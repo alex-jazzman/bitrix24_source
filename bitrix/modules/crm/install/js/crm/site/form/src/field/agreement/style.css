@@ -1,0 +1,23 @@
+.b24-form-field-agreement .b24-form-control-container {
+	line-height: 11px;
+}
+.b24-form-field-agreement .b24-form-control-desc {
+	font-size: 11px;
+	opacity: 0.5;
+	line-height: 1;
+}
+
+.b24-form-field-agreement .b24-form-field-agreement-link {
+	font-size: 11px;
+	line-height: 1;
+	cursor: pointer;
+}
+.b24-form-field-agreement a.b24-form-field-agreement-link {
+	color: #007eff;
+	text-decoration: underline;
+}
+
+.b24-form-field-agreement .b24-form-control-required {
+	font-size: 11px;
+	line-height: 1;
+}

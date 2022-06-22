@@ -1,0 +1,159 @@
+:root {
+	--ui-icon-size-xs: 26px;
+	--ui-icon-size-sm: 31px;
+	--ui-icon-size-md: 39px;
+	--ui-icon-size-lg: 47px;
+	--ui-icon-size: 39px;
+}
+
+.landing-b24-widget-button-social-item
+{
+	display: inline-flex;
+	align-items: center;
+	padding: 12px 12px 12px calc(var(--ui-icon-size-md) * 2);
+	margin-bottom: 9px;
+	background-repeat: no-repeat;
+	background-position: calc(var(--ui-icon-size-md) / 2) center !important;
+	background-size: var(--ui-icon-size-md) !important;
+	color: white;
+	border-radius: 4px;
+	font-size: 16px;
+	width: 100%;
+}
+.landing-b24-widget-button-social-item * {
+	color: white;
+	margin: 0;
+	padding: 0;
+	font-size: inherit;
+	font-weight: inherit;
+}
+
+.landing-b24-widget-button-social-item:hover
+{
+	color: white;
+	text-decoration: none;
+	opacity: .85;
+}
+.landing-b24-widget-button-social-item.b24-widget-button-openline_livechat {
+	background-color: #ffa900;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-livechat.svg);
+}
+
+.landing-b24-widget-button-social-item.ui-icon-service-whatsapp,
+.landing-b24-widget-button-social-item[class*="ui-icon-service-"][class*="whatsapp"] {
+	background-color: #01e675;
+	/*background-size: 30px;*/
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-whatsapp.svg);
+}
+
+.landing-b24-widget-button-social-item.ui-icon-service-avito {
+	background-color: #0af;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-avito.svg);
+}
+
+.landing-b24-widget-button-social-item.ui-icon-service-viber {
+	background-color: #995aca;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-viber.svg);
+}
+
+.landing-b24-widget-button-social-item.ui-icon-service-fb-messenger {
+	background-color: #0183ff;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-fb-messenger.svg);
+}
+
+.landing-b24-widget-button-social-item.ui-icon-service-telegram {
+	background-color: #2fc6f6;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-telegram.svg);
+}
+
+.landing-b24-widget-button-social-item.ui-icon-service-wechat {
+	background-color: #2ec100;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-wechat.svg);
+}
+
+.landing-b24-widget-button-social-item.ui-icon-service-skype {
+	background-color: #02aff0;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-skype.svg);
+}
+
+.landing-b24-widget-button-social-item.ui-icon-service-bitrix24 {
+	background-color: #3ac8f5;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-bitrix24.svg);
+}
+
+.landing-b24-widget-button-social-item.ui-icon-service-ya,
+.landing-b24-widget-button-social-item.ui-icon-service-yandex {
+	background-color: #fff;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-ya.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-apple {
+	background-color: #000;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-apple.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-light-apple {
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-apple.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-vk,
+.landing-b24-widget-button-social-item.ui-icon-service-vkontakte {
+	background-color: #3871ba;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-vk.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-light-vk,
+.landing-b24-widget-button-social-item.ui-icon-service-light-vkontakte {
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-vk.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-fb,
+.landing-b24-widget-button-social-item.ui-icon-service-facebook {
+	background-color: #38659f;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-fb.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-light-fb,
+.landing-b24-widget-button-social-item.ui-icon-service-light-facebook {
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-fb.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-fb-comments {
+	background-color: #38659f;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-fb-comments.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-light-fb-comments {
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-fb-comments.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-instagram-fb {
+	background-color: #e85998;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-instagram-fb.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-light-instagram-fb {
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-instagram-fb.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-instagram {
+	background-color: #d56c9a;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-instagram.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-light-instagram {
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-instagram.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-slack {
+	background-color: #776ebd;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-slack.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-light-slack {
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-slack.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-office365 {
+	background-color: #fff;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-office365.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-light-office365 {
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-office365.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-ok {
+	background-color: #ee8208;
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-ok.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-light-ok {
+	background-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-ok.svg);
+}
+.landing-b24-widget-button-social-item.ui-icon-service-instagram-direct {
+	background-color: #eb358c;
+	background-image: url("data:image/svg+xml,%3Csvg width='42' height='42' viewBox='0 0 42 42' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16.8378 11C14.3067 11 12 13.3694 12 15.9693V24.2515C12 26.8515 14.3067 29.2209 16.8378 29.2209H23.9353C23.6188 28.7355 23.2072 28.3154 22.72 27.9907L22.0805 27.5644H17.0274C15.1063 27.5644 13.6125 26.0299 13.6125 24.0566V16.1642C13.6125 14.1909 15.1063 12.6564 17.0274 12.6564H24.7109C26.6319 12.6564 28.1258 14.1909 28.1258 16.1642V18.7293L29.7385 18.3398V15.9693C29.7385 13.3694 27.4318 11 24.9007 11H16.8378ZM20.869 15.1411C23.271 15.1411 25.2784 16.963 25.6465 19.328L24.0713 19.7084C23.8805 18.0592 22.5295 16.7975 20.8691 16.7975C19.0763 16.7975 17.644 18.2688 17.644 20.1104C17.644 21.0048 17.9818 21.8118 18.5347 22.4053C18.3435 22.9267 18.292 23.5087 18.4163 24.0927C18.442 24.2135 18.4747 24.3319 18.5143 24.4473C17.0358 23.5945 16.0313 21.9673 16.0313 20.1104C16.0313 17.3771 18.208 15.1411 20.869 15.1411ZM24.9007 15.1411C24.9007 14.6833 25.2613 14.3128 25.707 14.3128C26.1527 14.3128 26.5133 14.6833 26.5133 15.1411C26.5133 15.5988 26.1527 15.9693 25.707 15.9693C25.2613 15.9693 24.9007 15.5988 24.9007 15.1411ZM23.19 23.6296L31.1239 21.8753L26.9903 28.8583L26.5452 25.9039C26.4775 25.4549 26.1964 25.0702 25.7956 24.8782L23.19 23.6296ZM32.8032 22.1832C33.4078 21.1618 32.5292 19.8931 31.3916 20.1447L22.0841 22.2027C20.8421 22.4774 20.6513 24.2161 21.8028 24.7679L24.9948 26.2974L25.5295 29.8457C25.7185 31.1008 27.3297 31.43 27.972 30.3448L32.8032 22.1832Z' fill='%23fff'/%3E%3C/svg%3E%0A");
+}

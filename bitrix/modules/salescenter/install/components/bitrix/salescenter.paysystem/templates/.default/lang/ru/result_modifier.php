@@ -1,0 +1,5 @@
+<?php
+$MESS["SALESCENTER_SP_PAYSYSTEM_ROBOXCHANGE_LINK_CONNECT"] = "Подключиться к Robokassa";
+$MESS["SALESCENTER_SP_PAYSYSTEM_WOOPKASSA_LINK_CONNECT"] = "Подключиться к Woopkassa";
+$MESS["SALESCENTER_SP_PAYSYSTEM_PLATON_LINK_CONNECT"] = "Подключиться к Platon";
+$MESS["SALESCENTER_SP_PAYSYSTEM_PLATON_LINK_CONNECT_SPECIAL_PLAN"] = "Подключиться к Platon и получить специальный тариф";

@@ -1,0 +1,23 @@
+<?php
+$MESS["CEEN_2FLIST"] = "Markups";
+$MESS["CEEN_ADDING"] = "Add new markup";
+$MESS["CEEN_APPLY"] = "Apply";
+$MESS["CEEN_CANCEL"] = "Reset";
+$MESS["CEEN_DELETE_DISCOUNT"] = "Delete markup";
+$MESS["CEEN_DELETE_DISCOUNT_CONFIRM"] = "Are you sure you want to delete this markup?";
+$MESS["CEEN_DISCOUNT_VALUE"] = "Value";
+$MESS["CEEN_ERROR_SAVING_EXTRA"] = "Error saving the markup";
+$MESS["CEEN_NAME"] = "Name";
+$MESS["CEEN_NEW_DISCOUNT"] = "New markup";
+$MESS["CEEN_NO_DISCOUNT"] = "The markup ##ID# was not found";
+$MESS["CEEN_NO_PERMS2ADD"] = "You do not have enough permissions to add a new markup";
+$MESS["CEEN_PERCENTAGE"] = "Value";
+$MESS["CEEN_RECALC"] = "Recalculate prices";
+$MESS["CEEN_SAVE"] = "Save";
+$MESS["CEEN_SAVE_ADD"] = "Add";
+$MESS["CEEN_SORT"] = "Sort index";
+$MESS["CEEN_TAB_DISCOUNT"] = "Markup";
+$MESS["CEEN_TAB_DISCOUNT_DESCR"] = "Edit parameters";
+$MESS["CEEN_TIMESTAMP"] = "Last modification date:";
+$MESS["CEEN_TO_LIST"] = "Markups";
+$MESS["CEEN_UPDATING"] = "Edit markup";

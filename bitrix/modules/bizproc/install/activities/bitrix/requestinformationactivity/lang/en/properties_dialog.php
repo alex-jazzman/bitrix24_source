@@ -1,0 +1,26 @@
+<?
+$MESS["BPSFA_PD_YES"] = "Yes";
+$MESS["BPSFA_PD_NO"] = "No";
+$MESS["BPSFA_PD_FIELDS"] = "Fields";
+$MESS["BPSFA_PD_F_NAME"] = "ID";
+$MESS["BPSFA_PD_F_TITLE"] = "Name";
+$MESS["BPSFA_PD_F_DESCR"] = "Description";
+$MESS["BPSFA_PD_F_TYPE"] = "Type";
+$MESS["BPSFA_PD_F_REQ"] = "Required";
+$MESS["BPSFA_PD_F_MULT"] = "Multiple";
+$MESS["BPSFA_PD_F_ADD"] = "Add Field...";
+$MESS["BPSFA_PD_FIELD"] = "Field";
+$MESS["BPSFA_PD_F_VLIST"] = "Values";
+$MESS["BPSFA_PD_F_VLIST_HINT"] = "(one value per line; if a variant value and the name are different, specify the variant in square brackets on the right of the name, e.g.: [v1]Variant 1)";
+$MESS["BPSFA_PD_F_DEF"] = "Default Value";
+$MESS["BPSFA_PD_SAVE"] = "Save";
+$MESS["BPSFA_PD_CANCEL"] = "Cancel";
+$MESS["BPSFA_PD_SAVE_HINT"] = "Save field";
+$MESS["BPSFA_PD_CANCEL_HINT"] = "Exit without Saving";
+$MESS["BP_WF_UP"] = "Up";
+$MESS["BP_WF_DOWN"] = "Down";
+$MESS["BPSFA_PD_DELETE"] = "Delete";
+$MESS["BPSFA_PD_EMPTY_TITLE"] = "The field name is missing";
+$MESS["BPSFA_PD_EMPTY_NAME"] = "The field code is missing";
+$MESS["BPSFA_PD_WRONG_NAME"] = "A field code may only include Latin letters and numbers, and cannot start with a digit.";
+$MESS["BPSFA_PD_TIMEOUT_LIMIT"] = "Minimum wait time";

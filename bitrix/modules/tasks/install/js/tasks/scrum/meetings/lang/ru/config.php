@@ -1,0 +1,27 @@
+<?php
+$MESS["TSM_MEETINGS_ERROR_POPUP_TITLE"] = "Произошла ошибка";
+$MESS["TSM_MEETINGS_HEADER_TITLE"] = "Встречи команды";
+$MESS["TSM_MEETINGS_CREATE_BUTTON"] = "Создать";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_BLANK"] = "ШАБЛОНЫ ВСТРЕЧ ПО SCRUM";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_DAILY"] = "Ежедневный скрам";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_PLANNING"] = "Планирование спринта";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_REVIEW"] = "Обзор спринта";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_RETROSPECTIVE"] = "Ретроспектива спринта";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATES_INFO"] = "Создайте регулярные встречи команды в один клик. Для каждой встречи будет создан чат на нужных участников.";
+$MESS["TSM_MEETINGS_SCHEDULED_BUTTON"] = "Запланированные встречи";
+$MESS["TSM_MEETINGS_SCHEDULED_BUTTON_HIDE"] = "Скрыть";
+$MESS["TSM_CHATS_HEADER_TITLE"] = "Чаты";
+$MESS["TSM_CHATS_EMPTY_TITLE"] = "Нет чатов связанных с проектом";
+$MESS["TSM_CHATS_EMPTY_TEXT"] = "создайте встречи команды и мы создадим чаты автоматически";
+$MESS["TSM_CHATS_CREATE_BUTTON"] = "Создать";
+$MESS["TSM_TODAY_EVENT_TITLE"] = "На сегодня";
+$MESS["TSM_PLANNING_EVENTS_TITLE"] = "Запланированные встречи";
+$MESS["TSM_MEETINGS_EMPTY_TITLE"] = "Нет встреч связанных с проектом";
+$MESS["TSM_MEETINGS_EMPTY_TEXT"] = "создайте регулярные встречи команды";
+$MESS["TSM_MEETINGS_CREATE_ONE_CLICK"] = "Создать в один клик";
+$MESS["TSM_VIDEO_CALL_BUTTON"] = "Видеозвонок HD";
+$MESS["TSM_REPETITION_TITLE"] = "регулярное событие";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_HINT_DAILY"] = "<b>Ежедневный скрам</b> – короткая встреча на 15 минут для обсуждения общего продвижения команды к целям спринта. Каждый участник рассказывает, что он сделал, что будет делать, какие возникли сложности.";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_HINT_PLANNING"] = "<b>Планирование спринта</b> – встреча для планирования нового спринта и формирования бэклога задач. Эта встреча может быть на несколько часов.  ";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_HINT_REVIEW"] = "<b>Обзор спринта</b> – встреча для подведения итогов спринта  (демо спринта), на которой команда показывает, что она сделала за спринт, готовый инкремент продукта.";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_HINT_RETROSPECTIVE"] = "<b>Ретроспектива спринта</b> – встреча для обсуждения внутри команды, что выполнено хорошо, а что можно улучшить в следующем спринте. Проходит после Обзора спринта перед Планированием.  ";

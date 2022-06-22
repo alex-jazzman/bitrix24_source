@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_DATA_CONTEXT_ENTITY"] = "Quantity";
+$MESS["CRM_DATA_CONTEXT_FUND"] = "Total";
+$MESS["CRM_DATA_CONTEXT_PERCENT"] = "Percent";

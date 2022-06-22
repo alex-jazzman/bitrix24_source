@@ -1,0 +1,1 @@
+{"version":3,"sources":["scheme.js"],"names":["BX","namespace","Crm","EntityScheme","UI","EntitySchemeElement"],"mappings":"AAAAA,GAAGC,UAAU,UAEb,UAAUD,GAAGE,IAAIC,eAAiB,YAClC,CAICH,GAAGE,IAAIC,aAAeH,GAAGI,GAAGD,aAG7B,UAAUH,GAAGE,IAAIG,sBAAwB,YACzC,CAICL,GAAGE,IAAIG,oBAAsBL,GAAGI,GAAGC","file":"scheme.map.js"}

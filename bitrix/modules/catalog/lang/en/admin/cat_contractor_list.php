@@ -1,0 +1,22 @@
+<?php
+$MESS["CONTRACTOR_ADDRESS"] = "Address";
+$MESS["CONTRACTOR_ADD_NEW"] = "Add vendor";
+$MESS["CONTRACTOR_ADD_NEW_ALT"] = "Add new vendor";
+$MESS["CONTRACTOR_COMPANY"] = "Company";
+$MESS["CONTRACTOR_EMAIL"] = "E-Mail";
+$MESS["CONTRACTOR_FIELD_ALL"] = "any";
+$MESS["CONTRACTOR_INN"] = "Taxpayer ID";
+$MESS["CONTRACTOR_KPP"] = " ";
+$MESS["CONTRACTOR_PAGE_TITLE"] = "Vendors";
+$MESS["CONTRACTOR_PERSON_NAME"] = "First name";
+$MESS["CONTRACTOR_PERSON_TITLE"] = "Contact person's full name";
+$MESS["CONTRACTOR_PHONE"] = "Phone";
+$MESS["CONTRACTOR_POST_INDEX"] = "Zip code";
+$MESS["CONTRACTOR_TITLE"] = "Name";
+$MESS["CONTRACTOR_TYPE"] = "Vendor type";
+$MESS["DELETE_CONTRACTOR_ALT"] = "Delete";
+$MESS["DELETE_CONTRACTOR_CONFIRM"] = "Are you sure you want to delete the vendor?";
+$MESS["EDIT_CONTRACTOR_ALT"] = "Edit";
+$MESS["ERROR_DELETING_TYPE"] = "Error deleting the record.";
+$MESS["ERROR_UPDATING_REC"] = "Error updating the record.";
+$MESS["group_admin_nav"] = "Vendors";

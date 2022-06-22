@@ -1,0 +1,25 @@
+<?php
+$MESS['CRM_SCENARIO_SELECTION_TITLE'] = 'Режим работы с заказами';
+$MESS['CRM_SCENARIO_SELECTION_SELECT'] = 'Выбрать';
+$MESS['CRM_SCENARIO_SELECTION_SELECTED'] = 'Выбрано';
+$MESS['CRM_SCENARIO_SELECTION_DEALS'] = 'Сделки';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_DESCRIPTION'] = 'Идеальный вариант для персональных продаж';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_DESCRIPTION_ITEM_1'] = 'Любая заявка (звонки, чаты, CRM-формы, заказы из интернет-магазина и другие) попадает в сделки CRM';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_DESCRIPTION_ITEM_2'] = 'Всё общение с клиентом, статус оплаты и доставки отражается в таймлайне в карточке сделки';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_DESCRIPTION_ITEM_3'] = 'Менеджер персонально общается с каждым клиентом из сделки';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS'] = 'Сделки + Заказы';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION'] = 'Подходит для автоматизированной обработки заказов из интернет-магазина';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_1'] = 'Заказы из интернет-магазина сохраняются только в заказах CRM и не попадают в сделки';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_2'] = 'Сделки создаются отдельно (например, для оказания услуг клиентам или для другого направления бизнеса)';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_PLUS_ORDERS_DESCRIPTION_ITEM_3'] = 'Часть менеджеров работает со сделками, часть – с заказами из интернет-магазина';
+$MESS['CRM_SCENARIO_SELECTION_ACTIVE_ORDERS'] = 'Активных заказов: #ORDER_COUNT#';
+$MESS['CRM_SCENARIO_SELECTION_DEALS_ONLY_WARNING'] = 'При работе только со сделками обработка заказов станет недоступна.';
+$MESS['CRM_SCENARIO_SELECTION_CONVERT_ACTIVE_ORDERS'] = 'Конвертировать активные заказы в сделки при смене режима';
+$MESS['CRM_SCENARIO_SELECTION_SAVE_ERROR'] = 'При переключении режима произошла ошибка';
+$MESS['CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TITLE'] = 'Вы переходите в режим «Сделки»';
+$MESS['CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_1'] = 'Заказы из вашего интернет-магазина будут становиться сделками, внутри которых вы сможете принимать оплату, оформлять доставку и резервировать товары на складах. Отдельного раздела «Заказы» не будет.';
+$MESS['CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_2'] = 'Обратите внимание, что вернуться в режим «Сделки+Заказы» не получится, так как он больше не поддерживается в Битрикс24.';
+$MESS['CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_3_PART_1'] = 'Почитайте подробнее';
+$MESS['CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_3_PART_2'] = 'про оба режима, прежде чем сделать переход.';
+$MESS['CRM_SCENARIO_SELECTION_TO_DEAL_MODE_OK_BUTTON'] = 'Остаться в режиме «Сделки+Заказы»';
+$MESS['CRM_SCENARIO_SELECTION_TO_DEAL_MODE_CANCEL_BUTTON'] = 'Перейти в режим «Сделки»';
