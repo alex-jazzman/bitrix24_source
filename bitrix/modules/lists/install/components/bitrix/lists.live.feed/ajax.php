@@ -4,7 +4,6 @@ use Bitrix\Lists\Internals\Error\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Lists\Internals\Controller;
-use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Text\HtmlFilter;
 
 define('STOP_STATISTICS', true);
@@ -96,11 +95,6 @@ class LiveFeedAjaxController extends Controller
 			ShowError($errorObject->getMessage());
 			return;
 		}
-
-		Asset::getInstance()->addJs('/bitrix/components/bitrix/ui.tile.selector/templates/.default/script.js');
-		Asset::getInstance()->addCss('/bitrix/components/bitrix/ui.tile.selector/templates/.default/style.css');
-		Asset::getInstance()->addJs('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js');
-		Asset::getInstance()->addCss('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');
 
 		$this->iblockId = intval($this->request->getPost('iblockId'));
 		$this->iblockDescription = (string)$this->request->getPost('iblockDescription');
