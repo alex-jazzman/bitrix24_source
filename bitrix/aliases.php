@@ -35,11 +35,6 @@ namespace Bitrix\Crm\Order {
     }
 }
 
-namespace Bitrix\Main\Composite {
-    class Helper extends \CHTMLPagesCache {
-    }
-}
-
 namespace Bitrix\Main\Entity\Field {
     class IReadable extends \Bitrix\Main\ORM\Fields\IReadable {
     }
@@ -106,12 +101,12 @@ namespace Bitrix\Main\Entity {
 }
 
 namespace Bitrix\Main\Entity {
-    class ScalarField extends \Bitrix\Main\ORM\Fields\ScalarField {
+    abstract class ScalarField extends \Bitrix\Main\ORM\Fields\ScalarField {
     }
 }
 
 namespace Bitrix\Main\Entity {
-    class Field extends \Bitrix\Main\ORM\Fields\Field {
+    abstract class Field extends \Bitrix\Main\ORM\Fields\Field {
     }
 }
 
@@ -126,7 +121,7 @@ namespace Bitrix\Main\Entity {
 }
 
 namespace Bitrix\Main\Entity\Validator {
-    class Base extends \Bitrix\Main\ORM\Fields\Validators\Validator {
+    abstract class Base extends \Bitrix\Main\ORM\Fields\Validators\Validator {
     }
 }
 
@@ -296,7 +291,7 @@ namespace Bitrix\Main\ORM {
 }
 
 namespace Bitrix\Main\UserField {
-    class TypeBase extends \Bitrix\Main\UserField\Types\BaseType {
+    abstract class TypeBase extends \Bitrix\Main\UserField\Types\BaseType {
     }
 }
 
@@ -320,7 +315,9 @@ namespace Bitrix\Main\Page {
     }
 }
 
-class CHTMLPagesCache extends \Bitrix\Main\Composite\Helper {
+namespace {
+    class CHTMLPagesCache extends \Bitrix\Main\Composite\Helper {
+    }
 }
 
 namespace Bitrix\Main\Data {
@@ -328,13 +325,19 @@ namespace Bitrix\Main\Data {
     }
 }
 
-class StaticHtmlCacheResponse extends \Bitrix\Main\Composite\AbstractResponse {
+namespace {
+    abstract class StaticHtmlCacheResponse extends \Bitrix\Main\Composite\AbstractResponse {
+    }
 }
 
-class StaticHtmlMemcachedResponse extends \Bitrix\Main\Composite\MemcachedResponse {
+namespace {
+    class StaticHtmlMemcachedResponse extends \Bitrix\Main\Composite\MemcachedResponse {
+    }
 }
 
-class StaticHtmlFileResponse extends \Bitrix\Main\Composite\FileResponse {
+namespace {
+    class StaticHtmlFileResponse extends \Bitrix\Main\Composite\FileResponse {
+    }
 }
 
 namespace Bitrix\Main\Page {
@@ -343,12 +346,12 @@ namespace Bitrix\Main\Page {
 }
 
 namespace Bitrix\Main\Data {
-    class StaticHtmlStorage extends \Bitrix\Main\Composite\Data\AbstractStorage {
+    abstract class StaticHtmlStorage extends \Bitrix\Main\Composite\Data\AbstractStorage {
     }
 }
 
 namespace Bitrix\Main\Data {
-    class StaticCacheProvider extends \Bitrix\Main\Composite\Data\CacheProvider {
+    abstract class StaticCacheProvider extends \Bitrix\Main\Composite\Data\CacheProvider {
     }
 }
 
@@ -359,11 +362,6 @@ namespace Bitrix\Main\Data {
 
 namespace Bitrix\Main\Data {
     class StaticHtmlMemcachedStorage extends \Bitrix\Main\Composite\Data\MemcachedStorage {
-    }
-}
-
-namespace Bitrix\Main\Composite {
-    class Engine extends \Bitrix\Main\Page\Frame {
     }
 }
 
@@ -438,7 +436,7 @@ namespace Bitrix\Sale\Delivery\Restrictions {
 }
 
 namespace Bitrix\Sender {
-    class Connector extends \Bitrix\Sender\Connector\Base {
+    abstract class Connector extends \Bitrix\Sender\Connector\Base {
     }
 }
 
@@ -453,7 +451,7 @@ namespace Bitrix\Sender {
 }
 
 namespace Bitrix\Sender {
-    class Trigger extends \Bitrix\Sender\Trigger\Base {
+    abstract class Trigger extends \Bitrix\Sender\Trigger\Base {
     }
 }
 
@@ -468,12 +466,12 @@ namespace Bitrix\Sender {
 }
 
 namespace Bitrix\Sender {
-    class TriggerConnector extends \Bitrix\Sender\Trigger\TriggerConnector {
+    abstract class TriggerConnector extends \Bitrix\Sender\Trigger\TriggerConnector {
     }
 }
 
 namespace Bitrix\Sender {
-    class TriggerConnectorClosed extends \Bitrix\Sender\Trigger\TriggerConnectorClosed {
+    abstract class TriggerConnectorClosed extends \Bitrix\Sender\Trigger\TriggerConnectorClosed {
     }
 }
 

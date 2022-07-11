@@ -63,8 +63,6 @@ $aliases = array(
     array('Bitrix\Main\Composite\AppCache', 'Bitrix\Main\Data\AppCacheManifest'),
     array('Bitrix\Main\Composite\BufferArea', 'Bitrix\Main\Page\FrameBuffered'),
     array('Bitrix\Main\Composite\BufferArea', 'Bitrix\Main\Page\FrameHelper'),
-    array('Bitrix\Main\Composite\Engine', 'Bitrix\Main\Page\Frame'),
-    array('Bitrix\Main\Composite\Helper', 'CHTMLPagesCache'),
     array('Bitrix\Main\Composite\Page', 'Bitrix\Main\Data\StaticHtmlCache'),
     array('Bitrix\Main\Composite\AbstractResponse', 'StaticHtmlCacheResponse'),
     array('Bitrix\Main\Composite\MemcachedResponse', 'StaticHtmlMemcachedResponse'),
@@ -132,11 +130,12 @@ foreach ($aliases as $alias) {
 
     if (count($classParts) > 0)
         $description .= "namespace " . implode("\\", $classParts) . " {" . PHP_EOL;
+    else
+        $description .= "namespace {" . PHP_EOL;
 
     $description .= "class " . $class . " extends \\" . $aliasName . " {}" . PHP_EOL;
 
-    if (count($classParts) > 0)
-        $description .= "}" . PHP_EOL;
+    $description .= "}" . PHP_EOL;
 
     $description .= PHP_EOL;
 }
