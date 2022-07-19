@@ -350,8 +350,18 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		if ($this->parentEntityId && $this->parentEntityTypeId)
 		{
 			$relationManager = Container::getInstance()->getRelationManager();
+			$relation = $relationManager->getRelation(
+				new \Bitrix\Crm\RelationIdentifier(
+					$this->parentEntityTypeId,
+					$this->entityTypeId,
+				)
+			);
+			if (!$relation)
+			{
+				return null;
+			}
 			$parentItemIdentifier = $this->getParentItemIdentifier();
-			$childElements = array_unique($relationManager->getChildElements($parentItemIdentifier));
+			$childElements = array_unique($relation->getChildElements($parentItemIdentifier));
 
 			$ids = [];
 			foreach($childElements as $element)

@@ -2341,7 +2341,7 @@ function htmlspecialcharsback($str)
 function htmlspecialcharsbx($string, $flags = ENT_COMPAT, $doubleEncode = true)
 {
 	//function for php 5.4 where default encoding is UTF-8
-	return htmlspecialchars($string, $flags, (defined("BX_UTF")? "UTF-8" : "ISO-8859-1"), $doubleEncode);
+	return htmlspecialchars((string)$string, $flags, (defined("BX_UTF")? "UTF-8" : "ISO-8859-1"), $doubleEncode);
 }
 
 function CheckDirPath($path)
@@ -3332,10 +3332,7 @@ function IncludeModuleLangFile($filepath, $lang=false, $bReturnArray=false)
  */
 function LangSubst($lang)
 {
-	static $arSubst = array('ua'=>'ru', 'kz'=>'ru', 'ru'=>'ru');
-	if(isset($arSubst[$lang]))
-		return $arSubst[$lang];
-	return 'en';
+	return Main\Localization\Loc::getDefaultLang($lang);
 }
 
 /*********************************************************************
@@ -3863,8 +3860,6 @@ function FormDecode()
 			if(!isset($superglobals[$key]))
 				$toGlobals[$key] = $val;
 
-		//$GLOBALS += $toGlobals;
-		//PHP7 bug
 		foreach($toGlobals as $key => $val)
 		{
 			if(!isset($GLOBALS[$key]))
@@ -4051,7 +4046,14 @@ function InitURLParam($url=false)
 		parse_str($params, $_GET);
 		parse_str($params, $arr);
 		$_REQUEST += $arr;
-		$GLOBALS += $arr;
+
+		foreach ($arr as $key => $val)
+		{
+			if (!isset($GLOBALS[$key]))
+			{
+				$GLOBALS[$key] = $val;
+			}
+		}
 	}
 }
 
@@ -4486,7 +4488,7 @@ class CUtil
 						$res .= "'".$value."'";
 					break;
 				default:
-					if(preg_match("#['\"\\n\\r<\\\\\x80]#", $value))
+					if(preg_match("#['\"\\n\\r<\\\\\x80]#", (string)$value))
 						$res .= "'".CUtil::JSEscape($value)."'";
 					else
 						$res .= "'".$value."'";
@@ -4830,7 +4832,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZNWUzOGJlNDY2ZGVmMjIwMTYxMjBhOTUyNzBhM2M1Njc=*/$GLOBALS['____401091849']= array(base64_decode('bXRfcmFuZA'.'='.'='),base64_decode(''.'aXNfb'.'2Jq'.'Z'.'WN0'),base64_decode('Y'.'2FsbF91'.'c2'.'V'.'y'.'X2Z1bmM='),base64_decode('Y2FsbF9'.'1'.'c'.'2Vy'.'X2Z1b'.'mM='),base64_decode('aW50d'.'mFs'),base64_decode('Y2FsbF91c2VyX2Z'.'1b'.'mM='),base64_decode(''.'aW50dmFs'),base64_decode('Y'.'2Fs'.'bF91c2VyX2Z1bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___1849989195')){function ___1849989195($_1519563401){static $_1542060943= false; if($_1542060943 == false) $_1542060943=array('VVNFUg==','VVNFUg='.'=','VV'.'NFUg==','SXNB'.'dXRo'.'b3JpemVk','VVN'.'FUg'.'==','S'.'XNBZG'.'1pbg==','REI=','U0VM'.'RUNUIENPVU5UKFUuSUQp'.'IGFzIEMgRl'.'J'.'P'.'TSBiX'.'3Vz'.'ZXIg'.'VS'.'B'.'XSEVSRSBVLklEI'.'D0g','VVNF'.'Ug==','R'.'2'.'V0SUQ=','IE'.'FO'.'RCBVLkxBU'.'1'.'RfTE9'.'H'.'S'.'U4gSVMgTlVMT'.'A==','Qw==',''.'VVNFUg==','T'.'G'.'9nb'.'3V0');return base64_decode($_1542060943[$_1519563401]);}};if($GLOBALS['____401091849'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+6.6666666666667+6.6666666666667+6.6666666666667)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___1849989195(0)]) && $GLOBALS['____401091849'][1]($GLOBALS[___1849989195(1)]) && $GLOBALS['____401091849'][2](array($GLOBALS[___1849989195(2)], ___1849989195(3))) &&!$GLOBALS['____401091849'][3](array($GLOBALS[___1849989195(4)], ___1849989195(5)))){ $_2076473879= $GLOBALS[___1849989195(6)]->Query(___1849989195(7).$GLOBALS['____401091849'][4]($GLOBALS['____401091849'][5](array($GLOBALS[___1849989195(8)], ___1849989195(9)))).___1849989195(10), true); if($_1665411785= $_2076473879->Fetch()){ if($GLOBALS['____401091849'][6]($_1665411785[___1849989195(11)])>(1404/2-702)) $GLOBALS['____401091849'][7](array($GLOBALS[___1849989195(12)], ___1849989195(13)));}}}/**/
+		/*ZDUyZmZN2VmNTIxNzU2NDI1YWZmN2NiNjQ0YTk4NTNkNjM0ZGQ=*/$GLOBALS['____1388771084']= array(base64_decode('bXRfcm'.'Fu'.'ZA'.'=='),base64_decode(''.'aXNfb2JqZ'.'WN'.'0'),base64_decode(''.'Y'.'2'.'Fsb'.'F91c2V'.'yX'.'2Z1bmM='),base64_decode('Y2FsbF91'.'c2V'.'yX2Z'.'1'.'bmM='),base64_decode(''.'aW50dmFs'),base64_decode('Y2Fsb'.'F9'.'1c2Vy'.'X2Z1b'.'mM'.'='),base64_decode('aW50'.'dmFs'),base64_decode('Y2FsbF9'.'1c2Vy'.'X'.'2Z1bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___679096262')){function ___679096262($_714794955){static $_1686178706= false; if($_1686178706 == false) $_1686178706=array('VV'.'NFUg==','V'.'V'.'NFUg'.'='.'=','VVNFUg==','SX'.'NBd'.'X'.'Ro'.'b'.'3J'.'pemVk','VVNFUg'.'==','SXNB'.'ZG1pbg='.'=','REI=','U'.'0VMRU'.'N'.'UIENPVU'.'5'.'U'.'KFU'.'uS'.'UQpI'.'GFzI'.'EM'.'g'.'RlJP'.'T'.'SBiX3VzZ'.'XIgV'.'SBXSEVSRSB'.'VLklE'.'ID'.'0g','VVNFUg'.'==','R2'.'V0SU'.'Q'.'=','IEFORCB'.'VLkxB'.'U1Rf'.'TE9HSU'.'4gSV'.'MgTl'.'VMTA==','Qw==','VVNFUg==','TG9nb'.'3V0');return base64_decode($_1686178706[$_714794955]);}};if($GLOBALS['____1388771084'][0](round(0+0.25+0.25+0.25+0.25), round(0+20)) == round(0+1.75+1.75+1.75+1.75)){ if(isset($GLOBALS[___679096262(0)]) && $GLOBALS['____1388771084'][1]($GLOBALS[___679096262(1)]) && $GLOBALS['____1388771084'][2](array($GLOBALS[___679096262(2)], ___679096262(3))) &&!$GLOBALS['____1388771084'][3](array($GLOBALS[___679096262(4)], ___679096262(5)))){ $_1668928519= $GLOBALS[___679096262(6)]->Query(___679096262(7).$GLOBALS['____1388771084'][4]($GLOBALS['____1388771084'][5](array($GLOBALS[___679096262(8)], ___679096262(9)))).___679096262(10), true); if($_865691200= $_1668928519->Fetch()){ if($GLOBALS['____1388771084'][6]($_865691200[___679096262(11)])>(994-2*497)) $GLOBALS['____1388771084'][7](array($GLOBALS[___679096262(12)], ___679096262(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 

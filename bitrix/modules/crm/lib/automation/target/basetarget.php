@@ -71,7 +71,10 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 
 	abstract public function getEntityStatus();
 
-	abstract public function setEntityStatus($statusId);
+	public function setEntityStatus($statusId, $executeBy = null)
+	{
+		return;
+	}
 
 	public function getDocumentStatus()
 	{

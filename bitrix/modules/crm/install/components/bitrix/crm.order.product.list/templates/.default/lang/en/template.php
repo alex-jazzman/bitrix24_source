@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ORDER_PL_ADD"] = "Add";
 $MESS["CRM_ORDER_PL_ADD_PRODUCT"] = "Add product";
 $MESS["CRM_ORDER_PL_APPLY"] = "Apply";
@@ -21,7 +21,7 @@ $MESS["CRM_ORDER_PL_ORDER_DISCOUNT"] = "Discounts";
 $MESS["CRM_ORDER_PL_PAID"] = "Already paid";
 $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_ADD"] = "Add";
 $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_CANCEL"] = "Cancel";
-$MESS["CRM_ORDER_PL_PROD_EXIST_DLG_TEXT"] = "Product \"#NAME#\" already exists in the product list. Do you want to add another product item?";
+$MESS["CRM_ORDER_PL_PROD_EXIST_DLG_TEXT_FOR_DOUBLE"] = "\"#NAME#\" is already in the shopping cart. Do you want to add another item?";
 $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_TITLE"] = "Product already added";
 $MESS["CRM_ORDER_PL_PROMO_CODE"] = "Coupon code";
 $MESS["CRM_ORDER_PL_RECALCULATE_ORDER"] = "Recalculate order";
@@ -36,4 +36,3 @@ $MESS["CRM_ORDER_PL_TUNE"] = "Add";
 $MESS["CRM_ORDER_PL_VAT"] = "Tax rate";
 $MESS["CRM_ORDER_PL_WEIGHT"] = "Weight";
 $MESS["CRM_ORDER_PL_YES"] = "Yes";
-?>

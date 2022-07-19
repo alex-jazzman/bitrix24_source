@@ -148,7 +148,7 @@
 .main-buttons-box {
 	display: flex;
 	background: var(--mib-background);
-	border-radius: var(--mib-radius, var(--ui-theme-radius-md, 0));
+	border-radius: var(--mib-radius);
 	height: var(--mib-height);
 	padding: var(--mib-padding-top) var(--mib-padding-right) var(--mib-padding-bottom) var(--mib-padding-left);
 	margin-bottom: var(--mib-margin-bottom);

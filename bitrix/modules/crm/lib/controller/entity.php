@@ -27,6 +27,9 @@ class Entity extends Main\Engine\Controller
 				'class' => Crm\Controller\Action\Entity\FetchPaymentDocumentsAction::class,
 				'+prefilters' => [new Main\Engine\ActionFilter\Authentication()]
 			),
+			'renderImageInput' => [
+				'class' =>  Crm\Controller\Action\Entity\RenderImageInputAction::class,
+			],
 		);
 	}
 

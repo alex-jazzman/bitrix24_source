@@ -241,9 +241,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_CLOSED_FIELD'))
 			,
 
-			(new StringField('TYPE_ID'))
-				->configureNullable()
-				->configureSize(50)
+			$fieldRepository->getTypeId(Item::FIELD_NAME_TYPE_ID, StatusTable::ENTITY_ID_DEAL_TYPE)
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_TYPE_ID_FIELD'))
 			,
 
@@ -251,7 +249,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				'TYPE_BY',
 				StatusTable::class,
 				Join::on('this.TYPE_ID', 'ref.STATUS_ID')
-					->where('ref.ENTITY_ID', '=', 'DEAL_TYPE')
+					->where('ref.ENTITY_ID', '=', StatusTable::ENTITY_ID_DEAL_TYPE)
 				,
 			))
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_TYPE_BY_FIELD'))

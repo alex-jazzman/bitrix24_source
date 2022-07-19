@@ -1888,7 +1888,7 @@ class EditorAdapter
 			$entityResult = $this->saveClientEntity(\CCrmOwnerType::Company, $companyData);
 			$entityResultData = $entityResult->getData();
 			$companyId = (int)($entityResultData['id'] ?? 0);
-			if ($companyId > 0 && $entityResult->isSuccess())
+			if ($companyId > 0)
 			{
 				$resultData[Item::FIELD_NAME_COMPANY_ID] = $companyId;
 				$processedEntities[] = new ItemIdentifier(\CCrmOwnerType::Company, $companyId);
@@ -1911,10 +1911,6 @@ class EditorAdapter
 			foreach ($contactData as $contactIndex => &$contact)
 			{
 				$entityResult = $this->saveClientEntity(\CCrmOwnerType::Contact, $contact);
-				if (!$entityResult->isSuccess())
-				{
-					continue;
-				}
 				$entityResultData = $entityResult->getData();
 				$contactId = (int)($entityResultData['id'] ?? 0);
 				if ($contactId > 0)
@@ -2331,7 +2327,7 @@ class EditorAdapter
 			$entityResult = $this->saveClientEntity(\CCrmOwnerType::Company, $companyData);
 			$entityData = $entityResult->getData();
 			$companyId = (int)($entityData['id'] ?? 0);
-			if ($companyId > 0 && $entityResult->isSuccess())
+			if ($companyId > 0)
 			{
 				$resultData[Item::FIELD_NAME_MYCOMPANY_ID] = $companyId;
 				$requisiteBinding = $this->extractRequisiteBinding(

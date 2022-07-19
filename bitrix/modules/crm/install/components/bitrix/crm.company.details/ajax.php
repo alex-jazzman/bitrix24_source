@@ -670,6 +670,10 @@ elseif($action === 'DELETE')
 }
 elseif($action === 'RENDER_IMAGE_INPUT')
 {
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Controller\Action\Entity\RenderImageInputAction
+	 */
 	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
 	if(($ID > 0 && !\CCrmCompany::CheckUpdatePermission($ID, $currentUserPermissions))
 		|| ($ID === 0 && !\CCrmCompany::CheckCreatePermission($currentUserPermissions))

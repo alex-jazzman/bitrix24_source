@@ -11,7 +11,7 @@ class ProductManager extends Crm\Order\ProductManager
 	/**
 	 * Adds entity products to order shipment
 	 *
-	 * @param array $entityProducts
+	 * @param array $entityProducts in format `[basketXmlId => entityProductRow]`
 	 * @return Main\Result
 	 */
 	public function addEntityProductsToOrderForShip(array $entityProducts): Main\Result
@@ -31,9 +31,9 @@ class ProductManager extends Crm\Order\ProductManager
 			return $result;
 		}
 
-		foreach ($entityProducts as $productId => $entityProduct)
+		foreach ($entityProducts as $basketXmlId => $entityProduct)
 		{
-			$entityProducts[$productId]['PRODUCT'] = $this->convertToSaleBasketFormat($entityProduct['PRODUCT']);
+			$entityProducts[$basketXmlId]['PRODUCT'] = $this->convertToSaleBasketFormat($entityProduct['PRODUCT']);
 		}
 
 		if ($entityProducts)
@@ -105,7 +105,7 @@ class ProductManager extends Crm\Order\ProductManager
 
 			foreach ($basketItems as $basketItem)
 			{
-				$storeList = $entityProducts[$basketItem->getProductId()]['STORE_LIST'] ?? [];
+				$storeList = $entityProducts[$basketItem->getField('XML_ID')]['STORE_LIST'] ?? [];
 
 				/** @var Crm\Order\ShipmentItem $shipmentItem */
 				$shipmentItem = $newShipmentItemCollection->createItem($basketItem);

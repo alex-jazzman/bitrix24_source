@@ -1,5 +1,10 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
 /**
  * Bitrix vars
  * @global CUser $USER
@@ -216,19 +221,9 @@ if(isset($navigationBarItems))
 }
 //endregion
 
-$viewID = isset($arParams['~RENDER_INTO_VIEW']) ? $arParams['~RENDER_INTO_VIEW'] : '';
-if($viewID === '')
+if (empty($arParams['~RENDER_INTO_VIEW']))
 {
-	$viewID = $isBitrix24Template ? 'inside_pagetitle' : 'crm-grid-filter';
-}
-
-$this->SetViewTarget($viewID, 0);
-//region Filter
-?><div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;"><?
-$APPLICATION->IncludeComponent(
-	'bitrix:main.ui.filter',
-	'',
-	[
+	Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
 		'GRID_ID' => $gridID,
 		'FILTER_ID' => $filterID,
 		'FILTER' => $arParams['~FILTER'],
@@ -245,9 +240,37 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_ADDITIONAL_FILTERS' => true,
 		'CONFIG' => $arParams['~CONFIG'] ?? null,
 		'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
-	],
-	$component
-);
-//endregion
-?></div><?
-$this->EndViewTarget();
+	]);
+}
+else
+{
+	// for filters inside tabs
+	$viewID = $arParams['~RENDER_INTO_VIEW'];
+	$this->SetViewTarget($viewID, 0);
+	?><div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;"><?
+	$APPLICATION->IncludeComponent(
+		'bitrix:main.ui.filter',
+		'',
+		[
+			'GRID_ID' => $gridID,
+			'FILTER_ID' => $filterID,
+			'FILTER' => $arParams['~FILTER'],
+			'FILTER_FIELDS' => $arParams['~FILTER_FIELDS'] ?? [],
+			'FILTER_PRESETS' => $arParams['~FILTER_PRESETS'],
+			'ENABLE_FIELDS_SEARCH' => (isset($arParams['~ENABLE_FIELDS_SEARCH']) && $arParams['~ENABLE_FIELDS_SEARCH'] === 'Y') ? 'Y' : 'N',
+			'HEADERS_SECTIONS' => $arParams['~HEADERS_SECTIONS'] ?? [],
+			'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
+			'LAZY_LOAD' => $arParams['~LAZY_LOAD'] ?? null,
+			'VALUE_REQUIRED_MODE' => isset($arParams['~VALUE_REQUIRED_MODE']) && $arParams['~VALUE_REQUIRED_MODE'] === true,
+			'ENABLE_LIVE_SEARCH' => isset($arParams['~ENABLE_LIVE_SEARCH']) && $arParams['~ENABLE_LIVE_SEARCH'] === true,
+			'LIMITS' => $arParams['~LIMITS'] ?? null,
+			'ENABLE_LABEL' => true,
+			'ENABLE_ADDITIONAL_FILTERS' => true,
+			'CONFIG' => $arParams['~CONFIG'] ?? null,
+			'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+		],
+		$component
+	);
+	?></div><?
+	$this->EndViewTarget();
+}

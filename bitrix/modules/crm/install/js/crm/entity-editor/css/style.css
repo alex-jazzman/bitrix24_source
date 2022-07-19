@@ -397,6 +397,10 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	transition: 220ms opacity linear;
 }
 
+.crm-entity-widget-content-block-inner .webform-field-upload-icon img {
+	background: #fff;
+}
+
 /*Fixed 0093648*/
 .crm-entity-widget-content-block-inner td * { white-space: normal !important; }
 

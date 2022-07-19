@@ -145,4 +145,13 @@ class PermissionEntityTypeHelper
 
 		return $permissionEntityTypes;
 	}
+
+	public function getAllowSkipOtherEntityTypesFromOptions(array $options): bool
+	{
+		return (
+			isset($options['RESTRICT_BY_ENTITY_TYPES'])
+			&& is_array($options['RESTRICT_BY_ENTITY_TYPES'])
+			&& !empty($options['RESTRICT_BY_ENTITY_TYPES'])
+		);
+	}
 }

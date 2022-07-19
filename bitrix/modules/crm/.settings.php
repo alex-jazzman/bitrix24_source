@@ -299,6 +299,13 @@ return array(
 					],
 				],
 				[
+					'entityId' => 'contact',
+					'provider' => [
+						'moduleId' => 'crm',
+						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\ContactProvider'
+					],
+				],
+				[
 					'entityId' => 'deal',
 					'provider' => [
 						'moduleId' => 'crm',

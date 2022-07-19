@@ -519,7 +519,8 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 	"NEW_ENTRY_NAME" => Loc::getMessage('CRM_CALENDAR_NEW_DEAL_NAME'),
 	"COLLAPSED_ENTRIES_NAME" => Loc::getMessage('CRM_CALENDAR_COLLAPSED_DEAL_NAME'),
 	"AVILABLE_VIEWS" => array('day', 'week', 'month'),
-	"ADDITIONAL_VIEW_MODES" => $arParams['CALENDAR_MODE_LIST']
+	"ADDITIONAL_VIEW_MODES" => $arParams['CALENDAR_MODE_LIST'],
+	"USE_VIEW_TARGET" => "N"
 ));
 //endregion
 

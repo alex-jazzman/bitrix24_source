@@ -9,7 +9,6 @@ use Bitrix\Crm\Controller\Entity;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Format\Money;
-use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
@@ -312,7 +311,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			]);
 		}
 
-		return $this->item->getTitle() ?? '';
+		return $this->item->getHeading() ?? '';
 	}
 
 	protected function isPageTitleEditable(): bool
@@ -701,6 +700,11 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				),
 				'ENTITY_ID' => $this->getEntityID(),
 				'ENTITY_TYPE_NAME' => $this->getEntityName(),
+				'ENTITY_TITLE' =>
+					$this->item->isNew()
+						? $this->getTitle()
+						: $this->item->getTitlePlaceholder()
+				,
 				'CUSTOM_SITE_ID' => $this->getSiteId(),
 				'CUSTOM_LANGUAGE_ID' => $this->getLanguageId(),
 				'ALLOW_EDIT' => $this->isReadOnly() ? 'N' : 'Y',
@@ -1338,10 +1342,6 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				{
 					$value = str_replace(',', '.', $value);
 				}
-			}
-			if ($field->getValueType() === Field::VALUE_TYPE_HTML)
-			{
-				$value = TextHelper::sanitizeHtml($value);
 			}
 
 			$setData[$name] = $value;

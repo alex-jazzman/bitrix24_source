@@ -82,7 +82,7 @@ class Document extends Base
 		{
 			$filter = [];
 		}
-		$filter['template.moduleId'] = static::MODULE_ID;
+		$filter['=template.moduleId'] = static::MODULE_ID;
 
 		if(is_array($select) && in_array('entityId', $select))
 		{
@@ -97,14 +97,20 @@ class Document extends Base
 			{
 				$filterMap = array_map(function($item)
 				{
-					return str_replace('\\', '\\\\', mb_strtolower($item));
+					return mb_strtolower($item);
 				}, $providersMap);
-				$filter['provider'] = str_ireplace(array_keys($providersMap), $filterMap, $filter['entityTypeId']);
+				$filter['=provider'] = str_ireplace(
+					array_reverse(
+						array_keys($providersMap)
+					),
+					array_reverse($filterMap),
+					$filter['entityTypeId']
+				);
 				unset($filter['entityTypeId']);
 			}
 			if(isset($filter['entityId']))
 			{
-				$filter['value'] = $filter['entityId'];
+				$filter['=value'] = $filter['entityId'];
 				unset($filter['entityId']);
 			}
 		}

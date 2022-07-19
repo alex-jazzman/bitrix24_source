@@ -1,20 +1,29 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /** @var array $arResult */
-?>
-<?php
+
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\UI\Extension;
+
+Extension::load(['crm.toolbar-component']);
+
 if(!empty($arResult['additionalScripts']))
 {
 	foreach ($arResult['additionalScripts'] as $path)
 	{
-		\Bitrix\Main\Page\Asset::getInstance()->addJs($path);
+		Asset::getInstance()->addJs($path);
 	}
 }
 
-if (isset($arResult['hideBorder']) && $arResult['hideBorder'] === true)
+if(isset($arResult['hideBorder']) && $arResult['hideBorder'] === true)
 {
 	global $APPLICATION;
+
 	$bodyClass = $APPLICATION->getPageProperty("BodyClass");
 	$APPLICATION->setPageProperty("BodyClass",
 		($bodyClass ? $bodyClass." " : "").
@@ -22,7 +31,7 @@ if (isset($arResult['hideBorder']) && $arResult['hideBorder'] === true)
 	);
 }
 
-if (isset($arResult['spotlight']) && is_array($arResult['spotlight']))
+if(isset($arResult['spotlight']) && is_array($arResult['spotlight']))
 {
 	$APPLICATION->includeComponent(
 		"bitrix:spotlight",

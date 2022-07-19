@@ -36,7 +36,7 @@ $containerId = 'crm-tracking-channel-pool';
 				<div class="ui-ctl ui-ctl-inline">
 					<span style="padding-bottom: 0;" class="ui-ctl-label-text"><?=Loc::getMessage('CRM_TRACKING_SETTINGS_ATTR_WINDOW_SITE')?></span>
 				</div>
-				<div class="ui-ctl ui-ctl-textbox ui-ctl-inline ui-ctl-w25">
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-inline" style="width: 80px;">
 					<input name="ATTR_WINDOW" type="number" class="ui-ctl-element"
 						min="1" max="180" step="1"
 						value="<?=htmlspecialcharsbx($arResult['DATA']['ATTR_WINDOW'])?>"

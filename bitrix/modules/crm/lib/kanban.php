@@ -1188,7 +1188,7 @@ abstract class Kanban
 
 		if ($columns === null)
 		{
-			$columns = $this->getColumns();
+			$columns = $this->getColumns(false, false, $this->params);
 		}
 
 		$parameters = [

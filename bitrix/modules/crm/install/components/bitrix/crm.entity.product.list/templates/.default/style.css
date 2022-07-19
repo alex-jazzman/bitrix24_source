@@ -1038,3 +1038,15 @@ select.crm-entity-product-control-select-field:hover {
 	padding-left: 5px
 }
 
+
+.store-available-popup-container
+{
+	padding: 20px;
+}
+.store-available-popup-link,
+.store-available-popup-reserves-slider-link
+{
+	border-bottom: 1px dashed #2067b0;
+	cursor: pointer;
+	text-decoration: none !important;
+}

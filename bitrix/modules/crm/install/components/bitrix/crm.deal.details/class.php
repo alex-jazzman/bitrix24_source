@@ -1357,7 +1357,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			array(
 				'name' => 'OPPORTUNITY_WITH_CURRENCY',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_OPPORTUNITY_WITH_CURRENCY'),
-				'type' => (Main\Loader::includeModule('salescenter')) ? 'moneyPay' : 'money',
+				'type' => (($this->entityData['IS_RECURRING'] !== 'Y') && Main\Loader::includeModule('salescenter')) ? 'moneyPay' : 'money',
 				'editable' => true,
 				'mergeable' => false,
 				'data' => array(

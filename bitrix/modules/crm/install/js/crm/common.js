@@ -4005,6 +4005,7 @@ if(typeof(BX.CrmDupController) === "undefined")
 
 			this._entityTypeName = this.getSetting("entityTypeName", "");
 			this._entityId = this.getSetting("entityId", 0);
+			this._ignoredItems = BX.prop.getArray(this._settings, 'ignoredItems', []);
 			var groups = this.getSetting("groups", null);
 			var group = null;
 			if(groups)
@@ -4323,6 +4324,11 @@ if(typeof(BX.CrmDupController) === "undefined")
 			}
 			params["ENTITY_TYPE_NAME"] = this._entityTypeName;
 			params["ENTITY_ID"] = this._entityId;
+			if (this._ignoredItems && this._ignoredItems.length)
+			{
+				params["IGNORED_ITEMS"] = this._ignoredItems;
+			}
+
 			this._startSearchRequest(params);
 		},
 		_startSearchRequest: function(params)

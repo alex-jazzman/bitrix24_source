@@ -585,7 +585,14 @@ class CBPCrmSendSmsActivity extends CBPActivity
 
 		$documentId = $this->GetDocumentId();
 		[$typeName, $id] = mb_split('_(?=[^_]*$)', $documentId[2]);
-		$authorId = \CCrmOwnerType::loadResponsibleId(\CCrmOwnerType::ResolveID($typeName), $id, false);
+		$typeId = \CCrmOwnerType::ResolveID($typeName);
+
+		if ($typeId === \CCrmOwnerType::Undefined || !$id)
+		{
+			return false;
+		}
+
+		$authorId = \CCrmOwnerType::loadResponsibleId($typeId, $id, false);
 
 		$result = SmsManager::sendMessage([
 			'SENDER_ID' => $senderId,

@@ -1234,10 +1234,8 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 			$systemFields = [
 				'DATE_CREATE',
 				'DATE_MODIFY',
-				'MOVED_TIME',
 				'CREATED_BY_ID',
 				'MODIFY_BY_ID',
-				'MOVED_BY_ID',
 			];
 
 			foreach ($systemFields as $systemField)

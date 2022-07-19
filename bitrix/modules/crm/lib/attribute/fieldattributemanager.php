@@ -13,13 +13,17 @@ class FieldAttributeManager
 {
 	protected const CACHE_TTL = 86400;
 
+	/** @var Crm\Restriction\RestrictionManager */
+	private static $restrictionManager = Crm\Restriction\RestrictionManager::class;
+
 	public static function isEnabled()
 	{
 		return true;
 	}
+
 	public static function isPhaseDependent()
 	{
-		return Crm\Restriction\RestrictionManager::getAttributeConfigRestriction()->hasPermission();
+		return self::$restrictionManager::getAttributeConfigRestriction()->hasPermission();
 	}
 
 	public static function isEntitySupported(int $entityTypeId): bool
@@ -988,18 +992,12 @@ class FieldAttributeManager
 	}
 
 	/**
-	 * Return list of field names that matches specified configs and stages.
+	 * Returns a flat list of field names that are always required, on any stage
 	 *
 	 * @param array $fieldsData - Data that returns by self::getList() method.
-	 * @param Crm\EO_Status_Collection $collection - Stages collection for which settings should be processed.
-	 * @param string $currentStageId - Current stage identifier.
-	 * @return string[]
+	 * @return string[] - Flat list of required field names
 	 */
-	public static function processFieldsForStages(
-		array $fieldsData,
-		Crm\EO_Status_Collection $collection,
-		string $currentStageId
-	): array
+	final public static function extractNamesOfAlwaysRequiredFields(array $fieldsData): array
 	{
 		$result = [];
 
@@ -1007,22 +1005,59 @@ class FieldAttributeManager
 		{
 			return $result;
 		}
-		if(empty($fieldsData))
+		if (empty($fieldsData))
 		{
 			return $result;
 		}
-		$stages = [];
-		foreach ($collection as $stage)
-		{
-			$stages[$stage->getStatusId()] = $stage;
-		}
-		$currentStageSort = isset($stages[$currentStageId]) ? $stages[$currentStageId]->getSort() : -1;
+
 		foreach ($fieldsData as $fieldConfig)
 		{
 			//If Start Phase and Finish Phase are empty, then field is required always.
 			if (empty($fieldConfig['START_PHASE']) && empty($fieldConfig['FINISH_PHASE']))
 			{
 				$result[] = $fieldConfig['FIELD_NAME'];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Return list of field names that matches specified configs and stages.
+	 *
+	 * @param array $fieldsData - Data that returns by self::getList() method.
+	 * @param Crm\EO_Status_Collection $collection - Stages collection for which settings should be processed.
+	 * @param string $currentStageId - Current stage identifier.
+	 * @return string[] - Flat array of required field names
+	 */
+	public static function processFieldsForStages(
+		array $fieldsData,
+		Crm\EO_Status_Collection $collection,
+		string $currentStageId
+	): array
+	{
+		if (!static::isPhaseDependent())
+		{
+			return [];
+		}
+		if(empty($fieldsData))
+		{
+			return [];
+		}
+
+		$stages = [];
+		foreach ($collection as $stage)
+		{
+			$stages[$stage->getStatusId()] = $stage;
+		}
+		$currentStageSort = isset($stages[$currentStageId]) ? $stages[$currentStageId]->getSort() : -1;
+
+		$result = static::extractNamesOfAlwaysRequiredFields($fieldsData);
+
+		foreach ($fieldsData as $fieldConfig)
+		{
+			if (empty($fieldConfig['START_PHASE']) && empty($fieldConfig['FINISH_PHASE']))
+			{
 				continue;
 			}
 
@@ -1043,7 +1078,7 @@ class FieldAttributeManager
 			}
 		}
 
-		return $result;
+		return array_unique($result);
 	}
 
 	public static function deleteByOwnerType(int $entityTypeId)

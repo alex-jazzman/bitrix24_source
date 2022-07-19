@@ -189,8 +189,17 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 			$trigger['RETURN'] = $this->getReturnValues();
 		}
 
+		$executeBy = null;
+
+		if (isset($trigger['APPLY_RULES']['ExecuteBy']))
+		{
+			$docId = $target->getDocumentType();
+			$docId[2] = $target->getDocumentId();
+			$executeBy = \CBPHelper::ExtractUsers($trigger['APPLY_RULES']['ExecuteBy'], $docId, true);
+		}
+
 		$target->setAppliedTrigger($trigger);
-		$result = $target->setEntityStatus($statusId);
+		$result = $target->setEntityStatus($statusId, $executeBy);
 		if ($result !== false)
 		{
 			Factory::runOnStatusChanged($target->getEntityTypeId(), $target->getEntityId());

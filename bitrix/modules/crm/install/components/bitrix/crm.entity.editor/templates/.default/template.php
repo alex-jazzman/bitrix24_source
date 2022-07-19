@@ -269,6 +269,10 @@ if(!empty($htmlEditorConfigs))
 			);
 			<?php endif;?>
 
+			var contextParams = {
+				CATEGORY_ID: <?=$arParams['EXTRAS']['CATEGORY_ID'] ?? 0?>
+			};
+
 			var userFieldManager = BX.UI.EntityUserFieldManager.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				{
@@ -279,6 +283,7 @@ if(!empty($htmlEditorConfigs))
 					creationPageUrl: "<?=CUtil::JSEscape($arResult['USER_FIELD_CREATE_PAGE_URL'])?>",
 					languages: <?=CUtil::PhpToJSObject($arResult['LANGUAGES'])?>,
 					fieldPrefix: "<?=CUtil::JSEscape($arResult['USER_FIELD_PREFIX'])?>",
+					contextParams: contextParams,
 				}
 			);
 

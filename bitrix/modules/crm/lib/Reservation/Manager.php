@@ -53,9 +53,44 @@ final class Manager
 		return $this->entityProducts;
 	}
 
-	private function getEntityProductsByProductId(): array
+	/**
+	 * Get entity products with grouped fields for ProductManager.
+	 *
+	 * @return array
+	 */
+	private function getEntityProductsForProductManager(): array
 	{
-		return $this->getEntity()->getProductsByProductId();
+		$result = [];
+
+		foreach ($this->entityProducts as $basketXmlId => $entityProduct)
+		{
+			$storeId = $entityProduct['STORE_ID'] ? (int)$entityProduct['STORE_ID'] : $this->defaultStore;
+			if (isset($result[$basketXmlId]))
+			{
+				$result[$basketXmlId]['QUANTITY'] += $entityProduct['QUANTITY'];
+
+				if (isset($result[$basketXmlId]['STORE_LIST'][$storeId]))
+				{
+					$result[$basketXmlId]['STORE_LIST'][$storeId] += $entityProduct['QUANTITY'];
+				}
+				else
+				{
+					$result[$basketXmlId]['STORE_LIST'][$storeId] = $entityProduct['QUANTITY'];
+				}
+			}
+			else
+			{
+				$result[$basketXmlId] = [
+					'QUANTITY' => $entityProduct['QUANTITY'],
+					'PRODUCT' => $entityProduct,
+					'STORE_LIST' => [
+						$storeId => $entityProduct['QUANTITY'],
+					],
+				];
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -150,7 +185,7 @@ final class Manager
 
 		// search difference between entity and shipments products
 		$diffProducts = $this->getDifferenceBetweenProducts(
-			$this->getEntityProductsByProductId(),
+			$this->getEntityProductsForProductManager(),
 			$orderProductList
 		);
 
@@ -477,22 +512,23 @@ final class Manager
 				/** @var Crm\Order\ShipmentItem $shipmentItem */
 				foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
 				{
+					/** @var Crm\Order\BasketItem $basketItem */
 					$basketItem = $shipmentItem->getBasketItem();
-					$productId = $basketItem->getProductId();
+					$basketXmlId = $basketItem->getField('XML_ID');
 
 					$shipmentItemStoreCollection = $shipmentItem->getShipmentItemStoreCollection();
 					if ($shipmentItemStoreCollection->isEmpty())
 					{
 						$quantity = $shipmentItem->getQuantity();
 
-						if (isset($orderProductList[$productId]))
+						if (isset($orderProductList[$basketXmlId]))
 						{
-							$orderProductList[$productId]['QUANTITY'] += $quantity;
-							$orderProductList[$productId]['STORE_LIST'][$this->defaultStore] += $quantity;
+							$orderProductList[$basketXmlId]['QUANTITY'] += $quantity;
+							$orderProductList[$basketXmlId]['STORE_LIST'][$this->defaultStore] += $quantity;
 						}
 						else
 						{
-							$orderProductList[$productId] = [
+							$orderProductList[$basketXmlId] = [
 								'QUANTITY' => $quantity,
 								'STORE_LIST' => [
 									$this->defaultStore => $quantity,
@@ -508,22 +544,22 @@ final class Manager
 							$shipmentStoreId = $shipmentItemStore->getStoreId();
 							$quantity = $shipmentItemStore->getQuantity();
 
-							if (isset($orderProductList[$productId]))
+							if (isset($orderProductList[$basketXmlId]))
 							{
-								$orderProductList[$productId]['QUANTITY'] += $quantity;
+								$orderProductList[$basketXmlId]['QUANTITY'] += $quantity;
 
-								if (isset($orderProductList[$productId]['STORE_LIST'][$shipmentStoreId]))
+								if (isset($orderProductList[$basketXmlId]['STORE_LIST'][$shipmentStoreId]))
 								{
-									$orderProductList[$productId]['STORE_LIST'][$shipmentStoreId] += $quantity;
+									$orderProductList[$basketXmlId]['STORE_LIST'][$shipmentStoreId] += $quantity;
 								}
 								else
 								{
-									$orderProductList[$productId]['STORE_LIST'][$shipmentStoreId] = $quantity;
+									$orderProductList[$basketXmlId]['STORE_LIST'][$shipmentStoreId] = $quantity;
 								}
 							}
 							else
 							{
-								$orderProductList[$productId] = [
+								$orderProductList[$basketXmlId] = [
 									'QUANTITY' => $quantity,
 									'STORE_LIST' => [
 										$shipmentStoreId => $quantity,
@@ -542,18 +578,18 @@ final class Manager
 	private function getDifferenceBetweenProducts(array $entityProducts, array $orderProductList): array
 	{
 		$diffProducts = [];
-		foreach ($entityProducts as $productId => $entityProduct)
+		foreach ($entityProducts as $basketXmlId => $entityProduct)
 		{
-			if (isset($orderProductList[$productId]))
+			if (isset($orderProductList[$basketXmlId]))
 			{
-				$quantityDiff = $entityProduct['QUANTITY'] - $orderProductList[$productId]['QUANTITY'];
+				$quantityDiff = $entityProduct['QUANTITY'] - $orderProductList[$basketXmlId]['QUANTITY'];
 				if ($quantityDiff <= 1e-10)
 				{
 					continue;
 				}
 
 				$entityProductStoreList = $entityProduct['STORE_LIST'];
-				$orderProductStoreList = $orderProductList[$productId]['STORE_LIST'];
+				$orderProductStoreList = $orderProductList[$basketXmlId]['STORE_LIST'];
 
 				$newStoreList = [];
 				foreach ($entityProductStoreList as $storeId => $storeQuantity)
@@ -572,11 +608,11 @@ final class Manager
 				$diffProduct = $entityProduct;
 				$diffProduct['STORE_LIST'] = $newStoreList;
 
-				$diffProducts[$productId] = $diffProduct;
+				$diffProducts[$basketXmlId] = $diffProduct;
 			}
 			else
 			{
-				$diffProducts[$productId] = $entityProduct;
+				$diffProducts[$basketXmlId] = $entityProduct;
 			}
 		}
 

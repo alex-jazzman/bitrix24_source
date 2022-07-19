@@ -97,8 +97,8 @@ if(!$arResult["SCORING_ENABLED"] && \Bitrix\Main\Loader::includeModule("bitrix24
 		"CRM_ML_SCORING_DESCRIPTION_TITLE_2": '<?= GetMessageJS("CRM_ML_SCORING_DESCRIPTION_TITLE_2")?>',
 		"CRM_ML_SCORING_DESCRIPTION_P1": '<?= GetMessageJS("CRM_ML_SCORING_DESCRIPTION_P1")?>',
 		"CRM_ML_SCORING_DESCRIPTION_P2_2": '<?= GetMessageJS("CRM_ML_SCORING_DESCRIPTION_P2_2")?>',
-		"CRM_SCORING_LICENSE_TITLE": '<?= \Bitrix\Crm\Ml\Scoring::getLicenseInfoTitle()?>',
-		"CRM_SCORING_LICENSE_TEXT": '<?= \Bitrix\Crm\Ml\Scoring::getLicenseInfoText()?>',
+		"CRM_SCORING_LICENSE_TITLE": '<?= \CUtil::JSEscape(\Bitrix\Crm\Ml\Scoring::getLicenseInfoTitle())?>',
+		"CRM_SCORING_LICENSE_TEXT": '<?= \CUtil::JSEscape(\Bitrix\Crm\Ml\Scoring::getLicenseInfoText())?>',
 		"CRM_ML_SCORING_PREDICTION_HINT": '<?= GetMessageJS("CRM_ML_SCORING_PREDICTION_HINT")?>',
 		"CRM_ML_SCORING_MODEL_QUALITY_HINT": '<?= GetMessageJS("CRM_ML_SCORING_MODEL_QUALITY_HINT")?>',
 	});
