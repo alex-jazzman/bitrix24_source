@@ -529,6 +529,14 @@ class DealDataProvider extends EntityDataProvider
 			]
 		);
 
+		$result['ROBOT_DEBUGGER'] = $this->createField(
+			'ROBOT_DEBUGGER',
+			[
+				'type' => 'list',
+				'partial' => true,
+			]
+		);
+
 		$parentFields = Container::getInstance()->getParentFieldManager()->getParentFieldsOptionsForFilterProvider(
 			\CCrmOwnerType::Deal
 		);
@@ -733,6 +741,15 @@ class DealDataProvider extends EntityDataProvider
 				'params' => ['multiple' => 'Y'],
 				'items' => $orderSourceItems,
 			);
+		}
+		elseif ($fieldID === 'ROBOT_DEBUGGER')
+		{
+			return [
+				'params' => [
+					'multiple' => 'N',
+				],
+				'items' => \Bitrix\Crm\Automation\Debugger\DebuggerFilter::getFilterItems(),
+			];
 		}
 		elseif (ParentFieldManager::isParentFieldName($fieldID))
 		{

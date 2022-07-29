@@ -55,7 +55,7 @@ class Update extends Operation
 
 	protected function save(): Result
 	{
-		return $this->item->save();
+		return $this->item->save($this->isCheckFieldsEnabled() && $this->isCheckRequiredUserFields());
 	}
 
 	public function isItemChanged(): bool

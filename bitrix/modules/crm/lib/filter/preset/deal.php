@@ -32,6 +32,12 @@ final class Deal extends Base
 					'STAGE_SEMANTIC_ID' => PhaseSemantics::getFinalSemantis(),
 				])
 			],
+			self::ID_ROBOT_DEBUGGER => [
+				'name' => Loc::getMessage('CRM_PRESET_DEALS_IN_ROBOT_DEBUGGER'),
+				'fields' => [
+					'ROBOT_DEBUGGER' => 'SHOW'
+				],
+			],
 		];
 	}
 }

@@ -21,6 +21,7 @@ Extension::load([
 	'ui.notification',
 	'catalog.product-calculator',
 	'catalog.store-use',
+	'ui.design-tokens',
 ]);
 
 /** @var array $grid */

@@ -58,7 +58,7 @@ export class Openlines extends Widget
 			</div>
 		`, section);
 		// Dom.append(
-		// 	this.renderBubble(BX.Loc.getMessage('EMBED_SLIDER_OL_SETTINGS_BUBBLE'), false),
+		// 	this.renderBubble("text", false),
 		// 	section
 		// );
 

@@ -10,6 +10,7 @@ use Bitrix\Crm\Observer\Entity\EO_Observer_Collection;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\UserField\UserFieldFilterable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Entity\DatetimeField;
@@ -396,6 +397,18 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			if ($this->isFieldMatchesTypeMask($fieldTypeMask, $field))
 			{
 				$names[] = $field->getName();
+			}
+		}
+
+		$flatBindingsFieldNames = [
+			static::FIELD_NAME_OBSERVERS,
+			static::FIELD_NAME_CONTACT_IDS,
+		];
+		foreach ($flatBindingsFieldNames as $fieldName)
+		{
+			if ($this->hasField($fieldName))
+			{
+				$names[] = $fieldName;
 			}
 		}
 
@@ -1630,6 +1643,16 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		;
 	}
 
+	public function getFilteredUserFields(): ?array
+	{
+		if (!($this->entityObject instanceof UserFieldFilterable)) // currently it allows for Company/Contacts)
+		{
+			return null;
+		}
+
+		return $this->entityObject->getFilteredUserFields();
+	}
+
 	protected function clearEmptyMultipleValues(string $commonFieldName, array $values): array
 	{
 		$result = [];
@@ -1657,7 +1680,11 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		$entityField = $this->entityObject->sysGetEntity()->getField($entityFieldName);
 		if (
 			$value === ''
-			&& ($entityField instanceof IntegerField || $entityField instanceof FloatField)
+			&& (
+				$entityField instanceof IntegerField
+				|| $entityField instanceof FloatField
+				|| $entityField instanceof UserTypeField
+			)
 		)
 		{
 			return null;

@@ -341,7 +341,9 @@ class DealTable extends Main\ORM\Data\DataManager
 
 			$fieldRepository->getWebformId(),
 
-			$fieldRepository->getSourceId(),
+			$fieldRepository->getSourceId()
+				->configureDefaultValue(null)
+			,
 
 			$fieldRepository->getSourceBy(),
 
@@ -380,6 +382,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				'IS_WORK',
 				'CASE WHEN %s = \'P\' THEN 1 ELSE 0 END',
 				'STAGE_SEMANTIC_ID',
+				['values' => [0, 1]]
 			))
 				->configureValueType(BooleanField::class)
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_IS_WORK_FIELD'))
@@ -389,6 +392,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				'IS_WON',
 				'CASE WHEN %s = \'S\' THEN 1 ELSE 0 END',
 				'STAGE_SEMANTIC_ID',
+				['values' => [0, 1]]
 			))
 				->configureValueType(BooleanField::class)
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_IS_WON_FIELD'))
@@ -398,6 +402,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				'IS_LOSE',
 				'CASE WHEN %s = \'F\' THEN 1 ELSE 0 END',
 				'STAGE_SEMANTIC_ID',
+				['values' => [0, 1]]
 			))
 				->configureValueType(BooleanField::class)
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_IS_LOSE_FIELD'))

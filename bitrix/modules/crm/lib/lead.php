@@ -143,6 +143,7 @@ class LeadTable extends Main\ORM\Data\DataManager
 				'IS_CONVERT',
 				'CASE WHEN %s = \'CONVERTED\' THEN 1 ELSE 0 END',
 				['STATUS_ID'],
+				['values' => [0, 1]]
 			))
 				->configureValueType(BooleanField::class)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_IS_CONVERT_FIELD'))

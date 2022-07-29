@@ -915,6 +915,7 @@ abstract class Kanban
 		}
 
 		$filter = Deal\OrderFilter::prepareFilter($filter);
+		$filter = \Bitrix\Crm\Automation\Debugger\DebuggerFilter::prepareFilter($filter, $this->entity->getTypeId());
 
 		//deal
 		if($this->entity->isCategoriesSupported())

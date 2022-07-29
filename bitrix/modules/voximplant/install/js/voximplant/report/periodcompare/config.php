@@ -11,4 +11,5 @@ return [
 	'css'  => [
 		'/bitrix/js/voximplant/report/periodcompare/view.css',
 	],
+	'rel' => ['ui.fonts.opensans'],
 ];

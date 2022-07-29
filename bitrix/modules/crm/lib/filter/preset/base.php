@@ -11,6 +11,7 @@ abstract class Base
 	protected const ID_MY = 'filter_my';
 	protected const ID_IN_WORK = 'filter_in_work';
 	protected const ID_IN_CLOSED = 'filter_closed';
+	protected const ID_ROBOT_DEBUGGER = 'filter_robot_debugger';
 
 	private const DEFAULT_FIELD_VALUE = '';
 

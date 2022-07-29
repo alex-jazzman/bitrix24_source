@@ -2281,10 +2281,7 @@ foreach($arResult['LEAD'] as &$arLead)
 	$arLead['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($arLead['~OPPORTUNITY'], $currencyID);
 
 	$statusID = isset($arLead['STATUS_ID']) ? $arLead['STATUS_ID'] : '';
-	$arLead['LEAD_STATUS_NAME'] = isset($arResult['STATUS_LIST'][$statusID]) ? $arResult['STATUS_LIST'][$statusID] : $statusID;
-
-	$sourceID = isset($arLead['SOURCE_ID']) ? $arLead['SOURCE_ID'] : '';
-	$arLead['LEAD_SOURCE_NAME'] = isset($arResult['SOURCE_LIST'][$sourceID]) ? $arResult['SOURCE_LIST'][$sourceID] : $sourceID;
+	$arLead['LEAD_STATUS_NAME'] = isset($arResult['STATUS_LIST'][$statusID]) ? $arResult['STATUS_LIST'][$statusID] : htmlspecialcharsbx($statusID);
 
 	$arLead['DELETE'] = $arLead['EDIT'] = !$arResult['INTERNAL'];
 
@@ -2412,7 +2409,7 @@ foreach($arResult['LEAD'] as &$arLead)
 	$arLead['MODIFY_BY_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~MODIFY_BY_FORMATTED_NAME']);
 
 	$sourceID = isset($arLead['~SOURCE_ID']) ? $arLead['~SOURCE_ID'] : '';
-	$arLead['LEAD_SOURCE_NAME'] = $sourceID !== '' ? (isset($arResult['SOURCE_LIST'][$sourceID]) ? $arResult['SOURCE_LIST'][$sourceID] : $sourceID) : '';
+	$arLead['LEAD_SOURCE_NAME'] = $sourceID !== '' ? (isset($arResult['SOURCE_LIST'][$sourceID]) ? $arResult['SOURCE_LIST'][$sourceID] : htmlspecialcharsbx($sourceID)) : '';
 	$arLead['~LEAD_SOURCE_NAME'] = htmlspecialcharsback($arLead['~LEAD_SOURCE_NAME']);
 
 	$arLead['~LEAD_FORMATTED_NAME'] = CCrmLead::PrepareFormattedName(

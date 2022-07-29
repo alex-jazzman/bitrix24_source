@@ -1460,17 +1460,26 @@ class CAllCrmCompany
 						'RESPONSIBLE_ID' => $assignedByID
 					)
 				);
-				CCrmSonetSubscription::RegisterSubscription(
-					CCrmOwnerType::Company,
-					$ID,
-					CCrmSonetSubscriptionType::Responsibility,
-					$assignedByID
-				);
-				$logEventID = CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, array('CURRENT_USER' => $userID));
+
+				$isUntypedCategory = (int)$arFields['CATEGORY_ID'] === 0;
+				if ($isUntypedCategory)
+				{
+					CCrmSonetSubscription::RegisterSubscription(
+						CCrmOwnerType::Company,
+						$ID,
+						CCrmSonetSubscriptionType::Responsibility,
+						$assignedByID
+					);
+				}
+
+				$logEventID = $isUntypedCategory
+					? CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, ['CURRENT_USER' => $userID])
+					: false;
 
 				if (
 					$logEventID
 					&& $assignedByID != $createdByID
+					&& (int)$arFields['CATEGORY_ID'] === 0
 					&& CModule::IncludeModule("im")
 				)
 				{
@@ -2097,8 +2106,9 @@ class CAllCrmCompany
 			);
 
 			$registerSonetEvent = isset($arOptions['REGISTER_SONET_EVENT']) && $arOptions['REGISTER_SONET_EVENT'] === true;
+			$isUntypedCategory = $categoryId === 0;
 
-			if($bResult && isset($arFields['ASSIGNED_BY_ID']))
+			if ($bResult && isset($arFields['ASSIGNED_BY_ID']) && $isUntypedCategory)
 			{
 				CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 					CCrmOwnerType::Company,
@@ -2113,18 +2123,21 @@ class CAllCrmCompany
 			if($bResult && $bCompare && $registerSonetEvent && !empty($sonetEventData))
 			{
 				$modifiedByID = intval($arFields['MODIFY_BY_ID']);
-				foreach($sonetEventData as &$sonetEvent)
+				foreach ($sonetEventData as &$sonetEvent)
 				{
 					$sonetEventFields = &$sonetEvent['FIELDS'];
 					$sonetEventFields['ENTITY_TYPE_ID'] = CCrmOwnerType::Company;
 					$sonetEventFields['ENTITY_ID'] = $ID;
 					$sonetEventFields['USER_ID'] = $modifiedByID;
 
-					$logEventID = CCrmLiveFeed::CreateLogEvent($sonetEventFields, $sonetEvent['TYPE'], array('CURRENT_USER' => $iUserId));
+					$logEventID = $isUntypedCategory
+						? CCrmLiveFeed::CreateLogEvent($sonetEventFields, $sonetEvent['TYPE'], ['CURRENT_USER' => $iUserId])
+						: false;
 
 					if (
 						$logEventID
 						&& $sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
+						&& $categoryId === 0
 						&& CModule::IncludeModule("im")
 					)
 					{
@@ -2641,15 +2654,29 @@ class CAllCrmCompany
 			}
 
 			$requiredUserFields = is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
-				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] : array();
+				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM]
+				: [];
 
-			if (!$USER_FIELD_MANAGER->CheckFields(
-				self::$sUFEntityID,
-				$ID,
-				$fieldsToCheck,
-				false,
-				$enableRequiredUserFieldCheck,
-				$requiredUserFields))
+			if (isset($arFields['CATEGORY_ID']))
+			{
+				// category specified user fields
+				$filteredUserFields = (new CCrmUserType($USER_FIELD_MANAGER, self::$sUFEntityID))
+					->setOption(['categoryId' => $arFields['CATEGORY_ID']])
+					->GetEntityFields($ID)
+				;
+			}
+
+			if (
+				!$USER_FIELD_MANAGER->CheckFields(
+					self::$sUFEntityID,
+					$ID,
+					$fieldsToCheck,
+					false,
+					$enableRequiredUserFieldCheck,
+					$requiredUserFields,
+					isset($filteredUserFields) ? array_keys($filteredUserFields) : null
+				)
+			)
 			{
 				$e = $APPLICATION->GetException();
 				$this->checkExceptions[] = $e;

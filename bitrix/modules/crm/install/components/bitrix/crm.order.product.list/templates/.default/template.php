@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Grid\Panel\Actions;
 use \Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load("ui.fonts.ruble");
+\Bitrix\Main\UI\Extension::load(["ui.fonts.ruble", "ui.design-tokens"]);
 
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_grid.js');
 
@@ -321,7 +321,7 @@ foreach($arResult['PRODUCTS'] as $product)
 			</div>',
 		'VAT' => '
 			<div class="crm-order-product-info-price">
-				<div class="crm-order-product-info-price-current">'.(is_null($product['VAT_ID']) ? Loc::getMessage('CRM_ORDER_PL_NO') : Loc::getMessage('CRM_ORDER_PL_VAT').' '.(int)($product['VAT_RATE']*100).'%').'</div>
+				<div class="crm-order-product-info-price-current">'.(is_null($product['VAT_RATE']) ? Loc::getMessage('CRM_ORDER_PL_NO_2') : Loc::getMessage('CRM_ORDER_PL_VAT_2', ['#VAT_RATE#' => (int)($product['VAT_RATE']*100)])).'</div>
 				<div class="crm-order-product-info-price-desc"></div>
 			</div>',
 		'VAT_INCLUDED' => $vatIncludedColumn,

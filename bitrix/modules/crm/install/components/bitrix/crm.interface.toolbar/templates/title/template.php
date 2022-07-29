@@ -1,11 +1,10 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-use Bitrix\Crm\UI\ToolbarHelper;
 use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Buttons\AddButton;
 use Bitrix\UI\Buttons\Button;
@@ -19,7 +18,7 @@ use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var array $arParams */
 
-Extension::load(['crm.toolbar-component']);
+Extension::load(['crm.toolbar-component', 'ui.design-tokens']);
 
 $toolbarId = $arParams['TOOLBAR_ID'];
 $items = [];
@@ -52,7 +51,7 @@ if(!empty($settingsItems))
 		'id' => $settingsButtonId,
 		'menu' => [
 			'id' => $settingsMenuId,
-			'items' => ToolbarHelper::mapItems($settingsItems, $toolbarId),
+			'items' => Bitrix\Crm\UI\Tools\ToolBar::mapItems($settingsItems, $toolbarId),
 			'offsetLeft' => 20,
 			'closeByEsc' => true,
 			'angle' => true
@@ -71,6 +70,7 @@ for($i = 0; $i < $itemCount; $i++)
 	$link = $item['LINK'] ?? '#';
 	$onClick = $item['ONCLICK'] ? new JsCode($item['ONCLICK']) : '';
 	$type = $item['TYPE'] ?? '';
+	$buttonId = "{$toolbarId}_button_{$i}";
 
 	// disabled button configuration
 	$disabledButtonDataset = [];
@@ -89,19 +89,22 @@ for($i = 0; $i < $itemCount; $i++)
 
 	if($type === 'crm-context-menu')
 	{
-		$buttonId = "{$toolbarId}_button_{$i}";
 		$menuItems = isset($item['ITEMS']) && is_array($item['ITEMS']) ? $item['ITEMS'] : [];
 		$menuButton = new Button([
 			'id' => htmlspecialcharsbx($buttonId),
 			'link' => $link,
-			'click' => $onClick,
 			'text' => $text,
 			'color' => Color::SUCCESS,
 			'icon' => Icon::ADD,
+			'click' => new JsCode('
+				var popup = this.menuWindow.popupWindow;
+				if (popup) {popup.setOffset({offsetLeft: BX.pos(popup.bindElement).width - 17});}
+			'),
 			'menu' => [
 				'id' => htmlspecialcharsbx($buttonId).'_menu',
-				'items' => ToolbarHelper::mapItems($menuItems),
+				'items' => Bitrix\Crm\UI\Tools\ToolBar::mapItems($menuItems),
 				'closeByEsc' => true,
+				'angle' => true,
 			]
 		]);
 
@@ -109,7 +112,6 @@ for($i = 0; $i < $itemCount; $i++)
 	}
 	elseif($type === 'crm-btn-double')
 	{
-		$buttonId = "{$toolbarId}_button_{$i}";
 		$bindElementID = "{$buttonId}_anchor";
 		$splitItems = isset($item['ITEMS']) && is_array($item['ITEMS']) ? $item['ITEMS'] : [];
 		$splitButton = new SplitButton([
@@ -118,10 +120,17 @@ for($i = 0; $i < $itemCount; $i++)
 			'title' => $title,
 			'text' => $text,
 			'color' => Color::SUCCESS,
+			'menuButton' => [
+				'click' => new JsCode('
+					var popup = this.getSplitButton().menuWindow.popupWindow;
+					if (popup) { popup.setOffset({offsetLeft: BX.pos(popup.bindElement).width - 20});}
+				')
+			],
 			'menu' => [
 				'id' => htmlspecialcharsbx($bindElementID),
-				'items' => ToolbarHelper::mapItems($splitItems),
+				'items' => Bitrix\Crm\UI\Tools\ToolBar::mapItems($splitItems),
 				'closeByEsc' => true,
+				'angle' => true,
 			],
 			'mainButton' => [
 				'link' => $link,

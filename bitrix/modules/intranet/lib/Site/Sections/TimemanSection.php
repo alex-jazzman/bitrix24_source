@@ -246,7 +246,7 @@ class TimemanSection
 		if (static::isBitrix24())
 		{
 			$available = static::isMeetingAvailable();
-			if (!static::isTimemanInstalled())
+			if (!static::isMeetingInstalled())
 			{
 				$locked = true;
 				$meetingUrl = '';

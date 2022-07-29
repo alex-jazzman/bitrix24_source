@@ -200,8 +200,18 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 
 		$target->setAppliedTrigger($trigger);
 		$result = $target->setEntityStatus($statusId, $executeBy);
+
+		//Fake document update for clearing document cache
+		$ds = \CBPRuntime::GetRuntime(true)->getDocumentService();
+		$ds->UpdateDocument($target->getComplexDocumentId(), []);
+
 		if ($result !== false)
 		{
+			Factory::onFieldsChanged(
+				$target->getEntityTypeId(),
+				$target->getEntityId(),
+				[$target->getEntityTypeId() === \CCrmOwnerType::Lead ? 'STATUS_ID' : 'STAGE_ID']
+			);
 			Factory::runOnStatusChanged($target->getEntityTypeId(), $target->getEntityId());
 		}
 

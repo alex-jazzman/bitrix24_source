@@ -4695,7 +4695,7 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 			}
 
 			_this.closePaidButtonMenu(index);
-			_this.setPaidButtonView(index, (_this.getValue('PAID') === 'Y'));
+			_this.setPaidButtonView(index, (_this.getModel().getField('PAID') === 'Y'));
 		};
 
 		var value = this.getValue();

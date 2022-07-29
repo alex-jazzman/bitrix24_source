@@ -1592,6 +1592,14 @@ class crm extends CModule
 		);
 
 		$eventManager->registerEventHandler(
+			'bitrix24',
+			'onFeedbackCollectorCheckCanRun',
+			'crm',
+			'\Bitrix\Crm\Integration\Bitrix24\FeedbackCollector',
+			'onFeedbackCollectorCheckCanRun'
+		);
+
+		$eventManager->registerEventHandler(
 			'sale',
 			'OnReservationSettingsBuild',
 			'crm',
@@ -2116,6 +2124,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Reservation\EventsHandler\Payment',
 			'OnSalePaymentEntitySaved'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'bitrix24',
+			'onFeedbackCollectorCheckCanRun',
+			'crm',
+			'\Bitrix\Crm\Integration\Bitrix24\FeedbackCollector',
+			'onFeedbackCollectorCheckCanRun'
 		);
 
 		$eventManager->unRegisterEventHandler(

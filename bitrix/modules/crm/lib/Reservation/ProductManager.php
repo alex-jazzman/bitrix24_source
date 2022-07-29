@@ -38,18 +38,22 @@ class ProductManager extends Crm\Order\ProductManager
 
 		if ($entityProducts)
 		{
+			$defaultStoreId = Catalog\StoreTable::getDefaultStoreId();
 			$currency = $this->getOrder()->getCurrency();
 
 			/** @var Crm\Order\BasketItem[] $basketItems */
 			$basketItems = [];
+			$foundProducts = [];
+
 			foreach ($entityProducts as $product)
 			{
 				$productData = $product['PRODUCT'];
 
-				$shipmentItem = $this->getBasketItemByEntityProduct($productData);
+				$shipmentItem = $this->getBasketItemByEntityProduct($productData, $foundProducts, true);
 				if (!$shipmentItem)
 				{
 					$shipmentItem = $basket->createItem('catalog', $productData['PRODUCT_ID']);
+					$foundProducts[] = $shipmentItem->getBasketCode();
 				}
 
 				$setFieldsResult = $shipmentItem->setFields([
@@ -105,7 +109,14 @@ class ProductManager extends Crm\Order\ProductManager
 
 			foreach ($basketItems as $basketItem)
 			{
+				// it can be empty if there are no reserves for the product
 				$storeList = $entityProducts[$basketItem->getField('XML_ID')]['STORE_LIST'] ?? [];
+				if (empty($storeList))
+				{
+					$storeList = [
+						$defaultStoreId => $basketItem->getQuantity(),
+					];
+				}
 
 				/** @var Crm\Order\ShipmentItem $shipmentItem */
 				$shipmentItem = $newShipmentItemCollection->createItem($basketItem);

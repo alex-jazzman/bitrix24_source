@@ -12942,7 +12942,7 @@ BX.Crm.Page =
 		factoryBased: { condition: new RegExp("/type/[0-9]+/details/[0-9]+/", "i") },
 		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['id', 'grid_action', 'page'], options: { customLeftBoundary: 0 } },
 		dynamicElementAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page']},
-		configsCatalog: { condition: new RegExp("/crm/configs/catalog/", "i"), options: { width: 1000, allowChangeHistory: false, cacheable: false, } }
+		activity: { condition: new RegExp("/bitrix/components/bitrix/crm.activity.planner/slider.php", "i"), options: { allowChangeHistory: false, width: 1080 }},
 	},
 	items: [],
 	initialized: false,

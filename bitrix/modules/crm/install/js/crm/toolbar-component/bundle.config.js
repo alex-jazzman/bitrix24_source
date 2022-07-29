@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/toolbar-component.js',
+	input: 'src/index.js',
 	output: 'dist/toolbar-component.bundle.js',
 	namespace: 'BX.Crm',
 };

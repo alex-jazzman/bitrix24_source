@@ -1,6 +1,10 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true){
+	die();
+}
+
+use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
@@ -1024,6 +1028,10 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 							'tagName' => \CCrmOwnerType::ContactName
 						)
 					),
+					'categoryParams' => CCrmComponentHelper::getEntityClientFieldCategoryParams(
+						CCrmOwnerType::Company,
+						$this->arResult['CATEGORY_ID'] ?? $this->getCategoryId()
+					),
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
 					'fixedLayoutType' => 'CONTACT',
@@ -1531,7 +1539,8 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					CCrmOwnerType::Company,
 					$this->entityID,
 					['COMPANY_TYPE', 'INDUSTRY', 'EMPLOYEES', Tracking\UI\Details::SourceId],
-					Crm\Attribute\FieldOrigin::SYSTEM
+					Crm\Attribute\FieldOrigin::SYSTEM,
+					['CATEGORY_ID' => $this->arResult['CATEGORY_ID']]
 				)
 				: [];
 			$isTrackingFieldRequired = in_array(Tracking\UI\Details::SourceId, $requiredFields, true);
@@ -1917,13 +1926,20 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 		$this->entityData['CLIENT_INFO'] = array('CONTACT_DATA' => $contactData);
 
-		if($this->enableSearchHistory)
+		if ($this->enableSearchHistory)
 		{
-			$this->entityData['LAST_CONTACT_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
+			$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
+				CCrmOwnerType::Company,
+				$this->arResult['CATEGORY_ID'] ?? $this->getCategoryId()
+			);
+			$this->entityData['LAST_CONTACT_INFOS'] = SearchAction::prepareSearchResultsJson(
 				Crm\Controller\Entity::getRecentlyUsedItems(
 					'crm.company.details',
 					'contact',
-					array('EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact)
+					[
+						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
+					]
 				)
 			);
 		}

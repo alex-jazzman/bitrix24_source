@@ -85,8 +85,6 @@ class ItemCategoryUserField
 			return;
 		}
 
-		$this->assertValidCategory($categoryId);
-
 		ItemCategoryUserFieldTable::deleteByCategoryId($categoryId);
 	}
 

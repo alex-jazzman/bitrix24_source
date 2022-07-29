@@ -12,6 +12,7 @@ use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics;
@@ -248,6 +249,16 @@ abstract class Factory
 			$entityFieldName = $this->getEntityFieldNameByMap($commonFieldName);
 		}
 
+		if (ParentFieldManager::isParentFieldName($entityFieldName))
+		{
+			return Container::getInstance()->getRelationManager()->getRelation(
+				new RelationIdentifier(
+					ParentFieldManager::getEntityTypeIdFromFieldName($entityFieldName),
+					$this->getEntityTypeId(),
+				)
+			) !== null;
+		}
+
 		return $this->getDataClass()::getEntity()->hasField($entityFieldName);
 	}
 
@@ -337,7 +348,7 @@ abstract class Factory
 		}
 		if ($field->getType() === Field::TYPE_LOCATION)
 		{
-			return \CCrmLocations::getLocationString($fieldValue);
+			return \CCrmLocations::getLocationStringByCode($fieldValue);
 		}
 
 		return (string)$fieldValue;
@@ -1629,7 +1640,10 @@ abstract class Factory
 			{
 				$this->editorAdapter->addEntityField(
 					EditorAdapter::getClientField(
-						$this->getFieldCaption(EditorAdapter::FIELD_CLIENT)
+						$this->getFieldCaption(EditorAdapter::FIELD_CLIENT),
+						EditorAdapter::FIELD_CLIENT,
+						EditorAdapter::FIELD_CLIENT_DATA_NAME,
+						['entityTypeId' => $this->getEntityTypeId()]
 					)
 				);
 			}

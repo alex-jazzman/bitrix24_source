@@ -40,6 +40,7 @@ use Bitrix\Main\UserField\Types\DoubleType;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\ButtonLocation;
+use CCrmComponentHelper;
 use CLists;
 
 abstract class FactoryBased extends BaseComponent implements Controllerable
@@ -1164,6 +1165,8 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		if ($this->factory->isClientEnabled() && isset($data[EditorAdapter::FIELD_CLIENT_DATA_NAME]))
 		{
+			// TODO: compare incoming category ID with actual category ID from store
+
 			$result = $this->editorAdapter->saveClientData(
 				$this->item,
 				$data[EditorAdapter::FIELD_CLIENT_DATA_NAME]
@@ -1416,13 +1419,17 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 	protected function addRecentlyUsedItem(int $entityTypeId, int $id): void
 	{
+		// TODO: need to detect category ID when will implement real category params feature
+		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams($this->factory->getEntityTypeId());
+
 		Entity::addLastRecentlyUsedItems(
 			$this->getComponentName(),
 			mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)),
 			[
 				[
 					'ENTITY_TYPE_ID' => $entityTypeId,
-					'ENTITY_ID' => $id
+					'ENTITY_ID' => $id,
+					'CATEGORY_ID' => $categoryParams[$entityTypeId]['categoryId'] ?? 0,
 				]
 			]
 		);
@@ -1537,7 +1544,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		return [
 			'ENTITY_SCOPE' => FieldAttributeManager::getItemConfigScope($this->item),
-			'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(),
+			'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages($this->entityTypeId),
 			'ENTITY_PHASES' => $entityPhases,
 		];
 	}

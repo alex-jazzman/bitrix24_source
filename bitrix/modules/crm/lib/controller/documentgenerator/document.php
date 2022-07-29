@@ -3,6 +3,9 @@
 namespace Bitrix\Crm\Controller\DocumentGenerator;
 
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\DocumentGenerator\Engine\CheckPermissions;
+use Bitrix\DocumentGenerator\UserPermissions;
+use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Engine\UrlManager;
@@ -19,6 +22,18 @@ class Document extends Base
 	protected function getDocumentGeneratorController()
 	{
 		return new \Bitrix\DocumentGenerator\Controller\Document();
+	}
+
+	public function configureActions()
+	{
+		$configureActions = parent::configureActions();
+		$configureActions['download'] = [
+			'-prefilters' => [
+				Csrf::class,
+			],
+		];
+
+		return $configureActions;
 	}
 
 	protected function getDocumentFileLink($documentId, $action, $updateTime = null)

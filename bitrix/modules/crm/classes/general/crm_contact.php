@@ -1699,17 +1699,25 @@ class CAllCrmContact
 				}
 				//endregion
 
-				CCrmSonetSubscription::RegisterSubscription(
-					CCrmOwnerType::Contact,
-					$ID,
-					CCrmSonetSubscriptionType::Responsibility,
-					$assignedByID
-				);
-				$logEventID = CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, array('CURRENT_USER' => $userID));
+				$isUntypedCategory = (int)$arFields['CATEGORY_ID'] === 0;
+				if ($isUntypedCategory)
+				{
+					CCrmSonetSubscription::RegisterSubscription(
+						CCrmOwnerType::Contact,
+						$ID,
+						CCrmSonetSubscriptionType::Responsibility,
+						$assignedByID
+					);
+				}
+
+				$logEventID = $isUntypedCategory
+					? CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, ['CURRENT_USER' => $userID])
+					: false;
 
 				if (
 					$logEventID
 					&& $assignedByID != $createdByID
+					&& (int)$arFields['CATEGORY_ID'] === 0
 					&& CModule::IncludeModule("im")
 				)
 				{
@@ -2502,8 +2510,9 @@ class CAllCrmContact
 			$arFields['ID'] = $ID;
 
 			$registerSonetEvent = isset($arOptions['REGISTER_SONET_EVENT']) && $arOptions['REGISTER_SONET_EVENT'] === true;
+			$isUntypedCategory = $categoryId === 0;
 
-			if($bResult && isset($arFields['ASSIGNED_BY_ID']))
+			if ($bResult && isset($arFields['ASSIGNED_BY_ID']) && $isUntypedCategory)
 			{
 				CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 					CCrmOwnerType::Contact,
@@ -2555,11 +2564,14 @@ class CAllCrmContact
 						$sonetEventFields['PARENTS'] = array_values($parents);
 					}
 
-					$logEventID = CCrmLiveFeed::CreateLogEvent($sonetEventFields, $sonetEventType, array('CURRENT_USER' => $iUserId));
+					$logEventID = $isUntypedCategory
+						? CCrmLiveFeed::CreateLogEvent($sonetEventFields, $sonetEventType, ['CURRENT_USER' => $iUserId])
+						: false;
 
 					if (
 						$logEventID
 						&& $sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
+						&& $categoryId === 0
 						&& CModule::IncludeModule("im")
 					)
 					{
@@ -3018,15 +3030,29 @@ class CAllCrmContact
 			}
 
 			$requiredUserFields = is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
-				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] : array();
+				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM]
+				: [];
 
-			if (!$USER_FIELD_MANAGER->CheckFields(
+			if (isset($arFields['CATEGORY_ID']))
+			{
+				// category specified user fields
+				$filteredUserFields = (new CCrmUserType($USER_FIELD_MANAGER, self::$sUFEntityID))
+					->setOption(['categoryId' => $arFields['CATEGORY_ID']])
+					->GetEntityFields($ID)
+				;
+			}
+
+			if (
+				!$USER_FIELD_MANAGER->CheckFields(
 					self::$sUFEntityID,
 					$ID,
 					$fieldsToCheck,
 					false,
 					$enableRequiredUserFieldCheck,
-					$requiredUserFields))
+					$requiredUserFields,
+					isset($filteredUserFields) ? array_keys($filteredUserFields) : null
+				)
+			)
 			{
 				$e = $APPLICATION->GetException();
 				$this->checkExceptions[] = $e;

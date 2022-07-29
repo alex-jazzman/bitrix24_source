@@ -4,7 +4,7 @@ use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Router;
-use Bitrix\Crm\UI\ToolbarHelper;
+use Bitrix\Crm\UI\Tools\ToolBar;
 use Bitrix\UI\Buttons;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
@@ -57,7 +57,7 @@ class CrmItemKanbanComponent extends Bitrix\Crm\Component\ItemList
 
 	protected function getToolbarSettingsItems(): array
 	{
-		return array_merge([ToolbarHelper::getKanbanSettings()], parent::getToolbarSettingsItems());
+		return array_merge([ToolBar::getKanbanSettings()], parent::getToolbarSettingsItems());
 	}
 
 	protected function getToolbarViews(): array

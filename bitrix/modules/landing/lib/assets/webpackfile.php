@@ -54,6 +54,11 @@ class WebpackFile
 	protected $packageHash;
 
 	/**
+	 * For browser cache
+	 */
+	protected static int $cacheTtl = 86400; // one day
+
+	/**
 	 * WebpackFile constructor.
 	 */
 	public function __construct()
@@ -214,7 +219,10 @@ class WebpackFile
 	 */
 	public function getOutput(): string
 	{
-		return $this->fileController->getLoader()->getString();
+		return $this->fileController
+			->getLoader()
+			->setCacheTtl(self::$cacheTtl)
+			->getString();
 	}
 
 	/**

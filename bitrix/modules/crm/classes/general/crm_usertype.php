@@ -1676,7 +1676,7 @@ class CCrmUserType
 					$fl = (COption::GetOptionString("crm", "bp_version", 2) == 2);
 					$rsEnum = call_user_func_array(array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetList'), array($arUserField));
 					while($ar = $rsEnum->GetNext())
-						$editable[$ar[$fl ? 'XML_ID' : 'ID']] = $ar['VALUE'];
+						$editable[$ar[$fl ? 'XML_ID' : 'ID']] = $ar['~VALUE'] ?? $ar['VALUE'];
 				}
 			}
 

@@ -32,7 +32,7 @@
 	border-bottom: 1px dashed #2067b0;
 }
 .bx-destination {
-	border-radius: 1px;
+	border-radius: var(--ui-border-radius-3xs, 1px);
 	font-size: 13px;
 	display: inline-block;
 	font-weight: bold;

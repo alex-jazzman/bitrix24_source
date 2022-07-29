@@ -37,6 +37,17 @@ class EventHistory
 	 */
 	public function registerView(TrackedObject $trackedObject, Context $context = null): Result
 	{
+		$context = $context ?? Container::getInstance()->getContext();
+		$userId = $context->getUserId();
+		if (!$userId)
+		{
+			return new Result();
+		}
+		if (!Container::getInstance()->getUserBroker()->isRealUser($userId))
+		{
+			return new Result();
+		}
+
 		$subQuery = EventRelationsTable::query()
 			->addSelect('EVENT_ID')
 			->addFilter('=ENTITY_TYPE', $trackedObject->getEntityType())
@@ -50,6 +61,7 @@ class EventHistory
 			->addSelect('DATE_CREATE')
 			->addFilter('=EVENT_TYPE', static::EVENT_TYPE_VIEW)
 			->addFilter('>=DATE_CREATE', $time)
+			->addFilter('=CREATED_BY_ID', $userId)
 			->addFilter('@ID', new SqlExpression($subQuery->getQuery()))
 			->addOrder('DATE_CREATE', 'DESC')
 			->setLimit(1);

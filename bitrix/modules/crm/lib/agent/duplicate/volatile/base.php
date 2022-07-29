@@ -14,7 +14,8 @@ use ReflectionClass;
 abstract class Base
 {
 	protected const STEP_TTL = 5;
-	protected const STEP_INDEX_RATIO = 0.8;
+	protected const INTERVAL_FACTOR = 1.2;
+	protected const STEP_RATIO = 0.8;
 	protected const ITEM_LIMIT = 50;
 
 	/*
@@ -286,7 +287,7 @@ abstract class Base
 			$this->getAgentName(),
 			'crm',
 			'Y',
-			(int)round(static::STEP_TTL * 1.2)
+			(int)round(static::STEP_TTL * static::INTERVAL_FACTOR)
 		);
 	}
 	protected function deactivate()

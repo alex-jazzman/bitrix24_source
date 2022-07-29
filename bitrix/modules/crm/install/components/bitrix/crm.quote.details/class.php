@@ -688,7 +688,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			$this->editorAdapter->addEntityData($name, $value);
 		}
 		$this->editorAdapter->addEntityData('UTM_VIEW_HTML', EditorAdapter::getUtmEntityData($this->item));
-		$locationString = CCrmLocations::getLocationString($this->item->getLocationId());
+		$locationString = CCrmLocations::getLocationStringByCode($this->item->getLocationId());
 		if (empty($locationString))
 		{
 			$locationString = '';

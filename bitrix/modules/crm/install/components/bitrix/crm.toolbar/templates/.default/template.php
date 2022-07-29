@@ -70,6 +70,9 @@ if(isset($arResult['spotlight']) && is_array($arResult['spotlight']))
 	</script>
 <?php endif;?>
 <?php
+
+$filterId = $arResult['filter']['FILTER_ID'] ?? $arResult['filter']['GRID_ID'];
+$navigationBarId = htmlspecialcharsbx(mb_strtolower("{$filterId}-nav-bar"));
 $renderViews = static function(array $views): void {
 	foreach ($views as $view):
 		if (!empty($view['html']))
@@ -107,16 +110,19 @@ $renderViews = static function(array $views): void {
 };
 ?>
 <?php if (!empty($arResult['views'])): ?>
-	<div class="crm-view-switcher">
-		<div class="crm-view-switcher-list">
-			<?php if (!empty($arResult['views']['left'])): ?>
-				<?php $renderViews($arResult['views']['left']); ?>
-			<?php endif; ?>
-		</div>
-	</div>
+	<div id="<?=$navigationBarId?>" class="crm-view-switcher"></div>
 	<div class="crm-view-switcher-buttons">
 		<?php if (!empty($arResult['views']['right'])): ?>
 			<?php $renderViews($arResult['views']['right']); ?>
 		<?php endif; ?>
 	</div>
+	<script type="text/javascript">
+		BX.ready(function() {
+			// init navigation bar panel
+			(new BX.Crm.NavigationBar({
+				id: "<?= $navigationBarId ?>",
+				items: <?= CUtil::PhpToJSObject($arResult['views']['left']) ?>
+			})).init();
+		});
+	</script>
 <?php endif; ?>

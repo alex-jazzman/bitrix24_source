@@ -1143,6 +1143,7 @@ if(isset($arFilter['ACTIVITY_COUNTER']))
 //endregion
 
 $arFilter = Crm\Deal\OrderFilter::prepareFilter($arFilter);
+$arFilter = Crm\Automation\Debugger\DebuggerFilter::prepareFilter($arFilter, \CCrmOwnerType::Deal);
 
 CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
 

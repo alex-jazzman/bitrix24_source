@@ -1,6 +1,11 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Category\EditorHelper;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
@@ -1019,6 +1024,10 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 							'tagName' => \CCrmOwnerType::CompanyName
 						)
 					),
+					'categoryParams' => CCrmComponentHelper::getEntityClientFieldCategoryParams(
+						CCrmOwnerType::Contact,
+						$this->arResult['CATEGORY_ID'] ?? $this->getCategoryId()
+					),
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
 					'fixedLayoutType' => 'COMPANY',
@@ -1494,7 +1503,8 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 					CCrmOwnerType::Contact,
 					$this->entityID,
 					['HONORIFIC', 'TYPE_ID', 'SOURCE_ID', Tracking\UI\Details::SourceId],
-					Crm\Attribute\FieldOrigin::SYSTEM
+					Crm\Attribute\FieldOrigin::SYSTEM,
+					['CATEGORY_ID' => $this->arResult['CATEGORY_ID']]
 				)
 				: [];
 			$isTrackingFieldRequired = in_array(Tracking\UI\Details::SourceId, $requiredFields, true);
@@ -1888,13 +1898,20 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		$this->entityData['CLIENT_INFO'] = array('COMPANY_DATA' => $companyData);
 
-		if($this->enableSearchHistory)
+		if ($this->enableSearchHistory)
 		{
-			$this->entityData['LAST_COMPANY_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
+			$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
+				CCrmOwnerType::Contact,
+				$this->arResult['CATEGORY_ID'] ?? $this->getCategoryId()
+			);
+			$this->entityData['LAST_COMPANY_INFOS'] = SearchAction::prepareSearchResultsJson(
 				Crm\Controller\Entity::getRecentlyUsedItems(
 					'crm.contact.details',
 					'company',
-					array('EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company)
+					[
+						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId'],
+					]
 				)
 			);
 		}

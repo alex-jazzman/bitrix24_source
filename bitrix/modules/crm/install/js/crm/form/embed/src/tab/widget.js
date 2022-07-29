@@ -163,7 +163,7 @@ export class Widget extends Tab
 			</div>
 		`, section);
 		// Dom.append(
-		// 	this.renderBubble(BX.Loc.getMessage('EMBED_SLIDER_WIDGET_SETTINGS_BUBBLE'), false),
+		// 	this.renderBubble("text", false),
 		// 	section
 		// );
 

@@ -11,4 +11,5 @@ return [
 	'css'  => [
 		'/bitrix/js/voximplant/report/employeesworkload/view.css',
 	],
+	'rel' => ['ui.fonts.opensans'],
 ];

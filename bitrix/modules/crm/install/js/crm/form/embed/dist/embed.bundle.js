@@ -559,7 +559,7 @@ this.BX.Crm = this.BX.Crm || {};
 				<div class="ui-slider-heading-4">${0}</div>
 			</div>
 		`), BX.Loc.getMessage('EMBED_SLIDER_WIDGET_SETTINGS_TITLE')), section); // Dom.append(
-	    // 	this.renderBubble(BX.Loc.getMessage('EMBED_SLIDER_WIDGET_SETTINGS_BUBBLE'), false),
+	    // 	this.renderBubble("text", false),
 	    // 	section
 	    // );
 
@@ -821,7 +821,7 @@ this.BX.Crm = this.BX.Crm || {};
 				<div class="ui-slider-heading-4">${0}</div>
 			</div>
 		`), BX.Loc.getMessage('EMBED_SLIDER_OL_SETTINGS_TITLE')), section); // Dom.append(
-	    // 	this.renderBubble(BX.Loc.getMessage('EMBED_SLIDER_OL_SETTINGS_BUBBLE'), false),
+	    // 	this.renderBubble("text", false),
 	    // 	section
 	    // );
 
@@ -3899,7 +3899,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  }
 	  /**
-	   * @deprecated
+	   * @deprecated open => openSlider
 	   * @see Embed.openSlider
 	   */
 

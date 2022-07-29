@@ -71,5 +71,6 @@ return array(
 		'ui.dialogs.messagebox',
 		'crm.entity-editor.field.payment-documents',
 		'crm.entity-editor.field.image',
+		'ui.design-tokens',
 	]
 );

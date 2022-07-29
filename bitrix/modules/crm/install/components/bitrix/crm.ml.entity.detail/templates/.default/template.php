@@ -5,7 +5,16 @@ use Bitrix\Main\Localization\Loc;
 
 /** @var CBitrixComponentTemplate $this */
 
-CJSCore::Init(["amcharts", "amcharts_serial", "crm_activity_planner", "date", "ui.buttons", "ui.hint", "ui.feedback.form"]);
+CJSCore::Init([
+	"amcharts",
+	"amcharts_serial",
+	"crm_activity_planner",
+	"date",
+	"ui.buttons",
+	"ui.hint",
+	"ui.feedback.form",
+	"ui.design-tokens",
+]);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background pagetitle-toolbar-field-view");

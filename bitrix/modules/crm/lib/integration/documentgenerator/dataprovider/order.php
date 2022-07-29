@@ -750,7 +750,7 @@ class Order extends ProductsDataProvider
 				$value = $property->getValue();
 				if (!empty($value) && $property->getType() === 'LOCATION')
 				{
-					$value = \CCrmLocations::getLocationString($value);
+					$value = \CCrmLocations::getLocationStringByCode($value);
 				}
 			}
 		}

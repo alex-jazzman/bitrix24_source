@@ -723,13 +723,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function unsubscribeCustomEvents() {
 	      if (this.mainSelector) {
 	        this.mainSelector.unsubscribeEvents();
-	        main_core_events.EventEmitter.unsubscribe(this.mainSelector, 'onClear', main_core.Runtime.debounce(_classPrivateMethodGet$2(this, _onMainSelectorClear, _onMainSelectorClear2).bind(this), 500, this));
+	        main_core_events.EventEmitter.unsubscribe(this.mainSelector, 'onClear', this.handleMainSelectorClear);
 	      }
 
 	      if (this.storeSelector) {
 	        this.storeSelector.unsubscribeEvents();
-	        main_core_events.EventEmitter.unsubscribe(this.storeSelector, 'onChange', main_core.Runtime.debounce(_classPrivateMethodGet$2(this, _onStoreFieldChange, _onStoreFieldChange2).bind(this), 500, this));
-	        main_core_events.EventEmitter.unsubscribe(this.storeSelector, 'onClear', main_core.Runtime.debounce(_classPrivateMethodGet$2(this, _onStoreFieldClear, _onStoreFieldClear2).bind(this), 500, this));
+	        main_core_events.EventEmitter.unsubscribe(this.storeSelector, 'onChange', this.handleStoreFieldChange);
+	        main_core_events.EventEmitter.unsubscribe(this.storeSelector, 'onClear', this.handleStoreFieldClear);
 	      }
 
 	      if (this.reserveControl) {
@@ -2292,7 +2292,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    this.mainSelector.renderTo(selectorWrapper);
 	  }
 
-	  main_core_events.EventEmitter.subscribe(this.mainSelector, 'onClear', main_core.Runtime.debounce(_classPrivateMethodGet$2(this, _onMainSelectorClear, _onMainSelectorClear2).bind(this), 500, this));
+	  main_core_events.EventEmitter.subscribe(this.mainSelector, 'onClear', this.handleMainSelectorClear);
 	}
 
 	function _onMainSelectorClear2() {
@@ -2327,8 +2327,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    }
 	  }
 
-	  main_core_events.EventEmitter.subscribe(this.storeSelector, 'onChange', main_core.Runtime.debounce(_classPrivateMethodGet$2(this, _onStoreFieldChange, _onStoreFieldChange2).bind(this), 500, this));
-	  main_core_events.EventEmitter.subscribe(this.storeSelector, 'onClear', main_core.Runtime.debounce(_classPrivateMethodGet$2(this, _onStoreFieldClear, _onStoreFieldClear2).bind(this), 500, this));
+	  main_core_events.EventEmitter.subscribe(this.storeSelector, 'onChange', this.handleStoreFieldChange);
+	  main_core_events.EventEmitter.subscribe(this.storeSelector, 'onClear', this.handleStoreFieldClear);
 	}
 
 	function _initStoreAvailablePopup2() {
@@ -2922,13 +2922,21 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        var container = this.getContainer();
 	        headersToLock.forEach(function (headerId) {
 	          var header = container === null || container === void 0 ? void 0 : container.querySelector(".main-grid-cell-head[data-name=\"".concat(headerId, "\"] .main-grid-cell-head-container"));
-	          var lock = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-entity-product-list-locked-header\"></span>"])));
 
-	          lock.onclick = function () {
-	            return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
-	          };
+	          if (header) {
+	            main_core.Dom.addClass(header, 'main-grid-cell-head-locked');
 
-	          header === null || header === void 0 ? void 0 : header.insertBefore(lock, header.firstChild);
+	            header.onclick = function (event) {
+	              if (main_core.Dom.hasClass(event.target, 'ui-hint-icon')) {
+	                return;
+	              }
+
+	              top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	            };
+
+	            var lock = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-entity-product-list-locked-header\"></span>"])));
+	            header.insertBefore(lock, header.firstChild);
+	          }
 	        });
 	      }
 	    }

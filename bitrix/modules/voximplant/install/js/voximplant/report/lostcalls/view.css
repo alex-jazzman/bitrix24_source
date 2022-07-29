@@ -13,7 +13,8 @@
 	margin: 0 0 12px 0;
 	padding: 0 0 12px 0;
 	border-bottom: 1px solid rgba(130,139,149,.19);
-	font: 13px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 }
 .telephony-report-lost-calls-modal-subtitle-primary {
@@ -41,12 +42,14 @@
 	justify-content: space-between;
 }
 .telephony-report-lost-calls-modal-value {
-	font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 }
 
 .telephony-report-lost-calls-modal-percent-value {
-	font: 15px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-left: 20px;
 }
 

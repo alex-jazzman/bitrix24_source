@@ -187,7 +187,7 @@ export class Row
 			EventEmitter.unsubscribe(
 				this.mainSelector,
 				'onClear',
-				Runtime.debounce(this.#onMainSelectorClear.bind(this), 500, this)
+				this.handleMainSelectorClear
 			);
 		}
 
@@ -197,13 +197,13 @@ export class Row
 			EventEmitter.unsubscribe(
 				this.storeSelector,
 				'onChange',
-				Runtime.debounce(this.#onStoreFieldChange.bind(this), 500, this)
+				this.handleStoreFieldChange
 			);
 
 			EventEmitter.unsubscribe(
 				this.storeSelector,
 				'onClear',
-				Runtime.debounce(this.#onStoreFieldClear.bind(this), 500, this)
+				this.handleStoreFieldClear
 			);
 		}
 
@@ -449,7 +449,7 @@ export class Row
 		EventEmitter.subscribe(
 			this.mainSelector,
 			'onClear',
-			Runtime.debounce(this.#onMainSelectorClear.bind(this), 500, this)
+			this.handleMainSelectorClear
 		);
 	}
 
@@ -493,13 +493,13 @@ export class Row
 		EventEmitter.subscribe(
 			this.storeSelector,
 			'onChange',
-			Runtime.debounce(this.#onStoreFieldChange.bind(this), 500, this)
+			this.handleStoreFieldChange
 		);
 
 		EventEmitter.subscribe(
 			this.storeSelector,
 			'onClear',
-			Runtime.debounce(this.#onStoreFieldClear.bind(this), 500, this)
+			this.handleStoreFieldClear
 		);
 	}
 

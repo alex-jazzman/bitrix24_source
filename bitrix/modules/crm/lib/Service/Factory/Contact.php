@@ -420,10 +420,19 @@ class Contact extends Service\Factory
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\ClearCache('b_crm_contact'),
 			)
-			->addAction(
-				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\Compatible\SocialNetwork\ProcessAdd(),
-			)
+		;
+
+		if ($operation->getItem()->getCategoryId() === 0)
+		{
+			$operation
+				->addAction(
+					Operation::ACTION_AFTER_SAVE,
+					new Operation\Action\Compatible\SocialNetwork\ProcessAdd(),
+				)
+			;
+		}
+
+		$operation
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent('OnAfterCrmContactAdd'),
@@ -485,10 +494,19 @@ class Contact extends Service\Factory
 					}
 				}
 			)
-			->addAction(
-				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\Compatible\SocialNetwork\ProcessUpdate(),
-			)
+		;
+
+		if ($operation->getItem()->getCategoryId() === 0)
+		{
+			$operation
+				->addAction(
+					Operation::ACTION_AFTER_SAVE,
+					new Operation\Action\Compatible\SocialNetwork\ProcessUpdate(),
+				)
+			;
+		}
+
+		$operation
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent('OnAfterCrmContactUpdate'),

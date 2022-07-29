@@ -6,6 +6,7 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Sale;
 use Bitrix\Catalog;
+use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
 
 final class Manager
 {
@@ -62,9 +63,15 @@ final class Manager
 	{
 		$result = [];
 
+		$crmReserves = $this->getCrmReserves();
+
 		foreach ($this->entityProducts as $basketXmlId => $entityProduct)
 		{
-			$storeId = $entityProduct['STORE_ID'] ? (int)$entityProduct['STORE_ID'] : $this->defaultStore;
+			$storeId = (int)(
+				$entityProduct['STORE_ID']
+				?? $crmReserves[$entityProduct['ID']]
+				?? $this->defaultStore
+			);
 			if (isset($result[$basketXmlId]))
 			{
 				$result[$basketXmlId]['QUANTITY'] += $entityProduct['QUANTITY'];
@@ -91,6 +98,37 @@ final class Manager
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Information on reserves that is stored in the crm.
+	 *
+	 * It is relevant for a situation when there is actually no reserve,
+	 * but it needs to be written off from a specific warehouse.
+	 *
+	 * @return array
+	 */
+	private function getCrmReserves(): array
+	{
+		$productRowIds = array_column($this->entityProducts, 'ID');
+		$productRowIds = array_filter($productRowIds);
+		if (empty($productRowIds))
+		{
+			return [];
+		}
+
+		$rows = ProductRowReservationTable::getList([
+			'select' => [
+				'ROW_ID',
+				'STORE_ID',
+			],
+			'filter' => [
+				'=ROW_ID' => $productRowIds,
+			],
+		]);
+		$rows = array_column($rows->fetchAll(), 'STORE_ID', 'ROW_ID');
+
+		return $rows;
 	}
 
 	/**

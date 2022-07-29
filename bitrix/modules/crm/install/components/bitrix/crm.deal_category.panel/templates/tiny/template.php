@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\UI\ToolbarHelper;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
@@ -30,7 +29,7 @@ $counterId = HtmlFilter::encode("{$guid}_counter");
 $tunnelsUrl = Container::getInstance()->getRouter()->getCategoryListUrl(\CCrmOwnerType::Deal);
 
 $menuItems = isset($arResult['ITEMS']) && is_array($arResult['ITEMS'])
-	? ToolbarHelper::mapItems($arResult['ITEMS'])
+	? Bitrix\Crm\UI\Tools\ToolBar::mapItems($arResult['ITEMS'])
 	: [];
 
 $menuItems = array_map(static function ($item)
@@ -68,7 +67,7 @@ $categoryButton = new Button([
 ]);
 
 $categoryButton->setDropdown(count($arResult['ITEMS']) > 0);
-if ($arResult['CATEGORY_COUNTER'] > 0)
+if($arResult['CATEGORY_COUNTER'] > 0)
 {
 	$categoryButton->setCounter($arResult['CATEGORY_COUNTER']);
 }

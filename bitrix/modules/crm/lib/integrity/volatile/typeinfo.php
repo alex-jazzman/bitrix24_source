@@ -4,6 +4,7 @@
 
 namespace Bitrix\Crm\Integrity\Volatile;
 
+use Bitrix\Crm\Agent\Duplicate\Volatile\Cleaner;
 use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Integrity\DuplicateIndexType;
 use Bitrix\Crm\Integrity\DuplicateIndexTypeSettingsTable;
@@ -261,6 +262,8 @@ class TypeInfo
 		$state->set($volatileTypeId, State::STATE_ASSIGNED);
 
 		IndexRebuild::getInstance($volatileTypeId)->start(['USER_ID' => $this->getCurrentUserId()]);
+
+		Cleaner::getInstance()->start([]);
 	}
 
 	public function release(int $volatileTypeId)
@@ -269,5 +272,7 @@ class TypeInfo
 		$state->set($volatileTypeId, State::STATE_FREE);
 
 		EventHandler::onAssignVolatileTypes([$volatileTypeId]);
+
+		Cleaner::getInstance()->start([]);
 	}
 }

@@ -11,5 +11,5 @@ return [
 	'css'  => [
 		'/bitrix/js/voximplant/report/widget/activity/view.css',
 	],
-	'rel' => ['popup'],
+	'rel' => ['popup', 'ui.fonts.opensans'],
 ];

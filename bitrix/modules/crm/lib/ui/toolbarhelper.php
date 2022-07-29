@@ -21,7 +21,7 @@ class ToolbarHelper
 	{
 		$inputItems = array_filter($inputItems);
 
-		if(empty($inputItems))
+		if (empty($inputItems))
 		{
 			return [];
 		}
@@ -30,18 +30,18 @@ class ToolbarHelper
 		{
 			$item = array_change_key_case($item);
 
-			if(isset($item['separator']))
+			if (isset($item['separator']))
 			{
 				$item['delimiter'] = $item['separator'];
 				unset($item['separator']);
 			}
 
-			if(isset($item['name']))
+			if (isset($item['name']))
 			{
 				$item['html'] = htmlspecialcharsbx($item['name']);
 				unset($item['name']);
 
-				if(isset($item['counter']) && $item['counter'] > 0)
+				if (isset($item['counter']) && $item['counter'] > 0)
 				{
 					$item['html'] = sprintf(
 						'%s <span class="main-buttons-item-counter">%d</span>',
@@ -51,34 +51,34 @@ class ToolbarHelper
 				}
 			}
 
-			if(isset($item['link']))
+			if (isset($item['link']))
 			{
 				$item['href'] = $item['link'];
 				unset($item['link']);
 			}
 
-			if(isset($item['url']))
+			if (isset($item['url']))
 			{
 				$item['href'] = $item['url'];
 				unset($item['url']);
 			}
 
-			if(isset($item['onclick']))
+			if (isset($item['onclick']))
 			{
 				$item['onclick'] = new JsCode($item['onclick']);
 			}
 
-			if(isset($item['jsevent']))
+			if (isset($item['jsevent']))
 			{
 				$item['onclick'] = new JsEvent($item['jsevent']);
 			}
 
-			if(isset($item['class_name']))
+			if (isset($item['class_name']))
 			{
 				$item['className'] = htmlspecialcharsbx($item['class_name']);
 			}
 
-			if(isset($item['items']))
+			if (isset($item['items']))
 			{
 				$item['items'] = self::mapItems($item['items']);
 			}
@@ -86,7 +86,7 @@ class ToolbarHelper
 			return $item;
 		}, $inputItems);
 
-		if(isset($toolbarId) && in_array($toolbarId, self::KANBAN_SETTINGS_TOOLBAR_IDS))
+		if (isset($toolbarId) && in_array($toolbarId, self::KANBAN_SETTINGS_TOOLBAR_IDS))
 		{
 			Container::getInstance()->getLocalization()->loadKanbanMessages();
 
@@ -96,7 +96,7 @@ class ToolbarHelper
 					->getRouter()
 					->getCurrentListView($entityTypeId) === Router::LIST_VIEW_KANBAN;
 
-			if(isset($entityTypeId) && $isKanbanView)
+			if (isset($entityTypeId) && $isKanbanView)
 			{
 				$result = array_merge([self::getKanbanSettings()], $result);
 			}

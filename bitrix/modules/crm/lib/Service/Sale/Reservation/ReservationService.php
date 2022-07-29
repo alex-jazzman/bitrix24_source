@@ -313,6 +313,22 @@ class ReservationService
 
 			$this->synchronizeOrderForDeal($dealId, $dealProducts, false);
 		}
+		else
+		{
+			$this->removeReservesProductsByDeal($dealId);
+		}
+	}
+
+	private function removeReservesProductsByDeal(int $dealId): void
+	{
+		$entityBuilder = new \Bitrix\Crm\Reservation\Entity\EntityBuilder();
+		$entityBuilder
+			->setOwnerTypeId(\CCrmOwnerType::Deal)
+			->setOwnerId($dealId)
+		;
+		$entity = $entityBuilder->build();
+
+		(new \Bitrix\Crm\Reservation\Manager($entity))->unReserve();
 	}
 
 	/**

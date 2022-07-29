@@ -1076,12 +1076,14 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$this->entityData['MULTIFIELD_DATA'] = $multiFieldData;
 		$this->entityData['USER_LIST_SELECT'] = $this->getDefaultUserList();
 
+		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(CCrmOwnerType::OrderShipment);
 		$this->entityData['LAST_COMPANY_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
 			Crm\Controller\Entity::getRecentlyUsedItems(
 				'crm.deal.details',
 				'company',
 				[
-					'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company
+					'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+					'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId'],
 				]
 			)
 		);
@@ -1090,7 +1092,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				'crm.deal.details',
 				'contact',
 				[
-					'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact
+					'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+					'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
 				]
 			)
 		);

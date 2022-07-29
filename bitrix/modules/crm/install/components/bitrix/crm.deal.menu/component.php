@@ -346,7 +346,7 @@ if($arParams['TYPE'] === 'list')
 			'JS_AVAILABLE_POPUP_SHOWER' => Rc\Service::getJsAvailablePopupShower(),
 		];
 
-		if($arResult['RC']['CAN_USE'] && !$arResult['RC']['IS_AVAILABLE'])
+		if ($arResult['RC']['CAN_USE'] && !$arResult['RC']['IS_AVAILABLE'])
 		{
 			Rc\Service::initJsExtensions();
 		}
@@ -354,44 +354,45 @@ if($arParams['TYPE'] === 'list')
 		$salesGeneratorButton = [
 			'TEXT' => $arResult['RC']['NAME'],
 			'ONCLICK' => $arResult['RC']['IS_AVAILABLE']
-    			? 'BX.SidePanel.Instance.open("' . \CUtil::JSEscape($arResult['RC']['PATH_TO_ADD']) . '")'
+				? 'BX.SidePanel.Instance.open("' . \CUtil::JSEscape($arResult['RC']['PATH_TO_ADD']) . '")'
 				: $arResult['RC']['JS_AVAILABLE_POPUP_SHOWER'],
 			'CLASS_NAME' => $arResult['RC']['IS_AVAILABLE'] ? '' : 'b24-tariff-lock'
-    	];
+		];
 	}
 
 	$baseCreateUrl = CComponentEngine::MakePathFromTemplate(
 		$arParams[$isSliderEnabled ? 'PATH_TO_DEAL_DETAILS' : 'PATH_TO_DEAL_EDIT'],
 		['deal_id' => 0]
-    );
+	);
 
 	$categoryIDs = $arResult['CATEGORY_ID'] >= 0
 		? [$arResult['CATEGORY_ID']]
 		: CCrmDeal::GetPermittedToCreateCategoryIDs($CrmPerms);
 
 	$categoryCount = count($categoryIDs);
-	if($categoryCount > 1)
+	if ($categoryCount > 1)
 	{
 		$categories = DealCategory::getJavaScriptInfos($categoryIDs);
 		$categoryButtons = [];
 		foreach ($categories as $row)
-    	{
-    		$link = CCrmUrlUtil::AddUrlParams($baseCreateUrl, ['category_id' => $row['id']]);
-    		$categoryButton = [
+		{
+			$link = CCrmUrlUtil::AddUrlParams($baseCreateUrl, ['category_id' => $row['id']]);
+			$categoryButton = [
+				'ID' => $row['id'],
 				'TITLE' => $row['name'],
 				'TEXT' => $row['name'],
 			];
-    		if($isSliderEnabled)
-    		{
-    			$categoryButton['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
-    		}
-    		else
-    		{
-    			$categoryButton['LINK'] = $link;
-    		}
+			if($isSliderEnabled)
+			{
+				$categoryButton['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
+			}
+			else
+			{
+				$categoryButton['LINK'] = $link;
+			}
 
 			$categoryButtons[] = $categoryButton;
-    	}
+		}
 
 		$categoryCreateUrl = '';
 		$categorySelectorID = 'deal_category';
@@ -420,10 +421,10 @@ if($arParams['TYPE'] === 'list')
 		}
 
 		if (isset($salesGeneratorButton))
-    	{
-    		$categoryButtons[] = ["SEPARATOR" => true];
-    		$categoryButtons[] = $salesGeneratorButton;
-    	}
+		{
+			$categoryButtons[] = ["SEPARATOR" => true];
+			$categoryButtons[] = $salesGeneratorButton;
+		}
 
 		// TODO: is not used (need check components crm.automation + crm.item.automation) and will be removed
 		$arResult['CATEGORY_SELECTOR'] = [
@@ -483,7 +484,7 @@ if($arParams['TYPE'] === 'list')
 				'LINK' => $link,
 				'ITEMS' => [
 					$itemAdd,
-					$salesGeneratorButton,
+					$salesGeneratorButton
 				],
 				'HIGHLIGHT' => true,
 				'IS_DISABLED' => !$bAdd,
@@ -492,26 +493,26 @@ if($arParams['TYPE'] === 'list')
 		}
 		else
 		{
-			$arResult['BUTTONS'][] = array(
+			$arResult['BUTTONS'][] = [
 				'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 				'TITLE' => GetMessage('CRM_COMMON_ACTION_ADD'),
 				'LINK' => $link,
 				'HIGHLIGHT' => true,
 				'IS_DISABLED' => !$bAdd,
 				'HINT' => GetMessage('CRM_DEAL_ADD_HINT')
-			);
+			];
 		}
 	}
 	else
 	{
-		$arResult['BUTTONS'][] = array(
+		$arResult['BUTTONS'][] = [
 			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 			'TITLE' => GetMessage('CRM_COMMON_ACTION_ADD'),
 			'LINK' => CCrmUrlUtil::AddUrlParams($baseCreateUrl, []),
 			'HIGHLIGHT' => true,
 			'IS_DISABLED' => !$bAdd,
 			'HINT' => GetMessage('CRM_DEAL_ADD_HINT')
-		);
+		];
 	}
 
 	if ($bImport && !$isInSlider)

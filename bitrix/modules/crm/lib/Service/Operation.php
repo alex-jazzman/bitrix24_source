@@ -395,6 +395,13 @@ abstract class Operation
 		}
 
 		$requiredFields = array_diff($requiredFields, $notDisplayedFields);
+		$filteredFields = $this->getItem()->getFilteredUserFields();
+		if (isset($filteredFields))
+		{
+			$requiredFields = array_filter($requiredFields, static function ($fieldName) use ($filteredFields) {
+				return mb_substr($fieldName, 0, 3) !== 'UF_' || in_array($fieldName, $filteredFields);
+			});
+		}
 
 		$result = $this->checkRequiredFields($requiredFields, $factory);
 

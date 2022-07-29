@@ -64,7 +64,7 @@ class PermissionEntityTypeHelper
 		$result = [];
 
 		$factory = Container::getInstance()->getFactory($this->entityTypeId);
-		if ($factory && $factory->isCategoriesEnabled())
+		if ($factory && $factory->isCategoriesSupported())
 		{
 			$categories = $factory->getCategories();
 			foreach ($categories as $category)

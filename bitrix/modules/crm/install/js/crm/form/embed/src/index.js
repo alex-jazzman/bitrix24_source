@@ -70,7 +70,7 @@ export class Embed
 	}
 
 	/**
-	 * @deprecated
+	 * @deprecated open => openSlider
 	 * @see Embed.openSlider
 	 */
 	static open(formId: number, options: EmbedOptions = {widgetsCount: DEFAULT_WIDGETS_COUNT, activeMenuItemId: 'inline'})

@@ -166,7 +166,7 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 	{
 		parent::initializeEditorAdapter();
 
-		$locationString = CCrmLocations::getLocationString($this->item->getLocationId());
+		$locationString = CCrmLocations::getLocationStringByCode($this->item->getLocationId());
 		if (empty($locationString))
 		{
 			$locationString = '';

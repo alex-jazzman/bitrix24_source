@@ -7821,12 +7821,19 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			);
 		}
 
+		var categoryParams = BX.prop.getObject(
+			this._schemeElement.getDataObjectParam('categoryParams', {}),
+			BX.CrmEntityType.enumeration.company,
+			{}
+		);
+
 		return(
 			BX.Crm.EntityEditorClientSearchBox.create(
 				this._id,
 				{
 					entityTypeId: BX.CrmEntityType.enumeration.company,
 					entityTypeName: BX.CrmEntityType.names.company,
+					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
 					enableDeletion: false,
@@ -7943,12 +7950,19 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			)
 		;
 
+		var categoryParams = BX.prop.getObject(
+			this._schemeElement.getDataObjectParam('categoryParams', {}),
+			BX.CrmEntityType.enumeration.contact,
+			{}
+		);
+
 		return(
 			BX.Crm.EntityEditorClientSearchBox.create(
 				this._id,
 				{
 					entityTypeId: BX.CrmEntityType.enumeration.contact,
 					entityTypeName: BX.CrmEntityType.names.contact,
+					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
 					enableDeletion: BX.prop.getBoolean(params, "enableDeletion", true),
@@ -8486,6 +8500,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 				data["title"] = entity.getTitle();
 				data["multifields"] = entity.getMultifields();
 				data["requisites"] = entity.getRequisitesForSave();
+				data["categoryId"] = entity.getCategoryId();
 			}
 
 			results.push(data);

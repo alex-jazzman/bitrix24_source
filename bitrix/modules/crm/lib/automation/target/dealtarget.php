@@ -67,6 +67,13 @@ class DealTarget extends BaseTarget
 		return isset($entity['STAGE_ID']) ? $entity['STAGE_ID'] : '';
 	}
 
+	public function getDocumentCategory(): int
+	{
+		$entity = $this->getEntity();
+
+		return (int)$entity['CATEGORY_ID'];
+	}
+
 	public function setEntityStatus($statusId, $executeBy = null)
 	{
 		$id = $this->getEntityId();
@@ -130,5 +137,10 @@ class DealTarget extends BaseTarget
 			$statuses[$id]['COLOR'] = ($isSuccess ? $successColor : ($isFailure ? $failureColor : $processColor));
 		}
 		return $statuses;
+	}
+
+	public function getDocumentCategoryCode(): string
+	{
+		return 'CATEGORY_ID';
 	}
 }

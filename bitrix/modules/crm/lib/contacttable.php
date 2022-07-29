@@ -14,6 +14,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
+use Bitrix\Main\ORM\EntityError;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -22,6 +23,7 @@ use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Objectify\State;
 use Bitrix\Main\UserTable;
 
 Loc::loadMessages(Path::combine(__DIR__, 'contact.php'));
@@ -301,9 +303,38 @@ class ContactTable extends ORM\Data\DataManager
 		if (!static::$isCheckUserFields)
 		{
 			static::$isCheckUserFields = true;
+
 			return;
 		}
 
-		parent::checkUfFields($object, $ufdata, $result);
+		global $USER_FIELD_MANAGER, $APPLICATION;
+
+		$userId = ($object->authContext && $object->authContext->getUserId())
+			? $object->authContext->getUserId()
+			: false;
+		$ufPrimary = ($object->sysGetState() === State::RAW) ? false : end($object->primary);
+		if (
+			!$USER_FIELD_MANAGER->CheckFields(
+				$object->entity->getUfId(),
+				$ufPrimary,
+				$ufdata,
+				$userId,
+				true,
+				null,
+				$object->getFilteredUserFields()
+			)
+		)
+		{
+			if (is_object($APPLICATION) && $APPLICATION->getException())
+			{
+				$e = $APPLICATION->getException();
+				$result->addError(new EntityError($e->getString()));
+				$APPLICATION->resetException();
+			}
+			else
+			{
+				$result->addError(new EntityError("Unknown error while checking userfields"));
+			}
+		}
 	}
 }

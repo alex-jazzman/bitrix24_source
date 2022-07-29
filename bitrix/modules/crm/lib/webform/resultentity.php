@@ -540,6 +540,36 @@ class ResultEntity
 			return $entityFields;
 		}
 
+		$fields = [];
+		foreach ($this->fields as $fieldEntityName => $fieldValues)
+		{
+			foreach ($fieldValues as $fieldName => $fieldValue)
+			{
+				if ($fieldName === 'FM' && is_array($fieldValue))
+				{
+					foreach ($fieldValue as $fieldMultiKey => $fieldMultiValue)
+					{
+						$fieldMultiValue = $fieldMultiValue['n0']['VALUE'] ?? '';
+						$key = "{$fieldEntityName}_{$fieldMultiKey}";
+						$key = mb_strtolower($key);
+						$fields[$key] = $fieldMultiValue;
+					}
+				}
+				elseif (!is_array($fieldValue))
+				{
+					$key = "{$fieldEntityName}_{$fieldName}";
+					$key = mb_strtolower($key);
+					$fields[$key] = $fieldValue;
+				}
+			}
+		}
+
+		$placeholders = $this->placeholders;
+		$placeholders['crm_form_id'] = $this->formId;
+		$placeholders['crm_form_name'] = $this->formData['NAME'];
+		$placeholders['crm_result_id'] = $this->resultId;
+		$placeholders += $fields;
+
 		foreach($this->presetFields as $presetField)
 		{
 			if($presetField['ENTITY_NAME'] != $entityName)
@@ -548,10 +578,6 @@ class ResultEntity
 			}
 
 			$value = $presetField['VALUE'];
-			$placeholders = $this->placeholders;
-			$placeholders['crm_form_id'] = $this->formId;
-			$placeholders['crm_form_name'] = $this->formData['NAME'];
-			$placeholders['crm_result_id'] = $this->resultId;
 			$fromList = $toList = array();
 			foreach ($placeholders as $key => $val)
 			{

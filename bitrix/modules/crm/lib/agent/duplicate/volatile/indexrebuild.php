@@ -441,7 +441,7 @@ class IndexRebuild extends Base
 			return false;
 		}
 
-		$timeToBuild = (int)floor(static::STEP_TTL * static::STEP_INDEX_RATIO);
+		$timeToBuild = (int)floor(static::STEP_TTL * static::STEP_RATIO);
 		$startTime = $this->getTimeStamp();
 		$endTime = $startTime;
 		$isFinal = false;

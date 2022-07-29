@@ -1150,7 +1150,7 @@
 	min-width: 180px;
 	height: 39px;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	outline: none;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2012%208%22%3E%3Cpath%20fill%3D%22%23828B95%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6.122%204.55L10.558.113l1.414%201.414-4.436%204.436-1.478%201.478L.401%201.785%201.88.307l4.242%204.242z%22/%3E%3C/svg%3E');
@@ -1217,8 +1217,7 @@
 	background-color: #ffffff;
 	border: 1px solid;
 	border-color: #E3E4E5 #E4E6E7 #E6E8E9;
-	-webkit-box-shadow: inset 0 1px 2px #e8e8e8;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	margin-bottom: 24px;
 	padding: 8px 10px 3px;
 	min-height: 31px;
@@ -1679,7 +1678,7 @@
 	min-width: 180px;
 	height: 39px;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	outline: none;
 	vertical-align: middle;
@@ -2074,7 +2073,9 @@
 .tel-set-frame-title {
 	display: flex;
 	padding: 9px 15px;
-	border-radius: 2px 2px 0 0;
+	border-radius: var(--tel-set-list-border-radius, var(--ui-border-radius-sm, 2px));
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 	background: #d5f4fd;
 	font: 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #333;
@@ -2108,7 +2109,9 @@
 	border-left: 1px solid rgba(151,151,151,.24);
 	border-right: 1px solid rgba(151,151,151,.24);
 	border-bottom: 1px solid rgba(151,151,151,.24);
-	border-radius: 0 0 2px 2px;
+	border-radius: var(--tel-set-list-border-radius, var(--ui-border-radius-sm, 2px));
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 
 .tel-set-amount-content {
@@ -2137,7 +2140,8 @@
 	display: inline-block;
 	margin: 0 30px 0 0;
 	padding: 0 17px 0 0;
-	font: 43px/43px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 43px/43px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 }
 
@@ -2165,7 +2169,8 @@
 }
 
 .tel-set-amount-value-md .tel-set-amount-number {
-	font: 33px/33px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 33px/33px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .tel-set-amount-value-md .tel-set-amount-number:after {
@@ -2226,7 +2231,9 @@
 	border-left: 1px solid rgba(151,151,151,.24);
 	border-right: 1px solid rgba(151,151,151,.24);
 	border-bottom: 1px solid rgba(151,151,151,.24);
-	border-radius: 0 0 2px 2px;
+	border-radius: var(--tel-set-list-border-radius, var(--ui-border-radius-sm, 2px));
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 
 .tel-set-list-item {
@@ -2235,7 +2242,8 @@
 	/*padding-left: 30px;*/
 	position: relative;
 	vertical-align: top;
-	font: 16px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 }
 
@@ -2790,13 +2798,15 @@
 	max-height: 67px;
 	background: rgba(47,198,248,.09);
 	box-sizing: border-box;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .voximplant-connected-ats-name {
 	display: inline-block;
 	margin: 0 10px 0;
 	max-width: 100%;
-	font: 18px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
@@ -2814,10 +2824,6 @@
 
 .voximplant-ats .ui-alert {
 	margin-bottom: 24px;
-}
-
-.voximplant-container.voximplant-options-popup {
-	margin: 20px;
 }
 
 .voximplant-grid-icon {
@@ -2935,6 +2941,7 @@
 .voximplant-status-table {
 	padding: 14px 18px 25px 18px;
 	background: rgba(237,238,240,.5);
+	border-radius: var(--voximplant-status-table-border-radius, var(--ui-border-radius-md));
 }
 
 .voximplant-doc-label {

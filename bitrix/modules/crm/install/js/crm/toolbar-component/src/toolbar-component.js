@@ -1,11 +1,12 @@
-import {Reflection, Event, ajax as Ajax, Text, Dom} from "main.core";
+import {Reflection, Event, ajax as Ajax, Text, Type, Dom} from "main.core";
 import {EventEmitter} from "main.core.events";
 import {BaseButton} from "ui.buttons";
 import {Router} from "crm.router";
 import {Menu} from "main.popup";
 
 import 'ui.hint';
-import 'toolbar-component.css';
+
+import './style.css';
 
 const namespace = Reflection.namespace('BX.Crm');
 
@@ -17,7 +18,7 @@ class ToolbarEvents
 	static CATEGORIES_UPDATED = 'CategoriesUpdated';
 }
 
-class ToolbarComponent extends EventEmitter
+export default class ToolbarComponent extends EventEmitter
 {
 	constructor() {
 		super();
@@ -138,7 +139,7 @@ class ToolbarComponent extends EventEmitter
 				});
 				if (category.id > 0 && categoryId > 0 && Number(categoryId) === Number(category.id))
 				{
-					button.setText(Text.encode(category.name));
+					button.setText(category.name);
 				}
 				startKey++;
 			});
@@ -146,9 +147,72 @@ class ToolbarComponent extends EventEmitter
 			options.items = items;
 			button.menuWindow = new Menu(options);
 			Event.bind(button.getContainer(), 'click', button.menuWindow.show.bind(button.menuWindow));
+
+			if (entityTypeId === BX.CrmEntityType.enumeration.deal)
+			{
+				this.reloadAddButtonMenu(categories);
+			}
 		}).catch((response) => {
 			console.log('error trying reload categories', response.errors);
 		});
+	}
+
+	reloadAddButtonMenu(categories: Array)
+	{
+		const addButtonNode = document.querySelector('.ui-btn-split.ui-btn-success');
+		if (!addButtonNode)
+		{
+			return;
+		}
+
+		const addButtonId = addButtonNode.dataset.btnUniqid;
+		const toolbar =	BX.UI.ToolbarManager.getDefaultToolbar();
+		const button = toolbar.getButton(addButtonId, 'data-btn-uniqid');
+		if (!button)
+		{
+			return;
+		}
+
+		let menu = button.menuWindow
+		if (!menu)
+		{
+			return;
+		}
+
+		const menuItemsIds = menu
+			.getMenuItems()
+			.map(item => item.id)
+			.filter(id => Type.isInteger(id));
+		const categoryIds = categories.map(item => item.id);
+		const idsToRemove = menuItemsIds.filter(id => !categoryIds.includes(id));
+		const newCategories = categories.filter(item => !menuItemsIds.includes(item.id) && item.id > 0);
+
+		// remove menu item(s)
+		if (idsToRemove.length > 0)
+		{
+			idsToRemove.forEach(idToRemove => menu.removeMenuItem(idToRemove));
+		}
+
+		// add new item(s)
+		if (newCategories.length > 0)
+		{
+			const targetItemId = menu
+				.getMenuItems()
+				.map(item => item.id)
+				.filter(id => Type.isString(id))
+				.at(1);
+
+			newCategories.forEach(item => {
+				menu.addMenuItem({
+					id: item.id,
+					text: item.name,
+					onclick: function(event)
+					{
+						BX.SidePanel.Instance.open('/crm/deal/details/0/?category_id=' + item.id);
+					}.bind(this)
+				}, targetItemId);
+			});
+		}
 	}
 }
 
