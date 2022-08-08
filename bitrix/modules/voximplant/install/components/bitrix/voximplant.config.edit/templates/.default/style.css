@@ -6,7 +6,7 @@
 	border:none; color:#555;
 	display:inline-block;
 	font-size:12px;
-	font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin: -6px 9px 0px 0;
 	height: 30px;
 	min-width:108px;

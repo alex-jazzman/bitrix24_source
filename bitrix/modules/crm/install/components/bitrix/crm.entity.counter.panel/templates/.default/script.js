@@ -247,6 +247,8 @@ this.BX = this.BX || {};
 
 	var _fields = /*#__PURE__*/new WeakMap();
 
+	var _isActive = /*#__PURE__*/new WeakMap();
+
 	var _bindEvents$1 = /*#__PURE__*/new WeakSet();
 
 	var _onFilterApply = /*#__PURE__*/new WeakSet();
@@ -273,23 +275,34 @@ this.BX = this.BX || {};
 	      value: void 0
 	    });
 
+	    _classPrivateFieldInitSpec$1(this, _isActive, {
+	      writable: true,
+	      value: true
+	    });
+
 	    var filters = main_core.Type.isObject(BX.Main.filterManager) && BX.Main.filterManager.hasOwnProperty('getList') ? BX.Main.filterManager.getList() : Object.values(BX.Main.filterManager.data);
 
 	    if (filters.length === 0) {
-	      throw 'BX.Crm.EntityCounterFilter: Unable to define filter.';
+	      console.warn('BX.Crm.EntityCounterFilter: Unable to define filter.');
+	      babelHelpers.classPrivateFieldSet(this, _isActive, false);
+	    } else {
+	      babelHelpers.classPrivateFieldSet(this, _filterManager, filters[0]); // use first filter to work
+
+	      _classPrivateMethodGet$1(this, _bindEvents$1, _bindEvents2$1).call(this);
+
+	      this.updateFields();
 	    }
-
-	    babelHelpers.classPrivateFieldSet(this, _filterManager, filters[0]); // use first filter to work
-
-	    _classPrivateMethodGet$1(this, _bindEvents$1, _bindEvents2$1).call(this);
-
-	    this.updateFields();
 	  }
 
 	  babelHelpers.createClass(EntityCounterFilterManager, [{
 	    key: "getManager",
 	    value: function getManager() {
 	      return babelHelpers.classPrivateFieldGet(this, _filterManager);
+	    }
+	  }, {
+	    key: "isActive",
+	    value: function isActive() {
+	      return babelHelpers.classPrivateFieldGet(this, _isActive);
 	    }
 	  }, {
 	    key: "getFields",
@@ -587,7 +600,7 @@ this.BX = this.BX || {};
 	}
 
 	function _onDeactivateItem2() {
-	  if (_classPrivateMethodGet$2(this, _isAllDeactivated, _isAllDeactivated2).call(this)) {
+	  if (_classPrivateMethodGet$2(this, _isAllDeactivated, _isAllDeactivated2).call(this) && babelHelpers.classPrivateFieldGet(this, _filterManager$1).isActive()) {
 	    var api = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getApi();
 
 	    if (babelHelpers.classPrivateFieldGet(this, _filterLastPreset).presetId === 'tmp_filter') {
@@ -602,7 +615,9 @@ this.BX = this.BX || {};
 	}
 
 	function _onFilterApply2$1() {
-	  babelHelpers.classPrivateFieldGet(this, _filterManager$1).updateFields();
+	  if (babelHelpers.classPrivateFieldGet(this, _filterManager$1).isActive()) {
+	    babelHelpers.classPrivateFieldGet(this, _filterManager$1).updateFields();
+	  }
 
 	  _classPrivateMethodGet$2(this, _markCounters, _markCounters2).call(this);
 	}
@@ -633,21 +648,26 @@ this.BX = this.BX || {};
 	      counterTypeId: typeId.toString(),
 	      cancel: false
 	    };
-	    var filteredFields = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getFields(true);
 
-	    if (typeof filteredFields[EntityCounterFilterManager.COUNTER_TYPE_FIELD] === 'undefined') {
-	      babelHelpers.classPrivateFieldGet(this, _filterLastPreset).presetId = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getApi().parent.getPreset().getCurrentPresetId();
+	    if (babelHelpers.classPrivateFieldGet(this, _filterManager$1).isActive()) {
+	      var filteredFields = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getFields(true);
 
-	      if (babelHelpers.classPrivateFieldGet(this, _filterLastPreset).presetId === 'tmp_filter') {
-	        babelHelpers.classPrivateFieldGet(this, _filterLastPreset).fields = filteredFields;
+	      if (typeof filteredFields[EntityCounterFilterManager.COUNTER_TYPE_FIELD] === 'undefined') {
+	        babelHelpers.classPrivateFieldGet(this, _filterLastPreset).presetId = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getApi().parent.getPreset().getCurrentPresetId();
+
+	        if (babelHelpers.classPrivateFieldGet(this, _filterLastPreset).presetId === 'tmp_filter') {
+	          babelHelpers.classPrivateFieldGet(this, _filterLastPreset).fields = filteredFields;
+	        }
+
+	        BX.userOptions.save('crm', babelHelpers.classPrivateFieldGet(this, _filterLastPresetId), '', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _filterLastPreset)));
 	      }
 
-	      BX.userOptions.save('crm', babelHelpers.classPrivateFieldGet(this, _filterLastPresetId), '', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _filterLastPreset)));
-	    }
+	      BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
 
-	    BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
-
-	    if (eventArgs.cancel) {
+	      if (eventArgs.cancel) {
+	        return false;
+	      }
+	    } else {
 	      return false;
 	    }
 	  }
@@ -657,6 +677,10 @@ this.BX = this.BX || {};
 
 	function _markCounters2() {
 	  var _this2 = this;
+
+	  if (!babelHelpers.classPrivateFieldGet(this, _filterManager$1).isActive()) {
+	    return;
+	  }
 
 	  Object.entries(babelHelpers.classPrivateFieldGet(this, _data)).forEach(function (_ref3) {
 	    var _ref4 = babelHelpers.slicedToArray(_ref3, 2),

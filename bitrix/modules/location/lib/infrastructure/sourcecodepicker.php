@@ -14,41 +14,31 @@ use Bitrix\Main\ModuleManager;
  */
 final class SourceCodePicker
 {
+	private const OPTION_NAME = 'location_default_source_code';
+
 	/**
 	 * @return string
 	 */
 	public static function getSourceCode(): string
 	{
-		$configuredSourceCode = static::getConfiguredSourceCode();
+		return Option::get(
+			'location',
+			self::OPTION_NAME,
+			(
+				ModuleManager::isModuleInstalled('bitrix24')
+				&& Loader::includeModule('bitrix24')
+			)
+				? Factory::OSM_SOURCE_CODE
+				: Factory::GOOGLE_SOURCE_CODE
 
-		if ($configuredSourceCode)
-		{
-			return $configuredSourceCode;
-		}
-
-		if (ModuleManager::isModuleInstalled('bitrix24') && Loader::includeModule('bitrix24'))
-		{
-			return Factory::OSM_SOURCE_CODE;
-		}
-
-		if (Option::get('location', 'use_google_api', 'Y') === 'Y')
-		{
-			return Factory::GOOGLE_SOURCE_CODE;
-		}
-
-		return '';
+		);
 	}
 
 	/**
-	 * @return string
+	 * @param string $sourceCode
 	 */
-	private static function getConfiguredSourceCode(): string
+	public static function setSourceCode(string $sourceCode): void
 	{
-		if (defined('LOCATION_DEFAULT_SOURCE_CODE'))
-		{
-			return (string)LOCATION_DEFAULT_SOURCE_CODE;
-		}
-
-		return (string)Option::get('location', 'location_default_source_code', '');
+		Option::set('location', self::OPTION_NAME, $sourceCode);
 	}
 }

@@ -100,6 +100,7 @@ class TimemanSection
 			$last = \Bitrix\Faceid\TrackingWorkdayTable::query()
 				->addSelect('DATE')
 				->addOrder('ID', 'DESC')
+				->setCacheTtl(3600)
 				->setLimit(1)
 				->fetch();
 

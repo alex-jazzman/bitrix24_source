@@ -30,7 +30,7 @@
 .voximplant-subtitle {
 	display: block;
 	margin: 0 0 5px 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	opacity: .5;
 }
@@ -38,7 +38,7 @@
 .sender-campaign-selector-title {
 	display: block;
 	margin: 0 0 6px 0;
-	font: 13px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868E;
 }
 /* END OF TITLE */
@@ -100,7 +100,7 @@
 .voximplant-start-label {
 	display: block;
 	margin: 0 0 6px 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(83,91,106,.52);
 }
 
@@ -112,22 +112,22 @@
 /* TEXT */
 .voximplant-start-text-dark-bold {
 	display: inline-block;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
 .voximplant-start-text-darkgrey {
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 }
 
 .voximplant-start-head-entity {
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 }
 
 .voximplant-start-head-entity-bold {
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 }
 
@@ -139,7 +139,7 @@
 /* HEAD INFO */
 .voximplant-start-head-subtitle {
 	display: block;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 	opacity: .5;
 }
@@ -163,7 +163,7 @@
 }
 /*.voximplant-start-payment-btn {*/
 	/*display: inline-block;*/
-	/*font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;*/
+	/*font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));*/
 	/*color: #177CE2;*/
 	/*border-bottom: 1px solid transparent;*/
 	/*transition: border-bottom .3s;*/
@@ -230,7 +230,7 @@
 	display: none;
 	height: 15px;
 	border-bottom: 1px dashed transparent;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066b0;
 	transition: border-bottom .3s;
 }
@@ -399,7 +399,7 @@
 	border-top: 1px solid rgba(82,92,105,.10);
 	padding-top: 10px;
 	margin-top: 15px;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	text-align: right;
 }
@@ -782,7 +782,7 @@
 .voximplant-blacklist-popup-title {
 	display: block;
 	margin: 0 0 18px 0;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-blacklist-input-box {
@@ -805,7 +805,7 @@
 }
 
 .voximplant-blacklist-label {
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-blacklist-popup-row .voximplant-control-row {
@@ -834,7 +834,7 @@
 	max-height: 367px;
 	border: 1px solid #c6cdd3;
 	border-radius: var(--ui-field-border-radius, 2px);
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline: none;
 	resize: none;
 	box-sizing: border-box;
@@ -929,7 +929,7 @@
 	position: relative;
 	margin: 0 0 3px 0;
 	height: 32px;
-	font: 13px/33px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/33px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535C6A;
 	transition: background .3s;
 	cursor: pointer;
@@ -980,7 +980,7 @@
 	display: block;
 	margin: 0 0 8px 0;
 	max-width: 100%;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	opacity: .5;
 	text-overflow: ellipsis;
@@ -1000,7 +1000,7 @@
 	border-radius: var(--ui-field-border-radius, 2px);
 	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2012%208%22%3E%3Cpath%20fill%3D%22%23828B95%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6.122%204.55L10.558.113l1.414%201.414-4.436%204.436-1.478%201.478L.401%201.785%201.88.307l4.242%204.242z%22/%3E%3C/svg%3E') center right 10px no-repeat;
 	background-size: 12px 8px;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-color .3s;
 	outline: none;
 	vertical-align: middle;
@@ -1054,7 +1054,7 @@
 }
 
 .voximplant-number-settings-wrap {
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-number-settings-row {
@@ -1100,7 +1100,7 @@
 .voximplant-link {
 	display: inline-block;
 	border-bottom: 1px dashed rgba(155,155,155,.4);
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #9b9b9b;
 	transition: border-bottom .3s;
 	cursor: pointer;
@@ -1130,7 +1130,7 @@
 
 .voximplant-number-settings-label {
 	padding: 0 0 0 24px;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -1168,12 +1168,12 @@
 
 .voximplant-control-description {
 	margin: 5px 0 0 0;
-	font: italic 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: italic 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 }
 
 .voximplant-control-description .voximplant-control-subtitle {
-	font: italic 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: italic 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-control-missed-call .voximplant-control-row:nth-child(1) .voximplant-control-select {
@@ -1211,7 +1211,7 @@
 
 .voximplant-audio-player-control .voximplant-control-description {
 	margin: 3px 0 0 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-audio-player-btn {
@@ -1303,7 +1303,7 @@
 	margin: 0 12px 0 0;
 	width: 62px;
 	min-width: 62px;
-	font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	text-align: right;
 	text-overflow: ellipsis;
@@ -1313,7 +1313,7 @@
 
 .voximplant-control-settings-value-box {
 	position: relative;
-	font: bold 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	word-break: break-word;
 }
@@ -1321,7 +1321,7 @@
 .voximplant-control-settings-input {
 	display: none;
 	margin: 0;
-	font: bold 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -1454,7 +1454,7 @@
 	margin: 0 auto;
 	width: 200px;
 	height: 31px;
-	font: 13px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #828b95;
 	overflow: hidden;
 }

@@ -10,9 +10,6 @@ COption::SetOptionString("socialnetwork", "group_path_template", WIZARD_SITE_DIR
 COption::SetOptionString("socialnetwork", "messages_path", WIZARD_SITE_DIR."contacts/personal/messages/", false, WIZARD_SITE_ID);
 COption::SetOptionString("socialnetwork", "default_photo_operation_write_group", "K", false, WIZARD_SITE_ID);
 
-if(!class_exists('CUserOptions'))
-	include_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".$GLOBALS['DBType']."/favorites.php");
-
 $sOptions = 'a:1:{s:7:"GADGETS";a:9:{s:18:"SONET_USER_LINKS@1";a:4:{s:6:"COLUMN";i:0;s:3:"ROW";i:0;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:19:"SONET_USER_GROUPS@2";a:4:{s:6:"COLUMN";i:0;s:3:"ROW";i:3;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:17:"SONET_USER_HEAD@3";a:4:{s:6:"COLUMN";i:0;s:3:"ROW";i:4;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:19:"SONET_USER_HONOUR@4";a:4:{s:6:"COLUMN";i:0;s:3:"ROW";i:5;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:20:"SONET_USER_ABSENCE@5";a:4:{s:6:"COLUMN";i:0;s:3:"ROW";i:6;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:17:"SONET_USER_DESC@6";a:4:{s:6:"COLUMN";i:1;s:3:"ROW";i:0;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:7:"TASKS@7";a:4:{s:6:"COLUMN";i:1;s:3:"ROW";i:1;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:13:"SONET_FORUM@8";a:4:{s:6:"COLUMN";i:1;s:3:"ROW";i:2;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}s:12:"SONET_BLOG@9";a:4:{s:6:"COLUMN";i:1;s:3:"ROW";i:3;s:8:"USERDATA";N;s:4:"HIDE";s:1:"N";}}}';
 $arOptions = unserialize($sOptions, ["allowed_classes" => false]);
 CUserOptions::SetOption("intranet", "~gadgets_sonet_user_extranet", $arOptions, false, 0);

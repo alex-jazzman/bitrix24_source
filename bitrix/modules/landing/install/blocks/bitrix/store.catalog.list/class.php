@@ -131,7 +131,7 @@ class StoreCatalogListBlock extends \Bitrix\Landing\LandingBlock
 		$sectionId = 0;
 		$sectionCode = '';
 		$variables = \Bitrix\Landing\Landing::getVariables();
-		if (isset($variables['sef'][0]))
+		if (isset($variables['sef'][0]) && $variables['sef'][0] !== 'item')
 		{
 			$sectionCode = $variables['sef'][0];
 			if (Loader::includeModule('iblock'))

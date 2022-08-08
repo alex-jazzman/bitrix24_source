@@ -9,6 +9,7 @@ export default class EntityCounterFilterManager
 
 	#filterManager: BX.Main.Filter;
 	#fields: Object;
+	#isActive = true;
 
 	constructor()
 	{
@@ -18,13 +19,15 @@ export default class EntityCounterFilterManager
 
 		if (filters.length === 0)
 		{
-			throw 'BX.Crm.EntityCounterFilter: Unable to define filter.';
+			console.warn('BX.Crm.EntityCounterFilter: Unable to define filter.');
+			this.#isActive = false;
 		}
-
-		this.#filterManager = filters[0]; // use first filter to work
-		this.#bindEvents();
-
-		this.updateFields();
+		else
+		{
+			this.#filterManager = filters[0]; // use first filter to work
+			this.#bindEvents();
+			this.updateFields();
+		}
 	}
 
 	#bindEvents(): void
@@ -55,6 +58,11 @@ export default class EntityCounterFilterManager
 	getManager(): BX.Main.filterManager
 	{
 		return this.#filterManager;
+	}
+
+	isActive(): boolean
+	{
+		return this.#isActive;
 	}
 
 	getFields(isFilterEmpty: boolean = false): Object

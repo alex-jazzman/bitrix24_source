@@ -133,6 +133,26 @@ class WebpackFile
 			{
 				$this->fileId = $res->getId();
 				File::addToAsset($this->landingId, $this->fileId);
+
+				$file = \CFile::GetByID($this->fileId)->Fetch();
+				$fileMsg = "File {$this->fileId} with NAME {$file['FILE_NAME']} and ORIG_NAME {$file['ORIGINAL_NAME']}";
+				$duplicateMsg = "Has no duplicates";
+
+				$original = \Bitrix\Main\File\Internal\FileDuplicateTable::query()
+					->addSelect("ORIGINAL_ID")
+					->where("DUPLICATE_ID", $this->fileId)
+					->fetch();
+				if ($original && $original['ORIGINAL_ID'])
+				{
+					$fileOrig = \CFile::GetByID((int)$original['ORIGINAL_ID'])->Fetch();
+					$duplicateMsg = "It is duplicate of orig {$original['ORIGINAL_ID']} with NAME {$fileOrig['FILE_NAME']} and ORIG_NAME {$fileOrig['ORIGINAL_NAME']}";
+				}
+
+				AddMessage2Log(
+					"[lndgdbg] afterBuildFile for lid {$this->landingId}. {$fileMsg}. {$duplicateMsg}.",
+					'landing',
+					7
+				);
 			}
 		}
 	}
@@ -142,13 +162,21 @@ class WebpackFile
 	 */
 	protected function configureFile(): void
 	{
-		// todo: js cache lifetime
+		$msgAdd = '';
 		if ($fileId = $this->findExistFile())
 		{
 			$this->fileId = $fileId;
 			$file = \CFile::GetByID($fileId)->Fetch();
 			$this->setFileName($file['ORIGINAL_NAME'] ?: $this->filename);
+
+			$msgAdd = " Existing {$fileId} with NAME {$file['FILE_NAME']} and ORIG_NAME {$file['ORIGINAL_NAME']}";
 		}
+
+		AddMessage2Log(
+			"[lndgdbg] configureFile for lid {$this->landingId}." . $msgAdd,
+			'landing',
+			7
+		);
 
 		$this->fileController->configureFile(
 			$this->fileId,

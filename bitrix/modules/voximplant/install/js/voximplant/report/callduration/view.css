@@ -20,17 +20,17 @@
 .telephony-report-call-duration-modal-subtitle-primary {
 	display: block;
 	margin: 0 0 2px 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 .telephony-report-call-duration-modal-subtitle-secondary {
 	display: block;
 	margin: 0 0 2px 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 }
 .telephony-report-call-duration-modal-main .telephony-report-chart-card-subtitle {
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .telephony-report-call-duration-modal-main {}
 .telephony-report-call-duration-modal-content {

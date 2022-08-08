@@ -24,17 +24,17 @@
 .telephony-report-missed-reaction-modal-subtitle-primary {
 	display: block;
 	margin: 0 0 2px 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 .telephony-report-missed-reaction-modal-subtitle-secondary {
 	display: block;
 	margin: 0 0 2px 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 }
 .telephony-report-missed-reaction-modal-main .telephony-report-chart-card-subtitle {
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .telephony-report-missed-reaction-modal-main {}
 .telephony-report-missed-reaction-modal-content {

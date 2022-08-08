@@ -3055,6 +3055,10 @@ BX.CRM.Kanban.Grid.prototype = {
 	getSettingsButtonMenu: function()
 	{
 		var toolbar = BX.UI.ToolbarManager.getDefaultToolbar();
+		if (!toolbar)
+		{
+			return;
+		}
 		var settingsButtonMenu = null;
 		for (const [key, button] of Object.entries(toolbar.buttons)) {
 			if (button.icon == 'ui-btn-icon-setting')

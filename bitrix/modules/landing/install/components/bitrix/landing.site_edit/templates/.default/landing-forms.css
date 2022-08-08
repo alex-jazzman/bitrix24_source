@@ -404,6 +404,10 @@
 	transition: transform ease .3s;
 }
 
+.landing-form-list-inner-prev {
+	transform: translateX(-250px);
+}
+
 .landing-form-layout-detail {
 	display: flex;
 }
@@ -528,4 +532,5 @@ div[data-form-row-hidden] + .ui-form-row-hidden,
 .ui-form-row-hidden__locked
 {
 	padding-left: 23px;
+	width: calc(100% - 23px);
 }

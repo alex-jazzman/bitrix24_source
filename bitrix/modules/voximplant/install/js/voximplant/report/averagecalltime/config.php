@@ -11,5 +11,5 @@ return [
 	'css'  => [
 		'/bitrix/js/voximplant/report/averagecalltime/view.css',
 	],
-	'rel' => ['ui.fonts.opensans'],
+	'rel' => ['ui.design-tokens', 'ui.fonts.opensans'],
 ];

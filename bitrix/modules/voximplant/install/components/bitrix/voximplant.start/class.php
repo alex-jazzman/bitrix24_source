@@ -84,30 +84,8 @@ class VoximplantStartComponent extends \CBitrixComponent
 				]);
 			}
 
-			foreach ($rentedNumbers as $rentedNumber)
-			{
-				$result['NUMBERS_LIST'][] = [
-					'NUMBER' => $rentedNumber['NUMBER'],
-					'TYPE' => CVoxImplantConfig::MODE_RENT,
-					'NAME' => $rentedNumber['FORMATTED_NUMBER'],
-					'DESCRIPTION' => CVoxImplantPhone::getNumberDescription($rentedNumber)
-				];
-			}
 			$callerIds = CVoxImplantPhone::PrepareCallerIdFields($accountInfo->caller_ids);
-
-			CVoxImplantPhone::syncCallerIds([
-				'callerIds' => $callerIds
-			]);
-
-			foreach ($callerIds as $callerId)
-			{
-				$result['NUMBERS_LIST'][] = [
-					'NUMBER' => $callerId['NUMBER'],
-					'TYPE' => CVoxImplantConfig::MODE_LINK,
-					'NAME' => $callerId['FORMATTED_NUMBER'],
-					'DESCRIPTION' => CVoxImplantPhone::getCallerIdDescription($callerId)
-				];
-			}
+			CVoxImplantPhone::syncCallerIds(['callerIds' => $callerIds]);
 
 			$sipConnections = \Bitrix\Voximplant\ConfigTable::getList([
 				'select' => [
@@ -123,14 +101,35 @@ class VoximplantStartComponent extends \CBitrixComponent
 				]
 			])->fetchAll();
 
-			foreach ($sipConnections as $sipConnection)
+			if ($result['SHOW_LINES'])
 			{
-				$result['NUMBERS_LIST'][] = [
-					'NUMBER' => $sipConnection['SEARCH_ID'],
-					'TYPE' => CVoxImplantConfig::MODE_SIP,
-					'NAME' => $sipConnection['PHONE_NAME'] ?: CVoxImplantConfig::GetDefaultPhoneName($sipConnection),
-					'DESCRIPTION' => CVoxImplantSip::getConnectionDescription($sipConnection)
-				];
+				foreach ($callerIds as $callerId)
+				{
+					$result['NUMBERS_LIST'][] = [
+						'NUMBER' => $callerId['NUMBER'],
+						'TYPE' => CVoxImplantConfig::MODE_LINK,
+						'NAME' => $callerId['FORMATTED_NUMBER'],
+						'DESCRIPTION' => CVoxImplantPhone::getCallerIdDescription($callerId)
+					];
+				}
+				foreach ($rentedNumbers as $rentedNumber)
+				{
+					$result['NUMBERS_LIST'][] = [
+						'NUMBER' => $rentedNumber['NUMBER'],
+						'TYPE' => CVoxImplantConfig::MODE_RENT,
+						'NAME' => $rentedNumber['FORMATTED_NUMBER'],
+						'DESCRIPTION' => CVoxImplantPhone::getNumberDescription($rentedNumber)
+					];
+				}
+				foreach ($sipConnections as $sipConnection)
+				{
+					$result['NUMBERS_LIST'][] = [
+						'NUMBER' => $sipConnection['SEARCH_ID'],
+						'TYPE' => CVoxImplantConfig::MODE_SIP,
+						'NAME' => $sipConnection['PHONE_NAME'] ?: CVoxImplantConfig::GetDefaultPhoneName($sipConnection),
+						'DESCRIPTION' => CVoxImplantSip::getConnectionDescription($sipConnection)
+					];
+				}
 			}
 
 			$result['LANG'] = $this->account->GetAccountLang();

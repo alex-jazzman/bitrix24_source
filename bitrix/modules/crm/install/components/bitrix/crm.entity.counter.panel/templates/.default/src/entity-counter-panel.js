@@ -82,7 +82,7 @@ class EntityCounterPanel extends CounterPanel
 
 	#onDeactivateItem(): void
 	{
-		if (this.#isAllDeactivated())
+		if (this.#isAllDeactivated() && this.#filterManager.isActive())
 		{
 			const api = this.#filterManager.getApi();
 
@@ -100,7 +100,10 @@ class EntityCounterPanel extends CounterPanel
 
 	#onFilterApply(): void
 	{
-		this.#filterManager.updateFields();
+		if (this.#filterManager.isActive())
+		{
+			this.#filterManager.updateFields();
+		}
 		this.#markCounters();
 	}
 
@@ -139,20 +142,27 @@ class EntityCounterPanel extends CounterPanel
 				cancel: false
 			};
 
-			const filteredFields = this.#filterManager.getFields(true);
-			if (typeof(filteredFields[EntityCounterFilterManager.COUNTER_TYPE_FIELD]) === 'undefined')
+			if (this.#filterManager.isActive())
 			{
-				this.#filterLastPreset.presetId = this.#filterManager.getApi().parent.getPreset().getCurrentPresetId();
-				if (this.#filterLastPreset.presetId === 'tmp_filter')
+				const filteredFields = this.#filterManager.getFields(true);
+				if (typeof (filteredFields[EntityCounterFilterManager.COUNTER_TYPE_FIELD]) === 'undefined')
 				{
-					this.#filterLastPreset.fields = filteredFields
+					this.#filterLastPreset.presetId = this.#filterManager.getApi().parent.getPreset().getCurrentPresetId();
+					if (this.#filterLastPreset.presetId === 'tmp_filter')
+					{
+						this.#filterLastPreset.fields = filteredFields
+					}
+
+					BX.userOptions.save('crm', this.#filterLastPresetId, '', JSON.stringify(this.#filterLastPreset));
 				}
 
-				BX.userOptions.save('crm', this.#filterLastPresetId, '', JSON.stringify(this.#filterLastPreset));
+				BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
+				if (eventArgs.cancel)
+				{
+					return false;
+				}
 			}
-
-			BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
-			if (eventArgs.cancel)
+			else
 			{
 				return false;
 			}
@@ -163,6 +173,10 @@ class EntityCounterPanel extends CounterPanel
 
 	#markCounters(): void
 	{
+		if (!this.#filterManager.isActive())
+		{
+			return;
+		}
 		Object.entries(this.#data).forEach(([code, record]) => {
 			let item = this.getItemById(code);
 
