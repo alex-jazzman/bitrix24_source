@@ -8,6 +8,7 @@
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Disk\Driver;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
@@ -43,6 +44,7 @@ use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Socialnetwork\Helper\ServiceComment;
+use Bitrix\Socialnetwork\Item\Workgroup;
 
 Loc::loadMessages(__FILE__);
 
@@ -887,7 +889,7 @@ class TasksTaskComponent extends TasksBaseComponent
 					$result['OPERATION_RESULT']['SHIFT_RESULT'] = [];
 					foreach ($shiftResult as $shift)
 					{
-						$result['OPERATION_RESULT']['SHIFT_RESULT'][$shift->getId()] = $shift->exportUpdatedData();
+						$result['OPERATION_RESULT']['SHIFT_RESULT'][$shift['ID']] = $shift;
 					}
 				}
 			}
@@ -2885,6 +2887,278 @@ class TasksTaskComponent extends TasksBaseComponent
 		return ['DATA' => $data];
 	}
 
+	private function getTaskDataForExistingTask(): ?array
+	{
+		$data = Task::get(
+			$this->userId,
+			$this->task->getId(),
+			[
+				'ENTITY_SELECT' => $this->arParams['SUB_ENTITY_SELECT'],
+				'ESCAPE_DATA' => static::getEscapedData(), // do not delete
+				'ERRORS' => $this->errors,
+			]
+		);
+		$this->arResult['DATA']['CHECKLIST_CONVERTED'] = TaskCheckListConverterHelper::checkEntityConverted($this->task->getId());
+
+		if ($this->errors->checkHasFatals())
+		{
+			return null;
+		}
+
+		if ($this->formData !== false) // is form submitted
+		{
+			// applying form data on top, what changed
+			$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
+		}
+
+		$group = Workgroup::getById($data['DATA']['GROUP_ID']);
+		$this->arParams['IS_SCRUM_TASK'] = ($group && $group->isScrumProject());
+		if ($this->arParams['IS_SCRUM_TASK'])
+		{
+			$itemService = new Tasks\Scrum\Service\ItemService();
+			$epicService = new Tasks\Scrum\Service\EpicService();
+
+			$scrumItem = $itemService->getItemBySourceId($this->task->getId());
+			if ($scrumItem->getId())
+			{
+				$epic = $epicService->getEpic($scrumItem->getEpicId());
+				if ($epic->getId())
+				{
+					$this->arResult['DATA']['SCRUM']['EPIC'] = $epic->toArray();
+				}
+			}
+		}
+
+		return $data;
+	}
+
+	private function getTaskDataForNewTask(): ?array
+	{
+		$this->arResult['DATA']['CHECKLIST_CONVERTED'] = true;
+
+		$data = $this->getDataDefaults();
+
+		if ($this->formData !== false) // is form submitted
+		{
+			// applying form data on top, what changed
+			$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
+
+			return $data;
+		}
+
+		$error = false;
+		$sourceData = [];
+
+		try
+		{
+			// copy from template
+			if ($templateId = (int)$this->request['TEMPLATE'])
+			{
+				$sourceData = $this->getTemplateSourceData($templateId);
+				$this->arResult['DATA']['CHECKLIST_CONVERTED'] =
+					TemplateCheckListConverterHelper::checkEntityConverted($templateId)
+				;
+			}
+			// copy from another task
+			elseif ((int)$this->request['COPY'] || (int)$this->request['_COPY'])
+			{
+				$taskIdToCopy = (int)($this->request['COPY'] ?: $this->request['_COPY']);
+				$sourceData = $this->getCopiedTaskSourceData($taskIdToCopy);
+				$this->arResult['DATA']['CHECKLIST_CONVERTED'] =
+					TaskCheckListConverterHelper::checkEntityConverted($taskIdToCopy)
+				;
+			}
+			// get some from request
+			else
+			{
+				$sourceData = $this->getDataRequest();
+			}
+		}
+		catch (TasksException $e)
+		{
+			if (
+				$e->checkOfType(TasksException::TE_ACCESS_DENIED)
+				|| $e->checkOfType(TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE)
+			)
+			{
+				$error = 'access';
+			}
+			else
+			{
+				$error = 'other';
+			}
+		}
+		catch (\Bitrix\Tasks\AccessDeniedException $e)
+		{
+			$error = 'access';
+		}
+
+		if ($error !== false)
+		{
+			$errorKey = (
+				$error === 'access' ? 'TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE_COPY' : 'TASKS_TT_COPY_READ_ERROR'
+			);
+			$this->errors->add('COPY_ERROR', Loc::getMessage($errorKey),Collection::TYPE_WARNING);
+		}
+
+		$data['DATA'] = Task::mergeData($sourceData['DATA'], $data['DATA']);
+		$data['DATA'] = $this->autoChangeTaskData($data['DATA']);
+
+		return $data;
+	}
+
+	private function getTemplateSourceData(int $templateId): array
+	{
+		$sourceData = $this->cloneDataFromTemplate($templateId);
+
+		if ($ufCrmEntities = $this->request['UF_CRM_TASK'])
+		{
+			$sourceData['DATA']['UF_CRM_TASK'][] = $ufCrmEntities;
+		}
+		if ($tags = $this->request['TAGS'])
+		{
+			$currentTags = array_map('strtolower', $sourceData['DATA']['TAGS']);
+			$tags = array_map('strtolower', explode(',', $tags));
+			foreach ($tags as $tag)
+			{
+				if (!in_array($tag, $currentTags, true))
+				{
+					$sourceData['DATA']['TAGS'][] = $tag;
+					$sourceData['DATA']['SE_TAG'][] = ['NAME' => $tag];
+				}
+			}
+		}
+
+		$driver = Driver::getInstance();
+		$userFieldManager = $driver->getUserFieldManager();
+		$attachedObjects = $userFieldManager->getAttachedObjectByEntity(
+			'TASKS_TASK_TEMPLATE',
+			$templateId,
+			'UF_TASK_WEBDAV_FILES'
+		);
+		if (!empty($attachedObjects))
+		{
+			$sourceData['DATA']['DISK_ATTACHED_OBJECT_ALLOW_EDIT'] = reset($attachedObjects)->getAllowEdit();
+		}
+
+		$this->setDataSource(static::DATA_SOURCE_TEMPLATE, $this->request['TEMPLATE']);
+
+		return $sourceData;
+	}
+
+	private function getCopiedTaskSourceData(int $taskIdToCopy): array
+	{
+		$sourceData = $this->cloneDataFromTask($taskIdToCopy);
+
+		$localOffset = (new \DateTime())->getOffset();
+		$userOffset =  \CTimeZone::GetOffset(null, true);
+		$offset = $localOffset + $userOffset;
+		$newOffset = ($offset > 0 ? '+' : '') . UI::formatTimeAmount($offset, 'HH:MI');
+
+		$deadline = $sourceData['DATA']['DEADLINE'];
+		if ($deadline && ($date = new Type\DateTime($deadline)))
+		{
+			$sourceData['DATA']['DEADLINE_ISO'] = mb_substr($date->format('c'), 0, -6) . $newOffset;
+		}
+
+		$this->setDataSource(static::DATA_SOURCE_TASK, $taskIdToCopy);
+
+		return $sourceData;
+	}
+
+	private function autoChangeTaskData(array $data): array
+	{
+		$data = $this->autoChangeOriginator($data);
+
+		if ($this->request['TEMPLATE'])
+		{
+			$data = $this->autoChangeResponsible($data);
+			$data = $this->autoChangeParent($data);
+			$data = $this->autoChangeGroup($data);
+		}
+
+		return $data;
+	}
+
+	private function autoChangeOriginator(array $data): array
+	{
+		$originatorKey = Task\Originator::getCode(true);
+		$responsibles = $data[Task\Responsible::getCode(true)];
+
+		if (
+			$data[$originatorKey]['ID'] !== $this->userId
+			&& (
+				count($responsibles) > 1
+				|| (count($responsibles) === 1 && $responsibles[0]['ID'] !== $this->userId)
+			)
+		)
+		{
+			$data[$originatorKey]['ID'] = $this->userId;
+			$this->errors->addWarning(
+				'AUTO_CHANGE_ORIGINATOR',
+				Loc::getMessage('TASKS_TT_AUTO_CHANGE_ORIGINATOR')
+			);
+		}
+
+		return $data;
+	}
+
+	private function autoChangeResponsible(array $data): array
+	{
+		$responsibleId = (int)$this->request['RESPONSIBLE_ID'];
+		if ($responsibleId > 0)
+		{
+			$data[Task\Responsible::getCode(true)] = [['ID' => $responsibleId]];
+			$this->errors->addWarning(
+				'AUTO_CHANGE_RESPONSIBLE',
+				Loc::getMessage('TASKS_TT_AUTO_CHANGE_RESPONSIBLE')
+			);
+		}
+
+		return $data;
+	}
+
+	private function autoChangeParent(array $data): array
+	{
+		$parentId = (int)$this->request['PARENT_ID'];
+		if ($parentId)
+		{
+			$data['PARENT_ID'] = $parentId;
+			$data[Task\ParentTask::getCode(true)] = ['ID' => $parentId];
+			$this->errors->addWarning('AUTO_CHANGE_PARENT', Loc::getMessage('TASKS_TT_AUTO_CHANGE_PARENT'));
+		}
+
+		return $data;
+	}
+
+	private function autoChangeGroup(array $data): array
+	{
+		$groupId = (int)$this->request['GROUP_ID'];
+		if ($groupId > 0)
+		{
+			$data[Task\Project::getCode(true)] = ['ID' => $groupId];
+			$this->errors->addWarning('AUTO_CHANGE_GROUP', Loc::getMessage('TASKS_TT_AUTO_CHANGE_GROUP'));
+
+			return $data;
+		}
+
+		$parentId = (int)$this->request['PARENT_ID'];
+		if ($parentId)
+		{
+			$parentTask = Bitrix\Tasks\Item\Task::getInstance($parentId, $this->userId);
+			if ($parentTask && $parentTask['GROUP_ID'])
+			{
+				$data[Task\Project::getCode(true)] = ['ID' => $parentTask['GROUP_ID']];
+				$this->errors->addWarning(
+					'AUTO_CHANGE_PARENT_GROUP',
+					Loc::getMessage('TASKS_TT_AUTO_CHANGE_PARENT_GROUP')
+				);
+			}
+		}
+
+		return $data;
+	}
+
 	// get some data and decide what goes to arResult
 	protected function getData()
 	{
@@ -2904,182 +3178,24 @@ class TasksTaskComponent extends TasksBaseComponent
 			$this->request->get('FIRST_GRID_TASK_CREATION_TOUR_GUIDE')
 		;
 
-		$formSubmitted = $this->formData !== false;
-
 		$this->arParams['IS_SCRUM_TASK'] = false;
 
 		$this->arResult['DATA']['SCRUM'] = [];
 		$this->arResult['DATA']['SCRUM']['EPIC'] = [];
 
-		if($this->task != null) // editing an existing task, get THIS task data
+		// editing an existing task, get THIS task data
+		if ($this->task !== null)
 		{
-			$data = Task::get($this->userId, $this->task->getId(), array(
-				'ENTITY_SELECT' => $this->arParams['SUB_ENTITY_SELECT'],
-				'ESCAPE_DATA' => static::getEscapedData(), // do not delete
-				'ERRORS' => $this->errors
-			));
-			$this->arResult['DATA']['CHECKLIST_CONVERTED'] = TaskCheckListConverterHelper::checkEntityConverted($this->task->getId());
-
-			if($this->errors->checkHasFatals())
+			$data = $this->getTaskDataForExistingTask();
+			if ($data === null)
 			{
 				return;
 			}
-
-			if($formSubmitted)
-			{
-				// applying form data on top, what changed
-				$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
-			}
-
-			$group = Bitrix\Socialnetwork\Item\Workgroup::getById($data['DATA']['GROUP_ID']);
-			$this->arParams['IS_SCRUM_TASK'] = ($group && $group->isScrumProject());
-
-			if ($this->arParams['IS_SCRUM_TASK'])
-			{
-				$itemService = new Tasks\Scrum\Service\ItemService();
-				$epicService = new Tasks\Scrum\Service\EpicService();
-
-				$scrumItem = $itemService->getItemBySourceId($this->task->getId());
-				if ($scrumItem->getId())
-				{
-					$epic = $epicService->getEpic($scrumItem->getEpicId());
-					if ($epic->getId())
-					{
-						$this->arResult['DATA']['SCRUM']['EPIC'] = $epic->toArray();
-					}
-				}
-			}
 		}
-		else // get from other sources: default task data, or other task data, or template data
+		else
 		{
-			$data = $this->getDataDefaults();
-			$this->arResult['DATA']['CHECKLIST_CONVERTED'] = true;
-
-			if($formSubmitted)
-			{
-				// applying form data on top, what changed
-				$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
-			}
-			else
-			{
-				$copyErrors = new Collection();
-				$parameters = array(
-					'ENTITY_SELECT' => array_intersect($this->arParams['SUB_ENTITY_SELECT'], array('CHECKLIST', 'REMINDER', 'TAG', 'PROJECTDEPENDENCE', 'RELATEDTASK')),
-					'ESCAPE_DATA' => false,
-					'ERRORS' => $copyErrors
-				);
-
-				$error = false;
-				$sourceData = [];
-
-				try
-				{
-					if ($templateId = (int)$this->request['TEMPLATE']) // copy from template?
-					{
-						$request = Application::getInstance()->getContext()->getRequest();
-
-						$sourceData = $this->cloneDataFromTemplate($templateId);
-						$fields = ['UF_CRM_TASK', 'TAGS'];
-
-						foreach ($fields as $fieldName)
-						{
-							$fieldValue = $request->getQuery($fieldName);
-							if ($fieldValue)
-							{
-								if ($fieldName == 'TAGS')
-								{
-									$tags = explode(',', $fieldValue);
-									foreach ($tags as $tag)
-									{
-										$sourceData['DATA']['TAGS'][] = $tag;
-										$sourceData['DATA']['SE_TAG'][] = ['NAME' => $tag];
-									}
-								}
-								else if ($fieldName == 'UF_CRM_TASK')
-								{
-									$sourceData['DATA'][$fieldName][] = $fieldValue;
-								}
-							}
-						}
-
-						$driver = \Bitrix\Disk\Driver::getInstance();
-						$userFieldManager = $driver->getUserFieldManager();
-						$attachedObjects = $userFieldManager->getAttachedObjectByEntity(
-							'TASKS_TASK_TEMPLATE',
-							$templateId,
-							'UF_TASK_WEBDAV_FILES'
-						);
-
-						foreach ($attachedObjects as $attachedObject)
-						{
-							$sourceData['DATA']['DISK_ATTACHED_OBJECT_ALLOW_EDIT'] = $attachedObject->getAllowEdit();
-							break;
-						}
-
-						$this->setDataSource(static::DATA_SOURCE_TEMPLATE, $this->request['TEMPLATE']);
-						$this->arResult['DATA']['CHECKLIST_CONVERTED'] = TemplateCheckListConverterHelper::checkEntityConverted($templateId);
-					}
-					elseif ((int)$this->request['COPY'] || (int)$this->request['_COPY']) // copy from another task?
-					{
-						$taskIdToCopy = (int)($this->request['COPY'] ?: $this->request['_COPY']);
-						$sourceData = $this->cloneDataFromTask($taskIdToCopy);
-
-						$localOffset = (new \DateTime())->getOffset();
-						$userOffset =  \CTimeZone::GetOffset(null, true);
-						$offset = $localOffset + $userOffset;
-						$newOffset = ($offset > 0 ? '+' : '') . UI::formatTimeAmount($offset, 'HH:MI');
-
-						$deadline = $sourceData['DATA']['DEADLINE'];
-						if ($deadline && ($date = new Type\DateTime($deadline)))
-						{
-							$sourceData['DATA']['DEADLINE_ISO'] = mb_substr($date->format('c'), 0, -6) . $newOffset;
-						}
-
-						$this->setDataSource(static::DATA_SOURCE_TASK, $taskIdToCopy);
-						$this->arResult['DATA']['CHECKLIST_CONVERTED'] = TaskCheckListConverterHelper::checkEntityConverted($taskIdToCopy);
-					}
-					else // get some from request
-					{
-						$sourceData = $this->getDataRequest();
-					}
-				}
-				catch(TasksException $e)
-				{
-					if($e->checkOfType(TasksException::TE_ACCESS_DENIED) || $e->checkOfType(TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE))
-					{
-						$error = 'access';
-					}
-					else
-					{
-						$error = 'other';
-					}
-				}
-				catch(\Bitrix\Tasks\AccessDeniedException $e)
-				{
-					$error = 'access';
-				}
-				if($error === false) // no exceptions? may be error collection has any?
-				{
-					if(!$copyErrors->isEmpty())
-					{
-						$error = 'other';
-					}
-				}
-
-				if($error !== false)
-				{
-					$this->errors->add('COPY_ERROR', Loc::getMessage($error == 'access' ? 'TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE_COPY' : 'TASKS_TT_COPY_READ_ERROR'), Collection::TYPE_WARNING);
-				}
-
-				$data['DATA'] = Task::mergeData($sourceData['DATA'], $data['DATA']);
-
-				if ($data['DATA']['SE_ORIGINATOR']['ID'] !== $this->userId &&
-					(count($data['DATA']['SE_RESPONSIBLE']) > 1 || (count($data['DATA']['SE_RESPONSIBLE']) == 1 && $data['DATA']['SE_RESPONSIBLE'][0]['ID'] !== $this->userId)))
-				{
-					$data['DATA']['SE_ORIGINATOR']['ID'] = $this->userId;
-					$this->errors->addWarning('', Loc::getMessage('TASKS_TT_AUTO_CHANGE_ORIGINATOR'));
-				}
-			}
+			// get from other sources: default task data, or other task data, or template data
+			$data = $this->getTaskDataForNewTask();
 		}
 
 		// kanban stages
@@ -3094,21 +3210,17 @@ class TasksTaskComponent extends TasksBaseComponent
 			}
 			else
 			{
-				$this->arResult['DATA']['STAGES'] = StagesTable::getStages(
-					$data['DATA']['GROUP_ID'],
-					true
-				);
+				$this->arResult['DATA']['STAGES'] = StagesTable::getStages($data['DATA']['GROUP_ID'], true);
 			}
 
-			$data['CAN']['ACTION']['SORT'] = Loader::includeModule('socialnetwork') &&
-											SocialNetwork\Group::can(
-												$data['DATA']['GROUP_ID'],
-												SocialNetwork\Group::ACTION_SORT_TASKS
-											);
+			$data['CAN']['ACTION']['SORT'] =
+				Loader::includeModule('socialnetwork')
+				&& SocialNetwork\Group::can($data['DATA']['GROUP_ID'], SocialNetwork\Group::ACTION_SORT_TASKS)
+			;
 		}
 		else
 		{
-			$this->arResult['DATA']['STAGES'] = array();
+			$this->arResult['DATA']['STAGES'] = [];
 			$data['CAN']['ACTION']['SORT'] = false;
 		}
 
@@ -3511,9 +3623,30 @@ class TasksTaskComponent extends TasksBaseComponent
 	{
 		$isNetworkTask = false;
 
+		$taskData = $this->arResult['DATA']['TASK'];
+		$taskMembers = [];
+		if (array_key_exists(Task\Originator::getCode(true), $taskData))
+		{
+			$taskMembers = array_merge($taskMembers, $taskData[Task\Originator::getCode(true)]);
+		}
+		if (array_key_exists(Task\Responsible::getCode(true), $taskData))
+		{
+			$taskMembers = array_merge($taskMembers, $taskData[Task\Responsible::getCode(true)]);
+		}
+		if (array_key_exists(Task\Accomplice::getCode(true), $taskData))
+		{
+			$taskMembers = array_merge($taskMembers, $taskData[Task\Accomplice::getCode(true)]);
+		}
+		if (array_key_exists(Task\Auditor::getCode(true), $taskData))
+		{
+			$taskMembers = array_merge($taskMembers, $taskData[Task\Auditor::getCode(true)]);
+		}
+		$taskMembers = array_map('intval', $taskMembers);
+		$taskMembers = array_unique($taskMembers);
+
 		foreach ($this->arResult['DATA']['USER'] as $user)
 		{
-			if ($user['IS_NETWORK_USER'])
+			if ($user['IS_NETWORK_USER'] && in_array((int)$user['ID'], $taskMembers, true))
 			{
 				$isNetworkTask = true;
 				break;
@@ -3555,7 +3688,10 @@ class TasksTaskComponent extends TasksBaseComponent
 					$this->task->getId(),
 					$this->userId,
 					null,
-					['UPDATE_TOPIC_LAST_VISIT' => false]
+					[
+						'UPDATE_TOPIC_LAST_VISIT' => false,
+						'IS_REAL_VIEW' => true,
+					]
 				);
 				if ($this->arParams['PLATFORM'] === 'web')
 				{

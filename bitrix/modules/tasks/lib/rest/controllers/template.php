@@ -126,9 +126,16 @@ class Template extends Base
 	 */
 	public function getAction($templateId, array $params = array())
 	{
+		$currentUserId = CurrentUser::get()->getId();
+
+		if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_READ, $templateId))
+		{
+			return false;
+		}
+
 		$template = new \CTaskTemplates();
 		$template = $template->GetByID($templateId, $params);
-
+		$template = $template->Fetch();
 
 		return $template;
 	}

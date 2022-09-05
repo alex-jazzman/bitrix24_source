@@ -66,6 +66,15 @@ this.BX.UI = this.BX.UI || {};
 	        return new Layout(options).render();
 	      });
 	    }
+	  }, {
+	    key: "createLayout",
+	    value: function createLayout() {
+	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      options = prepareOptions(options);
+	      return top.BX.Runtime.loadExtension(options.extensions).then(function () {
+	        return new Layout(options);
+	      });
+	    }
 	  }]);
 
 	  function Layout() {
@@ -124,6 +133,11 @@ this.BX.UI = this.BX.UI || {};
 	      }
 
 	      return babelHelpers.classPrivateFieldGet(this, _container);
+	    }
+	  }, {
+	    key: "getMenu",
+	    value: function getMenu() {
+	      return babelHelpers.classPrivateFieldGet(this, _menu);
 	    }
 	  }, {
 	    key: "getFooterContainer",

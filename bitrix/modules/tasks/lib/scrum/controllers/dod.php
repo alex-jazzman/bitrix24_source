@@ -178,10 +178,6 @@ class DoD extends Controller
 	 */
 	public function getSettingsAction(int $groupId, int $taskId = 0, string $saveRequest = 'Y'): array
 	{
-		$userId = User::getId();
-
-		$isSaveRequest = $saveRequest === 'Y';
-
 		$typeService = new TypeService();
 		$backlogService = new BacklogService();
 

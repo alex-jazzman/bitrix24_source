@@ -69,13 +69,34 @@ if($arParams["ENABLE_MENU_TOOLBAR"])
 		)
 	);
 }
-?>
 
-<?php if(Type::isIterable($arResult['ERROR']) && !empty($arResult['ERROR'])):?>
-	<?php foreach($arResult['ERROR'] as $error):?>
-		<div class="task-message-label <?=($error['TYPE'] == 'WARNING' ? 'warning' : 'error')?>"><?=htmlspecialcharsbx($error['MESSAGE'])?></div>
-	<?php endforeach?>
-<?php endif?>
+if (Type::isIterable($arResult['ERROR']))
+{
+	$errors = [];
+	$warnings = [];
+
+	foreach ($arResult['ERROR'] as $error)
+	{
+		if ($error['TYPE'] === 'WARNING')
+		{
+			$warnings[] = htmlspecialcharsbx($error['MESSAGE']);
+		}
+		else
+		{
+			$errors[] = htmlspecialcharsbx($error['MESSAGE']);
+		}
+	}
+
+	if (!empty($errors))
+	{
+		?><div class="task-message-label error"><?= implode("<br/>", $errors) ?></div><?php
+	}
+	if (!empty($warnings))
+	{
+		?><div class="task-message-label warning"><?= implode("<br/>", $warnings) ?></div><?php
+	}
+}
+?>
 
 <?php if($arResult['COMPONENT_DATA']['EVENT_TYPE'] == 'ADD' && !empty($arResult['DATA']['EVENT_TASK'])):?>
 	<div class="task-message-label">

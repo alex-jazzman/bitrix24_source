@@ -1055,7 +1055,15 @@ td.task-title-column { padding-left:6px !important; padding-right:0 !important; 
 .task-title-folding span { position: relative; top: 11px; font: normal normal normal 10px/normal Arial, Helvetica, sans-serif; color: #999999; }
 .task-list-item-opened .task-title-folding span { display: none;}
 
-.task-title-info { position:relative; padding-right:10px; margin-left: 14px; }
+.task-title-info {
+	position: relative;
+	padding-right: 14px;
+}
+
+.task-title-folding ~ .task-title-info {
+	margin-left: 14px;
+}
+
 .task-title-tags, .task-title-tags a { font-size: 11px; color: #999999 !important; }
 
 .task-title-indicators {
@@ -2199,12 +2207,18 @@ table.task-table-hide-first-column > tr > td:first-child {
     display: none;
 }
 
-.task-list-table th:first-child {
-    border-radius: 3px 0 0 3px;
+.task-list-table th:first-child,
+.task-list-table.task-table-hide-first-column th:nth-child(2) {
+	border-radius: var(--ui-border-radius-xs, 3px);
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	width: 10px;
 }
 
 .task-list-table th:last-child {
-    border-radius: 0 3px 3px 0;
+	border-radius: var(--ui-border-radius-xs, 3px);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
     text-align: right;
 }
 

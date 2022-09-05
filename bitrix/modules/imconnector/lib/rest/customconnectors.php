@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\ImConnector\Rest;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentTypeException;
 use \Bitrix\Main\Loader,
 	\Bitrix\Main\Localization\Loc,
 	\Bitrix\Main\ArgumentNullException,
@@ -541,6 +543,24 @@ if(Loader::includeModule('rest'))
 
 			$converter = new Converter(Converter::TO_LOWER | Converter::KEYS | Converter::RECURSIVE);
 			$params['MESSAGES'] = $converter->process($params['MESSAGES']);
+
+			if (!is_array($params['MESSAGES']))
+			{
+				throw new ArgumentTypeException("MESSAGES", 'array');
+			}
+
+			foreach ($params['MESSAGES'] as $message)
+			{
+				if (!is_array($message))
+				{
+					throw new ArgumentException('The MESSAGES parameter must be an array of messages (arrays)');
+				}
+
+				if (!isset($message['user'], $message['message'], $message['chat']))
+				{
+					throw new ArgumentException('The incorrect structure of a message inside MESSAGES parameter.');
+				}
+			}
 
 			$resultSend = CC::sendMessages($params['CONNECTOR'], $params['LINE'], $params['MESSAGES']);
 

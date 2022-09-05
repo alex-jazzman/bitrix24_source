@@ -91,7 +91,8 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 						"COMPANY_WORKTIME" => array(
 							"HOURS" => $arResult["TEMPLATE_DATA"]["AUX_DATA"]["COMPANY_WORKTIME"]["HOURS"]
 						)
-					)
+					),
+					"CALENDAR_SETTINGS" => $arResult['CALENDAR_SETTINGS'],
 				),
 				false,
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")

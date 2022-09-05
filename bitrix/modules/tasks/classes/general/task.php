@@ -547,10 +547,9 @@ class CTasks
 					break;
 
 				case "REFERENCE:RESPONSIBLE_ID":
-					$key = 'RESPONSIBLE_ID';
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."T.".$key,
-						$val,
+						"{$sAliasPrefix}T.RESPONSIBLE_ID",
+						"{$sAliasPrefix}T.{$val}",
 						'reference',
 						$bFullJoin,
 						$cOperationType

@@ -13,6 +13,27 @@ class Imap extends Mail\Helper\Mailbox
 	const MESSAGE_PARTS_TEXT = 1;
 	const MESSAGE_PARTS_ATTACHMENT = 2;
 	const MESSAGE_PARTS_ALL = -1;
+	const MAXIMUM_SYNCHRONIZATION_LENGTHS_OF_INTERVALS = [
+		100,
+		50,
+		25,
+		12,
+		6,
+		3,
+		1
+	];
+
+	protected function getMaximumSynchronizationLengthsOfIntervals($num)
+	{
+		if(isset(self::MAXIMUM_SYNCHRONIZATION_LENGTHS_OF_INTERVALS[$num]))
+		{
+			return self::MAXIMUM_SYNCHRONIZATION_LENGTHS_OF_INTERVALS[$num];
+		}
+		else
+		{
+			return self::MAXIMUM_SYNCHRONIZATION_LENGTHS_OF_INTERVALS[count(self::MAXIMUM_SYNCHRONIZATION_LENGTHS_OF_INTERVALS)-1];
+		}
+	}
 
 	protected $client;
 
@@ -857,7 +878,7 @@ class Imap extends Mail\Helper\Mailbox
 		}
 
 		$this->lastSyncResult['newMessages'] += $result;
-		if (!$dir->isTrash() && !$dir->isSpam()) // && !$dir->isDraft() && !$dir->isOutcome()
+		if (!$dir->isTrash() && !$dir->isSpam() && !$dir->isDraft() && !$dir->isOutcome())
 		{
 			$this->lastSyncResult['newMessagesNotify'] += $result;
 		}
@@ -999,7 +1020,7 @@ class Imap extends Mail\Helper\Mailbox
 
 	protected function syncDirInternal($dir)
 	{
-		$count = 0;
+		$messagesSynced = 0;
 
 		$meta = $this->client->select($dir->getPath(), $error);
 
@@ -1017,7 +1038,9 @@ class Imap extends Mail\Helper\Mailbox
 
 		$this->getDirsHelper()->updateMessageCount($dir->getId(), $meta['exists']);
 
-		while ($range = $this->getSyncRange($dir->getPath(), $uidtoken))
+		$intervalSynchronizationAttempts = 0;
+
+		while ($range = $this->getSyncRange($dir->getPath(), $uidtoken, $intervalSynchronizationAttempts))
 		{
 			$reverse = $range[0] > $range[1];
 
@@ -1031,20 +1054,43 @@ class Imap extends Mail\Helper\Mailbox
 				$error
 			);
 
+			$fetchErrors=$this->client->getErrors();
+			$errorReceivingMessages = $fetchErrors->getErrorByCode(210) !== null;
+			$failureDueToDataVolume = $fetchErrors->getErrorByCode(104) !== null;
+
 			if (empty($messages))
 			{
 				if (false === $messages)
 				{
-					$this->warnings->add($this->client->getErrors()->toArray());
-
-					return false;
+					if($errorReceivingMessages && !$failureDueToDataVolume)
+					{
+						/*
+						 	 Skip the intervals where all the messages were broken
+						*/
+						return $messagesSynced;
+					}
+					elseif($failureDueToDataVolume && $intervalSynchronizationAttempts < count(self::MAXIMUM_SYNCHRONIZATION_LENGTHS_OF_INTERVALS) - 1 )
+					{
+						$intervalSynchronizationAttempts++;
+						continue;
+						/*
+							Trying to resynchronize by reducing the interval
+						*/
+					}
+					else
+					{
+						/*
+							Fatal errors in which we cannot perform synchronization
+						*/
+						$this->warnings->add($fetchErrors->toArray());
+						return false;
+					}
 				}
-				else
-				{
-					// @TODO: log
-				}
-
 				break;
+			}
+			else
+			{
+				$intervalSynchronizationAttempts = 0;
 			}
 
 			$reverse ? krsort($messages) : ksort($messages);
@@ -1066,7 +1112,7 @@ class Imap extends Mail\Helper\Mailbox
 				if ($this->syncMessage($dir->getPath(), $uidtoken, $item, $hashesMap))
 				{
 					$this->lastSyncResult['newMessageId'] = end($hashesMap);
-					$count++;
+					$messagesSynced++;
 
 					$numberLeftToFillTheBatch--;
 					if($numberLeftToFillTheBatch === 0 and Main\Loader::includeModule('pull'))
@@ -1101,7 +1147,7 @@ class Imap extends Mail\Helper\Mailbox
 			return false;
 		}
 
-		return $count;
+		return $messagesSynced;
 	}
 
 	public function resyncDir($dirPath, $numberForResync = false)
@@ -1712,22 +1758,12 @@ class Imap extends Mail\Helper\Mailbox
 			return false;
 		}
 
-		if (Mail\Helper\LicenseManager::getSyncOldLimit() > 0)
-		{
-			if ($message['__internaldate']->getTimestamp() < strtotime(sprintf('-%u days', Mail\Helper\LicenseManager::getSyncOldLimit())))
-			{
-				$this->completeMessageSync($fields['ID']);
-				return false;
-			}
-		}
+		$minimumSyncDate = $this->getMinimumSyncDate();
 
-		if (!$ignoreSyncFrom && !empty($this->mailbox['OPTIONS']['sync_from']))
+		if($minimumSyncDate !== false && !$ignoreSyncFrom && $message['__internaldate']->getTimestamp() < $this->getMinimumSyncDate())
 		{
-			if ($message['__internaldate']->getTimestamp() < $this->mailbox['OPTIONS']['sync_from'])
-			{
-				$this->completeMessageSync($fields['ID']);
-				return false;
-			}
+			$this->completeMessageSync($fields['ID']);
+			return false;
 		}
 
 		if (!empty($message['__created']) && !empty($this->mailbox['OPTIONS']['resync_from']))
@@ -2023,7 +2059,33 @@ class Imap extends Mail\Helper\Mailbox
 		);
 	}
 
-	protected function getSyncRange($dirPath, &$uidtoken)
+	public function getMinimumSyncDate()
+	{
+		$minimumDate = false;
+
+		if(!empty($this->mailbox['OPTIONS']['sync_from']))
+		{
+			$minimumDate = $this->mailbox['OPTIONS']['sync_from'];
+		}
+
+		$syncOldLimit = Mail\Helper\LicenseManager::getSyncOldLimit();
+
+		if($syncOldLimit > 0)
+		{
+			$syncOldLimit = strtotime(sprintf('-%u days', $syncOldLimit));
+
+			/*
+				Checking in case of changes in tariff limits
+			*/
+			if($minimumDate === false || $minimumDate < $syncOldLimit)
+			{
+				$minimumDate = $syncOldLimit;
+			}
+		}
+		return $minimumDate;
+	}
+
+	protected function getSyncRange($dirPath, &$uidtoken, $intervalSynchronizationAttempts = 0)
 	{
 		$meta = $this->client->select($dirPath, $error);
 		if (false === $meta)
@@ -2040,33 +2102,38 @@ class Imap extends Mail\Helper\Mailbox
 
 		$uidtoken = $meta['uidvalidity'];
 
-		$rangeGetter = function ($min, $max) use ($dirPath, $uidtoken, &$rangeGetter)
+		/*
+			The interval may be smaller if the uid of the last message
+			in the database is close to the split point in the set of intervals
+		*/
+		$maximumLengthSynchronizationInterval = $this->getMaximumSynchronizationLengthsOfIntervals($intervalSynchronizationAttempts);
+
+		$rangeGetter = function ($min, $max) use ($dirPath, $uidtoken, &$rangeGetter, $maximumLengthSynchronizationInterval)
 		{
+
 			$size = $max - $min + 1;
 
-			$set = array();
-			$d = $size < 1000 ? 100 : pow(10, round(ceil(log10($size) - 0.7) / 2) * 2 - 2);
+			$set = [];
+			$d = $size < 1000 ? $maximumLengthSynchronizationInterval : pow(10, round(ceil(log10($size) - 0.7) / 2) * 2 - 2);
 
-			//take every $d (usually 100) id starting from the first one
+			//Take intermediate interval values
 			for ($i = $min; $i <= $max; $i = $i + $d)
 			{
 				$set[] = $i;
 			}
 
-			/*if the interval from the last message id(we will add it later)
-			to the penultimate id in the set is less than one hundred,
-			we will delete the last one to increase the interval.
-				Example: 5000, 5100, 5200... 13900... 14000... 14023.
+			/*
+				The end of the expected interval should not exceed the identifier of the last message
 			*/
-			if (count($set) > 1 && end($set) + 100 >= $max)
+			if (count($set) > 1 && end($set) >= $max)
 			{
 				array_pop($set);
 			}
 
-			//the last item in the set must match the last item on the service
+			//The last item in the set must match the last item on the service
 			$set[] = $max;
 
-			//returns messages starting from the 1st existing one
+			//Return messages starting from the 1st existing one
 			$set = $this->client->fetch(false, $dirPath, join(',', $set), '(UID)', $error);
 
 			if (empty($set))
@@ -2076,20 +2143,22 @@ class Imap extends Mail\Helper\Mailbox
 
 			ksort($set);
 
-			static $uidMin, $uidMax;
+			static $uidMinInDatabase, $uidMaxInDatabase, $takeFromDown;
 
-			if (!isset($uidMin, $uidMax))
+			if (!isset($uidMinInDatabase, $uidMaxInDatabase, $takeFromDown))
 			{
-				$minmax = $this->getUidRange($dirPath, $uidtoken);
+				$messagesUidBoundariesIntervalInDatabase = $this->getUidRange($dirPath, $uidtoken);
 
-				if ($minmax)
+				if ($messagesUidBoundariesIntervalInDatabase)
 				{
-					$uidMin = $minmax['MIN'];
-					$uidMax = $minmax['MAX'];
+					$uidMinInDatabase = $messagesUidBoundariesIntervalInDatabase['MIN'];
+					$uidMaxInDatabase = $messagesUidBoundariesIntervalInDatabase['MAX'];
+					$takeFromDown = $messagesUidBoundariesIntervalInDatabase['TAKE_FROM_DOWN'];
 				}
 				else
 				{
-					$uidMin = $uidMax = (end($set)['UID'] + 1);
+					$takeFromDown = true;
+					$uidMinInDatabase = $uidMaxInDatabase = (end($set)['UID'] + 1);
 				}
 			}
 
@@ -2097,74 +2166,66 @@ class Imap extends Mail\Helper\Mailbox
 			{
 				$uid = reset($set)['UID'];
 
-				if ($uid > $uidMax || $uid < $uidMin)
+				if ($uid > $uidMaxInDatabase || $uid < $uidMinInDatabase)
 				{
 					return array($uid, $uid);
 				}
 			}
-			elseif (end($set)['UID'] > $uidMax)
+			elseif (end($set)['UID'] > $uidMaxInDatabase)
 			{
-				$max = current($set)['id'];
-
-				/*select the closest element with the largest uid
-				from the set of messages on the service (every hundredth)
-				to a message from the database (synchronized) with the maximum uid.*/
+				/*
+					Select the closest element with the largest uid
+					from the set of messages on the service (every hundredth)
+					to a message from the database (synchronized) with the maximum uid.
+				*/
 				do
 				{
-					$exmax = $max;
-
 					$max = current($set)['id'];
 					$min = prev($set)['id'];
 				}
-				while (current($set)['UID'] > $uidMax && prev($set) && next($set));
+				while (current($set)['UID'] > $uidMaxInDatabase && prev($set) && next($set));
 
-				//if the interval of messages for downloading is more than 200 - we repeat the splitting.
-				if ($max - $min > 200)
+				if ($max - $min > $maximumLengthSynchronizationInterval)
 				{
 					return $rangeGetter($min, $max);
 				}
 				else
 				{
-					/*if the synchronization interval turned out to be too small,
-					we take the nearest largest to the end of the interval from the set (every 100).
-					Thus the interval will increase by a hundred
-					(or another value, if at the end of the set).*/
-					if ($set[$max]['UID'] - $uidMax < 100)
-					{
-						$max = $exmax;
-					}
-
+					/*
+						Since we upload messages "up",
+						we know the upper ones and there is no point in "capturing" existing messages in the interval.
+						The selection is made within the interval, so the presence of extreme messages with the specified identifiers is not necessary.
+						+ 1 / - do not include an already uploaded message
+					*/
 					return array(
-						max($set[$min]['UID'], $uidMax + 1),
+						max($set[$min]['UID'], $uidMaxInDatabase + 1),
 						$set[$max]['UID'],
 					);
 				}
 			}
-			elseif (reset($set)['UID'] < $uidMin)
+			elseif (reset($set)['UID'] < $uidMinInDatabase && $takeFromDown)
 			{
-				$min = current($set)['id'];
 				do
 				{
-					$exmin = $min;
-
 					$min = current($set)['id'];
 					$max = next($set)['id'];
 				}
-				while (current($set)['UID'] < $uidMin && next($set) && prev($set));
+				while (current($set)['UID'] < $uidMinInDatabase && next($set) && prev($set));
 
-				if ($max - $min > 200)
+				if ($max - $min > $maximumLengthSynchronizationInterval)
 				{
 					return $rangeGetter($min, $max);
 				}
 				else
 				{
-					if ($uidMin - $set[$min]['UID'] < 100)
-					{
-						$min = $exmin;
-					}
-
+					/*
+						Since we upload messages "down",
+						we know the upper ones and there is no point in "capturing" existing messages in the interval.
+						The selection is made within the interval, so the presence of extreme messages with the specified identifiers is not necessary.
+						- 1 / - do not include an already uploaded message
+					*/
 					return array(
-						min($set[$max]['UID'], $uidMin - 1),
+						min($set[$max]['UID'], $uidMinInDatabase - 1),
 						$set[$min]['UID'],
 					);
 				}
@@ -2184,10 +2245,14 @@ class Imap extends Mail\Helper\Mailbox
 			'>MSG_UID'  => 0,
 		);
 
+		$minimumSyncDate = $this->getMinimumSyncDate();
+
+		$takeFromDown = true;
+
 		$min = $this->listMessages(
 			array(
 				'select' => array(
-					'MIN' => 'MSG_UID',
+					'MIN' => 'MSG_UID','INTERNALDATE'
 				),
 				'filter' => $filter,
 				'order'  => array(
@@ -2197,6 +2262,11 @@ class Imap extends Mail\Helper\Mailbox
 			),
 			false
 		)->fetch();
+
+		if(isset($min['INTERNALDATE']) && $minimumSyncDate !== false && $min['INTERNALDATE']->getTimestamp() < $minimumSyncDate)
+		{
+			$takeFromDown = false;
+		}
 
 		$max = $this->listMessages(
 			array(
@@ -2217,6 +2287,7 @@ class Imap extends Mail\Helper\Mailbox
 			return array(
 				'MIN' => $min['MIN'],
 				'MAX' => $max['MAX'],
+				'TAKE_FROM_DOWN' => $takeFromDown,
 			);
 		}
 

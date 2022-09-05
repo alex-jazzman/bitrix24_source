@@ -33,13 +33,6 @@
 	float: left;
 }
 
-.tasks-scrum-dod-settings-container-shell {
-	width: 75%;
-	float: left;
-	margin: 0 0 0 25%;
-	background: #f8f9fa;
-}
-
 .tasks-scrum-dod-settings-container-sidebar {
 	text-align: left;
 	float: left;
@@ -52,7 +45,7 @@
 
 .tasks-scrum-dod-settings-container-sidebar-wrapper {
 	text-align: left;
-	padding: 15px 0 35px 15px;
+	padding: 15px 0 35px 5px;
 	background: #f8f9fa;
 	font-size: 0;
 }
@@ -186,4 +179,8 @@
 
 .tasks-scrum-dod-form.ui-ctl-label-text span {
 	cursor: pointer;
+}
+
+.tasks-scrum-dod-settings-type-form .ui-alert.--hidden {
+	display: none;
 }

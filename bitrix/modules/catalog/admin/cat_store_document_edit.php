@@ -1870,7 +1870,7 @@ if (typeof showTotalSum === 'undefined')
 
 		var elements = products.querySelectorAll('table input,table select');
 
-		var nameTemplate = /^PRODUCT\[(\d)+\]\[(\w+)\]/;
+		var nameTemplate = /^PRODUCT\[(\d+)\]\[(\w+)\]/;
 
 		elements.forEach(function(item){
 			if (BX.Type.isStringFilled(item.name))

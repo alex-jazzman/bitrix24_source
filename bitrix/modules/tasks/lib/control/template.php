@@ -540,12 +540,24 @@ class Template
 	{
 		\Bitrix\Tasks\Item\Access\Task\Template::grantAccessLevel(
 			$this->templateId,
-			'U'.$fields['CREATED_BY'],
+			'U'.$this->userId,
 			'full',
 			[
 				'CHECK_RIGHTS' => false,
 			]
 		);
+
+		if ($this->userId !== (int) $fields['CREATED_BY'])
+		{
+			\Bitrix\Tasks\Item\Access\Task\Template::grantAccessLevel(
+				$this->templateId,
+				'U'.$fields['CREATED_BY'],
+				'full',
+				[
+					'CHECK_RIGHTS' => false,
+				]
+			);
+		}
 	}
 
 	/**

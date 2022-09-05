@@ -71,6 +71,18 @@ class Type extends Controller
 		$typeService = new TypeService();
 		$backlogService = new BacklogService();
 
+		if (!mb_strlen($name))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_STC_ERROR_COULD_NOT_EMPTY_TYPE'),
+					self::ERROR_COULD_NOT_CREATE_TYPE
+				)
+			);
+
+			return null;
+		}
+
 		$backlog = $backlogService->getBacklogByGroupId($groupId);
 
 		if ($backlog->isEmpty())
@@ -115,9 +127,21 @@ class Type extends Controller
 	 * @param string $name New type name.
 	 * @return string|null
 	 */
-	public function changeTypeNameAction(int $id, string $name): ?string
+	public function changeTypeNameAction(int $id, string $name): ?array
 	{
 		$typeService = new TypeService();
+
+		if (!mb_strlen($name))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_STC_ERROR_COULD_NOT_EMPTY_TYPE'),
+					self::ERROR_COULD_NOT_CHANGE_TYPE_NAME
+				)
+			);
+
+			return null;
+		}
 
 		$type = $typeService->getType($id);
 		if ($type->isEmpty())
@@ -144,7 +168,7 @@ class Type extends Controller
 			return null;
 		}
 
-		return '';
+		return $typeService->getType($type->getId())->toArray();
 	}
 
 	/**

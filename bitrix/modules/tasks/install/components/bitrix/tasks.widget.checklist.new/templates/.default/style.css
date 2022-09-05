@@ -19,6 +19,7 @@
 	margin-bottom: 15px;
 	position: relative;
 	transition: 170ms linear all;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .tasks-checklist-list-actions {}
@@ -36,6 +37,9 @@
 	transition: 250ms linear all;
 	opacity: 0;
 	bottom: 0;
+	border-radius: var(--ui-border-radius-md);
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 
 .tasks-checklist-wrapper::after {

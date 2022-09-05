@@ -124,10 +124,10 @@ if ($isBitrix24Template)
 		if ($arResult['isScrumList'])
 		{
 			$isScrumLimited = ScrumLimit::isLimitExceeded();
+			$scrumLimitSidePanelId = ScrumLimit::getSidePanelId();
 			if ($isScrumLimited)
 			{
-				$sidePanelId = ScrumLimit::getSidePanelId();
-				$createProjectUrl = "javascript:BX.UI.InfoHelper.show('{$sidePanelId}', {isLimit: true, limitAnalyticsLabels: {module: 'tasks', source: 'scrumList'}});";
+				$createProjectUrl = "javascript:BX.UI.InfoHelper.show('{$scrumLimitSidePanelId}', {isLimit: true, limitAnalyticsLabels: {module: 'tasks', source: 'scrumList'}});";
 			}
 			else
 			{
@@ -165,7 +165,7 @@ if ($isBitrix24Template)
 			'ENABLE_LABEL' => true,
 			'ENABLE_LIVE_SEARCH' => true,
 			'RESET_TO_DEFAULT_MODE' => true,
-			'THEME' => Theme::LIGHT,
+			'THEME' => Theme::MUTED,
 		],
 		$component,
 		['HIDE_ICONS' => true]
@@ -387,6 +387,9 @@ $APPLICATION->IncludeComponent(
 				'pinned' => UserOptionTypeDictionary::OPTION_PINNED,
 			],
 			'tours' => $arResult['TOURS'],
+			'isScrumList' => $arResult['isScrumList'] ? 'Y' : 'N',
+			'createProjectUrl' => $createProjectUrl ?: '',
+			'scrumLimitSidePanelId' => $scrumLimitSidePanelId ?: ''
 		]) ?>;
 		options.actionsPanel = actionsPanel;
 		BX.Tasks.ProjectsInstance = new BX.Tasks.Projects.Controller(options);

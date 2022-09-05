@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/bundle.css',
 	'js' => 'dist/bundle.js',
 	'rel' => [
+		'main.popup',
 		'main.core.events',
 		'main.core',
 	],

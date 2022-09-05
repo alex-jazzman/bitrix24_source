@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Scrum\Service;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\Recyclebin;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Kanban\StagesTable;
@@ -60,9 +61,45 @@ class KanbanService implements Errorable
 			return [];
 		}
 
-		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+		return $this->getStages($entity->getId());
+	}
 
-		return StagesTable::getStages($entity->getId(), true);
+	public function getStages(int $sprintId): array
+	{
+		$stages = [];
+
+		$queryObject = StagesTable::getList([
+			'filter' => [
+				'ENTITY_ID' => $sprintId,
+				'=ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+			],
+			'order' => [
+				'SORT' => 'ASC',
+			],
+		]);
+		while ($stage = $queryObject->fetch())
+		{
+			if ($stage['COLOR'] == '')
+			{
+				$stage['COLOR'] = StagesTable::DEF_COLOR_STAGE;
+			}
+
+			if ($stage['TITLE'] == '')
+			{
+				if ($stage['SYSTEM_TYPE'] != '')
+				{
+					$stage['TITLE'] = Loc::getMessage('TASKS_SCRUM_STAGE_' . $stage['SYSTEM_TYPE']);
+				}
+				else
+				{
+					$stage['TITLE'] = Loc::getMessage('TASKS_SCRUM_STAGE_' . StagesTable::SYS_TYPE_DEFAULT);
+				}
+			}
+
+			$stages[$stage['ID']] = $stage;
+		}
+
+		return $stages;
 	}
 
 	/**
@@ -157,9 +194,15 @@ class KanbanService implements Errorable
 				return false;
 			}
 
-			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+			$defaultStageId = $this->getDefaultStageId($sprintId);
+			if (!$defaultStageId)
+			{
+				$this->errorCollection->setError(
+					new Error('Failed to get the default stage', self::ERROR_COULD_NOT_ADD_TASK)
+				);
 
-			$defaultStageId = StagesTable::getDefaultStageId($sprintId);
+				return false;
+			}
 
 			$taskStageIdsMap = [];
 			if ($lastSprintId)
@@ -186,15 +229,6 @@ class KanbanService implements Errorable
 				}
 			}
 
-			if (!$defaultStageId)
-			{
-				$this->errorCollection->setError(
-					new Error('Failed to get the default stage', self::ERROR_COULD_NOT_ADD_TASK)
-				);
-
-				return false;
-			}
-
 			$this->removeTasksFromKanban($sprintId, $taskIds);
 
 			foreach ($taskIds as $taskId)
@@ -205,6 +239,9 @@ class KanbanService implements Errorable
 					'TASK_ID' => $taskId,
 					'STAGE_ID' => $stageId,
 				]);
+
+				$taskObject = new \CTasks;
+				$taskObject->update($taskId, ['STAGE_ID' => $stageId]);
 			}
 
 			return true;
@@ -323,6 +360,9 @@ class KanbanService implements Errorable
 					'TASK_ID' => $taskId,
 					'STAGE_ID' => $newStageId
 				]);
+
+				$taskObject = new \CTasks;
+				$taskObject->update($taskId, ['STAGE_ID' => $newStageId]);
 			}
 		}
 		catch (\Exception $exception)
@@ -570,7 +610,7 @@ class KanbanService implements Errorable
 		$queryObject = StagesTable::getList([
 			'select' => ['*'],
 			'filter' => [
-				'ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'=ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
 				'ENTITY_ID' => [$firstSprintId, $secondSprintId],
 			],
 			'order' => ['SORT' => 'ASC']
@@ -611,6 +651,58 @@ class KanbanService implements Errorable
 		return $stageIdsMap;
 	}
 
+	public function createSprintStages(int $sprintId)
+	{
+		$stages = $this->generateKanbanStages($sprintId);
+
+		$sort = 0;
+		foreach ($stages as $stageCode => $stageItem)
+		{
+			StagesTable::add(
+				[
+					'SYSTEM_TYPE' => array_key_exists('SYSTEM_TYPE', $stageItem)
+						? $stageItem['SYSTEM_TYPE']
+						: $stageCode
+					,
+					'TITLE' => array_key_exists('TITLE', $stageItem) ? $stageItem['TITLE'] : '',
+					'SORT' => ++$sort * 100,
+					'ENTITY_ID' => $sprintId,
+					'ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+					'COLOR' => $stageItem['COLOR']
+				]
+			);
+		}
+	}
+
+	public function hasSprintStages(int $sprintId): bool
+	{
+		$queryObject = StagesTable::getList([
+			'select' => ['*'],
+			'filter' => [
+				'=ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'ENTITY_ID' => $sprintId
+			],
+			'order' => [
+				'SORT' => 'ASC'
+			]
+		]);
+
+		return (bool) $queryObject->fetch();
+	}
+
+	private function getDefaultStageId(int $sprintId): int
+	{
+		foreach ($this->getStages($sprintId) as $stage)
+		{
+			if ($stage['SYSTEM_TYPE'] == $this->getNewStatus())
+			{
+				return $stage['ID'];
+			}
+		}
+
+		return 0;
+	}
+
 	private function getTaskIds(array $filter): array
 	{
 		$taskIds = [];
@@ -647,7 +739,7 @@ class KanbanService implements Errorable
 		$queryObject = StagesTable::getList([
 			'select' => ['*'],
 			'filter' => [
-				'ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'=ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
 				'ENTITY_ID' => $sprintId
 			],
 			'order' => [
@@ -679,7 +771,7 @@ class KanbanService implements Errorable
 		$queryObject = StagesTable::getList([
 			'select' => ['ID'],
 			'filter' => [
-				'ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'=ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
 				'ENTITY_ID' => $sprintId,
 			],
 			'order' => ['SORT' => 'ASC']
@@ -694,11 +786,9 @@ class KanbanService implements Errorable
 
 	private function getFinishStageId(int $sprintId): int
 	{
-		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
-
 		$stageId = 0;
 
-		$stages = StagesTable::getStages($sprintId, true);
+		$stages = $this->getStages($sprintId);
 		foreach ($stages as $stage)
 		{
 			if ($stage['SYSTEM_TYPE'] == $this->getFinishStatus())
@@ -712,11 +802,9 @@ class KanbanService implements Errorable
 
 	private function getNewStageId(int $sprintId): int
 	{
-		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
-
 		$stageId = 0;
 
-		$stages = StagesTable::getStages($sprintId, true);
+		$stages = $this->getStages($sprintId);
 		foreach ($stages as $stage)
 		{
 			if ($stage['SYSTEM_TYPE'] == $this->getNewStatus())

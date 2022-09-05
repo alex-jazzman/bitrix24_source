@@ -64,6 +64,7 @@ export type ItemParams = {
 	isSubTask?: 'Y' | 'N',
 	subTasksInfo?: SubTasksInfo,
 	isImportant?: 'Y' | 'N',
+	pathToTask: string
 };
 
 export class Item extends EventEmitter
@@ -75,6 +76,7 @@ export class Item extends EventEmitter
 		this.setEventNamespace('BX.Tasks.Scrum.Item');
 
 		this.groupMode = false;
+		this.decompositionMode = false;
 
 		this.node = null;
 
@@ -90,6 +92,8 @@ export class Item extends EventEmitter
 		this.subTasks = null;
 
 		this.setItemParams(params);
+
+		this.shortView = 'Y';
 	}
 
 	setItemParams(params: ItemParams)
@@ -113,9 +117,7 @@ export class Item extends EventEmitter
 		this.setAllowedActions(params.allowedActions);
 		this.setImportant(params.isImportant);
 
-		this.shortView = 'Y';
-
-		this.decompositionMode = false;
+		this.pathToTask = params.pathToTask;
 	}
 
 	static buildItem(params: ItemParams): Item
@@ -169,7 +171,9 @@ export class Item extends EventEmitter
 		const name = new Name({
 			name: inputName,
 			isCompleted: this.isCompleted(),
-			isImportant: this.isImportant()
+			isImportant: this.isImportant(),
+			pathToTask: this.pathToTask,
+			sourceId: this.getSourceId()
 		});
 
 		if (this.name)

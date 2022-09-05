@@ -1,15 +1,15 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage tasks
- * @copyright 2001-2023 Bitrix
- */
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\ActionException;
 use Bitrix\Tasks\Helper\Grid;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
@@ -24,7 +24,7 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 {
 	public function configureActions()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return [];
 		}
@@ -59,7 +59,7 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 
 	public function setViewStateAction($state)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -76,7 +76,7 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 
 	public function notificationThrottleReleaseAction()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -88,26 +88,23 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 	 * @param $taskFrom
 	 * @param $taskTo
 	 * @param $linkType
-	 * @return array|null
+	 * @return array
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function addDependenceAction($taskFrom, $taskTo, $linkType)
+	public function addDependenceAction($taskFrom, $taskTo, $linkType): array
 	{
-		$taskFrom = (int) $taskFrom;
-		if (!$taskFrom)
+		if (!Loader::includeModule('tasks'))
 		{
-			return null;
+			$this->errorCollection->add('MODULE_IS_NOT_INSTALLED', 'The Tasks module is not installed');
+			return [];
 		}
 
-		$taskTo = (int) $taskTo;
-		if (!$taskTo)
+		$taskFrom = (int)$taskFrom;
+		$taskTo = (int)$taskTo;
+		if (!$taskFrom || !$taskTo)
 		{
-			return null;
-		}
-
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
-		{
-			return null;
+			$this->errorCollection->add('BAD_ARGUMENTS', 'Bad arguments detected');
+			return [];
 		}
 
 		if (
@@ -124,7 +121,30 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 			$task = new \CTaskItem($taskTo, $this->userId);
 			$task->addDependOn($taskFrom, $linkType);
 		}
-		catch(Exception | \CTaskAssertException $e)
+		catch (ActionException $e)
+		{
+			if (empty($errors = $e->getErrors()))
+			{
+				$this->errorCollection->add('', $e->getMessageOrigin());
+			}
+			else
+			{
+				foreach ($errors as $error)
+				{
+					if (is_string($error))
+					{
+						$error = [
+							'CODE' => '',
+							'MESSAGE' => $error,
+						];
+					}
+					$this->errorCollection->add($error['CODE'], $error['MESSAGE']);
+				}
+			}
+
+			return [];
+		}
+		catch (Exception | \CTaskAssertException $e)
 		{
 			$this->addForbiddenError();
 			return [];
@@ -153,7 +173,7 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -222,25 +242,25 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 		$taskIds = [];
 		$this->arResult['TASKS_LINKS'] = [];
 
-		foreach ($this->arResult['LIST'] as $k => $item)
+		foreach ($this->arResult['LIST'] as $key => $task)
 		{
-			$taskId = $item['ID'];
-
-			$taskParameters = ParameterTable::getList(['filter' => ['TASK_ID' => $taskId]])->fetchAll();
-			$this->arResult['LIST'][$taskId]['SE_PARAMETER'] = $taskParameters;
-
+			$taskId = (int)$task['ID'];
 			$taskIds[] = $taskId;
 
-			$this->arResult['GROUP_IDS'][] = $item['GROUP_ID'];
-			$this->arResult['LIST'][$k] = $this->prepareRow($item);
+			$taskParameters = ParameterTable::getList(['filter' => ['TASK_ID' => $taskId]])->fetchAll();
+			$task['SE_PARAMETER'] = $taskParameters;
+
+			$this->arResult['GROUP_IDS'][] = $task['GROUP_ID'];
+			$this->arResult['LIST'][$key] = $this->prepareRow($task);
 		}
 
 		$res = ProjectDependenceTable::getListByLegacyTaskFilter($this->listParameters['filter']);
 		while ($item = $res->fetch())
 		{
-			if (in_array($item['TASK_ID'], $taskIds))
+			$taskId = (int)$item['TASK_ID'];
+			if (in_array($taskId, $taskIds, true))
 			{
-				$this->arResult['TASKS_LINKS'][$item['TASK_ID']][] = $item;
+				$this->arResult['TASKS_LINKS'][$taskId][] = $item;
 			}
 		}
 	}

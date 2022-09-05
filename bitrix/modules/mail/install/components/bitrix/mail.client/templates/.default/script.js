@@ -922,17 +922,35 @@
 			},
 			function (json)
 			{
-				BXMailMailbox.syncProgress(
-					stepper,
-					gridId,
-					{
-						'complete': false,
-						'status': -1,
-						'errors': json.errors,
-						'is_fatal_error': json.data.is_fatal_error,
-					},
-
-				);
+				if(!json.errors.indexOf('Network error'))
+				{
+					BXMailMailbox.syncProgress(
+						stepper,
+						gridId,
+						{
+							'complete': false,
+							'status': -1,
+							'errors': json.errors,
+							'is_fatal_error': json.data.is_fatal_error,
+						},
+					);
+				}
+				else
+				{
+					/*
+						Suspend informing the user that synchronization is in progress
+						if synchronization takes too long.
+					*/
+					BXMailMailbox.syncProgress(
+						stepper,
+						gridId,
+						{
+							'complete': true,
+							'status': 1,
+							'errors': [],
+						},
+					);
+				}
 			}
 		);
 	};

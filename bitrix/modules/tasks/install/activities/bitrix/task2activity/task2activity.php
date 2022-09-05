@@ -150,7 +150,10 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 		elseif(!$this->AsChildTask && CBPHelper::isEmptyValue($fields['PARENT_ID']) === false)
 		{
 			$parentId = is_array($fields['PARENT_ID']) ? reset($fields['PARENT_ID']) : $fields['PARENT_ID'];
-			if(is_null(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocument($parentId)))
+			if(
+				!is_numeric($parentId)
+				|| is_null(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocument($parentId))
+			)
 			{
 				$parentIdModifiedProperty = $logMap['PARENT_ID'];
 				$parentIdModifiedProperty['BaseType'] = 'string';

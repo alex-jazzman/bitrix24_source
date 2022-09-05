@@ -9,10 +9,13 @@
 .task-detail-info {
 	background-color: #fff;
 	margin: 0 0 20px 0;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .template-bitrix24 .task-detail-info {
 	margin: 0;
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 }
 
 .task-info-panel-important {
@@ -652,15 +655,15 @@ input.task-detail-field-add {
 	border-top: 1px solid #eef2f4;
 	background: #fff;
 	line-height: 50px;
+	margin-bottom: var(--ui-space-stack-md, 15px);
+	border-radius: var(--ui-border-radius-md);
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 
 .task-button-edit-link {
 	color: #393939;
 	font-size: 14px;
-}
-
-.template-bitrix24 .task-detail-buttons {
-	border-bottom: 15px solid #eef2f4;
 }
 
 .webform-button-link,
@@ -689,11 +692,8 @@ input.task-detail-field-add {
 	background: #fff;
 	padding: 20px;
 	overflow-x: auto;
-}
-
-.template-bitrix24 .task-detail-list {
-	border-bottom: 15px solid #eef2f4;
-	margin-bottom: 0;
+	border-radius: var(--ui-border-radius-md);
+	margin-bottom: var(--ui-space-stack-md, 15px);
 }
 
 .task-detail-list-title {
@@ -703,8 +703,8 @@ input.task-detail-field-add {
 	margin: 0 0 20px;
 }
 
-.template-bitrix24 .task-detail-comments {
-	background: #eef2f4;
+#sidebar {
+	width: 300px !important;
 }
 
 .task-detail-sidebar-content {
@@ -712,6 +712,7 @@ input.task-detail-field-add {
 	padding: 0 16px 16px;
 	color: #535c69;
 	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .task-detail-sidebar-status {
@@ -720,6 +721,9 @@ input.task-detail-field-add {
 	position: relative;
 	margin: 0 -16px;
 	min-height: 32px;
+	border-radius: var(--ui-border-radius-md);
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 }
 
 .task-detail-sidebar-status-content {
@@ -1003,7 +1007,9 @@ input.task-detail-field-add {
 	line-height: 30px;
 	height: 30px;
 	background: #e0e5e9;
-	border-radius: 3px 3px 0 0;
+	border-radius: var(--ui-border-radius-xs, 3px);
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 	transition: all 220ms linear;
 	position: relative;
 	border: 1px solid transparent;
@@ -1106,6 +1112,8 @@ input.task-detail-field-add {
 	margin: 0;
 	background: #fff;
 	padding: 11px;
+	border-radius: var(--ui-border-radius-md);
+	border-top-left-radius: 0;
 }
 
 .task-switcher-block-selected {
@@ -1341,6 +1349,7 @@ th.task-time-comment-column {
 	border: 1px solid #c6cdd3;
 	font-size: 13px;
 	color: #000;
+	border-radius: var(--ui-field-border-radius);
 }
 
 .task-time-date-column input {

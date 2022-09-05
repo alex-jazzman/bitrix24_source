@@ -245,9 +245,9 @@ class Task
 		}
 
 		$fields = $this->updateTags($fields);
-		$fields = $this->correctDatePlan($fields);
 
 		$fields = $this->onBeforeUpdate($fields);
+		$fields = $this->updateDatePlan($fields);
 
 		try
 		{
@@ -1329,11 +1329,7 @@ class Task
 	 */
 	private function stopTimer(bool $force = false)
 	{
-		$taskData = $this->sourceTaskData;
-		if (!$taskData)
-		{
-			$taskData = $this->getFullTaskData();
-		}
+		$taskData = $this->getFullTaskData();
 
 		if (!$taskData)
 		{
@@ -2229,6 +2225,19 @@ class Task
 			}
 		}
 
+		if (
+			isset($fields['END_DATE_PLAN'])
+			&& (string) $fields['END_DATE_PLAN'] === ''
+		)
+		{
+			$fields['DURATION_PLAN'] = 0;
+		}
+
+		$taskData = $this->getFullTaskData() ?? [];
+		$fields = (new TaskFieldHandler($this->userId, $fields, $taskData))
+			->prepareDurationPlanFields()
+			->getFields();
+
 		return $fields;
 	}
 
@@ -2239,19 +2248,6 @@ class Task
 	 */
 	private function correctDatePlan(array $fields): array
 	{
-		if ($this->taskId)
-		{
-			$fields = $this->updateDatePlan($fields);
-
-			if (
-				isset($fields['END_DATE_PLAN'])
-				&& (string) $fields['END_DATE_PLAN'] === ''
-			)
-			{
-				$fields['DURATION_PLAN'] = 0;
-			}
-		}
-
 		if (!$this->needCorrectDatePlan)
 		{
 			return $fields;

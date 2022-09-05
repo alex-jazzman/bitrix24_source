@@ -94,6 +94,29 @@
 	background: linear-gradient(top right, rgba(227, 232, 235, 0) 0, rgba(227, 232, 235, 0.7) 10%, #e3e8eb 20%, #e3e8eb 100%);
 }
 
+.ui-sidepanel-menu-link.--hover,
+.ui-sidepanel-submenu-link.--hover {
+	background-color: #e3e8eb;
+	color: #505a68;
+	text-decoration: none;
+}
+
+.ui-sidepanel-menu-action-icon {
+	max-width: 0;
+	overflow: hidden;
+	transition: max-width .0s linear;
+	opacity: .6;
+	margin-left: auto;
+}
+
+.ui-sidepanel-menu-action-icon.--hover {
+	max-width: 100%;
+}
+
+.ui-sidepanel-menu-link:hover .ui-sidepanel-menu-action-icon {
+	max-width: 100%;
+}
+
 .ui-sidepanel-toggle-btn:hover {
 	color: #95929e;
 }

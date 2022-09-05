@@ -29,6 +29,7 @@ Extension::load([
 	'ui.entity-selector',
 	'ui.icons.b24',
 	'ui.label',
+	'ui.migrationbar',
 	'ui.tour',
 ]);
 
@@ -256,7 +257,18 @@ $APPLICATION->IncludeComponent(
 				'groupBySubTasks' => ($arResult['GROUP_BY_SUBTASK'] ? 'true' : 'false'),
 				'taskList' => $arResult['LIST'],
 				'arParams' => $arParams,
-				'calendarSettings' => $arResult['CALENDAR_SETTINGS']
+				'calendarSettings' => $arResult['CALENDAR_SETTINGS'],
+				'lastGroupId' => $arResult['LAST_GROUP_ID'],
+				'migrationBarOptions' => [
+					'title' => Loc::getMessage('TASKS_GRID_STUB_MIGRATION_TITLE'),
+					'buttonMigrate' => Loc::getMessage('TASKS_GRID_STUB_MIGRATION_BUTTON_MIGRATE'),
+					'other' => Loc::getMessage('TASKS_GRID_STUB_MIGRATION_OTHER'),
+					'items' => [
+						"{$templateFolder}/images/tasks-projects-jira.svg",
+						"{$templateFolder}/images/tasks-projects-asana.svg",
+						"{$templateFolder}/images/tasks-projects-trello.svg",
+					],
+				],
 			])?>);
 
 			new BX.Tasks.Grid.Sorting({

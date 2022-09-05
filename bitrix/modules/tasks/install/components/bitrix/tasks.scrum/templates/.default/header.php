@@ -29,6 +29,7 @@ Extension::load([
 	'ui.label',
 	'ui.entity-selector',
 	'ui.short-view',
+	'ui.design-tokens',
 ]);
 
 Extension::load('date');

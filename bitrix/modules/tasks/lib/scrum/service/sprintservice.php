@@ -193,6 +193,17 @@ class SprintService implements Errorable
 				return $sprint;
 			}
 
+			if (!$kanbanService->hasSprintStages($sprint->getId()))
+			{
+				$kanbanService->createSprintStages($sprint->getId());
+			}
+			if ($kanbanService->getErrors())
+			{
+				$this->errorCollection->add($kanbanService->getErrors());
+
+				return $sprint;
+			}
+
 			$lastSprintId = $kanbanService->getLastCompletedSprintIdSameGroup($sprint->getId());
 
 			$kanbanService->addTasksToKanban(
@@ -377,6 +388,7 @@ class SprintService implements Errorable
 			}
 
 			(new CacheService($sprint->getGroupId(), CacheService::STATS))->clean();
+			(new CacheService($sprint->getGroupId(), CacheService::TEAM_STATS))->cleanRoot();
 		}
 		catch (\Exception $exception)
 		{

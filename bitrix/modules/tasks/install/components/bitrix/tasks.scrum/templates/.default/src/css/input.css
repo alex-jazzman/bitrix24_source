@@ -1,7 +1,7 @@
 .tasks-scrum__input {
 	box-sizing: border-box;
 	padding: 12px 0;
-	border-radius: 3px;
+	border-radius: var(--ui-field-border-radius, 3px);
 	margin-top: 10px;
 	color: var(--tasks_scrum-light-grey);
 	position: relative;

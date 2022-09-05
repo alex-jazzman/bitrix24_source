@@ -491,7 +491,7 @@
 	box-sizing: border-box;
 	background: var(--tasks_scrum-white);
 	border: 1px solid var(--tasks_scrum-blue);
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	width: 100%;
 	transition: .2s;
 }
@@ -699,6 +699,9 @@
 	border: 1px solid;
 	transition: .2s;
 	cursor: pointer;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .tasks-scrum__item--epic-full-view.--visible {

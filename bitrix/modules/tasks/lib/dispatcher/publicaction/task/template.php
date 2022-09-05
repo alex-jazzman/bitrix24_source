@@ -351,6 +351,11 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 	{
 		$res = new Util\Result();
 
+		if (!Integration\Bitrix24::checkFeatureEnabled(Integration\Bitrix24\FeatureDictionary::TASKS_TEMPLATES_ACCESS))
+		{
+			return $res;
+		}
+
 		$permissions = array_values($permissions);
 
 		/**

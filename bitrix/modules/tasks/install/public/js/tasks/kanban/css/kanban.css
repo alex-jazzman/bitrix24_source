@@ -6,6 +6,9 @@
 .tasks-kanban-item {
 	padding: 10px 35px 0 12px;
 	position: relative;
+	background: #fff;
+	border-radius: var(--ui-border-radius-md);
+	overflow: hidden;
 }
 
 .tasks-kanban-item:before {
@@ -32,6 +35,16 @@
 
 .main-kanban-item-drag .tasks-kanban-item {
 	padding: 10px 12px 10px 12px;
+}
+
+.tasks-kanban-item-line {
+	display: block;
+	width: 3px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	background-color: var(--tasks-kanban-item-color);
 }
 
 .tasks-kanban-item:after {
@@ -833,7 +846,9 @@ a.tasks-kanban-item-super-blue:hover,
 .task-kanban-column-revert .main-kanban-column-title-bg {
 	left: 13px;
 	right: -3px;
-	border-radius: 0 3px 3px 0;
+	border-radius: var(--ui-border-radius-2xs, 3px);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
 }
 
 .task-kanban-column-revert .main-kanban-column-title-right {
@@ -842,7 +857,7 @@ a.tasks-kanban-item-super-blue:hover,
 	transform: scaleX(-1);
 }
 
-.main-kanban-column:first-child .main-kanban-column-title-bg {
+.main-kanban-column:first-child .task-kanban-column-revert .main-kanban-column-title-bg {
 	left: 0;
 	border-radius: 3px;
 }

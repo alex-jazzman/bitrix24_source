@@ -20,7 +20,7 @@ Loc::loadMessages(dirname(__FILE__).'/template.php');
 $taskData = $arResult["DATA"]["TASK"];
 $can = $arResult["CAN"]["TASK"]["ACTION"];
 
-\Bitrix\Main\UI\Extension::load("ui.notification");
+\Bitrix\Main\UI\Extension::load(["ui.notification", "ui.design-tokens"]);
 
 if (!intval($arParams['ID']))
 {
@@ -227,7 +227,7 @@ $component->tryParseBooleanParameter($arParams["ENABLE_MENU_TOOLBAR"], true);
 $arResult["TEMPLATE_DATA"]["RATING"] = CRatings::GetRatingVoteResult("TASK", $taskData["ID"]);
 
 //Body Class
-$ownClass = "no-paddings task-detail-page";
+$ownClass = "no-paddings task-detail-page no-background";
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $bodyClass = $bodyClass ? $bodyClass." ".$ownClass : $ownClass;
 $APPLICATION->SetPageProperty("BodyClass", $bodyClass);

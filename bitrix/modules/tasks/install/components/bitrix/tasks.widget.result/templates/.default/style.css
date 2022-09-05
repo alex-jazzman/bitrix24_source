@@ -17,13 +17,13 @@
 .tasks-result-list-container {
 	transition: .2s;
 	overflow: hidden;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .tasks-widget-result {
 	position: relative;
 	color: var(--tasks_widget_result-grey);
 	padding-bottom: 20px;
-	background: var(--tasks_widget_result-grey-2);
 }
 
 .tasks-widget-result--content {
@@ -51,6 +51,9 @@
 	background: var(--tasks_widget_result-white);
 	box-shadow: 0 1px 2px var(--tasks_widget_result-grey_alpha_07);
 	z-index: -1;
+	border-radius: var(--ui-border-radius-md);
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 
 .tasks-widget-result--content.--many-results > .tasks-widget-result__item::after {
@@ -72,6 +75,7 @@
 	margin-bottom: 15px;
 	transition: .2s;
 	position: relative;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .tasks-widget-result__item-more {

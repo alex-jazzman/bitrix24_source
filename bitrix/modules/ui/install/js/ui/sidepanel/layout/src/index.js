@@ -70,6 +70,16 @@ export class Layout
 		;
 	}
 
+	static createLayout(options: Options = {}): Promise
+	{
+		options = prepareOptions(options);
+
+		return top.BX.Runtime
+			.loadExtension(options.extensions)
+			.then(() => new Layout(options))
+		;
+	}
+
 	#container;
 	#containerFooter;
 	#options;
@@ -102,6 +112,11 @@ export class Layout
 			this.#container = Tag.render`<div class="ui-sidepanel-layout"></div>`;
 		}
 		return this.#container;
+	}
+
+	getMenu(): Menu
+	{
+		return this.#menu;
 	}
 
 	getFooterContainer()

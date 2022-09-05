@@ -73,7 +73,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 			$buttonIcon = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? 'ui-btn-icon-lock' : 'ui-btn-icon-add');
 			$href = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? '' : htmlspecialcharsbx($arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB']));
 			?>
-			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting" id="templateViewPopupMenuOptions"></button>
+			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting ui-btn-themes" id="templateViewPopupMenuOptions"></button>
 			<?if (!$helper->checkHasFatals() && \Bitrix\Tasks\Access\TemplateAccessController::can(User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE)):?>
 				<a class="ui-btn ui-btn-primary ui-btn-medium <?=$buttonIcon?>" id="subTemplateAdd" href="<?=$href?>">
 					<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_ADD_SUBTEMPLATE')?>
