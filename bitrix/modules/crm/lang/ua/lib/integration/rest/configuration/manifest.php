@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_CRM_FORM"] = "Натисніть \"Експортувати\", щоб зберегти ваші CRM-форми у файлі";
+$MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_CRM_SMART_ROBOTS"] = "Натисніть \"Експортувати\", щоб зберегти ваші Розумні сценарії у файлі";
+$MESS["CRM_CONFIGURATION_MANIFEST_ACTION_DESCRIPTION_VERTICAL_CRM"] = "Натисніть \"Експортувати\", щоб зберегти налаштування вашої CRM у файлі";
+$MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_CRM_FORM"] = "Експорт CRM-форм";
+$MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_CRM_SMART_ROBOTS"] = "Експорт Розумних сценаріїв";
+$MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_IMPORT_CRM_SMART_ROBOTS"] = "Імпорт Розумних сценаріїв";
+$MESS["CRM_CONFIGURATION_MANIFEST_BLOCK_TITLE_VERTICAL_CRM"] = "Експорт Галузевої CRM";
+$MESS["CRM_CONFIGURATION_MANIFEST_DESCRIPTION_CRM_FORM"] = "Отримайте готові CRM-форми для свого бізнесу за кілька хвилин!";
+$MESS["CRM_CONFIGURATION_MANIFEST_DESCRIPTION_CRM_SMART_ROBOTS"] = "Отримайте готові Розумні сценарії для свого бізнесу за кілька хвилин!";
+$MESS["CRM_CONFIGURATION_MANIFEST_DESCRIPTION_VERTICAL_CRM"] = "Отримайте готову CRM для свого бізнесу за кілька хвилин!";
+$MESS["CRM_CONFIGURATION_MANIFEST_IMPORT_DESCRIPTION_UPLOAD_CRM_SMART_ROBOTS"] = "Завантажте файл із налаштуваннями Розумних сценаріїв";
+$MESS["CRM_CONFIGURATION_MANIFEST_IMPORT_INSTALL_FINISH_TEXT_CRM_SMART_ROBOTS"] = "Імпорт Розумних сценаріїв успішно завершено";
+$MESS["CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_CRM_FORM"] = "Експорт CRM-форм";
+$MESS["CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_CRM_SMART_ROBOTS"] = "Експорт Розумних сценаріїв";
+$MESS["CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_IMPORT_CRM_SMART_ROBOTS"] = "Імпорт Розумних сценаріїв";
+$MESS["CRM_CONFIGURATION_MANIFEST_PAGE_TITLE_VERTICAL_CRM"] = "Експорт Галузевої CRM";
+$MESS["CRM_CONFIGURATION_MANIFEST_TITLE_CRM_FORM"] = "CRM-форми";
+$MESS["CRM_CONFIGURATION_MANIFEST_TITLE_CRM_SMART_ROBOTS"] = "Розумні сценарії";
+$MESS["CRM_CONFIGURATION_MANIFEST_TITLE_VERTICAL_CRM"] = "Галузева CRM";

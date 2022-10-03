@@ -2005,6 +2005,11 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 			$this->entityData['CURRENCY_ID'],
 			''
 		);
+		$this->entityData['FORMATTED_OPPORTUNITY_ACCOUNT_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
+			$this->entityData['OPPORTUNITY_ACCOUNT'],
+			$this->entityData['ACCOUNT_CURRENCY_ID'],
+			''
+		);
 		$this->entityData['FORMATTED_OPPORTUNITY'] = \CCrmCurrency::MoneyToString(
 			$this->entityData['OPPORTUNITY'],
 			$this->entityData['CURRENCY_ID'],

@@ -1,0 +1,36 @@
+<?
+$MESS["BPC_PAGE_OF"] = "з";
+$MESS["BPC_TEXT_ENTER_URL_NAME"] = "Введіть назву сайту";
+$MESS["BPC_TEXT_ENTER_URL"] = "Введіть повну адресу (URL)";
+$MESS["BPC_TEXT_ENTER_IMAGE"] = "Введіть повну адресу (URL) зображення";
+$MESS["BPC_LIST_PROMPT"] = "Введіть пункт списку. Натисніть 'Скасувати' або залиште пробіл для завершення списку";
+$MESS["BPC_HYPERLINK"] = "Введення гіперпосилання";
+$MESS["BLOG_P_INSERT_IMAGE_LINK"] = "Вставити посилання на зображення";
+$MESS["BPC_ERROR_NO_URL"] = "Ви повинні ввести адресу (URL)";
+$MESS["BPC_ERROR_NO_TITLE"] = "Ви повинні ввести назву";
+$MESS["BPC_MES_DELETE_POST_CONFIRM"] = "Ви впевнені, що хочете видалити коментар?";
+$MESS["B_B_MS_ADD_COMMENT"] = "Додати коментар";
+$MESS["BPC_BOLD"] = "Жирний текст";
+$MESS["BPC_CLOSE_OPENED_TAGS"] = "Закрити всі відкриті теги";
+$MESS["BPC_CLOSE_ALL_TAGS"] = "Закрити всі теги";
+$MESS["B_B_MS_NAME"] = "Ім'я:";
+$MESS["BLOG_CATEGORY_NAME"] = "Назва тега";
+$MESS["BPC_ITALIC"] = "Курсив";
+$MESS["B_B_MS_FROM"] = "від";
+$MESS["B_B_MS_REPLY"] = "Відповісти";
+$MESS["B_B_MS_SEND"] = "Надіслати";
+$MESS["BPC_CODE"] = "Оформлення тексту у вигляді коду";
+$MESS["BPC_LIST"] = "Оформлення тексту у вигляді списку";
+$MESS["BPC_QUOTE"] = "Оформлення тексту у вигляді цитати";
+$MESS["BPC_UNDER"] = "Підкреслений текст";
+$MESS["B_B_MS_PREVIEW_TITLE"] = "Попередній перегляд коментаря";
+$MESS["B_B_MS_PREVIEW"] = "Перегляд";
+$MESS["B_B_MS_PARENT"] = "Батько";
+$MESS["B_B_MS_CAPTCHA_SYM"] = "Символи на картинці:";
+$MESS["B_B_MS_M_BODY"] = "Повідомлення:";
+$MESS["B_B_MS_LINK"] = "Посилання";
+$MESS["BPC_PAGE"] = "Сторінка:";
+$MESS["B_B_MS_SUBJECT"] = "Тема:";
+$MESS["BPC_IMAGE"] = "Колір";
+$MESS["BPC_FONT"] = "Шрифт";
+?>

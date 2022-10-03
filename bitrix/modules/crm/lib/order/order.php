@@ -89,6 +89,8 @@ class Order extends Sale\Order
 					$binding->setField('OWNER_ID', $dealId);
 					$binding->setField('OWNER_TYPE_ID', \CCrmOwnerType::Deal);
 					$binding->markEntityAsNew();
+
+					$this->markDealCreationTimelineEntry();
 				}
 			}
 		}
@@ -480,9 +482,9 @@ class Order extends Sale\Order
 				$maxId = max($maxId, $payment->getId());
 			}
 
-			if ($latestPayment = $paymentCollection->getItemById($maxId))
+			if ($maxId > 0)
 			{
-				return $latestPayment;
+				return $paymentCollection->getItemById($maxId);
 			}
 		}
 
@@ -806,6 +808,17 @@ class Order extends Sale\Order
 			Crm\Timeline\TimelineType::CREATION,
 			$selectedFields
 		);
+	}
+
+	private function markDealCreationTimelineEntry(): void
+	{
+		if ($this->getEntityBinding())
+		{
+			Crm\Timeline\OrderController::getInstance()->markDealAsCreatedFromOrder(
+				$this->getId(),
+				$this->getEntityBinding()->getOwnerId(),
+			);
+		}
 	}
 
 	/**

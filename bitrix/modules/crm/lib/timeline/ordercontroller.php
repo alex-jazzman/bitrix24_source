@@ -316,6 +316,35 @@ class OrderController extends EntityController
 	}
 
 	/**
+	 * @param int $ownerId
+	 * @param int $dealId
+	 */
+	final public function markDealAsCreatedFromOrder(int $ownerId, int $dealId): void
+	{
+		$creationEntry =
+			Entity\TimelineTable::query()
+				->setSelect(['ID', 'SETTINGS'])
+				->where('ASSOCIATED_ENTITY_TYPE_ID', \CCrmOwnerType::Deal)
+				->where('ASSOCIATED_ENTITY_ID', $dealId)
+				->where('TYPE_ID', TimelineType::CREATION)
+				->setLimit(1)
+				->fetch()
+		;
+
+		if ($creationEntry)
+		{
+			$settings = $creationEntry['SETTINGS'] ?? [];
+
+			$settings['ORDER'] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => $ownerId,
+			];
+
+			Entity\TimelineTable::update($creationEntry['ID'], ['SETTINGS' => $settings]);
+		}
+	}
+
+	/**
 	 * @param $ownerID
 	 * @param $entryTypeID
 	 * @param array $fields

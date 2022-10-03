@@ -1,0 +1,32 @@
+<?
+$MESS["EMAIL_OPT_DAYS"] = "дн";
+$MESS["EMAIL_OPT_HR"] = "г";
+$MESS["EMAIL_OPT_MIN"] = "хв";
+$MESS["EMAL_OPT_PHP_LINE"] = "Командний рядок запуску PHP:";
+$MESS["EMAL_OPT_SEC"] = "сек";
+$MESS["EMAL_OPT_SMTP_RUN"] = "Сервер: працює";
+$MESS["EMAL_OPT_SMTP_STAT_CNT"] = "Прийнято:";
+$MESS["EMAL_OPT_SMTP_STAT_CNT_MAIL"] = "листів";
+$MESS["EMAL_OPT_SMTP_STAT_CONS"] = "З'єднань:";
+$MESS["EMAL_OPT_SMTP_STAT_CONS_NOW"] = "зараз:";
+$MESS["EMAL_OPT_SMTP_STAT_START"] = "Запущено:";
+$MESS["EMAL_OPT_SMTP_STAT_UPTIME"] = "працює";
+$MESS["EMAL_OPT_SMTP_STOPPED"] = "Сервер: зупинено";
+$MESS["EMAL_OPT_START_SMTP"] = "Запустити SMTP сервер";
+$MESS["EMAL_OPT_STATUS"] = "Стан:";
+$MESS["EMAL_OPT_STATUS_UNK"] = "невідомо";
+$MESS["EMAL_OPT_STOP_SMTP"] = "Зупинити SMTP сервер";
+$MESS["MAIL_OPTIONS_CHECKSPAM"] = "Перевіряти повідомлення на спам при отриманні пошти:";
+$MESS["MAIL_OPTIONS_LOG_SAVE"] = "Зберігати журнал роботи (днів):";
+$MESS["MAIL_OPTIONS_RESET"] = "Скасувати";
+$MESS["MAIL_OPTIONS_SAVE"] = "Зберегти";
+$MESS["MAIL_OPTIONS_SAVE_ATTACHMENTS"] = "Зберігати вкладені файли:";
+$MESS["MAIL_OPTIONS_SAVE_SRC"] = "Зберігати вихідний текст листа:";
+$MESS["MAIL_OPTIONS_SYNC_OLD_LIMIT"] = "Термін зберігання листів в днях (0 - без обмежень):";
+$MESS["MAIL_OPTIONS_TIMEOUT"] = "Таймаут з'єднання:";
+$MESS["MAIL_OPT_CONFIRM"] = "Поточне значення командного рядка не збережено. Запустити сервер зі старими даними?";
+$MESS["MAIL_OPT_ERR"] = "Помилка:";
+$MESS["MAIL_OPT_ERR_CON"] = "Помилка з'єднання.";
+$MESS["MAIN_TAB_SMTP"] = "SMTP сервер";
+$MESS["MAIN_TAB_SMTP_TITLE"] = "Параметри запуску SMTP серверу";
+?>

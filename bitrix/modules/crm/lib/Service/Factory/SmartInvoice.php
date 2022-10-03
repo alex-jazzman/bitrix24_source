@@ -96,6 +96,11 @@ class SmartInvoice extends Dynamic
 			'ATTRIBUTES' => $locationAttributes,
 		];
 
+		if (isset($settings[Item::FIELD_NAME_CLOSE_DATE]))
+		{
+			$settings[Item::FIELD_NAME_CLOSE_DATE]['SETTINGS']['isSetCurrentDateOnCompletionEnabled'] = false;
+		}
+
 		return $settings;
 	}
 
@@ -292,22 +297,7 @@ class SmartInvoice extends Dynamic
 
 		$operation->addAction(
 			Operation::ACTION_AFTER_SAVE,
-			new class extends Operation\Action {
-				public function process(Item $item): Result
-				{
-					$itemBeforeSave = $this->getItemBeforeSave();
-					if (
-						$itemBeforeSave
-						&& $itemBeforeSave->isChangedStageId()
-						&& $item instanceof Item\SmartInvoice
-					)
-					{
-						InvoiceTrigger::onSmartInvoiceStatusChanged($item);
-					}
-
-					return new Result();
-				}
-			}
+			new Operation\Action\SmartInvoiceStatusChangedTrigger(),
 		);
 
 		return $operation;

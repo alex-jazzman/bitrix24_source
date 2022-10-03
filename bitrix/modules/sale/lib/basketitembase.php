@@ -131,6 +131,7 @@ abstract class BasketItemBase extends Internals\CollectableEntity
 			"MODULE" => $moduleId,
 			"BASE_PRICE" => 0,
 			"CAN_BUY" => 'Y',
+			"VAT_RATE" => null,
 			"CUSTOM_PRICE" => 'N',
 			"PRODUCT_ID" => $productId,
 			'XML_ID' => static::generateXmlId(),
@@ -1029,6 +1030,30 @@ abstract class BasketItemBase extends Internals\CollectableEntity
 	public function getCurrency()
 	{
 		return $this->getField('CURRENCY');
+	}
+
+	/**
+	 * Change basket item currency.
+	 *
+	 * @param string $currency
+	 *
+	 * @return Main\Result
+	 */
+	public function changeCurrency(string $currency): Main\Result
+	{
+		$result = new Main\Result();
+
+		$oldCurrency = $this->getCurrency();
+		if ($oldCurrency === $currency)
+		{
+			return $result;
+		}
+
+		$result->addErrors(
+			$this->setField('CURRENCY', $currency)->getErrors()
+		);
+
+		return $result;
 	}
 
 	/**

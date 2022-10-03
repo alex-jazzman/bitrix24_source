@@ -14,6 +14,7 @@ CJSCore::Init([
 	"ui.hint",
 	"ui.feedback.form",
 	"ui.design-tokens",
+	"ui.fonts.opensans",
 ]);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");

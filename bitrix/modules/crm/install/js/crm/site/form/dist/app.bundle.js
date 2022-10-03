@@ -1828,6 +1828,74 @@ var Vue = exports.Vue;
       return MoveObserver;
     }();
 
+    function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+    function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+    function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+    function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+    var _element = /*#__PURE__*/new WeakMap();
+
+    var _handler = /*#__PURE__*/new WeakMap();
+
+    var _observer = /*#__PURE__*/new WeakMap();
+
+    var _init = /*#__PURE__*/new WeakSet();
+
+    var ViewObserver = /*#__PURE__*/function () {
+      function ViewObserver(element, handler) {
+        babelHelpers.classCallCheck(this, ViewObserver);
+
+        _classPrivateMethodInitSpec(this, _init);
+
+        _classPrivateFieldInitSpec(this, _element, {
+          writable: true,
+          value: void 0
+        });
+
+        _classPrivateFieldInitSpec(this, _handler, {
+          writable: true,
+          value: void 0
+        });
+
+        _classPrivateFieldInitSpec(this, _observer, {
+          writable: true,
+          value: void 0
+        });
+
+        babelHelpers.classPrivateFieldSet(this, _element, element);
+        babelHelpers.classPrivateFieldSet(this, _handler, handler);
+      }
+
+      babelHelpers.createClass(ViewObserver, null, [{
+        key: "observe",
+        value: function observe(element, handler) {
+          var instance = new ViewObserver(element, handler);
+
+          _classPrivateMethodGet(instance, _init, _init2).call(instance);
+        }
+      }]);
+      return ViewObserver;
+    }();
+
+    function _init2() {
+      var _this = this;
+
+      babelHelpers.classPrivateFieldSet(this, _observer, new IntersectionObserver(function (entries, observer) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            babelHelpers.classPrivateFieldGet(_this, _handler).call(_this);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.5
+      }));
+      babelHelpers.classPrivateFieldGet(this, _observer).observe(babelHelpers.classPrivateFieldGet(this, _element));
+    }
+
     var Scroll = {
       items: [],
       toggle: function toggle(element, mode) {
@@ -2039,9 +2107,9 @@ var Vue = exports.Vue;
       }
     };
 
-    function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+    function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 
-    function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
     var _namespace = /*#__PURE__*/new WeakMap();
 
@@ -2053,17 +2121,17 @@ var Vue = exports.Vue;
       function Event() {
         babelHelpers.classCallCheck(this, Event);
 
-        _classPrivateFieldInitSpec(this, _namespace, {
+        _classPrivateFieldInitSpec$1(this, _namespace, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec(this, _subscribers, {
+        _classPrivateFieldInitSpec$1(this, _subscribers, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec(this, _emittedOnce, {
+        _classPrivateFieldInitSpec$1(this, _emittedOnce, {
           writable: true,
           value: []
         });
@@ -2714,11 +2782,11 @@ var Vue = exports.Vue;
       return restore()['name'][fieldName] || '';
     }
 
-    function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+    function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
 
-    function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
-    function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+    function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var DefaultOptions = {
       type: 'string',
       label: 'Default field name',
@@ -2772,7 +2840,7 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
 
-        _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _prepareValues);
+        _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _prepareValues);
 
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "events", {
           blur: 'blur',
@@ -2980,7 +3048,7 @@ var Vue = exports.Vue;
         value: function setValues(values) {
           var _this6 = this;
 
-          values = _classPrivateMethodGet(this, _prepareValues, _prepareValues2).call(this, values);
+          values = _classPrivateMethodGet$1(this, _prepareValues, _prepareValues2).call(this, values);
 
           if (values.length === 0) {
             return this;
@@ -5795,7 +5863,8 @@ var Vue = exports.Vue;
       destroy: 'destroy',
       fieldFocus: 'field:focus',
       fieldBlur: 'field:blur',
-      fieldChangeSelected: 'field:change:selected'
+      fieldChangeSelected: 'field:change:selected',
+      view: 'view'
     };
     var ViewTypes = ['inline', 'popup', 'panel', 'widget'];
     var ViewPositions = ['left', 'center', 'right'];
@@ -5920,9 +5989,9 @@ var Vue = exports.Vue;
 
     function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
-    function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+    function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 
-    function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var ConditionEvents = {
       change: 'change'
     };
@@ -5958,17 +6027,17 @@ var Vue = exports.Vue;
       function Manager(form) {
         babelHelpers.classCallCheck(this, Manager);
 
-        _classPrivateFieldInitSpec$1(this, _form, {
+        _classPrivateFieldInitSpec$2(this, _form, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$1(this, _list, {
+        _classPrivateFieldInitSpec$2(this, _list, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$1(this, _groups, {
+        _classPrivateFieldInitSpec$2(this, _groups, {
           writable: true,
           value: []
         });
@@ -6231,9 +6300,9 @@ var Vue = exports.Vue;
       ConditionOperations.push(Operations[_operationName]);
     }
 
-    function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+    function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
 
-    function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
     var _form$1 = /*#__PURE__*/new WeakMap();
 
@@ -6245,17 +6314,17 @@ var Vue = exports.Vue;
       function Analytics$$1(form) {
         babelHelpers.classCallCheck(this, Analytics$$1);
 
-        _classPrivateFieldInitSpec$2(this, _form$1, {
+        _classPrivateFieldInitSpec$3(this, _form$1, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$2(this, _isStartSent, {
+        _classPrivateFieldInitSpec$3(this, _isStartSent, {
           writable: true,
           value: false
         });
 
-        _classPrivateFieldInitSpec$2(this, _filledFields, {
+        _classPrivateFieldInitSpec$3(this, _filledFields, {
           writable: true,
           value: []
         });
@@ -6267,9 +6336,22 @@ var Vue = exports.Vue;
       babelHelpers.createClass(Analytics$$1, [{
         key: "onFormEvent",
         value: function onFormEvent(data, obj, type) {
+          if (babelHelpers.classPrivateFieldGet(this, _form$1).disabled) {
+            return;
+          }
+
+          if (babelHelpers.classPrivateFieldGet(this, _form$1).editMode) {
+            return; // don't handle analytics in form editor mode
+          }
+
           switch (type) {
             case EventTypes.showFirst:
               this.send('view');
+              break;
+
+            case EventTypes.view:
+              // form
+              babelHelpers.classPrivateFieldGet(this, _form$1).analyticsHandler('view', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
               break;
 
             case EventTypes.fieldFocus:
@@ -6343,9 +6425,9 @@ var Vue = exports.Vue;
       return Analytics$$1;
     }();
 
-    function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
+    function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
 
-    function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
     var _key = /*#__PURE__*/new WeakMap();
 
@@ -6363,32 +6445,32 @@ var Vue = exports.Vue;
       function ReCaptcha$$1() {
         babelHelpers.classCallCheck(this, ReCaptcha$$1);
 
-        _classPrivateFieldInitSpec$3(this, _key, {
+        _classPrivateFieldInitSpec$4(this, _key, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$3(this, _use, {
+        _classPrivateFieldInitSpec$4(this, _use, {
           writable: true,
           value: false
         });
 
-        _classPrivateFieldInitSpec$3(this, _widgetId, {
+        _classPrivateFieldInitSpec$4(this, _widgetId, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$3(this, _response, {
+        _classPrivateFieldInitSpec$4(this, _response, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$3(this, _target, {
+        _classPrivateFieldInitSpec$4(this, _target, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$3(this, _callback, {
+        _classPrivateFieldInitSpec$4(this, _callback, {
           writable: true,
           value: void 0
         });
@@ -6482,9 +6564,9 @@ var Vue = exports.Vue;
       return ReCaptcha$$1;
     }();
 
-    function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
+    function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
 
-    function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
     var _currency = /*#__PURE__*/new WeakMap();
 
@@ -6494,12 +6576,12 @@ var Vue = exports.Vue;
       function Basket(fields, currency) {
         babelHelpers.classCallCheck(this, Basket);
 
-        _classPrivateFieldInitSpec$4(this, _currency, {
+        _classPrivateFieldInitSpec$5(this, _currency, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$4(this, _fields, {
+        _classPrivateFieldInitSpec$5(this, _fields, {
           writable: true,
           value: []
         });
@@ -7810,9 +7892,9 @@ var Vue = exports.Vue;
       'b24-form-widget': Widget$1
     };
 
-    function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+    function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
 
-    function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var DefaultOptions$4 = {
       view: 'inline'
     };
@@ -7833,13 +7915,15 @@ var Vue = exports.Vue;
       babelHelpers.inherits(Controller$$1, _Event);
 
       function Controller$$1() {
+        var _options$editMode;
+
         var _this;
 
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _id$2, {
+        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _id$2, {
           writable: true,
           value: void 0
         });
@@ -7853,17 +7937,17 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "languages", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "language", 'en');
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _fields$1, {
+        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _fields$1, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _dependence, {
+        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _dependence, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _properties, {
+        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _properties, {
           writable: true,
           value: {}
         });
@@ -7881,7 +7965,7 @@ var Vue = exports.Vue;
           format: '$#'
         });
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _personalisation, {
+        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _personalisation, {
           writable: true,
           value: {
             title: '',
@@ -7901,7 +7985,7 @@ var Vue = exports.Vue;
           handler: null
         });
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _vue, {
+        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _vue, {
           writable: true,
           value: void 0
         });
@@ -7920,6 +8004,7 @@ var Vue = exports.Vue;
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$2, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
         _this.provider = options.provider || {};
         _this.analyticsHandler = options.analyticsHandler || {};
+        _this.editMode = (_options$editMode = options.editMode) !== null && _options$editMode !== void 0 ? _options$editMode : false;
 
         if (_this.provider.form) {
           _this.loading = true;
@@ -7959,8 +8044,12 @@ var Vue = exports.Vue;
 
         _this.emit(EventTypes.init);
 
-        _this.render();
+        _this.render(); // track form views
 
+
+        ViewObserver.observe(document.querySelector('#b24-' + _this.getId() + ' .b24-form-wrapper'), function () {
+          _this.emit(EventTypes.view);
+        });
         return _this;
       }
 
@@ -8690,9 +8779,9 @@ var Vue = exports.Vue;
         applyOldenLoaderData: applyOldenLoaderData
     });
 
-    function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
+    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
 
-    function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
     var _forms = /*#__PURE__*/new WeakMap();
 
@@ -8702,12 +8791,12 @@ var Vue = exports.Vue;
       function Application() {
         babelHelpers.classCallCheck(this, Application);
 
-        _classPrivateFieldInitSpec$6(this, _forms, {
+        _classPrivateFieldInitSpec$7(this, _forms, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$6(this, _userProviderPromise, {
+        _classPrivateFieldInitSpec$7(this, _userProviderPromise, {
           writable: true,
           value: void 0
         });

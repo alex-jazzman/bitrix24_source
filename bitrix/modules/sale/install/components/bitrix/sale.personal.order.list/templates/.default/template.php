@@ -9,7 +9,7 @@ use Bitrix\Main,
 Asset::getInstance()->addJs("/bitrix/components/bitrix/sale.order.payment.change/templates/.default/script.js");
 Asset::getInstance()->addCss("/bitrix/components/bitrix/sale.order.payment.change/templates/.default/style.css");
 $this->addExternalCss("/bitrix/css/main/bootstrap.css");
-CJSCore::Init(array('clipboard', 'fx'));
+CJSCore::Init(array('clipboard', 'fx', 'ui.fonts.opensans'));
 
 Loc::loadMessages(__FILE__);
 

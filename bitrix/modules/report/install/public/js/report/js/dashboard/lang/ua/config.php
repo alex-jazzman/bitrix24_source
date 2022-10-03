@@ -1,0 +1,7 @@
+<?
+$MESS["DASHBOARD_WIDGET_REMOVE_TITLE"] = "Видалити";
+$MESS["DASHBOARD_WIDGET_REMOVE_CONTENT"] = "Ви впевнені, що хочете видалити блок?";
+$MESS["DASHBOARD_WIDGET_REMOVE_ACCEPT_TITLE"] = "Так";
+$MESS["DASHBOARD_WIDGET_REMOVE_CANCEL_TITLE"] = "Ні";
+$MESS["DASHBOARD_EMPTY_BOARD_CONTENT"] = "Немає даних для показу";
+?>

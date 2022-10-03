@@ -4,6 +4,8 @@ $showDiskQuota = $arResult['showDiskQuota'];
 $diskSpace = $arResult['diskSpace'];
 $quota = $arResult['quota'];
 $isInstalledPull = $arResult['isInstalledPull'];
+
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 ?>
 <script type="text/javascript">
 	BX.message({

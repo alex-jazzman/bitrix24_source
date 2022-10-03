@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_REQUISITE_ADDRESS_TYPE_BENEFICIARY"] = "Адреса бенефіціара";
+$MESS["CRM_REQUISITE_ADDRESS_TYPE_DELIVERY"] = "Адреса доставки";
+$MESS["CRM_REQUISITE_ADDRESS_TYPE_HOME"] = "Адреса реєстрації";
+?>

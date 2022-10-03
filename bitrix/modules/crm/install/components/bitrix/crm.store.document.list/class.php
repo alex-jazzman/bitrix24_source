@@ -486,7 +486,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		}
 		else
 		{
-			$column['PRICE_DELIVERY'] = CCurrencyLang::CurrencyFormat(0, \Bitrix\Currency\CurrencyManager::getBaseCurrency());
+			$column['PRICE_DELIVERY'] = CCurrencyLang::CurrencyFormat(0, (string)\Bitrix\Currency\CurrencyManager::getBaseCurrency());
 		}
 
 		if ($column['RESPONSIBLE_ID'])
@@ -771,6 +771,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			'dataset' => [
 				'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::ADD,
 			],
+			'classList' => ['add-document-button'],
 		]);
 		$addDocumentUrl = $this->getUrlToDocumentDetail(0);
 		$analyticsSourcePart = $this->analyticsSource ? '&inventoryManagementSource=' . $this->analyticsSource : '';

@@ -1,0 +1,35 @@
+<?
+$MESS["BPABL_WF_TAB"] = "Бізнес-процес";
+$MESS["BPABL_TAB_TITLE"] = "Бізнес-процес";
+$MESS["BPABL_TITLE"] = "Бізнес-процес #ID#";
+$MESS["BPABL_INVALID_WF"] = "Бізнес-процес не знайдений";
+$MESS["BPABL_BACK"] = "Повернутися";
+$MESS["BPABL_STATUS_2"] = "Виконується";
+$MESS["BPABL_STATE_MODIFIED_1"] = "Дата поточного статусу";
+$MESS["BPABL_TYPE_5_1"] = "Дія '#ACTIVITY#'#NOTE#";
+$MESS["BPABL_STATUS_4"] = "Завершено";
+$MESS["BPABL_TYPE_2_1"] = "Завершено дію '#ACTIVITY#' зі статусом '#STATUS#' й результатом '#RESULT#'#NOTE#";
+$MESS["BPABL_TYPE_1_1"] = "Запущена дія '#ACTIVITY#'#NOTE#";
+$MESS["BPABL_STATUS_1"] = "Ініціалізовано";
+$MESS["BPABL_LOG"] = "Історія виконання бізнес-процесу";
+$MESS["BPABL_ID"] = "Код бізнес-процесу";
+$MESS["BPABL_NAME"] = "Назва шаблону бізнес-процесу";
+$MESS["BPABL_RES_5"] = "Не ініціалізовано";
+$MESS["BPABL_STATUS_6"] = "Не визначено";
+$MESS["BPABL_RES_6"] = "Не визначено";
+$MESS["BPABL_RES_1"] = "Ні";
+$MESS["BPABL_DESCRIPTION"] = "Опис шаблону бізнес-процесу";
+$MESS["BPABL_RES_3"] = "Скасовано";
+$MESS["BPABL_TYPE_3_1"] = "Скасовано дію '#ACTIVITY#'#NOTE#";
+$MESS["BPABL_STATUS_3"] = "Скасовується";
+$MESS["BPABL_ERROR"] = "Помилка";
+$MESS["BPABL_STATUS_5"] = "Помилка";
+$MESS["BPABL_RES_4"] = "Помилка";
+$MESS["BPABL_TYPE_4_1"] = "Помилка дії '#ACTIVITY#'#NOTE#";
+$MESS["BPABL_STATE_NAME_1"] = "Поточний статус безнес-процесу";
+$MESS["BPABL_NO_PERMS"] = "У вас немає доступу до даного бізнес-процесу документа";
+$MESS["BPABL_RES_2"] = "Успішно";
+$MESS["BPABL_TYPE_6_1"] = "Щось зробили з дією '#ACTIVITY#'#NOTE#";
+$MESS["BPABL_RES2ADMINMODE"] = "Розширений режим";
+$MESS["BPABL_RES2SIMPLEMODE"] = "Звичайний режим";
+?>

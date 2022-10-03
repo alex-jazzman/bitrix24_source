@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load("ui.buttons");
 \Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-\Bitrix\Main\UI\Extension::load(["ui.alerts", "ui.design-tokens"]);
+\Bitrix\Main\UI\Extension::load(["ui.alerts", "ui.design-tokens", "ui.fonts.opensans"]);
 \CJSCore::init(["loader", "popup", "sidepanel", "documentpreview"]);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 

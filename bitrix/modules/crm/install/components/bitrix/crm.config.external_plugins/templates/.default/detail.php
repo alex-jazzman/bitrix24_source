@@ -5,6 +5,8 @@ use \Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 \CJSCore::Init(array('clipboard'));
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 $APPLICATION->setTitle(Loc::getMessage('CRM_CONFIG_PLG_TITLE_'.mb_strtoupper($arParams['CMS_ID'])));
 ?>
 

@@ -1,0 +1,16 @@
+<?
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_CAN_USE_ERROR'] = "Провайдер компанії SMS-асистент не налаштований";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_1'] = "Недостатньо коштів";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_10'] = "Сервіс тимчасово недоступний";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_11'] = "Некоректне значення ID SMS";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_12'] = "Інша помилка";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_13'] = "Заблоковано";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_2'] = "Неправильний логін або пароль";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_3'] = "Відсутній текст SMS";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_4'] = "Некоректне значення номера одержувача";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_5'] = "Некоректне значення відправника SMS";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_6'] = "Відсутній логін";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_7'] = "Відсутній пароль";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_ERROR_OTHER'] = "Системна помилка. Необхідно повторити запит ще раз";
+$MESS['MESSAGESERVICE_SENDER_SMS_SMSASTBY_NAME'] = "SMS-асистент";
+?>

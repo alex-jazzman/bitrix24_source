@@ -158,7 +158,8 @@
 	color: #525c69;
 	vertical-align: middle;
 	text-transform: uppercase;
-	font: 600 11px/23px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	white-space: nowrap;
 	overflow: hidden;
 	max-width: calc(100% - 30px);
@@ -552,7 +553,8 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	text-align: center;
 	text-transform: uppercase;
 	white-space: nowrap;
-	font: 9px/15px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 9px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	-webkit-box-flex: 0;
 	-ms-flex: 0;
 	flex: 0;
@@ -892,7 +894,8 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 .crm-entity-widget-content-block-locked .crm-entity-widget-content-block-inner { opacity: .5; }
 
 .crm-entity-widget-content-block-colums-block {
-	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: 29px;
 }
 
@@ -912,7 +915,8 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 .crm-entity-widget-content-block-wallet {
 	color: #80868e;
 	font-size: 24px;
-	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: 30px;
 }
 
@@ -1164,7 +1168,8 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	padding-bottom: 8px;
 	color: #333;
 	text-overflow: ellipsis;
-	font: 18px/20px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	-o-text-overflow: ellipsis;
 }
 
@@ -1574,7 +1579,8 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 	margin: 0 0 3px;
 	padding: 0;
 	color: rgba(82, 92, 105, .5);
-	font: 12px/14px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-widget-client-requisites-value {
@@ -1618,12 +1624,14 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 .crm-entity-requisites-slider-title-text {
 	margin-bottom: 3px;
 	color: #000;
-	font: 300 24px/24px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 24px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-requisites-slider-title-description {
 	color: #525c69;
-	font: 300 13px/20px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-requisites-slider-content { }
@@ -1681,7 +1689,8 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 	border-radius: 2px;
 	color: #000;
 	text-transform: uppercase;
-	font: 400 14px/24px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: 300ms all ease;
 }
 
@@ -1708,7 +1717,8 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 	margin: 10px 0;
 	color: #525c69;
 	text-transform: none;
-	font: 400 12px/15px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-requisites-select-item-bank-requisites-field-container { }
@@ -1716,7 +1726,8 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 .crm-entity-requisites-select-item-bank-requisites-field-item {
 	display: block;
 	margin-bottom: 5px;
-	font: 400 14px/16px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-requisites-select-item-bank-requisites-field { }
@@ -2111,7 +2122,8 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 	color: #858c95;
 	vertical-align: middle;
 	text-decoration: none;
-	font: 400 13px/20px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: 250ms all ease;
 }
 
@@ -2652,6 +2664,18 @@ div.crm-entity-widget-content-block-radio-label {
 	color: #333 !important;
 }
 
+.crm-entity-card-widget-add-btn-container .crm-entity-add-app-link,
+.crm-entity-card-widget-add-btn-container .crm-entity-settings-link,
+.crm-entity-card-widget-add-btn-container .crm-entity-add-widget-link {
+	border-color: #868d95;
+}
+
+.crm-entity-card-widget-add-btn-container .crm-entity-add-app-link:hover,
+.crm-entity-card-widget-add-btn-container .crm-entity-settings-link:hover,
+.crm-entity-card-widget-add-btn-container .crm-entity-add-widget-link:hover {
+	border-color: #333;
+}
+
 .bitrix24-light-theme .crm-entity-add-app-link,
 .bitrix24-light-theme .crm-entity-settings-link,
 .bitrix24-light-theme .crm-entity-add-widget-link {
@@ -2915,7 +2939,8 @@ div.crm-entity-widget-content-block-radio-label {
 	vertical-align: middle;
 	text-align: center;
 	text-transform: uppercase;
-	font: 12px/39px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/39px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	transition: color .25s ease;
 }
 
@@ -3130,13 +3155,15 @@ div.crm-entity-widget-content-block-radio-label {
 	display: block;
 	margin-bottom: 2px;
 	color: #333;
-	font: 14px/19px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-card-widget-create-field-item-desc {
 	display: block;
 	color: #828b95;
-	font: 400 13px/18px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-widget-content-hide {
@@ -3223,7 +3250,8 @@ div.crm-entity-widget-content-block-radio-label {
 	border-radius: 7px;
 	padding: 0 5px;
 	color: #767b81;
-	font: 8px/14px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 8px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	vertical-align: middle;
 	opacity: 0;
 	cursor: pointer;
@@ -3252,7 +3280,8 @@ div.crm-entity-widget-content-block-radio-label {
 	padding-left: 10px;
 	height: auto;
 	background: #fff;
-	font-family: 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	opacity: 1;
 }
 
@@ -3674,6 +3703,7 @@ div.crm-entity-widget-content-block-radio-label {
 .crm-entity-widget-content-block-selection-mode-old .crm-entity-widget-btn-select,
 .crm-entity-widget-content-block-selection-mode-old .crm-entity-widget-btn-edit,
 .crm-entity-widget-content-block-edit-mode .crm-entity-widget-btn-select,
+.crm-entity-widget-content-block-new-mode .crm-entity-widget-btn-select,
 .crm-entity-widget-content-block-select-mode .crm-entity-widget-btn-edit,
 .crm-entity-widget-content-block-selection-mode .crm-entity-widget-btn-edit {
 	display: inline-block;
@@ -3940,7 +3970,8 @@ div.crm-entity-widget-content-block-radio-label {
 
 .crm-entity-widget-client-requisites-empty-value .crm-entity-widget-client-requisites-name {
 	color: rgba(82, 92, 105, .8);
-	font: 14px/14px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 /*endregion END OF REQUISITE POPUP MODIFIERS */
@@ -4008,7 +4039,8 @@ div.crm-entity-widget-content-block-radio-label {
 
 .crm-entity-card-container-content .ui-entity-editor-header-title-text {
 	text-transform: uppercase;
-	font: 600 11px/23px "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: 11px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-card-container-content .ui-entity-editor-section-edit .crm-widget-employee-remove,
@@ -4162,7 +4194,8 @@ div.crm-entity-widget-content-block-radio-label {
 	display: inline-block;
 	margin-right: 10px;
 	max-width: 100%;
-	font: 36px/32px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 36px/32px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #424956;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -4297,7 +4330,8 @@ div.crm-entity-widget-content-block-radio-label {
 }
 
 .crm-entity-widget-payment-rub {
-	font-family: 'rubleBitrix', 'OpenSans', sans-serif;
+	font-family: 'rubleBitrix', var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-widget-payment-total .crm-entity-widget-payment-rub,

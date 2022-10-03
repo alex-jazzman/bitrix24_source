@@ -1,0 +1,30 @@
+<?
+$MESS["BX_WSTMPL_RESULT"] = "Результат виклику:";
+$MESS["BX_WSTMPL_ERROR_NOWSDESCR"] = "Опис сервіса відсутній.";
+$MESS["BX_WSTMPL_TITLE_PREFIX"] = "Опис веб-сервіса:";
+$MESS["BX_WSTMPL_WEBSERVICE"] = "Веб-сервіс:";
+$MESS["BX_WSTMPL_ENDPOINT"] = "Точка доступу:";
+$MESS["BX_WSTMPL_METHODS"] = "Методи:";
+$MESS["BX_WSTMPL_ERROR_NOMETHODS"] = "Методи не описані для цього сервісу.";
+$MESS["BX_WSTMPL_CLASS"] = "Клас:";
+$MESS["BX_WSTMPL_METHOD"] = "Метод веб-сервісу:";
+$MESS["BX_WSTMPL_NAMESPACE"] = "Простір імен:";
+$MESS["BX_WSTMPL_BSTYLE"] = "Стиль прив'язки:";
+$MESS["BX_WSTMPL_DOC"] = "Опис:";
+$MESS["BX_WSTMPL_WSDLDESCPRE"] = "Наступні операції підтримуються. Формальне визначення див. у";
+$MESS["BX_WSTMPL_WSDLDESC"] = "Опис служби.";
+$MESS["BX_WSTMPL_INNERTESTPRE"] = "Запустити вбудовані тести веб-сервісу можна";
+$MESS["BX_WSTMPL_INNERTEST"] = "тут.";
+$MESS["BX_WSTMPL_BACKPRE"] = "Для отримання повного списку операцій клацніть";
+$MESS["BX_WSTMPL_BACK"] = "тут.";
+$MESS["BX_WSTMPL_PARAMS"] = "Параметри:";
+$MESS["BX_WSTMPL_TEST"] = "Тест:";
+$MESS["BX_WSTMPL_ERROR_NOFORCOMPLEX"] = "Форма для тестування доступна тільки для методів з примітивними типами в якості параметрів.";
+$MESS["BX_WSTMPL_ERROR_PARAMETER"] = "Параметр";
+$MESS["BX_WSTMPL_ERROR_VALUE"] = "Значення";
+$MESS["BX_WSTMPL_ERROR_SUBMIT"] = "Запуск";
+$MESS["BX_WSTMPL_ERROR_NOTENOUGHTPARAMS"] = "Недостатньо параметрів у запиті.";
+$MESS["BX_WSTMPL_ERROR_UNKNOWN"] = "Чогось нам все ж таки не вистачає для запуску запиту.";
+$MESS["BX_WSTMPL_ERRSEC_NOOP"] = "Ви запросили неіснуючий контент.";
+$MESS["BX_WSTMPL_ERROR_NOTFORAUTH"] = "Форма для тестування доступна тільки для методів, що не потребують авторизації через HTTP Basic.";
+?>

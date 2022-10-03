@@ -1,0 +1,4 @@
+<?php
+$MESS["LANDING_UI_COMPONENT_LIST_ITEM_DRAG_TITLE"] = "Потягніть, щоб змінити порядок";
+$MESS["LANDING_UI_COMPONENT_LIST_ITEM_EDIT_TITLE"] = "Редагувати";
+$MESS["LANDING_UI_COMPONENT_LIST_ITEM_REMOVE_TITLE"] = "Видалити";

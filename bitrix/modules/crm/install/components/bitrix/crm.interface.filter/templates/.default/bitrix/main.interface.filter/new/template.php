@@ -1,5 +1,7 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
+
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/common.js');
 CJSCore::Init(array('popup', 'date'));

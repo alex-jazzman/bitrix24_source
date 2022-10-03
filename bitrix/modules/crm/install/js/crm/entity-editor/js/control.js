@@ -203,6 +203,24 @@ if(typeof BX.Crm.EntityEditorMoney === "undefined")
 	BX.extend(BX.Crm.EntityEditorMoney, BX.UI.EntityEditorMoney);
 	BX.Crm.EntityEditorMoney.prototype.doInitialize = function()
 	{
+		BX.Crm.EntityEditorMoney.prototype.superclass.doInitialize.apply(this);
+
+		const ownerInfo = this.getModel().getOwnerInfo();
+		if (ownerInfo)
+		{
+			BX.ajax.runAction("crm.api.entity.canChangeCurrency", {
+				data: {
+					entityId: ownerInfo.ownerID,
+					entityType: ownerInfo.ownerType
+				}
+			}).then((response) => {
+				if (response.data === false)
+				{
+					this._model.lockField('CURRENCY_ID');
+				}
+			});
+		}
+
 		this._changeAmountEditModeListener = BX.CrmNotifier.create(this);
 	};
 	BX.Crm.EntityEditorMoney.prototype.getAmountValue = function(defaultValue)
@@ -500,6 +518,48 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 				IS_WITH_ORDERS_MODE: this._schemeElement.getDataBooleanParam('isWithOrdersMode', false)
 			};
 			this._paymentDocumentsControl = new BX.Crm.EntityEditorPaymentDocuments(paymentDocumentsOptions);
+
+			if (this._paymentDocumentsControl.hasContent())
+			{
+				this._model.lockField('CURRENCY_ID');
+			}
+
+			BX.Event.EventEmitter.subscribe(
+				'PaymentDocuments.EntityEditor:changeDocuments',
+				this.lockCurrencyByPaymentDocuments.bind(this)
+			);
+		}
+	};
+
+	BX.Crm.EntityEditorMoneyPay.prototype.lockCurrencyByPaymentDocuments = function()
+	{
+		if (!this._paymentDocumentsControl)
+		{
+			return;
+		}
+
+		if (this._paymentDocumentsControl.hasContent())
+		{
+			this._model.lockField('CURRENCY_ID');
+		}
+		else
+		{
+			this._model.unlockField('CURRENCY_ID');
+		}
+
+		if (BX.PULL)
+		{
+			BX.PULL.subscribe({
+				moduleId: 'crm',
+				command: 'onOrderBound',
+				callback: function (params, extra, command)
+				{
+					if (params.FIELDS.PRODUCT_LIST)
+					{
+						this.reloadProductList(params.FIELDS.PRODUCT_LIST);
+					}
+				}.bind(this)
+			});
 		}
 	};
 
@@ -603,16 +663,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 
 					if (entity && entity.PRODUCT_LIST)
 					{
-						this._editor.tapController('PRODUCT_ROW_PROXY', function(controller) {
-							if (controller._externalEditor)
-							{
-								controller._externalEditor.reinitialize(entity.PRODUCT_LIST);
-							}
-						});
-
-						this._editor.tapController('PRODUCT_LIST', function(controller) {
-							controller.reinitializeProductList();
-						});
+						this.reloadProductList(entity.PRODUCT_LIST);
 					}
 
 					var order = result.get('order');
@@ -625,6 +676,20 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 			}.bind(this));
 		}.bind(this));
 	};
+
+	BX.Crm.EntityEditorMoneyPay.prototype.reloadProductList = function(productList)
+	{
+		this._editor.tapController('PRODUCT_ROW_PROXY', function(controller) {
+			if (controller._externalEditor)
+			{
+				controller._externalEditor.reinitialize(productList);
+			}
+		});
+
+		this._editor.tapController('PRODUCT_LIST', function(controller) {
+			controller.reinitializeProductList();
+		});
+	}
 
 	BX.Crm.EntityEditorMoneyPay.prototype.doPrepareContextMenuItems = function(menuItems)
 	{

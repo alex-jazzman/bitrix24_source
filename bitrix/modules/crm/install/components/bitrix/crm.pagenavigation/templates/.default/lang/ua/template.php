@@ -1,0 +1,9 @@
+<?
+$MESS["nav_all"] = "Всі";
+$MESS["nav_next"] = "Наступна";
+$MESS["nav_paged"] = "По стор.";
+$MESS["nav_prev"] = "Поперед.";
+$MESS["pages"] = "Сторінки:";
+$MESS["nav_first"] = "Перша";
+$MESS["nav_last"] = "Остання";
+?>

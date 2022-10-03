@@ -117,7 +117,8 @@
 	overflow: hidden;
 	padding: 0 17px;
 	margin: 0 4px 0 0;
-	font-family: 'OpenSans-Semibold';
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	line-height: 32px;
 	font-size: 13px;
 	color: #404956;
@@ -392,7 +393,8 @@
 
 .automation-base-node-edit {
 	float: right;
-	font-family: "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 14px;
 	color: #1058d0;
 	text-transform: lowercase;
@@ -403,7 +405,8 @@
 	float: left;
 	overflow: hidden;
 	color: #000;
-	font: 16px/22px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-automation-trigger-item-drag .crm-automation-trigger-item-wrapper {
@@ -1474,7 +1477,8 @@
 	margin: 14px 0;
 	cursor: pointer;
 	border-radius: 2px;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 12px;
 	outline: none;
 	padding: 0 18px;
@@ -1789,7 +1793,8 @@
 	color: #b0b7bd;
 	vertical-align: middle;
 	text-align: right;
-	font: 400 12px/16px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin: 5px 30px 0 0;
 }
 

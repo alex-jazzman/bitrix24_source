@@ -20,6 +20,7 @@ return [
 		'main.core.events',
 		'ui.alerts',
 		'main.core',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

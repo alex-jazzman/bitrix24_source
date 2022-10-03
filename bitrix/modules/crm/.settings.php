@@ -288,6 +288,9 @@ return array(
 					];
 				},
 			],
+			'crm.sale.entity.linkBuilder' => [
+				'className' => Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder::class,
+			],
 		],
 		'readonly' => true,
 	],

@@ -123,7 +123,7 @@ if (!($arIBUser = $rIBUser->Fetch()))
 	return 0;
 }
 
-include_once(str_replace(array("\\", "//"), "/", dirname(__FILE__)."/functions.php"));
+include_once(str_replace(array("\\", "//"), "/", __DIR__."/functions.php"));
 
 $arVariables = array();
 $sPath = false;

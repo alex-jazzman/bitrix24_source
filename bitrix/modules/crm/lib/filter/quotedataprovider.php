@@ -301,7 +301,7 @@ class QuoteDataProvider extends EntityDataProvider
 			'WEBFORM_ID' => $this->createField(
 				'WEBFORM_ID',
 				[
-					'type' => 'list',
+					'type' => 'entity_selector',
 					'partial' => true
 				]
 			),
@@ -536,10 +536,7 @@ class QuoteDataProvider extends EntityDataProvider
 		}
 		elseif($fieldID === 'WEBFORM_ID')
 		{
-			return array(
-				'params' => array('multiple' => 'N'),
-				'items' => Crm\WebForm\Manager::getListNames()
-			);
+			return Crm\WebForm\Helper::getEntitySelectorParams(\CCrmOwnerType::Quote, 'WEBFORM_ID', 'N');
 		}
 		elseif (ParentFieldManager::isParentFieldName($fieldID))
 		{

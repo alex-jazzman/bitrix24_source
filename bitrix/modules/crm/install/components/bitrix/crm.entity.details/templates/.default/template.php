@@ -8,7 +8,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CBitrixComponentTemplate $this */
 /** @var CCrmEntityPopupComponent $component */
 
-CJSCore::Init(['clipboard', 'ui.alerts']);
+CJSCore::Init(['clipboard', 'ui.alerts', 'ui.fonts.opensans']);
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/utils.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_form.js');

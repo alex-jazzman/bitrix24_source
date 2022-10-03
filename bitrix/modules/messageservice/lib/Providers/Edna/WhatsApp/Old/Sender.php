@@ -2,11 +2,7 @@
 
 namespace Bitrix\MessageService\Providers\Edna\WhatsApp\Old;
 
-use Bitrix\ImConnector\Library;
-use Bitrix\ImOpenLines\Im;
-use Bitrix\ImOpenLines\Session;
 use Bitrix\Main\Error;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\MessageService\Providers;
 use Bitrix\MessageService\Providers\Edna\WhatsApp\EdnaRu;
@@ -174,76 +170,6 @@ class Sender extends Providers\Edna\WhatsApp\Sender
 		}
 
 		return $method;
-	}
-
-	protected function sendHSMtoChat(array $messageFields): void
-	{
-		if (!Loader::includeModule('imopenlines') || !Loader::includeModule('imconnector'))
-		{
-			return;
-		}
-
-		$externalChatId = str_replace('+', '', $messageFields['MESSAGE_TO']);
-		$userId = $this->getImconnectorUserId($externalChatId);
-		if (!$userId)
-		{
-			return;
-		}
-
-		$from = $messageFields['MESSAGE_FROM'];
-		$lineId = $this->utils->getLineId();
-		$userSessionCode = $this->getSessionUserCode($lineId, $externalChatId, $from, $userId);
-		$chatId = $this->getOpenedSessionChatId($userSessionCode);
-		if (!$chatId)
-		{
-			return;
-		}
-
-		Im::addMessage([
-			'TO_CHAT_ID' => $chatId,
-			'MESSAGE' => $this->utils->prepareTemplateMessageText($messageFields),
-			'SYSTEM' => 'Y',
-			'SKIP_COMMAND' => 'Y',
-			'NO_SESSION_OL' => 'Y',
-			'PARAMS' => [
-				'CLASS' => 'bx-messenger-content-item-ol-output'
-			],
-		]);
-	}
-
-	protected function getImconnectorUserId(string $externalChatId): ?string
-	{
-		$userXmlId = Library::ID_EDNA_WHATSAPP_CONNECTOR . '|' . $externalChatId;
-		$user = \Bitrix\Main\UserTable::getRow([
-			'select' => ['ID'],
-			'filter' => ['=XML_ID' => $userXmlId],
-		]);
-
-		return $user ? $user['ID'] : null;
-	}
-
-	protected function getSessionUserCode(string $lineId, string $externalChatId, string $from, string $userId): string
-	{
-		return Library::ID_EDNA_WHATSAPP_CONNECTOR. '|'. $lineId. '|'. $externalChatId. '@'. $from. '|' . $userId;
-	}
-
-	protected function getOpenedSessionChatId(string $userSessionCode): ?string
-	{
-		$session = new Session();
-		$sessionLoadResult = $session->getLast(['USER_CODE' => $userSessionCode]);
-		if (!$sessionLoadResult->isSuccess())
-		{
-			return null;
-		}
-		$sessionData = $session->getData();
-		$chatId = $sessionData['CHAT_ID'];
-		$closed = $sessionData['CLOSED'] === 'Y';
-		if ($closed)
-		{
-			return null;
-		}
-
-		return $chatId;
 	}
 
 

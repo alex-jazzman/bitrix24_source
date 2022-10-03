@@ -29,6 +29,7 @@ Extension::load([
 	'seo.ads.login',
 	'ui.info-helper',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 $this->addExternalCss($this->GetFolder() . '/utm.css');

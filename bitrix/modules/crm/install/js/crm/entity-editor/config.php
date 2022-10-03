@@ -72,5 +72,6 @@ return array(
 		'crm.entity-editor.field.payment-documents',
 		'crm.entity-editor.field.image',
 		'ui.design-tokens',
+		'ui.fonts.opensans',
 	]
 );

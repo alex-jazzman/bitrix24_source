@@ -1,6 +1,6 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?><?
 
-$sTplDir = trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/")));
+$sTplDir = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/")));
 
 $arParams["TASK_ID"] = intval($arResult["VARIABLES"]["ID"]);
 $arParams["USER_ID"] = intval(empty($arParams["USER_ID"]) ? $GLOBALS["USER"]->GetID() : $arParams["USER_ID"]);

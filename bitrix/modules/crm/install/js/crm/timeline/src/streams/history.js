@@ -1,5 +1,5 @@
 import Stream from "../stream";
-import {Item as ItemType, Order as OrderType, Delivery as DeliveryType} from "../types";
+import {Item as ItemType, Order as OrderType, Delivery as DeliveryType, Compilation as CompilationType} from "../types";
 import HistoryItem from "../items/history";
 import Modification from "../items/modification";
 import Conversion from "../items/conversion";
@@ -858,6 +858,43 @@ export default class History extends Stream
 		}
 	}
 
+	createProductCompilationItem(data)
+	{
+		var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+		var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+		if(entityId !== BX.CrmEntityType.enumeration.deal)
+		{
+			return null;
+		}
+
+		var settings = {
+			history: this._history,
+			fixedHistory: this._fixedHistory,
+			container: this._wrapper,
+			activityEditor: this._activityEditor,
+			data: data
+		};
+
+		if (typeId === CompilationType.productList)
+		{
+			settings.vueComponent = BX.Crm.Timeline.ProductCompilationList;
+		}
+		else if (typeId === CompilationType.orderExists)
+		{
+			settings.vueComponent = BX.Crm.Timeline.CompilationOrderNotice;
+		}
+		else if (typeId === CompilationType.compilationViewed)
+		{
+			settings.vueComponent = BX.Crm.Timeline.ProductCompilationViewed;
+		}
+		else if (typeId === CompilationType.newDealCreated)
+		{
+			settings.vueComponent = BX.Crm.Timeline.NewDealCreated;
+		}
+
+		return BX.CrmHistoryItem.create(data["ID"], settings);
+	}
+
 	createExternalNotificationItem(data)
 	{
 		const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
@@ -937,6 +974,10 @@ export default class History extends Stream
 		else if (typeId === ItemType.order)
 		{
 			return this.createOrderEntityItem(data);
+		}
+		else if(typeId === ItemType.productCompilation)
+		{
+			return this.createProductCompilationItem(data);
 		}
 		else if (typeId === ItemType.storeDocument)
 		{

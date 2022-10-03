@@ -4022,6 +4022,9 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			$propertiesSelect[] = 'PROPERTY_*';
 		}
 
+		$fieldsInfo = $this->getFieldsInfo();
+		$this->internalizeFilterFields($filter, $fieldsInfo);
+
 		$filter['CATALOG_ID'] = $catalogID;
 		$dbResult = CCrmProduct::GetList($order, $filter, $select, $navigation);
 		if(!$enableCatalogData)

@@ -29,6 +29,7 @@ Extension::load([
 	'crm.tracking.connector',
 	'ui.sidepanel-content',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.analytics.channel.phone/templates/.default/style.css');

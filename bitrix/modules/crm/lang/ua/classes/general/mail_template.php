@@ -1,0 +1,9 @@
+<?
+$MESS["CRM_MAIL_TEMPLATE_SCOPE_PERSONAL"] = "тільки мені";
+$MESS["CRM_MAIL_TEMPLATE_SCOPE_COMMON"] = "всім";
+$MESS["CRM_MAIL_TEMPLATE_FIELD_OWNER_ID"] = "Власник";
+$MESS["CRM_MAIL_TEMPLATE_FIELD_ENTITY_TYPE_ID"] = "Сутність";
+$MESS["CRM_MAIL_TEMPLATE_FIELD_TITLE"] = "Назва";
+$MESS["CRM_MAIL_TEMPLATE_ERROR_NOT_EXISTS"] = "Не вдалося знайти елемент з ID = #ID#.";
+$MESS["CRM_MAIL_TEMPLATE_ERROR_FIELD_NOT_SPECIFIED"] = "Будь ласка, задайте значення для поля \"#FIELD#\".";
+?>

@@ -1,0 +1,23 @@
+<?php
+$MESS["SONET_EXT_LIVEFEED_DELETE_SUCCESS"] = "Запис видалено";
+$MESS["SONET_EXT_LIVEFEED_FOLLOW_TITLE_N"] = "Слідкувати";
+$MESS["SONET_EXT_LIVEFEED_FOLLOW_TITLE_Y"] = "Більше не слідкувати";
+$MESS["SONET_EXT_LIVEFEED_MENU_TITLE_FAVORITES_N"] = "Додати в обране";
+$MESS["SONET_EXT_LIVEFEED_MENU_TITLE_FAVORITES_Y"] = "Прибрати з обраного";
+$MESS["SONET_EXT_LIVEFEED_MENU_TITLE_PINNED_N"] = "Закріпити";
+$MESS["SONET_EXT_LIVEFEED_MENU_TITLE_PINNED_Y"] = "Відкріпити";
+$MESS["SONET_EXT_LIVEFEED_PINNED_CANCEL_BUTTON"] = "скасувати";
+$MESS["SONET_EXT_LIVEFEED_PINNED_CANCEL_DESCRIPTION"] = "Тепер він знаходиться вгорі стрічки.";
+$MESS["SONET_EXT_LIVEFEED_PINNED_CANCEL_TITLE"] = "Пост був закріплений.";
+$MESS["SONET_EXT_LIVEFEED_PIN_TITLE_N"] = "Закріпити";
+$MESS["SONET_EXT_LIVEFEED_PIN_TITLE_Y"] = "Відкріпити";
+$MESS["SONET_EXT_LIVEFEED_POST_BACKGROUND_EDIT_WARNING_BUTTON_CANCEL"] = "Скасувати";
+$MESS["SONET_EXT_LIVEFEED_POST_BACKGROUND_EDIT_WARNING_BUTTON_SUBMIT"] = "Продовжити";
+$MESS["SONET_EXT_LIVEFEED_POST_BACKGROUND_EDIT_WARNING_DESCRIPTION"] = "Повідомлення було створено в мобільному застосунку. На жаль, при редагуванні його тут, усе форматування буде видалено.";
+$MESS["SONET_EXT_LIVEFEED_POST_BACKGROUND_EDIT_WARNING_TITLE"] = "Редагувати повідомлення";
+$MESS["SONET_EXT_LIVEFEED_CREATE_TASK_ERROR_GET_DATA"] = "Не вдалося отримати дані для створення завдання";
+$MESS["SONET_EXT_LIVEFEED_CREATE_TASK_WAIT"] = "Почекайте...";
+$MESS["SONET_EXT_LIVEFEED_CREATE_TASK_SUCCESS_TITLE"] = "Завдання створено";
+$MESS["SONET_EXT_LIVEFEED_CREATE_TASK_VIEW"] = "Переглянути";
+$MESS["SONET_EXT_LIVEFEED_CREATE_TASK_FAILURE_TITLE"] = "Помилка";
+$MESS["SONET_EXT_ERROR_SESSION"] = "Ваша сесія скінчилася. Будь ласка, спробуйте ще раз.";

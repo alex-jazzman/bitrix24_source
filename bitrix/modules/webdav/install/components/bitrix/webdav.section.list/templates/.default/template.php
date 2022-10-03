@@ -4,6 +4,8 @@ if (!$this->__component->__parent || $this->__component->__parent->__name != "bi
 	$GLOBALS['APPLICATION']->AddHeadScript(BX_ROOT.'/components/bitrix/webdav/templates/.default/script.js');
 endif;
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 $GLOBALS['APPLICATION']->SetAdditionalCSS('/bitrix/panel/main/admin-public.css');
 $GLOBALS['APPLICATION']->AddHeadScript('/bitrix/js/main/utils.js');
 $GLOBALS['APPLICATION']->AddHeadScript('/bitrix/js/main/public_tools.js');
@@ -106,11 +108,11 @@ if ($arParams["SHOW_RATING"] == 'Y'):
 		);
 		$sVal = ob_get_contents();
 		ob_end_clean();
-		
+
 		$text = "";
 		if( array_key_exists("EXT_LINKS_HASH_ARRAY", $arResult)
-			&& array_key_exists("BASE_URL_FOR_EXT_LINK", $data["data"]) 
-			&& array_key_exists("URL_FOR_EXT_LINK", $data["data"]) 
+			&& array_key_exists("BASE_URL_FOR_EXT_LINK", $data["data"])
+			&& array_key_exists("URL_FOR_EXT_LINK", $data["data"])
 			&& $data["data"]["BASE_URL_FOR_EXT_LINK"] != null
 			&& $data["data"]["URL_FOR_EXT_LINK"] != null
 		)
@@ -118,13 +120,13 @@ if ($arParams["SHOW_RATING"] == 'Y'):
 			$currHash = md5($data["data"]["BASE_URL_FOR_EXT_LINK"] . $data["data"]["URL_FOR_EXT_LINK"]);
 			if(array_key_exists($currHash, $arResult["EXT_LINKS_HASH_ARRAY"]) && $arResult["EXT_LINKS_HASH_ARRAY"][$currHash] > 0){
 				//$arResult["EXT_LINKS_HASH_ARRAY"][$currHash]
-				
+
 				$urlT = CWebDavExtLinks::GetFullURL($data["data"]["BASE_URL_FOR_EXT_LINK"] . $data["data"]["URL_FOR_EXT_LINK"]) . "?" . bitrix_sessid_get();
 				$text = '<div class="ext-link-clip" onclick="ShowExtLinkDialog(\'' . $urlT . '&GetExtLink=1\',\'' . $urlT . '&GetDialogDiv=1\')" title="' . GetMessage("WD_COPY_EXT_LINK_TITLE") . '"></div>';
 			}
-			
+
 		}
-		
+
 		$arResult["GRID_DATA"][$id]['columns']['NAME'] = str_replace(CWebDavExtLinks::$icoRepStr, $text, $arResult["GRID_DATA"][$id]['columns']['NAME']);
 		/*$arResult["GRID_DATA"][$id]['columns']['NAME'] = CWebDavExtLinks::InsertListIcon($arResult["GRID_DATA"][$id]['columns']['NAME'] ,$data);*/
 		$arResult["GRID_DATA"][$id]['columns']['NAME'] = str_replace("#RATING#", '<div class="rating_vote_text">'.$sVal.'</div>', $arResult["GRID_DATA"][$id]['columns']['NAME']);

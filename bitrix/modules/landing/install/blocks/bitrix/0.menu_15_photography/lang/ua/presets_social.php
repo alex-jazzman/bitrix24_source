@@ -1,0 +1,4 @@
+<?
+$MESS["LANDING_BLOCK_MENU15__SOCIALS__PRESET_VK"] = "ВКонтакті";
+$MESS["LANDING_BLOCK_MENU15__SOCIALS__PRESET_OK"] = "Однокласники";
+?>

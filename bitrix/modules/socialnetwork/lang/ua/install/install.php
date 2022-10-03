@@ -1,0 +1,33 @@
+<?
+$MESS["SONET_GROUP_NAME_4"] = "4х4";
+$MESS["SONET_GROUP_KEYWORDS_1"] = "volkswagen, фольксваген, гольф";
+$MESS["SONET_GROUP_DESCRIPTION_2"] = "Автомобілі та спорт.";
+$MESS["SONET_GROUP_NAME_0"] = "Авторемонт";
+$MESS["SONET_GROUP_NAME_2"] = "Автоспорт";
+$MESS["SONET_I_FEATURE_BLOG"] = "Блог";
+$MESS["SONET_I_BLOG_NAME"] = "Блоги соц. Мережі";
+$MESS["SONET_GROUP_DESCRIPTION_1"] = "Власники автомобілів VOLKSWAGEN, об'єднуйтесь.";
+$MESS["SONET_GROUP_KEYWORDS_4"] = "позашляховик, джип, авто";
+$MESS["SONET_GROUP_DESCRIPTION_4"] = "Все про позашляховики.";
+$MESS["SONET_GROUP_DESCRIPTION_3"] = "Все про тюнінг автомобілів.";
+$MESS["SONET_I_IBLOCK_PHOTO_GROUP_NAME"] = "Галереї груп соц. Мережі";
+$MESS["SONET_I_IBLOCK_PHOTO_USER_NAME"] = "Галереї користувачів соц. Мережі";
+$MESS["SONET_I_PHOTO_IBLOCK_TYPE_NAME"] = "Галерея";
+$MESS["SONET_I_IBLOCK_TYPE_NAME"] = "Каталог авто";
+$MESS["SONET_I_IBLOCK_NAME"] = "Каталог авто";
+$MESS["SONET_GROUP_NAME_1"] = "Клуб власників VOLKSWAGEN";
+$MESS["SONET_I_USER_PROP_EFL"] = "Марка автомобіля";
+$MESS["SONET_I_USER_PROP_LCL"] = "Марка автомобіля";
+$MESS["SONET_I_USER_PROP_LFL"] = "Марка автомобіля";
+$MESS["SONET_GROUP_SUBJECT_0"] = "Моделі";
+$MESS["SONET_GROUP_DESCRIPTION_0"] = "Ознаки та причини несправностей автомобіля, прості та доступні способи їх виявлення і усунення своїми силами.";
+$MESS["SONET_GROUP_SUBJECT_2"] = "Ремонт";
+$MESS["SONET_GROUP_KEYWORDS_0"] = "ремонт, сервіс, техобслуговування, авто";
+$MESS["SONET_GROUP_KEYWORDS_3"] = "сервіс, авто, тюнінг";
+$MESS["SONET_GROUP_KEYWORDS_2"] = "спорт, перегони, авто";
+$MESS["SONET_GROUP_NAME_3"] = "Тюнінг авто";
+$MESS["SONET_GROUP_SUBJECT_1"] = "Захоплення";
+$MESS["SONET_I_FEATURE_FORUM"] = "Форум";
+$MESS["SONET_I_FORUM_NAME"] = "Форум соц. Мережі";
+$MESS["SONET_I_VOTE_NAME"] = "Опитування форуму соц. мережі";
+?>

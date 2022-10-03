@@ -1,0 +1,37 @@
+<?
+$MESS["DISK_BZ_D_FIELD_ID"] = "ID файлу";
+$MESS["DISK_BZ_D_FIELD_CREATE_TIME"] = "Дата і час створення файлу";
+$MESS["DISK_BZ_D_FIELD_CREATED_BY"] = "Ким створено";
+$MESS["DISK_BZ_D_FIELD_UPDATE_TIME"] = "Дата і час зміни файлу";
+$MESS["DISK_BZ_D_FIELD_UPDATED_BY"] = "Ким змінено";
+$MESS["DISK_BZ_D_FIELD_DELETE_TIME"] = "Дата і час видалення файлу";
+$MESS["DISK_BZ_D_FIELD_DELETED_BY"] = "Ким видалено";
+$MESS["DISK_BZ_D_IDENTIFICATOR"] = "(ідентифікатор)";
+$MESS["DISK_BZ_D_NAME_LASTNAME"] = "(Ім'я Прізвище)";
+$MESS["DISK_BZ_D_FIELD_STORAGE_ID"] = "Сховище";
+$MESS["DISK_BZ_D_FIELD_NAME"] = "Назва файлу";
+$MESS["DISK_BZ_D_FIELD_SIZE"] = "Розмір файлу";
+$MESS["DISK_BZ_D_FIELD_CODE"] = "Мнемонічний код";
+$MESS["DISK_BZ_D_FIELD_FILE"] = "Файл";
+$MESS["DISK_BZ_D_AUTHOR"] = "Автор";
+$MESS["DISK_IBD_DOCUMENT_XFORMOPTIONS1"] = "Кожен варіант значення у новому рядку. Якщо значення варіанта відрізняється від назви, вкажіть його в квадратних дужках перед назвою. Наприклад, [v1]Варіант 1";
+$MESS["DISK_IBD_DOCUMENT_XFORMOPTIONS2"] = "По закінченні заповнення натисніть кнопку \"Встановити\"";
+$MESS["DISK_IBD_DOCUMENT_XFORMOPTIONS3"] = "Встановити";
+$MESS["DISK_FILED_NOT_SET"] = "не встановлено";
+$MESS["DISK_DOC_TYPE_STRING"] = "Рядок";
+$MESS["DISK_DOC_TYPE_TEXT"] = "Багаторядковий текст";
+$MESS["DISK_DOC_TYPE_DOUBLE"] = "Число";
+$MESS["DISK_DOC_TYPE_INT"] = "Ціле число";
+$MESS["DISK_DOC_TYPE_SELECT"] = "Список";
+$MESS["DISK_DOC_TYPE_BOOL"] = "Так/Ні";
+$MESS["DISK_DOC_TYPE_DATA"] = "Дата";
+$MESS["DISK_DOC_TYPE_DATETIME"] = "Дата/Час";
+$MESS["DISK_DOC_TYPE_USER"] = "Прив'язка до користувача";
+$MESS["DISK_DOC_TYPE_FILE"] = "Файл";
+$MESS["DISK_YES"] = "Так";
+$MESS["DISK_NO"] = "Ні";
+$MESS["DISK_ADD"] = "Додати";
+$MESS["DISK_INVALID1"] = "Значення поля не є цілим числом";
+$MESS["DISK_UNKNOW"] = "Невідома помилка";
+$MESS["DISK_BZ_D_NAME_NOT_CODE"] = "Немає мнемонічного коду";
+?>

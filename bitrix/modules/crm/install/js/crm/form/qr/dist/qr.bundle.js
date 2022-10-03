@@ -5,6 +5,12 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _link = /*#__PURE__*/new WeakMap();
@@ -33,39 +39,39 @@ this.BX.Crm = this.BX.Crm || {};
 	  function Qr(options) {
 	    babelHelpers.classCallCheck(this, Qr);
 
-	    _getContainerCopyLink.add(this);
+	    _classPrivateMethodInitSpec(this, _getContainerCopyLink);
 
-	    _getContainerInputLink.add(this);
+	    _classPrivateMethodInitSpec(this, _getContainerInputLink);
 
-	    _renderImage.add(this);
+	    _classPrivateMethodInitSpec(this, _renderImage);
 
-	    _getPopup.add(this);
+	    _classPrivateMethodInitSpec(this, _getPopup);
 
-	    _getImageContainer.add(this);
+	    _classPrivateMethodInitSpec(this, _getImageContainer);
 
-	    _renderButton.add(this);
+	    _classPrivateMethodInitSpec(this, _renderButton);
 
-	    _link.set(this, {
+	    _classPrivateFieldInitSpec(this, _link, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _qrNode.set(this, {
+	    _classPrivateFieldInitSpec(this, _qrNode, {
 	      writable: true,
 	      value: null
 	    });
 
-	    _button.set(this, {
+	    _classPrivateFieldInitSpec(this, _button, {
 	      writable: true,
 	      value: null
 	    });
 
-	    _containerCopyLink.set(this, {
+	    _classPrivateFieldInitSpec(this, _containerCopyLink, {
 	      writable: true,
 	      value: null
 	    });
 
-	    _containerInputLink.set(this, {
+	    _classPrivateFieldInitSpec(this, _containerInputLink, {
 	      writable: true,
 	      value: null
 	    });

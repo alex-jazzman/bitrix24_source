@@ -1,0 +1,21 @@
+<?php
+$MESS["TASKS_GRID_ROW_ACTION_ACCEPT"] = "Прийняти завдання";
+$MESS["TASKS_GRID_ROW_ACTION_ADD_SUB_TASK"] = "Додати підзавдання";
+$MESS["TASKS_GRID_ROW_ACTION_ADD_TO_FAVORITES"] = "Додати в обране";
+$MESS["TASKS_GRID_ROW_ACTION_ADD_TO_TIMEMAN"] = "Додати до плану робочого дня";
+$MESS["TASKS_GRID_ROW_ACTION_APPROVE"] = "Прийняти роботу";
+$MESS["TASKS_GRID_ROW_ACTION_COMPLETE"] = "Завершити";
+$MESS["TASKS_GRID_ROW_ACTION_COPY"] = "Копіювати";
+$MESS["TASKS_GRID_ROW_ACTION_DEFER"] = "Відкласти";
+$MESS["TASKS_GRID_ROW_ACTION_EDIT"] = "Редагувати";
+$MESS["TASKS_GRID_ROW_ACTION_MUTE"] = "Без звуку";
+$MESS["TASKS_GRID_ROW_ACTION_PAUSE"] = "Призупинити";
+$MESS["TASKS_GRID_ROW_ACTION_PIN"] = "Закріпити";
+$MESS["TASKS_GRID_ROW_ACTION_PING"] = "Пінг";
+$MESS["TASKS_GRID_ROW_ACTION_REMOVE"] = "Видалити";
+$MESS["TASKS_GRID_ROW_ACTION_REMOVE_FROM_FAVORITES"] = "Видалити з обраного";
+$MESS["TASKS_GRID_ROW_ACTION_RENEW"] = "Відновити";
+$MESS["TASKS_GRID_ROW_ACTION_START"] = "Почати виконання";
+$MESS["TASKS_GRID_ROW_ACTION_UNMUTE"] = "Включити звук";
+$MESS["TASKS_GRID_ROW_ACTION_UNPIN"] = "Відкріпити";
+$MESS["TASKS_GRID_ROW_ACTION_VIEW"] = "Переглянути";

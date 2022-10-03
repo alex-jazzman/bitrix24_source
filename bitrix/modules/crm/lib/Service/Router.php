@@ -458,6 +458,33 @@ class Router
 		return new Uri(\CComponentEngine::makePathFromTemplate($template));
 	}
 
+	public function getCalendarUrl(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		// TODO: implement new routing if needed
+
+		return $this->getCalendarUrlWithOldRouting($entityTypeId, $categoryId);
+	}
+
+	protected function getCalendarUrlWithOldRouting(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		if ($entityTypeId === \CCrmOwnerType::Deal && !is_null($categoryId))
+		{
+			$template = Option::get(self::MODULE_ID, 'path_to_deal_category_calendar');
+
+			return new Uri(\CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId]));
+		}
+
+		// to Deal/Lead
+		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+		$template = Option::get(static::MODULE_ID, "path_to_{$entityName}_calendar");
+		if (empty($template))
+		{
+			return null;
+		}
+
+		return new Uri(\CComponentEngine::makePathFromTemplate($template));
+	}
+
 	public function getItemDetailUrlCompatibleTemplate(int $entityTypeId): ?string
 	{
 		if ($this->isNewRoutingForDetailEnabled($entityTypeId))

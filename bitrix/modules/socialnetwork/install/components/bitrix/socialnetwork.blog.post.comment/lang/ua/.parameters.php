@@ -1,0 +1,33 @@
+<?
+$MESS["BPC_PATH_TO_BLOG"] = "Шаблон шляху до сторінки повідомлень";
+$MESS["BPC_PATH_TO_USER"] = "Шаблон шляху до сторінки користувача";
+$MESS["BPC_PATH_TO_SMILE"] = "Шлях до папки зі смайликами щодо кореня сайту";
+$MESS["BPC_USER_VAR"] = "Ім'я змінної для ідентифікатора користувача";
+$MESS["BPC_POST_VAR"] = "Ім'я змінної для ідентифікатора повідомлення";
+$MESS["BPC_PAGE_VAR"] = "Ім'я змінної для сторінки";
+$MESS["BPC_ID"] = "Ідентифікатор повідомлення";
+$MESS["B_VARIABLE_ALIASES"] = "Імена змінних";
+$MESS["BC_DATE_TIME_FORMAT"] = "Формат показу дати і часу";
+$MESS["BPC_COMMENT_ID_VAR"] = "Ім'я змінної для ідентифікатора коментаря";
+$MESS["SHOW_RATING"] = "Увімкнути рейтинг";
+$MESS["SHOW_RATING_CONFIG"] = "за умовчанням";
+$MESS["RATING_TYPE"] = "Вид кнопок рейтингу";
+$MESS["RATING_TYPE_CONFIG"] = "за умовчанням";
+$MESS["RATING_TYPE_STANDART_TEXT"] = "Подобається / Не подобається (текстовий)";
+$MESS["RATING_TYPE_STANDART_GRAPHIC"] = "Подобається / Не подобається (графічний)";
+$MESS["RATING_TYPE_LIKE_TEXT"] = "Мені подобається (текстовий)";
+$MESS["RATING_TYPE_LIKE_GRAPHIC"] = "Мені подобається (графічний)";
+$MESS["BPC_IMAGE_MAX_WIDTH"] = "Максимальна ширина зображення";
+$MESS["BPC_IMAGE_MAX_HEIGHT"] = "Максимальна висота зображення";
+$MESS["BPC_ALLOW_VIDEO"] = "Дозволити вставку відео";
+$MESS["BPC_SHOW_SPAM"] = "Показувати адміністраторам посилання на всі коментарі користувача";
+$MESS["BPC_NO_URL_IN_COMMENTS"] = "Заборонити вставку посилань";
+$MESS["BPC_NO_URL_IN_COMMENTS_N"] = "Нікому";
+$MESS["BPC_NO_URL_IN_COMMENTS_A"] = "Анонімним користувачам";
+$MESS["BPC_NO_URL_IN_COMMENTS_L"] = "Всім";
+$MESS["BPC_NO_URL_IN_COMMENTS_AUTHORITY"] = "Мінімальний авторитет, з яким користувачі можуть вставляти посилання";
+$MESS["BPC_ALLOW_IMAGE_UPLOAD"] = "Дозволити завантаження зображень";
+$MESS["BPC_ALLOW_IMAGE_UPLOAD_A"] = "Всім";
+$MESS["BPC_ALLOW_IMAGE_UPLOAD_R"] = "Зареєстрованим користувачам";
+$MESS["BPC_ALLOW_IMAGE_UPLOAD_N"] = "Нікому";
+?>

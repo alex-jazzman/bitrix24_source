@@ -12,6 +12,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\EventManager;
 use Bitrix\Sale\Configuration;
 use Bitrix\Sale\ShopSitesController;
+use Bitrix\Main\Web\Uri;
 
 IncludeModuleLangFile(__FILE__);
 $aMenu = array();
@@ -826,7 +827,7 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
 			$locationMenu = array(
 				"text" => GetMessage("SALE_LOCATION"),
 				"title" => GetMessage("SALE_LOCATION_DESCR"),
-				"url" => CHTTP::urlAddParams(Location\Admin\LocationHelper::getListUrl(0), ["apply_filter" => "y"]),
+				"url" => (new Uri(Location\Admin\LocationHelper::getListUrl(0)))->addParams(["apply_filter" => "y"])->getUri(),
 				"items_id" => "menu_sale_locations",
 				"sort" => 717,
 			);
@@ -838,7 +839,7 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
 				{
 					if (!empty($location["url"]))
 					{
-						$location["url"] = CHTTP::urlAddParams($location["url"], ["apply_filter" => "y"]);
+						$location["url"] = (new Uri($location["url"]))->addParams(["apply_filter" => "y"])->getUri();
 					}
 					$locationSubMenu[] = $location;
 				}
@@ -846,7 +847,7 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
 					array(
 						"text" => GetMessage("sale_menu_locations"),
 						"title" => GetMessage("sale_menu_locations_title"),
-						"url" => CHTTP::urlAddParams(Location\Admin\LocationHelper::getListUrl(0), ["apply_filter" => "y"]),
+						"url" => (new Uri(Location\Admin\LocationHelper::getListUrl(0)))->addParams(["apply_filter" => "y"])->getUri(),
 						"more_url" => array(Location\Admin\LocationHelper::getEditUrl()),
 						"module_id" => "sale",
 						"items_id" => "sale_location_node_list",

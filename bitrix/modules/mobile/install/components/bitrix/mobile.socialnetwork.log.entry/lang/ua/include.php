@@ -1,0 +1,8 @@
+<?
+$MESS["SONET_SLM_FORMAT_DATE"] = "j F, G: i";
+$MESS["SONET_SLM_FORMAT_DATE_YEAR"] = "j F Y, G: i";
+$MESS["SONET_SLM_FORMAT_TIME"] = "G: i";
+$MESS["SONET_SLM_EXTRANET_SUFFIX"] = "(Екстранет)";
+$MESS["SONET_SLM_CREATED_BY_ANONYMOUS"] = "Неавторизований користувач";
+$MESS["SONET_SLM_DATETIME_DAYS"] = "#DAYS# д";
+?>

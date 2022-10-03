@@ -1,0 +1,33 @@
+<?
+$MESS["IM_CHAT_CALL"] = "Телефонний дзвінок";
+$MESS["IM_CHAT_GENERAL"] = "Загальний чат";
+$MESS["IM_CHAT_GROUP_NEW"] = "Груповий чат";
+$MESS["IM_CHAT_LINES"] = "Відкрита лінія";
+$MESS["IM_CHAT_OPEN_NEW"] = "Канал";
+$MESS["IM_CL_BOT"] = "Чат-бот";
+$MESS["IM_CL_USER"] = "Користувач";
+$MESS["IM_CL_USER_B24"] = "Співробітник";
+$MESS["IM_CL_USER_EXTRANET"] = "Зовнішній користувач";
+$MESS["IM_CL_USER_LINES"] = "Користувач Відкритих ліній";
+$MESS["IM_F_ATTACH"] = "Вкладення";
+$MESS["IM_F_FILE"] = "Файл";
+$MESS["IM_F_RATING"] = "Рейтинг";
+$MESS["IM_M_BIRTHDAY_MESSAGE_SHORT"] = "Святкує сьогодні день народження!";
+$MESS["IM_M_DELETED"] = "Це повідомлення було видалено.";
+$MESS["IM_M_ICON"] = "іконка";
+$MESS["IM_M_QUOTE_BLOCK"] = "Цитата";
+$MESS["IM_STATUS_AWAY"] = "Не на місці";
+$MESS["IM_STATUS_AWAY_TITLE"] = "Відсутня #TIME#";
+$MESS["IM_STATUS_BOT"] = "Чат-бот";
+$MESS["IM_STATUS_DND"] = "Не турбувати";
+$MESS["IM_STATUS_GUEST"] = "Не доступний";
+$MESS["IM_STATUS_LINES-ONLINE"] = "Користувач Відкритих ліній";
+$MESS["IM_STATUS_MOBILE"] = "Мобільний клієнт";
+$MESS["IM_STATUS_NA"] = "Не доступний";
+$MESS["IM_STATUS_NETWORK"] = "Бітрікс24.Network";
+$MESS["IM_STATUS_OFFLINE"] = "Не в мережі";
+$MESS["IM_STATUS_ONLINE"] = "Онлайн";
+$MESS["IM_STATUS_VACATION"] = "У відпустці";
+$MESS["IM_STATUS_VACATION_TITLE"] = "У відпустці до  #DATE#";
+$MESS["IM_M_CODE_BLOCK"] = "Фрагмент коду";
+?>

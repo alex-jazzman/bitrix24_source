@@ -363,6 +363,10 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			foreach ($parentIds as $parentId)
 			{
 				$parentEntityTypeId = $parentId->getEntityTypeId();
+				if ($parentEntityTypeId === \CCrmOwnerType::Order && !\CCrmSaleHelper::isWithOrdersMode())
+				{
+					continue;
+				}
 				$parents[$parentEntityTypeId] = $this->loadElementById($parentEntityTypeId, $parentId->getEntityId());
 			}
 		}
@@ -577,6 +581,10 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 				foreach ($childRelations as $childRelation)
 				{
 					$childEntityTypeId = $childRelation->getChildEntityTypeId();
+					if ($childEntityTypeId === \CCrmOwnerType::Order && !\CCrmSaleHelper::isWithOrdersMode())
+					{
+						continue;
+					}
 					$childIds = [];
 					$childItems = $childRelation->getChildElements($parentIdentifier);
 					foreach ($childItems as $childItem)

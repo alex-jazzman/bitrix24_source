@@ -1,0 +1,36 @@
+<?
+$MESS["SEC_MENU_ITEM"] = "Проактивний захист";
+$MESS["SEC_MENU_TITLE"] = "Управління проактивним захистом";
+$MESS["SEC_MENU_PANEL_ITEM"] = "Панель безпеки";
+$MESS["SEC_MENU_PANEL_TITLE"] = "Зведена інформація про налаштування безпеки";
+$MESS["SEC_MENU_FILTER_ITEM"] = "Проактивний фільтр";
+$MESS["SEC_MENU_FILTER_TITLE"] = "Управління та налаштування проактивного фильтру";
+$MESS["SEC_MENU_ANTIVIRUS_ITEM"] = "Веб-антивірус";
+$MESS["SEC_MENU_ANTIVIRUS_TITLE"] = "Управління та налаштування роботою антивіруса";
+$MESS["SEC_MENU_FILTER_LOG_ITEM"] = "Журнал вторгнень";
+$MESS["SEC_MENU_FILTER_LOG_TITLE"] = "Перегляд журналу спроб вторгнення";
+$MESS["SEC_MENU_ADMINIP_ITEM"] = "Захист адміністративного розділу";
+$MESS["SEC_MENU_ADMINIP_TITLE"] = "Захист доступу до адміністративної частини за IP-адресами";
+$MESS["SEC_MENU_IP_ITEM"] = "Стоп-лист";
+$MESS["SEC_MENU_IP_TITLE"] = "Правила блокування IP-адресу";
+$MESS["SEC_MENU_FILE_ITEM"] = "Контроль цілісності";
+$MESS["SEC_MENU_FILE_TITLE"] = "Перевірка цілісності файлів";
+$MESS["SEC_MENU_ACTIVITY_ITEM"] = "Контроль активності";
+$MESS["SEC_MENU_ACTIVITY_TITLE"] = "Налаштування обмеження активності з використанням модуля веб-аналітики";
+$MESS["SEC_MENU_SESSION_ITEM"] = "Захист сесій";
+$MESS["SEC_MENU_SESSION_TITLE"] = "Налаштування параметрів захисту сесій";
+$MESS["SEC_MENU_PHP_ITEM"] = "Рекомендації з налаштування PHP";
+$MESS["SEC_MENU_PHP_TITLE"] = "Рекомендації з налаштування PHP";
+$MESS["SEC_MENU_REDIRECT_ITEM"] = "Захист редиректів";
+$MESS["SEC_MENU_REDIRECT_TITLE"] = "Включення захисту редиректів від фішингу";
+$MESS["SEC_MENU_FRAME_ITEM"] = "Захист від фреймів";
+$MESS["SEC_MENU_FRAME_TITLE"] = "Увімкнення захисту на основі обмеження фреймів";
+$MESS["SEC_MENU_SCANNER_ITEM"] = "Сканер безпеки";
+$MESS["SEC_MENU_SCANNER_TITLE"] = "Запуск сканера безпеки";
+$MESS["SEC_MENU_HOSTS_ITEM"] = "Хости / домени";
+$MESS["SEC_MENU_HOSTS_TITLE"] = "Налаштування обмеження хостів";
+$MESS["SEC_MENU_OTP_NEW_ITEM"] = "Двоетапна авторизація";
+$MESS["SEC_MENU_OTP_NEW_ITEM_TITLE"] = "Включення і настройка використання двоетапної авторизації";
+$MESS["SEC_MENU_DDOS_ITEM"] = "Захист від DDoS";
+$MESS["SEC_MENU_DDOS_TITLE"] = "Включення захисту від DDoS";
+?>

@@ -1,0 +1,4 @@
+<?php
+$MESS["TELEPHONY_REPORT_MISSED_REACTION_AVG_RESPONSE_TIME"] = "Середній час реакції";
+$MESS["TELEPHONY_REPORT_MISSED_REACTION_MISSED"] = "Втрачені дзвінки";
+$MESS["TELEPHONY_REPORT_MISSED_REACTION_UNANSWERED"] = "Без відповіді протягом доби";

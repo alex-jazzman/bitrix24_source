@@ -8,7 +8,7 @@ if (!defined('ADMIN_THEME_ID'))
 	define('ADMIN_THEME_ID', '.default');
 }
 
-$file = trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/lang/".LANGUAGE_ID."/iblock_settings.php")));
+$file = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/lang/".LANGUAGE_ID."/iblock_settings.php")));
 __IncludeLang($file);
 $iblock_id = intval($_REQUEST["IBLOCK_ID"]);
 

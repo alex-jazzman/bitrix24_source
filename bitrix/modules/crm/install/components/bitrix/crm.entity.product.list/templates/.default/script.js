@@ -46,7 +46,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return HintPopup;
 	}();
 
-	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
+	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 
@@ -112,7 +112,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        _classPrivateMethodGet(this, _layoutDateReservation, _layoutDateReservation2).call(this, this.getDateReservation());
 	      }
 
-	      node.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["", ""])), _classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this)));
+	      node.appendChild(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this));
 	      main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this), 'click', _classStaticPrivateMethodGet(ReserveControl, ReserveControl, _onDateInputClick).bind(this));
 	      main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this).querySelector('input'), 'change', this.onDateChange.bind(this));
 	    }
@@ -172,7 +172,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            id: errorNotifyId,
 	            closeButton: true,
 	            autoHideDelay: 3000,
-	            content: main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_IS_LESS_QUANTITY_WITH_DEDUCTED_THEN_RESERVED'))
+	            content: main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_IS_LESS_QUANTITY_WITH_DEDUCTED_THEN_RESERVED'))
 	          };
 	          notify = BX.UI.Notification.Center.notify(notificationOptions);
 	        }
@@ -228,7 +228,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            id: errorNotifyId,
 	            closeButton: true,
 	            autoHideDelay: 3000,
-	            content: main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_DATE_IN_PAST'))
+	            content: main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_DATE_IN_PAST'))
 	          };
 	          notify = BX.UI.Notification.Center.notify(notificationOptions);
 	        }
@@ -265,7 +265,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  var _this = this;
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('dateInput', function () {
-	    return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<a class=\"crm-entity-product-list-reserve-date\"></a>\n\t\t\t\t\t<input\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t"])), _this.dateFieldName, _this.dateFieldName, _this.getDateReservation());
+	    return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<a class=\"crm-entity-product-list-reserve-date\"></a>\n\t\t\t\t\t<input\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t"])), _this.dateFieldName, _this.dateFieldName, _this.getDateReservation());
 	  });
 	}
 
@@ -273,11 +273,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  var _this2 = this;
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('reserveInput', function () {
-	    var tag = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<input type=\"text\"\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox ", "\"\n\t\t\t\t\t\tautoComplete=\"off\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tplaceholder=\"0\"\n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t", "\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t"])), _this2.inputFieldName, _this2.inputFieldName, _this2.isInputDisabled() ? "crm-entity-product-list-locked-field" : "", _this2.getReservedQuantity(), _this2.getReservedQuantity(), _this2.isInputDisabled() ? "disabled" : "");
+	    var tag = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<input type=\"text\"\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox ", "\"\n\t\t\t\t\t\tautoComplete=\"off\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tplaceholder=\"0\"\n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t", "\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t"])), _this2.inputFieldName, _this2.inputFieldName, _this2.isInputDisabled() ? "crm-entity-product-list-locked-field" : "", _this2.getReservedQuantity(), _this2.getReservedQuantity(), _this2.isInputDisabled() ? "disabled" : "");
 
 	    if (_this2.isBlocked) {
 	      tag.onclick = function () {
-	        return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	        return main_core_events.EventEmitter.emit(_this2, 'onNodeClick');
 	      };
 	    }
 
@@ -469,7 +469,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }
 	}
 
-	var _templateObject$3, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7, _templateObject8;
+	var _templateObject$3, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8;
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
@@ -854,6 +854,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      for (var name in fields) {
 	        if (fields.hasOwnProperty(name)) {
 	          this.setField(name, fields[name]);
+	          this.getModel().setField(name, fields[name]);
 	        }
 	      }
 	    }
@@ -1016,7 +1017,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function updateFieldByEvent(fieldCode, event) {
 	      var target = event.target;
 	      var value = target.type === 'checkbox' ? target.checked : target.value;
-	      var mode = event.type === 'input' ? MODE_EDIT : MODE_SET;
+	      var mode = event.type === 'input' || event.type === 'change' ? MODE_EDIT : MODE_SET;
 	      this.updateField(fieldCode, value, mode);
 	    }
 	  }, {
@@ -1556,6 +1557,20 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "setBasePrice",
 	    value: function setBasePrice(value) {
+	      var originalPrice = value; // price can't be less than zero
+
+	      value = Math.max(value, 0);
+	      var calculatedFields = this.getCalculator().setFields(this.getCalculator().calculateBasePrice(this.getCatalogPrice())).calculatePrice(value);
+	      this.setFields(calculatedFields);
+	      this.refreshFieldsLayout(['PRICE_NETTO', 'PRICE_BRUTTO']);
+	      this.addActionProductChange();
+	      this.addActionUpdateTotal();
+
+	      _classPrivateMethodGet$2(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this, originalPrice !== value);
+	    }
+	  }, {
+	    key: "setBasePrice",
+	    value: function setBasePrice(value) {
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
 	      var originalPrice = value; // price can't be less than zero
 
@@ -1965,7 +1980,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          result = field;
 	          break;
 
-	        case 'ENTERED_PRICE':
+	        case 'PRICE_NETTO':
+	        case 'PRICE_BRUTTO':
 	          result = 'PRICE';
 	          break;
 
@@ -2278,7 +2294,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    var numberSelector = mainInfoNode.querySelector('.main-grid-row-number');
 
 	    if (!main_core.Type.isDomNode(numberSelector)) {
-	      mainInfoNode.appendChild(main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"main-grid-row-number\"></div>"]))));
+	      mainInfoNode.appendChild(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"main-grid-row-number\"></div>"]))));
 	    }
 
 	    var selectorWrapper = mainInfoNode.querySelector('.main-grid-row-product-selector');
@@ -2348,6 +2364,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 
 	function _applyStoreSelectorRestrictionTweaks2() {
+	  var _this9 = this;
+
 	  var storeSearchInput = this.storeSelector.searchInput;
 
 	  if (!storeSearchInput || !storeSearchInput.getNameInput()) {
@@ -2360,13 +2378,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	  if (this.storeSelector.getWrapper()) {
 	    this.storeSelector.getWrapper().onclick = function () {
-	      return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	      return _this9.editor.openIntegrationLimitSlider();
 	    };
 	  }
 	}
 
 	function _initReservedControl2() {
-	  var _this9 = this;
+	  var _this10 = this;
 
 	  var storeWrapper = _classPrivateMethodGet$2(this, _getNodeChildByDataName, _getNodeChildByDataName2).call(this, 'RESERVE_INFO');
 
@@ -2380,7 +2398,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    main_core_events.EventEmitter.subscribe(this.reserveControl, 'onChange', function (event) {
 	      var item = event.getData();
 
-	      _this9.updateField(item.NAME, item.VALUE);
+	      _this10.updateField(item.NAME, item.VALUE);
+	    });
+	    main_core_events.EventEmitter.subscribe(this.reserveControl, 'onNodeClick', function () {
+	      _this10.editor.openIntegrationLimitSlider();
 	    });
 	    this.layoutReserveControl();
 	  }
@@ -2389,12 +2410,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	  if (quantityInput) {
 	    main_core.Event.bind(quantityInput, 'change', function (event) {
-	      var _this9$reserveControl;
+	      var _this10$reserveContro;
 
-	      var isReserveEqualProductQuantity = _classPrivateMethodGet$2(_this9, _isReserveEqualProductQuantity, _isReserveEqualProductQuantity2).call(_this9) && ((_this9$reserveControl = _this9.reserveControl) === null || _this9$reserveControl === void 0 ? void 0 : _this9$reserveControl.isReserveEqualProductQuantity);
+	      var isReserveEqualProductQuantity = _classPrivateMethodGet$2(_this10, _isReserveEqualProductQuantity, _isReserveEqualProductQuantity2).call(_this10) && ((_this10$reserveContro = _this10.reserveControl) === null || _this10$reserveContro === void 0 ? void 0 : _this10$reserveContro.isReserveEqualProductQuantity);
 
 	      if (isReserveEqualProductQuantity) {
-	        _this9.setReserveQuantity(_this9.getField('QUANTITY'));
+	        _this10.setReserveQuantity(_this10.getField('QUANTITY'));
 
 	        return;
 	      }
@@ -2403,7 +2424,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var errorNotifyId = 'quantityReservedCountError';
 	      var notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
 
-	      if (value < _this9.getField('INPUT_RESERVE_QUANTITY')) {
+	      if (value < _this10.getField('INPUT_RESERVE_QUANTITY')) {
 	        if (!notify) {
 	          var notificationOptions = {
 	            id: errorNotifyId,
@@ -2414,7 +2435,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          notify = BX.UI.Notification.Center.notify(notificationOptions);
 	        }
 
-	        _this9.setReserveQuantity(_this9.getField('QUANTITY'));
+	        _this10.setReserveQuantity(_this10.getField('QUANTITY'));
 
 	        notify.show();
 	      }
@@ -2423,11 +2444,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 
 	function _onStoreFieldChange2(event) {
-	  var _this10 = this;
+	  var _this11 = this;
 
 	  var data = event.getData();
 	  data.fields.forEach(function (item) {
-	    _this10.updateField(item.NAME, item.VALUE);
+	    _this11.updateField(item.NAME, item.VALUE);
 	  });
 	  this.initHandlersForSelectors();
 	}
@@ -2437,7 +2458,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 
 	function _showPriceNotifier2(enteredPrice) {
-	  var _this11 = this;
+	  var _this12 = this;
 
 	  var disabledPriceNotify = BX.UI.Notification.Center.getBalloonByCategory(Row.CATALOG_PRICE_CHANGING_DISABLED);
 
@@ -2449,16 +2470,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    title: main_core.Loc.getMessage('CATALOG_PRODUCT_MODEL_SAVING_NOTIFICATION_PRICE_CHANGED_QUERY'),
 	    events: {
 	      onCancel: function onCancel() {
-	        if (_this11.getBasePrice() > _this11.getEnteredPrice()) {
-	          _this11.setField('ENTERED_PRICE', _this11.getBasePrice());
+	        if (_this12.getBasePrice() > _this12.getEnteredPrice()) {
+	          _this12.setField('ENTERED_PRICE', _this12.getBasePrice());
 
-	          _this11.updateUiInputField('PRICE', _this11.getBasePrice());
+	          _this12.updateUiInputField('PRICE', _this12.getBasePrice());
 	        }
 
-	        _this11.setPrice(enteredPrice);
+	        _this12.setPrice(enteredPrice);
 
-	        if (_this11.getField('DISCOUNT_SUM') > 0) {
-	          var settingPopup = _this11.getEditor().getSettingsPopup();
+	        if (_this12.getField('DISCOUNT_SUM') > 0) {
+	          var settingPopup = _this12.getEditor().getSettingsPopup();
 
 	          var setting = settingPopup === null || settingPopup === void 0 ? void 0 : settingPopup.getSetting('DISCOUNTS');
 
@@ -2468,21 +2489,21 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        }
 	      },
 	      onSave: function onSave() {
-	        _this11.setField('ENTERED_PRICE', enteredPrice);
+	        _this12.setField('ENTERED_PRICE', enteredPrice);
 
-	        _this11.setField('PRICE', enteredPrice);
+	        _this12.setField('PRICE', enteredPrice);
 
-	        _this11.changeCatalogPrice('CATALOG_PRICE', enteredPrice);
+	        _this12.changeCatalogPrice('CATALOG_PRICE', enteredPrice);
 
-	        _this11.setBasePrice(enteredPrice);
+	        _this12.setBasePrice(enteredPrice);
 
-	        _this11.getModel().save(['BASE_PRICE', 'CURRENCY']);
+	        _this12.getModel().save(['BASE_PRICE', 'CURRENCY']);
 
-	        _this11.refreshFieldsLayout();
+	        _this12.refreshFieldsLayout();
 
-	        _this11.addActionUpdateTotal();
+	        _this12.addActionUpdateTotal();
 
-	        _this11.executeExternalActions();
+	        _this12.executeExternalActions();
 	      }
 	    }
 	  });
@@ -2899,6 +2920,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  babelHelpers.createClass(Editor, [{
 	    key: "init",
 	    value: function init() {
+	      var _this = this;
+
 	      var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      this.setSettings(config);
 
@@ -2931,7 +2954,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	                return;
 	              }
 
-	              top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	              _this.openIntegrationLimitSlider();
 	            };
 
 	            var lock = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-entity-product-list-locked-header\"></span>"])));
@@ -2943,46 +2966,46 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "subscribeDomEvents",
 	    value: function subscribeDomEvents() {
-	      var _this = this;
+	      var _this2 = this;
 
 	      this.unsubscribeDomEvents();
 	      var container = this.getContainer();
 
 	      if (main_core.Type.isElementNode(container)) {
 	        container.querySelectorAll('[data-role="product-list-select-button"]').forEach(function (selectButton) {
-	          main_core.Event.bind(selectButton, 'click', _this.productSelectionPopupHandler);
+	          main_core.Event.bind(selectButton, 'click', _this2.productSelectionPopupHandler);
 	        });
 	        container.querySelectorAll('[data-role="product-list-add-button"]').forEach(function (addButton) {
-	          main_core.Event.bind(addButton, 'click', _this.productRowAddHandler);
+	          main_core.Event.bind(addButton, 'click', _this2.productRowAddHandler);
 	        });
 	        container.querySelectorAll('[data-role="product-list-settings-button"]').forEach(function (configButton) {
-	          main_core.Event.bind(configButton, 'click', _this.showSettingsPopupHandler);
+	          main_core.Event.bind(configButton, 'click', _this2.showSettingsPopupHandler);
 	        });
 	      }
 	    }
 	  }, {
 	    key: "unsubscribeDomEvents",
 	    value: function unsubscribeDomEvents() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      var container = this.getContainer();
 
 	      if (main_core.Type.isElementNode(container)) {
 	        container.querySelectorAll('[data-role="product-list-select-button"]').forEach(function (selectButton) {
-	          main_core.Event.unbind(selectButton, 'click', _this2.productSelectionPopupHandler);
+	          main_core.Event.unbind(selectButton, 'click', _this3.productSelectionPopupHandler);
 	        });
 	        container.querySelectorAll('[data-role="product-list-add-button"]').forEach(function (addButton) {
-	          main_core.Event.unbind(addButton, 'click', _this2.productRowAddHandler);
+	          main_core.Event.unbind(addButton, 'click', _this3.productRowAddHandler);
 	        });
 	        container.querySelectorAll('[data-role="product-list-settings-button"]').forEach(function (configButton) {
-	          main_core.Event.unbind(configButton, 'click', _this2.showSettingsPopupHandler);
+	          main_core.Event.unbind(configButton, 'click', _this3.showSettingsPopupHandler);
 	        });
 	      }
 	    }
 	  }, {
 	    key: "subscribeCustomEvents",
 	    value: function subscribeCustomEvents() {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      this.unsubscribeCustomEvents();
 	      main_core_events.EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
@@ -3003,7 +3026,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          moduleId: 'crm',
 	          callback: function callback(data) {
 	            if (data.command === 'onCatalogInventoryManagementEnabled' || data.command === 'onCatalogInventoryManagementDisabled') {
-	              _this3.reloadGrid(false);
+	              _this4.reloadGrid(false);
 	            }
 	          }
 	        }).bind(this);
@@ -3053,16 +3076,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "selectProductInRow",
 	    value: function selectProductInRow(id, productId) {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      if (!main_core.Type.isStringFilled(id) || main_core.Text.toNumber(productId) <= 0) {
 	        return;
 	      }
 
 	      requestAnimationFrame(function () {
-	        var _this4$getProductSele;
+	        var _this5$getProductSele;
 
-	        (_this4$getProductSele = _this4.getProductSelector(id)) === null || _this4$getProductSele === void 0 ? void 0 : _this4$getProductSele.onProductSelect(productId);
+	        (_this5$getProductSele = _this5.getProductSelector(id)) === null || _this5$getProductSele === void 0 ? void 0 : _this5$getProductSele.onProductSelect(productId);
 	      });
 	    }
 	  }, {
@@ -3111,7 +3134,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnInnerCancel",
 	    value: function handleOnInnerCancel(event) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      if (this.controller) {
 	        this.controller.rollback();
@@ -3119,7 +3142,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      this.setGridChanged(false);
 	      main_core_events.EventEmitter.subscribeOnce(this, 'onGridReloaded', function () {
-	        return _this5.actionUpdateTotalData({
+	        return _this6.actionUpdateTotalData({
 	          isInternalChanging: true
 	        });
 	      });
@@ -3149,14 +3172,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "reloadGrid",
 	    value: function reloadGrid() {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var useProductsFromRequest = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
 	      this.getGrid().reloadTable('POST', {
 	        useProductsFromRequest: useProductsFromRequest
 	      }, function () {
-	        return main_core_events.EventEmitter.emit(_this6, 'onGridReloaded');
+	        return main_core_events.EventEmitter.emit(_this7, 'onGridReloaded');
 	      });
 	    }
 	    /*
@@ -3171,7 +3194,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnBeforeGridRequest",
 	    value: function handleOnBeforeGridRequest(event) {
-	      var _this7 = this;
+	      var _this8 = this;
 
 	      var _event$getCompatData3 = event.getCompatData(),
 	          _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 2),
@@ -3198,7 +3221,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      if (isNativeAction && this.isChanged()) {
 	        main_core_events.EventEmitter.subscribeOnce('Grid::updated', function () {
-	          return _this7.actionUpdateTotalData({
+	          return _this8.actionUpdateTotalData({
 	            isInternalChanging: false
 	          });
 	        });
@@ -3285,11 +3308,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "addFirstRowIfEmpty",
 	    value: function addFirstRowIfEmpty() {
-	      var _this8 = this;
+	      var _this9 = this;
 
 	      if (this.getGrid().getRows().getCountDisplayed() === 0) {
 	        requestAnimationFrame(function () {
-	          return _this8.addProductRow();
+	          return _this9.addProductRow();
 	        });
 	      }
 	    }
@@ -3456,14 +3479,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "changeCurrencyId",
 	    value: function changeCurrencyId(currencyId) {
-	      var _this9 = this;
+	      var _this10 = this;
 
 	      this.setCurrencyId(currencyId);
 	      var products = [];
 	      this.products.forEach(function (product) {
 	        var priceFields = {};
 
-	        _classPrivateMethodGet$4(_this9, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this9).forEach(function (name) {
+	        _classPrivateMethodGet$4(_this10, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this10).forEach(function (name) {
 	          priceFields[name] = product.getField(name);
 	        });
 
@@ -3485,7 +3508,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      templateRow['CURRENCY'] = this.getCurrencyId();
 	      var templateFieldNames = ['DISCOUNT_ROW', 'SUM', 'PRICE'];
 	      templateFieldNames.forEach(function (field) {
-	        templateRow[field]['CURRENCY']['VALUE'] = _this9.getCurrencyId();
+	        templateRow[field]['CURRENCY']['VALUE'] = _this10.getCurrencyId();
 	      });
 	      this.setGridEditData(editData);
 	    }
@@ -3506,13 +3529,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "updateTotalUiCurrency",
 	    value: function updateTotalUiCurrency() {
-	      var _this10 = this;
+	      var _this11 = this;
 
 	      var totalBlock = BX(this.getSettingValue('totalBlockContainerId', null));
 
 	      if (main_core.Type.isElementNode(totalBlock)) {
 	        totalBlock.querySelectorAll('[data-role="currency-wrapper"]').forEach(function (row) {
-	          row.innerHTML = _this10.getCurrencyText();
+	          row.innerHTML = _this11.getCurrencyText();
 	        });
 	      }
 	    }
@@ -3771,10 +3794,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getContainer",
 	    value: function getContainer() {
-	      var _this11 = this;
+	      var _this12 = this;
 
 	      return this.cache.remember('container', function () {
-	        return document.getElementById(_this11.getContainerId());
+	        return document.getElementById(_this12.getContainerId());
 	      });
 	    }
 	  }, {
@@ -3928,10 +3951,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getGrid",
 	    value: function getGrid() {
-	      var _this12 = this;
+	      var _this13 = this;
 
 	      return this.cache.remember('grid', function () {
-	        var gridId = _this12.getGridId();
+	        var gridId = _this13.getGridId();
 
 	        if (!main_core.Reflection.getClass('BX.Main.gridManager.getInstanceById')) {
 	          throw Error("Cannot find grid with '".concat(gridId, "' id."));
@@ -4060,7 +4083,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      main_core_events.EventEmitter.subscribeOnce(popup, 'onWindowRegister', BX.defer(function () {
 	        popup.Get().style.position = 'fixed';
 	        popup.Get().style.top = parseInt(popup.Get().style.top) - BX.GetWindowScrollPos().scrollTop + 'px';
-	        popup.OVERLAY.style.zIndex = 798;
 	      }));
 	      main_core_events.EventEmitter.subscribeOnce(window, 'EntityProductListController:onInnerCancel', BX.defer(function () {
 	        popup.Close();
@@ -4119,19 +4141,19 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getSettingsPopup",
 	    value: function getSettingsPopup() {
-	      var _this13 = this;
+	      var _this14 = this;
 
 	      return this.cache.remember('settings-popup', function () {
-	        return new SettingsPopup(_this13.getContainer().querySelector('.crm-entity-product-list-add-block-active [data-role="product-list-settings-button"]'), _this13.getSettingValue('popupSettings', []), _this13);
+	        return new SettingsPopup(_this14.getContainer().querySelector('.crm-entity-product-list-add-block-active [data-role="product-list-settings-button"]'), _this14.getSettingValue('popupSettings', []), _this14);
 	      });
 	    }
 	  }, {
 	    key: "getHintPopup",
 	    value: function getHintPopup() {
-	      var _this14 = this;
+	      var _this15 = this;
 
 	      return this.cache.remember('hint-popup', function () {
-	        return new HintPopup(_this14);
+	        return new HintPopup(_this15);
 	      });
 	    }
 	  }, {
@@ -4265,12 +4287,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "focusProductSelector",
 	    value: function focusProductSelector(newId) {
-	      var _this15 = this;
+	      var _this16 = this;
 
 	      requestAnimationFrame(function () {
-	        var _this15$getProductSel;
+	        var _this16$getProductSel;
 
-	        (_this15$getProductSel = _this15.getProductSelector(newId)) === null || _this15$getProductSel === void 0 ? void 0 : _this15$getProductSel.searchInDialog().focusName();
+	        (_this16$getProductSel = _this16.getProductSelector(newId)) === null || _this16$getProductSel === void 0 ? void 0 : _this16$getProductSel.searchInDialog().focusName();
 	      });
 	    }
 	  }, {
@@ -4287,7 +4309,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnProductChange",
 	    value: function handleOnProductChange(event) {
-	      var _this16 = this;
+	      var _this17 = this;
 
 	      var data = event.getData();
 	      var productRow = this.getProductByRowId(data.rowId);
@@ -4300,11 +4322,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            fields['IMAGE_INFO'] = JSON.stringify(fields['IMAGE_INFO']);
 	          }
 
-	          if (_this16.getCurrencyId() !== fields['CURRENCY_ID']) {
+	          if (_this17.getCurrencyId() !== fields['CURRENCY_ID']) {
 	            fields['CURRENCY'] = fields['CURRENCY_ID'];
 	            var priceFields = {};
 
-	            _classPrivateMethodGet$4(_this16, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this16).forEach(function (name) {
+	            _classPrivateMethodGet$4(_this17, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this17).forEach(function (name) {
 	              priceFields[name] = data.fields[name];
 	            });
 
@@ -4312,12 +4334,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	              fields: priceFields,
 	              id: productRow.getId()
 	            }];
-	            main_core.ajax.runComponentAction(_this16.getComponentName(), 'calculateProductPrices', {
+	            main_core.ajax.runComponentAction(_this17.getComponentName(), 'calculateProductPrices', {
 	              mode: 'class',
-	              signedParameters: _this16.getSignedParameters(),
+	              signedParameters: _this17.getSignedParameters(),
 	              data: {
 	                products: products,
-	                currencyId: _this16.getCurrencyId(),
+	                currencyId: _this17.getCurrencyId(),
 	                options: {
 	                  ACTION: 'calculateProductPrices'
 	                }
@@ -4337,14 +4359,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          }
 	        });
 	        promise.then(function (fields) {
-	          if (_this16.products.length > 1) {
+	          if (_this17.products.length > 1) {
 	            var taxId = fields['VAT_ID'] || fields['TAX_ID'];
 	            var taxIncluded = fields['VAT_INCLUDED'] || fields['TAX_INCLUDED'];
 
 	            if (taxId > 0 && taxIncluded !== productRow.getTaxIncluded()) {
-	              var _this16$getTaxList;
+	              var _this17$getTaxList;
 
-	              var taxRate = (_this16$getTaxList = _this16.getTaxList()) === null || _this16$getTaxList === void 0 ? void 0 : _this16$getTaxList.find(function (item) {
+	              var taxRate = (_this17$getTaxList = _this17.getTaxList()) === null || _this17$getTaxList === void 0 ? void 0 : _this17$getTaxList.find(function (item) {
 	                return parseInt(item.ID) === taxId;
 	              });
 
@@ -4381,7 +4403,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          productRow.modifyBasePriceInput();
 	          productRow.executeExternalActions();
 
-	          _this16.getGrid().tableUnfade();
+	          _this17.getGrid().tableUnfade();
 	        });
 	      } else {
 	        this.getGrid().tableUnfade();
@@ -4452,14 +4474,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	    /* actions */
 	    value: function executeActions(actions) {
-	      var _this17 = this;
+	      var _this18 = this;
 
 	      if (!main_core.Type.isArrayFilled(actions)) {
 	        return;
 	      }
 
 	      var disableSaveButton = actions.filter(function (action) {
-	        return action.type === _this17.actions.updateTotal || action.type === _this17.actions.disableSaveButton;
+	        return action.type === _this18.actions.updateTotal || action.type === _this18.actions.disableSaveButton;
 	      }).length > 0;
 
 	      var _iterator2 = _createForOfIteratorHelper$1(actions),
@@ -4698,7 +4720,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "sendTotalData",
 	    value: function sendTotalData(data, options) {
-	      var _this18 = this;
+	      var _this19 = this;
 
 	      if (this.controller) {
 	        var needMarkAsChanged = true;
@@ -4708,7 +4730,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        }
 
 	        setTimeout(function () {
-	          _this18.controller.changeSumTotal(data, needMarkAsChanged, !_classPrivateMethodGet$4(_this18, _childrenHasErrors, _childrenHasErrors2).call(_this18));
+	          _this19.controller.changeSumTotal(data, needMarkAsChanged, !_classPrivateMethodGet$4(_this19, _childrenHasErrors, _childrenHasErrors2).call(_this19));
 	        }, 500);
 	      }
 	    }
@@ -4719,7 +4741,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "ajaxRequest",
 	    value: function ajaxRequest(action, data) {
-	      var _this19 = this;
+	      var _this20 = this;
 
 	      var requestKey = main_core.Text.getRandom();
 	      this.ajaxPool.set(action, requestKey);
@@ -4735,9 +4757,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        signedParameters: this.getSignedParameters(),
 	        data: data
 	      }).then(function (response) {
-	        return _this19.ajaxResultSuccess(response, data.options);
+	        return _this20.ajaxResultSuccess(response, data.options);
 	      }, function (response) {
-	        return _this19.ajaxResultFailure(response, data.options);
+	        return _this20.ajaxResultFailure(response, data.options);
 	      });
 	    }
 	  }, {
@@ -4872,12 +4894,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "cleanProductRows",
 	    value: function cleanProductRows() {
-	      var _this20 = this;
+	      var _this21 = this;
 
 	      this.products.filter(function (item) {
 	        return item.isEmpty();
 	      }).forEach(function (row) {
-	        return _this20.deleteRow(row.getField('ID'), true);
+	        return _this21.deleteRow(row.getField('ID'), true);
 	      });
 	    }
 	  }, {
@@ -4909,6 +4931,23 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "handleOnTabShow",
 	    value: function handleOnTabShow() {
 	      main_core_events.EventEmitter.emit('onDemandRecalculateWrapper');
+	    }
+	  }, {
+	    key: "openIntegrationLimitSlider",
+	    value: function openIntegrationLimitSlider() {
+	      top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	      var helperSlider = top.BX.UI.InfoHelper.getSlider();
+	      top.BX.Event.EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', function (event) {
+	        var _event$getData$;
+
+	        var slider = (_event$getData$ = event.getData()[0]) === null || _event$getData$ === void 0 ? void 0 : _event$getData$.getSlider();
+
+	        if (slider !== helperSlider) {
+	          return;
+	        }
+
+	        window.location.search += '&active_tab=tab_products';
+	      });
 	    }
 	  }]);
 	  return Editor;

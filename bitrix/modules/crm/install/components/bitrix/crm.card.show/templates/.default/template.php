@@ -2,8 +2,9 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
+
 \Bitrix\Main\UI\Extension::load(["ui.fonts.opensans", "ui.design-tokens"]);
+\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 ?>
 
 <input type="hidden" value="<?=htmlspecialcharsbx($arResult['ENTITY']['VK_PROFILE'])?>" data-role="crm-card-vk-profile">

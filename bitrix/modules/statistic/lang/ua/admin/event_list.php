@@ -1,0 +1,33 @@
+<?
+$MESS["STAT_RECORDS_LIST"] = "Список подій";
+$MESS["STAT_F_ID"] = "ID";
+$MESS["STAT_F_EVENT_ID"] = "ID типу події";
+$MESS["STAT_F_EVENT_TYPE_NAME"] = "Найменування типу події";
+$MESS["STAT_F_ADV_ID"] = "ID рекламної кампанії";
+$MESS["STAT_F_ADV_BACK"] = "На поверненні на рекламній кампанії";
+$MESS["STAT_F_SESSION_ID"] = "ID сесії";
+$MESS["STAT_F_GUEST_ID"] = "ID відвідувача";
+$MESS["STAT_F_HIT_ID"] = "ID хіта";
+$MESS["STAT_F_REFERER_URL"] = "Звідки прийшли";
+$MESS["STAT_F_URL"] = "Де відбулося";
+$MESS["STAT_F_REDIRECT_URL"] = "Куди переспрямували";
+$MESS["STAT_EVENT_PAGES"] = "Події";
+$MESS["STAT_EVENT"] = "Тип";
+$MESS["STAT_DATE"] = "Дата";
+$MESS["STAT_ADV"] = "Рекл. камп.";
+$MESS["STAT_SESSION"] = "Сесія";
+$MESS["STAT_GUEST"] = "Відвід.";
+$MESS["STAT_HIT"] = "Хіт";
+$MESS["STAT_REFERER_URL"] = "Звідки прийшли";
+$MESS["STAT_URL"] = "Де відбулося";
+$MESS["STAT_REDIRECT_URL"] = "Куди переспрямували";
+$MESS["STAT_ADV_BACK_ALT"] = "На поверненні на рекламній кампанії";
+$MESS["STAT_DESCRIPTION"] = "Опис";
+$MESS["STAT_NAME"] = "Ім'я:";
+$MESS["STAT_DELETE_ERROR"] = "Помилка видалення";
+$MESS["STAT_F_MONEY"] = "Грошова сума";
+$MESS["STAT_MONEY"] = "Грошова сума";
+$MESS["STAT_TOTAL_MONEY"] = "Грошова сума:";
+$MESS["STAT_F_FILTER_LOGIC"] = "Логіка між полями";
+$MESS["STAT_ADD_TITLE"] = "Натисніть для додавання нової події";
+?>

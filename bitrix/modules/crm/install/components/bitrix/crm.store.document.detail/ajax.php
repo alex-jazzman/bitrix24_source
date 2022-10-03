@@ -15,7 +15,6 @@ use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Helpers\Order\Builder;
 use Bitrix\Catalog;
 use Bitrix\Crm\Service\Sale\Reservation\ShipmentService;
-use Bitrix\Salescenter;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -24,11 +23,6 @@ Loc::loadMessages(__FILE__);
 if (!Loader::includeModule('crm'))
 {
 	die('Can\'t include module "CRM"');
-}
-
-if (!Main\Loader::includeModule('salescenter'))
-{
-	die('Can\'t include module "salescenter"');
 }
 
 /** @internal  */
@@ -883,9 +877,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 		$formData['PROPERTIES'] = $this->getPropertiesField($formData);
 
-		$orderBuilder = Salescenter\Builder\Manager::getBuilder(
-			Salescenter\Builder\SettingsContainer::BUILDER_SCENARIO_SHIPMENT
-		);
+		$orderBuilder = Crm\Order\Builder\Factory::createBuilderForShipment();
 
 		$director = new Builder\Director;
 		/** @var Crm\Order\Order $order */

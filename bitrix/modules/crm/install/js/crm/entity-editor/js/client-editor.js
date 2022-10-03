@@ -164,6 +164,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				else
 				{
 					this.setMode(BX.Crm.EntityEditorClientMode.select);
+					this.releaseEntityEditor();
 				}
 
 				this.clearMultifieldLayout();
@@ -1346,16 +1347,40 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 			},
 			onChangeButtonClick: function(e)
 			{
-				this.setMode(BX.Crm.EntityEditorClientMode.select);
+				var isCreationMode = (this.getMode() === BX.Crm.EntityEditorClientMode.create);
+				if (isCreationMode)
+				{
+					this.setEntity(null, true);
+					this.adjust();
+				}
+				else
+				{
+					this.setMode(BX.Crm.EntityEditorClientMode.select);
+				}
+				this.releaseEntityEditor();
 
-				if(this._searchInput)
+				if(!isCreationMode && this._searchInput)
 				{
 					this._searchInput.focus();
 				}
 
 				if(this._searchControl)
 				{
-					this._searchControl.getPopupWindow().show();
+					if (isCreationMode)
+					{
+						var emptySearchResultsCallback = function()
+						{
+							BX.removeCustomEvent(this._searchControl, 'BX.UI.Dropdown:onSearchComplete', emptySearchResultsCallback);
+							this._searchControl.getPopupWindow().show();
+						}.bind(this);
+						BX.addCustomEvent(this._searchControl, 'BX.UI.Dropdown:onSearchComplete', emptySearchResultsCallback);
+						this._searchControl.previousSearchQuery = '';
+						this._searchControl.handleTypeInField();
+					}
+					else
+					{
+						this._searchControl.getPopupWindow().show();
+					}
 				}
 			},
 			onDeleteButtonClick: function(e)

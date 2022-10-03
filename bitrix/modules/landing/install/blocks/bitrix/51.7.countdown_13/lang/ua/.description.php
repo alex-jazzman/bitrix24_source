@@ -1,0 +1,7 @@
+<?
+$MESS["LANDING_BLOCK_51_7_COUNTDOWN_13--NAME"] = "Таймер в круглій рамці на світлому фоні";
+$MESS["LANDING_BLOCK_51_7_COUNTDOWN_13--DATE"] = "Дата завершення";
+$MESS["LANDING_BLOCK_51_7_COUNTDOWN_13--TITLE"] = "Заголовок";
+$MESS["LANDING_BLOCK_51_7_COUNTDOWN_13--NUMBER_NUMBER"] = "Число";
+$MESS["LANDING_BLOCK_51_7_COUNTDOWN_13--NUMBER_TEXT"] = "Підпис";
+?>

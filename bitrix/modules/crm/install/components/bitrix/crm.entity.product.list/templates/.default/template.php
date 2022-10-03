@@ -454,7 +454,7 @@ foreach ($grid['ROWS'] as $product)
 	// end region TAX
 
 	// region SUM
-	$sum = $rawProduct['PRICE'] * $rawProduct['QUANTITY'];
+	$sum = $rawProduct['PRICE_EXCLUSIVE'] * $rawProduct['QUANTITY'] + $rawProduct['TAX_SUM'];
 	$sum = number_format($sum, $pricePrecision, '.', '');
 	$sumColumn = CCrmCurrency::MoneyToString($sum, $currency['ID']);
 

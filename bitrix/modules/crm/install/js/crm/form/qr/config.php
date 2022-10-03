@@ -17,5 +17,6 @@ return [
 		'main.core',
 		'main.popup',
 		'ui.notification',
+		'ui.fonts.opensans',
 	]
 ];

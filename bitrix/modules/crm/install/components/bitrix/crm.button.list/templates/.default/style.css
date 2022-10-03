@@ -425,7 +425,8 @@
 	overflow: hidden;
 	white-space: nowrap;
 	display: block;
-	font: bold 12px/40px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 12px/40px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #fff;
 	max-width: 100%;
 	-webkit-transition: color .3s ease;
@@ -456,7 +457,8 @@ div.intranet-button-list-widget-content {
 
 .intranet-button-list-widget-content-amt {
 	color: #fff;
-	font: 13px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .intranet-button-list-widget-content-inner {
@@ -559,11 +561,13 @@ div.intranet-button-list-widget-content {
 }
 
 .crm-intranet-button-list-widget-content-title {
-	font: 21px/15px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 21px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .intranet-button-list-widget-content-number {
-	font: bold 38px/46px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 38px/46px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 @media (max-width: 1199px) {
@@ -583,7 +587,8 @@ div.intranet-button-list-widget-content {
 
 .intranet-button-list-widget-content-attempt-total-number,
 .intranet-button-list-widget-content-attempt-success-number {
-	font: bold 16px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 /* Right block */

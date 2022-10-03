@@ -497,6 +497,23 @@ class CCrmComponentHelper
 	}
 
 	/**
+	 * Method allows detecting active item for "bitrix:crm.control_panel"
+	 *
+	 * @param string          $entityName Entity name (CONTACT|COMPANY or custom value)
+	 * @param int|string|null $categoryId Category ID
+	 *
+	 * @return string
+	 */
+	public static function getMenuActiveItemId(string $entityName, $categoryId): string
+	{
+		$categoryId = isset($categoryId) ? (int)$categoryId : 0;
+
+		return $categoryId > 0
+			? "{$entityName}_C{$categoryId}"
+			: $entityName;
+	}
+
+	/**
 	 * @param int $entityTypeId Entity type ID
 	 * @param int $categoryId   Entity category ID
 	 *

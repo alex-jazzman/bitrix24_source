@@ -22,12 +22,6 @@ if (!Main\Loader::includeModule('crm'))
 	return;
 }
 
-if (!Main\Loader::includeModule('salescenter'))
-{
-	ShowError(GetMessage('SALESCENTER_MODULE_NOT_INSTALLED'));
-	return;
-}
-
 if (!Main\Loader::includeModule('catalog'))
 {
 	ShowError(GetMessage('CATALOG_MODULE_NOT_INSTALLED'));

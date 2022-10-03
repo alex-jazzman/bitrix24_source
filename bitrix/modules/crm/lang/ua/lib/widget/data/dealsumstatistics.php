@@ -1,0 +1,4 @@
+<?
+$MESS["CRM_DEAL_SUM_STAT_PRESET_OVERALL_COUNT"] = "Кількість угод";
+$MESS["CRM_DEAL_SUM_STAT_PRESET_OVERALL_SUM"] = "Сума угод";
+?>

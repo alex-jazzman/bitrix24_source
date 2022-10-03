@@ -128,7 +128,12 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->extras = isset($this->arParams['~EXTRAS']) && is_array($this->arParams['~EXTRAS'])
 			? $this->arParams['~EXTRAS'] : [];
 
-		if($this->entityID > 0 && !\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($this->entityTypeID, $this->entityID))
+		if($this->entityID > 0 && !\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission(
+			$this->entityTypeID,
+			$this->entityID,
+			$this->userPermissions,
+			$this->extras
+		))
 		{
 			$this->errors[] = GetMessage('CRM_PERMISSION_DENIED');
 			return;

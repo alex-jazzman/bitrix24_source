@@ -1,0 +1,37 @@
+<?
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_GREEN"] = "Хороший рівень";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_GREEN1"] = "Низький";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_GREEN2"] = "Невеликий";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_GREEN3"] = "Оптимальний";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_RED"] = "Поганий рівень";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_RED1"] = "Втома";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_RED2"] = "Знесилення";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_RED3"] = "Витратний";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_RED4"] = "Відчутний";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_RED5"] = "Сильний";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_RED6"] = "Перенапруження";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_RED7"] = "Критично високий";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_UNKNOWN"] = "Дивний рівень";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_YELLOW"] = "Середній рівень";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_YELLOW1"] = "Холодець";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_YELLOW2"] = "Підвищений";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_DESCRIPTION_YELLOW3"] = "Досить високий";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_GREEN1"] = "Спокійний розслаблений стан. Низький рівень напруги.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_GREEN2"] = "Невелика напруга, але організм добре справляється з будь-якими навантаженнями. Це стрес не \"прокачує\" організм, але і не шкодить йому.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_GREEN3"] = "Організм в тонусі. Він зібраний і готовий до роботи. Такий стрес - еустресс - гарна та корисна напруга, яке підвищує стійкість до стресів.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_RED1"] = "Стрес низький, організму важко, але він впорається. Схоже, нещодавно ви активно думали, сильно переживали або фізично перетрудилися.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_RED2"] = "Стрес низький, організму важко, але він впорається. Схоже, нещодавно ви активно думали, сильно переживали або фізично перетрудилися.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_RED3"] = "Організм витрачає дуже багато ресурсів на боротьбу з напругою, і це дається важко. При цьому самопочуття поки може бути нормальним.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_RED4"] = "Організм в дистресі. Напруга досить висока. У такому стані не варто перебувати довго, інакше самопочуття може стати гірше.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_RED5"] = "Організм дуже сильно напружений. На те, щоб підтримувати всі необхідні процеси на тлі стресу, йде багато сил.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_RED6"] = "Організм дуже перенапружений. Цей стан дистресу, у якому всі ресурси та енергія витрачаються вкрай швидко.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_RED7"] = "Максимальний рівень напруги. На тлі такого стану організму складно підтримувати всі процеси правильно. Не варто залишатися так надовго.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_TITLE"] = "Що означає рівень стресу &laquo;#LEVEL#&raquo;?";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_TITLE_GREEN"] = "Що означає хороший рівень стресу?";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_TITLE_RED"] = "Що означає високий рівень стресу?";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_TITLE_UNKNOWN"] = "Що означає дивний рівень стресу?";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_TITLE_YELLOW"] = "Що означає середній рівень стресу?";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_YELLOW1"] = "Організм розслаблений і не може зібратися. Він переживає наслідки нещодавньої сильної напруги, але вже починає відновлюватися.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_YELLOW2"] = "Напруга трохи підвищена, але організм з нею справляється, хоча починає витрачати більше ресурсів.";
+$MESS["INTRANET_USER_PROFILE_STRESSLEVEL_TYPE_TEXT_YELLOW3"] = "Напруга підвищена, але організм справляється, хоча й витрачає на це багато ресурсів і енергії.";
+?>

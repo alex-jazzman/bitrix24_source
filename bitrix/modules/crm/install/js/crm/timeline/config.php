@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/timeline.bundle.css',
 	'js' => 'dist/timeline.bundle.js',
 	'rel' => [
+		'ui.notification',
 		'main.core.events',
 		'currency',
-		'ui.notification',
 		'pull.client',
 		'ui.vue',
 		'main.core',

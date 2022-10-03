@@ -47,7 +47,7 @@ if (!$Browser["isOpera"]):
 	include_once($_SERVER['DOCUMENT_ROOT']."/bitrix/image_uploader/localization.php");
 endif;
 
-$file = trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/lang/".LANGUAGE_ID."/script.php")));
+$file = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/lang/".LANGUAGE_ID."/script.php")));
 __IncludeLang($file);
 
 ?>

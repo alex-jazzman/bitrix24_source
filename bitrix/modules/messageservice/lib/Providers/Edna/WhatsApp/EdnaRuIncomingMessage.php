@@ -11,34 +11,21 @@ use Bitrix\Messageservice\Internal\Entity\IncomingMessageTable;
 class EdnaRuIncomingMessage extends IncomingMessage
 {
 
-	public static function sendMessageToChat($internalId): void
+	public static function sendMessageToChat(array $message): void
 	{
-		$serializedFields =
-			IncomingMessageTable::query()
-				->addSelect('REQUEST_BODY')
-				->where('ID', $internalId)
-				->fetch()
-		;
-		
-		if (!$serializedFields)
-		{
-			throw new \RuntimeException('Invalid internal id for an incoming message');
-		}
-		$messageFields = unserialize($serializedFields['REQUEST_BODY'], ['allowed_classes' => false]);
+		$message = self::prepareMessageFields($message);
 
-		$messageFields = self::prepareMessageFields($messageFields);
-
-		$portal = new Input($messageFields);
+		$portal = new Input($message);
 		$portal->reception();
 
-		self::confirmSendingMessage($internalId);
+		self::confirmSendingMessage($message['internalId']);
 	}
 
 	public static function prepareMessageFields(array $messageFields): array
 	{
 		$messageFields['CONNECTOR'] = Library::ID_EDNA_WHATSAPP_CONNECTOR;
 
-		$messageFields['imSubject'] = $messageFields['subject'];
+		$messageFields['imSubject'] = $messageFields['subjectId'];
 		$messageFields['address'] = $messageFields['subscriber']['identifier'];
 		$messageFields['userName'] = $messageFields['userInfo']['userName'];
 		$messageFields['firstName'] = $messageFields['userInfo']['firstName'];

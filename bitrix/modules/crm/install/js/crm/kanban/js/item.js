@@ -197,7 +197,8 @@ BX.CRM.Kanban.Item.prototype = {
 		var rgba = "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + "," + ".7)";
 
 		// border color
-		BX.style(this.container, "border-left", "3px solid " + rgba);
+		this.container.style.setProperty("--crm-kanban-item-color", rgba);
+
 		// item link
 		this.link.innerHTML = this.clipTitle(data.name);
 
@@ -904,6 +905,8 @@ BX.CRM.Kanban.Item.prototype = {
 		});
 
 		this.container.appendChild(this.link);
+
+		this.container.appendChild(BX.Tag.render`<div class="crm-kanban-item-line"></div>`);
 
 		// lead repeated
 		if (

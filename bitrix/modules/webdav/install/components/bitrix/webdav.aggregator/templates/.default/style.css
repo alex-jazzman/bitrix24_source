@@ -81,7 +81,7 @@ div.bx-bnr-button  {
 	background-position: 5px center;
 	background-repeat: no-repeat;
 	border: solid 1px #E5E5E5;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 5px 7px 5px 25px;
 	color: black;
 	text-decoration: none;

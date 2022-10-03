@@ -1,0 +1,5 @@
+<?php
+$MESS["SELECTOR_COMPONENT_CREATE_PRODUCT"] = "Створити товар";
+$MESS["SELECTOR_COMPONENT_CREATING_PRODUCT"] = "Створення товару...";
+$MESS["SELECTOR_COMPONENT_PICK_PRODUCT_2"] = "Товар";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PRODUCT"] = "Почніть друкувати для пошуку товарів";

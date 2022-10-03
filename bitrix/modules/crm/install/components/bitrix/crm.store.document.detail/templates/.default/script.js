@@ -62,6 +62,11 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	          }
 	        }
 
+	        if (action === 'SAVE') {
+	          // for consistency in analytics tags
+	          action = 'save';
+	        }
+
 	        var urlParams = {
 	          isNewDocument: _this.entityId <= 0 ? 'Y' : 'N'
 	        };
@@ -260,7 +265,8 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	            }
 	          });
 	          deductDocumentAjaxForm.addUrlParams({
-	            action: actionName
+	            action: actionName,
+	            documentType: 'W'
 	          });
 	          deductDocumentAjaxForm.submit();
 	        }

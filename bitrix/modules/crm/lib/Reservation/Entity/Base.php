@@ -23,9 +23,6 @@ abstract class Base
 	/** @var Crm\Order\Order */
 	private $order;
 
-	/** @var int|null */
-	private $defaultStore;
-
 	/**
 	 * @param int $ownerId
 	 * @throws Main\SystemException
@@ -42,8 +39,6 @@ abstract class Base
 		}
 
 		$this->entityProducts = $this->loadEntityProducts();
-
-		$this->defaultStore = Catalog\StoreTable::getDefaultStoreId();
 	}
 
 	abstract protected function checkLoadedEntity(): Main\Result;

@@ -1,0 +1,34 @@
+<?
+$MESS["CRM_WEBFORM_EDIT_V2_ATTENTION"] = "Увага!";
+$MESS["CRM_WEBFORM_EDIT_V2_ATTENTION_TEXT"] = "Виведена форма з останніми збереженими змінами.";
+$MESS["CRM_WEBFORM_EDIT_V2_AUTO"] = "Авто";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER"] = "Межі форми";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_BOTTOM"] = "Знизу";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_LEFT"] = "Зліва";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_RIGHT"] = "Справа";
+$MESS["CRM_WEBFORM_EDIT_V2_BORDER_TOP"] = "Зверху";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_BRIGHT"] = "Колір яскравих елементів";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_BRIGHT_TEXT"] = "Колір тексту яскравих елементів";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD"] = "Колір фону полів";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD_BORDER"] = "Колір меж полів";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FIELD_FOCUS"] = "Колір фону полів у фокусі";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FORM"] = "Колір фону форми";
+$MESS["CRM_WEBFORM_EDIT_V2_COLOR_FORM_TEXT"] = "Колір тексту форми";
+$MESS["CRM_WEBFORM_EDIT_V2_DEF"] = "За замовчуванням";
+$MESS["CRM_WEBFORM_EDIT_V2_ENABLE_DESIGN"] = "Включити новий дизайн цієї форми у віджеті та за прямим посиланням. Викл. - новий дизайн тільки з новим кодом на сайт.";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT"] = "Шрифт";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT_FAMILY_HINT"] = "Назва шрифту (font-family). Приклад: Open Sans";
+$MESS["CRM_WEBFORM_EDIT_V2_FONT_URI_HINT"] = "Посилання на шрифт із сайту https://fonts.google.com";
+$MESS["CRM_WEBFORM_EDIT_V2_FORM_TRANSPARENT_HINT"] = "Ви можете зробити форму напівпрозорою, змінюючи прозорість `Колір фону форми` та` Колір фону полів`";
+$MESS["CRM_WEBFORM_EDIT_V2_MANUAL"] = "Свій";
+$MESS["CRM_WEBFORM_EDIT_V2_MODE"] = "Оформлення";
+$MESS["CRM_WEBFORM_EDIT_V2_MORE_FIELDS"] = "Додаткові можливості";
+$MESS["CRM_WEBFORM_EDIT_V2_PRIMARY_COLOR"] = "Основний колів";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP"] = "налаштувати";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP_COLOR"] = "Вказати колір";
+$MESS["CRM_WEBFORM_EDIT_V2_SETUP_OPACITY"] = "Вказати прозорість";
+$MESS["CRM_WEBFORM_EDIT_V2_SHADOW"] = "Тінь форми";
+$MESS["CRM_WEBFORM_EDIT_V2_STANDARD"] = "Стандартний";
+$MESS["CRM_WEBFORM_EDIT_V2_STYLE"] = "Стиль полів";
+$MESS["CRM_WEBFORM_EDIT_V2_THEME"] = "Тема";
+?>

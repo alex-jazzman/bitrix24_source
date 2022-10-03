@@ -59,7 +59,6 @@ this.BX = this.BX || {};
 	    _this._isMultiple = null;
 	    _this._autocompleteEnabled = false;
 	    _this._restrictionsCallback = null;
-	    _this._isMarkedAsChanged = false;
 	    return _this;
 	  }
 
@@ -306,14 +305,6 @@ this.BX = this.BX || {};
 	    key: "onAddressDataInputting",
 	    value: function onAddressDataInputting() {
 	      this.markAsChanged();
-	    }
-	  }, {
-	    key: "markAsChanged",
-	    value: function markAsChanged() {
-	      if (!this._isMarkedAsChanged) {
-	        babelHelpers.get(babelHelpers.getPrototypeOf(EntityEditorAddressField.prototype), "markAsChanged", this).call(this);
-	        this._isMarkedAsChanged = true;
-	      }
 	    }
 	  }, {
 	    key: "onError",

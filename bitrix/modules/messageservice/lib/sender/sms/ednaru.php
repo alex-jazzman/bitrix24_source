@@ -7,7 +7,7 @@ use Bitrix\MessageService\Providers\Base;
 use Bitrix\MessageService\Providers\Edna\WhatsApp;
 use Bitrix\MessageService\Sender;
 
-class Ednaru extends Sender\BaseConfigurable implements WhatsApp\EdnaRu
+class Ednaru extends Sender\BaseConfigurable
 {
 	public const ID = 'ednaru';
 
@@ -115,6 +115,11 @@ class Ednaru extends Sender\BaseConfigurable implements WhatsApp\EdnaRu
 		return $this->templateManager->isTemplatesBased();
 	}
 
+	public function isCorrectFrom($from)
+	{
+		return $this->initiator->isCorrectFrom($from);
+	}
+
 	/**
 	 * @inheritDoc
 	 */
@@ -153,18 +158,18 @@ class Ednaru extends Sender\BaseConfigurable implements WhatsApp\EdnaRu
 
 	protected function initializeNewAPI(): void
 	{
-		$this->registrar = new WhatsApp\Registrar($this->getId(), $this->optionManager);
-		$emojiConverter = new WhatsApp\EmojiConverter();
 		$this->utils = new WhatsApp\Utils($this->getId(), $this->optionManager);
+		$this->registrar = new WhatsApp\Registrar($this->getId(), $this->optionManager, $this->utils);
+		$emojiConverter = new WhatsApp\EmojiConverter();
 		$this->sender = new WhatsApp\Sender($this->optionManager, $this->registrar, $this->utils, $emojiConverter);
 		$this->templateManager = new WhatsApp\TemplateManager($this->getId(), $this->utils, $emojiConverter);
 	}
 
 	protected function initializeOldAPI(): void
 	{
-		$this->registrar = new WhatsApp\Old\Registrar($this->getId(), $this->optionManager);
-		$emojiConverter = new WhatsApp\Old\EmojiConverter();
 		$this->utils = new WhatsApp\Old\Utils($this->getId(), $this->optionManager);
+		$this->registrar = new WhatsApp\Old\Registrar($this->getId(), $this->optionManager, $this->utils);
+		$emojiConverter = new WhatsApp\Old\EmojiConverter();
 		$this->sender = new WhatsApp\Old\Sender($this->optionManager, $this->registrar, $this->utils, $emojiConverter);
 		$this->templateManager = new WhatsApp\TemplateManager($this->getId(), $this->utils, $emojiConverter);
 	}

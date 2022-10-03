@@ -81,7 +81,8 @@
 .crm-entity-widget-content-input.barcode-ok { border-color: #00ff00; }
 
 .pagetitle-inner-container .pagetitle {
-	font: 26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font: 26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	flex-grow: 1;
 	order: 1;
 }

@@ -97,11 +97,17 @@ else
 	}
 	elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
 	{
-		$controlPanelID = 'CONTACT';
+		$controlPanelID = CCrmComponentHelper::getMenuActiveItemId(
+			CCrmOwnerType::ContactName,
+			$arResult['EXTRAS']['CATEGORY_ID']
+		);
 	}
 	elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Company)
 	{
-		$controlPanelID = 'COMPANY';
+		$controlPanelID = CCrmComponentHelper::getMenuActiveItemId(
+			CCrmOwnerType::CompanyName,
+			$arResult['EXTRAS']['CATEGORY_ID']
+		);
 	}
 	elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Deal)
 	{

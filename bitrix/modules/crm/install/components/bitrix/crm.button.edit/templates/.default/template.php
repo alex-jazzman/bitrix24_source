@@ -15,6 +15,7 @@ Extension::load("ui.alerts");
 Extension::load("ui.buttons");
 Extension::load("ui.buttons.icons");
 Extension::load("ui.design-tokens");
+Extension::load('ui.fonts.opensans');
 
 if(!$arResult['BUTTON']['BACKGROUND_COLOR'])
 {

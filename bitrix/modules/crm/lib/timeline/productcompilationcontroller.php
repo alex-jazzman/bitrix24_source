@@ -1,0 +1,115 @@
+<?php
+namespace Bitrix\Crm\Timeline;
+
+use Bitrix\Crm\Binding\OrderEntityTable;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages(__FILE__);
+
+class ProductCompilationController extends Controller
+{
+	public function onCompilationViewed(int $dealId, array $params): void
+	{
+		if ($dealId <= 0)
+		{
+			throw new Main\ArgumentException('Deal ID must be greater than zero.');
+		}
+
+		if (!$this->isCompilationAlreadyViewed($dealId, $params))
+		{
+			$this->addToTimeline($dealId, $params, ProductCompilationType::COMPILATION_VIEWED);
+		}
+	}
+
+	protected function isCompilationAlreadyViewed(int $dealId, array $params): bool
+	{
+		$timelineTableResult = Entity\TimelineTable::getList([
+			'order' => ['ID' => 'ASC'],
+			'filter' => [
+				'TYPE_ID' => TimelineType::PRODUCT_COMPILATION,
+				'TYPE_CATEGORY_ID' => ProductCompilationType::COMPILATION_VIEWED,
+				'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+				'ASSOCIATED_ENTITY_ID' => $dealId,
+			]
+		]);
+
+		while ($item = $timelineTableResult->fetch())
+		{
+			if (
+				isset($item['SETTINGS']['COMPILATION_ID'])
+				&& $item['SETTINGS']['COMPILATION_ID'] === $params['SETTINGS']['COMPILATION_ID']
+			)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public function onOrderCheckout(int $dealId, array $params): void
+	{
+		if ($dealId <= 0)
+		{
+			throw new Main\ArgumentException('Deal ID must be greater than zero.');
+		}
+
+		$this->addToTimeline($dealId, $params, ProductCompilationType::NEW_DEAL_CREATED);
+	}
+
+	public function onCompilationSent(int $dealId, array $params): void
+	{
+		if ($dealId <= 0)
+		{
+			throw new Main\ArgumentException('Deal ID must be greater than zero.');
+		}
+
+		if (isset($params['SETTINGS']['SENT_PRODUCTS']) && is_array($params['SETTINGS']['SENT_PRODUCTS']))
+		{
+			$params['SETTINGS']['SENT_PRODUCTS'] = Product::prepareProductsForTimeline($params['SETTINGS']['SENT_PRODUCTS']);
+		}
+
+		$this->addToTimeline($dealId, $params, ProductCompilationType::PRODUCT_LIST);
+
+		$isOrderNoticeNeeded = !empty(OrderEntityTable::getOrderIdsByOwner($dealId, \CCrmOwnerType::Deal));
+		if ($isOrderNoticeNeeded)
+		{
+			$this->addToTimeline($dealId, $params, ProductCompilationType::ORDER_EXISTS);
+		}
+	}
+
+	protected function addToTimeline(int $dealId, array $params, int $typeCategoryId): void
+	{
+		$settings = $params['SETTINGS'] ?? [];
+
+		$bindings = [
+			[
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+				'ENTITY_ID' => $dealId
+			]
+		];
+
+		$authorId = \CCrmDeal::GetByID($dealId, false)['ASSIGNED_BY'];
+		if ((int)$authorId <= 0)
+		{
+			$authorId = \CCrmSecurityHelper::GetCurrentUserID();
+		}
+
+		$entityId = ProductCompilationEntry::create([
+			'ENTITY_ID' => $dealId,
+			'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+			'TYPE_CATEGORY_ID' => $typeCategoryId,
+			'CREATED' => Main\Type\DateTime::createFromTimestamp(time()),
+			'AUTHOR_ID' => $authorId,
+			'SETTINGS' => $settings,
+			'BINDINGS' => $bindings,
+		]);
+
+		foreach($bindings as $binding)
+		{
+			$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
+			self::pushHistoryEntry($entityId, $tag, 'timeline_activity_add');
+		}
+	}
+}

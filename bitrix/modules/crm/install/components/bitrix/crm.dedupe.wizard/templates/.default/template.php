@@ -10,11 +10,20 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-dedupe-wizard-body-modifier');
-\Bitrix\Main\UI\Extension::load(array(
-	'sidepanel', 'ui.common', 'ui.forms', 'ui.hint', 'ui.progressbar',
-	'ui.fonts.opensans', 'ui.icons.b24', 'ui.buttons', 'ui.notification',
-	'crm_common', 'ls'
-));
+\Bitrix\Main\UI\Extension::load([
+	'sidepanel',
+	'ui.common',
+	'ui.forms',
+	'ui.hint',
+	'ui.progressbar',
+	'ui.fonts.opensans',
+	'ui.icons.b24',
+	'ui.buttons',
+	'ui.notification',
+	'crm_common',
+	'ls',
+	'ui.fonts.opensans',
+]);
 
 $configTitleID = 'configTitle';
 $configTitleTextID = 'configTitleText';

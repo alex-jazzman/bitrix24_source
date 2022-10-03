@@ -1,0 +1,22 @@
+<?php
+$MESS["PROVIDER_SEARCH_CREATE_PLACEHOLDER"] = "Знайти чи створити";
+$MESS["PROVIDER_WIDGET_CREATE_ITEM"] = "Створити елемент";
+$MESS["PROVIDER_WIDGET_CREATING_ITEM"] = "Створення елемента...";
+$MESS["PROVIDER_WIDGET_DONE"] = "Готово";
+$MESS["PROVIDER_WIDGET_START_TYPING_TO_SEARCH"] = "Почніть друкувати для пошуку елементів";
+$MESS["SELECTOR_COMPONENT_CREATE_CONTRACTOR"] = "Створити постачальника";
+$MESS["SELECTOR_COMPONENT_CREATE_PRODUCT"] = "Створити товар";
+$MESS["SELECTOR_COMPONENT_CREATE_SECTION"] = "Створити розділ";
+$MESS["SELECTOR_COMPONENT_CREATE_STORE"] = "Створити склад";
+$MESS["SELECTOR_COMPONENT_CREATING_CONTRACTOR"] = "Створення постачальника...";
+$MESS["SELECTOR_COMPONENT_CREATING_PRODUCT"] = "Створення товару...";
+$MESS["SELECTOR_COMPONENT_CREATING_SECTION"] = "Створення розділу...";
+$MESS["SELECTOR_COMPONENT_CREATING_STORE"] = "Створення складу...";
+$MESS["SELECTOR_COMPONENT_PICK_CONTRACTOR"] = "Обрати постачальника";
+$MESS["SELECTOR_COMPONENT_PICK_PRODUCT"] = "Обрати товар";
+$MESS["SELECTOR_COMPONENT_PICK_SECTION"] = "Обрати розділ";
+$MESS["SELECTOR_COMPONENT_PICK_STORE"] = "Обрати склад";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_CONTRACTOR"] = "Почніть друкувати для вибору постачальника";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PRODUCT"] = "Почніть друкувати для пошуку товарів";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_SECTION"] = "Почніть друкувати для вибору розділу";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_STORE"] = "Почніть друкувати для вибору складу";

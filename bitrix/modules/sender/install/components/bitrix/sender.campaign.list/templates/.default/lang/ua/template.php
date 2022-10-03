@@ -1,0 +1,8 @@
+<?
+$MESS["SENDER_CAMPAIGN_LIST_BTN_EDIT_TITLE"] = "Змінити кампанію";
+$MESS["SENDER_CAMPAIGN_LIST_BTN_EDIT"] = "Змінити";
+$MESS["SENDER_TEMPLATE_LIST_BTN_VIEW"] = "Переглянути";
+$MESS["SENDER_CAMPAIGN_LIST_BTN_REMOVE_TITLE"] = "Видалити кампанію";
+$MESS["SENDER_CAMPAIGN_LIST_BTN_REMOVE"] = "Видалити";
+$MESS["SENDER_CAMPAIGN_LIST_BTN_ADD"] = "Додати кампанію";
+?>

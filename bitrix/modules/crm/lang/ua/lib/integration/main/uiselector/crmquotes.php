@@ -1,0 +1,4 @@
+<?
+$MESS["MAIN_UI_SELECTOR_TAB_CRMQUOTES"] = "Пропозиції";
+$MESS["MAIN_UI_SELECTOR_TITLE_CRMQUOTES"] = "Пропозиції:";
+?>

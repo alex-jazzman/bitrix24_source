@@ -13,7 +13,8 @@
 .crm-report-column-funnel-card-title.crm-report-column-funnel-th {
 	/*display: block;*/
 	padding-bottom: 8px;
-	font: 14px/16px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 }
 
@@ -49,12 +50,14 @@
 	align-items: baseline;
 	/*margin: 0 14px 0 0;*/
 	max-width: 100%;
-	font: 1.8vw "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 1.8vw var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 }
 
 .crm-report-column-funnel-card-info-percent {
-	font: 1.2vw "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 1.2vw var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #FF5752;
 }
 
@@ -83,12 +86,14 @@
 
 .crm-report-column-funnel-card-info-price .crm-report-column-funnel-card-info-symbol,
 .crm-report-column-funnel-card-info-value-box .crm-report-column-funnel-card-info-symbol {
-	font: 1.4vw "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 1.4vw var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #828B95;
 }
 
 .crm-report-column-funnel-card-info-percent .crm-report-column-funnel-card-info-symbol {
-	font: .9vw "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: .9vw var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #828B95;
 	opacity: .72;
 }
@@ -239,11 +244,13 @@
 }
 .crm-report-column-funnel-through-funnel-widget-value {
 	margin: 0 4px 0 0;
-	font: 1.8vw/1.8vw "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 1.8vw/1.8vw var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 }
 .crm-report-column-funnel-through-funnel-widget-percent {
-	font: 1.5vw/1.5vw "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 1.5vw/1.5vw var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #828B95;
 }
 .crm-report-column-funnel-through-funnel-widget-conversion-inline .crm-report-column-funnel-through-funnel-widget-conversion {
@@ -281,7 +288,8 @@
 	margin: 0 0 17px 0;
 	padding: 0 0 12px 0;
 	border-bottom: 1px solid rgba(130,139,149,.19);
-	font: 13px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 }
 .crm-report-column-funnel-modal-title {
@@ -316,7 +324,8 @@
 	margin: 0 0 18px 0;
 }
 .crm-report-column-funnel-modal-value {
-	font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 .crm-report-column-funnel-modal-value-grey {
 	color: #828B95;
@@ -331,20 +340,24 @@
 .crm-report-column-funnel-modal-main .crm-report-column-funnel-card-info-price,
 .crm-report-column-funnel-modal-main .crm-report-column-funnel-card-info-value-box {
 	margin: 0 30px 0 0;
-	font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 .crm-report-column-funnel-modal-main .crm-report-column-funnel-card-info-value-box {
 	margin: 0;
 }
 .crm-report-column-funnel-modal-main .crm-report-column-funnel-card-info-price .crm-report-column-funnel-card-info-symbol,
 .crm-report-column-funnel-modal-main .crm-report-column-funnel-card-info-value-box .crm-report-column-funnel-card-info-symbol {
-	font: 18px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 .crm-report-column-funnel-modal-main .crm-report-column-funnel-card-info-percent {
-	font: 21px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 21px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 .crm-report-column-funnel-modal-main .crm-report-column-funnel-card-info-percent .crm-report-column-funnel-card-info-symbol {
-	font: 15px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 /* END OF MODAL */
 

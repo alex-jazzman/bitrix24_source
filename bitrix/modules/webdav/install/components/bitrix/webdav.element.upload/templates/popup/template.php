@@ -1,7 +1,7 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 $GLOBALS['APPLICATION']->RestartBuffer();
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
-$file = trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/lang/".LANGUAGE_ID."/template.php")));
+$file = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/lang/".LANGUAGE_ID."/template.php")));
 __IncludeLang($file);
 
 if (isset($_REQUEST['CHECK_NAME']))
@@ -217,7 +217,7 @@ $popupWindow->StartContent();
 		</td>
 	</tr>
 </table>
-<? include trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/footer.php"))); ?>
+<? include trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/footer.php"))); ?>
 <? if (($arParams["OBJECT"]->Type == "iblock" && $arParams["ELEMENT_ID"] == 0) || ($arParams["OBJECT"]->Type == "folder" && $arParams["OBJECT"]->arParams['is_file'] == false)): ?>
 <p><?=GetMessage('WD_UPLOAD_EXTENDED', array("#LINK#" => htmlspecialcharsbx($APPLICATION->GetCurPage() . '?ncc=1')));?></p>
 <? endif; ?>

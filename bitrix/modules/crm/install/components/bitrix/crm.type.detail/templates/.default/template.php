@@ -25,6 +25,7 @@ Extension::load([
 	'main.loader',
 	'ui.layout-form',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 /** @var CBitrixComponentTemplate $this */

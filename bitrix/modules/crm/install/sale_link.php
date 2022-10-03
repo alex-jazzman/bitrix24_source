@@ -133,7 +133,10 @@ if (defined("ADMIN_SECTION"))
 }
 
 $defCurrency = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
-COption::SetOptionString("sale", "default_currency", $defCurrency);
+if ($defCurrency !== null)
+{
+	COption::SetOptionString("sale", "default_currency", $defCurrency);
+}
 
 // Create invoice statuses
 $statusesSort = array(

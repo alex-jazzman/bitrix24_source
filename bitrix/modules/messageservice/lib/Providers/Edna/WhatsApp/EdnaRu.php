@@ -10,4 +10,6 @@ interface EdnaRu
 	public function getLineId(): ?int;
 	public function getMessageTemplates(string $subject = ''): Result;
 	public function getSentTemplateMessage(string $from, string $to): string;
+	public function getChannelList(): Result;
+	public function getSubjectIdBySubject(string $subject): Result;
 }

@@ -168,7 +168,8 @@
 
 .crm-card-show-detail-header-user-name {
 	color: #fff;
-	font: 18px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-card-show-detail-header-user-status { margin: auto 0; }

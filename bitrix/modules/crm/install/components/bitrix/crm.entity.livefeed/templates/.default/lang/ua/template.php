@@ -1,0 +1,8 @@
+<?
+$MESS["CRM_ENTITY_LF_MENU_BTN_MESSAGE"] = "Повідомлення";
+$MESS["CRM_ENTITY_LF_MENU_BTN_TASK"] = "Завдання";
+$MESS["CRM_ENTITY_LF_MENU_BTN_MEETING"] = "Зустріч";
+$MESS["CRM_ENTITY_LF_MENU_BTN_CALL"] = "Дзвінок";
+$MESS["CRM_ENTITY_LF_MENU_BTN_EMAIL"] = "E-mail";
+$MESS["CRM_ENTITY_LF_MENU_BTN_FILTER"] = "Фільтр";
+?>

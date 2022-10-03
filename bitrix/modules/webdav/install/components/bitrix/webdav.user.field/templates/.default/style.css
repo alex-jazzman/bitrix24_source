@@ -388,7 +388,7 @@ table.files-list td.files-del-btn .del-but {
 	color: #2067b0;
 	cursor: pointer;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-align: center;
 	overflow: hidden;
 	position: relative;
@@ -479,7 +479,7 @@ td.wduf-selector-hover .wduf-uploader-text {
 	color: #0b66c3;
 	cursor: pointer;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 2px;
 	text-align: center;
 	overflow: hidden;
@@ -603,7 +603,7 @@ td.wduf-selector-hover .wduf-uploader-text {
 	padding-bottom: 0;
 }
 
-/*.feed-com-files-title {font-size:12px; font-weight:bold; float:left; min-width:50px;}*/
+/*.feed-com-files-title {font-size:12px; font-weight:var(--ui-font-weight-bold); float:left; min-width:50px;}*/
 .wduf-files-entity .feed-com-files-cont {
 	overflow: hidden;
 	padding: 1px 0 1px 10px;
@@ -649,7 +649,7 @@ td.wduf-selector-hover .wduf-uploader-text {
 .wduf-files-entity .feed-com-file-name {
 	color: #2067b0;
 	cursor: pointer;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: none;
 }
 
@@ -722,7 +722,7 @@ td.wduf-selector-hover .wduf-uploader-text {
 .wduf-files-entity .feed-com-file-inline.feed-com-file-name,
 .wduf-files-entity.feed-com-file-inline.feed-com-file-name {
 	color: #2067b0;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	vertical-align: top;
 	word-wrap: break-word;
 }
@@ -932,7 +932,7 @@ td.wduf-selector-hover .wduf-uploader-text {
 .feed-file-history-popup-title {
 	color: #555555;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-left: 13px;
 	text-shadow: 0 1px rgba(255, 255, 255, .8);
 }
@@ -1095,7 +1095,7 @@ td.wduf-selector-hover .wduf-uploader-text {
 .feed-file-history-list-title {
 	color: #555;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-bottom: 14px;
 }
 
@@ -1112,7 +1112,7 @@ td.wduf-selector-hover .wduf-uploader-text {
 .feed-file-history-list-link {
 	color: #2067b0;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: underline;
 }
 
@@ -1122,7 +1122,7 @@ td.wduf-selector-hover .wduf-uploader-text {
 
 a.feed-file-history-list-name {
 	color: #2067b0;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: none;
 }
 

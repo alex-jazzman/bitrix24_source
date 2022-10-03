@@ -1,0 +1,6 @@
+<?php
+$MESS["ALIAS_ENTITY_ALIAS_FIELD"] = "Псевдонім";
+$MESS["ALIAS_ENTITY_ENTITY_DATE_CREATE_FIELD"] = "Дата створення";
+$MESS["ALIAS_ENTITY_ENTITY_ID_FIELD"] = "Ідентифікатор сутності";
+$MESS["ALIAS_ENTITY_ENTITY_TYPE_FIELD"] = "Тип сутності";
+$MESS["ALIAS_ENTITY_ID_FIELD"] = "ID";

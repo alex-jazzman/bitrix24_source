@@ -12,6 +12,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	'ui.buttons',
 	'sidepanel',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");

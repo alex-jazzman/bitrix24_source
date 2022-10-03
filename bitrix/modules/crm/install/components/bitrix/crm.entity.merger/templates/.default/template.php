@@ -10,7 +10,13 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 //\CJSCore::Init(array('date'));
 \CJSCore::Init(array('ls'));
-\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'ui.notification', 'main.loader', 'ui.progressround']);
+\Bitrix\Main\UI\Extension::load([
+	'ui.fonts.opensans',
+	'ui.notification',
+	'main.loader',
+	'ui.progressround',
+	'ui.fonts.opensans',
+]);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);

@@ -921,8 +921,14 @@ class ContactCenter
 				}
 
 				$itemPath = str_replace('#LINE#', $configItem["ID"], $openLineSliderPath);
-				$configItem["ONCLICK"] = "BX.SidePanel.Instance.open('" . $itemPath . "', {width: 700})";
-
+				if ($connectorCode === 'facebook')
+				{
+					$configItem["ONCLICK"] = "BX.SidePanel.Instance.open('" . $itemPath . "', {width: 1000})";
+				}
+				else
+				{
+					$configItem["ONCLICK"] = "BX.SidePanel.Instance.open('" . $itemPath . "', {width: 700})";
+				}
 			}
 			unset($configItem);
 
@@ -944,11 +950,12 @@ class ContactCenter
 			$userPermissions = Permissions::createWithCurrentUser();
 			if ($userPermissions->canPerform(Permissions::ENTITY_LINES, Permissions::ACTION_MODIFY))
 			{
+				$width = ($connectorCode === 'facebook') ? 1000 : 700;
 				$configList[] = [
 					'NAME' => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_CREATE_OPEN_LINE"),
 					'ID' => 0,
 					'DELIMITER_BEFORE' => true,
-					'ONCLICK' => "new BX.Imopenlines.CreateLine({path:'{$openLineSliderPath}'});",
+					'ONCLICK' => "new BX.Imopenlines.CreateLine({path:'{$openLineSliderPath}', sliderWidth:'{$width}'});",
 				];
 			}
 		}

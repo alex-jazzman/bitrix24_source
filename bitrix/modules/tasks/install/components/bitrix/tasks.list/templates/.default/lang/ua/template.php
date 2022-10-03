@@ -1,0 +1,130 @@
+<?
+$MESS["TASKS_ACCOMPLICE"] = "Співвиконавці";
+$MESS["TASKS_ADD_QUICK_TASK"] = "Створити швидке завдання";
+$MESS["TASKS_ADD_TASK"] = "Додати завдання";
+$MESS["TASKS_ADD_TEMPLATE_TASK"] = "Додати завдання за шаблоном";
+$MESS["TASKS_APPLY"] = "Застосувати";
+$MESS["TASKS_APPROVE_TASK"] = "Прийняти роботу";
+$MESS["TASKS_AUDITOR"] = "Спостерігач";
+$MESS["TASKS_CANCEL"] = "Скасування";
+$MESS["TASKS_CONFIGURE_LIST"] = "Налаштувати список";
+$MESS["TASKS_CREATOR"] = "Постановник";
+$MESS["TASKS_DATE_COMPLETED"] = "Дата завершення";
+$MESS["TASKS_DATE_END"] = "Дата фінішу";
+$MESS["TASKS_DATE_START"] = "Дата старту";
+$MESS["TASKS_DATE_STARTED"] = "Початок виконання";
+$MESS["TASKS_DEADLINE"] = "Термін";
+$MESS["TASKS_DECLINE_REASON"] = "Причина відхилення завдання";
+$MESS["TASKS_DECLINE_TASK"] = "Відхилити";
+$MESS["TASKS_DEFAULT_SORT"] = "Сортування за умовчанням";
+$MESS["TASKS_DOUBLE_CLICK"] = "Подвійне натискання — Переглянути";
+$MESS["TASKS_DURATION"] = "Витрачено годин";
+$MESS["TASKS_EXPORT_EXCEL"] = "Експорт списку в Excel";
+$MESS["TASKS_EXPORT_OUTLOOK"] = "Експорт списку в Outlook";
+$MESS["TASKS_FILTER_BY_TAG"] = "За тегами";
+$MESS["TASKS_FILTER_CREAT_DATE"] = "Дата створення";
+$MESS["TASKS_FILTER_FIND"] = "Знайти";
+$MESS["TASKS_FILTER_IN_CONTROL"] = "Чекають контролю";
+$MESS["TASKS_FILTER_NOT_ACCEPTED"] = "Не прийняті";
+$MESS["TASKS_FILTER_PICK_DATE"] = "Вибрати дату в календарі";
+$MESS["TASKS_FILTER_SELECT"] = "вибрати";
+$MESS["TASKS_FILTER_SHOW_SUBORDINATE"] = "показати завдання підлеглих";
+$MESS["TASKS_FINISHED"] = "Завершене";
+$MESS["TASKS_GANTT"] = "Діаграма Ганта";
+$MESS["TASKS_HELP"] = "Допомога";
+$MESS["TASKS_LIST_COLUMN_1"] = "ID";
+$MESS["TASKS_LIST_COLUMN_2"] = "Назва";
+$MESS["TASKS_LIST_COLUMN_3"] = "Постановник";
+$MESS["TASKS_LIST_COLUMN_4"] = "Відповідальний";
+$MESS["TASKS_LIST_COLUMN_5"] = "Крайній термін";
+$MESS["TASKS_LIST_COLUMN_6"] = "Оцінка";
+$MESS["TASKS_LIST_COLUMN_7"] = "CRM";
+$MESS["TASKS_LIST_COLUMN_8"] = "Пріоритет";
+$MESS["TASKS_LIST_COLUMN_9"] = "Статус";
+$MESS["TASKS_LIST_COLUMN_10"] = "Група";
+$MESS["TASKS_LIST_COLUMN_11"] = "Планові трудовитрати";
+$MESS["TASKS_LIST_COLUMN_12"] = "Враховувати час";
+$MESS["TASKS_LIST_COLUMN_13"] = "Витрачений час";
+$MESS["TASKS_LIST_COLUMN_14"] = "Дозволити змінювати крайній термін відповідальному";
+$MESS["TASKS_LIST_COLUMN_15"] = "Дата створення";
+$MESS["TASKS_LIST_COLUMN_16"] = "Дата зміни";
+$MESS["TASKS_LIST_COLUMN_17"] = "Дата завершення";
+$MESS["TASKS_LIST_COLUMN_SORTING"] = "Моє сортування";
+$MESS["TASKS_LIST_CONFIRM_ACTION_FOR_ALL_ITEMS"] = "Застосувати дію для всіх завдань списку (включаючи їх підзавдання), в тому числі на інших сторінках?";
+$MESS["TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_ITEMS"] = "Видалити всі завдання списку (включаючи їх підзавдання), в тому числі на інших сторінках?";
+$MESS["TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_ITEMS"] = "Видалити позначені завдання?";
+$MESS["TASKS_LIST_GROUP_ACTION_ADD_ACCOMPLICE"] = "Додати співвиконавця";
+$MESS["TASKS_LIST_GROUP_ACTION_ADD_AUDITOR"] = "Додати спостерігача";
+$MESS["TASKS_LIST_GROUP_ACTION_ADD_FAVORITE"] = "Додати в обране";
+$MESS["TASKS_LIST_GROUP_ACTION_ADJUST_DEADLINE"] = "Перенести крайній термін вперед";
+$MESS["TASKS_LIST_GROUP_ACTION_CHANGE_ORIGINATOR"] = "Змінити постановника";
+$MESS["TASKS_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE"] = "Змінити відповідального";
+$MESS["TASKS_LIST_GROUP_ACTION_COMPLETE"] = "Завершити";
+$MESS["TASKS_LIST_GROUP_ACTION_DAYS_PLURAL_0"] = "день";
+$MESS["TASKS_LIST_GROUP_ACTION_DAYS_PLURAL_1"] = "дня";
+$MESS["TASKS_LIST_GROUP_ACTION_DAYS_PLURAL_2"] = "днів";
+$MESS["TASKS_LIST_GROUP_ACTION_DELETE_FAVORITE"] = "Прибрати з обраного";
+$MESS["TASKS_LIST_GROUP_ACTION_FOR_ALL"] = "Для всіх";
+$MESS["TASKS_LIST_GROUP_ACTION_MONTHES_PLURAL_0"] = "місяць";
+$MESS["TASKS_LIST_GROUP_ACTION_MONTHES_PLURAL_1"] = "місяці";
+$MESS["TASKS_LIST_GROUP_ACTION_MONTHES_PLURAL_2"] = "місяців";
+$MESS["TASKS_LIST_GROUP_ACTION_PLEASE_WAIT"] = "Будь ласка, зачекайте...";
+$MESS["TASKS_LIST_GROUP_ACTION_REMOVE"] = "Видалити";
+$MESS["TASKS_LIST_GROUP_ACTION_SET_DEADLINE"] = "Вказати крайній термін";
+$MESS["TASKS_LIST_GROUP_ACTION_SET_GROUP"] = "Вказати групу";
+$MESS["TASKS_LIST_GROUP_ACTION_SUBSTRACT_DEADLINE"] = "Перенести крайній термін назад";
+$MESS["TASKS_LIST_GROUP_ACTION_WEEKS_PLURAL_0"] = "тиждень";
+$MESS["TASKS_LIST_GROUP_ACTION_WEEKS_PLURAL_1"] = "тижні";
+$MESS["TASKS_LIST_GROUP_ACTION_WEEKS_PLURAL_2"] = "тижнів";
+$MESS["TASKS_LIST_MENU_RESET_TO_DEFAULT_PRESET"] = "Подання за замовчуванням";
+$MESS["TASKS_LIST_SUBMIT"] = "Застосувати";
+$MESS["TASKS_LIST_TOOLTIP_FOR_ALL_ITEMS"] = "Відзначити завдання на всіх сторінках списку, включаючи підзавдання";
+$MESS["TASKS_LIST_TRIAL_EXPIRED_TEXT"] = "У безкоштовному тарифі ви можете встановити 5 залежностей між завданнями. Увімкніть Розширені Завдання і встановлюйте залежності без обмежень.
+
+Підтримується 4 типи залежностей:
+Класичні залежності (Фініш > Старт)
+Одночасний початок завдань (Старт > Старт)
+Одночасний «дедлайн» за завданнями (Фініш > Фініш)
+Завдання починається тільки після завершення попереднього (Старт > Фініш)
+
+<a href=\"https://bitrix24.ua/pro/tasks.php\" target=\"_blank\"> Дізнатися докладніше</a>
+
+Розширені Завдання + Розширена CRM + Розширена Телефонія та інші корисні можливості доступні, починаючи з тарифу \"Проєкт+\" за 299 гривень.";
+$MESS["TASKS_LIST_TRIAL_EXPIRED_TITLE_V2"] = "Доступно тільки в розширених Завданнях &laquo;Бітрікс24&raquo;";
+$MESS["TASKS_MARK"] = "Оцінка";
+$MESS["TASKS_MARK_N"] = "Негативна";
+$MESS["TASKS_MARK_NONE"] = "Немає оцінки";
+$MESS["TASKS_MARK_P"] = "Позитивна";
+$MESS["TASKS_NO_RESPONSIBLE"] = "Не зазначений відповідальний";
+$MESS["TASKS_NO_TASKS"] = "немає завдань";
+$MESS["TASKS_NO_TEMPLATES"] = "Шаблонів поки немає";
+$MESS["TASKS_NO_TITLE"] = "Не зазначена назва завдання";
+$MESS["TASKS_OK"] = "ОК";
+$MESS["TASKS_PLAIN_LIST"] = "Плаский список завдань";
+$MESS["TASKS_PRIORITY_V2"] = "Важливе завдання";
+$MESS["TASKS_QUICK_CANCEL"] = "Скасувати";
+$MESS["TASKS_QUICK_DEADLINE"] = "Крайній термін";
+$MESS["TASKS_QUICK_DESCRIPTION"] = "опис";
+$MESS["TASKS_QUICK_INFO_DETAILS"] = "Подробиці";
+$MESS["TASKS_QUICK_INFO_EMPTY_DATE"] = "немає";
+$MESS["TASKS_QUICK_IN_GROUP"] = "завдання в проєкті";
+$MESS["TASKS_QUICK_SAVE"] = "Зберегти";
+$MESS["TASKS_QUICK_TITLE"] = "Назва завдання";
+$MESS["TASKS_REPORTS"] = "Звіти";
+$MESS["TASKS_RESPONSIBLE"] = "Відповідальний";
+$MESS["TASKS_STATUS"] = "Статус";
+$MESS["TASKS_STATUS_ACCEPTED"] = "Прийняте";
+$MESS["TASKS_STATUS_COMPLETED"] = "Завершене";
+$MESS["TASKS_STATUS_DECLINED"] = "Відхилене";
+$MESS["TASKS_STATUS_DELAYED"] = "Відкладене";
+$MESS["TASKS_STATUS_IN_PROGRESS"] = "Виконується";
+$MESS["TASKS_STATUS_NEW"] = "Нове";
+$MESS["TASKS_STATUS_OVERDUE"] = "Протерміноване";
+$MESS["TASKS_STATUS_WAITING"] = "Чекає контролю";
+$MESS["TASKS_TASK_FILES"] = "Файли";
+$MESS["TASKS_TASK_TITLE_LABEL"] = "Завдання";
+$MESS["TASKS_TEMPLATES"] = "Шаблони";
+$MESS["TASKS_TEMPLATES_LIST"] = "Список усіх шаблонів";
+$MESS["TASKS_TITLE"] = "Завдання";
+$MESS["TASKS_TREE_LIST"] = "Список завдань з підзавданнями";
+?>

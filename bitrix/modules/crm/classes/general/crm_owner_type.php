@@ -4,6 +4,7 @@ use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Service;
 
 class CCrmOwnerType
 {
@@ -1788,11 +1789,8 @@ class CCrmOwnerType
 					'LEGEND' => '',
 					'RESPONSIBLE_ID' => isset($result['RESPONSIBLE_ID']) ? (int)($result['CREATED_BY']) : 0,
 					'IMAGE_FILE_ID' => 0,
-					'SHOW_URL' =>
-						CComponentEngine::MakePathFromTemplate(
-							COption::GetOptionString('crm', 'path_to_order_details'),
-							array('order_id' => $ID)
-						),
+					'SHOW_URL' => Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getOrderDetailsLink($ID),
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Order),
 				);
 
@@ -2485,11 +2483,8 @@ class CCrmOwnerType
 					]),
 					'RESPONSIBLE_ID' => isset($arRes['RESPONSIBLE_ID']) ? intval($arRes['RESPONSIBLE_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
-					'SHOW_URL' =>
-						CComponentEngine::MakePathFromTemplate(
-							COption::GetOptionString('crm', 'path_to_order_payment_details'),
-							array('payment_id' => $ID)
-						),
+					'SHOW_URL' => Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getPaymentDetailsLink($ID),
 					'LOGOTIP' => $logotip,
 					'DATE' => $dateInsert,
 					'PAY_SYSTEM_NAME' => $arRes['PAY_SYSTEM_NAME'],
@@ -2498,13 +2493,10 @@ class CCrmOwnerType
 					'SUM_WITH_CURRENCY' => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY']),
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::OrderPayment),
 				);
-				if($enableEditUrl)
+				if ($enableEditUrl)
 				{
-					$result['EDIT_URL'] =
-						CComponentEngine::MakePathFromTemplate(
-							COption::GetOptionString('crm', 'path_to_order_payment_edit'),
-							array('payment_id' => $ID)
-						);
+					$result['EDIT_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getPaymentDetailsLink($ID);
 				}
 				return $result;
 			}
@@ -2530,20 +2522,14 @@ class CCrmOwnerType
 					]),
 					'RESPONSIBLE_ID' => isset($arRes['RESPONSIBLE_ID']) ? intval($arRes['RESPONSIBLE_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
-					'SHOW_URL' =>
-						CComponentEngine::MakePathFromTemplate(
-							COption::GetOptionString('crm', 'path_to_order_shipment_details'),
-							['shipment_id' => $ID]
-						),
+					'SHOW_URL' => Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getShipmentDetailsLink($ID),
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::OrderShipment),
 				];
-				if($enableEditUrl)
+				if ($enableEditUrl)
 				{
-					$result['EDIT_URL'] =
-						CComponentEngine::MakePathFromTemplate(
-							COption::GetOptionString('crm', 'path_to_order_shipment_details'),
-							array('shipment_id' => $ID)
-						);
+					$result['EDIT_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getShipmentDetailsLink($ID);
 				}
 				return $result;
 			}
@@ -3378,6 +3364,7 @@ class CCrmOwnerType
 			|| $entityTypeId === self::Lead
 			|| $entityTypeId === self::Deal
 			|| $entityTypeId === self::Contact
+			|| $entityTypeId === self::Company
 			|| $entityTypeId === self::Quote
 		);
 	}

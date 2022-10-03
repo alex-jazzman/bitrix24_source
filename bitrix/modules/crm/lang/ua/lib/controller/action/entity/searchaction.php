@@ -1,0 +1,8 @@
+<?
+$MESS["CRM_CONTROLLER_SEARCH_ACTION_COMPANY_LIMIT_EXCEEDED"] = "Щоб шукати по всім компаніям, оберіть тариф у залежності від обсягу накопичених даних і масштабу вашого бізнесу. <a onclick=\"top.BX.Helper.show('redirect=detail&code=9745327')\" style=\"cursor: pointer\">Детальніше</a>";
+$MESS["CRM_CONTROLLER_SEARCH_ACTION_CONTACT_LIMIT_EXCEEDED"] = "Щоб шукати по всім контактам, оберіть тариф у залежності від обсягу накопичених даних і масштабу вашого бізнесу. <a onclick=\"top.BX.Helper.show('redirect=detail&code=9745327')\" style=\"cursor: pointer\">Детальніше</a>";
+$MESS["CRM_CONTROLLER_SEARCH_ACTION_DEAL_LIMIT_EXCEEDED"] = "Щоб шукати по всім угодам, оберіть тариф у залежності від обсягу накопичених даних і масштабу вашого бізнесу. <a onclick=\"top.BX.Helper.show('redirect=detail&code=9745327')\" style=\"cursor: pointer\">Детальніше</a>";
+$MESS["CRM_CONTROLLER_SEARCH_ACTION_INVOICE_LIMIT_EXCEEDED"] = "Щоб шукати по всім рахункам, оберіть тариф у залежності від обсягу накопичених даних і масштабу вашого бізнесу. <a onclick=\"top.BX.Helper.show('redirect=detail&code=9745327')\" style=\"cursor: pointer\">Детальніше</a>";
+$MESS["CRM_CONTROLLER_SEARCH_ACTION_LEAD_LIMIT_EXCEEDED"] = "Щоб шукати по всім лідам, оберіть тариф у залежності від обсягу накопичених даних і масштабу вашого бізнесу. <a onclick=\"top.BX.Helper.show('redirect=detail&code=9745327')\" style=\"cursor: pointer\">Детальніше</a>";
+$MESS["CRM_CONTROLLER_SEARCH_ACTION_QUOTE_LIMIT_EXCEEDED"] = "Щоб шукати по всім пропозиціям, оберіть тариф у залежності від обсягу накопичених даних і масштабу вашого бізнесу. <a onclick=\"top.BX.Helper.show('redirect=detail&code=9745327')\" style=\"cursor: pointer\">Детальніше</a>";
+?>

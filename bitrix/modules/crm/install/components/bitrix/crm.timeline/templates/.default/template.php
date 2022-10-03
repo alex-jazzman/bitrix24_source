@@ -31,6 +31,7 @@ Bitrix\Main\UI\Extension::load(
 		'crm.restriction.bitrix24',
 		'ui.hint',
 		'ui.design-tokens',
+		'ui.fonts.opensans',
 	]
 );
 
@@ -227,13 +228,23 @@ if(!empty($arResult['ERRORS']))
 
 				if ($arResult['ENABLE_VISIT'])
 				{
+					$classParams =
+						$arResult['IS_VISIT_RESTRICTED']
+						? [
+							'CLASS' => 'crm-tariff-lock-ahead',
+							'CLASS_SUBMENU_ITEM' => 'crm-tariff-lock-ahead',
+							'IS_LOCKED' => true,
+						]
+						: []
+					;
 					$menuItems[] = [
 							'ID' => 'visit',
 							'TEXT' => GetMessage('CRM_TIMELINE_VISIT'),
 							'TITLE' => GetMessage('CRM_TIMELINE_VISIT'),
-						] + ($arResult['IS_VISIT_RESTRICTED'] ? [
-							'IS_LOCKED' => true,
-						] : [] ) + $baseMenuItem;
+						]
+						+ $classParams
+						+ $baseMenuItem
+					;
 				}
 
 				foreach($arResult['ADDITIONAL_TABS'] as $tab)

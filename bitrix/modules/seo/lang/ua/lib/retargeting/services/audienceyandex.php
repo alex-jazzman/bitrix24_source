@@ -1,0 +1,4 @@
+<?
+$MESS["SEO_RETARGETING_SERVICE_AUDIENCE_NAME_TEMPLATE"] = "Аудиторія від #DATE#";
+$MESS["SEO_RETARGETING_SERVICE_AUDIENCE_YANDEX_ADD"] = "Створити нову аудиторію (сегмент)";
+?>

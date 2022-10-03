@@ -1,0 +1,29 @@
+<?
+$MESS["SONET_GL_EMPTY_ENTITY_TYPE"] = "Не зазначений код сутності";
+$MESS["SONET_GL_ERROR_NO_ENTITY_TYPE"] = "Тип сутності не вірний";
+$MESS["SONET_GL_EMPTY_ENTITY_ID"] = "Не зазначений код сутності";
+$MESS["SONET_GL_ERROR_CALC_ENTITY_TYPE"] = "Помилка обчислення типу сутності";
+$MESS["SONET_GL_ERROR_NO_ENTITY_ID"] = "Код сутності не вірний";
+$MESS["SONET_GL_ERROR_NO_USER_ID"] = "Код користувача не вірний";
+$MESS["SONET_GL_EMPTY_EVENT_ID"] = "Не вказана подія";
+$MESS["SONET_GL_ERROR_NO_FEATURE_ID"] = "Подія вказана не вірно";
+$MESS["SONET_GL_EMPTY_DATE_CREATE"] = "Невірна дата створення";
+$MESS["SONET_GL_EMPTY_TITLE"] = "Не вказаний заголовок";
+$MESS["SONET_GL_WRONG_PARAMETER_ID"] = "Параметр ID не вірний";
+$MESS["SONET_GL_TITLE_JOIN1"] = "До групи приєднався новий учасник #TITLE#.";
+$MESS["SONET_GL_TITLE_JOIN2"] = "До групи приєдналися нові учасники #TITLE#.";
+$MESS["SONET_GL_TITLE_UNJOIN1"] = "Групу залишив учасник #TITLE#.";
+$MESS["SONET_GL_TITLE_UNJOIN2"] = "Групу залишили учасники #TITLE#.";
+$MESS["SONET_GL_TITLE_MODERATE1"] = "У групі призначений модератор #TITLE#.";
+$MESS["SONET_GL_TITLE_MODERATE2"] = "У групі призначені модератори #TITLE#.";
+$MESS["SONET_GL_TITLE_OWNER1"] = "У групі призначений новий власник #TITLE#.";
+$MESS["SONET_GL_TITLE_UNMODERATE1"] = "У групі звільнений модератор #TITLE#.";
+$MESS["SONET_GL_TITLE_UNMODERATE2"] = "У групі звільнені модератори #TITLE#.";
+$MESS["SONET_GL_TITLE_FRIEND1"] = "До списку друзів доданий користувач #TITLE#.";
+$MESS["SONET_GL_TITLE_UNFRIEND1"] = "Користувач #TITLE# більше не є другом.";
+$MESS["SONET_GL_TITLE_GROUP1"] = "Користувач вступив до групи  #TITLE#.";
+$MESS["SONET_GL_TITLE_UNGROUP1"] = "Користувач покинув групу #TITLE#.";
+$MESS["SONET_GL_TITLE_EXCLUDE_USER1"] = "Користувач виключений з групи #TITLE#.";
+$MESS["SONET_GL_TITLE_EXCLUDE_GROUP1"] = "З групи виключений учасник #TITLE#.";
+$MESS["SONET_GL_SEND_EVENT_LINK"] = "Перейти: ";
+?>

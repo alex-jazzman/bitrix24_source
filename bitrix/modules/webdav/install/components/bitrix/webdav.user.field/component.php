@@ -12,7 +12,7 @@ if(CModule::IncludeModule("disk") && \Bitrix\Disk\Configuration::isSuccessfullyC
 	return 0;
 }
 
-$path = dirname(__FILE__);
+$path = __DIR__;
 include_once($path . '/functions.php');
 
 $componentPage = 'edit';

@@ -1,0 +1,5 @@
+<?
+$MESS["VOX_DOCUMENT_STATUS_DECLINED"] = "Відхилено";
+$MESS["VOX_DOCUMENT_STATUS_IN_PROGRESS"] = "На перевірці";
+$MESS["VOX_DOCUMENT_STATUS_VERIFIED"] = "Підтверджено";
+?>

@@ -52,7 +52,7 @@ else
 		}
 	}
 }
-global $DBType;
+
 CModule::AddAutoloadClasses(
 	"webdav",
 	array(
@@ -86,13 +86,13 @@ CModule::AddAutoloadClasses(
 		"CWebDavTmpFile" => "classes/webdavtmpfile.php",
 		"CWebDavTools" => "classes/tools.php",
 		"CWebDavLogDeletedElementBase" => "classes/general/webdavlogdeletedelement.php",
-		"CWebDavLogDeletedElement" => "classes/".$DBType."/webdavlogdeletedelement.php",
+		"CWebDavLogDeletedElement" => "classes/mysql/webdavlogdeletedelement.php",
 		"CWebDavEditDocBase" => "classes/editdocbase.php",
 		"CWebDavEditDocComponentBase" => "classes/editdoccomponentbase.php",
 		"CWebDavEditDocGoogle" => "classes/editdocgoogle.php",
 		"CWebDavEditSkyDrive" => "classes/editskydrive.php",
 		"CWebDavLogOnlineEditBase" => "classes/general/webdavonlineedit.php",
-		"CWebDavLogOnlineEdit" => "classes/".$DBType."/webdavonlineedit.php",
+		"CWebDavLogOnlineEdit" => "classes/mysql/webdavonlineedit.php",
 		"CWebDavBlankDocument" => "classes/blankdocument.php",
 		"CWebDavStubTmpFile" => "classes/stubwebdavtmpfile.php",
 		"CWebDavSymlinkHelper" => "classes/symlinkhelper.php",
@@ -102,7 +102,7 @@ CJSCore::RegisterExt('wdfiledialog', array(
 	'js' => '/bitrix/js/webdav/file_dialog.js',
 	'css' => '/bitrix/js/webdav/css/file_dialog.css',
 	'lang' => '/bitrix/modules/webdav/lang/'.LANGUAGE_ID.'/install/js/file_dialog.php',
-	'rel' => array('core', 'popup', 'json', 'ajax')
+	'rel' => array('ui.design-tokens', 'core', 'popup', 'json', 'ajax')
 ));
 
 define("SONET_SUBSCRIBE_ENTITY_FILES", "F");

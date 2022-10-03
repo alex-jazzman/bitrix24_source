@@ -83,6 +83,10 @@ import Expand from "./animations/expand";
 import Shift from "./animations/shift";
 import AnimationComment from "./animations/comment";
 import Fasten from "./animations/fasten";
+import ProductCompilationList from './product-compilation/compilation-product-list/component';
+import CompilationOrderNotice from './product-compilation/order-notice/component';
+import ProductCompilationViewed from './product-compilation/compilation-viewed/component';
+import NewDealCreated from './product-compilation/deal-created/component';
 
 const Streams = {
 	History,
@@ -202,4 +206,8 @@ export {
 	Item,
 	Items,
 	Animations,
+	ProductCompilationList,
+	CompilationOrderNotice,
+	ProductCompilationViewed,
+	NewDealCreated,
 };

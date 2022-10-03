@@ -33,6 +33,8 @@ abstract class Operation
 	public const ACTION_BEFORE_SAVE = 'beforeSave';
 	public const ACTION_AFTER_SAVE = 'afterSave';
 
+	public const DEFAULT_ACTION_SORT = 500;
+
 	/** @var \CCrmBizProcHelper */
 	protected $bizProcHelper = \CCrmBizProcHelper::class;
 	/** @var Item */
@@ -82,7 +84,7 @@ abstract class Operation
 		return $this->itemBeforeSave;
 	}
 
-	public function addAction(string $actionPlacement, Action $action): self
+	public function addAction(string $actionPlacement, Action $action, int $sort = self::DEFAULT_ACTION_SORT): self
 	{
 		if (
 			$actionPlacement !== static::ACTION_BEFORE_SAVE
@@ -92,7 +94,25 @@ abstract class Operation
 			throw new ArgumentOutOfRangeException('actionPlacement');
 		}
 
-		$this->actions[$actionPlacement][] = $action;
+		while (isset($this->actions[$actionPlacement][$sort]))
+		{
+			$sort++;
+		}
+
+		$this->actions[$actionPlacement][$sort] = $action;
+
+		return $this;
+	}
+
+	public function removeAction(string $actionPlacement, string $actionClassName): self
+	{
+		foreach ($this->actions[$actionPlacement] as $index => $action)
+		{
+			if (get_class($action) === $actionClassName)
+			{
+				unset($this->actions[$actionPlacement][$index]);
+			}
+		}
 
 		return $this;
 	}
@@ -961,6 +981,8 @@ abstract class Operation
 	{
 		if (!empty($this->actions[$placementCode]))
 		{
+			ksort($this->actions[$placementCode]);
+
 			/** @var Action $action */
 			foreach($this->actions[$placementCode] as $action)
 			{

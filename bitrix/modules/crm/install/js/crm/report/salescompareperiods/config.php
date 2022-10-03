@@ -12,6 +12,7 @@ return [
 		'/bitrix/js/crm/report/salescompareperiods/view.css',
 	],
 	'rel' => [
-		'date'
+		'date',
+		'ui.fonts.opensans',
 	]
 ];

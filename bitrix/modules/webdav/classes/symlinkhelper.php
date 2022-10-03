@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Text\Emoji;
+
 IncludeModuleLangFile(__FILE__);
 
 final class CWebDavSymlinkHelper
@@ -66,7 +69,7 @@ final class CWebDavSymlinkHelper
 			return false;
 		}
 
-		$group['NAME'] = GetMessage('WD_SYMLINK_TEMPLATE_NAME', array('#NAME#' => $group['NAME']));
+		$group['NAME'] = GetMessage('WD_SYMLINK_TEMPLATE_NAME', array('#NAME#' => Emoji::decode($group['NAME'])));
 
 		return CWebDavTools::regenerateNameIfNonUnique($group['NAME'], $targetSectionData['IBLOCK_ID'], $targetSectionData['SECTION_ID']);
 	}
@@ -860,7 +863,7 @@ final class CWebDavSymlinkHelper
 					array(
 						'#FOLDERNAME#' => $sectionToShare['NAME'],
 						'#INVITETEXT#' => $folderInvite['DESCRIPTION'] ?: '',
-						'#GROUPNAME#' => '<a href="' . $uriShow . '">' . $group['NAME'] . '</a>',
+						'#GROUPNAME#' => '<a href="' . $uriShow . '">' . Emoji::decode($group['NAME']) . '</a>',
 						'#DISCONNECT_LINK#' => '<a href="' . $uriDisconnect . '">' . GetMessage('WD_SYMLINK_INVITE_TEXT_DISCONNECT_LINK') . '</a>',
 					)
 				);
@@ -868,7 +871,7 @@ final class CWebDavSymlinkHelper
 					array(
 						'#FOLDERNAME#' => $sectionToShare['NAME'],
 						'#INVITETEXT#' => $folderInvite['DESCRIPTION'] ?: '',
-						'#GROUPNAME#' => $group['NAME'],
+						'#GROUPNAME#' => Emoji::decode($group['NAME']),
 						'#DISCONNECT_LINK#' => "\n\n". GetMessage('WD_SYMLINK_INVITE_TEXT_DISCONNECT_LINK') . ': ' . $serverName . $uriDisconnect,
 					)
 				);

@@ -179,7 +179,7 @@
 				$rsLanguage = CLanguage::GetList();
 				while($arLanguage = $rsLanguage->Fetch())
 				{
-					$dir = str_replace(array("\\", "//"), "/", dirname(__FILE__)); 
+					$dir = str_replace(array("\\", "//"), "/", __DIR__);
 					$dirs = explode("/", $dir); 
 					array_pop($dirs); 
 					$file = trim(implode("/", $dirs)."/lang/".$arLanguage["LID"]."/include/webdav_settings.php");

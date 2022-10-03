@@ -20,6 +20,7 @@ Extension::load([
 	'catalog.entity-card',
 	'catalog.document-card',
 	'crm.entity-selector',
+	'ui.fonts.opensans',
 ]);
 
 if (

@@ -1,0 +1,33 @@
+<?
+$MESS["customrank_all"] = "(усі)";
+$MESS["customrank_no"] = "(ні)";
+$MESS["customrank_id"] = "ID";
+$MESS["customrank_find_title"] = "Введіть рядок для пошуку";
+$MESS["customrank_sort"] = "Вага";
+$MESS["customrank_delete_confirm"] = "Ви впевнені, що хочете видалити дане правило?";
+$MESS["customrank_add"] = "Додати";
+$MESS["customrank_of"] = "з";
+$MESS["customrank_edit"] = "Змінити";
+$MESS["customrank_module"] = "Модуль";
+$MESS["customrank_add_title"] = "Натисніть для додавання нового правила сортування";
+$MESS["customrank_find"] = "Знайти";
+$MESS["customrank_update"] = "Оновити";
+$MESS["customrank_applied"] = "Опрацьовано";
+$MESS["customrank_stop"] = "Зупинити";
+$MESS["customrank_edit_error"] = "Помилка зміни запису:";
+$MESS["customrank_error_delete"] = "Помилка видалення правила.";
+$MESS["customrank_param1"] = "Параметр 1";
+$MESS["customrank_param2"] = "Параметр 2";
+$MESS["customrank_param3"] = "Параметр 3";
+$MESS["customrank_save_note"] = "Після зміни або видалення правил потрібно натиснути кнопку «Оновити» для того, щоб зміни вступили у силу.";
+$MESS["customrank_rules"] = "Правила";
+$MESS["customrank_saved"] = "Правила збережені.";
+$MESS["customrank_no_rule"] = "правило не знайдено";
+$MESS["customrank_continue"] = "Продовжити";
+$MESS["customrank_site"] = "Сайт";
+$MESS["customrank_title"] = "Список правил сортування";
+$MESS["customrank_delete"] = "Видалити";
+$MESS["customrank_step1"] = "Крок 1. Керування правилами сортування";
+$MESS["customrank_step2"] = "Крок 2. Оновлення пошукового індексу";
+$MESS["customrank_progress"] = "Оновлення пошукового індексу.";
+?>

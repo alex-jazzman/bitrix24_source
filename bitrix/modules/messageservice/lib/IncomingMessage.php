@@ -10,7 +10,7 @@ use Bitrix\Messageservice\Internal\Entity\IncomingMessageTable;
 
 abstract class IncomingMessage
 {
-	abstract public static function sendMessageToChat(int $internalId);
+	abstract public static function sendMessageToChat(array $message);
 	abstract protected static function prepareBodyForSave(array $body): array;
 
 	public static function addMessage(string $senderId, array $requestBody): AddResult

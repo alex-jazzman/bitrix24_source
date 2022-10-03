@@ -1,0 +1,29 @@
+<?
+$MESS["IM_CALL_CHAT_WAIT"] = "Дзвінок не відбувся: #USER_NAME# не відповідає";
+$MESS["IM_CALL_CHAT_BUSY_M"] = "Дзвінок не відбувся: #USER_NAME# зайнятий іншим дзвінком";
+$MESS["IM_CALL_CHAT_BUSY_F"] = "Дзвінок не відбувся: #USER_NAME# зайнята іншим дзвінком";
+$MESS["IM_CALL_CHAT_ERROR"] = "Дзвінок не відбувся: у #USER_NAME# технічні проблеми";
+$MESS["IM_CALL_CHAT_DECLINE_M"] = "Дзвінок не відбувся: #USER_NAME# скасував виклик";
+$MESS["IM_CALL_CHAT_DECLINE_F"] = "Дзвінок не відбувся: #USER_NAME# скасувала виклик";
+$MESS["IM_CALL_CHAT_START"] = "Дзвінок почався";
+$MESS["IM_CALL_CHAT_END"] = "Дзвінок завершено";
+$MESS["IM_CALL_CHAT_START_M"] = "#USER_NAME# підключився до дзвінка";
+$MESS["IM_CALL_CHAT_START_F"] = "#USER_NAME# підключилася до дзвінка";
+$MESS["IM_CALL_CHAT_END_M"] = "#USER_NAME# відключився від дзвінка";
+$MESS["IM_CALL_CHAT_END_F"] = "#USER_NAME# відключилася від дзвінка";
+$MESS["IM_CALL_CHAT_ERROR_M"] = "#USER_NAME# не зміг підключитися через технічні проблеми";
+$MESS["IM_CALL_CHAT_ERROR_F"] = "#USER_NAME# не змогла підключитися через технічні проблеми";
+$MESS["IM_CALL_CHAT_OFFLINE"] = "Дзвінок не відбувся: #USER_NAME# не в мережі, або використовує застосунок, що не підтримує дзвінки";
+$MESS["IM_CALL_CHAT_TIMEOUT"] = "Дзвінок не відбувся: користувачі не відповідають";
+$MESS["IM_CALL_CHAT_INIT_M"] = "#USER_NAME# почав дзвінок";
+$MESS["IM_CALL_CHAT_INIT_F"] = "#USER_NAME# початку дзвінок";
+$MESS["IM_CALL_CHAT_CLOSE_M"] = "#USER_NAME# завершив дзвінок";
+$MESS["IM_CALL_CHAT_CLOSE_F"] = "#USER_NAME# завершила дзвінок";
+$MESS["IM_CALL_CHAT_G_BUSY_M"] = "#USER_NAME# зайнятий іншим дзвінком";
+$MESS["IM_CALL_CHAT_G_BUSY_F"] = "#USER_NAME# зайнята іншим дзвінком";
+$MESS["IM_CALL_CHAT_G_DECLINE_M"] = "#USER_NAME# відмовився від дзвінка";
+$MESS["IM_CALL_CHAT_G_DECLINE_F"] = "#USER_NAME# відмовилася від дзвінка";
+$MESS["IM_ERROR_CALL_PRIVACY"] = "Дзвінок не відбувся: користувач приймає дзвінки тільки від свого списку контактів";
+$MESS["IM_CALL_INVITE"] = "Дзвінок від #USER_NAME#";
+$MESS["IM_CALL_INVITE_NA"] = "користувача Бітрікс24";
+?>

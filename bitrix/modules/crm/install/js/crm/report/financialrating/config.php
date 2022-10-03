@@ -11,4 +11,5 @@ return [
 	'css'  => [
 		'/bitrix/js/crm/report/financialrating/view.css',
 	],
+	'rel' => ['ui.fonts.opensans'],
 ];

@@ -3,7 +3,7 @@
 	position: relative;
 	overflow: hidden;
     font-size: 90%;
-    font-weight: bold;
+    font-weight: var(--ui-font-weight-bold);
 	padding-top: 15px;
 }
 .wdif-file {

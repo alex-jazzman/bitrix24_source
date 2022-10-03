@@ -1,0 +1,24 @@
+<?php
+$MESS["LANDING_TABLE_FIELD_ACCESS"] = "Рівень доступу до блоку";
+$MESS["LANDING_TABLE_FIELD_ACTIVE"] = "Активність";
+$MESS["LANDING_TABLE_FIELD_ANCHOR"] = "Якір";
+$MESS["LANDING_TABLE_FIELD_ASSETS"] = "Додаткові ресурси блока";
+$MESS["LANDING_TABLE_FIELD_CODE"] = "Код";
+$MESS["LANDING_TABLE_FIELD_CODE_ORIGINAL"] = "Код оригінальний";
+$MESS["LANDING_TABLE_FIELD_CONTENT"] = "Вміст блоку";
+$MESS["LANDING_TABLE_FIELD_CREATED_BY_ID"] = "Ідентифікатор створившего користувача";
+$MESS["LANDING_TABLE_FIELD_DATE_CREATE"] = "Дата створення";
+$MESS["LANDING_TABLE_FIELD_DATE_MODIFY"] = "Дата зміни";
+$MESS["LANDING_TABLE_FIELD_DELETED"] = "Видалений чи ні";
+$MESS["LANDING_TABLE_FIELD_DESIGNED"] = "Блок був змінений користувачем (дизайнер блока)";
+$MESS["LANDING_TABLE_FIELD_FAVORITE_META"] = "Перепризначувані поля для збереженого блоку";
+$MESS["LANDING_TABLE_FIELD_INITIATOR_APP_CODE"] = "Код застосунку-ініціатора";
+$MESS["LANDING_TABLE_FIELD_LID"] = "Ідентифікатор лендінга";
+$MESS["LANDING_TABLE_FIELD_MODIFIED_BY_ID"] = "Ідентифікатор змінившего користувача";
+$MESS["LANDING_TABLE_FIELD_PARENT_ID"] = "Батьківський блок";
+$MESS["LANDING_TABLE_FIELD_PUBLIC"] = "Публічність";
+$MESS["LANDING_TABLE_FIELD_SEARCH_CONTENT"] = "Вміст блоку для пошуку";
+$MESS["LANDING_TABLE_FIELD_SORT"] = "Сортування";
+$MESS["LANDING_TABLE_FIELD_SOURCE_PARAMS"] = "Параметри динамічного джерела";
+$MESS["LANDING_TABLE_FIELD_TPL_CODE"] = "Код шаблону";
+$MESS["LANDING_TABLE_FIELD_XML_ID"] = "Зовнішній код";

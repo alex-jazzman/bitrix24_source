@@ -18,7 +18,8 @@ if($arResult['ADDITIONAL_CSS_PATH'] <> '')
 \Bitrix\Main\UI\Extension::load([
 	'ui.buttons',
 	'sale.barcode',
-	'ui.design-tokens'
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 if(SITE_TEMPLATE_ID === 'bitrix24')

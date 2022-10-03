@@ -25,6 +25,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\WebForm\Internals\ResultEntityTable;
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\BindingSelector;
+use Bitrix\Crm\ClientInfo;
 use Bitrix\Crm\Integration\Channel\WebFormTracker;
 use Bitrix\Crm\Order\OrderCreator;
 use Bitrix\Main\UserConsent\Consent;
@@ -33,7 +34,6 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Sale;
 use Bitrix\Sale\Delivery\Services\EmptyDeliveryService;
 use Bitrix\Sale\Helpers\Order\Builder\BuildingException;
-use Bitrix\SalesCenter;
 use Bitrix\Sale\Shipment;
 
 Loc::loadMessages(__FILE__);
@@ -1023,7 +1023,8 @@ class ResultEntity
 			}
 		}
 
-		$builder = SalesCenter\Builder\Manager::getBuilder();
+		$builder = Crm\Order\Builder\Factory::createDefaultBuilder();
+
 		try
 		{
 			$builder->build($formData);
@@ -1176,13 +1177,13 @@ class ResultEntity
 			'RESPONSIBLE_ID' => $this->assignedById,
 			'SHIPMENT' => [
 				[
-					'DELIVERY_ID' => SalesCenter\Integration\SaleManager::getInstance()->getEmptyDeliveryServiceId(),
+					'DELIVERY_ID' => EmptyDeliveryService::getEmptyDeliveryServiceId(),
 					'ALLOW_DELIVERY' => 'Y',
 				]
 			]
 		];
 
-		$client = SalesCenter\Integration\CrmManager::getInstance()->getClientInfo($ownerTypeId, $ownerId);;
+		$client = ClientInfo::createFromOwner($ownerTypeId, $ownerId)->toArray();
 
 		if(
 			!empty($client['OWNER_ID'])

@@ -68,7 +68,7 @@
 	background-repeat:no-repeat !important;
 	font-size: 22px;
 	font-weight: 300;
-	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: 23px;
 	vertical-align: middle;
 	padding-right: 172px !important;
@@ -85,7 +85,7 @@
 	font-size: 25px;
 	vertical-align: middle;
 	font-weight: 300;
-	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: 26px;
 	padding-right: 202px !important;
 	padding-left: 2% !important;
@@ -116,7 +116,7 @@
 	text-align: center;
 	font-weight: 300;
 	color: #fff;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: 17px;
 	/*text-shadow:  0 -1px 1px #dbddd4, 0 -2px 0px #6c812a;*/
 	text-shadow: 0 -1px 0px #6c812a;

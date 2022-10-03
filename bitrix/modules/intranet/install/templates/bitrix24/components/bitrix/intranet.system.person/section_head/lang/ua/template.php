@@ -1,0 +1,29 @@
+<?
+$MESS["ISL_PERSONAL_BIRTHDAY"] = "Дата народження";
+$MESS["ISL_PERSONAL_PHONE"] = "Телефон";
+$MESS["INTR_STR_UF_HEAD"] = "Керівник підрозділу";
+$MESS["ISL_PERSONAL_SKYPE"] = "Skype";
+$MESS["ISL_PERSONAL_EMAIL"] = "E-mail";
+$MESS["INTR_ISP_PM"] = "Написати повідомлення";
+$MESS["INTR_ISP_VIDEO_CALL"] = "Відеодзвінок";
+$MESS["INTR_ISP_TASK"] = "Поставити завдання";
+$MESS["INTR_ISP_IS_ONLINE"] = "на сайті";
+$MESS["INTR_ISP_IS_ABSENT"] = "офлайн";
+$MESS["INTR_ISP_EDIT_USER"] = "Редагувати профіль";
+$MESS["INTR_EXTRANET"] = "(екстранет)";
+$MESS["INTR_ISP_DEACTIVATE_USER"] = "Звільнити";
+$MESS["INTR_ISP_DELETE_USER"] = "Видалити";
+$MESS["INTR_ISP_RESTORE_USER"] = "Прийняти на роботу";
+$MESS["INTR_CONFIRM_FIRE"] = "Співробітник більше не зможе зайти на портал, не з'явиться в структурі компанії, але всі його дані (файли, повідомлення, завдання тощо) збережуться.\\n\\nВи впевнені, що хочете закрити доступ співробітнику?";
+$MESS["INTR_CONFIRM_RESTORE"] = "Співробітник зможе зайти на портал, з'явиться в структурі компанії.\\n\\ nВи впевнені, що хочете відкрити доступ співробітнику?";
+$MESS["INTR_ISP_INVITE"] = "Запросити ще раз";
+$MESS["INTR_ISP_INVITE_ACCESS"] = "Запрошення було надіслано";
+$MESS["INTR_CONFIRM_DELETE"] = "Запрошення співробітника буде видалено безповоротно.\\n\\ nВи впевнені, що хочете видалити співробітника?";
+$MESS["INTR_IS_ADMIN"] = "Адміністратор";
+$MESS["INTR_IS_HEAD"] = "Керівник";
+$MESS["INTR_USER_extranet"] = "Екстранет";
+$MESS["INTR_USER_fired"] = "Звільнено";
+$MESS["INTR_USER_inactive"] = "Запрошений";
+$MESS["INTR_USER_admin"] = "Адміністратор";
+$MESS["INTR_ISP_DELETE_ERROR"] = "Помилка! Користувач не був видалений";
+?>

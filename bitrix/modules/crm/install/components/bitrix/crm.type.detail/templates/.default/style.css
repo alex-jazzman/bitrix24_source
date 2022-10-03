@@ -25,12 +25,14 @@
 	padding-bottom: 14px;
 	width: 100%;
 	border-bottom: 1px solid rgba(82, 92, 105, .1);
-    font: 22px/28px "OpenSans-Light", Helvetica, Arial, sans-serif;
+    font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
     color: #333;
 }
 
 .crm-type .ui-title-3 {
-	font: 18px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-type .ui-form-row {
@@ -83,7 +85,8 @@
 }
 
 .crm-type-presets-category-title {
-	font-family: 'OpenSans-Light', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 18px;
 	color: #525c69;
 	line-height: 28px;
@@ -166,7 +169,8 @@
 }
 
 .crm-type-preset-text-title {
-	font-family: OpenSans-SemiBold, Helvetca, Arial, sans-sarif, serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 14px;
 	color: #333;
 	line-height: 32px;
@@ -199,7 +203,8 @@
 }
 
 .crm-type-preset-soon-label {
-	font-family: OpenSans-SemiBold, Helvetca, Arial, sans-sarif, serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	background: #3BC6F3;
 	border-radius: 11px;
 	font-size: 9px;
@@ -275,7 +280,8 @@ body.crm-type-settings-presets #workarea-content {
 }
 
 .crm-type-ui-card-message-title {
-	font: 21px/28px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 21px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	margin-top: -5px;
 }
@@ -397,7 +403,8 @@ body.crm-type-settings-presets #workarea-content {
 }
 
 .crm-type-field-selector-button-item-soon-label {
-	font-family: OpenSans-SemiBold, Helvetca, Arial, sans-sarif, serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	background: #3BC6F3;
 	border-radius: 11px;
 	font-size: 9px;
@@ -448,7 +455,8 @@ body.crm-type-settings-presets #workarea-content {
     padding-bottom: 18px;
     margin-bottom: 20px;
     border-bottom: 1px solid rgba(82, 92, 105, .1);
-    font: 18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+    font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
     color: #333;
 }
 
@@ -484,7 +492,8 @@ body.crm-type-settings-presets #workarea-content {
 }
 
 .crm-type-head--modifier .ui-sidepanel-title {
-    font: 24px "OpenSans-Light", Helvetica, Arial, sans-serif;
+    font: 24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
     /*letter-spacing: -0.266666px;*/
 }
 

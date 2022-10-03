@@ -4,7 +4,7 @@ $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/js/main/amcharts/3.3/amcharts.js
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/js/main/amcharts/3.3/pie.js");
 global $USER;
 
-CJSCore::Init(array("fx", "date"));
+\Bitrix\Main\UI\Extension::load(["ui.design-tokens", "fx", "date"]);
 
 $diskSpace = isset($arResult["diskSpace"]) && $arResult["diskSpace"] <> '' ? doubleval($arResult["diskSpace"]) : 0;
 $diskSpace = $diskSpace < 0 ? 0 : $diskSpace;

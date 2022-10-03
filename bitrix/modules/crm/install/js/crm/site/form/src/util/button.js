@@ -1,5 +1,6 @@
 import {B24Options} from "../type";
 import {Font, Type} from "./registry";
+import 'ui.fonts.opensans';
 import "./css/button.css";
 
 export class Button

@@ -1,0 +1,6 @@
+<?
+$MESS["SONET_ENTITY_SELECTOR_ERR_INTRANET_MODULE_NOT_INSTALLED"] = "Модуль \"Інтранет\" не встановлено";
+$MESS["SONET_ENTITY_SELECTOR_ERR_SONET_MODULE_NOT_INSTALLED"] = "Модуль \"Соціальна мережа\" не встановлено";
+$MESS["SONET_ENTITY_SELECTOR_FILTER_FIELD_AUTHOR_TITLE"] = "Автор";
+$MESS["SONET_ENTITY_SELECTOR_FILTER_FIELD_GROUP_TITLE"] = "Група або проєкт";
+?>

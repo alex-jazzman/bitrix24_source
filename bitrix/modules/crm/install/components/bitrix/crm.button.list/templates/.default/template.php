@@ -12,7 +12,8 @@ use Bitrix\Main\UI\Extension;
 Extension::load([
 	'clipboard',
 	'ui.buttons',
-	'ui.design-tokens'
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 ?>

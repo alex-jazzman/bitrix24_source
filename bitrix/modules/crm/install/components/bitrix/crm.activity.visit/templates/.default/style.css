@@ -204,7 +204,8 @@
 	height: 62px;
 	color: #fff;
 	text-transform: uppercase;
-	font: 10px/12px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	-webkit-box-pack: center;
 	justify-content: center;
 	-webkit-box-align: center;
@@ -258,7 +259,8 @@
 	background: rgba(59, 200, 245, .7);
 	color: #fff;
 	text-transform: uppercase;
-	font: 12px/36px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/36px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	cursor: pointer;
 	transition: background .3s;
 }
@@ -394,7 +396,8 @@
 	color: #fff;
 	text-align: center;
 	text-transform: uppercase;
-	font: 12px/50px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/50px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	cursor: pointer;
 	transition: background .3s;
 }
@@ -1272,7 +1275,8 @@
 	margin: 0 5px 0;
 	height: 30px;
 	color: #525c68;
-	font: 14px/19px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	cursor: pointer;
 	transition: color .3s;
 }
@@ -1309,7 +1313,8 @@
 	color: #fff;
 	text-align: center;
 	text-transform: uppercase;
-	font: bold 10px/26px 'Open Sans', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px/26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	cursor: pointer;
 	transition: background .4s, color .4s;
 }

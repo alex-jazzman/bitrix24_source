@@ -336,7 +336,7 @@ class FormTable extends ORM\Data\DataManager
 		// delete preset fields
 		PresetFieldTable::delete(array('FORM_ID' => $formId));
 		// delete view statistics
-		FormViewTable::delete(array('FORM_ID' => $formId));
+		FormCounterDailyTable::deleteByFormId($formId);
 		// delete start edit statistics
 		FormStartEditTable::delete(array('FORM_ID' => $formId));
 

@@ -1,0 +1,11 @@
+<?
+$MESS["INTR_USER_ABSENCE_TYPE_VACATION"] = "відпустка щорічна";
+$MESS["INTR_USER_ABSENCE_TYPE_ASSIGNMENT"] = "відрядження";
+$MESS["INTR_USER_ABSENCE_TYPE_LEAVESICK"] = "лікарняний";
+$MESS["INTR_USER_ABSENCE_TYPE_LEAVEMATERINITY"] = "відпустка декретна";
+$MESS["INTR_USER_ABSENCE_TYPE_LEAVEUNPAYED"] = "відгул за свій рахунок";
+$MESS["INTR_USER_ABSENCE_TYPE_UNKNOWN"] = "прогул";
+$MESS["INTR_USER_ABSENCE_TYPE_OTHER"] = "інше";
+$MESS["INTR_USER_ABSENCE_TYPE_PERSONAL"] = "персональні календарі";
+$MESS["USER_ABSENCE_STATUS_VACATION"] = "У відпустці";
+?>

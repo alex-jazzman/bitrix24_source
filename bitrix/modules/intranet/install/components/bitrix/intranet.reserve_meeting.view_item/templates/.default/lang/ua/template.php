@@ -1,0 +1,34 @@
+<?
+$MESS["INTASK_C29T_RWD_7"] = "Неділя";
+$MESS["INTASK_C29T_FROM_TIME"] = "Час початку";
+$MESS["INTASK_C29T_TO_TIME"] = "Час закінчення";
+$MESS["INTASK_C29T_RWD_2"] = "Вівторок";
+$MESS["INTASK_C29T_YES"] = "Так";
+$MESS["INTASK_C29T_DATE_FROM"] = "Дата початку";
+$MESS["INTASK_C29T_DATE_TO"] = "Дата закінчення";
+$MESS["INTASK_C29T_DURATION"] = "Тривалість";
+$MESS["INTASK_C29T_SAVE"] = "Зарезервувати";
+$MESS["INTASK_C29T_AUTHOR"] = "Заявник";
+$MESS["INTASK_C29T_TRANSS_WEEKLY"] = "Кожного #VAL# тижня";
+$MESS["INTASK_C29T_TRANSS_YEARLY"] = "Кажного #VAL# року";
+$MESS["INTASK_C29T_TRANSS_DAILY"] = "Кажного #VAL# дня";
+$MESS["INTASK_C29T_TRANSS_MONTHLY"] = "Кажного #VAL# місяця";
+$MESS["INTASK_C29T_PERSONS"] = "Кількість учасників";
+$MESS["INTASK_C29T_PLACE"] = "Місць";
+$MESS["INTASK_C29T_NAME"] = "Назва";
+$MESS["INTASK_C29T_REGULARITY_NONE"] = "Не повторюється";
+$MESS["INTASK_C29T_NO"] = "Ні";
+$MESS["INTASK_C29T_DESCR"] = "Опис";
+$MESS["INTASK_C29T_REGULAR"] = "Повтор";
+$MESS["INTASK_C29T_REGULARITY_UNTIL"] = "повторюється до";
+$MESS["INTASK_C29T_PREP"] = "Підготовка кімнати";
+$MESS["INTASK_C29T_RWD_1"] = "Понеділок";
+$MESS["INTASK_C29T_RWD_5"] = "П'ятниця";
+$MESS["INTASK_C29T_RWD_3"] = "Середа";
+$MESS["INTASK_C29T_RWD_6"] = "Субота";
+$MESS["INTASK_C29T_PHONE"] = "Телефон";
+$MESS["INTASK_C29T_TYPE"] = "Тип зустрічі";
+$MESS["INTASK_C29T_HOURS"] = "годин";
+$MESS["INTASK_C29T_RWD_4"] = "Четвер";
+$MESS["INTASK_C29T_FLOOR"] = "Поверх";
+?>

@@ -26,5 +26,6 @@ return [
 		'crm_activity_planner',
 		'ui.notification',
 		'ls',
+		'ui.fonts.opensans',
 	],
 ];

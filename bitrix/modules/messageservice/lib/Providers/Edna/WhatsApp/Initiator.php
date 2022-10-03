@@ -25,4 +25,17 @@ class Initiator extends Providers\Base\Initiator
 		}
 		return $fromList;
 	}
+
+	public function isCorrectFrom($from): bool
+	{
+		$fromList = $this->getFromList();
+		foreach ($fromList as $item)
+		{
+			if ((int)$from === $item['id'])
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 }

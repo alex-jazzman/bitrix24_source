@@ -55,7 +55,8 @@
 
 .crm-tracking-entity-details-title {
 	color: #fff;
-	font: 14px/24px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 14px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	text-transform: uppercase;
 	padding-bottom: 12px;
 	border-bottom: 1px solid rgba(255, 255, 255, .4);

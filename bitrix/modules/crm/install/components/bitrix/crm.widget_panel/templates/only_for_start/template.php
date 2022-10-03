@@ -22,6 +22,7 @@ CJSCore::Init([
 	'popup',
 	'date',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');

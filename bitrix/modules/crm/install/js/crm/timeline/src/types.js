@@ -22,6 +22,7 @@ export const Item = {
 	delivery: 19,
 	finalSummaryDocuments: 20,
 	storeDocument: 21,
+	productCompilation: 22,
 };
 
 /** @memberof BX.Crm.Timeline.Types */
@@ -57,4 +58,12 @@ export const Order = {
 export const EditorMode = {
 	view: 1,
 	edit: 2
+}
+
+/** @memberof BX.Crm.Timeline.Types */
+export const Compilation = {
+	productList: 1,
+	orderExists: 2,
+	compilationViewed: 3,
+	newDealCreated: 4,
 }

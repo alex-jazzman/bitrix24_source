@@ -262,12 +262,12 @@ table.wd-main thead th{
 	background-color: #CEDEEC;
 	color:#072838;
 	white-space:nowrap;
-	font-weight:bold;}
+	font-weight:var(--ui-font-weight-bold);}
 table.wd-main thead th.selected{
 	background-color: #E6EEF5;}
 table.wd-main thead a.wd-sort{
 	color:#072838;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	text-decoration:none;
 	display:block;
 	padding-right:10px;
@@ -458,28 +458,28 @@ td.popupmenu div.popupitem td.gutter div.icon.checked {
 
 td.popupmenu div.popupitem td.gutter div.bizproc_document,
 td.popupmenu div.popupitem td.gutter div.bizproc_start,
-td.popupmenu div.popupitem td.gutter div.bizproc_history { margin-left: 2px; background-position: 0 0 !important; width: 17px !important; height: 17px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_open{ background-position: -18px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_comment{ background-position: -39px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_copy{ background-position: -60px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_delete{ background-position: -81px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_download{ background-position: -102px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_edit{ background-position: -123px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_history{ background-position: -144px 0 !important; width: 16px !important; height: 16px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_move{ background-position: -161px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_permissions{ background-position: -182px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_rename{ background-position: -203px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_subscribe{ background-position: -224px 0 !important; width: 17px !important; height: 17px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_unlock{ background-position: -242px 0 !important; width: 17px !important; height: 17px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_unsubscribe{ background-position: -260px 0 !important; width: 17px !important; height: 17px !important; } 
-td.popupmenu div.popupitem td.gutter div.element_view{ background-position: -278px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.section_copy{ background-position: -299px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.section_drop{ margin-left:2px; background-position: -320px 0 !important; width: 16px !important; height: 16px !important; } 
-td.popupmenu div.popupitem td.gutter div.section_edit{ background-position: -337px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.section_move{ background-position: -358px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.section_open{ background-position: -379px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.section_permissions{ background-position: -400px 0 !important; width: 20px !important; height: 20px !important; } 
-td.popupmenu div.popupitem td.gutter div.section_rename{ background-position: -421px 0 !important; width: 20px !important; height: 20px !important; } 
+td.popupmenu div.popupitem td.gutter div.bizproc_history { margin-left: 2px; background-position: 0 0 !important; width: 17px !important; height: 17px !important; }
+td.popupmenu div.popupitem td.gutter div.element_open{ background-position: -18px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.element_comment{ background-position: -39px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.element_copy{ background-position: -60px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.element_delete{ background-position: -81px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.element_download{ background-position: -102px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.element_edit{ background-position: -123px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.element_history{ background-position: -144px 0 !important; width: 16px !important; height: 16px !important; }
+td.popupmenu div.popupitem td.gutter div.element_move{ background-position: -161px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.element_permissions{ background-position: -182px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.element_rename{ background-position: -203px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.element_subscribe{ background-position: -224px 0 !important; width: 17px !important; height: 17px !important; }
+td.popupmenu div.popupitem td.gutter div.element_unlock{ background-position: -242px 0 !important; width: 17px !important; height: 17px !important; }
+td.popupmenu div.popupitem td.gutter div.element_unsubscribe{ background-position: -260px 0 !important; width: 17px !important; height: 17px !important; }
+td.popupmenu div.popupitem td.gutter div.element_view{ background-position: -278px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.section_copy{ background-position: -299px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.section_drop{ margin-left:2px; background-position: -320px 0 !important; width: 16px !important; height: 16px !important; }
+td.popupmenu div.popupitem td.gutter div.section_edit{ background-position: -337px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.section_move{ background-position: -358px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.section_open{ background-position: -379px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.section_permissions{ background-position: -400px 0 !important; width: 20px !important; height: 20px !important; }
+td.popupmenu div.popupitem td.gutter div.section_rename{ background-position: -421px 0 !important; width: 20px !important; height: 20px !important; }
 td.popupmenu div.popupitem td.gutter div.section_share{ background-position: -441px -2px !important; width: 18px !important; height: 18px !important; }
 div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.settings{ background-image: url('images/menu_icons/settings.gif')!important;
 	background-position: -2px 0 !important; width: 18px !important; height: 18px !important; }
@@ -529,7 +529,7 @@ div.wd-window-edit table.wd-window-edit thead td{
 	font-size: 110%;
 	padding:5px 10px 0px 10px;
 	color:gray;
-	font-weight:bold;}
+	font-weight:var(--ui-font-weight-bold);}
 div.wd-window-edit table.wd-window-edit tbody td{
 	height:100px;
 	padding:0px 10px;}
@@ -813,7 +813,7 @@ a.bx-bnr-button  {
 	display: block;
 	float: right;
 	border: 1px solid #E5E5E5;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 5px 9px;
 	color: black;
 	text-decoration: none;
@@ -884,7 +884,7 @@ div.bx-core-window input.wd-connection-line {
 	width:98%;
 }
 div.bx-core-window p.wd-docstate-title {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-top: 15px;
 }
 div.bx-core-window textarea {
@@ -1009,9 +1009,9 @@ body table.bx-edit-table td.bx-field-value .wd-ufedit input {
 table.bx-edit-table div.wd-form-delimiter {
 	width:120%;
 	color:#000000;
-	font-family: Arial,helvetica,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:120%;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 5px 0px;
 }
 
@@ -1247,7 +1247,7 @@ table.reviews-post-hidden tr td {
 	background-color: #EDEDED !important;
 	background-image: none !important;
 	padding: 3px !important;
-	font-weight: bold !important;
+	font-weight: var(--ui-font-weight-bold) !important;
 	color:#000;
 	text-align:center;
 }

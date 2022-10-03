@@ -1,0 +1,6 @@
+<?php
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_CANCEL"] = "Скасувати";
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_ERROR_AVATAR_IS_UPLOADING"] = "Аватар проекту все ще завантажується";
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_ERROR_NO_TITLE"] = "Не вказано назву проєкту";
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_HEADER_TITLE"] = "Редагування проєкту";
+$MESS["MOBILE_LAYOUT_PROJECT_EDIT_SAVE"] = "Зберегти";

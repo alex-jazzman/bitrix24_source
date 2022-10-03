@@ -28,7 +28,7 @@ if(!$arResult['FORM']['LICENCE_BUTTON_CAPTION'])
 
 $isAvailableDesign = $arResult['IS_AVAILABLE_EMBEDDING'] && $arResult['FORM']['ID'];
 
-Extension::load(['ui.alerts', 'ui.buttons', 'color_picker',]);
+Extension::load(['ui.alerts', 'ui.buttons', 'color_picker', 'ui.fonts.opensans']);
 CUtil::InitJSCore(['date', 'sidepanel']);
 if(\Bitrix\Main\Loader::includeModule("socialnetwork"))
 {

@@ -1,0 +1,29 @@
+<?
+$MESS["LOG_TYPE_DOCUMENTS"] = "Бібліотека документів";
+$MESS["LOG_TYPE_ELEMENT_ADD"] = "Додавання файлу";
+$MESS["LOG_TYPE_SECTION_ADD"] = "Додавання папки";
+$MESS["LOG_TYPE_ELEMENT_DELETE"] = "Видалення файлу";
+$MESS["LOG_TYPE_SECTION_DELETE"] = "Видалення папки";
+$MESS["LOG_TYPE_ELEMENT_TRASH"] = "Переміщення файлу в корзину";
+$MESS["LOG_TYPE_SECTION_TRASH"] = "Переміщення папки в корзину";
+$MESS["LOG_TYPE_ELEMENT_RESTORE"] = "Відновлення файлу з кошика";
+$MESS["LOG_TYPE_SECTION_RESTORE"] = "Відновлення папки з кошика";
+$MESS["LOG_TYPE_ELEMENT_MOVE"] = "Переміщення файлу";
+$MESS["LOG_TYPE_SECTION_MOVE"] = "Переміщення папки";
+$MESS["LOG_TYPE_ELEMENT_RENAME"] = "Перейменування файлу";
+$MESS["LOG_TYPE_SECTION_RENAME"] = "Перейменування папки";
+$MESS["LOG_TYPE_ELEMENT_UPDATE"] = "Оновлення файлу";
+$MESS["LOG_WEBDAV_ELEMENT_ADD"] = "Файл #NAME# доданий";
+$MESS["LOG_WEBDAV_SECTION_ADD"] = "Папка #NAME# додана";
+$MESS["LOG_WEBDAV_ELEMENT_DELETE"] = "Файл #NAME# видалений";
+$MESS["LOG_WEBDAV_SECTION_DELETE"] = "Папка #NAME# видалена";
+$MESS["LOG_WEBDAV_ELEMENT_TRASH"] = "Файл #NAME# переміщений в кошик";
+$MESS["LOG_WEBDAV_SECTION_TRASH"] = "Папка #NAME# переміщена в кошик";
+$MESS["LOG_WEBDAV_ELEMENT_RESTORE"] = "Файл #NAME# відновлений";
+$MESS["LOG_WEBDAV_SECTION_RESTORE"] = "Папка #NAME# відновлена";
+$MESS["LOG_WEBDAV_ELEMENT_MOVE"] = "Файл #NAME# переміщений в \"#MOVE_TO#\"";
+$MESS["LOG_WEBDAV_SECTION_MOVE"] = "Папка #NAME# переміщена в \"#MOVE_TO#\"";
+$MESS["LOG_WEBDAV_ELEMENT_RENAME"] = "Файл \"#NAME_BEFORE#\" перейменований в #NAME#";
+$MESS["LOG_WEBDAV_SECTION_RENAME"] = "Папка \"#NAME_BEFORE#\" перейменована в #NAME#";
+$MESS["LOG_WEBDAV_ELEMENT_UPDATE"] = "Файл #NAME# оновлено";
+?>

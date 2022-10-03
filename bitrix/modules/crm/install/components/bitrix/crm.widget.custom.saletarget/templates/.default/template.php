@@ -7,6 +7,8 @@ $messages = Loc::loadLanguageFile(__FILE__);
 \Bitrix\Main\Loader::includeModule('socialnetwork');
 CJSCore::Init('socnetlogdest');
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 $this->addExternalJs($this->getFolder() . '/user_selector.js');
 $this->addExternalJs($this->getFolder() . '/config_popup.js');
 ?>

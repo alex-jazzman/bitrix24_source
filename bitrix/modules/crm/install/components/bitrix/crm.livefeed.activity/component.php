@@ -27,6 +27,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 
 	if ($arActivity["TYPE_ID"] == CCrmActivityType::Task)
 	{
+		\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 		$APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 
 		if (
@@ -145,7 +146,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 
 				ob_start();
 				$APPLICATION->IncludeComponent(
-					"bitrix:tasks.task.livefeed", 
+					"bitrix:tasks.task.livefeed",
 					($bMobile ? 'mobile' : ''),
 					array(
 						"MOBILE"        => ($bMobile ? "Y" : "N"),
@@ -164,8 +165,8 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 						),
 						'task_tmp'      => $taskHtmlTitle,
 						'taskHtmlTitle' => $taskHtmlTitle,
-					), 
-					null, 
+					),
+					null,
 					array("HIDE_ICONS" => "Y")
 				);
 
@@ -192,12 +193,12 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 		try
 		{
 			$oFormat = new CCrmLiveFeedComponent(array(
-				"FIELDS" => $arParams["~FIELDS"], 
+				"FIELDS" => $arParams["~FIELDS"],
 				"PARAMS" => $arParams["~PARAMS"],
 				"ACTIVITY" => $arParams["~ACTIVITY"]
 			));
 		}
-		catch (Exception $e) 
+		catch (Exception $e)
 		{
 			return false;
 		}
@@ -274,7 +275,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 					{
 						$dbRes = CCrmContact::GetListEx(array(), array('=ID' => $arCommunication["ENTITY_ID"], 'CHECK_PERMISSIONS' => 'N'), false, false, array('PHOTO'));
 						if (
-							($arRes = $dbRes->Fetch()) 
+							($arRes = $dbRes->Fetch())
 							&& (intval($arRes["PHOTO"]) > 0)
 						)
 						{
@@ -286,7 +287,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 							);
 
 							if(
-								is_array($arFileTmp) 
+								is_array($arFileTmp)
 								&& isset($arFileTmp["src"])
 							)
 							{
@@ -298,7 +299,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 					{
 						$dbRes = CCrmCompany::GetListEx(array(), array('=ID' => $arCommunication["ENTITY_ID"], 'CHECK_PERMISSIONS' => 'N'), false, false, array('LOGO'));
 						if (
-							($arRes = $dbRes->Fetch()) 
+							($arRes = $dbRes->Fetch())
 							&& (intval($arRes["LOGO"]) > 0)
 						)
 						{
@@ -310,7 +311,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 							);
 
 							if(
-								is_array($arFileTmp) 
+								is_array($arFileTmp)
 								&& isset($arFileTmp["src"])
 							)
 							{
@@ -319,7 +320,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 						}
 					}
 				}
-					
+
 
 				$arTmp["NAME"] = CCrmOwnerType::GetCaption($arCommunication["ENTITY_TYPE_ID"], $arCommunication["ENTITY_ID"], false);
 				$arTmp["URL"] = CCrmOwnerType::GetEntityShowPath($arCommunication["ENTITY_TYPE_ID"], $arCommunication["ENTITY_ID"], false);
@@ -336,7 +337,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 				{
 					$arTmp["COMPANY"] = $arCommunication["ENTITY_SETTINGS"]["COMPANY_TITLE"];
 				}
-				
+
 				$arResult["CLIENTS_FOR_JS"][] = $arTmp;
 			}
 		}

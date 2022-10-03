@@ -113,6 +113,15 @@ final class SaveOrderAction extends BaseAction
 				return $result;
 			}
 
+			if (
+				Main\Loader::includeModule('crm')
+				&& class_exists(Crm\Integration\CompilationManager::class)
+			)
+			{
+				Crm\Integration\CompilationManager::sendOrderBoundEvent($order);
+				Crm\Integration\CompilationManager::sendToCompilationDealTimeline($order);
+			}
+
 			$resultData['ORDER'] = $order;
 			$result->setData($resultData);
 		}
@@ -218,6 +227,14 @@ final class SaveOrderAction extends BaseAction
 				Sale\Controller\ErrorEnumeration::SAVE_ORDER_ACTION_SET_BASKET
 			);
 			return $result;
+		}
+
+		if (
+			Main\Loader::includeModule('crm')
+			&& class_exists(Crm\Integration\CompilationManager::class)
+		)
+		{
+			Crm\Integration\CompilationManager::processOrderForCompilation($order);
 		}
 
 		$result->setData(['order' => $order]);
@@ -353,6 +370,11 @@ final class SaveOrderAction extends BaseAction
 		if ((int)$fields['USER_ID'] > 0)
 		{
 			$userId = (int)$fields['USER_ID'];
+
+			if ($this->isLandingShop($order) && Main\Loader::includeModule('crm'))
+			{
+				Crm\Service\Sale\Order\BuyerService::getInstance()->attachUserToBuyers($userId);
+			}
 		}
 		else
 		{

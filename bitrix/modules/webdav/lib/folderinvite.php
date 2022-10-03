@@ -27,6 +27,19 @@ Loc::loadMessages(__FILE__);
  * <li> CREATED_TIMESTAMP datetime mandatory default 'CURRENT_TIMESTAMP'
  * </ul>
  * @package Bitrix\Webdav
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_FolderInvite_Query query()
+ * @method static EO_FolderInvite_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_FolderInvite_Result getById($id)
+ * @method static EO_FolderInvite_Result getList(array $parameters = array())
+ * @method static EO_FolderInvite_Entity getEntity()
+ * @method static \Bitrix\Webdav\EO_FolderInvite createObject($setDefaultValues = true)
+ * @method static \Bitrix\Webdav\EO_FolderInvite_Collection createCollection()
+ * @method static \Bitrix\Webdav\EO_FolderInvite wakeUpObject($row)
+ * @method static \Bitrix\Webdav\EO_FolderInvite_Collection wakeUpCollection($rows)
  */
 class FolderInviteTable extends Entity\DataManager
 {

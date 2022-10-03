@@ -1,0 +1,31 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не встановлено.";
+$MESS["CRM_UNSUPPORTED_OWNER_TYPE"] = "Задано непідтримуваний тип власника: \"#OWNER_TYPE#\".";
+$MESS["CRM_CURRENCY_IS_NOT_FOUND"] = "Не вдалося знайти валюту c ID = #CURRENCY_ID#.";
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонений.";
+$MESS["CRM_FIELD_PRODUCT_NAME"] = "Назва";
+$MESS["CRM_FIELD_DESCRIPTION"] = "Опис";
+$MESS["CRM_FIELD_ACTIVE"] = "Активний";
+$MESS["CRM_FIELD_CURRENCY"] = "Валюта";
+$MESS["CRM_FIELD_PRICE"] = "Ціна";
+$MESS["CRM_FIELD_VAT_ID"] = "Ставка ПДВ";
+$MESS["CRM_FIELD_VAT_INCLUDED"] = "ПДВ включено в ціну";
+$MESS["CRM_FIELD_SECTION"] = "Розділ";
+$MESS["CRM_FIELD_SORT"] = "Сортування";
+$MESS["CRM_PRODUCT_CREATE"] = "Створення нового товару";
+$MESS["CRM_PRODUCT_CREATE_WAIT"] = "Створення товару...";
+$MESS["CRM_PRODUCT_CREATE_AJAX_ERR"] = "Помилка обробки запиту на створення товару<br>";
+$MESS["CRM_BUTTON_CREATE_TITLE"] = "Створити";
+$MESS["CRM_BUTTON_CANCEL_TITLE"] = "Скасування";
+$MESS["CRM_FIELD_MEASURE"] = "Одиниця виміру";
+$MESS["CRM_MEASURE_NOT_SELECTED"] = "[не вибрана]";
+$MESS["CRM_PRODUCT_FIELD_PREVIEW_PICTURE"] = "Картинка для анонса";
+$MESS["CRM_PRODUCT_FIELD_DETAIL_PICTURE"] = "Детальна картинка";
+$MESS["CRM_PRODUCT_FILE_ENLARGE"] = "Збільшити";
+$MESS["CRM_PRODUCT_FILE_DOWNLOAD"] = "Завантажити";
+$MESS["CRM_PRODUCT_PROP_ADD_BUTTON"] = "Додати";
+$MESS["CRM_PRODUCT_PROP_NO_VALUE"] = "(не встановлено)";
+$MESS["CRM_PRODUCT_PROP_CHOOSE_ELEMENT"] = "Вибрати зі списку";
+$MESS["CRM_PRODUCT_PROP_START_TEXT"] = "(введіть назву)";
+$MESS["CRM_PRODUCT_PROP_NO_SEARCH_RESULT_TEXT"] = "нічого не знайдено";
+?>

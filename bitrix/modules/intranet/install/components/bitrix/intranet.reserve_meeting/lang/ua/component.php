@@ -1,0 +1,33 @@
+<?
+$MESS["SONET_PHOTO_LOG_1"] = "#AUTHOR_NAME# додав(ла) #TITLE#";
+$MESS["SONET_FILES_LOG"] = "#AUTHOR_NAME# додав(ла) файл #TITLE#.";
+$MESS["INTR_IRM_NAME_TEMPLATE_DEFAULT"] = "#NOBR##LAST_NAME# #NAME##/NOBR#";
+$MESS["SONET_LOG_TEMPLATE_AUTHOR_MAIL"] = "Автор: #AUTHOR_NAME# (#AUTHOR_URL#).";
+$MESS["SONET_LOG_TEMPLATE_GUEST"] = "Автор: #AUTHOR_NAME#.";
+$MESS["SONET_LOG_TEMPLATE_AUTHOR"] = "Автор: <a href=\"#AUTHOR_URL#\">#AUTHOR_NAME#</a>.";
+$MESS["SONET_GALLERY_IS_NOT_ACTIVE"] = "Ваша фотогалерея заблокована. Зверніться до адміністратора.";
+$MESS["SONET_GALLERIES_IS_NOT_ACTIVE"] = "Ваші фотогалереї заблоковані. Зверніться до адміністратора.";
+$MESS["IBLOCK_DEFAULT_UF"] = "Галерея за умовчанням";
+$MESS["SONET_LOG_GUEST"] = "Гість";
+$MESS["SONET_GROUP"] = "Група";
+$MESS["SONET_GROUP_NOT_EXISTS"] = "Групи не існує.";
+$MESS["SONET_GROUP_PREFIX"] = "Група:";
+$MESS["SONET_WEBDAV_NOT_EXISTS"] = "Документів немає.";
+$MESS["SONET_ACCESS_DENIED"] = "Доступ заборонений.";
+$MESS["SONET_LOADING"] = "Завантаження...";
+$MESS["SONET_WD_MODULE_IS_NOT_INSTALLED"] = "Модуль бібліотеки документів не встановлено.";
+$MESS["INTERANET_MODULE_NOT_INSTALL"] = "Модуль інтранету не встановлено.";
+$MESS["SONET_IB_MODULE_IS_NOT_INSTALLED"] = "Модуль інформаційних блоків не встановлено";
+$MESS["SONET_P_MODULE_IS_NOT_INSTALLED"] = "Модуль фотогалереї не встановлено.";
+$MESS["SONET_IBLOCK_ID_EMPTY"] = "Не зазначений інфоблок.";
+$MESS["SONET_PHOTO_LOG_MAIL_TEXT"] = "Нові фотографії: #LINKS# ті інші.";
+$MESS["SONET_PHOTO_LOG_TEXT"] = "Нові фотографії: <div class='notificationlog'>#LINKS#</div> <a href=\"#HREF#\">Перейти до альбому</a>.";
+$MESS["SONET_FILES_LOG_TEXT"] = "Новий файл #TITLE# за адресою #URL#.";
+$MESS["SONET_CREATE_WEBDAV"] = "Створити бібліотеку";
+$MESS["SONET_FILES"] = "Файли";
+$MESS["SONET_PHOTO"] = "Фото";
+$MESS["SONET_PHOTO_LOG_2"] = "фотографії (#COUNT#)";
+$MESS["SONET_GALLERY_NOT_FOUND"] = "Фотографій немає.";
+$MESS["SONET_FILES_IS_NOT_ACTIVE"] = "Функціонал 'Файли' вимкнений";
+$MESS["SONET_PHOTO_IS_NOT_ACTIVE"] = "Функціонал 'Фото' вимкнений";
+?>

@@ -10,6 +10,8 @@ $titleView = $arResult['ENTITY_CAPTION'] ? GetMessage('CRM_AUTOMATION_CMP_TITLE_
 
 $titleEdit = GetMessage('CRM_AUTOMATION_CMP_TITLE_'.$arResult['ENTITY_TYPE_NAME'].'_EDIT');
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 global $APPLICATION;
 
 $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [

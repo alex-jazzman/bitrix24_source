@@ -1,0 +1,8 @@
+<?
+$MESS["DISK_FILE_HISTORY_VERSION_RESTORE_CONFIRM"] = "Ви хочете відновити дану версію документа?";
+$MESS["DISK_FILE_HISTORY_VERSION_RESTORE_BUTTON"] = "Відновити";
+$MESS["DISK_FILE_HISTORY_VERSION_RESTORE_TITLE"] = "Відновлення версії";
+$MESS["DISK_FILE_HISTORY_VERSION_DELETE_VERSION_CONFIRM"] = "Ви хочете видалити дану версію документа?";
+$MESS["DISK_FILE_HISTORY_VERSION_DELETE_VERSION_BUTTON"] = "Видалити";
+$MESS["DISK_FILE_HISTORY_VERSION_DELETE_VERSION_TITLE"] = "Видалити версію";
+?>

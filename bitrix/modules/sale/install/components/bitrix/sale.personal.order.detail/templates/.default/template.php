@@ -11,7 +11,7 @@ if ($arParams['GUEST_MODE'] !== 'Y')
 }
 $this->addExternalCss("/bitrix/css/main/bootstrap.css");
 
-CJSCore::Init(array('clipboard', 'fx'));
+CJSCore::Init(array('clipboard', 'fx', 'ui.fonts.opensans'));
 
 $APPLICATION->SetTitle("");
 

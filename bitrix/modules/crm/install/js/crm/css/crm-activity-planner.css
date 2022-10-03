@@ -853,7 +853,8 @@
 .crm-activity-popup-timeline-cancel-button {
 	color: #535c69;
 	text-transform: uppercase;
-	font: 12px "OpenSans-Bold", Arial, Helvetica, sans-serif !important;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -2281,7 +2282,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	color: #000;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 24px/33px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 24px/33px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
@@ -2557,7 +2559,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	margin: 0 20px 16px 20px;
 	color: #828b95;
 	text-transform: uppercase;
-	font: bold 11px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	-webkit-box-pack: center;
 	justify-content: center;
 }
@@ -2681,7 +2684,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	padding: 0 0 10px 0;
 	border-bottom: 1px solid rgba(82, 92, 105, .13);
 	color: #525c69;
-	font: 15px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .crm-task-list-mail-additionally-info-inner {
@@ -3054,7 +3058,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	border: none;
 	color: #535b69;
 	text-transform: uppercase;
-	font: 12px/39px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/39px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	transition: color .25s ease;
 }
 
@@ -3374,7 +3379,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	vertical-align: middle;
 	text-align: center;
 	text-transform: uppercase;
-	font: 12px/39px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/39px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	transition: color .25s ease;
 }
 

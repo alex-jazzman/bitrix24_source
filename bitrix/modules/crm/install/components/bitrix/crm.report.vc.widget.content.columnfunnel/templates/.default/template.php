@@ -7,6 +7,8 @@ $widgetId = 'widget_id_' . $widget->getGId();
 
 $widgetData = $arResult['WIDGET_DATA'];
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 //TODO rewrite this
 $columnsContainerIds = [
 	"first-columns-container",

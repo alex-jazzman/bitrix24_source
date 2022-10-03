@@ -3,7 +3,7 @@ if(defined('BX24_HOST_NAME'))
 {
 	die;
 }
-$dir = trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/")));
+$dir = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/")));
 __IncludeLang($dir."lang/".LANGUAGE_ID."/disk_sections_tree.php");
 CModule::IncludeModule("webdav");
 $popupWindow = new CJSPopup('', '');
@@ -409,7 +409,7 @@ div.folder-block a.folder-title-opened {
 div.folder-block a.folder-title-empty {
 	background-image: url("/bitrix/images/main/file_dialog/icons/dot.gif"); }
 div.folder-block a.folder-active {
-	font-weight: bold; }
+	font-weight: var(--ui-font-weight-bold); }
 div.folder-block a span {
 	padding-left: 18px!important; 
 	background-image: url("/bitrix/images/main/file_dialog/icons/folder.gif"); 

@@ -1400,6 +1400,7 @@ class crm extends CModule
 		$eventManager->registerEventHandler('sale', 'OnSaleShipmentDeleted', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentDeleted');
 		$eventManager->registerEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
 		$eventManager->registerEventHandler('sale', 'onComponentSaleOrderCheckoutPaymentPayAction', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPaymentPayAction');
+		$eventManager->registerEventHandler('sale', 'onComponentSaleOrderCheckoutPrepareJsonData', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPrepareJsonData');
 
 		$eventManager->registerEventHandler(
 			'location', 'AddressOnUpdate',
@@ -1683,7 +1684,7 @@ class crm extends CModule
 			"\\Bitrix\\Crm\\Service\\Factory\\SmartInvoice::createTypeIfNotExists();",
 			"crm",
 			"N",
-			60,
+			3600,
 			'',
 			'Y',
 			$startTime
@@ -2013,6 +2014,7 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('sale', 'OnSaleShipmentDeleted', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentDeleted');
 		$eventManager->unRegisterEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
 		$eventManager->unRegisterEventHandler('sale', 'onComponentSaleOrderCheckoutPaymentPayAction', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPaymentPayAction');
+		$eventManager->unRegisterEventHandler('sale', 'onComponentSaleOrderCheckoutPrepareJsonData', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPrepareJsonData');
 
 		$eventManager->unRegisterEventHandler(
 			'imopenlines',

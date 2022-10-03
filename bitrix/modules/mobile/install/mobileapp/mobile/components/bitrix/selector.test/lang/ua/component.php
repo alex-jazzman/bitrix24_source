@@ -1,0 +1,5 @@
+<?php
+$MESS["SELECTOR_COMPONENT_PICK_CONTRACTOR"] = "Обрати постачальника";
+$MESS["SELECTOR_COMPONENT_PICK_PRODUCT"] = "Обрати товар";
+$MESS["SELECTOR_COMPONENT_PICK_SECTION"] = "Обрати категорію";
+$MESS["SELECTOR_COMPONENT_PICK_STORE"] = "Обрати склад";

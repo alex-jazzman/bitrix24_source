@@ -11,6 +11,7 @@ use \Bitrix\Crm\Category\DealCategory;
 use \Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Restriction\RestrictionManager;
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if(SITE_TEMPLATE_ID === 'bitrix24')

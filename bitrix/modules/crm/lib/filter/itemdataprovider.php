@@ -222,12 +222,12 @@ class ItemDataProvider extends EntityDataProvider
 			'filterOptionPreset' => static::PRESET_BOOLEAN,
 		];
 		$fields[Item::FIELD_NAME_WEBFORM_ID] = [
-			'type' => static::TYPE_LIST,
+			'type' => static::TYPE_ENTITY_SELECTOR,
 			'displayGrid' => true,
 			'displayFilter' => true,
 			'defaultGrid' => false,
 			'defaultFilter' => false,
-			'filterOptionPreset' => static::PRESET_LIST,
+			'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
 		];
 
 		if ($this->factory->isBeginCloseDatesEnabled())
@@ -668,6 +668,7 @@ class ItemDataProvider extends EntityDataProvider
 		if (
 			in_array($fieldID, $this->getFieldNamesByType(static::TYPE_USER, static::DISPLAY_IN_FILTER))
 			&& $fieldID !== Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'
+			&& $fieldID !== Item::FIELD_NAME_WEBFORM_ID
 		)
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeId());
@@ -682,6 +683,7 @@ class ItemDataProvider extends EntityDataProvider
 				]
 			);
 		}
+
 		if (in_array($fieldID, $this->getFieldNamesByType(static::TYPE_CRM_ENTITY, static::DISPLAY_IN_FILTER)))
 		{
 			$result = [
@@ -753,6 +755,13 @@ class ItemDataProvider extends EntityDataProvider
 					]
 				];
 			}
+			elseif ($fieldID === Item::FIELD_NAME_WEBFORM_ID)
+			{
+				$result['params'] = \Bitrix\Crm\WebForm\Helper::getEntitySelectorParams(
+					$this->factory->getEntityTypeId(),
+					Item::FIELD_NAME_WEBFORM_ID
+				)['params'];
+			}
 		}
 		elseif ($fieldID === Item::FIELD_NAME_CURRENCY_ID)
 		{
@@ -792,13 +801,6 @@ class ItemDataProvider extends EntityDataProvider
 			$result = [
 				'params' => ['multiple' => 'Y'],
 				'items' => StatusTable::getStatusesList(StatusTable::ENTITY_ID_SOURCE),
-			];
-		}
-		elseif ($fieldID === Item::FIELD_NAME_WEBFORM_ID)
-		{
-			$result = [
-				'params' => ['multiple' => 'Y'],
-				'items' => WebForm\Manager::getListNames()
 			];
 		}
 		elseif (ParentFieldManager::isParentFieldName($fieldID))

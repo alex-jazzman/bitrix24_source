@@ -1229,7 +1229,7 @@ class CIBlockWebdavSocnet
 		{
 			return $result;
 		}
-		
+
 		$dbRes = CUserTypeEntity::GetList(array($by=>$order), array("ENTITY_ID" => "IBLOCK_".$iblockId."_SECTION", "FIELD_NAME" => "UF_USE_BP"));
 		if (!$dbRes || !($res = $dbRes->GetNext()))
 		{
@@ -1244,7 +1244,7 @@ class CIBlockWebdavSocnet
 			$rsLanguage = CLanguage::GetList();
 			while($arLanguage = $rsLanguage->Fetch())
 			{
-				$dir = str_replace(array("\\", "//"), "/", dirname(__FILE__));
+				$dir = str_replace(array("\\", "//"), "/", __DIR__);
 				$dirs = explode("/", $dir);
 				array_pop($dirs);
 				$file = trim(implode("/", $dirs)."/lang/".$arLanguage["LID"]."/include/webdav_settings.php");
@@ -1279,7 +1279,7 @@ class CIBlockWebdavSocnet
 
 		if ($arGroup = $dbGroup->Fetch())
 		{
-			$arFields["NAME"] = GetMessage("SONET_GROUP_PREFIX").$arGroup["NAME"];
+			$arFields["NAME"] = GetMessage("SONET_GROUP_PREFIX") . \Bitrix\Main\Text\Emoji::decode($arGroup["NAME"]);
 		}
 
 		if (CIBlock::GetarrayByID($iblockId, "RIGHTS_MODE") === "E")

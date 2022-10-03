@@ -1,0 +1,27 @@
+<?php
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_1"] = "Увімкнути складський облік";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_2"] = "Вимкнути складський облік";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_3"] = "Увімкнути складський облік у Бітрікс24";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_4"] = "Увімкніть режими, в яких ви працюватимете зі складським обліком. Кожен варіант має певну конфігурацію, початкові налаштування й види автоматизації.";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_5"] = "Детальніше";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_6"] = "Скоро";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_7"] = "вкл";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_8"] = "викл";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_9"] = "Вимкнення складського обліку в Бітрікс24";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_10"] = "Налаштування складського обліку";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_12"] = "Скасувати";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_13"] = "Скинути залишки";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_14"] = "Обнулення залишків";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_15"] = "Знайдено товари з ненульовим залишком. Для включення складського обліку необхідно обнулити залишки.";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_16"] = "Ви зможете внести залишки товарів після включення складського обліку.";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_17"] = "Увімкнути й перенести дані з інших систем";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_18"] = "Недостатньо прав для включення складського обліку";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_19"] = "Зберегти";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_CLOSE"] = "Закрити";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_CONDUCTED_DOCUMENTS_EXIST"] = "Знайдено проведені складські документи. Не можна вимкнути складський облік за наявності проведених документів.";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_DISABLE"] = "Вимкнути";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_DISABLE_CONFIRMATION_TEXT"] = "Дійсно вимкнути складський облік? Проведення документів стане недоступним.";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_DISABLE_POPUP_TITLE"] = "Вимкнення складського обліку";
+$MESS["CAT_WAREHOUSE_MASTER_CLEAR_ENABLED"] = "Складський облік увімкнений";
+$MESS["CAT_WAREHOUSE_MASTER_STORE_LEAD_ENABLED_MODE_ERROR"] = "У режимі \"Класична CRM\" (з лідами) складський облік не працює. Щоб увімкнути складський облік, перейдіть у режим \"Проста CRM\" (без лідів).";
+$MESS["CAT_WAREHOUSE_MASTER_STORE_ORDER_DEAL_MODE_ERROR"] = "У режимі \"Угоди+Замовлення\" складський облік не працює. Щоб увімкнути складський облік, перейдіть у режим \"Угоди\".";

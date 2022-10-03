@@ -1,0 +1,31 @@
+<?
+$MESS["B_B_MS_LINK"] = "Посилання";
+$MESS["BPC_MES_EDIT"] = "Редагувати";
+$MESS["BPC_MES_SHOW"] = "Показати";
+$MESS["BPC_MES_HIDE"] = "Приховати";
+$MESS["BPC_MES_DELETE_POST_CONFIRM"] = "Ви впевнені, що хочете видалити коментар?";
+$MESS["BPC_MES_DELETE"] = "Видалити";
+$MESS["B_B_MS_ADD_COMMENT"] = "Додати коментар";
+$MESS["B_B_MS_CAPTCHA_SYM"] = "Код підтвердження (символи на картинці)";
+$MESS["B_B_MS_NAME"] = "Ваше ім'я";
+$MESS["BLOG_MONTH_01"] = "Січень";
+$MESS["BLOG_MONTH_02"] = "Лютий";
+$MESS["BLOG_MONTH_03"] = "Березень";
+$MESS["BLOG_MONTH_04"] = "Квітень";
+$MESS["BLOG_MONTH_05"] = "Травень";
+$MESS["BLOG_MONTH_06"] = "Червень";
+$MESS["BLOG_MONTH_07"] = "Липень";
+$MESS["BLOG_MONTH_08"] = "Серпень";
+$MESS["BLOG_MONTH_09"] = "Вересень";
+$MESS["BLOG_MONTH_10"] = "Жовтень";
+$MESS["BLOG_MONTH_11"] = "Листопад";
+$MESS["BLOG_MONTH_12"] = "Грудень";
+$MESS["BLOG_C_VIEW_ALL"] = "Дивитися всі коментарі";
+$MESS["BLOG_C_HIDE"] = "Згорнути коментарі";
+$MESS["BLOG_C_TEXT_TITLE"] = "Написати коментар ...";
+$MESS["BLOG_COMMENT_MOBILE_FORMAT_TIME"] = "G:i";
+$MESS["BLOG_COMMENT_MOBILE_FORMAT_DATE"] = "j F, G:i";
+$MESS["BLOG_COMMENT_MOBILE_FORMAT_DATE_YEAR"] = "j F Y, G:i";
+$MESS["BLOG_C_REPLY"] = "Відповісти";
+$MESS["BLOG_C_LIKES_LIST"] = "Кому сподобалося";
+?>

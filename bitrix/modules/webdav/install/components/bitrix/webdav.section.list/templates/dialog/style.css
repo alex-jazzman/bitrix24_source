@@ -90,7 +90,7 @@ div.bx-struct-name-drag {
     border: 1px solid #BBBBBB;
 }
 div.bx-struct-selected {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 div.bx-struct-drag {
     background-color: #D6DCEB;

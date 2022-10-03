@@ -46,7 +46,8 @@
 	border: none;
 	outline: none;
 	margin: 0 5px 0 0;
-	font: 600 11px/20px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 	text-decoration: underline;
 }
@@ -107,7 +108,8 @@
 .crm-expand-button {
 	float: right;
 	vertical-align: top;
-	font: 600 11px/20px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #535b69;
 	text-transform: uppercase;
 	text-decoration: underline;

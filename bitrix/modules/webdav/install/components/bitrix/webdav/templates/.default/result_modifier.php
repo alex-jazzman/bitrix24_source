@@ -1,6 +1,6 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 $arResult["MENU_VARIABLES"] = array();
-$file = trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/lang/".LANGUAGE_ID."/result_modifier.php")));
+$file = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/lang/".LANGUAGE_ID."/result_modifier.php")));
 __IncludeLang($file);
 
 if ($this->__page !== "menu" && $this->__page !== "element_upload_simple" && !isset($_REQUEST['AJAX_CALL']) && !isset($_REQUEST['ajax_call']) && !isset($_REQUEST['save_product_review'])):

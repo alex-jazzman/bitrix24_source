@@ -9,6 +9,15 @@ use \Bitrix\MessageService\Providers;
 
 class Registrar extends Providers\Base\Registrar implements Providers\SupportChecker
 {
+	protected EdnaRu $utils;
+
+	public function __construct(string $providerId, Providers\OptionManager $optionManager, EdnaRu $utils)
+	{
+		parent::__construct($providerId, $optionManager);
+
+		$this->utils = $utils;
+	}
+
 	public function isRegistered(): bool
 	{
 		return
@@ -25,23 +34,25 @@ class Registrar extends Providers\Base\Registrar implements Providers\SupportChe
 
 		if (!isset($fields[Constants::API_KEY_OPTION], $fields[Constants::SENDER_ID_OPTION]))
 		{
-			return (new Result())
-				->addError(new Error(Loc::getMessage('MESSAGESERVICE_SENDER_SMS_EDNARU_EMPTY_REQUIRED_FIELDS')))
-			;
+			return (new Result())->addError(new Error(Loc::getMessage('MESSAGESERVICE_SENDER_SMS_EDNARU_EMPTY_REQUIRED_FIELDS')));
 		}
-
 		$this->optionManager->setOption(Constants::API_KEY_OPTION, (string)$fields[Constants::API_KEY_OPTION]);
 
-		$senderIds = [];
+		$subjectIds = [];
 		foreach (explode(';', (string)$fields[Constants::SENDER_ID_OPTION]) as $senderId)
 		{
 			$senderId = trim($senderId);
 			if ($senderId !== '')
 			{
-				$senderIds[] = $senderId;
+				$subjectIds[] = (int)$senderId;
 			}
 		}
-		$this->optionManager->setOption(Constants::SENDER_ID_OPTION, $senderIds);
+		if (!$this->checkSubjectIds($subjectIds))
+		{
+			return (new Result())->addError(new Error('Invalid sender ids'));
+		}
+
+		$this->optionManager->setOption(Constants::SENDER_ID_OPTION, $subjectIds);
 
 		return new Result();
 	}
@@ -69,5 +80,31 @@ class Registrar extends Providers\Base\Registrar implements Providers\SupportChe
 	public function getExternalManageUrl(): string
 	{
 		return 'https://app.edna.ru/';
+	}
+
+	protected function checkSubjectIds($subjectId): bool
+	{
+		if (empty($subjectId))
+		{
+			return false;
+		}
+
+		$channelResult = $this->utils->getChannelList();
+		if (!$channelResult->isSuccess())
+		{
+			return false;
+		}
+
+		$checkedChannels = [];
+		$channelList = $channelResult->getData();
+		foreach ($channelList as $channel)
+		{
+			if (isset($channel['subjectId']) && in_array($channel['subjectId'], $subjectId, true))
+			{
+				$checkedChannels[] = $channel['subjectId'];
+			}
+		}
+
+		return count($checkedChannels) === count($subjectId);
 	}
 }

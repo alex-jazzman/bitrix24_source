@@ -36,6 +36,7 @@ if($arResult['IFRAME'])
 	<div class="crm-iframe-content"><?
 }
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS("/bitrix/components/bitrix/crm.entity.details/templates/.default/style.css");
 
 ?><div class="crm-entity-wrap">

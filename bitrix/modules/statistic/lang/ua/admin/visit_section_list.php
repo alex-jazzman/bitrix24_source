@@ -1,0 +1,31 @@
+<?
+$MESS["STAT_RECORDS_LIST"] = "Відвідуваність розділів і сторінок";
+$MESS["STAT_SECTION_PAGES"] = "Записи";
+$MESS["STAT_F_SECTIONS"] = "Сторінка / розділ";
+$MESS["STAT_F_VIEW"] = "Що показати";
+$MESS["STAT_F_VIEW_SECTIONS"] = "тільки розділи";
+$MESS["STAT_F_VIEW_FILES"] = "лише сторінки";
+$MESS["STAT_SECTION_GRAPH"] = "Графік відвідуваності даної сторінки / розділу";
+$MESS["STAT_SECTION_LINK_STAT"] = "Статистика переходів по посиланнях із цієї сторінки/розділу";
+$MESS["STAT_GO"] = "Перейти за посиланням";
+$MESS["STAT_T_HITS_DIAGRAM"] = "Відвідуваність";
+$MESS["STAT_T_EXIT_DIAGRAM"] = "Список точок виходу";
+$MESS["STAT_T_ENTER_DIAGRAM"] = "Список точок входу";
+$MESS["STAT_GROUP_BY_HITS"] = "Хіти";
+$MESS["STAT_GROUP_BY_EXITS"] = "Точки виходу";
+$MESS["STAT_GROUP_BY_ENTERS"] = "Точки входу";
+$MESS["STAT_PERCENT"] = "Відсоток";
+$MESS["STAT_NO_DATA"] = "Немає даних для побудови діаграми";
+$MESS["STAT_OTHER"] = "(решта)";
+$MESS["STAT_ATTENTION_GOTO"] = "Для переходу до розділу/сторінки необхідно клікнути по символу \"&raquo;\".";
+$MESS["STAT_F_ADV"] = "Рекламні кампанії";
+$MESS["STAT_F_ADV_DATA_TYPE"] = "Тип даних для рекламних кампаній";
+$MESS["STAT_ADV_NO_BACK"] = "на прямому заходженні";
+$MESS["STAT_ADV_BACK"] = "на поверненні";
+$MESS["STAT_ADV_SUMMA"] = "сума на прямому і на поверненні";
+$MESS["STAT_PAGE"] = "Розділ/сторінка";
+$MESS["STAT_HITS"] = "Хітів";
+$MESS["STAT_SESSIONS"] = "Сесій";
+$MESS["STAT_FILTER_PAGE_DIAGRAM_ALT"] = "Показати діаграму відвідуваності даного розділу";
+$MESS["STAT_ATTENTION"] = "Увага";
+?>

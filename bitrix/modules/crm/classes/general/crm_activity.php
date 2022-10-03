@@ -3924,6 +3924,11 @@ class CAllCrmActivity
 			$parseResult = \CCrmOwnerType::ParseEntitySlug(mb_strtoupper(trim($value)));
 			if(is_array($parseResult))
 			{
+				if ($parseResult['ENTITY_TYPE_ID'] === \CCrmOwnerType::Order && !\CCrmSaleHelper::isWithOrdersMode())
+				{
+					continue;
+				}
+
 				$ownerTypeName = \CCrmOwnerType::ResolveName($parseResult['ENTITY_TYPE_ID']);
 				$ownerID = $parseResult['ENTITY_ID'];
 			}

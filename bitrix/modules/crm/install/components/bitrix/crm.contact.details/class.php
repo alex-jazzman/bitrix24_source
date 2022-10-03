@@ -429,64 +429,76 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		$this->arResult['TABS'] = array();
 
 		$relationManager = Crm\Service\Container::getInstance()->getRelationManager();
-		$this->arResult['TABS'] = array_merge(
-			$this->arResult['TABS'],
-			$relationManager->getRelationTabsForDynamicChildren(
-				\CCrmOwnerType::Contact,
-				$this->entityID,
-				($this->entityID === 0)
-			)
-		);
+		if (!$this->arResult['CATEGORY_ID'])
+		{
+			$this->arResult['TABS'] = array_merge(
+				$this->arResult['TABS'],
+				$relationManager->getRelationTabsForDynamicChildren(
+					\CCrmOwnerType::Contact,
+					$this->entityID,
+					($this->entityID === 0)
+				)
+			);
+		}
 
 		if($this->entityID > 0)
 		{
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_deal',
-				'name' => Loc::getMessage('CRM_CONTACT_TAB_DEAL'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.deal.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '',
-						'params' => array(
-							'DEAL_COUNT' => '20',
-							'PATH_TO_DEAL_SHOW' => $this->arResult['PATH_TO_DEAL_SHOW'],
-							'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
-							'INTERNAL_FILTER' => array('ASSOCIATED_CONTACT_ID' => $this->entityID),
-							'INTERNAL_CONTEXT' => array('CONTACT_ID' => $this->entityID),
-							'GRID_ID_SUFFIX' => 'CONTACT_DETAILS',
-							'TAB_ID' => 'tab_deal',
-							'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
-							'ENABLE_TOOLBAR' => true,
-							'PRESERVE_HISTORY' => true,
-							'ADD_EVENT_NAME' => 'CrmCreateDealFromContact'
-						)
-					)
-				)
-			);
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_quote',
-				'name' => Loc::getMessage('CRM_CONTACT_TAB_QUOTE'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '',
-						'params' => array(
-							'QUOTE_COUNT' => '20',
-							'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'],
-							'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'],
-							'INTERNAL_FILTER' => array('ASSOCIATED_CONTACT_ID' => $this->entityID),
-							'INTERNAL_CONTEXT' => array('CONTACT_ID' => $this->entityID),
-							'GRID_ID_SUFFIX' => 'CONTACT_DETAILS',
-							'TAB_ID' => 'tab_quote',
-							'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
-							'ENABLE_TOOLBAR' => true,
-							'PRESERVE_HISTORY' => true,
-							'ADD_EVENT_NAME' => 'CrmCreateQuoteFromContact'
-						)
-					)
-				)
-			);
-			if (Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+			if (!$this->arResult['CATEGORY_ID'])
+			{
+				$this->arResult['TABS'][] = [
+					'id' => 'tab_deal',
+					'name' => Loc::getMessage('CRM_CONTACT_TAB_DEAL'),
+					'loader' => [
+						'serviceUrl' => '/bitrix/components/bitrix/crm.deal.list/lazyload.ajax.php?&site'
+							. SITE_ID
+							. '&'
+							. bitrix_sessid_get(),
+						'componentData' => [
+							'template' => '',
+							'params' => [
+								'DEAL_COUNT' => '20',
+								'PATH_TO_DEAL_SHOW' => $this->arResult['PATH_TO_DEAL_SHOW'],
+								'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
+								'INTERNAL_FILTER' => ['ASSOCIATED_CONTACT_ID' => $this->entityID],
+								'INTERNAL_CONTEXT' => ['CONTACT_ID' => $this->entityID],
+								'GRID_ID_SUFFIX' => 'CONTACT_DETAILS',
+								'TAB_ID' => 'tab_deal',
+								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+								'ENABLE_TOOLBAR' => true,
+								'PRESERVE_HISTORY' => true,
+								'ADD_EVENT_NAME' => 'CrmCreateDealFromContact'
+							]
+						]
+					]
+				];
+				$this->arResult['TABS'][] = [
+					'id' => 'tab_quote',
+					'name' => Loc::getMessage('CRM_CONTACT_TAB_QUOTE'),
+					'loader' => [
+						'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site'
+							. SITE_ID
+							. '&'
+							. bitrix_sessid_get(),
+						'componentData' => [
+							'template' => '',
+							'params' => [
+								'QUOTE_COUNT' => '20',
+								'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'],
+								'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'],
+								'INTERNAL_FILTER' => ['ASSOCIATED_CONTACT_ID' => $this->entityID],
+								'INTERNAL_CONTEXT' => ['CONTACT_ID' => $this->entityID],
+								'GRID_ID_SUFFIX' => 'CONTACT_DETAILS',
+								'TAB_ID' => 'tab_quote',
+								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+								'ENABLE_TOOLBAR' => true,
+								'PRESERVE_HISTORY' => true,
+								'ADD_EVENT_NAME' => 'CrmCreateQuoteFromContact'
+							]
+						]
+					]
+				];
+			}
+			if (Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled() && !$this->arResult['CATEGORY_ID'])
 			{
 				$this->arResult['TABS'][] = [
 					'id' => 'tab_invoice',
@@ -520,6 +532,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				CModule::IncludeModule('sale')
 				&& Main\Config\Option::get("crm", "crm_shop_enabled") === "Y"
 				&& CCrmSaleHelper::isWithOrdersMode()
+				&& !$this->arResult['CATEGORY_ID']
 			)
 			{
 				$this->arResult['TABS'][] = array(
@@ -619,7 +632,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 					]
 				];
 			}
-			if (CModule::IncludeModule('lists'))
+			if (CModule::IncludeModule('lists') && !$this->arResult['CATEGORY_ID'])
 			{
 				$listIblock = CLists::getIblockAttachedCrm(CCrmOwnerType::ContactName);
 				foreach($listIblock as $iblockId => $iblockName)
@@ -645,21 +658,24 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		else
 		{
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_deal',
-				'name' => Loc::getMessage('CRM_CONTACT_TAB_DEAL'),
-				'enabled' => false
-			);
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_quote',
-				'name' => Loc::getMessage('CRM_CONTACT_TAB_QUOTE'),
-				'enabled' => false
-			);
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_invoice',
-				'name' => Loc::getMessage('CRM_CONTACT_TAB_INVOICES'),
-				'enabled' => false
-			);
+			if (!$this->arResult['CATEGORY_ID'])
+			{
+				$this->arResult['TABS'][] = [
+					'id' => 'tab_deal',
+					'name' => Loc::getMessage('CRM_CONTACT_TAB_DEAL'),
+					'enabled' => false
+				];
+				$this->arResult['TABS'][] = [
+					'id' => 'tab_quote',
+					'name' => Loc::getMessage('CRM_CONTACT_TAB_QUOTE'),
+					'enabled' => false
+				];
+				$this->arResult['TABS'][] = [
+					'id' => 'tab_invoice',
+					'name' => Loc::getMessage('CRM_CONTACT_TAB_INVOICES'),
+					'enabled' => false
+				];
+			}
 			if (CModule::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled())
 			{
 				$this->arResult['TABS'][] = array(
@@ -669,12 +685,16 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				);
 			}
 			$this->arResult['TABS'][] = $this->getEventTabParams();
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_portrait',
-				'name' => Loc::getMessage('CRM_CONTACT_TAB_PORTRAIT'),
-				'enabled' => false
-			);
-			if (CModule::IncludeModule('lists'))
+
+			if (!$this->arResult['CATEGORY_ID'])
+			{
+				$this->arResult['TABS'][] = [
+					'id' => 'tab_portrait',
+					'name' => Loc::getMessage('CRM_CONTACT_TAB_PORTRAIT'),
+					'enabled' => false
+				];
+			}
+			if (CModule::IncludeModule('lists') && !$this->arResult['CATEGORY_ID'])
 			{
 				$listIblock = CLists::getIblockAttachedCrm(CCrmOwnerType::ContactName);
 				foreach($listIblock as $iblockId => $iblockName)

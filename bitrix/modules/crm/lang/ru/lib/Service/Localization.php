@@ -67,6 +67,7 @@ $MESS["CRM_COMMON_ERROR_ACCESS_DENIED"] = "Доступ запрещен";
 $MESS["CRM_COMMON_ERROR_DYNAMIC_DISABLED"] = "Работа со смарт-процессами недоступна";
 $MESS["CRM_COMMON_LIST"] = "Список";
 $MESS["CRM_COMMON_KANBAN"] = "Канбан";
+$MESS["CRM_COMMON_CALENDAR"] = "Календарь";
 $MESS["CRM_COMMON_CATEGORY"] = "Направление";
 $MESS["CRM_COMMON_CLIENT_CATEGORY"] = "Категория";
 $MESS["CRM_COMMON_MODIFY_DATE"] = "Дата изменения";
@@ -163,6 +164,8 @@ $MESS["CRM_TYPE_CATEGORY_NOT_FOUND_ERROR"] = "Направление не най
 $MESS["CRM_TYPE_CATEGORY_SETTINGS"] = "Воронки и туннели";
 $MESS["CRM_TYPE_CATEGORY_ACCESS_DENIED"] = "Доступ к направлению ограничен";
 $MESS["CRM_TYPE_CATEGORY_SORT_TITLE"] = "Сортировка";
+$MESS["CRM_TYPE_CATEGORY_ADD_ERROR_SYSTEM"] = "Добавление системной категории запрещено";
+$MESS["CRM_TYPE_CATEGORY_DELETE_ERROR_SYSTEM"] = "Удаление системной категории запрещено";
 
 $MESS["CRM_QUOTE_TITLE"] = "Предложение №#QUOTE_NUMBER# от #BEGINDATE#";
 $MESS["CRM_QUOTE_TITLE_PLACEHOLDER"] = "Предложение ##ID#";

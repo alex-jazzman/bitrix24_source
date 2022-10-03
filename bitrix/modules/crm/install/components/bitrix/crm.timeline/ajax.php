@@ -514,6 +514,15 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 		];
 	}
 
+	$compilationProductIds = is_array($_REQUEST['COMPILATION_PRODUCT_IDS']) ? $_REQUEST['COMPILATION_PRODUCT_IDS'] : [];
+	if ($source === 'deal' && !empty($compilationProductIds))
+	{
+		$additionalFields['PRODUCT_IDS'] = $compilationProductIds;
+		$additionalFields['ENTITIES'] = [
+			'DEAL' => $ownerTypeID === CCrmOwnerType::Deal ? CCrmDeal::GetByID($ownerID) : null,
+		];
+	}
+
 	$result = \Bitrix\Crm\Integration\SmsManager::sendMessage([
 		'SENDER_ID' => $senderId,
 		'AUTHOR_ID' => $responsibleID,

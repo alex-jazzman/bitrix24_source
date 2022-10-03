@@ -447,7 +447,7 @@ final class Order
 					$parentProductId = $parentProduct->getId();
 					$skuId = $sku->getId();
 
-					$tree = $skuTree->loadJsonOffers([$parentProductId => $skuId]);
+					$tree = $skuTree->loadWithSelectedOffers([$parentProductId => $skuId]);
 					if (isset($tree[$parentProductId][$skuId]))
 					{
 						$result = [

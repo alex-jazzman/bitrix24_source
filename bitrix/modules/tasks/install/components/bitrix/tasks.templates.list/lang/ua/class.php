@@ -1,0 +1,16 @@
+<?
+$MESS["TASKS_PRESET_ACTIVE_REGULAR"] = "Регулярні";
+$MESS["TASKS_PRESET_NEW_USER"] = "Для нових користувачів";
+$MESS["TASKS_TEMPLATE_ID"] = "ID";
+$MESS["TASKS_TEMPLATE_TITLE"] = "Назва";
+$MESS["TASKS_TEMPLATE_RESPONSIBLE_ID"] = "Відповідальний";
+$MESS["TASKS_TEMPLATE_CREATED_BY"] = "Постановник";
+$MESS["TASKS_TEMPLATE_GROUP_ID"] = "Група";
+$MESS["TASKS_TEMPLATE_TAGS"] = "Теги";
+$MESS["TASKS_TEMPLATE_FOR_NEW_USER"] = "Для нових користувачів";
+$MESS["TASKS_TEMPLATE_PRIORITY"] = "Приорітет";
+$MESS["TASKS_TEMPLATE_REGULAR"] = "Повтор";
+$MESS["TASKS_TEMPLATE_DEADLINE_AFTER"] = "Крайній термін";
+$MESS["TASKS_TEMPLATES_YES"] = "Так";
+$MESS["TASKS_TEMPLATES_NO"] = "Ні";
+?>

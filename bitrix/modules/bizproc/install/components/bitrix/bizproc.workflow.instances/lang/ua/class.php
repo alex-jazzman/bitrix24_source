@@ -1,0 +1,31 @@
+<?
+$MESS["BPWI_PAGE_TITLE"] = "Запущені бізнес-процеси";
+$MESS["BPWI_MODIFIED"] = "Дата зміни";
+$MESS["BPWI_OWNED_UNTIL"] = "Заблокований до";
+$MESS["BPWI_WS_STARTED"] = "Дата початку";
+$MESS["BPWI_WS_STARTED_BY"] = "Запустив";
+$MESS["BPWI_WS_WORKFLOW_TEMPLATE_ID"] = "Бізнес-процес";
+$MESS["BPWI_NO_MATTER"] = "(не важливо)";
+$MESS["BPWI_YES"] = "Так";
+$MESS["BPWI_NO"] = "Немає";
+$MESS["BPWI_WORKFLOW_ID_ANY"] = "(будь-який)";
+$MESS["BPWI_FILTER_PRESET_LOCKED"] = "Завислі";
+$MESS["BPWI_FILTER_DOCTYPE_ALL"] = "Всі";
+$MESS["BPWI_FILTER_DOCTYPE_CLAIMS"] = "Процеси";
+$MESS["BPWI_FILTER_DOCTYPE_CRM"] = "CRM";
+$MESS["BPWI_FILTER_DOCTYPE_DISK"] = "Файли";
+$MESS["BPWI_FILTER_DOCTYPE_LISTS"] = "Списки";
+$MESS["BPWI_FILTER_STATUS"] = "Статус";
+$MESS["BPWI_NO_ACCESS"] = "Доступ до цієї сторінки дозволений тільки адміністраторам порталу.";
+$MESS["BPWI_DELETE_LABEL"] = "Видалити";
+$MESS["BPWI_DELETE_CONFIRM"] = "Ви дійсно хочете видалити процес і пов'язані з ним дані?";
+$MESS["BPWI_OPEN_DOCUMENT"] = "Документ (у новому вікні)";
+$MESS["BPWI_NO_DOCUMENT"] = "Документ не знайдено.";
+$MESS["BPWI_IS_LOCKED"] = "Завис";
+$MESS["BPWI_WS_MODULE_ID"] = "Модуль";
+$MESS["BPWI_DOCUMENT_NAME"] = "Документ";
+$MESS["BPWI_MODULE_CRM"] = "CRM";
+$MESS["BPWI_MODULE_IBLOCK"] = "Списки";
+$MESS["BPWI_MODULE_DISK"] = "Диск";
+$MESS["BPWI_MODULE_LISTS"] = "Процеси";
+?>

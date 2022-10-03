@@ -1,0 +1,34 @@
+<?
+$MESS["STAT_FORGOT_REFERER"] = "Ви забули ввести referer1, referer2";
+$MESS["STAT_WRONG_REFERER"] = "Такі referer1 та referer2 вже використовуються";
+$MESS["STAT_EDIT_RECORD"] = "Рекламна кампанія # #ID#";
+$MESS["STAT_NEW_RECORD"] = "Нова рекламна кампанія";
+$MESS["STAT_RECORDS_LIST"] = "Список рекламних кампаній";
+$MESS["STAT_EVENTS_VIEW"] = "Як відображати події:";
+$MESS["STAT_DEFAULT"] = "< за умовчанням >";
+$MESS["STAT_DESCRIPTION"] = "Опис:";
+$MESS["STAT_PAGES_FROM"] = "Звідки прийшли [%_]:<br>(сторінки, що посилаються,<br>розділені новим рядком)";
+$MESS["STAT_SEARCHERS"] = "Пошукові системи:";
+$MESS["STAT_ADDITIONAL"] = "Додаткові налаштування";
+$MESS["STAT_MORE"] = "Додатково";
+$MESS["STAT_PROP"] = "Властивості";
+$MESS["STAT_PROP_TITLE"] = "Параметри рекламної кампанії";
+$MESS["STAT_MORE_TITLE"] = "Додаткові налаштування та фінанси";
+$MESS["STAT_IDENTIFIERS"] = "Ідентифікація рекламної кампанії";
+$MESS["STAT_SELECT_WHAT_YOU_NEED"] = "(виберіть потрібні)";
+$MESS["STAT_PRIORITY"] = "Пріоритет:";
+$MESS["STAT_PRIORITY_ALT"] = "(чим вище значення, тим вищий пріоритет)";
+$MESS["STAT_PAGES_TO"] = "Куди прийшли [%_]:<br>(повні адреси сторінок вашого сайту, <br>розділені новим рядком)";
+$MESS["STAT_FINANCES"] = "Фінанси";
+$MESS["STAT_COST"] = "Витрати:";
+$MESS["STAT_REVENUE"] = "Доходи:";
+$MESS["STAT_BASE"] = "базова";
+$MESS["STAT_NEW_ADV"] = "Нова рекламна кампанія";
+$MESS["STAT_RESET_ADV"] = "Скинути рекламную кампанію";
+$MESS["STAT_RESET_ADV_CONFIRM"] = "Ви впевнені, що хочете скинути рекламну кампанію?";
+$MESS["STAT_DELETE_ADV"] = "Видалити рекламну кампанію";
+$MESS["STAT_DELETE_ADV_CONFIRM"] = "Ви впевнені, що хочете видалити рекламну кампанію?";
+$MESS["STAT_ERROR"] = "Помилка!";
+$MESS["STAT_ID_ADD"] = "Додаткові умови";
+$MESS["STAT_ID_ADD_NOTE"] = "Кампанія працює при виконанні будь-якої з умов";
+?>

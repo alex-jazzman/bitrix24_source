@@ -1,0 +1,6 @@
+<?
+$MESS["MARKETPLACE_BEST"] = "Краще";
+$MESS["MARKETPLACE_CATEGORIES"] = "Категорії";
+$MESS["MARKETPLACE_SHOPPING"] = "Покупки";
+$MESS["MARKETPLACE_UPDATES"] = "Оновлення";
+?>

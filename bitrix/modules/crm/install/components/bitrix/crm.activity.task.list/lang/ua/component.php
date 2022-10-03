@@ -1,0 +1,37 @@
+<?
+$MESS["CRM_COLUMN_CHANGED_BY"] = "Ким змінено";
+$MESS["CRM_COLUMN_CLOSED_DATE"] = "Дата закриття";
+$MESS["CRM_COLUMN_DATE_CREATE"] = "Дата створення";
+$MESS["CRM_COLUMN_DATE_MODIFY"] = "Дата зміни";
+$MESS["CRM_COLUMN_DATE_START"] = "Дата початку";
+$MESS["CRM_COLUMN_ENTITY_TITLE"] = "Заголовок";
+$MESS["CRM_COLUMN_ENTITY_TYPE"] = "Тип";
+$MESS["CRM_COLUMN_ID"] = "ID";
+$MESS["CRM_COLUMN_PRIORITY"] = "Пріоритет";
+$MESS["CRM_COLUMN_REAL_STATUS"] = "Статус";
+$MESS["CRM_COLUMN_RESPONSIBLE_BY"] = "Відповідальний";
+$MESS["CRM_COLUMN_TITLE"] = "Назва";
+$MESS["CRM_COLUMN_UF_CRM_TASK"] = "Елемент CRM";
+$MESS["CRM_ENTITY_TYPE_COMPANY"] = "Компанія";
+$MESS["CRM_ENTITY_TYPE_CONTACT"] = "Контакт";
+$MESS["CRM_ENTITY_TYPE_DEAL"] = "Угода";
+$MESS["CRM_ENTITY_TYPE_LEAD"] = "Лід";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не встановлено.";
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонений";
+$MESS["CRM_PRESET_CHANGE_MY"] = "Змінені мною";
+$MESS["CRM_PRESET_CHANGE_TODAY"] = "Змінені за сьогодні";
+$MESS["CRM_PRESET_CHANGE_YESTERDAY"] = "Змінені за вчора";
+$MESS["CRM_PRESET_MY"] = "Мої завдання";
+$MESS["CRM_PRESET_NEW"] = "Нові завдання";
+$MESS["TASKS_MODULE_NOT_INSTALLED"] = "Модуль Завдання не встановлено";
+$MESS["TASKS_PRIORITY_0"] = "Низький";
+$MESS["TASKS_PRIORITY_1"] = "Середній";
+$MESS["TASKS_PRIORITY_2"] = "Високий";
+$MESS["TASKS_STATUS_1"] = "Нова";
+$MESS["TASKS_STATUS_2"] = "В очікуванні";
+$MESS["TASKS_STATUS_3"] = "Виконується";
+$MESS["TASKS_STATUS_4"] = "Умовно завершене";
+$MESS["TASKS_STATUS_5"] = "Завершене";
+$MESS["TASKS_STATUS_6"] = "Відкладене";
+$MESS["TASKS_STATUS_7"] = "Відхилене";
+?>

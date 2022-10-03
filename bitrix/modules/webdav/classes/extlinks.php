@@ -179,7 +179,7 @@ class CWebDavExtLinks
 				COption::SetOptionString("webdav", "webdav_ext_links_url", self::$url);
 			}
 			if(self::$url != $urlOld)
-			{				
+			{
 				COption::SetOptionString("webdav", "webdav_ext_links_old", self::$url);
 				self::UpdateUrlRewrite(self::$url);
 			}
@@ -200,8 +200,8 @@ class CWebDavExtLinks
 	}
 
 	public static function GetDemoFileName()
-	{	
-		$lang = defined("LANGUAGE_ID") ? LANGUAGE_ID : "en";		
+	{
+		$lang = defined("LANGUAGE_ID") ? LANGUAGE_ID : "en";
 		return "bitrix24" . $lang . ".docx";
 	}
 
@@ -252,7 +252,7 @@ class CWebDavExtLinks
 		$currUserID = self::GetUserID();
 		while($arU = $resUrl->Fetch())
 		{
-/*	
+/*
 'URL' => '/1.doc',
 'RESOURCE_TYPE' => 'IBLOCK',
 'FOLDER' => NULL,
@@ -304,7 +304,7 @@ class CWebDavExtLinks
 		if($sizeI > 0)
 		{
 			$size .= " (" . htmlspecialcharsbx(CFile::FormatSize($sizeI)) . ")";
-		}	
+		}
 		$changeTime = "";
 		if($fileOptT["CHANGE_TIME"] <> '')
 		{
@@ -313,7 +313,7 @@ class CWebDavExtLinks
 
 		$demoLink = self::GetFullURL(self::GetUrl() . "/" . self::DEMO_HASH . '/' . self::GetDemoFileName());
 
-?>		
+?>
 	<div class="ext-link-dialog-content">
 		<div class="ext-link-section">
 			<span><span class="ext-link-dialog-file-name"><? echo $fileName; ?></span><? echo $size . $changeTime; ?></span>
@@ -479,7 +479,7 @@ class CWebDavExtLinks
 
 	protected static function GetUserProfilesLinks($arUsers)
 	{
-		$path = trim(COption::GetOptionString("intranet", "path_user", "", SITE_ID));		
+		$path = trim(COption::GetOptionString("intranet", "path_user", "", SITE_ID));
 		/* /company/personal/user/#USER_ID#/ */
 		if($path == "")
 		{
@@ -733,7 +733,7 @@ class CWebDavExtLinks
 				case "USER_ID":
 					$arSqlSearch[] = GetFilterQuery("USER_ID", $val, "N");
 					break;
-			}	
+			}
 		}
 		$strSqlSearch = GetFilterSqlSearch($arSqlSearch);
 
@@ -814,7 +814,7 @@ class CWebDavExtLinks
 				case "BASE_URL":
 					$arSqlSearch[] = ("BASE_URL = '" .  $DB->ForSql($val) . "'");
 					break;
-			}	
+			}
 		}
 		if(count($arSqlSearch) <= 0)
 		{
@@ -861,7 +861,7 @@ class CWebDavExtLinks
 	}
 
 	public static function DeleteAllLinks($url, $ob, $userID = null)
-	{			
+	{
 		if($url == '')
 		{
 			$GLOBALS["APPLICATION"]->RestartBuffer();
@@ -965,7 +965,7 @@ class CWebDavExtLinks
 
 	public static function CheckPassword($arLink, $inputPass)
 	{
-		$inputPassH = self::GenerateHash($inputPass, $arLink["SALT"]);		
+		$inputPassH = self::GenerateHash($inputPass, $arLink["SALT"]);
 		return ($arLink["PASSWORD"] === $inputPassH);
 	}
 
@@ -1029,7 +1029,7 @@ class CWebDavExtLinks
 
 	public static function InsertDialogCallText($urlT)
 	{
-		CUtil::InitJSCore(array('popup'));
+		\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'popup']);
 		$arMessT = array();
 		$arTrans = array('WD_EXT_LINKS_DIALOG_TITLE', "WD_EXT_LINKS_DIALOG_CLOSE_BUTTON", "WD_EXT_LINKS_DIALOG_LOADING", "WD_EXT_LINKS_DIALOG_ERROR", "WD_EXT_LINKS_DIALOG_GET");
 		foreach($arTrans as $v)
@@ -1039,7 +1039,7 @@ class CWebDavExtLinks
 
 		$GLOBALS["APPLICATION"]->AddHeadString(
 			'<link href="' . CUtil::GetAdditionalFileURL('/bitrix/js/webdav/css/style_el_dialog.css') . '" type="text/css" rel="stylesheet" />' . "\n" .
-			'<script type="text/javascript" src="' . CUtil::GetAdditionalFileURL('/bitrix/js/webdav/extlinks.js') . '"></script>' . "\n" . 
+			'<script type="text/javascript" src="' . CUtil::GetAdditionalFileURL('/bitrix/js/webdav/extlinks.js') . '"></script>' . "\n" .
 			'<script>BX.message(' . CUtil::PhpToJsObject($arMessT) . ')</script>',
 			true
 		);

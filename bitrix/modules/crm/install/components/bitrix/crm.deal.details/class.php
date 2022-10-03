@@ -222,20 +222,6 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] =
 			CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
 
-		$this->arResult['PATH_TO_ORDER_PAYMENT_DETAILS'] = $this->arParams['PATH_TO_ORDER_PAYMENT_DETAILS'] =
-			CrmCheckPath(
-				'PATH_TO_ORDER_PAYMENT_DETAILS',
-				$this->arParams['PATH_TO_ORDER_PAYMENT_DETAILS'],
-				'/shop/orders/payment/details/#payment_id#/'
-			);
-
-		$this->arResult['PATH_TO_ORDER_SHIPMENT_DETAILS'] = $this->arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'] =
-			CrmCheckPath(
-				'PATH_TO_ORDER_SHIPMENT_DETAILS',
-				$this->arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-				'/shop/orders/shipment/details/#shipment_id#/'
-			);
-
 		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
 			? CSite::GetNameFormat(false)
 			: str_replace(array("#NOBR#","#/NOBR#"), array("",""), $this->arParams['NAME_TEMPLATE']);
@@ -704,6 +690,11 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region TABS
+		if ($this->request->get('active_tab'))
+		{
+			$this->arResult['ACTIVE_TAB'] = $this->request->get('active_tab');
+		}
+
 		$this->arResult['TABS'] = array();
 		ob_start();
 
@@ -2146,6 +2137,11 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		$this->entityData['FORMATTED_OPPORTUNITY_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
 			$this->entityData['OPPORTUNITY'],
 			$this->entityData['CURRENCY_ID'],
+			''
+		);
+		$this->entityData['FORMATTED_OPPORTUNITY_ACCOUNT_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
+			$this->entityData['OPPORTUNITY_ACCOUNT'],
+			$this->entityData['ACCOUNT_CURRENCY_ID'],
 			''
 		);
 		$this->entityData['FORMATTED_OPPORTUNITY'] = \CCrmCurrency::MoneyToString(

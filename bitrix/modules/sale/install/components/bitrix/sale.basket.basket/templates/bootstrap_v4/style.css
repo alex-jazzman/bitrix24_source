@@ -209,7 +209,8 @@
 	color: #2f3435;
 	text-align: right;
 	white-space: nowrap;
-	font: 400 36px/36px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 36px/36px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: 180ms text-shadow ease, 180ms color ease;
 }
 
@@ -852,7 +853,8 @@
 	text-decoration: none;
 	word-break: break-all;
 	word-break: break-word;
-	font: 400 16px/26px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px/26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: 300ms all ease;
 }
 
@@ -1852,7 +1854,8 @@ h2.basket-item-info-name {
 
 .basket-item-gift-title-link {
 	color: #333;
-	font: 400 15px/20px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: 300ms all ease;
 }
 
@@ -2012,7 +2015,8 @@ h2.basket-item-info-name {
 	padding: 0;
 	color: #2f3435;
 	text-decoration: none;
-	font: 400 15px/19px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: 300ms all ease;
 }
 

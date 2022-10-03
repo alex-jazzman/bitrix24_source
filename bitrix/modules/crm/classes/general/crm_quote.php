@@ -369,9 +369,6 @@ class CAllCrmQuote
 
 			if (isset($GLOBALS["USER"]) && isset($arFields['COMPANY_ID']) && intval($arFields['COMPANY_ID']) > 0)
 			{
-				if (!class_exists('CUserOptions'))
-					include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
-
 				CUserOptions::SetOption('crm', 'crm_company_search', array('last_selected' => $arFields['COMPANY_ID']));
 			}
 
@@ -381,9 +378,6 @@ class CAllCrmQuote
 				QuoteContactTable::bindContacts($ID, $contactBindings);
 				if (isset($GLOBALS['USER']))
 				{
-					if (!class_exists('CUserOptions'))
-						include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
-
 					CUserOptions::SetOption(
 						'crm',
 						'crm_contact_search',

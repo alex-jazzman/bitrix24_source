@@ -31,7 +31,7 @@ export class Document extends BaseCard
 			const eventEditor = event.data[0];
 			if (eventEditor && eventEditor._ajaxForm)
 			{
-				const action = eventEditor._ajaxForm?._actionName === 'SAVE' ? 'save' : eventEditor._ajaxForm?._config.data.ACTION;
+				let action = eventEditor._ajaxForm?._actionName === 'SAVE' ? 'save' : eventEditor._ajaxForm?._config.data.ACTION;
 				if (action === Document.saveAndDeductAction)
 				{
 					const controllersErrorCollection = this.getControllersIssues(eventEditor.getControllers());
@@ -44,13 +44,21 @@ export class Document extends BaseCard
 					}
 				}
 
+				if (action === 'SAVE')
+				{
+					// for consistency in analytics tags
+					action = 'save';
+				}
+
 				let urlParams = {
 					isNewDocument: this.entityId <= 0 ? 'Y' : 'N',
 				};
+
 				if (action)
 				{
 					urlParams.action = action;
 				}
+
 				eventEditor._ajaxForm.addUrlParams(urlParams);
 			}
 		});
@@ -255,6 +263,7 @@ export class Document extends BaseCard
 
 				deductDocumentAjaxForm.addUrlParams({
 					action: actionName,
+					documentType: 'W',
 				});
 
 				deductDocumentAjaxForm.submit();

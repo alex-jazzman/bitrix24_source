@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core_events,currency,ui_notification,pull_client,ui_vue,main_core) {
+(function (exports,ui_notification,main_core_events,currency,pull_client,ui_vue,main_core) {
 	'use strict';
 
 	/** @memberof BX.Crm.Timeline.Types */
@@ -26,7 +26,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  finalSummary: 18,
 	  delivery: 19,
 	  finalSummaryDocuments: 20,
-	  storeDocument: 21
+	  storeDocument: 21,
+	  productCompilation: 22
 	};
 	/** @memberof BX.Crm.Timeline.Types */
 
@@ -63,13 +64,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  view: 1,
 	  edit: 2
 	};
+	/** @memberof BX.Crm.Timeline.Types */
+
+	const Compilation = {
+	  productList: 1,
+	  orderExists: 2,
+	  compilationViewed: 3,
+	  newDealCreated: 4
+	};
 
 	var types = /*#__PURE__*/Object.freeze({
 		Item: Item,
 		Mark: Mark,
 		Delivery: Delivery,
 		Order: Order,
-		EditorMode: EditorMode
+		EditorMode: EditorMode,
+		Compilation: Compilation
 	});
 
 	/** @memberof BX.Crm.Timeline */
@@ -1269,6 +1279,112 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	};
 
+	var ProductListMixin = {
+	  data() {
+	    return {
+	      notificationBalloon: false,
+	      activeRequestsCnt: 0,
+	      dealId: null,
+	      products: []
+	    };
+	  },
+
+	  methods: {
+	    isProductsGridAvailable() {
+	      return !!this.productsGrid;
+	    },
+
+	    setProductsGrid(productsGrid) {
+	      this.productsGrid = productsGrid;
+
+	      if (this.productsGrid) {
+	        this.onProductsGridChanged();
+	      }
+	    },
+
+	    // region event handlers
+	    handleProductAddingToDeal() {
+	      this.activeRequestsCnt += 1;
+	    },
+
+	    handleProductAddedToDeal() {
+	      if (this.activeRequestsCnt > 0) {
+	        this.activeRequestsCnt -= 1;
+	      }
+
+	      if (!(this.activeRequestsCnt === 0 && this.productsGrid)) {
+	        return;
+	      }
+
+	      BX.Crm.EntityEditor.getDefault().reload();
+	      this.productsGrid.reloadGrid(false);
+
+	      if (!this.notificationBalloon || this.notificationBalloon.getState() !== BX.UI.Notification.State.OPEN) {
+	        this.notificationBalloon = ui_notification.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
+	          actions: [{
+	            title: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_EDIT_PRODUCTS'),
+	            events: {
+	              click: (event, balloon, action) => {
+	                BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
+	                balloon.close();
+	              }
+	            }
+	          }]
+	        });
+	      }
+	    },
+
+	    // endregion
+	    // region custom events
+	    subscribeCustomEvents() {
+	      main_core_events.EventEmitter.subscribe('EntityProductListController', this.onProductsGridCreated);
+	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
+	    },
+
+	    unsubscribeCustomEvents() {
+	      main_core_events.EventEmitter.unsubscribe('EntityProductListController', this.onProductsGridCreated);
+	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
+	    },
+
+	    onProductsGridCreated(event) {
+	      this.setProductsGrid(event.getData()[0]);
+	    },
+
+	    onProductsGridChanged(event) {
+	      if (!this.productsGrid) {
+	        return;
+	      }
+
+	      let dealOfferIds = this.productsGrid.products.map((product, index) => {
+	        if (!(product.hasOwnProperty('fields') && product.fields.hasOwnProperty('OFFER_ID'))) {
+	          return null;
+	        }
+
+	        return product.fields.OFFER_ID;
+	      });
+
+	      for (const [i, product] of this.products.entries()) {
+	        let isInDeal = dealOfferIds.some(id => parseInt(id) === parseInt(product.offerId));
+
+	        if (product.isInDeal === isInDeal) {
+	          continue;
+	        }
+
+	        ui_vue.Vue.set(this.products, i, Object.assign({}, product, {
+	          isInDeal
+	        }));
+	      }
+	    },
+
+	    // endregion
+	    beforeDestroy() {
+	      this.unsubscribeCustomEvents();
+	    }
+
+	  }
+	};
+
 	var Product = {
 	  props: {
 	    product: {
@@ -1353,6 +1469,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<li
 			:class="{'crm-entity-stream-advice-list-item--active': product.isInDeal}"
@@ -1392,7 +1509,7 @@ this.BX.Crm = this.BX.Crm || {};
 					</div>
 				</div>
 			</div>
-			<div v-if="isAddToDealVisible" class="crm-entity-stream-advice-list-btn-box">				
+			<div v-if="isAddToDealVisible" class="crm-entity-stream-advice-list-btn-box">
 				<button
 					@click="addProductToDeal"
 					class="ui-btn ui-btn-round ui-btn-xs crm-entity-stream-advice-list-btn"
@@ -1404,193 +1521,121 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	var component = ui_vue.Vue.extend({
-	  mixins: [HistoryItemMixin],
-	  components: {
-	    'product': Product
+	var ProductList = {
+	  props: {
+	    products: [],
+	    dealId: null,
+	    isAddToDealVisible: false
 	  },
 
 	  data() {
 	    return {
 	      isShortList: true,
-	      shortListProductsCnt: 3,
-	      isNotificationShown: false,
-	      activeRequestsCnt: 0,
-	      dealId: null,
-	      products: [],
-	      isProductsGridAvailable: false
+	      shortListProductsCnt: 3
 	    };
+	  },
+
+	  components: {
+	    'product': Product
+	  },
+	  methods: {
+	    onProductAddedToDeal() {
+	      this.$emit('product-added-to-deal');
+	    },
+
+	    onProductAddingToDeal() {
+	      this.$emit('product-adding-to-deal');
+	    },
+
+	    showMore() {
+	      this.isShortList = false;
+	      const listWrap = this.$refs.adviceList;
+	      listWrap.style.maxHeight = 950 + 'px';
+	    }
+
+	  },
+	  computed: {
+	    isShowMoreVisible() {
+	      return this.isShortList && this.products.length > this.shortListProductsCnt;
+	    },
+
+	    visibleProducts() {
+	      let result = [];
+	      const length = this.isShortList && this.shortListProductsCnt < this.products.length ? this.shortListProductsCnt : this.products.length;
+
+	      for (let productIndex = 0; productIndex < length; productIndex++) {
+	        result.push(this.products[productIndex]);
+	      }
+
+	      return result;
+	    }
+
+	  },
+	  // language=Vue
+	  template: `
+		<div>
+			<transition-group ref="adviceList" class="crm-entity-stream-advice-list" name="list" tag="ul">
+				<product
+					v-for="product in visibleProducts"
+					v-bind:key="product.offerId"
+					:product="product"
+					:dealId="dealId"
+					:isAddToDealVisible="isAddToDealVisible"
+					@product-added-to-deal="onProductAddedToDeal"
+					@product-adding-to-deal="onProductAddingToDeal"
+				></product>
+			</transition-group>
+			<!--</ul>-->
+			<a
+				v-if="isShowMoreVisible"
+				@click.prevent="showMore"
+				class="crm-entity-stream-advice-link"
+				href="#"
+			>
+				${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_SHOW_MORE')}
+			</a>
+		</div>
+	`
+	};
+
+	var component = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin, ProductListMixin],
+	  components: {
+	    'product-list': ProductList
 	  },
 
 	  created() {
 	    this.products = this.data.VIEWED_PRODUCTS;
 	    this.dealId = this.data.DEAL_ID;
-	    this._productsGrid = null;
+	    this.productsGrid = null;
 	    this.subscribeCustomEvents();
 	    BX.Crm.EntityEditor.getDefault().tapController('PRODUCT_LIST', controller => {
 	      this.setProductsGrid(controller.getProductList());
 	    });
 	  },
 
-	  methods: {
-	    setProductsGrid(productsGrid) {
-	      this._productsGrid = productsGrid;
-
-	      if (this._productsGrid) {
-	        this.onProductsGridChanged();
-	        this.isProductsGridAvailable = true;
-	      }
-	    },
-
-	    showMore() {
-	      this.isShortList = false;
-	      const listWrap = document.querySelector('.crm-entity-stream-advice-list');
-	      listWrap.style.maxHeight = 950 + 'px';
-	    },
-
-	    // region event handlers
-	    handleProductAddingToDeal() {
-	      this.activeRequestsCnt++;
-	    },
-
-	    handleProductAddedToDeal() {
-	      if (this.activeRequestsCnt > 0) {
-	        this.activeRequestsCnt--;
-	      }
-
-	      if (!(this.activeRequestsCnt === 0 && this._productsGrid)) {
-	        return;
-	      }
-
-	      BX.Crm.EntityEditor.getDefault().reload();
-
-	      this._productsGrid.reloadGrid(false);
-
-	      if (!this.isNotificationShown) {
-	        ui_notification.UI.Notification.Center.notify({
-	          content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
-	          events: {
-	            onClose: event => {
-	              this.isNotificationShown = false;
-	            }
-	          },
-	          actions: [{
-	            title: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_EDIT_PRODUCTS'),
-	            events: {
-	              click: (event, balloon, action) => {
-	                BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
-	                balloon.close();
-	              }
-	            }
-	          }]
-	        });
-	        this.isNotificationShown = true;
-	      }
-	    },
-
-	    // endregion
-	    // region custom events
-	    subscribeCustomEvents() {
-	      main_core_events.EventEmitter.subscribe('EntityProductListController', this.onProductsGridCreated);
-	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
-	    },
-
-	    unsubscribeCustomEvents() {
-	      main_core_events.EventEmitter.unsubscribe('EntityProductListController', this.onProductsGridCreated);
-	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
-	    },
-
-	    onProductsGridCreated(event) {
-	      this.setProductsGrid(event.getData()[0]);
-	    },
-
-	    onProductsGridChanged(event) {
-	      if (!this._productsGrid) {
-	        return;
-	      }
-
-	      let dealOfferIds = this._productsGrid.products.map((product, index) => {
-	        if (!(product.hasOwnProperty('fields') && product.fields.hasOwnProperty('OFFER_ID'))) {
-	          return null;
-	        }
-
-	        return product.fields.OFFER_ID;
-	      });
-
-	      for (const [i, product] of this.products.entries()) {
-	        let isInDeal = dealOfferIds.some(id => id == product.offerId);
-
-	        if (product.isInDeal === isInDeal) {
-	          continue;
-	        }
-
-	        ui_vue.Vue.set(this.products, i, Object.assign({}, product, {
-	          isInDeal
-	        }));
-	      }
-	    },
-
-	    // endregion
-	    beforeDestroy() {
-	      this.unsubscribeCustomEvents();
-	    }
-
-	  },
-	  computed: {
-	    visibleProducts() {
-	      let result = [];
-	      let i = 1;
-
-	      for (const product of this.products) {
-	        if (this.isShortList && i > this.shortListProductsCnt) {
-	          break;
-	        }
-
-	        result.push(product);
-	        i++;
-	      }
-
-	      return result;
-	    },
-
-	    isShowMoreVisible() {
-	      return this.isShortList && this.products.length > this.shortListProductsCnt;
-	    }
-
-	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-advice">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
 			<div class="crm-entity-stream-advice-content">
 				<div class="crm-entity-stream-advice-info">
 					${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_LOOK_AT_CLIENT_PRODUCTS')}
-					${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_ENCOURAGE_CLIENT_BUY_PRODUCTS')}
+					${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_ENCOURAGE_CLIENT_BUY_PRODUCTS_2')}
 				</div>
 				<div class="crm-entity-stream-advice-inner">
 					<h3 class="crm-entity-stream-advice-subtitle">
 						${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_VIEWED_PRODUCTS')}
 					</h3>
 					<!--<ul class="crm-entity-stream-advice-list">-->
-					<transition-group class="crm-entity-stream-advice-list" name="list" tag="ul">						
-						<product
-							v-for="product in visibleProducts"
-							v-bind:key="product"
-							:product="product"
-							:dealId="dealId"
-							:isAddToDealVisible="isProductsGridAvailable"
-							@product-added-to-deal="handleProductAddedToDeal"
-							@product-adding-to-deal="handleProductAddingToDeal"
-						></product>
-					</transition-group>
+					<product-list
+						:products="products"
+						:dealId="dealId"
+						:isAddToDealVisible="isProductsGridAvailable"
+						@product-added-to-deal="handleProductAddedToDeal"
+						@product-adding-to-deal="handleProductAddingToDeal"
+					></product-list>
 					<!--</ul>-->
-					<a
-						v-if="isShowMoreVisible"
-						@click.prevent="showMore"
-						class="crm-entity-stream-advice-link"
-						href="#"
-					>
-						${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_SHOW_MORE')}
-					</a>
 				</div>
 			</div>
 		</div>
@@ -1617,6 +1662,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<a
 			v-if="author.SHOW_URL"
@@ -1744,6 +1790,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-sms">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-sms"></div>
@@ -1830,6 +1877,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-entity-stream-content-delivery-title">
 			<div
@@ -2299,6 +2347,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  },
+	  // language=Vue
 	  template: `
 		<div
 			class="crm-entity-stream-section crm-entity-stream-section-new"
@@ -2513,6 +2562,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-new">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
@@ -2639,6 +2689,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-new">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
@@ -3673,6 +3724,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._source = null;
 	    _this._paymentId = null;
 	    _this._shipmentId = null;
+	    _this._compilationProductIds = [];
 	    _this._templateId = null;
 	    _this._templatesContainer = null;
 	    _this._templateFieldHintNode = null;
@@ -4206,7 +4258,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          "TO_ENTITY_TYPE_ID": this._commEntityTypeId,
 	          "TO_ENTITY_ID": this._commEntityId,
 	          "PAYMENT_ID": this._paymentId,
-	          "SHIPMENT_ID": this._shipmentId
+	          "SHIPMENT_ID": this._shipmentId,
+	          "COMPILATION_PRODUCT_IDS": this._compilationProductIds
 	        },
 	        onsuccess: BX.delegate(this.onSaveSuccess, this),
 	        onfailure: BX.delegate(this.onSaveFailure, this)
@@ -4274,6 +4327,13 @@ this.BX.Crm = this.BX.Crm || {};
 	              this._source = 'order';
 	              this._paymentId = result.get('order').paymentId;
 	              this._shipmentId = result.get('order').shipmentId;
+	            } else if (result.get('action') === 'sendCompilation' && result.get('compilation')) {
+	              this._input.focus();
+
+	              this._input.value = this._input.value + result.get('compilation').title;
+	              this.setMessageLengthCounter();
+	              this._source = 'deal';
+	              this._compilationProductIds = result.get('compilation').productIds;
 	            }
 	          }
 	        }.bind(this));
@@ -17535,6 +17595,36 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  }, {
+	    key: "createProductCompilationItem",
+	    value: function createProductCompilationItem(data) {
+	      var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+	      var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+
+	      if (entityId !== BX.CrmEntityType.enumeration.deal) {
+	        return null;
+	      }
+
+	      var settings = {
+	        history: this._history,
+	        fixedHistory: this._fixedHistory,
+	        container: this._wrapper,
+	        activityEditor: this._activityEditor,
+	        data: data
+	      };
+
+	      if (typeId === Compilation.productList) {
+	        settings.vueComponent = BX.Crm.Timeline.ProductCompilationList;
+	      } else if (typeId === Compilation.orderExists) {
+	        settings.vueComponent = BX.Crm.Timeline.CompilationOrderNotice;
+	      } else if (typeId === Compilation.compilationViewed) {
+	        settings.vueComponent = BX.Crm.Timeline.ProductCompilationViewed;
+	      } else if (typeId === Compilation.newDealCreated) {
+	        settings.vueComponent = BX.Crm.Timeline.NewDealCreated;
+	      }
+
+	      return BX.CrmHistoryItem.create(data["ID"], settings);
+	    }
+	  }, {
 	    key: "createExternalNotificationItem",
 	    value: function createExternalNotificationItem(data) {
 	      const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
@@ -17589,6 +17679,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return this.createActivityItem(data);
 	      } else if (typeId === Item.order) {
 	        return this.createOrderEntityItem(data);
+	      } else if (typeId === Item.productCompilation) {
+	        return this.createProductCompilationItem(data);
 	      } else if (typeId === Item.storeDocument) {
 	        return this.createStoreDocumentItem(data);
 	      } else if (typeId === Item.externalNotification) {
@@ -19470,6 +19562,146 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Comment;
 	}();
 
+	var component$5 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin, ProductListMixin],
+	  components: {
+	    'product-list': ProductList
+	  },
+
+	  created() {
+	    this.products = this.data.SENT_PRODUCTS;
+	    this.dealId = this.data.DEAL_ID;
+	    this.productsGrid = null;
+	    this.subscribeCustomEvents();
+	    BX.Crm.EntityEditor.getDefault().tapController('PRODUCT_LIST', controller => {
+	      this.setProductsGrid(controller.getProductList());
+	    });
+	  },
+
+	  // language=Vue
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-advice">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
+			<div class="crm-entity-stream-advice-content">
+				<div class="crm-entity-stream-advice-info">
+					${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_LIST_COMPILATION_SENT')}
+				</div>
+				<div class="crm-entity-stream-advice-inner">
+					<!--<ul class="crm-entity-stream-advice-list">-->
+					<product-list
+						:products="products"
+						:dealId="dealId"
+						:isAddToDealVisible="isProductsGridAvailable"
+						@product-added-to-deal="handleProductAddedToDeal"
+						@product-adding-to-deal="handleProductAddingToDeal"
+					></product-list>
+					<!--</ul>-->
+				</div>
+			</div>
+		</div>
+	`
+	});
+
+	var component$6 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin],
+	  // language=Vue
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-advice">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
+			<div class="crm-entity-stream-advice-content">
+				<div class="crm-entity-stream-advice-info">
+					${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_ORDER_EXISTS_NOTICE')}
+				</div>
+			</div>
+		</div>
+	`
+	});
+
+	var component$7 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin],
+	  computed: {
+	    legend() {
+	      var compilationCreationDate = BX.prop.getString(this.data, 'COMPILATION_CREATION_DATE', '');
+	      var legendTextTemplate = main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED_LEGEND');
+	      return legendTextTemplate.replace('#DATE_CREATE#', compilationCreationDate);
+	    },
+
+	    authorFormattedName() {
+	      var _this$data, _this$data$AUTHOR;
+
+	      return this === null || this === void 0 ? void 0 : (_this$data = this.data) === null || _this$data === void 0 ? void 0 : (_this$data$AUTHOR = _this$data.AUTHOR) === null || _this$data$AUTHOR === void 0 ? void 0 : _this$data$AUTHOR.FORMATTED_NAME;
+	    },
+
+	    authorHref() {
+	      var _this$data2, _this$data2$AUTHOR;
+
+	      return this === null || this === void 0 ? void 0 : (_this$data2 = this.data) === null || _this$data2 === void 0 ? void 0 : (_this$data2$AUTHOR = _this$data2.AUTHOR) === null || _this$data2$AUTHOR === void 0 ? void 0 : _this$data2$AUTHOR.SHOW_URL;
+	    }
+
+	  },
+	  // language=Vue
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-history">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-info"></div>
+			<div class="crm-entity-stream-section-content">
+				<div class="crm-entity-stream-content-event">
+					<div class="crm-entity-stream-content-header">
+						<div class="crm-entity-stream-content-event-title">
+							${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_TITLE')}
+						</div>
+						<span class="crm-entity-stream-content-event-done">
+							${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED')}
+						</span>
+						<span class="crm-entity-stream-content-event-time">{{createdAt}}</span>
+					</div>
+					<div class="crm-entity-stream-content-detail">
+						<div class="crm-entity-stream-content-detail-description">
+							${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED_DESCRIPTION')}
+						</div>
+					</div>
+						<a
+							class="ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee" 
+							v-bind:title="authorFormattedName"
+							target="_blank"
+							v-bind:href="authorHref"
+						>
+							<i></i>
+						</a>
+					</div>
+			</div>
+		</div>
+	`
+	});
+
+	var component$8 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin],
+	  computed: {
+	    message() {
+	      var _this$data, _this$data$NEW_DEAL_D, _this$data2, _this$data2$NEW_DEAL_, _this$data3, _this$data3$NEW_DEAL_;
+
+	      const dealTitle = BX.util.htmlspecialchars(this === null || this === void 0 ? void 0 : (_this$data = this.data) === null || _this$data === void 0 ? void 0 : (_this$data$NEW_DEAL_D = _this$data.NEW_DEAL_DATA) === null || _this$data$NEW_DEAL_D === void 0 ? void 0 : _this$data$NEW_DEAL_D.TITLE);
+	      const dealLegend = this === null || this === void 0 ? void 0 : (_this$data2 = this.data) === null || _this$data2 === void 0 ? void 0 : (_this$data2$NEW_DEAL_ = _this$data2.NEW_DEAL_DATA) === null || _this$data2$NEW_DEAL_ === void 0 ? void 0 : _this$data2$NEW_DEAL_.LEGEND;
+	      const dealUrl = this === null || this === void 0 ? void 0 : (_this$data3 = this.data) === null || _this$data3 === void 0 ? void 0 : (_this$data3$NEW_DEAL_ = _this$data3.NEW_DEAL_DATA) === null || _this$data3$NEW_DEAL_ === void 0 ? void 0 : _this$data3$NEW_DEAL_.SHOW_URL;
+	      const dealTitleLink = `<a href="${dealUrl}">${dealTitle}</a>`;
+	      let message = main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_DEAL_CREATED');
+	      message = message.replace('#DEAL_TITLE#', dealTitleLink);
+	      message = message.replace('#DEAL_LEGEND#', dealLegend);
+	      return message;
+	    }
+
+	  },
+	  // language=Vue
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-advice">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
+			<div class="crm-entity-stream-advice-content">
+				<div class="crm-entity-stream-advice-info" v-html="message">
+				</div>
+			</div>
+		</div>
+	`
+	});
+
 	const Streams = {
 	  History: History$1,
 	  FixedHistory,
@@ -19581,6 +19813,10 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Item = Item$1;
 	exports.Items = Items;
 	exports.Animations = Animations;
+	exports.ProductCompilationList = component$5;
+	exports.CompilationOrderNotice = component$6;
+	exports.ProductCompilationViewed = component$7;
+	exports.NewDealCreated = component$8;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Event,BX,BX,BX,BX,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.Event,BX,BX,BX,BX));
 //# sourceMappingURL=timeline.bundle.js.map

@@ -1,0 +1,6 @@
+<?
+$MESS["LANDING_HOOK_DETAIL_HELP"] = "Детальніше";
+$MESS["LANDING_HOOK_YACOUNTER_COUNTER"] = "Яндекс.Метрика";
+$MESS["LANDING_HOOK_YACOUNTER_PLACEHOLDER"] = "Введіть ID";
+$MESS["LANDING_HOOK_YACOUNTER_USE"] = "Яндекс.Метрика";
+?>

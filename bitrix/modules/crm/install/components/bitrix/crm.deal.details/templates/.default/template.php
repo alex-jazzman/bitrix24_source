@@ -297,3 +297,10 @@ endif;
 		BX.Event.EventEmitter.subscribe('PaymentDocuments.EntityEditor:changeRealizationDeductedStatus', listener);
 	})();
 </script>
+<?php if ($arResult['ACTIVE_TAB']): ?>
+<script>
+	BX.ready(function () {
+		BX.onCustomEvent('<?= $arResult['GUID'] ?>_click_<?= CUtil::JSEscape($arResult['ACTIVE_TAB']) ?>');
+	});
+</script>
+<?php endif; ?>

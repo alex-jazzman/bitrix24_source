@@ -1,6 +1,6 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-$sTplDir = trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/")));
+$sTplDir = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/")));
 
 $arInfo = include($sTplDir."tab_edit.php");
 if ($arParams["WORKFLOW"] == "bizproc")

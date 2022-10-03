@@ -57,21 +57,24 @@ class Utils implements WhatsApp\EdnaRu
 
 	public function getMessageTemplates(string $subject = ''): Result
 	{
-		if (defined('WA_EDNA_RU_TEMPLATES_STUB') && WA_EDNA_RU_TEMPLATES_STUB === true)
+		if ($this->optionManager->getOption('enable_templates_stub', 'N') === 'Y')
 		{
 			return $this->getMessageTemplatesStub();
 		}
-
-		$subjectResult = $this->getChannelIdBySubject($subject);
-		if (!$subjectResult->isSuccess())
+		
+		$subjectList = [$subject];
+		if ($subject === '')
 		{
-			return $subjectResult;
+			$subjectList = $this->optionManager->getOption('sender_id', []);
 		}
 
-		$subjectId = $subjectResult->getData()['id'];
-		$requestParams = [
-			'subjectId' => $subjectId
-		];
+		$verifiedSubjectIdResult = $this->getVerifiedSubjectIdList($subjectList);
+		if (!$verifiedSubjectIdResult->isSuccess())
+		{
+			return $verifiedSubjectIdResult;
+		}
+
+		$verifiedSubjectIdList = $verifiedSubjectIdResult->getData();
 
 		$externalSender =
 			new ExternalSender(
@@ -80,11 +83,27 @@ class Utils implements WhatsApp\EdnaRu
 			)
 		;
 
-		$templatesRequestResult =
-			$externalSender->callExternalMethod(Constants::GET_TEMPLATES, $requestParams)
-		;
+		$templates = [];
+		foreach ($verifiedSubjectIdList as $subjectId)
+		{
+			$requestParams = [
+				'subjectId' => $subjectId
+			];
 
-		return $this->removeUnsupportedTemplates($templatesRequestResult);
+			$templatesRequestResult =
+				$externalSender->callExternalMethod(Constants::GET_TEMPLATES, $requestParams)
+			;
+
+			if ($templatesRequestResult->isSuccess())
+			{
+				$templates = array_merge($templates, $templatesRequestResult->getData());
+			}
+		}
+
+		$result = new Result();
+		$result->setData($templates);
+
+		return $this->removeUnsupportedTemplates($result);
 	}
 
 	public function prepareTemplateMessageText(array $message): string
@@ -133,83 +152,130 @@ class Utils implements WhatsApp\EdnaRu
 	{
 		$result = new Result();
 		$result->setData([
-			'result' => [
-				[
-					'id' => 242,
-					'name' => 'QA_message_matcher_WA_1_opr_name_1',
-					'channelType' => 'whatsapp',
-					'language' => 'RU',
-					'content' => [
-						'attachment' => null,
-						'action' => null,
-						'caption' => null,
-						'header' => null,
-						'text' => 'QA_message_matcher_WA_1_body_text',
-						'footer' => [
-							'text' => 'footer text'
-						],
-						'keyboard' => [
-							'rows' => [
-								[
-									'buttons' => [],
-								],
-							],
-						],
-					],
-					'category' => 'ACCOUNT_UPDATE',
-					'status' => 'APPROVED',
-					'locked' => true,
-					'type' => 'USER',
-					'createdAt' => '2021-07-15T14:16:54.417024Z',
-					'updatedAt' => '2021-07-16T13:08:26.275414Z',
+			[
+				'id' => 242,
+				'name' => 'only text',
+				'channelType' => 'whatsapp',
+				'language' => 'RU',
+				'content' => [
+					'attachment' => null,
+					'action' => null,
+					'caption' => null,
+					'header' => null,
+					'text' => "Hello! Welcome to our platform.",
+					'footer' => null,
+					'keyboard' => null,
 				],
-				[
-					'id' => 267,
-					'channelType' => 'whatsapp',
-					'language' => 'RU',
-					'content' => [
-						'attachment' => null,
-						'action' => null,
-						'caption' => null,
-						'header' => null,
-						'text' => 'QA_message_matcher_WA_1_body_text',
-						'footer' => null,
-						'keyboard' => [
-							'rows' => [
-								[
-									'buttons' => [
-										[
-											'text' => 'red',
-											'payload' => '1'
-										],
-										[
-											'text' => 'blue',
-											'payload' => '2'
-										],
-										[
-											'text' => 'green',
-											'payload' => '3'
-										]
+				'category' => 'ACCOUNT_UPDATE',
+				'status' => 'APPROVED',
+				'locked' => false,
+				'type' => 'OPERATOR',
+				'createdAt' => '2021-07-15T14:16:54.417024Z',
+				'updatedAt' => '2021-07-16T13:08:26.275414Z',
+			],
+			[
+				'id' => 267,
+				'name' => 'text + header + footer',
+				'channelType' => 'whatsapp',
+				'language' => 'RU',
+				'content' => [
+					'attachment' => null,
+					'action' => null,
+					'caption' => null,
+					'header' => [
+						'text' => 'Greetings',
+					],
+					'text' => 'Hello! Welcome to our platform.',
+					'footer' => [
+						'text' => 'Have a nice day',
+					],
+					'keyboard' => null,
+				],
+				'category' => 'ACCOUNT_UPDATE',
+				'status' => 'APPROVED',
+				'locked' => false,
+				'type' => 'USER',
+				'createdAt' => '2021-07-20T09:21:42.444454Z',
+				'updatedAt' => '2021-07-20T09:21:42.444454Z',
+			],
+			[
+				'id' => 268,
+				'name' => 'text + buttons',
+				'channelType' => 'whatsapp',
+				'language' => 'RU',
+				'content' => [
+					'attachment' => null,
+					'action' => null,
+					'caption' => null,
+					'header' => null,
+					'text' => "Hello! Welcome to our platform. Have you already tried it?",
+					'footer' => null,
+					'keyboard' => [
+						'rows' => [
+							[
+								'buttons' => [
+									[
+										'text' => 'Yes',
+										'buttonType' => "QUICK_REPLY",
+										'payload' => '1'
+									],
+									[
+										'text' => 'No',
+										'buttonType' => "QUICK_REPLY",
+										'payload' => '2'
 									],
 								],
 							],
 						],
 					],
-					'category' => 'ACCOUNT_UPDATE',
-					'status' => 'APPROVED',
-					'locked' => false,
-					'type' => 'USER',
-					'createdAt' => '2021-07-20T09:21:42.444454Z',
-					'updatedAt' => '2021-07-20T09:21:42.444454Z',
+
 				],
+				'category' => 'ACCOUNT_UPDATE',
+				'status' => 'APPROVED',
+				'locked' => false,
+				'type' => 'USER',
+				'createdAt' => '2021-07-20T09:21:42.444454Z',
+				'updatedAt' => '2021-07-20T09:21:42.444454Z',
 			],
-			'code' => 'ok',
+			[
+				'id' => 269,
+				'name' => 'text + button-link',
+				'channelType' => 'whatsapp',
+				'language' => 'RU',
+				'content' => [
+					'attachment' => null,
+					'action' => null,
+					'caption' => null,
+					'header' => null,
+					'text' => 'Hello! Welcome to our platform. Follow the link bellow to read manuals:',
+					'footer' => null,
+					'keyboard' => [
+						'rows' => [
+							[
+								'buttons' => [
+									[
+										'text' => 'Manual',
+										'buttonType' => "URL",
+										'url' => "https://docs.edna.io/"
+									],
+								],
+							],
+						],
+					],
+				],
+				'category' => 'ACCOUNT_UPDATE',
+				'status' => 'APPROVED',
+				'locked' => false,
+				'type' => 'USER',
+				'createdAt' => '2021-07-20T09:21:42.444454Z',
+				'updatedAt' => '2021-07-20T09:21:42.444454Z',
+			],
 		]);
 
 		return $result;
 	}
 
-	private function getChannelIdBySubject(string $subject): Result
+	public function getSubjectIdBySubject(string $subject): Result
 	{
 		$subjectResult = $this->getChannelList();
 
@@ -224,7 +290,14 @@ class Utils implements WhatsApp\EdnaRu
 			if ($channel['subject'] === $subject)
 			{
 				$result = new Result();
-				$result->setData(['id' => $channel['id']]);
+				if (!isset($channel['subjectId']))
+				{
+					$result->addError(new Error('Unknown subject'));
+
+					return $result;
+				}
+
+				$result->setData(['subjectId' => $channel['subjectId']]);
 
 				return $result;
 			}
@@ -236,7 +309,36 @@ class Utils implements WhatsApp\EdnaRu
 		return $result;
 	}
 
-	private function getChannelList(): Result
+	private function getVerifiedSubjectIdList(array $subjectList): Result
+	{
+		$channelListResult = $this->getChannelList();
+		if (!$channelListResult->isSuccess())
+		{
+			return $channelListResult;
+		}
+
+		$filteredSubjectList = [];
+		foreach ($channelListResult->getData() as $channel)
+		{
+			if (isset($channel['subjectId']) && in_array($channel['subjectId'], $subjectList, true))
+			{
+				$filteredSubjectList[] = $channel['subjectId'];
+			}
+		}
+
+		$result = new Result();
+		if (empty($filteredSubjectList))
+		{
+			$result->addError(new Error('Verified subjects are missing'));
+			
+			return $result;
+		}
+		$result->setData($filteredSubjectList);
+		
+		return $result;
+	}
+
+	public function getChannelList(): Result
 	{
 		$requestParams = [
 			'imType' => 'WHATSAPP'
@@ -287,13 +389,13 @@ class Utils implements WhatsApp\EdnaRu
 		}
 
 		$templatesData = $templates->getData();
-		if (!$templatesData['result'])
+		if (!$templatesData)
 		{
 			return $templates;
 		}
 
 		$filteredTemplates = [];
-		foreach ($templatesData['result'] as $template)
+		foreach ($templatesData as $template)
 		{
 			if ($this->checkForPlaceholders($template))
 			{
@@ -303,7 +405,7 @@ class Utils implements WhatsApp\EdnaRu
 			$filteredTemplates[] = $template;
 		}
 
-		$templatesData['result'] = $filteredTemplates;
+		$templatesData = $filteredTemplates;
 		$result = new Result();
 		$result->setData($templatesData);
 

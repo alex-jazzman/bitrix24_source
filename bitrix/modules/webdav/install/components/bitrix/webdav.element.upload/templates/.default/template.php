@@ -51,7 +51,6 @@ if ($USER->IsAuthorized())
 	{
 		require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/components/bitrix/webdav.element.upload/user_settings.php");
 	}
-	require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/".mb_strtolower($GLOBALS["DB"]->type)."/favorites.php");
 	$arUserSettings = CUserOptions::GetOption("webdav", "upload_settings", '');
     $arUserSettings = @unserialize($arUserSettings, ['allowed_classes' => false]);
 	$arUserSettings = (is_array($arUserSettings) ? $arUserSettings : array());
@@ -70,7 +69,7 @@ $arParams["NOTE"] = trim($arParams["NOTE"]);
 /*************************************************************************
 	/Processing of received parameters
 *************************************************************************/
-include(str_replace(array("\\", "//"), "/", dirname(__FILE__)."/script.php"));
+include(str_replace(array("\\", "//"), "/", __DIR__."/script.php"));
 ?>
 <div id="webdav_error_<?=$arParams["INDEX_ON_PAGE"]?>" class="error required starrequired">
 <?
@@ -355,7 +354,7 @@ endif;
 		<td class="left"><div class="empty"></div></td>
 		<td class="middle">
 <?
-include(str_replace(array("\\", "//"), "/", dirname(__FILE__)."/footer.php"));
+include(str_replace(array("\\", "//"), "/", __DIR__."/footer.php"));
 ?>
 			<div class="iu-uploader-buttons">
 				<div class="iu-uploader-button">

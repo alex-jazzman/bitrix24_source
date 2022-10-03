@@ -1,0 +1,36 @@
+<?
+$MESS["PERFMON_CACHE_FIND"] = "Знайти";
+$MESS["PERFMON_CACHE_ID"] = "ID";
+$MESS["PERFMON_CACHE_HIT_ID"] = "Хіт";
+$MESS["PERFMON_CACHE_NN"] = "#";
+$MESS["PERFMON_CACHE_COMPONENT_NAME"] = "Компонент";
+$MESS["PERFMON_CACHE_MODULE_NAME"] = "Модуль";
+$MESS["PERFMON_CACHE_CACHE_SIZE"] = "Розмір";
+$MESS["PERFMON_CACHE_OP_MODE"] = "Операція";
+$MESS["PERFMON_CACHE_BASE_DIR"] = "Тип";
+$MESS["PERFMON_CACHE_INIT_DIR"] = "Каталог";
+$MESS["PERFMON_CACHE_FILE_NAME"] = "Файл";
+$MESS["PERFMON_CACHE_CACHE_PATH"] = "Шлях до файлу кеша";
+$MESS["PERFMON_CACHE_TITLE"] = "Монітор продуктивності: кеширование";
+$MESS["PERFMON_CACHE_COMPONENT_ID"] = "Примірник компонента";
+$MESS["PERFMON_CACHE_OP_MODE_R"] = "Читання";
+$MESS["PERFMON_CACHE_OP_MODE_W"] = "Запис";
+$MESS["PERFMON_CACHE_OP_MODE_C"] = "Скидання";
+$MESS["PERFMON_CACHE_GROUP_NONE"] = "Без груповання";
+$MESS["PERFMON_CACHE_GROUP_COMP"] = "Груповання за компонентами";
+$MESS["PERFMON_CACHE_GROUP_BASE_DIR"] = "Груповання за типом";
+$MESS["PERFMON_CACHE_GROUP_INIT_DIR"] = "Груповання за каталогом";
+$MESS["PERFMON_CACHE_GROUP_FILE_NAME"] = "Груповання за файлом";
+$MESS["PERFMON_CACHE_COUNT"] = "Кеш-операцій";
+$MESS["PERFMON_CACHE_COUNT_R"] = "Кеш-читань";
+$MESS["PERFMON_CACHE_COUNT_W"] = "Кеш-записів";
+$MESS["PERFMON_CACHE_COUNT_C"] = "Кеш-скидів";
+$MESS["PERFMON_CACHE_MAX_CACHE_SIZE"] = "Кеш (макс)";
+$MESS["PERFMON_CACHE_MIN_CACHE_SIZE"] = "Кеш (хв)";
+$MESS["PERFMON_CACHE_SUM_CACHE_SIZE"] = "Кеш (сума)";
+$MESS["PERFMON_CACHE_AVG_CACHE_SIZE"] = "Кеш (середовищ)";
+$MESS["PERFMON_CACHE_HIT_RATIO"] = "Ефективність";
+$MESS["PERFMON_CACHE_MANAGED"] = "керований";
+$MESS["PERFMON_CACHE_UNMANAGED"] = "некерований";
+$MESS["PERFMON_CACHE_PAGE"] = "кеш";
+?>

@@ -1,0 +1,36 @@
+<?
+$MESS["HIDE_ON_BASKET_PAGES_TIP"] = "Опція дозволяє приховати компонент на сторінках кошика і оформлення замовлення. Рекомендується залишити цю опцію ввімкненою для уникнення зниження продуктивності на цих сторінках.";
+$MESS["PATH_TO_AUTHORIZE_TIP"] = "Поле необхідно заповнювати тільки в разі, коли необхідна окрема сторінка авторизації. Якщо поле не заповнити, буде використаний шлях до сторінці реєстрації";
+$MESS["PATH_TO_REGISTER_TIP"] = "Якщо поле не заповнено, шлях до сторінці реєстрації буде братися з налаштувань Головного модуля";
+$MESS["SBBL_AUTHOR"] = "Авторизація";
+$MESS["SBBL_HIDE_ON_BASKET_PAGES"] = "Не показувати на сторінках кошика і оформлення замовлення";
+$MESS["SBBL_LIST"] = "Список товарів";
+$MESS["SBBL_MAX_IMAGE_SIZE"] = "Максимальний розмір картинки товару";
+$MESS["SBBL_PATH_TO_AUTHORIZE"] = "Сторінка авторизації";
+$MESS["SBBL_PATH_TO_BASKET"] = "Сторінка кошика";
+$MESS["SBBL_PATH_TO_ORDER"] = "Сторінка оформлення замовлення";
+$MESS["SBBL_PATH_TO_PERSONAL"] = "Персональний розділ";
+$MESS["SBBL_PATH_TO_PROFILE"] = "Сторінка профілю";
+$MESS["SBBL_PATH_TO_REGISTER"] = "Сторінка реєстрації";
+$MESS["SBBL_PERSONAL"] = "Персональний розділ";
+$MESS["SBBL_POSITION_CENTER"] = "по центру";
+$MESS["SBBL_POSITION_FIXED"] = "Відображати кошик поверх шаблону";
+$MESS["SBBL_POSITION_HORIZONTAL"] = "Положення по горизонталі";
+$MESS["SBBL_POSITION_HORIZONTAL_LEFT"] = "зліва";
+$MESS["SBBL_POSITION_HORIZONTAL_RIGHT"] = "праворуч";
+$MESS["SBBL_POSITION_VERTICAL"] = "Положення по вертикалі";
+$MESS["SBBL_POSITION_VERTICAL_BOTTOM"] = "внизу";
+$MESS["SBBL_POSITION_VERTICAL_TOP"] = "вгорі";
+$MESS["SBBL_SHOW_AUTHOR"] = "Додати можливість авторизації";
+$MESS["SBBL_SHOW_DELAY"] = "Показувати відкладені товари";
+$MESS["SBBL_SHOW_EMPTY_VALUES"] = "Виводити нульові значення в порожній кошику";
+$MESS["SBBL_SHOW_IMAGE"] = "Виводити картинку товару";
+$MESS["SBBL_SHOW_NOTAVAIL"] = "Показувати товари, недоступні для покупки";
+$MESS["SBBL_SHOW_NUM_PRODUCTS"] = "Показувати кількість товарів";
+$MESS["SBBL_SHOW_PERSONAL_LINK"] = "Відображати персональний розділ";
+$MESS["SBBL_SHOW_PRICE"] = "Виводити ціну товару";
+$MESS["SBBL_SHOW_PRODUCTS"] = "Показувати список товарів";
+$MESS["SBBL_SHOW_REGISTRATION"] = "Додати можливість реєстрації";
+$MESS["SBBL_SHOW_SUMMARY"] = "Виводити подитог по рядку";
+$MESS["SBBL_SHOW_TOTAL_PRICE"] = "Показувати загальну суму по товарах";
+?>

@@ -1,0 +1,8 @@
+<?php
+$MESS["LOCATION_WIDGET_AUI_ADDRESS_APPLY"] = "Застосувати";
+$MESS["LOCATION_WIDGET_AUI_ADDRESS_CHANGED"] = "Адреса змінилася, попередня адреса";
+$MESS["LOCATION_WIDGET_AUI_ADDRESS_CHANGED_NEW_ADDRESS"] = "Адреса змінилася, нова адреса";
+$MESS["LOCATION_WIDGET_AUI_ADDRESS_RESTORE"] = "Повернути";
+$MESS["LOCATION_WIDGET_AUI_BRIEFLY"] = "коротко";
+$MESS["LOCATION_WIDGET_AUI_MORE"] = "детально";
+$MESS["LOCATION_WIDGET_AUI_UNKNOWN_ERROR"] = "Невідома помилка";

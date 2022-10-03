@@ -1,0 +1,29 @@
+<?
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не встановлений.";
+$MESS["CRM_SALE_MODULE_NOT_INSTALLED"] = "Модуль Sale не встановлений.";
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонено";
+$MESS["CRM_INTS_TASKS_NAV"] = "Записи";
+$MESS["CRM_PRODUCT_PROP_PL_ID"] = "ID";
+$MESS["CRM_PRODUCT_PROP_PL_NAME"] = "Назва";
+$MESS["CRM_PRODUCT_PROP_PL_CODE"] = "Символьний код";
+$MESS["CRM_PRODUCT_PROP_PL_SORT"] = "Сортування";
+$MESS["CRM_PRODUCT_PROP_PL_ACTIVE"] = "Активність";
+$MESS["CRM_PRODUCT_PROP_PL_PROPERTY_TYPE"] = "Тип";
+$MESS["CRM_PRODUCT_PROP_PL_MULTIPLE"] = "Множинне";
+$MESS["CRM_PRODUCT_PROP_PL_XML_ID"] = "Зовнішній код";
+$MESS["CRM_PRODUCT_PROP_PL_WITH_DESCRIPTION"] = "Має опис";
+$MESS["CRM_PRODUCT_PROP_PL_SEARCHABLE"] = "Пошук";
+$MESS["CRM_PRODUCT_PROP_PL_FILTRABLE"] = "Показувати у фільтрі";
+$MESS["CRM_PRODUCT_PROP_PL_IS_REQUIRED"] = "Обов'язкове";
+$MESS["CRM_PRODUCT_PROP_PL_HINT"] = "Підказка";
+$MESS["CRM_PRODUCT_PROP_PL_DELETE_ERROR"] = "Помилка видалення.";
+$MESS["CRM_PRODUCT_PROP_PL_SAVE_ERROR"] = "Помилка збереження запису ##ID#: #ERROR_TEXT#";
+$MESS["CRM_PRODUCT_PROP_IBLOCK_PROP_S"] = "Рядок";
+$MESS["CRM_PRODUCT_PROP_IBLOCK_PROP_N"] = "Число";
+$MESS["CRM_PRODUCT_PROP_IBLOCK_PROP_L"] = "Список";
+$MESS["CRM_PRODUCT_PROP_IBLOCK_PROP_F"] = "Файл";
+$MESS["CRM_PRODUCT_PROP_IBLOCK_PROP_G"] = "Прив'язка до розділів";
+$MESS["CRM_PRODUCT_PROP_IBLOCK_PROP_E"] = "Прив'язка до елементів";
+$MESS["CRM_PRODUCT_PROP_IBLOCK_ALL"] = "(будь-який)";
+$MESS["IBLOCK_MODULE_NOT_INSTALLED"] = "Модуль iblock не встановлений.";
+?>

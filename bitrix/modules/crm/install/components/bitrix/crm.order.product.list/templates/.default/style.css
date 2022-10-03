@@ -178,7 +178,7 @@
 	margin-top: -8px;
 	margin-bottom: 2px;
 	padding: 1px 5px;
-	width: 61px;
+	width: 90px;
 	height: 27px;
 	border: 1px solid #c6cdd3;
 	text-align: left;
@@ -188,6 +188,16 @@
 .crm-order-product-control-amount-desc {
 	color: rgba(83, 92, 105, 0.62);
 	font: 11px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.crm-order-product-control-price-field {
+	-moz-appearance: textfield;
+}
+
+.crm-order-product-control-price-field::-webkit-outer-spin-button,
+.crm-order-product-control-price-field::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
 }
 
 /*endregion*/
@@ -236,7 +246,8 @@
 	margin-bottom: 6px;
 	color: #535c69;
 	text-transform: uppercase;
-	font: 11px/12px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-order-product-control-discounts-list { padding-top: 15px; }
@@ -446,7 +457,8 @@
 	margin-bottom: 6px;
 	color: #535c69;
 	text-transform: uppercase;
-	font: 11px/12px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-order-promotional-code-box { padding-right: 10px; }

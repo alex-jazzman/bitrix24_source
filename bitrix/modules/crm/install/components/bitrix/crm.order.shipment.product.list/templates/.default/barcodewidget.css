@@ -15,7 +15,8 @@
 	height: 23px;
 	color: #525c69;
 	text-transform: uppercase;
-	font: 600 11px/23px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	white-space: nowrap;
 	overflow: hidden;
 	max-width: calc(100% - 30px);

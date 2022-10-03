@@ -2,7 +2,11 @@
 
 namespace Bitrix\MessageService\Providers\Edna\WhatsApp;
 
+use Bitrix\ImConnector\Library;
+use Bitrix\ImOpenLines\Im;
+use Bitrix\ImOpenLines\Session;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\MessageService\Providers;
 use Bitrix\MessageService\Sender\Result\MessageStatus;
@@ -103,6 +107,11 @@ class Sender extends Providers\Base\Sender
 
 	private function getSendMessageParams(array $messageFields): Result
 	{
+		if (!is_numeric($messageFields['MESSAGE_FROM']))
+		{
+			return (new Result())->addError(new Error('Invalid subject id'));
+		}
+
 		$messageFields['MESSAGE_BODY'] = $this->emoji->convertEmoji($messageFields['MESSAGE_BODY'], Constants::EMOJI_DECODE);
 
 		$cascadeResult = $this->getCascadeIdFromSubject($messageFields['MESSAGE_FROM']);
@@ -200,10 +209,8 @@ class Sender extends Providers\Base\Sender
 		];
 	}
 
-	protected function getCascadeIdFromSubject(string $subject): Result
+	protected function getCascadeIdFromSubject(int $subjectId): Result
 	{
-		$result = new Result();
-
 		$externalSender =
 			new ExternalSender(
 				$this->optionManager->getOption(Constants::API_KEY_OPTION),
@@ -217,6 +224,7 @@ class Sender extends Providers\Base\Sender
 			'limit' => 0
 		]);
 
+		$result = new Result();
 		if (!$apiResult->isSuccess())
 		{
 			$result->addErrors($apiResult->getErrors());
@@ -232,7 +240,7 @@ class Sender extends Providers\Base\Sender
 				continue;
 			}
 
-			if ($cascade['stages'][0]['subject']['subject'] === $subject)
+			if ($cascade['stages'][0]['subject']['id'] === $subjectId)
 			{
 				$result->setData(['cascadeId' => $cascade['id']]);
 
@@ -243,6 +251,76 @@ class Sender extends Providers\Base\Sender
 		$result->addError(new Error('not cascade'));
 
 		return $result;
+	}
+
+	protected function sendHSMtoChat(array $messageFields): void
+	{
+		if (!Loader::includeModule('imopenlines') || !Loader::includeModule('imconnector'))
+		{
+			return;
+		}
+
+		$externalChatId = str_replace('+', '', $messageFields['MESSAGE_TO']);
+		$userId = $this->getImconnectorUserId($externalChatId);
+		if (!$userId)
+		{
+			return;
+		}
+
+		$from = $messageFields['MESSAGE_FROM'];
+		$lineId = $this->utils->getLineId();
+		$userSessionCode = $this->getSessionUserCode($lineId, $externalChatId, $from, $userId);
+		$chatId = $this->getOpenedSessionChatId($userSessionCode);
+		if (!$chatId)
+		{
+			return;
+		}
+
+		Im::addMessage([
+			'TO_CHAT_ID' => $chatId,
+			'MESSAGE' => $this->utils->prepareTemplateMessageText($messageFields),
+			'SYSTEM' => 'Y',
+			'SKIP_COMMAND' => 'Y',
+			'NO_SESSION_OL' => 'Y',
+			'PARAMS' => [
+				'CLASS' => 'bx-messenger-content-item-ol-output'
+			],
+		]);
+	}
+
+	protected function getImconnectorUserId(string $externalChatId): ?string
+	{
+		$userXmlId = Library::ID_EDNA_WHATSAPP_CONNECTOR . '|' . $externalChatId;
+		$user = \Bitrix\Main\UserTable::getRow([
+			'select' => ['ID'],
+			'filter' => ['=XML_ID' => $userXmlId],
+		]);
+
+		return $user ? $user['ID'] : null;
+	}
+
+	protected function getSessionUserCode(string $lineId, string $externalChatId, string $from, string $userId): string
+	{
+		return Library::ID_EDNA_WHATSAPP_CONNECTOR. '|'. $lineId. '|'. $externalChatId. '@'. $from. '|' . $userId;
+	}
+
+	protected function getOpenedSessionChatId(string $userSessionCode): ?string
+	{
+		$session = new Session();
+		$sessionLoadResult = $session->getLast(['USER_CODE' => $userSessionCode]);
+		if (!$sessionLoadResult->isSuccess())
+		{
+			return null;
+		}
+		$sessionData = $session->getData();
+		$chatId = $sessionData['CHAT_ID'];
+		$closed = $sessionData['CLOSED'] === 'Y';
+		if ($closed)
+		{
+			return null;
+		}
+
+		return $chatId;
 	}
 
 

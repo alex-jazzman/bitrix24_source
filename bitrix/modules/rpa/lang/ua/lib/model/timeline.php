@@ -1,0 +1,7 @@
+<?
+$MESS["RPA_TIMELINE_TITLE_COMMENT"] = "Коментар";
+$MESS["RPA_TIMELINE_TITLE_FIELDS_CHANGE"] = "Поля змінені";
+$MESS["RPA_TIMELINE_TITLE_ITEM_CREATE"] = "Елемент доданий";
+$MESS["RPA_TIMELINE_TITLE_STAGE_CHANGE"] = "Стадія змінена";
+$MESS["RPA_TIMELINE_TITLE_TASK_COMPLETE"] = "Завдання виконано";
+?>

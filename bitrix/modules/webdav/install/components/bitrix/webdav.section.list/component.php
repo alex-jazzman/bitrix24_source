@@ -432,7 +432,7 @@ if ($bDialog)
 				ACTIONS
 ********************************************************************/
 $GLOBALS["APPLICATION"]->ResetException();
-$path = str_replace(array("\\", "//"), "/", dirname(__FILE__)."/action.php");
+$path = str_replace(array("\\", "//"), "/", __DIR__."/action.php");
 $result = include($path);
 if ($result !== true)
 {

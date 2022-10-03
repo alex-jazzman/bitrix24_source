@@ -1,5 +1,8 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
+
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 if ($this->__template_is_buffering === true)
 {
 	if ($this->__template->__page !== "menu")
@@ -9,7 +12,7 @@ if ($this->__template_is_buffering === true)
 	}
 	else
 	{
-		echo $this->__template_html; 
+		echo $this->__template_html;
 	}
 }
 ?>

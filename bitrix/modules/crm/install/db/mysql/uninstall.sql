@@ -68,7 +68,7 @@ DROP TABLE IF EXISTS b_crm_act_mail_body;
 DROP TABLE IF EXISTS b_crm_deal_category;
 DROP TABLE IF EXISTS b_crm_webform;
 DROP TABLE IF EXISTS b_crm_webform_counter;
-DROP TABLE IF EXISTS b_crm_webform_view;
+DROP TABLE IF EXISTS b_crm_webform_counter_daily;
 DROP TABLE IF EXISTS b_crm_webform_start_edit;
 DROP TABLE IF EXISTS b_crm_webform_field;
 DROP TABLE IF EXISTS b_crm_webform_field_dep;

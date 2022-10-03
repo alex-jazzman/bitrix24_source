@@ -1,0 +1,26 @@
+<?php
+$MESS["BPSGCA_ACCESS_DENIED"] = "Налаштування дії доступні тільки адміністраторам порталу.";
+$MESS["BPSGCA_EMPTY_VARIABLES"] = "Не вказано значення жодної глобальної змінної";
+$MESS["BPSGVA_ADD_PARAMETER"] = "+ додати параметр";
+$MESS["BPSGVA_ADD_VARIABLE"] = "+ додати змінну";
+$MESS["BPSGVA_BOOL_NO"] = "Ні";
+$MESS["BPSGVA_BOOL_YES"] = "Так";
+$MESS["BPSGVA_CLEAR"] = "Очистити";
+$MESS["BPSGVA_CREATE_GCONSTANT"] = "Створити константу";
+$MESS["BPSGVA_CREATE_GCONSTANT_QUESTION"] = "Створити нову константу?";
+$MESS["BPSGVA_CREATE_GVARIABLE"] = "Створити змінну";
+$MESS["BPSGVA_CREATE_GVARIABLE_QUESTION"] = "Створити нову змінну?";
+$MESS["BPSGVA_DOCUMENT"] = "Значення поля";
+$MESS["BPSGVA_EMPTY"] = "Не обрано";
+$MESS["BPSGVA_GCONSTANT_NOT_FOUND"] = "Константа не знайдена";
+$MESS["BPSGVA_GCONSTANT_NO_EXIST"] = "Констант поки що немає";
+$MESS["BPSGVA_GLOBAL_CONST"] = "Глобальні константи";
+$MESS["BPSGVA_GLOBAL_VAR"] = "Глобальні змінні";
+$MESS["BPSGVA_GVARIABLE_NOT_FOUND"] = "Змінна не знайдена";
+$MESS["BPSGVA_GVARIABLE_NO_EXIST"] = "Змінних поки що немає";
+$MESS["BPSGVA_INPUT_TEXT"] = "Введіть значення";
+$MESS["BPSGVA_LIST_OF_VALUES"] = "Список значень";
+$MESS["BPSGVA_PARAMETER"] = "Обрати параметр";
+$MESS["BPSGVA_TEXT"] = "Своє значення";
+$MESS["BPSGVA_TYPE_OF_PARAMETER"] = "Тип параметра";
+$MESS["BPSGVA_VARIABLE"] = "Обрати змінну";

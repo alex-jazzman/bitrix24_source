@@ -17,7 +17,7 @@
 
 .crm-entity-stream-advice-inner {
 	padding-top: 20px;
-	margin-top: 20px;
+	margin-top: 12px;
 	border-top: 1px solid rgba(82,92,105,.1);
 }
 
@@ -31,7 +31,6 @@
 .crm-entity-stream-advice-list {
     padding: 0;
     margin: 0;
-	max-height: 150px;
 	transition: max-height .5s linear;
 }
 

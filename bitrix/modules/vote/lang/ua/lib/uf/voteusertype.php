@@ -1,0 +1,33 @@
+<?
+$MESS["V_USER_TYPE_DESCRIPTION"] = "Опитування";
+$MESS["V_NEW_CHANNEL"] = "Нова група опитувань";
+$MESS["V_CHANNEL_ID_COLON"] = "Група опитувань:";
+$MESS["V_CHANNEL_ID_EDIT"] = "змінити";
+$MESS["V_CHANNEL_ID_TITLE"] = "Заголовок:";
+$MESS["V_CHANNEL_ID_SYMBOLIC_NAME"] = "Символьний ідентифікатор:";
+$MESS["V_CHANNEL_ID_USE_CAPTCHA"] = "використовувати CAPTCHA";
+$MESS["V_UNIQUE_SESSION"] = "в одній сесії";
+$MESS["V_UNIQUE_COOKIE_ONLY"] = "з одним cookie";
+$MESS["V_UNIQUE_IP_ONLY"] = "з однієї IP";
+$MESS["V_UNIQUE_USER_ID_ONLY"] = "з одним ID користувача";
+$MESS["V_UNIQUE_IP_DELAY"] = "Не голосувати двічі з однієї IP протягом:";
+$MESS["V_UNIQUE"] = "Не голосувати двічі:";
+$MESS["V_UNIQUE_USER_ID_NEW"] = "Заборонити голосування користувачам, зареєстрованих після дати початку опитування";
+$MESS["V_SECONDS"] = "секунд";
+$MESS["V_MINUTES"] = "хвилин";
+$MESS["V_HOURS"] = "годин";
+$MESS["V_DAYS"] = "днів";
+$MESS["VT_UNKNOWN_ERROR_ADD_VOTE"] = "Невідома помилка (опитування).";
+$MESS["VOTE_NOTIFY"] = "Сповіщати автора опитування про голос:";
+$MESS["VOTE_NOTIFY_IM"] = "Так, за допомогою повідомлення (Модуль \"Веб-месенджер (im)\")";
+$MESS["VOTE_NOTIFY_EMAIL"] = "Так, за допомогою e-mail листа";
+$MESS["VOTE_NOTIFY_N"] = "Ні, не сповіщати";
+$MESS["VOTE_VOTES"] = "Голосів: ";
+$MESS["VOTE_EDIT_TITLE"] = "Змінити параметри опитування";
+$MESS["VOTE_ACTIVE_RED_LAMP"] = "Закінчився термін показу.";
+$MESS["VOTE_NOT_ACTIVE"] = "Опитування не активне.";
+$MESS["VOTE_IS_NOT_EXPECTED"] = "Опитування не співпадає зі збереженим.";
+$MESS["VOTE_IS_NOT_FOUND"] = "Опитування не знайдене.";
+$MESS["VOTE_EDIT_ACCESS_IS_DENIED"] = "Немає прав на зміну опитування.";
+$MESS["VOTE_READ_ACCESS_IS_DENIED"] = "Немає прав на читання опитування.";
+?>

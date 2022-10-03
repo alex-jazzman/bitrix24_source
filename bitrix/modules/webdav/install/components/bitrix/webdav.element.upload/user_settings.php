@@ -18,8 +18,6 @@ if(!function_exists("__UnEscape"))
 array_walk($_REQUEST, '__UnEscape');
 if (check_bitrix_sessid() && $GLOBALS["USER"]->IsAuthorized())
 {
-	require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/".mb_strtolower($GLOBALS["DB"]->type)."/favorites.php");
-	
 	$UploadViewMode = CUserOptions::GetOption("webdav", "upload_settings", '');
 	$UploadViewMode = @unserialize($UploadViewMode, ['allowed_classes' => false]);
 

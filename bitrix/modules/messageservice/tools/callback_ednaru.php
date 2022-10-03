@@ -64,10 +64,11 @@ else if (isset($messageFields['userInfo']) && Loader::includeModule('imconnector
 	{
 		\Bitrix\Main\Application::getInstance()->terminate();
 	}
+	$messageFields['internalId'] = $addResult->getId();
 
 	Application::getInstance()->addBackgroundJob(
 		[EdnaRuIncomingMessage::class, 'sendMessageToChat'],
-		[$addResult->getId()],
+		[$messageFields],
 		Application::JOB_PRIORITY_NORMAL
 	);
 

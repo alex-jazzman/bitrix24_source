@@ -20,7 +20,8 @@ Extension::load([
 	'ui.notification',
 	'dd',
 	'ui.popup',
-	'crm.restriction.bitrix24'
+	'crm.restriction.bitrix24',
+	'ui.fonts.opensans',
 ]);
 
 ?>

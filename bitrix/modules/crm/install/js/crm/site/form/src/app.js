@@ -349,11 +349,6 @@ class Application
 		});
 	}
 
-	static #createButton(b24options: B24Options): HTMLElement
-	{
-		
-	}
-
 	getAnalyticsSender(b24options)
 	{
 		return (counter: string, formId: string) =>

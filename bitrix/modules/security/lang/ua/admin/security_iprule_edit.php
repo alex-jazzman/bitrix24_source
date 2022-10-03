@@ -1,0 +1,31 @@
+<?
+$MESS["SEC_IP_EDIT_TAB"] = "Правило";
+$MESS["SEC_IP_EDIT_TAB_TITLE"] = "Редагування правила блокування IP";
+$MESS["SEC_IP_EDIT_SAVE_ERROR"] = "Помилка збереження правила";
+$MESS["SEC_IP_EDIT_EDIT_TITLE"] = "Редагування правила";
+$MESS["SEC_IP_EDIT_ADD_TITLE"] = "Нове правило";
+$MESS["SEC_IP_EDIT_MENU_LIST"] = "Список";
+$MESS["SEC_IP_EDIT_MENU_LIST_TITLE"] = "Список правил блокування";
+$MESS["SEC_IP_EDIT_MENU_ADD"] = "Додати";
+$MESS["SEC_IP_EDIT_MENU_ADD_TITLE"] = "Додати нове правило";
+$MESS["SEC_IP_EDIT_MENU_DELETE"] = "Видалити";
+$MESS["SEC_IP_EDIT_MENU_DELETE_TITLE"] = "Видалити правило";
+$MESS["SEC_IP_EDIT_MENU_DELETE_CONF"] = "Ви впевнені, що бажаєте видалити правило?";
+$MESS["SEC_IP_EDIT_ID"] = "ID";
+$MESS["SEC_IP_EDIT_ACTIVE"] = "Активність";
+$MESS["SEC_IP_EDIT_ADMIN_SECTION"] = "Діє для сторінок адміністративного розділу";
+$MESS["SEC_IP_EDIT_SITE_ID"] = "Діє для сторінок публічної частини сайту";
+$MESS["SEC_IP_EDIT_SORT"] = "Сортування";
+$MESS["SEC_IP_EDIT_NAME"] = "Назва";
+$MESS["SEC_IP_EDIT_ACTIVE_FROM"] = "Початок активності";
+$MESS["SEC_IP_EDIT_ACTIVE_TO"] = "Закінчення активності";
+$MESS["SEC_IP_EDIT_INCL_IPS"] = "IP-адреси та діапазони адрес, які будуть заблоковані";
+$MESS["SEC_IP_EDIT_INCL_IPS_SAMPLE"] = "Наприклад: 192.168.0.7 или 192.168.0.1-192.168.0.100";
+$MESS["SEC_IP_EDIT_EXCL_IPS"] = "Винятки IP із заблокованих";
+$MESS["SEC_IP_EDIT_INCL_MASKS"] = "Маски шляхів, доступ до яких буде заблоковано";
+$MESS["SEC_IP_EDIT_INCL_MASKS_SAMPLE"] = "Наприклад: /* или /bitrix/admin/*";
+$MESS["SEC_IP_EDIT_EXCL_MASKS"] = "Винятки масок шляхів";
+$MESS["SEC_IP_EDIT_ROW_ADD"] = "Додати";
+$MESS["SEC_IP_EDIT_SAVE_ERROR_EMPTY_INCL_IPS"] = "Ви не вказали IP-адреси, які будуть заблоковані";
+$MESS["SEC_IP_EDIT_SAVE_ERROR_EMPTY_INCL_MASKS"] = "Ви не вказали маски шляхів, доступ до яких буде заблокований";
+?>

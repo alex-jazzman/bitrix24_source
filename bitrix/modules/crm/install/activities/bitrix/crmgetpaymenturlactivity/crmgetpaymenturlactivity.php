@@ -92,6 +92,11 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 
 	private function getUrlByDealId(int $dealId): ?string
 	{
+		if (!Main\Loader::includeModule('salescenter'))
+		{
+			return null;
+		}
+
 		$payment = $this->createPayment($dealId);
 		if (!$payment)
 		{
@@ -108,6 +113,11 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 
 	private function createPayment(int $dealId) :? Order\Payment
 	{
+		if (!Main\Loader::includeModule('salescenter'))
+		{
+			return null;
+		}
+
 		$deal = CCrmDeal::GetByID($dealId, false);
 		if (!$deal)
 		{

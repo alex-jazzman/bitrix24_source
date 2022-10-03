@@ -6,7 +6,7 @@
 <html>
 	<head>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<?php echo CJSCore::GetHTML(array('ajax', 'viewer')); ?>
+		<?php echo CJSCore::GetHTML(array('ui.design-tokens', 'ajax', 'viewer')); ?>
 		<?//$APPLICATION->ShowHead();?>
 		<style>
 		</style>

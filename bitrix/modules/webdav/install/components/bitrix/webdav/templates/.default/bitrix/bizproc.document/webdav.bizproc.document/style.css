@@ -1,8 +1,8 @@
 ul.bizproc-list, ul.bizproc-list li{
-	margin: 0; 
-	padding: 0; 
-	border: none; 
-	font-size: 100%; 
+	margin: 0;
+	padding: 0;
+	border: none;
+	font-size: 100%;
 	list-style-type: none;}
 ul.bizproc-document-states{
 	border:1px solid #CFCFCF;
@@ -20,7 +20,7 @@ ul.bizproc-document-states li.bizproc-document-start{
 	height:35px!important;
 	overflow:hidden;}
 ul.bizproc-document-states li.bizproc-document-start td, ul.bizproc-document-states li.bizproc-item-buttons td{
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	height:35px!important;
 	overflow:hidden;}
 ul.bizproc-document-states li.bizproc-item-buttons{

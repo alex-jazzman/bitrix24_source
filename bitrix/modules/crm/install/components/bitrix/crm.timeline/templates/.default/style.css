@@ -25,7 +25,8 @@
 	max-width: 500px;
 	color: #555c6d;
 	text-align: center;
-	font: 20px/31px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 20px/31px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-stream-container-empty-list {
@@ -203,7 +204,8 @@
 	content: "1";
 	vertical-align: middle;
 	text-align: center;
-	font: bold 9px/12px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 9px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-stream-section-icon-IM { background-position: center 0; }
@@ -481,6 +483,7 @@
 	position: relative;
 	padding: 8px 50px 10px 15px;
 	transition: all 300ms ease, 1000ms background-color linear;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-entity-stream-section-planned .crm-entity-stream-content-event { padding-left: 35px; }
@@ -754,7 +757,8 @@
 	margin-right: 15px;
 	padding: 0 15px 0 13px;
 	color: #fff;
-	font: 25px/40px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 25px/40px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-stream-content-detail-payment-value:before {
@@ -891,7 +895,8 @@
 
 .crm-entity-stream-content-detail-cost-prev span,
 .crm-entity-stream-content-detail-cost-current span {
-	font-family: 'rubleBitrix', 'OpenSans';
+	font-family: 'rubleBitrix', var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	vertical-align: middle;
 }
 
@@ -946,7 +951,8 @@
 	border-bottom: 2px solid transparent;
 	color: #555c6d !important;
 	vertical-align: middle;
-	font: 14px/47px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/47px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	cursor: pointer;
 	transition: all 300ms ease;
 }
@@ -1162,7 +1168,8 @@
 	left: 15px;
 	border-bottom: 1px dashed;
 	vertical-align: middle;
-	font: 400 13px/17px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transform: translateY(-50%);
 }
 
@@ -1175,7 +1182,8 @@
 	color: #b0b7bd;
 	vertical-align: middle;
 	text-align: right;
-	font: 400 12px/16px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transform: translateY(-50%);
 }
 
@@ -1243,7 +1251,8 @@
 	top: 50%;
 	right: 15px;
 	transform: translateY(-50%);
-	font: 400 13px/17px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-stream-content-sms-file-icon,
@@ -1321,7 +1330,8 @@
 	position: relative;
 }
 .crm-entity-stream-content-sms-file-external-link-popup-limit-desc-text {
-	font: 16px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525c69;
 }
 .crm-entity-stream-content-sms-file-external-link-popup-limit-desc-number {
@@ -1884,7 +1894,8 @@
 	border-radius: 8px;
 	background: #2fc6f6 no-repeat 8px center url(images/live-im.svg);
 	color: #fff;
-	font: 9px/16px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 9px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-stream-live-im-message-show {
@@ -2744,7 +2755,8 @@ table.blogquote td {
 }
 
 .crm-entity-stream-filter-empty-text {
-	font: 18px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #a8adb4;
 	max-width: 360px;
 	text-align: center;
@@ -3668,7 +3680,8 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	line-height: 41px;
 	background: #177ce2;
 	border-radius: 24px;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 15px;
 	color: #fff;
 }
@@ -3717,7 +3730,8 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	height: 41px;
 	background: #177ce2;
 	border-radius: 24px;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 15px;
 	color: #fff;
 	line-height: 41px;
@@ -3776,7 +3790,8 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	border: 1px solid rgba(130,139,149,.21);
 	border-radius: 2px;
 	align-self: center;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 13px;
 	color: #333;
 	line-height: 14px;

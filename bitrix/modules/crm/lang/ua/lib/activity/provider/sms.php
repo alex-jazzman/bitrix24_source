@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_ACTIVITY_PROVIDER_SMS_INCOMING"] = "Вхідне SMS повідомлення";
+$MESS["CRM_ACTIVITY_PROVIDER_SMS_NAME"] = "SMS-повідомлення";
+$MESS["CRM_ACTIVITY_PROVIDER_SMS_OUTGOING"] = "Вихідне SMS повідомлення";
+$MESS["CRM_ACTIVITY_PROVIDER_SMS_SALESCENTER_DELIVERY_NAME"] = "SMS-повідомлення про доставку товарів";
+$MESS["CRM_ACTIVITY_PROVIDER_SMS_SALESCENTER_PAYMENT_SENT_NAME"] = "SMS-повідомлення про відправку оплати";

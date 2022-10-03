@@ -1,5 +1,5 @@
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
-$file = trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/lang/".LANGUAGE_ID."/iblock_e_rights.php")));
+$file = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/lang/".LANGUAGE_ID."/iblock_e_rights.php")));
 __IncludeLang($file);
 $iblock_id = intval($_REQUEST["IBLOCK_ID"]);
 

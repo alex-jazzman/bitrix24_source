@@ -821,6 +821,38 @@ abstract class OrderBase extends Internals\Entity
 	}
 
 	/**
+	 * Change order currency.
+	 *
+	 * @param string $currency
+	 *
+	 * @return Main\Result
+	 */
+	public function changeCurrency(string $currency): Main\Result
+	{
+		$result = new Main\Result();
+
+		if ($this->getCurrency() === $currency)
+		{
+			return $result;
+		}
+
+		$this->setFieldNoDemand('CURRENCY', $currency);
+
+		foreach ($this->getBasket() as $basketItem)
+		{
+			/**
+			 * @var BasketItem $basketItem
+			 */
+
+			$result->addErrors(
+				$basketItem->changeCurrency($currency)->getErrors()
+			);
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Return user id
 	 *
 	 * @return int

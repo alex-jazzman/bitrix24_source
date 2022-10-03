@@ -1,0 +1,29 @@
+<?
+$MESS["CONFIG_VM_HEADER_SETTINGS"] = "Налаштування";
+$MESS["CONFIG_VM_SMTP_TITLE"] = "Налаштування пошти";
+$MESS["CONFIG_VM_SMTP_HOST"] = "Сервер Smtp";
+$MESS["CONFIG_VM_SMTP_PORT"] = "Порт Smtp";
+$MESS["CONFIG_VM_SMTP_USER"] = "Логін користувача Smtp";
+$MESS["CONFIG_VM_SMTP_PASSWORD"] = "Пароль користувача";
+$MESS["CONFIG_VM_SMTP_REPEAT_PASSWORD"] = "Повторіть пароль";
+$MESS["CONFIG_VM_SMTP_EMAIL"] = "Адреса email";
+$MESS["CONFIG_VM_SMTP_TLS"] = "Використовувати TLS";
+$MESS["CONFIG_VM_SMTP_AUTH"] = "Використовувати аутентифікацію";
+$MESS["CONFIG_VM_SMTP_ERROR"] = "Помилка у налаштуваннях пошти";
+$MESS["CONFIG_VM_SAVE_SUCCESSFULLY"] = "Налаштування успішно оновлені";
+$MESS["CONFIG_VM_BXENV_UPDATE"] = "Вам необхідно оновити віртуальну машину.";
+$MESS["CONFIG_VM_BXENV_UPDATE_ARTICLE_ID"] = "6193897";
+$MESS["CONFIG_VM_CERTIFICATE_TITLE"] = "Налаштування сертифіката";
+$MESS["CONFIG_VM_CERTIFICATE_TYPE"] = "Тип сертифіката";
+$MESS["CONFIG_VM_CERTIFICATE_LETS_ENCRYPT_CONF"] = "Налаштування сертифіката Let's Encrypt";
+$MESS["CONFIG_VM_CERTIFICATE_SELF_CONF"] = "Налаштування власного сертифіката";
+$MESS["CONFIG_VM_CERTIFICATE_LETS_ENCRYPT_EMAIL"] = "Поштова адреса для сповіщень";
+$MESS["CONFIG_VM_CERTIFICATE_LETS_ENCRYPT_DNS"] = "DNS імена, для яких буде дійсний сертифікат";
+$MESS["CONFIG_VM_CERTIFICATE_SELF_KEY_PATH"] = "Шлях до закритого ключа";
+$MESS["CONFIG_VM_CERTIFICATE_SELF_PATH"] = "Шлях до сертифікату";
+$MESS["CONFIG_VM_CERTIFICATE_SELF_PATH_CHAIN"] = "Шлях до ланцюжка сертифікатів";
+$MESS["CONFIG_VM_SAVE"] = "Зберегти";
+$MESS["CONFIG_VM_START"] = "Почати";
+$MESS["CONFIG_VM_UPLOAD"] = "Завантажити";
+$MESS["CONFIG_VM_CERTIFICATE_PROCESS"] = "Виконується налаштування сертифіката. Це може зайняти кілька хвилин.";
+?>

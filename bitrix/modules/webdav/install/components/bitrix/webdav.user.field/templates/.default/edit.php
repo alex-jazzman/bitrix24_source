@@ -1,5 +1,5 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 CJSCore::Init(array('wdfiledialog', 'ajax', 'dd'));
 //$APPLICATION->AddHeadScript("/bitrix/js/webdav/selectfiledialog.js");
@@ -43,7 +43,7 @@ $previewImg =  preg_replace("/[\n\t]+/", "", $previewImg);
 $sValues = '[]';
 $arValue = $arParams['PARAMS']['arUserField']['VALUE'];
 
-$path = str_replace(array("\\", "//"), "/", dirname(__FILE__)."/functions.php");
+$path = str_replace(array("\\", "//"), "/", __DIR__."/functions.php");
 include_once($path);
 ?>
 <script type="text/javascript">

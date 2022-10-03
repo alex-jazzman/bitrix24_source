@@ -1,0 +1,8 @@
+<?
+$MESS["TASKS_PERSON_NAME_FORMAT_DEFAULT"] = "За замовчуванням";
+$MESS["TASKS_PERSON_NAME_FORMAT_HONORIFIC_LAST"] = "пан Петренко";
+$MESS["TASKS_PERSON_NAME_FORMAT_FIRST_LAST"] = "Іван Петренко";
+$MESS["TASKS_PERSON_NAME_FORMAT_FIRST_SECOND_LAST"] = "Іван Миколайович Петренко";
+$MESS["TASKS_PERSON_NAME_FORMAT_LAST_FIRST"] = "Петренко Іван";
+$MESS["TASKS_PERSON_NAME_FORMAT_LAST_FIRST_SECOND"] = "Петренко Іван Миколайович";
+?>

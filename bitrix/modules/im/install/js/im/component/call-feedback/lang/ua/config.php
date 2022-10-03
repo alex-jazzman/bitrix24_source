@@ -1,0 +1,17 @@
+<?php
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_CHOOSE_ISSUE"] = "Оберіть проблему, якщо потрібно";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_FILLED"] = "Ваша оцінка успішно відправлена в Бітрікс24!";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_AUDIO_QUALITY"] = "Проблеми з якістю звуку";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_CALL_INTERFACE_PROBLEM"] = "Проблема з інтерфейсом дзвінка";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_CANT_HEAR_EACH_OTHER"] = "Проблема зі звуком, співрозмовники не чують один одного";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_CANT_SEE_EACH_OTHER"] = "Учасники не бачили один одного";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_DESCRIPTION"] = "Опишіть проблему";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_GOT_DISCONNECTED"] = "Мене викинуло із дзвінка";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_OTHER"] = "Інше";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_RECORDING_PROBLEM"] = "Не починається запис дзвінка";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_SCREEN_SHARING_PROBLEM"] = "Не працює демонстрація екрану";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_ISSUE_VIDEO_QUALITY"] = "Погана якість відео";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_NO_ISSUE"] = "Не було проблем";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_RATE_QUALITY"] = "Оцініть якість зв'язку";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_SEND"] = "Надіслати";
+$MESS["BX_IM_COMPONENT_CALL_FEEDBACK_VIDEOCALL_FINISHED"] = "Відеодзвінок завершений";

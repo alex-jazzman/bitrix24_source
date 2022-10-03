@@ -1,0 +1,22 @@
+<?php
+$MESS["CANCEL_CONDUCT_BUTTON"] = "Скасувати проведення";
+$MESS["CONDUCT_BUTTON"] = "Провести документ";
+$MESS["DOCUMENT_ADD_CONTRACTOR"] = "Створити постачальника:";
+$MESS["DOCUMENT_ADD_CONTRACTOR_ERROR"] = "При створенні постачальника виникла помилка";
+$MESS["DOCUMENT_CONDUCT_SUCCESSFUL"] = "Документ успішно проведено";
+$MESS["DOCUMENT_CONDUCT_SUCCESSFUL_VIEW"] = "Переглянути";
+$MESS["DOCUMENT_CONTRACTOR_FIELD_PLACEHOLDER"] = "Знайти або створити постачальника";
+$MESS["DOCUMENT_CONTRACTOR_NOT_FILLED"] = "не заповнено";
+$MESS["DOCUMENT_FIRST_TIME_HINT_TEXT"] = "Складський облік починається з документа \"Оприбуткування товару\".<br/> Потрібно створити прибуття? Просто змініть тут тип документа";
+$MESS["DOCUMENT_FIRST_TIME_HINT_TITLE"] = "Тип документа";
+$MESS["DOCUMENT_LINK_COPIED"] = "Посилання на документ скопійовано в буфер обміну";
+$MESS["DOCUMENT_PRODUCTS_ADD_PRODUCT"] = "додати товари";
+$MESS["DOCUMENT_PRODUCTS_NOT_SHOWN"] = "Ще #COUNT#";
+$MESS["DOCUMENT_PRODUCTS_TOTAL"] = "Разом";
+$MESS["FEEDBACK_BUTTON_TITLE"] = "Зворотний зв'язок";
+$MESS["SAVE_AND_CONDUCT_BUTTON"] = "Зберегти та провести";
+$MESS["SLIDER_LABEL_A"] = "Прибуття";
+$MESS["SLIDER_LABEL_D"] = "Списання";
+$MESS["SLIDER_LABEL_M"] = "Переміщення";
+$MESS["SLIDER_LABEL_S"] = "Оприбуткування";
+$MESS["SLIDER_LABEL_W"] = "Реалізація";

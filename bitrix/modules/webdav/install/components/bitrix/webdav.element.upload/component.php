@@ -395,9 +395,9 @@ $arParams["BIZPROC"] = array(
 ********************************************************************/
 $GLOBALS["APPLICATION"]->ResetException();
 if ($ob->Type == "iblock")
-	$path = str_replace(array("\\", "//"), "/", dirname(__FILE__)."/action_iblock.php");
+	$path = str_replace(array("\\", "//"), "/", __DIR__."/action_iblock.php");
 else
-	$path = str_replace(array("\\", "//"), "/", dirname(__FILE__)."/action_file.php");
+	$path = str_replace(array("\\", "//"), "/", __DIR__."/action_file.php");
 $result = include($path);
 if ($result !== true)
 {

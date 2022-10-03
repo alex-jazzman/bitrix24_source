@@ -1,0 +1,16 @@
+<?
+$MESS["CRM_ACTIVITY_CALL_LIST_ACTIVITY_CREATED"] = "Справу обдзвону створено";
+$MESS["CRM_ACTIVITY_CALL_LIST_ACTIVITY_CREATED_TEXT"] = "Ви можете перейти до редагування справи";
+$MESS["CRM_ACTIVITY_CALL_LIST_ACTIVITY_GOTO"] = "Перейти до справи";
+$MESS["CRM_ACTIVITY_CALL_LIST_CREATE_FROM"] = "Створити список з";
+$MESS["CRM_ACTIVITY_CALL_LIST_CREATE_FROM_COMPANIES"] = "Компанії";
+$MESS["CRM_ACTIVITY_CALL_LIST_CREATE_FROM_CONTACTS"] = "Контакти";
+$MESS["CRM_ACTIVITY_CALL_LIST_CREATE_FROM_LEADS"] = "Ліди";
+$MESS["CRM_ACTIVITY_CALL_LIST_CREATE_TAB_FILTER_PARAMS"] = "Параметри відбору";
+$MESS["CRM_ACTIVITY_CALL_LIST_DESCRIPTION"] = "Доручення на обдзвін";
+$MESS["CRM_ACTIVITY_CALL_LIST_DESCRIPTION_PLACEHOLDER"] = "Опишіть менеджеру подробиці справи";
+$MESS["CRM_ACTIVITY_CALL_LIST_LABEL"] = "Список викликів";
+$MESS["CRM_ACTIVITY_CALL_LIST_SUBJECT"] = "Тема викликів";
+$MESS["CRM_ACTIVITY_CALL_LIST_SUBJECT_PLACEHOLDER"] = "Назва справи для менеджера";
+$MESS["CRM_CALL_LIST_FILTER"] = "фільтром";
+?>

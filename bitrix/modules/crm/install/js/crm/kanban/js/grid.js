@@ -2290,16 +2290,18 @@ BX.CRM.Kanban.Grid.prototype = {
 					"required_fm",
 					itemData.required_fm
 				);
-				if (eventParams.entityData["OPPORTUNITY"])
+
+				// @todo #015661 it may be necessary to rollback commit after merging with mobile/crm
+				if (eventParams.entityData["OPPORTUNITY_ACCOUNT"])
 				{
-					this.itemMoving.price = parseFloat(eventParams.entityData["OPPORTUNITY"]);
+					this.itemMoving.price = parseFloat(eventParams.entityData["OPPORTUNITY_ACCOUNT"]);
 					this.itemMoving.item.setDataKey(
 						"price",
 						this.itemMoving.price
 					);
 					this.itemMoving.item.setDataKey(
 						"price_formatted",
-						eventParams.entityData["FORMATTED_OPPORTUNITY_WITH_CURRENCY"]
+						eventParams.entityData["FORMATTED_OPPORTUNITY_ACCOUNT_WITH_CURRENCY"]
 					);
 				}
 			}

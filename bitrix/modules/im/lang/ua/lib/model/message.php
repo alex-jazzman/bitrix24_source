@@ -1,0 +1,18 @@
+<?
+$MESS["MESSAGE_ENTITY_ID_FIELD"] = "Унікальний ідентифікатор";
+$MESS["MESSAGE_ENTITY_CHAT_ID_FIELD"] = "Ідентифікатор чату";
+$MESS["MESSAGE_ENTITY_AUTHOR_ID_FIELD"] = "Автор";
+$MESS["MESSAGE_ENTITY_MESSAGE_FIELD"] = "Повідомлення";
+$MESS["MESSAGE_ENTITY_MESSAGE_OUT_FIELD"] = "Форматоване повідомлення";
+$MESS["MESSAGE_ENTITY_DATE_CREATE_FIELD"] = "Час створення";
+$MESS["MESSAGE_ENTITY_EMAIL_TEMPLATE_FIELD"] = "Поштовий шаблон";
+$MESS["MESSAGE_ENTITY_NOTIFY_TYPE_FIELD"] = "Тип нотифікації";
+$MESS["MESSAGE_ENTITY_NOTIFY_MODULE_FIELD"] = "Модуль нотифікації";
+$MESS["MESSAGE_ENTITY_NOTIFY_EVENT_FIELD"] = "Поле події";
+$MESS["MESSAGE_ENTITY_NOTIFY_TAG_FIELD"] = "Тег нотифікації";
+$MESS["MESSAGE_ENTITY_NOTIFY_SUB_TAG_FIELD"] = "Додатковий тег нотифікації";
+$MESS["MESSAGE_ENTITY_NOTIFY_TITLE_FIELD"] = "Заголовок";
+$MESS["MESSAGE_ENTITY_NOTIFY_BUTTONS_FIELD"] = "Кнопки";
+$MESS["MESSAGE_ENTITY_NOTIFY_READ_FIELD"] = "Прочитано";
+$MESS["MESSAGE_ENTITY_IMPORT_ID_FIELD"] = "Зовнішній ідентифікатор";
+?>

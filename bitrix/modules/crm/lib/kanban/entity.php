@@ -629,7 +629,7 @@ abstract class Entity
 		return 'STATUS_ID';
 	}
 
-	public function getCurrency(): string
+	public function getCurrency(): ?string
 	{
 		return \CCrmCurrency::GetAccountCurrencyID();
 	}

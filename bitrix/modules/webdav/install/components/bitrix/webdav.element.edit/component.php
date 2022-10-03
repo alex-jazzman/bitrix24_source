@@ -317,7 +317,7 @@ if (
 	)
 )
 {
-	$result = include(str_replace(array("\\", "//"), "/", dirname(__FILE__)."/action.php"));
+	$result = include(str_replace(array("\\", "//"), "/", __DIR__."/action.php"));
 	if ($result !== true)
 	{
 		$bVarsFromForm = true;

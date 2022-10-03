@@ -2,7 +2,7 @@
 if (!$GLOBALS["USER"]->IsAuthorized())
 	return true;
 
-$file = trim(preg_replace("'[\\\\/]+'", "/", (dirname(__FILE__)."/lang/".LANGUAGE_ID."/informer.php")));
+$file = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/lang/".LANGUAGE_ID."/informer.php")));
 __IncludeLang($file);
 $url_help = trim($url_help);
 $url_base = trim($url_base);
@@ -13,7 +13,6 @@ $arParams["SHOW_NOTE"] .= str_replace(
 		$url_base."'); return false;\">".$url_base."</a>", $url_help),
 	GetMessage("WD_HELP_TEXT"));
 
-require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/".mb_strtolower($GLOBALS["DB"]->type)."/favorites.php");
 $arText = array(
 	"note_1" => $arParams["SHOW_NOTE"], 
 	"note_2" => str_replace("#HREF#", $url_help, GetMessage("NOTE_2")), 

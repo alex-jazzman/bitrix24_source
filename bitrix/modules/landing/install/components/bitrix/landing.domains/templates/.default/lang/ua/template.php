@@ -1,0 +1,12 @@
+<?
+$MESS["LANDING_TPL_TITLE"] = "Список доменів";
+$MESS["LANDING_TPL_COL_ACTIVE"] = "Акт.";
+$MESS["LANDING_TPL_COL_ACT_Y"] = "Так";
+$MESS["LANDING_TPL_COL_ACT_N"] = "Ні";
+$MESS["LANDING_TPL_COL_DOMAIN"] = "Домен";
+$MESS["LANDING_TPL_COL_CREATED"] = "Створено";
+$MESS["LANDING_TPL_COL_MODIFIED"] = "Змінено";
+$MESS["LANDING_TPL_ACTION_EDIT"] = "Змінити";
+$MESS["LANDING_TPL_ACTION_DELETE"] = "Видалити";
+$MESS["LANDING_TPL_ACTION_ADD"] = "Новий";
+?>

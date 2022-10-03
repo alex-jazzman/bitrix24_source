@@ -17,6 +17,7 @@ use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UI\PageNavigation;
 
 class Item extends Base
@@ -816,16 +817,17 @@ class Item extends Base
 			return null;
 		}
 		$value = $item->get($fieldName);
-		if(
-			($value === $fileId)
-			||
-			(
-				is_array($value)
-				&& in_array($fileId, $value, true)
-			)
-		)
+		if ((int)$value === $fileId && $fileId > 0)
 		{
 			return BFile::createByFileId($fileId);
+		}
+		if (is_array($value))
+		{
+			Collection::normalizeArrayValuesByInt($value);
+			if (in_array($fileId, $value, true))
+			{
+				return BFile::createByFileId($fileId);
+			}
 		}
 
 		return null;

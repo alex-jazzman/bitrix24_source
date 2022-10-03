@@ -21,12 +21,19 @@ class TemplateManager extends \Bitrix\MessageService\Providers\Base\TemplateMana
 
 	public function getTemplatesList(array $context = null): array
 	{
-		$result = [];
-		$templates = $this->utils->getMessageTemplates()->getData()['result'];
+		$templatesResult = $this->utils->getMessageTemplates();
+		if (!$templatesResult->isSuccess())
+		{
+			return [];
+		}
+
+		$templates = $templatesResult->getData();
 		if (!is_array($templates))
 		{
-			return $result;
+			return [];
 		}
+
+		$result = [];
 		foreach ($templates as $template)
 		{
 			$result[] = [

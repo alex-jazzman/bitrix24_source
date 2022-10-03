@@ -1,0 +1,23 @@
+<?php
+$MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION"] = "Створити товар у повній версії";
+$MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS"] = "У документі зараз немає товарів";
+$MESS["CSPL_MENU"] = "Меню";
+$MESS["CSPL_MENU_ADD_NEW_PRODUCT_TITLE"] = "Новий товар";
+$MESS["CSPL_MENU_CHOOSE_FROM_DB"] = "Обрати з каталогу";
+$MESS["CSPL_MENU_CREATE_ARTNUMBER"] = "Товар із серійним номером";
+$MESS["CSPL_MENU_CREATE_BARCODE"] = "Товар зі штрихкодами";
+$MESS["CSPL_MENU_CREATE_PRODUCT"] = "Створити товар";
+$MESS["CSPL_MENU_CREATE_SKU"] = "Товар із варіаціями";
+$MESS["CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE"] = "Знайти за штрихкодом";
+$MESS["CSPL_PRODUCT_CONTEXT_MENU_EDIT"] = "Редагувати";
+$MESS["CSPL_PRODUCT_CONTEXT_MENU_OPEN"] = "Відкрити";
+$MESS["CSPL_PRODUCT_CONTEXT_MENU_REMOVE"] = "Видалити";
+$MESS["CSPL_PRODUCT_DELETE_CONFIRMATION"] = "Ви впевнені, що хочете видалити запис із документа?";
+$MESS["CSPL_PRODUCT_DELETE_CONFIRMATION_CANCEL"] = "Скасувати";
+$MESS["CSPL_PRODUCT_DELETE_CONFIRMATION_OK"] = "Видалити";
+$MESS["CSPL_PRODUCT_DETAIL_BACKDROP_TITLE"] = "Дані товару";
+$MESS["CSPL_PRODUCT_NOT_FOUND_BY_BARCODE"] = "Товар з цим штрихкодом не знайдено в каталозі";
+$MESS["CSPL_REMOVE_PRODUCT_ERROR"] = "Неможливо видалити товар із документа";
+$MESS["CSPL_UNKNOWN_ERROR"] = "Не так сталося, як гадалося......";
+$MESS["CSPL_UPDATE_TAB_ERROR"] = "При завантаженні даних сталася помилка";
+$MESS["CSPL_VALIDATION_ERROR_EMPTY_NAME"] = "Позиція №#NUM# не містить найменування товару";

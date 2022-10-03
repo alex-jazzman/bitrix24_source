@@ -1,0 +1,20 @@
+<?
+$MESS["BLOG_VIDEO_RECORD_BUTTON"] = "Записати відео";
+$MESS["BLOG_VIDEO_RECORD_CANCEL_BUTTON"] = "Скасувати";
+$MESS["BLOG_VIDEO_RECORD_LOGO"] = "<span class=\"logo\"><span class=\"logo-text\">Бітрікс</span><span class=\"logo-color\">24</span></span>";
+$MESS["BLOG_VIDEO_RECORD_STOP_BUTTON"] = "Стоп";
+$MESS["BLOG_VIDEO_RECORD_USE_BUTTON"] = "Використовувати відео";
+$MESS["BLOG_VIDEO_RECORD_IN_PROGRESS_LABEL"] = "Триває запис";
+$MESS["BLOG_VIDEO_RECORD_AGREE"] = "Дозволити";
+$MESS["BLOG_VIDEO_RECORD_CLOSE"] = "Закрити";
+$MESS["BLOG_VIDEO_RECORD_ASK_PERMISSIONS"] = "Для запису відеоповідомлення вам потрібно дозволити доступ до камери та мікрофону.";
+$MESS["BLOG_VIDEO_RECORD_REQUIREMENTS"] = "На жаль, ваш браузер не підтримує запис відеоповідомлень. Спробуйте інший браузер, наприклад Chrome або FireFox останніх версій.";
+$MESS["BLOG_VIDEO_RECORD_REQUIREMENTS_TITLE"] = "Увага";
+$MESS["BLOG_VIDEO_RECORD_PERMISSIONS_ERROR"] = "Немає доступу до вашої камери  та мікрофону";
+$MESS["BLOG_VIDEO_RECORD_PERMISSIONS_TITLE"] = "Доступ до пристроїв";
+$MESS["BLOG_VIDEO_RECORD_PERMISSIONS_ERROR_TITLE"] = "Помилка";
+$MESS["BLOG_VIDEO_RECORD_SPOTLIGHT_MESSAGE"] = "<b>Записуйте відеоповідомлення та діліться з колегами.</b>";
+$MESS["BLOG_VIDEO_RECORD_TRANFORM_LIMIT_TEXT"] = "Щоб відео можна було запустити прямо в Бітрікс24, закінчите запис протягом <span class=\"bx-videomessage-transform-time-tip\">60 секунд</span> Якщо вийде довше, то ми обов'язково збережемо його, але файл може відтворювати не у всіх браузерах.";
+$MESS["BLOG_VIDEO_RECORD_RESTART_BUTTON"] = "Записати заново";
+$MESS["BLOG_VIDEO_RECORD_ERROR_CHROME_HTTPS"] = "На жаль, у вашому браузері не підтримується http протокол.<br /><br />. Спробуйте інший браузер, наприклад Firefox.";
+?>

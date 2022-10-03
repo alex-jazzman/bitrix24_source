@@ -1,0 +1,30 @@
+<?
+$MESS["SEO_ROBOTS_EDIT_TITLE"] = "Управління robots.txt";
+$MESS["SEO_ROBOTS_CHOOSE_SITE"] = "Виберіть сайт:";
+$MESS["SEO_ROBOTS_common"] = "Загальні правила";
+$MESS["SEO_ROBOTS_TITLE_common"] = "Загальні правила для пошукових систем";
+$MESS["SEO_ROBOTS_yandex"] = "Яндекс";
+$MESS["SEO_ROBOTS_TITLE_yandex"] = "Правила для роботів Яндекс";
+$MESS["SEO_ROBOTS_google"] = "Google";
+$MESS["SEO_ROBOTS_TITLE_google"] = "Правила для роботів Google";
+$MESS["SEO_ROBOTS_EDIT"] = "Редагувати";
+$MESS["SEO_ROBOTS_TITLE_EDIT"] = "Редагування robots.txt";
+$MESS["SEO_ROBOTS_COMMON"] = "Всі роботи";
+$MESS["SEO_ROBOTS_YANDEX"] = "Всі роботи Яндекса";
+$MESS["SEO_ROBOTS_YANDEXBOT"] = "Основний індексуючий робот";
+$MESS["SEO_ROBOTS_YANDEXMEDIA"] = "Робот, що індексує мультимедійні дані";
+$MESS["SEO_ROBOTS_YANDEXIMAGES"] = "Індексатор <a href=\"http://images.yandex.ru/\" target=\"_blank\">Яндекс.Картинок</a>";
+$MESS["SEO_ROBOTS_YANDEXBLOGS"] = "Робот <a href=\"http://blogs.yandex.ru/\" target=\"_blank\">пошуку по блогах</a>, що індексує пости і коментарі";
+$MESS["SEO_ROBOTS_YANDEXNEWS"] = "Робот <a href=\"http://news.yandex.ru/\" target=\"_blank\">Яндекс.Новин</a>";
+$MESS["SEO_ROBOTS_YANDEXMETRIKA"] = "Робот <a href=\"http://metrika.yandex.ru/\" target=\"_blank\">Яндекс.Метрики</a>";
+$MESS["SEO_ROBOTS_YANDEXMARKET"] = "Робот <a href=\"http://market.yandex.ru/\" target=\"_blank\">Яндекс.Маркета</a>";
+$MESS["SEO_ROBOTS_GOOGLEBOT"] = "Робот веб-пошуку";
+$MESS["SEO_ROBOTS_GOOGLEBOT_NEWS"] = "Робот <a href=\"http://news.google.com/\" target=\"_blank\">Новин Google</a>";
+$MESS["SEO_ROBOTS_GOOGLEBOT_IMAGE"] = "Робот <a href=\"http://images.google.com/\" target=\"_blank\">Картинок Google</a>";
+$MESS["SEO_ROBOTS_GOOGLEBOT_VIDEO"] = "Робот <a href=\"http://video.google.com/\" target=\"_blank\">Відео Google</a>";
+$MESS["SEO_ROBOTS_GOOGLEBOT_MOBILE"] = "Мобільний робот";
+$MESS["SEO_ROBOTS_ERROR_NO_ROBOTS"] = "Файл #PATH#, не знайдений!";
+$MESS["SEO_ROBOTS_ERROR_NO_ROBOTS_MESSAGE"] = "Його необхідно створити якомога швидше.";
+$MESS["SEO_ROBOTS_HINT"] = "<a href=\"https://support.google.com/webmasters/answer/156449?hl=ru\" target=\"_blank\">Посібник з управління robots.txt в документації Google.</a>";
+$MESS["SEO_ROBOTS_HINT_1C"] = "<a href=\"http://help.yandex.ru/webmaster/controlling-robot/robots-txt.xml\" target=\"_blank\">Посібник з управління robots.txt в документації Яндекс. </a> <br / > <a href=\"https://support.google.com/webmasters/answer/156449?hl=ru\" target=\"_blank\">Посібник з управління robots.txt в документації Google.</a>";
+?>

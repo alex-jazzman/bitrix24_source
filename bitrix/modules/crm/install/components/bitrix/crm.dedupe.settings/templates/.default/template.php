@@ -12,7 +12,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 $APPLICATION->setTitle(Loc::getMessage('CRM_DEDUPE_WIZARD_SCANNING_CONFIG_TITLE'));
 
-\Bitrix\Main\UI\Extension::load(['ui.forms']);
+\Bitrix\Main\UI\Extension::load(['ui.forms', 'ui.fonts.opensans']);
 
 ?>
 

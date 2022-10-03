@@ -59,7 +59,8 @@
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 13px/20px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 .onec-placement-block .ui-tile-list-item { padding: 0; }
 .onec-logo-container { margin-bottom: 10px; }
@@ -141,7 +142,8 @@
 .crm-onec-header-title {
 	margin-bottom: 20px;
 	color: #000;
-	font: 22px/28px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .crm-onec-header-right-block { }
@@ -262,13 +264,15 @@
 	color: #fff;
 	vertical-align: middle;
 	text-align: center;
-	font: 14px/25px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-onec-section-step-title {
 	padding-left: 8px;
 	color: #333;
-	font: 18px/24px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-onec-section-header-block-right { }
@@ -281,7 +285,8 @@
 
 .crm-onec-block-title {
 	color: #000;
-	font: 16px/24px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .bitrix24-light-theme .crm-onec-block-title { color: #fff; }

@@ -1,0 +1,23 @@
+<?php
+$MESS["CRM_WEBFORM_ENTITY_FIELD_NAME_COMPANY_TEMPLATE"] = "юридична особа";
+$MESS["CRM_WEBFORM_ENTITY_FIELD_NAME_CONTACT_TEMPLATE"] = "приватна особа";
+$MESS["CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE"] = "Заповнення CRM-форми \"#FORM_NAME#\"";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_CLIENT"] = "Клієнт";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_CLIENT_DESC"] = "контакт або компанія";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_CLIENT_INVOICE_DESC"] = "контакт або компанія, рахунок";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_CLIENT_INVOICE_DESC1"] = "контакт або компанія, замовлення";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DEAL"] = "Угода";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DEAL_DESC"] = "угода, контакт або компанія";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DEAL_INVOICE_DESC"] = "угода, контакт або компанія, рахунок";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DEAL_INVOICE_DESC1"] = "угода, контакт або компанія, замовлення";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DYNAMIC"] = "Смарт-процес";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DYNAMIC_DESC"] = "Смарт-процес, контакт або компанія";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_DYNAMIC_INVOICE_DESC"] = "Смарт-процес, контакт або компанія, замовлення";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_LEED"] = "Лід";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_LEED_DESC"] = "лід";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_LEED_INVOICE_DESC"] = "лід, контакт або компанія, рахунок";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_LEED_INVOICE_DESC1"] = "лід, контакт або компанія, замовлення";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_QUOTE"] = "Пропозиція";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_QUOTE_DESC"] = "пропозиція, контакт або компанія";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_QUOTE_INVOICE_DESC"] = "пропозиція, контакт або компанія, рахунок";
+$MESS["CRM_WEBFORM_ENTITY_SCHEME_QUOTE_INVOICE_DESC1"] = "пропозиція, контакт або компанія, замовлення";

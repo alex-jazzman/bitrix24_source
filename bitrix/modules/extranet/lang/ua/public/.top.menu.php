@@ -1,0 +1,5 @@
+<?
+$MESS["EXTRANET_TOP_MENU_CONTACTS"] = "Контакти";
+$MESS["EXTRANET_TOP_MENU_MAIN"] = "Головна";
+$MESS["EXTRANET_TOP_MENU_WORKGROUPS"] = "Робочі групи";
+?>

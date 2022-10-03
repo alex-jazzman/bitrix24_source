@@ -72,14 +72,6 @@ class DealController extends EntityController
 			);
 		}
 
-		if (isset($fields['ORDER_ID']) && $fields['ORDER_ID'] > 0)
-		{
-			$settings['ORDER'] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => (int)$fields['ORDER_ID'],
-			];
-		}
-
 		$authorID = self::resolveCreatorID($fields);
 		$historyEntryID = CreationEntry::create(
 			array(
@@ -553,9 +545,9 @@ class DealController extends EntityController
 					if ($order)
 					{
 						$data['ASSOCIATED_ENTITY']['ORDER']['ID'] = $orderId;
-						$data['ASSOCIATED_ENTITY']['ORDER']['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
-							Main\Config\Option::get('crm', 'path_to_order_details'),
-							['order_id' => $orderId]
+						$data['ASSOCIATED_ENTITY']['ORDER']['SHOW_URL'] = Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getOrderDetailsLink(
+							$orderId,
+							Crm\Service\Sale\EntityLinkBuilder\Context::getShopForcedContext()
 						);
 						$data['ASSOCIATED_ENTITY']['ORDER']['SUM'] = \CCrmCurrency::MoneyToString(
 							$order->getPrice(),
@@ -628,6 +620,33 @@ class DealController extends EntityController
 			{
 				$data['RESULT']['TIMELINE_SUMMARY_OPTIONS'] = $result->getData();
 			}
+		}
+		elseif ($typeID === TimelineType::PRODUCT_COMPILATION)
+		{
+			if (isset($settings['COMPILATION_CREATION_DATE']))
+			{
+				$settings['COMPILATION_CREATION_DATE'] = FormatDate(
+					Main\Context::getCurrent()->getCulture()->getLongDateFormat(),
+					$settings['COMPILATION_CREATION_DATE']
+				);
+			}
+			elseif (
+				isset($data['TYPE_CATEGORY_ID'])
+				&& (int)$data['TYPE_CATEGORY_ID'] === ProductCompilationType::NEW_DEAL_CREATED
+			)
+			{
+				$newDealId = $settings['NEW_DEAL_ID'];
+				$entityInfo = [];
+				\CCrmOwnerType::TryGetEntityInfo(
+					\CCrmOwnerType::Deal,
+					$newDealId,
+					$entityInfo,
+					false
+				);
+				$data['NEW_DEAL_DATA'] = $entityInfo;
+			}
+
+			$data = array_merge($data, $settings);
 		}
 
 		return parent::prepareHistoryDataModel($data, $options);

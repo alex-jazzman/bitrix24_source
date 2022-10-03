@@ -1663,16 +1663,8 @@ elseif($action == 'SAVE_EMAIL')
 		}
 	}
 
-	$emailsLimitToSendMessage = (
-		\CModule::includeModule('bitrix24')
-		&& (
-			\CBitrix24::IsDemoLicense()
-			|| !(bool)\Bitrix\Bitrix24\Feature::isFeatureEnabled('mail_mailbox_sync')
-		)
-	)
-		? 1
-		: -1
-	;
+	$emailsLimitToSendMessage = Helper\LicenseManager::getEmailsLimitToSendMessage();
+
 	if($emailsLimitToSendMessage !== -1 && ($countTo > $emailsLimitToSendMessage || $countCc > $emailsLimitToSendMessage || $countBcc > $emailsLimitToSendMessage))
 	{
 		__CrmActivityEditorEndResponse([

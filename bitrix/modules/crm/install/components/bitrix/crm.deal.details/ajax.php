@@ -975,7 +975,6 @@ elseif($action === 'SAVE')
 		{
 			$isSaveSupplementReserveData =
 				Bitrix\Main\Loader::includeModule('catalog')
-				&& Bitrix\Main\Loader::includeModule('salescenter')
 				&& Bitrix\Catalog\Component\UseStore::isUsed()
 				&& !\CCrmSaleHelper::isWithOrdersMode()
 				&& Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()

@@ -762,15 +762,11 @@ var BitrixDisk = {
 			id: "disk",
 			title: BX.message("disk_name"),
 			order: 130,
+			target: false,
 			events: {
 				open: BX.proxy(function(){
-					if (!this.chartLoaded && this.diskSpace > 0)
-					{
-						this.showChart();
-					}
+					BXDesktopSystem.DiskMessage('{"action":"show_window","host":"' + location.host + '","protocol":"' + location.protocol + '"}');
 				}, this),
-				init: BX.proxy(function() { BX.desktop.setTabContent("disk", this.layout.wrap) }, this),
-				close: function() { }
 			}
 		});
 

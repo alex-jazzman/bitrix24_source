@@ -7,6 +7,7 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . 
 \Bitrix\Main\UI\Extension::load([
 	'popup',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y')

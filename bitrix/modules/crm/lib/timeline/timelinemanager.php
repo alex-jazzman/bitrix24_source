@@ -1,7 +1,9 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Main\Loader;
+use Bitrix\Crm\Service;
 
 class TimelineManager
 {
@@ -299,10 +301,8 @@ class TimelineManager
 				);
 				while ($payment = $paymentsData->fetch())
 				{
-					$payment['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
-						\Bitrix\Main\Config\Option::get('crm', 'path_to_order_payment_details'),
-						array('payment_id' => $payment['ID'])
-					);
+					$payment['SHOW_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getPaymentDetailsLink($payment['ID']);
 					$payment['SUM_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($payment['SUM'], $payment['CURRENCY']);
 					$orderPaymentMap[$payment['ORDER_ID']][$payment['ID']] = $payment;
 				}
@@ -319,10 +319,8 @@ class TimelineManager
 				);
 				while ($shipment = $shipmentsData->fetch())
 				{
-					$shipment['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
-						\Bitrix\Main\Config\Option::get('crm', 'path_to_order_shipment_details'),
-						array('shipment_id' => $shipment['ID'])
-					);
+					$shipment['SHOW_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getShipmentDetailsLink($shipment['ID']);
 					$shipment['PRICE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($shipment['PRICE'], $shipment['CURRENCY']);
 					$orderShipmentMap[$shipment['ORDER_ID']][$shipment['ID']] = $shipment;
 				}
@@ -373,10 +371,8 @@ class TimelineManager
 							array('check_id' => $check['ID'])
 						);
 
-						$listLink = \CComponentEngine::MakePathFromTemplate(
-							\Bitrix\Main\Config\Option::get('crm', 'path_to_order_details'),
-							array('order_id' => $check['ORDER_ID'])
-						);
+						$listLink = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+							->getOrderDetailsLink($check['ORDER_ID']);
 
 						$uri = new \Bitrix\Main\Web\Uri($listLink);
 						$uri->addParams(['tab' => 'check']);

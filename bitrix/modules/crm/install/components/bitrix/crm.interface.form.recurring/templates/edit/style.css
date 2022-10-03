@@ -6,7 +6,8 @@
 	outline: none;
 	font-size: 19px;
 	/*!*color: rgba(0,0,0,0.64);*!*/
-	font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-recur-options-repeat{

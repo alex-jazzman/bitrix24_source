@@ -1,0 +1,37 @@
+<?
+$MESS["SONET_TYPING_NOTE"] = "(можна перелічити кілька варіантів через пробіл)";
+$MESS["SONET_IMAGE_NOTE"] = "(рекомендований розмір смайликів: 16x16, іконок: 15x15)";
+$MESS["SONET_CODE_LEN"] = "буква";
+$MESS["SONET_RECORDS_LIST"] = "У список смайликів";
+$MESS["FSN_DELETE_SMILE_CONFIRM"] = "Ви впевнені, що хочете видалити цей смайлик?";
+$MESS["SONET_ADD"] = "Додати";
+$MESS["FSN_NEW_SMILE"] = "Додати новий смайлик";
+$MESS["SONET_EDIT_RECORD"] = "Змінення смайлика N#ID#";
+$MESS["ERROR_EXISTS_IMAGE"] = "Зображення з таким ім'ям вже існує";
+$MESS["SONET_IMAGE"] = "Зображення смайлика";
+$MESS["FSE_ICON"] = "Іконка";
+$MESS["SONET_CODE"] = "Код";
+$MESS["SONET_NAME"] = "Назва";
+$MESS["SONET_TYPING"] = "Написання смайлика";
+$MESS["ERROR_NO_NAME"] = "Не зазначена назва смайлика мовою";
+$MESS["FSE_ERROR_EXT"] = "Неприпустиме розширення графічного файлу";
+$MESS["SONET_NEW_RECORD"] = "Новий смайлик";
+$MESS["SONET_DESCR"] = "Опис";
+$MESS["SONET_RESET"] = "Скасування";
+$MESS["ERROR_ADD_SMILE"] = "Помилка додавання смайлика";
+$MESS["ERROR_COPY_IMAGE"] = "Помилка завантаження зображення. Можливо, недостатньо прав на запис";
+$MESS["ERROR_EDIT_SMILE"] = "Помилка зміни смайлика";
+$MESS["SONET_PT_PROPS"] = "Параметри";
+$MESS["SONET_APPLY"] = "Застосувати";
+$MESS["FSE_SMILE"] = "Смайлик";
+$MESS["FSN_TAB_SMILE"] = "Смайлик соціальної мережі";
+$MESS["FSN_TAB_SMILE_DESCR"] = "Смайлик соціальної мережі";
+$MESS["SONET_SORT"] = "Сортування";
+$MESS["SONET_SAVE"] = "Зберегти";
+$MESS["FSN_2FLIST"] = "Список смайликів";
+$MESS["SONET_TYPE"] = "Тип смайлика";
+$MESS["FSN_DELETE_SMILE"] = "Видалити смайлик";
+$MESS["ERROR_NO_IMAGE"] = "Встановіть зображення для смайлика";
+$MESS["ERROR_NO_MIN_NUM_POSTS"] = "Встановіть мінімальну кількість повідомлень для цього звання.";
+$MESS["ERROR_NO_TYPE"] = "Встановіть тип смайлика";
+?>

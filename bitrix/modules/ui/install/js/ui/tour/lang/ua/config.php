@@ -1,0 +1,7 @@
+<?
+$MESS["JS_UI_TOUR_BUTTON"] = "Далі";
+$MESS["JS_UI_TOUR_BUTTON_CLOSE"] = "Закрити";
+$MESS["JS_UI_TOUR_BUTTON_SIMPLE"] = "Зрозуміло";
+$MESS["JS_UI_TOUR_LINK"] = "Детальніше";
+$MESS["JS_UI_TOUR_STEP_INDEX_TEXT"] = "#NUMBER# з #NUMBER_TOTAL#";
+?>

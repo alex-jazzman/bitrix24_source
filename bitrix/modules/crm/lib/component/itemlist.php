@@ -144,6 +144,11 @@ abstract class ItemList extends Base
 
 		if ($categoryId <= 0)
 		{
+			if (!$this->factory->isCategoriesEnabled())
+			{
+				return $this->factory->createDefaultCategoryIfNotExist();
+			}
+
 			return null;
 		}
 

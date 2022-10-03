@@ -15,6 +15,8 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 $containerId = 'crm-tracking-entity-details-view';
 ?>
 <div id="<?=htmlspecialcharsbx($containerId)?>">

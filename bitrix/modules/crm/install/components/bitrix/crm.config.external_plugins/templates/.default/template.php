@@ -5,6 +5,8 @@ use Bitrix\Main\Localization\Loc;
 $request = $arResult['REQUEST'];
 $uri = new \Bitrix\Main\Web\Uri($request->getRequestUri());
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 $APPLICATION->setTitle(Loc::getMessage('CRM_CONFIG_PLG_TITLE'));
 ?>
 

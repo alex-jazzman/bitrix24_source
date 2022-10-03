@@ -1920,10 +1920,7 @@ abstract class EntityMerger
 									continue;
 								}
 
-								if(\CCrmFileProxy::TryResolveFile($fileID, $file, $fileOptions))
-								{
-									$targ[$fieldID][] = static::getAddressFields($data);
-								}
+								$targ[$fieldID][] = static::getAddressFields($data);
 							}
 						}
 						elseif (isset($targ[$fieldID]) && is_array($targ[$fieldID]))

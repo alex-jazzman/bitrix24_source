@@ -1,8 +1,9 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
+
+CJSCore::Init(array('popup', 'date', 'fx', 'ui.fonts.opensans'));
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/common.js');
-CJSCore::Init(array('popup', 'date', 'fx'));
 
 $presets = isset($arParams['~FILTER_PRESETS']) ? $arParams['~FILTER_PRESETS'] : array();
 $savedItems = isset($arResult['OPTIONS'])

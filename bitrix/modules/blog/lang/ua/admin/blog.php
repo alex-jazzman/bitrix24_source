@@ -1,0 +1,31 @@
+<?
+$MESS["BLB_F_ALL"] = "(Усі)";
+$MESS["BLB_ALLOW_HTML"] = "HTML";
+$MESS["BLB_ACTIVE"] = "Активність";
+$MESS["BLB_FILTER_ACTIVE"] = "Активність";
+$MESS["BLB_GROUP_NAV"] = "Блоги";
+$MESS["BLB_TITLE"] = "Блоги";
+$MESS["BLB_OWNER_ID"] = "Власник";
+$MESS["BLB_FILTER_OWNER"] = "Власник";
+$MESS["BLB_DELETE_CONF"] = "Ви впевнені, що хочете видалити цей блог?";
+$MESS["BLB_GROUP_ID"] = "Група";
+$MESS["BLB_FILTER_GROUP_ID"] = "Група";
+$MESS["BLB_SOCNET_GROUP_ID"] = "Група-власник блогу";
+$MESS["BLB_YES"] = "Так";
+$MESS["BLB_DATE_UPDATE"] = "Дата останнього оновлення";
+$MESS["BLB_DATE_CREATE"] = "Дата створення";
+$MESS["BLB_UPDATE_ALT"] = "Змінити параметри блогу";
+$MESS["BLB_ADD_NEW_ALT"] = "Натисніть для додавання нового блогу";
+$MESS["BLB_NAME"] = "Назва";
+$MESS["BLB_FILTER_NAME"] = "Назва";
+$MESS["BLB_NO"] = "Ні";
+$MESS["BLB_ADD_NEW"] = "Новий блог";
+$MESS["BLB_DELETE_ERROR"] = "Помилка видалення блогу";
+$MESS["BLB_URL"] = "Шлях";
+$MESS["BLB_FILTER_URL"] = "Шлях";
+$MESS["BLB_USE_SOCNET"] = "Соц. Мережа";
+$MESS["BLB_DELETE_ALT"] = "Видалити блог";
+$MESS["MAIN_ADMIN_LIST_SELECTED"] = "Обрано:";
+$MESS["MAIN_ADMIN_LIST_CHECKED"] = "Позначено:";
+$MESS["MAIN_ADMIN_LIST_DELETE"] = "видалити";
+?>

@@ -1,0 +1,19 @@
+<?php
+$MESS["CRM_DEAL_CREATION_BASED_ON"] = "Створено на підставі";
+$MESS["CRM_ORDER_ACTIVE"] = "В роботі";
+$MESS["CRM_ORDER_CANCELLED"] = "Скасоване";
+$MESS["CRM_ORDER_CONVERSION"] = "Створення на підставі";
+$MESS["CRM_ORDER_CREATION"] = "Створене замовлення";
+$MESS["CRM_ORDER_CREATION_MESSAGE_SUM"] = "(на суму #PRICE_WITH_CURRENCY#)";
+$MESS["CRM_ORDER_CREATION_TITLE"] = "#TITLE# від #DATE_INSERT#";
+$MESS["CRM_ORDER_DESTINATION_TITLE_BITRIX24"] = "через Бітрікс24";
+$MESS["CRM_ORDER_DESTINATION_TITLE_CHAT"] = "у чат";
+$MESS["CRM_ORDER_DESTINATION_TITLE_CONTROL_CENTER"] = "через Єдиний Центр Управління";
+$MESS["CRM_ORDER_DESTINATION_TITLE_SMS"] = "через SMS";
+$MESS["CRM_ORDER_MODIFICATION_CANCELED"] = "Замовлення скасоване";
+$MESS["CRM_ORDER_MODIFICATION_REASON_CANCELED"] = "Причини скасування замовлення";
+$MESS["CRM_ORDER_MODIFICATION_RESTORED"] = "Замовлення відновлене";
+$MESS["CRM_ORDER_MODIFICATION_STATUS"] = "Статус замовлення змінений";
+$MESS["CRM_ORDER_VIEWED_HTML_TITLE"] = "замовлення №#TITLE#";
+$MESS["CRM_ORDER_VIEWED_HTML_TITLE_2"] = "№ #ORDER_ID# від #DATE# на суму #SUM#";
+$MESS["CRM_PAYMENT_VIEWED_TITLE"] = "Клієнт перейшов на сторінку оплати";

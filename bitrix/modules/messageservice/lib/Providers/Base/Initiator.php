@@ -39,7 +39,7 @@ abstract class Initiator implements \Bitrix\MessageService\Providers\Initiator
 		return null;
 	}
 
-	public function isCorrectFrom(string $from): bool
+	public function isCorrectFrom($from): bool
 	{
 		$fromList = $this->getFromList();
 		foreach ($fromList as $item)

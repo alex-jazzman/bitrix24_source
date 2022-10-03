@@ -1,0 +1,33 @@
+<?
+$MESS["SONET_UR_ERROR_NO_SECOND_USER_ID"] = "Другий користувач зазначений невірно";
+$MESS["SONET_UR_BANUSER_MESSAGE"] = "Ви внесені до чорного списку";
+$MESS["SONET_UR_UNBAN_ERROR"] = "Ви не можете видалити цього користувача з чорного списку";
+$MESS["SONET_UR_UNBANUSER_MESSAGE"] = "Ви видалені з чорного списку";
+$MESS["SONET_UR_EMPTY_DATE_UPDATE"] = "Дата зміни параметрів вказана невірно";
+$MESS["SONET_UR_EMPTY_DATE_CREATE"] = "Дата створення вказана невірно";
+$MESS["SONET_UR_RELATION_DELETE_ERROR"] = "Не вдалося видалити відношення між користувачами";
+$MESS["SONET_UR_EMPTY_SECOND_USER_ID"] = "Не зазначений другий користувач";
+$MESS["SONET_UR_EMPTY_RELATION_ID"] = "Не зазначений код зв'язку";
+$MESS["SONET_UR_EMPTY_FIRST_USER_ID"] = "Не зазначений перший користувач";
+$MESS["SONET_UR_EMPTY_TARGET_USER_ID"] = "Не вказаний користувач, який повинен отримати запит";
+$MESS["SONET_UR_EMPTY_SENDER_USER_ID"] = "Не вказаний користувач, який відправив запит";
+$MESS["SONET_UR_EMPTY_RELATION"] = "Не вказаний зв'язок";
+$MESS["SONET_UR_RELATION_NOT_FOUND"] = "Відношення між користувачами не знайдене";
+$MESS["SONET_UR_ERROR_UPDATE_RELATION"] = "Помилка зміни зв'язку між користувачами";
+$MESS["SONET_UR_ERROR_CREATE_RELATION"] = "Помилка створення зв'язку між користувачами";
+$MESS["SONET_UR_ERROR_NO_FIRST_USER_ID"] = "Перший користувач зазначений невірно";
+$MESS["SONET_UR_REJECT_FRIEND_MESSAGE"] = "Користувач відмовівся стати вашим другом";
+$MESS["SONET_UR_AGREE_FRIEND_MESSAGE"] = "Користувач погодився стати вашим другом";
+$MESS["SONET_UR_NO_FRIEND_REQUEST"] = "Пропозиція поваришувати не знайдена";
+$MESS["SONET_UR_ERROR_NO_RELATION"] = "Зв'язок зазначений невірно";
+$MESS["SONET_UR_ALREADY_BAN"] = "Цей користувач вже внесений до чорного списку";
+$MESS["SONET_U_INVITE_CONFIRM_TEXT"] = "Пропозиція дружби: \"#TEXT#\"";
+$MESS["SONET_U_INVITE_CONFIRM"] = "Прийняти";
+$MESS["SONET_U_INVITE_REJECT"] = "Відмовитися";
+$MESS["SONET_UR_INVALID_TARGET_USER_ID"] = "Користувач, який відправив запит, не знайдений";
+$MESS["SONET_U_INVITE_CONFIRM_TITLE"] = "Пропозиція дружби від користувача #USER#";
+$MESS["SONET_UR_IM_UNFRIEND"] = "Перестав (а) бути вашим другом";
+$MESS["SONET_UR_IM_UNFRIEND_M"] = "Перестав бути вашим другом";
+$MESS["SONET_UR_IM_UNFRIEND_F"] = "Перестала бути вашим другом";
+$MESS["SONET_UR_ERROR_RELATION_FRIENDS2"] = "Зв'язок типу \"друг друга\" більше не підтримується";
+?>

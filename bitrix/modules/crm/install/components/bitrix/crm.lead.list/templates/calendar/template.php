@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Integration\Calendar;
+use Bitrix\Crm\UI\NavigationBarPanel;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if(SITE_TEMPLATE_ID === 'bitrix24')
@@ -24,6 +25,8 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
+
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
@@ -96,16 +99,6 @@ if(!$isInternal):
 endif;
 
 $gridManagerID = $arResult['GRID_ID'].'_MANAGER';
-$gridManagerCfg = array(
-	'ownerType' => CCrmOwnerType::LeadName,
-	'gridId' => $arResult['GRID_ID'],
-	'formName' => "form_{$arResult['GRID_ID']}",
-	'allRowsCheckBoxId' => "actallrows_{$arResult['GRID_ID']}",
-	'activityEditorId' => $activityEditorID,
-	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-	'filterFields' => [],
-	'destroyPreviousExtension' => true
-);
 
 echo CCrmViewHelper::RenderLeadStatusSettings();
 $prefix = $arResult['GRID_ID'];
@@ -305,43 +298,15 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 			'FILTER_ID' => $arResult['GRID_ID'],
 			'FILTER' => $arResult['FILTER'],
 			'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-
-			'NAVIGATION_BAR' => array(
-				'ITEMS' => array_merge(
-					\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Lead),
-					array(
-						array(
-							'id' => 'kanban',
-							'name' => GetMessage('CRM_LEAD_LIST_FILTER_NAV_BUTTON_KANBAN'),
-							'active' => false,
-							'url' => $arParams['PATH_TO_LEAD_KANBAN']
-						),
-						array(
-							'id' => 'list',
-							'name' => GetMessage('CRM_LEAD_LIST_FILTER_NAV_BUTTON_LIST'),
-							'active' => false,
-							'url' => $arParams['PATH_TO_LEAD_LIST']
-						)
-					),
-					(Calendar::isResourceBookingEnabled()
-						?
-						array(
-							array(
-								'id' => 'calendar',
-								'name' => GetMessage('CRM_LEAD_LIST_FILTER_NAV_BUTTON_CALENDAR'),
-								'active' => true,
-								'url' => $arResult['PATH_TO_LEAD_CALENDAR']
-							)
-						)
-						: array()
-					)
-				),
-				'BINDING' => array(
-					'category' => 'crm.navigation',
-					'name' => 'index',
-					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-				)
-			),
+			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead))
+				->setItems([
+					NavigationBarPanel::ID_AUTOMATION,
+					NavigationBarPanel::ID_KANBAN,
+					NavigationBarPanel::ID_LIST,
+					NavigationBarPanel::ID_CALENDAR
+				], NavigationBarPanel::ID_CALENDAR)
+				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+				->get(),
 			'LIMITS' => isset($arResult['LIVE_SEARCH_LIMIT_INFO']) ? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 			'ENABLE_LIVE_SEARCH' => true,
 			'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
@@ -377,13 +342,6 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 					}
 				}
 			});
-
-			// enable grid extension
-			BX.Crm.Page.initialize();
-			BX.CrmUIGridExtension.create(
-				"<?=CUtil::JSEscape($gridManagerID)?>",
-				<?=CUtil::PhpToJSObject($gridManagerCfg)?>
-			);
 		});
 	</script>
 	<?

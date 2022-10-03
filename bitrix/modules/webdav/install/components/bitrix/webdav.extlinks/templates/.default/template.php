@@ -1,17 +1,17 @@
 <?if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
-	CUtil::InitJSCore(array('viewer', 'ajax'));
+	CUtil::InitJSCore(array('ui.design-tokens', 'viewer', 'ajax'));
 	$sType = $arResult["SITE_TYPE"];
 	$fileNotFound = $arResult["FILE_NOT_FOUND"];
-	
-	
+
+
 	$tempPatch = CWebDavExtLinks::GetFullURL($this->GetFolder());
-	
+
 	$compName = htmlspecialcharsbx($arResult["COMPANY_NAME"]);
-	$fileName = htmlspecialcharsbx($arResult["NAME"]);	
+	$fileName = htmlspecialcharsbx($arResult["NAME"]);
 	$fileDescription = htmlspecialcharsbx($arResult["DESCRIPTION"]);
 	$fileSize = (intval($arResult["F_SIZE"]) > 0 ? CFile::FormatSize(intval($arResult["F_SIZE"])) : "");
 	$icon = $arResult["ICON"];
-	
+
 ?>
 <!DOCTYPE HTML>
 <html lang="en-US">
@@ -28,7 +28,7 @@
 			<div class="header-logo-block">
 				<a href="<? echo SITE_DIR; ?>" title="<? echo GetMessage("WD_EXT_LINK_COMP_LOGO_C"); ?>" class="logo">
 					<span class="logo-text"><? echo $compName; ?></span>
-<? 
+<?
 	if(substr_count($sType, "b24") > 0)
 	{
 ?>
@@ -39,12 +39,12 @@
 				</a>
 			</div>
 		</div>
-		
+
 <?
 	if($arResult["PASSWORD"] == "NOT")
 	{
 		$loadUrl = CWebDavExtLinks::GetFullExternalURL() .  $arResult["HASH"] . '/?LoadFile=1';
-		
+
 ?>
 		<script type="text/javascript">
 
@@ -87,7 +87,7 @@
 			}
 ?>
 		</div>
-<? 
+<?
 	}
 	else
 	{

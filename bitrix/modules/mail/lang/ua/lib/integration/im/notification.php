@@ -1,0 +1,7 @@
+<?
+$MESS["MAIL_NOTIFY_GO_TO_LIST"] = "Перейти";
+$MESS["MAIL_NOTIFY_NEW_MESSAGE"] = "Новий лист";
+$MESS["MAIL_NOTIFY_NEW_MESSAGE_TEXT_MULTI"] = "Нових листів: #COUNT#";
+$MESS["MAIL_NOTIFY_NEW_MESSAGE_TEXT_SINGLE"] = "Новий лист: #BRIEF#";
+$MESS["MAIL_NOTIFY_NEW_MESSAGE_TITLE"] = "Пошта";
+?>

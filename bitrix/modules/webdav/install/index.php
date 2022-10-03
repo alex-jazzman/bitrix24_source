@@ -189,8 +189,7 @@ Class webdav extends CModule
 	function InstallUnInstallDBTables($install = true)
 	{
 		global $DB;
-		$dbType = mb_strtolower($DB->type);
-		
+
 		$addTables = array(
 			"b_webdav_file_online_edit" => array(
 				'mysql' => '
@@ -210,67 +209,6 @@ CREATE TABLE b_webdav_file_online_edit
 	INDEX IXS_WD_FILE_ONLINE_EDIT_V(CREATED_TIMESTAMP),
 	INDEX IXS_WD_FILE_ONLINE_EDIT_ELEMENT(ELEMENT_ID, SECTION_ID, IBLOCK_ID)
 )
-',
-			'mssql' => '
-CREATE TABLE B_WEBDAV_FILE_ONLINE_EDIT
-(
-	ID int NOT NULL IDENTITY (1, 1),
-	IBLOCK_ID int not null,
-	SECTION_ID int,
-	ELEMENT_ID int not null,
-	USER_ID int,
-	OWNER_ID int,
-	SERVICE varchar(10) not null,
-	SERVICE_FILE_ID varchar(255) not null,
-	SERVICE_FILE_LINK text not null,
-	CREATED_TIMESTAMP datetime NULL
-)
-GO
-
-ALTER TABLE B_WEBDAV_FILE_ONLINE_EDIT ADD CONSTRAINT PK_B_WEBDAV_FILE_ONLINE_EDIT PRIMARY KEY (ID)
-GO
-
-CREATE INDEX IXS_WD_FILE_ONLINE_EDIT_V ON B_WEBDAV_FILE_ONLINE_EDIT (CREATED_TIMESTAMP)
-GO
-
-CREATE INDEX IXS_WD_FILE_ONLINE_EDIT_ELEMENT ON B_WEBDAV_FILE_ONLINE_EDIT (ELEMENT_ID, SECTION_ID, IBLOCK_ID)
-GO
-',
-			'oracle' => '
-CREATE TABLE b_webdav_file_online_edit
-(
-	ID NUMBER(18) NOT NULL,
-	IBLOCK_ID NUMBER(18) not null,
-	SECTION_ID NUMBER(18),
-	ELEMENT_ID NUMBER(18) not null,
-	USER_ID NUMBER(18),
-	OWNER_ID NUMBER(18),
-	SERVICE VARCHAR2(10 CHAR) not null,
-	SERVICE_FILE_ID VARCHAR2(255 CHAR) not null,
-	SERVICE_FILE_LINK VARCHAR2(3000 CHAR) not null,
-	CREATED_TIMESTAMP DATE DEFAULT SYSDATE NOT NULL,
-	PRIMARY KEY (ID)
-)
-/
-
-CREATE INDEX IXS_WD_FILE_ONLINE_EDIT_V ON b_webdav_file_online_edit (CREATED_TIMESTAMP)
-/
-
-CREATE INDEX IXS_WD_FILE_ONLINE_EDIT_EL ON b_webdav_file_online_edit (ELEMENT_ID, SECTION_ID, IBLOCK_ID)
-/
-CREATE SEQUENCE sq_b_webdav_folder_invite START WITH 1 INCREMENT BY 1 NOMAXVALUE NOCYCLE NOCACHE NOORDER
-/
-
-CREATE OR REPLACE TRIGGER b_webdav_file_online_edit_ins
-BEFORE INSERT
-ON b_webdav_file_online_edit
-FOR EACH ROW
-BEGIN
-	IF :NEW.ID IS NULL THEN
-	SELECT sq_b_webdav_folder_invite.NEXTVAL INTO :NEW.ID FROM dual;
-	END IF;
-END;
-/
 ',
 			),
 			"b_webdav_folder_invite" => array(
@@ -295,76 +233,6 @@ CREATE TABLE b_webdav_folder_invite
 	INDEX IXS_WD_FOLDER_INVITE_RECEIVER(INVITE_USER_ID)
 )
 ',
-			'mssql' => '
-CREATE TABLE B_WEBDAV_FOLDER_INVITE
-(
-	ID int NOT NULL IDENTITY (1, 1),
-	INVITE_USER_ID int not null,
-	USER_ID int not null,
-	IBLOCK_ID int not null,
-	SECTION_ID int not null,
-	LINK_SECTION_ID int,
-	DESCRIPTION VARCHAR(3000),
-	IS_APPROVED tinyint,
-	IS_DELETED tinyint,
-	CAN_FORWARD tinyint,
-	CAN_EDIT tinyint,
-	CREATED_TIMESTAMP datetime NULL
-)
-GO
-
-ALTER TABLE B_WEBDAV_FOLDER_INVITE ADD CONSTRAINT PK_B_WEBDAV_FOLDER_INVITE PRIMARY KEY (ID)
-GO
-
-CREATE INDEX IXS_WD_FOLDER_INVITE_SENDER ON B_WEBDAV_FOLDER_INVITE (USER_ID)
-GO
-
-CREATE INDEX IXS_WD_FOLDER_INVITE_RECEIVER ON B_WEBDAV_FOLDER_INVITE (INVITE_USER_ID)
-GO
-
-CREATE INDEX IXS_WD_FOLDER_INVITE_FOLDER ON B_WEBDAV_FOLDER_INVITE (SECTION_ID, IBLOCK_ID)
-GO
-',
-			'oracle' => '
-CREATE TABLE b_webdav_folder_invite
-(
-	ID NUMBER(18) NOT NULL,
-	INVITE_USER_ID NUMBER(18) not null,
-	USER_ID NUMBER(18) not null,
-	IBLOCK_ID NUMBER(18) not null,
-	SECTION_ID NUMBER(18) not null,
-	LINK_SECTION_ID NUMBER(18),
-	DESCRIPTION VARCHAR2(3000 CHAR),
-	IS_APPROVED NUMBER(1),
-	IS_DELETED NUMBER(1),
-	CAN_FORWARD NUMBER(1),
-	CAN_EDIT NUMBER(1),
-	CREATED_TIMESTAMP DATE DEFAULT SYSDATE NOT NULL,
-	PRIMARY KEY (ID)
-)
-/
-
-CREATE INDEX IXS_WD_FOLDER_INVITE_SENDER ON b_webdav_folder_invite (USER_ID)
-/
-
-CREATE INDEX IXS_WD_FOLDER_INVITE_RECEIVER ON b_webdav_folder_invite (INVITE_USER_ID)
-/
-CREATE INDEX IXS_WD_FOLDER_INVITE_FOLDER ON b_webdav_folder_invite (SECTION_ID, IBLOCK_ID)
-/
-CREATE SEQUENCE sq_wd_folder_invite_el START WITH 1 INCREMENT BY 1 NOMAXVALUE NOCYCLE NOCACHE NOORDER
-/
-
-CREATE OR REPLACE TRIGGER b_webdav_folder_invite_ins
-BEFORE INSERT
-ON b_webdav_folder_invite
-FOR EACH ROW
-BEGIN
-	IF :NEW.ID IS NULL THEN
-	SELECT sq_wd_folder_invite_el.NEXTVAL INTO :NEW.ID FROM dual;
-	END IF;
-END;
-/
-',
 			),
 			"b_webdav_storage_delete_log" => array(
 				'mysql' => "
@@ -381,62 +249,6 @@ CREATE TABLE b_webdav_storage_delete_log
 	INDEX IXS_WD_STORAGE_LOG_DEL_V(VERSION),
 	INDEX IXS_WD_STORAGE_LOG_DEL_E(ELEMENT_ID)
 )
-",
-				'mssql' => "
-CREATE TABLE B_WEBDAV_STORAGE_DELETE_LOG
-(
-	ID int NOT NULL IDENTITY (1, 1),
-	IBLOCK_ID int not null,
-	SECTION_ID int,
-	ELEMENT_ID varchar(60) not null,
-	IS_DIR tinyint,
-	USER_ID int,
-	VERSION int
-)
-GO
-
-ALTER TABLE B_WEBDAV_STORAGE_DELETE_LOG ADD CONSTRAINT PK_B_WEBDAV_STORAGE_DELETE_LOG PRIMARY KEY (ID)
-GO
-
-CREATE INDEX IXS_WD_STORAGE_LOG_DEL_V ON B_WEBDAV_STORAGE_DELETE_LOG (VERSION)
-GO
-
-CREATE INDEX IXS_WD_STORAGE_LOG_DEL_E ON B_WEBDAV_STORAGE_DELETE_LOG (ELEMENT_ID)
-GO
-",
-				'oracle' => "
-CREATE TABLE b_webdav_storage_delete_log
-(
-	ID NUMBER(18) NOT NULL,
-	IBLOCK_ID NUMBER(18) not null,
-	SECTION_ID NUMBER(18),
-	ELEMENT_ID VARCHAR2(60 CHAR) not null,
-	IS_DIR NUMBER(1),
-	VERSION NUMBER(18),
-	USER_ID NUMBER(18),
-	PRIMARY KEY (ID)
-)
-/
-
-CREATE INDEX IXS_WD_STORAGE_LOG_DEL_V ON b_webdav_storage_delete_log (VERSION)
-/
-
-CREATE INDEX IXS_WD_STORAGE_LOG_DEL_E ON b_webdav_storage_delete_log (ELEMENT_ID)
-/
-
-CREATE SEQUENCE sq_wd_strg_del_log START WITH 1 INCREMENT BY 1 NOMAXVALUE NOCYCLE NOCACHE NOORDER
-/
-
-CREATE OR REPLACE TRIGGER b_wd_strge_del_log_ins
-BEFORE INSERT
-ON b_webdav_storage_delete_log
-FOR EACH ROW
-BEGIN
-	IF :NEW.ID IS NULL THEN
-	SELECT sq_wd_strg_del_log.NEXTVAL INTO :NEW.ID FROM dual;
-	END IF;
-END;
-/
 ",
 			),
 			'b_webdav_storage_tmp_file' => array(
@@ -455,60 +267,6 @@ CREATE TABLE b_webdav_storage_tmp_file
 	PRIMARY KEY (ID),
 	INDEX IXS_WD_STORAGE_TMP_FILE_N(NAME)
 )
-",
-				'mssql' => "
-CREATE TABLE B_WEBDAV_STORAGE_TMP_FILE
-(
-	ID int NOT NULL IDENTITY (1, 1),
-	NAME varchar(32) not null,
-	PATH varchar(100) not null,
-	FILENAME varchar(255),
-	BUCKET_ID int,
-	WIDTH int,
-	HEIGHT int,
-	IS_CLOUD tinyint,
-	VERSION int
-)
-GO
-
-ALTER TABLE B_WEBDAV_STORAGE_TMP_FILE ADD CONSTRAINT PK_B_WEBDAV_STORAGE_TMP_FILE PRIMARY KEY (ID)
-GO
-
-CREATE INDEX IXS_WD_STORAGE_TMP_FILE_N ON B_WEBDAV_STORAGE_TMP_FILE (NAME)
-GO
-",
-				'oracle' => "
-CREATE TABLE b_webdav_storage_tmp_file
-(
-	ID NUMBER(18) NOT NULL,
-	NAME VARCHAR2(32 CHAR) not null,
-	PATH VARCHAR2(100 CHAR) not null,
-	FILENAME VARCHAR2(255 CHAR),
-	VERSION NUMBER(18),
-	BUCKET_ID NUMBER(18),
-	WIDTH NUMBER(18),
-	HEIGHT NUMBER(18),
-	IS_CLOUD NUMBER(1),
-	PRIMARY KEY (ID)
-)
-/
-
-CREATE INDEX IXS_WD_STORAGE_TMP_FILE_N ON b_webdav_storage_tmp_file (NAME)
-/
-
-CREATE SEQUENCE sq_wd_strge_tmp_file START WITH 1 INCREMENT BY 1 NOMAXVALUE NOCYCLE NOCACHE NOORDER
-/
-
-CREATE OR REPLACE TRIGGER b_wd_strge_tmp_file_ins
-BEFORE INSERT
-ON b_webdav_storage_tmp_file
-FOR EACH ROW
-BEGIN
-	IF :NEW.ID IS NULL THEN
-	SELECT sq_wd_strge_tmp_file.NEXTVAL INTO :NEW.ID FROM dual;
-	END IF;
-END;
-/
 ",
 			),
 
@@ -544,150 +302,34 @@ ALTER TABLE b_webdav_ext_links ADD INDEX UX_b_webdav_ext_links_h(HASH);
 
 ALTER TABLE b_webdav_ext_links ADD INDEX UX_b_webdav_ext_links_uh(URL_HASH);
 ",
-				"mssql" =>	"
-CREATE TABLE b_webdav_ext_links
-(
-	URL varchar(1000) NOT NULL,
-	RESOURCE_TYPE varchar(30) NOT NULL,
-	FOLDER varchar(1000) NULL,
-	IBLOCK_TYPE varchar(30) NULL,
-	IBLOCK_ID int NULL,
-	BASE_URL varchar(1000) NOT NULL,
-	HASH varchar(40) NOT NULL,
-	CREATION_DATE int NOT NULL,
-	USER_ID int NOT NULL,
-	SALT varchar(40),
-	PASSWORD varchar(40),
-	LIFETIME int NOT NULL,
-	F_SIZE int,
-	DESCRIPTION text,
-	ROOT_SECTION_ID int,
-	URL_HASH varchar(40),
-	SINGLE_SESSION tinyint NULL,
-	LINK_TYPE char(1) NOT NULL DEFAULT 'M',
-	ELEMENT_ID int NOT NULL DEFAULT 0,
-	VERSION_ID int NOT NULL DEFAULT 0,
-	FILE_ID int NOT NULL DEFAULT 0,
-	DOWNLOAD_COUNT int NOT NULL DEFAULT 0
-)
-GO
-
-CREATE INDEX UX_b_webdav_ext_links_h ON b_webdav_ext_links (HASH)
-GO
-
-CREATE INDEX UX_b_webdav_ext_links_uh ON b_webdav_ext_links (URL_HASH)
-GO
-",
-				"oracle" =>	"
-CREATE TABLE b_webdav_ext_links
-(
-	URL VARCHAR2(1000 CHAR) NOT NULL,
-	RESOURCE_TYPE VARCHAR2(30 CHAR) NOT NULL,
-	FOLDER VARCHAR2(1000 CHAR) NULL,
-	IBLOCK_TYPE VARCHAR2(30 CHAR) NULL,
-	IBLOCK_ID int NULL,
-	BASE_URL VARCHAR2(1000 CHAR) NOT NULL,
-	HASH VARCHAR2(40 CHAR) NOT NULL,
-	CREATION_DATE int NOT NULL,
-	USER_ID int NOT NULL,
-	SALT VARCHAR2(40 CHAR) NULL,
-	PASSWORD VARCHAR2(40 CHAR) NULL,
-	LIFETIME int NOT NULL,
-	F_SIZE int NULL,
-	DESCRIPTION CLOB NULL,
-	ROOT_SECTION_ID int NULL,
-	URL_HASH VARCHAR2(40 CHAR) NULL,
-	SINGLE_SESSION NUMBER(1) NULL,
-	LINK_TYPE CHAR(1 CHAR) DEFAULT('M') NOT NULL,
-	ELEMENT_ID NUMBER(18) DEFAULT('0') NOT NULL,
-	VERSION_ID NUMBER(18) DEFAULT('0') NOT NULL,
-	FILE_ID NUMBER(18) DEFAULT('0') NOT NULL,
-	DOWNLOAD_COUNT NUMBER(18) DEFAULT('0') NOT NULL
-)
-/
-
-CREATE INDEX UX_b_webdav_ext_links_h ON b_webdav_ext_links(HASH)
-/
-
-CREATE INDEX UX_b_webdav_ext_links_uh ON b_webdav_ext_links(URL_HASH)
-/
-"				
 			),
 		);
-		
+
 		$deleteTables = array(
 			'b_webdav_file_online_edit' => array(
 				'mysql' => "
 DROP TABLE IF EXISTS b_webdav_file_online_edit
-",
-				'mssql' => "
-DROP TABLE B_WEBDAV_FILE_ONLINE_EDIT
-GO
-",
-				'oracle' => "
-DROP TABLE b_webdav_file_online_edit CASCADE CONSTRAINTS
-/
-DROP SEQUENCE sq_wd_file_online_edit_el
-/
 ",
 			),
 			'b_webdav_folder_invite' => array(
 				'mysql' => "
 DROP TABLE IF EXISTS b_webdav_folder_invite
 ",
-				'mssql' => "
-DROP TABLE b_webdav_folder_invite
-GO
-",
-				'oracle' => "
-DROP TABLE b_webdav_folder_invite CASCADE CONSTRAINTS
-/
-DROP SEQUENCE sq_wd_folder_invite_el
-/
-",
 			),
 			'b_webdav_storage_delete_log' => array(
 				'mysql' => "
 DROP TABLE IF EXISTS b_webdav_storage_delete_log
-",
-				'mssql' => "
-DROP TABLE B_WEBDAV_STORAGE_DELETE_LOG
-GO
-",
-				'oracle' => "
-DROP TABLE b_webdav_storage_delete_log CASCADE CONSTRAINTS
-/
-DROP SEQUENCE sq_wd_strg_del_log
-/
 ",
 			),
 			'b_webdav_storage_tmp_file' => array(
 				'mysql' => "
 DROP TABLE IF EXISTS b_webdav_storage_tmp_file
 ",
-				'mssql' => "
-DROP TABLE B_WEBDAV_STORAGE_TMP_FILE
-GO
-",
-				'oracle' => "
-DROP TABLE b_webdav_storage_tmp_file CASCADE CONSTRAINTS
-/
-DROP SEQUENCE sq_wd_strge_tmp_file
-/
-",
 			),
 			"b_webdav_ext_links" => array(
 				"mysql" =>	"
 drop table if exists b_webdav_ext_links;
 ",
-				"mssql" =>	"
-DROP TABLE b_webdav_ext_links
-GO
-",
-				"oracle" =>	"
-DROP TABLE b_webdav_ext_links CASCADE CONSTRAINTS
-/
-"				
 			),
 		);
 				
@@ -699,7 +341,7 @@ DROP TABLE b_webdav_ext_links CASCADE CONSTRAINTS
 				{
 					if(!$DB->TableExists($table))
 					{
-						$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arr[$dbType]));
+						$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arr['mysql']));
 						foreach($arQuery as $i => $sql)
 						{
 							$res = $DB->Query($sql, true);
@@ -715,7 +357,7 @@ DROP TABLE b_webdav_ext_links CASCADE CONSTRAINTS
 			{
 				if($DB->TableExists($table))
 				{
-					$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arr[$dbType]));
+					$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arr['mysql']));
 					foreach($arQuery as $i => $sql)
 					{
 						$res = $DB->Query($sql, true);

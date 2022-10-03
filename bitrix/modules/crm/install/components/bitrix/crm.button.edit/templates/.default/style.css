@@ -85,8 +85,8 @@
 	position: relative;
 	font-size: 12px;
 	color: #535c69;
-	font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-	font-weight: bold;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 	margin-right: 20px;
 	padding-left: 18px;
@@ -143,7 +143,8 @@
 
 .crm-button-edit-button-item {
 	border: 0;
-	font: 25px "OpenSans", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #000;
 	width: 100%;
 }
@@ -1612,8 +1613,8 @@ select::-ms-expand {
 .crm-button-edit-photo-uploaded-item-container-title span{
 	text-transform: uppercase;
 	font-size: 9px;
-	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-weight: bold;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #727379;
 	position: relative;
 	background: #fff;

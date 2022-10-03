@@ -108,7 +108,7 @@ export class Editor
 						{
 							return;
 						}
-						top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+						this.openIntegrationLimitSlider();
 					};
 					const lock = Tag.render`<span class="crm-entity-product-list-locked-header"></span>`;
 					header.insertBefore(lock, header.firstChild);
@@ -1268,7 +1268,6 @@ export class Editor
 		EventEmitter.subscribeOnce(popup, 'onWindowRegister', BX.defer(() => {
 			popup.Get().style.position = 'fixed';
 			popup.Get().style.top = (parseInt(popup.Get().style.top) - BX.GetWindowScrollPos().scrollTop) + 'px';
-			popup.OVERLAY.style.zIndex = 798;
 		}));
 
 		EventEmitter.subscribeOnce(window, 'EntityProductListController:onInnerCancel', BX.defer(() => {
@@ -2209,5 +2208,20 @@ export class Editor
 	handleOnTabShow(): void
 	{
 		EventEmitter.emit('onDemandRecalculateWrapper');
+	}
+
+	openIntegrationLimitSlider()
+	{
+		top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+		const helperSlider = top.BX.UI.InfoHelper.getSlider();
+		top.BX.Event.EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', (event) => {
+			const slider = event.getData()[0]?.getSlider();
+			if (slider !== helperSlider)
+			{
+				return;
+			}
+
+			window.location.search += '&active_tab=tab_products';
+		});
 	}
 }

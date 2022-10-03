@@ -1,0 +1,31 @@
+<?
+$MESS["TASKS_STATUS_1"] = "Нове завдання";
+$MESS["TASKS_STATUS_2"] = "Прийняте";
+$MESS["TASKS_STATUS_3"] = "Виконується";
+$MESS["TASKS_STATUS_4"] = "чекає контролю";
+$MESS["TASKS_STATUS_5"] = "Завершене";
+$MESS["TASKS_STATUS_6"] = "Відкладене";
+$MESS["TASKS_STATUS_7"] = "Відхилене";
+$MESS["TASKS_SIDEBAR_IN_REPORT_YES"] = "Так";
+$MESS["TASKS_SIDEBAR_IN_REPORT_NO"] = "Ні";
+$MESS["TASKS_DURATION_HOURS"] = "годин";
+$MESS["TASKS_DURATION_DAYS"] = "днів";
+$MESS["TASKS_EXCEL_ID"] = "ID";
+$MESS["TASKS_EXCEL_TITLE"] = "Завдання";
+$MESS["TASKS_EXCEL_RESPONSIBLE_ID"] = "Відповідальний";
+$MESS["TASKS_EXCEL_CREATED_BY"] = "Постановник";
+$MESS["TASKS_EXCEL_CREATED_DATE"] = "Дата створення";
+$MESS["TASKS_EXCEL_REAL_STATUS"] = "Статус";
+$MESS["TASKS_EXCEL_PRIORITY"] = "Пріоритет";
+$MESS["TASKS_EXCEL_START_DATE_PLAN"] = "Планована дата початку";
+$MESS["TASKS_EXCEL_END_DATE_PLAN"] = "Планована дата закінчення";
+$MESS["TASKS_EXCEL_DEADLINE"] = "Крайній термін";
+$MESS["TASKS_EXCEL_TIME_ESTIMATE"] = "Планована тривалість";
+$MESS["TASKS_EXCEL_TIME_SPENT_IN_LOGS"] = "Витрачено";
+$MESS["TASKS_EXCEL_CLOSED_DATE"] = "Дата закриття";
+$MESS["TASKS_EXCEL_MARK"] = "Оцінка";
+$MESS["TASKS_EXCEL_ADD_IN_REPORT"] = "У звіті";
+$MESS["TASKS_EXCEL_GROUP_ID"] = "Група";
+$MESS["TASKS_ELAPSED_H"] = "год";
+$MESS["TASKS_ELAPSED_M"] = "хв";
+?>

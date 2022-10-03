@@ -2,7 +2,7 @@ html {height:100%;}
 
 body{
 	background:#fff;
-	font-family: "Helvetica Neue",Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	font-size: 14px;
 	height:100%;
@@ -42,7 +42,7 @@ a:hover {
 
 .logo {
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 30px;
 	line-height: 52px;
 	overflow: hidden;
@@ -102,23 +102,23 @@ a:hover {
 
 .sh-filename{
 	color:#535b67;
-	font-family:HelveticaNeue, Arial;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:18px;
 	text-decoration:underline;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 }
 .sh-filename-error{
 	color:#535b67;
-	font-family:HelveticaNeue, Arial;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:18px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 }
 
 .sh-filesize{
 	padding-left:10px;
 	color:#c6c8cb;
 	text-decoration:none;
-	font-family:HelveticaNeue, arial;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:14px;
 	margin-right:-45px;
 }
@@ -126,7 +126,7 @@ a:hover {
 	padding-top:10px;
 	padding-bottom:10px;
 	color:#535b67;
-	font-family:HelveticaNeue, arial;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .sh-footer{
 	width:100%;
@@ -145,7 +145,7 @@ a:hover {
 .button24-l, .button24-r {background:url("images/buttons.png") no-repeat; display:inline-block; height:43px; position:static!important; vertical-align:top; width:5px;}
 .button24-l {background-position:-75px 0;}
 .button24-r {background-position:-81px 0;}
-.button24-t {background:url("images/buttons.png") repeat-x 0 -302px; color:#FFF; display:inline-block; font:bold 17px Arial,Helvetica,sans-serif; height:33px; padding:10px 10px 0; position:static!important; text-shadow:0 1px #85AC1E;}
+.button24-t {background:url("images/buttons.png") repeat-x 0 -302px; color:#FFF; display:inline-block; font:var(--ui-font-weight-bold) 17px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); height:33px; padding:10px 10px 0; position:static!important; text-shadow:0 1px #85AC1E;}
 .button24:hover .button24-l {background-position:-61px 0;}
 .button24:hover .button24-r {background-position:-67px 0;}
 .button24:hover .button24-t {background-position:0 -252px;}
@@ -161,7 +161,7 @@ a:hover {
 
 .webform-small-button { margin: 0 12px 0 0;}
 .webform-small-button-left { width:4px; margin-right: 8px; vertical-align:top; }
-.webform-small-button-text { font: normal normal normal 13px/24px Arial, Helvetica, sans-serif; color: #4f4f4f; vertical-align:top;}
+.webform-small-button-text { font: normal normal normal 13px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); color: #4f4f4f; vertical-align:top;}
 .webform-small-button-right { width:6px; margin-left: 8px; vertical-align:top;}
 
 .webform-small-button:hover { background: url(images/controls-sprite.png) repeat-x 0 -985px; }
@@ -174,7 +174,7 @@ a:hover {
 
 .webform-small-button-accept { margin: 0; background: url(images/controls-sprite.png) repeat-x 0 -356px;}
 .webform-small-button-accept .webform-small-button-left { width:4px; background: url(images/controls-sprite.png) no-repeat 0 -328px; margin-right: 6px; }
-.webform-small-button-accept .webform-small-button-text { font: normal normal normal 13px/24px Arial, Helvetica, sans-serif; color: #fff; text-shadow: #75ab6f -1px -1px 0; padding:0 16px}
+.webform-small-button-accept .webform-small-button-text { font: normal normal normal 13px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); color: #fff; text-shadow: #75ab6f -1px -1px 0; padding:0 16px}
 .webform-small-button-accept .webform-small-button-right { width:6px; background: url(images/controls-sprite.png) no-repeat -6px -328px; margin-left: 6px;}
 
 .webform-small-button-accept:hover { background: url(images/controls-sprite.png) repeat-x 0 -1044px; }
@@ -186,7 +186,7 @@ a:hover {
 }
 
 .webform-button { margin: 0 16px 0 0; }
-.webform-button-text { font: normal normal bold 14px/33px "Helvetica Neue", Helvetica, Arial, sans-serif; padding:0 7px; color: #fff; text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.1), -1px 1px 1px rgba(0, 0, 0, 0.1); background: none;}
+.webform-button-text { font: normal normal var(--ui-font-weight-bold) 14px/33px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); padding:0 7px; color: #fff; text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.1), -1px 1px 1px rgba(0, 0, 0, 0.1); background: none;}
 .webform-button-left { width: 6px; position: relative; left: -6px;  }
 .webform-button-right { width: 6px; position: relative; left: 6px; }
 
@@ -219,7 +219,7 @@ a:hover {
 	cursor: pointer;
 	display: inline-block;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 40px;
 	line-height: 40px;
 	min-width: 171px;
@@ -282,10 +282,10 @@ a:hover {
 	box-shadow:0 1px 4px 0 rgba(88,112,118,.2);
 }
 .mdl-section{
-	font-family:HelveticaNeue, arial;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color:#555;
 	font-size:14px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	padding:20px 10px 30px;
 	border-bottom:1px solid #e5e5e5;
 }
@@ -354,7 +354,7 @@ input[type=text].mdl-result{
 
 .banner-link {
 	color:#1f67b0;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	text-decoration:underline;
 }
 
@@ -406,7 +406,7 @@ input[type=text].mdl-result{
 	display:inline-block;
 	color:#0f0d0d;
 	margin-right:14px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	text-shadow:0 1px #fafcfc;
 }
 

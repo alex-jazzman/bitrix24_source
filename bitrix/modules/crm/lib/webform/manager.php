@@ -227,6 +227,31 @@ class Manager
 	}
 
 	/**
+	 * Get prepared data to entity selector component.
+	 *
+	 * @param string $entityId
+	 * @param string $tabId
+	 *
+	 * @return array|array[]|null
+	 */
+	public static function getListForEntitySelector(string $entityId, string $tabId)
+	{
+		static $result = null;
+		if (!is_array($result))
+		{
+			$formList = self::getListPlain(['select' => ['ID', 'NAME']]);
+			$result = array_map(fn($form): array => [
+				'id' => $form['ID'],
+				'entityId' => $entityId,
+				'tabs' => $tabId,
+				'title' => sprintf('%s [%d]', $form['NAME'], $form['ID']),
+			], $formList);
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Get encoded form names list.
 	 *
 	 * @return array
