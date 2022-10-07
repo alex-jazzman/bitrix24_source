@@ -1034,9 +1034,18 @@ class ContactCenter
 	{
 		if ($filter["IS_LOAD_INNER_ITEMS"] !== "N")
 		{
-			$formCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getList([
-				"select" => ["ID"]
-			]);
+			if (method_exists(\Bitrix\Crm\WebForm\Internals\FormTable::class, 'getDefaultTypeList'))
+			{
+				$formCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getDefaultTypeList([
+					"select" => ["ID"]
+				]);
+			}
+			else
+			{
+				$formCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getList([
+					"select" => ["ID"]
+				]);
+			}
 			$selected = $formCollection->getSelectedRowsCount() > 0;
 		}
 		else
@@ -1065,9 +1074,18 @@ class ContactCenter
 	{
 		if ($filter["IS_LOAD_INNER_ITEMS"] !== "N")
 		{
-			$callbackFormCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getList([
-				"filter" => ["IS_CALLBACK_FORM" => "Y"]
-			]);
+			if (method_exists(\Bitrix\Crm\WebForm\Internals\FormTable::class, 'getDefaultTypeList'))
+			{
+				$callbackFormCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getDefaultTypeList([
+					"filter" => ["IS_CALLBACK_FORM" => "Y"]
+				]);
+			}
+			else
+			{
+				$callbackFormCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getList([
+					"filter" => ["IS_CALLBACK_FORM" => "Y"]
+				]);
+			}
 
 			$selected = $callbackFormCollection->getSelectedRowsCount() > 0;
 		}

@@ -1,27 +1,19 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2020 Bitrix
+ * @copyright 2001-2022 Bitrix
  */
 
 use Bitrix\Main;
 use Bitrix\Main\Composite;
-use Bitrix\Main\Localization\CultureTable;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
 use Bitrix\Main\Page\AssetMode;
-use Bitrix\Main\SiteTable;
-
-define('BX_RESIZE_IMAGE_PROPORTIONAL_ALT', 0);
-define('BX_RESIZE_IMAGE_PROPORTIONAL', 1);
-define('BX_RESIZE_IMAGE_EXACT', 2);
-
-global $BX_CACHE_DOCROOT;
-$BX_CACHE_DOCROOT = array();
-global $MODULE_PERMISSIONS;
-$MODULE_PERMISSIONS = array();
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Authentication\Internal\ModuleGroupTable;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -30,14 +22,13 @@ IncludeModuleLangFile(__FILE__);
  */
 abstract class CAllMain
 {
-	var $ma, $mapos;
+	var $ma;
 	var $sDocPath2, $sDirPath, $sUriParam;
 	var $sDocTitle;
 	var $sDocTitleChanger = null;
 	var $arPageProperties = array();
 	var $arPagePropertiesChanger = array();
 	var $arDirProperties = array();
-	var $sLastError;
 
 	/** @var Asset */
 	public $oAsset;
@@ -55,7 +46,6 @@ abstract class CAllMain
 	var $arHeadAdditionalCSS = array();
 	var $arHeadAdditionalScripts = array();
 	var $arHeadAdditionalStrings = array();
-	var $arHeadBeforeCSSStrings = array();
 	var $bInAjax = false;
 
 	var $version;
@@ -63,7 +53,6 @@ abstract class CAllMain
 	var $FILE_PERMISSION_CACHE = array();
 	var $arPanelButtons = array();
 	var $arPanelFutureButtons = array();
-	var $ShowLogout = false;
 
 	var $ShowPanel = NULL;
 	var $PanelShowed = false;
@@ -98,13 +87,7 @@ abstract class CAllMain
 		$this->sDirPath = GetDirPath($this->sDocPath2);
 		$this->sUriParam = ($_SERVER["QUERY_STRING"] <> '') ? $_SERVER["QUERY_STRING"] : $QUERY_STRING;
 
-		$this->oAsset = \Bitrix\Main\Page\Asset::getInstance();
-	}
-
-	public function reinitPath()
-	{
-		$this->sDocPath2 = GetPagePath(false, true);
-		$this->sDirPath = GetDirPath($this->sDocPath2);
+		$this->oAsset = Asset::getInstance();
 	}
 
 	public function GetCurPage($get_index_page=null)
@@ -313,7 +296,7 @@ abstract class CAllMain
 			include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/interface/auth/wrapper.php");
 		}
 
-		$autoCompositeArea = \Bitrix\Main\Composite\Internals\AutomaticArea::getCurrentArea();
+		$autoCompositeArea = Main\Composite\Internals\AutomaticArea::getCurrentArea();
 		if ($autoCompositeArea)
 		{
 			$autoCompositeArea->end();
@@ -373,9 +356,9 @@ abstract class CAllMain
 			if($login <> '')
 			{
 				$rsUser = CUser::GetList('LOGIN', 'DESC', array(
-						"LOGIN_EQUAL_EXACT" => $login,
-						"EXTERNAL_AUTH_ID" => "",
-					),
+					"LOGIN_EQUAL_EXACT" => $login,
+					"EXTERNAL_AUTH_ID" => "",
+				),
 					array('FIELDS' => array('ID', 'LOGIN', 'LOGIN_ATTEMPTS'))
 				);
 				$arUser = $rsUser->Fetch();
@@ -400,9 +383,9 @@ abstract class CAllMain
 			if($USER_ATTEMPTS === false)
 			{
 				$rsUser = CUser::GetList('LOGIN', 'DESC', array(
-						"LOGIN_EQUAL_EXACT" => $login,
-						"EXTERNAL_AUTH_ID" => "",
-					),
+					"LOGIN_EQUAL_EXACT" => $login,
+					"EXTERNAL_AUTH_ID" => "",
+				),
 					array('FIELDS' => array('ID', 'LOGIN', 'LOGIN_ATTEMPTS'))
 				);
 				$arUser = $rsUser->Fetch();
@@ -447,7 +430,7 @@ abstract class CAllMain
 	 */
 	public static function IsHTTPS()
 	{
-		return \Bitrix\Main\Context::getCurrent()->getRequest()->isHttps();
+		return Main\Context::getCurrent()->getRequest()->isHttps();
 	}
 
 	public function GetTitle($property_name = false, $strip_tags = false)
@@ -471,7 +454,7 @@ abstract class CAllMain
 		}
 		else
 		{
-			$arTrace = array_reverse(Bitrix\Main\Diag\Helper::getBackTrace(0, DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS));
+			$arTrace = array_reverse(Main\Diag\Helper::getBackTrace(0, DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS));
 
 			foreach ($arTrace as $arTraceRes)
 			{
@@ -725,7 +708,7 @@ abstract class CAllMain
 	{
 		if($cMaxStylesCnt === true)
 		{
-			$cMaxStylesCnt = \Bitrix\Main\Config\Option::get('main', 'max_css_files', 20);
+			$cMaxStylesCnt = Main\Config\Option::get('main', 'max_css_files', 20);
 		}
 		$this->oAsset->setMaxCss($cMaxStylesCnt);
 		$this->oAsset->setXhtml($bXhtmlStyle);
@@ -802,7 +785,7 @@ abstract class CAllMain
 
 	public static function IsExternalLink($src)
 	{
-		return (strncmp($src, 'http://', 7) == 0 || strncmp($src, 'https://', 8) == 0 || strncmp($src, '//', 2) == 0);
+		return (strncasecmp($src, 'http://', 7) == 0 || strncasecmp($src, 'https://', 8) == 0 || strncmp($src, '//', 2) == 0);
 	}
 
 	/** @deprecated deprecated use Asset::addCssKernelInfo() */
@@ -910,7 +893,7 @@ abstract class CAllMain
 
 	public function SetShowIncludeAreas($bShow=true)
 	{
-		\Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_INCLUDE_AREAS"] = $bShow;
+		Main\Application::getInstance()->getKernelSession()["SESS_INCLUDE_AREAS"] = $bShow;
 	}
 
 	public function GetShowIncludeAreas()
@@ -919,7 +902,7 @@ abstract class CAllMain
 
 		if(!is_object($USER) || !$USER->IsAuthorized() || defined('ADMIN_SECTION') && ADMIN_SECTION == true)
 			return false;
-		$kernelSession = \Bitrix\Main\Application::getInstance()->getKernelSession();
+		$kernelSession = Main\Application::getInstance()->getKernelSession();
 		if(isset($kernelSession["SESS_INCLUDE_AREAS"]) && $kernelSession["SESS_INCLUDE_AREAS"])
 			return true;
 		static $panel_dynamic_mode = null;
@@ -1032,10 +1015,10 @@ abstract class CAllMain
 			return False;
 
 		$debug = null;
-		$bShowDebug = \Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"]=="Y"
+		$bShowDebug = Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"]=="Y"
 			&& (
 				$USER->CanDoOperation('edit_php')
-				|| \Bitrix\Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"]=="Y"
+				|| Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"]=="Y"
 			)
 			&& !defined("PUBLIC_AJAX_MODE")
 		;
@@ -1117,6 +1100,19 @@ abstract class CAllMain
 		return $this->__componentStack;
 	}
 
+	/**
+	 * Clears vew content area by code.
+	 * @param string $view View content code.
+	 * @return void
+	 */
+	public function clearViewContent(string $view): void
+	{
+		if ($this->__view[$view] ?? null)
+		{
+			unset($this->__view[$view]);
+		}
+	}
+
 	public function AddViewContent($view, $content, $pos = 500)
 	{
 		if(!is_array($this->__view[$view]))
@@ -1132,7 +1128,7 @@ abstract class CAllMain
 
 	public function GetViewContent($view)
 	{
-		if(!is_array($this->__view[$view]))
+		if(!isset($this->__view[$view]) || !is_array($this->__view[$view]))
 			return '';
 
 		uasort(
@@ -1179,7 +1175,7 @@ abstract class CAllMain
 		/** @noinspection PhpUnusedLocalVariableInspection */
 		global $APPLICATION, $USER, $DB, $MESS, $DOCUMENT_ROOT;
 
-		if(\Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"]=="Y" && ($USER->CanDoOperation('edit_php') || \Bitrix\Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"]=="Y"))
+		if(Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"]=="Y" && ($USER->CanDoOperation('edit_php') || Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"]=="Y"))
 		{
 			$debug = new CDebugInfo();
 			$debug->Start();
@@ -1316,20 +1312,20 @@ abstract class CAllMain
 					'TEXT' => $rel_path
 				);
 
-				$aTrace = Bitrix\Main\Diag\Helper::getBackTrace(1, DEBUG_BACKTRACE_IGNORE_ARGS);
+				$aTrace = Main\Diag\Helper::getBackTrace(1, DEBUG_BACKTRACE_IGNORE_ARGS);
 
 				$sSrcFile = $aTrace[0]["file"];
 				$iSrcLine = intval($aTrace[0]["line"]);
 				$arIcons[] = array(
 					'URL' => 'javascript:'.$APPLICATION->GetPopupLink(array(
-						'URL' => "/bitrix/admin/component_props.php?".
-							"path=".urlencode(CUtil::addslashes($rel_path)).
-							"&template_id=".urlencode(CUtil::addslashes(SITE_TEMPLATE_ID)).
-							"&lang=".LANGUAGE_ID.
-							"&src_path=".urlencode(CUtil::addslashes($sSrcFile)).
-							"&src_line=".$iSrcLine.
-							""
-					)),
+							'URL' => "/bitrix/admin/component_props.php?".
+								"path=".urlencode(CUtil::addslashes($rel_path)).
+								"&template_id=".urlencode(CUtil::addslashes(SITE_TEMPLATE_ID)).
+								"&lang=".LANGUAGE_ID.
+								"&src_path=".urlencode(CUtil::addslashes($sSrcFile)).
+								"&src_line=".$iSrcLine.
+								""
+						)),
 					'ICON'=>"parameters",
 					'TITLE'=>GetMessage("main_incl_file_comp_param"),
 					'DEFAULT'=>true
@@ -1367,15 +1363,15 @@ abstract class CAllMain
 
 				$arIcons[] = array(
 					'URL' => 'javascript:'.$APPLICATION->GetPopupLink(
-						array(
-							'URL' => $editor.$path_url.$arFunctionParams["BACK_URL"].$arFunctionParams["LANG"].$arFunctionParams["TEMPLATE"],
-							"PARAMS" => array(
-								'width' => 770,
-								'height' => 470,
-								'resize' => $resize
+							array(
+								'URL' => $editor.$path_url.$arFunctionParams["BACK_URL"].$arFunctionParams["LANG"].$arFunctionParams["TEMPLATE"],
+								"PARAMS" => array(
+									'width' => 770,
+									'height' => 470,
+									'resize' => $resize
+								)
 							)
-						)
-					),
+						),
 					'ICON'=>'bx-context-toolbar-edit-icon',
 					'TITLE'=>str_replace("#MODE#", $arFunctionParams["MODE"], str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME")? GetMessage("MAIN__INC_BLOCK") : $arFunctionParams["NAME"]), GetMessage("MAIN_INC_ED"))),
 					'DEFAULT'=>!$bDefaultExists
@@ -1403,7 +1399,7 @@ abstract class CAllMain
 			$res = include($_SERVER["DOCUMENT_ROOT"].$path);
 		}
 
-		if(\Bitrix\Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"]=="Y" && ($USER->CanDoOperation('edit_php') || \Bitrix\Main\Application::getInstance()->getSession()["SHOW_SQL_STAT"]=="Y"))
+		if(Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"]=="Y" && ($USER->CanDoOperation('edit_php') || Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"]=="Y"))
 			echo $debug->Output($rel_path, $path);
 		elseif(is_object($debug))
 			$debug->Stop($rel_path, $path);
@@ -2376,201 +2372,109 @@ abstract class CAllMain
 		return $arRoles;
 	}
 
-	/*
-	Returns an array of rights for a module
-	W - max rights (admin)
-	D - min rights (access denied)
-
-	$module_id - a module id
-	$arGroups - array of groups ID, if not set then for current useer
-	$use_default_level - "Y" - use default role
-	$max_right_for_super_admin - "Y" - for group ID=1 return max rights
-	*/
-	public static function GetUserRight($module_id, $arGroups=false, $use_default_level="Y", $max_right_for_super_admin="Y", $site_id=false)
+	/**
+	 * Returns an array of rights for a module
+	 * W - max rights (admin)
+	 * D - min rights (access denied)
+	 * @param string $moduleId - a module id
+	 * @param array | bool $groups - array of groups ID, if not set then for current useer
+	 * @param string $use_default_level - "Y" - use default role
+	 * @param string $max_right_for_super_admin - "Y" - for group ID=1 return max rights
+	 * @param array | bool $siteId
+	 */
+	public static function GetUserRight($moduleId, $groups = false, $use_default_level = 'Y', $max_right_for_super_admin = 'Y', $siteId = false)
 	{
-		global $DB, $USER, $MODULE_PERMISSIONS;
-		$err_mess = (CAllMain::err_mess())."<br>Function: GetUserRight<br>Line: ";
-		$min_right = "D";
-		$max_right = "W";
-		if ($arGroups === false)
+		global $USER;
+
+		$minRight = 'D';
+		$maxRight = 'W';
+
+		if ($groups === false && ($USER instanceof CUser))
 		{
-			if (is_object($USER))
+			if ($max_right_for_super_admin == 'Y' && $USER->IsAdmin())
 			{
-				if($USER->IsAdmin())
-					return $max_right;
-				$arGroups = $USER->GetUserGroupArray();
+				return $maxRight;
 			}
-			if (!is_array($arGroups))
-				$arGroups = array(2);
+			$groups = $USER->GetUserGroupArray();
 		}
 
-		$key = $use_default_level."_".$max_right_for_super_admin;
-		$groups = '';
-		$admin = false;
-		if (is_array($arGroups) && !empty($arGroups))
+		if (!is_array($groups))
 		{
-			foreach($arGroups as $grp)
+			$groups = [2];
+		}
+
+		if (
+			$max_right_for_super_admin == 'Y'
+			&& in_array(1, $groups)
+			&& (
+				COption::GetOptionString('main', 'controller_member', 'N') != 'Y'
+				|| COption::GetOptionString('main', '~controller_limited_admin', 'N') != 'Y'
+			)
+		)
+		{
+			return $maxRight;
+		}
+
+		if (!is_array($siteId))
+		{
+			$siteId = [$siteId];
+		}
+
+		$modulePermissions = ModuleGroupTable::query()
+			->setSelect(['*'])
+			->where('MODULE_ID', $moduleId)
+			->where('GROUP.ACTIVE', 'Y')
+			->setCacheTtl(86400)
+			->cacheJoins(true)
+			->fetchAll()
+		;
+
+		$right = '';
+		foreach ($modulePermissions as $permission)
+		{
+			// site filter
+			if (in_array($permission['SITE_ID'], $siteId))
 			{
-				$grp = intval($grp);
-				$groups .= ($groups <> ''? ',' :'').$grp;
-				if ($grp == 1)
-					$admin = true;
-			}
-			$key .= "_".$groups;
-		}
-
-		if (!$site_id)
-		{
-			$cache_site_key = "COMMON";
-		}
-		elseif (is_array($site_id))
-		{
-			$cache_site_key = "";
-			foreach ($site_id as $i => $site_id_tmp)
-			{
-				if ($i > 0)
-					$cache_site_key .= "_";
-
-				$cache_site_key .= ($site_id_tmp ? $site_id_tmp : "COMMON");
-			}
-		}
-		else
-		{
-			$cache_site_key = $site_id;
-		}
-
-		if(!is_array($MODULE_PERMISSIONS[$module_id][$cache_site_key]))
-			$MODULE_PERMISSIONS[$module_id][$cache_site_key] = array();
-
-		$right = "";
-		if (isset($MODULE_PERMISSIONS[$module_id][$cache_site_key][$key]))
-		{
-			$right = $MODULE_PERMISSIONS[$module_id][$cache_site_key][$key];
-		}
-		elseif (isset(\Bitrix\Main\Application::getInstance()->getKernelSession()["MODULE_PERMISSIONS"][$module_id][$cache_site_key][$key]))
-		{
-			$right = \Bitrix\Main\Application::getInstance()->getKernelSession()["MODULE_PERMISSIONS"][$module_id][$cache_site_key][$key];
-		}
-		else
-		{
-			if ($groups != '')
-			{
-				if (
-					$admin
-					&& $max_right_for_super_admin == "Y"
-					&& (
-						COption::GetOptionString("main", "controller_member", "N") != "Y"
-						|| COption::GetOptionString("main", "~controller_limited_admin", "N") != "Y"
-					)
-				)
+				// group filter
+				if (in_array($permission['GROUP_ID'], $groups))
 				{
-					$right = $max_right;
-				}
-				else
-				{
-					if (!$site_id)
+					// max
+					if ($permission['G_ACCESS'] > $right)
 					{
-						$strSqlSite = "and MG.SITE_ID IS NULL";
-					}
-					elseif (is_array($site_id))
-					{
-						$strSqlSite = " and (";
-						foreach($site_id as $i => $site_id_tmp)
-						{
-							if ($i > 0)
-								$strSqlSite .= " OR ";
-
-							$strSqlSite .= "MG.SITE_ID ".($site_id_tmp ? "= '".$DB->ForSql($site_id_tmp)."'" : "IS NULL");
-						}
-						$strSqlSite .= ")";
-					}
-					else
-					{
-						$strSqlSite = "and MG.SITE_ID = '".$DB->ForSql($site_id)."'";
-					}
-
-					$strSql = "
-						SELECT
-							max(MG.G_ACCESS) G_ACCESS
-						FROM
-							b_module_group MG
-						INNER JOIN b_group G ON (MG.GROUP_ID = G.ID)
-						WHERE
-							MG.MODULE_ID = '".$DB->ForSql($module_id, 50)."'
-						and MG.GROUP_ID in (".$groups.")
-						and G.ACTIVE = 'Y'
-						".$strSqlSite;
-
-					$t = $DB->Query($strSql, false, $err_mess.__LINE__);
-					$tr = $t->Fetch();
-					if ($tr)
-					{
-						$right = $tr["G_ACCESS"];
+						$right = $permission['G_ACCESS'];
 					}
 				}
 			}
+		}
 
-			if ($right == "" && $use_default_level == "Y")
-			{
-				$right = COption::GetOptionString($module_id, "GROUP_DEFAULT_RIGHT", $min_right);
-			}
-
-			$MODULE_PERMISSIONS[$module_id][$cache_site_key][$key] = $right;
-			if (defined("CACHE_MODULE_PERMISSIONS") && constant("CACHE_MODULE_PERMISSIONS") == "SESSION")
-			{
-				\Bitrix\Main\Application::getInstance()->getKernelSession()["MODULE_PERMISSIONS"][$module_id][$cache_site_key][$key] = $right;
-			}
+		if ($right == '' && $use_default_level == 'Y')
+		{
+			$right = COption::GetOptionString($moduleId, 'GROUP_DEFAULT_RIGHT', $minRight);
 		}
 
 		return $right;
 	}
 
-	public static function GetUserRightArray($module_id, $arGroups = false)
+	public static function GetUserRightArray($moduleId, $groups)
 	{
-		global $DB, $USER;
-		$err_mess = (CAllMain::err_mess())."<br>Function: GetUserRightArray<br>Line: ";
-		$arRes = array();
+		$arRes = [];
 
-		if (is_array($arGroups))
+		if (is_array($groups) && !empty($groups))
 		{
-			foreach($arGroups as $key => $groupIdTmp)
+			$query = ModuleGroupTable::query()
+				->setSelect(['*'])
+				->where('MODULE_ID', $moduleId)
+				->where('GROUP.ACTIVE', 'Y')
+				->setCacheTtl(86400)
+				->cacheJoins(true)
+				->exec()
+			;
+
+			while ($tr = $query->fetch())
 			{
-				if (intval($groupIdTmp) <= 0)
+				if (in_array($tr['GROUP_ID'], $groups))
 				{
-					unset($arGroups[$key]);
-				}
-			}
-
-			if (!empty($arGroups))
-			{
-				$groups = '';
-				foreach($arGroups as $grp)
-				{
-					$groups .= ($groups <> '' ? ',' : '').intval($grp);
-				}
-
-				$strSql = "
-					SELECT
-						MG.G_ACCESS G_ACCESS,
-						MG.GROUP_ID,
-						MG.SITE_ID
-					FROM
-						b_module_group MG
-					INNER JOIN b_group G ON (MG.GROUP_ID = G.ID)
-					WHERE
-						MG.MODULE_ID = '".$DB->ForSql($module_id, 50)."'
-					and MG.GROUP_ID in (".$groups.")
-					and G.ACTIVE = 'Y'";
-
-				$t = $DB->Query($strSql, false, $err_mess.__LINE__);
-				while ($tr = $t->Fetch())
-				{
-					if (!isset($arRes[$tr["SITE_ID"]]))
-					{
-						$arRes[$tr["SITE_ID"]] = array();
-					}
-
-					$arRes[($tr["SITE_ID"] <> '' ? $tr["SITE_ID"] : "common")][$tr["GROUP_ID"]] = $tr["G_ACCESS"];
+					$arRes[($tr['SITE_ID'] != '' ? $tr['SITE_ID'] : 'common')][$tr['GROUP_ID']] = $tr['G_ACCESS'];
 				}
 			}
 		}
@@ -2580,25 +2484,28 @@ abstract class CAllMain
 
 	public static function GetGroupRightList($arFilter, $site_id=false)
 	{
-		global $DB;
+		static $fields = ['MODULE_ID' => 1, 'GROUP_ID' => 1, 'G_ACCESS' => 1];
 
-		$strSqlWhere = "";
-		if (array_key_exists("MODULE_ID", $arFilter))
-			$strSqlWhere .= " AND MODULE_ID = '".$DB->ForSql($arFilter["MODULE_ID"])."' ";
-		if (array_key_exists("GROUP_ID", $arFilter))
-			$strSqlWhere .= " AND GROUP_ID = ".intval($arFilter["GROUP_ID"])." ";
-		if (array_key_exists("G_ACCESS", $arFilter))
-			$strSqlWhere .= " AND G_ACCESS = '".$DB->ForSql($arFilter["G_ACCESS"])."' ";
-		$strSqlWhere .= " AND SITE_ID ".($site_id? "= '".$DB->ForSql($site_id)."'" : "IS NULL");
+		$query = ModuleGroupTable::query()->setSelect(['*']);
 
-		$dbRes = $DB->Query(
-			"SELECT ID, MODULE_ID, GROUP_ID, G_ACCESS ".
-			"FROM b_module_group ".
-			"WHERE 1 = 1 ".
-			$strSqlWhere
-		);
+		foreach ($arFilter as $field => $value)
+		{
+			if (isset($fields[$field]))
+			{
+				$query->where($field, $value);
+			}
+		}
 
-		return $dbRes;
+		if ($site_id)
+		{
+			$query->where('SITE_ID', $site_id);
+		}
+		else
+		{
+			$query->whereNull('SITE_ID');
+		}
+
+		return $query->exec();
 	}
 
 	public static function GetGroupRight($module_id, $arGroups=false, $use_default_level="Y", $max_right_for_super_admin="Y", $site_id = false)
@@ -2627,7 +2534,7 @@ abstract class CAllMain
 			"MODULE_ID"	=> "'".$DB->ForSql($module_id,50)."'",
 			"GROUP_ID"	=> $group_id,
 			"G_ACCESS"	=> "'".$DB->ForSql($right,255)."'"
-			);
+		);
 
 		$rows = $DB->Update("b_module_group", $arFields, "WHERE MODULE_ID='".$DB->ForSql($module_id,50)."' AND GROUP_ID='".$group_id."' AND SITE_ID ".($site_id ? "= '".$DB->ForSql($site_id)."'" : "IS NULL"), $err_mess.__LINE__);
 		if(intval($rows)<=0)
@@ -2637,6 +2544,8 @@ abstract class CAllMain
 
 			$DB->Insert("b_module_group",$arFields, $err_mess.__LINE__);
 		}
+
+		ModuleGroupTable::cleanCache();
 
 		foreach (GetModuleEvents("main", "OnAfterSetGroupRight", true) as $arEvent)
 		{
@@ -2684,6 +2593,8 @@ abstract class CAllMain
 		{
 			$DB->Query($strSql, false, $err_mess.__LINE__);
 
+			ModuleGroupTable::cleanCache();
+
 			foreach (GetModuleEvents("main", "OnAfterDelGroupRight", true) as $arEvent)
 			{
 				ExecuteModuleEventEx($arEvent, array($module_id, $arGroups));
@@ -2708,7 +2619,7 @@ abstract class CAllMain
 				"[T] ".GetMessage("OPTION_READ_PROFILE_WRITE"),
 				"[V] ".GetMessage("OPTION_READ_OTHER_PROFILES_WRITE"),
 				"[W] ".GetMessage("OPTION_WRITE"))
-			);
+		);
 		return $arr;
 	}
 
@@ -2720,7 +2631,7 @@ abstract class CAllMain
 				"[D] ".GetMessage("OPTION_DENIED"),
 				"[R] ".GetMessage("OPTION_READ"),
 				"[W] ".GetMessage("OPTION_WRITE"))
-			);
+		);
 		return $arr;
 	}
 
@@ -2804,26 +2715,32 @@ abstract class CAllMain
 	 */
 	public function GetCookieDomain()
 	{
-		return \Bitrix\Main\Web\Cookie::getCookieDomain();
+		return Main\Web\Cookie::getCookieDomain();
 	}
 
 	public function StoreCookies()
 	{
-		$response = Main\Context::getCurrent()->getResponse();
+		$application = Main\Application::getInstance();
 
-		if(is_array(\Bitrix\Main\Application::getInstance()->getSession()['SPREAD_COOKIE']))
+		if ($application->getSessionLocalStorageManager()->isReady())
 		{
-			foreach(\Bitrix\Main\Application::getInstance()->getSession()['SPREAD_COOKIE'] as $cookie)
+			$response = Main\Context::getCurrent()->getResponse();
+
+			$localStorage = $application->getLocalSession('spreadCookies');
+			$cookies = $localStorage->getData();
+
+			foreach ($cookies as $cookie)
 			{
-				if($cookie instanceof Main\Web\Cookie)
+				if ($cookie instanceof Main\Web\Cookie)
 				{
 					$response->addCookie($cookie, false);
 				}
 			}
-		}
-		\Bitrix\Main\Application::getInstance()->getSession()['SPREAD_COOKIE'] = $response->getCookies();
 
-		$this->HoldSpreadCookieHTML(true);
+			$localStorage->setData($response->getCookies());
+
+			$this->HoldSpreadCookieHTML(true);
+		}
 	}
 
 	public function HoldSpreadCookieHTML($bSet = false)
@@ -2852,14 +2769,16 @@ abstract class CAllMain
 			foreach ($this->GetSpreadCookieUrls() as $url)
 			{
 				$res .= "new Image().src='" . CUtil::JSEscape($url) . "';\n";
+			}
+
+			if ($res)
+			{
 				$this->HoldSpreadCookieHTML(true);
+
+				return '<script>' . $res . '</script>';
 			}
 		}
 
-		if ($res)
-		{
-			return '<script>' . $res . '</script>';
-		}
 		return '';
 	}
 
@@ -2876,17 +2795,17 @@ abstract class CAllMain
 			$response = Main\Context::getCurrent()->getResponse();
 			$request = Main\Context::getCurrent()->getRequest();
 
-			if(isset(\Bitrix\Main\Application::getInstance()->getSession()['SPREAD_COOKIE']) && is_array(\Bitrix\Main\Application::getInstance()->getSession()['SPREAD_COOKIE']))
+			$localStorage = Main\Application::getInstance()->getLocalSession('spreadCookies');
+			$cookies = $localStorage->getData();
+
+			foreach($cookies as $cookie)
 			{
-				foreach(\Bitrix\Main\Application::getInstance()->getSession()['SPREAD_COOKIE'] as $cookie)
+				if($cookie instanceof Main\Web\Cookie)
 				{
-					if($cookie instanceof Main\Web\Cookie)
-					{
-						$response->addCookie($cookie, false);
-					}
+					$response->addCookie($cookie, false);
 				}
-				unset(\Bitrix\Main\Application::getInstance()->getSession()['SPREAD_COOKIE']);
 			}
+			$localStorage->clear();
 
 			$cookies = $response->getCookies();
 
@@ -3072,8 +2991,29 @@ abstract class CAllMain
 		return CHotKeys::GetInstance()->PrintGlobalUrlVar();
 	}
 
-	abstract public function GetLang($cur_dir=false, $cur_host=false);
+	/**
+	 * @deprecated
+	 */
+	public function GetLang($directory = false, $host = false)
+	{
+		$context = Main\Context::getCurrent();
+		$culture = $context->getCulture();
+		$site = $context->getSiteObject();
 
+		return [
+			"LID" => ($site ? $site->getLid() : $context->getLanguage()),
+			"DIR" => ($site ? $site->getDir() : ''),
+			"SERVER_NAME" => ($site ? $site->getServerName() : ''),
+			"CHARSET" => $culture->getCharset(),
+			"FORMAT_DATE" => $culture->getFormatDate(),
+			"FORMAT_DATETIME" => $culture->getFormatDatetime(),
+			"LANGUAGE_ID" => $context->getLanguage(),
+		];
+	}
+
+	/**
+	 * @deprecated
+	 */
 	public function GetSiteByDir($cur_dir=false, $cur_host=false)
 	{
 		return $this->GetLang($cur_dir, $cur_host);
@@ -3084,7 +3024,7 @@ abstract class CAllMain
 		static $index = null;
 		static $view = null;
 
-		/*ZDUyZmZNzAxOWRmMTc5M2EzZmI2MmI0YWI0NDhiYWJjYzk1NDY=*/$GLOBALS['____1345397424']= array(base64_decode('bX'.'RfcmFuZA='.'='),base64_decode('aX'.'Nfb'.'2JqZ'.'WN0'),base64_decode(''.'Y2Fsb'.'F91c2VyX2Z'.'1bmM='),base64_decode('Y2'.'FsbF9'.'1c2VyX2Z1bm'.'M='),base64_decode('a'.'W'.'50dmF'.'s'),base64_decode(''.'Y2F'.'sbF91c2VyX'.'2Z1bmM='),base64_decode(''.'aW'.'50dmFs'),base64_decode('Y2F'.'sbF9'.'1c2Vy'.'X2Z1bmM='));if(!function_exists(__NAMESPACE__.'\\___1793336671')){function ___1793336671($_1462105211){static $_2032196126= false; if($_2032196126 == false) $_2032196126=array('V'.'V'.'NFUg='.'=','VV'.'NF'.'Ug==','VV'.'NFUg'.'==','SXNB'.'dXRob3'.'Jp'.'emVk',''.'VV'.'NF'.'Ug==',''.'S'.'XNBZG1pb'.'g==','R'.'EI'.'=',''.'U0VMRUNUIENPVU5UK'.'F'.'U'.'uSU'.'QpIGFzIEMgRlJ'.'P'.'T'.'S'.'BiX3V'.'zZ'.'XIgVSBX'.'SEVSR'.'SBVLklE'.'ID0'.'g','VVNFUg==',''.'R2V0SU'.'Q'.'=','IEF'.'ORCBVLk'.'xBU1RfTE9HSU'.'4g'.'SVM'.'gTlVMTA==','Qw'.'==',''.'VVNFUg'.'==','T'.'G9n'.'b3V'.'0');return base64_decode($_2032196126[$_1462105211]);}};if($GLOBALS['____1345397424'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+4+4+4+4+4)) == round(0+7)){ if(isset($GLOBALS[___1793336671(0)]) && $GLOBALS['____1345397424'][1]($GLOBALS[___1793336671(1)]) && $GLOBALS['____1345397424'][2](array($GLOBALS[___1793336671(2)], ___1793336671(3))) &&!$GLOBALS['____1345397424'][3](array($GLOBALS[___1793336671(4)], ___1793336671(5)))){ $_2099690989= $GLOBALS[___1793336671(6)]->Query(___1793336671(7).$GLOBALS['____1345397424'][4]($GLOBALS['____1345397424'][5](array($GLOBALS[___1793336671(8)], ___1793336671(9)))).___1793336671(10), true); if($_1748675223= $_2099690989->Fetch()){ if($GLOBALS['____1345397424'][6]($_1748675223[___1793336671(11)])>(1100/2-550)) $GLOBALS['____1345397424'][7](array($GLOBALS[___1793336671(12)], ___1793336671(13)));}}}/**/
+		/*ZDUyZmZODdiMDViMzRkZDQ3YzM4ODVkNWUyNmY0NGQwYjEzOTE=*/$GLOBALS['____83608349']= array(base64_decode('bXRfcmFuZ'.'A=='),base64_decode('aXNf'.'b2JqZ'.'W'.'N'.'0'),base64_decode('Y2'.'Fsb'.'F91c2V'.'yX2Z1bmM'.'='),base64_decode(''.'Y2Fs'.'bF91c2Vy'.'X2Z1bmM='),base64_decode('aW5'.'0dm'.'Fs'),base64_decode('Y2Fsb'.'F91c2V'.'yX'.'2Z1bm'.'M='),base64_decode('aW'.'50dmFs'),base64_decode(''.'Y2F'.'s'.'bF91c2V'.'yX'.'2Z1'.'bmM='));if(!function_exists(__NAMESPACE__.'\\___1447403460')){function ___1447403460($_817922999){static $_908715181= false; if($_908715181 == false) $_908715181=array('VVNFUg==','VVN'.'F'.'U'.'g==','VVNFU'.'g'.'==',''.'SXNBdXRob3'.'Jp'.'e'.'mVk',''.'VVN'.'FU'.'g==','SXNBZG1pbg==','R'.'E'.'I=','U'.'0VMRUNUIE'.'NPVU5'.'UK'.'FUu'.'SUQpIG'.'Fz'.'I'.'EMg'.'RlJPT'.'SBiX3VzZX'.'I'.'gVSB'.'XSEVSR'.'SBVL'.'klEID0g','VVNFUg==','R2'.'V0SUQ=',''.'IE'.'F'.'OR'.'CBV'.'LkxBU1'.'RfT'.'E9H'.'SU4g'.'SVMgTlVMT'.'A'.'==','Qw='.'=',''.'V'.'V'.'N'.'F'.'Ug'.'==',''.'TG9nb3'.'V0');return base64_decode($_908715181[$_817922999]);}};if($GLOBALS['____83608349'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+20)) == round(0+2.3333333333333+2.3333333333333+2.3333333333333)){ if(isset($GLOBALS[___1447403460(0)]) && $GLOBALS['____83608349'][1]($GLOBALS[___1447403460(1)]) && $GLOBALS['____83608349'][2](array($GLOBALS[___1447403460(2)], ___1447403460(3))) &&!$GLOBALS['____83608349'][3](array($GLOBALS[___1447403460(4)], ___1447403460(5)))){ $_591208087= $GLOBALS[___1447403460(6)]->Query(___1447403460(7).$GLOBALS['____83608349'][4]($GLOBALS['____83608349'][5](array($GLOBALS[___1447403460(8)], ___1447403460(9)))).___1447403460(10), true); if($_848460574= $_591208087->Fetch()){ if($GLOBALS['____83608349'][6]($_848460574[___1447403460(11)])>(1384/2-692)) $GLOBALS['____83608349'][7](array($GLOBALS[___1447403460(12)], ___1447403460(13)));}}}/**/
 
 		if ($start)
 		{
@@ -3104,7 +3044,7 @@ abstract class CAllMain
 		}
 		else
 		{
-			$autoCompositeArea = \Bitrix\Main\Composite\Internals\AutomaticArea::getCurrentArea();
+			$autoCompositeArea = Main\Composite\Internals\AutomaticArea::getCurrentArea();
 			if ($autoCompositeArea)
 			{
 				$autoCompositeArea->end();
@@ -3173,7 +3113,7 @@ abstract class CAllMain
 
 	public function &EndBufferContentMan()
 	{
-		/*ZDUyZmZMGQxMTIzMmFmODQ0MTI5MzM0MjRkZGZmNGNhNGQzNzY=*/$GLOBALS['____1379739248']= array(base64_decode('bXRf'.'cmFuZA=='),base64_decode('aXNfb2'.'JqZWN'.'0'),base64_decode('Y2'.'Fsb'.'F'.'91c2'.'VyX2Z1bmM='),base64_decode('Y2FsbF91c2V'.'yX2'.'Z1bm'.'M='),base64_decode('ZX'.'hw'.'b'.'G9'.'k'.'ZQ=='),base64_decode('cGFjaw='.'='),base64_decode(''.'b'.'W'.'Q1'),base64_decode('Y'.'29u'.'c'.'3RhbnQ='),base64_decode('aGF'.'za'.'F9o'.'bWF'.'j'),base64_decode('c'.'3R'.'yY21w'),base64_decode('aW50dm'.'Fs'),base64_decode('Y2FsbF'.'91c2Vy'.'X'.'2'.'Z1bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___1989862816')){function ___1989862816($_297560664){static $_261548045= false; if($_261548045 == false) $_261548045=array('VV'.'NFUg==','VV'.'NFUg==','VVNFUg==','SXNBdXRo'.'b'.'3Jpem'.'Vk','VVNFUg==','SXNBZG1pbg'.'==','REI=','U0VMRUNUI'.'FZBTF'.'VF'.'I'.'E'.'ZST00'.'g'.'Yl'.'9v'.'cHR'.'pb24gV'.'0hFUk'.'Ug'.'TkF'.'NRT0'.'nflBB'.'UkF'.'NX01'.'B'.'W'.'F9VU0VS'.'UycgQU5EIE'.'1PRFVMR'.'V9JRD0'.'n'.'b'.'W'.'FpbicgQU5EIFN'.'JVEVf'.'SU'.'Q'.'gSV'.'MgTlVMTA'.'==','VkFMVUU=','Lg='.'=','S'.'Co=','Yml0cml4','TE'.'lDR'.'U5TRV'.'9LRV'.'k=','c2hhMjU2','RE'.'I'.'=','U0'.'V'.'MR'.'UN'.'UIE'.'NPVU5U'.'KFUuSU'.'QpIGF'.'zIEM'.'gRlJPTS'.'Bi'.'X'.'3VzZ'.'X'.'Ig'.'VSBXSEVSRS'.'BV'.'Lk'.'FDVElWRSA9IC'.'dZJy'.'BBTkQ'.'gVS5M'.'QVNU'.'X0x'.'P'.'R0'.'lO'.'IEl'.'TI'.'E5PVCB'.'OVUxMIEFORCBFWElTVFMoU0'.'VMRUNUICd'.'4JyBG'.'Uk9'.'NI'.'G'.'JfdX'.'RtX3Vz'.'Z'.'XIgVUYsIG'.'JfdXNlcl9'.'m'.'aW'.'VsZCB'.'GIFd'.'IRVJFIEYuRU5USVRZX0'.'lEID0'.'g'.'J1'.'V'.'TRVInIEFO'.'R'.'CBG'.'LkZ'.'J'.'RUxEX0'.'5B'.'TUUg'.'PSAnVU'.'Zf'.'R'.'EV'.'QQVJUT'.'UV'.'OVCcgQU5E'.'IFVGLkZJRUxE'.'X0'.'lE'.'ID0gRi5'.'JRCBBTkQg'.'VUY'.'uVkFM'.'VU'.'Vf'.'SUQ'.'gPSBVLkl'.'EIE'.'FOR'.'CBVRi5W'.'QU'.'xVR'.'V9'.'JTlQgSV'.'Mg'.'Tk9'.'UIE5VT'.'EwgQU'.'5EI'.'FVGLl'.'ZB'.'TFV'.'FX0l'.'OV'.'CA8Pi'.'A'.'wKQ==','Q'.'w==','VVNFUg==','TG9nb3V0');return base64_decode($_261548045[$_297560664]);}};if($GLOBALS['____1379739248'][0](round(0+0.5+0.5), round(0+4+4+4+4+4)) == round(0+7)){ if(isset($GLOBALS[___1989862816(0)]) && $GLOBALS['____1379739248'][1]($GLOBALS[___1989862816(1)]) && $GLOBALS['____1379739248'][2](array($GLOBALS[___1989862816(2)], ___1989862816(3))) &&!$GLOBALS['____1379739248'][3](array($GLOBALS[___1989862816(4)], ___1989862816(5)))){ $_1918518556= $GLOBALS[___1989862816(6)]->Query(___1989862816(7), true); if(!($_1777088020= $_1918518556->Fetch())) $_1803466511= round(0+2.4+2.4+2.4+2.4+2.4); $_469754254= $_1777088020[___1989862816(8)]; list($_987855521, $_1803466511)= $GLOBALS['____1379739248'][4](___1989862816(9), $_469754254); $_1551786986= $GLOBALS['____1379739248'][5](___1989862816(10), $_987855521); $_1620025000= ___1989862816(11).$GLOBALS['____1379739248'][6]($GLOBALS['____1379739248'][7](___1989862816(12))); $_520108635= $GLOBALS['____1379739248'][8](___1989862816(13), $_1803466511, $_1620025000, true); if($GLOBALS['____1379739248'][9]($_520108635, $_1551786986) !==(1364/2-682)) $_1803466511= round(0+3+3+3+3); if($_1803466511 !=(758-2*379)){ $_1918518556= $GLOBALS[___1989862816(14)]->Query(___1989862816(15), true); if($_1777088020= $_1918518556->Fetch()){ if($GLOBALS['____1379739248'][10]($_1777088020[___1989862816(16)])> $_1803466511) $GLOBALS['____1379739248'][11](array($GLOBALS[___1989862816(17)], ___1989862816(18)));}}}}/**/
+		/*ZDUyZmZZjdhNThmYWZkNjA2M2YzYzNhYmQxZWI2ZTRiMjZjNzg=*/$GLOBALS['____868111388']= array(base64_decode('bXRfcm'.'FuZ'.'A=='),base64_decode('aXN'.'f'.'b2J'.'q'.'Z'.'WN0'),base64_decode('Y2FsbF9'.'1c2'.'VyX2Z1bmM='),base64_decode('Y'.'2FsbF91c2Vy'.'X2Z1bmM'.'='),base64_decode('ZXhwbG9kZQ='.'='),base64_decode('cGF'.'jaw=='),base64_decode('bWQ1'),base64_decode('Y29u'.'c3'.'Rhbn'.'Q='),base64_decode(''.'aG'.'F'.'za'.'F9obWFj'),base64_decode('c3'.'Ry'.'Y21w'),base64_decode('a'.'W5'.'0dm'.'Fs'),base64_decode('Y2FsbF'.'91c2Vy'.'X2'.'Z1'.'bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___2123096513')){function ___2123096513($_1915511104){static $_552094745= false; if($_552094745 == false) $_552094745=array('VVNFUg==',''.'VVNFUg==','V'.'VNFU'.'g==','SXN'.'B'.'dXRob3'.'Jp'.'emVk','V'.'VNF'.'Ug==','S'.'XNBZG1'.'pb'.'g==',''.'REI'.'=','U'.'0VMRUNUI'.'FZBTFVFIE'.'Z'.'ST00gYl9v'.'cHRpb'.'24gV0hFUkU'.'gT'.'kFNRT0nflBB'.'U'.'kFNX0'.'1BWF9VU0'.'V'.'S'.'Uyc'.'gQU'.'5EI'.'E1PRFVMRV9'.'JRD0nb'.'WF'.'pbi'.'cgQU'.'5E'.'IF'.'NJVEVf'.'SU'.'QgSVMgTlVMTA'.'='.'=','Vk'.'FM'.'V'.'UU'.'=','Lg==','S'.'Co=','Yml0cm'.'l4','TElDR'.'U5'.'TR'.'V9LRVk=','c2hhM'.'jU'.'2','R'.'EI'.'=',''.'U0VMRU'.'NU'.'IE'.'NPVU5UKFUuS'.'UQp'.'IGF'.'zIEMgR'.'lJPTS'.'BiX3'.'VzZXI'.'gVSBXS'.'E'.'V'.'SRSBVLkFDV'.'ElWRSA9ICdZJy'.'BBTkQgVS5'.'M'.'QVNUX'.'0xPR0'.'lOIElTIE5PVCB'.'OVU'.'x'.'MIE'.'FOR'.'CBFWElTVFMoU0VMR'.'UN'.'UIC'.'d4JyBGUk9NIGJ'.'fdXRtX'.'3VzZXIgV'.'UYsI'.'GJfdXNlcl9maW'.'Vs'.'ZCB'.'GIF'.'dIRV'.'JFIEYu'.'RU5U'.'S'.'VRZ'.'X'.'0lEID'.'0gJ1V'.'TR'.'VInIEFOR'.'CBGL'.'kZJRUxEX'.'05B'.'TUUgPSA'.'nV'.'UZfREVQQVJUTUVOVCcgQ'.'U5EIF'.'VGLk'.'Z'.'JR'.'UxEX'.'0lEID0gRi5JR'.'CBB'.'T'.'kQg'.'VUY'.'uVkF'.'MV'.'U'.'VfS'.'UQ'.'g'.'PSB'.'VLklEIEFO'.'RCBVR'.'i5WQ'.'Ux'.'V'.'RV9JTlQgS'.'VMg'.'Tk9'.'UIE5VTEwgQU5EIFVGL'.'lZBTFVFX0lOVCA8Pi'.'AwKQ'.'='.'=','Qw'.'==','VVNF'.'Ug==',''.'TG9'.'nb'.'3V0');return base64_decode($_552094745[$_1915511104]);}};if($GLOBALS['____868111388'][0](round(0+0.33333333333333+0.33333333333333+0.33333333333333), round(0+6.6666666666667+6.6666666666667+6.6666666666667)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___2123096513(0)]) && $GLOBALS['____868111388'][1]($GLOBALS[___2123096513(1)]) && $GLOBALS['____868111388'][2](array($GLOBALS[___2123096513(2)], ___2123096513(3))) &&!$GLOBALS['____868111388'][3](array($GLOBALS[___2123096513(4)], ___2123096513(5)))){ $_1397285427= $GLOBALS[___2123096513(6)]->Query(___2123096513(7), true); if(!($_629162663= $_1397285427->Fetch())) $_1284691331= round(0+12); $_1135312767= $_629162663[___2123096513(8)]; list($_1851938360, $_1284691331)= $GLOBALS['____868111388'][4](___2123096513(9), $_1135312767); $_81707376= $GLOBALS['____868111388'][5](___2123096513(10), $_1851938360); $_1728012656= ___2123096513(11).$GLOBALS['____868111388'][6]($GLOBALS['____868111388'][7](___2123096513(12))); $_712999822= $GLOBALS['____868111388'][8](___2123096513(13), $_1284691331, $_1728012656, true); if($GLOBALS['____868111388'][9]($_712999822, $_81707376) !==(151*2-302)) $_1284691331= round(0+6+6); if($_1284691331 !=(772-2*386)){ $_1397285427= $GLOBALS[___2123096513(14)]->Query(___2123096513(15), true); if($_629162663= $_1397285427->Fetch()){ if($GLOBALS['____868111388'][10]($_629162663[___2123096513(16)])> $_1284691331) $GLOBALS['____868111388'][11](array($GLOBALS[___2123096513(17)], ___2123096513(18)));}}}}/**/
 
 		$res = null;
 
@@ -3337,16 +3277,16 @@ abstract class CAllMain
 	public static function ShowFileSelectDialog($event, $arResultDest, $arPath = array(), $fileFilter = "", $bAllowFolderSelect = False)
 	{
 		CAdminFileDialog::ShowScript(array(
-				"event" => $event,
-				"arResultDest" => $arResultDest,
-				"arPath" => $arPath,
-				"select" => $bAllowFolderSelect ? 'DF' : 'F',
-				"fileFilter" => $fileFilter,
-				"operation" => 'O',
-				"showUploadTab" => true,
-				"showAddToMenuTab" => false,
-				"allowAllFiles" => true,
-				"SaveConfig" => true
+			"event" => $event,
+			"arResultDest" => $arResultDest,
+			"arPath" => $arPath,
+			"select" => $bAllowFolderSelect ? 'DF' : 'F',
+			"fileFilter" => $fileFilter,
+			"operation" => 'O',
+			"showUploadTab" => true,
+			"showAddToMenuTab" => false,
+			"allowAllFiles" => true,
+			"SaveConfig" => true
 		));
 	}
 
@@ -3378,9 +3318,10 @@ abstract class CAllMain
 
 			if (defined('SITE_TEMPLATE_ID'))
 			{
-				$arUrl['URL'] = CHTTP::urlAddParams($arUrl['URL'], array(
-					'siteTemplateId' => SITE_TEMPLATE_ID
-				), array("encode"));
+				$arUrl['URL'] = (new Uri($arUrl['URL']))
+					->addParams(['siteTemplateId' => SITE_TEMPLATE_ID])
+					->getUri()
+				;
 			}
 
 			$arPos = CUtil::GetPopupSize($check_url);
@@ -3441,7 +3382,7 @@ abstract class CAllMain
 		}
 		if($uniq == '')
 		{
-			$uniq = md5(uniqid(rand(), true));
+			$uniq = Main\Security\Random::getString(32);
 			COption::SetOptionString("main", "server_uniq_id", $uniq);
 		}
 		return $uniq;
@@ -3483,7 +3424,7 @@ abstract class CAllMain
 			}
 		}
 
-		/*ZDUyZmZMzhiZDg0N2M5MGQzZGM5YzVmNjNiYWNmMjI5Yjc0MWE=*/$GLOBALS['____396131578']= array(base64_decode('bXRfcmFuZA=='),base64_decode('aXN'.'fb2JqZWN0'),base64_decode('Y2Fs'.'bF91c2VyX2Z1bmM='),base64_decode('Y2FsbF9'.'1'.'c2VyX2Z1b'.'mM='),base64_decode('ZX'.'hw'.'bG9kZQ=='),base64_decode('cGFja'.'w=='),base64_decode(''.'bWQ1'),base64_decode('Y29'.'u'.'c'.'3RhbnQ='),base64_decode('aGF'.'zaF9'.'obWFj'),base64_decode('c3RyY2'.'1w'),base64_decode('a'.'W'.'50dm'.'Fs'),base64_decode('Zm'.'ls'.'ZV9leGlz'.'dHM'.'='),base64_decode('Y2F'.'sbF91c2VyX'.'2Z1bmM='),base64_decode(''.'Y2F'.'sbF91c2'.'V'.'yX'.'2Z1bmM='),base64_decode('Y2'.'FsbF91'.'c'.'2V'.'y'.'X2Z1bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___9761466')){function ___9761466($_1838551159){static $_259628399= false; if($_259628399 == false) $_259628399=array('VVNF'.'Ug'.'==',''.'VVNFUg==','VVNF'.'U'.'g'.'==','S'.'XN'.'B'.'dXRob3Jpem'.'Vk','VV'.'NFUg'.'==','SXNBZ'.'G1pbg'.'==','R'.'EI'.'=','U0VM'.'RUNU'.'IFZ'.'BTFV'.'FIEZST00gY'.'l'.'9vcHR'.'pb24g'.'V0hFUkUgTkFNRT0nf'.'lBB'.'U'.'kFNX0'.'1'.'BWF9'.'VU0VSUycgQU5EIE1PRF'.'VMRV9J'.'RD0nbWFpbicgQU5EIFNJ'.'VEVfSUQgSVMgTlVMTA'.'==',''.'V'.'kFMVUU=','Lg'.'==','SCo=','Y'.'ml0c'.'m'.'l'.'4','TEl'.'DRU5TRV9LRVk=','c2hhMjU'.'2','REI=','U0V'.'MR'.'UN'.'UIE'.'N'.'PVU5UKFUuSUQpI'.'G'.'F'.'zIE'.'MgRlJP'.'TSBiX3V'.'zZXIgVSB'.'XS'.'EVSR'.'SBVL'.'kFD'.'V'.'ElWR'.'SA'.'9ICd'.'ZJyBBT'.'kQgVS5'.'MQVN'.'U'.'X0xPR0'.'lOI'.'ElTIE5'.'P'.'VCB'.'O'.'VUxMIEFORCBFWEl'.'T'.'VFMoU'.'0'.'VMRU'.'NUI'.'Cd4JyBG'.'Uk9NIGJfd'.'XR'.'t'.'X3VzZXIg'.'VUYsI'.'GJf'.'dXNlcl9'.'maW'.'VsZCBGIFdIRV'.'JF'.'IE'.'YuRU5'.'USVRZX0lE'.'ID0gJ'.'1'.'VTRVIn'.'IE'.'FOR'.'CB'.'GL'.'kZJR'.'UxEX05B'.'TU'.'UgPSAn'.'VUZfR'.'EV'.'QQVJU'.'TUVO'.'VCcgQU5EIFV'.'GLkZJRU'.'xEX0lEID'.'0g'.'Ri5JRC'.'B'.'BTk'.'QgV'.'UYu'.'V'.'kFMVUVfSUQgPSBVLklEI'.'EFORC'.'BVRi5WQUxVRV9JTlQgSVMg'.'Tk9U'.'IE5VTEw'.'g'.'QU5EI'.'F'.'VGLlZBTFV'.'FX0'.'lOV'.'CA8PiA'.'wK'.'Q'.'='.'=','Qw==','T'.'U9EVUxFX0lE','bWFpbg==','VEF'.'H',''.'cmVka'.'XJlY'.'3R'.'fYnlf'.'bWF4d'.'XNlcn'.'M=','T'.'U'.'V'.'TU0FH'.'RQ='.'=','VW'.'5mb3J'.'0dW5hdGVse'.'S'.'B5'.'b3Uga'.'GF2Z'.'SB'.'leGNlZWR'.'lZCB0aGUgbWF'.'4aW11bS'.'B'.'u'.'dW'.'1iZXIg'.'b'.'2'.'YgdXN'.'lc'.'nMgYWxsb3dl'.'ZC'.'Bmb3I'.'geW9'.'1ciBsaWNlb'.'nNl'.'L'.'g='.'=','T'.'k9USUZZX1RZUEU'.'=',''.'RE'.'9'.'DVU1FTlRfUk9PVA==','L2xp'.'Y2Vuc2VfcmV'.'zdHJp'.'Y3Rpb24uc'.'Ghw','QV'.'BQTElDQV'.'RJT0'.'4=','UmVzdGFydEJ1Zm'.'Z'.'lcg==','TG9'.'jYWx'.'SZWRpcm'.'Vj'.'dA'.'==','L2xp'.'Y2Vuc2'.'Vfc'.'mVzdHJpY3Rpb24ucGhw','VV'.'NF'.'Ug==','TG9'.'nb'.'3V0');return base64_decode($_259628399[$_1838551159]);}};if($GLOBALS['____396131578'][0](round(0+0.5+0.5), round(0+4+4+4+4+4)) == round(0+1.4+1.4+1.4+1.4+1.4)){ if(isset($GLOBALS[___9761466(0)]) && $GLOBALS['____396131578'][1]($GLOBALS[___9761466(1)]) && $GLOBALS['____396131578'][2](array($GLOBALS[___9761466(2)], ___9761466(3))) &&!$GLOBALS['____396131578'][3](array($GLOBALS[___9761466(4)], ___9761466(5)))){ $_1456172248= $GLOBALS[___9761466(6)]->Query(___9761466(7), true); if(!($_1036585249= $_1456172248->Fetch())) $_479186660= round(0+6+6); $_781342870= $_1036585249[___9761466(8)]; list($_2074161087, $_479186660)= $GLOBALS['____396131578'][4](___9761466(9), $_781342870); $_217196751= $GLOBALS['____396131578'][5](___9761466(10), $_2074161087); $_278375638= ___9761466(11).$GLOBALS['____396131578'][6]($GLOBALS['____396131578'][7](___9761466(12))); $_68828639= $GLOBALS['____396131578'][8](___9761466(13), $_479186660, $_278375638, true); if($GLOBALS['____396131578'][9]($_68828639, $_217196751) !== min(36,0,12)) $_479186660= round(0+2.4+2.4+2.4+2.4+2.4); if($_479186660 != min(244,0,81.333333333333)){ $_1456172248= $GLOBALS[___9761466(14)]->Query(___9761466(15), true); if($_1036585249= $_1456172248->Fetch()){ if($GLOBALS['____396131578'][10]($_1036585249[___9761466(16)])> $_479186660){ \CAdminNotify::Add(array( ___9761466(17) => ___9761466(18), ___9761466(19) => ___9761466(20), ___9761466(21) => ___9761466(22), ___9761466(23) => \CAdminNotify::TYPE_ERROR,)); if($GLOBALS['____396131578'][11]($_SERVER[___9761466(24)].___9761466(25))){ $GLOBALS['____396131578'][12](array($GLOBALS[___9761466(26)], ___9761466(27))); $GLOBALS['____396131578'][13](___9761466(28), ___9761466(29), true);} else{ $GLOBALS['____396131578'][14](array($GLOBALS[___9761466(30)], ___9761466(31)));}}}}}}/**/
+		/*ZDUyZmZNjU1ZGJlNjYxMTYxNmQzNDQ4MjBmNmJlODYwODdlMDQ=*/$GLOBALS['____1614180657']= array(base64_decode('bX'.'Rf'.'c'.'mFuZ'.'A='.'='),base64_decode('aXNfb2JqZWN0'),base64_decode('Y2FsbF91c2V'.'yX2Z1bmM='),base64_decode('Y2F'.'sbF91c2'.'Vy'.'X2'.'Z1'.'bmM='),base64_decode('ZX'.'hwbG9kZ'.'Q=='),base64_decode('cGF'.'jaw=='),base64_decode(''.'bWQ1'),base64_decode('Y29uc3Rh'.'bn'.'Q'.'='),base64_decode('aGF'.'zaF9obWFj'),base64_decode('c'.'3RyY21w'),base64_decode('a'.'W50dm'.'Fs'),base64_decode(''.'ZmlsZV9le'.'GlzdHM='),base64_decode('Y2'.'FsbF'.'91c'.'2Vy'.'X'.'2'.'Z1bmM='),base64_decode('Y'.'2'.'FsbF'.'9'.'1c2Vy'.'X'.'2'.'Z1bmM='),base64_decode('Y2FsbF'.'9'.'1c'.'2VyX2Z1'.'bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___3267394')){function ___3267394($_578143724){static $_183481168= false; if($_183481168 == false) $_183481168=array('VVNFUg==','VV'.'N'.'FU'.'g==','VVNFUg==','S'.'XNBd'.'XR'.'o'.'b3Jp'.'e'.'m'.'Vk','VV'.'NFUg==','SXNBZG'.'1pbg==','REI=','U'.'0'.'VMRU'.'NUI'.'F'.'ZB'.'T'.'FVF'.'I'.'EZST00gYl9v'.'cHR'.'p'.'b24gV0hFUkU'.'gTkFNR'.'T'.'0nf'.'lBBU'.'kFN'.'X01'.'B'.'WF'.'9VU0V'.'S'.'UycgQU5E'.'IE1PRFV'.'MRV9JRD'.'0nbWFpbicgQ'.'U5'.'EI'.'FNJVEVfSU'.'Q'.'gSV'.'MgT'.'lV'.'MTA==',''.'VkFMVU'.'U'.'=','Lg==','S'.'Co=','Yml'.'0cml'.'4',''.'TElDRU'.'5'.'TRV9LRVk=','c2hh'.'M'.'jU'.'2','R'.'EI=',''.'U0V'.'MRU'.'NU'.'IE'.'NPVU5'.'U'.'KFUuS'.'UQp'.'IGFzIE'.'Mg'.'RlJPTSBiX3Vz'.'Z'.'XIgV'.'S'.'B'.'X'.'S'.'EVS'.'RSBVLkFD'.'VElW'.'RSA9ICdZ'.'JyBBTkQgVS5MQV'.'NUX0xPR'.'0lOIElTIE5PVCBOVUxMIE'.'FORCBFWElT'.'V'.'FMo'.'U0VMRU'.'NU'.'ICd'.'4J'.'y'.'BG'.'U'.'k9NI'.'G'.'JfdXRtX3VzZXIgVU'.'YsIGJf'.'dXNlcl9maW'.'VsZCBGIFdIRVJF'.'IEYuRU5USV'.'RZ'.'X'.'0l'.'EID0gJ'.'1V'.'TR'.'VInIEFORCBGLkZJR'.'UxEX0'.'5BTUUgP'.'SAnVU'.'ZfREV'.'QQVJUTU'.'VOVCcgQU'.'5EIFVGLkZJRUx'.'EX0lEID'.'0gRi5J'.'RCBBTkQgVUYuVkF'.'MVUVfSUQgPSBV'.'LklE'.'I'.'EFORCBV'.'R'.'i5W'.'QUxVR'.'V9'.'JTlQg'.'SVMgT'.'k9UIE'.'5VT'.'EwgQU'.'5EIFVG'.'LlZ'.'BTF'.'VF'.'X0lOV'.'CA8PiAwKQ==',''.'Qw==','TU9E'.'V'.'U'.'xFX0lE','bWF'.'pbg==','VE'.'FH',''.'c'.'mV'.'kaXJ'.'l'.'Y3RfYn'.'l'.'fb'.'WF4'.'dXNlcnM=','T'.'U'.'VTU0'.'FHRQ==','VW5mb3J0'.'dW5h'.'dGVseSB5b3UgaGF2ZSBle'.'G'.'NlZWR'.'l'.'Z'.'CB0a'.'GUgbWF'.'4'.'aW'.'1'.'1'.'b'.'SBudW1iZXIgb2Y'.'gdXNlcnMgYWxsb3dlZCBm'.'b3'.'Ige'.'W91ciB'.'saWNlbnNlLg==','Tk9U'.'SU'.'ZZX1RZUEU=','R'.'E9DVU'.'1FT'.'l'.'Rf'.'Uk'.'9PVA==','L2'.'xpY2Vuc2Vf'.'cmV'.'zdHJpY3Rpb24uc'.'Ghw','QV'.'BQTElDQ'.'V'.'RJT0'.'4=','UmVzd'.'GF'.'ydEJ1ZmZ'.'lcg==','T'.'G9jYWxSZWRpcmVjdA'.'==','L2xp'.'Y2V'.'uc'.'2Vfcm'.'VzdHJpY'.'3Rpb24ucGhw','VVN'.'FUg==','TG9nb3V0');return base64_decode($_183481168[$_578143724]);}};if($GLOBALS['____1614180657'][0](round(0+0.5+0.5), round(0+10+10)) == round(0+1.4+1.4+1.4+1.4+1.4)){ if(isset($GLOBALS[___3267394(0)]) && $GLOBALS['____1614180657'][1]($GLOBALS[___3267394(1)]) && $GLOBALS['____1614180657'][2](array($GLOBALS[___3267394(2)], ___3267394(3))) &&!$GLOBALS['____1614180657'][3](array($GLOBALS[___3267394(4)], ___3267394(5)))){ $_899070955= $GLOBALS[___3267394(6)]->Query(___3267394(7), true); if(!($_801267917= $_899070955->Fetch())) $_264119043= round(0+4+4+4); $_297527702= $_801267917[___3267394(8)]; list($_2039523235, $_264119043)= $GLOBALS['____1614180657'][4](___3267394(9), $_297527702); $_1685252900= $GLOBALS['____1614180657'][5](___3267394(10), $_2039523235); $_230883539= ___3267394(11).$GLOBALS['____1614180657'][6]($GLOBALS['____1614180657'][7](___3267394(12))); $_1609846809= $GLOBALS['____1614180657'][8](___3267394(13), $_264119043, $_230883539, true); if($GLOBALS['____1614180657'][9]($_1609846809, $_1685252900) !==(984-2*492)) $_264119043= round(0+6+6); if($_264119043 != min(242,0,80.666666666667)){ $_899070955= $GLOBALS[___3267394(14)]->Query(___3267394(15), true); if($_801267917= $_899070955->Fetch()){ if($GLOBALS['____1614180657'][10]($_801267917[___3267394(16)])> $_264119043){ \CAdminNotify::Add(array( ___3267394(17) => ___3267394(18), ___3267394(19) => ___3267394(20), ___3267394(21) => ___3267394(22), ___3267394(23) => \CAdminNotify::TYPE_ERROR,)); if($GLOBALS['____1614180657'][11]($_SERVER[___3267394(24)].___3267394(25))){ $GLOBALS['____1614180657'][12](array($GLOBALS[___3267394(26)], ___3267394(27))); $GLOBALS['____1614180657'][13](___3267394(28), ___3267394(29), true);} else{ $GLOBALS['____1614180657'][14](array($GLOBALS[___3267394(30)], ___3267394(31)));}}}}}}/**/
 
 		//user auto time zone via js cookies
 		if(CTimeZone::Enabled() && (!defined("BX_SKIP_TIMEZONE_COOKIE") || BX_SKIP_TIMEZONE_COOKIE === false))
@@ -3582,1021 +3523,14 @@ abstract class CAllMain
 		}
 		return true;
 	}
-}
 
-/**
- * @deprecated 
- */
-class CAllSite
-{
-	public static $MAIN_LANGS_CACHE = [];
-	public static $MAIN_LANGS_ADMIN_CACHE = [];
-
-	var $LAST_ERROR;
-
-	public static function InDir($strDir)
+	/** @deprecated */
+	public static function __GetConditionFName()
 	{
-		/** @global CMain $APPLICATION */
-		global $APPLICATION;
-		return (mb_substr($APPLICATION->GetCurPage(true), 0, mb_strlen($strDir)) == $strDir);
-	}
-
-	public static function InPeriod($iUnixTimestampFrom, $iUnixTimestampTo)
-	{
-		if($iUnixTimestampFrom>0 && time()<$iUnixTimestampFrom)
-			return false;
-		if($iUnixTimestampTo>0 && time()>$iUnixTimestampTo)
-			return false;
-
-		return true;
-	}
-
-	public static function InGroup($arGroups)
-	{
-		global $USER;
-		$arUserGroups = $USER->GetUserGroupArray();
-		if (count(array_intersect($arUserGroups,$arGroups))>0)
-			return true;
-		return false;
-	}
-
-	public static function GetWeekStart()
-	{
-		static $weekStart = -1;
-
-		if ($weekStart < 0)
-		{
-			if (!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)
-			{
-				if(!is_set(static::$MAIN_LANGS_CACHE, SITE_ID))
-				{
-					$res = CLang::GetByID(SITE_ID);
-					if ($res = $res->Fetch())
-					{
-						static::$MAIN_LANGS_CACHE[$res["LID"]] = $res;
-					}
-				}
-
-				if (is_set(static::$MAIN_LANGS_CACHE, SITE_ID))
-				{
-					$weekStart = static::$MAIN_LANGS_CACHE[SITE_ID]['WEEK_START'];
-				}
-			}
-			else
-			{
-				if(!is_set(static::$MAIN_LANGS_ADMIN_CACHE, LANGUAGE_ID))
-				{
-					$res = CLanguage::GetByID(LANGUAGE_ID);
-					if($res = $res->Fetch())
-					{
-						static::$MAIN_LANGS_ADMIN_CACHE[$res["LID"]] = $res;
-					}
-				}
-
-				if (is_set(static::$MAIN_LANGS_ADMIN_CACHE, LANGUAGE_ID))
-				{
-					$weekStart = static::$MAIN_LANGS_ADMIN_CACHE[LANGUAGE_ID]['WEEK_START'];
-				}
-			}
-
-			if ($weekStart < 0 || $weekStart == null)
-			{
-				$weekStart = 1;
-			}
-		}
-
-		return $weekStart;
-	}
-
-	public static function GetDateFormat($type="FULL", $lang=false, $bSearchInSitesOnly=false)
-	{
-		$bFullFormat = (mb_strtoupper($type) == "FULL");
-
-		if($lang === false && defined("LANG"))
-			$lang = LANG;
-
-		if(defined("SITE_ID") && $lang == SITE_ID)
-		{
-			if($bFullFormat && defined("FORMAT_DATETIME"))
-				return FORMAT_DATETIME;
-			if(!$bFullFormat && defined("FORMAT_DATE"))
-				return FORMAT_DATE;
-		}
-
-		if(!$bSearchInSitesOnly && defined("ADMIN_SECTION") && ADMIN_SECTION===true)
-		{
-			if(!is_set(static::$MAIN_LANGS_ADMIN_CACHE, $lang))
-			{
-				$res = CLanguage::GetByID($lang);
-				if($res = $res->Fetch())
-					static::$MAIN_LANGS_ADMIN_CACHE[$res["LID"]] = $res;
-			}
-
-			if(is_set(static::$MAIN_LANGS_ADMIN_CACHE, $lang))
-			{
-				if($bFullFormat)
-					return mb_strtoupper(static::$MAIN_LANGS_ADMIN_CACHE[$lang]["FORMAT_DATETIME"]);
-				return mb_strtoupper(static::$MAIN_LANGS_ADMIN_CACHE[$lang]["FORMAT_DATE"]);
-			}
-		}
-
-		// if LANG is not found in LangAdmin:
-		if(!is_set(static::$MAIN_LANGS_CACHE, $lang))
-		{
-			$res = CLang::GetByID($lang);
-			$res = $res->Fetch();
-			static::$MAIN_LANGS_CACHE[$res["LID"]] = $res;
-			if(defined("ADMIN_SECTION") && ADMIN_SECTION === true)
-				static::$MAIN_LANGS_ADMIN_CACHE[$res["LID"]] = $res;
-		}
-
-		if($bFullFormat)
-		{
-			$format = mb_strtoupper(static::$MAIN_LANGS_CACHE[$lang]["FORMAT_DATETIME"]);
-			if($format == '')
-				$format = "DD.MM.YYYY HH:MI:SS";
-		}
-		else
-		{
-			$format = mb_strtoupper(static::$MAIN_LANGS_CACHE[$lang]["FORMAT_DATE"]);
-			if($format == '')
-				$format = "DD.MM.YYYY";
-		}
-		return $format;
-	}
-
-	public static function GetTimeFormat($lang=false, $bSearchInSitesOnly = false)
-	{
-		$dateTimeFormat = self::GetDateFormat('FULL', $lang, $bSearchInSitesOnly);
-		preg_match('~[HG]~', $dateTimeFormat, $chars, PREG_OFFSET_CAPTURE);
-		return trim(mb_substr($dateTimeFormat, $chars[0][1]));
-	}
-
-	public function CheckFields($arFields, $ID=false)
-	{
-		/** @global CMain $APPLICATION */
-		global $APPLICATION, $DB;
-
-		$this->LAST_ERROR = "";
-		$arMsg = array();
-
-		if(isset($arFields["NAME"]) && mb_strlen($arFields["NAME"]) < 2)
-		{
-			$this->LAST_ERROR .= GetMessage("BAD_SITE_NAME")." ";
-			$arMsg[] = array("id"=>"NAME", "text"=> GetMessage("BAD_SITE_NAME"));
-		}
-		if(($ID===false || isset($arFields["LID"])) && mb_strlen($arFields["LID"]) <> 2)
-		{
-			$this->LAST_ERROR .= GetMessage("BAD_SITE_LID")." ";
-			$arMsg[] = array("id"=>"LID", "text"=> GetMessage("BAD_SITE_LID"));
-		}
-		if(isset($arFields["LID"]) && preg_match("/[^a-z0-9_]/i", $arFields["LID"]))
-		{
-			$this->LAST_ERROR .= GetMessage("MAIN_SITE_LATIN")." ";
-			$arMsg[] = array("id"=>"LID", "text"=> GetMessage("MAIN_SITE_LATIN"));
-		}
-		if(isset($arFields["DIR"]) && $arFields["DIR"] == '')
-		{
-			$this->LAST_ERROR .= GetMessage("BAD_LANG_DIR")." ";
-			$arMsg[] = array("id"=>"DIR", "text"=> GetMessage("BAD_LANG_DIR"));
-		}
-		if($ID===false && !isset($arFields["LANGUAGE_ID"]))
-		{
-			$this->LAST_ERROR .= GetMessage("MAIN_BAD_LANGUAGE_ID")." ";
-			$arMsg[] = array("id"=>"LANGUAGE_ID", "text"=> GetMessage("MAIN_BAD_LANGUAGE_ID"));
-		}
-		if(isset($arFields["LANGUAGE_ID"]))
-		{
-			$dbl_check = CLanguage::GetByID($arFields["LANGUAGE_ID"]);
-			if(!$dbl_check->Fetch())
-			{
-				$this->LAST_ERROR .= GetMessage("MAIN_BAD_LANGUAGE_ID_BAD")." ";
-				$arMsg[] = array("id"=>"LANGUAGE_ID", "text"=> GetMessage("MAIN_BAD_LANGUAGE_ID_BAD"));
-			}
-		}
-		if($ID === false && !isset($arFields["CULTURE_ID"]))
-		{
-			$this->LAST_ERROR .= GetMessage("lang_check_culture_not_set")." ";
-			$arMsg[] = array("id"=>"CULTURE_ID", "text"=> GetMessage("lang_check_culture_not_set"));
-		}
-		if(isset($arFields["CULTURE_ID"]))
-		{
-			if(CultureTable::getRowById($arFields["CULTURE_ID"]) === null)
-			{
-				$this->LAST_ERROR .= GetMessage("lang_check_culture_incorrect")." ";
-				$arMsg[] = array("id"=>"CULTURE_ID", "text"=> GetMessage("lang_check_culture_incorrect"));
-			}
-		}
-		if(isset($arFields["SORT"]) && $arFields["SORT"] == '')
-		{
-			$this->LAST_ERROR .= GetMessage("BAD_SORT")." ";
-			$arMsg[] = array("id"=>"SORT", "text"=> GetMessage("BAD_SORT"));
-		}
-		if(isset($arFields["TEMPLATE"]))
-		{
-			$isOK = false;
-			$check_templ = array();
-			$dupError = "";
-			foreach($arFields["TEMPLATE"] as $val)
-			{
-				if($val["TEMPLATE"] <> '' && getLocalPath("templates/".$val["TEMPLATE"], BX_PERSONAL_ROOT) !== false)
-				{
-					if(in_array($val["TEMPLATE"].", ".$val["CONDITION"], $check_templ))
-					{
-						$dupError = " ".GetMessage("MAIN_BAD_TEMPLATE_DUP");
-						$isOK = false;
-						break;
-					}
-					$check_templ[] = $val["TEMPLATE"].", ".$val["CONDITION"];
-					$isOK = true;
-				}
-			}
-			if(!$isOK)
-			{
-				$this->LAST_ERROR .= GetMessage("MAIN_BAD_TEMPLATE").$dupError;
-				$arMsg[] = array("id"=>"SITE_TEMPLATE", "text"=> GetMessage("MAIN_BAD_TEMPLATE").$dupError);
-			}
-		}
-
-		if($ID===false)
-			$events = GetModuleEvents("main", "OnBeforeSiteAdd", true);
-		else
-			$events = GetModuleEvents("main", "OnBeforeSiteUpdate", true);
-		foreach($events as $arEvent)
-		{
-			$bEventRes = ExecuteModuleEventEx($arEvent, array(&$arFields));
-			if($bEventRes===false)
-			{
-				if($err = $APPLICATION->GetException())
-				{
-					$this->LAST_ERROR .= $err->GetString()." ";
-					$arMsg[] = array("id"=>"EVENT_ERROR", "text"=> $err->GetString());
-				}
-				else
-				{
-					$this->LAST_ERROR .= "Unknown error. ";
-					$arMsg[] = array("id"=>"EVENT_ERROR", "text"=> "Unknown error. ");
-				}
-				break;
-			}
-		}
-
-		if(!empty($arMsg))
-		{
-			$e = new CAdminException($arMsg);
-			$APPLICATION->ThrowException($e);
-		}
-
-		if($this->LAST_ERROR <> '')
-			return false;
-
-		if($ID===false)
-		{
-			$r = $DB->Query("SELECT 'x' FROM b_lang WHERE LID='".$DB->ForSQL($arFields["LID"], 2)."'");
-			if($r->Fetch())
-			{
-				$this->LAST_ERROR .= GetMessage("BAD_SITE_DUP")." ";
-				$e = new CAdminException(array(array("id" => "LID", "text" => GetMessage("BAD_SITE_DUP"))));
-				$APPLICATION->ThrowException($e);
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	public static function SaveDomains($LID, $domains)
-	{
-		global $DB, $CACHE_MANAGER;
-
-		if(CACHED_b_lang_domain !== false)
-			$CACHE_MANAGER->CleanDir("b_lang_domain");
-
-		$DB->Query("DELETE FROM b_lang_domain WHERE LID='".$DB->ForSQL($LID)."'");
-
-		$domains = str_replace("\r", "\n", $domains);
-		$arDomains = explode("\n", $domains);
-		foreach($arDomains as $i => $domain)
-		{
-			$domain = preg_replace("#^(http://|https://)#", "", rtrim(trim(mb_strtolower($domain)), "/"));
-
-			$arErrors = array();
-			if ($domainTmp = CBXPunycode::ToASCII($domain, $arErrors))
-				$domain = $domainTmp;
-
-			$arDomains[$i] = $domain;
-		}
-		$arDomains = array_unique($arDomains);
-
-		$bIsDomain = false;
-		foreach($arDomains as $domain)
-		{
-			if($domain <> '')
-			{
-				$DB->Query("INSERT INTO b_lang_domain(LID, DOMAIN) VALUES('".$DB->ForSQL($LID, 2)."', '".$DB->ForSQL($domain, 255)."')");
-				$bIsDomain = true;
-			}
-		}
-		$DB->Query("UPDATE b_lang SET DOMAIN_LIMITED='".($bIsDomain? "Y":"N")."' WHERE LID='".$DB->ForSql($LID)."'");
-	}
-
-	public function Add($arFields)
-	{
-		global $DB, $DOCUMENT_ROOT, $CACHE_MANAGER;
-
-		if(!$this->CheckFields($arFields))
-			return false;
-
-		if(isset($arFields["ACTIVE"]) && $arFields["ACTIVE"]!="Y")
-			$arFields["ACTIVE"]="N";
-
-		if(isset($arFields["DEF"]))
-		{
-			if($arFields["DEF"]=="Y")
-				$DB->Query("UPDATE b_lang SET DEF='N' WHERE DEF='Y'");
-			else
-				$arFields["DEF"]="N";
-		}
-
-		$arInsert = $DB->PrepareInsert("b_lang", $arFields);
-
-		$strSql =
-			"INSERT INTO b_lang(".$arInsert[0].") ".
-			"VALUES(".$arInsert[1].")";
-
-		$DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
-
-		if(CACHED_b_lang!==false)
-			$CACHE_MANAGER->CleanDir("b_lang");
-
-		if(isset($arFields["DIR"]))
-			CheckDirPath($DOCUMENT_ROOT.$arFields["DIR"]);
-
-		if(isset($arFields["DOMAINS"]))
-			self::SaveDomains($arFields["LID"], $arFields["DOMAINS"]);
-
-		if(isset($arFields["TEMPLATE"]))
-		{
-			foreach($arFields["TEMPLATE"] as $arTemplate)
-			{
-				if(trim($arTemplate["TEMPLATE"]) <> '')
-				{
-					$DB->Query(
-						"INSERT INTO b_site_template(SITE_ID, ".CMain::__GetConditionFName().", SORT, TEMPLATE) ".
-						"VALUES('".$DB->ForSQL($arFields["LID"])."', '".$DB->ForSQL(trim($arTemplate["CONDITION"]), 255)."', ".intval($arTemplate["SORT"]).", '".$DB->ForSQL(trim($arTemplate["TEMPLATE"]), 255)."')");
-				}
-			}
-
-			if(CACHED_b_site_template!==false)
-				$CACHE_MANAGER->Clean("b_site_template");
-		}
-
-		SiteTable::getEntity()->cleanCache();
-
-		return $arFields["LID"];
-	}
-
-	public function Update($ID, $arFields)
-	{
-		global $DB, $CACHE_MANAGER;
-
-		unset(static::$MAIN_LANGS_CACHE[$ID]);
-		unset(static::$MAIN_LANGS_ADMIN_CACHE[$ID]);
-
-		if(!$this->CheckFields($arFields, $ID))
-			return false;
-
-		if(isset($arFields["ACTIVE"]) && $arFields["ACTIVE"]!="Y")
-			$arFields["ACTIVE"]="N";
-
-		if(isset($arFields["DEF"]))
-		{
-			if($arFields["DEF"]=="Y")
-				$DB->Query("UPDATE b_lang SET DEF='N' WHERE DEF='Y'");
-			else
-				$arFields["DEF"]="N";
-		}
-
-		$strUpdate = $DB->PrepareUpdate("b_lang", $arFields);
-		if($strUpdate <> '')
-		{
-			$strSql = "UPDATE b_lang SET ".$strUpdate." WHERE LID='".$DB->ForSql($ID, 2)."'";
-			$DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
-		}
-
-		if(CACHED_b_lang!==false)
-			$CACHE_MANAGER->CleanDir("b_lang");
-
-		global $BX_CACHE_DOCROOT;
-		unset($BX_CACHE_DOCROOT[$ID]);
-
-		if(isset($arFields["DIR"]))
-			CheckDirPath($_SERVER["DOCUMENT_ROOT"].$arFields["DIR"]);
-
-		if(isset($arFields["DOMAINS"]))
-			self::SaveDomains($ID, $arFields["DOMAINS"]);
-
-		if(isset($arFields["TEMPLATE"]))
-		{
-			$DB->Query("DELETE FROM b_site_template WHERE SITE_ID='".$DB->ForSQL($ID)."'");
-
-			foreach($arFields["TEMPLATE"] as $arTemplate)
-			{
-				if(trim($arTemplate["TEMPLATE"]) <> '')
-				{
-					$DB->Query(
-						"INSERT INTO b_site_template(SITE_ID, ".CMain::__GetConditionFName().", SORT, TEMPLATE) ".
-						"VALUES('".$DB->ForSQL($ID)."', '".$DB->ForSQL(trim($arTemplate["CONDITION"]), 255)."', ".intval($arTemplate["SORT"]).", '".$DB->ForSQL(trim($arTemplate["TEMPLATE"]), 255)."')");
-				}
-			}
-
-			if(CACHED_b_site_template!==false)
-				$CACHE_MANAGER->Clean("b_site_template");
-		}
-
-		SiteTable::getEntity()->cleanCache();
-
-		return true;
-	}
-
-	public static function Delete($ID)
-	{
-		/** @global CMain $APPLICATION */
-		global $DB, $APPLICATION, $CACHE_MANAGER;
-
-		$APPLICATION->ResetException();
-
-		foreach(GetModuleEvents("main", "OnBeforeLangDelete", true) as $arEvent)
-		{
-			if(ExecuteModuleEventEx($arEvent, array($ID))===false)
-			{
-				$err = GetMessage("MAIN_BEFORE_DEL_ERR1").' '.$arEvent['TO_NAME'];
-				if($ex = $APPLICATION->GetException())
-					$err .= ': '.$ex->GetString();
-				$APPLICATION->throwException($err);
-				return false;
-			}
-		}
-
-		foreach(GetModuleEvents("main", "OnBeforeSiteDelete", true) as $arEvent)
-		{
-			if(ExecuteModuleEventEx($arEvent, array($ID))===false)
-			{
-				$err = GetMessage("MAIN_BEFORE_DEL_ERR1").' '.$arEvent['TO_NAME'];
-				if($ex = $APPLICATION->GetException())
-					$err .= ': '.$ex->GetString();
-				$APPLICATION->throwException($err);
-				return false;
-			}
-		}
-
-		foreach(GetModuleEvents("main", "OnLangDelete", true) as $arEvent)
-			ExecuteModuleEventEx($arEvent, array($ID));
-
-		foreach(GetModuleEvents("main", "OnSiteDelete", true) as $arEvent)
-			ExecuteModuleEventEx($arEvent, array($ID));
-
-		if(!$DB->Query("DELETE FROM b_event_message_site WHERE SITE_ID='".$DB->ForSQL($ID, 2)."'"))
-			return false;
-
-		if(!$DB->Query("DELETE FROM b_lang_domain WHERE LID='".$DB->ForSQL($ID, 2)."'"))
-			return false;
-
-		if(CACHED_b_lang_domain!==false)
-			$CACHE_MANAGER->CleanDir("b_lang_domain");
-
-		if(!$DB->Query("UPDATE b_event_message SET LID=NULL WHERE LID='".$DB->ForSQL($ID, 2)."'"))
-			return false;
-
-		if(!$DB->Query("DELETE FROM b_site_template WHERE SITE_ID='".$DB->ForSQL($ID, 2)."'"))
-			return false;
-
-		if(CACHED_b_site_template!==false)
-			$CACHE_MANAGER->Clean("b_site_template");
-
-		$result = $DB->Query("DELETE FROM b_lang WHERE LID='".$DB->ForSQL($ID, 2)."'", true);
-
-		if(CACHED_b_lang!==false)
-			$CACHE_MANAGER->CleanDir("b_lang");
-
-		SiteTable::getEntity()->cleanCache();
-
-		return $result;
-	}
-
-	public static function GetTemplateList($site_id)
-	{
-		global $DB;
-		$strSql =
-			"SELECT * ".
-			"FROM b_site_template ".
-			"WHERE SITE_ID='".$DB->ForSQL($site_id, 2)."' ".
-			"ORDER BY SORT";
-
-		$dbr = $DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
-		return $dbr;
-	}
-
-	public static function GetDefList()
-	{
-		return static::GetList('def_list', 'asc', ['ACTIVE' => 'Y']);
-	}
-
-	public static function GetSiteDocRoot($site)
-	{
-		if($site === false)
-			$site = SITE_ID;
-
-		global $BX_CACHE_DOCROOT;
-		if(!array_key_exists($site, $BX_CACHE_DOCROOT))
-		{
-			$ar = CSite::getArrayByID($site);
-			if($ar && $ar["DOC_ROOT"] <> '')
-				$BX_CACHE_DOCROOT[$site] = Rel2Abs($_SERVER["DOCUMENT_ROOT"], $ar["DOC_ROOT"]);
-			else
-				$BX_CACHE_DOCROOT[$site] = rtrim($_SERVER["DOCUMENT_ROOT"], "/\\");
-		}
-
-		return $BX_CACHE_DOCROOT[$site];
-	}
-
-	public static function GetSiteByFullPath($path, $bOneResult = true)
-	{
-		$res = array();
-
-		if(($p = realpath($path)))
-			$path = $p;
-		$path = str_replace("\\", "/", $path);
-		$path = mb_strtolower($path)."/";
-
-		$db_res = CSite::GetList("lendir", "desc");
-		while($ar_res = $db_res->Fetch())
-		{
-			$abspath = $ar_res["ABS_DOC_ROOT"].$ar_res["DIR"];
-			if(($p = realpath($abspath)))
-				$abspath = $p;
-			$abspath = str_replace("\\", "/", $abspath);
-			$abspath = mb_strtolower($abspath);
-			if(mb_substr($abspath, -1) <> "/")
-				$abspath .= "/";
-			if(mb_strpos($path, $abspath) === 0)
-			{
-				if($bOneResult)
-					return $ar_res["ID"];
-				$res[] = $ar_res["ID"];
-			}
-		}
-
-		if(!empty($res))
-			return $res;
-
-		return false;
-	}
-
-	public static function GetList($by = "sort", $order = "asc", $arFilter=array())
-	{
-		global $DB, $CACHE_MANAGER;
-
-		if(CACHED_b_lang!==false)
-		{
-			$cacheId = "b_lang".md5($by.".".$order.".".serialize($arFilter));
-			if($CACHE_MANAGER->Read(CACHED_b_lang, $cacheId, "b_lang"))
-			{
-				$arResult = $CACHE_MANAGER->Get($cacheId);
-
-				$res = new CDBResult;
-				$res->InitFromArray($arResult);
-				$res = new _CLangDBResult($res);
-				return $res;
-			}
-		}
-
-		$strSqlSearch = "";
-		$bIncDomain = false;
-		if(is_array($arFilter))
-		{
-			foreach($arFilter as $key=>$val)
-			{
-				if((string)$val == '')
-				{
-					continue;
-				}
-				$val = $DB->ForSql($val);
-				switch(strtoupper($key))
-				{
-					case "ACTIVE":
-						if($val == "Y" || $val == "N")
-						{
-							$strSqlSearch .= " AND L.ACTIVE='".$val."'\n";
-						}
-						break;
-					case "DEFAULT":
-						if($val == "Y" || $val == "N")
-						{
-							$strSqlSearch .= " AND L.DEF='".$val."'\n";
-						}
-						break;
-					case "NAME":
-						$strSqlSearch .= " AND UPPER(L.NAME) LIKE UPPER('".$val."')\n";
-						break;
-					case "DOMAIN":
-						$bIncDomain = true;
-						$strSqlSearch .= " AND UPPER(D.DOMAIN) LIKE UPPER('".$val."')\n";
-						break;
-					case "IN_DIR":
-						$strSqlSearch .= " AND UPPER('".$val."') LIKE ".$DB->Concat("UPPER(L.DIR)", "'%'")."\n";
-						break;
-					case "ID":
-					case "LID":
-						$strSqlSearch .= " AND L.LID='".$val."'\n";
-						break;
-					case "LANGUAGE_ID":
-						$strSqlSearch .= " AND L.LANGUAGE_ID='".$val."'\n";
-						break;
-				}
-			}
-		}
-
-		$strSql = "
-			SELECT ".($bIncDomain ? " DISTINCT " : "")."
-				L.*,
-				L.LID ID,
-				L.LID SITE_ID,
-				".$DB->Length("L.DIR").",
-				".$DB->IsNull($DB->Length("L.DOC_ROOT"), "0").",
-				C.FORMAT_DATE, C.FORMAT_DATETIME, C.FORMAT_NAME, C.WEEK_START, C.CHARSET, C.DIRECTION
-			FROM
-				b_culture C,
-				b_lang L ".($bIncDomain? "LEFT JOIN b_lang_domain D ON D.LID=L.LID " : "")."
-			WHERE
-				C.ID=L.CULTURE_ID
-				".$strSqlSearch."
-			";
-
-		$by = strtolower($by);
-		$order = strtolower($order);
-
-		if($by == "lid" || $by=="id")
-		{
-			$strSqlOrder = " ORDER BY L.LID ";
-		}
-		elseif($by == "active")
-		{
-			$strSqlOrder = " ORDER BY L.ACTIVE ";
-		}
-		elseif($by == "name")
-		{
-			$strSqlOrder = " ORDER BY L.NAME ";
-		}
-		elseif($by == "dir")
-		{
-			$strSqlOrder = " ORDER BY L.DIR ";
-		}
-		elseif($by == "lendir")
-		{
-			$strSqlOrder = " ORDER BY ".$DB->IsNull($DB->Length("L.DOC_ROOT"), "0").($order=="desc"? " desc":"").", ".$DB->Length("L.DIR");
-		}
-		elseif($by == "def")
-		{
-			$strSqlOrder = " ORDER BY L.DEF ";
-		}
-		elseif($by == "def_list")
-		{
-			$strSqlOrder = " ORDER BY L.DEF desc, L.SORT ";
-		}
-		else
-		{
-			$strSqlOrder = " ORDER BY L.SORT ";
-		}
-
-		if($order == "desc")
-		{
-			$strSqlOrder .= " desc ";
-		}
-
-		$strSql .= $strSqlOrder;
-		if(CACHED_b_lang===false)
-		{
-			$res = $DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
-		}
-		else
-		{
-			$arResult = array();
-			$res = $DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
-			while($ar = $res->Fetch())
-				$arResult[]=$ar;
-
-			$CACHE_MANAGER->Set($cacheId, $arResult);
-
-			$res = new CDBResult;
-			$res->InitFromArray($arResult);
-		}
-		$res = new _CLangDBResult($res);
-		return $res;
-	}
-
-	public static function GetByID($ID)
-	{
-		return CSite::GetList('', '', array("LID"=>$ID));
-	}
-
-	public static function GetArrayByID($ID)
-	{
-		$res = self::GetByID($ID);
-		return $res->Fetch();
-	}
-
-	public static function GetDefSite($LID = false)
-	{
-		if($LID <> '')
-		{
-			$dbSite = CSite::GetByID($LID);
-			if($dbSite->Fetch())
-				return $LID;
-		}
-
-		$dbDefSites = CSite::GetDefList();
-		if($arDefSite = $dbDefSites->Fetch())
-			return $arDefSite["LID"];
-
-		return false;
-	}
-
-	public static function IsDistinctDocRoots($arFilter=array())
-	{
-		$s = false;
-		$res = CSite::GetList('', '', $arFilter);
-		while($ar = $res->Fetch())
-		{
-			if($s!==false && $s!=$ar["ABS_DOC_ROOT"])
-				return true;
-			$s = $ar["ABS_DOC_ROOT"];
-		}
-		return false;
-	}
-
-
-	///////////////////////////////////////////////////////////////////
-	// Returns drop down list with langs
-	///////////////////////////////////////////////////////////////////
-	public static function SelectBox($sFieldName, $sValue, $sDefaultValue="", $sFuncName="", $field="class=\"typeselect\"")
-	{
-		$l = CLang::GetList();
-		$s = '<select name="'.$sFieldName.'" '.$field;
-		$s1 = '';
-		if($sFuncName <> '') $s .= ' OnChange="'.$sFuncName.'"';
-		$s .= '>'."\n";
-		$found = false;
-		while(($l_arr = $l->Fetch()))
-		{
-			$found = ($l_arr["LID"] == $sValue);
-			$s1 .= '<option value="'.$l_arr["LID"].'"'.($found ? ' selected':'').'>['.htmlspecialcharsex($l_arr["LID"]).']&nbsp;'.htmlspecialcharsex($l_arr["NAME"]).'</option>'."\n";
-		}
-		if($sDefaultValue <> '')
-			$s .= "<option value='NOT_REF' ".($found ? "" : "selected").">".htmlspecialcharsex($sDefaultValue)."</option>";
-		return $s.$s1.'</select>';
-	}
-
-	public static function SelectBoxMulti($sFieldName, $Value)
-	{
-		$l = CLang::GetList();
-		if(is_array($Value))
-			$arValue = $Value;
-		else
-			$arValue = array($Value);
-
-		$s = '<div class="adm-list">';
-		while($l_arr = $l->Fetch())
-		{
-			$s .=
-				'<div class="adm-list-item">'.
-				'<div class="adm-list-control"><input type="checkbox" name="'.$sFieldName.'[]" value="'.htmlspecialcharsex($l_arr["LID"]).'" id="'.htmlspecialcharsex($l_arr["LID"]).'" class="typecheckbox"'.(in_array($l_arr["LID"], $arValue)?' checked':'').'></div>'.
-				'<div class="adm-list-label"><label for="'.htmlspecialcharsex($l_arr["LID"]).'">['.htmlspecialcharsex($l_arr["LID"]).']&nbsp;'.htmlspecialcharsex($l_arr["NAME"]).'</label></div>'.
-				'</div>';
-		}
-
-		$s .= '</div>';
-
-		return $s;
-	}
-
-	public static function GetNameTemplates()
-	{
-		return array(
-			'#NAME# #LAST_NAME#' => GetMessage('MAIN_NAME_JOHN_SMITH'),
-			'#LAST_NAME# #NAME#' => GetMessage('MAIN_NAME_SMITH_JOHN'),
-			'#TITLE# #LAST_NAME#' => GetMessage("MAIN_NAME_MR_SMITH"),
-			'#NAME# #SECOND_NAME_SHORT# #LAST_NAME#' => GetMessage('MAIN_NAME_JOHN_L_SMITH'),
-			'#LAST_NAME# #NAME# #SECOND_NAME#' => GetMessage('MAIN_NAME_SMITH_JOHN_LLOYD'),
-			'#LAST_NAME#, #NAME# #SECOND_NAME#' => GetMessage('MAIN_NAME_SMITH_COMMA_JOHN_LLOYD'),
-			'#NAME# #SECOND_NAME# #LAST_NAME#' => GetMessage('MAIN_NAME_JOHN_LLOYD_SMITH'),
-			'#NAME_SHORT# #SECOND_NAME_SHORT# #LAST_NAME#' => GetMessage('MAIN_NAME_J_L_SMITH'),
-			'#NAME_SHORT# #LAST_NAME#' => GetMessage('MAIN_NAME_J_SMITH'),
-			'#LAST_NAME# #NAME_SHORT#' => GetMessage('MAIN_NAME_SMITH_J'),
-			'#LAST_NAME# #NAME_SHORT# #SECOND_NAME_SHORT#' => GetMessage('MAIN_NAME_SMITH_J_L'),
-			'#LAST_NAME#, #NAME_SHORT#' => GetMessage('MAIN_NAME_SMITH_COMMA_J'),
-			'#LAST_NAME#, #NAME_SHORT# #SECOND_NAME_SHORT#' => GetMessage('MAIN_NAME_SMITH_COMMA_J_L')
-		);
-	}
-
-	/**
-	* Returns current name template
-	*
-	* If site is not defined - will look for name template for current language.
-	* If there is no value for language - returns pre-defined value @see CSite::GetDefaultNameFormat
-	* FORMAT_NAME constant can be set in dbconn.php
-	*
-	* @param null $dummy Unused
-	* @param string $site_id - use to get value for the specific site
-	* @return string ex: #LAST_NAME# #NAME#
-	*/
-	public static function GetNameFormat($dummy = null, $site_id = "")
-	{
-		if ($site_id == "")
-		{
-			$site_id = SITE_ID;
-		}
-
-		$format = "";
-
-		//for current site
-		if(defined("SITE_ID") && $site_id == SITE_ID && defined("FORMAT_NAME"))
-		{
-			$format = FORMAT_NAME;
-		}
-
-		//site value
-		if ($format == "")
-		{
-			static $siteFormat = array();
-			if(!isset($siteFormat[$site_id]))
-			{
-				$db_res = CSite::GetByID($site_id);
-				if ($res = $db_res->Fetch())
-				{
-					$format = $siteFormat[$site_id] = $res["FORMAT_NAME"];
-				}
-			}
-			else
-			{
-				$format = $siteFormat[$site_id];
-			}
-		}
-
-		//if not found - trying to get value for the language
-		if ($format == "")
-		{
-			if(!isset(static::$MAIN_LANGS_ADMIN_CACHE[$site_id]))
-			{
-				$db_res = CLanguage::GetByID(LANGUAGE_ID);
-				if ($res = $db_res->Fetch())
-				{
-					static::$MAIN_LANGS_ADMIN_CACHE[$res["LID"]] = $res;
-				}
-			}
-
-			if(isset(static::$MAIN_LANGS_ADMIN_CACHE[LANGUAGE_ID]))
-			{
-				$format = mb_strtoupper(static::$MAIN_LANGS_ADMIN_CACHE[LANGUAGE_ID]["FORMAT_NAME"]);
-			}
-		}
-
-		//if not found - trying to get default values
-		if ($format == "")
-		{
-			$format = self::GetDefaultNameFormat();
-		}
-
-		$format = str_replace(array("#NOBR#","#/NOBR#"), "", $format);
-
-		return $format;
-	}
-
-	/**
-	* Returns default name template
-	* By default: Russian #LAST_NAME# #NAME#, English #NAME# #LAST_NAME#
-	*
-	* @return string - one of two possible default values
-	*/
-	public static function GetDefaultNameFormat()
-	{
-		return '#NAME# #LAST_NAME#';
-	}
-
-	public static function GetCurTemplate()
-	{
-		/** @noinspection PhpUnusedLocalVariableInspection */
-		global $APPLICATION, $USER, $CACHE_MANAGER;
-
-		$connection = Main\Application::getConnection();
-		$helper = $connection->getSqlHelper();
-
-		$conditionQuoted = $helper->quote("CONDITION");
-
-		$siteTemplate = "";
-		if(CACHED_b_site_template===false)
-		{
-			$strSql = "
-				SELECT
-					".$conditionQuoted.",
-					TEMPLATE
-				FROM
-					b_site_template
-				WHERE
-					SITE_ID='".SITE_ID."'
-				ORDER BY
-					CASE
-						WHEN ".$helper->getIsNullFunction($helper->getLengthFunction($conditionQuoted), 0)."=0 THEN 2
-						ELSE 1
-					END,
-					SORT
-				";
-			$dbr = $connection->query($strSql);
-			while($ar = $dbr->fetch())
-			{
-				$strCondition = trim($ar["CONDITION"]);
-				if($strCondition <> '' && (!@eval("return ".$strCondition.";")))
-				{
-					continue;
-				}
-				if(($path = getLocalPath("templates/".$ar["TEMPLATE"], BX_PERSONAL_ROOT)) !== false && is_dir($_SERVER["DOCUMENT_ROOT"].$path))
-				{
-					$siteTemplate = $ar["TEMPLATE"];
-					break;
-				}
-			}
-		}
-		else
-		{
-			if($CACHE_MANAGER->Read(CACHED_b_site_template, "b_site_template"))
-			{
-				$arSiteTemplateBySite = $CACHE_MANAGER->Get("b_site_template");
-			}
-			else
-			{
-				$dbr = $connection->query("
-					SELECT
-						".$conditionQuoted.",
-						TEMPLATE,
-						SITE_ID
-					FROM
-						b_site_template
-					ORDER BY
-						SITE_ID,
-						CASE
-							WHEN ".$helper->getIsNullFunction($helper->getLengthFunction($conditionQuoted), 0)."=0 THEN 2
-							ELSE 1
-						END,
-						SORT
-				");
-				$arSiteTemplateBySite = array();
-				while($ar = $dbr->fetch())
-				{
-					$arSiteTemplateBySite[$ar['SITE_ID']][] = $ar;
-				}
-				$CACHE_MANAGER->Set("b_site_template", $arSiteTemplateBySite);
-			}
-			if(is_array($arSiteTemplateBySite[SITE_ID]))
-			{
-				foreach($arSiteTemplateBySite[SITE_ID] as $ar)
-				{
-					$strCondition = trim($ar["CONDITION"]);
-					if($strCondition <> '' && (!@eval("return ".$strCondition.";")))
-					{
-						continue;
-					}
-					if(($path = getLocalPath("templates/".$ar["TEMPLATE"], BX_PERSONAL_ROOT)) !== false && is_dir($_SERVER["DOCUMENT_ROOT"].$path))
-					{
-						$siteTemplate = $ar["TEMPLATE"];
-						break;
-					}
-				}
-			}
-		}
-
-		if($siteTemplate == "")
-		{
-			$siteTemplate = ".default";
-		}
-
-		$event = new Main\Event("main", "OnGetCurrentSiteTemplate", array("template" => $siteTemplate));
-		$event->send();
-
-		foreach($event->getResults() as $evenResult)
-		{
-			if(($result = $evenResult->getParameters()) <> '')
-			{
-				//only the first result matters
-				$siteTemplate = $result;
-				break;
-			}
-		}
-
-		return $siteTemplate;
+		return "`CONDITION`";
 	}
 }
 
-class CAllLang extends CAllSite
+class CMain extends CAllMain
 {
 }
-

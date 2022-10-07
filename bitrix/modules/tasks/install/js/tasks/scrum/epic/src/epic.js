@@ -7,6 +7,8 @@ import {UI} from 'ui.notification';
 
 import {RequestSender} from './request.sender';
 
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import '../css/base.css';
 
 type Params = {

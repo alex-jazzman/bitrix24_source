@@ -131,6 +131,15 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			return;
 		}
 
+		if (
+			!CCrmSaleHelper::isWithOrdersMode()
+			&& $this->order->getTradeBindingCollection()->isEmpty()
+		)
+		{
+			ShowError(Loc::getMessage('CRM_ORDER_CHECK_NOT_FOUND'));
+			return;
+		}
+
 		if(!$this->tryToDetectMode())
 		{
 			$this->addError(Loc::getMessage('CRM_PERMISSION_DENIED'));

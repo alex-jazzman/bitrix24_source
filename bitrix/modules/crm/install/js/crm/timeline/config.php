@@ -9,9 +9,12 @@ return [
 	'js' => 'dist/timeline.bundle.js',
 	'rel' => [
 		'ui.notification',
-		'main.core.events',
 		'currency',
+		'ui.design-tokens',
 		'pull.client',
+		'crm.timeline.tools',
+		'main.core.events',
+		'crm.timeline.item',
 		'ui.vue',
 		'main.core',
 	],

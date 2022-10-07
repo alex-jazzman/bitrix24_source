@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_popup,main_core_events,main_core) {
+(function (exports,ui_fonts_opensans,main_popup,main_core_events,main_core) {
 	'use strict';
 
 	var _templateObject;
@@ -639,5 +639,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.Item = Item;
 	exports.Menu = Menu;
 
-}((this.BX.UI.SidePanel = this.BX.UI.SidePanel || {}),BX.Main,BX.Event,BX));
+}((this.BX.UI.SidePanel = this.BX.UI.SidePanel || {}),BX,BX.Main,BX.Event,BX));
 //# sourceMappingURL=bundle.js.map

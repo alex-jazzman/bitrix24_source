@@ -109,7 +109,7 @@
 
 
 .tasks-checklist-header-name-text {
-	font: bold 14px/24px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	border: 1px solid transparent;
 	color: #525c69;
 	white-space: nowrap;
@@ -132,7 +132,7 @@
 	cursor: pointer;
 }
 
-.tasks-checklist-header-name-editor .ui-ctl-element { font: bold 14px/24px "Helvetica Neue", Helvetica, Arial, sans-serif;}
+.tasks-checklist-header-name-editor .ui-ctl-element { font: var(--ui-font-weight-bold) 14px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 
 .tasks-checklist-header-block:hover .tasks-checklist-header-name-edit-btn { opacity: .8; }
 
@@ -151,7 +151,7 @@
 .tasks-checklist-empty .tasks-checklist-action-group-btn {display: none;}
 
 .tasks-checklist-action-group-btn {
-	font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	border-bottom: 1px dashed;
 	text-decoration: none;
@@ -197,7 +197,7 @@
 .tasks-checklist-empty .tasks-checklist-action-complete-all-btn {display: none;}
 
 .tasks-checklist-action-complete-all-btn {
-    font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #80868e;
     border-bottom: 1px dashed;
     text-decoration: none;
@@ -328,7 +328,7 @@
 .tasks-checklist-header-progress .ui-progressbar-status-percent { display: none; }
 
 .tasks-checklist-header-progress .ui-progressbar-text-after {
-	font: 12px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	padding-left: 9px;
 }
@@ -696,7 +696,7 @@
 .tasks-checklist-item-description {
 	position: relative;
 	display: inline-block;
-	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 
@@ -720,7 +720,7 @@
 
 .tasks-checklist-item-auditor-link {
 	color: #2066b0;
-	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	border-bottom: 1px solid transparent;
 }
 
@@ -754,7 +754,7 @@
 
 .tasks-checklist-item-accomplice-link {
 	color: #2066b0;
-	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	position: relative;
 	border-bottom: 1px solid transparent;
 }
@@ -778,7 +778,7 @@
 .tasks-checklist-item-link {
 	color: #2066b0;
 	white-space: nowrap;
-	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	position: relative;
 	border-bottom: 1px solid transparent;
 }
@@ -907,7 +907,7 @@
 .tasks-checklist-item-default-btn,
 .tasks-checklist-item-remove-btn {
 	color: #80868e;
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	border-bottom: 1px dashed;
 	position: relative;
 	margin-left: 12px;
@@ -979,7 +979,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .tasks-checklist-item-attachment-file-name {
@@ -1126,7 +1126,7 @@
 .tasks-checklist-item-editor-panel-text {
 	order: 2;
 	color: #858c96;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: middle;
 }
 

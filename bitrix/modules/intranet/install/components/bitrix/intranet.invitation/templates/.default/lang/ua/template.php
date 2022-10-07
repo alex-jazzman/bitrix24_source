@@ -87,6 +87,7 @@ $MESS["BX24_INVITE_DIALOG_USERS_LIMIT_TEXT"] = "На вашому тарифі �
 $MESS["BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"] = "Обмеження кількості користувачів";
 $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Помилка при створенні поштової скриньки:";
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Підтвердження пароля не збігається з паролем";
+$MESS["INTRANET_INVITE_DIALOG_ACCESS_ERROR"] = "Доступ заборонениий";
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC"] = "У Бітрікс24 доступні 3 сценарії роботи з AD";
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC1"] = "Вивантаження списку співробітників";
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC2"] = "Побудова структури компанії";

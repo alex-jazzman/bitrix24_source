@@ -138,7 +138,7 @@
 
 .crm-entity-merger-sidebar-warning-text {
 	position: relative;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	z-index: 2;
 }
@@ -695,7 +695,7 @@ div.crm-entity-merger-sidebar div.ui-entity-editor-section-header,
 .crm-entity-merger-panel-label {
 	display: flex;
 	align-items: center;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	text-align: left;
 }

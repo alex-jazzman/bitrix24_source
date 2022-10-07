@@ -1,5 +1,6 @@
 import {ajax, Loc} from 'main.core';
 import 'currency';
+import 'ui.design-tokens';
 import './styles.css';
 
 export default {

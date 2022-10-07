@@ -18,7 +18,7 @@ $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.list/tem
 CJSCore::Init(array('tasks_util_query', 'task_popups'));
 
 // create template controller with js-dependency injections
-$arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
+$arResult['HELPER'] = $helper = require(__DIR__.'/helper.php');
 $arParams =& $helper->getComponent(
 )->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 

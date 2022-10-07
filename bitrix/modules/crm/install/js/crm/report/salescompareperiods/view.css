@@ -20,12 +20,12 @@
 .crm-report-sales-dynamics-modal-subtitle {
 	display: block;
 	margin: 0 0 2px 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 	opacity: .84;
 }
 .crm-report-sales-dynamics-modal-main .crm-report-chart-card-subtitle {
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .crm-report-sales-dynamics-modal-main {}
 .crm-report-sales-dynamics-modal-content {

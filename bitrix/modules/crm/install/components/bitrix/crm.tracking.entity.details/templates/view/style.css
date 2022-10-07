@@ -194,7 +194,7 @@
 
 .crm-tracking-entity-details-path-block-title-text {
 	color: #a3a9b1;
-	font: 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-tracking-entity-details-path-block-inner {

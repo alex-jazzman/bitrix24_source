@@ -184,7 +184,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 	vertical-align: middle;
 	font-size: 18px;
 	text-decoration: none;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
 	text-shadow:0 1px 1px #789d1c;
 }

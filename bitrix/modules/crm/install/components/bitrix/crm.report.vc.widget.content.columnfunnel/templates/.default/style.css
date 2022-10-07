@@ -20,7 +20,7 @@
 
 .crm-report-column-funnel-card-subtitle {
 	/*display: block;*/
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 	opacity: .84;
 }
@@ -232,7 +232,7 @@
 .crm-report-column-funnel-through-funnel-widget-title {
 	display: block;
 	margin: 0 0 1px 0;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(51,51,51,.56);
 	text-align: right;
 	z-index: 1;
@@ -307,12 +307,12 @@
 .crm-report-column-funnel-modal-subtitle {
 	display: block;
 	margin: 0 0 2px 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 	opacity: .84;
 }
 .crm-report-column-funnel-modal-main .crm-report-column-funnel-card-subtitle {
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .crm-report-column-funnel-modal-main {}
 .crm-report-column-funnel-modal-content {
@@ -392,11 +392,11 @@
 	align-items: baseline;
 }
 .crm-report-column-funnel-tooltip-value {
-	font: 700 11px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 700 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 .crm-report-column-funnel-tooltip-percent {
-	font: 700 9px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 700 9px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #828B95;
 }
 /* END OF TOOLTIP */
@@ -429,7 +429,7 @@
 }
 .crm-report-column-funnel-scale-item {
 	margin: 0 8px 0 0;
-	font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #808992;
 }
 .crm-report-column-funnel-scale-single-value.crm-report-column-funnel-scale-box {
@@ -455,14 +455,14 @@
 }
 .crm-report-column-funnel-grid-user-name {
 	max-width: 100%;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066B0;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
 }
 .crm-report-column-funnel-grid-company .crm-report-column-funnel-grid-user-name {
-	font: 500 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 500 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 .crm-report-column-funnel-grid-company-icon {
@@ -483,14 +483,14 @@
 	margin: 18px 0;
 }
 .crm-report-column-funnel-grid-value {
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 .crm-report-column-funnel-grid-value-black-bold,
 .crm-report-column-funnel-grid-value-bold {
 	display: inline-block;
 	border-bottom: 1px dashed transparent;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	transition: color .3s, border-bottom .3s;
 	cursor: pointer;
@@ -517,12 +517,12 @@
 }
 .crm-report-column-funnel-grid-value-dark-grey {
 	display: block;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 .crm-report-column-funnel-grid-value-grey {
 	display: block;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 }
 .crm-report-column-funnel-grid-value-up .crm-report-column-funnel-grid-triangle {
@@ -555,11 +555,11 @@
 	margin: 0 8px 0 0;
 	padding: 0 8px 0 0;
 	border-right: 1px solid rgba(82,92,105,.17);
-	font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #364150;
 }
 .crm-report-column-funnel-grid-rating-text {
-	font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-transform: uppercase;
 }
 .crm-report-column-funnel-grid-rating-bold .crm-report-column-funnel-grid-rating-value,

@@ -20,7 +20,7 @@
 
 .crm-webform-list-header {
 	margin: 33px 0 0 0;
-	font: normal 23px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 23px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -75,7 +75,7 @@
 .crm-webform-list-active-popup-item {
 	flex: 1;
 	overflow: hidden;
-	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-active-popup-item-caption {
@@ -157,7 +157,7 @@ a.crm-webform-list-entity-link {
 }
 
 .crm-webform-list-createform-element {
-	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 }
 
@@ -172,7 +172,7 @@ a.crm-webform-list-entity-link {
 .crm-webform-list-info {
 	position: relative;
 	max-height: 2000px;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	-webkit-transition: all .5s ease;
 	-moz-transition: all .5s ease;
@@ -253,7 +253,7 @@ a.crm-webform-list-entity-link {
 	margin: 0 0 17px 0;
 	width: -webkit-calc(100% - 30px);
 	width: calc(100% - 30px);
-	font: 22px/26px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #31c2f3;
 }
 
@@ -266,11 +266,11 @@ a.crm-webform-list-entity-link {
 .crm-webform-list-info-slogan {
 	display: block;
 	margin: 0 0 38px 0;
-	font: 16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-list-info-list-item-title {
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /* Buttons */
@@ -382,7 +382,7 @@ a.crm-webform-list-entity-link {
 	display: inline-block;
 	width: 100%;
 	height: 100%;
-	font: normal 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: top;
 }
 
@@ -603,7 +603,7 @@ div.crm-webform-list-widget-content {
 
 @media (max-width: 1199px) {
 	.crm-webform-list-widget-content-attempt {
-		font: normal 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+		font: normal 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	}
 }
 
@@ -792,7 +792,7 @@ div.crm-webform-list-widget-content {
 .crm-webform-grid-conversion {
 	display: flex;
 	align-items: center;
-	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-grid-conversion-icon {

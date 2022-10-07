@@ -23,6 +23,7 @@ export const Item = {
 	finalSummaryDocuments: 20,
 	storeDocument: 21,
 	productCompilation: 22,
+	signDocument: 23,
 };
 
 /** @memberof BX.Crm.Timeline.Types */
@@ -52,13 +53,13 @@ export const Delivery = {
 /** @memberof BX.Crm.Timeline.Types */
 export const Order = {
 	encourageBuyProducts: 100,
-}
+};
 
 /** @memberof BX.Crm.Timeline.Types */
 export const EditorMode = {
 	view: 1,
 	edit: 2
-}
+};
 
 /** @memberof BX.Crm.Timeline.Types */
 export const Compilation = {
@@ -66,4 +67,4 @@ export const Compilation = {
 	orderExists: 2,
 	compilationViewed: 3,
 	newDealCreated: 4,
-}
+};

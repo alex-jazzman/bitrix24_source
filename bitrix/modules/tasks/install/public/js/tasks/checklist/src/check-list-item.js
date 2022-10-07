@@ -1,3 +1,4 @@
+import 'ui.design-tokens';
 import './css/check-list-item.css';
 
 import {Dom, Event, Loc, Runtime, Tag, Text} from 'main.core';
@@ -291,7 +292,7 @@ class CheckListItem extends CompositeTreeItem
 			<span class="tasks-checklist-item-auditor">
 				<a class="tasks-checklist-item-${type}-icon" title="${Loc.getMessage(messageId)}"></a>
 				<a href="${url}" class="tasks-checklist-item-${type}-link">${name}</a>
-			</span>
+			</span> 
 		`;
 	}
 

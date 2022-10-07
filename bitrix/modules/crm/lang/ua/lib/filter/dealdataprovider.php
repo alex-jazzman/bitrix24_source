@@ -17,6 +17,7 @@ $MESS["CRM_DEAL_FILTER_RECURRING_ACTIVE"] = "Активний";
 $MESS["CRM_DEAL_FILTER_RECURRING_COUNTER_REPEAT"] = "Створено угод";
 $MESS["CRM_DEAL_FILTER_RECURRING_LIMIT_DATE"] = "Дата закінчення";
 $MESS["CRM_DEAL_FILTER_RECURRING_NEXT_EXECUTION"] = "Дата наступного створення";
+$MESS["CRM_DEAL_FILTER_ROBOT_DEBUGGER"] = "Угоди в режимі налагодження";
 $MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_HISTORY"] = "Стадія за історією";
 $MESS["CRM_DEAL_FILTER_STAGE_ID_FROM_SUPPOSED_HISTORY"] = "Стадія за історією (з передбачуваними переходами)";
 $MESS["CRM_DEAL_FILTER_STAGE_SEMANTIC_ID"] = "Група стадій";

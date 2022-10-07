@@ -200,9 +200,9 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		$result = $this->saveOrder();
 		if (!is_null($result))
 		{
-			[$orderId, $shipmentId] = $result;
+			[, $shipmentId] = $result;
 
-			$shipment = Crm\Order\Manager::getShipmentObject($shipmentId);
+			$shipment = Sale\Repository\ShipmentRepository::getInstance()->getById($shipmentId);
 			if (!$shipment)
 			{
 				$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND'));
@@ -268,12 +268,6 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		if ($isNew && !Permissions\Order::checkCreatePermission($this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
-			return;
-		}
-
-		if ($isNew && Crm\Restriction\OrderRestriction::isOrderLimitReached())
-		{
-			$this->addError('You have reached the order limit for your plan');
 			return;
 		}
 

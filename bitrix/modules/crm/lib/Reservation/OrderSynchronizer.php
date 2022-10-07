@@ -15,10 +15,13 @@ use Bitrix\Catalog\v2\Helpers\PropertyValue;
 use Bitrix\Catalog\StoreTable;
 use Bitrix\Crm\ClientInfo;
 use Bitrix\Crm\Order\Builder\Factory;
-use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Helpers\Order\Builder\Converter\CatalogJSProductForm;
 
+/**
+ * @deprecated 23.0.0
+ * @see \Bitrix\Crm\Order\OrderDealSynchronizer
+ */
 class OrderSynchronizer
 {
 	/** @var int */
@@ -273,7 +276,14 @@ class OrderSynchronizer
 		/**
 		 * Client Info
 		 */
-		$result['CLIENT'] = ClientInfo::createFromOwner(\CCrmOwnerType::Deal, $this->dealId)->toArray(false);
+		if ($this->order && !$this->order->getContactCompanyCollection()->isEmpty())
+		{
+			$result['CLIENT'] = ClientInfo::createFromOwner(\CCrmOwnerType::Order, $this->order->getId())->toArray(false);
+		}
+		else
+		{
+			$result['CLIENT'] = ClientInfo::createFromOwner(\CCrmOwnerType::Deal, $this->dealId)->toArray(false);
+		}
 
 		return $result;
 	}

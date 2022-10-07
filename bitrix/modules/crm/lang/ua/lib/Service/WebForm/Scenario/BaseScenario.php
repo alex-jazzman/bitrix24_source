@@ -17,6 +17,7 @@ $MESS["CRM_SERVICE_FORM_MENU_ITEM_FIELDS_RULES"] = "Правила відобр�
 $MESS["CRM_SERVICE_FORM_MENU_ITEM_HEADER_AND_BUTTON"] = "Заголовок і кнопка";
 $MESS["CRM_SERVICE_FORM_MENU_ITEM_IDENTIFY"] = "Впізнати клієнта";
 $MESS["CRM_SERVICE_FORM_MENU_ITEM_OTHER"] = "Інші налаштування";
+$MESS["CRM_SERVICE_FORM_MENU_ITEM_PAY_SYSTEMS"] = "Оплата";
 $MESS["CRM_SERVICE_FORM_MENU_ITEM_SPAM_PROTECTION"] = "Захист від спаму";
 $MESS["CRM_SERVICE_FORM_MENU_ITEM_VK"] = "ВКонтакті";
 $MESS["CRM_SERVICE_FORM_REFILL_BUTTON"] = "Заповнити ще раз";

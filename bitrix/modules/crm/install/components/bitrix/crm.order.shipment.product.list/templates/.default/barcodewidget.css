@@ -40,7 +40,7 @@
 	border-radius: 1px;
 	background-color: #fff;
 	color: #424956;
-	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: 220ms all ease;
 }
 

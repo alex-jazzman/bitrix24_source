@@ -13,6 +13,7 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Currency;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Integration\Catalog\WarehouseOnboarding;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -267,6 +268,8 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 				$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
 			);
 		}
+
+		$this->arResult['WAREHOUSE_CRM_TOUR_DATA'] = $this->getWarehouseOnboardTourData();
 
 		$ufEntityID = \CCrmDeal::GetUserFieldEntityID();
 		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
@@ -792,7 +795,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 							'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
 							'componentData' => array(
 								'template' => '',
-								'params' => array(
+								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'QUOTE_COUNT' => '20',
 									'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'],
 									'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'],
@@ -804,7 +807,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromDeal'
-								)
+								], 'crm.quote.list')
 							)
 						)
 					);
@@ -818,7 +821,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 							'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
 							'componentData' => array(
 								'template' => '',
-								'params' => array(
+								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'INVOICE_COUNT' => '20',
 									'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
 									'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
@@ -834,7 +837,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 									'ENABLE_TOOLBAR' => 'Y',
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromDeal'
-								)
+								], 'crm.invoice.list')
 							)
 						)
 					);
@@ -852,7 +855,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 							'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
 							'componentData' => array(
 								'template' => '',
-								'params' => array(
+								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'INVOICE_COUNT' => '20',
 									'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
 									'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
@@ -868,7 +871,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 //									'ENABLE_TOOLBAR' => 'N',
 									'PRESERVE_HISTORY' => true,
 									'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID
-								)
+								], 'crm.order.list')
 							)
 						)
 					);
@@ -934,10 +937,10 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 						'serviceUrl' => '/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 						'componentData' => array(
 							'template' => '.default',
-							'params' => array(
+							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'ENTITY_ID' => $this->entityID,
 								'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
-							)
+							], 'crm.entity.tree')
 						)
 					)
 				);
@@ -1072,6 +1075,14 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			$this->arResult['SCORING'] = Crm\Ml\ViewHelper::prepareData(CCrmOwnerType::Deal, $this->entityID);
 		}
 		//endregion
+
+		// region AUTOMATION DEBUG
+		$activeDebugEntityIds = CCrmBizProcHelper::getActiveDebugEntityIds(CCrmOwnerType::Deal);
+		if (in_array($this->entityID, $activeDebugEntityIds))
+		{
+			$this->arResult['IS_AUTOMATION_DEBUG_ITEM'] = 'Y';
+		}
+		// endregion
 
 		if ((!$this->isEnableRecurring || !Crm\Ml\Scoring::isEnabled()) && CModule::IncludeModule('bitrix24'))
 		{
@@ -3399,5 +3410,19 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			'ENTITY_ID' => $this->getEntityID(),
 			'ENTITY_DATA' => $this->prepareEntityData()
 		];
+	}
+
+	private function getWarehouseOnboardTourData(): array
+	{
+		$tourData = [
+			'IS_TOUR_AVAILABLE' => WarehouseOnboarding::isCrmWarehouseOnboardingAvailable($this->userID),
+		];
+
+		if ($tourData['IS_TOUR_AVAILABLE'])
+		{
+			$tourData['CHAIN_DATA'] = (new WarehouseOnboarding($this->userID))->getCurrentChainData();
+		}
+
+		return $tourData;
 	}
 }

@@ -18,6 +18,7 @@ class KanbanService implements Errorable
 {
 	const ERROR_COULD_NOT_ADD_TASK = 'TASKS_KS_01';
 	const ERROR_COULD_NOT_REMOVE_TASK = 'TASKS_KS_02';
+	const ERROR_COULD_NOT_GET_LAST_STAGES = 'TASKS_KS_03';
 	const ERROR_COULD_NOT_ADD_ONE_TASK = 'TASKS_KS_05';
 
 	private $errorCollection;
@@ -415,24 +416,30 @@ class KanbanService implements Errorable
 	/**
 	 * Gets default stages or stages of last sprint for active sprint.
 	 *
-	 * @param int $sprintId Sprint id for copy last view.
+	 * @param int $lastSprintId Last sprint id for copy last stages.
 	 * @return array
 	 */
-	public function generateKanbanStages(int $sprintId = 0): array
+	public function generateKanbanStages(int $lastSprintId = 0): array
 	{
-		$stages = [];
-
-		if ($sprintId > 0)
+		if ($lastSprintId)
 		{
-			if ($lastSprintId = $this->getLastCompletedSprintIdSameGroup($sprintId))
+			$stages = $this->getStagesCompletedSprint($lastSprintId);
+
+			if ($stages)
 			{
-				$stages = $this->getStagesCompletedSprint($lastSprintId);
+				return $stages;
 			}
-		}
+			else
+			{
+				$this->errorCollection->setError(
+					new Error(
+						'Failed to get last completed sprint',
+						self::ERROR_COULD_NOT_GET_LAST_STAGES
+					)
+				);
 
-		if ($stages)
-		{
-			return $stages;
+				return [];
+			}
 		}
 
 		return [
@@ -651,9 +658,9 @@ class KanbanService implements Errorable
 		return $stageIdsMap;
 	}
 
-	public function createSprintStages(int $sprintId)
+	public function createSprintStages(int $sprintId, int $lastSprintId = 0)
 	{
-		$stages = $this->generateKanbanStages($sprintId);
+		$stages = $this->generateKanbanStages($lastSprintId);
 
 		$sort = 0;
 		foreach ($stages as $stageCode => $stageItem)

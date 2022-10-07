@@ -1,6 +1,5 @@
 <?php
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE"] = "Доступний залишок";
-$MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE_HINT"] = "Доступний залишок = Кількість товару на складах – Кількість зарезервованого товару.";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE_HINT_2"] = "Доступний залишок = Кількість товару на складах – Кількість зарезервованого товару. #HELPER_HTML_LINK#";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_BASE_PRICE"] = "Базова ціна";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_CURRENCY"] = "Валюта";

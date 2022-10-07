@@ -181,7 +181,7 @@
 }
 
 .crm-type-preset-text-description {
-	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #a8adb4;
 	line-height: 17px;
@@ -287,7 +287,7 @@ body.crm-type-settings-presets #workarea-content {
 }
 
 .crm-type-ui-card-message-description {
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	margin-bottom: 14px;
 }
@@ -376,7 +376,7 @@ body.crm-type-settings-presets #workarea-content {
 }
 
 .crm-type-field-button-item-text {
-	font: 14px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	display: block;
 	text-align: center;
 	transition: 200ms ease all;
@@ -470,7 +470,7 @@ body.crm-type-settings-presets #workarea-content {
 
 .crm-type-relation-subtitle {
     margin-bottom: 5px;
-    font: 13px Helvetica, Arial, sans-serif;
+    font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #525c69;
 	opacity: .9;
 }
@@ -524,7 +524,7 @@ body.crm-type-settings-presets #workarea-content {
 
 .crm-type-head-control-caption {
     display: block;
-    font: 11px/12px Helvetica, Arial, sans-serif;
+    font: 11px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #858c96;
     letter-spacing: -0.266666px;
 	text-transform: lowercase;
@@ -537,7 +537,7 @@ body.crm-type-settings-presets #workarea-content {
     display: inline-block;
 	margin-right: 15px;
     border-bottom: 1px dashed rgba(39,107,179,.4);
-    font: 13px/14px Helvetica, Arial, sans-serif;
+    font: 13px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #4066A6;
     transition: border-bottom .3s;
 	cursor: pointer;
@@ -639,7 +639,7 @@ body.crm-type-settings-presets #workarea-content {
 	border: none;
 	border-bottom: 1px dotted #cbced2;
 	background: none;
-	font: 13px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: all 220ms ease;
 	border-bottom: 1px dotted;

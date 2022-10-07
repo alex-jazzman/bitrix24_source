@@ -17,7 +17,6 @@ return [
 	"rel" => [
 		'ui.webpacker',
 		'crm.tracking.connector',
-		'ui.fonts.opensans',
 	],
 	"lang" => "/bitrix/modules/crm/install/js/tracking.editor.php",
 	"options" => [

@@ -6,6 +6,7 @@ $MESS["LANDING_SITE_TILE_DEV_BTN"] = "Замовити";
 $MESS["LANDING_SITE_TILE_DEV_HELP"] = "Потрібна допомога в розробці сайту?";
 $MESS["LANDING_SITE_TILE_DEV_ORDER"] = "Замовте впровадження у наших партнерів";
 $MESS["LANDING_SITE_TILE_EMPTY_ADD"] = "Створити сайт";
+$MESS["LANDING_SITE_TILE_EMPTY_ADD_NO_RIGHT"] = "Недостатньо прав для створення сайту";
 $MESS["LANDING_SITE_TILE_EMPTY_ADD_STORE"] = "Створити магазин";
 $MESS["LANDING_SITE_TILE_EMPTY_FEAT1_PAGE"] = "Легко створіть сайт самостійно в простому й зручному конструкторі";
 $MESS["LANDING_SITE_TILE_EMPTY_FEAT1_STORE"] = "Миттєвий запуск без складних налаштувань";

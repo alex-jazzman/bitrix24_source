@@ -1,7 +1,8 @@
 .tasks-scrum-dod-side-panel {
 	padding: 0 20px;
 	color: #333;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-bottom: 20px;
 }
 
@@ -11,7 +12,8 @@
 }
 
 .tasks-scrum-dod-side-panel-header-title {
-	font: 24px/30px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 24px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .tasks-scrum-dod-side-panel-container {
@@ -48,6 +50,7 @@
 	padding: 15px 0 35px 5px;
 	background: #f8f9fa;
 	font-size: 0;
+	border-radius: var(--ui-border-radius-md, 0px);
 }
 
 .sidebar-tab {
@@ -55,7 +58,7 @@
 	padding: 13px 15px;
 	background: #ebf1f4;
 	color: rgba(0, 0, 0, 0.7);
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 14px;
 	display: flex;
 	text-align: left;
@@ -128,7 +131,8 @@
 
 .tasks-scrum-dod-settings-type-name-input {
 	display: block;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 18px;
 	color: #333;
 	letter-spacing: 0.4px;
@@ -150,7 +154,8 @@
 .tasks-scrum-project-side-panel {
 	padding: 0 20px;
 	color: #333;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-bottom: 80px;
 }
 
@@ -160,7 +165,8 @@
 }
 
 .tasks-scrum-project-side-panel-header-title {
-	font: 24px/30px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 24px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .tasks-scrum-dod-panel-padding {

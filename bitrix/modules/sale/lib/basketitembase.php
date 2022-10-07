@@ -11,6 +11,7 @@ use Bitrix\Main;
 use Bitrix\Main\Localization;
 use Bitrix\Sale\Basket\RefreshFactory;
 use Bitrix\Sale\Internals;
+use Bitrix\Sale\Tax\VatCalculator;
 
 Localization\Loc::loadMessages(__FILE__);
 
@@ -888,16 +889,14 @@ abstract class BasketItemBase extends Internals\CollectableEntity
 	 */
 	public function getVat()
 	{
-		$vatRate = $this->getVatRate();
-		if ($vatRate == 0)
-			return 0;
+		$calculator = new VatCalculator((float)$this->getVatRate());
+		$vat = $calculator->calc(
+			$this->getPrice(),
+			$this->isVatInPrice(),
+			false
+		);
 
-		if ($this->isVatInPrice())
-			$vat = PriceMaths::roundPrecision(($this->getPrice() * $this->getQuantity() * $vatRate / ($vatRate + 1)));
-		else
-			$vat = PriceMaths::roundPrecision(($this->getPrice() * $this->getQuantity() * $vatRate));
-
-		return $vat;
+		return PriceMaths::roundPrecision($vat * $this->getQuantity());
 	}
 
 	/**

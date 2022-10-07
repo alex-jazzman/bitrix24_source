@@ -58,3 +58,4 @@ $MESS['SALE_CASHBOX_ADD_CHECK_ENTITIES'] = 'Выберите оплату или
 $MESS['SALE_CASHBOX_ADD_CHECK_TYPE_CHECKS'] = 'Выберите тип чека';
 $MESS['SALE_CASHBOX_ADD_CHECK_ADDITIONAL_ENTITIES'] = 'Выберите доп. оплаты/отгрузки';
 $MESS["SALE_CASHBOX_ENTITY_ID"] = "ID сущности";
+$MESS["SALE_CASHBOX_ENTITY_ID_SOURCE"] = "Источник";

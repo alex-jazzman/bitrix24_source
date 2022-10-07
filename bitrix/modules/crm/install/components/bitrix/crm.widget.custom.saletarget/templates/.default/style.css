@@ -865,7 +865,7 @@
 .crm-start-popup-text {
 	display: inline-block;
 	margin-right: 10px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #525c69;
 }
@@ -907,7 +907,7 @@
 }
 
 .crm-start-dropdown-text {
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #333;
 }
@@ -1002,7 +1002,7 @@
 .crm-start-popup-config {
 	float: left;
 	margin: 7px 0;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #0063c6;
 	cursor: pointer;
@@ -1017,7 +1017,7 @@
 .crm-start-popup-copy {
 	float: right;
 	margin: 7px 0;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 	opacity: .5;
@@ -1044,7 +1044,7 @@
 .crm-start-popup-personal-title-position {
 	display: inline-block;
 	margin-left: 10px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
 	color: #9b9b9b;
 }

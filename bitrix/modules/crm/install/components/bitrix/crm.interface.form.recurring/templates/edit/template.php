@@ -15,7 +15,12 @@ CJSCore::RegisterExt(
 	)
 );
 
-\CJSCore::Init(array('recurringLang', 'ui.fonts.opensans'));
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'recurringLang',
+]);
+
 
 $templateId = $arParams['TEMPLATE_ID'];
 $data = $arParams['DATA'];

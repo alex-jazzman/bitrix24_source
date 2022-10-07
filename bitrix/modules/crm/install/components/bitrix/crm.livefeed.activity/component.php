@@ -27,7 +27,11 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 
 	if ($arActivity["TYPE_ID"] == CCrmActivityType::Task)
 	{
-		\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+		\Bitrix\Main\UI\Extension::load([
+			'ui.design-tokens',
+			'ui.fonts.opensans'
+		]);
+
 		$APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 
 		if (

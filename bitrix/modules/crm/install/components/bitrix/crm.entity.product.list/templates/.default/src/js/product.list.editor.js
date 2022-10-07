@@ -9,6 +9,8 @@ import {ProductSelector} from 'catalog.product-selector';
 import HintPopup from './hint.popup';
 import {ProductModel} from "catalog.product-model";
 import {PULL} from 'pull.client';
+import {FieldHintManager} from "./field.hint.manager";
+import {Guide} from 'ui.tour';
 
 const GRID_TEMPLATE_ROW = 'template_0';
 const DEFAULT_PRECISION: number = 2;
@@ -26,6 +28,8 @@ export class Editor
 	isChangedGrid = false;
 	pageEventsManager: PageEventsManager;
 	cache = new Cache.MemoryCache();
+
+	#fieldHintManager: FieldHintManager;
 
 	actions = {
 		disableSaveButton: 'disableSaveButton',
@@ -86,6 +90,8 @@ export class Editor
 		this.initForm();
 		this.initProducts();
 		this.initGridData();
+
+		this.#fieldHintManager = new FieldHintManager(this.getContainer(), this.getGrid.bind(this));
 
 		EventEmitter.emit(window, 'EntityProductListController', [this]);
 
@@ -2207,7 +2213,37 @@ export class Editor
 
 	handleOnTabShow(): void
 	{
-		EventEmitter.emit('onDemandRecalculateWrapper');
+		EventEmitter.emit('onDemandRecalculateWrapper', [this]);
+	}
+
+	showFieldTourHint(fieldName: string, tourData: Object, endTourHandler: Function, addictedFields: Array<string> = []): void
+	{
+		if (this.products.length > 0)
+		{
+			const firstProductRowNode = this.products[0].getNode();
+
+			const addictedNodes = [];
+			for (const fieldName of addictedFields)
+			{
+				const fieldNode = firstProductRowNode.querySelector(`[data-name="${fieldName}"]`);
+				if (fieldNode !== null)
+				{
+					addictedNodes.push(fieldNode);
+				}
+			}
+
+			const fieldNode = firstProductRowNode.querySelector(`[data-name="${fieldName}"]`);
+
+			if (fieldNode !== null)
+			{
+				this.#fieldHintManager.processFieldTour(fieldNode, tourData, endTourHandler, addictedNodes);
+			}
+		}
+	}
+
+	getActiveHint(): Guide|null
+	{
+		return this.#fieldHintManager.getActiveHint();
 	}
 
 	openIntegrationLimitSlider()

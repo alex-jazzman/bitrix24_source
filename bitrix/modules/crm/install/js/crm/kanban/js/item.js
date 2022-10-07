@@ -200,7 +200,13 @@ BX.CRM.Kanban.Item.prototype = {
 		this.container.style.setProperty("--crm-kanban-item-color", rgba);
 
 		// item link
-		this.link.innerHTML = this.clipTitle(data.name);
+		const isAutomationDebugItem = data['isAutomationDebugItem'];
+		const additionalLabel =
+			isAutomationDebugItem
+				? '<span class="crm-kanban-debug-item-label">' + BX.message('CRM_KANBAN_ITEM_DEBUG_TITLE') + ' </span>'
+				: ''
+		;
+		this.link.innerHTML = additionalLabel + this.clipTitle(data.name);
 
 		this.link.setAttribute(
 			"href",

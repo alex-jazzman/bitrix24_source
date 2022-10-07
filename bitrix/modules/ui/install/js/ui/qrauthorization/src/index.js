@@ -3,6 +3,8 @@ import { Popup } from 'main.popup';
 import { Loader } from 'main.loader';
 import { PULL } from 'pull.client';
 import 'main.qrcode';
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 
 export class QrAuthorization
 {

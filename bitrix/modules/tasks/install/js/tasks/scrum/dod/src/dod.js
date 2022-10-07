@@ -6,6 +6,7 @@ import {List} from './list';
 
 import 'ui.layout-form';
 import 'ui.forms';
+import 'ui.fonts.opensans';
 
 import '../css/base.css';
 

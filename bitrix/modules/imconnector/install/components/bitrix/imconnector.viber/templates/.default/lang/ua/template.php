@@ -6,9 +6,11 @@ $MESS["IMCONNECTOR_COMPONENT_VIBER_CONNECT_HELP"] = "<div class=\"imconnector-fi
 $MESS["IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP"] = "Для підключення необхідно <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">створити публічний акаунт в Viber</a>
  або підключити вже існуючий. Якщо у вас ще немає публічного акаунта, ми допоможемо створити його в кілька кроків і підключити до вашого Бітрікс24
 ";
+$MESS["IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP_NEW"] = "Для підключення необхідно #LINK_START#створити публічний обліковий запис Viber#LINK_END# або під'єднати наявний. Якщо у вас ще немає облікового запису, ми допоможемо створити його й під'єднати до Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_CONNECT_TITLE"] = "Підключіть Viber до Відкритої лінії";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_FINAL_FORM_DESCRIPTION"] = "Viber успішно підключений до вашої Відкритої лінії. Тепер всі звернення до вашого публічного акаунту будуть автоматично спрямовані на ваш Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_ADDITIONAL_DESCRIPTION"] = "Для підключення необхідно <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">створити публічний акаунт у Viber</a> або підключити вже існуючий. Якщо у вас ще немає публічного облікового запису, ми допоможемо створити його за кілька кроків і підключити до вашого Бітрікс24.";
+$MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "Для підключення необхідно #LINK_START#створити публічний обліковий запис Viber#LINK_END# або під'єднати наявний. Якщо у вас ще немає облікового запису, ми допоможемо створити його й під'єднати до Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_1"] = "Контакти та лпереписки зберігаються в CRM";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_2"] = "CRM допомагає вести клієнта воронкою продажів";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_3"] = "Ви відповідаєте клієнтам швидко й там, де їм зручно";

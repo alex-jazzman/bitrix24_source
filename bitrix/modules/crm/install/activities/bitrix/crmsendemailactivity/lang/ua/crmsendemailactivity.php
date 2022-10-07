@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_SEMA_ACTIVITY_LINK_LABEL"] = "Відкрити повідомлення";
 $MESS["CRM_SEMA_ATTACHMENT"] = "Вкладення";
 $MESS["CRM_SEMA_ATTACHMENT_DISK"] = "Диск";
 $MESS["CRM_SEMA_ATTACHMENT_FILE_1"] = "Файли документа";

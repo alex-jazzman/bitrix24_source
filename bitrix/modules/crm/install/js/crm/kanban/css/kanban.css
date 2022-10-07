@@ -458,7 +458,7 @@
 	width: 100%;
 	background: #fff;
 	border: 1px solid #c6cdd3;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	font-size: 14px;
 	border-radius: 2px;
@@ -473,7 +473,7 @@
 	display: block;
 	width: 100%;
 	resize: none;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	font-size: 14px;
 	line-height: 20px;
@@ -1006,7 +1006,7 @@ a.crm-kanban-sidepanel:hover {
 	line-height: 33px;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #535c69;
 	cursor: pointer;
@@ -1036,7 +1036,7 @@ a.crm-kanban-sidepanel:hover {
 	overflow: hidden;
 	padding: 9px 0;
 	color: #535c69;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	line-height: 17px;
 	border-bottom: 1px solid rgba(82,92,105,.1);
@@ -1106,11 +1106,12 @@ a.crm-kanban-sidepanel:hover {
 
 .crm-kanban-qiuck-form-buttons {
 	margin: 0;
-	margin-top: var(--ui-space-stack-sm-neg, -15px);
+	margin-top: var(--ui-space-stack-md-neg, -16px);
 	padding: 15px;
 	background: #fff;
 	position: relative;
-	border-radius: var(--ui-border-radius-md, 0 0 2px 2px);
+	border-bottom-left-radius: var(--ui-border-radius-md, 2px);
+	border-bottom-right-radius: var(--ui-border-radius-md, 2px);
 }
 
 .crm-kanban-quick-form-container {
@@ -1186,7 +1187,7 @@ a.crm-kanban-sidepanel:hover {
 }
 
 .crm-kanban-item-fields-item-title {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 11px;
 	color: #868d96;
 	margin-bottom: 3px;
@@ -1423,7 +1424,7 @@ a.crm-kanban-sidepanel:hover {
 	text-transform: uppercase;
 	transition: 250ms all ease;
 	margin-top: 2px;
-	font: 700 10px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 700 10px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-kanban-item-status-seen {
@@ -1514,6 +1515,10 @@ a.crm-kanban-sidepanel:hover {
 
 .crm-kanban-popup-field-search-list-item-hidden{
 	animation: hideKanbanPopupSearchSectionItem 300ms both;
+}
+
+.crm-kanban-debug-item-label {
+	color: #FFA900;
 }
 
 @keyframes hideKanbanPopupSearchSectionItem {

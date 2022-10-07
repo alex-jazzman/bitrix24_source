@@ -4,6 +4,7 @@ namespace Bitrix\Sale\Helpers\Order\Builder\Converter;
 
 use Bitrix\Main;
 use Bitrix\Catalog\Product;
+use Bitrix\Catalog\VatTable;
 
 class CatalogJSProductForm
 {
@@ -27,12 +28,48 @@ class CatalogJSProductForm
 	}
 
 	/**
+	 * Brings the fields to a consistent state.
+	 *
+	 * Checks:
+	 * - discount price - must be equals difference base price and price;
+	 *
+	 * @param array $fields
+	 *
+	 * @return array
+	 */
+	private static function consistentFields(array $fields): array
+	{
+		// prices
+		if (!empty($fields['discount']))
+		{
+			$price = (float)($fields['priceExclusive'] ?? $fields['price']);
+			$basePrice = (float)$fields['basePrice'];
+			$discountPrice = (float)$fields['discount'];
+
+			$realDiscountPrice = $basePrice - $price;
+			if ($discountPrice !== $realDiscountPrice)
+			{
+				$fields['discount'] = $realDiscountPrice;
+
+				if (isset($fields['discountRate']))
+				{
+					$fields['discountRate'] = $realDiscountPrice / $basePrice * 100;
+				}
+			}
+		}
+
+		return $fields;
+	}
+
+	/**
 	 * @param $fields
 	 * @return array
 	 * @throws Main\ArgumentException
 	 */
 	protected static function obtainProductFields($fields) : array
 	{
+		$fields = self::consistentFields($fields);
+
 		$item = [
 			'NAME' => $fields['name'],
 			'QUANTITY' => (float)$fields['quantity'] > 0 ? (float)$fields['quantity'] : 1,
@@ -51,6 +88,24 @@ class CatalogJSProductForm
 			'MANUALLY_EDITED' => 'Y',
 			'XML_ID' => $fields['innerId']
 		];
+
+		if (
+			isset($fields['taxIncluded'], $fields['taxId'])
+			&& Main\Loader::includeModule('catalog')
+		)
+		{
+			$rateRow = VatTable::getRowById((int)$fields['taxId']);
+			if ($rateRow)
+			{
+				$item['VAT_RATE'] =
+					isset($rateRow['RATE'])
+						? (float)$rateRow['RATE'] / 100
+						: null
+				;
+			}
+
+			$item['VAT_INCLUDED'] = $fields['taxIncluded'] === 'N' ? 'N' : 'Y';
+		}
 
 		if (isset($fields['skuId']) && $fields['skuId'])
 		{

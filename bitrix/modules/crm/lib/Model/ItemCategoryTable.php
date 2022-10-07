@@ -241,7 +241,6 @@ class ItemCategoryTable extends DataManager
 
 		$list = static::query()
 			->where('ENTITY_TYPE_ID', $entityTypeId)
-			->where('IS_SYSTEM', 'N')
 			->setSelect(['*'])
 			->addOrder('SORT')
 			->exec()

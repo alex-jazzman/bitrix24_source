@@ -30,6 +30,7 @@ use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
+use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\TaskTable;
@@ -162,6 +163,7 @@ class Task
 
 		$this->addToFavorite($fields);
 		$this->setMembers($fields);
+		$this->addParameters($fields);
 		$this->addFiles($fields);
 		$this->setTags($fields);
 		$this->setUserFields($fields);
@@ -261,6 +263,7 @@ class Task
 		$this->changes = $this->getChanges($fields);
 
 		$this->setMembers($fields);
+		$this->updateParameters($fields);
 		$this->saveFiles($fields);
 		$this->setTags($fields);
 		$this->updateDepends($fields);
@@ -1245,6 +1248,10 @@ class Task
 			'=TASK_ID' => $this->taskId,
 		]);
 
+		TemplateDependenceTable::deleteList([
+			'=DEPENDS_ON_ID' => $this->taskId,
+		]);
+
 		Topic::delete($taskData["FORUM_TOPIC_ID"]);
 		$this->ufManager->Delete(Util\UserField\Task::getEntityCode(), $this->taskId);
 	}
@@ -1631,6 +1638,7 @@ class Task
 	{
 		$task = $this->getTask();
 		$task->fillMemberList();
+		$task->fillTagList();
 
 		$tagList = $task->getTagList();
 		$tags = [];
@@ -2003,6 +2011,26 @@ class Task
 	{
 		$members = new Member($this->userId, $this->taskId);
 		$members->set($fields);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 */
+	private function addParameters(array $fields)
+	{
+		$parametes = new Parameter($this->userId, $this->taskId);
+		$parametes->add($fields);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 */
+	private function updateParameters(array $fields)
+	{
+		$parametes = new Parameter($this->userId, $this->taskId);
+		$parametes->update($fields);
 	}
 
 	/**

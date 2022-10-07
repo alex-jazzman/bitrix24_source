@@ -9,14 +9,16 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CCrmEntityProgressBarComponent $component */
 
 //\CJSCore::Init(array('date'));
-\CJSCore::Init(array('ls'));
+
 \Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.notification',
 	'main.loader',
 	'ui.progressround',
-	'ui.fonts.opensans',
+	'ls',
 ]);
+
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);

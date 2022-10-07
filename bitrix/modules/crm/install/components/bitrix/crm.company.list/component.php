@@ -132,6 +132,12 @@ $isAdmin = CCrmPerms::IsAdmin();
 $enableOutmodedFields = $arResult['ENABLE_OUTMODED_FIELDS'] = CompanySettings::getCurrent()->areOutmodedRequisitesEnabled();
 
 $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
+
+if (!isset($arParams['PATH_TO_COMPANY_LIST']) && $arResult['CATEGORY_ID'] > 0)
+{
+	$arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath('PATH_TO_COMPANY_CATEGORY', $arParams['PATH_TO_COMPANY_CATEGORY'], $APPLICATION->GetCurPage());
+	$arParams['PATH_TO_COMPANY_LIST'] = str_replace('#category_id#', $arResult['CATEGORY_ID'], $arParams['PATH_TO_COMPANY_LIST']);
+}
 $arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath('PATH_TO_COMPANY_LIST', $arParams['PATH_TO_COMPANY_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_COMPANY_DETAILS'] = CrmCheckPath('PATH_TO_COMPANY_DETAILS', $arParams['PATH_TO_COMPANY_DETAILS'], $APPLICATION->GetCurPage().'?company_id=#company_id#&details');
 $arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');

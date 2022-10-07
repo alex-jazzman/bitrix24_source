@@ -2873,9 +2873,19 @@ class CAllCrmContact
 		$this->LAST_ERROR = '';
 		$this->checkExceptions = [];
 
-		if (($ID == false || (isset($arFields['NAME']) && isset($arFields['LAST_NAME'])))
-			&& (empty($arFields['NAME']) && empty($arFields['LAST_NAME'])))
-			$this->LAST_ERROR .= GetMessage('CRM_ERROR_REQUIRED_FIELDS')."<br />";
+		if (
+			(
+				$ID == false
+				|| (isset($arFields['NAME']) && isset($arFields['LAST_NAME']))
+			)
+			&& (
+				empty($arFields['NAME'])
+				&& empty($arFields['LAST_NAME'])
+			)
+		)
+		{
+			$this->LAST_ERROR .= GetMessage('CRM_ERROR_REQUIRED_FIELDS') . "<br />";
+		}
 
 		if (isset($arFields['FM']) && is_array($arFields['FM']))
 		{
@@ -2890,18 +2900,23 @@ class CAllCrmContact
 				$this->LAST_ERROR .= $strError."<br />";
 		}
 
-		if(isset($arFields['BIRTHDATE']) && $arFields['BIRTHDATE'] !== '' && !CheckDateTime($arFields['BIRTHDATE']))
+		if (isset($arFields['BIRTHDATE']) && $arFields['BIRTHDATE'] !== '' && !CheckDateTime($arFields['BIRTHDATE']))
 		{
-			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => self::GetFieldCaption('BIRTHDATE')))."<br />";
+			$this->LAST_ERROR .=
+				GetMessage(
+					'CRM_ERROR_FIELD_INCORRECT',
+					['%FIELD_NAME%' => self::GetFieldCaption('BIRTHDATE')]
+				) . "<br />"
+			;
 		}
 
-		if(!is_array($options))
+		if (!is_array($options))
 		{
 			$options = array();
 		}
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
-		if($isRestoration)
+		if ($isRestoration)
 		{
 			$enableUserFieldCheck = false;
 		}
@@ -2912,7 +2927,7 @@ class CAllCrmContact
 		}
 
 		$factory = Container::getInstance()->getFactory(CCrmOwnerType::Contact);
-		if(isset($arFields['CATEGORY_ID']))
+		if (isset($arFields['CATEGORY_ID']))
 		{
 			if (!$factory->isCategoryAvailable($arFields['CATEGORY_ID']))
 			{
@@ -2928,70 +2943,23 @@ class CAllCrmContact
 			}
 		}
 
-		if($enableUserFieldCheck)
+		if ($enableUserFieldCheck)
 		{
 			// We have to prepare field data before check (issue #22966)
 			CCrmEntityHelper::NormalizeUserFields(
 				$arFields,
 				self::$sUFEntityID,
 				$USER_FIELD_MANAGER,
-				array('IS_NEW' => ($ID == false))
+				['IS_NEW' => ($ID == false)]
 			);
 
 			$enableRequiredUserFieldCheck = !(isset($options['DISABLE_REQUIRED_USER_FIELD_CHECK'])
 				&& $options['DISABLE_REQUIRED_USER_FIELD_CHECK'] === true);
 
+			$isUpdate = ($ID > 0);
 			$fieldsToCheck = $arFields;
-			$requiredFields = null;
-			if($enableRequiredUserFieldCheck)
+			if ($enableRequiredUserFieldCheck)
 			{
-				/* Comment before status support
-				$currentFields = null;
-				if($ID > 0)
-				{
-					if(isset($options['CURRENT_FIELDS']) && is_array($options['CURRENT_FIELDS']))
-					{
-						$currentFields = $options['CURRENT_FIELDS'];
-					}
-					else
-					{
-						$dbResult = self::GetListEx(
-							array(),
-							array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
-							false,
-							false,
-							array('*', 'UF_*')
-						);
-						$currentFields = $dbResult->Fetch();
-					}
-				}
-
-				if(is_array($currentFields))
-				{
-					CCrmEntityHelper::NormalizeUserFields(
-						$currentFields,
-						self::$sUFEntityID,
-						$USER_FIELD_MANAGER,
-						array('IS_NEW' => ($ID == false))
-					);
-
-					//If Status ID is changed we must perform check of all fields.
-					if(isset($arFields['STATUS_ID']) && $arFields['STATUS_ID'] !== $currentFields['STATUS_ID'])
-					{
-						$fieldsToCheck = array_merge($currentFields, $arFields);
-						if(self::GetSemanticID($arFields['STATUS_ID'], $currentFields['CATEGORY_ID']) ===
-							Bitrix\Crm\PhaseSemantics::FAILURE)
-						{
-							//Disable required fields check for failure status due to backward compatibility.
-							$enableRequiredUserFieldCheck = false;
-						}
-					}
-					elseif(!isset($arFields['STATUS_ID']) && isset($currentFields['STATUS_ID']))
-					{
-						$fieldsToCheck = array_merge($arFields, array('STATUS_ID' => $currentFields['STATUS_ID']));
-					}
-				}*/
-
 				$requiredFields = Crm\Attribute\FieldAttributeManager::getRequiredFields(
 					CCrmOwnerType::Contact,
 					$ID,
@@ -3000,18 +2968,28 @@ class CAllCrmContact
 					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
 				);
 
-				$requiredSystemFields = isset($requiredFields[Crm\Attribute\FieldOrigin::SYSTEM])
-					? $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] : array();
-				if(!empty($requiredSystemFields))
+				$requiredSystemFields = $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] ?? [];
+
+				if (!empty($requiredSystemFields))
 				{
 					$validator = new Crm\Entity\ContactValidator($ID, $fieldsToCheck);
 					$validationErrors = array();
 					foreach($requiredSystemFields as $fieldName)
 					{
-						$validator->checkFieldPresence($fieldName, $validationErrors);
+						if (
+							!$isUpdate
+							|| array_key_exists($fieldName, $fieldsToCheck)
+							|| (
+								is_array($fieldsToCheck['FM'])
+								&& array_key_exists($fieldName, $fieldsToCheck['FM'])
+							)
+						)
+						{
+							$validator->checkFieldPresence($fieldName, $validationErrors);
+						}
 					}
 
-					if(!empty($validationErrors))
+					if (!empty($validationErrors))
 					{
 						$e = new CAdminException($validationErrors);
 						$this->checkExceptions[] = $e;
@@ -3019,10 +2997,6 @@ class CAllCrmContact
 					}
 				}
 			}
-
-			$requiredUserFields = is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
-				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM]
-				: [];
 
 			if (isset($arFields['CATEGORY_ID']))
 			{
@@ -3040,7 +3014,7 @@ class CAllCrmContact
 					$fieldsToCheck,
 					false,
 					$enableRequiredUserFieldCheck,
-					$requiredUserFields,
+					$requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] ?? null,
 					isset($filteredUserFields) ? array_keys($filteredUserFields) : null
 				)
 			)

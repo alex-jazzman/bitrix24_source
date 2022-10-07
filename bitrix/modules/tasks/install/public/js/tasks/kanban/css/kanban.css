@@ -67,7 +67,8 @@
 	/*word-wrap: break-word;*/
 	max-width: 100%;
 	margin: 0 0 7px;
-	font-family: "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 	font-size: 13px;
 	max-height: 65px;
@@ -133,7 +134,8 @@
 .tasks-kanban-item-epic {
 	display: inline-block;
 	max-width: 100%;
-	font: 12px/18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 12px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	border-radius: 14px;
 	padding: 0 11px 1px;
 	margin: 4px 9px 4px 0;
@@ -208,7 +210,8 @@
 	padding: 0 6px;
 	margin: 0 4px 0 0;
 	font-size: 11px;
-	font-family: "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	line-height: 14px;
 	color: #a9aeb5;
 	border: 1px solid #e6e8ea;
@@ -324,7 +327,8 @@ a.tasks-kanban-item-super-blue:hover,
 
 .tasks-kanban-item-bold {
 	color: #828b95;
-	font-family: "OpenSans-Bold", 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 
 .tasks-kanban-item-info {
@@ -459,7 +463,8 @@ a.tasks-kanban-item-super-blue:hover,
 	vertical-align: middle;
 	height: 32px;
 	line-height: 32px;
-	font-family: "OpenSans-Bold", 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 12px;
 	color: #525c68;
 	white-space: nowrap;
@@ -521,7 +526,8 @@ a.tasks-kanban-item-super-blue:hover,
 	border: 1px solid #eaecef;
 	height: 26px;
 	padding: 0 6px;
-	font-family: "OpenSans-Bold", 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 12px;
 	color: #525c68;
 }
@@ -613,7 +619,7 @@ a.tasks-kanban-item-super-blue:hover,
 }
 
 .tasks-kanban-item-story-points {
-	font: 13px/19px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	background: #f8f9fa;
 	border-radius: 24px;
@@ -763,7 +769,8 @@ a.tasks-kanban-item-super-blue:hover,
 .tasks-kanban-start-title-sm {
 	display: block;
 	overflow: hidden;
-	font-family: "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 34px;
 	color: #a8adb4;
 	text-align: center;

@@ -301,7 +301,7 @@
 	word-break: break-word;
 	white-space: break-spaces;
 	margin: 9px 5px 16px;
-	font: 15px/26px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 15px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-form-embed__code {

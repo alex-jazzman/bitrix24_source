@@ -651,7 +651,7 @@ export class Item extends EventEmitter
 			switch (this.getEntityType())
 			{
 				case 'backlog':
-					Dom.style(this.getNode(), 'borderLeft', '3px solid' + this.getBorderColor());
+					Dom.style(this.getNode().querySelector('.tasks-scrum__item--bg'), 'backgroundColor', this.getBorderColor());
 					break;
 				case 'sprint':
 					Dom.style(this.getNode(), 'borderLeft', null);
@@ -905,6 +905,7 @@ export class Item extends EventEmitter
 				data-id="${Text.encode(this.getId())}"
 				data-sort="${Text.encode(this.getSort())}"
 			>
+			<div class="tasks-scrum__item--bg"></div>
 				<div class="tasks-scrum__item--link"></div>
 				<div class="tasks-scrum__item--info">
 					${this.toggle ? this.toggle.render() : ''}
@@ -953,6 +954,7 @@ export class Item extends EventEmitter
 				data-id="${Text.encode(this.getId())}"
 				data-sort="${Text.encode(this.getSort())}"
 			>
+			<div class="tasks-scrum__item--bg"></div>
 			<div class="tasks-scrum__item--info-task--basic">
 				<div class="tasks-scrum__item--link"></div>
 				<div class="tasks-scrum__item--info">

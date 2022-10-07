@@ -178,7 +178,7 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 	$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
 	$isAllowedRegion = $region !== null && $region !== 'ru';
 
-	$hasShops = !empty(ShopSitesController::getShops());
+	$hasShops = Loader::includeModule('sale') && !empty(ShopSitesController::getShops());
 
 	if ($isAllowedRegion && $hasShops)
 	{
@@ -279,6 +279,7 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 
 			if (
 				IsModuleInstalled('crm')
+				&& Loader::includeModule('sale')
 				&& \Bitrix\Sale\Cashbox\CheckManager::isAvailableCorrection()
 			)
 			{

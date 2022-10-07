@@ -67,6 +67,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	customFieldsPopup: null,
 	customFieldsContainer: null,
 	actionPanel: null,
+	customActionPanel: null,
 	currentNode: null,
 	itemMoving: null,
 	actionItems: [],
@@ -2126,7 +2127,9 @@ BX.CRM.Kanban.Grid.prototype = {
 					var fields = {
 						"ASSIGNED_BY_ID": { 0: eventArgs["userId"] },
 						"ASSIGNED_BY_ID_label": [ eventArgs["userName"] ],
-						"ACTIVITY_COUNTER": { 0: eventArgs["counterTypeId"] }
+						"ACTIVITY_COUNTER": BX.Type.isPlainObject(eventArgs["counterTypeId"])
+							? eventArgs["counterTypeId"]
+							: { 0: eventArgs["counterTypeId"] }
 					};
 					var filter = BX.Main.filterManager.getById(gridData.gridId);
 					var api = filter.getApi();
@@ -2511,6 +2514,16 @@ BX.CRM.Kanban.Grid.prototype = {
 			renderToNode = document.getElementById('uiToolbarContainer');
 		}
 
+		if (this.customActionPanel)
+		{
+			this.customActionPanel.renderTo = renderToNode;
+			this.actionPanel = this.customActionPanel;
+
+			this.actionPanel.draw();
+
+			return;
+		}
+
 		this.actionPanel = new BX.UI.ActionPanel({
 			renderTo: renderToNode,
 			removeLeftPosition: true,
@@ -2836,6 +2849,21 @@ BX.CRM.Kanban.Grid.prototype = {
 			this.actionPanel.removeItems();
 			this.actionPanel = null;
 		}
+
+		if (this.customActionPanel)
+		{
+			this.customActionPanel.removeItems();
+			this.customActionPanel = null;
+		}
+	},
+
+	/**
+	 * Set Custom Action Panel
+	 * @param {BX.UI.ActionPanel} actionPanel
+	 */
+	setCustomActionPanel: function (actionPanel)
+	{
+		this.customActionPanel = actionPanel;
 	},
 
 	reload: function ()

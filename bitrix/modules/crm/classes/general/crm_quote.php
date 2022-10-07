@@ -1986,6 +1986,9 @@ class CAllCrmQuote
 					'CLOSEDATE' => array(
 						'TYPE' => 'date'
 					),
+					'ACTUAL_DATE' => array(
+						'TYPE' => 'date'
+					),
 					'OPENED' => array(
 						'TYPE' => 'char'
 					),
@@ -2119,6 +2122,7 @@ class CAllCrmQuote
 
 			'BEGINDATE' => array('FIELD' => self::TABLE_ALIAS.'.BEGINDATE', 'TYPE' => 'date'),
 			'CLOSEDATE' => array('FIELD' => self::TABLE_ALIAS.'.CLOSEDATE', 'TYPE' => 'date'),
+			'ACTUAL_DATE' => array('FIELD' => self::TABLE_ALIAS.'.ACTUAL_DATE', 'TYPE' => 'date'),
 
 			'ASSIGNED_BY_ID' => array('FIELD' => self::TABLE_ALIAS.'.ASSIGNED_BY_ID', 'TYPE' => 'int'),
 			'ASSIGNED_BY_LOGIN' => array('FIELD' => 'U.LOGIN', 'TYPE' => 'string', 'FROM' => $assignedByJoin),

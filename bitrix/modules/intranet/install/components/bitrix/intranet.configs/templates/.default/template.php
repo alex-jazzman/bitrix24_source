@@ -10,7 +10,8 @@ use Bitrix\Location;
 	'ui.hint',
 	'ui.dialogs.messagebox',
 	'ui.forms',
-	'ui.alerts'
+	'ui.alerts',
+	'ui.design-tokens',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
@@ -909,7 +910,8 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				<?=GetMessage('CONFIG_OTP_SECURITY_DAYS')?>
 			</td>
 			<td class="content-edit-form-field-input">
-				<div class="ui-ctl ui-ctl-dropdown">
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 					<select id="security_otp_days" name="security_otp_days" class="ui-ctl-element">
 						<?for($i=5; $i<=10; $i++):?>
 							<option

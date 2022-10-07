@@ -48,8 +48,8 @@ use Bitrix\Socialnetwork\Item\Workgroup;
 
 Loc::loadMessages(__FILE__);
 
-require_once(dirname(__FILE__).'/class/taskstaskformstate.php');
-require_once(dirname(__FILE__).'/class/taskstaskhitstatestructure.php');
+require_once(__DIR__.'/class/taskstaskformstate.php');
+require_once(__DIR__.'/class/taskstaskhitstatestructure.php');
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
@@ -87,218 +87,182 @@ class TasksTaskComponent extends TasksBaseComponent
 
 		return [
 			'checkCanRead' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setMark' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setGroup' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setReminder' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setDeadline' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'addElapsedTime' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'updateElapsedTime' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'deleteElapsedTime' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'get' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'start' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'complete' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'delegate' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'defer' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'delete' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'renew' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'pause' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'addFavorite' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'deleteFavorite' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setPriority' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'getFileCount' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'getFiles' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'mute' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'unmute' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'ping' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'approve' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'disapprove' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setTags' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'legacyUpdate' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'legacyAdd' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'startTimer' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'stopTimer' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'canMoveStage' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'getStages' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'moveStage' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setState' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'uiEdit' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
@@ -699,7 +663,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			$additional = [];
 
 			// use direct query here, avoiding cached CTaskItem::getData(), because $lastTimer['TASK_ID'] unlikely will be in cache
-			list($tasks, $res) = \CTaskItem::fetchList($this->userId, [], ['ID' => (int)$lastTimer['TASK_ID']], [], ['ID', 'TITLE']);
+			[$tasks, $res] = \CTaskItem::fetchList($this->userId, [], ['ID' => (int)$lastTimer['TASK_ID']], [], ['ID', 'TITLE']);
 			if(is_array($tasks))
 			{
 				$task = array_shift($tasks);
@@ -2057,6 +2021,13 @@ class TasksTaskComponent extends TasksBaseComponent
 			$error->setCode('ERROR_TASK_CREATE_ACCESS_DENIED');
 			$error->setMessage(Loc::getMessage('TASKS_TASK_CREATE_ACCESS_DENIED'));
 		}
+		else if (
+			$request
+			&& $request['ACTION'][0]['OPERATION'] === 'task.update'
+		)
+		{
+			$action = Tasks\Access\ActionDictionary::ACTION_TASK_SAVE;
+		}
 		else if ($arParams['ACTION'] === "edit" && $taskId)
 		{
 			$action = Tasks\Access\ActionDictionary::ACTION_TASK_EDIT;
@@ -2475,92 +2446,100 @@ class TasksTaskComponent extends TasksBaseComponent
 	{
 		$request = $this->getRequest();
 		$additional = $request['ADDITIONAL'];
-		if($additional && $additional['SAVE_AS_TEMPLATE'] == 'Y') // user specified he wanted to create template by this task
+
+		if(
+			!$additional
+			|| $additional['SAVE_AS_TEMPLATE'] !== 'Y'
+		)
 		{
-			if (!Tasks\Access\TemplateAccessController::can($this->userId, Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE))
+			return;
+		}
+
+		if (!Tasks\Access\TemplateAccessController::can($this->userId, Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE))
+		{
+			$this->errors->addWarning(
+				'SAVE_AS_TEMPLATE_ERROR',
+				Loc::getMessage('TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX') . ': ' . Loc::getMessage('TASKS_TEMPLATE_CREATE_FORBIDDEN')
+			);
+			return;
+		}
+
+		$task = new \Bitrix\Tasks\Item\Task($taskId, $this->userId); // todo: use Task::getInstance($taskId, $this->userId) here, when ready
+		if($task['REPLICATE'] === 'Y')
+		{
+			return;
+		}
+
+		// create template here
+		$conversionResult = $task->transformToTemplate();
+		if(!$conversionResult->isSuccess())
+		{
+			return;
+		}
+
+		$template = $conversionResult->getInstance();
+		// take responsibles directly from query, because task can not have multiple responsibles
+
+		$responsibles = $this->getResponsibles();
+		$respIds = array();
+		foreach($responsibles as $user)
+		{
+			$respIds[] = intval($user['ID']);
+		}
+		$template['RESPONSIBLES'] = $respIds;
+		$template['SE_CHECKLIST'] = new Tasks\Item\Task\CheckList();
+
+		// todo: move logic from \Bitrix\Tasks\Manager\Task\Template::manageTaskReplication() here,
+		// todo: mark the entire Manager namespace as deprecated
+		// $template['REPLICATE_PARAMS'] = $operation['ARGUMENTS']['data']['SE_TEMPLATE']['REPLICATE_PARAMS'];
+
+		$saveResult = $template->save();
+
+		if ($saveResult->isSuccess())
+		{
+			$checkListItems = TaskCheckListFacade::getByEntityId($taskId);
+			$checkListItems = array_map(
+				static function($item)
+				{
+					$item['COPIED_ID'] = $item['ID'];
+					unset($item['ID']);
+					return $item;
+				},
+				$checkListItems
+			);
+
+			$checkListRoots = TemplateCheckListFacade::getObjectStructuredRoots(
+				$checkListItems,
+				$template->getId(),
+				$this->userId
+			);
+			foreach ($checkListRoots as $root)
+			{
+				/** @var CheckList $root */
+				$checkListSaveResult = $root->save();
+				if (!$checkListSaveResult->isSuccess())
+				{
+					$saveResult->loadErrors($checkListSaveResult->getErrors());
+				}
+			}
+
+			\Bitrix\Tasks\Item\Access\Task\Template::grantAccessLevel($template->getId(), 'U'.$this->userId, 'full', array(
+				'CHECK_RIGHTS' => false,
+			));
+		}
+
+		if (!$saveResult->isSuccess())
+		{
+			$conversionResult->abortConversion();
+
+			$saveResultErrorMessages = $saveResult->getErrors()->getMessages();
+			foreach ($saveResultErrorMessages as $message)
 			{
 				$this->errors->addWarning(
 					'SAVE_AS_TEMPLATE_ERROR',
-					Loc::getMessage('TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX') . ': ' . Loc::getMessage('TASKS_TEMPLATE_CREATE_FORBIDDEN')
+					Loc::getMessage('TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX') . ': ' . $message
 				);
-				return;
 			}
-			$task = new \Bitrix\Tasks\Item\Task($taskId, $this->userId); // todo: use Task::getInstance($taskId, $this->userId) here, when ready
-			if($task['REPLICATE'] != 'Y')
-			{
-				// create template here
-				$conversionResult = $task->transformToTemplate();
-				if($conversionResult->isSuccess())
-				{
-					$template = $conversionResult->getInstance();
-					// take responsibles directly from query, because task can not have multiple responsibles
-
-					$responsibles = $this->getResponsibles();
-					$respIds = array();
-					foreach($responsibles as $user)
-					{
-						$respIds[] = intval($user['ID']);
-					}
-					$template['RESPONSIBLES'] = $respIds;
-					$template['SE_CHECKLIST'] = new Tasks\Item\Task\CheckList();
-
-					// todo: move logic from \Bitrix\Tasks\Manager\Task\Template::manageTaskReplication() here,
-					// todo: mark the entire Manager namespace as deprecated
-					// $template['REPLICATE_PARAMS'] = $operation['ARGUMENTS']['data']['SE_TEMPLATE']['REPLICATE_PARAMS'];
-
-					$saveResult = $template->save();
-
-					if ($saveResult->isSuccess())
-					{
-						$checkListItems = TaskCheckListFacade::getByEntityId($taskId);
-						$checkListItems = array_map(
-							static function($item)
-							{
-								$item['COPIED_ID'] = $item['ID'];
-								unset($item['ID']);
-								return $item;
-							},
-							$checkListItems
-						);
-
-						$checkListRoots = TemplateCheckListFacade::getObjectStructuredRoots(
-							$checkListItems,
-							$template->getId(),
-							$this->userId
-						);
-						foreach ($checkListRoots as $root)
-						{
-							/** @var CheckList $root */
-							$checkListSaveResult = $root->save();
-							if (!$checkListSaveResult->isSuccess())
-							{
-								$saveResult->loadErrors($checkListSaveResult->getErrors());
-							}
-						}
-
-						\Bitrix\Tasks\Item\Access\Task\Template::grantAccessLevel($template->getId(), 'U'.$this->userId, 'full', array(
-							'CHECK_RIGHTS' => false,
-						));
-					}
-
-					if (!$saveResult->isSuccess())
-					{
-						$conversionResult->abortConversion();
-
-						$saveResultErrorMessages = $saveResult->getErrors()->getMessages();
-						foreach ($saveResultErrorMessages as $message)
-						{
-							$this->errors->addWarning(
-								'SAVE_AS_TEMPLATE_ERROR',
-								Loc::getMessage('TASKS_TT_SAVE_AS_TEMPLATE_ERROR_MESSAGE_PREFIX') . ': ' . $message
-							);
-						}
-					}
-				}
-
-
-			}
-			// or else it was created above, inside \Bitrix\Tasks\Manager\Task\Template::manageTaskReplication()
 		}
 	}
 
@@ -2949,6 +2928,8 @@ class TasksTaskComponent extends TasksBaseComponent
 		$error = false;
 		$sourceData = [];
 
+		$this->arResult['DATA']['FROM_TEMPLATE'] = null;
+
 		try
 		{
 			// copy from template
@@ -2958,6 +2939,8 @@ class TasksTaskComponent extends TasksBaseComponent
 				$this->arResult['DATA']['CHECKLIST_CONVERTED'] =
 					TemplateCheckListConverterHelper::checkEntityConverted($templateId)
 				;
+
+				$this->arResult['DATA']['FROM_TEMPLATE'] = $templateId;
 			}
 			// copy from another task
 			elseif ((int)$this->request['COPY'] || (int)$this->request['_COPY'])
@@ -3271,10 +3254,13 @@ class TasksTaskComponent extends TasksBaseComponent
 			$data['SE_RESPONSIBLE'] = $responsibles;
 
 			$checkListItems = TemplateCheckListFacade::getItemsForEntity($itemId, $this->userId);
-			foreach (array_keys($checkListItems) as $id)
+			if ($checkListItems)
 			{
-				$checkListItems[$id]['COPIED_ID'] = $id;
-				unset($checkListItems[$id]['ID']);
+				foreach (array_keys($checkListItems) as $id)
+				{
+					$checkListItems[$id]['COPIED_ID'] = $id;
+					unset($checkListItems[$id]['ID']);
+				}
 			}
 			$data['SE_CHECKLIST'] = $checkListItems;
 		}

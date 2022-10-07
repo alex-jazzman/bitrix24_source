@@ -7,10 +7,12 @@ $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECTED"] = "WhatsApp підкл
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div>
 <div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Підключити</span> WhatsApp через Twilio</div>";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP"] = "Для підключення необхідно <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">виконати ряд дій</a>.";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP_NEW"] = "Щоб під'єднати WhatsApp, #LINK_START#дотримуйтесь інструкцій#LINK_END#.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_TITLE"] = "Підключіть WhatsApp до Відкритої лінії";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_COPY"] = "Копіювати";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_FINAL_FORM_DESCRIPTION"] = "WhatsApp успішно підключений до вашої Відкритої лінії. Тепер усі звернення будуть автоматично спрямовані у ваш Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION"] = "Для підключення необхідно виконати <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\');return false;\">декілька кроків.</a>";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "Щоб під'єднати WhatsApp, #LINK_START#дотримуйтесь інструкцій#LINK_END#.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_1"] = "Контакти та переписки зберігаються в CRM";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_2"] = "CRM допомагає вести клієнта воронкою продажів";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_3"] = "Ви відповідаєте клієнтам швидко й там, де їм зручно";

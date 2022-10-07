@@ -1,6 +1,9 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_AUTHORIZATION"] = "Авторизація";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_AUTHORIZE"] = "Авторизуватись";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_CATALOG_MENU_TITLE"] = "Facebook";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_CATALOG_TAB_SETUP_FIRST_WARNING"] = "Для роботи з каталогом товарів у чатах, під'єднайте Facebook до Відкритої лінії.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_CATALOG_TAB_TITLE"] = "Каталог товарів Facebook";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_CHANGE_ANY_TIME"] = "Ви можете в будь-який час змінити або відключити";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_CHANGE_PAGE"] = "Змінити";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_CONNECTED"] = "Facebook підключений";
@@ -26,6 +29,18 @@ $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_TITLE"] = "Відповідайте 
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INFO"] = "Інформація";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_LOG_IN_UNDER_AN_ADMINISTRATOR_ACCOUNT_PAGE"] = "Авторизуйтесь під акаунтом, який є адміністратором потрібної сторінки Facebook, щоб приймати повідомлення від ваших клієнтів усередині Бітрікс24";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_NO_SPECIFIC_PAGE"] = "Немає потрібної сторінки? Можливі причини описані #A# у статті. #A_END#";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_ALERT"] = "Для підключення каталогу спочатку дозвольте під'єднання товарів до Відкритих ліній.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_CANCEL"] = "Відміна";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_CONNECT"] = "Підключити";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_CONNECT_HELP"] = "Натисніть кнопку «#BUTTON#». Дотримуйтесь інструкцій у спливному вікні.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_DESCRIPTION"] = "Усі товари автоматично синхронізуються з вашим каталогом у Facebook.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_DIFFERENT_IDS"] = "Для правильної роботи з товарами потрібно вказати ту саму сторінку Facebook, яку ви під'єднали до Відкритих ліній.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_DISCONNECT"] = "Відключити";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_PERMISSION_TEXT"] = "Натисніть кнопку «#BUTTON#». У спливному вікні позначте #A_START#дозвіл на використання каталогу#A_END#.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_PERMISSION_TITLE"] = "Дозвольте Бітрікс24 надсилати добірки товарів у стилі Facebook";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_REMOVE"] = "Дійсно вимкнути каталог?";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_SUCCESS"] = "Каталог під'єднано";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_TITLE"] = "Під'єднайте каталог товарів до Facebook";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_OTHER_PAGES"] = "Інші сторінки";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_PAGE"] = "Сторінка";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_PAGE_IM"] = "Мессенджер";
@@ -38,3 +53,7 @@ $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT_OFF"] = "Не ро�
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT_ON"] = "Розширено \"вікно переписки\" з 24 годин до 7 днів.";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_TO_CREATE_A_PAGE"] = "Створити";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_USER"] = "Акаунт";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_USER_RELOGIN"] = "Підключити";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_USER_RELOGIN_SUCCESS"] = "Доступ отримано";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_USER_RELOGIN_WRONG_USER"] = "Помилка запиту на права доступу до каталогу. Запит на дозвіл
+прав потрібно робити від імені користувача, який виконував перше підключення Facebook.";

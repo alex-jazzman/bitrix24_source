@@ -186,6 +186,18 @@ class QuoteDataProvider extends EntityDataProvider
 					],
 				]
 			),
+			'ACTUAL_DATE' => $this->createField(
+				'ACTUAL_DATE',
+				[
+					'type' => 'date',
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'CLOSED' => $this->createField(
 				'CLOSED',
 				[

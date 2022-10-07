@@ -18,6 +18,7 @@ $MESS["CRM_FIELDS_QUOTE"] = "Пропозиція";
 $MESS["CRM_FIELDS_QUOTE_DESC"] = "Поля користувача для \"Пропозицій\"";
 $MESS["CRM_FIELDS_TEXT_ROW_COUNT"] = "Кількість рядків в поле вводу";
 $MESS["CRM_FIELDS_TYPE_ADDRESS"] = "Адреса";
+$MESS["CRM_FIELDS_TYPE_ADDRESS_2"] = "Адреса";
 $MESS["CRM_FIELDS_TYPE_B"] = "Так/Ні";
 $MESS["CRM_FIELDS_TYPE_B_DISPLAY"] = "Зовнішній вигляд";
 $MESS["CRM_FIELDS_TYPE_B_DISPLAY_CHECKBOX"] = "Прапорець";

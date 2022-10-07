@@ -15,8 +15,8 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Util\User;
 
-Loc::loadMessages(dirname(__FILE__).'/template.php');
-Loc::loadMessages(dirname(__FILE__).'/export_excel.php');
+Loc::loadMessages(__DIR__.'/template.php');
+Loc::loadMessages(__DIR__.'/export_excel.php');
 
 $APPLICATION->RestartBuffer();
 

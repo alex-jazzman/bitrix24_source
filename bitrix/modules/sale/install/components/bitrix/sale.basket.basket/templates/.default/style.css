@@ -267,7 +267,7 @@
 
 .basket-btn-checkout {
 	border-radius: 2px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 16px;
 }
 
@@ -406,7 +406,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	transition: 300ms all ease;
 	-o-text-overflow: ellipsis;
 	-webkit-box-flex: 1;
@@ -431,7 +431,7 @@
 	border-bottom: 1px dotted;
 	color: #3e86de;
 	text-decoration: none;
-	font: bold 13px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 13px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	cursor: pointer;
 	transition: 220ms ease;
 }
@@ -714,7 +714,7 @@
 .basket-item-label-text span {
 	padding: 2px 5px;
 	vertical-align: middle;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .basket-item-label-text.basket-item-label-small span {
@@ -754,7 +754,7 @@
 	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
 	border-radius: 50%;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .basket-item-label-ring.basket-item-label-small {
@@ -1003,7 +1003,7 @@ h2.basket-item-info-name {
 .basket-item-property-value,
 .basket-item-property-custom-value {
 	color: #4a4a4a;
-	font: bold 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 /*region Custom Column*/
@@ -1142,12 +1142,12 @@ h2.basket-item-info-name {
 	padding: 3px 5px;
 	min-width: 30px;
 	text-align: center;
-	font: bold 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .basket-items-list-wrapper-compact .basket-item-property-scu-text .basket-item-scu-item-inner {
 	padding: 1px 2px;
-	font: bold 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 @media (max-width: 768px) {
@@ -1171,7 +1171,7 @@ h2.basket-item-info-name {
 		padding: 2px 3px;
 		min-width: 25px;
 		text-align: center;
-		font: bold 11px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+		font: var(--ui-font-weight-bold) 11px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	}
 }
 
@@ -1217,7 +1217,7 @@ h2.basket-item-info-name {
 	border-radius: 1px;
 	vertical-align: middle;
 	text-align: center;
-	font: bold 18px/27px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 18px/27px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	transition: 300ms all ease;
 }
 
@@ -1710,7 +1710,7 @@ h2.basket-item-info-name {
 .basket-items-list-item-removed-anchor {
 	border-bottom: 1px dashed;
 	color: #333;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .basket-items-list-item-clear-btn {
@@ -1797,7 +1797,7 @@ h2.basket-item-info-name {
 	padding: 12px 17px;
 	background-color: #fceb9f;
 	color: #5b5848;
-	font: bold 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .basket-item-gifts-list { padding: 15px; }
@@ -1891,7 +1891,7 @@ h2.basket-item-info-name {
 	color: #525c69;
 	text-align: center;
 	text-transform: uppercase;
-	font: bold 9px/12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 9px/12px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	-webkit-box-align: center;
 	align-items: center;
 }
@@ -1919,7 +1919,7 @@ h2.basket-item-info-name {
 	padding: 18px 25px 20px;
 	border-bottom: 1px solid #e2dfdf;
 	background: #f2f2f2;
-	font: bold 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	transition: 300ms all ease;
 }
 
@@ -2078,7 +2078,7 @@ h2.basket-item-info-name {
 
 .basket-gift-item-select-btn-text {
 	text-transform: lowercase;
-	font: bold 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	cursor: pointer;
 }
 
@@ -2215,7 +2215,7 @@ h2.basket-item-info-name {
 
 .catalog-block-header{
 	font-size:14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-align: left;
 	margin:5px 0;
 	padding:5px 15px;

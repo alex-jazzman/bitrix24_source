@@ -6,6 +6,7 @@ import {Layout} from 'ui.sidepanel.layout';
 import {RequestSender} from './request.sender';
 
 import 'ui.hint';
+import 'ui.fonts.opensans';
 
 import '../css/base.css';
 
@@ -121,6 +122,7 @@ export class SprintStartForm extends EventEmitter
 				});
 			})
 			.catch((response) => {
+				this.startButton.setWaiting(false);
 				this.requestSender.showErrorAlert(
 					response,
 					Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP')

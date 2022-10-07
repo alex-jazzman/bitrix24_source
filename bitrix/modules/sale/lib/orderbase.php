@@ -246,13 +246,14 @@ abstract class OrderBase extends Internals\Entity
 	/**
 	 * Load order object by id
 	 *
-	 * @param $id
+	 * @param int $id
 	 * @return null|static
 	 * @throws Main\ArgumentNullException
 	 */
 	public static function load($id)
 	{
-		if ((int)$id <= 0)
+		$id = (int)$id;
+		if ($id <= 0)
 		{
 			throw new Main\ArgumentNullException("id");
 		}

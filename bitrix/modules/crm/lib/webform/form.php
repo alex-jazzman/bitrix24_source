@@ -27,9 +27,11 @@ class Form
 
 	protected $id = null;
 	protected static $defaultParams = array(
+		'TYPE_ID' => Internals\FormTable::TYPE_DEFAULT,
 		'ACTIVE' => 'N',
 		'IS_SYSTEM' => 'N',
 		'COPYRIGHT_REMOVED' => 'N',
+		'IS_PAY' => 'N',
 		'LANGUAGE_ID' => '',
 		'USE_CAPTCHA' => 'N',
 		'USE_LICENCE' => 'N',
@@ -1853,7 +1855,7 @@ class Form
 			$maxActivated = self::getMaxActivatedFormLimit();
 		}
 
-		$formDb = Internals\FormTable::getList(array(
+		$formDb = Internals\FormTable::getDefaultTypeList(array(
 			'select' => array('ID'),
 			'filter' => array('=ACTIVE' => 'Y', '=IS_SYSTEM' => 'N'),
 			'order' => array('ID' => 'ASC')

@@ -1,7 +1,9 @@
 <?php
+$MESS["CRM_CMPR_COPIED_ROWS"] = "Товари скопійовані";
 $MESS["CRM_CMPR_COPY_PRODUCTS_ERROR"] = "Не вдалося скопіювати товари";
 $MESS["CRM_CMPR_DST_ENTITY_ID"] = "ID цілі";
 $MESS["CRM_CMPR_DST_ENTITY_TYPE"] = "Ціль";
+$MESS["CRM_CMPR_MOVED_ROWS"] = "Товари переміщені";
 $MESS["CRM_CMPR_MOVE_PRODUCTS_ERROR"] = "Не вдалося перемістити товари";
 $MESS["CRM_CMPR_NO_DST_ENTITY"] = "Не вдалося знайти цільовий документ для передачі товарів";
 $MESS["CRM_CMPR_NO_SOURCE_PRODUCTS"] = "Не вдалося отримати товари вихідного документа";

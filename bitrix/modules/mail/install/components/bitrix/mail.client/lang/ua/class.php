@@ -141,6 +141,7 @@ $MESS["MAIL_MESSAGE_NEW_FROM"] = "Від кого";
 $MESS["MAIL_MESSAGE_NEW_SEND"] = "Відправити";
 $MESS["MAIL_MESSAGE_NEW_SUBJECT"] = "Тема";
 $MESS["MAIL_MESSAGE_NEW_SUBJECT_PH"] = "Введіть тему повідомлення";
+$MESS["MAIL_MESSAGE_NEW_TARIFF_RESTRICTION"] = "На вашому тарифному плані діють обмеження:<br/>\"Кому\", \"Копія\", \"Прихована копія\" — #COUNT# адреса ел. пошти (одержувач)";
 $MESS["MAIL_MESSAGE_NEW_TO"] = "Кому";
 $MESS["MAIL_MESSAGE_NEW_UPLOADING"] = "Будь ласка, дочекайтеся закінчення завантаження вкладень";
 $MESS["MAIL_MESSAGE_POST_TITLE"] = "Лист: #SUBJECT#";

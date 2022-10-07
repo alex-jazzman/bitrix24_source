@@ -46,6 +46,7 @@ $MESS["CONFIG_ENTITY_OPERATOR_DATA_FIELD"] = "Інформація про опе
 $MESS["CONFIG_ENTITY_QUEUE_TIME_FIELD_NEW"] = "Затримка перед переходом між співробітниками в черзі";
 $MESS["CONFIG_ENTITY_QUEUE_TYPE_FIELD"] = "Тип розподілу дзвінків між співробітниками в черзі";
 $MESS["CONFIG_ENTITY_SEND_NOTIFICATION_EMPTY_QUEUE"] = "Ознака відправки нотифікації про те, що черга ВЛ порожня";
+$MESS["CONFIG_ENTITY_SEND_WELCOME_EACH_SESSION"] = "Чи слід надсилати автовідповідь у кожній новій сесії";
 $MESS["CONFIG_ENTITY_TEMPORARY_FIELD"] = "Тимчасові параметри";
 $MESS["CONFIG_ENTITY_USE_WELCOME_FORM"] = "Показувати клієнту форму при старті діалогу";
 $MESS["CONFIG_ENTITY_VOTE_BEFORE_FINISH_FIELD"] = "Дозволити оцінку діалогу до його завершення";

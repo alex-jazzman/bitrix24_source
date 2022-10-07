@@ -210,7 +210,7 @@
 	border: 1px solid #d0d2d5;
 	width: 100%;
 	max-width: 100%;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	box-sizing: border-box;
 	margin-bottom: 18px;
 	outline: none;
@@ -234,7 +234,7 @@
 
 .task-top-panel-create-link {
 	position: relative;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #535C69;
 	cursor: pointer;
 }
@@ -320,7 +320,7 @@
 	vertical-align: middle;
 }
 
-.task-menu-popup-item-selected .menu-popup-item-text { font-weight: bold; }
+.task-menu-popup-item-selected .menu-popup-item-text { font-weight: var(--ui-font-weight-bold); }
 
 .task-top-notification {
 	display: none;
@@ -342,7 +342,7 @@
 }
 
 .task-top-notification-message {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .task-top-notification-link {
@@ -369,7 +369,7 @@
 	margin: 18px 0;
 	padding: 0 0;
 	font-size: 18px;
-	font-family: Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	position: relative;
 }
 
@@ -435,7 +435,7 @@ span.task-top-panel-text {
 	line-height: 20px;
 	color: #fff;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-right: 5px;
 }
 

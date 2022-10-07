@@ -1,6 +1,7 @@
 <?php
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU"] = "дії";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CANCEL"] = "Скасувати";
+$MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CASHBOX_CHECKS"] = "Чеки";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CHANGE_DELIVERY_STATUS"] = "Змінити статус доставки";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CHANGE_PAYMENT_STATUS"] = "Змінити статус оплати";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CHOOSE_DELIVERY"] = "Оформити доставку";
@@ -12,6 +13,7 @@ $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_PARAMS"] = "Параметри �
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_DELIVERY"] = "Доставка";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_PAYMENT"] = "Оплата";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT"] = "Реалізація";
+$MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ENTITY_PAID_SUM"] = "Оплачено";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_SUM"] = "Сума рахунку";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_TITLE"] = "Документи рахунку";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_TOTAL_SUM"] = "Разом до сплати за рахунком";
@@ -50,7 +52,3 @@ $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE"] = "Документи угоди"
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_INVOICE_SUM"] = "Разом до оплати за рахунком";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM"] = "Разом до сплати по угоді";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP"] = "Сума угоди мінус здійснені клієнтом оплати";
-$MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_SUM"] = "Сума рахунку";
-$MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_INVOICE_SUM"] = "Разом до оплати за рахунком";
-$MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN_REALIZATION_DOCUMENT"] = "Відкрити реалізацію";
-$MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ENTITY_PAID_SUM"] = "Оплачено";

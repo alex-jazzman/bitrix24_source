@@ -99,6 +99,16 @@ if(!$isInternal):
 endif;
 
 $gridManagerID = $arResult['GRID_ID'].'_MANAGER';
+$gridManagerCfg = array(
+	'ownerType' => CCrmOwnerType::LeadName,
+	'gridId' => $arResult['GRID_ID'],
+	'formName' => "form_{$arResult['GRID_ID']}",
+	'allRowsCheckBoxId' => "actallrows_{$arResult['GRID_ID']}",
+	'activityEditorId' => $activityEditorID,
+	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+	'filterFields' => [],
+	'destroyPreviousExtension' => true
+);
 
 echo CCrmViewHelper::RenderLeadStatusSettings();
 $prefix = $arResult['GRID_ID'];
@@ -342,6 +352,13 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 					}
 				}
 			});
+
+			// enable grid extension
+			BX.Crm.Page.initialize();
+			BX.CrmUIGridExtension.create(
+				"<?=CUtil::JSEscape($gridManagerID)?>",
+				<?=CUtil::PhpToJSObject($gridManagerCfg)?>
+			);
 		});
 	</script>
 	<?

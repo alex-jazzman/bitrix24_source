@@ -1,8 +1,8 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm;
-use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Data\EntityFieldsHelper;
 use Bitrix\Crm\Entity\PaymentDocumentsRepository;
 use Bitrix\Crm\History\DealStageHistoryEntry;
@@ -117,6 +117,7 @@ class DealController extends EntityController
 
 		$this->createManualOpportunityModificationEntryIfNeeded($ownerID, $authorID, $fields);
 	}
+
 	public function onModify($ownerID, array $params)
 	{
 		if(!is_int($ownerID))
@@ -139,19 +140,6 @@ class DealController extends EntityController
 			$currentFields = EntityFieldsHelper::replaceFieldNamesByMap($currentFields, $fieldsMap);
 			$previousFields = EntityFieldsHelper::replaceFieldNamesByMap($previousFields, $fieldsMap);
 		}
-
-		$prevCompanyID = isset($previousFields['COMPANY_ID']) ? (int)$previousFields['COMPANY_ID'] : 0;
-		$curCompanyID = isset($currentFields['COMPANY_ID']) ? (int)$currentFields['COMPANY_ID'] : $prevCompanyID;
-
-		$contactBindings = isset($params['CONTACT_BINDINGS']) && is_array($params['CONTACT_BINDINGS'])
-			? $params['CONTACT_BINDINGS'] : null;
-		if($contactBindings === null)
-		{
-			$contactBindings = DealContactTable::getDealBindings($ownerID);
-		}
-
-		$addedContactBindings = isset($params['ADDED_CONTACT_BINDINGS']) && is_array($params['ADDED_CONTACT_BINDINGS'])
-			? $params['ADDED_CONTACT_BINDINGS'] : array();
 
 		$prevStageID = isset($previousFields['STAGE_ID']) ? $previousFields['STAGE_ID'] : '';
 		$curStageID = isset($currentFields['STAGE_ID']) ? $currentFields['STAGE_ID'] : $prevStageID;
@@ -180,33 +168,7 @@ class DealController extends EntityController
 					)
 				)
 			);
-
-			$enableHistoryPush = $historyEntryID > 0;
-			if(($enableHistoryPush) && Main\Loader::includeModule('pull'))
-			{
-				$pushParams = array();
-				if($enableHistoryPush)
-				{
-					$historyFields = TimelineEntry::getByID($historyEntryID);
-					if(is_array($historyFields))
-					{
-						$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
-							$historyFields,
-							array('ENABLE_USER_INFO' => true)
-						);
-					}
-				}
-
-				$tag = $pushParams['TAG'] = TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Deal, $ownerID);
-				\CPullWatch::AddToStack(
-					$tag,
-					array(
-						'module_id' => 'crm',
-						'command' => 'timeline_activity_add',
-						'params' => $pushParams,
-					)
-				);
-			}
+			$this->sendPullEventOnAdd(new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $ownerID), $historyEntryID);
 
 			$curSemanticID = \CCrmDeal::GetSemanticID($curStageID, $categoryID);
 			$prevSemanticID = \CCrmDeal::GetSemanticID($prevStageID, $categoryID);
@@ -239,12 +201,7 @@ class DealController extends EntityController
 					{
 						$entryId = FinalSummaryDocumentsEntry::create($summaryFields);
 					}
-
-					self::pushHistoryEntry(
-						$entryId,
-						TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Deal, $ownerID),
-						'timeline_activity_add'
-					);
+					$this->sendPullEventOnAdd(new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $ownerID), $entryId);
 				}
 			}
 		}
@@ -278,6 +235,7 @@ class DealController extends EntityController
 			);
 		}
 	}
+
 	public function onRestore($ownerID, array $params)
 	{
 		if(!is_int($ownerID))
@@ -341,6 +299,7 @@ class DealController extends EntityController
 			);
 		}
 	}
+
 	public function getSupportedPullCommands()
 	{
 		return array(
@@ -433,6 +392,7 @@ class DealController extends EntityController
 		LiveFeed::registerEntityMessages(\CCrmOwnerType::Deal, $ownerID);
 		//endregion
 	}
+
 	protected static function getEntity($ID)
 	{
 		$dbResult = \CCrmDeal::GetListEx(
@@ -448,6 +408,7 @@ class DealController extends EntityController
 		);
 		return is_object($dbResult) ? $dbResult->Fetch() : null;
 	}
+
 	protected static function resolveCreatorID(array $fields)
 	{
 		$authorID = 0;
@@ -474,6 +435,7 @@ class DealController extends EntityController
 
 		return $authorID;
 	}
+
 	protected static function resolveEditorID(array $fields)
 	{
 		$authorID = 0;
@@ -500,10 +462,41 @@ class DealController extends EntityController
 
 		return $authorID;
 	}
+
+	protected function applySettingsBaseData(array &$data, array $base, string $caption = ''): void
+	{
+		if (empty($base))
+		{
+			return;
+		}
+
+		$entityTypeId = $base['ENTITY_TYPE_ID'] ?? 0;
+		$entityId = $base['ENTITY_ID'] ?? 0;
+		$source = $base['SOURCE'] ?? '';
+		if ($entityId > 0 && \CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			if (!empty($caption))
+			{
+				$data['BASE'] = ['CAPTION' => $caption];
+			}
+
+			if (\CCrmOwnerType::TryGetEntityInfo($entityTypeId, $entityId, $baseEntityInfo, false))
+			{
+				$data['BASE']['ENTITY_INFO'] = $baseEntityInfo;
+				if (!empty($source))
+				{
+					$data['BASE']['ENTITY_INFO']['SOURCE'] = $source;
+				}
+			}
+		}
+	}
+
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
 		$typeID = isset($data['TYPE_ID']) ? (int)$data['TYPE_ID'] : TimelineType::UNDEFINED;
-		$settings = isset($data['SETTINGS']) ? $data['SETTINGS'] : array();
+		$typeCategoryId = (int)($data['TYPE_CATEGORY_ID'] ?? LogMessageType::UNDEFINED);
+		$settings = $data['SETTINGS'] ?? [];
+		$base = $settings['BASE'] ?? [];
 		$culture = Main\Context::getCurrent()->getCulture();
 		$associatedEntityTypeID = isset($data['ASSOCIATED_ENTITY_TYPE_ID'])
 			? (int)$data['ASSOCIATED_ENTITY_TYPE_ID']
@@ -520,22 +513,11 @@ class DealController extends EntityController
 			}
 			else
 			{
-				$base = isset($settings['BASE']) ? $settings['BASE'] : null;
-				if(is_array($base))
-				{
-					$entityTypeID = isset($base['ENTITY_TYPE_ID']) ? $base['ENTITY_TYPE_ID'] : 0;
-					$entityID = isset($base['ENTITY_ID']) ? $base['ENTITY_ID'] : 0;
-					if(\CCrmOwnerType::IsDefined($entityTypeID) && $entityID > 0)
-					{
-						$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
-						$data['BASE'] = array('CAPTION' => Loc::getMessage("CRM_DEAL_BASE_CAPTION_{$entityTypeName}"));
-
-						if(\CCrmOwnerType::TryGetEntityInfo($entityTypeID, $entityID, $baseEntityInfo, false))
-						{
-							$data['BASE']['ENTITY_INFO'] = $baseEntityInfo;
-						}
-					}
-				}
+				$entityTypeId = $base['ENTITY_TYPE_ID'] ?? 0;
+				$caption = $entityTypeId <= 0
+					? ''
+					: Loc::getMessage(sprintf('CRM_DEAL_BASE_CAPTION_%s', \CCrmOwnerType::ResolveName($entityTypeId)));
+				$this->applySettingsBaseData($data, $base, $caption);
 
 				$order = $settings['ORDER'] ?? null;
 				if ($order)
@@ -576,6 +558,7 @@ class DealController extends EntityController
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
 			}
+			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);
 		}
 		elseif($typeID === TimelineType::CONVERSION)
@@ -648,9 +631,15 @@ class DealController extends EntityController
 
 			$data = array_merge($data, $settings);
 		}
+		elseif (
+			$typeID === TimelineType::LOG_MESSAGE
+			&& $typeCategoryId === LogMessageType::CALL_INCOMING
+		)
+		{
+			$this->applySettingsBaseData($data, $base);
+		}
 
 		return parent::prepareHistoryDataModel($data, $options);
 	}
 	//endregion
-
 }

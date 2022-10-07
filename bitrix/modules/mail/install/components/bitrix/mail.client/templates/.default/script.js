@@ -856,8 +856,10 @@
 
 	BXMailMessage.prototype.onMessageActionError = function (response)
 	{
-		alert(response.errors[0].message);
-		// todo show errors
+		top.BX.UI.Notification.Center.notify({
+			autoHideDelay: 4000,
+			content: response.errors[0].message
+		});
 	};
 
 	BXMailMessage.prototype.onMessageActionSuccess = function (btn)

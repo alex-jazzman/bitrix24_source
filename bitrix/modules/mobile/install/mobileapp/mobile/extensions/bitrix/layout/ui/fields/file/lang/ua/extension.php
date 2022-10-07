@@ -1,6 +1,6 @@
 <?php
-$MESS["FIELDS_FILE_ADD"] = "Додати файли";
 $MESS["FIELDS_FILE_ADD_FILE"] = "Додати файл";
+$MESS["FIELDS_FILE_ADD_FILES"] = "Додати файли";
 $MESS["FIELDS_FILE_ADD_IMAGE"] = "Додати фото";
 $MESS["FIELDS_FILE_ADD_VIDEO"] = "Додати відео";
 $MESS["FIELDS_FILE_ATTACHMENTS_DIALOG_TITLE"] = "Прикріплено файлів: #NUM#";

@@ -51,7 +51,7 @@
 }
 
 .crm-type-ui-card-message-description {
-    font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #525c69;
     margin-bottom: 14px;
 }

@@ -3553,53 +3553,6 @@ var Vue = exports.Vue;
       }
     };
 
-    var Controller$1 = /*#__PURE__*/function (_BaseField$Controller) {
-      babelHelpers.inherits(Controller$$1, _BaseField$Controller);
-
-      function Controller$$1() {
-        babelHelpers.classCallCheck(this, Controller$$1);
-        return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).apply(this, arguments));
-      }
-
-      babelHelpers.createClass(Controller$$1, [{
-        key: "getOriginalType",
-        value: function getOriginalType() {
-          return 'string';
-        }
-      }, {
-        key: "getInputType",
-        value: function getInputType() {
-          return 'string';
-        }
-      }, {
-        key: "getInputName",
-        value: function getInputName() {
-          return null;
-        }
-      }, {
-        key: "getInputAutocomplete",
-        value: function getInputAutocomplete() {
-          return null;
-        }
-      }, {
-        key: "isComponentDuplicable",
-        get: function get() {
-          return true;
-        }
-      }], [{
-        key: "type",
-        value: function type() {
-          return 'string';
-        }
-      }, {
-        key: "component",
-        value: function component() {
-          return FieldString;
-        }
-      }]);
-      return Controller$$1;
-    }(Controller);
-
     var Filter = {
       Email: function Email(value) {
         return (value || '').replace(/[^\w.\d-_@]/g, '');
@@ -3632,6 +3585,13 @@ var Vue = exports.Vue;
       },
       Money: function Money(value) {
         return Filter.Money(value).replace(/,/g, '.');
+      },
+      makeStringLengthNormalizer: function makeStringLengthNormalizer() {
+        var max = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+        return function (value) {
+          value = value + '';
+          return value.length > max ? value.substring(0, max) : value;
+        };
       }
     };
     var Validator = {
@@ -3658,6 +3618,14 @@ var Vue = exports.Vue;
       },
       Money: function Money(value) {
         return Validator.Double(value);
+      },
+      makeStringLengthValidator: function makeStringLengthValidator() {
+        var min = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+        var max = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+        return function (value) {
+          var len = (value + '').length;
+          return (!min || len >= min) && (!max || len <= max);
+        };
       }
     };
     var phoneDb = {
@@ -3712,6 +3680,66 @@ var Vue = exports.Vue;
         return value;
       }
     };
+
+    var Controller$1 = /*#__PURE__*/function (_BaseField$Controller) {
+      babelHelpers.inherits(Controller$$1, _BaseField$Controller);
+      babelHelpers.createClass(Controller$$1, null, [{
+        key: "type",
+        value: function type() {
+          return 'string';
+        }
+      }, {
+        key: "component",
+        value: function component() {
+          return FieldString;
+        }
+      }]);
+
+      function Controller$$1(options) {
+        var _this;
+
+        babelHelpers.classCallCheck(this, Controller$$1);
+        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
+        var minSize = (options.size || {}).min || 0;
+        var maxSize = (options.size || {}).max || 0;
+
+        if (minSize || maxSize) {
+          _this.validators.push(Validator.makeStringLengthValidator(minSize, maxSize));
+
+          _this.normalizers.push(Normalizer.makeStringLengthNormalizer(maxSize));
+        }
+
+        return _this;
+      }
+
+      babelHelpers.createClass(Controller$$1, [{
+        key: "getOriginalType",
+        value: function getOriginalType() {
+          return 'string';
+        }
+      }, {
+        key: "getInputType",
+        value: function getInputType() {
+          return 'string';
+        }
+      }, {
+        key: "getInputName",
+        value: function getInputName() {
+          return null;
+        }
+      }, {
+        key: "getInputAutocomplete",
+        value: function getInputAutocomplete() {
+          return null;
+        }
+      }, {
+        key: "isComponentDuplicable",
+        get: function get() {
+          return true;
+        }
+      }]);
+      return Controller$$1;
+    }(Controller);
 
     var Controller$2 = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
@@ -5811,7 +5839,216 @@ var Vue = exports.Vue;
       return Controller$$1;
     }(Controller);
 
-    var controllers = [Controller$1, Controller$3, Controller$2, Controller$4, Controller$5, Controller$6, Controller$7, Controller$8, Controller$9, Controller$b, Controller$a, Controller$d, Controller$c, Controller$e, Controller$f, Controller$g, Controller$h, Controller$i, Controller$j, Controller$k, Controller$l, Controller$m, Controller$n];
+    var Item$3 = /*#__PURE__*/function (_BaseItem) {
+      babelHelpers.inherits(Item$$1, _BaseItem);
+
+      function Item$$1(options) {
+        var _this;
+
+        babelHelpers.classCallCheck(this, Item$$1);
+        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item$$1).call(this, options));
+        _this.value = {};
+        _this.selected = false;
+        return _this;
+      }
+
+      return Item$$1;
+    }(Item);
+
+    var FieldsContainer = {
+      name: 'field-container',
+      // for recurrence
+      mixins: [MixinField],
+      components: {
+        Field: Field
+      },
+      template: "\n\t\t<transition-group name=\"b24-form-field-a-slide\" tag=\"div\"\n\t\t\tv-if=\"field.nestedFields.length > 0\"\t\t\n\t\t>\n\t\t\t<Field\n\t\t\t\tv-for=\"nestedField in field.nestedFields\"\n\t\t\t\t:field=\"nestedField\"\n\t\t\t\t:key=\"field.name + '-' + nestedField.name\"\n\t\t\t\t@input-blur=\"\"\n\t\t\t\t@input-focus=\"\"\n\t\t\t\t@input-key-down=\"\"\n\t\t\t/>\n\t\t</transition-group>\n\t"
+    };
+
+    var Controller$o = /*#__PURE__*/function (_BaseField$Controller) {
+      babelHelpers.inherits(Controller$$1, _BaseField$Controller);
+      babelHelpers.createClass(Controller$$1, null, [{
+        key: "type",
+        value: function type() {
+          return 'container';
+        }
+      }, {
+        key: "component",
+        value: function component() {
+          return FieldsContainer;
+        }
+      }, {
+        key: "createItem",
+        value: function createItem(options) {
+          return new Item$3(options);
+        }
+      }]);
+
+      function Controller$$1(options) {
+        var _this;
+
+        babelHelpers.classCallCheck(this, Controller$$1);
+        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options)); //this.nestedFields = [];
+
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "nestedFields", []);
+        return _this;
+      }
+
+      babelHelpers.createClass(Controller$$1, [{
+        key: "adjust",
+        value: function adjust(options) {
+          var _this2 = this;
+          babelHelpers.get(babelHelpers.getPrototypeOf(Controller$$1.prototype), "adjust", this).call(this, options);
+          setTimeout(function () {
+            _this2.actualizeFields();
+
+            _this2.actualizeValues();
+          }, 0);
+        }
+      }, {
+        key: "actualizeFields",
+        value: function actualizeFields() {
+          this.nestedFields = this.makeFields(this.options.fields || []);
+        }
+      }, {
+        key: "makeFields",
+        value: function makeFields() {
+          var _this3 = this;
+
+          var list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+          return list.map(function (options) {
+            options.messages = _this3.options.messages;
+            options.design = _this3.options.design;
+            options.format = _this3.options.format;
+            options.sundayFirstly = _this3.options.sundayFirstly;
+            var field = new Factory.create(Object.assign({
+              visible: true,
+              id: _this3.id + '-' + options.name
+            }, options));
+            field.subscribe(field.events.changeSelected, function () {
+              return _this3.actualizeValues();
+            });
+            return field;
+          });
+        }
+      }, {
+        key: "actualizeValues",
+        value: function actualizeValues() {
+          var value = (this.nestedFields || []).reduce(function (acc, field) {
+            var key = field.name || '';
+            var val = field.value();
+
+            if (key.length > 0) {
+              acc[key] = val;
+            }
+
+            return acc;
+          }, {});
+          var item = this.item();
+          item.value = value;
+          item.selected = true;
+        }
+      }]);
+      return Controller$$1;
+    }(Controller);
+
+    var Controller$p = /*#__PURE__*/function (_ContainerController) {
+      babelHelpers.inherits(Controller$$1, _ContainerController);
+
+      function Controller$$1() {
+        babelHelpers.classCallCheck(this, Controller$$1);
+        return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).apply(this, arguments));
+      }
+
+      babelHelpers.createClass(Controller$$1, [{
+        key: "actualizeFields11",
+        value: function actualizeFields11() {//this.nestedFields = [].concat([this.searchField], this.makeFields(fields));
+        }
+      }], [{
+        key: "type",
+        value: function type() {
+          return 'address';
+        }
+      }]);
+      return Controller$$1;
+    }(Controller$o);
+
+    var Controller$q = /*#__PURE__*/function (_ContainerController) {
+      babelHelpers.inherits(Controller$$1, _ContainerController);
+
+      function Controller$$1() {
+        babelHelpers.classCallCheck(this, Controller$$1);
+        return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).apply(this, arguments));
+      }
+
+      babelHelpers.createClass(Controller$$1, [{
+        key: "actualizeFields",
+        value: function actualizeFields() {
+          var _this = this;
+
+          if (!this.presetField) {
+            this.options.requisite = this.options.requisite || {};
+            this.options.requisite.presets = (this.options.requisite.presets || []).filter(function (preset) {
+              return !preset.disabled;
+            });
+            this.presetField = new Factory.create({
+              type: 'radio',
+              name: 'presetId',
+              label: this.label,
+              items: this.options.requisite.presets.map(function (preset) {
+                return {
+                  value: preset.id,
+                  label: preset.label
+                };
+              }),
+              visible: true
+            });
+            this.presetField.subscribe(this.presetField.events.changeSelected, function () {
+              _this.actualizeFields();
+
+              _this.actualizeValues();
+            });
+          }
+
+          var v = this.presetField.value();
+          var presets = this.options.requisite.presets;
+          var preset = presets.filter(function (preset) {
+            return preset.id === v;
+          })[0] || {};
+          var fields = [];
+          (preset.fields || []).filter(function (options) {
+            return !options.disabled;
+          }).forEach(function (options) {
+            options = JSON.parse(JSON.stringify(options));
+
+            if (options.fields && options.fields.length > 0) {
+              if (['address', 'account'].includes(options.type)) {
+                fields.push({
+                  type: 'layout',
+                  label: options.label,
+                  content: {
+                    type: 'section'
+                  }
+                });
+              }
+
+              options.type = 'container';
+            }
+
+            fields.push(options);
+          });
+          this.nestedFields = [].concat([this.presetField], this.makeFields(fields));
+        }
+      }], [{
+        key: "type",
+        value: function type() {
+          return 'rq';
+        }
+      }]);
+      return Controller$$1;
+    }(Controller$o);
+
+    var controllers = [Controller$1, Controller$3, Controller$2, Controller$4, Controller$5, Controller$6, Controller$7, Controller$8, Controller$9, Controller$b, Controller$a, Controller$d, Controller$c, Controller$e, Controller$f, Controller$g, Controller$h, Controller$i, Controller$j, Controller$k, Controller$l, Controller$m, Controller$n, Controller$o, Controller$p, Controller$q];
     var component = Controller.component();
     component.components = Object.assign({}, component.components || {}, controllers.reduce(function (accum, controller) {
       accum['field-' + controller.type()] = controller.component();
@@ -7660,7 +7897,7 @@ var Vue = exports.Vue;
     var Form = {
       props: {
         form: {
-          type: Controller$o
+          type: Controller$r
         }
       },
       components: {
@@ -7911,7 +8148,7 @@ var Vue = exports.Vue;
 
     var _vue = /*#__PURE__*/new WeakMap();
 
-    var Controller$o = /*#__PURE__*/function (_Event) {
+    var Controller$r = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller$$1, _Event);
 
       function Controller$$1() {
@@ -8415,6 +8652,7 @@ var Vue = exports.Vue;
 
               case 'date':
               case 'datetime':
+              case 'rq':
                 options.format = options.type === 'date' ? _this5.date.dateFormat : _this5.date.dateTimeFormat;
                 options.sundayFirstly = _this5.date.sundayFirstly;
                 break;
@@ -8817,7 +9055,7 @@ var Vue = exports.Vue;
       }, {
         key: "create",
         value: function create(options) {
-          var form = new Controller$o(options);
+          var form = new Controller$r(options);
           babelHelpers.classPrivateFieldGet(this, _forms).push(form);
           return form;
         }
@@ -8930,6 +9168,16 @@ var Vue = exports.Vue;
             }
           }
 
+          var eventData = {
+            sign: sign
+          };
+          dispatchEvent(new CustomEvent('b24:form:app:user:init', {
+            detail: {
+              object: this,
+              data: eventData
+            }
+          }));
+          sign = eventData.sign;
           var ttl = 3600 * 24 * 28;
 
           if (!sign) {
@@ -8983,6 +9231,12 @@ var Vue = exports.Vue;
             });
 
             b24form.util.ls.setItem('b24-form-user', data, ttl);
+            dispatchEvent(new CustomEvent('b24:form:app:user:loaded', {
+              detail: {
+                object: _this2,
+                data: {}
+              }
+            }));
             return data.fields;
           }));
           return babelHelpers.classPrivateFieldGet(this, _userProviderPromise);

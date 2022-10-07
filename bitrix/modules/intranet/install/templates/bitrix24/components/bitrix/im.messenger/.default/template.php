@@ -7,7 +7,7 @@ if (defined('BX_IM_FULLSCREEN'))
 }
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load('ui.tutor');
+\Bitrix\Main\UI\Extension::load(['ui.tutor', 'ui.design-tokens']);
 $this->SetViewTarget("im-fullscreen");
 ?>
 <div class="bx-desktop bx-im-fullscreen-popup" id="im-workarea-popup">

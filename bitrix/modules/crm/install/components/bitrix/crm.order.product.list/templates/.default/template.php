@@ -4,7 +4,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Grid\Panel\Actions;
 use \Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load(["ui.fonts.ruble", "ui.design-tokens", "ui.fonts.opensans"]);
+\Bitrix\Main\UI\Extension::load([
+	"ui.design-tokens",
+	"ui.fonts.opensans",
+	"ui.fonts.ruble",
+]);
 
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_grid.js');
 

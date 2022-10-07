@@ -13,6 +13,8 @@
 use Bitrix\Crm;
 
 CJSCore::Init([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'amcharts',
 	'amcharts_funnel',
 	'amcharts_serial',
@@ -22,8 +24,6 @@ CJSCore::Init([
 	'popup',
 	'date',
 	'sidepanel',
-	'ui.design-tokens',
-	'ui.fonts.opensans',
 ]);
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');

@@ -123,7 +123,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			$this->preparePost();
 		}
 
-		$dbForms = Internals\FormTable::getList(array(
+		$dbForms = Internals\FormTable::getDefaultTypeList(array(
 			"select"=> $this->getDataFields(),
 			"filter"=> $this->getDataFilters(),
 			'order' => $this->getOrder(),

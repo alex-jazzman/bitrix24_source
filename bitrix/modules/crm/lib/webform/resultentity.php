@@ -160,7 +160,7 @@ class ResultEntity
 
 			default:
 				$entityTypeId = \CCrmOwnerType::resolveID($entityTypeName);
-				if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+				if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 				{
 					return null;
 				}
@@ -617,12 +617,15 @@ class ResultEntity
 		$isEntityContact = $entityName === \CCrmOwnerType::ContactName;
 		$isEntityCompany = $entityName === \CCrmOwnerType::CompanyName;
 		$isEntityDynamic = !empty($params['DYNAMIC_ENTITY']);
+		$entityTypeId = \CCrmOwnerType::resolveID($entityName);
 
 		if(!$isEntityInvoice)
 		{
 			$entityFields = $entityFields + $this->getCommonFields();
 		}
+
 		$entityFields = $this->fillFieldsByPresetFields($entityName, $entityFields);
+		[$requisiteFields, $entityFields] = Requisite::separateFieldValues($entityTypeId, $entityFields);
 
 		if($this->assignedById)
 		{
@@ -771,6 +774,11 @@ class ResultEntity
 						\CCrmOwnerType::ResolveID($entityName), $id, EntityAddressType::Delivery, $addressFields
 					);
 				}
+			}
+
+			if ($requisiteFields)
+			{
+				Requisite::instance()->fill($entityTypeId, $id, $requisiteFields);
 			}
 
 			$this->resultEntityPack[] = $resultEntityInfo;
@@ -1947,7 +1955,7 @@ class ResultEntity
 					foreach ($scheme['ENTITIES'] as $entityTypeName)
 					{
 						$entityTypeId = \CCrmOwnerType::resolveId($entityTypeName);
-						if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+						if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 						{
 							$dynamicTypeId = $entityTypeId;
 						}

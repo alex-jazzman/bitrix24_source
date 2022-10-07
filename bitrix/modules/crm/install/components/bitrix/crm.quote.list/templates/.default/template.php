@@ -264,7 +264,8 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 						)
 					) : '',
 				'ENTITIES_LINKS' => $arQuote['FORMATTED_ENTITIES_LINKS'],
-				'CLOSEDATE' => empty($arQuote['CLOSEDATE']) ? '' : '<nobr>'.$arQuote['CLOSEDATE'].'</nobr>'
+				'CLOSEDATE' => empty($arQuote['CLOSEDATE']) ? '' : '<nobr>'.$arQuote['CLOSEDATE'].'</nobr>',
+				'ACTUAL_DATE' => empty($arQuote['ACTUAL_DATE']) ? '' : '<nobr>'.$arQuote['ACTUAL_DATE'].'</nobr>',
 			) + $arResult['QUOTE_UF'][$sKey]
 		);
 

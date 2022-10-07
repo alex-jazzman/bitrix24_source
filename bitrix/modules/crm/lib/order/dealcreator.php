@@ -15,6 +15,13 @@ class DealCreator
 		$this->order = $order;
 	}
 
+	/**
+	 * Create deal.
+	 *
+	 * Creates a deal without products, for creating products rows use method `addProductsToDeal`.
+	 *
+	 * @return int
+	 */
 	public function create()
 	{
 		$selector = $this->getActualEntitySelector();
@@ -93,12 +100,22 @@ class DealCreator
 			'CONTACT_IDS' => $contactIds,
 			'CONTACT_ID' => $contactId,
 			'COMPANY_ID' => $companyId,
+			'ORDER_ID' => $this->order->getId(),
 		];
 	}
 
+	/**
+	 * Adds the order basket items to the deal as the product rows.
+	 *
+	 * If you need to sync a deal and an order, maybe you need `OrderDealSynchronizer`?
+	 * @see \Bitrix\Crm\Order\OrderDealSynchronizer
+	 *
+	 * @param mixed $dealId
+	 *
+	 * @return void
+	 */
 	public function addProductsToDeal($dealId)
 	{
 		Manager::copyOrderProductsToDeal($this->order, $dealId);
 	}
-
 }

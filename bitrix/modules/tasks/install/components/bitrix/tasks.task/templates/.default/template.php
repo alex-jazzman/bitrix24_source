@@ -10,7 +10,7 @@ use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 
 Loc::loadMessages(__FILE__);
 
-\Bitrix\Main\UI\Extension::load("ui.alerts");
+\Bitrix\Main\UI\Extension::load(["ui.design-tokens", "ui.fonts.opensans", "ui.alerts"]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
@@ -27,7 +27,23 @@ if (!empty($arResult['ERROR']))
 		}
 	}
 }
+?>
 
+<?php
+if (
+	$arResult['DATA']['FROM_TEMPLATE']
+	&& \Bitrix\Tasks\Update\TemplateConverter::isProceed()
+):
+?>
+	<?php
+		$APPLICATION->IncludeComponent("bitrix:tasks.interface.emptystate", "", [
+			'TITLE' => Loc::getMessage('TASKS_TEMPLATE_MEMBER_CONVERT_TITLE'),
+			'TEXT' => Loc::getMessage('TASKS_TEMPLATE_MEMBER_CONVERT'),
+		]);
+	?>
+<?php return; endif; ?>
+
+<?php
 $templateId = $arResult['TEMPLATE_DATA']['ID'];
 
 if($arParams["ENABLE_MENU_TOOLBAR"])

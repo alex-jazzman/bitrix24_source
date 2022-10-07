@@ -89,7 +89,7 @@
 .crm-report-financial-rating-modal-subtitle {
 	display: block;
 	margin: 0 0 2px 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(168, 173, 180, .84);
 	opacity: initial;
 }

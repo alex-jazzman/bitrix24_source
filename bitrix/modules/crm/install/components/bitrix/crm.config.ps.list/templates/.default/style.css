@@ -4,7 +4,7 @@
 
 .crm-config-ps-list-wrapper {
 	line-height:17px;
-	font: normal 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -12,7 +12,7 @@
 
 .crm-config-ps-list-header {
 	margin: 33px 0 0 0;
-	font: normal 23px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 23px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -38,7 +38,7 @@
 }
 
 .crm-config-ps-list-createform-element {
-	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 }
 
@@ -140,7 +140,7 @@
 	display: inline-block;
 	width: 100%;
 	height: 100%;
-	font: normal 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: top;
 }
 
@@ -565,7 +565,7 @@ div.crm-config-ps-list-widget-content {
 .crm-config-ps-list-activate-comments {
 	position: relative;
 	width: 100%;
-	font: normal 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	overflow: hidden;
 	white-space: nowrap;
@@ -589,7 +589,7 @@ div.crm-config-ps-list-widget-content {
 .crm-config-ps-list-activate-user-element {
 	display: inline-block;
 	width: 100%;
-	font: bold 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #29619b;
 	vertical-align: middle;
 	overflow: hidden;
@@ -671,7 +671,7 @@ div.crm-config-ps-list-widget-content {
 	-webkit-border-radius: 2px;
 	-moz-border-radius: 2px;
 	border-radius: 2px;
-	font: 16px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #eb314b;
 	text-align: center;
 	min-width: 400px;

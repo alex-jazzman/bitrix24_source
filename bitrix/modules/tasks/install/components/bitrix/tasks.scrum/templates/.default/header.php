@@ -30,6 +30,7 @@ Extension::load([
 	'ui.entity-selector',
 	'ui.short-view',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 Extension::load('date');

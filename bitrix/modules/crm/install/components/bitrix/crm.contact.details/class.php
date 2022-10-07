@@ -455,7 +455,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 							. bitrix_sessid_get(),
 						'componentData' => [
 							'template' => '',
-							'params' => [
+							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'DEAL_COUNT' => '20',
 								'PATH_TO_DEAL_SHOW' => $this->arResult['PATH_TO_DEAL_SHOW'],
 								'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
@@ -467,7 +467,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 								'ENABLE_TOOLBAR' => true,
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateDealFromContact'
-							]
+							], 'crm.deal.list')
 						]
 					]
 				];
@@ -481,7 +481,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 							. bitrix_sessid_get(),
 						'componentData' => [
 							'template' => '',
-							'params' => [
+							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'QUOTE_COUNT' => '20',
 								'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'],
 								'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'],
@@ -493,7 +493,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 								'ENABLE_TOOLBAR' => true,
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateQuoteFromContact'
-							]
+							], 'crm.quote.list')
 						]
 					]
 				];
@@ -507,7 +507,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 						'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
 						'componentData' => [
 							'template' => '',
-							'params' => [
+							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'INVOICE_COUNT' => '20',
 								'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
 								'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
@@ -523,7 +523,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 								'ENABLE_TOOLBAR' => 'Y',
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromContact'
-							]
+							], 'crm.invoice.list')
 						]
 					]
 				];
@@ -542,7 +542,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 						'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
 						'componentData' => array(
 							'template' => '',
-							'params' => array(
+							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'INVOICE_COUNT' => '20',
 								'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
 								'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
@@ -558,7 +558,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 								'ENABLE_TOOLBAR' => 'Y',
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateOrderFromContact'
-							)
+							], 'crm.order.list')
 						)
 					)
 				);
@@ -603,10 +603,10 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 					'serviceUrl' => '/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => array(
 						'template' => '.default',
-						'params' => array(
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'ENTITY_ID' => $this->entityID,
 							'ENTITY_TYPE_NAME' => CCrmOwnerType::ContactName,
-						)
+						], 'crm.entity.tree')
 					)
 				)
 			);
@@ -623,11 +623,11 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 							. bitrix_sessid_get(),
 						'componentData' => [
 							'template' => '.default',
-							'params' => [
+							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'ELEMENT_ID' => $this->entityID,
 								'ELEMENT_TYPE' => CCrmOwnerType::Contact,
 								'IS_FRAME' => 'Y'
-							]
+							], 'crm.client.portrait'),
 						]
 					]
 				];

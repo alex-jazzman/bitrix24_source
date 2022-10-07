@@ -51,19 +51,19 @@
 }
 
 .sale-personal-account-wallet-currency-item {
-	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #955d00;
 }
 
 .sale-personal-account-wallet-currency-item + .sale-personal-account-wallet-currency-item {
-	font: bold 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: var(--ui-font-weight-bold) 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 
 .sale-personal-account-wallet-sum {
 	display: inline-block;
 	float: right;
 	white-space: nowrap;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 22px;
 	/*line-height: 22px;*/
 	vertical-align: middle;

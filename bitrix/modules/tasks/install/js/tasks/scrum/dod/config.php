@@ -19,6 +19,7 @@ return [
 		'ui.sidepanel.layout',
 		'ui.layout-form',
 		'ui.forms',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

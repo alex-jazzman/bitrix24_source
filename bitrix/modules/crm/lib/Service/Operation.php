@@ -361,10 +361,26 @@ abstract class Operation
 	 */
 	public function checkFields(): Result
 	{
-		$result = new Result();
+		$requiredFields = $this->getRequiredFields();
+		if (empty($requiredFields))
+		{
+			return new Result();
+		}
+
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
+		if (!$factory)
+		{
+			throw new InvalidOperationException('Factory not found');
+		}
+
+		return $this->checkRequiredFields($requiredFields, $factory);
+	}
+
+	final public function getRequiredFields(): array
+	{
 		if (empty($this->fieldsCollection))
 		{
-			return $result;
+			return [];
 		}
 
 		$requiredFields = [];
@@ -394,7 +410,6 @@ abstract class Operation
 		}
 		if (
 			$this->isCheckRequiredUserFields()
-			&& $this->fieldAttributeManager::isPhaseDependent()
 		)
 		{
 			$requiredFields = array_merge($requiredFields, $this->getStageDependantRequiredFields($factory));
@@ -415,6 +430,7 @@ abstract class Operation
 		}
 
 		$requiredFields = array_diff($requiredFields, $notDisplayedFields);
+
 		$filteredFields = $this->getItem()->getFilteredUserFields();
 		if (isset($filteredFields))
 		{
@@ -423,9 +439,7 @@ abstract class Operation
 			});
 		}
 
-		$result = $this->checkRequiredFields($requiredFields, $factory);
-
-		return $result;
+		return array_unique(array_diff($requiredFields, $notDisplayedFields));
 	}
 
 	/**
@@ -1160,7 +1174,7 @@ abstract class Operation
 			$this->fieldAttributeManager::getItemConfigScope($this->item)
 		);
 
-		if ($this->item->isStagesEnabled())
+		if ($this->item->isStagesEnabled() && $this->fieldAttributeManager::isPhaseDependent())
 		{
 			$categoryId = $this->item->isCategoriesSupported() ? $this->item->getCategoryId() : null;
 			$stages = $factory->getStages($categoryId);

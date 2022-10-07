@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core_events,main_core) {
+(function (exports,ui_designTokens,main_core_events,main_core) {
 	'use strict';
 
 	var TreeItem = /*#__PURE__*/function () {
@@ -751,7 +751,7 @@ this.BX = this.BX || {};
 	    key: "getMemberLinkLayout",
 	    value: function getMemberLinkLayout(type, name, url) {
 	      var messageId = "TASKS_CHECKLIST_".concat(type.toUpperCase(), "_ICON_HINT");
-	      return "\n\t\t\t<span class=\"tasks-checklist-item-auditor\">\n\t\t\t\t<a class=\"tasks-checklist-item-".concat(type, "-icon\" title=\"").concat(main_core.Loc.getMessage(messageId), "\"></a>\n\t\t\t\t<a href=\"").concat(url, "\" class=\"tasks-checklist-item-").concat(type, "-link\">").concat(name, "</a>\n\t\t\t</span>\n\t\t");
+	      return "\n\t\t\t<span class=\"tasks-checklist-item-auditor\">\n\t\t\t\t<a class=\"tasks-checklist-item-".concat(type, "-icon\" title=\"").concat(main_core.Loc.getMessage(messageId), "\"></a>\n\t\t\t\t<a href=\"").concat(url, "\" class=\"tasks-checklist-item-").concat(type, "-link\">").concat(name, "</a>\n\t\t\t</span> \n\t\t");
 	    }
 	  }, {
 	    key: "getLinkLayout",
@@ -1448,6 +1448,7 @@ this.BX = this.BX || {};
 	      };
 
 	      var title = this.fields.getTitle();
+	      console.log('title', title);
 	      title = this.isCheckList() ? CheckListItem.getDefaultCheckListTitle(title) : title;
 	      this.fields.getMembers().forEach(function (_ref) {
 	        var id = _ref.id,
@@ -3733,5 +3734,5 @@ this.BX = this.BX || {};
 	exports.CheckListItem = CheckListItem;
 	exports.MobileCheckListItem = MobileCheckListItem;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX.Event,BX));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX,BX.Event,BX));
 //# sourceMappingURL=check-list-item.bundle.js.map

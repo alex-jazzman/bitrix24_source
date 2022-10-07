@@ -1,6 +1,7 @@
 <?php
 $MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION"] = "Створити товар у повній версії";
 $MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS"] = "У документі зараз немає товарів";
+$MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS_V2"] = "У документі зараз немає товарів";
 $MESS["CSPL_MENU"] = "Меню";
 $MESS["CSPL_MENU_ADD_NEW_PRODUCT_TITLE"] = "Новий товар";
 $MESS["CSPL_MENU_CHOOSE_FROM_DB"] = "Обрати з каталогу";

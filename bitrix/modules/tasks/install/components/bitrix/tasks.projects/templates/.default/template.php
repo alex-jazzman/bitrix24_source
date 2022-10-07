@@ -22,6 +22,8 @@ use Bitrix\UI\Buttons\SettingsButton;
 Loc::loadMessages(__FILE__);
 
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'ui.actionpanel',
 	'ui.alerts',
 	'ui.buttons',
@@ -30,9 +32,8 @@ Extension::load([
 	'ui.label',
 	'ui.info-helper',
 	'socialnetwork.common',
+	'tasks_integration_socialnetwork',
 ]);
-
-CJSCore::Init('tasks_integration_socialnetwork');
 
 /**
  * @var array $arParams

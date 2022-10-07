@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_qrcode,main_core,main_popup) {
+(function (exports,ui_designTokens,ui_fonts_opensans,main_qrcode,main_core,main_popup) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
@@ -189,5 +189,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Qr = Qr;
 
-}((this.BX.Crm.Form = this.BX.Crm.Form || {}),BX,BX,BX.Main));
+}((this.BX.Crm.Form = this.BX.Crm.Form || {}),BX,BX,BX,BX,BX.Main));
 //# sourceMappingURL=qr.bundle.js.map

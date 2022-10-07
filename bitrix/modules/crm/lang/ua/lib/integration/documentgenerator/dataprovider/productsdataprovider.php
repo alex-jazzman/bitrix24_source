@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_CURRENCY_NAME_TITLE"] = "Назва валюти";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_PRODUCTS_TITLE"] = "Товари";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_PRODUCT_TITLE"] = "Товар";
@@ -14,9 +14,9 @@ $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_QUANTITY_TITLE"] = "Загальн�
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_QUANTITY_WORDS_TITLE"] = "Загальна кількість товарів прописом";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_RAW_BEFORE_DISCOUNT_TITLE"] = "Сума вихідних цін без знижки";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_RAW_TITLE"] = "Сума початкових цін";
+$MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_ROWS_TITLE"] = "Кількість рядків";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_ROWS_WORDS_TITLE"] = "Кількість рядків прописом";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_SUM_TITLE"] = "Загальна сума";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_SUM_WORDS_TITLE"] = "Загальна сума прописом";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_TAX_TITLE"] = "Сума податку";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_TAX_WORDS_TITLE"] = "Сума податку прописом";
-?>

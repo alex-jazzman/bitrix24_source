@@ -26,6 +26,7 @@ $MESS["SALE_CASHBOX_DEDUCTED"] = "Shipped";
 $MESS["SALE_CASHBOX_EDIT"] = "Edit";
 $MESS["SALE_CASHBOX_EDIT_DESCR"] = "Edit cash register parameters";
 $MESS["SALE_CASHBOX_ENTITY_ID"] = "Entity ID";
+$MESS["SALE_CASHBOX_ENTITY_ID_SOURCE"] = "Source";
 $MESS["SALE_CASHBOX_ID"] = "ID";
 $MESS["SALE_CASHBOX_LINK"] = "Receipt link";
 $MESS["SALE_CASHBOX_MARKED"] = "Marked";

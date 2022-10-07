@@ -1,6 +1,7 @@
 <?php
 $MESS["CRM_GEDA_EMPTY_TEMPLATE_ID"] = "Не вказаний шаблон документа";
 $MESS["CRM_GEDA_MODULE_DOCGEN_ERROR"] = "Модуль \"Генератор документів\" не встановлений";
+$MESS["CRM_GEDA_NAME_CREATE_ACTIVITY"] = "Додати справу";
 $MESS["CRM_GEDA_NAME_DELETE"] = "Видалити";
 $MESS["CRM_GEDA_NAME_MY_COMPANY_BANK_DETAIL_ID"] = "Банківські реквізити моєї компанії";
 $MESS["CRM_GEDA_NAME_MY_COMPANY_ID"] = "Моя компанія";

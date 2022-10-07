@@ -73,12 +73,14 @@ if($MOD_RIGHT>='R'):
 		array('path_to_quote_import', Loc::getMessage('CRM_OPTIONS_PATH_TO_QUOTE_IMPORT'), '/crm/quote/import/', Array('text', '40')),
 		array('path_to_quote_kanban', Loc::getMessage('CRM_OPTIONS_PATH_TO_QUOTE_KANBAN'), '/crm/quote/kanban/', Array('text', '40')),
 		array('path_to_contact_list', Loc::getMessage('CRM_OPTIONS_PATH_TO_CONTACT_LIST'), '/crm/contact/list/', Array('text', '40')),
+		array('path_to_contact_category', Loc::getMessage('CRM_OPTIONS_PATH_TO_CONTACT_CATEGORY'), '/crm/contact/category/#category_id#/', Array('text', '40')),
 		array('path_to_contact_show', Loc::getMessage('CRM_OPTIONS_PATH_TO_CONTACT_SHOW'), '/crm/contact/show/#contact_id#/', Array('text', '40')),
 		array('path_to_contact_edit', Loc::getMessage('CRM_OPTIONS_PATH_TO_CONTACT_EDIT'), '/crm/contact/edit/#contact_id#/', Array('text', '40')),
 		array('path_to_contact_details', Loc::getMessage('CRM_OPTIONS_PATH_TO_CONTACT_DETAILS'), '/crm/contact/details/#contact_id#/', Array('text', '40')),
 		array('path_to_contact_import', Loc::getMessage('CRM_OPTIONS_PATH_TO_CONTACT_IMPORT'), '/crm/contact/import/', Array('text', '40')),
 		array('path_to_contact_widget', Loc::getMessage('CRM_OPTIONS_PATH_TO_CONTACT_WIDGET'), '/crm/contact/widget/', Array('text', '40')),
 		array('path_to_company_list', Loc::getMessage('CRM_OPTIONS_PATH_TO_COMPANY_LIST'), '/crm/company/list/', Array('text', '40')),
+		array('path_to_company_category', Loc::getMessage('CRM_OPTIONS_PATH_TO_COMPANY_CATEGORY'), '/crm/company/category/#category_id#/', Array('text', '40')),
 		array('path_to_company_show', Loc::getMessage('CRM_OPTIONS_PATH_TO_COMPANY_SHOW'), '/crm/company/show/#company_id#/', Array('text', '40')),
 		array('path_to_company_edit', Loc::getMessage('CRM_OPTIONS_PATH_TO_COMPANY_EDIT'), '/crm/company/edit/#company_id#/', Array('text', '40')),
 		array('path_to_company_details', Loc::getMessage('CRM_OPTIONS_PATH_TO_COMPANY_DETAILS'), '/crm/company/details/#company_id#/', Array('text', '40')),
@@ -117,6 +119,7 @@ if($MOD_RIGHT>='R'):
 		array('path_to_order_form', Loc::getMessage('CRM_OPTIONS_PATH_TO_ORDER_FORM'), '/shop/orderform/', Array('text', '40')),
 		array('path_to_order_import_instagram', Loc::getMessage('CRM_OPTIONS_PATH_TO_ORDER_IMPORT_INSTAGRAM'), '/shop/import/instagram/', Array('text', '40')),
 		array('path_to_lead_status_list', Loc::getMessage('CRM_OPTIONS_PATH_TO_LEAD_STATUS_LIST'), '/crm/type/1/categories/', Array('text', '40')),
+		array('path_to_company_category', Loc::getMessage('CRM_OPTIONS_PATH_TO_LEAD_STATUS_LIST'), '/crm/type/1/categories/', Array('text', '40')),
 	);
 
 	$arAllOptions = array_merge($arOptionsPath, $arOptionsBase);

@@ -276,7 +276,7 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		return parent::GetAdminListViewHTML($value);
 	}
 
-	public static function getAdminListViewHtmlExtended(array $property, array $value, array $control): string
+	public static function getAdminListViewHtmlExtended(array $property, array $value, $control): string
 	{
 		$result = '';
 		if (isset($value['VALUE']))
@@ -318,16 +318,31 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		return parent::GetPublicViewHTML($value);
 	}
 
-	public static function getPublicViewHtmlExtended(array $property, array $value, array $control): string
+	public static function getPublicViewHtmlExtended(array $property, array $value, $control): string
 	{
 		$result = '';
 		if (isset($value['VALUE']))
 		{
+			if (!is_array($control))
+			{
+				$control = [];
+			}
+			$mode = (string)($control['MODE'] ?? '');
+
 			$user = static::_GetUserArray($value['VALUE']);
 			if (!empty($user))
 			{
-				$name = htmlspecialcharsbx('(' . $user['LOGIN'] . ') ' . $user['NAME'] . ' ' . $user['LAST_NAME']);
-				$url = self::getUserProfileUrl(self::USER_PROFILE_PUBLIC, $user);
+				$useUrl =
+					$mode !== 'SIMPLE_TEXT'
+					&& $mode !== 'ELEMENT_TEMPLATE'
+					&& $mode !== 'CSV_EXPORT'
+				;
+				$name = '(' . $user['LOGIN'] . ') ' . $user['NAME'] . ' ' . $user['LAST_NAME'];
+				if ($mode !== 'CSV_EXPORT')
+				{
+					$name = htmlspecialcharsbx($name);
+				}
+				$url = $useUrl ? self::getUserProfileUrl(self::USER_PROFILE_PUBLIC, $user) : null;
 
 				if ($url !== null)
 				{

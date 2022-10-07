@@ -943,7 +943,10 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 				"Editable" => true,
 				"Required" => true,
 				"Multiple" => false,
-				"BaseType" => "user"
+				"BaseType" => "user",
+				"Settings" => [
+					'allowEmailUsers' => true,
+				],
 			),
 			"RESPONSIBLE_ID" => array(
 				"Name" => GetMessage("BPTA1A_TASKASSIGNEDTO"),
@@ -970,7 +973,10 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 				"Editable" => true,
 				"Required" => false,
 				"Multiple" => true,
-				"BaseType" => "user"
+				"BaseType" => "user",
+				"Settings" => [
+					'allowEmailUsers' => true,
+				],
 			),
 			"START_DATE_PLAN" => array(
 				"Name" => GetMessage("BPTA1A_TASKACTIVEFROM"),
@@ -1044,7 +1050,10 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 				"Editable" => true,
 				"Required" => false,
 				"Multiple" => true,
-				"BaseType" => "user"
+				"BaseType" => "user",
+				"Settings" => [
+					'allowEmailUsers' => true,
+				],
 			),
 			"PARENT_ID" => array(
 				"Name" => GetMessage('BPTA1A_MAKE_SUBTASK'),

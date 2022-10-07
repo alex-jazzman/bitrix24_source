@@ -6,13 +6,13 @@ use Bitrix\Main\Web\Json;
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 \Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'date',
 	'ui.progressbar',
 	'ui.progressround',
 	'ui.buttons',
 	'sidepanel',
-	'ui.design-tokens',
-	'ui.fonts.opensans',
 ]);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");

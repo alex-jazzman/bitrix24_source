@@ -1,13 +1,15 @@
 import {Loc, Tag, Type} from 'main.core';
 import {Layout} from 'ui.sidepanel.layout';
-import './embed.css';
 import {EmbedOptions} from './types';
 import {DataProvider} from "./data_provider";
 import {Widget} from './tab/widget';
 import {Openlines} from './tab/openlines';
 import * as Form from './tab/form/index';
 import {openFeedbackForm} from "./util";
+
+import 'ui.design-tokens';
 import 'ui.fonts.opensans';
+import './embed.css';
 
 const DEFAULT_WIDGETS_COUNT = 10;
 

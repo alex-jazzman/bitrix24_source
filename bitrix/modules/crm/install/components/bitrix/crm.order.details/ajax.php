@@ -1977,6 +1977,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$_SESSION['ORDER_BASKET'][$order->getId()]['ITEMS'] = $sessionBasket;
 		$ajaxParams = $componentParams;
 		$ajaxParams['params']['SESSION_BASKET'] = 'Y';
+		$ajaxParams['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+			(array)$ajaxParams['params'],
+			'crm.order.product.list'
+		);
+		unset($ajaxParams['params']);
+
 		$template = $componentParams['template'] ?? '';
 		$params = $componentParams['params'] ?? [];
 

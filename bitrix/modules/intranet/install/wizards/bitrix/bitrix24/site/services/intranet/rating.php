@@ -24,8 +24,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 		$dbRes = CLanguage::GetList();
 		while ($arRes = $dbRes->Fetch())
 		{
-			if (file_exists(dirname(__FILE__).'/'.$arRes['LID'].'/rating.php'))
-				require(dirname(__FILE__).'/'.$arRes['LID'].'/rating.php');
+			if (file_exists(__DIR__.'/'.$arRes['LID'].'/rating.php'))
+				require(__DIR__.'/'.$arRes['LID'].'/rating.php');
 		}
 		$arFields = Array(
 			"ACTIVE" 			=> "Y",

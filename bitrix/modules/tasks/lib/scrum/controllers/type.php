@@ -13,6 +13,7 @@ use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
 use Bitrix\Tasks\Scrum\Form\TypeForm;
 use Bitrix\Tasks\Scrum\Service\BacklogService;
 use Bitrix\Tasks\Scrum\Service\DefinitionOfDoneService;
+use Bitrix\Tasks\Scrum\Service\EntityService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\TypeService;
 use Bitrix\Tasks\Util\User;
@@ -130,6 +131,9 @@ class Type extends Controller
 	public function changeTypeNameAction(int $id, string $name): ?array
 	{
 		$typeService = new TypeService();
+		$entityService = new EntityService();
+
+		$userId = User::getId();
 
 		if (!mb_strlen($name))
 		{
@@ -148,10 +152,23 @@ class Type extends Controller
 		{
 			$this->errorCollection->setError(
 				new Error(
-					Loc::getMessage('TASKS_SDC_ERROR_TYPE_NOT_FOUND'),
+					Loc::getMessage('TASKS_STC_ERROR_COULD_NOT_FOUND_TYPE'),
 					self::ERROR_COULD_NOT_CHANGE_TYPE_NAME
 				)
 			);
+		}
+
+		$entity = $entityService->getEntityById($type->getEntityId());
+		if (!Group::canReadGroupTasks($userId, $entity->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_STC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
 		}
 
 		$typeForm = new TypeForm();
@@ -184,6 +201,31 @@ class Type extends Controller
 		$typeService = new TypeService();
 		$definitionOfDoneService = new DefinitionOfDoneService($userId);
 		$itemService = new ItemService();
+		$entityService = new EntityService();
+
+		$type = $typeService->getType($id);
+		if ($type->isEmpty())
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_STC_ERROR_COULD_NOT_FOUND_TYPE'),
+					self::ERROR_COULD_NOT_CHANGE_TYPE_NAME
+				)
+			);
+		}
+
+		$entity = $entityService->getEntityById($type->getEntityId());
+		if (!Group::canReadGroupTasks($userId, $entity->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_STC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
+		}
 
 		$type = new TypeForm();
 		$type->setId($id);

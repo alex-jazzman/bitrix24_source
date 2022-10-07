@@ -54,6 +54,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN"] = "Кошик";
 $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN_TITLE"] = "Перегляд і відновлення видалених лідів, контактів, компаній та угод.";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT"] = "Звіти";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT_CONSTRUCTOR"] = "Конструктор звітів";
+$MESS["CRM_CTRL_PANEL_ITEM_REPORT_CONSTRUCTOR2"] = "Конструктор звітів";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT_TITLE"] = "Список звітів";
 $MESS["CRM_CTRL_PANEL_ITEM_SALES"] = "Продажі";
 $MESS["CRM_CTRL_PANEL_ITEM_SALES_CENTER"] = "Центр продажу";

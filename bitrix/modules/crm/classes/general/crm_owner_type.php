@@ -47,11 +47,12 @@ class CCrmOwnerType
 
 	public const StoreDocument = 33;
 	public const ShipmentDocument = 34;
-
 	public const BankDetail = 35;
+	public const SmartDocument = 36;
+	public const SuspendedSmartDocument = 37;
 
 	public const FirstOwnerType = 1;
-	public const LastOwnerType = 35;
+	public const LastOwnerType = 37;
 
 	public const DynamicTypeStart = 128;
 	public const DynamicTypeEnd = 192;
@@ -82,6 +83,7 @@ class CCrmOwnerType
 	public const OrderShipmentName = 'ORDER_SHIPMENT';
 	public const OrderPaymentName = 'ORDER_PAYMENT';
 	public const SmartInvoiceName = 'SMART_INVOICE';
+	public const SmartDocumentName = 'SMART_DOCUMENT';
 	public const CommonDynamicName = 'DYNAMIC';
 
 	public const SuspendedLeadName = 'SUS_LEAD';
@@ -94,6 +96,7 @@ class CCrmOwnerType
 	public const SuspendedActivityName = 'SUS_ACTIVITY';
 	public const SuspendedRequisiteName = 'SUS_REQUISITE';
 	public const SuspendedSmartInvoiceName = 'SUS_SMART_INVOICE';
+	public const SuspendedSmartDocumentName = 'SUS_SMART_DOCUMENT';
 
 	public const StoreDocumentName = 'STORE_DOCUMENT';
 	public const ShipmentDocumentName = 'SHIPMENT_DOCUMENT';
@@ -332,6 +335,14 @@ class CCrmOwnerType
 			case self::SuspendedSmartInvoiceName:
 				return self::SuspendedSmartInvoice;
 
+			case CCrmOwnerTypeAbbr::SmartDocument:
+			case self::SmartDocumentName:
+				return self::SmartDocument;
+
+			case CCrmOwnerTypeAbbr::SuspendedSmartDocument:
+			case self::SuspendedSmartDocumentName:
+				return self::SuspendedSmartDocument;
+
 			case self::StoreDocumentName:
 				return self::StoreDocument;
 
@@ -465,6 +476,12 @@ class CCrmOwnerType
 			case self::ShipmentDocument:
 				return self::ShipmentDocumentName;
 
+			case self::SmartDocument:
+				return self::SmartDocumentName;
+
+			case self::SuspendedSmartDocument:
+				return self::SuspendedSmartDocumentName;
+
 			case self::System:
 				return self::SystemName;
 
@@ -536,6 +553,10 @@ class CCrmOwnerType
 			case self::SuspendedSmartInvoice:
 				return self::SuspendedSmartInvoice;
 
+			case self::SmartDocument:
+			case self::SuspendedSmartDocument:
+				return self::SuspendedSmartDocument;
+
 			default:
 				$isPossibleDynamicTypeId = static::isPossibleDynamicTypeId($typeID);
 				$isPossibleSuspendedDynamicTypeId = static::isPossibleSuspendedDynamicTypeId($typeID);
@@ -562,7 +583,7 @@ class CCrmOwnerType
 			self::InvoiceName, self::ActivityName,
 			self::QuoteName, self::Requisite,
 			self::DealCategoryName, self::CustomActivityTypeName,
-			self::SmartInvoice,
+			self::SmartInvoiceName, self::SmartDocumentName,
 		];
 	}
 
@@ -606,11 +627,11 @@ class CCrmOwnerType
 			self::Invoice, self::Activity,
 			self::Quote, self::Requisite,
 			self::DealCategory, self::CustomActivityType,
-			self::SmartInvoice,
+			self::SmartInvoice, self::SmartDocument,
 		];
 	}
 
-	public static function getAllSuspended(): array
+	public static function  getAllSuspended(): array
 	{
 		$suspended = [
 			self::SuspendedLead,
@@ -659,6 +680,7 @@ class CCrmOwnerType
 				self::Order => GetMessage('CRM_OWNER_TYPE_ORDER'),
 				self::OrderShipment => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT'),
 				self::OrderPayment => GetMessage('CRM_OWNER_TYPE_ORDER_PAYMENT'),
+				self::SmartDocument => GetMessage('CRM_OWNER_TYPE_SMART_DOCUMENT'),
 			];
 
 			$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap();
@@ -692,6 +714,8 @@ class CCrmOwnerType
 				self::DealCategory => GetMessage('CRM_OWNER_TYPE_DEAL_CATEGORY_CATEGORY'),
 				self::CustomActivityType => GetMessage('CRM_OWNER_TYPE_CUSTOM_ACTIVITY_TYPE_CATEGORY'),
 				self::Order => GetMessage('CRM_OWNER_TYPE_ORDER_CATEGORY'),
+				self::SmartInvoice => GetMessage('CRM_OWNER_TYPE_INVOICE_CATEGORY'),
+				self::SmartDocument => GetMessage('CRM_OWNER_TYPE_DOCUMENT_CATEGORY'),
 			];
 
 			$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap();
@@ -1161,7 +1185,9 @@ class CCrmOwnerType
 			|| $typeID === CCrmOwnerType::OrderCheck
 			|| $typeID === CCrmOwnerType::OrderShipment
 			|| $typeID === CCrmOwnerType::OrderPayment
-			|| $typeID === CCrmOwnerType::SmartInvoice)
+			|| $typeID === CCrmOwnerType::SmartInvoice
+			|| $typeID === CCrmOwnerType::SmartDocument
+		)
 		{
 			return true;
 		}
@@ -2628,6 +2654,10 @@ class CCrmOwnerType
 				return \Bitrix\Crm\Service\Factory\SmartInvoice::USER_FIELD_ENTITY_ID;
 			case self::SuspendedSmartInvoice:
 				return \Bitrix\Crm\Service\Factory\SmartInvoice::SUSPENDED_USER_FIELD_ENTITY_ID;
+			case self::SmartDocument:
+				return \Bitrix\Crm\Service\Factory\SmartDocument::USER_FIELD_ENTITY_ID;
+			case self::SuspendedSmartDocument:
+				return \Bitrix\Crm\Service\Factory\SmartDocument::SUSPENDED_USER_FIELD_ENTITY_ID;
 			case self::Undefined:
 				return '';
 			default:
@@ -2688,6 +2718,8 @@ class CCrmOwnerType
 				return self::Order;
 			case \Bitrix\Crm\Service\Factory\SmartInvoice::USER_FIELD_ENTITY_ID:
 				return self::SmartInvoice;
+			case \Bitrix\Crm\Service\Factory\SmartDocument::USER_FIELD_ENTITY_ID:
+				return self::SmartDocument;
 		}
 
 		if (preg_match('/CRM_(\d+)/', $userFieldEntityId, $matches))
@@ -3327,6 +3359,7 @@ class CCrmOwnerType
 			self::QuoteName => self::GetDescription(self::Quote),
 			self::OrderName => self::GetDescription(self::Order),
 			self::SmartInvoice => self::GetDescription(self::SmartInvoice),
+			self::SmartDocument => self::GetDescription(self::SmartDocument),
 		];
 	}
 
@@ -3393,7 +3426,7 @@ class CCrmOwnerType
 	 */
 	public static function isDynamicTypeBasedStaticEntity(int $entityTypeId): bool
 	{
-		return $entityTypeId === self::SmartInvoice;
+		return in_array($entityTypeId, static::getDynamicTypeBasedStaticEntityTypeIds(), true);
 	}
 
 	/**
@@ -3403,7 +3436,7 @@ class CCrmOwnerType
 	 */
 	public static function getDynamicTypeBasedStaticEntityTypeIds(): array
 	{
-		return [self::SmartInvoice];
+		return [self::SmartInvoice, self::SmartDocument];
 	}
 }
 
@@ -3424,10 +3457,12 @@ class CCrmOwnerTypeAbbr
 	public const OrderShipment = 'OS';
 	public const OrderPayment = 'OP';
 	public const SmartInvoice = 'SI';
+	public const SmartDocument = 'DO';
 
 	public const SuspendedLead = 'SL';
 	public const SuspendedDeal = 'SD';
 	public const SuspendedSmartInvoice = 'SSI';
+	public const SuspendedSmartDocument = 'SSD';
 
 	public const DynamicTypeAbbreviationPrefix = 'T';
 	public const SuspendedDynamicTypeAbbreviationPrefix = 'S';
@@ -3473,6 +3508,10 @@ class CCrmOwnerTypeAbbr
 				return self::SmartInvoice;
 			case CCrmOwnerType::SuspendedSmartInvoice:
 				return self::SuspendedSmartInvoice;
+			case CCrmOwnerType::SmartDocument:
+				return self::SmartDocument;
+			case CCrmOwnerType::SuspendedSmartDocument:
+				return self::SuspendedSmartDocument;
 			case CCrmOwnerType::System:
 				return self::System;
 			default:
@@ -3546,6 +3585,10 @@ class CCrmOwnerTypeAbbr
 				return self::SmartInvoice;
 			case CCrmOwnerType::SuspendedSmartInvoiceName:
 				return self::SuspendedSmartInvoice;
+			case CCrmOwnerType::SmartDocumentName:
+				return self::SmartDocument;
+			case CCrmOwnerType::SuspendedSmartDocumentName:
+				return self::SuspendedSmartDocument;
 			case CCrmOwnerType::SystemName:
 				return self::System;
 			default:
@@ -3610,6 +3653,10 @@ class CCrmOwnerTypeAbbr
 				return CCrmOwnerType::SmartInvoiceName;
 			case self::SuspendedSmartInvoice:
 				return CCrmOwnerType::SuspendedSmartInvoiceName;
+			case self::SmartDocument:
+				return CCrmOwnerType::SmartDocumentName;
+			case self::SuspendedSmartDocument:
+				return CCrmOwnerType::SuspendedSmartDocumentName;
 			case self::System:
 				return CCrmOwnerType::SystemName;
 			default:

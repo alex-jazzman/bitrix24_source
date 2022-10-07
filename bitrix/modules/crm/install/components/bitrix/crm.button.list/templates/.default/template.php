@@ -10,10 +10,10 @@ use Bitrix\Main\UI\Extension;
 /** @var array $arResult */
 
 Extension::load([
-	'clipboard',
-	'ui.buttons',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'clipboard',
+	'ui.buttons',
 ]);
 
 ?>

@@ -364,7 +364,7 @@ this.BX = this.BX || {};
 
 	      var button;
 	      var content = document.querySelector('#left-menu-preset-popup').cloneNode(true);
-	      return main_popup.PopupManager.create(this.constructor.toString(), null, {
+	      return main_popup.PopupManager.create(this.constructor.name.toString(), null, {
 	        overlay: true,
 	        contentColor: "white",
 	        contentNoPaddings: true,

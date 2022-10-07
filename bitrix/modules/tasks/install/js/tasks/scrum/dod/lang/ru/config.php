@@ -1,6 +1,6 @@
 <?php
 $MESS["TSD_ERROR_POPUP_TITLE"] = "Произошла ошибка";
-$MESS["TASKS_SCRUM_DOD_TITLE"] = "Definition of Done";
+$MESS["TASKS_SCRUM_DOD_TITLE"] = "Критерии готовности задачи (DoD)";
 $MESS["TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL"] = "Выполнение пунктов является обязательным";
 $MESS["TASKS_SCRUM_DOD_LABEL_TYPES"] = "Тип задачи";
 $MESS["TASKS_SCRUM_DOD_INFO_TEXT"] = "Для завершения задачи необходимо выполнить все пункты Definition of Done";

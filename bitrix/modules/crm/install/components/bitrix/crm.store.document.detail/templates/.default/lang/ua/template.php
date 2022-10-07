@@ -16,3 +16,5 @@ $MESS["CRM_STORE_DOCUMENT_DETAIL_TIMELINE_STUB_MESSAGE"] = "Просто зар�
 $MESS["CRM_STORE_DOCUMENT_OPEN_DOCUMENT"] = "Переглянути";
 $MESS["CRM_STORE_DOCUMENT_PRODUCT_LIST_COLUMN_PRICE"] = "Ціна продажу";
 $MESS["CRM_STORE_DOCUMENT_SAVE_AND_CONDUCT_NOTIFICATION"] = "Документ проведено";
+$MESS["CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_AMOUNT_GUIDE_TEXT"] = "Кількість товару на складі, доступна для реалізації в цій угоді.";
+$MESS["CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_AMOUNT_GUIDE_TITLE"] = "Доступний залишок";

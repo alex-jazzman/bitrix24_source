@@ -1,4 +1,3 @@
-import {BitrixVue} from 'ui.vue3';
 import {mapState} from 'ui.vue3.vuex';
 import {MenuManager} from 'main.popup';
 import {Loc} from 'main.core';
@@ -20,6 +19,7 @@ export const ActiveCall = {
 			default: false
 		}
 	},
+	emits: ['click', 'contextmenu'],
 	computed: {
 		RecentCallStatus: () => RecentCallStatus,
 		AvatarSize: () => AvatarSize,
@@ -70,9 +70,29 @@ export const ActiveCall = {
 		{
 			this.getCallController().leaveCurrentCall();
 		},
-		onActiveCallClick()
+		onClick(event)
 		{
-			this.getCallController().unfold();
+			if (this.item.state === RecentCallStatus.joined)
+			{
+				this.getCallController().unfold();
+				return;
+			}
+
+			const item = this.$store.getters['recent/get'](this.item.dialogId);
+			if (!item)
+			{
+				return;
+			}
+			this.$emit('click', {item, $event: event});
+		},
+		onRightClick()
+		{
+			const item = this.$store.getters['recent/get'](this.item.dialogId);
+			if (!item)
+			{
+				return;
+			}
+			this.$emit('contextmenu', {item, $event: event});
 		},
 		getJoinMenu(event)
 		{
@@ -105,8 +125,8 @@ export const ActiveCall = {
 		}
 	},
 	template: `
-		<div>
-		<div v-if="!compactMode" @click="onActiveCallClick" class="bx-im-recent-item bx-im-recent-active-call-item">
+		<div :data-id="item.dialogId" class="bx-im-recent-item-wrap">
+		<div v-if="!compactMode" @click="onClick" @click.right.prevent="onRightClick" class="bx-im-recent-item bx-im-recent-active-call-item">
 			<div class="bx-im-recent-avatar-wrap">
 				<Avatar :dialogId="item.dialogId" :size="AvatarSize.L" />
 			</div>
@@ -129,7 +149,7 @@ export const ActiveCall = {
 							</span>
 						</div>
 						<div class="bx-im-recent-item-content-bottom">
-							<div @click="onJoinClick" class="bx-im-recent-active-call-button bx-im-recent-active-call-join-button">
+							<div @click.stop="onJoinClick" class="bx-im-recent-active-call-button bx-im-recent-active-call-join-button">
 								{{ $Bitrix.Loc.getMessage('IM_RECENT_ACTIVE_CALL_JOIN') }}
 							</div>
 						</div>
@@ -153,7 +173,7 @@ export const ActiveCall = {
 							</span>
 						</div>
 						<div class="bx-im-recent-item-content-bottom">
-							<div @click="onHangupClick" class="bx-im-recent-active-call-button bx-im-recent-active-call-hangup-button">
+							<div @click.stop="onHangupClick" class="bx-im-recent-active-call-button bx-im-recent-active-call-hangup-button">
 								{{ $Bitrix.Loc.getMessage('IM_RECENT_ACTIVE_CALL_HANGUP') }}
 							</div>
 						</div>
@@ -161,8 +181,8 @@ export const ActiveCall = {
 				</template>
 			</div>
 		</div>
-		<div v-if="compactMode" class="bx-im-recent-item bx-im-recent-active-call-item">
-			<div @click.right.prevent="onJoinClick" class="bx-im-recent-avatar-wrap">
+		<div v-if="compactMode" @click="onClick" @click.right.prevent="onRightClick" class="bx-im-recent-item bx-im-recent-active-call-item">
+			<div class="bx-im-recent-avatar-wrap">
 				<Avatar :dialogId="item.dialogId" :size="AvatarSize.M" />
 				<div class="bx-im-recent-active-call-compact-icon-container">
 					<div v-if="item.state === RecentCallStatus.waiting" class="bx-im-recent-active-call-icon bx-im-recent-active-call-waiting-icon"></div>

@@ -2,6 +2,7 @@ import {Loc, Reflection, Tag} from "main.core";
 import {BaseCard} from "catalog.entity-card";
 import {EventEmitter} from "main.core.events";
 import {Button, ButtonColor, ButtonState} from "ui.buttons";
+import {DocumentOnboardingManager, OnboardingData} from "./document.onboarding.manager";
 
 export class Document extends BaseCard
 {
@@ -10,6 +11,8 @@ export class Document extends BaseCard
 	static saveAndDeductAction = 'saveAndDeduct';
 	static deductAction = 'deduct';
 	static cancelDeductAction = 'cancelDeduct';
+
+	#documentOnboardingManager: DocumentOnboardingManager|null = null;
 
 	constructor(id, settings)
 	{
@@ -460,5 +463,17 @@ export class Document extends BaseCard
 				analyticsLabel: data,
 			}
 		);
+	}
+
+	enableOnboardingChain(onboardingData: OnboardingData)
+	{
+		if (this.#documentOnboardingManager === null)
+		{
+			this.#documentOnboardingManager  = new DocumentOnboardingManager({
+				onboardingData: onboardingData,
+				documentGuid: this.id
+			});
+			this.#documentOnboardingManager.processOnboarding();
+		}
 	}
 }

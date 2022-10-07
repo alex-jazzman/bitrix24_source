@@ -217,7 +217,7 @@
 }
 
 .crm-st-category-info-links-link {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));;
 	font-size: 13px;
 	color: #80868E;
 	line-height: 21px;

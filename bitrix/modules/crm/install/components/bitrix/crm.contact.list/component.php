@@ -143,6 +143,11 @@ $isAdmin = CCrmPerms::IsAdmin();
 $enableOutmodedFields = $arResult['ENABLE_OUTMODED_FIELDS'] = ContactSettings::getCurrent()->areOutmodedRequisitesEnabled();
 
 $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
+if (!isset($arParams['PATH_TO_CONTACT_LIST']) && $arResult['CATEGORY_ID'] > 0)
+{
+	$arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_CATEGORY', $arParams['PATH_TO_CONTACT_CATEGORY'], $APPLICATION->GetCurPage());
+	$arParams['PATH_TO_CONTACT_LIST'] = str_replace('#category_id#', $arResult['CATEGORY_ID'], $arParams['PATH_TO_CONTACT_LIST']);
+}
 $arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_LIST', $arParams['PATH_TO_CONTACT_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath('PATH_TO_CONTACT_DETAILS', $arParams['PATH_TO_CONTACT_DETAILS'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&details');
 $arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');

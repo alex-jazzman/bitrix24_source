@@ -179,6 +179,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 				&& mb_strpos($status['ENTITY_ID'], 'DEAL_STAGE') !== 0
 				&& mb_strpos($status['ENTITY_ID'], 'DYNAMIC_') !== 0
 				&& mb_strpos($status['ENTITY_ID'], 'SMART_INVOICE_') !== 0
+				&& mb_strpos($status['ENTITY_ID'], 'SMART_DOCUMENT_') !== 0
 			)
 			{
 				continue;

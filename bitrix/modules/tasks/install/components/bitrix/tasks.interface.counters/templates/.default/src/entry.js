@@ -4,7 +4,8 @@ import { Menu, MenuItem } from 'main.popup';
 import { Filter } from './counters-helper';
 import CountersItem from './counters-item';
 
-import './style.css'
+import 'ui.fonts.opensans';
+import './style.css';
 
 export class Counters
 {

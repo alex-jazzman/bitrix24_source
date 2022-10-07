@@ -12,7 +12,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
 
-UI\Extension::load('tasks.comment-action-controller');
+UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'tasks.comment-action-controller']);
 
 if ($arResult["LIKE_TEMPLATE"] == 'like_react')
 {

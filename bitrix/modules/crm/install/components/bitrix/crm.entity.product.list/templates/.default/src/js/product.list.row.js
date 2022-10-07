@@ -710,7 +710,7 @@ export class Row
 
 	setFields(fields: Object): void
 	{
-		for (let name in fields)
+		for (const name in fields)
 		{
 			if (fields.hasOwnProperty(name))
 			{
@@ -1179,17 +1179,26 @@ export class Row
 		const taxList = this.getEditor().getTaxList();
 		if (Type.isArrayFilled(taxList))
 		{
-			const taxRate = taxList.find((item) => parseInt(item.ID) === parseInt(value));
+			let taxRate = taxList.find((item) => parseInt(item.ID) === parseInt(value));
+			if (!taxRate)
+			{
+				taxRate = taxList.find((item) => Type.isNil(item.VALUE));
+			}
+
 			if (taxRate)
 			{
-				this.changeTaxRate(this.parseFloat(taxRate.VALUE));
+				this.changeTaxRate(taxRate.VALUE);
 			}
 		}
 	}
 
-	changeTaxRate(value: number): void
+	changeTaxRate(value: number | null): void
 	{
-		const preparedValue = this.parseFloat(value, this.getCommonPrecision());
+		const preparedValue =
+			Type.isNil(value) || value === ''
+				? null
+				: this.parseFloat(value, this.getCommonPrecision())
+		;
 
 		this.setTaxRate(preparedValue);
 	}
@@ -1997,9 +2006,17 @@ export class Row
 				{
 					value = this.parseFloat(value, this.getQuantityPrecision());
 				}
-				else if (field === 'DISCOUNT_RATE' || field === 'TAX_RATE')
+				else if (field === 'DISCOUNT_RATE')
 				{
 					value = this.parseFloat(value, this.getCommonPrecision());
+				}
+				else if (field === 'TAX_RATE')
+				{
+					value =
+						Type.isNil(value) || value === ''
+							? ''
+							: this.parseFloat(value, this.getCommonPrecision())
+					;
 				}
 				else if (value === 0)
 				{

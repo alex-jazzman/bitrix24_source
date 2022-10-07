@@ -548,6 +548,10 @@ final class Deal extends Factory
 				),
 			)
 			->addAction(
+				Operation::ACTION_BEFORE_SAVE,
+				new Operation\Action\Compatible\SendEvent\ProductRowsSave('OnBeforeCrmDealProductRowsSave'),
+			)
+			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\ClearCache('b_crm_deal'),
 			)
@@ -581,6 +585,10 @@ final class Deal extends Factory
 					'OnBeforeCrmDealUpdate',
 					'CRM_DEAL_UPDATE_CANCELED',
 				),
+			)
+			->addAction(
+				Operation::ACTION_BEFORE_SAVE,
+				new Operation\Action\Compatible\SendEvent\ProductRowsSave('OnBeforeCrmDealProductRowsSave'),
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,

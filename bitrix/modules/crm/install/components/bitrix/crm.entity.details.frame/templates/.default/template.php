@@ -1,5 +1,9 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -67,6 +71,9 @@ if($arResult['IFRAME'])
 					$APPLICATION->ShowViewContent("inside_pagetitle");
 				?></div>
 				<div class="pagetitle">
+					<div class="pagetitle-title-prefix"><?php
+						$APPLICATION->ShowViewContent('crm_details_title_prefix');
+					?></div>
 					<span id="pagetitle_icon"></span>
 					<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle()?></span>
 					<span id="pagetitle_btn_wrapper" class="pagetitile-button-container">

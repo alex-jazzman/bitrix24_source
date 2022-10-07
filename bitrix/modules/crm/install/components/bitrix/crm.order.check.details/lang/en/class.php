@@ -18,6 +18,7 @@ $MESS["CRM_ORDER_CASHBOX_STATUS_P"] = "Printing";
 $MESS["CRM_ORDER_CASHBOX_STATUS_Y"] = "Printed";
 $MESS["CRM_ORDER_CHECK_ADD_TITLE"] = "Add New Receipt";
 $MESS["CRM_ORDER_CHECK_LINK"] = "Receipt link";
+$MESS["CRM_ORDER_CHECK_NOT_FOUND"] = "Receipt was not found";
 $MESS["CRM_ORDER_CHECK_TITLE"] = "Receipt ##ID# of #DATE_CREATE#";
 $MESS["CRM_ORDER_COPY_PAGE_TITLE"] = "Copy Receipt";
 $MESS["CRM_ORDER_NOT_FOUND"] = "Order was not found.";

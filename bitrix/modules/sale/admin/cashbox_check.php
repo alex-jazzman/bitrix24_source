@@ -10,6 +10,10 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\Internals\StatusTable;
 use Bitrix\Main\Loader;
+use Bitrix\Sale\Link\EntityLinkBuilder\AdminEntityLinkBuilder;
+use Bitrix\Sale\Link\EntityLinkBuilder\CrmEntityLinkBuilder;
+use Bitrix\Sale\Link\Html\EntityLink;
+use Bitrix\Sale\Link\Html\OrderLink;
 
 $publicMode = $adminPage->publicMode || $adminSidePanelHelper->isPublicSidePanel();
 $shouldHideOrderEntities = (
@@ -17,48 +21,6 @@ $shouldHideOrderEntities = (
 	&& Loader::includeModule('crm')
 	&& !CCrmSaleHelper::isWithOrdersMode()
 );
-
-$orderEntityLinkBuilderClass = new class($publicMode)
-{
-	/** @var bool */
-	private $publicMode;
-
-	public function __construct(bool $publicMode)
-	{
-		$this->publicMode = $publicMode;
-	}
-
-	public function getEntityDetailUrl(int $orderId): string
-	{
-		return (string)Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
-			->getEntityDetailUrlByOrderId($orderId);
-	}
-
-	public function getShipmentDetailsLink(int $orderId, int $shipmentId): string
-	{
-		$result = 'sale_order_shipment_edit.php?order_id=' . $orderId . '&shipment_id=' . $shipmentId . '&lang=' . LANGUAGE_ID;
-		if ($this->publicMode)
-		{
-			$result = Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
-				->getShipmentDetailsLink($shipmentId);
-		}
-
-		return $result;
-	}
-
-	public function getPaymentDetailsLink(int $orderId, int $paymentId): string
-	{
-		$result = 'sale_order_payment_edit.php?order_id=' . $orderId . '&payment_id=' . $paymentId . '&lang=' . LANGUAGE_ID;
-		if ($this->publicMode)
-		{
-			$result = Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
-				->getPaymentDetailsLink($paymentId);
-		}
-
-		return $result;
-	}
-};
-$orderEntityLinkBuilder = new $orderEntityLinkBuilderClass($publicMode);
 
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 
@@ -70,6 +32,12 @@ IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/prolog.php");
 Page\Asset::getInstance()->addJs("/bitrix/js/sale/cashbox.js");
 \Bitrix\Main\Loader::includeModule('sale');
+
+$orderEntityLinkBuilder =
+	$publicMode && Loader::includeModule('crm')
+		? new CrmEntityLinkBuilder()
+		: new AdminEntityLinkBuilder()
+;
 
 $tableId = "tbl_sale_cashbox_check";
 $instance = \Bitrix\Main\Application::getInstance();
@@ -213,15 +181,26 @@ $lAdmin->setFilterPresets($filterPresets);
 
 $lAdmin->AddFilter($filterFields, $filter);
 
-$params = array(
-	'filter' => $filter
-);
-
 global $by, $order;
 $by = isset($by) ? $by : "ID";
 $order = isset($order) ? $order : "ASC";
-$params['order'] = array($by => $order);
 
+$params = array(
+	'filter' => $filter,
+	'order' => [$by => $order],
+	'runtime' => []
+);
+
+if ($shouldHideOrderEntities)
+{
+	$params['runtime'][] = new \Bitrix\Main\Entity\ReferenceField('ORDER_BINDING',
+		\Bitrix\Crm\Binding\OrderEntityTable::getEntity(),
+		[
+			'=ref.ORDER_ID' => 'this.ORDER_ID',
+		],
+		['join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_INNER]
+	);
+}
 $dbResultList = new CAdminUiResult(Internals\CashboxCheckTable::getList($params), $tableId);
 
 $dbResultList->NavStart();
@@ -233,7 +212,7 @@ $headers = array(
 		$shouldHideOrderEntities
 			? [
 			"id" => "ENTITY_ID",
-			"content" => GetMessage("SALE_CASHBOX_ENTITY_ID"),
+			"content" => GetMessage("SALE_CASHBOX_ENTITY_ID_SOURCE"),
 			"sort" => "ORDER_ID",
 			"default" => true
 		]
@@ -377,27 +356,31 @@ while ($check = $dbResultList->Fetch())
 	$checkName = class_exists($checkClass) ? $checkClass::getName() : '';
 	$row->AddField("CHECK_TYPE", $checkName);
 
+	$orderId = (int)$check['ORDER_ID'];
 	if ($shouldHideOrderEntities)
 	{
-		$entityIdUrl = $orderEntityLinkBuilder->getEntityDetailUrl((int)$check['ORDER_ID']);
-		$entityId = Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
-			->getEntityOwnerIdByOrderId($check['ORDER_ID']);
-		$entityField = $entityIdUrl ? "<a href=\"".$entityIdUrl."\">" . $entityId . "</a>" : $entityId;
+		$entityLink = $orderEntityLinkBuilder->getOrderDetailUrl($orderId);
+		if ($orderEntityLinkBuilder instanceof CrmEntityLinkBuilder)
+		{
+			$relatedEntityLink = $orderEntityLinkBuilder->getEntityDetailUrl($orderId);
+			if ($relatedEntityLink)
+			{
+				$entityLink = $relatedEntityLink;
+			}
+		}
 
-		$row->AddField("ENTITY_ID",  $entityField);
+		$row->AddField("ENTITY_ID", EntityLink::createByOrder($orderId, $entityLink)->render());
 	}
 	else
 	{
 		$orderField = '';
-		if ($check['ORDER_ID'] > 0)
+		if ($orderId > 0)
 		{
-			$orderIdUrl = "sale_order_view.php?ID=".(int)$check['ORDER_ID']."&lang=".LANGUAGE_ID;
-			if ($publicMode)
-			{
-				$orderIdUrl = "/shop/orders/details/".(int)$check['ORDER_ID']."/";
-			}
-
-			$orderField = "<a href=\"".$orderIdUrl."\">".(int)$check['ORDER_ID']."</a>";
+			$orderField = new OrderLink(
+				$orderId,
+				$orderEntityLinkBuilder->getOrderDetailUrl($orderId)
+			);
+			$orderField = $orderField->render();
 		}
 
 		$row->AddField("ORDER_ID",  $orderField);

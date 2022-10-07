@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_CHANGE_NEW_RESPONSIBLE_ID"] = "Змінено відповідальну особу, тепер —";
 $MESS["CRM_CHANGE_RESPONSIBLE_EMPTY_PROP"] = "Не вказано відповідального";
 $MESS["CRM_CHANGE_RESPONSIBLE_GETTER_TYPE"] = "Як обирати";
 $MESS["CRM_CHANGE_RESPONSIBLE_GETTER_TYPE_F"] = "конкретно";

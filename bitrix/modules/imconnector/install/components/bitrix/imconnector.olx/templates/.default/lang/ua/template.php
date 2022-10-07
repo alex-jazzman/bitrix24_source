@@ -12,9 +12,11 @@ $MESS["IMCONNECTOR_COMPONENT_OLX_CONNECT_HELP"] = "<div class=\"imconnector-fiel
     <div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Підключити</span> OLX акаунт</div>";
 $MESS["IMCONNECTOR_COMPONENT_OLX_CONNECT_STEP"] = "Для підключення необхідно <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">створити акаунт</a>
 або підключити вже існуючий. Якщо у вас ще немає акаунту, ми допоможемо створити його в кілька кроків і підключити до вашого Бітрікс24";
+$MESS["IMCONNECTOR_COMPONENT_OLX_CONNECT_STEP_NEW"] = "Для підключення необхідно #LINK_START#створити обліковий запис#LINK_END# або під'єднати наявний. Якщо у вас ще немає облікового запису, ми допоможемо створити його й під'єднати до Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_OLX_CONNECT_TITLE"] = "Підключіть OLX до Відкритої лінії";
 $MESS["IMCONNECTOR_COMPONENT_OLX_FINAL_FORM_DESCRIPTION"] = "OLX успішно підключений до вашої Відкритої лінії. Тепер усі звернення у ваш акаунт будуть автоматично спрямовані у ваш Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_OLX_INDEX_ADDITIONAL_DESCRIPTION"] = "Для підключення необхідно <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">створити акаунт</a> OLX або підключити вже існуючий. Якщо у вас ще немає облікового запису, ми допоможемо створити його за кілька кроків і підключити до вашого Бітрікс24.";
+$MESS["IMCONNECTOR_COMPONENT_OLX_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "Для підключення необхідно #LINK_START#створити обліковий запис#LINK_END# або під'єднати наявний. Якщо у вас ще немає облікового запису, ми допоможемо створити його за кілька кроків і під'єднати до Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_OLX_INDEX_SUBTITLE"] = "Об'єднайте всі канали спілкування з клієнтами в Бітрікс24. Це допоможе вам відповідати швидше й підвищить конверсію в продажах.";
 $MESS["IMCONNECTOR_COMPONENT_OLX_INDEX_TITLE"] = "Продаєте на OLX? Приймайте питання від клієнтів у Бітрікс24";
 $MESS["IMCONNECTOR_COMPONENT_OLX_INFO"] = "Інформація";

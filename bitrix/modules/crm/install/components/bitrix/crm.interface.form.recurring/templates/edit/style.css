@@ -628,7 +628,7 @@ select.crm-recur-options-inp {
 }
 .crm-recur-options-client-email-list{
 	display: inline-block;
-	font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:13px;
 	color:#0b66c3;
 	line-height:14px;

@@ -25,6 +25,8 @@ Asset::getInstance()->addJs("/bitrix/js/tasks/task-iframe-popup.js");
 $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'ui.counter',
 	'ui.entity-selector',
 	'ui.icons.b24',

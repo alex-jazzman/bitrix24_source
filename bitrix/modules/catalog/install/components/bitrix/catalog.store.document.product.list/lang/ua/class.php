@@ -20,6 +20,7 @@ $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_COLUMN_STORE_TO_AMOUNT"] = "Кількіс�
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_COLUMN_STORE_TO_AMOUNT_AVAILABLE"] = "Доступний залишок на складі-одержувачу";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_COLUMN_STORE_TO_AMOUNT_RESERVED"] = "Зарезервована кількість на складі-одержувачу";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_COLUMN_STORE_TO_INFO"] = "Склад-одержувач";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_COLUMN_TOTAL_PRICE"] = "Cума";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ERR_ACCESS_DENIED"] = "Доступ заборонено";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_SETTING_NEW_ROW_POSITION_TITLE"] = "Додавати товар на початок списку";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_WRONG_CATALOG_ID"] = "Неправильний ідентифікатор каталогу";

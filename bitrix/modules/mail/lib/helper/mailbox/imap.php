@@ -928,6 +928,14 @@ class Imap extends Mail\Helper\Mailbox
 		}
 	}
 
+	/**
+	 * @param $mailboxID
+	 * @param $dirPath
+	 * @param $UIDs
+	 * @return bool - success status
+	 * @throws Main\DB\SqlQueryException
+	 * @throws Main\SystemException
+	 */
 	public function syncMessages($mailboxID, $dirPath, $UIDs)
 	{
 		$meta = $this->client->select($dirPath, $error);
@@ -987,12 +995,32 @@ class Imap extends Mail\Helper\Mailbox
 
 			$this->blacklistMessages($dir->getPath(), $messages);
 
-			$this->prepareMessages($dir->getPath(), $uidtoken, $messages);
+			$this->removeExistingMessagesFromSynchronizationList($dir->getPath(), $uidtoken, $messages);
 
-			foreach ($messages as $id => $item)
+			foreach ($messages as &$message)
 			{
-				$hashesMAp = [];
-				$this->syncMessage($dir->getPath(), $uidtoken, $item, $hashesMAp, true);
+				$this->fillMessageFields($message, $dir->getPath(), $uidtoken);
+			}
+
+			$this->linkWithExistingMessages($messages);
+
+			foreach ($messages as $item)
+			{
+				$isOutgoing = false;
+
+				if(empty($item['__replaces']))
+				{
+					$outgoingMessageId = $this->selectOutgoingMessageIdFromHeader($item);
+
+					if($outgoingMessageId)
+					{
+						$item['__replaces'] = $outgoingMessageId;
+						$isOutgoing = true;
+					}
+				}
+
+				$hashesMap = [];
+				$this->syncMessage($dir->getPath(), $item, $hashesMap, true, $isOutgoing);
 
 				if ($this->isTimeQuotaExceeded())
 				{
@@ -1001,6 +1029,16 @@ class Imap extends Mail\Helper\Mailbox
 			}
 
 		}
+		return true;
+	}
+
+	public function isAuthenticated(): bool
+	{
+		if (\Bitrix\Mail\Helper::getImapUnseen($this->mailbox, 'inbox') === false)
+		{
+			return false;
+		}
+
 		return true;
 	}
 
@@ -1013,7 +1051,7 @@ class Imap extends Mail\Helper\Mailbox
 
 		$mailboxID = $this->mailbox['ID'];
 
-		$UIDsOnService  = \Bitrix\Mail\Helper::getImapUIDsForSpecificDay($mailboxID, $dirPath, $internalDate);
+		$UIDsOnService = \Bitrix\Mail\Helper::getImapUIDsForSpecificDay($mailboxID, $dirPath, $internalDate);
 
 		return $this->syncMessages($mailboxID, $dirPath, $UIDsOnService);
 	}
@@ -1099,17 +1137,37 @@ class Imap extends Mail\Helper\Mailbox
 
 			$this->blacklistMessages($dir->getPath(), $messages);
 
-			$this->prepareMessages($dir->getPath(), $uidtoken, $messages);
+			$this->removeExistingMessagesFromSynchronizationList($dir->getPath(), $uidtoken, $messages);
 
-			$hashesMap = array();
+			foreach ($messages as &$message)
+			{
+				$this->fillMessageFields($message, $dir->getPath(), $uidtoken);
+			}
+
+			$this->linkWithExistingMessages($messages);
+
+			$hashesMap = [];
 
 			//To display new messages(grid reload) until synchronization is complete
 			$numberOfMessagesInABatch = 1;
 			$numberLeftToFillTheBatch = $numberOfMessagesInABatch;
 
-			foreach ($messages as $id => $item)
+			foreach ($messages as $item)
 			{
-				if ($this->syncMessage($dir->getPath(), $uidtoken, $item, $hashesMap))
+				$isOutgoing = false;
+
+				if(empty($item['__replaces']))
+				{
+					$outgoingMessageId = $this->selectOutgoingMessageIdFromHeader($item);
+
+					if($outgoingMessageId)
+					{
+						$item['__replaces'] = $outgoingMessageId;
+						$isOutgoing = true;
+					}
+				}
+
+				if ($this->syncMessage($dir->getPath(), $item, $hashesMap, false, $isOutgoing))
 				{
 					$this->lastSyncResult['newMessageId'] = end($hashesMap);
 					$messagesSynced++;
@@ -1121,13 +1179,14 @@ class Imap extends Mail\Helper\Mailbox
 						$numberLeftToFillTheBatch = $numberOfMessagesInABatch;
 						\CPullWatch::addToStack(
 							'mail_mailbox_' . $this->mailbox['ID'],
-							array(
-								'params' => array(
-									'dir' => $dir->getPath()
-								),
+							[
+								'params' => [
+									'dir' => $dir->getPath(),
+									'mailboxId' => $this->mailbox['ID'],
+								],
 								'module_id' => 'mail',
 								'command' => 'new_message_is_synchronized',
-							)
+							]
 						);
 						\Bitrix\Pull\Event::send();
 					}
@@ -1483,9 +1542,25 @@ class Imap extends Mail\Helper\Mailbox
 		}
 	}
 
-	protected function prepareMessages($dirPath, $uidtoken, &$messages)
+	protected function buildMessageIdForDataBase($dirPath, $uidToken, $UID): string
 	{
-		$excerpt = array();
+		return md5(sprintf('%s:%u:%u', $dirPath, $uidToken, $UID));
+	}
+
+	protected function buildMessageHeaderHashForDataBase($message): string
+	{
+		return md5(sprintf(
+			'%s:%s:%u',
+			trim($message['BODY[HEADER]']),
+			$message['INTERNALDATE'],
+			$message['RFC822.SIZE']
+		));
+	}
+
+
+	protected function removeExistingMessagesFromSynchronizationList($dirPath, $uidToken, &$messages)
+	{
+		$existingMessagesId = [];
 
 		$range = array(
 			reset($messages)['UID'],
@@ -1494,10 +1569,12 @@ class Imap extends Mail\Helper\Mailbox
 		sort($range);
 
 		$result = $this->listMessages(array(
-			'select' => array('ID'),
+			'select' => [
+				'ID'
+			],
 			'filter' => array(
 				'=DIR_MD5'  => md5(Emoji::encode($dirPath)),
-				'=DIR_UIDV' => $uidtoken,
+				'=DIR_UIDV' => $uidToken,
 				'>=MSG_UID' => $range[0],
 				'<=MSG_UID' => $range[1],
 			),
@@ -1505,73 +1582,75 @@ class Imap extends Mail\Helper\Mailbox
 
 		while ($item = $result->fetch())
 		{
-			$excerpt[] = $item['ID'];
+			$existingMessagesId[] = $item['ID'];
 		}
 
-		$uids = array();
-		$hashes = array();
 		foreach ($messages as $id => $item)
 		{
-			$messageUid = md5(sprintf('%s:%u:%u', $dirPath, $uidtoken, $item['UID']));
+			$messageUid = $this->buildMessageIdForDataBase($dirPath, $uidToken, $item['UID']);
 
-			if (in_array($messageUid, $excerpt))
+			if (in_array($messageUid, $existingMessagesId))
 			{
 				unset($messages[$id]);
 				continue;
 			}
 
-			$excerpt[] = $uids[$id] = $messageUid;
+			//We also remove duplicate messages
+			$existingMessagesId[] = $messageUid;
+		}
+	}
 
-			$hashes[$id] = md5(sprintf(
-				'%s:%s:%u',
-				trim($item['BODY[HEADER]']),
-				$item['INTERNALDATE'],
-				$item['RFC822.SIZE']
-			));
+	protected function searchExistingMessagesByHeaderInDataBase($headerHashes)
+	{
+		return $this->listMessages([
+			'select' => ['HEADER_MD5', 'MESSAGE_ID', 'DATE_INSERT'],
+			'filter' => [
+				'@HEADER_MD5' => $headerHashes,
+			],
+		], false);
+	}
 
-			$messages[$id]['__internaldate'] = Main\Type\DateTime::createFromPhp(
-				\DateTime::createFromFormat(
-					'j-M-Y H:i:s O',
-					ltrim(trim($item['INTERNALDATE']), '0')
-				) ?: new \DateTime
-			);
+	protected function searchExistingMessagesByIdInDataBase($idsForDataBase)
+	{
+		return $this->listMessages(array(
+			'select' => array('ID', 'MESSAGE_ID', 'DATE_INSERT'),
+			'filter' => array(
+				'@ID' => array_values($idsForDataBase),
+			),
+		), false);
+	}
 
-			$messages[$id]['__fields'] = array(
-				'ID'           => $messageUid,
-				'DIR_MD5'      => md5(Emoji::encode($dirPath)),
-				'DIR_UIDV'     => $uidtoken,
-				'MSG_UID'      => $item['UID'],
-				'INTERNALDATE' => $messages[$id]['__internaldate'],
-				'IS_SEEN'      => preg_grep('/^ \x5c Seen $/ix', $item['FLAGS']) ? 'Y' : 'N',
-				'HEADER_MD5'   => $hashes[$id],
-				'MESSAGE_ID'   => 0,
-			);
+	protected function linkWithExistingMessages(&$messages)
+	{
+		$hashes = [];
+		$idsForDataBase = [];
 
-			if (preg_match('/X-Bitrix-Mail-Message-UID:\s*([a-f0-9]+)/i', $item['BODY[HEADER]'], $matches))
-			{
-				$messages[$id]['__replaces'] = $matches[1];
-			}
+		foreach ($messages as $id => $item)
+		{
+			$hashes[$id] = $item['__fields']['HEADER_MD5'];
+			$idsForDataBase[$id] = $item['__fields']['ID'];
 		}
 
-		$hashesMap = array();
+		$hashesMap = [];
+
 		foreach ($hashes as $id => $hash)
 		{
 			if (!array_key_exists($hash, $hashesMap))
 			{
-				$hashesMap[$hash] = array();
+				$hashesMap[$hash] = [];
 			}
 
 			$hashesMap[$hash][] = $id;
 		}
 
-		$result = $this->listMessages(array(
-			'select' => array('HEADER_MD5', 'MESSAGE_ID', 'DATE_INSERT'),
-			'filter' => array(
-				'@HEADER_MD5' => array_keys($hashesMap),
-			),
-		), false);
+		$existingMessages = $this->searchExistingMessagesByHeaderInDataBase(array_keys($hashesMap));
 
-		while ($item = $result->fetch())
+		/*
+			For example, Gmail's labels act like "tags".
+			Any individual email message can have multiple labels,
+			and thus appear under multiple dirs.
+		*/
+		while ($item = $existingMessages->fetch())
 		{
 			foreach ((array)$hashesMap[$item['HEADER_MD5']] as $id)
 			{
@@ -1580,20 +1659,51 @@ class Imap extends Mail\Helper\Mailbox
 			}
 		}
 
-		$result = $this->listMessages(array(
-			'select' => array('ID', 'MESSAGE_ID', 'DATE_INSERT'),
-			'filter' => array(
-				'@ID' => array_values($uids),
-				// DIR_MD5 can be empty in DB
-			),
-		), false);
+		$existingMessages = $this->searchExistingMessagesByIdInDataBase($idsForDataBase);
 
-		while ($item = $result->fetch())
+		/*
+			To restore messages stored with "broken" directories.
+			For example, previously, data for messages in directories containing emojis were stored incorrectly in the database.
+		*/
+		while ($item = $existingMessages->fetch())
 		{
-			$id = array_search($item['ID'], $uids);
+			$id = array_search($item['ID'], $idsForDataBase);
 			$messages[$id]['__created'] = $item['DATE_INSERT'];
 			$messages[$id]['__fields']['MESSAGE_ID'] = $item['MESSAGE_ID'];
 			$messages[$id]['__replaces'] = $item['ID'];
+		}
+	}
+
+	protected function fillMessageFields(&$message, $dirPath, $uidToken)
+	{
+		$message['__internaldate'] = Main\Type\DateTime::createFromPhp(
+			\DateTime::createFromFormat(
+				'j-M-Y H:i:s O',
+				ltrim(trim($message['INTERNALDATE']), '0')
+			) ?: new \DateTime
+		);
+
+		$message['__fields'] = [
+			'ID'           => $this->buildMessageIdForDataBase($dirPath, $uidToken, $message['UID']),
+			'DIR_MD5'      => md5(Emoji::encode($dirPath)),
+			'DIR_UIDV'     => $uidToken,
+			'MSG_UID'      => $message['UID'],
+			'INTERNALDATE' => $message['__internaldate'],
+			'IS_SEEN'      => preg_grep('/^ \x5c Seen $/ix', $message['FLAGS']) ? 'Y' : 'N',
+			'HEADER_MD5'   => $this->buildMessageHeaderHashForDataBase($message),
+			'MESSAGE_ID'   => 0,
+		];
+	}
+
+	protected function selectOutgoingMessageIdFromHeader($message)
+	{
+		if (preg_match('/X-Bitrix-Mail-Message-UID:\s*([a-f0-9]+)/i', $message['BODY[HEADER]'], $matches))
+		{
+			return $matches[1];
+		}
+		else
+		{
+			return false;
 		}
 	}
 
@@ -1737,7 +1847,7 @@ class Imap extends Mail\Helper\Mailbox
 		return $result->isSuccess();
 	}
 
-	protected function syncMessage($dirPath, $uidtoken, $message, &$hashesMap = array(), $ignoreSyncFrom = false)
+	protected function syncMessage($dirPath, $message, &$hashesMap = [], $ignoreSyncFrom = false, $isOutgoing = false)
 	{
 		$fields = $message['__fields'];
 
@@ -1753,7 +1863,7 @@ class Imap extends Mail\Helper\Mailbox
 			}
 		}
 
-		if (!$this->registerMessage($fields, isset($message['__replaces']) ? $message['__replaces'] : null))
+		if (!$this->registerMessage($fields, ($message['__replaces'] ?? null), $isOutgoing))
 		{
 			return false;
 		}
@@ -1946,7 +2056,7 @@ class Imap extends Mail\Helper\Mailbox
 			}
 		};
 
-		list($bodyHtml, $bodyText, $attachments) = $message['__bodystructure']->traverse(
+		[$bodyHtml, $bodyText, $attachments] = $message['__bodystructure']->traverse(
 			function (Mail\Imap\BodyStructure $item, &$subparts) use (&$message, &$complete)
 			{
 				$parts = &$message['__parts'];

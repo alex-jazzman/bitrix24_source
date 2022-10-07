@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SOC_OPT_B24NET_CLIENT_ID"] = "Ідентифікатор порталу";
 $MESS["SOC_OPT_B24NET_CLIENT_SECRET"] = "Секретний код порталу";
 $MESS["SOC_OPT_B24NET_GET"] = "Отримати";
@@ -33,4 +33,4 @@ $MESS["socserv_sett_common_title"] = "Загальні налаштування 
 $MESS["socserv_sett_site"] = "Налаштування для сайту";
 $MESS["socserv_sett_site_apply"] = "Застосувати індивідуальні налаштування для цього сайту:";
 $MESS["socserv_twit_to_buzz"] = "Транслювати твіти користувачів з хештегом #hash# в живу стрічку";
-?>
+$MESS["socserv_twit_to_buzz2"] = "Транслювати твіти користувачів із хештегом #hash# у стрічку новин";

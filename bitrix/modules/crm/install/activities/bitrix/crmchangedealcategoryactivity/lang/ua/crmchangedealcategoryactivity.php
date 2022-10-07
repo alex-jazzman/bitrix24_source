@@ -1,6 +1,7 @@
 <?php
 $MESS["CRM_CDCA_CATEGORY"] = "Напрямок";
 $MESS["CRM_CDCA_CYCLING_ERROR"] = "Угода не переміщена. Підозра на зациклення дії";
+$MESS["CRM_CDCA_CYCLING_EXCEPTION_MESSAGE"] = "Виконання робота пропущено";
 $MESS["CRM_CDCA_EMPTY_CATEGORY"] = "Не вказаний напрямок";
 $MESS["CRM_CDCA_MOVE_ERROR"] = "Не вдалося змінити напрямок (Код помилки: #ERROR_CODE#)";
 $MESS["CRM_CDCA_MOVE_ERROR_CATEGORY_NOT_CHANGED"] = "Угода вже належить до даного напрямку";

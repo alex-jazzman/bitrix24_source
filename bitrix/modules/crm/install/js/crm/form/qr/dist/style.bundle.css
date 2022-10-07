@@ -55,7 +55,7 @@
 	--gray: rgba(51,51,51,1);
 	--dark-grey: rgba(32,32,32,1);
 
-	--font_helvetica: "Helvetica Neue", Helvetica Neue, Helvetica, Arial, sans-serif;
+	--font_helvetica: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform__qr-icon {
@@ -336,7 +336,7 @@
 	height: 64px;
 	padding-right: 10px;
 	border-bottom: 1px solid var(--graphite_alpha_10);
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-weight: bold;
 	font-size: 16px;
 	line-height: 20px;
@@ -455,7 +455,7 @@
 .crm-webform__popup-copy {
 	height: 18px;
 	line-height: 18px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: var(--graphite);
 	cursor: pointer;

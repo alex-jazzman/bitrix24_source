@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["VOTE_ANONYMOUSLY"] = "Анонімно";
 $MESS["VOTE_ERROR"] = "Помилка:";
 $MESS["VOTE_ERROR_BY_COOKIE"] = "З цим cookie вже голосували [cookie].";
@@ -15,6 +15,7 @@ $MESS["VOTE_ERROR_SAME_DATE_VOTE_IS_ALREADY_EXISTS"] = "Дати опитува�
 $MESS["VOTE_GUEST"] = "Гость";
 $MESS["VOTE_GUESTS"] = "Гостей";
 $MESS["VOTE_IS_NOT_ACTIVE"] = "Опитування не активне.";
+$MESS["VOTE_IS_OCCUPIED"] = "Опитування в процесі голосування. Повторіть спробу пізніше.";
 $MESS["V_EXPORT_DATE"] = "Дата";
 $MESS["V_EXPORT_GENERAL_INFO"] = "Загальна інформація";
 $MESS["V_EXPORT_NAME"] = "Ім'я";
@@ -25,4 +26,3 @@ $MESS["V_NOTIFY_MESSAGE_HREF"] = "Брав участь в опитуванні 
 $MESS["V_NOTIFY_MESSAGE_HREF_F"] = "Приймала участь в опитуванні <a href=\"#VOTE_URL#\">#VOTE_TITLE#</a>.";
 $MESS["V_NOTIFY_MESSAGE_OUT_HREF"] = "Приймав участь в опитуванні \"#VOTE_TITLE#\" (#VOTE_URL#)";
 $MESS["V_NOTIFY_MESSAGE_OUT_HREF_F"] = "Приймала участь в опитуванні \"#VOTE_TITLE#\" (#VOTE_URL#)";
-?>

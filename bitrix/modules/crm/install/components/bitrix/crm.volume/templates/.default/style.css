@@ -369,7 +369,7 @@
 	text-align:center;
 }
 .crm-volume-popup-content {
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:16px;
 	min-width:500px;
 	color:#000;
@@ -389,7 +389,7 @@
 	background-color: #eef2f4;
 }
 .crm-volume-popup-content-title{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:15px;
 	font-weight:bold;
 	padding-bottom:20px;
@@ -416,7 +416,7 @@
 	height: 30px;
 	border-radius: 2px;
 	background: #bcedfc;
-	font: 15px/30px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: middle;
 	-webkit-transition: background 0.2s linear;
 	transition: background 0.2s linear;

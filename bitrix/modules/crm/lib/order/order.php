@@ -76,37 +76,6 @@ class Order extends Sale\Order
 			$this->setContactCompanyRequisites();
 		}
 
-		if ($this->enableAutomaticDealCreation())
-		{
-			$binding = $this->getEntityBinding();
-			if (!$binding)
-			{
-				$dealCreator = new DealCreator($this);
-				$dealId = $dealCreator->create();
-				if ($dealId)
-				{
-					$binding = $this->createEntityBinding();
-					$binding->setField('OWNER_ID', $dealId);
-					$binding->setField('OWNER_TYPE_ID', \CCrmOwnerType::Deal);
-					$binding->markEntityAsNew();
-
-					$this->markDealCreationTimelineEntry();
-				}
-			}
-		}
-
-		if (
-			Main\Loader::includeModule('landing')
-			&& $platform = $this->getTradeBindingCollection()->getTradingPlatform(
-				Landing::TRADING_PLATFORM_CODE,
-				Landing::LANDING_STORE_STORE_V3
-			)
-		)
-		{
-			$this->addTimelineEntryOnStoreV3OrderCreate();
-			$this->sendSmsToClientOnStoreV3OrderCreate($platform);
-		}
-
 		$this->addTimelineEntryOnCreate();
 
 		return $result;
@@ -266,6 +235,23 @@ class Order extends Sale\Order
 	{
 		$result = parent::onAfterSave();
 
+		if ($this->enableAutomaticDealCreation())
+		{
+			if ($this->isNew())
+			{
+				(new OrderDealSynchronizer)->createDealFromOrder($this);
+			}
+			elseif ($this->getBasket()->isChanged())
+			{
+				(new OrderDealSynchronizer)->updateDealFromOrder($this);
+			}
+		}
+
+		if ($this->isNew())
+		{
+			$this->processOnStoreV3OrderCreate();
+		}
+
 		if ($this->fields->isChanged('CANCELED') && $this->isCanceled() && Crm\Automation\Factory::canUseAutomation())
 		{
 			Crm\Automation\Trigger\OrderCanceledTrigger::execute(
@@ -280,12 +266,6 @@ class Order extends Sale\Order
 			if ($binding->isChanged() && !$this->enableAutomaticDealCreation())
 			{
 				$this->addTimelineEntryOnBindingDealChanged();
-			}
-
-			if ($binding->isNewEntity() && $this->enableAutomaticDealCreation())
-			{
-				$dealCreator = new DealCreator($this);
-				$dealCreator->addProductsToDeal($binding->getOwnerId());
 			}
 		}
 
@@ -664,6 +644,29 @@ class Order extends Sale\Order
 		return $result;
 	}
 
+	/**
+	 * Processing the creation of an order for the store.
+	 *
+	 * @return void
+	 */
+	private function processOnStoreV3OrderCreate(): void
+	{
+		if (!Main\Loader::includeModule('landing'))
+		{
+			return;
+		}
+
+		$platform = $this->getTradeBindingCollection()->getTradingPlatform(
+			Landing::TRADING_PLATFORM_CODE,
+			Landing::LANDING_STORE_STORE_V3
+		);
+		if ($platform)
+		{
+			$this->addTimelineEntryOnStoreV3OrderCreate();
+			$this->sendSmsToClientOnStoreV3OrderCreate($platform);
+		}
+	}
+
 	private function addTimelineEntryOnStoreV3OrderCreate(): void
 	{
 		$viewedProducts = $this->getViewedProducts();
@@ -808,17 +811,6 @@ class Order extends Sale\Order
 			Crm\Timeline\TimelineType::CREATION,
 			$selectedFields
 		);
-	}
-
-	private function markDealCreationTimelineEntry(): void
-	{
-		if ($this->getEntityBinding())
-		{
-			Crm\Timeline\OrderController::getInstance()->markDealAsCreatedFromOrder(
-				$this->getId(),
-				$this->getEntityBinding()->getOwnerId(),
-			);
-		}
 	}
 
 	/**

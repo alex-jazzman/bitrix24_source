@@ -471,7 +471,7 @@ a.crm-fake-widget-content-text {
 }
 
 .crm-portriat-popup-input {
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	display: inline-block;
 	vertical-align: middle;
 	background: #fff;

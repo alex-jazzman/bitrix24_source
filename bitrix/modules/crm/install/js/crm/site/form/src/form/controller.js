@@ -540,6 +540,7 @@ class Controller extends Event
 
 				case 'date':
 				case 'datetime':
+				case 'rq':
 					options.format = options.type === 'date'
 						? this.date.dateFormat
 						: this.date.dateTimeFormat;

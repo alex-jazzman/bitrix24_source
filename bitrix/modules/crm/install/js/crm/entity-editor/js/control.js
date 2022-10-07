@@ -6783,6 +6783,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		this._contactResetHandler = BX.delegate(this.onContactReset, this);
 		this._requisiteChangeHandler = BX.delegate(this.onRequisiteChange, this);
 		this._multifieldChangeHandler = BX.delegate(this.onMultifieldChange, this);
+		this._changeRequisiteControlData = {};
 	};
 	BX.extend(BX.Crm.EntityEditorClientLight, BX.Crm.EntityEditorField);
 	BX.Crm.EntityEditorClientLight.prototype.doInitialize = function()
@@ -7300,11 +7301,11 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 	{
 		var fieldsParams = this.getClientEditorFieldsParams(entityTypeName);
 		var result = ['PHONE', 'EMAIL'];
-		if (this.isClientFieldVisible('ADDRESS') && fieldsParams.hasOwnProperty('ADDRESS'))
+		if (this.isClientFieldVisible('ADDRESS') && fieldsParams.hasOwnProperty('ADDRESS') && fieldsParams.ADDRESS.isHidden !== true)
 		{
 			result.push('ADDRESS');
 		}
-		if (this.isClientFieldVisible('REQUISITES') && fieldsParams.hasOwnProperty('REQUISITES'))
+		if (this.isClientFieldVisible('REQUISITES') && fieldsParams.hasOwnProperty('REQUISITES') && fieldsParams.REQUISITES.isHidden !== true)
 		{
 			result.push('REQUISITES');
 		}
@@ -8229,12 +8230,15 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		}
 
 		var validator = BX.UI.EntityAsyncValidator.create();
-		var hasValidCompanies = this.validateSearchBoxes(this._companySearchBoxes, validator, result);
-		var hasValidContacts = this.validateSearchBoxes(this._contactSearchBoxes, validator, result);
-		if (!hasValidCompanies && !hasValidContacts && isRequired)
+		if(this.isInEditMode())
 		{
-			this.addValidationErrorToResult(result);
-			return false;
+			var hasValidCompanies = this.validateSearchBoxes(this._companySearchBoxes, validator, result);
+			var hasValidContacts = this.validateSearchBoxes(this._contactSearchBoxes, validator, result);
+			if (!hasValidCompanies && !hasValidContacts && isRequired)
+			{
+				this.addValidationErrorToResult(result);
+				return false;
+			}
 		}
 		return validator.validate();
 	};
@@ -8478,10 +8482,9 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		{
 			//Save immediately
 
-			var data;
 			if (this._schemeElement.getDataBooleanParam('enableMyCompanyOnly', false))
 			{
-				data = {
+				this._changeRequisiteControlData = {
 					'MC_REQUISITE_ID': BX.prop.getInteger(eventArgs, "requisiteId", 0),
 					'MC_BANK_DETAIL_ID': BX.prop.getInteger(eventArgs, "bankDetailId", 0),
 					'MYCOMPANY_ID': this._model.getNumberField('MYCOMPANY_ID')
@@ -8489,16 +8492,23 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			}
 			else
 			{
-				data = {
+				this._changeRequisiteControlData = {
 					'REQUISITE_ID': BX.prop.getInteger(eventArgs, "requisiteId", 0),
 					'BANK_DETAIL_ID': BX.prop.getInteger(eventArgs, "bankDetailId", 0)
 				};
 			}
-			this._editor.saveData(data);
+			this._editor.saveControl(this);
 
 			this._model.setField("REQUISITE_BINDING", null,  { enableNotification: false });
 		}
 	};
+
+	BX.Crm.EntityEditorClientLight.prototype.prepareSaveData = function(data)
+	{
+		BX.Crm.EntityEditorClientLight.superclass.prepareSaveData.call(this, data);
+		BX.mergeEx(data, this._changeRequisiteControlData);
+	};
+
 	// save changes in requisites in model
 	BX.Crm.EntityEditorClientLight.prototype.onRequisiteListChange = function(sender, eventArgs)
 	{
@@ -8574,6 +8584,10 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 	};
 	BX.Crm.EntityEditorClientLight.prototype.onBeforeSubmit = function()
 	{
+		if (this.getMode() === BX.UI.EntityEditorMode.view)
+		{
+			return;
+		}
 		var data = {};
 		if(this.isCompanyEnabled())
 		{

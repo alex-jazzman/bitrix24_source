@@ -29,7 +29,7 @@
 }
 .crm-report-chart-card-subtitle {
     /*display: block;*/
-    font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #A8ADB4;
     opacity: .84;
 }
@@ -223,7 +223,7 @@
 
 .crm-report-chart-through-funnel-widget-title {
     margin: 0 0 10px 0;
-    font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: rgba(51,51,51,.56);
 }
 .crm-report-chart-through-funnel-widget-value-box {
@@ -297,12 +297,12 @@
 .crm-report-chart-modal-subtitle {
     display: block;
     margin: 0 0 2px 0;
-    font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #A8ADB4;
     opacity: .84;
 }
 .crm-report-chart-modal-main .crm-report-chart-card-subtitle {
-    font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .crm-report-chart-modal-main {}
 .crm-report-chart-modal-content {
@@ -386,11 +386,11 @@
     z-index: 2;
 }
 .crm-report-chart-tooltip-value {
-    font: 700 11px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 700 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #525C69;
 }
 .crm-report-chart-tooltip-percent {
-    font: 700 9px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 700 9px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #828B95;
 }
 /* END OF TOOLTIP */
@@ -423,7 +423,7 @@
 }
 .crm-report-chart-scale-item {
     margin: 0 8px 0 0;
-    font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #808992;
 }
 
@@ -549,11 +549,11 @@
     margin: 0 8px 0 0;
     padding: 0 8px 0 0;
     border-right: 1px solid rgba(82,92,105,.17);
-    font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 13px/10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #364150;
 }
 .crm-report-chart-grid-rating-text {
-    font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     text-transform: uppercase;
 }
 .crm-report-chart-grid-rating-bold .crm-report-chart-grid-rating-value,

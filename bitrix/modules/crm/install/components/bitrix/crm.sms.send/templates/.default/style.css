@@ -97,3 +97,13 @@
 }
 
 .sms-symbol-counter-number-overhead { color: #d0011b; }
+
+.crm-sms-send-subtitle {
+	margin-bottom: 30px;
+	margin-top: -10px;
+	color: #b0b7bd;
+	margin-left: 6px;
+}
+.crm-sms-send-subtitle-sender {
+	color: #333;
+}

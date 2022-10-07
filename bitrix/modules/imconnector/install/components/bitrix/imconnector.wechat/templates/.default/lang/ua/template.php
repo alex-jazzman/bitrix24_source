@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_APP_ENCRYPT_KEY"] = "Введіть Message Encryption Key";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_APP_ID"] = "Введіть Developer ID (AppID):";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_APP_SECRET"] = "Введіть Developer Password (AppSecret)";
@@ -8,6 +8,7 @@ $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_HELP"] = "<div class=\"imconnector-f
     <div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Підключити</span> Wechat акаунт</div>";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP"] = "Для підключення необхідно <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">створити офіційний акаунт</a>
  або підключити вже існуючий. Якщо у вас ще немає офіційного акаунта, ми допоможемо створити його в кілька кроків і підключити до вашого Бітрікс24";
+$MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP_NEW"] = "Для підключення необхідно #LINK_START#створити офіційний обліковий запис#LINK_END# або під'єднати наявний. Якщо у вас ще немає облікового запису, ми допоможемо створити його й під'єднати до Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_TITLE"] = "Підключіть WeChat до Відкритої лінії";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_COPY"] = "Копіювати";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_FINAL_FORM_DESCRIPTION"] = "WeChat успішно підключений до вашої Відкритої лінії. Тепер усі звернення у ваш офіційний акаунт будуть автоматично спрямовані у ваш Бітрікс24.";
@@ -19,4 +20,3 @@ $MESS["IMCONNECTOR_COMPONENT_WECHAT_NAME_CHAT_LINK"] = "Посилання на 
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_SERVER_IP_ADDRESS_DESCRIPTION"] = "У особистому кабінеті офіційного акаунта, в полі IP whitelist вкажіть наступні значення (кожне на новому рядку)";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_TOKEN_DESCRIPTION"] = "У особистому кабінеті офіційного акаунта, в полі Token, вкажіть наступне значення";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_WEBHOOK_DESCRIPTION"] = "У особистому кабінеті офіційного акаунта, в полі URL, вкажіть наступну адресу:";
-?>

@@ -35,11 +35,18 @@ class CompilationManager
 		return self::$currentCompilationDealId;
 	}
 
-	public static function processOrderForCompilation($order): void
+	/**
+	 * Binded order for comlitation deal.
+	 *
+	 * @param mixed $order
+	 *
+	 * @return int|null complitation deal id
+	 */
+	public static function processOrderForCompilation($order): ?int
 	{
 		if (!($order instanceof \Bitrix\Crm\Order\Order))
 		{
-			return;
+			return null;
 		}
 
 		$currentCompilationDealId = self::getCurrentCompilationDealId();
@@ -50,14 +57,12 @@ class CompilationManager
 			{
 				// bind order to deal
 				$dealBinding = $order->createEntityBinding();
-				if ($dealBinding)
-				{
-					$dealBinding->setField('OWNER_TYPE_ID', \CCrmOwnerType::Deal);
-					$dealBinding->setField('OWNER_ID', $currentCompilationDealId);
-					Order\Manager::copyOrderProductsToDeal($order, $currentCompilationDealId);
-				}
+				$dealBinding->setField('OWNER_TYPE_ID', \CCrmOwnerType::Deal);
+				$dealBinding->setField('OWNER_ID', $currentCompilationDealId);
 			}
 		}
+
+		return $currentCompilationDealId;
 	}
 
 	public static function sendOrderBoundEvent($order)

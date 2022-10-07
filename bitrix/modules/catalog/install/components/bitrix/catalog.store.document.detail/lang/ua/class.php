@@ -14,5 +14,7 @@ $MESS["CATALOG_STORE_DOCUMENT_DETAIL_INCORRECT_VALUE"] = "Поле \"#FIELD_NAME
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_NO_VIEW_RIGHTS_ERROR"] = "Недостатньо прав для перегляду документа";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_NO_WRITE_RIGHTS_ERROR"] = "Недостатньо прав для збереження документа";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_SAVE_ERROR"] = "Сталася помилка при збереженні документа";
+$MESS["CATALOG_STORE_DOCUMENT_ERR_ACCESS_DENIED_BOX"] = "У вас недостатньо прав на доступ до Складського обліку. Для надання прав зверніться до Адміністратора Бітрікс24. <a href=\"https://training.bitrix24.com/support/training/course/index.php?COURSE_ID=178&LESSON_ID=25118\" target=\"_blank\">Докладніше</a>.";
+$MESS["CATALOG_STORE_DOCUMENT_ERR_ACCESS_DENIED_CLOUD"] = "У вас недостатньо прав на доступ до Складського обліку. Для надання прав зверніться до Адміністратора Бітрікс24. Адміністратору необхідно призначити роль менеджера в розділі налаштувань CRM. <a onclick=\"top.BX.Helper.show('redirect=detail&code=15955386')\" style=\"cursor: pointer; \">Докладніше</a>.";
 $MESS["CATALOG_STORE_DOCUMENT_NO_PRODUCT"] = "Для збереження документа необхідно обрати або створити товар";
 $MESS["CATALOG_STORE_DOCUMENT_SAVE_AND_CONDUCT_BUTTON"] = "Зберегти та провести";

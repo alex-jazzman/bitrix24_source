@@ -61,16 +61,12 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/tools.php");
 
 //Init new kernel
 $application = \Bitrix\Main\HttpApplication::getInstance();
-$application->initializeBasicKernel();
 $context = new \Bitrix\Main\HttpContext($application);
 $context->setLanguage(LANGUAGE_ID);
 $application->setContext($context);
 
 //Lang files
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/install.php");
-
-//Magic quotes
-UnQuoteAll();
 
 bx_accelerator_reset();
 
@@ -201,7 +197,6 @@ class AgreementStep4VM extends CWizardStep
 		IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
 
 		$application = \Bitrix\Main\HttpApplication::getInstance();
-		$application->initializeBasicKernel();
 		$conPool = $application->getConnectionPool();
 		$connection = $conPool->getConnection();
 
@@ -2350,7 +2345,6 @@ class CreateModulesStep extends CWizardStep
 			global $DB, $DBHost, $DBLogin, $DBPassword, $DBName, $DBDebug, $DBDebugToFile, $APPLICATION;
 
 			$application = \Bitrix\Main\HttpApplication::getInstance();
-			$application->initializeBasicKernel();
 
 			require_once($_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/php_interface/dbconn.php");
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/autoload.php");

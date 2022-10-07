@@ -3,7 +3,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2013 Bitrix
+ * @copyright 2001-2022 Bitrix
  */
 
 error_reporting(E_COMPILE_ERROR|E_ERROR|E_CORE_ERROR|E_PARSE);
@@ -20,21 +20,9 @@ require_once(__DIR__."/classes/general/version.php");
 // global functions
 require_once(__DIR__."/tools.php");
 
-//TODO remove this
-if(@ini_get_bool("register_long_arrays") != true)
-{
-	$HTTP_POST_FILES  = $_FILES;
-	$HTTP_SERVER_VARS = $_SERVER;
-	$HTTP_GET_VARS = $_GET;
-	$HTTP_POST_VARS = $_POST;
-	$HTTP_COOKIE_VARS = $_COOKIE;
-	$HTTP_ENV_VARS = $_ENV;
-}
-
 FormDecode();
 
 $application = \Bitrix\Main\HttpApplication::getInstance();
-$application->initializeBasicKernel();
 
 //Defined in dbconn.php
 global $DBType, $DBDebug, $DBDebugToFile, $DBHost, $DBName, $DBLogin, $DBPassword;
@@ -49,14 +37,11 @@ $DBLogin = "";
 $DBPassword = "";
 $DBName = "";
 
-if(defined('BX_UTF'))
-{
-	define('BX_UTF_PCRE_MODIFIER', 'u');
-}
-else
-{
-	define('BX_UTF_PCRE_MODIFIER', '');
-}
+define('BX_UTF_PCRE_MODIFIER', (defined('BX_UTF') ? 'u' : ''));
+
+define('BX_RESIZE_IMAGE_PROPORTIONAL_ALT', 0);
+define('BX_RESIZE_IMAGE_PROPORTIONAL', 1);
+define('BX_RESIZE_IMAGE_EXACT', 2);
 
 if(!defined("CACHED_b_lang")) define("CACHED_b_lang", 3600);
 if(!defined("CACHED_b_option")) define("CACHED_b_option", 3600);
@@ -120,8 +105,7 @@ else
 	define("LICENSE_KEY", $LICENSE_KEY);
 
 //language independed classes
-require_once(__DIR__."/classes/mysql/main.php");	//main class
-require_once(__DIR__."/classes/general/cache.php");	//various cache classes
+require_once(__DIR__."/classes/general/cache.php");
 require_once(__DIR__."/classes/general/module.php");
 
 error_reporting(E_COMPILE_ERROR|E_ERROR|E_CORE_ERROR|E_PARSE);

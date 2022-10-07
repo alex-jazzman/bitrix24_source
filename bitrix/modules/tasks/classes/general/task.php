@@ -5106,6 +5106,11 @@ class CTasks
 	 */
 	public static function RepeatTaskByTemplateId ($templateId, $flipFlop = 1, array &$debugHere = array())
 	{
+		if (\Bitrix\Tasks\Update\TemplateConverter::isProceed())
+		{
+			return 'CTasks::RepeatTaskByTemplateId('.$templateId.');';
+		}
+
 		return Replicator\Task\FromTemplate::repeatTask(
 			$templateId,
 			array(

@@ -189,7 +189,7 @@
 
 .crm-onec-header-futures-text {
 	color: #000;
-	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-onec-header-futures-icon {
@@ -214,7 +214,7 @@
 
 .crm-onec-install-description {
 	color: #000;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-onec-alert-warning {
@@ -280,7 +280,7 @@
 .crm-onec-section-info-link {
 	border-bottom: 1px solid;
 	color: #9b9b9b;
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-onec-block-title {

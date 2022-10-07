@@ -181,11 +181,11 @@ class Manager
 		{
 			$params['filter'] = array();
 		}
-		$params['filter']['ACTIVE'] = 'Y';
-		$params['filter']['IS_CALLBACK_FORM'] = 'N';
+		$params['filter']['=ACTIVE'] = 'Y';
+		$params['filter']['=IS_CALLBACK_FORM'] = 'N';
 
 		$list = array();
-		$listDb = Internals\FormTable::getList($params);
+		$listDb = Internals\FormTable::getDefaultTypeList($params);
 		while($item = $listDb->fetch())
 		{
 			$list[] = $item;
@@ -202,7 +202,7 @@ class Manager
 	public static function getListPlain(array $parameters = [])
 	{
 		$parameters["cache"] = array("ttl" => 3600);
-		return Internals\FormTable::getList($parameters)->fetchAll();
+		return Internals\FormTable::getDefaultTypeList($parameters)->fetchAll();
 	}
 
 	/**

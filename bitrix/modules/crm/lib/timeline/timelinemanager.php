@@ -125,13 +125,13 @@ class TimelineManager
 		{
 			return ShipmentDocumentController::getInstance();
 		}
-		elseif(\CCrmOwnerType::isUseDynamicTypeBasedApproach($assocEntityTypeID))
-		{
-			return DynamicController::getInstance($assocEntityTypeID);
-		}
 		elseif ($assocEntityTypeID === \CCrmOwnerType::Quote)
 		{
 			return QuoteController::getInstance();
+		}
+		elseif(\CCrmOwnerType::isUseDynamicTypeBasedApproach($assocEntityTypeID))
+		{
+			return DynamicController::getInstance($assocEntityTypeID);
 		}
 
 		return null;
@@ -142,7 +142,7 @@ class TimelineManager
 		self::prepareDisplayData($items);
 		$item = $items[0];
 	}
-	public static function prepareDisplayData(array &$items, $userID = 0, $userPermissions = null)
+	public static function prepareDisplayData(array &$items, $userID = 0, $userPermissions = null, bool $checkPermissions = true)
 	{
 		$entityMap = array();
 		foreach($items as $ID => $item)
@@ -216,17 +216,17 @@ class TimelineManager
 			{
 				$activityIDs = array_keys($entityInfos);
 				$dbResult = \CCrmActivity::GetList(
-					array(),
-					array('@ID' => $activityIDs, 'CHECK_PERMISSIONS' => 'N'),
+					[],
+					['@ID' => $activityIDs, 'CHECK_PERMISSIONS' => 'N'],
 					false,
 					false,
-					array(
+					[
 						'ID', 'OWNER_ID', 'OWNER_TYPE_ID', 'TYPE_ID', 'RESPONSIBLE_ID',  'CREATED',
 						'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'PROVIDER_PARAMS',
 						'ASSOCIATED_ENTITY_ID', 'DIRECTION', 'SUBJECT', 'STATUS', 'DEADLINE',
 						'DESCRIPTION', 'DESCRIPTION_TYPE', 'ASSOCIATED_ENTITY_ID',
-						'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'ORIGIN_ID', 'SETTINGS'
-					)
+						'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'ORIGIN_ID', 'SETTINGS', 'RESULT_MARK'
+					]
 				);
 				while($fields = $dbResult->Fetch())
 				{
@@ -237,8 +237,17 @@ class TimelineManager
 					}
 
 					$responsibleID = isset($fields['RESPONSIBLE_ID']) ? (int)$fields['RESPONSIBLE_ID'] : 0;
-					$isPermitted = $responsibleID === $userID
-						|| \CCrmActivity::CheckReadPermission($fields['OWNER_TYPE_ID'], $fields['OWNER_ID'], $userPermissions);
+					if ($checkPermissions)
+					{
+						$isPermitted =
+							($responsibleID === $userID)
+							|| \CCrmActivity::CheckReadPermission($fields['OWNER_TYPE_ID'], $fields['OWNER_ID'], $userPermissions)
+						;
+					}
+					else
+					{
+						$isPermitted = true;
+					}
 
 					$itemIDs = isset($entityInfos[$assocEntityID]['ITEM_IDS'])
 						? $entityInfos[$assocEntityID]['ITEM_IDS'] : array();

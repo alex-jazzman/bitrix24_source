@@ -135,6 +135,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          _this3.emit('afterStart');
 	        });
 	      })["catch"](function (response) {
+	        _this3.startButton.setWaiting(false);
+
 	        _this3.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP'));
 	      });
 	    }

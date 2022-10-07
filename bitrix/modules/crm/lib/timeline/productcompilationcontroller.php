@@ -16,19 +16,32 @@ class ProductCompilationController extends Controller
 			throw new Main\ArgumentException('Deal ID must be greater than zero.');
 		}
 
-		if (!$this->isCompilationAlreadyViewed($dealId, $params))
+		if (
+			$this->isCompilationProductListSent($dealId, $params)
+			&& !$this->isCompilationAlreadyViewed($dealId, $params)
+		)
 		{
 			$this->addToTimeline($dealId, $params, ProductCompilationType::COMPILATION_VIEWED);
 		}
 	}
 
+	protected function isCompilationProductListSent($dealId, $params): bool
+	{
+		return $this->isCompilationMessageSent(ProductCompilationType::PRODUCT_LIST, $dealId, $params);
+	}
+
 	protected function isCompilationAlreadyViewed(int $dealId, array $params): bool
+	{
+		return $this->isCompilationMessageSent(ProductCompilationType::COMPILATION_VIEWED, $dealId, $params);
+	}
+
+	protected function isCompilationMessageSent(int $compilationMessageType, int $dealId, array $params): bool
 	{
 		$timelineTableResult = Entity\TimelineTable::getList([
 			'order' => ['ID' => 'ASC'],
 			'filter' => [
 				'TYPE_ID' => TimelineType::PRODUCT_COMPILATION,
-				'TYPE_CATEGORY_ID' => ProductCompilationType::COMPILATION_VIEWED,
+				'TYPE_CATEGORY_ID' => $compilationMessageType,
 				'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
 				'ASSOCIATED_ENTITY_ID' => $dealId,
 			]
@@ -38,7 +51,7 @@ class ProductCompilationController extends Controller
 		{
 			if (
 				isset($item['SETTINGS']['COMPILATION_ID'])
-				&& $item['SETTINGS']['COMPILATION_ID'] === $params['SETTINGS']['COMPILATION_ID']
+				&& (int)$item['SETTINGS']['COMPILATION_ID'] === (int)$params['SETTINGS']['COMPILATION_ID']
 			)
 			{
 				return true;

@@ -371,7 +371,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 		'columns' => array(
 			'DEAL_SUMMARY' => CCrmViewHelper::RenderInfo(
 				$arDeal['PATH_TO_DEAL_SHOW'],
-				isset($arDeal['TITLE']) ? $arDeal['TITLE'] : ('['.$arDeal['ID'].']'),
+				($arDeal['TITLE_PREFIX'] ?? '') . ($arDeal['TITLE'] ?? ('[' . $arDeal['ID'] . ']')),
 				Tracking\UI\Grid::enrichSourceName(
 					\CCrmOwnerType::Deal,
 					$arDeal['ID'],

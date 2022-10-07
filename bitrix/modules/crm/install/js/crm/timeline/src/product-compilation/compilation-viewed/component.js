@@ -20,6 +20,22 @@ export default Vue.extend({
 		{
 			return this?.data?.AUTHOR?.SHOW_URL;
 		},
+		authorImageUrl()
+		{
+			return this?.data?.AUTHOR?.IMAGE_URL;
+		},
+		authorImageStyle()
+		{
+			if (this.authorImageUrl)
+			{
+				return {
+					backgroundImage: "url('" + this.authorImageUrl + "')",
+					backgroundSize: '21px',
+				}
+			}
+
+			return {};
+		}
 	},
 	// language=Vue
 	template: `
@@ -47,7 +63,7 @@ export default Vue.extend({
 							target="_blank"
 							v-bind:href="authorHref"
 						>
-							<i></i>
+							<i :style="authorImageStyle"></i>
 						</a>
 					</div>
 			</div>

@@ -12,7 +12,7 @@
 .crm-analytics-source-wrap {
 	/*padding: 20px;*/
 	/*background: #fff;*/
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-analytics-source-block {
@@ -405,7 +405,7 @@
 	background: #fff;
 	border: 1px solid #c6cdd3;
 	border-radius: var(--ui-field-border-radius, 2px);
-	font: 13px/29px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/29px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-analytics-source-block-utm-content-val {

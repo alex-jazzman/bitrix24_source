@@ -78,8 +78,8 @@ button.b24-form-click-btn-font-classic {
 }
 
 button.b24-form-click-btn-font-modern {
-	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-weight: 700;
 	font-size: 14px;
 }
 
@@ -92,6 +92,5 @@ a.b24-form-click-btn-font-classic {
 }
 
 a.b24-form-click-btn-font-modern {
-	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	font-family: "Open Sans", Helvetica, Arial, sans-serif;
 }

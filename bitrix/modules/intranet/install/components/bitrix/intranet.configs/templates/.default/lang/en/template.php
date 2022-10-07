@@ -55,7 +55,7 @@ Advanced Bitrix24.Drive features are available in commercial subscriptions start
 $MESS["CONFIG_DISK_LOCK_POPUP_TITLE"] = "Available only in advanced Bitrix24 Drive";
 $MESS["CONFIG_DISK_OBJECT_LOCK_ENABLED"] = "Allow document locking";
 $MESS["CONFIG_DISK_TRANSFORM_FILES_ON_OPEN"] = "Convert file as soon as it is opened";
-$MESS["CONFIG_DISK_VERSION_LIMIT_PER_FILE"] = "Max. entries in document history";
+$MESS["CONFIG_DISK_VERSION_LIMIT_PER_FILE"] = "Max. entries in document history.";
 $MESS["CONFIG_DISK_VIEWER_SERVICE"] = "View documents using";
 $MESS["CONFIG_EMAIL_FROM"] = "E-mail of the site administrator<br>(default sender address)";
 $MESS["CONFIG_EXAMPLE"] = "Example";

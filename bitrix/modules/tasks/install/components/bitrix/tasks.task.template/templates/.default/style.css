@@ -1,5 +1,5 @@
 .task-form {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .workarea-content-paddings .template-bitrix24 .task-info {
@@ -24,8 +24,8 @@
   position: relative;
   font-size: 12px;
   color: #535c69;
-  font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: bold;
+  font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+  font-weight: var(--ui-font-weight-semi-bold, 600);
   text-transform: uppercase;
   padding-left: 18px;
   line-height: 30px;
@@ -53,7 +53,8 @@
   font-size: 19px;
   /*color: rgba(0,0,0,0.64);*/
 
-  font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 .task-info-editor {
   background: #fff;
@@ -127,7 +128,7 @@
 .task-options-title {
   color: #000;
   font-size: 14px;
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   line-height: 18px;
   padding: 0 25px;
   margin-bottom: 15px;
@@ -135,7 +136,7 @@
 .task-options-subtitle {
   position: relative;
   color: rgba(83, 92, 105, 0.6);
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   font-size: 9px;
   text-transform: uppercase;
   margin: 15px 25px 5px;
@@ -286,7 +287,7 @@
 .mode-unit-selected-hours [data-unit="hours"],
 .mode-unit-selected-mins [data-unit="mins"] {
   color: #535c69;
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   border-bottom: 1px dashed transparent;
   cursor: default;
 }
@@ -359,7 +360,7 @@
 .task-options-destination-text {
   display: inline-block;
   vertical-align: middle;
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
 }
 .task-options-destination-wrap .task-options-date {
   width: 100%;
@@ -510,7 +511,7 @@ span.task-options-destination-wrap {
   color: #5e6675;
   padding-left: 26px;
   float: left;
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
 }
 .task-options-panel-more:hover:before {
   opacity: 1;
@@ -567,7 +568,7 @@ span.task-options-destination-wrap {
   color: #555;
   display: inline-block;
   font-size: 12px;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
   height: 30px;
   min-width: 108px;
   outline: none;
@@ -579,7 +580,7 @@ span.task-options-destination-wrap {
   color: #2067b0;
   cursor: pointer;
   display: inline-block;
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   font-size: 13px;
   line-height: 17px;
   text-decoration: none;
@@ -759,7 +760,7 @@ span.task-options-destination-wrap {
   line-height: 50px;
 }
 .task-info-head-title {
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   font-size: 15px;
   color: #535c69;
 }
@@ -1146,7 +1147,7 @@ select.task-options-inp {
   color: #2067b0;
   cursor: pointer;
   display: inline-block;
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   margin: 7px 0 7px 0;
   line-height: 17px;
   text-decoration: none;
@@ -1198,7 +1199,7 @@ select.task-options-inp {
   border-bottom: 1px dashed transparent;
 }
 .task-options-task-name {
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   font-size: 14px;
   color: #1f67b0;
   text-decoration: underline;
@@ -1429,7 +1430,7 @@ select.task-options-inp {
   display: inline-block;
   overflow: hidden;
   float: left;
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   padding-left: 26px;
   cursor: pointer;
   color: #5e6675;
@@ -1467,7 +1468,8 @@ select.task-options-inp {
   text-align: left;
 }
 .tasks-form-footer-container .webform-button-link {
-  font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+  font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
   font-size: 12px;
   -webkit-transition: background .5s ease;
   -moz-transition: background .5s ease;

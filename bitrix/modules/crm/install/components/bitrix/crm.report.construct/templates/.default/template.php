@@ -1,10 +1,17 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
-CUtil::InitJSCore(array('ajax', 'popup'));
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ajax',
+	'popup',
+]);
 
 global $APPLICATION;
-
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/crm.js');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 

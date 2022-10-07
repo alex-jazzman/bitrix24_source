@@ -10,8 +10,8 @@ define('DisableEventsCheck', true);
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(dirname(__FILE__).'/template.php');
-Loc::loadMessages(dirname(__FILE__).'/export_excel.php');
+Loc::loadMessages(__DIR__.'/template.php');
+Loc::loadMessages(__DIR__.'/export_excel.php');
 
 $APPLICATION->RestartBuffer();
 

@@ -42,6 +42,7 @@ $MESS["UI_ENTITY_EDITOR_NEW_SECTION_TITLE"] = "Новий розділ";
 $MESS["UI_ENTITY_EDITOR_NO"] = "Ні";
 $MESS["UI_ENTITY_EDITOR_NOTHING_SELECTED"] = "Нічого не обрано";
 $MESS["UI_ENTITY_EDITOR_NOT_SELECTED"] = "Не обрано";
+$MESS["UI_ENTITY_EDITOR_PRODUCT_SUMMARY_FULL_BUTTON"] = "Показати всі (#COUNT#)";
 $MESS["UI_ENTITY_EDITOR_REQUIRED_FIELD_ERROR"] = "Будь ласка, введіть значення.";
 $MESS["UI_ENTITY_EDITOR_RESET_CONFIG"] = "Скинути налаштування на початковий вигляд картки";
 $MESS["UI_ENTITY_EDITOR_SAVE"] = "Зберегти";

@@ -1374,6 +1374,7 @@ class crm extends CModule
 		$eventManager->registerEventHandler('socialnetwork', 'onCommentAuxInitJs', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onCommentAuxInitJs');
 		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'crm', '\Bitrix\Crm\Integration\Socialnetwork\Log', 'onIndexGetContent');
 
+		$eventManager->registerEventHandler('voximplant', 'onCallRegisteredInCrm', 'crm', '\Bitrix\Crm\Integration\VoxImplant\EventHandler', 'onCallRegisteredInCrm');
 		$eventManager->registerEventHandler('voximplant', 'onCallEnd', 'crm', '\Bitrix\Crm\Integration\VoxImplant\EventHandler', 'onCallEnd');
 		$eventManager->registerEventHandler('recyclebin', 'OnModuleSurvey', 'crm', '\Bitrix\Crm\Integration\Recyclebin\RecyclingManager', 'OnModuleSurvey');
 		$eventManager->registerEventHandler('recyclebin', 'onAdditionalDataRequest', 'crm', '\Bitrix\Crm\Integration\Recyclebin\RecyclingManager', 'onAdditionalDataRequest');
@@ -1578,6 +1579,22 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler(
 			'crm',
+			'OnBeforeCrmDealProductRowsSave',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Deal',
+			'OnBeforeCrmDealProductRowsSave'
+		);
+
+		$eventManager->registerEventHandler(
+			'crm',
+			'OnAfterCrmDealProductRowsSave',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Deal',
+			'OnAfterCrmDealProductRowsSave'
+		);
+
+		$eventManager->registerEventHandler(
+			'crm',
 			'OnAfterCrmDealProductRowsSave',
 			'crm',
 			'\Bitrix\Crm\Reservation\EventsHandler\Deal',
@@ -1699,6 +1716,11 @@ class crm extends CModule
 		if (\Bitrix\Main\Config\Option::get('crm', 'need_set_deal_moved_by_field') === 'Y')
 		{
 			\Bitrix\Crm\Agent\MovedByField\DealFieldAgent::bind();
+		}
+		// fill b_crm_entity_uncompleted_act table
+		if (\Bitrix\Main\Config\Option::get('crm', 'enable_entity_uncompleted_act', 'Y') === 'N')
+		{
+			\Bitrix\Crm\Agent\Activity\ProcessEntityUncompletedActivitiesAgent::bind();
 		}
 	}
 
@@ -1877,6 +1899,7 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\Attribute\FieldAttributeManager', 'onUserFieldDelete');
 
 		$eventManager->unRegisterEventHandler('sale', 'OnModuleUnInstall', 'crm', '', 'CrmOnModuleUnInstallSale');
+		$eventManager->unRegisterEventHandler('voximplant', 'onCallRegisteredInCrm', 'crm', '\Bitrix\Crm\Integration\VoxImplant\EventHandler', 'onCallRegisteredInCrm');
 		$eventManager->unRegisterEventHandler('voximplant', 'onCallEnd', 'crm', '\Bitrix\Crm\Integration\VoxImplant\EventHandler', 'onCallEnd');
 
 		$eventManager->unRegisterEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
@@ -2110,6 +2133,22 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Sale\ShipmentDocumentAnalytics',
 			'onSaleShipmentEntitySaved'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'crm',
+			'OnBeforeCrmDealProductRowsSave',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Deal',
+			'OnBeforeCrmDealProductRowsSave'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'crm',
+			'OnAfterCrmDealProductRowsSave',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Deal',
+			'OnAfterCrmDealProductRowsSave'
 		);
 
 		$eventManager->unRegisterEventHandler(

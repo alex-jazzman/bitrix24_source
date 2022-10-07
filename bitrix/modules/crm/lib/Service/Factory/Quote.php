@@ -292,6 +292,10 @@ class Quote extends Factory
 			'ATTRIBUTES' => [\CCrmFieldInfoAttr::CanNotBeEmptied, \CCrmFieldInfoAttr::HasDefaultValue],
 			'CLASS' => Field\CloseDate::class,
 		];
+		$info[Item\Quote::FIELD_NAME_ACTUAL_DATE] = [
+			'TYPE' => Field::TYPE_DATE,
+			'ATTRIBUTES' => [\CCrmFieldInfoAttr::CanNotBeEmptied, \CCrmFieldInfoAttr::HasDefaultValue],
+		];
 
 		if ($this->isMyCompanyEnabled())
 		{
