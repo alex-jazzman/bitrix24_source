@@ -46,6 +46,11 @@ class Controller implements Errorable, Controllerable
 	protected $request;
 	/** @var Configurator */
 	protected $configurator;
+	private Action $currentAction;
+	private array $eventHandlersIds = [
+		'prefilters' => [],
+		'postfilters' => [],
+	];
 	/** @var null|array */
 	private $configurationOfActions = null;
 	/** @var string */
@@ -59,6 +64,7 @@ class Controller implements Errorable, Controllerable
 	/** @var array */
 	private $sourceParametersList;
 	private $unsignedParameters;
+
 
 	/**
 	 * Returns the fully qualified name of this class.
@@ -104,12 +110,16 @@ class Controller implements Errorable, Controllerable
 		$controller->setScope($this->getScope());
 		$controller->setCurrentUser($this->getCurrentUser());
 
+		$currentAction = $this->getCurrentAction();
+		$this->detachFilters($currentAction);
+
 		// run action
 		$result = $controller->run(
 			$actionName,
 			$parameters === null ? $this->getSourceParametersList() : [$parameters]
 		);
 
+		$this->attachFilters($currentAction);
 		$this->addErrors($controller->getErrors());
 
 		return $result;
@@ -142,6 +152,18 @@ class Controller implements Errorable, Controllerable
 	final public function getModuleId()
 	{
 		return getModuleId($this->getFilePath());
+	}
+
+	private function getCurrentAction(): Action
+	{
+		return $this->currentAction;
+	}
+
+	private function setCurrentAction(Action $currentAction): self
+	{
+		$this->currentAction = $currentAction;
+
+		return $this;
 	}
 
 	final public function isLocatedUnderPsr4(): bool
@@ -389,6 +411,7 @@ class Controller implements Errorable, Controllerable
 			{
 				throw new SystemException("Could not create action by name {$actionName}");
 			}
+			$this->setCurrentAction($action);
 
 			$this->attachFilters($action);
 			if ($this->shouldDecodePostData($action))
@@ -419,6 +442,13 @@ class Controller implements Errorable, Controllerable
 		{
 			$this->runProcessingThrowable($e);
 			$this->processExceptionInDebug($e);
+		}
+		finally
+		{
+			if (isset($action))
+			{
+				$this->detachFilters($action);
+			}
 		}
 
 		$this->logDebugInfo();
@@ -555,6 +585,8 @@ class Controller implements Errorable, Controllerable
 			}
 		}
 
+		$this->detachPreFilters($action);
+
 		return $allow;
 	}
 
@@ -593,6 +625,8 @@ class Controller implements Errorable, Controllerable
 			)
 		);
 		$event->send($this);
+
+		$this->detachPostFilters($action);
 
 		return $event->getParameter('result');
 	}
@@ -819,12 +853,11 @@ class Controller implements Errorable, Controllerable
 
 			$filter->bindAction($action);
 
-			$eventManager->addEventHandler(
+			$this->eventHandlersIds['prefilters'][] = $eventManager->addEventHandler(
 				'main',
 				static::getFullEventName(static::EVENT_ON_BEFORE_ACTION),
 				array($filter, 'onBeforeAction')
 			);
-
 		}
 
 		foreach ($modifiedConfig['postfilters'] as $filter)
@@ -838,12 +871,48 @@ class Controller implements Errorable, Controllerable
 			/** @var $filter ActionFilter\Base */
 			$filter->bindAction($action);
 
-			$eventManager->addEventHandler(
+			$this->eventHandlersIds['postfilters'][] = $eventManager->addEventHandler(
 				'main',
 				static::getFullEventName(static::EVENT_ON_AFTER_ACTION),
 				array($filter, 'onAfterAction')
 			);
 		}
+	}
+
+	final protected function detachFilters(Action $action): void
+	{
+		$this->detachPreFilters($action);
+		$this->detachPostFilters($action);
+	}
+
+	final protected function detachPreFilters(Action $action): void
+	{
+		$eventManager = EventManager::getInstance();
+		foreach ($this->eventHandlersIds['prefilters'] as $handlerId)
+		{
+			$eventManager->removeEventHandler(
+				'main',
+				static::getFullEventName(static::EVENT_ON_BEFORE_ACTION),
+				$handlerId
+			);
+		}
+
+		$this->eventHandlersIds['prefilters'] = [];
+	}
+
+	final protected function detachPostFilters(Action $action): void
+	{
+		$eventManager = EventManager::getInstance();
+		foreach ($this->eventHandlersIds['postfilters'] as $handlerId)
+		{
+			$eventManager->removeEventHandler(
+				'main',
+				static::getFullEventName(static::EVENT_ON_AFTER_ACTION),
+				$handlerId
+			);
+		}
+
+		$this->eventHandlersIds['postfilters'] = [];
 	}
 
 	final protected function getActionConfig($actionName)

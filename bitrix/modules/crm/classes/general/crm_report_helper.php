@@ -1140,6 +1140,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 			'COMMENTS',
 			'CATEGORY_ID',
 			'STAGE_ID',
+			'SOURCE_ID',
 			'STAGE_SUB' => array(
 				'IS_WORK',
 				'IS_WON',
