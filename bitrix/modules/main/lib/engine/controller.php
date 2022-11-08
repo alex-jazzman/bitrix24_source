@@ -25,27 +25,28 @@ use Bitrix\Main\Response;
 use Bitrix\Main\Security\Sign\BadSignatureException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\PostDecodeFilter;
+use Bitrix\Main\Web\Uri;
 
 class Controller implements Errorable, Controllerable
 {
-	const SCOPE_REST = 'rest';
-	const SCOPE_AJAX = 'ajax';
-	const SCOPE_CLI  = 'cli';
+	public const SCOPE_REST = 'rest';
+	public const SCOPE_AJAX = 'ajax';
+	public const SCOPE_CLI  = 'cli';
 
-	const EVENT_ON_BEFORE_ACTION = 'onBeforeAction';
-	const EVENT_ON_AFTER_ACTION  = 'onAfterAction';
+	public const EVENT_ON_BEFORE_ACTION = 'onBeforeAction';
+	public const EVENT_ON_AFTER_ACTION  = 'onAfterAction';
 
-	const ERROR_REQUIRED_PARAMETER = 'MAIN_CONTROLLER_22001';
-	const ERROR_UNKNOWN_ACTION     = 'MAIN_CONTROLLER_22002';
+	public const ERROR_REQUIRED_PARAMETER = 'MAIN_CONTROLLER_22001';
+	public const ERROR_UNKNOWN_ACTION     = 'MAIN_CONTROLLER_22002';
 
-	const EXCEPTION_UNKNOWN_ACTION = 22002;
+	public const EXCEPTION_UNKNOWN_ACTION = 22002;
 
 	/** @var  ErrorCollection */
 	protected $errorCollection;
 	/** @var  \Bitrix\Main\HttpRequest */
 	protected $request;
 	/** @var Configurator */
-	protected $configurator;
+	protected Configurator $configurator;
 	private Action $currentAction;
 	private array $eventHandlersIds = [
 		'prefilters' => [],
@@ -54,11 +55,11 @@ class Controller implements Errorable, Controllerable
 	/** @var null|array */
 	private $configurationOfActions = null;
 	/** @var string */
-	private $scope;
+	private string $scope;
 	/** @var CurrentUser */
 	private $currentUser;
 	/** @var Converter */
-	private $converter;
+	private Converter $converter;
 	/** @var string */
 	private $filePath;
 	/** @var array */
@@ -70,9 +71,9 @@ class Controller implements Errorable, Controllerable
 	 * Returns the fully qualified name of this class.
 	 * @return string
 	 */
-	final public static function className()
+	final public static function className(): string
 	{
-		return get_called_class();
+		return static::class;
 	}
 
 	/**
@@ -91,7 +92,7 @@ class Controller implements Errorable, Controllerable
 	}
 
 	/**
-	 * @param Controller $controller
+	 * @param Controller|string $controller
 	 * @param string     $actionName
 	 * @param array|null      $parameters
 	 *
@@ -193,9 +194,9 @@ class Controller implements Errorable, Controllerable
 	 * @param array $params Parameters for creating uri.
 	 * @param bool $absolute
 	 *
-	 * @return \Bitrix\Main\Web\Uri
+	 * @return Uri
 	 */
-	final public function getActionUri($actionName, array $params = array(), $absolute = false)
+	final public function getActionUri(string $actionName, array $params = [], bool $absolute = false): Uri
 	{
 		if (mb_strpos($this->getFilePath(), '/components/') === false)
 		{
@@ -213,22 +214,22 @@ class Controller implements Errorable, Controllerable
 		return $this->unsignedParameters;
 	}
 
-	final protected function processUnsignedParameters()
+	final protected function processUnsignedParameters(): void
 	{
 		foreach ($this->getSourceParametersList() as $source)
 		{
-			if (isset($source['signedParameters']) && is_string($source['signedParameters']))
+			$signedParameters = $source['signedParameters'] ?? null;
+			if (is_string($signedParameters))
 			{
 				try
 				{
 					$this->unsignedParameters = ParameterSigner::unsignParameters(
 						$this->getSaltToUnsign(),
-						$source['signedParameters']
+						$signedParameters
 					);
 				}
 				catch (BadSignatureException $exception)
 				{}
-
 
 				return;
 			}
@@ -256,7 +257,7 @@ class Controller implements Errorable, Controllerable
 	/**
 	 * @return CurrentUser
 	 */
-	final public function getCurrentUser()
+	final public function getCurrentUser(): ?CurrentUser
 	{
 		return $this->currentUser;
 	}
@@ -264,7 +265,7 @@ class Controller implements Errorable, Controllerable
 	/**
 	 * @param CurrentUser $currentUser
 	 */
-	final public function setCurrentUser(CurrentUser $currentUser)
+	final public function setCurrentUser(CurrentUser $currentUser): void
 	{
 		$this->currentUser = $currentUser;
 	}
@@ -285,7 +286,7 @@ class Controller implements Errorable, Controllerable
 	 * Returns list of all
 	 * @return array
 	 */
-	final public function listNameActions()
+	final public function listNameActions(): array
 	{
 		$actions = array_keys($this->getConfigurationOfActions());
 		$lengthSuffix = mb_strlen(self::METHOD_ACTION_SUFFIX);
@@ -335,7 +336,7 @@ class Controller implements Errorable, Controllerable
 		return [];
 	}
 
-	private function buildConfigurationOfActions()
+	private function buildConfigurationOfActions(): void
 	{
 		$this->configurationOfActions = $this->configurator->getConfigurationByController($this);
 	}
@@ -495,18 +496,17 @@ class Controller implements Errorable, Controllerable
 		return true;
 	}
 
-	final public static function getFullEventName($eventName)
+	final public static function getFullEventName($eventName): string
 	{
-		return get_called_class() . '::' . $eventName;
+		return static::class . '::' . $eventName;
 	}
 
 	/**
 	 * Collects debug info by Diag.
 	 * @return void
 	 */
-	final protected function collectDebugInfo()
+	final protected function collectDebugInfo(): void
 	{
-		//Bitrix\Disk\Internals\Diag::getInstance()->collectDebugInfo(get_called_class());
 	}
 
 	/**
@@ -514,9 +514,8 @@ class Controller implements Errorable, Controllerable
 	 * @throws \Bitrix\Main\SystemException
 	 * @return void
 	 */
-	final protected function logDebugInfo()
+	final protected function logDebugInfo(): void
 	{
-		//Bitrix\Disk\Internals\Diag::getInstance()->logDebugInfo(get_called_class());
 	}
 
 	/**
@@ -558,15 +557,15 @@ class Controller implements Errorable, Controllerable
 	 * @param Action $action Action name.
 	 * @return bool
 	 */
-	final protected function triggerOnBeforeAction(Action $action)
+	final protected function triggerOnBeforeAction(Action $action): bool
 	{
 		$event = new Event(
 			'main',
 			static::getFullEventName(static::EVENT_ON_BEFORE_ACTION),
-			array(
+			[
 				'action' => $action,
 				'controller' => $this,
-			)
+			]
 		);
 		$event->send($this);
 
@@ -576,7 +575,7 @@ class Controller implements Errorable, Controllerable
 			if ($eventResult->getType() != EventResult::SUCCESS)
 			{
 				$handler = $eventResult->getHandler();
-				if ($handler && $handler instanceof Errorable)
+				if ($handler instanceof Errorable)
 				{
 					$this->errorCollection->add($handler->getErrors());
 				}
@@ -618,11 +617,11 @@ class Controller implements Errorable, Controllerable
 		$event = new Event(
 			'main',
 			static::getFullEventName(static::EVENT_ON_AFTER_ACTION),
-			array(
+			[
 				'result' => $result,
 				'action' => $action,
 				'controller' => $this,
-			)
+			]
 		);
 		$event->send($this);
 
@@ -631,7 +630,7 @@ class Controller implements Errorable, Controllerable
 		return $event->getParameter('result');
 	}
 
-	final public function generateActionMethodName($action)
+	final public function generateActionMethodName($action): string
 	{
 		return $action . self::METHOD_ACTION_SUFFIX;
 	}
@@ -669,7 +668,7 @@ class Controller implements Errorable, Controllerable
 		return null;
 	}
 
-	final protected function buildActionInstance($actionName, array $config)
+	final protected function buildActionInstance($actionName, array $config): Action
 	{
 		if (isset($config['callable']))
 		{
@@ -681,7 +680,8 @@ class Controller implements Errorable, Controllerable
 
 			return new ClosureAction($actionName, $this, $callable);
 		}
-		elseif (empty($config['class']))
+
+		if (empty($config['class']))
 		{
 			throw new SystemException(
 				"Could not find class in description of {$actionName} in {$this::className()} to create instance",
@@ -690,12 +690,10 @@ class Controller implements Errorable, Controllerable
 		}
 
 		/** @see Action::__construct */
-		$action = new $config['class']($actionName, $this, $config);
-
-		return $action;
+		return new $config['class']($actionName, $this, $config);
 	}
 
-	final protected function existsAction($actionName)
+	final protected function existsAction($actionName): bool
 	{
 		try
 		{
@@ -718,13 +716,13 @@ class Controller implements Errorable, Controllerable
 	 */
 	protected function getDefaultPreFilters()
 	{
-		return array(
+		return [
 			new ActionFilter\Authentication(),
 			new ActionFilter\HttpMethod(
-				array(ActionFilter\HttpMethod::METHOD_GET, ActionFilter\HttpMethod::METHOD_POST)
+				[ActionFilter\HttpMethod::METHOD_GET, ActionFilter\HttpMethod::METHOD_POST]
 			),
 			new ActionFilter\Csrf(),
-		);
+		];
 	}
 
 	/**
@@ -733,7 +731,7 @@ class Controller implements Errorable, Controllerable
 	 */
 	protected function getDefaultPostFilters()
 	{
-		return array();
+		return [];
 	}
 
 	/**
@@ -746,11 +744,11 @@ class Controller implements Errorable, Controllerable
 	 *
 	 * @return array|null
 	 */
-	final protected function buildFilters(array $config = null)
+	final protected function buildFilters(array $config = null): array
 	{
 		if ($config === null)
 		{
-			$config = array();
+			$config = [];
 		}
 
 		if (!isset($config['prefilters']))
@@ -807,12 +805,12 @@ class Controller implements Errorable, Controllerable
 		return $config;
 	}
 
-	final protected function appendFilters(array $filters, array $filtersToAppend)
+	final protected function appendFilters(array $filters, array $filtersToAppend): array
 	{
 		return array_merge($filters, $filtersToAppend);
 	}
 
-	final protected function removeFilters(array $filters, array $filtersToRemove)
+	final protected function removeFilters(array $filters, array $filtersToRemove): array
 	{
 		$cleanedFilters = [];
 		foreach ($filters as $filter)
@@ -836,7 +834,7 @@ class Controller implements Errorable, Controllerable
 		return $cleanedFilters;
 	}
 
-	final protected function attachFilters(Action $action)
+	final protected function attachFilters(Action $action): void
 	{
 		$modifiedConfig = $this->buildFilters(
 			$this->getActionConfig($action->getName())
@@ -856,7 +854,7 @@ class Controller implements Errorable, Controllerable
 			$this->eventHandlersIds['prefilters'][] = $eventManager->addEventHandler(
 				'main',
 				static::getFullEventName(static::EVENT_ON_BEFORE_ACTION),
-				array($filter, 'onBeforeAction')
+				[$filter, 'onBeforeAction']
 			);
 		}
 
@@ -874,7 +872,7 @@ class Controller implements Errorable, Controllerable
 			$this->eventHandlersIds['postfilters'][] = $eventManager->addEventHandler(
 				'main',
 				static::getFullEventName(static::EVENT_ON_AFTER_ACTION),
-				array($filter, 'onAfterAction')
+				[$filter, 'onAfterAction']
 			);
 		}
 	}
@@ -915,7 +913,7 @@ class Controller implements Errorable, Controllerable
 		$this->eventHandlersIds['postfilters'] = [];
 	}
 
-	final protected function getActionConfig($actionName)
+	final protected function getActionConfig($actionName): ?array
 	{
 		$listOfActions = array_change_key_case($this->configurationOfActions, CASE_LOWER);
 		$actionName = mb_strtolower($actionName);
@@ -928,7 +926,7 @@ class Controller implements Errorable, Controllerable
 		return $listOfActions[$actionName];
 	}
 
-	final protected function setActionConfig($actionName, array $config = null)
+	final protected function setActionConfig($actionName, array $config = null): self
 	{
 		$this->configurationOfActions[$actionName] = $config;
 
@@ -1011,7 +1009,7 @@ class Controller implements Errorable, Controllerable
 	 */
 	protected function runProcessingIfUserNotAuthorized()
 	{
-		$this->errorCollection[] = new Error('User is not authorized');
+		$this->addError(new Error('User is not authorized'));
 
 		throw new SystemException('User is not authorized');
 	}
@@ -1022,7 +1020,7 @@ class Controller implements Errorable, Controllerable
 	 */
 	protected function runProcessingIfInvalidCsrfToken()
 	{
-		$this->errorCollection[] = new Error('Invalid csrf token');
+		$this->addError(new Error('Invalid csrf token'));
 
 		throw new SystemException('Invalid csrf token');
 	}
