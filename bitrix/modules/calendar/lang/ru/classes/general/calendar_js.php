@@ -86,6 +86,7 @@ $MESS['EC_COUNTER_TOTAL'] = 'События';
 $MESS['EC_COUNTER_INVITATION_PLURAL_0'] = 'приглашение';
 $MESS['EC_COUNTER_INVITATION_PLURAL_1'] = 'приглашения';
 $MESS['EC_COUNTER_INVITATION_PLURAL_2'] = 'приглашения';
+$MESS['EC_COUNTER_INVITATION'] = 'Приглашения';
 $MESS['EC_COUNTER_NEW_COMMENTS_PLURAL_0'] = 'с новыми комментариями';
 $MESS['EC_COUNTER_NEW_COMMENTS_PLURAL_1'] = 'с новыми комментариями';
 $MESS['EC_COUNTER_NEW_COMMENTS_PLURAL_2'] = 'с новыми комментариями';

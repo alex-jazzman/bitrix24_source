@@ -2,8 +2,11 @@
 /** @global CMain $APPLICATION */
 /** @global $DB CDatabase */
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
+
 use Bitrix\Main,
 	Bitrix\Main\Loader,
+	Bitrix\Catalog\Access\ActionDictionary,
+	Bitrix\Catalog\Access\AccessController,
 	Bitrix\Iblock,
 	Bitrix\Iblock\Grid\ActionType,
 	Bitrix\Catalog;
@@ -161,14 +164,9 @@ $catalog = false;
 if ($catalogIncluded)
 {
 	$catalog = CCatalogSKU::GetInfoByIBlock($arIBlock["ID"]);
-	if (empty($catalog))
+	if (empty($catalog) || !AccessController::getCurrent()->check(ActionDictionary::ACTION_PRICE_EDIT))
 	{
 		$useCatalog = false;
-	}
-	else
-	{
-		if (!$USER->CanDoOperation('catalog_price'))
-			$useCatalog = false;
 	}
 }
 

@@ -163,9 +163,7 @@ foreach ($factory->getCategories() as $category)
 	$entityOperationsMap[$entityName] = $operations;
 }
 
-$arResult['ENTITY']['DEAL'] = GetMessage('CRM_ENTITY_TYPE_DEAL');
-
-$dealCategoryConfigs = Bitrix\Crm\Category\DealCategory::getPermissionRoleConfigurations();
+$dealCategoryConfigs = Bitrix\Crm\Category\DealCategory::getPermissionRoleConfigurationsWithDefault();
 foreach($dealCategoryConfigs as $typeName => $config)
 {
 	$arResult['ENTITY'][$typeName] = isset($config['NAME']) ? htmlspecialcharsbx($config['NAME']) : $typeName;

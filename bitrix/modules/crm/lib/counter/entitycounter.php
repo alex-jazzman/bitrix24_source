@@ -11,7 +11,6 @@ use Bitrix\Main;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Main\Type\Date;
 
 class EntityCounter extends CounterBase
 {
@@ -108,13 +107,19 @@ class EntityCounter extends CounterBase
 	{
 		return $this->typeID === EntityCounterType::PENDING
 			|| $this->typeID === EntityCounterType::OVERDUE
-			|| $this->typeID === EntityCounterType::ALL;
+			|| $this->typeID === EntityCounterType::CURRENT
+			|| $this->typeID === EntityCounterType::ALL_DEADLINE_BASED
+			|| $this->typeID === EntityCounterType::ALL
+		;
 	}
 	protected function isExpired()
 	{
 		return ($this->typeID === EntityCounterType::PENDING
 			|| $this->typeID === EntityCounterType::OVERDUE
-			|| $this->typeID === EntityCounterType::ALL)
+			|| $this->typeID === EntityCounterType::CURRENT
+			|| $this->typeID === EntityCounterType::ALL_DEADLINE_BASED
+			|| $this->typeID === EntityCounterType::ALL
+		)
 			&& !$this->checkLastCalculatedTime();
 	}
 	public function getExtras()
@@ -127,7 +132,7 @@ class EntityCounter extends CounterBase
 	}
 	public function getExtraParam($name, $default = null)
 	{
-		return isset($this->extras) ? $this->extras[$name] : $default;
+		return isset($this->extras[$name]) ? $this->extras[$name] : $default;
 	}
 	/**
 	 * @param string $name Extra Parameter Name.
@@ -137,6 +142,10 @@ class EntityCounter extends CounterBase
 	public function getIntegerExtraParam($name, $default = 0)
 	{
 		return isset($this->extras[$name]) ? (int)$this->extras[$name] : $default;
+	}
+	public function getBoolExtraParam(string $name, bool $default = false): bool
+	{
+		return isset($this->extras[$name]) ? (bool)$this->extras[$name] : $default;
 	}
 	public function reset()
 	{
@@ -162,6 +171,22 @@ class EntityCounter extends CounterBase
 		)
 		{
 			\CUserCounter::Set($userID, $code, -1, '**', '', false);
+		}
+	}
+
+	public static function resetExcludedByCode(string $code, int $userId): void
+	{
+		if ($code === '' || $userId <= 0)
+		{
+			return;
+		}
+		$counterValue = \CUserCounter::GetValues($userId, '**')[$code] ?? -1;
+		// delete counter value for all users
+		EntityCounter::resetByCodeForAll($code);
+		// and restore value for current user if it was
+		if ($counterValue >= 0)
+		{
+			\CUserCounter::Set($userId, $code, $counterValue, '**', '', false);
 		}
 	}
 
@@ -302,11 +327,12 @@ class EntityCounter extends CounterBase
 			$select = QueryBuilder::SELECT_TYPE_QUANTITY;
 		}
 
-		$distinct = true;
+		$distinct = ($select === QueryBuilder::SELECT_TYPE_ENTITIES); // SELECT_TYPE_QUANTITY should not use distinct
 		if($select === QueryBuilder::SELECT_TYPE_ENTITIES && isset($options['DISTINCT']))
 		{
 			$distinct = (bool)$options['DISTINCT'];
 		}
+		$needExcludeUsers = (bool)($options['EXCLUDE_USERS'] ?? false);
 
 		$results = [];
 
@@ -325,11 +351,7 @@ class EntityCounter extends CounterBase
 			{
 				continue;
 			}
-			$forceSkipMinDeadline =
-				($select === QueryBuilder::SELECT_TYPE_ENTITIES)
-				&& is_array($userID)
-				&& count($userID) > 1
-			;
+			$useUncompletedActivityTable = ($select === QueryBuilder::SELECT_TYPE_ENTITIES);
 			$query = $factory->getDataClass()::query();
 
 			$stageSemanticId = isset($options['STAGE_SEMANTIC_ID']) && $options['STAGE_SEMANTIC_ID']
@@ -384,6 +406,7 @@ class EntityCounter extends CounterBase
 				$results[] = (new Idle($entityTypeID, $userID))
 					->setUseDistinct($distinct)
 					->setSelectType($select)
+					->setUseUncompletedActivityTable(true)
 					->build($query)
 				;
 			}
@@ -403,22 +426,28 @@ class EntityCounter extends CounterBase
 					}
 					$results[] = (new DeadlineBased($entityTypeID, $userID))
 						->setUseDistinct($distinct)
+						->setExcludeUsers($needExcludeUsers)
 						->setSelectType($select)
 						->setPeriodFrom($periodFrom)
 						->setPeriodTo($periodTo)
-						->setUseOnlyMinDeadline(!$forceSkipMinDeadline)
+						->setUseUncompletedActivityTable($useUncompletedActivityTable)
 						->build($query)
 					;
 				}
 				else
 				{
-					$useOnlyMinDeadline = $this->getExtraParam('ONLY_MIN_DEADLINE', false) && !$forceSkipMinDeadline;
+					if ($useUncompletedActivityTable)
+					{
+						// do not use UncompletedActivityTable by default for PENDING counter
+						$useUncompletedActivityTable = $this->getExtraParam('ONLY_MIN_DEADLINE', false);
+					}
 					$results[] = (new DeadlineBased($entityTypeID, $userID))
 						->setUseDistinct($distinct)
+						->setExcludeUsers($needExcludeUsers)
 						->setSelectType($select)
 						->setPeriodFrom(\CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID)) // today (time 00:00:00 will applied by counter itself)
 						->setPeriodTo(\CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID)) // today (time 23:59:59 will applied by counter itself)
-						->setUseOnlyMinDeadline($useOnlyMinDeadline)
+						->setUseUncompletedActivityTable($useUncompletedActivityTable)
 						->build($query)
 					;
 				}
@@ -431,17 +460,25 @@ class EntityCounter extends CounterBase
 				}
 				$results[] = (new DeadlineBased($entityTypeID, $userID))
 					->setUseDistinct($distinct)
+					->setExcludeUsers($needExcludeUsers)
 					->setSelectType($select)
 					->setPeriodTo(\CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID)->add('-1 day')) // yesterday (time 23:59:59 will applied by counter itself)
-					->setUseOnlyMinDeadline(true)
+					->setUseUncompletedActivityTable($useUncompletedActivityTable)
 					->build($query)
 				;
 			}
 			else if($typeID === EntityCounterType::INCOMING_CHANNEL)
 			{
+				if ($useUncompletedActivityTable)
+				{
+					// do not use UncompletedActivityTable by default for INCOMING_CHANNEL counter
+					$useUncompletedActivityTable = $this->getExtraParam('ONLY_MIN_INCOMING_CHANNEL', false);
+				}
 				$results[] = (new IncomingChannel($entityTypeID, $userID))
 					->setUseDistinct($distinct)
+					->setExcludeUsers($needExcludeUsers)
 					->setSelectType($select)
+					->setUseUncompletedActivityTable($useUncompletedActivityTable)
 					->build($query)
 				;
 			}
@@ -476,6 +513,10 @@ class EntityCounter extends CounterBase
 		if (!is_null($categoryId) && $categoryId >= 0)
 		{
 			$options['CATEGORY_ID'] = $categoryId;
+		}
+		if ($this->getBoolExtraParam('EXCLUDE_USERS'))
+		{
+			$options['EXCLUDE_USERS'] = true;
 		}
 
 		return $this->prepareEntityQueries($this->entityTypeID, $this->typeID, $userIDs, $options);
@@ -622,6 +663,10 @@ class EntityCounter extends CounterBase
 		if(isset($params['STAGE_SEMANTIC_ID']))
 		{
 			$queryParams['STAGE_SEMANTIC_ID'] = $params['STAGE_SEMANTIC_ID'];
+		}
+		if(isset($params['EXCLUDE_USERS']))
+		{
+			$queryParams['EXCLUDE_USERS'] = (bool)$params['EXCLUDE_USERS'];
 		}
 
 		$queries = $this->prepareQueries($queryParams);

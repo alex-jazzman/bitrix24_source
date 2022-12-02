@@ -135,11 +135,9 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	  computed: {
 	    getObjectClass: function getObjectClass() {
 	      var classes = ['btn', 'btn-primary', 'product-item-buy-button', 'rounded-pill'];
-
 	      if (this.wait) {
 	        classes.push('btn-wait');
 	      }
-
 	      return classes;
 	    }
 	  },

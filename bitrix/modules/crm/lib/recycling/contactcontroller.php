@@ -279,6 +279,7 @@ class ContactController extends BaseController
 		$this->suspendUtm($entityID, $recyclingEntityID);
 		$this->suspendTracing($entityID, $recyclingEntityID);
 		$this->suspendCustomRelations((int)$entityID, (int)$recyclingEntityID);
+		$this->suspendBadges((int)$entityID, (int)$recyclingEntityID);
 
 		//region Relations
 		foreach($relations as $relation)
@@ -410,6 +411,7 @@ class ContactController extends BaseController
 		$this->recoverUtm($recyclingEntityID, $newEntityID);
 		$this->recoverTracing($recyclingEntityID, $newEntityID);
 		$this->recoverCustomRelations((int)$recyclingEntityID, (int)$newEntityID);
+		$this->recoverBadges((int)$recyclingEntityID, (int)$newEntityID);
 
 		$requisiteLinks = isset($slots['REQUISITE_LINKS']) ? $slots['REQUISITE_LINKS'] : null;
 		if(is_array($requisiteLinks) && !empty($requisiteLinks))
@@ -487,6 +489,7 @@ class ContactController extends BaseController
 		$this->eraseSuspendedTracing($recyclingEntityID);
 		$this->eraseSuspendedUserFields($recyclingEntityID);
 		$this->eraseSuspendedCustomRelations($recyclingEntityID);
+		$this->eraseSuspendedBadges($recyclingEntityID);
 
 		//region Files
 		if(isset($params['FILES']) && is_array($params['FILES']) && !empty($params['FILES']))

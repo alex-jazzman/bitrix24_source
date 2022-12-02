@@ -14,6 +14,8 @@ use Bitrix\Main\UI\FileInput;
 use Bitrix\Main\Web\PostDecodeFilter;
 use Bitrix\Main\Web\Json;
 use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Currency;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_before.php');
@@ -131,13 +133,16 @@ $userSearchUrl = $selfFolderUrl . 'user_search.php?lang=' . LANGUAGE_ID . '&JSFU
 
 $currentUser = CurrentUser::get();
 
-if (!$currentUser->canDoOperation('catalog_store'))
+Loader::includeModule('catalog');
+
+$accessController = AccessController::getCurrent();
+if (!$accessController->check(ActionDictionary::ACTION_STORE_VIEW))
 {
 	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
-Loader::includeModule('catalog');
 
-$canModify = $currentUser->canDoOperation('catalog_store');
+
+$canModify = $accessController->check(ActionDictionary::ACTION_STORE_VIEW);
 $bReadOnly = !$canModify;
 
 $publicMode = $adminPage->publicMode;
@@ -962,7 +967,7 @@ if ($ID > 0 || $isAjaxDocumentRequest)
 	}
 }
 
-if (!$currentUser->canDoOperation('catalog_store'))
+if (!$accessController->check(ActionDictionary::ACTION_STORE_VIEW))
 {
 	$isDocumentConduct = false;
 }

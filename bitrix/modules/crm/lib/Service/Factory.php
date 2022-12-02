@@ -623,7 +623,8 @@ abstract class Factory
 
 		if (in_array(Item::FIELD_NAME_PRODUCTS, $select, true))
 		{
-			$select[] = Item::FIELD_NAME_PRODUCTS.'.IBLOCK_ELEMENT';
+			$select[] = Item::FIELD_NAME_PRODUCTS . '.IBLOCK_ELEMENT';
+			$select[] = Item::FIELD_NAME_PRODUCTS . '.PRODUCT_ROW_RESERVATION';
 		}
 
 		return $select;
@@ -1651,6 +1652,26 @@ abstract class Factory
 	}
 
 	/**
+	 * Returns true if this entity supports LAST_ACTIVITY_* fields and all associated logic
+	 *
+	 * @return bool
+	 */
+	public function isLastActivitySupported(): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Returns true if 'last activity' functionality is enabled in UI
+	 *
+	 * @return bool
+	 */
+	public function isLastActivityEnabled(): bool
+	{
+		return $this->isLastActivitySupported();
+	}
+
+	/**
 	 * Return actual counters settings.
 	 *
 	 * @return EntityCounterSettings
@@ -1662,6 +1683,16 @@ abstract class Factory
 				? EntityCounterSettings::createDefault($this->isStagesSupported())
 				: new EntityCounterSettings()
 			;
+	}
+
+	/**
+	 * Return true if inventory management is enabled for this entity.
+	 *
+	 * @return bool
+	 */
+	public function isInventoryManagementEnabled(): bool
+	{
+		return false;
 	}
 
 	public function getEditorAdapter(): EditorAdapter

@@ -201,8 +201,8 @@ XML;
 	protected function callExternalMethod(string $body): Sender\Result\HttpRequestResult
 	{
 		$httpClient = new HttpClient([
-			'socketTimeout' => 10,
-			'streamTimeout' => 30,
+			"socketTimeout" => $this->socketTimeout,
+			"streamTimeout" => $this->streamTimeout,
 			'waitResponse' => true,
 		]);
 		$httpClient->setHeader('User-Agent', 'Bitrix24');

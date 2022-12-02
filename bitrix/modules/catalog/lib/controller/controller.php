@@ -3,6 +3,8 @@
 
 namespace Bitrix\Catalog\Controller;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Model\Event;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -26,12 +28,24 @@ class Controller extends Base
 	const IBLOCK_SECTION_SECTION_BIND = 'section_section_bind';
 	const IBLOCK_ELEMENT_SECTION_BIND = 'section_element_bind';
 	const IBLOCK_EDIT = 'iblock_edit';
-	const CATALOG_STORE = 'catalog_store';
-	const CATALOG_READ = 'catalog_read';
-	const CATALOG_GROUP = 'catalog_group';
-	const CATALOG_VAT = 'catalog_vat';
+
+	const CATALOG_STORE = ActionDictionary::ACTION_STORE_VIEW;
+	const CATALOG_READ = ActionDictionary::ACTION_CATALOG_READ;
+	const CATALOG_GROUP = ActionDictionary::ACTION_PRICE_GROUP_EDIT;
+	const CATALOG_VAT = ActionDictionary::ACTION_VAT_EDIT;
 
 	public const ERROR_ACCESS_DENIED = 'Access denied';
+	protected AccessController $accessController;
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function init()
+	{
+		parent::init();
+
+		$this->accessController = AccessController::getCurrent();
+	}
 
 	protected function createViewManager(Action $action)
 	{

@@ -144,3 +144,7 @@ $MESS["IBEL_CATALOG_DEFAULT"] = "(по умолчанию)";
 $MESS["IBEL_ERR_BUILDER_ADSENT"] = "Не найден генератор ссылок.";
 $MESS["IBEL_A_CATALOG_PRODUCT"] = "Товар";
 $MESS["IBEL_A_CATALOG_PRODUCT_TITLE"] = "Товар";
+$MESS['IBEL_A_CONVERT_PRODUCT_TO_SERVICE_TITLE'] = "Конвертировать в услугу";
+$MESS['IBEL_A_CONVERT_PRODUCT_TO_SERVICE_CONFIRM'] = "Вы уверены, что хотите конвертировать товар в услугу? После этого вы не сможете работать с этим товаром в складском учёте.";
+$MESS['IBEL_A_CONVERT_SERVICE_TO_PRODUCT_TITLE'] = "Конвертировать в товар";
+$MESS['IBEL_A_CONVERT_SERVICE_TO_PRODUCT_CONFIRM'] = "Вы уверены, что хотите конвертировать услугу в товар? Для товаров будет необходимо формировать товарные накладные, а если вы работаете со складским учётом - указывать количество товара на складе и оформлять все складские документы.";

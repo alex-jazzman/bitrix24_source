@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -1227,6 +1228,14 @@ class crm extends CModule
 		RegisterModuleDependences('main', 'OnMailEventMailChangeStatus', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventMailChangeStatus');
 		RegisterModuleDependences('main', 'OnMailEventMailChangeStatus', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventSendNotification');
 
+		RegisterModuleDependences(
+				'main',
+				'OnBeforeUserTypeAdd',
+				'crm',
+				'\Bitrix\Crm\Service\EventHandler',
+				'OnBeforeUserTypeAdd'
+		);
+
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_~crm_webform_max_activated', 'crm', '\Bitrix\Crm\WebForm\Form', 'onAfterSetOptionCrmWebFormMaxActivated');
 
@@ -1334,6 +1343,8 @@ class crm extends CModule
 		$eventManager->registerEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\Attribute\FieldAttributeManager', 'onUserFieldDelete');
 
 		$eventManager->registerEventHandler('im', 'OnChatUserAddEntityTypeCrm', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'onAddChatUser');
+		$eventManager->registerEventHandler('im', 'OnAfterMessagesAdd', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterMessagesAdd');
+		$eventManager->registerEventHandler('im', 'OnAfterChatRead', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterChatRead');
 
 		$eventManager->registerEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
 		$eventManager->registerEventHandler('main', 'OnUISelectorBeforeSave', 'crm', '\Bitrix\Crm\Integration\Main\UISelector\Handler', 'OnUISelectorBeforeSave');
@@ -1365,7 +1376,6 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler('main', 'onAfterSetEnumValues', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onAfterSetEnumValues');
 		$eventManager->registerEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onAfterUserTypeDelete');
-
 
 		$eventManager->registerEventHandler('socialnetwork', 'onLogProviderGetContentId', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onLogProviderGetContentId');
 		$eventManager->registerEventHandler('socialnetwork', 'onLogProviderGetProvider', 'crm', '\Bitrix\Crm\Integration\Socialnetwork', 'onLogProviderGetProvider');
@@ -1498,11 +1508,11 @@ class crm extends CModule
 		);
 
 		$eventManager->registerEventHandler(
-			'main',
-			'OnBeforeUserTypeAdd',
+			'imopenlines',
+			'OnImOpenLineRegisteredInCrm',
 			'crm',
-			'\Bitrix\Crm\Service\EventHandler',
-			'OnBeforeUserTypeAdd'
+			'\Bitrix\Crm\Integration\ImOpenLines\EventHandler',
+			'OnImOpenLineRegisteredInCrm'
 		);
 
 		$eventManager->registerEventHandler(
@@ -1590,14 +1600,6 @@ class crm extends CModule
 			'OnAfterCrmDealProductRowsSave',
 			'crm',
 			'\Bitrix\Crm\Order\EventsHandler\Deal',
-			'OnAfterCrmDealProductRowsSave'
-		);
-
-		$eventManager->registerEventHandler(
-			'crm',
-			'OnAfterCrmDealProductRowsSave',
-			'crm',
-			'\Bitrix\Crm\Reservation\EventsHandler\Deal',
 			'OnAfterCrmDealProductRowsSave'
 		);
 
@@ -1717,11 +1719,18 @@ class crm extends CModule
 		{
 			\Bitrix\Crm\Agent\MovedByField\DealFieldAgent::bind();
 		}
+		// set initial values for LAST_ACTIVITY_TIME and LAST_ACTIVITY_BY fields in deals
+		if (\Bitrix\Main\Config\Option::get('crm', 'enable_last_activity_for_deal', 'Y') === 'N')
+		{
+			\Bitrix\Crm\Update\Entity\LastActivityFields::bind(300, [\CCrmOwnerType::Deal]);
+		}
 		// fill b_crm_entity_uncompleted_act table
 		if (\Bitrix\Main\Config\Option::get('crm', 'enable_entity_uncompleted_act', 'Y') === 'N')
 		{
 			\Bitrix\Crm\Agent\Activity\ProcessEntityUncompletedActivitiesAgent::bind();
 		}
+
+		CAgent::AddAgent('\Bitrix\Crm\Reservation\Agent\ReservedProductCleaner::runAgent();', 'crm', 'N', 86400);
 	}
 
 	private function uninstallEventHandlers()
@@ -1792,6 +1801,14 @@ class crm extends CModule
 
 		UnRegisterModuleDependences('main', 'OnMailEventMailChangeStatus', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventMailChangeStatus');
 		UnRegisterModuleDependences('main', 'OnMailEventMailChangeStatus', 'crm', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventSendNotification');
+
+		UnRegisterModuleDependences(
+			'main',
+			'OnBeforeUserTypeAdd',
+			'crm',
+			'\Bitrix\Crm\Service\EventHandler',
+			'OnBeforeUserTypeAdd'
+		);
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~crm_webform_max_activated', 'crm', '\Bitrix\Crm\WebForm\Form', 'onAfterSetOptionCrmWebFormMaxActivated');
@@ -2056,11 +2073,11 @@ class crm extends CModule
 		);
 
 		$eventManager->unRegisterEventHandler(
-			'main',
-			'OnBeforeUserTypeAdd',
+			'imopenlines',
+			'OnImOpenLineRegisteredInCrm',
 			'crm',
-			'\Bitrix\Crm\Service\EventHandler',
-			'OnBeforeUserTypeAdd'
+			'\Bitrix\Crm\Integration\ImOpenLines\EventHandler',
+			'OnImOpenLineRegisteredInCrm'
 		);
 
 		$eventManager->unRegisterEventHandler(
@@ -2152,14 +2169,6 @@ class crm extends CModule
 		);
 
 		$eventManager->unRegisterEventHandler(
-			'crm',
-			'OnAfterCrmDealProductRowsSave',
-			'crm',
-			'\Bitrix\Crm\Reservation\EventsHandler\Deal',
-			'OnAfterCrmDealProductRowsSave'
-		);
-
-		$eventManager->unRegisterEventHandler(
 			'sale',
 			'OnSalePaymentEntitySaved',
 			'crm',
@@ -2182,6 +2191,10 @@ class crm extends CModule
 			'\Bitrix\Crm\Integration\Sale\Reservation\Event\ReservationSettingsBuildEventHandler',
 			'OnReservationSettingsBuild'
 		);
+
+		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesAdd', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterMessagesAdd');
+		$eventManager->unRegisterEventHandler('im', 'OnAfterChatRead', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterChatRead');
+
 	}
 
 	private function uninstallAgents()
@@ -2236,6 +2249,12 @@ class crm extends CModule
 	{
 		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step;
 		$step = intval($step);
+
+		if (ModuleManager::isModuleInstalled('crmmobile'))
+		{
+			$APPLICATION->throwException(Loc::getMessage('CRM_MODULE_UNINSTALL_ERROR_CRMMOBILE'));
+		}
+
 		if ($step < 2)
 		{
 			$APPLICATION->IncludeAdminFile(Loc::getMessage('CRM_UNINSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/unstep1.php');

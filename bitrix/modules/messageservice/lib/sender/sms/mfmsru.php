@@ -233,8 +233,8 @@ class MfmsRu extends Sender\BaseConfigurable
 		}
 
 		$httpClient = new HttpClient(array(
-			"socketTimeout" => 10,
-			"streamTimeout" => 30,
+			"socketTimeout" => $this->socketTimeout,
+			"streamTimeout" => $this->streamTimeout,
 			"waitResponse" => true,
 		));
 		$httpClient->setHeader('User-Agent', 'Bitrix24');

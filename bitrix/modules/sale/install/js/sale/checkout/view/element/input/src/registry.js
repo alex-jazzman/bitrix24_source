@@ -1,3 +1,7 @@
 import './product-item-quantity'
 import './property-phone'
 import './property-text'
+import './property-number'
+import './property-checkbox'
+import './property-date'
+import './property-enum'

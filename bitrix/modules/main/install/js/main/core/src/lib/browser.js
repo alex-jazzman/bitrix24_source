@@ -211,11 +211,12 @@ export default class Browser
 		}
 	}
 
-	static addGlobalClass()
+	static addGlobalClass(target: Element)
 	{
 		let globalClass = 'bx-core';
 
-		if (Dom.hasClass(document.documentElement, globalClass))
+		target = Type.isElementNode(target) ? target : document.documentElement;
+		if (Dom.hasClass(target, globalClass))
 		{
 			return;
 		}
@@ -269,7 +270,7 @@ export default class Browser
 			globalClass += ' bx-firefox';
 		}
 
-		Dom.addClass(document.documentElement, globalClass);
+		Dom.addClass(target, globalClass);
 	}
 
 	static detectAndroidVersion()

@@ -2,10 +2,13 @@
 
 namespace Bitrix\Catalog\Integration\Report;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Integration\Report\Dashboard\StoreStock;
 use Bitrix\Catalog\Integration\Report\Filter\StoreStockFilter;
 use Bitrix\Catalog\Integration\Report\Handler;
 use Bitrix\Catalog\Integration\Report\View;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Report\VisualConstructor\AnalyticBoard;
 use Bitrix\Report\VisualConstructor\AnalyticBoardBatch;
@@ -76,6 +79,6 @@ final class EventHandler
 
 	private static function checkDocumentReadRights(): bool
 	{
-		return \Bitrix\Main\Engine\CurrentUser::get()->canDoOperation('catalog_read');
+		return Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
 	}
 }

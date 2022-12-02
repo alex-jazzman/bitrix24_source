@@ -57,6 +57,11 @@ class CCrmEntitySelectorHelper
 			&& ($options['IS_HIDDEN'] === true || $options['IS_HIDDEN'] === 'Y')
 		);
 
+		$largeImages = (
+			isset($options['LARGE_IMAGES'])
+			&& ($options['LARGE_IMAGES'] === true || $options['LARGE_IMAGES'] === 'Y')
+		);
+
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 		$serviceUserPermissions = Container::getInstance()->getUserPermissions($userPermissions->GetUserID());
 		if (!$isHidden)
@@ -98,7 +103,9 @@ class CCrmEntitySelectorHelper
 			$result['id'] = $entityID;
 			$result['type'] = mb_strtolower($entityTypeName);
 			$result['typeName'] = $entityTypeName;
+			$result['typeNameTitle'] = \CCrmOwnerType::GetDescription($entityTypeId);
 			$result['place'] = $result['type'];
+			$result['hidden'] = $isHidden;
 		}
 
 		$titleKey = $bEntityEditorFormat ? 'title' : 'TITLE';
@@ -161,8 +168,31 @@ class CCrmEntitySelectorHelper
 				$photoID = intval($arRes['PHOTO']);
 				if ($photoID > 0 && !isset($arImages[$photoID]))
 				{
-					$arImages[$photoID] = CFile::ResizeImageGet($photoID, array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
-					$arLargeImages[$photoID] = CFile::ResizeImageGet($photoID, array('width' => 38, 'height' => 38), BX_RESIZE_IMAGE_EXACT);
+					if ($largeImages)
+					{
+						// the same size and resize type as in `crm.contact.details` (do not multiply images)
+						$arImages[$photoID] = $arLargeImages[$photoID] = CFile::ResizeImageGet(
+							$photoID,
+							['width' => 200, 'height' => 200],
+							BX_RESIZE_IMAGE_EXACT,
+							false,
+							false,
+							true
+						);
+					}
+					else
+					{
+						$arImages[$photoID] = CFile::ResizeImageGet(
+							$photoID,
+							['width' => 25, 'height' => 25],
+							BX_RESIZE_IMAGE_EXACT
+						);
+						$arLargeImages[$photoID] = CFile::ResizeImageGet(
+							$photoID,
+							['width' => 38, 'height' => 38],
+							BX_RESIZE_IMAGE_EXACT
+						);
+					}
 				}
 				$result[$titleKey] = CCrmContact::PrepareFormattedName(
 					array(
@@ -302,8 +332,30 @@ class CCrmEntitySelectorHelper
 				$logoID = intval($arRes['LOGO']);
 				if ($logoID > 0 && !isset($arImages[$logoID]))
 				{
-					$arImages[$logoID] = CFile::ResizeImageGet($logoID, array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
-					$arLargeImages[$logoID] = CFile::ResizeImageGet($logoID, array('width' => 38, 'height' => 38), BX_RESIZE_IMAGE_EXACT);
+					if ($largeImages)
+					{
+						// the same size and resize type as in `crm.company.details` (do not multiply images)
+						$arImages[$logoID] = $arLargeImages[$logoID] = CFile::ResizeImageGet(
+							$logoID,
+							['width' => 300, 'height' => 300],
+							false,
+							false,
+							true
+						);
+					}
+					else
+					{
+						$arImages[$logoID] = CFile::ResizeImageGet(
+							$logoID,
+							['width' => 25, 'height' => 25],
+							BX_RESIZE_IMAGE_EXACT
+						);
+						$arLargeImages[$logoID] = CFile::ResizeImageGet(
+							$logoID,
+							['width' => 38, 'height' => 38],
+							BX_RESIZE_IMAGE_EXACT
+						);
+					}
 				}
 				$result[$imageKey] = isset($arImages[$logoID]['src']) ? $arImages[$logoID]['src'] : '';
 				$result[$largeImageKey] = isset($arLargeImages[$logoID]['src']) ? $arLargeImages[$logoID]['src'] : '';
@@ -1045,6 +1097,7 @@ class CCrmEntitySelectorHelper
 			$requisiteList = array();
 			$presetList = array();
 			$presetIds = array();
+			$requisiteAddresses = array();
 			if (is_array($select) && !empty($select))
 			{
 				$res = $requisite->getList(
@@ -1119,6 +1172,8 @@ class CCrmEntitySelectorHelper
 							$requisiteId = (int)$row['ENTITY_ID'];
 							$typeId = (int)$row['TYPE_ID'];
 							unset($row['ENTITY_ID'], $row['TYPE_ID']);
+							$requisiteAddresses[$typeId] = \Bitrix\Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma($row);
+
 							if ($addressAsJson)
 							{
 								if (RequisiteAddress::isLocationModuleIncluded())
@@ -1269,7 +1324,9 @@ class CCrmEntitySelectorHelper
 						}
 						$requisiteData['bankDetailViewDataList'] = &$bankDetailsData['bankDetailViewDataList'];
 						$requisiteData['bankDetailIdSelected'] = &$bankDetailsData['bankDetailIdSelected'];
-						unset($viewDataFields, $bankDetailsData);
+						$requisiteData['formattedAddresses'] = $requisiteAddresses;
+
+						unset($viewDataFields, $bankDetailsData, $requisiteAddress);
 						$requisiteDataJson = '';
 						$requisiteDataSign = '';
 						if (is_array($requisiteData))

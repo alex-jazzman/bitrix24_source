@@ -458,8 +458,10 @@ this.BX = this.BX || {};
 	        event.denyAction();
 	      } else {
 	        this.BX.removeCustomEvent("SidePanel.Slider::onClose", this.sliderOnClose);
-	        if (this.attendeesSelector) this.attendeesSelector.closeAll();
-	        this.destroy(event);
+
+	        if (this.attendeesSelector) {
+	          this.attendeesSelector.closeAll();
+	        }
 	      }
 	    }
 	  }

@@ -420,7 +420,7 @@ class Controller extends Event
 		}
 		if (typeof options.design !== 'undefined')
 		{
-			this.design.adjust(options.design);
+			this.design.adjust({proxy: options.proxy, ...options.design});
 		}
 		if (typeof options.recaptcha !== 'undefined')
 		{

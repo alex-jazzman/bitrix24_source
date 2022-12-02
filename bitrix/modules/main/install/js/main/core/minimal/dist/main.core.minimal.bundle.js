@@ -9490,10 +9490,11 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: "addGlobalClass",
-	    value: function addGlobalClass() {
+	    value: function addGlobalClass(target) {
 	      var globalClass = 'bx-core';
+	      target = Type.isElementNode(target) ? target : document.documentElement;
 
-	      if (Dom.hasClass(document.documentElement, globalClass)) {
+	      if (Dom.hasClass(target, globalClass)) {
 	        return;
 	      }
 
@@ -9528,7 +9529,7 @@ window._main_polyfill_core = true;
 	        globalClass += ' bx-firefox';
 	      }
 
-	      Dom.addClass(document.documentElement, globalClass);
+	      Dom.addClass(target, globalClass);
 	    }
 	  }, {
 	    key: "detectAndroidVersion",

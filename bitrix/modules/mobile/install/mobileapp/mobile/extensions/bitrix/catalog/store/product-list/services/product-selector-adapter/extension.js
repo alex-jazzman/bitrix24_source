@@ -5,13 +5,24 @@
 	 */
 	class StoreProductSelectorAdapter
 	{
-		constructor({root, iblockId, basePriceId, currency, onCreate, onSelect})
+		constructor({
+			root,
+			iblockId,
+			restrictedProductTypes,
+			basePriceId,
+			currency,
+			enableCreation,
+			onCreate,
+			onSelect
+		})
 		{
 			/** @type StoreProductList */
 			this.root = root;
 			this.iblockId = iblockId;
+			this.restrictedProductTypes = restrictedProductTypes;
 			this.basePriceId = basePriceId;
 			this.currency = currency;
+			this.enableCreation = enableCreation;
 
 			const emptyCallback = () => {};
 			this.onCreate = onCreate || emptyCallback;
@@ -24,13 +35,15 @@
 				provider: {
 					options: {
 						iblockId: this.iblockId,
+						restrictedProductTypes: this.restrictedProductTypes,
 						basePriceId: this.basePriceId,
 						currency: this.currency,
 					},
 				},
 				allowMultipleSelection: false,
+				closeOnSelect: true,
 				createOptions: {
-					enableCreation: true,
+					enableCreation: this.enableCreation,
 					handler: (name) => {
 						selector.close().then(() => {
 							this.onCreate(name);
@@ -51,6 +64,7 @@
 				widgetParams: {
 					backdrop: {
 						mediumPositionPercent: 70,
+						horizontalSwipeAllowed: false,
 					}
 				}
 			});

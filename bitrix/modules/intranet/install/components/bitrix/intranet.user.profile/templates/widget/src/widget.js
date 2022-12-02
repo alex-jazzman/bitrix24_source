@@ -472,15 +472,21 @@ export default class Widget extends EventEmitter
 
 	#getDeskTopContainer(): ?Element
 	{
-		if (this.#features.browser === 'Linux')
-		{
-			return null;
-		}
 		return this.#cache.remember('getDeskTopContainer', () => {
 			let isInstalled = this.#features['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
 			let cssPostfix = '--apple';
 			let title = Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_APPLE');
-			let linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.dmg'
+			let linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.dmg';
+			const typesInstallersForLinux = {
+				'DEB': {
+					text: Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_DEB'),
+					href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb',
+				},
+				'RBM': {
+					text: Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RBM'),
+					href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm',
+				},
+			};
 
 			if (this.#features.browser === 'Windows')
 			{
@@ -489,7 +495,8 @@ export default class Widget extends EventEmitter
 				title = Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_WINDOWS');
 				linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.exe'
 			}
-			const onclick = isInstalled ? (event) => {
+
+			let onclick = isInstalled ? (event) => {
 				event.preventDefault();
 				event.stopPropagation();
 				return false;
@@ -498,21 +505,94 @@ export default class Widget extends EventEmitter
 				return true;
 			};
 
+			let menuLinux = null;
+			const showMenuLinux = (event) => {
+				event.preventDefault();
+				menuLinux = (menuLinux || new Menu({
+					className: 'system-auth-form__popup',
+					bindElement: event.target,
+					items: [
+						{
+							text: typesInstallersForLinux.DEB.text,
+							href: typesInstallersForLinux.DEB.href,
+							onclick: () => {
+								menuLinux.close();
+							}
+						},
+						{
+							text: typesInstallersForLinux.RBM.text,
+							href: typesInstallersForLinux.RBM.href,
+							onclick: () => {
+								menuLinux.close();
+							}
+						},
+
+					],
+					angle: true,
+					offsetLeft: 10,
+					events: {
+						onShow: () => {
+							this.getPopup().getPopup().setAutoHide(false);
+						},
+						onClose: () => {
+							this.getPopup().getPopup().setAutoHide(true);
+						}
+					}
+				}));
+				menuLinux.toggle();
+			}
+
+			if (this.#features.browser === 'Linux')
+			{
+				isInstalled = this.#features['appInstalled']['APP_LINUX_INSTALLED'] === 'Y';
+				cssPostfix = '--linux';
+				title = Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_LINUX');
+				linkToDistributive = '';
+
+				onclick = isInstalled ? (event) => {
+					event.preventDefault();
+					event.stopPropagation();
+					return false;
+				} : showMenuLinux;
+			}
+
 			if (Type.isPlainObject(this.#features['otp']) === false)
 			{
 				let menuPopup = null;
+				let menuItems = [{
+					text: Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'),
+					href: linkToDistributive,
+					onclick: () => {
+						menuPopup.close();
+						this.hide();
+					}
+				}];
+
+				if (this.#features.browser === 'Linux')
+				{
+					menuItems = [
+						{
+							text: typesInstallersForLinux.DEB.text,
+							href: typesInstallersForLinux.DEB.href,
+							onclick: () => {
+								menuPopup.close();
+							}
+						},
+						{
+							text: typesInstallersForLinux.RBM.text,
+							href: typesInstallersForLinux.RBM.href,
+							onclick: () => {
+								menuPopup.close();
+							}
+						},
+					];
+				}
+
 				const popupClick = (event: MouseEvent) => {
 					menuPopup = (menuPopup || (new Menu({
 						className: 'system-auth-form__popup',
 						bindElement: event.target,
-						items: [{
-								text: Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'),
-								href: linkToDistributive,
-								onclick: () => {
-									menuPopup.close();
-									this.hide();
-								}
-						}],
+						items: menuItems,
 						angle: true,
 						offsetLeft: 10,
 						events: {
@@ -544,6 +624,19 @@ export default class Widget extends EventEmitter
 				`;
 			}
 
+			const getLinkForHiddenState = () => {
+				const link = Tag.render`
+					<a href="${linkToDistributive}" class="system-auth-form__item-title --link-dotted">${Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD')}</a>
+				`;
+
+				if (this.#features.browser === 'Linux')
+				{
+					link.addEventListener('click', showMenuLinux);
+				}
+
+				return link;
+			};
+
 			return Tag.render`
 				<div class="system-auth-form__item system-auth-form__scope --padding-bottom-10 ${isInstalled ? ' --active' : ''}">
 					<div class="system-auth-form__item-logo">
@@ -551,11 +644,7 @@ export default class Widget extends EventEmitter
 					</div>
 					<div class="system-auth-form__item-container">
 						<div class="system-auth-form__item-title ${isInstalled ? ' --without-margin' : '--min-height'}">${title}</div>
-						${isInstalled ?
-							Tag.render`
-							<a href="${linkToDistributive}" class="system-auth-form__item-title --link-dotted">${Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD')}</a>
-							` : ''
-							}
+						${isInstalled ? getLinkForHiddenState() : ''}
 						<div class="system-auth-form__item-content --center --center-force">
 							<a class="ui-qr-popupcomponentmaker__btn" href="${linkToDistributive}" target="_blank" onclick="${onclick}">
 								${isInstalled ? Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : Loc.getMessage('INTRANET_USER_PROFILE_INSTALL')}
@@ -825,7 +914,7 @@ export default class Widget extends EventEmitter
 			const newUrl =  new Uri('/auth/?logout=yes');
 			newUrl.setQueryParam('sessid', BX.bitrix_sessid());
 			newUrl.setQueryParam('backurl', encodeURIComponent(backUrl.toString()));
-			//TODO   
+			//TODO
 			return Tag.render`
 				<div class="system-auth-form__item system-auth-form__scope --padding-sm">
 					<div class="system-auth-form__item-logo">

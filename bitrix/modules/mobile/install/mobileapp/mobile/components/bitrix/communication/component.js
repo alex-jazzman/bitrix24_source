@@ -1,20 +1,22 @@
 "use strict";
-(()=>{
-	const { EntityReady } = jn.require('entity-ready');
+(() =>
+{
+	const {EntityReady} = jn.require('entity-ready');
 
-	if (typeof this.SocketConnection == 'undefined')
+	if (typeof window.SocketConnection == 'undefined')
 	{
-		this.SocketConnection = new Connection();
+		window.SocketConnection = new Connection();
 		// EntityReady.wait('chat').then(() => this.SocketConnection.start());
-		setTimeout(() => this.SocketConnection.start(), 0);
+		setTimeout(() => window.SocketConnection.start(), 0);
 	}
 	else
 	{
-		this.SocketConnection.disconnect(1000, "restart");
-		this.SocketConnection = new Connection();
-		setTimeout(() => {
-			this.SocketConnection.start();
-			// EntityReady.wait('chat').then(() => this.SocketConnection.start());
+		window.SocketConnection.disconnect(1000, "restart");
+		window.SocketConnection = new Connection();
+		setTimeout(() =>
+		{
+			window.SocketConnection.start();
+			// EntityReady.wait('chat').then(() => window.SocketConnection.start());
 		}, 2000);
 	}
 
@@ -33,6 +35,7 @@
 				'openlines': 'im_messenger',
 				'notifications': 'im_messenger',
 				'tasks_total': 'tasks_total',
+				'crm_all_no_orders': 'crm_all_no_orders',
 				'crm_activity_current_calltracker': 'crm_activity_current_calltracker',
 			};
 
@@ -41,19 +44,20 @@
 				'bp_tasks': 'bp_tasks',
 				'im': 'messages',
 				'tasks_total': 'tasks_total',
+				'crm_all_no_orders': 'crm_all_no_orders',
 				'crm_activity_current_calltracker': 'crm_activity_current_calltracker',
 			};
 
 			this.sharedStorage = Application.sharedStorage();
 
 			let counters = this.sharedStorage.get('counters');
-			this.counters = counters? JSON.parse(counters): {};
+			this.counters = counters ? JSON.parse(counters) : {};
 
 			let userCounters = this.sharedStorage.get('userCounters');
-			this.userCounters = userCounters? JSON.parse(userCounters): {};
+			this.userCounters = userCounters ? JSON.parse(userCounters) : {};
 
 			let userCountersDates = this.sharedStorage.get('userCountersDates');
-			this.userCountersDates = userCountersDates? JSON.parse(userCountersDates): {};
+			this.userCountersDates = userCountersDates ? JSON.parse(userCountersDates) : {};
 
 			BX.addCustomEvent("onUpdateConfig", this.onUpdateApplicationCounterConfig.bind(this));
 			BX.addCustomEvent("onSetUserCounters", this.onSetUserCounters.bind(this));
@@ -70,9 +74,7 @@
 
 			this.loadFromCache();
 
-			BX.addCustomEvent("onAppActive", () => {
-				this.update();
-			});
+			BX.addCustomEvent("onAppActive", () => this.update());
 		}
 
 		onSetUserCounters(counters, time)
@@ -86,7 +88,7 @@
 				&& typeof this.userCountersDates[siteId] == 'object'
 			)
 			{
-				startTime = time.start*1000;
+				startTime = time.start * 1000;
 
 				for (let counterName in this.userCountersDates[siteId])
 				{
@@ -148,7 +150,7 @@
 		{
 			if (command == 'user_counter')
 			{
-				this.onUpdateUserCounters(params, extra.server_time_unix*1000);
+				this.onUpdateUserCounters(params, extra.server_time_unix * 1000);
 			}
 		}
 
@@ -326,14 +328,15 @@
 
 			this.total = Object.keys(this.counters)
 				.filter(counterType => this.isEnableApplicationCounterType(counterType))
-				.reduce((currentTotal, key) => {
+				.reduce((currentTotal, key) =>
+				{
 					let counter = Number(this.counters[key]);
-					let value = Number.isNaN(counter)? 0: counter;
+					let value = Number.isNaN(counter) ? 0 : counter;
 					return currentTotal + value;
 				}, 0)
 			;
 
-			console.info("AppCounters.update: update counters: "+ this.total+ "\n", this.counters);
+			console.info("AppCounters.update: update counters: " + this.total + "\n", this.counters);
 
 			Application.setBadges(this.counters);
 
@@ -380,7 +383,8 @@
 
 					this.update();
 
-				}).catch(() => {
+				}).catch(() =>
+				{
 					this.update();
 				});
 			});
@@ -430,8 +434,6 @@
 			}
 		}
 	}
-
-	window.Counters = new AppCounters();
 
 	class DesktopStatus
 	{
@@ -492,44 +494,57 @@
 		}
 	}
 
-	window.DesktopStatus = new DesktopStatus();
-
-
 	/**
 	 * Auth restore
 	 */
 
-	let Authorization =
+	class Authorization
+	{
+		constructor()
 		{
-			restore:() => Application.auth(
-				result => {
+			this.interval = 24 * 60 * 1000
+			this.intervalId = 0
+		}
+
+		restore()
+		{
+			Application.auth(
+				result =>
+				{
 					console.info(
 						(!result || result.status != "success")
-							?"Authorization.restore: fail!"
-							:"Authorization.restore: success!"
+							? "Authorization.restore: fail!"
+							: "Authorization.restore: success!"
 					);
 				}
-			),
-			start:function(){
-				if(typeof Application.auth === "function")
-				{
-					console.info("Authorization.start: auth restore is active\n", this);
-					this.intervalId = setInterval(this.restore, this.interval);
-				}
-			},
+			)
+		}
 
-			interval:24 * 60 * 1000,
-			intervalId:0,
-		};
+		start()
+		{
+			if (typeof Application.auth === "function")
+			{
+				console.info("Authorization.start: auth restore is active\n", this);
+				this.intervalId = setInterval(this.restore, this.interval);
+			}
+		}
 
-	Authorization.start();
-	window.Authorization = Authorization;
+		stop()
+		{
+			clearTimeout(this.intervalId)
+		}
+	}
 
+	if (window.Authorization && window.Authorization.stop)
+	{
+		window.Authorization.stop();
+	}
+	window.Authorization = new Authorization();
+	window.Authorization.start();
 
 	/**
 	 *  Push notification registration
 	 */
-
 	let pushNotificationRegister = () =>
 	{
 		if (window.registerSuccess)
@@ -537,19 +552,21 @@
 			return true;
 		}
 
-		if( typeof Application.registerVoipNotifications == "function") {
-			Application.registerVoipNotifications().then( ({token, uuid, model}) => {
+		if (typeof(Application.registerVoipNotifications) === "function")
+		{
+			Application.registerVoipNotifications().then(({token, uuid, model}) =>
+			{
 				BX.ajax({
-					url : env.siteDir + "mobile/",
-					method : "POST",
-					dataType : "json",
-					tokenSaveRequest : true,
-					data : {
-						mobile_action : "save_device_token",
-						device_name : model,
-						uuid : uuid,
-						device_token_voip : token,
-						device_type : "APPLE",
+					url: env.siteDir + "mobile/",
+					method: "POST",
+					dataType: "json",
+					tokenSaveRequest: true,
+					data: {
+						mobile_action: "save_device_token",
+						device_name: model,
+						uuid: uuid,
+						device_token_voip: token,
+						device_type: "APPLE",
 					}
 				})
 					.then((data) => console.log("save_device_token response ", data))
@@ -584,7 +601,8 @@
 								token = data.voipToken;
 								dt = "APPLE/VOIP"
 							}
-							else if(data.type && data.type === 'huawei') {
+							else if (data.type && data.type === 'huawei')
+							{
 								token = data.token;
 								dt = "HUAWEI"
 							}
@@ -599,16 +617,16 @@
 						}
 
 						BX.ajax({
-							url : env.siteDir + "mobile/",
-							method : "POST",
-							dataType : "json",
-							tokenSaveRequest : true,
-							data : {
-								mobile_action : "save_device_token",
-								device_name : (typeof device.name == "undefined"? device.model: device.name),
-								uuid : device.uuid,
-								device_token : token,
-								device_type : dt,
+							url: env.siteDir + "mobile/",
+							method: "POST",
+							dataType: "json",
+							tokenSaveRequest: true,
+							data: {
+								mobile_action: "save_device_token",
+								device_name: (typeof device.name == "undefined" ? device.model : device.name),
+								uuid: device.uuid,
+								device_token: token,
+								device_type: dt,
 							}
 						})
 							.then((data) => console.log("save_device_token response ", data))
@@ -629,9 +647,8 @@
 	 * Push handling
 	 */
 
-
 	let PushNotifications = {
-		urlByTag: function(tag)
+		urlByTag: function (tag)
 		{
 			let link = (env.siteDir ? env.siteDir : '/');
 			let result = false;
@@ -650,7 +667,6 @@
 				params = tag.split("|");
 				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=" + params[2];
 			}
-
 			else if (
 				tag.substr(0, 13) == 'BLOG|COMMENT|'
 				|| tag.substr(0, 21) == 'BLOG|COMMENT_MENTION|'
@@ -659,7 +675,6 @@
 				params = tag.split("|");
 				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=" + params[2] + "&commentId=" + params[3] + "#com" + params[3];
 			}
-
 			else if (
 				tag.substr(0, 25) == 'XDIMPORT|COMMENT_MENTION|'
 			)
@@ -667,8 +682,7 @@
 				params = tag.split("|");
 				result = link + "mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=LOG_ENTRY&ENTITY_ID=" + params[2];
 			}
-
-			else if(
+			else if (
 				tag.substr(0, 11) == 'TASKS|TASK|'
 				|| tag.substr(0, 14) == 'TASKS|COMMENT|'
 			)
@@ -713,18 +727,17 @@
 			let data = null;
 			if (typeof (push) !== 'object' || typeof (push.params) === 'undefined')
 			{
-				pushParams =  {'ACTION' : 'NONE'};
+				pushParams = {'ACTION': 'NONE'};
 			}
 
-			if(typeof push.params != "undefined")
+			if (typeof push.params != "undefined")
 			{
 				try
 				{
 					pushParams = JSON.parse(push.params);
-				}
-				catch (e)
+				} catch (e)
 				{
-					pushParams = {'ACTION' : push.params};
+					pushParams = {'ACTION': push.params};
 				}
 
 				if (this.actions.includes(pushParams.ACTION))
@@ -732,30 +745,29 @@
 					data = this.urlByTag(pushParams.TAG);
 				}
 			}
-			else if(push.id != null) {
+			else if (push.id != null)
+			{
 				data = this.urlByTag(push.id);
 			}
 
-			if(data != null)
+			if (data != null)
 			{
-				if ( typeof data.LINK != 'undefined' && data.LINK.length > 0)
+				if (typeof data.LINK != 'undefined' && data.LINK.length > 0)
 				{
 					PageManager.openPage({
-						url : data.LINK,
-						unique : data.UNIQUE,
+						url: data.LINK,
+						unique: data.UNIQUE,
 						data: data.DATA,
 					});
 				}
 			}
 
-
-
-
 		},
 		actions: ["post", "tasks", "comment", "mention", "share", "share2users", "sonet_group_event"],
-		init:function(){
+		init: function ()
+		{
 			this.handler(); //handle first start of the app
-			BX.addCustomEvent("onAppActive", ()=> this.handler()); //listen for the app wake up
+			BX.addCustomEvent("onAppActive", () => this.handler()); //listen for the app wake up
 		}
 	};
 
@@ -770,11 +782,11 @@
 	{
 		console.log("onUserProfileOpen", userId, options);
 
-		if(Application.getApiVersion() >= 27)
+		if (Application.getApiVersion() >= 27)
 		{
 			let url = "/mobile/mobile_component/user.profile/?version=1";
 
-			if(availableComponents && availableComponents["user.profile"])
+			if (availableComponents && availableComponents["user.profile"])
 			{
 				url = availableComponents["user.profile"]["publicUrl"];
 			}
@@ -799,7 +811,7 @@
 				{
 					scriptPath: url,
 					params: {userId, isBackdrop},
-					canOpenInDefault:true,
+					canOpenInDefault: true,
 					rootWidget: {
 						name: "list",
 						groupStyle: true,
@@ -812,9 +824,12 @@
 		}
 		else
 		{
-			PageManager.openPage({url:"/mobile/users/?user_id="+userId});
+			PageManager.openPage({url: "/mobile/users/?user_id=" + userId});
 		}
 	});
+
+	window.Counters = new AppCounters();
+	window.DesktopStatus = new DesktopStatus();
 })();
 
 

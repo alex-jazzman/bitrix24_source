@@ -475,6 +475,9 @@ export default class History extends Stream
 
 	createCurrentDaySection()
 	{
+		let formattedDate = this.formatDate(BX.prop.extractDate(new Date()));
+		formattedDate = formattedDate[0].toUpperCase() + formattedDate.substring(1);
+
 		return BX.create("DIV",
 			{
 				attrs: {className: "crm-entity-stream-section crm-entity-stream-section-today-label"},
@@ -488,7 +491,7 @@ export default class History extends Stream
 										BX.create("DIV",
 											{
 												attrs: {className: "crm-entity-stream-today-label"},
-												text: this.formatDate(BX.prop.extractDate(new Date()))
+												text: formattedDate
 											}
 										)
 									]
@@ -501,6 +504,9 @@ export default class History extends Stream
 
 	createDaySection(date)
 	{
+		let formattedDate = this.formatDate(date);
+		formattedDate = formattedDate[0].toUpperCase() + formattedDate.substring(1);
+
 		return BX.create("DIV",
 			{
 				attrs: {className: "crm-entity-stream-section crm-entity-stream-section-history-label"},
@@ -514,7 +520,7 @@ export default class History extends Stream
 										BX.create("DIV",
 											{
 												attrs: {className: "crm-entity-stream-history-label"},
-												text: this.formatDate(date)
+												text: formattedDate
 											}
 										)
 									]
@@ -945,6 +951,7 @@ export default class History extends Stream
 				itemClassName: this.getItemClassName(),
 				useShortTimeFormat: true,
 				isReadOnly: this.isReadOnly(),
+				currentUser: this._manager.getCurrentUser(),
 				streamType: this.getStreamType(),
 				data: data,
 			})

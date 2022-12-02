@@ -292,6 +292,7 @@ export class Content extends BasePanel
 			{
 				Dom.addClass(document.body, 'landing-ui-hide-action-panels');
 			}
+			Dom.addClass(document.body, "landing-ui-action-panels-disable-scrollbar");
 
 			void BX.Landing.Utils.Show(this.overlay);
 			return BX.Landing.Utils.Show(this.layout).then(() => {
@@ -310,6 +311,7 @@ export class Content extends BasePanel
 			{
 				Dom.removeClass(document.body, 'landing-ui-hide-action-panels');
 			}
+			Dom.removeClass(document.body, "landing-ui-action-panels-disable-scrollbar");
 
 			void BX.Landing.Utils.Hide(this.overlay);
 			return BX.Landing.Utils.Hide(this.layout).then(() => {

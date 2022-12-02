@@ -395,8 +395,6 @@ class CAllCrmQuote
 			foreach (GetModuleEvents('crm', 'OnAfterCrmQuoteAdd', true) as $arEvent)
 				ExecuteModuleEventEx($arEvent, array(&$arFields));
 			//endregion
-
-			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::QuoteName, 'kanban_add');
 		}
 
 		return $result;
@@ -969,8 +967,6 @@ class CAllCrmQuote
 				foreach (GetModuleEvents('crm', 'OnAfterCrmQuoteUpdate', true) as $arEvent)
 					ExecuteModuleEventEx($arEvent, array(&$arFields));
 			}
-
-			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::QuoteName, 'kanban_update');
 		}
 		return $bResult;
 	}

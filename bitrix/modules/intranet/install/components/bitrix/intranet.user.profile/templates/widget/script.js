@@ -1023,15 +1023,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	function _getDeskTopContainer2() {
 	  var _this11 = this;
 
-	  if (babelHelpers.classPrivateFieldGet(this, _features).browser === 'Linux') {
-	    return null;
-	  }
-
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getDeskTopContainer', function () {
 	    var isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
 	    var cssPostfix = '--apple';
 	    var title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_APPLE');
 	    var linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.dmg';
+	    var typesInstallersForLinux = {
+	      'DEB': {
+	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_DEB'),
+	        href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb'
+	      },
+	      'RBM': {
+	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RBM'),
+	        href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm'
+	      }
+	    };
 
 	    if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Windows') {
 	      isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_WINDOWS_INSTALLED'] === 'Y';
@@ -1049,23 +1055,85 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	      return true;
 	    };
+	    var menuLinux = null;
+
+	    var showMenuLinux = function showMenuLinux(event) {
+	      event.preventDefault();
+	      menuLinux = menuLinux || new main_popup.Menu({
+	        className: 'system-auth-form__popup',
+	        bindElement: event.target,
+	        items: [{
+	          text: typesInstallersForLinux.DEB.text,
+	          href: typesInstallersForLinux.DEB.href,
+	          onclick: function onclick() {
+	            menuLinux.close();
+	          }
+	        }, {
+	          text: typesInstallersForLinux.RBM.text,
+	          href: typesInstallersForLinux.RBM.href,
+	          onclick: function onclick() {
+	            menuLinux.close();
+	          }
+	        }],
+	        angle: true,
+	        offsetLeft: 10,
+	        events: {
+	          onShow: function onShow() {
+	            _this11.getPopup().getPopup().setAutoHide(false);
+	          },
+	          onClose: function onClose() {
+	            _this11.getPopup().getPopup().setAutoHide(true);
+	          }
+	        }
+	      });
+	      menuLinux.toggle();
+	    };
+
+	    if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Linux') {
+	      isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_LINUX_INSTALLED'] === 'Y';
+	      cssPostfix = '--linux';
+	      title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_LINUX');
+	      linkToDistributive = '';
+	      onclick = isInstalled ? function (event) {
+	        event.preventDefault();
+	        event.stopPropagation();
+	        return false;
+	      } : showMenuLinux;
+	    }
 
 	    if (main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(_this11, _features)['otp']) === false) {
 	      var menuPopup = null;
+	      var menuItems = [{
+	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'),
+	        href: linkToDistributive,
+	        onclick: function onclick() {
+	          menuPopup.close();
+
+	          _this11.hide();
+	        }
+	      }];
+
+	      if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Linux') {
+	        menuItems = [{
+	          text: typesInstallersForLinux.DEB.text,
+	          href: typesInstallersForLinux.DEB.href,
+	          onclick: function onclick() {
+	            menuPopup.close();
+	          }
+	        }, {
+	          text: typesInstallersForLinux.RBM.text,
+	          href: typesInstallersForLinux.RBM.href,
+	          onclick: function onclick() {
+	            menuPopup.close();
+	          }
+	        }];
+	      }
 
 	      var popupClick = function popupClick(event) {
 	        menuPopup = menuPopup || new main_popup.Menu({
 	          className: 'system-auth-form__popup',
 	          bindElement: event.target,
-	          items: [{
-	            text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'),
-	            href: linkToDistributive,
-	            onclick: function onclick() {
-	              menuPopup.close();
-
-	              _this11.hide();
-	            }
-	          }],
+	          items: menuItems,
 	          angle: true,
 	          offsetLeft: 10,
 	          events: {
@@ -1083,7 +1151,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div data-role=\"desktop-item\" class=\"system-auth-form__item system-auth-form__scope --padding-sm-all ", " --vertical --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo --margin-bottom --center system-auth-form__item-container --flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --center --display-flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light --center --s\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --flex --center --display-flex\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<div class=\"system-auth-form__config --absolute\" onclick=\"", "\"></div>"])), popupClick) : '', title, linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
 	    }
 
-	    return main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title ", "\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? ' --without-margin' : '--min-height', title, isInstalled ? main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-title --link-dotted\">", "</a>\n\t\t\t\t\t\t\t"])), linkToDistributive, main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD')) : '', linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
+	    var getLinkForHiddenState = function getLinkForHiddenState() {
+	      var link = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-title --link-dotted\">", "</a>\n\t\t\t\t"])), linkToDistributive, main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD'));
+
+	      if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Linux') {
+	        link.addEventListener('click', showMenuLinux);
+	      }
+
+	      return link;
+	    };
+
+	    return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title ", "\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? ' --without-margin' : '--min-height', title, isInstalled ? getLinkForHiddenState() : '', linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
 	  });
 	}
 
@@ -1244,7 +1322,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    backUrl.removeQueryParam(['logout', 'login', 'back_url_pub', 'user_lang']);
 	    var newUrl = new main_core.Uri('/auth/?logout=yes');
 	    newUrl.setQueryParam('sessid', BX.bitrix_sessid());
-	    newUrl.setQueryParam('backurl', encodeURIComponent(backUrl.toString())); //TODO   
+	    newUrl.setQueryParam('backurl', encodeURIComponent(backUrl.toString())); //TODO
 
 	    return main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --logout\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-link-all\"></a>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_LOGOUT'), newUrl.toString());
 	  });

@@ -409,15 +409,12 @@ class ResultEntity
 		return $this->replaceDefaultFieldValue($fieldProperties['TEMPLATE']);
 	}
 
-	protected function getEntityFields($entityName)
+	protected function getEntityFields(string $entityName, ?bool $onlyDefaultsMode = null): array
 	{
-		if(isset($this->fields[$entityName]))
+		$filledFields = $this->fields[$entityName] ?? [];
+		if ($onlyDefaultsMode === false)
 		{
-			$fields = $this->fields[$entityName];
-		}
-		else
-		{
-			$fields =  array();
+			return $filledFields;
 		}
 
 		if(!$this->entityMap)
@@ -425,13 +422,8 @@ class ResultEntity
 			$this->entityMap = Entity::getMap();
 		}
 
-		if(!isset($this->entityMap[$entityName]['FIELD_AUTO_FILL_TEMPLATE']))
-		{
-			return $fields;
-		}
-
-
-		foreach($this->entityMap[$entityName]['FIELD_AUTO_FILL_TEMPLATE'] as $fieldName => $fieldProperties)
+		$fields = [];
+		foreach(($this->entityMap[$entityName]['FIELD_AUTO_FILL_TEMPLATE'] ?? []) as $fieldName => $fieldProperties)
 		{
 			if(isset($fields[$fieldName]) && $fields[$fieldName])
 			{
@@ -441,7 +433,12 @@ class ResultEntity
 			$fields[$fieldName] =  $this->replaceDefaultFieldValue($fieldProperties['TEMPLATE']);
 		}
 
-		return $fields;
+		if ($onlyDefaultsMode)
+		{
+			return $fields;
+		}
+
+		return $filledFields + $fields;
 	}
 
 	public function setProductRows($productList)
@@ -594,9 +591,7 @@ class ResultEntity
 
 	protected function addByEntityName($entityName, $params = array())
 	{
-		$id = null;
-
-		$entityFields = $this->getEntityFields($entityName);
+		$entityFields = $this->getEntityFields($entityName, false);
 		if($params['FIELDS'])
 		{
 			$entityFields = $params['FIELDS'] + $entityFields;
@@ -668,6 +663,7 @@ class ResultEntity
 				$entityFields['SOURCE_ID'] = 'CALLBACK';
 			}
 
+			$entityFields += $this->getEntityFields($entityName, true);
 
 			$addOptions = [
 				'DISABLE_USER_FIELD_CHECK' => true,

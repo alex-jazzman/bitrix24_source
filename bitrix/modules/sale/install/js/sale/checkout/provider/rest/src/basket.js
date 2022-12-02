@@ -19,15 +19,15 @@ export class BasketRestHandler extends BaseRestHandler
             {
                 EventEmitter.emit(EventType.basket.needRefresh, {})
             }
-            
+
             let needRefresh = this.store.getters['basket/getNeedRefresh'];
-            
+
             this.#setModelBasketForAction(response.data, pool)
                 .then(() => resolve());
 
             this.#setModelBasketForActionError(response.data)
                 .then(() => resolve());
-            
+
             if(needRefresh === 'Y')
             {
                 if(pool.isEmpty())
@@ -38,7 +38,7 @@ export class BasketRestHandler extends BaseRestHandler
             }
         });
     }
-    
+
     #setModelBasketByItem(data, pool)
     {
         return new Promise((resolve, reject) =>{
@@ -46,27 +46,27 @@ export class BasketRestHandler extends BaseRestHandler
             {
                 const items = data.basketItems;
                 const collection = this.store.getters['basket/getBasket'];
-                
+
                 //refresh
                 collection.forEach((fields, index) =>
                 {
                     let item = this.#findItemById(fields.id, items);
-        
+
                     if(Type.isObject(item))
                     {
                         let fields = this.#prepareBasketItemFields(item);
-            
+
                         this.#changeBasketItem(fields, index);
                     }
                 })
-    
+
                 if(Type.isObject(data) && Type.isObject(data.orderPriceTotal))
                 {
                     this.#refreshModelBasketTotal(data);
                     this.#refreshModelBasketDiscount(data);
                 }
             }
-    
+
             resolve();
         });
     }
@@ -136,7 +136,7 @@ export class BasketRestHandler extends BaseRestHandler
                         else if(typeAction === PoolConst.action.offer)
                         {
                             item = null; //not refresh
-    
+
                             let exists = this.#hasActionInPool(index, PoolConst.action.offer, poolList);
                             if(exists === false)
                             {
@@ -277,7 +277,9 @@ export class BasketRestHandler extends BaseRestHandler
                 detailPageUrl: item.detailPageUrl,
                 picture: Type.isObject(item.catalogProduct.frontImage) ? item.catalogProduct.frontImage.src:null,
                 ratio: item.catalogProduct.ratio,
-                availableQuantity: item.catalogProduct.availableQuantity
+                availableQuantity: item.catalogProduct.availableQuantity,
+                type: item.catalogProduct.type,
+				checkMaxQuantity: item.catalogProduct.checkMaxQuantity,
             }
         };
     }

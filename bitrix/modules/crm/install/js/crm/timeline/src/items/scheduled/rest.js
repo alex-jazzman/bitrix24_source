@@ -30,6 +30,8 @@ export default class Rest extends Activity
 			{
 				iconNode.style.backgroundImage = "url('" +  data['APP_TYPE']['ICON_SRC'] + "')";
 				iconNode.style.backgroundPosition = "center center";
+				iconNode.style.backgroundSize = "cover";
+				iconNode.style.backgroundColor = "transparent";
 			}
 		}
 

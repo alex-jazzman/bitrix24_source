@@ -11,7 +11,7 @@
 		this.needForReload = false;
 		this.pullEventList = new Set();
 
-		if (this.util.isFilterEnabled())
+		if (this.util.isFilterEnabled() && config.filterId)
 		{
 			this.search = new BX.Calendar.Search(config.filterId, config.counters);
 		}
@@ -126,8 +126,7 @@
 						this.search.applyFilter();
 					}
 
-					this.searchCont = BX(this.id + '-search-container');
-					if (this.searchCont && this.util.isCountersEnabled())
+					if (this.search && this.util.getCounters())
 					{
 						this.buildCountersControl();
 					}
@@ -230,9 +229,9 @@
 					if (event instanceof BX.Event.BaseEvent)
 					{
 						var data = event.getData();
-						if (BX.Type.isObjectLike(data.counters) && this.search && this.util.isCountersEnabled())
+						if (BX.Type.isObjectLike(data.counters) && this.counters && this.util.getCounters())
 						{
-							this.search.setCountersValue(data.counters);
+							this.counters.setCountersValue(data.counters);
 						}
 
 						this.reload();
@@ -866,16 +865,15 @@
 		buildCountersControl: function()
 		{
 			this.countersCont = BX(this.id + '-counter-container');
-			if (!this.countersCont)
-			{
-				this.countersCont = this.mainCont.appendChild(BX.create('DIV', {
-					props: { className: 'calendar-counter-container' },
-					attrs: { id: this.id + '-counter-container' },
-				}));
-			}
-			BX.addClass(this.countersCont, 'calendar-counter');
 
-			this.search.updateCounters();
+			this.counters = new BX.Calendar.Counters({
+				search: this.search,
+				countersWrap: this.countersCont,
+				counters: this.util.getCounters(),
+				userId: this.currentUser.id
+			});
+			
+			this.counters.init();
 		},
 
 		buildTopButtons: function()
@@ -1389,11 +1387,11 @@
 						{
 							if (
 								BX.Type.isObjectLike(response.data.counters)
-								&& this.search
-								&& this.util.isCountersEnabled()
+								&& this.counters
+								&& this.util.getCounters()
 							)
 							{
-								this.search.setCountersValue(response.data.counters);
+								this.counters.setCountersValue(response.data.counters);
 							}
 							resolve();
 						}.bind(this),

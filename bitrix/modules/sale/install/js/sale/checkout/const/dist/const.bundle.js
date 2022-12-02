@@ -97,7 +97,19 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         email: 'EMAIL',
         phone: 'PHONE',
         string: 'STRING',
+        number: 'NUMBER',
+        checkbox: 'Y/N',
+        date: 'DATE',
+        datetime: 'DATETIME',
+        enum: 'ENUM',
         undefined: 'UNDEFINED'
+      }
+    });
+
+    var Product = Object.freeze({
+      type: {
+        product: 'product',
+        service: 'service'
       }
     });
 
@@ -121,7 +133,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 
     var Check = Object.freeze({
       status: {
-        "new": 'N',
+        new: 'N',
         error: 'E',
         process: 'P',
         printed: 'Y'
@@ -131,7 +143,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
     var Pool = Object.freeze({
       action: {
         offer: 'offer',
-        "delete": 'delete',
+        delete: 'delete',
         restore: 'restore',
         quantity: 'quantity'
       }
@@ -143,6 +155,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
     exports.PaySystem = PaySystem;
     exports.Component = Component;
     exports.Property = Property;
+    exports.Product = Product;
     exports.Consent = Consent;
     exports.Loader = Loader;
     exports.Check = Check;

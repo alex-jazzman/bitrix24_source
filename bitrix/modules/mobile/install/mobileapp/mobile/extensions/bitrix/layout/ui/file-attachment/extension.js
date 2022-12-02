@@ -45,13 +45,16 @@
 				imageUri: uri,
 				type: file.type,
 				name: file.name,
+				isLoading: file.isUploading || false,
+				hasError: file.hasError || false,
 				attachmentCloseIcon: this.props.attachmentCloseIcon,
 				attachmentFileIconFolder: this.props.attachmentFileIconFolder,
 				onDeleteAttachmentItem: (
 					this.props.onDeleteAttachmentItem && (() => this.props.onDeleteAttachmentItem(index))
 				),
 				styles: this.props.styles,
-				files: this.state.attachments
+				files: this.state.attachments,
+				showName: this.props.showName,
 			});
 		}
 
@@ -63,16 +66,16 @@
 				{
 					style: {
 						backgroundColor: '#ffffff'
-					}
+					},
 				},
 				View({},
 					View(
 						{
 							style: {
-								padding: 16,
+								padding: 13,
 								flexDirection: 'row',
-								flexWrap: 'wrap'
-							}
+								flexWrap: 'wrap',
+							},
 						},
 						...attachments.map((file, index) => this.renderFile(file, index))
 					)

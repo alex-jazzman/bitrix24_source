@@ -346,6 +346,9 @@ class CCrmOwnerType
 			case self::StoreDocumentName:
 				return self::StoreDocument;
 
+			case self::ShipmentDocumentName:
+				return self::ShipmentDocument;
+
 			case CCrmOwnerTypeAbbr::System:
 			case self::SystemName:
 				return self::System;
@@ -3546,6 +3549,8 @@ class CCrmOwnerTypeAbbr
 	 */
 	public static function ResolveByTypeName(string $typeName): string
 	{
+		$typeName = mb_strtoupper(trim($typeName));
+
 		if ($typeName === '')
 		{
 			return self::Undefined;

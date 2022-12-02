@@ -494,9 +494,9 @@ export class EventEditForm
 			{
 				this.BX.removeCustomEvent("SidePanel.Slider::onClose", this.sliderOnClose);
 				if (this.attendeesSelector)
+				{
 				 	this.attendeesSelector.closeAll();
-
-				this.destroy(event);
+				}
 			}
 		}
 	}

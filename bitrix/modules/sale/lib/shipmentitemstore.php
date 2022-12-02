@@ -66,11 +66,15 @@ class ShipmentItemStore
 	 * @param ShipmentItemStoreCollection $collection
 	 * @param BasketItem $basketItem
 	 * @return mixed
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
+	 * @throws Main\SystemException
 	 */
 	public static function create(ShipmentItemStoreCollection $collection, BasketItem $basketItem)
 	{
+		if (!$basketItem->isReservableItem())
+		{
+			throw new Main\SystemException('Basket item is not available for reservation');
+		}
+
 		$shipmentItemStore = static::createShipmentItemStoreObject();
 		$shipmentItemStore->setCollection($collection);
 
@@ -120,8 +124,14 @@ class ShipmentItemStore
 		)
 		{
 			$shipmentItem = $this->getCollection()->getShipmentItem();
+			$basketItem = $shipmentItem->getBasketItem();
+
+			/** @var ReserveQuantityCollection $reserveCollection */
+			$reserveCollection = $basketItem->getReserveQuantityCollection();
+
 			if (
-				$shipmentItem->getReservedQuantity() > 0
+				$reserveCollection
+				&& $shipmentItem->getReservedQuantity() > 0
 				&& $this->getQuantity() > 0
 			)
 			{
@@ -133,11 +143,10 @@ class ShipmentItemStore
 					return $result;
 				}
 
-				$basketItem = $shipmentItem->getBasketItem();
 				$reserveTo = $reserveFrom = null;
 
 				/** @var ReserveQuantity $reserve */
-				foreach ($basketItem->getReserveQuantityCollection() as $reserve)
+				foreach ($reserveCollection as $reserve)
 				{
 					if ($reserve->getStoreId() === $storeIdFrom)
 					{
@@ -169,7 +178,7 @@ class ShipmentItemStore
 
 				if (!$reserveTo)
 				{
-					$reserveTo = $basketItem->getReserveQuantityCollection()->create();
+					$reserveTo = $reserveCollection->create();
 					$reserveTo->setStoreId($storeIdTo);
 				}
 
@@ -182,7 +191,12 @@ class ShipmentItemStore
 		)
 		{
 			$shipmentItem = $this->getCollection()->getShipmentItem();
-			if ($shipmentItem->getReservedQuantity() > 0)
+			$basketItem = $shipmentItem->getBasketItem();
+
+			/** @var ReserveQuantityCollection $reserveCollection */
+			$reserveCollection = $basketItem->getReserveQuantityCollection();
+
+			if ($reserveCollection && $shipmentItem->getReservedQuantity() > 0)
 			{
 				if ($value > $oldValue)
 				{
@@ -200,11 +214,10 @@ class ShipmentItemStore
 					return $result;
 				}
 
-				$basketItem = $shipmentItem->getBasketItem();
 				$reserveTo = $reserveFrom = null;
 
 				/** @var ReserveQuantity $reserve */
-				foreach ($basketItem->getReserveQuantityCollection() as $reserve)
+				foreach ($reserveCollection as $reserve)
 				{
 					if ($reserve->getStoreId() === $storeIdFrom)
 					{
@@ -238,7 +251,7 @@ class ShipmentItemStore
 
 				if (!$reserveTo)
 				{
-					$reserveTo = $basketItem->getReserveQuantityCollection()->create();
+					$reserveTo = $reserveCollection->create();
 					$reserveTo->setStoreId($storeIdTo);
 				}
 
@@ -291,7 +304,12 @@ class ShipmentItemStore
 		}
 
 		$shipmentItem = $this->getCollection()->getShipmentItem();
-		if ($shipmentItem->getReservedQuantity() > 0)
+		$basketItem = $shipmentItem->getBasketItem();
+
+		/** @var ReserveQuantityCollection $reserveCollection */
+		$reserveCollection = $basketItem->getReserveQuantityCollection();
+
+		if ($reserveCollection && $shipmentItem->getReservedQuantity() > 0)
 		{
 			$storeIdTo = Configuration::getDefaultStoreId();
 			$storeIdFrom = $this->getStoreId();
@@ -301,11 +319,10 @@ class ShipmentItemStore
 				return $result;
 			}
 
-			$basketItem = $shipmentItem->getBasketItem();
 			$reserveTo = $reserveFrom = null;
 
 			/** @var ReserveQuantity $reserve */
-			foreach ($basketItem->getReserveQuantityCollection() as $reserve)
+			foreach ($reserveCollection as $reserve)
 			{
 				if ($reserve->getStoreId() === $storeIdFrom)
 				{
@@ -339,7 +356,7 @@ class ShipmentItemStore
 
 			if (!$reserveTo)
 			{
-				$reserveTo = $basketItem->getReserveQuantityCollection()->create();
+				$reserveTo = $reserveCollection->create();
 				$reserveTo->setStoreId($storeIdTo);
 			}
 

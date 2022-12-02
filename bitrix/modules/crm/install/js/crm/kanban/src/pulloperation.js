@@ -1,3 +1,5 @@
+import { Sorter } from "crm.kanban.sort";
+
 export default class PullOperation
 {
 	grid: BX.CRM.Kanban.Grid;
@@ -78,6 +80,12 @@ export default class PullOperation
 			return;
 		}
 
+		const insertItemParams = {};
+		if (paramsItem.data.lastActivity && paramsItem.data.lastActivity.timestamp !== item.data.lastActivity.timestamp)
+		{
+			insertItemParams.canShowLastActivitySortTour = true;
+		}
+
 		const oldPrice = parseFloat(item.data.price);
 		const oldColumnId = item.columnId;
 
@@ -95,7 +103,12 @@ export default class PullOperation
 		item.setChangedInPullRequest();
 
 		this.grid.resetMultiSelectMode();
-		this.grid.insertItem(item);
+		this.grid.insertItem(item, insertItemParams);
+
+		if (!this.grid.getTypeInfoParam('showTotalPrice'))
+		{
+			return;
+		}
 
 		const newColumnId = paramsItem.data.columnId;
 		const newColumn = this.grid.getColumn(newColumnId);
@@ -138,6 +151,20 @@ export default class PullOperation
 			return;
 		}
 
-		this.grid.addItemTop(params.item);
+		const column = this.grid.getColumn(params.item.data.columnId);
+		if (!column)
+		{
+			return;
+		}
+
+		const sorter = Sorter.createWithCurrentSortType(column.getItems());
+
+		const beforeItem = sorter.calcBeforeItemByParams(params.item.data.sort);
+		if (beforeItem)
+		{
+			params.item.targetId = beforeItem.getId();
+		}
+
+		this.grid.addItem(params.item);
 	}
 }

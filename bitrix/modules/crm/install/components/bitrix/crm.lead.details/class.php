@@ -3,6 +3,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\Service\EditorAdapter;
+use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Location\Entity\Address\AddressLinkCollection;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -84,7 +86,10 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 	private $isCatalogModuleIncluded = false;
 	/** @var array */
 	private $defaultEntityData = [];
-	private $editorAdapter;
+	/** @var Crm\Service\Factory\Lead|null */
+	private ?Crm\Service\Factory\Lead $factory;
+	/** @var EditorAdapter|null */
+	private ?EditorAdapter $editorAdapter;
 
 	public function __construct($component = null)
 	{
@@ -106,7 +111,12 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
 		if ($factory)
 		{
+			$this->factory = $factory;
 			$this->editorAdapter = $factory->getEditorAdapter();
+		}
+		else
+		{
+			$this->factory = $this->editorAdapter = null;
 		}
 	}
 	public function executeComponent()
@@ -1001,15 +1011,10 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 				'type' => 'html',
 				'editable' => true
 			),
-			array(
-				'name' => 'PRODUCT_ROW_SUMMARY',
-				'title' => Loc::getMessage('CRM_LEAD_FIELD_PRODUCTS'),
-				'type' => 'product_row_summary',
-				'editable' => false,
-				'enableAttributes' => false,
-				'transferable' => false,
-				'mergeable' => false
-			)
+			EditorAdapter::getProductRowSummaryField(
+				Loc::getMessage('CRM_LEAD_FIELD_PRODUCTS'),
+				'PRODUCT_ROW_SUMMARY'
+			),
 		);
 
 		if($this->customerType === CustomerType::GENERAL)
@@ -1220,10 +1225,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		);
 		if ($this->editorAdapter)
 		{
-			$parentFieldsInfo = $this->editorAdapter->getParentFieldsInfo(
-				\CCrmOwnerType::Lead,
-				'crm_lead_details'
-			);
+			$parentFieldsInfo = $this->editorAdapter->getParentFieldsInfo(\CCrmOwnerType::Lead);
 			$this->entityFieldInfos = array_merge(
 				$this->entityFieldInfos,
 				array_values($parentFieldsInfo)
@@ -2188,74 +2190,9 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region Product row
-		$productRowCount = 0;
-		$productRowInfos = array();
-		if($this->entityID > 0)
-		{
-			$productRows = \CCrmProductRow::LoadRows('L', $this->entityID);
-			foreach($productRows as $productRow)
-			{
-				$productName = isset($productRow['PRODUCT_NAME']) ? $productRow['PRODUCT_NAME'] : '';
-				if($productName === '' && isset($productRow['ORIGINAL_PRODUCT_NAME']))
-				{
-					$productName = $productRow['ORIGINAL_PRODUCT_NAME'];
-				}
 
-				$productID = isset($productRow['PRODUCT_ID']) ? (int)$productRow['PRODUCT_ID'] : 0;
-				$url = '';
-				if($productID > 0)
-				{
-					$url = CComponentEngine::MakePathFromTemplate(
-						$this->arResult['PATH_TO_PRODUCT_SHOW'],
-						array('product_id' => $productRow['PRODUCT_ID'])
-					);
-				}
+		$this->entityData['PRODUCT_ROW_SUMMARY'] = $this->getProductRowSummaryData();
 
-				if($productRow['TAX_INCLUDED'] === 'Y')
-				{
-					$sum = $productRow['PRICE'] * $productRow['QUANTITY'];
-				}
-				else
-				{
-					$sum = round($productRow['PRICE_EXCLUSIVE'] * $productRow['QUANTITY'], 2) * (1 + $productRow['TAX_RATE'] / 100);
-				}
-
-				$productRowCount++;
-				if($productRowCount <= 10)
-				{
-					$productRowInfos[] = array(
-						'PRODUCT_NAME' => $productName,
-						'SUM' => CCrmCurrency::MoneyToString($sum, $this->entityData['CURRENCY_ID']),
-						'URL' => $url
-					);
-				}
-			}
-
-			$calculateOptions = array();
-			if($this->isTaxMode)
-			{
-				$calcOptions['ALLOW_LD_TAX'] = 'Y';
-				$calcOptions['LOCATION_ID'] = isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '';
-			}
-
-			$result = CCrmSaleHelper::Calculate(
-				$productRows,
-				$this->entityData['CURRENCY_ID'],
-				$this->resolvePersonTypeID($this->entityData),
-				false,
-				SITE_ID,
-				$calculateOptions
-			);
-
-			$this->entityData['PRODUCT_ROW_SUMMARY'] = array(
-				'count' => $productRowCount,
-				'total' => CCrmCurrency::MoneyToString(
-					isset($result['PRICE']) ? round((double)$result['PRICE'], 2) : 0.0,
-					$this->entityData['CURRENCY_ID']
-				),
-				'items' => $productRowInfos
-			);
-		}
 		//endregion
 
 		Tracking\UI\Details::prepareEntityData(
@@ -2296,6 +2233,81 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
 	}
+
+	protected function getProductRowSummaryData(): array
+	{
+		$productRowSummaryData = [];
+		if ($this->factory && $this->editorAdapter)
+		{
+			$item = $this->factory->getItem($this->entityID) ?? $this->factory->createItem();
+			$mode = $this->getComponentMode();
+			$productRowSummaryData = $this->editorAdapter->getProductRowSummaryDataByItem($item, $mode);
+		}
+		else
+		{
+			$productRowCount = 0;
+			$productRowInfos = [];
+			if ($this->entityID > 0)
+			{
+				$productRows = \CCrmProductRow::LoadRows(\CCrmOwnerTypeAbbr::Lead, $this->entityID);
+				foreach ($productRows as $productRow)
+				{
+					$productRowCount++;
+					if ($productRowCount <= 10)
+					{
+						$productRowInfos[] = EditorAdapter::formProductRowData(
+							Crm\ProductRow::createFromArray($productRow),
+							$this->entityData['CURRENCY_ID'],
+							true
+						);
+					}
+				}
+
+				$calculateOptions = [];
+				if ($this->isTaxMode)
+				{
+					$calculateOptions['ALLOW_LD_TAX'] = 'Y';
+					$calculateOptions['LOCATION_ID'] = $this->entityData['LOCATION_ID'] ?? '';
+				}
+
+				$result = CCrmSaleHelper::Calculate(
+					$productRows,
+					$this->entityData['CURRENCY_ID'],
+					$this->resolvePersonTypeID($this->entityData),
+					false,
+					SITE_ID,
+					$calculateOptions
+				);
+				$productRowSummaryData = [
+					'count' => $productRowCount,
+					'total' => CCrmCurrency::MoneyToString(
+						isset($result['PRICE']) ? round((double)$result['PRICE'], 2) : 0.0,
+						$this->entityData['CURRENCY_ID']
+					),
+					'items' => $productRowInfos,
+				];
+			}
+			$productRowSummaryData['isReadOnly'] = $this->arResult['READ_ONLY'] ?? true;
+		}
+
+		return $productRowSummaryData;
+	}
+
+	protected function getComponentMode(): int
+	{
+		if ($this->isEditMode)
+		{
+			return ComponentMode::MODIFICATION;
+		}
+
+		if ($this->isCopyMode)
+		{
+			return ComponentMode::COPING;
+		}
+
+		return ComponentMode::VIEW;
+	}
+
 	protected function prepareMultifieldData($entityTypeID, array $entityIDs, array $typeIDs)
 	{
 		if(empty($entityIDs))

@@ -1,16 +1,23 @@
-(() => {
+/**
+ * @module layout/ui/fields/textarea
+ */
+jn.define('layout/ui/fields/textarea', (require, exports, module) => {
+	const { StringFieldClass } = require('layout/ui/fields/string');
+
 	/**
-	 * @class Fields.TextArea
+	 * @class TextAreaField
 	 */
-	class TextArea extends Fields.StringInput
+	class TextAreaField extends StringFieldClass
 	{
 		constructor(props)
 		{
 			super(props);
+			this.state.height = this.state.focus ? 20 : 1;
+		}
 
-			this.state = this.state || {};
-			this.state.height = props.height || 20;
-			this.state.isResizableByContent = props.isResizableByContent || !props.height;
+		componentDidMount() {
+			super.componentDidMount();
+			this.initialValue = this.getValue();
 		}
 
 		getDefaultStyles()
@@ -21,38 +28,49 @@
 				...styles,
 				editableValue: {
 					...styles.editableValue,
-					height: this.state.height
+					flex: 1,
+					height: this.getFieldHeight(),
+					minHeight: this.state.height ? 20 : 1,
 				},
 			};
 		}
 
-		renderEditableContent()
+		getFieldHeight()
 		{
-			return TextInput({
-				ref: ref => this.inputRef = ref,
-				style: this.styles.editableValue,
-				value: this.stringify(this.props.value),
-				focus: this.state.focus,
-				multiline: this.props.multiline || true,
-				keyboardType: this.getConfig().keyboardType,
-				placeholder: this.getPlaceholder(),
-				placeholderTextColor: this.styles.textPlaceholder.color,
-				onFocus: () => this.setFocus(),
-				onBlur: () => this.removeFocus(),
-				onChangeText: text => this.changeText(text),
-				onContentSizeChange: data => this.changeSize(data)
-			});
+			if (Application.getPlatform() === 'ios')
+			{
+				return this.initialValue !== '' && this.initialValue === this.getValue() ? 'auto' : this.state.height
+			}
+
+			return 'auto';
 		}
 
-		changeSize(data)
+		getEllipsizeParams()
 		{
-			if (this.state.isResizableByContent)
-			{
-				this.setState({height: data.height});
-			}
+			return this.getConfig().ellipsize ? {
+				numberOfLines: 4,
+				ellipsize: 'end',
+			} : null;
+		}
+
+		renderEditableContent()
+		{
+			return TextInput(this.getFieldInputProps());
+		}
+
+		getFieldInputProps()
+		{
+			return {
+				...super.getFieldInputProps(),
+				multiline: (this.props.multiline || true),
+				onSubmitEditing: this.getConfig().onSubmitEditing,
+				onContentSizeChange: ({height}) => setTimeout(() => this.setState({height}), 50),
+			};
 		}
 	}
 
-	this.Fields = this.Fields || {};
-	this.Fields.TextArea = TextArea;
-})();
+	module.exports = {
+		TextAreaType: 'textarea',
+		TextAreaField: (props) => new TextAreaField(props),
+	};
+});

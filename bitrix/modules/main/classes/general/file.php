@@ -1828,10 +1828,7 @@ function ImgShw(ID, width, height, alt)
 			$strImage = CComponentEngine::MakePathFromTemplate($strImageUrlTemplate, array('file_id' => $iImageID));
 		}
 
-		if (!preg_match("/^https?:/i", $strImage))
-		{
-			$strImage = Uri::urnEncode($strImage, "UTF-8");
-		}
+		$strImage = Uri::urnEncode($strImage);
 
 		if(GetFileType($strImage) == "FLASH")
 		{
@@ -1915,8 +1912,7 @@ function ImgShw(ID, width, height, alt)
 		if(!($arImgParams = static::_GetImgParams($strImage1, $iSizeWHTTP, $iSizeHHTTP)))
 			return "";
 
-		if (!preg_match("/^https?:/i", $strImage1))
-			$strImage1 = Uri::urnEncode($arImgParams["SRC"], "UTF-8");
+		$strImage1 = Uri::urnEncode($arImgParams["SRC"], "UTF-8");
 
 		$intWidth = $arImgParams["WIDTH"];
 		$intHeight = $arImgParams["HEIGHT"];
@@ -1947,8 +1943,7 @@ function ImgShw(ID, width, height, alt)
 			if($sPopupTitle === false)
 				$sPopupTitle = GetMessage("FILE_ENLARGE");
 
-			if (!preg_match("/^https?:/i", $strImage2))
-				$strImage2 = Uri::urnEncode($arImgParams["SRC"], "UTF-8");
+			$strImage2 = Uri::urnEncode($arImgParams["SRC"], "UTF-8");
 			$intWidth2 = $arImgParams["WIDTH"];
 			$intHeight2 = $arImgParams["HEIGHT"];
 			$strAlt2 = $arImgParams["ALT"];
@@ -2026,7 +2021,7 @@ function ImgShw(ID, width, height, alt)
 			return NULL;
 		}
 
-		if(preg_match("#^(http[s]?)://#", $path))
+		if(preg_match("#^https?://#", $path))
 		{
 			$temp_path = '';
 			$bExternalStorage = false;
@@ -3024,19 +3019,19 @@ function ImgShw(ID, width, height, alt)
 			$response->addHeader("Expires", "0");
 			$response->addHeader("Pragma", "public");
 
+			$filenameEncoded = Uri::urnEncode($filename, "UTF-8");
 			// Download from front-end
 			if($fastDownload)
 			{
 				if($fromClouds)
 				{
-					$filename = preg_replace('~^(http[s]?)(\://)~i', '\\1.' , $filename);
+					$filenameDisableProto = preg_replace('~^(https?)(\://)~i', '\\1.' , $filenameEncoded);
 					$cloudUploadPath = COption::GetOptionString('main', 'bx_cloud_upload', '/upload/bx_cloud_upload/');
-					$response->addHeader('X-Accel-Redirect', $cloudUploadPath.$filename);
+					$response->addHeader('X-Accel-Redirect', rawurlencode($cloudUploadPath.$filenameDisableProto));
 				}
 				else
 				{
-					$filename = Uri::urnEncode($filename, "UTF-8");
-					$response->addHeader('X-Accel-Redirect', $filename);
+					$response->addHeader('X-Accel-Redirect', $filenameEncoded);
 				}
 				$response->writeHeaders();
 				self::terminate();
@@ -3059,7 +3054,7 @@ function ImgShw(ID, width, height, alt)
 					else
 					{
 						/** @var Web\HttpClient $src */
-						echo htmlspecialcharsbx($src->get($filename));
+						echo htmlspecialcharsbx($src->get($filenameEncoded));
 					}
 					echo "<", "/pre", ">";
 				}
@@ -3084,7 +3079,7 @@ function ImgShw(ID, width, height, alt)
 						$fp = fopen("php://output", "wb");
 						/** @var Web\HttpClient $src */
 						$src->setOutputStream($fp);
-						$src->get($filename);
+						$src->get($filenameEncoded);
 					}
 				}
 				@ob_flush();

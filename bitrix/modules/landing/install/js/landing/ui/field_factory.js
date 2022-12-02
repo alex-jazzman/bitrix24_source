@@ -146,7 +146,7 @@
 					disabled: BX.Text.toBoolean(options.disabled)
 				});
 
-				return new BX.Landing.UI.Field.LinkURL(options);
+				return new BX.Landing.UI.Field.LinkUrl(options);
 			}
 
 			if (options.type === "dynamic_source")
@@ -171,7 +171,7 @@
 					disabled: BX.Text.toBoolean(options.disabled)
 				});
 
-				return new BX.Landing.UI.Field.LinkURL(options);
+				return new BX.Landing.UI.Field.LinkUrl(options);
 			}
 
 			if (options.type === "slider" || options.type === "range-slider")

@@ -277,6 +277,18 @@ abstract class Entity
 			try
 			{
 				$result = $this->onFieldModify($name, $oldValue, $value);
+
+				if ($result->isSuccess() && $this->eventName)
+				{
+					$event = new Main\Event('sale', 'OnAfter'.$this->eventName.'SetField', array(
+						'ENTITY' => $this,
+						'NAME' => $name,
+						'VALUE' => $value,
+						'OLD_VALUE' => $oldValue,
+					));
+					$event->send();
+				}
+
 				if ($result->isSuccess())
 				{
 					static::addChangesToHistory($name, $oldValue, $value);

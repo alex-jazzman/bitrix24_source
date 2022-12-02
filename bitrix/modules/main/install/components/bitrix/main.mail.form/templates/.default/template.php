@@ -435,7 +435,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version)
 					'useFileDialogs' => false,
 					'useLinkStat' => false,
 					'uploadImagesFromClipboard' => false,
-					'autoLink' => false,
+					'autoLink' => true,
 					'controlsMap' => array(
 						array('id' => 'Bold', 'compact' => true, 'sort' => 10),
 						array('id' => 'Italic', 'compact' => true, 'sort' => 20),

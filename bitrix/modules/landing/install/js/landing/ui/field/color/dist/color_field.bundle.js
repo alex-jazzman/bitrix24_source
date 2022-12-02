@@ -3348,7 +3348,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    this.unsetActive();
 	    this.activeControl = null;
 
-	    if (main_core.Type.isNull(value)) ; else if (isRgbString(value) || isHex(value) || isHslString(value) || isCssVar(value)) {
+	    if (main_core.Type.isNil(value)) ; else if (isRgbString(value) || isHex(value) || isHslString(value) || isCssVar(value)) {
 	      super.setValue(value);
 	      this.activeControl = this.colorSet;
 	    } else if (isGradientString(value)) {
@@ -4092,10 +4092,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        processorValue[Bg.BG_IMAGE] = '';
 	        processorValue[Bg.BG_SIZE_VAR] = defaultBgImageSize;
 	        processorValue[Bg.BG_ATTACHMENT_VAR] = defaultBgImageAttachment;
-	        const regWebkitUrl = /-webkit-image-set\(url\(/i;
-	        const searchWebkitUrl = defaultValue[Bg.BG_IMAGE].match(regWebkitUrl);
+	        const regUrl = /image-set\(url\(/i;
+	        const searchUrl = defaultValue[Bg.BG_IMAGE].match(regUrl);
 
-	        if (searchWebkitUrl !== null) {
+	        if (searchUrl !== null) {
 	          const regSearchUrl = /"(https?:\/)?\/[\S]*"/gi;
 	          const search = defaultValue[Bg.BG_IMAGE].match(regSearchUrl);
 

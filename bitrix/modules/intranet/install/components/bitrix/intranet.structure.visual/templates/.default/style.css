@@ -369,6 +369,10 @@
     display: inline-block;
 }
 
+.structure-undo-text {
+	word-wrap: break-word;
+}
+
 .structure-undo.structure-undo-scroll {
     position: fixed; top: 10px;
 }

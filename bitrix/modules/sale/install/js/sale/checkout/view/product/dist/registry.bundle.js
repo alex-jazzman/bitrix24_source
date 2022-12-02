@@ -2,7 +2,7 @@ this.BX = this.BX || {};
 this.BX.Sale = this.BX.Sale || {};
 this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
-(function (exports,sale_checkout_view_element_input,currency_currencyCore,sale_checkout_view_mixins,sale_checkout_view_element_animatePrice,sale_checkout_view_element_button,ui_vue,catalog_skuTree,sale_checkout_const,main_core_events) {
+(function (exports,sale_checkout_lib,sale_checkout_view_element_input,currency_currencyCore,sale_checkout_view_mixins,sale_checkout_view_element_animatePrice,sale_checkout_view_element_button,ui_vue,catalog_skuTree,sale_checkout_const,main_core_events) {
 	'use strict';
 
 	ui_vue.BitrixVue.component('sale-checkout-view-product-price', {
@@ -100,6 +100,11 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	      showBackdropChangeSku: 'N'
 	    };
 	  },
+	  methods: {
+	    isService: function isService() {
+	      return sale_checkout_lib.Product.isService(this.item);
+	    }
+	  },
 	  computed: {
 	    config: function config() {
 	      return {
@@ -133,62 +138,53 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	    },
 	    getObjectClass: function getObjectClass() {
 	      var classes = ['checkout-table-row-group', 'checkout-basket-item'];
-
 	      if (this.hasSkuPropsColor) {
 	        classes.push('checkout-basket-item--has-sku-color');
 	      }
-
 	      if (this.isDeleted) {
 	        classes.push('checkout-basket-item-deleted');
 	      }
-
 	      if (this.isLocked) {
 	        classes.push('checkout-basket-item-locked');
 	      }
-
 	      if (this.isBackdropChangeSku) {
 	        classes.push('active-backdrop-open-change-sku');
 	      }
-
 	      if (this.isBackdropMobileMenu) {
 	        classes.push('active-backdrop-open-mobile-menu');
 	      }
-
 	      return classes;
 	    }
 	  },
 	  created: function created() {
 	    var _this = this;
-
 	    main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.basket.backdropOpenMobileMenu, function (event) {
 	      var index = event.getData().index;
-
 	      if (index === _this.index) {
 	        _this.showBackdropMobileMenu = 'Y';
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.basket.backdropOpenChangeSku, function (event) {
 	      var index = event.getData().index;
-
 	      if (index === _this.index) {
 	        _this.showBackdropChangeSku = 'Y';
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.basket.backdropClose, function (event) {
 	      var index = event.getData().index;
-
 	      if (index === _this.index) {
 	        _this.showBackdropMobileMenu = 'N';
 	        _this.showBackdropChangeSku = 'N';
 	      }
 	    });
 	  },
-	  beforeDestroy: function beforeDestroy() {// EventEmitter.unsubscribe(EventType.basket.backdropOpenMobileMenu);
+	  beforeDestroy: function beforeDestroy() {
+	    // EventEmitter.unsubscribe(EventType.basket.backdropOpenMobileMenu);
 	    // EventEmitter.unsubscribe(EventType.basket.backdropOpenChangeSku);
 	    // EventEmitter.unsubscribe(EventType.basket.backdropClose);
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div :class=\"getObjectClass\" style='position: relative;' ref=\"container\">\n\t\t\t<template v-if=\"isDeleted\">\n\t\t\t\t<sale-checkout-view-product-item_deleted :item=\"item\" :index=\"index\"/>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<template v-if=\"mode === getConstMode.edit\">\n\t\t\t\t\t<sale-checkout-view-product-item_edit :item=\"item\" :index=\"index\" :mode=\"mode\" :error=\"error\">\n\t\t\t\t\t\t<template v-slot:button-minus><sale-checkout-view-element-button-minus :class=\"{'checkout-item-quantity-btn-disabled': buttonMinusDisabled}\" :index=\"index\"/></template>\n\t\t\t\t\t\t<template v-slot:button-plus><sale-checkout-view-element-button-plus :class=\"{'checkout-item-quantity-btn-disabled': buttonPlusDisabled}\" :index=\"index\"/></template>\n\t\t\t\t\t\t<template v-slot:button-remove>\n\t\t\t\t\t\t\t<div class=\"checkout-basket-item-remove-btn-block\">\n\t\t\t\t\t\t\t\t<sale-checkout-view-element-button-remove :index=\"index\"/>\n\t\t\t\t\t\t\t\t<sale-checkout-view-element-button-item_mobile_menu :index=\"index\"/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-slot:quantity-description>\n\t\t\t\t\t\t\t<template v-if=\"buttonMinusDisabled\"><sale-checkout-view-product-measure :item=\"item\"/></template>\n\t\t\t\t\t\t\t<template v-else><sale-checkout-view-product-price_measure :item=\"item\"/></template>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-slot:button-change-sku><sale-checkout-view-element-button-item_change_sku :index=\"index\"/></template>\n\t\t\t\t\t</sale-checkout-view-product-item_edit>\n\t\t\t\t\t<sale-checkout-view-product-item_backdrop_remove :index=\"index\"/>\n\t\t\t\t\t<sale-checkout-view-product-item_backdrop :item=\"item\" :index=\"index\" :error=\"error\">\n\t\t\t\t\t\t<template v-slot:button-minus><sale-checkout-view-element-button-minus :class=\"{'checkout-item-quantity-btn-disabled': buttonMinusDisabled}\" :index=\"index\"/></template>\n\t\t\t\t\t\t<template v-slot:button-plus><sale-checkout-view-element-button-plus :class=\"{'checkout-item-quantity-btn-disabled': buttonPlusDisabled}\" :index=\"index\"/></template>\n\t\t\t\t\t</sale-checkout-view-product-item_backdrop>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<sale-checkout-view-product-item_view :item=\"item\"/>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"getObjectClass\" style='position: relative;' ref=\"container\">\n\t\t\t<template v-if=\"isDeleted\">\n\t\t\t\t<sale-checkout-view-product-item_deleted :item=\"item\" :index=\"index\"/>\n\t\t\t</template>\n\t\t\t<template v-else>\n\t\t\t\t<template v-if=\"mode === getConstMode.edit\">\n\t\t\t\t\t<sale-checkout-view-product-item_edit :item=\"item\" :index=\"index\" :mode=\"mode\" :error=\"error\">\n\t\t\t\t\t\t<template v-slot:button-minus><sale-checkout-view-element-button-minus :class=\"{'checkout-item-quantity-btn-disabled': buttonMinusDisabled}\" :index=\"index\"/></template>\n\t\t\t\t\t\t<template v-slot:button-plus v-if=\"isService\"><sale-checkout-view-element-button-plus :index=\"index\"/></template>\n\t\t\t\t\t\t<template v-slot:button-plus v-else\t\t\t ><sale-checkout-view-element-button-plus :class=\"{'checkout-item-quantity-btn-disabled': buttonPlusDisabled}\" :index=\"index\"/></template>\n\t\t\t\t\t\t<template v-slot:button-remove>\n\t\t\t\t\t\t\t<div class=\"checkout-basket-item-remove-btn-block\">\n\t\t\t\t\t\t\t\t<sale-checkout-view-element-button-remove :index=\"index\"/>\n\t\t\t\t\t\t\t\t<sale-checkout-view-element-button-item_mobile_menu :index=\"index\"/>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-slot:quantity-description>\n\t\t\t\t\t\t\t<template v-if=\"buttonMinusDisabled\"><sale-checkout-view-product-measure :item=\"item\"/></template>\n\t\t\t\t\t\t\t<template v-else><sale-checkout-view-product-price_measure :item=\"item\"/></template>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-slot:button-change-sku><sale-checkout-view-element-button-item_change_sku :index=\"index\"/></template>\n\t\t\t\t\t</sale-checkout-view-product-item_edit>\n\t\t\t\t\t<sale-checkout-view-product-item_backdrop_remove :index=\"index\"/>\n\t\t\t\t\t<sale-checkout-view-product-item_backdrop :item=\"item\" :index=\"index\" :error=\"error\">\n\t\t\t\t\t\t<template v-slot:button-minus><sale-checkout-view-element-button-minus :class=\"{'checkout-item-quantity-btn-disabled': buttonMinusDisabled}\" :index=\"index\"/></template>\n\t\t\t\t\t\t<template v-slot:button-plus v-if=\"isService\"><sale-checkout-view-element-button-plus :index=\"index\"/></template>\n\t\t\t\t\t\t<template v-slot:button-plus v-else\t\t\t ><sale-checkout-view-element-button-plus :class=\"{'checkout-item-quantity-btn-disabled': buttonPlusDisabled}\" :index=\"index\"/></template>\n\t\t\t\t\t</sale-checkout-view-product-item_backdrop>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<sale-checkout-view-product-item_view :item=\"item\"/>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
 	ui_vue.BitrixVue.component('sale-checkout-view-product-list', {
@@ -236,15 +232,12 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	    },
 	    getObjectClass: function getObjectClass() {
 	      var classes = ['checkout-basket-list-items', 'checkout-table'];
-
 	      if (this.mode === sale_checkout_const.Application.mode.view) {
 	        classes.push('checkout-basket-list-items-view-mode');
 	      }
-
 	      if (this.isLocked) {
 	        classes.push('checkout-basket-item-locked');
 	      }
-
 	      return classes;
 	    }
 	  },
@@ -286,25 +279,20 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	  watch: {
 	    getHash: function getHash() {
 	      var selectedValues = this.tree.SELECTED_VALUES;
-
 	      try {
 	        for (var propertyId in selectedValues) {
 	          if (!selectedValues.hasOwnProperty(propertyId)) {
 	            continue;
 	          }
-
 	          this.skuTree.setSelectedProperty(propertyId, selectedValues[propertyId]);
 	        }
 	      } catch (e) {}
-
 	      this.skuTree.toggleSkuProperties();
 	    }
 	  },
 	  mounted: function mounted() {
 	    var _this = this;
-
 	    this.appendBlockHtml();
-
 	    if (this.skuTree) {
 	      this.skuTree.subscribe(sale_checkout_const.EventType.basket.changeSkuOriginName, function (event) {
 	        main_core_events.EventEmitter.emit(sale_checkout_const.EventType.basket.changeSku, {
@@ -318,5 +306,5 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	  template: "<div>\n\t  \t<div ref=\"container\"/>\n    </div>\n\t"
 	});
 
-}((this.BX.Sale.Checkout.View.Product = this.BX.Sale.Checkout.View.Product || {}),BX.Sale.Checkout.View.Element.Input,BX.Currency,BX.Sale.Checkout.View.Mixins,BX.Sale.Checkout.View.Element,BX.Sale.Checkout.View.Element,BX,BX.Catalog.SkuTree,BX.Sale.Checkout.Const,BX.Event));
+}((this.BX.Sale.Checkout.View.Product = this.BX.Sale.Checkout.View.Product || {}),BX.Sale.Checkout.Lib,BX.Sale.Checkout.View.Element.Input,BX.Currency,BX.Sale.Checkout.View.Mixins,BX.Sale.Checkout.View.Element,BX.Sale.Checkout.View.Element,BX,BX.Catalog.SkuTree,BX.Sale.Checkout.Const,BX.Event));
 //# sourceMappingURL=registry.bundle.js.map

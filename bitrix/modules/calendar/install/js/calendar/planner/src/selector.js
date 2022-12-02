@@ -443,26 +443,30 @@ export class Selector extends EventEmitter
 		}
 	}
 
-	setValue(selectorPos, selectorWidth)
+	setValue(selectorPos = null, duration = null)
 	{
 		if (!selectorPos)
 		{
 			selectorPos = parseInt(this.DOM.wrap.style.left);
 		}
 		selectorPos = Math.max(0, selectorPos);
-
-		if (!selectorWidth)
-		{
-			selectorWidth = parseInt(this.DOM.wrap.style.width);
-		}
+		const selectorWidth = parseInt(this.DOM.wrap.style.width);
 
 		if (selectorPos + selectorWidth > parseInt(this.getTimelineWidth()))
 		{
 			selectorPos = parseInt(this.getTimelineWidth()) - selectorWidth;
 		}
 
-		let dateFrom = this.getDateByPos(selectorPos);
-		let dateTo = this.getDateByPos(selectorPos + selectorWidth, true);
+		const dateFrom = this.getDateByPos(selectorPos);
+		let dateTo;
+		if (duration)
+		{
+			dateTo = new Date(dateFrom.getTime() + duration);
+		}
+		else
+		{
+			dateTo = this.getDateByPos(selectorPos + selectorWidth, true);
+		}
 
 		if (dateFrom && dateTo)
 		{
@@ -549,6 +553,7 @@ export class Selector extends EventEmitter
 
 	transit(params = {})
 	{
+		let duration;
 		if (Type.isDate(params.leftDate) && Type.isDate(params.rightDate))
 		{
 			if (this.fullDayMode)
@@ -558,6 +563,7 @@ export class Selector extends EventEmitter
 				params.rightDate = new Date(params.leftDate.getTime() + (dayCount - 1) * 24 * 3600 * 1000);
 				params.rightDate.setHours(23, 55, 0, 0);
 			}
+			duration = params.rightDate.getTime() - params.leftDate.getTime();
 			const fromPos = this.getPosByDate(params.leftDate);
 			const toPos = this.getPosByDate(params.rightDate);
 			params.toX = fromPos;
@@ -596,7 +602,7 @@ export class Selector extends EventEmitter
 
 					if (triggerChangeEvents)
 					{
-						this.setValue(checkedPos);
+						this.setValue(checkedPos, duration);
 					}
 
 					if (focus)
@@ -626,7 +632,7 @@ export class Selector extends EventEmitter
 		{
 			if (triggerChangeEvents)
 			{
-				this.setValue();
+				this.setValue(false, duration);
 			}
 
 			if (focus === true)

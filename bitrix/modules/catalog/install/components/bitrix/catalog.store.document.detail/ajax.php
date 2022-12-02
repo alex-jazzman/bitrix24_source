@@ -8,6 +8,8 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_befo
 
 use Bitrix\Catalog\StoreDocumentFileTable;
 use Bitrix\Main\Context;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Access\AccessController;
 
 if (!\Bitrix\Main\Loader::includeModule('catalog'))
 {
@@ -58,7 +60,7 @@ elseif ($action === 'GET_FORMATTED_SUM')
 }
 elseif($action === 'RENDER_IMAGE_INPUT')
 {
-	if (!\Bitrix\Main\Engine\CurrentUser::get()->canDoOperation('catalog_read'))
+	if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
 	{
 		return;
 	}

@@ -46,6 +46,7 @@ class DocumentCardTimeline
 			'ENTITY_TYPE_NAME' => \CCrmOwnerType::StoreDocumentName,
 			'ENTITY_INFO' => $entityInfo,
 			'ACTIVITY_EDITOR_ID' => $editorId,
+			'ENABLE_TODO' => false,
 			'ENABLE_TASK' => false,
 			'ENABLE_WAIT' => false,
 			'ENABLE_SMS' => false,

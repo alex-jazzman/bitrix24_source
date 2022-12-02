@@ -163,13 +163,19 @@
 			const pushParams = JSON.parse(push.params);
 			if (pushParams && pushParams.command && pushParams.message && pushParams.command === HANDLED_PUSH_COMMAND)
 			{
-				pushListener.handle(new DeviceMessage(pushParams.message));
+				const messageParams = JSON.parse(pushParams.message);
+				if (messageParams)
+				{
+					pushListener.handle(new DeviceMessage(messageParams));
+				}
 			}
 		}
 	};
 
 	BX.addCustomEvent('onAppActive', onAppActive);
-	onAppActive();
+
+	// fake timeout to wait subscribers on initialization
+	setTimeout(() => onAppActive(), 100);
 
 	this.PushListener = pushListener;
 

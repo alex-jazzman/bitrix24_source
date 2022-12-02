@@ -157,7 +157,7 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				}
 				else if(type === "product_row_summary")
 				{
-					return BX.Crm.EntityEditorProductRowSummary.create(controlId, settings);
+					return BX.UI.EntityEditorProductRowSummary.create(controlId, settings);
 				}
 				else if(type === "requisite_selector")
 				{
@@ -384,6 +384,10 @@ if(typeof BX.Crm.EntityEditorModelFactory === "undefined")
 				else if(entityTypeId === BX.CrmEntityType.enumeration.ordershipment)
 				{
 					return BX.Crm.OrderShipmentModel.create(id, settings);
+				}
+				else if(entityTypeId === BX.CrmEntityType.enumeration.shipmentDocument)
+				{
+					return BX.Crm.DocumentOrderShipmentModel.create(id, settings);
 				}
 				else if(entityTypeId === BX.CrmEntityType.enumeration.smartinvoice)
 				{

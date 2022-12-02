@@ -13,6 +13,7 @@ export default class EntityCounterManager
 	#serviceUrl: string;
 	#codes: Array;
 	#extras: Object;
+	#withExcludeUsers: boolean = false;
 	#counterData: Object;
 	#isRequestRunning: boolean;
 
@@ -39,6 +40,7 @@ export default class EntityCounterManager
 		this.#entityTypeName = BX.CrmEntityType.resolveName(this.#entityTypeId);
 		this.#codes = Type.isArray(options.codes) ? options.codes : [];
 		this.#extras = Type.isObject(options.extras) ? options.extras : {};
+		this.#withExcludeUsers = Type.isBoolean(options.withExcludeUsers) ? options.withExcludeUsers : false;
 		this.#counterData = {};
 
 		this.#bindEvents();
@@ -98,7 +100,7 @@ export default class EntityCounterManager
 
 		if (enableRecalculation)
 		{
-			EventEmitter.emit('BX.Crm.EntityCounterManager:onRecalculate', this);
+			EventEmitter.emit(this, 'BX.Crm.EntityCounterManager:onRecalculate');
 		}
 	}
 
@@ -111,34 +113,25 @@ export default class EntityCounterManager
 
 		this.#isRequestRunning = true;
 
-		Ajax({
-			url: this.#serviceUrl,
-			method: 'POST',
-			dataType: 'json',
+		Ajax.runAction('crm.counter.list', {
 			data: {
-				'ACTION': 'RECALCULATE',
-				'ENTITY_TYPES': [ this.#entityTypeName ],
-				'EXTRAS': this.#extras
-			},
-			onsuccess: BX.delegate(this.#onRecalculationSuccess, this)
-		});
+				entityTypeId: this.#entityTypeId,
+				extras: this.#extras,
+				withExcludeUsers: this.#withExcludeUsers ? 1 : 0,
+			}
+		}).then(this.#onRecalculationSuccess.bind(this));
 	}
 
 	#onRecalculationSuccess(result: Object): void
 	{
 		this.#isRequestRunning = false;
 
-		const data = Type.isPlainObject(result['DATA']) ? result['DATA'] : null;
+		const data = Type.isPlainObject(result.data) ? result.data : null;
 		if (data === null)
 		{
 			return;
 		}
-
-		this.setCounterData(
-			Type.isPlainObject(data[this.#entityTypeName])
-				? data[this.#entityTypeName]
-				: {}
-		);
+		this.setCounterData(data);
 
 		EventEmitter.emit('BX.Crm.EntityCounterManager:onRecalculate', this);
 	}

@@ -364,23 +364,26 @@ this.BX = this.BX || {};
 	    }
 	  }
 
-	  setValue(selectorPos, selectorWidth) {
+	  setValue(selectorPos = null, duration = null) {
 	    if (!selectorPos) {
 	      selectorPos = parseInt(this.DOM.wrap.style.left);
 	    }
 
 	    selectorPos = Math.max(0, selectorPos);
-
-	    if (!selectorWidth) {
-	      selectorWidth = parseInt(this.DOM.wrap.style.width);
-	    }
+	    const selectorWidth = parseInt(this.DOM.wrap.style.width);
 
 	    if (selectorPos + selectorWidth > parseInt(this.getTimelineWidth())) {
 	      selectorPos = parseInt(this.getTimelineWidth()) - selectorWidth;
 	    }
 
-	    let dateFrom = this.getDateByPos(selectorPos);
-	    let dateTo = this.getDateByPos(selectorPos + selectorWidth, true);
+	    const dateFrom = this.getDateByPos(selectorPos);
+	    let dateTo;
+
+	    if (duration) {
+	      dateTo = new Date(dateFrom.getTime() + duration);
+	    } else {
+	      dateTo = this.getDateByPos(selectorPos + selectorWidth, true);
+	    }
 
 	    if (dateFrom && dateTo) {
 	      if (this.fullDayMode) {
@@ -457,6 +460,8 @@ this.BX = this.BX || {};
 	  transit(params = {}) {
 	    var _params$fromX, _params$toX;
 
+	    let duration;
+
 	    if (main_core.Type.isDate(params.leftDate) && main_core.Type.isDate(params.rightDate)) {
 	      if (this.fullDayMode) {
 	        const dayCount = Math.ceil((this.currentDateTo.getTime() - this.currentDateFrom.getTime()) / (1000 * 3600 * 24));
@@ -465,6 +470,7 @@ this.BX = this.BX || {};
 	        params.rightDate.setHours(23, 55, 0, 0);
 	      }
 
+	      duration = params.rightDate.getTime() - params.leftDate.getTime();
 	      const fromPos = this.getPosByDate(params.leftDate);
 	      const toPos = this.getPosByDate(params.rightDate);
 	      params.toX = fromPos;
@@ -503,7 +509,7 @@ this.BX = this.BX || {};
 	          }
 
 	          if (triggerChangeEvents) {
-	            this.setValue(checkedPos);
+	            this.setValue(checkedPos, duration);
 	          }
 
 	          if (focus) {
@@ -523,7 +529,7 @@ this.BX = this.BX || {};
 	      this.animation.animate();
 	    } else {
 	      if (triggerChangeEvents) {
-	        this.setValue();
+	        this.setValue(false, duration);
 	      }
 
 	      if (focus === true) {
@@ -1037,12 +1043,12 @@ this.BX = this.BX || {};
 	      }
 	    }
 
-	    if ((this.shownScaleTimeTo - this.shownScaleTimeFrom) % 2 !== 0) {
-	      this.shownScaleTimeTo++;
+	    if (this.shownScaleTimeFrom % 2 !== 0) {
+	      this.shownScaleTimeFrom++;
+	    }
 
-	      if (this.shownScaleTimeTo > 24) {
-	        this.shownScaleTimeFrom--;
-	      }
+	    if (this.shownScaleTimeTo % 2 !== 0) {
+	      this.shownScaleTimeTo--;
 	    }
 
 	    if (fromTime === false && toTime !== false) {
@@ -1347,6 +1353,10 @@ this.BX = this.BX || {};
 	      if (isToLeft) {
 	        toTimestamp = this.scaleData[pivotScaleDatumOfDayIndex].timestamp / 1000;
 	        fromTimestamp = toTimestamp - 3600 * extendCount;
+
+	        if (new Date(fromTimestamp * 1000).getHours() !== extendedTimeFrom) {
+	          return;
+	        }
 	      } else {
 	        fromTimestamp = this.scaleData[pivotScaleDatumOfDayIndex].timestamp / 1000 + this.scaleSize;
 	        toTimestamp = fromTimestamp + 3600 * extendCount;
@@ -1847,6 +1857,11 @@ this.BX = this.BX || {};
 
 	    e.preventDefault();
 	    const isRightClick = e.which === 3;
+
+	    if (isRightClick) {
+	      return;
+	    }
+
 	    this.clickMousePos = this.getMousePos(e);
 	    let nodeTarget = e.target || e.srcElement,
 	        accuracyMouse = 5;
@@ -1886,18 +1901,12 @@ this.BX = this.BX || {};
 
 	        const selectorTimeLength = this.currentToDate - this.currentFromDate;
 	        let selectedDateTo = new Date(selectedDateFrom.getTime() + selectorTimeLength);
-
-	        if (isRightClick) {
-	          selectedDateFrom = new Date(selectedDateFrom.getTime() - selectorTimeLength);
-	          selectedDateTo = new Date(selectedDateTo.getTime() - selectorTimeLength);
-	        }
-
 	        this.currentFromDate = selectedDateFrom;
 	        this.currentToDate = selectedDateTo;
 	        this.selector.transit({
 	          toX: this.getPosByDate(selectedDateFrom),
-	          leftDate: selectedDateFrom,
-	          rightDate: selectedDateTo
+	          leftDate: this.currentFromDate,
+	          rightDate: this.currentToDate
 	        });
 	      }
 	    }
@@ -2410,7 +2419,11 @@ this.BX = this.BX || {};
 	        return -1;
 	      }
 
-	      return 0;
+	      if (parseInt(a.id) < parseInt(b.id)) {
+	        return -1;
+	      }
+
+	      return 1;
 	    });
 
 	    if (this.selectedEntriesWrap) {

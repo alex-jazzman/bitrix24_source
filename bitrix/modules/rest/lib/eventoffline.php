@@ -91,12 +91,15 @@ class EventOfflineTable extends Main\Entity\DataManager
 			),
 			'PROCESS_ID' => array(
 				'data_type' => 'string',
+				'default_value' => '',
 			),
 			'CONNECTOR_ID' => array(
 				'data_type' => 'string',
+				'default_value' => '',
 			),
 			'ERROR' => array(
 				'data_type' => 'integer',
+				'default_value' => 0,
 			),
 		);
 	}
@@ -166,8 +169,27 @@ class EventOfflineTable extends Main\Entity\DataManager
 
 		$query = new EventOfflineQuery(static::getEntity());
 		$query->setOrder($order);
-		$query->setFilter($filter);
 		$query->setLimit($limit);
+
+		foreach ($filter as $key => $value)
+		{
+			$matches = [];
+			if (preg_match('/^([\W]{1,2})(.+)/',$key, $matches) && $matches[0] === $key)
+			{
+				$query->where(
+					$matches[2],
+					$matches[1],
+					$value,
+				);
+			}
+			else
+			{
+				$query->where(
+					$key,
+					$value,
+				);
+			}
+		}
 
 		$sql = $query->getMarkQuery($processId);
 

@@ -587,12 +587,6 @@ if(!empty($htmlEditorConfigs))
 
 			BX.Crm.EntityProductListController.messages = BX.Crm.EntityEditorProductRowProxy.messages;
 
-			BX.Crm.EntityEditorProductRowSummary.messages =
-			{
-				notShown: "<?=GetMessageJS('CRM_ENTITY_ED_PRODUCT_NOT_SHOWN')?>",
-				total: "<?=GetMessageJS('CRM_ENTITY_ED_TOTAL')?>"
-			};
-
 			BX.Crm.ClientEditorEntityRequisitePanel.messages =
 			{
 				toggle: "<?=GetMessageJS('CRM_ENTITY_ED_TOGGLE_REQUISITES')?>"

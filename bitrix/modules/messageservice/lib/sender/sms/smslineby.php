@@ -278,8 +278,8 @@ class SmsLineBy extends Sender\BaseConfigurable
 	private function sendHttpRequest($method, $login, $signature, $path, $body = null): Sender\Result\HttpRequestResult
 	{
 		$httpClient = new HttpClient(array(
-			"socketTimeout" => 10,
-			"streamTimeout" => 30,
+			"socketTimeout" => $this->socketTimeout,
+			"streamTimeout" => $this->streamTimeout,
 			"waitResponse" => true,
 		));
 		$httpClient->setCharset('UTF-8');

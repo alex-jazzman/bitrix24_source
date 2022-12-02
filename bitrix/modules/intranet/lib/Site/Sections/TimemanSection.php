@@ -30,18 +30,15 @@ class TimemanSection
 	{
 		$available = static::isBitrix24() || \CBXFeatures::isFeatureEnabled('StaffAbsence');
 
-		$enabled = static::isBitrix24()
-			? COption::GetOptionString("bitrix24", "absence_limits_enabled", "") !== "Y" || \Bitrix\Bitrix24\Feature::isFeatureEnabled("absence")
-			: \CBXFeatures::isFeatureEnabled('StaffAbsence')
+		$locked = static::isBitrix24()
+			? !(COption::GetOptionString("bitrix24", "absence_limits_enabled", "") !== "Y" || \Bitrix\Bitrix24\Feature::isFeatureEnabled("absence"))
+			: !\CBXFeatures::isFeatureEnabled('StaffAbsence')
 		;
-
-		$locked = false;
 		$onclick = '';
 		$absenceUrl = SITE_DIR . 'timeman/';
 
-		if (!$enabled)
+		if ($locked)
 		{
-			$locked = true;
 			$absenceUrl = '';
 			$onclick = 'javascript:BX.UI.InfoHelper.show("limit_absence_management");';
 		}

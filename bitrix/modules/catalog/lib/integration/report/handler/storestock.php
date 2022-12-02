@@ -2,6 +2,9 @@
 
 namespace Bitrix\Catalog\Integration\Report\Handler;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Access\Permission\PermissionDictionary;
 use Bitrix\Catalog\Integration\Report\Filter\StoreStockFilter;
 use Bitrix\Catalog\Integration\Report\StoreStock\StoreStockSale;
 use Bitrix\Catalog\StoreProductTable;
@@ -82,6 +85,26 @@ class StoreStock extends BaseHandler implements IReportMultipleData
 				'FROM' => $userFilterParameters['REPORT_INTERVAL_from'],
 				'TO' => $userFilterParameters['REPORT_INTERVAL_to'],
 			];
+		}
+
+		$accessController = AccessController::getCurrent();
+		$accessFilter = $accessController->getEntityFilter(
+			ActionDictionary::ACTION_STORE_VIEW,
+			StoreProductTable::class
+		);
+		if (count($accessFilter))
+		{
+			$queryParams['filter'][] = $accessFilter;
+		}
+
+		$storeIds = (array)$accessController->getPermissionValue(ActionDictionary::ACTION_STORE_VIEW);
+		if (!in_array(PermissionDictionary::VALUE_VARIATION_ALL, $storeIds, true))
+		{
+			$storeIds = array_map(static fn($i) => (int)$i, $storeIds);
+
+			$chartFilters['STORES'] ??= [];
+			$chartFilters['STORES'] = array_map(static fn($i) => (int)$i, $chartFilters['STORES']);
+			$chartFilters['STORES'] = array_intersect($storeIds, $chartFilters['STORES']);
 		}
 
 		$reportData = [

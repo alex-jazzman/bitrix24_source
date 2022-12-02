@@ -91,7 +91,13 @@ class CrmControlPanel extends CBitrixComponent
 				'SUB_ITEMS' => [
 					['ID' => 'SETTINGS'],
 					['ID' => 'MY_COMPANY'],
-					['ID' => 'PERMISSIONS'],
+					[
+						'ID' => 'PERMISSIONS',
+						'SUB_ITEMS' => [
+							['ID' => 'CRM_PERMISSIONS'],
+							['ID' => 'CATALOG_PERMISSIONS'],
+						],
+					],
 					['ID' => 'SALES_CENTER_PAYMENT', 'SLIDER_MODE' => true],
 					['ID' => 'SALES_CENTER_DELIVERY', 'SLIDER_MODE' => true],
 					['ID' => 'DYNAMIC_LIST'],

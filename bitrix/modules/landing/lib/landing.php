@@ -242,6 +242,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					'SITE_SPECIAL' => 'SITE.SPECIAL',
 					'SITE_TITLE' => 'SITE.TITLE',
 					'SITE_VERSION' => 'SITE.VERSION',
+					'SITE_LANG' => 'SITE.LANG',
 					'DOMAIN_ID' => 'SITE.DOMAIN_ID',
 					'SITE_LANDING_ID_INDEX' => 'SITE.LANDING_ID_INDEX'
 				),
@@ -331,7 +332,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				'CREATED_BY_ID', 'MODIFIED_BY_ID', 'DATE_CREATE',
 				'DATE_MODIFY', 'INITIATOR_APP_CODE', 'VIEWS', 'TPL_CODE',
 				'ACTIVE', 'PUBLIC', 'SITE_CODE', 'SITE_SPECIAL', 'RULE',
-				'SITE_VERSION', 'SITE_TPL_CODE'
+				'SITE_VERSION', 'SITE_LANG', 'SITE_TPL_CODE'
 			];
 			foreach ($keys as $key)
 			{
@@ -1399,7 +1400,9 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	 */
 	protected function parseLocalUrl(string $content): string
 	{
-		$pattern = '/([",\'\;]{1})#(landing|block|dynamic)([\d\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
+		$pattern = '/([",\'\;]{1})(page:|block:|user:)?#(landing|block|dynamic|user)([\d\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
+		$patternWithoutUser = '/([",\'\;]{1})(page:|block:)?#(landing|block|dynamic)([\d\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
+		$patternForUser = '/(user:)?#(user)([\d\_]+)/is';
 		static $isIframe = null;
 
 		if (!self::$editMode)
@@ -1419,12 +1422,12 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		if (self::$previewMode)
 		{
 			$content = preg_replace_callback(
-				'/href\="#catalog(Element|Section)([\d]+)"/i',
+				'/href\="(product:)?#catalog(Element|Section)([\d]+)"/i',
 				function($href)
 				{
 					return 'href="' . PublicAction\Utils::getIblockURL(
-							$href[2],
-							mb_strtolower($href[1])
+							$href[3],
+							mb_strtolower($href[2])
 						) . '"';
 				},
 				$content);
@@ -1459,22 +1462,27 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			$urls = array(
 				'LANDING' => array(),
 				'BLOCK' => array(),
+				'USER' => array(),
 				'DYNAMIC' => array()
 			);
 			for ($i = 0, $c = count($matches[0]); $i < $c; $i++)
 			{
-				if (mb_strtoupper($matches[2][$i]) == 'LANDING')
+				if (mb_strtoupper($matches[3][$i]) == 'LANDING')
 				{
-					$urls['LANDING'][] = $matches[3][$i];
+					$urls['LANDING'][] = $matches[4][$i];
 				}
-				else if (mb_strtoupper($matches[2][$i]) == 'DYNAMIC')
+				else if (mb_strtoupper($matches[3][$i]) == 'DYNAMIC')
 				{
-					[$dynamicId, ] = explode('_', $matches[3][$i]);
+					[$dynamicId, ] = explode('_', $matches[4][$i]);
 					$urls['DYNAMIC'][] = $dynamicId;
+				}
+				else if (mb_strtoupper($matches[3][$i]) == 'USER')
+				{
+					$urls['USER'][] = $matches[4][$i];
 				}
 				else
 				{
-					$urls['BLOCK'][] = $matches[3][$i];
+					$urls['BLOCK'][] = $matches[4][$i];
 				}
 			}
 			// get parent landings for blocks
@@ -1539,6 +1547,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			}
 			$anchorsPublicId += $anchorsId;
 			$landingFull = [];
+			$lidEncoded = [];
 			// get landing and blocks urls
 			if (!empty($urls['LANDING']))
 			{
@@ -1548,8 +1557,9 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					false,
 					$landingFull
 				);
-				foreach ($urls['LANDING'] as &$url)
+				foreach ($urls['LANDING'] as $lid => &$url)
 				{
+					$lidEncoded[] = $lid;
 					$url = \htmlspecialcharsbx($url);
 					if ($isIframe)
 					{
@@ -1564,7 +1574,10 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				{
 					if (isset($urls['LANDING'][$lid]))
 					{
-						$urls['LANDING'][$lid] = \htmlspecialcharsbx($urls['LANDING'][$lid]);
+						if (!in_array($lid, $lidEncoded))
+						{
+							$urls['LANDING'][$lid] = \htmlspecialcharsbx($urls['LANDING'][$lid]);
+						}
 						$urls['LANDING'][$lid] .= ($isIframe ? '?IFRAME=Y' : '');
 						$urls['BLOCK'][$bid] = $urls['LANDING'][$lid] . '#' . $anchorsPublicId[$bid];
 					}
@@ -1579,47 +1592,47 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			{
 				krsort($urls['LANDING']);
 				$content = preg_replace_callback(
-					$pattern,
+					$patternWithoutUser,
 					function($matches) use($urls, $landingFull, $isIframe)
 					{
 						$dynamicPart = '';
-						$matches[2] = mb_strtoupper($matches[2]);
-						if ($matches[2] == 'DYNAMIC')
+						$matches[3] = mb_strtoupper($matches[3]);
+						if ($matches[3] == 'DYNAMIC')
 						{
-							$matches[2] = 'LANDING';
-							if (($underPos = mb_strpos($matches[3], '_')) !== false)
+							$matches[3] = 'LANDING';
+							if (($underPos = mb_strpos($matches[4], '_')) !== false)
 							{
-								$dynamicPart = mb_substr($matches[3], $underPos);
-								$matches[3] = mb_substr($matches[3], 0, $underPos);
+								$dynamicPart = mb_substr($matches[4], $underPos);
+								$matches[4] = mb_substr($matches[4], 0, $underPos);
 							}
-							[$dynamicId, ] = explode('_', $matches[3]);
-							$matches[3] = $dynamicId;
+							[$dynamicId, ] = explode('_', $matches[4]);
+							$matches[4] = $dynamicId;
 						}
-						if (isset($urls[$matches[2]][$matches[3]]))
+						if (isset($urls[$matches[3]][$matches[4]]))
 						{
 							if ($dynamicPart)
 							{
-								$landingUrl = $urls[$matches[2]][$matches[3]];
-								if (isset($landingFull[$matches[3]]))
+								$landingUrl = $urls[$matches[3]][$matches[4]];
+								if (isset($landingFull[$matches[4]]))
 								{
-									$landingUrl = $landingFull[$matches[3]];
+									$landingUrl = $landingFull[$matches[4]];
 								}
 								$url = mb_substr($landingUrl, 0, mb_strlen($landingUrl) - 1);
 								$url .= $dynamicPart . ($isIframe ? '/?IFRAME=Y' : '/');
 							}
 							else
 							{
-								$url = $urls[$matches[2]][$matches[3]];
+								$url = $urls[$matches[3]][$matches[4]];
 							}
 							return $matches[1] .
-								   		$url . $matches[4] .
-									$matches[5];
+								   		$url . $matches[5] .
+									$matches[6];
 						}
 						else
 						{
 							return $matches[1] .
-										'#landing' . $matches[3] . $matches[4] . $dynamicPart .
-									$matches[5];
+										'#landing' . $matches[4] . $matches[5] . $dynamicPart .
+									$matches[6];
 						}
 					},
 					$content
@@ -1629,6 +1642,18 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				{
 					$landingUrls['@#landing' . $lid.'@'] = $url;
 				}
+			}
+			// replace user urls
+			if (!empty($urls['USER']))
+			{
+				$content = preg_replace_callback(
+					$patternForUser,
+					function($matches)
+					{
+						return Domain::getHostUrl() . '/company/personal/user/' . $matches[3] . '/';
+					},
+					$content
+				);
 			}
 		}
 

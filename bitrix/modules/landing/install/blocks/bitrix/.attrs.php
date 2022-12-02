@@ -129,8 +129,8 @@ return [
 			'attribute' => 'data-slider-dots',
 			'type' => 'list',
 			'items' => [
-				['name' => Loc::getMessage('LANDING_BLOCK_ATTRS_NO'), 'value' => '0'],
 				['name' => Loc::getMessage('LANDING_BLOCK_ATTRS_YES'), 'value' => '1'],
+				['name' => Loc::getMessage('LANDING_BLOCK_ATTRS_NO'), 'value' => '0'],
 			],
 		],
 	]

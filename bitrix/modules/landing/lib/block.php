@@ -1815,6 +1815,21 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
+	 * Get class of block.
+	 * @return LandingBlock
+	 */
+	public function getBlockClass()
+	{
+		$class = $this->getClass()[0];
+		if ($class !== null)
+		{
+			return $this->includeBlockClass($class);
+		}
+
+		return null;
+	}
+
+	/**
 	 * Marks block as allowed or not by tariff.
 	 * @param bool $mark Mark.
 	 * @return void
@@ -2918,10 +2933,13 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 
 			$sysPages = $sysPagesSites[$this->siteId];
 
-			$sysPages['@' . Connector\Disk::FILE_MASK_HREF . '@i'] = str_replace(
-				'#fileId#', '$1',
-				Controller\DiskFile::getDownloadLink($this->metaData['SITE_TYPE'], $this->id)
-			);
+			if (!Connector\Mobile::isMobileHit())
+			{
+				$sysPages['@' . Connector\Disk::FILE_MASK_HREF . '@i'] = str_replace(
+					'#fileId#', '$2',
+					Controller\DiskFile::getDownloadLink($this->metaData['SITE_TYPE'], $this->id)
+				);
+			}
 
 			if (!empty($sysPages))
 			{
@@ -4379,7 +4397,7 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 					isset($menuItem['href']) && is_string($menuItem['href'])
 				)
 				{
-					if ($menuItem['href'] == '#landing0')
+					if ($menuItem['href'] === 'page:#landing0')
 					{
 						$res = Landing::addByTemplate(
 							$this->getSiteId(),

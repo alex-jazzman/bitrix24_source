@@ -1,17 +1,15 @@
 this.BX = this.BX || {};
 this.BX.Sale = this.BX.Sale || {};
 this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
-(function (exports,ui_vue,ui_vue_vuex,main_core,sale_checkout_const) {
+(function (exports,sale_checkout_const,ui_vue,ui_vue_vuex,main_core) {
     'use strict';
 
     var Order = /*#__PURE__*/function (_VuexBuilderModel) {
       babelHelpers.inherits(Order, _VuexBuilderModel);
-
       function Order() {
         babelHelpers.classCallCheck(this, Order);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Order).apply(this, arguments));
       }
-
       babelHelpers.createClass(Order, [{
         key: "getName",
         value: function getName() {
@@ -29,41 +27,33 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "validate",
         value: function validate(fields) {
           var result = {};
-
           if (main_core.Type.isObject(fields.order)) {
             result.order = this.validateOrder(fields.order);
           }
-
           return result;
         }
       }, {
         key: "validateOrder",
         value: function validateOrder(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
             result.id = parseInt(fields.id);
           }
-
           if (main_core.Type.isNumber(fields.accountNumber) || main_core.Type.isString(fields.accountNumber)) {
             result.accountNumber = fields.accountNumber.toString();
           }
-
           if (main_core.Type.isString(fields.hash)) {
             result.hash = fields.hash.toString();
           }
-
           if (main_core.Type.isString(fields.payed)) {
             result.payed = fields.payed.toString() === 'Y' ? 'Y' : 'N';
           }
-
           return result;
         }
       }, {
         key: "getActions",
         value: function getActions() {
           var _this = this;
-
           return {
             set: function set(_ref, payload) {
               var commit = _ref.commit;
@@ -109,12 +99,10 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 
     var Check = /*#__PURE__*/function (_VuexBuilderModel) {
       babelHelpers.inherits(Check, _VuexBuilderModel);
-
       function Check() {
         babelHelpers.classCallCheck(this, Check);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Check).apply(this, arguments));
       }
-
       babelHelpers.createClass(Check, [{
         key: "getName",
         value: function getName() {
@@ -132,51 +120,41 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "validate",
         value: function validate(fields) {
           var result = {};
-
           if (main_core.Type.isObject(fields.check)) {
             result.check = this.validateCheck(fields.check);
           }
-
           if (main_core.Type.isString(fields.status)) {
             result.status = fields.status.toString();
           }
-
           return result;
         }
       }, {
         key: "validateCheck",
         value: function validateCheck(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
             result.id = parseInt(fields.id);
           }
-
           if (main_core.Type.isNumber(fields.paymentId) || main_core.Type.isString(fields.paymentId)) {
             result.paymentId = parseInt(fields.paymentId);
           }
-
           if (main_core.Type.isString(fields.dateFormatted)) {
             result.dateFormatted = fields.dateFormatted.toString();
           }
-
           if (main_core.Type.isString(fields.link)) {
             result.link = fields.link.toString();
           }
-
           if (main_core.Type.isString(fields.status)) {
             var allowed = Object.values(sale_checkout_const.Check.status);
             var status = fields.status.toString();
-            result.status = allowed.includes(status) ? status : sale_checkout_const.Check.status["new"];
+            result.status = allowed.includes(status) ? status : sale_checkout_const.Check.status.new;
           }
-
           return result;
         }
       }, {
         key: "getActions",
         value: function getActions() {
           var _this = this;
-
           return {
             setStatus: function setStatus(_ref, payload) {
               var commit = _ref.commit;
@@ -233,7 +211,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
               if (typeof state.check[payload.index] === 'undefined') {
                 ui_vue.Vue.set(state.check, payload.index, Check.getBaseItem());
               }
-
               state.check[payload.index] = Object.assign(state.check[payload.index], payload.fields);
             },
             deleteItem: function deleteItem(state, payload) {
@@ -251,7 +228,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
             id: 0,
             paymentId: 0,
             dateFormatted: null,
-            status: sale_checkout_const.Check.status["new"],
+            status: sale_checkout_const.Check.status.new,
             link: null
           };
         }
@@ -261,12 +238,10 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 
     var Basket = /*#__PURE__*/function (_VuexBuilderModel) {
       babelHelpers.inherits(Basket, _VuexBuilderModel);
-
       function Basket() {
         babelHelpers.classCallCheck(this, Basket);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Basket).apply(this, arguments));
       }
-
       babelHelpers.createClass(Basket, [{
         key: "getName",
         value: function getName() {
@@ -320,191 +295,153 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
             picture: this.getVariable('product.noImage', null),
             detailPageUrl: "",
             availableQuantity: 0,
-            ratio: 0
+            ratio: 0,
+            type: sale_checkout_const.Product.type.product,
+            checkMaxQuantity: 'N'
           };
         }
       }, {
         key: "validate",
         value: function validate(fields) {
           var result = {};
-
           if (main_core.Type.isObject(fields.basket)) {
             result.basket = this.validateBasket(fields.basket);
           }
-
           if (main_core.Type.isString(fields.status)) {
             result.status = fields.status.toString();
           }
-
           if (main_core.Type.isString(fields.needRefresh)) {
             result.needRefresh = fields.needRefresh.toString() === 'Y' ? 'Y' : 'N';
           }
-
           if (main_core.Type.isString(fields.currency)) {
             result.currency = fields.currency.toString();
           }
-
           if (main_core.Type.isObject(fields.discount)) {
             result.discount = this.validateTotalDiscount(fields.discount);
           }
-
           if (main_core.Type.isObject(fields.total)) {
             result.total = this.validateTotal(fields.total);
           }
-
           return result;
         }
       }, {
         key: "validateBasket",
         value: function validateBasket(fields) {
           var _this = this;
-
           var result = {};
-
           if (main_core.Type.isString(fields.status)) {
             var allowed = Object.values(sale_checkout_const.Loader.status);
             var status = fields.status.toString();
             result.status = allowed.includes(status) ? status : sale_checkout_const.Loader.status.none;
           }
-
           if (main_core.Type.isString(fields.deleted)) {
             result.deleted = fields.deleted.toString() === 'Y' ? 'Y' : 'N';
           }
-
           if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
             result.id = parseInt(fields.id);
           }
-
           if (main_core.Type.isString(fields.name)) {
             result.name = fields.name.toString();
           }
-
           if (main_core.Type.isNumber(fields.quantity) || main_core.Type.isString(fields.quantity)) {
             result.quantity = parseFloat(fields.quantity);
           }
-
           if (main_core.Type.isString(fields.measureText)) {
             result.measureText = fields.measureText.toString();
           }
-
           if (main_core.Type.isNumber(fields.sum) || main_core.Type.isString(fields.sum)) {
             result.sum = parseFloat(fields.sum);
           }
-
           if (main_core.Type.isNumber(fields.price) || main_core.Type.isString(fields.price)) {
             result.price = parseFloat(fields.price);
           }
-
           if (main_core.Type.isNumber(fields.baseSum) || main_core.Type.isString(fields.baseSum)) {
             result.baseSum = parseFloat(fields.baseSum);
           }
-
           if (main_core.Type.isNumber(fields.basePrice) || main_core.Type.isString(fields.basePrice)) {
             result.basePrice = parseFloat(fields.basePrice);
           }
-
           if (main_core.Type.isString(fields.currency)) {
             result.currency = fields.currency.toString();
           }
-
           if (main_core.Type.isString(fields.module)) {
             result.module = fields.module.toString();
           }
-
           if (main_core.Type.isString(fields.productProviderClass)) {
             result.productProviderClass = fields.productProviderClass.toString();
           }
-
           if (main_core.Type.isObject(fields.product)) {
             result.product = this.validateProduct(fields.product);
           }
-
           if (main_core.Type.isObject(fields.props)) {
             result.props = [];
             fields.props.forEach(function (item) {
               var fields = _this.validateProps(item);
-
               result.props.push(fields);
             });
           }
-
           if (main_core.Type.isObject(fields.sku)) {
             result.sku = this.validateSku(fields.sku);
           }
-
           if (main_core.Type.isObject(fields.discount)) {
             result.discount = this.validateDiscount(fields.discount);
           }
-
           return result;
         }
       }, {
         key: "validateSku",
         value: function validateSku(fields) {
           var result = {};
-
           if (main_core.Type.isObject(fields.tree)) {
             result.tree = fields.tree;
           }
-
           if (main_core.Type.isNumber(fields.parentProductId) || main_core.Type.isString(fields.parentProductId)) {
             result.parentProductId = parseInt(fields.parentProductId);
           }
-
           return result;
         }
       }, {
         key: "validateDiscount",
         value: function validateDiscount(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.sum) || main_core.Type.isString(fields.sum)) {
             result.sum = parseFloat(fields.sum);
           }
-
           if (main_core.Type.isNumber(fields.price) || main_core.Type.isString(fields.price)) {
             result.price = parseFloat(fields.price);
           }
-
           return result;
         }
       }, {
         key: "validateTotalDiscount",
         value: function validateTotalDiscount(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.sum) || main_core.Type.isString(fields.sum)) {
             result.sum = parseFloat(fields.sum);
           }
-
           return result;
         }
       }, {
         key: "validateTotal",
         value: function validateTotal(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.price) || main_core.Type.isString(fields.price)) {
             result.price = parseFloat(fields.price);
           }
-
           if (main_core.Type.isNumber(fields.basePrice) || main_core.Type.isString(fields.basePrice)) {
             result.basePrice = parseFloat(fields.basePrice);
           }
-
           return result;
         }
       }, {
         key: "validateProduct",
         value: function validateProduct(fields) {
           var result = {};
-
           try {
             for (var field in fields) {
               if (!fields.hasOwnProperty(field)) {
                 continue;
               }
-
               if (field === 'id') {
                 if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
                   result[field] = fields.id;
@@ -525,46 +462,48 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
                 if (main_core.Type.isNumber(fields.ratio) || main_core.Type.isString(fields.ratio)) {
                   result.ratio = parseFloat(fields.ratio);
                 }
+              } else if (field === 'type') {
+                if (main_core.Type.isString(fields.type)) {
+                  var productTypes = Object.values(sale_checkout_const.Product.type);
+                  var type = fields.type.toString();
+                  result.type = productTypes.includes(type) ? type : sale_checkout_const.Product.type.product;
+                }
+              } else if (field === 'checkMaxQuantity') {
+                if (main_core.Type.isString(fields.checkMaxQuantity)) {
+                  result.checkMaxQuantity = fields.checkMaxQuantity.toString() === 'Y' ? 'Y' : 'N';
+                }
               } else {
                 result[field] = fields[field];
               }
             }
           } catch (e) {}
-
           return result;
         }
       }, {
         key: "validateProps",
         value: function validateProps(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
             result.id = parseInt(fields.id);
           }
-
           if (main_core.Type.isString(fields.name)) {
             result.name = fields.name.toString();
           }
-
           if (main_core.Type.isString(fields.code)) {
             result.code = fields.code.toString();
           }
-
           if (main_core.Type.isString(fields.value)) {
             result.value = fields.value.toString();
           }
-
           if (main_core.Type.isNumber(fields.sort) || main_core.Type.isString(fields.sort)) {
             result.sort = parseInt(fields.sort);
           }
-
           return result;
         }
       }, {
         key: "getActions",
         value: function getActions() {
           var _this2 = this;
-
           return {
             setTradingPlatformId: function setTradingPlatformId(_ref, payload) {
               var commit = _ref.commit;
@@ -623,7 +562,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "getGetters",
         value: function getGetters() {
           var _this3 = this;
-
           return {
             getStatus: function getStatus(state) {
               return state.status;
@@ -636,7 +574,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
                 if (!state.basket[id] || state.basket[id].length <= 0) {
                   return [];
                 }
-
                 return state.basket[id];
               };
             },
@@ -664,7 +601,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "getMutations",
         value: function getMutations() {
           var _this4 = this;
-
           return {
             setStatus: function setStatus(state, payload) {
               var item = {
@@ -699,13 +635,10 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
             },
             addItem: function addItem(state, payload) {
               var item = _this4.getBaseItem();
-
               item = Object.assign(item, payload.fields);
-
               if (main_core.Type.isObject(payload.fields.product)) {
                 item.product = Object.assign(item.product, payload.fields.product);
               }
-
               if (main_core.Type.isObject(item.props)) {
                 item.props.forEach(function (fields, index) {
                   var prop = Basket.getPropsItem();
@@ -713,14 +646,11 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
                   item.props[index] = prop;
                 });
               }
-
               if (main_core.Type.isObject(payload.fields.sku)) {
                 var _item = Basket.getSkuItem();
-
                 _item = Object.assign(_item, payload.fields.sku);
                 payload.fields.sku = _item;
               }
-
               state.basket.push(item);
               state.basket.forEach(function (item, index) {
                 item.sort = index + 1;
@@ -730,11 +660,9 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
               if (typeof state.basket[payload.index] === 'undefined') {
                 ui_vue.Vue.set(state.basket, payload.index, _this4.getBaseItem());
               }
-
               if (main_core.Type.isObject(payload.fields.product)) {
                 payload.fields.product = Object.assign(state.basket[payload.index].product, payload.fields.product);
               }
-
               if (main_core.Type.isObject(payload.fields.props)) {
                 payload.fields.props.forEach(function (fields, index) {
                   var item = Basket.getPropsItem();
@@ -742,13 +670,11 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
                   payload.fields.props[index] = item;
                 });
               }
-
               if (main_core.Type.isObject(payload.fields.sku)) {
                 var item = Basket.getSkuItem();
                 item = Object.assign(item, payload.fields.sku);
                 payload.fields.sku = item;
               }
-
               state.basket[payload.index] = Object.assign(state.basket[payload.index], payload.fields);
             },
             deleteItem: function deleteItem(state, payload) {
@@ -798,7 +724,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
             sum: 0,
             // => (basketItem->getBasePrice() * basketItem->getQuantity()) - (basketItem->getPrice() * basketItem->getQuantity())
             price: 0 // => basketItem->getDiscountPrice();
-
           };
         }
       }, {
@@ -806,7 +731,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         value: function getDiscountTotalItem() {
           return {
             sum: 0 // => order->getDiscountPrice() + (basket->getBasePrice() - basket->getPrice())
-
           };
         }
       }, {
@@ -816,7 +740,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
             price: 0.0,
             //finalPrice, basket price with discounts and taxes => basket->getPrice()
             basePrice: 0.0 //basePrice,  basket price without discounts => basket->getBasePrice();
-
           };
         }
       }, {
@@ -830,12 +753,10 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 
     var Property = /*#__PURE__*/function (_VuexBuilderModel) {
       babelHelpers.inherits(Property, _VuexBuilderModel);
-
       function Property() {
         babelHelpers.classCallCheck(this, Property);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Property).apply(this, arguments));
       }
-
       babelHelpers.createClass(Property, [{
         key: "getName",
         value: function getName() {
@@ -853,40 +774,40 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "validate",
         value: function validate(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
             result.id = parseInt(fields.id);
           }
-
           if (main_core.Type.isString(fields.name)) {
             result.name = fields.name.toString();
           }
-
           if (main_core.Type.isString(fields.type)) {
             var allowed = Object.values(sale_checkout_const.Property.type);
             var type = fields.type.toString();
             result.type = allowed.includes(type) ? type : sale_checkout_const.Property.type.undefined;
           }
-
           if (main_core.Type.isString(fields.value)) {
             result.value = fields.value.toString();
           }
-
           if (main_core.Type.isString(fields.validated)) {
             result.validated = fields.validated.toString();
           }
-
           if (main_core.Type.isNumber(fields.personTypeId) || main_core.Type.isString(fields.personTypeId)) {
             result.personTypeId = parseInt(fields.personTypeId);
           }
-
+          if (main_core.Type.isString(fields.required)) {
+            var requiredValue = fields.required.toString();
+            result.required = requiredValue === 'Y' ? 'Y' : 'N';
+          }
+          if (main_core.Type.isString(fields.multiple)) {
+            var multipleValue = fields.multiple.toString();
+            result.multiple = multipleValue === 'Y' ? 'Y' : 'N';
+          }
           return result;
         }
       }, {
         key: "getActions",
         value: function getActions() {
           var _this = this;
-
           return {
             addItem: function addItem(_ref, payload) {
               var commit = _ref.commit;
@@ -913,7 +834,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
                 if (!state.property[id] || state.property[id].length <= 0) {
                   return [];
                 }
-
                 return state.property[id];
               };
             },
@@ -932,7 +852,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "getMutations",
         value: function getMutations() {
           var _this2 = this;
-
           return {
             addItem: function addItem(state, payload) {
               payload = _this2.prepareFields(payload);
@@ -947,7 +866,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
               if (typeof state.property[payload.index] === 'undefined') {
                 ui_vue.Vue.set(state.property, payload.index, Property.getBaseItem());
               }
-
               payload = _this2.prepareFields(payload);
               state.property[payload.index] = Object.assign(state.property[payload.index], payload.fields);
             },
@@ -969,13 +887,11 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "prepareFields",
         value: function prepareFields(fields) {
           var result = {};
-
           try {
             for (var field in fields) {
               if (!fields.hasOwnProperty(field)) {
                 continue;
               }
-
               if (field === 'validated') {
                 var validate = Object.values(sale_checkout_const.Property.validate);
                 fields.validated = validate.includes(fields.validated) ? fields.validated : sale_checkout_const.Property.validate.unvalidated;
@@ -985,7 +901,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
               }
             }
           } catch (e) {}
-
           return result;
         }
       }], [{
@@ -996,7 +911,9 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
             name: "",
             type: sale_checkout_const.Property.type.undefined,
             value: "",
-            validated: sale_checkout_const.Property.validate.unvalidated
+            validated: sale_checkout_const.Property.validate.unvalidated,
+            required: 'N',
+            multiple: 'N'
           };
         }
       }]);
@@ -1005,12 +922,10 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 
     var Payment = /*#__PURE__*/function (_VuexBuilderModel) {
       babelHelpers.inherits(Payment, _VuexBuilderModel);
-
       function Payment() {
         babelHelpers.classCallCheck(this, Payment);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Payment).apply(this, arguments));
       }
-
       babelHelpers.createClass(Payment, [{
         key: "getName",
         value: function getName() {
@@ -1028,42 +943,33 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "validate",
         value: function validate(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
             result.id = parseInt(fields.id);
           }
-
           if (main_core.Type.isNumber(fields.sum) || main_core.Type.isString(fields.sum)) {
             result.sum = parseFloat(fields.sum);
           }
-
           if (main_core.Type.isString(fields.paid)) {
             result.paid = fields.paid.toString() === 'Y' ? 'Y' : 'N';
           }
-
           if (main_core.Type.isString(fields.currency)) {
             result.currency = fields.currency.toString();
           }
-
           if (main_core.Type.isNumber(fields.accountNumber) || main_core.Type.isString(fields.accountNumber)) {
             result.accountNumber = fields.accountNumber.toString();
           }
-
           if (main_core.Type.isString(fields.dateBillFormatted)) {
             result.dateBillFormatted = fields.dateBillFormatted.toString();
           }
-
           if (main_core.Type.isNumber(fields.paySystemId) || main_core.Type.isString(fields.paySystemId)) {
             result.paySystemId = parseInt(fields.paySystemId);
           }
-
           return result;
         }
       }, {
         key: "getActions",
         value: function getActions() {
           var _this = this;
-
           return {
             addItem: function addItem(_ref, payload) {
               var commit = _ref.commit;
@@ -1090,7 +996,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
                 if (!state.payment[id] || state.payment[id].length <= 0) {
                   return [];
                 }
-
                 return state.payment[id];
               };
             },
@@ -1115,7 +1020,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
               if (typeof state.payment[payload.index] === 'undefined') {
                 ui_vue.Vue.set(state.payment, payload.index, Payment.getBaseItem());
               }
-
               state.payment[payload.index] = Object.assign(state.payment[payload.index], payload.fields);
             },
             deleteItem: function deleteItem(state, payload) {
@@ -1145,12 +1049,10 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 
     var PaySystem = /*#__PURE__*/function (_VuexBuilderModel) {
       babelHelpers.inherits(PaySystem, _VuexBuilderModel);
-
       function PaySystem() {
         babelHelpers.classCallCheck(this, PaySystem);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PaySystem).apply(this, arguments));
       }
-
       babelHelpers.createClass(PaySystem, [{
         key: "getName",
         value: function getName() {
@@ -1168,47 +1070,38 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "validate",
         value: function validate(fields) {
           var result = {};
-
           if (main_core.Type.isObject(fields.paySystem)) {
             result.paySystem = this.validatePaySystem(fields.paySystem);
           }
-
           if (main_core.Type.isString(fields.status)) {
             result.status = fields.status.toString();
           }
-
           return result;
         }
       }, {
         key: "validatePaySystem",
         value: function validatePaySystem(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
             result.id = parseInt(fields.id);
           }
-
           if (main_core.Type.isString(fields.name)) {
             result.name = fields.name.toString();
           }
-
           if (main_core.Type.isString(fields.logotypeSrc) && fields.logotypeSrc.length > 0) {
             result.picture = fields.logotypeSrc.toString();
           }
-
           if (main_core.Type.isString(fields.type)) {
             var allowed = Object.values(sale_checkout_const.PaySystem.type);
             var type = fields.type.toString();
             result.type = allowed.includes(type) ? type : sale_checkout_const.PaySystem.type.undefined;
           }
-
           return result;
         }
       }, {
         key: "getActions",
         value: function getActions() {
           var _this = this;
-
           return {
             setStatus: function setStatus(_ref, payload) {
               var commit = _ref.commit;
@@ -1265,7 +1158,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
               if (typeof state.paySystem[payload.index] === 'undefined') {
                 ui_vue.Vue.set(state.paySystem, payload.index, PaySystem.getBaseItem());
               }
-
               state.paySystem[payload.index] = Object.assign(state.paySystem[payload.index], payload.fields);
             },
             deleteItem: function deleteItem(state, payload) {
@@ -1292,12 +1184,10 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 
     var Application = /*#__PURE__*/function (_VuexBuilderModel) {
       babelHelpers.inherits(Application, _VuexBuilderModel);
-
       function Application() {
         babelHelpers.classCallCheck(this, Application);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Application).apply(this, arguments));
       }
-
       babelHelpers.createClass(Application, [{
         key: "getName",
         value: function getName() {
@@ -1333,91 +1223,72 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "validate",
         value: function validate(fields) {
           var result = {};
-
           if (main_core.Type.isString(fields.stage)) {
             result.stage = fields.stage.toString();
           }
-
           if (main_core.Type.isString(fields.status)) {
             result.status = fields.status.toString();
           }
-
           if (main_core.Type.isObject(fields.path)) {
             result.path = this.validatePaths(fields.path);
           }
-
           if (main_core.Type.isObject(fields.common)) {
             result.common = this.validateCommon(fields.common);
           }
-
           if (main_core.Type.isObject(fields.options)) {
             result.options = this.validateOptions(fields.options);
           }
-
           return result;
         }
       }, {
         key: "validateCommon",
         value: function validateCommon(fields) {
           var result = {};
-
           if (main_core.Type.isString(fields.siteId)) {
             result.siteId = fields.siteId.toString();
           }
-
           if (main_core.Type.isNumber(fields.tradingPlatformId) || main_core.Type.isString(fields.tradingPlatformId)) {
             result.tradingPlatformId = parseInt(fields.tradingPlatformId);
           }
-
           if (main_core.Type.isNumber(fields.personTypeId) || main_core.Type.isString(fields.personTypeId)) {
             result.personTypeId = parseInt(fields.personTypeId);
           }
-
           return result;
         }
       }, {
         key: "validatePaths",
         value: function validatePaths(fields) {
           var result = {};
-
           if (main_core.Type.isString(fields.productNoImage)) {
             result.productNoImage = fields.productNoImage.toString();
           }
-
           if (main_core.Type.isString(fields.emptyCart)) {
             result.emptyCart = fields.emptyCart.toString();
           }
-
           if (main_core.Type.isString(fields.mainPage)) {
             result.mainPage = fields.mainPage.toString();
           }
-
           if (main_core.Type.isString(fields.location)) {
             result.location = fields.location.toString();
           }
-
           return result;
         }
       }, {
         key: "validateOptions",
         value: function validateOptions(fields) {
           var result = {};
-
           if (main_core.Type.isString(fields.signedParameters)) {
             result.signedParameters = fields.signedParameters.toString();
           }
-
           if (main_core.Type.isString(fields.showReturnButton)) {
             result.showReturnButton = fields.showReturnButton.toString() === 'Y' ? 'Y' : 'N';
           }
-
           return result;
         }
       }, {
         key: "getActions",
         value: function getActions() {
           var _this = this;
-
           return {
             setPathLocation: function setPathLocation(_ref, payload) {
               var commit = _ref.commit;
@@ -1519,12 +1390,10 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 
     var Consent = /*#__PURE__*/function (_VuexBuilderModel) {
       babelHelpers.inherits(Consent, _VuexBuilderModel);
-
       function Consent() {
         babelHelpers.classCallCheck(this, Consent);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Consent).apply(this, arguments));
       }
-
       babelHelpers.createClass(Consent, [{
         key: "getName",
         value: function getName() {
@@ -1543,76 +1412,61 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "validate",
         value: function validate(fields) {
           var result = {};
-
           if (main_core.Type.isString(fields.status)) {
             result.status = fields.status.toString();
           }
-
           if (main_core.Type.isObject(fields.consent)) {
             result.consent = this.validateConsent(fields.consent);
           }
-
           return result;
         }
       }, {
         key: "validateConsent",
         value: function validateConsent(fields) {
           var result = {};
-
           if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
             result.id = parseInt(fields.id);
           }
-
           if (main_core.Type.isString(fields.title)) {
             result.title = fields.title.toString();
           }
-
           if (main_core.Type.isString(fields.isLoaded)) {
             result.isLoaded = fields.isLoaded.toString();
           }
-
           if (main_core.Type.isString(fields.autoSave)) {
             result.autoSave = fields.autoSave.toString();
           }
-
           if (main_core.Type.isString(fields.isChecked)) {
             result.isChecked = fields.isChecked.toString();
           }
-
           if (main_core.Type.isString(fields.submitEventName)) {
             result.submitEventName = fields.submitEventName.toString();
           }
-
           if (main_core.Type.isArrayFilled(fields.params)) {
             result.params = this.validateParams(fields.params);
           }
-
           return result;
         }
       }, {
         key: "validateParams",
         value: function validateParams(fields) {
           var result = [];
-
           try {
             for (var key in fields) {
               if (!fields.hasOwnProperty(key)) {
                 continue;
               }
-
               if (main_core.Type.isNumber(fields[key]) || main_core.Type.isString(fields[key])) {
                 result[key] = fields[key];
               }
             }
           } catch (e) {}
-
           return result;
         }
       }, {
         key: "getActions",
         value: function getActions() {
           var _this = this;
-
           return {
             setStatus: function setStatus(_ref, payload) {
               var commit = _ref.commit;
@@ -1680,6 +1534,134 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
       return Consent;
     }(ui_vue_vuex.VuexBuilderModel);
 
+    var Variant = /*#__PURE__*/function (_VuexBuilderModel) {
+      babelHelpers.inherits(Variant, _VuexBuilderModel);
+      function Variant() {
+        babelHelpers.classCallCheck(this, Variant);
+        return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Variant).apply(this, arguments));
+      }
+      babelHelpers.createClass(Variant, [{
+        key: "getName",
+        value: function getName() {
+          return 'property-variant';
+        }
+      }, {
+        key: "getState",
+        value: function getState() {
+          return {
+            variant: []
+          };
+        }
+      }, {
+        key: "validate",
+        value: function validate(fields) {
+          var result = {};
+          if (main_core.Type.isNumber(fields.id) || main_core.Type.isString(fields.id)) {
+            result.id = parseInt(fields.id);
+          }
+          if (main_core.Type.isNumber(fields.orderPropsId) || main_core.Type.isString(fields.orderPropsId)) {
+            result.propertyId = parseInt(fields.orderPropsId);
+          }
+          if (main_core.Type.isString(fields.name)) {
+            result.name = fields.name.toString();
+          }
+          if (main_core.Type.isString(fields.value)) {
+            result.value = fields.value.toString();
+          }
+          return result;
+        }
+      }, {
+        key: "getActions",
+        value: function getActions() {
+          var _this = this;
+          return {
+            addItem: function addItem(_ref, payload) {
+              var commit = _ref.commit;
+              payload.fields = _this.validate(payload.fields);
+              commit('addItem', payload);
+            },
+            changeItem: function changeItem(_ref2, payload) {
+              var commit = _ref2.commit;
+              payload.fields = _this.validate(payload.fields);
+              commit('updateItem', payload);
+            },
+            removeItem: function removeItem(_ref3, payload) {
+              var commit = _ref3.commit;
+              commit('deleteItem', payload);
+            }
+          };
+        }
+      }, {
+        key: "getGetters",
+        value: function getGetters() {
+          return {
+            get: function get(state) {
+              return function (id) {
+                if (!state.variant[id] || state.variant[id].length <= 0) {
+                  return [];
+                }
+                return state.variant[id];
+              };
+            },
+            getVariant: function getVariant(state) {
+              return state.variant;
+            },
+            getBaseItem: function getBaseItem(state) {
+              return Variant.getBaseItem();
+            },
+            getErrors: function getErrors(state) {
+              return state.errors;
+            }
+          };
+        }
+      }, {
+        key: "getMutations",
+        value: function getMutations() {
+          var _this2 = this;
+          return {
+            addItem: function addItem(state, payload) {
+              payload = _this2.prepareFields(payload);
+              var item = Variant.getBaseItem();
+              item = Object.assign(item, payload);
+              state.variant.unshift(item);
+              state.variant.forEach(function (item, index) {
+                item.sort = index + 1;
+              });
+            },
+            updateItem: function updateItem(state, payload) {
+              if (typeof state.variant[payload.index] === 'undefined') {
+                ui_vue.Vue.set(state.variant, payload.index, Variant.getBaseItem());
+              }
+              state.variant[payload.index] = Object.assign(state.variant[payload.index], payload.fields);
+            },
+            deleteItem: function deleteItem(state, payload) {
+              state.variant.splice(payload.index, 1);
+            },
+            clearVariant: function clearVariant(state) {
+              state.variant = [];
+            },
+            setErrors: function setErrors(state, payload) {
+              state.errors = payload;
+            },
+            clearErrors: function clearErrors(state) {
+              state.errors = [];
+            }
+          };
+        }
+      }], [{
+        key: "getBaseItem",
+        value: function getBaseItem() {
+          return {
+            id: 0,
+            propertyId: 0,
+            value: "",
+            name: ""
+          };
+        }
+      }]);
+      return Variant;
+    }(ui_vue_vuex.VuexBuilderModel);
+
     exports.Order = Order;
     exports.Check = Check;
     exports.Basket = Basket;
@@ -1688,6 +1670,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
     exports.PaySystem = PaySystem;
     exports.Application = Application;
     exports.Consent = Consent;
+    exports.Variant = Variant;
 
-}((this.BX.Sale.Checkout.Model = this.BX.Sale.Checkout.Model || {}),BX,BX,BX,BX.Sale.Checkout.Const));
+}((this.BX.Sale.Checkout.Model = this.BX.Sale.Checkout.Model || {}),BX.Sale.Checkout.Const,BX,BX,BX));
 //# sourceMappingURL=model.bundle.js.map

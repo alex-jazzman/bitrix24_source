@@ -3,7 +3,7 @@ namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
-use Bitrix\Main;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Crm;
@@ -362,10 +362,12 @@ class ContactDataProvider extends EntityDataProvider
 			$referenceClass = ($factory ? $factory->getDataClass() : null);
 
 			return $this->getUserEntitySelectorParams(
-				strtolower('crm_contact_filter_' . $fieldID),
+				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
 					'referenceClass' => $referenceClass,
+					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
+					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
 				]
 			);
 		}
@@ -471,5 +473,16 @@ class ContactDataProvider extends EntityDataProvider
 		}
 
 		return $result;
+	}
+
+	public function prepareListFilter(array &$filter, array $requestFilter): void
+	{
+		$listFilter = new ListFilter($this->getEntityTypeId(), $this->prepareFields());
+		$listFilter->prepareListFilter($filter, $requestFilter);
+	}
+
+	protected function getEntityTypeId(): int
+	{
+		return \CCrmOwnerType::Contact;
 	}
 }

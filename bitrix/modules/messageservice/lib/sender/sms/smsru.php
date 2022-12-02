@@ -357,8 +357,8 @@ class SmsRu extends Sender\BaseConfigurable
 		$url = 'https://sms.ru/'.$method;
 
 		$httpClient = new HttpClient(array(
-			"socketTimeout" => 10,
-			"streamTimeout" => 30,
+			"socketTimeout" => $this->socketTimeout,
+			"streamTimeout" => $this->streamTimeout,
 			"waitResponse" => true,
 		));
 		$httpClient->setHeader('User-Agent', 'Bitrix24');

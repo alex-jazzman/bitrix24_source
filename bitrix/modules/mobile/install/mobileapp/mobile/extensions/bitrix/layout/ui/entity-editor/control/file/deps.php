@@ -1,5 +1,6 @@
 <?php
 return [
-	'layout/ui/entity-editor/control/field',
-	'utils',
+	'extensions' => [
+		'layout/ui/entity-editor/control/field',
+	],
 ];

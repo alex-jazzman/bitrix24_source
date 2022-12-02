@@ -11,6 +11,7 @@ use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Crm\Reservation;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlHelper;
 use Bitrix\Main\Localization\Loc;
@@ -89,6 +90,17 @@ final class FieldRepository
 		;
 	}
 
+	public function getLastActivityTime(string $fieldName = Item::FIELD_NAME_LAST_ACTIVITY_TIME): ScalarField
+	{
+		return
+			(new DatetimeField($fieldName))
+				->configureDefaultValue(static function () {
+					return new DateTime();
+				})
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_TIME'))
+		;
+	}
+
 	public function getCreatedBy(string $fieldName = Item::FIELD_NAME_CREATED_BY): ScalarField
 	{
 		return
@@ -118,6 +130,17 @@ final class FieldRepository
 					return Container::getInstance()->getContext()->getUserId();
 				})
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_BY'))
+		;
+	}
+
+	public function getLastActivityBy(string $fieldName = Item::FIELD_NAME_LAST_ACTIVITY_BY): ScalarField
+	{
+		return
+			(new IntegerField($fieldName))
+				->configureDefaultValue(static function () {
+					return Container::getInstance()->getContext()->getUserId();
+				})
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_BY'))
 		;
 	}
 
@@ -877,5 +900,16 @@ final class FieldRepository
 			(new IntegerField($fieldName))
 				->configureNullable()
 		;
+	}
+
+	public function getProductRowReservation(): Relation
+	{
+		return (
+			new Reference(
+				Reservation\Internals\ProductRowReservationTable::PRODUCT_ROW_RESERVATION_NAME,
+				Reservation\Internals\ProductRowReservationTable::class,
+				Join::on('this.ID', 'ref.ROW_ID')
+			)
+		);
 	}
 }

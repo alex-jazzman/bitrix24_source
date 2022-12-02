@@ -889,8 +889,8 @@ class CAllUser extends CDBResult
 			if (!isset($_REQUEST["logout"]) || strtolower($_REQUEST["logout"]) != "yes")
 			{
 				$prefix = COption::GetOptionString('main', 'cookie_name', 'BITRIX_SM');
-				$login = (string)$_COOKIE[$prefix.'_UIDL'];
-				$password = (string)$_COOKIE[$prefix.'_UIDH'];
+				$login = (string)($_COOKIE[$prefix.'_UIDL'] ?? '');
+				$password = (string)($_COOKIE[$prefix.'_UIDH'] ?? '');
 
 				if($login != '' && $password != '')
 				{
@@ -1697,8 +1697,8 @@ class CAllUser extends CDBResult
 				Note: there is no MFA check for an application password.
 				*/
 
-				$arParams["CAPTCHA_WORD"] = $_REQUEST["captcha_word"];
-				$arParams["CAPTCHA_SID"] = $_REQUEST["captcha_sid"];
+				$arParams["CAPTCHA_WORD"] = $_REQUEST["captcha_word"] ?? '';
+				$arParams["CAPTCHA_SID"] = $_REQUEST["captcha_sid"] ?? '';
 
 				$doAuthorize = \Bitrix\Security\Mfa\Otp::verifyUser($arParams);
 			}

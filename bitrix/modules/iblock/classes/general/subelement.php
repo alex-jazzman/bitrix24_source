@@ -842,6 +842,11 @@ function ReloadOffers()
 		$this->dialogButtons = $buttons;
 	}
 
+	public function setReadDialogButtons(): void
+	{
+		$this->setDialogButtons(['BX.CAdminDialog.btnCancel']);
+	}
+
 	public function getDialogButtons($jsFormat = false)
 	{
 		$jsFormat = ($jsFormat === true);

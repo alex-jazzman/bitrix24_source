@@ -32,15 +32,29 @@ elseif (!$arResult['DOCUMENT'] && empty($arResult['ERROR_MESSAGES']))
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background');
 
-if (!empty($arResult['ERROR_MESSAGES']) && is_array($arResult['ERROR_MESSAGES'])): ?>
-	<?php foreach($arResult['ERROR_MESSAGES'] as $error):?>
-		<div class="ui-alert ui-alert-danger catalog-store-document-detail--alert" style="margin-bottom: 0;">
-			<span class="ui-alert-message"><?= $error ?></span>
-		</div>
-	<?php endforeach;?>
-	<?php
+if (!empty($arResult['ERROR_MESSAGES']) && is_array($arResult['ERROR_MESSAGES']))
+{
+	if (is_array($arResult['ERROR_MESSAGES'][0]))
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:ui.info.error',
+			'',
+			$arResult['ERROR_MESSAGES'][0]
+		);
+	}
+	else
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:ui.info.error',
+			'',
+			[
+				'TITLE' => $arResult['ERROR_MESSAGES'][0],
+			],
+		);
+	}
+
 	return;
-endif;
+}
 
 Extension::load([
 	'ui.alerts',
@@ -228,6 +242,7 @@ $tabContainerClassName .= ' ui-entity-stream-section-planned-above-overlay';
 			signedParameters: <?=CUtil::PhpToJSObject($this->getComponent()->getSignedParameters()) ?>,
 			isConductLocked: <?= CUtil::PhpToJSObject($arResult['IS_CONDUCT_LOCKED']) ?>,
 			masterSliderUrl: <?= CUtil::PhpToJSObject($arResult['MASTER_SLIDER_URL']) ?>,
+			inventoryManagementSource: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_SOURCE']) ?>,
 		}
 	);
 

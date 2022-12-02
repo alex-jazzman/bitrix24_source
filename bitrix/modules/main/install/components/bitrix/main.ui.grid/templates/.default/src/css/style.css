@@ -511,7 +511,7 @@ span.main-grid-cell-head-container { box-sizing: border-box; }
 	margin: 15px 16px 10px;
 	color: #535c69;
 	vertical-align: top;
-	font-size: 13px;
+	font-size: 14px;
 }
 
 .main-grid-cell-content {
@@ -2616,7 +2616,6 @@ label.main-grid-checkbox {
 .main-grid-load-animation {
 	display: table !important;
 	-webkit-animation: main-grid-load 10ms;
-	-o-animation: main-grid-load 10ms;
 	animation: main-grid-load 10ms;
 }
 

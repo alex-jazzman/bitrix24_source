@@ -21,3 +21,5 @@ $MESS["CSPL_REMOVE_PRODUCT_ERROR"] = "Cannot remove product from inventory objec
 $MESS["CSPL_UNKNOWN_ERROR"] = "Something went wrong...";
 $MESS["CSPL_UPDATE_TAB_ERROR"] = "Error loading data";
 $MESS["CSPL_VALIDATION_ERROR_EMPTY_NAME"] = "Item ##NUM# has no product name";
+$MESS["CSPL_VALIDATION_ERROR_PHOTO_HAS_ERROR"] = "Item ##NUM# has invalid product images. Delete those images and upload them again.";
+$MESS["CSPL_VALIDATION_ERROR_PHOTO_IS_LOADING"] = "Item ##NUM# has no product photos.";

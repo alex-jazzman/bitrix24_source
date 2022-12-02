@@ -1779,18 +1779,18 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		{
 			$stampPlaceholders = $this->getTemplateStampsFields($template);
 		}
-		$documentStampFields = $document->getFields($stampPlaceholders);
 		if (empty($stampPlaceholders))
 		{
 			$data['changeStampsDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_NO_TEMPLATE');
 		}
 		else
 		{
+			$documentStampFields = $this->getDocumentFieldsValues($document, $stampPlaceholders);
 			foreach ($stampPlaceholders as $placeholder)
 			{
 				if (
-					!empty($documentStampFields[$placeholder]['VALUE'])
-					&& $documentStampFields[$placeholder]['VALUE'] != false
+					!empty($documentStampFields[$placeholder])
+					&& $documentStampFields[$placeholder] != false
 				)
 				{
 					$data['changeStampsEnabled'] = true;
@@ -1802,7 +1802,6 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		$qrPlaceholder = 'PaymentQrCode';
 		$data['changeQrCodeEnabled'] = false;
 		$data['qrCodeEnabled'] = false;
-		$documentQrCodeFields = $document->getFields([$qrPlaceholder]);
 		if (!isset($templateFields[$qrPlaceholder]))
 		{
 			$data['changeQrCodeDisabledReason'] = 'No qr code in template';
@@ -1815,14 +1814,15 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			}
 			else
 			{
+				$documentQrCodeFields = $this->getDocumentFieldsValues($document, [$qrPlaceholder]);
 				$data['changeQrCodeEnabled'] = true;
 				$data['qrCodeEnabled'] = (
-					!empty($documentQrCodeFields[$qrPlaceholder]['VALUE'])
-					&& $documentQrCodeFields[$qrPlaceholder]['VALUE'] != false
+					!empty($documentQrCodeFields[$qrPlaceholder])
+					&& $documentQrCodeFields[$qrPlaceholder] != false
 				);
 			}
 		}
-		if (!$data['changeStampsEnabled'])
+		if (!$data['changeStampsEnabled'] && !empty($stampPlaceholders))
 		{
 			$data['changeStampsDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_EMPTY_FIELDS');
 			$data['myCompanyEditUrl'] = $this->getMyCompanyEditUrl();
@@ -1850,6 +1850,28 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		}
 
 		return $data;
+	}
+
+	protected function getDocumentFieldsValues(Document $document, array $fieldsNames): array
+	{
+		$result = [];
+		if (is_callable([$document, 'getValue']))
+		{
+			foreach ($fieldsNames as $fieldName)
+			{
+				$result[$fieldName] = $document->getValue($fieldName);
+			}
+
+			return $result;
+		}
+
+		$fieldsData = $document->getFields($fieldsNames);
+		foreach ($fieldsNames as $fieldName)
+		{
+			$result[$fieldName] = $fieldsData[$fieldName]['VALUE'] ?? null;
+		}
+
+		return $result;
 	}
 
 	/**

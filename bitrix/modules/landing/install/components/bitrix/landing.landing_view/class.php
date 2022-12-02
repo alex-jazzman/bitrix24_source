@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use \Bitrix\Landing\Folder;
 use \Bitrix\Landing\Manager;
 use \Bitrix\Landing\Site;
 use \Bitrix\Landing\Landing;
@@ -373,7 +374,12 @@ class LandingViewComponent extends LandingBaseComponent
 		{
 			$pages = $this->getLandings(array(
 				'filter' => array(
-					'SITE_ID' => $landing->getSiteId()
+					'SITE_ID' => $landing->getSiteId(),
+					[
+						'LOGIC' => 'OR',
+						['FOLDER_ID' => null],
+						['!FOLDER_ID' => Folder::getFolderIdsForSite($landing->getSiteId(), ['=DELETED' => 'Y']) ?: [-1]]
+					]
 				)
 			));
 			foreach ($pages as $page)
@@ -883,9 +889,9 @@ class LandingViewComponent extends LandingBaseComponent
 							}
 						}
 						if (
-							!empty($block['type']) &&
-							!in_array($type, $block['type']) &&
-							($b24 || $block['type'] == 'null')
+							!empty($block['type'])
+							&& !in_array($type, $block['type'], true)
+							&& ($b24 || in_array('NULL', $block['type'], true))
 						)
 						{
 							unset($section['items'][$code]);

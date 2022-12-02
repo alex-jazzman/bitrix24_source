@@ -332,6 +332,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			"APP_MAC_INSTALLED" => \CUserOptions::GetOption('im', 'MacLastActivityDate', "", $this->arParams["ID"]),
 			"APP_IOS_INSTALLED" => \CUserOptions::GetOption('mobile', 'iOsLastActivityDate', "", $this->arParams["ID"]),
 			"APP_ANDROID_INSTALLED" => \CUserOptions::GetOption('mobile', 'AndroidLastActivityDate', "", $this->arParams["ID"]),
+			"APP_LINUX_INSTALLED" => \CUserOptions::GetOption('im', 'LinuxLastActivityDate', "", $this->arParams["ID"]),
 		];
 
 		foreach ($appActivity as $key => $lastActivity)

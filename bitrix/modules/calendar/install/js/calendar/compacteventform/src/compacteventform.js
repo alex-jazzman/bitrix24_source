@@ -469,13 +469,15 @@ export class CompactEventForm extends EventEmitter
 			if (
 				!this.isNewEntry()
 				&& this.canDo('delete')
-				&& this.entry.getCurrentStatus() === 'H'
 				&& !this.checkLocationView()
 			)
 			{
-				if (!this.entry.isMeeting()
+				if (
+					!this.entry.isMeeting()
 					|| !this.entry.getCurrentStatus()
-					|| this.entry.getCurrentStatus() === 'H')
+					|| this.entry.getCurrentStatus() === 'H'
+					|| this.entry.data['CREATED_BY'] === this.entry.data['MEETING_HOST']
+				)
 				{
 					buttons.push(
 						new BX.UI.Button({
@@ -1800,11 +1802,8 @@ export class CompactEventForm extends EventEmitter
 
 	outsideMouseDownClose(event)
 	{
-		if (this.checkTopSlider())
-		{
-			let target = event.target || event.srcElement;
-			this.outsideMouseDown = !target.closest('div.popup-window');
-		}
+		let target = event.target || event.srcElement;
+		this.outsideMouseDown = !target.closest('div.popup-window');
 	}
 
 	checkTopSlider()

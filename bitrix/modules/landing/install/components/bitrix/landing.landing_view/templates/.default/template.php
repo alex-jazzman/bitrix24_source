@@ -505,26 +505,24 @@ if ($request->offsetExists('landing_mode'))
 								&& typeof BX.Landing.Metrika !== 'undefined'
 							)
 							{
-								var appCode = event.data.from.match(/app_code:(.*)=?:title/i);
-								var title = event.data.from.match(/title:(.*)=?:preview_url/iu);
-								var previewUrl = event.data.from.match(/preview_url:(.*)/i);
+								var dataFrom = event.data.from.split('|');
+								var appCode = dataFrom[1];
+								var title = dataFrom[2];
+								var previewId = dataFrom[3];
 								if (
 									appCode !== null
-									&& appCode.length > 1
 									&& title !== null
-									&& title.length > 1
-									&& previewUrl !== null
-									&& previewUrl.length > 1
+									&& previewId !== null
 								)
 								{
 									var metrikaValue =
 										landingPath
 										+ '?action=templateCreated&app_code='
-										+ appCode[1]
+										+ appCode
 										+ '&title='
-										+ title[1]
-										+ '&preview_url='
-										+ previewUrl[1];
+										+ title
+										+ '&preview_id='
+										+ previewId;
 									var metrika = new BX.Landing.Metrika(true);
 									metrika.sendLabel(
 										null,
@@ -534,7 +532,7 @@ if ($request->offsetExists('landing_mode'))
 								}
 							}
 							gotoSiteButton.setAttribute('href', landingPath);
-							top.window.location.href = landingPath;
+							setTimeout(() => {top.window.location.href = landingPath}, 3000);
 						}
 					}
 				}

@@ -446,6 +446,23 @@ class CCrmComponentHelper
 		return $result;
 	}
 
+	public static function getRequisiteAutocompleteFieldInfoData(int $countryId): array
+	{
+		$clientResolverPropertyType = ClientResolver::getClientResolverPropertyWithPlacements($countryId);
+		$placementParams = ClientResolver::getClientResolverPlacementParams($countryId);
+		$featureRestriction = ClientResolver::getRestriction($countryId);
+
+		return [
+			'enabled' => !!$clientResolverPropertyType,
+			'featureRestrictionCallback' =>
+				$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
+			,
+			'placeholder' => ClientResolver::getClientResolverPlaceholderText($countryId),
+			'feedback_form' => EntityRequisite::getRequisiteFeedbackFormParams(),
+			'clientResolverPlacementParams' => $placementParams
+		];
+	}
+
 	public static function getEventTabParams(
 		int $entityId,
 		string $tabName,

@@ -16,6 +16,7 @@ Loc::loadMessages(__FILE__);
 
 class EntityFieldProvider
 {
+	const TYPE_VIRTUAL = 'VIRTUAL';
 	protected static $statusTypes = null;
 
 	public static function getFields(array $hiddenTypes = [])
@@ -142,6 +143,7 @@ class EntityFieldProvider
 			)
 		);
 
+		$hideVirtual = in_array(self::TYPE_VIRTUAL, $hiddenTypes);
 		$hideRequisites = in_array(\CCrmOwnerType::Requisite, $hiddenTypes);
 		$map = Entity::getMap();
 		foreach($map as $entityName => $entity)
@@ -154,7 +156,14 @@ class EntityFieldProvider
 
 			$fields[$entityName] = array(
 				'CAPTION' => \CCrmOwnerType::GetDescription($entityTypeId),
-				'FIELDS' => self::getFieldsInternal($entityName, $entity, ['hideRequisites' => $hideRequisites])
+				'FIELDS' => self::getFieldsInternal(
+					$entityName,
+					$entity,
+					[
+						'hideVirtual' => $hideVirtual,
+						'hideRequisites' => $hideRequisites,
+					]
+				)
 			);
 		}
 
@@ -348,15 +357,18 @@ class EntityFieldProvider
 		//Add delivery address to company/contact/lead fields
 		if (in_array($entityName, [\CCrmOwnerType::CompanyName, \CCrmOwnerType::ContactName], true))
 		{
-			$fieldsMap[] = [
-				'type' => 'string',
-				'entity_field_name' => "DELIVERY_ADDRESS",
-				'entity_name' => $entityName,
-				'name' => "{$entityName}_DELIVERY_ADDRESS",
-				'caption' => Loc::getMessage("CRM_WEBFORM_FIELD_PROVIDER_DELIVERY_ADDRESS_CAPTION"),
-				'multiple' => false,
-				'required' => false,
-			];
+			if (empty($options['hideVirtual']))
+			{
+				$fieldsMap[] = [
+					'type' => 'string',
+					'entity_field_name' => "DELIVERY_ADDRESS",
+					'entity_name' => $entityName,
+					'name' => "{$entityName}_DELIVERY_ADDRESS",
+					'caption' => Loc::getMessage("CRM_WEBFORM_FIELD_PROVIDER_DELIVERY_ADDRESS_CAPTION"),
+					'multiple' => false,
+					'required' => false,
+				];
+			}
 
 			/*
 			$fieldsMap[] = [

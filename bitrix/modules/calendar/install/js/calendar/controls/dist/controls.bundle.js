@@ -787,7 +787,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    _t2$1,
 	    _t3$1,
 	    _t4$1,
-	    _t5$1;
+	    _t5$1,
+	    _t6$1;
 	class Location {
 	  constructor(params) {
 	    this.datesRange = [];
@@ -845,20 +846,6 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      });
 	    }
 
-	    if (this.disabled) {
-	      main_core.Dom.addClass(this.DOM.wrapNode, 'locked');
-	      this.DOM.inputWrap.appendChild(main_core.Dom.create('DIV', {
-	        props: {
-	          className: 'calendar-lock-icon'
-	        },
-	        events: {
-	          click: () => {
-	            top.BX.UI.InfoHelper.show('limit_office_calendar_location');
-	          }
-	        }
-	      }));
-	    }
-
 	    this.DOM.input = this.DOM.inputWrap.appendChild(main_core.Dom.create('INPUT', {
 	      attrs: {
 	        name: this.params.inputName || '',
@@ -874,6 +861,17 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        maxWidth: 300 + 'px'
 	      }
 	    }));
+
+	    if (this.disabled) {
+	      main_core.Dom.addClass(this.DOM.wrapNode, 'locked');
+	      this.DOM.lockIcon = main_core.Tag.render(_t5$1 || (_t5$1 = _$1`
+				<div class="calendar-lock-icon"></div>
+			`));
+	      main_core.Event.bind(this.DOM.lockIcon, 'click', () => {
+	        top.BX.UI.InfoHelper.show('limit_office_calendar_location');
+	      });
+	      main_core.Dom.append(this.DOM.lockIcon, this.DOM.inputWrap);
+	    }
 	  }
 
 	  setValues() {
@@ -996,7 +994,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      zIndex: this.zIndex,
 	      disabled: this.disabled,
 	      minWidth: 300,
-	      onChangeCallback: BX.delegate(function () {
+	      onChangeCallback: () => {
 	        let i,
 	            value = this.DOM.input.value;
 	        this.value = {
@@ -1022,7 +1020,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 
 	        this.addLocationRemoveButton();
 	        this.allowClick();
-	      }, this)
+	      }
 	    });
 	    this.allowClick();
 	  }
@@ -1080,7 +1078,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    }
 
 	    if ((this.value.value || this.value.str || this.value.text) && !this.viewMode && !this.DOM.removeLocationButton && this.value.text !== '') {
-	      this.DOM.removeLocationButton = wrap.appendChild(main_core.Tag.render(_t5$1 || (_t5$1 = _$1`
+	      this.DOM.removeLocationButton = wrap.appendChild(main_core.Tag.render(_t6$1 || (_t6$1 = _$1`
 				<span class="calendar-location-clear-btn-wrap calendar-location-readonly">
 					<span class="calendar-location-clear-btn-text">${0}</span>
 				</span>`), main_core.Loc.getMessage('EC_LOCATION_CLEAR_INPUT')));
@@ -2173,7 +2171,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    _t3$2,
 	    _t4$2,
 	    _t5$2,
-	    _t6$1,
+	    _t6$2,
 	    _t7$1,
 	    _t8$1;
 	class SectionSelector {
@@ -2378,7 +2376,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      if (imageSrc) {
 	        imageNode = main_core.Tag.render(_t5$2 || (_t5$2 = _$3`<img class="calendar-field-choice-calendar-img-value" src="${0}">`), imageSrc);
 	      } else if (section.type === 'group') {
-	        imageNode = main_core.Tag.render(_t6$1 || (_t6$1 = _$3`<div class="ui-icon ui-icon-common-user-group"><i></i></div>`));
+	        imageNode = main_core.Tag.render(_t6$2 || (_t6$2 = _$3`<div class="ui-icon ui-icon-common-user-group"><i></i></div>`));
 	      } else if (section.type === 'user') {
 	        imageNode = main_core.Tag.render(_t7$1 || (_t7$1 = _$3`<div class="ui-icon ui-icon-common-user"><i></i></div>`));
 	      } else {
@@ -3636,7 +3634,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    _t3$4,
 	    _t4$4,
 	    _t5$4,
-	    _t6$2,
+	    _t6$3,
 	    _t7$2,
 	    _t8$2,
 	    _t9,
@@ -3690,7 +3688,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        this.DOM.fromTimeText = this.DOM.leftInnerWrap.appendChild(main_core.Tag.render(_t5$4 || (_t5$4 = _$6`<span class="calendar-field-value calendar-field-value-time"></span>`)));
 	      }
 
-	      this.DOM.betweenSpacer = this.DOM.outerWrap.appendChild(main_core.Tag.render(_t6$2 || (_t6$2 = _$6`<div class="calendar-field-block calendar-field-block-between" />`)));
+	      this.DOM.betweenSpacer = this.DOM.outerWrap.appendChild(main_core.Tag.render(_t6$3 || (_t6$3 = _$6`<div class="calendar-field-block calendar-field-block-between" />`)));
 	      this.DOM.rightInnerWrap = this.DOM.outerWrap.appendChild(main_core.Tag.render(_t7$2 || (_t7$2 = _$6`<div class="calendar-field-block calendar-field-block-right"></div>`)));
 	      this.DOM.toTime = this.DOM.rightInnerWrap.appendChild(main_core.Tag.render(_t8$2 || (_t8$2 = _$6`
 				<input class="calendar-field calendar-field-time" value="" type="text" autocomplete="off" style="width: ${0}px; max-width: ${0}px;"/>
@@ -3950,13 +3948,6 @@ this.BX.Calendar = this.BX.Calendar || {};
 
 	    this.DOM.fromDate.value = calendar_util.Util.formatDate(this.getFrom());
 	    const difference = this.getFrom().getTime() - this.from.getTime();
-	    const yearDuration = 1000 * 60 * 60 * 24 * 365;
-
-	    if (Math.abs(difference) > yearDuration) {
-	      this.DOM.fromDate.value = calendar_util.Util.formatDate(this.from.getTime());
-	      return;
-	    }
-
 	    this.DOM.toDate.value = calendar_util.Util.formatDate(this.to.getTime() + difference);
 	    this.handleValueChange();
 	  }
@@ -3969,11 +3960,14 @@ this.BX.Calendar = this.BX.Calendar || {};
 
 	    this.DOM.toDate.value = calendar_util.Util.formatDate(this.getTo());
 	    const difference = Math.abs(this.to.getTime() - this.getTo().getTime());
-	    const yearDuration = 1000 * 60 * 60 * 24 * 365;
+	    const yearDuration = 1000 * 60 * 60 * 24 * 300;
 
 	    if (difference > yearDuration) {
-	      this.DOM.toDate.value = calendar_util.Util.formatDate(this.to.getTime());
-	      return;
+	      const duration = this.to.getTime() - this.from.getTime();
+	      const toDate = calendar_util.Util.parseDate(this.DOM.toDate.value);
+	      toDate.setHours(this.to.getHours(), this.to.getMinutes(), 0, 0);
+	      const fromDate = new Date(toDate.getTime() - duration);
+	      this.DOM.fromDate.value = calendar_util.Util.formatDate(fromDate);
 	    }
 
 	    if (this.getTo() < this.getFrom()) {

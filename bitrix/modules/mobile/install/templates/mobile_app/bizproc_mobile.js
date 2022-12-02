@@ -85,6 +85,9 @@ if (typeof BX.BizProcMobile === 'undefined')
 			url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + 'mobile/bp/detail.php?task_id=' + taskId,
 			unique: true
 		});
+
+		BX.PreventDefault(event);
+
 		return false;
 	};
 

@@ -1,2 +1,2 @@
 <?php
-$MESS["CATALOG_BARCODE_SCANNER_TITLE"] = "Scan the QR code with your phone";
+$MESS["CATALOG_BARCODE_SCANNER_TITLE1"] = "Scan the barcode with your phone";

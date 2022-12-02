@@ -4,8 +4,6 @@ IncludeModuleLangFile(__FILE__);
 use Bitrix\Crm;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\LeadContactTable;
-use Bitrix\Crm\Counter\EntityCounterManager;
-use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\EntityAddressType;
@@ -14,8 +12,6 @@ use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
-use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
-use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UtmTable;
@@ -1759,20 +1755,7 @@ class CAllCrmLead
 		;
 		$duplicateCriterionRegistrar->register($data);
 
-		if($assignedByID > 0)
-		{
-			EntityCounterManager::reset(
-				EntityCounterManager::prepareCodes(
-					CCrmOwnerType::Lead,
-					array(
-						EntityCounterType::IDLE,
-						EntityCounterType::ALL
-					)
-				),
-				array($assignedByID)
-			);
-		}
-
+		\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityAdd(CCrmOwnerType::Lead, $arFields);
 		// tracking of entity
 		Tracking\Entity::onAfterAdd(CCrmOwnerType::Lead, $ID, $arFields);
 
@@ -1893,8 +1876,6 @@ class CAllCrmLead
 				ExecuteModuleEventEx($arEvent, array(&$arFields));
 			}
 		}
-
-		\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::LeadName, 'kanban_add');
 
 		if ($ID>0)
 		{
@@ -2730,38 +2711,15 @@ class CAllCrmLead
 
 			if($bResult && (isset($arFields['ASSIGNED_BY_ID']) || isset($arFields['STATUS_ID'])))
 			{
-				$assignedByIDs = array();
-				if($assignedByID > 0)
-				{
-					$assignedByIDs[] = $assignedByID;
-				}
-
 				$previousAssignedByID = isset($arRow['ASSIGNED_BY_ID']) ? (int)$arRow['ASSIGNED_BY_ID'] : 0;
-				if($previousAssignedByID > 0 && $assignedByID !== $previousAssignedByID)
-				{
-					$assignedByIDs[] = $previousAssignedByID;
-				}
-
-				if(!empty($assignedByIDs))
-				{
-					EntityCounterManager::reset(
-						EntityCounterManager::prepareCodes(
-							CCrmOwnerType::Lead,
-							array(
-								EntityCounterType::PENDING,
-								EntityCounterType::OVERDUE,
-								EntityCounterType::IDLE,
-								EntityCounterType::ALL
-							)
-						),
-						$assignedByIDs
-					);
-				}
-
 				if ($assignedByID !== $previousAssignedByID && $enableDupIndexInvalidation)
 				{
 					DuplicateManager::onChangeEntityAssignedBy(CCrmOwnerType::Lead, $ID);
 				}
+			}
+			if ($bResult)
+			{
+				\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityUpdate(CCrmOwnerType::Lead, $arRow, $currentFields);
 			}
 
 			// update utm fields
@@ -2955,8 +2913,6 @@ class CAllCrmLead
 					ExecuteModuleEventEx($arEvent, array(&$arFields));
 			}
 			//endregion
-
-			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::LeadName, 'kanban_update');
 
 			$statusSemanticsId = $arFields['STATUS_SEMANTIC_ID'] ?: $arRow['STATUS_SEMANTIC_ID'];
 			if(Crm\Ml\Scoring::isMlAvailable() && !Crm\PhaseSemantics::isFinal($statusSemanticsId))
@@ -3178,21 +3134,7 @@ class CAllCrmLead
 
 			DuplicateIndexMismatch::unregisterEntity(CCrmOwnerType::Lead, $ID);
 
-			if($assignedByID > 0)
-			{
-				EntityCounterManager::reset(
-					EntityCounterManager::prepareCodes(
-						CCrmOwnerType::Lead,
-						array(
-							EntityCounterType::PENDING,
-							EntityCounterType::OVERDUE,
-							EntityCounterType::IDLE,
-							EntityCounterType::ALL
-						)
-					),
-					array($assignedByID)
-				);
-			}
+			\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityDelete(CCrmOwnerType::Lead, $arFields);
 
 			if($isConverted)
 			{
@@ -3277,7 +3219,7 @@ class CAllCrmLead
 			$item,
 			[
 				'TYPE' => self::$TYPE_NAME,
-				'SKIP_CURRENT_USER' => ($iUserId !== 0),
+				'SKIP_CURRENT_USER' => false,
 			]
 		);
 

@@ -133,11 +133,6 @@ if (!$arParams["ALLOW_HORIZONTAL_SCROLL"])
 	$gridClasses[] = 'main-grid-full';
 }
 
-if ($arParams["ALLOW_ROWS_SORT"])
-{
-	$gridClasses[] = 'main-grid-rows-sort-enable';
-}
-
 if ($arParams["HIDE_TOP_BORDER_RADIUS"])
 {
 	$gridClasses[] = '--hide-top-border-radius';

@@ -77,15 +77,15 @@ export class Application
 		EventEmitter.subscribe(EventType.basket.buttonRestoreProduct, Runtime.debounce((e) => this.basket.handlerRestore(e), 500, this));
 		EventEmitter.subscribe(EventType.basket.needRefresh, (e) => this.basket.handlerNeedRefreshY(e));
 		EventEmitter.subscribe(EventType.basket.refreshAfter, (e) => this.basket.handlerNeedRefreshN(e));
-	
+
 		EventEmitter.subscribe(EventType.basket.changeSku, (e) => this.basket.handlerChangeSku(e));
-		
+
 		EventEmitter.subscribe(EventType.consent.refused, () => this.handlerConsentRefused());
 		EventEmitter.subscribe(EventType.consent.accepted, () => this.handlerConsentAccepted());
-	
+
 		EventEmitter.subscribe(EventType.element.buttonCheckout, Runtime.debounce(() => this.handlerCheckout(), 1000, this));
 		EventEmitter.subscribe(EventType.element.buttonShipping, Runtime.debounce(() => this.handlerShipping(), 1000, this));
-	
+
 		EventEmitter.subscribe(EventType.paysystem.beforeInitList, () => this.paySystemSetStatusWait());
 		EventEmitter.subscribe(EventType.paysystem.afterInitList, () => this.paySystemSetStatusNone());
 	}
@@ -174,7 +174,7 @@ export class Application
 		{
 			// this.propertiesValidate();
 			// this.propertiesIsValid() ? alert('propsSuccess'):alert('propsError')
- 
+
 			this.appSetStatusWait();
 
 			this.saveOrder()
@@ -210,7 +210,7 @@ export class Application
 		this.store.dispatch('application/setStage', {stage: ApplicationConst.stage.view});
 		// todo
 		delete BX.UserConsent;
-		
+
 		let order = this.store.getters['order/getOrder'];
 		if(order.id>0)
 		{

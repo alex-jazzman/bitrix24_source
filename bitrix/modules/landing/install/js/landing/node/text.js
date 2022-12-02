@@ -904,7 +904,7 @@
 			if (position === 0)
 			{
 				var focusNode = selection.focusNode;
-				if (focusNode.nodeType !== 3)
+				if (!BX.Type.isNil(focusNode) && focusNode.nodeType !== 3)
 				{
 					if (focusNode.firstChild.nodeType === 3 && focusNode.firstChild.firstChild.nodeType === 3)
 					{

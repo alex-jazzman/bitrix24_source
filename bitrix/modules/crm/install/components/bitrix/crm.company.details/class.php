@@ -26,7 +26,9 @@ if(!Main\Loader::includeModule('crm'))
 
 Loc::loadMessages(__FILE__);
 
-class CCrmCompanyDetailsComponent extends CBitrixComponent
+class CCrmCompanyDetailsComponent
+	extends CBitrixComponent
+	implements Crm\Integration\UI\EntityEditor\SupportsEditorProvider
 {
 	use Crm\Entity\Traits\VisibilityConfig;
 
@@ -379,8 +381,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		$this->arResult['IS_MY_COMPANY'] = $this->isMyCompany();
 
 		//region GUID
-		$this->arResult['GUID'] = $this->arParams['GUID']
-			?? ($this->isMyCompany() ? "my_company_{$this->entityID}_details" : "company_{$this->entityID}_details");
+		$this->arResult['GUID'] = $this->arParams['GUID'] ?? $this->getDefaultGuid();
 		$this->guid = $this->arResult['GUID'];
 
 		$this->arResult['EDITOR_CONFIG_ID'] = $this->getEditorConfigId(
@@ -429,16 +430,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region CONTROLLERS
-		$this->arResult['ENTITY_CONTROLLERS'] = array(
-			array(
-				"name" => "REQUISITE_CONTROLLER",
-				"type" => "requisite_controller",
-				"config" => array(
-					'requisiteFieldId' => 'REQUISITES',
-					'addressFieldId' => 'ADDRESS',
-				)
-			),
-		);
+		$this->prepareEntityControllers();
 		//endregion
 
 		//region Validators
@@ -751,10 +743,26 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		$this->includeComponentTemplate();
 	}
+
+	public function getDefaultGuid(): string
+	{
+		return (
+			$this->isMyCompany()
+				? "my_company_{$this->entityID}_details"
+				: "company_{$this->entityID}_details"
+		);
+	}
+
 	public function getDefaultConfigID()
 	{
 		return $this->getEditorConfigId();
 	}
+
+	public function prepareConfigID()
+	{
+		return $this->getDefaultConfigID();
+	}
+
 	public function prepareConfiguration()
 	{
 		if(isset($this->arResult['ENTITY_CONFIG']))
@@ -817,6 +825,26 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		return $this->arResult['ENTITY_CONFIG'];
 	}
+
+	public function prepareEntityControllers(): array
+	{
+		if (!isset($this->arResult['ENTITY_CONTROLLERS']))
+		{
+			$this->arResult['ENTITY_CONTROLLERS'] = [
+				[
+					'name' => 'REQUISITE_CONTROLLER',
+					'type' => 'requisite_controller',
+					'config' => [
+						'requisiteFieldId' => 'REQUISITES',
+						'addressFieldId' => 'ADDRESS',
+					],
+				],
+			];
+		}
+
+		return $this->arResult['ENTITY_CONTROLLERS'];
+	}
+
 	public function isSearchHistoryEnabled()
 	{
 		return $this->enableSearchHistory;
@@ -1180,10 +1208,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		if ($this->editorAdapter)
 		{
-			$parentFieldsInfo = $this->editorAdapter->getParentFieldsInfo(
-				\CCrmOwnerType::Company,
-				'crm_company_details'
-			);
+			$parentFieldsInfo = $this->editorAdapter->getParentFieldsInfo(\CCrmOwnerType::Company);
 			$this->entityFieldInfos = array_merge(
 				$this->entityFieldInfos,
 				array_values($parentFieldsInfo)
@@ -1686,9 +1711,14 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 		//endregion
 
-		if(isset($this->entityData['CATEGORY_ID']))
+		if (isset($this->entityData['CATEGORY_ID']))
 		{
 			$this->arResult['CATEGORY_ID'] = (int)$this->entityData['CATEGORY_ID'];
+		}
+
+		if (!isset($this->entityData['CATEGORY_ID']))
+		{
+			$this->entityData['CATEGORY_ID'] = (int)($this->arResult['CATEGORY_ID'] ?? 0);
 		}
 
 		//region User Fields
@@ -2168,7 +2198,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		];
 	}
 
-	protected function getCategoryId(): int
+	public function getCategoryId(): int
 	{
 		$categoryId = 0;
 		if ($this->entityID > 0)
@@ -2185,6 +2215,10 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			// get category from conversion context:
 			$categoryId = $this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID'] ?? $categoryId;
 		}
+		else
+		{
+			$categoryId = (int)($this->arResult['CATEGORY_ID'] ?? 0);
+		}
 
 		if ($categoryId && !($this->factory && $this->factory->isCategoryAvailable($categoryId)))
 		{
@@ -2197,6 +2231,11 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 	public function getEditorConfigId(string $sourceId = ''): string
 	{
 		$sourceId = ($sourceId === '') ? 'company_details' : $sourceId;
+
+		if (!isset($this->arResult['CATEGORY_ID']))
+		{
+			$this->arResult['CATEGORY_ID'] = $this->getCategoryId();
+		}
 
 		return (new EditorHelper(\CCrmOwnerType::Company))->getEditorConfigId($this->arResult['CATEGORY_ID'], $sourceId);
 	}

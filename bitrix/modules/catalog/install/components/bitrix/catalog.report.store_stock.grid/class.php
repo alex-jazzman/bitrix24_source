@@ -1,6 +1,9 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -13,7 +16,7 @@ class CatalogReportStoreStockGridComponent extends CBitrixComponent
 
 	public function executeComponent()
 	{
-		if (!self::checkDocumentReadRights())
+		if (!Loader::includeModule('catalog') || !self::checkDocumentReadRights())
 		{
 			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('STORE_STOCK_REPORT_GRID_NO_READ_RIGHTS_ERROR');
 			$this->includeComponentTemplate();
@@ -202,6 +205,6 @@ class CatalogReportStoreStockGridComponent extends CBitrixComponent
 
 	private static function checkDocumentReadRights(): bool
 	{
-		return \Bitrix\Main\Engine\CurrentUser::get()->canDoOperation('catalog_read');
+		return AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
 	}
 }

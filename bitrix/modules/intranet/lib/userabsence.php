@@ -202,9 +202,10 @@ class UserAbsence
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\ObjectException
 	 */
-	public static function isAbsent($userId, $returnToDate = false)
+	public static function isAbsent($userId, bool $returnToDate = false)
 	{
 		$result = self::getCurrentMonth();
+
 		if (isset($result[$userId]))
 		{
 			$now = new \Bitrix\Main\Type\DateTime();
@@ -216,16 +217,22 @@ class UserAbsence
 				{
 					continue;
 				}
+
+				$startDay = '00:00:00';
+
+				if (date('H:i:s', $vacation['DATE_TO_TS']) === $startDay)
+				{
+					$vacation['DATE_TO_TS'] += 86400;
+				}
+
 				if ($nowTs >= $vacation['DATE_FROM_TS'] && $nowTs < $vacation['DATE_TO_TS'])
 				{
 					if ($returnToDate)
 					{
 						return $vacation;
 					}
-					else
-					{
-						return true;
-					}
+
+					return true;
 				}
 			}
 		}
@@ -241,9 +248,10 @@ class UserAbsence
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\ObjectException
 	 */
-	public static function isAbsentOnVacation($userId, $returnToDate = false)
+	public static function isAbsentOnVacation($userId, bool $returnToDate = false)
 	{
 		$result = self::getCurrentMonth();
+
 		if (isset($result[$userId]))
 		{
 			$now = new \Bitrix\Main\Type\DateTime();
@@ -255,16 +263,22 @@ class UserAbsence
 				{
 					continue;
 				}
+
+				$startDay = '00:00:00';
+
+				if (date('H:i:s', $vacation['DATE_TO_TS']) === $startDay)
+				{
+					$vacation['DATE_TO_TS'] += 86400;
+				}
+
 				if ($nowTs >= $vacation['DATE_FROM_TS'] && $nowTs < $vacation['DATE_TO_TS'])
 				{
 					if ($returnToDate)
 					{
 						return $vacation;
 					}
-					else
-					{
-						return true;
-					}
+
+					return true;
 				}
 			}
 		}

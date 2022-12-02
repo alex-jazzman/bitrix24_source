@@ -607,29 +607,64 @@ class CIBlockCMLImport
 
 	function CheckTax($title, $rate)
 	{
-		$tax_name = $title." ".$rate."%";
-		if(!array_key_exists($tax_name, $this->arTaxCache))
+		if ($rate === null)
 		{
-			$rsVat = CCatalogVat::GetListEx(
-				array(),
-				array(
-					"=NAME" => $tax_name,
-					"RATE" => $rate,
-				),
-				false,
-				false,
-				array("ID")
-			);
-			if($arVat = $rsVat->Fetch())
-				$this->arTaxCache[$tax_name] = $arVat["ID"];
-			else
-				$this->arTaxCache[$tax_name] = CCatalogVat::Add(array(
-					"ACTIVE" => "Y",
-					"NAME" => $tax_name,
-					"RATE" => $rate,
-				));
+			$taxName = GetMessage('IBLOCK_NO_VAT_TITLE');
 		}
-		return $this->arTaxCache[$tax_name];
+		else
+		{
+			$taxName = $title . " " . $rate . "%";
+		}
+
+		if (isset($this->arTaxCache[$taxName]))
+		{
+			return $this->arTaxCache[$taxName];
+		}
+
+		$vatParams = [
+			'select' => ['ID'],
+		];
+
+		if ($rate === null)
+		{
+			$vatParams['filter'] = [
+				'=EXCLUDE_VAT' => 'Y',
+			];
+		}
+		else
+		{
+			$vatParams['filter'] = [
+				'=NAME' => $taxName,
+				'=EXCLUDE_VAT' => 'N',
+				'=RATE' => $rate,
+			];
+		}
+
+		$getResult = \Bitrix\Catalog\Model\Vat::getList($vatParams)->fetch();
+		if (isset($getResult['ID']))
+		{
+			$vatId = $getResult['ID'];
+			$this->arTaxCache[$taxName] = $vatId;
+			return $vatId;
+		}
+
+		$addParams = [
+			'ACTIVE' => 'Y',
+			'NAME' => $taxName,
+		];
+
+		if ($rate === null)
+		{
+			$addParams['EXCLUDE_VAT'] = 'Y';
+		}
+		else
+		{
+			$addParams['RATE'] = $rate;
+		}
+
+		$this->arTaxCache[$taxName] = \Bitrix\Catalog\Model\Vat::add($addParams)->getId();
+
+		return $this->arTaxCache[$taxName];
 	}
 
 	function CheckCurrency($currency)
@@ -3912,14 +3947,21 @@ class CIBlockCMLImport
 				while($arTaxProperty = $rsTaxProperty->Fetch())
 				{
 					if(
-						$arTaxProperty["VALUE"] <> ''
-						&& $arTaxProperty["DESCRIPTION"] <> ''
+						$arTaxProperty["DESCRIPTION"] <> ''
 						&& !array_key_exists($arTaxProperty["DESCRIPTION"], $arTaxMap)
 					)
 					{
+						if ($arTaxProperty["VALUE"] === '' || !is_numeric($arTaxProperty["VALUE"]))
+						{
+							$taxValue = null;
+						}
+						else
+						{
+							$taxValue = $this->ToFloat($arTaxProperty["VALUE"]);
+						}
 						$arTaxMap[$arTaxProperty["DESCRIPTION"]] = array(
 							"RATE" => $this->ToFloat($arTaxProperty["VALUE"]),
-							"ID" => $this->CheckTax($arTaxProperty["DESCRIPTION"], $this->ToFloat($arTaxProperty["VALUE"])),
+							"ID" => $this->CheckTax($arTaxProperty["DESCRIPTION"], $taxValue),
 						);
 					}
 				}
@@ -4345,14 +4387,21 @@ class CIBlockCMLImport
 				while($arTaxProperty = $rsTaxProperty->Fetch())
 				{
 					if(
-						$arTaxProperty["VALUE"] <> ''
-						&& $arTaxProperty["DESCRIPTION"] <> ''
+						$arTaxProperty["DESCRIPTION"] <> ''
 						&& !array_key_exists($arTaxProperty["DESCRIPTION"], $arTaxMap)
 					)
 					{
+						if ($arTaxProperty["VALUE"] === '' || !is_numeric($arTaxProperty["VALUE"]))
+						{
+							$taxValue = null;
+						}
+						else
+						{
+							$taxValue = $this->ToFloat($arTaxProperty["VALUE"]);
+						}
 						$arTaxMap[$arTaxProperty["DESCRIPTION"]] = array(
 							"RATE" => $this->ToFloat($arTaxProperty["VALUE"]),
-							"ID" => $this->CheckTax($arTaxProperty["DESCRIPTION"], $this->ToFloat($arTaxProperty["VALUE"])),
+							"ID" => $this->CheckTax($arTaxProperty["DESCRIPTION"], $taxValue),
 						);
 					}
 				}
@@ -4372,14 +4421,21 @@ class CIBlockCMLImport
 						while($arTaxProperty = $rsTaxProperty->Fetch())
 						{
 							if(
-								$arTaxProperty["VALUE"] <> ''
-								&& $arTaxProperty["DESCRIPTION"] <> ''
+								$arTaxProperty["DESCRIPTION"] <> ''
 								&& !array_key_exists($arTaxProperty["DESCRIPTION"], $arTaxMap)
 							)
 							{
+								if ($arTaxProperty["VALUE"] === '' || !is_numeric($arTaxProperty["VALUE"]))
+								{
+									$taxValue = null;
+								}
+								else
+								{
+									$taxValue = $this->ToFloat($arTaxProperty["VALUE"]);
+								}
 								$arTaxMap[$arTaxProperty["DESCRIPTION"]] = array(
 									"RATE" => $this->ToFloat($arTaxProperty["VALUE"]),
-									"ID" => $this->CheckTax($arTaxProperty["DESCRIPTION"], $this->ToFloat($arTaxProperty["VALUE"])),
+									"ID" => $this->CheckTax($arTaxProperty["DESCRIPTION"], $taxValue),
 								);
 							}
 						}
@@ -5372,7 +5428,7 @@ class CIBlockCMLExport
 	/** @var bool|array */
 	var $next_step = false;
 	var $arIBlock = false;
-	var $prices = false;
+	var $prices = array();
 	var $only_price = false;
 	var $download_files = true;
 	var $export_as_url = false;
@@ -5408,7 +5464,7 @@ class CIBlockCMLExport
 				{
 					$this->next_step["catalog"] = true;
 					$this->prices = array();
-					foreach (CCatalogGroup::GetListArray() as $arPrice)
+					foreach (Catalog\GroupTable::getTypeList() as $arPrice)
 					{
 						$this->prices[$arPrice["ID"]] = $arPrice["NAME"];
 					}

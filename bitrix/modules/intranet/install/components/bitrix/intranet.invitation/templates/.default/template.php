@@ -14,6 +14,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
+if (!$arResult['canCurrentUserInvite'])
+{
+	echo Loc::getMessage('INTRANET_INVITE_DIALOG_ACCESS_ERROR');
+	return false;
+}
+
 \Bitrix\Main\UI\Extension::load([
 	"ui.forms",
 	"ui.buttons",
@@ -62,10 +68,7 @@ if ($arResult["IS_CLOUD"])
 	$APPLICATION->AddViewContent("left-panel", '');
 }
 
-if (
-	$arResult["IS_CLOUD"]
-	&& $arResult['canCurrentUserInvite']
-)
+if ($arResult["IS_CLOUD"])
 {
 	$isMaxUsersUnlimited = ($arResult["USER_MAX_COUNT"] == 0);
 

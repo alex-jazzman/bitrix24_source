@@ -138,6 +138,7 @@ BX.ready(function() {
 					'APP_MAC_INSTALLED' => $arResult['User']['APP_MAC_INSTALLED'] ? 'Y' : 'N',
 					'APP_IOS_INSTALLED' => $arResult['User']['APP_IOS_INSTALLED'] ? 'Y' : 'N',
 					'APP_ANDROID_INSTALLED' => $arResult['User']['APP_ANDROID_INSTALLED'] ? 'Y' : 'N',
+					'APP_LINUX_INSTALLED' => $arResult['User']['APP_LINUX_INSTALLED'] ? 'Y' : 'N',
 				],
 				'stressLevel' => Main\Config\Option::get('intranet', 'stresslevel_available', 'Y') === 'Y' && (
 					!$bitrix24Included || \Bitrix\Bitrix24\Release::isAvailable('stresslevel')

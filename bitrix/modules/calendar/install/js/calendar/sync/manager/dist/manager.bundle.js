@@ -91,12 +91,20 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    return this.popup;
 	  }
 
-	  getFormattedTime(timestamp) {
-	    if (main_core.Type.isDate(timestamp)) {
-	      timestamp = timestamp.getTime() / 1000;
+	  getFormattedTime(date) {
+	    const now = new Date();
+	    let timestamp = date;
+
+	    if (main_core.Type.isDate(date)) {
+	      timestamp = Math.round(date.getTime() / 1000);
+	      let secondsAgo = parseInt((now - date) / 1000);
+
+	      if (secondsAgo < 60) {
+	        return main_core.Loc.getMessage('CAL_JUST');
+	      }
 	    }
 
-	    return BX.date.format([["tommorow", "tommorow, H:i:s"], ["s", main_core.Loc.getMessage('CAL_JUST')], ["i", "iago"], ["H", "Hago"], ["d", "dago"], ["m100", "mago"], ["m", "mago"], ["-", ""]], timestamp);
+	    return BX.date.format([["tommorow", "tommorow, H:i:s"], ["i", "iago"], ["H", "Hago"], ["d", "dago"], ["m100", "mago"], ["m", "mago"], ["-", ""]], timestamp);
 	  }
 
 	  getSyncElement(options) {
@@ -335,7 +343,7 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    }
 
 	    return {
-	      text: main_core.Loc.getMessage('STATUS_BUTTON_SYNC_CALENDAR'),
+	      text: main_core.Loc.getMessage('STATUS_BUTTON_SYNC_CALENDAR_NEW'),
 	      color: BX.UI.Button.Color.PRIMARY
 	    };
 	  }

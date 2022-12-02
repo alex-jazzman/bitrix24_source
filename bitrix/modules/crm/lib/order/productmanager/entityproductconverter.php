@@ -2,12 +2,16 @@
 
 namespace Bitrix\Crm\Order\ProductManager;
 
+use Bitrix\Sale\Basket;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Order\OrderDealSynchronizer\Products\BasketXmlId;
 use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
+use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\Catalog\ProductTypeMapper;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\PriceMaths;
 use Bitrix\Sale\Tax\VatCalculator;
+use Bitrix\Catalog;
 use Exception;
 
 /**
@@ -15,12 +19,19 @@ use Exception;
  */
 class EntityProductConverter implements ProductConverter
 {
+	private ?Basket $basket = null;
+
 	/**
 	 * @throws Exception if not installed 'sale' module.
 	 */
 	public function __construct()
 	{
 		Loader::requireModule('sale');
+	}
+
+	public function setBasketItem(Basket $basket): void
+	{
+		$this->basket = $basket;
 	}
 
 	/**
@@ -57,7 +68,8 @@ class EntityProductConverter implements ProductConverter
 			'MEASURE_NAME' => $product['MEASURE_NAME'],
 			'VAT_RATE' => $product['TAX_RATE'] === null ? null : $product['TAX_RATE'] * 0.01,
 			'VAT_INCLUDED' => $product['TAX_INCLUDED'],
-			'XML_ID' => $product['ID'] ? BasketXmlId::getXmlIdFromRowId($product['ID']) : null,
+			'XML_ID' => isset($product['ID']) && is_numeric($product['ID']) ? BasketXmlId::getXmlIdFromRowId((int)$product['ID']) : null,
+			'TYPE' => ProductTypeMapper::getType((int)$product['TYPE']),
 			// not `sale` basket item, but used.
 			'DISCOUNT_SUM' => $discountPrice,
 			'DISCOUNT_RATE' => $product['DISCOUNT_RATE'] ?? null,
@@ -78,7 +90,7 @@ class EntityProductConverter implements ProductConverter
 			//'PRICE_ACCOUNT' => 'Calculated when saving',
 			'MEASURE_CODE' => $basketItem['MEASURE_CODE'],
 			'MEASURE_NAME' => $basketItem['MEASURE_NAME'],
-			'TAX_RATE' => $basketItem['VAT_RATE'] === null ? null : $basketItem['VAT_RATE'] * 100,
+			'TAX_RATE' => $basketItem['VAT_RATE'] === null ? false : $basketItem['VAT_RATE'] * 100,
 			'TAX_INCLUDED' => $basketItem['VAT_INCLUDED'],
 		];
 
@@ -110,6 +122,75 @@ class EntityProductConverter implements ProductConverter
 		$result['DISCOUNT_PERCENT'] = null; // set null, it will be recalculated when saving.
 		$result['DISCOUNT_SUM'] = PriceMaths::roundPrecision($result['PRICE_NETTO'] - $result['PRICE_EXCLUSIVE']);
 
+		// type
+		$result['TYPE'] = $this->getTypeByProductId((int)$basketItem['PRODUCT_ID']);
+
 		return $result;
+	}
+
+	private function getTypeByProductId(int $productId): ?int
+	{
+		$catalogProductTypes = $this->getCatalogProductTypes();
+		return $catalogProductTypes[$productId] ?? null;
+	}
+
+	private function getCatalogProductTypes(): array
+	{
+		static $result = [];
+
+		if (!$this->basket)
+		{
+			return $result;
+		}
+
+		if (!Loader::includeModule('catalog'))
+		{
+			return $result;
+		}
+
+		// local cache
+		$basketUniqHash = $this->getBasketUniqHash();
+		if (!empty($result[$basketUniqHash]))
+		{
+			return $result[$basketUniqHash];
+		}
+
+		$productIds = [];
+
+		/** @var BasketItem $basketItem */
+		foreach ($this->basket as $basketItem)
+		{
+			$productIds[] = $basketItem->getProductId();
+		}
+
+		if ($productIds)
+		{
+			$productIterator = Catalog\ProductTable::getList([
+				'select' => ['ID', 'TYPE'],
+				'filter' => [
+					'@ID' => $productIds,
+				],
+			]);
+
+			$rows = [];
+			while ($product = $productIterator->fetch())
+			{
+				$rows[$product['ID']] = (int)$product['TYPE'];
+			}
+
+			$result[$basketUniqHash] = $rows;
+		}
+
+		return $result[$basketUniqHash];
+	}
+
+	private function getBasketUniqHash(): ?string
+	{
+		if ($this->basket)
+		{
+			return md5(serialize($this->basket->toArray()));
+		}
+
+		return null;
 	}
 }

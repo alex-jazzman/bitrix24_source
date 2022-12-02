@@ -165,7 +165,7 @@ class CAgent extends CAllAgent
 				$eval_result = "";
 				$e = eval("\$eval_result=".$arAgent["NAME"]);
 			}
-			catch (Exception $e)
+			catch (\Throwable $e)
 			{
 				CTimeZone::Enable();
 

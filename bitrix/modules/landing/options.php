@@ -319,6 +319,10 @@ if ($postRight >= 'R'):
 					}
 				}
 			}
+			elseif (!$val && strpos($name, 'pub_path_') === 0)
+			{
+				$val = '/';
+			}
 
 			\COption::setOptionString($module_id, $name, $val);
 		}

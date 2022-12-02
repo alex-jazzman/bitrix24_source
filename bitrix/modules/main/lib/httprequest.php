@@ -564,7 +564,10 @@ class HttpRequest extends Request
 			try
 			{
 				$json = Web\Json::decode(static::getInput());
-				$this->jsonData = new Type\ParameterDictionary($json);
+				if (is_array($json))
+				{
+					$this->jsonData = new Type\ParameterDictionary($json);
+				}
 			}
 			catch (ArgumentException $exception)
 			{

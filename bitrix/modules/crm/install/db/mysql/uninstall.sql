@@ -198,3 +198,7 @@ DROP TABLE IF EXISTS b_crm_entity_uncompleted_act;
 DROP TABLE IF EXISTS b_crm_counter_caluclated_time;
 DROP TABLE IF EXISTS b_crm_field_set;
 DROP TABLE IF EXISTS b_crm_automation_qr;
+DROP TABLE IF EXISTS b_crm_item_badge;
+DROP TABLE IF EXISTS b_crm_act_ping_offsets;
+DROP TABLE IF EXISTS b_crm_act_ping_queue;
+DROP TABLE IF EXISTS b_crm_timeline_note;

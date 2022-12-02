@@ -50,6 +50,11 @@ class Dummy extends \Bitrix\MessageService\Sender\Base
 			&& \Bitrix\Im\Common::isChatId($dialogId)
 		)
 		{
+			$messageFieldsFields['provider_settings'] = [
+				"socketTimeout" => $this->socketTimeout,
+				"streamTimeout" => $this->streamTimeout,
+			];
+
 			\CIMChat::AddMessage([
 				'DIALOG_ID' => $dialogId,
 				'USER_ID' => 0,

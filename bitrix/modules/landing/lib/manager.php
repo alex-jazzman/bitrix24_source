@@ -876,7 +876,8 @@ class Manager
 			'sc' => 'zh-Hans',
 			'tc' => 'zh-Hant',
 			'vn' => 'vi',
-			'ua' => 'uk'
+			'ua' => 'uk',
+			'in' => 'hi',
 		];
 
 		return $transform[LANGUAGE_ID] ?? LANGUAGE_ID;

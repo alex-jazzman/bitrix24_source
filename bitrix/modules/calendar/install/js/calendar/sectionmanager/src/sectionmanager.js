@@ -353,7 +353,9 @@ export class SectionManager
 		if (this.sectionIndex[sectionId] !== undefined)
 		{
 			this.sections = BX.util.deleteFromArray(this.sections, this.sectionIndex[sectionId]);
-			for (var i = 0; i < this.sections.length; i++)
+
+			this.sectionIndex = {};
+			for (let i = 0; i < this.sections.length; i++)
 			{
 				this.sectionIndex[this.sections[i].id] = i;
 			}
@@ -379,9 +381,9 @@ export class SectionManager
 				const section = calendarContext.sectionManager.getDefaultSection(calendarType, ownerId);
 				return parseInt(section.id, 10);
 			}
-
 		}
-		return SectionManager.newEntrySectionId;
+
+		return null;
 	}
 
 	static setNewEntrySectionId(sectionId)
@@ -600,7 +602,7 @@ export class SectionManager
 			: parseInt(section.data.CAL_DAV_CON, 10)
 		;
 
-		if (connectionId && calendarContext.syncInterface)
+		if (connectionId && calendarContext && calendarContext.syncInterface)
 		{
 			[provider, connection] = calendarContext.syncInterface.getProviderById(connectionId);
 

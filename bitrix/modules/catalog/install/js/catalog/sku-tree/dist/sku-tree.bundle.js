@@ -244,6 +244,12 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      _this.existingValues = JSON.parse(options.skuTree.EXISTING_VALUES_JSON);
 	    }
 
+	    for (var key in _this.existingValues) {
+	      if (_this.existingValues[key].length === 1 && _this.existingValues[key][0] === 0) {
+	        delete _this.existingValues[key];
+	      }
+	    }
+
 	    return _this;
 	  }
 

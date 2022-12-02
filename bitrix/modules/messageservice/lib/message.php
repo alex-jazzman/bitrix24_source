@@ -163,7 +163,7 @@ class Message
 		$sender = $this->getSender();
 		$headers = $this->getHeaders();
 
-		$result = Internal\Entity\MessageTable::add(array(
+		$result = Internal\Entity\MessageTable::add([
 			'TYPE' => $this->getType(),
 			'SENDER_ID' => $sender->getId(),
 			'AUTHOR_ID' => $this->getAuthorId(),
@@ -171,7 +171,8 @@ class Message
 			'MESSAGE_TO' => $this->getTo(),
 			'MESSAGE_HEADERS' => count($headers) > 0 ? $headers : null,
 			'MESSAGE_BODY' => $this->getBody(),
-		));
+			'CLUSTER_GROUP' => defined('BX_CLUSTER_GROUP') ? BX_CLUSTER_GROUP : null
+		]);
 		if ($result->isSuccess())
 		{
 			$this->id = $result->getId();
@@ -210,36 +211,37 @@ class Message
 			'MESSAGE_TO' => $this->getTo(),
 			'MESSAGE_HEADERS' => count($headers) > 0 ? $headers : null,
 			'MESSAGE_BODY' => $this->getBody(),
+			'CLUSTER_GROUP' => defined('BX_CLUSTER_GROUP') ? BX_CLUSTER_GROUP : null
 		];
+
+		$sender->setSocketTimeout(5);
+		$sender->setStreamTimeout(15);
+
+		$result = $sender->sendMessage($messageFields);
+
+		$messageFields['DATE_EXEC'] = new DateTime();
+		$messageFields['SUCCESS_EXEC'] = $result->isSuccess() ? 'Y' : 'N';
+
+		if ($result->getExternalId() !== null)
+		{
+			$messageFields['EXTERNAL_ID'] = $result->getExternalId();
+		}
+		if ($result->getStatus() !== null)
+		{
+			$messageFields['STATUS_ID'] = $result->getStatus();
+		}
 
 		$addResult = Internal\Entity\MessageTable::add($messageFields);
 		if (!$addResult->isSuccess())
 		{
-			$result = new Result\SendMessage();
 			$result->addErrors($addResult->getErrors());
 			$result->setStatus(MessageStatus::ERROR);
 
 			return $result;
 		}
+
 		$this->id = $addResult->getId();
-		$messageFields['ID'] = $this->id;
-
-		$result = $sender->sendMessage($messageFields);
 		$result->setId($this->id);
-
-		$updateFields = [
-			'DATE_EXEC' => new DateTime(),
-			'SUCCESS_EXEC' => $result->isSuccess() ? 'Y' : 'N',
-		];
-		if ($result->getExternalId() !== null)
-		{
-			$updateFields['EXTERNAL_ID'] = $result->getExternalId();
-		}
-		if ($result->getStatus() !== null)
-		{
-			$updateFields['STATUS_ID'] = $result->getStatus();
-		}
-		Internal\Entity\MessageTable::update($this->id, $updateFields);
 
 		return $result;
 	}
