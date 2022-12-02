@@ -34,6 +34,7 @@ class DocumentCard extends BaseCard
 		this.signedParameters = settings.signedParameters;
 		this.isConductLocked = settings.isConductLocked;
 		this.masterSliderUrl = settings.masterSliderUrl;
+		this.inventoryManagementSource = settings.inventoryManagementSource;
 
 		this.isTabAnalyticsSent = false;
 
@@ -340,6 +341,7 @@ class DocumentCard extends BaseCard
 					form.addUrlParams({
 						documentType: this.documentType,
 						isNewDocument: this.entityId <= 0 ? 'Y' : 'N',
+						inventoryManagementSource: this.inventoryManagementSource,
 					});
 				}
 			}
@@ -356,6 +358,7 @@ class DocumentCard extends BaseCard
 					tab: 'products',
 					isNewDocument: this.entityId <= 0 ? 'Y' : 'N',
 					documentType: this.documentType,
+					inventoryManagementSource: this.inventoryManagementSource,
 				});
 				this.isTabAnalyticsSent = true;
 			}
@@ -389,6 +392,7 @@ class DocumentCard extends BaseCard
 
 				event.data[0]._ajaxForms['CONDUCT'].addUrlParams({
 					documentType: this.documentType,
+					inventoryManagementSource: this.inventoryManagementSource,
 				});
 			}
 
@@ -396,6 +400,7 @@ class DocumentCard extends BaseCard
 			{
 				event.data[0]._ajaxForms['CANCEL_CONDUCT'].addUrlParams({
 					documentType: this.documentType,
+					inventoryManagementSource: this.inventoryManagementSource,
 				});
 			}
 		});

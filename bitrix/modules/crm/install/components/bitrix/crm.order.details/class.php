@@ -4,6 +4,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Main;
 use Bitrix\Salescenter;
 use Bitrix\Sale;
@@ -780,22 +781,13 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		}
 		//endregion
 
-		$tradingPlatforms = [];
+		$tradingPlatforms = [
+			0 => Loc::getMessage('CRM_ORDER_STORE_NOT_CHOSEN')
+		];
+
 		if (Main\Loader::includeModule('sale'))
 		{
-			$dbRes = Sale\TradingPlatform\Manager::getList([
-				'select' => ['ID', 'NAME'],
-				'filter' => ['=ACTIVE' => 'Y']
-			]);
-			while ($platform = $dbRes->fetch())
-			{
-				if (!$tradingPlatforms)
-				{
-					$tradingPlatforms[] = Loc::getMessage('CRM_ORDER_STORE_NOT_CHOSEN');
-				}
-
-				$tradingPlatforms[$platform['ID']] = $platform['NAME']." [".$platform['ID']."]";
-			}
+			$tradingPlatforms += Sale\TradingPlatform\Manager::getActivePlatformList();
 		}
 
 		$this->arResult['ORDER_PROPERTIES'] = $this->prepareProperties(
@@ -1427,22 +1419,29 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			{
 				$sum = $item->getPrice() * $item->getQuantity();
 				$productRowTotalSum += $sum;
-				$productRowCount++;
 
-				if($productRowCount > 10)
+				if(++$productRowCount > 10)
+				{
 					continue;
+				}
 
-				$productRowInfos[] = array(
-					'PRODUCT_NAME' => $item->getField('NAME'),
-					'SUM' => CCrmCurrency::MoneyToString($sum, $item->getCurrency())
-				);
+				$itemData = $item->toArray();
+				$itemData['PRODUCT_NAME'] = $itemData['NAME'];
+				$productRowInfos[] = EditorAdapter::formProductRowData(Crm\ProductRow::createFromArray($itemData), $item->getCurrency());
 			}
 
-			$this->entityData['PRODUCT_ROW_SUMMARY'] = array(
+			$this->entityData['PRODUCT_ROW_SUMMARY'] = [
 				'count' => $productRowCount,
 				'total' => CCrmCurrency::MoneyToString($productRowTotalSum, $this->entityData['CURRENCY']),
-				'items' => $productRowInfos
-			);
+				'items' => $productRowInfos,
+				'isReadOnly' => false,
+			];
+		}
+		else
+		{
+			$this->entityData['PRODUCT_ROW_SUMMARY'] = [
+				'isReadOnly' => false,
+			];
 		}
 
 		$this->entityData += $this->getPaymentEntityData();

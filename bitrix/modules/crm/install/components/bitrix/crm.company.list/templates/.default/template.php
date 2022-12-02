@@ -119,6 +119,7 @@ if(!$isInternal):
 	);
 endif;
 $gridManagerID = $arResult['GRID_ID'].'_MANAGER';
+$preparedGridId = htmlspecialcharsbx(CUtil::JSescape($gridManagerID));
 $gridManagerCfg = array(
 	'ownerType' => 'COMPANY',
 	'gridId' => $arResult['GRID_ID'],
@@ -285,6 +286,14 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 
 		if($arCompany['EDIT'])
 		{
+			if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
+			{
+				$arActivitySubMenuItems[] = [
+					'TEXT' => GetMessage('CRM_COMPANY_ADD_TODO'),
+					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Company . ", " . (int)$arCompany['ID'] . ");"
+				];
+			}
+
 			if (RestrictionManager::isHistoryViewPermitted() && !$arResult['CATEGORY_ID'])
 			{
 				$arActions[] = $arActivityMenuItems[] = array(
@@ -311,7 +320,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 				);
 			}
 
-			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID))
+			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
 			{
 				$arActivityMenuItems[] = array(
 					'TITLE' => GetMessage('CRM_COMPANY_ADD_CALL_TITLE'),

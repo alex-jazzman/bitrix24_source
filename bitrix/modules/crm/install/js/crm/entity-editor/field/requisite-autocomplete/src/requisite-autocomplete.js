@@ -1,5 +1,5 @@
 import {EventEmitter} from "main.core.events";
-import {Dom, Loc, Tag} from "main.core";
+import {Dom, Loc, Tag, Type} from "main.core";
 import {RequisiteAutocompleteField} from "crm.entity-editor.field.requisite.autocomplete";
 
 export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
@@ -27,6 +27,11 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 		});
 		this._autocomplete.subscribe('onSelectValue', this.onSelectAutocompleteValue.bind(this));
 		this._autocomplete.subscribe('onClear', this.onClearAutocompleteValue.bind(this));
+		this._autocomplete.subscribe('onInstallDefaultApp', this.onInstallDefaultApp.bind(this));
+		EventEmitter.subscribe(
+			"BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp",
+			this.onInstallDefaultAppGlobal.bind(this)
+		);
 	}
 
 	createTitleMarker()
@@ -129,6 +134,55 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 	{
 		this._autocomplete.setCurrentItem(null);
 		this._autocompleteData = null;
+	}
+
+	onInstallDefaultApp()
+	{
+		BX.onGlobalCustomEvent("BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp");
+	}
+
+	onInstallDefaultAppGlobal()
+	{
+		const data = this._schemeElement.getData();
+		if (
+			Type.isPlainObject(data)
+			&& data.hasOwnProperty("clientResolverPlacementParams")
+			&& Type.isPlainObject(data["clientResolverPlacementParams"])
+		)
+		{
+			const countryId = BX.prop.getInteger(data["clientResolverPlacementParams"], "countryId", 0);
+			if (countryId > 0)
+			{
+				BX.ajax.runAction(
+					'crm.requisite.schemedata.getRequisiteAutocompleteSchemeData',
+					{ data: { "countryId": countryId } }
+				).then(
+					(data) => {
+						if (
+							Type.isPlainObject(data)
+							&& data.hasOwnProperty("data")
+							&& Type.isPlainObject(data["data"])
+						)
+						{
+							this._schemeElement.setData(data["data"]);
+							if (this._autocomplete)
+							{
+								if (Type.isStringFilled(data["data"]["placeholder"]))
+								{
+									this._autocomplete.setPlaceholderText(data["data"]["placeholder"]);
+								}
+								if (Type.isPlainObject(data["data"]["clientResolverPlacementParams"]))
+								{
+									this._autocomplete.setClientResolverPlacementParams(
+										data["data"]["clientResolverPlacementParams"]
+									);
+								}
+							}
+						}
+					}
+				);
+			}
+		}
 	}
 
 	getAutocompleteData()

@@ -721,7 +721,7 @@ class CAllIBlock
 
 			$CACHE_MANAGER->Clean($cache_id, "b_iblock");
 		}
-		Iblock\IblockTable::getEntity()->cleanCache();
+		Iblock\IblockTable::cleanCache();
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -2170,7 +2170,17 @@ REQ
 			{
 				$a = &$arDefFields[$FIELD_ID]["DEFAULT_VALUE"];
 
-				$a = $a <> ''? unserialize($a, ['allowed_classes' => false]) : array();
+				if (is_string($a) && $a !== '')
+				{
+					if (CheckSerializedData($a))
+					{
+						$a = unserialize($a, ['allowed_classes' => false]);
+					}
+				}
+				if (!is_array($a))
+				{
+					$a = [];
+				}
 
 				if(array_key_exists("TRANS_LEN", $a))
 				{

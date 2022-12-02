@@ -12,7 +12,8 @@
 			const {
 				textBefore,
 				addDefaultIfEmpty,
-				defaultErrorText
+				defaultErrorText,
+				title
 			} = options;
 
 			if (!errors.length && addDefaultIfEmpty === true)
@@ -24,17 +25,18 @@
 
 			return this.showError(
 				(textBefore ? textBefore + '\n' : '')
-				+ errors.map(error => error.message).join('\n')
+				+ errors.map(error => error.message).join('\n'),
+				title || ''
 			);
 		}
 
-		static showError(text)
+		static showError(text, title = '')
 		{
 			return new Promise((resolve, reject) => {
 				navigator.notification.alert(
 					text,
 					() => resolve(),
-					''
+					title
 				);
 			});
 		}

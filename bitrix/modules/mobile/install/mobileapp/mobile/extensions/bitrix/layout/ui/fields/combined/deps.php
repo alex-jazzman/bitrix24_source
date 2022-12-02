@@ -1,5 +1,5 @@
 <?php
 return [
-	'layout/ui/fields',
-	'layout/ui/fields/*',
+	'utils/object',
+	'layout/ui/fields/base',
 ];

@@ -260,8 +260,8 @@ class Twilio extends Sender\BaseConfigurable
 		$url = 'https://api.twilio.com/2010-04-01/'.$apiMethod.'.json';
 
 		$httpClient = new HttpClient(array(
-			"socketTimeout" => 10,
-			"streamTimeout" => 30,
+			"socketTimeout" => $this->socketTimeout,
+			"streamTimeout" => $this->streamTimeout,
 			"waitResponse" => true,
 		));
 		$httpClient->setHeader('User-Agent', 'Bitrix24');

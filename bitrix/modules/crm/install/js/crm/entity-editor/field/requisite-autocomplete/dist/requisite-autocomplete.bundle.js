@@ -35,6 +35,10 @@ this.BX = this.BX || {};
 	      this._autocomplete.subscribe('onSelectValue', this.onSelectAutocompleteValue.bind(this));
 
 	      this._autocomplete.subscribe('onClear', this.onClearAutocompleteValue.bind(this));
+
+	      this._autocomplete.subscribe('onInstallDefaultApp', this.onInstallDefaultApp.bind(this));
+
+	      main_core_events.EventEmitter.subscribe("BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp", this.onInstallDefaultAppGlobal.bind(this));
 	    }
 	  }, {
 	    key: "createTitleMarker",
@@ -133,6 +137,44 @@ this.BX = this.BX || {};
 	      this._autocomplete.setCurrentItem(null);
 
 	      this._autocompleteData = null;
+	    }
+	  }, {
+	    key: "onInstallDefaultApp",
+	    value: function onInstallDefaultApp() {
+	      BX.onGlobalCustomEvent("BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp");
+	    }
+	  }, {
+	    key: "onInstallDefaultAppGlobal",
+	    value: function onInstallDefaultAppGlobal() {
+	      var _this2 = this;
+
+	      var data = this._schemeElement.getData();
+
+	      if (main_core.Type.isPlainObject(data) && data.hasOwnProperty("clientResolverPlacementParams") && main_core.Type.isPlainObject(data["clientResolverPlacementParams"])) {
+	        var countryId = BX.prop.getInteger(data["clientResolverPlacementParams"], "countryId", 0);
+
+	        if (countryId > 0) {
+	          BX.ajax.runAction('crm.requisite.schemedata.getRequisiteAutocompleteSchemeData', {
+	            data: {
+	              "countryId": countryId
+	            }
+	          }).then(function (data) {
+	            if (main_core.Type.isPlainObject(data) && data.hasOwnProperty("data") && main_core.Type.isPlainObject(data["data"])) {
+	              _this2._schemeElement.setData(data["data"]);
+
+	              if (_this2._autocomplete) {
+	                if (main_core.Type.isStringFilled(data["data"]["placeholder"])) {
+	                  _this2._autocomplete.setPlaceholderText(data["data"]["placeholder"]);
+	                }
+
+	                if (main_core.Type.isPlainObject(data["data"]["clientResolverPlacementParams"])) {
+	                  _this2._autocomplete.setClientResolverPlacementParams(data["data"]["clientResolverPlacementParams"]);
+	                }
+	              }
+	            }
+	          });
+	        }
+	      }
 	    }
 	  }, {
 	    key: "getAutocompleteData",

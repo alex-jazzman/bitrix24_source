@@ -16,13 +16,11 @@ this.BX.Sale = this.BX.Sale || {};
 	    checkoutButtonEnabled: function checkoutButtonEnabled() {
 	      var properties = [];
 	      var list = this.$store.getters['property/getProperty'];
-
 	      for (var listKey in list) {
 	        if (list[listKey].value.length > 0) {
 	          properties.push(list[listKey].value);
 	        }
 	      }
-
 	      return properties.length > 0;
 	    },
 	    hasPS: function hasPS() {
@@ -49,6 +47,9 @@ this.BX.Sale = this.BX.Sale || {};
 	    },
 	    getProperty: function getProperty() {
 	      return this.$store.getters['property/getProperty'];
+	    },
+	    getVariant: function getVariant() {
+	      return this.$store.getters['property-variant/getVariant'];
 	    },
 	    getPropertyErrors: function getPropertyErrors() {
 	      return this.$store.getters['property/getErrors'];
@@ -113,7 +114,6 @@ this.BX.Sale = this.BX.Sale || {};
 	  },
 	  created: function created() {
 	    var _this = this;
-
 	    main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.basket.backdropTotalOpen, function (event) {
 	      _this.totalIsShow = 'Y';
 	    });
@@ -126,17 +126,24 @@ this.BX.Sale = this.BX.Sale || {};
 	    main_core_events.EventEmitter.unsubscribe(sale_checkout_const.EventType.basket.backdropTotalClose);
 	  },
 	  // language=Vue
-	  template: "\n      <div class=\"checkout-container-wrapper\">\n\t\t  <div class=\"checkout-basket-container\">\n\t\t\t<template v-if=\"getStage === stage.edit\">\n\t\t\t  <sale-checkout-view-product :items=\"getBasket\" :total=\"getTotal\" :mode=\"mode.edit\" :errors=\"getBasketErrors\" :config=\"getBasketConfig\"/>\n\t\t\t  <sale-checkout-view-property :items=\"getProperty\" :mode=\"mode.edit\" :errors=\"getPropertyErrors\"/>\n\t\t\t  <sale-checkout-view-alert-list :errors=\"getErrors\"/>\n\t\t\t  <sale-checkout-view-user_consent :item=\"getConsent\" v-if=\"needCheckConsent\"/>\n\t\t\t  <template v-if=\"checkoutButtonEnabled\">\n\t\t\t\t<sale-checkout-view-element-button-checkout :title=\"getTitleCheckoutButton.title\" :wait=\"getStatus === status.wait\"/>\n\t\t\t  </template>\n\t\t\t  <template v-else>\n\t\t\t\t<sale-checkout-view-element-button-checkout_disabled :title=\"getTitleCheckoutButton.title\"/>\n\t\t\t  </template>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"getStage === stage.success\">\n\t\t\t  <template v-if=\"hasPS\">\n\t\t\t\t<sale-checkout-view-successful :items=\"getProperty\" :order=\"getOrder\" :config=\"getSuccessfulConfig\"/>\n\t\t\t  </template>\n\t\t\t  <template v-else>\n\t\t\t\t<sale-checkout-view-successful-without-ps :items=\"getProperty\" :order=\"getOrder\" :config=\"getSuccessfulConfig\"/>\n\t\t\t  </template>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"getStage === stage.payed\">\n              <sale-checkout-view-successful_ps_return :items=\"getProperty\" :order=\"getOrder\" :total=\"getTotal\" :config=\"getSuccessfulConfig\"/>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"getStage === stage.view\">\n\t\t\t  <sale-checkout-view-product :items=\"getBasket\" :total=\"getTotal\" :mode=\"mode.view\" :errors=\"getBasketErrors\" :config=\"getBasketConfig\"/>\n\t\t\t  <sale-checkout-view-property :items=\"getProperty\" :mode=\"mode.view\" :order=\"getOrder\"/>\n\t\t\t  <sale-checkout-view-product-summary :total=\"getTotal\" :mode=\"mode.view\"/>\n              <sale-checkout-view-payment :order=\"getOrder\" :payments=\"getPayment\" :paySystems=\"getPaySystem\" :check=\"getCheck\" :config=\"getPaymentConfig\"/>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"getStage === stage.empty\">\n\t\t\t  <sale-checkout-view-empty_cart :config=\"getEmptyCartConfig\"/>\n\t\t\t</template>\n\t\t  </div>\n\t\t  <template v-if=\"getStage === stage.view\">\n\t\t\t<sale-checkout-view-total :total=\"getTotal\" :showBackdrop=\"totalIsShow\"/>\n\t\t  </template>\n      </div>\n\t"
+	  template: "\n      <div class=\"checkout-container-wrapper\">\n\t\t  <div class=\"checkout-basket-container\">\n\t\t\t<template v-if=\"getStage === stage.edit\">\n\t\t\t  <sale-checkout-view-product :items=\"getBasket\" :total=\"getTotal\" :mode=\"mode.edit\" :errors=\"getBasketErrors\" :config=\"getBasketConfig\"/>\n\t\t\t  <sale-checkout-view-property :items=\"getProperty\" :mode=\"mode.edit\" :errors=\"getPropertyErrors\" :propertyVariants=\"getVariant\"/>\n\t\t\t  <sale-checkout-view-alert-list :errors=\"getErrors\"/>\n\t\t\t  <sale-checkout-view-user_consent :item=\"getConsent\" v-if=\"needCheckConsent\"/>\n\t\t\t  <template v-if=\"checkoutButtonEnabled\">\n\t\t\t\t<sale-checkout-view-element-button-checkout :title=\"getTitleCheckoutButton.title\" :wait=\"getStatus === status.wait\"/>\n\t\t\t  </template>\n\t\t\t  <template v-else>\n\t\t\t\t<sale-checkout-view-element-button-checkout_disabled :title=\"getTitleCheckoutButton.title\"/>\n\t\t\t  </template>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"getStage === stage.success\">\n\t\t\t  <template v-if=\"hasPS\">\n\t\t\t\t<sale-checkout-view-successful :items=\"getProperty\" :order=\"getOrder\" :config=\"getSuccessfulConfig\"/>\n\t\t\t  </template>\n\t\t\t  <template v-else>\n\t\t\t\t<sale-checkout-view-successful-without-ps :items=\"getProperty\" :order=\"getOrder\" :config=\"getSuccessfulConfig\"/>\n\t\t\t  </template>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"getStage === stage.payed\">\n              <sale-checkout-view-successful_ps_return :items=\"getProperty\" :order=\"getOrder\" :total=\"getTotal\" :config=\"getSuccessfulConfig\"/>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"getStage === stage.view\">\n\t\t\t  <sale-checkout-view-product :items=\"getBasket\" :total=\"getTotal\" :mode=\"mode.view\" :errors=\"getBasketErrors\" :config=\"getBasketConfig\"/>\n\t\t\t  <sale-checkout-view-property :items=\"getProperty\" :mode=\"mode.view\" :order=\"getOrder\" :propertyVariants=\"getVariant\"/>\n\t\t\t  <sale-checkout-view-product-summary :total=\"getTotal\" :mode=\"mode.view\"/>\n              <sale-checkout-view-payment :order=\"getOrder\" :payments=\"getPayment\" :paySystems=\"getPaySystem\" :check=\"getCheck\" :config=\"getPaymentConfig\"/>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"getStage === stage.empty\">\n\t\t\t  <sale-checkout-view-empty_cart :config=\"getEmptyCartConfig\"/>\n\t\t\t</template>\n\t\t  </div>\n\t\t  <template v-if=\"getStage === stage.view\">\n\t\t\t<sale-checkout-view-total :total=\"getTotal\" :showBackdrop=\"totalIsShow\"/>\n\t\t  </template>\n      </div>\n\t"
 	});
 
-	var _templateObject;
+	function _templateObject() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"\"></div>"]);
+
+	  _templateObject = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
 	var Application = /*#__PURE__*/function () {
 	  function Application() {
 	    var _this = this;
-
 	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, Application);
-	    this.wrapper = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"\"></div>"])));
+	    this.wrapper = main_core.Tag.render(_templateObject());
 	    this.init().then(function () {
 	      return _this.prepareParams({
 	        options: options
@@ -144,20 +151,17 @@ this.BX.Sale = this.BX.Sale || {};
 	    }).then(function () {
 	      _this.initStore().then(function (result) {
 	        _this.setStore(result);
-
 	        _this.initController().then(function () {});
-
 	        _this.initTemplate().then(function () {});
-	      })["catch"](function (error) {
+	      }).catch(function (error) {
 	        return Application.showError(error);
 	      });
 	    });
 	  }
+
 	  /**
 	   * @private
 	   */
-
-
 	  babelHelpers.createClass(Application, [{
 	    key: "init",
 	    value: function init() {
@@ -166,7 +170,6 @@ this.BX.Sale = this.BX.Sale || {};
 	    /**
 	     * @private
 	     */
-
 	  }, {
 	    key: "prepareParams",
 	    value: function prepareParams(params) {
@@ -176,7 +179,6 @@ this.BX.Sale = this.BX.Sale || {};
 	    /**
 	     * @private
 	     */
-
 	  }, {
 	    key: "initStore",
 	    value: function initStore() {
@@ -191,12 +193,11 @@ this.BX.Sale = this.BX.Sale || {};
 	        messages: this.options.messages
 	      };
 	      contextVariablesApp.path.location = sale_checkout_lib.Url.getCurrentUrl();
-	      return builder.addModel(sale_checkout_model.Order.create()).addModel(sale_checkout_model.Basket.create().setVariables(contextVariablesBasket)).addModel(sale_checkout_model.Property.create()).addModel(sale_checkout_model.Payment.create()).addModel(sale_checkout_model.Check.create()).addModel(sale_checkout_model.PaySystem.create()).addModel(sale_checkout_model.Application.create().setVariables(contextVariablesApp)).addModel(sale_checkout_model.Consent.create()).build();
+	      return builder.addModel(sale_checkout_model.Order.create()).addModel(sale_checkout_model.Basket.create().setVariables(contextVariablesBasket)).addModel(sale_checkout_model.Property.create()).addModel(sale_checkout_model.Variant.create()).addModel(sale_checkout_model.Payment.create()).addModel(sale_checkout_model.Check.create()).addModel(sale_checkout_model.PaySystem.create()).addModel(sale_checkout_model.Application.create().setVariables(contextVariablesApp)).addModel(sale_checkout_model.Consent.create()).build();
 	    }
 	    /**
 	     * @private
 	     */
-
 	  }, {
 	    key: "layout",
 	    value: function layout() {
@@ -205,7 +206,6 @@ this.BX.Sale = this.BX.Sale || {};
 	    /**
 	     * @private
 	     */
-
 	  }, {
 	    key: "initController",
 	    value: function initController() {
@@ -219,12 +219,10 @@ this.BX.Sale = this.BX.Sale || {};
 	    /**
 	     * @private
 	     */
-
 	  }, {
 	    key: "initTemplate",
 	    value: function initTemplate() {
 	      var _this2 = this;
-
 	      return new Promise(function (resolve) {
 	        var context = _this2;
 	        _this2.templateEngine = ui_vue.BitrixVue.createApp({
@@ -237,7 +235,6 @@ this.BX.Sale = this.BX.Sale || {};
 	          },
 	          created: function created() {
 	            var data = {};
-
 	            if (context.options.basket.length > 0) {
 	              data = {
 	                order: this.options.order,
@@ -249,11 +246,11 @@ this.BX.Sale = this.BX.Sale || {};
 	                currency: this.options.currency,
 	                discount: this.options.discount,
 	                property: this.options.property,
+	                variant: this.options.variant,
 	                consent: this.options.consent,
 	                consentStatus: this.options.consentStatus
 	              };
 	            }
-
 	            data.stage = this.options.stage;
 	            context.setModelData(data);
 	          },
@@ -267,7 +264,6 @@ this.BX.Sale = this.BX.Sale || {};
 	    /**
 	     * @private
 	     */
-
 	  }, {
 	    key: "setStore",
 	    value: function setStore(data) {
@@ -276,27 +272,25 @@ this.BX.Sale = this.BX.Sale || {};
 	    /**
 	     * @private
 	     */
-
 	  }, {
 	    key: "setModelData",
 	    value: function setModelData(data) {
 	      var _this3 = this;
-
 	      //region: application model
 	      if (main_core.Type.isString(data.stage)) {
 	        this.store.dispatch('application/setStage', {
 	          stage: data.stage
 	        });
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region: order model
-
-
 	      if (main_core.Type.isObject(data.order)) {
 	        this.store.dispatch('order/set', data.order);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region: basket model
-
-
 	      if (main_core.Type.isObject(data.basket)) {
 	        data.basket.forEach(function (fields, index) {
 	          _this3.store.dispatch('basket/changeItem', {
@@ -305,23 +299,20 @@ this.BX.Sale = this.BX.Sale || {};
 	          });
 	        });
 	      }
-
 	      if (main_core.Type.isString(data.currency)) {
 	        this.store.dispatch('basket/setCurrency', {
 	          currency: data.currency
 	        });
 	      }
-
 	      if (main_core.Type.isObject(data.discount)) {
 	        this.store.dispatch('basket/setDiscount', data.discount);
 	      }
-
 	      if (main_core.Type.isObject(data.total)) {
 	        this.store.dispatch('basket/setTotal', data.total);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region: property model
-
-
 	      if (main_core.Type.isObject(data.property)) {
 	        data.property.forEach(function (fields, index) {
 	          _this3.store.dispatch('property/changeItem', {
@@ -329,10 +320,21 @@ this.BX.Sale = this.BX.Sale || {};
 	            fields: fields
 	          });
 	        });
-	      } //endregion
+	      }
+	      //endregion
+
+	      //region: variant model
+	      if (main_core.Type.isObject(data.variant)) {
+	        data.variant.forEach(function (fields, index) {
+	          _this3.store.dispatch('property-variant/changeItem', {
+	            index: index,
+	            fields: fields
+	          });
+	        });
+	      }
+	      //endregion
+
 	      //region: payment model
-
-
 	      if (main_core.Type.isObject(data.payment)) {
 	        data.payment.forEach(function (fields, index) {
 	          _this3.store.dispatch('payment/changeItem', {
@@ -340,10 +342,10 @@ this.BX.Sale = this.BX.Sale || {};
 	            fields: fields
 	          });
 	        });
-	      } //endregion
+	      }
+	      //endregion
+
 	      // region: check model
-
-
 	      if (main_core.Type.isObject(data.check)) {
 	        data.check.forEach(function (fields, index) {
 	          _this3.store.dispatch('check/changeItem', {
@@ -351,10 +353,10 @@ this.BX.Sale = this.BX.Sale || {};
 	            fields: fields
 	          });
 	        });
-	      } //endregion
+	      }
+	      //endregion
+
 	      // region: paySystem model
-
-
 	      if (main_core.Type.isObject(data.paySystem)) {
 	        data.paySystem.forEach(function (fields, index) {
 	          _this3.store.dispatch('pay-system/changeItem', {
@@ -362,29 +364,27 @@ this.BX.Sale = this.BX.Sale || {};
 	            fields: fields
 	          });
 	        });
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region: consent
-
-
 	      if (main_core.Type.isString(data.consentStatus)) {
 	        this.store.dispatch('consent/setStatus', data.consentStatus);
 	      }
-
 	      if (main_core.Type.isObject(data.consent)) {
 	        this.store.dispatch('consent/set', data.consent);
-	      } //endregion
+	      }
+	      //endregion
+
 	      // region: errors
-
-
 	      if (main_core.Type.isObject(data.errors)) {
 	        this.store.commit('basket/setErrors', data.errors);
-	      } //endregion
-
+	      }
+	      //endregion
 	    }
 	    /**
 	     * @private
 	     */
-
 	  }], [{
 	    key: "showError",
 	    value: function showError(error) {

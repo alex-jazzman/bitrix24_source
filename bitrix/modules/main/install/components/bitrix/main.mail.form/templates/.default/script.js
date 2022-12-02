@@ -134,7 +134,7 @@
 
 		this.postForm = LHEPostForm.getHandler(this.formId+'_editor');
 		this.editor = BXHtmlEditor.Get(this.formId+'_editor');
-		this.editor.config.autoLink = false;
+		// this.editor.config.autoLink = false;
 		this.editorInited = false;
 
 		this.timestamp = (new Date).getTime();

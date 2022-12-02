@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Counter;
 
+use Bitrix\Crm\Settings\Crm;
+
 class EntityCounterSettings
 {
 	protected $isCountersEnabled = false;
@@ -15,23 +17,31 @@ class EntityCounterSettings
 			true
 		);
 
-		$enabledCounters = [
-		//	\Bitrix\Crm\Counter\EntityCounterType::INCOMING_CHANNEL, // temporary disabled
-			\Bitrix\Crm\Counter\EntityCounterType::PENDING,
-			\Bitrix\Crm\Counter\EntityCounterType::OVERDUE,
-			\Bitrix\Crm\Counter\EntityCounterType::CURRENT,
-			\Bitrix\Crm\Counter\EntityCounterType::ALL,
-		];
-
-		if ($isStagesSupported && $isIdleCounterEnabled)
+		if (Crm::isUniversalActivityScenarioEnabled())
 		{
-			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::IDLE;
+			$enabledCounters = [
+				\Bitrix\Crm\Counter\EntityCounterType::INCOMING_CHANNEL,
+				\Bitrix\Crm\Counter\EntityCounterType::CURRENT,
+				\Bitrix\Crm\Counter\EntityCounterType::ALL,
+			];
+		}
+		else
+		{
+			$enabledCounters = [];
+			if ($isStagesSupported && $isIdleCounterEnabled)
+			{
+				$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::IDLE;
+			}
+			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::PENDING;
+			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::OVERDUE;
+			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::CURRENT;
+			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::ALL;
 		}
 
 		return
 			(new EntityCounterSettings())
 				->setIsCountersEnabled($isCountersEnabled)
-				->setEnabledCountersTypes( $enabledCounters)
+				->setEnabledCountersTypes($enabledCounters)
 		;
 	}
 

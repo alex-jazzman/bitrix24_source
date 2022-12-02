@@ -1152,9 +1152,6 @@ var Vue = exports.Vue;
       return elementHasSelector($el, selector);
     };
 
-    function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
-    function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     var FILL_GAP_AVAILABLE_METHODS = ['padding', 'margin', 'width', 'max-width', 'none'];
     var TOUCH_DIRECTION_DETECT_OFFSET = 3;
     var state = {
@@ -1690,8 +1687,7 @@ var Vue = exports.Vue;
         clearQueueScrollLocks();
       }
     };
-
-    var scrollLock = _objectSpread({
+    var scrollLock = babelHelpers.objectSpread({
       disablePageScroll: disablePageScroll,
       enablePageScroll: enablePageScroll,
       getScrollState: getScrollState,
@@ -1828,39 +1824,24 @@ var Vue = exports.Vue;
       return MoveObserver;
     }();
 
-    function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-
-    function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
     function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-
-    var _element = /*#__PURE__*/new WeakMap();
-
-    var _handler = /*#__PURE__*/new WeakMap();
-
-    var _observer = /*#__PURE__*/new WeakMap();
-
-    var _init = /*#__PURE__*/new WeakSet();
-
     var ViewObserver = /*#__PURE__*/function () {
       function ViewObserver(element, handler) {
         babelHelpers.classCallCheck(this, ViewObserver);
 
-        _classPrivateMethodInitSpec(this, _init);
+        _init.add(this);
 
-        _classPrivateFieldInitSpec(this, _element, {
+        _element.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec(this, _handler, {
+        _handler.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec(this, _observer, {
+        _observer.set(this, {
           writable: true,
           value: void 0
         });
@@ -1880,7 +1861,15 @@ var Vue = exports.Vue;
       return ViewObserver;
     }();
 
-    function _init2() {
+    var _element = new WeakMap();
+
+    var _handler = new WeakMap();
+
+    var _observer = new WeakMap();
+
+    var _init = new WeakSet();
+
+    var _init2 = function _init2() {
       var _this = this;
 
       babelHelpers.classPrivateFieldSet(this, _observer, new IntersectionObserver(function (entries, observer) {
@@ -1894,7 +1883,7 @@ var Vue = exports.Vue;
         threshold: 0.5
       }));
       babelHelpers.classPrivateFieldGet(this, _observer).observe(babelHelpers.classPrivateFieldGet(this, _element));
-    }
+    };
 
     var Scroll = {
       items: [],
@@ -1937,7 +1926,7 @@ var Vue = exports.Vue;
         return typeof val !== 'undefined';
       },
       object: function object(val) {
-        if (!val || babelHelpers["typeof"](val) !== 'object' || Object.prototype.toString.call(val) !== '[object Object]') {
+        if (!val || babelHelpers.typeof(val) !== 'object' || Object.prototype.toString.call(val) !== '[object Object]') {
           return false;
         }
 
@@ -2107,31 +2096,21 @@ var Vue = exports.Vue;
       }
     };
 
-    function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-    var _namespace = /*#__PURE__*/new WeakMap();
-
-    var _subscribers = /*#__PURE__*/new WeakMap();
-
-    var _emittedOnce = /*#__PURE__*/new WeakMap();
-
     var Event = /*#__PURE__*/function () {
       function Event() {
         babelHelpers.classCallCheck(this, Event);
 
-        _classPrivateFieldInitSpec$1(this, _namespace, {
+        _namespace.set(this, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$1(this, _subscribers, {
+        _subscribers.set(this, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$1(this, _emittedOnce, {
+        _emittedOnce.set(this, {
           writable: true,
           value: []
         });
@@ -2212,6 +2191,12 @@ var Vue = exports.Vue;
       }]);
       return Event;
     }();
+
+    var _namespace = new WeakMap();
+
+    var _subscribers = new WeakMap();
+
+    var _emittedOnce = new WeakMap();
 
     var Item = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Item, _Event);
@@ -2376,6 +2361,7 @@ var Vue = exports.Vue;
       return Storage;
     }();
 
+    function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var Themes = {
       'modern-light': {
         dark: false,
@@ -2455,6 +2441,9 @@ var Vue = exports.Vue;
     var Model = /*#__PURE__*/function () {
       function Model(options) {
         babelHelpers.classCallCheck(this, Model);
+
+        _replaceFontUriByProxy.add(this);
+
         babelHelpers.defineProperty(this, "dark", null);
         babelHelpers.defineProperty(this, "font", {
           uri: '',
@@ -2480,6 +2469,9 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(this, "compact", false);
         babelHelpers.defineProperty(this, "style", null);
         babelHelpers.defineProperty(this, "backgroundImage", null);
+        babelHelpers.defineProperty(this, "proxy", {
+          fonts: []
+        });
         this.adjust(options);
       }
 
@@ -2487,6 +2479,10 @@ var Vue = exports.Vue;
         key: "adjust",
         value: function adjust(options) {
           options = options || {};
+
+          if (babelHelpers.typeof(options.proxy) === 'object') {
+            this.setProxy(options.proxy);
+          }
 
           if (typeof options.theme !== 'undefined') {
             this.theme = options.theme;
@@ -2517,7 +2513,7 @@ var Vue = exports.Vue;
             */
           }
 
-          if (typeof options.font === 'string' || babelHelpers["typeof"](options.font) === 'object') {
+          if (typeof options.font === 'string' || babelHelpers.typeof(options.font) === 'object') {
             this.setFont(options.font);
           }
 
@@ -2525,7 +2521,7 @@ var Vue = exports.Vue;
             this.setDark(options.dark);
           }
 
-          if (babelHelpers["typeof"](options.color) === 'object') {
+          if (babelHelpers.typeof(options.color) === 'object') {
             this.setColor(options.color);
           }
 
@@ -2550,9 +2546,20 @@ var Vue = exports.Vue;
           }
         }
       }, {
+        key: "setProxy",
+        value: function setProxy(_ref) {
+          var fonts = _ref.fonts;
+
+          if (typeof fonts !== 'undefined') {
+            this.proxy.fonts = Array.isArray(fonts) ? fonts : [];
+          }
+
+          return this;
+        }
+      }, {
         key: "setFont",
         value: function setFont(family, uri) {
-          if (babelHelpers["typeof"](family) === 'object') {
+          if (babelHelpers.typeof(family) === 'object') {
             uri = family.uri;
             family = family.family;
           }
@@ -2578,7 +2585,7 @@ var Vue = exports.Vue;
       }, {
         key: "setBorder",
         value: function setBorder(border) {
-          if (babelHelpers["typeof"](border) === 'object') {
+          if (babelHelpers.typeof(border) === 'object') {
             if (typeof border.top !== 'undefined') {
               this.border.top = !!border.top;
             }
@@ -2655,7 +2662,7 @@ var Vue = exports.Vue;
       }, {
         key: "getFontUri",
         value: function getFontUri() {
-          return this.font.uri;
+          return _classPrivateMethodGet$1(this, _replaceFontUriByProxy, _replaceFontUriByProxy2).call(this, this.font.uri);
         }
       }, {
         key: "getFontFamily",
@@ -2665,7 +2672,7 @@ var Vue = exports.Vue;
       }, {
         key: "getEffectiveOption",
         value: function getEffectiveOption(option) {
-          switch (babelHelpers["typeof"](option)) {
+          switch (babelHelpers.typeof(option)) {
             case "object":
               var result = undefined;
 
@@ -2719,6 +2726,23 @@ var Vue = exports.Vue;
       }]);
       return Model;
     }();
+
+    var _replaceFontUriByProxy = new WeakSet();
+
+    var _replaceFontUriByProxy2 = function _replaceFontUriByProxy2(uri) {
+      if (typeof uri !== 'string' || !uri) {
+        return uri;
+      }
+
+      this.proxy.fonts.forEach(function (item) {
+        if (!item.source || !item.target) {
+          return;
+        }
+
+        uri = uri.replace('https://' + item.source, 'https://' + item.target);
+      });
+      return uri;
+    };
 
     var storedValues = null;
     var lsStoredValuesKey = 'b24-form-field-stored-values';
@@ -2782,11 +2806,7 @@ var Vue = exports.Vue;
       return restore()['name'][fieldName] || '';
     }
 
-    function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-
-    function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-    function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+    function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var DefaultOptions = {
       type: 'string',
       label: 'Default field name',
@@ -2795,8 +2815,6 @@ var Vue = exports.Vue;
       visible: true,
       required: false
     };
-
-    var _prepareValues = /*#__PURE__*/new WeakSet();
 
     var Controller = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller, _Event);
@@ -2840,7 +2858,7 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
 
-        _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _prepareValues);
+        _prepareValues.add(babelHelpers.assertThisInitialized(_this));
 
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "events", {
           blur: 'blur',
@@ -3048,7 +3066,7 @@ var Vue = exports.Vue;
         value: function setValues(values) {
           var _this6 = this;
 
-          values = _classPrivateMethodGet$1(this, _prepareValues, _prepareValues2).call(this, values);
+          values = _classPrivateMethodGet$2(this, _prepareValues, _prepareValues2).call(this, values);
 
           if (values.length === 0) {
             return this;
@@ -3163,7 +3181,9 @@ var Vue = exports.Vue;
       return Controller;
     }(Event);
 
-    function _prepareValues2(values) {
+    var _prepareValues = new WeakSet();
+
+    var _prepareValues2 = function _prepareValues2(values) {
       var _this8 = this;
 
       return values.filter(function (value) {
@@ -3175,7 +3195,7 @@ var Vue = exports.Vue;
       }).filter(function (value) {
         return _this8.validate(value);
       });
-    }
+    };
 
     var Dropdown = {
       props: ['marginTop', 'maxHeight', 'width', 'visible', 'title'],
@@ -4863,33 +4883,33 @@ var Vue = exports.Vue;
       props: {
         show: {
           type: Boolean,
-          "default": true
+          default: true
         },
         value: {
           type: String,
-          "default": ''
+          default: ''
         },
         format: {
           type: String,
-          "default": 'MM/DD/YYYY'
+          default: 'MM/DD/YYYY'
         },
         displayFormat: {
           type: String
         },
         editable: {
           type: Boolean,
-          "default": true
+          default: true
         },
         hasInputElement: {
           type: Boolean,
-          "default": true
+          default: true
         },
         inputAttributes: {
           type: Object
         },
         selectableYearRange: {
           type: Number,
-          "default": 40
+          default: 40
         },
         parseDate: {
           type: Function
@@ -4899,57 +4919,57 @@ var Vue = exports.Vue;
         },
         pickTime: {
           type: Boolean,
-          "default": false
+          default: false
         },
         pickMinutes: {
           type: Boolean,
-          "default": true
+          default: true
         },
         pickSeconds: {
           type: Boolean,
-          "default": false
+          default: false
         },
         isDateDisabled: {
           type: Function,
-          "default": function _default() {
+          default: function _default() {
             return false;
           }
         },
         nextMonthCaption: {
           type: String,
-          "default": 'Next month'
+          default: 'Next month'
         },
         prevMonthCaption: {
           type: String,
-          "default": 'Previous month'
+          default: 'Previous month'
         },
         setTimeCaption: {
           type: String,
-          "default": 'Set time'
+          default: 'Set time'
         },
         closeButtonCaption: {
           type: String,
-          "default": 'Close'
+          default: 'Close'
         },
         mobileBreakpointWidth: {
           type: Number,
-          "default": 530
+          default: 530
         },
         weekdays: {
           type: Array,
-          "default": function _default() {
+          default: function _default() {
             return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
           }
         },
         months: {
           type: Array,
-          "default": function _default() {
+          default: function _default() {
             return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
           }
         },
         startWeekOnSunday: {
           type: Boolean,
-          "default": false
+          default: false
         }
       },
       data: function data() {
@@ -5685,7 +5705,7 @@ var Vue = exports.Vue;
         _this.multiple = false;
         _this.required = false;
 
-        if (babelHelpers["typeof"](options.content) === 'object') {
+        if (babelHelpers.typeof(options.content) === 'object') {
           if (options.content.type) {
             _this.content.type = options.content.type;
           }
@@ -5756,7 +5776,7 @@ var Vue = exports.Vue;
 
                   var value = data[key];
 
-                  if (babelHelpers["typeof"](value) === 'object') {
+                  if (babelHelpers.typeof(value) === 'object') {
                     value = JSON.stringify(value);
                   }
 
@@ -5906,6 +5926,20 @@ var Vue = exports.Vue;
           }, 0);
         }
       }, {
+        key: "setValues",
+        value: function setValues(values) {
+          values = values[0] || {};
+          this.nestedFields.forEach(function (field) {
+            var value = values[field.name];
+
+            if (typeof value === 'undefined') {
+              return;
+            }
+
+            field.setValues(Array.isArray(value) ? value : [value]);
+          });
+        }
+      }, {
         key: "actualizeFields",
         value: function actualizeFields() {
           this.nestedFields = this.makeFields(this.options.fields || []);
@@ -5932,6 +5966,22 @@ var Vue = exports.Vue;
           });
         }
       }, {
+        key: "valid",
+        value: function valid() {
+          if (!this.visible) {
+            return true;
+          }
+
+          this.validated = true;
+          var valid = true;
+          this.nestedFields.forEach(function (field) {
+            if (!field.valid()) {
+              valid = false;
+            }
+          });
+          return valid;
+        }
+      }, {
         key: "actualizeValues",
         value: function actualizeValues() {
           var value = (this.nestedFields || []).reduce(function (acc, field) {
@@ -5947,6 +5997,7 @@ var Vue = exports.Vue;
           var item = this.item();
           item.value = value;
           item.selected = true;
+          console.log('value', value);
         }
       }]);
       return Controller$$1;
@@ -6221,14 +6272,6 @@ var Vue = exports.Vue;
     }();
 
     var _OppositeActionTypes;
-
-    function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
-    function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
-    function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var ConditionEvents = {
       change: 'change'
     };
@@ -6254,27 +6297,21 @@ var Vue = exports.Vue;
     };
     var OppositeActionTypes = (_OppositeActionTypes = {}, babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.hide, ActionTypes.show), babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.show, ActionTypes.hide), _OppositeActionTypes);
 
-    var _form = /*#__PURE__*/new WeakMap();
-
-    var _list = /*#__PURE__*/new WeakMap();
-
-    var _groups = /*#__PURE__*/new WeakMap();
-
     var Manager = /*#__PURE__*/function () {
       function Manager(form) {
         babelHelpers.classCallCheck(this, Manager);
 
-        _classPrivateFieldInitSpec$2(this, _form, {
+        _form.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$2(this, _list, {
+        _list.set(this, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$2(this, _groups, {
+        _groups.set(this, {
           writable: true,
           value: []
         });
@@ -6333,7 +6370,7 @@ var Vue = exports.Vue;
       }, {
         key: "addDependence",
         value: function addDependence(dep, group) {
-          if (babelHelpers["typeof"](dep) !== 'object' || babelHelpers["typeof"](dep.condition) !== 'object' || babelHelpers["typeof"](dep.action) !== 'object') {
+          if (babelHelpers.typeof(dep) !== 'object' || babelHelpers.typeof(dep.condition) !== 'object' || babelHelpers.typeof(dep.action) !== 'object') {
             return;
           }
 
@@ -6347,13 +6384,13 @@ var Vue = exports.Vue;
 
           dep.condition.operation = ConditionOperations.indexOf(dep.condition.operation) > 0 ? dep.condition.operation : Operations.equal;
           var item = {
-            condition: _objectSpread$1({
+            condition: babelHelpers.objectSpread({
               target: '',
               event: '',
               value: '',
               operation: ''
             }, dep.condition),
-            action: _objectSpread$1({
+            action: babelHelpers.objectSpread({
               target: '',
               type: '',
               value: ''
@@ -6436,7 +6473,7 @@ var Vue = exports.Vue;
                 }
               }
 
-              _this2.runAction(_objectSpread$1(_objectSpread$1({}, dep.action), {}, {
+              _this2.runAction(babelHelpers.objectSpread({}, dep.action, {
                 type: actionType
               }), field);
             });
@@ -6527,6 +6564,12 @@ var Vue = exports.Vue;
       return Manager;
     }();
 
+    var _form = new WeakMap();
+
+    var _list = new WeakMap();
+
+    var _groups = new WeakMap();
+
     var ConditionOperations = [];
 
     for (var operationName in Operations) {
@@ -6537,31 +6580,21 @@ var Vue = exports.Vue;
       ConditionOperations.push(Operations[_operationName]);
     }
 
-    function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-    var _form$1 = /*#__PURE__*/new WeakMap();
-
-    var _isStartSent = /*#__PURE__*/new WeakMap();
-
-    var _filledFields = /*#__PURE__*/new WeakMap();
-
     var Analytics$1 = /*#__PURE__*/function () {
       function Analytics$$1(form) {
         babelHelpers.classCallCheck(this, Analytics$$1);
 
-        _classPrivateFieldInitSpec$3(this, _form$1, {
+        _form$1.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$3(this, _isStartSent, {
+        _isStartSent.set(this, {
           writable: true,
           value: false
         });
 
-        _classPrivateFieldInitSpec$3(this, _filledFields, {
+        _filledFields.set(this, {
           writable: true,
           value: []
         });
@@ -6662,52 +6695,42 @@ var Vue = exports.Vue;
       return Analytics$$1;
     }();
 
-    function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
+    var _form$1 = new WeakMap();
 
-    function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    var _isStartSent = new WeakMap();
 
-    var _key = /*#__PURE__*/new WeakMap();
-
-    var _use = /*#__PURE__*/new WeakMap();
-
-    var _widgetId = /*#__PURE__*/new WeakMap();
-
-    var _response = /*#__PURE__*/new WeakMap();
-
-    var _target = /*#__PURE__*/new WeakMap();
-
-    var _callback = /*#__PURE__*/new WeakMap();
+    var _filledFields = new WeakMap();
 
     var ReCaptcha$1 = /*#__PURE__*/function () {
       function ReCaptcha$$1() {
         babelHelpers.classCallCheck(this, ReCaptcha$$1);
 
-        _classPrivateFieldInitSpec$4(this, _key, {
+        _key.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$4(this, _use, {
+        _use.set(this, {
           writable: true,
           value: false
         });
 
-        _classPrivateFieldInitSpec$4(this, _widgetId, {
+        _widgetId.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$4(this, _response, {
+        _response.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$4(this, _target, {
+        _target.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$4(this, _callback, {
+        _callback.set(this, {
           writable: true,
           value: void 0
         });
@@ -6801,24 +6824,28 @@ var Vue = exports.Vue;
       return ReCaptcha$$1;
     }();
 
-    function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+    var _key = new WeakMap();
 
-    function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    var _use = new WeakMap();
 
-    var _currency = /*#__PURE__*/new WeakMap();
+    var _widgetId = new WeakMap();
 
-    var _fields = /*#__PURE__*/new WeakMap();
+    var _response = new WeakMap();
+
+    var _target = new WeakMap();
+
+    var _callback = new WeakMap();
 
     var Basket = /*#__PURE__*/function () {
       function Basket(fields, currency) {
         babelHelpers.classCallCheck(this, Basket);
 
-        _classPrivateFieldInitSpec$5(this, _currency, {
+        _currency.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$5(this, _fields, {
+        _fields.set(this, {
           writable: true,
           value: []
         });
@@ -6896,8 +6923,12 @@ var Vue = exports.Vue;
       return Basket;
     }();
 
+    var _currency = new WeakMap();
+
+    var _fields = new WeakMap();
+
     /*! 
-     * portal-vue В© Thorsten LГјnborg, 2019 
+     * portal-vue � Thorsten L?nborg, 2019 
      * 
      * Version: 2.1.7
      * 
@@ -6907,13 +6938,13 @@ var Vue = exports.Vue;
      * 
     */
     function _typeof(obj) {
-      if (typeof Symbol === "function" && babelHelpers["typeof"](Symbol.iterator) === "symbol") {
+      if (typeof Symbol === "function" && babelHelpers.typeof(Symbol.iterator) === "symbol") {
         _typeof = function _typeof(obj) {
-          return babelHelpers["typeof"](obj);
+          return babelHelpers.typeof(obj);
         };
       } else {
         _typeof = function _typeof(obj) {
-          return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : babelHelpers["typeof"](obj);
+          return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : babelHelpers.typeof(obj);
         };
       }
 
@@ -7109,30 +7140,30 @@ var Vue = exports.Vue;
         },
         name: {
           type: String,
-          "default": function _default() {
+          default: function _default() {
             return String(_id++);
           }
         },
         order: {
           type: Number,
-          "default": 0
+          default: 0
         },
         slim: {
           type: Boolean
         },
         slotProps: {
           type: Object,
-          "default": function _default() {
+          default: function _default() {
             return {};
           }
         },
         tag: {
           type: String,
-          "default": 'DIV'
+          default: 'DIV'
         },
         to: {
           type: String,
-          "default": function _default() {
+          default: function _default() {
             return String(Math.round(Math.random() * 10000000));
           }
         }
@@ -7175,7 +7206,7 @@ var Vue = exports.Vue;
           wormhole.close(closer);
         },
         normalizeSlots: function normalizeSlots() {
-          return this.$scopedSlots["default"] ? [this.$scopedSlots["default"]] : this.$slots["default"];
+          return this.$scopedSlots.default ? [this.$scopedSlots.default] : this.$slots.default;
         },
         normalizeOwnChildren: function normalizeOwnChildren(children) {
           return typeof children === 'function' ? children(this.slotProps) : children;
@@ -7197,14 +7228,14 @@ var Vue = exports.Vue;
         }
       },
       render: function render(h) {
-        var children = this.$slots["default"] || this.$scopedSlots["default"] || [];
+        var children = this.$slots.default || this.$scopedSlots.default || [];
         var Tag = this.tag;
 
         if (children && this.disabled) {
           return children.length <= 1 && this.slim ? this.normalizeOwnChildren(children)[0] : h(Tag, [this.normalizeOwnChildren(children)]);
         } else {
           return this.slim ? h() : h(Tag, {
-            "class": {
+            class: {
               'v-portal': true
             },
             style: {
@@ -7220,7 +7251,7 @@ var Vue = exports.Vue;
       props: {
         multiple: {
           type: Boolean,
-          "default": false
+          default: false
         },
         name: {
           type: String,
@@ -7228,17 +7259,17 @@ var Vue = exports.Vue;
         },
         slim: {
           type: Boolean,
-          "default": false
+          default: false
         },
         slotProps: {
           type: Object,
-          "default": function _default() {
+          default: function _default() {
             return {};
           }
         },
         tag: {
           type: String,
-          "default": 'div'
+          default: 'div'
         },
         transition: {
           type: [String, Object, Function]
@@ -7300,7 +7331,7 @@ var Vue = exports.Vue;
       methods: {
         // can't be a computed prop because it has to "react" to $slot changes.
         children: function children() {
-          return this.passengers.length !== 0 ? this.passengers : this.$scopedSlots["default"] ? this.$scopedSlots["default"](this.slotProps) : this.$slots["default"] || [];
+          return this.passengers.length !== 0 ? this.passengers : this.$scopedSlots.default ? this.$scopedSlots.default(this.slotProps) : this.$slots.default || [];
         },
         // can't be a computed prop because it has to "react" to this.children().
         noWrapper: function noWrapper() {
@@ -7322,7 +7353,7 @@ var Vue = exports.Vue;
             // if we have a transition component, pass the tag if it exists
             tag: this.transition && this.tag ? this.tag : undefined
           },
-          "class": {
+          class: {
             'vue-portal-target': true
           }
         }, children);
@@ -7352,51 +7383,51 @@ var Vue = exports.Vue;
         // name for the portal
         name: {
           type: String,
-          "default": function _default() {
+          default: function _default() {
             return 'mounted_' + String(_id$1++);
           }
         },
         order: {
           type: Number,
-          "default": 0
+          default: 0
         },
         slim: {
           type: Boolean
         },
         slotProps: {
           type: Object,
-          "default": function _default() {
+          default: function _default() {
             return {};
           }
         },
         tag: {
           type: String,
-          "default": 'DIV'
+          default: 'DIV'
         },
         // name for the target
         to: {
           type: String,
-          "default": function _default() {
+          default: function _default() {
             return String(Math.round(Math.random() * 10000000));
           }
         },
         // Target
         multiple: {
           type: Boolean,
-          "default": false
+          default: false
         },
         targetSlim: {
           type: Boolean
         },
         targetSlotProps: {
           type: Object,
-          "default": function _default() {
+          default: function _default() {
             return {};
           }
         },
         targetTag: {
           type: String,
-          "default": 'div'
+          default: 'div'
         },
         transition: {
           type: [String, Object, Function]
@@ -7470,7 +7501,7 @@ var Vue = exports.Vue;
             attrs: this.$attrs,
             on: this.$listeners,
             scopedSlots: this.$scopedSlots
-          }, this.$slots["default"]);
+          }, this.$slots.default);
         } // else, we render the scoped slot
 
 
@@ -7490,7 +7521,7 @@ var Vue = exports.Vue;
 
     var Scrollable = {
       props: ['show', 'enabled', 'zIndex', 'text', 'topIntersected', 'bottomIntersected'],
-      template: "\n\t\t<div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-up-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorTopIntersected\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(false)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-up\"></button>\n\t\t\t\t</div>\n\t\t\t</transition>\t\t\t\t\t\t\n\t\t\t<div class=\"b24-window-scrollable\" :style=\"{ zIndex: zIndexComputed }\">\n\t\t\t\t<div v-if=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t\t<slot></slot>\n\t\t\t\t<div v-if=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t</div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-down-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorBottomIntersected && !hideEars\"\n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-down\"></button>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-scroll-textable\"\n\t\t\t\t\tv-if=\"enabled && text && !anchorBottomIntersected && !hideEars\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<p class=\"b24-form-scroll-textable-text\">{{ text }}</p>\n\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow\">\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\t\n\t",
+      template: "\n\t\t<div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-up-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorTopIntersected\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(false)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-up\"></button>\n\t\t\t\t</div>\n\t\t\t</transition>\t\t\t\t\t\t\n\t\t\t<div class=\"b24-window-scrollable\" :style=\"{ zIndex: zIndexComputed }\">\n\t\t\t\t<div v-show=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t\t<slot></slot>\n\t\t\t\t<div v-show=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t</div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-down-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorBottomIntersected && !hideEars\"\n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-down\"></button>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-scroll-textable\"\n\t\t\t\t\tv-if=\"enabled && text && !anchorBottomIntersected && !hideEars\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<p class=\"b24-form-scroll-textable-text\">{{ text }}</p>\n\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow\">\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\t\n\t",
       data: function data() {
         return {
           showed: false,
@@ -7807,11 +7838,11 @@ var Vue = exports.Vue;
         },
         diameter: {
           type: Number,
-          "default": 44
+          default: 44
         },
         border: {
           type: Number,
-          "default": 4
+          default: 4
         }
       },
       template: "\n\t\t<div class=\"b24-form-progress-container\"\n\t\t\tv-if=\"pager.iterable()\"\n\t\t>\n\t\t\t<div class=\"b24-form-progress-bar-container\">\n\t\t\t\t<svg class=\"b24-form-progress\" \n\t\t\t\t\t:viewport=\"'0 0 ' + diameter + ' ' + diameter\" \n\t\t\t\t\t:width=\"diameter\" :height=\"diameter\"\n\t\t\t\t>\n\t\t\t\t\t<circle class=\"b24-form-progress-track\"\n\t\t\t\t\t\t:r=\"(diameter - border) / 2\" \n\t\t\t\t\t\t:cx=\"diameter / 2\" :cy=\"diameter / 2\" \n\t\t\t\t\t\t:stroke-width=\"border\" \n\t\t\t\t\t></circle>\n\t\t\t\t\t<circle class=\"b24-form-progress-bar\"\n\t\t\t\t\t\t:r=\"(diameter - border) / 2\"\n\t\t\t\t\t\t:cx=\"diameter / 2\" :cy=\"diameter / 2\"\n\t\t\t\t\t\t:stroke-width=\"border\"\n\t\t\t\t\t\t:stroke-dasharray=\"strokeDasharray\" \n\t\t\t\t\t\t:stroke-dashoffset=\"strokeDashoffset\"\n\t\t\t\t\t></circle>\n\t\t\t\t</svg>\n\t\t\t\t<div class=\"b24-form-progress-bar-counter\">\n\t\t\t\t\t<strong>{{ pager.index}}</strong>/{{ pager.count() }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-progress-bar-title\">\n\t\t\t\t{{ pager.current().getTitle() }}\n\t\t\t</div>\n\n\t\t</div>\n\t",
@@ -8129,24 +8160,9 @@ var Vue = exports.Vue;
       'b24-form-widget': Widget$1
     };
 
-    function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var DefaultOptions$4 = {
       view: 'inline'
     };
-
-    var _id$2 = /*#__PURE__*/new WeakMap();
-
-    var _fields$1 = /*#__PURE__*/new WeakMap();
-
-    var _dependence = /*#__PURE__*/new WeakMap();
-
-    var _properties = /*#__PURE__*/new WeakMap();
-
-    var _personalisation = /*#__PURE__*/new WeakMap();
-
-    var _vue = /*#__PURE__*/new WeakMap();
 
     var Controller$r = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller$$1, _Event);
@@ -8160,7 +8176,7 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
 
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _id$2, {
+        _id$2.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: void 0
         });
@@ -8174,17 +8190,17 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "languages", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "language", 'en');
 
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _fields$1, {
+        _fields$1.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _dependence, {
+        _dependence.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _properties, {
+        _properties.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: {}
         });
@@ -8202,7 +8218,7 @@ var Vue = exports.Vue;
           format: '$#'
         });
 
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _personalisation, {
+        _personalisation.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: {
             title: '',
@@ -8222,7 +8238,7 @@ var Vue = exports.Vue;
           handler: null
         });
 
-        _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _vue, {
+        _vue.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: void 0
         });
@@ -8252,7 +8268,7 @@ var Vue = exports.Vue;
                 _this.adjust(options);
 
                 _this.load();
-              })["catch"](function (e) {
+              }).catch(function (e) {
                 if (window.console && console.log) {
                   console.log('b24form get `form` error:', e.message);
                 }
@@ -8268,12 +8284,12 @@ var Vue = exports.Vue;
                 _this.setValues(user);
 
                 return user;
-              })["catch"](function (e) {
+              }).catch(function (e) {
                 if (window.console && console.log) {
                   console.log('b24form get `user` error:', e.message);
                 }
               });
-            } else if (babelHelpers["typeof"](_this.provider.user) === 'object') {
+            } else if (babelHelpers.typeof(_this.provider.user) === 'object') {
               _this.setValues(_this.provider.user);
             }
           }
@@ -8425,7 +8441,7 @@ var Vue = exports.Vue;
                 _this3.reset();
               };
             }
-          })["catch"](function (e) {
+          }).catch(function (e) {
             _this3.error = true;
             _this3.loading = false;
             _this3.stateText = _this3.messages.get('stateError');
@@ -8437,7 +8453,7 @@ var Vue = exports.Vue;
       }, {
         key: "setValues",
         value: function setValues(values) {
-          if (!values || babelHelpers["typeof"](values) !== 'object') {
+          if (!values || babelHelpers.typeof(values) !== 'object') {
             return;
           }
 
@@ -8467,7 +8483,7 @@ var Vue = exports.Vue;
           var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
           options = Object.assign({}, DefaultOptions$4, options);
 
-          if (babelHelpers["typeof"](options.identification) === 'object') {
+          if (babelHelpers.typeof(options.identification) === 'object') {
             this.identification = options.identification;
           }
 
@@ -8485,13 +8501,13 @@ var Vue = exports.Vue;
           } ////////////////////////////////////////
 
 
-          if (options.handlers && babelHelpers["typeof"](options.handlers) === 'object') {
+          if (options.handlers && babelHelpers.typeof(options.handlers) === 'object') {
             Object.keys(options.handlers).forEach(function (key) {
               return _this4.subscribe(key, options.handlers[key]);
             });
           }
 
-          if (options.properties && babelHelpers["typeof"](options.properties) === 'object') {
+          if (options.properties && babelHelpers.typeof(options.properties) === 'object') {
             Object.keys(options.properties).forEach(function (key) {
               return _this4.setProperty(key, options.properties[key]);
             });
@@ -8511,11 +8527,11 @@ var Vue = exports.Vue;
             this.useSign = !!options.useSign;
           }
 
-          if (babelHelpers["typeof"](options.date) === 'object') {
+          if (babelHelpers.typeof(options.date) === 'object') {
             this.setDate(options.date);
           }
 
-          if (babelHelpers["typeof"](options.currency) === 'object') {
+          if (babelHelpers.typeof(options.currency) === 'object') {
             this.setCurrency(options.currency);
           }
 
@@ -8544,7 +8560,9 @@ var Vue = exports.Vue;
           }
 
           if (typeof options.design !== 'undefined') {
-            this.design.adjust(options.design);
+            this.design.adjust(babelHelpers.objectSpread({
+              proxy: options.proxy
+            }, options.design));
           }
 
           if (typeof options.recaptcha !== 'undefined') {
@@ -8597,7 +8615,7 @@ var Vue = exports.Vue;
       }, {
         key: "setDate",
         value: function setDate(date) {
-          if (babelHelpers["typeof"](date) !== 'object') {
+          if (babelHelpers.typeof(date) !== 'object') {
             return;
           }
 
@@ -8616,7 +8634,7 @@ var Vue = exports.Vue;
       }, {
         key: "setCurrency",
         value: function setCurrency(currency) {
-          if (babelHelpers["typeof"](currency) !== 'object') {
+          if (babelHelpers.typeof(currency) !== 'object') {
             return;
           }
 
@@ -8776,9 +8794,19 @@ var Vue = exports.Vue;
       return Controller$$1;
     }(Event);
 
-    function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
+    var _id$2 = new WeakMap();
 
-    function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+    var _fields$1 = new WeakMap();
+
+    var _dependence = new WeakMap();
+
+    var _properties = new WeakMap();
+
+    var _personalisation = new WeakMap();
+
+    var _vue = new WeakMap();
+
+    function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
     var Button = /*#__PURE__*/function () {
       function Button() {
         babelHelpers.classCallCheck(this, Button);
@@ -8829,16 +8857,16 @@ var Vue = exports.Vue;
       return Button;
     }();
 
-    function _applyDecoration(button, decoration) {
+    var _applyDecoration = function _applyDecoration(button, decoration) {
       switch (decoration) {
         case 'dotted':
         case 'solid':
           button.classList.add('--b24-mod-' + decoration);
           break;
       }
-    }
+    };
 
-    function _applyAlign(button, align) {
+    var _applyAlign = function _applyAlign(button, align) {
       switch (align) {
         case 'center':
         case 'left':
@@ -8847,18 +8875,18 @@ var Vue = exports.Vue;
           button.classList.add('--b24-mod-' + align);
           break;
       }
-    }
+    };
 
-    function _loadFont(fontStyle) {
+    var _loadFont = function _loadFont(fontStyle) {
       switch (fontStyle) {
         case 'modern':
         default:
           Font.load('opensans');
           break;
       }
-    }
+    };
 
-    function _applyFont(button, fontStyle) {
+    var _applyFont = function _applyFont(button, fontStyle) {
       switch (fontStyle) {
         case 'classic':
         case 'elegant':
@@ -8866,9 +8894,9 @@ var Vue = exports.Vue;
           button.classList.add("b24-form-click-btn-font-" + fontStyle);
           break;
       }
-    }
+    };
 
-    function _applyColors(button) {
+    var _applyColors = function _applyColors(button) {
       var _buttonParams$color, _buttonParams$color2, _buttonParams$color3, _buttonParams$color4, _buttonParams$color5, _buttonParams$color6, _buttonParams$color7, _buttonParams$color8, _buttonParams$color9;
 
       var buttonParams = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -8904,7 +8932,7 @@ var Vue = exports.Vue;
       }
 
       document.getElementsByTagName('head')[0].appendChild(styleElem);
-    }
+    };
 
     function performEventOfWidgetFormInit(b24options, options) {
       var compatibleData = createEventData(b24options, options);
@@ -8912,7 +8940,7 @@ var Vue = exports.Vue;
       applyOldenLoaderData(options, compatibleData);
     }
     function applyOldenLoaderData(options, oldenLoaderData) {
-      if (options.fields && babelHelpers["typeof"](oldenLoaderData.fields) === 'object' && babelHelpers["typeof"](oldenLoaderData.fields.values) === 'object') {
+      if (options.fields && babelHelpers.typeof(oldenLoaderData.fields) === 'object' && babelHelpers.typeof(oldenLoaderData.fields.values) === 'object') {
         Object.keys(oldenLoaderData.fields.values).forEach(function (key) {
           options.fields.filter(function (field) {
             return field.name === key;
@@ -8922,7 +8950,7 @@ var Vue = exports.Vue;
         });
       }
 
-      if (babelHelpers["typeof"](oldenLoaderData.presets) === 'object') {
+      if (babelHelpers.typeof(oldenLoaderData.presets) === 'object') {
         options.properties = options.properties || {};
         Object.keys(oldenLoaderData.presets).forEach(function (key) {
           options.properties[key] = oldenLoaderData.presets[key];
@@ -8930,12 +8958,12 @@ var Vue = exports.Vue;
       }
 
       if (oldenLoaderData.type === 'auto' && oldenLoaderData.delay) {
-        if (babelHelpers["typeof"](options.view) === 'object' && parseInt(oldenLoaderData.delay) > 0) {
+        if (babelHelpers.typeof(options.view) === 'object' && parseInt(oldenLoaderData.delay) > 0) {
           options.view.delay = parseInt(oldenLoaderData.delay);
         }
       }
 
-      if (babelHelpers["typeof"](oldenLoaderData.handlers) === 'object') {
+      if (babelHelpers.typeof(oldenLoaderData.handlers) === 'object') {
         options.handlers = options.handlers || {};
         Object.keys(oldenLoaderData.handlers).forEach(function (key) {
           var value = oldenLoaderData.handlers[key];
@@ -9017,24 +9045,16 @@ var Vue = exports.Vue;
         applyOldenLoaderData: applyOldenLoaderData
     });
 
-    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-    var _forms = /*#__PURE__*/new WeakMap();
-
-    var _userProviderPromise = /*#__PURE__*/new WeakMap();
-
     var Application = /*#__PURE__*/function () {
       function Application() {
         babelHelpers.classCallCheck(this, Application);
 
-        _classPrivateFieldInitSpec$7(this, _forms, {
+        _forms.set(this, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$7(this, _userProviderPromise, {
+        _userProviderPromise.set(this, {
           writable: true,
           value: void 0
         });
@@ -9082,7 +9102,9 @@ var Vue = exports.Vue;
       }, {
         key: "createForm24",
         value: function createForm24(b24options, options) {
-          var _this = this;
+          var _b24form$common,
+              _b24form$common$prope,
+              _this = this;
 
           options.provider = options.provider || {};
 
@@ -9096,7 +9118,7 @@ var Vue = exports.Vue;
             if (entities) {
               entities = JSON.parse(entities);
 
-              if (babelHelpers["typeof"](entities) === 'object') {
+              if (babelHelpers.typeof(entities) === 'object') {
                 options.provider.entities = entities;
               }
             }
@@ -9109,6 +9131,7 @@ var Vue = exports.Vue;
             options.language = b24options.lang;
           }
 
+          options.proxy = ((_b24form$common = b24form.common) === null || _b24form$common === void 0 ? void 0 : (_b24form$common$prope = _b24form$common.properties) === null || _b24form$common$prope === void 0 ? void 0 : _b24form$common$prope.proxy) || {};
           options.languages = b24form.common.languages || [];
           options.messages = options.messages || {};
           options.messages = Object.assign(b24form.common.messages, options.messages || {});
@@ -9181,7 +9204,7 @@ var Vue = exports.Vue;
           var ttl = 3600 * 24 * 28;
 
           if (!sign) {
-            if (b24form.user && babelHelpers["typeof"](b24form.user) === 'object') {
+            if (b24form.user && babelHelpers.typeof(b24form.user) === 'object') {
               b24options.entities = b24options.entities || b24form.user.entities || [];
               return b24form.user.fields || {};
             }
@@ -9189,7 +9212,7 @@ var Vue = exports.Vue;
             try {
               var user = b24form.util.ls.getItem('b24-form-user', ttl);
 
-              if (user !== null && babelHelpers["typeof"](user) === 'object') {
+              if (user !== null && babelHelpers.typeof(user) === 'object') {
                 return user.fields || {};
               }
             } catch (e) {}
@@ -9217,8 +9240,8 @@ var Vue = exports.Vue;
             }
 
             data = data.result;
-            data = data && babelHelpers["typeof"](data) === 'object' ? data : {};
-            data.fields = data && babelHelpers["typeof"](data.fields) === 'object' ? data.fields : {};
+            data = data && babelHelpers.typeof(data) === 'object' ? data : {};
+            data.fields = data && babelHelpers.typeof(data.fields) === 'object' ? data.fields : {};
             var properties = data.properties || {};
             delete data.properties;
 
@@ -9394,6 +9417,10 @@ var Vue = exports.Vue;
       }]);
       return Application;
     }();
+
+    var _forms = new WeakMap();
+
+    var _userProviderPromise = new WeakMap();
 
     var App = new Application();
 

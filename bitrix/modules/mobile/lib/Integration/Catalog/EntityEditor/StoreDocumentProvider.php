@@ -102,9 +102,9 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 				$enableTime = $field['data']['enableTime'] ?? true;
 				$field['type'] = $enableTime ? 'datetime' : 'date';
 			}
-			elseif (in_array($field['type'], ['moneyPay', 'document_total'], true))
+			elseif (in_array($field['type'], ['money', 'moneyPay', 'document_total'], true))
 			{
-				$field['type'] = 'money';
+				$field['type'] = 'opportunity';
 			}
 
 			$field['multiple'] = $field['data']['multiple'] ?? false;
@@ -193,27 +193,19 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 		return [
 			'Y' => [
 				'name' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_DOC_STATUS_CONDUCTED'),
-				'color' => '#589308',
-				'backgroundColor' => '#e4f5c8',
+				'backgroundColor' => '#e0f5c2',
+				'color' => '#589309',
 			],
 			'N' => [
 				'name' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_DOC_STATUS_NOT_CONDUCTED'),
-				'color' => '#535c69',
-				'backgroundColor' => '#eaebed',
+				'backgroundColor' => '#e0e2e4',
+				'color' => '#79818b',
 			],
 			'C' => [
 				'name' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_DOC_STATUS_CANCELLED'),
-				'color' => '#b47a00',
-				'backgroundColor' => '#ffdfa1',
+				'backgroundColor' => '#faf4a0',
+				'color' => '#9d7e2b',
 			],
-		];
-	}
-
-	protected function getProductSummaryInfoTotal(array $document)
-	{
-		return [
-			'amount' => $document['TOTAL'],
-			'currency' => $document['CURRENCY'],
 		];
 	}
 
@@ -364,6 +356,9 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 			{
 				$field['data'] = array_merge($field['data'], [
 					'fileInfoField' => $field['name'] . self::FILE_INFO_POSTFIX,
+					'controller' => [
+						'entityId' => 'catalog-document',
+					],
 				]);
 			}
 		}
@@ -371,6 +366,32 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 		unset($field);
 
 		return $fields;
+	}
+
+	public function getEntityControllers(): array
+	{
+		$controllers = parent::getEntityControllers();
+		foreach ($controllers as $key => $controller)
+		{
+			if ($controller['name'] === 'PRODUCT_LIST_CONTROLLER')
+			{
+				$controllers[$key] = $this->prepareProductListController($controller);
+				break;
+			}
+		}
+
+		return $controllers;
+	}
+
+	private function prepareProductListController(array $controller): array
+	{
+		$config = $controller['config'] ?? [];
+
+		$config['currencyFieldName'] = 'CURRENCY';
+		$config['priceWithCurrencyFieldName'] = 'TOTAL_WITH_CURRENCY';
+		$config['productSummaryFieldName'] = 'DOCUMENT_PRODUCTS';
+
+		return array_merge($controller, ['config' => $config]);
 	}
 
 	/**
@@ -382,5 +403,15 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 			parent::prepareCurrencyListItem($currency),
 			CASE_LOWER
 		);
+	}
+
+	protected function getTotalInfoControlForNewDocument(): array
+	{
+		return $this->getTotalInfoControlForExistingDocument();
+	}
+
+	protected function shouldPrepareDateFields(): bool
+	{
+		return false;
 	}
 }

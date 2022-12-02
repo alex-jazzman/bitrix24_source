@@ -116,4 +116,11 @@ $MESS["BITRIX24_THEME_WINDOW"] = "Окно";
 $MESS["BITRIX24_THEME_WOODEN_LETTERS"] = "Деревянные буквы";
 $MESS["BITRIX24_THEME_MAIL"] = "Почта";
 $MESS["BITRIX24_THEME_ROBOTS"] = "Роботы";
+$MESS["BITRIX24_THEME_MILKY_WAY"] = "Млечный путь";
+$MESS["BITRIX24_THEME_DELICATE_SILK"] = "Нежный шёлк";
+$MESS["BITRIX24_THEME_TROPICAL_SUNSET"] = "Тропический закат";
+$MESS["BITRIX24_THEME_DARK_SILK"] = "Тёмный шёлк";
+$MESS["BITRIX24_THEME_MAGIC_SPHERES"] = "Магические сферы";
+$MESS["BITRIX24_THEME_COASTAL_DUNES"] = "Прибрежные дюны";
+$MESS["BITRIX24_THEME_RASPBERRY_DAIQUIRI"] = "Малиновый дайкири";
 ?>

@@ -1140,6 +1140,7 @@
 					var blockDisplay = new ActionButton("block_display_info", {
 						html: "&nbsp;",
 						separate: true,
+						onClick: this.onStyleShow.bind(this),
 					});
 
 					bind(blockDisplay.layout, "mouseenter", this.onBlockDisplayMouseenter.bind(this));

@@ -134,7 +134,7 @@ elseif ($action === 'REBUILD_SEARCH_CONTENT')
 		)
 	);
 }
-elseif ($action === 'SAVE_PROGRESS')
+elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 {
 	CUtil::JSPostUnescape();
 

@@ -13,6 +13,45 @@ class Option implements OptionManager
 	protected string $providerId;
 	protected string $dbOptionName;
 
+	protected int $socketTimeout = 10;
+	protected int $streamTimeout = 30;
+
+	/**
+	 * @return int
+	 */
+	public function getSocketTimeout(): int
+	{
+		return $this->socketTimeout;
+	}
+
+	/**
+	 * @param int $socketTimeout
+	 * @return Option
+	 */
+	public function setSocketTimeout(int $socketTimeout): OptionManager
+	{
+		$this->socketTimeout = $socketTimeout;
+		return $this;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getStreamTimeout(): int
+	{
+		return $this->streamTimeout;
+	}
+
+	/**
+	 * @param int $streamTimeout
+	 * @return Option
+	 */
+	public function setStreamTimeout(int $streamTimeout): OptionManager
+	{
+		$this->streamTimeout = $streamTimeout;
+		return $this;
+	}
+
 	public function __construct(string $providerType, string $providerId)
 	{
 		$this->options = null;

@@ -227,8 +227,8 @@ class ISmsCenter extends Sender\BaseConfigurable
 	private function sendHttpRequest($path, $login, $psw, array $params): Sender\Result\HttpRequestResult
 	{
 		$httpClient = new HttpClient([
-			'socketTimeout' => 10,
-			'streamTimeout' => 30,
+			"socketTimeout" => $this->socketTimeout,
+			"streamTimeout" => $this->streamTimeout,
 			'waitResponse' => true,
 		]);
 		$httpClient->setCharset('UTF-8');

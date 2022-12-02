@@ -2,9 +2,10 @@
 
 namespace Bitrix\Catalog\Controller;
 
+use Bitrix\Catalog\Component\UseStore;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Model\Event;
 use Bitrix\Main\Engine;
-use Bitrix\Catalog\Component\UseStore;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -876,7 +877,11 @@ class Product extends Controller implements EventBindInterface
 	{
 		$r = new Result();
 
-		if (!static::getGlobalUser()->CanDoOperation('catalog_read') && !static::getGlobalUser()->CanDoOperation('catalog_price') && !static::getGlobalUser()->CanDoOperation('catalog_view'))
+		if (
+			!$this->accessController->check(ActionDictionary::ACTION_CATALOG_READ)
+			&& !$this->accessController->check(ActionDictionary::ACTION_PRICE_EDIT)
+			&& !$this->accessController->check(ActionDictionary::ACTION_CATALOG_VIEW)
+		)
 		{
 			$r->addError(new Error('Access Denied', 200040300010));
 		}
@@ -920,9 +925,20 @@ class Product extends Controller implements EventBindInterface
 
 		$arIBlock = \CIBlock::GetArrayByID($iblockId);
 		if($arIBlock)
-			$bBadBlock = !\CIBlockElementRights::UserHasRightTo($iblockId, $elementId, self::IBLOCK_ELEMENT_EDIT); //access edit
+		{
+			if ($elementId > 0)
+			{
+				$bBadBlock = !\CIBlockElementRights::UserHasRightTo($iblockId, $elementId, self::IBLOCK_ELEMENT_EDIT); //access edit
+			}
+			else
+			{
+				$bBadBlock = !\CIBlockRights::UserHasRightTo($iblockId, $iblockId, self::IBLOCK_ELEMENT_EDIT);
+			}
+		}
 		else
+		{
 			$bBadBlock = true;
+		}
 
 		if($bBadBlock)
 		{

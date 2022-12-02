@@ -301,18 +301,9 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 		}
 
 		if (
-			$currentUserId != $userFields["ID"]
+			(int)$currentUserId !== $userFields["ID"]
 			&& !in_array($userFields['USER_TYPE'], ['bot', 'imconnector'])
-			&& (
-				$constantAllowed['EDIT_ALL']
-				|| (
-					$constantAllowed['EDIT_SUBORDINATE']
-					&& (count(array_diff(\CUser::getUserGroup($userFields['ID']), \CSocNetTools::getSubordinateGroups())) == 0)
-				)
-			)
-			&& self::checkIntegratorActionRestriction([
-				'userId' => $userFields["ID"]
-			])
+			&& \Bitrix\Intranet\CurrentUser::get()->isAdmin()
 		)
 		{
 			if ($userFields["ACTIVE"] != 'Y')

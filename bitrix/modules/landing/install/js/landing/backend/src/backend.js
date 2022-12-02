@@ -112,7 +112,14 @@ export class Backend
 						|| response.authorized === false
 					)
 					{
-						reject(response);
+						if (response.authorized === false)
+						{
+							top.window.location.reload();
+						}
+						else
+						{
+							reject(response);
+						}
 						return;
 					}
 
@@ -267,6 +274,7 @@ export class Backend
 						&& requestBody.action !== 'Site::publication'
 						&& requestBody.action !== 'Site::moveFolder'
 						&& requestBody.action !== 'Site::markDelete'
+						&& requestBody.action !== 'Vk::getVideoInfo'
 					)
 					{
 						const error = Type.isString(err) ? {type: 'error'} : err;

@@ -216,7 +216,7 @@ if($arParams['TYPE'] === 'list')
 	}
 
 	$arResult['BUTTONS'][] = [
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => $createUrl,
 		'HIGHLIGHT' => true,
 		'IS_DISABLED' => !$bAdd,
@@ -563,7 +563,7 @@ if ($bAdd && $arParams['TYPE'] != 'list' && $arParams['TYPE'] !== 'portrait')
 		$createUrl = CHTTP::urlAddParams($createUrl, array('mycompany' => 'y'));
 	}
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => $createUrl,
 		'TARGET' => '_blank',
 		'ICON' => 'btn-new'

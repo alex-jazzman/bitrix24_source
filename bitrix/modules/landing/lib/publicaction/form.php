@@ -36,14 +36,32 @@ class Form
 		return $publicActionResult;
 	}
 
-	public static function getCrmFields()
+	public static function getCrmFields(?array $options = null)
 	{
 		if (
 			Loader::includeModule('crm')
 			&& static::checkFormPermission()
 		)
 		{
-			$fields = EntityFieldProvider::getFieldsTree();
+			$hiddenTypes = [];
+			if ((int)($options['hideVirtual'] ?? 0))
+			{
+				$hiddenTypes[] = EntityFieldProvider::TYPE_VIRTUAL;
+			}
+			if ((int)($options['hideRequisites'] ?? 1))
+			{
+				$hiddenTypes[] = \CCrmOwnerType::Requisite;
+			}
+			if ((int)($options['hideSmartDocument'] ?? 1))
+			{
+				$hiddenTypes[] = \CCrmOwnerType::SmartInvoice;
+			}
+			if ($options['hideDocument'] ?? false)
+			{
+				$hiddenTypes[] = \CCrmOwnerType::SmartDocument;
+			}
+
+			$fields = EntityFieldProvider::getFieldsTree($hiddenTypes);
 			foreach ($fields as $key => $item)
 			{
 				if (strpos($key, 'DYNAMIC_') === 0)

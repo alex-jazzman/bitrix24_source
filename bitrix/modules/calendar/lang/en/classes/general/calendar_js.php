@@ -70,6 +70,7 @@ $MESS["EC_CATEGORY_DELETE_CONFIRM"] = "Are sure you want to delete the category?
 $MESS["EC_CATEGORY_EMPTY"] = "There are no meeting rooms.";
 $MESS["EC_COLLAPSED_MESSAGE"] = "Events";
 $MESS["EC_COLOR"] = "Other color";
+$MESS["EC_COUNTER_INVITATION"] = "Invitations";
 $MESS["EC_COUNTER_INVITATION_PLURAL_0"] = "invitation";
 $MESS["EC_COUNTER_INVITATION_PLURAL_1"] = "invitations";
 $MESS["EC_COUNTER_INVITATION_PLURAL_2"] = "invitations";

@@ -38,34 +38,40 @@ if (!empty($arResult['COUNTERS_RUNNING']['lists']['BizprocDocument']) || !empty(
 			<div class="sidebar-widget-top-title"><?= GetMessage('BPTLWGT_TITLE') ?></div>
 			<!--<div class="plus-icon"></div>-->
 		</div>
-		<div class="sidebar-widget-item-wrap">
-		<span class="task-item task-item-list">
-			<a href="<?= htmlspecialcharsbx($arParams["PATH_TO_BP_TASKS"]) ?>" class="task-item">
-				<span class="task-item-text"><?= GetMessage('BPTLWGT_RUNNING') ?></span>
-				<span class="task-item-index-wrap">
-					<span class="task-item-index"><?= $arResult['COUNTERS']['*'] < 100 ? $arResult['COUNTERS']['*'] : '99+' ?></span>
-				</span>
-			</a>
+		<div class="sidebar-widget-content">
+		<span class="sidebar-widget-item-list task-item-list">
+			<span class="sidebar-widget-item --with-separator">
+				<a href="<?= htmlspecialcharsbx($arParams["PATH_TO_BP_TASKS"]) ?>" class="task-item">
+					<span class="task-item-text"><?= GetMessage('BPTLWGT_RUNNING') ?></span>
+					<span class="task-item-index-wrap">
+						<span class="task-item-index"><?= $arResult['COUNTERS']['*'] < 100 ? $arResult['COUNTERS']['*'] : '99+' ?></span>
+					</span>
+				</a>
+			</span>
 			<? foreach ($arResult['COUNTERS'] as $module => $data):
 				if (!isset($whiteList[$module]) || empty($data['*']))
 					continue;
 				?>
-				<a href="<?= htmlspecialcharsbx($whiteList[$module]['URL']) ?>" class="task-item">
+				<span class="sidebar-widget-item">
+					<a href="<?= htmlspecialcharsbx($whiteList[$module]['URL']) ?>" class="task-item">
 					<span class="task-item-text"><?= htmlspecialcharsbx($whiteList[$module]['LABEL']) ?></span>
-				<span class="task-item-index-wrap">
-					<span class="task-item-index"><?= $arResult['COUNTERS'][$module]['*'] < 100 ? $arResult['COUNTERS'][$module]['*'] : '99+' ?></span>
-				</span>
+					<span class="task-item-index-wrap">
+						<span class="task-item-index"><?= $arResult['COUNTERS'][$module]['*'] < 100 ? $arResult['COUNTERS'][$module]['*'] : '99+' ?></span>
+					</span>
 				</a>
+				</span>
 			<? endforeach;?>
 		</span>
-			<? if (!empty($arResult['COUNTERS_RUNNING']['lists']['BizprocDocument'])): ?>
+		<? if (!empty($arResult['COUNTERS_RUNNING']['lists']['BizprocDocument'])): ?>
+			<div class="sidebar-widget-item --with-separator">
 				<a class="task-item" href="<?= htmlspecialcharsbx($arParams["PATH_TO_MY_PROCESSES"]) ?>">
 					<span class="task-item-text"><?= GetMessage('BPTLWGT_MY_PROCESSES_1') ?></span>
-			<span class="task-item-index-wrap">
-				<span class="task-item-index"><?= $arResult['COUNTERS_RUNNING']['lists']['BizprocDocument'] < 100 ? $arResult['COUNTERS_RUNNING']['lists']['BizprocDocument'] : '99+' ?></span>
-			</span>
+					<span class="task-item-index-wrap">
+					<span class="task-item-index"><?= $arResult['COUNTERS_RUNNING']['lists']['BizprocDocument'] < 100 ? $arResult['COUNTERS_RUNNING']['lists']['BizprocDocument'] : '99+' ?></span>
+				</span>
 				</a>
-			<? endif?>
+			</div>
+		<? endif?>
 		</div>
 	</div>
 	<?

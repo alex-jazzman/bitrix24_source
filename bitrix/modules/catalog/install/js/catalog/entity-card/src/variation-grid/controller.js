@@ -70,7 +70,6 @@ export default class VariationGridController extends BX.UI.EntityEditorControlle
 		super.rollback();
 		this.checkEditorToolbar();
 		this.unsubscribeGridEvents();
-
 		BX.Main.gridManager.destroy(this.getGridId());
 	}
 
@@ -130,7 +129,6 @@ export default class VariationGridController extends BX.UI.EntityEditorControlle
 		}
 
 		EventEmitter.unsubscribeAll('BX.Main.grid:paramsUpdated');
-		this.getGrid()?.destroy();
 	}
 
 	ajaxSuccessHandler(event: BaseEvent)

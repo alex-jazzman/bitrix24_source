@@ -1404,9 +1404,9 @@ body table.bx-edit-table td.bx-field-name {
 	width: 20%;
 	font-size: 14px;
 	line-height: 15px;
-	font-weight: var(--ui-font-weight-bold);
+	font-weight: var(--ui-font-weight-semi-bold);
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #555555;
+	color: #333;
 	vertical-align: middle;
 }
 
@@ -3699,7 +3699,7 @@ body .tm-report-popup-people {
 	position: relative;
 	padding: 0;
 	margin: 0 0 10px 0;
-	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	background: #dbecf4;
 	border-radius: var(--ui-border-radius-xs);
@@ -3902,7 +3902,9 @@ body .tm-report-popup-desc {
 	position: relative;
 	padding: 0;
 	margin: 10px 0;
-	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-md, 12px);
+	line-height: var(--ui-font-line-height-md, 15px);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 

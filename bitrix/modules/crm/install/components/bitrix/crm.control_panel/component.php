@@ -21,6 +21,9 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\SalesCenter;
 use Bitrix\SalesCenter\Integration\SaleManager;
+use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -57,8 +60,10 @@ $arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath('PATH_TO_CONTACT_DETAILS', $
 $arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath('PATH_TO_DEAL_LIST', isset($arParams['PATH_TO_DEAL_LIST']) ? $arParams['PATH_TO_DEAL_LIST'] : '', '#SITE_DIR#crm/deal/list/');
 $arParams['PATH_TO_DEAL_EDIT'] = (isset($arParams['PATH_TO_DEAL_EDIT']) && $arParams['PATH_TO_DEAL_EDIT'] !== '') ? $arParams['PATH_TO_DEAL_EDIT'] : '#SITE_DIR#crm/deal/edit/#deal_id#/';
 $arParams['PATH_TO_DEAL_KANBAN'] = (isset($arParams['PATH_TO_DEAL_KANBAN']) && $arParams['PATH_TO_DEAL_KANBAN'] !== '') ? $arParams['PATH_TO_DEAL_KANBAN'] : '#SITE_DIR#crm/deal/kanban/';
+$arParams['PATH_TO_DEAL_ACTIVITY'] = (isset($arParams['PATH_TO_DEAL_ACTIVITY']) && $arParams['PATH_TO_DEAL_ACTIVITY'] !== '') ? $arParams['PATH_TO_DEAL_ACTIVITY'] : '#SITE_DIR#crm/deal/activity/';
 $arParams['PATH_TO_DEAL_CALENDAR'] = (isset($arParams['PATH_TO_DEAL_CALENDAR']) && $arParams['PATH_TO_DEAL_CALENDAR'] !== '') ? $arParams['PATH_TO_DEAL_CALENDAR'] : '#SITE_DIR#crm/deal/calendar/';
 $arParams['PATH_TO_DEAL_KANBANCATEGORY'] = (isset($arParams['PATH_TO_DEAL_KANBANCATEGORY']) && $arParams['PATH_TO_DEAL_KANBANCATEGORY'] !== '') ? $arParams['PATH_TO_DEAL_KANBANCATEGORY'] : '#SITE_DIR#crm/deal/kanban/category/#category_id#/';
+$arParams['PATH_TO_DEAL_ACTIVITYCATEGORY'] = (isset($arParams['PATH_TO_DEAL_ACTIVITYCATEGORY']) && $arParams['PATH_TO_DEAL_ACTIVITYCATEGORY'] !== '') ? $arParams['PATH_TO_DEAL_ACTIVITYCATEGORY'] : '#SITE_DIR#crm/deal/activity/category/#category_id#/';
 $arParams['PATH_TO_DEAL_CALENDARCATEGORY'] = (isset($arParams['PATH_TO_DEAL_CALENDARCATEGORY']) && $arParams['PATH_TO_DEAL_CALENDARCATEGORY'] !== '') ? $arParams['PATH_TO_DEAL_CALENDARCATEGORY'] : '#SITE_DIR#crm/deal/calendar/category/#category_id#/';
 $arParams['PATH_TO_DEAL_CATEGORY'] = (isset($arParams['PATH_TO_DEAL_CATEGORY']) && $arParams['PATH_TO_DEAL_CATEGORY'] !== '') ? $arParams['PATH_TO_DEAL_CATEGORY'] : '#SITE_DIR#crm/deal/category/#category_id#/';
 $arParams['PATH_TO_DEAL_DETAILS'] = CrmCheckPath('PATH_TO_DEAL_DETAILS', $arParams['PATH_TO_DEAL_DETAILS'], '#SITE_DIR#crm/deal/details/#deal_id#/');
@@ -476,7 +481,7 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 		{
 			if (
 				CIBlockSectionRights::UserHasRightTo($catalogId, 0, 'section_element_bind')
-				&& \Bitrix\Main\Engine\CurrentUser::get()->CanDoOperation('catalog_price')
+				&& AccessController::getCurrent()->check(ActionDictionary::ACTION_PRICE_EDIT)
 			)
 			{
 				$productLimit = \Bitrix\Catalog\Config\State::getExceedingProductLimit($catalogId);
@@ -552,7 +557,6 @@ if (
 
 if (
 	\Bitrix\Main\Loader::includeModule('catalog')
-	&& \Bitrix\Main\Engine\CurrentUser::get()->canDoOperation('catalog_read')
 )
 {
 	\Bitrix\Main\UI\Extension::load([
@@ -589,8 +593,52 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'
 	$stdItems['PERMISSIONS'] = [
 		'ID' => 'PERMISSIONS',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_PERMISSIONS'),
+	];
+
+	$stdItems['CRM_PERMISSIONS'] = [
+		'ID' => 'CRM_PERMISSIONS',
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
 	];
+}
+
+if (Loader::includeModule('catalog'))
+{
+	$catalogRights = null;
+	if (Catalog\Config\Feature::isAccessControllerCheckingEnabled())
+	{
+		$catalogRightsUrl = '/shop/settings/permissions/';
+		$catalogRights = [
+			'ID' => 'CATALOG_PERMISSIONS',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS'),
+			'URL' => $catalogRightsUrl,
+			'ON_CLICK' => 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($catalogRightsUrl) . '"); return false;'
+		];
+	}
+	else
+	{
+		$helpLink = Catalog\Config\Feature::getAccessControllerHelpLink();
+		if (!empty($helpLink))
+		{
+			$catalogRights = [
+				'ID' => 'CATALOG_PERMISSIONS',
+				'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS'),
+				'URL' => '',
+				'ON_CLICK' => $helpLink['LINK'],
+				'IS_LOCKED' => true,
+			];
+		}
+	}
+
+	if ($catalogRights)
+	{
+		$stdItems['PERMISSIONS'] ??= [
+			'ID' => 'PERMISSIONS',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_PERMISSIONS'),
+		];
+
+		$stdItems['CATALOG_PERMISSIONS'] = $catalogRights;
+	}
 }
 
 if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
@@ -666,7 +714,7 @@ if(IsModuleInstalled('report'))
 	$stdItems['REPORT'] = array(
 		'ID' => 'REPORT',
 		'MENU_ID' => 'menu_crm_report',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_REPORT_CONSTRUCTOR'),
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_REPORT_CONSTRUCTOR2'),
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REPORT_LIST']),
 		'ICON' => 'report',
 		'IS_DISABLED' => true

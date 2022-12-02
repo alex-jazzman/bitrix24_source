@@ -273,8 +273,8 @@ class SmscUa extends Sender\BaseConfigurable
 	private function sendHttpRequest($method, $path, array $params): Sender\Result\HttpRequestResult
 	{
 		$httpClient = new HttpClient([
-			"socketTimeout" => 10,
-			"streamTimeout" => 30,
+			"socketTimeout" => $this->socketTimeout,
+			"streamTimeout" => $this->streamTimeout,
 			"waitResponse" => true,
 		]);
 		$httpClient->setCharset('UTF-8');

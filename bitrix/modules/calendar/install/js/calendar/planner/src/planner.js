@@ -361,13 +361,14 @@ export class Planner extends EventEmitter
 			}
 		}
 
-		if ((this.shownScaleTimeTo - this.shownScaleTimeFrom) % 2 !== 0)
+		if (this.shownScaleTimeFrom % 2 !== 0)
 		{
-			this.shownScaleTimeTo++;
-			if (this.shownScaleTimeTo > 24)
-			{
-				this.shownScaleTimeFrom--;
-			}
+			this.shownScaleTimeFrom++;
+		}
+
+		if (this.shownScaleTimeTo % 2 !== 0)
+		{
+			this.shownScaleTimeTo--;
 		}
 
 		if (fromTime === false && toTime !== false)
@@ -747,6 +748,10 @@ export class Planner extends EventEmitter
 			{
 				toTimestamp = this.scaleData[pivotScaleDatumOfDayIndex].timestamp / 1000;
 				fromTimestamp = toTimestamp - 3600 * extendCount;
+				if (new Date(fromTimestamp * 1000).getHours() !== extendedTimeFrom)
+				{
+					return;
+				}
 			}
 			else
 			{
@@ -1355,12 +1360,15 @@ export class Planner extends EventEmitter
 		}
 		e.preventDefault();
 		const isRightClick = e.which === 3;
+		if (isRightClick)
+		{
+			return;
+		}
 
 		this.clickMousePos = this.getMousePos(e);
 		let
 			nodeTarget = e.target || e.srcElement,
 			accuracyMouse = 5;
-
 
 		if (this.selectMode &&
 			Dom.hasClass(nodeTarget, 'calendar-planner-selector-control-row'))
@@ -1404,19 +1412,13 @@ export class Planner extends EventEmitter
 				}
 				const selectorTimeLength = this.currentToDate - this.currentFromDate;
 				let selectedDateTo = new Date(selectedDateFrom.getTime() + selectorTimeLength);
-
-				if (isRightClick)
-				{
-					selectedDateFrom = new Date(selectedDateFrom.getTime() - selectorTimeLength);
-					selectedDateTo = new Date(selectedDateTo.getTime() - selectorTimeLength);
-				}
 				this.currentFromDate = selectedDateFrom;
 				this.currentToDate = selectedDateTo;
 
 				this.selector.transit({
 					toX: this.getPosByDate(selectedDateFrom),
-					leftDate: selectedDateFrom,
-					rightDate: selectedDateTo
+					leftDate: this.currentFromDate,
+					rightDate: this.currentToDate
 				});
 			}
 		}
@@ -2034,7 +2036,11 @@ export class Planner extends EventEmitter
 			{
 				return  -1;
 			}
-			return 0;
+			if (parseInt(a.id) < parseInt(b.id))
+			{
+				return -1;
+			}
+			return 1;
 		});
 
 		if (this.selectedEntriesWrap)

@@ -346,7 +346,11 @@ export class SectionInterface extends EventEmitter
 				&& calendarContext
 				&& calendarContext.util.userIsOwner()
 				&& !section.isArchive()
-				&& (section.isExchange() && !calendarContext.util.config.bExchange)
+				&& (
+					!section.isExchange()
+					||
+					(!calendarContext.util.config.bExchange && section.isExchange())
+				)
 			)
 			{
 				sectionListWrap.querySelector('.calendar-list-slider-widget-content-block')
@@ -957,7 +961,7 @@ export class SectionInterface extends EventEmitter
 			}
 		}
 
-		if (section.isPseudo())
+		if (section.isPseudo() && section.taskSectionBelongToUser())
 		{
 			menuItems.push({
 				text: Loc.getMessage('EC_SEC_EDIT'),

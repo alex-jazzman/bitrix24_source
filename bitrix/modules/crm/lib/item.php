@@ -150,9 +150,11 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	public const FIELD_NAME_CREATED_TIME = 'CREATED_TIME';
 	public const FIELD_NAME_UPDATED_TIME = 'UPDATED_TIME';
 	public const FIELD_NAME_MOVED_TIME = 'MOVED_TIME';
+	public const FIELD_NAME_LAST_ACTIVITY_TIME = 'LAST_ACTIVITY_TIME';
 	public const FIELD_NAME_CREATED_BY = 'CREATED_BY';
 	public const FIELD_NAME_UPDATED_BY = 'UPDATED_BY';
 	public const FIELD_NAME_MOVED_BY = 'MOVED_BY';
+	public const FIELD_NAME_LAST_ACTIVITY_BY = 'LAST_ACTIVITY_BY';
 	public const FIELD_NAME_ASSIGNED = 'ASSIGNED_BY_ID';
 	public const FIELD_NAME_OPENED = 'OPENED';
 	public const FIELD_NAME_BEGIN_DATE = 'BEGINDATE';
@@ -1177,6 +1179,27 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			{
 				$originalProduct->set($fieldName, $value);
 			}
+
+			$productReservation = $product->getProductRowReservation();
+			$originalProductReservation = $originalProduct->getProductRowReservation();
+			if ($productReservation && $originalProductReservation)
+			{
+				$data = $productReservation->collectValues(Values::CURRENT, FieldTypeMask::SCALAR);
+				// can't change primary key
+				unset($data['ID']);
+
+				foreach ($data as $fieldName => $value)
+				{
+					$originalProductReservation->set($fieldName, $value);
+				}
+
+				$originalProductReservation->setProductRow($originalProduct);
+			}
+			elseif ($productReservation)
+			{
+				$productReservation->setProductRow($originalProduct);
+				$originalProduct->setProductRowReservation($productReservation);
+			}
 		}
 		else
 		{
@@ -1244,8 +1267,33 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			return false;
 		}
 
+		$productRows = $this->getProductRows();
+
 		/** @noinspection PhpParamsInspection */
-		return $this->isCollectionChanged($this->getProductRows());
+		$isProductCollectionChanged = $this->isCollectionChanged($productRows);
+		if ($isProductCollectionChanged)
+		{
+			return true;
+		}
+
+		/** @var ProductRow $productRow */
+		foreach ($productRows as $productRow)
+		{
+			$productReservation = $productRow->getProductRowReservation();
+			if ($productReservation)
+			{
+				$scalarFields = $productReservation->entity->getScalarFields();
+				foreach ($scalarFields as $field)
+				{
+					if ($productReservation->isChanged($field->getName()))
+					{
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 	//endregion
 

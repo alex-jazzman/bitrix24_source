@@ -918,6 +918,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    _this.signedParameters = settings.signedParameters;
 	    _this.isConductLocked = settings.isConductLocked;
 	    _this.masterSliderUrl = settings.masterSliderUrl;
+	    _this.inventoryManagementSource = settings.inventoryManagementSource;
 	    _this.isTabAnalyticsSent = false;
 
 	    _this.setSliderText();
@@ -1217,7 +1218,8 @@ this.BX.Catalog = this.BX.Catalog || {};
 	          if (form) {
 	            form.addUrlParams({
 	              documentType: _this4.documentType,
-	              isNewDocument: _this4.entityId <= 0 ? 'Y' : 'N'
+	              isNewDocument: _this4.entityId <= 0 ? 'Y' : 'N',
+	              inventoryManagementSource: _this4.inventoryManagementSource
 	            });
 	          }
 	        }
@@ -1235,7 +1237,8 @@ this.BX.Catalog = this.BX.Catalog || {};
 	          _this5.sendAnalyticsData({
 	            tab: 'products',
 	            isNewDocument: _this5.entityId <= 0 ? 'Y' : 'N',
-	            documentType: _this5.documentType
+	            documentType: _this5.documentType,
+	            inventoryManagementSource: _this5.inventoryManagementSource
 	          });
 
 	          _this5.isTabAnalyticsSent = true;
@@ -1277,13 +1280,15 @@ this.BX.Catalog = this.BX.Catalog || {};
 	          }
 
 	          event.data[0]._ajaxForms['CONDUCT'].addUrlParams({
-	            documentType: _this6.documentType
+	            documentType: _this6.documentType,
+	            inventoryManagementSource: _this6.inventoryManagementSource
 	          });
 	        }
 
 	        if (((_event$data$3 = event.data[1]) === null || _event$data$3 === void 0 ? void 0 : _event$data$3.actionId) === 'CANCEL_CONDUCT') {
 	          event.data[0]._ajaxForms['CANCEL_CONDUCT'].addUrlParams({
-	            documentType: _this6.documentType
+	            documentType: _this6.documentType,
+	            inventoryManagementSource: _this6.inventoryManagementSource
 	          });
 	        }
 	      });

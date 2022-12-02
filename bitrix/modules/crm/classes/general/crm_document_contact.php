@@ -182,6 +182,7 @@ class CCrmDocumentContact extends CCrmDocument implements IBPWorkflowDocument
 			'COMMENTS' => array(
 				'Name' => GetMessage('CRM_FIELD_COMMENTS'),
 				'Type' => 'text',
+				'ValueContentType' => 'html',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,

@@ -1739,7 +1739,7 @@ class CIBlockElement extends CAllIBlockElement
 				}
 			}
 
-			Iblock\ElementTable::getEntity()->cleanCache();
+			Iblock\ElementTable::cleanCache();
 
 			$Result = true;
 

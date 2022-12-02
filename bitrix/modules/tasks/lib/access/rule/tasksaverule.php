@@ -78,23 +78,17 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		}
 
 		// user can assign task to this man
-		foreach ($this->newTask->getMembers(RoleDictionary::ROLE_RESPONSIBLE) as $member)
+		if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_RESPONSIBLE, $this->newTask))
 		{
-			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_RESPONSIBLE, $member, $this->newTask))
-			{
-				$this->controller->addError(static::class, 'Access to assign responsible denied');
-				return false;
-			}
+			$this->controller->addError(static::class, 'Access to assign responsible denied');
+			return false;
 		}
 
 		// user can assign task to co-executors
-		foreach ($this->newTask->getMembers(RoleDictionary::ROLE_ACCOMPLICE) as $member)
+		if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_ACCOMPLICE, $this->newTask))
 		{
-			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_ACCOMPLICE, $member, $this->newTask))
-			{
-				$this->controller->addError(static::class, 'Access to assign accomplice denied');
-				return false;
-			}
+			$this->controller->addError(static::class, 'Access to assign accomplice denied');
+			return false;
 		}
 
 		// user can change director (if director has been changed)

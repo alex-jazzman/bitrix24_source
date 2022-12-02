@@ -19027,15 +19027,18 @@ BX.IM.Desktop = function(BXIM, params)
 		{
 			if (command == 'user_counter' && params[BX.message('SITE_ID')])
 			{
-				var countersToCheck = ['**', 'tasks_total', 'calendar'];
+				var countersToCheck = [/^\*\*/, '^tasks_total$', '^calendar$'];
 				var countersToUpdate = {};
 
-				countersToCheck.forEach(function(counter) {
-					if (params[BX.message('SITE_ID')].hasOwnProperty(counter))
-					{
-						countersToUpdate[counter] = parseInt(params[BX.message('SITE_ID')][counter]);
-					}
-				});
+				for (const counterCode in params[BX.message('SITE_ID')])
+				{
+					countersToCheck.map(pattern => {
+						if (counterCode.match(pattern))
+						{
+							countersToUpdate[counterCode] = parseInt(params[BX.message('SITE_ID')][counterCode]);
+						}
+					});
+				}
 
 				if (Object.keys(countersToUpdate).length > 0)
 				{

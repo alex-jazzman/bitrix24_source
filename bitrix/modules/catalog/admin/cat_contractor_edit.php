@@ -6,15 +6,41 @@ global $DB;
 global $USER;
 
 use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+
+/**
+ * @var CAdminPage $adminPage
+ * @var CAdminSidePanelHelper $adminSidePanelHelper
+ */
 
 $selfFolderUrl = $adminPage->getSelfFolderUrl();
 $listUrl = $selfFolderUrl."cat_contractor_list.php?lang=".LANGUAGE_ID;
 $listUrl = $adminSidePanelHelper->editUrlToPublicPage($listUrl);
 
-if (!($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_store')))
-	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 CModule::IncludeModule("catalog");
-$bReadOnly = !$USER->CanDoOperation('catalog_store');
+
+$publicMode = $adminPage->publicMode || $adminSidePanelHelper->isPublicSidePanel();
+$accessController = AccessController::getCurrent();
+
+if ($publicMode)
+{
+	$hasAccess = $accessController->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS);
+	$bReadOnly = false;
+}
+else
+{
+	$hasAccess =
+		$accessController->check(ActionDictionary::ACTION_CATALOG_READ)
+		|| $accessController->check(ActionDictionary::ACTION_STORE_VIEW)
+	;
+	$bReadOnly = !$accessController->check(ActionDictionary::ACTION_STORE_VIEW);
+}
+
+if (!$hasAccess)
+{
+	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if ($ex = $APPLICATION->GetException())
 {

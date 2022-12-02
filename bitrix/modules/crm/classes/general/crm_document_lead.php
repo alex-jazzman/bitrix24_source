@@ -130,6 +130,7 @@ class CCrmDocumentLead extends CCrmDocument
 			'COMMENTS' => [
 				'Name' => GetMessage('CRM_FIELD_COMMENTS'),
 				'Type' => 'text',
+				'ValueContentType' => 'html',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,

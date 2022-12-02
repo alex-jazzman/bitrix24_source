@@ -1037,7 +1037,7 @@
 				|| this.isGroupCalendar();
 		},
 		
-		isCountersEnabled: function()
+		getCounters: function()
 		{
 			return this.config.counters;
 		},

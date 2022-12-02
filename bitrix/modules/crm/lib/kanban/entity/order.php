@@ -48,6 +48,17 @@ class Order extends Entity
 		return OrderStatus::NAME;
 	}
 
+	public function getStagesList(): array
+	{
+		$orderStatuses = OrderStatus::getListInCrmFormat(true);
+		foreach($orderStatuses as &$status)
+		{
+			$status['SEMANTICS'] = OrderStatus::getSemanticID($status['STATUS_ID']);
+		}
+
+		return array_merge(parent::getStagesList(), $orderStatuses);
+	}
+
 	public function getFilterPresets(): array
 	{
 		$user = $this->getCurrentUserInfo();
@@ -382,6 +393,7 @@ class Order extends Entity
 		$item['USER'] = $item['USER_ID'];
 
 		$item = parent::prepareItemCommonFields($item);
+		$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['PRICE'], $item['CURRENCY_ID']);
 
 		return $item;
 	}
@@ -400,7 +412,7 @@ class Order extends Entity
 		;
 		$result['USER'] =
 			(Field::createByType('user', 'USER'))
-				->setDisplayParams([
+				->addDisplayParams([
 					'SHOW_URL_TEMPLATE' => '/shop/settings/sale_buyers_profile/?USER_ID=#user_id#&lang=' . LANGUAGE_ID
 				])
 		;
@@ -496,9 +508,10 @@ class Order extends Entity
 	 * @param array $ids
 	 * @param bool $isIgnore
 	 * @param \CCrmPerms|null $permissions
+	 * @param array $params
 	 * @throws Exception
 	 */
-	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null): void
+	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null, array $params = []): void
 	{
 		foreach ($ids as $id)
 		{

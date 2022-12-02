@@ -87,6 +87,11 @@ export default class Scheduled extends CompatibleItem
 		return deadline && History.isCounterEnabled(deadline);
 	}
 
+	isIncomingChannel()
+	{
+		return false;
+	}
+
 	getSourceId()
 	{
 		return BX.prop.getInteger(this.getAssociatedEntityData(), "ID", 0);

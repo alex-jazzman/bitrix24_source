@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm;
+use Bitrix\Crm\PhaseSemantics;
 
 class Filter extends \Bitrix\Main\Filter\Filter
 {
@@ -64,6 +65,44 @@ class Filter extends \Bitrix\Main\Filter\Filter
 			{
 				$factory->getDataClass();
 			}
+		}
+	}
+
+	public static function applyStageSemanticFilter(array &$filter, array $requestFilter, string $fieldStageSemantic): void
+	{
+		if (empty($requestFilter[$fieldStageSemantic]))
+		{
+			return;
+		}
+
+		$semanticFilter = [];
+		if (in_array(PhaseSemantics::PROCESS, $requestFilter[$fieldStageSemantic], true))
+		{
+			$semanticFilter[] = [
+				'STAGE.SEMANTICS' => '',
+			];
+			$semanticFilter[] = [
+				'STAGE.SEMANTICS' => PhaseSemantics::PROCESS,
+			];
+		}
+		if (in_array(PhaseSemantics::SUCCESS, $requestFilter[$fieldStageSemantic], true))
+		{
+			$semanticFilter[] = [
+				'STAGE.SEMANTICS' => PhaseSemantics::SUCCESS,
+			];
+		}
+		if (in_array(PhaseSemantics::FAILURE, $requestFilter[$fieldStageSemantic], true))
+		{
+			$semanticFilter[] = [
+				'STAGE.SEMANTICS' => PhaseSemantics::FAILURE,
+			];
+		}
+
+		if (!empty($semanticFilter))
+		{
+			$filter[] = array_merge([
+				'LOGIC' => 'OR',
+			], $semanticFilter);
 		}
 	}
 }

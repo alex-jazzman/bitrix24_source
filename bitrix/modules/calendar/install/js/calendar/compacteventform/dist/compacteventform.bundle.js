@@ -427,8 +427,8 @@ this.BX = this.BX || {};
 	        }));
 	      }
 
-	      if (!this.isNewEntry() && this.canDo('delete') && this.entry.getCurrentStatus() === 'H' && !this.checkLocationView()) {
-	        if (!this.entry.isMeeting() || !this.entry.getCurrentStatus() || this.entry.getCurrentStatus() === 'H') {
+	      if (!this.isNewEntry() && this.canDo('delete') && !this.checkLocationView()) {
+	        if (!this.entry.isMeeting() || !this.entry.getCurrentStatus() || this.entry.getCurrentStatus() === 'H' || this.entry.data['CREATED_BY'] === this.entry.data['MEETING_HOST']) {
 	          buttons.push(new BX.UI.Button({
 	            text: main_core.Loc.getMessage('CALENDAR_EVENT_DO_DELETE'),
 	            className: "ui-btn ui-btn-link",
@@ -1498,10 +1498,8 @@ this.BX = this.BX || {};
 	  }
 
 	  outsideMouseDownClose(event) {
-	    if (this.checkTopSlider()) {
-	      let target = event.target || event.srcElement;
-	      this.outsideMouseDown = !target.closest('div.popup-window');
-	    }
+	    let target = event.target || event.srcElement;
+	    this.outsideMouseDown = !target.closest('div.popup-window');
 	  }
 
 	  checkTopSlider() {

@@ -30,6 +30,15 @@ export class BaseField extends EventEmitter
 		`;
 	}
 
+	static createError(text: string): HTMLDivElement
+	{
+		return Tag.render`
+			<div class="landing-ui-field-description landing-ui-error">
+				<span class="fa fa-info-circle"> </span> ${text}
+			</div>
+		`;
+	}
+
 	static currentField: ?BaseField = null;
 
 	constructor(options: {[key: string]: any} = {})

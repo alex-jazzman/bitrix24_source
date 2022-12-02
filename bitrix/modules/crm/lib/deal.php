@@ -378,6 +378,10 @@ class DealTable extends Main\ORM\Data\DataManager
 
 			$fieldRepository->getMovedTime(),
 
+			$fieldRepository->getLastActivityBy(),
+
+			$fieldRepository->getLastActivityTime(),
+
 			(new ExpressionField(
 				'IS_WORK',
 				'CASE WHEN %s = \'P\' THEN 1 ELSE 0 END',

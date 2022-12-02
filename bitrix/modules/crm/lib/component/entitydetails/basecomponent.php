@@ -10,6 +10,7 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -204,7 +205,7 @@ abstract class BaseComponent extends Crm\Component\Base
 
 			$multifields[$typeID][$fields['ID']] = [
 				'VALUE' => $fields['VALUE'] ?? '',
-				'VALUE_TYPE' => $fields['VALUE_TYPE'] ?? ''
+				'VALUE_TYPE' => $fields['VALUE_TYPE'] ?? '',
 			];
 		}
 
@@ -218,7 +219,7 @@ abstract class BaseComponent extends Crm\Component\Base
 			array(
 				'ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeID),
 				'ELEMENT_ID' => $entityID,
-				'TYPE_ID' => $typeID
+				'TYPE_ID' => $typeID,
 			)
 		);
 
@@ -259,7 +260,7 @@ abstract class BaseComponent extends Crm\Component\Base
 					'VALUE_TYPE' => $valueType,
 					'VALUE_FORMATTED' => $formattedValue,
 					'COMPLEX_ID' => $multiFieldComplexID,
-					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($multiFieldComplexID, false)
+					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($multiFieldComplexID, false),
 				);
 			}
 			else
@@ -319,9 +320,10 @@ abstract class BaseComponent extends Crm\Component\Base
 	protected function showErrors()
 	{
 		$messages = array();
+		/** @var Error $error */
 		foreach($this->errorCollection as $error)
 		{
-			$message = $this->getErrorMessage($error);
+			$message = $error->getMessage();
 			if($message !== '')
 			{
 				$messages[] = $message;
@@ -557,7 +559,7 @@ abstract class BaseComponent extends Crm\Component\Base
 
 	protected function getEntitySelectorContext(): string
 	{
-		return $this->getComponentName();
+		return EntitySelector::CONTEXT;
 	}
 
 	/**

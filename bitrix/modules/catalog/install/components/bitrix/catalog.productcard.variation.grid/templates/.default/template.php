@@ -112,6 +112,7 @@ $isProduct = $arParams['VARIATION_ID_LIST'] === null;
 			'gridId' => $component->getGridId(),
 			'isGridReload' => $component->isAjaxGridAction(),
 			'isNew' => $component->isNewProduct(),
+			'isReadOnly' => $arResult['IS_READ_ONLY'],
 			'isSimple' => $component->isSimpleProduct(),
 			'hiddenProperties' => $arResult['GRID']['HIDDEN_PROPERTIES'],
 			'modifyPropertyLink' => $arResult['PROPERTY_MODIFY_LINK'],

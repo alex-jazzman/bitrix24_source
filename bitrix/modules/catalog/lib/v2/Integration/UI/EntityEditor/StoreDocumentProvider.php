@@ -2,6 +2,8 @@
 
 namespace Bitrix\Catalog\v2\Integration\UI\EntityEditor;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\ContractorTable;
 use Bitrix\Catalog\StoreDocumentFileTable;
 use Bitrix\Catalog\StoreDocumentTable;
@@ -556,12 +558,15 @@ class StoreDocumentProvider extends BaseProvider
 			$document['DOCUMENT_FILES'] = $this->getDocumentFiles($document);
 		}
 
-		$dateFields = ['DATE_DOCUMENT', 'ITEMS_ORDER_DATE', 'ITEMS_RECEIVED_DATE'];
-		foreach ($dateFields as $dateField)
+		if ($this->shouldPrepareDateFields())
 		{
-			if (isset($document[$dateField]) && $document[$dateField] instanceof Main\Type\DateTime)
+			$dateFields = ['DATE_DOCUMENT', 'ITEMS_ORDER_DATE', 'ITEMS_RECEIVED_DATE'];
+			foreach ($dateFields as $dateField)
 			{
-				$document[$dateField] = new Main\Type\Date($document[$dateField]);
+				if (isset($document[$dateField]) && $document[$dateField] instanceof Main\Type\DateTime)
+				{
+					$document[$dateField] = new Main\Type\Date($document[$dateField]);
+				}
 			}
 		}
 
@@ -754,7 +759,26 @@ class StoreDocumentProvider extends BaseProvider
 
 	public function isReadOnly(): bool
 	{
-		return isset($this->document['STATUS']) && $this->document['STATUS'] === 'Y';
+		/** @var AccessController $accessController */
+		$accessController = AccessController::getCurrent();
+
+		return
+			!$accessController->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+				$this->getDocumentType()
+			)
+			|| (
+				isset($this->document['STATUS']) && $this->document['STATUS'] === 'Y'
+			)
+		;
+	}
+
+	public function isEntityConfigEditable(): bool
+	{
+		/** @var AccessController $accessController */
+		$accessController = AccessController::getCurrent();
+
+		return AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_CARD_EDIT);
 	}
 
 	/**
@@ -817,5 +841,10 @@ class StoreDocumentProvider extends BaseProvider
 			default:
 				return Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_' . $fieldName);
 		}
+	}
+
+	protected function shouldPrepareDateFields(): bool
+	{
+		return true;
 	}
 }

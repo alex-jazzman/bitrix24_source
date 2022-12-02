@@ -336,6 +336,13 @@ class CCrmBizProcHelper
 
 		return $ids;
 	}
+
+	public static function isActiveDebugEntity(int $entityTypeId, int $entityId): bool
+	{
+		$ids = static::getActiveDebugEntityIds($entityTypeId);
+
+		return in_array($entityId, $ids, true);
+	}
 }
 
 class CCrmBizProcEventType

@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -396,10 +397,12 @@ class CompanyDataProvider extends EntityDataProvider
 			$referenceClass = ($factory ? $factory->getDataClass() : null);
 
 			return $this->getUserEntitySelectorParams(
-				strtolower('crm_company_filter_' . $fieldID),
+				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
 					'referenceClass' => $referenceClass,
+					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
+					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
 				]
 			);
 		}
@@ -482,5 +485,16 @@ class CompanyDataProvider extends EntityDataProvider
 		}
 
 		return $result;
+	}
+
+	public function prepareListFilter(array &$filter, array $requestFilter): void
+	{
+		$listFilter = new ListFilter($this->getEntityTypeId(), $this->prepareFields());
+		$listFilter->prepareListFilter($filter, $requestFilter);
+	}
+
+	protected function getEntityTypeId(): int
+	{
+		return \CCrmOwnerType::Company;
 	}
 }

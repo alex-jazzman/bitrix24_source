@@ -4,6 +4,7 @@
 namespace Bitrix\Catalog\Controller;
 
 
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\MeasureTable;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
@@ -188,13 +189,11 @@ final class Measure extends Controller implements EventBindInterface
 
 	protected function checkModifyPermissionEntity()
 	{
-		$r = $this->checkReadPermissionEntity();
-		if ($r->isSuccess())
+		$r = new Result();
+
+		if (!$this->accessController->check(ActionDictionary::ACTION_STORE_VIEW))
 		{
-			if (!static::getGlobalUser()->CanDoOperation('catalog_store'))
-			{
-				$r->addError(new Error('Access Denied', 200040300020));
-			}
+			$r->addError(new Error('Access Denied', 200040300020));
 		}
 
 		return $r;
@@ -204,7 +203,12 @@ final class Measure extends Controller implements EventBindInterface
 	{
 		$r = new Result();
 
-		if (!(static::getGlobalUser()->CanDoOperation('catalog_read') || static::getGlobalUser()->CanDoOperation('catalog_store')))
+		if (
+			!(
+				$this->accessController->check(ActionDictionary::ACTION_CATALOG_READ)
+				|| $this->accessController->check(ActionDictionary::ACTION_STORE_VIEW)
+			)
+		)
 		{
 			$r->addError(new Error('Access Denied', 200040300010));
 		}

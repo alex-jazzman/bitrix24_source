@@ -5,6 +5,8 @@ namespace Bitrix\Mobile\Integration\Catalog\StoreDocumentList;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Mobile\Integration\Catalog\EntityEditor\StoreDocumentProvider;
 use Bitrix\Catalog\EO_StoreDocument;
+use Bitrix\Mobile\InventoryControl\Dto\DocumentListItem;
+use Bitrix\Mobile\InventoryControl\Dto\DocumentListItemData;
 
 class Item
 {
@@ -23,7 +25,7 @@ class Item
 		$this->document = $document;
 	}
 
-	public function prepareItem(): array
+	public function prepareItem(): DocumentListItem
 	{
 		$document = $this->document;
 
@@ -52,17 +54,14 @@ class Item
 		$id = (int)$document['ID'];
 		$docType = $document['DOC_TYPE'];
 
-		return [
+		return $this->buildItemDto([
 			'id' => $id,
-			'data' => [
-				'id' => $id,
-				'docType' => $docType,
-				'name' => $entityData['TITLE'] ?: StoreDocumentTable::getTypeList(true)[$docType],
-				'date' => $entityData['DATE_CREATE'],
-				'statuses' => $this->getStatus($document),
-				'fields' => $this->getFields($dp),
-			],
-		];
+			'docType' => $docType,
+			'name' => $entityData['TITLE'] ?: StoreDocumentTable::getTypeList(true)[$docType],
+			'date' => $entityData['DATE_CREATE'],
+			'statuses' => $this->getStatus($document),
+			'fields' => $this->getFields($dp),
+		]);
 	}
 
 	protected function prepareContractor(array &$document): void
@@ -109,6 +108,15 @@ class Item
 		}
 	}
 
+	protected function buildItemDto(array $data): DocumentListItem
+	{
+		$item = new DocumentListItem([
+			'id' => $data['id'],
+		]);
+		$item->data = new DocumentListItemData($data);
+		return $item;
+	}
+
 	protected function getFields(StoreDocumentProvider $item): array
 	{
 		$fieldsConfig = $this->getFieldsConfig($item);
@@ -117,6 +125,18 @@ class Item
 		$fields = [];
 		foreach ($fieldsConfig as $fieldConfig)
 		{
+			$fieldConfig['config'] = (isset($fieldConfig['config']) && is_array($fieldConfig['config']))
+				? $fieldConfig['config']
+				: [];
+
+			if (isset($fieldConfig['data']) && is_array($fieldConfig['data']))
+			{
+				$fieldConfig['config'] = array_merge(
+					$fieldConfig['config'],
+					$fieldConfig['data']
+				);
+			}
+
 			if ($fieldConfig['name'] === self::SUM_FIELD_ID)
 			{
 				$value = [
@@ -133,6 +153,11 @@ class Item
 			else
 			{
 				$value = ($entityData[$fieldConfig['name']] ?? null);
+			}
+
+			if ($fieldConfig['type'] === 'opportunity')
+			{
+				$fieldConfig['type'] = 'money';
 			}
 
 			if ($value !== null || !empty($fieldConfig['required']))

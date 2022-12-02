@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Integration\Report\Filter\StoreStockFilter;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Main\Loader;
@@ -257,7 +259,7 @@ class CatalogReportStoreStockProductsGridComponent extends \Bitrix\Catalog\Compo
 
 	private function checkDocumentReadRights(): bool
 	{
-		return \Bitrix\Main\Engine\CurrentUser::get()->canDoOperation('catalog_read');
+		return AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
 	}
 
 	private function getListFilter(): array

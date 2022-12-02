@@ -148,6 +148,7 @@ class StoreStockSale
 	{
 		$formedFilter = [
 			'=SHIPMENT.DEDUCTED' => 'Y',
+			'>S_BARCODE.STORE_ID' => 0,
 		];
 
 		if (isset($filter['STORES']))
@@ -185,7 +186,9 @@ class StoreStockSale
 
 	private static function formReservedDataFilter(array $filter): array
 	{
-		$formedFilter = [];
+		$formedFilter = [
+			'>STORE_ID' => 0,
+		];
 		if (isset($filter['STORES']))
 		{
 			$formedFilter['=STORE_ID'] = $filter['STORES'];

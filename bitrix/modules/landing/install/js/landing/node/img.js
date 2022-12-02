@@ -446,6 +446,11 @@
 
 			if (value.url)
 			{
+				if (value.url.href === 'selectActions:')
+				{
+					value.url.href = '';
+					value.url.enabled = false;
+				}
 				attr(this.node, "data-pseudo-url", value.url);
 			}
 

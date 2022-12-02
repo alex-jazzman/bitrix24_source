@@ -265,8 +265,7 @@ class Router
 			+ '&memberHash=' + memberHash
 			,
 			{
-				width: 1060,
-				loader: '/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg',
+				width: 760,
 			}
 		);
 	}
@@ -274,7 +273,7 @@ class Router
 	openSignDocumentModifySlider(documentId: number): Promise<?BX.SidePanel.Slider>
 	{
 		return Router.openSlider(
-			'/sign/doc/0/?docId=' + documentId
+			'/sign/doc/0/?docId=' + documentId + '&stepId=changePartner&noRedirect=Y'
 		);
 	}
 

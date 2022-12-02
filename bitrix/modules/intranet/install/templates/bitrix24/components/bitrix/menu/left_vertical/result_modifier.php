@@ -8,8 +8,8 @@
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Main\Type\Date;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -106,14 +106,28 @@ if (
 		$arResult["HOST_NAME"] = defined('BX24_HOST_NAME')? BX24_HOST_NAME: SITE_SERVER_NAME;
 		$arResult["IS_DEMO_LICENSE"] = \CBitrix24::getLicenseFamily() === "demo";
 		$arResult["DEMO_DAYS"] = "";
+
 		if ($arResult["IS_DEMO_LICENSE"])
 		{
 			$demoEnd = COption::GetOptionInt('main', '~controller_group_till');
+
 			if ($demoEnd > 0)
 			{
-				$currentDate = new Date;
-				$currentDate = $currentDate->getTimestamp();
-				$arResult["DEMO_DAYS"] = FormatDate("ddiff", $currentDate, $demoEnd);
+				$currentDate = (new Main\Type\DateTime)->getTimestamp();
+				$timeUntilEndLicense = $demoEnd - $currentDate;
+
+				if ($timeUntilEndLicense > 86400)
+				{
+					$arResult["DEMO_DAYS"] = FormatDate("ddiff", $currentDate, $demoEnd + 86400);
+				}
+				elseif ($timeUntilEndLicense === 86400)
+				{
+					$arResult["DEMO_DAYS"] = FormatDate("ddiff", $currentDate, $demoEnd);
+				}
+				elseif ($timeUntilEndLicense < 86400)
+				{
+					$arResult["DEMO_DAYS"] = Loc::getMessage('MENU_LICENSE_LESS_DAY');
+				}
 			}
 		}
 	}

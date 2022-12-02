@@ -206,4 +206,5 @@ $MESS["IBLOCK_XML2_IBLOCK_CACHE_MODE_NORMAL"] = "сбрасывать после
 $MESS["IBLOCK_XML2_IBLOCK_CACHE_MODE_HIT"] = "сбрасывать в конце каждого шага импорта";
 $MESS["IBLOCK_XML2_IBLOCK_CACHE_MODE_FINAL"] = "сбрасывать после окончания импорта";
 $MESS["IBLOCK_XML2_IBLOCK_CACHE_MODE_FREEZE"] = "не сбрасывать";
+$MESS["IBLOCK_NO_VAT_TITLE"] = "Без НДС";
 ?>

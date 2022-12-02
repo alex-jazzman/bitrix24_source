@@ -57,11 +57,9 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         },
         getObjectClass: function getObjectClass() {
           var classes = ['checkout-basket-total-container'];
-
           if (this.isBackdrop) {
             classes.push('active');
           }
-
           return classes;
         },
         isBackdrop: function isBackdrop() {

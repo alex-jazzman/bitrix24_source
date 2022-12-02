@@ -29,6 +29,7 @@ class CCalendarSceleton
 			'calendar.util',
 			'calendar.entry',
 			'calendar.search',
+			'calendar.counters',
 			'calendar.controls',
 			'calendar.sliderloader',
 			'calendar.sync.manager',

@@ -1,10 +1,141 @@
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
-(function (exports,ui_designTokens,landing_ui_field_basefield,landing_loc,main_core,ui_draganddrop_draggable,landing_ui_panel_fieldspanel,landing_ui_component_listitem,landing_ui_component_actionpanel,landing_ui_field_textfield,main_core_events,landing_ui_form_formsettingsform,crm_form_client,landing_ui_field_listsettingsfield,landing_ui_panel_separatorpanel,landing_pageobject,main_loader,landing_ui_field_productfield,calendar_resourcebookinguserfield,socnetlogdest,ui_hint,landing_ui_component_iconbutton) {
+(function (exports,ui_designTokens,landing_loc,ui_draganddrop_draggable,landing_ui_panel_fieldspanel,landing_ui_component_listitem,landing_ui_component_actionpanel,landing_ui_field_textfield,main_core_events,landing_ui_form_formsettingsform,crm_form_client,landing_ui_field_listsettingsfield,landing_ui_panel_separatorpanel,landing_pageobject,main_loader,landing_ui_field_productfield,calendar_resourcebookinguserfield,socnetlogdest,ui_hint,landing_ui_component_iconbutton,main_core,landing_ui_field_basefield) {
 	'use strict';
 
 	var _templateObject, _templateObject2;
+	var RequisiteSettingsField = /*#__PURE__*/function (_BaseField) {
+	  babelHelpers.inherits(RequisiteSettingsField, _BaseField);
+
+	  function RequisiteSettingsField(options) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, RequisiteSettingsField);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(RequisiteSettingsField).call(this, options));
+
+	    _this.setEventNamespace('BX.Landing.UI.Field.FieldsListField.RequisiteSettingsField');
+
+	    _this.subscribeFromOptions(options.events);
+
+	    main_core.Dom.replace(_this.input, _this.getSettingsLayout());
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(RequisiteSettingsField, [{
+	    key: "getOptions",
+	    value: function getOptions() {
+	      return this.options;
+	    }
+	  }, {
+	    key: "getSettingsLayout",
+	    value: function getSettingsLayout() {
+	      var _this2 = this;
+
+	      return this.cache.remember('settingsLayout', function () {
+	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-field-requisite-settings\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), babelHelpers.toConsumableArray(_this2.getCheckboxTree().keys()).map(function (checkbox) {
+	          return checkbox.layout;
+	        }));
+	      });
+	    }
+	  }, {
+	    key: "getCheckboxTree",
+	    value: function getCheckboxTree() {
+	      var _this3 = this;
+
+	      return this.cache.remember('checkboxTree', function () {
+	        var requisites = _this3.getOptions().value;
+
+	        return requisites.reduce(function (map, requisite) {
+	          var fieldsCheckbox = new BX.Landing.UI.Field.Checkbox({
+	            selector: "".concat(requisite.id, "_fields"),
+	            compact: true,
+	            items: requisite.fields.map(function (field) {
+	              return {
+	                name: field.label,
+	                value: field.name,
+	                checked: field.disabled !== false
+	              };
+	            }),
+	            onChange: function onChange() {
+	              _this3.emit('onChange');
+	            }
+	          });
+
+	          var onFieldSettingsLinkClick = function onFieldSettingsLinkClick(event) {
+	            event.preventDefault();
+	            event.stopPropagation();
+
+	            if (!categoryCheckbox.layout.contains(fieldsCheckbox.layout)) {
+	              main_core.Dom.append(fieldsCheckbox.layout, categoryCheckbox.layout);
+	            } else {
+	              main_core.Dom.remove(fieldsCheckbox.layout);
+	            }
+	          };
+
+	          var fieldSettingsLink = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span \n\t\t\t\t\t\tclass=\"ui-link ui-link-dashed\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t"])), onFieldSettingsLinkClick, main_core.Loc.getMessage('LANDING_FIELDS_ITEM_REQUISITE_SETTINGS_FIELDS_LABEL'));
+	          var categoryCheckbox = new BX.Landing.UI.Field.Checkbox({
+	            selector: requisite.id,
+	            compact: true,
+	            items: [{
+	              name: requisite.label,
+	              value: requisite.id,
+	              checked: requisite.disabled !== false
+	            }],
+	            onChange: function onChange() {
+	              _this3.emit('onChange');
+
+	              var labelLayout = categoryCheckbox.layout.querySelector('.landing-ui-field-checkbox-item-label');
+
+	              if (categoryCheckbox.getValue().length > 0) {
+	                main_core.Dom.append(fieldSettingsLink, labelLayout);
+	              } else {
+	                main_core.Dom.remove(fieldSettingsLink);
+	                main_core.Dom.remove(fieldsCheckbox.layout);
+	              }
+	            }
+	          });
+
+	          if (requisite.disabled !== false) {
+	            var labelLayout = categoryCheckbox.layout.querySelector('.landing-ui-field-checkbox-item-label');
+	            main_core.Dom.append(fieldSettingsLink, labelLayout);
+	          }
+
+	          map.set(categoryCheckbox, fieldsCheckbox);
+	          return map;
+	        }, new Map());
+	      });
+	    }
+	  }, {
+	    key: "getValue",
+	    value: function getValue() {
+	      var _this4 = this;
+
+	      var entries = babelHelpers.toConsumableArray(this.getCheckboxTree().entries());
+	      return entries.reduce(function (acc, _ref, index) {
+	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
+	            categoryCheckbox = _ref2[0],
+	            fieldsCheckbox = _ref2[1];
+
+	        var fieldsValue = fieldsCheckbox.getValue();
+	        acc.push({
+	          id: categoryCheckbox.selector,
+	          disabled: categoryCheckbox.getValue().length === 0,
+	          fields: _this4.getOptions().value[index].fields.map(function (field) {
+	            return {
+	              name: field.name,
+	              disabled: !fieldsValue.includes(field.name)
+	            };
+	          })
+	        });
+	        return acc;
+	      }, []);
+	    }
+	  }]);
+	  return RequisiteSettingsField;
+	}(landing_ui_field_basefield.BaseField);
+
+	var _templateObject$1, _templateObject2$1;
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
@@ -157,7 +288,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        return root.BX.Calendar.ResourcebookingUserfield.initCrmFormFieldController({
 	          field: _objectSpread(_objectSpread({}, options), {}, {
 	            dict: crmField,
-	            node: main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div><div class=\"crm-webform-resourcebooking-wrap\"></div></div>"])))
+	            node: main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div><div class=\"crm-webform-resourcebooking-wrap\"></div></div>"])))
 	          })
 	        });
 	      }
@@ -420,6 +551,12 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            }
 	          }
 
+	          if (main_core.Type.isArray(value.requisite)) {
+	            modifiedValue.requisite = {
+	              presets: value.requisite
+	            };
+	          }
+
 	          return modifiedValue;
 	        }
 	      });
@@ -467,6 +604,14 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          title: landing_loc.Loc.getMessage('LANDING_FIELDS_ITEM_FORM_LABEL_FIELD_TITLE'),
 	          content: field.label,
 	          textOnly: true
+	        }));
+	      }
+
+	      if (field.type === 'rq') {
+	        fields.push(new RequisiteSettingsField({
+	          selector: 'requisite',
+	          title: landing_loc.Loc.getMessage('LANDING_FIELDS_ITEM_REQUISITE_SETTINGS_LABEL'),
+	          value: field.requisite.presets
 	        }));
 	      }
 
@@ -549,7 +694,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        fields.push(this.createProductDefaultValueDropdown(field));
 	      }
 
-	      if (['list', 'radio'].includes(field.type) && field.editing.items.length > 0) {
+	      if (['list', 'radio', 'checkbox'].includes(field.type) && field.editing.items.length > 0) {
 	        var defaultValueField = this.createDefaultValueField(field);
 	        var listSettingsField = new landing_ui_field_listsettingsfield.ListSettingsField({
 	          selector: 'items',
@@ -685,7 +830,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "getListContainer",
 	    value: function getListContainer() {
 	      return this.cache.remember('listContainer', function () {
-	        return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"landing-ui-field-fields-list-container\"></div>"])));
+	        return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"landing-ui-field-fields-list-container\"></div>"])));
 	      });
 	    }
 	  }, {
@@ -956,5 +1101,5 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	exports.FieldsListField = FieldsListField;
 
-}((this.BX.Landing.UI.Field = this.BX.Landing.UI.Field || {}),BX,BX.Landing.UI.Field,BX.Landing,BX,BX.UI.DragAndDrop,BX.Landing.UI.Panel,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Form,BX.Crm.Form,BX.Landing.UI.Field,BX.Landing.UI.Panel,BX.Landing,BX,BX.Landing.Ui.Field,BX.Calendar,BX,BX,BX.Landing.UI.Component));
+}((this.BX.Landing.UI.Field = this.BX.Landing.UI.Field || {}),BX,BX.Landing,BX.UI.DragAndDrop,BX.Landing.UI.Panel,BX.Landing.UI.Component,BX.Landing.UI.Component,BX.Landing.UI.Field,BX.Event,BX.Landing.UI.Form,BX.Crm.Form,BX.Landing.UI.Field,BX.Landing.UI.Panel,BX.Landing,BX,BX.Landing.Ui.Field,BX.Calendar,BX,BX,BX.Landing.UI.Component,BX,BX.Landing.UI.Field));
 //# sourceMappingURL=fieldslistfield.bundle.js.map

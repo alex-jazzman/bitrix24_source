@@ -321,6 +321,14 @@
 	background-image: url(images/system-auth-form__icon-windows--white.svg);
 }
 
+.system-auth-form__item-logo--image.--linux {
+	background-image: url(images/system-auth-form__icon-linux.svg);
+}
+
+.system-auth-form__item.--active .system-auth-form__item-logo--image.--linux {
+	background-image: url(images/system-auth-form__icon-linux--white.svg);
+}
+
 .system-auth-form__item-logo--image.--authentication {
 	background-image: url(images/system-auth-form__icon-shield.svg);
 }

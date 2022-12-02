@@ -28,9 +28,9 @@ BitrixVue.component('sale-checkout-form', {
 		checkoutButtonEnabled()
 		{
 			const properties = [];
-			
+
 			let list = this.$store.getters['property/getProperty'];
-			
+
 			for (let listKey in list)
 			{
 				if (list[listKey].value.length > 0)
@@ -38,7 +38,7 @@ BitrixVue.component('sale-checkout-form', {
 					properties.push(list[listKey].value);
 				}
 			}
-			
+
 			return properties.length > 0
 		},
 		hasPS()
@@ -72,6 +72,10 @@ BitrixVue.component('sale-checkout-form', {
 		getProperty()
 		{
 			return this.$store.getters['property/getProperty'];
+		},
+		getVariant()
+		{
+			return this.$store.getters['property-variant/getVariant'];
 		},
 		getPropertyErrors()
 		{
@@ -150,11 +154,11 @@ BitrixVue.component('sale-checkout-form', {
 	},
 	created()
 	{
-		
+
 		EventEmitter.subscribe(EventType.basket.backdropTotalOpen, (event) => {
 			this.totalIsShow = 'Y';
 		});
-		
+
 		EventEmitter.subscribe(EventType.basket.backdropTotalClose, (event) => {
 			this.totalIsShow = 'N';
 		});
@@ -170,7 +174,7 @@ BitrixVue.component('sale-checkout-form', {
 		  <div class="checkout-basket-container">
 			<template v-if="getStage === stage.edit">
 			  <sale-checkout-view-product :items="getBasket" :total="getTotal" :mode="mode.edit" :errors="getBasketErrors" :config="getBasketConfig"/>
-			  <sale-checkout-view-property :items="getProperty" :mode="mode.edit" :errors="getPropertyErrors"/>
+			  <sale-checkout-view-property :items="getProperty" :mode="mode.edit" :errors="getPropertyErrors" :propertyVariants="getVariant"/>
 			  <sale-checkout-view-alert-list :errors="getErrors"/>
 			  <sale-checkout-view-user_consent :item="getConsent" v-if="needCheckConsent"/>
 			  <template v-if="checkoutButtonEnabled">
@@ -193,7 +197,7 @@ BitrixVue.component('sale-checkout-form', {
 			</template>
 			<template v-else-if="getStage === stage.view">
 			  <sale-checkout-view-product :items="getBasket" :total="getTotal" :mode="mode.view" :errors="getBasketErrors" :config="getBasketConfig"/>
-			  <sale-checkout-view-property :items="getProperty" :mode="mode.view" :order="getOrder"/>
+			  <sale-checkout-view-property :items="getProperty" :mode="mode.view" :order="getOrder" :propertyVariants="getVariant"/>
 			  <sale-checkout-view-product-summary :total="getTotal" :mode="mode.view"/>
               <sale-checkout-view-payment :order="getOrder" :payments="getPayment" :paySystems="getPaySystem" :check="getCheck" :config="getPaymentConfig"/>
 			</template>

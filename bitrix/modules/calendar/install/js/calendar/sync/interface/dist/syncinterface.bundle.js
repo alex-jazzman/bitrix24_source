@@ -214,7 +214,7 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    return this.cache.remember('calendar-syncPanel-mainHeader', () => {
 	      return main_core.Tag.render(_t3$1 || (_t3$1 = _$1`
 				<span class="calendar-sync-header-text">${0}</span>
-			`), main_core.Loc.getMessage('SYNC_CALENDAR_HEADER'));
+			`), main_core.Loc.getMessage('SYNC_CALENDAR_HEADER_NEW'));
 	    });
 	  }
 
@@ -521,12 +521,20 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    }
 	  }
 
-	  formatSyncTime(timestamp) {
-	    if (main_core.Type.isDate(timestamp)) {
-	      timestamp = timestamp.getTime() / 1000;
+	  formatSyncTime(date) {
+	    const now = new Date();
+	    let timestamp = date;
+
+	    if (main_core.Type.isDate(date)) {
+	      timestamp = Math.round(date.getTime() / 1000);
+	      const secondsAgo = parseInt((now - date) / 1000);
+
+	      if (secondsAgo < 60) {
+	        return main_core.Loc.getMessage('CAL_JUST');
+	      }
 	    }
 
-	    return BX.date.format([["tommorow", "tommorow, H:i:s"], ["s", main_core.Loc.getMessage('CAL_JUST')], ["i", "iago"], ["H", "Hago"], ["d", "dago"], ["m100", "mago"], ["m", "mago"], ["-", ""]], timestamp);
+	    return BX.date.format([["tommorow", "tommorow, H:i:s"], ["i", "iago"], ["H", "Hago"], ["d", "dago"], ["m100", "mago"], ["m", "mago"], ["-", ""]], timestamp);
 	  }
 
 	}
@@ -592,7 +600,7 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 					<div class="calendar-sync__header-sub-title">${0}</div>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('CAL_SYNC_TITLE'), main_core.Loc.getMessage('CAL_SYNC_SUB_TITLE'));
+		`), main_core.Loc.getMessage('CAL_SYNC_TITLE_NEW'), main_core.Loc.getMessage('CAL_SYNC_SUB_TITLE'));
 	  }
 
 	  getUnitsContentWrapper() {
@@ -2308,7 +2316,8 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    _t7$5,
 	    _t8$3,
 	    _t9$3,
-	    _t10$3;
+	    _t10$3,
+	    _t11$2;
 	class IcloudAuthDialog extends main_core_events.EventEmitter {
 	  constructor(options = {}) {
 	    super();
@@ -2330,6 +2339,7 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	      draggable: true,
 	      content: this.getContainer(),
 	      width: 475,
+	      animation: 'fading-slide',
 	      zIndexAbsolute: this.zIndex,
 	      cacheable: false,
 	      closeByEsc: true,
@@ -2453,11 +2463,14 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 						${0}
 						${0}
 					</div>
-					${0}
+					<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon">
+						${0}
+						${0}
+					</div>
 					${0}
 				</div>
 			</div>
-		`), this.getAppleInfoBlock(), this.getAppleIdTitle(), this.getAppleIdInput(), this.getAppleIdError(), this.getAppPasswordTitle(), this.getLearnMoreButton(), this.getAppPasswordInput(), this.getAppPasswordError());
+		`), this.getAppleInfoBlock(), this.getAppleIdTitle(), this.getAppleIdInput(), this.getAppleIdError(), this.getAppPasswordTitle(), this.getLearnMoreButton(), this.getAppPasswordInput(), this.getShowHidePasswordIcon(), this.getAppPasswordError());
 	    return this.DOM.container;
 	  }
 
@@ -2489,9 +2502,9 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	  getAppPasswordTitle() {
 	    if (!this.DOM.appPasswordTitle) {
 	      this.DOM.appPasswordTitle = main_core.Tag.render(_t4$9 || (_t4$9 = _$d`
-			<p class="calendar-sync__auth-popup--label-text">
-				${0}
-			</p>
+				<p class="calendar-sync__auth-popup--label-text">
+					${0}
+				</p>
 			`), main_core.Loc.getMessage('CAL_ICLOUD_PASS_PLACEHOLDER'));
 	    }
 
@@ -2501,9 +2514,9 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	  getAppleIdError() {
 	    if (!this.DOM.appleIdError) {
 	      this.DOM.appleIdError = main_core.Tag.render(_t5$7 || (_t5$7 = _$d`
-			<div class="calendar-sync__auth-popup--label-text --error">
-				${0}
-			</div>
+				<div class="calendar-sync__auth-popup--label-text --error">
+					${0}
+				</div>
 			`), main_core.Loc.getMessage('CAL_ICLOUD_APPLE_ID_ERROR'));
 	    }
 
@@ -2513,9 +2526,9 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	  getAppPasswordError() {
 	    if (!this.DOM.appPasswordError) {
 	      this.DOM.appPasswordError = main_core.Tag.render(_t6$6 || (_t6$6 = _$d`
-			<div class="calendar-sync__auth-popup--label-text --error">
-				${0}
-			</div>
+				<div class="calendar-sync__auth-popup--label-text --error">
+					${0}
+				</div>
 			`), main_core.Loc.getMessage('CAL_ICLOUD_APP_PASSWORD_ERROR', {
 	        '#LINK_START#': '<a href="#" data-role="open-helpdesk-password">',
 	        '#LINK_END#': '</a>'
@@ -2533,12 +2546,12 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	  getAppleIdInput() {
 	    if (!this.DOM.appleIdInput) {
 	      this.DOM.appleIdInput = main_core.Tag.render(_t7$5 || (_t7$5 = _$d`
-			<input
-				type="text"
-				placeholder="${0}"
-				class="calendar-field-string ui-ctl-element"
-			/>
-		`), main_core.Loc.getMessage('CAL_ICLOUD_AUTH_EMAIL_PLACEHOLDER'));
+				<input
+					type="text"
+					placeholder="${0}"
+					class="calendar-field-string ui-ctl-element"
+				/>
+			`), main_core.Loc.getMessage('CAL_ICLOUD_AUTH_EMAIL_PLACEHOLDER'));
 
 	      this.DOM.appleIdInput.onfocus = () => {
 	        if (main_core.Dom.hasClass(this.DOM.appleIdInput, 'calendar-field-string-error')) {
@@ -2574,9 +2587,20 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    return this.DOM.appPasswordInput;
 	  }
 
+	  getShowHidePasswordIcon() {
+	    if (!this.DOM.showHidePasswordIcon) {
+	      this.DOM.showHidePasswordIcon = main_core.Tag.render(_t9$3 || (_t9$3 = _$d`
+				<div class="ui-ctl-after calendar-sync__auth-popup--icon-adjust-password"></div>
+			`));
+	      main_core.Event.bind(this.DOM.showHidePasswordIcon, 'click', this.switchPasswordVisibility.bind(this));
+	    }
+
+	    return this.DOM.showHidePasswordIcon;
+	  }
+
 	  getLearnMoreButton() {
 	    if (!this.DOM.learnMoreButton) {
-	      this.DOM.learnMoreButton = main_core.Tag.render(_t9$3 || (_t9$3 = _$d`
+	      this.DOM.learnMoreButton = main_core.Tag.render(_t10$3 || (_t10$3 = _$d`
 				<span class="calendar-sync__auth-popup--learn-more">${0}</span>
 			`), main_core.Loc.getMessage('CAL_ICLOUD_AUTH_APPPASS_ABOUT'));
 	      main_core.Event.bind(this.DOM.learnMoreButton, 'click', this.openHelpDesk.bind(this));
@@ -2587,10 +2611,10 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 
 	  initAlertBlock() {
 	    if (!this.DOM.alertBlock) {
-	      this.DOM.alertBlock = main_core.Tag.render(_t10$3 || (_t10$3 = _$d`
-			<div class="ui-alert ui-alert-danger calendar-sync__auth-error">
-    			<span class="ui-alert-message">${0}</span>
-			</div>
+	      this.DOM.alertBlock = main_core.Tag.render(_t11$2 || (_t11$2 = _$d`
+				<div class="ui-alert ui-alert-danger calendar-sync__auth-error">
+	                <span class="ui-alert-message">${0}</span>
+				</div>
 			`), main_core.Loc.getMessage('CAL_ICLOUD_AUTH_ERROR'));
 	    }
 	  }
@@ -2606,7 +2630,7 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	  }
 
 	  validateAppleIdInput() {
-	    const emailRegExp = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+	    const emailRegExp = /^[a-zA-Z\d.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z\d-]+(?:\.[a-zA-Z\d-]+)*$/;
 	    const input = this.DOM.appleIdInput.value.toString().trim();
 
 	    if (input === '') {
@@ -2626,6 +2650,16 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    } else {
 	      main_core.Dom.addClass(this.DOM.appPasswordInput, 'calendar-field-string-error');
 	      main_core.Dom.addClass(this.DOM.appPasswordError, 'show');
+	    }
+	  }
+
+	  switchPasswordVisibility() {
+	    if (main_core.Dom.hasClass(this.DOM.showHidePasswordIcon, '--hide')) {
+	      this.DOM.appPasswordInput.type = 'password';
+	      main_core.Dom.removeClass(this.DOM.showHidePasswordIcon, '--hide');
+	    } else {
+	      this.DOM.appPasswordInput.type = 'text';
+	      main_core.Dom.addClass(this.DOM.showHidePasswordIcon, '--hide');
 	    }
 	  }
 

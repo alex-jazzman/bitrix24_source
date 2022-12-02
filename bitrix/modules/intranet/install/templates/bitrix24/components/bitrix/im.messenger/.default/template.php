@@ -107,6 +107,7 @@ $this->SetViewTarget("im", 100);
 				"targetElement" => "#bx-help-block",
 				"content"       => Loc::getMessage("IM_HELP_SPOTLIGHT"),
 				"targetVertex"  => "middle-center",
+				"left" => -10,
 				"lightMode"     => true
 			)
 		));

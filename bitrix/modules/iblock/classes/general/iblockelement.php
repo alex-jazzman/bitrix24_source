@@ -657,7 +657,10 @@ class CAllIBlockElement
 					$arStatus = array((int)($STATUS_ID)=>(int)($STATUS_ID));
 				}
 				$arGroups = $USER->GetUserGroupArray();
-				if(!is_array($arGroups)) $arGroups[] = 2;
+				if (!is_array($arGroups))
+				{
+					$arGroups = [2];
+				}
 				$groups = implode(",",$arGroups);
 				foreach($arStatus as $STATUS_ID)
 				{
@@ -3656,7 +3659,7 @@ class CAllIBlockElement
 
 		CIBlock::clearIblockTagCache($arIBlock['ID']);
 
-		Iblock\ElementTable::getEntity()->cleanCache();
+		Iblock\ElementTable::cleanCache();
 
 		return $Result;
 	}
@@ -4054,14 +4057,17 @@ class CAllIBlockElement
 				\Bitrix\Iblock\PropertyIndex\Manager::deleteElementIndex($zr["IBLOCK_ID"], $piId);
 
 				if(CModule::IncludeModule("bizproc"))
-					CBPDocument::OnDocumentDelete(array("iblock", "CIBlockDocument", $zr["ID"]), $arErrorsTmp);
+				{
+					$arErrorsTmp = [];
+					CBPDocument::OnDocumentDelete(["iblock", "CIBlockDocument", $zr["ID"]], $arErrorsTmp);
+				}
 
 				foreach (GetModuleEvents("iblock", "OnAfterIBlockElementDelete", true) as $arEvent)
 					ExecuteModuleEventEx($arEvent, array($zr));
 
 				CIBlock::clearIblockTagCache($zr['IBLOCK_ID']);
 
-				Iblock\ElementTable::getEntity()->cleanCache();
+				Iblock\ElementTable::cleanCache();
 
 				unset($elementId);
 			}
@@ -7417,24 +7423,75 @@ class CAllIBlockElement
 		{
 			return false;
 		}
-		$filter = [
+
+		$filter = static::getPublicElementsOrmFilter([
 			'=IBLOCK_ID' => $iblockId,
 			'=CODE' => $code,
-			'=WF_STATUS_ID' => 1,
-			'==WF_PARENT_ELEMENT_ID' => null,
-		];
+		]);
 		if ($elementId !== null)
 		{
 			$filter['!=ID'] = $elementId;
 		}
 
-		$row = Iblock\ElementTable::getList([
+		return Iblock\ElementTable::getRow([
 			'select' => ['ID'],
 			'filter' => $filter,
-			'limit' => 1,
-		])->fetch();
+		]) !== null;
+	}
 
-		return !empty($row);
+	public function getUniqueMnemonicCode(string $code, ?int $elementId, int $iblockId, array $options = []): ?string
+	{
+		if ($code === '')
+		{
+			return false;
+		}
+		if ($iblockId <= 0)
+		{
+			return null;
+		}
+
+		if (!$this->isExistsMnemonicCode($code, $elementId, $iblockId))
+		{
+			return $code;
+		}
+
+		$checkSimilar = (isset($options['CHECK_SIMILAR']) && $options['CHECK_SIMILAR'] === 'Y');
+
+		$list = [];
+		$iterator = Iblock\ElementTable::getList([
+			'select' => [
+				'ID',
+				'CODE',
+			],
+			'filter' => static::getPublicElementsOrmFilter([
+				'=IBLOCK_ID' => $iblockId,
+				'%=CODE' => $code . '%',
+			]),
+		]);
+		while ($row = $iterator->fetch())
+		{
+			if ($checkSimilar && $elementId === (int)$row['ID'])
+			{
+				return null;
+			}
+			$list[$row['CODE']] = true;
+		}
+		unset($iterator, $row);
+
+		if (isset($list[$code]))
+		{
+			$code .= '_';
+			$i = 1;
+			while (isset($list[$code . $i]))
+			{
+				$i++;
+			}
+
+			$code .= $i;
+		}
+		unset($list);
+
+		return $code;
 	}
 
 	public function createMnemonicCode(array $element, array $options = []): ?string
@@ -7484,45 +7541,13 @@ class CAllIBlockElement
 			)
 			{
 				$id = (int)$element['ID'] ?? null;
-				if (!$this->isExistsMnemonicCode($code, $id, $iblockId))
-				{
-					return $code;
-				}
 
-				$checkSimilar = (isset($options['CHECK_SIMILAR']) && $options['CHECK_SIMILAR'] === 'Y');
-
-				$list = [];
-				$iterator = Iblock\ElementTable::getList([
-					'select' => ['ID', 'CODE'],
-					'filter' => [
-						'=IBLOCK_ID' => $iblockId,
-						'%=CODE' => $code . '%',
-						'=WF_STATUS_ID' => 1,
-						'==WF_PARENT_ELEMENT_ID' => null,
-					],
-				]);
-				while ($row = $iterator->fetch())
-				{
-					if ($checkSimilar && $id === (int)$row['ID'])
-					{
-						return null;
-					}
-					$list[$row['CODE']] = true;
-				}
-				unset($iterator, $row);
-
-				if (isset($list[$code]))
-				{
-					$code .= '_';
-					$i = 1;
-					while (isset($list[$code . $i]))
-					{
-						$i++;
-					}
-
-					$code .= $i;
-				}
-				unset($list);
+				$code = $this->getUniqueMnemonicCode(
+					$code,
+					$id,
+					$iblockId,
+					$options
+				);
 			}
 		}
 

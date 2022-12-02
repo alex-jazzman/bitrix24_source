@@ -3220,10 +3220,10 @@ BitrixMSL.prototype.createTaskSetContentSuccess = function(taskId)
 		callback: function (buttonId) {
 			if (buttonId == 2)
 			{
-				app.loadPageBlank({
-					url: BX.message('MOBILE_EXT_LIVEFEED_TASK_PATH').replace('#user_id#', BX.message('USER_ID')).replace('#task_id#', taskId),
-					bx24ModernStyle: true
-				});
+				BXMobileApp.Events.postToComponent(
+					'taskbackground::task::action',
+					[{taskId: taskId}]
+				);
 			}
 		}
 	});
