@@ -142,7 +142,7 @@ foreach ($factory->getCategories() as $category)
 		continue;
 	}
 	$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
-	$entityTitle = $category->getName();
+	$entityTitle = $category->getSingleNameIfPossible();
 	$arResult['ENTITY'][$entityName] =  htmlspecialcharsbx($entityTitle);
 	$arResult['ROLE_PERM'][$entityName] = $permissionSet;
 	$entityOperationsMap[$entityName] = $operationsWithImport;
@@ -157,7 +157,7 @@ foreach ($factory->getCategories() as $category)
 		continue;
 	}
 	$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
-	$entityTitle = $category->getName();
+	$entityTitle = $category->getSingleNameIfPossible();
 	$arResult['ENTITY'][$entityName] = htmlspecialcharsbx($entityTitle);
 	$arResult['ROLE_PERM'][$entityName] = $permissionSet;
 	$entityOperationsMap[$entityName] = $operations;
@@ -214,7 +214,7 @@ if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
 			$entityTitle = \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice);
 			if ($smartInvoiceFactory->isCategoriesEnabled())
 			{
-				$entityTitle .= ' ' . $category->getName();
+				$entityTitle .= ' ' . $category->getSingleNameIfPossible();
 			}
 			$arResult['ENTITY'][$entityName] = $entityTitle;
 			foreach ($smartInvoiceFactory->getStages($category->getId()) as $stage)

@@ -2,11 +2,12 @@
 
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\RequisiteAddress;
-use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Location\Entity\Address;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Item\Company;
+use Bitrix\Crm\Item;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -308,10 +309,16 @@ class CCrmEntitySelectorHelper
 				array('=ID'=> $entityID, 'CHECK_PERMISSIONS' => 'N'),
 				false,
 				false,
-				array('TITLE', 'COMPANY_TYPE', 'INDUSTRY', 'LOGO')
+				[
+					'ID',
+					'TITLE',
+					'COMPANY_TYPE',
+					'INDUSTRY',
+					'LOGO',
+				]
 			);
 
-			if($arRes = $obRes->Fetch())
+			if ($arRes = $obRes->fetch())
 			{
 				$result[$titleKey] = $arRes['TITLE'];
 
@@ -322,11 +329,27 @@ class CCrmEntitySelectorHelper
 					)
 				);
 
-				$arDesc = Array();
-				if (isset($arCompanyTypeList[$arRes['COMPANY_TYPE']]))
+				$category = Container::getInstance()->getFactory(CCrmOwnerType::Company)
+					->getItemCategory((int)$arRes['ID']);
+				$categoryDependentDisabledFields = $category ? $category->getDisabledFieldNames() : [];
+
+				$arDesc = [];
+				if (
+					isset($arCompanyTypeList[$arRes['COMPANY_TYPE']])
+					&& !in_array(Item::FIELD_NAME_TYPE_ID, $categoryDependentDisabledFields, true)
+				)
+				{
 					$arDesc[] = $arCompanyTypeList[$arRes['COMPANY_TYPE']];
-				if (isset($arCompanyIndustryList[$arRes['INDUSTRY']]))
+				}
+
+				if (
+					isset($arCompanyIndustryList[$arRes['INDUSTRY']])
+					&& !in_array(Company::FIELD_NAME_INDUSTRY, $categoryDependentDisabledFields, true)
+				)
+				{
 					$arDesc[] = $arCompanyIndustryList[$arRes['INDUSTRY']];
+				}
+
 				$result[$descKey] = implode(', ', $arDesc);
 
 				$logoID = intval($arRes['LOGO']);

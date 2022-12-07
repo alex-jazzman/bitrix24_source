@@ -26,7 +26,7 @@ class DocumentCardTimeline
 			'PREFIX' => 'store_document',
 			'ENABLE_UI' => false,
 			'ENABLE_TOOLBAR' => false,
-			'ENABLE_EMAIL_ADD' => false,
+			'ENABLE_EMAIL_ADD' => true,
 			'ENABLE_TASK_ADD' => false,
 			'MARK_AS_COMPLETED_ON_VIEW' => false,
 			'SKIP_VISUAL_COMPONENTS' => 'Y'

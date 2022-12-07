@@ -20,7 +20,7 @@ class EmailReadTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_EMAIL_READ_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_EMAIL_READ_DESCRIPTION') ?? '';
 	}
 
 	public static function getGroup(): array

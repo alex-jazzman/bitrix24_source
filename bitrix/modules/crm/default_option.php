@@ -98,8 +98,8 @@ $crm_default_option = [
 	'path_to_user_field_edit' => '/crm/configs/fields/#entity_id#/edit/#field_id#/',
 	'path_to_lead_status_list' => '/crm/type/1/categories/',
 
-	'path_to_store_document_details' => '/shop/documents/details/#document_id#/',
-	'path_to_shipment_document_details' => '/shop/documents/details/sales_order/#document_id#/',
+	'path_to_store_document_details' => '/shop/documents/details/#store_document_id#/',
+	'path_to_shipment_document_details' => '/shop/documents/details/sales_order/#shipment_document_id#/',
 
 	'email_from' => '',
 	'email_template' => '',

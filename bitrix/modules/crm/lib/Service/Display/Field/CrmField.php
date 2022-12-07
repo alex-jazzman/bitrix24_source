@@ -271,7 +271,10 @@ class CrmField extends BaseLinkedEntitiesField
 						$imageUrl = \CFile::ResizeImageGet(
 							$logo,
 							['width' => 200, 'height' => 200],
-							BX_RESIZE_IMAGE_EXACT
+							BX_RESIZE_IMAGE_EXACT,
+							false,
+							false,
+							true
 						);
 						$imageUrl = $imageUrl['src'] ?? null;
 					}
@@ -289,7 +292,10 @@ class CrmField extends BaseLinkedEntitiesField
 						$imageUrl = \CFile::ResizeImageGet(
 							$logo,
 							['width' => 300, 'height' => 300],
-							BX_RESIZE_IMAGE_EXACT
+							BX_RESIZE_IMAGE_EXACT,
+							false,
+							false,
+							true
 						);
 						$imageUrl = $imageUrl['src'] ?? null;
 					}

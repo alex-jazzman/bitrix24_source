@@ -319,6 +319,7 @@ class Dynamic extends Kanban\Entity
 		return (new Filter\Preset\Dynamic())
 			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
 			->setStagesEnabled($this->factory->isStagesEnabled())
+			->setCategoryId($this->categoryId)
 			->getDefaultPresets()
 		;
 	}

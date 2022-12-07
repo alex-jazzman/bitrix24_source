@@ -103,6 +103,7 @@ class Deal extends Entity
 	{
 		return (new Filter\Preset\Deal())
 			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
+			->setCategoryId($this->categoryId)
 			->getDefaultPresets()
 		;
 	}

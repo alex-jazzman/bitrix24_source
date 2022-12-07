@@ -159,6 +159,15 @@ class CompanyController extends BaseController
 			$slots['ORDER_IDS'] = $orderIds;
 		}
 
+		$storeDocumentIds = StoreDocumentBinder::getInstance()->getBoundEntityIDs(
+			\CCrmOwnerType::Company,
+			$entityID
+		);
+		if(!empty($storeDocumentIds))
+		{
+			$slots['STORE_DOCUMENT_IDS'] = $storeDocumentIds;
+		}
+
 		$slots = array_merge(
 			$slots,
 			DynamicBinderManager::getInstance()
@@ -395,6 +404,16 @@ class CompanyController extends BaseController
 				\CCrmOwnerType::Company,
 				$newEntityID,
 				$orderIds
+			);
+		}
+
+		$storeDocumentIds = isset($slots['STORE_DOCUMENT_IDS']) ? $slots['STORE_DOCUMENT_IDS'] : null;
+		if(is_array($storeDocumentIds) && !empty($storeDocumentIds))
+		{
+			StoreDocumentBinder::getInstance()->bindEntities(
+				\CCrmOwnerType::Company,
+				$newEntityID,
+				$storeDocumentIds
 			);
 		}
 

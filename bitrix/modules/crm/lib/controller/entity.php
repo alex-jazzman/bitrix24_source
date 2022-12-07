@@ -294,6 +294,7 @@ class Entity extends Main\Engine\Controller
 			$map[$key] = [
 				'ENTITY_TYPE_ID' => $entityTypeId,
 				'ENTITY_ID' => (int)$entityId,
+				'CATEGORY_ID' => $categoryId,
 			];
 		}
 

@@ -219,8 +219,8 @@ while ($l_res = $l->Fetch())
 	}
 	?>
 <script type="text/javascript">
-var allowPriceEdit = <?= ($allowEditPrices ? 'true' : 'false'); ?>;
-var allowEdit = <?= ($allowEdit ? 'true' : 'false'); ?>;
+var allowSubPriceEdit = <?= ($allowEditPrices ? 'true' : 'false'); ?>;
+var allowSubEdit = <?= ($allowEdit ? 'true' : 'false'); ?>;
 
 function getElementSubForm()
 {
@@ -307,7 +307,7 @@ function editSubBarCode()
 {
 	var obEditSubBarCode = BX('SUBCAT_BARCODE_EDIT_Y');
 	var obSubBarCode = BX('SUBCAT_BARCODE');
-	if (allowEdit && !!obEditSubBarCode && !!obSubBarCode)
+	if (allowSubEdit && !!obEditSubBarCode && !!obSubBarCode)
 	{
 		if (obEditSubBarCode.checked)
 		{
@@ -678,7 +678,7 @@ else
 
 				function OnChangeSubExtra(priceType)
 				{
-					if (!allowPriceEdit)
+					if (!allowSubPriceEdit)
 						return;
 
 					var e_base_price = BX('SUBCAT_BASE_PRICE');
@@ -719,7 +719,7 @@ else
 
 				function OnChangeSubExtraEx(e)
 				{
-					if (!allowPriceEdit)
+					if (!allowSubPriceEdit)
 						return;
 
 					var thename = e.name;
@@ -769,7 +769,7 @@ else
 
 				function ChangeSubExtra(codID)
 				{
-					if (!allowPriceEdit)
+					if (!allowSubPriceEdit)
 						return;
 
 					OnChangeSubExtra(codID);
@@ -785,7 +785,7 @@ else
 
 				function OnChangeSubBasePrice()
 				{
-					if (!allowPriceEdit)
+					if (!allowSubPriceEdit)
 						return;
 
 					var e_base_price = BX('SUBCAT_BASE_PRICE');
@@ -834,7 +834,7 @@ else
 
 				function ChangeSubBasePrice(e)
 				{
-					if (!allowPriceEdit)
+					if (!allowSubPriceEdit)
 						return;
 
 					if (e.value != '' && (isNaN(e.value) || e.value <= 0))
@@ -855,7 +855,7 @@ else
 
 				function ChangeSubBaseCurrency()
 				{
-					if (!allowPriceEdit)
+					if (!allowSubPriceEdit)
 						return;
 
 					BX('SUBCAT_BASE_CURRENCY_0').selectedIndex = BX('SUBCAT_BASE_CURRENCY').selectedIndex;
@@ -863,7 +863,7 @@ else
 
 				function ChangeSubPrice(codID)
 				{
-					if (!allowPriceEdit)
+					if (!allowSubPriceEdit)
 						return;
 
 					var e_price = BX('SUBCAT_PRICE_' + codID + '_0');
@@ -874,7 +874,7 @@ else
 
 				function ChangeSubCurrency(codID)
 				{
-					if (!allowPriceEdit)
+					if (!allowSubPriceEdit)
 						return;
 
 					var e_currency = BX('SUBCAT_CURRENCY_' + codID + "_0");
@@ -883,7 +883,7 @@ else
 
 				function OnChangeSubPriceExist()
 				{
-					if (!allowPriceEdit)
+					if (!allowSubPriceEdit)
 						return;
 
 					var bExist = 'N';
@@ -1070,7 +1070,7 @@ SetSubFieldsStyle('subcatalog_vat_table');
 <script type="text/javascript">
 function CloneSubBasePriceGroup()
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	var oTbl = BX("SUBBASE_PRICE_GROUP_TABLE");
@@ -1126,7 +1126,7 @@ function CloneSubBasePriceGroup()
 
 function CloneSubOtherPriceGroup(ind)
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	var oTbl = BX("SUBOTHER_PRICE_GROUP_TABLE_"+ind);
@@ -1194,7 +1194,7 @@ function CloneSubOtherPriceGroup(ind)
 
 function CloneSubPriceSections()
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	CloneSubBasePriceGroup();
@@ -1211,7 +1211,7 @@ function CloneSubPriceSections()
 
 function ChangeSubBaseQuantityEx(e)
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	var thename = e.name;
@@ -1241,7 +1241,7 @@ function ChangeSubBaseQuantityEx(e)
 
 function OnChangeSubBasePriceEx(e)
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	var thename = e.name;
@@ -1293,7 +1293,7 @@ function OnChangeSubBasePriceEx(e)
 
 function ChangeSubBasePriceEx(e)
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	if (isNaN(e.value) || e.value <= 0)
@@ -1320,7 +1320,7 @@ function ChangeSubBasePriceEx(e)
 
 function ChangeSubExtraEx(e)
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	if (null == e)
@@ -1344,7 +1344,7 @@ function ChangeSubExtraEx(e)
 
 function ChangeSubBaseCurrencyEx(e)
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	var thename = e.name;
@@ -1360,7 +1360,7 @@ function ChangeSubBaseCurrencyEx(e)
 
 function ptSubPriceChangeEx(e)
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	var thename = e.name;
@@ -1382,7 +1382,7 @@ function ptSubPriceChangeEx(e)
 
 function ChangeSubCurrencyEx(e)
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	var thename = e.name;
@@ -1402,7 +1402,7 @@ function ChangeSubCurrencyEx(e)
 
 function OnChangeSubPriceExistEx(e)
 {
-	if (!allowPriceEdit)
+	if (!allowSubPriceEdit)
 		return;
 
 	var thename = e.name;
@@ -2111,7 +2111,7 @@ function HideNotice()
 						<script type="text/javascript">
 						function ChangeSubPriceType()
 						{
-							if (!allowPriceEdit)
+							if (!allowSubPriceEdit)
 								return;
 
 							var e_pt = BX('SUBCAT_PRICE_TYPE');
@@ -2273,7 +2273,7 @@ SetSubFieldsStyle('subcatalog_properties_table');
 			<script type="text/javascript">
 			function SubCatGroupsActivate(obj, id)
 			{
-				if (!allowEdit)
+				if (!allowSubEdit)
 					return;
 
 				var ed = BX('SUBCAT_ACCESS_LENGTH_' + id);

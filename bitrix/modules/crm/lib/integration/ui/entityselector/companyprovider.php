@@ -50,6 +50,11 @@ class CompanyProvider extends EntityProvider
 		return \CCrmOwnerType::Company;
 	}
 
+	protected function getCategoryId(): int
+	{
+		return $this->options['categoryId'];
+	}
+
 	protected function fetchEntryIds(array $filter): array
 	{
 		if ($this->enableMyCompanyOnly)

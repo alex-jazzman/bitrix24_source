@@ -1,4 +1,25 @@
 <?php
+
+use Bitrix\Crm;
+use Bitrix\Crm\Agent\Duplicate\Background\CompanyIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\CompanyMerge;
+use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
+use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
+use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
+use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integrity\Volatile;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\CompanySettings;
+use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /**
@@ -37,6 +58,8 @@ if (!$isErrorOccured && $isBizProcInstalled)
 }
 
 $arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Company);
+$category = $factory && $arResult['CATEGORY_ID'] ? $factory->getCategory($arResult['CATEGORY_ID']) : null;
 
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
 if (!$isErrorOccured && !CCrmCompany::CheckReadPermission(0, $userPermissions, $arResult['CATEGORY_ID']))
@@ -106,25 +129,6 @@ if ($isErrorOccured)
 	}
 }
 
-use Bitrix\Crm;
-use Bitrix\Crm\Agent\Duplicate\Background\CompanyIndexRebuild;
-use Bitrix\Crm\Agent\Duplicate\Background\CompanyMerge;
-use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
-use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
-use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
-use Bitrix\Crm\CompanyAddress;
-use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Crm\Integrity\Volatile;
-use Bitrix\Crm\Settings\CompanySettings;
-use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
-
 $CCrmBizProc = new CCrmBizProc('COMPANY');
 
 $userID = CCrmSecurityHelper::GetCurrentUserID();
@@ -172,6 +176,7 @@ $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['aj
 $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
+$arResult['CRM_CUSTOM_PAGE_TITLE'] = $arParams['CRM_CUSTOM_PAGE_TITLE'] ?? null;
 
 if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 {
@@ -379,12 +384,17 @@ if (!$bInternal)
 		$filterFlags |= Crm\Filter\CompanySettings::FLAG_ENABLE_ADDRESS;
 	}
 	$entityFilter = Crm\Filter\Factory::createEntityFilter(
-		new Crm\Filter\CompanySettings(['ID' => $arResult['GRID_ID'], 'flags' => $filterFlags])
+		new Crm\Filter\CompanySettings([
+			'ID' => $arResult['GRID_ID'],
+			'categoryID' => $arResult['CATEGORY_ID'],
+			'flags' => $filterFlags,
+		],)
 	);
 	$arResult['FILTER_PRESETS'] = (new Bitrix\Crm\Filter\Preset\Company())
 		->setUserId((int) $arResult['CURRENT_USER_ID'])
 		->setUserName(CCrmViewHelper::GetFormattedUserName($arResult['CURRENT_USER_ID'], $arParams['NAME_TEMPLATE']))
 		->setDefaultValues($entityFilter->getDefaultFieldIDs())
+		->setCategoryId($arResult['CATEGORY_ID'])
 		->getDefaultPresets()
 	;
 }
@@ -449,8 +459,25 @@ if (!$bInternal)
 
 //region Headers initialization
 $arResult['HEADERS'] = array(
-	array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'id', 'first_order' => 'desc', 'width' => 60, 'editable' => false, 'type' => 'int', 'class' => 'minimal'),
-	array('id' => 'COMPANY_SUMMARY', 'name' => GetMessage('CRM_COLUMN_COMPANY'), 'sort' => 'title', 'width' => 200, 'default' => true, 'editable' => false, 'enableDefaultSort' => false)
+	[
+		'id' => 'ID',
+		'name' => GetMessage('CRM_COLUMN_ID'),
+		'sort' => 'id',
+		'first_order' => 'desc',
+		'width' => 60,
+		'editable' => false,
+		'type' => 'int',
+		'class' => 'minimal',
+	],
+	[
+		'id' => 'COMPANY_SUMMARY',
+		'name' => Loc::getMessage('CRM_COLUMN_COMPANY'),
+		'sort' => 'title',
+		'width' => 200,
+		'default' => true,
+		'editable' => false,
+		'enableDefaultSort' => false,
+	]
 );
 
 // Don't display activities in INTERNAL mode.
@@ -468,14 +495,44 @@ if(!$bInternal && !$isMyCompanyMode)
 $arResult['HEADERS'] = array_merge(
 	$arResult['HEADERS'],
 	array(
-		array('id' => 'LOGO', 'name' => GetMessage('CRM_COLUMN_LOGO'), 'sort' => false, 'editable' => false),
-		array('id' => 'TITLE', 'name' => GetMessage('CRM_COLUMN_TITLE'), 'sort' => 'title', 'editable' => true),
-		array('id' => 'COMPANY_TYPE', 'name' => GetMessage('CRM_COLUMN_COMPANY_TYPE'), 'sort' => 'company_type', 'editable' => array('items' => CCrmStatus::GetStatusList('COMPANY_TYPE')), 'type' => 'list'),
-		array('id' => 'EMPLOYEES', 'name' => GetMessage('CRM_COLUMN_EMPLOYEES'), 'sort' => 'employees', 'first_order' => 'desc', 'editable' => array('items' => CCrmStatus::GetStatusList('EMPLOYEES')), 'type' => 'list')
+		[
+			'id' => 'LOGO',
+			'name' => GetMessage('CRM_COLUMN_LOGO'),
+			'sort' => false,
+			'editable' => false,
+		],
+		[
+			'id' => 'TITLE',
+			'name' => Loc::getMessage('CRM_COLUMN_TITLE'),
+			'sort' => 'title',
+			'editable' => true,
+		],
+		[
+			'id' => 'COMPANY_TYPE',
+			'name' => GetMessage('CRM_COLUMN_COMPANY_TYPE'),
+			'sort' => 'company_type',
+			'editable' => [
+				'items' => CCrmStatus::GetStatusList('COMPANY_TYPE')
+			],
+			'type' => 'list',
+		],
+		[
+			'id' => 'EMPLOYEES',
+			'name' => GetMessage('CRM_COLUMN_EMPLOYEES'),
+			'sort' => 'employees',
+			'first_order' => 'desc',
+			'editable' => [
+				'items' => CCrmStatus::GetStatusList('EMPLOYEES')
+			],
+			'type' => 'list',
+		]
 	)
 );
 
-Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
+if (!$category || $category->isTrackingEnabled())
+{
+	Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
+}
 
 $utmList = \Bitrix\Crm\UtmTable::getCodeNames();
 foreach ($utmList as $utmCode => $utmName)
@@ -553,6 +610,46 @@ $arResult['HEADERS'] = array_merge($arResult['HEADERS'], array(
 	array('id' => 'DATE_MODIFY', 'name' => GetMessage('CRM_COLUMN_DATE_MODIFY'), 'sort' => 'date_modify', 'first_order' => 'desc', 'editable' => false, 'class' => 'date'),
 	array('id' => 'WEBFORM_ID', 'name' => GetMessage('CRM_COLUMN_WEBFORM'), 'sort' => 'webform_id', 'type' => 'list')
 ));
+
+// filter out category-specific disabled fields
+if ($factory && $category)
+{
+	$arResult['HEADERS'] = array_values(
+		array_filter(
+			$arResult['HEADERS'],
+			static function ($header) use ($factory, $category)
+			{
+				return !in_array(
+					$factory->getCommonFieldNameByMap($header['id']),
+					$category->getDisabledFieldNames(),
+					true
+				);
+			}
+		)
+	);
+
+	$categoryUISettings = $category->getUISettings();
+	$defaultGridColumns = isset($categoryUISettings['grid']['defaultFields'])
+		? $categoryUISettings['grid']['defaultFields']
+		: [];
+
+	if (!empty($defaultGridColumns))
+	{
+		$arResult['HEADERS'] = array_map(
+			static function ($header) use ($defaultGridColumns)
+			{
+				$header['default'] = in_array(
+					$header['id'],
+					$defaultGridColumns,
+				true
+				);
+
+				return $header;
+			},
+			$arResult['HEADERS']
+		);
+	}
+}
 
 $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
 
@@ -1925,8 +2022,11 @@ foreach($arResult['COMPANY'] as &$arCompany)
 		}
 	}
 
-	$typeID = isset($arCompany['COMPANY_TYPE']) ? $arCompany['COMPANY_TYPE'] : '';
-	$arCompany['COMPANY_TYPE_NAME'] = isset($arResult['COMPANY_TYPE_LIST'][$typeID]) ? $arResult['COMPANY_TYPE_LIST'][$typeID] : $typeID;
+	if (!$category || !in_array(Crm\Item::FIELD_NAME_TYPE_ID, $category->getDisabledFieldNames(), true))
+	{
+		$typeID = isset($arCompany['COMPANY_TYPE']) ? $arCompany['COMPANY_TYPE'] : '';
+		$arCompany['COMPANY_TYPE_NAME'] = isset($arResult['COMPANY_TYPE_LIST'][$typeID]) ? $arResult['COMPANY_TYPE_LIST'][$typeID] : $typeID;
+	}
 
 	if ($isMyCompanyMode)
 	{

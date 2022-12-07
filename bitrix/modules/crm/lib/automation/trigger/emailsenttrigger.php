@@ -19,7 +19,7 @@ class EmailSentTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_EMAIL_SENT_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_EMAIL_SENT_DESCRIPTION') ?? '';
 	}
 
 	public static function getGroup(): array

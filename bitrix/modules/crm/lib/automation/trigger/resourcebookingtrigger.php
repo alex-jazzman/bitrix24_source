@@ -40,7 +40,7 @@ class ResourceBookingTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_RESOURCE_BOOKING_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_RESOURCE_BOOKING_DESCRIPTION') ?? '';
 	}
 
 	public static function getGroup(): array

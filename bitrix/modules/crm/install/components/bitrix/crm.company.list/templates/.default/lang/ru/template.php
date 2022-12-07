@@ -2,12 +2,16 @@
 $MESS["CRM_ALL"] = "Всего";
 $MESS["CRM_COMPANY_SHOW_TITLE"] = "Просмотреть компанию";
 $MESS["CRM_COMPANY_SHOW"] = "Просмотреть компанию";
+$MESS["CRM_COMPANY_SHOW_TEXT"] = "Просмотреть";
 $MESS["CRM_COMPANY_EDIT_TITLE"] = "Редактировать компанию";
 $MESS["CRM_COMPANY_EDIT"] = "Редактировать компанию";
+$MESS["CRM_COMPANY_EDIT_TEXT"] = "Редактировать";
 $MESS["CRM_COMPANY_COPY_TITLE"] = "Копировать компанию";
 $MESS["CRM_COMPANY_COPY"] = "Копировать компанию";
+$MESS["CRM_COMPANY_COPY_TEXT"] = "Копировать";
 $MESS["CRM_COMPANY_DELETE_TITLE"] = "Удалить компанию";
 $MESS["CRM_COMPANY_DELETE"] = "Удалить компанию";
+$MESS["CRM_COMPANY_DELETE_TEXT"] = "Удалить";
 $MESS["CRM_COMPANY_EVENT_TITLE"] = "Добавить новое событие";
 $MESS["CRM_COMPANY_EVENT"] = "Добавить событие";
 $MESS["CRM_COMPANY_TASK_TITLE"] = "Добавить задачу";

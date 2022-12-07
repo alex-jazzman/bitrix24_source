@@ -154,6 +154,6 @@ class WebHookTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_WEBHOOK_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_WEBHOOK_DESCRIPTION') ?? '';
 	}
 }

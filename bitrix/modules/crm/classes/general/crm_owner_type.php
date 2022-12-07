@@ -987,7 +987,9 @@ class CCrmOwnerType
 			{
 				return CComponentEngine::MakePathFromTemplate(
 					COption::GetOptionString('crm', 'path_to_store_document_details'),
-					array('document_id' => $ID)
+					[
+						'store_document_id' => $ID,
+					]
 				);
 			}
 
@@ -995,7 +997,9 @@ class CCrmOwnerType
 			{
 				return CComponentEngine::MakePathFromTemplate(
 					COption::GetOptionString('crm', 'path_to_shipment_document_details'),
-					array('document_id' => $ID)
+					[
+						'shipment_document_id' => $ID,
+					]
 				);
 			}
 
@@ -1188,6 +1192,7 @@ class CCrmOwnerType
 			|| $typeID === CCrmOwnerType::OrderCheck
 			|| $typeID === CCrmOwnerType::OrderShipment
 			|| $typeID === CCrmOwnerType::OrderPayment
+			|| $typeID === CCrmOwnerType::StoreDocument
 			|| $typeID === CCrmOwnerType::SmartInvoice
 			|| $typeID === CCrmOwnerType::SmartDocument
 		)

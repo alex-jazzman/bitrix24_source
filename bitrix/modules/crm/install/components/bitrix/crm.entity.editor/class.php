@@ -13,6 +13,7 @@ use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\UI;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Spotlight;
@@ -37,6 +38,9 @@ class CCrmEntityEditorComponent extends UIFormComponent
 	/** @var int */
 	protected $entityTypeID = 0;
 
+	/** @var int|null */
+	protected $categoryId;
+
 	protected function emitOnUIFormInitializeEvent(): void
 	{
 		$event = new Main\Event('crm', 'onCrmEntityEditorInitialize', ['TEMPLATE' => $this->getTemplateName()]);
@@ -59,6 +63,14 @@ class CCrmEntityEditorComponent extends UIFormComponent
 				'DUPLICATE_CONTROL' => [],
 				'USER_FIELD_PREFIX' => 'CRM',
 				'ENTITY_TYPE_TITLE' => '',
+				'CUSTOM_TOOL_PANEL_BUTTONS' => [],
+				'TOOL_PANEL_BUTTONS_ORDER' => [
+					'VIEW' => [],
+					'EDIT' => [
+						UI\EntityEditor\Action::DEFAULT_ACTION_BUTTON_ID,
+						UI\EntityEditor\Action::CANCEL_ACTION_BUTTON_ID,
+					],
+				],
 			]
 		);
 	}
@@ -415,6 +427,10 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			$this->entityTypeID = CCrmOwnerType::ResolveID($this->entityTypeName);
 			$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeID;
 		}
+
+		$this->categoryId = isset($this->arParams['EXTRAS']['CATEGORY_ID'])
+			? (int)$this->arParams['EXTRAS']['CATEGORY_ID']
+			: 0;
 
 		if (empty($this->arResult['ENTITY_TYPE_TITLE']))
 		{

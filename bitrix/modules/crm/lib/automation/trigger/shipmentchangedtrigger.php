@@ -69,7 +69,7 @@ class ShipmentChangedTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_DESCRIPTION') ?? '';
 	}
 
 	public static function getGroup(): array

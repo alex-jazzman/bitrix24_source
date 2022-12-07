@@ -60,7 +60,7 @@ class FillTrackingNumberTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_DESCRIPTION') ?? '';
 	}
 
 	public static function getGroup(): array

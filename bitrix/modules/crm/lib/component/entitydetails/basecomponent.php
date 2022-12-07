@@ -212,64 +212,6 @@ abstract class BaseComponent extends Crm\Component\Base
 		return $multifields;
 	}
 
-	protected static function prepareMultifieldData($entityTypeID, $entityID, $typeID, array &$data)
-	{
-		$dbResult = \CCrmFieldMulti::GetList(
-			array('ID' => 'asc'),
-			array(
-				'ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeID),
-				'ELEMENT_ID' => $entityID,
-				'TYPE_ID' => $typeID,
-			)
-		);
-
-		$entityKey = "{$entityTypeID}_{$entityID}";
-		while($fields = $dbResult->Fetch())
-		{
-			$value = $fields['VALUE'] ?? '';
-			$valueType = $fields['VALUE_TYPE'];
-			$multiFieldComplexID = $fields['COMPLEX_ID'];
-
-			if($value === '')
-			{
-				continue;
-			}
-
-			if(!isset($data[$typeID]))
-			{
-				$data[$typeID] = array();
-			}
-
-			if(!isset($data[$typeID][$entityKey]))
-			{
-				$data[$typeID][$entityKey] = array();
-			}
-
-			//Is required for phone & email & messenger menu
-			if($typeID === 'PHONE' || $typeID === 'EMAIL'
-				|| ($typeID === 'IM' && preg_match('/^imol\|/', $value) === 1)
-			)
-			{
-				$formattedValue = $typeID === 'PHONE'
-					? Main\PhoneNumber\Parser::getInstance()->parse($value)->format()
-					: $value;
-
-				$data[$typeID][$entityKey][] = array(
-					'ID' => $fields['ID'],
-					'VALUE' => $value,
-					'VALUE_TYPE' => $valueType,
-					'VALUE_FORMATTED' => $formattedValue,
-					'COMPLEX_ID' => $multiFieldComplexID,
-					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($multiFieldComplexID, false),
-				);
-			}
-			else
-			{
-				$data[$typeID][$entityKey][] = $value;
-			}
-		}
-	}
-
 	protected function getRequestParamOrDefault($paramName, $default = null)
 	{
 		$value = $this->request->get($paramName);

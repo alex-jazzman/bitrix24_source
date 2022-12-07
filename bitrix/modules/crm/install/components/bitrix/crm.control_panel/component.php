@@ -1,6 +1,8 @@
 <?php
 /** @var \CrmControlPanel $this */
 
+use Bitrix\Catalog\v2\Contractor;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Crm;
@@ -350,10 +352,9 @@ if($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
 
 		$actions[] = array('ID' => 'CREATE', 'URL' => $createUrl);
 	}
-
 	$stdItems['CONTACT'] = array(
 		'ID' => 'CONTACT',
-		'MENU_ID' => 'menu_crm_contact',
+		'MENU_ID' => CrmControlPanel::MENU_ID_CRM_CONTACT,
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CONTACT'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CONTACT_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
@@ -404,7 +405,7 @@ if($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
 
 	$stdItems['COMPANY'] = array(
 		'ID' => 'COMPANY',
-		'MENU_ID' => 'menu_crm_company',
+		'MENU_ID' => CrmControlPanel::MENU_ID_CRM_COMPANY,
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_COMPANY'),
 		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_COMPANY_TITLE'),
 		'URL' => CComponentEngine::MakePathFromTemplate(
@@ -571,6 +572,36 @@ if (
 		'URL' => SITE_DIR."shop/documents/",
 		'ON_CLICK' => 'event.preventDefault();BX.SidePanel.Instance.open("/shop/documents/?inventoryManagementSource=crm", {cacheable: false, customLeftBoundary: 0,});',
 	];
+
+	if (
+		class_exists('Bitrix\Catalog\v2\Contractor\Provider\Manager')
+		&& Contractor\Provider\Manager::isActiveProviderByModule('crm')
+	)
+	{
+		\CBitrixComponent::includeComponentClass('bitrix:catalog.store.document.control_panel');
+
+		$contractorsCompanyItem = $this->getContractorsMenuItem(
+			\CCrmOwnerType::Company,
+			\CatalogStoreDocumentControlPanelComponent::PATH_TO['CONTRACTORS'],
+			CrmControlPanel::MENU_ID_CRM_STORE_CONTRACTORS_COMPANIES,
+			$counterExtras
+		);
+		if ($contractorsCompanyItem)
+		{
+			$stdItems[$contractorsCompanyItem['ID']] = $contractorsCompanyItem;
+		}
+
+		$contractorsContactItem = $this->getContractorsMenuItem(
+			\CCrmOwnerType::Contact,
+			\CatalogStoreDocumentControlPanelComponent::PATH_TO['CONTRACTORS_CONTACTS'],
+			CrmControlPanel::MENU_ID_CRM_STORE_CONTRACTORS_CONTACTS,
+			$counterExtras
+		);
+		if ($contractorsContactItem)
+		{
+			$stdItems[$contractorsContactItem['ID']] = $contractorsContactItem;
+		}
+	}
 }
 
 $stdItems['SETTINGS'] = array(
@@ -1169,5 +1200,11 @@ else
 {
 	$arResult['ITEMS'] = $this->prepareItems($items);
 	unset($items);
+
+	if (isset($arParams['GET_RESULT']) && $arParams['GET_RESULT'] === 'Y')
+	{
+		return $arResult;
+	}
+
 	$this->IncludeComponentTemplate();
 }

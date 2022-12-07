@@ -24,6 +24,6 @@ class GuestReturnTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_GUEST_RETURN_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_GUEST_RETURN_DESCRIPTION') ?? '';
 	}
 }

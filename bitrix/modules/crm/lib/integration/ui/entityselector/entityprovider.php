@@ -204,12 +204,18 @@ abstract class EntityProvider extends BaseProvider
 		return [];
 	}
 
+	protected function getCategoryId(): int
+	{
+		return 0;
+	}
+
 	protected function getRecentItemIds(string $context): array
 	{
 		$ids = [];
 
 		$recentItems = Entity::getRecentlyUsedItems($context, $this->getItemEntityId(), [
 			'EXPAND_ENTITY_TYPE_ID' => $this->getEntityTypeId(),
+			'EXPAND_CATEGORY_ID' => $this->getCategoryId(),
 		]);
 
 		foreach ($recentItems as $item)

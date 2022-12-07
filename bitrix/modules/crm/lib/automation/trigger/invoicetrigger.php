@@ -107,7 +107,7 @@ class InvoiceTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_INVOICE_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_INVOICE_DESCRIPTION') ?? '';
 	}
 
 	public static function getGroup(): array

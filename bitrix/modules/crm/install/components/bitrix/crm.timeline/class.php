@@ -25,6 +25,8 @@ class CCrmTimelineComponent extends CBitrixComponent
 	/** @var int */
 	protected $entityTypeID = \CCrmOwnerType::Undefined;
 	/** @var int */
+	protected $categoryId = 0;
+	/** @var int */
 	protected $entityID = 0;
 	/** @var array|null  */
 	private $entityInfo = null;
@@ -75,6 +77,16 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->entityID = $entityID;
 	}
 
+	public function getExtras(): ?array
+	{
+		return $this->extras;
+	}
+
+	public function setExtras(?array $extras): void
+	{
+		$this->extras = $extras;
+	}
+
 	public function getRepository(): \Bitrix\Crm\Service\Timeline\Repository
 	{
 		if (!$this->repository)
@@ -83,7 +95,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 			{
 				$this->repository = new \Bitrix\Crm\Service\Timeline\Repository(
 					new Crm\Service\Timeline\Context(
-						new Crm\ItemIdentifier($this->entityTypeID, $this->entityID),
+						new Crm\ItemIdentifier($this->entityTypeID, $this->entityID, $this->extras['CATEGORY_ID'] ?? 0),
 						Crm\Service\Timeline\Context::DESKTOP,
 					)
 				);

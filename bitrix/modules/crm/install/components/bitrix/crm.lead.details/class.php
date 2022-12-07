@@ -2151,14 +2151,19 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		//endregion
 		//region Multifield Data
-		if($this->customerType === CustomerType::GENERAL)
+		if ($this->customerType === CustomerType::GENERAL)
 		{
-			if($this->entityID > 0)
+			if ($this->entityID > 0)
 			{
-				$this->prepareMultifieldData(
-					CCrmOwnerType::Lead,
-					array($this->entityID),
-					array()
+				\CCrmComponentHelper::prepareMultifieldData(
+					\CCrmOwnerType::Lead,
+					[$this->entityID],
+					[],
+					$this->entityData,
+					[
+						'ADD_TO_DATA_LEVEL' => true,
+						'COPY_MODE' => $this->isCopyMode,
+					]
 				);
 			}
 			else
@@ -2177,14 +2182,36 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 		elseif($this->customerType === CustomerType::RETURNING)
 		{
-			if($companyID > 0)
+			if ($companyID > 0)
 			{
-				$this->prepareMultifieldData(\CCrmOwnerType::Company, array($companyID), array('PHONE', 'EMAIL', 'IM'));
+				\CCrmComponentHelper::prepareMultifieldData(
+					\CCrmOwnerType::Company,
+					[$companyID],
+					[
+						'PHONE',
+						'EMAIL',
+						'IM',
+					],
+					$this->entityData,
+					[
+						'ADD_TO_DATA_LEVEL' => false,
+						'COPY_MODE' => $this->isCopyMode,
+					]
+				);
 			}
 
-			if(!empty($contactIDs))
+			if (!empty($contactIDs))
 			{
-				$this->prepareMultifieldData(CCrmOwnerType::Contact, $contactIDs, array('PHONE', 'EMAIL', 'IM'));
+				\CCrmComponentHelper::prepareMultifieldData(
+					\CCrmOwnerType::Contact,
+					$contactIDs,
+					[
+						'PHONE',
+						'EMAIL',
+						'IM',
+					],
+					$this->entityData
+				);
 			}
 		}
 		//endregion
@@ -2308,115 +2335,6 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		return ComponentMode::VIEW;
 	}
 
-	protected function prepareMultifieldData($entityTypeID, array $entityIDs, array $typeIDs)
-	{
-		if(empty($entityIDs))
-		{
-			return;
-		}
-
-		$multiFieldEntityTypes = \CCrmFieldMulti::GetEntityTypes();
-		$multiFieldViewClassNames = array(
-			'PHONE' => 'crm-entity-phone-number',
-			'EMAIL' => 'crm-entity-email',
-			'IM' => 'crm-entity-phone-number'
-		);
-
-		if(!isset($this->entityData['MULTIFIELD_DATA']))
-		{
-			$this->entityData['MULTIFIELD_DATA'] = array();
-		}
-
-		$filter = array(
-			'=ENTITY_ID' => CCrmOwnerType::ResolveName($entityTypeID),
-			'@ELEMENT_ID' => $entityIDs
-		);
-
-		if(!empty($typeIDs))
-		{
-			$filter['@TYPE_ID'] = $typeIDs;
-		}
-
-		$dbResult = CCrmFieldMulti::GetListEx(array('ID' => 'asc'), $filter);
-		while($fields = $dbResult->Fetch())
-		{
-			$elementID = (int)$fields['ELEMENT_ID'];
-			$typeID = $fields['TYPE_ID'];
-			$value = isset($fields['VALUE']) ? $fields['VALUE'] : '';
-			if($value === '')
-			{
-				continue;
-			}
-
-			$ID = $fields['ID'];
-			$complexID = isset($fields['COMPLEX_ID']) ? $fields['COMPLEX_ID'] : '';
-			$valueTypeID = isset($fields['VALUE_TYPE']) ? $fields['VALUE_TYPE'] : '';
-
-			//Is required for phone & email & messenger menu
-			if($typeID === 'PHONE' || $typeID === 'EMAIL'
-				|| ($typeID === 'IM' && preg_match('/^imol\|/', $value) === 1)
-			)
-			{
-				$entityKey = "{$entityTypeID}_{$elementID}";
-				if(!isset($this->entityData['MULTIFIELD_DATA'][$typeID]))
-				{
-					$this->entityData['MULTIFIELD_DATA'][$typeID] = array();
-				}
-
-				if(!isset($this->entityData['MULTIFIELD_DATA'][$typeID][$entityKey]))
-				{
-					$this->entityData['MULTIFIELD_DATA'][$typeID][$entityKey] = array();
-				}
-
-				$formattedValue = $typeID === 'PHONE'
-					? Main\PhoneNumber\Parser::getInstance()->parse($value)->format()
-					: $value;
-
-				$this->entityData['MULTIFIELD_DATA'][$typeID][$entityKey][] = array(
-					'ID' => $ID,
-					'VALUE' => $value,
-					'VALUE_TYPE' => $valueTypeID,
-					'VALUE_FORMATTED' => $formattedValue,
-					'COMPLEX_ID' => $complexID,
-					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($complexID, false)
-				);
-			}
-
-			if($entityTypeID === CCrmOwnerType::Lead && $elementID === $this->entityID)
-			{
-				$multiFieldID = $ID;
-				if($this->isCopyMode)
-				{
-					$multiFieldID = "n0{$multiFieldID}";
-				}
-
-				$this->entityData[$typeID][] = array(
-					'ID' => $multiFieldID,
-					'VALUE' => $value,
-					'VALUE_TYPE' => $valueTypeID,
-					'VIEW_DATA' => \CCrmViewHelper::PrepareMultiFieldValueItemData(
-						$typeID,
-						array(
-							'VALUE' => $value,
-							'VALUE_TYPE_ID' => $valueTypeID,
-							'VALUE_TYPE' => isset($multiFieldEntityTypes[$typeID][$valueTypeID])
-								? $multiFieldEntityTypes[$typeID][$valueTypeID] : null,
-							'CLASS_NAME' => isset($multiFieldViewClassNames[$typeID])
-								? $multiFieldViewClassNames[$typeID] : ''
-						),
-						array(
-							'ENABLE_SIP' => false,
-							'SIP_PARAMS' => array(
-								'ENTITY_TYPE_NAME' => CCrmOwnerType::LeadName,
-								'ENTITY_ID' => $this->entityID,
-								'AUTO_FOLD' => true
-							)
-						)
-					)
-				);
-			}
-		}
-	}
 	protected function prepareStatusList()
 	{
 		if($this->statuses === null)

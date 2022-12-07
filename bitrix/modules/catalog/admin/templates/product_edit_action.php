@@ -12,6 +12,7 @@ use Bitrix\Catalog;
 /** @var int $MENU_SECTION_ID */
 /** @var int $ID */
 /** @var bool $bCreateRecord */
+/** @var array $arShowTabs */
 
 /** @global string $CAT_BASE_WEIGHT */
 /** @global string $CAT_BASE_WIDTH */
@@ -82,7 +83,9 @@ if ($allowEdit)
 
 	$isService = false;
 	$productRow = null;
-	if (!$bCreateRecord)
+	$allowedSkuTab = isset($arShowTabs['sku']) && $arShowTabs['sku'];
+	$checkExistProduct = !$bCreateRecord || $allowedSkuTab;
+	if ($checkExistProduct)
 	{
 		$productRow = Catalog\Model\Product::getRow([
 			'select' => [

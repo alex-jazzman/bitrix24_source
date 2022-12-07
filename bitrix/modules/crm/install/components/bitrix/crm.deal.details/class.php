@@ -898,7 +898,7 @@ class CCrmDealDetailsComponent
 									'GRID_ID_SUFFIX' => 'DEAL_DETAILS',
 									'TAB_ID' => 'tab_order',
 									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
-//									'ENABLE_TOOLBAR' => 'N',
+									//									'ENABLE_TOOLBAR' => 'N',
 									'PRESERVE_HISTORY' => true,
 									'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID
 								], 'crm.order.list')
@@ -1492,7 +1492,7 @@ class CCrmDealDetailsComponent
 							)
 						)
 					),
-					'clientEditorFieldsParams' => $this->prepareClientEditorFieldsParams(),
+					'clientEditorFieldsParams' => CCrmComponentHelper::prepareClientEditorFieldsParams(),
 					'useExternalRequisiteBinding' => true
 				)
 			),
@@ -2287,14 +2287,20 @@ class CCrmDealDetailsComponent
 
 		//region Client Data & Multifield Data
 		$clientInfo = array();
-		$multiFieldData = array();
 
 		$companyID = isset($this->entityData['COMPANY_ID']) ? (int)$this->entityData['COMPANY_ID'] : 0;
 		if($companyID > 0)
 		{
-			$this->prepareMultifieldData(\CCrmOwnerType::Company, $companyID, 'PHONE', $multiFieldData);
-			$this->prepareMultifieldData(\CCrmOwnerType::Company, $companyID, 'EMAIL', $multiFieldData);
-			$this->prepareMultifieldData(\CCrmOwnerType::Company, $companyID, 'IM', $multiFieldData);
+			\CCrmComponentHelper::prepareMultifieldData(
+				\CCrmOwnerType::Company,
+				[$companyID],
+				[
+					'PHONE',
+					'EMAIL',
+					'IM',
+				],
+				$this->entityData
+			);
 
 			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyID, $this->userPermissions);
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
@@ -2335,12 +2341,19 @@ class CCrmDealDetailsComponent
 		$contactIDs = \Bitrix\Crm\Binding\EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $contactBindings);
 		$clientInfo['CONTACT_DATA'] = array();
 		$iteration= 0;
+
+		\CCrmComponentHelper::prepareMultifieldData(
+			\CCrmOwnerType::Contact,
+			$contactIDs,
+			[
+				'PHONE',
+				'EMAIL',
+				'IM',
+			],
+			$this->entityData
+		);
 		foreach($contactIDs as $contactID)
 		{
-			$this->prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'PHONE', $multiFieldData);
-			$this->prepareMultifieldData(\CCrmOwnerType::Contact, $contactID, 'EMAIL', $multiFieldData);
-			$this->prepareMultifieldData(\CCrmOwnerType::Contact, $contactID, 'IM', $multiFieldData);
-
 			$isEntityReadPermitted = CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
 			$clientInfo['CONTACT_DATA'][] = CCrmEntitySelectorHelper::PrepareEntityInfo(
 				CCrmOwnerType::ContactName,
@@ -2424,8 +2437,6 @@ class CCrmDealDetailsComponent
 			$this->entityData['REQUISITE_BINDING'] = $requisiteLinkInfo;
 		}
 		//endregion
-
-		$this->entityData['MULTIFIELD_DATA'] = $multiFieldData;
 		//endregion
 
 		//region Product row
@@ -2700,60 +2711,6 @@ class CCrmDealDetailsComponent
 		}
 
 		return ComponentMode::VIEW;
-	}
-
-	protected function prepareMultifieldData($entityTypeID, $entityID, $typeID, array &$data)
-	{
-		$dbResult = CCrmFieldMulti::GetList(
-			array('ID' => 'asc'),
-			array(
-				'ENTITY_ID' => CCrmOwnerType::ResolveName($entityTypeID),
-				'ELEMENT_ID' => $entityID,
-				'TYPE_ID' => $typeID
-			)
-		);
-
-		$entityKey = "{$entityTypeID}_{$entityID}";
-		while($fields = $dbResult->Fetch())
-		{
-			$value = isset($fields['VALUE']) ? $fields['VALUE'] : '';
-			$valueType = $fields['VALUE_TYPE'];
-			$multiFieldComplexID = $fields['COMPLEX_ID'];
-
-			if($value === '')
-			{
-				continue;
-			}
-
-			//Is required for phone & email & messenger menu
-			if($typeID === 'PHONE' || $typeID === 'EMAIL'
-				|| ($typeID === 'IM' && preg_match('/^imol\|/', $value) === 1)
-			)
-			{
-				if(!isset($data[$typeID]))
-				{
-					$data[$typeID] = array();
-				}
-
-				if(!isset($data[$typeID][$entityKey]))
-				{
-					$data[$typeID][$entityKey] = array();
-				}
-
-				$formattedValue = $typeID === 'PHONE'
-					? Main\PhoneNumber\Parser::getInstance()->parse($value)->format()
-					: $value;
-
-				$data[$typeID][$entityKey][] = array(
-					'ID' => $fields['ID'],
-					'VALUE' => $value,
-					'VALUE_TYPE' => $valueType,
-					'VALUE_FORMATTED' => $formattedValue,
-					'COMPLEX_ID' => $multiFieldComplexID,
-					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($multiFieldComplexID, false)
-				);
-			}
-		}
 	}
 
 	protected function prepareTypeList()
@@ -3426,25 +3383,6 @@ class CCrmDealDetailsComponent
 		}
 
 		return $results;
-	}
-
-	protected function prepareClientEditorFieldsParams(): array
-	{
-		$result = [
-			CCrmOwnerType::ContactName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite')
-			],
-			CCrmOwnerType::CompanyName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite')
-			]
-		];
-		if ($this->isLocationModuleIncluded)
-		{
-			$result[CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address');
-			$result[CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address');
-		}
-
-		return $result;
 	}
 
 	protected function getEventTabParams(): array

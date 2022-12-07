@@ -33,6 +33,6 @@ class OpenLineMessageTrigger extends OpenLineTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_DESCRIPTION') ?? '';
 	}
 }

@@ -15,6 +15,7 @@ use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if(SITE_TEMPLATE_ID === 'bitrix24')
@@ -55,7 +56,7 @@ endif;
 
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
 	?><div id="rebuildCompanyDupIndexMsg" class="crm-view-message">
-		<?=GetMessage('CRM_COMPANY_REBUILD_DUP_INDEX', array('#ID#' => 'rebuildCompanyDupIndexLink', '#URL#' => '#'))?>
+		<?=Loc::getMessage('CRM_COMPANY_REBUILD_DUP_INDEX')?>
 	</div><?
 endif;
 
@@ -148,21 +149,21 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 	$arActions = array();
 
 	$arActions[] = array(
-		'TITLE' => GetMessage('CRM_COMPANY_SHOW_TITLE'),
-		'TEXT' => GetMessage('CRM_COMPANY_SHOW'),
+		'TITLE' => GetMessage('CRM_COMPANY_SHOW_TEXT'),
+		'TEXT' => GetMessage('CRM_COMPANY_SHOW_TEXT'),
 		'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arCompany['PATH_TO_COMPANY_SHOW'])."')",
 		'DEFAULT' => true
 	);
 	if($arCompany['EDIT'])
 	{
 		$arActions[] = array(
-			'TITLE' => GetMessage('CRM_COMPANY_EDIT_TITLE'),
-			'TEXT' => GetMessage('CRM_COMPANY_EDIT'),
+			'TITLE' => GetMessage('CRM_COMPANY_EDIT_TEXT'),
+			'TEXT' => GetMessage('CRM_COMPANY_EDIT_TEXT'),
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arCompany['PATH_TO_COMPANY_EDIT'])."')"
 		);
 		$arActions[] = array(
-			'TITLE' => GetMessage('CRM_COMPANY_COPY_TITLE'),
-			'TEXT' => GetMessage('CRM_COMPANY_COPY'),
+			'TITLE' => GetMessage('CRM_COMPANY_COPY_TEXT'),
+			'TEXT' => GetMessage('CRM_COMPANY_COPY_TEXT'),
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arCompany['PATH_TO_COMPANY_COPY'])."')",
 		);
 	}
@@ -171,8 +172,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 	{
 		$pathToRemove = CUtil::JSEscape($arCompany['PATH_TO_COMPANY_DELETE']);
 		$arActions[] = array(
-			'TITLE' => GetMessage('CRM_COMPANY_DELETE_TITLE'),
-			'TEXT' => GetMessage('CRM_COMPANY_DELETE'),
+			'TITLE' => GetMessage('CRM_COMPANY_DELETE_TEXT'),
+			'TEXT' => GetMessage('CRM_COMPANY_DELETE_TEXT'),
 			'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 				'{$gridManagerID}',
 				BX.CrmUIGridMenuCommand.remove,
@@ -463,7 +464,6 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 						'USER_PROFILE_URL' => $arCompany['PATH_TO_USER_PROFILE']
 					)
 				) : '',
-			'COMMENTS' => nl2br($arCompany['COMMENTS']),
 			'REVENUE' =>  '<nobr>'.number_format($arCompany['REVENUE'], 2, ',', ' ').'</nobr>',
 			'COMMENTS' => htmlspecialcharsback($arCompany['COMMENTS']),
 			'BANKING_DETAILS' => nl2br($arCompany['BANKING_DETAILS']),
@@ -885,7 +885,6 @@ $APPLICATION->IncludeComponent(
 	),
 	$component
 );
-
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -913,6 +912,7 @@ $APPLICATION->IncludeComponent(
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [
+				'AUTOFOCUS' => false,
 				'popupColumnsCount' => 4,
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,

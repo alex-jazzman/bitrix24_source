@@ -1626,6 +1626,14 @@ class crm extends CModule
 			'\Bitrix\Crm\Integration\Sale\Reservation\Event\ReservationSettingsBuildEventHandler',
 			'OnReservationSettingsBuild'
 		);
+
+		$eventManager->registerEventHandler(
+			'catalog',
+			'onGetContractorsProvider',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\EventHandler',
+			'onGetContractorsProviderEventHandler'
+		);
 	}
 
 	private function installAgents()
@@ -2190,6 +2198,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Sale\Reservation\Event\ReservationSettingsBuildEventHandler',
 			'OnReservationSettingsBuild'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'catalog',
+			'onGetContractorsProvider',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\EventHandler',
+			'onGetContractorsProviderEventHandler'
 		);
 
 		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesAdd', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterMessagesAdd');

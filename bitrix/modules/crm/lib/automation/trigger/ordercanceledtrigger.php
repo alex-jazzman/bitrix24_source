@@ -25,7 +25,7 @@ class OrderCanceledTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_ORDER_CANCELED_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_ORDER_CANCELED_DESCRIPTION') ?? '';
 	}
 
 	public static function getGroup(): array

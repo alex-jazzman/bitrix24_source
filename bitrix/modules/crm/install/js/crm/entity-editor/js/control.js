@@ -7513,6 +7513,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
+					creationLegend: this._schemeElement.getDataStringParam('creationLegend', ''),
 					enableDeletion: false,
 					enableQuickEdit: this.isQuickEditEnabled(),
 					mode: BX.prop.getInteger(params, "mode", BX.Crm.EntityEditorClientMode.select),
@@ -7642,6 +7643,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
+					creationLegend: this._schemeElement.getDataStringParam('creationLegend', ''),
 					enableDeletion: BX.prop.getBoolean(params, "enableDeletion", true),
 					enableQuickEdit: this.isQuickEditEnabled(),
 					mode: BX.prop.getInteger(params, "mode", BX.Crm.EntityEditorClientMode.select),
@@ -7858,6 +7860,19 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		result.addError(BX.UI.EntityValidationError.create({ field: this }));
 		this.showRequiredFieldError(this.getContentWrapper());
 	};
+	BX.Crm.EntityEditorClientLight.prototype.showRequiredFieldError =  function(anchor)
+	{
+		var requiredFieldErrorMessage = this._schemeElement.getDataStringParam('requiredFieldErrorMessage', '');
+		if (requiredFieldErrorMessage)
+		{
+			this.showError(requiredFieldErrorMessage, anchor);
+		}
+		else
+		{
+			BX.Crm.EntityEditorClientLight.superclass.showRequiredFieldError.call(this, anchor);
+		}
+	};
+
 	BX.Crm.EntityEditorClientLight.prototype.validateSearchBoxes = function(searchBoxes, validator, result)
 	{
 		var hasValidValue = false;

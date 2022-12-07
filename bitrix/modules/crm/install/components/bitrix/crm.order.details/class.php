@@ -1348,11 +1348,17 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		}
 
 		$clientInfo = array();
-		$multiFieldData = array();
-		if($companyId > 0)
+		if ($companyId > 0)
 		{
-			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyId, 'PHONE', $multiFieldData);
-			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyId, 'EMAIL', $multiFieldData);
+			\CCrmComponentHelper::prepareMultifieldData(
+				\CCrmOwnerType::Company,
+				[$companyId],
+				[
+					'PHONE',
+					'EMAIL',
+				],
+				$this->entityData
+			);
 
 			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyId, $this->userPermissions);
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
@@ -1373,11 +1379,18 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		$clientInfo['CONTACT_DATA'] = array();
 		$iteration= 0;
-		foreach($contactIDs as $contactID)
-		{
-			self::prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'PHONE', $multiFieldData);
-			self::prepareMultifieldData(CCrmOwnerType::Contact, $contactID, 'EMAIL', $multiFieldData);
 
+		\CCrmComponentHelper::prepareMultifieldData(
+			\CCrmOwnerType::Contact,
+			$contactIDs,
+			[
+				'PHONE',
+				'EMAIL',
+			],
+			$this->entityData
+		);
+		foreach ($contactIDs as $contactID)
+		{
 			$isEntityReadPermitted = CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
 			$clientInfo['CONTACT_DATA'][] = CCrmEntitySelectorHelper::PrepareEntityInfo(
 				CCrmOwnerType::ContactName,
@@ -1399,7 +1412,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		$this->entityData['REQUISITE_BINDING'] = $this->order->getRequisiteLink();
 
-		$this->entityData['MULTIFIELD_DATA'] = $multiFieldData;
 		$this->entityData['USER_LIST_SELECT'] = $this->getDefaultUserList();
 		$lastUserClients = $this->getLastUserClients();
 		$this->entityData['LAST_COMPANY_INFO'] = $lastUserClients[\CCrmOwnerType::Company];

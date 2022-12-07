@@ -18,6 +18,7 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Crm\Integration\Catalog\Contractor;
 
 class CAllCrmCompany
 {
@@ -1246,6 +1247,8 @@ class CAllCrmCompany
 		if (isset($arFields['REVENUE']))
 			$arFields['REVENUE'] = floatval($arFields['REVENUE']);
 
+		$arFields['CATEGORY_ID'] = $arFields['CATEGORY_ID'] ?? 0;
+
 		if(!isset($arFields['TITLE']) || trim($arFields['TITLE']) === '')
 		{
 			$arFields['TITLE'] = self::GetAutoTitle();
@@ -1253,8 +1256,6 @@ class CAllCrmCompany
 
 		$fields = self::GetUserFields();
 		$this->fillEmptyFieldValues($arFields, $fields);
-
-		$arFields['CATEGORY_ID'] = $arFields['CATEGORY_ID'] ?? 0;
 
 		if (!$this->CheckFields($arFields, false, $options))
 		{
@@ -2575,6 +2576,8 @@ class CAllCrmCompany
 				(new \Bitrix\Crm\Order\ContactCompanyBinding(\CCrmOwnerType::Company))->unbind($ID);
 			}
 
+			(new Contractor\ContactCompanyBinding(\CCrmOwnerType::Company))->unbind($ID);
+
 			\Bitrix\Crm\Timeline\CompanyController::getInstance()->onDelete(
 				$ID,
 				array('FIELDS' => $arFields)
@@ -3382,7 +3385,7 @@ class CAllCrmCompany
 		return GetMessage('CRM_COMPANY_DEFAULT_TITLE_TEMPLATE');
 	}
 
-	public static function GetAutoTitle($number = '')
+	public static function GetAutoTitle(string $number = ''): string
 	{
 		return GetMessage('CRM_COMPANY_DEFAULT_TITLE_TEMPLATE', array('%NUMBER%' => $number));
 	}

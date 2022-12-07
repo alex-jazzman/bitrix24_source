@@ -527,6 +527,7 @@ if (!$bInternal)
 				->setUserId($arResult['CURRENT_USER_ID'])
 				->setUserName(Container::getInstance()->getUserBroker()->getName($arResult['CURRENT_USER_ID']))
 				->setDefaultValues($entityFilter->getDefaultFieldIDs())
+				->setCategoryId($arResult['CATEGORY_ID'])
 				->getDefaultPresets()
 			;
 		}

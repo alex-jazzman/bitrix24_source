@@ -1,4 +1,25 @@
 <?php
+
+use Bitrix\Crm;
+use Bitrix\Crm\Agent\Duplicate\Background\ContactIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\ContactMerge;
+use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
+use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
+use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
+use Bitrix\Crm\ContactAddress;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integrity\Volatile;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\ContactSettings;
+use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /**
@@ -37,6 +58,8 @@ if (!$isErrorOccured && $isBizProcInstalled)
 }
 
 $arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
+$category = $factory && $arResult['CATEGORY_ID'] ? $factory->getCategory($arResult['CATEGORY_ID']) : null;
 
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
 if (!$isErrorOccured && !CCrmContact::CheckReadPermission(0, $userPermissions, $arResult['CATEGORY_ID']))
@@ -99,7 +122,7 @@ if (!$isErrorOccured && $isInExportMode)
 $exportRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getContactExportRestriction();
 if (!$isErrorOccured && $isInExportMode && !$exportRestriction->hasPermission())
 {
-	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+	Container::getInstance()->getLocalization()->loadMessages();
 	$errorMessage = \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR');
 	$isErrorOccured = true;
 }
@@ -116,25 +139,6 @@ if ($isErrorOccured)
 		return;
 	}
 }
-
-use Bitrix\Crm;
-use Bitrix\Crm\Agent\Duplicate\Background\ContactIndexRebuild;
-use Bitrix\Crm\Agent\Duplicate\Background\ContactMerge;
-use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
-use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
-use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
-use Bitrix\Crm\ContactAddress;
-use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Crm\Integrity\Volatile;
-use Bitrix\Crm\Settings\ContactSettings;
-use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
 
 $CCrmBizProc = new CCrmBizProc('CONTACT');
 
@@ -169,6 +173,7 @@ $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
+$arResult['CRM_CUSTOM_PAGE_TITLE'] = $arParams['CRM_CUSTOM_PAGE_TITLE'] ?? null;
 
 if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 {
@@ -370,12 +375,17 @@ if (!$bInternal)
 		$filterFlags |= Crm\Filter\ContactSettings::FLAG_ENABLE_ADDRESS;
 	}
 	$entityFilter = Crm\Filter\Factory::createEntityFilter(
-		new Crm\Filter\ContactSettings(['ID' => $arResult['GRID_ID'], 'flags' => $filterFlags])
+		new Crm\Filter\ContactSettings([
+			'ID' => $arResult['GRID_ID'],
+			'categoryID' => $arResult['CATEGORY_ID'],
+			'flags' => $filterFlags,
+		])
 	);
 	$arResult['FILTER_PRESETS'] = (new Bitrix\Crm\Filter\Preset\Contact())
 		->setUserId((int) $arResult['CURRENT_USER_ID'])
 		->setUserName(CCrmViewHelper::GetFormattedUserName($arResult['CURRENT_USER_ID'], $arParams['NAME_TEMPLATE']))
 		->setDefaultValues($entityFilter->getDefaultFieldIDs())
+		->setCategoryId($arResult['CATEGORY_ID'])
 		->getDefaultPresets()
 	;
 }
@@ -475,7 +485,12 @@ $arResult['HEADERS'] = array_merge(
 		array('id' => 'SECOND_NAME', 'name' => GetMessage('CRM_COLUMN_SECOND_NAME'), 'sort' => 'second_name', 'editable' => true, 'class' => 'username'),
 		array('id' => 'BIRTHDATE', 'name' => GetMessage('CRM_COLUMN_BIRTHDATE'), 'sort' => 'BIRTHDATE', 'first_order' => 'desc', 'type' => 'date', 'editable' => true),
 		array('id' => 'POST', 'name' => GetMessage('CRM_COLUMN_POST'), 'sort' => 'post', 'editable' => true),
-		array('id' => 'COMPANY_ID', 'name' => GetMessage('CRM_COLUMN_COMPANY_ID'), 'sort' => 'company_title', 'editable' => false),
+		[
+			'id' => 'COMPANY_ID',
+			'name' => Loc::getMessage('CRM_COLUMN_COMPANY_ID'),
+			'sort' => 'company_title',
+			'editable' => false,
+		],
 		array('id' => 'TYPE_ID', 'name' => GetMessage('CRM_COLUMN_TYPE'), 'sort' => 'type_id', 'type' => 'list', 'editable' => array('items' => CCrmStatus::GetStatusList('CONTACT_TYPE'))),
 		array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username')
 	)
@@ -487,7 +502,7 @@ if($isInExportMode)
 	$CCrmFieldMulti->ListAddHeaders($arResult['HEADERS']);
 }
 
-Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
+Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
 	\CCrmOwnerType::Contact,
 	$arResult['HEADERS']
 );
@@ -524,7 +539,10 @@ $arResult['HEADERS'] = array_merge(
 	)
 );
 
-Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
+if (!$category || $category->isTrackingEnabled())
+{
+	Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
+}
 
 $utmList = \Bitrix\Crm\UtmTable::getCodeNames();
 foreach ($utmList as $utmCode => $utmName)
@@ -534,6 +552,46 @@ foreach ($utmList as $utmCode => $utmName)
 		'name' => $utmName,
 		'sort' => false, 'default' => $isInExportMode, 'editable' => false
 	);
+}
+
+// filter out category-specific disabled fields
+if ($factory && $category)
+{
+	$arResult['HEADERS'] = array_values(
+		array_filter(
+			$arResult['HEADERS'],
+			static function ($header) use ($factory, $category)
+			{
+				return !in_array(
+					$factory->getCommonFieldNameByMap($header['id']),
+					$category->getDisabledFieldNames(),
+					true
+				);
+			}
+		)
+	);
+
+	$categoryUISettings = $category->getUISettings();
+	$defaultGridColumns = isset($categoryUISettings['grid']['defaultFields'])
+		? $categoryUISettings['grid']['defaultFields']
+		: [];
+
+	if (!empty($defaultGridColumns))
+	{
+		$arResult['HEADERS'] = array_map(
+			static function ($header) use ($defaultGridColumns)
+			{
+				$header['default'] = in_array(
+					$header['id'],
+					$defaultGridColumns,
+					true
+				);
+
+				return $header;
+			},
+			$arResult['HEADERS']
+		);
+	}
 }
 
 $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
@@ -2041,7 +2099,7 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['CONTACT']))
 	}
 }
 
-$parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
+$parentFieldValues = Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
 	\CCrmOwnerType::Contact,
 	$arResult['CONTACT']
 );
@@ -2168,8 +2226,11 @@ foreach($arResult['CONTACT'] as &$arContact)
 	);
 	$arContact['CONTACT_FORMATTED_NAME'] = htmlspecialcharsbx($arContact['~CONTACT_FORMATTED_NAME']);
 
-	$typeID = isset($arContact['TYPE_ID']) ? $arContact['TYPE_ID'] : '';
-	$arContact['CONTACT_TYPE_NAME'] = isset($arResult['TYPE_LIST'][$typeID]) ? $arResult['TYPE_LIST'][$typeID] : $typeID;
+	if (!$category || !in_array(Crm\Item::FIELD_NAME_TYPE_ID, $category->getDisabledFieldNames(), true))
+	{
+		$typeID = isset($arContact['TYPE_ID']) ? $arContact['TYPE_ID'] : '';
+		$arContact['CONTACT_TYPE_NAME'] = isset($arResult['TYPE_LIST'][$typeID]) ? $arResult['TYPE_LIST'][$typeID] : $typeID;
+	}
 
 	$arContact['PATH_TO_USER_CREATOR'] = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_USER_PROFILE'],
@@ -2435,7 +2496,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		$parentEntityId = (int)($arParams['PARENT_ENTITY_ID'] ?? 0);
 		if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
 		{
-			$arResult['PATH_TO_CONTACT_ADD'] = Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+			$arResult['PATH_TO_CONTACT_ADD'] = Container::getInstance()->getRouter()->getItemDetailUrl(
 				\CCrmOwnerType::Contact,
 				0,
 				null,

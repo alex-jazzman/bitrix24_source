@@ -1,12 +1,11 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\UI\EntitySelector;
-use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Crm;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Counter\EntityCounterType;
@@ -17,10 +16,12 @@ class CompanyDataProvider extends EntityDataProvider
 {
 	/** @var CompanySettings|null */
 	protected $settings = null;
+	protected ?Crm\Service\Factory $factory = null;
 
 	function __construct(CompanySettings $settings)
 	{
 		$this->settings = $settings;
+		$this->factory = Container::getInstance()->getFactory(\CCrmOwnerType::Company);
 	}
 
 	/**
@@ -39,7 +40,7 @@ class CompanyDataProvider extends EntityDataProvider
 	 */
 	protected function getFieldName($fieldID)
 	{
-		$name = Loc::getMessage("CRM_COMPANY_FILTER_{$fieldID}");
+		$name = Loc::getMessage('CRM_COMPANY_FILTER_' . $fieldID);
 		if($name === null)
 		{
 			$name = \CCrmCompany::GetFieldCaption($fieldID);
@@ -393,8 +394,7 @@ class CompanyDataProvider extends EntityDataProvider
 		}
 		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
 		{
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Company);
-			$referenceClass = ($factory ? $factory->getDataClass() : null);
+			$referenceClass = ($this->factory ? $this->factory->getDataClass() : null);
 
 			return $this->getUserEntitySelectorParams(
 				EntitySelector::CONTEXT,

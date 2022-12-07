@@ -306,8 +306,13 @@ abstract class Operation
 
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
 
-		foreach($this->fieldsCollection as $field)
+		foreach ($this->fieldsCollection as $field)
 		{
+			if ($this->item->isFieldDisabled($field->getName()))
+			{
+				continue;
+			}
+
 			$fieldResult = $field->processWithPermissions($this->item, $userPermissions);
 			if (!$fieldResult->isSuccess())
 			{
@@ -332,8 +337,13 @@ abstract class Operation
 			return $result;
 		}
 
-		foreach($this->fieldsCollection as $field)
+		foreach ($this->fieldsCollection as $field)
 		{
+			if ($this->item->isFieldDisabled($field->getName()))
+			{
+				continue;
+			}
+
 			$fieldResult = $field->process($this->item, $this->getContext());
 			if (!$fieldResult->isSuccess())
 			{
@@ -393,6 +403,12 @@ abstract class Operation
 		foreach ($this->fieldsCollection as $field)
 		{
 			$fieldName = $field->getName();
+
+			if ($this->item->isFieldDisabled($fieldName))
+			{
+				continue;
+			}
+
 			if ($field->isRequired())
 			{
 				if ($field->isUserField() && !$this->isCheckRequiredUserFields())
@@ -557,8 +573,13 @@ abstract class Operation
 		}
 
 		$isChanged = false;
-		foreach($this->fieldsCollection as $field)
+		foreach ($this->fieldsCollection as $field)
 		{
+			if ($this->item->isFieldDisabled($field->getName()))
+			{
+				continue;
+			}
+
 			$fieldResult = $field->processAfterSave($this->itemBeforeSave, $this->item, $this->getContext());
 			if (!$fieldResult->isSuccess())
 			{

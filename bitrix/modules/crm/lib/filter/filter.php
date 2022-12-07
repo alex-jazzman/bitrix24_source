@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm;
@@ -19,6 +20,39 @@ class Filter extends \Bitrix\Main\Filter\Filter
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getFields()
+	{
+		$fields = parent::getFields();
+
+		if (
+			isset($this->params['filterFieldsCallback'])
+			&& is_callable($this->params['filterFieldsCallback'])
+		)
+		{
+			$fields = array_filter(
+				$fields,
+				$this->params['filterFieldsCallback'],
+				ARRAY_FILTER_USE_KEY
+			);
+		}
+
+		if (
+			isset($this->params['modifyFieldsCallback'])
+			&& is_callable($this->params['modifyFieldsCallback'])
+		)
+		{
+			$fields = array_map(
+				$this->params['modifyFieldsCallback'],
+				$fields
+			);
+		}
+
+		return $fields;
 	}
 
 	/**

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Item\DisabledField;
 use Bitrix\Crm\Item\FieldImplementation;
 use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Observer\Entity\EO_Observer;
@@ -224,6 +225,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	protected $fieldsMap = [];
 	protected $actualValues = [];
 	protected $currentValues = [];
+	/** @var DisabledField[] */
 	protected $disabledFieldNames = [];
 	protected $isUtmLoaded = false;
 
@@ -236,14 +238,31 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		int $entityTypeId,
 		EntityObject $entityObject,
 		array $fieldsMap = [],
-		array $disabledFieldNames = []
+		array $disabledFields = []
 	)
 	{
 		$this->entityTypeId = $entityTypeId;
 		$this->entityObject = $entityObject;
 		$this->fieldsMap = $fieldsMap;
 		$this->primary = $entityObject->primary;
-		$this->disabledFieldNames = $disabledFieldNames;
+
+		foreach ($disabledFields as $disabledField)
+		{
+			if (is_string($disabledField))
+			{
+				$disabledField = new DisabledField($disabledField);
+			}
+
+			if (!$disabledField instanceof DisabledField)
+			{
+				throw new ArgumentException(sprintf(
+					'Disabled field must be instance of %s',
+					DisabledField::class
+				));
+			}
+
+			$this->disabledFieldNames[] = $disabledField;
+		}
 
 		$this->fillExpressionFields($entityObject);
 	}
@@ -446,6 +465,11 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	protected function hasFieldInEntityObject(string $commonFieldName): bool
 	{
+		if ($this->isFieldDisabled($commonFieldName))
+		{
+			return false;
+		}
+
 		$entityFieldName = $this->getEntityFieldNameByMap($commonFieldName);
 
 		return ($this->entityObject->sysGetEntity()->hasField($entityFieldName));
@@ -469,6 +493,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	public function get(string $commonFieldName)
 	{
+		if ($this->isFieldDisabled($commonFieldName))
+		{
+			throw new ArgumentException(sprintf(
+				'Item has no %s field',
+				$commonFieldName
+			));
+		}
+
 		$implementation = $this->getImplementation($commonFieldName);
 		if ($implementation)
 		{
@@ -493,6 +525,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	public function set(string $commonFieldName, $value): self
 	{
+		if ($this->isFieldDisabled($commonFieldName))
+		{
+			throw new ArgumentException(sprintf(
+				'Item has no %s field',
+				$commonFieldName
+			));
+		}
+
 		$implementation = $this->getImplementation($commonFieldName);
 		if ($implementation)
 		{
@@ -525,9 +565,27 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			$value = $this->prepareNullValue($entityFieldName, $value);
 		}
 
+		$oldValue = $this->get($commonFieldName);
 		$this->entityObject->set($entityFieldName, $value);
+		$this->onAfterFieldSet($commonFieldName, $oldValue, $value);
 
 		return $this;
+	}
+
+	protected function onAfterFieldSet(string $commonFieldName, $oldValue, $newValue): void
+	{
+		if ($oldValue === $newValue)
+		{
+			return;
+		}
+
+		if (
+			$commonFieldName === static::FIELD_NAME_CATEGORY_ID
+			&& $this->isCategoriesSupported()
+		)
+		{
+			$this->refreshCategoryDependentDisabledFields();
+		}
 	}
 
 	public function reset(string $commonFieldName): self
@@ -551,6 +609,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		if ($this->isExpressionField($commonFieldName))
 		{
 			return $this->resetExpressionField($commonFieldName);
+		}
+
+		if (!$this->hasFieldInEntityObject($commonFieldName))
+		{
+			throw new ArgumentException(sprintf(
+				'Entity object has no %s field',
+				$commonFieldName
+			));
 		}
 
 		$entityFieldName = $this->getEntityFieldNameByMap($commonFieldName);
@@ -583,6 +649,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			return $this->unsetExpressionField($commonFieldName);
 		}
 
+		if (!$this->hasFieldInEntityObject($commonFieldName))
+		{
+			throw new ArgumentException(sprintf(
+				'Entity object has no %s field',
+				$commonFieldName
+			));
+		}
+
 		$entityFieldName = $this->getEntityFieldNameByMap($commonFieldName);
 		$this->entityObject->sysUnset($entityFieldName);
 
@@ -608,6 +682,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			return $this->remindActualExpressionField($commonFieldName);
 		}
 
+		if (!$this->hasFieldInEntityObject($commonFieldName))
+		{
+			throw new ArgumentException(sprintf(
+				'Entity object has no %s field',
+				$commonFieldName
+			));
+		}
+
 		$entityFieldName = $this->getEntityFieldNameByMap($commonFieldName);
 
 		return $this->entityObject->remindActual($entityFieldName);
@@ -630,6 +712,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		if ($this->isExpressionField($commonFieldName))
 		{
 			return $this->isChangedExpressionField($commonFieldName);
+		}
+
+		if (!$this->hasFieldInEntityObject($commonFieldName))
+		{
+			throw new ArgumentException(sprintf(
+				'Entity object has no %s field',
+				$commonFieldName
+			));
 		}
 
 		$entityFieldName = $this->getEntityFieldNameByMap($commonFieldName);
@@ -680,6 +770,10 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		foreach ($entityFieldNames as $entityFieldName)
 		{
 			$commonFieldName = $this->getCommonFieldNameByMap($entityFieldName);
+			if ($this->isFieldDisabled($commonFieldName))
+			{
+				continue;
+			}
 
 			if (array_key_exists($entityFieldName, $data))
 			{
@@ -1056,7 +1150,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		{
 			return (new Result())
 				->addError(new Error('The provided product is not bound to the item'))
-			;
+				;
 		}
 
 		foreach ($productRowArray as $fieldName => $value)
@@ -1441,6 +1535,11 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		{
 			$commonFieldName = $this->getCommonFieldNameByMap($entityFieldName);
 
+			if ($this->isFieldDisabled($commonFieldName))
+			{
+				continue;
+			}
+
 			if ($valuesType === Values::ACTUAL)
 			{
 				$data[$entityFieldName] = $this->remindActual($commonFieldName);
@@ -1588,7 +1687,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			$this->getExternalizableFieldNamesFromImplementations(),
 		);
 
-		$names = array_merge(
+		return array_merge(
 			$names,
 			$namesFromImplementations,
 			$this->utmTableClassName::getCodeList(),
@@ -1598,8 +1697,6 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 				| FieldTypeMask::EXPRESSION
 			),
 		);
-
-		return array_diff($names, $this->disabledFieldNames);
 	}
 
 	protected function getInternalizableFieldNames(): array
@@ -1657,12 +1754,12 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	public function isCategoriesSupported(): bool
 	{
-		return (!in_array(static::FIELD_NAME_CATEGORY_ID, $this->disabledFieldNames, true));
+		return !$this->isFieldDisabled(static::FIELD_NAME_CATEGORY_ID);
 	}
 
 	public function isStagesEnabled(): bool
 	{
-		return (!in_array(static::FIELD_NAME_STAGE_ID, $this->disabledFieldNames, true));
+		return !$this->isFieldDisabled(static::FIELD_NAME_STAGE_ID);
 	}
 
 	/**
@@ -1686,6 +1783,51 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	}
 
 	/**
+	 * This method is subject to change and is not covered by backwards compatibility
+	 *
+	 * @internal
+	 */
+	final public function refreshCategoryDependentDisabledFields(): void
+	{
+		$this->disabledFieldNames = array_filter(
+			$this->disabledFieldNames,
+			static function (DisabledField $disabledField)
+			{
+				return !$disabledField->isCategoryDependent();
+			}
+		);
+
+		$categoryId = $this->getCategoryId();
+		if (!$categoryId)
+		{
+			return;
+		}
+
+		$category = null;
+		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+		if ($factory)
+		{
+			$category = $factory->getCategory($categoryId);
+		}
+
+		if (!$category)
+		{
+			return;
+		}
+
+		$disabledFieldNames = $category->getDisabledFieldNames();
+		foreach ($disabledFieldNames as $disabledFieldName)
+		{
+			$this->reset($disabledFieldName);
+
+			$disabledField = (new DisabledField($disabledFieldName))
+				->setIsCategoryDependent(true);
+
+			$this->disabledFieldNames[] = $disabledField;
+		}
+	}
+
+	/**
 	 * Return event name fired by DataManager.
 	 *
 	 * @param string $eventName
@@ -1698,7 +1840,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			. $this->entityObject->sysGetEntity()->getName()
 			. '::'
 			. $eventName
-		;
+			;
 	}
 
 	public function getFilteredUserFields(): ?array
@@ -1891,4 +2033,23 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		);
 	}
 	// endregion
+
+	/**
+	 * @param string $commonFieldName
+	 * @return bool
+	 */
+	public function isFieldDisabled(string $commonFieldName): bool
+	{
+		return in_array(
+			$commonFieldName,
+			array_map(
+				static function (DisabledField $disabledField)
+				{
+					return $disabledField->getName();
+				},
+				$this->disabledFieldNames
+			),
+			true
+		);
+	}
 }

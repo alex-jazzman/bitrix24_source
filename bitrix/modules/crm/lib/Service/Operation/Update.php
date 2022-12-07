@@ -62,6 +62,11 @@ class Update extends Operation
 	{
 		foreach ($this->fieldsCollection as $field)
 		{
+			if ($this->item->isFieldDisabled($field->getName()))
+			{
+				continue;
+			}
+
 			if ($field->isValueCanBeChanged() && $this->item->isChanged($field->getName()))
 			{
 				return true;

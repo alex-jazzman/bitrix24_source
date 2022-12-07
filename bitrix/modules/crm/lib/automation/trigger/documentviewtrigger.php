@@ -24,6 +24,6 @@ class DocumentViewTrigger extends DocumentCreateTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_DOCUMENT_VIEW_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_DOCUMENT_VIEW_DESCRIPTION') ?? '';
 	}
 }

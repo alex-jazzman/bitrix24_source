@@ -20,6 +20,7 @@ use Bitrix\Crm\UtmTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Crm\Integration\Catalog\Contractor;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/crm/lib/webform/entity.php');
 
@@ -2761,6 +2762,8 @@ class CAllCrmContact
 			{
 				(new \Bitrix\Crm\Order\ContactCompanyBinding(\CCrmOwnerType::Contact))->unbind($ID);
 			}
+
+			(new Contractor\ContactCompanyBinding(\CCrmOwnerType::Contact))->unbind($ID);
 
 			if(!$enableDeferredMode)
 			{

@@ -148,21 +148,21 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 	$arActions = array();
 
 	$arActions[] = array(
-		'TITLE' => GetMessage('CRM_CONTACT_SHOW_TITLE'),
-		'TEXT' => GetMessage('CRM_CONTACT_SHOW'),
+		'TITLE' => GetMessage('CRM_CONTACT_SHOW_TEXT'),
+		'TEXT' => GetMessage('CRM_CONTACT_SHOW_TEXT'),
 		'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arContact['PATH_TO_CONTACT_SHOW'])."')",
 		'DEFAULT' => true
 	);
 	if($arContact['EDIT'])
 	{
 		$arActions[] = array(
-			'TITLE' => GetMessage('CRM_CONTACT_EDIT_TITLE'),
-			'TEXT' => GetMessage('CRM_CONTACT_EDIT'),
+			'TITLE' => GetMessage('CRM_CONTACT_EDIT_TEXT'),
+			'TEXT' => GetMessage('CRM_CONTACT_EDIT_TEXT'),
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arContact['PATH_TO_CONTACT_EDIT'])."')"
 		);
 		$arActions[] = array(
-			'TITLE' => GetMessage('CRM_CONTACT_COPY_TITLE'),
-			'TEXT' => GetMessage('CRM_CONTACT_COPY'),
+			'TITLE' => GetMessage('CRM_CONTACT_COPY_TEXT'),
+			'TEXT' => GetMessage('CRM_CONTACT_COPY_TEXT'),
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arContact['PATH_TO_CONTACT_COPY'])."')",
 		);
 	}
@@ -171,8 +171,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 	{
 		$pathToRemove = CUtil::JSEscape($arContact['PATH_TO_CONTACT_DELETE']);
 		$arActions[] = array(
-			'TITLE' => GetMessage('CRM_CONTACT_DELETE_TITLE'),
-			'TEXT' => GetMessage('CRM_CONTACT_DELETE'),
+			'TITLE' => GetMessage('CRM_CONTACT_DELETE_TEXT'),
+			'TEXT' => GetMessage('CRM_CONTACT_DELETE_TEXT'),
 			'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 				'{$gridManagerID}',
 				BX.CrmUIGridMenuCommand.remove,
@@ -917,6 +917,7 @@ $APPLICATION->IncludeComponent(
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [
+				'AUTOFOCUS' => false,
 				'popupColumnsCount' => 4,
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,

@@ -99,7 +99,7 @@ class TaskStatusTrigger extends BaseTrigger
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_TASK_STATUS_DESCRIPTION');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_TASK_STATUS_DESCRIPTION') ?? '';
 	}
 
 	public static function getGroup(): array
