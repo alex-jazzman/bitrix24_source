@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_TIMELINE_CLIENT_TITLE"] = "Клієнт";
+$MESS["CRM_TIMELINE_MARKET_PANEL_TEXT"] = "Понад 1000 застосунків для CRM";
+$MESS["CRM_TIMELINE_MARKET_PANEL_TEXT_DETAILS"] = "Докладніше";
+$MESS["CRM_TIMELINE_MENU_FASTEN"] = "Закріпити";
+$MESS["CRM_TIMELINE_MENU_UNFASTEN"] = "Відкріпити";

@@ -1,0 +1,31 @@
+<?
+$MESS["FORM_FL_ID"] = "ID статуса";
+$MESS["FORM_FL_ACTIVE"] = "Активний";
+$MESS["FORM_F_ACTIVE"] = "Активний:";
+$MESS["FORM_NOT_FOUND"] = "Веб форма не знайдена";
+$MESS["FORM_DELETE_STATUS_CONFIRM"] = "Ви впевнені, що хочете видалити даний статус?";
+$MESS["FORM_F_TITLE"] = "Заголовок:";
+$MESS["FORM_TIMESTAMP"] = "Змінений";
+$MESS["FORM_EDIT_ALT"] = "Змінити параметри статуса";
+$MESS["FORM_FORM_EDIT_TITLE"] = "Змінити параметри форми";
+$MESS["FORM_FL_RESULTS"] = "Кількість результатів";
+$MESS["FORM_COPY"] = "Копіювати";
+$MESS["FORM_COPY_ALT"] = "Копіювати статус";
+$MESS["FORM_DESCRIPTION"] = "Опис";
+$MESS["FORM_FL_DESCR"] = "Опис";
+$MESS["FORM_F_DESCRIPTION"] = "Опис:";
+$MESS["FORM_RESULT_TITLE"] = "Відкрити результати форми";
+$MESS["FORM_ERROR"] = "Помилка!";
+$MESS["FORM_FORM_EDIT"] = "Параметри форми";
+$MESS["FORM_F_RESULTS"] = "Результатів:";
+$MESS["FORM_C_SORT"] = "Сорт.";
+$MESS["FORM_PAGE_TITLE"] = "Список статусів для результатів форми # #ID#";
+$MESS["FORM_FORM_LIST"] = "Список форм";
+$MESS["FORM_PAGES"] = "Статуси";
+$MESS["FORM_STATUS_DELETE"] = "Видалити";
+$MESS["FORM_STATUS_DELETE_ALT"] = "Видалити статус";
+$MESS["FORM_DEFAULT"] = "Умовч.";
+$MESS["FORM_FORM_NAME"] = "Форма:";
+$MESS["FORM_STATUS_DELETE_ERROR"] = "Помилка видалення статусу";
+$MESS["FORM_STATUS_ACTIVE_ERROR"] = "Помилка активації / деактивації статусу";
+?>

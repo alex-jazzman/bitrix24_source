@@ -1,0 +1,6 @@
+<?php
+$MESS["CRM_TIMELINE_BLOCK_TITLE_CHANNEL"] = "Канал";
+$MESS["CRM_TIMELINE_BLOCK_TITLE_CLIENT"] = "Клієнт";
+$MESS["CRM_TIMELINE_BLOCK_TITLE_NAME"] = "Назва";
+$MESS["CRM_TIMELINE_BUTTON_SEE_CHAT"] = "Переглянути";
+$MESS["CRM_TIMELINE_TITLE_OPEN_LINE_DONE"] = "Чат із клієнтом завершено";

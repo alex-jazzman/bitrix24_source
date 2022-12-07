@@ -1,0 +1,32 @@
+<?
+$MESS["SUP_ADMIN_TAB1"] = "Розклад";
+$MESS["SUP_ADMIN_TAB2"] = "Години";
+$MESS["SUP_ADMIN_TITLE"] = "Розклади";
+$MESS["SUP_ERROR"] = "Помилки";
+$MESS["SUP_BACK_TO_ADMIN"] = "До переліку";
+$MESS["SUP_TIMETABLE_NOT_FOUND"] = "Розклад не знайдено";
+$MESS["SUP_CONFIRM_DEL_MESSAGE"] = "Ви дійсно хочете видалити цей Розклад?";
+$MESS["SUP_FORM_SETTINGS"] = "Налаштування";
+$MESS["SUP_FORM_SETTINGS_EX"] = "Налаштування";
+$MESS["SUP_NAME"] = "Ім'я";
+$MESS["SUP_DESCRIPTION"] = "Опис";
+$MESS["SUP_HOURS"] = "Годинники";
+$MESS["SUP_24H"] = "24 години";
+$MESS["SUP_CLOSED"] = "не працює";
+$MESS["SUP_CUSTOM"] = "години роботи: <br>(HH24:MI)";
+$MESS["SUP_ADMIN_USER_FIELDS"] = "Додаткові властивості";
+$MESS["SUP_ADMIN_TITLE_ADD"] = "Створення нового розкладу";
+$MESS["SUP_ADMIN_TITLE_EDIT"] = "Редагування розкладу \"#NAME#\"";
+$MESS["SUP_ADMIN_ROW_COPY"] = "Копіювати";
+$MESS["SUP_ADMIN_ROW_DELETE"] = "Видалити рядок";
+$MESS["MAIN_ADMIN_MENU_LIST"] = "Список";
+$MESS["MAIN_ADMIN_MENU_DELETE"] = "Видалити";
+$MESS["MAIN_ADMIN_MENU_COPY"] = "Копіювати";
+$MESS["SUP_WEEKDAY_0"] = "Понеділок";
+$MESS["SUP_WEEKDAY_1"] = "Вівторок";
+$MESS["SUP_WEEKDAY_2"] = "Середа";
+$MESS["SUP_WEEKDAY_3"] = "Четвер";
+$MESS["SUP_WEEKDAY_4"] = "П'ятниця";
+$MESS["SUP_WEEKDAY_5"] = "Субота";
+$MESS["SUP_WEEKDAY_6"] = "Неділя";
+?>

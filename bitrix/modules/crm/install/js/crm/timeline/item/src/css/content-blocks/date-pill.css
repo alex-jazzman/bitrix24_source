@@ -1,0 +1,48 @@
+.crm-timeline__date-pill {
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	min-height: 21px;
+	padding-left: 9px;
+	padding-right: 21px;
+	font-family: var(--ui-font-family-secondary, --ui-font-family-open-sans, 'Open Sans', sans-serif);
+	font-size: var(--ui-font-size-xs, 12px);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	border-radius: 64px;
+	color: var(--ui-color-text-subtle, #828b95);
+	cursor: pointer;
+}
+
+.crm-timeline__date-pill.--color-default {
+	background-color: var(--ui-color-base-04, #F1F4F6);
+}
+
+.crm-timeline__date-pill.--color-warning {
+	background-color: var(--ui-color-accent-yellow, #FEF3B8);
+}
+
+.crm-timeline__date-pill.--readonly {
+	padding-right: 9px;
+	cursor: default;
+}
+
+.crm-timeline__date-pill_caret {
+	pointer-events: none;
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	right: 5px;
+	top: 50%;
+	transform: translateY(-50%);
+	mask-image: url("../../images/common/crm-timeline__bottom-caret.svg");
+	mask-size: contain;
+	mask-position: center center;
+	--crm-timeline__date-pill_caret-color: 130, 139, 149;
+	background-color: rgba(var(--ui-color-text-subtle-rgb, var(--crm-timeline__date-pill_caret-color)), 0.54);
+}
+
+.crm-timeline__date-pill.--readonly .crm-timeline__date-pill_caret{
+	display: none;
+}

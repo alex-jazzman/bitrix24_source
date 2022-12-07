@@ -1,0 +1,3 @@
+<?php
+$MESS["UI_NOTIFICATION_MANAGER_CLOSE"] = "Закрити";
+$MESS["UI_NOTIFICATION_MANAGER_REPLY"] = "Відповісти";

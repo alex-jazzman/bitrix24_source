@@ -1,0 +1,30 @@
+<?
+$MESS["FLOW_DOCUMENT_LIST"] = "Список документів";
+$MESS["FLOW_RECORD_NOT_FOUND"] = "Невірний ID запису або запис не знайдено";
+$MESS["FLOW_PAGE_TITLE"] = "Запис # #ID#";
+$MESS["FLOW_PAGE_DIFF_TITLE"] = "Порівняння документів # #ID# та # #PREV_ID#";
+$MESS["FLOW_HISTORY"] = "Історія";
+$MESS["FLOW_STATUS"] = "Статус:";
+$MESS["FLOW_FILENAME"] = "Ім'я файлу:";
+$MESS["FLOW_TITLE"] = "Заголовок:";
+$MESS["FLOW_TEXT"] = "Текст";
+$MESS["FLOW_DOCUMENT_ID"] = "ID документу:";
+$MESS["FLOW_DOCUMENT_FILENAME"] = "Ім'я файлу:";
+$MESS["FLOW_DOCUMENT_TITLE"] = "Заголовок:";
+$MESS["FLOW_DOCUMENT_DATE_ENTER"] = "Створено:";
+$MESS["FLOW_DOCUMENT_DATE_MODIFY"] = "Змінено:";
+$MESS["FLOW_DOCUMENT_DATE_LOCK"] = "Блоковано:";
+$MESS["FLOW_DOCUMENT_STATUS"] = "Статус:";
+$MESS["FLOW_CURRENT_SETTINGS"] = "Поточні параметри";
+$MESS["FLOW_RECORD_SETTINGS"] = "Документ";
+$MESS["FLOW_TIMESTAMP"] = "Змінено:";
+$MESS["FLOW_COMMENTS"] = "Коментар:";
+$MESS["FLOW_HIST_VIEW_SITE"] = "Сайт:";
+$MESS["FLOW_PAGE_PARAM_TITLE"] = "Поточні параметри документу";
+$MESS["FLOW_BACK"] = "Повернутися до списку";
+$MESS["FLOW_USER_ALT"] = "Переглянути інформацію про користувача";
+$MESS["FLOW_STATUS_ALT"] = "Переглянути інформацію про статус";
+$MESS["FLOW_VIEW_DOC_ALT"] = "Переглянути вихідний документ";
+$MESS["FLOW_VIEW_FILE_ALT"] = "Переглянути файл";
+$MESS["FLOW_SITE_ALT"] = "Переглянути інформацію про сайт";
+?>

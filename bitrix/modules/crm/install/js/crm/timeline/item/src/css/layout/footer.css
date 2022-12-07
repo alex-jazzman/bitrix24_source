@@ -1,0 +1,88 @@
+
+.crm-timeline__card-action {
+	padding: calc(var(--ui-space-inset-sm, 12px) * -1) var(--ui-space-inset-md, 16px) var(--ui-space-inset-sm, 12px) var(--ui-space-inset-md, 16px);
+	display: flex;
+	margin-bottom: 16px;
+}
+
+.crm-timeline__card-action:last-child {
+	margin-bottom: unset;
+}
+
+.crm-timeline__card-action_buttons {
+	display: flex;
+	flex-wrap: wrap;
+	flex: 1;
+	margin-bottom: -8px;
+}
+
+.crm-timeline__card-action_menu {
+	display: flex;
+	margin: -1px 0 0 14px;
+}
+
+.crm-timeline__card-action_menu-item {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 9px;
+}
+
+.crm-timeline__card-action_menu-item:first-child {
+	margin-left: unset;
+}
+
+.crm-timeline__card-action-btn {
+	display: inline-block;
+	min-width: 120px;
+	width: 31%;
+	margin: 0 8px 8px 0;
+}
+
+.crm-timeline__card-action-btn .ui-btn {
+	width: 100%;
+}
+
+.crm-timeline__card-action-btn.ui-btn:last-child {
+	margin-right: unset;
+}
+
+.crm-timeline__card_add-button {
+	width: 28px;
+	height: 28px;
+	mask-size: 28px 28px;
+	mask-repeat: no-repeat;
+	mask-position: center center;
+	cursor: pointer;
+	transition: filter var(--crm-timeline__transition-hover) linear;
+}
+
+.crm-timeline__card_add-button.--hover,
+.crm-timeline__card_add-button:hover {
+	filter: brightness(90%);
+	transition-duration: unset;
+}
+
+.crm-timeline__card_add-button.--color-default {
+	background-color: var(--ui-color-base-40, #bdc1c6);
+}
+
+.crm-timeline__card_add-button.--color-primary {
+	background-color: rgba(var(--ui-color-primary-rgb), 1);
+}
+
+.crm-timeline__card_add-button.--icon-note {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-note.svg);
+}
+
+.crm-timeline__card_add-button.--icon-print {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-print.svg);
+}
+
+.crm-timeline__card_add-button.--icon-script {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-script.svg);
+}
+
+.crm-timeline__card_add-button.--icon-dots {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-dots.svg);
+}

@@ -1,0 +1,29 @@
+<?
+$MESS["LEARNING_EDIT_TITLE1"] = "Створити новий курс";
+$MESS["LEARNING_EDIT_TITLE2"] = "Змінити курс ##ID#";
+$MESS["LEARNING_ADD"] = "Додати курс";
+$MESS["LEARNING_ERROR"] = "Помилка при збереженні курсу";
+$MESS["LEARNING_ADMIN_TAB1"] = "Курс";
+$MESS["LEARNING_ADMIN_TAB1_EX"] = "Параметри курсу";
+$MESS["LEARNING_ADMIN_TAB2"] = "Доступ";
+$MESS["LEARNING_ADMIN_TAB2_EX"] = "Права доступу до курсу";
+$MESS["LEARNING_ADMIN_TAB3"] = "Анонс";
+$MESS["LEARNING_ADMIN_TAB3_EX"] = "Короткий опис курсу";
+$MESS["LEARNING_ADMIN_TAB4"] = "Докладно";
+$MESS["LEARNING_ADMIN_TAB4_EX"] = "Детальний опис курсу";
+$MESS["LEARNING_CONFIRM_DEL_MESSAGE"] = "Ви впевнені, що хочете видалити даний курс?";
+$MESS["LEARNING_GROUP_ID_TITLE"] = "Редагувати групу користувачів";
+$MESS["LEARNING_PREVIEW_TEXT"] = "Анонс";
+$MESS["LEARNING_ACCESS"] = "Доступ";
+$MESS["LEARNING_DESCRIPTION"] = "Докладно";
+$MESS["LEARNING_RATING"] = "Увімкнути рейтинг";
+$MESS["LEARNING_RATING_CONFIG"] = "за умовчанням";
+$MESS["LEARNING_RATING_TYPE"] = "Вигляд кнопок рейтингу";
+$MESS["LEARNING_RATING_TYPE_CONFIG"] = "за умовчанням";
+$MESS["LEARNING_RATING_TYPE_LIKE"] = "Мені подобається (текстовий)";
+$MESS["LEARNING_RATING_TYPE_STANDART_TEXT"] = "Подобається / Не подобається (текстовий)";
+$MESS["LEARNING_RATING_TYPE_STANDART"] = "Подобається / Не подобається (графічний)";
+$MESS["LEARNING_RATING_TYPE_LIKE_GRAPHIC"] = "Мені подобається (графічний)";
+$MESS["LEARNING_ADMIN_TAB5"] = "Зв'язки";
+$MESS["LEARNING_ADMIN_TAB5_EX"] = "Взаємозв'язку курсу";
+?>

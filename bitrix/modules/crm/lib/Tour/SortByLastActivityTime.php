@@ -1,0 +1,33 @@
+<?php
+
+namespace Bitrix\Crm\Tour;
+
+use Bitrix\Main\Localization\Loc;
+
+class SortByLastActivityTime extends Base
+{
+	use OtherTourChecker;
+
+	protected const OPTION_NAME = 'sort-by-last-activity';
+
+	protected function canShow(): bool
+	{
+		return
+			$this->isTourAvailable()
+			&& $this->isUserSeenOtherTour(ActivityViewMode::getInstance(), self::OPTION_CATEGORY)
+		;
+	}
+
+	protected function getSteps(): array
+	{
+		return [
+			[
+				'id' => 'step-sort-by-last-activity-time',
+				'title' => Loc::getMessage('CRM_TOUR_SBLA_TITLE'),
+				'text' => Loc::getMessage('CRM_TOUR_SBLA_TEXT'),
+				'useDynamicTarget' => true,
+				'eventName' => 'Kanban.Grid::onShowSortByLastActivityTour',
+			],
+		];
+	}
+}

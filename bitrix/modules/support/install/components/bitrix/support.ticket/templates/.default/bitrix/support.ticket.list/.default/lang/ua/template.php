@@ -1,0 +1,37 @@
+<?
+$MESS["SUP_ALL"] = "(всі)";
+$MESS["SUP_ID"] = "ID";
+$MESS["SUP_F_ID"] = "ID звернення";
+$MESS["SUP_TOTAL"] = "Всього";
+$MESS["SUP_TITLE"] = "Заголовок";
+$MESS["SUP_CLOSED"] = "закрито";
+$MESS["SUP_F_CLOSE"] = "Закрито/відкрито";
+$MESS["SUP_GREEN"] = "зелений";
+$MESS["SUP_TIMESTAMP"] = "Змінено";
+$MESS["SUP_EDIT"] = "Змінити";
+$MESS["SUP_EDIT_TICKET"] = "Змінити звернення";
+$MESS["SUP_F_LAMP"] = "Індикатор";
+$MESS["SUP_LAMP"] = "Індикатор";
+$MESS["SUP_EXACT_MATCH"] = "Шукати точний збіг при фільтрації";
+$MESS["SUP_RED"] = "червоний";
+$MESS["SUP_MODIFIED_BY"] = "Хто змінив";
+$MESS["SUP_GREY_ALT"] = "звернення закрито";
+$MESS["SUP_GREY_ALT_SUP"] = "звернення закрито";
+$MESS["SUP_OPENED"] = "відкрито";
+$MESS["SUP_YELLOW_ALT_SUP"] = "Востаннє у звернення писав клієнт техпідтримки (ви не відповідальний)";
+$MESS["SUP_RED_ALT_SUP"] = "Востаннє у звернення писав клієнт техпідтримки (ви відповідальний)";
+$MESS["SUP_RED_ALT"] = "Востаннє у звернення писав співробітник техпідтримки";
+$MESS["SUP_RED_ALT_2"] = "Востаннє у звернення писав співробітник техпідтримки";
+$MESS["SUP_GREEN_S_ALT_SUP"] = "Востаннє у звернення писав співробітник техпідтримки";
+$MESS["SUP_GREEN_ALT"] = "Востаннє у звернення писали ви";
+$MESS["SUP_GREEN_ALT_SUP"] = "Востаннє у звернення писали ви";
+$MESS["SUP_VIEW_TICKET"] = "Переглянути звернення";
+$MESS["SUP_F_DEL_FILTER"] = "Скинути";
+$MESS["SUP_GREY"] = "сірий";
+$MESS["SUP_ASK"] = "Створити нове звернення";
+$MESS["SUP_MESSAGES"] = "Повідомл.";
+$MESS["SUP_STATUS"] = "Статус";
+$MESS["SUP_F_MESSAGE"] = "Текст повідомлення";
+$MESS["SUP_F_SET_FILTER"] = "Встановити";
+$MESS["SUP_F_FILTER"] = "Фільтр";
+?>

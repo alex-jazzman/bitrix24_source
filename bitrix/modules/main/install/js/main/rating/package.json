@@ -1,0 +1,9 @@
+{
+  "name": "rating",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bundle.config.js",
+  "dependencies": {
+    "lottie-web": "^5.9.6"
+  }
+}

@@ -1,0 +1,30 @@
+<?
+$MESS["LEARNING_LESSON"] = "Урок";
+$MESS["LEARNING_ADMIN_TAB1"] = "Запитання";
+$MESS["LEARNING_ADMIN_TAB1_EX"] = "Параметри питання";
+$MESS["LEARNING_ADMIN_TAB2"] = "Відповіді";
+$MESS["LEARNING_ADMIN_TAB2_EX"] = "Варіанти відповідей";
+$MESS["LEARNING_ADMIN_TAB3"] = "Опис";
+$MESS["LEARNING_ADMIN_TAB3_EX"] = "Детальний опис питання";
+$MESS["LEARNING_ERROR"] = "Помилка при збереженні питання";
+$MESS["LEARNING_QUESTION_LIST"] = "Список запитань";
+$MESS["LEARNING_QUESTION_NAME"] = "Питання";
+$MESS["LEARNING_CONFIRM_DEL_MESSAGE"] = "Ви впевнені, що хочете видалити дане питання?";
+$MESS["LEARNING_CONFIRM_CHECK_ANSWER"] = "Питання не містить правильних відповідей. Продовжити?";
+$MESS["LEARNING_PATH_TO_FILE"] = "Шлях до файлу";
+$MESS["LEARNING_WIDTH"] = "Ширина";
+$MESS["LEARNING_HEIGHT"] = "Висота";
+$MESS["LEARNING_SAVE"] = "Зберегти";
+$MESS["LEARNING_VIDEO_AUDIO"] = "Відео/аудіо";
+$MESS["LEARNING_CORRECT_REQUIRED"] = "Обов'язкова правильна відповідь";
+$MESS["LEARNING_INCORRECT_MESSAGE"] = "Повідомлення при неправильній відповіді";
+$MESS["LEARNING_EMAIL_ANSWER"] = "Повідомляти викладача про відповідь";
+$MESS["LEARNING_TEXT_ANSWER"] = "Текстова відповідь";
+$MESS["LEARNING_SORTING"] = "Сортування";
+$MESS["LEARNING_ANSWERS"] = "Варіанти відповідей";
+$MESS["LEARNING_NO_ANSWERS"] = "Для даного типу питань варіанти відповідей не передбачені";
+$MESS["LEARNING_ADD_ANSWER"] = "Додати відповідь";
+$MESS["LEARNING_ADD_RIGHT_ANSWER_NOT_SELECTED"] = "Не обрано правильну відповідь";
+$MESS["LEARNING_COMMENT"] = "Нотаток";
+$MESS["LEARNING_CHANGE_ATTACHED_LESSON"] = "змінити";
+?>
