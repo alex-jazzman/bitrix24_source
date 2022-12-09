@@ -32,6 +32,26 @@ $APPLICATION->IncludeComponent(
 
 $filterID = (!empty($arParams["FILTER_ID"]) ? $arParams["FILTER_ID"] : 'SONET_GROUP_LIST');
 
+if ($arParams["ALLOW_CREATE_GROUP"] == "Y")
+{
+	?><div class="pagetitle-container sonet-groups-filter-btn-add"><a class="ui-btn ui-btn-success" href="<?=htmlspecialcharsbx($arParams["HREF"])?>"><?
+	?><?=Loc::getMessage("SONET_C36_T_CREATE2")?></a></div><?
+
+	?><script>
+	BX.ready(function()
+	{
+		<?
+		if (isset($_GET["new"]))
+		{
+		?>
+		BX.SGCP.ShowForm("create", "<?=$popupName?>", {});
+		<?
+		}
+		?>
+	});<?
+	?></script><?
+}
+
 ?><div class="pagetitle-container pagetitle-flexible-space" style="overflow: hidden;" id="<?=htmlspecialcharsbx($filterID)?>_filter_container"><?
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.filter',
@@ -48,29 +68,9 @@ $APPLICATION->IncludeComponent(
 			'AUTOFOCUS' => false
 		)
 	),
-	$this->getComponent()
+	$this->getComponent(),
 );
 ?></div><?
-
-if ($arParams["ALLOW_CREATE_GROUP"] == "Y")
-{
-	?><a class="ui-btn ui-btn-primary ui-btn-icon-add" href="<?=htmlspecialcharsbx($arParams["HREF"])?>"><?
-		?><?=Loc::getMessage("SONET_C36_T_CREATE2")?></a><?
-
-	?><script>
-		BX.ready(function()
-		{
-			<?
-			if (isset($_GET["new"]))
-			{
-				?>
-				BX.SGCP.ShowForm("create", "<?=$popupName?>", {});
-				<?
-			}
-			?>
-		});<?
-	?></script><?
-}
 
 ?><script>
 	BX.ready(function()

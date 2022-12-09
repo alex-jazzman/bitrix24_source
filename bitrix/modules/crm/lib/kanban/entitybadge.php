@@ -6,7 +6,8 @@ use Bitrix\Crm\Badge\Model\BadgeTable;
 use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\Crm;
-use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\ORM\Query\Result;
 
 class EntityBadge
@@ -56,7 +57,7 @@ class EntityBadge
 		return BadgeTable::getList([
 			'select' => [
 				'ENTITY_ID',
-				'MAX_DATE',
+				'MAX_DATE' => 'CREATED_DATE',
 				'TYPE',
 				'VALUE',
 			],
@@ -64,13 +65,21 @@ class EntityBadge
 				'=ENTITY_TYPE_ID' => $this->entityTypeId,
 				'@ENTITY_ID' => $this->entityIds,
 				$hiddenBadgesFilter,
+				'SUB_TABLE.CREATED_DATE' => null,
 			],
 			'group' => [
 				'TYPE',
 				'ENTITY_ID',
 			],
 			'runtime' => [
-				new ExpressionField('MAX_DATE', 'MAX(%s)', ['CREATED_DATE']),
+				new Reference(
+					'SUB_TABLE',
+					BadgeTable::class,
+					Query::filter()
+						->whereColumn('this.ENTITY_ID', 'ref.ENTITY_ID')
+						->whereColumn('this.ENTITY_TYPE_ID', 'ref.ENTITY_TYPE_ID')
+						->whereColumn('this.CREATED_DATE', '<', 'ref.CREATED_DATE')
+				),
 			],
 		]);
 	}

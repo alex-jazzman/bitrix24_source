@@ -105,7 +105,8 @@
 	        var step = {
 	          id: stepConfig.id,
 	          title: stepConfig.title,
-	          text: stepConfig.text
+	          text: stepConfig.text,
+	          position: stepConfig.position
 	        };
 
 	        if (stepConfig.useDynamicTarget) {

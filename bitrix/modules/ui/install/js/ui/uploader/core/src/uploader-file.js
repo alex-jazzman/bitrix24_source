@@ -1,4 +1,4 @@
-import { Type, Runtime } from 'main.core';
+import { Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import { FileStatus } from './enums/file-status';
@@ -6,6 +6,7 @@ import { FileOrigin } from './enums/file-origin';
 
 import type { FileInfo } from './types/file-info';
 import type { UploaderFileOptions } from './types/uploader-file-options';
+import type UploaderError from './uploader-error';
 
 import AbstractUploadController from './backend/abstract-upload-controller';
 import AbstractLoadController from './backend/abstract-load-controller';
@@ -45,6 +46,8 @@ export default class UploaderFile extends EventEmitter
 
 	status: FileStatus = FileStatus.INIT;
 	origin: FileOrigin = FileOrigin.CLIENT;
+	errors: UploaderError[] = [];
+	progress: number = 0;
 
 	uploadController: AbstractUploadController = null;
 	loadController: AbstractLoadController = null;
@@ -302,7 +305,7 @@ export default class UploaderFile extends EventEmitter
 		const name = this.getOriginalName();
 		const position = name.lastIndexOf('.');
 
-		return position > 0 ? name.substring(position + 1).toLowerCase() : '';
+		return position >= 0 ? name.substring(position + 1).toLowerCase() : '';
 	}
 
 	getType(): string
@@ -520,6 +523,35 @@ export default class UploaderFile extends EventEmitter
 		return isResizableImage(this.getOriginalName(), this.getType());
 	}
 
+	getProgress(): number
+	{
+		return this.progress;
+	}
+
+	setProgress(progress: ?number)
+	{
+		if (Type.isNumber(progress))
+		{
+			this.#setProperty('progress', progress);
+		}
+	}
+
+	addError(error: UploaderError): void
+	{
+		this.errors.push(error);
+		this.emit('onStateChange');
+	}
+
+	getError(): ?UploaderError
+	{
+		return this.errors[0] || null;
+	}
+
+	getErrors(): UploaderError[]
+	{
+		return this.errors;
+	}
+
 	getState(): { [key: string]: any }
 	{
 		return JSON.parse(JSON.stringify(this));
@@ -548,6 +580,9 @@ export default class UploaderFile extends EventEmitter
 			failed: this.isFailed(),
 			width: this.getWidth(),
 			height: this.getHeight(),
+			progress: this.getProgress(),
+			error: this.getError(),
+			errors: this.getErrors(),
 
 			previewUrl: this.getPreviewUrl(),
 			previewWidth: this.getPreviewWidth(),

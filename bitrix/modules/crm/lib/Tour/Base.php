@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Tour;
 
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Traits;
 use CUserOptions;
 
@@ -44,12 +43,11 @@ abstract class Base
 		return ob_get_clean();
 	}
 
-	protected function isTourAvailable(): bool
+	protected function isUserSeenTour(): bool
 	{
 		$option = CUserOptions::GetOption(static::OPTION_CATEGORY, static::OPTION_NAME, []);
-		$isUserSeenTour = isset($option['closed']) && $option['closed'] === 'Y';
 
-		return Crm::isUniversalActivityScenarioEnabled() && !$isUserSeenTour;
+		return (isset($option['closed']) && $option['closed'] === 'Y');
 	}
 
 	protected function getSlides(): array

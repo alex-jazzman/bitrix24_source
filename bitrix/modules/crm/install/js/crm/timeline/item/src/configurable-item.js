@@ -3,9 +3,10 @@ import TimelineItem from './item';
 import { Item } from './components/item';
 import Layout from './layout';
 import { BitrixVue } from 'ui.vue3';
+import { Base } from "./controllers/base";
 import ControllerManager from './controller-manager';
 import { DatetimeConverter } from 'crm.timeline.tools';
-import {StreamType} from 'crm.timeline.item';
+import { StreamType } from 'crm.timeline.item';
 
 declare type ConfigurableItemParams = {
 	timelineId: string,
@@ -36,7 +37,7 @@ export default class ConfigurableItem extends TimelineItem
 	#useShortTimeFormat: boolean = false;
 	#isReadOnly: boolean = false;
 	#currentUser: ?Object = null;
-	#controllers: Array = null;
+	#controllers: Base[] = null;
 	#layoutComponent: ?Object = null;
 	#layoutApp: ?Object = null;
 	#layout: ?Layout = null;
@@ -112,6 +113,10 @@ export default class ConfigurableItem extends TimelineItem
 		if (this.#layoutComponent)
 		{
 			this.#layoutComponent.setLayout(this.getLayout().asPlainObject());
+			for (const controller of this.#controllers)
+			{
+				controller.onAfterItemRefreshLayout(this);
+			}
 		}
 		else
 		{

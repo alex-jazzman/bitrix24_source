@@ -1,4 +1,4 @@
-import {Uri, Type, Tag, Cache, Loc, Browser, Text, ajax} from 'main.core';
+import { Uri, Type, Tag, Cache, Loc, Browser, Text, Dom, ajax } from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
 import {StressLevel} from './stress-level';
@@ -8,7 +8,9 @@ import 'main.qrcode';
 import Options from "./options";
 import MaskEditor from "./mask-editor";
 import Ustat from "./ustat";
+import UserLoginHistory from './user-login-history';
 import {QrAuthorization} from "ui.qrauthorization";
+import { Loader } from 'main.loader';
 
 const widgetMarker = Symbol('user.widget');
 export default class Widget extends EventEmitter
@@ -216,7 +218,7 @@ export default class Widget extends EventEmitter
 				</span>
 				`;
 			const nameNode = Tag.render`
-				<div class="system-auth-form__profile-name">${this.#profile.FULL_NAME}</div>
+				<div class="system-auth-form__profile-name">${Text.encode(this.#profile.FULL_NAME)}</div>
 			`;
 			EventEmitter.subscribe(
 				EventEmitter.GLOBAL_TARGET,
@@ -771,59 +773,11 @@ export default class Widget extends EventEmitter
 	#getLoginHistoryContainer(): Element
 	{
 		return this.#cache.remember('getLoginHistoryContainer', () => {
-			if (this.#features['history'])// for the future
-			{
-				Tag.render`
-				<div class="system-auth-form__item system-auth-form__scope --vertical">
-					<div class="system-auth-form__item-container --center --border">
-						<div class="system-auth-form__item-logo">
-							<div class="system-auth-form__item-logo--image --history"></div>
-						</div>
-						<div class="system-auth-form__item-container --center">
-							<div class="system-auth-form__item-title --sm">${Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE')}</div>
-						</div>
-						<div class="system-auth-form__item-content">
-							<div class="ui-qr-popupcomponentmaker__btn --border">Logout</div>
-						</div>
-					</div>
-					<div class="system-auth-form__visited">
-						<div class="system-auth-form__visited-item">
-							<div class="system-auth-form__visited-icon --apple"></div>
-							<div class="system-auth-form__visited-text">Device 2</div>
-							<div class="system-auth-form__visited-action"></div>
-						</div>
-						<div class="system-auth-form__visited-item">
-							<div class="system-auth-form__visited-icon --android"></div>
-							<div class="system-auth-form__visited-text">Device 1</div>
-							<div class="system-auth-form__visited-action"></div>
-						</div>
-					</div>
-					<div class="system-auth-form__item-container">
-						<div class="system-auth-form__show-history">Logout</div>
-					</div>
-				</div>
-			`;
-			}
-
-			let resultEmpty = Tag.render`
-				<div class="system-auth-form__item --hover system-auth-form__scope --center --padding-sm">
-					<div class="system-auth-form__item-logo">
-						<div class="system-auth-form__item-logo--image --history-gray"></div>
-					</div>
-					<div class="system-auth-form__item-container --center">
-						<div class="system-auth-form__item-title">${Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE')}</div>
-					</div>
-					<div class="system-auth-form__item-new --soon">
-						<div class="system-auth-form__item-new--title">${Loc.getMessage('INTRANET_USER_PROFILE_SOON')}</div>
-					</div>
-				</div>
-			`;
-
+			const history = new UserLoginHistory(this.#features.loginHistory, this);
 			return {
-				html: resultEmpty,
-				disabled: true,
-				backgroundColor: '#fafafa'
-			}
+				html: history.getContainer(),
+				backgroundColor: '#fafafa',
+			};
 		});
 	}
 

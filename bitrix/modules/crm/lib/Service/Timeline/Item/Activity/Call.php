@@ -6,6 +6,7 @@ use Bitrix\Crm\Activity\StatisticsMark;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Format\Duration;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
@@ -23,6 +24,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\IconButton;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Crm\Service\Timeline\Layout\Menu;
+use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Settings\WorkTime;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber;
@@ -102,7 +104,7 @@ class Call extends Activity
 
 	public function getLogo(): ?Logo
 	{
-		$isAudioExist = !empty($this->fetchAudioRecordUrl());
+		$isAudioExist = !empty($this->fetchAudioRecordList());
 		$changePlayerStateAction = (new JsEvent('Call:ChangePlayerState'))
 			->addActionParamInt('recordId', $this->getAssociatedEntityModel()->get('ID'))
 		;
@@ -200,10 +202,32 @@ class Call extends Activity
 			$result['callQueue'] = $callQueueBlock;
 		}
 
-		$recordUrl = $this->fetchAudioRecordUrl();
-		if (!empty($recordUrl))
+		$recordUrls = array_unique(array_column($this->fetchAudioRecordList(), 'VIEW_URL'));
+		if (!empty($recordUrls))
 		{
-			$result['audio'] = (new Audio())->setId($this->getAssociatedEntityModel()->get('ID'))->setSource($recordUrl);
+			// show first audio record
+			$audio = (new Audio())->setId($this->getAssociatedEntityModel()->get('ID'))->setSource($recordUrls[0]);
+			if (isset($clientBlock))
+			{
+				$title = $clientBlock->getContentBlock() ? $clientBlock->getContentBlock()->getValue() : null;
+				if ($title !== null)
+				{
+					$audio->setTitle($title);
+				}
+
+				$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
+				if (isset($communication['ENTITY_TYPE_ID']) && $communication['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
+				{
+					$photo = Container::getInstance()->getContactBroker()->getById($communication['ENTITY_ID'])['PHOTO'];
+					if ($photo)
+					{
+						$photoUrl = \CFile::ResizeImageGet($photo, ["width" => 2000, "height" => 2000], BX_RESIZE_IMAGE_PROPORTIONAL,false, false, true);
+						$audio->setImageUrl($photoUrl['src']);
+					}
+				}
+			}
+
+			$result['audio'] = $audio;
 		}
 
 		$additionalInfoBlock = $this->getAdditionalInfoBlock();
@@ -218,10 +242,18 @@ class Call extends Activity
 			$result['clientMark'] = $clientMarkBlock;
 		}
 
-		$description = $this->fetchDescription((string)$this->getAssociatedEntityModel()->get('DESCRIPTION'));
+		$description = $this->fetchDescription(
+			(string)$this->getAssociatedEntityModel()->get($this->isScheduled() ? 'DESCRIPTION' : 'DESCRIPTION_RAW')
+		);
 		if (!empty($description))
 		{
 			$result['description'] = (new Text())->setValue($description)->setFontSize(Text::COLOR_BASE_70);
+		}
+
+		$comment = (string)$this->fetchInfo()['COMMENT'];
+		if (!empty($comment))
+		{
+			$result['comment'] = (new Text())->setValue($comment)->setFontSize(Text::COLOR_BASE_70);
 		}
 
 		return $result;
@@ -322,6 +354,25 @@ class Call extends Activity
 		else
 		{
 			unset($items['edit'], $items['view']);
+		}
+
+		$records = $this->fetchAudioRecordList();
+		if (count($records) === 1)
+		{
+			$items['downloadFile'] = MenuItemFactory::createDownloadFileMenuItem()
+				->setAction((new Redirect(new Uri($records[0]['VIEW_URL']))))
+			;
+			$items['downloadFile']->setScopeWeb();
+		}
+		else if (count($records) > 1)
+		{
+			foreach ($records as $index => $record)
+			{
+				$items["downloadFile_{$index}"] = MenuItemFactory::createDownloadFileMenuItem($record['NAME'])
+					->setAction((new Redirect(new Uri($record['VIEW_URL']))))
+				;
+				$items["downloadFile_{$index}"]->setScopeWeb();
+			}
 		}
 
 		return $items;
@@ -426,14 +477,19 @@ class Call extends Activity
 		$block = new LineOfTextBlocks();
 
 		// 1st element - phone number
-		$formattedValue = PhoneNumber\Parser::getInstance()->parse($callInfo['PORTAL_NUMBER'])->format();
+		$portalNumber = $callInfo['PORTAL_LINE']['FULL_NAME'] ?? $callInfo['PORTAL_NUMBER'];
+		$formattedValue = PhoneNumber\Parser::getInstance()->parse($portalNumber)->format();
 		if (!empty($formattedValue))
 		{
 			$block
 				->addContentBlock(
 					'info1',
 					ContentBlockFactory::createTitle(
-						Loc::getMessage('CRM_TIMELINE_BLOCK_CALL_ADDITIONAL_INFO_1')
+						Loc::getMessage(
+							$this->fetchDirection() === CCrmActivityDirection::Incoming
+								? 'CRM_TIMELINE_BLOCK_CALL_ADDITIONAL_INFO_1'
+								: 'CRM_TIMELINE_BLOCK_CALL_ADDITIONAL_INFO_1_OUT'
+						)
 					)->setColor(Text::COLOR_BASE_50)
 
 				)
@@ -576,46 +632,55 @@ class Call extends Activity
 			: [];
 	}
 	
-	private function fetchAudioRecordUrl(): string
+	private function fetchAudioRecordList(): array
 	{
 		$originId = $this->fetchOriginId();
 		if (!$this->isVoxImplant($originId))
 		{
-			return '';
+			return [];
 		}
 
 		if (!empty($this->getAssociatedEntityModel()->get('MEDIA_FILE_INFO')['URL']))
 		{
-			return (string)$this->getAssociatedEntityModel()->get('MEDIA_FILE_INFO')['URL'];
+			return [[
+				'VIEW_URL' => (string)$this->getAssociatedEntityModel()->get('MEDIA_FILE_INFO')['URL']
+			]];
 		}
 
 		$storageElementIds = $this->getAssociatedEntityModel()->get('STORAGE_ELEMENT_IDS');
 		$storageTypeId = $this->getAssociatedEntityModel()->get('STORAGE_TYPE_ID');
 		if (empty($storageElementIds) || empty($storageTypeId))
 		{
-			return '';
+			return [];
 		}
+		$result = [];
 
 		$elementIds = unserialize($storageElementIds, ['allowed_classes' => false]);
-		if (isset($elementIds[0]))
+		foreach ($elementIds as $elementId)
 		{
-			$info = StorageManager::getFileInfo(
-				$elementIds[0],
+			$fileInfo = StorageManager::getFileInfo(
+				$elementId,
 				$storageTypeId,
 				false,
 				['OWNER_TYPE_ID' => CCrmOwnerType::Activity, 'OWNER_ID' => $this->getActivityId()]
 			);
 
-			if (
-				is_array($info)
-				&& in_array(GetFileExtension(mb_strtolower($info['NAME'])), ['wav', 'mp3', 'mp4'])
-			)
+			if (is_array($fileInfo))
 			{
-				return (string)$info['VIEW_URL'];
+				$result[] = $fileInfo;
 			}
 		}
+		if (empty($result))
+		{
+			return [];
+		}
 
-		return '';
+		return array_values(
+			array_filter(
+				$result,
+				fn($row) => in_array(GetFileExtension(mb_strtolower($row['NAME'])), ['wav', 'mp3', 'mp4'])
+			)
+		);
 	}
 
 	private function fetchPhoneList(int $entityTypeId, int $entityId): array

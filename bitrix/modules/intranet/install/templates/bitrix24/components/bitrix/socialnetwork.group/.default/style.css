@@ -491,7 +491,7 @@ a.socialnetwork-group-title-link:hover {
 	font-size: 14px;
 	color: #80868e;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	outline: 0;
 	width: 100%;
 	min-height: 75px;

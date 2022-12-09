@@ -23,7 +23,7 @@ $b24Languages = array(
 	),
 	"it" => array(
 		"NAME" => "Italiano",
-		"IS_BETA" => true
+		"IS_BETA" => false
 	),
 	"pl" => array(
 		"NAME" => "Polski",
@@ -55,23 +55,19 @@ $b24Languages = array(
 	),
 	"vn" => array(
 		"NAME" => "Tiếng Việt",
-		"IS_BETA" => true
+		"IS_BETA" => false
 	),
 	"id" => array(
 		"NAME" => "Bahasa Indonesia",
-		"IS_BETA" => true
+		"IS_BETA" => false
 	),
 	"ms" => array(
 		"NAME" => "Bahasa Melayu",
-		"IS_BETA" => true
+		"IS_BETA" => false
 	),
 	"th" => array(
 		"NAME" => "ภาษาไทย",
-		"IS_BETA" => true
-	),
-	"hi" => array(
-		"NAME" => "हिन्दी",
-		"IS_BETA" => true
-	),
+		"IS_BETA" => false
+	)
 );
 ?>

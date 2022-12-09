@@ -70,6 +70,7 @@ export class TodoCreateNotification
 			EventEmitter.subscribe(this.#getSliderInstance(), 'SidePanel.Slider:onClose', this.#onCloseSlider.bind(this));
 			EventEmitter.subscribe('Crm.EntityModel.Change', this.#onEntityModelChange.bind(this));
 			EventEmitter.subscribe('onCrmEntityUpdate', this.#onEntityUpdate.bind(this));
+			EventEmitter.subscribe('onCrmEntityDelete', this.#onEntityDelete.bind(this));
 		}
 		EventEmitter.subscribe('Crm.InterfaceToolbar.MenuBuild', this.#onToolbarMenuBuild.bind(this));
 	}
@@ -131,6 +132,15 @@ export class TodoCreateNotification
 			this.#entityStageId = eventParams.entityData[this.#stageIdField];
 		}
 
+	}
+
+	#onEntityDelete(event: BaseEvent): void
+	{
+		const [eventParams] = event.getCompatData();
+		if (eventParams.hasOwnProperty('id') && eventParams.id == this.#entityId)
+		{
+			this.#allowCloseSlider = true;
+		}
 	}
 
 	#onEntityModelChange(event: BaseEvent): void

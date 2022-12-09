@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Counter;
 
 use Bitrix\Crm\Counter\Monitor\ActivitiesChangesCollection;
 use Bitrix\Crm\Counter\Monitor\ActivityChange;
+use Bitrix\Crm\Counter\Monitor\CountableActivitySynchronizer;
 use Bitrix\Crm\Counter\Monitor\EntitiesChangesCollection;
 use Bitrix\Crm\Counter\Monitor\EntityChange;
 use Bitrix\Crm\Item;
@@ -17,8 +18,10 @@ final class Monitor
 	use Traits\Singleton;
 
 	private array $activitiesBindingsChanges = [];
+	private array $activitiesIdsWithBindingsChanges = [];
 	private ActivitiesChangesCollection $activitiesChangesCollection;
 	private EntitiesChangesCollection $entitiesChangesCollection;
+	private array $loadedEntitiesData = [];
 
 	private function __construct()
 	{
@@ -30,38 +33,47 @@ final class Monitor
 
 	public function onActivityAdd(array $activityFields, array $activityBindings): void
 	{
-		$this->activitiesChangesCollection->add(ActivityChange::create(
+		$activityChange = ActivityChange::create(
 			(int)$activityFields['ID'],
 			[],
 			[],
 			$activityFields,
 			$activityBindings
-		));
+		);
+		$this->synchronizeEntityCountableTableByActivityChange($activityChange);
+		$this->activitiesChangesCollection->add($activityChange);
 	}
 
 	public function onActivityUpdate(array $oldActivityFields, array $newActivityFields, array $oldActivityBindings, array $newActivityBindings): void
 	{
-		$this->activitiesChangesCollection->add(ActivityChange::create(
+		$activityChange = ActivityChange::create(
 			(int)$oldActivityFields['ID'],
 			$oldActivityFields,
 			$oldActivityBindings,
 			$newActivityFields,
 			$newActivityBindings
-		));
+		);
+		if ($activityChange->hasSignificantChangesForCountable())
+		{
+			$this->synchronizeEntityCountableTableByActivityChange($activityChange);
+		}
+		$this->activitiesChangesCollection->add($activityChange);
 	}
 
 	public function onActivityDelete(array $activityFields, array $activityBindings): void
 	{
-		$this->activitiesChangesCollection->add(ActivityChange::create(
+		$activityChange = ActivityChange::create(
 			(int)$activityFields['ID'],
 			$activityFields,
 			$activityBindings,
 			[],
 			[]
-		));
+		);
+		$this->synchronizeEntityCountableTableByActivityChange($activityChange);
+		$this->activitiesChangesCollection->add($activityChange);
 	}
 
-	public function onChangeActivityBindings(array $oldActivityBindings, array $newActivityBindings): void
+	public function onChangeActivityBindings(int $activityId, array $oldActivityBindings, array $newActivityBindings): void
 	{
 		$addedBindings = [];
 		$removedBindings = [];
@@ -73,6 +85,14 @@ final class Monitor
 		{
 			$this->activitiesBindingsChanges[$binding->getHash()] = $binding;
 		}
+		if (count($changedBindings))
+		{
+			CountableActivitySynchronizer::synchronizeByActivityId($activityId);
+		}
+	}
+	public function onChangeActivitySingleBinding(int $activityId, array $oldActivityBinding, array $newActivityBinding): void
+	{
+		$this->onChangeActivityBindings($activityId, [$oldActivityBinding], [$newActivityBinding]);
 	}
 
 	public function onEntityAdd(int $entityTypeId, array $entityFields): void
@@ -86,6 +106,7 @@ final class Monitor
 		if ($change)
 		{
 			$this->entitiesChangesCollection->add($change);
+			CountableActivitySynchronizer::synchronizeByEntityChange($change);
 		}
 	}
 
@@ -100,6 +121,7 @@ final class Monitor
 		if ($change)
 		{
 			$this->entitiesChangesCollection->add($change);
+			CountableActivitySynchronizer::synchronizeByEntityChange($change);
 		}
 	}
 
@@ -114,6 +136,7 @@ final class Monitor
 		if ($change)
 		{
 			$this->entitiesChangesCollection->add($change);
+			CountableActivitySynchronizer::synchronizeByEntityChange($change);
 		}
 	}
 
@@ -155,10 +178,10 @@ final class Monitor
 		foreach ($changedEntities->getValues() as $changedEntity)
 		{
 			$entityTypeId = $changedEntity->getIdentifier()->getEntityTypeId();
-			if ($changedEntity->wasEntityAddedOrDeleted())
+			if ($changedEntity->wasEntityAdded())
 			{
 				$factory = Container::getInstance()->getFactory($entityTypeId);
-				// if entity was added or removed, it only affects the idle counter
+				// if entity was added, it only affects the idle counter
 				if (
 					$factory && $factory
 					->getCountersSettings()
@@ -234,11 +257,15 @@ final class Monitor
 		{
 			return [];
 		}
-		$bindingsMap = [];
+		$loadedEntitiesData = $this->loadedEntitiesData;
+
 		/** @var ItemIdentifier $binding */
 		foreach ($bindings as $binding)
 		{
-			$bindingsMap[$binding->getEntityTypeId()][$binding->getEntityId()] = [];
+			if (!is_array($loadedEntitiesData[$binding->getEntityTypeId()][$binding->getEntityId()]))
+			{
+				$loadedEntitiesData[$binding->getEntityTypeId()][$binding->getEntityId()] = [];
+			}
 		}
 
 		// get fields from entities changes
@@ -247,21 +274,21 @@ final class Monitor
 		{
 			$entityTypeId = $entityChange->getIdentifier()->getEntityTypeId();
 			$entityId = $entityChange->getIdentifier()->getEntityId();
-			if (isset($bindingsMap[$entityTypeId][$entityId]))
+			if (isset($loadedEntitiesData[$entityTypeId][$entityId]))
 			{
-				$bindingsMap[$entityTypeId][$entityId] = [
+				$loadedEntitiesData[$entityTypeId][$entityId] = [
 					'assignedBy' => $entityChange->getActualAssignedById(),
 					'categoryId' => $entityChange->getActualCategoryId(),
 				];
 			}
 		}
 		// load fields for not modified entities
-		foreach ($bindingsMap as $entityTypeId => $entityTypeBindings)
+		foreach ($loadedEntitiesData as $entityTypeId => $entityTypeBindings)
 		{
 			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if (!$factory)
 			{
-				unset($bindingsMap[$entityTypeId]);
+				unset($loadedEntitiesData[$entityTypeId]);
 
 				continue;
 			}
@@ -297,18 +324,20 @@ final class Monitor
 				;
 				foreach ($entitiesData as $entityData)
 				{
-					if (isset($bindingsMap[$entityTypeId][$entityData['ID']]))
+					if (isset($loadedEntitiesData[$entityTypeId][$entityData['ID']]))
 					{
-						$bindingsMap[$entityTypeId][$entityData['ID']] = [
+						$loadedEntitiesData[$entityTypeId][$entityData['ID']] = [
 							'assignedBy' => $entityData[$assignedByFiledName] ?? null,
 							'categoryId' => $entityData[$categoryIdFieldName] ?? null,
 						];
+
+						$this->loadedEntitiesData[$entityTypeId][$entityData['ID']] = $loadedEntitiesData[$entityTypeId][$entityData['ID']];
 					}
 				}
 			}
 		}
 
-		return $bindingsMap;
+		return $loadedEntitiesData;
 	}
 
 	private function resetCounters(
@@ -339,5 +368,23 @@ final class Monitor
 			EntityCounterManager::reset($counterCodes, [$responsibleId]);
 			EntityCounterManager::resetExcludeUsersCounters($counterCodes, [$responsibleId]);
 		}
+	}
+
+	private function synchronizeEntityCountableTableByActivityChange(ActivityChange $changedActivity): void
+	{
+		if ($changedActivity->wasActivityDeleted())
+		{
+			EntityCountableActivityTable::deleteByActivity($changedActivity->getId());
+		}
+		elseif ($changedActivity->areBindingsChanged())
+		{
+			CountableActivitySynchronizer::synchronizeByActivityId($changedActivity->getId());
+		}
+		else
+		{
+			$entitiesData = $this->loadEntitiesDataForBindings($changedActivity->getAffectedBindings());
+			CountableActivitySynchronizer::synchronizeByActivityChange($changedActivity, $entitiesData);
+		}
+
 	}
 }

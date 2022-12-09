@@ -419,7 +419,11 @@ class CAllCrmProductRow
 				'CUSTOMIZED' => array('TYPE' => 'char'),
 				'MEASURE_CODE' => array('TYPE' => 'integer'),
 				'MEASURE_NAME' => array('TYPE' => 'string'),
-				'SORT' => array('TYPE' => 'integer')
+				'SORT' => array('TYPE' => 'integer'),
+				'TYPE' => array(
+					'TYPE' => 'integer',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
 			);
 		}
 

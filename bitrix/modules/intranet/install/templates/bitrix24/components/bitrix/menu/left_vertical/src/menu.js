@@ -41,6 +41,8 @@ export default class Menu
 	isMenuMouseLeaveBlocked = [];
 	isCollapsedMode = false;
 
+	workgroupsCounterData = {};
+
 	constructor(params)
 	{
 		//TODO     html
@@ -56,6 +58,8 @@ export default class Menu
 		Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
 
 		this.isCollapsedMode = params.isCollapsedMode;
+
+		this.workgroupsCounterData = params.workgroupsCounterData;
 
 		this.initAndBindNodes();
 		this.bindEvents();
@@ -1298,6 +1302,36 @@ export default class Menu
 			counters['live-feed'] = counters['**'];
 			delete counters['**'];
 		}
+
+		let workgroupsCounterUpdated = false;
+		if (!Type.isUndefined(counters['**SG0']))
+		{
+			this.workgroupsCounterData['livefeed'] = counters['**SG0'];
+			delete counters['**SG0'];
+			workgroupsCounterUpdated = true;
+		}
+
+		if (!Type.isUndefined(counters[Loc.getMessage('COUNTER_PROJECTS_MAJOR')]))
+		{
+			this.workgroupsCounterData[Loc.getMessage('COUNTER_PROJECTS_MAJOR')] = counters[Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
+			delete counters[Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
+			workgroupsCounterUpdated = true;
+		}
+
+		if (!Type.isUndefined(counters[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')]))
+		{
+			this.workgroupsCounterData[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')] = counters[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
+			delete counters[Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
+			workgroupsCounterUpdated = true;
+		}
+
+		if (workgroupsCounterUpdated)
+		{
+			counters['workgroups'] = Object.entries(this.workgroupsCounterData).reduce((prevValue, [, curValue]) => {
+				return prevValue + Number(curValue);
+			}, 0);
+		}
+
 		if (counters['live-feed'])
 		{
 			if (counters['live-feed'] <= 0)
@@ -1309,6 +1343,7 @@ export default class Menu
 				counters['live-feed'] -= this.#specialLiveFeedDecrement;
 			}
 		}
+
 		this.getItemsController().updateCounters(counters, send);
 	}
 	//endregion

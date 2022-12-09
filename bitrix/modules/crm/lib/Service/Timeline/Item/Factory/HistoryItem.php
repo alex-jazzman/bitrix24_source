@@ -6,6 +6,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Item\Model;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Timeline\LogMessageType;
 use Bitrix\Crm\Timeline\TimelineType;
 use CCrmOwnerType;
@@ -91,6 +92,21 @@ class HistoryItem
 				(new Item\Catalog\ProductCompilation($context, $model))
 					->setData($rawData)
 			;
+		}
+
+		if ($typeId === TimelineType::DOCUMENT && Crm::isUniversalActivityScenarioEnabled())
+		{
+			if ($typeCategoryId === TimelineType::MODIFICATION && Item\LogMessage\DocumentViewed::isActive())
+			{
+				return new Item\LogMessage\DocumentViewed($context, $model);
+			}
+
+			if (Item\Document::isActive())
+			{
+				return new Item\Document($context, $model);
+			}
+
+			return new Item\NotAvailable($context, $model);
 		}
 
 		return new Item\Compatible\HistoryItem(

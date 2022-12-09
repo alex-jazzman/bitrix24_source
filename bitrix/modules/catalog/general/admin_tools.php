@@ -1782,6 +1782,11 @@ class CCatalogAdminTools extends CCatalogAdminToolsAll
 	 */
 	public static function needSummaryStoreAmountByPermissions(): bool
 	{
+		if (!Loader::includeModule('crm'))
+		{
+			return false;
+		}
+
 		if (!Catalog\Config\State::isUsedInventoryManagement())
 		{
 			return false;
@@ -1803,6 +1808,11 @@ class CCatalogAdminTools extends CCatalogAdminToolsAll
 
 	public static function allowedShowQuantityFields(): bool
 	{
+		if (!Loader::includeModule('crm'))
+		{
+			return true;
+		}
+
 		if (!Catalog\Config\State::isUsedInventoryManagement())
 		{
 			return true;
@@ -1820,6 +1830,11 @@ class CCatalogAdminTools extends CCatalogAdminToolsAll
 
 	public static function getSummaryStoreAmountByPermissions(array $productIds): array
 	{
+		if (!Loader::includeModule('crm'))
+		{
+			return [];
+		}
+
 		if (!Catalog\Config\State::isUsedInventoryManagement())
 		{
 			return [];

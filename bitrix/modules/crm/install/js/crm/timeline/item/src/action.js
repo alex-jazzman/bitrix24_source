@@ -1,7 +1,7 @@
-import {ajax, Type} from 'main.core';
-import {UI} from 'ui.notification';
-import {Menu} from "./components/layout/menu";
-import {DateTimeFormat} from "main.date";
+import { ajax, Type } from 'main.core';
+import { UI } from 'ui.notification';
+import { Menu } from "./components/layout/menu";
+import { DateTimeFormat } from "main.date";
 import { DatetimeConverter } from "crm.timeline.tools";
 
 declare type AnimationParams = {
@@ -19,6 +19,34 @@ const AnimationType = {
 	disable: 'disable',
 	loader: 'loader',
 };
+
+const ActionType = {
+	JS_EVENT: 'jsEvent',
+	AJAX_ACTION: {
+		STARTED: 'ajaxActionStarted',
+		FINISHED: 'ajaxActionFinished',
+		FAILED: 'ajaxActionFailed',
+	},
+
+	isJsEvent(type: string): boolean
+	{
+		return (type === this.JS_EVENT);
+	},
+
+	isAjaxAction(type: string): boolean
+	{
+		return (
+			type === this.AJAX_ACTION.STARTED
+			|| type === this.AJAX_ACTION.FINISHED
+			|| type === this.AJAX_ACTION.FAILED
+		);
+	}
+};
+
+Object.freeze(ActionType.AJAX_ACTION);
+Object.freeze(ActionType);
+
+export { ActionType };
 
 export class Action
 {
@@ -42,7 +70,7 @@ export class Action
 			{
 				vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 					action: this.#value,
-					actionType: 'jsEvent',
+					actionType: ActionType.JS_EVENT,
 					actionData: this.#actionParams,
 					animationCallbacks: {
 						onStart: this.#startAnimation.bind(this, vueComponent),
@@ -64,7 +92,7 @@ export class Action
 				this.#startAnimation(vueComponent);
 				vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 					action: this.#value,
-					actionType: 'ajaxActionStarted',
+					actionType: ActionType.AJAX_ACTION.STARTED,
 					actionData: this.#actionParams,
 				});
 				ajax.runAction(
@@ -78,8 +106,9 @@ export class Action
 						this.#stopAnimation(vueComponent);
 						vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 							action: this.#value,
-							actionType: 'ajaxActionFinished',
+							actionType: ActionType.AJAX_ACTION.FINISHED,
 							actionData: this.#actionParams,
+							response,
 						});
 						resolve(response);
 					},
@@ -92,8 +121,9 @@ export class Action
 						});
 						vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 							action: this.#value,
-							actionType: 'ajaxActionFailed',
+							actionType: ActionType.AJAX_ACTION.FAILED,
 							actionParams: this.#actionParams,
+							response,
 						});
 
 						reject(response);

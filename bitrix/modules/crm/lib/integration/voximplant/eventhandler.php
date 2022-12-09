@@ -124,7 +124,7 @@ class EventHandler
 		{
 			$activityFields = CCrmActivity::GetByID($activityId, false);
 
-			$activityIds = Call::getUncompletedActivityIdList($activityId);
+			$activityIds = Call::getUncompletedActivityIdList($activityId, Call::UNCOMPLETED_ACTIVITY_INCOMING);
 			if (($key = array_search($activityId, $activityIds, true)) !== false) {
 				unset($activityIds[$key]); // exclude last call activity ID
 			}

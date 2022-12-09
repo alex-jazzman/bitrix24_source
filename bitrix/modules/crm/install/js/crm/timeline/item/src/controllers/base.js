@@ -1,14 +1,15 @@
 import ConfigurableItem from '../configurable-item';
 
-declare type ActionParams =
+export type ActionParams =
 {
 	action: String,
 	actionType: String,
 	actionData: ?Object,
+	response: ?Object,
 	animationCallbacks: ?ActionAnimationCallbacks,
 };
 
-declare type ActionAnimationCallbacks =
+export type ActionAnimationCallbacks =
 {
 	onStart: ?function,
 	onStop: ?function,
@@ -24,6 +25,10 @@ export class Base
 	getContentBlockComponents(item: ConfigurableItem): Object
 	{
 		return {};
+	}
+
+	onAfterItemRefreshLayout(item: ConfigurableItem): void
+	{
 	}
 
 	/**

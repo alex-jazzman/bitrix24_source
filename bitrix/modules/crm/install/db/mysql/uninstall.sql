@@ -202,5 +202,6 @@ DROP TABLE IF EXISTS b_crm_item_badge;
 DROP TABLE IF EXISTS b_crm_act_ping_offsets;
 DROP TABLE IF EXISTS b_crm_act_ping_queue;
 DROP TABLE IF EXISTS b_crm_timeline_note;
+DROP TABLE IF EXISTS b_crm_entity_countable_act;
 DROP TABLE IF EXISTS b_crm_store_document_contractor;
 DROP TABLE IF EXISTS b_crm_contractor_conversion;

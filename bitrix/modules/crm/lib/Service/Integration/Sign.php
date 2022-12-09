@@ -5,12 +5,9 @@ namespace Bitrix\Crm\Service\Integration;
 use Bitrix\Crm\Activity\Provider\SignDocument;
 use Bitrix\Crm\Service\Operation\ConversionResult;
 use Bitrix\DocumentGenerator\Document;
-use Bitrix\DocumentGenerator\Storage\BFile;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Sign\Blank;
 use Bitrix\Sign\Config\Storage;
-use Bitrix\Sign\File;
 
 class Sign
 {
@@ -26,6 +23,19 @@ class Sign
 			&& \Bitrix\Main\Loader::includeModule('crm')
 			&& \Bitrix\Main\Loader::includeModule('sign')
 			&& Storage::instance()->isAvailable();
+	}
+
+	/**
+	 * Check that sign-related interfaces should be displayed
+	 *
+	 * @return bool
+	 */
+	public function isEnabled(): bool
+	{
+		return (
+			\Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
+			&& $this->isAvailable()
+		);
 	}
 
 	/**

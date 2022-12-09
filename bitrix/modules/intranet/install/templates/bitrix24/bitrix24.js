@@ -90,6 +90,26 @@
 		}
 	});
 
+	BX.addCustomEvent("onPullEvent-tasks", function(command, params){
+		if (
+			command == "user_counter"
+			&& Number(params.userId) === Number(BX.Loc.getMessage('USER_ID'))
+		)
+		{
+			var counters = {};
+			if (!BX.Type.isUndefined(params.projects_major))
+			{
+				counters.projects_major = params.projects_major;
+			}
+			if (!BX.Type.isUndefined(params.scrum_total_comments))
+			{
+				counters.scrum_total_comments = params.scrum_total_comments;
+			}
+
+			B24.updateCounters(counters, false);
+		}
+	});
+
 	BX.addCustomEvent("onPullEvent-bitrix24", BX.delegate(function(command,params){
 		if (command == "userLimitNotify")
 		{

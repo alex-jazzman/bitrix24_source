@@ -132,6 +132,13 @@
 	background-image: url('../../../images/timeline-card-logos/document/crm-timeline__document-signed.svg');
 }
 
+.crm-timeline__card-logo_icon.--document-print > i {
+	mask-image: none;
+	background-color: transparent;
+	background-image: url('../../../images/timeline-card-logos/document/crm-timeline__document-print.svg');
+	background-position: center 57%;
+}
+
 .crm-timeline__card-logo_icon.--document-addition > i {
 	mask-image: none;
 	background-color: transparent;

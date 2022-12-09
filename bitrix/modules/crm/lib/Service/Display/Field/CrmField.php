@@ -250,94 +250,110 @@ class CrmField extends BaseLinkedEntitiesField
 			{
 				continue;
 			}
-
+			$categoryId = 0;
 			$entityType = \CCrmOwnerTypeAbbr::ResolveName($entityTypePrefix);
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if ($factory && $factory->isCategoriesSupported())
+			{
+				$entityValue = $linkedEntitiesValues[$entityType][$entityElementId];
+				if ($entityValue)
+				{
+					$categoryId = $entityValue->getCategoryId();
+				}
+			}
 			$title = null;
+			$hidden = !Container::getInstance()->getUserPermissions()->checkReadPermissions(
+				$entityTypeId,
+				$entityElementId,
+				$categoryId
+			);
 			$imageUrl = null;
 
-			if ($entityTypePrefix === \CCrmOwnerTypeAbbr::Lead)
+			if(!$hidden)
 			{
-				$title = ($linkedEntitiesValues[\CCrmOwnerType::LeadName][$entityElementId]['TITLE'] ?? null);
-			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Contact)
-			{
-				if (isset($linkedEntitiesValues[\CCrmOwnerType::ContactName][$entityElementId]))
+				if ($entityTypePrefix === \CCrmOwnerTypeAbbr::Lead)
 				{
-					$entityElementObject = $linkedEntitiesValues[\CCrmOwnerType::ContactName][$entityElementId] ?? null;
-					if ($entityElementObject)
+					$title = ($linkedEntitiesValues[\CCrmOwnerType::LeadName][$entityElementId]['TITLE'] ?? null);
+				}
+				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Contact)
+				{
+					if (isset($linkedEntitiesValues[\CCrmOwnerType::ContactName][$entityElementId]))
 					{
-						$title = $entityElementObject->getFormattedName();
-						$logo = $entityElementObject->get(Contact::FIELD_NAME_PHOTO);
-						$imageUrl = \CFile::ResizeImageGet(
-							$logo,
-							['width' => 200, 'height' => 200],
-							BX_RESIZE_IMAGE_EXACT,
-							false,
-							false,
-							true
-						);
-						$imageUrl = $imageUrl['src'] ?? null;
+						$entityElementObject = $linkedEntitiesValues[\CCrmOwnerType::ContactName][$entityElementId] ?? null;
+						if ($entityElementObject)
+						{
+							$title = $entityElementObject->getFormattedName();
+							$logo = $entityElementObject->get(Contact::FIELD_NAME_PHOTO);
+							$imageUrl = \CFile::ResizeImageGet(
+								$logo,
+								['width' => 200, 'height' => 200],
+								BX_RESIZE_IMAGE_EXACT,
+								false,
+								false,
+								true
+							);
+							$imageUrl = $imageUrl['src'] ?? null;
+						}
+					}
+				}
+				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Company)
+				{
+					if (isset($linkedEntitiesValues[\CCrmOwnerType::CompanyName][$entityElementId]))
+					{
+						$entityElementObject = $linkedEntitiesValues[\CCrmOwnerType::CompanyName][$entityElementId] ?? null;
+						if ($entityElementObject)
+						{
+							$title = $entityElementObject->getTitle();
+							$logo = $entityElementObject->get(Company::FIELD_NAME_LOGO);
+							$imageUrl = \CFile::ResizeImageGet(
+								$logo,
+								['width' => 300, 'height' => 300],
+								BX_RESIZE_IMAGE_EXACT,
+								false,
+								false,
+								true
+							);
+							$imageUrl = $imageUrl['src'] ?? null;
+						}
+					}
+				}
+				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Deal)
+				{
+					$title = ($linkedEntitiesValues[\CCrmOwnerType::DealName][$entityElementId]['TITLE'] ?? null);
+				}
+				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Order)
+				{
+					$title = $this->getOrderTitle($entityElementId);
+				}
+				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Quote)
+				{
+					$title = ($linkedEntitiesValues[\CCrmOwnerType::QuoteName][$entityElementId]['TITLE'] ?? null);
+				}
+				elseif (\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
+				{
+					$title = (
+					$linkedEntitiesValues[$entityType][$entityElementId]
+						? $linkedEntitiesValues[$entityType][$entityElementId]->getHeading()
+						: null
+					);
+
+					if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+					{
+						$entityElementId = DynamicMultipleProvider::prepareId($entityTypeId, $entityElementId);
+						$entityType = DynamicMultipleProvider::DYNAMIC_MULTIPLE_ID;
 					}
 				}
 			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Company)
-			{
-				if (isset($linkedEntitiesValues[\CCrmOwnerType::CompanyName][$entityElementId]))
-				{
-					$entityElementObject = $linkedEntitiesValues[\CCrmOwnerType::CompanyName][$entityElementId] ?? null;
-					if ($entityElementObject)
-					{
-						$title = $entityElementObject->getTitle();
-						$logo = $entityElementObject->get(Company::FIELD_NAME_LOGO);
-						$imageUrl = \CFile::ResizeImageGet(
-							$logo,
-							['width' => 300, 'height' => 300],
-							BX_RESIZE_IMAGE_EXACT,
-							false,
-							false,
-							true
-						);
-						$imageUrl = $imageUrl['src'] ?? null;
-					}
-				}
-			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Deal)
-			{
-				$title = ($linkedEntitiesValues[\CCrmOwnerType::DealName][$entityElementId]['TITLE'] ?? null);
-			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Order)
-			{
-				$title = $this->getOrderTitle($entityElementId);
-			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Quote)
-			{
-				$title = ($linkedEntitiesValues[\CCrmOwnerType::QuoteName][$entityElementId]['TITLE'] ?? null);
-			}
-			elseif (\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
-			{
-				$title = (
-				$linkedEntitiesValues[$entityType][$entityElementId]
-					? $linkedEntitiesValues[$entityType][$entityElementId]->getHeading()
-					: null
-				);
 
-				if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
-				{
-					$entityElementId = DynamicMultipleProvider::prepareId($entityTypeId, $entityElementId);
-					$entityType = DynamicMultipleProvider::DYNAMIC_MULTIPLE_ID;
-				}
-			}
 
-			if ($title !== null)
-			{
-				$result[] = [
-					'id' => $entityElementId,
-					'title' => $title,
-					'type' => mb_strtolower($entityType),
-					'imageUrl' => $imageUrl,
-					'subtitle' => \CCrmOwnerType::GetDescription($entityTypeId),
-				];
-			}
+			$result[] = [
+				'id' => $entityElementId,
+				'title' => $title,
+				'type' => mb_strtolower($entityType),
+				'hidden' => $hidden,
+				'imageUrl' => $imageUrl,
+				'subtitle' => \CCrmOwnerType::GetDescription($entityTypeId),
+			];
 		}
 
 		[$entityIds, $providerOptions] = $this->getCrmUserFieldEntityOptions();
@@ -369,13 +385,13 @@ class CrmField extends BaseLinkedEntitiesField
 		else
 		{
 			$entityTypePrefix = \CCrmOwnerTypeAbbr::ResolveByTypeName($this->entityTypes[0]);
-			$entityElementId = (int)$entityElement;
+			$entityElementId = $entityElement;
 			$elementWasExploded = false;
 		}
 
 		return [
 			$entityTypePrefix,
-			$entityElementId,
+			(int)$entityElementId,
 			$elementWasExploded,
 		];
 	}

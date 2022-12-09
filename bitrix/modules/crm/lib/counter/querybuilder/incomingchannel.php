@@ -6,8 +6,8 @@ use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
 use Bitrix\Crm\ActivityBindingTable;
 use Bitrix\Crm\Counter\QueryBuilder;
 use Bitrix\Main\DB\SqlExpression;
-use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 class IncomingChannel extends QueryBuilder
 {
@@ -58,9 +58,18 @@ class IncomingChannel extends QueryBuilder
 		return $query;
 	}
 
-	protected function applyReferenceFilter(array &$referenceFilter): void
+	protected function applyUncompletedActivityTableReferenceFilter(ConditionTree $referenceFilter): void
 	{
-		$referenceFilter['=ref.RESPONSIBLE_ID'] =new SqlExpression('?i', 0);
-		$referenceFilter['=ref.IS_INCOMING_CHANNEL'] = new SqlExpression('?', 'Y');
+		$referenceFilter
+			->where('ref.RESPONSIBLE_ID', new SqlExpression('?i', 0))
+			->where('ref.IS_INCOMING_CHANNEL', new SqlExpression('?', 'Y'))
+		;
+	}
+
+	protected function applyEntityCountableActivityTableReferenceFilter(ConditionTree $referenceFilter): void
+	{
+		$referenceFilter
+			->where('ref.ACTIVITY_IS_INCOMING_CHANNEL', new SqlExpression('?', 'Y'))
+		;
 	}
 }

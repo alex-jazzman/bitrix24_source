@@ -31,9 +31,17 @@ final class SignDocument extends Activity
 		return 'document';
 	}
 
+	public function getBackgroundColorToken(): string
+	{
+		return Layout\Icon::BACKGROUND_PRIMARY_ALT;
+	}
+
 	public function getTitle(): ?string
 	{
-		return Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CREATED_AT');
+		return $this->getModel()->isScheduled()
+		? Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT')
+		: Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLOSED')
+		;
 	}
 
 	public function getLogo(): ?Layout\Body\Logo
@@ -141,7 +149,7 @@ final class SignDocument extends Activity
 			$blocks['client' . $clientCount] =
 				(new Layout\Body\ContentBlock\ContentBlockWithTitle())
 					->setTitle(
-						Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLIENT_WITH_COUNT', ['#CLIENT_COUNT#' => $clientCount])
+						Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CONTER_AGENT')
 					)
 					->setContentBlock(
 						(new Layout\Body\ContentBlock\Text())

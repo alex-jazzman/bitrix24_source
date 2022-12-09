@@ -3568,12 +3568,6 @@ this.BX.UI = this.BX.UI || {};
 	      }) => {
 	        var _loader$hiddenCanvas;
 
-	        if (!babelHelpers.classPrivateFieldLooseBase(this, _canvasMask)[_canvasMask]) {
-	          return resolve({
-	            blob
-	          });
-	        }
-
 	        const loader = CanvasLoader.getInstance();
 	        loader[hiddenCanvas] = (_loader$hiddenCanvas = loader[hiddenCanvas]) != null ? _loader$hiddenCanvas : document.createElement('canvas');
 	        const canvas = loader[hiddenCanvas];
@@ -3581,15 +3575,24 @@ this.BX.UI = this.BX.UI || {};
 	        canvas.height = blob.height;
 	        canvas.getContext('2d').drawImage(loader.getCanvas(), 0, 0);
 
+	        if (!babelHelpers.classPrivateFieldLooseBase(this, _canvasMask)[_canvasMask]) {
+	          return resolve({
+	            blob,
+	            canvas
+	          });
+	        }
+
 	        babelHelpers.classPrivateFieldLooseBase(this, _canvasMask)[_canvasMask].applyAndPack(canvas).then((maskedBlob, maskId) => {
 	          resolve({
 	            blob,
 	            maskedBlob,
-	            maskId
+	            maskId,
+	            canvas
 	          });
 	        }).catch(() => {
 	          resolve({
-	            blob
+	            blob,
+	            canvas
 	          });
 	        });
 	      }).catch(error => {
@@ -3722,7 +3725,8 @@ this.BX.UI = this.BX.UI || {};
 	    this.packBlobAndMask().then(({
 	      blob,
 	      maskedBlob,
-	      maskId
+	      maskId,
+	      canvas
 	    }) => {
 	      if (blob instanceof Blob) {
 	        if (maskId > 0) {
@@ -3730,7 +3734,7 @@ this.BX.UI = this.BX.UI || {};
 	        }
 
 	        const ev = new main_core_events.BaseEvent({
-	          compatData: [blob, maskedBlob],
+	          compatData: [blob, canvas],
 	          data: {
 	            blob,
 	            maskedBlob

@@ -305,6 +305,7 @@ final class Monitor
 					'TYPE' => $entityTypeName,
 					'SKIP_CURRENT_USER' => false,
 					'CATEGORY_ID' => $item->isCategoriesSupported() ? $item->getCategoryId() : null,
+					'IGNORE_DELAY' => true,
 				],
 			);
 		}

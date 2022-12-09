@@ -130,7 +130,7 @@ class CCrmActivity extends CAllCrmActivity
 
 		if ($registerBindingsChanges)
 		{
-			\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivityBindings($existedBindings, $arBindings);
+			\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivityBindings($ID, $existedBindings, $arBindings);
 		}
 
 		$monitor = \Bitrix\Crm\Service\Timeline\Monitor::getInstance();

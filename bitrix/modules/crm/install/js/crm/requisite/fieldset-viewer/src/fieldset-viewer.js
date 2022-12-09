@@ -285,7 +285,7 @@ export class FieldsetViewer extends EventEmitter
 					onSave: () => this.show(),
 				},
 				fieldsPanelOptions: {
-					hideRequisites: false,
+					hideVirtual: 1,
 					...(Type.isPlainObject(options.fieldsPanelOptions) ? options.fieldsPanelOptions : {}),
 				},
 				...(Type.isPlainObject(options.fieldListEditorOptions) ? options.fieldListEditorOptions : {}),

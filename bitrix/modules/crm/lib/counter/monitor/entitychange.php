@@ -166,10 +166,17 @@ class EntityChange
 
 	public function wasEntityAddedOrDeleted(): bool
 	{
-		return (
-			(is_null($this->oldAssignedById) && is_null($this->oldStageId) && is_null($this->oldCategoryId))
-			|| (is_null($this->newAssignedById) && is_null($this->newStageId) && is_null($this->newCategoryId))
-		);
+		return $this->wasEntityAdded() || $this->wasEntityDeleted();
+	}
+
+	public function wasEntityAdded():bool
+	{
+		return (is_null($this->oldAssignedById) && is_null($this->oldStageId) && is_null($this->oldCategoryId));
+	}
+
+	public function wasEntityDeleted():bool
+	{
+		return (is_null($this->newAssignedById) && is_null($this->newStageId) && is_null($this->newCategoryId));
 	}
 
 	public function applyNewChange(self $entityChange): void

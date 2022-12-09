@@ -102,6 +102,11 @@ class EntityActivities
 	{
 		$filter = $params['filter'] ?? [];
 		$stageId = $filter[self::ACTIVITY_STAGE_ID] ?? null;
+		if (!isset($stageId) && isset($filter['ID'][0]))
+		{
+			$stageId = $this->getActivityStageIdByEntityId($filter['ID'][0]);
+		}
+
 		if (!$stageId)
 		{
 			return $params;
@@ -170,28 +175,10 @@ class EntityActivities
 
 			if (!empty($itemIds))
 			{
-				$minDeadlines = EntityUncompletedActivityTable::getList([
-					'select' => [
-						'ENTITY_ID',
-						'MIN_DEADLINE',
-						'IS_INCOMING_CHANNEL',
-					],
-					'filter' => [
-						'ENTITY_TYPE_ID' => $this->entityTypeId,
-						'@ENTITY_ID' => $itemIds,
-						'=RESPONSIBLE_ID' => 0,
-					],
-				]);
+				$minDeadlines = $this->fetchMinDeadlinesData($itemIds);
 				foreach ($minDeadlines as $minDeadlineItem)
 				{
-					if ($minDeadlineItem['IS_INCOMING_CHANNEL'] === 'Y')
-					{
-						$activityStageId = $this->getStatusIdByCategoryId(self::STAGE_PENDING, $this->categoryId);
-					}
-					else
-					{
-						$activityStageId = $this->getActivityStageIdByDeadline($minDeadlineItem['MIN_DEADLINE']);
-					}
+					$activityStageId = $this->getActivityStageIdByDeadlineAndIncoming($minDeadlineItem['MIN_DEADLINE'], $minDeadlineItem['HAS_ANY_INCOMING_CHANEL'] === 'Y');
 
 					$items[$minDeadlineItem['ENTITY_ID']][self::ACTIVITY_STAGE_ID] = $activityStageId;
 				}
@@ -204,9 +191,9 @@ class EntityActivities
 		return $result;
 	}
 
-	private function getActivityStageIdByDeadline(?DateTime $deadline): string
+	private function getActivityStageIdByDeadlineAndIncoming(?DateTime $deadline, bool $hasAnyIncomingChannel): string
 	{
-		if ($deadline === null)
+		if ($deadline === null && !$hasAnyIncomingChannel)
 		{
 			return $this->getStatusIdByCategoryId(self::STAGE_IDLE, $this->categoryId);
 		}
@@ -224,7 +211,7 @@ class EntityActivities
 
 		// today
 		$userTomorrowDate = $this->getTomorrowDay($dateTime);
-		if ($userTomorrowDate->getTimestamp() > $userDeadlineDate->getTimestamp())
+		if (($userTomorrowDate->getTimestamp() > $userDeadlineDate->getTimestamp()) || $hasAnyIncomingChannel)
 		{
 			return $this->getStatusIdByCategoryId(self::STAGE_PENDING, $this->categoryId);
 		}
@@ -323,6 +310,11 @@ class EntityActivities
 		switch ($stageId)
 		{
 			case $this->getStatusIdByCategoryId(self::STAGE_OVERDUE, $this->categoryId):
+				if (in_array(EntityCounterType::INCOMING_CHANNEL, $activityCounterFilterValues))
+				{
+					$counterExtras['HAS_ANY_INCOMING_CHANEL'] = true;
+				}
+
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
 					EntityCounterType::OVERDUE,
@@ -338,6 +330,10 @@ class EntityActivities
 				if (in_array(EntityCounterType::INCOMING_CHANNEL, $activityCounterFilterValues) || empty($activityCounterFilterValues))
 				{
 					$counterType |= EntityCounterType::INCOMING_CHANNEL;
+					if (count($activityCounterFilterValues) === 1) // only INCOMING_CHANNEL type in filter
+					{
+						$counterExtras['HAS_ANY_INCOMING_CHANEL'] = true;
+					}
 				}
 
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
@@ -350,7 +346,8 @@ class EntityActivities
 						[
 							'ONLY_MIN_DEADLINE' => true,
 							'ONLY_MIN_INCOMING_CHANNEL' => true,
-						]
+							'INCOMING_CHANNEL_PERIOD_FROM' => \CCrmDateTimeHelper::getUserDate(new DateTime())
+						],
 					),
 				);
 			case $this->getStatusIdByCategoryId(self::STAGE_THIS_WEEK, $this->categoryId):
@@ -359,6 +356,7 @@ class EntityActivities
 
 				$counterExtras['PERIOD_FROM'] = $tomorrow;
 				$counterExtras['PERIOD_TO'] = $lastWeekDay;
+				$counterExtras['HAS_ANY_INCOMING_CHANEL'] = false;
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
 					EntityCounterType::CURRENT,
@@ -372,6 +370,7 @@ class EntityActivities
 
 				$counterExtras['PERIOD_FROM'] = $nextWeekFirstDay;
 				$counterExtras['PERIOD_TO'] = $nextWeekLastDay;
+				$counterExtras['HAS_ANY_INCOMING_CHANEL'] = false;
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
 					EntityCounterType::CURRENT,
@@ -388,6 +387,7 @@ class EntityActivities
 			case $this->getStatusIdByCategoryId(self::STAGE_LATER, $this->categoryId):
 				$counterExtras['PERIOD_FROM'] = $this->getLastWeekDay(new DateTime())->add('+8 days');
 				$counterExtras['PERIOD_TO'] = null;
+				$counterExtras['HAS_ANY_INCOMING_CHANEL'] = false;
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
 					EntityCounterType::CURRENT,
@@ -420,7 +420,10 @@ class EntityActivities
 
 		if (
 			$stageId === $this->getStatusIdByCategoryId(self::STAGE_OVERDUE, $this->categoryId)
-			&& in_array(EntityCounterType::OVERDUE, $activityCounterFilterValues, true)
+			&& (
+				in_array(EntityCounterType::OVERDUE, $activityCounterFilterValues, true)
+				|| in_array(EntityCounterType::INCOMING_CHANNEL, $activityCounterFilterValues, true)
+			)
 		)
 		{
 			return false;
@@ -478,5 +481,31 @@ class EntityActivities
 		$userTimezoneDay = Datetime::createFromTimestamp($daySomewhereInWeek->getTimestamp());
 		$userTimezoneDay->toUserTime();
 		return DateTime::createFromTimestamp($userTimezoneDay->getTimestamp());
+	}
+
+	private function fetchMinDeadlinesData(array $itemIds)
+	{
+		return EntityUncompletedActivityTable::getList([
+			'select' => [
+				'ENTITY_ID',
+				'MIN_DEADLINE',
+				'IS_INCOMING_CHANNEL',
+				'HAS_ANY_INCOMING_CHANEL',
+			],
+			'filter' => [
+				'ENTITY_TYPE_ID' => $this->entityTypeId,
+				'@ENTITY_ID' => $itemIds,
+				'=RESPONSIBLE_ID' => 0,
+			],
+		]);
+	}
+
+	private function getActivityStageIdByEntityId(int $entityId): ?string
+	{
+		$minDeadlineItem = $this->fetchMinDeadlinesData([$entityId])->fetch();
+
+		return is_array($minDeadlineItem)
+			? $this->getActivityStageIdByDeadlineAndIncoming($minDeadlineItem['MIN_DEADLINE'], $minDeadlineItem['HAS_ANY_INCOMING_CHANEL'] === 'Y')
+			: null;
 	}
 }

@@ -31,7 +31,7 @@ return [
 	],
 	'skip_core' => false,
 	'lang' => [
-		'/bitrix/modules/ui/FileUploader/UserErrors.php',
+		'/bitrix/modules/ui/lib/FileUploader/UserErrors.php',
 	],
 	'settings' => [
 		'chunkMinSize' => $chunkMinSize,

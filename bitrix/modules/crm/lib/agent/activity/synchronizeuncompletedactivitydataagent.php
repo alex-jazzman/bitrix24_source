@@ -21,16 +21,16 @@ class SynchronizeUncompletedActivityDataAgent extends Stepper
 		$result['steps'] = (int)($result['steps'] ?? 0);
 		if (!$result['currentTable'])
 		{
-			$result['currentTable'] = self::ENTITY_UNCOMPLETED_ACTIVITY_TABLE;
+			$result['currentTable'] = self::INCOMING_CHANNEL_TABLE;
 		}
 		switch ($result['currentTable'])
 		{
-			case self::ENTITY_UNCOMPLETED_ACTIVITY_TABLE:
-				$result = $this->processEntityUncompletedActivityTable($result);
-				return self::CONTINUE_EXECUTION;
-
 			case self::INCOMING_CHANNEL_TABLE:
 				$result = $this->processIncomingChannelTable($result);
+				return self::CONTINUE_EXECUTION;
+
+			case self::ENTITY_UNCOMPLETED_ACTIVITY_TABLE:
+				$result = $this->processEntityUncompletedActivityTable($result);
 				return self::CONTINUE_EXECUTION;
 		}
 
@@ -130,7 +130,7 @@ class SynchronizeUncompletedActivityDataAgent extends Stepper
 
 		if ($processedCount < $limit)
 		{
-			$result['currentTable'] = self::INCOMING_CHANNEL_TABLE;
+			$result['currentTable'] = '-';
 		}
 
 		return $result;
@@ -163,7 +163,7 @@ class SynchronizeUncompletedActivityDataAgent extends Stepper
 		$result['lastIncomingActivityId'] = $lastId;
 		if ($processedCount < $limit)
 		{
-			$result['currentTable'] = '-';
+			$result['currentTable'] = self::ENTITY_UNCOMPLETED_ACTIVITY_TABLE;
 		}
 
 		return $result;
@@ -191,10 +191,10 @@ class SynchronizeUncompletedActivityDataAgent extends Stepper
 			->where('RESPONSIBLE_ID', $responsibleId)
 			->where('ENTITY_TYPE_ID', $ownerTypeId)
 			->where('ENTITY_ID', $ownerId)
-			->setSelect(['ID'])
+			->setSelect(['ID', 'HAS_ANY_INCOMING_CHANEL'])
 			->fetch()
 		;
-		if ($existedUncompletedActivity)
+		if ($existedUncompletedActivity && $existedUncompletedActivity['HAS_ANY_INCOMING_CHANEL'] === 'N')
 		{
 			EntityUncompletedActivityTable::update($existedUncompletedActivity['ID'], ['HAS_ANY_INCOMING_CHANEL' => true]);
 		}

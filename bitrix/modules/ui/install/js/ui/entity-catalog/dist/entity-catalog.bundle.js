@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,ui_vue3,ui_vue3_components_hint,ui_feedback_form,ui_icons,group,item,button,main_popup,main_core_events,main_core,group$1) {
+(function (exports,ui_vue3,ui_vue3_components_hint,ui_feedback_form,ui_icons,group,ui_advice,item,button,main_popup,main_core_events,main_core,group$1) {
 	'use strict';
 
 	const feedback = {
@@ -250,19 +250,29 @@ this.BX = this.BX || {};
 	      return main_core.Type.isStringFilled(this.groupData.adviceAvatar) ? this.groupData.adviceAvatar : '/bitrix/js/ui/entity-catalog/images/ui-entity-catalog--nata.jpg';
 	    }
 	  },
+	  methods: {
+	    renderAdvice() {
+	      main_core.Dom.clean(this.$refs.container);
+	      const advice = new ui_advice.Advice({
+	        content: this.groupData.adviceTitle,
+	        avatarImg: this.getAvatar,
+	        anglePosition: ui_advice.Advice.AnglePosition.BOTTOM
+	      });
+	      advice.renderTo(this.$refs.container);
+	    }
+
+	  },
+
+	  mounted() {
+	    this.renderAdvice();
+	  },
+
+	  updated() {
+	    this.renderAdvice();
+	  },
+
 	  template: `
-		<div class="ui-entity-catalog__advice-box" v-if="groupData.adviceTitle">
-			<div class="ui-entity-catalog__advice-avatar">
-				<span class="ui-entity-catalog__avatar ui-icon ui-icon-common-user">
-					<i :style="{ backgroundImage: 'url(' + getAvatar + ')'}"></i>
-				</span>
-			</div>
-			<div class="ui-entity-catalog__advice-text">
-				<div class="ui-entity-catalog__advice-text-title">
-					{{ groupData.adviceTitle }}
-				</div>
-			</div>
-		</div>
+		<div ref="container"></div>
 	`
 	};
 
@@ -583,7 +593,7 @@ this.BX = this.BX || {};
 
 	      if (Object.keys(appliedFilters).length > 0) {
 	        this.$emit('onApplyFilters', new main_core_events.BaseEvent({
-	          data: this.appliedFilters
+	          data: appliedFilters
 	        }));
 	      }
 
@@ -714,9 +724,17 @@ this.BX = this.BX || {};
 	  },
 
 	  data() {
-	    var _this$groups$find, _this$recentGroupData, _selectedGroup$id, _selectedGroup;
+	    var _this$recentGroupData, _selectedGroup$id, _selectedGroup;
 
-	    let selectedGroup = (_this$groups$find = this.groups.find(group$$1 => group$$1.selected)) != null ? _this$groups$find : null;
+	    let selectedGroup = null;
+
+	    for (const groupList of this.groups) {
+	      selectedGroup = groupList.find(group$$1 => group$$1.selected);
+
+	      if (selectedGroup) {
+	        break;
+	      }
+	    }
 
 	    if (main_core.Type.isNil(selectedGroup) && (_this$recentGroupData = this.recentGroupData) != null && _this$recentGroupData.selected) {
 	      var _this$recentGroupData2;
@@ -733,7 +751,7 @@ this.BX = this.BX || {};
 	      shownItems: [],
 	      shownGroups: this.getDisplayedGroup(),
 	      searching: false,
-	      lastSearchString: null,
+	      lastSearchString: '',
 	      filters: []
 	    };
 	  },
@@ -812,7 +830,11 @@ this.BX = this.BX || {};
 	      this.filters = event.getData();
 
 	      if (this.searching) {
-	        this.onSearch(this.lastSearchString);
+	        this.onSearch(new main_core_events.BaseEvent({
+	          data: {
+	            queryString: this.lastSearchString
+	          }
+	        }));
 	        return;
 	      }
 
@@ -1220,5 +1242,5 @@ this.BX = this.BX || {};
 
 	exports.EntityCatalog = EntityCatalog;
 
-}((this.BX.UI = this.BX.UI || {}),BX.Vue3,BX.Vue3.Components,BX,BX,BX,BX,BX,BX.Main,BX.Event,BX,BX));
+}((this.BX.UI = this.BX.UI || {}),BX.Vue3,BX.Vue3.Components,BX,BX,BX,BX.Ui,BX,BX,BX.Main,BX.Event,BX,BX));
 //# sourceMappingURL=entity-catalog.bundle.js.map

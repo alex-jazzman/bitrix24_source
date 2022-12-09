@@ -35,7 +35,7 @@ import Document from "../items/document";
 import Sender from "../items/sender";
 import Bizproc from "../items/bizproc";
 import Scoring from "../items/scoring";
-import {ConfigurableItem} from "crm.timeline.item";
+import {ConfigurableItem, StreamType} from "crm.timeline.item";
 import Expand from "../animations/expand";
 
 /** @memberof BX.Crm.Timeline.Streams */
@@ -949,7 +949,7 @@ export default class History extends Stream
 				timelineId: this.getId(),
 				container: this.getWrapper(),
 				itemClassName: this.getItemClassName(),
-				useShortTimeFormat: true,
+				useShortTimeFormat: this.getStreamType() === StreamType.history,
 				isReadOnly: this.isReadOnly(),
 				currentUser: this._manager.getCurrentUser(),
 				streamType: this.getStreamType(),

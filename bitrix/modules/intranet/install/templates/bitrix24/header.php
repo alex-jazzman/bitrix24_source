@@ -9,6 +9,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use \Bitrix\Main\Page\AssetLocation;
+use \Bitrix\Intranet;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -254,7 +255,7 @@ if ($isBitrix24Cloud)
 					{
 						CJSCore::Init("timer");?>
 						<div
-							class="timeman-container timeman-container-<?=LANGUAGE_ID?><?=(IsAmPmMode() ? " am-pm-mode" : "")?>"
+							class="timeman-container timer-container timeman-container-<?=LANGUAGE_ID?><?=(IsAmPmMode() ? " am-pm-mode" : "")?>"
 							id="timeman-container"
 						>
 							<div class="timeman-wrap">
@@ -312,7 +313,7 @@ if ($isBitrix24Cloud)
 							}
 						})();
 					</script>
-					<div class="header-logo-block"><?include(__DIR__."/logo.php"); ?></div>
+					<div class="header-logo-block"><?include(__DIR__."/logo.php");?></div>
 
 					<?if (Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin($USER->GetID()))
 					{
@@ -327,15 +328,6 @@ if ($isBitrix24Cloud)
 									onclick="BX.Bitrix24.renamePortal(this)"
 									title="<?=GetMessage('BITRIX24_SETTINGS_TITLE')?>">
 								</span><?
-							?></div><?
-						}
-						else
-						{
-							?><div class="header-logo-block-settings"><?
-								?><a
-									class="header-logo-block-settings-item"
-									href="<?=CBitrix24::PATH_CONFIGS?>"
-									title="<?=GetMessage("BITRIX24_SETTINGS_TITLE_RENAMED")?>"></a><?
 							?></div><?
 						}
 

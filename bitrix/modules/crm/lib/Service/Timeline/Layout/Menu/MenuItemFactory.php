@@ -24,6 +24,20 @@ class MenuItemFactory
 		;
 	}
 
+	public static function createDownloadFileMenuItem(string $filename = null): MenuItem
+	{
+		$title = (string)Loc::getMessage('CRM_TIMELINE_MENU_DOWNLOAD_FILE');
+		if (isset($filename))
+		{
+			$title = sprintf('%s "%s"', $title, $filename);
+		}
+
+		return (new MenuItem($title))
+			->setHideIfReadonly()
+			->setSort(9995)
+		;
+	}
+
 	public static function createDeleteMenuItem(): MenuItem
 	{
 		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_DELETE')))

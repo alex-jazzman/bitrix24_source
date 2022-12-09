@@ -64,7 +64,7 @@ class CCrmDateTimeHelper
 			->setDate(9999, 12, 31)
 			->setTime(0, 0, 0)
 			->disableUserTime()
-			;
+		;
 	}
 
 	public static function IsMaxDatabaseDate($datetime, $format = false)

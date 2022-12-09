@@ -1944,6 +1944,7 @@ class CAllCrmActivity
 		if ($registerBindingsChanges)
 		{
 			\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivityBindings(
+				$activityID,
 				$affectedBindingsArray,
 				[]
 			);
@@ -2702,6 +2703,18 @@ class CAllCrmActivity
 				$provider::rebindAssociatedEntity($associatedEntityID, $ownerTypeID, $ownerTypeID, $oldOwnerID, $newOwnerID);
 			}
 
+			\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivitySingleBinding(
+				(int)$item['ID'],
+				[
+					'OWNER_TYPE_ID' => $ownerTypeID,
+					'OWNER_ID' => $oldOwnerID,
+				],
+				[
+					'OWNER_TYPE_ID' => $ownerTypeID,
+					'OWNER_ID' => $newOwnerID,
+				]
+			);
+
 			Crm\Activity\Provider\ProviderManager::syncBadgesOnBindingsChange(
 				(int)$item['ID'],
 				[
@@ -2728,16 +2741,6 @@ class CAllCrmActivity
 				['OWNER_TYPE_ID' => $ownerTypeID, 'OWNER_ID' => $newOwnerID],
 			],
 			array_merge([0], $responsibleIDs)
-		);
-		\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivityBindings(
-			[
-				'OWNER_TYPE_ID' => $ownerTypeID,
-				'OWNER_ID' => $oldOwnerID,
-			],
-			[
-				'OWNER_TYPE_ID' => $ownerTypeID,
-				'OWNER_ID' => $newOwnerID,
-			]
 		);
 
 		if($enableCalendarEvents)
@@ -4047,7 +4050,7 @@ class CAllCrmActivity
 		bool $useNegativeOffset = false
 	): void
 	{
-		$currentDeadline = DateTime::createFromText($activityFields['DEADLINE']);
+		$currentDeadline = DateTime::createFromUserTime($activityFields['DEADLINE']);
 		$offset = $desiredDeadline->getTimestamp() - $currentDeadline->getTimestamp();
 
 		$params = [
@@ -4668,6 +4671,7 @@ class CAllCrmActivity
 
 		$sliceSize = 200;
 		$itemIDs = array_keys($deleteMap);
+		$existedActivityIds = [];
 		while(!empty($itemIDs))
 		{
 			$conditionSql = implode(',', array_splice($itemIDs, 0, $sliceSize));
@@ -4683,6 +4687,7 @@ class CAllCrmActivity
 			while($fields = $dbResult->fetch())
 			{
 				unset($deleteMap[$fields['ACTIVITY_ID']]);
+				$existedActivityIds[] = (int)$fields['ACTIVITY_ID'];
 			}
 		}
 
@@ -4739,6 +4744,21 @@ class CAllCrmActivity
 				) a2 ON a1.ID = a2.ACTIVITY_ID
 				SET a1.OWNER_ID = a2.OWNER_ID, a1.OWNER_TYPE_ID = a2.OWNER_TYPE_ID"
 			);
+
+			foreach ($existedActivityIds as $existedActivityId)
+			{
+				$bindings = self::GetBindings($existedActivityId);
+				$oldBindings = $bindings;
+				$oldBindings[] = [
+					'OWNER_TYPE_ID' => $ownerTypeID,
+					'OWNER_ID' => $ownerID,
+				];
+				\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivityBindings(
+					$existedActivityId,
+					$oldBindings,
+					$bindings
+				);
+			}
 		}
 		//endregion
 	}
@@ -4785,6 +4805,15 @@ class CAllCrmActivity
 
 			foreach ($processedIDs as $activityId)
 			{
+				\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivitySingleBinding(
+					$activityId,
+					[
+						'OWNER_TYPE_ID' => $ownerTypeID,
+						'OWNER_ID' => $ownerID,
+					],
+					[]
+				);
+
 				Crm\Activity\Provider\ProviderManager::syncBadgesOnBindingsChange(
 					$activityId,
 					[],
@@ -4798,14 +4827,6 @@ class CAllCrmActivity
 			{
 				Crm\Service\Timeline\Monitor::getInstance()->onActivityRemove(new Crm\ItemIdentifier($ownerTypeID, $ownerID));
 			}
-
-			\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivityBindings(
-				[
-					'OWNER_TYPE_ID' => $ownerTypeID,
-					'OWNER_ID' => $ownerID,
-				],
-				[]
-			);
 		}
 
 		return $processedIDs;

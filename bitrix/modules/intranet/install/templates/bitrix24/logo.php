@@ -45,6 +45,14 @@ $logo24 = Intranet\Util::getLogo24()
 				?><span class="logo-color"><?=$logo24?></span><?
 			endif
 		?></span><?
-	endif
+	endif;
 
+	if (IsModuleInstalled("bitrix24")):
+		$APPLICATION->IncludeComponent(
+			'bitrix:bitrix24.holding',
+			'.default', [],
+			false,
+			['HIDE_ICONS' => 'Y']
+		);
+	endif;
 ?></a>

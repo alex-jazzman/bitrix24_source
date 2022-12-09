@@ -131,7 +131,7 @@ $userUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFIL
 	<span class="ui-icon ui-icon-common-user user-img" id="user-block-icon"><?php
 		$style = (
 			$arResult['USER_PERSONAL_PHOTO_SRC']
-				? "background: url('" . $arResult['USER_PERSONAL_PHOTO_SRC']. "') no-repeat center; background-size: cover;"
+				? "background: url('" . \Bitrix\Main\Web\Uri::urnEncode($arResult['USER_PERSONAL_PHOTO_SRC']) . "') no-repeat center; background-size: cover;"
 				: ''
 		);
 		?><i style="<?= $style ?>"></i>

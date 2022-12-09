@@ -1479,6 +1479,11 @@ class ResultEntity
 			);
 		}
 		$bindings = BindingSelector::sortBindings($bindings);
+		$bindings = $this->removeIgnoredActivityBindings($bindings);
+		if (empty($bindings))
+		{
+			return;
+		}
 
 		// add activity
 		$activityFields = array(
@@ -2264,5 +2269,18 @@ class ResultEntity
 		}
 
 		return $results;
+	}
+
+	private function removeIgnoredActivityBindings(array $bindings): array
+	{
+		foreach ($bindings as $i => $binding)
+		{
+			if ($binding['OWNER_TYPE_ID'] == \CCrmOwnerType::SmartDocument) // do not create activity for smart document
+			{
+				unset($bindings[$i]);
+			}
+		}
+
+		return $bindings;
 	}
 }

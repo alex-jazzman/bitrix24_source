@@ -1124,16 +1124,18 @@ class CAllUser extends CDBResult
 
 		$APPLICATION->ResetException();
 
+		$request = Main\Context::getCurrent()->getRequest();
+		$url = str_replace('%', '%%', $request->getRequestedPage());
+
 		$connection = Main\Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
-		// todo: here should be concat(replace(UH.URL, '\\', '\\\\'), '%')
 		$query = UserHitAuthTable::query()
 			->setSelect(['ID', 'USER_ID', 'HASH', 'VALID_UNTIL'])
 			->where('USER.ACTIVE', 'Y')
 			->where('USER.BLOCKED', 'N')
 			->where('HASH', $hash)
-			->whereExpr("'" . $helper->forSql($APPLICATION->GetCurPageParam('', [], true), 255) . "' LIKE " . $helper->getConcatFunction('%s', "'%%'"), ['URL'])
+			->whereExpr("%s = left('" . $helper->forSql($url) . "', length(%s))", ['URL', 'URL'])
 		;
 
 		if (!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)

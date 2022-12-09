@@ -124,6 +124,8 @@ trait Activity
 			return $result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_ACTIVITY_COMPLETE_FORBIDDEN')));
 		}
 
+		$activityDeadline = null;
+
 		$activity = $this->getNearestActivity($ownerTypeId, $ownerId);
 		if ($activity)
 		{
@@ -133,6 +135,10 @@ trait Activity
 		else
 		{
 			$hasOnlyIncomingActivities = true;
+		}
+
+		if (!$activityDeadline)
+		{
 			$activityDeadline = new DateTime();
 		}
 

@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Tour;
 
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\UserTable;
@@ -21,10 +23,12 @@ class ActivityViewMode extends Base
 	protected function canShow(): bool
 	{
 		return
-			$this->isTourAvailable()
+			Crm::isUniversalActivityScenarioEnabled()
+			&& !$this->isUserSeenTour()
 			&& $this->isOldPortal()
 			&& $this->isEnableEntityUncompletedActivity()
 			&& $this->isEnableEntityLastActivityFields()
+			&& $this->seenPolarStarSlider()
 		;
 	}
 
@@ -104,5 +108,48 @@ class ActivityViewMode extends Base
 				],
 			],
 		];
+	}
+
+	private function seenPolarStarSlider(): bool
+	{
+		$zone = $this->getZone();
+		if (in_array($zone, ['ua', 'ur']))
+		{
+			return true;
+		}
+
+		$maxDateTime = '03.12.2022 00:00';
+		$time = \DateTime::createFromFormat(
+			'd.m.Y H:i',
+			$maxDateTime,
+			new \DateTimeZone('Europe/Moscow')
+		);
+
+		if (time() > $time->getTimestamp())
+		{
+			return true;
+		}
+
+		if (Loader::includeModule('extranet') && \CExtranet::isExtranetSite())
+		{
+			return true;
+		}
+
+		if (\CUserOptions::getOption('intranet', 'release_polar_star:deactivated') === 'Y')
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	private function getZone(): ?string
+	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			return \CBitrix24::getPortalZone();
+		}
+
+		return null;
 	}
 }

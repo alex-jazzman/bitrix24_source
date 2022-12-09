@@ -6956,7 +6956,7 @@ this.BX.UI = this.BX.UI || {};
 	        var matchSortA = a.getSort();
 	        var matchSortB = b.getSort();
 
-	        if (matchSortA !== null && matchSortB !== null) {
+	        if (matchSortA !== null && matchSortB !== null && matchSortA !== matchSortB) {
 	          return matchSortA - matchSortB;
 	        }
 
@@ -7271,7 +7271,11 @@ this.BX.UI = this.BX.UI || {};
 	      });
 	    }
 
-	    if (options.enableSearch === true) {
+	    if (options.tagSelector instanceof TagSelector) {
+	      _this.tagSelectorMode = TagSelectorMode.OUTSIDE;
+
+	      _this.setTagSelector(options.tagSelector);
+	    } else if (options.enableSearch === true) {
 	      var defaultOptions = {
 	        placeholder: main_core.Loc.getMessage('UI_TAG_SELECTOR_SEARCH_PLACEHOLDER'),
 	        maxHeight: 99,
@@ -7290,10 +7294,6 @@ this.BX.UI = this.BX.UI || {};
 	      _this.tagSelectorMode = TagSelectorMode.INSIDE;
 
 	      _this.setTagSelector(tagSelector);
-	    } else if (options.tagSelector instanceof TagSelector) {
-	      _this.tagSelectorMode = TagSelectorMode.OUTSIDE;
-
-	      _this.setTagSelector(options.tagSelector);
 	    }
 
 	    _this.setTargetNode(options.targetNode);

@@ -434,7 +434,7 @@ class Requisite
 	{
 		$result = new Result();
 
-		$presetId = (int)($values['presetId'] ?? $this->getDefaultPreset($entityTypeId));
+		$presetId = (int)($values['presetId'] ?? $this->getDefaultPreset($entityTypeId)['id'] ?? null);
 		if ($presetId <= 0)
 		{
 			return $result;

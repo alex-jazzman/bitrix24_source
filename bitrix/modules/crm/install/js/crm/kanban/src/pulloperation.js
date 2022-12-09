@@ -103,18 +103,20 @@ export default class PullOperation
 		item.setChangedInPullRequest();
 
 		this.grid.resetMultiSelectMode();
-		this.grid.insertItem(item, insertItemParams);
-
-		if (!this.grid.getTypeInfoParam('showTotalPrice'))
-		{
-			return;
-		}
 
 		const newColumnId = paramsItem.data.columnId;
 		const newColumn = this.grid.getColumn(newColumnId);
 		const newPrice = parseFloat(paramsItem.data.price);
 
+		insertItemParams.newColumnId = newColumnId;
+		this.grid.insertItem(item, insertItemParams);
+
 		item.columnId = newColumnId;
+
+		if (!this.grid.getTypeInfoParam('showTotalPrice'))
+		{
+			return;
+		}
 
 		if (oldColumnId !== newColumnId)
 		{

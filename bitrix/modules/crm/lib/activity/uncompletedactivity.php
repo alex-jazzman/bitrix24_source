@@ -6,6 +6,7 @@ use Bitrix\Crm\Activity\Entity\EntityUncompletedActivityTable;
 use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Timeline\Monitor;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Type\DateTime;
 
 class UncompletedActivity
@@ -296,10 +297,27 @@ class UncompletedActivity
 		}
 		else
 		{
-			$fields['ENTITY_TYPE_ID'] = $this->itemIdentifier->getEntityTypeId();
-			$fields['ENTITY_ID'] = $this->itemIdentifier->getEntityId();
-			$fields['RESPONSIBLE_ID'] =$this->responsibleId;
-			EntityUncompletedActivityTable::add($fields);
+			$addFields = $fields;
+			$addFields['ENTITY_TYPE_ID'] = $this->itemIdentifier->getEntityTypeId();
+			$addFields['ENTITY_ID'] = $this->itemIdentifier->getEntityId();
+			$addFields['RESPONSIBLE_ID'] =$this->responsibleId;
+
+			try
+			{
+				EntityUncompletedActivityTable::add($addFields);
+			}
+			catch (SqlQueryException $e)
+			{
+				if (mb_strpos($e->getMessage(), 'Duplicate entry') !== false)
+				{
+					$existedRecord = $this->loadExistedRecord();
+					if (!$existedRecord)
+					{
+						throw $e;
+					}
+					EntityUncompletedActivityTable::update($existedRecord['ID'], $fields);
+				}
+			}
 		}
 	}
 
@@ -322,6 +340,14 @@ class UncompletedActivity
 			return $this->existedRecord;
 		}
 		$this->existedRecordLoaded = true;
+		$existedRecord = $this->loadExistedRecord();
+		$this->existedRecord = is_array($existedRecord) ? $existedRecord : null;
+
+		return $this->existedRecord;
+	}
+
+	private function loadExistedRecord(): ?array
+	{
 		$existedRecord = EntityUncompletedActivityTable::query()
 			->where('ENTITY_TYPE_ID', $this->itemIdentifier->getEntityTypeId())
 			->where('ENTITY_ID', $this->itemIdentifier->getEntityId())
@@ -330,9 +356,8 @@ class UncompletedActivity
 			->setLimit(1)
 			->fetch()
 		;
-		$this->existedRecord = is_array($existedRecord) ? $existedRecord : null;
 
-		return $this->existedRecord;
+		return is_array($existedRecord) ? $existedRecord : null;
 	}
 
 	private function trySynchronizeByActivityChange(): bool
@@ -511,6 +536,6 @@ class UncompletedActivity
 
 	private function uncompletedActivityTableHasInconsistentData(): bool
 	{
-		return \Bitrix\Main\Config\Option::set('crm', 'enable_any_incoming_act', 'Y') === 'N';
+		return \Bitrix\Main\Config\Option::get('crm', 'enable_any_incoming_act', 'Y') === 'N';
 	}
 }

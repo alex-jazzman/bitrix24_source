@@ -10,6 +10,8 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Type\Date;
+use Bitrix\Tasks\Internals\Counter\CounterDictionary as TasksCounterDictionary;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -42,7 +44,8 @@ $arResult = [
 		'hide' => $menu->getHiddenItems()
 	],
 	'IS_CUSTOM_PRESET_AVAILABLE' => LeftMenu\Preset\Custom::isAvailable(),
-	'CURRENT_PRESET_ID' => $activePreset->getCode()
+	'CURRENT_PRESET_ID' => $activePreset->getCode(),
+	'WORKGROUP_COUNTER_DATA' => [],
 ];
 
 if ($arResult["IS_EXTRANET"] === false && count($defaultItems) > 0)
@@ -80,7 +83,30 @@ if ($menuUser->isAdmin())
 }
 
 $counters = \CUserCounter::GetValues($USER->GetID(), SITE_ID);
-$arResult["COUNTERS"] = is_array($counters) ? $counters : array();
+$counters = is_array($counters) ? $counters : [];
+
+$workgroupCounterData = [
+	'livefeed' => ($counters[\CUserCounter::LIVEFEED_CODE . 'SG0']),
+];
+
+if (Loader::includeModule('tasks'))
+{
+	$tasksCounterInstance = \Bitrix\Tasks\Internals\Counter::getInstance($USER->GetID());
+
+	$workgroupCounterData[TasksCounterDictionary::COUNTER_PROJECTS_MAJOR] = (
+		$tasksCounterInstance->get(TasksCounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS)
+		+ $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_PROJECTS_TOTAL_COMMENTS)
+		+ $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED)
+		+ $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_PROJECTS_TOTAL_EXPIRED)
+	);
+
+	$workgroupCounterData[TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS] = $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS);
+}
+
+$counters['workgroups'] = array_sum($workgroupCounterData);
+
+$arResult["COUNTERS"] = $counters;
+$arResult['WORKGROUP_COUNTER_DATA'] = $workgroupCounterData;
 
 $arResult["GROUPS"] = array();
 if (!$arResult["IS_EXTRANET"] && $GLOBALS["USER"]->isAuthorized())

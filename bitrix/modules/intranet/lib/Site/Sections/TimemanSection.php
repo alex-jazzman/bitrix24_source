@@ -2,7 +2,7 @@
 
 namespace Bitrix\Intranet\Site\Sections;
 
-use Bitrix\FaceId\FaceId;
+use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -23,6 +23,7 @@ class TimemanSection
 			static::getMeetings(),
 			static::getAbsence(),
 			static::getPermissions(),
+			static::getLoginHistory(),
 		];
 	}
 
@@ -31,7 +32,7 @@ class TimemanSection
 		$available = static::isBitrix24() || \CBXFeatures::isFeatureEnabled('StaffAbsence');
 
 		$locked = static::isBitrix24()
-			? !(COption::GetOptionString("bitrix24", "absence_limits_enabled", "") !== "Y" || \Bitrix\Bitrix24\Feature::isFeatureEnabled("absence"))
+			? !(COption::GetOptionString("bitrix24", "absence_limits_enabled", "") !== "Y" || Feature::isFeatureEnabled("absence"))
 			: !\CBXFeatures::isFeatureEnabled('StaffAbsence')
 		;
 		$onclick = '';
@@ -52,6 +53,32 @@ class TimemanSection
 			'menuData' => [
 				'menu_item_id' => 'menu_absence',
 				'is_locked' => $locked,
+				'onclick' => $onclick,
+			],
+		];
+	}
+
+	public static function getLoginHistory(): array
+	{
+		$locked = static::isBitrix24() && !Feature::isFeatureEnabled('user_login_history');
+		$onclick = '';
+		$historyUrl = static::getUserLoginHistoryUrl();
+
+		if ($locked)
+		{
+			$onclick = 'javascript:BX.UI.InfoHelper.show("limit_office_login_history");';
+			$historyUrl = false;
+		}
+
+		return [
+			'id' => 'login_history',
+			'title' => Loc::getMessage('TIMEMAN_SECTION_USER_LOGIN_HISTORY'),
+			'available' => true,
+			'url' => $historyUrl,
+			'locked' => $locked,
+			'menuData' => [
+				'is_locked' => $locked,
+				'menu_item_id' => 'menu_login_history',
 				'onclick' => $onclick,
 			],
 		];
@@ -360,5 +387,15 @@ class TimemanSection
 			],
 			'',
 		];
+	}
+
+	public static function getUserLoginHistoryUrl(): string
+	{
+		return static::getPath() . 'login-history/';
+	}
+
+	public static function getUserLoginHistoryUrlById(int $id): string
+	{
+		return static::getUserLoginHistoryUrl() . "$id/";
 	}
 }

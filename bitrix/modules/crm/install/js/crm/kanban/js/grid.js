@@ -1289,7 +1289,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	onBeforeItemMoved: function(event)
 	{
-		if (event.targetColumn.data.blockedIncomingMoving)
+		if (this.isBlockedIncomingMoving(event.targetColumn))
 		{
 			BX.UI.Notification.Center.notify(
 				{
@@ -2657,7 +2657,8 @@ BX.CRM.Kanban.Grid.prototype = {
 		{
 			categories.push({
 				id: columns[i].id,
-				name: columns[i].name
+				name: columns[i].name,
+				blockedIncomingMoving: this.isBlockedIncomingMoving(columns[i]),
 			});
 		}
 		for (var i = 0, c = drops.length; i < c; i++)
@@ -2677,12 +2678,18 @@ BX.CRM.Kanban.Grid.prototype = {
 			{
 				categories.push({
 					id: drops[i].id,
-					name: drops[i].name
+					name: drops[i].name,
+					blockedIncomingMoving: this.isBlockedIncomingMoving(columns[i]),
 				});
 			}
 		}
 		for (var i = 0, c = categories.length; i < c; i++)
 		{
+			if (categories[i].blockedIncomingMoving)
+			{
+				continue;
+			}
+
 			items.push({
 				id: "kanban_column_" + categories[i].id,
 				column: categories[i],
@@ -2892,6 +2899,11 @@ BX.CRM.Kanban.Grid.prototype = {
 		}*/
 	},
 
+	isBlockedIncomingMoving: function(column)
+	{
+		return ((column && column.data && column.data.blockedIncomingMoving) || false);
+	},
+
 	/**
 	 * Show action panel.
 	 * @returns {void}
@@ -3076,7 +3088,9 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	insertItem: function(item, params = {})
 	{
-		var newColumn = this.getColumn(item.getData().columnId);
+		const columnId = (params.hasOwnProperty('newColumnId') ? params.newColumnId : item.columnId);
+		const newColumn = this.getColumn(columnId);
+
 		if(newColumn)
 		{
 			const sorter = BX.CRM.Kanban.Sort.Sorter.createWithCurrentSortType(newColumn.getItems());
@@ -3094,7 +3108,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				});
 			}
 
-			this.moveItem(item, item.getData().columnId, beforeItem);
+			this.moveItem(item, newColumn.getId(), beforeItem);
 		}
 		else
 		{

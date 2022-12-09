@@ -34,6 +34,11 @@ class SignDocument extends Configurable
 		return 'SignDocument';
 	}
 
+	public function needShowNotes(): bool
+	{
+		return true;
+	}
+
 	public static function isActive(): bool
 	{
 		return \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled();
@@ -51,6 +56,16 @@ class SignDocument extends Configurable
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_REPEATEDLY => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SENT_REPEATEDLY_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_PRINTED_FORM => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_PRINTED_FORM_TITLE'),
 		];
+
+		$messageData = $this->getMessageData();
+
+		if ($messageData)
+		{
+			$titlesMap[Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT] =
+				$messageData->getChannel()->getType() === Timeline\SignDocument\Channel::TYPE_EMAIL
+				? Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MAIL_SEND_TITLE')
+				: Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SMS_SEND_TITLE');
+		}
 
 		return $titlesMap[$this->model->getTypeCategoryId()] ?? null;
 	}
@@ -104,11 +119,6 @@ class SignDocument extends Configurable
 
 	}
 
-	public function getMenuItems(): ?array
-	{
-		return null;
-	}
-
 	public function getTags(): ?array
 	{
 		$tags = null;
@@ -117,7 +127,7 @@ class SignDocument extends Configurable
 		{
 			$tags = [
 				new Layout\Header\Tag(
-					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_CREATED'),
+					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_CREATED') ?? '',
 					Layout\Header\Tag::TYPE_PRIMARY,
 				),
 			];
@@ -139,7 +149,7 @@ class SignDocument extends Configurable
 		{
 			$tags = [
 				new Layout\Header\Tag(
-					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_VIEWED'),
+					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_VIEWED') ?? '',
 					Layout\Header\Tag::TYPE_SUCCESS,
 				),
 			];
@@ -148,7 +158,7 @@ class SignDocument extends Configurable
 		{
 			$tags = [
 				new Layout\Header\Tag(
-					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_PREPARED_TO_FILL'),
+					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_PREPARED_TO_FILL') ?? '',
 					Layout\Header\Tag::TYPE_SECONDARY,
 				),
 			];
@@ -157,16 +167,27 @@ class SignDocument extends Configurable
 		{
 			$tags = [
 				new Layout\Header\Tag(
-					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_FILLED'),
+					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_FILLED') ?? '',
 					Layout\Header\Tag::TYPE_SUCCESS,
 				),
 			];
 		}
 		elseif ($this->isCategorySigned())
 		{
+			$messageData = $this->getMessageData();
+			$signDocument = $this->getSignDocument();
+			if ($messageData && $signDocument)
+			{
+				$member = $signDocument->getMemberByHash($messageData->getRecipient()->getHash());
+
+				$title = $member->isInitiator()
+					? Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_INITIATOR_SIGNED')
+					: Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_SIDE_SIGNED');
+			}
+			$title = $title ?? Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_SIGNED');
 			$tags = [
 				new Layout\Header\Tag(
-					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_SIGNED'),
+					$title ?? '',
 					Layout\Header\Tag::TYPE_PRIMARY,
 				),
 			];
@@ -175,7 +196,7 @@ class SignDocument extends Configurable
 		{
 			$tags = [
 				new Layout\Header\Tag(
-					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_SIGN_COMPLETED'),
+					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_SIGN_COMPLETED') ?? '',
 					Layout\Header\Tag::TYPE_SUCCESS,
 				),
 			];
@@ -184,7 +205,7 @@ class SignDocument extends Configurable
 		{
 			$tags = [
 				new Layout\Header\Tag(
-					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_INTEGRITY_SUCCESS'),
+					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_INTEGRITY_SUCCESS') ?? '',
 					Layout\Header\Tag::TYPE_SUCCESS,
 				),
 			];
@@ -193,7 +214,7 @@ class SignDocument extends Configurable
 		{
 			$tags = [
 				new Layout\Header\Tag(
-					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_INTEGRITY_FAILURE'),
+					Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_INTEGRITY_FAILURE') ?? '',
 					Layout\Header\Tag::TYPE_FAILURE,
 				),
 			];
@@ -212,21 +233,20 @@ class SignDocument extends Configurable
 		if ($messageData->isStatusSent())
 		{
 			return new Layout\Header\Tag(
-				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_SENT'),
+				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_SENT') ?? '',
 				Layout\Header\Tag::TYPE_SECONDARY,
 			);
 		}
 		if ($messageData->isStatusDelivered())
 		{
 			return new Layout\Header\Tag(
-				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_DELIVERED'),
+				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_DELIVERED') ?? '',
 				Layout\Header\Tag::TYPE_SUCCESS,
 			);
 		}
 
-		// todo add tooltip on hover with $messageData->getDescription()
 		return new Layout\Header\Tag(
-			Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_ERROR'),
+			Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TAG_ERROR') ?? '',
 			Layout\Header\Tag::TYPE_FAILURE,
 		);
 	}
@@ -264,7 +284,7 @@ class SignDocument extends Configurable
 			: '';
 
 		$openButton = $this->getSignDocument() ? (new Layout\Footer\Button(
-			Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BUTTON_OPEN'),
+			Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BUTTON_OPEN') ?? '',
 			Layout\Footer\Button::TYPE_PRIMARY,
 		))->setAction((new Layout\Action\JsEvent('SignDocument:Open'))
 			->addActionParamInt('documentId', $this->getDocumentData()->getDocumentId())
@@ -288,7 +308,7 @@ class SignDocument extends Configurable
 			}
 
 			$buttons['modify'] = (new Layout\Footer\Button(
-				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BUTTON_MODIFY'),
+				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BUTTON_MODIFY') ?? '',
 				Layout\Footer\Button::TYPE_SECONDARY,
 			))
 				->setAction((new Layout\Action\JsEvent('SignDocument:Modify'))
@@ -311,10 +331,11 @@ class SignDocument extends Configurable
 		)
 		{
 			$buttons['resend'] = (new Layout\Footer\Button(
-				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BUTTON_RESEND'),
+				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BUTTON_RESEND') ?? '',
 				Layout\Footer\Button::TYPE_SECONDARY,
 			))->setAction(
 				(new Layout\Action\JsEvent('SignDocument:Resend'))
+					->addActionParamString('buttonId', 'resend')
 					->addActionParamInt('documentId', $this->getDocumentData()->getDocumentId())
 					->addActionParamString('recipientHash', $recipientHash)
 					->setAnimation(Layout\Action\Animation::showLoaderForBlock())
@@ -338,7 +359,7 @@ class SignDocument extends Configurable
 			}
 
 			$buttons['download'] = (new Layout\Footer\Button(
-				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BUTTON_DOWNLOAD'),
+				Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BUTTON_DOWNLOAD') ?? '',
 				Layout\Footer\Button::TYPE_SECONDARY,
 			))->setAction(
 				(new Layout\Action\JsEvent('SignDocument:Download'))
@@ -365,7 +386,6 @@ class SignDocument extends Configurable
 		{
 			return [
 				static::BLOCK_DOCUMENT,
-				static::BLOCK_CHANNEL,
 				static::BLOCK_RECIPIENT,
 				static::BLOCK_MY_SIGNER,
 			];
@@ -374,7 +394,6 @@ class SignDocument extends Configurable
 		{
 			return [
 				static::BLOCK_DOCUMENT,
-				static::BLOCK_CHANNEL,
 				static::BLOCK_MY_SIGNER,
 				static::BLOCK_RECIPIENT,
 			];
@@ -383,7 +402,6 @@ class SignDocument extends Configurable
 		{
 			return [
 				static::BLOCK_DOCUMENT,
-				static::BLOCK_CHANNEL,
 				static::BLOCK_RECIPIENT,
 				static::BLOCK_FIELDS_COUNT,
 				static::BLOCK_MY_SIGNER,
@@ -507,16 +525,16 @@ class SignDocument extends Configurable
 
 	protected function getDocumentBlock()
 	{
-		if (!$this->getSignDocument())
+		if (!$this->getAssociatedEntityModel())
 		{
 			return null;
 		}
 
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
-			->setInline(false)
+			->setInline()
 			->setTitle(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_TITLE'))
 			->setContentBlock((new Layout\Body\ContentBlock\Text())
-				->setValue($this->getSignDocument()->getTitle()));
+				->setValue($this->getAssociatedEntityModel()->get('TITLE')));
 	}
 
 	protected function getSignerContentBlock(Signer $signer): Layout\Body\ContentBlock

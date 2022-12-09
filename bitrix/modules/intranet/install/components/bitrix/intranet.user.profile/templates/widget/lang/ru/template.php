@@ -59,6 +59,13 @@ $MESS["INTRANET_USER_PROFILE_MOBILE_SHOW_QR_SMALL"] = "Показать код";
 $MESS["INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK"] = "Как это работает?";
 
 $MESS["INTRANET_USER_PROFILE_HISTORY_TITLE"] = "История входов";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE"] = "Выйти на всех устройствах";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_THIS_DEVICE_DESCRIPTION"] = "Последний вход в профиль Битрикс24";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_WITHOUT_THIS_MESSAGE"] = "Будет выполнен выход из вашего профиля Битрикс24 на всех устройствах, кроме текущего. Продолжить?";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_WITHOUT_THIS_RESULT"] = "Вы успешно вышли на всех устройствах, кроме текущего";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_ERROR"] = "Произошла ошибка при попытке выйти из профиля. Попробуйте ещё раз";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_TITLE"] = "Подтвердите действие";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_SHOW_FULL_LIST"] = "Показать всю историю входов";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Экстранет";
 $MESS["INTRANET_USER_PROFILE_visitor"] = "Посетитель";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Уволен";

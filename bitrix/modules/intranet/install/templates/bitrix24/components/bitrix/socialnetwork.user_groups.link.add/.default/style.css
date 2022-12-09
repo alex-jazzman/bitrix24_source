@@ -96,3 +96,8 @@
 }
 
 .webform-small-button.sonet-groups-add-button { margin-left: 10px; }
+
+.sonet-groups-filter-btn-add {
+	padding-right: 17px;
+	font-size: 14px;
+}

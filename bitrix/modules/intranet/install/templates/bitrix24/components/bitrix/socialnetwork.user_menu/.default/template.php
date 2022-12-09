@@ -295,7 +295,7 @@ if (
 		(
 			"ID" => "groups",
 			"TEXT" => GetMessage("SONET_UM_GROUPS"),
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".$arResult["Urls"]['groups']."', { width: 1000, loader: 'intranet:grouplist' })"
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$arResult["Urls"]['groups']."', { width: 1000 })"
 		)
 	));
 }

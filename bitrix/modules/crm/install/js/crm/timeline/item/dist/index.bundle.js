@@ -330,6 +330,25 @@ this.BX.Crm = this.BX.Crm || {};
 	  disable: 'disable',
 	  loader: 'loader'
 	};
+	const ActionType = {
+	  JS_EVENT: 'jsEvent',
+	  AJAX_ACTION: {
+	    STARTED: 'ajaxActionStarted',
+	    FINISHED: 'ajaxActionFinished',
+	    FAILED: 'ajaxActionFailed'
+	  },
+
+	  isJsEvent(type) {
+	    return type === this.JS_EVENT;
+	  },
+
+	  isAjaxAction(type) {
+	    return type === this.AJAX_ACTION.STARTED || type === this.AJAX_ACTION.FINISHED || type === this.AJAX_ACTION.FAILED;
+	  }
+
+	};
+	Object.freeze(ActionType.AJAX_ACTION);
+	Object.freeze(ActionType);
 
 	var _type = /*#__PURE__*/new WeakMap();
 
@@ -396,7 +415,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        if (this.isJsEvent()) {
 	          vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 	            action: babelHelpers.classPrivateFieldGet(this, _value),
-	            actionType: 'jsEvent',
+	            actionType: ActionType.JS_EVENT,
 	            actionData: babelHelpers.classPrivateFieldGet(this, _actionParams),
 	            animationCallbacks: {
 	              onStart: _classPrivateMethodGet(this, _startAnimation, _startAnimation2).bind(this, vueComponent),
@@ -417,7 +436,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	          vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 	            action: babelHelpers.classPrivateFieldGet(this, _value),
-	            actionType: 'ajaxActionStarted',
+	            actionType: ActionType.AJAX_ACTION.STARTED,
 	            actionData: babelHelpers.classPrivateFieldGet(this, _actionParams)
 	          });
 	          main_core.ajax.runAction(babelHelpers.classPrivateFieldGet(this, _value), {
@@ -427,8 +446,9 @@ this.BX.Crm = this.BX.Crm || {};
 
 	            vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 	              action: babelHelpers.classPrivateFieldGet(this, _value),
-	              actionType: 'ajaxActionFinished',
-	              actionData: babelHelpers.classPrivateFieldGet(this, _actionParams)
+	              actionType: ActionType.AJAX_ACTION.FINISHED,
+	              actionData: babelHelpers.classPrivateFieldGet(this, _actionParams),
+	              response
 	            });
 	            resolve(response);
 	          }, response => {
@@ -440,8 +460,9 @@ this.BX.Crm = this.BX.Crm || {};
 	            });
 	            vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
 	              action: babelHelpers.classPrivateFieldGet(this, _value),
-	              actionType: 'ajaxActionFailed',
-	              actionParams: babelHelpers.classPrivateFieldGet(this, _actionParams)
+	              actionType: ActionType.AJAX_ACTION.FAILED,
+	              actionParams: babelHelpers.classPrivateFieldGet(this, _actionParams),
+	              response
 	            });
 	            reject(response);
 	          });
@@ -1385,6 +1406,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    blocks: Object
 	  },
 
+	  data() {
+	    return {
+	      blockRefs: {}
+	    };
+	  },
+
 	  mounted() {
 	    const blocks = this.$refs.blocks;
 
@@ -1399,6 +1426,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        throw new Error('Vue component "' + block.rendererName + '" was not found');
 	      }
 	    });
+	  },
+
+	  beforeUpdate() {
+	    this.blockRefs = {};
 	  },
 
 	  computed: {
@@ -1425,22 +1456,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  methods: {
 	    getContentBlockById(blockId) {
-	      const blocks = this.$refs.blocks;
-	      return this.visibleBlocks.reduce((found, block, index) => {
-	        if (found) {
-	          return found;
-	        }
+	      var _this$blockRefs$block;
 
-	        if (block.id === blockId) {
-	          return blocks[index];
-	        }
-
-	        return null;
-	      }, null);
+	      return (_this$blockRefs$block = this.blockRefs[blockId]) !== null && _this$blockRefs$block !== void 0 ? _this$blockRefs$block : null;
 	    },
 
 	    getLogo() {
 	      return this.$refs.logo;
+	    },
+
+	    saveRef(ref, id) {
+	      this.blockRefs[id] = ref;
 	    }
 
 	  },
@@ -1459,7 +1485,7 @@ this.BX.Crm = this.BX.Crm || {};
 					<component
 						:is="block.rendererName"
 						v-bind="block.properties"
-						ref="blocks"
+						:ref="(el) => this.saveRef(el, block.id)"
 					/>
 				</div>
 			</div>
@@ -1475,6 +1501,88 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
 	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
 
+	const BaseButton = {
+	  props: {
+	    id: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    state: {
+	      type: String,
+	      required: false,
+	      default: ButtonState.DEFAULT
+	    },
+	    action: Object
+	  },
+
+	  data() {
+	    return {
+	      currentState: this.state
+	    };
+	  },
+
+	  computed: {
+	    itemStateToButtonStateDict() {
+	      return {
+	        [ButtonState.LOADING]: ui_buttons.Button.State.WAITING,
+	        [ButtonState.DISABLED]: ui_buttons.Button.State.DISABLED
+	      };
+	    }
+
+	  },
+	  methods: {
+	    setDisabled(disabled) {
+	      if (disabled) {
+	        this.setButtonState(ButtonState.DISABLED);
+	      } else {
+	        this.setButtonState(ButtonState.DEFAULT);
+	      }
+	    },
+
+	    setLoading(loading) {
+	      if (loading) {
+	        this.setButtonState(ButtonState.LOADING);
+	      } else {
+	        this.setButtonState(ButtonState.DEFAULT);
+	      }
+	    },
+
+	    setButtonState(state) {
+	      if (this.currentState !== state) {
+	        this.currentState = state;
+	      }
+	    },
+
+	    onLayoutUpdated() {
+	      this.setButtonState(this.state);
+	    },
+
+	    executeAction() {
+	      if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING) {
+	        const action = new Action(this.action);
+	        action.execute(this);
+	      }
+	    }
+
+	  },
+
+	  created() {
+	    this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
+	  },
+
+	  beforeDestroy() {
+	    this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
+	  },
+
+	  template: `<button></button>`
+	};
+
 	const AdditionalButtonIcon = Object.freeze({
 	  NOTE: 'note',
 	  SCRIPT: 'script',
@@ -1485,7 +1593,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  DEFAULT: 'default',
 	  PRIMARY: 'primary'
 	});
-	const AdditionalButton = {
+	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
 	  props: {
 	    iconName: {
 	      type: String,
@@ -1506,41 +1614,47 @@ this.BX.Crm = this.BX.Crm || {};
 	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
 	      }
 
-	    },
-	    title: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    state: {
-	      type: String,
-	      required: false,
-	      default: ButtonState.DEFAULT
-	    },
-	    action: Object
+	    }
 	  },
 	  computed: {
 	    className() {
 	      return ['crm-timeline__card_add-button', {
 	        [`--icon-${this.iconName}`]: this.iconName,
-	        [`--color-${this.color}`]: this.color
+	        [`--color-${this.color}`]: this.color,
+	        [`--state-${this.currentState}`]: this.currentState
 	      }];
-	    }
+	    },
 
-	  },
-	  methods: {
-	    executeAction() {
-	      if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING) {
-	        const action = new Action(this.action);
-	        action.execute(this);
-	      }
+	    ButtonState() {
+	      return ButtonState;
+	    },
+
+	    loaderHtml() {
+	      const loader = new main_loader.Loader({
+	        mode: 'inline',
+	        size: 20
+	      });
+	      loader.show();
+	      return loader.layout.outerHTML;
 	    }
 
 	  },
 	  template: `
-		<div :title="title" :class="className" @click="executeAction"></div>
+		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
+			<div
+				v-if="currentState === ButtonState.LOADING"
+				v-html="loaderHtml"
+				class="crm-timeline__card_add-button"
+			></div>
+			<div
+				v-else
+				:title="title"
+				@click="executeAction"
+				:class="className">
+			</div>
+		</transition>
 	`
-	};
+	});
 
 	const MenuId = 'timeline-more-button-menu';
 	const Menu$1 = {
@@ -1622,9 +1736,9 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
 	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
 
-	const Button = {
+	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
 	  props: {
-	    title: {
+	    id: {
 	      type: String,
 	      required: false,
 	      default: ''
@@ -1633,11 +1747,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String,
 	      required: false,
 	      default: ButtonType.SECONDARY
-	    },
-	    state: {
-	      type: String,
-	      required: false,
-	      default: ButtonState.DEFAULT
 	    },
 	    iconName: {
 	      type: String,
@@ -1648,15 +1757,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String,
 	      required: false,
 	      default: 'extra_small'
-	    },
-	    action: Object
+	    }
 	  },
 
 	  data() {
 	    return {
 	      popup: null,
 	      uiButton: Object.freeze(null),
-	      currentState: this.state
+	      currentState: this.state,
+	      timerSecondsRemaining: 0
 	    };
 	  },
 
@@ -1667,6 +1776,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      const color = this.itemTypeToButtonColorDict[this.type] || ui_buttons.Button.Color.LIGHT_BORDER;
 	      const text = this.type === ButtonType.ICON ? '' : this.title;
 	      return {
+	        id: this.id,
 	        round: true,
 	        dependOnTheme: false,
 	        size: ui_buttons.Button.Size[upperCaseButtonSize],
@@ -1686,13 +1796,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	    },
 
-	    itemStateToButtonStateDict() {
-	      return {
-	        [ButtonState.LOADING]: ui_buttons.Button.State.WAITING,
-	        [ButtonState.DISABLED]: ui_buttons.Button.State.DISABLED
-	      };
-	    },
-
 	    buttonContainerRef() {
 	      return this.$refs.buttonContainer;
 	    }
@@ -1703,29 +1806,41 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.uiButton;
 	    },
 
-	    setDisabled(disabled) {
-	      if (disabled) {
-	        this.setButtonState(ButtonState.DISABLED);
-	      } else {
-	        this.setButtonState(ButtonState.DEFAULT);
-	      }
+	    disableWithTimer(sec) {
+	      this.setButtonState(ButtonState.DISABLED);
+	      const btn = this.getUiButton();
+	      let remainingSeconds = sec;
+	      btn.setText(this.formatSeconds(remainingSeconds));
+	      const timer = setInterval(() => {
+	        if (remainingSeconds < 1) {
+	          clearInterval(timer);
+	          btn.setText(this.title);
+	          this.setButtonState(ButtonState.DEFAULT);
+	          return;
+	        }
+
+	        remainingSeconds--;
+	        btn.setText(this.formatSeconds(remainingSeconds));
+	      }, 1000);
 	    },
 
-	    setLoading(loading) {
-	      if (loading) {
-	        this.setButtonState(ButtonState.LOADING);
-	      } else {
-	        this.setButtonState(ButtonState.DEFAULT);
-	      }
+	    formatSeconds(sec) {
+	      const minutes = Math.floor(sec / 60);
+	      const seconds = sec % 60;
+	      const formatMinutes = this.formatNumber(minutes);
+	      const formatSeconds = this.formatNumber(seconds);
+	      return `${formatMinutes}:${formatSeconds}`;
+	    },
+
+	    formatNumber(num) {
+	      return num < 10 ? `0${num}` : num;
 	    },
 
 	    setButtonState(state) {
-	      if (this.currentState !== state) {
-	        var _this$getUiButton, _this$itemStateToButt;
+	      var _this$getUiButton, _this$itemStateToButt;
 
-	        this.currentState = state;
-	        (_this$getUiButton = this.getUiButton()) === null || _this$getUiButton === void 0 ? void 0 : _this$getUiButton.setState((_this$itemStateToButt = this.itemStateToButtonStateDict[this.currentState]) !== null && _this$itemStateToButt !== void 0 ? _this$itemStateToButt : null);
-	      }
+	      this.parentSetButtonState(state);
+	      (_this$getUiButton = this.getUiButton()) === null || _this$getUiButton === void 0 ? void 0 : _this$getUiButton.setState((_this$itemStateToButt = this.itemStateToButtonStateDict[this.currentState]) !== null && _this$itemStateToButt !== void 0 ? _this$itemStateToButt : null);
 	    },
 
 	    renderButton() {
@@ -1737,27 +1852,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      const button = new ui_buttons.Button(this.buttonOptions);
 	      button.renderTo(this.buttonContainerRef);
 	      this.uiButton = button;
-	    },
-
-	    executeAction() {
-	      if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING) {
-	        const action = new Action(this.action);
-	        action.execute(this);
-	      }
-	    },
-
-	    onLayoutUpdated() {
-	      this.setButtonState(this.state);
 	    }
 
 	  },
+	  watch: {
+	    state(newValue) {
+	      this.setButtonState(newValue);
+	    }
 
-	  created() {
-	    this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
-	  },
-
-	  beforeDestroy() {
-	    this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
 	  },
 
 	  mounted() {
@@ -1768,12 +1870,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.renderButton();
 	  },
 
-	  watch: {
-	    state(newValue) {
-	      this.setButtonState(newValue);
-	    }
-
-	  },
 	  template: `
 		<div
 			:class="$attrs.class"
@@ -1781,7 +1877,7 @@ this.BX.Crm = this.BX.Crm || {};
 			@click="executeAction">
 		</div>
 	`
-	};
+	});
 
 	const Buttons = {
 	  components: {
@@ -2227,6 +2323,39 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Layout;
 	}();
 
+	let Base = /*#__PURE__*/function () {
+	  function Base() {
+	    babelHelpers.classCallCheck(this, Base);
+	  }
+
+	  babelHelpers.createClass(Base, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {}
+	  }, {
+	    key: "getContentBlockComponents",
+	    value: function getContentBlockComponents(item) {
+	      return {};
+	    }
+	  }, {
+	    key: "onAfterItemRefreshLayout",
+	    value: function onAfterItemRefreshLayout(item) {}
+	    /**
+	     * Will be executed before item node deleted from DOM
+	     * @param item
+	     */
+
+	  }, {
+	    key: "onBeforeItemClearLayout",
+	    value: function onBeforeItemClearLayout(item) {}
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return false;
+	    }
+	  }]);
+	  return Base;
+	}();
+
 	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -2504,6 +2633,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      // try to refresh layout via vue reactivity, if possible:
 	      if (babelHelpers.classPrivateFieldGet(this, _layoutComponent)) {
 	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setLayout(this.getLayout().asPlainObject());
+
+	        for (const controller of babelHelpers.classPrivateFieldGet(this, _controllers)) {
+	          controller.onAfterItemRefreshLayout(this);
+	        }
 	      } else {
 	        babelHelpers.get(babelHelpers.getPrototypeOf(ConfigurableItem.prototype), "refreshLayout", this).call(this);
 	      }
@@ -2666,36 +2799,6 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  return components;
 	}
-
-	let Base = /*#__PURE__*/function () {
-	  function Base() {
-	    babelHelpers.classCallCheck(this, Base);
-	  }
-
-	  babelHelpers.createClass(Base, [{
-	    key: "onItemAction",
-	    value: function onItemAction(item, actionParams) {}
-	  }, {
-	    key: "getContentBlockComponents",
-	    value: function getContentBlockComponents(item) {
-	      return {};
-	    }
-	    /**
-	     * Will be executed before item node deleted from DOM
-	     * @param item
-	     */
-
-	  }, {
-	    key: "onBeforeItemClearLayout",
-	    value: function onBeforeItemClearLayout(item) {}
-	  }], [{
-	    key: "isItemSupported",
-	    value: function isItemSupported(item) {
-	      return false;
-	    }
-	  }]);
-	  return Base;
-	}();
 
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
 
@@ -4687,7 +4790,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else if ((action === 'SignDocument:UpdateActivityDeadline' || action === 'Activity:SignDocument:UpdateActivityDeadline') && activityId > 0) {
 	        _classPrivateMethodGet$5(this, _updateActivityDeadline, _updateActivityDeadline2).call(this, activityId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
 	      } else if (action === 'SignDocument:Resend' && documentId > 0 && actionData !== null && actionData !== void 0 && actionData.recipientHash) {
-	        _classPrivateMethodGet$5(this, _resendDocument, _resendDocument2).call(this, actionData, animationCallbacks);
+	        _classPrivateMethodGet$5(this, _resendDocument, _resendDocument2).call(this, actionData, animationCallbacks).then(() => {
+	          if (actionData.buttonId) {
+	            const btn = item.getLayoutFooterButtonById(actionData.buttonId);
+	            btn.disableWithTimer(60);
+	          }
+	        });
 	      } else if (action === 'SignDocument:TouchSigner' && documentId > 0) {
 	        _classPrivateMethodGet$5(this, _touchSigner, _touchSigner2).call(this, actionData);
 	      } else if (action === 'SignDocument:Download' && documentHash) {
@@ -4765,31 +4873,37 @@ this.BX.Crm = this.BX.Crm || {};
 	    animationCallbacks.onStart();
 	  }
 
-	  main_core.ajax.runAction('sign.internal.document.resendFile', {
-	    data: {
-	      memberHash: recipientHash,
-	      documentId: documentId
-	    }
-	  }).then(() => {
-	    ui_notification.UI.Notification.Center.notify({
-	      content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'),
-	      autoHideDelay: 5000
-	    });
+	  return new Promise((resolve, reject) => {
+	    main_core.ajax.runAction('sign.internal.document.resendFile', {
+	      data: {
+	        memberHash: recipientHash,
+	        documentId: documentId
+	      }
+	    }).then(() => {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'),
+	        autoHideDelay: 5000
+	      });
 
-	    if (animationCallbacks.onStop) {
-	      animationCallbacks.onStop();
-	    }
-	  }, response => {
-	    ui_notification.UI.Notification.Center.notify({
-	      content: response.errors[0].message,
-	      autoHideDelay: 5000
-	    });
+	      if (animationCallbacks.onStop) {
+	        animationCallbacks.onStop();
+	      }
 
-	    if (animationCallbacks.onStop) {
-	      animationCallbacks.onStop();
-	    }
+	      resolve();
+	    }, response => {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: response.errors[0].message,
+	        autoHideDelay: 5000
+	      });
+
+	      if (animationCallbacks.onStop) {
+	        animationCallbacks.onStop();
+	      }
+
+	      reject();
+	    });
+	    console.log('resend document ' + documentId + ' for ' + recipientHash);
 	  });
-	  console.log('resend document ' + documentId + ' for ' + recipientHash);
 	}
 
 	function _touchSigner2({
@@ -4806,35 +4920,38 @@ this.BX.Crm = this.BX.Crm || {};
 	    animationCallbacks.onStart();
 	  }
 
-	  const req = main_core.ajax.xhr();
-	  req.open("GET", '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' + '&memberHash=' + memberHash + '&documentHash=' + documentHash, true);
-	  req.responseType = "blob";
+	  const link = document.createElement('a');
+	  link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' + '&memberHash=' + memberHash + '&documentHash=' + documentHash;
+	  link.setAttribute('download', '');
+	  document.body.appendChild(link);
+	  link.click();
+	  document.body.removeChild(link);
 
-	  req.onload = () => {
-	    const blob = req.response;
-	    const url = window.URL.createObjectURL(new Blob([blob]));
-	    const link = document.createElement('a');
-	    link.href = url;
-	    link.setAttribute('download', 'doc.pdf');
-	    document.body.appendChild(link);
-	    link.click();
-	    document.body.removeChild(link);
-
-	    if (animationCallbacks.onStop) {
-	      animationCallbacks.onStop();
-	    }
-	  };
-
-	  req.send();
+	  if (animationCallbacks.onStop) {
+	    animationCallbacks.onStop();
+	  }
 	}
 
 	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
 
 	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
+	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
+
+	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
+
+	function _classStaticPrivateFieldSpecGet$1(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "get"); return _classApplyDescriptorGet$1(receiver, descriptor); }
+
+	function _classCheckPrivateStaticFieldDescriptor$1(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+
+	function _classCheckPrivateStaticAccess$1(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+
+	function _classApplyDescriptorGet$1(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
 	function _classPrivateMethodGet$6(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	const ITEM_TYPE = 'Activity:Document';
-	const ACTION_NAMESPACE = ITEM_TYPE + ':';
+	const ACTION_NAMESPACE = 'Document:';
+
+	var _onJsEvent = /*#__PURE__*/new WeakSet();
 
 	var _openDocument$1 = /*#__PURE__*/new WeakSet();
 
@@ -4852,6 +4969,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _updateCreateDate = /*#__PURE__*/new WeakSet();
 
+	var _deleteDocument = /*#__PURE__*/new WeakSet();
+
+	var _onAjaxAction = /*#__PURE__*/new WeakSet();
+
 	let Document = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Document, _Base);
 
@@ -4860,6 +4981,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    babelHelpers.classCallCheck(this, Document);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Document).call(this, ...args));
+
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _onAjaxAction);
+
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _deleteDocument);
 
 	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _updateCreateDate);
 
@@ -4877,6 +5002,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _openDocument$1);
 
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _onJsEvent);
+
 	    return _this;
 	  }
 
@@ -4886,46 +5013,99 @@ this.BX.Crm = this.BX.Crm || {};
 	      const {
 	        action,
 	        actionType,
-	        actionData
+	        actionData,
+	        response,
+	        animationCallbacks
 	      } = actionParams;
 
-	      if (actionType !== 'jsEvent') {
+	      if (ActionType.isJsEvent(actionType)) {
+	        _classPrivateMethodGet$6(this, _onJsEvent, _onJsEvent2).call(this, action, actionData, animationCallbacks, item);
+	      } else if (ActionType.isAjaxAction(actionType)) {
+	        _classPrivateMethodGet$6(this, _onAjaxAction, _onAjaxAction2).call(this, action, actionType, actionData, response);
+	      }
+	    }
+	  }, {
+	    key: "onAfterItemRefreshLayout",
+	    value: function onAfterItemRefreshLayout(item) {
+	      var _item$getLayout$asPla, _item$getLayout$asPla2, _item$getLayout$asPla3, _action$actionParams;
+
+	      const itemsToPrint = _classStaticPrivateFieldSpecGet$1(Document, Document, _toPrintAfterRefresh).filter(candidate => candidate.getId() === item.getId());
+
+	      if (itemsToPrint.length <= 0) {
 	        return;
 	      }
 
-	      const documentId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.documentId);
+	      const action = (_item$getLayout$asPla = item.getLayout().asPlainObject().footer) === null || _item$getLayout$asPla === void 0 ? void 0 : (_item$getLayout$asPla2 = _item$getLayout$asPla.additionalButtons) === null || _item$getLayout$asPla2 === void 0 ? void 0 : (_item$getLayout$asPla3 = _item$getLayout$asPla2.extra) === null || _item$getLayout$asPla3 === void 0 ? void 0 : _item$getLayout$asPla3.action;
+	      const isPrintEvent = main_core.Type.isPlainObject(action) && ActionType.isJsEvent(action.type) && action.value === ACTION_NAMESPACE + 'Print';
 
-	      if (documentId <= 0) {
+	      if (!isPrintEvent) {
 	        return;
 	      }
 
-	      if (action === ACTION_NAMESPACE + 'Open') {
-	        _classPrivateMethodGet$6(this, _openDocument$1, _openDocument2$1).call(this, documentId);
-	      } else if (action === ACTION_NAMESPACE + 'CopyPublicLink') {
-	        // todo block button while loading
-	        _classPrivateMethodGet$6(this, _copyPublicLink, _copyPublicLink2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.publicUrl);
-	      } else if (action === ACTION_NAMESPACE + 'Print') {
-	        _classPrivateMethodGet$6(this, _printDocument, _printDocument2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.printUrl);
-	      } else if (action === ACTION_NAMESPACE + 'DownloadPdf') {
-	        _classPrivateMethodGet$6(this, _downloadPdf, _downloadPdf2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.pdfUrl);
-	      } else if (action === ACTION_NAMESPACE + 'DownloadDocx') {
-	        _classPrivateMethodGet$6(this, _downloadDocx, _downloadDocx2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.docxUrl);
-	      } else if (action === ACTION_NAMESPACE + 'UpdateTitle') {
-	        _classPrivateMethodGet$6(this, _updateTitle, _updateTitle2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
-	      } else if (action === ACTION_NAMESPACE + 'UpdateCreateDate') {
-	        _classPrivateMethodGet$6(this, _updateCreateDate, _updateCreateDate2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
-	      } else {
-	        console.info(`Unknown action ${action} in ${ITEM_TYPE}`);
+	      const printUrl = (_action$actionParams = action.actionParams) === null || _action$actionParams === void 0 ? void 0 : _action$actionParams.printUrl;
+
+	      if (!main_core.Type.isStringFilled(printUrl)) {
+	        return;
 	      }
+
+	      _classPrivateMethodGet$6(this, _printDocument, _printDocument2).call(this, printUrl, null, item);
+
+	      _classStaticPrivateFieldSpecSet(Document, Document, _toPrintAfterRefresh, _classStaticPrivateFieldSpecGet$1(Document, Document, _toPrintAfterRefresh).filter(remainingItem => !itemsToPrint.includes(remainingItem)));
 	    }
 	  }], [{
 	    key: "isItemSupported",
 	    value: function isItemSupported(item) {
-	      return item.getType() === ITEM_TYPE;
+	      return item.getType() === 'Document' || item.getType() === 'DocumentViewed' || item.getType() === 'Activity:Document';
 	    }
 	  }]);
 	  return Document;
 	}(Base);
+
+	function _onJsEvent2(action, actionData, animationCallbacks, item) {
+	  const documentId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.documentId); // if (documentId <= 0)
+	  // {
+	  // 	return;
+	  // }
+
+	  if (action === ACTION_NAMESPACE + 'Open') {
+	    _classPrivateMethodGet$6(this, _openDocument$1, _openDocument2$1).call(this, documentId);
+	  } else if (action === ACTION_NAMESPACE + 'CopyPublicLink') {
+	    // todo block button while loading
+	    _classPrivateMethodGet$6(this, _copyPublicLink, _copyPublicLink2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.publicUrl);
+	  } else if (action === ACTION_NAMESPACE + 'Print') {
+	    _classPrivateMethodGet$6(this, _printDocument, _printDocument2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.printUrl, animationCallbacks, item);
+	  } else if (action === ACTION_NAMESPACE + 'DownloadPdf') {
+	    _classPrivateMethodGet$6(this, _downloadPdf, _downloadPdf2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.pdfUrl);
+	  } else if (action === ACTION_NAMESPACE + 'DownloadDocx') {
+	    _classPrivateMethodGet$6(this, _downloadDocx, _downloadDocx2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.docxUrl);
+	  } else if (action === ACTION_NAMESPACE + 'UpdateTitle') {
+	    _classPrivateMethodGet$6(this, _updateTitle, _updateTitle2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
+	  } else if (action === ACTION_NAMESPACE + 'UpdateCreateDate') {
+	    _classPrivateMethodGet$6(this, _updateCreateDate, _updateCreateDate2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
+	  } else if (action === ACTION_NAMESPACE + 'Delete') {
+	    var _actionData$confirmat;
+
+	    const confirmationText = (_actionData$confirmat = actionData.confirmationText) !== null && _actionData$confirmat !== void 0 ? _actionData$confirmat : '';
+
+	    if (confirmationText) {
+	      ui_dialogs_messagebox.MessageBox.show({
+	        message: confirmationText,
+	        modal: true,
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
+	        onYes: () => {
+	          return _classPrivateMethodGet$6(this, _deleteDocument, _deleteDocument2).call(this, actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+	        },
+	        onNo: messageBox => {
+	          messageBox.close();
+	        }
+	      });
+	    } else {
+	      _classPrivateMethodGet$6(this, _deleteDocument, _deleteDocument2).call(this, actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+	    }
+	  } else {
+	    console.info(`Unknown action ${action} in ${item.getType()}`);
+	  }
+	}
 
 	function _openDocument2$1(documentId) {
 	  crm_router.Router.Instance.openDocumentSlider(documentId);
@@ -4978,11 +5158,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  return publicUrl;
 	}
 
-	function _printDocument2(printUrl) {
+	function _printDocument2(printUrl, animationCallbacks, item) {
 	  if (main_core.Type.isStringFilled(printUrl)) {
 	    window.open(printUrl, '_blank');
-	  } else {
-	    ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PRINT_NOT_READY'));
+	    return;
+	  } // there is no pdf yet. wait till document is transformed and update push comes in
+
+
+	  _classStaticPrivateFieldSpecGet$1(Document, Document, _toPrintAfterRefresh).push(item);
+
+	  const onStart = animationCallbacks === null || animationCallbacks === void 0 ? void 0 : animationCallbacks.onStart;
+
+	  if (main_core.Type.isFunction(onStart)) {
+	    onStart();
 	  }
 	}
 
@@ -5056,6 +5244,59 @@ this.BX.Crm = this.BX.Crm || {};
 	    console.error("Updated document create date without errors, but for some reason date from the backend doesn't match sent value");
 	  }
 	}
+
+	function _deleteDocument2(id, ownerTypeId, ownerId, animationCallbacks) {
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
+
+	  return main_core.ajax.runAction('crm.timeline.document.delete', {
+	    data: {
+	      id,
+	      ownerTypeId,
+	      ownerId
+	    }
+	  }).then(() => {
+	    if (animationCallbacks.onStop) {
+	      animationCallbacks.onStop();
+	    }
+
+	    return true;
+	  }, response => {
+	    ui_notification.UI.Notification.Center.notify({
+	      content: response.errors[0].message,
+	      autoHideDelay: 5000
+	    });
+
+	    if (animationCallbacks.onStop) {
+	      animationCallbacks.onStop();
+	    }
+
+	    return true;
+	  });
+	}
+
+	function _onAjaxAction2(action, actionType, actionData, response) {
+	  if (action === 'crm.api.integration.sign.convertDeal') {
+	    var _response$data;
+
+	    if (actionType === ActionType.AJAX_ACTION.FINISHED && !main_core.Type.isNil(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.SMART_DOCUMENT)) {
+	      //todo extract it to router?
+	      const wizardUri = new main_core.Uri('/sign/doc/0/');
+	      wizardUri.setQueryParams({
+	        docId: response.data.SMART_DOCUMENT,
+	        stepId: 'changePartner',
+	        noRedirect: 'Y'
+	      });
+	      BX.SidePanel.Instance.open(wizardUri.toString());
+	    }
+	  }
+	}
+
+	var _toPrintAfterRefresh = {
+	  writable: true,
+	  value: []
+	};
 
 	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
 

@@ -1,12 +1,13 @@
-import {Action} from "../../action";
+import {BitrixVue} from 'ui.vue3';
+import {BaseButton} from './baseButton';
 import { ButtonOptions, Button as UIButton } from 'ui.buttons';
 import {ButtonType} from '../enums/button-type';
 import {ButtonState} from '../enums/button-state';
-import {Type} from 'main.core';
+import {Type, clone} from 'main.core';
 
-export const Button = {
+export const Button  = BitrixVue.cloneComponent(BaseButton, {
 	props: {
-		title: {
+		id: {
 			type: String,
 			required: false,
 			default: '',
@@ -15,11 +16,6 @@ export const Button = {
 			type: String,
 			required: false,
 			default: ButtonType.SECONDARY,
-		},
-		state: {
-			type: String,
-			required: false,
-			default: ButtonState.DEFAULT,
 		},
 		iconName: {
 			type: String,
@@ -31,15 +27,17 @@ export const Button = {
 			required: false,
 			default: 'extra_small'
 		},
-		action: Object,
 	},
+
 	data() {
 		return {
 			popup: null,
 			uiButton: Object.freeze(null),
 			currentState: this.state,
+			timerSecondsRemaining: 0,
 		}
 	},
+
 	computed: {
 		buttonOptions(): ButtonOptions {
 			const upperCaseIconName = Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
@@ -47,6 +45,7 @@ export const Button = {
 			const color = this.itemTypeToButtonColorDict[this.type] || UIButton.Color.LIGHT_BORDER;
 			const text = this.type === ButtonType.ICON ? '' : this.title;
 			return {
+				id: this.id,
 				round: true,
 				dependOnTheme: false,
 				size: UIButton.Size[upperCaseButtonSize],
@@ -57,7 +56,7 @@ export const Button = {
 			}
 		},
 
-		itemTypeToButtonColorDict() {
+		itemTypeToButtonColorDict(): Object {
 			return {
 				[ButtonType.PRIMARY]: UIButton.Color.PRIMARY,
 				[ButtonType.SECONDARY]: UIButton.Color.LIGHT_BORDER,
@@ -66,55 +65,57 @@ export const Button = {
 			}
 		},
 
-		itemStateToButtonStateDict() {
-			return {
-				[ButtonState.LOADING]: UIButton.State.WAITING,
-				[ButtonState.DISABLED]: UIButton.State.DISABLED,
-			}
-		},
-
 		buttonContainerRef(): HTMLElement | undefined {
 			return this.$refs.buttonContainer;
 		},
-
 	},
+
 	methods: {
 		getUiButton(): ?UIButton
 		{
 			return this.uiButton;
 		},
 
-		setDisabled(disabled: boolean): void
+		disableWithTimer(sec: number)
 		{
-			if (disabled)
-			{
-				this.setButtonState(ButtonState.DISABLED);
-			}
-			else
-			{
-				this.setButtonState(ButtonState.DEFAULT);
-			}
+			this.setButtonState(ButtonState.DISABLED);
+			const btn = this.getUiButton();
+			let remainingSeconds = sec;
+
+			btn.setText(this.formatSeconds(remainingSeconds));
+
+			const timer = setInterval(() => {
+				if (remainingSeconds < 1)
+				{
+					clearInterval(timer);
+					btn.setText(this.title);
+					this.setButtonState(ButtonState.DEFAULT);
+					return;
+				}
+
+				remainingSeconds--;
+				btn.setText(this.formatSeconds(remainingSeconds));
+			}, 1000);
 		},
 
-		setLoading(loading: boolean): void
-		{
-			if (loading)
-			{
-				this.setButtonState(ButtonState.LOADING);
-			}
-			else
-			{
-				this.setButtonState(ButtonState.DEFAULT);
-			}
+		formatSeconds(sec: number): string {
+			const minutes = Math.floor(sec / 60);
+			const seconds = sec % 60;
+
+			const formatMinutes = this.formatNumber(minutes);
+			const formatSeconds = this.formatNumber(seconds);
+
+			return `${formatMinutes}:${formatSeconds}`;
+		},
+
+		formatNumber(num: number): string {
+			return num < 10 ? `0${num}` : num;
 		},
 
 		setButtonState(state): void
 		{
-			if (this.currentState !== state)
-			{
-				this.currentState = state;
-				this.getUiButton()?.setState(this.itemStateToButtonStateDict[this.currentState] ?? null);
-			}
+			this.parentSetButtonState(state);
+			this.getUiButton()?.setState(this.itemStateToButtonStateDict[this.currentState] ?? null);
 		},
 
 		renderButton(): void {
@@ -126,41 +127,22 @@ export const Button = {
 			button.renderTo(this.buttonContainerRef);
 			this.uiButton = button;
 		},
+	},
 
-		executeAction(): void
-		{
-			if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING)
-			{
-				const action = new Action(this.action);
-				action.execute(this);
-			}
-		},
-
-		onLayoutUpdated(): void
-		{
-			this.setButtonState(this.state);
-		},
-
-	},
-	created() {
-		this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
-	},
-	beforeDestroy(): void
-	{
-		this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
-	},
-	mounted() {
-		this.renderButton();
-	},
-	updated() {
-		this.renderButton();
-	},
 	watch: {
 		state(newValue): void
 		{
 			this.setButtonState(newValue);
 		},
 	},
+
+	mounted() {
+		this.renderButton();
+	},
+	updated() {
+		this.renderButton();
+	},
+
 	template: `
 		<div
 			:class="$attrs.class"
@@ -168,4 +150,4 @@ export const Button = {
 			@click="executeAction">
 		</div>
 	`
-};
+});

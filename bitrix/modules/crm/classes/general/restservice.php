@@ -30,6 +30,7 @@ use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Iblock;
+use Bitrix\Catalog;
 
 if (!Loader::includeModule('rest'))
 {
@@ -5383,6 +5384,25 @@ class CCrmProductRowRestProxy extends CCrmRestProxyBase
 	{
 		$fieldsInfo = $this->getFieldsInfo();
 		$this->internalizeFields($fields, $fieldsInfo);
+
+		$productId = (int)($fields['PRODUCT_ID'] ?? null);
+		if ($productId && Loader::includeModule('catalog'))
+		{
+			$productRow = Catalog\ProductTable::getRow([
+				'select' => [
+					'PRODUCT_NAME' => 'IBLOCK_ELEMENT.NAME',
+					'TYPE',
+				],
+				'filter' => [
+					'=ID' => $productId,
+				],
+			]);
+			if ($productRow)
+			{
+				$fields['TYPE'] = (int)$productRow['TYPE'];
+				$fields['PRODUCT_NAME'] ??= $productRow['PRODUCT_NAME'];
+			}
+		}
 	}
 }
 

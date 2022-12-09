@@ -38,12 +38,14 @@
 		},
 
 		"base": {
+			"02": { "value":  "{color.palette.gray.02}" },
 			"03": { "value":  "{color.palette.gray.03}" },
 			"04": { "value":  "{color.palette.gray.04}" },
 			"05": { "value":  "{color.palette.gray.05}" },
 			"10": { "value":  "{color.palette.gray.10}" },
 			"20": { "value":  "{color.palette.gray.20}" },
 			"30": { "value":  "{color.palette.gray.30}" },
+			"35": { "value":  "{color.palette.gray.35}" },
 			"40": { "value":  "{color.palette.gray.40}" },
 			"50": { "value":  "{color.palette.gray.50}" },
 			"60": { "value":  "{color.palette.gray.60}" },

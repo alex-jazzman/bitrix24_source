@@ -1,4 +1,4 @@
-import { ajax as Ajax, Loc, Text, Type } from 'main.core';
+import { ajax as Ajax, Event, Loc, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import type { EntityCounterManagerOptions } from './entity-counter-manager-options';
@@ -16,6 +16,8 @@ export default class EntityCounterManager
 	#withExcludeUsers: boolean = false;
 	#counterData: Object;
 	#isRequestRunning: boolean;
+	#lastPullEventData: Object;
+	#isTabActive: boolean;
 
 	constructor(options: EntityCounterManagerOptions): void
 	{
@@ -42,6 +44,7 @@ export default class EntityCounterManager
 		this.#extras = Type.isObject(options.extras) ? options.extras : {};
 		this.#withExcludeUsers = Type.isBoolean(options.withExcludeUsers) ? options.withExcludeUsers : false;
 		this.#counterData = {};
+		this.#isTabActive = true;
 
 		this.#bindEvents();
 
@@ -51,6 +54,16 @@ export default class EntityCounterManager
 	#bindEvents(): void
 	{
 		EventEmitter.subscribe('onPullEvent-main', this.#onPullEvent.bind(this));
+
+		Event.ready(() => {
+			Event.bind(document, 'visibilitychange', () => {
+				this.#isTabActive = document.visibilityState === 'visible';
+				if (this.#isTabActive && this.#isRecalculationRequired())
+				{
+					this.#tryRecalculate(this.#lastPullEventData);
+				}
+			});
+		});
 	}
 
 	#onPullEvent(event: BaseEvent): void
@@ -61,10 +74,17 @@ export default class EntityCounterManager
 			return;
 		}
 
+		this.#lastPullEventData = params;
+
+		this.#tryRecalculate(params);
+	}
+
+	#tryRecalculate(params: Object): void
+	{
 		let enableRecalculation = false;
 		let enableRecalculationWithRequest = false;
-		const currentSiteId = Loc.getMessage('SITE_ID');
-		const counterData = Type.isPlainObject(params[currentSiteId]) ? params[currentSiteId] : {};
+
+		const counterData = this.#fetchCounterData(params);
 		for (let counterId in counterData)
 		{
 			if (
@@ -106,7 +126,12 @@ export default class EntityCounterManager
 
 	#startRecalculationRequest(): void
 	{
-		if (this.#isRequestRunning)
+		if (this.#isRequestRunning )
+		{
+			return;
+		}
+
+		if (!this.#isTabActive)
 		{
 			return;
 		}
@@ -134,6 +159,25 @@ export default class EntityCounterManager
 		this.setCounterData(data);
 
 		EventEmitter.emit('BX.Crm.EntityCounterManager:onRecalculate', this);
+	}
+
+	#fetchCounterData(params: Object): Object
+	{
+		const currentSiteId = Loc.getMessage('SITE_ID');
+
+		return  Type.isPlainObject(params[currentSiteId]) ? params[currentSiteId] : {};
+	}
+
+	#isRecalculationRequired(): Boolean
+	{
+		if (!this.#lastPullEventData)
+		{
+			return false;
+		}
+
+		const counterData = this.#fetchCounterData(this.#lastPullEventData);
+
+		return Object.values(counterData).includes(-1);
 	}
 
 	getId(): string

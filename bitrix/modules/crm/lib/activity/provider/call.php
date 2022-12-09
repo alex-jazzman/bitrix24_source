@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Activity\Provider;
 
-
 use Bitrix\Crm\Activity\CommunicationStatistics;
+use Bitrix\Crm\Activity\IncomingChannel;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Communication;
 use Bitrix\Crm\Integration\VoxImplantManager;
@@ -25,6 +25,9 @@ class Call extends Base
 	public const ACTIVITY_PROVIDER_ID = 'VOXIMPLANT_CALL';
 	public const ACTIVITY_PROVIDER_TYPE_CALL = 'CALL';
 	public const ACTIVITY_PROVIDER_TYPE_CALLBACK = 'CALLBACK';
+
+	public const UNCOMPLETED_ACTIVITY_MISSED = 1;
+	public const UNCOMPLETED_ACTIVITY_INCOMING = 2;
 
 	public static function getId()
 	{
@@ -471,11 +474,12 @@ class Call extends Base
 	}
 
 	/**
-	 * @param int $activityId
+	 * @param int $activityId Activity ID
+	 * @param int $options    Fetch options [UNCOMPLETED_ACTIVITY_MISSED|UNCOMPLETED_ACTIVITY_INCOMING]
 	 *
 	 * @return array
 	 */
-	public static function getUncompletedActivityIdList(int $activityId, bool $missedOnly = false): array
+	public static function getUncompletedActivityIdList(int $activityId, int $options = 0): array
 	{
 		$bindings = CCrmActivity::GetBindings($activityId);
 		if (!is_array($bindings))
@@ -504,6 +508,9 @@ class Call extends Base
 			['ID', 'SETTINGS']
 		);
 
+		$missedOnly = $options & self::UNCOMPLETED_ACTIVITY_MISSED;
+		$incomingOnly = $options & self::UNCOMPLETED_ACTIVITY_INCOMING;
+
 		$result = [];
 		while ($arResult = $dbResult->Fetch())
 		{
@@ -524,6 +531,14 @@ class Call extends Base
 				{
 					$result[] = (int)$arResult["ID"];
 				}
+			}
+
+			if ($incomingOnly)
+			{
+				$result = array_filter(
+					$result,
+					fn($activityId): bool => IncomingChannel::getInstance()->isIncomingChannel($activityId)
+				);
 			}
 		}
 

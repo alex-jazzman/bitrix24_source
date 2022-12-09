@@ -3568,6 +3568,7 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "isMenuMouseEnterBlocked", false);
 	    babelHelpers.defineProperty(this, "isMenuMouseLeaveBlocked", []);
 	    babelHelpers.defineProperty(this, "isCollapsedMode", false);
+	    babelHelpers.defineProperty(this, "workgroupsCounterData", {});
 
 	    _classPrivateFieldInitSpec$4(this, _specialLiveFeedDecrement, {
 	      writable: true,
@@ -3586,6 +3587,7 @@ this.BX = this.BX || {};
 	    Options.isAdmin = params.isAdmin;
 	    Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
 	    this.isCollapsedMode = params.isCollapsedMode;
+	    this.workgroupsCounterData = params.workgroupsCounterData;
 	    this.initAndBindNodes();
 	    this.bindEvents();
 	    this.getItemsController(); //Emulate document scroll because init() can be invoked after page load scroll (a hard reload with script at the bottom).
@@ -4677,6 +4679,35 @@ this.BX = this.BX || {};
 	        delete counters['**'];
 	      }
 
+	      var workgroupsCounterUpdated = false;
+
+	      if (!main_core.Type.isUndefined(counters['**SG0'])) {
+	        this.workgroupsCounterData['livefeed'] = counters['**SG0'];
+	        delete counters['**SG0'];
+	        workgroupsCounterUpdated = true;
+	      }
+
+	      if (!main_core.Type.isUndefined(counters[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')])) {
+	        this.workgroupsCounterData[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')] = counters[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
+	        delete counters[main_core.Loc.getMessage('COUNTER_PROJECTS_MAJOR')];
+	        workgroupsCounterUpdated = true;
+	      }
+
+	      if (!main_core.Type.isUndefined(counters[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')])) {
+	        this.workgroupsCounterData[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')] = counters[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
+	        delete counters[main_core.Loc.getMessage('COUNTER_SCRUM_TOTAL_COMMENTS')];
+	        workgroupsCounterUpdated = true;
+	      }
+
+	      if (workgroupsCounterUpdated) {
+	        counters['workgroups'] = Object.entries(this.workgroupsCounterData).reduce(function (prevValue, _ref13) {
+	          var _ref14 = babelHelpers.slicedToArray(_ref13, 2),
+	              curValue = _ref14[1];
+
+	          return prevValue + Number(curValue);
+	        }, 0);
+	      }
+
 	      if (counters['live-feed']) {
 	        if (counters['live-feed'] <= 0) {
 	          babelHelpers.classPrivateFieldSet(this, _specialLiveFeedDecrement, 0);
@@ -4692,11 +4723,11 @@ this.BX = this.BX || {};
 	  return Menu;
 	}();
 
-	function _getLeftMenuItemByTopMenuItem2(_ref13) {
+	function _getLeftMenuItemByTopMenuItem2(_ref15) {
 	  var _item;
 
-	  var DATA_ID = _ref13.DATA_ID,
-	      NODE = _ref13.NODE;
+	  var DATA_ID = _ref15.DATA_ID,
+	      NODE = _ref15.NODE;
 	  var item = this.getItemsController().items.get(DATA_ID);
 
 	  if (!item) {
@@ -4735,8 +4766,8 @@ this.BX = this.BX || {};
 	  var _this11 = this;
 
 	  if (!this['menuAdjustAdminPanel']) {
-	    this['menuAdjustAdminPanel'] = function (_ref14) {
-	      var data = _ref14.data;
+	    this['menuAdjustAdminPanel'] = function (_ref16) {
+	      var data = _ref16.data;
 	      _this11.menuContainer.style.top = [data, 'px'].join('');
 	    };
 

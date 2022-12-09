@@ -1,6 +1,7 @@
 import Uploader from './uploader';
 import UploaderFile from './uploader-file';
-import VueUploader from './adapters/vue-uploader';
+import VueUploaderWidget from './adapters/vue-uploader-widget';
+import { VueUploaderComponent } from './adapters/vue-uploader-component';
 
 import { UploaderStatus } from './enums/uploader-status';
 import { FileStatus } from './enums/file-status';
@@ -22,7 +23,8 @@ export {
 	FileOrigin,
 	FilterType,
 	Helpers,
-	VueUploader,
+	VueUploaderWidget,
+	VueUploaderComponent,
 };
 
 export type {

@@ -323,21 +323,21 @@ class EntityCounterType
 
 		$countersSettings = $factory->getCountersSettings();
 
-		if ($countersSettings->isIncomingCounterEnabled())
+		if ($countersSettings->isIncomingCounterEnabledInFilter())
 		{
 			$items[self::INCOMING_CHANNEL] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_INCOMING_CHANNEL');
 		}
-		if ($countersSettings->isIdleCounterEnabled())
-		{
-			$items[self::IDLE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_IDLE');
-		}
-		if ($countersSettings->isPendingCounterEnabled() || $countersSettings->isCurrentCounterEnabled())
+		if ($countersSettings->isPendingCounterEnabledInFilter() || $countersSettings->isCurrentCounterEnabledInFilter())
 		{
 			$items[self::PENDING] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_PENDING');
 		}
-		if ($countersSettings->isOverdueCounterEnabled() || $countersSettings->isCurrentCounterEnabled())
+		if ($countersSettings->isOverdueCounterEnabledInFilter() || $countersSettings->isCurrentCounterEnabledInFilter())
 		{
 			$items[self::OVERDUE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_OVERDUE');
+		}
+		if ($countersSettings->isIdleCounterEnabledInFilter())
+		{
+			$items[self::IDLE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_IDLE');
 		}
 
 		return array_merge(

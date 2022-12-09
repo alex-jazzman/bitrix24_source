@@ -5,12 +5,12 @@ namespace Bitrix\Crm\Service\Timeline;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Compatible\Wait;
 use Bitrix\Crm\Service\Timeline\Repository\Query;
+use Bitrix\Crm\Service\Timeline\Repository\IgnoredItemsRules;
 use Bitrix\Crm\Service\Timeline\Repository\Result;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\TimelineManager;
-use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Type\DateTime;
 
@@ -276,30 +276,7 @@ class Repository
 			\Bitrix\Crm\Filter\TimelineDataProvider::prepareQuery($query, $filter);
 		}
 
-		$query->whereNotIn(
-			'ASSOCIATED_ENTITY_TYPE_ID',
-			TimelineManager::getIgnoredEntityTypeIDs()
-		);
-
-		if (
-			!\CCrmSaleHelper::isWithOrdersMode()
-			&& (
-				$this->context->getEntityTypeId() === \CCrmOwnerType::Deal
-				|| \CCrmOwnerType::isPossibleDynamicTypeId($this->context->getEntityTypeId())
-			)
-		)
-		{
-			$orderFilter = $this->getExcludingOrderFilter($this->context->getEntityId(),
-				$this->context->getEntityTypeId());
-			$query->whereNot($orderFilter);
-		}
-
-		if ($this->context->getEntityTypeId() === \CCrmOwnerType::SmartDocument)
-		{
-			$smartDocumentFilter = $this->getExcludingForSmartDocumentFilter($this->context->getEntityId(),
-				$this->context->getEntityTypeId());
-			$query->where($smartDocumentFilter);
-		}
+		(new IgnoredItemsRules($this->context))->applyToQuery($query);
 
 		$query->setOrder(['CREATED' => 'DESC', 'ID' => 'DESC']);
 
@@ -326,38 +303,6 @@ class Repository
 		$bindingQuery->addSelect('IS_FIXED');
 
 		return $bindingQuery;
-	}
-
-	private function getExcludingOrderFilter(int $ownerId, int $ownerTypeId)
-	{
-		$orderFilter = \Bitrix\Main\ORM\Query\Query::filter();
-
-		$orderList = \Bitrix\Crm\Binding\OrderEntityTable::getOrderIdsByOwner($ownerId, $ownerTypeId);
-		if ($orderList)
-		{
-			$orderFilter->whereIn('ASSOCIATED_ENTITY_ID', $orderList);
-			$orderFilter->where('ASSOCIATED_ENTITY_TYPE_ID', TimelineType::ORDER);
-			$orderFilter->whereIn('TYPE_ID', [TimelineType::MODIFICATION, TimelineType::ORDER]);
-			$orderFilter->whereNot('TYPE_CATEGORY_ID', \Bitrix\Crm\Timeline\OrderCategoryType::ENCOURAGE_BUY_PRODUCTS);
-			$orderFilter->whereNotIn('TYPE_CATEGORY_ID', [
-				\Bitrix\Crm\Timeline\OrderCategoryType::ENCOURAGE_BUY_PRODUCTS,
-				TimelineType::MODIFICATION,
-			]);
-		}
-
-		return $orderFilter;
-	}
-
-	private function getExcludingForSmartDocumentFilter(int $ownerId, int $ownerTypeId)
-	{
-		$filter = \Bitrix\Main\ORM\Query\Query::filter();
-
-		$filter->whereNotIn('TYPE_ID', [
-			TimelineType::ACTIVITY,
-			TimelineType::LINK,
-			TimelineType::UNLINK,
-		]);
-		return $filter;
 	}
 
 	private function fetchHistoryItems(int $offsetID, \Bitrix\Main\ORM\Query\Query $query): array

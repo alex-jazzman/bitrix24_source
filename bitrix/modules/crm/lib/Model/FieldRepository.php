@@ -58,35 +58,53 @@ final class FieldRepository
 		;
 	}
 
-	public function getCreatedTime(string $fieldName = Item::FIELD_NAME_CREATED_TIME): ScalarField
+	public function getCreatedTime(
+		string $fieldName = Item::FIELD_NAME_CREATED_TIME,
+		bool $feminine = false
+	): ScalarField
 	{
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_CREATED_TIME';
+		$this->prepareMessageCode($messageCode, $feminine);
+
 		return
 			(new DatetimeField($fieldName))
 				->configureRequired()
 				->configureDefaultValue(static function () {
 					return new DateTime();
 				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CREATED_TIME'))
+				->configureTitle(Loc::getMessage($messageCode))
 		;
 	}
 
-	public function getUpdatedTime(string $fieldName = Item::FIELD_NAME_UPDATED_TIME): ScalarField
+	public function getUpdatedTime(
+		string $fieldName = Item::FIELD_NAME_UPDATED_TIME,
+		bool $feminine = false
+	): ScalarField
 	{
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_UPDATED_TIME';
+		$this->prepareMessageCode($messageCode, $feminine);
+
 		return
 			(new DatetimeField($fieldName))
 				->configureRequired()
 				->configureDefaultValue(static function () {
 					return new DateTime();
 				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_UPDATED_TIME'))
+				->configureTitle(Loc::getMessage($messageCode))
 		;
 	}
 
-	public function getMovedTime(string $fieldName = Item::FIELD_NAME_MOVED_TIME): ScalarField
+	public function getMovedTime(
+		string $fieldName = Item::FIELD_NAME_MOVED_TIME,
+		bool $feminine = false
+	): ScalarField
 	{
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_TIME';
+		$this->prepareMessageCode($messageCode, $feminine);
+
 		return
 			(new DatetimeField($fieldName))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_TIME'))
+				->configureTitle(Loc::getMessage($messageCode))
 		;
 	}
 
@@ -101,36 +119,62 @@ final class FieldRepository
 		;
 	}
 
-	public function getCreatedBy(string $fieldName = Item::FIELD_NAME_CREATED_BY): ScalarField
+	public function getCreatedBy(
+		string $fieldName = Item::FIELD_NAME_CREATED_BY,
+		bool $feminine = false
+	): ScalarField
 	{
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_CREATED_BY';
+		$this->prepareMessageCode($messageCode, $feminine);
+
 		return
 			(new IntegerField($fieldName))
 				->configureRequired()
 				->configureDefaultValue(static function () {
 					return Container::getInstance()->getContext()->getUserId();
 				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CREATED_BY'))
+				->configureTitle(Loc::getMessage($messageCode))
 		;
 	}
 
-	public function getUpdatedBy(string $fieldName = Item::FIELD_NAME_UPDATED_BY): ScalarField
+	public function getUpdatedBy(
+		string $fieldName = Item::FIELD_NAME_UPDATED_BY,
+		bool $feminine = false
+	): ScalarField
 	{
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_UPDATED_BY';
+		$this->prepareMessageCode($messageCode, $feminine);
+
 		return
 			(new IntegerField($fieldName))
 				->configureRequired()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_UPDATED_BY'))
+				->configureTitle(Loc::getMessage($messageCode))
 		;
 	}
 
-	public function getMovedBy(string $fieldName = Item::FIELD_NAME_MOVED_BY): ScalarField
+	public function getMovedBy(
+		string $fieldName = Item::FIELD_NAME_MOVED_BY,
+		bool $feminine = false
+	): ScalarField
 	{
+		$messageCode = 'CRM_TYPE_ITEM_FIELD_MOVED_BY';
+		$this->prepareMessageCode($messageCode, $feminine);
+
 		return
 			(new IntegerField($fieldName))
 				->configureDefaultValue(static function () {
 					return Container::getInstance()->getContext()->getUserId();
 				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_BY'))
+				->configureTitle(Loc::getMessage($messageCode))
 		;
+	}
+
+	private function prepareMessageCode(string &$messageCode, bool $feminine = false): void
+	{
+		if ($feminine)
+		{
+			$messageCode .= '_FEMININE';
+		}
 	}
 
 	public function getLastActivityBy(string $fieldName = Item::FIELD_NAME_LAST_ACTIVITY_BY): ScalarField

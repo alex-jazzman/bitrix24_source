@@ -1300,6 +1300,7 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler('documentgenerator', 'onGetDataProviderList', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'getDataProviders');
 		$eventManager->registerEventHandler('documentgenerator', 'onCreateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onCreateDocument');
+		$eventManager->registerEventHandler('documentgenerator', 'onDocumentTransformationComplete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDocumentTransformationComplete');
 		$eventManager->registerEventHandler('documentgenerator', 'onUpdateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onUpdateDocument');
 		$eventManager->registerEventHandler('documentgenerator', '\Bitrix\DocumentGenerator\Model\Document::OnBeforeDelete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDeleteDocument');
 		$eventManager->registerEventHandler('documentgenerator', 'onPublicView', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onPublicView');
@@ -1737,6 +1738,11 @@ class crm extends CModule
 		{
 			\Bitrix\Crm\Agent\Activity\ProcessEntityUncompletedActivitiesAgent::bind();
 		}
+		// fill b_crm_entity_countable_act table
+		if (\Bitrix\Main\Config\Option::get('crm', 'enable_entity_countable_act', 'Y') === 'N')
+		{
+			\Bitrix\Crm\Agent\Activity\ProcessEntityCountableActivitiesAgent::bind();
+		}
 
 		CAgent::AddAgent('\Bitrix\Crm\Reservation\Agent\ReservedProductCleaner::runAgent();', 'crm', 'N', 86400);
 	}
@@ -1879,6 +1885,7 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserTypeDelete', 'crm', '\Bitrix\Crm\UserField\UserFieldHistory', 'onDelete');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onGetDataProviderList', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'getDataProviders');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onCreateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onCreateDocument');
+		$eventManager->unRegisterEventHandler('documentgenerator', 'onDocumentTransformationComplete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDocumentTransformationComplete');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onUpdateDocument', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onUpdateDocument');
 		$eventManager->unRegisterEventHandler('documentgenerator', '\Bitrix\DocumentGenerator\Model\Document::OnBeforeDelete', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onDeleteDocument');
 		$eventManager->unRegisterEventHandler('documentgenerator', 'onPublicView', 'crm', '\Bitrix\Crm\Integration\DocumentGeneratorManager', 'onPublicView');

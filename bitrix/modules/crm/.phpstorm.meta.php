@@ -77,6 +77,7 @@ namespace PHPSTORM_META
 		'crm.conversion.mapper',
 		'crm.service.webform.scenario',
 		'crm.model.fieldRepository',
+		'crm.integration.sign',
 	);
 
 	expectedArguments(\Bitrix\Main\DI\ServiceLocator::get(), 0, argumentsSet('bitrix_crm_serviceLocator_codes'));
@@ -155,5 +156,6 @@ namespace PHPSTORM_META
 		'crm.conversion.mapper' => \Bitrix\Crm\Conversion\Mapper::class,
 		'crm.service.webform.scenario' => \Bitrix\Crm\Service\WebForm\WebFormScenarioService::class,
 		'crm.model.fieldRepository' => \Bitrix\Crm\Model\FieldRepository::class,
+		'crm.integration.sign' => \Bitrix\Crm\Service\Integration\Sign::class,
 	]));
 }

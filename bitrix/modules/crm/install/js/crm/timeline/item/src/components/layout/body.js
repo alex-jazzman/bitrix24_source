@@ -11,6 +11,12 @@ export const Body = {
 		logo: Object,
 		blocks: Object,
 	},
+	data()
+	{
+		return {
+			blockRefs: {},
+		}
+	},
 	mounted() {
 		const blocks = this.$refs.blocks;
 		if (!blocks || !this.visibleBlocks)
@@ -27,6 +33,9 @@ export const Body = {
 				throw new Error('Vue component "' + block.rendererName + '" was not found');
 			}
 		});
+	},
+	beforeUpdate() {
+		this.blockRefs = {};
 	},
 	computed: {
 		visibleBlocks(): Array
@@ -53,24 +62,15 @@ export const Body = {
 	methods: {
 		getContentBlockById(blockId: string): ?Object
 		{
-			const blocks = this.$refs.blocks;
-
-			return this.visibleBlocks.reduce((found, block, index) => {
-				if (found)
-				{
-					return found;
-				}
-				if (block.id === blockId)
-				{
-					return blocks[index];
-				}
-
-				return null;
-			}, null);
+			return this.blockRefs[blockId] ?? null;
 		},
 		getLogo(): ?Object
 		{
 			return this.$refs.logo;
+		},
+		saveRef(ref: Object, id: string): void
+		{
+			this.blockRefs[id] = ref;
 		}
 	},
 	template: `
@@ -88,7 +88,7 @@ export const Body = {
 					<component
 						:is="block.rendererName"
 						v-bind="block.properties"
-						ref="blocks"
+						:ref="(el) => this.saveRef(el, block.id)"
 					/>
 				</div>
 			</div>

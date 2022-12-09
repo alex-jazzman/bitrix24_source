@@ -17,8 +17,6 @@ class SignDocument extends LogMessage
 	protected ?MessageData $messageData = null;
 	protected ?Document $signDocument = null;
 
-
-
 	public function getType(): string
 	{
 		return 'SignDocumentLog';
@@ -34,7 +32,7 @@ class SignDocument extends LogMessage
 		$titlesMap = [
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_CREATED => 'document',
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT => 'mail-outcome',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_VIEWED => 'document',
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_VIEWED => 'view',
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_PREPARED_TO_FILL => 'document',
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_FILLED => 'document',
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGNED => 'document',
@@ -43,6 +41,7 @@ class SignDocument extends LogMessage
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_INTEGRITY_SUCCESS => 'document',
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_INTEGRITY_FAILURE => 'document',
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_INTEGRITY_FAILURE => 'document',
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED => 'document',
 		];
 
 		return $titlesMap[$this->model->getTypeCategoryId()] ?? 'info';
@@ -52,17 +51,31 @@ class SignDocument extends LogMessage
 	{
 		$titlesMap = [
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_CREATED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_CREATE_TITLE'),
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SEND_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_VIEWED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_VIEW_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_PREPARED_TO_FILL => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_READY_TO_FILL_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_FILLED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_FILLED_TITLE'),
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGNED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SIGNED_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGN_COMPLETED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SIGNED_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_REPEATEDLY => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SENT_REPEATEDLY_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_INTEGRITY_SUCCESS => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_INTEGRITY_CHECK_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_INTEGRITY_FAILURE => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_INTEGRITY_CHECK_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_INTEGRITY_FAILURE => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SENT_INTEGRITY_FAILURE_TITLE'),
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_PIN_SEND_LIMIT_REACHED_TITLE'),
 		];
+		$messageData = $this->loadMessageData();
+
+		if ($messageData)
+		{
+			$titlesMap[Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT] = $messageData->getChannel()->getType() === Timeline\SignDocument\Channel::TYPE_EMAIL
+				? Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MAIL_SEND_TITLE')
+				: Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SMS_SEND_TITLE');
+
+			$signDocument = $this->loadSignDocument();
+			$member = $signDocument->getMemberByHash($messageData->getRecipient()->getHash());
+
+			$titlesMap[Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGNED] = !$member->isInitiator()
+				? Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SIGNED_BY_SIDE_TITLE')
+				: Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SIGNED_BY_INITIATOR_TITLE');
+		}
 
 		return $titlesMap[$this->model->getTypeCategoryId()] ?? null;
 	}
@@ -86,8 +99,14 @@ class SignDocument extends LogMessage
 			$blocks[] = $this->getSignerContentBlock();
 		}
 
+		if ($this->model->getTypeCategoryId() === Timeline\SignDocument\Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED)
+		{
+			$blocks[] = $this->getPinSendLimitContentBlock();
+		}
+
 		return $blocks;
 	}
+
 	private function getChannelContentBlock(): ?Layout\Body\ContentBlock
 	{
 		$messageData = $this->loadMessageData();
@@ -126,6 +145,14 @@ class SignDocument extends LogMessage
 					. $this->loadMessageData()->getIntegrityState())));
 	}
 
+	private function getPinSendLimitContentBlock(): Layout\Body\ContentBlock\Text
+	{
+		return (new Layout\Body\ContentBlock\Text)
+			->setValue(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BLOCK_TEXT_PIN_SEND_LIMIT_REACHED_CONTENT'))
+			->setColor(Layout\Body\ContentBlock\Text::COLOR_BASE_70)
+		;
+	}
+
 	private function getSignerContentBlock()
 	{
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
@@ -138,7 +165,7 @@ class SignDocument extends LogMessage
 	private function getDocumentBlock()
 	{
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
-			->setInline(true)
+			->setInline()
 			->setTitle(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT'))
 			->setContentBlock((new Layout\Body\ContentBlock\Text())
 				->setValue(!empty($this->loadSignDocument()) ? $this->loadSignDocument()->getTitle() : ''));

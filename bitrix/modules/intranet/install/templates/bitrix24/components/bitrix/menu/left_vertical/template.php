@@ -1,6 +1,7 @@
-<?
+<?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\Counter\CounterDictionary as TasksCounterDictionary;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -63,7 +64,15 @@ $groupPopupExists = false;
 					$counter = 0;
 					if (array_key_exists("counter_id", $item["PARAMS"]) && $item["PARAMS"]["counter_id"] <> '')
 					{
-						$counterId = $item["PARAMS"]["counter_id"] == "live-feed" ? "**" : $item["PARAMS"]["counter_id"];
+						switch ($item['PARAMS']['counter_id'])
+						{
+							case 'live-feed':
+								$counterId = \CUserCounter::LIVEFEED_CODE;
+								break;
+							default:
+								$counterId = $item['PARAMS']['counter_id'];
+						}
+
 						$counter = array_key_exists($counterId, $arResult["COUNTERS"]) ? $arResult["COUNTERS"][$counterId] : 0;
 					}
 
@@ -383,7 +392,8 @@ $arJSParams = array(
 	"isExtranet" => $arResult["IS_EXTRANET"] ? "Y" : "N",
 	"isCollapsedMode" => CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y",
 	"isCustomPresetAvailable" => $arResult["IS_CUSTOM_PRESET_AVAILABLE"] ? "Y" : "N",
-	"customPresetExists" => $arResult["CUSTOM_PRESET_EXISTS"] ? "Y" : "N"
+	"customPresetExists" => $arResult["CUSTOM_PRESET_EXISTS"] ? "Y" : "N",
+	'workgroupsCounterData' => $arResult["WORKGROUP_COUNTER_DATA"],
 );
 ?>
 
@@ -454,7 +464,9 @@ BX.message({
 	MENU_CUSTOM_PRESET_SUCCESS: '<?=GetMessageJS("MENU_CUSTOM_PRESET_SUCCESS2")?>',
 	MENU_DELETE_CUSTOM_ITEM_FROM_ALL: '<?=GetMessageJS("MENU_DELETE_CUSTOM_ITEM_FROM_ALL")?>',
 	MENU_SETTINGS_MODE: '<?=GetMessageJS("MENU_SETTINGS_MODE")?>',
-	MENU_EDIT_READY_FULL: '<?=GetMessageJS("MENU_EDIT_READY_FULL")?>'
+	MENU_EDIT_READY_FULL: '<?=GetMessageJS("MENU_EDIT_READY_FULL")?>',
+	COUNTER_PROJECTS_MAJOR: '<?= CUtil::JSEscape(TasksCounterDictionary::COUNTER_PROJECTS_MAJOR) ?>',
+	COUNTER_SCRUM_TOTAL_COMMENTS: '<?= CUtil::JSEscape(TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS) ?>',
 });
 BX.Intranet.LeftMenu = new BX.Intranet.Menu(<?=CUtil::PhpToJSObject($arJSParams)?>);
 <?

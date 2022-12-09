@@ -8,6 +8,7 @@ class EntityCounterSettings
 {
 	protected $isCountersEnabled = false;
 	protected $enabledCountersTypes = [];
+	protected $enabledInFilterCountersTypes = [];
 
 	public static function createDefault(bool $isStagesSupported): self
 	{
@@ -24,6 +25,11 @@ class EntityCounterSettings
 				\Bitrix\Crm\Counter\EntityCounterType::CURRENT,
 				\Bitrix\Crm\Counter\EntityCounterType::ALL,
 			];
+			$enabledInFilterCounters = $enabledCounters;
+			if ($isStagesSupported)
+			{
+				$enabledInFilterCounters[] = \Bitrix\Crm\Counter\EntityCounterType::IDLE;
+			}
 		}
 		else
 		{
@@ -36,12 +42,14 @@ class EntityCounterSettings
 			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::OVERDUE;
 			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::CURRENT;
 			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::ALL;
+			$enabledInFilterCounters = $enabledCounters;
 		}
 
 		return
 			(new EntityCounterSettings())
 				->setIsCountersEnabled($isCountersEnabled)
 				->setEnabledCountersTypes($enabledCounters)
+				->setEnabledInFilterCountersTypes($enabledInFilterCounters)
 		;
 	}
 
@@ -52,7 +60,17 @@ class EntityCounterSettings
 
 	public function isCounterTypeEnabled(int $counterType): bool
 	{
-		$enabled = in_array($counterType, $this->enabledCountersTypes, true);
+		return $this->checkIfCounterTypeEnabled($counterType, $this->enabledCountersTypes);
+	}
+
+	public function isCounterTypeEnabledInFilter(int $counterType): bool
+	{
+		return $this->checkIfCounterTypeEnabled($counterType, $this->enabledInFilterCountersTypes);
+	}
+
+	public function checkIfCounterTypeEnabled(int $counterType, array $enabledCounterTypes): bool
+	{
+		$enabled = in_array($counterType, $enabledCounterTypes, true);
 		if ($enabled)
 		{
 			return true;
@@ -65,7 +83,7 @@ class EntityCounterSettings
 			]
 		))
 		{
-			return $this->isCounterTypeEnabled(\Bitrix\Crm\Counter\EntityCounterType::CURRENT);
+			return $this->checkIfCounterTypeEnabled(\Bitrix\Crm\Counter\EntityCounterType::CURRENT, $enabledCounterTypes);
 		}
 
 		return false;
@@ -96,6 +114,31 @@ class EntityCounterSettings
 		return $this->isCounterTypeEnabled(\Bitrix\Crm\Counter\EntityCounterType::INCOMING_CHANNEL);
 	}
 
+	public function isIdleCounterEnabledInFilter(): bool
+	{
+		return $this->isCounterTypeEnabledInFilter(\Bitrix\Crm\Counter\EntityCounterType::IDLE);
+	}
+
+	public function isOverdueCounterEnabledInFilter(): bool
+	{
+		return $this->isCounterTypeEnabledInFilter(\Bitrix\Crm\Counter\EntityCounterType::OVERDUE);
+	}
+
+	public function isPendingCounterEnabledInFilter(): bool
+	{
+		return $this->isCounterTypeEnabledInFilter(\Bitrix\Crm\Counter\EntityCounterType::PENDING);
+	}
+
+	public function isCurrentCounterEnabledInFilter(): bool
+	{
+		return $this->isCounterTypeEnabledInFilter(\Bitrix\Crm\Counter\EntityCounterType::CURRENT);
+	}
+
+	public function isIncomingCounterEnabledInFilter(): bool
+	{
+		return $this->isCounterTypeEnabledInFilter(\Bitrix\Crm\Counter\EntityCounterType::INCOMING_CHANNEL);
+	}
+
 	public function setIsCountersEnabled(bool $isCountersEnabled): self
 	{
 		$this->isCountersEnabled = $isCountersEnabled;
@@ -113,5 +156,51 @@ class EntityCounterSettings
 		$this->enabledCountersTypes = $enabledCountersTypes;
 
 		return $this;
+	}
+
+	public function getEnabledInFilterCountersTypes(): array
+	{
+		return $this->enabledInFilterCountersTypes;
+	}
+
+	public function setEnabledInFilterCountersTypes(array $enabledInFilterCountersTypes): self
+	{
+		$this->enabledInFilterCountersTypes = $enabledInFilterCountersTypes;
+
+		return $this;
+	}
+
+	public function getComponentsOfAllCounter(): array
+	{
+		$result = [];
+		$currentTypeIdIsEnabled = in_array(
+			\Bitrix\Crm\Counter\EntityCounterType::CURRENT,
+			$this->getEnabledCountersTypes()
+		);
+		foreach ($this->getEnabledCountersTypes() as $typeId)
+		{
+			if ($typeId === \Bitrix\Crm\Counter\EntityCounterType::ALL)
+			{
+				continue;
+			}
+			if (
+				$typeId === \Bitrix\Crm\Counter\EntityCounterType::OVERDUE
+				&& $currentTypeIdIsEnabled
+			)
+			{
+				continue;
+			}
+			if (
+				$typeId === \Bitrix\Crm\Counter\EntityCounterType::PENDING
+				&& $currentTypeIdIsEnabled
+			)
+			{
+				continue;
+			}
+
+			$result[] = $typeId;
+		}
+
+		return $result;
 	}
 }

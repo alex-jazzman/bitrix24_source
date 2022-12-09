@@ -2527,22 +2527,29 @@ if (Main\Loader::includeModule('sale'))
 			{
 				foreach ($availableItems as $productId => $productData)
 				{
+					$messageId = null;
 					if (
-						(!isset($productData['CATALOG']['ACTIVE']) || $productData['CATALOG']['ACTIVE'] !== 'Y')
-						|| (!isset($productData['PRODUCT']['AVAILABLE']) || $productData['PRODUCT']['AVAILABLE'] !== 'Y')
+						isset($productData['PRODUCT']['TYPE'])
+						&& $productData['PRODUCT']['TYPE'] === Catalog\ProductTable::TYPE_SERVICE
 					)
 					{
 						if (
-							isset($productData['PRODUCT']['TYPE'])
-							&& $productData['PRODUCT']['TYPE'] === Catalog\ProductTable::TYPE_SERVICE
+							(!isset($productData['CATALOG']['ACTIVE']) || $productData['CATALOG']['ACTIVE'] !== 'Y')
+							|| (!isset($productData['PRODUCT']['AVAILABLE']) || $productData['PRODUCT']['AVAILABLE'] !== 'Y')
 						)
 						{
 							$messageId = 'SALE_PROVIDER_PRODUCT_SERVICE_NOT_AVAILABLE';
 						}
-						else
+					}
+					else
+					{
+						if (!isset($productData['CATALOG']['ACTIVE']) || $productData['CATALOG']['ACTIVE'] !== 'Y')
 						{
 							$messageId = 'SALE_PROVIDER_PRODUCT_NOT_AVAILABLE';
 						}
+					}
+					if ($messageId !== null)
+					{
 						$result->addError(
 							new Sale\ResultError(
 								Main\Localization\Loc::getMessage(

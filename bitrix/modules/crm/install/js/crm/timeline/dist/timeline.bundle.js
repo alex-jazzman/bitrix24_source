@@ -5334,6 +5334,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        return false;
 	      }
 
+	      if (this.isIncomingChannel()) {
+	        return false;
+	      }
+
 	      const perms = BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
 	      return BX.prop.getBoolean(perms, "POSTPONE", false);
 	    }
@@ -18261,7 +18265,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          timelineId: this.getId(),
 	          container: this.getWrapper(),
 	          itemClassName: this.getItemClassName(),
-	          useShortTimeFormat: true,
+	          useShortTimeFormat: this.getStreamType() === crm_timeline_item.StreamType.history,
 	          isReadOnly: this.isReadOnly(),
 	          currentUser: this._manager.getCurrentUser(),
 	          streamType: this.getStreamType(),

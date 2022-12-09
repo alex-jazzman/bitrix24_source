@@ -37,9 +37,9 @@ class EntityFieldProvider
 		return $plainFields;
 	}
 
-	public static function getField($fieldCode)
+	public static function getField($fieldCode, $hiddenTypes = [])
 	{
-		$fields = static::getFields();
+		$fields = static::getFields($hiddenTypes);
 		foreach($fields as $field)
 		{
 			if($field['name'] == $fieldCode)

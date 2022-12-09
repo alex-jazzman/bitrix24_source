@@ -59,8 +59,9 @@ export default class UploadController extends AbstractUploadController
 			fileName = fileName.normalize();
 		}
 
+		const type = Type.isStringFilled(this.getFile().type) ? this.getFile().type : 'application/octet-stream';
 		const headers = [
-			{ name: 'Content-Type', value: this.getFile().type },
+			{ name: 'Content-Type', value: type },
 			{ name: 'X-Upload-Content-Name', value: encodeURIComponent(fileName) },
 		];
 
@@ -98,8 +99,6 @@ export default class UploadController extends AbstractUploadController
 				},
 			})
 			.then(response => {
-				console.log('response', response);
-
 				if (response.data.token)
 				{
 					this.setToken(response.data.token);

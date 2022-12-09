@@ -151,6 +151,10 @@ export default class Scheduled extends CompatibleItem
 		{
 			return false;
 		}
+		if (this.isIncomingChannel())
+		{
+			return false;
+		}
 
 		const perms = BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
 		return BX.prop.getBoolean(perms, "POSTPONE", false);

@@ -237,7 +237,7 @@
 			}
 
 			if (
-				this.isCurrentUserAdmin
+				this.isCurrentUserAdmin === 'Y'
 				&& !this.isOwnProfile
 				&& !BX.util.in_array(this.userStatus, ['email', 'shop' ])
 			)

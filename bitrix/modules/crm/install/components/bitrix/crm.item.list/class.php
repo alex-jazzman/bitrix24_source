@@ -198,6 +198,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			if (isset($column['id'], $notAccessibleFields[$column['id']]))
 			{
 				unset($grid['COLUMNS'][$key]);
+				$grid['COLUMNS'] = array_values($grid['COLUMNS']);
 			}
 		}
 

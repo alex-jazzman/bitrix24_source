@@ -652,18 +652,23 @@ abstract class Kanban
 
 		if($params['FORCE_FILTER'] === 'Y')
 		{
+			$forceFilter = [];
+
 			if ($entity->canUseAllCategories() && $entity->getCategoryId() === -1)
 			{
-				return [];
+				$forceFilter = [];
 			}
 
 			if ($entity->isCategoriesSupported())
 			{
-				return [
+				$forceFilter = [
 					'CATEGORY_ID' => $entity->getCategoryId(),
 				];
 			}
-			return [];
+
+			$this->prepareSemanticIdsAndStages($forceFilter);
+
+			return $forceFilter;
 		}
 
 		if($filter !== null)
@@ -1099,6 +1104,40 @@ abstract class Kanban
 	 */
 	protected function isDropZone(array $status = []): bool
 	{
+		if (!isset($status['STATUS_ID']))
+		{
+			return false;
+		}
+
+		if (!empty($this->allowStages) && !in_array($status['STATUS_ID'], $this->allowStages, true))
+		{
+			return true;
+		}
+
+		if (in_array($status['STATUS_ID'], $this->allowStages, true))
+		{
+			return false;
+		}
+
+		if (
+			(
+				$status['PROGRESS_TYPE'] === 'WIN'
+				&& !in_array(PhaseSemantics::SUCCESS, $this->allowSemantics, true)
+			)
+			|| (
+				$status['PROGRESS_TYPE'] === 'LOOSE'
+				&& !in_array(PhaseSemantics::FAILURE, $this->allowSemantics, true)
+			)
+			|| (
+				$status['PROGRESS_TYPE'] !== 'WIN'
+				&& $status['PROGRESS_TYPE'] !== 'LOOSE'
+				&& !in_array(PhaseSemantics::PROCESS, $this->allowSemantics, true)
+			)
+		)
+		{
+			return true;
+		}
+
 		return false;
 	}
 

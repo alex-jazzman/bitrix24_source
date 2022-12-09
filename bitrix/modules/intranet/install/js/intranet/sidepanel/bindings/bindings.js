@@ -442,7 +442,6 @@
 				loader: "crm-entity-details-loader",
 				options: {
 					label: {
-						text: BX.message("INTRANET_BINDINGS_COMPANY"),
 						bgColor: "#F7A700"
 					}
 				}

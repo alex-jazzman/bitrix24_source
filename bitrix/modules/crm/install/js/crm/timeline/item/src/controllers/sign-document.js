@@ -40,7 +40,13 @@ export class SignDocument extends Base
 		}
 		else if (action === 'SignDocument:Resend' && documentId > 0 && actionData?.recipientHash)
 		{
-			this.#resendDocument(actionData, animationCallbacks);
+			this.#resendDocument(actionData, animationCallbacks).then(() => {
+				if (actionData.buttonId)
+				{
+					const btn = item.getLayoutFooterButtonById(actionData.buttonId);
+					btn.disableWithTimer(60);
+				}
+			});
 		}
 		else if (action === 'SignDocument:TouchSigner' && documentId > 0)
 		{
@@ -114,44 +120,49 @@ export class SignDocument extends Base
 		}
 	}
 
-	#resendDocument({documentId, recipientHash}, animationCallbacks): void
+	#resendDocument({documentId, recipientHash}, animationCallbacks): Promise
 	{
 		if (animationCallbacks.onStart)
 		{
 			animationCallbacks.onStart();
 		}
 
-		ajax.runAction(
-			'sign.internal.document.resendFile',
+		return new Promise((resolve, reject) => {
+			ajax.runAction(
+				'sign.internal.document.resendFile',
+				{
+					data: {
+						memberHash: recipientHash,
+						documentId: documentId
+					},
+				}
+			).then(() =>
 			{
-				data: {
-					memberHash: recipientHash,
-					documentId: documentId
-				},
-			}
-		).then(() =>
-		{
-			UI.Notification.Center.notify({
-				content: Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'),
-				autoHideDelay: 5000,
-			});
-			if (animationCallbacks.onStop)
-			{
-				animationCallbacks.onStop();
-			}
-		}, (response) =>
-		{
-			UI.Notification.Center.notify({
-				content: response.errors[0].message,
-				autoHideDelay: 5000,
-			});
-			if (animationCallbacks.onStop)
-			{
-				animationCallbacks.onStop();
-			}
-		});
+				UI.Notification.Center.notify({
+					content: Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'),
+					autoHideDelay: 5000,
+				});
+				if (animationCallbacks.onStop)
+				{
+					animationCallbacks.onStop();
 
-		console.log('resend document ' + documentId + ' for ' + recipientHash);
+				}
+				resolve();
+			}, (response) =>
+			{
+				UI.Notification.Center.notify({
+					content: response.errors[0].message,
+					autoHideDelay: 5000,
+				});
+				if (animationCallbacks.onStop)
+				{
+					animationCallbacks.onStop();
+				}
+				reject();
+			});
+
+			console.log('resend document ' + documentId + ' for ' + recipientHash);
+		})
 	}
 
 	#touchSigner({documentId}): void
@@ -166,29 +177,21 @@ export class SignDocument extends Base
 			animationCallbacks.onStart();
 		}
 
-		const req = ajax.xhr();
-		req.open("GET", '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' +
+		const link = document.createElement('a');
+		link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' +
 			'&memberHash=' + memberHash +
-			'&documentHash=' + documentHash, true);
-		req.responseType = "blob";
+			'&documentHash=' + documentHash;
 
-		req.onload = () => {
-			const blob = req.response;
-			const url = window.URL.createObjectURL(new Blob([blob]));
-			const link = document.createElement('a');
-			link.href = url;
-			link.setAttribute('download', 'doc.pdf');
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
+		link.setAttribute('download', '');
 
-			if (animationCallbacks.onStop)
-			{
-				animationCallbacks.onStop();
-			}
-		};
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
 
-		req.send()
+		if (animationCallbacks.onStop)
+		{
+			animationCallbacks.onStop();
+		}
 	}
 
 	static isItemSupported(item: ConfigurableItem): boolean

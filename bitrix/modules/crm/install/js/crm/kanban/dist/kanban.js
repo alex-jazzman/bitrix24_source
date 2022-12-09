@@ -95,16 +95,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      item.useAnimation = true;
 	      item.setChangedInPullRequest();
 	      this.grid.resetMultiSelectMode();
+	      var newColumnId = paramsItem.data.columnId;
+	      var newColumn = this.grid.getColumn(newColumnId);
+	      var newPrice = parseFloat(paramsItem.data.price);
+	      insertItemParams.newColumnId = newColumnId;
 	      this.grid.insertItem(item, insertItemParams);
+	      item.columnId = newColumnId;
 
 	      if (!this.grid.getTypeInfoParam('showTotalPrice')) {
 	        return;
 	      }
-
-	      var newColumnId = paramsItem.data.columnId;
-	      var newColumn = this.grid.getColumn(newColumnId);
-	      var newPrice = parseFloat(paramsItem.data.price);
-	      item.columnId = newColumnId;
 
 	      if (oldColumnId !== newColumnId) {
 	        var oldColumn = this.grid.getColumn(oldColumnId);

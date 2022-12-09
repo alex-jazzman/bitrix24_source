@@ -50,6 +50,10 @@
 .crm-timeline__card_add-button {
 	width: 28px;
 	height: 28px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
 	mask-size: 28px 28px;
 	mask-repeat: no-repeat;
 	mask-position: center center;
@@ -57,10 +61,25 @@
 	transition: filter var(--crm-timeline__transition-hover) linear;
 }
 
+.crm-timeline__card_add-button .main-ui-loader-svg-circle {
+	stroke: var(--ui-color-base-40, #bdc1c6);
+	stroke-width: 4px;
+}
+
 .crm-timeline__card_add-button.--hover,
 .crm-timeline__card_add-button:hover {
 	filter: brightness(90%);
 	transition-duration: unset;
+}
+
+.crm-timeline__card_add-button.--state-disabled,
+.crm-timeline__card_add-button.--state-disabled:hover {
+	filter: brightness(115%);
+	cursor: not-allowed;
+}
+
+.crm-timeline__card_add-button.--state-hidden{
+	display: none;
 }
 
 .crm-timeline__card_add-button.--color-default {
@@ -85,4 +104,14 @@
 
 .crm-timeline__card_add-button.--icon-dots {
 	mask-image: url(../../images/add-btn-icons/add-btn-icon-dots.svg);
+}
+
+.crm-timeline__card_add-button-fade-enter-active,
+.crm-timeline__card_add-button-fade-leave-active {
+	transition: opacity 0.25s ease-in-out;
+}
+
+.crm-timeline__card_add-button-fade-enter-from,
+.crm-timeline__card_add-button-fade-leave-to {
+	opacity: 0;
 }

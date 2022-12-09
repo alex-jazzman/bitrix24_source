@@ -142,15 +142,16 @@
 	height: 57px;
 	left: 19px;
 	position: absolute;
-	top: 12px;
+	top: 15px;
 	width: 53px;
 	border-radius: var(--ui-border-radius-sm, 8px);
 }
 
 .sidebar-widget-calendar .sidebar-widget-item {
 	min-height: 57px;
-	padding: 8px 10px 10px calc(76px + var(--sidebar-widget-item-padding-left, 17px));
+	padding: 14px 10px 14px calc(67px + var(--sidebar-widget-item-padding-left, 17px));
 	position: relative;
+	justify-content: center;
 }
 
 .calendar-item-icon-day {
@@ -220,7 +221,7 @@
 }
 
 .sidebar-widget-bp .task-item-index {
-	margin-right: 0px;
+	margin-right: 0;
 	font-size: var(--ui-font-size-md, 14px);
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-bold, 700);

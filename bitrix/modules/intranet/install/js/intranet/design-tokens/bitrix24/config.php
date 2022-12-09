@@ -22,6 +22,7 @@ if (!defined('SITE_TEMPLATE_ID') || !in_array(SITE_TEMPLATE_ID, ['bitrix24', 'de
 
 $server = Context::getCurrent()->getServer();
 $userAgent = $server->get('HTTP_USER_AGENT') ?? '';
+$jsInjection = '';
 if (preg_match('/Linux/i', $userAgent) && !preg_match('/Android/i', $userAgent))
 {
 	$js = <<<JS
@@ -43,7 +44,7 @@ if (preg_match('/Linux/i', $userAgent) && !preg_match('/Android/i', $userAgent))
 			Object.keys(fonts).forEach(name => {
 				const font = fonts[name];
 				const context = document.createElement('canvas').getContext('2d');
-				context.font = `normal ` + font.weight + ` 12px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'`;
+				context.font = 'normal ' + font.weight + ' 12px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"';
 				const textMetrics = context.measureText(text);
 				font.width = Math.round(textMetrics.width);
 			});
@@ -59,18 +60,38 @@ if (preg_match('/Linux/i', $userAgent) && !preg_match('/Android/i', $userAgent))
 				html.classList.add('bx-font-semi-bold');
 			}
 		})();
-JS;
+	JS;
+
+	$jsInjection = '<script data-skip-moving="true">' . str_replace(["\n", "\t"], '', $js) . '</script>';
 	$asset = Asset::getInstance();
-	$asset->addString(
-		'<script type="text/javascript" data-skip-moving="true">'.str_replace(array("\n", "\t"), "", $js)."</script>",
-		false,
-		AssetLocation::BEFORE_CSS,
-		AssetMode::ALL
-	);
+	$asset->addString($jsInjection, false, AssetLocation::BEFORE_CSS, AssetMode::ALL);
 }
+
+$eventManager = \Bitrix\Main\EventManager::getInstance();
+$eventManager->addEventHandler(
+	'fileman',
+	'HtmlEditor:onBeforeBuild',
+	function (\Bitrix\Main\Event $event) use ($jsInjection)
+	{
+		$addGlobalClass = <<<JS
+			(function() {
+				if (parent.BX && parent.BX.Browser && parent.BX.Browser.addGlobalClass.length > 0)
+				{
+					parent.BX.Browser.addGlobalClass(document.documentElement);
+				} 
+			})();
+		JS;
+
+		$jsInjection = '<script>' . str_replace(["\n", "\t"], '', $addGlobalClass) . '</script>' . $jsInjection;
+
+		$editor = $event->getParameters()[0];
+		$editor->setOption('headHtml', $jsInjection);
+	}
+);
 
 return [
 	'css' =>[
 		'bitrix24-design-tokens.css',
 	],
+	'skip_core' => true,
 ];

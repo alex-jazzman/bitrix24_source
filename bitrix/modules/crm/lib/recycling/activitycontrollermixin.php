@@ -77,19 +77,6 @@ trait ActivityControllerMixin
 				[ 'ENABLE_RECYCLE_BIN' => true ]
 			);
 		}
-		$sharedActivityIDs = isset($slots['SHARED_ACTIVITY_IDS']) && is_array($slots['SHARED_ACTIVITY_IDS'])
-			? $slots['SHARED_ACTIVITY_IDS']
-			: []
-		;
-		foreach ($sharedActivityIDs as $activityID)
-		{
-			$activity = \CCrmActivity::GetByID($activityID, false);
-			if ($activity)
-			{
-				$activity['IS_INCOMING_CHANNEL'] = \Bitrix\Crm\Activity\IncomingChannel::getInstance()->isIncomingChannel($activityID) ? 'Y' : 'N';
-				\Bitrix\Crm\Counter\Monitor::getInstance()->onActivityDelete($activity, \CCrmActivity::GetBindings($activityID));
-			}
-		}
 
 		//Rebind custom activity relations
 		Crm\Activity\Provider\ProviderManager::transferOwnership(

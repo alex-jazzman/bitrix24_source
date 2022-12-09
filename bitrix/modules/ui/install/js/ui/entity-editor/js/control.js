@@ -6558,12 +6558,27 @@ if(typeof BX.UI.EntityEditorMultiMoney === "undefined")
 			}
 		);
 	};
-	BX.UI.EntityEditorMultiMoney.prototype.onAmountValueChange = function(v, index)
+	BX.UI.EntityEditorMultiMoney.prototype.onAmountValueChange = function(value, index)
 	{
-		if(this._amountValue[index])
+		if(!this._amountValue[index])
 		{
-			this._amountValue[index].value = v;
+			return;
 		}
+
+		var currencyFormat = BX.prop.getObject(
+			BX.Currency.Editor.currencyList,
+			this._selectedCurrencyValue[index],
+			null
+		);
+		if (currencyFormat)
+		{
+			value = BX.Currency.Editor.getFormattedValue(
+				value,
+				this._selectedCurrencyValue[index]
+			);
+			value = value.replaceAll(currencyFormat['SEPARATOR'], '');
+		}
+		this._amountValue[index].value = value;
 	};
 	BX.UI.EntityEditorMultiMoney.prototype.getViewInnerLayout = function()
 	{
@@ -10342,12 +10357,27 @@ if(typeof BX.UI.EntityEditorMoney === "undefined")
 			this._sumElement.innerHTML = this.renderMoney();
 		}
 	};
-	BX.UI.EntityEditorMoney.prototype.onAmountValueChange = function(v)
+	BX.UI.EntityEditorMoney.prototype.onAmountValueChange = function(value)
 	{
-		if(this._amountValue)
+		if(!this._amountValue)
 		{
-			this._amountValue.value = v;
+			return;
 		}
+
+		var currencyFormat = BX.prop.getObject(
+			BX.Currency.Editor.currencyList,
+			this._selectedCurrencyValue,
+			null
+		);
+		if (currencyFormat)
+		{
+			value = BX.Currency.Editor.getFormattedValue(
+				value,
+				this._selectedCurrencyValue
+			);
+			value = value.replaceAll(currencyFormat['SEPARATOR'], '');
+		}
+		this._amountValue.value = value;
 	};
 	BX.UI.EntityEditorMoney.prototype.getAmountFieldName = function()
 	{

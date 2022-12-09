@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_TIMELINE_BLOCK_CALL_ADDITIONAL_INFO_1"] = "Number";
+$MESS["CRM_TIMELINE_BLOCK_CALL_ADDITIONAL_INFO_1_OUT"] = "Call from";
 $MESS["CRM_TIMELINE_BLOCK_CALL_ADDITIONAL_INFO_2"] = "Duration";
 $MESS["CRM_TIMELINE_BLOCK_CLIENT_MARK_TEXT"] = "Customer rated call #MARK#";
 $MESS["CRM_TIMELINE_BLOCK_DESCRIPTION_EXCLUDE_1"] = "Call was received outside business hours";
@@ -14,6 +15,7 @@ $MESS["CRM_TIMELINE_BUTTON_CALL_SCHEDULE"] = "Schedule";
 $MESS["CRM_TIMELINE_BUTTON_TIP_TRANSCRIPT"] = "Show call transcript";
 $MESS["CRM_TIMELINE_CALL_TITLE_DEFAULT"] = "Call";
 $MESS["CRM_TIMELINE_INCOMING_CALL_DELETION_CONFIRM"] = 'Are you sure you want to delete the inbound call "#TITLE#"?';
+$MESS["CRM_TIMELINE_ITEM_CALL_COMPLETE_TO"] = "Deadline";
 $MESS["CRM_TIMELINE_OUTGOING_CALL_DELETION_CONFIRM"] = 'Are you sure you want to delete the outbound call "#TITLE#"?';
 $MESS["CRM_TIMELINE_TAG_CALL_COMPLETED"] = "Ended successfully";
 $MESS["CRM_TIMELINE_TAG_CALL_MISSED"] = "Missed";
@@ -24,4 +26,3 @@ $MESS["CRM_TIMELINE_TITLE_CALL_INCOMING_PLAN"] = "Inbound call planned";
 $MESS["CRM_TIMELINE_TITLE_CALL_MISSED"] = "Inbound call missed";
 $MESS["CRM_TIMELINE_TITLE_CALL_OUTGOING"] = "Outbound call ended";
 $MESS["CRM_TIMELINE_TITLE_CALL_OUTGOING_PLAN"] = "Outbound call planned";
-$MESS["CRM_TIMELINE_ITEM_CALL_COMPLETE_TO"] = "Deadline";

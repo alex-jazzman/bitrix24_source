@@ -1,8 +1,11 @@
 <?php
 namespace Bitrix\Intranet\Component;
 
-use Bitrix\Bitrix24\Integrator;
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Intranet\CurrentUser;
 use Bitrix\Main\Engine\ActionFilter;
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Errorable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -11,7 +14,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\UserTable;
 
-class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
+class UserList extends \CBitrixComponent implements Controllerable, Errorable
 {
 	/** @var ErrorCollection errorCollection */
 	protected $errorCollection;
@@ -228,6 +231,7 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 
 		$userFields = (isset($params['USER_FIELDS']) ? $params['USER_FIELDS'] : []);
 		$currentUserId = $USER->getId();
+		$isCloud = ModuleManager::isModuleInstalled('bitrix24');
 
 		if ($constantAllowed === null)
 		{
@@ -303,7 +307,7 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 		if (
 			(int)$currentUserId !== $userFields["ID"]
 			&& !in_array($userFields['USER_TYPE'], ['bot', 'imconnector'])
-			&& \Bitrix\Intranet\CurrentUser::get()->isAdmin()
+			&& CurrentUser::get()->isAdmin()
 		)
 		{
 			if ($userFields["ACTIVE"] != 'Y')
@@ -328,6 +332,13 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 		)
 		{
 			$result[] = 'videocall';
+		}
+
+		$lockedShowLoginHistory = $isCloud && !Feature::isFeatureEnabled('user_login_history');
+
+		if (CurrentUser::get()->isAdmin() && !$lockedShowLoginHistory)
+		{
+			$result[] = 'loginhistory';
 		}
 
 		return $result;
@@ -397,7 +408,7 @@ class UserList extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract
 					if (
 						$action === "setActivity"
 						&& Loader::includeModule("bitrix24")
-						&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled("user_dismissal")
+						&& !Feature::isFeatureEnabled("user_dismissal")
 						&& !\Bitrix\Bitrix24\Integrator::isIntegrator($userId)
 					)
 					{

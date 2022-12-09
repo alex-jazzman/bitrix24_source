@@ -195,8 +195,11 @@ export default class Uploader extends EventEmitter
 
 		loadController.subscribeFromOptions({
 			'onError': (event: BaseEvent) => {
+				const { error } = event.getData();
+				file.addError(error);
 				file.setStatus(FileStatus.LOAD_FAILED);
-				this.emit('File:onError', { file, error: event.getData().error });
+				this.emit('File:onError', { file, error });
+
 				this.#loadNext();
 			},
 			'onAbort': (event: BaseEvent) => {
@@ -254,6 +257,7 @@ export default class Uploader extends EventEmitter
 						this.#loadNext();
 					})
 					.catch(error => {
+						file.addError(error);
 						file.setStatus(FileStatus.LOAD_FAILED);
 						this.emit('File:onError', { file, error });
 						this.emit('File:onAdd', { file, error });
@@ -276,8 +280,10 @@ export default class Uploader extends EventEmitter
 
 		uploadController.subscribeFromOptions({
 			'onError': (event: BaseEvent) => {
+				const { error } = event.getData();
+				file.addError(error);
 				file.setStatus(FileStatus.UPLOAD_FAILED);
-				this.emit('File:onError', { file, error: event.getData().error });
+				this.emit('File:onError', { file, error });
 				this.#uploadNext();
 			},
 			'onAbort': (event: BaseEvent) => {
@@ -286,7 +292,9 @@ export default class Uploader extends EventEmitter
 				this.#uploadNext();
 			},
 			'onProgress': (event: BaseEvent) => {
-				this.emit('File:onUploadProgress', { file, progress: event.getData().progress });
+				const { progress } = event.getData();
+				file.setProgress(progress);
+				this.emit('File:onUploadProgress', { file, progress });
 			},
 			'onUpload': (event: BaseEvent) => {
 				file.setStatus(FileStatus.COMPLETE);

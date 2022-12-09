@@ -210,7 +210,7 @@ this.BX = this.BX || {};
 	    value: function openSignDocumentSlider(documentId, memberHash) {
 	      // todo make a url template
 	      return Router.openSlider('/bitrix/components/bitrix/crm.signdocument.view/slider.php?documentId=' + documentId + '&memberHash=' + memberHash, {
-	        width: 760
+	        width: 1060
 	      });
 	    }
 	  }, {

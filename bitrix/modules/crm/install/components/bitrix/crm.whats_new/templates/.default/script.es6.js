@@ -1,4 +1,4 @@
-import { Reflection, Runtime, Dom, Tag, Type, clone } from 'main.core';
+import { clone, Dom, Reflection, Runtime, Tag, Type } from 'main.core';
 import { Popup, PopupManager } from 'main.popup';
 import { Button } from 'ui.buttons';
 import { EventEmitter } from "main.core.events";
@@ -26,10 +26,13 @@ type Slide = {
 	html: string,
 }
 
+type StepPosition = 'left' | 'right'; //it's bottom by default
+
 type StepConfig = {
 	id: string,
 	title: string,
 	text: string,
+	position: ?StepPosition,
 	target: ?string,
 	useDynamicTarget: ?boolean,
 	eventName: ?string,
@@ -39,6 +42,7 @@ type Step = {
 	id: string,
 	title: string,
 	text: string,
+	position: ?StepPosition,
 	target: ?string,
 }
 
@@ -149,6 +153,7 @@ class ActionViewMode
 				id: stepConfig.id,
 				title: stepConfig.title,
 				text: stepConfig.text,
+				position: stepConfig.position,
 			};
 
 			if (stepConfig.useDynamicTarget)

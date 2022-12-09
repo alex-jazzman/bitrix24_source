@@ -814,5 +814,11 @@ $arUrlRewrite = array(
 		"ID" => "bitrix:sign.start",
 		"PATH" => "/sign/index.php",
 	),
+	array(
+		"CONDITION" => "#^/timeman/login-history/([0-9]+)/.*#",
+		"RULE" => "user=\$1",
+		"ID" => "bitrix:intranet.user.login.history",
+		"PATH" => "/timeman/login-history/index.php"
+	),
 );
 ?>

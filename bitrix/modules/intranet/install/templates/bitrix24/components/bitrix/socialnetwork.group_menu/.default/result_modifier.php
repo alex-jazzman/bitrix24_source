@@ -458,10 +458,54 @@ foreach ($arResult['Urls'] as $key => $value)
 			'allowChangeHistory' => $sliderPages[$key]['allowChangeHistory'] ?? null,
 		];
 
-		$arResult['OnClicks'][$key] =
-			"BX.SidePanel.Instance.open('"
-			. (new Uri($value))->addParams([ 'IFRAME' => 'Y' ])->getUri() .
-			"', " . CUtil::phpToJSObject($options) . " )";
+		//to display correct knowledge url;
+		if ($key === 'landing_knowledge')
+		{
+			$knowledgeUrl = '/knowledge/group/';
+			$onLoadLink = (new Uri($value))->getPath();
+			$onCloseLink = str_replace('#group_id#', (int)$arParams['GROUP_ID'], $arParams['PATH_TO_GROUP']);
+
+			$functions = [
+				'onCloseComplete' => $onCloseLink
+			];
+
+			if (mb_stripos($onLoadLink, $knowledgeUrl) !== false)
+			{
+				$functions['onLoad'] = $onLoadLink;
+			}
+
+			$config = mb_substr(CUtil::phpToJSObject($options), 0, -1);
+			$config .= ',';
+			$events = 'events: {';
+
+			foreach ($functions as $functionName => $link)
+			{
+				$events .= "
+					{$functionName}: function(){
+						top.window.history.replaceState({}, '', '{$link}');
+					},
+				";
+			}
+
+			$events .= '},';
+			$config .= $events;
+			$config .= '}';
+
+			$uri = (new Uri($value))->addParams(['IFRAME' => 'Y'])->getUri();
+			$arResult['OnClicks'][$key] = "
+				top.BX.SidePanel.Instance.open(
+					'{$uri}',
+					{$config},
+				);
+			";
+		}
+		else
+		{
+			$arResult['OnClicks'][$key] =
+				"BX.SidePanel.Instance.open('"
+				. (new Uri($value))->addParams(['IFRAME' => 'Y'])->getUri() .
+				"', " . CUtil::phpToJSObject($options) . " )";
+		}
 	}
 	elseif ($key === 'marketplace')
 	{

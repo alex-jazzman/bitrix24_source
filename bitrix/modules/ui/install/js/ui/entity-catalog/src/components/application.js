@@ -51,7 +51,15 @@ export const Application = {
 	},
 	data(): Object
 	{
-		let selectedGroup: ?GroupData = this.groups.find(group => group.selected) ?? null;
+		let selectedGroup = null;
+		for (const groupList of this.groups)
+		{
+			selectedGroup = groupList.find(group => group.selected);
+			if (selectedGroup)
+			{
+				break;
+			}
+		}
 		if (Type.isNil(selectedGroup) && this.recentGroupData?.selected)
 		{
 			selectedGroup = {id: 'recent', ...(this.recentGroupData ?? {})};
@@ -63,7 +71,7 @@ export const Application = {
 			shownItems: [],
 			shownGroups: this.getDisplayedGroup(),
 			searching: false,
-			lastSearchString: null,
+			lastSearchString: '',
 			filters: [],
 		};
 	},
@@ -152,7 +160,7 @@ export const Application = {
 			this.filters = event.getData();
 			if (this.searching)
 			{
-				this.onSearch(this.lastSearchString);
+				this.onSearch(new BaseEvent({data: {queryString: this.lastSearchString}}));
 
 				return;
 			}

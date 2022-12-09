@@ -671,8 +671,8 @@ class RelationManager
 
 		//@TODO collect predefined relations across modules via event
 		if (
-			class_exists('Bitrix\Catalog\v2\Contractor\Provider\Manager')
-			&& Loader::includeModule('catalog')
+			Loader::includeModule('catalog')
+			&& class_exists('Bitrix\Catalog\v2\Contractor\Provider\Manager')
 			&& Manager::isActiveProviderByModule('crm')
 		)
 		{

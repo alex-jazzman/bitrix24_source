@@ -123,7 +123,7 @@ export default class SearchTab extends Tab
 			const matchSortA = a.getSort();
 			const matchSortB = b.getSort();
 
-			if (matchSortA !== null && matchSortB !== null)
+			if (matchSortA !== null && matchSortB !== null && matchSortA !== matchSortB)
 			{
 				return matchSortA - matchSortB;
 			}

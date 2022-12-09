@@ -291,12 +291,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 
 		$user["PHOTO"] = self::getUserPhoto($user["PERSONAL_PHOTO"], 212);
 
-		$fullName = [
-			"NAME" => $user["NAME"],
-			"LAST_NAME" => $user["LAST_NAME"],
-			"SECOND_NAME" => $user["SECOND_NAME"]
-		];
-		$user["FULL_NAME"] = \CUser::FormatName(\CSite::GetNameFormat(), $fullName);
+		$user["FULL_NAME"] = \CUser::FormatName(\CSite::GetNameFormat(), $user, true, false);
 
 		if ($user["PERSONAL_WWW"] <> '')
 		{

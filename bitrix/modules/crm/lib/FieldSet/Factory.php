@@ -159,7 +159,8 @@ class Factory
 
 			$fields = [];
 			$countryId = EntityRequisite::getSingleInstance()->getCountryIdByPresetId($rqPresetId);
-			$regionFields = $this->getDefaultItemRegionFieldMap()[$countryId] ?? [];
+			$fieldsMap = $this->getDefaultItemRegionFieldMap();
+			$regionFields = $fieldsMap[$countryId] ?? $fieldsMap[Country::ID_USA];
 			foreach ([$item->getEntityTypeId(), $item->getClientEntityTypeId()] as $typeId)
 			{
 				$fields = array_merge($fields, $regionFields[$typeId] ?? []);
@@ -195,7 +196,6 @@ class Factory
 				CCrmOwnerType::Contact => [
 					'RQ_ADDR_PRIMARY',
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 					'NAME',
 					'LAST_NAME',
 					'POST',
@@ -203,13 +203,11 @@ class Factory
 				CCrmOwnerType::Company => [
 					'RQ_ADDR_PRIMARY',
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 				],
 			],
 			Country::ID_POLAND => [
 				CCrmOwnerType::Contact => [
 					'POST',
-					'RQ_SIGNATURE',
 					'NAME',
 					'LAST_NAME',
 					'RQ_COMPANY_NAME',
@@ -221,7 +219,6 @@ class Factory
 					'WEB',
 				],
 				CCrmOwnerType::Company => [
-					'RQ_SIGNATURE',
 					'RQ_COMPANY_NAME',
 					'RQ_ADDR_PRIMARY',
 					'PHONE',
@@ -233,7 +230,6 @@ class Factory
 			],
 			Country::ID_COLOMBIA => [
 				CCrmOwnerType::Contact => [
-					'RQ_SIGNATURE',
 					'NAME',
 					'LAST_NAME',
 					'POST',
@@ -241,20 +237,17 @@ class Factory
 				],
 				CCrmOwnerType::Company => [
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 				],
 			],
 			Country::ID_USA => [
 				CCrmOwnerType::Contact => [
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 					'NAME',
 					'LAST_NAME',
 					'POST',
 				],
 				CCrmOwnerType::Company => [
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 				],
 			],
 			Country::ID_RUSSIA => [

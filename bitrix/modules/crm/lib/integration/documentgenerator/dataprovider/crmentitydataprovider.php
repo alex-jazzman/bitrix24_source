@@ -210,6 +210,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 					],
 				],
 				'TYPE_CATEGORY_ID' => TimelineType::MODIFICATION,
+				'AUTHOR_ID' => DocumentEntry::getDocumentCreatedEntryAuthorId($document->ID),
 			], $document->ID);
 
 			if($entryId > 0)

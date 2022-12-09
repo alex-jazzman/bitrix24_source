@@ -27,7 +27,12 @@ class ActivitiesChangesCollection extends \Bitrix\Main\Type\Dictionary
 		/** @var $activityChange ActivityChange */
 		foreach ($this->values as $activityChange)
 		{
-			if ($activityChange->isIncomingChannelChanged() || $activityChange->isDeadlineChanged() || $activityChange->isCompletedChanged())
+			if (
+				$activityChange->isIncomingChannelChanged()
+				|| $activityChange->isDeadlineChanged()
+				|| $activityChange->isCompletedChanged()
+				|| $activityChange->areBindingsChanged()
+			)
 			{
 				$result->add($activityChange);
 			}

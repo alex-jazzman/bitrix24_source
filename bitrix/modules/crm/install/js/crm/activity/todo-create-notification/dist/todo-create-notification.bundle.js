@@ -42,6 +42,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _onEntityUpdate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEntityUpdate");
 
+	var _onEntityDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEntityDelete");
+
 	var _onEntityModelChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onEntityModelChange");
 
 	var _onSkippedPeriodChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSkippedPeriodChange");
@@ -128,6 +130,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    Object.defineProperty(this, _onEntityModelChange, {
 	      value: _onEntityModelChange2
+	    });
+	    Object.defineProperty(this, _onEntityDelete, {
+	      value: _onEntityDelete2
 	    });
 	    Object.defineProperty(this, _onEntityUpdate, {
 	      value: _onEntityUpdate2
@@ -219,6 +224,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    main_core_events.EventEmitter.subscribe(babelHelpers.classPrivateFieldLooseBase(this, _getSliderInstance)[_getSliderInstance](), 'SidePanel.Slider:onClose', babelHelpers.classPrivateFieldLooseBase(this, _onCloseSlider)[_onCloseSlider].bind(this));
 	    main_core_events.EventEmitter.subscribe('Crm.EntityModel.Change', babelHelpers.classPrivateFieldLooseBase(this, _onEntityModelChange)[_onEntityModelChange].bind(this));
 	    main_core_events.EventEmitter.subscribe('onCrmEntityUpdate', babelHelpers.classPrivateFieldLooseBase(this, _onEntityUpdate)[_onEntityUpdate].bind(this));
+	    main_core_events.EventEmitter.subscribe('onCrmEntityDelete', babelHelpers.classPrivateFieldLooseBase(this, _onEntityDelete)[_onEntityDelete].bind(this));
 	  }
 
 	  main_core_events.EventEmitter.subscribe('Crm.InterfaceToolbar.MenuBuild', babelHelpers.classPrivateFieldLooseBase(this, _onToolbarMenuBuild)[_onToolbarMenuBuild].bind(this));
@@ -270,6 +276,14 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  if (eventParams.hasOwnProperty('entityData') && eventParams.entityData.hasOwnProperty(babelHelpers.classPrivateFieldLooseBase(this, _stageIdField)[_stageIdField])) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityStageId)[_entityStageId] = eventParams.entityData[babelHelpers.classPrivateFieldLooseBase(this, _stageIdField)[_stageIdField]];
+	  }
+	}
+
+	function _onEntityDelete2(event) {
+	  const [eventParams] = event.getCompatData();
+
+	  if (eventParams.hasOwnProperty('id') && eventParams.id == babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _allowCloseSlider)[_allowCloseSlider] = true;
 	  }
 	}
 

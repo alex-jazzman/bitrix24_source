@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Tour;
 
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 
 class NewCountersMode extends Base
@@ -13,8 +14,9 @@ class NewCountersMode extends Base
 	protected function canShow(): bool
 	{
 		return
-			$this->isTourAvailable()
-			&& $this->isUserSeenOtherTour(ActivityViewMode::getInstance(), self::OPTION_CATEGORY)
+			Crm::isUniversalActivityScenarioEnabled()
+			&& !$this->isUserSeenTour()
+			&& $this->isUserSeenOtherTour(ActivityViewMode::getInstance())
 		;
 	}
 

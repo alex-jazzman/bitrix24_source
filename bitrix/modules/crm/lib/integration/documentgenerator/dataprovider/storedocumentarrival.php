@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Catalog\ContractorTable;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Catalog\v2\Contractor\Provider\Manager;
@@ -93,10 +94,17 @@ class StoreDocumentArrival extends StoreDocument
 	{
 		parent::fetchData();
 
-		$contractorsProvider = Manager::getActiveProvider();
-		if ($contractorsProvider)
+		if (!Loader::includeModule('catalog'))
 		{
-			$contractor = $contractorsProvider::getContractorByDocumentId((int)$this->data['ID']);
+			return;
+		}
+
+		if (
+			class_exists('Bitrix\Catalog\v2\Contractor\Provider\Manager')
+			&& Manager::getActiveProvider()
+		)
+		{
+			$contractor = Manager::getActiveProvider()::getContractorByDocumentId((int)$this->data['ID']);
 			if ($contractor)
 			{
 				$this->data['CONTRACTOR_PERSON_NAME'] = $contractor->getContactPersonFullName();

@@ -15,15 +15,23 @@ this.BX = this.BX || {};
 	var _withExcludeUsers = /*#__PURE__*/new WeakMap();
 	var _counterData = /*#__PURE__*/new WeakMap();
 	var _isRequestRunning = /*#__PURE__*/new WeakMap();
+	var _lastPullEventData = /*#__PURE__*/new WeakMap();
+	var _isTabActive = /*#__PURE__*/new WeakMap();
 	var _bindEvents = /*#__PURE__*/new WeakSet();
 	var _onPullEvent = /*#__PURE__*/new WeakSet();
+	var _tryRecalculate = /*#__PURE__*/new WeakSet();
 	var _startRecalculationRequest = /*#__PURE__*/new WeakSet();
 	var _onRecalculationSuccess = /*#__PURE__*/new WeakSet();
+	var _fetchCounterData = /*#__PURE__*/new WeakSet();
+	var _isRecalculationRequired = /*#__PURE__*/new WeakSet();
 	var EntityCounterManager = /*#__PURE__*/function () {
 	  function EntityCounterManager(options) {
 	    babelHelpers.classCallCheck(this, EntityCounterManager);
+	    _classPrivateMethodInitSpec(this, _isRecalculationRequired);
+	    _classPrivateMethodInitSpec(this, _fetchCounterData);
 	    _classPrivateMethodInitSpec(this, _onRecalculationSuccess);
 	    _classPrivateMethodInitSpec(this, _startRecalculationRequest);
+	    _classPrivateMethodInitSpec(this, _tryRecalculate);
 	    _classPrivateMethodInitSpec(this, _onPullEvent);
 	    _classPrivateMethodInitSpec(this, _bindEvents);
 	    _classPrivateFieldInitSpec(this, _id, {
@@ -62,6 +70,14 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _lastPullEventData, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _isTabActive, {
+	      writable: true,
+	      value: void 0
+	    });
 	    if (!main_core.Type.isPlainObject(options)) {
 	      throw 'BX.Crm.EntityCounterManager: The "options" argument must be object.';
 	    }
@@ -79,6 +95,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldSet(this, _extras, main_core.Type.isObject(options.extras) ? options.extras : {});
 	    babelHelpers.classPrivateFieldSet(this, _withExcludeUsers, main_core.Type.isBoolean(options.withExcludeUsers) ? options.withExcludeUsers : false);
 	    babelHelpers.classPrivateFieldSet(this, _counterData, {});
+	    babelHelpers.classPrivateFieldSet(this, _isTabActive, true);
 	    _classPrivateMethodGet(this, _bindEvents, _bindEvents2).call(this);
 	    this.constructor.lastInstance = this;
 	  }
@@ -106,7 +123,16 @@ this.BX = this.BX || {};
 	  return EntityCounterManager;
 	}();
 	function _bindEvents2() {
+	  var _this = this;
 	  main_core_events.EventEmitter.subscribe('onPullEvent-main', _classPrivateMethodGet(this, _onPullEvent, _onPullEvent2).bind(this));
+	  main_core.Event.ready(function () {
+	    main_core.Event.bind(document, 'visibilitychange', function () {
+	      babelHelpers.classPrivateFieldSet(_this, _isTabActive, document.visibilityState === 'visible');
+	      if (babelHelpers.classPrivateFieldGet(_this, _isTabActive) && _classPrivateMethodGet(_this, _isRecalculationRequired, _isRecalculationRequired2).call(_this)) {
+	        _classPrivateMethodGet(_this, _tryRecalculate, _tryRecalculate2).call(_this, babelHelpers.classPrivateFieldGet(_this, _lastPullEventData));
+	      }
+	    });
+	  });
 	}
 	function _onPullEvent2(event) {
 	  var _event$getData = event.getData(),
@@ -116,10 +142,13 @@ this.BX = this.BX || {};
 	  if (command !== 'user_counter') {
 	    return;
 	  }
+	  babelHelpers.classPrivateFieldSet(this, _lastPullEventData, params);
+	  _classPrivateMethodGet(this, _tryRecalculate, _tryRecalculate2).call(this, params);
+	}
+	function _tryRecalculate2(params) {
 	  var enableRecalculation = false;
 	  var enableRecalculationWithRequest = false;
-	  var currentSiteId = main_core.Loc.getMessage('SITE_ID');
-	  var counterData = main_core.Type.isPlainObject(params[currentSiteId]) ? params[currentSiteId] : {};
+	  var counterData = _classPrivateMethodGet(this, _fetchCounterData, _fetchCounterData2).call(this, params);
 	  for (var counterId in counterData) {
 	    if (!counterData.hasOwnProperty(counterId) || babelHelpers.classPrivateFieldGet(this, _codes).indexOf(counterId) < 0) {
 	      continue;
@@ -148,6 +177,9 @@ this.BX = this.BX || {};
 	  if (babelHelpers.classPrivateFieldGet(this, _isRequestRunning)) {
 	    return;
 	  }
+	  if (!babelHelpers.classPrivateFieldGet(this, _isTabActive)) {
+	    return;
+	  }
 	  babelHelpers.classPrivateFieldSet(this, _isRequestRunning, true);
 	  main_core.ajax.runAction('crm.counter.list', {
 	    data: {
@@ -165,6 +197,17 @@ this.BX = this.BX || {};
 	  }
 	  this.setCounterData(data);
 	  main_core_events.EventEmitter.emit('BX.Crm.EntityCounterManager:onRecalculate', this);
+	}
+	function _fetchCounterData2(params) {
+	  var currentSiteId = main_core.Loc.getMessage('SITE_ID');
+	  return main_core.Type.isPlainObject(params[currentSiteId]) ? params[currentSiteId] : {};
+	}
+	function _isRecalculationRequired2() {
+	  if (!babelHelpers.classPrivateFieldGet(this, _lastPullEventData)) {
+	    return false;
+	  }
+	  var counterData = _classPrivateMethodGet(this, _fetchCounterData, _fetchCounterData2).call(this, babelHelpers.classPrivateFieldGet(this, _lastPullEventData));
+	  return Object.values(counterData).includes(-1);
 	}
 	babelHelpers.defineProperty(EntityCounterManager, "lastInstance", null);
 

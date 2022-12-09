@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_core,main_core_events,ui_uploader_core,ui_vue) {
+(function (exports,main_core,main_core_events,ui_uploader_core,ui_vue3) {
 	'use strict';
 
 	const FileStatus = {
@@ -216,6 +216,8 @@ this.BX.UI = this.BX.UI || {};
 	    this.removeUrl = null;
 	    this.status = FileStatus.INIT;
 	    this.origin = FileOrigin.CLIENT;
+	    this.errors = [];
+	    this.progress = 0;
 	    this.uploadController = null;
 	    this.loadController = null;
 	    this.setEventNamespace('BX.UI.Uploader.File');
@@ -426,7 +428,7 @@ this.BX.UI = this.BX.UI || {};
 	  getExtension() {
 	    const name = this.getOriginalName();
 	    const position = name.lastIndexOf('.');
-	    return position > 0 ? name.substring(position + 1).toLowerCase() : '';
+	    return position >= 0 ? name.substring(position + 1).toLowerCase() : '';
 	  }
 
 	  getType() {
@@ -607,6 +609,29 @@ this.BX.UI = this.BX.UI || {};
 	    return isResizableImage(this.getOriginalName(), this.getType());
 	  }
 
+	  getProgress() {
+	    return this.progress;
+	  }
+
+	  setProgress(progress) {
+	    if (main_core.Type.isNumber(progress)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _setProperty)[_setProperty]('progress', progress);
+	    }
+	  }
+
+	  addError(error) {
+	    this.errors.push(error);
+	    this.emit('onStateChange');
+	  }
+
+	  getError() {
+	    return this.errors[0] || null;
+	  }
+
+	  getErrors() {
+	    return this.errors;
+	  }
+
 	  getState() {
 	    return JSON.parse(JSON.stringify(this));
 	  }
@@ -627,6 +652,9 @@ this.BX.UI = this.BX.UI || {};
 	      failed: this.isFailed(),
 	      width: this.getWidth(),
 	      height: this.getHeight(),
+	      progress: this.getProgress(),
+	      error: this.getError(),
+	      errors: this.getErrors(),
 	      previewUrl: this.getPreviewUrl(),
 	      previewWidth: this.getPreviewWidth(),
 	      previewHeight: this.getPreviewHeight(),
@@ -882,9 +910,10 @@ this.BX.UI = this.BX.UI || {};
 	    fileName = fileName.normalize();
 	  }
 
+	  const type = main_core.Type.isStringFilled(this.getFile().type) ? this.getFile().type : 'application/octet-stream';
 	  const headers = [{
 	    name: 'Content-Type',
-	    value: this.getFile().type
+	    value: type
 	  }, {
 	    name: 'X-Upload-Content-Name',
 	    value: encodeURIComponent(fileName)
@@ -925,8 +954,6 @@ this.BX.UI = this.BX.UI || {};
 	      }
 	    }
 	  }).then(response => {
-	    console.log('response', response);
-
 	    if (response.data.token) {
 	      this.setToken(response.data.token);
 	      const size = this.getFile().size;
@@ -1038,7 +1065,7 @@ this.BX.UI = this.BX.UI || {};
 	    queue.xhr.abort();
 	    queue.xhr = null;
 	    queues.delete(server);
-	    tasks.forEach(task => {
+	    queue.tasks.forEach(task => {
 	      const {
 	        controller,
 	        file
@@ -3041,10 +3068,14 @@ this.BX.UI = this.BX.UI || {};
 	  const loadController = file.getOrigin() === FileOrigin.SERVER ? this.getServer().createLoadController() : this.getServer().createClientLoadController();
 	  loadController.subscribeFromOptions({
 	    'onError': event => {
+	      const {
+	        error
+	      } = event.getData();
+	      file.addError(error);
 	      file.setStatus(FileStatus.LOAD_FAILED);
 	      this.emit('File:onError', {
 	        file,
-	        error: event.getData().error
+	        error
 	      });
 
 	      babelHelpers.classPrivateFieldLooseBase(this, _loadNext)[_loadNext]();
@@ -3116,6 +3147,7 @@ this.BX.UI = this.BX.UI || {};
 
 	        babelHelpers.classPrivateFieldLooseBase(this, _loadNext)[_loadNext]();
 	      }).catch(error => {
+	        file.addError(error);
 	        file.setStatus(FileStatus.LOAD_FAILED);
 	        this.emit('File:onError', {
 	          file,
@@ -3142,10 +3174,14 @@ this.BX.UI = this.BX.UI || {};
 
 	  uploadController.subscribeFromOptions({
 	    'onError': event => {
+	      const {
+	        error
+	      } = event.getData();
+	      file.addError(error);
 	      file.setStatus(FileStatus.UPLOAD_FAILED);
 	      this.emit('File:onError', {
 	        file,
-	        error: event.getData().error
+	        error
 	      });
 
 	      babelHelpers.classPrivateFieldLooseBase(this, _uploadNext)[_uploadNext]();
@@ -3159,9 +3195,13 @@ this.BX.UI = this.BX.UI || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _uploadNext)[_uploadNext]();
 	    },
 	    'onProgress': event => {
+	      const {
+	        progress
+	      } = event.getData();
+	      file.setProgress(progress);
 	      this.emit('File:onUploadProgress', {
 	        file,
-	        progress: event.getData().progress
+	        progress
 	      });
 	    },
 	    'onUpload': event => {
@@ -3345,197 +3385,284 @@ this.BX.UI = this.BX.UI || {};
 
 	var _uploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploader");
 
-	var _vueApp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("vueApp");
+	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
 
-	class VueUploader {
-	  constructor(uploaderOptions, vueOptions = {}) {
+	var _uploaderError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderError");
+
+	var _getItemsArray = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItemsArray");
+
+	var _getItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItem");
+
+	var _handleFileAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFileAdd");
+
+	var _handleFileRemove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFileRemove");
+
+	var _handleFileStateChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFileStateChange");
+
+	var _handleError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleError");
+
+	var _handleUploadStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleUploadStart");
+
+	var _handleUploadComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleUploadComplete");
+
+	class VueAdapter extends main_core_events.EventEmitter {
+	  constructor(uploaderOptions) {
+	    super();
+	    Object.defineProperty(this, _handleUploadComplete, {
+	      value: _handleUploadComplete2
+	    });
+	    Object.defineProperty(this, _handleUploadStart, {
+	      value: _handleUploadStart2
+	    });
+	    Object.defineProperty(this, _handleError, {
+	      value: _handleError2
+	    });
+	    Object.defineProperty(this, _handleFileStateChange, {
+	      value: _handleFileStateChange2
+	    });
+	    Object.defineProperty(this, _handleFileRemove, {
+	      value: _handleFileRemove2
+	    });
+	    Object.defineProperty(this, _handleFileAdd, {
+	      value: _handleFileAdd2
+	    });
+	    Object.defineProperty(this, _getItem, {
+	      value: _getItem2
+	    });
+	    Object.defineProperty(this, _getItemsArray, {
+	      value: _getItemsArray2
+	    });
 	    Object.defineProperty(this, _uploader, {
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _vueApp, {
+	    Object.defineProperty(this, _items, {
 	      writable: true,
 	      value: null
 	    });
-	    const context = this;
-	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp] = ui_vue.BitrixVue.createApp({
-	      data() {
-	        return {
-	          items: [],
-	          rootComponentId: null,
-	          multiple: true,
-	          acceptOnlyImages: false
-	        };
-	      },
-
-	      mixins: [vueOptions],
-	      provide: {
-	        getUploader() {
-	          return babelHelpers.classPrivateFieldLooseBase(context, _uploader)[_uploader];
-	        },
-
-	        getWidget() {
-	          return context;
-	        }
-
-	      },
-	      methods: {
-	        getUploader() {
-	          return babelHelpers.classPrivateFieldLooseBase(context, _uploader)[_uploader];
-	        },
-
-	        getWidget() {
-	          return context;
-	        }
-
-	      },
-	      // language=Vue
-	      template: `
-				<component
-					:is="rootComponentId"
-					:items="items"
-				/>
-			`
+	    Object.defineProperty(this, _uploaderError, {
+	      writable: true,
+	      value: null
 	    });
+	    this.setEventNamespace('BX.UI.Uploader.Vue.Adapter');
+	    babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = ui_vue3.ref([]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderError)[_uploaderError] = ui_vue3.shallowRef(null);
 	    const options = main_core.Type.isPlainObject(uploaderOptions) ? Object.assign({}, uploaderOptions) : {};
 	    const userEvents = options.events;
 	    options.events = {
-	      'File:onAddStart': this.handleFileAdd.bind(this),
-	      'File:onRemove': this.handleFileRemove.bind(this),
-	      'File:onUploadProgress': this.handleFileUploadProgress.bind(this),
-	      'File:onStateChange': this.handleFileStateChange.bind(this),
-	      'File:onError': this.handleFileError.bind(this),
-	      'onError': this.handleError.bind(this),
-	      'onUploadStart': this.handleUploadStart.bind(this),
-	      'onUploadComplete': this.handleUploadComplete.bind(this)
+	      'File:onAddStart': babelHelpers.classPrivateFieldLooseBase(this, _handleFileAdd)[_handleFileAdd].bind(this),
+	      'File:onRemove': babelHelpers.classPrivateFieldLooseBase(this, _handleFileRemove)[_handleFileRemove].bind(this),
+	      'File:onStateChange': babelHelpers.classPrivateFieldLooseBase(this, _handleFileStateChange)[_handleFileStateChange].bind(this),
+	      'onError': babelHelpers.classPrivateFieldLooseBase(this, _handleError)[_handleError].bind(this),
+	      'onUploadStart': babelHelpers.classPrivateFieldLooseBase(this, _handleUploadStart)[_handleUploadStart].bind(this),
+	      'onUploadComplete': babelHelpers.classPrivateFieldLooseBase(this, _handleUploadComplete)[_handleUploadComplete].bind(this)
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader] = new ui_uploader_core.Uploader(options);
 
 	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].subscribeFromOptions(userEvents);
-
-	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp].multiple = babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].isMultiple();
-	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp].acceptOnlyImages = babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].shouldAcceptOnlyImages();
-	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp].rootComponentId = this.getRootComponentId();
-	  }
-
-	  getVueOptions() {
-	    return {};
-	  }
-
-	  getRootComponentId() {
-	    return null;
 	  }
 
 	  getUploader() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader];
 	  }
 
+	  getItems() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _items)[_items];
+	  }
+
+	  getUploaderError() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _uploaderError)[_uploaderError];
+	  }
+
+	}
+
+	function _getItemsArray2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].value;
+	}
+
+	function _getItem2(id) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _getItemsArray)[_getItemsArray]().find(item => item.id === id);
+	}
+
+	function _handleFileAdd2(event) {
+	  const {
+	    file
+	  } = event.getData();
+	  const item = file.getState();
+
+	  babelHelpers.classPrivateFieldLooseBase(this, _getItemsArray)[_getItemsArray]().push(item);
+
+	  this.emit('Item:onAdd', {
+	    item
+	  });
+	}
+
+	function _handleFileRemove2(event) {
+	  const {
+	    file
+	  } = event.getData();
+
+	  const position = babelHelpers.classPrivateFieldLooseBase(this, _getItemsArray)[_getItemsArray]().findIndex(fileInfo => fileInfo.id === file.getId());
+
+	  if (position >= 0) {
+	    const result = babelHelpers.classPrivateFieldLooseBase(this, _getItemsArray)[_getItemsArray]().splice(position, 1);
+
+	    this.emit('Item:onRemove', {
+	      item: result[0]
+	    });
+	  }
+	}
+
+	function _handleFileStateChange2(event) {
+	  const {
+	    file
+	  } = event.getData();
+
+	  const item = babelHelpers.classPrivateFieldLooseBase(this, _getItem)[_getItem](file.getId());
+
+	  if (item) {
+	    Object.assign(item, file.getState());
+	  }
+	}
+
+	function _handleError2(event) {
+	  const {
+	    error
+	  } = event.getData();
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderError)[_uploaderError].value = error.toJSON();
+	  this.emit('Uploader:onError', event);
+	}
+
+	function _handleUploadStart2(event) {
+	  this.emit('Uploader:onUploadStart', event);
+	}
+
+	function _handleUploadComplete2(event) {
+	  this.emit('Uploader:onUploadComplete', event);
+	}
+
+	/**
+	 * @memberof BX.UI.Uploader
+	 */
+
+	var _vueAdapter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("vueAdapter");
+
+	var _uploaderOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderOptions");
+
+	var _widgetOptions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("widgetOptions");
+
+	var _vueApp = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("vueApp");
+
+	class VueUploaderWidget extends main_core_events.EventEmitter {
+	  constructor(uploaderOptions, widgetOptions = {}) {
+	    super();
+	    Object.defineProperty(this, _vueAdapter, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _uploaderOptions, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _widgetOptions, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _vueApp, {
+	      writable: true,
+	      value: null
+	    });
+	    this.setEventNamespace('BX.UI.Uploader.Vue.Widget');
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderOptions)[_uploaderOptions] = uploaderOptions;
+	    babelHelpers.classPrivateFieldLooseBase(this, _widgetOptions)[_widgetOptions] = widgetOptions;
+	  }
+
+	  getRootComponent() {
+	    return null;
+	  }
+
+	  getAdapter() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _vueAdapter)[_vueAdapter] === null) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _vueAdapter)[_vueAdapter] = new VueAdapter(babelHelpers.classPrivateFieldLooseBase(this, _uploaderOptions)[_uploaderOptions]);
+	    }
+
+	    return babelHelpers.classPrivateFieldLooseBase(this, _vueAdapter)[_vueAdapter];
+	  }
+
+	  getUploader() {
+	    return this.getAdapter().getUploader();
+	  }
+
 	  getVueApp() {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp] !== null) {
+	      return babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp];
+	    }
+
+	    babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp] = ui_vue3.BitrixVue.createApp(this.getRootComponent(), {
+	      uploaderOptions: babelHelpers.classPrivateFieldLooseBase(this, _uploaderOptions)[_uploaderOptions],
+	      widgetOptions: babelHelpers.classPrivateFieldLooseBase(this, _widgetOptions)[_widgetOptions],
+	      uploaderAdapter: this.getAdapter()
+	    });
 	    return babelHelpers.classPrivateFieldLooseBase(this, _vueApp)[_vueApp];
 	  }
 
 	  renderTo(node) {
 	    if (main_core.Type.isDomNode(node)) {
-	      const container = main_core.Dom.create('div');
-	      node.appendChild(container);
-
-	      if (!this.getUploader().getHiddenFieldsContainer()) {
-	        this.getUploader().setHiddenFieldsContainer(node);
-	      }
-
-	      this.getVueApp().mount(container);
+	      this.getVueApp().mount(node);
 	    }
-	  }
-
-	  remove(id) {
-	    this.getUploader().removeFile(id);
-	  }
-
-	  getItems() {
-	    return this.getVueApp().items;
-	  }
-
-	  getItem(id) {
-	    return this.getItems().find(item => item.id === id);
-	  }
-
-	  createItemFromFile(file) {
-	    const item = file.getState();
-	    item.progress = 0;
-	    return item;
-	  }
-
-	  handleFileAdd(event) {
-	    const {
-	      file,
-	      error
-	    } = event.getData();
-	    const item = this.createItemFromFile(file);
-	    this.getItems().push(item);
-	    this.getVueApp().$Bitrix.eventEmitter.emit('Item:onAdd', {
-	      item
-	    });
-	  }
-
-	  handleFileRemove(event) {
-	    const {
-	      file
-	    } = event.getData();
-	    const position = this.getItems().findIndex(fileInfo => fileInfo.id === file.getId());
-
-	    if (position >= 0) {
-	      const result = this.getItems().splice(position, 1);
-	      this.getVueApp().$Bitrix.eventEmitter.emit('Item:onRemove', {
-	        item: result[0]
-	      });
-	    }
-	  }
-
-	  handleFileError(event) {
-	    const {
-	      file,
-	      error
-	    } = event.getData();
-	    const item = this.getItem(file.getId());
-	    item.error = error;
-	  }
-
-	  handleFileUploadProgress(event) {
-	    const {
-	      file,
-	      progress
-	    } = event.getData();
-	    const item = this.getItem(file.getId());
-
-	    if (item) {
-	      item.progress = progress;
-	    }
-	  }
-
-	  handleFileStateChange(event) {
-	    const {
-	      file
-	    } = event.getData();
-	    const item = this.getItem(file.getId());
-
-	    if (item) {
-	      Object.assign(item, file.getState());
-	    }
-	  }
-
-	  handleError(event) {
-	    this.getVueApp().$Bitrix.eventEmitter.emit('Uploader:onError', event);
-	  }
-
-	  handleUploadStart(event) {
-	    this.getVueApp().$Bitrix.eventEmitter.emit('Uploader:onUploadStart', event);
-	  }
-
-	  handleUploadComplete(event) {
-	    this.getVueApp().$Bitrix.eventEmitter.emit('Uploader:onUploadComplete', event);
 	  }
 
 	}
+
+	/**
+	 * @memberof BX.UI.Uploader
+	 */
+
+	const VueUploaderComponent = {
+	  name: 'VueUploaderComponent',
+	  props: {
+	    uploaderOptions: {
+	      type: Object
+	    },
+	    widgetOptions: {
+	      type: Object,
+	      default: {}
+	    },
+	    uploaderAdapter: {
+	      type: Object,
+	      default: null
+	    }
+	  },
+	  data: () => ({
+	    items: [],
+	    uploaderError: null
+	  }),
+
+	  provide() {
+	    return {
+	      uploader: this.uploader,
+	      adapter: this.adapter,
+	      widgetOptions: this.widgetOptions
+	    };
+	  },
+
+	  beforeCreate() {
+	    this.adapter = this.uploaderAdapter === null ? new VueAdapter(this.uploaderOptions) : this.uploaderAdapter;
+	    this.uploader = this.adapter.getUploader();
+	  },
+
+	  created() {
+	    this.items = this.adapter.getItems();
+	    this.uploaderError = this.adapter.getUploaderError();
+	  },
+
+	  mounted() {
+	    if (!this.uploader.getHiddenFieldsContainer()) {
+	      this.uploader.setHiddenFieldsContainer(this.$el);
+	    }
+	  }
+
+	};
 
 	const isImage = file => {
 	  return /^image\/[a-z0-9.-]+$/i.test(file.type);
@@ -3570,7 +3697,8 @@ this.BX.UI = this.BX.UI || {};
 	exports.FileOrigin = FileOrigin;
 	exports.FilterType = FilterType;
 	exports.Helpers = index;
-	exports.VueUploader = VueUploader;
+	exports.VueUploaderWidget = VueUploaderWidget;
+	exports.VueUploaderComponent = VueUploaderComponent;
 
-}((this.BX.UI.Uploader = this.BX.UI.Uploader || {}),BX,BX.Event,BX.UI.Uploader,BX));
+}((this.BX.UI.Uploader = this.BX.UI.Uploader || {}),BX,BX.Event,BX.UI.Uploader,BX.Vue3));
 //# sourceMappingURL=ui.uploader.bundle.js.map

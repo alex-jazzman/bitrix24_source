@@ -220,7 +220,9 @@ endif;
 					);
 				?></div>
 				<?php
-				if ($arResult['isSigningEnabled']) {?>
+				if ($arResult['isSigningEnabled']):
+					echo \Bitrix\Crm\Tour\Sign\SignDocumentFromSlider::getInstance()->build();
+				?>
 				<div class="crm__document-view--sidebar-section">
 					<div class="crm__document-view--sidebar-control" id="crm-document-sign" >
 						<label class="crm__document-view--label --label-icon --icon-sign crm__document-view--sidebar-control-sign">
@@ -229,7 +231,7 @@ endif;
 						<span class="crm__document-view--arrow"> </span>
 					</div>
 				</div>
-				<?}?>
+				<?php endif; ?>
 			</div>
 			<?php if ($arResult['editDocumentUrl']):?>
 				<div class="crm__document-view--link-inner">

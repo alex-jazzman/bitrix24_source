@@ -265,7 +265,7 @@ class Router
 			+ '&memberHash=' + memberHash
 			,
 			{
-				width: 760,
+				width: 1060,
 			}
 		);
 	}
