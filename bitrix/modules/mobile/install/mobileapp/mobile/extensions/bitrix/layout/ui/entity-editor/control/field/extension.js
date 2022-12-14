@@ -97,6 +97,7 @@
 				id,
 				type: this.type,
 				testId: `${this.model.id}_${id}`,
+				uid: this.uid,
 				title: this.getTitle(),
 				multiple: this.isMultiple(),
 				placeholder: this.isNewEntity() && this.getCreationPlaceholder(),
@@ -332,16 +333,6 @@
 			}
 
 			return isValid;
-		}
-
-		isRequired()
-		{
-			return this.schemeElement && this.schemeElement.isRequired();
-		}
-
-		isShowRequired()
-		{
-			return this.schemeElement && this.schemeElement.isShowRequired();
 		}
 
 		setValue(value)

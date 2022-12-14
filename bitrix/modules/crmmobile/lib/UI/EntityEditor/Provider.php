@@ -13,6 +13,7 @@ use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Service\Display\Field\IblockElementField;
 use Bitrix\Crm\Service\Display\Field\IblockSectionField;
 use Bitrix\Crm\Service\Display\Field\TextField;
+use Bitrix\Crm\Service\Display\Field\StringField;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\Localization\Loc;
@@ -225,7 +226,7 @@ final class Provider extends \Bitrix\Crm\Integration\UI\EntityEditor\Provider
 					$field['multiple'] = $fieldItem->isMultiple();
 				}
 
-				if ($field['type'] === TextField::TYPE)
+				if ($field['type'] === TextField::TYPE || $field['type'] ===  StringField::TYPE)
 				{
 					$field['type'] = self::TEXTAREA;
 				}
@@ -367,6 +368,21 @@ final class Provider extends \Bitrix\Crm\Integration\UI\EntityEditor\Provider
 				}
 
 				$field['data']['permissions'] = $permissions;
+			}
+
+			if ($fieldName === Item::FIELD_NAME_TITLE)
+			{
+				$field['data']['autoCapitalize'] = 'sentences';
+			}
+
+			if (
+				$fieldName === Item::FIELD_NAME_NAME
+				|| $fieldName === Item::FIELD_NAME_LAST_NAME
+				|| $fieldName === Item::FIELD_NAME_SECOND_NAME
+				|| $fieldName === Item::FIELD_NAME_FULL_NAME
+			)
+			{
+				$field['data']['autoCapitalize'] = 'words';
 			}
 
 			if ($fieldName === Company::FIELD_NAME_LOGO || $fieldName === Contact::FIELD_NAME_PHOTO)
@@ -714,13 +730,13 @@ final class Provider extends \Bitrix\Crm\Integration\UI\EntityEditor\Provider
 
 						if (!empty($requisiteAddresses) && is_array($requisiteAddresses))
 						{
-							foreach ($requisiteAddresses as $requisiteAddressJson)
+							foreach ($requisiteAddresses as $id => $requisiteAddressJson)
 							{
 								$formatter = AddressFormatter::getSingleInstance();
-								$requisiteAddress['formattedLocation'] = $formatter->formatLocationAddressArrayAsString(
+								$requisiteAddress= $formatter->formatLocationAddressArrayAsString(
 									Json::decode($requisiteAddressJson)
 								);
-								$values['REQUISITES_ADDRESSES_RAW'][] = $requisiteAddress;
+								$values['REQUISITES_ADDRESSES_RAW'][$id] = $requisiteAddress;
 							}
 						}
 

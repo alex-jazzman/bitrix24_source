@@ -177,11 +177,14 @@ jn.define('crm/storage/category', (require, exports, module) => {
 						this.clearTtlValue(pathToList);
 
 						const pathToUpdatedInList = this.getPathToCategoryInCategoryList(entityTypeId);
-						const listCategoryData = this.getDataValue(pathToUpdatedInList, []);
+						const listCategoryData = this.getDataValue(pathToUpdatedInList, []) || [];
 
 						// modify category data in list
 						const categoryDataInList = listCategoryData.find((category) => category.id === categoryId);
-						merge(categoryDataInList, fields);
+						if (categoryDataInList)
+						{
+							merge(categoryDataInList, fields);
+						}
 
 						// save modified list in storage
 						this.updateDataInStorage(pathToUpdatedInList, listCategoryData, true);
@@ -189,7 +192,7 @@ jn.define('crm/storage/category', (require, exports, module) => {
 						const pathToUpdated = this.getPathToCategory(entityTypeId, categoryId);
 						this.clearTtlValue(pathToUpdated);
 
-						const categoryData = this.getDataValue(pathToUpdated, {});
+						const categoryData = this.getDataValue(pathToUpdated, {}) || {};
 						this.updateDataInStorage(pathToUpdated, mergeImmutable(categoryData, fields));
 
 						resolve();

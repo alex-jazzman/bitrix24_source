@@ -58,7 +58,10 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 		if (!$params['HEADER_TITLE'])
 		{
 			$title = '';
-			if (Loader::includeModule('salescenter'))
+			if (
+				Loader::includeModule('salescenter')
+				&& Loader::includeModule('crm')
+			)
 			{
 				$title = \Bitrix\SalesCenter\Integration\CrmManager::getPublishedCompanyName();
 			}

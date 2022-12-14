@@ -17,6 +17,7 @@ use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Currency;
+use Bitrix\Catalog\v2\Contractor\Provider\Manager;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_before.php');
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/catalog/prolog.php');
@@ -141,6 +142,10 @@ if (!$accessController->check(ActionDictionary::ACTION_STORE_VIEW))
 	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
 
+if (Manager::getActiveProvider())
+{
+	LocalRedirect($listUrl);
+}
 
 $canModify = $accessController->check(ActionDictionary::ACTION_STORE_VIEW);
 $bReadOnly = !$canModify;

@@ -2,6 +2,16 @@
 $MESS["M_CRM_ENTITY_TAB_ACTION_FORBIDDEN_TEXT"] = "Please contact your Bitrix24 administrator";
 $MESS["M_CRM_ENTITY_TAB_ACTION_FORBIDDEN_TITLE"] = "Insufficient permissions";
 $MESS["M_CRM_ENTITY_TAB_COLUMN_EMPTY_DEAL_TITLE"] = "You don't have deals in this stage";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_COMMON"] = "Reset the filter or select different filter options";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_COMPANY"] = "Reset the filter or select different filter options";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_CONTACT"] = "Reset the filter or select different filter options";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_DEAL"] = "Reset the filter or select different filter options";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_LEAD"] = "Reset the filter or select different filter options";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_COMMON"] = "Items on this stage do not match the selected filter";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_COMPANY"] = "Companies on this stage do not match the selected filter";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_CONTACT"] = "Contacts on this stage do not match the selected filter";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_DEAL"] = "Deals on this stage do not match the selected filter";
+$MESS["M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_LEAD"] = "Leads on this stage do not match the selected filter";
 $MESS["M_CRM_ENTITY_TAB_DEAL_ACTION_ACTIVITY"] = "Plan activity";
 $MESS["M_CRM_ENTITY_TAB_DEAL_ACTION_EXCLUDE"] = "Add to exceptions";
 $MESS["M_CRM_ENTITY_TAB_DEAL_ACTION_EXCLUDE_CONFIRMATION"] = "This action cannot be undone. Are you sure you want to add the item to exceptions?";

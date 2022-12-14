@@ -16,7 +16,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { clone, get } = require('utils/object');
 	const { capitalize } = require('utils/string');
-	const { ActivityCountersStoreManager } = jn.require('crm/state-storage');
+	const { ActivityCountersStoreManager } = require('crm/state-storage');
 
 	const iconColor = '#767c87';
 
@@ -50,6 +50,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.checkIsEmptyHandler = this.checkIsEmpty.bind(this);
 			this.showSearchBarHandler = this.showSearchBar.bind(this);
 			this.updateEntityTypesHandler = this.updateEntityTypes.bind(this);
+			this.eventUids = new Set();
 
 			/** @type {ContextMenu}*/
 			this.floatingButtonMenu = null;
@@ -68,7 +69,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.state.searchButtonBackgroundColor = null;
 
 			/** @type {Filter}*/
-			this.filter = new Filter();
+			this.filter = new Filter(this.getDefaultPresetId());
 		}
 
 		componentWillReceiveProps(nextProps)
@@ -144,7 +145,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				this.filter.unsetWasShown();
 			}
 
-			if (params.counter && params.counter.id)
+			if (params.counter && params.counter.code)
 			{
 				this.setCounterFilter(params);
 				return;
@@ -180,7 +181,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			const { text } = params;
 			const { filter } = this;
 
-			if (filter.currentFilterId === code)
+			if (filter.currentFilterId === code && filter.search === text)
 			{
 				filter.clear();
 			}
@@ -206,11 +207,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		setPresetFilter(params)
 		{
 			const { preset, text } = params;
-			const presetId = (preset ? preset.id : null);
+			const presetId = (preset ? preset.id : 'tmp_filter');
 			this.filter.set({
 				presetId,
 				search: text,
 				currentFilterId: presetId,
+				counterId: null,
+				tmpFields: {},
 			});
 
 			this.reload(this.getReloadParamsByFilter());
@@ -222,6 +225,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				skipFillSlides: true,
 				menuButtons: this.getMenuButtons(),
 				force: true,
+				forcedShowSkeleton: true,
 			};
 		}
 
@@ -258,7 +262,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		getMenuActions()
 		{
-			return [
+			const actions = [
 				{
 					type: UI.Menu.Types.DESKTOP,
 					showHint: false,
@@ -266,12 +270,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 						qrUrl: this.getEntityType(this.props.entityTypeId).link,
 					},
 				},
-				// {
-				// 	type: UI.Menu.Types.HELPDESK,
-				// 	data: {
-				// 		articleCode: '14721730', // @todo set correct article code
-				// 	},
-				// },
+			]
+
+			const entity = TypeFactory.getEntityByType(this.entityTypeName);
+
+			return [
+				...actions,
+				...entity.getMenuActions(),
 			];
 		}
 
@@ -373,28 +378,30 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			return clone(this.props.actionParams);
 		}
 
-		getEmptyListComponent()
+		getEmptyListComponent(params = null)
 		{
-			const model = this.getEntityTypeModel();
-
-			let params;
-			const { filter } = this;
-
-			if (
-				filter.isActive()
-				|| filter.hasSearchText()
-				|| filter.hasSelectedNotDefaultPreset(this.props.searchRef)
-			)
+			if (params === null)
 			{
-				params = model.getEmptySearchScreenConfig();
-			}
-			else
-			{
-				params = (
-					this.isEmpty
-						? model.getEmptyEntityScreenConfig()
-						: this.getEmptyColumnScreenConfig(model)
-				);
+				const model = this.getEntityTypeModel();
+
+				const {filter} = this;
+
+				if (
+					filter.isActive()
+					|| filter.hasSearchText()
+					|| filter.hasSelectedNotDefaultPreset(this.props.searchRef)
+				)
+				{
+					params = model.getEmptySearchScreenConfig();
+				}
+				else
+				{
+					params = (
+						this.isEmpty
+							? model.getEmptyEntityScreenConfig()
+							: this.getEmptyColumnScreenConfig(model)
+					);
+				}
 			}
 
 			params.onRefresh = () => {
@@ -406,7 +413,12 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		getEmptyColumnScreenConfig(model)
 		{
-			return model.getEmptyColumnScreenConfig();
+			if (this.getCurrentEntityType().isStagesEnabled)
+			{
+				return model.getEmptyColumnScreenConfig()
+			}
+
+			return model.getEmptyEntityScreenConfig();
 		}
 
 		/**
@@ -453,20 +465,25 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 								&& !this.isCurrentSlideName(item.data.columnId, context.slideName)
 							)
 							{
+								let action;
+
 								// update columnId in AllStages column
 								if (viewComponent.getSlideName() === context.slideName)
 								{
+									action = 'update';
 									this.updateItemColumn(item.id, item.data.columnId);
 								}
 								// or delete item from current (not AllStages) column
 								else
 								{
+									action = 'delete';
 									viewComponent.deleteItemFromStatefulList(item.id);
 								}
 
 								BX.postComponentEvent('UI.Kanban::onItemMoved', [{
 									item,
 									oldItem: oldItem.props.item,
+									resolveParams: { action }
 								}]);
 
 								reject();
@@ -807,7 +824,25 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		onDetailCardCreate(params)
 		{
-			// can be implemented in a child class
+			const { entityTypeId } = params;
+
+			if (params.eventUid)
+			{
+				if (this.eventUids.has(params.eventUid))
+				{
+					return;
+				}
+
+				this.eventUids.add(params.eventUid);
+			}
+
+			if (this.props.entityTypeId === entityTypeId)
+			{
+				this.reload();
+				return;
+			}
+
+			this.props.setActiveTab(entityTypeId, params);
 		}
 
 		getFloatingButtonMenu()
@@ -946,9 +981,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			params.categoryId = this.getCategoryId(this.props.entityTypeId);
 			params.categoriesCount = this.getCurrentEntityType().data.categoriesCount || 0;
 
-			const factory = new TypeFactory(this.entityTypeName);
-
-			return factory.getEntity(params);
+			return TypeFactory.getEntityByType(this.entityTypeName, params);
 		}
 
 		/**
@@ -1042,6 +1075,17 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					listView.scrollToBegin(true);
 				}
 			}
+		}
+
+		getDefaultPresetId()
+		{
+			const entityType = this.getCurrentEntityType();
+			if (!entityType)
+			{
+				return null;
+			}
+
+			return BX.prop.getString(entityType.data, 'presetId', null);
 		}
 	}
 

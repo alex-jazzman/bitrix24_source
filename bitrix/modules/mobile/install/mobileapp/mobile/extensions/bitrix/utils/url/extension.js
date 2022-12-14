@@ -8,29 +8,32 @@ jn.define('utils/url', (require, exports, module) => {
 
 	/**
 	 * @function URL
-	 * @param {String} value
+	 * @param {String} href
 	 * @return {Object}
 	 */
-	function URL(value)
+	function URL(href)
 	{
-		const url = prepareLink(value).match(/^((\w+:)?\/\/([^\/]+))+([^?#]+)*$/i);
+		href = prepareLink(href);
 
-		if (!Array.isArray(url))
+		const match = href.match(/^(https?\:)\/\/(([^:\/?#]*)(?:\:([0-9]+))?)(\/?[^?#]*)(\?[^#]*|)(#.*|)$/i);
+		if (!match || !Array.isArray(match))
 		{
 			return {};
 		}
 
-		const pathname = url[4] || '';
-		const hostname = punycode.toASCII(url[3]);
-		const protocol = url[2];
+		const hostname = punycode.toASCII(stringify(match[3]));
+		const protocol = stringify(match[1]);
 
 		return {
-			originHref: url[0],
-			href: `${protocol}//${hostname}${pathname}`,
-			origin: url[1],
+			href,
+			origin: protocol + '//' + hostname,
 			protocol,
+			host: stringify(match[2]),
 			hostname,
-			pathname,
+			port: stringify(match[4]),
+			pathname: stringify(match[5]),
+			search: stringify(match[6]),
+			hash: stringify(match[7]),
 		};
 	}
 

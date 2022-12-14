@@ -3,15 +3,13 @@
  */
 jn.define('communication/menu', (require, exports, module) => {
 
+	const EntitySvg = require('assets/communication/menu');
+	const { ImType, PhoneType, isOpenLine, getOpenLineTitle } = require('communication/connection');
+	const { CommunicationEvents } = require('communication/events');
 	const { getFormattedNumber } = require('utils/phone');
 	const { isEmpty } = require('utils/object');
-	const { CommunicationEvents } = require('communication/events');
-	const { ImType } = require('layout/ui/fields/im');
-	const { PhoneType } = require('layout/ui/fields/phone');
-	const EntitySvg = require('assets/communication/menu');
 
 	const CHANNELS = 'CHANNELS';
-	const OPEN_LINE_CODE = 'OPENLINE';
 	const MonochromeGraphite = '#767c87';
 
 	/**
@@ -76,12 +74,18 @@ jn.define('communication/menu', (require, exports, module) => {
 				.filter(Boolean);
 		}
 
+		/**
+		 * @param {object} params
+		 * @return {{data: {svgIcon: *}, subtitle: (?string|*), closeCallback: *, sectionCode: string, id: string, title: (*|string), onClickCallback: (function(): Promise<{closeCallback: (function(): void)}>)}|null}
+		 */
 		createItem(params)
 		{
 			const { id, type, title = '', connectionType } = params;
 			const itemValue = params[connectionType];
+			const value = itemValue && itemValue.value || itemValue;
+			const complexName = itemValue && itemValue.complexName || '';
 
-			if (connectionType === ImType && OPEN_LINE_CODE !== itemValue.valueType)
+			if (connectionType === ImType && !isOpenLine(value))
 			{
 				return null;
 			}
@@ -92,8 +96,8 @@ jn.define('communication/menu', (require, exports, module) => {
 			return {
 				id: `${id}_${type}`,
 				sectionCode,
-				title: this.getTitle(itemValue.value || itemValue, connectionType),
-				subtitle: itemValue.complexName || '',
+				title: this.getTitle(value, connectionType),
+				subtitle: this.getSubtitle(complexName, value, connectionType),
 				data: {
 					svgIcon: this.getSvg(connectionType),
 				},
@@ -127,6 +131,20 @@ jn.define('communication/menu', (require, exports, module) => {
 			}
 
 			return String(value);
+		}
+
+		getSubtitle(complexName, value, connectionType)
+		{
+			if (connectionType === ImType && isOpenLine(value))
+			{
+				const title = getOpenLineTitle(value, false);
+				if (title)
+				{
+					return title;
+				}
+			}
+
+			return complexName;
 		}
 
 		setTitlesSectionCode(title, type, sectionCode)

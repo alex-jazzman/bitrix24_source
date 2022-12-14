@@ -157,7 +157,7 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 		}
 		else
 		{
-			taxMessageCode = taxIncluded ? 'PRODUCT_GRID_SUMMARY_TAX_INCLUDED' : 'PRODUCT_GRID_SUMMARY_TAX_NOT_INCLUDED';
+			taxMessageCode = taxIncluded ? 'PRODUCT_GRID_SUMMARY_TAX_INCLUDED' : 'PRODUCT_GRID_SUMMARY_TAX_NOT_INCLUDED_MSGVER_1';
 		}
 
 		return View(

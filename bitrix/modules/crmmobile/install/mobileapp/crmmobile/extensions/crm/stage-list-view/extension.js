@@ -151,9 +151,11 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 				return BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_NOT_LOADED_TITLE2');
 			}
 
+			const name = stringify(category.name).trim();
+
 			return (
-				stringify(category.name) !== ''
-					? BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_TITLE2').replace('#CATEGORY_NAME#', category.name)
+				name !== ''
+					? BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_TITLE2').replace('#CATEGORY_NAME#', name)
 					: BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_EMPTY_TITLE2')
 			);
 		}
@@ -304,7 +306,12 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 			this.refreshTitle();
 
 			const { category } = this.state;
-			const { stageParams, canMoveStages, activeStageId } = this.props;
+			const {
+				stageParams,
+				canMoveStages,
+				activeStageId,
+				unsuitableStages,
+			} = this.props;
 
 			return ScrollView(
 				{
@@ -329,6 +336,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 						stageParams,
 						category,
 						activeStageId,
+						unsuitableStages,
 						processStages: category.processStages,
 						finalStages: [...category.successStages, ...category.failedStages],
 						onSelectedStage: this.onSelectedStage,

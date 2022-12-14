@@ -22,6 +22,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 	const FILE_TASK_ID_PREFIX = 'mobile-file-field-';
 	const HIDDEN_FILES_COUNTER_WIDTH = 36;
+	const HIDDEN_FILES_COUNTER_HEIGHT = 36;
 	const FILE_PREVIEW_MEASURE = 66;
 	const EDIT_BUTTON_WIDTH = 36;
 	const VISIBLE_FILES_COUNT = 3;
@@ -126,7 +127,6 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		{
 			const config = super.getConfig();
 			const controller = BX.prop.getObject(config, 'controller', {});
-			const isEnabledToEdit = BX.prop.getBoolean(config, 'enableToEdit', !this.isReadOnly());
 
 			if (!this.isReadOnly())
 			{
@@ -151,10 +151,11 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 			return {
 				...config,
+				controller,
 				fileInfo: BX.prop.getObject(config, 'fileInfo', {}),
 				mediaType: BX.prop.getString(config, 'mediaType', MEDIA_TYPE.FILE),
-				controller,
-				isEnabledToEdit,
+				isEnabledToEdit: BX.prop.getBoolean(config, 'enableToEdit', !this.isReadOnly()),
+				emptyEditableButtonStyle: BX.prop.getObject(config, 'emptyEditableButtonStyle', {}),
 			};
 		}
 
@@ -309,20 +310,28 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 		renderEditableContent()
 		{
+			if (this.isEmpty())
+			{
+				return this.renderEmptyEditableContent();
+			}
+
 			return View(
 				{
 					style: this.styles.fieldWrapper,
+					clickable: false,
 				},
-				this.isEmpty() ? this.renderEmptyEditableView() : this.getFilesView(),
+				this.getFilesView(),
 			);
 		}
 
-		renderEmptyEditableView()
+		renderEmptyEditableContent()
 		{
 			if (this.hasHiddenEmptyView())
 			{
 				return null;
 			}
+
+			const {emptyEditableButtonStyle} = this.styles;
 
 			return View(
 				{
@@ -332,8 +341,10 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						flexDirection: 'row',
 						justifyContent: 'center',
 						alignItems: 'center',
+						borderWidth: 1,
+						borderColor: (emptyEditableButtonStyle.borderColor || emptyEditableButtonStyle.backgroundColor),
 						borderRadius: 6,
-						backgroundColor: '#00a2e8',
+						backgroundColor: emptyEditableButtonStyle.backgroundColor,
 					},
 					clickable: false,
 				},
@@ -347,7 +358,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						clickable: false,
 						resizeMode: 'center',
 						svg: {
-							content: svgImages.file.content.replace(/%color%/g, '#ffffff'),
+							content: svgImages.file.content.replace(/%color%/g, emptyEditableButtonStyle.iconColor),
 						},
 					},
 				),
@@ -355,7 +366,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 					{
 						style: {
 							fontSize: 16,
-							color: '#ffffff',
+							color: emptyEditableButtonStyle.textColor,
 						},
 						clickable: false,
 						text: this.getAddButtonText(this.getConfig().mediaType),
@@ -784,6 +795,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				...super.getDefaultStyles(),
 				fieldWrapper: {
 					flex: 1,
+					borderWidth: 0
 				},
 				wrapper: {
 					paddingTop: this.isEmpty() ? 12 : 7,
@@ -804,7 +816,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 					borderWidth: 0.5,
 					borderRadius: 18,
 					width: HIDDEN_FILES_COUNTER_WIDTH,
-					height: HIDDEN_FILES_COUNTER_WIDTH,
+					height: HIDDEN_FILES_COUNTER_HEIGHT,
 					alignItems: 'center',
 					alignSelf: 'flex-start',
 					justifyContent: 'center',
@@ -814,6 +826,13 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				hiddenFilesCounterText: {
 					fontSize: 17,
 					color: '#828b95',
+				},
+				emptyEditableButtonStyle: {
+					borderColor: '#00a2e8',
+					backgroundColor: '#00a2e8',
+					iconColor: '#ffffff',
+					textColor: '#ffffff',
+					...this.getConfig().emptyEditableButtonStyle,
 				},
 			};
 		}

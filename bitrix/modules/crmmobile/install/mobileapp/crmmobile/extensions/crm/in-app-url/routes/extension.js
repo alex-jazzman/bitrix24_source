@@ -8,6 +8,13 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 	const { ProfileView } = require('user/profile');
 
 	const openCrmEntity = (entityTypeId, entityId, { linkText = '', canOpenInDefault } = {}) => {
+		const extensionData = jnExtensionData.get('crm:in-app-url/routes');
+
+		if (typeof extensionData === 'undefined' || !extensionData.isUniversalActivityScenarioEnabled)
+		{
+			return;
+		}
+
 		EntityDetailOpener.open(
 			{ entityId, entityTypeId },
 			{ titleParams: { text: linkText } },
@@ -42,13 +49,6 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = function(inAppUrl) {
-		const extensionData = jnExtensionData.get('crm:in-app-url/routes');
-
-		if (typeof extensionData === 'undefined' || !extensionData.isUniversalActivityScenarioEnabled)
-		{
-			return;
-		}
-
 		inAppUrl.register('/crm/deal/details/:id/', ({ id }, { context }) => {
 
 			openCrmEntity(TypeId.Deal, id, context);
@@ -60,6 +60,18 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 				activeTab: TypeName.Deal,
 			});
 		}).name('crm:dealList');
+
+		inAppUrl.register('/crm/lead/details/:id/', ({ id }) => {
+			PageManager.openPage({
+				url: `/mobile/crm/lead/?page=view&lead_id=${id}`,
+			});
+		}).name('crm:lead');
+
+		inAppUrl.register('/crm/lead/', ({ id }) => {
+			PageManager.openPage({
+				url: `/mobile/crm/lead/`,
+			});
+		}).name('crm:leadList');
 
 		inAppUrl.register('/crm/contact/details/:id/', ({ id }, { context }) => {
 

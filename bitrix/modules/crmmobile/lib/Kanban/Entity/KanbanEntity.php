@@ -5,6 +5,7 @@ namespace Bitrix\CrmMobile\Kanban\Entity;
 
 
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\EntityBadge;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\CrmMobile\Kanban\ClientDataProvider;
@@ -140,7 +141,7 @@ abstract class KanbanEntity extends Entity
 			return;
 		}
 
-		$this->setFilterPreset($presetId, $entity->getFilterOptions(), $entity->getFilterPresets());
+		$this->setFilterPreset($presetId, $entity->getFilterOptions());
 	}
 
 	protected function prepareItemsBadges(array &$items): void
@@ -228,6 +229,11 @@ abstract class KanbanEntity extends Entity
 
 	protected function getMoney(array $item): ?array
 	{
+		if (!$this->hasVisibleField($item, Item::FIELD_NAME_OPPORTUNITY))
+		{
+			return null;
+		}
+
 		return [
 			'amount' => (float)$item['entity_price'],
 			'currency' => $item['entity_currency'],
@@ -350,34 +356,6 @@ abstract class KanbanEntity extends Entity
 			$this->getEntityType(),
 			$this->getFilterParams()
 		);
-	}
-
-	/**
-	 * @param int $currentCategoryId
-	 * @return array
-	 */
-	protected function getDefaultSearchPresets(int $currentCategoryId = 0): array
-	{
-		$entity = \Bitrix\Crm\Kanban\Entity::getInstance($this->getEntityType());
-		$entity->setCategoryId($currentCategoryId);
-		return $entity->getFilterPresets();
-	}
-
-	/**
-	 * @param int $currentCategoryId
-	 * @return array
-	 */
-	protected function getUserSearchPresets(int $currentCategoryId = 0): array
-	{
-		$this->prepare([
-			'filterParams' => [
-				'CATEGORY_ID' => $currentCategoryId,
-			],
-		]);
-
-		$gridId = $this->getGridId();
-		$options = (new Options($gridId))->getOptions();
-		return $options['filters'] ?? [];
 	}
 
 	protected function getAssignedById(array $item): ?int

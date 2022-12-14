@@ -77,6 +77,6 @@ class Status extends Base
 
 	public static function getDescription(): string
 	{
-		return Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_DESCRIPTION');
+		return Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_DESCRIPTION') ?? '';
 	}
 }

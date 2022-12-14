@@ -2,12 +2,11 @@
 
 return [
 	'extensions' => [
+		'assets/communication/menu',
+		'communication/connection',
+		'communication/events',
+		'layout/ui/context-menu',
 		'utils/phone',
 		'utils/object',
-		'communication/events',
-		'assets/communication/menu',
-		'layout/ui/fields/im',
-		'layout/ui/fields/phone',
-		'layout/ui/context-menu',
 	],
 ];

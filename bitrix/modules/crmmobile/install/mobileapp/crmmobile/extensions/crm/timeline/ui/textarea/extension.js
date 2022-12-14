@@ -24,6 +24,7 @@ jn.define('crm/timeline/ui/textarea', (require, exports, module) => {
 					paddingVertical: 12,
 					fontSize: 18,
 					flexGrow: 1,
+					maxHeight: 155,
 				},
 				onChangeText: onChange,
 			}),

@@ -10,5 +10,6 @@ return [
 		'utils/function',
 		'crm:entity-tab/*',
 		'crm:state-storage',
+		'crm:type',
 	],
 ];

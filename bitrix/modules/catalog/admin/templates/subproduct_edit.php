@@ -2486,10 +2486,14 @@ SetSubFieldsStyle('subcatalog_properties_table');
 		$stores = array();
 		$storeLink = array();
 		$storeCount = 0;
-		$permissionFilter = $accessController->getEntityFilter(
-			ActionDictionary::ACTION_STORE_VIEW,
-			Catalog\StoreTable::class
-		);
+		$permissionFilter = [];
+		if (Loader::includeModule('crm'))
+		{
+			$permissionFilter = $accessController->getEntityFilter(
+				ActionDictionary::ACTION_STORE_VIEW,
+				Catalog\StoreTable::class
+			);
+		}
 		$iterator = Catalog\StoreTable::getList(array(
 			'select' => array('ID', 'TITLE', 'ADDRESS', 'SORT'),
 			'filter' => array_merge(

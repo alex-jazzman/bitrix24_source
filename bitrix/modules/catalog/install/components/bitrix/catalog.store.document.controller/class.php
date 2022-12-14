@@ -9,12 +9,14 @@ use Bitrix\Main\Loader;
 use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\v2\Contractor\Provider\Manager;
 
 class CatalogStoreDocumentControllerComponent extends CBitrixComponent
 {
 	private const URL_TEMPLATE_DOCUMENT = 'document';
 	private const URL_TEMPLATE_DOCUMENT_LIST = 'list';
 	private const URL_TEMPLATE_CONTRACTORS_LIST = 'contractors';
+	private const URL_TEMPLATE_CONTRACTORS_CONTACTS = 'contractors_contacts';
 	private const URL_TEMPLATE_DOCUMENT_SHIPMENT = 'sales_order';
 	private const URL_TEMPLATE_ERROR = 'error';
 
@@ -53,6 +55,9 @@ class CatalogStoreDocumentControllerComponent extends CBitrixComponent
 		}
 		$this->arResult['VARIABLES'] = $variables;
 
+		$this->arResult['IS_CRM_CONTRACTORS_PROVIDER'] = Manager::isActiveProviderByModule('crm');
+		$this->arResult['CONTRACTORS_MIGRATION_PROGRESS'] = Manager::getMigrationProgressHtml();
+
 		$this->includeComponentTemplate($template);
 	}
 
@@ -72,6 +77,7 @@ class CatalogStoreDocumentControllerComponent extends CBitrixComponent
 			self::URL_TEMPLATE_DOCUMENT_LIST => '#DOCUMENT_TYPE#/',
 			self::URL_TEMPLATE_DOCUMENT => 'details/#DOCUMENT_ID#/',
 			self::URL_TEMPLATE_CONTRACTORS_LIST => 'contractors/',
+			self::URL_TEMPLATE_CONTRACTORS_CONTACTS => 'contractors_contacts/',
 			self::URL_TEMPLATE_DOCUMENT_SHIPMENT => 'details/sales_order/#DOCUMENT_ID#/',
 		];
 	}
@@ -137,7 +143,7 @@ class CatalogStoreDocumentControllerComponent extends CBitrixComponent
 			$redirectUrl = (new \Bitrix\Main\Web\Uri($defaultUrl))
 				->addParams([
 					'inventoryManagementSource' => 'inventory',
-					]);
+				]);
 
 			LocalRedirect($redirectUrl);
 		}

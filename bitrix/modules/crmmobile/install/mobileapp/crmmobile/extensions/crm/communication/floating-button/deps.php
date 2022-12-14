@@ -1,6 +1,8 @@
 <?php
+
 return [
 	'extensions' => [
-		'crm:communication/button'
+		'crm:communication/button',
+		'utils/array',
 	],
 ];

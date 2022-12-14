@@ -2,6 +2,7 @@
 
 namespace Bitrix\CrmMobile\Command;
 
+use Bitrix\Crm\Currency;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\FileUploader\EntityFieldController;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
@@ -85,6 +86,7 @@ final class SaveEntityCommand extends Command
 			$this->prepareComment($data);
 			$this->prepareFields($data);
 			$this->prepareMultiFields($data);
+			$this->prepareCurrencyIdForCompanyRevenue($data);
 
 			$result->setData($data);
 		}
@@ -231,13 +233,22 @@ final class SaveEntityCommand extends Command
 
 	private function prepareDatetimeField(Field $field, &$data): void
 	{
-		$createFromTimestamp = static fn ($timestamp) => (
-			$field->getType() === Field::TYPE_DATETIME
-				? DateTime::createFromTimestamp($timestamp)
-				: Date::createFromTimestamp($timestamp)
-		);
-
+		$isDateTimeField = $field->getType() === Field::TYPE_DATETIME;
+		$timezoneOffset = \CTimeZone::getOffset();
 		$useTimezone = ($field->getUserField()['SETTINGS']['USE_TIMEZONE'] ?? 'Y') === 'Y';
+
+		$createFromTimestamp = static function ($timestamp) use ($isDateTimeField, $timezoneOffset, $useTimezone) {
+			$object = $isDateTimeField
+				? DateTime::createFromTimestamp($timestamp)
+				: Date::createFromTimestamp($timestamp + $timezoneOffset);
+
+			if ($isDateTimeField && !$useTimezone)
+			{
+				$object = $object->toUserTime();
+			}
+
+			return $object;
+		};
 
 		if ($field->isMultiple())
 		{
@@ -248,11 +259,6 @@ final class SaveEntityCommand extends Command
 					if (!empty($value))
 					{
 						$data[$key] = $createFromTimestamp($value);
-
-						if (!$useTimezone)
-						{
-							$data[$key] = $data[$key]->toUserTime();
-						}
 					}
 					else
 					{
@@ -264,11 +270,6 @@ final class SaveEntityCommand extends Command
 		else
 		{
 			$data = $createFromTimestamp($data);
-
-			if (!$useTimezone)
-			{
-				$data = $data->toUserTime();
-			}
 		}
 	}
 
@@ -339,7 +340,7 @@ final class SaveEntityCommand extends Command
 		}
 		else
 		{
-			$data = null;
+			$data = $field->isMultiple() ? [] : null;
 		}
 	}
 
@@ -488,6 +489,22 @@ final class SaveEntityCommand extends Command
 
 			$fields['FM'][$name] = $fmValues;
 		}
+	}
+
+	private function prepareCurrencyIdForCompanyRevenue(array &$fields): void
+	{
+		if ($this->entity->getEntityTypeId() !== \CCrmOwnerType::Company)
+		{
+			return;
+		}
+
+		if (!$this->entity->hasField(Item::FIELD_NAME_CURRENCY_ID))
+		{
+			return;
+		}
+
+		$fields['CURRENCY_ID'] ??= $this->entity->getCurrencyId();
+		$fields['CURRENCY_ID'] = $fields['CURRENCY_ID'] ?: Currency::getBaseCurrencyId();
 	}
 
 	private function saveFactoryBasedEntities(array $fields): Result

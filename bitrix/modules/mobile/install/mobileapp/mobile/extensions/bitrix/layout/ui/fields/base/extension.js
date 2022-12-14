@@ -10,7 +10,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	const { isEqual, mergeImmutable } = require('utils/object');
 	const { capitalize, stringify } = require('utils/string');
 	const { isNil } = require('utils/type');
-	const { arrowDown } = require('assets/common');
+	const { arrowDown, arrowUp } = require('assets/common');
 
 	const ERROR_TEXT_COLOR = '#ff5752';
 	const TitlePosition = {
@@ -56,6 +56,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			this.customContentClickHandler = null;
 
 			this.fieldContainerRef = null;
+			this.showHideButton = false;
 		}
 
 		componentDidMount()
@@ -1195,9 +1196,65 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 						color: '#a8adb4',
 						fontSize: 13,
 					},
-					text: `${BX.message('FIELDS_BASE_SHOW_ALL')} ${hiddenFieldsCount}`,
+					text: `${BX.message('FIELDS_BASE_SHOW_ALL')} ${this.showAllCount() ? hiddenFieldsCount : ''}`,
 				}),
 			);
+		}
+
+		renderHideButton()
+		{
+			if (this.state.showAll && this.showHideButton)
+			{
+				return View(
+					{
+						style: {
+							flexDirection: "row",
+							paddingTop: 3,
+							paddingBottom: 6,
+						},
+						onClick: () => {
+							this.setState({
+								showAll: false,
+							});
+						},
+					},
+					View(
+						{
+							style: {
+								width: 20,
+								height: 20,
+								justifyContent: 'center',
+								alignItems: 'center',
+							},
+						},
+						Image({
+							style: {
+								width: 12,
+								height: 7,
+							},
+							resizeMode: 'cover',
+							svg: {
+								content: arrowUp(),
+							},
+						}),
+					),
+					Text({
+						style: {
+							flex: 1,
+							color: '#a8adb4',
+							fontSize: 13,
+						},
+						text: `${BX.message('FIELDS_BASE_HIDE')}`,
+					}),
+				);
+			}
+
+			return null;
+		}
+
+		showAllCount()
+		{
+			return true;
 		}
 	}
 

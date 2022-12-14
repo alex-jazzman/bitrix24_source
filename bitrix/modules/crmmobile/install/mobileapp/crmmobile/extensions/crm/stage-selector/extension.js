@@ -15,6 +15,11 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 	const STAGE_MARGIN = 8;
 	const FIRST_STAGE_VIEW_WIDTH = 16;
 
+	const AnimationMode = {
+		UPDATE_BEFORE_ANIMATION: 'updateBeforeAnimation',
+		ANIMATE_BEFORE_UPDATE: 'animateBeforeUpdate',
+	};
+
 	/**
 	 * @class StageSelector
 	 */
@@ -24,17 +29,39 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 		{
 			super(props);
 
-			const { activeStageId } = props;
+			this.randomUid = Random.getString(10);
 
 			this.state = {
 				category: this.getCategoryByProps(props),
-				activeStageId,
+				activeStageId: props.activeStageId,
 			};
 
-			this.uid = (props.uid || Random.getString(10));
-
 			this.handleStageClick = throttle(this.handleStageClick, 500, this);
-			this.prevActiveStageId = null;
+		}
+
+		componentWillReceiveProps(newProps)
+		{
+			this.state.activeStageId = newProps.activeStageId;
+			this.state.category = this.getCategoryByProps(newProps);
+		}
+
+		componentDidMount()
+		{
+			CategoryStorage
+				.subscribeOnChange(() => this.reloadCategory())
+				.subscribeOnLoading(({ status }) => NavigationLoader.setLoading(status))
+				.markReady()
+			;
+		}
+
+		get uid()
+		{
+			return this.props.uid || this.randomUid;
+		}
+
+		get animationMode()
+		{
+			return BX.prop.getString(this.props, 'animationMode', AnimationMode.UPDATE_BEFORE_ANIMATION);
 		}
 
 		getCategoryByProps(props)
@@ -44,14 +71,6 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			return CategoryStorage.getCategory(entityTypeId, categoryId);
 		}
 
-		componentDidMount()
-		{
-			CategoryStorage
-				.subscribeOnChange(() => this.reloadCategory())
-				.subscribeOnLoading(({ status }) => NavigationLoader.setLoading(status))
-				.markReady();
-		}
-
 		reloadCategory()
 		{
 			const category = this.getCategoryByProps(this.props);
@@ -59,19 +78,6 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			{
 				this.setState({ category });
 			}
-		}
-
-		componentWillReceiveProps(newProps)
-		{
-			const { activeStageId } = newProps;
-
-			if (this.props.categoryId !== newProps.categoryId)
-			{
-				this.prevActiveStageId = null;
-			}
-
-			this.state.category = this.getCategoryByProps(newProps);
-			this.state.activeStageId = activeStageId;
 		}
 
 		isReadonly()
@@ -103,11 +109,6 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			return [...processStages, ...successStages, ...failedStages];
 		}
 
-		componentDidUpdate(prevProps, prevState)
-		{
-			//this.animate();
-		}
-
 		getStageIndexById(stages, stageId)
 		{
 			return Math.max(stages.findIndex(({ id }) => id === stageId), 0);
@@ -119,10 +120,8 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			{
 				return this.props.hasHiddenEmptyView ? FIRST_STAGE_VIEW_WIDTH : STAGE_MARGIN + FIRST_STAGE_VIEW_WIDTH;
 			}
-			else
-			{
-				return activeIndex * (-STAGE_WIDTH - STAGE_MARGIN) + FIRST_STAGE_VIEW_WIDTH + 2 * STAGE_MARGIN;
-			}
+
+			return activeIndex * (-STAGE_WIDTH - STAGE_MARGIN) + FIRST_STAGE_VIEW_WIDTH + 2 * STAGE_MARGIN;
 		}
 
 		openStageList(activeStageId)
@@ -199,32 +198,86 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			}
 		}
 
-		changeActiveStageId(activeStageId, category, data)
+		changeActiveStageId(selectedStageId, category, data)
 		{
-			if (this.isReadonly() || this.state.activeStageId === activeStageId)
+			const { activeStageId } = this.state;
+
+			if (this.isReadonly() || activeStageId === selectedStageId)
 			{
 				return;
 			}
 
-			this.prevActiveStageId = this.state.activeStageId;
-
 			const { onStageSelect } = this.props;
 			if (typeof onStageSelect === 'function')
 			{
-				onStageSelect(activeStageId, category, data).then((response) => {
-					this.setState({ activeStageId: response.columnId || activeStageId });
-				});
+				if (this.animationMode === AnimationMode.ANIMATE_BEFORE_UPDATE)
+				{
+					onStageSelect(selectedStageId, category, data)
+						.then(({ action } = {}) => {
+							if (action === 'delete')
+							{
+								return Promise.reject();
+							}
+
+							return this.updateBeforeAnimation(selectedStageId);
+						})
+						.then(() => {
+							if (this.props.forceUpdate)
+							{
+								this.props.forceUpdate({
+									data,
+									columnId: selectedStageId,
+								});
+							}
+						})
+					;
+				}
+				else
+				{
+					this.prevActiveStageId = activeStageId;
+
+					onStageSelect(selectedStageId, category, data)
+						.then(() => this.animate(selectedStageId))
+					;
+				}
 			}
-			else
-			{
-				this.setState({ activeStageId });
-			}
+		}
+
+		updateBeforeAnimation(selectedStageId)
+		{
+			return new Promise((resolve) => {
+				this.setState({ nextStageId: selectedStageId }, () => this.animate(selectedStageId, resolve));
+			});
+		}
+
+		animate(stageId, resolve)
+		{
+			const activeIndex = this.getStageIndexById(this.currentStages, stageId);
+			const offset = this.getCurrentSliderPosition(this.currentStages, activeIndex);
+
+			this.stageSliderRef.animate(
+				{
+					duration: 500,
+					left: offset,
+				},
+				() => {
+					if (this.animationMode === AnimationMode.ANIMATE_BEFORE_UPDATE)
+					{
+						this.setState({
+							activeStageId: this.state.nextStageId,
+							nextStageId: null,
+						}, () => resolve && resolve());
+					}
+					else
+					{
+						resolve && resolve();
+					}
+				},
+			);
 		}
 
 		render()
 		{
-			this.animate();
-
 			return View(
 				{
 					style: {
@@ -248,52 +301,40 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 							flexDirection: 'row',
 							flex: 1,
 							borderBottomWidth: 1,
-							borderBottomColor: this.showBorder() ? this.props.borderColor: null,
+							borderBottomColor: this.showBorder() ? this.props.borderColor : null,
 						},
 					},
 				),
 			);
 		}
 
-		animate()
-		{
-			if (this.prevActiveStageId && this.state.activeStageId !== this.prevActiveStageId)
-			{
-				setTimeout(() => {
-					const activeIndex = this.getStageIndexById(this.currentStages, this.state.activeStageId);
-
-					this.stageSliderRef.animate(
-						{
-							delay: 100,
-							duration: 500,
-							left: this.getCurrentSliderPosition(this.currentStages, activeIndex),
-						},
-					);
-				}, 100);
-			}
-		}
-
 		renderStageSlider()
 		{
+			const { activeStageId, nextStageId } = this.state;
+
 			this.currentStages = this.getSliderStages();
-			const activeIndex = this.getStageIndexById(this.currentStages, this.state.activeStageId);
-			let currentPosition;
-			if (this.prevActiveStageId && this.prevActiveStageId !== this.state.activeStageId)
+
+			let activeIndex;
+			let prevIndex;
+
+			if (this.animationMode === AnimationMode.ANIMATE_BEFORE_UPDATE)
 			{
-				const prevIndex = this.getStageIndexById(this.currentStages, this.prevActiveStageId);
-				currentPosition = this.getCurrentSliderPosition(this.currentStages, prevIndex);
+				activeIndex = this.getStageIndexById(this.currentStages, nextStageId || activeStageId);
+				prevIndex = this.getStageIndexById(this.currentStages, activeStageId);
 			}
 			else
 			{
-				currentPosition = this.getCurrentSliderPosition(this.currentStages, activeIndex);
+				activeIndex = this.getStageIndexById(this.currentStages, activeStageId);
+				prevIndex = this.getStageIndexById(this.currentStages, this.prevActiveStageId || activeStageId);
 			}
 
+			const currentPosition = this.getCurrentSliderPosition(this.currentStages, prevIndex);
 			const renderedStages = this.currentStages.map((stage, index) => {
 				return this.renderStage(
 					stage,
 					index,
 					activeIndex,
-					this.state.activeStageId,
+					activeStageId,
 				);
 			});
 
@@ -306,7 +347,7 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 						position: 'absolute',
 						top: 0,
 						//animation fix (create new object on each render)
-						left: this.state.activeStageId % 2 ? currentPosition : currentPosition + 0.1,
+						left: activeStageId % 2 ? currentPosition - Math.random() : currentPosition + Math.random(),
 					},
 					ref: (ref) => this.stageSliderRef = ref,
 				},
@@ -317,14 +358,21 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 		getSliderStages()
 		{
 			const stages = this.getStagesFromCategory();
-			const activeIndex = this.getStageIndexById(stages, this.state.activeStageId);
+			let activeIndex, prevIndex;
 
-			if (!this.prevActiveStageId)
+			if (this.animationMode === AnimationMode.ANIMATE_BEFORE_UPDATE)
 			{
-				return this.getInitialSliderStages(stages, activeIndex);
+				const prevStage = this.state.nextStageId || this.state.activeStageId;
+
+				activeIndex = this.getStageIndexById(stages, this.state.activeStageId);
+				prevIndex = this.getStageIndexById(stages, prevStage);
+			}
+			else
+			{
+				activeIndex = this.getStageIndexById(stages, this.state.activeStageId);
+				prevIndex = this.getStageIndexById(stages, this.prevActiveStageId);
 			}
 
-			const prevIndex = this.getStageIndexById(stages, this.prevActiveStageId);
 			if (prevIndex === activeIndex)
 			{
 				return this.getInitialSliderStages(stages, activeIndex);
@@ -546,5 +594,5 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			return `<svg width="15" height="34" viewBox="0 0 15 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0H0.314926C2.30669 0 4.16862 0.9884 5.28463 2.63814L13.8629 15.3191C14.5498 16.3344 14.5498 17.6656 13.8629 18.6809L5.28463 31.3619C4.16863 33.0116 2.30669 34 0.314926 34H0V0Z" fill="${backgroundColor}"/><path d="M0 31H5.5L5.2812 31.3282C4.1684 32.9974 2.29502 34 0.288897 34H0V31Z" fill="${borderColor}"/></svg>`;
 		},
 	};
-	module.exports = { StageSelector };
+	module.exports = { StageSelector, AnimationMode };
 });

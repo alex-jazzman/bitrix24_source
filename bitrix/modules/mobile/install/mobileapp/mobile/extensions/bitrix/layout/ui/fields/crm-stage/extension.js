@@ -5,11 +5,12 @@ jn.define('layout/ui/fields/crm-stage', (require, exports, module) => {
 
 	const { BaseField } = require('layout/ui/fields/base');
 
-	let StageSelector;
+	let StageSelector, AnimationMode;
 
 	try
 	{
 		StageSelector = jn.require('crm/stage-selector').StageSelector;
+		AnimationMode = jn.require('crm/stage-selector').AnimationMode;
 	}
 	catch (e)
 	{
@@ -29,6 +30,12 @@ jn.define('layout/ui/fields/crm-stage', (require, exports, module) => {
 
 			this.handleChange = this.handleChange.bind(this);
 			this.afterContentStyles = null;
+			this.forceUpdateHandler = this.forceUpdate.bind(this);
+		}
+
+		get animationMode()
+		{
+			return BX.prop.getString(this.getConfig(), 'animationMode', AnimationMode.UPDATE_BEFORE_ANIMATION);
 		}
 
 		getConfig()
@@ -107,6 +114,8 @@ jn.define('layout/ui/fields/crm-stage', (require, exports, module) => {
 					hasHiddenEmptyView: this.hasHiddenEmptyView(),
 					showBorder: this.showBorder(),
 					borderColor: this.getExternalWrapperBorderColor(),
+					forceUpdate: this.forceUpdateHandler,
+					animationMode: this.animationMode,
 				}),
 				View(
 					{
@@ -120,6 +129,14 @@ jn.define('layout/ui/fields/crm-stage', (require, exports, module) => {
 					},
 				),
 			);
+		}
+
+		forceUpdate(params)
+		{
+			if (this.props.forceUpdate)
+			{
+				this.props.forceUpdate(params);
+			}
 		}
 
 		getDefaultStyles()

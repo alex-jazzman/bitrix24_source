@@ -68,7 +68,8 @@ if(!empty($arResult["Post"]))
 				"ATTACHED_IMAGE_MAX_WIDTH_FULL" => 640,
 				"ATTACHED_IMAGE_MAX_HEIGHT_FULL" => 832,
 				"CAN_USER_COMMENT" => (!isset($arResult["CanComment"]) || $arResult["CanComment"] ? 'Y' : 'N'),
-				"NAV_TYPE_NEW" => "Y"
+				"NAV_TYPE_NEW" => "Y",
+				'UNREAD_BLOG_COMMENT_ID' => ($arParams['UNREAD_BLOG_COMMENT_ID'] ?? []),
 			),
 			$component,
 			array("HIDE_ICONS" => "Y")
@@ -174,6 +175,12 @@ if(!empty($arResult["Post"]))
 			 data-livefeed-post-read-only="<?=((bool)$arResult['ReadOnly'] ? 'Y' : 'N')?>"
 			 data-livefeed-post-content-type-id="BLOG_POST"
 			 data-livefeed-post-content-id="<?=(int)$arResult['Post']['ID']?>"
+			 data-livefeed-unread-log-comment-id-data=""
+			 data-livefeed-unread-blog-comment-id-data="<?= \CUtil::JSEscape(implode(' ', (
+				is_array($arParams['UNREAD_BLOG_COMMENT_ID'])
+					? $arParams['UNREAD_BLOG_COMMENT_ID']
+					: []
+			 ))) ?>"
 		><?php
 			?><div id="post_item_top_wrap_<?=(int)$arParams["LOG_ID"]?>" class="<?=implode(' ', $topWrapClassList)?>"><?php
 				?><div class="post-item-top" id="post_item_top_<?=(int)$arParams["LOG_ID"]?>"><?php
@@ -915,6 +922,8 @@ if(!empty($arResult["Post"]))
 							"CAN_USER_COMMENT" => (!isset($arResult["CanComment"]) || $arResult["CanComment"] ? 'Y' : 'N'),
 							"NAV_TYPE_NEW" => "Y",
 							"SITE_TEMPLATE_ID" => (!empty($arParams["SITE_TEMPLATE_ID"]) ? $arParams["SITE_TEMPLATE_ID"] : ''),
+							'UNREAD_BLOG_COMMENT_ID' => ($arParams['UNREAD_BLOG_COMMENT_ID'] ?? []),
+							'MARK_NEW_COMMENTS' => 'Y',
 						),
 						$component,
 						array("HIDE_ICONS" => "Y")

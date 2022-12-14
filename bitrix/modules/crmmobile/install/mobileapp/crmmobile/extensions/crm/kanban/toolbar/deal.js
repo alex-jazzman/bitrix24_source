@@ -165,21 +165,24 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 			this.removeFromStageCounters(oldColumnId, oldAmount);
 		}
 
-		handleOnItemMoved(params)
+		handleOnItemMoved({ oldItem, item, resolveParams = {} })
 		{
-			const oldColumnId = params.oldItem.data.columnId;
-			const columnId = params.item.data.columnId;
+			const oldColumnId = oldItem.data.columnId;
+			const columnId = item.data.columnId;
 
 			if (oldColumnId === columnId)
 			{
 				return;
 			}
 
-			const amount = params.item.data.price;
+			const amount = item.data.price;
 			this.addToStageCounters(columnId, amount);
 			this.removeFromStageCounters(oldColumnId, amount);
 
-			this.blinkItem(params.item.id);
+			const { action } = resolveParams;
+			const showUpdated = action !== 'delete';
+
+			this.blinkItem(item.id, showUpdated);
 		}
 
 		addToStageCounters(columnId, amount, addCount = 1)
@@ -249,7 +252,10 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 		{
 			if (this.stageToolbarRef)
 			{
-				this.stageToolbarRef.handleSelectorClick();
+				const stages = this.getCategoryCounters();
+				const unsuitableStages = stages.filter(stage => stage.dropzone).map(stage => stage.id);
+
+				this.stageToolbarRef.handleSelectorClick(unsuitableStages);
 			}
 		}
 
@@ -509,6 +515,7 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 								category,
 								activeStageId,
 								showAllStages: true,
+								clickable: false,
 								onStageSelect: ({ id }) => this.updateCurrentColumnId(id),
 								stageParams: {
 									showTotal: true,

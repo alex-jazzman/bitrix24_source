@@ -29,24 +29,12 @@ class Item
 	{
 		$document = $this->document;
 
-		$this->prepareContractor($document);
 		$this->prepareResponsible($document);
-
-		$data = [];
-		if (isset($document['CONTRACTOR_PERSON_NAME']))
-		{
-			$data['CONTRACTOR_PERSON_NAME'] = $document['CONTRACTOR_PERSON_NAME'];
-		}
-		if (isset($document['CONTRACTOR_COMPANY']))
-		{
-			$data['CONTRACTOR_COMPANY'] = $document['CONTRACTOR_COMPANY'];
-		}
 
 		$dp = StoreDocumentProvider::createByArray($document, [
 			'skipFiles' => true,
 			'skipProducts' => true,
 			'skipUsers' => isset($document['USER_INFO']),
-			'data' => $data,
 		]);
 
 		$entityData = $dp->getEntityData();
@@ -62,21 +50,6 @@ class Item
 			'statuses' => $this->getStatus($document),
 			'fields' => $this->getFields($dp),
 		]);
-	}
-
-	protected function prepareContractor(array &$document): void
-	{
-		if (isset($document['CATALOG_STORE_DOCUMENT_CONTRACTOR_ID']))
-		{
-			$document['CONTRACTOR_ID'] = $document['CATALOG_STORE_DOCUMENT_CONTRACTOR_ID'];
-			$document['CONTRACTOR_PERSON_NAME'] = $document['CATALOG_STORE_DOCUMENT_CONTRACTOR_PERSON_NAME'];
-			$document['CONTRACTOR_COMPANY'] = $document['CATALOG_STORE_DOCUMENT_CONTRACTOR_COMPANY'];
-			unset(
-				$document['CATALOG_STORE_DOCUMENT_CONTRACTOR_ID'],
-				$document['CATALOG_STORE_DOCUMENT_CONTRACTOR_PERSON_NAME'],
-				$document['CATALOG_STORE_DOCUMENT_CONTRACTOR_COMPANY'],
-			);
-		}
 	}
 
 	protected function prepareResponsible(array &$document): void
@@ -149,6 +122,15 @@ class Item
 				$fieldConfig['entityList'] = ($entityData[$fieldConfig['name'] . '_ENTITY_LIST'] ?? []);
 				$fieldConfig['config']['entityList'] = ($entityData[$fieldConfig['name'] . '_ENTITY_LIST'] ?? []);
 				$value = ($fieldConfig['config']['entityList'] ? current($fieldConfig['config']['entityList'])['id'] : null);
+			}
+			elseif ($fieldConfig['type'] === 'client_light')
+			{
+				$value = [
+					'company' => $entityData[$fieldConfig['data']['info']]['COMPANY_DATA'],
+					'contact' => $entityData[$fieldConfig['data']['info']]['CONTACT_DATA'],
+				];
+
+				$fieldConfig['entityList'] = $value;
 			}
 			else
 			{

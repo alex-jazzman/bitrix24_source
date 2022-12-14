@@ -13,6 +13,12 @@ class Company extends ListEntity
 		'ASSIGNED_BY_ID',
 	];
 
+	protected const FIELD_ALIASES = [
+		'ASSIGNED_BY' => 'ASSIGNED_BY_ID',
+		'CREATED_BY' => 'CREATED_BY_ID',
+		'MODIFY_BY' => 'MODIFY_BY_ID',
+	];
+
 	public function getEntityType(): string
 	{
 		return \CCrmOwnerType::CompanyName;
@@ -21,11 +27,6 @@ class Company extends ListEntity
 	protected function getEntityClass(): \CCrmCompany
 	{
 		return new \CCrmCompany();
-	}
-
-	protected function getDefaultSearchPresets(int $currentCategoryId = 0): array
-	{
-		return (new \Bitrix\Crm\Filter\Preset\Company())->getDefaultPresets();
 	}
 
 	protected function getClient(array $item, array $params = []): ?array

@@ -13824,11 +13824,12 @@ class CCrmExternalChannelConnectorRestProxy  extends CCrmRestProxyBase
 				$fields = $this->resolveArrayParam($arParams, 'fields');
 
 				$entity->prepareFields($fields);
+				$error = [];
 				$entity->checkFields($fields, $error);
 
 				$this->internalizeFields($fields, $fieldsInfo, array());
 
-				if(count($error)<=0)
+				if(count($error) <= 0)
 				{
 					$channelId = $entity::register($fields['TYPE_ID'], $fields['ORIGINATOR_ID'], $fields);
 				}

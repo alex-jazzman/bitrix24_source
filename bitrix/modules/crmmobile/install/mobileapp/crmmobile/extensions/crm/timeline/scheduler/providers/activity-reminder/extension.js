@@ -81,6 +81,7 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 							borderRadius: 12,
 							borderWidth: 1.4,
 							borderColor: '#2fc6f6',
+							maxHeight: 226,
 						},
 					},
 					this.renderTextField(),

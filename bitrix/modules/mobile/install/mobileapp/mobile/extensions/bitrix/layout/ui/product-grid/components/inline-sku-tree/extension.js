@@ -184,8 +184,8 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 		 */
 		getFlattenPropertyValues(propertyTypeFilter, valueFormatter)
 		{
-			const allProps = get(this, 'props.OFFERS_PROP', {});
-			const selectedValues = get(this, 'props.SELECTED_VALUES', {});
+			const allProps = get(this.props, 'OFFERS_PROP', {});
+			const selectedValues = get(this.props, 'SELECTED_VALUES', {});
 			const filteredProps = Object.values(allProps).filter(propertyTypeFilter);
 
 			if (!filteredProps.length)

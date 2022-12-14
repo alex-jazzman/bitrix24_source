@@ -75,6 +75,15 @@ jn.define('in-app-url/in-app-url', (require, exports, module) => {
 				return false;
 			}
 
+			if (url.isMobileView)
+			{
+				PageManager.openPage({
+					url: url.toString(),
+				})
+
+				return false;
+			}
+
 			const route = this.findRoute(url);
 
 			if (!route)

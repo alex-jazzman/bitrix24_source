@@ -42,7 +42,7 @@ jn.define('crm/stage-toolbar', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props.stageParams, 'showCount', false);
 		}
 
-		handleSelectorClick()
+		handleSelectorClick(unsuitableStages = [])
 		{
 			if (!this.isSelectorEnabled())
 			{
@@ -58,8 +58,10 @@ jn.define('crm/stage-toolbar', (require, exports, module) => {
 				readOnly: true,
 				canMoveStages: false,
 				enableStageSelect: true,
+				clickable: false,
 				onStageSelect,
 				onViewHidden,
+				unsuitableStages,
 				stageParams: {
 					showTunnels: BX.prop.getBoolean(stageParams, 'showTunnels', false),
 					showTotal: BX.prop.getBoolean(stageParams, 'showTotal', false),
@@ -72,11 +74,17 @@ jn.define('crm/stage-toolbar', (require, exports, module) => {
 
 		render()
 		{
+			const props = {
+				style: styles.rootWrapper,
+			};
+			const clickable = BX.prop.getBoolean(this.props, 'clickable', true);
+			if (clickable)
+			{
+				props.onClick = this.isSelectorEnabled() && this.selectorClickHandler;
+			}
+
 			return View(
-				{
-					style: styles.rootWrapper,
-					onClick: this.isSelectorEnabled() && this.selectorClickHandler,
-				},
+				props,
 				this.renderStageLogo(),
 				View(
 					{

@@ -5,6 +5,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 
 	const { EntityTab } = require('crm/entity-tab');
 	const { Filter } = require('crm/entity-tab/filter');
+	const { TypePull } = require('crm/entity-tab/pull-manager');
 
 	/**
 	 * @class ListTab
@@ -119,7 +120,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 		getPullCommand(prefix)
 		{
 			const { entityTypeName } = this.props;
-			return `${prefix}_${entityTypeName}`;
+			return `${prefix}_${entityTypeName}_0`; // @todo need check this.getCurrentEntityType().isCategoriesSupported after support a smart-processes
 		}
 
 		getCurrentStatefulList()
@@ -134,7 +135,14 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 
 		isNeedProcessPull(data, context)
 		{
-			return !this.pullManager.hasEvent(data.params.eventId);
+			const { command, params } = data;
+
+			if (this.pullManager.hasEvent(params.eventId))
+			{
+				return false;
+			}
+
+			return command === this.getPullCommand(TypePull.Command);
 		}
 
 		onDetailCardUpdate(params)
@@ -145,26 +153,20 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 			}
 		}
 
-		onDetailCardCreate(params)
-		{
-			if (this.props.entityTypeId === params.entityTypeId)
-			{
-				this.reload();
-			}
-		}
-
 		reload(params = {})
 		{
 			if (params.clearFilter)
 			{
-				this.filter = new Filter();
+				this.filter = new Filter(this.getDefaultPresetId());
 				this.state.searchButtonBackgroundColor = null;
 			}
 
 			this.setState({}, () => {
 				const canUseCache = !(Boolean(this.filter.currentFilterId) || Boolean(this.filter.search));
 				this.getViewComponent().reload(
-					{},
+					{
+						forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', false),
+					},
 					{
 						useCache: canUseCache,
 					},

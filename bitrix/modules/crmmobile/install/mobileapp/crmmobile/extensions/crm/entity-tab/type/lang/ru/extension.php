@@ -36,3 +36,14 @@ $MESS['M_CRM_ENTITY_TAB_SEARCH_EMPTY_COMPANY_TITLE'] = 'Компании не н
 
 $MESS['M_CRM_ENTITY_TAB_SEARCH_EMPTY_DESCRIPTION'] = 'Попробуйте сбросить значения в фильтре или изменить запрос поиска';
 $MESS['M_CRM_ENTITY_TAB_SEARCH_WITH_TWO_OR_MORE_CATEGORIES_EMPTY_DEAL_DESCRIPTION2'] = 'Измените запрос поиска или попробуйте найти нужные сделки в других воронках';
+
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_COMMON'] = 'Элементы на этой стадии не соответствуют выбранным фильтрам';
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_LEAD'] = 'Лиды на этой стадии не соответствуют выбранным фильтрам';
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_DEAL'] = 'Сделки на этой стадии не соответствуют выбранным фильтрам';
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_CONTACT'] = 'Контакты на этой стадии не соответствуют выбранным фильтрам';
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_COMPANY'] = 'Компании на этой стадии не соответствуют выбранным фильтрам';
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_COMMON'] = 'Сбросьте все фильтры или выберите другие условия показа элементов';
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_LEAD'] = 'Сбросьте все фильтры или выберите другие условия показа лидов';
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_DEAL'] = 'Сбросьте все фильтры или выберите другие условия показа сделок';
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_CONTACT'] = 'Сбросьте все фильтры или выберите другие условия показа контактов';
+$MESS['M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_COMPANY'] = 'Сбросьте все фильтры или выберите другие условия показа компаний';

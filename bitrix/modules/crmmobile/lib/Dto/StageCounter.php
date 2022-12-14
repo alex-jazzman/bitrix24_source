@@ -20,6 +20,9 @@ final class StageCounter extends Dto
 	/** @var string|null */
 	public ?string $currency;
 
+	/** @var boolean|null */
+	public ?bool $dropzone;
+
 	public function getCasts(): array
 	{
 		return [
@@ -27,6 +30,7 @@ final class StageCounter extends Dto
 			'count' => Type::int(),
 			'total' => Type::int(),
 			'currency' => Type::string(),
+			'dropzone' => Type::bool(),
 		];
 	}
 }

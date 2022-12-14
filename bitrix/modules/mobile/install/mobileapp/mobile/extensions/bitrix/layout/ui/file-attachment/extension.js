@@ -38,6 +38,10 @@
 			{
 				uri = this.serverName + file.dataAttributes.IMAGE;
 			}
+			else if (file.url)
+			{
+				uri = file.url;
+			}
 
 			return UI.File({
 				id: file.id,

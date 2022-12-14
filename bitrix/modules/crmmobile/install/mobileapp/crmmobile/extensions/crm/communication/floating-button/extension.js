@@ -4,7 +4,9 @@
 
 jn.define('crm/communication/floating-button', (require, exports, module) => {
 
-	const { CommunicationButton } = jn.require('crm/communication/button');
+	const { CommunicationButton } = require('crm/communication/button');
+	const { uniqBy } = require('utils/array');
+	const { isEmpty } = require('utils/object');
 
 	const testId = 'CommunicationFloatingButton';
 	const BUTTON_WIDTH = 108;
@@ -24,14 +26,36 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 			};
 		}
 
-
 		setValue(value, ownerInfo)
 		{
+			const { value: prevValue } = this.state;
+
 			this.setState(
-				{ value, ownerInfo },
+				{
+					value: this.mergeValues(value, prevValue),
+					ownerInfo,
+				},
 				() => {
 					this.show();
-				});
+				},
+			);
+		}
+
+		mergeValues(value, prevValue)
+		{
+			if (isEmpty(prevValue))
+			{
+				return value;
+			}
+
+			const uniqValue = Object.keys(value).reduce((result, key) => ({
+				...result,
+				[key]: !prevValue[key]
+					? prevValue[key]
+					: uniqBy([...value[key], ...prevValue[key]], 'id'),
+			}), {});
+
+			return { ...prevValue, ...uniqValue };
 		}
 
 		show()
@@ -71,7 +95,7 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 			const { value, ownerInfo } = this.state;
 
 			return new CommunicationButton({
-				ref: (ref) => this.buttonRef = ref,
+				viewRef: (ref) => this.buttonRef = ref,
 				testId,
 				border: true,
 				horizontal: true,

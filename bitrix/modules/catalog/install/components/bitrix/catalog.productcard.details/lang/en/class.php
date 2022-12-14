@@ -10,7 +10,7 @@ $MESS["CPD_EDIT_PRODUCT_DENIED_ERROR_TITLE"] = "Insufficient permission to edit 
 $MESS["CPD_ENABLE_INVENTORY_MANAGEMENT_DENIED_ERROR_TITLE"] = "Insufficient permission to enable Inventory Management.";
 $MESS["CPD_ERROR_ADD_HIGHLOAD_BLOCK"] = "Could not create a dictionary with this name";
 $MESS["CPD_ERROR_CATALOG_SERVICES_LIMIT_EDITION"] = "Your product edition does not include Services feature.";
-$MESS["CPD_ERROR_CATALOG_SERVICES_LIMIT_TARIFF"] = "<a onclick=\"#LINK#\" style=\"cursor: pointer\">You current plan</a>  does not support services.";
+$MESS["CPD_ERROR_CATALOG_SERVICES_LIMIT_TARIFF"] = "<a onclick=\"#LINK#\" style=\"cursor: pointer\">Your current plan</a> does not support services.";
 $MESS["CPD_ERROR_EMPTY_DIRECTORY_ITEMS"] = "Add items to dictionary list";
 $MESS["CPD_ERROR_EMPTY_LIST_ITEMS"] = "Add list items";
 $MESS["CPD_ERROR_NOT_SUPPORTED_PRODUCT_TYPE"] = "The product type \"#TYPE#\" you selected is not supported by the new product form. You can view and edit this product in the Online Store area.<br>#LINK#";

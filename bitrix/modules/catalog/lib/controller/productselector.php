@@ -878,6 +878,9 @@ class ProductSelector extends JsonController
 			$fields['MEASURE'] = $this->getMeasureIdByCode($fields['MEASURE_CODE']);
 		}
 
+		$sectionId = $fields['IBLOCK_SECTION_ID'];
+		unset($fields['IBLOCK_SECTION_ID']);
+
 		$sku->setFields($fields);
 
 		if (!empty($fields['PRICES']) && is_array($fields['PRICES']))
@@ -966,9 +969,9 @@ class ProductSelector extends JsonController
 			$parentProduct->getPropertyCollection()->setValues(['BRAND_FOR_FACEBOOK' => $fields['BRANDS']]);
 		}
 
-		if (isset($fields['IBLOCK_SECTION_ID']))
+		if (isset($sectionId))
 		{
-			$parentProduct->setField('IBLOCK_SECTION_ID', $fields['IBLOCK_SECTION_ID']);
+			$parentProduct->setField('IBLOCK_SECTION_ID', $sectionId);
 		}
 
 		if (

@@ -645,6 +645,7 @@ class CatalogProductDetailsComponent
 					$fields['ID'],
 					$fields['TYPE'], // TODO: this code blocked copy service
 					$fields['IBLOCK_ID'],
+					$fields['XML_ID'],
 					$fields['PREVIEW_PICTURE'],
 					$fields['DETAIL_PICTURE'],
 					$fields['QUANTITY'],
@@ -839,6 +840,7 @@ class CatalogProductDetailsComponent
 		$baseLink->addParams([
 			'preselectedProductId' => $productId,
 			'inventoryManagementSource' => 'product',
+			'focusedTab' => 'tab_products',
 		]);
 
 		$result = [];
@@ -894,6 +896,7 @@ class CatalogProductDetailsComponent
 				$link = new Uri('/shop/documents/details/sales_order/0/?DOCUMENT_TYPE=W&inventoryManagementSource=product');
 				$link->addParams([
 					'preselectedProductId' => $productId,
+					'focusedTab' => 'tab_products',
 				]);
 			}
 			else
@@ -1720,7 +1723,13 @@ class CatalogProductDetailsComponent
 			if ($copySku)
 			{
 				$fields = $copySku->getFields();
-				unset($fields['ID'], $fields['IBLOCK_ID'], $fields['PREVIEW_PICTURE'], $fields['DETAIL_PICTURE']);
+				unset(
+					$fields['ID'],
+					$fields['IBLOCK_ID'],
+					$fields['XML_ID'],
+					$fields['PREVIEW_PICTURE'],
+					$fields['DETAIL_PICTURE']
+				);
 				$sku->setFields($fields);
 
 				$propertyValues = [];

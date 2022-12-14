@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
-		"layout/ui/entity-editor/control/combined/base",
+		'communication/connection',
+		'layout/ui/entity-editor/control/combined/base',
 	],
 ];

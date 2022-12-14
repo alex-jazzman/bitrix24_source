@@ -19,13 +19,13 @@ jn.define('layout/ui/product-grid/components/store-amount', (require, exports, m
 
 		render()
 		{
-			let amount = Number(get(this, 'props.amount', 0));
+			let amount = Number(get(this.props, 'amount', 0));
 			if (isNaN(amount))
 			{
 				amount = 0;
 			}
 
-			const measure = get(this, 'props.measure', '');
+			const measure = get(this.props, 'measure', '');
 
 			return View(
 				{

@@ -97,6 +97,10 @@ class Category extends Controller
 
 		$entity = Entity::getInstance(\CCrmOwnerType::ResolveName($entityTypeId));
 		$userId = (int)$this->getCurrentUser()->getId();
+
+		$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
+		$infoHelperId = $searchRestriction->getMobileInfoHelperId();
+
 		return [
 			'permissions' => [
 				'add' => $userPermissions->checkAddPermissions($entityTypeId, $categoryId),
@@ -107,6 +111,12 @@ class Category extends Controller
 			'link' => $entity->getDesktopLink($categoryId),
 			'counters' => $entity->getCounters($userId, $categoryId),
 			'categoryId' => $categoryId,
+			'restrictions' => [
+				'search' => [
+					'isExceeded' => $searchRestriction->isExceeded($entityTypeId),
+					'infoHelperId' => $infoHelperId,
+				],
+			],
 		];
 	}
 
@@ -287,19 +297,24 @@ class Category extends Controller
 
 		$columns = $kanban->getColumns(false, false, $filterParams);
 
-		$results = [];
+		$stages = [];
 		foreach ($columns as $column)
 		{
-			$results[] = new Dto\StageCounter([
-				'id' => $column['real_id'],
-				'total' => $column['total'],
-				'count' => $column['count'],
-				'currency' => $column['currency'],
-			]);
+			$id = (int)$column['real_id'];
+			if ($id > 0)
+			{
+				$stages[] = new Dto\StageCounter([
+					'id' => $id,
+					'total' => $column['total'],
+					'count' => $column['count'],
+					'currency' => $column['currency'],
+					'dropzone' => $column['dropzone'],
+				]);
+			}
 		}
 
 		return [
-			'stages' => $results,
+			'stages' => $stages,
 		];
 	}
 
@@ -308,7 +323,11 @@ class Category extends Controller
 		$filterParams = [];
 		$filter = $params['filter'];
 
-		if (isset($filter['presetId']))
+		if (empty($filter['presetId']))
+		{
+			$filterParams['FORCE_FILTER'] = 'Y';
+		}
+		else
 		{
 			$filterParams['FILTER_PRESET_ID'] = $filter['presetId'];
 		}
@@ -516,6 +535,7 @@ class Category extends Controller
 		{
 			$statusId = $stage->getStatusId();
 			$semanticId = $stage->getSemantics() ?? PhaseSemantics::PROCESS;
+			$semanticId = $semanticId ?: PhaseSemantics::PROCESS;
 			$color = $stageColors[$statusId]['COLOR'] ?? $stage->getColor();
 
 			$stagesBySemantics[$semanticId][] = [

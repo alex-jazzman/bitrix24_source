@@ -733,9 +733,15 @@ class Call extends Engine\Controller
 		return "call_entity_{$entityType}_{$entityId}";
 	}
 
-	protected static function getLockNameWithCallId(int $callId)
+	protected static function getLockNameWithCallId($callId): string
 	{
-		return "im_call_{$callId}";
+		//TODO: int|string after switching to php 8
+		if (is_string($callId) || is_numeric($callId))
+		{
+			return "im_call_{$callId}";
+		}
+
+		return '';
 	}
 
 	public function configureActions()

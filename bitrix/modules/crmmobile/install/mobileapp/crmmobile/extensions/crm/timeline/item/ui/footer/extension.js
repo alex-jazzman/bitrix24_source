@@ -11,6 +11,7 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 	} = require('crm/timeline/item/ui/styles');
 	const { transparent } = require('utils/color');
 	const { get } = require('utils/object');
+	const { Haptics } = require('haptics');
 
 	const nothing = () => {};
 
@@ -83,7 +84,7 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 		 */
 		get availableMenuItems()
 		{
-			const rawItems = Object.values(get(this, 'props.menu.items', {}));
+			const rawItems = Object.values(get(this.props, 'menu.items', {}));
 
 			return [ ...rawItems, ...this.hiddenButtons ];
 		}
@@ -137,7 +138,10 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 				},
 				TimelineItemButton({
 					...button,
-					onClick: () => this.onAction(button.action),
+					onClick: () => {
+						Haptics.impactLight();
+						this.onAction(button.action);
+					},
 				}),
 			);
 		}
@@ -161,7 +165,10 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 						paddingTop: 5,
 						paddingBottom: 5,
 					},
-					onClick: () => this.onAction(icon.action),
+					onClick: () => {
+						Haptics.impactLight();
+						this.onAction(icon.action);
+					},
 				},
 				Image({
 					style: {
@@ -192,7 +199,10 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 						paddingTop: 16,
 						paddingBottom: 16,
 					},
-					onClick: () => this.menu.open(),
+					onClick: () => {
+						Haptics.impactLight();
+						this.menu.open()
+					},
 				},
 				Image({
 					style: {

@@ -28,6 +28,19 @@ if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_VIEW))
 	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
 
+if (
+	!$publicMode
+	&& Loader::includeModule('sale')
+	&& Catalog\v2\Contractor\Provider\Manager::getActiveProvider()
+)
+{
+	$APPLICATION->SetTitle(Loc::getMessage("CAT_DOCS"));
+	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+	$APPLICATION->IncludeComponent("bitrix:sale.admin.page.stub", "");
+	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+	die();
+}
+
 if($ex = $APPLICATION->GetException())
 {
 	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");

@@ -117,6 +117,27 @@ jn.define('crm/entity-tab/type/deal', (require, exports, module) => {
 
 			return config;
 		}
+
+		getUnsuitableStageScreenConfig(data)
+		{
+			return {
+				title: BX.message(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_TITLE_${this.getName()}`),
+				description: BX.message(`M_CRM_ENTITY_TAB_COLUMN_USUITABLE_FOR_FILTER_DESCRIPTION_${this.getName()}`),
+				image: this.getEmptyImage(),
+			};
+		}
+		
+		getMenuActions()
+		{
+			return [
+				{
+				 	type: UI.Menu.Types.HELPDESK,
+				 	data: {
+				 		articleCode: '16758628',
+				 	},
+				},
+			];
+		}
 	}
 
 	module.exports = { Deal };

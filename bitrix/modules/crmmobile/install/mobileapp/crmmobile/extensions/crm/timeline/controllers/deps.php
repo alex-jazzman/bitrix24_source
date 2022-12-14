@@ -13,5 +13,6 @@ return [
 		'./activity',
 		'./call',
 		'./note',
+		'./helpdesk',
 	]
 ];

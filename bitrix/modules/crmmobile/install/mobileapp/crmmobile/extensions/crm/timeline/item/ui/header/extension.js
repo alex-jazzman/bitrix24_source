@@ -7,6 +7,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 	const { Checkbox } = require('crm/timeline/item/ui/header/checkbox');
 	const { PinButton } = require('crm/timeline/item/ui/header/pin-button');
 	const { Tag } = require('crm/timeline/item/ui/header/tag');
+	const { InfoHelper } = require('crm/timeline/item/ui/header/info-helper');
 	const { TimelineItemUserAvatar } = require('crm/timeline/item/ui/user-avatar');
 	const { TimelineButtonVisibilityFilter, TimelineButtonSorter } = require('crm/timeline/item/ui/styles');
 	const { Moment } = require('utils/date');
@@ -29,6 +30,8 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 		constructor(props)
 		{
 			super(props);
+
+			this.onAction = this.onAction.bind(this);
 		}
 
 		get hasIcon()
@@ -101,10 +104,14 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 							fontSize: 15,
 							fontWeight: '500',
 							color: '#333333',
-							marginRight: this.hasIcon ? 0 : 12,
+							marginRight: 6,
 						}
 					})
 				),
+				this.props.infoHelper && new InfoHelper({
+					...this.props.infoHelper,
+					onAction: this.onAction,
+				}),
 				!this.hasIcon && View(
 					{
 						style: {

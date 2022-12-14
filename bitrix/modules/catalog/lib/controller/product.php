@@ -162,8 +162,19 @@ class Product extends Controller implements EventBindInterface
 			$select = empty($select)? array_merge(['*'], $this->getAllowedFieldsProduct()):$select;
 			$order = empty($order)? ['ID'=>'ASC']:$order;
 
-			$list = self::perfGetList($select, $filter, $order, self::getNavData($pageNavigation->getOffset()));
-			$this->attachPropertyValues($list, (int)$filter['IBLOCK_ID']);
+			$groupFields = $this->splitFieldsByEntity(
+				array_flip($select)
+			);
+
+			$productFields = array_keys($groupFields['productFields']);
+			$elementFields = array_keys($groupFields['elementFields']);
+			$propertyFields = $groupFields['propertyFields'];
+
+			$propertyFields = $this->preparePropertyFields($propertyFields);
+			$propertyIds = array_keys($propertyFields);
+
+			$list = self::perfGetList(array_merge($productFields, $elementFields), $filter, $order, self::getNavData($pageNavigation->getOffset()));
+			$this->attachPropertyValues($list, (int)$filter['IBLOCK_ID'], $propertyIds);
 
 			foreach ($list as $row)
 			{
@@ -677,19 +688,21 @@ class Product extends Controller implements EventBindInterface
 	 * @param array $result
 	 * @param int $iblockId
 	 */
-	protected function attachPropertyValues(array &$result, int $iblockId): void
+	protected function attachPropertyValues(array &$result, int $iblockId, array $propertyIds = []): void
 	{
 		if ($iblockId <= 0)
 		{
 			return;
 		}
 
+		$propertyFilter = count($propertyIds)>0 ? ['ID' => $propertyIds] : [];
+
 		$propertyValues = [];
 		\CIBlockElement::getPropertyValuesArray(
 			$propertyValues,
 			$iblockId,
 			['ID' => array_keys($result)],
-			[],
+			$propertyFilter,
 			['USE_PROPERTY_ID' => 'Y']
 		);
 
@@ -752,6 +765,17 @@ class Product extends Controller implements EventBindInterface
 					}
 
 					$result[$k]['PROPERTY_' . $propId] = $value;
+				}
+			}
+			else if(count($propertyIds)>0)
+			{
+				/**
+				 * if property values are empty $propertyValues is empty
+				 */
+
+				foreach ($propertyIds as $propId)
+				{
+					$result[$k]['PROPERTY_' . $propId] = null;
 				}
 			}
 		}

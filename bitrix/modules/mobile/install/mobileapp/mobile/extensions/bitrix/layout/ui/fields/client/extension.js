@@ -54,6 +54,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			this.uid = Random.getString();
 			/** @type {EventEmitter} */
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
+			this.parentCustomEventEmitter = EventEmitter.createWithUid(this.props.uid || this.uid);
 
 			this.onEditClient = this.handleEditClient.bind(this);
 			this.onOpenBackDrop = (method) => this.handleOnOpenBackDrop.bind(this, method);
@@ -208,6 +209,8 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 
 					return ClientItem({
 						...contact,
+						phone: this.getFirst(contact.phone),
+						email: this.getFirst(contact.email),
 						readOnly: this.isReadOnly(),
 						showClientInfo: this.isShowClientInfo(),
 						onEdit: this.onEditClient,
@@ -216,6 +219,11 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				}),
 				this.renderShowAllButton(contacts.length - visibleContacts.length),
 			);
+		}
+
+		getFirst(data)
+		{
+			return Array.isArray(data) && data.length ? data[0] : data;
 		}
 
 		getVisibleContacts(contacts)
@@ -323,7 +331,6 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			const widgetParams = {
 				titleParams: { text: title },
 			};
-
 			EntityDetailOpener.open(
 				{
 					entityTypeId: Type.resolveIdByName(type),
@@ -361,6 +368,8 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 								? mergeBy(prevEntityList, entityData, 'id')
 								: [entityData];
 
+						this.communicationUpdate({ [selectorName.toUpperCase()]: [entityData] });
+
 						if (!this.isEqualEntities(selectorName, entityList))
 						{
 							if (!this.isCreateContact)
@@ -387,6 +396,11 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 					})
 					.catch(console.error);
 			}
+		}
+
+		communicationUpdate(clientData)
+		{
+			this.parentCustomEventEmitter.emit('Communication::onUpdate', [clientData]);
 		}
 
 		changeClientsList(selectorType)

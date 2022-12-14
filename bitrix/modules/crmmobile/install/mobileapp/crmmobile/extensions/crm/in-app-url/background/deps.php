@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
-		'crm:in-app-url/router',
+		'in-app-url',
+		'crm:in-app-url/url',
 	],
 ];

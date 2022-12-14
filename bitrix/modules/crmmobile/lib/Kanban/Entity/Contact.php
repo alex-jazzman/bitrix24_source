@@ -20,6 +20,12 @@ class Contact extends ListEntity
 		'ASSIGNED_BY_ID',
 	];
 
+	protected const FIELD_ALIASES = [
+		'ASSIGNED_BY' => 'ASSIGNED_BY_ID',
+		'CREATED_BY' => 'CREATED_BY_ID',
+		'MODIFY_BY' => 'MODIFY_BY_ID',
+	];
+
 	public function getEntityType(): string
 	{
 		return \CCrmOwnerType::ContactName;
@@ -40,11 +46,6 @@ class Contact extends ListEntity
 	protected function getEntityClass(): \CCrmContact
 	{
 		return new \CCrmContact();
-	}
-
-	protected function getDefaultSearchPresets(int $currentCategoryId = 0): array
-	{
-		return (new \Bitrix\Crm\Filter\Preset\Contact())->getDefaultPresets();
 	}
 
 	protected function appendRelatedEntitiesValues(array &$items): void

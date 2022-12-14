@@ -2,16 +2,22 @@
  * @module crm/entity-name
  */
 jn.define('crm/entity-name', (require, exports, module) => {
-	const { StringField } = require('layout/ui/fields/string');
+	const { TextAreaField } = require('layout/ui/fields/textarea');
 
 	class EntityName extends LayoutComponent
 	{
 		constructor(props)
 		{
 			super(props);
+
 			this.state = {
 				name: BX.prop.getString(this.props, 'name', ''),
 			};
+
+			this.onChangeHandler = this.onChangeHandler.bind(this);
+
+			/** @type {TextAreaField} */
+			this.textAreaField = null;
 		}
 
 		get title()
@@ -39,6 +45,14 @@ jn.define('crm/entity-name', (require, exports, module) => {
 			return BX.prop.get(this.props, 'config', {});
 		}
 
+		focus()
+		{
+			if (this.textAreaField)
+			{
+				this.textAreaField.focus();
+			}
+		}
+
 		render()
 		{
 			return View(
@@ -52,35 +66,31 @@ jn.define('crm/entity-name', (require, exports, module) => {
 						backgroundColor: '#fff',
 					},
 				},
-				StringField({
+				TextAreaField({
+					ref: (ref) => this.textAreaField = ref,
 					title: this.title,
 					value: this.state.name,
 					placeholder: this.placeholder,
 					required: this.required,
 					showRequired: this.showRequired,
 					config: this.config,
-					onChange: (value) => {
-						const { onChange } = this.props;
-						this.setState({
-							name: value,
-						}, () => {
-							if (onChange)
-							{
-								onChange(this.state.name);
-							}
-						});
-					},
+					onChange: this.onChangeHandler,
 				}),
 			);
 		}
 
-		onChange()
+		onChangeHandler(name)
+		{
+			this.setState({ name }, () => this.onAfterChange(name));
+		}
+
+		onAfterChange(name)
 		{
 			const { onChange } = this.props;
 
 			if (onChange)
 			{
-				onChange(this.state.name);
+				onChange(name);
 			}
 		}
 	}

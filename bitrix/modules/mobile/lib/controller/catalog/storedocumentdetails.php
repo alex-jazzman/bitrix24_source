@@ -34,6 +34,7 @@ use Bitrix\UI\FileUploader\PendingFileCollection;
 use Bitrix\UI\FileUploader\Uploader;
 use CCatalogStoreDocsBarcode;
 use Bitrix\Catalog\Access;
+use Bitrix\Catalog\v2\Contractor\Provider\Manager;
 
 Loader::requireModule('catalog');
 
@@ -178,6 +179,8 @@ class StoreDocumentDetails extends Controller
 			$this->updateCatalogProducts($data['PRODUCTS']);
 		}
 
+		$this->updateCatalogContractor($documentId, $data);
+
 		return $documentId;
 	}
 
@@ -242,6 +245,8 @@ class StoreDocumentDetails extends Controller
 			$this->updateDocumentProductRecords($entityId, $data['PRODUCTS']);
 			$this->updateCatalogProducts($data['PRODUCTS']);
 		}
+
+		$this->updateCatalogContractor($entityId, $data);
 
 		return $entityId;
 	}
@@ -756,6 +761,19 @@ class StoreDocumentDetails extends Controller
 			{
 				$this->addNonCriticalErrors($result->getErrors());
 			}
+		}
+	}
+
+	/**
+	 * @param int $entityId
+	 * @param array $data
+	 */
+	private function updateCatalogContractor(int $entityId, array $data): void
+	{
+		$contractorsProvider = Manager::getActiveProvider();
+		if ($contractorsProvider)
+		{
+			$contractorsProvider::onAfterDocumentSaveSuccessForMobile($entityId, $data);
 		}
 	}
 

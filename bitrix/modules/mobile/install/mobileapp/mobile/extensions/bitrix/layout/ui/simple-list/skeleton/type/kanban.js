@@ -72,7 +72,6 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 						style: {
 							flexDirection: 'row',
 							alignItems: 'flex-start',
-							justifyContent: 'space-between',
 							marginTop: 7,
 							marginBottom: 24,
 						},
@@ -96,7 +95,15 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 							},
 						}),
 					),
-					this.renderLine(170, 34),
+					View(
+						{
+							style: {
+								flexDirection: 'row',
+								marginLeft: 20,
+							},
+						},
+						this.renderLine('100%', 34),
+					),
 				),
 				View(
 					{

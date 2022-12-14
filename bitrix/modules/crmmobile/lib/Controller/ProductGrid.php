@@ -22,6 +22,13 @@ class ProductGrid extends JsonController
 	use PrimaryAutoWiredEntity;
 	use PublicErrorsTrait;
 
+	protected function init()
+	{
+		parent::init();
+
+		define('BX_MOBILE', true);
+	}
+
 	protected function getDefaultPreFilters(): array
 	{
 		return [

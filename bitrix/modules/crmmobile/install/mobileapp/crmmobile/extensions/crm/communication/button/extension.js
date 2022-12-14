@@ -4,28 +4,30 @@
 
 jn.define('crm/communication/button', (require, exports, module) => {
 
-	const { connections, isExistContacts } = require('communication/connection');
+	const { PhoneType, ImType, EmailType, isExistContacts } = require('communication/connection');
 	const { CommunicationMenu } = require('communication/menu');
 	const { isEmpty, merge } = require('utils/object');
 	const communicationIcons = require('assets/communication');
+
 	const ICON_SIZE = 28;
 	const ICON_COLOR = {
-		ENABLED: '#378EE7',
-		DISABLED: '#D5D7DB',
+		ENABLED: '#378ee7',
+		DISABLED: '#d5d7db',
 	};
+	const connections = [PhoneType, ImType, EmailType];
 
 	class CommunicationButton extends LayoutComponent
 	{
 		render()
 		{
-			const { ref, testId } = this.props;
+			const { viewRef, testId } = this.props;
 
 			this.availableConnections = this.getExistConnections();
 			const { main, wrapper } = this.styles();
 
 			return View(
 				{
-					ref,
+					ref: viewRef,
 					testId,
 					safeArea: {
 						bottom: true,
@@ -123,7 +125,7 @@ jn.define('crm/communication/button', (require, exports, module) => {
 					paddingHorizontal: horizontal ? 6 : 4,
 					paddingVertical: horizontal ? 4 : 6,
 					borderRadius: height,
-					backgroundColor: this.hasConnections() ? '#E5F9FF' : '#F8FAFB',
+					backgroundColor: this.hasConnections() ? '#e5f9ff' : '#f8fafb',
 					flexShrink: 2,
 					justifyContent: 'space-evenly',
 					flexDirection: horizontal ? 'row' : 'column',
@@ -149,7 +151,7 @@ jn.define('crm/communication/button', (require, exports, module) => {
 			}
 
 			return {
-				borderColor: this.hasConnections() ? '#7FDEFC' : ICON_COLOR.DISABLED,
+				borderColor: this.hasConnections() ? '#7fdefc' : ICON_COLOR.DISABLED,
 				borderWidth: 1,
 			};
 		}

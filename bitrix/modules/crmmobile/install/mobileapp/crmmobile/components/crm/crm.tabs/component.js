@@ -11,6 +11,7 @@
 	const { throttle } = jn.require('utils/function');
 	const { Search } = jn.require('crm/entity-tab/search');
 	const { ActivityCountersStoreManager } = jn.require('crm/state-storage');
+	const { Type } = jn.require('crm/type');
 
 	const TAB_BIG_LABEL = '99+';
 
@@ -55,6 +56,8 @@
 			this.onTabsReSelected = this.onTabsReSelected.bind(this);
 			this.onMoneyLoad = this.onMoneyLoad.bind(this);
 			this.updateCounters = this.updateCounters.bind(this);
+			this.setActiveTab = this.setActiveTab.bind(this);
+			this.updateEntityTypeData = this.updateEntityTypeData.bind(this);
 
 			this.scrollOnTop = throttle(this.scrollOnTop, 500, this);
 		}
@@ -183,6 +186,14 @@
 			this.tabViewRef.updateItem(item.id, item);
 		}
 
+		setActiveTab(entityTypeId)
+		{
+			if (Type.existsById(entityTypeId))
+			{
+				this.tabViewRef.setActiveItem(Type.resolveNameById(entityTypeId));
+			}
+		}
+
 		getTabsFromCache()
 		{
 			const cache = Application.storage.getObject(this.tabsCacheName, {});
@@ -248,13 +259,13 @@
 					},
 					onTabSelected: (tab, changed) => this.handleTabSelected(tab, changed),
 				}),
-				this.state.activeTabTypeName && this.renderTab(),
-				this.state.activeTabTypeName && new Search({
+				this.state.activeTabTypeName && activeTab && this.renderTab(),
+				this.state.activeTabTypeName && activeTab && new Search({
 					entityTypeName: activeTab.typeName,
 					categoryId: activeTab.data.currentCategoryId,
 					getSearchDataAction: result.actions.getSearchData,
 					link: activeTab.link,
-					restrictions: BX.prop.getObject(activeTab.restrictions, 'search', {}),
+					restrictions: BX.prop.getObject(activeTab.restrictions || {}, 'search', {}),
 					layout,
 					ref: (ref) => {
 						if (ref)
@@ -497,7 +508,8 @@
 				entityTypeName: this.state.activeTabTypeName,
 				entityTypeId: this.state.activeTabId,
 				entityTypes: this.getEntityTypes(),
-				updateEntityTypeData: this.updateEntityTypeData.bind(this),
+				updateEntityTypeData: this.updateEntityTypeData,
+				setActiveTab: this.setActiveTab,
 				actions: result.actions || {},
 				actionParams: {
 					loadItems: {

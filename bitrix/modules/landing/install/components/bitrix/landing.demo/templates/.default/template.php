@@ -22,9 +22,6 @@ use \Bitrix\Main\ModuleManager;
 ]);
 
 Loc::loadMessages(__FILE__);
-Loc::loadMessages(
-	Manager::getDocRoot() . '/bitrix/components/bitrix/landing.demo/templates/.default/designed_by.php'
-);
 
 $context = \Bitrix\Main\Application::getInstance()->getContext();
 $request = $context->getRequest();
@@ -280,24 +277,16 @@ if (!$component->isAjax())
 				<?endif;?>
 				<?php if ($item['LABELS']):?>
 					<span class="landing-item-label">
-						<?=$item['LABELS'][0]['TEXT']?>
+						<?=Loc::getMessage('LANDING_TPL_LABEL_SUBSCRIPTION')?>
+					</span>
+				<?php elseif($item['TYPE'] === 'PAGE'):?>
+					<span class="landing-item-label landing-item-label-free">
+						<?=Loc::getMessage('LANDING_TPL_LABEL_FREE')?>
 					</span>
 				<?php endif;?>
 			</span>
 
 			<div class="landing-item-bottom">
-				<?php if ($item['DESIGNED_BY']):?>
-					<a class="landing-item-designed"
-						href="<?= Loc::getMessage('LANDING_TPL_DESIGNED_BY_' . $item['DESIGNED_BY'] . '_URL')?>"
-						target="_blank"
-					>
-						<?php $name = Loc::getMessage('LANDING_TPL_DESIGNED_BY_' . $item['DESIGNED_BY'] . '_NAME'); ?>
-						<?= Loc::getMessage('LANDING_TPL_DESIGN_BY', [
-							'#DESIGNER#' => $name,
-						]);?>
-					</a>
-				<?php endif;?>
-
 				<?php if (trim($item['DESCRIPTION'])):?>
 					<span class="landing-item-description">
 						<span class="landing-item-desc-inner">

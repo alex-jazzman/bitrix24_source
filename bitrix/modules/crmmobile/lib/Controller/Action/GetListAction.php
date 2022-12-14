@@ -32,7 +32,6 @@ class GetListAction extends Action
 			];
 		}
 
-		$extra['skipColumnsLoad'] = true;
 		$extra['userId'] = $this->getCurrentUser()->getId();
 		$extra['isReckonActivityLessItems'] = \CCrmUserCounterSettings::getValue(
 			\CCrmUserCounterSettings::ReckonActivitylessItems,

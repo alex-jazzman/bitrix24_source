@@ -54,7 +54,7 @@ jn.define('layout/ui/fields/client/elements/title', (require, exports, module) =
 				Text({
 						style: {
 							fontSize: 10,
-							marginBottom: 2,
+							marginBottom: Application.getPlatform() === 'android' ? 3 : 1,
 						},
 						text: BX.message(`FIELDS_${type.toUpperCase()}_TITLE`),
 					},

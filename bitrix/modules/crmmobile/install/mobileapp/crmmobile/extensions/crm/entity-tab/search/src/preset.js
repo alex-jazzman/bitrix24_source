@@ -57,6 +57,11 @@ jn.define('crm/entity-tab/search/preset', (require, exports, module) => {
 
 			return params;
 		}
+
+		isDefault()
+		{
+			return this.props.default;
+		}
 	}
 
 	module.exports = { Preset }

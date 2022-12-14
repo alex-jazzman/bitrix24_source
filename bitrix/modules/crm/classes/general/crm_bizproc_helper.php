@@ -320,7 +320,8 @@ class CCrmBizProcHelper
 		}
 
 		$session = Bizproc\Debugger\Session\Manager::getActiveSession();
-		if (!$session || !$session->isStartedInDocumentType(\CCrmBizProcHelper::ResolveDocumentType($entityTypeId)))
+		$documentType = \CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+		if (!$session || !$documentType || !$session->isStartedInDocumentType($documentType))
 		{
 			return [];
 		}

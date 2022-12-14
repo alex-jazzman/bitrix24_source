@@ -34,6 +34,16 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 			return BX.prop.get(this.props, 'uid', Random.getString());
 		}
 
+		get title()
+		{
+			return BX.prop.getString(this.props, 'title', null);
+		}
+
+		get imageUri()
+		{
+			return BX.prop.getString(this.props, 'imageUri', null);
+		}
+
 		componentDidMount()
 		{
 			this.customEventEmitter.on('onTimelineIconClicked', () => {
@@ -159,6 +169,8 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 				this.player = new Player({
 					uri: this.props.uri,
 					speed: this.speed,
+					title: this.title,
+					imageUri: this.imageUri,
 				});
 
 				this.bindPlayerEvents();

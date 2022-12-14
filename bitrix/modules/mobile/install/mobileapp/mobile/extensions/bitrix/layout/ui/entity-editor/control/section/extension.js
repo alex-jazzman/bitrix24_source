@@ -182,9 +182,17 @@
 		renderFromModel(ref)
 		{
 			let elements = this.schemeElement ? this.schemeElement.getElements() : [];
+
 			if (this.editor.isNew)
 			{
-				elements = elements.filter((element) => element.isEditable() || element.getType() === 'product_row_summary');
+				elements = elements.filter((element) => {
+					if (element.getType() === 'product_row_summary')
+					{
+						return true;
+					}
+
+					return element.isEditable() || element.isRequired();
+				});
 			}
 
 			const reversedElements = elements.reverse();

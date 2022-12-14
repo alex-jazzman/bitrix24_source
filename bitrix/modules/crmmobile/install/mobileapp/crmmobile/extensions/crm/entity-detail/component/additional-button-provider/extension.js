@@ -17,36 +17,35 @@ jn.define('crm/entity-detail/component/additional-button-provider', (require, ex
 		const entityTypeId = detailCard.getEntityTypeId();
 		const entityId = detailCard.getEntityId();
 		const { customEventEmitter } = detailCard;
-
-		const isShow = entityTypeId === TypeId.Contact
-			|| entityTypeId === TypeId.Company
-			|| entityTypeId === TypeId.Deal;
+		const isShow = [TypeId.Contact, TypeId.Company, TypeId.Deal].includes(entityTypeId);
 
 		if (!isShow || !entityId)
 		{
 			return [];
 		}
 
+		const ownerInfo = {
+			ownerId: entityId,
+			ownerTypeName: Type.resolveNameById(entityTypeId),
+		};
 		const button = new CommunicationFloatingButton();
 
 		const handleOnReady = (entityModel) => {
+
 			const contactInfo = preparationContactInfo({
 				entityModel,
 				entityTypeId,
 				entityId,
 			});
 
-			button.setValue(
-				contactInfo,
-				{
-					ownerId: entityId,
-					ownerTypeName: Type.resolveNameById(entityTypeId),
-				},
-			);
+			button.setValue(contactInfo, ownerInfo);
 		};
 
 		customEventEmitter.on('UI.EntityEditor.Model::onReady', handleOnReady);
 		customEventEmitter.on('DetailCard::onScroll', (params, tabId) => animateScrollButton(params, button, tabId, detailCard.activeTab));
+		customEventEmitter.on('Communication::onUpdate', (updateInfo) => {
+			button.setValue(updateInfo, ownerInfo);
+		});
 
 		return [button];
 	};

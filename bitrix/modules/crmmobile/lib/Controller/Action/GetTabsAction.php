@@ -106,21 +106,27 @@ class GetTabsAction extends Action
 	 */
 	private function getCurrentCategoryId(Factory $factory): int
 	{
-		if (!$factory->isCategoriesSupported() || !$factory->isCategoriesEnabled())
+		if (!$factory->isCategoriesSupported())
 		{
 			return 0;
 		}
 
-		$currentCategoryId = 0;
+		$category = $factory->getDefaultCategory();
+		$currentCategoryId = ($category ? $category->getId() : 0);
+
+		if (!$factory->isCategoriesEnabled())
+		{
+			return $currentCategoryId;
+		}
 
 		// @todo temporary support only deals,
 		// in the feature will be use factory when smart processes will be support this too
 		if ($factory->getEntityName() === \CCrmOwnerType::DealName)
 		{
-			$currentCategoryId = \CUserOptions::GetOption(
+			$currentCategoryId = (int) \CUserOptions::GetOption(
 				'crm',
 				'current_deal_category',
-				0
+				$currentCategoryId
 			);
 		}
 

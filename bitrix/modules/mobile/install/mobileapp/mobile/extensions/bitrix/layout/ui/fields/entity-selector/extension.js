@@ -219,7 +219,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 					style: {
 						flexDirection: 'column',
 						flex: 1,
-					}
+					},
 				},
 				View(
 					{
@@ -234,12 +234,18 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		renderEntities(entityList)
 		{
 			return entityList.map((entity, index) => {
+				if (!entity.title)
+				{
+					entity.hidden = true;
+				}
+
 				if (!this.state.showAll && index > 3)
 				{
 					return null;
 				}
 
 				const showDot = this.isMultiple() && entityList.length - 1 !== index || !this.state.showAll && index === 3;
+
 				return this.renderEntity(entity, showDot);
 			});
 		}

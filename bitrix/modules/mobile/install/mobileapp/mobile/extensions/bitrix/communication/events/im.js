@@ -4,7 +4,9 @@
 jn.define('communication/events/im', (require, exports, module) => {
 
 	const { BaseEvent } = require('communication/events/base');
-	const { isEmpty, has } = require('utils/object');
+	const { isOpenLine } = require('communication/connection');
+	const { NotifyManager } = require('notify-manager');
+	const { isEmpty } = require('utils/object');
 
 	const DialogOpener = () => {
 		try
@@ -21,10 +23,6 @@ jn.define('communication/events/im', (require, exports, module) => {
 		}
 	};
 
-	const IM_EVENTS = {
-		openLine: 'OPENLINE',
-	};
-
 	class ImEvent extends BaseEvent
 	{
 		prepareValue(value)
@@ -34,12 +32,7 @@ jn.define('communication/events/im', (require, exports, module) => {
 				return null;
 			}
 
-			if (!has(value, ['params', 'titleParams']))
-			{
-				return value;
-			}
-
-			const { params: { titleParams, ...restParams } } = value;
+			const { params: { titleParams = {}, ...restParams } = {} } = value;
 
 			return {
 				...value,
@@ -59,37 +52,39 @@ jn.define('communication/events/im', (require, exports, module) => {
 				return;
 			}
 
-			switch (event.toUpperCase())
+			const { value, userCode } = params;
+
+			if (isOpenLine(userCode))
 			{
-				case IM_EVENTS.openLine:
-
-					if (typeof params.value === 'string')
-					{
-						params.userCode = params.value;
-					}
-					this.showOpenLine(params, callback);
-
-					break;
-				default:
-					Application.openUrl(params.value);
-					break;
+				this.showOpenLine(params, callback);
+				return;
 			}
+
+			Application.openUrl(value);
 		}
 
 		showOpenLine(params, callback)
 		{
 			const imOpener = DialogOpener();
+
 			if (this.isApiVersionGreaterThan45 && imOpener)
 			{
+				NotifyManager.showLoadingIndicator();
+
 				imOpener
 					.openLine(params)
 					.then(() => {
+						NotifyManager.hideLoadingIndicatorWithoutFallback();
+
 						if (callback)
 						{
 							callback();
 						}
 					})
-					.catch(console.error);
+					.catch((error) => {
+						NotifyManager.hideLoadingIndicator(false);
+						console.error(error);
+					});
 			}
 			else
 			{

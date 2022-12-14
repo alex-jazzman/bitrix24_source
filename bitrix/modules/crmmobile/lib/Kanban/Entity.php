@@ -148,24 +148,25 @@ abstract class Entity
 
 	/**
 	 * @param array $presets
+	 * @param string|null $defaultPresetName
 	 * @return array
 	 */
-	protected function prepareFilterPresets(array $presets): array
+	protected function prepareFilterPresets(array $presets, ?string $defaultPresetName): array
 	{
 		$results = [];
 
-		$default = true;
 		foreach ($presets as $id => $preset)
 		{
-			$name = $preset['name'];
+			$name = html_entity_decode($preset['name'], ENT_QUOTES);
 
 			if ($id === null || $id === 'default_filter' || $id === 'tmp_filter')
 			{
 				continue;
 			}
 
+			$default = ($id === $defaultPresetName);
+
 			$results[] = compact('id', 'name', 'default');
-			$default = false;
 		}
 
 		return $results;
@@ -521,6 +522,19 @@ abstract class Entity
 		return in_array($fieldName, static::EXCLUDED_FIELDS, true);
 	}
 
+	protected function hasVisibleField(array $item, string $fieldName): bool
+	{
+		foreach ($item['fields'] as $field)
+		{
+			if ($field['code'] === $fieldName)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public function getSearchPresetsAndCounters(int $userId, ?int $currentCategoryId = null): array
 	{
 		$presets = $this->getSearchPresets($currentCategoryId);
@@ -532,22 +546,21 @@ abstract class Entity
 		];
 	}
 
-	/**
-	 * @param int $currentCategoryId
-	 * @return array
-	 */
 	private function getSearchPresets(int $currentCategoryId = 0): array
 	{
-		$defaultPresets = $this->getDefaultSearchPresets($currentCategoryId);
-		$userPresets = $this->getUserSearchPresets($currentCategoryId);
+		$entity = \Bitrix\Crm\Kanban\Entity::getInstance($this->getEntityType());
+		$entity->setCategoryId($currentCategoryId);
 
-		$presets = array_merge($defaultPresets, $userPresets);
+		$filterOptions = new \Bitrix\Main\UI\Filter\Options(
+			$this->getGridId(),
+			$entity->getFilterPresets()
+		);
 
-		return $this->prepareFilterPresets($presets);
+		return $this->prepareFilterPresets(
+			$filterOptions->getPresets(),
+			$filterOptions->getDefaultFilterId()
+		);
 	}
-
-	abstract protected function getDefaultSearchPresets(int $currentCategoryId = 0): array;
-	abstract protected function getUserSearchPresets(int $currentCategoryId = 0): array;
 
 	/**
 	 * @param int|null $categoryId
@@ -651,12 +664,14 @@ abstract class Entity
 		return $permissions >= $uPermissions::PERMISSION_ALL;
 	}
 
-	protected function setFilterPreset(string $presetId, Options $filterOptions, array $presets = []): void
+	protected function setFilterPreset(string $presetId, Options $filterOptions): void
 	{
 		if ($presetId === 'default_filter')
 		{
 			$presetId = 'tmp_filter';
 		}
+
+		$presets = $filterOptions->getPresets();
 
 		if ($presetId !== self::TMP_FILTER_PRESET_ID && !empty($presets[$presetId]))
 		{
@@ -669,7 +684,7 @@ abstract class Entity
 				'name' => $preset['name'],
 			];
 		}
-		else
+		elseif ($presetId === self::TMP_FILTER_PRESET_ID)
 		{
 			$tmpFilter = ($this->params['filter']['tmpFields'] ?? []);
 			$fields = [];
@@ -683,6 +698,10 @@ abstract class Entity
 				'preset_id' => self::TMP_FILTER_PRESET_ID,
 				'rows' => array_keys($fields),
 			];
+		}
+		else
+		{
+			return;
 		}
 
 		$filterOptions->setFilterSettings($presetId, $data);

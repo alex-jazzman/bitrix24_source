@@ -79,6 +79,11 @@
 
 		isInEditMode()
 		{
+			if (this.parent && this.parent.isInEditMode())
+			{
+				return true;
+			}
+
 			return this.getMode() === BX.UI.EntityEditorMode.edit;
 		}
 
@@ -150,6 +155,16 @@
 			}
 
 			return this.schemeElement && this.schemeElement.isEditable();
+		}
+
+		isRequired()
+		{
+			return this.schemeElement && this.schemeElement.isRequired();
+		}
+
+		isShowRequired()
+		{
+			return this.schemeElement && this.schemeElement.isShowRequired();
 		}
 
 		validate(result)

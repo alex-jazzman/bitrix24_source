@@ -226,7 +226,8 @@ jn.define('layout/ui/fields/base-multiple', (require, exports, module) => {
 					flexGrow: 2,
 				},
 				addOrDeleteFieldButtonWrapper: {
-					alignItems: 'center',
+					alignSelf: 'flex-start',
+					marginTop: 14,
 					justifyContent: 'center',
 					marginLeft: 7,
 					width: 33,

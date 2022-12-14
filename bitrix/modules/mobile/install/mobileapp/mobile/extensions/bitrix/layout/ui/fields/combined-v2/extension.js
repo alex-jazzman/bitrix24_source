@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 
+	const { isOpenLine, getOpenLineTitle } = require('communication/connection');
 	const { CommunicationEvents } = require('communication/events');
 	const { CombinedFieldClass } = require('layout/ui/fields/combined');
 	const { ImType, ImFieldClass } = require('layout/ui/fields/im');
@@ -138,9 +139,23 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 			switch (primaryType)
 			{
 				case ImType:
+					let params;
+
+					if (isOpenLine(LINK))
+					{
+						params = {
+							titleParams: { name: getOpenLineTitle(LINK) },
+							userCode: LINK,
+						};
+					}
+					else
+					{
+						params = { value: LINK };
+					}
+
 					return {
 						event: VALUE_TYPE,
-						params: { value: LINK },
+						params,
 					};
 
 				case PhoneType:
@@ -152,6 +167,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 						},
 						alert: true,
 					};
+
 				case WebType:
 					return getHttpPath(VALUE);
 			}

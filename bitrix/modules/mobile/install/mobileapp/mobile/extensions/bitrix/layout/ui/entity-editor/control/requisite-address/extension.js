@@ -16,7 +16,7 @@
 			{
 				const requisites = this.model.getField('REQUISITES_ADDRESSES_RAW', {});
 
-				return Array.isArray(requisites) ? requisites : [];
+				return Object.keys(requisites).map((id) => ({id, address: requisites[id]}));
 			}
 
 			return defaultValue;

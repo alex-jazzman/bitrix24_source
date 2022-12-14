@@ -247,23 +247,23 @@ final class Product extends Base
 	private function getFieldsCatalogProductCommonFields(): array
 	{
 		$fieldList = [
-			'ID'=>[
-				'TYPE'=>DataType::TYPE_INT,
+			'ID' => [
+				'TYPE' => DataType::TYPE_INT,
 				'ATTRIBUTES'=>[
-					Attributes::READONLY
-				]
+					Attributes::READONLY,
+				],
 			],
-			'TIMESTAMP_X'=>[
+			'TIMESTAMP_X' => [
 				'TYPE'=>DataType::TYPE_DATETIME,
 			],
-			'PRICE_TYPE'=>[
-				'TYPE'=>DataType::TYPE_CHAR,
+			'PRICE_TYPE' => [
+				'TYPE' => DataType::TYPE_CHAR,
 			],
-			'TYPE'=>[
-				'TYPE'=>DataType::TYPE_INT,
-				'ATTRIBUTES'=>[
-					Attributes::READONLY
-				]
+			'TYPE' => [
+				'TYPE' => DataType::TYPE_INT,
+				'ATTRIBUTES' => [
+					Attributes::READONLY,
+				],
 			],
 			'AVAILABLE'=>[
 				'TYPE'=>DataType::TYPE_CHAR,
@@ -271,9 +271,12 @@ final class Product extends Base
 					Attributes::READONLY
 				]
 			],
-			'BUNDLE'=>[
-				'TYPE'=>DataType::TYPE_CHAR,
-			]
+			'BUNDLE' => [
+				'TYPE' => DataType::TYPE_CHAR,
+				'ATTRIBUTES' => [
+					Attributes::READONLY,
+				],
+			],
 		];
 
 		return $this->fillFieldNames($fieldList);
@@ -356,8 +359,11 @@ final class Product extends Base
 					Attributes::READONLY
 				]
 			],
-			'BUNDLE'=>[
-				'TYPE'=>DataType::TYPE_CHAR,
+			'BUNDLE' => [
+				'TYPE' => DataType::TYPE_CHAR,
+				'ATTRIBUTES' => [
+					Attributes::READONLY,
+				],
 			],
 			'QUANTITY'=>[
 				'TYPE'=>DataType::TYPE_FLOAT,

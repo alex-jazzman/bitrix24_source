@@ -14,39 +14,12 @@
 
 			this.state.columnId = this.getColumnId(props);
 
-			this.onItemMovedHandler = this.handleOnItemMoved.bind(this);
+			this.forceUpdateCrmStagesHandler = this.forceUpdateCrmStages.bind(this);
 		}
 
 		componentWillReceiveProps(props)
 		{
 			this.state.columnId = this.getColumnId(props);
-		}
-
-		componentDidMount()
-		{
-			super.componentDidMount();
-
-			BX.addCustomEvent('UI.Kanban::onItemMoved', this.onItemMovedHandler);
-		}
-
-		componentWillUnmount()
-		{
-			super.componentWillUnmount();
-
-			BX.removeCustomEvent('UI.Kanban::onItemMoved', this.onItemMovedHandler);
-		}
-
-		handleOnItemMoved(params)
-		{
-			const { item, oldItem: { data: { columnId: oldColumnId } } } = params;
-			const { columnId } = item.data;
-
-			if (oldColumnId === columnId || this.props.item.id !== item.data.id)
-			{
-				return;
-			}
-
-			this.props.modifyItemsListHandler([ item ], params.preventRender);
 		}
 
 		getColumnId(props, columnId = null)
@@ -153,13 +126,22 @@
 							uid: this.getUidForStageSliderField(data.id, data.columnId),
 							useStageChangeMenu: true,
 							showReadonlyNotification: true,
+							animationMode: 'animateBeforeUpdate',
 						},
 						onChange: (this.params.onChange || emptyCallback),
+						forceUpdate: this.forceUpdateCrmStagesHandler,
 					});
 				}
 			}
 
 			return null;
+		}
+
+		forceUpdateCrmStages(params)
+		{
+			const {columnId, data: {itemId: id}} =  params;
+			const itemsData = { id, columnId};
+			this.props.modifyItemsListHandler([ itemsData ]);
 		}
 
 		renderSpecialFields(data)

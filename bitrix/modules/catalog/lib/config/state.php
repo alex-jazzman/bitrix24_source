@@ -776,7 +776,7 @@ final class State
 		$result = [
 			'COUNT' => 0,
 			'LIMIT' => Feature::getLandingProductLimit(),
-			'MESSAGE_ID' => 'CATALOG_STATE_ERR_PRODUCT_LIMIT'
+			'MESSAGE_ID' => 'CATALOG_STATE_ERR_PRODUCT_LIMIT_1'
 		];
 		if ($result['LIMIT'] === 0)
 		{

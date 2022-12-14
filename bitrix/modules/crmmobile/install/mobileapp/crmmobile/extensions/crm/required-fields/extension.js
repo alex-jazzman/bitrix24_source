@@ -5,6 +5,7 @@
 jn.define('crm/required-fields', (require, exports, module) => {
 
 	const { Haptics } = require('haptics');
+	const { Loc } = require('loc');
 	const { RequiredFieldsBackdrop } = require('crm/required-fields/required-backdrop');
 
 	const REQUIRED_ERROR_CODE = 'CRM_FIELD_ERROR_REQUIRED';
@@ -116,7 +117,21 @@ jn.define('crm/required-fields', (require, exports, module) => {
 		showErrors({ errors })
 		{
 			this.handleOnCancelEvent();
-			ErrorNotifier.showErrors(errors);
+
+			errors = Array.isArray(errors) ? errors : [];
+			errors = errors.filter(({ customData, message }) => customData && customData.public && message);
+
+			let title = Loc.getMessage('MCRM_REQUIRED_FIELDS_ERROR_ON_SAVE');
+			if (errors.length === 0)
+			{
+				title = Loc.getMessage('MCRM_REQUIRED_FIELDS_ERROR_ON_SAVE_INTERNAL');
+			}
+
+			ErrorNotifier.showErrors(errors, {
+				title,
+				addDefaultIfEmpty: true,
+				defaultErrorText: Loc.getMessage('MCRM_REQUIRED_FIELDS_ERROR_ON_SAVE_INTERNAL_TEXT'),
+			});
 		}
 
 		handleOnCancelEvent()

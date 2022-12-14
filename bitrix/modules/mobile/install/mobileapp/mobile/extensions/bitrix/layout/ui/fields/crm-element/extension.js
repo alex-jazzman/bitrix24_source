@@ -6,16 +6,22 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 	const { EntitySelectorFieldClass, CastType } = require('layout/ui/fields/entity-selector');
 	const { get, clone } = require('utils/object');
 	const { stringify } = require('utils/string');
+	const { inAppUrl } = require('in-app-url');
+	const { Loc } = require('loc');
 
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/crm-element/images/default-avatar.png';
 
 	let EntityDetailOpener;
 	let Type;
+	let TypeId;
+	let CrmUrl;
 
 	try
 	{
 		EntityDetailOpener = require('crm/entity-detail/opener').EntityDetailOpener;
 		Type = require('crm/type').Type;
+		TypeId = require('crm/type').TypeId;
+		CrmUrl = require('crm/in-app-url/url').CrmUrl;
 	}
 	catch (e)
 	{
@@ -23,6 +29,13 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 
 		return;
 	}
+
+	const SUPPORTED_ENTITIES = [
+		TypeId.Contact,
+		TypeId.Company,
+		TypeId.Deal,
+		TypeId.Lead,
+	];
 
 	/**
 	 * @class CrmElementField
@@ -98,10 +111,9 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 
 		renderEntity(entity = {}, showPadding = false)
 		{
-			const { imageUrl, type, title } = entity;
+			const { imageUrl, type } = entity;
 			const onClick = this.openEntity.bind(this, entity);
 			const subtitle = get(entity, ['customData', 'entityInfo', 'typeNameTitle'], null) || entity.subtitle;
-			const entityTypeId = Type.resolveIdByName(type);
 
 			return View(
 				{
@@ -125,10 +137,10 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 						onClick,
 					},
 					Text({
-						style: this.styles.entityTitle(this.supportsOpenEntity(entityTypeId)),
+						style: this.styles.entityTitle(this.canOpenEntity(entity)),
 						numberOfLines: 1,
 						ellipsize: 'end',
-						text: title,
+						text: this.getEntityTitle(entity),
 					}),
 					subtitle && Text({
 						style: this.styles.entitySubtitle,
@@ -138,6 +150,19 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 					}),
 				),
 			);
+		}
+
+		getEntityTitle(entity)
+		{
+			const { type, title, hidden } = entity;
+
+			if (title && !hidden)
+			{
+				return title;
+			}
+			const messageId = `FIELDS_CRM_ELEMENT_HIDDEN_${type.toUpperCase()}`;
+
+			return Loc.hasMessage(messageId) ? Loc.getMessage(messageId) : Loc.getMessage('FIELDS_CRM_ELEMENT_HIDDEN');
 		}
 
 		getImageUrl(imageUrl, type)
@@ -163,37 +188,35 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 
 		openEntity(entity)
 		{
-			const { type: entityTypeName, id: entityId, title } = entity;
-			const entityTypeId = Type.resolveIdByName(entityTypeName);
-
-			if (!this.supportsOpenEntity(entityTypeId))
+			if (!this.canOpenEntity(entity))
 			{
 				return;
 			}
 
-			EntityDetailOpener.open(
-				{
-					entityTypeId,
-					entityId,
-				},
-				{ titleParams: { text: title } },
-				this.getParentWidget(),
-			);
-		}
+			const { type: entityTypeName, id: entityId } = entity;
+			const crmUrl = new CrmUrl({ entityId, entityTypeName });
+			const url = crmUrl.toString();
 
-		supportsOpenEntity(entityTypeId)
-		{
-			if (!this.canOpenEntity())
-			{
-				return false;
-			}
-
-			return EntityDetailOpener.supportsEntityType(entityTypeId);
+			inAppUrl.open(url);
 		}
 
 		canOpenEntity(entity)
 		{
-			return true;
+			if (!entity)
+			{
+				return false;
+			}
+
+			const { type, hidden } = entity;
+
+			return !hidden && this.supportsEntityType(type);
+		}
+
+		supportsEntityType(entityTypeName)
+		{
+			const entityTypeId = Type.resolveIdByName(entityTypeName);
+
+			return SUPPORTED_ENTITIES.includes(entityTypeId);
 		}
 
 		getDefaultStyles()

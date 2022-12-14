@@ -99,10 +99,7 @@ class StoreDocumentArrival extends StoreDocument
 			return;
 		}
 
-		if (
-			class_exists('Bitrix\Catalog\v2\Contractor\Provider\Manager')
-			&& Manager::getActiveProvider()
-		)
+		if (Manager::getActiveProvider())
 		{
 			$contractor = Manager::getActiveProvider()::getContractorByDocumentId((int)$this->data['ID']);
 			if ($contractor)

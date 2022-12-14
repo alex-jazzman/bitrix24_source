@@ -315,15 +315,15 @@ class Product extends Entity
 			{
 				if (!$isSpecialType)
 				{
-					$data['actions'][self::ACTION_CHANGE_PARENT_AVAILABLE] = true;
-				}
-				else
-				{
-					//TODO: remove this hack after reservation resource
-					$fields['QUANTITY'] = $fields['AVAILABLE'] !== Catalog\ProductTable::STATUS_YES
-						? 0
-						: 1
-					;
+					if ($isService)
+					{
+						//TODO: remove this hack after reservation resource
+						$fields['QUANTITY'] = $fields['AVAILABLE'] !== Catalog\ProductTable::STATUS_YES ? 0 : 1;
+					}
+					else
+					{
+						$data['actions'][self::ACTION_CHANGE_PARENT_AVAILABLE] = true;
+					}
 				}
 			}
 		}
@@ -560,7 +560,22 @@ class Product extends Entity
 
 			if (isset($fields['AVAILABLE']))
 			{
-				$data['actions'][self::ACTION_CHANGE_PARENT_AVAILABLE] = true;
+				$copyFields =
+					isset($fields['TYPE'])
+						? $fields
+						: array_merge(static::getCacheItem($id, true), $fields)
+				;
+				$copyFields['TYPE'] = (int)$copyFields['TYPE'];
+				$isService = $copyFields['TYPE'] === Catalog\ProductTable::TYPE_SERVICE;
+				if ($isService)
+				{
+					//TODO: remove this hack after reservation resource
+					$fields['QUANTITY'] = $fields['AVAILABLE'] !== Catalog\ProductTable::STATUS_YES ? 0 : 1;
+				}
+				if (!$isService)
+				{
+					$data['actions'][self::ACTION_CHANGE_PARENT_AVAILABLE] = true;
+				}
 				$data['actions'][self::ACTION_RECALCULATE_SETS] = true;
 				$data['actions'][self::ACTION_SEND_NOTIFICATIONS] = true;
 			}
@@ -583,7 +598,7 @@ class Product extends Entity
 						? array_merge(static::getCacheItem($id, true), $fields)
 						: $fields
 					);
-
+					$copyFields['TYPE'] = (int)$copyFields['TYPE'];
 					self::calculateAvailable($copyFields, $data['actions']);
 					if ($copyFields['AVAILABLE'] !== null)
 						$fields['AVAILABLE'] = $copyFields['AVAILABLE'];

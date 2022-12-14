@@ -12,6 +12,7 @@ use Bitrix\Catalog\Document\Action\Store\IncreaseStoreQuantityAction;
 use Bitrix\Catalog\Document\Action\Price\UpdateProductPricesAction;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Iblock;
+use Bitrix\Catalog\v2\Contractor\Provider\Manager;
 
 /** @global CMain $APPLICATION */
 
@@ -1286,7 +1287,18 @@ class CCatalogArrivalDocs extends CCatalogDocsTypes
 		{
 			return false;
 		}
-		if ($contractorId <= 0)
+
+		if (Manager::getActiveProvider())
+		{
+			$contractor = Manager::getActiveProvider()::getContractorByDocumentId($documentId);
+			$isContractorSpecified = !is_null($contractor);
+		}
+		else
+		{
+			$isContractorSpecified = $contractorId > 0;
+		}
+
+		if (!$isContractorSpecified)
 		{
 			static::setErrors([
 				Loc::getMessage('CATALOG_STORE_DOCS_ERR_WRONG_CONTRACTOR')

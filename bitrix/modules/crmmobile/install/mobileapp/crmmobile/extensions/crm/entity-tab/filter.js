@@ -10,9 +10,9 @@ jn.define('crm/entity-tab/filter', (require, exports, module) => {
 	 */
 	class Filter
 	{
-		constructor()
+		constructor(presetId = null)
 		{
-			this.init();
+			this.init(presetId);
 			this.wasShown = false;
 		}
 
@@ -26,9 +26,9 @@ jn.define('crm/entity-tab/filter', (require, exports, module) => {
 			this.init();
 		}
 
-		init()
+		init(presetId = null)
 		{
-			this.presetId = null;
+			this.presetId = presetId;
 			this.counterId = null;
 			this.tmpFields = {}
 			this.search = null;

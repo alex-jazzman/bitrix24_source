@@ -7,6 +7,7 @@ return [
 		'utils/object',
 		'utils/function',
 		'layout/ui/plan-restriction',
+		'crm:loc',
 	],
 	'bundle' => [
 		'./src/base-item',

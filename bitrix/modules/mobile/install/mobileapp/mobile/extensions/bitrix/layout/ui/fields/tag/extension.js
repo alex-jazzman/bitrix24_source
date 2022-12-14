@@ -20,7 +20,17 @@ jn.define('layout/ui/fields/tag', (require, exports, module) => {
 			};
 		}
 
+		renderEmptyContent()
+		{
+			return this.renderEmptyTags();
+		}
+
 		renderEmptyEntity()
+		{
+			return this.renderEmptyTags();
+		}
+
+		renderEmptyTags()
 		{
 			return View(
 				{

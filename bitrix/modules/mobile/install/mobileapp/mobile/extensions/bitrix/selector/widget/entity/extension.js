@@ -34,7 +34,7 @@
 
 			if (!BX.type.isBoolean(closeOnSelect))
 			{
-				closeOnSelect = false;
+				closeOnSelect = true;
 			}
 
 			const entitySelectorWidget = new EntitySelectorWidget({

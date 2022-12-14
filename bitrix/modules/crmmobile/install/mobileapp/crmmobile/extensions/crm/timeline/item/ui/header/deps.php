@@ -6,5 +6,6 @@ return [
 		'./checkbox',
 		'./pin-button',
 		'./tag',
+		'./info-helper',
 	]
 ];

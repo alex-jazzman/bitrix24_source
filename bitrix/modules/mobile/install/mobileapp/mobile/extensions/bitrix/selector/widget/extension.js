@@ -148,7 +148,11 @@
 						}
 
 						this.widget.setRightButtons([{
-							name: BX.message('PROVIDER_WIDGET_SELECT'),
+							name: (
+								this.closeOnSelect
+									? BX.message('PROVIDER_WIDGET_CLOSE')
+									: BX.message('PROVIDER_WIDGET_SELECT')
+							),
 							type: 'text',
 							color: '#0065a3',
 							callback: () => this.close(),

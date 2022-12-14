@@ -284,11 +284,11 @@ this.BX.Catalog = this.BX.Catalog || {};
 	}
 
 	var ControllersFactory = /*#__PURE__*/function () {
-	  function ControllersFactory() {
+	  function ControllersFactory(eventName) {
 	    var _this = this;
 
 	    babelHelpers.classCallCheck(this, ControllersFactory);
-	    main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorControllerFactory:onInitialize', function (event) {
+	    main_core_events.EventEmitter.subscribe(eventName, function (event) {
 	      var _event$getCompatData = event.getCompatData(),
 	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
 	          eventArgs = _event$getCompatData2[1];
@@ -304,7 +304,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	        return new DocumentCardController(controlId, settings);
 	      }
 
-	      if (type === 'product_list') {
+	      if (type === 'catalog_store_document_product_list') {
 	        return new ProductListController(controlId, settings);
 	      }
 
@@ -898,14 +898,6 @@ this.BX.Catalog = this.BX.Catalog || {};
 
 	var DocumentCard = /*#__PURE__*/function (_BaseCard) {
 	  babelHelpers.inherits(DocumentCard, _BaseCard);
-	  babelHelpers.createClass(DocumentCard, null, [{
-	    key: "initializeEntityEditorFactories",
-	    value: function initializeEntityEditorFactories() {
-	      DocumentCard.registerFieldFactory();
-	      DocumentCard.registerModelFactory();
-	      DocumentCard.registerDocumentControllersFactory();
-	    }
-	  }]);
 
 	  function DocumentCard(id, settings) {
 	    var _this;
@@ -918,7 +910,9 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    _this.signedParameters = settings.signedParameters;
 	    _this.isConductLocked = settings.isConductLocked;
 	    _this.masterSliderUrl = settings.masterSliderUrl;
+	    _this.editorName = settings.includeCrmEntityEditor ? 'BX.Crm.EntityEditor' : 'BX.UI.EntityEditor';
 	    _this.inventoryManagementSource = settings.inventoryManagementSource;
+	    _this.activeTabId = 'main';
 	    _this.isTabAnalyticsSent = false;
 
 	    _this.setSliderText();
@@ -963,7 +957,13 @@ this.BX.Catalog = this.BX.Catalog || {};
 	              slider.url = BX.Uri.addParam(slider.getUrl(), {
 	                DOCUMENT_TYPE: type
 	              });
-	              slider.url = BX.Uri.removeParam(slider.url, ['firstTime']);
+	              slider.url = BX.Uri.removeParam(slider.url, ['firstTime', 'focusedTab']);
+
+	              if (_this2.activeTabId !== 'main') {
+	                slider.url = BX.Uri.addParam(slider.getUrl(), {
+	                  focusedTab: _this2.activeTabId
+	                });
+	              }
 
 	              if (type === 'A' || type === 'S') {
 	                slider.requestMethod = 'post';
@@ -1079,8 +1079,15 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      return;
 	    }
 	  }, {
+	    key: "focusOnTab",
+	    value: function focusOnTab(tabId) {
+	      main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
+	        tabId: tabId
+	      });
+	    } // deprecated
+
+	  }, {
 	    key: "setViewModeButtons",
-	    // deprecated
 	    value: function setViewModeButtons(editor) {
 	      editor._toolPanel.showViewModeButtons();
 	    } // deprecated
@@ -1093,8 +1100,10 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "getEditorInstance",
 	    value: function getEditorInstance() {
-	      if (main_core.Reflection.getClass('BX.UI.EntityEditor')) {
-	        return BX.UI.EntityEditor.getDefault();
+	      var editorInstance = main_core.Reflection.getClass(this.editorName);
+
+	      if (editorInstance) {
+	        return editorInstance.getDefault();
 	      }
 
 	      return null;
@@ -1114,6 +1123,10 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    key: "subscribeToUserSelectorEvent",
 	    value: function subscribeToUserSelectorEvent() {
 	      var _this3 = this;
+
+	      if (this.editorName !== 'BX.UI.EntityEditor') {
+	        return;
+	      }
 
 	      main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorUser:openSelector', function (event) {
 	        var eventData = event.data[1];
@@ -1161,7 +1174,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "subscribeToValidationFailedEvent",
 	    value: function subscribeToValidationFailedEvent() {
-	      main_core_events.EventEmitter.subscribe('BX.UI.EntityEditor:onFailedValidation', function (event) {
+	      main_core_events.EventEmitter.subscribe(this.editorName + ':onFailedValidation', function (event) {
 	        main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
 	          tabId: 'main'
 	        });
@@ -1177,7 +1190,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    value: function subscribeToOnSaveEvent() {
 	      var _this4 = this;
 
-	      main_core_events.EventEmitter.subscribe('BX.UI.EntityEditor:onSave', function (event) {
+	      main_core_events.EventEmitter.subscribe(this.editorName + ':onSave', function (event) {
 	        var _event$data$;
 
 	        var eventEditor = event.data[0];
@@ -1243,6 +1256,10 @@ this.BX.Catalog = this.BX.Catalog || {};
 
 	          _this5.isTabAnalyticsSent = true;
 	        }
+
+	        if (tabId) {
+	          _this5.activeTabId = tabId;
+	        }
 	      });
 	    }
 	  }, {
@@ -1250,7 +1267,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    value: function subscribeToDirectActionEvent() {
 	      var _this6 = this;
 
-	      main_core_events.EventEmitter.subscribe('BX.UI.EntityEditor:onDirectAction', function (event) {
+	      main_core_events.EventEmitter.subscribe(this.editorName + ':onDirectAction', function (event) {
 	        var _event$data$2, _event$data$3;
 
 	        var eventEditor = event.data[0];
@@ -1462,11 +1479,6 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      return _classStaticPrivateFieldSpecGet(DocumentCard, DocumentCard, _instance);
 	    }
 	  }, {
-	    key: "registerDocumentControllersFactory",
-	    value: function registerDocumentControllersFactory() {
-	      _classStaticPrivateFieldSpecSet(DocumentCard, DocumentCard, _controllersFactory, new ControllersFactory());
-	    }
-	  }, {
 	    key: "registerFieldFactory",
 	    value: function registerFieldFactory() {
 	      _classStaticPrivateFieldSpecSet(DocumentCard, DocumentCard, _fieldFactory, new FieldsFactory());
@@ -1475,6 +1487,11 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    key: "registerModelFactory",
 	    value: function registerModelFactory() {
 	      _classStaticPrivateFieldSpecSet(DocumentCard, DocumentCard, _modelFactory, new ModelFactory());
+	    }
+	  }, {
+	    key: "registerDocumentControllersFactory",
+	    value: function registerDocumentControllersFactory(eventName) {
+	      _classStaticPrivateFieldSpecSet(DocumentCard, DocumentCard, _controllersFactory, new ControllersFactory(eventName));
 	    }
 	  }]);
 	  return DocumentCard;

@@ -1614,13 +1614,19 @@
 
 		emitEntityCreate()
 		{
-			this.customEventEmitter.emit('DetailCard::onCreate', [this.getComponentParams()]);
+			const params = this.getComponentParams();
+			params.eventUid = this.createUid();
+			params.entityModel = this.entityModel;
+
+			this.customEventEmitter.emit('DetailCard::onCreate', [params]);
 		}
 
 		emitEntityUpdate(actionName)
 		{
 			const params = this.getComponentParams();
 			params.actionName = actionName;
+			params.eventUid = this.createUid();
+			params.entityModel = this.entityModel;
 
 			this.customEventEmitter.emit('DetailCard::onUpdate', [params, this.header]);
 		}

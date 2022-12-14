@@ -23,11 +23,11 @@ jn.define('crm/entity-tab/search/base-item', (require, exports, module) => {
 
 		render()
 		{
-			const { active } = this.props;
+			const { active, last } = this.props;
 
 			return View(
 				{
-					style: this.styles.wrapper(active, this.getActiveColor(), this.props.default),
+					style: this.styles.wrapper(active, this.getActiveColor(), this.props.default, last),
 					onClick: () => this.onClick(),
 				},
 				...this.renderContent(),
@@ -81,7 +81,7 @@ jn.define('crm/entity-tab/search/base-item', (require, exports, module) => {
 	}
 
 	const styles = {
-		wrapper: (active, color, isDefault = false) => {
+		wrapper: (active, color, isDefault = false, isLast = false) => {
 			return {
 				paddingHorizontal: 10,
 				backgroundColor: active ? color : 'inherit',
@@ -91,6 +91,7 @@ jn.define('crm/entity-tab/search/base-item', (require, exports, module) => {
 				flexDirection: 'row',
 				height: 32,
 				marginLeft: isDefault ? 8 : 0,
+				marginRight: (isLast && active) ? 8 :0,
 			}
 		},
 		title: {

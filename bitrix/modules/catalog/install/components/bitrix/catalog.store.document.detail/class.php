@@ -18,6 +18,8 @@ use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentArrival;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentStoreAdjustment;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentMoving;
+use Bitrix\Catalog\v2\Contractor;
+use Bitrix\Crm\Settings\EntityEditSettings;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -43,11 +45,15 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 	private $accessController;
 	private bool $canSelectDocumentType = true;
 
+	/** @var Contractor\Provider\IProvider|null */
+	private ?Contractor\Provider\IProvider $contractorsProvider;
+
 	public function __construct($component = null)
 	{
 		parent::__construct($component);
 
 		$this->accessController = AccessController::getCurrent();
+		$this->contractorsProvider = Contractor\Provider\Manager::getActiveProvider();
 	}
 
 	public function onPrepareComponentParams($arParams)
@@ -130,10 +136,13 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 		}
 		$this->initializeDocumentFields();
 
+		$this->arResult['INCLUDE_CRM_ENTITY_EDITOR'] = Contractor\Provider\Manager::isActiveProviderByModule('crm');
 		$this->arResult['GUID'] = $this->arResult['FORM']['GUID'];
 		$this->arResult['TOOLBAR_ID'] = "toolbar_store_document_{$this->documentId}";
 		$this->arResult['IS_MAIN_CARD_READ_ONLY'] = $this->arResult['FORM']['READ_ONLY'];
 		$this->arResult['DOCUMENT_TYPE'] = $this->getDocumentType();
+		$this->arResult['FOCUSED_TAB'] = $this->request->get('focusedTab');
+
 		$this->setDropdownTypes();
 
 		$this->getAdditionalEntityEditorActions();
@@ -269,7 +278,15 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 			return;
 		}
 
-		$document = StoreDocumentTable::getById($this->documentId)->fetch();
+		$document = StoreDocumentTable::getList([
+			'select' => [
+				'*',
+				'CONTRACTOR_REF_' => 'CONTRACTOR',
+			],
+			'filter' => [
+				'=ID' => $this->documentId,
+			],
+		])->fetch();
 		if ($document)
 		{
 			$document = $this->fillDefaultDocumentFields($document);
@@ -587,33 +604,70 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 		];
 	}
 
+	/**
+	 * @param $fields
+	 * @return Main\Result
+	 */
 	private function saveDocument($fields): Main\Result
 	{
+		$contractorProviderSaveResult = null;
+		if ($this->contractorsProvider)
+		{
+			$contractorProviderSaveResult = $this->contractorsProvider::onBeforeDocumentSave($fields);
+		}
+
 		$result = new Main\Result();
+		$entityId = null;
 		if ($this->isNew())
 		{
 			$addDocumentResult = $this->addDocument($fields);
-			if (!$addDocumentResult->isSuccess())
+			if ($addDocumentResult->isSuccess())
+			{
+				$entityId = (int)$addDocumentResult->getData()['ENTITY_ID'];
+			}
+			else
 			{
 				$result->addErrors($addDocumentResult->getErrors());
-				return $result;
 			}
-
-			$entityId = $addDocumentResult->getData()['ENTITY_ID'];
 		}
 		else
 		{
 			$updateDocumentResult = $this->updateDocument($fields);
-			if (!$updateDocumentResult->isSuccess())
+			if ($updateDocumentResult->isSuccess())
+			{
+				$entityId = (int)$updateDocumentResult->getData()['ENTITY_ID'];
+			}
+			else
 			{
 				$result->addErrors($updateDocumentResult->getErrors());
-				return $result;
 			}
-
-			$entityId = $updateDocumentResult->getData()['ENTITY_ID'];
 		}
 
-		$result->setData(['ENTITY_ID' => $entityId]);
+		if (!$result->isSuccess())
+		{
+			if ($this->contractorsProvider)
+			{
+				$this->contractorsProvider::onAfterDocumentSaveFailure($entityId, $contractorProviderSaveResult);
+			}
+
+			return $result;
+		}
+
+		if ($this->contractorsProvider)
+		{
+			$this->contractorsProvider::onAfterDocumentSaveSuccess(
+				$entityId,
+				$contractorProviderSaveResult,
+				[
+					'entityEditorSettings' => new EntityEditSettings($this->getEditorProvider()->getConfigId()),
+				]
+			);
+		}
+
+		if ($result->isSuccess())
+		{
+			$result->setData(['ENTITY_ID' => $entityId]);
+		}
 
 		return $result;
 	}

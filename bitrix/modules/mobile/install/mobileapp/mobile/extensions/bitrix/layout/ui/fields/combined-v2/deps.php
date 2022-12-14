@@ -1,9 +1,6 @@
 <?php
 
 return [
-	'bundle' => [
-		'./primaryWrapper',
-	],
 	'extensions' => [
 		'communication/events',
 		'layout/ui/fields/combined',
@@ -11,6 +8,10 @@ return [
 		'layout/ui/fields/phone',
 		'layout/ui/fields/web',
 		'utils/object',
+		'utils/string',
 		'utils/url',
+	],
+	'bundle' => [
+		'./primaryWrapper',
 	],
 ];

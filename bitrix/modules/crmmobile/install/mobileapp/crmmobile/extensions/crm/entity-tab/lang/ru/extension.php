@@ -31,7 +31,13 @@ $MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_TITLE'] = 'Настройка ф�
 $MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CREATE_FILTER'] = 'Создание фильтров';
 $MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_MORE_SETTINGS'] = 'Расширенные настройки';
 $MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_RESPONSIBLE'] = 'Ответственный';
-$MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_DEAL_SETTINGS'] = 'Настройки сделки';
+
+$MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CUSTOMIZATION'] = 'Настройки элемента';
+$MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CUSTOMIZATION_LEAD'] = 'Настройки лида';
+$MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CUSTOMIZATION_DEAL'] = 'Настройки сделки';
+$MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CUSTOMIZATION_CONTACT'] = 'Настройки контакта';
+$MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CUSTOMIZATION_COMPANY'] = 'Настройки компании';
+$MESS['M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CUSTOMIZATION_SMART_INVOICE'] = 'Настройки счета';
 
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE'] = 'Недостаточно прав на удаление элемента';
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_LEAD'] = 'Недостаточно прав на удаление лида';

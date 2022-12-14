@@ -2,7 +2,8 @@
 
 return [
 	'extensions' => [
-		'utils/function',
 		'layout/ui/fields/base',
+		'layout/ui/fields/focus-manager',
+		'utils/function',
 	],
 ];

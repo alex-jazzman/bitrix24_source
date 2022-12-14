@@ -31,11 +31,13 @@
 		automatic: 'automatic',
 		left: 'left',
 		right: 'right',
+		top: 'top',
 	};
 
 	const UPDATE_ACTION = 'update';
 	const CREATE_ACTION = 'create';
 	const EXCLUDE_ACTION = 'excludeEntity';
+	const DELETE_ACTION = 'deleteEntity';
 
 	class Kanban extends LayoutComponent
 	{
@@ -118,15 +120,24 @@
 				const data = (props.onBeforeReload ? props.onBeforeReload() : {});
 				const id = (isBackFromSlaveEntityType ? owner.id : params.entityId);
 
-				if (!data.reload && action === UPDATE_ACTION)
+				const currentColumnId = this.getCurrentColumnId();
+
+				if (
+					!data.reload
+					&& (
+						action === EXCLUDE_ACTION
+						|| action === DELETE_ACTION
+						|| (currentColumnId && currentColumnId !== params.entityModel.STAGE_ID)
+					)
+				)
 				{
-					void statefulList.updateItems([id], BX.prop.getBoolean(data, 'animate', true));
+					void statefulList.deleteItem(id);
 					return;
 				}
 
-				if (!data.reload && action === EXCLUDE_ACTION)
+				if (!data.reload && action === UPDATE_ACTION)
 				{
-					void statefulList.deleteItem(id);
+					void statefulList.updateItems([id], BX.prop.getBoolean(data, 'animate', true));
 					return;
 				}
 
@@ -244,6 +255,11 @@
 			item.updateColumnId(column.id);
 		}
 
+		getCurrentColumnId()
+		{
+			return this.getColumnIdByName(this.getColumnStatusIdFromSlideName(this.getCurrentSlideName()));
+		}
+
 		/**
 		 * @param {String} columnName
 		 * @returns {null|Number}
@@ -341,6 +357,7 @@
 					BX.postComponentEvent('UI.Kanban::onItemMoved', [{
 						item,
 						oldItem,
+						resolveParams,
 					}]);
 
 					resolve(resolveParams);
@@ -393,7 +410,7 @@
 		getPublicError(errors)
 		{
 			const error = errors.find(({ customData, message }) => customData && customData.public && message);
-			return (error || null);
+			return ([ error ] || null);
 		}
 
 		deleteItem(itemId, params = {})
@@ -428,7 +445,7 @@
 			});
 		}
 
-		deleteItemFromStatefulList(itemId, animationType = animationTypes.automatic)
+		deleteItemFromStatefulList(itemId, animationType = animationTypes.top)
 		{
 			const statefulList = this.getCurrentStatefulList();
 			if (statefulList)
@@ -851,6 +868,8 @@
 			const skipUseCache = BX.prop.getBoolean(params, 'skipUseCache', false);
 			const skipInitCounters = BX.prop.getBoolean(params, 'skipInitCounters', false);
 			const updateToolbarColumnId = BX.prop.getBoolean(params, 'updateToolbarColumnId', true);
+			const initMenu = BX.prop.getBoolean(params, 'initMenu', false);
+			const forcedShowSkeleton = BX.prop.getBoolean(params, 'forcedShowSkeleton', false);
 
 			if (params.skipFillSlides)
 			{
@@ -863,12 +882,18 @@
 					force,
 					menuButtons,
 					skipUseCache,
+					forcedShowSkeleton,
 				};
 
 				this.reloadStatefulList(slideName, reloadParams, () => {
 					if (!skipInitCounters)
 					{
 						this.initCounters();
+					}
+
+					if (initMenu)
+					{
+						this.getCurrentStatefulList().initMenu();
 					}
 				});
 			}
@@ -1005,6 +1030,7 @@
 
 			const initialStateParams = {
 				itemParams: this.getPreparedItemParams(),
+				forcedShowSkeleton: BX.prop.getBoolean(params, 'forcedShowSkeleton', false),
 			};
 
 			if (params.menuButtons)
@@ -1073,12 +1099,12 @@
 			return this.currentSlideName;
 		}
 
-		blinkItem(itemId)
+		blinkItem(itemId, showUpdated = true)
 		{
 			const statefulList = this.getCurrentStatefulList();
 			if (statefulList)
 			{
-				statefulList.blinkItem(itemId);
+				statefulList.blinkItem(itemId, showUpdated);
 			}
 		}
 

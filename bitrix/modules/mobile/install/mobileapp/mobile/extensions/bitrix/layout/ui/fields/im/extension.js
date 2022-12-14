@@ -3,10 +3,10 @@
  */
 jn.define('layout/ui/fields/im', (require, exports, module) => {
 
+	const { isOpenLine, getOpenLineTitle } = require('communication/connection');
 	const { StringFieldClass } = require('layout/ui/fields/string');
 
 	const DEFAULT = 'default';
-	const OPEN_LINE = 'openline';
 	const SUPPORTED = [
 		'bitrix24',
 		'facebook',
@@ -44,15 +44,25 @@ jn.define('layout/ui/fields/im', (require, exports, module) => {
 			this.state.imageUri = ImField.getImage(nextProps);
 		}
 
+		getConfig()
+		{
+			const config = super.getConfig();
+
+			return {
+				...config,
+				items: BX.prop.getArray(config, 'items', []),
+			};
+		}
+
 		renderReadOnlyContent()
 		{
-			const { valueType } = this.props;
+			const value = this.getValue();
 
-			if (!this.isEmpty() && valueType === OPEN_LINE)
+			if (isOpenLine(value))
 			{
 				return Text({
 					style: this.styles.value,
-					text: BX.message('FIELDS_IM_OPENLINE_TITLE'),
+					text: getOpenLineTitle(value),
 				});
 			}
 

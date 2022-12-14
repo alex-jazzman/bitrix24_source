@@ -140,7 +140,7 @@
 		static getWidgetParams()
 		{
 			return {
-				title: BX.message('CATALOG_BARCODE_SCANNER_TITLE1'),
+				title: BX.message('CATALOG_BARCODE_SCANNER_TITLE2'),
 				backdrop: {
 					mediumPositionPercent: 70,
 					horizontalSwipeAllowed: false,

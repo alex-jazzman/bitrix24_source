@@ -724,7 +724,7 @@ function __MSLOnFeedInit(params)
 														obFocus: {
 															form: 'NO',
 															comments: 'NO'
-														}
+														},
 													});
 												}
 											});

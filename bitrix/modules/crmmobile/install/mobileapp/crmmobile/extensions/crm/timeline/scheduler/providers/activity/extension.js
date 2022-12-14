@@ -161,6 +161,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 							marginBottom: 12,
 							backgroundColor: '#ffffff',
 							borderRadius: 12,
+							maxHeight: 197,
 						},
 					},
 					this.renderTextField(),

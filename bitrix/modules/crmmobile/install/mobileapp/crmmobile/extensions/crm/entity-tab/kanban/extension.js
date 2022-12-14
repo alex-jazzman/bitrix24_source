@@ -6,6 +6,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { EntityTab } = require('crm/entity-tab');
 	const { TypeSort } = require('crm/entity-tab/sort');
+	const { TypePull } = require('crm/entity-tab/pull-manager');
 	const { ToolbarFactory } = require('crm/kanban/toolbar');
 	const { CategorySelectActions } = require('crm/category-list/actions');
 	const { CategoryListView } = require('crm/category-list-view');
@@ -18,10 +19,6 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		get,
 		isEqual,
 	} = require('utils/object');
-
-	const PULL_COMMAND = 'CRM_KANBANUPDATED';
-	const PULL_EVENT_NAME_ITEM_ADDED = 'ITEMADDED';
-	const PULL_EVENT_NAME_ITEM_UPDATED = 'ITEMUPDATED';
 
 	const MAX_CATEGORY_CHANGE_ATTEMPTS = 3;
 	const CATEGORY_CHANGE_DELAY_TIME = 2000;
@@ -75,20 +72,9 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				viewComponent.setFilter(this.filter);
 			}
 
-			const skipFillSlides = BX.prop.getBoolean(params, 'skipFillSlides', false);
-			const menuButtons = BX.prop.getArray(params, 'menuButtons', null);
-			const skipUseCache = BX.prop.getBoolean(params, 'skipUseCache', false);
-			const skipInitCounters = BX.prop.getBoolean(params, 'skipInitCounters', false);
 			const force = BX.prop.getBoolean(params, 'force', false);
-			const updateToolbarColumnId = BX.prop.getBoolean(params, 'updateToolbarColumnId', true);
 
-			viewComponent.reload(viewComponent.getCurrentSlideName(), force, {
-				skipFillSlides,
-				menuButtons,
-				skipUseCache,
-				skipInitCounters,
-				updateToolbarColumnId,
-			});
+			viewComponent.reload(viewComponent.getCurrentSlideName(), force, params);
 		}
 
 		initCategoryCounters(params = {})
@@ -282,7 +268,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				this.showChangeToAvailableCategoryNotice(categoryFromStorage.name);
 			}
 
-			this.filter = new Filter();
+			this.filter = new Filter(this.getDefaultPresetId());
 
 			newState.searchButtonBackgroundColor = null;
 			newState.categoryId = categoryId;
@@ -306,7 +292,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 
 		initAfterCategoryChange(category, data)
 		{
-			this.filter = new Filter();
+			this.filter = new Filter(this.getDefaultPresetId());
 			this.category = category;
 			this.isEmpty = true;
 			this.floatingButtonMenu = null;
@@ -388,8 +374,8 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				isShowFloatingButton: this.isShowFloatingButton(),
 				floatingButtonClickHandler: this.handleFloatingButtonClick.bind(this),
 				floatingButtonLongClickHandler: this.handleFloatingButtonLongClick.bind(this),
-				onDetailCardUpdateHandler: this.onDetailCardUpdate,
-				onDetailCardCreateHandler: this.onDetailCardCreate,
+				onDetailCardUpdateHandler: this.onDetailCardUpdate.bind(this),
+				onDetailCardCreateHandler: this.onDetailCardCreate.bind(this),
 				onNotViewableHandler: this.onNotViewable,
 				onPanListHandler: this.props.onPanList || null,
 				initCountersHandler: this.initCategoryCounters,
@@ -593,7 +579,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				return false;
 			}
 
-			if (command !== this.getPullCommand(PULL_COMMAND))
+			if (command !== this.getPullCommand(TypePull.Command))
 			{
 				return false;
 			}
@@ -602,7 +588,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 
 			const isUpdatedItemInCurrentSlide = (params, slideName) => {
 				return (
-					params.eventName !== PULL_EVENT_NAME_ITEM_ADDED
+					params.eventName !== TypePull.EventNameItemAdded
 					&& viewComponent.getCurrentSlideName() === context.slideName
 					&& this.hasItemInCurrentColumn(params.item.id)
 				);
@@ -627,14 +613,14 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			}
 
 			if (
-				params.eventName === PULL_EVENT_NAME_ITEM_UPDATED
+				params.eventName === TypePull.EventNameItemUpdated
 				&& (viewComponent.getSlideName(columnId) === context.slideName || isAllStagesSlide)
 			)
 			{
 				return true;
 			}
 
-			return (params.eventName === PULL_EVENT_NAME_ITEM_ADDED);
+			return (params.eventName === TypePull.EventNameItemAdded);
 		}
 
 		/**
@@ -748,6 +734,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 						updateToolbarColumnId: false,
 						skipInitCounters: true,
 						force: true,
+						initMenu: true,
 					});
 				});
 			}).catch((response) => {
@@ -814,8 +801,15 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			return itemConfig;
 		}
 
-		getEmptyListComponent()
+		getEmptyListComponent(params = null)
 		{
+			if (this.isUnsuitableCurrentStage())
+			{
+				const model = this.getEntityTypeModel();
+				params = model.getUnsuitableStageScreenConfig();
+				return super.getEmptyListComponent(params);
+			}
+
 			if (this.filter.isActive())
 			{
 				return super.getEmptyListComponent();
@@ -832,6 +826,16 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			}
 
 			return super.getEmptyListComponent();
+		}
+
+		isUnsuitableCurrentStage()
+		{
+			const viewComponent = this.getViewComponent();
+			const stages = CategoryCountersStoreManager.getStages();
+			const stageId = viewComponent.getCurrentColumnId();
+			const currentStage = stages.find(stage => stage.id === stageId);
+
+			return (currentStage && currentStage.dropzone);
 		}
 
 		onBeforeReloadHandler()

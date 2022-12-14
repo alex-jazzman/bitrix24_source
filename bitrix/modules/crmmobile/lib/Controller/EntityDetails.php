@@ -21,6 +21,7 @@ use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\CrmMobile\Command\SaveEntityCommand;
 use Bitrix\CrmMobile\Entity\FactoryProvider;
+use Bitrix\CrmMobile\ProductGrid\ProductGridQuery;
 use Bitrix\CrmMobile\Query\EntityEditor;
 use Bitrix\CrmMobile\UI\EntityEditor\Provider;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
@@ -354,9 +355,9 @@ class EntityDetails extends Controller
 		}
 	}
 
-	public function loadProductsAction(): array
+	public function loadProductsAction(Item $entity, ?string $currencyId = null): array
 	{
-		return $this->forward(ProductGrid::class, 'loadProducts');
+		return (new ProductGridQuery($entity, $currencyId))->execute();
 	}
 
 	public function loadTimelineAction(Factory $factory, Item $entity, CurrentUser $currentUser): array

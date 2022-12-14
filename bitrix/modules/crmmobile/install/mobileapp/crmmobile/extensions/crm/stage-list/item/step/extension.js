@@ -62,6 +62,7 @@
 				},
 				disabled,
 				showTotal,
+				unsuitable,
 			} = this.props;
 
 			const preparedStageColor = stageColor || DEFAULT_STAGE_BACKGROUND_COLOR;
@@ -73,6 +74,7 @@
 					style: {
 						flexDirection: 'row',
 						flex: 1,
+						opacity: unsuitable ? 0.3 : 1,
 					}
 				},
 				View(
@@ -110,22 +112,6 @@
 						},
 					}),
 				),
-				/*
-				// @todo here need sett counters
-				showCounters ? View(
-					{
-						style: {
-							padding: 8,
-							justifyContent: 'center',
-							height: stageHeight,
-							position: 'absolute',
-							right: 20,
-							...stageMargins,
-						},
-					},
-					CounterView(1),
-				) : null,
-				 */
 				!disabled && Image(
 					{
 						style: {
@@ -167,7 +153,7 @@
 						},
 					},
 					this.renderTitle(stageColor),
-					MoneyView({
+					isShowTotal && MoneyView({
 						money: Money.create(money),
 						renderAmount: formattedAmount => Text({
 							text: formattedAmount,

@@ -95,7 +95,7 @@
 			return {
 				position: 'absolute',
 				right: Application.getPlatform() === 'android' ? 14 : 13,
-				bottom: Application.getPlatform() === 'android' ? 14 : 13,
+				bottom: Application.getPlatform() === 'android' ? 12 : 11,
 			};
 		},
 		shadow: {

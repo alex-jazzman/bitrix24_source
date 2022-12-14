@@ -85,6 +85,11 @@ jn.define('crm/entity-tab/type/base', (require, exports, module) => {
 			return {};
 		}
 
+		getUnsuitableStageScreenConfig(data)
+		{
+			return {};
+		}
+
 		getEmptyImage()
 		{
 			return {
@@ -196,6 +201,11 @@ jn.define('crm/entity-tab/type/base', (require, exports, module) => {
 					.replace('#MANY_ENTITY_TYPE_TITLE#', manyEntityTypeTitle)
 					.replace('#SINGLE_ENTITY_TYPE_TITLE#', singleEntityTypeTitle)
 			);
+		}
+
+		getMenuActions()
+		{
+			return [];
 		}
 	}
 

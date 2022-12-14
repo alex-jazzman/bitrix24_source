@@ -559,23 +559,39 @@
 						this.fillAnimateIds(items);
 					}
 
-					this.getSimpleList().listView.updateRows(items).then(() => {
-						items.forEach(item => {
-							const { id } = item;
+					const simpleList = this.getSimpleList();
 
-							if (showAnimateImmediately)
-							{
-								this.blinkItem(id);
-							}
+					const animatePromises = [];
+					items.forEach(({ id }) => {
+						if (showAnimateImmediately)
+					 	{
+							animatePromises.push(simpleList.setLoading(id));
+					 	}
+					});
 
-							if (this.state.items.has(id))
-							{
-								this.state.items.set(id, item);
-							}
+					Promise.all(animatePromises).then(() => {
+
+						const dropLoadingPromises = [];
+						items.forEach(({ id }) => {
+							dropLoadingPromises.push(simpleList.dropLoading(id));
 						});
 
-						this.modifyCache(ACTION_UPDATE, { items });
-						resolve();
+						Promise.all(dropLoadingPromises).then(() => {
+							this.getSimpleList().listView.updateRows(items).then(() => {
+								items.forEach(item => {
+									const { id } = item;
+
+									if (this.state.items.has(id))
+									{
+										this.state.items.set(id, item);
+									}
+								});
+
+								this.modifyCache(ACTION_UPDATE, {items});
+
+								resolve();
+							});
+						});
 					});
 				});
 			});
@@ -596,10 +612,11 @@
 
 				const data = clone(this.state.actionParams.loadItems || {});
 				data.extra = (data.extra || {});
-				data.extra.filterParams = (data.extra.filterParams || {});
-				data.extra.filterParams.ID = ids;
+				const filterParams = (data.extra.filterParams || {});
+				filterParams.ID = ids;
+				merge(data.extra, { filterParams }, { subscribeUser: true, filter: {} });
 
-				BX.ajax.runAction(this.actions.loadItems,{ data })
+				BX.ajax.runAction(this.actions.loadItems, { data })
 					.then(response => {
 						if (response.errors.length)
 						{
@@ -607,6 +624,7 @@
 						}
 						resolve(response.data.items);
 					}, response => {
+						console.error(response.errors);
 						reject(response.errors);
 					});
 			});
@@ -892,6 +910,7 @@
 				searchText: null,
 				searchPresetId: null,
 				renderType: null,
+				forcedShowSkeleton: null,
 			};
 
 			if (!params.skipItems)
@@ -899,9 +918,14 @@
 				initialState.items = new Map();
 			}
 
-			if(params.itemParams)
+			if (params.itemParams)
 			{
 				initialState.itemParams = params.itemParams;
+			}
+
+			if (params.forcedShowSkeleton)
+			{
+				initialState.forcedShowSkeleton = params.forcedShowSkeleton;
 			}
 
 			return initialState;
@@ -1021,7 +1045,7 @@
 		 * @param {String} animationType
 		 * @returns {Promise}
 		 */
-		deleteItem(itemId, animationType = 'automatic')
+		deleteItem(itemId, animationType = 'top')
 		{
 			return new Promise((resolve, reject) => {
 				const simpleList = this.getSimpleList();
@@ -1053,9 +1077,9 @@
 			});
 		}
 
-		blinkItem(itemId)
+		blinkItem(itemId, showUpdated = true)
 		{
-			return this.getSimpleList().blinkItem(itemId);
+			return this.getSimpleList().blinkItem(itemId, showUpdated);
 		}
 
 		/**
@@ -1227,6 +1251,7 @@
 						isSearchEnabled: this.stateBeforeSearch !== null,
 						blockPage: this.blockPage,
 						allItemsLoaded: this.state.allItemsLoaded,
+						forcedShowSkeleton: this.state.forcedShowSkeleton,
 						itemLayoutOptions: this.itemLayoutOptions,
 						itemActions: this.state.itemActions,
 						loadItemsHandler: this.loadItemsHandler,

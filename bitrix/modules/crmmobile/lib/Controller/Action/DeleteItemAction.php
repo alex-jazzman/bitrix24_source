@@ -2,12 +2,14 @@
 
 namespace Bitrix\CrmMobile\Controller\Action;
 
+use Bitrix\CrmMobile\Controller\PublicErrorsTrait;
 use Bitrix\Main\Result;
 use Bitrix\CrmMobile\Controller\Action;
 use Bitrix\CrmMobile\Kanban\Entity;
 
 class DeleteItemAction extends Action
 {
+	use PublicErrorsTrait;
 
 	public function run(int $id, string $entityType, array $params = [])
 	{
@@ -20,7 +22,8 @@ class DeleteItemAction extends Action
 		$result = $this->delete($id, $entityType, $params);
 		if (!$result->isSuccess())
 		{
-			$this->addErrors($result->getErrors());
+			$errors = $this->markErrorsAsPublic($result->getErrors());
+			$this->addErrors($errors);
 		}
 	}
 

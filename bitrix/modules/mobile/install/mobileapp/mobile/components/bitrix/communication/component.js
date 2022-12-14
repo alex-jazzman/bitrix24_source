@@ -576,68 +576,56 @@
 		}
 
 		window.registerSuccess = true;
-		Cordova.exec(
-			(deviceInfo) =>
-			{
-				this.device = deviceInfo;
-				Application.registerPushNotifications(
-					function (data)
-					{
-						console.log("registerPushNotifications");
-						console.log(data);
 
-						var dt = (Application.getPlatform() === "ios"
-								? "APPLE"
-								: "GOOGLE/REV2"
-						);
-
-						var token = null;
-
-						if (typeof data == "object")
-						{
-
-							if (data.voipToken)
-							{
-								token = data.voipToken;
-								dt = "APPLE/VOIP"
-							}
-							else if (data.type && data.type === 'huawei')
-							{
-								token = data.token;
-								dt = "HUAWEI"
-							}
-							else if (data.token)
-							{
-								token = data.token;
-							}
-						}
-						else
-						{
-							token = data;
-						}
-
-						BX.ajax({
-							url: env.siteDir + "mobile/",
-							method: "POST",
-							dataType: "json",
-							tokenSaveRequest: true,
-							data: {
-								mobile_action: "save_device_token",
-								device_name: (typeof device.name == "undefined" ? device.model : device.name),
-								uuid: device.uuid,
-								device_token: token,
-								device_type: dt,
-							}
-						})
-							.then((data) => console.log("save_device_token response ", data))
-							.catch((e) => console.error(e))
-						;
-					}
+		Application.registerPushNotifications(
+			data => {
+				let dt = (Application.getPlatform() === "ios"
+						? "APPLE"
+						: "GOOGLE/REV2"
 				);
-			},
-			() =>
-			{
-			}, "Device", "getDeviceInfo", []);
+
+				let token = null;
+
+				if (typeof data == "object")
+				{
+					if (data.voipToken)
+					{
+						token = data.voipToken;
+						dt = "APPLE/VOIP"
+					}
+					else if (data.type && data.type === 'huawei')
+					{
+						token = data.token;
+						dt = "HUAWEI"
+					}
+					else if (data.token)
+					{
+						token = data.token;
+					}
+				}
+				else
+				{
+					token = data;
+				}
+
+				BX.ajax({
+					url: env.siteDir + "mobile/",
+					method: "POST",
+					dataType: "json",
+					tokenSaveRequest: true,
+					data: {
+						mobile_action: "save_device_token",
+						device_name: (device.model),
+						uuid: device.uuid,
+						device_token: token,
+						device_type: dt,
+					}
+				})
+					.then((data) => console.log("save_device_token response ", data))
+					.catch((e) => console.error(e))
+				;
+			}
+		);
 	};
 
 	EntityReady.wait('chat').then(() => pushNotificationRegister);

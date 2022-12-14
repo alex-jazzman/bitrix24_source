@@ -14,7 +14,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 	const FIRST_TUNNEL_ADDITIONAL_HEIGHT = 5;
 	const TUNNEL_HEIGHT = 22;
 	const TUNNEL_MARGIN_TOP = 9;
-	const MIN_STAGE_HEIGHT = 70;
+	const MIN_STAGE_HEIGHT = 71;
 
 	class StageListItem extends LayoutComponent
 	{
@@ -34,10 +34,11 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 
 		initStageProps(props)
 		{
+			this.unsuitable = BX.prop.getBoolean(props, 'unsuitable', false);
 			this.showTunnels = BX.prop.get(props, 'showTunnels', false);
-			this.showTotal = BX.prop.get(props, 'showTotal', false);
-			this.showCount = BX.prop.get(props, 'showCount', false);
-			this.showCounters = BX.prop.get(props, 'showCounters', false);
+			this.showTotal = !this.unsuitable && BX.prop.get(props, 'showTotal', false);
+			this.showCount = !this.unsuitable && BX.prop.get(props, 'showCount', false);
+			this.showCounters = !this.unsuitable && BX.prop.get(props, 'showCounters', false);
 			this.showAllStagesItem = BX.prop.get(props, 'showAllStagesItem', false);
 		}
 
@@ -139,6 +140,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 						style: {
 							width: this.props.stage.semantics === SEMANTICS.SUCCESS ? 14 : 18,
 							height: this.props.stage.semantics === SEMANTICS.SUCCESS ? 16 : 17,
+							opacity: (this.unsuitable ? 0.3 : 1),
 						},
 						resizeMode: 'contain',
 						svg: {
@@ -168,6 +170,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 						showCount: this.showCount,
 						showCounters: this.showCounters,
 						showAllStagesItem: this.showAllStagesItem,
+						unsuitable: this.unsuitable,
 					}),
 					(this.showTunnels ? this.renderTunnels(stage) : null),
 				),

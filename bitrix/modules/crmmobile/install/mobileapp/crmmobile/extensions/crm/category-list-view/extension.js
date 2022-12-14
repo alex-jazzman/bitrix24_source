@@ -176,7 +176,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				onCreateCategory: this.createCategoryHandler,
 				onEditCategory: this.editCategoryHandler,
 				canUserEditCategory: this.canUserEditCategory(),
-				canUserAddCategory: !this.getDealCategoryLimitRestriction().isExceeded,
+				canUserAddCategory: !this.hasDealCategoryLimitRestriction(),
 				readOnly: this.props.readOnly,
 				selectAction: this.props.selectAction,
 				onSelectCategory: this.props.onSelectCategory,
@@ -227,7 +227,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 					stageParams: {
 						showTunnels: true,
 					},
-					onViewHidden: ({stageAction}) => {
+					onViewHidden: ({ stageAction }) => {
 						if (
 							stageAction === StageSelectActions.SelectTunnelDestination
 							|| stageAction === StageSelectActions.CreateTunnel
@@ -235,7 +235,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 						{
 							this.layout.close();
 						}
-					}
+					},
 				},
 				{},
 				this.layout,
@@ -245,9 +245,8 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 		createCategory(categories)
 		{
 			const sort = categories[categories.length - 1].sort + 100;
-			const dealCategoryLimitRestriction = this.getDealCategoryLimitRestriction();
 
-			if (this.getRestrictions() && dealCategoryLimitRestriction.isExceeded)
+			if (this.hasDealCategoryLimitRestriction())
 			{
 				void PlanRestriction.open(
 					{
@@ -282,6 +281,13 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				this.getRestrictions()
 					.find((restriction) => restriction.name === DEAL_CATEGORY_LIMIT_RESTRICTION_NAME)
 			);
+		}
+
+		hasDealCategoryLimitRestriction()
+		{
+			const dealCategoryLimitRestriction = this.getDealCategoryLimitRestriction();
+
+			return !dealCategoryLimitRestriction || dealCategoryLimitRestriction.isExceeded;
 		}
 	}
 

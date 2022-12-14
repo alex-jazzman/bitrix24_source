@@ -26,6 +26,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 
 			return {
 				...config,
+				enableTime,
 				datePickerType: BX.prop.getString(config, 'datePickerType', defaultDatePickerType),
 				dateFormat: BX.prop.getString(config, 'dateFormat', defaultDateFormat),
 				defaultListTitle: BX.prop.getString(config, 'defaultListTitle', this.props.title || ''),
@@ -57,7 +58,9 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 
 		getTimezoneOffset(value)
 		{
-			if (!this.getConfig().checkTimezoneOffset)
+			const { enableTime, checkTimezoneOffset } = this.getConfig();
+
+			if (!enableTime || !checkTimezoneOffset)
 			{
 				return 0;
 			}
@@ -181,7 +184,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 		{
 			const value = this.getValue();
 
-			return (BX.type.isNumber(value) ? dateFormatter.get(value, this.getConfig().dateFormat) : '');
+			return (BX.type.isNumber(value) ? DateFormatter.getDateString(value, this.getConfig().dateFormat) : '');
 		}
 
 		getTimeInMilliseconds(value)

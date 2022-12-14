@@ -3,7 +3,7 @@
  */
 jn.define('layout/ui/fields/client/elements/info', (require, exports, module) => {
 
-	const { AddressView } = require('layout/ui/address');
+	const { AddressView, AddressViewType } = require('layout/ui/address');
 
 	/**
 	 * @function ClientItemInfo
@@ -28,7 +28,11 @@ jn.define('layout/ui/fields/client/elements/info', (require, exports, module) =>
 				style: style.text,
 				text: connectionInfo,
 			}),
-			...addresses.map((address) => AddressView({ address, clickable: true })),
+			...addresses.map((address) => AddressView({
+				address,
+				clickable: true,
+				viewType: AddressViewType.BLENDING
+			})),
 		);
 	}
 

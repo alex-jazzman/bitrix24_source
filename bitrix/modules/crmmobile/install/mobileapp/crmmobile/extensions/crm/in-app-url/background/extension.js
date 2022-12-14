@@ -1,6 +1,7 @@
 (() => {
 
-	const { CrmRouter } = jn.require('crm/in-app-url/router');
+	const { CrmUrl } = jn.require('crm/in-app-url/url');
+	const { inAppUrl } = jn.require('in-app-url');
 
 	class CrmBackground
 	{
@@ -12,8 +13,12 @@
 		bindEvents()
 		{
 			BX.addCustomEvent('crmbackground::router', (props) => {
-				const router = new CrmRouter(props);
-				router.open();
+				const crmUrl = new CrmUrl(props);
+				const url = crmUrl.toString();
+
+				inAppUrl.open(url, { canOpenInDefault: true }, () => {
+					console.error(`it is impossible to open url: ${url} `);
+				});
 			});
 		}
 	}

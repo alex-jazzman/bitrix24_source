@@ -14,11 +14,12 @@ $MESS["LANDING_TPL_EMPTY_REPO_EXPIRED"] = "Лицензия вашего про�
 $MESS["LANDING_TPL_EMPTY_REPO_EXPIRED_LINK"] = "Пожалуйста, #LINK1#продлите лицензию#LINK2#";
 $MESS["LANDING_TPL_LOAD_APP_TEMPLATE_2"] = "<span>Загрузить</span> шаблон из Битрикс24.Маркет";
 $MESS["LANDING_TPL_LABEL_NEW"] = "новое";
-$MESS["LANDING_TPL_DESIGN_BY"] = "Дизайн #DESIGNER#";
 $MESS["LANDING_TPL_FEEDBACK_TITLE"] = "Не нашли нужный шаблон?";
 $MESS["LANDING_TPL_FEEDBACK_MESSAGE_2"] = "Поделитесь с нами, какая тематика шаблона вам нужна";
 $MESS["LANDING_TPL_FEEDBACK_SEND"] = "Написать";
 $MESS["LANDING_TPL_CREATE_EMPTY"] = "Пустой шаблон";
 $MESS["LANDING_TPL_NOT_FOUND_TITLE"] = "Не удалось найти шаблон?";
 $MESS["LANDING_TPL_NOT_FOUND_BUTTON"] = "Написать";
+$MESS["LANDING_TPL_LABEL_FREE"] = "Бесплатный";
+$MESS["LANDING_TPL_LABEL_SUBSCRIPTION"] = "По подписке";
 ?>

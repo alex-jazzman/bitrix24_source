@@ -238,14 +238,29 @@
 						useSearchBar:true,
 						cache:false
 					}
-				}
+				},
+				{
+					exp: /(^.*\/((?!mobile\/)[\w.,@?^=%&:\/~+#-])*)(\/knowledge)([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])/gi,
+					replace: "$1/mobile$3$4",
+					useNewStyle: true
+				},
+				{
+					exp: /(\/mobile\/knowledge\/[\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])/gi,
+					replace: "$1",
+					useNewStyle: true,
+					notRequireChanges: true,
+				},
 			];
 
 			var params = null;
 			for (var i = 0; i < mobileRegReplace.length; i++)
 			{
 				var mobileLink = url.replace(mobileRegReplace[i].exp, mobileRegReplace[i].replace);
-				if (mobileLink != url)
+				var matchUrl = url.match(mobileRegReplace[i].exp);
+				if (
+					mobileLink != url
+					|| (mobileRegReplace[i].notRequireChanges && matchUrl !== null)
+				)
 				{
 					params = {
 						url: mobileLink,
@@ -372,23 +387,17 @@
 		},
 		resolveOpenFunction: function(url, loadParams = {})
 		{
-			let func = BX.MobileTools.getOpenFunction(url);
+			const openFunction = BX.MobileTools.getOpenFunction(url);
 
-			if(!func)
+			if(!openFunction)
 			{
 				const mobileUrlParams = BX.MobileTools.getMobileUrlParams(url);
 				const pageLoadParams = mobileUrlParams || { url, ...loadParams };
 
-				func = () => BXMobileApp.PageManager.loadPageBlank(pageLoadParams, true);
-
-				if(!mobileUrlParams)
-				{
-					func();
-					return;
-				}
+				return () => BXMobileApp.PageManager.loadPageBlank(pageLoadParams, true);
 			}
 
-			return func;
+			return openFunction;
 		},
 		resolverCrmCondition: ({
 			resolveFunction: (props) => {

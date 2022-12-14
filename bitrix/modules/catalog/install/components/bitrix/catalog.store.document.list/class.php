@@ -8,13 +8,16 @@ use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
 use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\Contract\Controllerable;
-use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons\CreateButton;
 use Bitrix\UI\Buttons\LockedButton;
+use Bitrix\Catalog\v2\Contractor\Provider\Manager;
+use Bitrix\Catalog\ContractorTable;
+use Bitrix\Catalog\StoreTable;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -164,7 +167,7 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 				return
 					$this->accessController->checkByValue($action, StoreDocumentTable::TYPE_ARRIVAL)
 					|| $this->accessController->checkByValue($action, StoreDocumentTable::TYPE_STORE_ADJUSTMENT)
-				;
+					;
 
 			case self::MOVING_MODE:
 				return $this->accessController->checkByValue(
@@ -182,7 +185,7 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 				return
 					$this->accessController->checkByValue($action, StoreDocumentTable::TYPE_RETURN)
 					|| $this->accessController->checkByValue($action, StoreDocumentTable::TYPE_UNDO_RESERVE)
-				;
+					;
 		}
 
 		return false;
@@ -672,10 +675,7 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 			];
 		}
 
-		if ($column['CONTRACTOR_ID'])
-		{
-			$column['CONTRACTOR_ID'] = htmlspecialcharsbx($this->getContractors()[$column['CONTRACTOR_ID']]['NAME']);
-		}
+		$column['CONTRACTOR_ID'] = htmlspecialcharsbx($this->getContractorName($column));
 
 		if (isset($column['TOTAL']))
 		{
@@ -762,7 +762,7 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 
 		$this->contractors = [];
 
-		$dbResult = \Bitrix\Catalog\ContractorTable::getList(['select' => ['ID', 'COMPANY', 'PERSON_NAME']]);
+		$dbResult = ContractorTable::getList(['select' => ['ID', 'COMPANY', 'PERSON_NAME']]);
 		while ($contractor = $dbResult->fetch())
 		{
 			$this->contractors[$contractor['ID']] = [
@@ -783,7 +783,7 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 
 		$this->stores = [];
 
-		$dbResult = \Bitrix\Catalog\StoreTable::getList(['select' => ['ID', 'TITLE']]);
+		$dbResult = StoreTable::getList(['select' => ['ID', 'TITLE']]);
 		while ($store = $dbResult->fetch())
 		{
 			$this->stores[$store['ID']] = [
@@ -939,11 +939,11 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 				'items' => [
 					[
 						'text' => StoreDocumentTable::getTypeList(true)[StoreDocumentTable::TYPE_UNDO_RESERVE],
-						'href' => $this->getUrlToDocumentDetail(0, StoreDocumentTable::TYPE_UNDO_RESERVE),
+						'href' => $this->getUrlToNewDocumentDetail(StoreDocumentTable::TYPE_UNDO_RESERVE),
 					],
 					[
 						'text' => StoreDocumentTable::getTypeList(true)[StoreDocumentTable::TYPE_RETURN],
-						'href' => $this->getUrlToDocumentDetail(0, StoreDocumentTable::TYPE_RETURN),
+						'href' => $this->getUrlToNewDocumentDetail(StoreDocumentTable::TYPE_RETURN),
 					],
 				]
 			]);
@@ -954,24 +954,40 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 			{
 				if ($this->isFirstTime())
 				{
-					$addDocumentButton->setLink($this->getUrlToDocumentDetail(0, StoreDocumentTable::TYPE_STORE_ADJUSTMENT, 'Y'));
+					$addDocumentButton->setLink($this->getUrlToNewDocumentDetail(StoreDocumentTable::TYPE_STORE_ADJUSTMENT, 'Y'));
 				}
 				else
 				{
-					$addDocumentButton->setLink($this->getUrlToDocumentDetail(0, StoreDocumentTable::TYPE_ARRIVAL));
+					$addDocumentButton->setLink($this->getUrlToNewDocumentDetail(StoreDocumentTable::TYPE_ARRIVAL));
 				}
 			}
 			if ($this->mode === self::MOVING_MODE)
 			{
-				$addDocumentButton->setLink($this->getUrlToDocumentDetail(0, StoreDocumentTable::TYPE_MOVING));
+				$addDocumentButton->setLink($this->getUrlToNewDocumentDetail(StoreDocumentTable::TYPE_MOVING));
 			}
 			if ($this->mode === self::DEDUCT_MODE)
 			{
-				$addDocumentButton->setLink($this->getUrlToDocumentDetail(0, StoreDocumentTable::TYPE_DEDUCT));
+				$addDocumentButton->setLink($this->getUrlToNewDocumentDetail(StoreDocumentTable::TYPE_DEDUCT));
 			}
 		}
 
 		return $addDocumentButton;
+	}
+
+	private function getUrlToNewDocumentDetail(string $documentType, bool $isFirstTime = false): string
+	{
+		if ($isFirstTime)
+		{
+			$uriEntity = new Uri($this->getUrlToDocumentDetail(0, $documentType, 'Y'));
+		}
+		else
+		{
+			$uriEntity = new Uri($this->getUrlToDocumentDetail(0, $documentType));
+		}
+
+		$uriEntity->addParams(['focusedTab' => 'tab_products']);
+
+		return $uriEntity->getUri();
 	}
 
 	private function isFirstTime(): bool
@@ -1064,6 +1080,11 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 		if (isset($preparedFilter['DOC_NUMBER']))
 		{
 			$preparedFilter['DOC_NUMBER'] = '%' . $preparedFilter['DOC_NUMBER'] . '%';
+		}
+
+		if (Manager::getActiveProvider())
+		{
+			Manager::getActiveProvider()::setDocumentsGridFilter($preparedFilter);
 		}
 
 		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->filter->getID());
@@ -1272,5 +1293,29 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 		}
 
 		return $zone;
+	}
+
+	/**
+	 * @param array $column
+	 * @return string
+	 */
+	private function getContractorName(array $column): string
+	{
+		if (Manager::getActiveProvider())
+		{
+			$contractor = Manager::getActiveProvider()::getContractorByDocumentId((int)$column['ID']);
+
+			return $contractor ? $contractor->getName() : '';
+		}
+
+		$contractorId = (int)$column['CONTRACTOR_ID'];
+		$contractors = $this->getContractors();
+
+		if (!isset($contractors[$contractorId]))
+		{
+			return '';
+		}
+
+		return (string)$contractors[$contractorId]['NAME'];
 	}
 }

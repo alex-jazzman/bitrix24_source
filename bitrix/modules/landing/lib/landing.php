@@ -1405,7 +1405,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		$patternForUser = '/(user:)?#(user)([\d\_]+)/is';
 		static $isIframe = null;
 
-		if (!self::$editMode)
+		if (!self::$editMode && $content)
 		{
 			$content = Subtype\Form::prepareFormsToView(
 				$content

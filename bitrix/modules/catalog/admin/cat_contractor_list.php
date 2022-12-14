@@ -31,6 +31,19 @@ $bReadOnly = !$accessController->check(ActionDictionary::ACTION_STORE_VIEW);
 
 IncludeModuleLangFile(__FILE__);
 
+if (
+	!$publicMode
+	&& Loader::includeModule('sale')
+	&& Catalog\v2\Contractor\Provider\Manager::getActiveProvider()
+)
+{
+	$APPLICATION->SetTitle(GetMessage("CONTRACTOR_PAGE_TITLE"));
+	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+	$APPLICATION->IncludeComponent("bitrix:sale.admin.page.stub", "");
+	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+	die();
+}
+
 $bExport = (isset($_REQUEST['mode']) && $_REQUEST['mode'] == 'excel');
 
 $typeList = Catalog\ContractorTable::getTypeDescriptions();

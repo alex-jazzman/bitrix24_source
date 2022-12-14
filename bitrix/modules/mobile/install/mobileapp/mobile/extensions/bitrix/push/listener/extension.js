@@ -5,9 +5,6 @@
 
 	include('InAppNotifier');
 
-	/**
-	 * @class PushListener
-	 */
 	class PushListener
 	{
 		constructor()
@@ -177,6 +174,9 @@
 	// fake timeout to wait subscribers on initialization
 	setTimeout(() => onAppActive(), 100);
 
+	/**
+	 * @class PushListener
+	 */
 	this.PushListener = pushListener;
 
 })();

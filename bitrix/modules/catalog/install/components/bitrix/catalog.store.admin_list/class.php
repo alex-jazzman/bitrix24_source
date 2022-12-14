@@ -310,6 +310,9 @@ class CatalogStoreAdminList extends CBitrixComponent
 			'FILTER_PRESETS' => [],
 			'ENABLE_LABEL' => true,
 			'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+			'CONFIG' => [
+				'AUTOFOCUS' => false,
+			]
 		];
 		\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter($filterOptions);
 

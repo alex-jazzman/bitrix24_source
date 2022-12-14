@@ -9,12 +9,11 @@ jn.define('communication/connection/item', (require, exports, module) => {
 		ENABLED: '#E6F6FD',
 		DISABLED: '#F6F7F7',
 	};
+	const ICON_SIZE = 18;
 
-	const connectionItem = ({ enabled, type, horizontal, connectionMenu }) => {
+	const connectionItem = ({ enabled, horizontal, connectionMenu }) => {
 
-		const typeStyles = styles[type] || {};
-
-		const svgContent = ConnectionSvg[type];
+		const svgContent = ConnectionSvg['phone'];
 		const iconColor = enabled
 			? ICON_COLOR.ENABLED
 			: ICON_COLOR.DISABLED;
@@ -34,35 +33,20 @@ jn.define('communication/connection/item', (require, exports, module) => {
 				onClick: () => {
 					if (enabled && connectionMenu)
 					{
-						connectionMenu.show([type]);
+						connectionMenu.show();
 					}
 				},
 			},
 			Image({
 				style: {
-					width: typeStyles.width - 3,
-					height: typeStyles.height - 3,
+					width: ICON_SIZE,
+					height: ICON_SIZE,
 				},
 				svg: {
 					content: svgContent(enabled),
 				},
 			}),
 		);
-	};
-
-	const styles = {
-		phone: {
-			width: 21,
-			height: 21,
-		},
-		im: {
-			width: 20,
-			height: 18,
-		},
-		email: {
-			width: 21,
-			height: 15,
-		},
 	};
 
 	module.exports = { connectionItem };

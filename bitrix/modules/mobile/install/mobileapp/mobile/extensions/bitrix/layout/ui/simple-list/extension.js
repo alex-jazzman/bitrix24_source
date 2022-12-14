@@ -1,7 +1,7 @@
 (() => {
 
 	const { Haptics } = jn.require('haptics');
-	const { clone } = jn.require('utils/object');
+	const { clone, merge } = jn.require('utils/object');
 	const { ViewMode } = jn.require('layout/ui/simple-list/view-mode');
 	const { SkeletonFactory, SkeletonTypes } = jn.require('layout/ui/simple-list/skeleton');
 
@@ -21,6 +21,12 @@
 	const ACTION_UPDATE = 'update';
 
 	const CONTEXT_AJAX = 'ajax';
+
+	const animateActions = {
+		blink: 'blink',
+		setLoading: 'setLoading',
+		dropLoading: 'dropLoading',
+	}
 
 	/**
 	 * @class SimpleList
@@ -201,7 +207,7 @@
 
 		updateItemFromPull(id, item)
 		{
-			if (this.items.size < 2)
+			if (!this.items.size)
 			{
 				this.reloadList();
 				return;
@@ -299,7 +305,22 @@
 			});
 		}
 
-		blinkItem(itemId)
+		blinkItem(itemId, showUpdated = true)
+		{
+			return this.animateItem(animateActions.blink, itemId, { showUpdated });
+		}
+
+		setLoading(itemId)
+		{
+			return this.animateItem(animateActions.setLoading, itemId);
+		}
+
+		dropLoading(itemId, showUpdated = true)
+		{
+			return this.animateItem(animateActions.dropLoading, itemId, { showUpdated });
+		}
+
+		animateItem(action, itemId, { showUpdated = true } = {})
 		{
 			return new Promise(resolve => {
 				const item = this.getItemComponent(itemId);
@@ -309,7 +330,18 @@
 					return;
 				}
 
-				item.blink(resolve);
+				if (action === animateActions.blink)
+				{
+					item.blink(resolve, showUpdated);
+				}
+				else if (action === animateActions.setLoading)
+				{
+					item.setLoading(resolve);
+				}
+				else if (action === animateActions.dropLoading)
+				{
+					item.dropLoading(resolve, showUpdated);
+				}
 			});
 		}
 
@@ -324,8 +356,6 @@
 
 		showItemMenu(itemId)
 		{
-			Haptics.impactLight();
-
 			const actions = clone(this.props.itemActions);
 
 			if (this.itemViews[itemId])
@@ -484,7 +514,7 @@
 
 			if (viewMode === ViewMode.loading)
 			{
-				if (lastViewMode === ViewMode.empty)
+				if (lastViewMode === ViewMode.empty && !this.props.forcedShowSkeleton)
 				{
 					container = null;
 				}
@@ -715,17 +745,18 @@
 			}
 		}
 
-		modifyItemsList(items)
+		modifyItemsList(itemsData)
 		{
-			items.forEach(item => {
+			itemsData.forEach(item => {
 				const { id } = item;
-				if (this.items.has(id))
+				const currentItem = this.items.has(id) && clone(this.items.get(id));
+
+				if (currentItem)
 				{
-					this.items.set(id, item);
+					merge(currentItem.data, item.data);
+					this.items.set(id, currentItem);
 				}
 			});
-
-			this.setState({});
 		}
 
 		getStyle(name)

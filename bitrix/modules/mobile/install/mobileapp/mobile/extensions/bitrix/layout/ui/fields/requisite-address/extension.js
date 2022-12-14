@@ -11,6 +11,11 @@ jn.define('layout/ui/fields/requisite-address', (require, exports, module) => {
 	 */
 	class RequisiteAddressField extends BaseField
 	{
+		get types()
+		{
+			return BX.prop.getObject(this.getConfig(), 'types', null);
+		}
+
 		isReadOnly()
 		{
 			return true;
@@ -19,11 +24,6 @@ jn.define('layout/ui/fields/requisite-address', (require, exports, module) => {
 		isDisabled()
 		{
 			return true;
-		}
-
-		getAddresses()
-		{
-			return this.getValue().filter((address) => address && address.formattedLocation);
 		}
 
 		renderEditableContent()
@@ -45,17 +45,28 @@ jn.define('layout/ui/fields/requisite-address', (require, exports, module) => {
 						flexDirection: 'column',
 					},
 				},
-				...this.getAddresses().map((location) => this.renderAddress(location)),
+				...this.getValue().map((location) => this.renderAddress(location)),
 			);
 		}
 
 		renderAddress(location)
 		{
-			const { formattedLocation: address, longitude: lng, latitude: lat } = location;
+			const { id, address, longitude: lng, latitude: lat } = location;
 			const coords = { lng, lat };
 			const parentWidget = this.getParentWidget();
+			const type = this.getTypeValueById(id);
 
-			return AddressView({ address, coords, parentWidget });
+			return AddressView({ address, type, coords, parentWidget });
+		}
+
+		getTypeValueById(id)
+		{
+			if (this.types && this.types[id])
+			{
+				return this.types[id].DESCRIPTION;
+			}
+
+			return null;
 		}
 	}
 

@@ -5,6 +5,5 @@ return [
 		'layout/ui/fields',
 		'layout/ui/simple-list/items/base',
 		'utils/object',
-		'crm:stage-selector',
 	],
 ];

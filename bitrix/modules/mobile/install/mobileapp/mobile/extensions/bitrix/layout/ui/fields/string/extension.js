@@ -18,8 +18,10 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			super(props);
 
 			this.valueFromKeyboard = null;
+			this.state.showAll = this.getValue().length <= 180;
 
 			this.inputRef = null;
+			this.showHideButton = this.getValue().length > 180;
 		}
 
 		getConfig()
@@ -29,12 +31,12 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			return {
 				...config,
 				keyboardType: 'default',
-				autoCapitalize: BX.prop.getBoolean(config, 'autoCapitalize', undefined),
+				autoCapitalize: BX.prop.getString(config, 'autoCapitalize', undefined),
 				enableKeyboardHide: BX.prop.getBoolean(config, 'enableKeyboardHide', false),
 				selectionOnFocus: BX.prop.getBoolean(config, 'selectionOnFocus', false),
 				ellipsize: BX.prop.getBoolean(config, 'ellipsize', false),
 				readOnlyElementType: BX.prop.getString(config, 'readOnlyElementType', 'Text'),
-				onLinkClick: BX.prop.getFunction(config, 'onLinkClick', () => {}),
+				onLinkClick: BX.prop.getFunction(config, 'onLinkClick', undefined),
 				onSubmitEditing: BX.prop.getFunction(config, 'onSubmitEditing', null),
 			};
 		}
@@ -203,35 +205,59 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 
 			const params = this.getReadOnlyRenderParams();
 
-			switch (this.getConfig().readOnlyElementType)
-			{
-				case 'BBCodeText':
-					return BBCodeText({
-						...params,
-						value: this.getValue(),
-						onLinkClick: this.getConfig().onLinkClick,
-					});
+			const getContent = (readOnlyElementType) => {
+				switch (readOnlyElementType)
+				{
+					case 'BBCodeText':
+						return BBCodeText({
+							...params,
+							value: this.getValue(),
+							onLinkClick: this.getConfig().onLinkClick,
+						});
 
-				case 'TextInput':
-					return TextInput({
-						...params,
-						value: this.getValue(),
-						enable: false,
-					});
+					case 'TextInput':
+						return TextInput({
+							...params,
+							value: this.getValue(),
+							enable: false,
+						});
 
-				default:
-					return Text({
-						...params,
-						text: this.getValue(),
-					});
-			}
+					default:
+						return Text({
+							...params,
+							text: this.getValue(),
+						});
+				}
+			};
+
+			return View(
+				{
+					style: {
+						flexDirection: 'column',
+						flex: 1,
+					},
+				},
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							flexGrow: 2,
+						},
+					},
+					getContent(this.getConfig().readOnlyElementType),
+				),
+				this.renderShowAllButton(1),
+				this.renderHideButton(),
+			);
 		}
 
 		getReadOnlyRenderParams()
 		{
 			return {
-				style: this.styles.value,
-				...this.getEllipsizeParams(),
+				style: {
+					...this.styles.value,
+					maxHeight: this.state.showAll ? null : 50,
+				}
 			};
 		}
 
@@ -267,6 +293,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				onBlur: () => this.removeFocus(),
 				onChangeText: (text) => this.changeText(text),
 				onSubmitEditing: () => FocusManager.blurFocusedFieldIfHas(),
+				onLinkClick: this.getConfig().onLinkClick,
 			};
 		}
 
@@ -320,6 +347,11 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 		hasCapitalizeTitleInEmpty()
 		{
 			return !this.state.focus;
+		}
+
+		showAllCount()
+		{
+			return false;
 		}
 	}
 

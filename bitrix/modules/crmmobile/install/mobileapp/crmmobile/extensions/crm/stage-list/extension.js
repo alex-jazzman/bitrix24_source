@@ -3,6 +3,7 @@
  */
 jn.define('crm/stage-list', (require, exports, module) => {
 
+	const { clone } = require('utils/object');
 	const { CategoryCountersStoreManager } = require('crm/state-storage');
 	const {
 		StageListItem,
@@ -54,12 +55,17 @@ jn.define('crm/stage-list', (require, exports, module) => {
 					...acc,
 					{
 						...stage,
-						type: String(Random.getString(10)),
+						type: `${stage.tunnels.length} ${this.showContentBorder(index, stages.length - 1) ? 'with border' : ''}`,
 						key: String(stage.id),
 						index: index + 1,
-						showContentBorder: index !== stages.length - 1,
+						showContentBorder: this.showContentBorder(index, stages.length - 1),
 					},
 				]), []);
+		}
+
+		showContentBorder(index, lastIndex)
+		{
+			return index !== lastIndex;
 		}
 
 		/**
@@ -104,12 +110,27 @@ jn.define('crm/stage-list', (require, exports, module) => {
 		moveStage(fromIndex, toIndex)
 		{
 			const { processStages } = this.props;
+
 			const stage = processStages[fromIndex];
 			let list = [...processStages];
+
 			list.splice(fromIndex, 1);
 			list.splice(toIndex, 0, stage);
+
 			list = this.updateStagesSort(list);
 			this.onStageMove(list);
+		}
+
+		updateStagesSort(stages)
+		{
+			return stages.map((stage, index) => {
+				stage = clone(stage);
+
+				stage.sort = index * 10 + 10;
+				stage.index = index + 1;
+
+				return stage;
+			});
 		}
 
 		onStageMove(list)
@@ -121,15 +142,6 @@ jn.define('crm/stage-list', (require, exports, module) => {
 			}
 		}
 
-		updateStagesSort(stages)
-		{
-			return stages.map((stage, index) => {
-				stage.sort = index * 10 + 10;
-				stage.index = index + 1;
-				return stage;
-			});
-		}
-
 		renderProcessStageList(stages)
 		{
 			const { readOnly } = this.props;
@@ -138,9 +150,7 @@ jn.define('crm/stage-list', (require, exports, module) => {
 				data: [{ items: stages }],
 				renderItem: (stage) => this.renderStageListItem(stage),
 				dragInteractionEnabled: !readOnly,
-				onItemDrop: (itemMove) => {
-					this.moveStage(itemMove.from.index, itemMove.to.index);
-				},
+				onItemDrop: (itemMove) => this.moveStage(itemMove.from.index, itemMove.to.index),
 				style: {
 					height: this.calculateHeight(stages),
 					alignItems: 'center',
@@ -182,7 +192,7 @@ jn.define('crm/stage-list', (require, exports, module) => {
 
 			const { categoryCounters } = this.state;
 
-			let stageData =  { ...stage, active };
+			let stageData = { ...stage, active };
 			const counters = categoryCounters.find(stageCounters => stageCounters.id === stage.id);
 
 			if (stage.id && counters)
@@ -203,6 +213,7 @@ jn.define('crm/stage-list', (require, exports, module) => {
 				onOpenStageDetail: this.onOpenStageDetail,
 				enableStageSelect: this.props.enableStageSelect,
 				enabled: this.isStageEnabled(stage),
+				unsuitable: this.isUnsuitableStage(stage),
 			});
 		}
 
@@ -214,6 +225,16 @@ jn.define('crm/stage-list', (require, exports, module) => {
 		get disabledStageIds()
 		{
 			return BX.prop.getArray(this.props, 'disabledStageIds', []);
+		}
+
+		isUnsuitableStage(stage)
+		{
+			return this.unsuitableStageIds.includes(stage.id);
+		}
+
+		get unsuitableStageIds()
+		{
+			return BX.prop.getArray(this.props, 'unsuitableStages', []);
 		}
 
 		render()

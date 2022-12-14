@@ -13,6 +13,12 @@ jn.define('crm/entity-tab/type', (require, exports, module) => {
 	 */
 	class TypeFactory
 	{
+		static getEntityByType(entityTypeName, params)
+		{
+			const factory = new TypeFactory(entityTypeName);
+			return factory.getEntity(params);
+		}
+
 		/**
 		 * @param {String} entityTypeName
 		 */

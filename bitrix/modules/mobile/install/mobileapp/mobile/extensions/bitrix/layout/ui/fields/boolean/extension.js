@@ -42,6 +42,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 				descriptionNo: BX.prop.getString(config, 'descriptionNo', BX.message('FIELDS_BOOLEAN_NO')),
 				iconUriYes: BX.prop.getString(config, 'iconUriYes', false),
 				iconUriNo: BX.prop.getString(config, 'iconUriNo', false),
+				showSwitcher: BX.prop.getBoolean(config, 'showSwitcher', !this.isReadOnly()),
 			};
 		}
 
@@ -84,23 +85,9 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 					);
 				}
 
-				if (this.showBooleanFieldDescription)
+				if (this.showBooleanFieldDescription && this.isBlinkable())
 				{
-					if (this.isBlinkable())
-					{
-						animations.push(this.blinkViewRef.blink(!wasChecked));
-					}
-					else
-					{
-						animations.push(
-							new Promise((resolve) => {
-								this.descriptionRef.animate({
-									duration: 200,
-									textColor: (wasChecked ? '#a8adb4' : '#333333'),
-								}, resolve);
-							}),
-						);
-					}
+					animations.push(this.blinkViewRef.blink(!wasChecked));
 				}
 
 				return Promise.all(animations).then(() => this.handleChange(!wasChecked));
@@ -137,11 +124,14 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 						minHeight: 21,
 					},
 				},
-				(this.isIconMode() && this.renderIcon()),
+				(this.isIconMode() ? this.renderIcon() : (config.showSwitcher && this.renderSwitcher())),
 				(
 					this.isBlinkable()
 						? Text({
-							style: this.styles.value,
+							style: {
+								...this.styles.value,
+								color: '#333333',
+							},
 							text: (checked ? config.descriptionYes : config.descriptionNo),
 						})
 						: this.renderBooleanFieldDescription()
@@ -204,6 +194,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 						width: 37,
 						height: 17,
 						marginRight: 8,
+						opacity: (this.isReadOnly() ? 0.5 : 1),
 					},
 				},
 				View(
@@ -230,20 +221,16 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 				return null;
 			}
 
-			const checked = this.getValue();
 			const config = this.getConfig();
 
 			if (!this.isBlinkable())
 			{
 				return Text({
-					ref: ref => this.descriptionRef = ref,
 					style: {
 						flexShrink: 2,
-						color: (checked ? '#333333' : '#a8adb4'),
+						color: '#333333',
 						fontSize: 16,
 					},
-					numberOfLines: 1,
-					ellipsize: 'end',
 					text: config.description,
 				});
 			}
@@ -254,11 +241,10 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 				slot: (checked) => {
 					return Text({
 						style: {
-							color: (checked ? '#333333' : '#b8bfc9'),
+							color: '#333333',
 							fontSize: 16,
 							flexShrink: 2,
 						},
-						numberOfLines: 1,
 						text: (checked ? config.descriptionYes : config.descriptionNo),
 					});
 				},

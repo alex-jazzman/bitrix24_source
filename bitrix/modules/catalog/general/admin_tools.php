@@ -188,7 +188,7 @@ class CCatalogAdminTools extends CCatalogAdminToolsAll
 
 		$arItems = array();
 
-		$productLimits = Catalog\Config\State::getExceedingProductLimit($intIBlockID);
+		$productLimits = Catalog\Config\State::getExceedingProductLimit($intIBlockID, $arParams['find_section_section'] ?? null);
 		if (!empty($productLimits))
 		{
 			if (!empty($productLimits['HELP_MESSAGE']))
@@ -410,7 +410,9 @@ class CCatalogAdminTools extends CCatalogAdminToolsAll
 				&& \Bitrix\Main\Loader::includeModule('crm')
 			)
 			{
-				if (\Bitrix\Crm\Order\Import\Instagram::isAvailable())
+				if (\Bitrix\Crm\Order\Import\Instagram::isAvailable()
+					&& Access\AccessController::getCurrent()->check(Access\ActionDictionary::ACTION_CATALOG_IMPORT_EXECUTION)
+				)
 				{
 					$arItems[] = [
 						'TEXT' => Loc::getMessage('BT_CAT_ADM_TOOLS_ADD_INSTAGRAM_IMPORT_2'),

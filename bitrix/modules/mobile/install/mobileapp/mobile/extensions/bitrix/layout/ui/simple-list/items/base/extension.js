@@ -26,6 +26,10 @@
 			this.showMenuHandler = props.showMenuHandler;
 			this.params = (this.props.params || {});
 			this.styles = styles;
+
+			this.communicationButtonRef = null;
+
+			this.showCommunicationButton = this.showCommunicationButton.bind(this);
 		}
 
 		componentWillReceiveProps(props)
@@ -33,9 +37,9 @@
 			this.testId = props.testId || '';
 		}
 
-		blink(callback = null)
+		blink(callback = null, showUpdated = true)
 		{
-			this.setLoading(this.dropLoading.bind(this, callback));
+			this.setLoading(this.dropLoading.bind(this, callback, showUpdated));
 		}
 
 		render()
@@ -298,15 +302,35 @@
 		{
 			const { item, params } = this.props;
 
-			return new CommunicationButton({
-				border: false,
-				horizontal: false,
-				value: item.data[ClientType],
-				ownerInfo: {
-					ownerId: item.id,
-					ownerTypeName: params.entityTypeName,
+			return View(
+				{
+					style: {
+						flexDirection: 'column',
+						alignItems: 'center',
+						justifyContent: 'center',
+						width: 76,
+					},
+					onClick: this.showCommunicationButton,
 				},
-			});
+				new CommunicationButton({
+					ref: (ref) => this.communicationButtonRef = ref,
+					border: false,
+					horizontal: false,
+					value: item.data[ClientType],
+					ownerInfo: {
+						ownerId: item.id,
+						ownerTypeName: params.entityTypeName,
+					},
+				}),
+			);
+		}
+
+		showCommunicationButton()
+		{
+			if (this.communicationButtonRef)
+			{
+				this.communicationButtonRef.showMenu();
+			}
 		}
 
 		renderSpecialFields(data)

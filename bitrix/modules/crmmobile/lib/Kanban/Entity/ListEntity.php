@@ -25,6 +25,7 @@ abstract class ListEntity extends Entity
 	// @todo maybe need to add more fields
 	protected const DEFAULT_SHOW_FIELD_NAMES = ['ID', 'CREATED_TIME'];
 	protected const DEFAULT_SELECT_FIELD_NAMES = ['PHONE', 'EMAIL', 'ASSIGNED_BY_ID'];
+	protected const FIELD_ALIASES = [];
 
 	protected array $factories = [];
 	protected ?Options $gridOptions = null;
@@ -73,7 +74,7 @@ abstract class ListEntity extends Entity
 		if ($presetId)
 		{
 			$filterOptions = $this->getFilterOptions();
-			$this->setFilterPreset($presetId, $filterOptions, $this->filterOptions->getPresets());
+			$this->setFilterPreset($presetId, $filterOptions);
 
 			$params = $filterOptions->setCurrentFilterPresetId($presetId)->getFilter();
 			$filter = array_merge($params, $filter);
@@ -123,7 +124,9 @@ abstract class ListEntity extends Entity
 	protected function getPreparedItems(int $entityTypeId, array $parameters = []): array
 	{
 		$fieldsCollection = $this->getFieldsCollection($entityTypeId);
-		$displayedFields = $this->getDisplayedFields($fieldsCollection);
+		$fieldsMap = $this->getFieldsMap($entityTypeId);
+
+		$displayedFields = $this->getDisplayedFields($fieldsCollection, $fieldsMap);
 
 		$parameters['select'] = $this->getSelectFields($displayedFields);
 		$items = $this->getItems($entityTypeId, $parameters);
@@ -182,8 +185,7 @@ abstract class ListEntity extends Entity
 		$this->ufProvider->prepareListFilter($filter, $this->getFilterFieldsArray(), $requestFilter);
 		$this->prepareActivityFilter($filter);
 		$this->prepareEntityTypeFilter($filter);
-
-		$parameters['filter'] = $filter;
+		$parameters['filter'] = $this->provider->prepareFilterValue($filter);
 
 		$items = $this->getFactory($entityTypeId)->getItemsFilteredByPermissions($parameters);
 
@@ -283,6 +285,11 @@ abstract class ListEntity extends Entity
 		return $this->getFactory($entityTypeId)->getFieldsCollection();
 	}
 
+	protected function getFieldsMap(int $entityTypeId): array
+	{
+		return array_flip($this->getFactory($entityTypeId)->getFieldsMap());
+	}
+
 	/**
 	 * @param array $item
 	 * @param array $params
@@ -322,13 +329,9 @@ abstract class ListEntity extends Entity
 		return [];
 	}
 
-	/**
-	 * @param Collection $fieldsCollection
-	 * @return array
-	 */
-	protected function getDisplayedFields(Collection $fieldsCollection): array
+	protected function getDisplayedFields(Collection $fieldsCollection, array $fieldsMap): array
 	{
-		$showedFields = $this->getShowedFieldsList($fieldsCollection);
+		$showedFields = $this->getShowedFieldsList($fieldsCollection, $fieldsMap);
 
 		$results = [];
 		foreach ($showedFields as $displayFieldName)
@@ -342,11 +345,7 @@ abstract class ListEntity extends Entity
 		return $results;
 	}
 
-	/**
-	 * @param Collection $fieldsCollection
-	 * @return array
-	 */
-	protected function getShowedFieldsList(Collection $fieldsCollection): array
+	protected function getShowedFieldsList(Collection $fieldsCollection, array $fieldsMap): array
 	{
 		if (empty($this->showedFieldsList))
 		{
@@ -366,6 +365,7 @@ abstract class ListEntity extends Entity
 			foreach ($showedFieldsNames as $showedFieldName)
 			{
 				$showedFieldName = trim($showedFieldName);
+				$showedFieldName = ($fieldsMap[$showedFieldName] ?? $showedFieldName);
 
 				if (!empty($showedFieldName) && $fieldsCollection->hasField($showedFieldName))
 				{
@@ -405,7 +405,22 @@ abstract class ListEntity extends Entity
 			$visibleFieldsNames = explode(',', $options['columns']);
 		}
 
+		$this->addFieldAliases($visibleFieldsNames);
+
 		return $visibleFieldsNames;
+	}
+
+	protected function addFieldAliases(array &$fieldNames): void
+	{
+		foreach (static::FIELD_ALIASES as $name => $alias)
+		{
+			$index = array_search($name, $fieldNames, true);
+			if ($index !== false)
+			{
+				unset($fieldNames[$index]);
+				$fieldNames[] = $alias;
+			}
+		}
 	}
 
 	/**
@@ -529,16 +544,6 @@ abstract class ListEntity extends Entity
 	 * @todo must be replace after support new api in the crm
 	 */
 	abstract protected function getEntityClass();
-
-	/**
-	 * @param int $currentCategoryId
-	 * @return array
-	 */
-	protected function getUserSearchPresets(int $currentCategoryId = 0): array
-	{
-		$options = $this->getFilterOptions()->getOptions();
-		return $options['filters'] ?? [];
-	}
 
 	/**
 	 * @return \Bitrix\Main\UI\Filter\Options

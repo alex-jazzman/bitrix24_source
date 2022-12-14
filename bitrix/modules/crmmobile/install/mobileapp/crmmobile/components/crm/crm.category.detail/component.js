@@ -43,6 +43,9 @@
 					this.openStageDetail(stage);
 				});
 			}, 500, this);
+
+			this.scrollViewRef = null;
+			this.categoryNameRef = null;
 		}
 
 		getCategoryByProps(props)
@@ -133,6 +136,24 @@
 				const { entityTypeId } = this.props;
 				const fields = this.getCategoryFields();
 
+				if (fields.name.trim() === '')
+				{
+					Haptics.notifyWarning();
+
+					if (this.scrollViewRef)
+					{
+						this.scrollViewRef.scrollToBegin(true);
+					}
+
+					if (this.categoryNameRef)
+					{
+						this.categoryNameRef.focus();
+					}
+
+					reject();
+					return;
+				}
+
 				NotifyManager.showLoadingIndicator();
 
 				CategoryStorage
@@ -165,9 +186,11 @@
 				return BX.message('M_CRM_CATEGORY_DETAIL_FUNNEL_NOT_LOADED2');
 			}
 
+			const name = stringify(category.name).trim();
+
 			return (
-				stringify(category.name) !== ''
-					? BX.message('M_CRM_CATEGORY_DETAIL_FUNNEL2').replace('#CATEGORY_NAME#', category.name)
+				name !== ''
+					? BX.message('M_CRM_CATEGORY_DETAIL_FUNNEL2').replace('#CATEGORY_NAME#', name)
 					: BX.message('M_CRM_CATEGORY_DETAIL_FUNNEL_EMPTY2')
 			);
 		}
@@ -204,6 +227,7 @@
 
 			return ScrollView(
 				{
+					ref: (ref) => this.scrollViewRef = ref,
 					resizableByKeyboard: true,
 					safeArea: {
 						bottom: true,
@@ -235,6 +259,7 @@
 					style: styles.categoryNameContainer,
 				},
 				new EntityName({
+					ref: (ref) => this.categoryNameRef = ref,
 					title: BX.message('M_CRM_CATEGORY_DETAIL_NAME_FIELD_TITLE2'),
 					name,
 					placeholder: BX.message('M_CRM_CATEGORY_DETAIL_DEFAULT_CATEGORY_NAME2'),
@@ -360,6 +385,16 @@
 						color,
 					})
 					.then((stage) => {
+						const stageEntity = new Stage(stage);
+
+						if (this.changedFields[stageEntity.type])
+						{
+							this.changedFields[stageEntity.type] = [
+								...this.changedFields[stageEntity.type],
+								stageEntity.toStorageJson(),
+							];
+						}
+
 						NotifyManager.hideLoadingIndicator(
 							true,
 							BX.message('M_CRM_CATEGORY_DETAIL_SUCCESS_CREATION'),
@@ -421,9 +456,10 @@
 
 		getDefaultNewSort(stageType)
 		{
-			const lastStage = this.state.category[stageType].length - 1;
+			const category = this.getCategoryFields();
+			const lastStage = category[stageType].length - 1;
 
-			return this.state.category[stageType][lastStage].sort + 1;
+			return category[stageType][lastStage].sort + 1;
 		}
 
 		openAlertOnDeleteCategory()
@@ -459,36 +495,33 @@
 
 		onUpdateStage(stageData)
 		{
+			const category = this.getCategoryFields();
 			const stage = new Stage(stageData);
-			const stageIndex = this.state.category[stage.type].findIndex((item) => item.id === stage.id);
+			const stageIndex = category[stage.type].findIndex((item) => item.id === stage.id);
+
 			if (stageIndex !== -1)
 			{
-				const modifiedStages = [...this.state.category[stage.type]];
+				const modifiedStages = [...category[stage.type]];
 				modifiedStages[stageIndex] = stage.toStorageJson();
 
-				this.setState({
-					category: {
-						...this.state.category,
-						[stage.type]: [
-							...modifiedStages,
-						],
-					},
-				}, () => this.getCategoryByProps(this.props));
+				this.changedFields[stage.type] = modifiedStages;
+
+				this.setState({}, () => this.getCategoryByProps(this.props));
 			}
 		}
 
 		onDeleteStage(stageData)
 		{
+			const category = this.getCategoryFields();
 			const stage = new Stage(stageData);
-			const stageIndex = this.state.category[stage.type].findIndex((item) => item.id === stage.id);
-			const stages = [...this.state.category[stage.type]];
-			stages.splice(stageIndex, 1);
-			this.setState({
-				category: {
-					...this.state.category,
-					[stage.type]: stages,
-				},
-			}, () => this.getCategoryByProps(this.props));
+			const stageIndex = category[stage.type].findIndex((item) => item.id === stage.id);
+			const modifiedStages = [...category[stage.type]];
+
+			modifiedStages.splice(stageIndex, 1);
+
+			this.changedFields[stage.type] = modifiedStages;
+
+			this.setState({}, () => this.getCategoryByProps(this.props));
 		}
 	}
 
