@@ -35,12 +35,14 @@ class TextFragmentParser
 
 		while (true)
 		{
+			$index++;
+
 			$tableName = Loc::getMessage(
 				'TASKSMOBILE_TEXT_FRAGMENT_PARSER_TABLE_REPLACED_NAME',
-				['#INDEX#' => $index + 1]
+				['#INDEX#' => $index]
 			);
 			$replace = "\n[URL=/?openWeb&type=table&id={$index}]{$tableName}[/URL]\n";
-			$index++;
+
 
 			$tableStart = mb_strpos($text, '[TABLE]');
 			$tableEnd = mb_strpos($text, '[/TABLE]');
@@ -50,9 +52,14 @@ class TextFragmentParser
 				break;
 			}
 
+			if ($tableStart >= $tableEnd)
+			{
+				break;
+			}
+
 			$text = mb_substr($text, 0, $tableStart) . $replace . mb_substr($text, $tableEnd + mb_strlen('[/TABLE]'));
 
-			if ($index >= 10000)
+			if ($index >= 100)
 			{
 				return $text;
 			}

@@ -129,10 +129,17 @@ class TasksMobileFragmentRendererComponent extends CBitrixComponent
 
 		while (true)
 		{
+			$index++;
+
 			$tableStart = mb_strpos($text, '[TABLE]', $tableEnd);
 			$tableEnd = mb_strpos($text, '[/TABLE]', $tableStart);
 
 			if ($tableStart === false || $tableEnd === false)
+			{
+				return '';
+			}
+
+			if ($tableStart >= $tableEnd)
 			{
 				return '';
 			}
@@ -142,9 +149,7 @@ class TasksMobileFragmentRendererComponent extends CBitrixComponent
 				return mb_substr($text, $tableStart, $tableEnd + mb_strlen('[/TABLE]') - $tableStart);
 			}
 
-			$index++;
-
-			if ($index >= 10000)
+			if ($index >= 100)
 			{
 				return '';
 			}

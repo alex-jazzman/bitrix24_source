@@ -159,7 +159,7 @@ class Task
 		}
 		catch (\Exception $e)
 		{
-			throw new TaskAddException();
+			throw new TaskAddException($e->getMessage());
 		}
 
 		$this->addToFavorite($fields);

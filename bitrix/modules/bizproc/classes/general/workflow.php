@@ -641,6 +641,7 @@ class CBPWorkflow
 
 		foreach ($this->rootActivity->arEventsMap[$eventName] as $eventHandler)
 		{
+      AddMessage2Log($eventHandler, 'saaaaaa');
 			if (!empty($eventParameters['DebugEvent']) && $eventHandler instanceof IBPActivityDebugEventListener)
 			{
 				$eventHandler->onDebugEvent($eventParameters);

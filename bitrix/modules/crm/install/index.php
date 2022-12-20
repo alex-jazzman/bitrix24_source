@@ -1733,6 +1733,8 @@ class crm extends CModule
 		{
 			\Bitrix\Crm\Update\Entity\LastActivityFields::bind(300, [\CCrmOwnerType::Deal]);
 		}
+
+		\Bitrix\Crm\Update\Entity\ContactId::bindOnCrmModuleInstallIfNeeded();
 		// fill b_crm_entity_uncompleted_act table
 		if (\Bitrix\Main\Config\Option::get('crm', 'enable_entity_uncompleted_act', 'Y') === 'N')
 		{
