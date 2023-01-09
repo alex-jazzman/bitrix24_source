@@ -115,4 +115,12 @@ class ModuleManager
 		Loader::clearModuleCache($moduleName);
 		EventManager::getInstance()->clearLoadedHandlers();
 	}
+
+	public static function isValidModule(string $moduleName): bool
+	{
+		$originalModuleName = $moduleName;
+		$moduleName = preg_replace("/[^a-zA-Z0-9_.]+/i", "", trim($moduleName));
+
+		return $moduleName === $originalModuleName;
+	}
 }

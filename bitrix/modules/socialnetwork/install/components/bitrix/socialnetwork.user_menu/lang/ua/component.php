@@ -9,4 +9,5 @@ $MESS["SONET_UM_FORUM"] = "Форум";
 $MESS["SONET_UM_MICROBLOG"] = "Мікроблог";
 $MESS["SONET_UM_PHOTO"] = "Фото";
 $MESS["SONET_UM_SEARCH"] = "Пошук";
+$MESS["SONET_UM_STREAM_NEWS"] = "Новини";
 $MESS["SONET_UM_TASKS"] = "Завдання";

@@ -54,8 +54,9 @@ class Builder
 		$userId = $this->item->getAuthorId();
 
 		$changeStreamButton = $this->item->getChangeStreamButton();
+		$infoHelper = $this->item->getInfoHelper();
 
-		return ($title || $date || $tags || $userId || $changeStreamButton)
+		return ($title || $date || $tags || $userId || $changeStreamButton || $infoHelper)
 			? (new Layout\Header())
 				->setChangeStreamButton($changeStreamButton)
 				->setTitle($title)
@@ -64,6 +65,7 @@ class Builder
 				->setDatePlaceholder($this->item->getDatePlaceholder())
 				->setTags($tags ?? [])
 				->setUser($this->createLayoutUser($userId))
+				->setInfoHelper($infoHelper)
 			: null
 		;
 	}

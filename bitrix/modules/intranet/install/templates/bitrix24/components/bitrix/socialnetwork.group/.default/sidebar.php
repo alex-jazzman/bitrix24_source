@@ -15,6 +15,7 @@ global $DB, $USER;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Web\Uri;
 
 if ($_REQUEST['BLOCK_RELOAD'] !== 'Y')
 {
@@ -79,7 +80,7 @@ if ($_REQUEST['BLOCK_RELOAD'] !== 'Y')
 							<?php
 							$style = (
 								$avatar
-									? "style=\"background: url('" . $avatar . "'); background-size: cover\""
+									? "style=\"background: url('" . Uri::urnEncode($avatar) . "'); background-size: cover\""
 									: ''
 							);
 							?>

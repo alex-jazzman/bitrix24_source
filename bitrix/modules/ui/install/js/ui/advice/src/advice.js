@@ -115,7 +115,7 @@ export class Advice
 				<div class="${this.#getContainerClassname()}">
 					<div class="ui-advice__avatar-box">
 						<span class="ui-advice__avatar ui-icon ui-icon-common-user">
-							<i style="background-image: url(${this.getAvatar()})"></i>
+							<i style="background-image: url('${encodeURI(this.getAvatar())}')"></i>
 						</span>
 					</div>
 					<div class="${this.#getTextBoxClassname()}"></div>

@@ -1,3 +1,4 @@
-<?
+<?php
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_DESCRIPTION"] = "Змінює стадію, якщо в елементі змінено значення полів.";
 $MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME"] = "Змінено поля";
-?>
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME_1"] = "Відстежити зміну полів";

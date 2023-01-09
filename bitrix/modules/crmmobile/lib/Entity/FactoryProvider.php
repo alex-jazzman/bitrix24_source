@@ -5,7 +5,6 @@ namespace Bitrix\CrmMobile\Entity;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Settings\LeadSettings;
-use Bitrix\Main\Loader;
 
 final class FactoryProvider
 {
@@ -14,17 +13,43 @@ final class FactoryProvider
 	 */
 	public static function getAvailableFactories(): array
 	{
-		if (!Loader::includeModule('crm'))
-		{
-			return [];
-		}
-
 		$factories = Container::getInstance()->getTypesMap()->getFactories();
 
 		$factories = static::filterSupportedFactories($factories);
 		$factories = static::filterPermittedFactories($factories);
 
 		return $factories;
+	}
+
+	/**
+	 * @return Factory[]
+	 */
+	public static function getFactoriesMetaData(): array
+	{
+		$result = [];
+
+		$factories = Container::getInstance()->getTypesMap()->getFactories();
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		$supportedEntityNames = static::getSupportedEntityNames();
+
+		foreach ($factories as $factory)
+		{
+			$entityTypeId = $factory->getEntityTypeId();
+			if (!$userPermissions->checkReadPermissions($entityTypeId))
+			{
+				continue;
+			}
+
+			$entityTypeName = $factory->getEntityName();
+			$result[] = [
+				'entityTypeId' => $entityTypeId,
+				'entityTypeName' => $entityTypeName,
+				'title' => $factory->getEntityDescription(),
+				'supported' => in_array($entityTypeName, $supportedEntityNames, true),
+			];
+		}
+
+		return $result;
 	}
 
 	public static function getSupportedEntityNames(): array

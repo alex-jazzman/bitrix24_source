@@ -487,18 +487,22 @@ class Category extends Controller
 	 */
 	private function getCategoryById(Factory $factory, int $categoryId): ?Dto\Category
 	{
+		$categoryNotFound = false;
 		$category = $factory->getCategory($categoryId);
+
 		if (!$category)
 		{
+			$categoryNotFound = true;
 			$category = $factory->createCategory([
 				'ID' => $categoryId,
-				'NAME' => "#${$categoryId}",
+				'NAME' => "#{$categoryId}",
 			]);
 		}
 
 		if (!Container::getInstance()->getUserPermissions()->canViewItemsInCategory($category))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
+
 			return null;
 		}
 
@@ -529,7 +533,7 @@ class Category extends Controller
 				}, []);
 		}
 
-		$entityTypeId = $factory->getEntityTypeId();
+		$stagesBySemantics = [];
 
 		foreach ($stageObjects as $stage)
 		{
@@ -549,6 +553,14 @@ class Category extends Controller
 			];
 		}
 
+		if ($categoryNotFound && empty($stagesBySemantics))
+		{
+			$this->addError(ErrorCode::getNotFoundError());
+
+			return null;
+		}
+
+		$entityTypeId = $factory->getEntityTypeId();
 		$permissionEntityName = UserPermissions::getPermissionEntityType($entityTypeId, $categoryId);
 		$permissions = RolePermission::getByEntityId($permissionEntityName);
 

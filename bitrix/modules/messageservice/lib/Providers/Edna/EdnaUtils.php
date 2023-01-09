@@ -43,7 +43,7 @@ abstract class EdnaUtils implements EdnaRu
 		$channelList = [];
 		foreach ($channelResult->getData() as $channel)
 		{
-			if ($channel['type'] === $imType)
+			if (is_array($channel) && isset($channel['type']) && $channel['type'] === $imType)
 			{
 				$channelList[] = $channel;
 			}

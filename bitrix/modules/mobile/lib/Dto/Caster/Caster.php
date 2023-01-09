@@ -4,8 +4,7 @@ namespace Bitrix\Mobile\Dto\Caster;
 
 abstract class Caster
 {
-	/** @var bool */
-	protected $isCollection = false;
+	protected bool $isCollection = false;
 
 	protected bool $isNullable = false;
 

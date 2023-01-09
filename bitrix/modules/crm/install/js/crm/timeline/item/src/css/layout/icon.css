@@ -76,7 +76,7 @@
 
 .crm-timeline__card_icon.--code-store i { mask-position: center -1282px; }
 
-.crm-timeline__card_icon.--code-task,
+.crm-timeline__card_icon.--code-task i,
 .crm-timeline__card_icon.--code-store-document i { mask-position: center -157px; }
 
 .crm-timeline__card_icon.--code-meeting i { mask-position: center -188px; }

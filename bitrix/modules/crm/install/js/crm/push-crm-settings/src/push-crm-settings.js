@@ -6,6 +6,7 @@ import { Loc, Reflection, Text } from "main.core";
 import { TodoNotificationSkipMenu } from "crm.activity.todo-notification-skip-menu";
 import { Params } from "./params";
 import { requireClass, requireClassOrNull, requireStringOrNull } from "./params-handling";
+import { SortController as GridSortController } from "./grid/sort-controller";
 
 const EntityType = Reflection.getClass('BX.CrmEntityType');
 
@@ -20,8 +21,9 @@ export class PushCrmSettings
 	#entityTypeId: number;
 	#rootMenu: Menu;
 	#targetItemId: ?string;
-	#controller: ?SettingsController;
+	#kanbanController: ?SettingsController;
 	#restriction: ?Restriction;
+	#gridController: ?GridSortController = null;
 
 	#todoSkipMenu: TodoNotificationSkipMenu;
 
@@ -39,8 +41,13 @@ export class PushCrmSettings
 
 		this.#targetItemId = requireStringOrNull(params.targetItemId, 'params.targetItemId');
 
-		this.#controller = requireClassOrNull(params.controller, SettingsController, 'params.controller');
+		this.#kanbanController = requireClassOrNull(params.controller, SettingsController, 'params.controller');
 		this.#restriction = requireClassOrNull(params.restriction, Restriction, 'params.restriction');
+
+		if (Reflection.getClass('BX.Main.grid') && params.grid)
+		{
+			this.#gridController = new GridSortController(this.#entityTypeId, params.grid);
+		}
 
 		this.#todoSkipMenu = new TodoNotificationSkipMenu({
 			entityTypeId: this.#entityTypeId,
@@ -119,10 +126,12 @@ export class PushCrmSettings
 
 	#shouldShowLastActivitySortToggle(): boolean
 	{
-		return !!(
-			this.#controller?.getCurrentSettings().isTypeSupported(SortType.BY_LAST_ACTIVITY_TIME)
+		const shouldShowInKanban = (
+			this.#kanbanController?.getCurrentSettings().isTypeSupported(SortType.BY_LAST_ACTIVITY_TIME)
 			&& this.#restriction?.isSortTypeChangeAvailable()
 		);
+
+		return !!(shouldShowInKanban || this.#gridController?.isLastActivitySortSupported());
 	}
 
 	#getLastActivitySortToggle(): MenuItemOptions
@@ -137,7 +146,16 @@ export class PushCrmSettings
 
 	#isLastActivitySortEnabled(): boolean
 	{
-		return this.#controller?.getCurrentSettings().getCurrentType() === SortType.BY_LAST_ACTIVITY_TIME;
+		if (this.#kanbanController)
+		{
+			return this.#kanbanController.getCurrentSettings().getCurrentType() === SortType.BY_LAST_ACTIVITY_TIME;
+		}
+		if (this.#gridController)
+		{
+			return this.#gridController.isLastActivitySortEnabled();
+		}
+
+		return false;
 	}
 
 	#handleLastActivitySortToggleClick(event: PointerEvent, item: MenuItem): void
@@ -145,34 +163,46 @@ export class PushCrmSettings
 		item.getMenuWindow()?.getRootMenuWindow()?.close();
 		item.disable();
 
-		if (this.#isSetSortRequestRunning)
+		if (this.#kanbanController)
 		{
-			return;
+			if (this.#isSetSortRequestRunning)
+			{
+				return;
+			}
+
+			this.#isSetSortRequestRunning = true;
+
+			const settings = this.#kanbanController.getCurrentSettings();
+
+			let newSortType: string;
+			if (settings.getCurrentType() === SortType.BY_LAST_ACTIVITY_TIME)
+			{
+				// first different type
+				newSortType = settings.getSupportedTypes().find(sortType => sortType !== SortType.BY_LAST_ACTIVITY_TIME);
+			}
+			else
+			{
+				newSortType = SortType.BY_LAST_ACTIVITY_TIME;
+			}
+
+			this.#kanbanController.setCurrentSortType(newSortType)
+				.then(() => {})
+				.catch(() => {})
+				.finally(() => {
+					this.#isSetSortRequestRunning = false;
+					item.enable();
+				})
+			;
 		}
-
-		this.#isSetSortRequestRunning = true;
-
-		const settings = this.#controller.getCurrentSettings();
-
-		let newSortType: string;
-		if (settings.getCurrentType() === SortType.BY_LAST_ACTIVITY_TIME)
+		else if (this.#gridController)
 		{
-			// first different type
-			newSortType = settings.getSupportedTypes().find(sortType => sortType !== SortType.BY_LAST_ACTIVITY_TIME);
+			this.#gridController.toggleLastActivitySort();
+			item.enable();
 		}
 		else
 		{
-			newSortType = SortType.BY_LAST_ACTIVITY_TIME;
+			console.error('Can not handle last activity toggle click');
 		}
-
-		this.#controller.setCurrentSortType(newSortType)
-			.then(() => {})
-			.catch(() => {})
-			.finally(() => {
-				this.#isSetSortRequestRunning = false;
-				item.enable();
-			})
-		;
 	}
 
 	#shouldShowTodoSkipMenu(): boolean

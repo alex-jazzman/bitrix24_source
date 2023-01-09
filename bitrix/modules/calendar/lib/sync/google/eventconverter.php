@@ -67,11 +67,6 @@ class EventConverter
 			$event['iCalUID'] = $this->originalEvent->getUid();
 		}
 
-		if ($this->originalEvent->getOriginalDateFrom() !== null)
-		{
-			$event['originalStartTime'] = $this->originalEvent->getOriginalDateFrom()->format(Helper::DATE_TIME_FORMAT);
-		}
-
 		if ($this->originalEvent->isRecurrence())
 		{
 			$event['recurrence'] = $this->prepareRecurrenceRule();
@@ -167,6 +162,18 @@ class EventConverter
 				? $this->originalEvent->getEndTimeZone()->getTimeZone()->getName()
 				: (new \DateTime())->getTimezone()->getName()
 			;
+		}
+
+		if ($this->originalEvent->getOriginalDateFrom() !== null)
+		{
+			if ($this->originalEvent->isFullDayEvent())
+			{
+				$event['originalStartTime']['date'] = $this->originalEvent->getOriginalDateFrom()->format(Helper::DATE_FORMAT);
+			}
+			else
+			{
+				$event['originalStartTime']['dateTime'] = $this->originalEvent->getOriginalDateFrom()->format(Helper::DATE_TIME_FORMAT);
+			}
 		}
 
 		return $date;

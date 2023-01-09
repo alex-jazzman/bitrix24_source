@@ -114,7 +114,6 @@ $crm_default_option = [
 	'enable_slider' => 'Y',
 	'enable_simple_time_format' => 'Y',
 	'enable_user_name_sorting' => 'N',
-	'crm_shop_enabled' => 'N',
 	'enable_order_deal_create' => 'N',
 	'enable_catalog_price_save' => 'Y',
 	'enable_full_catalog' => 'Y',

@@ -45,7 +45,7 @@ export default class Browser
 
 	static isSafari()
 	{
-		return UA.includes('webkit');
+		return UA.includes('safari') && !UA.includes('chrome');
 	}
 
 	static isFirefox()
@@ -245,27 +245,15 @@ export default class Browser
 		globalClass += (Browser.isMobile() ? ' bx-touch' : ' bx-no-touch');
 		globalClass += (Browser.isRetina() ? ' bx-retina' : ' bx-no-retina');
 
-		let ieVersion = -1;
-
 		if (/AppleWebKit/.test(navigator.userAgent))
 		{
 			globalClass += ' bx-chrome';
-		}
-		else if (Browser.detectIEVersion() > 0)
-		{
-			ieVersion = Browser.detectIEVersion();
-			globalClass += ` bx-ie bx-ie${ieVersion}`;
-
-			if (ieVersion > 7 && ieVersion < 10 && !Browser.isDoctype())
-			{
-				globalClass += ' bx-quirks';
-			}
 		}
 		else if (/Opera/.test(navigator.userAgent))
 		{
 			globalClass += ' bx-opera';
 		}
-		else if (/Gecko/.test(navigator.userAgent))
+		else if (Browser.isFirefox())
 		{
 			globalClass += ' bx-firefox';
 		}

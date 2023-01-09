@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core) {
+(function (exports,main_core,main_date) {
 	'use strict';
 
 	/**
@@ -136,16 +136,43 @@ this.BX.Crm = this.BX.Crm || {};
 	  value: _getBrowserNowTimestamp2
 	});
 
+	/**
+	 * Contains datetime formats for current culture.
+	 * See config.php of this extension for specific format details.
+	 * All formats are in BX.Main.DateTimeFormat format (de-facto - php format), even FORMAT_DATE and FORMAT_DATETIME
+	 *
+	 * @memberOf BX.Crm.DateTime.Dictionary
+	 */
+
+	const Format = {};
+	const formatsRaw = main_core.Extension.getSettings('crm.datetime').get('formats', {});
+
+	for (const name in formatsRaw) {
+	  if (formatsRaw.hasOwnProperty(name) && main_core.Type.isStringFilled(formatsRaw[name])) {
+	    let value = formatsRaw[name];
+
+	    if (name === 'FORMAT_DATE' || name === 'FORMAT_DATETIME') {
+	      value = main_date.DateTimeFormat.convertBitrixFormat(value);
+	    }
+
+	    Format[name] = value;
+	  }
+	}
+
+	Object.freeze(Format);
+
 	const namespace = main_core.Reflection.namespace('BX.Crm.DateTime');
 	namespace.Factory = Factory;
 	namespace.TimestampConverter = TimestampConverter;
 	namespace.Dictionary = {
-	  TimezoneOffset
+	  TimezoneOffset,
+	  Format
 	};
 
 	exports.Factory = Factory;
 	exports.TimestampConverter = TimestampConverter;
 	exports.TimezoneOffset = TimezoneOffset;
+	exports.Format = Format;
 
-}((this.BX.Crm.DateTime = this.BX.Crm.DateTime || {}),BX));
+}((this.BX.Crm.DateTime = this.BX.Crm.DateTime || {}),BX,BX.Main));
 //# sourceMappingURL=datetime.bundle.js.map

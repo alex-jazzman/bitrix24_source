@@ -9,9 +9,9 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 
 	const { Alert } = require('alert');
 	const { NotifyManager } = require('notify-manager');
-	const { TypeId } = require('crm/type');
+	const { TypeId, Type } = require('crm/type');
 	const { getEntityMessage } = require('crm/loc');
-	const { CategoryListView } = require('crm/category-list-view');
+	const { getActionToChangePipeline } = require('crm/entity-actions');
 	const { getSmartActivityMenuItem } = require('crm/entity-detail/component/smart-activity-menu-item');
 
 	/**
@@ -71,14 +71,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 					});
 				}
 
-				result.push({
-					id: 'changeCategoryItem',
-					sectionCode: 'action',
-					onItemSelected: () => changeEntityCategory(detailCard, entityModel),
-					title: BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY2'),
-					iconUrl: component.path + '/icons/change_category.png',
-					disable: !canUpdate,
-				});
+				result.push(changeEntityCategory(detailCard, canUpdate));
 
 				if (todoNotificationParams)
 				{
@@ -116,17 +109,44 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 
 	/**
 	 * @param {DetailCardComponent} detailCard
-	 * @param {Object} entityModel
+	 * @param canUpdate boolean
 	 */
-	const changeEntityCategory = (detailCard, entityModel) => {
-		let promise = Promise.resolve();
+	const changeEntityCategory = (detailCard, canUpdate) => {
+		const entityTypeId = detailCard.getEntityTypeId();
+		const {
+			title,
+			iconUrl,
+			onAction,
+		} = getActionToChangePipeline();
 
-		if (detailCard.isToolPanelVisible())
-		{
-			promise = promise.then(() => askAboutUnsavedChanges());
-		}
+		return {
+			id: 'changePipelineItem',
+			title,
+			iconUrl,
+			disable: !canUpdate,
+			sectionCode: 'action',
+			onItemSelected: () => {
+				let promise = Promise.resolve();
+				let selectedCategoryId = null;
 
-		promise.then(() => openCategoryList(detailCard, entityModel));
+				if (detailCard.isToolPanelVisible())
+				{
+					promise = promise.then(() => askAboutUnsavedChanges());
+				}
+
+				promise
+					.then(() => onAction({
+						categoryId: detailCard.entityModel.CATEGORY_ID,
+						entityType: Type.resolveNameById(entityTypeId),
+					}))
+					.then(({ categoryId }) => {
+						selectedCategoryId = categoryId;
+
+						return detailCard.refreshDetailCard();
+					})
+					.then(() => detailCard.handleSave({ CATEGORY_ID: selectedCategoryId }));
+			},
+		};
 	};
 
 	/**
@@ -145,69 +165,6 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 					},
 					{
 						text: BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_CANCEL'),
-						type: 'cancel',
-						onPress: reject,
-					},
-				],
-			);
-		});
-	};
-
-	/**
-	 * @private
-	 * @param {DetailCardComponent} detailCard
-	 * @param {Object} entityModel
-	 */
-	const openCategoryList = (detailCard, entityModel) => {
-		return CategoryListView.open(
-			{
-				entityTypeId: detailCard.getEntityTypeId(),
-				currentCategoryId: entityModel.CATEGORY_ID,
-				readOnly: true,
-				showCounters: false,
-				showTunnels: false,
-				onSelectCategory: (category, categoryListLayout) => {
-					if (parseInt(entityModel.CATEGORY_ID) !== parseInt(category.id))
-					{
-						return askToChangeCategory().then(() => {
-							closeListAndSaveCategoryChange(categoryListLayout, detailCard, category.id);
-						});
-					}
-
-					categoryListLayout.close();
-
-					return Promise.resolve();
-				},
-			},
-			{
-				title: BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_TITLE2'),
-			},
-		);
-	};
-
-	const closeListAndSaveCategoryChange = (categoryListLayout, detailCard, categoryId) => {
-		categoryListLayout.setListener((eventName) => {
-			if (eventName === 'onViewHidden')
-			{
-				detailCard.refreshDetailCard()
-					.then(() => detailCard.handleSave({ CATEGORY_ID: categoryId }))
-				;
-			}
-		});
-		categoryListLayout.close();
-	};
-
-	const askToChangeCategory = () => {
-		return new Promise((resolve, reject) => {
-			Alert.confirm(
-				BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_ALERT_TITLE2'),
-				BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_ALERT_TEXT2'),
-				[
-					{
-						text: BX.message('M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_ALERT_OK2'),
-						onPress: resolve,
-					},
-					{
 						type: 'cancel',
 						onPress: reject,
 					},
@@ -266,11 +223,11 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 		NotifyManager.showLoadingIndicator();
 
 		BX.ajax.runAction(`crmmobile.EntityDetails.${actionName}`, {
-			json: {
-				entityTypeId: detailCard.getEntityTypeId(),
-				entityId: detailCard.getEntityId(),
-			},
-		})
+				json: {
+					entityTypeId: detailCard.getEntityTypeId(),
+					entityId: detailCard.getEntityId(),
+				},
+			})
 			.then(() => {
 				detailCard.emitEntityUpdate(actionName);
 				NotifyManager.hideLoadingIndicatorWithoutFallback();

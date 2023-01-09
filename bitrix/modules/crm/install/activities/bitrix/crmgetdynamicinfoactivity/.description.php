@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('CRM_GDIA_NAME_2'),
-	'DESCRIPTION' => Loc::getMessage('CRM_GDIA_DESC_2'),
+	'DESCRIPTION' => Loc::getMessage('CRM_GDIA_DESC_2_MSGVER_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmGetDynamicInfoActivity',
 	'JSCLASS' => 'BizProcActivity',
@@ -32,7 +32,7 @@ $arActivityDescription = [
 			'digitalWorkplace' => Loc::getMessage('CRM_GDIA_ROBOT_NAME_DIGITAL_WORKPLACE'),
 		],
 		'DESCRIPTION_GROUP' => [
-			'other' => Loc::getMessage('CRM_GDIA_DESC_2'),
+			'other' => Loc::getMessage('CRM_GDIA_DESC_2_MSGVER_1'),
 			'digitalWorkplace' => Loc::getMessage('CRM_GDIA_ROBOT_DESCRIPTION_DIGITAL_WORKPLACE'),
 		],
 		'SORT' => 3200,

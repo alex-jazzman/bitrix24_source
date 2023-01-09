@@ -1,6 +1,6 @@
 import { Type, Loc, Dom, Runtime, pos, GetWindowSize } from 'main.core';
 import { EventEmitter } from 'main.core.events'
-import Lottie from 'lottie-web';
+import {Lottie} from 'ui.lottie';
 
 import { RatingManager } from './manager';
 import { RatingLike } from './like';
@@ -1387,7 +1387,7 @@ export class RatingRender
 						style: (
 							Type.isStringFilled(item.PHOTO_SRC)
 								? {
-									'background-image': `url("${item.PHOTO_SRC}")`,
+									'background-image': `url("${encodeURI(item.PHOTO_SRC)}")`,
 								}
 								: {}
 						)
@@ -1513,7 +1513,7 @@ export class RatingRender
 			{
 				avatarNode = Dom.create('img', {
 					attrs: {
-						src: item.PHOTO_SRC,
+						src: encodeURI(item.PHOTO_SRC),
 					},
 					props: {
 						className: 'bx-ilike-popup-avatar-img',

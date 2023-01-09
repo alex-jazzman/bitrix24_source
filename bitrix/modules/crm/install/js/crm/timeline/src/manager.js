@@ -276,6 +276,8 @@ export default class Manager
 				scheduleStream: this._schedule,
 				fixedHistoryStream: this._fixedHistory,
 				historyStream: this._history,
+				ownerTypeId: this._ownerTypeId,
+				ownerId: this._ownerId,
 			});
 		}
 		this._menuBar = MenuBar.create(

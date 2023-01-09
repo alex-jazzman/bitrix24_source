@@ -1,0 +1,4 @@
+<?php
+$MESS["IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT"] = "Написати повідомлення...";
+$MESS["IMMOBILE_MESSENGER_DIALOG_OPEN"] = "Відкрита лінія";
+$MESS["IMMOBILE_MESSENGER_DIALOG_UNNAMED"] = "Завантаження...";

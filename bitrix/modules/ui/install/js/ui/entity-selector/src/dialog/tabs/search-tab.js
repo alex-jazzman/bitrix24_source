@@ -291,6 +291,8 @@ export default class SearchTab extends Tab
 				{
 					this.removeCacheQuery(searchQuery);
 					this.toggleEmptyResult();
+					this.getDialog().emit('SearchTab:onLoad', { searchTab: this });
+
 					return;
 				}
 
@@ -325,6 +327,8 @@ export default class SearchTab extends Tab
 				}
 
 				this.toggleEmptyResult();
+
+				this.getDialog().emit('SearchTab:onLoad', { searchTab: this });
 			})
 			.catch((error) => {
 				this.removeCacheQuery(searchQuery);

@@ -1402,7 +1402,6 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	{
 		$pattern = '/([",\'\;]{1})(page:|block:|user:)?#(landing|block|dynamic|user)([\d\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
 		$patternWithoutUser = '/([",\'\;]{1})(page:|block:)?#(landing|block|dynamic)([\d\_]+)\@{0,1}([^\'"]*)([",\'\&]{1})/is';
-		$patternForUser = '/(user:)?#(user)([\d\_]+)/is';
 		static $isIframe = null;
 
 		if (!self::$editMode && $content)
@@ -1646,6 +1645,17 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			// replace user urls
 			if (!empty($urls['USER']))
 			{
+				$patternForPseudoUrlUser = '/data-pseudo-url="{\S*(user:)?#user([\d\_]+)\S*}"/is';
+				$content = preg_replace_callback(
+					$patternForPseudoUrlUser,
+					function($matches)
+					{
+						$url = "'" . Domain::getHostUrl() . '/company/personal/user/' . $matches[2] . "/'";
+						return 'onClick="BX.SidePanel.Instance.open('. $url . ')" ';
+					},
+					$content
+				);
+				$patternForUser = '/(user:)?#(user)([\d\_]+)/is';
 				$content = preg_replace_callback(
 					$patternForUser,
 					function($matches)
@@ -2744,6 +2754,77 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
+	 * System method for checking ability to publication page after copy/move.
+	 *
+	 * @return bool
+	 */
+	private function canPublicAfterCopy(): bool
+	{
+		$siteId = $this->getSiteId();
+		$folderId = $this->getFolderId();
+
+		// if permissions enough
+		if (!$this->canPublication())
+		{
+			return false;
+		}
+
+		// in root, we can
+		if (!$folderId)
+		{
+			return true;
+		}
+
+		// check all folders above the page
+		$crumbs = Folder::getBreadCrumbs($folderId, $siteId);
+		foreach ($crumbs as $crumb)
+		{
+			// if folder is active, we don't care about
+			if ($crumb['ACTIVE'] === 'Y')
+			{
+				continue;
+			}
+
+			// check active pages in each folder above
+			$res = self::getList([
+				'select' => [
+					'ID'
+				],
+				'filter' => [
+					'=ACTIVE' => 'Y',
+					'FOLDER_ID' => $crumb['ID'],
+				],
+				'limit' => 1
+			]);
+			if ($res->fetch())
+			{
+				// if such folder exists we cant public any folder
+				return false;
+			}
+
+			// check active folders in folders above
+			$res = Folder::getList([
+				'select' => [
+					'ID'
+				],
+				'filter' => [
+					'=ACTIVE' => 'Y',
+					'PARENT_ID' => $crumb['ID'],
+				],
+				'limit' => 1
+				]);
+			if ($res->fetch())
+			{
+				// if such folder exists we cant public any folder
+				return false;
+			}
+		}
+
+		// all folders are active or not exists active pages
+		return true;
+	}
+
+	/**
 	 * Move current page to site/folder.
 	 * @param int|null $toSiteId Destination site id (if you want copy in another site).
 	 * @param int|null $toFolderId Destination folder id.
@@ -2791,6 +2872,10 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		if ($result->isSuccess())
 		{
 			$this->clearFolderIndex();
+			if ($this->active && $this->canPublicAfterCopy($toFolderId))
+			{
+				$this->publication();
+			}
 		}
 
 		$this->error->addFromResult($result);
@@ -2891,6 +2976,11 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					if (($refs = TemplateRef::getForLanding($this->id)))
 					{
 						TemplateRef::setForLanding($landingNew->getId(), $refs);
+					}
+					// publication if needed
+					if ($landingRow['ACTIVE'] === 'Y' && $landingNew->canPublicAfterCopy($toFolderId))
+					{
+						$landingNew->publication();
 					}
 					return $landingNew->getId();
 				}

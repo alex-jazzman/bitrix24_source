@@ -8162,12 +8162,20 @@ if(typeof BX.UI.EntityEditorList === "undefined")
 			menu.push(itemParams);
 		}
 
+		const selectBottomY = BX.Dom.getPosition(this._select).y;
+
+		const distanceToTop = selectBottomY - window.pageYOffset;
+		const distanceToBottom = document.documentElement.clientHeight + window.pageYOffset - selectBottomY;
+
+		const popupMaxHeight = distanceToTop > distanceToBottom ? distanceToTop - 50 : distanceToBottom - 100;
+
 		BX.PopupMenu.show(
 			this._id,
 			this._select,
 			menu,
 			{
 				angle: false, width: this._select.offsetWidth + 'px',
+				maxHeight: popupMaxHeight,
 				events:
 					{
 						onPopupShow: BX.delegate( this.onMenuShow, this),
@@ -10694,7 +10702,7 @@ if(typeof BX.UI.EntityEditorUser === "undefined")
 				props: { className: "ui-entity-editor-user-avatar-container", target: "_blank" },
 				style:
 					{
-						backgroundImage: BX.type.isNotEmptyString(photoUrl) ? "url('" + photoUrl + "')" : "",
+						backgroundImage: BX.type.isNotEmptyString(photoUrl) ? "url('" + encodeURI(photoUrl) + "')" : "",
 						backgroundSize: BX.type.isNotEmptyString(photoUrl) ? "30px" : ""
 					}
 			}
@@ -10826,7 +10834,7 @@ if(typeof BX.UI.EntityEditorUser === "undefined")
 
 		this._input.value = this._selectedData["id"];
 		this._photoElement.style.backgroundImage = this._selectedData["photoUrl"] !== ""
-			? "url('" + this._selectedData["photoUrl"] + "')" : "";
+			? "url('" + encodeURI(this._selectedData["photoUrl"]) + "')" : "";
 		this._photoElement.style.backgroundSize = this._selectedData["photoUrl"] !== ""
 			? "30px" : "";
 
@@ -11249,7 +11257,7 @@ if(typeof BX.UI.EntityEditorProductRowSummary === "undefined")
 		if (photoUrl !== '')
 		{
 			photoSettings.style = {
-				backgroundImage: `url(${photoUrl})`
+				backgroundImage: `url(${encodeURI(photoUrl)})`
 			};
 		}
 

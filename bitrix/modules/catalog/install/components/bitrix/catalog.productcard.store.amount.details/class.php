@@ -259,10 +259,10 @@ class CatalogProductStoreAmountDetailsComponent extends \CBitrixComponent implem
 			'CURRENT_PAGE' => $this->getNavigation()->getCurrentPage(),
 			'SHOW_PAGESIZE' => true,
 			'PAGE_SIZES' => [
-				['NAME' => 5, 'VALUE' => 5],
-				['NAME' => 10, 'VALUE' => 10],
-				['NAME' => 20, 'VALUE' => 20],
-				['NAME' => 50, 'VALUE' => 50],
+				['NAME' => '5', 'VALUE' => '5'],
+				['NAME' => '10', 'VALUE' => '10'],
+				['NAME' => '20', 'VALUE' => '20'],
+				['NAME' => '50', 'VALUE' => '50'],
 			],
 			'DEFAULT_PAGE_SIZE' => self::DEFAULT_PAGE_SIZE,
 

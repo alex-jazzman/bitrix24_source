@@ -98,6 +98,7 @@ $editorConfig = [
 	'allowedStores' => $arResult['ALLOWED_STORES'],
 	'allowEntityReserve' => $arResult['ALLOW_ENTITY_RESERVE'],
 	'allowProductView' => $arResult['ALLOW_PRODUCT_VIEW'],
+	'allowDiscountChange' => $arResult['ALLOW_DISCOUNT_CHANGE'],
 	'disabledAddRowButton' => $disabledAddRowButton,
 	'disabledSelectProductInput' => $disabledAddRowButton,
 	'disabledSelectProductButton' => $disabledSelectProductButton,
@@ -481,7 +482,7 @@ foreach ($grid['ROWS'] as $product)
 	// end region TAX
 
 	// region SUM
-	$sum = $rawProduct['PRICE_EXCLUSIVE'] * $rawProduct['QUANTITY'] + $rawProduct['TAX_SUM'];
+	$sum = $rawProduct['PRICE'] * $rawProduct['QUANTITY'];
 	$sum = number_format($sum, $pricePrecision, '.', '');
 	$sumColumn = CCrmCurrency::MoneyToString($sum, $currency['ID']);
 
@@ -529,8 +530,8 @@ foreach ($grid['ROWS'] as $product)
 		'PRICE' => $priceColumn,
 		'QUANTITY' => $quantityColumn,
 		'SUM' => $sumColumn,
-		'DISCOUNT_PRICE' => $discountColumn,
-		'DISCOUNT_ROW' => $discountRowColumn,
+		'DISCOUNT_PRICE' => "<span data-name='DISCOUNT_PRICE'>{$discountColumn}</span>",
+		'DISCOUNT_ROW' => "<span data-name='DISCOUNT_ROW'>{$discountRowColumn}</span>",
 	];
 	if ($arResult['ALLOW_TAX'])
 	{

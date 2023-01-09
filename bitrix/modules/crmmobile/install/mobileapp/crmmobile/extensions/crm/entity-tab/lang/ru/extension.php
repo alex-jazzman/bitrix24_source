@@ -23,6 +23,8 @@ $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_CONFIRMATION'] = 'Вы уверены
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_CONFIRMATION_OK'] = 'Удалить';
 
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_ACTIVITIES2'] = 'Таймлайн';
+$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_CHANGE_CATEGORY'] = 'Сменить воронку';
+$MESS['M_CRM_ENTITY_TAB_ITEM_CATEGORY_TITLE'] = 'Выберите воронку';
 
 $MESS['M_CRM_ENTITY_TAB_COLUMN_EMPTY_TITLE'] = 'На текущей стадии нет элементов';
 $MESS['M_CRM_ENTITY_TAB_COLUMN_EMPTY_DESCRIPTION'] = 'Чтобы приблизиться к продаже, передвигайте сделки по стадиям автоматически или вручную';

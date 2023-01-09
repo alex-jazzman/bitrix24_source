@@ -20,8 +20,8 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		isEqual,
 	} = require('utils/object');
 
-	const MAX_CATEGORY_CHANGE_ATTEMPTS = 3;
-	const CATEGORY_CHANGE_DELAY_TIME = 2000;
+	const MAX_CATEGORY_CHANGE_ATTEMPTS = 5;
+	const CATEGORY_CHANGE_DELAY_TIME = 1000;
 
 	const pathToIcons = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/entity-tab/kanban/icons/`;
 
@@ -46,6 +46,8 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			this.state.isLoading = !this.category;
 
 			this.onSelectedCategory = this.onSelectedCategoryHandler.bind(this);
+			this.onCategoryDelete = this.onCategoryDeleteHandler.bind(this);
+			this.onCategoryClose = this.onCategoryCloseHandler.bind(this);
 			this.setSmartActivityStatus = this.setSmartActivityStatus.bind(this);
 			this.onNotViewable = this.onNotViewableHandler.bind(this);
 			this.setCounterFilter = this.setCounterFilter.bind(this);
@@ -63,6 +65,16 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			if (!viewComponent)
 			{
 				console.error('view component not found');
+
+				const pathToCategory = CategoryStorage.getPathToCategory(this.props.entityTypeId, this.getCurrentCategoryId());
+				if (
+					!this.getCategoryFromCategoryStorage()
+					&& !CategoryStorage.isFetching(pathToCategory)
+				)
+				{
+					this.changeCategory(null);
+				}
+
 				return;
 			}
 
@@ -98,12 +110,13 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			super.componentDidMount();
 
 			CategoryStorage
-				.setEventId('crm.kanban')
 				.subscribeOnChange(() => this.applyCategoryStorageChanges())
 				.markReady()
 			;
 
 			BX.addCustomEvent('Crm.CategoryList::onSelectedCategory', this.onSelectedCategory);
+			BX.addCustomEvent('Crm.CategoryDetail::onDeleteCategory', this.onCategoryDelete);
+			BX.addCustomEvent('Crm.CategoryDetail::onClose', this.onCategoryClose);
 			BX.addCustomEvent('Crm.Activity.Todo::onChangeNotifications', this.setSmartActivityStatus);
 
 			if (!this.props.permissions.read)
@@ -122,14 +135,27 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			}
 		}
 
+		onCategoryDeleteHandler(categoryId)
+		{
+			if (this.state.categoryId === categoryId)
+			{
+				this.changeCategory(null);
+			}
+		}
+
+		onCategoryCloseHandler()
+		{
+			this.applyCategoryStorageChanges();
+		}
+
 		componentWillUnmount()
 		{
 			super.componentWillUnmount();
 
 			BX.removeCustomEvent('Crm.CategoryList::onSelectedCategory', this.onSelectedCategory);
+			BX.removeCustomEvent('Crm.CategoryDetail::onDeleteCategory', this.onCategoryDelete);
+			BX.removeCustomEvent('Crm.CategoryDetail::onClose', this.onCategoryClose);
 			BX.removeCustomEvent('Crm.Activity.Todo::onChangeNotifications', this.setSmartActivityStatus);
-
-			CategoryStorage.unsubscribe('crm.kanban');
 		}
 
 		applyCategoryStorageChanges()
@@ -249,13 +275,18 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				this.clearCurrentCategory();
 
 				console.error(`Category ${categoryId} not found in storage`);
+
 				if (this.categoryChangeAttempts++ < MAX_CATEGORY_CHANGE_ATTEMPTS)
 				{
-					console.info(`Category change will be repeated after 5 seconds. Attempt: ${this.categoryChangeAttempts}`);
+					const repeatTimeout = CATEGORY_CHANGE_DELAY_TIME * this.categoryChangeAttempts;
+
+					console.info(`Category change will be repeated after ${repeatTimeout / 1000} seconds. Attempt: ${this.categoryChangeAttempts}`);
+
 					this.categoryChangeTimeoutId = setTimeout(() => {
 						this.tryUpdateToNewCategory(data, desiredCategoryId, showNotice);
-					}, CATEGORY_CHANGE_DELAY_TIME * this.categoryChangeAttempts);
+					}, repeatTimeout);
 				}
+
 				return;
 			}
 
@@ -302,7 +333,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				this.entityTypes = tabs;
 				const params = {
 					menuButtons: this.getMenuButtons(),
-				}
+				};
 				this.needReloadTab = false;
 				needInitMenu = false;
 				this.reload(params);
@@ -708,8 +739,8 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		{
 			const type = (
 				this.getCurrentTypeSort() === TypeSort.LastActivityTime
-				? TypeSort.Id
-				: TypeSort.LastActivityTime
+					? TypeSort.Id
+					: TypeSort.LastActivityTime
 			);
 
 			BX.ajax.runAction(this.props.actions.setSortType, {
@@ -851,8 +882,8 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 
 			return {
 				reload: false,
-				animate: !this.getCurrentStatefulList().getSimpleList().shouldShowReloadListNotification()
-			}
+				animate: !this.getCurrentStatefulList().getSimpleList().shouldShowReloadListNotification(),
+			};
 		}
 	}
 

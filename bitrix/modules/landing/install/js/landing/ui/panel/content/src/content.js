@@ -354,6 +354,7 @@ export class Content extends BasePanel
 	clearSidebar()
 	{
 		Dom.clean(this.sidebar);
+		this.sidebarButtons = new BX.Landing.UI.Collection.ButtonCollection();
 	}
 
 	setTitle(title)

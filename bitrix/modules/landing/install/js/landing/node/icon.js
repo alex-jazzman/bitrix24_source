@@ -133,6 +133,10 @@
 							value.url.href = '';
 							value.url.enabled = false;
 						}
+						if (value.url.href.startsWith('product:'))
+						{
+							value.url.target = '_self';
+						}
 						attr(this.node, "data-pseudo-url", value.url);
 					}
 					this.onChange();

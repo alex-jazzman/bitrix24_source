@@ -92,23 +92,4 @@ class CrmSmartDocumentDetailsComponent extends FactoryBased
 
 		$this->includeComponentTemplate();
 	}
-
-	public function getEditorConfig(): array
-	{
-		$config = parent::getEditorConfig();
-
-		foreach ($config['ENTITY_FIELDS'] as &$field)
-		{
-			if(
-				$field['name'] === EditorAdapter::FIELD_CLIENT
-				&& isset($field['data']['clientEditorFieldsParams'][\CCrmOwnerType::ContactName]['REQUISITES'])
-			)
-			{
-				$field['data']['clientEditorFieldsParams'][\CCrmOwnerType::ContactName]['REQUISITES']['isHidden'] = true;
-				break;
-			}
-		}
-
-		return $config;
-	}
 }

@@ -8,6 +8,7 @@ $MESS["SENDER_START_CREATE_AD"] = "Створити рекламну кампа�
 $MESS["SENDER_START_CREATE_AUDIENCE"] = "Створити рекламну аудиторію";
 $MESS["SENDER_START_CREATE_FACEBOOK_CONVERSION"] = "Надіслати дії клієнтів";
 $MESS["SENDER_START_CREATE_LETTER"] = "Створити розсилку";
+$MESS["SENDER_START_CREATE_NEW_AD"] = "Створити рекламну кампанію";
 $MESS["SENDER_START_CREATE_RC"] = "Генератор продажів";
 $MESS["SENDER_START_CREATE_TOLOKA"] = "Яндекс.Толока";
 $MESS["SENDER_START_TITLE"] = "Старт";

@@ -289,7 +289,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				$user["PERSONAL_PHOTO"] = Option::get('socialnetwork', 'default_user_picture_'.$suffix, false, SITE_ID);
 		}
 
-		$user["PHOTO"] = self::getUserPhoto($user["PERSONAL_PHOTO"], 212);
+		$user["PHOTO"] = self::getUserPhoto($user["PERSONAL_PHOTO"], 512);
 
 		$user["FULL_NAME"] = \CUser::FormatName(\CSite::GetNameFormat(), $user, true, false);
 
@@ -432,6 +432,11 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		{
 			global $CACHE_MANAGER;
 			$CACHE_MANAGER->ClearByTag('USER_CARD_'.(int)($this->arParams['ID'] / TAGGED_user_card_size));
+		}
+
+		if (Loader::includeModule('intranet'))
+		{
+			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
 		}
 
 		$this->arResult['User'] = $this->getUserData();

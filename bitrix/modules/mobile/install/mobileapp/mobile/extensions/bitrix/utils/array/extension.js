@@ -10,6 +10,11 @@
 		return Array.isArray(array) ? array[array.length - 1] : null;
 	}
 
+	function unique(array)
+	{
+		return [...new Set(array)];
+	}
+
 	function uniqBy(arr, predicate)
 	{
 		const cb = typeof predicate === 'function' ? predicate : (o) => o[predicate];
@@ -69,8 +74,9 @@
 
 		module.exports = {
 			last,
+			unique,
 			uniqBy,
-			mergeBy
+			mergeBy,
 		};
 
 	});

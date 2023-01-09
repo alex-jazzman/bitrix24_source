@@ -1,7 +1,7 @@
 (() => {
 
 	const { mergeImmutable } = jn.require('utils/object');
-	const { uniqBy } = jn.require('utils/array');
+	const { uniqBy, unique } = jn.require('utils/array');
 	const { debounce } = jn.require('utils/function');
 	const { stringify } = jn.require('utils/string');
 
@@ -204,7 +204,7 @@
 			{
 				query = query.toLowerCase();
 				const queryWords = this.splitQueryByWords(query);
-				const shouldMatch = queryWords.length;
+				const uniqueQueryWords = unique(queryWords);
 
 				return items.map(item => {
 					let sort = this.getItemBaseSort(item);
@@ -264,7 +264,7 @@
 						sort = 1;
 					}
 
-					item.sort = matchedWords.length >= shouldMatch ? sort : -1;
+					item.sort = matchedWords.length >= uniqueQueryWords.length ? sort : -1;
 
 					return item;
 				})

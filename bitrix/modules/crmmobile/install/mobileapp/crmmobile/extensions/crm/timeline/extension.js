@@ -50,6 +50,8 @@ jn.define('crm/timeline', (require, exports, module) => {
 			this.state = this.buildState(props);
 
 			this.listViewRef = null;
+
+			this.openDesktopEntityPage = this.openDesktopEntityPage.bind(this);
         }
 
 		initStreams()
@@ -83,6 +85,16 @@ jn.define('crm/timeline', (require, exports, module) => {
 		componentWillReceiveProps(props)
 		{
 			this.state = this.buildState(props);
+		}
+
+		componentDidMount()
+		{
+			this.timelineScopeEventBus.on('Crm.Timeline::onFeatureNotSupported', this.openDesktopEntityPage);
+		}
+
+		componentWillUnmount()
+		{
+			this.timelineScopeEventBus.off('Crm.Timeline::onFeatureNotSupported', this.openDesktopEntityPage);
 		}
 
 		/**

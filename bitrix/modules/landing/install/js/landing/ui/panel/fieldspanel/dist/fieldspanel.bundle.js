@@ -152,6 +152,16 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      });
 	    }
 	  }, {
+	    key: "setLoadOptions",
+	    value: function setLoadOptions(options) {
+	      this.cache.set('loadOptions', _objectSpread({}, options));
+	    }
+	  }, {
+	    key: "getLoadOptions",
+	    value: function getLoadOptions() {
+	      return this.cache.get('loadOptions', {});
+	    }
+	  }, {
 	    key: "show",
 	    value: function show() {
 	      var _options$position,
@@ -184,7 +194,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        this.setMultiple(options.multiple);
 	      }
 	      main_core.Dom.style(this.layout, 'position', (_options$position = options.position) !== null && _options$position !== void 0 ? _options$position : null);
-	      var allowedLoadOptions = ['hideVirtual', 'hideRequisites', 'hideSmartDocument', 'hideDocument'];
+	      var allowedLoadOptions = ['hideVirtual', 'hideRequisites', 'hideSmartDocument', 'presetId'];
 	      var loadOptions = Object.entries(options).reduce(function (acc, _ref) {
 	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
 	          key = _ref2[0],
@@ -194,6 +204,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        }
 	        return acc;
 	      }, {});
+	      this.setLoadOptions(loadOptions);
 	      this.showLoader();
 	      this.load(loadOptions).then(function () {
 	        _this3.hideLoader();
@@ -594,7 +605,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	          userField: factory.createUserField(type),
 	          onSave: function onSave(userField) {
 	            userField.save().then(function () {
-	              return _this10.load();
+	              return _this10.load(_this10.getLoadOptions());
 	            }).then(function () {
 	              _this10.getSearchField().setValue(userField.getData().editFormLabel[landing_loc.Loc.getMessage('LANGUAGE_ID')]);
 	              _this10.showCreateFieldButton();

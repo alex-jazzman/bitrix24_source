@@ -13,7 +13,7 @@ BitrixVue.component('sale-checkout-view-element-input-property-date', {
 		},
 		focusOnInput()
 		{
-			const element = this.$el;
+			const element = this.$el.children[0];
 			element.focus();
 		},
 		showCalendar()
@@ -50,12 +50,13 @@ BitrixVue.component('sale-checkout-view-element-input-property-date', {
 		},
 		blur()
 		{
-			this.changeValue(this.item.value);
+			if (Type.isStringFilled(this.item.value))
+			{
+				this.changeValue(this.item.value);
+			}
 		},
 		changeValue(value)
 		{
-			this.validate();
-
 			let changeValue = '';
 			if (Type.isStringFilled(value))
 			{
@@ -64,6 +65,7 @@ BitrixVue.component('sale-checkout-view-element-input-property-date', {
 					: this.previousValue;
 			}
 			this.setDate(changeValue);
+			this.validate();
 		},
 		validateDate(value): boolean
 		{
@@ -85,26 +87,46 @@ BitrixVue.component('sale-checkout-view-element-input-property-date', {
 		{
 			return {
 				'is-invalid': this.item.validated === Const.validate.failure,
-				'is-valid': this.item.validated === Const.validate.successful
-			}
+				'is-valid': this.item.validated === Const.validate.successful,
+			};
+		},
+		isEmpty()
+		{
+			return this.item.value === '';
+		},
+		isRequired()
+		{
+			return this.item.required === 'Y';
+		},
+		isAsteriskShown()
+		{
+			return this.isEmpty && this.isRequired;
 		},
 	},
 	// language=Vue
 	template: `
-		<input 
-			class="form-control form-control-lg" 
-			:class="checkedClassObject"
-			@blur="blur"
-			type="text"
-			inputmode="numeric"
-			:name="item.name"
-			@click="onClick"
-			@drop="(e) => e.preventDefault()"
-			@dragstart="(e) => e.preventDefault()"
-			@paste="(e) => e.preventDefault()"
-			:autocomplete="autocomplete"
-			:placeholder="item.name"
-			v-model="item.value"
-		/>
+		<div class="form-wrap form-asterisk">
+			<input
+				class="form-control form-control-lg"
+				:class="checkedClassObject"
+				@blur="blur"
+				type="text"
+				inputmode="numeric"
+				:name="item.name"
+				@click="onClick"
+				@drop="(e) => e.preventDefault()"
+				@dragstart="(e) => e.preventDefault()"
+				@paste="(e) => e.preventDefault()"
+				:autocomplete="autocomplete"
+				:placeholder="item.name"
+				v-model="item.value"
+			/>
+			<span
+				class="asterisk-item"
+				v-if="isAsteriskShown"
+			>
+				{{item.name}}
+			</span>
+		</div>
 	`
 });

@@ -131,6 +131,19 @@ $operationsWithImport[] = 'IMPORT';
 $operationsWithAutomation = $operationsWithImport;
 $operationsWithAutomation[] = 'AUTOMATION';
 
+$entityOperationsMap = [
+	'LEAD' => $operationsWithAutomation,
+	'QUOTE' => $operationsWithImport,
+	'INVOICE' => $operationsWithImport,
+	'CONTACT' => $operationsWithImport,
+	'COMPANY' => $operationsWithImport,
+	'ORDER' => $operationsWithAutomation,
+	'WEBFORM' => ['READ', 'WRITE'],
+	'BUTTON' => ['READ', 'WRITE'],
+	'SALETARGET' => ['READ', 'WRITE'],
+	'EXCLUSION' => ['READ', 'WRITE'],
+];
+
 $arResult['ENTITY'] = [];
 
 $arResult['ENTITY']['CONTACT'] = GetMessage('CRM_ENTITY_TYPE_CONTACT');
@@ -160,7 +173,7 @@ foreach ($factory->getCategories() as $category)
 	$entityTitle = $category->getSingleNameIfPossible();
 	$arResult['ENTITY'][$entityName] = htmlspecialcharsbx($entityTitle);
 	$arResult['ROLE_PERM'][$entityName] = $permissionSet;
-	$entityOperationsMap[$entityName] = $operations;
+	$entityOperationsMap[$entityName] = $operationsWithImport;
 }
 
 $dealCategoryConfigs = Bitrix\Crm\Category\DealCategory::getPermissionRoleConfigurationsWithDefault();
@@ -183,19 +196,6 @@ if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 {
 	$arResult['ENTITY'][\CCrmOwnerType::InvoiceName] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice);
 }
-
-$entityOperationsMap = [
-	'LEAD' => $operationsWithAutomation,
-	'QUOTE' => $operationsWithImport,
-	'INVOICE' => $operationsWithImport,
-	'CONTACT' => $operationsWithImport,
-	'COMPANY' => $operationsWithImport,
-	'ORDER' => $operationsWithAutomation,
-	'WEBFORM' => ['READ', 'WRITE'],
-	'BUTTON' => ['READ', 'WRITE'],
-	'SALETARGET' => ['READ', 'WRITE'],
-	'EXCLUSION' => ['READ', 'WRITE'],
-];
 
 $arResult['ENTITY_FIELDS'] = array(
 	'DEAL' => array('STAGE_ID' => CCrmStatus::GetStatusListEx('DEAL_STAGE')),

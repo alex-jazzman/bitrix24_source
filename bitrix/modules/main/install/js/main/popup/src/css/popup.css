@@ -24,10 +24,6 @@
 	display: flex !important;
 }
 
-.bx-ie .popup-window[style*="block"] {
-	display: block !important;
-}
-
 .popup-window.popup-window-with-titlebar {
 	padding: 0 10px 10px;
 }

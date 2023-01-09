@@ -692,7 +692,7 @@ class VendorSynchronization
 					/** @var SyncEvent $instance */
 					foreach ($recurrenceEvent->getInstanceMap()->getCollection() as $instance)
 					{
-						if ($instance->getEventConnection()->getId())
+						if ($instance->getEventConnection() && $instance->getEventConnection()->getId())
 						{
 							$instanceResult[] = $this->updateEventLink($instance);
 						}
@@ -1071,10 +1071,16 @@ class VendorSynchronization
 		return EventConnectionTable::add([
 			'EVENT_ID' => $syncEvent->getEvent()->getId(),
 			'CONNECTION_ID' => $connectionId,
-			'VENDOR_EVENT_ID' => $syncEvent->getEventConnection()->getVendorEventId(),
+			'VENDOR_EVENT_ID' => $syncEvent->getEventConnection()
+				? $syncEvent->getEventConnection()->getVendorEventId()
+				: null
+			,
 			'SYNC_STATUS' => Dictionary::SYNC_STATUS['success'],
 			'VERSION' => $syncEvent->getEvent()->getVersion(),
-			'ENTITY_TAG' =>  $syncEvent->getEventConnection()->getEntityTag(),
+			'ENTITY_TAG' =>  $syncEvent->getEventConnection()
+				? $syncEvent->getEventConnection()->getEntityTag()
+				: null
+			,
 		]);
 	}
 

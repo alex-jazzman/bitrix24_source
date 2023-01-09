@@ -572,7 +572,7 @@ this.BX = this.BX || {};
 	          },
 	          onfailure: function onfailure(sourceResponse) {
 	            if (sourceResponse === 'auth') {
-	              reject(Backend.makeResponse(xhr));
+	              top.window.location.reload();
 	            } else {
 	              reject(Backend.makeResponse(xhr, sourceResponse));
 	            }

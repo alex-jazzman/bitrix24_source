@@ -17,6 +17,8 @@
 	const { isEqual } = jn.require('utils/object');
 	const { stringify } = jn.require('utils/string');
 	const { PlanRestriction } = jn.require('layout/ui/plan-restriction');
+	const { DuplicateTooltip } = jn.require('layout/ui/entity-editor/tooltip/duplicate');
+	const { useCallback } = jn.require('utils/function');
 
 	const EDIT_MODE_FIELD_BACKGROUND_COLOR = '#f8fafb';
 
@@ -38,13 +40,11 @@
 		constructor(props)
 		{
 			super(props);
-
 			this.state.value = this.getValueFromModel();
 
 			/** @type {BaseField} */
 			this.fieldRef = null;
 			this.fieldViewRef = null;
-
 			this.bindRef = this.bindRef.bind(this);
 			this.onChangeState = this.onChangeState.bind(this);
 			this.onFocusIn = this.onFocusIn.bind(this);
@@ -91,10 +91,12 @@
 
 			const restrictedEdit = this.isEditRestricted();
 			const showEditIcon = restrictedEdit || this.isSingleEditEnabled();
+			const tooltip = this.getTooltip();
 
 			return {
 				ref: this.bindRef,
 				id,
+				uid: this.getUid(),
 				type: this.type,
 				testId: `${this.model.id}_${id}`,
 				uid: this.uid,
@@ -111,10 +113,32 @@
 				showRequired: this.isShowRequired(),
 				showEditIcon,
 				restrictedEdit,
-				hasHiddenEmptyView: true,
 				showBorder: this.showBorder,
 				hasSolidBorderContainer: this.hasSolidBorderContainer(),
+				hasHiddenEmptyView: true,
+				tooltip: isFunction(tooltip) ? useCallback(tooltip) : null,
 			};
+		}
+
+		getTooltip()
+		{
+			if (this.hasDuplicate())
+			{
+				return DuplicateTooltip.create({
+					uid: this.getUid(),
+					fieldType: this.getId(),
+					settings: this.settings,
+					entityId: this.editor.getEntityId(),
+					entityType: this.editor.getEntityTypeName(),
+				});
+			}
+
+			return null;
+		}
+
+		hasDuplicate()
+		{
+			return DuplicateTooltip.isEnabledDuplicateControl(this.schemeElement.getData(), this.editor.getEntityTypeName());
 		}
 
 		bindRef(ref)
@@ -333,6 +357,16 @@
 			}
 
 			return isValid;
+		}
+
+		isRequired()
+		{
+			return this.schemeElement && this.schemeElement.isRequired();
+		}
+
+		isShowRequired()
+		{
+			return this.schemeElement && this.schemeElement.isShowRequired();
 		}
 
 		setValue(value)

@@ -341,6 +341,14 @@ abstract class KanbanEntity extends Entity
 		return new Result();
 	}
 
+	public function changeCategory(array $ids, int $categoryId): Result
+	{
+		$kanban = $this->getKanbanInstance();
+		$userPermissions = $kanban->getCurrentUserPermissions();
+
+		return $kanban->getEntity()->updateItemsCategory($ids, $categoryId, $userPermissions);
+	}
+
 	protected function getGridId(): string
 	{
 		$kanban = $this->getKanbanInstance();

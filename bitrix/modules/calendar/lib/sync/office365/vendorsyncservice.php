@@ -239,9 +239,16 @@ class VendorSyncService
 	{
 		$result = $this->apiService->getEventInstances($params);
 
-		return array_map(function ($row){
-			return new EventDto($row);
-		}, $result['value']) ?? [];
+		if (!empty($result['value']))
+		{
+			return array_map(function ($row){
+				return new EventDto($row);
+			}, $result['value']) ?? [];
+		}
+		else
+		{
+			return [];
+		}
 	}
 
 	/**

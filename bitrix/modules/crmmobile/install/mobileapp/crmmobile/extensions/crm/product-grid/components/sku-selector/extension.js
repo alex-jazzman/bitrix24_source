@@ -6,7 +6,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 	const { Loc } = require('loc');
 	const { isArray, get, clone, mergeImmutable, isEqual } = require('utils/object');
 	const { debounce } = require('utils/function');
-	const { ProductGridStringField } = require('layout/ui/product-grid/components/string-field');
+	const { ProductGridNumberField } = require('layout/ui/product-grid/components/string-field');
 	const { PriceDetails } = require('layout/ui/product-grid/components/price-details');
 	const { FocusContext } = require('layout/ui/product-grid/services/focus-context');
 	const {
@@ -219,7 +219,20 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 
 		renderBottomPanelQuantity()
 		{
-			const handleChange = (field) => this.setState({quantity: field.value});
+			const value = this.state.quantity;
+			const moneyFormat = Money.create({
+				amount: 0,
+				currency: this.props.currencyId,
+			}).format;
+			const groupSeparator = jnComponent.convertHtmlEntities(moneyFormat.THOUSANDS_SEP);
+
+			const handleChange = (field) => {
+				const newVal = field.value;
+				if (newVal !== value)
+				{
+					this.setState({ quantity: newVal });
+				}
+			};
 
 			return View(
 				{
@@ -227,10 +240,12 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 						width: 150,
 					}
 				},
-				new ProductGridStringField({
-					value: this.state.quantity,
+				new ProductGridNumberField({
+					value,
+					groupSize: 3,
+					groupSeparator: Boolean(groupSeparator) ? groupSeparator : ' ',
+					decimalSeparator: moneyFormat.DEC_POINT,
 					placeholder: '0',
-					keyboardType: 'decimal-pad',
 					useIncrement: true,
 					useDecrement: true,
 					min: 1,
@@ -238,9 +253,13 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 					label: this.props.measureName,
 					labelAlign: 'center',
 					textAlign: 'center',
-					onBlur: handleChange,
-					onIncrement: debounce(handleChange, 300),
-					onDecrement: debounce(handleChange, 300),
+					onChange: debounce((field) => {
+						if (field.value === '') return;
+						handleChange(field);
+					}, 300),
+					onBlur: (field) => {
+						if (field.value === '') handleChange(field);
+					},
 				})
 			);
 		}

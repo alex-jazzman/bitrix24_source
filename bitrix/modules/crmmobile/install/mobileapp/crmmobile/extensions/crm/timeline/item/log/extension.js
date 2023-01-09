@@ -10,6 +10,7 @@ jn.define('crm/timeline/item/log', (require, exports, module) => {
 	const { TodoCreated } = require('crm/timeline/item/log/todo-created');
 	const { CallIncoming } = require('crm/timeline/item/log/call-incoming');
 	const { Ping } = require('crm/timeline/item/log/ping');
+	const { DocumentViewed } = require('crm/timeline/item/log/document-viewed');
 
     module.exports = {
 		Creation,
@@ -19,6 +20,7 @@ jn.define('crm/timeline/item/log', (require, exports, module) => {
 		TodoCreated,
 		CallIncoming,
 		Ping,
+		DocumentViewed,
 	};
 
 });

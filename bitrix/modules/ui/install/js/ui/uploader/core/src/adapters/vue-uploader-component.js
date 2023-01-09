@@ -1,4 +1,4 @@
-import VueAdapter from './vue-adapter';
+import VueUploaderAdapter from './vue-uploader-adapter';
 
 /**
  * @memberof BX.UI.Uploader
@@ -31,7 +31,7 @@ export const VueUploaderComponent = {
 	},
 	beforeCreate()
 	{
-		this.adapter = this.uploaderAdapter === null ? new VueAdapter(this.uploaderOptions) : this.uploaderAdapter;
+		this.adapter = this.uploaderAdapter === null ? new VueUploaderAdapter(this.uploaderOptions) : this.uploaderAdapter;
 		this.uploader = this.adapter.getUploader();
 	},
 	created()

@@ -246,8 +246,10 @@ class CUserOptions
 	{
 		global $DB, $USER, $CACHE_MANAGER;
 
-		if ($user_id === false)
+		if ($user_id === false && $USER instanceof CUser)
+		{
 			$user_id = $USER->GetID();
+		}
 
 		$user_id = intval($user_id);
 		$strSql = "

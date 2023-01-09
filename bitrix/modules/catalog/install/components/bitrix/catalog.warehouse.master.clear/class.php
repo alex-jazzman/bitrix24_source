@@ -9,6 +9,8 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadLanguageFile(__FILE__);
 
+\Bitrix\Main\Loader::includeModule('catalog');
+
 /**
  * Class WarehouseMasterClear
  */

@@ -40,6 +40,7 @@ $MESS["MENU_RPA_SECTION"] = "Роботизація бізнесу (RPA)";
 $MESS["MENU_SALESCENTER_SECTION"] = "Центр продажів";
 $MESS["MENU_SETTINGS_SECTION"] = "Налаштування";
 $MESS["MENU_SHOP"] = "Магазин";
+$MESS["MENU_SIGN"] = "Bitrix24.Sign";
 $MESS["MENU_SITES"] = "Сайти";
 $MESS["MENU_SITES_AND_STORES"] = "Сайти та Магазини";
 $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Складський облік";

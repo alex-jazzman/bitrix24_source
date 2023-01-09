@@ -18,6 +18,7 @@ jn.define('layout/ui/entity-editor/manager', (require, exports, module) => {
 				desktopUrl,
 				onScroll,
 				layout,
+				payload,
 			} = settings;
 
 			const id = editorProps.GUID;
@@ -72,6 +73,7 @@ jn.define('layout/ui/entity-editor/manager', (require, exports, module) => {
 					isEmbedded: Boolean(editorProps.IS_EMBEDDED),
 					desktopUrl,
 					entityDetailsUrl: editorProps.PATH_TO_ENTITY_DETAILS,
+					payload,
 				},
 			});
 		}

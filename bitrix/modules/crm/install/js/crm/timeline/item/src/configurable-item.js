@@ -1,4 +1,4 @@
-import { Dom, Text, Type } from 'main.core';
+import {ajax, Dom, Text, Type} from 'main.core';
 import TimelineItem from './item';
 import { Item } from './components/item';
 import Layout from './layout';
@@ -15,6 +15,8 @@ declare type ConfigurableItemParams = {
 	useShortTimeFormat: boolean,
 	isReadOnly: boolean,
 	currentUser: ?Object,
+	ownerTypeId: number,
+	ownerId: number,
 	data: ConfigurableItemData,
 	streamType: number;
 };
@@ -37,6 +39,8 @@ export default class ConfigurableItem extends TimelineItem
 	#useShortTimeFormat: boolean = false;
 	#isReadOnly: boolean = false;
 	#currentUser: ?Object = null;
+	#ownerTypeId: number = null;
+	#ownerId: number = null;
 	#controllers: Base[] = null;
 	#layoutComponent: ?Object = null;
 	#layoutApp: ?Object = null;
@@ -58,6 +62,8 @@ export default class ConfigurableItem extends TimelineItem
 			this.#useShortTimeFormat = settings.useShortTimeFormat || false;
 			this.#isReadOnly = settings.isReadOnly || false;
 			this.#currentUser = settings.currentUser || null;
+			this.#ownerTypeId = settings.ownerTypeId;
+			this.#ownerId = settings.ownerId;
 			this.#streamType = settings.streamType || StreamType.history;
 		}
 
@@ -278,6 +284,40 @@ export default class ConfigurableItem extends TimelineItem
 				layout: this.getLayout().asPlainObject(),
 			},
 		});
+	}
+
+	reloadFromServer(): Promise
+	{
+		const data = {
+			ownerTypeId: this.#ownerTypeId,
+			ownerId: this.#ownerId,
+		};
+		if (this.#streamType === StreamType.history || this.#streamType === StreamType.pinned)
+		{
+			data.historyIds = [ this.getId() ];
+		}
+		else if (this.#streamType === StreamType.scheduled)
+		{
+			data.activityIds = [ this.getId() ];
+		}
+		else
+		{
+			throw new Error('Wrong stream type');
+		}
+
+		return ajax.runAction('crm.timeline.item.load', {data})
+			.then(response => {
+				Object.values(response.data).forEach(item => {
+					if (item.id === this.getId())
+					{
+						this.setData(item);
+						this.refreshLayout();
+					}
+				})
+			})
+			.catch(err => {
+				console.error(err);
+			});
 	}
 
 	static create(id, settings): ConfigurableItem

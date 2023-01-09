@@ -42,9 +42,14 @@ trait Document
 
 	private function getOpenDocumentAction(): Layout\Action
 	{
+		$documentData = $this->getDocument()->getFile(false)->getData();
+
+		$pdfUrl = $documentData['pdfUrl'] ?? null;
+
 		return
 			(new Layout\Action\JsEvent('Document:Open'))
 				->addActionParamInt('documentId', $this->getDocumentId())
+				->addActionParamString('pdfUrl', $pdfUrl)
 		;
 	}
 }

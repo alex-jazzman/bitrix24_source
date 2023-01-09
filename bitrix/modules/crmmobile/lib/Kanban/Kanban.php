@@ -30,13 +30,22 @@ class Kanban extends \Bitrix\Crm\Kanban
 	 */
 	protected function prepareField(array &$data, $value, ?array $displayedFieldsValues = []): void
 	{
-		if (isset($displayedFieldsValues[$data['code']]))
+		if (
+			isset($data['code'], $displayedFieldsValues[$data['code']])
+			&& is_array($displayedFieldsValues[$data['code']])
+		)
 		{
 			$value = $displayedFieldsValues[$data['code']];
 		}
-		else
+		elseif (is_array($value))
 		{
 			$value['value'] = $value;
+		}
+		else
+		{
+			$value = [
+				'value' => $value,
+			];
 		}
 
 		$data['value'] = $value['value'];

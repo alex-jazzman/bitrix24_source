@@ -82,6 +82,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 		componentDidMount()
 		{
 			BX.addCustomEvent('Crm.CategoryDetail::onDeleteCategory', () => this.getCategoryListFromStorage(this.props.entityTypeId));
+			BX.addCustomEvent('Crm.CategoryDetail::onClose', () => this.getCategoryListFromStorage(this.props.entityTypeId));
 
 			this.layout.enableNavigationBarBorder(false);
 
@@ -124,7 +125,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 		 */
 		getRestrictions()
 		{
-			if (!this.state.categoryList)
+			if (!this.state.categoryList || !Array.isArray(this.state.categoryList.restrictions))
 			{
 				return [];
 			}
@@ -168,9 +169,15 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 			const showCounters = BX.prop.getBoolean(this.props, 'showCounters', true);
 			const showTunnels = BX.prop.getBoolean(this.props, 'showTunnels', true);
 
+			let currentCategory = this.getCategories().find((category) => category.id === this.props.currentCategoryId);
+			if (!currentCategory)
+			{
+				currentCategory = this.getCategories()[0];
+			}
+
 			return new CategoryList({
 				entityTypeId: this.props.entityTypeId,
-				currentCategoryId: this.props.currentCategoryId,
+				currentCategoryId: currentCategory && currentCategory.id,
 				needSaveCurrentCategoryId: this.props.needSaveCurrentCategoryId,
 				categories: this.getCategories(),
 				onCreateCategory: this.createCategoryHandler,

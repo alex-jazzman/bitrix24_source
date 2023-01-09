@@ -1,6 +1,7 @@
 import { BitrixVue } from 'ui.vue';
 import { EventEmitter } from "main.core.events";
-import { Application as ApplicationConst, Loader as LoaderConst, PaySystem as PaySystemConst,
+import { Type } from 'main.core';
+import { Application as ApplicationConst, Loader as LoaderConst, PaySystem as PaySystemConst, Property as PropertyConst,
 		 EventType } from 'sale.checkout.const';
 
 import "sale.checkout.view.total";
@@ -33,10 +34,31 @@ BitrixVue.component('sale-checkout-form', {
 
 			for (let listKey in list)
 			{
-				if (list[listKey].value.length > 0)
+				if (!Type.isStringFilled(list[listKey].value) && list[listKey].required === 'Y')
 				{
-					properties.push(list[listKey].value);
+					return false;
 				}
+
+				if (!Type.isStringFilled(list[listKey].value))
+				{
+					continue;
+				}
+
+				if (
+					list[listKey].type === PropertyConst.type.checkbox
+					&& list[listKey].required === 'Y'
+					&& list[listKey].value !== 'Y'
+				)
+				{
+					return false;
+				}
+
+				if (list[listKey].type === PropertyConst.type.checkbox)
+				{
+					continue;
+				}
+
+				properties.push(list[listKey].value);
 			}
 
 			return properties.length > 0

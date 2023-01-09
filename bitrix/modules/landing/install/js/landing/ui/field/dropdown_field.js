@@ -62,6 +62,10 @@
 
 		if (this.content !== "")
 		{
+			setTimeout(() => {
+				this.emit("onInit", this.items[this.content]);
+			}, 0);
+
 			this.setValue(this.content);
 		}
 	};
@@ -169,7 +173,7 @@
 			this.onChangeHandler(item.value, this.items, this.postfix, this.property);
 			this.onValueChangeHandler(this);
 			BX.fireEvent(this.input, "input");
-			this.emit('onChange');
+			this.emit("onChange", item);
 		},
 
 		/**
@@ -190,7 +194,7 @@
 			}
 		},
 
-		setValue: function(value)
+		setValue: function(value, preventEvent)
 		{
 			this.items.forEach(function(item) {
 				// noinspection EqualityComparisonWithCoercionJS
@@ -198,6 +202,13 @@
 				{
 					setTextContent(this.input, item.name, this.classForTextNode);
 					data(this.input, "value", item.value);
+
+					if (preventEvent)
+					{
+						setTimeout(() => {
+							this.emit("onInit", item);
+						}, 0);
+					}
 				}
 			}, this);
 		},

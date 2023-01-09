@@ -6,22 +6,19 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 	const { EntitySelectorFieldClass, CastType } = require('layout/ui/fields/entity-selector');
 	const { get, clone } = require('utils/object');
 	const { stringify } = require('utils/string');
-	const { inAppUrl } = require('in-app-url');
 	const { Loc } = require('loc');
 
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/crm-element/images/default-avatar.png';
 
-	let EntityDetailOpener;
 	let Type;
 	let TypeId;
-	let CrmUrl;
+	let openCrmEntityInAppUrl;
 
 	try
 	{
-		EntityDetailOpener = require('crm/entity-detail/opener').EntityDetailOpener;
 		Type = require('crm/type').Type;
 		TypeId = require('crm/type').TypeId;
-		CrmUrl = require('crm/in-app-url/url').CrmUrl;
+		openCrmEntityInAppUrl = require('crm/in-app-url/open').openCrmEntityInAppUrl;
 	}
 	catch (e)
 	{
@@ -46,19 +43,26 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 		{
 			super(props);
 
-			this.handleUpdateEntity = this.handleUpdateEntity.bind(this);
 			this.state.showAll = false;
+
+			this.handleUpdateEntity = this.handleUpdateEntity.bind(this);
 		}
 
 		componentDidMount()
 		{
 			super.componentDidMount();
 
-			BX.addCustomEvent('DetailCard::onUpdate', this.handleUpdateEntity.bind(this));
+			BX.addCustomEvent('DetailCard::onUpdate', this.handleUpdateEntity);
 		}
 
-		handleUpdateEntity(uid, { entityTypeId, entityId }, { text })
+		handleUpdateEntity(uid, { entityTypeId, entityId }, titleParams = {})
 		{
+			const text = titleParams && stringify(titleParams.text) || '';
+			if (text === '')
+			{
+				return;
+			}
+
 			const entityList = clone(this.state.entityList);
 
 			const entity = entityList.find(({ type, id }) => {
@@ -194,10 +198,7 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 			}
 
 			const { type: entityTypeName, id: entityId } = entity;
-			const crmUrl = new CrmUrl({ entityId, entityTypeName });
-			const url = crmUrl.toString();
-
-			inAppUrl.open(url);
+			openCrmEntityInAppUrl({ entityId, entityTypeName });
 		}
 
 		canOpenEntity(entity)

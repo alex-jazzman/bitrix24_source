@@ -2685,7 +2685,10 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 			foreach ($this->getClass() as $class)
 			{
 				$classBlock = $this->includeBlockClass($class);
-				$classBlock->beforeView($this);
+				if ($classBlock->beforeView($this) === false)
+				{
+					return;
+				}
 			}
 		}
 
@@ -3363,12 +3366,21 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 		);
 		if (!$availableFeature)
 		{
-			$this->saveContent($this::getMessageBlock([
-				'HEADER' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_DYNAMIC_LIMIT_TITLE'),
-				'MESSAGE' => Restriction\Manager::getSystemErrorMessage('limit_sites_dynamic_blocks'),
-				'BUTTON' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_LIMIT_BUTTON'),
-				'LINK' => Manager::BUY_LICENSE_PATH
-		  	], 'locked'));
+			$hackContent = preg_replace(
+				'/^<([a-z]+)\s/',
+				'<$1 style="display: none;" ',
+				$this->content
+			);
+
+			$this->saveContent(
+				$hackContent .
+				$this::getMessageBlock([
+					'HEADER' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_DYNAMIC_LIMIT_TITLE'),
+					'MESSAGE' => Restriction\Manager::getSystemErrorMessage('limit_sites_dynamic_blocks'),
+					'BUTTON' => Loc::getMessage('LANDING_BLOCK_MESSAGE_ERROR_LIMIT_BUTTON'),
+					'LINK' => Manager::BUY_LICENSE_PATH
+		  	    ], 'locked')
+			);
 			return;
 		}
 
@@ -4726,7 +4738,13 @@ class Block extends \Bitrix\Landing\Internals\BaseTable
 						}
 						else
 						{
+							preg_match_all("/background-image:.*;/i", $resultNode->getAttribute('style'), $matches);
+							foreach ($matches[0] as $i => $match)
+							{
+								$styleOldContent .= $match;
+							}
 							$resultNode->removeAttribute('style');
+							$resultNode->setAttribute('style', $styleOldContent);
 						}
 					}
 				}

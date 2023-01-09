@@ -671,36 +671,12 @@ class Call extends Engine\Controller
 		return $callUser->toArray();
 	}
 
-	public function getBackgroundAction()
-	{
-		$diskFolder = \Bitrix\Im\Call\Background::getUploadFolder();
-		$diskFolderId = $diskFolder? (int)$diskFolder->getId(): 0;
-		$infoHelperParams = \Bitrix\Main\Loader::includeModule('ui')? InfoHelper::getInitParams(): [];
-
-		return [
-			'list' => [
-				'default' => \Bitrix\Im\Call\Background::get(),
-				'custom' => \Bitrix\Im\Call\Background::getCustom(),
-			],
-			'diskFolderId' => $diskFolderId,
-			'limit' => \Bitrix\Im\Call\Background::getLimitForJs(),
-			'infohelper' => $infoHelperParams
-		];
-	}
-
 	public function getCallLimitsAction()
 	{
 		return [
 			'callServerEnabled' => (bool)\Bitrix\Im\Call\Call::isCallServerEnabled(),
 			'maxParticipants' => (int)\Bitrix\Im\Call\Call::getMaxParticipants(),
 		];
-	}
-
-	public function commitBackgroundAction(int $fileId)
-	{
-		\CIMDisk::CommitBackgroundFile($this->getCurrentUser()->getId(), $fileId);
-
-		return true;
 	}
 
 	public function reportConnectionStatusAction(int $callId, bool $connectionStatus)

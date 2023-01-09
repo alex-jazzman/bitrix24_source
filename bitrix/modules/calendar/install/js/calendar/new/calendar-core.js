@@ -48,6 +48,8 @@
 
 		BX.Calendar.Util.setIphoneConnectionStatus(config.isIphoneConnected);
 		BX.Calendar.Util.setMacConnectionStatus(config.isMacConnected);
+		BX.Calendar.Util.setIcloudConnectionStatus(config.isIcloudConnected);
+		BX.Calendar.Util.setGoogleConnectionStatus(config.isGoogleConnected);
 
 		this.requests = {};
 		this.currentUser = config.user;
@@ -548,6 +550,13 @@
 						this.rightBlock.style.display = '';
 					}
 
+					if (view === 'day')
+					{
+						params.animation = params.animation
+							&& this.getDisplayedViewRange().start.getTime() <= params.newViewDate.getTime()
+							&& params.newViewDate.getTime() <= this.getDisplayedViewRange().end.getTime();
+					}
+
 					if (params.animation)
 					{
 						this.viewTransition.transit(params);
@@ -580,7 +589,6 @@
 				}
 			}
 		},
-
 		request: function(params)
 		{
 			if (!params.url)
@@ -660,7 +668,6 @@
 
 			return params;
 		},
-
 		cancelRequest: function(reqId)
 		{
 			if (this.requests[reqId] && this.requests[reqId].status === 'sent')
@@ -678,7 +685,6 @@
 
 			return {};
 		},
-
 		displayError: function(str, bReloadPage)
 		{
 			if (BX.type.isArray(str) && str.length > 0)
@@ -872,7 +878,7 @@
 				counters: this.util.getCounters(),
 				userId: this.currentUser.id
 			});
-			
+
 			this.counters.init();
 		},
 
@@ -1067,7 +1073,7 @@
 
 		refresh: function()
 		{
-			this.getView().redraw();
+			this.getView().reload();
 		},
 
 		reload: function(params)

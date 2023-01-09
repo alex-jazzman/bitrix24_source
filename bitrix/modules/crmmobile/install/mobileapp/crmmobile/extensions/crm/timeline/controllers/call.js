@@ -7,11 +7,15 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 	const { TimelineScheduler } = require('crm/timeline/scheduler');
 	const { Type: CrmType } = require('crm/type');
 	const { Type } = require('type');
+	const { Filesystem } = require('native/filesystem');
+	const { withCurrentDomain } = require('utils/url');
+	const { Feature } = require('feature');
 
 	const SupportedActions = {
 		MAKE_CALL: 'Call:MakeCall',
 		SCHEDULE_CALL: 'Call:Schedule',
 		OPEN_TOOLBAR: 'Call::OpenToolBar',
+		DOWNLOAD_RECORD: 'Call:DownloadRecord',
 	};
 
 	class TimelineCallController extends TimelineBaseController
@@ -31,6 +35,8 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 					return this.scheduleCall(actionParams);
 				case SupportedActions.OPEN_TOOLBAR:
 					return this.openToolBar(actionParams);
+				case SupportedActions.DOWNLOAD_RECORD:
+					return this.downloadRecord(actionParams);
 				default:
 					return;
 			}
@@ -79,6 +85,28 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 		openToolBar(actionData)
 		{
 			this.pinInTopToolbar({...actionData});
+		}
+
+		downloadRecord(actionData)
+		{
+			const { url } = actionData;
+			if (!url)
+			{
+				return;
+			}
+
+			if (Feature.isShareDialogSupportsFiles())
+			{
+				Notify.showIndicatorLoading();
+				Filesystem.downloadFile(withCurrentDomain(url)).then(uri => {
+					Notify.hideCurrentIndicator();
+					dialogs.showSharingDialog({ uri });
+				});
+			}
+			else
+			{
+				Feature.showDefaultUnsupportedWidget();
+			}
 		}
 	}
 

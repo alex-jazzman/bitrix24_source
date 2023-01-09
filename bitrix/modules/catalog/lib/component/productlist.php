@@ -130,18 +130,6 @@ abstract class ProductList extends \CBitrixComponent
 	 */
 	protected function getDefaultMeasure(): array
 	{
-		if (empty($this->measures))
-		{
-			$this->loadMeasures();
-		}
-		foreach ($this->measures as $measure)
-		{
-			if ($measure['IS_DEFAULT'] === 'Y')
-			{
-				return $measure;
-			}
-		}
-
-		return [];
+		return \CCatalogMeasure::getDefaultMeasure(true);
 	}
 }

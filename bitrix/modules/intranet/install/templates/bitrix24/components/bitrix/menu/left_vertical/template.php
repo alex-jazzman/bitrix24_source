@@ -289,10 +289,20 @@ $groupPopupExists = false;
 			?></span>
 			<?endif;?>
 		</div>
+		<div class="menu-item-separator --pointer-events">
+			<div class="menu-item-sepor-text-line"></div>
+		</div>
 
 		<div class="menu-extra-btn-box">
 
 			<div class="menu-settings-save-btn"><?=Loc::getMessage("MENU_EDIT_READY_FULL")?></div>
+
+			<div class="menu-help-btn">
+				<span class="menu-help-icon-box">
+					<span class="menu-help-icon"></span>
+				</span>
+				<span class="menu-help-btn-text"><?=Loc::getMessage("MENU_HELP")?></span>
+			</div>
 
 			<? if ($arResult["SHOW_SITEMAP_BUTTON"]): ?>
 			<div class="menu-sitemap-btn">

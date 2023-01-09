@@ -490,5 +490,4 @@ if ($USER->IsAdmin())
 
 ?></div><?
 
-echo $GLOBALS["adminPage"]->ShowSound();
-?>
+echo CAdminPage::ShowSound();

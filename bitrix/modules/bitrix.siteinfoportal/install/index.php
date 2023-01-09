@@ -13,7 +13,7 @@ Class bitrix_siteinfoportal extends CModule
 	var $MODULE_CSS;
 	var $MODULE_GROUP_RIGHTS = "Y";
 
-	function bitrix_siteinfoportal()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 
@@ -31,8 +31,6 @@ Class bitrix_siteinfoportal extends CModule
 
 	function InstallDB($install_wizard = true)
 	{
-		global $DB, $DBType, $APPLICATION;
-
 		RegisterModule("bitrix.siteinfoportal");
 		RegisterModuleDependences("main", "OnBeforeProlog", "bitrix.siteinfoportal", "CSiteInfoportal", "ShowPanel");
 
@@ -41,9 +39,7 @@ Class bitrix_siteinfoportal extends CModule
 
 	function UnInstallDB($arParams = Array())
 	{
-		global $DB, $DBType, $APPLICATION;
-
-		UnRegisterModuleDependences("main", "OnBeforeProlog", "bitrix.siteinfoportal", "CSiteInfoportal", "ShowPanel"); 
+		UnRegisterModuleDependences("main", "OnBeforeProlog", "bitrix.siteinfoportal", "CSiteInfoportal", "ShowPanel");
 		UnRegisterModule("bitrix.siteinfoportal");
 
 		return true;

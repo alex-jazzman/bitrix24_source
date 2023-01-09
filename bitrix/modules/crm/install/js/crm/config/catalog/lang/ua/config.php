@@ -15,6 +15,10 @@ $MESS["CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_CAN_BUY_ZERO_V2"] = "Доз�
 $MESS["CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_SUBSCRIBE"] = "Дозволити підписку при відсутності товару";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_HINT"] = "Налаштування каталогу зміняться для всіх розділів, у яких він використовується.";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD"] = "Включити нову картку товару";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE"] = "Включити нову картку товару";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_DISAGREE"] = "Залишити стару картку товару";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TEXT"] = "Зверніть увагу: повернутися на стару картку товару не вийде, бо вона більше не підтримується в Бітрікс24. <a id=\"catalog-settings-new-productcard-popup-helpdesk\">Почитайте докладніше</a> про роботу з новою карткою товару, перш ніж зробити перехід.";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TITLE"] = "Ви переходите на нову картку товару";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_SET_VAT_IN_PRICE_FOR_NEW_PRODUCTS"] = "Встановлювати параметр \"ПДВ включений в ціну\" при створенні нових товарів і пропозицій";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_SETTINGS_CURRENT_CATALOG"] = "Обробка каталогу";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_SETTINGS_UPDATE_TITLE"] = "Оновлення налаштувань товару";

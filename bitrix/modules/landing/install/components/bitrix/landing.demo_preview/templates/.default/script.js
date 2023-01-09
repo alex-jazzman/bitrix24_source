@@ -369,7 +369,7 @@
 					result[this.themesPalette.dataset.name] = this.getActiveColorNode().dataset.value;
 				}
 			}
-			result[this.title.dataset.name] = this.title.value;
+			result[this.title.dataset.name] = this.title.value.replaceAll('&', '').replaceAll('?', '');
 			result[this.description.dataset.name] = this.description.value;
 
 			return result;

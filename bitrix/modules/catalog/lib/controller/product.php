@@ -17,9 +17,6 @@ use Bitrix\Rest\RestException;
 
 class Product extends Controller implements EventBindInterface
 {
-	protected const ITEM = 'PRODUCT';
-	protected const LIST = 'PRODUCTS';
-
 	/**
 	 * @inheritDoc
 	 */
@@ -42,12 +39,16 @@ class Product extends Controller implements EventBindInterface
 	{
 		$r = new Result();
 
-		if($action->getName() === 'update')
+		if ($action->getName() === 'add')
+		{
+			$r = $this->processBeforeAdd($action);
+		}
+		else if ($action->getName() === 'update')
 		{
 			$r = $this->processBeforeUpdate($action);
 		}
 
-		if(!$r->isSuccess())
+		if (!$r->isSuccess())
 		{
 			$this->addErrors($r->getErrors());
 			return null;
@@ -97,6 +98,11 @@ class Product extends Controller implements EventBindInterface
 		return $r;
 	}
 
+	protected function processBeforeAdd(Engine\Action $action): Result
+	{
+		return new Result();
+	}
+
 	//region Actions
 	public function getFieldsByFilterAction($filter): ?array
 	{
@@ -112,7 +118,7 @@ class Product extends Controller implements EventBindInterface
 		}
 		else
 		{
-			return [static::ITEM =>$view->prepareFieldInfos(
+			return [$this->getServiceItemName() =>$view->prepareFieldInfos(
 				$r->getData()
 			)];
 		}
@@ -181,7 +187,7 @@ class Product extends Controller implements EventBindInterface
 				$result[] = $row;
 			}
 
-			return new Page(static::LIST, $result, function() use ($filter)
+			return new Page($this->getServiceListName(), $result, function() use ($filter)
 			{
 				return (int)\CIBlockElement::GetList([], $filter, []);
 			});
@@ -201,7 +207,7 @@ class Product extends Controller implements EventBindInterface
 			$r = $this->exists($id);
 			if($r->isSuccess())
 			{
-				return [static::ITEM => $this->get($id)];
+				return [$this->getServiceItemName() => $this->get($id)];
 			}
 		}
 
@@ -338,16 +344,12 @@ class Product extends Controller implements EventBindInterface
 		}
 		if($r->isSuccess())
 		{
-			$r = \Bitrix\Catalog\Model\Product::delete($id);
-			if($r->isSuccess())
+			if (!\CIBlockElement::Delete($id))
 			{
-				if (!\CIBlockElement::Delete($id))
-				{
-					if ($ex = self::getApplication()->GetException())
-						$r->addError(new Error($ex->GetString(), $ex->GetId()));
-					else
-						$r->addError(new Error('delete iBlockElement error'));
-				}
+				if ($ex = self::getApplication()->GetException())
+					$r->addError(new Error($ex->GetString(), $ex->GetId()));
+				else
+					$r->addError(new Error('delete iBlockElement error'));
 			}
 		}
 
@@ -1080,11 +1082,11 @@ class Product extends Controller implements EventBindInterface
 			throw new RestException('event object not found trying to process event');
 		}
 
-		if($event instanceof Event)
+		if($event instanceof Event) // update, add
 		{
 			$id = $event->getParameter('id');
 		}
-		else if($event instanceof \Bitrix\Main\ORM\Event)
+		else if($event instanceof \Bitrix\Main\ORM\Event) // delete
 		{
 			$item = $event->getParameter('id');
 			$id = is_array($item) ? $item['ID']: $item;
@@ -1095,9 +1097,19 @@ class Product extends Controller implements EventBindInterface
 			throw new RestException('id not found trying to process event');
 		}
 
+		$product = \Bitrix\Catalog\Model\Product::getCacheItem($id);
+
+		$type = $product['TYPE']  ?? null;
+
+		if (!$type)
+		{
+			throw new RestException('type is not specified trying to process event');
+		}
+
 		return [
 			'FIELDS' => [
-				'ID' => $id
+				'ID' => $id,
+				'TYPE' => $type
 			],
 		];
 	}

@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 $this->addExternalCss(SITE_TEMPLATE_PATH . '/css/sidebar.css');
 
@@ -53,7 +54,7 @@ $frame = $this->createFrame()->begin();
 			$classList[] = 'today-birth';
 		}
 
-		$avatarStyle = (isset($arUser['PERSONAL_PHOTO']['src']) ? "background: url('" . $arUser['PERSONAL_PHOTO']['src'] . "') no-repeat center; background-size: cover;" : '');
+		$avatarStyle = (isset($arUser['PERSONAL_PHOTO']['src']) ? "background: url('" . Uri::urnEncode($arUser['PERSONAL_PHOTO']['src']) . "') no-repeat center; background-size: cover;" : '');
 
 		?><a href="<?= $arUser['DETAIL_URL'] ?>" class="<?= implode(' ', $classList) ?>">
 			<span class="user-avatar user-default-avatar" style="<?= $avatarStyle ?>"></span>

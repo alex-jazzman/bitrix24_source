@@ -7,13 +7,13 @@ use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Model\Event;
 use Bitrix\Main\Engine\Action;
+use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Rest\Event\EventBind;
 use Bitrix\Rest\Event\EventBindInterface;
 use Bitrix\Rest\Integration\CatalogViewManager;
 use Bitrix\Rest\Integration\Controller\Base;
-use phpDocumentor\Reflection\DocBlock\Tags\Method;
 
 class Controller extends Base
 {
@@ -117,6 +117,23 @@ class Controller extends Base
 	public function getEntity(): Entity
 	{
 		return $this->getEntityTable()::getEntity();
+	}
+
+	private function getServiceName(): string
+	{
+		return (new \ReflectionClass($this))->getShortName();
+	}
+
+	protected function getServiceItemName(): string
+	{
+		$converter = new Converter(Converter::TO_UPPER | Converter::TO_SNAKE_DIGIT);
+
+		return $converter->process($this->getServiceName());
+	}
+
+	protected function getServiceListName(): string
+	{
+		return $this->getServiceItemName() . 'S';
 	}
 
 	// rest-event region

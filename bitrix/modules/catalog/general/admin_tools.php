@@ -2296,7 +2296,8 @@ class CCatalogAdminProductSetEdit
 				'BTN_ID' => $strIDPrefix.'_ITEMS_ADD',
 				'CELLS' => $arCellInfo['CELLS'],
 				'CELL_PARAMS' => $arCellInfo['CELL_PARAMS'],
-				'SEARCH_PAGE' => (defined('SELF_FOLDER_URL') ? SELF_FOLDER_URL : '/bitrix/admin/').'cat_product_search_dialog.php'
+				// TODO: remove this dirty hack after disable old product card in public shop
+				'SEARCH_PAGE' => (defined('SELF_FOLDER_URL') ? '/shop/settings/' : '/bitrix/admin/').'cat_product_search_dialog.php',
 			);
 			?>
 <script type="text/javascript">

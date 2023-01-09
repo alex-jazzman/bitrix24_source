@@ -2104,8 +2104,16 @@ abstract class BaseForm
 
 		if (!empty($value) && is_array($value))
 		{
-			foreach ($value as $fileId)
+			foreach ($value as $valueItem)
 			{
+				if (is_array($valueItem))
+				{
+					$fileId = $valueItem['ID'];
+				}
+				else
+				{
+					$fileId = $valueItem;
+				}
 				$propName = str_replace('n#IND#', $fileId, $inputName);
 				$fileValues[$propName] = $fileId;
 			}

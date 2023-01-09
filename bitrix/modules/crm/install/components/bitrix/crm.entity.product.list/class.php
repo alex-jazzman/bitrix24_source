@@ -652,6 +652,7 @@ final class CCrmEntityProductListComponent
 		$this->defaultSettings['PAGE_SIZES'] = [5, 10, 20, 50, 100];
 		$this->defaultSettings['NEW_ROW_POSITION'] = CUserOptions::GetOption("crm.entity.product.list", 'new.row.position', 'top');
 		$this->defaultSettings['ALLOW_CATALOG_PRICE_EDIT'] = true;
+		$this->defaultSettings['ALLOW_DISCOUNT_CHANGE'] = true;
 		$this->defaultSettings['ALLOW_ENTITY_RESERVE'] = false;
 	}
 
@@ -1795,6 +1796,7 @@ final class CCrmEntityProductListComponent
 			ActionDictionary::ACTION_PRICE_ENTITY_EDIT,
 			$this->entity['TYPE_ID']
 		);
+		$this->crmSettings['ALLOW_DISCOUNT_CHANGE'] = $this->isAllowedDiscount();
 		$this->crmSettings['ALLOW_CATALOG_PRICE_SAVE'] = $accessController->check(ActionDictionary::ACTION_PRICE_EDIT);
 
 		$this->crmSettings['CATALOG_ENABLE_EMPTY_PRODUCT_ERROR'] = !\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCreationEntityCommodityItemAllowed();
@@ -1894,6 +1896,7 @@ final class CCrmEntityProductListComponent
 		$this->arResult['IS_PRODUCT_EDITABLE'] = $this->crmSettings['IS_PRODUCT_EDITABLE'];
 		$this->arResult['ALLOW_CATALOG_PRICE_EDIT'] = $this->crmSettings['ALLOW_CATALOG_PRICE_EDIT'];
 		$this->arResult['ALLOW_ENTITY_RESERVE'] = $this->crmSettings['ALLOW_ENTITY_RESERVE'];
+		$this->arResult['ALLOW_DISCOUNT_CHANGE'] = $this->crmSettings['ALLOW_DISCOUNT_CHANGE'];
 		$this->arResult['ALLOW_CATALOG_PRICE_SAVE'] = $this->crmSettings['ALLOW_CATALOG_PRICE_SAVE'];
 		$this->arResult['CATALOG_PRICE_EDIT_ARTICLE_CODE'] = $this->crmSettings['CATALOG_PRICE_EDIT_ARTICLE_CODE'];
 		$this->arResult['CATALOG_PRICE_EDIT_ARTICLE_HINT'] = $this->crmSettings['CATALOG_PRICE_EDIT_ARTICLE_HINT'];

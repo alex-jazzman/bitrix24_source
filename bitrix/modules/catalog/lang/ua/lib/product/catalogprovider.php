@@ -8,3 +8,4 @@ $MESS["DDCT_DEDUCTION_SHIPMENT_QUANTITY_NOT_ENOUGH"] = "Кількість ві�
 $MESS["DDCT_DEDUCTION_STORE_EMPTY_ERROR"] = "Відвантаження товару #PRODUCT_NAME# (##PRODUCT_ID#) неможливе – він відсутній на складах";
 $MESS["DDCT_DEDUCTION_STORE_ERROR"] = "Не вказані склади для відвантаження товару #PRODUCT_NAME# (##PRODUCT_ID#)";
 $MESS["SALE_PROVIDER_PRODUCT_NOT_AVAILABLE"] = "Товар #PRODUCT_NAME# (##PRODUCT_ID#) недоступний.";
+$MESS["SALE_PROVIDER_PRODUCT_SERVICE_NOT_AVAILABLE"] = "Послуга #PRODUCT_NAME# (##PRODUCT_ID#) недоступна.";

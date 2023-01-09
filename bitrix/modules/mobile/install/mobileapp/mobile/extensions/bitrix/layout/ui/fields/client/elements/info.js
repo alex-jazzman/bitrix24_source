@@ -6,34 +6,93 @@ jn.define('layout/ui/fields/client/elements/info', (require, exports, module) =>
 	const { AddressView, AddressViewType } = require('layout/ui/address');
 
 	/**
-	 * @function ClientItemInfo
+	 * @class ClientItemInfo
 	 */
-	function ClientItemInfo(props)
+	class ClientItemInfo extends LayoutComponent
 	{
-		const { subtitle, phone, email, addresses = [] } = props;
-		const emailValue = email && email.value;
-		const phoneValue = phone && phone.value;
-		const connectionInfo = [phoneValue, emailValue].filter(Boolean).join(', ');
-		return View(
-			{
-				style: {
-					flexShrink: 2,
+		render()
+		{
+			const { addresses = [], subtitle } = this.props;
+
+			return View(
+				{
+					style: {
+						flexShrink: 2,
+					},
 				},
-			},
-			Boolean(subtitle) && Text({
+				Boolean(subtitle) && Text({
+					style: style.text,
+					text: subtitle,
+				}),
+				this.renderConnections(),
+				...addresses.map((address) => AddressView({
+					address,
+					clickable: true,
+					viewType: AddressViewType.BLENDING,
+				})),
+			);
+		}
+
+		renderConnections()
+		{
+			const { phone, email } = this.props;
+
+			const phones = this.getValue(phone);
+			const emails = this.getValue(email);
+
+			return View(
+				{
+					style: {
+						flexDirection: 'column',
+					},
+				},
+				this.renderText(phones),
+				this.renderText(emails),
+			);
+
+		}
+
+		renderText(value)
+		{
+			const text = this.arrayToString(value);
+
+			return Boolean(text) && Text({
+				text,
 				style: style.text,
-				text: subtitle,
-			}),
-			Boolean(connectionInfo) && Text({
-				style: style.text,
-				text: connectionInfo,
-			}),
-			...addresses.map((address) => AddressView({
-				address,
-				clickable: true,
-				viewType: AddressViewType.BLENDING
-			})),
-		);
+				numberOfLines: 1,
+				ellipsize: 'end',
+			});
+		}
+
+		arrayToString(array)
+		{
+			if (!Array.isArray(array))
+			{
+				return array;
+			}
+
+			return array.filter(Boolean).join(', ');
+		}
+
+		getValue(value)
+		{
+			if (Array.isArray(value))
+			{
+				return value.map(this.getText);
+			}
+
+			return this.getText(value);
+		}
+
+		getText(value)
+		{
+			if (!value)
+			{
+				return '';
+			}
+
+			return typeof value === 'string' ? value : value.value;
+		}
 	}
 
 	const style = {

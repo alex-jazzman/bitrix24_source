@@ -69,7 +69,7 @@ $arMenu = [
 ];
 
 if (
-	\Bitrix\Main\Config\Option::get('intranet', 'left_menu_crm_store_menu', 'N') == 'Y'
+	\Bitrix\Main\Config\Option::get('intranet', 'left_menu_crm_store_menu', 'Y') === 'Y'
 	&& Loader::includeModule('catalog')
 )
 {

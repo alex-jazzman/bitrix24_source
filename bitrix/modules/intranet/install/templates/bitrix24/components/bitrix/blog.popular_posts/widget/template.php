@@ -1,4 +1,7 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?
+use Bitrix\Main\Web\Uri;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/sidebar.css");
 
@@ -21,7 +24,7 @@ $this->SetViewTarget("sidebar", 250);
 	<a href="<?=$arPost["urlToPost"]?>" class="sidebar-widget-item --row <?if(++$i == count($arResult)):?> widget-last-item<?endif?>">
 		<span class="user-avatar user-default-avatar"
 			<?if (isset($arPost["AVATAR_file"]["src"])):?>
-				style="background:url('<?=$arPost["AVATAR_file"]["src"]?>') no-repeat center; background-size: cover;"
+				style="background:url('<?= Uri::urnEncode($arPost["AVATAR_file"]["src"])?>') no-repeat center; background-size: cover;"
 			<?endif?>>
 		</span>
 		<span class="sidebar-user-info">

@@ -60,6 +60,8 @@ class GetTabsAction extends Action
 			$categories = ($factory->isCategoriesSupported() ? $factory->getCategories() : []);
 			$permissions = $this->getPermissions($userPermissions, $entityTypeId, $categoryId);
 
+			$filterOptions = $this->getFilterOptions($factory, $categoryId);
+
 			$result[] = [
 				'id' => $entityTypeId,
 				'typeName' => $entityTypeName,
@@ -81,7 +83,8 @@ class GetTabsAction extends Action
 					'currentCategoryId' => $categoryId,
 					'categoriesCount' => count($categories),
 					'counters' => $this->getCounters($factory, $categoryId),
-					'presetId' => $this->getCurrentFilterPresetId($factory, $categoryId),
+					'presetId' => $this->getCurrentFilterPresetId($filterOptions),
+					'defaultFilterId' => $this->getDefaultFilterId($filterOptions),
 					'sortType' => $this->getSortType($entityTypeName),
 					'smartActivitySettings' => $this->getSmartActivitySettings($factory, $permissions),
 				],
@@ -189,7 +192,21 @@ class GetTabsAction extends Action
 		return Entity::getInstance($factory->getEntityName())->getCounters($userId, $categoryId);
 	}
 
-	private function getCurrentFilterPresetId(Factory $factory, ?int $categoryId = null): string
+	private function getCurrentFilterPresetId(Options $options): string
+	{
+		return $options->getCurrentFilterPresetId() ?? $options->getCurrentFilterId();
+	}
+
+	/**
+	 * @param Options $options
+	 * @return mixed
+	 */
+	private function getDefaultFilterId(Options $options)
+	{
+		return $options->getDefaultFilterId();
+	}
+
+	private function getFilterOptions(Factory $factory, ?int $categoryId = null): Options
 	{
 		if ($factory->isStagesSupported())
 		{
@@ -215,7 +232,7 @@ class GetTabsAction extends Action
 			$options = (new Options($gridId, $defaultPresets));
 		}
 
-		return $options->getCurrentFilterPresetId() ?? $options->getCurrentFilterId();
+		return $options;
 	}
 
 	private function getPermissions(UserPermissions $userPermissions, int $entityTypeId, ?int $categoryId): array

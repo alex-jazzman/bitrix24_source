@@ -52,6 +52,8 @@ jn.define('crm/product-grid/components/sku-selector/elements/sku-tree-property-v
 					height: 20,
 					borderRadius: 2,
 					marginRight: 6,
+					borderWidth: 1,
+					borderColor: '#eaeaea',
 				},
 				resizeMode: 'cover',
 				uri: encodeURI(src),

@@ -91,13 +91,9 @@ this.BX.Landing.Ui.Panel.Formsettingspanel = this.BX.Landing.Ui.Panel.Formsettin
 	  return StageField;
 	}(landing_ui_field_basefield.BaseField);
 
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
 	var _schemeManager = /*#__PURE__*/new WeakMap();
 
@@ -110,7 +106,7 @@ this.BX.Landing.Ui.Panel.Formsettingspanel = this.BX.Landing.Ui.Panel.Formsettin
 	    babelHelpers.classCallCheck(this, CrmContent);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CrmContent).call(this, options));
 
-	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _schemeManager, {
+	    _schemeManager.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
@@ -540,8 +536,9 @@ this.BX.Landing.Ui.Panel.Formsettingspanel = this.BX.Landing.Ui.Panel.Formsettin
 
 	      if (main_core.Type.isPlainObject(scheme) && (String(item.id) === 'smart' || scheme.dynamic === true) && this.isDynamicAvailable()) {
 	        expertSettingsForm.addField(this.getDynamicHeader(scheme.name));
+	        var dynamicScheme = this.getDynamicSchemeById(scheme.id);
 
-	        if (scheme.categories) {
+	        if (dynamicScheme && dynamicScheme.categories) {
 	          expertSettingsForm.addField(this.getDynamicCategoriesField(scheme.id));
 	        }
 
@@ -839,8 +836,9 @@ this.BX.Landing.Ui.Panel.Formsettingspanel = this.BX.Landing.Ui.Panel.Formsettin
 	      }
 
 	      var scheme = this.getSchemeById(reducedValue.scheme);
+	      var dynamicScheme = this.getDynamicSchemeById(reducedValue.scheme);
 
-	      if (main_core.Type.isPlainObject(scheme) && scheme.dynamic && scheme.categories) {
+	      if (main_core.Type.isPlainObject(scheme) && scheme.dynamic && dynamicScheme && dynamicScheme.categories) {
 	        reducedValue.dynamic.category = this.getDynamicCategoriesField(scheme.id).getValue().category;
 	      }
 

@@ -54,9 +54,11 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
       computed: {
         getObjectClass: function getObjectClass() {
           var classes = ['btn', 'btn-checkout-order-status', 'btn-md', 'rounded-pill'];
+
           if (this.wait) {
             classes.push('btn-wait');
           }
+
           return classes;
         }
       }
@@ -71,6 +73,7 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
       methods: {
         hasSkyTree: function hasSkyTree() {
           var _this$item$sku$tree$S;
+
           var tree = (_this$item$sku$tree$S = this.item.sku.tree.SELECTED_VALUES) !== null && _this$item$sku$tree$S !== void 0 ? _this$item$sku$tree$S : {};
           return Object.keys(tree).length > 0;
         },

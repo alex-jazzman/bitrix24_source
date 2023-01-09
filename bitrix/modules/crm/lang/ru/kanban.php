@@ -119,5 +119,5 @@ $MESS['CRM_KANBAN_LESS_THAN_1_MINUTE_AGO'] = 'только что';
 $MESS['CRM_KANBAN_N_MINUTES_AGO'] = '#N# мин';
 $MESS['CRM_KANBAN_N_HOURS_AGO'] = '#N# час';
 $MESS['CRM_KANBAN_JUST_NOW'] = 'только что';
-$MESS['CRM_KANBAN_ITEM_DEBUG_TITLE'] = 'В отладке';
+$MESS['CRM_KANBAN_ITEM_DEBUG_TITLE_MSGVER_1'] = 'В отладке';
 $MESS['CRM_KANBAN_MOVE_ITEM_TO_COLUMN_BLOCKED_2'] = 'Перемещение на эту стадию невозможно';

@@ -1,6 +1,7 @@
 <?php
 $MESS["TASKS_ACTION_RESULT_REQUIRED"] = "Постановник зробив запит на результат роботи.<br> Залиште коментар до завдання та позначте його як звіт.";
 $MESS["TASKS_REST_BUTTON_TITLE_2"] = "Бітрікс24.Маркет";
+$MESS["TASKS_TASK_TAG_ACCESS_DENIED"] = "Недостатньо прав";
 $MESS["TASKS_TEMPLATE_CREATE_FORBIDDEN"] = "Доступ до створення шаблонів заборонений";
 $MESS["TASKS_TT_AUTO_CHANGE_GROUP"] = "Завдання автоматично прив’язане до поточного проєкту";
 $MESS["TASKS_TT_AUTO_CHANGE_ORIGINATOR"] = "Постановник завдання був автоматично замінений на поточного користувача";

@@ -245,7 +245,7 @@ $classAliases = [
 	['Bitrix\Crm\Communication\Type', 'Bitrix\Crm\CommunicationType'],
 ];
 
-if (IsModuleInstalled('sale'))
+if (\Bitrix\Main\Loader::includeModule('sale'))
 {
 	$classAliases[] = ['Bitrix\Crm\Order\Builder\OrderBuilderCrm', 'Bitrix\Crm\Order\OrderBuilderCrm'];
 	$classAliases[] = ['Bitrix\Crm\Order\Builder\OrderBuilderRest', 'Bitrix\Crm\Order\OrderBuilderRest'];

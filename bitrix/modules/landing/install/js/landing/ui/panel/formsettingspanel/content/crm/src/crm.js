@@ -472,7 +472,8 @@ export default class CrmContent extends ContentWrapper
 		)
 		{
 			expertSettingsForm.addField(this.getDynamicHeader(scheme.name));
-			if (scheme.categories)
+			const dynamicScheme = this.getDynamicSchemeById(scheme.id);
+			if (dynamicScheme && dynamicScheme.categories)
 			{
 				expertSettingsForm.addField(this.getDynamicCategoriesField(scheme.id));
 			}
@@ -821,7 +822,8 @@ export default class CrmContent extends ContentWrapper
 		}
 
 		const scheme = this.getSchemeById(reducedValue.scheme);
-		if (Type.isPlainObject(scheme) && scheme.dynamic && scheme.categories)
+		const dynamicScheme = this.getDynamicSchemeById(reducedValue.scheme);
+		if (Type.isPlainObject(scheme) && scheme.dynamic && dynamicScheme && dynamicScheme.categories)
 		{
 			reducedValue.dynamic.category = this.getDynamicCategoriesField(scheme.id).getValue().category;
 		}

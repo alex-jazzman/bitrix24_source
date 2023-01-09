@@ -244,7 +244,7 @@ class Event extends Mapper
 			'NAME'               => $event->getName(),
 			'DATE_FROM'          => (string)$event->getStart(),
 			'DATE_TO'            => (string)$event->getEnd(),
-			'ORIGINAL_DATE_FROM' => (string)$event->getOriginalDateFrom(),
+			'ORIGINAL_DATE_FROM' => $this->prepareOriginalDateFrom($event),
 			'DESCRIPTION'        => $event->getDescription(),
 			'ACCESSIBILITY'      => $event->getAccessibility(),
 			'PRIVATE_EVENT'      => $event->isPrivate(), // TODO: add converter
@@ -482,5 +482,25 @@ class Event extends Mapper
 	protected function getEntityClass(): string
 	{
 		return Core\Event\Event::class;
+	}
+
+	/**
+	 * @param Core\Event\Event $event
+	 *
+	 * @return string|null
+	 */
+	private function prepareOriginalDateFrom(Core\Event\Event $event): ?string
+	{
+		$result = null;
+		if ($event->getOriginalDateFrom())
+		{
+			if ($event->getStartTimeZone())
+			{
+				$event->getOriginalDateFrom()->setTimezone($event->getStartTimeZone()->getTimeZone());
+			}
+			$result = (string)$event->getOriginalDateFrom();
+		}
+
+		return $result;
 	}
 }

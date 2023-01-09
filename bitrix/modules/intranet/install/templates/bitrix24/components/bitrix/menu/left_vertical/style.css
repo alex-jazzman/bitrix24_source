@@ -292,7 +292,8 @@
 .menu-collapsed-mode .menu-default-more-btn,
 .menu-collapsed-mode .menu-settings-btn-text,
 .menu-collapsed-mode .menu-invite-employees-text,
-.menu-collapsed-mode .menu-sitemap-btn-text {
+.menu-collapsed-mode .menu-sitemap-btn-text,
+.menu-collapsed-mode .menu-help-btn-text {
 	display: none;
 }
 
@@ -981,6 +982,10 @@
 	opacity: initial;
 }
 
+.menu-item-separator.--pointer-events {
+	pointer-events: none;
+}
+
 .menu-items-edit-mode .menu-item-separator {
 	cursor: default;
 }
@@ -1147,7 +1152,9 @@
 .menu-sitemap-btn,
 .menu-collapsed-mode.menu-sliding-mode .menu-sitemap-btn,
 .menu-invite-employees,
-.menu-collapsed-mode.menu-sliding-mode .menu-invite-employees {
+.menu-collapsed-mode.menu-sliding-mode .menu-invite-employees,
+.menu-help-btn,
+.menu-collapsed-mode.menu-sliding-mode .menu-help-btn {
 	position: relative;
 	/*margin: 5px 0 0 0;*/
 	padding: 6px 0 5px 34px;
@@ -1159,6 +1166,7 @@
 
 .menu-collapsed-mode.menu-sliding-mode .menu-settings-btn,
 .menu-collapsed-mode.menu-sliding-mode .menu-sitemap-btn,
+.menu-collapsed-mode.menu-sliding-mode .menu-help-btn,
 .menu-collapsed-mode.menu-sliding-mode .menu-invite-employees {
 	padding: 6px 0 5px 26px;
 }
@@ -1168,13 +1176,15 @@
 }
 
 .menu-extra-btn-box {
-	margin: 15px 0 0 0;
+	margin: 10px 0 0 0;
 }
 
 .menu-settings-btn-text,
 .menu-collapsed-mode.menu-sliding-mode .menu-settings-btn-text,
 .menu-sitemap-btn-text,
+.menu-help-btn-text,
 .menu-collapsed-mode.menu-sliding-mode .menu-sitemap-btn-text,
+.menu-collapsed-mode.menu-sliding-mode .menu-help-btn-text,
 .menu-invite-employees-text,
 .menu-collapsed-mode.menu-sliding-mode .menu-invite-employees-text {
 	display: inline-block;
@@ -1192,12 +1202,14 @@
 
 .menu-settings-btn-text,
 .menu-sitemap-btn-text,
-.menu-invite-employees-text {
+.menu-invite-employees-text,
+.menu-help-btn-text {
 	padding-left: 0;
 }
 
 .menu-animation-opening-mode .menu-settings-btn-text,
-.menu-animation-opening-mode .menu-sitemap-btn-text {
+.menu-animation-opening-mode .menu-sitemap-btn-text,
+.menu-animation-opening-mode .menu-help-btn-text {
 	display: inline-block;
 	margin-left: 31px;
 }
@@ -1218,7 +1230,8 @@
 
 .menu-settings-btn-text:after,
 .menu-sitemap-btn-text:after,
-.menu-invite-employees-text:after {
+.menu-invite-employees-text:after,
+.menu-help-btn-text:after {
 	content: '';
 	position: absolute;
 	top: 4px;
@@ -1239,9 +1252,15 @@
 
 .menu-collapsed-mode.menu-sliding-mode .menu-sitemap-btn-text:after,
 .menu-collapsed-mode.menu-sliding-mode .menu-settings-btn-text:after,
+.menu-collapsed-mode.menu-sliding-mode .menu-help-btn-text:after,
 .menu-collapsed-mode.menu-sliding-mode .menu-invite-employees-text:after {
 	left: 1px;
 	display: inline-block;
+}
+
+.menu-collapsed-mode.menu-sliding-mode .menu-help-btn-text:after {
+	top: 3px;
+	left: 0;
 }
 
 .menu-collapsed-mode.menu-sliding-mode .menu-invite-employees-text:after {
@@ -1255,16 +1274,19 @@
 
 .menu-collapsed-mode .menu-settings-btn-text:after,
 .menu-collapsed-mode .menu-sitemap-btn-text:after,
+.menu-collapsed-mode .menu-help-btn-text:after,
 .menu-collapsed-mode .menu-invite-employees-text:after,
 
 .menu-collapsed-mode.menu-sliding-mode .menu-settings-btn-text:after,
 .menu-collapsed-mode.menu-sliding-mode .menu-sitemap-btn-text:after,
+.menu-collapsed-mode.menu-sliding-mode .menu-help-btn-text:after,
 .menu-collapsed-mode.menu-sliding-mode .menu-invite-employees-text:after {
 	display: inline-block;
 }
 
 .menu-animation-opening-mode .menu-settings-btn-text:after,
 .menu-animation-opening-mode .menu-sitemap-btn-text:after,
+.menu-animation-opening-mode .menu-help-btn-text:after,
 .menu-animation-opening-mode .menu-invite-employees-text:after {
 	display: none;
 }
@@ -1924,7 +1946,8 @@
 .menu-settings-icon-box,
 .menu-invite-icon-box,
 .menu-item-icon-box,
-.menu-sitemap-icon-box {
+.menu-sitemap-icon-box,
+.menu-help-icon-box {
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -1948,7 +1971,9 @@
 .menu-collapsed-mode.menu-sliding-mode .menu-invite-icon-box,
 .menu-collapsed-more-btn,
 .menu-sitemap-icon-box,
-.menu-collapsed-mode.menu-sliding-mode .menu-sitemap-icon-box {
+.menu-collapsed-mode.menu-sliding-mode .menu-sitemap-icon-box,
+.menu-help-icon-box,
+.menu-collapsed-mode.menu-sliding-mode .menu-help-icon-box {
 	position: absolute;
 	/*top: 0;*/
 	transform: translateX(-100px);
@@ -1959,7 +1984,8 @@
 .menu-collapsed-mode .menu-settings-icon-box,
 .menu-collapsed-mode .menu-invite-icon-box,
 .menu-collapsed-mode .menu-collapsed-more-btn,
-.menu-collapsed-mode .menu-sitemap-icon-box {
+.menu-collapsed-mode .menu-sitemap-icon-box,
+.menu-collapsed-mode .menu-help-icon-box {
 	position: static;
 	transform: translateX(0);
 	opacity: 1;
@@ -1970,7 +1996,8 @@
 .menu-settings-icon,
 .menu-invite-icon,
 .menu-item-icon,
-.menu-sitemap-icon {
+.menu-sitemap-icon,
+.menu-help-icon {
 	position: relative;
 	display: inline-block;
 	min-width: 20px;
@@ -2021,6 +2048,7 @@
 
 .menu-collapsed-mode .menu-settings-btn,
 .menu-collapsed-mode .menu-sitemap-btn,
+.menu-collapsed-mode .menu-help-btn,
 .menu-collapsed-mode .menu-invite-employees {
 	padding-left: 21px;
 	width: 66px;
@@ -2029,6 +2057,7 @@
 
 .menu-animation-closing-mode .menu-settings-btn,
 .menu-animation-closing-mode .menu-sitemap-btn,
+.menu-animation-closing-mode .menu-help-btn,
 .menu-animation-closing-mode .menu-invite-employees {
 	padding-left: 21px;
 }
@@ -2042,10 +2071,18 @@
 }
 
 .menu-settings-icon,
+.menu-help-icon,
 .menu-sitemap-icon {
 	min-width: 12px;
 	width: 12px;
 	height: 12px;
+}
+
+.menu-help-icon {
+	width: 14px;
+	height: 14px;
+	background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7.955%2015.491a7.493%207.493%200%201%201%200-14.986%207.493%207.493%200%200%201%200%2014.986zM6.819%209.598h1.669v-.375c0-.25.053-.452.16-.606.107-.154.362-.38.765-.675.588-.416.987-.791%201.197-1.124.21-.334.315-.73.315-1.188%200-.687-.255-1.237-.765-1.649-.51-.412-1.198-.618-2.063-.618-1.05%200-2.042.26-2.978.78l.686%201.369c.806-.408%201.524-.613%202.154-.613.36%200%20.642.071.844.213.201.142.302.348.302.618%200%20.242-.07.46-.211.656-.14.196-.431.45-.872.763-.458.333-.773.647-.945.943a2.037%202.037%200%200%200-.258%201.043v.463zm-.201%202.137c0%20.337.096.598.29.784.192.185.465.278.818.278.344%200%20.613-.095.806-.285.193-.19.29-.448.29-.777%200-.342-.096-.604-.287-.788-.191-.183-.46-.275-.81-.275-.36%200-.635.09-.824.27-.189.178-.283.443-.283.793z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E");
+	background-size: contain;
 }
 
 .menu-invite-icon {
@@ -2056,7 +2093,8 @@
 
 .menu-settings-icon-box,
 .menu-sitemap-icon-box,
-.menu-invite-icon-box {
+.menu-invite-icon-box,
+.menu-help-icon-box {
 	width: 66px;
 	height: 20px;
 	cursor: pointer;
@@ -2064,41 +2102,48 @@
 
 .menu-animation-closing-mode .menu-settings-icon-box,
 .menu-animation-closing-mode .menu-sitemap-icon-box,
-.menu-animation-closing-mode .menu-invite-icon-box {
+.menu-animation-closing-mode .menu-invite-icon-box,
+.menu-animation-closing-mode .menu-help-icon-box {
 	margin-left: -21px;
 }
 
 .menu-animation-opening-mode .menu-settings-icon-box,
 .menu-animation-opening-mode .menu-sitemap-icon-box,
-.menu-animation-opening-mode .menu-invite-icon-box {
+.menu-animation-opening-mode .menu-invite-icon-box,
+.menu-animation-opening-mode .menu-help-icon-box {
 	position: absolute;
 	margin-left: 0;
 }
 
 .menu-collapsed-mode .menu-settings-icon-box,
 .menu-collapsed-mode .menu-sitemap-icon-box,
-.menu-collapsed-mode .menu-invite-icon-box {
+.menu-collapsed-mode .menu-invite-icon-box,
+.menu-collapsed-mode .menu-help-icon-box {
 	margin-left: -21px;
 }
 
 .menu-animation-mode .menu-settings-icon-box,
 .menu-animation-mode .menu-sitemap-icon-box,
-.menu-animation-mode .menu-invite-icon-box {
+.menu-animation-mode .menu-invite-icon-box,
+.menu-animation-mode .menu-help-icon-box {
 	top: 6px;
 }
 
 .menu-settings-icon,
 .menu-invite-icon,
 .menu-sitemap-icon,
+.menu-help-icon,
 .menu-settings-btn-text:after,
 .menu-sitemap-btn-text:after,
+.menu-help-btn-text:after,
 .menu-invite-employees-text:after {
 	opacity: .6;
 }
 
 .menu-settings-btn:hover .menu-settings-icon,
 .menu-invite-employees:hover .menu-invite-icon,
-.menu-sitemap-btn:hover .menu-sitemap-icon {
+.menu-sitemap-btn:hover .menu-sitemap-icon,
+.menu-help-btn:hover .menu-help-icon {
 	opacity: 1;
 }
 
@@ -2465,6 +2510,11 @@
 .bitrix24-default-theme .menu-sitemap-icon,
 .bitrix24-dark-theme .menu-sitemap-icon {
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20viewBox%3D%220%200%2012%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7.897%203.627l1.369%202.371a2.122%202.122%200%200%201%202.653%202.05%202.119%202.119%200%201%201-3.475-1.627l-1.33-2.305a2.115%202.115%200%200%201-1.507-.039L4.292%206.354a2.119%202.119%200%201%201-.846-.381l1.401-2.427a2.119%202.119%200%201%201%203.05.08z%22%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
+}
+
+.bitrix24-default-theme .menu-help-icon,
+.bitrix24-dark-theme .menu-help-icon {
+	background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7.955%2015.491a7.493%207.493%200%201%201%200-14.986%207.493%207.493%200%200%201%200%2014.986zM6.819%209.598h1.669v-.375c0-.25.053-.452.16-.606.107-.154.362-.38.765-.675.588-.416.987-.791%201.197-1.124.21-.334.315-.73.315-1.188%200-.687-.255-1.237-.765-1.649-.51-.412-1.198-.618-2.063-.618-1.05%200-2.042.26-2.978.78l.686%201.369c.806-.408%201.524-.613%202.154-.613.36%200%20.642.071.844.213.201.142.302.348.302.618%200%20.242-.07.46-.211.656-.14.196-.431.45-.872.763-.458.333-.773.647-.945.943a2.037%202.037%200%200%200-.258%201.043v.463zm-.201%202.137c0%20.337.096.598.29.784.192.185.465.278.818.278.344%200%20.613-.095.806-.285.193-.19.29-.448.29-.777%200-.342-.096-.604-.287-.788-.191-.183-.46-.275-.81-.275-.36%200-.635.09-.824.27-.189.178-.283.443-.283.793z%22%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E");
 }
 
 .bitrix24-default-theme .menu-settings-icon,

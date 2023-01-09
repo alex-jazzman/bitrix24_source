@@ -1,7 +1,7 @@
 import {EventEmitter, BaseEvent} from 'main.core.events';
 import {Type, Cache, Tag, Dom, Reflection, Loc} from 'main.core';
 import {Uploader as FileUploader, UploaderFile} from 'ui.uploader.core';
-import {MessageBox} from 'ui.dialogs.messagebox';
+import 'ui.dialogs.messagebox';
 import {Layout} from 'ui.sidepanel.layout';
 import {Button} from 'ui.buttons';
 import Header from './header/header';
@@ -103,7 +103,11 @@ export class Uploader extends EventEmitter
 					},
 					'File:onError': function(event: BaseEvent) {
 						const {error} = event.getData();
-						MessageBox.alert(error.getMessage());
+						const TopMessageBox = Reflection.getClass('top.BX.UI.Dialogs.MessageBox');
+						if (!Type.isNil(TopMessageBox))
+						{
+							TopMessageBox.alert(error.getMessage());
+						}
 					},
 				},
 			});

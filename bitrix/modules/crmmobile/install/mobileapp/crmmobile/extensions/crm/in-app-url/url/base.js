@@ -76,6 +76,11 @@ jn.define('crm/in-app-url/url/base', (require, exports, module) => {
 			return this.createUrl();
 		}
 
+		setEntityTypeName(entityTypeName)
+		{
+			this.entityTypeName = entityTypeName.toLowerCase();
+		}
+
 		getTypePage(type)
 		{
 			return this.isDetailPage(type) ? DETAIL : LIST;
@@ -94,7 +99,7 @@ jn.define('crm/in-app-url/url/base', (require, exports, module) => {
 
 			if (!url)
 			{
-				this.entityTypeName = entityTypeName;
+				this.setEntityTypeName(entityTypeName);
 				this.typePage = this.getTypePage();
 
 				return;
@@ -103,7 +108,7 @@ jn.define('crm/in-app-url/url/base', (require, exports, module) => {
 			const regExp = /\/crm\/(deal|lead|company|contact)\/(show|details)?/i;
 			const type = url.match(regExp);
 
-			this.entityTypeName = type[1] || entityTypeName;
+			this.setEntityTypeName(type[1] || entityTypeName);
 			this.typePage = this.getTypePage(type[2]);
 		}
 

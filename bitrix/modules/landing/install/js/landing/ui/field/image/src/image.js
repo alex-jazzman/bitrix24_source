@@ -190,6 +190,7 @@ export class Image extends TextField
 			additionalParams: {context: 'imageeditor'},
 			dimensions: this.dimensions,
 			sizes: ['1x', '2x'],
+			allowSvg: Main.getInstance().options.allow_svg === true,
 		});
 
 		this.adjustEditButtonState();
@@ -861,9 +862,14 @@ export class Image extends TextField
 			&& file.type.includes('png')
 		);
 
+		const isSvg = (
+			Type.isStringFilled(file.type)
+			&& file.type.includes('svg')
+		);
+
 		const checkSize = new Promise(function (resolve)
 		{
-			let sizes = isPng ? ['2x'] : ['1x', '2x'];
+			let sizes = (isPng || isSvg) ? ['2x'] : ['1x', '2x'];
 
 			if (this.create2xByDefault === false)
 			{
@@ -882,7 +888,7 @@ export class Image extends TextField
 						) === false
 					)
 					{
-						sizes = isPng ? ['2x'] : ['1x'];
+						sizes = (isPng || isSvg) ? ['2x'] : ['1x'];
 					}
 
 					resolve(sizes);
@@ -908,7 +914,7 @@ export class Image extends TextField
 						return allowedSizes;
 					}
 
-					return isPng ? ['2x'] : ['1x', '2x'];
+					return (isPng || isSvg) ? ['2x'] : ['1x', '2x'];
 				}.bind(this))();
 
 				return this.uploader

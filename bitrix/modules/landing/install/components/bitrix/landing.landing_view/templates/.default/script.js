@@ -661,6 +661,10 @@
 								if (this.storeEnabled)
 								{
 									BX.Landing.Backend.getInstance()
+										.action('Landing::publication', {
+											lid: this.id
+										});
+									BX.Landing.Backend.getInstance()
 										.action('Site::publication', {
 											id: this.siteId
 										});

@@ -7,6 +7,7 @@ import {
 	Component as ComponentConst,
 	Consent as ConsentConst,
 	Loader as LoaderConst,
+	Property as PropertyConst,
 	EventType
 } from 'sale.checkout.const';
 
@@ -82,6 +83,8 @@ export class Application
 
 		EventEmitter.subscribe(EventType.consent.refused, () => this.handlerConsentRefused());
 		EventEmitter.subscribe(EventType.consent.accepted, () => this.handlerConsentAccepted());
+
+		EventEmitter.subscribe(EventType.property.validate, (e) => this.handlerValidateProperty(e));
 
 		EventEmitter.subscribe(EventType.element.buttonCheckout, Runtime.debounce(() => this.handlerCheckout(), 1000, this));
 		EventEmitter.subscribe(EventType.element.buttonShipping, Runtime.debounce(() => this.handlerShipping(), 1000, this));
@@ -258,6 +261,79 @@ export class Application
 		)
 			.then((result) => this.executeRestAnswer(cmd, result))
 			.catch((result) => this.executeRestAnswer(cmd, {error: result.errors}));
+	}
+
+	/**
+	 * @private
+	 */
+	handlerValidateProperty(event)
+	{
+		const property = {};
+		property.index = event.getData().index;
+		property.fields = this.getPropertyItem(property.index);
+		this.changeValidatedProperty(property);
+	}
+
+	/**
+	 * @private
+	 */
+	getPropertyItem(index)
+	{
+		return this.store.getters['property/get'](index);
+	}
+
+	/**
+	 * @private
+	 */
+	changeValidatedProperty(property)
+	{
+		const fields = property.fields;
+		let errors = this.store.getters['property/getErrors'];
+		if (this.propertyDataValidate(fields))
+		{
+			errors = this.deletePropertyError(fields, errors);
+		}
+		else
+		{
+			errors = this.addPropertyError(fields, errors);
+		}
+		this.provider.setModelPropertyError(errors);
+	}
+
+	/**
+	 * @private
+	 */
+	propertyDataValidate(fields)
+	{
+		return !(fields.required === 'Y' && fields.value === '');
+	}
+
+	/**
+	 * @private
+	 */
+	deletePropertyError(fields, errors)
+	{
+		for (const errorIndex in errors)
+		{
+			if (errors[errorIndex]['propertyId'] === fields.id)
+			{
+				errors.splice(errorIndex, 1);
+			}
+		}
+		return errors;
+	}
+
+	/**
+	 * @private
+	 */
+	addPropertyError(fields, errors)
+	{
+		const errorIds = errors.map(item => item.propertyId);
+		if (!errorIds.includes(fields.id))
+		{
+			errors.push({propertyId: fields.id});
+		}
+		return errors;
 	}
 
 	/**

@@ -357,21 +357,18 @@ class Call extends Activity
 		}
 
 		$records = $this->fetchAudioRecordList();
-		if (count($records) === 1)
-		{
-			$items['downloadFile'] = MenuItemFactory::createDownloadFileMenuItem()
-				->setAction((new Redirect(new Uri($records[0]['VIEW_URL']))))
-			;
-			$items['downloadFile']->setScopeWeb();
-		}
-		else if (count($records) > 1)
+		$isSingleRecord = (count($records) === 1);
+		if (!empty($records))
 		{
 			foreach ($records as $index => $record)
 			{
-				$items["downloadFile_{$index}"] = MenuItemFactory::createDownloadFileMenuItem($record['NAME'])
-					->setAction((new Redirect(new Uri($record['VIEW_URL']))))
+				$menuItemName = $isSingleRecord ? null : $record['NAME'];
+				$items["downloadFile_{$index}"] = MenuItemFactory::createDownloadFileMenuItem($menuItemName)
+					->setAction(
+						(new JsEvent('Call:DownloadRecord'))
+							->addActionParamString('url', $record['VIEW_URL'])
+					)
 				;
-				$items["downloadFile_{$index}"]->setScopeWeb();
 			}
 		}
 

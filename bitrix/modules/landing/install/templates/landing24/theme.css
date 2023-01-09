@@ -33070,25 +33070,6 @@ body {
   overflow-x: hidden;
 }
 
-/*new animation*/
-@keyframes zoomToIn {
-  from {
-    opacity: 0;
-    transform: scale3d(1.7, 1.7, 1.7);
-    animation-timing-function: ease-out;
-  }
-  30% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-.zoomToIn {
-  animation-name: zoomToIn;
-}
-
 /* Styles for DYNAMIC blocks, from livefeed */
 div.blog-post-code table.blogcode,
 div.blog-post-quote table.blogquote {

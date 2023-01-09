@@ -245,6 +245,7 @@ jn.define('layout/ui/kanban/counter', (require, exports, module) => {
 			marginTop: 3,
 			fontSize: 9.5,
 			color: '#A8ADB4',
+			textAlign: 'center',
 		},
 	};
 

@@ -763,7 +763,7 @@ class Provider implements IProvider
 	/**
 	 * @inheritDoc
 	 */
-	public static function onAfterDocumentSaveFailure(int $documentId, Result $result, array $options = []): void
+	public static function onAfterDocumentSaveFailure(?int $documentId, Result $result, array $options = []): void
 	{
 		self::deleteCreatedEntities($result);
 	}

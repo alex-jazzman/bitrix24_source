@@ -491,7 +491,8 @@ if ($action === 'GET_ROW_COUNT')
 				$invoiceFields = array_merge($invoiceFields, array_keys($invoiceUserFields));
 			}
 			$invoiceFields = array_merge($invoiceFields, $recurringFields);
-
+			$filterQuery = [];
+			$filterSubquery = [];
 			foreach ($filter as $fieldName => $value)
 			{
 				$key = str_replace($recurFieldPrefix, '', $fieldName);

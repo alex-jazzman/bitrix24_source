@@ -24,6 +24,8 @@ type TimelineItemProps = {
 	timestamp?: number,
 	type?: string,
 	sort?: number[],
+	languageId?: string,
+	canBeReloaded?: boolean,
 	showMarketBanner: boolean,
 } | TimelineItemCompatibleProps;
 

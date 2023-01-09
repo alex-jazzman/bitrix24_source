@@ -81,7 +81,7 @@ class Activity extends \Bitrix\Crm\Controller\Base
 			return;
 		}
 
-		\CCrmActivity::PostponeToDate($activity, $deadline->toUserTime(), true);
+		\CCrmActivity::PostponeToDate($activity, $deadline, true);
 	}
 
 	public function deleteAction(int $activityId, int $ownerTypeId, int $ownerId): void

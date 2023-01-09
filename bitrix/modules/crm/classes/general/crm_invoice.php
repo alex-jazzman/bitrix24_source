@@ -1605,7 +1605,7 @@ class CAllCrmInvoice
 				$deliveryId, $paySystemId, $arOptions, $arErrors, $arWarnings
 			);
 
-			if (count($arOrder) <= 0)
+			if (!is_array($arOrder) || empty($arOrder))
 			{
 				if (is_array($arErrors) && isset($arErrors[0]['TEXT']))
 				{

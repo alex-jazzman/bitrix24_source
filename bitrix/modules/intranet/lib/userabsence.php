@@ -155,6 +155,13 @@ class UserAbsence
 				$vacationTypes[(int)$enum_fields['ID']] = $enum_fields['EXTERNAL_ID'];
 			}
 
+			$timeZoneEnabled = \CTimeZone::Enabled();
+
+			if ($timeZoneEnabled)
+			{
+				\CTimeZone::Disable();
+			}
+
 			$absenceData = \CIntranetUtils::GetAbsenceData(
 				array(
 					'PER_USER' => true,
@@ -163,6 +170,11 @@ class UserAbsence
 				),
 				BX_INTRANET_ABSENCE_HR
 			);
+
+			if ($timeZoneEnabled)
+			{
+				\CTimeZone::Enable();
+			}
 
 			$result = Array();
 			foreach ($absenceData as $userId => $record)
@@ -173,7 +185,6 @@ class UserAbsence
 
 					$dateFrom = new \Bitrix\Main\Type\DateTime($data['DATE_FROM']);
 					$dateTo = new \Bitrix\Main\Type\DateTime($data['DATE_TO']);
-
 					$result[$userId][$index] = Array(
 						'ID' => $data['ID'],
 						'USER_ID' => $data['USER_ID'],
@@ -218,13 +229,6 @@ class UserAbsence
 					continue;
 				}
 
-				$startDay = '00:00:00';
-
-				if (date('H:i:s', $vacation['DATE_TO_TS']) === $startDay)
-				{
-					$vacation['DATE_TO_TS'] += 86400;
-				}
-
 				if ($nowTs >= $vacation['DATE_FROM_TS'] && $nowTs < $vacation['DATE_TO_TS'])
 				{
 					if ($returnToDate)
@@ -264,15 +268,20 @@ class UserAbsence
 					continue;
 				}
 
-				$startDay = '00:00:00';
+				$isCounterpart = $vacation['DATE_FROM_TS'] === $vacation['DATE_TO_TS'];
 
-				if (date('H:i:s', $vacation['DATE_TO_TS']) === $startDay)
+				if ($isCounterpart)
 				{
 					$vacation['DATE_TO_TS'] += 86400;
 				}
 
 				if ($nowTs >= $vacation['DATE_FROM_TS'] && $nowTs < $vacation['DATE_TO_TS'])
 				{
+					if ($isCounterpart)
+					{
+						$vacation['DATE_TO_TS'] -= 86399;
+					}
+
 					if ($returnToDate)
 					{
 						return $vacation;

@@ -26,9 +26,10 @@ class Repository
 	/**
 	 * @return Result
 	 */
-	public function getScheduledItems(): Result
+	public function getScheduledItems(?Query $queryParams = null): Result
 	{
-		$filter = [
+		$filter = $queryParams ? $queryParams->getFilter() : [];
+		$filter = array_merge($filter, [
 			'CHECK_PERMISSIONS' => 'N',
 			'STATUS' => \CCrmActivityStatus::Waiting,
 			'BINDINGS' => [
@@ -37,7 +38,7 @@ class Repository
 					'OWNER_ID' => $this->context->getEntityId(),
 				],
 			],
-		];
+		]);
 		if (!$this->context->canReadEntity())
 		{
 			return new Result();
@@ -244,6 +245,18 @@ class Repository
 				['join_type' => 'INNER']
 			)
 		);
+
+		if (!empty($filter['ID']))
+		{
+			if (is_array($filter['ID']))
+			{
+				$query->whereIn('ID', $filter['ID']);
+			}
+			else
+			{
+				$query->where('=ID', $filter['ID']);
+			}
+		}
 
 		if (isset($filter['CREATED_to']))
 		{

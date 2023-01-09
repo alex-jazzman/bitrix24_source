@@ -822,7 +822,11 @@ class CAllIBlockElement
 			case "TIMESTAMP_X":
 			case "DATE_CREATE":
 			case "SHOW_COUNTER_START":
-				$arSqlSearch[] = CIBlock::FilterCreateEx("BE.".$key, $val, "date", $bFullJoinTmp, $cOperationType);
+				$sqlSearch = CIBlock::FilterCreateEx("BE.".$key, $val, "date", $bFullJoinTmp, $cOperationType);
+				if($sqlSearch <> '')
+				{
+					$arSqlSearch[] = $sqlSearch;
+				}
 				break;
 			case "EXTERNAL_ID":
 				$arSqlSearch[] = CIBlock::FilterCreateEx("BE.XML_ID", $val, "string", $bFullJoinTmp, $cOperationType);
@@ -955,10 +959,18 @@ class CAllIBlockElement
 					)";
 				break;
 			case "DATE_ACTIVE_FROM":
-				$arSqlSearch[] = CIBlock::FilterCreateEx("BE.ACTIVE_FROM", $val, "date", $bFullJoinTmp, $cOperationType);
+				$sqlSearch = CIBlock::FilterCreateEx("BE.ACTIVE_FROM", $val, "date", $bFullJoinTmp, $cOperationType);
+				if ($sqlSearch <> '')
+				{
+					$arSqlSearch[] = $sqlSearch;
+				}
 				break;
 			case "DATE_ACTIVE_TO":
-				$arSqlSearch[] = CIBlock::FilterCreateEx("BE.ACTIVE_TO", $val, "date", $bFullJoinTmp, $cOperationType);
+				$sqlSearch = CIBlock::FilterCreateEx("BE.ACTIVE_TO", $val, "date", $bFullJoinTmp, $cOperationType);
+				if ($sqlSearch <> '')
+				{
+					$arSqlSearch[] = $sqlSearch;
+				}
 				break;
 			case "IBLOCK_ACTIVE":
 				$arSqlSearch[] = CIBlock::FilterCreateEx("B.ACTIVE", $val, "string_equal", $bFullJoinTmp, $cOperationType);
@@ -974,13 +986,33 @@ class CAllIBlockElement
 				break;
 			case "ACTIVE_FROM":
 				$val = (string)$val;
-				if($val !== '')
-					$arSqlSearch[] = "(BE.ACTIVE_FROM ".($cOperationType=="N"?"<":">=").$DB->CharToDateFunction($DB->ForSql($val), "FULL").($cOperationType=="N"?"":" OR BE.ACTIVE_FROM IS NULL").")";
+				if ($val !== '')
+				{
+					$isCorrect = \CIBlock::isCorrectFullFormatDate($DB->ForSql($val));
+					if ($isCorrect)
+					{
+						$arSqlSearch[] = "(BE.ACTIVE_FROM "
+							. ($cOperationType == "N" ? "<" : ">=")
+							. $DB->CharToDateFunction($DB->ForSql($val), "FULL")
+							. ($cOperationType == "N" ? "" : " OR BE.ACTIVE_FROM IS NULL")
+							. ")";
+					}
+				}
 				break;
 			case "ACTIVE_TO":
 				$val = (string)$val;
-				if($val !== '')
-					$arSqlSearch[] = "(BE.ACTIVE_TO ".($cOperationType=="N"?">":"<=").$DB->CharToDateFunction($DB->ForSql($val), "FULL").($cOperationType=="N"?"":" OR BE.ACTIVE_TO IS NULL").")";
+				if ($val !== '')
+				{
+					$isCorrect = \CIBlock::isCorrectFullFormatDate($DB->ForSql($val));
+					if ($isCorrect)
+					{
+						$arSqlSearch[] = "(BE.ACTIVE_TO "
+							. ($cOperationType == "N" ? ">" : "<=")
+							. $DB->CharToDateFunction($DB->ForSql($val), "FULL")
+							. ($cOperationType == "N" ? "" : " OR BE.ACTIVE_TO IS NULL")
+							. ")";
+					}
+				}
 				break;
 			case "ACTIVE_DATE":
 				$val = (string)$val;
@@ -989,17 +1021,29 @@ class CAllIBlockElement
 				break;
 			case "DATE_MODIFY_FROM":
 				$val = (string)$val;
-				if($val !== '')
-					$arSqlSearch[] = "(BE.TIMESTAMP_X ".
-						( $cOperationType=="N" ? "<" : ">=" ).$DB->CharToDateFunction($DB->ForSql($val), "FULL").
-						( $cOperationType=="N" ? ""  : " OR BE.TIMESTAMP_X IS NULL").")";
+				if ($val !== '')
+				{
+					$isCorrect = \CIBlock::isCorrectFullFormatDate($DB->ForSql($val));
+					if ($isCorrect)
+					{
+						$arSqlSearch[] = "(BE.TIMESTAMP_X " .
+							($cOperationType == "N" ? "<" : ">=") . $DB->CharToDateFunction($DB->ForSql($val), "FULL") .
+							($cOperationType == "N" ? "" : " OR BE.TIMESTAMP_X IS NULL") . ")";
+					}
+				}
 				break;
 			case "DATE_MODIFY_TO":
 				$val = (string)$val;
-				if($val !== '')
-					$arSqlSearch[] = "(BE.TIMESTAMP_X ".
-						( $cOperationType=="N" ? ">" : "<=" ).$DB->CharToDateFunction($DB->ForSql($val), "FULL").
-						( $cOperationType=="N" ? ""  : " OR BE.TIMESTAMP_X IS NULL").")";
+				if ($val !== '')
+				{
+					$isCorrect = \CIBlock::isCorrectFullFormatDate($DB->ForSql($val));
+					if ($isCorrect)
+					{
+						$arSqlSearch[] = "(BE.TIMESTAMP_X " .
+							($cOperationType == "N" ? ">" : "<=") . $DB->CharToDateFunction($DB->ForSql($val), "FULL") .
+							($cOperationType == "N" ? "" : " OR BE.TIMESTAMP_X IS NULL") . ")";
+					}
+				}
 				break;
 			case "WF_NEW":
 				if($val=="Y" || $val=="N")
@@ -2947,7 +2991,7 @@ class CAllIBlockElement
 
 					if(preg_match("/^([^.]+)\\.([^.]+)$/", $PR_ID, $arMatch))
 					{
-						$db_prop = CIBlockProperty::GetPropertyArray($arMatch[1], CIBlock::_MergeIBArrays($arFilter["IBLOCK_ID"], $arFilter["IBLOCK_CODE"]));
+						$db_prop = CIBlockProperty::GetPropertyArray($arMatch[1], CIBlock::_MergeIBArrays($arFilter["IBLOCK_ID"], $arFilter["IBLOCK_CODE"] ?? false));
 						if(is_array($db_prop) && $db_prop["PROPERTY_TYPE"] == "E")
 							$this->MkPropertySelect($arMatch, $db_prop, $arJoinProps, $bWasGroup, $sGroupBy, $sSelect);
 					}

@@ -11,7 +11,6 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 	} = require('crm/timeline/item/ui/styles');
 	const { transparent } = require('utils/color');
 	const { get } = require('utils/object');
-	const { Haptics } = require('haptics');
 
 	const nothing = () => {};
 
@@ -138,10 +137,7 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 				},
 				TimelineItemButton({
 					...button,
-					onClick: () => {
-						Haptics.impactLight();
-						this.onAction(button.action);
-					},
+					onClick: () => this.onAction(button.action),
 				}),
 			);
 		}
@@ -165,10 +161,7 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 						paddingTop: 5,
 						paddingBottom: 5,
 					},
-					onClick: () => {
-						Haptics.impactLight();
-						this.onAction(icon.action);
-					},
+					onClick: () => this.onAction(icon.action),
 				},
 				Image({
 					style: {
@@ -199,10 +192,7 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 						paddingTop: 16,
 						paddingBottom: 16,
 					},
-					onClick: () => {
-						Haptics.impactLight();
-						this.menu.open()
-					},
+					onClick: () => this.menu.open(),
 				},
 				Image({
 					style: {
@@ -265,6 +255,7 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 			const color = IconColors[icon.color] || IconColors.default;
 			return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.5 5C6.11929 5 5 6.11929 5 7.5V16.5C5 17.8807 6.11929 19 7.5 19H14.5222C15.16 19 15.7736 18.7562 16.2376 18.3186L18.2154 16.4531C18.7162 15.9808 19 15.3229 19 14.6345V7.5C19 6.11929 17.8807 5 16.5 5H7.5ZM7.7088 6.7088C7.15652 6.7088 6.7088 7.15652 6.7088 7.7088V16.2912C6.7088 16.8435 7.15652 17.2912 7.7088 17.2912H14V14.5C14 14.2239 14.2239 14 14.5 14H17.2912V7.7088C17.2912 7.15652 16.8435 6.7088 16.2912 6.7088H7.7088ZM9.08035 9C8.8042 9 8.58035 9.22386 8.58035 9.5V10.2381C8.58035 10.5143 8.8042 10.7381 9.08035 10.7381H14.1456C14.4218 10.7381 14.6456 10.5143 14.6456 10.2381V9.5C14.6456 9.22386 14.4218 9 14.1456 9H9.08035Z" fill="${color}"/></svg>`
 		},
+		print: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.1889 4.66669C9.58755 4.66669 9.10004 5.1583 9.10004 5.76473V7.9608H18.9V5.76473C18.9 5.1583 18.4125 4.66669 17.8112 4.66669H10.1889Z" fill="#BDC1C6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M5.83337 11.2549C5.83337 10.0421 6.8084 9.05884 8.01115 9.05884H19.9889C21.1917 9.05884 22.1667 10.0421 22.1667 11.2549V15.6471C22.1667 16.8599 21.1917 17.8432 19.9889 17.8432V16.7451C19.9889 16.1387 19.5014 15.6471 18.9 15.6471H9.10004C8.49866 15.6471 8.01115 16.1387 8.01115 16.7451L8.01115 17.8432C6.8084 17.8432 5.83337 16.8599 5.83337 15.6471V11.2549ZM19.9889 12.353C19.9889 12.9594 19.5014 13.451 18.9 13.451C18.2987 13.451 17.8112 12.9594 17.8112 12.353C17.8112 11.7465 18.2987 11.2549 18.9 11.2549C19.5014 11.2549 19.9889 11.7465 19.9889 12.353ZM13.4556 12.3615C13.4556 12.1112 13.6568 11.9083 13.9051 11.9083H16.2728C16.521 11.9083 16.7223 12.1112 16.7223 12.3615C16.7223 12.6119 16.521 12.8148 16.2728 12.8148H13.9051C13.6568 12.8148 13.4556 12.6119 13.4556 12.3615Z" fill="#BDC1C6"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9.10004 17.2941C9.10004 16.9909 9.3438 16.7451 9.64448 16.7451H18.3556C18.6563 16.7451 18.9 16.9909 18.9 17.2941V22.7843C18.9 23.0875 18.6563 23.3334 18.3556 23.3334H9.64448C9.3438 23.3334 9.10004 23.0875 9.10004 22.7843V17.2941ZM10.1889 19.4902C10.1889 19.187 10.4327 18.9412 10.7334 18.9412H17.2667C17.5674 18.9412 17.8112 19.187 17.8112 19.4902C17.8112 19.7934 17.5674 20.0392 17.2667 20.0392H10.7334C10.4327 20.0392 10.1889 19.7934 10.1889 19.4902ZM10.7334 21.1373C10.4327 21.1373 10.1889 21.3831 10.1889 21.6863C10.1889 21.9895 10.4327 22.2353 10.7334 22.2353H17.2667C17.5674 22.2353 17.8112 21.9895 17.8112 21.6863C17.8112 21.3831 17.5674 21.1373 17.2667 21.1373H10.7334Z" fill="#BDC1C6"/></svg>`
 	};
 
     module.exports = { TimelineItemFooter };

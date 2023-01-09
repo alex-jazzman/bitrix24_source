@@ -55,7 +55,7 @@ final class Document extends Configurable
 					(new Layout\Body\ContentBlock\Text())
 						->setValue(Loc::getMessage('CRM_COMMON_TITLE'))
 						->setColor(Layout\Body\ContentBlock\Text::COLOR_BASE_50)
-						->setFontSize(Layout\Body\ContentBlock\Text::FONT_SIZE_XS)
+						->setFontSize(Layout\Body\ContentBlock\Text::FONT_SIZE_SM)
 				)
 				->addContentBlock(
 					'spacing',
@@ -204,6 +204,7 @@ final class Document extends Configurable
 							->addActionParamInt('documentId', $this->getDocumentId())
 							->setAnimation(Layout\Action\Animation::showLoaderForBlock())
 					)
+					->setScopeWeb()
 			;
 		}
 
@@ -221,10 +222,13 @@ final class Document extends Configurable
 			(new Layout\Action\JsEvent('Document:Print'))
 		;
 
-		$printUrl = $this->getDocument()->getFile(false)->getData()['printUrl'] ?? null;
+		$documentData = $this->getDocument()->getFile(false)->getData();
+		$printUrl = $documentData['printUrl'] ?? null;
+		$pdfUrl = $documentData['pdfUrl'] ?? null;
 		if ($printUrl)
 		{
 			$action->addActionParamString('printUrl', (string)$printUrl);
+			$action->addActionParamString('pdfUrl', (string)$pdfUrl);
 		}
 		else
 		{

@@ -149,6 +149,7 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 					isReadonly: this.model.isReadonly,
 					model: this.model,
 					itemScopeEventBus: this.itemScopeEventBus,
+					timelineScopeEventBus: this.timelineScopeEventBus,
 				}),
 				this.layoutSchema.footer && new TimelineItemFooter({
 					...this.layoutSchema.footer,

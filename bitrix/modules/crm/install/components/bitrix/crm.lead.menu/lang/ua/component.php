@@ -32,6 +32,7 @@ $MESS["LEAD_CONVERT"] = "Конвертувати";
 $MESS["LEAD_CONVERT_TITLE"] = "Конвертувати лід";
 $MESS["LEAD_COPY"] = "Копіювати лід";
 $MESS["LEAD_COPY_TITLE"] = "Копіювати лід";
+$MESS["LEAD_CREATE"] = "Створити лід";
 $MESS["LEAD_CREATE_ON_BASIS"] = "Створити на підставі:";
 $MESS["LEAD_CREATE_ON_BASIS_DISABLE_HINT"] = "Більше не показувати";
 $MESS["LEAD_CREATE_ON_BASIS_HINT_CONTENT"] = "Натисніть на кнопку, щоб створити на підставі ліда угоду, контакт і компанію. Скористайтеся списком, що випадає для вибору потрібного сценарію.";

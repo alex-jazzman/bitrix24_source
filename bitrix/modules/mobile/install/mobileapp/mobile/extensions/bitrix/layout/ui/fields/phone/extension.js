@@ -54,7 +54,6 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 					this.handleChange(newPhoneNumber);
 				})
 				.catch(console.error);
-
 		}
 
 		changePhoneNumberCode(phoneCode)

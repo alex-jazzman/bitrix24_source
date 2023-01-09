@@ -9,6 +9,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
@@ -22,26 +23,32 @@ const NUMBER_SECONDS_DAY = 86400;
 const START_DAY_TIME = '00:00';
 const MAX_NUMBER_ABSENCES = 5;
 $fullDaySeconds = NUMBER_SECONDS_DAY - 1; // 23:59:59
+$formShortDate = Context::getCurrent()->getCulture()->getDayMonthFormat();
+$timeZone = \CTimeZone::GetOffset();
 
 function formatUserAbsenceDate(int $startDate, int $finishDate, int $now): array
 {
-	$formTimeForStart = 'd.m';
-	$formTimeForFinish = 'd.m';
+	$culture = Context::getCurrent()->getCulture();
+	$formFullDate = $culture->getShortDateFormat();
+	$formShortDate = $culture->getDayMonthFormat();
+	$formatTime = $culture->getShortTimeFormat();
+	$formTimeForStart = $formShortDate;
+	$formTimeForFinish = $formShortDate;
 
-	if ((date('y', $startDate) !== date('y', $finishDate)) && (date('y', $now) !== date('y', $startDate)))
+	if ((date('y', $startDate) !== date('y', $finishDate)) || (date('y', $now) !== date('y', $startDate)))
 	{
-		$formTimeForStart .= '.y';
-		$formTimeForFinish .= '.y';
+		$formTimeForStart = $formFullDate;
+		$formTimeForFinish = $formFullDate;
 	}
 
 	if (date('H:i', $startDate) !== START_DAY_TIME)
 	{
-		$formTimeForStart .= ' H:i';
+		$formTimeForStart .= ' ' . $formatTime;
 	}
 
 	if (date('H:i', $finishDate) !== START_DAY_TIME)
 	{
-		$formTimeForFinish .= ' H:i';
+		$formTimeForFinish .= ' ' . $formatTime;
 	}
 
 	return ['start' => $formTimeForStart, 'finish' => $formTimeForFinish];
@@ -50,7 +57,7 @@ function formatUserAbsenceDate(int $startDate, int $finishDate, int $now): array
 $minStart = MakeTimeStamp($arResult['ENTRIES'][0]['DATE_ACTIVE_FROM']);
 $reasonStart = htmlspecialcharsbx($arResult['ENTRIES'][0]['TITLE']);
 $reasonFinish = htmlspecialcharsbx($arResult['ENTRIES'][0]['TITLE']);
-$now = time() + \CTimeZone::getOffset();
+$now = time() + $timeZone;
 $maxFinish = 0;
 $oneDayList = [];
 $nextDaysAbsenceList = [];
@@ -66,30 +73,13 @@ foreach ($arResult['ENTRIES'] as $key => $arEntry)
 	$finishDateForDiff = date('y:d:m', $finishAbsence);
 	$title = htmlspecialcharsbx($arEntry['TITLE']);
 
-	if (
-		($startDateForDiff === $finishDateForDiff)
-		&& ($startAbsence !== $finishAbsence)
-		&& ($finishAbsence > $now)
-		&& ($countOneDayAbsence < MAX_NUMBER_ABSENCES)
-	)
-	{
-		$oneDayList[] = date('H:i', $startAbsence)
-			. '&nbsp-&nbsp'
-			. date('H:i', $finishAbsence)
-			. ' '
-			. '('
-			. $title
-			. ')';
-		$countOneDayAbsence++;
-	}
-
 	if ($startAbsence > $now && (date('d', $startAbsence) !== date('d', $now)))
 	{
 		$formatsForNextDaysAbsences = formatUserAbsenceDate($startAbsence, $finishAbsence, $now);
 
 		if ($startAbsence === $finishAbsence && date('H:i', $startAbsence) === START_DAY_TIME)
 		{
-			$nextDaysAbsenceList[] = date($formatsForNextDaysAbsences['finish'], $finishAbsence)
+			$nextDaysAbsenceList[] = FormatDate($formatsForNextDaysAbsences['finish'], $finishAbsence, $timeZone)
 				. ' - '
 				. Loc::getMessage('INTR_IAU_TPL_ALL_DAY')
 				. ' '
@@ -99,17 +89,35 @@ foreach ($arResult['ENTRIES'] as $key => $arEntry)
 		}
 		else
 		{
-			$nextDaysAbsenceList[] = date($formatsForNextDaysAbsences['start'], $startAbsence)
+			$nextDaysAbsenceList[] = FormatDate($formatsForNextDaysAbsences['start'], $startAbsence, $timeZone)
 				. '&nbsp-&nbsp'
-				. date($formatsForNextDaysAbsences['finish'], $finishAbsence)
+				. FormatDate($formatsForNextDaysAbsences['finish'], $finishAbsence, $timeZone)
 				. ' '
 				. '('
 				. $title
 				. ')';
 		}
+		continue;
 	}
 
-	if ($startAbsence === $finishAbsence)
+	if (
+		($startDateForDiff === $finishDateForDiff)
+		&& ($startAbsence !== $finishAbsence)
+		&& ($finishAbsence > $now)
+		&& ($countOneDayAbsence < MAX_NUMBER_ABSENCES)
+	)
+	{
+		$oneDayList[] = date('H:i', $startAbsence)
+			. '&nbsp-&nbsp'
+			. FormatDate(Context::getCurrent()->getCulture()->getShortTimeFormat(), $finishAbsence, $timeZone)
+			. ' '
+			. '('
+			. $title
+			. ')';
+		$countOneDayAbsence++;
+	}
+
+	if ($startAbsence === $finishAbsence && $startDateForDiff === $nowDateForDiff)
 	{
 		if ($minStart > $startAbsence)
 		{
@@ -182,11 +190,11 @@ $dayForFinish = date("d", $maxFinish);
 				$formatsForAssociationAbsences = formatUserAbsenceDate($minStart, $maxFinish, $now);
 				echo Loc::getMessage('INTR_IAU_TPL_FROM')
 					. ' '
-					. date($formatsForAssociationAbsences['start'], $minStart)
+					. FormatDate($formatsForAssociationAbsences['start'], $minStart, $timeZone)
 					. ' '
 					. Loc::getMessage('INTR_IAU_TPL_TO')
 					. ' '
-					. date($formatsForAssociationAbsences['finish'], $maxFinish)
+					. FormatDate($formatsForAssociationAbsences['finish'], $maxFinish, $timeZone)
 					. ' '
 					. $reasonResult
 					. '<br>'
@@ -212,11 +220,11 @@ $dayForFinish = date("d", $maxFinish);
 			{
 				echo Loc::getMessage('INTR_IAU_TPL_FROM')
 					. ' '
-					. date('d.m', $minStart)
+					. FormatDate($formShortDate, $minStart, $timeZone)
 					. ' '
 					. Loc::getMessage('INTR_IAU_TPL_TO')
 					. ' '
-					. date('d.m', $maxFinish)
+					. FormatDate($formShortDate, $maxFinish, $timeZone)
 					. ' '
 					. $reasonResult
 					. '<br>'

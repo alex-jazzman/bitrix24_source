@@ -284,6 +284,8 @@ export default class Schedule extends Stream
 				itemClassName: this.getItemClassName(),
 				isReadOnly: this.isReadOnly(),
 				currentUser: this._manager.getCurrentUser(),
+				ownerTypeId: this._manager.getOwnerTypeId(),
+				ownerId: this._manager.getOwnerId(),
 				streamType: this.getStreamType(),
 				data: data,
 			})

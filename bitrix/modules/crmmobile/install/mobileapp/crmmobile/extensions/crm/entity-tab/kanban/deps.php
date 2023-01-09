@@ -5,6 +5,7 @@ return [
 		'notify',
 		'haptics',
 		'loc',
+		'crm:entity-tab',
 		'crm:assets/category',
 		'crm:category-list/actions',
 		'crm:category-list-view',

@@ -105,6 +105,13 @@ export default class Menu
 		this.menuMoreButton = this.menuContainer.querySelector(".menu-favorites-more-btn");
 		this.menuMoreButton.addEventListener("click", this.handleShowHiddenClick.bind(this));
 
+		const helperItem = this.menuContainer.querySelector(".menu-help-btn");
+
+		if (helperItem)
+		{
+			helperItem.addEventListener('click', this.handleHelperClick.bind(this));
+		}
+
 		const siteMapItem = this.menuContainer.querySelector(".menu-sitemap-btn");
 		if (siteMapItem)
 		{
@@ -599,6 +606,12 @@ export default class Menu
 		);
 	}
 
+	handleHelperClick()
+	{
+		this.switchToSlidingMode(false);
+		BX.Helper.show();
+	}
+
 	// region Sliding functions
 	blockSliding()
 	{
@@ -884,6 +897,9 @@ export default class Menu
 		const settingsIconBox = this.menuContainer.querySelector(".menu-settings-icon-box");
 		const settingsBtnText = this.menuContainer.querySelector(".menu-settings-btn-text");
 
+		const helpIconBox = this.menuContainer.querySelector(".menu-help-icon-box");
+		const helpBtnText = this.menuContainer.querySelector(".menu-help-btn-text");
+
 		var menuTextDivider = leftColumn.querySelector('.menu-item-separator');
 		var menuMoreCounter = leftColumn.querySelector('.menu-item-index-more');
 
@@ -961,6 +977,12 @@ export default class Menu
 
 					settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
 					settingsBtnText.style.opacity = state.opacity / 100;
+
+					helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+					helpIconBox.style.opacity = state.opacityRevert / 100;
+
+					helpBtnText.style.transform = "translateX(" + state.translateText + "px)";
+					helpBtnText.style.opacity = state.opacity / 100;
 
 					menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
 					menuMoreBtn.style.opacity = state.opacityRevert / 100;
@@ -1044,6 +1066,12 @@ export default class Menu
 					settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
 					settingsBtnText.style.opacity = state.opacity / 100;
 
+					helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+					helpIconBox.style.opacity = state.opacityRevert / 100;
+
+					helpBtnText.style.transform = "translateX(" + state.translateText + "px)";
+					helpBtnText.style.opacity = state.opacity / 100;
+
 					menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
 					menuMoreBtn.style.opacity = state.opacityRevert / 100;
 
@@ -1121,6 +1149,8 @@ export default class Menu
 					this.headerBurger,
 					settingsIconBox,
 					settingsBtnText,
+					helpIconBox,
+					helpBtnText,
 					menuMoreBtnDefault,
 					menuMoreBtn,
 					logoImageContainer,

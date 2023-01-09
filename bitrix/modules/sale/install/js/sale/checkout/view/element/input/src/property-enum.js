@@ -64,11 +64,13 @@ BitrixVue.component('sale-checkout-view-element-input-property-enum', {
 			this.$el.value = selectedItem.getTitle();
 			const customData = Object.fromEntries(selectedItem.getCustomData());
 			this.item.value = customData.value;
+			this.validate();
 		},
 		onDeselect()
 		{
 			this.item.value = '';
 			this.popupMenu.hide();
+			this.validate();
 		},
 		getFooter()
 		{
@@ -141,21 +143,27 @@ BitrixVue.component('sale-checkout-view-element-input-property-enum', {
 			}
 			return '';
 		},
-		isValidated()
+		isEmpty()
 		{
-			return this.item.validated === Const.validate.unvalidated;
+			return this.item.value === '';
+		},
+		isRequired()
+		{
+			return this.item.required === 'Y';
+		},
+		isAsteriskShown()
+		{
+			return this.isEmpty && this.isRequired;
 		},
 	},
 	// language=Vue
 	template: `
-		<div 
+		<div
+            class="form-wrap form-asterisk"
 			:class="getObjectClass"
 			@blur="validate"
 		>
-			<div 
-				v-if="isValidated"
-				class="ui-ctl-after ui-ctl-icon-angle"
-			></div>
+			<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 			<input
 				readonly
 				@click="render"
@@ -164,6 +172,12 @@ BitrixVue.component('sale-checkout-view-element-input-property-enum', {
 				:placeholder="item.name"
 				:value="defaultValue"
 			>
+            <span
+				class="asterisk-item"
+				v-if="isAsteriskShown"
+			>
+				{{item.name}}
+			</span>
 		</div>
 	`
 });

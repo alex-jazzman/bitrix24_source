@@ -3,15 +3,10 @@ import {BaseButton} from './baseButton';
 import { ButtonOptions, Button as UIButton } from 'ui.buttons';
 import {ButtonType} from '../enums/button-type';
 import {ButtonState} from '../enums/button-state';
-import {Type, clone} from 'main.core';
+import {Type} from 'main.core';
 
 export const Button  = BitrixVue.cloneComponent(BaseButton, {
 	props: {
-		id: {
-			type: String,
-			required: false,
-			default: '',
-		},
 		type: {
 			type: String,
 			required: false,
@@ -33,7 +28,6 @@ export const Button  = BitrixVue.cloneComponent(BaseButton, {
 		return {
 			popup: null,
 			uiButton: Object.freeze(null),
-			currentState: this.state,
 			timerSecondsRemaining: 0,
 		}
 	},

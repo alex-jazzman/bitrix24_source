@@ -4,9 +4,9 @@
 jn.define('crm/entity-detail/component', (require, exports, module) => {
 
 	const { ajaxErrorHandler } = require('crm/entity-detail/component/ajax-error-handler');
+	const { menuProvider } = require('crm/entity-detail/component/menu-provider');
 	const { onCloseHandler } = require('crm/entity-detail/component/on-close-handler');
 	const { headerProcessor } = require('crm/entity-detail/component/header-processor');
-	const { menuProvider } = require('crm/entity-detail/component/menu-provider');
 	const { rightButtonsProvider } = require('crm/entity-detail/component/right-buttons-provider');
 	const { additionalButtonProvider } = require('crm/entity-detail/component/additional-button-provider');
 	const { setAvailableTabs } = require('crm/entity-detail/component/set-available-tabs');
@@ -17,10 +17,10 @@ jn.define('crm/entity-detail/component', (require, exports, module) => {
 	const { onEntityModelReady } = require('crm/entity-detail/component/on-model-ready');
 
 	module.exports = {
+		menuProvider,
 		ajaxErrorHandler,
 		onCloseHandler,
 		headerProcessor,
-		menuProvider,
 		rightButtonsProvider,
 		setAvailableTabs,
 		additionalButtonProvider,

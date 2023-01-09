@@ -1031,6 +1031,7 @@ class CalendarAjax extends \Bitrix\Main\Engine\Controller
 		if (!empty($user_timezone_name))
 		{
 			\CCalendar::SaveUserTimezoneName($userId, $user_timezone_name);
+			\CCalendar::ClearCache('event_list');
 		}
 	}
 

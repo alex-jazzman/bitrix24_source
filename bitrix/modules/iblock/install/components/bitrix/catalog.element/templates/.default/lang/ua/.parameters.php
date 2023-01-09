@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["ADD_DETAIL_TO_SLIDER_TIP"] = "Детальна картинка виводиться разом з додатковими в слайдері зображень товару";
 $MESS["ADD_PICT_PROP_TIP"] = "Властивість додаткових картинок товару";
 $MESS["ADD_TO_BASKET_ACTION_ADD"] = "Додавання в корзину";
@@ -46,6 +46,8 @@ $MESS["CP_BCE_TPL_MESS_DESCRIPTION_TAB"] = "Текст на вкладці \"О�
 $MESS["CP_BCE_TPL_MESS_DESCRIPTION_TAB_DEFAULT"] = "Опис";
 $MESS["CP_BCE_TPL_MESS_NOT_AVAILABLE"] = "Повідомлення про відсутність товару";
 $MESS["CP_BCE_TPL_MESS_NOT_AVAILABLE_DEFAULT"] = "Немає в наявності";
+$MESS["CP_BCE_TPL_MESS_NOT_AVAILABLE_SERVICE"] = "Повідомлення про недоступність послуги";
+$MESS["CP_BCE_TPL_MESS_NOT_AVAILABLE_SERVICE_DEFAULT"] = "Не доступний";
 $MESS["CP_BCE_TPL_MESS_PRICE_RANGES_TITLE"] = "Назва блоку c розширеними цінами";
 $MESS["CP_BCE_TPL_MESS_PRICE_RANGES_TITLE_DEFAULT"] = "Ціни";
 $MESS["CP_BCE_TPL_MESS_PROPERTIES_TAB"] = "Текст на вкладці \"Характеристики\"";
@@ -122,4 +124,3 @@ $MESS["USE_COMMENTS_TIP"] = "Включити функціонал відгук�
 $MESS["USE_ENHANCED_ECOMMERCE_TIP"] = "Потрібно додаткове налаштування в Google Analytics Enhanced 
 Ecommerce та/або Яндекс.Метриці";
 $MESS["USE_VOTE_RATING_TIP"] = "Включити рейтингування товару";
-?>

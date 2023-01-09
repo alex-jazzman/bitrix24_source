@@ -6,6 +6,7 @@ use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
@@ -23,6 +24,7 @@ use Bitrix\Crm\Integration\Catalog\Contractor;
 class CAllCrmCompany
 {
 	use UserFieldPreparer;
+	use EntityFieldsNormalizer;
 
 	static public $sUFEntityID = 'CRM_COMPANY';
 
@@ -30,6 +32,8 @@ class CAllCrmCompany
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_COMPANY_SPD';
 	const TOTAL_COUNT_CACHE_ID = 'crm_company_total_count';
 	const CACHE_TTL = 3600;
+
+	protected const TABLE_NAME = 'b_crm_company';
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
@@ -1372,7 +1376,10 @@ class CAllCrmCompany
 			}
 
 			unset($arFields['ID']);
-			$ID = intval($DB->Add('b_crm_company', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+
+			$this->normalizeEntityFields($arFields);
+			$ID = (int) $DB->Add(self::TABLE_NAME, $arFields, [], 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
 			//Append ID to TITLE if required
 			if($ID > 0 && $arFields['TITLE'] === self::GetAutoTitle())
 			{
@@ -1951,7 +1958,10 @@ class CAllCrmCompany
 			}
 
 			unset($arFields["ID"]);
-			$sUpdate = $DB->PrepareUpdate('b_crm_company', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
+			$this->normalizeEntityFields($arFields);
+			$sUpdate = $DB->PrepareUpdate(self::TABLE_NAME, $arFields);
+
 			if ($sUpdate <> '')
 			{
 				$DB->Query("UPDATE b_crm_company SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);

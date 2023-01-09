@@ -8,6 +8,9 @@ jn.define('crm/in-app-url/url', (require, exports, module) => {
 	const { CrmMobileAppUrl } = require('crm/in-app-url/url/mobile-app');
 	const { get } = require('utils/object');
 
+	/**
+	 * @class CrmUrl
+	 */
 	class CrmUrl
 	{
 
@@ -16,10 +19,7 @@ jn.define('crm/in-app-url/url', (require, exports, module) => {
 			const { url } = props;
 
 			this.url = new Url(url);
-			this.controller = this.getUrlController({
-				...props,
-				url: this.url,
-			});
+			this.controller = this.getUrlController({ ...props, url: this.url });
 		}
 
 		get isUniversalActivityScenario()
@@ -30,6 +30,13 @@ jn.define('crm/in-app-url/url', (require, exports, module) => {
 				false,
 			);
 		};
+
+		static createUrl(props)
+		{
+			const crmUrl = new this(props);
+
+			return crmUrl.toString();
+		}
 
 		getUrlController(props)
 		{

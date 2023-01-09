@@ -72,6 +72,7 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 				{
 					style: {
 						flexDirection: 'row',
+						alignItems: 'center',
 					}
 				},
 				...pictures.flatMap((src, index, arr) => [
@@ -80,8 +81,9 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 							width: 14,
 							height: 14,
 							borderRadius: 2,
-							marginTop: 2,
 							marginRight: 6,
+							borderWidth: 1,
+							borderColor: '#eaeaea',
 						},
 						resizeMode: 'cover',
 						uri: prepareImagePath(src),

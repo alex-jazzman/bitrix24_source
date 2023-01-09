@@ -53,14 +53,14 @@ jn.define('navigation-loader', (require, exports, module) => {
 			this.getInstance(widget).setLoading(status);
 		}
 
-		static show()
+		static show(widget = layout)
 		{
-			this.getInstance().setLoading(true);
+			this.getInstance(widget).setLoading(true);
 		}
 
-		static hide()
+		static hide(widget = layout)
 		{
-			this.getInstance().setLoading(false);
+			this.getInstance(widget).setLoading(false);
 		}
 
 		setDelay(delay)

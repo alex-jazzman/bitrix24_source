@@ -874,7 +874,6 @@ class CCrmDealDetailsComponent
 				}
 				if (
 					CModule::IncludeModule('sale')
-					&& Main\Config\Option::get("crm", "crm_shop_enabled") === "Y"
 					&& CCrmSaleHelper::isWithOrdersMode()
 				)
 				{

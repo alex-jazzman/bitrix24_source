@@ -209,6 +209,13 @@ $assets->addAsset(
 		'landing_public',
 		Assets\Location::LOCATION_AFTER_TEMPLATE
 );
+$publicModeInit = '
+	BX.namespace("BX.Landing");
+	BX.Landing.getMode = () => "view";
+';
+$assets->addString(
+	"<script>{$publicModeInit}</script>",
+);
 $assets->addAsset(
 	Config::get('js_core_public'),
 	Assets\Location::LOCATION_KERNEL

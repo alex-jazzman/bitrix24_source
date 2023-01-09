@@ -1016,9 +1016,28 @@ this.BX.Catalog = this.BX.Catalog || {};
 	        return;
 	      }
 
+	      var url = eventArgs.url;
+
+	      if (url) {
+	        var params = new main_core.Uri(url).getQueryParams();
+	        url = new main_core.Uri(this.getReloadUrl());
+
+	        if (params) {
+	          for (var key in params) {
+	            if (Object.hasOwnProperty.call(params, key)) {
+	              url.setQueryParam(key, params[key]);
+	            }
+	          }
+	        }
+
+	        url = url.toString();
+	      } else {
+	        url = this.getReloadUrl();
+	      }
+
 	      eventArgs.sessid = BX.bitrix_sessid();
 	      eventArgs.method = 'POST';
-	      eventArgs.url = this.getReloadUrl();
+	      eventArgs.url = url;
 	      eventArgs.data = _objectSpread$1(_objectSpread$1({}, eventArgs.data), {}, {
 	        signedParameters: this.getSignedParameters()
 	      });

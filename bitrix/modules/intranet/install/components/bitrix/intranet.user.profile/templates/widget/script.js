@@ -429,7 +429,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    if (isCurrentUser) {
 	      myActivity = userRating['ACTIVITY'];
 	    }
-	    userList.appendChild(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div title=\"", "\" class=\"system-auth-form__userlist-item ui-icon ui-icon ui-icon-common-user\">\n\t\t\t\t\t\t\t<i ", "></i>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), main_core.Text.encode(fullName), avatarSrc ? "style=\"background-image: url('".concat(avatarSrc, "');background-size: cover;\"") : ''));
+	    userList.appendChild(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div title=\"", "\" class=\"system-auth-form__userlist-item ui-icon ui-icon ui-icon-common-user\">\n\t\t\t\t\t\t\t<i ", "></i>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), main_core.Text.encode(fullName), avatarSrc ? "style=\"background-image: url('".concat(encodeURI(avatarSrc), "');background-size: cover;\"") : ''));
 	  });
 	  return {
 	    userList: userList,
@@ -882,9 +882,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    var nameNode = main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__profile-name\">", "</div>\n\t\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME));
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.UserProfile:Avatar:changed', function (_ref2) {
 	      var _ref2$data = babelHelpers.slicedToArray(_ref2.data, 1),
-	        url = _ref2$data[0].url;
-	      babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO = url;
-	      avatarNode.style = main_core.Type.isStringFilled(url) ? "background-size: cover; background-image: url('".concat(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO, "')") : '';
+	        _ref2$data$ = _ref2$data[0],
+	        url = _ref2$data$.url,
+	        userId = _ref2$data$.userId;
+	      if (babelHelpers.classPrivateFieldGet(_this3, _profile).ID > 0 && userId && babelHelpers.classPrivateFieldGet(_this3, _profile).ID.toString() === userId.toString()) {
+	        babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO = url;
+	        avatarNode.style = main_core.Type.isStringFilled(url) ? "background-size: cover; background-image: url('".concat(encodeURI(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO), "')") : '';
+	      }
 	    });
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.UserProfile:Name:changed', function (_ref3) {
 	      var _ref3$data = babelHelpers.slicedToArray(_ref3.data, 1),
@@ -964,7 +968,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }).then(function (response) {
 	    if (response.data) {
 	      (top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{
-	        url: response.data
+	        url: response.data,
+	        userId: babelHelpers.classPrivateFieldGet(this, _profile).ID
 	      }]);
 	    }
 	  }.bind(this), function (response) {
@@ -1208,6 +1213,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 	function _getLoginHistoryContainer2() {
 	  var _this13 = this;
+	  if (babelHelpers.classPrivateFieldGet(this, _features).loginHistory.isHide) {
+	    return null;
+	  }
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getLoginHistoryContainer', function () {
 	    var history = new UserLoginHistory(babelHelpers.classPrivateFieldGet(_this13, _features).loginHistory, _this13);
 	    return {

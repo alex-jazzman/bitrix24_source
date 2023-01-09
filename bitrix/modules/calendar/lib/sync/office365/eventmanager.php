@@ -302,6 +302,10 @@ class EventManager extends AbstractManager implements EventManagerInterface
 				$result->addError(new Error('Error of move instance', 400));
 			}
 		}
+		else
+		{
+			$result->addError(new Error('Instance not found'));
+		}
 
 		return $result;
 	}
@@ -460,7 +464,7 @@ class EventManager extends AbstractManager implements EventManagerInterface
 				{
 					$excludes->removeDateFromCollection($instance->getEvent()->getStart());
 				}
-				if (!$result->isSuccess())
+				if (!$instanceResult->isSuccess())
 				{
 					$result->addErrors($instanceResult->getErrors());
 				}

@@ -729,6 +729,8 @@ this.BX = this.BX || {};
 	    _this3.externalSearchHandler = BX.prop.getFunction(options, "externalSearchHandler", null);
 	    _this3.placementParams = BX.prop.getObject(options, "placementParams", {});
 	    _this3.installDefaultAppHandler = _this3.onClickInstallDefaultApp.bind(babelHelpers.assertThisInitialized(_this3));
+	    _this3.installDefaultAppTimeout = 7000;
+	    _this3.installDefaultAppTimeoutHandler = _this3.onInstallDefaultAppTimeout.bind(babelHelpers.assertThisInitialized(_this3));
 	    _this3.afterInstallDefaultAppHandler = _this3.onAfterInstallDefaultApp.bind(babelHelpers.assertThisInitialized(_this3));
 	    _this3.popupAlertContainer = null;
 	    _this3.defaultAppInstallLoader = null;
@@ -912,7 +914,7 @@ this.BX = this.BX || {};
 
 	      if (main_core.Type.isDomNode(event.target) && main_core.Type.isDomNode(event.target.parentNode)) {
 	        var parent = event.target.parentNode;
-	        main_core.Dom.clean(parent);
+	        main_core.Dom.hide(event.target);
 	        this.defaultAppInstallLoader = this.defaultAppInstallLoader || new BX.Loader({
 	          target: parent,
 	          size: 30,
@@ -925,13 +927,31 @@ this.BX = this.BX || {};
 
 	      if (this.isDefaultAppCanInstall()) {
 	        BX.loadExt('marketplace').then(function () {
+	          setTimeout(_this4.installDefaultAppTimeoutHandler, _this4.installDefaultAppTimeout, event.target);
 	          top.BX.addCustomEvent(top, "Rest:AppLayout:ApplicationInstall", _this4.afterInstallDefaultAppHandler);
 	          BX.rest.Marketplace.install({
-	            CODE: _this4.placementParams["defaultAppInfo"]["code"]
+	            CODE: _this4.placementParams["defaultAppInfo"]["code"],
+	            SILENT_INSTALL: "Y",
+	            REDIRECT_PRIORITY: false,
+	            IFRAME: true
 	          });
 	        })["catch"](function () {
 	          top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", _this4.afterInstallDefaultAppHandler);
 	        });
+	      }
+	    }
+	  }, {
+	    key: "onInstallDefaultAppTimeout",
+	    value: function onInstallDefaultAppTimeout(elementToShow) {
+	      top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
+
+	      if (this.defaultAppInstallLoader) {
+	        this.defaultAppInstallLoader.destroy();
+	        this.defaultAppInstallLoader = null;
+	      }
+
+	      if (main_core.Type.isDomNode(elementToShow)) {
+	        main_core.Dom.show(elementToShow);
 	      }
 	    }
 	  }, {

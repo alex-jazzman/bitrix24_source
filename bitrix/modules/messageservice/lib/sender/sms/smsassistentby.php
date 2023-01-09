@@ -141,7 +141,7 @@ class SmsAssistentBy extends Sender\BaseConfigurable
 
 		$message = [
 			'recipient' => $messageFields['MESSAGE_TO'],
-			'message' => $messageFields['MESSAGE_BODY'],
+			'message' => $this->prepareMessageBodyForSend($messageFields['MESSAGE_BODY']),
 			'validity_period' => 24,
 			'webhook_url' => $this->getCallbackUrl()
 		];
@@ -196,7 +196,7 @@ class SmsAssistentBy extends Sender\BaseConfigurable
 
 		$message = [
 			'recepient' => $messageFields['MESSAGE_TO'],
-			'sms_text' => $messageFields['MESSAGE_BODY'],
+			'sms_text' => $this->prepareMessageBodyForSend($messageFields['MESSAGE_BODY']),
 		];
 
 		if ($messageFields['MESSAGE_FROM'])

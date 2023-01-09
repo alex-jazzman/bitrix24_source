@@ -3,14 +3,14 @@ import { EventEmitter } from 'main.core.events';
 import type { UploaderOptions, Uploader } from 'ui.uploader.core';
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
 
-import VueAdapter from './vue-adapter';
+import VueUploaderAdapter from './vue-uploader-adapter';
 
 /**
  * @memberof BX.UI.Uploader
  */
 export default class VueUploaderWidget extends EventEmitter
 {
-	#vueAdapter: VueAdapter = null;
+	#vueAdapter: VueUploaderAdapter = null;
 	#uploaderOptions: UploaderOptions = null;
 	#widgetOptions = {};
 	#vueApp = null;
@@ -29,11 +29,11 @@ export default class VueUploaderWidget extends EventEmitter
 		return null;
 	}
 
-	getAdapter(): VueAdapter
+	getAdapter(): VueUploaderAdapter
 	{
 		if (this.#vueAdapter === null)
 		{
-			this.#vueAdapter = new VueAdapter(this.#uploaderOptions);
+			this.#vueAdapter = new VueUploaderAdapter(this.#uploaderOptions);
 		}
 
 		return this.#vueAdapter;

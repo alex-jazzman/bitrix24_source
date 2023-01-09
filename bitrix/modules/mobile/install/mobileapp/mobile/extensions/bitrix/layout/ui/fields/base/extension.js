@@ -7,12 +7,14 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { throttle, debounce } = require('utils/function');
-	const { isEqual, mergeImmutable } = require('utils/object');
+	const { isEqual, mergeImmutable, isEmpty } = require('utils/object');
 	const { capitalize, stringify } = require('utils/string');
 	const { isNil } = require('utils/type');
 	const { arrowDown, arrowUp } = require('assets/common');
 
 	const ERROR_TEXT_COLOR = '#ff5752';
+	const TOOLTIP_COLOR = '#E89B06';
+
 	const TitlePosition = {
 		top: 'top',
 		left: 'left',
@@ -29,6 +31,10 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		option: 'easeOut',
 	})();
 
+	const tooltipTriangle = (color) => `<svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<path fill-rule="evenodd" clip-rule="evenodd" d="M2.60352 2.97461L0 0V4H4.86133C3.99634 4 3.17334 3.62695 2.60352 2.97461Z" fill="${color}"/>
+	</svg>`;
+
 	/**
 	 * @class BaseField
 	 * @abstract
@@ -43,9 +49,12 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			this.state = {
 				focus: (props.focus || false),
 				errorMessage: null,
+				tooltipMessage: null,
+				tooltipColor: TOOLTIP_COLOR,
 				showAll: false,
 			};
 
+			this.uid = props.uid || Random.getString();
 			this.preparedValue = null;
 
 			this.handleContentClick = this.handleContentClick.bind(this);
@@ -54,6 +63,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			this.debouncedValidation = debounce(this.validate, 300, this);
 
 			this.customContentClickHandler = null;
+			this.customValidation = null;
 
 			this.fieldContainerRef = null;
 			this.showHideButton = false;
@@ -321,6 +331,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return compiledStyles;
 		}
 
+		getTooltipColor()
+		{
+			return this.state.tooltipColor;
+		}
+
 		getDefaultStyles()
 		{
 			const base = {
@@ -360,17 +375,16 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		getBaseFieldStyles()
 		{
 			const isReadOnly = this.isReadOnly();
-			const hasErrorMessage = this.hasErrorMessage();
 
 			return {
 				externalWrapper: this.getExternalWrapperStyle(),
 				wrapper: {
 					paddingTop: 8,
-					paddingBottom: hasErrorMessage ? 5 : 12,
+					paddingBottom: this.hasErrorOrTooltip() ? 5 : 12,
 				},
 				readOnlyWrapper: {
 					paddingTop: 8,
-					paddingBottom: hasErrorMessage ? 5 : 12,
+					paddingBottom: this.hasErrorOrTooltip() ? 5 : 12,
 				},
 				innerWrapper: {
 					flexDirection: 'column',
@@ -387,19 +401,20 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 					flexDirection: 'row',
 					alignItems: 'center',
 				},
-				errorWrapper: {
+				tooltipWrapper: {
 					marginLeft: 1,
 					marginTop: -2,
+					marginBottom: 2,
 				},
-				errorIcon: {
+				tooltipIcon: {
 					width: 5,
 					height: 5,
 				},
-				errorContainer: {
+				tooltipContainer: {
 					marginTop: -1,
 					paddingLeft: 6,
 					paddingRight: 9,
-					backgroundColor: ERROR_TEXT_COLOR,
+					backgroundColor: this.getTooltipColor(),
 					borderTopRightRadius: 8,
 					borderBottomLeftRadius: 8,
 					alignSelf: 'flex-start',
@@ -453,14 +468,13 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		{
 			const isEmptyEditable = this.isEmptyEditable();
 			const isFocusedEmptyEditable = isEmptyEditable && !this.state.focus;
-			const hasErrorMessage = this.hasErrorMessage();
 			const paddingBottomWithoutError = isEmptyEditable ? 21 : 14;
 
 			return {
 				wrapper: {
 					justifyContent: isFocusedEmptyEditable ? 'center' : 'flex-start',
 					paddingTop: isEmptyEditable ? 14 : 8,
-					paddingBottom: hasErrorMessage ? 5 : paddingBottomWithoutError,
+					paddingBottom: this.hasErrorOrTooltip() ? 5 : paddingBottomWithoutError,
 				},
 				readOnlyWrapper: {
 					justifyContent: isFocusedEmptyEditable ? 'center' : 'flex-start',
@@ -473,9 +487,6 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				container: {
 					opacity: isFocusedEmptyEditable ? 0 : 1,
 					height: isFocusedEmptyEditable ? 0 : null,
-				},
-				errorWrapper: {
-					marginTop: isEmptyEditable ? 18 : -2,
 				},
 			};
 		}
@@ -534,12 +545,12 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return View(
 				{
 					style: this.styles.externalWrapper,
-					onClick: this.getContentClickHandler(),
 					ref: (ref) => this.fieldContainerRef = ref,
 				},
 				View(
 					{
 						testId: `${this.testId}_FIELD`,
+						onClick: this.getContentClickHandler(),
 						style: (this.isReadOnly() ? this.styles.readOnlyWrapper : this.styles.wrapper),
 					},
 					View(
@@ -554,8 +565,9 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 						this.renderRightIcons(),
 						this.renderAdditionalContent(),
 					),
-					(this.hasErrorMessage() && this.renderError()),
 				),
+				this.hasErrorMessage() && this.renderError(),
+				!this.hasErrorMessage() && this.hasTooltipMessage() && this.renderTooltip(),
 			);
 		}
 
@@ -833,6 +845,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 			this.clearError();
 
+			if (!checkFocusOut)
+			{
+				this.checkTooltip();
+			}
+
 			return true;
 		}
 
@@ -881,11 +898,16 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return typeof this.state.errorMessage === 'string' && this.state.errorMessage.length;
 		}
 
+		hasErrorOrTooltip()
+		{
+			return this.hasErrorMessage() || this.hasTooltipMessage();
+		}
+
 		setError(errorMessage)
 		{
 			if (this.state.errorMessage !== errorMessage)
 			{
-				this.setState({ errorMessage });
+				this.setState({ errorMessage, tooltipColor: ERROR_TEXT_COLOR, tooltipMessage: null });
 			}
 		}
 
@@ -894,6 +916,108 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			if (this.state.errorMessage !== null)
 			{
 				this.setState({ errorMessage: null });
+			}
+		}
+
+		renderTooltip()
+		{
+			const tooltipMessage = this.getTooltipMessage();
+			return View(
+				{
+					style: this.styles.tooltipWrapper,
+				},
+				Image(
+					{
+						style: this.styles.tooltipIcon,
+						svg: {
+							content: tooltipTriangle(this.getTooltipColor()),
+						},
+					},
+				),
+				View(
+					{
+						style: this.styles.tooltipContainer,
+					},
+					typeof tooltipMessage === 'string'
+						? Text(
+							{
+								style: this.styles.errorText,
+								text: this.getTooltipMessage(),
+								numberOfLines: 1,
+								ellipsize: 'end',
+							})
+						: tooltipMessage,
+				),
+			);
+		}
+
+		checkTooltip()
+		{
+			const { tooltip } = this.props;
+
+			if (tooltip)
+			{
+				tooltip(this).then(({ message, color }) => {
+					this.setTooltip(message, color);
+				});
+			}
+		}
+
+		clearTooltip()
+		{
+			const emptyMessage = { tooltipMessage: null };
+
+			if (this.getParent())
+			{
+				this.getParent().updateTooltip(emptyMessage);
+			}
+			else
+			{
+				this.updateTooltip(emptyMessage);
+			}
+		}
+
+		hasTooltipMessage()
+		{
+			return (typeof this.state.tooltipMessage === 'string' && this.state.tooltipMessage.length)
+				|| this.state.tooltipMessage instanceof LayoutComponent;
+		}
+
+		getTooltipMessage()
+		{
+			return this.state.tooltipMessage;
+		}
+
+		setTooltip(tooltipMessage, tooltipColor)
+		{
+			const newTooltip = { tooltipMessage, tooltipColor };
+			if (this.getParent())
+			{
+				this.getParent().updateTooltip(newTooltip);
+			}
+			else
+			{
+				this.updateTooltip(newTooltip);
+			}
+		}
+
+		updateTooltip({ tooltipMessage, tooltipColor })
+		{
+			const result = {};
+
+			if (this.state.tooltipMessage !== tooltipMessage)
+			{
+				result.tooltipMessage = tooltipMessage;
+			}
+
+			if (typeof tooltipColor !== 'undefined' && this.state.tooltipColor !== tooltipColor)
+			{
+				result.tooltipColor = tooltipColor;
+			}
+
+			if (!isEmpty(result))
+			{
+				this.setState(result);
 			}
 		}
 
@@ -1072,26 +1196,28 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		renderError()
 		{
+			const { errorMessage } = this.state;
+
 			return View(
 				{
-					style: this.styles.errorWrapper,
+					style: this.styles.tooltipWrapper,
 				},
 				Image(
 					{
-						style: this.styles.errorIcon,
+						style: this.styles.tooltipIcon,
 						svg: {
-							content: `<svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.60352 2.97461L0 0V4H4.86133C3.99634 4 3.17334 3.62695 2.60352 2.97461Z" fill="${ERROR_TEXT_COLOR}"/></svg>`,
+							content: tooltipTriangle(ERROR_TEXT_COLOR),
 						},
 					},
 				),
 				View(
 					{
-						style: this.styles.errorContainer,
+						style: this.styles.tooltipContainer,
 					},
 					Text(
 						{
 							style: this.styles.errorText,
-							text: this.state.errorMessage,
+							text: errorMessage,
 							numberOfLines: 1,
 							ellipsize: 'end',
 						},
@@ -1160,7 +1286,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						flexDirection: "row",
+						flexDirection: 'row',
 						paddingTop: 3,
 						paddingBottom: 6,
 					},
@@ -1208,7 +1334,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				return View(
 					{
 						style: {
-							flexDirection: "row",
+							flexDirection: 'row',
 							paddingTop: 3,
 							paddingBottom: 6,
 						},

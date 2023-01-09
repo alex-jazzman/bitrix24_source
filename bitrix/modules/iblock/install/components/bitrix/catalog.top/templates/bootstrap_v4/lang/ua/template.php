@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["ADD_TO_BASKET_OK"] = "Товар доданий в кошик";
 $MESS["CATALOG_COMPARE"] = "Порівняти";
 $MESS["CT_BCT_CATALOG_BASKET_UNKNOWN_ERROR"] = "Невідома помилка при додаванні товару до кошику";
@@ -24,4 +24,4 @@ $MESS["CT_BCT_TPL_MESS_BTN_DETAIL"] = "Детальніше";
 $MESS["CT_BCT_TPL_MESS_BTN_SUBSCRIBE"] = "Підписатися";
 $MESS["CT_BCT_TPL_MESS_PRICE_SIMPLE_MODE_SHORT"] = "від #PRICE#";
 $MESS["CT_BCT_TPL_MESS_PRODUCT_NOT_AVAILABLE"] = "Немає в наявності";
-?>
+$MESS["CT_BCT_TPL_MESS_PRODUCT_NOT_AVAILABLE_SERVICE"] = "Не доступний";

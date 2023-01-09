@@ -128,9 +128,7 @@ export class Backend
 				onfailure: (sourceResponse) => {
 					if (sourceResponse === 'auth')
 					{
-						reject(
-							Backend.makeResponse(xhr),
-						);
+						top.window.location.reload();
 					}
 					else
 					{

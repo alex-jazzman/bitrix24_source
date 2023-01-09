@@ -9,6 +9,8 @@ use CAgent;
 
 class AgentListener implements Queue\Interfaces\Listener
 {
+	private const DEFAULT_DELAY = 60; // in seconds
+
 	private AgentEntity $agentEntity;
 
 	public function __construct(AgentEntity $agentEntity)
@@ -24,10 +26,10 @@ class AgentListener implements Queue\Interfaces\Listener
 		if ($agentId = $this->getAgentId())
 		{
 			$time = new Bitrix\Main\Type\DateTime();
-			if ($this->agentEntity->getDelay())
-			{
-				$time->add($this->agentEntity->getDelay() . ' seconds');
-			}
+
+			$delay = $this->agentEntity->getDelay() ?: self::DEFAULT_DELAY;
+			$time->add($delay . ' seconds');
+
 			CAgent::Update($agentId,[
 				'NEXT_EXEC' => $time,
 			]);

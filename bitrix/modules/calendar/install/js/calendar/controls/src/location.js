@@ -1,6 +1,7 @@
 import { Tag, Type, Loc, Dom, Event, Text} from 'main.core';
 import { RoomsManager, RoomsSection } from 'calendar.roomsmanager';
 import { CategoryManager } from 'calendar.categorymanager';
+import {EventEmitter} from 'main.core.events';
 import { Util } from 'calendar.util';
 
 export class Location
@@ -70,7 +71,12 @@ export class Location
 			);
 		}
 
-		this.DOM.input = this.DOM.inputWrap.appendChild(Dom.create('INPUT', {
+		this.DOM.inputWrapInner = this.DOM.inputWrap.appendChild(Tag.render`
+				<div class="calendar-event-location-input-wrap-inner">
+				</div>`
+		);
+
+		this.DOM.input = this.DOM.inputWrapInner.appendChild(Dom.create('INPUT', {
 			attrs: {
 				name: this.params.inputName || '',
 				placeholder: this.disabled
@@ -85,6 +91,7 @@ export class Location
 			},
 			style: {
 				paddingRight: 25 + 'px',
+				minWidth: 300 + 'px',
 				maxWidth: 300 + 'px',
 			}
 		}));
@@ -100,7 +107,7 @@ export class Location
 				top.BX.UI.InfoHelper.show('limit_office_calendar_location');
 			})
 
-			Dom.append(this.DOM.lockIcon, this.DOM.inputWrap);
+			Dom.append(this.DOM.lockIcon, this.DOM.inputWrapInner);
 		}
 	}
 
@@ -236,6 +243,7 @@ export class Location
 			disabled: this.disabled,
 			minWidth: 300,
 			onChangeCallback: () => {
+				EventEmitter.emit('Calendar.LocationControl.onValueChange');
 				let i, value = this.DOM.input.value;
 				this.value = {text: value};
 				for (i = 0; i < menuItemList.length; i++)

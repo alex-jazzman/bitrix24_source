@@ -133,6 +133,10 @@ this.BX = this.BX || {};
 	      return false;
 	    }
 
+	    return this.hasPermission(action);
+	  }
+
+	  hasPermission(action) {
 	    if (action === 'view_event') {
 	      action = 'view_time';
 	    }
@@ -324,7 +328,9 @@ this.BX = this.BX || {};
 	    this.setConfig(config);
 	    this.addTaskSection();
 	    this.sortSections();
-	    main_core_events.EventEmitter.subscribeOnce('BX.Calendar.Section:delete', this.deleteSectionHandler.bind(this));
+	    main_core_events.EventEmitter.subscribeOnce('BX.Calendar.Section:delete', event => {
+	      this.deleteSectionHandler(event.data.sectionId);
+	    });
 	    this.reloadDataDebounce = main_core.Runtime.debounce(this.reloadData, SectionManager.RELOAD_DELAY, this);
 	  }
 

@@ -76,7 +76,7 @@ class Sender extends Providers\Edna\Sender
 		return [
 			'smsContent' => [
 				'contentType' => Providers\Edna\Constants\ContentType::TEXT,
-				'text' => Emoji::decode($messageFields['MESSAGE_BODY']),
+				'text' => $this->prepareMessageBodyForSend($messageFields['MESSAGE_BODY']),
 			],
 		];
 	}

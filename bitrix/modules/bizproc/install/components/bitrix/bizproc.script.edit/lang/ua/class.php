@@ -1,4 +1,5 @@
 <?php
+$MESS["BP_SCR_ED_CMP_HELP_BUTTON_TITLE"] = "Допомога";
 $MESS["BP_SCR_ED_CMP_SCRIPT_CAN_CREATE_ERROR"] = "Недостатньо прав для створення Розумного сценарію";
 $MESS["BP_SCR_ED_CMP_SCRIPT_CAN_EDIT_ERROR"] = "Недостатньо прав для редагування Розумного сценарію";
 $MESS["BP_SCR_ED_CMP_SCRIPT_CREATE_ERROR"] = "Не передані необхідні дані про Розумномий сценарій, який створюється";

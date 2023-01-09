@@ -67,6 +67,14 @@ final class Provider extends \Bitrix\Crm\Integration\UI\EntityEditor\Provider
 		$this->initializeDisplayItem();
 	}
 
+	public function getFields(): array
+	{
+		$fields = parent::getFields();
+		$fields['MODULE_ID'] = 'crm';
+
+		return $fields;
+	}
+
 	private function initializeEntityItem(): void
 	{
 		if ($this->isNewItem())
@@ -279,14 +287,21 @@ final class Provider extends \Bitrix\Crm\Integration\UI\EntityEditor\Provider
 					$items = [];
 
 					$fieldInfo = $field['data']['fieldInfo'] ?? [];
-					if (!empty($fieldInfo['ENUM']) && is_array($fieldInfo['ENUM']))
+					if (!empty($fieldInfo['ENUM']))
 					{
-						foreach ($fieldInfo['ENUM'] as $item)
+						if (is_array($fieldInfo['ENUM']))
 						{
-							$items[] = [
-								'value' => $item['ID'],
-								'name' => $item['VALUE'],
-							];
+							foreach ($fieldInfo['ENUM'] as $item)
+							{
+								$items[] = [
+									'value' => $item['ID'],
+									'name' => $item['VALUE'],
+								];
+							}
+						}
+						if (isset($fieldInfo['SETTINGS']['DISPLAY']))
+						{
+							$field['data']['mode'] = $fieldInfo['SETTINGS']['DISPLAY'] === 'DIALOG' ? 'selector' : 'picker';
 						}
 					}
 

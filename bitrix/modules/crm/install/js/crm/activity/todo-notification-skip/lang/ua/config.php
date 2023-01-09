@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_ACTIVITY_TODO_NOTIFICATION_CANCELED_BUTTON"] = "увімкнути знову";
+$MESS["CRM_ACTIVITY_TODO_NOTIFICATION_CANCELED_TEXT"] = "Розумні справи вимкнені";

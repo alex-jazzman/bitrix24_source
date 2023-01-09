@@ -13,31 +13,21 @@ export const Hint = {
 		icon: {
 			type: String,
 			required: false,
-			default: 'auto-sum',
+			default: '',
 		},
 		textBlocks: {
-			type: Object,
+			type: Array,
 			required: false,
-			default: () => ({
-				'text1': {
-					type: 'text',
-					options: {
-						text: 'Now the amount is calculated automatically based on the value of the goods in the transaction. ',
-						// text: 'Hello my friend, want more?'
-					},
-				},
-				'link1' : {
-					type: 'link',
-					options: {
-						text: 'More',
-						action: () => {},
-					}
-				},
-			}),
+			default: [],
 		},
 	},
 	computed: {
-		hintContentIcon(): HTMLElement {
+		hintContentIcon(): ?HTMLElement {
+			if (this.icon === '')
+			{
+				return null;
+			}
+
 			const iconElement = Dom.create('i');
 
 			return Dom.create('div', {
@@ -58,7 +48,7 @@ export const Hint = {
 		},
 
 		hintContentTextBlocks(): HTMLElement[] {
-			return Object.values(this.textBlocks).map(this.getContentBlockNode);
+			return this.textBlocks.map(this.getContentBlockNode);
 		},
 
 		hintContentIconClassname(): string {
@@ -73,6 +63,10 @@ export const Hint = {
 				'--active': this.hintPopup,
 				}
 			]
+		},
+
+		hasContent(): boolean {
+			return this.textBlocks.length > 0;
 		},
 	},
 	methods: {
@@ -217,6 +211,7 @@ export const Hint = {
 			@click.stop.prevent
 			@mouseenter="onMouseEnterToHint"
 			@mouseleave="onHintAreaMouseLeave"
+			v-if="hasContent"
 			:class="hintIconClassname"
 		>
 			<span class="ui-hint-icon" />

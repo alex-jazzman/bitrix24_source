@@ -63,6 +63,12 @@ class TimemanSection
 		$locked = static::isBitrix24() && !Feature::isFeatureEnabled('user_login_history');
 		$onclick = '';
 		$historyUrl = static::getUserLoginHistoryUrl();
+		$available = true;
+
+		if (static::isBitrix24() && (\CBitrix24::getPortalZone() === 'ua'))
+		{
+			$available = false;
+		}
 
 		if ($locked)
 		{
@@ -73,7 +79,7 @@ class TimemanSection
 		return [
 			'id' => 'login_history',
 			'title' => Loc::getMessage('TIMEMAN_SECTION_USER_LOGIN_HISTORY'),
-			'available' => true,
+			'available' => $available,
 			'url' => $historyUrl,
 			'locked' => $locked,
 			'menuData' => [

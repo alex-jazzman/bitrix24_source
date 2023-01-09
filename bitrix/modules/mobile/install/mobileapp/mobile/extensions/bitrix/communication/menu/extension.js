@@ -230,6 +230,7 @@ jn.define('communication/menu', (require, exports, module) => {
 				actions,
 				titlesBySectionCode: this.titlesBySectionCode,
 				params: {
+					shouldResizeContent: true,
 					showCancelButton: true,
 					title: BX.message(`M_CRM_COMMUNICATION_MENU_${title}`),
 				},

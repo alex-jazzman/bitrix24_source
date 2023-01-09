@@ -8,6 +8,7 @@ return [
 		'helpers/component',
 		'utils/storage',
 		'crm:assets/entity',
+		'crm:loc',
 		'crm:type',
 	],
 	'components' => [

@@ -1454,9 +1454,9 @@ class Form
 			if ($field['type'] === Internals\FieldTable::TYPE_ENUM_DATETIME)
 			{
 				$activityFieldValues = array_map(
-					function ($fieldValue)
-					{
-						return DateTime::createFromUserTime($fieldValue)->getTimestamp();
+					static function ($fieldValue) {
+						$dateTimeWithAtomFormat = DateTime::tryParse($fieldValue, DATE_ATOM);
+						return ($dateTimeWithAtomFormat ?? DateTime::createFromUserTime($fieldValue))->getTimestamp();
 					},
 					$activityFieldValues
 				);

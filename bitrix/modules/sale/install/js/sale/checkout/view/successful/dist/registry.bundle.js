@@ -20,11 +20,13 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	    },
 	    getPropertiesShort: function getPropertiesShort() {
 	      var properties = [];
+
 	      for (var propertyId in this.items) {
 	        if (main_core.Type.isStringFilled(this.items[propertyId].value)) {
 	          properties.push(this.items[propertyId].value);
 	        }
 	      }
+
 	      return properties.join(', ');
 	    }
 	  },
@@ -84,12 +86,15 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	    },
 	    getItemsForView: function getItemsForView() {
 	      var itemsForView = [];
+
 	      for (var propertyId in this.items) {
 	        var item = this.items[propertyId];
+
 	        if (BX.util.in_array(item.type, [sale_checkout_const.Property.type.name, sale_checkout_const.Property.type.phone, sale_checkout_const.Property.type.email])) {
 	          itemsForView.push(item);
 	        }
 	      }
+
 	      return itemsForView;
 	    }
 	  },

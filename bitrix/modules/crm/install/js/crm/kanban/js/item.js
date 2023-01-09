@@ -206,7 +206,7 @@ BX.CRM.Kanban.Item.prototype = {
 		const isAutomationDebugItem = data['isAutomationDebugItem'];
 		const additionalLabel =
 			isAutomationDebugItem
-				? '<span class="crm-kanban-debug-item-label">' + BX.message('CRM_KANBAN_ITEM_DEBUG_TITLE') + ' </span>'
+				? '<span class="crm-kanban-debug-item-label">' + BX.message('CRM_KANBAN_ITEM_DEBUG_TITLE_MSGVER_1') + ' </span>'
 				: ''
 		;
 		this.link.innerHTML = additionalLabel + this.clipTitle(data.name);
@@ -292,39 +292,32 @@ BX.CRM.Kanban.Item.prototype = {
 			const timestamp = BX.Text.toInteger(lastActivity.timestamp);
 			if (timestamp > 0)
 			{
-				const getAgo = (timestamp) => {
-					const now = BX.Crm.DateTime.Factory.getUserNow();
-					const secondsAgo = Math.floor(now.getTime() / 1000) - timestamp;
+				const userNow = BX.Crm.DateTime.Factory.getUserNow();
+				const userNowTimestamp = Math.round(userNow.getTime() / 1000);
 
-					if (secondsAgo < 60)
-					{
-						return BX.Text.encode(BX.Loc.getMessage('CRM_KANBAN_JUST_NOW'));
-					}
-
-					const bitrixTimeFormatWithoutSeconds =
-						BX.message('FORMAT_DATETIME')
-							.replace(BX.message('FORMAT_DATE'), '')
-							.replace(':SS', '')
-							.trim()
-					;
-
-					const timeFormatWithoutSeconds = BX.Main.Date.convertBitrixFormat(bitrixTimeFormatWithoutSeconds);
-
-					return BX.Main.Date.format(
+				let ago;
+				if (userNowTimestamp - timestamp <= 60)
+				{
+					// less than a minute
+					ago = BX.Text.encode(BX.Loc.getMessage('CRM_KANBAN_JUST_NOW'));
+				}
+				else
+				{
+					ago = BX.Main.Date.format(
 						[
 							['i', 'idiff'],
 							['H', 'Hdiff'],
-							['yesterday', 'x'],
-							['m', `j M, ${timeFormatWithoutSeconds}`],
-							['-', 'x']
+							['yesterday', 'yesterday'],
+							['m', BX.Crm.DateTime.Dictionary.Format.DAY_SHORT_MONTH_FORMAT],
+							['-', BX.Crm.DateTime.Dictionary.Format.MEDIUM_DATE_FORMAT],
 						],
 						timestamp,
-						now,
+						userNow,
 					);
-				};
+				}
 
 				BX.Dom.append(
-					BX.Tag.render`<span class="crm-kanban-item-last-activity-time-ago">${getAgo(timestamp)}</span>`,
+					BX.Tag.render`<span class="crm-kanban-item-last-activity-time-ago">${ago}</span>`,
 					this.lastActivityTime,
 				);
 			}

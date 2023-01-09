@@ -117,8 +117,7 @@ class ImConnectorFacebook extends CBitrixComponent
 		if (
 			!is_array($currentStatusData)
 			|| !isset($currentStatusData['CATALOG'])
-			|| ($currentStatusData['CATALOG'] !== $formData['PERMISSIONS']['CATALOG'])
-		)
+			|| ($currentStatusData['CATALOG'] !== $formData['PERMISSIONS']['CATALOG']))
 		{
 			$dataToSave = [
 				'CATALOG' => $formData['PERMISSIONS']['CATALOG'],

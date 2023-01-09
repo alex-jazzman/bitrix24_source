@@ -487,12 +487,22 @@ class CCalendar
 			$JSConfig['isSetSyncOffice365Settings'] = self::IsCalDAVEnabled() && self::isOffice365ApiEnabled();
 			$JSConfig['isIphoneConnected'] = self::isIphoneConnected();
 			$JSConfig['isMacConnected'] = self::isMacConnected();
+			$JSConfig['isIcloudConnected'] = $JSConfig['syncInfo']['icloud']
+				? $JSConfig['syncInfo']['icloud']['connected']
+				: false
+			;
+			$JSConfig['isGoogleConnected'] = $JSConfig['syncInfo']['google']
+				? $JSConfig['syncInfo']['google']['connected']
+				: false
+			;
 		}
 		else
 		{
 			$JSConfig['syncInfo'] = false;
 			$JSConfig['isIphoneConnected'] = false;
 			$JSConfig['isMacConnected'] = false;
+			$JSConfig['isIcloudConnected'] = false;
+			$JSConfig['isGoogleConnected'] = false;
 		}
 
 		self::$userMeetingSection = self::GetCurUserMeetingSection();
@@ -708,7 +718,7 @@ class CCalendar
 			$JSConfig['new_section_access'] = CCalendarSect::GetDefaultAccess(self::$type, self::$ownerId);
 		}
 
-		$colors = ['#86B100','#0092CC','#00AFC7','#DA9100','#00B38C','#DE2B24','#BD7AC9','#838FA0','#AB7917','#E97090'];
+		$colors = ['#86B100','#0092CC','#00AFC7','#E89B06','#00B38C','#DE2B24','#BD7AC9','#838FA0','#C3612C','#E97090'];
 
 		$JSConfig['hiddenSections'] = $hiddenSections;
 		$JSConfig['readOnly'] = $readOnly;
@@ -1038,7 +1048,16 @@ class CCalendar
 			return true;
 		}
 
-		return !count(self::GetUserDepartment($userId));
+		$departments = self::GetUserDepartment($userId);
+		if (
+			!$departments
+			|| empty($departments)
+		)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	public static function GetUserDepartment($userId = 0)
@@ -1081,11 +1100,6 @@ class CCalendar
 				return $value == 'Y' ? Loc::getMessage('EC_PROP_CONFIRMED_TEXT_Y') : Loc::getMessage('EC_PROP_CONFIRMED_TEXT_N');
 			}
 		}
-	}
-
-	public static function ClearSettings()
-	{
-		self::SetSettings([], true);
 	}
 
 	public static function SetSettings($settings = [], $clearOptions = false)
@@ -1611,63 +1625,6 @@ class CCalendar
 	public static function ReleaseMeetingRoom($params)
 	{
 		Rooms\IBlockMeetingRoom::releaseMeetingRoom($params);
-	}
-
-	public static function GetCalendarList($calendarId, $params = [])
-	{
-		$TASK_ID = '1_tasks';
-
-		self::SetSilentErrorMode();
-		[$sectionId, $entityType, $entityId] = $calendarId;
-
-		if ($sectionId !== $TASK_ID)
-		{
-			$arFilter = array(
-				'CAL_TYPE' => $entityType,
-				'OWNER_ID' => $entityId,
-			);
-
-			if (!is_array($params))
-				$params = [];
-
-			if ($sectionId > 0)
-				$arFilter['ID'] = $sectionId;
-
-			if (isset($params['active']))
-			{
-				$arFilter['ACTIVE'] = $params['active'] ? 'Y' : 'N';
-			}
-			$res = CCalendarSect::GetList(array('arFilter' => $arFilter));
-
-			$arCalendars = [];
-			foreach($res as $calendar)
-			{
-				if ($params['skipExchange'] == true && $calendar['DAV_EXCH_CAL'] <> '')
-				{
-					continue;
-				}
-
-				$arCalendars[] = array(
-					'ID' => $calendar['ID'],
-					'~NAME' => $calendar['NAME'],
-					'NAME' => htmlspecialcharsbx($calendar['NAME']),
-					'COLOR' => htmlspecialcharsbx($calendar['COLOR']),
-				);
-			}
-		}
-
-		if (CCalendarSync::isTaskListSyncEnabled() && $entityType == 'user' && ($sectionId === $TASK_ID || !$sectionId))
-		{
-			$arCalendars[] = array(
-				'ID' => $TASK_ID,
-				'~NAME' => 'My tasks',
-				'NAME' => 'My tasks',
-				'COLOR' => self::DEFAULT_TASK_COLOR,
-			);
-		}
-
-		self::SetSilentErrorMode(false);
-		return $arCalendars;
 	}
 
 	/*
@@ -4926,25 +4883,25 @@ class CCalendar
 
 	public static function GetUserTimezoneName($user, $getDefault = true)
 	{
-		if (isset(self::$userTimezoneList[$user]) && !is_array($user) && intval($user) > 0)
+		if (isset(self::$userTimezoneList[$user]) && !is_array($user) && (int)$user > 0)
 		{
 			return self::$userTimezoneList[$user];
 		}
-		elseif(is_array($user) && (int)$user['ID'] > 0 && isset(self::$userTimezoneList[$user['ID']]))
+		elseif (is_array($user) && (int)$user['ID'] > 0 && isset(self::$userTimezoneList[$user['ID']]))
 		{
 			return self::$userTimezoneList[$user['ID']];
 		}
 		else
 		{
-			if (!is_array($user) && intval($user) > 0)
+			if (!is_array($user) && (int)$user > 0)
 			{
-				$user = self::GetUser($user, true);
+				$user = self::GetUser((int)$user, true);
 			}
 
-			if (\CTimezone::OptionEnabled())
+			if (\CTimezone::OptionEnabled() && $user && is_array($user))
 			{
 				$offset = isset($user['TIME_ZONE_OFFSET'])
-					? intval(date('Z') + $user['TIME_ZONE_OFFSET'])
+					? (int)(date('Z') + $user['TIME_ZONE_OFFSET'])
 					: self::GetCurrentOffsetUTC($user['ID']);
 
 				$tzName = CUserOptions::GetOption(
@@ -4983,7 +4940,10 @@ class CCalendar
 				$tzName = self::GetGoodTimezoneForOffset($offset);
 			}
 
-			self::$userTimezoneList[$user['ID']] = $tzName;
+            if ($user && is_array($user) && $user['ID'])
+            {
+                self::$userTimezoneList[$user['ID']] = $tzName;
+            }
 		}
 
 		return $tzName;
@@ -5986,15 +5946,6 @@ class CCalendar
 		return self::$accessNames;
 	}
 
-	function TrimTime($strTime)
-	{
-		$strTime = trim($strTime);
-		$strTime = preg_replace("/:00$/", "", $strTime);
-		$strTime = preg_replace("/:00$/", "", $strTime);
-		$strTime = preg_replace("/\\s00$/", "", $strTime);
-		return rtrim($strTime);
-	}
-
 	public static function SetSilentErrorMode($silentErrorMode = true)
 	{
 		self::$silentErrorMode = $silentErrorMode;
@@ -6308,10 +6259,13 @@ class CCalendar
 							$result = $syncManager->deleteInstance($event, $context);
 							break;
 						default:
-							$result = empty($curEvent)
-								? $syncManager->createEvent($event, $context)
-								: $syncManager->updateEvent($event, $context)
-							;
+							if ($event->getMeetingStatus() !== 'N')
+							{
+								$result = empty($curEvent)
+									? $syncManager->createEvent($event, $context)
+									: $syncManager->updateEvent($event, $context)
+								;
+							}
 					}
 				}
 			}

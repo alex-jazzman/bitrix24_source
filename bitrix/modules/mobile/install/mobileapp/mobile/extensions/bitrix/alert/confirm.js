@@ -91,8 +91,31 @@ jn.define('alert/confirm', (require, exports, module) => {
 				selectedButton.onPress();
 			}
 		}
-
 	}
 
-	module.exports = { ConfirmNavigator, ButtonType };
+	const makeButton = (text, onPress, type = ButtonType.DEFAULT) => ({
+		text,
+		onPress,
+		type,
+	});
+
+	const makeCancelButton = (onPress = null, text = null) => ({
+		text,
+		onPress,
+		type: ButtonType.CANCEL,
+	});
+
+	const makeDestructiveButton = (text, onPress) => ({
+		text,
+		onPress,
+		type: ButtonType.DESTRUCTIVE
+	})
+
+	module.exports = {
+		ConfirmNavigator,
+		ButtonType,
+		makeButton,
+		makeCancelButton,
+		makeDestructiveButton,
+	};
 });

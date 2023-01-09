@@ -138,7 +138,11 @@ class ShipmentItemStore
 				$storeIdFrom = (int)$oldValue ?: Configuration::getDefaultStoreId();
 				$storeIdTo = (int)$value;
 
-				if ($storeIdFrom === $storeIdTo)
+				if (
+					$storeIdFrom === 0
+					|| $storeIdTo === 0
+					|| $storeIdFrom === $storeIdTo
+				)
 				{
 					return $result;
 				}
@@ -209,7 +213,11 @@ class ShipmentItemStore
 					$storeIdFrom = $this->getStoreId();
 				}
 
-				if ($storeIdFrom === $storeIdTo)
+				if (
+					$storeIdFrom === 0
+					|| $storeIdTo === 0
+					|| $storeIdFrom === $storeIdTo
+				)
 				{
 					return $result;
 				}

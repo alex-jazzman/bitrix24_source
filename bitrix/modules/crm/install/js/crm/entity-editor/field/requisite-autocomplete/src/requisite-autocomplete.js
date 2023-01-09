@@ -1,5 +1,5 @@
 import {EventEmitter} from "main.core.events";
-import {Dom, Loc, Tag, Type} from "main.core";
+import {Dom, Tag, Type} from "main.core";
 import {RequisiteAutocompleteField} from "crm.entity-editor.field.requisite.autocomplete";
 
 export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
@@ -124,9 +124,112 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 		this._autocomplete.setContext(this.getAutocompleteContext());
 	}
 
+	setUserFieldValue(fieldName, fieldValue)
+	{
+		if (this._editor)
+		{
+			const allowedFieldTypes = ["string", "double", "boolean", "datetime"];
+			const control = this._editor.getControlByIdRecursive(fieldName);
+			const fieldType = control.getFieldType();
+			if (control instanceof BX.UI.EntityEditorUserField && allowedFieldTypes.indexOf(fieldType) >= 0)
+			{
+				let fieldNode;
+				let valueControl;
+				switch (fieldType)
+				{
+					case "string":
+						if (Type.isStringFilled(fieldValue))
+						{
+							fieldNode = control.getFieldNode();
+							if (Type.isDomNode(fieldNode))
+							{
+								valueControl = fieldNode.querySelector(
+									`input[type=\"text\"][name=\"${fieldName}\"]`
+								);
+								if (valueControl)
+								{
+									valueControl.value = fieldValue;
+								}
+							}
+						}
+						break;
+
+					case "double":
+						let numberValue;
+						numberValue = "" + fieldValue;
+						if (/^[\-+]?\d*[.,]?\d+?$/.test(numberValue))
+						{
+							fieldNode = control.getFieldNode();
+							if (Type.isDomNode(fieldNode))
+							{
+								valueControl = fieldNode.querySelector(
+									`input[type=\"text\"][name=\"${fieldName}\"]`
+								);
+								if (valueControl)
+								{
+									valueControl.value = numberValue;
+								}
+							}
+						}
+						break;
+
+					case "boolean":
+						fieldNode = control.getFieldNode();
+						if (Type.isDomNode(fieldNode))
+						{
+							valueControl = fieldNode.querySelector(
+								`input[type=\"checkbox\"][name=\"${fieldName}\"]`
+							);
+							if (valueControl)
+							{
+								let booleanValue = !!(Type.isNumber(fieldValue) ? fieldValue : parseInt(fieldValue));
+								valueControl.value = booleanValue ? 1 : 0;
+								valueControl.checked = booleanValue;
+							}
+						}
+						break;
+
+					case "datetime":
+						fieldNode = control.getFieldNode();
+						if (Type.isDomNode(fieldNode) && Type.isStringFilled(fieldValue))
+						{
+							let datetimeValue = fieldValue;
+							valueControl = fieldNode.querySelector(
+								`input[type=\"text\"][name=\"${fieldName}\"]`
+							);
+							if (valueControl)
+							{
+								valueControl.value = datetimeValue;
+								BX.fireEvent(valueControl, 'change');
+							}
+						}
+						break;
+				}
+			}
+		}
+	}
+
 	onSelectAutocompleteValue(event)
 	{
 		this._autocompleteData = event.getData();
+		if (Type.isPlainObject(this._autocompleteData["fields"]))
+		{
+			const fields = this._autocompleteData["fields"];
+			for (let fieldName in fields)
+			{
+				if (
+					Type.isString(fieldName)
+					&& fieldName.length > 3
+					&& fieldName.substr(0, 3) === "UF_"
+					&& fields.hasOwnProperty(fieldName)
+				)
+				{
+					this.setUserFieldValue(fieldName, fields[fieldName])
+					delete fields[fieldName];
+				}
+			}
+		}
+
 		this.markAsChanged();
 	}
 

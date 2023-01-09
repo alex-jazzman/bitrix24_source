@@ -3,6 +3,7 @@ $MESS["CRM_ORDER_PL_ADD"] = "Додати";
 $MESS["CRM_ORDER_PL_ADD_PRODUCT"] = "Додати товар";
 $MESS["CRM_ORDER_PL_APPLY"] = "Застосувати";
 $MESS["CRM_ORDER_PL_AVAILABLE"] = "Доступно";
+$MESS["CRM_ORDER_PL_CATALOG_DENIED_HINT"] = "Недостатньо прав для перегляду каталогу.";
 $MESS["CRM_ORDER_PL_CHANGE"] = "Змінити";
 $MESS["CRM_ORDER_PL_CHANGE_ITEM_IN_SHOPPING_CART"] = "Змінити товар в кошику";
 $MESS["CRM_ORDER_PL_CHOOSE_ACTION"] = "Оберіть дію";

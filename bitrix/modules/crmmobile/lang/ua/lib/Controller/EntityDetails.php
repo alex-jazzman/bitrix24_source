@@ -1,0 +1,4 @@
+<?php
+$MESS["M_CRM_ENTITY_DETAILS_REPEATED_APPROACH_DEAL"] = "Повторне звернення";
+$MESS["M_CRM_ENTITY_DETAILS_REPEATED_DEAL"] = "Повторна угода";
+$MESS["M_CRM_ENTITY_DETAILS_REPEATED_LEAD"] = "Повторний лід";

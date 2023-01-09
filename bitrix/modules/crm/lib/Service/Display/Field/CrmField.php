@@ -14,7 +14,7 @@ use Bitrix\Main\Localization\Loc;
 class CrmField extends BaseLinkedEntitiesField
 {
 	public const TYPE = 'crm';
-	protected $entityTypes = [];
+	protected array $entityTypes = [];
 
 	public function prepareLinkedEntities(
 		array &$linkedEntities,
@@ -245,6 +245,11 @@ class CrmField extends BaseLinkedEntitiesField
 		{
 			[$entityTypePrefix, $entityElementId] = $this->explodeEntityElement((string)$entityElement);
 
+			if ($entityTypePrefix === null)
+			{
+				continue;
+			}
+
 			$entityTypeId = \CCrmOwnerTypeAbbr::ResolveTypeID($entityTypePrefix);
 			if (!$entityTypeId)
 			{
@@ -358,6 +363,11 @@ class CrmField extends BaseLinkedEntitiesField
 
 		[$entityIds, $providerOptions] = $this->getCrmUserFieldEntityOptions();
 
+		if (empty($result))
+		{
+			return [];
+		}
+
 		return [
 			'value' => array_column($result, 'id'),
 			'config' => [
@@ -373,14 +383,18 @@ class CrmField extends BaseLinkedEntitiesField
 
 	/**
 	 * @param string $entityElement
-	 * @return array
+	 * @return array|null
 	 */
-	protected function explodeEntityElement(string $entityElement): array
+	protected function explodeEntityElement(string $entityElement): ?array
 	{
 		if ($this->needExplodeValue($entityElement))
 		{
 			[$entityTypePrefix, $entityElementId] = explode('_', $entityElement);
 			$elementWasExploded = true;
+		}
+		elseif(empty($this->entityTypes[0]))
+		{
+			return null;
 		}
 		else
 		{

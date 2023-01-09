@@ -535,16 +535,10 @@ do{ //one iteration loop
 		}
 		else
 		{
-			if ($ID > 0)
+			if ($ID > 0 && !CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $ID, "element_edit"))
 			{
-				if (
-					!CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $ID, "element_edit")
-					|| ($bCatalog && !empty($arMainCatalog) && !$allowProductEdit)
-				)
-				{
-					$error = new _CIBlockError(2, "ACCESS_DENIED", GetMessage("IBLOCK_ACCESS_DENIED_STATUS"));
-					$errorTriger = true;
-				}
+				$error = new _CIBlockError(2, "ACCESS_DENIED", GetMessage("IBLOCK_ACCESS_DENIED_STATUS"));
+				$errorTriger = true;
 			}
 		}
 	}
@@ -571,22 +565,6 @@ do{ //one iteration loop
 				$bBizproc
 				&& !$canWrite
 			);
-
-		if (!$denyAutosave && $bCatalog && !empty($arMainCatalog))
-		{
-			$denyAutosaveProduct =
-				(
-					$newElement && !$allowProductAdd
-				)
-				|| (
-					$currentElement && !$allowProductEdit
-				)
-			;
-			if ($denyAutosaveProduct)
-			{
-				$denyAutosave = true;
-			}
-		}
 	}
 
 	$tabControl = new CAdminForm("form_element_".$IBLOCK_ID, $aTabs, !$bPropertyAjax, $denyAutosave);
@@ -605,14 +583,6 @@ do{ //one iteration loop
 				$arMainCatalog['OFFERS_PROPERTY_ID'] = $arMainCatalog['SKU_PROPERTY_ID'];
 				$arMainCatalog['OFFERS_IBLOCK_ID'] = $arMainCatalog['IBLOCK_ID'];
 			}
-		}
-	}
-
-	if ($bCatalog && !empty($arMainCatalog))
-	{
-		if (!$allowProductEdit)
-		{
-			$tabControl->SetShowSettings(false);
 		}
 	}
 
@@ -3753,24 +3723,22 @@ $bDisabled =
 	)
 ;
 
-if (!$bDisabled && $bCatalog && !empty($arMainCatalog))
+if (
+	!$bDisabled
+	&& $bCatalog
+	&& !empty($arMainCatalog)
+	&& $newElement
+	&& !$allowProductAdd
+)
 {
-	$disableProduct =
-		(
-			$newElement && !$allowProductAdd
-		)
-		|| (
-			$currentElement && !$allowProductEdit
-		)
-	;
-	if ($disableProduct)
-	{
-		$bDisabled = true;
-	}
+	$bDisabled = true;
 }
 
 if ($adminSidePanelHelper->isSidePanelFrame()):
-	$tabControl->Buttons(array("disabled" => $bDisabled));
+	$tabControl->Buttons(array(
+		'disabled' => $bDisabled,
+		'btnApply' => false,
+	));
 elseif(!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):
 	ob_start();
 	$disableHtml = $bDisabled

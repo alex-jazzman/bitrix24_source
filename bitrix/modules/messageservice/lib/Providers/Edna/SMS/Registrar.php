@@ -40,6 +40,7 @@ class Registrar extends \Bitrix\MessageService\Providers\Edna\Registrar
 		{
 			$migratedOptions = [
 				InternalOption::API_KEY => $options['apiKey'],
+				InternalOption::MIGRATED_TO_STANDART_SETTING_NAMES => 'Y'
 			];
 
 			$this->optionManager->setOptions($migratedOptions);

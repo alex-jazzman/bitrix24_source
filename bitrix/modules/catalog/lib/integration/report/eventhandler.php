@@ -4,14 +4,8 @@ namespace Bitrix\Catalog\Integration\Report;
 
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
-use Bitrix\Catalog\Integration\Report\Dashboard\StoreStock;
-use Bitrix\Catalog\Integration\Report\Filter\StoreStockFilter;
-use Bitrix\Catalog\Integration\Report\Handler;
-use Bitrix\Catalog\Integration\Report\View;
+use Bitrix\Catalog\Integration\Report\Dashboard\DashboardManager;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Report\VisualConstructor\AnalyticBoard;
-use Bitrix\Report\VisualConstructor\AnalyticBoardBatch;
 
 final class EventHandler
 {
@@ -22,59 +16,27 @@ final class EventHandler
 
 	public static function onAnalyticPageBatchCollect(): array
 	{
-		$result = [];
-
-		if (self::checkDocumentReadRights() && \Bitrix\Catalog\Config\State::isUsedInventoryManagement())
-		{
-			$inventoryManagementBatch = new AnalyticBoardBatch();
-			$inventoryManagementBatch->setKey(self::BATCH_INVENTORY_MANAGEMENT);
-			$inventoryManagementBatch->setGroup(self::BATCH_GROUP_CATALOG);
-			$inventoryManagementBatch->setTitle(Loc::getMessage('INVENTORY_MANAGEMENT_REPORT_BATCH_TITLE'));
-			$inventoryManagementBatch->setOrder(self::BATCH_INVENTORY_MANAGEMENT_SORT);
-			$result[] = $inventoryManagementBatch;
-		}
-
-		return $result;
+		return DashboardManager::getManager()->getAnalyticBoardBatchList();
 	}
 
 	public static function onAnalyticPageCollect(): array
 	{
-		$result = [];
-
-		if (self::checkDocumentReadRights() && \Bitrix\Catalog\Config\State::isUsedInventoryManagement())
-		{
-			$storeStockBoard = new AnalyticBoard(StoreStock::BOARD_KEY);
-			$storeStockBoard->setBatchKey(self::BATCH_INVENTORY_MANAGEMENT);
-			$storeStockBoard->setGroup(self::BATCH_GROUP_CATALOG);
-			$storeStockBoard->setTitle(Loc::getMessage('STORE_STOCK_REPORT_TITLE'));
-			$storeStockBoard->setFilter(new StoreStockFilter(StoreStock::BOARD_KEY));
-			$storeStockBoard->addFeedbackButton();
-			$result[] = $storeStockBoard;
-		}
-
-		return $result;
+		return DashboardManager::getManager()->getAnalyticBoardList();
 	}
 
 	public static function onReportHandlerCollect(): array
 	{
-		return [new Handler\StoreStock()];
+		return DashboardManager::getManager()->getActiveHandlerList();
 	}
 
 	public static function onViewsCollect(): array
 	{
-		return [
-			new View\StoreStock\StoreStockGrid(),
-			new View\StoreStock\StoreStockSaleChart(),
-		];
+		return DashboardManager::getManager()->getActiveViewList();
 	}
 
 	public static function onDefaultBoardsCollect(): array
 	{
-		$dashboards = [];
-
-		$dashboards[] = StoreStock::getDashboard();
-
-		return $dashboards;
+		return DashboardManager::getManager()->getDashboardList();
 	}
 
 	private static function checkDocumentReadRights(): bool

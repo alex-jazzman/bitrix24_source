@@ -359,12 +359,6 @@ class CCrmSaleHelper
 	 */
 	public static function isShopAccess($role = "")
 	{
-		$shopEnabled = Option::get("crm", "crm_shop_enabled", "N");
-		if ($shopEnabled == "N")
-		{
-			return false;
-		}
-
 		global $USER;
 		if (!is_object($USER))
 		{
@@ -441,7 +435,7 @@ class CCrmSaleHelper
 
 	private static function addToCacheAccess(int $userId, string $role, bool $access): void
 	{
-		self::$userIdsWithShopAccess[$userId] = self::$userIdsWithShopAccess[$userId] ?: [];
+		self::$userIdsWithShopAccess[$userId] = self::$userIdsWithShopAccess[$userId] ?? [];
 		self::$userIdsWithShopAccess[$userId][$role] = $access;
 	}
 

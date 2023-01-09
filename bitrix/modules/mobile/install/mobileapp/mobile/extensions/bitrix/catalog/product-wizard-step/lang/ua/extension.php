@@ -1,4 +1,5 @@
 <?php
+$MESS["WIZARD_FIELD_ACCESS_DENIED"] = "Недостатньо прав";
 $MESS["WIZARD_FIELD_MEASURE_CODE"] = "Одиниці";
 $MESS["WIZARD_FIELD_PRODUCT_AMOUNT"] = "Прийнято на склад";
 $MESS["WIZARD_FIELD_PRODUCT_BARCODE"] = "Штрих код";

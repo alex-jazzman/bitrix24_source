@@ -9610,7 +9610,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      const data = this.getAssociatedEntityData();
 
 	      if (data['APP_TYPE'] && data['APP_TYPE']['ICON_SRC']) {
-	        const iconNode = wrapper.querySelector('[class="' + this.getIconClassName() + '"]');
+	        const iconNode = wrapper.querySelector('.' + this.getIconClassName().replace(/\s+/g, '.'));
 
 	        if (iconNode) {
 	          iconNode.style.backgroundImage = "url('" + data['APP_TYPE']['ICON_SRC'] + "')";
@@ -10328,6 +10328,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          itemClassName: this.getItemClassName(),
 	          isReadOnly: this.isReadOnly(),
 	          currentUser: this._manager.getCurrentUser(),
+	          ownerTypeId: this._manager.getOwnerTypeId(),
+	          ownerId: this._manager.getOwnerId(),
 	          streamType: this.getStreamType(),
 	          data: data
 	        });
@@ -18268,6 +18270,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          useShortTimeFormat: this.getStreamType() === crm_timeline_item.StreamType.history,
 	          isReadOnly: this.isReadOnly(),
 	          currentUser: this._manager.getCurrentUser(),
+	          ownerTypeId: this._manager.getOwnerTypeId(),
+	          ownerId: this._manager.getOwnerId(),
 	          streamType: this.getStreamType(),
 	          data: data
 	        });
@@ -18839,6 +18843,14 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _itemsQueueProcessing = /*#__PURE__*/new WeakMap();
 
+	var _reloadingMessagesQueue = /*#__PURE__*/new WeakMap();
+
+	var _ownerTypeId = /*#__PURE__*/new WeakMap();
+
+	var _ownerId = /*#__PURE__*/new WeakMap();
+
+	var _itemDataShouldBeReloaded = /*#__PURE__*/new WeakSet();
+
 	var _addToQueue = /*#__PURE__*/new WeakSet();
 
 	var _processQueueItem = /*#__PURE__*/new WeakSet();
@@ -18857,9 +18869,13 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _getStreamByName = /*#__PURE__*/new WeakSet();
 
+	var _fetchItems = /*#__PURE__*/new WeakSet();
+
 	let PullActionProcessor = /*#__PURE__*/function () {
 	  function PullActionProcessor(params) {
 	    babelHelpers.classCallCheck(this, PullActionProcessor);
+
+	    _classPrivateMethodInitSpec$2(this, _fetchItems);
 
 	    _classPrivateMethodInitSpec$2(this, _getStreamByName);
 
@@ -18878,6 +18894,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$2(this, _processQueueItem);
 
 	    _classPrivateMethodInitSpec$2(this, _addToQueue);
+
+	    _classPrivateMethodInitSpec$2(this, _itemDataShouldBeReloaded);
 
 	    _classPrivateFieldInitSpec$1(this, _scheduleStream, {
 	      writable: true,
@@ -18904,33 +18922,65 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: false
 	    });
 
-	    if (main_core.Type.isObject(params.scheduleStream)) {
-	      babelHelpers.classPrivateFieldSet(this, _scheduleStream, params.scheduleStream);
-	    } else {
-	      throw new Error(`scheduleStream must be set`);
+	    _classPrivateFieldInitSpec$1(this, _reloadingMessagesQueue, {
+	      writable: true,
+	      value: []
+	    });
+
+	    _classPrivateFieldInitSpec$1(this, _ownerTypeId, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _classPrivateFieldInitSpec$1(this, _ownerId, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    if (!main_core.Type.isObject(params.scheduleStream) || !main_core.Type.isObject(params.fixedHistoryStream) || !main_core.Type.isObject(params.historyStream)) {
+	      throw new Error(`params scheduleStream, fixedHistoryStream and historyStream are required`);
 	    }
 
-	    if (main_core.Type.isObject(params.fixedHistoryStream)) {
-	      babelHelpers.classPrivateFieldSet(this, _fixedHistoryStream, params.fixedHistoryStream);
-	    } else {
-	      throw new Error(`fixedHistoryStream must be set`);
+	    if (!main_core.Type.isNumber(params.ownerTypeId) || !main_core.Type.isNumber(params.ownerId)) {
+	      throw new Error('params ownerTypeId and ownerId are required');
 	    }
 
-	    if (main_core.Type.isObject(params.historyStream)) {
-	      babelHelpers.classPrivateFieldSet(this, _historyStream, params.historyStream);
-	    } else {
-	      throw new Error(`historyStream must be set`);
-	    }
+	    babelHelpers.classPrivateFieldSet(this, _scheduleStream, params.scheduleStream);
+	    babelHelpers.classPrivateFieldSet(this, _fixedHistoryStream, params.fixedHistoryStream);
+	    babelHelpers.classPrivateFieldSet(this, _historyStream, params.historyStream);
+	    babelHelpers.classPrivateFieldSet(this, _ownerTypeId, params.ownerTypeId);
+	    babelHelpers.classPrivateFieldSet(this, _ownerId, params.ownerId);
 	  }
 
 	  babelHelpers.createClass(PullActionProcessor, [{
 	    key: "processAction",
 	    value: function processAction(actionParams) {
-	      _classPrivateMethodGet$2(this, _addToQueue, _addToQueue2).call(this, actionParams);
+	      if (_classPrivateMethodGet$2(this, _itemDataShouldBeReloaded, _itemDataShouldBeReloaded2).call(this, actionParams)) {
+	        babelHelpers.classPrivateFieldGet(this, _reloadingMessagesQueue).push(actionParams);
+
+	        _classPrivateMethodGet$2(this, _fetchItems, _fetchItems2).call(this);
+	      } else {
+	        _classPrivateMethodGet$2(this, _addToQueue, _addToQueue2).call(this, actionParams);
+	      }
 	    }
 	  }]);
 	  return PullActionProcessor;
 	}();
+
+	function _itemDataShouldBeReloaded2(actionParams) {
+	  const {
+	    item
+	  } = actionParams;
+
+	  if (!item) {
+	    return false;
+	  }
+
+	  const appLanguage = main_core.Loc.getMessage('LANGUAGE_ID').toLowerCase();
+	  const languageId = BX.prop.getString(item, 'languageId', appLanguage).toLowerCase();
+	  const canBeReloaded = BX.prop.getBoolean(item, 'canBeReloaded', true);
+	  return languageId !== appLanguage && canBeReloaded;
+	}
 
 	function _addToQueue2(actionParams) {
 	  babelHelpers.classPrivateFieldGet(this, _itemsQueue).push(actionParams);
@@ -19132,6 +19182,42 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 
 	  throw new Error(`Stream "${streamName}" not found`);
+	}
+
+	function _fetchItems2() {
+	  setTimeout(() => {
+	    const messages = main_core.clone(babelHelpers.classPrivateFieldGet(this, _reloadingMessagesQueue));
+	    babelHelpers.classPrivateFieldSet(this, _reloadingMessagesQueue, []);
+	    const activityIds = [];
+	    const historyIds = [];
+	    messages.forEach(message => {
+	      const container = message.stream === 'scheduled' ? activityIds : historyIds;
+	      container.push(message.id);
+	    });
+
+	    if (messages.length) {
+	      const data = {
+	        activityIds,
+	        historyIds,
+	        ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
+	        ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId)
+	      };
+	      main_core.ajax.runAction('crm.timeline.item.load', {
+	        data
+	      }).then(response => {
+	        messages.forEach(message => {
+	          if (response.data[message.id]) {
+	            message.item = response.data[message.id];
+	          }
+
+	          _classPrivateMethodGet$2(this, _addToQueue, _addToQueue2).call(this, message);
+	        });
+	      }).catch(err => {
+	        console.error(err);
+	        messages.forEach(message => _classPrivateMethodGet$2(this, _addToQueue, _addToQueue2).call(this, message));
+	      });
+	    }
+	  }, 1500);
 	}
 
 	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
@@ -19385,7 +19471,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        babelHelpers.classPrivateFieldSet(this, _itemPullActionProcessor, new PullActionProcessor({
 	          scheduleStream: this._schedule,
 	          fixedHistoryStream: this._fixedHistory,
-	          historyStream: this._history
+	          historyStream: this._history,
+	          ownerTypeId: this._ownerTypeId,
+	          ownerId: this._ownerId
 	        }));
 	      }
 

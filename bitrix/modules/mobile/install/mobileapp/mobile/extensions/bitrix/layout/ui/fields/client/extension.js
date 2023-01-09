@@ -52,16 +52,25 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			super(props);
 			this.isCreateContact = false;
 			this.uid = Random.getString();
+
+			this.state.clientValue = {};
+
 			/** @type {EventEmitter} */
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 			this.parentCustomEventEmitter = EventEmitter.createWithUid(this.props.uid || this.uid);
 
 			this.onEditClient = this.handleEditClient.bind(this);
-			this.onOpenBackDrop = (method) => this.handleOnOpenBackDrop.bind(this, method);
+			this.handleUpdateEntity = this.handleUpdateEntity.bind(this);
+			this.handleCloseEntity = this.handleCloseEntity.bind(this);
+		}
 
-			this.customEventEmitter.on('DetailCard::onUpdate', this.handleUpdateEntity.bind(this));
-			this.customEventEmitter.on('DetailCard::onClose', this.handleCloseEntity.bind(this));
-			this.state.clientValue = {};
+		componentDidMount()
+		{
+			super.componentDidMount();
+
+			this.customEventEmitter.on('DetailCard::onClose', this.handleCloseEntity);
+			this.customEventEmitter.on('DetailCard::onUpdate', this.handleUpdateEntity);
+			this.customEventEmitter.on('Duplicate::onUpdate', this.handleUpdateEntity);
 		}
 
 		getConfig()
@@ -201,29 +210,35 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 						flexDirection: 'column',
 					},
 				},
-				...visibleContacts.map((contact) => {
-					if (!contact.id && !contact.title)
+				...visibleContacts.map((contact, index) => {
+					if (!contact.id && !contact.title && contact.hidden)
 					{
 						return null;
 					}
 
-					return ClientItem({
-						...contact,
-						phone: this.getFirst(contact.phone),
-						email: this.getFirst(contact.email),
-						readOnly: this.isReadOnly(),
-						showClientInfo: this.isShowClientInfo(),
-						onEdit: this.onEditClient,
-						onOpenBackDrop: this.onOpenBackDrop(),
-					});
+					return View(
+						{
+							style: {
+								marginBottom: 10,
+							},
+						},
+						new ClientItem({
+							...contact,
+							onEdit: this.onEditClient,
+							readOnly: this.isReadOnly(),
+							showClientInfo: this.isShowClientInfo(),
+							onOpenBackdrop: () => {
+								this.handleOnOpenBackDrop(contact);
+							},
+							actionParams: {
+								show: !index,
+								onClick: this.onEditClient,
+							},
+						}),
+					);
 				}),
 				this.renderShowAllButton(contacts.length - visibleContacts.length),
 			);
-		}
-
-		getFirst(data)
-		{
-			return Array.isArray(data) && data.length ? data[0] : data;
 		}
 
 		getVisibleContacts(contacts)
@@ -303,16 +318,16 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 
 		}
 
-		handleOnOpenBackDrop(method, params)
+		handleOnOpenBackDrop(params, method)
 		{
-			const { type } = params;
+			const type = params.type;
 			this.isCreateContact = method === CREATE;
 			if (!Type.existsByName(type) && !this.isReadOnly())
 			{
 				return false;
 			}
 
-			const { entityId, title, queryText = '' } = params;
+			const { id, entityId, title, queryText = '' } = params;
 
 			const entityData = this.parseEntityDataFromQueryString(type, queryText);
 			let tabsExternalData = null;
@@ -328,13 +343,10 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				};
 			}
 
-			const widgetParams = {
-				titleParams: { text: title },
-			};
 			EntityDetailOpener.open(
 				{
 					entityTypeId: Type.resolveIdByName(type),
-					entityId,
+					entityId: id || entityId,
 					categoryId: this.getCategoryId(type),
 					uid: this.uid,
 					isCreationFromSelector: this.isCreateContact,
@@ -342,7 +354,9 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 					tabsExternalData,
 					owner: BX.prop.getObject(this.getConfig(), 'owner', {}),
 				},
-				widgetParams,
+				{
+					titleParams: { text: title },
+				},
 			);
 		}
 
@@ -350,52 +364,50 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 		{
 			const { entityTypeId, entityId } = params;
 			const selectorName = SELECTOR_TYPES_BY_ID[entityTypeId];
-			if (!selectorName)
+
+			if (!selectorName || !entityId)
 			{
 				return;
 			}
 
-			if (entityId > 0)
-			{
-				this
-					.getClientInfo(selectorName, entityId)
-					.then((entityData) => {
-						const { [selectorName]: prevEntityList } = this.getValue();
-						const entityList =
-							Array.isArray(prevEntityList)
-							&& !isEmpty(entityData)
-							&& this.isMultipleSelector(selectorName)
-								? mergeBy(prevEntityList, entityData, 'id')
-								: [entityData];
+			this
+				.getClientInfo(selectorName, entityId)
+				.then((entityData) => {
+					const { [selectorName]: prevEntityList } = this.getValue();
+					const entityList =
+						Array.isArray(prevEntityList)
+						&& !isEmpty(entityData)
+						&& this.isMultipleSelector(selectorName)
+							? mergeBy(prevEntityList, entityData, 'id')
+							: [entityData];
 
-						this.communicationUpdate({ [selectorName.toUpperCase()]: [entityData] });
+					this.communicationUpdate({ [selectorName.toUpperCase()]: [entityData] });
 
-						if (!this.isEqualEntities(selectorName, entityList))
+					if (!this.isEqualEntities(selectorName, entityList))
+					{
+						if (!this.isCreateContact)
 						{
-							if (!this.isCreateContact)
-							{
-								this.handleOnChange({
-									[selectorName]: entityList,
-								});
-							}
-							else
-							{
-								this.currentEntities = entityList;
-								this.changeClientsList(selectorName);
-							}
-						}
-						else if (!isEqual(entityList, prevEntityList))
-						{
-							this.setState({
-								clientValue: {
-									...this.state.clientValue,
-									[selectorName]: entityList,
-								},
+							this.handleOnChange({
+								[selectorName]: entityList,
 							});
 						}
-					})
-					.catch(console.error);
-			}
+						else
+						{
+							this.currentEntities = entityList;
+							this.changeClientsList(selectorName);
+						}
+					}
+					else if (!isEqual(entityList, prevEntityList))
+					{
+						this.setState({
+							clientValue: {
+								...this.state.clientValue,
+								[selectorName]: entityList,
+							},
+						});
+					}
+				})
+				.catch(console.error);
 		}
 
 		communicationUpdate(clientData)
@@ -517,11 +529,14 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				allowMultipleSelection: this.isMultipleSelector(selectorType),
 				events: {
 					onCreate: (createParams) => {
-						this.handleOnOpenBackDrop(CREATE, {
-							...createParams,
-							type: selectorType,
-							entityId: null,
-						});
+						this.handleOnOpenBackDrop(
+							{
+								...createParams,
+								type: selectorType,
+								entityId: null,
+							},
+							CREATE,
+						);
 					},
 					onClose: (currentEntities) => {
 						this.currentEntities = currentEntities;
@@ -543,18 +558,19 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 
 		makeClientSelectorProvider(selectorType)
 		{
-			const categoryId = this.getCategoryId(selectorType);
-
-			if (!categoryId)
+			const options = {};
+			if (selectorType === CRM_COMPANY)
 			{
-				return null;
+				options.excludeMyCompany = true;
 			}
 
-			return {
-				options: {
-					categoryId,
-				},
-			};
+			const categoryId = this.getCategoryId(selectorType);
+			if (categoryId)
+			{
+				options.categoryId = categoryId;
+			}
+
+			return { options };
 		}
 
 		isShowSelectorInDeal(selectorType)

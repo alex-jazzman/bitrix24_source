@@ -36,6 +36,7 @@ $MESS["MENU_EMPTY_FORM_ERROR"] = "Не заповнені всі поля";
 $MESS["MENU_ERROR_OCCURRED"] = "Виникла помилка";
 $MESS["MENU_EXPAND"] = "Розгорнути меню";
 $MESS["MENU_FIRST_ITEM_ERROR"] = "Даний пункт не можна зробити головною<br/> сторінкою вашого Бітрікс24";
+$MESS["MENU_HELP"] = "Допомога";
 $MESS["MENU_HIDDEN_ITEMS"] = "Прихований";
 $MESS["MENU_HIDE"] = "згорнути";
 $MESS["MENU_HIDE_ITEM"] = "Сховати пункт";

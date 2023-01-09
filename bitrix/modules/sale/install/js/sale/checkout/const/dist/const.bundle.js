@@ -101,7 +101,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         checkbox: 'Y/N',
         date: 'DATE',
         datetime: 'DATETIME',
-        enum: 'ENUM',
+        "enum": 'ENUM',
         undefined: 'UNDEFINED'
       }
     });
@@ -133,7 +133,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 
     var Check = Object.freeze({
       status: {
-        new: 'N',
+        "new": 'N',
         error: 'E',
         process: 'P',
         printed: 'Y'
@@ -143,7 +143,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
     var Pool = Object.freeze({
       action: {
         offer: 'offer',
-        delete: 'delete',
+        "delete": 'delete',
         restore: 'restore',
         quantity: 'quantity'
       }

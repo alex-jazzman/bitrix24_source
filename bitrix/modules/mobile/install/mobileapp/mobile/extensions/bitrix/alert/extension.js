@@ -4,7 +4,13 @@
 jn.define('alert', (require, exports, module) => {
 
 	const { AlertNavigator } = require('alert/alert');
-	const { ConfirmNavigator, ButtonType } = require('alert/confirm');
+	const {
+		ConfirmNavigator,
+		ButtonType,
+		makeButton,
+		makeCancelButton,
+		makeDestructiveButton,
+	} = require('alert/confirm');
 
 	/**
 	 * @class Alert
@@ -25,5 +31,11 @@ jn.define('alert', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { Alert, ButtonType };
+	module.exports = {
+		Alert,
+		ButtonType,
+		makeButton,
+		makeCancelButton,
+		makeDestructiveButton,
+	};
 });

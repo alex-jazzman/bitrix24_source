@@ -6,11 +6,9 @@ use Bitrix\Mobile\Dto\Caster\Caster;
 
 final class Property
 {
-	/** @var \ReflectionProperty */
-	private $property;
+	private \ReflectionProperty $property;
 
-	/** @var Dto */
-	private $object;
+	private Dto $object;
 
 	public function __construct(\ReflectionProperty $property, Dto $object)
 	{
@@ -74,6 +72,16 @@ final class Property
 	{
 		$casts = $this->object->getCachedCasts();
 
-		return $casts[$this->getName()] ?? null;
+		if ($caster = $casts[$this->getName()])
+		{
+			return $caster;
+		}
+
+		if ($type = $this->property->getType())
+		{
+			return Type::makeCasterByPropertyType($type);
+		}
+
+		return null;
 	}
 }

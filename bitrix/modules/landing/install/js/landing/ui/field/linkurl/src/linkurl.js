@@ -464,6 +464,9 @@ export class LinkUrl extends Text
 				break;
 			case LinkUrl.TYPE_HREF_TEL:
 				data.title = BX.Landing.Loc.getMessage("LANDING_LINK_URL_TITLE_TEL");
+				data.items =  {
+					"_blank": '',
+				};
 				data.button = {
 					'className': 'fa fa-chevron-right',
 					'text': '',
@@ -541,9 +544,10 @@ export class LinkUrl extends Text
 			return this.constantType;
 		}
 
-		if (this.matchers.pageOld.test(segment))
+		const foundHrefStringType = this.matchHrefStringType(segment);
+		if (foundHrefStringType !== null)
 		{
-			return LinkUrl.TYPE_HREF_PAGE;
+			return foundHrefStringType
 		}
 
 		//for blocks with default href="#"
@@ -616,6 +620,44 @@ export class LinkUrl extends Text
 		}
 
 		return type;
+	}
+
+	/**
+	 * Match type href for old values
+	 * @param {string} value
+	 */
+	matchHrefStringType(value)
+	{
+		if (this.matchers.catalogElement.test(value))
+		{
+			return LinkUrl.TYPE_HREF_PRODUCT;
+		}
+		if (this.matchers.catalogSection.test(value))
+		{
+			return LinkUrl.TYPE_HREF_PRODUCT;
+		}
+		if (this.matchers.block.test(value))
+		{
+			return LinkUrl.TYPE_HREF_BLOCK;
+		}
+		if (this.matchers.pageOld.test(value))
+		{
+			return LinkUrl.TYPE_HREF_PAGE;
+		}
+		if (this.matchers.crmForm.test(value))
+		{
+			return LinkUrl.TYPE_HREF_CRM_FORM;
+		}
+		if (this.matchers.crmPhone.test(value))
+		{
+			return LinkUrl.TYPE_HREF_TEL;
+		}
+		if (this.matchers.diskFile.test(value))
+		{
+			return LinkUrl.TYPE_HREF_FILE;
+		}
+
+		return null;
 	}
 
 	/**
@@ -825,7 +867,7 @@ export class LinkUrl extends Text
 				className: 'landing-ui-field-link-url-select-action-item fas landing-ui-field-link-url-icon--link',
 			},
 			{
-				name: BX.Landing.Loc.getMessage("LANDING_LINK_URL_ACTION_FILE"),
+				name: BX.Landing.Loc.getMessage("LANDING_LINK_URL_ACTION_FILE_MSGVER_1"),
 				value: LinkUrl.TYPE_HREF_FILE,
 				className: 'landing-ui-field-link-url-select-action-item fas landing-ui-field-link-url-icon--file',
 				type: 'KNOWLEDGE',
@@ -1600,7 +1642,7 @@ export class LinkUrl extends Text
 		const setRegs = [];
 		setRegs['phoneExtended'] = /(^[\d+][\d-]{4,14}\d$)|#crmPhone\d+/;
 		setRegs['phone'] = /^[\d+][\d-]{4,14}\d$/;
-		setRegs['mail'] = /^[\w-.]+@[\w-]+\.[a-z]{2,4}$|#crmEmail[\d]+$/i;
+		setRegs['mail'] = /^[\w-.]+@[\w-]+([.][a-z]{2,4})+$|#crmEmail[\d]+$/i;
 		setRegs['skype'] = /^[a-z\d-.:]{6,32}$/i;
 		const type = this.hrefTypeSwithcer.getValue();
 		const data = this.getTypeData(type);

@@ -2,6 +2,7 @@
 namespace Bitrix\Rest;
 
 use Bitrix\Main;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Data\Cache;
 
 /**
@@ -166,28 +167,49 @@ class EventOfflineTable extends Main\Entity\DataManager
 		$processId = static::getProcessId();
 
 		$limit = intval($limit);
-
 		$query = new EventOfflineQuery(static::getEntity());
 		$query->setOrder($order);
 		$query->setLimit($limit);
 
-		foreach ($filter as $key => $value)
+		if (is_array($filter))
 		{
-			$matches = [];
-			if (preg_match('/^([\W]{1,2})(.+)/',$key, $matches) && $matches[0] === $key)
+			foreach ($filter as $key => $value)
 			{
-				$query->where(
-					$matches[2],
-					$matches[1],
-					$value,
-				);
-			}
-			else
-			{
-				$query->where(
-					$key,
-					$value,
-				);
+				$matches = [];
+				if (preg_match('/^([\W]{1,2})(.+)/', $key, $matches) && $matches[0] === $key)
+				{
+					if (
+						!is_string($matches[2])
+						|| !is_string($matches[1])
+					)
+					{
+						throw new ArgumentTypeException('FILTER_KEYS', 'string');
+					}
+					if (is_array($value) || is_object($value))
+					{
+						throw new ArgumentTypeException($key);
+					}
+					$query->where(
+						$matches[2],
+						$matches[1],
+						$value
+					);
+				}
+				else
+				{
+					if (!is_string($key))
+					{
+						throw new ArgumentTypeException('FILTER_KEYS', 'string');
+					}
+					if (is_array($value) || is_object($value))
+					{
+						throw new ArgumentTypeException($key);
+					}
+					$query->where(
+						$key,
+						$value
+					);
+				}
 			}
 		}
 

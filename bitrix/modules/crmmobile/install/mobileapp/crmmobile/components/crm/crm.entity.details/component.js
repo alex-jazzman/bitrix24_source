@@ -4,7 +4,6 @@
 		ajaxErrorHandler,
 		onCloseHandler,
 		headerProcessor,
-		menuProvider,
 		rightButtonsProvider,
 		additionalButtonProvider,
 		setAvailableTabs,
@@ -12,6 +11,7 @@
 		customEvents,
 		globalEvents,
 		onEntityModelReady,
+		menuProvider,
 	} = jn.require('crm/entity-detail/component');
 
 	const { DetailToolbarFactory } = jn.require('crm/entity-detail/toolbar');

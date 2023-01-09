@@ -8,6 +8,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		OpenLineActivity,
 		CreationActivity,
 		TodoActivity,
+		Document,
 	} = require('crm/timeline/item/activity');
 
 	const {
@@ -18,6 +19,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		TodoCreated,
 		CallIncoming,
 		Ping,
+		DocumentViewed,
 	} = require('crm/timeline/item/log');
 
 	const { TimelineItemCompatible } = require('crm/timeline/item/compatible');
@@ -33,6 +35,8 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		TodoCreated,
 		CallIncoming,
 		Ping,
+		DocumentViewed,
+		Document,
 		'Activity:Call': CallActivity,
 		'Activity:OpenLine': OpenLineActivity,
 		'Activity:Creation': CreationActivity,

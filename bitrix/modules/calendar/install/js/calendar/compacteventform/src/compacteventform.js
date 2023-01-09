@@ -94,6 +94,12 @@ export class CompactEventForm extends EventEmitter
 				}
 
 				this.popup.show();
+				if (this.isLocationCalendar
+					|| (this.userPlannerSelector.attendeesEntityList.length > 1 && this.getMode() !== CompactEventForm.VIEW_MODE)
+				)
+				{
+					this.userPlannerSelector.showPlanner();
+				}
 
 				this.checkDataBeforeCloseMode = true;
 				if (this.canDo('edit') && this.DOM.titleInput && mode === CompactEventForm.EDIT_MODE)
@@ -156,13 +162,19 @@ export class CompactEventForm extends EventEmitter
 		return this.displayed;
 	}
 
-	close()
+	close(fromButton = true)
 	{
 		if (
-			this.getMode() === CompactEventForm.EDIT_MODE
-			&& this.formDataChanged()
-			&& this.checkDataBeforeCloseMode
-			&& !confirm(Loc.getMessage('EC_SAVE_ENTRY_CONFIRM'))
+			(
+				!fromButton && !this.checkTopSlider()
+			)
+			||
+			(
+				this.getMode() === CompactEventForm.EDIT_MODE
+				&& this.formDataChanged()
+				&& this.checkDataBeforeCloseMode
+				&& !confirm(Loc.getMessage('EC_SAVE_ENTRY_CONFIRM'))
+			)
 		)
 		{
 			// Workaround to prevent form closing even if user don't want to and presses "cancel" in confirm
@@ -1336,10 +1348,6 @@ export class CompactEventForm extends EventEmitter
 			});
 			this.userPlannerSelector.setDateTime(this.dateTimeControl.getValue());
 			this.userPlannerSelector.setViewMode(readOnly);
-			if (this.isLocationCalendar)
-			{
-				this.userPlannerSelector.showPlanner();
-			}
 		}
 		else
 		{
@@ -1668,6 +1676,7 @@ export class CompactEventForm extends EventEmitter
 		)
 		{
 			this.checkDataBeforeCloseMode = false;
+			this.locationSelector.selectContol.onChangeCallback();
 			this.save();
 		}
 		else if (
@@ -1823,7 +1832,9 @@ export class CompactEventForm extends EventEmitter
 				|| this.isNewEntry())
 		)
 		{
-			setTimeout(this.close.bind(this), 0);
+			setTimeout(() => {
+				this.close(false);
+			}, 0);
 		}
 	}
 

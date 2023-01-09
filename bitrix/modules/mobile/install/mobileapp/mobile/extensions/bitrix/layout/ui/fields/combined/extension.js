@@ -85,56 +85,67 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 
 			return View(
 				{
-					style: this.styles.combinedContainer,
-					testId: `${this.testId}_COMBINED_FIELD`,
+					style: this.styles.combinedContainerWrapper,
 				},
 				View(
 					{
-						style: this.styles.primaryFieldContainer,
-						testId: `${this.testId}_PRIMARY_FIELD`,
+						style: this.styles.combinedContainer,
+						testId: `${this.testId}_COMBINED_FIELD`,
 					},
-					renderPrimaryField({
-						...primaryField,
-						focus: this.state.focus && !primaryField.disabled || undefined,
-						required: primaryField.required || this.props.required,
-						readOnly: this.isReadOnly(),
-						value: primaryValue,
-						ref: this.bindPrimaryRef,
-						testId: `${this.testId}_${primaryField.id}`,
-						parent: this,
-						onChange: useCallback((value) => this.handleChange({
-							[primaryField.id]: value,
-							[secondaryField.id]: secondaryValue,
-						}), [primaryField.id, secondaryField.id, secondaryValue]),
-						onFocusIn: this.props.onFocusIn,
-						onFocusOut: this.props.onFocusOut,
-						showBorder: false,
-					}),
+					View(
+						{
+							style: this.styles.primaryFieldContainer,
+							testId: `${this.testId}_PRIMARY_FIELD`,
+						},
+						renderPrimaryField({
+							...primaryField,
+							focus: this.state.focus && !primaryField.disabled || undefined,
+							required: primaryField.required || this.props.required,
+							readOnly: this.isReadOnly(),
+							value: primaryValue,
+							ref: this.bindPrimaryRef,
+							testId: `${this.testId}_${primaryField.id}`,
+							uid: this.props.uid,
+							tooltip: this.props.tooltip,
+							isNew: this.isNew(),
+							parent: this,
+							onChange: useCallback((value) => this.handleChange({
+								[primaryField.id]: value,
+								[secondaryField.id]: secondaryValue,
+							}), [primaryField.id, secondaryField.id, secondaryValue]),
+							onFocusIn: this.props.onFocusIn,
+							onFocusOut: this.props.onFocusOut,
+							showBorder: false,
+						}),
+					),
+					View(
+						{
+							style: this.styles.secondaryFieldContainer,
+							testId: `${this.testId}_SECONDARY_FIELD`,
+						},
+						renderSecondaryField({
+							...secondaryField,
+							focus: undefined,
+							readOnly: this.isReadOnly(),
+							value: secondaryValue,
+							ref: this.bindSecondaryRef,
+							testId: `${this.testId}_${secondaryField.id}`,
+							uid: this.props.uid,
+							isNew: this.props.isNew,
+							parent: this,
+							onChange: useCallback((value) => this.handleChange({
+								[primaryField.id]: primaryValue,
+								[secondaryField.id]: value,
+							}, [primaryField.id, secondaryField.id, secondaryValue])),
+							onFocusIn: this.props.onFocusIn,
+							onFocusOut: this.props.onFocusOut,
+							showEditIcon: false,
+							showBorder: false,
+						}),
+					),
+					this.renderAdditionalContent(),
 				),
-				View(
-					{
-						style: this.styles.secondaryFieldContainer,
-						testId: `${this.testId}_SECONDARY_FIELD`,
-					},
-					renderSecondaryField({
-						...secondaryField,
-						focus: undefined,
-						readOnly: this.isReadOnly(),
-						value: secondaryValue,
-						ref: this.bindSecondaryRef,
-						testId: `${this.testId}_${secondaryField.id}`,
-						parent: this,
-						onChange: useCallback((value) => this.handleChange({
-							[primaryField.id]: primaryValue,
-							[secondaryField.id]: value,
-						}, [primaryField.id, secondaryField.id, secondaryValue])),
-						onFocusIn: this.props.onFocusIn,
-						onFocusOut: this.props.onFocusOut,
-						showEditIcon: false,
-						showBorder: false,
-					}),
-				),
-				this.renderAdditionalContent(),
+				!this.hasErrorMessage() && this.hasTooltipMessage() && this.renderTooltip(),
 			);
 		}
 
@@ -263,7 +274,13 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 		getPrimaryFieldType()
 		{
 			const { primaryField } = this.prepareFieldsConfig();
+
 			return primaryField.type;
+		}
+
+		isNew()
+		{
+			return BX.prop.getBoolean(this.props, 'isNew', false);
 		}
 
 		getDefaultStyles()
@@ -273,10 +290,14 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 
 			return {
 				...styles,
+				combinedContainerWrapper: {
+					width: '100%',
+					flexDirection: 'column',
+				},
 				combinedContainer: {
 					flexWrap: 'wrap',
 					justifyContent: 'center',
-					alignItems: 'flex-start',
+					alignItems: 'center',
 					flexDirection: 'row',
 					width: '100%',
 					paddingTop: 8,

@@ -1,0 +1,4 @@
+<?php
+$MESS["BIZPROC_DEBUGGER_SESSION_MANAGER_ERROR_INCORRECT_MODE"] = "Зазначено неправильний режим роботи налагоджувача";
+$MESS["BIZPROC_DEBUGGER_SESSION_MANAGER_ERROR_SESSION_NOT_FOUND"] = "Сесія не знайдена";
+$MESS["BIZPROC_DEBUGGER_SESSION_MANAGER_ERROR_SESSION_STILL_ACTIVE"] = "Сесія все ще активна";

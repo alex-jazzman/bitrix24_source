@@ -5,89 +5,101 @@ jn.define('layout/ui/fields/client/elements', (require, exports, module) => {
 
 	const { ClientItemTitle } = require('layout/ui/fields/client/elements/title');
 	const { ClientItemInfo } = require('layout/ui/fields/client/elements/info');
-	const { pen } = require('assets/common');
+	const { ClientItemAction } = require('layout/ui/fields/client/elements/action');
 
 	/**
-	 * @function ClientItem
+	 * @class ClientItem
 	 */
-	function ClientItem(props)
+	class ClientItem extends LayoutComponent
 	{
-		const {
-			id,
-			title,
-			subtitle,
-			phone,
-			email,
-			type,
-			addresses,
-			onEdit,
-			readOnly,
-			onOpenBackDrop,
-			showClientInfo,
-			hidden,
-		} = props;
+		/**
+		 * @param {String} props.title
+		 * @param {String} props.subtitle
+		 * @param {String | String[]} props.phone
+		 * @param {String | String[]} props.email
+		 * @param {String | String[]} props.addresses
+		 * @param {Function} props.onOpenBackdrop
+		 * @param {Boolean} props.readOnly
+		 * @param {Boolean} props.hidden
+		 * @param {Object} props.actionParams
+		 * @return ClientItem
+		 */
+		constructor(props)
+		{
+			super(props);
+		}
 
-		const handleOnEdit = () => {
-			onEdit(type);
-		};
+		renderTitle()
+		{
+			const { title } = this.props;
 
-		const onClick = () => {
-			if (!id || hidden)
+			if (!title)
 			{
-				return;
+				return null;
 			}
-			onOpenBackDrop({
-				type,
-				title,
-				entityId: id,
-			});
-		};
 
-		return View({
-				style: {
-					flexDirection: 'row',
-					marginBottom: 10,
-					justifyContent: 'space-between',
-				},
-			},
-			View({
-					style: {
-						flexDirection: 'column',
-						flex: 1,
-					},
-				},
-				ClientItemTitle({ title, type, showClientInfo, hidden, onClick }),
-				showClientInfo && ClientItemInfo({ subtitle, phone, email, addresses }),
-			),
-			showClientInfo && View(
+			return ClientItemTitle(this.props);
+		}
+
+		renderAdditionalInfo()
+		{
+
+			if (!this.props.showClientInfo)
+			{
+				return null;
+			}
+
+			const { subtitle, phone, email, addresses } = this.props;
+
+			return new ClientItemInfo({ subtitle, phone, email, addresses });
+		}
+
+		renderRightAction()
+		{
+			if (!this.props.showClientInfo || !this.props.actionParams)
+			{
+				return null;
+			}
+
+			const { type, readOnly, actionParams } = this.props;
+			const { onClick, element, show = true } = actionParams;
+
+			return show && View(
 				{
-					style: {
-						width: !readOnly ? 38 : 0,
-						alignItems: 'flex-end',
+					onClick: () => {
+						if (onClick)
+						{
+							onClick(type);
+						}
 					},
-					onClick: !readOnly && handleOnEdit,
 				},
-				!readOnly && View(
-					{
+				typeof element === 'object'
+					? element
+					: ClientItemAction({ readOnly }),
+			);
+		}
+
+		render()
+		{
+			return View({
+					style: {
+						flexDirection: 'row',
+						alignItems: 'flex-start',
+						justifyContent: 'space-between',
+					},
+				},
+				View({
 						style: {
-							width: 28,
-							height: 28,
-							justifyContent: 'center',
-							alignItems: 'center',
+							flexDirection: 'column',
+							flex: 1,
 						},
 					},
-					Image({
-						style: {
-							height: 15,
-							width: 15,
-						},
-						svg: {
-							content: pen,
-						},
-					}),
+					this.renderTitle(),
+					this.renderAdditionalInfo(),
 				),
-			),
-		);
+				this.renderRightAction(),
+			);
+		}
 	}
 
 	module.exports = { ClientItem };

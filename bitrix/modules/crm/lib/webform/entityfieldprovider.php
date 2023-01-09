@@ -95,7 +95,7 @@ class EntityFieldProvider
 		return $fieldsTree;
 	}
 
-	public static function getFieldsTree(array $hiddenTypes = [])
+	public static function getFieldsTree(array $hiddenTypes = [], ?int $presetId = null)
 	{
 		$fields = array();
 
@@ -162,6 +162,7 @@ class EntityFieldProvider
 					[
 						'hideVirtual' => $hideVirtual,
 						'hideRequisites' => $hideRequisites,
+						'presetId' => $presetId,
 					]
 				)
 			);
@@ -388,7 +389,11 @@ class EntityFieldProvider
 			if (empty($options['hideRequisites']))
 			{
 				$entityTypeId = \CCrmOwnerType::Company; //\CCrmOwnerType::resolveID($entityName);
-				$preset = Requisite::instance()->getDefaultPreset($entityTypeId);
+
+				$preset = !is_null($options['presetId'])
+					? Requisite::instance()->getPreset($options['presetId'])
+					: Requisite::instance()->getDefaultPreset($entityTypeId);
+
 				foreach (($preset['fields'] ?? []) as $field)
 				{
 					$fieldsMap[] = [

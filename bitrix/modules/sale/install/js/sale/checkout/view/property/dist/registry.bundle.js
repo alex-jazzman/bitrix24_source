@@ -45,7 +45,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
           return item.type === sale_checkout_const.Property.type.datetime;
         },
         isEnum: function isEnum(item) {
-          return item.type === sale_checkout_const.Property.type.enum;
+          return item.type === sale_checkout_const.Property.type["enum"];
         },
         isFailure: function isFailure(item) {
           return item.validated === sale_checkout_const.Property.validate.failure;
@@ -57,7 +57,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         }
       },
       // language=Vue
-      template: "\n\t\t<div class=\"checkout-basket-section checkout-basket-section-personal-form\">\n\t\t\t<h2 class=\"checkout-basket-title\">{{localize.CHECKOUT_VIEW_PROPERTY_LIST_VIEW_SHIPPING_CONTACTS}}</h2>\n\t\t\t<div class=\"form-group\" v-for=\"(item, index) in items\" :key=\"index\">\n\t\t\t\t<sale-checkout-view-element-input-property-text v-if=\"isName(item)\"\n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\" \n\t\t\t\t\tautocomplete=\"name\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-phone v-else-if=\"isPhone(item)\" \n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-text v-else-if=\"isEmail(item)\" \n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\" \n\t\t\t\t\tautocomplete=\"email\" \n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-checkbox v-else-if=\"isCheckbox(item)\" \n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\" \n\t\t\t\t\t:autocomplete=\"item.value\" \n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-number v-else-if=\"isNumber(item)\" \n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-date v-else-if=\"isDate(item) || isDateTime(item)\"\n\t\t\t\t\t:item=\"item\"\n\t\t\t\t\t:index=\"index\"\n\t\t\t\t\tautocomplete=\"off\"\n\t\t\t\t\t:isDateTime=\"isDateTime(item)\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-enum v-else-if=\"isEnum(item)\"\n\t\t\t\t\t:item=\"item\"\n\t\t\t\t\t:index=\"index\"\n\t\t\t\t\t:variants=\"getVariantsByPropertyId(item.id)\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-text v-else\n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\" \n\t\t\t\t\tautocomplete=\"off\"\n\t\t\t\t/>\n\n\t\t\t\t<sale-checkout-view-property-note_error v-if=\"isFailure(item)\"\n\t\t\t\t\t:message=\"getErrorMessage(item)\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"checkout-basket-section checkout-basket-section-personal-form\">\n\t\t\t<h2 class=\"checkout-basket-title\">{{localize.CHECKOUT_VIEW_PROPERTY_LIST_VIEW_SHIPPING_CONTACTS}}</h2>\n\t\t\t<div class=\"form-group\" v-for=\"(item, index) in items\" :key=\"index\">\n\t\t\t\t<sale-checkout-view-element-input-property-text v-if=\"isName(item)\"\n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\" \n\t\t\t\t\tautocomplete=\"name\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-phone v-else-if=\"isPhone(item)\" \n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-email v-else-if=\"isEmail(item)\" \n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\" \n\t\t\t\t\tautocomplete=\"email\" \n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-checkbox v-else-if=\"isCheckbox(item)\" \n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\" \n\t\t\t\t\t:autocomplete=\"item.value\" \n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-number v-else-if=\"isNumber(item)\" \n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-date v-else-if=\"isDate(item) || isDateTime(item)\"\n\t\t\t\t\t:item=\"item\"\n\t\t\t\t\t:index=\"index\"\n\t\t\t\t\tautocomplete=\"off\"\n\t\t\t\t\t:isDateTime=\"isDateTime(item)\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-enum v-else-if=\"isEnum(item)\"\n\t\t\t\t\t:item=\"item\"\n\t\t\t\t\t:index=\"index\"\n\t\t\t\t\t:variants=\"getVariantsByPropertyId(item.id)\"\n\t\t\t\t/>\n\t\t\t\t<sale-checkout-view-element-input-property-text v-else\n\t\t\t\t\t:item=\"item\" \n\t\t\t\t\t:index=\"index\" \n\t\t\t\t\tautocomplete=\"off\"\n\t\t\t\t/>\n\n\t\t\t\t<sale-checkout-view-property-note_error v-if=\"isFailure(item)\"\n\t\t\t\t\t:message=\"getErrorMessage(item)\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
     });
 
     ui_vue.BitrixVue.component('sale-checkout-view-property-list_view', {
@@ -72,11 +72,13 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         },
         getPropertiesShort: function getPropertiesShort() {
           var properties = [];
+
           for (var propertyId in this.items) {
             if (main_core.Type.isStringFilled(this.items[propertyId].value)) {
               properties.push(this.items[propertyId].value);
             }
           }
+
           return properties.join(', ');
         }
       },
@@ -84,11 +86,12 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         resolveValue: function resolveValue(item) {
           if (item.type === sale_checkout_const.Property.type.checkbox) {
             return item.value === 'Y' ? this.localize.CHECKOUT_VIEW_PROPERTY_LIST_VIEW_CHECKBOX_Y : this.localize.CHECKOUT_VIEW_PROPERTY_LIST_VIEW_CHECKBOX_N;
-          } else if (item.type === sale_checkout_const.Property.type.enum) {
+          } else if (item.type === sale_checkout_const.Property.type["enum"]) {
             return this.propertyVariants.find(function (variant) {
               return variant.value === item.value && variant.propertyId === item.id;
             }).name;
           }
+
           return item.value;
         }
       },

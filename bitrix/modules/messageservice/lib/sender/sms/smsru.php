@@ -211,7 +211,7 @@ class SmsRu extends Sender\BaseConfigurable
 
 		$params = array(
 			'to' => $messageFields['MESSAGE_TO'],
-			'text' => $messageFields['MESSAGE_BODY'],
+			'text' => $this->prepareMessageBodyForSend($messageFields['MESSAGE_BODY']),
 			'embed_id' => $this->getOption('embed_id')
 		);
 

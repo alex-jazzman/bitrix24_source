@@ -1,11 +1,13 @@
 (() => {
 
-	const { describe, it, test, expect } = Testing.helpers();
+	const require = ext => jn.require(ext);
 
-	const { md5 } = jn.require('utils/hash');
-	const { clone } = jn.require('utils/object');
-	const { isRegExp } = jn.require('utils/type');
-	const { replaceAll } = jn.require('utils/string');
+	const { describe, it, test, expect } = require('testing');
+
+	const { md5 } = require('utils/hash');
+	const { clone } = require('utils/object');
+	const { isRegExp } = require('utils/type');
+	const { replaceAll } = require('utils/string');
 
 	describe('global utils objects', () => {
 

@@ -151,11 +151,8 @@ this.BX.Catalog = this.BX.Catalog || {};
 
 	      var propertyId = main_core.Text.toNumber(selectedSkuProperty.getAttribute('data-property-id'));
 	      var propertyValue = main_core.Text.toNumber(selectedSkuProperty.getAttribute('data-property-value'));
-	      var innerText = selectedSkuProperty.querySelector('.ui-ctl-inner');
-	      main_core.Dom.addClass(innerText, ['ui-ctl-before', 'ui-ctl-icon-loader']);
 	      this.parent.setSelectedProperty(propertyId, propertyValue);
 	      this.parent.getSelectedSku().then(function (selectedSkuData) {
-	        main_core.Dom.removeClass(innerText, ['ui-ctl-before', 'ui-ctl-icon-loader']);
 	        main_core_events.EventEmitter.emit('SkuProperty::onChange', [selectedSkuData, _this3.property]);
 
 	        if (_this3.parent) {

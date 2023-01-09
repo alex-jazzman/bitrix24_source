@@ -771,6 +771,35 @@ class ProductTable extends DataManager
 	}
 
 	/**
+	 * Returns true if need check maximum product quantity.
+	 *
+	 * @param array $fields Product data.
+	 * @return bool
+	 */
+	public static function isNeedCheckQuantity(array $fields): bool
+	{
+		if (isset($fields['QUANTITY_TRACE']) && isset($fields['CAN_BUY_ZERO']))
+		{
+			if (empty(self::$defaultProductSettings))
+			{
+				self::loadDefaultProductSettings();
+			}
+			if ($fields['QUANTITY_TRACE'] == self::STATUS_DEFAULT)
+			{
+				$fields['QUANTITY_TRACE'] = self::$defaultProductSettings['QUANTITY_TRACE'];
+			}
+			if ($fields['CAN_BUY_ZERO'] == self::STATUS_DEFAULT)
+			{
+				$fields['CAN_BUY_ZERO'] = self::$defaultProductSettings['CAN_BUY_ZERO'];
+			}
+
+			return ($fields['QUANTITY_TRACE'] === self::STATUS_YES && $fields['CAN_BUY_ZERO'] === self::STATUS_NO);
+		}
+
+		return false;
+	}
+
+	/**
 	 * Load default product settings from module options.
 	 *
 	 * @internal

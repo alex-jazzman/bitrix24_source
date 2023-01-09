@@ -42,11 +42,6 @@
 	text-overflow: ellipsis;
 }
 
-.bx-ie8 .header-search-input {
-	background: none repeat 0 0 #414a5a;
-	line-height: 32px;
-}
-
 .header-search-active .header-search-input {
 	color: #535c69;
 }

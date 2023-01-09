@@ -32,6 +32,11 @@ export class Call extends Base
 		{
 			this.#changePlayerState(item, actionData.recordId);
 		}
+
+		if (action === 'Call:DownloadRecord' && actionData && actionData.url)
+		{
+			this.#downloadRecord(actionData.url);
+		}
 	}
 
 	#makeCall(actionData): void
@@ -113,6 +118,11 @@ export class Call extends Base
 		{
 			player.play();
 		}
+	}
+
+	#downloadRecord(url: String): void
+	{
+		location.href = url;
 	}
 
 	static isItemSupported(item: ConfigurableItem): boolean

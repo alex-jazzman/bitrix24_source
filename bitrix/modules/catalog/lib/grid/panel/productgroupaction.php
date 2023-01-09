@@ -161,7 +161,8 @@ class ProductGroupAction extends Iblock\Grid\Panel\GroupAction
 			if ($this->isUiGrid())
 			{
 				$data[] = $this->getApplyButtonWithConfirm([
-					'APPLY_BUTTON_ID' => 'send_product'
+					'APPLY_BUTTON_ID' => 'send_product',
+					'CONFIRM_MESSAGE' => Loc::getMessage('IBLOCK_GRID_PANEL_ACTION_SET_PRODUCT_FIELD_CONFIRM'),
 				]);
 			}
 

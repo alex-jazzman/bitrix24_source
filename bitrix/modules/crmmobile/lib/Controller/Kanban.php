@@ -39,6 +39,9 @@ class Kanban extends BaseController
 			'deleteItem' => [
 				'class' => Action\DeleteItemAction::class,
 			],
+			'changeCategory' => [
+				'class' => Action\ChangeCategoryAction::class,
+			],
 			'getSearchData' => [
 				'class' => Action\GetSearchDataAction::class,
 				'+prefilters' => [

@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('CRM_BP_GPU_DESC_NAME'),
-	'DESCRIPTION' => Loc::getMessage('CRM_BP_GPU_DESC_DESC_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_BP_GPU_DESC_DESC_1_MSGVER_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmGetPaymentUrlActivity',
 	'JSCLASS' => 'BizProcActivity',

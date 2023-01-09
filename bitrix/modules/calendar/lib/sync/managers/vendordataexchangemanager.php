@@ -454,19 +454,22 @@ class VendorDataExchangeManager
 			])
 		;
 
-		$syncEvent->setEvent($event);
-		$eventConnection = $syncEvent->getEventConnection();
-		if ($eventConnection)
+		if ($event)
 		{
-			$eventConnection
-				->setEvent($event)
-				->setVersion($event->getVersion())
-			;
+			$syncEvent->setEvent($event);
+			$eventConnection = $syncEvent->getEventConnection();
+			if ($eventConnection)
+			{
+				$eventConnection
+					->setEvent($event)
+					->setVersion($event->getVersion())
+				;
 
-			$eventConnection->getId()
-				? $this->eventConnectionMapper->update($eventConnection)
-				: $this->eventConnectionMapper->create($eventConnection)
-			;
+				$eventConnection->getId()
+					? $this->eventConnectionMapper->update($eventConnection)
+					: $this->eventConnectionMapper->create($eventConnection)
+				;
+			}
 		}
 	}
 

@@ -764,7 +764,7 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 				},
 				{
 					text: params.isFolder
-							? '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_EDIT_FOLDER')) ?>'
+							? '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_EDIT_FOLDER_MSGVER_1')) ?>'
 							: '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_EDIT_2')) ?>',
 					href: params.isFolder ? params.editPage : params.settings,
 					disabled: params.isDeleted || params.isSettingsDisabled,

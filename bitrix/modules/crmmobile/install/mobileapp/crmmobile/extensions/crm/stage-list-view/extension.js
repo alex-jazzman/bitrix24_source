@@ -53,6 +53,8 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 
 			this.selectedStage = null;
 
+			this.isClosing = false;
+
 			this.onSelectedStage = this.handlerOnSelectedStage.bind(this);
 			this.onOpenStageDetail = this.handlerOnOpenStageDetail.bind(this);
 			this.saveOnCreateTunnelHandler = throttle(this.saveOnCreateTunnel, 1000, this);
@@ -113,7 +115,17 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 		bindEvents()
 		{
 			BX.addCustomEvent('Crm.CategoryDetail::onClose', (category) => {
-				this.setState({ category });
+				if (!this.isClosing)
+				{
+					this.setState({ category });
+				}
+			});
+
+			BX.addCustomEvent('Crm.CategoryDetail::onDeleteCategory', (categoryId) => {
+				if (!this.state.category || this.state.category.id === categoryId)
+				{
+					this.closeLayout();
+				}
 			});
 
 			BX.addCustomEvent('Crm.StageDetail::onUpdateStage', stage => {
@@ -140,6 +152,19 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 					);
 				});
 			});
+		}
+
+		closeLayout()
+		{
+			if (this.isClosing)
+			{
+				return;
+			}
+
+			this.isClosing = true;
+
+			this.layout.back();
+			this.layout.close();
 		}
 
 		getTitleForNavigation()
@@ -204,7 +229,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 		{
 			if (this.state.category)
 			{
-				this.layout.setTitle({ text: this.state.category.name }, true);
+				this.layout.setTitle({ text: this.getTitleForNavigation() }, true);
 			}
 		}
 
@@ -246,7 +271,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 						onStageSelect(stage, category, data, uid);
 					}
 
-					this.layout.close();
+					this.closeLayout();
 					break;
 
 				case StageSelectActions.CreateTunnel:
@@ -259,7 +284,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 						this.saveOnCreateTunnelHandler();
 					}
 
-					this.layout.close();
+					this.closeLayout();
 
 					break;
 
@@ -273,7 +298,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 						this.saveOnChangeTunnelDestinationHandler(uid);
 					}
 
-					this.layout.close();
+					this.closeLayout();
 
 					break;
 			}

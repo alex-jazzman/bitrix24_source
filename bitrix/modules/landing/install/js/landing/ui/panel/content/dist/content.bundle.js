@@ -394,6 +394,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    key: "clearSidebar",
 	    value: function clearSidebar() {
 	      main_core.Dom.clean(this.sidebar);
+	      this.sidebarButtons = new BX.Landing.UI.Collection.ButtonCollection();
 	    }
 	  }, {
 	    key: "setTitle",

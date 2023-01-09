@@ -195,7 +195,7 @@ DROP TABLE IF EXISTS b_crm_webform_field_dep_group;
 DROP TABLE IF EXISTS b_crm_product_row_reservation;
 DROP TABLE IF EXISTS b_crm_act_incoming_channel;
 DROP TABLE IF EXISTS b_crm_entity_uncompleted_act;
-DROP TABLE IF EXISTS b_crm_counter_caluclated_time;
+DROP TABLE IF EXISTS b_crm_counter_calculated_time;
 DROP TABLE IF EXISTS b_crm_field_set;
 DROP TABLE IF EXISTS b_crm_automation_qr;
 DROP TABLE IF EXISTS b_crm_item_badge;

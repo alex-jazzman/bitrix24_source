@@ -901,6 +901,8 @@ class CIBlockCMLImport
 					$this->next_step["bUpdateOnly"] = $trueValue;
 				elseif($ar["NAME"] == $this->mess["IBLOCK_XML2_BX_CODE"])
 					$arIBlock["CODE"] = $ar["VALUE"];
+				elseif($ar["NAME"] == $this->mess["IBLOCK_XML2_BX_API_CODE"])
+					$arIBlock["API_CODE"] = $ar["VALUE"];
 				elseif($ar["NAME"] == $this->mess["IBLOCK_XML2_BX_SORT"])
 					$arIBlock["SORT"] = $ar["VALUE"];
 				elseif($ar["NAME"] == $this->mess["IBLOCK_XML2_BX_LIST_URL"])
@@ -5427,6 +5429,7 @@ class CIBlockCMLExport
 	var $file_dir = false;
 	/** @var bool|array */
 	var $next_step = false;
+	/** @var array */
 	var $arIBlock = false;
 	var $prices = array();
 	var $only_price = false;
@@ -6191,6 +6194,7 @@ class CIBlockCMLExport
 			{
 				fwrite($this->fp,
 					$this->formatXMLNode(2, GetMessage("IBLOCK_XML2_BX_CODE"), $this->arIBlock["CODE"])
+					.$this->formatXMLNode(2, GetMessage("IBLOCK_XML2_BX_API_CODE"), (string)$this->arIBlock["API_CODE"])
 					.$this->formatXMLNode(2, GetMessage("IBLOCK_XML2_BX_SORT"), intval($this->arIBlock["SORT"]))
 					.$this->formatXMLNode(2, GetMessage("IBLOCK_XML2_BX_LIST_URL"), $this->arIBlock["LIST_PAGE_URL"])
 					.$this->formatXMLNode(2, GetMessage("IBLOCK_XML2_BX_DETAIL_URL"), $this->arIBlock["DETAIL_PAGE_URL"])

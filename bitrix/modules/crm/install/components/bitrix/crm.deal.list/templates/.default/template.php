@@ -1281,6 +1281,7 @@ if(!$isInternal):
 					new exports.PushCrmSettings({
 						entityTypeId: <?= (int)\CCrmOwnerType::Deal ?>,
 						rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
+						grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
 						<?php if (is_string($todoCreateNotificationSkipPeriod)): ?>
 						todoCreateNotificationSkipPeriod: '<?= \CUtil::JSEscape($todoCreateNotificationSkipPeriod) ?>',
 						<?php endif; ?>

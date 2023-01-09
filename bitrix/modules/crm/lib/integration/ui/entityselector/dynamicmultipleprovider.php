@@ -126,12 +126,12 @@ class DynamicMultipleProvider extends BaseProvider
 
 		foreach ($idsByEntityId as $entityTypeId => $idsList)
 		{
-			$idsList = $this->filterOutNonExistentEntityIds($entityTypeId, $idsList);
+			$items[] = $this->makeItemsByTypeAndId($entityTypeId, $idsList);
+		}
 
-			foreach ($idsList as $entityId)
-			{
-				$items[] = $this->makeItem($entityTypeId, $entityId);
-			}
+		if (!empty($items))
+		{
+			$items = array_merge(...$items);
 		}
 
 		return $items;
@@ -166,6 +166,19 @@ class DynamicMultipleProvider extends BaseProvider
 		}
 
 		return $idsByEntityId;
+	}
+
+	protected function makeItemsByTypeAndId(int $entityTypeId, array $ids): array
+	{
+		$items = [];
+
+		$idsList = $this->filterOutNonExistentEntityIds($entityTypeId, $ids);
+		foreach ($idsList as $entityId)
+		{
+			$items[] = $this->makeItem($entityTypeId, $entityId);
+		}
+
+		return $items;
 	}
 
 	protected function filterOutNonExistentEntityIds(int $entityTypeId, array $ids): array
@@ -333,7 +346,7 @@ class DynamicMultipleProvider extends BaseProvider
 
 			$resultIds = $searchProvider->getSearchResult($searchQuery->getQuery())->getIds();
 
-			$dialog->addItems($this->makeItemsByIds($resultIds));
+			$dialog->addItems($this->makeItemsByTypeAndId($entityTypeId, $resultIds));
 
 			$countFound += count($resultIds);
 			$maxLimit = max($maxLimit, $searchProvider->getLimit());

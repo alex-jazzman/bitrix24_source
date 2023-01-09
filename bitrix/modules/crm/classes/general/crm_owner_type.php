@@ -1900,7 +1900,7 @@ class CCrmOwnerType
 					array('@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'),
 					false,
 					false,
-					array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_ID', 'COMPANY_TITLE', 'PHOTO', 'ASSIGNED_BY_ID')
+					array('ID', 'HONORIFIC', 'NAME', 'POST', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_ID', 'COMPANY_TITLE', 'PHOTO', 'ASSIGNED_BY_ID')
 				);
 				break;
 			}
@@ -2292,6 +2292,7 @@ class CCrmOwnerType
 				$result = array(
 					'TITLE' => CCrmContact::PrepareFormattedName($arRes),
 					'LEGEND' => isset($arRes['COMPANY_TITLE']) ? $arRes['COMPANY_TITLE'] : '',
+					'POST' => isset($arRes['POST']) ? $arRes['POST'] : '',
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => isset($arRes['PHOTO']) ? intval($arRes['PHOTO']) : 0,
 					'SHOW_URL' =>

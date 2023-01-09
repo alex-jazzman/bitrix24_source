@@ -279,7 +279,15 @@ jn.define('crm/storage/base', (require, exports, module) => {
 			if (response.error || response.errors && response.errors.length)
 			{
 				console.warn(`Fetch error for ${this.getStorageId()} {${pathTo}}.`, response);
-				return;
+
+				const notFoundOrAccessDenied = Array.isArray(response.errors) && response.errors.some((error) => {
+					return error.code === 'NOT_FOUND' || error.code === 'ACCESS_DENIED';
+				});
+				if (!notFoundOrAccessDenied)
+				{
+					// cancel storage update, it seems like some internal error or internet connection
+					return;
+				}
 			}
 
 			this.setTtlValue(pathTo, this.getCurrentTimeInSeconds());
@@ -295,14 +303,15 @@ jn.define('crm/storage/base', (require, exports, module) => {
 		updateDataInStorage(pathTo, data, skipEvents = false)
 		{
 			const currentData = this.getDataValue(pathTo);
-			if (!isEqual(currentData, data))
+
+			if (!isEqual(currentData, data) || data === null)
 			{
 				this.setDataValue(pathTo, data);
+			}
 
-				if (!skipEvents)
-				{
-					this.publishOnChange();
-				}
+			if (!skipEvents)
+			{
+				this.publishOnChange();
 			}
 		}
 

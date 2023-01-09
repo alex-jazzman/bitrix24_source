@@ -6,5 +6,6 @@ $MESS["TIMEMAN_SECTION_MONITOR_REPORT_ITEM_TITLE"] = "Асистент робо�
 $MESS["TIMEMAN_SECTION_PERMISSIONS_ITEM_TITLE"] = "Права доступу";
 $MESS["TIMEMAN_SECTION_ROOT_ITEM_TITLE"] = "Час та Звіти";
 $MESS["TIMEMAN_SECTION_SCHEDULES_ITEM_TITLE"] = "Робочі графіки";
+$MESS["TIMEMAN_SECTION_USER_LOGIN_HISTORY"] = "Історія входів";
 $MESS["TIMEMAN_SECTION_WORK_REPORT_ITEM_TITLE"] = "Робочі звіти";
 $MESS["TIMEMAN_SECTION_WORK_TIME_ITEM_TITLE"] = "Робочий час";

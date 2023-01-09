@@ -241,7 +241,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 			'FILTER' => [
 				[
 					'id' => 'DATE',
-					'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_DATE'),
+					'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_WHEN'),
 					'type' => 'date',
 					'default' => true,
 					'exclude' => [
@@ -383,7 +383,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 		return [
 			[
 				'id' => 'DATE',
-				'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_DATE'),
+				'name' => Loc::getMessage('INTRANET_USER_LOGIN_HISTORY_GRID_COLUMN_NAME_WHEN'),
 				'sort' => 'LOGIN_DATE',
 				'default' => true,
 			],

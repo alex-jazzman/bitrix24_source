@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'loc',
 		'alert',
 		'utils/array',
 		'utils/string',
@@ -11,6 +12,7 @@ return [
 		'crm:selector/utils/processing',
 		'crm:entity-detail/opener',
 		'crm:type',
+		'crm:loc',
 		'layout/ui/buttons/add-button',
 		'assets/common',
 	],

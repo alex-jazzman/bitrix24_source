@@ -90,7 +90,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      _this.disable();
 	    }
 
-	    main_core.Event.bind(_this.input, 'paste', _this.onPaste);
+	    if (options.skipPasteControl !== true) {
+	      main_core.Event.bind(_this.input, 'paste', _this.onPaste);
+	    }
 
 	    _this.init();
 

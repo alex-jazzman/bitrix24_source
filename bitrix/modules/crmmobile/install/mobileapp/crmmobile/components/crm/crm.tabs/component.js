@@ -1,6 +1,4 @@
 (() => {
-	const { KanbanTab } = jn.require('crm/entity-tab/kanban');
-	const { ListTab } = jn.require('crm/entity-tab/list');
 	const {
 		clone,
 		get,
@@ -9,6 +7,8 @@
 		mergeImmutable,
 	} = jn.require('utils/object');
 	const { throttle } = jn.require('utils/function');
+	const { KanbanTab } = jn.require('crm/entity-tab/kanban');
+	const { ListTab } = jn.require('crm/entity-tab/list');
 	const { Search } = jn.require('crm/entity-tab/search');
 	const { ActivityCountersStoreManager } = jn.require('crm/state-storage');
 	const { Type } = jn.require('crm/type');

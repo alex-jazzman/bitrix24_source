@@ -783,6 +783,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      required: false,
 	      default: ''
 	    },
+	    hint: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
 	    action: {
 	      type: Object,
 	      required: false,
@@ -799,7 +804,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    className() {
 	      return {
 	        'crm-timeline__card-status': true,
-	        '--clickable': !!this.action
+	        '--clickable': !!this.action,
+	        '--hint': !!this.hint
 	      };
 	    },
 
@@ -834,13 +840,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        title,
 	        type
 	      } = tagOptions;
-	      const uppercaseTitle = title && typeof title === 'string' ? title.toUpperCase() : '';
+	      const uppercaseTitle = title && main_core.Type.isString(title) ? title.toUpperCase() : '';
 	      const label = new ui_label.Label({
 	        text: uppercaseTitle,
 	        color: this.getLabelColorFromTagType(type),
 	        fill: true
 	      });
-	      this.tagContainerRef.appendChild(label.render());
+	      main_core.Dom.clean(this.tagContainerRef);
+	      main_core.Dom.append(label.render(), this.tagContainerRef);
 	    },
 
 	    executeAction() {
@@ -861,8 +868,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  },
 
+	  updated() {
+	    this.renderTag({
+	      title: this.title,
+	      type: this.type
+	    });
+	  },
+
 	  template: `
-		<div ref="tag" :class="className" @click="executeAction"></div>
+		<div ref="tag" :title="hint" :class="className" @click="executeAction"></div>
 	`
 	};
 
@@ -951,31 +965,20 @@ this.BX.Crm = this.BX.Crm || {};
 	    icon: {
 	      type: String,
 	      required: false,
-	      default: 'auto-sum'
+	      default: ''
 	    },
 	    textBlocks: {
-	      type: Object,
+	      type: Array,
 	      required: false,
-	      default: () => ({
-	        'text1': {
-	          type: 'text',
-	          options: {
-	            text: 'Now the amount is calculated automatically based on the value of the goods in the transaction. ' // text: 'Hello my friend, want more?'
-
-	          }
-	        },
-	        'link1': {
-	          type: 'link',
-	          options: {
-	            text: 'More',
-	            action: () => {}
-	          }
-	        }
-	      })
+	      default: []
 	    }
 	  },
 	  computed: {
 	    hintContentIcon() {
+	      if (this.icon === '') {
+	        return null;
+	      }
+
 	      const iconElement = main_core.Dom.create('i');
 	      return main_core.Dom.create('div', {
 	        attrs: {
@@ -995,7 +998,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 
 	    hintContentTextBlocks() {
-	      return Object.values(this.textBlocks).map(this.getContentBlockNode);
+	      return this.textBlocks.map(this.getContentBlockNode);
 	    },
 
 	    hintContentIconClassname() {
@@ -1007,6 +1010,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      return ['ui-hint', 'crm-timeline__header-hint', {
 	        '--active': this.hintPopup
 	      }];
+	    },
+
+	    hasContent() {
+	      return this.textBlocks.length > 0;
 	    }
 
 	  },
@@ -1164,6 +1171,7 @@ this.BX.Crm = this.BX.Crm || {};
 			@click.stop.prevent
 			@mouseenter="onMouseEnterToHint"
 			@mouseleave="onHintAreaMouseLeave"
+			v-if="hasContent"
 			:class="hintIconClassname"
 		>
 			<span class="ui-hint-icon" />
@@ -1738,11 +1746,6 @@ this.BX.Crm = this.BX.Crm || {};
 
 	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
 	  props: {
-	    id: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
 	    type: {
 	      type: String,
 	      required: false,
@@ -1764,7 +1767,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    return {
 	      popup: null,
 	      uiButton: Object.freeze(null),
-	      currentState: this.state,
 	      timerSecondsRemaining: 0
 	    };
 	  },
@@ -2453,6 +2455,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _currentUser = /*#__PURE__*/new WeakMap();
 
+	var _ownerTypeId = /*#__PURE__*/new WeakMap();
+
+	var _ownerId = /*#__PURE__*/new WeakMap();
+
 	var _controllers = /*#__PURE__*/new WeakMap();
 
 	var _layoutComponent = /*#__PURE__*/new WeakMap();
@@ -2533,6 +2539,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _ownerTypeId, {
+	      writable: true,
+	      value: null
+	    });
+
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _ownerId, {
+	      writable: true,
+	      value: null
+	    });
+
 	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _controllers, {
 	      writable: true,
 	      value: null
@@ -2576,6 +2592,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        babelHelpers.classPrivateFieldSet(this, _useShortTimeFormat, settings.useShortTimeFormat || false);
 	        babelHelpers.classPrivateFieldSet(this, _isReadOnly, settings.isReadOnly || false);
 	        babelHelpers.classPrivateFieldSet(this, _currentUser, settings.currentUser || null);
+	        babelHelpers.classPrivateFieldSet(this, _ownerTypeId, settings.ownerTypeId);
+	        babelHelpers.classPrivateFieldSet(this, _ownerId, settings.ownerId);
 	        babelHelpers.classPrivateFieldSet(this, _streamType, settings.streamType || crm_timeline_item.StreamType.history);
 	      }
 
@@ -2745,6 +2763,35 @@ this.BX.Crm = this.BX.Crm || {};
 	          sort: babelHelpers.classPrivateFieldGet(this, _sort),
 	          layout: this.getLayout().asPlainObject()
 	        }
+	      });
+	    }
+	  }, {
+	    key: "reloadFromServer",
+	    value: function reloadFromServer() {
+	      const data = {
+	        ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
+	        ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId)
+	      };
+
+	      if (babelHelpers.classPrivateFieldGet(this, _streamType) === crm_timeline_item.StreamType.history || babelHelpers.classPrivateFieldGet(this, _streamType) === crm_timeline_item.StreamType.pinned) {
+	        data.historyIds = [this.getId()];
+	      } else if (babelHelpers.classPrivateFieldGet(this, _streamType) === crm_timeline_item.StreamType.scheduled) {
+	        data.activityIds = [this.getId()];
+	      } else {
+	        throw new Error('Wrong stream type');
+	      }
+
+	      return main_core.ajax.runAction('crm.timeline.item.load', {
+	        data
+	      }).then(response => {
+	        Object.values(response.data).forEach(item => {
+	          if (item.id === this.getId()) {
+	            this.setData(item);
+	            this.refreshLayout();
+	          }
+	        });
+	      }).catch(err => {
+	        console.error(err);
 	      });
 	    }
 	  }], [{
@@ -4495,6 +4542,54 @@ this.BX.Crm = this.BX.Crm || {};
 		</span>`
 	};
 
+	const InfoGroup = {
+	  props: {
+	    blocks: {
+	      type: Object,
+	      required: false,
+	      default: () => ({})
+	    }
+	  },
+	  template: `
+		<table class="crm-timeline__info-group">
+			<tbody>
+				<tr
+					v-for="({title, block}, id) in blocks"
+					:key="id"
+					class="crm-timeline__info-group_block"
+				>
+					<td
+						:title="title"
+						class="crm-timeline__info-group_block-title"
+					>
+						{{title}}
+					</td>
+					<td class="crm-timeline__info-group_block-content">
+						<component
+							:is="block.rendererName"
+							v-bind="block.properties"
+						/>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	`
+	};
+
+	const SmsMessage = {
+	  props: {
+	    contentBlock: Object
+	  },
+	  template: `
+		<div
+			class="crm-timeline__item_sms-message">
+			<span>
+				<component v-if="contentBlock" :is="contentBlock.rendererName" v-bind="contentBlock.properties"></component>
+			</span>
+		</div>
+	`
+	};
+
 	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
 
 	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -4542,7 +4637,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        EditableDate,
 	        PlayerAlert,
 	        DatePill,
-	        Note
+	        Note,
+	        InfoGroup,
+	        SmsMessage
 	      };
 	    }
 	    /**
@@ -5312,6 +5409,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _changePlayerState = /*#__PURE__*/new WeakSet();
 
+	var _downloadRecord = /*#__PURE__*/new WeakSet();
+
 	let Call = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Call, _Base);
 
@@ -5320,6 +5419,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    babelHelpers.classCallCheck(this, Call);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Call).call(this, ...args));
+
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _downloadRecord);
 
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _changePlayerState);
 
@@ -5359,6 +5460,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      if (action === 'Call:ChangePlayerState' && actionData && actionData.recordId) {
 	        _classPrivateMethodGet$7(this, _changePlayerState, _changePlayerState2).call(this, item, actionData.recordId);
+	      }
+
+	      if (action === 'Call:DownloadRecord' && actionData && actionData.url) {
+	        _classPrivateMethodGet$7(this, _downloadRecord, _downloadRecord2).call(this, actionData.url);
 	      }
 	    }
 	  }], [{
@@ -5441,6 +5546,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	function _downloadRecord2(url) {
+	  location.href = url;
+	}
+
 	let ToDo = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(ToDo, _Base);
 
@@ -5478,6 +5587,55 @@ this.BX.Crm = this.BX.Crm || {};
 	  return ToDo;
 	}(Base);
 
+	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _openHelpdesk = /*#__PURE__*/new WeakSet();
+
+	let Helpdesk = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(Helpdesk, _Base);
+
+	  function Helpdesk(...args) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, Helpdesk);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Helpdesk).call(this, ...args));
+
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _openHelpdesk);
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(Helpdesk, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionData
+	      } = actionParams;
+
+	      if (action === 'Helpdesk:Open' && actionData && actionData.articleCode) {
+	        _classPrivateMethodGet$8(this, _openHelpdesk, _openHelpdesk2).call(this, actionData.articleCode);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return true;
+	    }
+	  }]);
+	  return Helpdesk;
+	}(Base);
+
+	function _openHelpdesk2(articleCode) {
+	  if (top.BX && top.BX.Helper) {
+	    top.BX.Helper.show(`redirect=detail&code=${articleCode}`);
+	  }
+	}
+
 	ControllerManager.registerController(Activity);
 	ControllerManager.registerController(CommonContentBlocks);
 	ControllerManager.registerController(OpenLines);
@@ -5486,6 +5644,7 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(Document);
 	ControllerManager.registerController(Call);
 	ControllerManager.registerController(ToDo);
+	ControllerManager.registerController(Helpdesk);
 
 	exports.Item = Item;
 	exports.ConfigurableItem = ConfigurableItem;

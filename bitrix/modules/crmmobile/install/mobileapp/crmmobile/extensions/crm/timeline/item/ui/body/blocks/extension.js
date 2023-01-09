@@ -15,6 +15,7 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 	const { TimelineItemBodyPlayerAlertBlock: PlayerAlert } = require('crm/timeline/item/ui/body/blocks/player-alert');
 	const { TimelineItemBodyEditableDescriptionBlock: EditableDescription } = require('crm/timeline/item/ui/body/blocks/editable-description');
 	const { TimelineItemBodyNoteBlock: Note } = require('crm/timeline/item/ui/body/blocks/note');
+	const { TimelineItemBodyFileList: FileList } = require('crm/timeline/item/ui/body/blocks/file-list');
 
 	const AvailableBlocks = {
 		TextBlock,
@@ -29,6 +30,7 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		PlayerAlert,
 		EditableDescription,
 		Note,
+		FileList,
 	};
 
     /**
@@ -39,12 +41,14 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		/**
 		 * @param {TimelineItemModel} model
 		 * @param {EventEmitter} itemScopeEventBus
+		 * @param {EventEmitter} timelineScopeEventBus
 		 * @param {function} onAction
 		 */
-		constructor({ model, itemScopeEventBus, onAction })
+		constructor({ model, itemScopeEventBus, timelineScopeEventBus, onAction })
 		{
 			this.model = model;
 			this.itemScopeEventBus = itemScopeEventBus;
+			this.timelineScopeEventBus = timelineScopeEventBus;
 			this.onAction = onAction;
 		}
 

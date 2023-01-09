@@ -384,7 +384,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 		{
 			if (this.isComplexSelector())
 			{
-				return this.state.entityList.map(({ id, type }) => [type, id]);
+				return this.state.entityList.map(({ id, type }) => (type && id) && [type, id]).filter(Boolean);
 			}
 
 			return this.state.entityList.map((entity) => entity.id);

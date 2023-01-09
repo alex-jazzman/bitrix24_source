@@ -26,11 +26,12 @@ jn.define('crm/work-time', (require, exports, module) => {
 	{
 		/**
 		 * @param {Moment|null} moment
+		 * @param {object|null} calendar
 		 */
-		constructor(moment)
+		constructor(moment, calendar = null)
 		{
 			this.moment = moment || new Moment();
-			this.calendar = currentCalendar;
+			this.calendar = calendar || currentCalendar;
 		}
 
 		/**

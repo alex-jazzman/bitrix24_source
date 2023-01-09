@@ -50,7 +50,9 @@
 			return r;
 		}
 		else
+		{
 			return value;
+		}
 	}
 
 	function number_format(number, decimals, dec_point, thousands_sep)
@@ -63,7 +65,9 @@
 		}
 		dec_point = dec_point || ',';
 		if (typeof thousands_sep === 'undefined')
+		{
 			thousands_sep = '.';
+		}
 
 		number = (+number || 0).toFixed(decimals);
 		if (number < 0)
@@ -99,6 +103,53 @@
 		return str.replace(new RegExp(search, 'g'), replace);
 	}
 
+	/**
+	 * Splits string into an array of its words.
+	 * @param string
+	 * @param pattern
+	 * @returns {string[]}
+	 */
+	function splitByWords(string, pattern = '')
+	{
+		const specialChars = pattern || `!"#$%&'()*+,-.\/:;<=>?@[\\]^_\`{|}`;
+		const specialCharsRegExp = new RegExp(`[${specialChars}]`, 'g');
+
+		const clearedQuery = (
+			string
+				.replace(specialCharsRegExp, ' ')
+				.replace(/\s\s+/g, ' ')
+		);
+
+		return (
+			clearedQuery
+				.toLowerCase()
+				.split(' ')
+				.filter(word => word !== '')
+		);
+	}
+
+	/**
+	 * Compare words use IntlCollator
+	 * @param wordFirst
+	 * @param wordSecond
+	 * @returns {boolean}
+	 */
+	const compareWords = (wordFirst, wordSecond) => {
+		const collator = IntlCollator();
+		if (collator)
+		{
+			wordSecond = wordSecond.substring(0, wordFirst.length);
+
+			return collator.compare(wordFirst, wordSecond) === 0;
+		}
+
+		return wordSecond.indexOf(wordFirst) === 0;
+	};
+
+	const IntlCollator = () => Application.getPlatform() === 'ios' && Intl && Intl.Collator
+		? new Intl.Collator(undefined, { sensitivity: 'base' })
+		: null;
+
 	if (!String.prototype.replaceAll)
 	{
 		String.prototype.replaceAll = function(search, replace) {
@@ -124,7 +175,7 @@
 
 		static camelize(value)
 		{
-			return camelize(value)
+			return camelize(value);
 		}
 
 		static trim(value)
@@ -151,6 +202,9 @@
 			camelize,
 			trim,
 			number_format,
+			splitByWords,
+			compareWords,
+			IntlCollator,
 			replaceAll,
 		};
 

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["DOCGEN_TEMPLATE_ADD_ACTIVE"] = "Активність";
 $MESS["DOCGEN_TEMPLATE_ADD_ADD_USER_LINK"] = "Додати ще";
 $MESS["DOCGEN_TEMPLATE_ADD_CANCEL"] = "Скасувати";
@@ -14,6 +14,10 @@ $MESS["DOCGEN_TEMPLATE_ADD_FORMATS"] = "Формат файлів для шаб�
 $MESS["DOCGEN_TEMPLATE_ADD_INSTALL"] = "Встановити";
 $MESS["DOCGEN_TEMPLATE_ADD_MAIN_PROVIDER"] = "Прив'язати до розділів CRM";
 $MESS["DOCGEN_TEMPLATE_ADD_NAME"] = "Назва";
+$MESS["DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT"] = "Товари й Послуги";
+$MESS["DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT_GOODS"] = "Товари";
+$MESS["DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT_SERVICE"] = "Послуги";
+$MESS["DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT_TITLE"] = "Таблична частина";
 $MESS["DOCGEN_TEMPLATE_ADD_PROGRESS"] = "Йде завантаження...";
 $MESS["DOCGEN_TEMPLATE_ADD_REINSTALL"] = "Відновити версію шаблона за замовчуванням";
 $MESS["DOCGEN_TEMPLATE_ADD_REINSTALL_CONFIRM"] = "Ви впевнені, що хочете замінити файл шаблоном за замовчуванням?";
@@ -29,4 +33,3 @@ $MESS["DOCGEN_TEMPLATE_ADD_TEMPLATE_REGION"] = "Прив'язати до кра�
 $MESS["DOCGEN_TEMPLATE_ADD_UPLOAD_NEW"] = "Завантажити новий";
 $MESS["DOCGEN_TEMPLATE_ADD_USERS"] = "Хто буде працювати з шаблоном";
 $MESS["DOCGEN_TEMPLATE_ADD_WITH_STAMPS"] = "З підписами і печаткою";
-?>

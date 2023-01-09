@@ -17,6 +17,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 	const { clone, get } = require('utils/object');
 	const { capitalize } = require('utils/string');
 	const { ActivityCountersStoreManager } = require('crm/state-storage');
+	const { getActionToChangePipeline } = require('crm/entity-actions');
 
 	const iconColor = '#767c87';
 
@@ -135,6 +136,16 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			}
 		}
 
+		blinkItemListView(itemId)
+		{
+			return this.getCurrentStatefulList().blinkItem(itemId);
+		}
+
+		deleteRowFromListView(itemId)
+		{
+			this.getCurrentStatefulList().deleteRowFromListView({ itemId });
+		}
+
 		onSearch(params)
 		{
 			const { data } = params;
@@ -148,6 +159,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			if (params.counter && params.counter.code)
 			{
 				this.setCounterFilter(params);
+
 				return;
 			}
 
@@ -270,7 +282,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 						qrUrl: this.getEntityType(this.props.entityTypeId).link,
 					},
 				},
-			]
+			];
 
 			const entity = TypeFactory.getEntityByType(this.entityTypeName);
 
@@ -296,7 +308,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			let rect = '';
 			let dot = '';
-			let magnifierColor = '#c5c8d0';
+			let magnifierColor = '#A8ADB4';
 			let magnifierSvg = null;
 
 			if (this.state.searchButtonBackgroundColor)
@@ -384,7 +396,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			{
 				const model = this.getEntityTypeModel();
 
-				const {filter} = this;
+				const { filter } = this;
 
 				if (
 					filter.isActive()
@@ -415,7 +427,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			if (this.getCurrentEntityType().isStagesEnabled)
 			{
-				return model.getEmptyColumnScreenConfig()
+				return model.getEmptyColumnScreenConfig();
 			}
 
 			return model.getEmptyEntityScreenConfig();
@@ -483,7 +495,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 								BX.postComponentEvent('UI.Kanban::onItemMoved', [{
 									item,
 									oldItem: oldItem.props.item,
-									resolveParams: { action }
+									resolveParams: { action },
 								}]);
 
 								reject();
@@ -917,7 +929,9 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		 */
 		getItemActions()
 		{
-			const canUpdate = Boolean(this.getCurrentEntityType().permissions.update);
+			const { typeName, permissions, canUseCategoryId } = this.getCurrentEntityType();
+			const canUpdate = Boolean(permissions.update);
+
 			const actions = [
 				{
 					id: 'open',
@@ -938,13 +952,37 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			actions.push(...this.getItemActionsByEntityType());
 
+			if (canUseCategoryId)
+			{
+				const { entityTypeId } = this.props;
+				const actionName = 'changeCategory';
+				const { title, svgIcon, onAction } = getActionToChangePipeline();
+
+				actions.push({
+					id: actionName,
+					title,
+					type: actionName,
+					onClickCallback: (action, itemId, { parentWidget }) => {
+						const categoryId = this.getCategoryId(entityTypeId);
+						parentWidget.close(() => {
+							const changeParams = { categoryId, itemId, parentWidget, entityType: typeName };
+							onAction(changeParams)
+								.then(() => this.blinkItemListView(itemId))
+								.then(() => this.deleteRowFromListView(itemId));
+						});
+					},
+					isDisabled: !canUpdate,
+					data: { svgIcon },
+				});
+			}
+
 			actions.push({
 				id: 'delete',
 				title: this.getEntityMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE'),
 				type: 'delete',
 				onClickCallback: this.deleteItemConfirm,
 				onDisableClick: this.showForbiddenDeleteNotification.bind(this),
-				isDisabled: !this.getCurrentEntityType().permissions.delete,
+				isDisabled: !permissions.delete,
 			});
 
 			actions.push({
@@ -1085,7 +1123,8 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				return null;
 			}
 
-			return BX.prop.getString(entityType.data, 'presetId', null);
+			const defaultFilterId = BX.prop.getString(entityType.data, 'defaultFilterId', null);
+			return (defaultFilterId || BX.prop.getString(entityType.data, 'presetId', null));
 		}
 	}
 

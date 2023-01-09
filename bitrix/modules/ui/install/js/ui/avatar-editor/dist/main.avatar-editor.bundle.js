@@ -2126,7 +2126,7 @@ this.BX.UI = this.BX.UI || {};
 
 	  if (main_core.Type.isPlainObject(file) && (file['src'] || file['tmp_url'])) {
 	    const src = file['src'] || file['tmp_url'];
-	    babelHelpers.classPrivateFieldLooseBase(this, _image)[_image].src = src + (src.indexOf("?") > 0 ? '&' : '?') + 'imageUploader' + babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1] + babelHelpers.classPrivateFieldLooseBase(this, _justACounter)[_justACounter]++;
+	    babelHelpers.classPrivateFieldLooseBase(this, _image)[_image].src = encodeURI(src) + (src.indexOf("?") > 0 ? '&' : '?') + 'imageUploader' + babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1] + babelHelpers.classPrivateFieldLooseBase(this, _justACounter)[_justACounter]++;
 	  } else {
 	    const res = Object.prototype.toString.call(file);
 

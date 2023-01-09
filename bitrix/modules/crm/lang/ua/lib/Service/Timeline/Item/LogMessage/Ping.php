@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_TIMELINE_LOG_PING_ACTIVITY_STARTED_NEW"] = "Просто зараз";
+$MESS["CRM_TIMELINE_LOG_PING_ACTIVITY_START_NEW"] = "Залишилось #OFFSET# хв.";
+$MESS["CRM_TIMELINE_LOG_PING_TIME_PRETEXT_NEW"] = "сьогодні в #TIME#";
+$MESS["CRM_TIMELINE_LOG_PING_TITLE_NEW"] = "Нагадування про справу";

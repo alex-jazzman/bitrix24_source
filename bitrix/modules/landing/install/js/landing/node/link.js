@@ -210,6 +210,10 @@
 				delete value.text;
 			}
 
+			if (value.href.startsWith('selectActions:'))
+			{
+				value.href = '#';
+			}
 			return value;
 		},
 

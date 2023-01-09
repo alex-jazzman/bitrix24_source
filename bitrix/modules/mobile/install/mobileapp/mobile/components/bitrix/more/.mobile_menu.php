@@ -1023,6 +1023,25 @@ JS,
 		],
 	];
 
+	$developerMenuItems[] = [
+		"title" => "Developer playground",
+		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+		"color" => '#8590a2',
+		"hidden" => false,
+		"attrs" => [
+			"id" => "playground",
+			"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'playground',
+					object: 'layout',
+					widgetParams: {
+						title: 'Developer playground'
+					}
+				});
+JS,
+		],
+	];
+
 	if (!empty($developerMenuItems))
 	{
 		$menuStructure[] = [

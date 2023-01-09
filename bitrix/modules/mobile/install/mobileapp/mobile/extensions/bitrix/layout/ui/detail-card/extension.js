@@ -106,6 +106,7 @@
 			this.handleTabScroll = this.handleTabScroll.bind(this);
 			this.handleTabPreloadRequest = this.handleTabPreloadRequest.bind(this);
 			this.handleOnSaveLock = this.setLoading.bind(this);
+			this.handleClose = this.close.bind(this);
 			this.handleEntityModelReady = this.handleEntityModelReady.bind(this);
 			this.handleEntityModelChange = this.handleEntityModelChange.bind(this);
 			this.handleEntityEditorInit = this.handleEntityEditorInit.bind(this);
@@ -139,6 +140,7 @@
 				.off('DetailCard::onTabPreloadRequest', this.handleTabPreloadRequest)
 				.off('DetailCard::onTabCounterChange', this.setTabCounter)
 				.off('DetailCard::onSaveLock', this.handleOnSaveLock)
+				.off('DetailCard::close', this.handleClose)
 				.off('UI.EntityEditor.Model::onReady', this.handleEntityModelReady)
 				.off('UI.EntityEditor.Model::onChange', this.handleEntityModelChange)
 				.off('UI.EntityEditor::onInit', this.handleEntityEditorInit)
@@ -157,6 +159,7 @@
 				.on('DetailCard::onTabCounterChange', this.setTabCounter)
 				.on('DetailCard::onShowTopToolbar', this.showTopToolbar.bind(this))
 				.on('DetailCard::onSaveLock', this.handleOnSaveLock)
+				.on('DetailCard::close', this.handleClose)
 				.on('UI.EntityEditor.Model::onReady', this.handleEntityModelReady)
 				.on('UI.EntityEditor.Model::onChange', this.handleEntityModelChange)
 				.on('UI.EntityEditor::onInit', this.handleEntityEditorInit)
@@ -261,6 +264,7 @@
 				if (this.isToolPanelVisible())
 				{
 					buttons.push({
+						id: 'save-entity',
 						name: this.getSaveButtonTitle(),
 						type: 'text',
 						badgeCode: 'save_entity',

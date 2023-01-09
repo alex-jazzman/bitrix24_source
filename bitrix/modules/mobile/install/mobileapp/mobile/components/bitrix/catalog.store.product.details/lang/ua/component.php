@@ -1,10 +1,16 @@
 <?php
+$MESS["CSPD_ACCESS_DENIED"] = "Недостатньо прав";
+$MESS["CSPD_ACCESS_DENIED_NOTIFY_TEXT"] = "Зверніться до адміністратора порталу";
 $MESS["CSPD_ADD_SKU_OR_SERIAL_NUMBER"] = "Додати варіації чи серійні номери";
 $MESS["CSPD_CLOSE"] = "Закрити";
 $MESS["CSPD_DONE"] = "Готово";
+$MESS["CSPD_EDIT_ACCESS_DENIED_NOTIFY_TITLE"] = "Недостатньо прав для редагування";
 $MESS["CSPD_FIELDS_BARCODE"] = "Штрихкод";
 $MESS["CSPD_FIELDS_MEASURES"] = "Одиниці";
 $MESS["CSPD_FIELDS_PHOTOS"] = "Фотографії товару";
+$MESS["CSPD_FIELDS_PHOTOS_UPLOADING"] = "Фотографії товару завантажуються";
+$MESS["CSPD_FIELDS_PHOTOS_UPLOADING_BUTTON"] = "Відкрити доступ";
+$MESS["CSPD_FIELDS_PHOTOS_UPLOADING_DESC"] = "Дочекайтеся завантаження або видаліть завантажувані фотографії.";
 $MESS["CSPD_FIELDS_PRODUCT_NAME"] = "Назва товару";
 $MESS["CSPD_FIELDS_PRODUCT_SECTIONS"] = "Прив'язка до розділів";
 $MESS["CSPD_FIELDS_PURCHASING_PRICE"] = "Закупівельна ціна";
@@ -13,3 +19,4 @@ $MESS["CSPD_FIELDS_STORE"] = "Склад";
 $MESS["CSPD_FIELDS_STORE_TO_AMOUNT"] = "Прийнято на склад";
 $MESS["CSPD_MORE_OPPORTUNITIES"] = "Додаткові можливості";
 $MESS["CSPD_OPEN_PRODUCT_IN_DESKTOP_VERSION"] = "Відкрити товар у повній версії";
+$MESS["CSPD_READ_ACCESS_DENIED_NOTIFY_TITLE"] = "Недостатньо прав для перегляду.";

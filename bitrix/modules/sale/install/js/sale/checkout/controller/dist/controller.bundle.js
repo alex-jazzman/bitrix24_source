@@ -11,10 +11,11 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         this.timer = this.getTimer();
         this.running = 'N';
       }
-
       /**
        * @private
        */
+
+
       babelHelpers.createClass(Basket, [{
         key: "getPool",
         value: function getPool() {
@@ -23,6 +24,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "getTimer",
         value: function getTimer() {
@@ -31,6 +33,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "isRunning",
         value: function isRunning() {
@@ -39,6 +42,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "setRunningY",
         value: function setRunningY() {
@@ -47,6 +51,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "setRunningN",
         value: function setRunningN() {
@@ -55,6 +60,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "setStore",
         value: function setStore(store) {
@@ -64,6 +70,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "setProvider",
         value: function setProvider(provider) {
@@ -73,6 +80,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "executeRestAnswer",
         value: function executeRestAnswer(command, result, extra) {
@@ -81,6 +89,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "getItem",
         value: function getItem(index) {
@@ -89,6 +98,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "getBasket",
         value: function getBasket() {
@@ -97,6 +107,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "getBasketCollection",
         value: function getBasketCollection() {
@@ -107,6 +118,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "changeItem",
         value: function changeItem(product) {
@@ -118,6 +130,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "setQuantity",
         value: function setQuantity(index, quantity) {
@@ -142,6 +155,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "refreshDiscount",
         value: function refreshDiscount() {
           var basket = this.getBasket();
+
           if (basket.length > 0) {
             this.store.dispatch('basket/setDiscount', {
               sum: basket.reduce(function (result, value) {
@@ -154,6 +168,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         key: "refreshTotal",
         value: function refreshTotal() {
           var basket = this.getBasketCollection();
+
           if (basket.length > 0) {
             this.store.dispatch('basket/setTotal', {
               price: basket.reduce(function (result, value) {
@@ -168,6 +183,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "removeItem",
         value: function removeItem(product) {
@@ -178,6 +194,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "round",
         value: function round(value) {
@@ -193,6 +210,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerOrderSuccess",
         value: function handlerOrderSuccess() {
@@ -201,6 +219,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerRemoveProductSuccess",
         value: function handlerRemoveProductSuccess() {
@@ -209,6 +228,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerRestoreProductSuccess",
         value: function handlerRestoreProductSuccess() {
@@ -217,6 +237,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerRemove",
         value: function handlerRemove(event) {
@@ -224,7 +245,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
           var fields = this.getItem(index);
           fields.deleted = 'Y';
           fields.status = sale_checkout_const.Loader.status.wait;
-          this.pool.add(sale_checkout_const.Pool.action.delete, index, {
+          this.pool.add(sale_checkout_const.Pool.action["delete"], index, {
             id: fields.id,
             fields: {
               value: 'Y'
@@ -239,10 +260,12 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerSuccessRemove",
         value: function handlerSuccessRemove(event) {
           var _this = this;
+
           var index = event.getData().index;
           this.timer.create(5000, index + '_DELETE', function () {
             return _this.removeItem({
@@ -259,6 +282,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerRestore",
         value: function handlerRestore(event) {
@@ -268,9 +292,8 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
             index: index + '_DELETE'
           });
           fields.deleted = 'N';
-          fields.status = sale_checkout_const.Loader.status.wait;
+          fields.status = sale_checkout_const.Loader.status.wait; //todo: send all fields ?
 
-          //todo: send all fields ?
           this.pool.add(sale_checkout_const.Pool.action.restore, index, {
             basePrice: fields.basePrice,
             baseSum: fields.baseSum,
@@ -296,6 +319,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerChangeQuantity",
         value: function handlerChangeQuantity(event) {
@@ -308,9 +332,11 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
           quantity = sale_checkout_lib.Basket.roundValue(quantity);
           ratio = sale_checkout_lib.Basket.roundValue(ratio);
           quantity = isNaN(quantity) ? 0 : quantity;
+
           if (ratio > 0 && quantity < ratio) {
             quantity = ratio;
           }
+
           if (sale_checkout_lib.Product.isService(fields)) ; else {
             // for products
             if (sale_checkout_lib.Product.isLimitedQuantity(fields)) {
@@ -319,7 +345,9 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
               }
             }
           }
+
           quantity = sale_checkout_lib.Basket.toFixed(quantity, ratio, available);
+
           if (fields.quantity !== quantity) {
             this.setQuantity(index, quantity);
           }
@@ -327,6 +355,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerQuantityPlus",
         value: function handlerQuantityPlus(event) {
@@ -338,9 +367,11 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
           quantity = sale_checkout_lib.Basket.roundValue(quantity);
           ratio = sale_checkout_lib.Basket.roundValue(ratio);
           quantity = quantity + ratio;
+
           if (sale_checkout_lib.Basket.isValueFloat(quantity)) {
             quantity = sale_checkout_lib.Basket.roundFloatValue(quantity);
           }
+
           if (sale_checkout_lib.Product.isService(fields)) ; else {
             // for products
             if (sale_checkout_lib.Product.isLimitedQuantity(fields)) {
@@ -349,7 +380,9 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
               }
             }
           }
+
           quantity = sale_checkout_lib.Basket.toFixed(quantity, ratio, available);
+
           if (fields.quantity < quantity) {
             this.setQuantity(index, quantity);
           }
@@ -357,6 +390,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerQuantityMinus",
         value: function handlerQuantityMinus(event) {
@@ -368,13 +402,16 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
           quantity = sale_checkout_lib.Basket.roundValue(quantity);
           ratio = sale_checkout_lib.Basket.roundValue(ratio);
           var delta = quantity = quantity - ratio;
+
           if (sale_checkout_lib.Basket.isValueFloat(quantity)) {
             quantity = sale_checkout_lib.Basket.roundFloatValue(quantity);
             delta = sale_checkout_lib.Basket.roundFloatValue(delta);
           }
+
           if (ratio > 0 && quantity < ratio) {
             quantity = ratio;
           }
+
           if (sale_checkout_lib.Product.isService(fields)) ; else {
             // for products
             if (sale_checkout_lib.Product.isLimitedQuantity(fields)) {
@@ -383,7 +420,9 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
               }
             }
           }
+
           quantity = sale_checkout_lib.Basket.toFixed(quantity, ratio, available);
+
           if (delta >= ratio) {
             this.setQuantity(index, quantity);
           }
@@ -391,15 +430,20 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "commit",
         value: function commit() {
           var _this2 = this;
+
           return new Promise(function (resolve, reject) {
             var fields = {};
+
             if (_this2.pool.isEmpty() === false) {
               fields = _this2.pool.get();
+
               _this2.pool.clean();
+
               var component = sale_checkout_const.Component.bitrixSaleOrderCheckout;
               var cmd = sale_checkout_const.RestMethod.saleEntityRecalculateBasket;
               main_core.ajax.runComponentAction(component, cmd, {
@@ -413,7 +457,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
                     return resolve();
                   });
                 });
-              }).catch();
+              })["catch"]();
             } else {
               resolve();
             }
@@ -422,14 +466,18 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "shelveCommit",
         value: function shelveCommit() {
           var _this3 = this;
+
           var index = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'BASKET';
+
           if (this.isRunning() === false) {
             this.timer.create(300, index, function () {
               _this3.setRunningY();
+
               _this3.commit().then(function () {
                 return _this3.setRunningN();
               });
@@ -439,6 +487,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "getStatus",
         value: function getStatus() {
@@ -447,6 +496,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "setStatusWait",
         value: function setStatusWait() {
@@ -458,6 +508,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "setStatusNone",
         value: function setStatusNone() {
@@ -469,6 +520,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerNeedRefreshY",
         value: function handlerNeedRefreshY() {
@@ -478,6 +530,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerNeedRefreshN",
         value: function handlerNeedRefreshN() {
@@ -487,6 +540,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "setNeedRefreshY",
         value: function setNeedRefreshY() {
@@ -498,6 +552,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "setNeedRefreshN",
         value: function setNeedRefreshN() {
@@ -509,6 +564,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerChangeSku",
         value: function handlerChangeSku(event) {
@@ -535,6 +591,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
     var Application = /*#__PURE__*/function () {
       function Application(option) {
         var _this = this;
+
         babelHelpers.classCallCheck(this, Application);
         this.init(option).then(function () {
           return _this.initProvider();
@@ -546,10 +603,11 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
           return _this.subscribeToStoreChanges();
         });
       }
-
       /**
        * @private
        */
+
+
       babelHelpers.createClass(Application, [{
         key: "init",
         value: function init(option) {
@@ -561,6 +619,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "initProvider",
         value: function initProvider() {
@@ -574,6 +633,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "iniController",
         value: function iniController() {
@@ -585,6 +645,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "executeRestAnswer",
         value: function executeRestAnswer(command, result, extra) {
@@ -593,10 +654,12 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "subscribeToEvents",
         value: function subscribeToEvents() {
           var _this2 = this;
+
           main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.order.success, function (e) {
             return _this2.basket.handlerOrderSuccess(e);
           });
@@ -636,6 +699,9 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
           main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.consent.accepted, function () {
             return _this2.handlerConsentAccepted();
           });
+          main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.property.validate, function (e) {
+            return _this2.handlerValidateProperty(e);
+          });
           main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.element.buttonCheckout, main_core.Runtime.debounce(function () {
             return _this2.handlerCheckout();
           }, 1000, this));
@@ -652,6 +718,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "subscribeToStoreChanges",
         value: function subscribeToStoreChanges() {
@@ -663,7 +730,6 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
           //	 	this.getData();
           //	 }
           // });
-
           return new Promise(function (resolve, reject) {
             return resolve();
           });
@@ -671,6 +737,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "paySystemSetStatusWait",
         value: function paySystemSetStatusWait() {
@@ -682,6 +749,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "paySystemSetStatusNone",
         value: function paySystemSetStatusNone() {
@@ -693,6 +761,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "appSetStatusWait",
         value: function appSetStatusWait() {
@@ -704,6 +773,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "appSetStatusNone",
         value: function appSetStatusNone() {
@@ -715,6 +785,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerConsentAccepted",
         value: function handlerConsentAccepted() {
@@ -723,6 +794,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerConsentRefused",
         value: function handlerConsentRefused() {
@@ -731,31 +803,35 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerCheckout",
         value: function handlerCheckout() {
           var _this3 = this;
+
           BX.onCustomEvent(sale_checkout_const.Consent.validate.submit, []);
           var consent = this.store.getters['consent/get'];
           var consentStatus = this.store.getters['consent/getStatus'];
           var allowed = consent.id > 0 ? consentStatus === sale_checkout_const.Consent.status.accepted : true;
+
           if (allowed) {
             // this.propertiesValidate();
             // this.propertiesIsValid() ? alert('propsSuccess'):alert('propsError')
-
             this.appSetStatusWait();
             this.saveOrder().then(function () {
               _this3.appSetStatusNone().then(function () {
                 var order = _this3.store.getters['order/getOrder'];
+
                 if (order.id > 0) {
                   var url = sale_checkout_lib.History.pushState(_this3.store.getters['application/getPathLocation'], {
                     accountNumber: order.accountNumber,
                     access: order.hash
                   });
+
                   _this3.store.dispatch('application/setPathLocation', url);
                 }
               });
-            }).catch(function () {
+            })["catch"](function () {
               return _this3.appSetStatusNone();
             });
           }
@@ -763,15 +839,17 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "handlerShipping",
         value: function handlerShipping() {
           this.store.dispatch('application/setStage', {
             stage: sale_checkout_const.Application.stage.view
-          });
-          // todo
+          }); // todo
+
           delete BX.UserConsent;
           var order = this.store.getters['order/getOrder'];
+
           if (order.id > 0) {
             var component = sale_checkout_const.Component.bitrixSaleOrderCheckout;
             var cmd = sale_checkout_const.RestMethod.saleEntityPaymentPay;
@@ -789,10 +867,12 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
       }, {
         key: "saveOrder",
         value: function saveOrder() {
           var _this4 = this;
+
           var component = sale_checkout_const.Component.bitrixSaleOrderCheckout;
           var cmd = sale_checkout_const.RestMethod.saleEntitySaveOrder;
           return main_core.ajax.runComponentAction(component, cmd, {
@@ -807,7 +887,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
             signedParameters: this.store.getters['application/getSignedParameters']
           }).then(function (result) {
             return _this4.executeRestAnswer(cmd, result);
-          }).catch(function (result) {
+          })["catch"](function (result) {
             return _this4.executeRestAnswer(cmd, {
               error: result.errors
             });
@@ -816,24 +896,111 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
         /**
          * @private
          */
+
+      }, {
+        key: "handlerValidateProperty",
+        value: function handlerValidateProperty(event) {
+          var property = {};
+          property.index = event.getData().index;
+          property.fields = this.getPropertyItem(property.index);
+          this.changeValidatedProperty(property);
+        }
+        /**
+         * @private
+         */
+
+      }, {
+        key: "getPropertyItem",
+        value: function getPropertyItem(index) {
+          return this.store.getters['property/get'](index);
+        }
+        /**
+         * @private
+         */
+
+      }, {
+        key: "changeValidatedProperty",
+        value: function changeValidatedProperty(property) {
+          var fields = property.fields;
+          var errors = this.store.getters['property/getErrors'];
+
+          if (this.propertyDataValidate(fields)) {
+            errors = this.deletePropertyError(fields, errors);
+          } else {
+            errors = this.addPropertyError(fields, errors);
+          }
+
+          this.provider.setModelPropertyError(errors);
+        }
+        /**
+         * @private
+         */
+
+      }, {
+        key: "propertyDataValidate",
+        value: function propertyDataValidate(fields) {
+          return !(fields.required === 'Y' && fields.value === '');
+        }
+        /**
+         * @private
+         */
+
+      }, {
+        key: "deletePropertyError",
+        value: function deletePropertyError(fields, errors) {
+          for (var errorIndex in errors) {
+            if (errors[errorIndex]['propertyId'] === fields.id) {
+              errors.splice(errorIndex, 1);
+            }
+          }
+
+          return errors;
+        }
+        /**
+         * @private
+         */
+
+      }, {
+        key: "addPropertyError",
+        value: function addPropertyError(fields, errors) {
+          var errorIds = errors.map(function (item) {
+            return item.propertyId;
+          });
+
+          if (!errorIds.includes(fields.id)) {
+            errors.push({
+              propertyId: fields.id
+            });
+          }
+
+          return errors;
+        }
+        /**
+         * @private
+         */
+
       }, {
         key: "getPropertyList",
         value: function getPropertyList() {
           var result = [];
           var list = this.store.getters['property/getProperty'];
+
           try {
             for (var key in list) {
               if (!list.hasOwnProperty(key)) {
                 continue;
               }
+
               result[list[key].id] = list[key];
             }
           } catch (e) {}
+
           return result;
         }
         /**
          * @private
          */
+
       }, {
         key: "preparePropertyFields",
         value: function preparePropertyFields(list) {

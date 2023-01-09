@@ -646,10 +646,12 @@ class Order extends Base
 	 */
 	private function convertionLeadWithExistDeal(int $leadId, int $dealId): void
 	{
-		$lead = new CCrmLead(false);
-		$lead->Update($leadId, $fields = [
+		$fields = [
 			'STATUS_ID' => 'CONVERTED',
-		]);
+		];
+
+		$lead = new CCrmLead(false);
+		$lead->Update($leadId, $fields);
 		if ($lead->LAST_ERROR)
 		{
 			// as can't change status, that no point in converting.

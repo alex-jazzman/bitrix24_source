@@ -843,20 +843,16 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 			Crm\Tracking\UI\Details::saveEntityData(\CCrmOwnerType::Deal, $id, $arFields);
 		}
 
-		// BP
-		if (COption::GetOptionString('crm', 'start_bp_within_bp', 'N') == 'Y')
+		$CCrmBizProc = new CCrmBizProc('DEAL');
+
+		if (false === $CCrmBizProc->CheckFields(false, true))
 		{
-			$CCrmBizProc = new CCrmBizProc('DEAL');
+			throw new Exception($CCrmBizProc->LAST_ERROR);
+		}
 
-			if (false === $CCrmBizProc->CheckFields(false, true))
-			{
-				throw new Exception($CCrmBizProc->LAST_ERROR);
-			}
-
-			if (!$CCrmBizProc->StartWorkflow($id))
-			{
-				throw new Exception($CCrmBizProc->LAST_ERROR);
-			}
+		if (!$CCrmBizProc->StartWorkflow($id))
+		{
+			throw new Exception($CCrmBizProc->LAST_ERROR);
 		}
 
 		// no automation

@@ -11,7 +11,6 @@ $pathTemplate24 = getLocalPath($pathTemplate24);
 $pathCSS = '/bitrix/js/landing/css';
 $pathLang = BX_ROOT . '/modules/landing/lang/' . LANGUAGE_ID;
 
-
 $jsConfig = [
 	'landing_master' => [
 		'rel' => [
@@ -214,7 +213,6 @@ $jsConfig = [
 		'js' => [
 			$pathTemplate24 . '/assets/vendor/bootstrap/js/dist/util.js',
 			$pathTemplate24 . '/assets/vendor/bootstrap/js/dist/collapse.js',
-			$pathTemplate24 . '/assets/js/helpers/menu/hamburgers.js',
 			$pathTemplate24 . '/assets/js/helpers/menu/scrollspy.js',
 			$pathTemplate24 . '/assets/js/helpers/menu/menu_init.js',
 		],

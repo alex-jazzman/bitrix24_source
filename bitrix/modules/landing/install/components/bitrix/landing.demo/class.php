@@ -997,6 +997,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				return false;
 			}
 		}
+
 		// else create site and pages into
 		$demo = $this->getDemoSite();
 		if (isset($demo[$code]))
@@ -2776,7 +2777,10 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				],
 				['IFRAME', 'IFRAME_TYPE']
 			);
-			if ($this->arParams['TYPE'] === 'PAGE')
+			if (
+				$this->arParams['TYPE'] === 'PAGE'
+				&& !$this->request('action')
+			)
 			{
 				$this->arResult['FILTER_FIELDS'] = self::getFilterFields();
 				$this->arResult['FILTER_ID'] = self::FILTER_ID . '_' . $this->arParams['TYPE'];
@@ -3914,12 +3918,15 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 	{
 		$result = '';
 		$filter = $this->arResult['FILTER'];
-		$keys = array_merge(['FIND'], array_keys(self::getFilterFields()));
-		foreach ($keys as $key)
+		if (is_array($filter) && !empty($filter))
 		{
-			if ($filter[$key])
+			$keys = array_merge(['FIND'], array_keys(self::getFilterFields()));
+			foreach ($keys as $key)
 			{
-				$result .= "{$key}:{$filter[$key]}_";
+				if ($filter[$key])
+				{
+					$result .= "{$key}:{$filter[$key]}_";
+				}
 			}
 		}
 

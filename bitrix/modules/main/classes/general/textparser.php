@@ -1947,11 +1947,12 @@ class CTextParser
 		}
 		else
 		{
-			$url = $this->defended_tags(htmlspecialcharsbx(htmlspecialcharsback($url)), 'replace');
+			$url = $this->defended_tags(htmlspecialcharsbx($url, ENT_COMPAT, false), 'replace');
+			$text = htmlspecialcharsbx($text, ENT_COMPAT, false);
 
 			$noFollowAttribute = $this->parser_nofollow == "Y"? ' rel="nofollow"': '';
 
-			$link = '<a href="'.$url.'" target="'.$this->link_target.'"'.$noFollowAttribute.'>'.$text .'</a>';
+			$link = '<a href="' . $url . '" target="' . $this->link_target . '"' . $noFollowAttribute . '>' . $text .'</a>';
 
 			if ($noFollowAttribute)
 			{

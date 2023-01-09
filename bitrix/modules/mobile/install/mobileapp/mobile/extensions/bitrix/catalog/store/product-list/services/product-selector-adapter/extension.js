@@ -53,7 +53,7 @@
 					}
 				},
 				events: {
-					onClose: (products) => {
+					onWidgetClosed: (products) => {
 						if (products && products.length && products.length > 0)
 						{
 							const product = products[0];

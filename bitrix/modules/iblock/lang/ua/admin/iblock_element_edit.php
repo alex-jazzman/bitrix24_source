@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IBEL_BIZPROC_DATE"] = "Дата поточного стану:";
 $MESS["IBEL_BIZPROC_DESC"] = "Опис бізнес-процесу:";
 $MESS["IBEL_BIZPROC_NA"] = "Бізнес-процеси не запущені.";
@@ -43,6 +43,8 @@ $MESS["IBEL_E_TAB14_TITLE"] = "Налаштування SEO інформації
 $MESS["IBEL_E_TAB_BIZPROC"] = "Бізнес-процеси";
 $MESS["IBEL_E_TAB_DET"] = "Докладно";
 $MESS["IBEL_E_TAB_DET_TITLE"] = "Детальна інформація";
+$MESS["IBEL_E_TAB_ELEMENT"] = "Параметри";
+$MESS["IBEL_E_TAB_ELEMENT_TITLE"] = "Основні параметри";
 $MESS["IBEL_E_TAB_PREV"] = "Анонс";
 $MESS["IBEL_E_TAB_PREV_TITLE"] = "Інформація для анонсу";
 $MESS["IBEL_E_TAB_RIGHTS"] = "Доступ";
@@ -65,6 +67,10 @@ $MESS["IBLOCK_ELEMENT_EDIT_LINKED"] = "Пов'язані елементи:";
 $MESS["IBLOCK_ELEMENT_EDIT_PROP_ADD"] = "Додати";
 $MESS["IBLOCK_ELEMENT_EDIT_TAGS_TIP"] = "(введіть слова або словосполучення, розділяючи їх комами)";
 $MESS["IBLOCK_ELEMENT_EDIT_VIEW"] = "Перегляд";
+$MESS["IBLOCK_ELEMENT_ERR_BUILDER_ADSENT"] = "Не знайдений генератор посилань.";
+$MESS["IBLOCK_ELEMENT_FORM_TITLE_EDIT"] = "#IBLOCK_NAME#: #ELEMENT_TYPE#: #NAME# - Редагування";
+$MESS["IBLOCK_ELEMENT_FORM_TITLE_NEW"] = "#IBLOCK_NAME#: #ELEMENT_TYPE#: Додавання";
+$MESS["IBLOCK_ELEMENT_FORM_TITLE_VIEW"] = "#IBLOCK_NAME#: #ELEMENT_TYPE#: #NAME# - Перегляд";
 $MESS["IBLOCK_ELEMENT_OFFERS_IS_ABSENT"] = "Не створені торгові пропозиції";
 $MESS["IBLOCK_ELEMENT_PROP_VALUE"] = "Значення властивостей:";
 $MESS["IBLOCK_EL_CANC"] = "Скасувати";
@@ -106,5 +112,3 @@ $MESS["IBLOCK_TCATALOG"] = "Торгівельний каталог";
 $MESS["IBLOCK_UPPER_LEVEL"] = "Верхній рівень";
 $MESS["IBLOCK_WRONG_SESSION"] = "Ваша сесія закінчилася. Будь ласка, перезбережіть документ ще раз.";
 $MESS["IBLOCK_WRONG_WF_STATUS"] = "Невірний статус";
-$MESS["IBLOCK_ELEMENT_ERR_BUILDER_ADSENT"] = "Не знайдений генератор посилань.";
-?>

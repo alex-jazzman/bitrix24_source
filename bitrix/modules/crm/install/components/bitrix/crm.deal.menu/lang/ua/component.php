@@ -28,6 +28,7 @@ $MESS["DEAL_ADD_TITLE"] = "Додати угоду";
 $MESS["DEAL_CHANGE_CATEGORY"] = "Перенести в напрямок";
 $MESS["DEAL_COPY"] = "Копіювати";
 $MESS["DEAL_COPY_TITLE"] = "Копіювати угоду";
+$MESS["DEAL_CREATE"] = "Створити угоду";
 $MESS["DEAL_CREATE_ON_BASIS"] = "Створити на підставі:";
 $MESS["DEAL_CREATE_ON_BASIS_TITLE"] = "Створення рахунку і пропозиції на підставі угоди";
 $MESS["DEAL_CRM_RECURRING_LIST"] = "Шаблони регулярних угод";

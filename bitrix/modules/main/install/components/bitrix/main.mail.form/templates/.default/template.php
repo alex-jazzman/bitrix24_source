@@ -7,7 +7,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.alerts',
-	'ui.buttons'
+	'ui.buttons',
+	'ui.entity-selector',
 ]);
 
 $htmlFormId = htmlspecialcharsbx('main_mail_form_'.$arParams['FORM_ID']);

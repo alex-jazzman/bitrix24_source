@@ -2,7 +2,7 @@
 $MESS['CRM_TIMELINE_TITLE_CALL_INCOMING'] = 'Завершён входящий звонок';
 $MESS['CRM_TIMELINE_TITLE_CALL_INCOMING_DONE'] = 'Обработан входящий звонок';
 $MESS['CRM_TIMELINE_TITLE_CALL_MISSED'] = 'Пропущен входящий звонок';
-$MESS['CRM_TIMELINE_TITLE_CALL_OUTGOING'] = 'Завершен исходящий звонок';
+$MESS['CRM_TIMELINE_TITLE_CALL_OUTGOING'] = 'Завершён исходящий звонок';
 $MESS['CRM_TIMELINE_TITLE_CALL_INCOMING_PLAN'] = 'Запланирован входящий звонок';
 $MESS['CRM_TIMELINE_TITLE_CALL_OUTGOING_PLAN'] = 'Запланирован исходящий звонок';
 $MESS['CRM_TIMELINE_CALL_TITLE_DEFAULT'] = 'Звонок';

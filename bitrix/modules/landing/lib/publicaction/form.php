@@ -52,16 +52,21 @@ class Form
 			{
 				$hiddenTypes[] = \CCrmOwnerType::Requisite;
 			}
-			if ((int)($options['hideSmartDocument'] ?? 1))
-			{
-				$hiddenTypes[] = \CCrmOwnerType::SmartInvoice;
-			}
-			if ($options['hideDocument'] ?? false)
+			if ((int)($options['hideSmartDocument'] ?? 0))
 			{
 				$hiddenTypes[] = \CCrmOwnerType::SmartDocument;
 			}
 
-			$fields = EntityFieldProvider::getFieldsTree($hiddenTypes);
+			if (isset($options['presetId']) && is_numeric($options['presetId']))
+			{
+				$presetId = (int)$options['presetId'];
+			}
+			else
+			{
+				$presetId = null;
+			}
+
+			$fields = EntityFieldProvider::getFieldsTree($hiddenTypes, $presetId);
 			foreach ($fields as $key => $item)
 			{
 				if (strpos($key, 'DYNAMIC_') === 0)

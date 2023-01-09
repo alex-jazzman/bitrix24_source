@@ -183,7 +183,7 @@ if ($arResult['EXPORT_DISABLED'] === 'Y')
 <?endif?>
 
 <?
-if ($arParams['TYPE'] !== 'KNOWLEDGE' && $isCrm && (($arParams['OLD_TILE'] ?? 'N') !== 'Y'))
+if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm && (($arParams['OLD_TILE'] ?? 'N') !== 'Y'))
 {
 	if ($arParams['TYPE'] === 'STORE')
 	{

@@ -38,11 +38,11 @@ class Factory
 		return $this->createItems([$row])[0] ?? null;
 	}
 
-	public function installDefaults(): Main\Result
+	public function installDefaults(?int $presetId = null): Main\Result
 	{
 		$result = new Main\Result();
 		$items = [];
-		foreach ($this->makeDefaultItems() as $item)
+		foreach ($this->makeDefaultItems($presetId) as $item)
 		{
 			$saveResult = $this->save($item);
 			if (!$saveResult->isSuccess())
@@ -110,11 +110,12 @@ class Factory
 		;
 	}
 
-	private function makeDefaultItems(): array
+	private function makeDefaultItems(?int $presetId = null): array
 	{
 		/** @var Item[] $items */
 		$items = [];
-		$code = 'def-req-' . \CCrmOwnerType::Company;
+		$code = 'def-req-' . \CCrmOwnerType::Company . ($presetId ? '-'. $presetId : '');
+
 		if (!$this->fetchByCode($code))
 		{
 			$items[] = (new Item)
@@ -125,7 +126,7 @@ class Factory
 			;
 		}
 
-		$code = 'def-req-' . \CCrmOwnerType::Contact;
+		$code = 'def-req-' . \CCrmOwnerType::Contact . ($presetId ? '-'. $presetId : '');
 		if (!$this->fetchByCode($code))
 		{
 			$items[] = (new Item)
@@ -145,11 +146,11 @@ class Factory
 				continue;
 			}
 
-			$rqPresetId = EntityRequisite::getDefaultPresetId($presetEntityTypeId) ?: 0;
+			$rqPresetId = $presetId ?: (EntityRequisite::getDefaultPresetId($presetEntityTypeId) ?: 0);
 			if (!$rqPresetId)
 			{
 				EntityRequisite::installDefaultPresets();
-				$rqPresetId = EntityRequisite::getDefaultPresetId($presetEntityTypeId) ?: 0;
+				$rqPresetId =  $presetId ?: (EntityRequisite::getDefaultPresetId($presetEntityTypeId) ?: 0);
 			}
 
 			if (!$rqPresetId)

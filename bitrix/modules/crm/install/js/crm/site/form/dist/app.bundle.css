@@ -841,8 +841,7 @@ div.b24-form-loader {
 .b24-form-control::-webkit-input-placeholder {
 	color: rgba(0, 0, 0, 0);
 	-webkit-transition: 170ms linear all;
-	-moz-transition: 170ms linear all;
-	-ms-transition: 170ms linear all;
+	-o-transition: 170ms linear all;
 	transition: 170ms linear all;
 }
 

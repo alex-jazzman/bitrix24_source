@@ -547,7 +547,7 @@ if (\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCommonProductProcessing
 {
 	$arResult['FIELDS']['tab_main'][] = array(
 		'id' => 'PRODUCT_CONFIG',
-		'name' => GetMessage('CRM_SECTION_PRODUCT_CONFIG'),
+		'name' => GetMessage('CRM_SECTION_PRODUCT_CONFIG_MSGVER_1'),
 		'type' => 'section'
 	);
 

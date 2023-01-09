@@ -223,10 +223,15 @@ export default class Widget extends EventEmitter
 			EventEmitter.subscribe(
 				EventEmitter.GLOBAL_TARGET,
 				'BX.Intranet.UserProfile:Avatar:changed',
-				({data: [{url}]}) => {
-					this.#profile.PHOTO = url;
-					avatarNode.style = Type.isStringFilled(url) ?
-						`background-size: cover; background-image: url('${this.#profile.PHOTO}')` : '';
+				({data: [{url, userId}]}) => {
+					if (this.#profile.ID > 0 && userId && this.#profile.ID.toString() === userId.toString())
+					{
+						this.#profile.PHOTO = url;
+						avatarNode.style = Type.isStringFilled(url)
+							? `background-size: cover; background-image: url('${encodeURI(this.#profile.PHOTO)}')`
+							: ''
+						;
+					}
 				})
 			;
 			EventEmitter.subscribe(
@@ -369,9 +374,12 @@ export default class Widget extends EventEmitter
 				data: dataObj
 			}
 		).then(function (response) {
-				if (response.data)
+			if (response.data)
 			{
-				(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{url: response.data}]);
+				(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{
+					url: response.data,
+					userId: this.#profile.ID,
+				}]);
 			}
 		}.bind(this), function (response) {
 			console.log('response: ', response);
@@ -770,8 +778,13 @@ export default class Widget extends EventEmitter
 		});
 	}
 
-	#getLoginHistoryContainer(): Element
+	#getLoginHistoryContainer(): ?Element
 	{
+		if (this.#features.loginHistory.isHide)
+		{
+			return null;
+		}
+
 		return this.#cache.remember('getLoginHistoryContainer', () => {
 			const history = new UserLoginHistory(this.#features.loginHistory, this);
 			return {

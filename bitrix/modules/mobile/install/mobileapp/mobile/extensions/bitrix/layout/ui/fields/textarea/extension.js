@@ -71,7 +71,8 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 						style: {
 							flexDirection: 'row',
 							flexGrow: 2,
-						}
+						},
+						interactable: Application.getPlatform() !== 'ios' && this.state.focus,
 					},
 					TextInput(this.getFieldInputProps()),
 				),

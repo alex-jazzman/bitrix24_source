@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["ADD_PICT_PROP_TIP"] = "Властивість додаткових картинок товару";
 $MESS["ADD_TO_BASKET_ACTION_ADD"] = "Додавання до кошику";
 $MESS["ADD_TO_BASKET_ACTION_BUY"] = "Покупки";
@@ -34,6 +34,8 @@ $MESS["CP_BCS_TPL_MESS_BTN_SUBSCRIBE"] = "Текст кнопки \"Повідо
 $MESS["CP_BCS_TPL_MESS_BTN_SUBSCRIBE_DEFAULT"] = "Підписатися";
 $MESS["CP_BCS_TPL_MESS_NOT_AVAILABLE"] = "Повідомлення про відсутність товару";
 $MESS["CP_BCS_TPL_MESS_NOT_AVAILABLE_DEFAULT"] = "Немає в наявності";
+$MESS["CP_BCS_TPL_MESS_NOT_AVAILABLE_SERVICE"] = "Повідомлення про недоступність послуги";
+$MESS["CP_BCS_TPL_MESS_NOT_AVAILABLE_SERVICE_DEFAULT"] = "Не доступний";
 $MESS["CP_BCS_TPL_MESS_RELATIVE_QUANTITY_FEW"] = "Текст для значення менше";
 $MESS["CP_BCS_TPL_MESS_RELATIVE_QUANTITY_FEW_DEFAULT"] = "мало";
 $MESS["CP_BCS_TPL_MESS_RELATIVE_QUANTITY_MANY"] = "Текст для значення більше";

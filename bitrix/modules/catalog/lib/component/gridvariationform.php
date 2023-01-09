@@ -378,7 +378,7 @@ class GridVariationForm extends VariationForm
 				'id' => static::formatFieldName('NAME'),
 				'name' => $headerName['NAME'],
 				'title' => $headerName['TITLE'],
-				'sort' => false,
+				'sort' => 'NAME',
 				'type' => 'string',
 				'editable' =>
 					$this->isAllowedEditFields()
@@ -442,6 +442,26 @@ class GridVariationForm extends VariationForm
 
 		$defaultFields = ['QUANTITY', 'MEASURE', 'NAME', 'BARCODE'];
 		$defaultFields = array_fill_keys($defaultFields, true);
+
+		$sortableFields = [
+			'QUANTITY' =>'QUANTITY',
+			'AVAILABLE' =>'AVAILABLE',
+			'WEIGHT' =>'WEIGHT',
+			'ACTIVE' =>'ACTIVE',
+			'MEASURE' =>'MEASURE',
+			'TIMESTAMP_X' => 'TIMESTAMP_X',
+			'USER_NAME' => 'MODIFIED_BY',
+			'DATE_CREATE' => 'CREATED',
+			'CREATED_USER_NAME' => 'CREATED_BY',
+			'CODE' => 'CODE',
+			'EXTERNAL_ID' => 'EXTERNAL_ID',
+			'XML_ID' => 'XML_ID',
+			'TAGS' => 'TAGS',
+			'SHOW_COUNTER' => 'SHOW_COUNTER',
+			'SHOW_COUNTER_START' => 'SHOW_COUNTER_START',
+			'PREVIEW_PICTURE' => 'HAS_PREVIEW_PICTURE',
+			'DETAIL_PICTURE' => 'HAS_DETAIL_PICTURE',
+		];
 
 		foreach ($fields as $code)
 		{
@@ -590,11 +610,13 @@ class GridVariationForm extends VariationForm
 
 			$headerName = static::getHeaderName($code);
 
+			$sortField = $sortableFields[$code] ?? false;
+
 			$headers[] = [
 				'id' => static::formatFieldName($code),
 				'name' => $headerName['NAME'],
 				'title' => $headerName['TITLE'],
-				'sort' => false,
+				'sort' => $sortField,
 				'locked' => false,
 				'headerHint' => null,
 				'type' => $type,
@@ -619,15 +641,24 @@ class GridVariationForm extends VariationForm
 
 		foreach ($this->getIblockPropertiesDescriptions() as $property)
 		{
-			$isDirectory = $property['settings']['PROPERTY_TYPE'] === PropertyTable::TYPE_STRING
-				&& $property['settings']['USER_TYPE'] === 'directory';
+			$isDirectory =
+				$property['settings']['PROPERTY_TYPE'] === PropertyTable::TYPE_STRING
+				&& $property['settings']['USER_TYPE'] === 'directory'
+			;
+
+			$sortField = "PROPERTY_{$property['propertyCode']}";
+			if ($property['multiple'] || $property['propertyCode'] === 'CML2_LINK')
+			{
+				$sortField = false;
+			}
+
 			$header = [
 				'id' => $property['name'],
 				'name' => $property['title'],
 				'title' => $property['title'],
 				'type' => $property['type'],
 				'align' => $property['type'] === 'number' ? 'right' : 'left',
-				'sort' => false,
+				'sort' => $sortField,
 				'default' => $property['propertyCode'] === self::MORE_PHOTO,
 				'data' => $property['data'],
 				'width' => $isDirectory ? 160 : null,
@@ -661,7 +692,7 @@ class GridVariationForm extends VariationForm
 				'id' => static::formatFieldName('PURCHASING_PRICE_FIELD'),
 				'name' => $headerName['NAME'],
 				'title' => $headerName['TITLE'],
-				'sort' => false,
+				'sort' => 'PURCHASING_PRICE',
 				'type' => 'money',
 				'align' => 'right',
 				'editable' =>
@@ -702,7 +733,7 @@ class GridVariationForm extends VariationForm
 				'id' => $priceId,
 				'name' => $columnName,
 				'title' => $columnName,
-				'sort' => false, // 'SCALED_PRICE_'.$priceType['ID'],
+				'sort' => 'SCALED_PRICE_'.$priceType['ID'],
 				'type' => 'money',
 				'align' => 'right',
 				'editable' =>

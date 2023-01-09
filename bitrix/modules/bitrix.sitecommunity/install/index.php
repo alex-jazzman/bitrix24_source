@@ -14,7 +14,7 @@ Class bitrix_sitecommunity extends CModule
 	var $MODULE_CSS;
 	var $MODULE_GROUP_RIGHTS = "Y";
 
-	function bitrix_sitecommunity()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 
@@ -32,8 +32,6 @@ Class bitrix_sitecommunity extends CModule
 
 	function InstallDB($install_wizard = true)
 	{
-		global $DB, $DBType, $APPLICATION;
-		
 		RegisterModule("bitrix.sitecommunity");
 		RegisterModuleDependences("main", "OnBeforeProlog", "bitrix.sitecommunity", "CSiteCommunity", "ShowPanel");
 
@@ -42,9 +40,7 @@ Class bitrix_sitecommunity extends CModule
 
 	function UnInstallDB($arParams = Array())
 	{
-		global $DB, $DBType, $APPLICATION;
-		
-		UnRegisterModuleDependences("main", "OnBeforeProlog", "bitrix.sitecommunity", "CSiteCommunity", "ShowPanel"); 
+		UnRegisterModuleDependences("main", "OnBeforeProlog", "bitrix.sitecommunity", "CSiteCommunity", "ShowPanel");
 		UnRegisterModule("bitrix.sitecommunity");
 
 		return true;

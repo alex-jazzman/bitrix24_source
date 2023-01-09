@@ -37,3 +37,6 @@ $MESS['M_CRM_TIMELINE_COMMON_ERROR_TITLE'] = 'Произошла внутрен�
 $MESS['M_CRM_TIMELINE_COMMON_ERROR_DESCRIPTION'] = 'Обратитесь к администратору вашего Битрикс24 или сотруднику, который отвечает за CRM';
 $MESS['M_CRM_TIMELINE_COMMON_ERROR_OK_BUTTON'] = 'Понятно';
 
+$MESS['M_CRM_TIMELINE_DOCUMENT_PDF_NOT_READY_TITLE'] = 'Пожалуйста, подождите';
+$MESS['M_CRM_TIMELINE_DOCUMENT_PDF_NOT_READY_BODY'] = 'PDF-файл ещё не сформирован';
+

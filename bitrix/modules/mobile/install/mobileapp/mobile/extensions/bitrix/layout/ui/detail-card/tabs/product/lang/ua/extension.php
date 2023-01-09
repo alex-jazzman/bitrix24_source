@@ -21,3 +21,5 @@ $MESS["CSPL_REMOVE_PRODUCT_ERROR"] = "Неможливо видалити тов
 $MESS["CSPL_UNKNOWN_ERROR"] = "Не так сталося, як гадалося......";
 $MESS["CSPL_UPDATE_TAB_ERROR"] = "При завантаженні даних сталася помилка";
 $MESS["CSPL_VALIDATION_ERROR_EMPTY_NAME"] = "Позиція №#NUM# не містить найменування товару";
+$MESS["CSPL_VALIDATION_ERROR_PHOTO_HAS_ERROR"] = "Позиція №NUM містить фотографії товару, завантажені з помилкою. Видаліть їх та спробуйте завантажити знову.";
+$MESS["CSPL_VALIDATION_ERROR_PHOTO_IS_LOADING"] = "Позиція №#NUM# не містить фотографії товару.";

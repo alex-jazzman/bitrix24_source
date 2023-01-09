@@ -237,8 +237,10 @@ class DataSyncManager
 			return;
 		}
 
-		if (!$this->checkAttendeesAccessibility($eventsMap[$event['href']], $event))
-		{
+		$eventId = null;
+
+		// if (!$this->checkAttendeesAccessibility($eventsMap[$event['href']], $event))
+		// {
 			// temporary this functionality is turned off
 
 			// $this->rollbackEvent(
@@ -246,19 +248,22 @@ class DataSyncManager
 			// 	'CALENDAR_IMPORT_BLOCK_ATTENDEE_ACCESSIBILITY'
 			// );
 			// return;
-		}
+		// }
 
 		[$event, $exDate] = $this->mergeExternalEventWithLocal($eventsMap[$event['href']], $event, $client);
 
-		$eventId = $this->modifySingleEvent(
-			$connection,
-			$event['calendar-data'],
-			[
-				'SECTION_ID' => $calendar['SECTION_ID'],
-				'VERSION' => $eventsMap[$event['href']]['VERSION'],
-				'EVENT_CONNECTION_ID' => $eventsMap[$event['href']]['EVENT_CONNECTION_ID'],
-			]
-		);
+		if ($event['calendar-data'] && is_array($event['calendar-data']))
+		{
+			$eventId = $this->modifySingleEvent(
+				$connection,
+				$event['calendar-data'],
+				[
+					'SECTION_ID' => $calendar['SECTION_ID'],
+					'VERSION' => $eventsMap[$event['href']]['VERSION'],
+					'EVENT_CONNECTION_ID' => $eventsMap[$event['href']]['EVENT_CONNECTION_ID'],
+				]
+			);
+		}
 
 		if (is_array($event['calendar-data-ex']) && $eventId && count($event['calendar-data-ex']) > 0)
 		{
@@ -272,7 +277,7 @@ class DataSyncManager
 				]
 			);
 		}
-		else if ($exDate && $event['calendar-data']['ID'])
+		else if ($exDate && $event['calendar-data'] && $event['calendar-data']['ID'])
 		{
 			$this->deleteDuplicateExDates(
 				$exDate,

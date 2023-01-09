@@ -16,6 +16,7 @@ $MESS["CRM_KANBAN_EMAIL_TYPE_HOME"] = "Приватний";
 $MESS["CRM_KANBAN_EMAIL_TYPE_OTHER"] = "Інший";
 $MESS["CRM_KANBAN_EMAIL_TYPE_WORK"] = "Робочий";
 $MESS["CRM_KANBAN_ERROR_ACCESS_DENIED"] = "Доступ заборонено.";
+$MESS["CRM_KANBAN_ERROR_ACTIVITY_COMPLETE_FORBIDDEN"] = "Недостатньо прав на закриття справи.";
 $MESS["CRM_KANBAN_ERROR_DEAL_STAGE_MISMATCH"] = "Не можна поміняти стадію угоди, оскільки напрямок угоди було змінено.";
 $MESS["CRM_KANBAN_ERROR_LEAD_ALREADY_CONVERTED"] = "Не можна поміняти статус у сконвертовані ліда.";
 $MESS["CRM_KANBAN_ERROR_SESSION_EXPIRED"] = "Ваша сесія закінчилася.";

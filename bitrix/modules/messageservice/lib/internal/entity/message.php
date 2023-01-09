@@ -2,7 +2,7 @@
 namespace Bitrix\MessageService\Internal\Entity;
 
 use Bitrix\Main\Application;
-use Bitrix\Main\Entity;
+use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -26,7 +26,7 @@ use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
  * @method static \Bitrix\MessageService\Internal\Entity\EO_Message wakeUpObject($row)
  * @method static \Bitrix\MessageService\Internal\Entity\EO_Message_Collection wakeUpCollection($rows)
  */
-class MessageTable extends Entity\DataManager
+class MessageTable extends DataManager
 {
 	/**
 	 * @return string

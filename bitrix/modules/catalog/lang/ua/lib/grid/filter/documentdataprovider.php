@@ -9,6 +9,7 @@ $MESS["DOCUMENT_DOC_NUMBER_NAME"] = "Номер документа-підста�
 $MESS["DOCUMENT_DOC_TYPE_NAME"] = "Тип документа";
 $MESS["DOCUMENT_ID_NAME"] = "ID";
 $MESS["DOCUMENT_MODIFIED_BY_NAME"] = "Ким змінено";
+$MESS["DOCUMENT_PRODUCTS_NAME"] = "Товар";
 $MESS["DOCUMENT_RESPONSIBLE_ID_NAME"] = "Відповідальний";
 $MESS["DOCUMENT_STATUS_BY_NAME"] = "Ким змінено статус";
 $MESS["DOCUMENT_STATUS_NAME"] = "Статус";

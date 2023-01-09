@@ -536,7 +536,6 @@ class CCrmContactDetailsComponent
 			}
 			if (
 				CModule::IncludeModule('sale')
-				&& Main\Config\Option::get("crm", "crm_shop_enabled") === "Y"
 				&& CCrmSaleHelper::isWithOrdersMode()
 				&& !$this->arResult['CATEGORY_ID']
 			)

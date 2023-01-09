@@ -121,8 +121,8 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 				$activity[$type][$id] = array_reverse($activity[$type][$id], true);
 			}
 
-			$activityCount = count($activity[$type][$id]);
-			$documentCount = count($document[$type][$id]);
+			$activityCount = count($activity[$type][$id] ?? []);
+			$documentCount = count($document[$type][$id] ?? []);
 
 			?>
 			<div class="crm-doc-drop">

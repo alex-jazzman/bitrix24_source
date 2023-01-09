@@ -7,6 +7,7 @@ use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
@@ -27,6 +28,7 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/crm/lib/webfor
 class CAllCrmContact
 {
 	use UserFieldPreparer;
+	use EntityFieldsNormalizer;
 
 	static public $sUFEntityID = 'CRM_CONTACT';
 
@@ -34,6 +36,8 @@ class CAllCrmContact
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_CONTACT_SPD';
 	const TOTAL_COUNT_CACHE_ID = 'crm_contact_total_count';
 	const CACHE_TTL = 3600;
+
+	protected const TABLE_NAME = 'b_crm_contact';
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
@@ -1514,7 +1518,10 @@ class CAllCrmContact
 			//endregion
 
 			unset($arFields['ID']);
-			$ID = intval($DB->Add('b_crm_contact', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+
+			$this->normalizeEntityFields($arFields);
+			$ID = (int) $DB->Add(self::TABLE_NAME, $arFields, [], 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
 			//Append ID to LAST_NAME if required
 			if($ID > 0 && $arFields['LAST_NAME'] === self::GetDefaultTitle())
 			{
@@ -2255,7 +2262,10 @@ class CAllCrmContact
 			}
 
 			unset($arFields['ID']);
-			$sUpdate = $DB->PrepareUpdate('b_crm_contact', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
+			$this->normalizeEntityFields($arFields);
+			$sUpdate = $DB->PrepareUpdate(self::TABLE_NAME, $arFields);
+
 			if ($sUpdate <> '')
 			{
 				$bResult = true;

@@ -108,11 +108,11 @@ interface IProvider
 	public static function onAfterDocumentSaveSuccess(int $documentId, Result $result, array $options = []): void;
 
 	/**
-	 * @param int $documentId
+	 * @param int|null $documentId
 	 * @param Result $result
 	 * @param array $options
 	 */
-	public static function onAfterDocumentSaveFailure(int $documentId, Result $result, array $options = []): void;
+	public static function onAfterDocumentSaveFailure(?int $documentId, Result $result, array $options = []): void;
 
 	/**
 	 * @param int $documentId

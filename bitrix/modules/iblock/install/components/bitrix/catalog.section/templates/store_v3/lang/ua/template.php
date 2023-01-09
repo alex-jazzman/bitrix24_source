@@ -1,5 +1,6 @@
 <?php
 $MESS["ADD_TO_BASKET_OK"] = "Товар доданий до кошику";
+$MESS["CP_BCS_TPL_MESS_PRODUCT_NOT_AVAILABLE_SERVICE"] = "Не доступний";
 $MESS["CT_BCS_CATALOG_BASKET_UNKNOWN_ERROR"] = "Невідома помилка при додаванні товару в кошик";
 $MESS["CT_BCS_CATALOG_BTN_MESSAGE_BASKET_REDIRECT"] = "Перейти до кошику";
 $MESS["CT_BCS_CATALOG_BTN_MESSAGE_CLOSE"] = "Закрити";

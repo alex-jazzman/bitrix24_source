@@ -799,6 +799,11 @@ class crm extends CModule
 			unset($progressData);
 		}
 
+		if (\Bitrix\Main\Loader::includeModule('intranet'))
+		{
+			\CIntranetUtils::clearMenuCache();
+		}
+
 		if (is_array($this->errors))
 		{
 			$GLOBALS['errors'] = $this->errors;
@@ -1733,8 +1738,9 @@ class crm extends CModule
 		{
 			\Bitrix\Crm\Update\Entity\LastActivityFields::bind(300, [\CCrmOwnerType::Deal]);
 		}
-
+		
 		\Bitrix\Crm\Update\Entity\ContactId::bindOnCrmModuleInstallIfNeeded();
+		
 		// fill b_crm_entity_uncompleted_act table
 		if (\Bitrix\Main\Config\Option::get('crm', 'enable_entity_uncompleted_act', 'Y') === 'N')
 		{
@@ -1747,6 +1753,18 @@ class crm extends CModule
 		}
 
 		CAgent::AddAgent('\Bitrix\Crm\Reservation\Agent\ReservedProductCleaner::runAgent();', 'crm', 'N', 86400);
+
+		if (\Bitrix\Main\Config\Option::get('crm', 'CRM_MOVE_OBSERVERS_TO_ACCESS_ATTR_IN_WORK', 'N')  === 'Y') {
+			\CAgent::AddAgent(
+				'Bitrix\Crm\Agent\Security\AssignAccessRightsToObserversAgent::run();',
+				'crm',
+				'N',
+				60,
+				'',
+				'Y',
+				\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+600)
+			);
+		}
 	}
 
 	private function uninstallEventHandlers()

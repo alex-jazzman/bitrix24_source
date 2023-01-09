@@ -120,7 +120,7 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 							justifyContent: 'center',
 							alignItems: 'center',
 							alignSelf: 'flex-start',
-							marginTop: 5,
+							marginTop: 9,
 						},
 						onClick: () => {
 							if (this.props.onEdit)
@@ -331,7 +331,7 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 
 		getHiddenFieldsCount()
 		{
-			return this.getValue().filter((item, index) => this.isPossibleHiddenField(item, index)). length;
+			return this.getValue().filter((item, index) => this.isPossibleHiddenField(item, index)).length;
 		}
 
 		isPossibleHiddenField(field, index)

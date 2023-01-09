@@ -903,7 +903,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			$addDocumentButton = LockedButton::create([
 				'text' => Loc::getMessage('CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_2'),
 				'color' => \Bitrix\UI\Buttons\Color::SUCCESS,
-				'hint' => Loc::getMessage('CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_DISABLE_HINT'),
+				'hint' => Loc::getMessage('CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_DISABLE_HINT_MSGVER_1'),
 				'classList' => [
 					'add-document-button',
 					'add-document-button-disabled',

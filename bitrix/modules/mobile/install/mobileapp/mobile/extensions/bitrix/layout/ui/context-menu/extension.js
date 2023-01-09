@@ -107,21 +107,33 @@
 				const sectionCode = action.sectionCode;
 				action.getParentWidget = () => this.layoutWidget;
 				actionsBySections[sectionCode] = (actionsBySections[sectionCode] || []);
-				actionsBySections[sectionCode].push(ContextMenuItem.create({
+				actionsBySections[sectionCode].push({
 					...action,
-					testId: this.testId,
-				}));
+					isActive: (
+						!action.onActiveCallback
+						|| (
+							action.onActiveCallback
+							&& action.onActiveCallback(action.id, action.parentId, action.parent)
+						)
+					)
+				});
 			});
 
 			if (this.showCancelButton)
 			{
 				const serviceSectionName = ContextMenuSection.getServiceSectionName();
 				actionsBySections[serviceSectionName] = (actionsBySections[serviceSectionName] || []);
-				actionsBySections[serviceSectionName].push(ContextMenuItem.create({
-					...this.getCancelButtonConfig(),
-					testId: this.testId,
-					showActionLoader: false,
-				}));
+				const actionCancel = this.getCancelButtonConfig();
+				actionsBySections[serviceSectionName].push({
+					...actionCancel,
+					isActive: (
+						!actionCancel.onActiveCallback
+						|| (
+							actionCancel.onActiveCallback
+							&& actionCancel.onActiveCallback(actionCancel.id, actionCancel.parentId, actionCancel.parent)
+						)
+					)
+				});
 			}
 
 			return actionsBySections;
@@ -201,6 +213,22 @@
 					id: sectionCode,
 					title: this.titlesBySectionCode[sectionCode],
 					actions: this.actionsBySections[sectionCode],
+					renderAction: (action, {
+						onClick,
+						showIcon,
+						firstInSection,
+						lastInSection,
+						enabled
+					}) => ContextMenuItem.create({
+						...action,
+						onClick,
+						showIcon,
+						firstInSection,
+						lastInSection,
+						enabled,
+						testId: this.testId,
+						showActionLoader: action.title !== BX.message('CONTEXT_MENU_CANCEL')
+					}),
 					enabled: this.state.enabled,
 					style: {
 						marginTop: (i > 0 ? 10 : (this.getParam('title', '') === '' ? 10 : 0)),
@@ -252,7 +280,7 @@
 				}
 
 				height += this.actionsBySections[sectionCode].reduce((sum, action) => {
-					if (action.isActiveItem())
+					if (action.isActive)
 					{
 						return sum + itemHeight;
 					}

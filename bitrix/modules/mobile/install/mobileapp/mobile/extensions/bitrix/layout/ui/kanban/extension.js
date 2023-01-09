@@ -89,6 +89,23 @@
 			BX.addCustomEvent('DetailCard::onUpdate', this.onUpdateItemHandler);
 			BX.addCustomEvent('DetailCard::onCreate', this.onCreateItemHandler);
 			BX.addCustomEvent('DetailCard::onAccessDenied', this.onAccessDeniedItemHandler);
+
+			CategoryStorage && CategoryStorage
+				.subscribeOnChange(() => this.fillSlidesOrReload())
+				.markReady()
+			;
+		}
+
+		fillSlidesOrReload()
+		{
+			if (this.slides.size === this.getColumnsFromCurrentCategory().size)
+			{
+				this.fillSlides();
+			}
+			else
+			{
+				this.reload(this.getCurrentSlideName());
+			}
 		}
 
 		componentWillUnmount()

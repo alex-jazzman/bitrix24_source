@@ -78,16 +78,28 @@
 
 		renderActions()
 		{
-			const hasIcons = Boolean(this.actions.find((action) => action.data.svgIcon || action.data.imgUri));
+			const renderAction = this.props.renderAction;
+			if (!renderAction)
+			{
+				return [];
+			}
 
-			return this.actions.map((action, i) => {
-				action.onClick = this.props.onClick;
-				action.showIcon = hasIcons;
-				action.firstInSection = !i;
-				action.lastInSection = this.actions.length - 1 === i;
-				action.props.enabled = this.props.enabled;
-				return action;
+			const hasIcons = this.actions.some((action) => {
+				if (action.data)
+				{
+					return action.data.svgIcon || action.data.imgUri;
+				}
+
+				return false;
 			});
+
+			return this.actions.map((action, i) => renderAction(action, {
+				onClick: this.props.onClick,
+				showIcon: hasIcons,
+				firstInSection: !i,
+				lastInSection: this.actions.length - 1 === i,
+				enabled: this.props.enabled,
+			}));
 		}
 
 		static getDefaultSectionName()

@@ -1,6 +1,6 @@
 /**
  * Do not edit directly
- * Generated on Thu, 13 Oct 2022 09:45:03 GMT
+ * Generated on Fri, 11 Nov 2022 07:59:19 GMT
  */
 
 :root {
@@ -224,6 +224,8 @@
   --ui-color-palette-gray-30-rgb: 213, 215, 219;
   --ui-color-palette-gray-20: #dfe0e3;
   --ui-color-palette-gray-20-rgb: 223, 224, 227;
+  --ui-color-palette-gray-15: #e6e7e9;
+  --ui-color-palette-gray-15-rgb: 230, 231, 233;
   --ui-color-palette-gray-10: #edeef0;
   --ui-color-palette-gray-10-rgb: 237, 238, 240;
   --ui-color-palette-red-solid: #f0371b;
@@ -284,10 +286,14 @@
   --ui-color-palette-green-70-rgb: 127, 168, 0;
   --ui-color-palette-green-60: #8dbb00;
   --ui-color-palette-green-60-rgb: 141, 187, 0;
+  --ui-color-palette-green-55: #9dcf00;
+  --ui-color-palette-green-55-rgb: 157, 207, 0;
   --ui-color-palette-green-50: #9dcf00;
   --ui-color-palette-green-50-rgb: 157, 207, 0;
   --ui-color-palette-green-40: #bbde4d;
   --ui-color-palette-green-40-rgb: 187, 222, 77;
+  --ui-color-palette-green-35: #cfe780;
+  --ui-color-palette-green-35-rgb: 207, 231, 128;
   --ui-color-palette-green-30: #e2f1b3;
   --ui-color-palette-green-30-rgb: 226, 241, 179;
   --ui-color-palette-green-25: #faf6c3;
@@ -445,6 +451,8 @@
   --ui-color-base-30-rgb: var(--ui-color-palette-gray-30-rgb);
   --ui-color-base-20: var(--ui-color-palette-gray-20);
   --ui-color-base-20-rgb: var(--ui-color-palette-gray-20-rgb);
+  --ui-color-base-15: var(--ui-color-palette-gray-15);
+  --ui-color-base-15-rgb: var(--ui-color-palette-gray-15-rgb);
   --ui-color-base-10: var(--ui-color-palette-gray-10);
   --ui-color-base-10-rgb: var(--ui-color-palette-gray-10-rgb);
   --ui-color-background-note: var(--ui-color-palette-beige-base);

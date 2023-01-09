@@ -285,7 +285,7 @@ var phpVars = {
 		echo '</div>';
 	}
 
-	public function ShowSound()
+	public static function ShowSound()
 	{
 		/** @global CMain $APPLICATION */
 		global $USER, $APPLICATION;
@@ -2077,8 +2077,10 @@ class CAdminResult extends CDBResult
 			$nPageSize = array();
 
 		$nPageSize["nPageSize"] = $nSize;
-		if($_REQUEST["mode"] == "excel")
+		if (isset($_REQUEST["mode"]) && $_REQUEST["mode"] === "excel")
+		{
 			$nPageSize["NavShowAll"] = true;
+		}
 
 		$this->nInitialSize = $nPageSize["nPageSize"];
 

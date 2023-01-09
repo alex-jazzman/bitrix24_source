@@ -115,8 +115,8 @@ export default class SyncPanelUnit
 		if (!Type.isElementNode(this.buttonsWrap))
 		{
 			this.buttonsWrap = Tag.render`<div class="calendar-sync__calendar-item--buttons">
-				${this.getMoreButton()}
 				${this.getButton()}
+				${this.getMoreButton()}
 			</div>`;
 
 			Event.bind(this.moreButton, 'click', this.handleItemClick.bind(this));

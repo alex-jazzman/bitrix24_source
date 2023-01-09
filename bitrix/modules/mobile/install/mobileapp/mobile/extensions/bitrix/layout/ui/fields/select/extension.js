@@ -7,6 +7,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 	const { BaseSelectField } = require('layout/ui/fields/base-select');
 	const { stringify } = require('utils/string');
 	const { isEqual } = require('utils/object');
+	const { search } = require('utils/search');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 
 	const Type = {
@@ -292,11 +293,9 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 								color: '#0b66c3',
 								callback: () => this.applyChangesAndCloseSelector(),
 							}]);
-							this.selector.setSearchEnabled(false);
+							this.selector.setSearchEnabled(true);
 							this.selector.allowMultipleSelection(this.isMultiple());
-
-							this.selector.setItems(items, this.getSelectorSections());
-
+							this.selectorSetItems(items);
 							this.selectorSelectedItems = this.getSelectedSelectorItems();
 							this.selector.setSelected(this.selectorSelectedItems);
 
@@ -315,6 +314,34 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 					.catch(reject)
 				;
 			});
+		}
+
+		onListFillListener({ text })
+		{
+			const selectorItems = this.getSelectorItems();
+			if (!selectorItems.length)
+			{
+				return;
+			}
+
+			let items = selectorItems;
+
+			if (text.trim())
+			{
+				const foundItems = search(selectorItems, text, ['title']);
+				items = foundItems.length ? foundItems : [this.getEmptyResultButtonItem()];
+			}
+
+			this.selectorSetItems(items);
+		}
+
+		selectorSetItems(items)
+		{
+			if (!this.selector)
+			{
+				return;
+			}
+			this.selector.setItems(items, this.getSelectorSections());
 		}
 
 		showEmptyScreen(widget)
@@ -384,10 +411,9 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 				this
 					.removeFocus()
 					.then(() => {
-						this.selector.close(() => {
-							this.selector = null;
-							resolve();
-						});
+						this.selector.close();
+						this.selector = null;
+						resolve();
 					})
 				;
 			});
@@ -473,6 +499,17 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			{
 				void this.closeSelector();
 			}
+		}
+
+		getEmptyResultButtonItem()
+		{
+			return {
+				title: BX.message('FIELDS_SELECT_SELECTOR_NO_RESULTS'),
+				type: 'button',
+				unselectable: true,
+				sectionCode: SELECTOR_SECTION_ID,
+				hideBottomLine: true,
+			};
 		}
 
 		getDefaultStyles()

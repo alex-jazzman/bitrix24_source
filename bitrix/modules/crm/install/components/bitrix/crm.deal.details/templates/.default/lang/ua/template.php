@@ -13,6 +13,7 @@ $MESS["CRM_DEAL_DETAIL_ATTR_GR_TYPE_PIPELINE"] = "В роботі + успішн
 $MESS["CRM_DEAL_DETAIL_ATTR_REQUIRED_FULL"] = "Обов'язкове зі стадії";
 $MESS["CRM_DEAL_DETAIL_ATTR_REQUIRED_FULL_1"] = "Обов'язкове на стадії";
 $MESS["CRM_DEAL_DETAIL_ATTR_REQUIRED_SHORT"] = "Обов'язкове";
+$MESS["CRM_DEAL_DETAIL_AUTOMATION_DEBUG_ITEM"] = "У налагодженні";
 $MESS["CRM_DEAL_DETAIL_HISTORY_STUB"] = "Просто зараз ви створюєте угоду ...";
 $MESS["CRM_DEAL_DETAIL_WAREHOUSE_ADD_DOCUMENT_GUIDE_TEXT"] = "Усі дані про клієнта й товар скопіюються в документ. <br/><br/>Якщо не оформляти документ реалізації в процесі угоди, він сформується автоматично після її закриття.";
 $MESS["CRM_DEAL_DETAIL_WAREHOUSE_ADD_DOCUMENT_GUIDE_TITLE"] = "Провести реалізацію можна прямо з угоди";

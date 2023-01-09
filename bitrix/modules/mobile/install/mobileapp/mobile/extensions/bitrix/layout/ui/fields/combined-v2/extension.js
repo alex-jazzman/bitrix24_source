@@ -117,15 +117,11 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 			return super.isReadOnly() && !this.isNew();
 		}
 
-		isNew()
-		{
-			return BX.prop.getBoolean(this.props, 'isNew', false);
-		}
-
 		handlePrimaryOnClick()
 		{
 			const primaryType = this.getPrimaryFieldType();
 			const value = this.getPrimaryValue();
+
 			CommunicationEvents.execute({ type: primaryType, props: value });
 		}
 

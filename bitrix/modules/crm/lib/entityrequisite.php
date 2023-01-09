@@ -3490,7 +3490,11 @@ class EntityRequisite
 		$signer = new Main\Security\Sign\Signer();
 		foreach($formData as $requisiteID => $requisiteData)
 		{
-			if($requisiteID > 0 && isset($requisiteData['DELETED']) && mb_strtoupper($requisiteData['DELETED']) === 'Y')
+			if(
+				(int)$requisiteID > 0
+				&& isset($requisiteData['DELETED'])
+				&& mb_strtoupper($requisiteData['DELETED']) === 'Y'
+			)
 			{
 				$requisites[$requisiteID] = array('isDeleted' => true);
 				continue;

@@ -224,7 +224,7 @@ if (!$bReadOnly && 'POST' == $_SERVER['REQUEST_METHOD'] && ($save <> '' || $appl
 			}
 			elseif ($apply <> '')
 			{
-				$applyUrl = $selfFolderUrl."cat_group_edit.php?lang=".$lang."&ID=".$ID;
+				$applyUrl = $selfFolderUrl."cat_group_edit.php?lang=".LANGUAGE_ID."&ID=".$ID;
 				$applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
 				LocalRedirect($applyUrl);
 			}

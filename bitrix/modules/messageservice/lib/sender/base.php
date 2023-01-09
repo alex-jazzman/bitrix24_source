@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\MessageService\Sender;
 
+use Bitrix\Main\Text\Emoji;
 use Bitrix\MessageService\MessageStatus;
 use Bitrix\MessageService\MessageType;
 use Bitrix\MessageService\Providers;
@@ -169,6 +170,11 @@ abstract class Base
 	 */
 	public function prepareMessageBodyForSave(string $text): string
 	{
-		return $text;
+		return Emoji::encode($text);
+	}
+
+	protected function prepareMessageBodyForSend(string $text): string
+	{
+		return Emoji::decode($text);
 	}
 }

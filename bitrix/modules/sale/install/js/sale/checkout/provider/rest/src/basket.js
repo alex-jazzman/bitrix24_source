@@ -361,6 +361,39 @@ export class BasketRestHandler extends BaseRestHandler
         });
     }
 
+	setModelPropertyError(properties)
+	{
+		if (Type.isArrayFilled(properties))
+		{
+			this.store.commit('property/setErrors', properties);
+
+			this.store.getters['property/getProperty']
+			.forEach((fields, index)=>
+			{
+				if (typeof properties.find(item => item.propertyId === fields.id) !== 'undefined')
+				{
+					fields.validated = PropertyConst.validate.failure;
+				}
+				else
+				{
+					fields.validated = PropertyConst.validate.unvalidated;
+				}
+				this.store.dispatch('property/changeItem', {index, fields});
+			})
+		}
+		else
+		{
+			this.store.commit('property/clearErrors');
+
+			this.store.getters['property/getProperty']
+			.forEach((fields, index)=>
+			{
+				fields.validated = PropertyConst.validate.unvalidated;
+				this.store.dispatch('property/changeItem', {index, fields});
+			})
+		}
+	}
+
     handleSaveOrderError(errors)
     {
         return new Promise((resolve, reject) => {
@@ -378,41 +411,7 @@ export class BasketRestHandler extends BaseRestHandler
                     this.store.commit('application/clearErrors');
                 }
 
-                if(properties.length > 0)
-                {
-                    this.store.commit('property/setErrors', properties);
-
-                    this.store.getters['property/getProperty']
-                        .forEach((fields, index)=>
-                        {
-                            if(typeof properties.find(item => item.propertyId === fields.id) !== 'undefined')
-                            {
-                                fields.validated = PropertyConst.validate.failure
-                            }
-                            else
-                            {
-                                if(fields.validated !== PropertyConst.validate.unvalidated)
-                                {
-                                    fields.validated = PropertyConst.validate.successful
-                                }
-                            }
-                            this.store.dispatch('property/changeItem', {index, fields});
-                        })
-                }
-                else
-                {
-                    this.store.commit('property/clearErrors');
-
-                    this.store.getters['property/getProperty']
-                        .forEach((fields, index)=>
-                        {
-                            if(fields.validated !== PropertyConst.validate.unvalidated)
-                            {
-                                fields.validated = PropertyConst.validate.successful
-                            }
-                            this.store.dispatch('property/changeItem', {index, fields});
-                        })
-                }
+				this.setModelPropertyError(properties);
             }
         });
     }

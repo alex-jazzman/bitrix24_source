@@ -626,6 +626,7 @@
 			isMap,
 			isSet,
 			isEmpty,
+			isFunction
 		};
 
 	});

@@ -213,7 +213,7 @@ class Manager
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function getRoomById(int $id): array
+	public static function getRoomById(int $id, array $params = []): array
 	{
 		$roomQuery = LocationTable::query()
 			->setSelect([
@@ -249,7 +249,13 @@ class Manager
 			\CCalendarSect::HandlePermission($room);
 		}
 
-		return \CCalendarSect::GetSectionPermission($result);
+		$applyPermission = $params['checkPermission'] ?? true;
+		if ($applyPermission !== false)
+		{
+			return \CCalendarSect::GetSectionPermission($result);
+		}
+
+		return [...$result];
 	}
 
 	/**
@@ -263,11 +269,11 @@ class Manager
 	 */
 	public static function reserveRoom(array $params = []): ?int
 	{
-		$roomList = self::getRoomById((int)$params['room_id']);
+		$roomList = self::getRoomById((int)$params['room_id'], ['checkPermission' => $params['checkPermission']]);
 
 		if (!$roomList || empty($roomList[0])
 			|| empty($roomList[0]['NAME'])
-			|| !$roomList[0]['PERM']['view_full'])
+			|| (!$roomList[0]['PERM']['view_full'] && $params['checkPermission'] !== false))
 		{
 			return null;
 		}

@@ -17,7 +17,9 @@ export class SectionManager
 		this.setConfig(config);
 		this.addTaskSection();
 		this.sortSections();
-		EventEmitter.subscribeOnce('BX.Calendar.Section:delete', this.deleteSectionHandler.bind(this));
+		EventEmitter.subscribeOnce('BX.Calendar.Section:delete', (event) => {
+			this.deleteSectionHandler(event.data.sectionId);
+		});
 
 		this.reloadDataDebounce = Runtime.debounce(this.reloadData, SectionManager.RELOAD_DELAY, this);
 	}

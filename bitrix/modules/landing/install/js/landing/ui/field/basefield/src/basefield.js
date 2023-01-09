@@ -92,7 +92,10 @@ export class BaseField extends EventEmitter
 			this.disable();
 		}
 
-		Event.bind(this.input, 'paste', this.onPaste);
+		if (options.skipPasteControl !== true)
+		{
+			Event.bind(this.input, 'paste', this.onPaste);
+		}
 
 		this.init();
 

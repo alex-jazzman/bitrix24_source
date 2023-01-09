@@ -1,4 +1,7 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?
+use Bitrix\Main\Web\Uri;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/sidebar.css");
 
 $GLOBALS['APPLICATION']->SetAdditionalCSS('/bitrix/components/bitrix/rating.vote/templates/like/popup.css');
@@ -21,7 +24,7 @@ foreach($arResult["POST"] as $id => $res)
 		"post_text" => TruncateText(($res["MICRO"] != "Y" ? $res["TITLE"]." ".$res["CLEAR_TEXT"] : $res["CLEAR_TEXT"]), $arParams["MESSAGE_LENGTH"]),
 		"post_url" => $res["urlToPost"],
 		"author_name" => $res["AUTHOR_NAME"],
-		"author_avatar_style" => (!empty($res["AUTHOR_AVATAR"]["src"]) ? "url('".$res["AUTHOR_AVATAR"]["src"]."')" : ""),
+		"author_avatar_style" => (!empty($res["AUTHOR_AVATAR"]["src"]) ? "url('". Uri::urnEncode($res["AUTHOR_AVATAR"]["src"])."')" : ""),
 		"author_avatar" => (!empty($res["AUTHOR_AVATAR"]["src"]) ? "style=\"background:url('".$res["AUTHOR_AVATAR"]["src"]."') no-repeat center; background-size: cover;\"" : ""),
 		"author_url" => $res["urlToAuthor"]
 	);

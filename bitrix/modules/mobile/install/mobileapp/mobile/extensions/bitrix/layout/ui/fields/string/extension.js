@@ -43,6 +43,13 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 
 		shouldComponentUpdate(nextProps, nextState)
 		{
+			if (this.isReadOnly() && this.showHideButton && this.state.showAll && this.props.value === nextProps.value)
+			{
+				this.state.showAll = false;
+
+				return true;
+			}
+
 			nextState = Array.isArray(nextState) ? nextState[0] : nextState;
 
 			let prevPropsToCompare = this.props;
@@ -178,7 +185,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				wrapper: {
 					...styles.wrapper,
 					paddingTop: isFocusedEmptyEditable ? 14 : 8,
-					paddingBottom: this.hasErrorMessage() ? 5 : paddingBottomWithoutError,
+					paddingBottom: this.hasErrorOrTooltip() ? 5 : paddingBottomWithoutError,
 				},
 				title: {
 					...styles.title,
@@ -189,9 +196,6 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 					...styles.container,
 					// value = 1 to enable focus on Android
 					height: isFocusedEmptyEditable ? 1 : null,
-				},
-				errorWrapper: {
-					marginTop: !this.state.focus ? 18 : -2,
 				},
 			};
 		}

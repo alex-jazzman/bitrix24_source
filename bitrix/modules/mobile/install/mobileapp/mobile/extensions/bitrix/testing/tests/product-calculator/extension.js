@@ -2,9 +2,11 @@
 
 	// @todo add more test cases
 
-	const {describe, it, test, expect} = Testing.helpers();
+	const require = ext => jn.require(ext);
 
-	const {DiscountType, ProductCalculator, TaxForSumStrategy} = jn.require('crm/product-calculator');
+	const { describe, it, test, expect } = require('testing');
+
+	const { DiscountType, ProductCalculator, TaxForSumStrategy } = require('crm/product-calculator');
 
 	const defaultFields = {
 		QUANTITY: 0,

@@ -436,8 +436,11 @@ class SyncCountableDataAgent extends Stepper
 
 			if ($entity['DELETED'])
 			{
-				EntityCountableActivityTable::deleteByEntity(new ItemIdentifier($entityTypeId, $entityId));
-				$this->resetCounterByEntity($entityTypeId, $entityId);
+				if (\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId) && $entityId > 0)
+				{
+					EntityCountableActivityTable::deleteByEntity(new ItemIdentifier($entityTypeId, $entityId));
+					$this->resetCounterByEntity($entityTypeId, $entityId);
+				}
 			}
 			else
 			{

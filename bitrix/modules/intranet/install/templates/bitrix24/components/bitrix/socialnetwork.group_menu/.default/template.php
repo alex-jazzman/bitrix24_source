@@ -142,7 +142,7 @@ if (
 
 			$avatarStyle = (
 				!empty($arResult['Group']['IMAGE_FILE']['src'])
-					? 'style="background:url(\'' . $arResult['Group']['IMAGE_FILE']['src'] . '\') no-repeat center center; background-size: cover;"'
+					? 'style="background:url(\'' . Uri::urnEncode($arResult['Group']['IMAGE_FILE']['src']) . '\') no-repeat center center; background-size: cover;"'
 					: ''
 			);
 

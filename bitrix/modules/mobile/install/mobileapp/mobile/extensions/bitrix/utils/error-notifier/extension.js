@@ -25,9 +25,14 @@
 
 			return this.showError(
 				(textBefore ? textBefore + '\n' : '')
-				+ errors.map(error => error.message).join('\n'),
-				title || ''
+				+ ErrorNotifier.joinErrors(errors),
+				title || '',
 			);
+		}
+
+		static joinErrors(errors)
+		{
+			return errors.map(({ message }) => message).filter(Boolean).join('\n');
 		}
 
 		static showError(text, title = '')

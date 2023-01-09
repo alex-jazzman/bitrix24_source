@@ -1,0 +1,8 @@
+<?php
+$MESS["M_CRM_COMMUNICATION_MENU_CHANNELS"] = "Канали звернень";
+$MESS["M_CRM_COMMUNICATION_MENU_COMPANY"] = "Компанія";
+$MESS["M_CRM_COMMUNICATION_MENU_CONTACT"] = "Контакт";
+$MESS["M_CRM_COMMUNICATION_MENU_EMAIL"] = "Написати лист";
+$MESS["M_CRM_COMMUNICATION_MENU_IM"] = "Написати в месенджері";
+$MESS["M_CRM_COMMUNICATION_MENU_OPENLINE"] = "Відкрита лінія";
+$MESS["M_CRM_COMMUNICATION_MENU_PHONE"] = "Зателефонувати";

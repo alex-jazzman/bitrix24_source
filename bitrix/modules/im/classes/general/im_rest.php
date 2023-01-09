@@ -2373,9 +2373,12 @@ class CIMRestService extends IRestService
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
-		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		if (
+			$server->getAuthType() != \Bitrix\Rest\OAuth\Auth::AUTH_TYPE
+			&& !self::isDebugEnabled()
+		)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new \Bitrix\Rest\RestException("Access for this method allowed only by OAuth authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		global $USER;
@@ -5602,9 +5605,13 @@ class CIMRestService extends IRestService
 
 	public static function mobileConfigGet($params, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() != \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		if (
+			$server->getAuthType() != \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE
+			&& !self::isDebugEnabled()
+		)
 		{
 			throw new \Bitrix\Rest\RestException("Get access to browser const available only for session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+
 		}
 
 		$config = Array();
@@ -6268,6 +6275,12 @@ class CIMRestService extends IRestService
 		{
 			return (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".$_SERVER['SERVER_NAME'].(in_array($_SERVER['SERVER_PORT'], Array(80, 443))?'':':'.$_SERVER['SERVER_PORT']);
 		}
+	}
+
+	public static function isDebugEnabled()
+	{
+		$settings = \Bitrix\Main\Config\Configuration::getValue('im');
+		return $settings['rest_debug'] === true;
 	}
 }
 ?>

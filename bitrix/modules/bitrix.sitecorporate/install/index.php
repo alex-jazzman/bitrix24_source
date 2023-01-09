@@ -14,7 +14,7 @@ Class bitrix_sitecorporate extends CModule
 	var $MODULE_CSS;
 	var $MODULE_GROUP_RIGHTS = "Y";
 
-	function bitrix_sitecorporate()
+	public function __construct()
 	{
 		$arModuleVersion = array();
 
@@ -32,8 +32,6 @@ Class bitrix_sitecorporate extends CModule
 
 	function InstallDB($install_wizard = true)
 	{
-		global $DB, $DBType, $APPLICATION;
-
 		RegisterModule("bitrix.sitecorporate");
 		RegisterModuleDependences("main", "OnBeforeProlog", "bitrix.sitecorporate", "CSiteCorporate", "ShowPanel");
 
@@ -42,9 +40,7 @@ Class bitrix_sitecorporate extends CModule
 
 	function UnInstallDB($arParams = Array())
 	{
-		global $DB, $DBType, $APPLICATION;
-
-		UnRegisterModuleDependences("main", "OnBeforeProlog", "bitrix.sitecorporate", "CSiteCorporate", "ShowPanel"); 
+		UnRegisterModuleDependences("main", "OnBeforeProlog", "bitrix.sitecorporate", "CSiteCorporate", "ShowPanel");
 		UnRegisterModule("bitrix.sitecorporate");
 
 		return true;

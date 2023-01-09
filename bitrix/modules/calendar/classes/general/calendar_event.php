@@ -202,7 +202,8 @@ class CCalendarEvent
 						'name' => $entryFields['NAME'],
 						'persons' => count($attendees),
 						'attendees' => $attendees,
-						'bRecreateReserveMeetings' => $entryFields['LOCATION']['RE_RESERVE'] !== 'N'
+						'bRecreateReserveMeetings' => $entryFields['LOCATION']['RE_RESERVE'] !== 'N',
+						'checkPermission' => $params['checkPermission'],
 					]
 				);
 			}
@@ -402,9 +403,13 @@ class CCalendarEvent
 
 			foreach($entryFields as $field => $val)
 			{
-				if(isset($AllFields[$field]) && $field !== "ID")
+				if(
+					isset($AllFields[$field])
+					&& $field !== "ID"
+					&& is_scalar($val)
+				)
 				{
-					$dbFields[$field] = $entryFields[$field];
+					$dbFields[$field] = $val;
 				}
 			}
 
@@ -683,8 +688,11 @@ class CCalendarEvent
 			if ($cache->InitCache(CCalendar::CacheTime(), $cacheId, $cachePath))
 			{
 				$cachedData = $cache->GetVars();
-				$resultEntryList = $cachedData["resultEntryList"];
-				$userIndex = $cachedData["userIndex"];
+				if ($cachedData['dateTimeFormat'] === FORMAT_DATETIME)
+				{
+					$resultEntryList = $cachedData["resultEntryList"];
+					$userIndex = $cachedData["userIndex"];
+				}
 			}
 		}
 
@@ -1172,7 +1180,8 @@ class CCalendarEvent
 				$cache->StartDataCache(CCalendar::CacheTime(), $cacheId, $cachePath);
 				$cache->EndDataCache([
 					"resultEntryList" => $resultEntryList,
-					"userIndex" => $userIndex
+					"userIndex" => $userIndex,
+					"dateTimeFormat" => FORMAT_DATETIME,
 				]);
 			}
 		}
@@ -2842,10 +2851,11 @@ class CCalendarEvent
 								"ID" => (int)$childParams['arFields']['ID'],
 								"DELETED" => 'N',
 							],
+							'checkPermissions' => false,
 							'parseRecursion' => false,
 							'fetchAttendees' => true,
 							'fetchMeetings' => false,
-							'userId' => $userId
+							'userId' => $userId,
 						]
 					);
 				}
@@ -2877,7 +2887,7 @@ class CCalendarEvent
 					}
 
 					$sender = self::getSenderForIcal($userIndex, $childParams['arFields']['MEETING_HOST']);
-					
+
 					if (empty($sender) || !$sender['ID'])
 					{
 						continue;
@@ -2979,20 +2989,6 @@ class CCalendarEvent
 		$delIdStr = '';
 		if (!$isNewEvent && count($deletedAttendees) > 0)
 		{
-			$mailAttendeesIndex = [];
-			foreach ($attendees as $attendee)
-			{
-				if (!in_array($attendee['USER_ID'], $deletedAttendees))
-				{
-					$mailAttendeesIndex[$attendee['USER_ID']] = [
-						'ID' => $attendee['USER_ID'],
-						'NAME' => $attendee['NAME'],
-						'LAST_NAME' => $attendee['LAST_NAME'],
-						'EMAIL' => $attendee['EMAIL'],
-					];
-				}
-			}
-
 			foreach($deletedAttendees as $attendeeId)
 			{
 				if($chatId > 0 && $chat)
@@ -3019,34 +3015,36 @@ class CCalendarEvent
 				}
 				$delIdStr .= ','.(int)$att['EVENT_ID'];
 
-				$isExchangeEnabled = CCalendar::IsExchangeEnabled($attendeeId);
-				if ($isExchangeEnabled || $isCalDavEnabled)
-				{
-					$currentEvent = self::GetList(
-						array(
-							'arFilter' => array(
-								"PARENT_ID" => $parentId,
-								"OWNER_ID" => $attendeeId,
-								"IS_MEETING" => 1,
-								"DELETED" => "N"
-							),
-							'parseRecursion' => false,
-							'fetchAttendees' => true,
-							'fetchMeetings' => true,
-							'checkPermissions' => false,
-							'setDefaultLimit' => false
-						)
-					);
-					$currentEvent = $currentEvent[0];
+				$currentEvent = self::GetList(
+					array(
+						'arFilter' => array(
+							"PARENT_ID" => $parentId,
+							"OWNER_ID" => $attendeeId,
+							"IS_MEETING" => 1,
+							"DELETED" => "N"
+						),
+						'parseRecursion' => false,
+						'fetchAttendees' => true,
+						'fetchMeetings' => true,
+						'checkPermissions' => false,
+						'setDefaultLimit' => false
+					)
+				);
+				$currentEvent = $currentEvent[0];
 
-					if ($currentEvent)
-					{
-						CCalendarSync::DoDeleteToDav([
-							'bCalDav' => $isCalDavEnabled,
-							'bExchangeEnabled' => $isExchangeEnabled,
-							'sectionId' => $currentEvent['SECT_ID']
-						], $currentEvent);
-					}
+				$isExchangeEnabled = CCalendar::IsExchangeEnabled($attendeeId);
+				if (($isExchangeEnabled || $isCalDavEnabled) && $currentEvent)
+				{
+					CCalendarSync::DoDeleteToDav([
+						'bCalDav' => $isCalDavEnabled,
+						'bExchangeEnabled' => $isExchangeEnabled,
+						'sectionId' => $currentEvent['SECT_ID']
+					], $currentEvent);
+				}
+
+				if ($currentEvent)
+				{
+					self::onEventDelete($currentEvent, $params);
 				}
 
 				if ($att['EXTERNAL_AUTH_ID'] === 'email' && !$isPastEvent)

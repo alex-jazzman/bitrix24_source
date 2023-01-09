@@ -125,7 +125,7 @@ class ISmsCenter extends Sender\BaseConfigurable
 		$message = [
 			'from' => $messageFields['MESSAGE_FROM'],
 			'to' => str_replace('+', '', $messageFields['MESSAGE_TO']),
-			'text' => $messageFields['MESSAGE_BODY'],
+			'text' => $this->prepareMessageBodyForSend($messageFields['MESSAGE_BODY']),
 			'notify_url' => $this->getCallbackUrl()
 		];
 

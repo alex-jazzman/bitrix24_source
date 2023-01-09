@@ -36,21 +36,194 @@ this.BX = this.BX || {};
 	}
 
 	const EntityType = main_core.Reflection.getClass('BX.CrmEntityType');
+	const DefaultSort = {};
+
+	if (EntityType) {
+	  DefaultSort[EntityType.enumeration.deal] = {
+	    column: 'DATE_CREATE',
+	    order: 'desc'
+	  };
+	}
+
+	Object.freeze(DefaultSort);
+
+	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+
+	var _grid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("grid");
+
+	var _disableLastActivitySort = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableLastActivitySort");
+
+	var _enableLastActivitySort = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableLastActivitySort");
+
+	var _isColumnExists = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isColumnExists");
+
+	var _isColumnShowed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isColumnShowed");
+
+	var _isColumnSortable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isColumnSortable");
+
+	var _getShowedColumnList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getShowedColumnList");
+
+	var _setSortOrder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setSortOrder");
+
+	var _showColumn = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showColumn");
+
+	class SortController {
+	  constructor(entityTypeId, grid) {
+	    Object.defineProperty(this, _showColumn, {
+	      value: _showColumn2
+	    });
+	    Object.defineProperty(this, _setSortOrder, {
+	      value: _setSortOrder2
+	    });
+	    Object.defineProperty(this, _getShowedColumnList, {
+	      value: _getShowedColumnList2
+	    });
+	    Object.defineProperty(this, _isColumnSortable, {
+	      value: _isColumnSortable2
+	    });
+	    Object.defineProperty(this, _isColumnShowed, {
+	      value: _isColumnShowed2
+	    });
+	    Object.defineProperty(this, _isColumnExists, {
+	      value: _isColumnExists2
+	    });
+	    Object.defineProperty(this, _enableLastActivitySort, {
+	      value: _enableLastActivitySort2
+	    });
+	    Object.defineProperty(this, _disableLastActivitySort, {
+	      value: _disableLastActivitySort2
+	    });
+	    Object.defineProperty(this, _entityTypeId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _grid, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = main_core.Text.toInteger(entityTypeId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid] = requireClass(grid, BX.Main.grid, 'grid');
+	  }
+
+	  isLastActivitySortSupported() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isColumnExists)[_isColumnExists]('LAST_ACTIVITY_TIME');
+	  }
+
+	  isLastActivitySortEnabled() {
+	    const options = babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getUserOptions().getCurrentOptions();
+
+	    const column = options.last_sort_by;
+	    const order = options.last_sort_order;
+	    return (column == null ? void 0 : column.toLowerCase()) === 'last_activity_time' && (order == null ? void 0 : order.toLowerCase()) === 'desc';
+	  }
+
+	  toggleLastActivitySort() {
+	    if (this.isLastActivitySortEnabled()) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _disableLastActivitySort)[_disableLastActivitySort]();
+	    } else {
+	      babelHelpers.classPrivateFieldLooseBase(this, _enableLastActivitySort)[_enableLastActivitySort]();
+	    }
+	  }
+
+	}
+
+	async function _disableLastActivitySort2() {
+	  const sort = DefaultSort[babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]];
+
+	  let column;
+
+	  if (main_core.Type.isPlainObject(sort) && babelHelpers.classPrivateFieldLooseBase(this, _isColumnExists)[_isColumnExists](sort.column) && babelHelpers.classPrivateFieldLooseBase(this, _isColumnSortable)[_isColumnSortable](sort.column)) {
+	    column = sort.column;
+
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isColumnShowed)[_isColumnShowed](column)) {
+	      await babelHelpers.classPrivateFieldLooseBase(this, _showColumn)[_showColumn](column);
+	    }
+
+	    babelHelpers.classPrivateFieldLooseBase(this, _setSortOrder)[_setSortOrder](column, sort.order);
+	  } else {
+	    // fist showed different sortable
+	    column = babelHelpers.classPrivateFieldLooseBase(this, _getShowedColumnList)[_getShowedColumnList]().find(columnName => {
+	      return columnName !== 'LAST_ACTIVITY_TIME' && babelHelpers.classPrivateFieldLooseBase(this, _isColumnSortable)[_isColumnSortable](columnName);
+	    });
+	  }
+
+	  babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].sortByColumn(column);
+	}
+
+	async function _enableLastActivitySort2() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isColumnShowed)[_isColumnShowed]('LAST_ACTIVITY_TIME')) {
+	    await babelHelpers.classPrivateFieldLooseBase(this, _showColumn)[_showColumn]('LAST_ACTIVITY_TIME');
+	  }
+
+	  babelHelpers.classPrivateFieldLooseBase(this, _setSortOrder)[_setSortOrder]('LAST_ACTIVITY_TIME', 'desc');
+
+	  babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].sortByColumn('LAST_ACTIVITY_TIME');
+	}
+
+	function _isColumnExists2(column) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getParam('COLUMNS_ALL', {}).hasOwnProperty(column);
+	}
+
+	function _isColumnShowed2(column) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _getShowedColumnList)[_getShowedColumnList]().includes(column);
+	}
+
+	function _isColumnSortable2(column) {
+	  const columnParams = babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getColumnByName(column);
+
+	  return !!(columnParams && columnParams.sort !== false);
+	}
+
+	function _getShowedColumnList2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getSettingsWindow().getShowedColumns();
+	}
+
+	function _setSortOrder2(column, order) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getColumnByName(column).sort_order = order;
+	}
+
+	function _showColumn2(column) {
+	  return new Promise((resolve, reject) => {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isColumnExists)[_isColumnExists](column)) {
+	      reject(`Column ${column} does not exists`);
+	      return;
+	    }
+
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isColumnShowed)[_isColumnShowed](column)) {
+	      reject(`Column ${column} is showed already`);
+	      return;
+	    }
+
+	    const settingsWindowCheckbox = babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getSettingsWindow().getItems().find(checkbox => checkbox.getId() === column);
+
+	    settingsWindowCheckbox == null ? void 0 : settingsWindowCheckbox.select();
+
+	    const showedColumns = babelHelpers.classPrivateFieldLooseBase(this, _getShowedColumnList)[_getShowedColumnList]();
+
+	    showedColumns.push(column);
+
+	    babelHelpers.classPrivateFieldLooseBase(this, _grid)[_grid].getSettingsWindow().saveColumns(showedColumns, resolve);
+	  });
+	}
+
+	const EntityType$1 = main_core.Reflection.getClass('BX.CrmEntityType');
 	const CHECKED_CLASS = 'menu-popup-item-accept';
 	const NOT_CHECKED_CLASS = 'menu-popup-item-none';
 	/**
 	 * @memberOf BX.Crm
 	 */
 
-	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityTypeId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 
 	var _rootMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rootMenu");
 
 	var _targetItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetItemId");
 
-	var _controller = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("controller");
+	var _kanbanController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("kanbanController");
 
 	var _restriction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restriction");
+
+	var _gridController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridController");
 
 	var _todoSkipMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("todoSkipMenu");
 
@@ -98,7 +271,7 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _bindEvents, {
 	      value: _bindEvents2
 	    });
-	    Object.defineProperty(this, _entityTypeId, {
+	    Object.defineProperty(this, _entityTypeId$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -110,13 +283,17 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _controller, {
+	    Object.defineProperty(this, _kanbanController, {
 	      writable: true,
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _restriction, {
 	      writable: true,
 	      value: void 0
+	    });
+	    Object.defineProperty(this, _gridController, {
+	      writable: true,
+	      value: null
 	    });
 	    Object.defineProperty(this, _todoSkipMenu, {
 	      writable: true,
@@ -126,18 +303,23 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: false
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = main_core.Text.toInteger(params.entityTypeId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1] = main_core.Text.toInteger(params.entityTypeId);
 
-	    if (EntityType && !EntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId])) {
-	      throw new Error(`Provided entityTypeId is invalid: ${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]}`);
+	    if (EntityType$1 && !EntityType$1.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1])) {
+	      throw new Error(`Provided entityTypeId is invalid: ${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]}`);
 	    }
 
 	    babelHelpers.classPrivateFieldLooseBase(this, _rootMenu)[_rootMenu] = requireClass(params.rootMenu, main_popup.Menu, 'params.rootMenu');
 	    babelHelpers.classPrivateFieldLooseBase(this, _targetItemId)[_targetItemId] = requireStringOrNull(params.targetItemId, 'params.targetItemId');
-	    babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller] = requireClassOrNull(params.controller, crm_kanban_sort.SettingsController, 'params.controller');
+	    babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController] = requireClassOrNull(params.controller, crm_kanban_sort.SettingsController, 'params.controller');
 	    babelHelpers.classPrivateFieldLooseBase(this, _restriction)[_restriction] = requireClassOrNull(params.restriction, crm_kanban_restriction.Restriction, 'params.restriction');
+
+	    if (main_core.Reflection.getClass('BX.Main.grid') && params.grid) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _gridController)[_gridController] = new SortController(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1], params.grid);
+	    }
+
 	    babelHelpers.classPrivateFieldLooseBase(this, _todoSkipMenu)[_todoSkipMenu] = new crm_activity_todoNotificationSkipMenu.TodoNotificationSkipMenu({
-	      entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId],
+	      entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1],
 	      selectedValue: requireStringOrNull(params.todoCreateNotificationSkipPeriod, 'params.todoCreateNotificationSkipPeriod')
 	    });
 
@@ -206,9 +388,10 @@ this.BX = this.BX || {};
 	}
 
 	function _shouldShowLastActivitySortToggle2() {
-	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3;
 
-	  return !!((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller]) != null && _babelHelpers$classPr.getCurrentSettings().isTypeSupported(crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME) && (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _restriction)[_restriction]) != null && _babelHelpers$classPr2.isSortTypeChangeAvailable());
+	  const shouldShowInKanban = ((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController]) == null ? void 0 : _babelHelpers$classPr.getCurrentSettings().isTypeSupported(crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME)) && ((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _restriction)[_restriction]) == null ? void 0 : _babelHelpers$classPr2.isSortTypeChangeAvailable());
+	  return !!(shouldShowInKanban || (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _gridController)[_gridController]) != null && _babelHelpers$classPr3.isLastActivitySortSupported());
 	}
 
 	function _getLastActivitySortToggle2() {
@@ -221,9 +404,15 @@ this.BX = this.BX || {};
 	}
 
 	function _isLastActivitySortEnabled2() {
-	  var _babelHelpers$classPr3;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController]) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController].getCurrentSettings().getCurrentType() === crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME;
+	  }
 
-	  return ((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller]) == null ? void 0 : _babelHelpers$classPr3.getCurrentSettings().getCurrentType()) === crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _gridController)[_gridController]) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _gridController)[_gridController].isLastActivitySortEnabled();
+	  }
+
+	  return false;
 	}
 
 	function _handleLastActivitySortToggleClick2(event, item) {
@@ -232,37 +421,45 @@ this.BX = this.BX || {};
 	  (_item$getMenuWindow = item.getMenuWindow()) == null ? void 0 : (_item$getMenuWindow$g = _item$getMenuWindow.getRootMenuWindow()) == null ? void 0 : _item$getMenuWindow$g.close();
 	  item.disable();
 
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isSetSortRequestRunning)[_isSetSortRequestRunning]) {
-	    return;
-	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController]) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isSetSortRequestRunning)[_isSetSortRequestRunning]) {
+	      return;
+	    }
 
-	  babelHelpers.classPrivateFieldLooseBase(this, _isSetSortRequestRunning)[_isSetSortRequestRunning] = true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isSetSortRequestRunning)[_isSetSortRequestRunning] = true;
 
-	  const settings = babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller].getCurrentSettings();
+	    const settings = babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController].getCurrentSettings();
 
-	  let newSortType;
+	    let newSortType;
 
-	  if (settings.getCurrentType() === crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME) {
-	    // first different type
-	    newSortType = settings.getSupportedTypes().find(sortType => sortType !== crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME);
-	  } else {
-	    newSortType = crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME;
-	  }
+	    if (settings.getCurrentType() === crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME) {
+	      // first different type
+	      newSortType = settings.getSupportedTypes().find(sortType => sortType !== crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME);
+	    } else {
+	      newSortType = crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME;
+	    }
 
-	  babelHelpers.classPrivateFieldLooseBase(this, _controller)[_controller].setCurrentSortType(newSortType).then(() => {}).catch(() => {}).finally(() => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _isSetSortRequestRunning)[_isSetSortRequestRunning] = false;
+	    babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController].setCurrentSortType(newSortType).then(() => {}).catch(() => {}).finally(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _isSetSortRequestRunning)[_isSetSortRequestRunning] = false;
+	      item.enable();
+	    });
+	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _gridController)[_gridController]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _gridController)[_gridController].toggleLastActivitySort();
+
 	    item.enable();
-	  });
+	  } else {
+	    console.error('Can not handle last activity toggle click');
+	  }
 	}
 
 	function _shouldShowTodoSkipMenu2() {
 	  let allowedTypes = [];
 
-	  if (EntityType) {
-	    allowedTypes = [EntityType.enumeration.deal];
+	  if (EntityType$1) {
+	    allowedTypes = [EntityType$1.enumeration.deal];
 	  }
 
-	  return allowedTypes.includes(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]);
+	  return allowedTypes.includes(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]);
 	}
 
 	const namespace = main_core.Reflection.namespace('BX.Crm');

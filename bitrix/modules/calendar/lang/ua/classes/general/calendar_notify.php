@@ -33,6 +33,11 @@ $MESS["EC_MESS_REC_THIS_CANCEL_SITE"] = "Повторення зустрічі \
 $MESS["EC_MESS_VIEW_OWN_CALENDAR"] = "Переглянути інші події та зустрічі Ви можете в своєму [url=#LINK#]персональному календарі [/url]";
 $MESS["EC_MESS_VIEW_OWN_CALENDAR_OUT"] = "Переглянути інші події та зустрічі Ви можете в своєму персональному календарі #LINK#";
 $MESS["EC_NOTIFY_ATTENDEES_CHANGED"] = "Змінений склад учасників зустрічі \"#TITLE#\" з вашою участю, дата проведення зустрічі - #ACTIVE_FROM#";
+$MESS["EC_NOTIFY_CANCEL_BOOKING_ALL"] = "Скасовано бронювання кімнати для зустрічей для всіх подій «[url=#LINK#]#EVENT#[/url]», які проходять [B]#FREQUENCY#, #FROM_TIME#[/B].";
+$MESS["EC_NOTIFY_CANCEL_BOOKING_ENDING"] = "Ви можете вибрати вільну кімнату для зустрічей або проводити онлайн-подію за допомогою відеодзвінків у Бітрікс24.";
+$MESS["EC_NOTIFY_CANCEL_BOOKING_NEXT"] = "Скасовано бронювання кімнати для зустрічей для подій «[url=#LINK#]#EVENT#[/url]», які проходять [B]#FREQUENCY#, #FROM_TIME#[/B].";
+$MESS["EC_NOTIFY_CANCEL_BOOKING_THIS"] = "Скасовано бронювання кімнати для зустрічей для вашої події «[url=#LINK#]#EVENT#[/url]», яка пройде [B]#FROM#[/B].";
+$MESS["EC_NOTIFY_CANCEL_BOOKING_TIME"] = "о #FROM_TIME#";
 $MESS["EC_NOTIFY_DATE_FROM_CHANGED"] = "Змінений час проведення зустрічі \"#TITLE#\" з вашою участю з \"#OLD_DATE_FROM#\", на \"#NEW_DATE_FROM#\"";
 $MESS["EC_NOTIFY_DATE_TO_CHANGED"] = "Змінений час завершення зустрічі \"#TITLE#\" з вашою участю з \"#OLD_DATE_TO#\", на \"#NEW_DATE_TO#\"";
 $MESS["EC_NOTIFY_DELETE_LOCATION"] = "Переговорна кімната <b>\"#LOCATION#\"</b> була видалена з ваших подій";

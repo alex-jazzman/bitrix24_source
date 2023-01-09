@@ -3,6 +3,7 @@ $MESS["BIZPROC_GLOBALFIELDS_LIST_CANT_DELETE_CONSTANT_RIGHT"] = "Недоста�
 $MESS["BIZPROC_GLOBALFIELDS_LIST_CANT_DELETE_VARIABLE_RIGHT"] = "Недостатньо прав для видалення змінних.";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_CREATED_BY"] = "Автор";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_CREATED_DATE"] = "Дата створення";
+$MESS["BIZPROC_GLOBALFIELDS_LIST_CREATE_BUTTON"] = "Створити";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_CREATE_CONSTANT"] = "Створити константу";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_CREATE_VARIABLE"] = "Створити змінну";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_DELETE"] = "Видалити";

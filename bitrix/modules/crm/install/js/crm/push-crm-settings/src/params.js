@@ -9,4 +9,5 @@ export type Params = {
 	targetItemId: ?string,
 	controller: ?SettingsController,
 	restriction: ?Restriction,
+	grid: ?BX.Main.grid,
 };

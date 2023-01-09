@@ -3,11 +3,17 @@
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Component\BaseForm;
+use Bitrix\Catalog\Component\GridVariation\GridState;
+use Bitrix\Catalog\Component\GridVariation\GridStateStorage;
 use Bitrix\Catalog\Component\GridVariationForm;
 use Bitrix\Catalog\Config\State;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Catalog\v2\Product\BaseProduct;
+use Bitrix\Catalog\v2\Sku\SkuCollection;
+use Bitrix\Catalog\v2\Sku\SkuRepositoryContract;
+use Bitrix\Main\Application;
+use Bitrix\Main\Data\LocalStorage\SessionLocalStorage;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorableImplementation;
@@ -37,7 +43,11 @@ class CatalogProductVariationGridComponent
 	private $product;
 	/** @var \Bitrix\Catalog\Component\GridVariationForm */
 	private $defaultForm;
-
+	private CGridOptions $gridOptions;
+	private PageNavigation $gridPagination;
+	private SkuCollection $preparedSkuCollection;
+	private ?SkuRepositoryContract $skuRepository;
+	private GridState $state;
 	/** @var array|null */
 	private $skuStoreAmount;
 
@@ -63,6 +73,105 @@ class CatalogProductVariationGridComponent
 	protected function listKeysSignedParameters()
 	{
 		return [];
+	}
+
+	private function getSkuRepository(): ?SkuRepositoryContract
+	{
+		if (!isset($this->skuRepository))
+		{
+            $skuIblockId = $this->getProduct()->getIblockInfo()->getSkuIblockId();
+			if (!isset($skuIblockId))
+			{
+				return null;
+			}
+
+			$this->skuRepository = ServiceContainer::getSkuRepository($skuIblockId);
+		}
+
+		return $this->skuRepository;
+	}
+
+	private function getGridState(): GridState
+	{
+		$this->state ??= (new GridStateStorage)->load(
+			$this->getProductId(),
+			(string)$this->getGridId()
+		);
+
+		return $this->state;
+	}
+
+	private function checkGridStateCurrentPage(): void
+	{
+		$state = $this->getGridState();
+
+		if (isset($this->gridPagination))
+		{
+			$pagination = $this->loadGridNavObject();
+			$pagination->setCurrentPage($state->getCurrentPage());
+		}
+		else
+		{
+			$pagination = $this->getGridNavObject();
+		}
+
+		$pageCount = $pagination->getPageCount();
+		$page = $pagination->getCurrentPage();
+		if ($page > $pageCount)
+		{
+			$pagination->setCurrentPage($pageCount);
+			$state->setCurrentPage($pageCount);
+			$state->save();
+		}
+	}
+
+	/**
+	 * SKU collection with order and pagination.
+	 *
+	 * @return SkuCollection
+	 */
+	private function getPreparedSkuCollection(): SkuCollection
+	{
+		if (isset($this->preparedSkuCollection))
+		{
+			return $this->preparedSkuCollection;
+		}
+
+		$repository = $this->getSkuRepository();
+		if ($repository && !$this->isNewProduct())
+		{
+			$pagination = $this->getGridNavObject();
+
+			$params = [
+				'order' => $this->getGridOptionsSorting()['sort'],
+				'nav' => [
+					'nTopCount' => $pagination->getLimit(),
+					'nOffset' => $pagination->getOffset(),
+				],
+			];
+
+			$skus = $repository->getEntitiesByProduct($this->getProduct(), $params);
+			$factory = ServiceContainer::getSkuFactory($this->getProduct()->getIblockId());
+			if ($factory)
+			{
+				$this->preparedSkuCollection =
+					$factory
+						->createCollection()
+						->setParent($this->getProduct())
+						->add(... $skus)
+				;
+
+				return $this->preparedSkuCollection;
+			}
+		}
+
+		$this->preparedSkuCollection = $this->getProduct()->loadSkuCollection();
+		if ($this->preparedSkuCollection->isEmpty())
+		{
+			$this->preparedSkuCollection->create();
+		}
+
+		return $this->preparedSkuCollection;
 	}
 
 	public function onPrepareComponentParams($params)
@@ -137,6 +246,10 @@ class CatalogProductVariationGridComponent
 								$propertyValues = [];
 								foreach ($copyItem->getPropertyCollection() as $property)
 								{
+									if ($property->getCode() === 'MORE_PHOTO')
+									{
+										continue;
+									}
 									$propertyValues[$property->getId()] = $property->getPropertyValueCollection()->toArray();
 								}
 								$sku->getPropertyCollection()->setValues($propertyValues);
@@ -244,6 +357,7 @@ class CatalogProductVariationGridComponent
 		$actionButton = 'action_button_'.$this->getGridId();
 		$gridGroupAction = $request[$actionButton] ?? null;
 		$gridItemAction = $request['action'] ?? null;
+		$gridAction = $request['grid_action'] ?? null;
 
 		if ($gridGroupAction && $gridGroupAction === 'delete')
 		{
@@ -252,6 +366,7 @@ class CatalogProductVariationGridComponent
 			$allRows = ($request[$actionAllRows] ?? 'N') === 'Y';
 
 			$this->processGridDelete($ids, $allRows);
+			$this->checkGridStateCurrentPage();
 		}
 		elseif ($gridItemAction && $gridItemAction === 'deleteRow')
 		{
@@ -261,6 +376,23 @@ class CatalogProductVariationGridComponent
 			{
 				$this->processGridDelete([$id]);
 			}
+
+			$this->checkGridStateCurrentPage();
+		}
+		elseif ($gridAction === 'pagination')
+		{
+			$pagination = $this->loadGridNavObject();
+			$pagination->initFromUri();
+
+			$state = $this->getGridState();
+			$state->setCurrentPage($pagination->getCurrentPage());
+			$state->save();
+		}
+		elseif ($gridAction === 'showpage')
+		{
+			$state = $this->getGridState();
+			$state->reset();
+			$state->save();
 		}
 	}
 
@@ -420,14 +552,9 @@ class CatalogProductVariationGridComponent
 
 	private function getGridOptions(): CGridOptions
 	{
-		static $gridOptions = null;
+		$this->gridOptions ??= new CGridOptions($this->getGridId());
 
-		if ($gridOptions === null)
-		{
-			$gridOptions = new \CGridOptions($this->getGridId());
-		}
-
-		return $gridOptions;
+		return $this->gridOptions;
 	}
 
 	public function getGridOptionsSorting(): array
@@ -437,7 +564,7 @@ class CatalogProductVariationGridComponent
 				'sort' => ['NAME' => 'ASC'],
 				'vars' => ['by' => 'by', 'order' => 'order'],
 			])
-			;
+		;
 	}
 
 	protected function getVariationLink(?int $skuId): ?string
@@ -466,8 +593,9 @@ class CatalogProductVariationGridComponent
 	protected function getGridRows(): array
 	{
 		$rows = [];
-		$skuCollection = $this->getProduct()->loadSkuCollection();
+		$skuCollection = $this->getPreparedSkuCollection();
 		$skuCount = $skuCollection->count();
+
 		$rowMode = $this->isNewProduct() ? GridVariationForm::CREATION_MODE : GridVariationForm::EDIT_MODE;
 		foreach ($skuCollection as $sku)
 		{
@@ -631,9 +759,49 @@ class CatalogProductVariationGridComponent
 		return $hiddenNames;
 	}
 
-	protected function getGridNavObject()
+	private function getNavParamName(): string
 	{
-		return new PageNavigation('nav-'.$this->getGridId());
+		return 'nav-'.$this->getGridId();
+	}
+
+	private function getTotalCountProductSkus(): int
+	{
+		$product = $this->getProduct();
+		$repository = $this->getSkuRepository();
+
+		if (isset($repository) && !$product->isNew())
+		{
+			return $repository->getCountByProductId($product->getId());
+		}
+
+		return 0;
+	}
+
+	private function loadGridNavObject(): PageNavigation
+	{
+		$totalCount = $this->getTotalCountProductSkus();
+		$gridOptions = $this->getGridOptions();
+		$pageSize = (int)$gridOptions->GetNavParams()['nPageSize'];
+
+		$pagination = new PageNavigation($this->getNavParamName());
+		$pagination->allowAllRecords(false);
+		$pagination->setPageSize($pageSize);
+		$pagination->setRecordCount($totalCount);
+
+		return $pagination;
+	}
+
+	protected function getGridNavObject(): PageNavigation
+	{
+		if (!isset($this->gridPagination))
+		{
+			$this->gridPagination = $this->loadGridNavObject();
+			$this->gridPagination->setCurrentPage(
+				$this->getGridState()->getCurrentPage()
+			);
+		}
+
+		return $this->gridPagination;
 	}
 
 	protected function getGridActionPanel()
@@ -657,14 +825,23 @@ class CatalogProductVariationGridComponent
 		$gridSorting = $this->getGridOptionsSorting();
 		$rows = $this->getGridRows();
 		$isReadOnly = $this->isReadOnly();
+		$pagination = $this->getGridNavObject();
+		$isShowPagination = $pagination->getPageCount() > 1;
+
 		return [
-			'ID' => $this->getGridId(),
+			//'ID' => $this->getGridId(),
+			'GRID_ID' => $this->getGridId(),
 			'HEADERS' => $this->getDefaultVariationRowForm()->getGridHeaders(),
 			'HIDDEN_PROPERTIES' => $this->getHiddenProperties(),
 			'ROWS' => $rows,
 			'SORT' => $gridSorting['sort'],
 			'SORT_VARS' => $gridSorting['vars'],
-			'NAV_OBJECT' => $this->getGridNavObject(),
+
+			'NAV_OBJECT' => $pagination,
+			'NAV_PARAM_NAME' => $pagination->getId(),
+			'CURRENT_PAGE' => $pagination->getCurrentPage(),
+			'TOTAL_ROWS_COUNT' => $pagination->getRecordCount(),
+
 			'ACTION_PANEL' => $this->getGridActionPanel(),
 
 			'EDIT_DATA' => $this->getGridEditData($rows),
@@ -673,8 +850,8 @@ class CatalogProductVariationGridComponent
 			'SHOW_ROW_CHECKBOXES' => !$isReadOnly,
 			'SHOW_ROW_ACTIONS_MENU' => true,
 			'SHOW_GRID_SETTINGS_MENU' => $this->getDefaultVariationRowForm()->isCardSettingsEditable(),
-			'SHOW_NAVIGATION_PANEL' => !$isReadOnly,
-			'SHOW_PAGINATION' => !$isReadOnly,
+			'SHOW_NAVIGATION_PANEL' => true,
+			'SHOW_PAGINATION' => $isShowPagination,
 			'SHOW_SELECTED_COUNTER' => !$isReadOnly,
 			'SHOW_TOTAL_COUNTER' => true,
 			'SHOW_PAGESIZE' => true,
@@ -710,12 +887,7 @@ class CatalogProductVariationGridComponent
 
 		$product->setFields($fields);
 
-		if ($product->getSkuCollection()->isEmpty())
-		{
-			$product->getSkuCollection()->create();
-		}
-
-		foreach ($product->getSkuCollection() as $sku)
+		foreach ($this->getPreparedSkuCollection() as $sku)
 		{
 			$sku->setFields($fields);
 
@@ -761,7 +933,7 @@ class CatalogProductVariationGridComponent
 			return [];
 		}
 
-		$skus = $this->getProduct()->getSkuCollection()->toArray();
+		$skus = $this->getPreparedSkuCollection()->toArray();
 		$skuIds = array_column($skus, 'ID');
 
 		if (!$skuIds)

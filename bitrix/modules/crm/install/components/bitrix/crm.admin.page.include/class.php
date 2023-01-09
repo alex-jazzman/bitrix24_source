@@ -217,7 +217,10 @@ class CCrmAdminPageInclude extends \CBitrixComponent
 
 		$_REQUEST["lang"] = LANGUAGE_ID;
 
-		define("SELF_FOLDER_URL", $this->arParams["SEF_FOLDER"]);
+		if (!defined('SELF_FOLDER_URL'))
+		{
+			define('SELF_FOLDER_URL', $this->arParams['SEF_FOLDER']);
+		}
 	}
 
 	protected function formatResult()

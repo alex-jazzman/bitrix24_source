@@ -191,7 +191,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 					$this->arResult['DOCUMENT']['ID']
 				),
 			];
-		}
+		} 
 
 		return $result;
 	}
@@ -320,7 +320,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 		return
 			$this->accessController->check(ActionDictionary::ACTION_CATALOG_READ)
 			&& $this->accessController->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
-		;
+			;
 	}
 
 	private function checkDocumentReadRights(): bool
@@ -331,7 +331,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 				ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
 				$this->getDocumentType()
 			)
-		;
+			;
 	}
 
 	private function checkDocumentWriteRights(): bool
@@ -342,7 +342,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 				ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
 				$this->getDocumentType()
 			)
-		;
+			;
 	}
 
 	private function checkDocumentConductRights(): bool
@@ -353,7 +353,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 				ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT,
 				$this->getDocumentType()
 			)
-		;
+			;
 	}
 
 	private function checkDocumentCancelRights(): bool
@@ -364,7 +364,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 				ActionDictionary::ACTION_STORE_DOCUMENT_CANCEL,
 				$this->getDocumentType()
 			)
-		;
+			;
 	}
 
 	public function saveAction($fields = []): array
@@ -1312,7 +1312,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 
 		return
 			InventoryManagementSourceBuilder::getInstance()->addInventoryManagementSourceParam($pathToDocumentDetail)
-		;
+			;
 	}
 
 	private function clearElementsForDocument()

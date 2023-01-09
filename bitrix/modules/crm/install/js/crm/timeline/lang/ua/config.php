@@ -15,6 +15,7 @@ $MESS["CRM_TIMELINE_NOTIFICATION_MESSAGE"] = "повідомлення";
 $MESS["CRM_TIMELINE_NOTIFICATION_NO_MESSAGE_TEXT"] = "Повідомлення за шаблоном центру сповіщень";
 $MESS["CRM_TIMELINE_NOTIFICATION_NO_MESSAGE_TEXT_2"] = "Повідомлення за шаблоном";
 $MESS["CRM_TIMELINE_NOTIFICATION_VIA"] = "через";
+$MESS["CRM_TIMELINE_PRODUCT_COMPILATION_ORDER_EXISTS_NOTICE"] = "В угоді вже є замовлення. При оформленні замовлення з добірки буде створено нову угоду.";
 $MESS["CRM_TIMELINE_USER_NOTE_CANCEL"] = "Скасувати";
 $MESS["CRM_TIMELINE_USER_NOTE_PLACEHOLDER"] = "Уведіть текст примітки";
 $MESS["CRM_TIMELINE_USER_NOTE_SAVE"] = "Зберегти";

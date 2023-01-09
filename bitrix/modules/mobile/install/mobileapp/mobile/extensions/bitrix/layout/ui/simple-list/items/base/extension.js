@@ -59,7 +59,10 @@
 						this.props.item.data,
 						this.params,
 					),
-					onLongClick: this.isMenuEnabled() && (() => this.showMenuHandler(this.props.item.data.id)),
+					onLongClick: this.isMenuEnabled() && (() => {
+						Haptics.impactLight();
+						this.showMenuHandler(this.props.item.data.id);
+					})
 				},
 				View(
 					{

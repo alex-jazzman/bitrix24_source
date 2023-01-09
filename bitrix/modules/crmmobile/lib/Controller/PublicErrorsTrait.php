@@ -18,9 +18,10 @@ trait PublicErrorsTrait
 
 		foreach ($errors as $error)
 		{
+			/** @var string|array $message */
 			$message = $error->getMessage();
+			$message = isset($message['message']) && is_string($message['message']) ? $message['message'] : $message;
 			$message = str_replace(['<br>', '<br/>', '<br />'], "\n", $message);
-			$message = is_array($message) ? implode("\n", $message) : $message;
 			$message = strip_tags($message);
 
 			$publicErrors[] = new Error(

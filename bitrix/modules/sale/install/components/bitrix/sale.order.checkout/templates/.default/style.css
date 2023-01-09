@@ -353,6 +353,7 @@ a.checkout-basket-item-name-text:hover { color: #333; }
 
 .checkout-basket-section .was-validated .form-control:invalid,
 .checkout-basket-section .form-control.is-invalid {
+	padding-right: 0;
 	background-image: none;
 }
 
@@ -2198,7 +2199,7 @@ input.checkout-item-quantity-field {
 	background-color: #404040;
 }
 
-.btn.product-item-buy-button { padding: 13px !important; }
+/*.btn.product-item-buy-button { padding: 13px !important; }*/
 
 .btn.product-item-buy-button:disabled,
 .btn.product-item-detail-buy-button:disabled,
@@ -2420,3 +2421,49 @@ input.checkout-item-quantity-field {
 }
 
 /*endregion*/
+
+.form-wrap.form-asterisk {
+	position: relative;
+	display: flex;
+}
+
+.asterisk-item {
+	display: none;
+}
+
+.form-wrap.form-asterisk .asterisk-item {
+	position: absolute;
+	top: 7px;
+	left: 15px;
+	display: inline-block;
+	padding-right: 7px;
+	font-size: 17px;
+	color: transparent;
+	pointer-events: none;
+}
+
+.form-wrap.form-asterisk .asterisk-item:after {
+	content: '*';
+	position: absolute;
+	top: 0;
+	right: -7px;
+	color: var(--ui-color-palette-red-50, #ff5752);
+}
+
+.form-wrap.form-asterisk label + .asterisk-item,
+.form-wrap.form-asterisk label + .asterisk-item:after {
+	position: static;
+}
+
+.form-wrap.form-asterisk label + .asterisk-item {
+	padding-right: 0;
+	margin-left: 5px;
+}
+
+.form-wrap label {
+	margin-bottom: 0;
+}
+
+.form-wrap.form-asterisk.is-invalid + .invalid-feedback {
+	display: block;
+}

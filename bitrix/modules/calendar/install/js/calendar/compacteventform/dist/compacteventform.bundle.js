@@ -99,6 +99,11 @@ this.BX = this.BX || {};
 	      }
 
 	      this.popup.show();
+
+	      if (this.isLocationCalendar || this.userPlannerSelector.attendeesEntityList.length > 1 && this.getMode() !== CompactEventForm.VIEW_MODE) {
+	        this.userPlannerSelector.showPlanner();
+	      }
+
 	      this.checkDataBeforeCloseMode = true;
 
 	      if (this.canDo('edit') && this.DOM.titleInput && mode === CompactEventForm.EDIT_MODE) {
@@ -151,8 +156,8 @@ this.BX = this.BX || {};
 	    return this.displayed;
 	  }
 
-	  close() {
-	    if (this.getMode() === CompactEventForm.EDIT_MODE && this.formDataChanged() && this.checkDataBeforeCloseMode && !confirm(main_core.Loc.getMessage('EC_SAVE_ENTRY_CONFIRM'))) {
+	  close(fromButton = true) {
+	    if (!fromButton && !this.checkTopSlider() || this.getMode() === CompactEventForm.EDIT_MODE && this.formDataChanged() && this.checkDataBeforeCloseMode && !confirm(main_core.Loc.getMessage('EC_SAVE_ENTRY_CONFIRM'))) {
 	      // Workaround to prevent form closing even if user don't want to and presses "cancel" in confirm
 	      if (this.popup) {
 	        this.popup.destroyed = true;
@@ -1131,10 +1136,6 @@ this.BX = this.BX || {};
 	      });
 	      this.userPlannerSelector.setDateTime(this.dateTimeControl.getValue());
 	      this.userPlannerSelector.setViewMode(readOnly);
-
-	      if (this.isLocationCalendar) {
-	        this.userPlannerSelector.showPlanner();
-	      }
 	    } else {
 	      main_core.Dom.remove(this.DOM.userPlannerSelectorOuterWrap);
 	    }
@@ -1389,6 +1390,7 @@ this.BX = this.BX || {};
 	  handleKeyPress(e) {
 	    if (this.getMode() === CompactEventForm.EDIT_MODE && e.keyCode === calendar_util.Util.getKeyCode('enter') && (e.ctrlKey || e.metaKey) && !e.altKey) {
 	      this.checkDataBeforeCloseMode = false;
+	      this.locationSelector.selectContol.onChangeCallback();
 	      this.save();
 	    } else if (this.checkTopSlider() && e.keyCode === calendar_util.Util.getKeyCode('escape') && this.couldBeClosedByEsc()) {
 	      this.close();
@@ -1511,7 +1513,9 @@ this.BX = this.BX || {};
 	    this.outsideMouseUp = !target.closest('div.popup-window');
 
 	    if (this.couldBeClosedByEsc() && this.outsideMouseDown && this.outsideMouseUp && (this.getMode() === CompactEventForm.VIEW_MODE || !this.formDataChanged() || this.isNewEntry())) {
-	      setTimeout(this.close.bind(this), 0);
+	      setTimeout(() => {
+	        this.close(false);
+	      }, 0);
 	    }
 	  }
 

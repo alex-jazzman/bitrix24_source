@@ -489,10 +489,6 @@ h1 {
 	background: #fff;
 }
 
-.bx-ie8 .error-block {
-	top: 24%;
-}
-
 .error-block-text {
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);

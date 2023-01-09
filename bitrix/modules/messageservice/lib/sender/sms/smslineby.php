@@ -101,7 +101,7 @@ class SmsLineBy extends Sender\BaseConfigurable
 		$message = [
 			'target' => $messageFields['MESSAGE_FROM'],
 			'msisdn' => str_replace('+', '', $messageFields['MESSAGE_TO']),
-			'text' => $messageFields['MESSAGE_BODY'],
+			'text' => $this->prepareMessageBodyForSend($messageFields['MESSAGE_BODY']),
 			'callback_url' => $this->getCallbackUrl()
 		];
 

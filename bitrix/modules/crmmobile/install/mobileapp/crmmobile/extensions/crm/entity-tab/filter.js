@@ -3,8 +3,6 @@
  */
 jn.define('crm/entity-tab/filter', (require, exports, module) => {
 
-	const EMPTY_FILTER_PRESET_ID = 'default_filter';
-
 	/**
 	 * @class Filter
 	 */
@@ -12,6 +10,7 @@ jn.define('crm/entity-tab/filter', (require, exports, module) => {
 	{
 		constructor(presetId = null)
 		{
+			this.defaultPresetId = presetId;
 			this.init(presetId);
 			this.wasShown = false;
 		}
@@ -83,7 +82,7 @@ jn.define('crm/entity-tab/filter', (require, exports, module) => {
 
 		getEmptyFilterPresetId()
 		{
-			return EMPTY_FILTER_PRESET_ID;
+			return this.defaultPresetId;
 		}
 
 		getData()

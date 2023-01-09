@@ -99,15 +99,15 @@ abstract class Configurable extends Item
 
 	public function jsonSerialize(): array
 	{
-		$result = [
+		return [
 			'layout' => (new Converter($this->getLayout()))->toArray(),
 			'type' => $this->getType(),
 			'id' => $this->getModel()->getId(),
 			'timestamp' => $this->getModel()->getDate() ? $this->getModel()->getDate()->getTimestamp() : null,
 			'sort' => $this->getSort(),
+			'languageId' => \Bitrix\Main\Context::getCurrent()->getLanguage(),
+			'canBeReloaded' => $this->canBeReloaded(),
 		];
-
-		return $result;
 	}
 
 	/**
@@ -227,6 +227,16 @@ abstract class Configurable extends Item
 	 * @return Layout\Action|null
 	 */
 	public function getTitleAction(): ?Layout\Action
+	{
+		return null;
+	}
+
+	/**
+	 * Hint icon in item header
+	 *
+	 * @return Layout\Header\InfoHelper|null
+	 */
+	public function getInfoHelper(): ?Layout\Header\InfoHelper
 	{
 		return null;
 	}
@@ -557,5 +567,14 @@ abstract class Configurable extends Item
 	public function getNoteItemId(): int
 	{
 		return $this->model->getId();
+	}
+
+	/**
+	 * Returns true if item data allowed to be re-fetched (e.g. after push-message handling)
+	 * @return bool
+	 */
+	protected function canBeReloaded(): bool
+	{
+		return true;
 	}
 }

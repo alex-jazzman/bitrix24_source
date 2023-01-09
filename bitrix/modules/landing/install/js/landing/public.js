@@ -7,11 +7,6 @@
 			// region INIT
 			BX.namespace("BX.Landing");
 
-			BX.Landing.getMode = function()
-			{
-				return "view";
-			};
-
 			const blocks = [].slice.call(document.getElementsByClassName("block-wrapper"));
 			if (!!blocks && blocks.length)
 			{
@@ -95,6 +90,15 @@
 								stopPropagation(node);
 							});
 						}
+
+						if (BX.hasClass(link, 'g-bg-cover'))
+						{
+							const child = link.firstElementChild;
+							if (child)
+							{
+								stopPropagation(child);
+							}
+						}
 					}
 				});
 			}
@@ -165,7 +169,7 @@
 			 */
 			function isBlockLink(url)
 			{
-				if (url === '#')
+				if (url === '#' || url.startsWith('#/'))
 				{
 					return false;
 				}

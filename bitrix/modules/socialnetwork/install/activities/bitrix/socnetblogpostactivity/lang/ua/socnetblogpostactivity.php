@@ -8,4 +8,5 @@ $MESS["SNBPA_OWNER_ID"] = "Автор";
 $MESS["SNBPA_POST_MESSAGE"] = "Текст повідомлення";
 $MESS["SNBPA_POST_SITE"] = "Цільовий сайт";
 $MESS["SNBPA_POST_TITLE"] = "Тема повідомлення";
+$MESS["SNBPA_POST_URL_LABEL"] = "Відкрити публікацію";
 $MESS["SNBPA_USERS_TO"] = "Одержувачі";

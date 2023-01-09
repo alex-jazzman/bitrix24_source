@@ -541,12 +541,29 @@ class EventManager extends Manager implements EventManagerInterface
 			->setEventConnection(
 				(new EventConnection())
 					->setVendorEventId(
-						$masterVendorEventId
-						. '_'
-						. $event->getOriginalDateFrom()->setTimezone(Util::prepareTimezone())->format('Ymd\THis\Z')
+						$this->getInstanceId($masterVendorEventId, $event)
 					)
 					->setRecurrenceId($masterVendorEventId)
 			);
+	}
+
+	/**
+	 * @param string $masterId Vendor ID of master event
+	 * @param Event $event exception event
+	 *
+	 * @return string
+	 */
+	private function getInstanceId(string $masterId, Event $event): string
+	{
+		$base = $masterId . '_';
+		if ($event->isFullDayEvent())
+		{
+			return $base . $event->getOriginalDateFrom()->setTimezone(Util::prepareTimezone())->format('Ymd');
+		}
+		else
+		{
+			return $base . $event->getOriginalDateFrom()->setTimezone(Util::prepareTimezone())->format('Ymd\THis\Z');
+		}
 	}
 
 	/**

@@ -45,6 +45,14 @@ jn.define('crm/timeline/item/ui/body/blocks/base', (require, exports, module) =>
 			return this.factory.itemScopeEventBus;
 		}
 
+		/**
+		 * @return {EventEmitter}
+		 */
+		get timelineScopeEventBus()
+		{
+			return this.factory.timelineScopeEventBus;
+		}
+
 		emitAction(params)
 		{
 			if (this.factory.onAction && params)

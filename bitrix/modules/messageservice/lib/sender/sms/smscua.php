@@ -112,7 +112,7 @@ class SmscUa extends Sender\BaseConfigurable
 		$message = [
 			'sender' => $messageFields['MESSAGE_FROM'],
 			'phones' => str_replace('+', '', $messageFields['MESSAGE_TO']),
-			'mes' => $messageFields['MESSAGE_BODY'],
+			'mes' => $this->prepareMessageBodyForSend($messageFields['MESSAGE_BODY']),
 			'charset' => 'utf-8'
 		];
 

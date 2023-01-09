@@ -91,7 +91,7 @@ $this->SetViewTarget("im-fullscreen");
 $this->SetViewTarget("im", 100);
 ?>
 <div class="bx-im-bar bx-im-bar-with-ol" id="bx-im-bar">
-	<div class="help-block" id="bx-help-block" title="<?=GetMessage("AUTH_HELP")?>">
+	<div class="help-block bx-im-border-b" id="bx-help-block" title="<?=GetMessage("AUTH_HELP")?>">
 		<div class="help-icon-border"></div>
 		<div class="help-block-icon"></div>
 		<div class="help-block-counter-wrap" id="bx-help-notify">
@@ -124,19 +124,11 @@ $this->SetViewTarget("im", 100);
 	<div id="bx-im-bar-search" class="bx-im-search bx-im-border-b" title="<?=GetMessage('IM_MESSENGER_OPEN_SEARCH');?>">
 		<div class="bx-im-informer-num"></div>
 	</div>
-	<div class="bx-im-users-wrap <?if ($arResult['PHONE_ENABLED']):?>bx-im-users-wrap-with-phone<?else:?>bx-im-users-wrap-without-phone<?endif;?>">
+	<div class="bx-im-users-wrap">
 		<div class="bx-im-scroll-wrap" id="bx-im-external-recent-list"></div>
 	</div>
 
 	<div class="bx-im-bottom-block" id="bx-im-bottom-block">
-		<div id="bx-im-bar-mobile" class="bx-im-bar-mobile" onclick="BX.UI.InfoHelper.show('mobile_app');">
-			<div class="bx-im-mobile-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_MOBILE');?>"></div>
-		</div>
-		<?if($arResult['PHONE_ENABLED']):?>
-		<div id="bx-im-btn-call" class="bx-im-btn-wrap bx-im-btn-call" title="<?=GetMessage('IM_MESSENGER_OPEN_CALL2');?>">
-			<div class="bx-im-btn"></div>
-		</div>
-		<?endif;?>
 		<div id="ui-tutor-btn-wrap" class="ui-tutor-btn-wrap"></div>
 		<div id="tutorial_feedback" style="display: none;">
 			<?

@@ -2641,7 +2641,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	public function getComponentResultAction(array $arParams): array
 	{
-		$this->arParams = $arParams;
+		$this->arParams = $this->onPrepareComponentParams($arParams);
 
 		$this->fillComponentResult();
 

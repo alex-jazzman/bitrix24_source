@@ -1,5 +1,10 @@
 <?php
+
 return [
-	'utils/object',
-	'layout/ui/fields/base',
+	'extensions' => [
+		'loc',
+		'utils/object',
+		'utils/function',
+		'layout/ui/fields/base',
+	],
 ];

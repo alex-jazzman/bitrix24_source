@@ -34,7 +34,9 @@ final class Measure extends Controller implements EventBindInterface
 	 */
 	public function addAction(array $fields): ?array
 	{
-		$r = $this->existsByFilter(['CODE'=>$fields['CODE']]);
+		$r = $this->existsByFilter([
+			'=CODE' => $fields['CODE'],
+		]);
 		if ($r->isSuccess() === false)
 		{
 			$r = $this->checkDefaultValue($fields);
@@ -49,10 +51,11 @@ final class Measure extends Controller implements EventBindInterface
 		}
 		else
 		{
-			$r->addError(new Error('Duplicate entry for key [code]'));
+			$r->addError($this->getErrorDublicateFieldCode());
 		}
 
 		$this->addErrors($r->getErrors());
+
 		return null;
 	}
 
@@ -71,10 +74,11 @@ final class Measure extends Controller implements EventBindInterface
 		if (!$existsResult->isSuccess())
 		{
 			$this->addErrors($existsResult->getErrors());
+
 			return null;
 		}
 
-		$r = $this->checkDefaultValue($fields);
+		$r = $this->checkMeasureBeforeUpdate($id, $fields);
 		if ($r->isSuccess())
 		{
 			$r = parent::update($id, $fields);
@@ -85,6 +89,7 @@ final class Measure extends Controller implements EventBindInterface
 		}
 
 		$this->addErrors($r->getErrors());
+
 		return null;
 	}
 
@@ -170,10 +175,12 @@ final class Measure extends Controller implements EventBindInterface
 		 */
 		$fields['IS_DEFAULT'] = $fields['IS_DEFAULT'] ?? 'N';
 
-		if($fields['IS_DEFAULT'] === 'Y')
+		if ($fields['IS_DEFAULT'] === 'Y')
 		{
-			$exist = $this->existsByFilter(['IS_DEFAULT' => $fields['IS_DEFAULT']]);
-			if($exist->isSuccess())
+			$exist = $this->existsByFilter([
+				'=IS_DEFAULT' => $fields['IS_DEFAULT'],
+			]);
+			if ($exist->isSuccess())
 			{
 				$r->addError(new Error('default value can be set once [isDefault]'));
 			}
@@ -213,5 +220,30 @@ final class Measure extends Controller implements EventBindInterface
 			$r->addError(new Error('Access Denied', 200040300010));
 		}
 		return $r;
+	}
+
+	protected function checkMeasureBeforeUpdate(int $id, array $fields): Result
+	{
+		if (isset($fields['CODE']))
+		{
+			$existsResult = $this->existsByFilter([
+				'!=ID' => $id,
+				'=CODE' => $fields['CODE'],
+			]);
+			if ($existsResult->isSuccess())
+			{
+				$result = new Result();
+				$result->addError($this->getErrorDublicateFieldCode());
+
+				return $result;
+			}
+		}
+
+		return $this->checkDefaultValue($fields);
+	}
+
+	private function getErrorDublicateFieldCode(): Error
+	{
+		return new Error('Duplicate entry for key [code]');
 	}
 }

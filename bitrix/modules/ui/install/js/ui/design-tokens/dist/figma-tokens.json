@@ -132,6 +132,9 @@
 				"10": {
 					"value": "{color.palette.gray.10}"
 				},
+				"15": {
+					"value": "{color.palette.gray.15}"
+				},
 				"20": {
 					"value": "{color.palette.gray.20}"
 				},
@@ -310,10 +313,16 @@
 					"30": {
 						"value": "#e2f1b3"
 					},
+					"35": {
+						"value": "#cfe780"
+					},
 					"40": {
 						"value": "#bbde4d"
 					},
 					"50": {
+						"value": "#9dcf00"
+					},
+					"55": {
 						"value": "#9dcf00"
 					},
 					"60": {
@@ -411,6 +420,9 @@
 				"gray": {
 					"10": {
 						"value": "#edeef0"
+					},
+					"15": {
+						"value": "#e6e7e9"
 					},
 					"20": {
 						"value": "#dfe0e3"

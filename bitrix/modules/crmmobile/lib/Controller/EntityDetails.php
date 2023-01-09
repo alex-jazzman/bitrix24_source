@@ -137,25 +137,7 @@ class EntityDetails extends Controller
 			return [];
 		}
 
-		$result = [];
-
-		foreach (FactoryProvider::getAvailableFactories() as $factory)
-		{
-			$entityTypeId = $factory->getEntityTypeId();
-
-			if ($entityTypeId === \CCrmOwnerType::Lead)
-			{
-				continue;
-			}
-
-			$result[] = [
-				'entityTypeId' => $entityTypeId,
-				'entityTypeName' => \CCrmOwnerType::resolveName($entityTypeId),
-				'title' => $factory->getEntityDescription(),
-			];
-		}
-
-		return $result;
+		return FactoryProvider::getFactoriesMetaData();
 	}
 
 	private function getEntityIdFromSourceList(): int

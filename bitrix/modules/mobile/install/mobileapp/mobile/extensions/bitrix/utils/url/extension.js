@@ -90,12 +90,24 @@ jn.define('utils/url', (require, exports, module) => {
 		return regExp.test(email);
 	}
 
+	/**
+	 * Prefix {uri} with current domain, if {uri} is local path.
+	 * Otherwise, keeps {uri} unchanged.
+	 * @param {string} uri
+	 * @return {string}
+	 */
+	function withCurrentDomain(uri = '/')
+	{
+		return uri.startsWith('/') ? currentDomain + uri : uri;
+	}
+
 	module.exports = {
 		URL,
 		prepareLink,
 		isValidLink,
 		isValidEmail,
 		getHttpPath,
+		withCurrentDomain,
 	};
 
 });

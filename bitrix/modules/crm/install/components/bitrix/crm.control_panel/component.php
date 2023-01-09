@@ -529,10 +529,7 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 	}
 }
 
-if (
-	\Bitrix\Main\Config\Option::get("crm", "crm_shop_enabled", "N") === 'Y'
-	&& \CCrmSaleHelper::isWithOrdersMode()
-)
+if (\CCrmSaleHelper::isWithOrdersMode())
 {
 	$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
 		CCrmOwnerType::Order,

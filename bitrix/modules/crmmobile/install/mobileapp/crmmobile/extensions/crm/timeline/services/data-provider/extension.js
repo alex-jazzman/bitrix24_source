@@ -33,6 +33,19 @@ jn.define('crm/timeline/services/data-provider', (require, exports, module) => {
 					});
 			});
 		}
+
+		loadItems(activityIds = [], historyIds = [])
+		{
+			const data = {
+				activityIds,
+				historyIds,
+				ownerTypeId: this.entity.typeId,
+				ownerId: this.entity.id,
+				context: 'mobile',
+			};
+
+			return BX.ajax.runAction('crm.timeline.item.load', { data });
+		}
 	}
 
 	module.exports = { TimelineDataProvider };

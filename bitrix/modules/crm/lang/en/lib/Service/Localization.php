@@ -129,6 +129,7 @@ $MESS["CRM_TYPE_ITEM_FIELD_HONORIFIC"] = "Salutation";
 $MESS["CRM_TYPE_ITEM_FIELD_IS_MANUAL_OPPORTUNITY"] = "Amount calculation mode";
 $MESS["CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_BY"] = "Last timeline activity by";
 $MESS["CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_TIME"] = "Last timeline activity time";
+$MESS["CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_TIME_2"] = "Last updated on";
 $MESS["CRM_TYPE_ITEM_FIELD_LAST_NAME"] = "Last name";
 $MESS["CRM_TYPE_ITEM_FIELD_LOCATION"] = "Location";
 $MESS["CRM_TYPE_ITEM_FIELD_MOVED_BY"] = "Moved by";

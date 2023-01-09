@@ -453,6 +453,10 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	      delete value['text'];
 	    }
 
+	    if (value.href.startsWith('selectActions:')) {
+	      value.href = '#';
+	    }
+
 	    return value;
 	  }
 

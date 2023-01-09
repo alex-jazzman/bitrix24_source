@@ -11,5 +11,6 @@ return [
 		'layout/ui/fields',
 		'layout/ui/fields/focus-manager',
 		'layout/ui/plan-restriction',
+		'layout/ui/entity-editor/tooltip/duplicate',
 	],
 ];

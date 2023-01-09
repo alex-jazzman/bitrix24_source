@@ -15,5 +15,6 @@ return [
 		'layout/ui/product-grid/components/price-details',
 		'crm:product-grid/components/sku-selector/elements',
 		'rest',
+		'money',
 	]
 ];

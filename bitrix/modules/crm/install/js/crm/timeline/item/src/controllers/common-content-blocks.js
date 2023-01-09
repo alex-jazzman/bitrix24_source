@@ -17,6 +17,8 @@ import {PlayerAlert} from '../components/content-blocks/player-alert';
 import {Note} from '../components/content-blocks/note';
 import DatePill from '../components/content-blocks/date-pill';
 import {ButtonState} from "ui.buttons";
+import {InfoGroup} from '../components/content-blocks/info-group';
+import {SmsMessage} from '../components/content-blocks/sms-message';
 
 export class CommonContentBlocks extends Base
 {
@@ -37,6 +39,8 @@ export class CommonContentBlocks extends Base
 			PlayerAlert,
 			DatePill,
 			Note,
+			InfoGroup,
+			SmsMessage,
 		};
 	}
 

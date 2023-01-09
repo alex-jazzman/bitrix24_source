@@ -852,6 +852,8 @@ class Dropdown extends BX.UI.Dropdown
 		this.externalSearchHandler = BX.prop.getFunction(options, "externalSearchHandler", null);
 		this.placementParams = BX.prop.getObject(options, "placementParams", {});
 		this.installDefaultAppHandler = this.onClickInstallDefaultApp.bind(this);
+		this.installDefaultAppTimeout = 7000;
+		this.installDefaultAppTimeoutHandler = this.onInstallDefaultAppTimeout.bind(this);
 		this.afterInstallDefaultAppHandler = this.onAfterInstallDefaultApp.bind(this);
 		this.popupAlertContainer = null;
 		this.defaultAppInstallLoader = null;
@@ -1073,7 +1075,7 @@ class Dropdown extends BX.UI.Dropdown
 		{
 			const parent = event.target.parentNode;
 
-			Dom.clean(parent);
+			Dom.hide(event.target);
 
 			this.defaultAppInstallLoader = (
 				this.defaultAppInstallLoader
@@ -1090,14 +1092,20 @@ class Dropdown extends BX.UI.Dropdown
 		{
 			BX.loadExt('marketplace').then(
 				() => {
+					setTimeout(this.installDefaultAppTimeoutHandler, this.installDefaultAppTimeout, event.target);
 					top.BX.addCustomEvent(
 						top,
 						"Rest:AppLayout:ApplicationInstall",
 						this.afterInstallDefaultAppHandler
 					);
 					BX.rest.Marketplace.install(
-						{ CODE: this.placementParams["defaultAppInfo"]["code"] }
-					)
+						{
+							CODE: this.placementParams["defaultAppInfo"]["code"],
+							SILENT_INSTALL: "Y",
+							REDIRECT_PRIORITY: false,
+							IFRAME: true
+						}
+					);
 				}
 			).catch(
 				() => {
@@ -1108,6 +1116,22 @@ class Dropdown extends BX.UI.Dropdown
 					);
 				}
 			);
+		}
+	}
+
+	onInstallDefaultAppTimeout(elementToShow)
+	{
+		top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
+
+		if (this.defaultAppInstallLoader)
+		{
+			this.defaultAppInstallLoader.destroy();
+			this.defaultAppInstallLoader = null;
+		}
+
+		if (Type.isDomNode(elementToShow))
+		{
+			Dom.show(elementToShow);
 		}
 	}
 

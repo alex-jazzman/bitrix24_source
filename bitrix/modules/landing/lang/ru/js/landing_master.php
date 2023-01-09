@@ -411,6 +411,7 @@ $MESS['LANDING_ACTION_BUTTON_PUBLISH'] = 'Опубликовать';
 $MESS['LANDING_LINK_PLACEHOLDER_NEW_PAGE'] = 'Новая страница';
 $MESS['LANDING_LINK_NEW_PAGE_LABEL'] = 'НОВАЯ';
 $MESS['LANDING_LINK_NEW_PAGE_SAVE_BUTTON_LABEL'] = 'Создать';
+$MESS['LANDING_LINK_NEW_PAGE_CANCEL_BUTTON_LABEL'] = 'Отменить';
 
 $MESS['LANDING_EMBED_BG_FIELD_DESCRIPTION'] = 'Допускаются только полные или короткие ссылки на видео с&nbsp;сервисов Youtube и VK видео';
 $MESS['LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION'] = 'Допускаются только полные или короткие ссылки на видео с&nbsp;сервисов Youtube, VK видео, RuTube или Vimeo';
@@ -478,7 +479,7 @@ $MESS["LANDING_LINK_URL_ACTION_SMS"] = "Отправить СМС";
 $MESS["LANDING_LINK_URL_ACTION_EMAIL"] = "Отправить письмо по e-mail";
 $MESS["LANDING_LINK_URL_ACTION_SKYPE"] = "Связаться по Skype";
 $MESS["LANDING_LINK_URL_ACTION_LINK"] = "Перейти по внешней ссылке";
-$MESS["LANDING_LINK_URL_ACTION_FILE"] = "Скачать файл";
+$MESS["LANDING_LINK_URL_ACTION_FILE_MSGVER_1"] = "Открыть файл";
 $MESS["LANDING_LINK_URL_ACTION_USER"] = "Открыть профиль в Битрикс24";
 $MESS["LANDING_LINK_URL_DELETE_ACTION"] = "Не указывать ссылку";
 $MESS["LANDING_LINK_URL_ACTION_SELECT_CATALOG"] = "Выбрать папку";

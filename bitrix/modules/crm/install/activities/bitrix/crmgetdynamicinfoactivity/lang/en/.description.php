@@ -1,7 +1,7 @@
 <?php
 $MESS["CRM_GDIA_DESC"] = "Reads data of a specified SPA item";
 $MESS["CRM_GDIA_DESC_1"] = "Reads data of a specified CRM item";
-$MESS["CRM_GDIA_DESC_2"] = "Sends item information to other automation rules (helper automation rule).";
+$MESS["CRM_GDIA_DESC_2_MSGVER_1"] = "Sends item information to other automation rules (helper).";
 $MESS["CRM_GDIA_NAME"] = "Read SPA item";
 $MESS["CRM_GDIA_NAME_1"] = "Read CRM item";
 $MESS["CRM_GDIA_NAME_2"] = "Get CRM item information";

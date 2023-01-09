@@ -1441,6 +1441,7 @@ elseif($message)
 	elseif($hideKeyExist && in_array("MULTIPLE", $arPropertyFields["HIDE"]))
 		$bShow = false;
 
+
 	if ($bShow)
 	{?><tr>
 	<td width="40%"><label for="PROPERTY_MULTIPLE_Y"><?php echo GetMessage("BT_ADM_IEP_PROP_MULTIPLE")?></label></td>
@@ -1972,10 +1973,11 @@ if ($enablePropertyFeatures && !empty($currentFeatures))
 
 	if($useTabs)
 	{
-		if ($adminSidePanelHelper->isPublicFrame()):
+		if ($adminSidePanelHelper->isSidePanelFrame()):
 			$tabControl->Buttons(array(
-				"disabled"=>false,
-				"back_url"=>$listUrl,
+				'disabled' => false,
+				'back_url' => $listUrl,
+				'btnApply' => false,
 			));
 		elseif (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):
 			$tabControl->Buttons(array(

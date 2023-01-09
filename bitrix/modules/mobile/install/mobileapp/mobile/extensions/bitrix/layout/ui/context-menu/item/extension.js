@@ -63,20 +63,9 @@
 
 			this.state.isProcessing = false;
 
-			this.isActive = (
-				!this.onActiveCallback
-				|| (
-					this.onActiveCallback
-					&& this.onActiveCallback(this.id, this.parentId, this.parent)
-				)
-			);
+			this.isActive = props.isActive;
 
 			this.handleSelectItem = this.handleSelectItem.bind(this);
-		}
-
-		isActiveItem()
-		{
-			return this.isActive;
 		}
 
 		render()

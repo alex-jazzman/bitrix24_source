@@ -3,12 +3,21 @@
  */
 jn.define('layout/ui/fields/client/elements/title', (require, exports, module) => {
 
+	const { Loc } = require('loc');
+
 	/**
 	 * @function ClientItemTitle
 	 */
 	function ClientItemTitle(props)
 	{
-		const { title = '', type, hidden, onClick } = props;
+		const { id, hidden, title, type, onOpenBackdrop } = props;
+
+		const onClick = () => {
+			if (id && !hidden && onOpenBackdrop)
+			{
+				onOpenBackdrop();
+			}
+		};
 
 		return View({
 				style: {
@@ -28,7 +37,7 @@ jn.define('layout/ui/fields/client/elements/title', (require, exports, module) =
 				},
 				Text({
 						style: {
-							color: hidden ? '#333333' : '#0b66c3',
+							color: !id || hidden ? '#333333' : '#0b66c3',
 							fontSize: 18,
 						},
 						numberOfLines: 1,
@@ -37,11 +46,11 @@ jn.define('layout/ui/fields/client/elements/title', (require, exports, module) =
 					},
 				),
 			),
-			!hidden && View(
+			type && View(
 				{
 					style: {
 						flexShrink: 0,
-						height: 16,
+						height: 18,
 						borderColor: '#2fc6f6',
 						borderRadius: 12,
 						borderWidth: 1,
@@ -54,9 +63,9 @@ jn.define('layout/ui/fields/client/elements/title', (require, exports, module) =
 				Text({
 						style: {
 							fontSize: 10,
-							marginBottom: Application.getPlatform() === 'android' ? 3 : 1,
+							marginBottom: Application.getPlatform() === 'android' ? 3 : 2,
 						},
-						text: BX.message(`FIELDS_${type.toUpperCase()}_TITLE`),
+						text: Loc.getMessage(`FIELDS_CLIENT_TITLE_${type.toUpperCase()}_MSGVER_1`),
 					},
 				),
 			),

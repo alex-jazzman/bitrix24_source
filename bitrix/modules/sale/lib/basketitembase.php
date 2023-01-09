@@ -81,12 +81,14 @@ abstract class BasketItemBase extends Internals\CollectableEntity
 	 */
 	public function findItemById($id)
 	{
+		$id = (int)$id;
+
 		if ($id <= 0)
 		{
 			return null;
 		}
 
-		if ($this->getId() === (int)$id)
+		if ($this->getId() === $id)
 		{
 			return $this;
 		}

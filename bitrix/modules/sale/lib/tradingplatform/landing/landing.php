@@ -331,7 +331,7 @@ class Landing
 	 */
 	public function getRealName()
 	{
-		return (string)$this->getInfo()['TITLE'];
+		return (string)($this->getInfo()['TITLE'] ?? '');
 	}
 
 	/**

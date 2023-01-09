@@ -1126,6 +1126,11 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	      templateClass: 'BX.Calendar.Sync.Interface.CaldavTemplate'
 	    });
 	    this.connectionsSyncInfo = options.connections;
+
+	    if (options.connections && options.connections[0] && options.connections[0].syncInfo) {
+	      this.setSyncDate(options.connections[0].syncInfo.syncOffset);
+	    }
+
 	    this.setConnections();
 	  }
 
@@ -1280,6 +1285,11 @@ this.BX.Calendar.Sync = this.BX.Calendar.Sync || {};
 	    });
 	    this.connectionName = main_core.Loc.getMessage('CALENDAR_TITLE_YANDEX');
 	    this.connectionsSyncInfo = options.connections;
+
+	    if (options.connections && options.connections[0] && options.connections[0].syncInfo) {
+	      this.setSyncDate(options.connections[0].syncInfo.syncOffset);
+	    }
+
 	    this.setConnections();
 	  }
 

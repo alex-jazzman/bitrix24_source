@@ -430,11 +430,11 @@ class Requisite
 		return $result;
 	}
 
-	public function fill(int $entityTypeId, int $entityId, array $values): Result
+	public function fill(int $entityTypeId, int $entityId, array $values, ?int $requisitePresetId = null): Result
 	{
 		$result = new Result();
 
-		$presetId = (int)($values['presetId'] ?? $this->getDefaultPreset($entityTypeId)['id'] ?? null);
+		$presetId = (int)($requisitePresetId ?? $this->getDefaultPreset($entityTypeId)['id'] ?? null);
 		if ($presetId <= 0)
 		{
 			return $result;
@@ -549,13 +549,17 @@ class Requisite
 		return $result;
 	}
 
-	public function load(int $entityTypeId, int $entityId): Result
+	public function load(int $entityTypeId, int $entityId, ?int $requisitePresetId = null): Result
 	{
 		$result = new Result();
 
 		$splitMode = $this->splitAccountFields;
 		$this->splitAccountFields = false;
-		$preset = $this->getDefaultPreset($entityTypeId);
+		$preset =
+			$requisitePresetId !== null && $requisitePresetId >= 0
+				? $this->getPreset($requisitePresetId)
+				: $this->getDefaultPreset($entityTypeId)
+		;
 		$this->splitAccountFields = $splitMode;
 
 		if (!$preset)

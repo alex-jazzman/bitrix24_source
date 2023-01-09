@@ -148,8 +148,13 @@ class Event
 
 		if ($destination[$eventCode])
 		{
-			$destination[$eventCode]['users'] = array_unique(array_merge($destination[$eventCode]['users'], $users)) ?? [];
-			$destination[$eventCode]['channels'] = array_unique(array_merge($destination[$eventCode]['channels'], $channels)) ?? [];
+			$waitingToReceiveUserList = $destination[$eventCode]['users'] ?? [];
+			$newUserList = $users ?? [];
+			$destination[$eventCode]['users'] = array_unique(array_merge($waitingToReceiveUserList, $newUserList));
+
+			$waitingToReceiveChannelList = $destination[$eventCode]['channels'] ?? [];
+			$newChannelList = $channels ?? [];
+			$destination[$eventCode]['channels'] = array_unique(array_merge($waitingToReceiveChannelList, $newChannelList));
 		}
 		else
 		{
@@ -157,7 +162,6 @@ class Event
 			$destination[$eventCode]['users'] = array_unique($users);
 			$destination[$eventCode]['channels'] = array_unique($channels);
 		}
-
 	}
 
 	private static function generateEventsForUsers($recipients, $parameters, $channelType = \CPullChannel::TYPE_PRIVATE)

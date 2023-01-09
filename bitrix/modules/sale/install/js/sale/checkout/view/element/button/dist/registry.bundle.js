@@ -86,6 +86,7 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	  },
 	  methods: {
 	    click: function click() {
+	      document.body.style.overflowY = '';
 	      main_core_events.EventEmitter.emit(sale_checkout_const.EventType.basket.backdropClose, {
 	        index: this.index
 	      });
@@ -135,9 +136,11 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	  computed: {
 	    getObjectClass: function getObjectClass() {
 	      var classes = ['btn', 'btn-primary', 'product-item-buy-button', 'rounded-pill'];
+
 	      if (this.wait) {
 	        classes.push('btn-wait');
 	      }
+
 	      return classes;
 	    }
 	  },

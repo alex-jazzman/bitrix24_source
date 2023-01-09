@@ -193,7 +193,18 @@ jn.define('crm/storage/category', (require, exports, module) => {
 						this.clearTtlValue(pathToUpdated);
 
 						const categoryData = this.getDataValue(pathToUpdated, {}) || {};
-						this.updateDataInStorage(pathToUpdated, mergeImmutable(categoryData, fields));
+						this.updateDataInStorage(pathToUpdated, mergeImmutable(categoryData, fields), true);
+
+						// clear cache for tunnels with changed category
+						listCategoryData.forEach((category, index) => {
+							category.tunnels
+								.filter((tunnel) => tunnel.dstCategoryId === categoryId)
+								.forEach((tunnel) => {
+									const pathToUpdated = this.getPathToCategory(entityTypeId, tunnel.srcCategoryId);
+									this.clearTtlValue(pathToUpdated);
+								})
+							;
+						});
 
 						resolve();
 					})
@@ -224,6 +235,20 @@ jn.define('crm/storage/category', (require, exports, module) => {
 
 						const pathToList = this.getPathToCategoryList(entityTypeId);
 						this.clearTtlValue(pathToList);
+
+						const pathToUpdatedInList = this.getPathToCategoryInCategoryList(entityTypeId);
+						const listCategoryData = this.getDataValue(pathToUpdatedInList, []) || [];
+
+						// clear cache for tunnels with deleted category
+						listCategoryData.forEach((category, index) => {
+							category.tunnels
+								.filter((tunnel) => tunnel.dstCategoryId === categoryId)
+								.forEach((tunnel) => {
+									const pathToUpdated = this.getPathToCategory(entityTypeId, tunnel.srcCategoryId);
+									this.clearTtlValue(pathToUpdated);
+								})
+							;
+						});
 
 						resolve();
 					})

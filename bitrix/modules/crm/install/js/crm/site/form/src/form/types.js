@@ -43,6 +43,7 @@ type View = {
 	position: ?string;
 	vertical: ?string;
 	delay: ?number;
+	hideOnOverlayClick: ?boolean;
 };
 
 type DateOptions = {
@@ -154,6 +155,7 @@ type Options = {
 	dependencies: ?Array<DependenceGroup>;
 	handlers: ?Object;
 	proxy: ?Proxy;
+	hideOnOverlayClick: ?Boolean
 };
 
 export {

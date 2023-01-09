@@ -115,7 +115,7 @@ final class FieldRepository
 				->configureDefaultValue(static function () {
 					return new DateTime();
 				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_TIME'))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LAST_ACTIVITY_TIME_2'))
 		;
 	}
 

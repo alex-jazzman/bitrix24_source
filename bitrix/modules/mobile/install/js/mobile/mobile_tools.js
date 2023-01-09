@@ -315,7 +315,7 @@
 				{
 					resolveFunction: BX.MobileTools.diskFileIdFromUrl,
 					openFunction: function(fileId) {
-						BXMobileApp.Document.open({
+						BXMobileApp.UI.Document.open({
 							url: "/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=" + fileId
 						})
 					}

@@ -40,12 +40,17 @@ BitrixVue.component('sale-checkout-view-element-input-property-checkbox', {
 					this.item.value = 'N';
 					this.showValue = false;
 				}
+				this.validate();
 			}
+		},
+		isAsteriskShown()
+		{
+			return this.item.required === 'Y';
 		},
 	},
 	// language=Vue
 	template: `
-		<div class="form-control form-control-lg border-0 pl-0" :class="checkedClassObject">
+		<div class="form-wrap form-control form-control-lg border-0 pl-0 form-asterisk" :class="checkedClassObject">
 			<input
 				@blur="validate"
 				type="checkbox"
@@ -54,6 +59,11 @@ BitrixVue.component('sale-checkout-view-element-input-property-checkbox', {
 				v-model="switchValue"
 			/>
 			<label :for="item.name" class="ml-2">{{item.name}}</label>
+			<div 
+				class="asterisk-item"
+				v-if="isAsteriskShown"
+			>
+			</div>
 		</div>
 	`,
 });

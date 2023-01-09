@@ -37,6 +37,7 @@ class Dummy extends \Bitrix\MessageService\Sender\Base
 
 	public function sendMessage(array $messageFieldsFields)
 	{
+		$messageFieldsFields['MESSAGE_BODY'] = $this->prepareMessageBodyForSend($messageFieldsFields['MESSAGE_BODY']);
 		AddMessage2Log($messageFieldsFields);
 
 		$result = new \Bitrix\MessageService\Sender\Result\SendMessage();

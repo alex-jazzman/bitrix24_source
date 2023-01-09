@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && $Update <> '' && !$bReadOnly && chec
 			}
 			else
 			{
-				$applyUrl = $selfFolderUrl."cat_extra_edit.php?lang=".$lang."&ID=".$ID;
+				$applyUrl = $selfFolderUrl."cat_extra_edit.php?lang=".LANGUAGE_ID."&ID=".$ID;
 				$applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
 				LocalRedirect($applyUrl);
 			}

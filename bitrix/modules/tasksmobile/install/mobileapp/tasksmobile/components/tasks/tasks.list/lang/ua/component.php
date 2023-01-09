@@ -7,6 +7,7 @@ $MESS["MOBILE_TASKS_VIEW_TAB_CHECKLIST"] = "Чек-лист";
 $MESS["MOBILE_TASKS_VIEW_TAB_COMMENT"] = "Коментарі";
 $MESS["MOBILE_TASKS_VIEW_TAB_FILES"] = "Файли";
 $MESS["MOBILE_TASKS_VIEW_TAB_TASK"] = "Завдання";
+$MESS["TASKS_ADD"] = "Створити завдання";
 $MESS["TASKS_CONFIRM_DELETE"] = "Перемістити в кошик?";
 $MESS["TASKS_CONFIRM_DELETE_NO"] = "Ні";
 $MESS["TASKS_CONFIRM_DELETE_YES"] = "Так";

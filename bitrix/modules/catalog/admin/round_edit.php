@@ -114,7 +114,7 @@ if (
 		{
 			if ((string)$request->getPost('apply') != '')
 			{
-				$applyUrl = $selfFolderUrl."cat_round_edit.php?lang=".$lang."&ID=".$ruleId.'&'.$control->ActiveTabParam();
+				$applyUrl = $selfFolderUrl."cat_round_edit.php?lang=".LANGUAGE_ID."&ID=".$ruleId.'&'.$control->ActiveTabParam();
 				$applyUrl = $adminSidePanelHelper->setDefaultQueryParams($applyUrl);
 				LocalRedirect($applyUrl);
 			}

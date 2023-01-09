@@ -15,8 +15,8 @@ global $USER_FIELD_MANAGER, $USER, $APPLICATION, $DB;
 
 use Bitrix\Crm;
 use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
@@ -767,6 +767,18 @@ Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeader
 	$arResult['HEADERS']
 );
 
+$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+
+if (
+	\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+	&& $factory
+	&& $factory->isLastActivityEnabled()
+)
+{
+	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
+}
+unset($factory);
+
 if ($bInternal)
 {
 	$arResult['HEADERS_SECTIONS'] = [
@@ -1432,8 +1444,6 @@ if($actionData['ACTIVE'])
 					$arUpdateData = array('STAGE_ID' => $stageID);
 					if($CCrmDeal->Update($ID, $arUpdateData))
 					{
-						$DB->Commit();
-
 						$arErrors = array();
 						CCrmBizProcHelper::AutoStartWorkflows(
 							CCrmOwnerType::Deal,

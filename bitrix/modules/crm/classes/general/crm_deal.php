@@ -4,7 +4,6 @@ IncludeModuleLangFile(__FILE__);
 use Bitrix\Crm;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Integration\PullManager;
-use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Tracking;
@@ -22,11 +21,13 @@ use Bitrix\Crm\Statistics\DealActivityStatisticEntry;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Reservation\Compatibility\ProductRowReserves;
 
 class CAllCrmDeal
 {
 	use UserFieldPreparer;
+	use EntityFieldsNormalizer;
 
 	static public $sUFEntityID = 'CRM_DEAL';
 
@@ -34,6 +35,8 @@ class CAllCrmDeal
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_DEAL_SPD';
 	const TOTAL_COUNT_CACHE_ID = 'crm_deal_total_count';
 	const CACHE_TTL = 3600;
+
+	protected const TABLE_NAME = 'b_crm_deal';
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
@@ -1710,7 +1713,7 @@ class CAllCrmDeal
 			}
 		}
 
-		if(!isset($arFields['TITLE']) || trim($arFields['TITLE']) === '')
+		if(!isset($arFields['TITLE']) || !is_string($arFields['TITLE']) || trim($arFields['TITLE']) === '')
 		{
 			$arFields['TITLE'] = self::GetDefaultTitle();
 		}
@@ -1969,7 +1972,10 @@ class CAllCrmDeal
 			}
 
 			unset($arFields['ID']);
-			$ID = intval($DB->Add('b_crm_deal', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+
+			$this->normalizeEntityFields($arFields);
+			$ID = (int) $DB->Add(self::TABLE_NAME, $arFields, [], 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
 			//Append ID to TITLE if required
 			if($ID > 0 && $arFields['TITLE'] === self::GetDefaultTitle())
 			{
@@ -2006,6 +2012,13 @@ class CAllCrmDeal
 			$GLOBALS['USER_FIELD_MANAGER']->Update(self::$sUFEntityID, $ID, $arFields);
 			//endregion
 
+			//region Save Observers
+			if(!empty($observerIDs))
+			{
+				Crm\Observer\ObserverManager::registerBulk($observerIDs, \CCrmOwnerType::Deal, $ID);
+			}
+			//endregion
+
 			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
 				->setEntityAttributes($arEntityAttr)
 			;
@@ -2025,13 +2038,6 @@ class CAllCrmDeal
 						array('last_selected' => $contactIDs[count($contactIDs) - 1])
 					);
 				}
-			}
-			//endregion
-
-			//region Save Observers
-			if(!empty($observerIDs))
-			{
-				Crm\Observer\ObserverManager::registerBulk($observerIDs, \CCrmOwnerType::Deal, $ID);
 			}
 			//endregion
 
@@ -2720,7 +2726,7 @@ class CAllCrmDeal
 			}
 		}
 
-		if(isset($arFields['TITLE']) && trim($arFields['TITLE']) === '')
+		if(isset($arFields['TITLE']) && (!is_string($arFields['TITLE']) || trim($arFields['TITLE']) === ''))
 		{
 			unset($arFields['TITLE']);
 		}
@@ -3145,7 +3151,10 @@ class CAllCrmDeal
 			}
 
 			unset($arFields['ID']);
-			$sUpdate = $DB->PrepareUpdate('b_crm_deal', $arFields);
+
+			$this->normalizeEntityFields($arFields);
+			$sUpdate = $DB->PrepareUpdate(self::TABLE_NAME, $arFields);
+
 			if ($sUpdate <> '')
 			{
 				$DB->Query("UPDATE b_crm_deal SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
@@ -3203,14 +3212,6 @@ class CAllCrmDeal
 			}
 			//endregion
 
-			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
-				->setEntityAttributes($arEntityAttr)
-				->setEntityFields($currentFields)
-			;
-			Crm\Security\Manager::getEntityController(CCrmOwnerType::Deal)
-				->register($permissionEntityType, $ID, $securityRegisterOptions)
-			;
-
 			//region Save contacts
 			if(!empty($removedContactBindings))
 			{
@@ -3243,6 +3244,16 @@ class CAllCrmDeal
 				);
 
 			}
+			//endregion
+
+			//region Save access rights for owner and observers
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+				->setEntityFields($currentFields)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Deal)
+				->register($permissionEntityType, $ID, $securityRegisterOptions)
+			;
 			//endregion
 
 			self::SynchronizeCustomerData($ID, $arRow, array('ENABLE_SOURCE' => false));
@@ -3612,17 +3623,16 @@ class CAllCrmDeal
 
 		$permissionEntityType = DealCategory::convertToPermissionEntityType($categoryID);
 
-		$sWherePerm = '';
-		if ($this->bCheckPermission)
+		$hasDeletePerm = \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($iUserId)
+			->checkDeletePermissions(CCrmOwnerType::Deal, $ID);
+
+		if (
+			$this->bCheckPermission
+			&& !$hasDeletePerm
+		)
 		{
-			$arEntityAttr = $this->cPerms->GetEntityAttr($permissionEntityType, $ID);
-			$sEntityPerm = $this->cPerms->GetPermType($permissionEntityType, 'DELETE', $arEntityAttr[$ID]);
-			if ($sEntityPerm == BX_CRM_PERM_NONE)
-				return false;
-			else if ($sEntityPerm == BX_CRM_PERM_SELF)
-				$sWherePerm = " AND ASSIGNED_BY_ID = {$iUserId}";
-			else if ($sEntityPerm == BX_CRM_PERM_OPEN)
-				$sWherePerm = " AND (OPENED = 'Y' OR ASSIGNED_BY_ID = {$iUserId})";
+			return false;
 		}
 
 		$APPLICATION->ResetException();
@@ -3663,7 +3673,7 @@ class CAllCrmDeal
 			\Bitrix\Crm\Recycling\DealController::getInstance()->moveToBin($ID, array('FIELDS' => $arFields));
 		}
 
-		$dbRes = $DB->Query("DELETE FROM b_crm_deal WHERE ID = {$ID}{$sWherePerm}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$dbRes = $DB->Query("DELETE FROM b_crm_deal WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 		if (is_object($dbRes) && $dbRes->AffectedRowsCount() > 0)
 		{
 			if(defined('BX_COMP_MANAGED_CACHE'))
@@ -4934,10 +4944,8 @@ class CAllCrmDeal
 
 	public static function IsStageExists($stageID, $categoryID = -1, array $params = [])
 	{
-		if(!is_int($categoryID))
-		{
-			$categoryID = (int)$categoryID;
-		}
+		$stageID = (string)$stageID;
+		$categoryID = (int)$categoryID;
 
 		if($categoryID < 0)
 		{

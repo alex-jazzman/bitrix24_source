@@ -28,6 +28,7 @@ $MESS["IBLOCK_XML2_BX_CANONICAL_URL"] = "БитриксURLКанонически
 $MESS["IBLOCK_XML2_BX_DEFAULT_VALUE"] = "БитриксЗначениеПоУмолчанию";
 $MESS["IBLOCK_XML2_BX_INDEX_SECTIONS"] = "БитриксИндексироватьРазделы";
 $MESS["IBLOCK_XML2_BX_INDEX_ELEMENTS"] = "БитриксИндексироватьЭлементы";
+$MESS["IBLOCK_XML2_BX_API_CODE"] = "БитриксСимвольныйКодAPI";
 $MESS["IBLOCK_XML2_BX_PICTURE"] = "БитриксКартинка";
 $MESS["IBLOCK_XML2_BX_DETAIL_PICTURE"] = "БитриксКартинкаДетальная";
 $MESS["IBLOCK_XML2_BX_CODE"] = "БитриксКод";

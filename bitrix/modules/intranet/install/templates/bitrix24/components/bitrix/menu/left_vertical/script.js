@@ -3628,6 +3628,12 @@ this.BX = this.BX || {};
 	      this.upButton.addEventListener("click", this.handleUpButtonClick.bind(this));
 	      this.menuMoreButton = this.menuContainer.querySelector(".menu-favorites-more-btn");
 	      this.menuMoreButton.addEventListener("click", this.handleShowHiddenClick.bind(this));
+	      var helperItem = this.menuContainer.querySelector(".menu-help-btn");
+
+	      if (helperItem) {
+	        helperItem.addEventListener('click', this.handleHelperClick.bind(this));
+	      }
+
 	      var siteMapItem = this.menuContainer.querySelector(".menu-sitemap-btn");
 
 	      if (siteMapItem) {
@@ -4104,6 +4110,12 @@ this.BX = this.BX || {};
 	        allowChangeHistory: false,
 	        customLeftBoundary: 0
 	      });
+	    }
+	  }, {
+	    key: "handleHelperClick",
+	    value: function handleHelperClick() {
+	      this.switchToSlidingMode(false);
+	      BX.Helper.show();
 	    } // region Sliding functions
 
 	  }, {
@@ -4333,6 +4345,8 @@ this.BX = this.BX || {};
 	      var licenseCollapsedBtn = leftColumn.querySelector('.menu-license-all-collapsed');
 	      var settingsIconBox = this.menuContainer.querySelector(".menu-settings-icon-box");
 	      var settingsBtnText = this.menuContainer.querySelector(".menu-settings-btn-text");
+	      var helpIconBox = this.menuContainer.querySelector(".menu-help-icon-box");
+	      var helpBtnText = this.menuContainer.querySelector(".menu-help-btn-text");
 	      var menuTextDivider = leftColumn.querySelector('.menu-item-separator');
 	      var menuMoreCounter = leftColumn.querySelector('.menu-item-index-more');
 	      var pageHeader = this.mainTable.querySelector(".page-header");
@@ -4401,6 +4415,10 @@ this.BX = this.BX || {};
 	            settingsIconBox.style.opacity = state.opacityRevert / 100;
 	            settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
 	            settingsBtnText.style.opacity = state.opacity / 100;
+	            helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+	            helpIconBox.style.opacity = state.opacityRevert / 100;
+	            helpBtnText.style.transform = "translateX(" + state.translateText + "px)";
+	            helpBtnText.style.opacity = state.opacity / 100;
 	            menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
 	            menuMoreBtn.style.opacity = state.opacityRevert / 100;
 	            menuMoreBtnDefault.style.transform = "translateX(" + state.translateMoreBtn + "px)";
@@ -4467,6 +4485,10 @@ this.BX = this.BX || {};
 	            settingsIconBox.style.opacity = state.opacityRevert / 100;
 	            settingsBtnText.style.transform = "translateX(" + state.translateText + "px)";
 	            settingsBtnText.style.opacity = state.opacity / 100;
+	            helpIconBox.style.transform = "translateX(" + state.translateIcon + "px)";
+	            helpIconBox.style.opacity = state.opacityRevert / 100;
+	            helpBtnText.style.transform = "translateX(" + state.translateText + "px)";
+	            helpBtnText.style.opacity = state.opacity / 100;
 	            menuMoreBtn.style.transform = "translateX(" + state.translateIcon + "px)";
 	            menuMoreBtn.style.opacity = state.opacityRevert / 100;
 	            menuMoreBtnDefault.style.transform = "translateX(" + state.translateMoreBtn + "px)";
@@ -4519,7 +4541,7 @@ this.BX = this.BX || {};
 	          }
 
 	          BX.removeClass(this.mainTable, "menu-animation-mode menu-animation-opening-mode menu-animation-closing-mode");
-	          var containers = [leftColumn, menuTextDivider, this.menuHeaderBurger, this.headerBurger, settingsIconBox, settingsBtnText, menuMoreBtnDefault, menuMoreBtn, logoImageContainer, menuSitemapIcon, menuSitemapText, menuEmployeesIcon, menuEmployeesText, menuMoreCounter, licenseBtn, licenseCollapsedBtn, this.menuContainer, pageHeader];
+	          var containers = [leftColumn, menuTextDivider, this.menuHeaderBurger, this.headerBurger, settingsIconBox, settingsBtnText, helpIconBox, helpBtnText, menuMoreBtnDefault, menuMoreBtn, logoImageContainer, menuSitemapIcon, menuSitemapText, menuEmployeesIcon, menuEmployeesText, menuMoreCounter, licenseBtn, licenseCollapsedBtn, this.menuContainer, pageHeader];
 	          containers.forEach(function (container) {
 	            if (container) {
 	              container.style.cssText = "";

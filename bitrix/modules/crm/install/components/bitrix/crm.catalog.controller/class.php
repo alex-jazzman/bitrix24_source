@@ -79,6 +79,14 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 			'#SITE_DIR#crm/product/index.php'
 		);
 		$params['SEF_MODE'] = 'Y';
+		if (!isset($params['SEF_URL_TEMPLATES']) || !is_array($params['SEF_URL_TEMPLATES']))
+		{
+			$params['SEF_URL_TEMPLATES'] = [];
+		}
+		if (!isset($params['VARIABLE_ALIASES']) || !is_array($params['VARIABLE_ALIASES']))
+		{
+			$params['VARIABLE_ALIASES'] = [];
+		}
 
 		return $params;
 	}

@@ -103,7 +103,6 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 			this.subscribeStoreEvents();
 
 			CategoryStorage
-				.setEventId('crm.dealToolbar')
 				.subscribeOnChange(() => this.reloadCategory())
 				.subscribeOnLoading(({ status }) => NavigationLoader.setLoading(status))
 				.markReady()
@@ -131,8 +130,6 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 			BX.removeCustomEvent('UI.SimpleList::onDeleteItem', this.onItemDeletedHandler);
 			BX.removeCustomEvent('UI.Kanban::onItemMoved', this.onItemMovedHandler);
 			BX.removeCustomEvent('UI.SimpleList::onRefresh', this.onSimpleListRefreshHandler);
-
-			CategoryStorage.unsubscribe('crm.dealToolbar');
 
 			CategoryCountersStoreManager
 				.unsubscribe('categoryCountersModel/init', this.updateCountersHandler)
@@ -209,6 +206,11 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 			}
 
 			const stageCounters = this.getCountersByStageId(stage.id);
+			if (!stageCounters)
+			{
+				return;
+			}
+
 			const total = (action === PLUS_ONE_ACTION ? stageCounters.total + amount : stageCounters.total - amount);
 			count = (action === PLUS_ONE_ACTION ? stageCounters.count + count : stageCounters.count - count);
 

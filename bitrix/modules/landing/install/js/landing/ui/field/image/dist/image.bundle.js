@@ -203,7 +203,8 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	        context: 'imageeditor'
 	      },
 	      dimensions: _this.dimensions,
-	      sizes: ['1x', '2x']
+	      sizes: ['1x', '2x'],
+	      allowSvg: landing_main.Main.getInstance().options.allow_svg === true
 	    });
 
 	    _this.adjustEditButtonState();
@@ -673,8 +674,9 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 
 	      this.showLoader();
 	      var isPng = main_core.Type.isStringFilled(file.type) && file.type.includes('png');
+	      var isSvg = main_core.Type.isStringFilled(file.type) && file.type.includes('svg');
 	      var checkSize = new Promise(function (resolve) {
-	        var sizes = isPng ? ['2x'] : ['1x', '2x'];
+	        var sizes = isPng || isSvg ? ['2x'] : ['1x', '2x'];
 
 	        if (this.create2xByDefault === false) {
 	          var image = document.createElement('img');
@@ -685,7 +687,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            URL.revokeObjectURL(objectUrl);
 
 	            if ((this.width >= dimensions.width || this.height >= dimensions.height || this.width >= dimensions.maxWidth || this.height >= dimensions.maxHeight) === false) {
-	              sizes = isPng ? ['2x'] : ['1x'];
+	              sizes = isPng || isSvg ? ['2x'] : ['1x'];
 	            }
 
 	            resolve(sizes);
@@ -702,7 +704,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	            return allowedSizes;
 	          }
 
-	          return isPng ? ['2x'] : ['1x', '2x'];
+	          return isPng || isSvg ? ['2x'] : ['1x', '2x'];
 	        }.bind(this)();
 
 	        return this.uploader.setSizes(sizes).upload(file, additionalParams).then(function (result) {

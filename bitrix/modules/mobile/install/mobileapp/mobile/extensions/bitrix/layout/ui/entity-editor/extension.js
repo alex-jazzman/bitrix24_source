@@ -63,6 +63,7 @@
 			/** @type {EntityConfig} */
 			this.config = BX.prop.get(this.settings, 'config', null);
 
+			this.payload = BX.prop.get(this.settings, 'payload', '');
 			this.entityTypeName = BX.prop.getString(this.settings, 'entityTypeName', '');
 			this.entityId = BX.prop.getInteger(this.settings, 'entityId', 0);
 			this.context = BX.prop.getObject(this.settings, 'context', {});

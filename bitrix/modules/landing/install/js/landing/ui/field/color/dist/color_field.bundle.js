@@ -3828,7 +3828,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    this.setEventNamespace('BX.Landing.UI.Field.Processor.Bg');
 	    this.styleNode = options.styleNode;
 	    this.parentVariableName = this.variableName;
-	    this.variableName = [this.parentVariableName, Bg.BG_URL_VAR, Bg.BG_URL_2X_VAR, Bg.BG_OVERLAY_VAR, Bg.BG_SIZE_VAR, Bg.BG_ATTACHMENT_VAR];
+	    this.variableName = [this.parentVariableName, Bg.BG_URL_VAR, Bg.BG_URL_2X_VAR, Bg.BG_OVERLAY_VAR, Bg.BG_SIZE_VAR, Bg.BG_ATTACHMENT_VAR, Bg.BG_IMAGE];
 	    this.parentClassName = this.className;
 	    this.className = 'g-bg-image';
 	    this.image = new Image(options);

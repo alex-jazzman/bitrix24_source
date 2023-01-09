@@ -1663,6 +1663,21 @@ export class Editor
 				{
 					fields['ROW_RESERVED'] = 0;
 					fields['DEDUCTED_QUANTITY'] = 0;
+					if (!this.getSettingValue('allowDiscountChange', true))
+					{
+						fields['DISCOUNT_ROW'] = 0;
+						fields['DISCOUNT_SUM'] = 0;
+						fields['DISCOUNT_RATE'] = 0;
+						fields['DISCOUNT'] = 0;
+						productRow.updateUiHtmlField(
+							'DISCOUNT_PRICE',
+							CurrencyCore.currencyFormat(0, this.getCurrencyId(), true)
+						);
+						productRow.updateUiHtmlField(
+							'DISCOUNT_ROW',
+							CurrencyCore.currencyFormat(0, this.getCurrencyId(), true)
+						);
+					}
 				}
 
 				Object.keys(fields).forEach((key) => {
@@ -1701,6 +1716,18 @@ export class Editor
 			product.layoutReserveControl();
 			product.initHandlersForSelectors();
 			product.changeBasePrice(0);
+			if (!this.getSettingValue('allowDiscountChange', true))
+			{
+				product.setDiscount(0);
+				product.updateUiHtmlField(
+					'DISCOUNT_PRICE',
+					CurrencyCore.currencyFormat(0, this.getCurrencyId(), true)
+				);
+				product.updateUiHtmlField(
+					'DISCOUNT_ROW',
+					CurrencyCore.currencyFormat(0, this.getCurrencyId(), true)
+				);
+			}
 			product.modifyBasePriceInput();
 			product.executeExternalActions();
 		}

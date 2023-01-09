@@ -947,6 +947,7 @@ export class FieldsListField extends BaseField
 			})
 			.show({
 				disabledFields: this.items.map((item) => item.options.id),
+				allowedTypes: this.#getFieldsPanelAllowedTypes(),
 			})
 			.then((selectedFields) => {
 				if (Type.isArrayFilled(selectedFields))
@@ -955,6 +956,27 @@ export class FieldsListField extends BaseField
 					this.onFieldsSelect(selectedFields);
 				}
 			});
+	}
+
+	#getFieldsPanelAllowedTypes(): Array<string>
+	{
+		return [
+			'list',
+			'string',
+			'checkbox',
+			'date',
+			'text',
+			'typed_string',
+			'file',
+			'datetime',
+			'integer',
+			'double',
+			'enumeration',
+			'url',
+			'money',
+			'boolean',
+			'resourcebooking',
+		];
 	}
 
 	onFieldsSelect(selectedFields: Array<string>)

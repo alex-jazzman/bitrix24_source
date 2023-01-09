@@ -118,6 +118,7 @@ $MESS["LANDING_FORM_SETTINGS_CRM_TYPE_2"] = "Клієнт";
 $MESS["LANDING_FORM_SETTINGS_CRM_TYPE_3"] = "Угода +&nbsp;клієнт";
 $MESS["LANDING_FORM_SETTINGS_CRM_TYPE_4"] = "Пропозиція +&nbsp;клієнт";
 $MESS["LANDING_FORM_SETTINGS_CRM_TYPE_5"] = "Смарт-процес";
+$MESS["LANDING_FORM_SETTINGS_CRM_TYPE_310"] = "Рахунок";
 $MESS["LANDING_FORM_SETTINGS_DEFAULT_VALUE_MESSAGE_DESCRIPTION"] = "Ви можете створити невидимі для клієнта поля у формі та автоматично заповнити їх за клієнта, якщо у вас є ця інформація.";
 $MESS["LANDING_FORM_SETTINGS_DEFAULT_VALUE_MESSAGE_TITLE"] = "Заповнюйте поля автоматично при надсиланні форми";
 $MESS["LANDING_FORM_SETTINGS_DEFAULT_VALUE_TITLE"] = "Значення прихованих полів";

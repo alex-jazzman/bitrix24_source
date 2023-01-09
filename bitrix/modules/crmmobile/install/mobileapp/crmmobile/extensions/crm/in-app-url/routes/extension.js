@@ -7,7 +7,11 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 	const { TypeId, TypeName } = require('crm/type');
 	const { ProfileView } = require('user/profile');
 
-	const openCrmEntity = (entityTypeId, entityId, { linkText = '', canOpenInDefault } = {}) => {
+	const openCrmEntity = (
+		entityTypeId,
+		entityId,
+		{ linkText = '', canOpenInDefault, ...restPayload } = {}) => {
+
 		const extensionData = jnExtensionData.get('crm:in-app-url/routes');
 
 		if (typeof extensionData === 'undefined' || !extensionData.isUniversalActivityScenarioEnabled)
@@ -16,8 +20,10 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 		}
 
 		EntityDetailOpener.open(
-			{ entityId, entityTypeId },
-			{ titleParams: { text: linkText } },
+			{ entityId, entityTypeId, ...restPayload },
+			{
+				titleParams: { text: linkText },
+			},
 			null,
 			canOpenInDefault,
 		);

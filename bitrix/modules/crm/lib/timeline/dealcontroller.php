@@ -573,6 +573,8 @@ class DealController extends EntityController
 				$data['TITLE'] =  Loc::getMessage('CRM_DEAL_MODIFICATION_IS_MANUAL_OPPORTUNITY');
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
+				$data['START'] = $settings['START'];
+				$data['FINISH'] = $settings['FINISH'];
 			}
 			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);

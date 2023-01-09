@@ -200,6 +200,10 @@ final class SaveEntityCommand extends Command
 			{
 				$this->prepareCrmField($field, $fields[$id]);
 			}
+			elseif ($fieldType === 'crm_entity')
+			{
+				$this->prepareCrmEntityField($field, $fields[$id]);
+			}
 		}
 	}
 
@@ -281,7 +285,7 @@ final class SaveEntityCommand extends Command
 			{
 				foreach ($data as $key => $value)
 				{
-					if (!empty($value['amount']))
+					if (isset($value['amount']) && is_numeric($value['amount']))
 					{
 						$data[$key] = "{$value['amount']}|{$value['currency']}";
 					}
@@ -292,7 +296,7 @@ final class SaveEntityCommand extends Command
 				}
 			}
 		}
-		elseif (!empty($data['amount']))
+		elseif (isset($data['amount']) && is_numeric($data['amount']))
 		{
 			$data = "{$data['amount']}|{$data['currency']}";
 		}
@@ -326,6 +330,40 @@ final class SaveEntityCommand extends Command
 					{
 						$data[$key] = "{$entityTypeAbbr}_{$entityId}";
 					}
+				}
+				else
+				{
+					unset($data[$key]);
+				}
+			}
+
+			if (!$field->isMultiple())
+			{
+				$data = $data[0] ?? null;
+			}
+		}
+		else
+		{
+			$data = $field->isMultiple() ? [] : null;
+		}
+	}
+
+	private function prepareCrmEntityField(Field $field, &$data): void
+	{
+		if (!empty($data) && is_array($data))
+		{
+			foreach ($data as $key => $value)
+			{
+				if (!empty($value) && is_array($value))
+				{
+					[$entityTypeName, $entityId] = $value;
+
+					if ($entityTypeName === DynamicMultipleProvider::DYNAMIC_MULTIPLE_ID)
+					{
+						[, $entityId] = DynamicMultipleProvider::parseId($entityId);
+					}
+
+					$data[$key] = $entityId;
 				}
 				else
 				{

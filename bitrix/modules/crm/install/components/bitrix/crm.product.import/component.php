@@ -716,7 +716,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					$productIndex = $data;
 					$data = null;
 				}
-				else if (mb_substr($currentKey, 0, 1) === '~' || empty($data))
+				else if (mb_substr($currentKey, 0, 1) === '~' || $data === '')
 				{
 					continue;
 				}

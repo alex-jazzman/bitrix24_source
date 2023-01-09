@@ -9,5 +9,6 @@ return [
 		'./todo-created',
 		'./call-incoming',
 		'./ping',
+		'./document-viewed',
 	]
 ];

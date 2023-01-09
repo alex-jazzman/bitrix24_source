@@ -677,6 +677,7 @@ abstract class Field
 				[
 					'CONTEXT' => 'CRM_GRID',
 					'mode' => 'main.public_text',
+					'renderContext' => 'export',
 				]
 			)
 			)->render());

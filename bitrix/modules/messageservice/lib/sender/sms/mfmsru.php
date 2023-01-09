@@ -166,7 +166,7 @@ class MfmsRu extends Sender\BaseConfigurable
 			'pass' => $this->getOption('password'),
 			'subject' => $messageFields['MESSAGE_FROM'],
 			'address' => str_replace('+', '', $messageFields['MESSAGE_TO']),
-			'text' => $messageFields['MESSAGE_BODY'],
+			'text' => $this->prepareMessageBodyForSend($messageFields['MESSAGE_BODY']),
 		];
 
 		$remoteCallResult = $this->touchHpg($this->getOption('hpg_send_url'), $params);

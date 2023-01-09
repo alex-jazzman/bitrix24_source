@@ -18,6 +18,7 @@ class Social extends PresetAbstract
 			],
 			'menu_tasks',
 			'menu_crm_favorite',
+			'menu_crm_store',
 			'menu_marketing',
 			'menu_sites',
 			'menu_shop',

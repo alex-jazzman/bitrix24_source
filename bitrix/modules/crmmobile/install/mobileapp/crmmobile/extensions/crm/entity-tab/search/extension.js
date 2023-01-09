@@ -50,6 +50,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 				search: '',
 				presetId: (this.props.presetId || null),
 				counterId: (this.props.counterId || null),
+				iconBackground: DEFAULT_ICON_BACKGROUND,
 			};
 		}
 
@@ -419,9 +420,24 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 			}
 
 			params.data = params.data || {};
-			if (newState.search && !params.data.background)
+			if (newState.search || newState.presetId !== this.getDefaultPresetId())
 			{
-				params.data.background = DEFAULT_ICON_BACKGROUND;
+				if (!params.data.background && newState.search)
+				{
+					params.data.background = DEFAULT_ICON_BACKGROUND;
+				}
+				else if (!newState.search && !newState.presetId && !newState.counterId)
+				{
+					params.data.background = DEFAULT_ICON_BACKGROUND;
+				}
+				else if (!params.data.background)
+				{
+					params.data.background = this.state.iconBackground;
+				}
+				else
+				{
+					this.state.iconBackground = params.data.background;
+				}
 			}
 
 			this.setState(newState, () => BX.postComponentEvent('Crm.EntityTab::onSearch', [params]));

@@ -25,7 +25,7 @@ export default class Rest extends Activity
 
 		if (data['APP_TYPE'] && data['APP_TYPE']['ICON_SRC'])
 		{
-			const iconNode = wrapper.querySelector('[class="' + this.getIconClassName() + '"]');
+			const iconNode = wrapper.querySelector('.' + this.getIconClassName().replace(/\s+/g, '.'));
 			if (iconNode)
 			{
 				iconNode.style.backgroundImage = "url('" +  data['APP_TYPE']['ICON_SRC'] + "')";

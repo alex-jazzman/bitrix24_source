@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MENU_ITEM_ACCESS_DENIED"] = "Доступ запрещен";
 $MESS["MENU_HIDE"] = "свернуть";
 $MESS["MENU_SHOW"] = "развернуть";
@@ -99,4 +99,4 @@ $MESS["MENU_LICENSE_DEMO"] = "Осталось #NUM_DAYS#";
 $MESS["MENU_LICENSE_BUY"] = "Купить";
 $MESS["MENU_DELETE_FROM_FAVORITE_ALL"] = "Удалить из избранного для всех";
 $MESS["MENU_SITE_MAP"] = "Карта сайта";
-?>
+$MESS["MENU_HELP"] = "Помощь";

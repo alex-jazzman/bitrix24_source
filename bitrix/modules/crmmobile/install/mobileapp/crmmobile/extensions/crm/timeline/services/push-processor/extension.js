@@ -4,6 +4,7 @@
 jn.define('crm/timeline/services/push-processor', (require, exports, module) => {
 
 	const { TimelineStreamScheduled } = require('crm/timeline/stream');
+	const { clone } = require('utils/object');
 
 	const StreamNames = {
 		PINNED: 'pinned',
@@ -34,6 +35,11 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 
 			/** @type {boolean} */
 			this.queueProcessingInProgress = false;
+
+			/** @type {TimelinePushActionParams[]} */
+			this.reloadingMessagesQueue = [];
+
+			this.fetchItems = this.delay(this.fetchItems, 1500);
 		}
 
 		/**
@@ -41,6 +47,71 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 		 * @param {TimelinePushActionParams} params
 		 */
 		handleMessage(params)
+		{
+			if (this.itemDataShouldBeReloaded(params))
+			{
+				this.reloadingMessagesQueue.push(params);
+				this.fetchItems();
+			}
+			else
+			{
+				this.addToQueue(params);
+			}
+		}
+
+		/**
+		 * @param {TimelinePushActionParams} params
+		 * @return {boolean}
+		 */
+		itemDataShouldBeReloaded(params)
+		{
+			const { item } = params;
+
+			if (!item)
+			{
+				return false;
+			}
+
+			const appLanguage = env.languageId.toLowerCase();
+			const languageId = BX.prop.getString(item, 'languageId', appLanguage).toLowerCase();
+			const canBeReloaded = BX.prop.getBoolean(item, 'canBeReloaded', true);
+
+			return (languageId !== appLanguage) && canBeReloaded;
+		}
+
+		fetchItems()
+		{
+			const messages = clone(this.reloadingMessagesQueue);
+			this.reloadingMessagesQueue = [];
+
+			const activityIds = [];
+			const historyIds = [];
+
+			messages.forEach(message => {
+				const container = message.stream === StreamNames.SCHEDULED ? activityIds : historyIds;
+				container.push(message.id);
+			});
+
+			if (messages.length)
+			{
+				this.timelineInstance.dataProvider.loadItems(activityIds, historyIds)
+					.then(response => {
+						messages.forEach(message => {
+							if (response.data[message.id])
+							{
+								message.item = response.data[message.id];
+							}
+							this.addToQueue(message);
+						})
+					})
+					.catch(err => {
+						console.error(err);
+						messages.forEach(message => this.addToQueue(message));
+					});
+			}
+		}
+
+		addToQueue(params)
 		{
 			this.queue.push(params);
 
@@ -260,6 +331,21 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 			{
 				this.onStreamChangedHandler({ stream, itemId });
 			}
+		}
+
+		/**
+		 * @private
+		 * @param {function} fn
+		 * @param {number} timeout
+		 * @return {function}
+		 */
+		delay(fn, timeout)
+		{
+			const context = this;
+
+			return function() {
+				setTimeout(() => fn.apply(context, arguments), timeout);
+			};
 		}
 	}
 

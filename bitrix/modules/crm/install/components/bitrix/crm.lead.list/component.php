@@ -1235,8 +1235,6 @@ if($actionData['ACTIVE'])
 
 					if($CCrmLead->Update($ID, $arUpdateData))
 					{
-						$DB->Commit();
-
 						CCrmBizProcHelper::AutoStartWorkflows(
 							CCrmOwnerType::Lead,
 							$ID,

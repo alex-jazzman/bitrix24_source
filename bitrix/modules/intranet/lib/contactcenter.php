@@ -941,7 +941,14 @@ class ContactCenter
 				try
 				{
 					$channelData = JSON::decode($channelInfo['DATA']);
-					$channelName = trim($channelData[$connectorCode]['name']);
+					if (is_string($channelData[$connectorCode]['name']))
+					{
+						$channelName = trim($channelData[$connectorCode]['name']);
+					}
+					else
+					{
+						$channelName = '';
+					}
 				}
 				catch (\Exception $exception)
 				{

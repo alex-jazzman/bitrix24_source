@@ -21,9 +21,9 @@ abstract class ListEntity extends Entity
 {
 	protected const LIMIT = 20;
 
-	protected const ALWAYS_SHOW_FIELD_NAMES = ['ID', 'CREATED_TIME'];
+	protected const ALWAYS_SHOW_FIELD_NAMES = [];
 	// @todo maybe need to add more fields
-	protected const DEFAULT_SHOW_FIELD_NAMES = ['ID', 'CREATED_TIME'];
+	protected const DEFAULT_SHOW_FIELD_NAMES = ['CREATED_TIME', 'ASSIGNED_BY_ID'];
 	protected const DEFAULT_SELECT_FIELD_NAMES = ['PHONE', 'EMAIL', 'ASSIGNED_BY_ID'];
 	protected const FIELD_ALIASES = [];
 
@@ -141,12 +141,12 @@ abstract class ListEntity extends Entity
 		$entityAttributes = $this->getEntityAttributes($items, 'ID');
 
 		$results = [];
-		foreach ($allDisplayValues as $id => $displayValues)
+		foreach ($items as $id => $item)
 		{
 			$preparedItem = $this->prepareItem(
-				$items[$id],
+				$item,
 				[
-					'displayValues' => $displayValues,
+					'displayValues' => $allDisplayValues[$id] ?? [],
 					'fieldsCollection' => $fieldsCollection,
 					'permissionEntityAttributes' => $entityAttributes,
 				]
@@ -385,7 +385,7 @@ abstract class ListEntity extends Entity
 	{
 		$options = $this->getCurrentOptions();
 
-		if ($options['columns'] === '')
+		if ($options['columns'] === '' || $options['columns'] === null)
 		{
 			$visibleFieldsNames = [];
 			foreach ($fieldsCollection as $field)

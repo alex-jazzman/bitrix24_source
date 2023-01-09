@@ -139,4 +139,9 @@ class Provider extends BaseProvider
 
 		return !$hasAccess;
 	}
+
+	public function getModuleId(): ?string
+	{
+		return 'crm';
+	}
 }

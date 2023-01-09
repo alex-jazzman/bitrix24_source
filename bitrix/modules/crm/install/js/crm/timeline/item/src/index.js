@@ -21,6 +21,8 @@ import './css/layout/body/calendar-icon.css';
 import './css/content-blocks/date-pill.css';
 import './css/content-blocks/editable-text.css';
 import './css/layout/header/hint.css';
+import './css/content-blocks/info-group.css';
+import './css/content-blocks/sms-message.css';
 import './css/main.css';
 
 export {

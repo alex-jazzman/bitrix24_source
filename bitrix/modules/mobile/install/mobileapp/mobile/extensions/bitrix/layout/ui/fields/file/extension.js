@@ -60,11 +60,6 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			}, 50, this);
 		}
 
-		canFocusTitle()
-		{
-			return false;
-		}
-
 		componentWillReceiveProps(newProps)
 		{
 			super.componentWillReceiveProps(newProps);
@@ -331,7 +326,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				return null;
 			}
 
-			const {emptyEditableButtonStyle} = this.styles;
+			const { emptyEditableButtonStyle } = this.styles;
 
 			return View(
 				{
@@ -573,7 +568,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						attachButton: { items },
 					},
 				},
-				data => this.onAddFile(data),
+				data => this.removeFocus().then(() => this.onAddFile(data)),
 				() => this.removeFocus(),
 			);
 		}
@@ -795,7 +790,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				...super.getDefaultStyles(),
 				fieldWrapper: {
 					flex: 1,
-					borderWidth: 0
+					borderWidth: 0,
 				},
 				wrapper: {
 					paddingTop: this.isEmpty() ? 12 : 7,

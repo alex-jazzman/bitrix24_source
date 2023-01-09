@@ -15,7 +15,9 @@ use Bitrix\Crm\Timeline\ActivityController;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Traits;
 use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
 
 final class Monitor
@@ -229,6 +231,13 @@ final class Monitor
 
 		foreach ($this->changes as $entityTypeId => $changesOfItemsOfSameType)
 		{
+			if ($entityTypeId === \CCrmOwnerType::Order && Loader::includeModule('sale'))
+			{
+				//todo delete when orders support factory based approach
+				$this->sendOrdersUpdatedPushes(array_keys($changesOfItemsOfSameType));
+				continue;
+			}
+
 			$factory = $container->getFactory($entityTypeId);
 			if (!$factory || !\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 			{
@@ -345,6 +354,38 @@ final class Monitor
 		}
 	}
 
+	private function sendOrdersUpdatedPushes(array $ids): void
+	{
+		Collection::normalizeArrayValuesByInt($ids);
+		if (empty($ids))
+		{
+			return;
+		}
+
+		$entity = Entity::getInstance(\CCrmOwnerType::OrderName);
+		if (!$entity)
+		{
+			return;
+		}
+
+		$dbResult = $entity->getItems([
+			'filter' => ['@ID' => $ids],
+		]);
+
+		$pullManager = PullManager::getInstance();
+
+		while ($orderArray = $dbResult->Fetch())
+		{
+			$pullManager->sendItemUpdatedEvent(
+				$entity->createPullItem($orderArray),
+				[
+					'TYPE' => \CCrmOwnerType::OrderName,
+					'SKIP_CURRENT_USER' => false,
+				],
+			);
+		}
+	}
+
 	private function addTimelineTypeFilter(ItemIdentifier $timelineOwner, Query $lastTimelineQuery): void
 	{
 		$lastTimelineQuery->where(Query::filter()
@@ -428,10 +469,10 @@ final class Monitor
 
 		return $factory->getDataClass()::getList([
 				'filter' => [
-					'=ID' => $timelineOwner->getEntityId()
+					'=ID' => $timelineOwner->getEntityId(),
 				],
 				'select' => [
-					$assignedByFieldName
+					$assignedByFieldName,
 				],
 				'limit' => 1,
 			])->fetch()[$assignedByFieldName] ?? 0

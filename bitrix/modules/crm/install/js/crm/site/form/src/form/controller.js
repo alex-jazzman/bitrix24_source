@@ -479,6 +479,10 @@ class Controller extends Event
 			this.view.delay = parseInt(view.delay);
 			this.view.delay = isNaN(this.view.delay) ? 0 : this.view.delay;
 		}
+		this.view.hideOnOverlayClick = typeof view.hideOnOverlayClick !== "undefined"
+			? Boolean(view.hideOnOverlayClick)
+			: true
+		;
 	}
 
 	setDate(date: Type.Date)

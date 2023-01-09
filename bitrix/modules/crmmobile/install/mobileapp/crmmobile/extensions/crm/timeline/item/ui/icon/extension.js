@@ -82,7 +82,8 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 
 		render()
 		{
-			const { action, onAction, counterType } = this.props;
+			const { onAction, counterType } = this.props;
+			const action = get(this.props, 'logo.action', null);
 
 			return View(
 				{

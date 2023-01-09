@@ -136,6 +136,7 @@ Loader::registerAutoLoadClasses(
 		"CUserTypeIBlockElement" => "classes/general/usertypeelement.php",
 		"CUserTypeStringFormatted" => "classes/general/usertypestrfmt.php",
 		"CUserTypeUrl" => "classes/general/usertypeurl.php",
+		"BXGadget" => "classes/general/gadget.php",
 
 		//deprecated
 		"CUrlRewriter" => "classes/general/urlrewriter.php",

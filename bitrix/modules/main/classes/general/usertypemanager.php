@@ -2,6 +2,8 @@
 
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UserField\Types\BaseType;
 use Bitrix\Main\UserField\Types\DateTimeType;
 
@@ -1703,12 +1705,47 @@ class CUserTypeManager
 					{
 						if (!($arFields[$FIELD_NAME] instanceof SqlExpression))
 						{
-							//apply appropriate check function
-							$ar = call_user_func_array(
-								array($CLASS_NAME, "checkfields"),
-								array($arUserField, $arFields[$FIELD_NAME], $user_id)
-							);
-							$aMsg = array_merge($aMsg, $ar);
+							$canUseArrayValueForSingleField = false;
+							if (
+								is_callable([$CLASS_NAME, 'canUseArrayValueForSingleField'])
+								&& $CLASS_NAME::canUseArrayValueForSingleField()
+							)
+							{
+								$canUseArrayValueForSingleField = true;
+							}
+
+							if (is_array($arFields[$FIELD_NAME]) && !$canUseArrayValueForSingleField)
+							{
+								$fieldName = HtmlFilter::encode(
+									empty($arUserField['EDIT_FORM_LABEL'])
+										? $arUserField['FIELD_NAME']
+										: $arUserField['EDIT_FORM_LABEL']
+								);
+								$messages = [
+									[
+										'id' => $arUserField['FIELD_NAME'],
+										'text' => Loc::getMessage('USER_TYPE_FIELD_VALUE_IS_MULTIPLE', [
+											'#FIELD_NAME#' => $fieldName,
+										]),
+									],
+								];
+							}
+							else
+							{
+								//apply appropriate check function
+								$messages = call_user_func_array(
+									[
+										$CLASS_NAME,
+										'checkfields',
+									],
+									[
+										$arUserField,
+										$arFields[$FIELD_NAME],
+										$user_id,
+									]
+								);
+							}
+							$aMsg = array_merge($aMsg, $messages);
 						}
 					}
 					elseif(is_array($arFields[$FIELD_NAME]))
@@ -2056,6 +2093,8 @@ class CUserTypeManager
 		else
 			return $result;
 
+		$DB->StartTransaction();
+
 		if($strUpdate <> '')
 		{
 			$result = true;
@@ -2131,6 +2170,8 @@ class CUserTypeManager
 					VALUES (" . intval($ID) . ", '" . $FieldId . "', " . $value . ")", false, "FILE: " . __FILE__ . "<br>LINE: " . __LINE__);
 			}
 		}
+
+		$DB->Commit();
 
 		return $result;
 	}

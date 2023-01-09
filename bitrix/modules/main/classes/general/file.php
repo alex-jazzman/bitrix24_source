@@ -205,10 +205,7 @@ class CFile extends CAllFile
 			return false;
 		}
 
-		if($arFile["type"] == "image/pjpeg" || $arFile["type"] == "image/jpg")
-		{
-			$arFile["type"] = "image/jpeg";
-		}
+		$arFile["type"] = Web\MimeType::normalize($arFile["type"]);
 
 		$original = null;
 
@@ -385,11 +382,6 @@ class CFile extends CAllFile
 			}
 		}
 
-		if($arFile["type"] == '' || !is_string($arFile["type"]))
-		{
-			$arFile["type"] = "application/octet-stream";
-		}
-
 		/****************************** QUOTA ******************************/
 		if (COption::GetOptionInt("main", "disk_space") > 0 && $original === null)
 		{
@@ -476,7 +468,7 @@ class CFile extends CAllFile
 		return Internal\FileHashTable::query()
 			->addSelect("FILE.*")
 			->where($filter)
-			->addOrder("FILE_ID")
+			->addOrder("FILE.ID")
 			->setLimit(1)
 			->fetchObject();
 	}

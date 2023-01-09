@@ -43,6 +43,7 @@ jn.define('crm/timeline/item/ui/body', (require, exports, module) => {
 			const factory = new TimelineItemBodyBlockFactory({
 				model: this.props.model,
 				itemScopeEventBus: this.props.itemScopeEventBus,
+				timelineScopeEventBus: this.props.timelineScopeEventBus,
 				onAction: this.props.onAction || nothing,
 			});
 

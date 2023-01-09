@@ -8,6 +8,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	  function Url() {
 	    babelHelpers.classCallCheck(this, Url);
 	  }
+
 	  babelHelpers.createClass(Url, null, [{
 	    key: "getCurrentUrl",
 	    value: function getCurrentUrl() {
@@ -19,10 +20,13 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	      if (!link.length) {
 	        return '?' + name + '=' + value;
 	      }
+
 	      link = main_core.Uri.removeParam(link, name);
+
 	      if (link.indexOf('?') != -1) {
 	        return link + '&' + name + '=' + value;
 	      }
+
 	      return link + '?' + name + '=' + value;
 	    }
 	  }]);
@@ -34,12 +38,14 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	    babelHelpers.classCallCheck(this, Pool);
 	    this.pool = {};
 	  }
+
 	  babelHelpers.createClass(Pool, [{
 	    key: "add",
 	    value: function add(cmd, index, fields) {
 	      if (!this.pool.hasOwnProperty(index)) {
 	        this.pool[index] = [];
 	      }
+
 	      this.pool[index].push(babelHelpers.defineProperty({}, cmd, {
 	        fields: fields
 	      }));
@@ -68,12 +74,14 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	    babelHelpers.classCallCheck(this, Timer);
 	    this.list = [];
 	  }
+
 	  babelHelpers.createClass(Timer, [{
 	    key: "add",
 	    value: function add(fields) {
 	      if (!fields.hasOwnProperty('index')) {
 	        return false;
 	      }
+
 	      this.list[fields.index] = {
 	        id: fields.id
 	      };
@@ -84,6 +92,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	      if (!this.list[index] || this.list[index].length <= 0) {
 	        return {};
 	      }
+
 	      return this.list[index];
 	    }
 	  }, {
@@ -96,7 +105,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	    value: function clean(fields) {
 	      var timer = this.get(fields.index);
 	      clearTimeout(timer.id);
-	      this.delete({
+	      this["delete"]({
 	        index: fields.index
 	      });
 	    }
@@ -130,18 +139,22 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	  function Basket() {
 	    babelHelpers.classCallCheck(this, Basket);
 	  }
+
 	  babelHelpers.createClass(Basket, null, [{
 	    key: "toFixed",
 	    value: function toFixed(quantity, measureRatio) {
 	      var availableQuantity = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
 	      var precisionFactor = Math.pow(10, 6);
 	      var reminder = (quantity / measureRatio - (quantity / measureRatio).toFixed(0)).toFixed(5),
-	        remain;
+	          remain;
+
 	      if (parseFloat(reminder) === 0) {
 	        return quantity;
 	      }
+
 	      if (measureRatio !== 0 && measureRatio !== 1) {
 	        remain = quantity * precisionFactor % (measureRatio * precisionFactor) / precisionFactor;
+
 	        if (measureRatio > 0 && remain > 0) {
 	          if (remain >= measureRatio / 2 && (availableQuantity === 0 || quantity + measureRatio - remain <= availableQuantity)) {
 	            quantity += (measureRatio * precisionFactor - remain * precisionFactor) / precisionFactor;
@@ -150,11 +163,13 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	          }
 	        }
 	      }
+
 	      return quantity;
 	    } // isRatioFloat(value)
 	    // {
 	    // 	return parseInt(value) !== parseFloat(value)
 	    // }
+
 	  }, {
 	    key: "isValueFloat",
 	    value: function isValueFloat(value) {
@@ -184,6 +199,7 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	  function Product() {
 	    babelHelpers.classCallCheck(this, Product);
 	  }
+
 	  babelHelpers.createClass(Product, null, [{
 	    key: "isService",
 	    value: function isService(item) {
@@ -204,19 +220,23 @@ this.BX.Sale.Checkout = this.BX.Sale.Checkout || {};
 	    this.location = options.location;
 	    this.params = options.params;
 	  }
+
 	  babelHelpers.createClass(History, [{
 	    key: "build",
 	    value: function build() {
 	      var path = this.location;
 	      var params = this.params;
+
 	      try {
 	        for (var name in params) {
 	          if (!params.hasOwnProperty(name)) {
 	            continue;
 	          }
+
 	          path = Url.addLinkParam(path, name, params[name]);
 	        }
 	      } catch (e) {}
+
 	      return path;
 	    }
 	  }], [{

@@ -7,10 +7,6 @@ this.BX.Landing.Ui.Panel.Formsettingspanel.Content = this.BX.Landing.Ui.Panel.Fo
 (function (exports) {
 	'use strict';
 
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
 	var _schemes = /*#__PURE__*/new WeakMap();
 
 	var _defaultSchemes = /*#__PURE__*/new WeakMap();
@@ -19,12 +15,12 @@ this.BX.Landing.Ui.Panel.Formsettingspanel.Content = this.BX.Landing.Ui.Panel.Fo
 	  function SchemeManager(schemes) {
 	    babelHelpers.classCallCheck(this, SchemeManager);
 
-	    _classPrivateFieldInitSpec(this, _schemes, {
+	    _schemes.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _classPrivateFieldInitSpec(this, _defaultSchemes, {
+	    _defaultSchemes.set(this, {
 	      writable: true,
 	      value: void 0
 	    });

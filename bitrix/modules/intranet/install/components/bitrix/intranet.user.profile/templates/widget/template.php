@@ -144,6 +144,7 @@ BX.ready(function() {
 				'loginHistory' => [
 					'url' => TimemanSection::getUserLoginHistoryUrl(),
 					'isCloud' => $bitrix24Included,
+					'isHide' => $bitrix24Included && (\CBitrix24::getPortalZone() === 'ua'),
 					'isAvailableUserLoginHistory' => isset($arResult['isAvailableUserLoginHistory']) && $arResult['isAvailableUserLoginHistory'],
 					'isConfiguredUserLoginHistory' => isset($arResult['isConfiguredUserLoginHistory']) && $arResult['isConfiguredUserLoginHistory']
 				],

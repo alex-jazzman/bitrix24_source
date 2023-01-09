@@ -450,8 +450,13 @@
 				{
 					value.url.href = '';
 					value.url.enabled = false;
+					attr(this.node, "data-pseudo-url", value.url);
 				}
-				attr(this.node, "data-pseudo-url", value.url);
+				if (value.url.href.startsWith('product:'))
+				{
+					value.url.target = '_self';
+					attr(this.node, "data-pseudo-url", value.url);
+				}
 			}
 
 			this.onChange();

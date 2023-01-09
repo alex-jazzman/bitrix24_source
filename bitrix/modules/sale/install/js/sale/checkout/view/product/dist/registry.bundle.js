@@ -138,48 +138,57 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	    },
 	    getObjectClass: function getObjectClass() {
 	      var classes = ['checkout-table-row-group', 'checkout-basket-item'];
+
 	      if (this.hasSkuPropsColor) {
 	        classes.push('checkout-basket-item--has-sku-color');
 	      }
+
 	      if (this.isDeleted) {
 	        classes.push('checkout-basket-item-deleted');
 	      }
+
 	      if (this.isLocked) {
 	        classes.push('checkout-basket-item-locked');
 	      }
+
 	      if (this.isBackdropChangeSku) {
 	        classes.push('active-backdrop-open-change-sku');
 	      }
+
 	      if (this.isBackdropMobileMenu) {
 	        classes.push('active-backdrop-open-mobile-menu');
 	      }
+
 	      return classes;
 	    }
 	  },
 	  created: function created() {
 	    var _this = this;
+
 	    main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.basket.backdropOpenMobileMenu, function (event) {
 	      var index = event.getData().index;
+
 	      if (index === _this.index) {
 	        _this.showBackdropMobileMenu = 'Y';
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.basket.backdropOpenChangeSku, function (event) {
 	      var index = event.getData().index;
+
 	      if (index === _this.index) {
 	        _this.showBackdropChangeSku = 'Y';
 	      }
 	    });
 	    main_core_events.EventEmitter.subscribe(sale_checkout_const.EventType.basket.backdropClose, function (event) {
 	      var index = event.getData().index;
+
 	      if (index === _this.index) {
 	        _this.showBackdropMobileMenu = 'N';
 	        _this.showBackdropChangeSku = 'N';
 	      }
 	    });
 	  },
-	  beforeDestroy: function beforeDestroy() {
-	    // EventEmitter.unsubscribe(EventType.basket.backdropOpenMobileMenu);
+	  beforeDestroy: function beforeDestroy() {// EventEmitter.unsubscribe(EventType.basket.backdropOpenMobileMenu);
 	    // EventEmitter.unsubscribe(EventType.basket.backdropOpenChangeSku);
 	    // EventEmitter.unsubscribe(EventType.basket.backdropClose);
 	  },
@@ -232,12 +241,15 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	    },
 	    getObjectClass: function getObjectClass() {
 	      var classes = ['checkout-basket-list-items', 'checkout-table'];
+
 	      if (this.mode === sale_checkout_const.Application.mode.view) {
 	        classes.push('checkout-basket-list-items-view-mode');
 	      }
+
 	      if (this.isLocked) {
 	        classes.push('checkout-basket-item-locked');
 	      }
+
 	      return classes;
 	    }
 	  },
@@ -279,20 +291,25 @@ this.BX.Sale.Checkout.View = this.BX.Sale.Checkout.View || {};
 	  watch: {
 	    getHash: function getHash() {
 	      var selectedValues = this.tree.SELECTED_VALUES;
+
 	      try {
 	        for (var propertyId in selectedValues) {
 	          if (!selectedValues.hasOwnProperty(propertyId)) {
 	            continue;
 	          }
+
 	          this.skuTree.setSelectedProperty(propertyId, selectedValues[propertyId]);
 	        }
 	      } catch (e) {}
+
 	      this.skuTree.toggleSkuProperties();
 	    }
 	  },
 	  mounted: function mounted() {
 	    var _this = this;
+
 	    this.appendBlockHtml();
+
 	    if (this.skuTree) {
 	      this.skuTree.subscribe(sale_checkout_const.EventType.basket.changeSkuOriginName, function (event) {
 	        main_core_events.EventEmitter.emit(sale_checkout_const.EventType.basket.changeSku, {

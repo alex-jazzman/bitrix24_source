@@ -5,6 +5,7 @@ namespace Bitrix\Catalog\Component;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
+use Bitrix\Currency\CurrencyManager;
 use Bitrix\Main\Grid\Editor\Types;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Catalog\v2\Property\Property;
@@ -102,6 +103,44 @@ class GridServiceForm extends GridVariationForm
 		}
 
 		return array_values($headers);
+	}
+
+	/**
+	 * Returns list with purchasing price grid header.
+	 *
+	 * @param int|null $defaultWidth
+	 * @return array
+	 */
+	protected function getPurchasingPriceHeaders(?int $defaultWidth): array
+	{
+		$headers = [];
+
+		if ($this->isPurchasingPriceAllowed())
+		{
+			$headerName = static::getHeaderName('PURCHASING_PRICE');
+
+			$headers[] = [
+				'id' => static::formatFieldName('PURCHASING_PRICE_FIELD'),
+				'name' => $headerName['NAME'],
+				'title' => $headerName['TITLE'],
+				'sort' => 'PURCHASING_PRICE',
+				'type' => 'money',
+				'align' => 'right',
+				'editable' =>
+					$this->isAllowedEditFields()
+						? [
+							'TYPE' => Types::MONEY,
+							'CURRENCY_LIST' => CurrencyManager::getSymbolList(),
+							'HTML_ENTITY' => true,
+						]
+						: false
+				,
+				'width' => $defaultWidth,
+				'default' => false,
+			];
+		}
+
+		return $headers;
 	}
 
 	public function getVariationGridId(): string

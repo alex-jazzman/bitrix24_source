@@ -1,0 +1,3 @@
+<?php
+$MESS["TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_IMPORTANT_NO"] = "Зробити важливим завданням";
+$MESS["TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_IMPORTANT_YES"] = "Це важливе завдання";

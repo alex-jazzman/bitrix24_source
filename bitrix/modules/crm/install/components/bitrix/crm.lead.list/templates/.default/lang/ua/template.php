@@ -14,6 +14,7 @@ $MESS["CRM_LEAD_ADD_MEETING_SHORT"] = "Зустріч";
 $MESS["CRM_LEAD_ADD_MEETING_TITLE"] = "Додати нову зустріч";
 $MESS["CRM_LEAD_ADD_QUOTE"] = "Зробити пропозицію";
 $MESS["CRM_LEAD_ADD_QUOTE_TITLE"] = "Зробити пропозицію";
+$MESS["CRM_LEAD_ADD_TODO"] = "Справа";
 $MESS["CRM_LEAD_ASSIGN_TO"] = "Призначити відповідального";
 $MESS["CRM_LEAD_BACKGROUND_DUPLICATE_INDEX_REBUILD_STATE"] = "#processed#%";
 $MESS["CRM_LEAD_BACKGROUND_DUPLICATE_INDEX_REBUILD_TITLE"] = "Сканування дублікатів лидов";

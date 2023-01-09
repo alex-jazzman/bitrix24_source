@@ -792,7 +792,7 @@ abstract class OrderBuilder
 					return $result;
 				}
 
-				if (isset($items['BASKET_ID']) && $items['BASKET_ID'] > 0)
+				if (isset($items['BASKET_ID']) && !BasketBuilder::isBasketItemNew($items['BASKET_ID']))
 				{
 					if (!$basketItem = $basket->getItemById($items['BASKET_ID']))
 					{

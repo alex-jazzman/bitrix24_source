@@ -189,6 +189,16 @@ export class FieldsPanel extends Content
 		return this.cache.get('showLock', false);
 	}
 
+	setLoadOptions(options: {[key: string]: any})
+	{
+		this.cache.set('loadOptions', {...options});
+	}
+
+	getLoadOptions(): {[key: string]: any}
+	{
+		return this.cache.get('loadOptions', {});
+	}
+
 	show(options = {}): Promise<any>
 	{
 		if (this.#getShowLock())
@@ -234,7 +244,7 @@ export class FieldsPanel extends Content
 
 		Dom.style(this.layout, 'position', options.position ?? null);
 
-		const allowedLoadOptions = ['hideVirtual', 'hideRequisites', 'hideSmartDocument', 'hideDocument'];
+		const allowedLoadOptions = ['hideVirtual', 'hideRequisites', 'hideSmartDocument', 'presetId'];
 		const loadOptions = Object.entries(options).reduce((acc, [key, value]) => {
 			if (allowedLoadOptions.includes(key))
 			{
@@ -242,6 +252,8 @@ export class FieldsPanel extends Content
 			}
 			return acc;
 		}, {});
+
+		this.setLoadOptions(loadOptions);
 
 		this.showLoader();
 		this.load(loadOptions)
@@ -780,7 +792,7 @@ export class FieldsPanel extends Content
 					userField
 						.save()
 						.then(() => {
-							return this.load();
+							return this.load(this.getLoadOptions());
 						})
 						.then(() => {
 							this.getSearchField()

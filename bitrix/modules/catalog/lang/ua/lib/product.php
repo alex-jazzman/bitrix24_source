@@ -1,8 +1,11 @@
-<?
+<?php
 $MESS["PRODUCT_ENTITY_AVAILABLE_FIELD"] = "Доступність до покупки";
 $MESS["PRODUCT_ENTITY_BARCODE_MULTI_FIELD"] = "Унікальні штрих-коди для кожного примірника";
 $MESS["PRODUCT_ENTITY_BUNDLE_FIELD"] = "Наявність набору";
 $MESS["PRODUCT_ENTITY_CAN_BUY_ZERO_FIELD"] = "Дозвіл покупки при відсутності товару";
+$MESS["PRODUCT_ENTITY_ENTITY_NAME_ANY_PRODUCT"] = "товар";
+$MESS["PRODUCT_ENTITY_ENTITY_NAME_ANY_RESTLESS"] = "некоректний товар";
+$MESS["PRODUCT_ENTITY_ENTITY_NAME_ANY_SERVICE"] = "послуга";
 $MESS["PRODUCT_ENTITY_HEIGHT_FIELD"] = "Висота";
 $MESS["PRODUCT_ENTITY_ID_FIELD"] = "Ідентифікатор";
 $MESS["PRODUCT_ENTITY_LENGTH_FIELD"] = "Довжина";
@@ -34,6 +37,7 @@ $MESS["PRODUCT_ENTITY_TYPE_FIELD"] = "Тип товару";
 $MESS["PRODUCT_ENTITY_TYPE_FREE_OFFER"] = "пропозиція без товару";
 $MESS["PRODUCT_ENTITY_TYPE_OFFER"] = "пропозиція";
 $MESS["PRODUCT_ENTITY_TYPE_PRODUCT"] = "простий";
+$MESS["PRODUCT_ENTITY_TYPE_SERVICE"] = "послуга";
 $MESS["PRODUCT_ENTITY_TYPE_SET"] = "комплект";
 $MESS["PRODUCT_ENTITY_TYPE_SKU"] = "товар з пропозиціями";
 $MESS["PRODUCT_ENTITY_VAT_ID_FIELD"] = "Ідентифікатор ПДВ";
@@ -41,4 +45,3 @@ $MESS["PRODUCT_ENTITY_VAT_INCLUDED_FIELD"] = "ПДВ включено в цін�
 $MESS["PRODUCT_ENTITY_WEIGHT_FIELD"] = "Вага";
 $MESS["PRODUCT_ENTITY_WIDTH_FIELD"] = "Ширина";
 $MESS["PRODUCT_ENTITY_WITHOUT_ORDER_FIELD"] = "Продовження без оформлення замовлення";
-?>

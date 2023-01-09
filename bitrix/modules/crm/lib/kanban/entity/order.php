@@ -355,7 +355,21 @@ class Order extends Entity
 			$currentPropertyId = $propertyValue['ORDER_PROPS_ID'];
 			if ($propertyValue['TYPE'] === 'ENUM')
 			{
-				$orders[$propertyValue['ORDER_ID']]['PROPERTY_'.$currentPropertyId] = $enumVariants[$currentPropertyId][$value];
+				$valueNameList = [];
+
+				if (is_array($value))
+				{
+					foreach ($value as $currentValue)
+					{
+						$valueNameList[] = $enumVariants[$currentPropertyId][$currentValue];
+					}
+				}
+				else
+				{
+					$valueNameList[] = $enumVariants[$currentPropertyId][$value];
+				}
+
+				$orders[$propertyValue['ORDER_ID']]['PROPERTY_'.$currentPropertyId] = implode(', ', $valueNameList);
 			}
 			if ($propertyValue['TYPE'] === 'Y/N')
 			{

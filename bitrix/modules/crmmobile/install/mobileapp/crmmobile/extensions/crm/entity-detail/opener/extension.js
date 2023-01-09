@@ -6,6 +6,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { NotifyManager } = require('notify-manager');
 	const { EntitySvg } = require('crm/assets/entity');
+	const { getEntityMessage } = require('crm/loc');
 	const { Type, TypeId } = require('crm/type');
 	const { Type: CoreType } = require('type');
 	const { mergeImmutable } = require('utils/object');
@@ -70,7 +71,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 				})
 				.catch((error) => {
 					console.error(error);
-					this.showAlert();
+					this.showAlert(error, entityTypeId);
 				})
 			;
 		}
@@ -230,7 +231,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			}
 			else
 			{
-				entityTitleParams.text = this.getCreationEntityTitle(entity.entityTypeName);
+				entityTitleParams.text = getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_CREATE_TEXT', entity.entityTypeName);
 			}
 
 			const iconFunctionName = entity['entityTypeName'].toLowerCase() + 'Inverted';
@@ -242,25 +243,6 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			}
 
 			return mergeImmutable(entityTitleParams, titleParams);
-		}
-
-		static getCreationEntityTitle(entityTypeName)
-		{
-			let title;
-
-			if (entityTypeName)
-			{
-				entityTypeName = entityTypeName.toUpperCase();
-				title = BX.message(`MCRM_ENTITY_DETAIL_OPENER_CREATE_TEXT_${entityTypeName}`);
-			}
-
-			if (!title)
-			{
-				title = BX.message('MCRM_ENTITY_DETAIL_OPENER_CREATE_TEXT');
-			}
-
-			return title;
-
 		}
 
 		/**
@@ -289,7 +271,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 							let entity = this.findEntityType(entityTypeId);
 							if (entity)
 							{
-								resolve();
+								this.resolveEntity(entity, resolve, reject);
 							}
 							else if (this.cacheExpired(5))
 							{
@@ -301,7 +283,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 										entity = this.findEntityType(entityTypeId);
 										if (entity)
 										{
-											resolve();
+											this.resolveEntity(entity, resolve, reject);
 										}
 										else
 										{
@@ -360,11 +342,30 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		 * @private
 		 * @internal
 		 */
-		static showAlert()
+		static resolveEntity(entity, resolve, reject)
+		{
+			if (entity.hasOwnProperty('supported') && !entity.supported)
+			{
+				reject({
+					title: getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_NOT_SUPPORTED_TITLE', entity.entityTypeId),
+					text: BX.message('MCRM_ENTITY_DETAIL_OPENER_NOT_SUPPORTED_TEXT'),
+				});
+			}
+			else
+			{
+				resolve();
+			}
+		};
+
+		/**
+		 * @private
+		 * @internal
+		 */
+		static showAlert(error, entityTypeId)
 		{
 			Alert.alert(
-				BX.message('MCRM_ENTITY_DETAIL_OPENER_ALERT_TITLE'),
-				BX.message('MCRM_ENTITY_DETAIL_OPENER_ALERT_TEXT'),
+				error && error.title || getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_ALERT_TITLE2', entityTypeId),
+				error && error.text || BX.message('MCRM_ENTITY_DETAIL_OPENER_ALERT_TEXT2'),
 			);
 		}
 	}

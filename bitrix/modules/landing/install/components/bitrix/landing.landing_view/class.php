@@ -655,6 +655,7 @@ class LandingViewComponent extends LandingBaseComponent
 				$options = $event->getParameter('options');
 				$meta = $landing->getMeta();
 				$options['url'] = $arResult['~LANDING_FULL_URL'] ?? $landing->getPublicUrl();
+				$options['allow_svg'] = Manager::getOption('allow_svg_content') === 'Y';
 				$options['folder_id'] = $landing->getFolderId();
 				$options['version'] = Manager::getVersion();
 				$options['default_section'] = $this->getCurrentBlockSection($type);

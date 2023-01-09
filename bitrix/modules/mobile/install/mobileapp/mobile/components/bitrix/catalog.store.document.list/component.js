@@ -98,6 +98,12 @@
 					notificationUpdateText: BX.message('M_CSDL_PULL_NOTIFICATION_UPDATE'),
 					notificationAddText: BX.message('M_CSDL_PULL_NOTIFICATION_ADD'),
 				},
+				onDetailCardUpdateHandler: (params) => {
+					if (this.statefulList)
+					{
+						this.statefulList.updateItems([params.entityId]);
+					}
+				},
 				ref: ref => this.statefulList = ref,
 			});
 		}

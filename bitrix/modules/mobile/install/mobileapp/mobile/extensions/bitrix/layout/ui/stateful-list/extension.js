@@ -277,6 +277,7 @@
 		getSearchMode()
 		{
 			const search = this.getSearchObject();
+
 			return search.mode;
 		}
 
@@ -564,9 +565,9 @@
 					const animatePromises = [];
 					items.forEach(({ id }) => {
 						if (showAnimateImmediately)
-					 	{
+						{
 							animatePromises.push(simpleList.setLoading(id));
-					 	}
+						}
 					});
 
 					Promise.all(animatePromises).then(() => {
@@ -1057,24 +1058,31 @@
 					return;
 				}
 
-				const { listView } = this.getSimpleList();
-				const { index, section } = listView.getElementPosition(itemId);
+				this.deleteRowFromListView({ itemId, animationType, onDelete: resolve });
+			});
+		}
 
-				listView.deleteRow(section, index, animationType, () => {
+		deleteRowFromListView({ itemId, animationType = 'top', onDelete })
+		{
+			const { items } = this.state;
+			const { listView } = this.getSimpleList();
+			const { index, section } = listView.getElementPosition(itemId);
+
+			listView.deleteRow(section, index, animationType, () => {
 					this.modifyCache(ACTION_DELETE, { itemId });
-					this.setState(state => {
+					this.setState((state) => {
 						const items = clone(state.items);
 						items.delete(itemId);
-						return {
-							items,
-						};
+
+						return { items };
 					}, () => {
-						resolve({
-							items: this.state.items,
-						});
+						if (typeof onDelete === 'function')
+						{
+							onDelete({ items });
+						}
 					});
-				});
-			});
+				},
+			);
 		}
 
 		blinkItem(itemId, showUpdated = true)

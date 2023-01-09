@@ -38,7 +38,7 @@ return [
 		],
 		'.landing-block-faq-visible' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_FAQ_3_NAME_ELEMENTS'),
-			'type' => ['color', 'color-hover'],
+			'type' => ['color', 'color-hover', 'border-color'],
 		],
 		'.landing-block-faq-visible-text' => [
 			'name' => Loc::getMessage('LANDING_BLOCK_FAQ_3_NAME_TITLE'),

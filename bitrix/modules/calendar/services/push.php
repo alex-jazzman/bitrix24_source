@@ -1,5 +1,5 @@
 <?php
-
+// exit;
 use Bitrix\Calendar\Sync\Managers\PushManager;
 use Bitrix\Main\Loader;
 

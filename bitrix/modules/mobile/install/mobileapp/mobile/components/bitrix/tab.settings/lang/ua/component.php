@@ -1,6 +1,7 @@
-<?
+<?php
 $MESS["ERROR"] = "Помилка";
 $MESS["PRESET_APPLY_ERROR"] = "Не вдалося застосувати налаштування меню";
+$MESS["PRESET_NAME_CRM"] = "CRM";
 $MESS["PRESET_NAME_DEFAULT"] = "За замовчуванням";
 $MESS["PRESET_NAME_MANUAL"] = "Налаштування користувача";
 $MESS["PRESET_NAME_OL"] = "Оператор Відкритих ліній";
@@ -15,9 +16,9 @@ $MESS["SETTINGS_TAB_CANT_MOVE"] = "Пункт \"#title#\" не можна пер
 $MESS["SETTINGS_TAB_INACTIVE_TITLE"] = "Неактивні пункти";
 $MESS["SETTINGS_TAB_MAKE_INACTIVE"] = "Прибрати";
 $MESS["TAB_NAME_CHAT"] = "Чати";
+$MESS["TAB_NAME_CRM"] = "CRM";
 $MESS["TAB_NAME_MENU"] = "Меню";
 $MESS["TAB_NAME_NOTIFY"] = "Сповіщення";
 $MESS["TAB_NAME_OL"] = "Відкриті Лінії";
 $MESS["TAB_NAME_STREAM"] = "Жива Стрічка";
 $MESS["TAB_NAME_TASK"] = "Завдання";
-?>

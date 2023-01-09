@@ -1,0 +1,19 @@
+<?php
+$MESS["UI_STAMP_UPLOADER_CROP_BUTTON_LABEL"] = "Обрізати";
+$MESS["UI_STAMP_UPLOADER_DROPZONE_HEADER"] = "Завантажте зображення печатки";
+$MESS["UI_STAMP_UPLOADER_DROPZONE_TEXT"] = "Можна просто перетягнути файли сюди";
+$MESS["UI_STAMP_UPLOADER_HEADER_CHANGE_CONTACT_BUTTON_LABEL"] = "Змінити";
+$MESS["UI_STAMP_UPLOADER_HEADER_TITLE"] = "Печатка для:";
+$MESS["UI_STAMP_UPLOADER_PREPARING_STATUS"] = "Обробляємо";
+$MESS["UI_STAMP_UPLOADER_PREVIEW_TITLE"] = "Натисніть для завантаження іншого зображення";
+$MESS["UI_STAMP_UPLOADER_SAVE_BUTTON_LABEL"] = "Зберегти";
+$MESS["UI_STAMP_UPLOADER_SELECT_PHOTO_BUTTON_LABEL"] = "Завантажити фото";
+$MESS["UI_STAMP_UPLOADER_SLIDER_MESSAGE_DESCRIPTION"] = "Завантажте зображення печатки один раз і використовуйте під час підписання інших документів. Зображення автоматично обробиться штучним інтелектом.";
+$MESS["UI_STAMP_UPLOADER_SLIDER_MESSAGE_TITLE"] = "Печатка";
+$MESS["UI_STAMP_UPLOADER_TAKE_PHOTO_BUTTON_LABEL"] = "Зробити фото за допомогою телефона";
+$MESS["UI_STAMP_UPLOADER_UPLOAD_STATUS_PERCENT"] = "{{number}} %";
+$MESS["UI_STAMP_UPLOADER_UPLOAD_STATUS_SIZE"] = "{{number}} {{text}}";
+$MESS["UI_STAMP_UPLOADER_UPLOAD_STATUS_SIZE_B"] = "байт";
+$MESS["UI_STAMP_UPLOADER_UPLOAD_STATUS_SIZE_KB"] = "КБ";
+$MESS["UI_STAMP_UPLOADER_UPLOAD_STATUS_SIZE_MB"] = "Мб";
+$MESS["UI_STAMP_UPLOADER_UPLOAD_STATUS_TEXT"] = "Завантаження файлу";

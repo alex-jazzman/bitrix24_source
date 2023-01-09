@@ -457,6 +457,8 @@ class LandingPubComponent extends LandingBaseComponent
 			}
 		}
 
+		$this->arParams['LOCAL_SITE_ID'] = $siteId ?? 0;
+
 		$landingUrl = array_shift($requestedPageParts);
 		$landingSubUrl = $requestedPageParts ? implode('/', $requestedPageParts) : '';
 		$landingCodeOriginal = null;
@@ -1752,6 +1754,11 @@ class LandingPubComponent extends LandingBaseComponent
 						return;
 					}
 					$this->arParams['CHECK_PERMISSIONS'] = 'Y';
+				}
+				// for 404 we need site url
+				if ($this->arParams['LOCAL_SITE_ID'] ?? null)
+				{
+					$this->arResult['SITE_URL'] = Site::getPublicUrl($this->arParams['LOCAL_SITE_ID']);
 				}
 				// try force reload
 				if ($this->request('forceLandingId'))

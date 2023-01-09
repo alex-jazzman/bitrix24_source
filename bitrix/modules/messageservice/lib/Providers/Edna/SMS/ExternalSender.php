@@ -31,7 +31,7 @@ class ExternalSender extends \Bitrix\MessageService\Providers\Edna\ExternalSende
 		if ($this->apiKey === '')
 		{
 			$result = new HttpRequestResult();
-			$result->addError(new Error('System error'));
+			$result->addError(new Error('Missing API key when requesting a service.'));
 
 			return $result;
 		}

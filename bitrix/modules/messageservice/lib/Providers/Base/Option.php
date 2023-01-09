@@ -3,10 +3,14 @@
 namespace Bitrix\MessageService\Providers\Base;
 
 use Bitrix\Main;
+use Bitrix\Main\Security\Cipher;
+use Bitrix\MessageService\Providers\Encryptor;
 use Bitrix\MessageService\Providers\OptionManager;
 
 class Option implements OptionManager
 {
+	use Encryptor;
+
 	protected ?array $options;
 
 	protected string $providerType;
@@ -65,8 +69,14 @@ class Option implements OptionManager
 	public function setOptions(array $options): OptionManager
 	{
 		$this->options = $options;
+		$data = serialize($options);
 
-		Main\Config\Option::set('messageservice', $this->dbOptionName, serialize($options));
+		$encryptedData = [
+			'crypto' => 'Y',
+			'data' => self::encrypt($data, $this->providerType . '-' . $this->providerId)
+		];
+
+		Main\Config\Option::set('messageservice', $this->dbOptionName, serialize($encryptedData));
 
 		return $this;
 	}
@@ -108,14 +118,17 @@ class Option implements OptionManager
 
 	protected function loadOptions(): array
 	{
-		$serializedOptions = Main\Config\Option::get('messageservice', $this->dbOptionName);
-		$options = unserialize($serializedOptions, ['allowed_classes' => false]);
+		$data = Main\Config\Option::get('messageservice', $this->dbOptionName);
+		$data = unserialize($data, ['allowed_classes' => false]);
 
-		if (!is_array($options))
+		if (!isset($data['crypto']) && !isset($data['data']))
 		{
-			$options = [];
+			return is_array($data) ? $data : [];
 		}
 
-		return $options;
+		$decryptedData = self::decrypt($data['data'], $this->providerType . '-' . $this->providerId);
+		$options = unserialize($decryptedData, ['allowed_classes' => false]);
+
+		return is_array($options) ? $options : [];
 	}
 }

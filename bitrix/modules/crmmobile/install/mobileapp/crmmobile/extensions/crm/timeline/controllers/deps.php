@@ -14,5 +14,6 @@ return [
 		'./call',
 		'./note',
 		'./helpdesk',
+		'./document',
 	]
 ];

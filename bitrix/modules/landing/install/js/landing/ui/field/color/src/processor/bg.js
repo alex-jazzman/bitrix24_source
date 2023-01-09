@@ -38,6 +38,7 @@ export default class Bg extends BgColor
 			Bg.BG_OVERLAY_VAR,
 			Bg.BG_SIZE_VAR,
 			Bg.BG_ATTACHMENT_VAR,
+			Bg.BG_IMAGE,
 		];
 		this.parentClassName = this.className;
 		this.className = 'g-bg-image';

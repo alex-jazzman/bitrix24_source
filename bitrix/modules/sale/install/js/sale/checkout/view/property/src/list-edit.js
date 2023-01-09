@@ -75,7 +75,7 @@ BitrixVue.component('sale-checkout-view-property-list_edit', {
 					:item="item" 
 					:index="index"
 				/>
-				<sale-checkout-view-element-input-property-text v-else-if="isEmail(item)" 
+				<sale-checkout-view-element-input-property-email v-else-if="isEmail(item)" 
 					:item="item" 
 					:index="index" 
 					autocomplete="email" 

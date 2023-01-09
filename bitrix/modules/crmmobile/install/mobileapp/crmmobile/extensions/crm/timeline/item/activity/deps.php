@@ -6,5 +6,6 @@ return [
 		'./open-line',
 		'./creation',
 		'./todo',
+		'./document',
 	]
 ];

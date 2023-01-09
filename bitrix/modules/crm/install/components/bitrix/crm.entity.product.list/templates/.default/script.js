@@ -4717,6 +4717,15 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          if (productRow.getField('OFFER_ID') !== fields.ID) {
 	            fields['ROW_RESERVED'] = 0;
 	            fields['DEDUCTED_QUANTITY'] = 0;
+
+	            if (!_this17.getSettingValue('allowDiscountChange', true)) {
+	              fields['DISCOUNT_ROW'] = 0;
+	              fields['DISCOUNT_SUM'] = 0;
+	              fields['DISCOUNT_RATE'] = 0;
+	              fields['DISCOUNT'] = 0;
+	              productRow.updateUiHtmlField('DISCOUNT_PRICE', currency_currencyCore.CurrencyCore.currencyFormat(0, _this17.getCurrencyId(), true));
+	              productRow.updateUiHtmlField('DISCOUNT_ROW', currency_currencyCore.CurrencyCore.currencyFormat(0, _this17.getCurrencyId(), true));
+	            }
 	          }
 
 	          Object.keys(fields).forEach(function (key) {
@@ -4753,6 +4762,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        product.layoutReserveControl();
 	        product.initHandlersForSelectors();
 	        product.changeBasePrice(0);
+
+	        if (!this.getSettingValue('allowDiscountChange', true)) {
+	          product.setDiscount(0);
+	          product.updateUiHtmlField('DISCOUNT_PRICE', currency_currencyCore.CurrencyCore.currencyFormat(0, this.getCurrencyId(), true));
+	          product.updateUiHtmlField('DISCOUNT_ROW', currency_currencyCore.CurrencyCore.currencyFormat(0, this.getCurrencyId(), true));
+	        }
+
 	        product.modifyBasePriceInput();
 	        product.executeExternalActions();
 	      }

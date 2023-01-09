@@ -641,6 +641,15 @@
 			}
 		}
 
+		onWidgetClosed()
+		{
+			this.widget = null;
+			if (this.events.onWidgetClosed)
+			{
+				this.events.onWidgetClosed(this.extractEntityItems(this.currentSelectedItems));
+			}
+		}
+
 		closeOnCreation(entity)
 		{
 			if (this.events.onCreateBeforeClose)
@@ -705,11 +714,7 @@
 				}
 
 				this.widget.close(() => {
-					this.widget = null;
-					if (this.events.onWidgetClosed)
-					{
-						this.events.onWidgetClosed();
-					}
+					this.onWidgetClosed();
 					resolve();
 				});
 			});

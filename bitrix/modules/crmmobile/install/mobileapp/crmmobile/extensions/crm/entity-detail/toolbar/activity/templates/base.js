@@ -193,7 +193,7 @@ jn.define('crm/entity-detail/toolbar/activity/templates/base', (require, exports
 					style: styles.rightIcon,
 					onClick: this.state.visible && onHide,
 					svg: {
-						content: bigCross(),
+						content: bigCross('#666666'),
 					},
 				}));
 		}

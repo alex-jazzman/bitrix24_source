@@ -679,6 +679,13 @@ class CatalogProductDetailsComponent
 	protected function loadProduct($productId): ?BaseProduct
 	{
 		$repositoryFacade = ServiceContainer::getRepositoryFacade();
+
+		$product = $repositoryFacade->loadProduct($productId);
+		if ($product)
+		{
+			return $product;
+		}
+
 		$variation = $repositoryFacade->loadVariation($productId);
 
 		if ($variation === null)
