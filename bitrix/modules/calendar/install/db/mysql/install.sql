@@ -199,6 +199,9 @@ create table b_calendar_log
   ID int not null auto_increment,
   TIMESTAMP_X TIMESTAMP NOT NULL DEFAULT current_timestamp,
   MESSAGE TEXT NULL,
+  TYPE varchar(50) default null,
+  UUID varchar(255) default null,
+  USER_ID int default null,
   PRIMARY KEY(ID)
 );
 
