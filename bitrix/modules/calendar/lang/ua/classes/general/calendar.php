@@ -175,6 +175,7 @@ $MESS["EC_DECLINE_REC_EVENT"] = "Відмовитися від участі в �
 $MESS["EC_DEC_R"] = "Грудня";
 $MESS["EC_DEFAULT_COLOR"] = "за умовчанням";
 $MESS["EC_DEFAULT_EVENT_NAME"] = "Моє подія";
+$MESS["EC_DEFAULT_EVENT_NAME_V2"] = "Нова подія";
 $MESS["EC_DEF_MEETING_NAME"] = "Збори";
 $MESS["EC_DEF_SECT_DESC"] = "Календар був створений автоматично";
 $MESS["EC_DEF_SECT_GROUP"] = "Група:";

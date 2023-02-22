@@ -1,0 +1,24 @@
+<?php
+$MESS["SN_BIC_GROUP_FIELD_CLOSED"] = "Архівна";
+$MESS["SN_BIC_GROUP_FIELD_CLOSED_FULL"] = "Y — так, N — ні";
+$MESS["SN_BIC_GROUP_FIELD_DATE_ACTIVITY"] = "Час останньої активності";
+$MESS["SN_BIC_GROUP_FIELD_DATE_CREATE"] = "Дата створення";
+$MESS["SN_BIC_GROUP_FIELD_DATE_MODIFY"] = "Дата змінення";
+$MESS["SN_BIC_GROUP_FIELD_DESCRIPTION"] = "Опис";
+$MESS["SN_BIC_GROUP_FIELD_ID"] = "Унікальний ключ";
+$MESS["SN_BIC_GROUP_FIELD_KEYWORDS"] = "Ключові слова";
+$MESS["SN_BIC_GROUP_FIELD_NAME"] = "Назва";
+$MESS["SN_BIC_GROUP_FIELD_NUMBER_OF_MEMBERS"] = "Кількість учасників";
+$MESS["SN_BIC_GROUP_FIELD_OPENED"] = "Відкритість";
+$MESS["SN_BIC_GROUP_FIELD_OPENED_FULL"] = "Y — так, N — ні";
+$MESS["SN_BIC_GROUP_FIELD_OWNER"] = "Власник";
+$MESS["SN_BIC_GROUP_FIELD_OWNER_FULL"] = "Ідентифікатор та ім’я користувача, який володіє робочою групою";
+$MESS["SN_BIC_GROUP_FIELD_OWNER_ID"] = "ID власника";
+$MESS["SN_BIC_GROUP_FIELD_OWNER_ID_FULL"] = "ID користувача, який володіє робочою групою";
+$MESS["SN_BIC_GROUP_FIELD_OWNER_NAME"] = "Ім’я власника";
+$MESS["SN_BIC_GROUP_FIELD_OWNER_NAME_FULL"] = "Ім’я користувача, який володіє робочою групою";
+$MESS["SN_BIC_GROUP_FIELD_PROJECT"] = "Є проєктом";
+$MESS["SN_BIC_GROUP_FIELD_PROJECT_FULL"] = "Y — так, N — ні";
+$MESS["SN_BIC_GROUP_FIELD_SITE_ID"] = "Код сайту";
+$MESS["SN_BIC_GROUP_FIELD_SUBJECT"] = "Тема";
+$MESS["SN_BIC_GROUP_TABLE"] = "Проєкт";

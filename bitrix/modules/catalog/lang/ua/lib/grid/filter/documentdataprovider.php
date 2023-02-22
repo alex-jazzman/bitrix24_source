@@ -1,4 +1,6 @@
 <?php
+$MESS["DOCUMENT_CONTRACTOR_CRM_COMPANY_ID_NAME"] = "Постачальник: компанія";
+$MESS["DOCUMENT_CONTRACTOR_CRM_CONTACT_ID_NAME"] = "Постачальник: контакт";
 $MESS["DOCUMENT_CONTRACTOR_ID_NAME"] = "Постачальник";
 $MESS["DOCUMENT_CREATED_BY_NAME"] = "Ким створено";
 $MESS["DOCUMENT_DATE_CREATE_NAME"] = "Дата створення";
@@ -13,7 +15,9 @@ $MESS["DOCUMENT_PRODUCTS_NAME"] = "Товар";
 $MESS["DOCUMENT_RESPONSIBLE_ID_NAME"] = "Відповідальний";
 $MESS["DOCUMENT_STATUS_BY_NAME"] = "Ким змінено статус";
 $MESS["DOCUMENT_STATUS_NAME"] = "Статус";
+$MESS["DOCUMENT_STORES_FROM_NAME"] = "Склад-відправник";
 $MESS["DOCUMENT_STORES_NAME"] = "Склади";
+$MESS["DOCUMENT_STORES_TO_NAME"] = "Склад-одержувач";
 $MESS["DOCUMENT_TITLE_NAME"] = "Назва";
 $MESS["DOCUMENT_TOTAL_NAME"] = "Сума";
 $MESS["DOCUMENT_TYPE_A"] = "Прибуток";

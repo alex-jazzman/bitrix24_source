@@ -11,7 +11,7 @@ class CWebDavSocNetEvent
 	var $event_id = null;
 	var $object = null;
 
-	public static function GetRuntime() 
+	public static function GetRuntime()
 	{
 		if (!isset(self::$instance))
 		{
@@ -80,7 +80,7 @@ class CWebDavSocNetEvent
 
 		$userID = $GLOBALS['USER']->GetID();
 		$this->arPath['PATH_TO_USER'] = (
-			isset($arParams["PATH_TO_USER"]) ? $arParams["PATH_TO_USER"] : 
+			isset($arParams["PATH_TO_USER"]) ? $arParams["PATH_TO_USER"] :
 			(isset($arResult["PATH_TO_USER"]) ? $arResult["PATH_TO_USER"] : '')
 		);
 		$this->arPath['SEF_FOLDER'] = $arResult["SEF_FOLDER"];
@@ -102,11 +102,11 @@ class CWebDavSocNetEvent
 		}
 		//$this->arPath['PATH_TO_GROUP'] = (isset($arParams['PATH_TO_GROUP'])?$arParams['PATH_TO_GROUP']:'');
 		$this->arPath['PATH_TO_GROUP'] = (
-			isset($arParams["PATH_TO_GROUP"]) ? $arParams["PATH_TO_GROUP"] : 
+			isset($arParams["PATH_TO_GROUP"]) ? $arParams["PATH_TO_GROUP"] :
 			(isset($arResult["PATH_TO_GROUP"]) ? $arResult["PATH_TO_GROUP"] : '')
 		);
 		$this->arPath['PATH_TO_USER'] = (isset($arParams['PATH_TO_USER'])?$arParams['PATH_TO_USER']:'');
-		$this->arPath['PATH_TO_GROUP_FILES_ELEMENT'] = $arResult["PATH_TO_GROUP_FILES_ELEMENT"];
+		$this->arPath['PATH_TO_GROUP_FILES_ELEMENT'] = $arResult["PATH_TO_GROUP_FILES_ELEMENT"] ?? '';
 		$this->arPath['PATH_TO_USER_FILES_ELEMENT'] = $arResult["PATH_TO_USER_FILES_ELEMENT"];
 		$this->event_id = ENTITY_FILES_SOCNET_EVENT_ID;
 		$this->event_comments_id = ENTITY_FILES_SOCNET_COMMENTS_EVENT_ID;
@@ -140,12 +140,12 @@ class CWebDavSocNetEvent
 		$arGroup = CSocNetGroup::GetByID($id);
 		$sOldName = GetMessage('SONET_GROUP_PREFIX').$arGroup['NAME'];
 		$sNewName = GetMessage('SONET_GROUP_PREFIX').$arParams['NAME'];
-		
+
 		if($sOldName === $sNewName)
 		{
 			return;
 		}
-		
+
 		$arFilter = array(
 			"IBLOCK_ID" => $this->IBlockID,
 			"SOCNET_GROUP_ID" => intval($id),
@@ -247,7 +247,7 @@ class CWebDavSocNetEvent
 			array_key_exists("dropped", $arParams["ELEMENT"])
 			&& $arParams["ELEMENT"]["dropped"]
 		)
-			return;			
+			return;
 
 		$arReaders = CWebDavIblock::GetReaders($arParams["ELEMENT"]["id"], $arParams["OBJECT"]["IBLOCK_ID"]);
 		if (!in_array("SG".intval($arParams["OBJECT"]["ATTRIBUTES"]["group_id"])."_".SONET_ROLES_USER, $arReaders))
@@ -256,7 +256,7 @@ class CWebDavSocNetEvent
 		$url = $this->arPath["PATH_TO_GROUP_FILES_ELEMENT"];
 		if (IsModuleInstalled("extranet") && $this->arPath["SEF_FOLDER"] <> '' && mb_strpos($url, $this->arPath["SEF_FOLDER"]) === 0)
 			$url = str_replace($this->arPath["SEF_FOLDER"], "#GROUPS_PATH#", $url);
-			
+
 		$urlParams = array(
 			"SECTION_ID" => isset($arParams["OBJECT"]["SECTION_ID"])? $arParams["OBJECT"]["SECTION_ID"]: $arParams["section_id"],
 			"ELEMENT_ID" => $arParams["ELEMENT"]["id"],
@@ -290,7 +290,7 @@ class CWebDavSocNetEvent
 		CSocNetSubscription::NotifyGroup($arNotifyParams);
 
 		return true;
-	}	
+	}
 
 	public function SocnetLogFileUpdate($arParams, $file=null)
 	{
@@ -298,9 +298,9 @@ class CWebDavSocNetEvent
 
 $arParams :
 $arParams:array (
-	'OPERATION' => 
+	'OPERATION' =>
 	array (
-		'UPDATE_TYPE' => 
+		'UPDATE_TYPE' =>
 		array (
 			0 => 'PREVIEW_TEXT',
 		),
@@ -370,10 +370,10 @@ UPDATE_TYPE:
 			));
 
 			if ($USER->IsAuthorized())
-				$arFields["USER_ID"] = $USER->GetID();			
-			
+				$arFields["USER_ID"] = $USER->GetID();
+
 			if (IsModuleInstalled("extranet"))
-				$serverName = "#SERVER_NAME#";			
+				$serverName = "#SERVER_NAME#";
 			else
 				$serverName = (defined("SITE_SERVER_NAME") && strLen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name");
 
@@ -410,7 +410,7 @@ UPDATE_TYPE:
 		if (
 			is_array($arCommentFields)
 			&& (
-				!array_key_exists("PARAM1", $arCommentFields) 
+				!array_key_exists("PARAM1", $arCommentFields)
 				|| empty($arCommentFields["PARAM1"])
 			)
 			&& array_key_exists("PARAM2", $arCommentFields)
@@ -526,7 +526,7 @@ UPDATE_TYPE:
 				"NL2BR" => "N",
 				"SMILES" => "N"
 			);
-			
+
 			if (intval($arRes["COMMENTS_COUNT"]) == intval($arTopic["POSTS"]))
 			{
 				$url = CComponentEngine::MakePathFromTemplate($arParams["~URL_TEMPLATES_MESSAGE"],
@@ -790,7 +790,7 @@ UPDATE_TYPE:
 		$arResult["HAS_COMMENTS"] = "N";
 		if (
 			intval($arFields["SOURCE_ID"]) > 0
-			&& array_key_exists("PARAMS", $arFields) 
+			&& array_key_exists("PARAMS", $arFields)
 			&& $arFields["PARAMS"] <> ''
 		)
 		{
@@ -920,7 +920,7 @@ UPDATE_TYPE:
 						CSocNetLogTools::AddComment_Review_CheckIBlock($arElement);
 
 						$dbMessage = CForumMessage::GetList(
-							array(), 
+							array(),
 							array("PARAM2" => $arElement["ID"])
 						);
 
@@ -1087,5 +1087,5 @@ UPDATE_TYPE:
 
 		$name = "<a href=\"".$url."\">".$arEntityDesc["NAME"]."</a>";
 		return $name;
-	}	
+	}
 }

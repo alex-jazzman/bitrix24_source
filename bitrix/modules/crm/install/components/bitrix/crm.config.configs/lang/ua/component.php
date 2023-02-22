@@ -85,6 +85,7 @@ $MESS["CRM_SECTION_MAIL_INFO"] = "Налаштування";
 $MESS["CRM_SECTION_NOTIFICATIONS_CONFIG"] = "Налаштування нотифікацій";
 $MESS["CRM_SECTION_NOTIFICATIONS_SENDER2"] = "Нотифікації для клієнтів";
 $MESS["CRM_SECTION_PRODUCT_CONFIG"] = "Налаштування товарів";
+$MESS["CRM_SECTION_PRODUCT_CONFIG_MSGVER_1"] = "Налаштування товарів";
 $MESS["CRM_SECTION_QUOTE_CONFIG2"] = "Налаштування пропозицій";
 $MESS["CRM_SECTION_WEBFORM_CONFIG"] = "Налаштування CRM-форм";
 $MESS["CRM_SM_LIST"] = "Налаштування";

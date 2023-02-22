@@ -598,7 +598,7 @@ class CWebDavIblock extends CWebDavBase
 
 	function GetERights($type, $id)
 	{
-		$ibRights = $this->_get_ib_rights_object($type, $id);
+		$ibRights = $this->_get_ib_rights_object($type, $id, $this->IBLOCK_ID);
 		return $ibRights->GetRights();
 	}
 
@@ -622,7 +622,7 @@ class CWebDavIblock extends CWebDavBase
 		{
 			$id = 0;
 			$arResult = array();
-			$ibRights = $this->_get_ib_rights_object($type, $id);
+			$ibRights = $this->_get_ib_rights_object($type, $id, $this->IBLOCK_ID);
 			$dbRules = $ibRights->GetList(array("=IBLOCK_ID" => $this->IBLOCK_ID, "=ITEM_ID" => $arID));
 			if (!$dbRules)
 				return false;
@@ -699,7 +699,7 @@ class CWebDavIblock extends CWebDavBase
 					}
 				}
 
-				$ibRights = $this->_get_ib_rights_object($type, $id);
+				$ibRights = $this->_get_ib_rights_object($type, $id, $this->IBLOCK_ID);
 				$result = $ibRights->UserHasRightTo($this->IBLOCK_ID, $id, trim($op));
 				return $result;
 			}
@@ -2678,6 +2678,7 @@ class CWebDavIblock extends CWebDavBase
 							return $this->ThrowError( "400 Bad Request", "SECTION_IS_NOT_UPDATED", GetMessage("WD_FILE_ERROR100"), __LINE__);
 						}
 
+						$pathBasename = array_slice($arPath, -1, 1);
 						if(!empty($arTo['is_symlink']))
 						{
 							$parentSectionId = $this->arParams["item_id"];
@@ -2688,7 +2689,7 @@ class CWebDavIblock extends CWebDavBase
 							$arTo["dir_array"]["ID"] = $se->Add(array(
 								"IBLOCK_ID" => $arTo['symlink_section_data']['IBLOCK_ID'],
 								"IBLOCK_SECTION_ID" => $parentSectionId,
-								"NAME" => end(array_slice($arPath, -1, 1))
+								"NAME" => end($pathBasename)
 							));
 							$arTo["dir_array"]['IBLOCK_ID'] = $arTo['symlink_section_data']['IBLOCK_ID'];
 						}
@@ -2697,7 +2698,7 @@ class CWebDavIblock extends CWebDavBase
 							$arTo["dir_array"]["ID"] = $se->Add(array(
 								"IBLOCK_ID" => $this->IBLOCK_ID,
 								"IBLOCK_SECTION_ID" => $this->arParams["item_id"],
-								"NAME" => end(array_slice($arPath, -1, 1))
+								"NAME" => end($pathBasename)
 							));
 						}
 
@@ -3911,7 +3912,7 @@ class CWebDavIblock extends CWebDavBase
 
 		if (array_key_exists("LOCK", $arProps) && is_array($arProps["LOCK"]) && count($arProps["LOCK"]) > 0)
 		{
-			$k = reset(array_keys($arProps["LOCK"]));
+			$k = array_key_first($arProps["LOCK"]);
 
 			$row = $arProps["LOCK"][$k];
 
@@ -5110,7 +5111,7 @@ class CWebDavIblock extends CWebDavBase
 		{
 			if ($element_id > 0)
 			{
-				$arParentPerms = $this->GetPermissions('ELEMENT', (int) $element_id);
+				$arParentPerms = $this->GetPermissions('ELEMENT', (int) $element_id, $this->IBLOCK_ID);
 			}
 			else
 			{
@@ -5124,7 +5125,8 @@ class CWebDavIblock extends CWebDavBase
 							? $this->arRootSection
 							: 0
 						)
-					)
+					),
+					$this->IBLOCK_ID
 				);
 			}
 
@@ -5373,7 +5375,7 @@ class CWebDavIblock extends CWebDavBase
 				}
 				if ($this->e_rights)
 				{
-					$arSectionRights = $this->GetPermissions('SECTION', $arSectionIDs);
+					$arSectionRights = $this->GetPermissions('SECTION', $arSectionIDs, $this->IBLOCK_ID);
 					$arSectionRules = $this->GetPermissionRules('SECTION', $arSectionIDs);
 					foreach($arResult as $id => &$arSection)
 					{
@@ -5528,7 +5530,7 @@ class CWebDavIblock extends CWebDavBase
 			}
 			if ($this->e_rights)
 			{
-				$arElementRights = $this->GetPermissions('ELEMENT', $arElementIDs);
+				$arElementRights = $this->GetPermissions('ELEMENT', $arElementIDs, $this->IBLOCK_ID);
 				$arElementRules = $this->GetPermissionRules('ELEMENT', $arElementIDs);
 				foreach($arElementResult as $id=>&$arElement)
 				{
@@ -6824,7 +6826,7 @@ class CWebDavIblock extends CWebDavBase
 			}
 			unset($section);
 
-			$sectionRights = $this->GetPermissions('SECTION', $sectionIds);
+			$sectionRights = $this->GetPermissions('SECTION', $sectionIds, $this->IBLOCK_ID);
 			foreach ($sections as &$section)
 			{
 				if (isset($sectionRights[$section['ID']]))

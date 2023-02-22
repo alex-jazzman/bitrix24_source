@@ -159,3 +159,4 @@ $MESS["BIZPROC_AUTOMATION_TRIGGER_QR_LABEL"] = "Виберіть ідентиф�
 $MESS["BIZPROC_AUTOMATION_TRIGGER_STATUS_ANY"] = "будь-який";
 $MESS["BIZPROC_AUTOMATION_TRIGGER_WEBFORM_ANY"] = "всі";
 $MESS["BIZPROC_AUTOMATION_TRIGGER_WEBFORM_LABEL"] = "Виберіть форму";
+$MESS["BIZPROC_AUTOMATION_WEBHOOK_PASSWORD_ALERT"] = "Для роботи тригера необхідний Вхідний вебхук. #A1#Створити зараз#A2#?";

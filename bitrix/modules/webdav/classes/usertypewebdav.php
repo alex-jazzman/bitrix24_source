@@ -47,7 +47,7 @@ class CUserTypeWebdavElement
 		);
 	}
 
-	function GetSettingsHTML($arUserField = false, $arHtmlControl, $bVarsFromForm)
+	function GetSettingsHTML($arUserField, $arHtmlControl, $bVarsFromForm)
 	{
 		$result = '';
 
@@ -194,7 +194,7 @@ class CUserTypeWebdavElement
 			$dbWDFile = CIBlockElement::GetList(array(), array('ID' => $id), false, false, array('IBLOCK_ID'));
 			if ($dbWDFile && ($arWDFile = $dbWDFile->Fetch()))
 			{
-				$iBlockID = intval($arWDFile['IBLOCK_ID']); 
+				$iBlockID = intval($arWDFile['IBLOCK_ID']);
 				$resT = CWebDavIblock::CheckUserIBlockPermission("element_read", CWebDavIblock::OBJ_TYPE_ELEMENT, $iBlockID, $id);
 				if($resT)
 				{
@@ -207,7 +207,7 @@ class CUserTypeWebdavElement
 				return null;
 			}
 		}
-		return false;	
+		return false;
 	}
 
 	function CheckFields($arUserField, $value)
@@ -233,7 +233,7 @@ class CUserTypeWebdavElement
 		{
 			$arError[] = array('id' => 'WD_ERR_IBLOCK404', 'text' =>GetMessage('WD_ERR_IBLOCK404'));
 		}
-				
+
 		if ((sizeof($arError) <= 0) && isset($arFile['dest_section'])) // move to section
 		{
 			$ibe = new CIBlockElement();
@@ -421,8 +421,8 @@ class CUserTypeWebdavElement
 						$cFile = CFile::MakeFileArray($fileNew['PROPERTY_FILE_VALUE']);
 
 						$options = array(
-							"new" => false, 
-							"FILE_NAME" => $arWDFile['NAME'], 
+							"new" => false,
+							"FILE_NAME" => $arWDFile['NAME'],
 							"IBLOCK_ID" => $arFile['iblock'],
 							"IBLOCK_SECTION_ID" => $arFile['section'],
 							"ELEMENT_ID" => $fileExists['ID'],
@@ -778,7 +778,7 @@ class CUserTypeWebdavElement
 
 	public static function OnPostUpdate($id, &$arParams)
 	{
-		// we only extend file permissions, 
+		// we only extend file permissions,
 		// also we cannot figure out if the current file permissions are originally from file or from post
 		// some users who had access earlier might already download the file,
 
@@ -838,13 +838,16 @@ class CUserTypeWebdavElement
 		if ($params != '' && is_string($params) && preg_match_all("/(width|height)=(\d+)/is", $params, $matches))
 			$params = array_combine($matches[1], $matches[2]);
 		ob_start();
-			CWebDavInterface::UserFieldViewThumb(
-				$arParams = array(
-					"arUserField" => $arUserField, 
-					"arSettings" => $set, 
-					"MOBILE" => ((is_array($settings) && array_key_exists("bMobile", $settings) && $settings["bMobile"] )? "Y" : "N")
-				),
-				$arResult = array("VALUE" => array($id)),
+		$arParams = [
+			"arUserField" => $arUserField,
+			"arSettings" => $set,
+			"MOBILE" => ((is_array($settings) && array_key_exists("bMobile", $settings) && $settings["bMobile"]) ? "Y"
+				: "N"),
+		];
+		$arResult = ["VALUE" => [$id]];
+		CWebDavInterface::UserFieldViewThumb(
+				$arParams,
+				$arResult,
 				null,
 				array($id => $params));
 		return ob_get_clean();

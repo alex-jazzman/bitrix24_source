@@ -3,8 +3,8 @@
 $file = trim(preg_replace("'[\\\\/]+'", "/", (__DIR__."/lang/".LANGUAGE_ID."/footer.php")));
 __IncludeLang($file);
 
-$arUserFields = $arResult['USER_FIELDS'];
-if(count($arUserFields)>0)
+$arUserFields = $arResult['USER_FIELDS'] ?? null;
+if($arUserFields && count($arUserFields)>0)
 {
 ?>
 	<table id='wd_upload_props' width='100%' cellpadding='0' cellspacing='0' bodred='0'>

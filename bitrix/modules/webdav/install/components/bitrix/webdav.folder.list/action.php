@@ -15,7 +15,8 @@ $_REQUEST["ACTION"] = mb_strtoupper($_REQUEST["ACTION"]);
 $arData = array("S" => array(), "E" => array()); 
 if ($_POST["action_all_rows_".$arParams["GRID_ID"]] == "Y")
 {
-	$res = $ob->PROPFIND($options = array("path" => $ob->_path, "depth" => 1), $files, array("COLUMNS" => array("ID", "NAME"), "return" => "nav_result")); 
+	$options = array("path" => $ob->_path, "depth" => 1);
+	$res = $ob->PROPFIND($options, $files, array("COLUMNS" => array("ID", "NAME"), "return" => "nav_result"));
 	$db_res = $res["NAV_RESULT"];
 	if ($db_res && $res = $db_res->Fetch())
 	{
@@ -95,7 +96,8 @@ elseif ($ACTION == "MOVE")
 {
 	
 	@set_time_limit(1000);
-	$result = $ob->PROPFIND($options = array("path" => $ob->_path, "depth" => 1), $files, array("return" => "array")); 
+	$options = array("path" => $ob->_path, "depth" => 1);
+	$result = $ob->PROPFIND($options, $files, array("return" => "array"));
 	if (!empty($result["RESULT"]))
 	{
 		foreach ($result["RESULT"] as $key => $res)

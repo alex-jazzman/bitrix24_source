@@ -15,6 +15,7 @@ $MESS["CRM_ADS_RTG_AUTO_REMOVE_TITLE"] = "видалити з аудиторії
 $MESS["CRM_ADS_RTG_AUTO_REMOVE_TITLE_YANDEX"] = "видалити з сегментів через";
 $MESS["CRM_ADS_RTG_CABINET_FACEBOOK"] = "Рекламний кабінет Facebook";
 $MESS["CRM_ADS_RTG_CABINET_GOOGLE"] = "Рекламний кабінет Google AdWords";
+$MESS["CRM_ADS_RTG_CABINET_GOOGLE_1"] = "Рекламний кабінет Google Ads";
 $MESS["CRM_ADS_RTG_CABINET_VKONTAKTE"] = "Рекламний кабінет Вконтакті";
 $MESS["CRM_ADS_RTG_CABINET_YANDEX"] = "Кабінет Яндекс.Аудиторії";
 $MESS["CRM_ADS_RTG_CANCEL"] = "Скасувати";

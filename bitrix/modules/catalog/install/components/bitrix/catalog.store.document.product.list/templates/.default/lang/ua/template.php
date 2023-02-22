@@ -13,6 +13,7 @@ $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_CREATE_PRODUCT_TITLE"] = "Створити 
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_DELETE_ACTION"] = "Видалити";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_INVALID_AMOUNT"] = "Укажіть кількість прийнятого на складу товару, щоб провести документ";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_INVALID_AMOUNT_2"] = "Укажіть кількість товару, щоб провести документ";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_INVALID_AMOUNT_REALIZATION"] = "Укажіть кількість товару";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_IS_EMPTY"] = "Уведіть принаймні один товар";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_NEGATIVE_PRICE_NOTICE"] = "Ціна може бути негативною.";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_SETTING_DISABLED"] = "Налаштування \"#NAME#\" відключено";

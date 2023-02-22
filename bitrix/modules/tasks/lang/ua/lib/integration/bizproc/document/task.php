@@ -9,6 +9,7 @@ $MESS["TASKS_BP_DOCUMENT_CHANGED_DATE"] = "Дата зміни";
 $MESS["TASKS_BP_DOCUMENT_CLOSED_BY"] = "Хто закрив";
 $MESS["TASKS_BP_DOCUMENT_CLOSED_DATE"] = "Дата закриття";
 $MESS["TASKS_BP_DOCUMENT_COMMENT_RESULT"] = "Результат";
+$MESS["TASKS_BP_DOCUMENT_COMMENT_RESULT_LAST"] = "Результат (останній)";
 $MESS["TASKS_BP_DOCUMENT_CREATED_BY"] = "Хто створив";
 $MESS["TASKS_BP_DOCUMENT_CREATED_DATE"] = "Дата створення";
 $MESS["TASKS_BP_DOCUMENT_DATE_START"] = "Дата початку";

@@ -1,0 +1,2 @@
+<?php
+$MESS["CALENDAR_SHARING_MAIL_MORE_ATTENDEES"] = "Ще учасники";

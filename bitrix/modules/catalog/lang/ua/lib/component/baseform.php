@@ -19,4 +19,5 @@ $MESS["CATALOG_C_F_VARIATION_SETTINGS_VAT_INCLUDED_TITLE"] = "Ставка ПД�
 $MESS["CATALOG_C_F_VARIATION_SETTINGS_WAREHOUSE_HINT"] = "Складський облік включений. Відключити складський облік можна в налаштуваннях";
 $MESS["CATALOG_C_F_VARIATION_SETTINGS_WAREHOUSE_TITLE"] = "Включити складський облік";
 $MESS["CATALOG_C_F_YES"] = "Так";
+$MESS["CATALOG_PRODUCT_CARD_USERFIELD_MESS_EMPTY_VALUE"] = "не вибрано";
 $MESS["CATALOG_PRODUCT_CARD_VARIATION_GRID_NOT_SELECTED"] = "не вибрано";

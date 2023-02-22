@@ -31,6 +31,7 @@ $MESS["BPTA1A_TASKPRIORITY_V2"] = "Важливість";
 $MESS["BPTA1A_TASKPRIORITY_V3"] = "Важливе завдання";
 $MESS["BPTA1A_TASKTRACKERS"] = "Спостерігачі";
 $MESS["BPTA1A_TASK_TASK_PRESENCE_ERROR"] = "Не існує завдання з id \"#TASK_ID#\"";
+$MESS["BPTA1A_TASK_URL_LABEL"] = "Відкрити завдання";
 $MESS["BPTA1A_TASK_URL_NAME"] = "Завдання";
 $MESS["BPTA1A_TIME_TRACKING_H"] = "Час виконання, годин";
 $MESS["BPTA1A_TIME_TRACKING_M"] = "Час виконання, хвилин";

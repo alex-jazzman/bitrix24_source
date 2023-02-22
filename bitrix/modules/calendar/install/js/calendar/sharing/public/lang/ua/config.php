@@ -1,0 +1,7 @@
+<?php
+$MESS["CALENDAR_SHARING_BACK"] = "Календар";
+$MESS["CALENDAR_SHARING_CANCEL"] = "Скасувати";
+$MESS["CALENDAR_SHARING_RETURN_TO_CALENDAR"] = "Спробувати ще раз";
+$MESS["CALENDAR_SHARING_TODAY"] = "сьогодні";
+$MESS["CALENDAR_SHARING_TOMORROW"] = "завтра";
+$MESS["CALENDAR_SHARING_YEAR"] = "Рік";

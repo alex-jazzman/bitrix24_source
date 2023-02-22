@@ -1,0 +1,3 @@
+<?php
+$MESS["CALENDAR_SHARING_EVENT_TODAY"] = "сьогодні";
+$MESS["CALENDAR_SHARING_EVENT_TOMORROW"] = "завтра";

@@ -26,6 +26,7 @@ $MESS["TASKS_SCRUM_TAB_COMPLETED_SPRINT"] = "Завершений спринт";
 $MESS["TASKS_SCRUM_TAB_PLAN"] = "Планування";
 $MESS["TASKS_SCRUM_TAB_SPRINT"] = "Активний спринт";
 $MESS["TASKS_SCRUM_TAG_ACCESS_DENIED"] = "Недостатньо прав";
+$MESS["TASKS_SCRUM_TAG_ALREADY_EXISTS"] = "Такий тег уже існує.";
 $MESS["TASKS_SCRUM_TASK_ADD_ERROR"] = "Сталася помилка створення завдання.";
 $MESS["TASKS_SCRUM_TASK_ADD_NAME_ERROR"] = "Не вказана назва завдання.";
 $MESS["TASKS_SCRUM_TASK_ATTACH_FILES_ERROR"] = "Сталася помилка прикріплення файлів до завдання.";

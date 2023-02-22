@@ -1,7 +1,9 @@
 <?php
 $MESS["IM_CALL_CONFERENCE_ERROR_ADDING_USERS"] = "Помилка при додаванні користувачів у чат";
+$MESS["IM_CALL_CONFERENCE_ERROR_ALIAS"] = "Передано некоректний формат короткого посилання";
 $MESS["IM_CALL_CONFERENCE_ERROR_CREATING"] = "Сталася помилка під час створення конференції";
 $MESS["IM_CALL_CONFERENCE_ERROR_DELETING_USERS"] = "Помилка при виключенні користувачів із чату";
+$MESS["IM_CALL_CONFERENCE_ERROR_ENVIRONMENT_CONFIG"] = "Для використання конференцій необхідно налаштувати оточення";
 $MESS["IM_CALL_CONFERENCE_ERROR_ID_NOT_PROVIDED"] = "Неправильний ідентифікатор конференції";
 $MESS["IM_CALL_CONFERENCE_ERROR_INVITATION_LENGTH"] = "Запрошення не може бути довше 255 символів";
 $MESS["IM_CALL_CONFERENCE_ERROR_INVITATION_TYPE"] = "Некоректне запрошення";

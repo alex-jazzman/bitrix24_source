@@ -55,3 +55,6 @@ $MESS["TASKS_TASK_STATUS_4"] = "Чекає контролю";
 $MESS["TASKS_TASK_STATUS_5"] = "Завершене";
 $MESS["TASKS_TASK_STATUS_6"] = "Відкладене";
 $MESS["TASKS_TASK_STATUS_7"] = "Відхилене";
+$MESS["TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER"] = "Повернутися пізніше";
+$MESS["TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT"] = "Зараз ми оновлюємо теги на більш зручні. Оновлення не займе багато часу, ви можете продовжити роботу в інших розділах Бітрікс24 й повернутися пізніше.";
+$MESS["TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE"] = "Зачекайте трохи, теги скоро з'являться";

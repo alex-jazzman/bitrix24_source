@@ -39,7 +39,7 @@ class CUserTypeWebdavElementHistory extends CUserTypeWebdavElement
 		);
 	}
 
-	function GetSettingsHTML($arUserField = false, $arHtmlControl, $bVarsFromForm)
+	function GetSettingsHTML($arUserField, $arHtmlControl, $bVarsFromForm)
 	{
 		return "&nbsp;";
 	}

@@ -1,6 +1,7 @@
 <?php
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BLOCK_CHANNEL_TITLE"] = "Канал надсилання";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BLOCK_DATE"] = "Дата актуальності";
+$MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BLOCK_FIELDS_COUNT_TITLE"] = "Поля для заповнення";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BLOCK_MY_SIGNER_TITLE"] = "Моя компанія";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BLOCK_RECIPIENT_TITLE"] = "Одержувач";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BLOCK_REQUEST_TITLE"] = "Запит від";
@@ -20,6 +21,7 @@ $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MAIL_SEND_TITLE"] = "Вихід�
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MESSAGE_AUTHOR"] = "Відправник";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MESSAGE_MAIL_SUBJECT"] = "Тема листа";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_PRINTED_FORM_TITLE"] = "Документ підготовлено на підпис";
+$MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_PRINTED_FORM_TITLE_MSGVER_1"] = "Документ підготовлено на підпис";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_READY_TO_FILL_TITLE"] = "Одержувач перейшов до підписання";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_REQUESTED_TITLE"] = "Надіслано повторний запит щодо документа";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SENT_FINAL_TITLE"] = "Надсилання фінального документа";

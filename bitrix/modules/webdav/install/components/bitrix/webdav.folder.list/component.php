@@ -155,8 +155,9 @@ $arResult["FILTER_VALUE"] = $grid_filter;
 /********************************************************************
 				Data
 ********************************************************************/
+$options = ["path" => $ob->_path, "depth" => 1, "FILTER" => $grid_filter];
 $tmp = $ob->PROPFIND(
-	$options = array("path" => $ob->_path, "depth" => 1, "FILTER" => $grid_filter), 
+	$options,
 	$files, 
 	array("COLUMNS" => $arSelectedFields, "return" => "nav_result")); 
 if (is_array($tmp))

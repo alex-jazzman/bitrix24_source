@@ -6,4 +6,4 @@ $MESS["CRM_CDA_NAME"] = "Створити смарт-процес";
 $MESS["CRM_CDA_NAME_1"] = "Створити елемент CRM";
 $MESS["CRM_CDA_RETURN_ITEM_ID"] = "ID нового елемента смарт-процесу";
 $MESS["CRM_CDA_RETURN_ITEM_ID_1"] = "ID нового елемента CRM";
-$MESS["CRM_CDA_ROBOT_DESCRIPTION_DIGITAL_WORKPLACE"] = "Erstellt ein neues Element des Smartprozesses und füllt dort erforderliche Felder aus.";
+$MESS["CRM_CDA_ROBOT_DESCRIPTION_DIGITAL_WORKPLACE"] = "Створює новий елемент смартпроцесів і заповнює в ньому необхідні поля.";

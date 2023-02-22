@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_ABOUT_DEADLINE"] = "Про крайній термін";
 $MESS["TASKS_ACCEPT_TASK"] = "Прийняти завдання";
 $MESS["TASKS_ADD_BACK_TO_TASKS_LIST"] = "Повернутися до списку завдань";
@@ -125,7 +125,7 @@ $MESS["TASKS_QUICK_INFO_EMPTY_DATE"] = "немає";
 $MESS["TASKS_QUICK_IN_GROUP"] = "завдання в проєкті";
 $MESS["TASKS_QUICK_SAVE"] = "Зберегти";
 $MESS["TASKS_QUICK_TITLE"] = "Назва завдання";
-$MESS["TASKS_REDO_TASK"] = "Допрацювати";
+$MESS["TASKS_REDO_TASK"] = "Доопрацювати";
 $MESS["TASKS_REMIND"] = "нагадати";
 $MESS["TASKS_REMINDER_OK"] = "ОК";
 $MESS["TASKS_REMINDER_TITLE"] = "Нагадати";
@@ -207,4 +207,3 @@ $MESS["TASKS_TTV_TASK_INACCESSIBLE"] = "завдання недоступне д
 $MESS["TASKS_TTV_TEMPLATE_INACCESSIBLE"] = "шаблон недоступний для перегляду";
 $MESS["TASKS_TTV_TYPE_FOR_NEW_USER_HINT"] = "За даним шаблоном створюється завдання для кожного знов зареєстрованого користувача";
 $MESS["TASKS_TT_VIEW"] = "Перегляд шаблону № #ID#";
-?>

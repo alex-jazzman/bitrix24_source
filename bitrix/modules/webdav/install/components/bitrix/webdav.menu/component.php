@@ -168,7 +168,9 @@ if ($arParams["USE_COMMENTS"] == "Y" && $GLOBALS['USER']->IsAuthorized())
 		{
 			if ($_REQUEST["SUBSCRIBE_FORUM"] == "Y" || $_REQUEST["subscribe_forum"] == "Y")
 			{
-				ForumSubscribeNewMessagesEx($arParams["FORUM_ID"], 0, "N", $strErrorMessage = "", $strOKMessage = "");
+				$strErrorMessage = "";
+				$strOKMessage = "";
+				ForumSubscribeNewMessagesEx($arParams["FORUM_ID"], 0, "N", $strErrorMessage, $strOKMessage);
 			}
 			elseif ($_REQUEST["SUBSCRIBE_FORUM"] == "N" || $_REQUEST["subscribe_forum"] == "N")
 			{

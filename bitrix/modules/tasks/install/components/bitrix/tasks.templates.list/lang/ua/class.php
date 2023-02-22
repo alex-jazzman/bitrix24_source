@@ -1,6 +1,7 @@
 <?php
 $MESS["TASKS_PRESET_ACTIVE_REGULAR"] = "Регулярні";
 $MESS["TASKS_PRESET_NEW_USER"] = "Для нових користувачів";
+$MESS["TASKS_TEMPLATES_LIST_BATCH_DELETE_ERROR_MESSAGE"] = "Недостатньо прав для видалення наступних шаблонів: #TEMPLATE_IDS#";
 $MESS["TASKS_TEMPLATES_LIST_CLOSE"] = "Закрити";
 $MESS["TASKS_TEMPLATES_LIST_TITLE_ERROR"] = "Помилка";
 $MESS["TASKS_TEMPLATES_NO"] = "Ні";

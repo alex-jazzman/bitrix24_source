@@ -62,7 +62,8 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/tools.php");
 //Init new kernel
 $application = \Bitrix\Main\HttpApplication::getInstance();
 $context = new \Bitrix\Main\HttpContext($application);
-$context->setLanguage(LANGUAGE_ID);
+$language = \Bitrix\Main\Localization\LanguageTable::wakeUpObject(LANGUAGE_ID);
+$context->setLanguage($language);
 $application->setContext($context);
 
 //Lang files
@@ -192,7 +193,7 @@ class AgreementStep4VM extends CWizardStep
 
 		//Check connection
 		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/mysql/database.php");
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/mysql/main.php");
+		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
 		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/tools.php");
 		IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
 
@@ -529,7 +530,7 @@ class RequirementStep extends CWizardStep
 	protected $memoryRecommend = 256;
 	protected $diskSizeMin = 500;
 
-	protected $phpMinVersion = "7.4.0";
+	protected $phpMinVersion = "8.0.0";
 	protected $apacheMinVersion = "2.0";
 	protected $bitrixVmMinVersion = '7.5.0';
 
@@ -1449,7 +1450,7 @@ class CreateDBStep extends CWizardStep
 			return;
 
 		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/".$this->dbType."/database.php");
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/".$this->dbType."/main.php");
+		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
 		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/tools.php");
 		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/time.php");
 		IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
@@ -2349,10 +2350,10 @@ class CreateModulesStep extends CWizardStep
 			require_once($_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/php_interface/dbconn.php");
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/autoload.php");
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/mysql/database.php");
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/mysql/main.php");
+			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/cache.php");
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/module.php");
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/mysql/usertype.php");
+			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/usertype.php");
 		}
 		else
 		{
@@ -3604,64 +3605,6 @@ class SelectWizard1Step extends SelectWizardStep
 	}
 }
 
-class FinishStep extends CWizardStep
-{
-	function InitStep()
-	{
-		$this->SetStepID("finish");
-		$this->SetTitle(InstallGetMessage("INS_STEP7_TITLE"));
-	}
-
-	function CreateNewIndex()
-	{
-		$handler = @fopen($_SERVER["DOCUMENT_ROOT"]."/index.php","wb");
-
-		if (!$handler)
-		{
-			$this->SetError(InstallGetMessage("INST_INDEX_ACCESS_ERROR"));
-			return;
-		}
-
-		$success = @fwrite($handler,
-			'<'.'?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");?'.'>'."\n".
-			'<br /><a href="/bitrix/admin/">Control panel</a>'."\n".
-			'<'.'?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?'.'>'
-		);
-
-		if (!$success)
-		{
-			$this->SetError(InstallGetMessage("INST_INDEX_ACCESS_ERROR"));
-			return;
-		}
-
-		if (defined("BX_FILE_PERMISSIONS"))
-			@chmod($_SERVER["DOCUMENT_ROOT"]."/index.php", BX_FILE_PERMISSIONS);
-
-		fclose($handler);
-	}
-
-	function ShowStep()
-	{
-		$this->CreateNewIndex();
-
-		BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"]."/install.config");
-
-		$this->content = '
-		<p>'.InstallGetMessage("GRETTINGS").'</p>
-
-		<b><a href="/bitrix/admin/sysupdate.php?lang='.LANGUAGE_ID.'">'.InstallGetMessage("GO_TO_REGISTER").'</a></b><br>'.InstallGetMessage("GO_TO_REGISTER_DESCR").'<br><br>
-
-		<table width="100%" cellpadding="2" cellspacing="0" border="0">
-			<tr>
-				<td><a href="/bitrix/admin/index.php?lang='.LANGUAGE_ID.'"><img src="/bitrix/images/install/admin.gif" width="22" height="22" border="0" title="'.InstallGetMessage("GO_TO_CONTROL").'"></a></td>
-				<td width="50%">&nbsp;<a href="/bitrix/admin/index.php?lang='.LANGUAGE_ID.'">'.InstallGetMessage("GO_TO_CONTROL").'</a></td>
-				<td><a href="/"><img border="0" src="/bitrix/images/install/public.gif" width="22" height="22" title="'.InstallGetMessage("GO_TO_VIEW").'"></a></td>
-				<td width="50%">&nbsp;<a href="/">'.InstallGetMessage("GO_TO_VIEW").'</a></td>
-			</tr>
-		</table>';
-	}
-}
-
 class CheckLicenseKey extends CWizardStep
 {
 	function InitStep()
@@ -3841,16 +3784,21 @@ if (defined("WIZARD_DEFAULT_TONLY") && WIZARD_DEFAULT_TONLY === true)
 	require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/include.php");
 	if($USER->CanDoOperation('edit_other_settings'))
 	{
-		$arSteps = Array("SelectWizardStep", "LoadModuleStep", "LoadModuleActionStep", "SelectWizard1Step");
+		$arSteps = Array(
+			"SelectWizardStep",
+			"LoadModuleStep",
+			"LoadModuleActionStep",
+			"SelectWizard1Step",
+		);
 	}
 	else
 	{
 		die();
 	}
 }
-//Short installation
 elseif (BXInstallServices::IsShortInstall())
 {
+	//Short installation
 	$arSteps = Array();
 	if (defined("VM_INSTALL"))
 	{
@@ -3866,11 +3814,6 @@ elseif (BXInstallServices::IsShortInstall())
 		$arSteps[] = "LoadModuleStep";
 		$arSteps[] = "LoadModuleActionStep";
 		$arSteps[] = "SelectWizard1Step";
-
-		if (BXInstallServices::GetDemoWizard() === false)
-		{
-			$arSteps[] = "FinishStep";
-		}
 	}
 	else
 	{
@@ -3881,19 +3824,19 @@ elseif (BXInstallServices::IsShortInstall())
 else
 {
 	//Full installation
-	$arSteps = Array("WelcomeStep", "AgreementStep", "DBTypeStep", "RequirementStep", "CreateDBStep", "CreateModulesStep", "CreateAdminStep");
-
-	$arWizardsList = BXInstallServices::GetWizardsList();
-	if (count($arWizardsList) > 0)
-	{
-		$arSteps[] = "SelectWizardStep";
-		$arSteps[] = "LoadModuleStep";
-		$arSteps[] = "LoadModuleActionStep";
-		$arSteps[] = "SelectWizard1Step";
-	}
-
-	if (BXInstallServices::GetDemoWizard() === false)
-		$arSteps[] = "FinishStep";
+	$arSteps = Array(
+		"WelcomeStep",
+		"AgreementStep",
+		"DBTypeStep",
+		"RequirementStep",
+		"CreateDBStep",
+		"CreateModulesStep",
+		"CreateAdminStep",
+		"SelectWizardStep",
+		"LoadModuleStep",
+		"LoadModuleActionStep",
+		"SelectWizard1Step",
+	);
 }
 
 $wizard->AddSteps($arSteps); //Add steps

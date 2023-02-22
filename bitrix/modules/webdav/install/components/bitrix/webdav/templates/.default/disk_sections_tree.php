@@ -134,8 +134,9 @@ function __WDGetSectionsTree($base, $active)
 	$arParams["FOLDER"] = trim($_REQUEST["folder"]); 
 	$io = CBXVirtualIo::GetInstance();
 	$arParams["ACTIVE"] = $io->CombinePath(trim($_REQUEST["active"])); 
-	$ob = new CWebDavFile($arParams, ""); 
-	if (!$ob->CheckRights("MOVE", false, $path = ""))
+	$ob = new CWebDavFile($arParams, "");
+	$path = "";
+	if (!$ob->CheckRights("MOVE", false, $path))
 		$popupWindow->ShowError(GetMessage("WD_ACCESS_DENIED")); 
 
 	//CWebDavFile::RegisterVirtualIOCompatibility($ob->real_path_full);

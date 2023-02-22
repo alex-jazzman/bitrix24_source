@@ -77,13 +77,14 @@ if ($arParams["WORKFLOW"] == "bizproc" && (!CBPDocument::CanUserOperateDocument(
 	$arParams["PERMISSION"] = "D"; 
 }
 unset($file);
+$options = ["element_id" => $arParams["ELEMENT_ID"]];
 if ($arParams["PERMISSION"] < "U")
 {
 	ShowError(GetMessage("WD_ACCESS_DENIED"));
 	return 0;
 }
 elseif (!$ob->PROPFIND(
-	$options = array("element_id" => $arParams["ELEMENT_ID"]), 
+	$options,
 	$file, 
 	array("COLUMNS" => $arSelectedFields, "get_clones" => "N", "return" => "array")))
 {

@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_TIMELINE_ECOMMERCE_DEAL_SUMMARY"] = "Підсумок угоди";
+$MESS["CRM_TIMELINE_ECOMMERCE_INVOICE_SUMMARY"] = "Підсумок рахунку";

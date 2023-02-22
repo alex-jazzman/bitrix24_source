@@ -11,6 +11,7 @@ $MESS["BPC_MES_CREATE_TASK"] = "Створити завдання";
 $MESS["BPC_MES_CREATE_TASK_RESULT"] = "Позначити як результат";
 $MESS["BPC_MES_DELETE"] = "Видалити";
 $MESS["BPC_MES_DELETE_POST_CONFIRM"] = "Ви впевнені, що хочете видалити коментар?";
+$MESS["BPC_MES_DELETE_TASK_RESULT"] = "Видалити результат";
 $MESS["BPC_MES_EDIT"] = "Редагувати";
 $MESS["BPC_MES_HIDE"] = "Приховати";
 $MESS["BPC_MES_REMOVE_TASK_RESULT"] = "Зняти відмітку про результат";

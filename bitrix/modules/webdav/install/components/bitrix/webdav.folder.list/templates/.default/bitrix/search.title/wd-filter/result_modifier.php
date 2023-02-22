@@ -74,7 +74,8 @@ foreach($arResult["CATEGORIES"] as $category_id => $arCategory)
         {
             if ($ob->Type == 'folder')
             {
-                $path = array_pop(explode("|", $arItem['ITEM_ID']));
+				$itemParts = explode("|", $arItem['ITEM_ID']);
+				$path = array_pop($itemParts);
                 $arResult["CATEGORIES"][$category_id]["ITEMS"][$i]["URL"] = CComponentEngine::MakePathFromTemplate(
                     $arParams["ELEMENT_EDIT_URL"], 
                     array("ACTION"=>"EDIT", "PATH" => mb_substr($path, mb_strlen($ob->real_path))));
@@ -224,7 +225,8 @@ foreach($arResult["SEARCH"] as $i=>$arItem)
 			}
 			break;
 		case "main":
-			$ext = end(explode('.', $arItem["ITEM_ID"]));
+			$itemParts = explode('.', $arItem["ITEM_ID"]);
+			$ext = end($itemParts);
 			if(file_exists($abs_path."main_".mb_strtolower($ext).".png"))
 				$file = "main_".mb_strtolower($ext).".png";
 			break;

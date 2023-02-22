@@ -344,7 +344,10 @@ elseif (!(is_object($arParams["bxu"]) && $arParams["bxu"]->checkPost()))
 		(($arFileError = $wuo->saveFile($name, $arFile, $arElement)) && $arFileError === true))
 	{
 		if (isset($_REQUEST["UploadUnlock"]))
-			$ob->UNLOCK($options = array("element_id" => intval($arParams["ELEMENT_ID"])));
+		{
+			$options = ["element_id" => intval($arParams["ELEMENT_ID"])];
+			$ob->UNLOCK($options);
+		}
 		$arFields["ID"] = $arElement["ID"];
 		if(function_exists('BXIBlockAfterSave'))
 			BXIBlockAfterSave($arFields);

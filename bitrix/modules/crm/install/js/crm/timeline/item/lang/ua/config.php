@@ -4,6 +4,7 @@ $MESS["CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_CREATE_PUBLIC_LINK_ERROR"] = "Пом�
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PDF_NOT_READY"] = "PDF-файл поки не сформований. Повторіть спробу пізніше або завантажте файл DOCX саме зараз.";
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PRINT_NOT_READY"] = "Друк документа неможливий, доки не буде сформований файл PDF. Повторіть спробу пізніше.";
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR"] = "Помилка оновлення документа";
+$MESS["CRM_TIMELINE_ITEM_ACTIVITY_POPUP_CLOSE"] = "Закрити";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL"] = "Скасувати";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE"] = "Сховати текст";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER"] = "Що потрібно зробити";

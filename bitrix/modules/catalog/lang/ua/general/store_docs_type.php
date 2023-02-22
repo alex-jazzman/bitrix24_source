@@ -1,4 +1,7 @@
 <?php
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_COMMON_STORE_FROM"] = "Склад-відправник";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_MOVING_STORE_FROM"] = "Склад-відправник";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_MOVING_STORE_TO"] = "Склад-одержувач";
 $MESS["CATALOG_STORE_DOCS_ERR_ABSENT_DOCUMENT_ELEMENTS"] = "Не знайдено позицій документа складського обліку з ідентифікатором ##ID#";
 $MESS["CATALOG_STORE_DOCS_ERR_ADJUSTMENT_STORE_DESTINATION_IS_ABSENT_PRODUCT"] = "Для товару #PRODUCTS# не вказано склад оприбуткування.";
 $MESS["CATALOG_STORE_DOCS_ERR_ADJUSTMENT_STORE_DESTINATION_IS_ABSENT_PRODUCT_LIST"] = "Для товарів #PRODUCTS# вказано відсутній склад оприбуткування.";

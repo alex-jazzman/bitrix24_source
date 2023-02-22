@@ -5,7 +5,8 @@ $url = (empty($_REQUEST["back_url"]) ? false : $_REQUEST["back_url"]);
 ********************************************************************/
 if ((!empty($_REQUEST["cancel"])) && check_bitrix_sessid())
 {
-	$ob->UNLOCK($options = array("element_id" => $arParams["ELEMENT_ID"])); 
+	$options = ["element_id" => $arParams["ELEMENT_ID"]];
+	$ob->UNLOCK($options);
 	$arResult["NAV_CHAIN_PATH"] = $ob->GetNavChain(array("section_id" => $arResult["ELEMENT"]["IBLOCK_SECTION_ID"]), true);
 	if (!$url)
 	{
@@ -164,7 +165,8 @@ elseif ($arParams["ACTION"] == "CLONE")
 	else
 	{
 		$DB->commit();
-		$ob->UNLOCK($tmp = array("element_id" => $arParams["ELEMENT_ID"]));
+		$tmp = ["element_id" => $arParams["ELEMENT_ID"]];
+		$ob->UNLOCK($tmp);
 		$arParams["ELEMENT_ID"] = $options["ELEMENT_ID"];
 	}
 }

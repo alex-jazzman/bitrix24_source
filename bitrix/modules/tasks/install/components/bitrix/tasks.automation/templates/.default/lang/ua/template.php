@@ -13,3 +13,5 @@ $MESS["TASKS_AUTOMATION_CMP_TITLE_VIEW"] = "Поточні роботи всіх
 $MESS["TASKS_AUTOMATION_CMP_TITLE_VIEW_PLAN_1"] = "Поточні роботи всіх завдань Мого плану";
 $MESS["TASKS_AUTOMATION_CMP_TITLE_VIEW_STATUSES"] = "Поточні роботи всіх завдань, в яких ви берете участь";
 $MESS["TASKS_AUTOMATION_CMP_TRIGGER_HELP_TIP_2"] = "Тригер - це конкретна дія або ситуація, наприклад, протерміноване завдання. Як тільки ця ситуація станеться, завдання перейде в потрібну стадію. І вже на потрібній стадії спрацьовує налаштований Робот.";
+$MESS["TASKS_AUTOMATION_CMP_TRIGGER_TASKS_FIELD_CHANGED_CHOOSE"] = "Вибрати поля";
+$MESS["TASKS_AUTOMATION_CMP_TRIGGER_TASKS_FIELD_CHANGED_FIELDS"] = "Відстежувати поля";

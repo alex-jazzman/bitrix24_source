@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_OIIE_ERROR_ACCESS_DENIED"] = "Недостатньо прав для імпорту даних.";
 $MESS["CRM_OIIE_FACEBOOK_NO_AUTHORIZATION_PAGE"] = "Підключити сторінку не вийшло";
 $MESS["CRM_OIIE_FACEBOOK_NO_DEL_PAGE"] = "Відв'язати сторінку не вийшло";
 $MESS["CRM_OIIE_FACEBOOK_NO_DEL_USER"] = "Відв'язати обліковий запис користувача не вийшло";

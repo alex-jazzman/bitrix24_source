@@ -26,6 +26,7 @@ $MESS["CRM_DOCUMENT_VIEW_SIGNED"] = "з підписами та печаткою
 $MESS["CRM_DOCUMENT_VIEW_SIGN_AND_STAMP"] = "Печатка й підпис";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_BUTTON"] = "Підписати";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_CLICKED"] = "Ви вже почали підписувати документ.";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_CLOSE"] = "Закрити";
 $MESS["CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY"] = "Для відправки по смс необхідне публічне посилання";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR"] = "Немає PDF-файлу документа. Швидше за все, під час конвертації сталася помилка.";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS"] = "Будь ласка, дочекайтеся завершення конвертації";

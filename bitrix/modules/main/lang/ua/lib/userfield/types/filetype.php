@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["USER_TYPE_FILE_DESCRIPTION"] = "Файл";
 $MESS["USER_TYPE_FILE_EXTENSIONS"] = "Розширення";
 $MESS["USER_TYPE_FILE_EXTENSIONS_HINT"] = "Введіть допустимі розширення файлів через кому";
@@ -7,5 +7,5 @@ $MESS["USER_TYPE_FILE_MAX_SHOW_SIZE"] = "Максимально допустим
 $MESS["USER_TYPE_FILE_MAX_SIZE_ERROR"] = "Розмір файлу для поля \"#FIELD_NAME#\" повинен бути не більше #MAX_ALLOWED_SIZE# байт.";
 $MESS["USER_TYPE_FILE_SIZE"] = "Розмір поля введення для відображення";
 $MESS["USER_TYPE_FILE_TARGET_BLANK"] = "Відкривати файл у новій вкладці";
+$MESS["USER_TYPE_FILE_VALUE_IS_MULTIPLE"] = "Поле \"#FIELD_NAME#\" не може бути множинним.";
 $MESS["USER_TYPE_FILE_WIDTH_AND_HEIGHT"] = "Максимальні ширина і висота для відображення в списку";
-?>

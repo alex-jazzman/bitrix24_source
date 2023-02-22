@@ -78,7 +78,7 @@ class CWebDavFile extends CWebDavBase
 
 		$this->permission = $GLOBALS['APPLICATION']->GetFileAccessPermission($arParams["FOLDER"]);
 
-		foreach ($this->arFilePermissions as $right => $perms)
+		foreach ($this->arFilePermissions as $right => $permissionOuter)
 		{
 			foreach ($this->arFilePermissions[$right] as $ext => $perms)
 			{
@@ -512,7 +512,8 @@ class CWebDavFile extends CWebDavBase
 
 				foreach ($arSearchResults as $sSearchItem)
 				{
-					$file = array_pop(explode("|", $sSearchItem));
+					$dataInSearchItem = explode("|", $sSearchItem);
+					$file = array_pop($dataInSearchItem);
 
 					$filename = GetFileName($file);
 					$sFullFileName = $io->CombinePath($_SERVER['DOCUMENT_ROOT'], $file);
@@ -644,6 +645,8 @@ class CWebDavFile extends CWebDavBase
 	function Undelete($options)
 	{
 		$io = self::GetIo();
+		$options["path"] = $io->CombinePath(static::_udecode($options["path"]));
+
 		if(!$this->CheckRights("UNDELETE", true, $options["path"]))
 		{
 			$this->ThrowAccessDenied();
@@ -731,7 +734,8 @@ class CWebDavFile extends CWebDavBase
 			$GLOBALS["APPLICATION"]->ThrowException(GetMessage('WD_FILE_ERROR14'), 'FORBIDDEN_NAME');
 			return "409 Conflict";
 		}
-		$options["~path"] = $this->_udecode($options["path"]);
+		$options["~path"] = static::_udecode($options["path"]);
+		$this->arParams["base_name"] = $io->CombinePath(static::_udecode($this->arParams["base_name"]));
 		if ($this->arParams["not_found"] && !$this->CheckRights("PUT", true, $this->arParams["base_name"]) ||
 			!$this->arParams["not_found"] && !$this->CheckRights("PUT", true, $this->arParams["item_id"]))
 		{
@@ -948,6 +952,8 @@ class CWebDavFile extends CWebDavBase
 	{
 		$io = self::GetIo();
 		$options["dest_url"] = $this->MetaNamesReverse(explode("/", $options["dest_url"]));
+		$options["dest_url"] = $io->CombinePath(static::_udecode($options["dest_url"]));
+
 		if (!$this->CheckRights("COPY", true, $options["dest_url"])):
 			$this->ThrowAccessDenied();
 			return "403 Forbidden";
@@ -1732,7 +1738,7 @@ class CWebDavFile extends CWebDavBase
 		return $result;
 	}
 
-	function CheckRights($method, $strong, &$path)
+	function CheckRights($method = "", $strong = false, $path = false)
 	{
 		$result = true;
 		if (!parent::CheckRights($method))
@@ -1960,10 +1966,9 @@ class CDBResultWebDAVFiles extends CDBResult
 		return $res;
 	}
 
-	function GetNext()
+	public function GetNext($bTextHtmlAuto=true, $use_tilda=true)
 	{
-		global $DB;
-		if ($res = parent::GetNext())
+		if ($res = parent::GetNext($bTextHtmlAuto, $use_tilda))
 		{
 			$result = $res;
 			foreach ($res as $key => $val)
@@ -1975,6 +1980,6 @@ class CDBResultWebDAVFiles extends CDBResult
 				}
 			}
 		}
-		return $result;
+		return $result ?? null;
 	}
 }

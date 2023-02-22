@@ -65,6 +65,9 @@ $arElement = $arResult["ELEMENT"];
 $arResult["WRITEABLE"] = (isset($arElement["PROPERTIES"]["UNDELETEBX:"]) ? "N" : "Y");
 if ($arParams["PERMISSION"] > "W")
 	$arResult["WRITEABLE"] = "Y"; // admin can delete from trash
+
+$io = CBXVirtualIo::GetInstance();
+$arResult["ELEMENT"]["ID"] = $io->CombinePath(CWebDavFile::_udecode($arResult["ELEMENT"]["ID"]));
 if ( !$ob->CheckRights('PUT', false, $arResult["ELEMENT"]["ID"] ))
 {
 	if ($arParams["PERMISSION"] >= "R")
