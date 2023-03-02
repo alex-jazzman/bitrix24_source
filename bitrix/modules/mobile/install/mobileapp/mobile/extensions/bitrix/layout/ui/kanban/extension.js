@@ -13,6 +13,7 @@
 		mergeImmutable,
 		isEqual,
 	} = jn.require('utils/object');
+	const { StatefulList } = jn.require('layout/ui/stateful-list');
 
 	let RequiredFields;
 	let CategoryStorage;

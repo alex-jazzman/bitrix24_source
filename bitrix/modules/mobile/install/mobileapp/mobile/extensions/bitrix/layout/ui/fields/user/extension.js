@@ -199,7 +199,6 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 		{
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = encodeURI(imageUrl);
 				imageUrl = imageUrl.replace(`${currentDomain}`, '');
 				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
 			}
@@ -209,7 +208,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 				imageUrl = currentDomain + DEFAULT_AVATAR;
 			}
 
-			return imageUrl;
+			return encodeURI(imageUrl);
 		}
 
 		canOpenEntity()

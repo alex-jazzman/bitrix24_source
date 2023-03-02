@@ -1543,18 +1543,21 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 				[TaskView.field.parentTask]: new ParentTask({
 					parentTask: this.task.parentTask,
 					canOpenEntity: true,
+					parentWidget: this.layoutWidget,
 					style: this.getStyleForField(TaskView.field.parentTask),
 					deepMergeStyles: this.getDeepMergeStylesForField(true),
 					ref: ref => this.parentTaskRef = ref,
 				}),
 				[TaskView.field.subTasks]: new SubTasks({
 					subTasks: this.task.subTasks,
+					parentWidget: this.layoutWidget,
 					style: this.getStyleForField(TaskView.field.subTasks),
 					deepMergeStyles: this.getDeepMergeStylesForField(true),
 					ref: ref => this.subTasksRef = ref,
 				}),
 				[TaskView.field.relatedTasks]: new RelatedTasks({
 					relatedTasks: this.task.relatedTasks,
+					parentWidget: this.layoutWidget,
 					style: this.getStyleForField(TaskView.field.relatedTasks),
 					deepMergeStyles: this.getDeepMergeStylesForField(true),
 					ref: ref => this.relatedTasksRef = ref,

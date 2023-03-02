@@ -3,6 +3,7 @@
 namespace Bitrix\Catalog\UI;
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Catalog;
 use Bitrix\Crm;
@@ -310,9 +311,14 @@ class PropertyProduct
 	 */
 	private static function getIblockIds(): array
 	{
-		return [
-			Crm\Product\Catalog::getDefaultId(),
-			Crm\Product\Catalog::getDefaultOfferId(),
-		];
+		if (Loader::includeModule('crm'))
+		{
+			return [
+				Crm\Product\Catalog::getDefaultId(),
+				Crm\Product\Catalog::getDefaultOfferId(),
+			];
+		}
+
+		return [];
 	}
 }

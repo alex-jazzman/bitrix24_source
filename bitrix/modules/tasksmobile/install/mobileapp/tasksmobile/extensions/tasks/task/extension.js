@@ -5,6 +5,7 @@
 (() => {
 	const {Loc} = jn.require('loc');
 	const {Type} = jn.require('type');
+	const {Entry} = jn.require('tasks/entry');
 	const pathToExtension = '/bitrix/mobileapp/tasksmobile/extensions/tasks/task/';
 
 	class Counter
@@ -1002,7 +1003,7 @@
 			});
 		}
 
-		open()
+		open(parentWidget)
 		{
 			if (Application.getApiVersion() < 31)
 			{
@@ -1028,17 +1029,19 @@
 			{
 				const taskId = this.task.id;
 				const taskData = {
+					taskId,
 					id: taskId,
 					title: 'TASK',
 					taskInfo: this.task.getTaskInfo(),
 				};
 				const params = {
+					parentWidget,
 					userId: this.task.currentUser.id,
 					taskObject: (this.task.canSendMyselfOnOpen ? this.task.exportProperties() : null),
 				};
 				delete taskData.taskInfo.project;
 
-				BX.postComponentEvent('taskbackground::task::action', [taskData, taskId, params]);
+				(new Entry()).openTask(taskData, params);
 			}
 		}
 	}
@@ -2464,9 +2467,9 @@
 			return this._actions.exportProperties();
 		}
 
-		open()
+		open(parentWidget = null)
 		{
-			this._actions.open();
+			this._actions.open(parentWidget);
 		}
 
 		save()

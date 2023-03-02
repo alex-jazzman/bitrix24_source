@@ -297,7 +297,7 @@
 				{
 					resolveFunction: BX.MobileTools.taskIdFromUrl,
 					openFunction: function(data) {
-						BXMobileApp.Events.postToComponent("taskbackground::task::action", data, "background");
+						BXMobileApp.Events.postToComponent("taskbackground::task::open", data, "background");
 					}
 				},
 				{

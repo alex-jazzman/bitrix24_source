@@ -6,6 +6,7 @@ include('InAppNotifier');
 	const caches = new Map();
 
 	const {EntityReady} = jn.require('entity-ready');
+	const {Entry} = jn.require('tasks/entry');
 	const {TaskCreateManager} = jn.require('tasks/layout/task/create');
 
 	class Util
@@ -1991,13 +1992,13 @@ include('InAppNotifier');
 			}
 			else
 			{
-				BX.postComponentEvent('taskbackground::task::action', [{
+				(new Entry()).openTaskList({
 					groupId: project.id,
 					groupName: project.name,
 					groupImageUrl: project.image,
 					ownerId: this.list.owner.id,
 					getProjectData: true,
-				}]);
+				});
 			}
 
 			setTimeout(() => {
@@ -2526,7 +2527,7 @@ include('InAppNotifier');
 
 			this.initCommon(list, owner, params);
 
-			if (this.group.getData)
+			if (this.group.id && this.group.getData)
 			{
 				this.fillProjectData().then(() => {
 					if (!this.group.id || this.group.isOpened || this.isMember())
@@ -4002,13 +4003,13 @@ include('InAppNotifier');
 			}
 			else
 			{
-				BX.postComponentEvent('taskbackground::task::action', [{
+				(new Entry()).openTaskList({
 					groupId: data.id,
 					groupName: project.name,
 					groupImageUrl: data.imageUrl,
 					ownerId: this.owner.id,
 					getProjectData: true,
-				}]);
+				});
 			}
 		}
 

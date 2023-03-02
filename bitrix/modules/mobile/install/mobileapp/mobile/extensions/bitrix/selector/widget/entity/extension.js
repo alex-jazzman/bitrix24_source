@@ -99,6 +99,11 @@
 				searchOptions.startTypingText = this.getStartTypingText();
 			}
 
+			if (!searchOptions['startTypingWithCreationText'])
+			{
+				searchOptions.startTypingWithCreationText = this.getStartTypingWithCreationText();
+			}
+
 			if (!searchOptions['searchPlaceholderWithCreation'])
 			{
 				searchOptions.searchPlaceholderWithCreation = this.getSearchPlaceholderWithCreation();
@@ -178,6 +183,11 @@
 		}
 
 		static getStartTypingText()
+		{
+			return null;
+		}
+
+		static getStartTypingWithCreationText()
 		{
 			return null;
 		}
