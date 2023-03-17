@@ -457,7 +457,7 @@ function MakeTimeStamp($datetime, $format=false)
 
 	$ar = ParseDateTime($datetime, $format);
 
-	$day = intval($ar["DD"]);
+	$day = intval($ar["DD"] ?? 0);
 	$hour = $month = 0;
 
 	if (isset($ar["MMMM"]))
@@ -490,7 +490,7 @@ function MakeTimeStamp($datetime, $format=false)
 				$month = intval(date('m', strtotime($ar["M"])));
 		}
 	}
-	$year  = intval($ar["YYYY"]);
+	$year  = intval($ar["YYYY"] ?? 0);
 	if (isset($ar["HH"]))
 	{
 		$hour  = intval($ar["HH"]);
@@ -4050,16 +4050,13 @@ function check_email($email, $strict = false, $domainCheck = false)
 	}
 
 	//convert to UTF to use extended regular expressions
-	$encodedEmail = $email;
 	static $encoding = null;
-	if ($encoding === null)
+	if($encoding === null)
 	{
-		if (($context = Context::getCurrent()) && ($culture = $context->getCulture()))
-		{
-			$encoding = strtolower($culture->getCharset());
-		}
+		$encoding = strtolower(Context::getCurrent()->getCulture()->getCharset());
 	}
-	if ($encoding !== null && $encoding != "utf-8")
+	$encodedEmail = $email;
+	if($encoding <> "utf-8")
 	{
 		$encodedEmail = Text\Encoding::convertEncoding($email, $encoding, "UTF-8");
 	}

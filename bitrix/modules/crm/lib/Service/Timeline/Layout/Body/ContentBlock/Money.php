@@ -6,8 +6,10 @@ use Bitrix\Crm\Currency;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Main\ArgumentOutOfRangeException;
 
-class Money extends ContentBlock
+class Money extends ContentBlock implements TextPropertiesInterface
 {
+	use TextPropertiesMixin;
+
 	private ?float $opportunity = null;
 	private ?string $currencyId = null;
 
@@ -45,11 +47,14 @@ class Money extends ContentBlock
 		return $this;
 	}
 
-	protected function getProperties(): ?array
+	protected function getProperties(): array
 	{
-		return [
-			'opportunity' => $this->getOpportunity(),
-			'currencyId' => $this->getCurrencyId(),
-		];
+		return array_merge(
+			$this->getTextProperties(),
+			[
+				'opportunity' => $this->getOpportunity(),
+				'currencyId' => $this->getCurrencyId(),
+			]
+		);
 	}
 }

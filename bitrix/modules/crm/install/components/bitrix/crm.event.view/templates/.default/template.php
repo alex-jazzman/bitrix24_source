@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 Bitrix\Main\UI\Extension::load("ui.tooltip");
@@ -94,7 +97,7 @@ $prefix = $arResult['GRID_ID'];
 					<div class=\"crm-client-title-wrapper\">
 						<a class='crm-grid-username' href='{$arEvent['CREATED_BY_LINK']}' id=\"balloon_{$arResult['GRID_ID']}_{$arEvent['ID']}\" bx-tooltip-user-id=\"{$arEvent['CREATED_BY_ID']}\">
 							<span class='crm-grid-avatar ui-icon ui-icon-common-user'>
-								<i ".($photoUrl ? "style=\"background-image: url('{$photoUrl}')\"" : "")."></i>
+								<i ".($photoUrl ? 'style=\"background-image: url(\'' . Uri::urnEncode($photoUrl) . '\')"' : '') ."></i>
 							</span>
 							<span class='crm-grid-username-inner'>{$arEvent['CREATED_BY_FULL_NAME']}</span>
 						</a>
@@ -176,7 +179,7 @@ $prefix = $arResult['GRID_ID'];
 				'bitrix:crm.interface.toolbar',
 				'',
 				[
-					'TOOLBAR_ID' => $toolbarID,
+					'TOOLBAR_ID' => $toolbarID ?? null,
 					'BUTTONS' => $toolbarButtons
 				],
 				$component,
@@ -209,15 +212,15 @@ $prefix = $arResult['GRID_ID'];
 			'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
 				? $arResult['PAGINATION'] : array(),
 			'ENABLE_ROW_COUNT_LOADER' => true,
-			'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
-			'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
+			'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'] ?? null,
+			'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'] ?? null,
 			'EXTENSION' => array(
 				'ID' => $gridManagerID,
 				'CONFIG' => array(
 					'ownerTypeName' => 'EVENT',
 					'gridId' => $arResult['GRID_ID'],
 					'serviceUrl' => '/bitrix/components/bitrix/crm.event.view/list.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-					'loaderData' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null
+					'loaderData' => $arParams['AJAX_LOADER'] ?? null
 				),
 				'MESSAGES' => array(
 					'deletionDialogTitle' => GetMessage('CRM_EVENT_DELETE_TITLE'),

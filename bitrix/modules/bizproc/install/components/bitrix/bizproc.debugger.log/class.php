@@ -18,7 +18,7 @@ class BizprocDebuggerLogComponent extends CBitrixComponent
 		// module
 		if (!\Bitrix\Main\Loader::includeModule('bizproc'))
 		{
-			return static::showError(
+			return $this->showError(
 				\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_MODULE_NOT_INSTALLED')
 			);
 		}
@@ -35,7 +35,7 @@ class BizprocDebuggerLogComponent extends CBitrixComponent
 		$documentType = $session->getParameterDocumentType();
 		if (!\Bitrix\Bizproc\Debugger\Session\Manager::canUserDebugAutomation($userId, $documentType))
 		{
-			return static::showError(
+			return $this->showError(
 				\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_CMP_DEBUGGER_LOG_NO_RIGHTS')
 			);
 		}
@@ -60,10 +60,15 @@ class BizprocDebuggerLogComponent extends CBitrixComponent
 	protected function getLog(\Bitrix\Bizproc\Debugger\Session\Session $session): array
 	{
 		$logs = [];
-		foreach ($session->getLogs() as $log)
+
+		$trackingResult = new \CBPTrackingServiceResult();
+		$trackingResult->InitFromArray($session->getLogs());
+
+		while ($log = $trackingResult->fetch())
 		{
+			/** @var $log \Bitrix\Bizproc\Service\Entity\EO_Tracking*/
 			$values = $log->collectValues();
-			$values['MODIFIED'] = (string)($values['MODIFIED'])->getTimestamp();
+			$values['MODIFIED'] = (string)($values['MODIFIED']);
 			$logs[] = $values;
 		}
 

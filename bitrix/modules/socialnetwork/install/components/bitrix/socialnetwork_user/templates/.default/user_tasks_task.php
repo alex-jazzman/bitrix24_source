@@ -24,8 +24,8 @@ $action =
 		? 'edit'
 		: 'view'
 ;
-//tmp remove after tasks 22.1600.100 korobka
-if (true)
+
+if (Context::getCurrent()->getRequest()->get('IFRAME'))
 {
 	include("util_menu.php");
 	include("util_profile.php");

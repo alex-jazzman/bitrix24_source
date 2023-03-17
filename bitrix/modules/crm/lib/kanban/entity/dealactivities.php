@@ -11,38 +11,6 @@ class DealActivities extends Deal
 {
 	use Activity;
 
-	public function getStageFieldName(): string
-	{
-		return EntityActivities::ACTIVITY_STAGE_ID;
-	}
-
-	public function fillStageTotalSums(array $filter, array $runtime, array &$stages): void
-	{
-		foreach ($stages as &$stage)
-		{
-			$stage['count'] = $this->getEntityActivities()->calculateTotalForStage($stage['id'], $filter);
-		}
-	}
-
-	public function getItems(array $parameters): \CDBResult
-	{
-		$parameters = $this->getEntityActivities()->prepareItemsListParams($parameters);
-
-		$columnId = $parameters['columnId'] ?? '';
-		$filter = $parameters['filter'] ?? [];
-		return $this->getEntityActivities()->prepareItemsResult($columnId, parent::getItems($parameters), $filter);
-	}
-
-	protected function getEntityActivities(): EntityActivities
-	{
-		if (!$this->entityActivities)
-		{
-			$this->entityActivities = new EntityActivities($this->getTypeId(), $this->getCategoryId());
-		}
-
-		return $this->entityActivities;
-	}
-
 	public function isTotalPriceSupported(): bool
 	{
 		return false;
@@ -58,11 +26,6 @@ class DealActivities extends Deal
 		return false; // @todo check this
 	}
 
-	public function applyCountersFilter(array &$filter): void
-	{
-		// do nothing, $filter['ACTIVITY_COUNTER'] will be applied in $this->getItems()
-	}
-
 	public function updateItemStage(int $id, string $stageId, array $newStateParams, array $stages): Result
 	{
 		$result = $this->getItemViaLoadedItems($id);
@@ -73,7 +36,7 @@ class DealActivities extends Deal
 
 		$item = $result->getData()['item'];
 
-		$stageCategoryID = (int) DealCategory::resolveFromStageID($stageId);
+		$stageCategoryID = DealCategory::resolveFromStageID($stageId);
 		$dealCategoryID = (int) $item['CATEGORY_ID'];
 		if($dealCategoryID !== $stageCategoryID && $this->getCategoryId() >= 0)
 		{
@@ -86,5 +49,10 @@ class DealActivities extends Deal
 	public function canUseAllCategories(): bool
 	{
 		return true;
+	}
+
+	public function getRequiredFieldsByStages(array $stages): array
+	{
+		return [];
 	}
 }

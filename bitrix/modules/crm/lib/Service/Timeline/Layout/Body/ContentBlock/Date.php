@@ -5,7 +5,7 @@ namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Main\Type\DateTime;
 
-class Date extends ContentBlock
+class Date extends ContentBlock implements TextPropertiesInterface
 {
 	use TextPropertiesMixin;
 

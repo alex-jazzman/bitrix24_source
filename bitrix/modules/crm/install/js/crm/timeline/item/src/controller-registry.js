@@ -1,14 +1,19 @@
-import ControllerManager from "./controller-manager";
+import ControllerManager from './controller-manager';
 
-import {Activity} from "./controllers/activity";
-import {CommonContentBlocks} from "./controllers/common-content-blocks";
-import {Modification} from "./controllers/modification";
-import {OpenLines} from "./controllers/openlines";
-import {SignDocument} from "./controllers/sign-document";
-import {Document} from "./controllers/document";
-import {Call} from "./controllers/call";
-import {ToDo} from "./controllers/todo";
-import {Helpdesk} from "./controllers/helpdesk";
+import {Activity} from './controllers/activity';
+import {CommonContentBlocks} from './controllers/common-content-blocks';
+import {Modification} from './controllers/modification';
+import {OpenLines} from './controllers/openlines';
+import {SignDocument} from './controllers/sign-document';
+import {Document} from './controllers/document';
+import {Call} from './controllers/call';
+import {ToDo} from './controllers/todo';
+import {Helpdesk} from './controllers/helpdesk';
+import {Sms} from './controllers/sms';
+import {DealProductList} from './controllers/deal-product-list';
+import {OrderCheck} from './controllers/order-check';
+import {FinalSummary} from './controllers/finalsummary';
+import {SalescenterApp} from './controllers/salescenter-app';
 
 ControllerManager.registerController(Activity);
 ControllerManager.registerController(CommonContentBlocks);
@@ -19,3 +24,8 @@ ControllerManager.registerController(Document);
 ControllerManager.registerController(Call);
 ControllerManager.registerController(ToDo);
 ControllerManager.registerController(Helpdesk);
+ControllerManager.registerController(Sms);
+ControllerManager.registerController(DealProductList);
+ControllerManager.registerController(OrderCheck);
+ControllerManager.registerController(FinalSummary);
+ControllerManager.registerController(SalescenterApp);

@@ -78,6 +78,8 @@ class Deal extends Entity
 		$options = parent::getFilterOptions();
 		$clientFieldsRestrictionManager = new \Bitrix\Crm\Component\EntityList\ClientFieldRestrictionManager();
 		$clientFieldsRestrictionManager->removeRestrictedFieldsFromFilter($options);
+		$observersFieldRestrictionManager = new \Bitrix\Crm\Component\EntityList\ObserversFieldRestrictionManager();
+		$observersFieldRestrictionManager->removeRestrictedFieldsFromFilter($options);
 
 		return $options;
 	}
@@ -115,7 +117,7 @@ class Deal extends Entity
 
 	public function isActivityCountersFilterSupported(): bool
 	{
-		return true;
+		return $this->factory->isCountersEnabled();
 	}
 
 	public function isRecurringSupported(): bool
@@ -139,17 +141,12 @@ class Deal extends Entity
 			'TITLE' => '',
 			'OPPORTUNITY' => '',
 			'DATE_CREATE' => '',
-			'PAYMENT_STAGE' => '',
-			'DELIVERY_STAGE' => '',
+			'PAYMENT_STAGE' => Loc::getMessage('CRM_KANBAN_FIELD_PAYMENT_STAGE'),
+			'DELIVERY_STAGE' => Loc::getMessage('CRM_KANBAN_FIELD_DELIVERY_STAGE'),
 			'CLIENT' => '',
 			'PROBLEM_NOTIFICATION' => '',
-			'OBSERVER' => '',
+			'OBSERVER' => Loc::getMessage('CRM_KANBAN_FIELD_OBSERVER'),
 		];
-	}
-
-	public function getAdditionalEditFields(): array
-	{
-		return (array)$this->getAdditionalEditFieldsFromOptions();
 	}
 
 	public function getStageFieldName(): string
@@ -191,7 +188,7 @@ class Deal extends Entity
 	public function prepareItemCommonFields(array $item): array
 	{
 		$item['PRICE'] = $item['OPPORTUNITY'];
-		$item['DATE'] = $item['DATE_CREATE'];
+		$item['DATE'] = $item['DATE_CREATE'] ?? null;
 
 		$item = parent::prepareItemCommonFields($item);
 
@@ -208,7 +205,7 @@ class Deal extends Entity
 			$shipmentStages = (new ShipmentsRepository())->getShipmentStages($dealIds);
 			foreach ($items as $itemId => $item)
 			{
-				$items[$itemId]['DELIVERY_STAGE'] = $shipmentStages[$itemId];
+				$items[$itemId]['DELIVERY_STAGE'] = $shipmentStages[$itemId] ?? null;
 			}
 		}
 
@@ -328,25 +325,6 @@ class Deal extends Entity
 		return parent::updateItemStage($id, $stageId, $newStateParams, $stages);
 	}
 
-	protected function getItemViaLoadedItems(int $id): Result
-	{
-		$result = new Result();
-
-		$item = ($this->loadedItems[$id] ?? $this->getItem($id));
-		if($item)
-		{
-			$result->setData([
-				'item' => $item,
-			]);
-		}
-		else
-		{
-			$result->addError(new Error('Deal not found'));
-		}
-
-		return $result;
-	}
-
 	public function getFilterLazyLoadParams(): ?array
 	{
 		$path = '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php'
@@ -370,6 +348,21 @@ class Deal extends Entity
 			'callback' => $clientFieldsRestrictionManager->getJsCallback(),
 			'filterId' =>  $this->getGridId(),
 			'filterFields' => $clientFieldsRestrictionManager->getRestrictedFilterFields($this->getFilter()),
+		];
+	}
+
+	public function getObserversFieldRestrictions(): ?array
+	{
+		$observersFieldRestrictionManager = new \Bitrix\Crm\Component\EntityList\ObserversFieldRestrictionManager();
+		if (!$observersFieldRestrictionManager->hasRestrictions())
+		{
+			return null;
+		}
+
+		return [
+			'callback' => $observersFieldRestrictionManager->getJsCallback(),
+			'filterId' =>  $this->getGridId(),
+			'filterFields' => $observersFieldRestrictionManager->getRestrictedFilterFields($this->getFilter()),
 		];
 	}
 
@@ -492,19 +485,6 @@ class Deal extends Entity
 			PhaseSemantics::PROCESS,
 			PhaseSemantics::SUCCESS,
 			PhaseSemantics::FAILURE,
-		];
-	}
-
-	protected function getDefaultSortType(): string
-	{
-		return Sort\Type::BY_LAST_ACTIVITY_TIME;
-	}
-
-	protected function getSupportedSortTypes(): array
-	{
-		return [
-			Sort\Type::BY_ID,
-			Sort\Type::BY_LAST_ACTIVITY_TIME,
 		];
 	}
 }

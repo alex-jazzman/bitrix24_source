@@ -114,7 +114,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->initialize();
 		$this->arResult['ERRORS'] = $this->errors;
 
-		$skipTemplate = $this->arParams['SKIP_TEMPLATE'] === 'Y';
+		$skipTemplate = ($this->arParams['SKIP_TEMPLATE'] ?? null) === 'Y';
 		if (!$skipTemplate)
 		{
 			$this->includeComponentTemplate();
@@ -297,11 +297,15 @@ class CCrmTimelineComponent extends CBitrixComponent
 			$this->arResult['ENABLE_WAIT'] = false;
 		}
 
-		$this->arResult['PROGRESS_SEMANTICS'] = isset($this->arParams['~PROGRESS_SEMANTICS']) ? $this->arParams['~PROGRESS_SEMANTICS'] : '';
+		$this->arResult['PROGRESS_SEMANTICS'] = $this->arParams['~PROGRESS_SEMANTICS'] ?? '';
 
 		$this->arResult['CURRENT_URL'] = $APPLICATION->GetCurPageParam('', array('bxajaxid', 'AJAX_CALL'));
-		$this->arResult['AJAX_ID'] = isset($this->arParams['AJAX_ID']) ? $this->arParams['AJAX_ID'] : '';
-		$this->arResult['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+		$this->arResult['AJAX_ID'] = $this->arParams['AJAX_ID'] ?? '';
+		$this->arResult['PATH_TO_USER_PROFILE'] = CrmCheckPath(
+			'PATH_TO_USER_PROFILE',
+			$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
+			'/company/personal/user/#user_id#/'
+		);
 
 		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeID;
 		$this->arResult['ENTITY_TYPE_NAME'] = $this->entityTypeName;

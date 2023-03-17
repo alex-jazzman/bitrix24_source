@@ -10,6 +10,7 @@ use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Integration\Catalog\Contractor;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
@@ -21,7 +22,6 @@ use Bitrix\Crm\UtmTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
-use Bitrix\Crm\Integration\Catalog\Contractor;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/crm/lib/webform/entity.php');
 
@@ -48,6 +48,8 @@ class CAllCrmContact
 	protected static $TYPE_NAME = 'CONTACT';
 	private static $FIELD_INFOS = null;
 	const DEFAULT_FORM_ID = 'CRM_CONTACT_SHOW_V12';
+
+	private static ?\Bitrix\Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
 
 	/** @var Crm\Entity\Compatibility\Adapter */
 	private $compatibilityAdapter;
@@ -129,6 +131,18 @@ class CAllCrmContact
 		$compatibilityAdapter->addChild($addressAdapter);
 
 		return $compatibilityAdapter;
+	}
+
+	private static function getLastActivityAdapter(): Crm\Entity\Compatibility\Adapter
+	{
+		if (!self::$lastActivityAdapter)
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
+			self::$lastActivityAdapter = new Crm\Entity\Compatibility\Adapter\LastActivity($factory);
+			self::$lastActivityAdapter->setTableAlias(self::TABLE_ALIAS);
+		}
+
+		return self::$lastActivityAdapter;
 	}
 
 	// Service -->
@@ -337,6 +351,8 @@ class CAllCrmContact
 			// add utm fields
 			self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
 			self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Contact);
+
+			self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 		}
 
 		return self::$FIELD_INFOS;
@@ -499,6 +515,8 @@ class CAllCrmContact
 				$tableAliasName
 			)
 		);
+
+		$result += self::getLastActivityAdapter()->getFields();
 
 		return $result;
 	}
@@ -1497,6 +1515,8 @@ class CAllCrmContact
 			*/
 			//endregion
 
+			self::getLastActivityAdapter()->performAdd($arFields, $options);
+
 			//region Rise BeforeAdd event
 			$beforeEvents = GetModuleEvents('crm', 'OnBeforeCrmContactAdd');
 			while ($arEvent = $beforeEvents->Fetch())
@@ -1581,21 +1601,21 @@ class CAllCrmContact
 			else
 			{
 				Bitrix\Crm\Timeline\ContactController::getInstance()->onCreate($ID, array('FIELDS' => $arFields));
-
-				CCrmEntityHelper::registerAdditionalTimelineEvents([
-					'entityTypeId' => \CCrmOwnerType::Contact,
-					'entityId' => $ID,
-					'fieldsInfo' => static::GetFieldsInfo(),
-					'previousFields' => [],
-					'currentFields' => $arFields,
-					'options' => $options,
-					'bindings' => [
-						'entityTypeId' => \CCrmOwnerType::Company,
-						'previous' => [],
-						'current' => $companyBindings,
-					]
-				]);
 			}
+
+			CCrmEntityHelper::registerAdditionalTimelineEvents([
+				'entityTypeId' => \CCrmOwnerType::Contact,
+				'entityId' => $ID,
+				'fieldsInfo' => static::GetFieldsInfo(),
+				'previousFields' => [],
+				'currentFields' => $arFields,
+				'options' => $options,
+				'bindings' => [
+					'entityTypeId' => \CCrmOwnerType::Company,
+					'previous' => [],
+					'current' => $companyBindings,
+				]
+			]);
 
 			EntityAddress::register(
 				CCrmOwnerType::Contact,
@@ -1704,7 +1724,7 @@ class CAllCrmContact
 				//endregion
 
 				$isUntypedCategory = (int)$arFields['CATEGORY_ID'] === 0;
-				if ($isUntypedCategory)
+				if ($isUntypedCategory && Crm\Settings\Crm::isLiveFeedRecordsGenerationEnabled())
 				{
 					CCrmSonetSubscription::RegisterSubscription(
 						CCrmOwnerType::Contact,
@@ -1719,9 +1739,9 @@ class CAllCrmContact
 					: false;
 
 				if (
-					$logEventID
+					$logEventID !== false
 					&& $assignedByID != $createdByID
-					&& (int)$arFields['CATEGORY_ID'] === 0
+					&& $isUntypedCategory
 					&& CModule::IncludeModule("im")
 				)
 				{
@@ -2129,19 +2149,21 @@ class CAllCrmContact
 						}
 					}
 
-					$CCrmEvent = new CCrmEvent();
-					$eventID = $CCrmEvent->Add($arEvent, $this->bCheckPermission);
-					if(is_int($eventID) && $eventID > 0)
+					if ($arEvent['ENTITY_FIELD'] !== 'CONTACT_ID' && $arEvent['ENTITY_FIELD'] !== 'COMPANY_ID')
 					{
-						$fieldID = isset($arEvent['ENTITY_FIELD']) ? $arEvent['ENTITY_FIELD'] : '';
-						if($fieldID === '')
-						{
-							continue;
-						}
+						$CCrmEvent = new CCrmEvent();
+						$eventID = $CCrmEvent->Add($arEvent, $this->bCheckPermission);
+					}
 
-						switch($fieldID)
-						{
-							case 'ASSIGNED_BY_ID':
+					$fieldID = isset($arEvent['ENTITY_FIELD']) ? $arEvent['ENTITY_FIELD'] : '';
+					if($fieldID === '')
+					{
+						continue;
+					}
+
+					switch($fieldID)
+					{
+						case 'ASSIGNED_BY_ID':
 							{
 								$sonetEventData[CCrmLiveFeedEvent::Responsible] = array(
 									'TYPE' => CCrmLiveFeedEvent::Responsible,
@@ -2157,7 +2179,7 @@ class CAllCrmContact
 								);
 							}
 							break;
-							case 'COMPANY_ID':
+						case 'COMPANY_ID':
 							{
 								if(!isset($sonetEventData[CCrmLiveFeedEvent::Owner]))
 								{
@@ -2175,16 +2197,15 @@ class CAllCrmContact
 													? $addedCompanyIDs : array(),
 												//Todo: Remove START_OWNER_COMPANY_ID and FINAL_OWNER_COMPANY_ID when log template will be ready
 												'START_OWNER_COMPANY_ID' => is_array($removedCompanyIDs)
-													&& isset($removedCompanyIDs[0]) ? $removedCompanyIDs[0] : 0,
+												&& isset($removedCompanyIDs[0]) ? $removedCompanyIDs[0] : 0,
 												'FINAL_OWNER_COMPANY_ID' => is_array($addedCompanyIDs)
-													&& isset($addedCompanyIDs[0]) ? $addedCompanyIDs[0] : 0
+												&& isset($addedCompanyIDs[0]) ? $addedCompanyIDs[0] : 0
 											)
 										)
 									);
 								}
 							}
 							break;
-						}
 					}
 				}
 			}
@@ -2260,6 +2281,8 @@ class CAllCrmContact
 			{
 				unset($arFields['HAS_IMOL']);
 			}
+
+			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $arOptions);
 
 			unset($arFields['ID']);
 
@@ -2507,7 +2530,12 @@ class CAllCrmContact
 			$registerSonetEvent = isset($arOptions['REGISTER_SONET_EVENT']) && $arOptions['REGISTER_SONET_EVENT'] === true;
 			$isUntypedCategory = $categoryId === 0;
 
-			if ($bResult && isset($arFields['ASSIGNED_BY_ID']) && $isUntypedCategory)
+			if (
+				$bResult
+				&& isset($arFields['ASSIGNED_BY_ID'])
+				&& $isUntypedCategory
+				&& Crm\Settings\Crm::isLiveFeedRecordsGenerationEnabled()
+			)
 			{
 				CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 					CCrmOwnerType::Contact,
@@ -2564,9 +2592,9 @@ class CAllCrmContact
 						: false;
 
 					if (
-						$logEventID
+						$logEventID !== false
 						&& $sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
-						&& $categoryId === 0
+						&& $isUntypedCategory
 						&& CModule::IncludeModule("im")
 					)
 					{

@@ -16,8 +16,10 @@ use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
-class DealDataProvider extends EntityDataProvider
+class DealDataProvider extends EntityDataProvider implements FactoryOptionable
 {
+	use ForceUseFactoryTrait;
+
 	/** @var DealSettings|null */
 	protected $settings = null;
 
@@ -158,7 +160,14 @@ class DealDataProvider extends EntityDataProvider
 					'type' => 'list',
 					'partial' => true
 				]
-			)
+			),
+			'OBSERVER_IDS' => $this->createField(
+				'OBSERVER_IDS',
+				[
+					'type' => 'entity_selector',
+					'partial' => true,
+				]
+			),
 		);
 
 		if(!$this->settings->checkFlag(DealSettings::FLAG_RECURRING))
@@ -571,7 +580,7 @@ class DealDataProvider extends EntityDataProvider
 				'items' => \CCrmStatus::GetStatusList('DEAL_TYPE')
 			);
 		}
-		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
+		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID', 'OBSERVER_IDS'], true))
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
 			$referenceClass = ($factory ? $factory->getDataClass() : null);
@@ -580,7 +589,7 @@ class DealDataProvider extends EntityDataProvider
 				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
-					'referenceClass' => $referenceClass,
+					'referenceClass' => $fieldID !== 'OBSERVER_IDS' ? $referenceClass : null,
 					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
 					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
 				]

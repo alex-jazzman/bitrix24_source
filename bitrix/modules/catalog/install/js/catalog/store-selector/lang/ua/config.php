@@ -5,4 +5,5 @@ $MESS["CATALOG_STORE_SELECTOR_HAS_PERMISSION_VIEW_STORES_HINT"] = "Недост�
 $MESS["CATALOG_STORE_SELECTOR_HAS_PERMISSION_VIEW_STORES_TITLE"] = "Недостатньо прав";
 $MESS["CATALOG_STORE_SELECTOR_IS_EMPTY_SUBTITLE"] = "Створити новий склад?";
 $MESS["CATALOG_STORE_SELECTOR_IS_EMPTY_TITLE"] = "Склад не знайдено";
+$MESS["CATALOG_STORE_SELECTOR_UNSELECTED"] = "Виберіть або створіть склад";
 $MESS["CATALOG_STORE_SELECTOR_VIEW_NAME_TITLE"] = "Склад";

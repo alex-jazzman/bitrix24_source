@@ -1,4 +1,5 @@
 <?php
+$MESS["REST_SCOPE_BICONNECTOR"] = "Конектор BI-аналітики";
 $MESS["REST_SCOPE_BIZPROC"] = "Бізнес-процеси";
 $MESS["REST_SCOPE_BIZPROC_DESCRIPTION"] = "повний доступ: читання, додавання, зміна та видалення дій бізнес-процесів, роботів, тригерів, читання списку завдань, запуск бізнес-процесів";
 $MESS["REST_SCOPE_CALENDAR"] = "Календар";

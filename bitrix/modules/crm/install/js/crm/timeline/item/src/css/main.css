@@ -4,6 +4,8 @@
 	background-color: var(--crm-timeline__card-color-background);
 	border-radius: var(--crm-timeline__card-border-radius);
 	position: relative;
+	padding-top: var(--ui-space-inset-sm, 12px);
+	padding-bottom: var(--ui-space-inset-sm, 12px);
 }
 
 .crm-timeline__card.--stream-type-pinned {
@@ -17,6 +19,7 @@
 .crm-timeline__card.--log-message {
 	--crm-timeline__card_log-message-white-rgb: 255, 255, 255;
 	background-color: var(--ui-color-base-02, #f8fafb);
+	border: var(--ui-border-width-thin, 1px) solid var(--ui-color-base-20, #dfe0e3);
 	opacity: 1;
 }
 
@@ -56,7 +59,7 @@
 }
 
 .crm-timeline__card-body {
-	padding: 0 var(--ui-space-inset-md, 16px) var(--ui-space-inset-md, 16px) var(--ui-space-inset-md, 16px);
+	padding: 0 var(--ui-space-inset-md, 16px) 0 var(--ui-space-inset-md, 16px);
 	display: flex;
 	align-items: flex-start;
 }
@@ -69,6 +72,10 @@
 	max-width: calc(100% - var(--crm-timeline__icon-size) - 18px);
 	flex: 1;
 	padding: 2px 0;
+}
+
+.crm-timeline__card-container.--without-logo {
+	--crm-timeline__icon-size: 0.00000000001px; /* hack due to the css minifier replaces `0px` to `0` and breaks expression calc(100% - var(--crm-timeline__icon-size) - 18px); */
 }
 
 .crm-timeline__card_link {
@@ -109,6 +116,8 @@
 
 .crm-timeline__card-bottom {
 	display: block;
+	margin-top: 16px;
+	margin-bottom: -12px;
 }
 
 .crm-timeline__card_more-menu .menu-popup-item-icon {

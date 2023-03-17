@@ -4162,6 +4162,10 @@ include('InAppNotifier');
 					this.onReadAction(task);
 					break;
 
+				case 'share':
+					this.onShareAction(task);
+					break;
+
 				default:
 					break;
 			}
@@ -4272,6 +4276,10 @@ include('InAppNotifier');
 
 				case 'read':
 					this.onReadAction(task);
+					break;
+
+				case 'share':
+					this.onShareAction(task);
 					break;
 
 				case 'cancel':
@@ -4673,6 +4681,16 @@ include('InAppNotifier');
 			this.filter.pseudoUpdateCounters(-task.getCounterMyNewCommentsCount(), task);
 			void task.read();
 			this.updateItem(task.id);
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		onShareAction(task)
+		{
+			dialogs.showSharingDialog({
+				message: `${currentDomain}/company/personal/user/${this.currentUser.id}/tasks/task/view/${task.id}/`,
+			});
 		}
 
 		updateTitle(useProgress = false)

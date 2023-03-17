@@ -19,10 +19,10 @@ class EntityFieldProvider
 	const TYPE_VIRTUAL = 'VIRTUAL';
 	protected static $statusTypes = null;
 
-	public static function getFields(array $hiddenTypes = [])
+	public static function getFields(array $hiddenTypes = [], ?int $presetId = null)
 	{
 		$plainFields = array();
-		$fieldsByEntity = static::getFieldsTree($hiddenTypes);
+		$fieldsByEntity = static::getFieldsTree($hiddenTypes, $presetId);
 		foreach($fieldsByEntity as $entityName => $entity)
 		{
 			foreach($entity['FIELDS'] as $field)
@@ -37,9 +37,9 @@ class EntityFieldProvider
 		return $plainFields;
 	}
 
-	public static function getField($fieldCode, $hiddenTypes = [])
+	public static function getField($fieldCode, $hiddenTypes = [], ?int $presetId = null)
 	{
-		$fields = static::getFields($hiddenTypes);
+		$fields = static::getFields($hiddenTypes, $presetId);
 		foreach($fields as $field)
 		{
 			if($field['name'] == $fieldCode)

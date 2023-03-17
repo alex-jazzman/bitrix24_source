@@ -58,39 +58,51 @@ export default class Manager
 
 	#startScriptInternal(scriptId, documentIds, parameters = {}, popup)
 	{
+		let data = {scriptId, documentIds, parameters};
+
+		if (parameters instanceof FormData)
+		{
+			data = parameters;
+			data.set('scriptId', scriptId);
+			documentIds.forEach(id => data.append('documentIds[]', id));
+		}
+
 		ajax.runAction('bizproc.script.start', {
 			analyticsLabel: 'bizprocScriptStart',
-			data: {scriptId, documentIds, parameters}
-		}).then((response) =>
-		{
-			if (response.data.error)
+			data
+		})
+			.then((response) =>
 			{
-				MessageBox.alert(response.data.error);
-			}
-
-			if (response.data.status === 'FILL_PARAMETERS')
-			{
-				this.#showFillParametersPopup(scriptId, documentIds, response.data);
-			}
-			else if (response.data.status === 'INVALID_PARAMETERS')
-			{
-				//error has already shown by MessageBox.alert
-				//no actions to do
-			}
-			else if (response.data.status === 'QUEUED')
-			{
-				if (popup)
+				if (response.data.error)
 				{
-					popup.close();
+					MessageBox.alert(response.data.error);
 				}
 
-				UI.Notification.Center.notify({
-					content: Loc.getMessage('BIZPROC_SCRIPT_MANAGER_START_QUEUED')
-				});
+				if (response.data.status === 'FILL_PARAMETERS')
+				{
+					this.#showFillParametersPopup(scriptId, documentIds, response.data);
+				}
+				else if (response.data.status === 'INVALID_PARAMETERS')
+				{
+					//error has already shown by MessageBox.alert
+					//no actions to do
+				}
+				else if (response.data.status === 'QUEUED')
+				{
+					if (popup)
+					{
+						popup.close();
+					}
 
-				this.#keepAliveQueue(response.data.queueId);
-			}
-		});
+					UI.Notification.Center.notify({
+						content: Loc.getMessage('BIZPROC_SCRIPT_MANAGER_START_QUEUED')
+					});
+
+					this.#keepAliveQueue(response.data.queueId);
+				}
+			})
+			.catch(response => MessageBox.alert(response.errors.pop().message))
+		;
 	}
 
 	#keepAliveQueue(queueId, delay = 500)
@@ -132,13 +144,7 @@ export default class Manager
 					text : Loc.getMessage('BIZPROC_SCRIPT_MANAGER_START_BUTTON_SEND_PARAMS'),
 					color: Button.Color.SUCCESS,
 					onclick: () => {
-						const paramFields = {};
-						for (let field of (new FormData(form)).entries())
-						{
-							paramFields[field[0]] = field[1];
-						}
-
-						this.#startScriptInternal(scriptId, documentIds, paramFields, popup);
+						this.#startScriptInternal(scriptId, documentIds, new FormData(form), popup);
 					}
 				}),
 				new BX.UI.Button({

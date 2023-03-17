@@ -6,3 +6,4 @@ $MESS["CRM_APR_PRODUCT_ID"] = "ID товару";
 $MESS["CRM_APR_ROW_DISCOUNT_RATE"] = "Знижка, %";
 $MESS["CRM_APR_ROW_PRICE_ACCOUNT"] = "Ціна";
 $MESS["CRM_APR_ROW_QUANTITY"] = "Кількість";
+$MESS["CRM_EMPTY_ORDER_ERROR"] = "Замовлення не знайдене.";

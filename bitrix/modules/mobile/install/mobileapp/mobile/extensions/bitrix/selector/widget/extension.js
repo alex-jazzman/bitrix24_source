@@ -22,6 +22,7 @@
 						selectOptions,
 						widgetParams,
 						allowMultipleSelection,
+						canUseRecent,
 						closeOnSelect,
 						events,
 						initSelectedIds,
@@ -46,6 +47,7 @@
 			this.selectOptions = selectOptions || {};
 			this.widgetParams = widgetParams || {};
 			this.allowMultipleSelection = allowMultipleSelection !== false;
+			this.canUseRecent = canUseRecent !== false;
 			this.closeOnSelect = this.allowMultipleSelection === false && closeOnSelect;
 			this.events = events || {};
 
@@ -95,6 +97,7 @@
 			}
 
 			this.provider.setPreselectedItems(this.initSelectedIds);
+			this.provider.setCanUseRecent(this.canUseRecent);
 
 			this.provider.setListener({
 				onFetchResult: this.onProviderFetchResult.bind(this),

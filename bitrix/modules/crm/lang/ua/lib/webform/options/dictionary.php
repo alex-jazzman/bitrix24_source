@@ -19,6 +19,7 @@ $MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_ARCHIVE_HINT"] = "До �
 $MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_AUDIO"] = "Аудіо";
 $MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC"] = "Документи";
 $MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC_HINT"] = "До документів належать PDF-файли, презентації (.ppt, .pptx), таблиці (.xls, xlsx, .csv), текстові файли (.txt, .doc, .docx) та інші.";
+$MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC_MSGVER_1"] = "Документи";
 $MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_IMAGE"] = "Зображення";
 $MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_VIDEO"] = "Відео";
 $MESS["CRM_WEBFORM_OPTIONS_DICT_PERC_FIELD_COMPANY_NAME"] = "Назва компанії";

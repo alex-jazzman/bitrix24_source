@@ -14,6 +14,7 @@
  * @global CAdminPage $adminPage
  * @global CAdminMenu $adminMenu
  * @global CAdminMainChain $adminChain
+ * @global string $SiteExpireDate
  */
 
 use Bitrix\Main\Web\Uri;
@@ -46,7 +47,7 @@ $aOptMenuPos = array();
 if($bShowAdminMenu && class_exists("CUserOptions"))
 {
 	$aOptMenuPos = CUserOptions::GetOption("admin_menu", "pos", array());
-	$bOptMenuMinimized = $aOptMenuPos['ver'] == 'off';
+	$bOptMenuMinimized = isset($aOptMenuPos['ver']) && $aOptMenuPos['ver'] == 'off';
 }
 
 if (!defined('ADMIN_SECTION_LOAD_AUTH') || !ADMIN_SECTION_LOAD_AUTH):
@@ -345,7 +346,7 @@ if ($curPage != "/bitrix/admin/index.php" && !$adminPage->isHideTitle())
 if($USER->IsAuthorized()):
 	if(defined("DEMO") && DEMO == "Y"):
 		$vendor = COption::GetOptionString("main", "vendor", "1c_bitrix");
-		$delta = $GLOBALS['SiteExpireDate'] - time();
+		$delta = $SiteExpireDate-time();
 		$daysToExpire = ($delta < 0? 0 : ceil($delta/86400));
 		$bSaas = (COption::GetOptionString('main', '~SAAS_MODE', "N") == "Y");
 
@@ -395,9 +396,9 @@ if($USER->IsAuthorized()):
 
 	elseif(defined("TIMELIMIT_EDITION") && TIMELIMIT_EDITION == "Y"):
 
-		$delta = $GLOBALS['SiteExpireDate'] - time();
+		$delta = $SiteExpireDate - time();
 		$daysToExpire = ceil($delta / 86400);
-		$sWarnDate = ConvertTimeStamp($GLOBALS['SiteExpireDate'], "SHORT");
+		$sWarnDate = ConvertTimeStamp($SiteExpireDate, "SHORT");
 
 		if ($daysToExpire >= 0 && $daysToExpire < 60)
 		{

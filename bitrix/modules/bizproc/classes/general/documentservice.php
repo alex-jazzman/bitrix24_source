@@ -46,7 +46,7 @@ class CBPDocumentService extends CBPRuntimeService
 			CModule::IncludeModule($moduleId);
 		}
 
-		if (class_exists($entity))
+		if (class_exists($entity) && method_exists($entity, 'GetDocument'))
 		{
 			$this->arDocumentsCache[$k] = call_user_func_array([$entity, "GetDocument"], [$documentId, $documentType]);
 			return $this->arDocumentsCache[$k];
@@ -321,14 +321,25 @@ class CBPDocumentService extends CBPRuntimeService
 					}
 					if (empty($prop['BaseType']))
 					{
-						if (in_array($prop["Type"], ["int", "double", "date", "datetime", "user", "string", "bool", "file", "text", "select"]))
-						{
-							$fields[$key]["BaseType"] = $prop["Type"];
-						}
-						else
-						{
-							$fields[$key]["BaseType"] = "string";
-						}
+						$baseTypes = [
+							"int",
+							"double",
+							"date",
+							"datetime",
+							"user",
+							"string",
+							"bool",
+							"file",
+							"text",
+							"select",
+							'time',
+						];
+
+						$fields[$key]["BaseType"] =
+							in_array($prop["Type"], $baseTypes, true)
+								? $prop["Type"]
+								: 'string'
+						;
 					}
 				}
 			}
@@ -418,8 +429,8 @@ class CBPDocumentService extends CBPRuntimeService
 
 			$documentFieldsString .= "'Name':'".CUtil::JSEscape($arFieldValue["Name"])."',";
 			$documentFieldsString .= "'Type':'".CUtil::JSEscape($arFieldValue["Type"])."',";
-			$documentFieldsString .= "'Multiple':'".CUtil::JSEscape($arFieldValue["Multiple"] ? "Y" : "N")."',";
-			$documentFieldsString .= "'Complex':'".CUtil::JSEscape($arFieldValue["Complex"] ? "Y" : "N")."',";
+			$documentFieldsString .= "'Multiple':'".CUtil::JSEscape(!empty($arFieldValue["Multiple"]) ? "Y" : "N")."',";
+			$documentFieldsString .= "'Complex':'".CUtil::JSEscape(!empty($arFieldValue["Complex"]) ? "Y" : "N")."',";
 
 			$documentFieldsString .= "'Options':";
 			if (array_key_exists("Options", $arFieldValue))
@@ -430,6 +441,11 @@ class CBPDocumentService extends CBPRuntimeService
 					$flTmp = false;
 					foreach ($arFieldValue["Options"] as $k => $v)
 					{
+						if (!is_scalar($v))
+						{
+							continue;
+						}
+
 						if ($flTmp)
 							$documentFieldsString .= ",";
 						$documentFieldsString .= "'".CUtil::JSEscape($k)."':'".CUtil::JSEscape($v)."'";
@@ -474,7 +490,7 @@ class CBPDocumentService extends CBPRuntimeService
 
 			$fieldTypesString .= "'Name':'".CUtil::JSEscape($arTypeValue["Name"])."',";
 			$fieldTypesString .= "'BaseType':'".CUtil::JSEscape($arTypeValue["BaseType"])."',";
-			$fieldTypesString .= "'Complex':'".CUtil::JSEscape($arTypeValue["Complex"] ? "Y" : "N")."',";
+			$fieldTypesString .= "'Complex':'".CUtil::JSEscape(!empty($arTypeValue["Complex"]) ? "Y" : "N")."',";
 			$fieldTypesString .= "'Index':".$ind."";
 
 			$fieldTypesString .= "}";
@@ -642,7 +658,32 @@ $objectName.GetFieldValueByTagName = function(tag, name, form)
 				else
 				{
 					if (ar[i].selectedIndex >= 0)
-						fieldValues[ar[i].name] = ar[i].options[ar[i].selectedIndex].value;
+					{
+						const name = ar[i].name;
+						const value = ar[i].options[ar[i].selectedIndex].value;
+
+						if (name.indexOf("[]", 0) >= 0)
+						{
+							const newName = name.replace(/\[\]/g, "");
+							if ((typeof(fieldValues[newName]) !== 'object') || !(fieldValues[newName] instanceof Array))
+							{
+								if (fieldValues[newName])
+								{
+									fieldValues[newName] = [fieldValues[newName]];
+								}
+								else
+								{
+									fieldValues[newName] = [];
+								}
+							}
+
+							fieldValues[newName][fieldValues[newName].length] = value;
+						}
+						else
+						{
+							fieldValues[name] = value;
+						}
+					}
 				}
 			}
 			else
@@ -1108,7 +1149,8 @@ EOS;
 	 */
 	public function getFieldTypeObject(array $parameterDocumentType, array $property)
 	{
-		$typeClass = $this->getTypeClass($parameterDocumentType, $property['Type']);
+		$type = $property['Type'] ?? null;
+		$typeClass = $this->getTypeClass($parameterDocumentType, $type);
 		if ($typeClass && class_exists($typeClass))
 		{
 			return new FieldType($property, $parameterDocumentType, $typeClass);

@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
@@ -103,9 +102,20 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->getApplication()->SetTitle(htmlspecialcharsbx($this->getTitle()));
 
 		$listFilter = $this->getListFilter();
+
+		// transform ACTIVITY_COUNTER filter to real filter params
+		CCrmEntityHelper::applyCounterFilterWrapper(
+			$this->entityTypeId,
+			$this->getGridId(),
+			\Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+			$listFilter,
+			null
+		);
+
 		$navParams = $this->gridOptions->getNavParams(['nPageSize' => static::DEFAULT_PAGE_SIZE]);
 		$pageSize = (int)$navParams['nPageSize'];
 		$pageNavigation = $this->getPageNavigation($pageSize);
+		$entityTypeName = \CCrmOwnerType::ResolveName($this->entityTypeId);
 		$this->arResult['grid'] = $this->prepareGrid(
 			$listFilter,
 			$pageNavigation,
@@ -114,11 +124,16 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['interfaceToolbar'] = $this->prepareInterfaceToolbar();
 		$this->arResult['jsParams'] = [
 			'entityTypeId' => $this->entityTypeId,
-			'entityTypeName' => \CCrmOwnerType::ResolveName($this->entityTypeId),
+			'entityTypeName' => $entityTypeName,
 			'categoryId' => $this->category ? $this->category->getId() : 0,
 			'gridId' => $this->getGridId(),
 			'backendUrl' => $this->arParams['backendUrl'] ?? null,
+			'isUniversalActivityScenarioEnabled' => \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled(),
+			'isIframe' => $this->isIframe(),
 		];
+		$this->arResult['entityTypeName'] = $entityTypeName;
+		$this->arResult['categoryId'] = $this->category ? $this->category->getId() : 0;
+		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
 
 		$this->includeComponentTemplate();
 	}
@@ -210,9 +225,10 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		else
 		{
 			$order = $this->validateOrder($gridSort['sort']);
-			$list = $this->factory->getItemsFilteredByPermissions(
+			// load only ID of elements
+			$itemsWithIds = $this->factory->getItemsFilteredByPermissions(
 				[
-					'select' => $this->getSelect(),
+					'select' => [Item::FIELD_NAME_ID],
 					'order' => $order,
 					'offset' => $pageNavigation->getOffset(),
 					'limit' => $pageNavigation->getLimit(),
@@ -223,6 +239,34 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 					? \Bitrix\Crm\Service\UserPermissions::OPERATION_EXPORT
 					: \Bitrix\Crm\Service\UserPermissions::OPERATION_READ
 			);
+			$itemIds = [];
+			foreach ($itemsWithIds as $item)
+			{
+				$itemIds[] = $item->getId();
+			}
+			$list = [];
+			if (!empty($itemIds))
+			{
+				// load complete data
+				$itemsWithAllData = $this->factory->getItems([
+					'select' => $this->getSelect(),
+					'filter' => ['@'.Item::FIELD_NAME_ID => $itemIds],
+				]);
+				$items = [];
+				foreach ($itemsWithAllData as $item)
+				{
+					$items[$item->getId()] = $item;
+				}
+				// prepare list in correct order
+				foreach ($itemIds as $itemId)
+				{
+					if ($items[$itemId] ?? null)
+					{
+						$list[] = $items[$itemId];
+					}
+				}
+			}
+
 			$rows = $this->prepareGridRows($list);
 			$totalCount = $this->factory->getItemsCountFilteredByPermissions($listFilter);
 		}

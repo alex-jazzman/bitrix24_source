@@ -60,11 +60,3 @@ export const EditorMode = {
 	view: 1,
 	edit: 2
 };
-
-/** @memberof BX.Crm.Timeline.Types */
-export const Compilation = {
-	productList: 1,
-	orderExists: 2,
-	compilationViewed: 3,
-	newDealCreated: 4,
-};

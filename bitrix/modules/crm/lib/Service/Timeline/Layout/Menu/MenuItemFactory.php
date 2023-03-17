@@ -24,6 +24,14 @@ class MenuItemFactory
 		;
 	}
 
+	public static function createAddFileMenuItem(): MenuItem
+	{
+		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_ADD_FILE')))
+			->setHideIfReadonly()
+			->setSort(9990)
+		;
+	}
+
 	public static function createDownloadFileMenuItem(string $filename = null): MenuItem
 	{
 		$title = (string)Loc::getMessage('CRM_TIMELINE_MENU_DOWNLOAD_FILE');
@@ -48,12 +56,13 @@ class MenuItemFactory
 
 	public static function createFromArray(array $menuItem): MenuItem
 	{
-		if ($menuItem['delimiter'])
+		if (isset($menuItem['delimiter']) && $menuItem['delimiter'])
 		{
 			return new MenuItemDelimiter($menuItem['text'] ?? '');
 		}
 
-		if (is_array($menuItem['items']))
+		$menuItemItems = $menuItem['items'] ?? null;
+		if (is_array($menuItemItems))
 		{
 			$menuItems = [];
 			$index = 0;

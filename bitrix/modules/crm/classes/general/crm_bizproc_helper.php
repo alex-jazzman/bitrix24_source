@@ -45,6 +45,10 @@ class CCrmBizProcHelper
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class;
 		}
+		elseif ($ownerTypeID === CCrmOwnerType::SmartDocument)
+		{
+			$docName = \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class;
+		}
 		elseif(CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID))
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class;
@@ -343,6 +347,35 @@ class CCrmBizProcHelper
 		$ids = static::getActiveDebugEntityIds($entityTypeId);
 
 		return in_array($entityId, $ids, true);
+	}
+
+	public static function isDynamicEntityWithProducts(int $entityTypeId): bool
+	{
+		if (!CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			return false;
+		}
+
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+
+		return $factory && $factory->isLinkWithProductsEnabled();
+	}
+
+	public static function getHowCheckAutomationTourGuideData(int $entityTypeId, int $categoryId, int $userId): ?array
+	{
+		$userOption = \CUserOptions::GetOption('bizproc.automation.guide', 'crm_check_automation', $userId);
+		$entityName = CCrmOwnerType::ResolveName($entityTypeId);
+		$userOptionDocumentType = $userOption['document_type'] ?? null;
+		if (
+			empty($userOption)
+			|| $userOptionDocumentType !== $entityName
+			|| (int)$userOption['category_id'] !== $categoryId
+		)
+		{
+			return null;
+		}
+
+		return $userOption;
 	}
 }
 

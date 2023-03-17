@@ -1,3 +1,4 @@
 <?php
 $MESS["SIMPLELIST_KANBAN_CLIENT"] = "Клієнт";
+$MESS["SIMPLELIST_KANBAN_TOTAL_SUM"] = "Сума та валюта";
 $MESS["SIMPLELIST_KANBAN_TOTAL_SUM_DEAL"] = "Сума угоди";

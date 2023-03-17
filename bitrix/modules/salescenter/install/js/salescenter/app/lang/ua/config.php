@@ -22,6 +22,7 @@ $MESS["SALESCENTER_DATA_UPDATE_ERROR"] = "При оновленні даних �
 $MESS["SALESCENTER_DEFAULT_TITLE"] = "Продажі в чаті";
 $MESS["SALESCENTER_DELIVERY_BLOCK_TEXT"] = "Спосіб";
 $MESS["SALESCENTER_DELIVERY_BLOCK_TITLE"] = "Доставка";
+$MESS["SALESCENTER_DELIVERY_REQUEST_DETAILS"] = "Замовлення докладно";
 $MESS["SALESCENTER_DOCUMENT_SELECTOR_BLOCK_CREATE_NEW_DOCUMENT"] = "Створити за шаблоном";
 $MESS["SALESCENTER_DOCUMENT_SELECTOR_BLOCK_CREATE_NEW_TEMPLATE"] = "Налаштувати шаблони";
 $MESS["SALESCENTER_DOCUMENT_SELECTOR_BLOCK_DOCUMENT_CREATED_LATER_SUFFIX"] = "#TITLE# (буде створений після збереження оплати)";

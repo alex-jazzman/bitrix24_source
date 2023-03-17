@@ -170,6 +170,7 @@ $MESS["LANDING_IDENTIFY_HEADER"] = "Впізнати клієнта";
 $MESS["LANDING_IDENTIFY_MESSAGE_DESCRIPTION"] = "Клієнти заповнюють форми швидко, продажі ростуть!<br>Якщо клієнт заповнював форму на вашому сайті, інформація про нього вже є у вашій CRM. Чому б її не використати? Тепер ваші форми будуть впізнавати клієнта та підставляти дані в потрібні поля. Клієнту більше не потрібно повторно вводити інформацію, наприклад, ім'я, телефон, email. Без сумнівів, легкість заповнення форм буде збільшувати ваші продажі.";
 $MESS["LANDING_IDENTIFY_MESSAGE_HEADER"] = "Функція \"Впізнатия клієнта\" включена!";
 $MESS["LANDING_RULE_CONDITION_VALUE_EMPTY"] = "Не вказано";
+$MESS["LANDING_RULE_CONDITION_VALUE_EMPTY_MSGVER_1"] = "Не вказано";
 $MESS["LANDING_RULE_CONDITION_VALUE_NO"] = "Ні";
 $MESS["LANDING_RULE_CONDITION_VALUE_YES"] = "Так";
 $MESS["LANDING_RULE_ENTRY_ADD_FIELD_LABEL"] = "Обрати поле";
@@ -201,6 +202,7 @@ $MESS["LANDING_SPAM_PROTECTION_CUSTOM_KEYS_CHECKBOX_LABEL"] = "Вказати с
 $MESS["LANDING_SPAM_PROTECTION_KEYS_FORM_HELP_HREF"] = "https://www.google.com/recaptcha/about/";
 $MESS["LANDING_SPAM_PROTECTION_KEYS_FORM_HELP_TEXT"] = "Як отримати ключі?";
 $MESS["LANDING_SPAM_PROTECTION_KEYS_FORM_TITLE"] = "Введіть ключі reCAPTCHA";
+$MESS["LANDING_SPAM_PROTECTION_MESSAGE_WARNING_RECAPTCHA"] = "Google reCAPTCHA є сервісом Google LLC.<br> Підключаючи reCAPTCHA, ви погоджуєтесь із тим, що використання цього сервісу спричинить збір і передачу даних до Google LLC відповідно до <a href=\"#URL_POLICIES_TERMS#\" target=\"_blank\">Загальних положень та умов</a > і <a href=\"#URL_POLICIES_PRIVACY#\" target=\"_blank\">Політики конфіденційності</a> Google LLC.";
 $MESS["LANDING_SPAM_PROTECTION_RECAPTCHA_KEY_FIELD_TITLE"] = "Ключ";
 $MESS["LANDING_SPAM_PROTECTION_RECAPTCHA_SECRET_KEY_FIELD_TITLE"] = "Секретний ключ";
 $MESS["LANDING_SPAM_PROTECTION_TABS_TITLE"] = "Оберіть варіант використання модуля reCAPTCHA";

@@ -1,2 +1,7 @@
 <?php
+$MESS["CALENDAR_SHARING_MAIL_ADD_EVENT_TO_MY_CALENDAR"] = "Додати зустріч у мій календар";
+$MESS["CALENDAR_SHARING_MAIL_CANCEL_EVENT"] = "Скасувати зустріч";
+$MESS["CALENDAR_SHARING_MAIL_CONNECT_TO_VIDEOCONFERENCE"] = "Приєднатися до відеоконференції";
+$MESS["CALENDAR_SHARING_MAIL_CREATE_NEW_EVENT"] = "Створити нову зустріч";
 $MESS["CALENDAR_SHARING_MAIL_MORE_ATTENDEES"] = "Ще учасники";
+$MESS["CALENDAR_SHARING_MAIL_YOU_INVITED"] = "Ви запросили";

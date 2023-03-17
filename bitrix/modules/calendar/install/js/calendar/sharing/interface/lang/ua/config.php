@@ -1,4 +1,20 @@
 <?php
+$MESS["SHARING_BUTTON_TITLE"] = "Гостьовий доступ";
 $MESS["SHARING_COPY_LINK_NOTIFICATION"] = "Посилання скопійоване";
+$MESS["SHARING_DIALOG_CHECKBOX_OFF"] = "ВИМК.";
+$MESS["SHARING_DIALOG_CHECKBOX_ON"] = "УВІМК.";
+$MESS["SHARING_DIALOG_INFO_POPUP"] = "Плануйте зустрічі без довгих листувань. Надішліть посилання, за яким клієнт, партнер або підрядник побачать ваш вільний час і зможуть самі підібрати зручний варіант.\n\nНіхто не побачить ваш розклад, ми покажемо тільки час, коли ви вільні.";
+$MESS["SHARING_DIALOG_MORE_DETAILED"] = "Докладніше";
+$MESS["SHARING_DIALOG_PREVIEW_BLOCK_CONTENT"] = "Наведіть камеру смартфона на QR-код або #LINK#, щоб переглянути, як одержувачі побачать ваш вільний час у календарі.";
+$MESS["SHARING_DIALOG_PREVIEW_BLOCK_CONTENT_LINK"] = "перейдіть за посиланням";
+$MESS["SHARING_DIALOG_SHARING_BLOCK_COPY_LINK_BUTTON"] = "Копіювати посилання";
 $MESS["SHARING_DIALOG_SHARING_BLOCK_COPY_LINK_BUTTON_COPIED"] = "Скопійовано";
+$MESS["SHARING_DIALOG_SHARING_BLOCK_DISABLED_COPY_LINK_BUTTON_POPUP"] = "Щоб поділитись посиланням, відкрийте доступ до календаря.";
+$MESS["SHARING_DIALOG_SHARING_BLOCK_TITLE"] = "Посилання на календар";
+$MESS["SHARING_DIALOG_SHARING_HINT"] = "Надішліть посилання клієнту, партнеру, підряднику – вони самі знайдуть зручний час для зустрічі та додадуть подію у ваш календар.";
+$MESS["SHARING_INFO_POPUP_CONTENT_1"] = "Плануйте зустрічі без довгих листувань. Надішліть посилання, за яким клієнт, партнер або підрядник побачать ваш вільний час і зможуть самі підібрати зручний варіант.";
+$MESS["SHARING_INFO_POPUP_CONTENT_2"] = "Ніхто не побачить ваш розклад, ми покажемо тільки час, коли ви вільні.";
 $MESS["SHARING_WARNING_POPUP_CANCEL_BUTTON"] = "Скасувати";
+$MESS["SHARING_WARNING_POPUP_CONTENT"] = "Під час повторного ввімкнення доступу з'явиться нове гостьове посилання, доступ за старим посиланням буде неможливий.";
+$MESS["SHARING_WARNING_POPUP_SUBMIT_BUTTON"] = "Закрити доступ";
+$MESS["SHARING_WARNING_POPUP_TITLE"] = "Ви вимикаєте доступ за посиланням";

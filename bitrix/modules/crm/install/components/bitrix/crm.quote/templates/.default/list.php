@@ -43,6 +43,16 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Quot
 }
 else
 {
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.entity.counter.panel',
+		'',
+		array(
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::QuoteName,
+			'EXTRAS' => array(),
+			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_QUOTE_LIST']
+		)
+	);
+
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	$APPLICATION->IncludeComponent(
@@ -91,6 +101,7 @@ else
 				'PATH_TO_QUOTE_SHOW' => $arResult['PATH_TO_QUOTE_SHOW'],
 				'PATH_TO_QUOTE_EDIT' => $arResult['PATH_TO_QUOTE_EDIT'],
 				'PATH_TO_QUOTE_KANBAN' => $arResult['PATH_TO_QUOTE_KANBAN'],
+				'PATH_TO_QUOTE_DEADLINES' => $arResult['PATH_TO_QUOTE_DEADLINES'],
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
 			],

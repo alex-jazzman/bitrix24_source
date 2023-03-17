@@ -19,8 +19,8 @@ $pageId = 'user_tasks';
 $userId = (int)$arResult['VARIABLES']['user_id'];
 $templateId = (int)$arResult['VARIABLES']['template_id'];
 $action = $arResult['VARIABLES']['action'];
-//tmp remove after tasks 22.1600.100 korobka
-if (true)
+
+if (Context::getCurrent()->getRequest()->get('IFRAME'))
 {
 	include("util_menu.php");
 	include("util_profile.php");
@@ -79,7 +79,7 @@ if (true)
 			'bitrix:ui.sidepanel.wrapper',
 			'',
 			[
-				// 'PAGE_MODE' => false,
+				'PAGE_MODE' => false,
 				'POPUP_COMPONENT_NAME' => 'bitrix:tasks.task.template',
 				'POPUP_COMPONENT_TEMPLATE_NAME' => $popupComponentTemplate,
 				'POPUP_COMPONENT_PARAMS' => $popupComponentParams,

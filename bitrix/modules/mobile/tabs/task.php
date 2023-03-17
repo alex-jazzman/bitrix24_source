@@ -244,17 +244,17 @@ class Task implements Tabable
 			'useLetterImage' => true,
 			'color' => '#fabb3f',
 			'imageUrl' => 'favorite/icon-tasks.png',
-		];;
+		];
 
 		$data = $this->getDataInternal();
-		if ($data['component'])
+		if (!empty($data['component']))
 		{
 			$result['params']= [
 				'onclick' => "BX.postComponentEvent('taskbackground::taskList::open', [{ownerId: {$this->context->userId}}], 'background');",
 				'counter' => 'tasks_total',
 			];
 		}
-		else if ($data['page'])
+		elseif (!empty($data['page']))
 		{
 			$result['params'] = $data['page'];
 			$result['params']['counter'] = 'tasks_total';

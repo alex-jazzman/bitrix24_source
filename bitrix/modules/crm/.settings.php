@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
 
 return array(
@@ -143,11 +144,17 @@ return array(
 			'crm.service.broker.activity' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Activity',
 			],
+			'crm.service.broker.quote' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Quote',
+			],
 			'crm.service.director' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Director',
 			],
 			'crm.service.eventhistory' => [
 				'className' => '\\Bitrix\\Crm\\Service\\EventHistory',
+			],
+			'crm.service.relation.registrar' => [
+				'className' => '\\Bitrix\\Crm\\Relation\\Registrar',
 			],
 			'crm.service.typesMap' => [
 				'className' => '\\Bitrix\\Crm\\Service\\TypesMap',
@@ -176,6 +183,9 @@ return array(
 			'crm.kanban.entity.lead' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Lead',
 			],
+			'crm.kanban.entity.lead.activities' => [
+				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\LeadActivities',
+			],
 			'crm.kanban.entity.deal' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Deal',
 			],
@@ -194,6 +204,9 @@ return array(
 			'crm.kanban.entity.quote' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Quote',
 			],
+			'crm.kanban.entity.quote.deadlines' => [
+				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\QuoteDeadlines',
+			],
 			'crm.kanban.entity.order' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Order',
 			],
@@ -202,6 +215,9 @@ return array(
 			],
 			'crm.kanban.entity.smartInvoice' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\SmartInvoice',
+			],
+			'crm.kanban.entity.smartInvoiceDeadlines' => [
+				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\SmartInvoiceDeadlines',
 			],
 			'crm.kanban.entity.smartDocument' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\SmartDocument',
@@ -330,6 +346,14 @@ return array(
 			'crm.integration.sign' => [
 				'className' => \Bitrix\Crm\Service\Integration\Sign::class,
 			],
+			'crm.lib.filter.activity.prepareactivityfilter' => [
+				'className' => \Bitrix\Crm\Filter\Activity\PrepareActivityFilter::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Main\Engine\CurrentUser::get()->getId()
+					];
+				},
+			]
 		],
 		'readonly' => true,
 	],
@@ -406,7 +430,15 @@ return array(
 						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartDocument'
 					],
 				],
+				[
+					'entityId' => 'country',
+					'provider' => [
+						'moduleId' => 'crm',
+						'className' => CountryProvider::class,
+					],
+				],
 			],
+			'extensions' => ['crm.entity-selector'],
 		],
 		'readonly' => true,
 	],

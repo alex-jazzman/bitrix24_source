@@ -33,7 +33,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						users: this.state.entityList.map((user) => ({
 							id: user.id,
 							name: user.title,
-							avatar: this.getImageUrl(user.imageUrl || DEFAULT_AVATAR),
+							avatar: user.imageUrl,
 							workPosition: (user.customData && user.customData.position ? user.customData.position : ''),
 						})),
 						testId: this.testId,

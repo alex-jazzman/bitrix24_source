@@ -659,6 +659,12 @@ $arUrlRewrite = array(
 		"ID" => "",
 		"PATH" => "/marketing/toloka.php",
 	),
+	[
+		"CONDITION" => "#^/marketing/master-yandex/#",
+		"RULE" => "",
+		"ID" => "",
+		"PATH" => "/marketing/master-yandex.php",
+	],
 	array(
 		"CONDITION" => "#^/marketing/config/role/#",
 		"RULE" => "",

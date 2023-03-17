@@ -38,7 +38,7 @@ jn.define('tasks/layout/task/fields/relatedTasks', (require, exports, module) =>
 				},
 				TaskField({
 					readOnly: true,
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_RELATED_TASKS'),
+					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_RELATED_TASKS_MSGVER_1'),
 					multiple: true,
 					value: Object.keys(this.state.relatedTasks),
 					config: {

@@ -8,4 +8,5 @@ $MESS["PROVIDER_WIDGET_CREATE_ITEM"] = "Створити елемент";
 $MESS["PROVIDER_WIDGET_CREATING_ITEM"] = "Створення елемента...";
 $MESS["PROVIDER_WIDGET_DONE"] = "Готово";
 $MESS["PROVIDER_WIDGET_SELECT"] = "Вибрати";
+$MESS["PROVIDER_WIDGET_START_TYPING_TO_CREATE"] = "Почніть друкувати для створення елемента";
 $MESS["PROVIDER_WIDGET_START_TYPING_TO_SEARCH"] = "Почніть друкувати для пошуку елементів";

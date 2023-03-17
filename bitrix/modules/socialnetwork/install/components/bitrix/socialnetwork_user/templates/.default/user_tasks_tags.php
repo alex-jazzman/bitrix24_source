@@ -13,8 +13,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Ui\Filter\Task;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 
 if (Loader::includeModule('tasks'))
 {

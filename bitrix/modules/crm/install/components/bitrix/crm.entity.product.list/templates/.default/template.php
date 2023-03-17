@@ -97,7 +97,8 @@ $editorConfig = [
 	'allowEdit' => $settings['ALLOW_EDIT'],
 	'allowedStores' => $arResult['ALLOWED_STORES'],
 	'allowEntityReserve' => $arResult['ALLOW_ENTITY_RESERVE'],
-	'allowProductView' => $arResult['ALLOW_PRODUCT_VIEW'],
+	'allowReservation' => $arResult['ALLOW_RESERVATION'],
+	'allowProductView' => $arResult['ALLOW_PRODUCT_VIEW'] ?? null,
 	'allowDiscountChange' => $arResult['ALLOW_DISCOUNT_CHANGE'],
 	'disabledAddRowButton' => $disabledAddRowButton,
 	'disabledSelectProductInput' => $disabledAddRowButton,
@@ -193,6 +194,8 @@ $grid['ROWS']['template_0'] = [
 	'SORT' => null,
 	'IS_NEW' => 'N',
 	'TYPE' => Crm\ProductType::TYPE_PRODUCT,
+	'SKU_PROPERTIES' => [],
+	'PRODUCT_PROPERTIES' => [],
 ];
 
 $rows = [];
@@ -253,7 +256,7 @@ foreach ($grid['ROWS'] as $product)
 		'MEASURE_CODE' => $rawProduct['MEASURE_CODE'],
 		'MEASURE_NAME' => $rawProduct['MEASURE_NAME'],
 		'SORT' => $rawProduct['SORT'],
-		'STORE_ID' => $rawProduct['STORE_ID'],
+		'STORE_ID' => $rawProduct['STORE_ID'] ?? null,
 		'STORE_TITLE' => $rawProduct['STORE_TITLE'],
 		'STORE_AVAILABLE' => $rawProduct['STORE_AVAILABLE'],
 		'STORE_AMOUNT' => $rawProduct['STORE_AMOUNT'],
@@ -265,11 +268,11 @@ foreach ($grid['ROWS'] as $product)
 		'DEDUCTED_QUANTITY' => $rawProduct['DEDUCTED_QUANTITY'],
 		'DATE_RESERVE' => $rawProduct['DATE_RESERVE'],
 		'DATE_RESERVE_END' => $rawProduct['DATE_RESERVE_END'],
-		'RESERVE_ID' => $rawProduct['RESERVE_ID'],
+		'RESERVE_ID' => $rawProduct['RESERVE_ID'] ?? null,
 		'IS_NEW' => $rawProduct['IS_NEW'],
-		'SKU_TREE' => $rawProduct['SKU_TREE'],
-		'DETAIL_URL' => $rawProduct['DETAIL_URL'],
-		'IMAGE_INFO' => $rawProduct['IMAGE_INFO'],
+		'SKU_TREE' => $rawProduct['SKU_TREE'] ?? null,
+		'DETAIL_URL' => $rawProduct['DETAIL_URL'] ?? null,
+		'IMAGE_INFO' => $rawProduct['IMAGE_INFO'] ?? null,
 		'TYPE' => $rawProduct['TYPE'] ?? Crm\ProductType::TYPE_PRODUCT,
 	];
 	$selectorId = 'crm_grid_'.$rowId;
@@ -499,6 +502,13 @@ foreach ($grid['ROWS'] as $product)
 	];
 	// end region SUM
 
+
+	// region PURCHASING_PRICE
+
+	$purchasingPriceColumn = $rawProduct['SKU_PROPERTIES']['PURCHASING_PRICE_FORMATTED'] ?? null;
+
+	// end region PURCHASING_PRICE
+
 	$reserveInfo =
 		$rawProduct['INPUT_RESERVE_QUANTITY'] !== null
 			? $rawProduct['INPUT_RESERVE_QUANTITY'] . " " . $measureName
@@ -515,7 +525,7 @@ foreach ($grid['ROWS'] as $product)
 			: ''
 	;
 	$storeAvailable =
-		$rawProduct['STORE_AVAILABLE'] !== null && in_array((int)$rawProduct['STORE_ID'], $component->getAllowedStories(), true)
+		$rawProduct['STORE_AVAILABLE'] !== null && in_array((int)($rawProduct['STORE_ID'] ?? 0), $component->getAllowedStories(), true)
 			? $rawProduct['STORE_AVAILABLE'] . " " . $measureName
 			: ''
 	;
@@ -539,6 +549,18 @@ foreach ($grid['ROWS'] as $product)
 		$columns['TAX_INCLUDED'] = $taxIncludedColumn;
 		$columns['TAX_SUM'] = '<span data-name="TAX_SUM">' . $taxSumColumn . '</span>';
 	}
+
+
+	if (!empty($arResult['USER_FIELD_COLUMNS']))
+	{
+		foreach ($arResult['USER_FIELD_COLUMNS'] as $propName)
+		{
+			$value = $rawProduct[$propName] ?? '';
+			$columns[$propName] = "<span data-name='{$propName}'>{$value}</a>";
+		}
+	}
+
+	$columns['PURCHASING_PRICE_FORMATTED'] = "<span data-name='PURCHASING_PRICE_FORMATTED'>{$purchasingPriceColumn}</a>";
 
 	$rows[] = [
 		'id' => $rawProduct['ID'] === $productIdMask ? 'template_0' : $rawProduct['ID'],
@@ -613,6 +635,7 @@ foreach ($rows as $key => $row)
 		[
 			'GRID_ID' => $gridId,
 			'HEADERS' => $grid['COLUMNS'],
+			'HEADERS_SECTIONS' => $grid['HEADERS_SECTIONS'],
 			// 'ROW_LAYOUT' => $rowLayout,
 			'SORT' => $grid['SORT'],
 			'SORT_VARS' => $grid['SORT_VARS'],
@@ -635,6 +658,7 @@ foreach ($rows as $key => $row)
 			'ALLOW_ROWS_SORT_IN_EDIT_MODE' => true,
 			'ALLOW_ROWS_SORT_INSTANT_SAVE' => false,
 			'ENABLE_ROW_COUNT_LOADER' => false,
+			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HIDE_FILTER' => true,
 			'ENABLE_COLLAPSIBLE_ROWS' => false,
 			'ADVANCED_EDIT_MODE' => true,
@@ -686,68 +710,62 @@ foreach ($rows as $key => $row)
 		</div>
 		<?php
 	}
+
+	function formatTotalAmount($total, $currencyId, $fieldName): string
+	{
+		$formattedValue =
+			'<span class="crm-product-list-result-grid-total" data-total="' . $fieldName . '">'
+			. \CCurrencyLang::CurrencyFormat($total, $currencyId, false)
+			. '</span>'
+		;
+
+		return \CCurrencyLang::getPriceControl($formattedValue, $currencyId);
+	}
+
 	?>
 	<div class="crm-entity-total-wrapper crm-product-list-page-content">
 		<div class="crm-product-list-result-container" id="<?=$productTotalContainerId?>">
 			<table class="crm-product-list-payment-side-table">
 				<tr class="crm-product-list-payment-side-table-row">
 					<td><?=Loc::getMessage('CRM_PRODUCT_TOTAL_BEFORE_DISCOUNT')?>:</td>
-					<td>
-						<span data-total="totalWithoutDiscount">
-							<?=\CCurrencyLang::CurrencyFormat($arResult['TOTAL_BEFORE_DISCOUNT'], $currency['ID'], false)?>
-						</span>
-						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
+					<td class="crm-product-list-payment-side-table-column">
+						<?= formatTotalAmount($arResult['TOTAL_BEFORE_DISCOUNT'], $currency['ID'], 'totalWithoutDiscount') ?>
 					</td>
 				</tr>
 				<tr class="crm-product-list-payment-side-table-row">
 					<td><?=Loc::getMessage('CRM_DELIVERY_TOTAL')?>:</td>
-					<td>
-						<span data-total="totalDelivery">
-							<?=\CCurrencyLang::CurrencyFormat($arResult['TOTAL_DELIVERY_SUM'], $currency['ID'], false)?>
-						</span>
-						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
+					<td class="crm-product-list-payment-side-table-column">
+						<?= formatTotalAmount($arResult['TOTAL_DELIVERY_SUM'], $currency['ID'], 'totalDelivery') ?>
 					</td>
 				</tr>
 				<tr class="crm-product-list-payment-side-table-row crm-product-list-result-grid-benefit">
 					<td>
 						<?=Loc::getMessage('CRM_PRODUCT_TOTAL_DISCOUNT')?>:
 					</td>
-					<td>
-						<span data-total="totalDiscount">
-							<?=\CCurrencyLang::CurrencyFormat($arResult['TOTAL_DISCOUNT'], $currency['ID'], false)?>
-						</span>
-						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
+					<td class="crm-product-list-payment-side-table-column">
+						<?= formatTotalAmount($arResult['TOTAL_DISCOUNT'], $currency['ID'], 'totalDiscount') ?>
 					</td>
 				</tr>
 				<tr class="crm-product-list-payment-side-table-row">
 					<td><?=Loc::getMessage('CRM_PRODUCT_TOTAL_BEFORE_TAX')?>:</td>
-					<td>
-						<span data-total="totalWithoutTax">
-							<?=\CCurrencyLang::CurrencyFormat($arResult['TOTAL_BEFORE_TAX'], $currency['ID'], false)?>
-						</span>
-						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
+					<td class="crm-product-list-payment-side-table-column">
+						<?= formatTotalAmount($arResult['TOTAL_BEFORE_TAX'], $currency['ID'], 'totalWithoutTax') ?>
 					</td>
 				</tr>
 				<tr class="crm-product-list-payment-side-table-row">
 					<td class="crm-product-list-payment-side-table-td-border">
 						<?=Loc::getMessage('CRM_PRODUCT_TOTAL_TAX')?>:
 					</td>
-					<td class="crm-product-list-payment-side-table-td-border">
-						<span data-total="totalTax">
-							<?=\CCurrencyLang::CurrencyFormat($arResult['TOTAL_TAX'], $currency['ID'], false)?>
-						</span>
-						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
+					<td class="crm-product-list-payment-side-table-td-border crm-product-list-payment-side-table-column">
+						<?= formatTotalAmount($arResult['TOTAL_TAX'], $currency['ID'], 'totalTax') ?>
 					</td>
 				</tr>
 				<tr class="crm-product-list-payment-side-table-row">
 					<td class="crm-product-list-result-grid-total-big">
 						<?=Loc::getMessage('CRM_PRODUCT_SUM_TOTAL')?>:
 					</td>
-					<td class="crm-product-list-result-grid-total-big">
-						<span data-total="totalCost">
-							<?=\CCurrencyLang::CurrencyFormat($arResult['TOTAL_SUM'], $currency['ID'], false)?>
-						</span>
-						<span data-role="currency-wrapper" class="crm-product-list-result-grid-item-currency-symbol"><?=$currency['TEXT']?></span>
+					<td class="crm-product-list-result-grid-total-big crm-product-list-payment-side-table-column">
+						<?= formatTotalAmount($arResult['TOTAL_SUM'], $currency['ID'], 'totalCost') ?>
 					</td>
 				</tr>
 			</table>

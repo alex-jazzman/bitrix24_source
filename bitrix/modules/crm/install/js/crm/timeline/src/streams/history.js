@@ -1,5 +1,5 @@
 import Stream from "../stream";
-import {Item as ItemType, Order as OrderType, Delivery as DeliveryType, Compilation as CompilationType} from "../types";
+import {Item as ItemType, Order as OrderType, Delivery as DeliveryType} from "../types";
 import HistoryItem from "../items/history";
 import Modification from "../items/modification";
 import Conversion from "../items/conversion";
@@ -9,7 +9,6 @@ import Call from "../items/call";
 import Meeting from "../items/meeting";
 import Task from "../items/task";
 import WebForm from "../items/webform";
-import Sms from "../items/sms";
 import Request from "../items/request";
 import OpenLine from "../items/openline";
 import Rest from "../items/rest";
@@ -17,13 +16,8 @@ import Visit from "../items/visit";
 import Zoom from "../items/zoom";
 import OrderCreation from "../items/order-creation";
 import OrderModification from "../items/order-modification";
-import StoreDocumentCreation from "../items/store-document-creation";
-import StoreDocumentModification from "../items/store-document-modification";
 import ExternalNoticeStatusModification from "../items/external-notice-status-modification";
 import ExternalNoticeModification from "../items/external-notice-modification";
-import OrderCheck from "../items/order-check";
-import FinalSummary from "../items/final-summary";
-import FinalSummaryDocuments from "../items/final-summary-documents";
 import Creation from "../items/creation";
 import Restoration from "../items/restoration";
 import Link from "../items/link";
@@ -577,7 +571,6 @@ export default class History extends Stream
 		);
 		const vueComponentId = 'TYPE_' + typeCategoryId + (providerId ? '_' + providerId : '');
 		const vueComponentsMap = new Map([
-			['TYPE_' + BX.CrmActivityType.provider + '_CRM_NOTIFICATION', BX.Crm.Timeline.Notification],
 			['TYPE_' + BX.CrmActivityType.provider + '_CRM_DELIVERY', BX.Crm.Timeline.DeliveryActivity],
 		]);
 		const vueComponent = vueComponentsMap.has(vueComponentId) ? vueComponentsMap.get(vueComponentId) : null;
@@ -651,21 +644,6 @@ export default class History extends Stream
 						container: this._wrapper,
 						activityEditor: this._activityEditor,
 						data: data
-					}
-				);
-			}
-			else if (providerId === 'CRM_SMS')
-			{
-				return Sms.create(
-					data["ID"],
-					{
-						history: this._history,
-						fixedHistory: this._fixedHistory,
-						container: this._wrapper,
-						activityEditor: this._activityEditor,
-						data: data,
-						smsStatusDescriptions: this._manager.getSetting('smsStatusDescriptions', {}),
-						smsStatusSemantics: this._manager.getSetting('smsStatusSemantics', {}),
 					}
 				);
 			}
@@ -803,75 +781,6 @@ export default class History extends Stream
 		{
 			return OrderModification.create(data["ID"], settings);
 		}
-		else if (typeId === OrderType.encourageBuyProducts)
-		{
-			settings.vueComponent = BX.Crm.Timeline.EncourageBuyProducts;
-			return HistoryItem.create(data["ID"], settings);
-		}
-	}
-
-	createStoreDocumentItem(data)
-	{
-		const entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
-		const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
-		if (entityId !== BX.CrmEntityType.enumeration.storeDocument && entityId !== BX.CrmEntityType.enumeration.shipmentDocument)
-		{
-			return null;
-		}
-
-		const settings = {
-			history: this._history,
-			fixedHistory: this._fixedHistory,
-			container: this._wrapper,
-			activityEditor: this._activityEditor,
-			data: data
-		};
-
-		if (typeId === ItemType.creation)
-		{
-			return StoreDocumentCreation.create(data["ID"], settings);
-		}
-		else if (typeId === ItemType.modification)
-		{
-			return StoreDocumentModification.create(data["ID"], settings);
-		}
-	}
-
-	createProductCompilationItem(data)
-	{
-		var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
-		var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
-		if(entityId !== BX.CrmEntityType.enumeration.deal)
-		{
-			return null;
-		}
-
-		var settings = {
-			history: this._history,
-			fixedHistory: this._fixedHistory,
-			container: this._wrapper,
-			activityEditor: this._activityEditor,
-			data: data
-		};
-
-		if (typeId === CompilationType.productList)
-		{
-			settings.vueComponent = BX.Crm.Timeline.ProductCompilationList;
-		}
-		else if (typeId === CompilationType.orderExists)
-		{
-			settings.vueComponent = BX.Crm.Timeline.CompilationOrderNotice;
-		}
-		else if (typeId === CompilationType.compilationViewed)
-		{
-			settings.vueComponent = BX.Crm.Timeline.ProductCompilationViewed;
-		}
-		else if (typeId === CompilationType.newDealCreated)
-		{
-			settings.vueComponent = BX.Crm.Timeline.NewDealCreated;
-		}
-
-		return BX.CrmHistoryItem.create(data["ID"], settings);
 	}
 
 	createExternalNotificationItem(data)
@@ -970,53 +879,9 @@ export default class History extends Stream
 		{
 			return this.createOrderEntityItem(data);
 		}
-		else if(typeId === ItemType.productCompilation)
-		{
-			return this.createProductCompilationItem(data);
-		}
-		else if (typeId === ItemType.storeDocument)
-		{
-			return this.createStoreDocumentItem(data);
-		}
 		else if (typeId === ItemType.externalNotification)
 		{
 			return this.createExternalNotificationItem(data);
-		}
-		else if (typeId === ItemType.orderCheck)
-		{
-			return OrderCheck.create(
-				data["ID"],
-				{
-					history: this._history,
-					container: this._wrapper,
-					activityEditor: this._activityEditor,
-					data: data
-				}
-			);
-		}
-		else if (typeId === ItemType.finalSummary)
-		{
-			return FinalSummary.create(
-				data["ID"],
-				{
-					history: this._history,
-					container: this._wrapper,
-					activityEditor: this._activityEditor,
-					data: data
-				}
-			);
-		}
-		else if (typeId === ItemType.finalSummaryDocuments)
-		{
-			return FinalSummaryDocuments.create(
-				data["ID"],
-				{
-					history: this._history,
-					container: this._wrapper,
-					activityEditor: this._activityEditor,
-					data: data
-				}
-			);
 		}
 		else if (typeId === ItemType.creation)
 		{

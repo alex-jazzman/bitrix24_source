@@ -20,6 +20,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\Ui\Filter\Task;
 
 $pageId = "group_tasks";

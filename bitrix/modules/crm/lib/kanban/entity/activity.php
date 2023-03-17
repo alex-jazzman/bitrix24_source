@@ -64,7 +64,7 @@ trait Activity
 		$activities = $this->getAllActivities($ownerTypeId, $ownerId);
 		foreach ($activities as $activity)
 		{
-			$datetime = DateTime::createFromText($activity['DEADLINE']);
+			$datetime = DateTime::createFromUserTime($activity['DEADLINE']);
 			if ($datetime < $currentDate)
 			{
 				return true;
@@ -130,7 +130,7 @@ trait Activity
 		if ($activity)
 		{
 			$hasOnlyIncomingActivities = false;
-			$activityDeadline = DateTime::createFromText($activity['DEADLINE']);
+			$activityDeadline = DateTime::createFromUserTime($activity['DEADLINE']);
 		}
 		else
 		{
@@ -185,6 +185,43 @@ trait Activity
 			->setCurrentDeadline($activityDeadline)
 			->getDeadline($statusTypeId)
 		;
+	}
+
+	protected function getEntityActivities(): EntityActivities
+	{
+		if (!$this->entityActivities)
+		{
+			$this->entityActivities = new EntityActivities($this->getTypeId(), $this->getCategoryId());
+		}
+
+		return $this->entityActivities;
+	}
+
+	public function getStageFieldName(): string
+	{
+		return EntityActivities::ACTIVITY_STAGE_ID;
+	}
+
+	public function fillStageTotalSums(array $filter, array $runtime, array &$stages): void
+	{
+		foreach ($stages as &$stage)
+		{
+			$stage['count'] = $this->getEntityActivities()->calculateTotalForStage($stage['id'], $filter);
+		}
+	}
+
+	public function getItems(array $parameters): \CDBResult
+	{
+		$parameters = $this->getEntityActivities()->prepareItemsListParams($parameters);
+
+		$columnId = $parameters['columnId'] ?? '';
+		$filter = $parameters['filter'] ?? [];
+		return $this->getEntityActivities()->prepareItemsResult($columnId, parent::getItems($parameters), $filter);
+	}
+
+	public function applyCountersFilter(array &$filter): void
+	{
+		// do nothing, $filter['ACTIVITY_COUNTER'] will be applied in $this->getItems()
 	}
 
 	// temporary not used, but maybe still useful

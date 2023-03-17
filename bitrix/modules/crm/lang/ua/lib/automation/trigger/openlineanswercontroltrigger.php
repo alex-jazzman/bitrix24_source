@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_CONDITION"] = "Поля чату";
 $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_DESCRIPTION"] = "Змінює стадію, якщо менеджер занадто пізно відреагує на перше звернення клієнта.";
 $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_FIELD_ANSWER_TIME"] = "Час відповіді (секунди)";
 $MESS["CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_FIELD_CONFIG_ID"] = "Відкрита лінія";

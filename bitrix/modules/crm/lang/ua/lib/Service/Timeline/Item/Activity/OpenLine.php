@@ -11,3 +11,4 @@ $MESS["CRM_TIMELINE_BUTTON_SEE_CHAT"] = "Переглянути";
 $MESS["CRM_TIMELINE_TAG_CHAT_NOT_READ"] = "Непереглянуті";
 $MESS["CRM_TIMELINE_TITLE_OPEN_LINE"] = "Чат із клієнтом";
 $MESS["CRM_TIMELINE_TITLE_OPEN_LINE_DONE"] = "Чат із клієнтом завершено";
+$MESS["CRM_TIMELINE_TITLE_OPEN_LINE_MSGVER_1"] = "Чат із клієнтом";

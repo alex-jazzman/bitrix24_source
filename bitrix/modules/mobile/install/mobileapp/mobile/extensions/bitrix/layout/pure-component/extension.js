@@ -8,8 +8,18 @@ jn.define('layout/pure-component', (require, exports, module) => {
 	const globalScope = this;
 	const isBeta = Application.getApiVersion() >= 44 && Application.isBeta();
 
+	/**
+	 * @class PureComponent
+	 */
 	class PureComponent extends LayoutComponent
 	{
+		constructor(props)
+		{
+			super(props);
+
+			this.isPureComponentUpdateControlled = true;
+		}
+
 		shouldComponentUpdate(nextProps, nextState)
 		{
 			// some version of Android had a bug with nextState wrapped in an array
@@ -23,7 +33,7 @@ jn.define('layout/pure-component', (require, exports, module) => {
 				log(this.constructor.name, this.props, nextProps, this.state, nextState);
 			}
 
-			return hasChanged;
+			return (this.isPureComponentUpdateControlled ? hasChanged : true);
 		}
 
 		/**
@@ -32,6 +42,16 @@ jn.define('layout/pure-component', (require, exports, module) => {
 		isLogSuppressed()
 		{
 			return false;
+		}
+
+		enablePureComponentUpdateControl()
+		{
+			this.isPureComponentUpdateControlled = false;
+		}
+
+		disablePureComponentUpdateControl()
+		{
+			this.isPureComponentUpdateControlled = false;
 		}
 	}
 

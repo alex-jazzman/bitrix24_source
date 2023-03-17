@@ -1,0 +1,4 @@
+<?php
+$MESS["CALENDAR_SHARING_EVENT_ATTENDEE_STATUS_N"] = "Запрошення відхилено";
+$MESS["CALENDAR_SHARING_EVENT_ATTENDEE_STATUS_Q"] = "Очікує підтвердження";
+$MESS["CALENDAR_SHARING_EVENT_ATTENDEE_STATUS_Y"] = "Підтверджено";

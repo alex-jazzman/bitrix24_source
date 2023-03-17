@@ -8,6 +8,8 @@ use Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Item\Model;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Timeline\LogMessageType;
+use Bitrix\Crm\Timeline\ProductCompilationType;
+use Bitrix\Crm\Timeline\OrderCategoryType;
 use Bitrix\Crm\Timeline\TimelineType;
 use CCrmOwnerType;
 
@@ -88,10 +90,19 @@ class HistoryItem
 
 		if ($typeId === TimelineType::PRODUCT_COMPILATION)
 		{
-			return
-				(new Item\Catalog\ProductCompilation($context, $model))
-					->setData($rawData)
-			;
+			switch ($typeCategoryId)
+			{
+				case ProductCompilationType::PRODUCT_LIST:
+					return new Item\ProductCompilationSentToCustomer($context, $model);
+				case ProductCompilationType::ORDER_EXISTS:
+					return new Item\LogMessage\ProductCompilationOrderExists($context, $model);
+				case ProductCompilationType::COMPILATION_VIEWED:
+					return new Item\LogMessage\ProductCompilationViewed($context, $model);
+				case ProductCompilationType::COMPILATION_NOT_VIEWED:
+					return new Item\LogMessage\ProductCompilationNotViewed($context, $model);
+				case ProductCompilationType::NEW_DEAL_CREATED:
+					return new Item\LogMessage\ProductCompilationNewDealCreated($context, $model);
+			}
 		}
 
 		if ($typeId === TimelineType::DOCUMENT && Crm::isUniversalActivityScenarioEnabled())
@@ -107,6 +118,55 @@ class HistoryItem
 			}
 
 			return new Item\NotAvailable($context, $model);
+		}
+
+		if ($typeId === TimelineType::ORDER)
+		{
+			if ($typeCategoryId === OrderCategoryType::ENCOURAGE_BUY_PRODUCTS)
+			{
+				return new Item\Order\EncourageBuyProducts($context, $model);
+			}
+		}
+
+		if (in_array($typeId, [TimelineType::FINAL_SUMMARY, TimelineType::FINAL_SUMMARY_DOCUMENTS], true))
+		{
+			if ($typeCategoryId === TimelineType::CREATION)
+			{
+				return new Item\FinalSummary($context, $model);
+			}
+		}
+
+		if ($typeId === TimelineType::ORDER_CHECK)
+		{
+			if ($typeCategoryId === TimelineType::MARK)
+			{
+				return new Item\LogMessage\OrderCheckSent($context, $model);
+			}
+			else
+			{
+				if ($model->getAssociatedEntityId())
+				{
+					if ($model->getHistoryItemModel()->get('PRINTED') === 'Y')
+					{
+						return new Item\OrderCheckPrinted($context, $model);
+					}
+
+					return new Item\OrderCheckNotPrinted($context, $model);
+				}
+				else
+				{
+					return new Item\LogMessage\OrderCheckCreationError($context, $model);
+				}
+			}
+		}
+
+		if ($typeId === TimelineType::STORE_DOCUMENT)
+		{
+			$item = HistoryItemStoreDocument::createItem($context, $model);
+			if ($item)
+			{
+				return $item;
+			}
 		}
 
 		return new Item\Compatible\HistoryItem(

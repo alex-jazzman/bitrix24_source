@@ -33,6 +33,7 @@ Bitrix\Main\UI\Extension::load([
 	'sidepanel',
 	'crm.restriction.bitrix24',
 	'ui.hint',
+	'ui.viewer',
 ]);
 
 //HACK: Preloading files for prevent trembling of player afer load.
@@ -117,6 +118,8 @@ $activityEditorID = "{$prefix}_editor";
 $scheduleItems = $arResult['SCHEDULE_ITEMS'];
 $historyItems = $arResult['HISTORY_ITEMS'];
 $fixedItems = $arResult['FIXED_ITEMS'];
+
+$editorName = null;
 
 if (!empty($arResult['ERRORS']))
 {
@@ -802,55 +805,6 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					orderManualContinuePay: "<?=GetMessageJS('CRM_TIMELINE_ORDER_MANUAL_CONTINUE_PAY')?>",
 					orderManualAddCheck: "<?=GetMessageJS('CRM_TIMELINE_PAYMENT_NEED_MANUAL_ADD_CHECK')?>",
 					orderManualAddCheckHelpLink: "<?=GetMessageJS('CRM_TIMELINE_PAYMENT_NEED_MANUAL_ADD_CHECK_HELP_LINK')?>",
-				};
-
-			BX.CrmHistoryItemFinalSummary.messages =
-				{
-					title: "<?=GetMessageJS($finalSummaryPhraseCodes['summary'])?>",
-					orderPaid: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_ORDER_PAID_2')?>",
-					basketBasePrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_BASE_PRICE')?>",
-					basketPrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_PRICE')?>",
-					paymentStatusY: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_PAYMENT_STATUS_Y')?>",
-					sumForPay: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_SUM_FOR_PAY')?>",
-				};
-
-			BX.CrmHistoryItemFinalSummaryDocuments.messages =
-				{
-					title: "<?=GetMessageJS($finalSummaryPhraseCodes['documents'])?>",
-				};
-
-			BX.CrmHistoryItemOrcderCheck.messages =
-				{
-					orderCheck: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_TITLE')?>",
-					printed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_PRINTED')?>",
-					unprinted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_UNPRINTED')?>",
-					sended: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_SENT')?>",
-					urlLink: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_LINK')?>",
-					sendedTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_SENT_TITLE')?>",
-				};
-
-			BX.CrmHistoryItemStoreDocumentCreation.messages =
-				{
-					arrivalDocument: "<?=GetMessageJS('CRM_TIMELINE_ARRIVAL_DOCUMENT_CREATION')?>",
-					storeAdjustmentDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_ADJUSTMENT_DOCUMENT_CREATION')?>",
-					movingDocument: "<?=GetMessageJS('CRM_TIMELINE_MOVING_DOCUMENT_CREATION')?>",
-					deductDocument: "<?=GetMessageJS('CRM_TIMELINE_DEDUCT_DOCUMENT_CREATION')?>",
-					shipmentDocument: "<?=GetMessageJS('CRM_TIMELINE_SHIPMENT_DOCUMENT_CREATION')?>",
-				};
-
-			BX.CrmHistoryItemStoreDocumentModification.messages =
-				{
-					arrivalDocument: "<?=GetMessageJS('CRM_TIMELINE_ARRIVAL_DOCUMENT')?>",
-					storeAdjustmentDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_ADJUSTMENT_DOCUMENT')?>",
-					movingDocument: "<?=GetMessageJS('CRM_TIMELINE_MOVING_DOCUMENT')?>",
-					shipmentDocument: "<?=GetMessageJS('CRM_TIMELINE_SHIPMENT_DOCUMENT')?>",
-					deductDocument: "<?=GetMessageJS('CRM_TIMELINE_DEDUCT_DOCUMENT')?>",
-					arrivalModification: "<?=GetMessageJS('CRM_TIMELINE_ARRIVAL_DOCUMENT_MODIFICATION')?>",
-					storeAdjustmentModification: "<?=GetMessageJS('CRM_TIMELINE_STORE_ADJUSTMENT_DOCUMENT_MODIFICATION')?>",
-					movingModification: "<?=GetMessageJS('CRM_TIMELINE_MOVING_DOCUMENT_MODIFICATION')?>",
-					deductModification: "<?=GetMessageJS('CRM_TIMELINE_DEDUCT_DOCUMENT_MODIFICATION')?>",
-					shipmentModification: "<?=GetMessageJS('CRM_TIMELINE_SHIPMENT_DOCUMENT_MODIFICATION')?>",
-					conductError: "<?=GetMessageJS('CRM_TIMELINE_CONDUCT_ERROR')?>",
 				};
 
 			BX.message({

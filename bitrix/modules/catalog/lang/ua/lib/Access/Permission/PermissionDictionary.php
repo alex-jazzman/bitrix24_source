@@ -26,6 +26,7 @@ $MESS["CATALOG_SETTINGS_PRODUCT_CARD_EDIT"] = "Зміна виду картки 
 $MESS["CATALOG_SETTINGS_PRODUCT_CARD_SET_PROFILE_FOR_USERS"] = "Застосування виду картки товару для всіх співробітників";
 $MESS["CATALOG_SETTINGS_SELL_NEGATIVE_COMMODITIES"] = "Доступ до опції «Продаж відсутнього товару»";
 $MESS["CATALOG_SETTINGS_STORE_DOCUMENT_CARD_EDIT"] = "Зміна картки складського документа (додавання/видалення полів)";
+$MESS["CATALOG_STORE_ANALYTIC_VIEW"] = "Перегляд звітів";
 $MESS["CATALOG_STORE_DOCUMENT_ALLOW_NEGATION_PRODUCT_QUANTITY_D"] = "Дозволити від'ємну кількість товару при списанні";
 $MESS["CATALOG_STORE_DOCUMENT_ALLOW_NEGATION_PRODUCT_QUANTITY_M"] = "Дозволити від'ємну кількість товару при переміщенні";
 $MESS["CATALOG_STORE_DOCUMENT_ALLOW_NEGATION_PRODUCT_QUANTITY_W"] = "Дозволити від'ємну кількість товару в документі «Реалізація»";

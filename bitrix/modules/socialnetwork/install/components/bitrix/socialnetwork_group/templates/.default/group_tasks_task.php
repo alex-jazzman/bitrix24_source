@@ -43,8 +43,7 @@ $formParams = [
 	"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 ];
 
-//tmp remove after tasks 22.1600.100 korobka
-if (true)
+if (Context::getCurrent()->getRequest()->get('IFRAME'))
 {
 	include("util_group_menu.php");
 	include("util_group_profile.php");

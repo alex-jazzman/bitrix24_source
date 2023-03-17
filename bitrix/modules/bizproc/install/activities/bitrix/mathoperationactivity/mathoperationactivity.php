@@ -118,11 +118,14 @@ class CBPMathOperationActivity extends CBPActivity
 		);
 
 		$currentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
-		$currentValuesTmp =
-			is_array($currentActivity['Properties']['Conditions'])
-				? $currentActivity['Properties']['Conditions']
-				: []
-		;
+		$currentValuesTmp = [];
+		if (
+			isset($currentActivity['Properties']['Conditions'])
+			&& is_array($currentActivity['Properties']['Conditions'])
+		)
+		{
+			$currentValuesTmp = $currentActivity['Properties']['Conditions'];
+		}
 
 		$currentValues = [];
 		foreach ($currentValuesTmp as $varId => $condition)
@@ -147,7 +150,7 @@ class CBPMathOperationActivity extends CBPActivity
 
 	private static function getVisibilityMessages(array $documentType): array
 	{
-		if (self::$visibilityMessages[implode('@', $documentType)])
+		if (isset(self::$visibilityMessages[implode('@', $documentType)]))
 		{
 			return self::$visibilityMessages[implode('@', $documentType)];
 		}
@@ -207,7 +210,7 @@ class CBPMathOperationActivity extends CBPActivity
 		foreach ($globals as $id => $property)
 		{
 			$visibility = $property['Visibility'];
-			if (!$result[$visibility])
+			if (!isset($result[$visibility]))
 			{
 				$result[$visibility] = [];
 			}
@@ -230,10 +233,7 @@ class CBPMathOperationActivity extends CBPActivity
 
 	private static function getDocumentFields($parameterDocumentType): array
 	{
-		$runtime = CBPRuntime::GetRuntime();
-		$documentService = $runtime->GetService("DocumentService");
-		$documentFields = $documentService->GetDocumentFields($parameterDocumentType);
-
+		$documentService = CBPRuntime::getRuntime()->getDocumentService();
 		$numericDocumentFields = static::getAllNumericDocumentFields($parameterDocumentType);
 
 		return static::prepareDocumentFieldsForMenu(
@@ -244,8 +244,7 @@ class CBPMathOperationActivity extends CBPActivity
 
 	private static function getAllNumericDocumentFields($documentType): array
 	{
-		$runtime = CBPRuntime::GetRuntime();
-		$documentService = $runtime->GetService("DocumentService");
+		$documentService = CBPRuntime::getRuntime()->getDocumentService();
 		$documentFields = $documentService->GetDocumentFields($documentType);
 
 		return array_filter($documentFields, 'self::filterNumericTypes');
@@ -285,7 +284,7 @@ class CBPMathOperationActivity extends CBPActivity
 			{
 				$names = mb_split(': ', $fieldName);
 				$groupName = array_shift($names);
-				$fieldName = join(': ', $names);
+				$fieldName = implode(': ', $names);
 			}
 
 			$posAssignedBy = mb_strpos($fieldName, 'ASSIGNED_BY_');
@@ -294,12 +293,12 @@ class CBPMathOperationActivity extends CBPActivity
 				$groupKey = 'ASSIGNED_BY';
 				$names = mb_split(' ', $fieldName);
 				$groupName = array_shift($names);
-				$fieldName = join(' ', $names);
+				$fieldName = implode(' ', $names);
 				$fieldName = mb_ereg_replace('(', '', $fieldName);
 				$fieldName = mb_ereg_replace(')', '', $fieldName);
 			}
 
-			if (!$result[$groupKey])
+			if (!isset($result[$groupKey]))
 			{
 				$result[$groupKey] = [
 					'title' => $groupName,
@@ -365,8 +364,7 @@ class CBPMathOperationActivity extends CBPActivity
 			static::getAllNumericDocumentFields($documentType)
 		);
 
-		$runtime = CBPRuntime::GetRuntime();
-		$documentService = $runtime->GetService('DocumentService');
+		$documentService = CBPRuntime::getRuntime()->getDocumentService();
 
 		$htmlVariableCode = 'bp_moa_variable_';
 		$htmlOperationCode = 'bp_moa_operation_';
@@ -484,7 +482,7 @@ class CBPMathOperationActivity extends CBPActivity
 		$result = CBPActivity::parseExpression($text);
 		if ($result === null)
 		{
-			return [];
+			return [null, null];
 		}
 
 		return [$result['object'], $result['field']];

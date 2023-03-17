@@ -1276,11 +1276,11 @@ class CIBlockElement extends CAllIBlockElement
 		}
 
 		$ipropTemplates = new \Bitrix\Iblock\InheritedProperty\ElementTemplates($ar_element["IBLOCK_ID"], $ar_element["ID"]);
-		if(isset($arFields["PREVIEW_PICTURE"]) && is_array($arFields["PREVIEW_PICTURE"]))
+		if (isset($arFields["PREVIEW_PICTURE"]) && is_array($arFields["PREVIEW_PICTURE"]))
 		{
 			if(
-				$arFields["PREVIEW_PICTURE"]["name"] == ''
-				&& $arFields["PREVIEW_PICTURE"]["del"] == ''
+				($arFields["PREVIEW_PICTURE"]["name"] ?? '') === ''
+				&& ($arFields["PREVIEW_PICTURE"]["del"] ?? '') === ''
 				&& !is_set($arFields["PREVIEW_PICTURE"], "description")
 			)
 			{
@@ -1302,8 +1302,8 @@ class CIBlockElement extends CAllIBlockElement
 		if(isset($arFields["DETAIL_PICTURE"]) && is_array($arFields["DETAIL_PICTURE"]))
 		{
 			if(
-				$arFields["DETAIL_PICTURE"]["name"] == ''
-				&& $arFields["DETAIL_PICTURE"]["del"] == ''
+				($arFields["DETAIL_PICTURE"]["name"] ?? '') === ''
+				&& ($arFields["DETAIL_PICTURE"]["del"] ?? '') === ''
 				&& !is_set($arFields["DETAIL_PICTURE"], "description")
 			)
 			{
@@ -1709,7 +1709,7 @@ class CIBlockElement extends CAllIBlockElement
 			//Restore saved values
 			if($SAVED_PREVIEW_PICTURE !== false)
 			{
-				$arFields["PREVIEW_PICTURE_ID"] = $arFields["PREVIEW_PICTURE"];
+				$arFields["PREVIEW_PICTURE_ID"] = ($arFields["PREVIEW_PICTURE"] ?? null);
 				$arFields["PREVIEW_PICTURE"] = $SAVED_PREVIEW_PICTURE;
 			}
 			else
@@ -1719,7 +1719,7 @@ class CIBlockElement extends CAllIBlockElement
 
 			if($SAVED_DETAIL_PICTURE !== false)
 			{
-				$arFields["DETAIL_PICTURE_ID"] = $arFields["DETAIL_PICTURE"];
+				$arFields["DETAIL_PICTURE_ID"] = ($arFields["DETAIL_PICTURE"] ?? null);
 				$arFields["DETAIL_PICTURE"] = $SAVED_DETAIL_PICTURE;
 			}
 			else
@@ -1773,8 +1773,8 @@ class CIBlockElement extends CAllIBlockElement
 		if(
 			isset($arFields["PREVIEW_PICTURE"])
 			&& is_array($arFields["PREVIEW_PICTURE"])
-			&& $arFields["PREVIEW_PICTURE"]["COPY_FILE"] == "Y"
-			&& $arFields["PREVIEW_PICTURE"]["copy"]
+			&& ($arFields["PREVIEW_PICTURE"]["COPY_FILE"] ?? '') === "Y"
+			&& ($arFields["PREVIEW_PICTURE"]["copy"] ?? null)
 		)
 		{
 			@unlink($arFields["PREVIEW_PICTURE"]["tmp_name"]);
@@ -1784,8 +1784,8 @@ class CIBlockElement extends CAllIBlockElement
 		if(
 			isset($arFields["DETAIL_PICTURE"])
 			&& is_array($arFields["DETAIL_PICTURE"])
-			&& $arFields["DETAIL_PICTURE"]["COPY_FILE"] == "Y"
-			&& $arFields["DETAIL_PICTURE"]["copy"]
+			&& ($arFields["DETAIL_PICTURE"]["COPY_FILE"] ?? '') === "Y"
+			&& ($arFields["DETAIL_PICTURE"]["copy"] ?? null)
 		)
 		{
 			@unlink($arFields["DETAIL_PICTURE"]["tmp_name"]);
@@ -1951,7 +1951,7 @@ class CIBlockElement extends CAllIBlockElement
 				if ($prop["CODE"] <> '' && array_key_exists($prop["CODE"], $PROPERTY_VALUES))
 					$PROP = $PROPERTY_VALUES[$prop["CODE"]];
 				else
-					$PROP = $PROPERTY_VALUES[$prop["ID"]];
+					$PROP = $PROPERTY_VALUES[$prop["ID"]] ?? [];
 			}
 
 			if (

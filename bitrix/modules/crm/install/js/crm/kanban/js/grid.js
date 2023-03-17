@@ -11,6 +11,7 @@ BX.namespace("BX.CRM.Kanban");
  */
 BX.CRM.Kanban.Grid = function(options)
 {
+	BX.Event.EventEmitter.setMaxListeners('Kanban.Grid:onFirstRender', 50);
 
 	BX.Kanban.Grid.apply(this, arguments);
 
@@ -29,15 +30,16 @@ BX.CRM.Kanban.Grid = function(options)
 	BX.addCustomEvent(this, "Kanban.Grid:onItemDragStop", BX.delegate(this.unSetKanbanDragMode, this));
 
 	BX.addCustomEvent("BX.Main.Filter:apply", BX.delegate(this.onApplyFilter, this));
-	BX.addCustomEvent("BX.CrmEntityCounterPanel:applyFilter", BX.delegate(this.onApplyFilterCounter, this));
 	BX.addCustomEvent("Crm.PartialEditorDialog.Close", BX.delegate(this.onPartialEditorClose, this));
 	BX.addCustomEvent("onPullEvent-crm", BX.proxy(this.onPullEventHandlerCrm, this));
 	BX.addCustomEvent("onPullEvent-im", BX.proxy(this.onPullEventHandlerCrm, this));
 	BX.addCustomEvent("onCrmActivityTodoChecked", BX.proxy(this.onCrmActivityTodoChecked, this));
 	BX.addCustomEvent("SidePanel.Slider:onClose", BX.proxy(this.onSliderClose, this));
 	BX.addCustomEvent("BX.CRM.Kanban.Item.select", BX.proxy(this.startActionPanel, this));
-	BX.addCustomEvent("BX.CRM.Kanban.Item.unSelect", BX.proxy(this.stopActionPanel, this));
+	BX.addCustomEvent("BX.CRM.Kanban.Item.unSelect", BX.proxy(this.onItemUnselect, this));
 	BX.addCustomEvent("BX.UI.ActionPanel:clickResetAllBlock", BX.proxy(this.resetMultiSelectMode, this));
+	BX.addCustomEvent('BX.UI.ActionPanel:hidePanel', BX.proxy(this.showUiToolbarContainer, this));
+	BX.addCustomEvent('BX.UI.ActionPanel:showPanel', BX.proxy(this.hideUiToolbarContainer, this));
 	BX.addCustomEvent("BX.Crm.EntityEditorSection:onOpenChildMenu", BX.proxy(this.onOpenEditorMenu, this));
 	BX.addCustomEvent("BX.Crm.EntityEditor:onConfigScopeChange", BX.proxy(this.onConfigEditorScopeChange, this));
 	BX.addCustomEvent("BX.Crm.EntityEditor:onConfigReset", BX.proxy(this.onConfigEditorReset, this));
@@ -46,6 +48,7 @@ BX.CRM.Kanban.Grid = function(options)
 	BX.addCustomEvent("onPopupShow", BX.proxy(this.onPopupShow, this));
 	BX.addCustomEvent("onPopupClose", BX.proxy(this.onPopupClose, this));
 	BX.addCustomEvent("CrmDragItemDragRelease", BX.proxy(this.onEditorDragItemRelease, this));
+	BX.addCustomEvent(window, "onCrmEntityCreate", BX.delegate(this.onCrmEntityCreateDeadlinesView, this));
 
 	//setInterval(BX.proxy(this.loadNew, this), this.loadNewInterval * 1000);
 	this.bindEvents();
@@ -139,6 +142,18 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 
 		return false;
+	},
+
+	onCrmEntityCreateDeadlinesView: function(entityData)
+	{
+		var context = entityData.sender.getContext();
+		if (context['VIEW_MODE'] === 'DEADLINES')
+		{
+			this.loadNew(
+				entityData.entityId,
+				true
+			);
+		}
 	},
 
 	onEditorDragItemRelease: function()
@@ -250,6 +265,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				)
 				{
 					this.unSetKanbanDragMode();
+					this.resetMultiSelectMode();
 				}
 			}.bind(this));
 
@@ -524,7 +540,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			return false;
 		}
 
-		var ciclePeriod = 10 * 1000; // 10 seconds
+		var ciclePeriod = 8 * 1000; // 8 seconds
 		var maxRequestsInPeriod = 5;
 		var setCicleRequestParams = function(cicleRequestParams)
 		{
@@ -1299,6 +1315,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			);
 
 			event.denyAction();
+			return;
 		}
 
 		var item = event.getItem();
@@ -1545,6 +1562,18 @@ BX.CRM.Kanban.Grid.prototype = {
 				{
 					if (data && !data.error)
 					{
+						if (
+							this.getData().viewMode === BX.Crm.Kanban.ViewMode.MODE_ACTIVITIES
+							&& !this.itemMoving.groupIds
+							&& BX.CRM.Kanban.Restriction.Instance.isTodoActivityCreateAvailable()
+						)
+						{
+							item.showPlannerMenu(
+								item.getContainer(),
+								BX.Crm.Activity.TodoEditorMode.UPDATE
+							);
+						}
+
 						if (data.items && data.items.length > 0)
 						{
 							this.updateItem(itemId, data.items[0]);
@@ -1552,6 +1581,10 @@ BX.CRM.Kanban.Grid.prototype = {
 						else
 						{
 							item.setDataKey("columnId", targetColumnId);
+							if (data.IS_SHOULD_UPDATE_CARD)
+							{
+								this.loadNew(itemId, false, true, true, true);
+							}
 						}
 					}
 					else if (data)
@@ -2152,51 +2185,6 @@ BX.CRM.Kanban.Grid.prototype = {
 	},
 
 	/**
-	 * Hook on filter counters click.
-	 * @param {BX.CrmEntityCounterPanel} sender
-	 * @param {Object} eventArgs
-	 * @returns {void}
-	 */
-	onApplyFilterCounter: function(sender, eventArgs)
-	{
-		setTimeout(
-			BX.delegate(
-				function() {
-					var gridData = this.getData();
-					var fields = {
-						"ASSIGNED_BY_ID": { 0: eventArgs["userId"] },
-						"ASSIGNED_BY_ID_label": [ eventArgs["userName"] ],
-						"ACTIVITY_COUNTER": BX.Type.isPlainObject(eventArgs["counterTypeId"])
-							? eventArgs["counterTypeId"]
-							: { 0: eventArgs["counterTypeId"] }
-					};
-					var filter = BX.Main.filterManager.getById(gridData.gridId);
-					var api = filter.getApi();
-					api.setFields(fields);
-					api.apply({'COUNTER': this.getAnalyticsLabel(eventArgs["counterTypeId"])});
-				},
-				this
-			), 0
-		);
-		eventArgs["cancel"] = true;
-	},
-
-	/**
-	 * Get analytics label
-	 * @param int counterTypeId
-	 * @return string
-	 */
-	getAnalyticsLabel: function(counterTypeId)
-	{
-		var entityTypeName = this.getData().entityType;
-		if (entityTypeName && counterTypeId)
-		{
-			return 'CRM_' + entityTypeName + '_COUNTER_TYPE_' + counterTypeId;
-		}
-		return '';
-	},
-
-	/**
 	 * Handler partial editor close.
 	 * @param {BX.Crm.PartialEditorDialog} sender
 	 * @param {Object} eventParams
@@ -2593,7 +2581,8 @@ BX.CRM.Kanban.Grid.prototype = {
 	{
 		var gridData = this.getData();
 
-		var renderToNode = document.querySelector(".pagetitle-wrap");
+		var renderToNode = document.querySelector(".page-navigation");
+
 		if(!renderToNode)
 		{
 			renderToNode = document.getElementById('uiToolbarContainer');
@@ -2904,6 +2893,18 @@ BX.CRM.Kanban.Grid.prototype = {
 		return ((column && column.data && column.data.blockedIncomingMoving) || false);
 	},
 
+	hideUiToolbarContainer()
+	{
+		var uiToolbarContainer = document.getElementById('uiToolbarContainer');
+		BX.Dom.addClass(uiToolbarContainer, '--transparent');
+	},
+
+	showUiToolbarContainer()
+	{
+		var uiToolbarContainer = document.getElementById('uiToolbarContainer');
+		BX.Dom.removeClass(uiToolbarContainer, '--transparent');
+	},
+
 	/**
 	 * Show action panel.
 	 * @returns {void}
@@ -2922,7 +2923,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	 * Hide action panel.
 	 * @returns {void}
 	 */
-	stopActionPanel: function(force)
+	stopActionPanel: function(force = false, resetMultiSelectMode = false)
 	{
 		if (!this.actionPanel)
 		{
@@ -2952,6 +2953,11 @@ BX.CRM.Kanban.Grid.prototype = {
 			this.customActionPanel.removeItems();
 			this.customActionPanel = null;
 		}
+	},
+
+	onItemUnselect: function(itemInArray)
+	{
+		this.stopActionPanel();
 	},
 
 	/**

@@ -72,17 +72,23 @@ abstract class SynchronizeReserves extends Action
 			$oldDateReserveEnd = $oldValues['DATE_RESERVE_END'] ? (string)$oldValues['DATE_RESERVE_END'] : null;
 			$oldReserveQuantity = (float)$oldValues['RESERVE_QUANTITY'];
 
-			// is empty new values - that new record
+			$isNotSavedOnSale = $productReservation->getReserveId() === null;
+
 			$newValues = $productReservation->collectValues(Values::CURRENT);
 			if (empty($newValues))
 			{
 				$reserveInfo = $this->reservationResult->addReserveInfo(
 					$rowId,
 					$oldReserveQuantity,
-					$oldReserveQuantity
+					0
 				);
 				$reserveInfo->setStoreId($oldStoreId ?: null);
 				$reserveInfo->setDateReserveEnd($oldDateReserveEnd ?: null);
+
+				if ($isNotSavedOnSale)
+				{
+					$reserveInfo->setDeltaReserveQuantity($oldReserveQuantity);
+				}
 			}
 			else
 			{
@@ -115,10 +121,13 @@ abstract class SynchronizeReserves extends Action
 					$reserveInfo->setDeltaReserveQuantity($reserveInfo->getReserveQuantity());
 					$reserveInfo->setChanged();
 				}
+				elseif ($newDateReserveEnd !== $oldDateReserveEnd)
+				{
+					$reserveInfo->setChanged();
+				}
 			}
 
-			$saleReserveId = $productReservation->getReserveId();
-			if (!$saleReserveId)
+			if ($isNotSavedOnSale)
 			{
 				$reserveInfo->setChanged();
 			}

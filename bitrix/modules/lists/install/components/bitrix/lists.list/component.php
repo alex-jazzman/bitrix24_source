@@ -28,8 +28,9 @@ if(isset($_REQUEST["list_section_id"]))
 else
 	$section_id = intval($arParams["~SECTION_ID"]);
 
+$arResult['IS_SOCNET_GROUP_CLOSED'] = false;
 if (
-	intval($arParams["~SOCNET_GROUP_ID"]) > 0
+	intval($arParams["~SOCNET_GROUP_ID"] ?? null) > 0
 	&& CModule::IncludeModule("socialnetwork")
 )
 {
@@ -52,7 +53,7 @@ $lists_perm = CListPermissions::CheckAccess(
 	$USER,
 	$arParams["~IBLOCK_TYPE_ID"],
 	$IBLOCK_ID,
-	$arParams["~SOCNET_GROUP_ID"]
+	$arParams["~SOCNET_GROUP_ID"] ?? null
 );
 if($lists_perm < 0)
 {
@@ -554,7 +555,7 @@ foreach($listFields as $fieldId => $field)
 	{
 		$customFilter[$preparedField["id"]] = $preparedField["customFilter"];
 	}
-	if($preparedField["type"] == "custom_entity")
+	if(isset($preparedField['type']) && $preparedField["type"] === "custom_entity")
 	{
 		if(!empty($field["PROPERTY_USER_TYPE"]["USER_TYPE"]))
 			$fieldType = $field["PROPERTY_USER_TYPE"]["USER_TYPE"];
@@ -858,9 +859,9 @@ while ($obElement = $rsElements->GetNextElement())
 			$documentComplexId,
 			[
 				"IBlockId" => $arIBlock["ID"],
-				"AllUserGroups" => $arUserGroupsForBPTmp,
+				"AllUserGroups" => $arUserGroupsForBPTmp ?? null,
 				"DocumentStates" => $arDocumentStatesForBP,
-				"WorkflowId" => $arWorkflowTemplate["ID"]
+				"WorkflowId" => isset($arWorkflowTemplate, $arWorkflowTemplate['ID']) ? $arWorkflowTemplate["ID"] : null,
 			]
 		);
 
@@ -886,7 +887,7 @@ while ($obElement = $rsElements->GetNextElement())
 		}
 	}
 
-	if(!is_array($listValues[$data["ID"]]))
+	if(!is_array($listValues[$data["ID"]] ?? null))
 		$listValues[$data["ID"]] = array();
 
 	foreach($data as $fieldId => $fieldValue)

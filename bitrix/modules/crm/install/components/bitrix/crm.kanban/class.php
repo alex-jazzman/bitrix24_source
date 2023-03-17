@@ -58,13 +58,13 @@ class CrmKanbanComponent extends \CBitrixComponent
 		{
 			$arParams['EXTRA'] = [];
 		}
-		$arParams['PAGE'] = (int)$arParams['PAGE'];
-		$arParams['ONLY_COLUMNS'] = $arParams['ONLY_COLUMNS'] !== 'Y' ? 'N' : 'Y';
-		$arParams['ONLY_ITEMS'] = $arParams['ONLY_ITEMS'] !== 'Y' ? 'N' : 'Y';
-		$arParams['EMPTY_RESULT'] = $arParams['EMPTY_RESULT'] !== 'Y' ? 'N' : 'Y';
-		$arParams['IS_AJAX'] = $arParams['IS_AJAX'] !== 'Y' ? 'N' : 'Y';
-		$arParams['GET_AVATARS'] = $arParams['GET_AVATARS'] !== 'Y' ? 'N' : 'Y';
-		$arParams['FORCE_FILTER'] = $arParams['FORCE_FILTER'] !== 'Y' ? 'N' : 'Y';
+		$arParams['PAGE'] = (int)($arParams['PAGE'] ?? null);
+		$arParams['ONLY_COLUMNS'] = ($arParams['ONLY_COLUMNS'] ?? 'N')  !== 'Y' ? 'N' : 'Y';
+		$arParams['ONLY_ITEMS'] = ($arParams['ONLY_ITEMS'] ?? 'N')  !== 'Y' ? 'N' : 'Y';
+		$arParams['EMPTY_RESULT'] = ($arParams['EMPTY_RESULT'] ?? 'N') !== 'Y' ? 'N' : 'Y';
+		$arParams['IS_AJAX'] = ($arParams['IS_AJAX'] ?? 'N') !== 'Y' ? 'N' : 'Y';
+		$arParams['GET_AVATARS'] = ($arParams['GET_AVATARS'] ?? 'N') !== 'Y' ? 'N' : 'Y';
+		$arParams['FORCE_FILTER'] = ($arParams['FORCE_FILTER'] ?? 'N') !== 'Y' ? 'N' : 'Y';
 		$arParams['VIEW_MODE'] = \Bitrix\Crm\Kanban\ViewMode::normalize((string)($arParams['VIEW_MODE'] ?? ''));
 		$arParams['PATH_TO_USER'] = $arParams['PATH_TO_USER'] ?? '/company/personal/user/#user_id#/';
 		$arParams['PATH_TO_MERGE'] = $arParams['PATH_TO_MERGE'] ?? '';
@@ -307,6 +307,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 							$this->arResult['ERROR'] = $errorMessage;
 						}
 					}
+					else
+					{
+						$viewMode = $this->arParams['VIEW_MODE'] ?? '';
+						$this->arResult['ITEMS']['IS_SHOULD_UPDATE_CARD'] = $viewMode === Kanban\ViewMode::MODE_DEADLINES;
+					}
 				}
 			}
 
@@ -335,7 +340,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$this->arResult['MORE_EDIT_FIELDS'] = $this->componentParams['MORE_EDIT_FIELDS'];
 		$this->arResult['FIELDS_DISABLED'] = $this->componentParams['FIELDS_DISABLED'];
 		$this->arResult['CATEGORIES'] = $this->componentParams['CATEGORIES'];
-		$this->arResult['FIELDS_SECTIONS'] = $this->componentParams['FIELDS_SECTIONS'];
+		$this->arResult['FIELDS_SECTIONS'] = $this->componentParams['FIELDS_SECTIONS'] ?? null;
 		//$this->arResult['STUB'] = $this->getStub(); TODO: исправить, когда по€в€тс€ актуальные тексты
 
 		$context = Application::getInstance()->getContext();
@@ -488,6 +493,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['CLIENT_FIELDS_RESTRICTIONS'] = $this->getEntity()->getClientFieldsRestrictions();
+		$this->arResult['OBSERVERS_FIELD_RESTRICTIONS'] = $this->getEntity()->getObserversFieldRestrictions();
 		$this->arResult['SORT_SETTINGS'] = $this->getEntity()->getSortSettings();
 		$this->arResult['IS_LAST_ACTIVITY_ENABLED'] = $this->getEntity()->isLastActivityEnabled();
 		$GLOBALS['APPLICATION']->setTitle($this->getEntity()->getTitle());
@@ -498,7 +504,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	{
 		$viewMode = $this->arParams['VIEW_MODE'];
 
-		if ($viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES)
+		if (\Bitrix\Crm\Kanban\ViewMode::isDatesBasedView($viewMode))
 		{
 			$canChangeColumns = 'false';
 			return [
@@ -507,20 +513,22 @@ class CrmKanbanComponent extends \CBitrixComponent
 				'canEditColumn'=> $canChangeColumns,
 				'canRemoveColumn' => $canChangeColumns,
 				'canSortColumn' => $canChangeColumns,
-				'canChangeItemStage' => true,
+				'canChangeItemStage' => 'true',
+				'columnsRevert' => 'true',
 			];
 		}
 
 		$demoAccess = \CJSCore::IsExtRegistered('intranet_notify_dialog') && ModuleManager::isModuleInstalled('im');
-		$canChangeColumns = ($this->arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false');
+		$canChangeColumns = (($this->arResult['ACCESS_CONFIG_PERMS'] ?? null ) ? 'true' : 'false');
 
 		return [
-			'accessConfigPerms' => $this->arResult['ACCESS_CONFIG_PERMS'],
+			'accessConfigPerms' => $this->arResult['ACCESS_CONFIG_PERMS'] ?? null,
 			'canAddColumn' => ($demoAccess ? 'true' : $canChangeColumns),
 			'canEditColumn'=> ($demoAccess ? 'true' : $canChangeColumns),
 			'canRemoveColumn' => $canChangeColumns,
 			'canSortColumn' => $canChangeColumns,
 			'canChangeItemStage' => 'true',
+			'columnsRevert' => 'false',
 		];
 	}
 

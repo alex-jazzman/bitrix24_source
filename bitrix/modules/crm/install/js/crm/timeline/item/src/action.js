@@ -133,7 +133,14 @@ export class Action
 			else if (this.isRedirect())
 			{
 				this.#startAnimation(vueComponent);
-				location.href = this.#value;
+				if (this.#actionParams && this.#actionParams.target)
+				{
+					window.open(this.#value, this.#actionParams.target);
+				}
+				else
+				{
+					location.href = this.#value;
+				}
 				resolve(this.#value);
 			}
 			else if (this.isShowMenu())

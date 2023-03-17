@@ -806,7 +806,7 @@ class BizprocDocument extends CIBlockDocument
 					"active_type" => $field['TYPE'],
 					"DefaultValue" => $field["DEFAULT_VALUE"],
 				);
-				if($field["ROW_COUNT"] && $field["COL_COUNT"])
+				if(isset($field['ROW_COUNT'], $field['COL_COUNT']) && $field["ROW_COUNT"] && $field["COL_COUNT"])
 				{
 					$result[$fieldId]["row_count"] = $field["ROW_COUNT"];
 					$result[$fieldId]["col_count"] = $field["COL_COUNT"];
@@ -818,7 +818,7 @@ class BizprocDocument extends CIBlockDocument
 		foreach ($keys as $k)
 		{
 			$result[$k]["BaseType"] = $documentFieldTypes[$result[$k]["Type"]]["BaseType"];
-			$result[$k]["Complex"] = $documentFieldTypes[$result[$k]["Type"]]["Complex"];
+			$result[$k]["Complex"] = $documentFieldTypes[$result[$k]["Type"]]["Complex"] ?? null;
 		}
 
 		return $result;
@@ -1268,6 +1268,7 @@ class BizprocDocument extends CIBlockDocument
 			throw new Exception('Element is not found');
 		}
 
+		$complexDocumentId = ['lists', get_called_class(), $documentId];
 		$arDocumentFields = self::GetDocumentFields('iblock_' . $arResult['IBLOCK_ID']);
 
 		$arKeys = array_keys($arFields);
@@ -1290,28 +1291,7 @@ class BizprocDocument extends CIBlockDocument
 
 			if ($arDocumentFields[$key]['Type'] == 'user')
 			{
-				$ar = [];
-				foreach ($arFields[$key] as $v1)
-				{
-					if (mb_substr($v1, 0, mb_strlen('user_')) == 'user_')
-					{
-						$ar[] = mb_substr($v1, mb_strlen('user_'));
-					}
-					else
-					{
-						$a1 = self::GetUsersFromUserGroup($v1, $documentId);
-						foreach ($a1 as $a11)
-						{
-							$ar[] = $a11;
-						}
-					}
-				}
-				if (!empty($ar))
-				{
-					$ar = array_unique($ar);
-				}
-
-				$arFields[$key] = $ar;
+				$arFields[$key] = \CBPHelper::extractUsers($arFields[$key], $complexDocumentId);
 			}
 			elseif ($arDocumentFields[$key]['Type'] == 'select')
 			{

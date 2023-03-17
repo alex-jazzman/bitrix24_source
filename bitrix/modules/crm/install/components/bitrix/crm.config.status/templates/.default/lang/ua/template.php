@@ -46,4 +46,5 @@ $MESS["CRM_STATUS_UNSUCCESSFUL_QUOTE_STATUS"] = "Неуспішні статус
 $MESS["CRM_STATUS_UNSUCCESSFUL_STATUS"] = "Неуспішні статуси";
 $MESS["CRM_STATUS_VIEW_FUNNEL"] = "Попередній перегляд воронки";
 $MESS["CRM_STATUS_VIEW_FUNNEL2"] = "Попередній перегляд вирви";
+$MESS["CRM_STATUS_VIEW_FUNNEL2_MSGVER_1"] = "Попередній перегляд вирви";
 $MESS["CRM_STATUS_VIEW_SCALE"] = "Попередній перегляд шкали";

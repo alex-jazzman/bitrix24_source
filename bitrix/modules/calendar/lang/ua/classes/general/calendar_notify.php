@@ -9,6 +9,8 @@ $MESS["EC_MESS_INVITE"] = "Користувач #OWNER_NAME# запрошує в
 $MESS["EC_MESS_INVITE_ACCEPTED_1"] = "Користувач #GUEST_NAME# візьме участь в організованій вами зустрічі \"#TITLE#\", #ACTIVE_FROM#";
 $MESS["EC_MESS_INVITE_ACCEPTED_SITE_1"] = "Я візьму участь в організованій вами зустрічі \"#TITLE#\", #ACTIVE_FROM#";
 $MESS["EC_MESS_INVITE_CANCEL"] = "Користувач #OWNER_NAME# скасував зустріч \"#TITLE#\"з Вашою участю, яка повинна була відбутися #ACTIVE_FROM#";
+$MESS["EC_MESS_INVITE_CANCEL_SHARING"] = "Скасовано зустріч [B]\"#TITLE#\"[/B], яка мала відбутися [B]#ACTIVE_FROM#[/B]. Щоб погодити новий час, зверніться до користувача.";
+$MESS["EC_MESS_INVITE_CANCEL_SHARING_SITE"] = "[url=#LINK#]Докладніше про зустріч[/url]";
 $MESS["EC_MESS_INVITE_CANCEL_SITE"] = "Скасовано зустріч  \"[B]#TITLE#[/B]\"з Вашою участю, яка повинна була відбутися [B]#ACTIVE_FROM#[/B]";
 $MESS["EC_MESS_INVITE_CANCEL_TITLE"] = "Зустріч \"#TITLE#\" скасовано";
 $MESS["EC_MESS_INVITE_CHANGED"] = "Користувач  #OWNER_NAME# змінив зустріч \"#TITLE#\" з Вашою участю, яка відбудеться#ACTIVE_FROM#";
@@ -23,6 +25,7 @@ $MESS["EC_MESS_INVITE_DECLINED_SITE_1"] = "Я не візьму участь в 
 $MESS["EC_MESS_INVITE_DETAILS"] = "Деталі зустрічі Ви можете подивитися в своєму календарі: #LINK#";
 $MESS["EC_MESS_INVITE_DETAILS_SITE"] = "Деталі зустрічі Ви можете подивитися в [url=#LINK#] своєму календарі[/url]";
 $MESS["EC_MESS_INVITE_SITE"] = "Запрошую вас взяти участь у зустрічі \"[B]#TITLE#[/B]\", яка відбудеться [B]#ACTIVE_FROM#[/B]";
+$MESS["EC_MESS_INVITE_SITE_SHARING"] = "Запросив(-ла) вас узяти участь у зустрічі [B]\"#TITLE#\"[/B], яка відбудеться [B]#ACTIVE_FROM#[/B]";
 $MESS["EC_MESS_INVITE_TITLE"] = "Запрошення на зустріч \"#TITLE#\"  від користувача #OWNER_NAME#";
 $MESS["EC_MESS_REC_ALL_CANCEL"] = "Користувач #OWNER_NAME# скасував всі повторення зустрічі  \"[B]#TITLE#[/B]\"з Вашою участю, від [B]#ACTIVE_FROM#[/B]";
 $MESS["EC_MESS_REC_ALL_CANCEL_SITE"] = "Скасовано всі повторення зустрічі \"[B]#TITLE#[/B]\" з Вашою участю, від [B]#ACTIVE_FROM#[/B]";

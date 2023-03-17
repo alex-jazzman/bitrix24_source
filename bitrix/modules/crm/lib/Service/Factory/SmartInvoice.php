@@ -121,6 +121,11 @@ class SmartInvoice extends Dynamic
 		return $parameters;
 	}
 
+	public function isCountersEnabled(): bool
+	{
+		return true;
+	}
+
 	public static function createTypeIfNotExists(): void
 	{
 		$type = TypeTable::getByEntityTypeId(\CCrmOwnerType::SmartInvoice)->fetchObject();
@@ -153,6 +158,7 @@ class SmartInvoice extends Dynamic
 			->setIsAutomationEnabled(true)
 			->setIsBizProcEnabled(true)
 			->setIsPaymentsEnabled(true)
+			->setIsCountersEnabled(true)
 		;
 
 		/** @var AddResult $result */
@@ -303,6 +309,10 @@ class SmartInvoice extends Dynamic
 		$operation->addAction(
 			Operation::ACTION_AFTER_SAVE,
 			new Operation\Action\ActualizeDocuments()
+		);
+		$operation->addAction(
+			Operation::ACTION_AFTER_SAVE,
+			new Operation\Action\CreateFinalSummaryTimelineHistoryItem()
 		);
 
 		return $operation;

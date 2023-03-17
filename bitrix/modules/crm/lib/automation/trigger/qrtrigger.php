@@ -13,7 +13,7 @@ class QrTrigger extends BaseTrigger
 			return parent::isSupported($entityTypeId);
 		}
 
-		$supported = [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead];
+		$supported = [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead, \CCrmOwnerType::SmartDocument];
 
 		return in_array($entityTypeId, $supported, true);
 	}
@@ -53,6 +53,22 @@ class QrTrigger extends BaseTrigger
 		}
 
 		return true;
+	}
+
+	protected static function getPropertiesMap(): array
+	{
+		return [
+			[
+				'Id' => 'ownerId',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_QR_PROPERTY_OWNER'),
+				'Type' => '@robot-select',
+				'EmptyValueText' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_QR_DEFAULT_OWNER'),
+				'Settings' => [
+					'Filter' => ['Type' => 'CrmGenerateQr'],
+					'OptionNameProperty' => 'QrTitle'
+				],
+			],
+		];
 	}
 
 	public static function getGroup(): array

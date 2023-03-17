@@ -43,6 +43,7 @@
 				searchOptions,
 				createOptions,
 				selectOptions: props.selectOptions || {},
+				canUseRecent: props.canUseRecent,
 				allowMultipleSelection,
 				closeOnSelect,
 				widgetParams,

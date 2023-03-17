@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Activity\Entity;
 
+use Bitrix\Crm\Activity\Provider;
+use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
@@ -24,11 +26,27 @@ class ToDo
 	protected ItemIdentifier $owner;
 
 	protected ?int $autocompleteRule = null;
+	protected string $completed;
 
 	protected bool $checkPermissions = true;
 
-	public static function createWithDefaultDescription(int $entityTypeId, int $id, DateTime $deadline): Result
+	protected ?array $storageElementIds = null;
+
+	public static function createWithDefaultDescription(
+		int $entityTypeId,
+		int $id,
+		DateTime $deadline,
+		bool $ceilDeadlineTime = true
+	): Result
 	{
+		if ($ceilDeadlineTime)
+		{
+			$deadline
+				->setTime($deadline->format('H'), 0)
+				->add('PT1H')
+			;
+		}
+
 		$itemIdentifier = new ItemIdentifier($entityTypeId, $id);
 		return (new self($itemIdentifier))
 			->setDefaultDescription()
@@ -45,49 +63,92 @@ class ToDo
 
 	public static function load(ItemIdentifier $owner, int $id): ?self
 	{
-		$data = CCrmActivity::GetList(
-			[],
+		$filter = [
+			'BINDINGS' => [
 				[
-					'BINDINGS' => [
-						'OWNER_TYPE_ID' => $owner->getEntityTypeId(),
-						'OWNER_ID' => $owner->getEntityId(),
-					],
-					'ID' => $id
+					'OWNER_TYPE_ID' => $owner->getEntityTypeId(),
+					'OWNER_ID' => $owner->getEntityId(),
+				]
 			],
+			'=ID' => $id
+		];
+
+		return self::getInstanceByParams($owner, $filter);
+	}
+	public static function loadNearest(ItemIdentifier $owner): ?self
+	{
+		$filter = [
+			'=COMPLETED' => 'N',
+			'=PROVIDER_ID' => Provider\ToDo::PROVIDER_ID,
+			'=PROVIDER_TYPE_ID' => Provider\ToDo::PROVIDER_TYPE_ID_DEFAULT,
+			'BINDINGS' => [
+				[
+					'OWNER_TYPE_ID' => $owner->getEntityTypeId(),
+					'OWNER_ID' => $owner->getEntityId(),
+				],
+			],
+		];
+
+		$order = [
+			'DEADLINE' => 'ASC',
+		];
+
+		$options = [
+			'QUERY_OPTIONS' => [
+				'LIMIT' => 1,
+			],
+		];
+
+		return self::getInstanceByParams($owner, $filter, $order, $options);
+	}
+	protected static function getInstanceByParams(
+		ItemIdentifier $owner,
+		array $filter,
+		array $order = [],
+		array $options = []
+	): ?ToDo
+	{
+		$data = CCrmActivity::GetList(
+			$order,
+			$filter,
 			false,
 			false,
 			[
 				'ID',
+				'COMPLETED',
 				'DEADLINE',
 				'DESCRIPTION',
 				'RESPONSIBLE_ID',
 				'ASSOCIATED_ENTITY_ID',
 				'AUTOCOMPLETE_RULE',
-			]
+				'STORAGE_ELEMENT_IDS',
+			],
+			$options
 		)->Fetch();
 
-		if ($data)
+		if (!$data)
 		{
-			$todo = new self($owner);
-			$todo
-				->setId((int)$data['ID'])
-				->setDeadline(
-					($data['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($data['DEADLINE']))
-						? DateTime::createFromUserTime($data['DEADLINE'])
-						: null
-				)
-				->setDescription($data['DESCRIPTION'])
-				->setResponsibleId($data['RESPONSIBLE_ID'])
-				->setParentActivityId($data['ASSOCIATED_ENTITY_ID'] ?: null)
-				->setAutocompleteRule($data['AUTOCOMPLETE_RULE'] ?: null)
-			;
-
-			return $todo;
+			return null;
 		}
 
-		return null;
-	}
+		$todo = new self($owner);
+		$todo
+			->setId((int)$data['ID'])
+			->setDeadline(
+				($data['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($data['DEADLINE']))
+					? DateTime::createFromUserTime($data['DEADLINE'])
+					: null
+			)
+			->setDescription($data['DESCRIPTION'])
+			->setResponsibleId($data['RESPONSIBLE_ID'])
+			->setParentActivityId($data['ASSOCIATED_ENTITY_ID'] ?: null)
+			->setAutocompleteRule($data['AUTOCOMPLETE_RULE'] ?: null)
+			->setCompleted($data['COMPLETED'])
+			->setStorageElementIds($data['STORAGE_ELEMENT_IDS'] ?: null)
+		;
 
+		return $todo;
+	}
 	public static function getDescriptionForEntityType(int $entityTypeId): string
 	{
 		$defaultDescription = Loc::getMessage('CRM_TODO_ENTITY_ACTIVITY_DESCRIPTION_CONTACT_CLIENT') ?? '';
@@ -193,6 +254,48 @@ class ToDo
 		return $this;
 	}
 
+	public function getCompleted(): string
+	{
+		return $this->completed;
+	}
+
+	protected function setCompleted(string $completed): self
+	{
+		$this->completed = $completed;
+
+		return $this;
+	}
+
+	public function isCompleted(): bool
+	{
+		return $this->completed === 'Y';
+	}
+
+	public function getStorageElementIds(): ?array
+	{
+		return $this->storageElementIds;
+	}
+
+	/**
+	 * @param string|int[] $storageElementIds
+	 *
+	 * @return $this
+	 */
+	public function setStorageElementIds($storageElementIds): self
+	{
+		if (is_string($storageElementIds))
+		{
+			$storageElementIds = unserialize($storageElementIds, ['allowed_classes' => false]);
+		}
+
+		if (is_array($storageElementIds))
+		{
+			$this->storageElementIds = $storageElementIds;
+		}
+
+		return $this;
+	}
+
 	public function setCheckPermissions(bool $checkPermissions): self
 	{
 		$this->checkPermissions = $checkPermissions;
@@ -242,6 +345,12 @@ class ToDo
 			}
 		}
 
+		if (!is_null($this->getStorageElementIds()))
+		{
+			$fields['STORAGE_TYPE_ID'] = StorageType::Disk;
+			$fields['STORAGE_ELEMENT_IDS'] = $this->getStorageElementIds();
+		}
+
 		if($this->checkPermissions && !CCrmActivity::CheckUpdatePermission($this->getOwner()->getEntityTypeId(), $this->getOwner()->getEntityId()))
 		{
 			$result->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
@@ -262,6 +371,7 @@ class ToDo
 				[
 					'ID',
 					'COMPLETED',
+					'PROVIDER_ID',
 				]
 			)->Fetch();
 
@@ -276,6 +386,12 @@ class ToDo
 				$result->addError(
 					new Error(Loc::getMessage("CRM_TODO_ENTITY_ACTIVITY_ALREADY_COMPLETED"), 'CAN_NOT_UPDATE_COMPLETED_TODO'),
 				);
+
+				return $result;
+			}
+			if ($existedActivity['PROVIDER_ID'] !== \Bitrix\Crm\Activity\Provider\ToDo::getId())
+			{
+				$result->addError(\Bitrix\Crm\Controller\ErrorCode::getNotFoundError());
 
 				return $result;
 			}
@@ -312,7 +428,7 @@ class ToDo
 					// close parent activity
 					if (!CCrmActivity::Complete($this->getParentActivityId(), true, ['REGISTER_SONET_EVENT' => true]))
 					{
-						$this->addError(new Error(implode(', ', \CCrmActivity::GetErrorMessages()), 'CAN_NOT_COMPLETE'));
+						$this->addError(new Error(implode(', ', CCrmActivity::GetErrorMessages()), 'CAN_NOT_COMPLETE'));
 					}
 				}
 			}

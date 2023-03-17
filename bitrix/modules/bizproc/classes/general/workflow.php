@@ -497,7 +497,11 @@ class CBPWorkflow
 							$analyticsService = $this->GetService("AnalyticsService");
 							if ($analyticsService->isEnabled())
 							{
-								$analyticsService->write($activity->GetDocumentId(), 'robot_run', $activityType);
+								$analyticsService->write(
+									$activity->GetDocumentId(),
+									'robot_run',
+									$activityType
+								);
 							}
 						}
 					}
@@ -641,7 +645,6 @@ class CBPWorkflow
 
 		foreach ($this->rootActivity->arEventsMap[$eventName] as $eventHandler)
 		{
-      AddMessage2Log($eventHandler, 'saaaaaa');
 			if (!empty($eventParameters['DebugEvent']) && $eventHandler instanceof IBPActivityDebugEventListener)
 			{
 				$eventHandler->onDebugEvent($eventParameters);

@@ -184,9 +184,10 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 			{
 				imageUrl = imageUrl.replace(`${currentDomain}`, '');
 				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
+				imageUrl = encodeURI(imageUrl);
 			}
 
-			return encodeURI(imageUrl);
+			return imageUrl;
 		}
 
 		openEntity(entity)

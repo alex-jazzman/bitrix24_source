@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
+use Bitrix\Crm\Activity\Provider\ProviderManager;
+use Bitrix\Crm\Badge\Model\BadgeTable;
 use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Layout\Action;
@@ -33,7 +35,7 @@ class OpenLine extends Activity
 	{
 		return Loc::getMessage(
 			$this->isScheduled()
-				? 'CRM_TIMELINE_TITLE_OPEN_LINE'
+				? 'CRM_TIMELINE_TITLE_OPEN_LINE_MSGVER_1'
 				: 'CRM_TIMELINE_TITLE_OPEN_LINE_DONE'
 		);
 	}
@@ -98,7 +100,7 @@ class OpenLine extends Activity
 			;
 		}
 
-		$clientBlock = $this->getClientContentBlock(self::BLOCK_WITH_FIXED_TITLE);
+		$clientBlock = $this->buildClientBlock(self::BLOCK_WITH_FIXED_TITLE);
 		if (isset($clientBlock))
 		{
 			$result['client'] = $clientBlock;
@@ -134,7 +136,7 @@ class OpenLine extends Activity
 			}
 		}
 
-		$clientMarkBlock = $this->getClientMarkBlock();
+		$clientMarkBlock = $this->buildClientMarkBlock();
 		if (isset($clientMarkBlock))
 		{
 			$result['clientMark'] = $clientMarkBlock;
@@ -154,7 +156,7 @@ class OpenLine extends Activity
 		return [
 			'openChat' => (
 				new Button(
-					Loc::getMessage($this->isScheduled() ? 'CRM_TIMELINE_BUTTON_OPEN_CHAT' : 'CRM_TIMELINE_BUTTON_SEE_CHAT'),
+					Loc::getMessage($this->isScheduled() ? 'CRM_TIMELINE_BUTTON_OPEN_CHAT_MSGVER_1' : 'CRM_TIMELINE_BUTTON_SEE_CHAT'),
 					$this->isScheduled() ? Button::TYPE_PRIMARY : Button::TYPE_SECONDARY
 				)
 			)->setAction($openChatAction)
@@ -184,6 +186,14 @@ class OpenLine extends Activity
 				Tag::TYPE_WARNING
 			);
 		}
+		else if (BadgeTable::isActivityHasBadge($this->getActivityId()))
+		{
+			$activity = CCrmActivity::GetByID($this->getActivityId(), false);
+			if (is_array($activity))
+			{
+				ProviderManager::syncBadgesOnActivityUpdate($this->getActivityId(), $activity);
+			}
+		}
 
 		return $tags;
 	}
@@ -207,7 +217,7 @@ class OpenLine extends Activity
 		;
 	}
 
-	private function getClientMarkBlock():  ?ContentBlock
+	private function buildClientMarkBlock(): ?ContentBlock
 	{
 		$sessionData = $this->getSessionData();
 		if (empty($sessionData))

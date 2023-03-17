@@ -25,6 +25,7 @@ $arActivityDescription = [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
 			//['crm', 'Bitrix\Crm\Integration\BizProc\Document\Order'],
 		],
 	],
@@ -35,7 +36,17 @@ $arActivityDescription = [
 	],
 ];
 
-if (Loader::includeModule('crm') && !CatalogAccessChecker::hasAccess())
+if (Loader::includeModule('crm'))
 {
-	$arActivityDescription['EXCLUDED'] = true;
+	if (!CatalogAccessChecker::hasAccess())
+	{
+		$arActivityDescription['EXCLUDED'] = true;
+	}
+	elseif (isset($documentType) && $documentType[0] === 'crm')
+	{
+		if (CCrmBizProcHelper::isDynamicEntityWithProducts(CCrmOwnerType::ResolveID((string)$documentType[2])))
+		{
+			$arActivityDescription['FILTER']['INCLUDE'][] = ['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class];
+		}
+	}
 }

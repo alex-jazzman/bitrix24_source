@@ -677,10 +677,10 @@ jn.define("user/profile", (require, exports, module) => {
 			}
 		}
 
-		error()
+		error(e)
 		{
 			this.form.stopRefreshing();
-			super.error();
+			super.error(e);
 		}
 
 		onRefresh()

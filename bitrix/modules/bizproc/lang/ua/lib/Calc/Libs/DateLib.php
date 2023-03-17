@@ -1,4 +1,11 @@
 <?php
+$MESS["BIZPROC_CALC_FUNCTION_ADDWORKDAYS_DESCRIPTION"] = "Додає N робочих днів до вказаної дати";
+$MESS["BIZPROC_CALC_FUNCTION_DATEADD_DESCRIPTION"] = "Додавання вказаного значення до дати";
+$MESS["BIZPROC_CALC_FUNCTION_DATEDIFF_DESCRIPTION"] = "Обчислення різниці між датами";
+$MESS["BIZPROC_CALC_FUNCTION_DATE_DESCRIPTION"] = "Форматує виведення дати/часу";
+$MESS["BIZPROC_CALC_FUNCTION_GETUSERDATEOFFSET_DESCRIPTION"] = "Повертає зміщення часу користувача відносно сервера, в секундах";
+$MESS["BIZPROC_CALC_FUNCTION_ISWORKDAY_DESCRIPTION"] = "Перевіряє, чи є дата робочим днем";
+$MESS["BIZPROC_CALC_FUNCTION_ISWORKTIME_DESCRIPTION"] = "Перевіряє, чи є дата/час робочим часом";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_APRIL"] = "Квітень";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_APRIL_1"] = "Квітня";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_APR_SHORT"] = "Квіт";
@@ -8,6 +15,7 @@ $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_AUG_SHORT"] = "Серп";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_DECEMBER"] = "Грудень";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_DECEMBER_1"] = "Грудня";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_DEC_SHORT"] = "Груд";
+$MESS["BIZPROC_CALC_FUNCTION_LOCDATE_DESCRIPTION"] = "Змінює мову відображення дати/часу на поточну мову порталу";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_FEBRUARY"] = "Лютий";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_FEBRUARY_1"] = "Лютого";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_FEB_SHORT"] = "Лют";
@@ -49,3 +57,7 @@ $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_TUESDAY"] = "Вівторок";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_TUE_SHORT"] = "Вт";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_WEDNESDAY"] = "Середа";
 $MESS["BIZPROC_CALC_FUNCTION_LOCDATE_WED_SHORT"] = "Ср";
+$MESS["BIZPROC_CALC_FUNCTION_SETTIME_DESCRIPTION"] = "Установлює конкретний час для зазначеної дати.";
+$MESS["BIZPROC_CALC_FUNCTION_STRTOTIME_DESCRIPTION"] = "Перетворює текстове написання дати англійською мовою у внутрішній формат дати";
+$MESS["BIZPROC_CALC_FUNCTION_TOUSERDATE_DESCRIPTION"] = "Налаштовує серверний час відповідно до часу користувача";
+$MESS["BIZPROC_CALC_FUNCTION_WORKDATEADD_DESCRIPTION"] = "Додає робочі дні, години, хвилини до вказаної дати";

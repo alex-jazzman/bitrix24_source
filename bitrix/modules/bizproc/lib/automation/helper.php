@@ -1,9 +1,11 @@
 <?php
+
 namespace Bitrix\Bizproc\Automation;
 
 use Bitrix\Bizproc\Automation\Engine\DelayInterval;
 use Bitrix\Disk;
 use Bitrix\Main\Loader;
+use Bitrix\Bizproc;
 
 class Helper
 {
@@ -202,17 +204,22 @@ class Helper
 
 	public static function convertExpressions($source, array $documentType, $useTilda = true)
 	{
+		if (!$source)
+		{
+			return $source;
+		}
+
 		$pattern = \CBPActivity::ValueInlinePattern;
 		[$mapIds, $mapNames, $mapObjectNames] = static::getExpressionsMaps($documentType);
 
 		$converter = function ($matches) use ($mapIds, $mapNames, $mapObjectNames, $useTilda)
 		{
 			$mods = [];
-			if ($matches['mod1'])
+			if (isset($matches['mod1']))
 			{
 				$mods[] = $matches['mod1'];
 			}
-			if ($matches['mod2'])
+			if (isset($matches['mod2']))
 			{
 				$mods[] = $matches['mod2'];
 			}
@@ -404,11 +411,11 @@ class Helper
 		$key = implode('@', $documentType);
 		if (!isset(static::$documentFields[$key]))
 		{
-			$documentService = \CBPRuntime::GetRuntime(true)->getDocumentService();
+			$documentService = \CBPRuntime::getRuntime()->getDocumentService();
 			static::$documentFields[$key] = $documentService->GetDocumentFields($documentType);
 		}
 
-		$resultFields = array();
+		$resultFields = [];
 
 		if (is_array(static::$documentFields[$key]))
 		{
@@ -431,24 +438,83 @@ class Helper
 
 				$field['Name'] = trim($field['Name']);
 
-				$resultFields[$id] = array(
+				$resultFields[$id] = [
 					'Id' => $id,
 					'Name' => $field['Name'],
 					'Type' => $field['Type'],
 					'BaseType' => $field['BaseType'] ?? $field['Type'],
-					'Expression' => '{{'.$field['Name'].'}}',
-					'SystemExpression' => '{=Document:'.$id.'}',
-					'Options' => $field['Options'],
+					'Expression' => '{{' . $field['Name'] . '}}',
+					'SystemExpression' => '{=Document:' . $id . '}',
+					'Options' => $field['Options'] ?? null,
 					'Multiple' => $field['Multiple'] ?? false,
-				);
+				];
 			}
 		}
 		return $resultFields;
 	}
 
+	/** Get global variables for usage in robots designer */
+	public static function getGlobalVariables(array $documentType): array
+	{
+		$globalVariables = Bizproc\Workflow\Type\GlobalVar::getAll($documentType);
+
+		$result = [];
+		$visibilityNames = Bizproc\Workflow\Type\GlobalVar::getVisibilityFullNames($documentType);
+		foreach ($globalVariables as $id => $variable)
+		{
+			$name = trim($variable['Name']);
+			$visibilityName = $visibilityNames[$variable['Visibility']];
+
+			$result[$id] = [
+				'Id' => $id,
+				'Name' => $name,
+				'Type' => $variable['Type'],
+				'BaseType' => $variable['Type'],
+				'Expression' => '{{' . $visibilityName . ': ' . $name . '}}',
+				'SystemExpression' => '{=' . Bizproc\Workflow\Template\SourceType::GlobalVariable . ':' . $id . '}',
+				'Options' => $variable['Options'] ?? null,
+				'Multiple' => $variable['Multiple'] ?? false,
+				'Visibility' => $variable['Visibility'],
+				'VisibilityName' => $visibilityName,
+			];
+		}
+
+		return $result;
+	}
+
+	/** Get global constants for usage in robots designer */
+	public static function getGlobalConstants(array $documentType): array
+	{
+		$globalConstants = Bizproc\Workflow\Type\GlobalConst::getAll($documentType);
+
+		$result = [];
+		$visibilityNames = Bizproc\Workflow\Type\GlobalConst::getVisibilityFullNames($documentType);
+		foreach ($globalConstants as $id => $constant)
+		{
+			$name = trim($constant['Name']);
+			$visibilityName = $visibilityNames[$constant['Visibility']];
+
+			$result[$id] = [
+				'Id' => $id,
+				'Name' => $name,
+				'Type' => $constant['Type'],
+				'BaseType' => $constant['Type'],
+				'Expression' => '{{' . $visibilityName . ': ' . $name . '}}',
+				'SystemExpression' => '{=' . Bizproc\Workflow\Template\SourceType::GlobalConstant . ':' . $id . '}',
+				'Options' => $constant['Options'] ?? null,
+				'Multiple' => $constant['Multiple'] ?? false,
+				'Visibility' => $constant['Visibility'],
+				'VisibilityName' => $visibilityName,
+			];
+		}
+
+		return $result;
+	}
+
 	private static function getDocumentUserServiceGroups(array $documentType)
 	{
-		$documentService = \CBPRuntime::GetRuntime(true)->getDocumentService();
+		$documentService = \CBPRuntime::getRuntime()->getDocumentService();
+
 		return $documentService->GetAllowableUserGroups($documentType);
 	}
 
@@ -500,7 +566,8 @@ class Helper
 		$key = implode('@', $documentType);
 		if (!isset(static::$maps[$key]))
 		{
-			$id = $name = [];
+			$id = [];
+			$name = [];
 
 			$fields = static::getDocumentFields($documentType);
 			foreach ($fields as $field)
@@ -525,8 +592,7 @@ class Helper
 				{
 					return static::$maps[$key];
 				}
-				$globals = \Bitrix\Bizproc\Workflow\Type\GlobalConst::getAll($documentType);
-				$visibilityNames = \Bitrix\Bizproc\Workflow\Type\GlobalConst::getVisibilityFullNames($documentType);
+				$globals = static::getGlobalConstants($documentType);
 				break;
 			case \Bitrix\Bizproc\Workflow\Template\SourceType::GlobalVariable:
 				$key = 'globals@var@' . implode('@', $documentType);
@@ -534,8 +600,7 @@ class Helper
 				{
 					return static::$maps[$key];
 				}
-				$globals = \Bitrix\Bizproc\Workflow\Type\GlobalVar::getAll($documentType);
-				$visibilityNames = \Bitrix\Bizproc\Workflow\Type\GlobalVar::getVisibilityFullNames($documentType);
+				$globals = static::getGlobalVariables($documentType);
 				break;
 			default:
 				return [];
@@ -547,8 +612,7 @@ class Helper
 		foreach ($globals as $id => $property)
 		{
 			$ids[] = $id;
-			$visibility = $property['Visibility'];
-			$names[] = $visibilityNames[$visibility] . ': ' . $property['Name'];
+			$names[] = $property['VisibilityName'] . ': ' . trim($property['Name']);
 		}
 
 		static::$maps[$key] = [$ids, $names];
@@ -558,43 +622,61 @@ class Helper
 
 	public static function parseDateTimeInterval($interval)
 	{
-		$interval = (string)$interval;
-		$result = array(
+		$interval = ltrim((string)$interval, '=');
+		$result = [
 			'basis' => null,
+			'workTime' => false,
+			'inTime' => null,
+		];
+
+		$values = [
 			'i' => 0,
 			'h' => 0,
 			'd' => 0,
-			'workTime' => false
-		);
+		];
 
-		if (mb_strpos($interval, '=dateadd(') === 0 || mb_strpos($interval, '=workdateadd(') === 0)
+		if (mb_strpos($interval, 'settime(') === 0)
 		{
-			if (mb_strpos($interval, '=workdateadd(') === 0)
+			$interval = mb_substr($interval, 8, -1); // cut settime(...)
+			$arguments = explode(',', $interval);
+
+			$minute = array_pop($arguments);
+			$hour = array_pop($arguments);
+
+			$interval = implode(',', $arguments);
+			$result['inTime'] = [(int)$hour, (int)$minute];
+		}
+
+		if (mb_strpos($interval, 'dateadd(') === 0 || mb_strpos($interval, 'workdateadd(') === 0)
+		{
+			if (mb_strpos($interval, 'workdateadd(') === 0)
 			{
-				$interval = mb_substr($interval, 13, -1); // cut =workdateadd(...)
+				$interval = mb_substr($interval, 12, -1); // cut workdateadd(...)
 				$result['workTime'] = true;
 			}
 			else
 			{
-				$interval = mb_substr($interval, 9, -1); // cut =dateadd(...)
+				$interval = mb_substr($interval, 8, -1); // cut dateadd(...)
 			}
 
 			$arguments = explode(',', $interval);
 			$result['basis'] = trim($arguments[0]);
 
-			$arguments[1] = trim($arguments[1], '"\'');
+			$arguments[1] = trim(($arguments[1] ?? ''), '"\'');
 			$result['type'] = mb_strpos($arguments[1], '-') === 0 ? DelayInterval::TYPE_BEFORE : DelayInterval::TYPE_AFTER;
 
 			preg_match_all('/\s*([\d]+)\s*(i|h|d)\s*/i', $arguments[1], $matches);
 			foreach ($matches[0] as $i => $match)
 			{
-				$result[$matches[2][$i]] = (int)$matches[1][$i];
+				$values[$matches[2][$i]] = (int)$matches[1][$i];
 			}
 		}
 		elseif (\CBPDocument::IsExpression($interval))
+		{
 			$result['basis'] = $interval;
+		}
 
-		$minutes = $result['i'] + $result['h'] * 60 + $result['d'] * 60 * 24;
+		$minutes = $values['i'] + $values['h'] * 60 + $values['d'] * 60 * 24;
 
 		if ($minutes % 1440 === 0)
 		{
@@ -614,20 +696,25 @@ class Helper
 
 		if (
 			!$result['value']
-			&& $result['basis'] !== static::CURRENT_DATETIME_BASIS
+			&& (
+				$result['basis'] !== static::CURRENT_DATETIME_BASIS
+				|| $result['inTime']
+			)
 			&& \CBPDocument::IsExpression($result['basis'])
 		)
 		{
 			$result['type'] =  DelayInterval::TYPE_IN;
 		}
 
-		return $result;
+		return $result + $values;
 	}
 
 	public static function getDateTimeIntervalString($interval)
 	{
-		if (!$interval['basis'] || !\CBPDocument::IsExpression($interval['basis']))
+		if (empty($interval['basis']) || !\CBPDocument::IsExpression($interval['basis']))
+		{
 			$interval['basis'] = static::CURRENT_DATE_BASIS;
+		}
 
 		$days = isset($interval['d']) ? (int)$interval['d'] : 0;
 		$hours = isset($interval['h']) ? (int)$interval['h'] : 0;
@@ -673,7 +760,24 @@ class Helper
 			$worker = $interval['worker'];
 		}
 
-		return '='.$fn.'('.$interval['basis'].',"'.$add.'"'.($worker ? ','.$worker : '').')';
+		$result = $fn . '(' . $interval['basis'] . ',"' . $add . '"' . ($worker ? ',' . $worker : '') . ')';
+
+		if (isset($interval['type']) && $interval['type'] === DelayInterval::TYPE_IN && isset($interval['inTime']))
+		{
+			if (empty($interval['workTime']))
+			{
+				$result = $interval['basis'];
+			}
+
+			$result = sprintf(
+				'settime(%s, %d, %d)',
+				$result,
+				$interval['inTime'][0] ?? 0,
+				$interval['inTime'][1] ?? 0
+			);
+		}
+
+		return '=' . $result;
 	}
 
 	public static function parseTimeString($time)

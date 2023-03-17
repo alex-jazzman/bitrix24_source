@@ -15,9 +15,10 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote.list/templates/.default/template.php');
 
 // if not isset
-$arResult['PATH_TO_QUOTE_EDIT'] = isset($arResult['PATH_TO_QUOTE_EDIT']) ? $arResult['PATH_TO_QUOTE_EDIT'] : '';
-$arResult['PATH_TO_QUOTE_LIST'] = isset($arResult['PATH_TO_QUOTE_LIST']) ? $arResult['PATH_TO_QUOTE_LIST'] : '';
-$arResult['PATH_TO_QUOTE_KANBAN'] = isset($arResult['PATH_TO_QUOTE_KANBAN']) ? $arResult['PATH_TO_QUOTE_KANBAN'] : '';
+$arResult['PATH_TO_QUOTE_EDIT'] = $arResult['PATH_TO_QUOTE_EDIT'] ?? '';
+$arResult['PATH_TO_QUOTE_LIST'] = $arResult['PATH_TO_QUOTE_LIST'] ?? '';
+$arResult['PATH_TO_QUOTE_KANBAN'] = $arResult['PATH_TO_QUOTE_KANBAN'] ?? '';
+$arResult['PATH_TO_QUOTE_DEADLINES'] = $arResult['PATH_TO_QUOTE_DEADLINES'] ?? '';
 $arResult['PATH_TO_QUOTE_DETAILS'] = $arResult['PATH_TO_QUOTE_DETAILS'] ?? '';
 
 // csv and excel delegate to list
@@ -74,6 +75,28 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Quot
 else
 {
 	$entityType = \CCrmOwnerType::QuoteName;
+	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
+
+	// counters
+	if ($isBitrix24Template)
+	{
+		$this->SetViewTarget('below_pagetitle', 1000);
+	}
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.entity.counter.panel',
+		'',
+		[
+			'ENTITY_TYPE_NAME' => $entityType,
+			'EXTRAS' => [],
+			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_QUOTE_KANBAN'],
+		]
+	);
+
+	if ($isBitrix24Template)
+	{
+		$this->EndViewTarget();
+	}
 
 	// menu
 	$APPLICATION->IncludeComponent(
@@ -100,7 +123,8 @@ else
 				->setItems([
 					NavigationBarPanel::ID_AUTOMATION,
 					NavigationBarPanel::ID_KANBAN,
-					NavigationBarPanel::ID_LIST
+					NavigationBarPanel::ID_LIST,
+					NavigationBarPanel::ID_DEADLINES
 				], NavigationBarPanel::ID_KANBAN)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 				->get(),
@@ -117,6 +141,7 @@ else
 		[
 			'ENTITY_TYPE' => $entityType,
 			'PATH_TO_QUOTE_DETAILS' => $arResult['PATH_TO_QUOTE_DETAILS'],
+			'SHOW_ACTIVITY' => 'Y',
 			'HEADERS_SECTIONS' => [
 				[
 					'id'=> CCrmOwnerType::QuoteName,

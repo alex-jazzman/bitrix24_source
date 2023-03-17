@@ -1026,7 +1026,11 @@ class CAllSaleDiscount
 			}
 			else
 			{
-				if (isset($discountInfo['PREDICTIONS_LIST']))
+				if (
+					isset($discountInfo['PREDICTIONS_LIST'])
+					&& $discountInfo['PREDICTIONS_LIST'] !== ''
+					&& $discountInfo['PREDICTIONS_LIST'] !== false
+				)
 				{
 					$discountInfo['PREDICTIONS_APP'] = '';
 					if (!self::prepareDiscountConditions(

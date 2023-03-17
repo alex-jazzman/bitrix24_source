@@ -3,6 +3,7 @@ $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACCESS_DENIED_PRODUCT_CREATION_HINT"] = "Н
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACCESS_DENIED_PURCHASING_PRICE_HINT"] = "Недостатньо прав для перегляду закупівельної ціни товару.";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACCESS_DENIED_STORE_HINT"] = "У вас немає доступу до складу, на який було прийнято товар. Щоб переглядати інформацію по складу, запросіть доступ у керівника або адміністратора.";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACCESS_DENIED_TEXT"] = "Недостатньо прав";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACTION_DEFAULT"] = "— дії —";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ADD_PRODUCT"] = "Додати рядок";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ADD_PRODUCT_TITLE"] = "Знайти чи створити новий товар";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_BARCODE_SETTING_PRODUCT"] = "Налаштування сканування";

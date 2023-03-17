@@ -1,4 +1,4 @@
-import {ajax, Cache, Dom, Event, Loc, Reflection, Runtime, Tag, Text, Type} from 'main.core';
+import {Cache, Dom, Event, Loc, Reflection, Runtime, Tag, Text, Type} from 'main.core';
 import {Editor} from './product.list.editor';
 import {DiscountType, DiscountTypes, FieldScheme, ProductCalculator} from 'catalog.product-calculator';
 import {CurrencyCore} from 'currency.currency-core';
@@ -1174,16 +1174,53 @@ export class Row
 		}
 
 		const storeId = this.getField('STORE_ID');
+		if (!storeId)
+		{
+			return;
+		}
+
 		const available = this.model.getStoreCollection().getStoreAvailableAmount(storeId);
+		const amount = Text.toNumber(available)
+
+		let amountWithMeasure = '';
 
 		if (!this.getModel().isCatalogExisted() || this.isRestrictedStoreInfo() || this.getModel().isService())
 		{
-			availableWrapper.innerHTML = '';
+			//do nothing
 		}
 		else
 		{
-			availableWrapper.innerHTML = Text.toNumber(available) + ' ' + this.#getMeasureName();
+			amountWithMeasure = amount + ' ' + this.#getMeasureName();
 		}
+
+		availableWrapper.innerHTML =
+			amount > 0
+				? amountWithMeasure
+				: `<span class="store-available-popup-link--danger">${amountWithMeasure}</span>`
+		;
+	}
+
+	updatePropertyFields()
+	{
+		const productProps = this.model.getField('PRODUCT_PROPERTIES');
+
+		for (const property in productProps)
+		{
+			const availableWrapper = this.#getNodeChildByDataName(property);
+			if (availableWrapper)
+			{
+				const value = this.model.getField('PRODUCT_PROPERTIES')[property] ?? '';
+				availableWrapper.innerHTML = value;
+			}
+		}
+	}
+
+	clearPropertyFields()
+	{
+		const propNodes = this.#getNodesChild();
+		propNodes.forEach((property) => {
+			property.innerHTML = '';
+		})
 	}
 
 	setRowReserved(value)
@@ -1388,6 +1425,14 @@ export class Row
 
 	changeBasePrice(value, mode = MODE_SET)
 	{
+		if (mode === MODE_EDIT && !this.#isEditableCatalogPrice())
+		{
+			value = this.getField('BASE_PRICE');
+			this.updateUiInputField('PRICE', value.toFixed(this.getPricePrecision()));
+
+			return;
+		}
+
 		const originalPrice = value;
 		// price can't be less than zero
 		value = Math.max(value, 0);
@@ -2084,6 +2129,11 @@ export class Row
 
 	isRestrictedStoreInfo(): boolean
 	{
+		if (!this.editor.getSettingValue('allowReservation', true))
+		{
+			return false;
+		}
+
 		const storeId = this.getField('STORE_ID')?.toString();
 		if (Type.isNil(storeId) || storeId === '0')
 		{
@@ -2123,6 +2173,11 @@ export class Row
 	#getNodeChildByDataName(name: String): HTMLElement
 	{
 		return this.getNode().querySelector(`[data-name="${name}"]`);
+	}
+
+	#getNodesChild(): NodeList
+	{
+		return this.getNode().querySelectorAll(`span[data-name]`);
 	}
 
 	#onGridUpdated(): void

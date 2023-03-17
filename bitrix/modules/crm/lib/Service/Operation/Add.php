@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Service\Operation;
 
 use Bitrix\Crm\Activity\Entity\ToDo;
-use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity;
@@ -12,10 +11,10 @@ use Bitrix\Crm\Kanban\EntityActivityDeadline;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\Timeline\MarkController;
-use Bitrix\Crm\Timeline\RelationController;
 use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -76,6 +75,56 @@ class Add extends Operation
 		return $statisticsFacade->add($this->item);
 	}
 
+	protected function saveToHistory(): Result
+	{
+		$registrar = Container::getInstance()->getRelationRegistrar();
+
+		$result = $registrar->registerByFieldsChange(
+			$this->getItemIdentifier(),
+			$this->fieldsCollection->toArray(),
+			[],
+			$this->item->getData(),
+			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+			$this->getContext(),
+		);
+
+		if ($this->item->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
+		{
+			$contactBindingsResult = $registrar->registerByBindingsChange(
+				$this->getItemIdentifier(),
+				\CCrmOwnerType::Contact,
+				[],
+				$this->item->getContactBindings(),
+				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+				$this->getContext(),
+			);
+
+			if (!$contactBindingsResult->isSuccess())
+			{
+				$result->addErrors($contactBindingsResult->getErrors());
+			}
+		}
+
+		if ($this->item->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS))
+		{
+			$companyBindingsResult = $registrar->registerByBindingsChange(
+				$this->getItemIdentifier(),
+				\CCrmOwnerType::Company,
+				[],
+				$this->item->get(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
+				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+				$this->getContext(),
+			);
+
+			if (!$companyBindingsResult->isSuccess())
+			{
+				$result->addErrors($companyBindingsResult->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
 	protected function createTimelineRecord(): void
 	{
 		$timelineController = TimelineManager::resolveController([
@@ -93,40 +142,7 @@ class Add extends Operation
 			);
 		}
 
-		RelationController::getInstance()->registerEventsByFieldsChange(
-			$this->getItemIdentifier(),
-			$this->fieldsCollection->toArray(),
-			[],
-			$this->item->getData(),
-			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
-			$this->getContext()->getUserId(),
-		);
-
 		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
-
-		if ($this->item->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
-		{
-			RelationController::getInstance()->registerEventsByBindingsChange(
-				$this->getItemIdentifier(),
-				\CCrmOwnerType::Contact,
-				[],
-				$this->item->getContactBindings(),
-				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
-				$this->getContext()->getUserId(),
-			);
-		}
-
-		if ($this->item->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS))
-		{
-			RelationController::getInstance()->registerEventsByBindingsChange(
-				$this->getItemIdentifier(),
-				\CCrmOwnerType::Company,
-				[],
-				$this->item->get(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
-				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
-				$this->getContext()->getUserId(),
-			);
-		}
 
 		if (!$factory->isStagesEnabled())
 		{
@@ -163,7 +179,10 @@ class Add extends Operation
 
 		if ($viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES)
 		{
-			$stageId = $context->getItemOption('STAGE_ID');
+			$factory = $this->getFactory();
+			$stageFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_STAGE_ID);
+
+			$stageId = $context->getItemOption($stageFieldName);
 			if (!$stageId)
 			{
 				return;
@@ -180,6 +199,11 @@ class Add extends Operation
 				);
 			}
 		}
+	}
+
+	protected function getFactory(): ?Factory
+	{
+		return Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
 	}
 
 	protected function sendPullEvent(): void

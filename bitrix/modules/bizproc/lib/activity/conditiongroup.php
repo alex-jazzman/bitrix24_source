@@ -37,8 +37,8 @@ class ConditionGroup
 		{
 			$this->items[] = [
 				'condition' => new Condition($item),
-				'joiner' => $item['joiner'] === 0 ? static::JOINER_AND : self::JOINER_OR,
-				'valueToCheck' => $item['valueToCheck'],
+				'joiner' => isset($item['joiner']) && $item['joiner'] === 0 ? static::JOINER_AND : self::JOINER_OR,
+				'valueToCheck' => $item['valueToCheck'] ?? null,
 				'fieldType' => $item['fieldType'] ?? new FieldType([], [], 'Bitrix\Bizproc\BaseType\StringType')
 			];
 		}
@@ -71,8 +71,8 @@ class ConditionGroup
 
 			if ($condition->getOperator() === 'modified')
 			{
-				$conditionResult = !is_array($condition->getValue())
-					|| in_array($item['valueToCheck'], $condition->getValue())
+				$conditionResult =
+					is_array($condition->getValue()) && in_array($item['valueToCheck'], $condition->getValue(), true)
 				;
 			}
 			else

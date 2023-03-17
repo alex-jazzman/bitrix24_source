@@ -1,5 +1,6 @@
-<?
+<?php
 $MESS["CRM_TRACKING_SOURCE_UTM_ADDITIONAL_GOOGLE"] = "Додаткові UTM мітки для Google Adwords";
+$MESS["CRM_TRACKING_SOURCE_UTM_ADDITIONAL_GOOGLE_MSGVER_1"] = "Додаткові мітки UTM для Google Ads";
 $MESS["CRM_TRACKING_SOURCE_UTM_CAMPAIGN"] = "Назва рекламної компанії";
 $MESS["CRM_TRACKING_SOURCE_UTM_CAMPAIGN_DESC_GOOGLE"] = "Замість {network} AdWords підставить \"g\" (пошук google), \"s\" (пошуковий партнер) або \"d\" (КМС). Наприклад: dytiachyi_odiah, dytiache_vzuttia і так далі";
 $MESS["CRM_TRACKING_SOURCE_UTM_MATCHTYPE_DESC_GOOGLE"] = "Можливі значення: e (точна відповідність), p (фразова) або b (широка)";
@@ -16,4 +17,3 @@ $MESS["CRM_TRACKING_SOURCE_UTM_SITE_NAME"] = "Введіть адресу сай
 $MESS["CRM_TRACKING_SOURCE_UTM_SITE_NAME_DESC"] = "Адреса сторінки, на яку повинен перейти відвідувач";
 $MESS["CRM_TRACKING_SOURCE_UTM_SOURCE"] = "Джерело рекламної кампанії";
 $MESS["CRM_TRACKING_SOURCE_UTM_SOURCE_DESC"] = "Джерело переходу. Наприклад: google, email, newsletter";
-?>

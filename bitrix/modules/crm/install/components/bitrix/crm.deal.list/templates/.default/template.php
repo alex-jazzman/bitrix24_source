@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * Bitrix vars
@@ -15,17 +19,33 @@ use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
+
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager', 'ui.fonts.opensans']);
+
+Extension::load(
+	[
+		'crm.merger.batchmergemanager',
+		'ui.fonts.opensans',
+	]
+);
+
+if (
+	!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])
+	|| !empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])
+)
+{
+	Extension::load(['crm.restriction.filter-fields']);
+}
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
@@ -43,31 +63,37 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 ?>
 <div id="rebuildMessageWrapper"><?
 
-if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
+if (isset($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']) && $arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
 {
 	?><div id="rebuildDealSearchWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT'])
+
+if (isset($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT']) && $arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT'])
 {
 	?><div id="buildTimelineSearchWrapper"></div><?
 }
-if($arResult['NEED_FOR_BUILD_TIMELINE'])
+
+if (isset($arResult['NEED_FOR_BUILD_TIMELINE']) && $arResult['NEED_FOR_BUILD_TIMELINE'])
 {
 	?><div id="buildDealTimelineWrapper"></div><?
 }
-if($arResult['NEED_FOR_REFRESH_ACCOUNTING'])
+
+if (isset($arResult['NEED_FOR_REFRESH_ACCOUNTING']) && $arResult['NEED_FOR_REFRESH_ACCOUNTING'])
 {
 	?><div id="refreshDealAccountingWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS'])
+
+if (isset($arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS']) && $arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS'])
 {
 	?><div id="rebuildDealSemanticsWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'])
+
+if (isset($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']) && $arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'])
 {
 	?><div id="rebuildDealSecurityAttrsWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_DEAL_ATTRS'])
+
+if (isset($arResult['NEED_FOR_REBUILD_DEAL_ATTRS']) && $arResult['NEED_FOR_REBUILD_DEAL_ATTRS'])
 {
 	?><div id="rebuildDealAttrsMsg" class="crm-view-message">
 		<?=GetMessage('CRM_DEAL_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildDealAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
@@ -82,7 +108,8 @@ $allowDelete = $arResult['PERMS']['DELETE'];
 $allowExclude = $arResult['CAN_EXCLUDE'];
 $currentUserID = $arResult['CURRENT_USER_ID'];
 $activityEditorID = '';
-if(!$isInternal)
+
+if (!$isInternal)
 {
 	$activityEditorID = "{$arResult['GRID_ID']}_activity_editor";
 	$APPLICATION->IncludeComponent(
@@ -114,7 +141,7 @@ $gridManagerCfg = array(
 	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 	'filterFields' => array()
 );
-echo CCrmViewHelper::RenderDealStageSettings($arParams['CATEGORY_ID']);
+echo CCrmViewHelper::RenderDealStageSettings($arParams['CATEGORY_ID'] ?? null);
 $prefix = $arResult['GRID_ID'];
 $prefixLC = mb_strtolower($arResult['GRID_ID']);
 
@@ -609,7 +636,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 		);
 
 		$counterData = array('CURRENT_USER_ID' => $currentUserID, 'ENTITY' => $arDeal);
-		if($waitingID <= 0
+		if ($waitingID <= 0
 			&& CCrmUserCounter::IsReckoned(CCrmUserCounter::CurrentDealActivies, $counterData)
 		)
 		{
@@ -1152,7 +1179,13 @@ $APPLICATION->IncludeComponent(
 		'MESSAGES' => $messages,
 		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']))
-			->setAllAllowableItems(NavigationBarPanel::ID_LIST)
+			->setItems([
+				NavigationBarPanel::ID_KANBAN,
+				NavigationBarPanel::ID_LIST,
+				NavigationBarPanel::ID_ACTIVITY,
+				NavigationBarPanel::ID_CALENDAR,
+				NavigationBarPanel::ID_AUTOMATION
+			], NavigationBarPanel::ID_LIST)
 			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 			->get(),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
@@ -1261,18 +1294,21 @@ $APPLICATION->IncludeComponent(
 			<?php endif;?>
 		}
 	);
-</script><?
-if(!$isInternal):
-?><script type="text/javascript">
+</script><?php
+if (
+	!$isInternal
+	&& !$isRecurring
+	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
+	&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+):
+	$todoCreateNotificationSkipPeriod =
+		(new \Bitrix\Crm\Activity\TodoCreateNotification(\CCrmOwnerType::Deal))
+			->getCurrentSkipPeriod()
+	;
+	?><script type="text/javascript">
 	BX.ready(
 			function()
 			{
-				<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()):
-					$todoCreateNotificationSkipPeriod =
-						(new \Bitrix\Crm\Activity\TodoCreateNotification(\CCrmOwnerType::Deal))
-							->getCurrentSkipPeriod()
-					;
-				?>
 				BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
 					/** @see BX.Crm.ToolbarComponent */
 					const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
@@ -1287,8 +1323,16 @@ if(!$isInternal):
 						<?php endif; ?>
 					});
 				});
-				<?php endif; ?>
+			}
+	);
+</script><?php
+endif;
 
+if(!$isInternal):
+?><script type="text/javascript">
+	BX.ready(
+			function()
+			{
 				BX.CrmActivityEditor.items['<?= CUtil::JSEscape($activityEditorID)?>'].addActivityChangeHandler(
 						function()
 						{
@@ -1341,21 +1385,31 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):
-	Bitrix\Main\UI\Extension::load(['crm.restriction.client-fields']);
-?>
+<?if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):?>
 		<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				new BX.Crm.Restriction.ClientFieldsRestriction(
+				new BX.Crm.Restriction.FilterFieldsRestriction(
 					<?=CUtil::PhpToJSObject($arResult['CLIENT_FIELDS_RESTRICTIONS'])?>
 				);
 			}
 		);
 		</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
+<?if (!empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])):?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				new BX.Crm.Restriction.FilterFieldsRestriction(
+					<?=CUtil::PhpToJSObject($arResult['OBSERVERS_FIELD_RESTRICTIONS'])?>
+				);
+			}
+		);
+	</script>
+<?endif;?>
+<?if (isset($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']) && $arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1383,7 +1437,7 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT']):?>
+<?if (isset($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT']) && $arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1411,7 +1465,7 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']):?>
+<?if (isset($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']) && $arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1431,7 +1485,7 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_BUILD_TIMELINE']):?>
+<?if (isset($arResult['NEED_FOR_BUILD_TIMELINE']) && $arResult['NEED_FOR_BUILD_TIMELINE']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1459,7 +1513,7 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REFRESH_ACCOUNTING']):?>
+<?if (isset($arResult['NEED_FOR_REFRESH_ACCOUNTING']) && $arResult['NEED_FOR_REFRESH_ACCOUNTING']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1487,7 +1541,7 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS']):?>
+<?if (isset($arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS']) && $arResult['NEED_FOR_REBUILD_DEAL_SEMANTICS']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1515,7 +1569,7 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_DEAL_ATTRS']):?>
+<?if (isset($arResult['NEED_FOR_REBUILD_DEAL_ATTRS']) && $arResult['NEED_FOR_REBUILD_DEAL_ATTRS']):?>
 <script type="text/javascript">
 	BX.ready(
 		function()

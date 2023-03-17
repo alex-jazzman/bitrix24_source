@@ -198,10 +198,12 @@
 			var index = BX.util.array_search(beforeItem, this.items);
 			var items = this.getItems();
 			var alreadySet = false;
-			for (itemId in items)
+
+			for (const itemId in items)
 			{
 				if (items[itemId].id === item.getId())
 				{
+					items[itemId] = item;
 					alreadySet = true;
 				}
 			}
@@ -234,7 +236,17 @@
 			}).then(function(){
 				this.setPullItemBackground(item, '#fff');
 				item.useAnimation = false;
-				item.layout.container.style.opacity = '100%';
+
+				if (item.layout.container)
+				{
+					item.layout.container.style.opacity = '100%';
+				}
+
+				if (this.getGrid().isRendered())
+				{
+					this.render();
+				}
+
 				BX.Event.EventEmitter.emit(
 					'Crm.Kanban.Column:onItemAdded',
 					{
@@ -244,11 +256,6 @@
 						oldColumn: this.grid.getColumn(oldColumnId),
 					});
 			}.bind(this));
-
-			if (this.getGrid().isRendered())
-			{
-				this.render();
-			}
 		},
 
 		addItems: function(items, beforeItem)
@@ -335,6 +342,8 @@
 					if (data && data.error)
 					{
 						BX.Kanban.Utils.showErrorDialog(data.error, true);
+					} else if (data && data.IS_SHOULD_UPDATE_CARD) {
+						this.getGrid().loadNew(forSend, false, true, true, true);
 					}
 				}.bind(this),
 				function(error)
@@ -357,8 +366,6 @@
 				}
 
 				this.render( );
-
-				this.layout.total.textContent = arr.length;
 			}
 		},
 
@@ -377,6 +384,11 @@
 
 
 			BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onBeforeItemMoved", [event]);
+
+			if (!event.isActionAllowed())
+			{
+				return;
+			}
 
 			success = this.getGrid().moveItem(draggableItem, this);
 
@@ -477,6 +489,7 @@
 							categoryId: gridData.params.CATEGORY_ID ? gridData.params.CATEGORY_ID : 0,
 							guid: this.editorId,
 							configId: gridData.editorConfigId,
+							viewMode: gridData.viewMode,
 							params: {
 								'ENABLE_PERSONAL_CONFIGURATION_UPDATE': true,
 								'ENABLE_COMMON_CONFIGURATION_UPDATE': true,
@@ -1073,6 +1086,12 @@
 					events: {
 						click: quickForm
 							? function(ev) {
+								const tariffRestrictions = gridData.tariffRestrictions || {};
+								if (tariffRestrictions.addItemNotPermittedByTariff === true)
+								{
+									BX.Crm.Router.Instance.showFeatureSlider();
+									return;
+								}
 							// @todo Checking bx-ie is still actually?
 								if(document.getElementsByTagName("html")[0].classList.contains("bx-ie"))
 								{

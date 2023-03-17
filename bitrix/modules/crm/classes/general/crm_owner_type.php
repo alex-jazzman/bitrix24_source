@@ -663,7 +663,7 @@ class CCrmOwnerType
 
 	public static function GetAllDescriptions(): array
 	{
-		if (!self::$ALL_DESCRIPTIONS[LANGUAGE_ID])
+		if (!isset(self::$ALL_DESCRIPTIONS[LANGUAGE_ID]))
 		{
 			IncludeModuleLangFile(__FILE__);
 			self::$ALL_DESCRIPTIONS[LANGUAGE_ID] = [
@@ -702,7 +702,7 @@ class CCrmOwnerType
 
 	public static function GetAllCategoryCaptions(bool $useNames = false): array
 	{
-		if (!self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID])
+		if (!isset(self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID]))
 		{
 			IncludeModuleLangFile(__FILE__);
 			self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID] = [
@@ -1731,6 +1731,9 @@ class CCrmOwnerType
 							$arRes['CURRENCY_ID']
 						),
 					]),
+					'OPPORTUNITY' => $arRes['OPPORTUNITY'],
+					'CURRENCY_ID' => $arRes['CURRENCY_ID'],
+					'DATE_CREATE' => $arRes['DATE_CREATE'],
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
 					'SHOW_URL' => self::GetEntityShowPath(self::Deal, $ID),
@@ -1911,7 +1914,7 @@ class CCrmOwnerType
 					array('@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'),
 					false,
 					false,
-					array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO', 'ASSIGNED_BY_ID')
+					array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO', 'ASSIGNED_BY_ID', 'IS_MY_COMPANY')
 				);
 				break;
 			}
@@ -2348,6 +2351,7 @@ class CCrmOwnerType
 							array('company_id' => $ID)
 						),
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Company),
+					'IS_MY_COMPANY' => isset($arRes['IS_MY_COMPANY']) ? ($arRes['IS_MY_COMPANY'] === 'Y') : false,
 				);
 				if($enableEditUrl)
 				{

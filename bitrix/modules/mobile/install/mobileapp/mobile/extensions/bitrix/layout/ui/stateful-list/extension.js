@@ -56,6 +56,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.deleteItemHandler = this.deleteItemHandler.bind(this);
 			this.addItemHandler = this.addItemHandler.bind(this);
 			this.menuShowHandler = this.menuShow.bind(this);
+			this.bindSimpleListRef = this.bindSimpleListRef.bind(this);
 
 			this.state = this.getInitialState();
 			this.state.itemType = this.getValue(props, 'itemType', ListItemsFactory.Type.Base);
@@ -709,7 +710,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				.setCacheId(cacheId)
 				.setCacheHandler(response => this.drawListFromCache(response, blockPage, append))
 				.setHandler(response => this.drawListFromAjax(response, blockPage, append))
-				.call(useCache);
+				.call(useCache)
+			;
 		}
 
 		drawListFromCache(response, blockPage, append)
@@ -1278,7 +1280,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 						showFloatingButton: BX.prop.getBoolean(this.props, 'isShowFloatingButton', true),
 						itemsLoadLimit: ITEMS_LOAD_LIMIT,
 						isRefreshing: this.state.isRefreshing,
-						ref: ref => this.simpleList = ref,
+						ref: this.bindSimpleListRef,
 						pull: this.pull,
 						onDetailCardUpdateHandler: this.props.onDetailCardUpdateHandler || null,
 						onDetailCardCreateHandler: this.props.onDetailCardCreateHandler || null,
@@ -1286,6 +1288,11 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 					}),
 				),
 			);
+		}
+
+		bindSimpleListRef(ref)
+		{
+			this.simpleList = ref;
 		}
 
 		showError(errorText)
