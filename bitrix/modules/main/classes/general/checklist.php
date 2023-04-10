@@ -1231,15 +1231,17 @@ class CAutoCheck
 						\Bitrix\Main\Application::getInstance()->getSession()["BX_CHECKLIST"]["LAST_FILE"] = "";
 					continue;
 				}
-				$queries = array();
-				if ($f = @fopen($file, "r"))
+
+				if ($content = file_get_contents($file))
 				{
-					if ($content = @fread($f, filesize($file)))
-						//preg_match('/\<\?[^(\?\>)]*?(?:mysql_query|odbc_exec)\(/ism', $content, $queries);
-						preg_match('/((?:mysql_query|odbc_exec|oci_execute|odbc_execute)\(.*\))/ism', $content, $queries);
+					$queries = [];
+					preg_match('/((?:mysql_query|mysqli_query|odbc_exec|oci_execute|odbc_execute)\(.*\))/ism', $content, $queries);
+
+					if ($queries && !empty($queries[0]))
+					{
+						\Bitrix\Main\Application::getInstance()->getSession()["BX_CHECKLIST"]["FOUND"] .= str_replace(array("//", "\\\\"), array("/", "\\"), $file)."\n";
+					}
 				}
-				if ($queries && count($queries[0])>0)
-					\Bitrix\Main\Application::getInstance()->getSession()["BX_CHECKLIST"]["FOUND"].=str_replace(array("//", "\\\\"), array("/", "\\"), $file)."\n";
 
 				if (time()-$time>=20)
 				{

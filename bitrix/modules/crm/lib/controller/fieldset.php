@@ -83,6 +83,11 @@ class FieldSet extends Main\Engine\JsonController
 			$field['valuePrintable'] = $value;
 			$fieldEntityTypeId = $field['editing']['entityTypeId'];
 
+			if (!$fieldEntityTypeId)
+			{
+				continue;
+			}
+
 			$field['editing']['url'] =
 				($fieldEntityTypeId === \CCrmOwnerType::Requisite)
 					? $rqEditUrl

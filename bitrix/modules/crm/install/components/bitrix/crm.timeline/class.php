@@ -320,6 +320,8 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->arResult['USER_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
 		$this->arResult['LAYOUT_CURRENT_USER'] = Crm\Service\Timeline\Layout\User::current()->toArray();
 
+		$this->arResult['CURRENCIES'] = $this->getCurrency();
+
 		$this->prepareScheduleItems();
 		$this->prepareHistoryFilter();
 		$this->prepareHistoryItems();
@@ -668,5 +670,29 @@ class CCrmTimelineComponent extends CBitrixComponent
 		}
 
 		return $chatData;
+	}
+
+	protected function getCurrency()
+	{
+		$currencyList = [];
+
+		if (Main\Loader::includeModule('currency'))
+		{
+			$currencyId = \CCrmCurrency::GetBaseCurrencyID();
+			$currencyFormat = CCurrencyLang::GetFormatDescription($currencyId);
+			$currencyList[] = [
+				'CURRENCY' => $currencyId,
+				'FORMAT' => [
+					'FORMAT_STRING' => $currencyFormat['FORMAT_STRING'],
+					'DEC_POINT' => $currencyFormat['DEC_POINT'],
+					'THOUSANDS_SEP' => $currencyFormat['THOUSANDS_SEP'],
+					'DECIMALS' => $currencyFormat['DECIMALS'],
+					'THOUSANDS_VARIANT' => $currencyFormat['THOUSANDS_VARIANT'],
+					'HIDE_ZERO' => $currencyFormat['HIDE_ZERO'],
+				],
+			];
+		}
+
+		return $currencyList;
 	}
 }

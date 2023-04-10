@@ -265,7 +265,12 @@ abstract class BaseComponent extends Crm\Component\Base
 
 	protected function addError($error)
 	{
-		$this->errorCollection[] = new Main\Error($this->getErrorMessage($error));
+		if (!$error instanceof Main\Error)
+		{
+			$error = new Main\Error($this->getErrorMessage($error));
+		}
+
+		$this->errorCollection[] = $error;
 	}
 
 	protected function getErrorMessage($error)

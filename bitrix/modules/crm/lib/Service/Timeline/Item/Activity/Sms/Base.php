@@ -59,6 +59,8 @@ abstract class Base extends Activity
 			&& $factory->isStagesEnabled()
 		)
 		{
+			$ownerTypeId = $this->getContext()->getEntityTypeId();
+
 			$result['resendPayment'] =
 				(new Layout\Footer\Button(
 					Loc::getMessage('CRM_TIMELINE_TITLE_ACTIVITY_SMS_NOTIFICATION_RESEND'),
@@ -66,10 +68,22 @@ abstract class Base extends Activity
 				))
 					->setAction(
 						(new Layout\Action\JsEvent('SalescenterApp:Start'))
+							->addActionParamString(
+								'mode',
+								$ownerTypeId === \CCrmOwnerType::Deal
+									? 'payment_delivery'
+									: 'payment'
+							)
 							->addActionParamInt('orderId', $orderId)
 							->addActionParamInt('paymentId', $paymentId)
-							->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+							->addActionParamInt('ownerTypeId', $ownerTypeId)
 							->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+							->addActionParamString(
+								'analyticsLabel',
+								\CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId)
+									? 'crmDealTimelineSmsResendPaymentSlider'
+									: 'crmDynamicTypeTimelineSmsResendPaymentSlider'
+							)
 					)
 			;
 		}

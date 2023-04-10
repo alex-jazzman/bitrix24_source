@@ -938,7 +938,16 @@ $tabControl->BeginNextFormTab();
 	<?$tabControl->EndCustomField("TIMESTAMP_X", '');?>
 
 <?
-$tabControl->AddCheckBoxField("ACTIVE", GetMessage("IBSEC_E_ACTIVE"), false, "Y", $str_ACTIVE=="Y");
+$tabControl->AddCheckBoxField(
+	'ACTIVE',
+	GetMessage('IBSEC_E_ACTIVE'),
+	false,
+	[
+		'Y',
+		'N',
+	],
+	$str_ACTIVE === 'Y'
+);
 
 $tabControl->BeginCustomField("IBLOCK_SECTION_ID", GetMessage("IBSEC_E_PARENT_SECTION").":");?>
 	<tr>

@@ -25,6 +25,7 @@
 		this.viewer = null;
 		this.publicUrl = null;
 		this.sendedToSign = false;
+		this.signingInfoHelperSliderCode = null;
 	};
 
 	BX.Crm.DocumentView.init = function(options)
@@ -143,12 +144,11 @@
 		{
 			this.transformationErrorCode = options.transformationErrorCode;
 		}
-		this.isSigningEnabledInCurrentTariff =
-			BX.type.isBoolean(options.isSigningEnabledInCurrentTariff)
-			&& options.isSigningEnabledInCurrentTariff
-		;
+		if (BX.type.isBoolean(options.isSigningEnabledInCurrentTariff))
+		{
+			this.isSigningEnabledInCurrentTariff = options.isSigningEnabledInCurrentTariff;
+		}
 
-		this.signingInfoHelperSliderCode = null;
 		if (BX.type.isString(options.signingInfoHelperSliderCode))
 		{
 			this.signingInfoHelperSliderCode =

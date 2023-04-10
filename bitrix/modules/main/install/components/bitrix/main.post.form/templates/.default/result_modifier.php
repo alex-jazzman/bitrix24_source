@@ -77,7 +77,7 @@ if (is_array($arParams["ADDITIONAL"]))
 			$arParams["ADDITIONAL_TYPE"] =  'popup';
 		}
 	}
-	if ($arParams["TEXT"]["SHOW"] !== "N")
+	if (!isset($arParams["TEXT"]["SHOW"]) || $arParams["TEXT"]["SHOW"] !== "N")
 	{
 		if ($arParams["ADDITIONAL_TYPE"] === 'html')
 		{

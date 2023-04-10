@@ -1,0 +1,7 @@
+<?php
+$MESS["MOBILE_UI_EDITOR_EMAIL_BUTTON"] = "Додати адресу ел. пошти";
+$MESS["MOBILE_UI_EDITOR_IM_BUTTON"] = "Додати месенджер";
+$MESS["MOBILE_UI_EDITOR_OPPORTUNITY_TITLE"] = "Сума";
+$MESS["MOBILE_UI_EDITOR_PHONE_BUTTON"] = "Додати телефон";
+$MESS["MOBILE_UI_EDITOR_PROVIDER_TYPE"] = "Тип";
+$MESS["MOBILE_UI_EDITOR_WEB_BUTTON"] = "Додати сайт";

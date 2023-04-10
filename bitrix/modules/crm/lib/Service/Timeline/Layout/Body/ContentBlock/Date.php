@@ -11,6 +11,7 @@ class Date extends ContentBlock implements TextPropertiesInterface
 
 	protected ?DateTime $date = null;
 	private bool $withTime = true;
+	private ?string $format = null;
 
 	public function isWithTime(): bool
 	{
@@ -20,6 +21,18 @@ class Date extends ContentBlock implements TextPropertiesInterface
 	public function setWithTime(bool $withTime = true): self
 	{
 		$this->withTime = $withTime;
+
+		return $this;
+	}
+
+	public function getFormat(): ?string
+	{
+		return $this->format;
+	}
+
+	public function setFormat(?string $format): Date
+	{
+		$this->format = $format;
 
 		return $this;
 	}
@@ -48,6 +61,7 @@ class Date extends ContentBlock implements TextPropertiesInterface
 			[
 				'value' => $this->getDate()->getTimestamp(),
 				'withTime' => $this->isWithTime(),
+				'format' => $this->getFormat(),
 			]
 		);
 	}

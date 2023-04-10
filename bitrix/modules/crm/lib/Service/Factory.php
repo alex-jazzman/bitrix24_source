@@ -370,9 +370,6 @@ abstract class Factory
 	 */
 	public function getItems(array $parameters = []): array
 	{
-		$items = [];
-		$itemIds = [];
-
 		$fmIndex = array_search(Item::FIELD_NAME_FM, $parameters['select'] ?? [], true);
 		if ($fmIndex !== false)
 		{
@@ -383,15 +380,30 @@ abstract class Factory
 
 		$parameters = $this->prepareGetListParameters($parameters);
 
-		$list = $this->getDataClass()::getList($parameters);
-		while($item = $list->fetchObject())
+		$itemIds =
+			$this->getDataClass()::getList(['select' => [Item::FIELD_NAME_ID]] + $parameters)
+				->fetchCollection()
+				->getIdList()
+		;
+		if (empty($itemIds))
 		{
-			$item =  $this->getItemByEntityObject($item);
-			$items[] = $item;
-			$itemIds[] = $item->getId();
+			return [];
 		}
 
-		if ($isFmInSelect && !empty($itemIds) && $this->isMultiFieldsEnabled())
+		$items = [];
+
+		$list = $this->getDataClass()::getList(
+			[
+				'filter' => ['@' . Item::FIELD_NAME_ID => $itemIds],
+				'limit' => null,
+			] + $parameters
+		);
+		while($item = $list->fetchObject())
+		{
+			$items[] = $this->getItemByEntityObject($item);
+		}
+
+		if ($isFmInSelect && $this->isMultiFieldsEnabled())
 		{
 			Container::getInstance()->getMultifieldStorage()->warmupCache($this->getEntityTypeId(), $itemIds);
 		}

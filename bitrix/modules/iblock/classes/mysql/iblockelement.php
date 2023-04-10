@@ -2348,18 +2348,22 @@ class CIBlockElement extends CAllIBlockElement
 
 							//Check if no new file and no delete command
 							if (
-								!mb_strlen($val["tmp_name"])
-								&& !mb_strlen($val["del"])
+								(!isset($val["tmp_name"]) || $val["tmp_name"] === '')
+								&& (!isset($val["del"]) || $val["del"] === '')
 							) //Overwrite with database value
 							{
 								//But save description from incoming value
-								if (array_key_exists("description", $val))
-									$description = trim($val["description"]);
+								if (is_array($val) && array_key_exists("description", $val))
+								{
+									$description = trim((string)$val["description"]);
+								}
 								elseif (
 									is_array($orderedPROP[$res["ID"]])
 									&& array_key_exists("DESCRIPTION", $orderedPROP[$res["ID"]])
 								)
-									$description = trim($orderedPROP[$res["ID"]]["DESCRIPTION"]);
+								{
+									$description = trim((string)$orderedPROP[$res["ID"]]["DESCRIPTION"]);
+								}
 
 								$orderedPROP[$res["ID"]] = array(
 									"VALUE" => $res["VALUE"],

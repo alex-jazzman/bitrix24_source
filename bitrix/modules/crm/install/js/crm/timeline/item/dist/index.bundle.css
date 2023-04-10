@@ -937,6 +937,19 @@ a.crm-timeline__card-title:hover {
 	background-color: var(--ui-color-background-on-alert, #e92f2a);
 }
 
+.crm-timeline__card-logo_icon.--delivery > i {
+	background-color: transparent;
+	-webkit-mask-image: none;
+	        mask-image: none;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='36' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M7.905.644h17.199a1.94 1.94 0 011.941 1.94v2.564h1.046c1.051 0 2.058.426 2.789 1.182l3.84 3.967c.35.362.547.847.547 1.35v6.96c0 .643-.522 1.165-1.165 1.165h-2.498a3.482 3.482 0 11-6.94.018h-7.356a3.482 3.482 0 11-6.941 0H7.952a1.165 1.165 0 01-1.165-1.165V9.114H3.99a1.595 1.595 0 010-3.19h2.798v-2.09H1.761a1.595 1.595 0 010-3.19h6.144zM27.07 8.61c0-.214.174-.388.388-.388h1.784c.208 0 .408.084.554.232l2.491 2.532c.143.145.223.34.223.544v1.073a.388.388 0 01-.388.388h-4.664a.388.388 0 01-.388-.388V8.61zm-11.327 5.403c.226.204.57.2.791-.01l5.36-5.074a.776.776 0 00.008-1.12l-.416-.404a.776.776 0 00-1.073-.01l-4.27 4.006-1.562-1.33a.776.776 0 00-1.045.036l-.426.415a.776.776 0 00.021 1.133l2.612 2.358z' fill='%232FC6F6'/%3E%3C/svg%3E");
+}
+
+.crm-timeline__card-logo_icon.--empty > i {
+	background-color: transparent;
+	-webkit-mask-image: none;
+	        mask-image: none;
+}
+
 .crm-timeline__card-logo_icon.--notification > i {
 	background-color: transparent;
 	-webkit-mask-image: none;
@@ -944,6 +957,11 @@ a.crm-timeline__card-title:hover {
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='33' height='32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M.915 15.968c0 8.819 7.149 15.968 15.967 15.968 8.819 0 15.968-7.149 15.968-15.968C32.85 7.15 25.701 0 16.882 0 8.064 0 .915 7.15.915 15.968zm7.208-3.96a3 3 0 013-3h11.519a3 3 0 013 3v7.139a3 3 0 01-3 3h-5.038l-3.71 3.709c-.755.756-2.048.22-2.048-.849v-2.86h-.723a3 3 0 01-3-3v-7.14z' fill='%232FC6F6'/%3E%3C/svg%3E");
 }
 
+.crm-timeline__card-logo_icon.--empty > i {
+	background-color: transparent;
+	-webkit-mask-image: none;
+	        mask-image: none;
+}
 .crm-timeline__client-mark {
 	--icon-color: inherit;
 	--text-color: inherit;

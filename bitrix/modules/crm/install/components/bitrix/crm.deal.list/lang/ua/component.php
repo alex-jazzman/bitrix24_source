@@ -62,6 +62,7 @@ $MESS["CRM_COLUMN_TITLE"] = "Назва";
 $MESS["CRM_COLUMN_TYPE_ID"] = "Тип";
 $MESS["CRM_COLUMN_WEBFORM"] = "Створена CRM-формою";
 $MESS["CRM_DEAL_LIST_ITEM_DEBUG_TITLE"] = "Налагодження";
+$MESS["CRM_DEAL_LIST_ITEM_DEBUG_TITLE_MSGVER_1"] = "У налагодженні";
 $MESS["CRM_DEAL_NAV_TITLE_LIST"] = "Список угод";
 $MESS["CRM_DEAL_NAV_TITLE_LIST_SHORT"] = "Угоди";
 $MESS["CRM_DEAL_NAV_TITLE_RECUR"] = "Регулярні угоди";

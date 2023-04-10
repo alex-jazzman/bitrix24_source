@@ -347,8 +347,24 @@
 	background-color: var(--ui-color-background-on-alert, #e92f2a);
 }
 
+.crm-timeline__card-logo_icon.--delivery > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/delivery/crm-timeline__delivery.svg');
+}
+
+.crm-timeline__card-logo_icon.--empty > i {
+	background-color: transparent;
+	mask-image: none;
+}
+
 .crm-timeline__card-logo_icon.--notification > i {
 	background-color: transparent;
 	mask-image: none;
 	background-image: url('../../../images/timeline-card-logos/notification/crm-timeline__notification.svg');
+}
+
+.crm-timeline__card-logo_icon.--empty > i {
+	background-color: transparent;
+	mask-image: none;
 }

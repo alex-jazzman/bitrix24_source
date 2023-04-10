@@ -23,6 +23,7 @@ $MESS["REST_CONFIGURATION_IMPORT_INSTALL_STEP"] = "Імпортуємо нала
 $MESS["REST_CONFIGURATION_IMPORT_INSTALL_STEP_CLEAR"] = "Готуємо ваш Бітрікс24 до імпорту";
 $MESS["REST_CONFIGURATION_IMPORT_INSTALL_STEP_FINISH"] = "Завершуємо роботи";
 $MESS["REST_CONFIGURATION_IMPORT_INSTALL_STEP_INIT_BACKGROUND"] = "Завантажуємо контент";
+$MESS["REST_CONFIGURATION_IMPORT_INSTALL_STEP_MSGVER_1"] = "Установлюємо вибраний вами шаблон, лишилося зовсім трохи.";
 $MESS["REST_CONFIGURATION_IMPORT_INSTALL_STEP_START"] = "Збираємо інформацію";
 $MESS["REST_CONFIGURATION_IMPORT_PRE_INSTALL_APP_DESCRIPTION"] = "Натисніть «Продовжити» для установки галузевого рішення «#APP_NAME#».";
 $MESS["REST_CONFIGURATION_IMPORT_PRE_INSTALL_LATER_APP_POPUP_DESCRIPTION"] = "Ви зможете встановити галузеве рішення «#APP_NAME#» в будь-який момент, знайшовши його у списку встановлених рішень. Детальніше про це читайте в нашій #HELP_DESK_LINK#";

@@ -736,6 +736,11 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 
 		return orderId;
 	};
+
+	BX.Crm.EntityEditorMoneyPay.prototype.getPaymentDocumentsControl = function()
+	{
+		return this._paymentDocumentsControl;
+	};
 }
 
 if(typeof BX.Crm.EntityEditorUser === "undefined")

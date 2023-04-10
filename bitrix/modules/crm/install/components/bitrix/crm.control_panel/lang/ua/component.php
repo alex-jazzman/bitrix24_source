@@ -64,6 +64,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_SALES_CENTER"] = "Центр продажу";
 $MESS["CRM_CTRL_PANEL_ITEM_SALES_CENTER_DELIVERY"] = "CRM.Доставка";
 $MESS["CRM_CTRL_PANEL_ITEM_SALES_CENTER_PAYMENT"] = "CRM.Оплата";
 $MESS["CRM_CTRL_PANEL_ITEM_SETTINGS"] = "Налаштування";
+$MESS["CRM_CTRL_PANEL_ITEM_SIGN_COUNTERPARTY"] = "Контрагенти підписання";
 $MESS["CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST"] = "Список смарт-процесів";
 $MESS["CRM_CTRL_PANEL_ITEM_START"] = "Старт";
 $MESS["CRM_CTRL_PANEL_ITEM_START_TITLE"] = "Стартова сторінка зі зведеною статистикою по каналах";

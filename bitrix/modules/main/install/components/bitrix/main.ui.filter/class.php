@@ -847,7 +847,7 @@ class CMainUiFilter extends CBitrixComponent
 			);
 		}
 
-		return $this->arResult["CURRENT_PRESET"];
+		return $this->arResult["CURRENT_PRESET"] ?? [];
 	}
 
 	protected function prepareFieldsCount()
@@ -1224,7 +1224,7 @@ class CMainUiFilter extends CBitrixComponent
 		if (!$USER->CanDoOperation("edit_other_settings"))
 		{
 			$commonOptions = $this->getCommonOptions();
-			$filters = $commonOptions["filters"];
+			$filters = $commonOptions["filters"] ?? [];
 
 			if (!empty($filters) && is_array($filters))
 			{

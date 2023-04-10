@@ -208,9 +208,6 @@ class EventMessageCompiler
 		return $this->mailContentType;
 	}
 
-	/**
-	 * @param mixed $mailAttachment
-	 */
 	protected function setMailAttachment()
 	{
 		$eventMessageAttachment = [];
@@ -290,8 +287,6 @@ class EventMessageCompiler
 		return $this->mailAttachment;
 	}
 
-
-
 	/**
 	 * @param
 	 */
@@ -343,7 +338,7 @@ class EventMessageCompiler
 		//add those who want to receive all emails
 		if(isset($this->event["DUPLICATE"]) && $this->event["DUPLICATE"]=="Y")
 		{
-			$all_bcc = Config\Option::get("main", "all_bcc", "");
+			$all_bcc = Config\Option::get("main", "all_bcc");
 			if(mb_strpos($all_bcc, "@") !== false)
 				$arMailFields["BCC"] .= ($all_bcc <> ''?($arMailFields["BCC"] <> ''?",":"").$all_bcc:"");
 		}
@@ -419,7 +414,7 @@ class EventMessageCompiler
 	 * @param $str
 	 * @param $ar
 	 * @param bool $bNewLineToBreak
-	 * @return mixed
+	 * @return string
 	 */
 	protected function replaceTemplate($str, $ar, $bNewLineToBreak=false)
 	{
@@ -471,9 +466,10 @@ class EventMessageCompiler
 				$site_id = $arMessageSite['SITE_ID'];
 		}
 
-		$SITE_NAME = Config\Option::get("main", "site_name", $GLOBALS["SERVER_NAME"]);
-		$SERVER_NAME = Config\Option::get("main", "server_name", $GLOBALS["SERVER_NAME"]);
-		$DEFAULT_EMAIL_FROM = Config\Option::get("main", "email_from", "admin@".$GLOBALS["SERVER_NAME"]);
+		$globalName = $GLOBALS["SERVER_NAME"] ?? '';
+		$SITE_NAME = Config\Option::get("main", "site_name", $globalName);
+		$SERVER_NAME = Config\Option::get("main", "server_name", $globalName);
+		$DEFAULT_EMAIL_FROM = Config\Option::get("main", "email_from", "admin@" . $globalName);
 
 		if($site_id <> '')
 		{
@@ -503,7 +499,7 @@ class EventMessageCompiler
 	}
 
 	/**
-	 * @param string|array
+	 * @param $value string|array
 	 * @return string
 	 */
 	protected static function getFieldFlatValue($value)

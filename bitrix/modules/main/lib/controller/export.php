@@ -2,10 +2,14 @@
 namespace Bitrix\Main\Controller;
 
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Engine\Response\AjaxJson;
-
+use Bitrix\Main\Security\Sign\Signer;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Security\Sign\BadSignatureException;
 
 class Export extends Main\Engine\Controller
 {
@@ -35,7 +39,7 @@ class Export extends Main\Engine\Controller
 	protected $componentName = '';
 
 	/** @var array */
-	protected $componentParameters = array();
+	protected $componentParameters = [];
 
 	/** @var string - Exporting file type csv|excel. */
 	protected $exportType;
@@ -808,7 +812,7 @@ class Export extends Main\Engine\Controller
 	{
 		if ($action == self::ACTION_CLEAR || $action == self::ACTION_CANCEL || $action == self::ACTION_PURGE)
 		{
-			$result = array();
+			$result = [];
 		}
 		else
 		{
@@ -1125,10 +1129,10 @@ class Export extends Main\Engine\Controller
 	 *
 	 * @return array
 	 */
-	protected function getBucketList($filter = array())
+	protected function getBucketList($filter = [])
 	{
-		$result = array();
-		$res = \CCloudStorageBucket::GetList(array(), array_merge(array('ACTIVE' => 'Y', 'READ_ONLY' => 'N'), $filter));
+		$result = [];
+		$res = \CCloudStorageBucket::GetList([], array_merge(array('ACTIVE' => 'Y', 'READ_ONLY' => 'N'), $filter));
 		while($bucket = $res->Fetch())
 		{
 			$result[] = $bucket;
@@ -1140,21 +1144,23 @@ class Export extends Main\Engine\Controller
 	/**
 	 * Save progress parameters.
 	 *
-	 * @return boolean
+	 * @return void
 	 */
-	protected function saveProgressParameters()
+	protected function saveProgressParameters(): void
 	{
 		// store state
-		$progressData = array(
+		$progressData = [
 			'processToken' => $this->processToken,
-		);
+		];
 		foreach ($this->fieldToStoreInProcess as $fieldName)
 		{
 			$progressData[$fieldName] = $this->{$fieldName};
 		}
 
-		$res = \CUserOptions::SetOption($this->module, $this->getProgressParameterOptionName(), $progressData);
-		return  $res;
+		$progressData = (new Signer())->sign(Json::encode($progressData));
+
+		$localStorage = Application::getInstance()->getLocalSession($this->module.'_export_stepper');
+		$localStorage->set($this->getProgressParameterOptionName(), $progressData);
 	}
 
 	/**
@@ -1164,10 +1170,28 @@ class Export extends Main\Engine\Controller
 	 */
 	protected function getProgressParameters()
 	{
-		$progressData = \CUserOptions::GetOption($this->module, $this->getProgressParameterOptionName());
+		$localStorage = Application::getInstance()->getLocalSession($this->module.'_export_stepper');
+		$progressData = $localStorage->get($this->getProgressParameterOptionName());
+
+		if ($progressData)
+		{
+			try
+			{
+				$progressData = Json::decode((new Signer())->unsign($progressData));
+			}
+			catch (BadSignatureException $exception)
+			{
+				$progressData = [];
+			}
+			catch (ArgumentException $exception)
+			{
+				$progressData = [];
+			}
+		}
+
 		if (!is_array($progressData))
 		{
-			$progressData = array();
+			$progressData = [];
 		}
 
 		return $progressData;
@@ -1176,11 +1200,12 @@ class Export extends Main\Engine\Controller
 	/**
 	 * Removes progress parameters.
 	 *
-	 * @return boolean
+	 * @return void
 	 */
-	protected function clearProgressParameters()
+	protected function clearProgressParameters(): void
 	{
-		return \CUserOptions::DeleteOption($this->module, $this->getProgressParameterOptionName());
+		$localStorage = Application::getInstance()->getLocalSession($this->module.'_export_stepper');
+		$localStorage->offsetUnset($this->getProgressParameterOptionName());
 	}
 
 	/**

@@ -26,6 +26,7 @@ declare type ConfigurableItemData = {
 	timestamp: ?Number,
 	sort: ?Array,
 	layout: ?Object,
+	payload: ?Object,
 }
 
 export default class ConfigurableItem extends TimelineItem
@@ -90,7 +91,7 @@ export default class ConfigurableItem extends TimelineItem
 		return this.#type;
 	}
 
-	getDataPayload(): string
+	getDataPayload(): ?Object
 	{
 		return this.#dataPayload;
 	}

@@ -11,6 +11,7 @@ $MESS["CONFIG_ADD_LOGO_DELETE"] = "Видалити логотип";
 $MESS["CONFIG_ADD_LOGO_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити логотип?";
 $MESS["CONFIG_ALLOW_INVITE_USERS"] = "Дозволити всім запрошувати користувачів на портал";
 $MESS["CONFIG_ALLOW_NEW_USER_LF"] = "Включити додавання в живу стрічку запису про прийняття на роботу нового співробітника";
+$MESS["CONFIG_ALLOW_SEARCH_NETWORK"] = "Дозволяти пошук Відкритих ліній у Бітрікс24.Network";
 $MESS["CONFIG_ALLOW_SELF_REGISTER"] = "Дозволити швидку реєстрацію";
 $MESS["CONFIG_ALLOW_TOALL"] = "Дозволяти адресувати \"Всім\" повідомлення в Живій стрічці";
 $MESS["CONFIG_BUY_TARIFF_BY_ALL"] = "Дозволити всім оплачувати тариф";

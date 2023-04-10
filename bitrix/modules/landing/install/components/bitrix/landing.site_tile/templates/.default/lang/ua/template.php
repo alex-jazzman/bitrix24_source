@@ -34,6 +34,7 @@ $MESS["LANDING_SITE_TILE_POPUP_COPY_LINK_COMPLETE"] = "Посилання ско
 $MESS["LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER"] = "Зробити тестове замовлення";
 $MESS["LANDING_SITE_TILE_POPUP_OPEN_CRM"] = "Відкрити CRM із замовленнями";
 $MESS["LANDING_SITE_TILE_POPUP_OPEN_SITE"] = "Перейти на сайт";
+$MESS["LANDING_SITE_TILE_POPUP_SITE_TEXT"] = "Наведіть камеру на QR-код, щоб відкрити сайт";
 $MESS["LANDING_SITE_TILE_POPUP_TEST_ORDER"] = "Тестове замовлення";
 $MESS["LANDING_SITE_TILE_POPUP_TEST_ORDER_ACTION_1"] = "Наведіть камеру на QR-код нижче, щоб відкрити інтернет-магазин на телефоні або перейдіть за посиланням";
 $MESS["LANDING_SITE_TILE_POPUP_TEST_ORDER_ACTION_2"] = "Оформіть замовлення на будь-який товар";

@@ -37,18 +37,6 @@ export const Mark = {
 };
 
 /** @memberof BX.Crm.Timeline.Types */
-export const Delivery = {
-	undefined: 0,
-	taxiEstimationRequest: 1,
-	taxiCallRequest: 2,
-	taxiCancelledByManager: 3,
-	taxiCancelledByDriver: 4,
-	taxiPerformerNotFound: 5,
-	taxiSmsProviderIssue: 6,
-	taxiReturnedFinish: 7,
-	deliveryMessage: 101,
-	deliveryCalculation: 102,
-};
 
 /** @memberof BX.Crm.Timeline.Types */
 export const Order = {

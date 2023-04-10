@@ -132,8 +132,6 @@ BX.CrmHistoryItemVisit = BX.Crm.Timeline.Items.Visit;
 
 BX.CrmHistoryItemScoring = BX.Crm.Timeline.Items.Scoring;
 
-BX.CrmHistoryItemOrderCreation = BX.Crm.Timeline.Items.OrderCreation;
-
 BX.CrmHistoryItemOrderModification = BX.Crm.Timeline.Items.OrderModification;
 
 BX.CrmHistoryItemExternalNoticeModification = BX.Crm.Timeline.Items.ExternalNoticeModification;

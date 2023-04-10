@@ -70,7 +70,7 @@ BX.ready(function()
 		},
 		<?=CUtil::PhpToJSObject([
 			'ctrlEnterHandler' => $arParams["LHE"]['ctrlEnterHandler'] ?? '',
-			'showPanelEditor' => ($arParams["TEXT"]["SHOW"] == "Y"),
+			'showPanelEditor' => isset($arParams["TEXT"]["SHOW"]) && $arParams["TEXT"]["SHOW"] === "Y",
 			'lazyLoad' => !!$arParams["LHE"]['lazyLoad'],
 			'urlPreviewId' => $arParams['urlPreviewId'],
 			'parsers' => $arParams["PARSER"],

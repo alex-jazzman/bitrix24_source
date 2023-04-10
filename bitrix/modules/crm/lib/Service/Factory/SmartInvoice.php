@@ -121,11 +121,6 @@ class SmartInvoice extends Dynamic
 		return $parameters;
 	}
 
-	public function isCountersEnabled(): bool
-	{
-		return true;
-	}
-
 	public static function createTypeIfNotExists(): void
 	{
 		$type = TypeTable::getByEntityTypeId(\CCrmOwnerType::SmartInvoice)->fetchObject();
@@ -355,4 +350,32 @@ class SmartInvoice extends Dynamic
 				->configureSize(100),
 		];
 	}
+
+	public function isCountersEnabled(): bool
+	{
+		// Rarely some portals hasn't b_crm_dynamic_items_31 table. This is unexpected situation, to prevent crash
+		// have to temporarily disabled counter for the smart invoice.
+		$hasTable = $this->checkSmartInvoiceTableExists();
+		return $hasTable;
+	}
+
+	private function checkSmartInvoiceTableExists(): bool
+	{
+		global $DB;
+		$cache = \Bitrix\Main\Application::getInstance()->getManagedCache();
+		$cacheKey = 'crm_check__b_crm_dynamic_items_31__table';
+
+		if ($cache->read(3600*24*7, $cacheKey))
+		{
+			$hasTable = (bool)$cache->get($cacheKey);
+		}
+		else
+		{
+			$hasTable = (bool)$DB->Query('SELECT ID FROM b_crm_dynamic_items_31 LIMIT 1', true);
+			$cache->set($cacheKey, $hasTable);
+		}
+
+		return $hasTable;
+	}
+
 }

@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Factory;
 
+use Bitrix\Crm\Activity\Provider\Delivery;
 use Bitrix\Crm\Activity\Provider\Document;
+use Bitrix\Crm\Activity\Provider\Payment;
 use Bitrix\Crm\Activity\Provider\SignDocument;
 use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Crm\Activity\Provider\StoreDocument;
@@ -52,6 +54,7 @@ class ConfigurableActivity
 
 				return new Item\NotAvailable($context, $model);
 			}
+
 			if ($providerId === SignDocument::getId())
 			{
 				if (SignDocument::isActive())
@@ -61,6 +64,7 @@ class ConfigurableActivity
 
 				return new Item\NotAvailable($context, $model);
 			}
+
 			if ($providerId === ToDo::getId())
 			{
 				return new Item\Activity\ToDo($context, $model);
@@ -79,10 +83,22 @@ class ConfigurableActivity
 					return new $className($context, $model);
 				}
 			}
+
+			if ($providerId === Payment::getId())
+			{
+				return new Item\Activity\Payment($context, $model);
+			}
+
+			if ($providerId === Delivery::getId())
+			{
+				return new Item\Activity\Delivery($context, $model);
+			}
+
 			if ($providerId === Sms::getId())
 			{
 				return new Item\Activity\Sms\Sms($context, $model);
 			}
+
 			if ($providerId === Notification::getId())
 			{
 				return new Item\Activity\Sms\Notification($context, $model);

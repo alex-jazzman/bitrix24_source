@@ -63,7 +63,7 @@ class OrderCheckController extends EntityController
 		$settings = $params['SETTINGS'] ?? [];
 		$orderFields = $params['ORDER_FIELDS'] ?? [];
 
-		$entityId = OrderCheckEntry::create([
+		$timelineEntryId = OrderCheckEntry::create([
 			'ENTITY_ID' => $ownerId,
 			'TYPE_CATEGORY_ID' => TimelineType::MARK,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
@@ -75,7 +75,7 @@ class OrderCheckController extends EntityController
 		{
 			$this->sendPullEventOnAdd(
 				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-				$entityId
+				$timelineEntryId
 			);
 		}
 	}
@@ -86,7 +86,7 @@ class OrderCheckController extends EntityController
 		$settings = $params['SETTINGS'] ?? [];
 		$orderFields = $params['ORDER_FIELDS'] ?? [];
 
-		$entityId = OrderCheckEntry::create([
+		$timelineEntryId = OrderCheckEntry::create([
 			'ENTITY_ID' => $ownerId,
 			'TYPE_CATEGORY_ID' => TimelineType::UNDEFINED,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
@@ -94,11 +94,11 @@ class OrderCheckController extends EntityController
 			'BINDINGS' => $bindings,
 		]);
 
-		foreach($bindings as $binding)
+		foreach ($bindings as $binding)
 		{
 			$this->sendPullEventOnAdd(
 				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-				$entityId
+				$timelineEntryId
 			);
 		}
 	}
@@ -109,18 +109,18 @@ class OrderCheckController extends EntityController
 		$settings = $params['SETTINGS'] ?? [];
 		$orderFields = $params['ORDER_FIELDS'] ?? [];
 
-		$entityId = OrderCheckEntry::create([
+		$timelineEntryId = OrderCheckEntry::create([
 			'TYPE_CATEGORY_ID' => TimelineType::UNDEFINED,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
 			'SETTINGS' => $settings,
 			'BINDINGS' => $bindings,
 		]);
 
-		foreach($bindings as $binding)
+		foreach ($bindings as $binding)
 		{
 			$this->sendPullEventOnAdd(
 				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-				$entityId
+				$timelineEntryId
 			);
 		}
 	}

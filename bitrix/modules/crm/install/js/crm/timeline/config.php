@@ -8,8 +8,6 @@ return [
 	'css' => 'dist/timeline.bundle.css',
 	'js' => 'dist/timeline.bundle.js',
 	'rel' => [
-		'pull.client',
-		'ui.vue',
 		'crm.activity.todo-editor',
 		'main.core.events',
 		'crm.datetime',

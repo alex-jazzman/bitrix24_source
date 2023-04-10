@@ -1,6 +1,3 @@
-import DeliveryActivity from './delivery-activity/component';
-import DeliveryMessage from './delivery-message/component';
-import DeliveryCalculation from './delivery-calculation/component';
 import Manager from "./manager";
 import Stream from "./stream";
 import Editor from "./editor";
@@ -50,8 +47,6 @@ import Zoom from "./items/zoom";
 import Conversion from "./items/conversion";
 import Visit from "./items/visit";
 import Scoring from "./items/scoring";
-import OrderCreation from "./items/order-creation";
-import OrderModification from "./items/order-modification";
 import ExternalNoticeModification from "./items/external-notice-modification";
 import ExternalNoticeStatusModification from "./items/external-notice-status-modification";
 import Scheduled from "./items/scheduled";
@@ -149,8 +144,6 @@ const Items = {
 	Conversion,
 	Visit,
 	Scoring,
-	OrderCreation,
-	OrderModification,
 	ExternalNoticeModification,
 	ExternalNoticeStatusModification,
 	ScheduledBase: Scheduled,
@@ -167,9 +160,6 @@ const Animations = {
 };
 
 export {
-	DeliveryActivity,
-	DeliveryMessage,
-	DeliveryCalculation,
 	Manager,
 	Stream,
 	Streams,

@@ -1,0 +1,9 @@
+<?php
+$MESS["TASKS_TASK_DEAL_BUTTON_OPEN"] = "Відкрити";
+$MESS["TASKS_TASK_DEAL_BUTTON_PING"] = "Пінг";
+$MESS["TASKS_TASK_DEAL_CHECKLIST"] = "Чек лист";
+$MESS["TASKS_TASK_DEAL_DEADLINE"] = "Крайній термін";
+$MESS["TASKS_TASK_DEAL_FILES"] = "Файли";
+$MESS["TASKS_TASK_DEAL_SUBMENU_DELETE"] = "Видалити завдання";
+$MESS["TASKS_TASK_DEAL_SUBMENU_EDIT"] = "Редагувати";
+$MESS["TASKS_TASK_DEAL_TITLE"] = "Завдання";

@@ -46,6 +46,7 @@ trait Document
 		$action =
 			(new Layout\Action\JsEvent('Document:Open'))
 				->addActionParamInt('documentId', $this->getDocumentId())
+				->addActionParamString('title', $this->getDocument()->getTitle())
 		;
 
 		$pdfUrl = $this->getPdfUrl();

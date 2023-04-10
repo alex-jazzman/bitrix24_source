@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Service\Timeline\Item\Activity\Sms;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\MessageService\Integration\Pull;
 use Bitrix\MessageService\MessageStatus;
 use Bitrix\Crm\Service\Container;
@@ -15,7 +16,6 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
 use Bitrix\Crm\Service\Timeline\Layout\Common;
-use Bitrix\Main\Localization\Loc;
 
 class Sms extends Base
 {

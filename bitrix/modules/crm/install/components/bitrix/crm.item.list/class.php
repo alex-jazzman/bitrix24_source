@@ -225,10 +225,9 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		else
 		{
 			$order = $this->validateOrder($gridSort['sort']);
-			// load only ID of elements
-			$itemsWithIds = $this->factory->getItemsFilteredByPermissions(
+			$list = $this->factory->getItemsFilteredByPermissions(
 				[
-					'select' => [Item::FIELD_NAME_ID],
+					'select' => $this->getSelect(),
 					'order' => $order,
 					'offset' => $pageNavigation->getOffset(),
 					'limit' => $pageNavigation->getLimit(),
@@ -239,34 +238,6 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 					? \Bitrix\Crm\Service\UserPermissions::OPERATION_EXPORT
 					: \Bitrix\Crm\Service\UserPermissions::OPERATION_READ
 			);
-			$itemIds = [];
-			foreach ($itemsWithIds as $item)
-			{
-				$itemIds[] = $item->getId();
-			}
-			$list = [];
-			if (!empty($itemIds))
-			{
-				// load complete data
-				$itemsWithAllData = $this->factory->getItems([
-					'select' => $this->getSelect(),
-					'filter' => ['@'.Item::FIELD_NAME_ID => $itemIds],
-				]);
-				$items = [];
-				foreach ($itemsWithAllData as $item)
-				{
-					$items[$item->getId()] = $item;
-				}
-				// prepare list in correct order
-				foreach ($itemIds as $itemId)
-				{
-					if ($items[$itemId] ?? null)
-					{
-						$list[] = $items[$itemId];
-					}
-				}
-			}
-
 			$rows = $this->prepareGridRows($list);
 			$totalCount = $this->factory->getItemsCountFilteredByPermissions($listFilter);
 		}

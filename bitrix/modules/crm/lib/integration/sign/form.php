@@ -163,7 +163,9 @@ class Form
 				continue;
 			}
 			
-			$value = isset($values[$key]) ? $entityFactory->getFieldValueCaption($key, $values[$key]) : null;
+			$value = isset($values[$key]) && !empty($values[$key])
+				? $entityFactory->getFieldValueCaption($key, $values[$key])
+				: null;
 			$value ??= '';
 			$result[$name] = $value ?? '';
 		}

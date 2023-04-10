@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_ACCOMPLICE"] = "Співвиконавці";
 $MESS["TASKS_ADD_QUICK_TASK"] = "Створити швидке завдання";
 $MESS["TASKS_ADD_TASK"] = "Додати завдання";
@@ -38,6 +38,7 @@ $MESS["TASKS_LIST_COLUMN_3"] = "Постановник";
 $MESS["TASKS_LIST_COLUMN_4"] = "Відповідальний";
 $MESS["TASKS_LIST_COLUMN_5"] = "Крайній термін";
 $MESS["TASKS_LIST_COLUMN_6"] = "Оцінка";
+$MESS["TASKS_LIST_COLUMN_6_MSGVER_1"] = "Оцінка";
 $MESS["TASKS_LIST_COLUMN_7"] = "CRM";
 $MESS["TASKS_LIST_COLUMN_8"] = "Пріоритет";
 $MESS["TASKS_LIST_COLUMN_9"] = "Статус";
@@ -92,6 +93,7 @@ $MESS["TASKS_LIST_TRIAL_EXPIRED_TEXT"] = "У безкоштовному тари
 Розширені Завдання + Розширена CRM + Розширена Телефонія та інші корисні можливості доступні, починаючи з тарифу \"Проєкт+\" за 299 гривень.";
 $MESS["TASKS_LIST_TRIAL_EXPIRED_TITLE_V2"] = "Доступно тільки в розширених Завданнях &laquo;Бітрікс24&raquo;";
 $MESS["TASKS_MARK"] = "Оцінка";
+$MESS["TASKS_MARK_MSGVER_1"] = "Оцінка";
 $MESS["TASKS_MARK_N"] = "Негативна";
 $MESS["TASKS_MARK_NONE"] = "Немає оцінки";
 $MESS["TASKS_MARK_P"] = "Позитивна";
@@ -127,4 +129,3 @@ $MESS["TASKS_TEMPLATES"] = "Шаблони";
 $MESS["TASKS_TEMPLATES_LIST"] = "Список усіх шаблонів";
 $MESS["TASKS_TITLE"] = "Завдання";
 $MESS["TASKS_TREE_LIST"] = "Список завдань з підзавданнями";
-?>

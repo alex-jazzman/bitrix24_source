@@ -1663,7 +1663,7 @@ class CAllUser extends CDBResult
 		}
 
 		// All except Admin
-		if ($user_id > 1 && $arParams["CONTROLLER_ADMIN"] !== "Y")
+		if ($user_id > 1 && (!isset($arParams["CONTROLLER_ADMIN"]) || $arParams["CONTROLLER_ADMIN"] !== "Y"))
 		{
 			if(!static::CheckUsersCount($user_id))
 			{
@@ -1779,7 +1779,7 @@ class CAllUser extends CDBResult
 			$passwordCorrect = false;
 			$policy = null;
 			$applicationId = null;
-			$original = ($arParams["PASSWORD_ORIGINAL"] == "Y");
+			$original = isset($arParams["PASSWORD_ORIGINAL"]) && $arParams["PASSWORD_ORIGINAL"] === "Y";
 			$loginAttempts = intval($arUser["LOGIN_ATTEMPTS"]) + 1;
 
 			if($arUser["BLOCKED"] <> "Y")
@@ -1792,7 +1792,7 @@ class CAllUser extends CDBResult
 				if($policyLoginAttempts > 0 && $loginAttempts > $policyLoginAttempts)
 				{
 					$APPLICATION->SetNeedCAPTHA(true);
-					if(!$APPLICATION->CaptchaCheckCode($_REQUEST["captcha_word"], $_REQUEST["captcha_sid"]))
+					if(!$APPLICATION->CaptchaCheckCode($_REQUEST["captcha_word"] ?? '', $_REQUEST["captcha_sid"] ?? ''))
 					{
 						$correctCaptcha = false;
 					}
@@ -1804,7 +1804,7 @@ class CAllUser extends CDBResult
 
 					if(!$passwordCorrect)
 					{
-						if($arParams["OTP"] <> '' && $original)
+						if(isset($arParams["OTP"]) && $arParams["OTP"] <> '' && $original)
 						{
 							//may be we have OTP added to the password
 							$passwordWithoutOtp = mb_substr($arParams["PASSWORD"], 0, -6);
@@ -2402,7 +2402,7 @@ class CAllUser extends CDBResult
 				"WHERE ID = '".$ID."'".
 				(
 					// $arParams["EXTERNAL_AUTH_ID"] can be changed in the OnBeforeSendUserInfo event
-					$arParams["EXTERNAL_AUTH_ID"] <> ''?
+					isset($arParams["EXTERNAL_AUTH_ID"]) && $arParams["EXTERNAL_AUTH_ID"] <> ''?
 						"	AND EXTERNAL_AUTH_ID='".$DB->ForSQL($arParams["EXTERNAL_AUTH_ID"])."' " :
 						"	AND (EXTERNAL_AUTH_ID IS NULL OR EXTERNAL_AUTH_ID='') "
 				);
@@ -2415,7 +2415,7 @@ class CAllUser extends CDBResult
 			"FROM b_user u ".
 			"WHERE ID='".$ID."'".
 			(
-				$arParams["EXTERNAL_AUTH_ID"] <> ''?
+				isset($arParams["EXTERNAL_AUTH_ID"]) && $arParams["EXTERNAL_AUTH_ID"] <> ''?
 					"	AND EXTERNAL_AUTH_ID='".$DB->ForSQL($arParams["EXTERNAL_AUTH_ID"])."' " :
 					"	AND (EXTERNAL_AUTH_ID IS NULL OR EXTERNAL_AUTH_ID='') "
 			)
@@ -2536,7 +2536,7 @@ class CAllUser extends CDBResult
 						"	AND (ACTIVE='Y' OR NOT(CONFIRM_CODE IS NULL OR CONFIRM_CODE='')) ".
 						(
 							// $arParams["EXTERNAL_AUTH_ID"] can be changed in the OnBeforeUserSendPassword event
-							$arParams["EXTERNAL_AUTH_ID"] <> ''?
+							isset($arParams["EXTERNAL_AUTH_ID"]) && $arParams["EXTERNAL_AUTH_ID"] <> ''?
 								"	AND EXTERNAL_AUTH_ID='".$DB->ForSQL($arParams["EXTERNAL_AUTH_ID"])."' " :
 								"	AND (EXTERNAL_AUTH_ID IS NULL OR EXTERNAL_AUTH_ID='') "
 						);
@@ -2553,7 +2553,7 @@ class CAllUser extends CDBResult
 						"WHERE EMAIL='".$DB->ForSQL($arParams["EMAIL"])."' ".
 						"	AND (ACTIVE='Y' OR NOT(CONFIRM_CODE IS NULL OR CONFIRM_CODE='')) ".
 						(
-							$arParams["EXTERNAL_AUTH_ID"] <> ''?
+							isset($arParams["EXTERNAL_AUTH_ID"]) && $arParams["EXTERNAL_AUTH_ID"] <> ''?
 								"	AND EXTERNAL_AUTH_ID='".$DB->ForSQL($arParams["EXTERNAL_AUTH_ID"])."' " :
 								"	AND (EXTERNAL_AUTH_ID IS NULL OR EXTERNAL_AUTH_ID='') "
 						);
@@ -3243,7 +3243,11 @@ class CAllUser extends CDBResult
 			}
 		}
 
-		if(is_set($arFields, "PERSONAL_PHOTO") && $arFields["PERSONAL_PHOTO"]["name"] == '' && $arFields["PERSONAL_PHOTO"]["del"] == '')
+		if(
+			is_set($arFields, "PERSONAL_PHOTO")
+			&& (!isset($arFields["PERSONAL_PHOTO"]["name"]) || $arFields["PERSONAL_PHOTO"]["name"] == '')
+			&& (!isset($arFields["PERSONAL_PHOTO"]["del"]) || $arFields["PERSONAL_PHOTO"]["del"] == '')
+		)
 		{
 			unset($arFields["PERSONAL_PHOTO"]);
 		}
@@ -3266,7 +3270,11 @@ class CAllUser extends CDBResult
 			$this->LAST_ERROR .= GetMessage("WRONG_PERSONAL_BIRTHDAY")."<br>";
 		}
 
-		if(is_set($arFields, "WORK_LOGO") && $arFields["WORK_LOGO"]["name"] == '' && $arFields["WORK_LOGO"]["del"] == '')
+		if(
+			is_set($arFields, "WORK_LOGO")
+			&& (!isset($arFields["WORK_LOGO"]["name"]) || $arFields["WORK_LOGO"]["name"] == '')
+			&& (!isset($arFields["WORK_LOGO"]["del"]) || $arFields["WORK_LOGO"]["del"] == '')
+		)
 		{
 			unset($arFields["WORK_LOGO"]);
 		}
@@ -3516,9 +3524,9 @@ class CAllUser extends CDBResult
 			}
 		}
 
-		if(is_array($arFields["GROUP_ID"]) && count($arFields["GROUP_ID"]) > 0)
+		if (isset($arFields["GROUP_ID"]) && is_array($arFields["GROUP_ID"]) && count($arFields["GROUP_ID"]) > 0)
 		{
-			if(is_array($arFields["GROUP_ID"][0]) && count($arFields["GROUP_ID"][0]) > 0)
+			if (isset($arFields["GROUP_ID"][0]) && is_array($arFields["GROUP_ID"][0]) && count($arFields["GROUP_ID"][0]) > 0)
 			{
 				foreach($arFields["GROUP_ID"] as $arGroup)
 				{

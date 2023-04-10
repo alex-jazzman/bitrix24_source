@@ -18,7 +18,4 @@ $MESS["C_PVG_STORE_AMOUNT_POPUP_QUANTITY_COMMON1"] = "Кількість на с
 $MESS["C_PVG_STORE_AMOUNT_POPUP_QUANTITY_RESERVED"] = "У резерві";
 $MESS["C_PVG_STORE_AMOUNT_POPUP_STORE"] = "Склад";
 $MESS["C_PVG_STORE_CREATE_BARCODE_PLACEHOLDER"] = "Введіть новий штрих-код";
-$MESS["C_PVG_UNSAVED_DATA_CONTINUE"] = "Продовжити без збереження";
-$MESS["C_PVG_UNSAVED_DATA_MESSAGE"] = "При зміні налаштувань відображення варіацій незбережені дані будуть втрачені.";
-$MESS["C_PVG_UNSAVED_DATA_TITLE"] = "У вас є незбережені дані";
 $MESS["C_PVG_VARIATIONS_TITLE"] = "Варіації";

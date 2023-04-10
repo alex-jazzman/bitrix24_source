@@ -3887,8 +3887,16 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			$descriptionType = (isset($fields['DESCRIPTION_TYPE']) && $fields['DESCRIPTION_TYPE'] === 'html') ?
 				'html' : 'text';
 			$fields['DESCRIPTION_TYPE'] = $descriptionType;
-			$description = (isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION'])) ? trim($fields['DESCRIPTION']) : '';
-			$isNeedSanitize = ($descriptionType === 'html' && $description !== '' && mb_strpos($description, '<'));
+			$description =
+				(isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION']))
+					? trim($fields['DESCRIPTION'])
+					: ''
+			;
+			$isNeedSanitize = (
+				$descriptionType === 'html'
+				&& $description !== ''
+				&& mb_strpos($description, '<') !== false
+			);
 			if ($isNeedSanitize)
 			{
 				$description = self::sanitizeHtml($description);
@@ -4260,8 +4268,16 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 				$descriptionType = 'text';
 			}
 
-			$description = (isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION'])) ? trim($fields['DESCRIPTION']) : '';
-			$isNeedSanitize = ($descriptionType === 'html' && $description !== '' && mb_strpos($description, '<'));
+			$description =
+				(isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION']))
+					? trim($fields['DESCRIPTION'])
+					: ''
+			;
+			$isNeedSanitize = (
+				$descriptionType === 'html'
+				&& $description !== ''
+				&& mb_strpos($description, '<') !== false
+			);
 			if ($isNeedSanitize)
 			{
 				$description = self::sanitizeHtml($description);

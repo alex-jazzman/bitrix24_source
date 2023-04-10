@@ -1,5 +1,5 @@
 <?php
-$MESS["SHARING_BUTTON_TITLE"] = "Гостьовий доступ";
+$MESS["SHARING_BUTTON_TITLE"] = "Вільні слоти";
 $MESS["SHARING_COPY_LINK_NOTIFICATION"] = "Посилання скопійоване";
 $MESS["SHARING_DIALOG_CHECKBOX_OFF"] = "ВИМК.";
 $MESS["SHARING_DIALOG_CHECKBOX_ON"] = "УВІМК.";

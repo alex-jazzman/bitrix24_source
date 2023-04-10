@@ -242,11 +242,6 @@
 					item.layout.container.style.opacity = '100%';
 				}
 
-				if (this.getGrid().isRendered())
-				{
-					this.render();
-				}
-
 				BX.Event.EventEmitter.emit(
 					'Crm.Kanban.Column:onItemAdded',
 					{
@@ -256,6 +251,11 @@
 						oldColumn: this.grid.getColumn(oldColumnId),
 					});
 			}.bind(this));
+
+			if (this.getGrid().isRendered())
+			{
+				this.render();
+			}
 		},
 
 		addItems: function(items, beforeItem)

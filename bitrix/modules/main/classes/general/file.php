@@ -156,7 +156,7 @@ class CFile extends CAllFile
 
 	public static function SaveFile($arFile, $strSavePath, $forceRandom = false, $skipExtension = false, $dirAdd = '', $checkDuplicates = true)
 	{
-		$strFileName = GetFileName($arFile["name"]);	/* filename.gif */
+		$strFileName = GetFileName($arFile["name"] ?? '');	/* filename.gif */
 
 		if(isset($arFile["del"]) && $arFile["del"] <> '')
 		{
@@ -165,7 +165,7 @@ class CFile extends CAllFile
 				return "NULL";
 		}
 
-		if($arFile["name"] == '')
+		if(!isset($arFile["name"]) || $arFile["name"] == '')
 		{
 			if(isset($arFile["description"]) && intval($arFile["old_file"])>0)
 			{
@@ -629,24 +629,6 @@ class CFile extends CAllFile
 			CDiskQuota::updateDiskQuota("file", $deleteSize, "delete");
 		}
 		/****************************** QUOTA ******************************/
-	}
-
-	public static function CloneFile(int $fileId): ?int
-	{
-		$originalFile = static::GetByID($fileId)->Fetch();
-		if (!$originalFile)
-		{
-			return null;
-		}
-
-		$originalFile['FILE_HASH'] = '';
-
-		$cloneId = static::DoInsert($originalFile);
-
-		static::AddDuplicate($fileId, $cloneId);
-		static::CleanCache($cloneId);
-
-		return $cloneId;
 	}
 
 	public static function DoInsert($arFields)
@@ -1486,7 +1468,7 @@ class CFile extends CAllFile
 
 	public static function CheckImageFile($arFile, $iMaxSize=0, $iMaxWidth=0, $iMaxHeight=0, $access_typies=array(), $bForceMD5=false, $bSkipExt=false)
 	{
-		if($arFile["name"] == "")
+		if (!isset($arFile["name"]) || $arFile["name"] == "")
 		{
 			return "";
 		}
@@ -2395,10 +2377,26 @@ function ImgShw(ID, width, height, alt)
 						$io->Delete($f->GetPathWithName());
 					}
 				}
-				@rmdir($io->GetPhysicalName($dir_entry->GetPathWithName()));
+
+				try
+				{
+					@rmdir($io->GetPhysicalName($dir_entry->GetPathWithName()));
+				}
+				catch(\ErrorException $exception)
+				{
+					// Ignore a E_WARNING Error
+				}
 			}
 		}
-		@rmdir($io->GetPhysicalName($d->GetPathWithName()));
+
+		try
+		{
+			@rmdir($io->GetPhysicalName($d->GetPathWithName()));
+		}
+		catch(\ErrorException $exception)
+		{
+			// Ignore a E_WARNING Error
+		}
 
 		return $delete_size;
 	}

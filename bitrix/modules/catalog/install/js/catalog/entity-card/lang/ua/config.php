@@ -14,7 +14,6 @@ $MESS["CATALOG_ENTITY_CARD_SETTING_ENABLED"] = "Налаштування \"#NAME
 $MESS["CATALOG_ENTITY_CARD_SHOW_SYMBOLIC_CODE"] = "Показати символьний код";
 $MESS["CATALOG_ENTITY_CARD_SYMBOLIC_CODE"] = "Символьний код";
 $MESS["CATALOG_ENTITY_CARD_SYMBOLIC_CODE_HINT"] = "Cимвольний код для формування посилання на товар";
-$MESS["CATALOG_ENTITY_CARD_UNSAVED_DATA_MESSAGE"] = "При створенні нової властивості варіації незбережені дані будуть втрачені.";
 $MESS["CATALOG_ENTITY_CARD_WAREHOUSE_DISABLED"] = "Складський облік відключений";
 $MESS["CATALOG_ENTITY_CARD_WAREHOUSE_ENABLED"] = "Складський облік включений";
 $MESS["CATALOG_ENTITY_EDITOR_IS_PUBLIC_PROPERTY"] = "Показувати в інтернет-магазині";

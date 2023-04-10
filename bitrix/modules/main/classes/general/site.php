@@ -14,7 +14,7 @@ use Bitrix\Main\SiteTable;
 IncludeModuleLangFile(__FILE__);
 
 /**
- * @deprecated 
+ * @deprecated
  */
 class CAllSite
 {
@@ -921,7 +921,8 @@ class CAllSite
 				}
 				$CACHE_MANAGER->Set("b_site_template", $arSiteTemplateBySite);
 			}
-			if(is_array($arSiteTemplateBySite[SITE_ID]))
+
+			if (isset($arSiteTemplateBySite[SITE_ID]) && is_array($arSiteTemplateBySite[SITE_ID]))
 			{
 				foreach($arSiteTemplateBySite[SITE_ID] as $ar)
 				{

@@ -4050,13 +4050,16 @@ function check_email($email, $strict = false, $domainCheck = false)
 	}
 
 	//convert to UTF to use extended regular expressions
-	static $encoding = null;
-	if($encoding === null)
-	{
-		$encoding = strtolower(Context::getCurrent()->getCulture()->getCharset());
-	}
 	$encodedEmail = $email;
-	if($encoding <> "utf-8")
+	static $encoding = null;
+	if ($encoding === null)
+	{
+		if (($context = Context::getCurrent()) && ($culture = $context->getCulture()))
+		{
+			$encoding = strtolower($culture->getCharset());
+		}
+	}
+	if ($encoding !== null && $encoding != "utf-8")
 	{
 		$encodedEmail = Text\Encoding::convertEncoding($email, $encoding, "UTF-8");
 	}
@@ -4475,13 +4478,18 @@ function bxmail($to, $subject, $message, $additional_headers="", $additional_par
 	$event->send();
 
 	$defaultMailConfiguration = Configuration::getValue("smtp");
+	$smtpEnabled =
+		is_array($defaultMailConfiguration)
+		&& isset($defaultMailConfiguration['enabled'])
+		&& $defaultMailConfiguration['enabled'] === true
+	;
+
 	if (
-		$defaultMailConfiguration
-		&& $defaultMailConfiguration['enabled']
-		&& $context->getSmtp()
-		|| $defaultMailConfiguration['enabled']
-		&& $defaultMailConfiguration['host']
-		&& $defaultMailConfiguration['login']
+		$smtpEnabled
+		&& (
+			$context->getSmtp() !== null
+			|| (!empty($defaultMailConfiguration['host']) && !empty($defaultMailConfiguration['login']))
+		)
 	)
 	{
 		$mailer = Main\Mail\Smtp\Mailer::getInstance($context);

@@ -6,7 +6,7 @@
 // region environment initialization
 if (!defined("UPDATE_SYSTEM_VERSION"))
 {
-	define("UPDATE_SYSTEM_VERSION", "22.600.0");
+	define("UPDATE_SYSTEM_VERSION", "22.600.100");
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -133,7 +133,7 @@ if (!$bLockUpdateSystemKernel)
 	{
 		if ($arUpdateList = CUpdateClient::GetUpdatesList($errorMessage, LANG, $stableVersionsOnly))
 		{
-			$refreshStep = intval($_REQUEST["refresh_step"] ?? 0) + 1;
+			$refreshStep = isset($_REQUEST["refresh_step"]) ? ((int)$_REQUEST["refresh_step"] + 1) : 1;
 			if (isset($arUpdateList["REPAIR"]))
 			{
 				if ($refreshStep < 5)
@@ -2044,35 +2044,35 @@ $tabControl->End();
 		txt += '</tr>';
 		txt += '	<tr>';
 		txt += '		<td width="50%"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_RI_NAME") ?>:</td>';
-		txt += '		<td width="50%" nowrap><div id="id_activate_name_error"></div><input type="text" id="id_activate_name" name="NAME" value="<?=htmlspecialcharsEx($_POST["NAME"] ?? '')?>" size="40"></td>';
+		txt += '		<td width="50%" nowrap><div id="id_activate_name_error"></div><input type="text" id="id_activate_name" name="NAME" value="<?=htmlspecialcharsEx(isset($_POST["NAME"]) ? $_POST["NAME"] : '')?>" size="40"></td>';
 		txt += '	</tr>';
 		txt += '	<tr>';
 		txt += '		<td width="50%"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_RI_URI") ?>:</td>';
-		txt += '		<td width="50%" nowrap><div id="SITE_URL_error"></div><input type="text" id="SITE_URL" name="SITE_URL" value="<?=htmlspecialcharsEx($_POST["SITE_URL"] ?? '')?>" size="40"></td>';
+		txt += '		<td width="50%" nowrap><div id="SITE_URL_error"></div><input type="text" id="SITE_URL" name="SITE_URL" value="<?=htmlspecialcharsEx(isset($_POST["SITE_URL"]) ? $_POST["SITE_URL"] : '')?>" size="40"></td>';
 		txt += '	</tr>';
 		txt += '	<tr>';
 		txt += '		<td width="50%"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_RI_PHONE") ?>:</td>';
-		txt += '		<td width="50%" nowrap><div id="PHONE_error"></div><input type="text" id="PHONE" name="PHONE" value="<?=htmlspecialcharsEx($_POST["PHONE"] ?? '')?>" size="40"></td>';
+		txt += '		<td width="50%" nowrap><div id="PHONE_error"></div><input type="text" id="PHONE" name="PHONE" value="<?=htmlspecialcharsEx(isset($_POST["PHONE"]) ? $_POST["PHONE"] : '')?>" size="40"></td>';
 		txt += '	</tr>';
 		txt += '	<tr>';
 		txt += '		<td width="50%"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_RI_EMAIL") ?>:</td>';
-		txt += '		<td width="50%" nowrap><div id="EMAIL_error"></div><input type="text" id="EMAIL" name="EMAIL" value="<?=htmlspecialcharsEx($_POST["EMAIL"] ?? '')?>" size="40"></td>';
+		txt += '		<td width="50%" nowrap><div id="EMAIL_error"></div><input type="text" id="EMAIL" name="EMAIL" value="<?=htmlspecialcharsEx(isset($_POST["EMAIL"]) ? $_POST["EMAIL"] : '')?>" size="40"></td>';
 		txt += '	</tr>';
 		txt += '	<tr>';
 		txt += '		<td width="50%"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_RI_CONTACT_PERSON") ?>:</td>';
-		txt += '		<td width="50%" nowrap><div id="CONTACT_PERSON_error"></div><input type="text" id="CONTACT_PERSON" name="CONTACT_PERSON" value="<?=htmlspecialcharsEx($_POST["CONTACT_PERSON"] ?? '')?>" size="40"></td>';
+		txt += '		<td width="50%" nowrap><div id="CONTACT_PERSON_error"></div><input type="text" id="CONTACT_PERSON" name="CONTACT_PERSON" value="<?=htmlspecialcharsEx(isset($_POST["CONTACT_PERSON"]) ? $_POST["CONTACT_PERSON"] : '')?>" size="40"></td>';
 		txt += '	</tr>';
 		txt += '	<tr>';
 		txt += '		<td width="50%"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_RI_CONTACT_EMAIL") ?>:</td>';
-		txt += '		<td width="50%" nowrap><div id="CONTACT_EMAIL_error"></div><input type="text" id="CONTACT_EMAIL" name="CONTACT_EMAIL" value="<?=htmlspecialcharsEx($_POST["CONTACT_EMAIL"] ?? '')?>" size="40"></td>';
+		txt += '		<td width="50%" nowrap><div id="CONTACT_EMAIL_error"></div><input type="text" id="CONTACT_EMAIL" name="CONTACT_EMAIL" value="<?=htmlspecialcharsEx(isset($_POST["CONTACT_EMAIL"]) ? $_POST["CONTACT_EMAIL"] : '')?>" size="40"></td>';
 		txt += '	</tr>';
 		txt += '	<tr>';
 		txt += '		<td width="50%"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_RI_CONTACT_PHONE") ?>:</td>';
-		txt += '		<td width="50%" nowrap><div id="CONTACT_PHONE_error"></div><input type="text" id="CONTACT_PHONE" name="CONTACT_PHONE" value="<?=htmlspecialcharsEx($_POST["CONTACT_PHONE"] ?? '')?>" size="40"></td>';
+		txt += '		<td width="50%" nowrap><div id="CONTACT_PHONE_error"></div><input type="text" id="CONTACT_PHONE" name="CONTACT_PHONE" value="<?=htmlspecialcharsEx(isset($_POST["CONTACT_PHONE"]) ? $_POST["CONTACT_PHONE"] : '')?>" size="40"></td>';
 		txt += '	</tr>';
 		txt += '	<tr>';
 		txt += '		<td width="50%"><?= GetMessage("SUP_SUBA_RI_CONTACT") ?>:</td>';
-		txt += '		<td width="50%" nowrap><input type="text" name="CONTACT_INFO" value="<?=htmlspecialcharsEx($_POST["CONTACT_INFO"] ?? '')?>" size="40"></td>';
+		txt += '		<td width="50%" nowrap><input type="text" name="CONTACT_INFO" value="<?=htmlspecialcharsEx(isset($_POST["CONTACT_INFO"]) ? $_POST["CONTACT_INFO"] : '')?>" size="40"></td>';
 		txt += '	</tr>';
 		txt += '<tr>';
 		txt += '	<td colspan="2">';
@@ -2088,15 +2088,15 @@ $tabControl->End();
 		txt += '			<table width="100%" border="0">';
 		txt += '			<tr id="tr_USER_NAME">';
 		txt += '				<td width="50%" class="field-name" style="padding: 3px;"><span class="required">*</span><?= GetMessageJS("SUP_SUBA__UI_NAME") ?>:</td>';
-		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_NAME_error"></div><input type="text" id="USER_NAME" name="USER_NAME" value="<?=htmlspecialcharsEx($_POST["USER_NAME"] ?? '')?>" size="40"></td>';
+		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_NAME_error"></div><input type="text" id="USER_NAME" name="USER_NAME" value="<?=htmlspecialcharsEx(isset($_POST["USER_NAME"]) ? $_POST["USER_NAME"] : '')?>" size="40"></td>';
 		txt += '			</tr>';
 		txt += '			<tr id="tr_USER_LAST_NAME">';
 		txt += '				<td width="50%" class="field-name" style="padding: 3px;"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_UI_LASTNAME") ?>:</td>';
-		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_LAST_NAME_error"></div><input type="text" id="USER_LAST_NAME" name="USER_LAST_NAME" value="<?=htmlspecialcharsEx($_POST["USER_LAST_NAME"] ?? '')?>" size="40"></td>';
+		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_LAST_NAME_error"></div><input type="text" id="USER_LAST_NAME" name="USER_LAST_NAME" value="<?=htmlspecialcharsEx(isset($_POST["USER_LAST_NAME"]) ? $_POST["USER_LAST_NAME"] : '')?>" size="40"></td>';
 		txt += '			</tr>';
 		txt += '			<tr id="tr_USER_LOGIN">';
 		txt += '				<td width="50%" class="field-name" style="padding: 3px;"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_UI_LOGIN") ?>:</td>';
-		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_LOGIN_error"></div><input type="text" id="USER_LOGIN_activate" name="USER_LOGIN_A" value="<?=htmlspecialcharsEx($_POST["USER_LOGIN_A"] ?? '')?>" size="40"></td>';
+		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_LOGIN_error"></div><input type="text" id="USER_LOGIN_activate" name="USER_LOGIN_A" value="<?=htmlspecialcharsEx(isset($_POST["USER_LOGIN_A"]) ? $_POST["USER_LOGIN_A"] : '')?>" size="40"></td>';
 		txt += '			</tr>';
 		txt += '			<tr id="tr_USER_PASSWORD">';
 		txt += '				<td width="50%" class="field-name" style="padding: 3px;"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_UI_PASSWORD") ?>:</td>';
@@ -2108,7 +2108,7 @@ $tabControl->End();
 		txt += '			</tr>';
 		txt += '			<tr id="tr_USER_EMAIL">';
 		txt += '				<td width="50%" class="field-name" style="padding: 3px;"><span class="required">*</span>E-mail:</td>';
-		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_EMAIL_error"></div><input type="text" id="USER_EMAIL" name="USER_EMAIL" value="<?=htmlspecialcharsEx($_POST["USER_EMAIL"] ?? '')?>" size="40"></td>';
+		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_EMAIL_error"></div><input type="text" id="USER_EMAIL" name="USER_EMAIL" value="<?=htmlspecialcharsEx(isset($_POST["USER_EMAIL"]) ? $_POST["USER_EMAIL"] : '')?>" size="40"></td>';
 		txt += '			</tr>';
 		txt += '			</table>';
 		txt += '		</div>';
@@ -2116,7 +2116,7 @@ $tabControl->End();
 		txt += '			<table width="100%" border="0">';
 		txt += '			<tr>';
 		txt += '				<td width="50%" class="field-name" style="padding: 3px;"><span class="required">*</span><?= GetMessageJS("SUP_SUBA_UI_LOGIN") ?>:</td>';
-		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_LOGIN_EXIST_error"></div><input id="USER_LOGIN" name="USER_LOGIN" maxlength="50" value="<?=htmlspecialcharsEx($_POST["USER_LOGIN"] ?? '')?>" size="40" type="text"></td>';
+		txt += '				<td width="50%" style="padding: 3px;" nowrap><div id="USER_LOGIN_EXIST_error"></div><input id="USER_LOGIN" name="USER_LOGIN" maxlength="50" value="<?=htmlspecialcharsEx(isset($_POST["USER_LOGIN"]) ? $_POST["USER_LOGIN"] : '')?>" size="40" type="text"></td>';
 		txt += '			</tr>';
 		txt += '			</table>';
 		txt += '		</div>';

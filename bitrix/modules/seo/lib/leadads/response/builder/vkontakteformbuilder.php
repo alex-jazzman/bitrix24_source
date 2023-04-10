@@ -10,6 +10,7 @@ Loc::loadMessages(__FILE__);
 
 class VkontakteFormBuilder implements FormBuilderInterface
 {
+	protected const PAGE_TYPE_QUESTION = 'question';
 	/**@var LeadAds\Mapper $mapper*/
 	private $mapper;
 
@@ -31,16 +32,18 @@ class VkontakteFormBuilder implements FormBuilderInterface
 	 */
 	public function buildForm(array $form): LeadAdsForm
 	{
+		$fields = $this->buildFields($form['CONTACT_FIELDS'] ?? []);
+		$questions = $this->buildQuestions($form['PAGES'] ?? []);
 		return new LeadAdsForm(
-			array(
-				"id" => $form['FORM_ID'],
+			[
+				"id" => $form['ID'],
 				"name" => $form['NAME'],
-				"description" => $form['DESCRIPTION'],
-				"title" => $form['TITLE'],
-				"fields" => $this->buildQuestions($form['QUESTIONS'] ?? []),
-				"message" => $form['CONFIRMATION'],
-				"link" => $form['URL'],
-			)
+				// "description" => $form['DESCRIPTION'],
+				"title" => $form['NAME'],
+				"fields" => array_merge($fields, $questions)
+				// "message" => $form['CONFIRMATION'],
+				// "link" => $form['URL'],
+			]
 		);
 	}
 
@@ -49,35 +52,17 @@ class VkontakteFormBuilder implements FormBuilderInterface
 	 *
 	 * @return LeadAds\Field[]
 	 */
-	private function buildQuestions(array $questions) : array
+	private function buildFields(array $questions) : array
 	{
 		foreach ($questions  as $key => $externalField)
 		{
-			if ($fieldName = $this->mapper->getCrmName($externalField['type']))
+			if ($fieldName = $this->mapper->getCrmName($externalField))
 			{
 				$questions[$key] = new LeadAds\Field(
 					$fieldName,
 					self::EMPTY_FIELD_NAME,
 					$this->getFormLabel($fieldName),
-					$externalField['key']
-				);
-			}
-			elseif (in_array($externalField['type'], LeadAds\Field::getTypes(), true))
-			{
-				$questions[$key] = new LeadAds\Field(
-					$externalField['type'],
-					self::EMPTY_FIELD_NAME,
-					$externalField['label'],
-					$externalField['key'],
-					array_map(
-						static function($option) : array {
-							return [
-								"key" => $option["key"] ?? (string) $option["label"],
-								"label" => $option["label"]
-							];
-						},
-						$externalField['options'] ?? []
-					)
+					$externalField
 				);
 			}
 			else
@@ -103,4 +88,40 @@ class VkontakteFormBuilder implements FormBuilderInterface
 		return $phrase;
 	}
 
+	private function buildQuestions(array $pages)
+	{
+		$result = [];
+		foreach ($pages as $page)
+		{
+			if ( ! (isset($page['blocks']) && is_array($page['blocks'])))
+			{
+				continue;
+			}
+
+			foreach ($page['blocks'] as $block)
+			{
+				if (
+					! (isset($block['block_data']) && is_array($block['block_data']))
+					&& $block['type'] !== self::PAGE_TYPE_QUESTION
+					&& ! (isset($block['block_data']['data']) && is_array($block['block_data']['data']))
+				)
+				{
+					continue;
+				}
+
+
+				if ($fieldName = $this->mapper->getCrmName(self::PAGE_TYPE_QUESTION))
+				{
+					$result[] = new LeadAds\Field(
+						$fieldName,
+						self::EMPTY_FIELD_NAME,
+						$block['block_data']['data']['text'],
+						$block['id']
+					);
+				}
+			}
+		}
+
+		return $result;
+	}
 }

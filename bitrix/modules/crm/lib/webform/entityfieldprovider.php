@@ -188,7 +188,7 @@ class EntityFieldProvider
 		return $result;
 	}
 
-	public static function getFieldsDescription(array $fields)
+	public static function getFieldsDescription(array $fields, ?int $presetId = null)
 	{
 		$fieldCodeList = array();
 		foreach($fields as $field)
@@ -200,7 +200,7 @@ class EntityFieldProvider
 			\CCrmOwnerType::SmartDocument,
 		];
 
-		$availableFields = EntityFieldProvider::getFields($hiddenTypes);
+		$availableFields = EntityFieldProvider::getFields($hiddenTypes, $presetId);
 		foreach($availableFields as $fieldAvailable)
 		{
 			if(!in_array($fieldAvailable['name'], $fieldCodeList))
@@ -396,6 +396,11 @@ class EntityFieldProvider
 
 				foreach (($preset['fields'] ?? []) as $field)
 				{
+					if (mb_strpos($field['name'], 'RQ_') !== 0)
+					{
+						$field['name'] = 'RQ_'. $field['name'];
+					}
+
 					$fieldsMap[] = [
 						'type' => $field['type'],
 						'entity_field_name' => $field['name'],

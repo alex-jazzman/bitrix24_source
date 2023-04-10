@@ -4007,7 +4007,7 @@ REQ
 			);
 		}
 
-		if (array_key_exists("description", $data["VALUE"]))
+		if (array_key_exists("description", $data["VALUE"] ?? []))
 		{
 			$data["DESCRIPTION"] = $data["VALUE"]["description"];
 		}

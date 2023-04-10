@@ -57,7 +57,7 @@ class TimelineManager
 			return DocumentController::getInstance();
 		}
 
-		if($typeID === TimelineType::DELIVERY)
+		if ($typeID === TimelineType::DELIVERY)
 		{
 			return DeliveryController::getInstance();
 		}

@@ -2,6 +2,9 @@
 $MESS["KANBAN_SORT_MY_SORT"] = "Моє сортування";
 $MESS["KANBAN_SORT_MY_SORT_V2"] = "Моє сортування";
 $MESS["TASKS_KANBAN_RESULT_REQUIRED"] = "Постановник зробив запит на результат роботи.<br> Залиште коментар до завдання та позначте його як звіт.";
+$MESS["TASKS_MARK_N"] = "Негативна";
+$MESS["TASKS_MARK_NONE"] = "Без оцінки";
+$MESS["TASKS_MARK_P"] = "Позитивна";
 $MESS["TASK_ACCESS_NOTIFY_MESSAGE"] = "Прошу вас <a href=\"#URL#\">налаштувати стадії</a> для роботи з завданнями на канбані в проєкті або делегувати право керування налаштуваннями мені.";
 $MESS["TASK_KANBAN_PERSONAL_TITLE"] = "Мій план";
 $MESS["TASK_KANBAN_TITLE"] = "Канбан";

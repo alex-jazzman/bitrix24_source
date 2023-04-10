@@ -150,10 +150,10 @@ class Item
 		];
 		$entityFields = WebForm\EntityFieldProvider::getFieldsTree($hiddenTypes, $this->getRequisitePresetId());
 		$fields = array_map(
-			function (array $field) use ($isSet)
+			function (array $field) use ($isSet, $hiddenTypes)
 			{
 				$name = $field['name'] ?? '';
-				$fieldData = WebForm\EntityFieldProvider::getField($name, [], $this->requisitePresetId);
+				$fieldData = WebForm\EntityFieldProvider::getField($name, $hiddenTypes, $this->requisitePresetId);
 
 				$label = $field['label'] ?? '';
 				$mainLabel = $fieldData['caption'] ?? '';
@@ -224,7 +224,12 @@ class Item
 					{
 						if (mb_strpos($field['name'], $prefixRq) !== 0)
 						{
-							$field['name'] = $prefix.$field['name'];
+							if (mb_strpos($field['name'], 'RQ_') !== 0)
+							{
+								$field['name'] = 'RQ_'. $field['name'];
+							}
+
+							$field['name'] = $prefix . $field['name'];
 						}
 					}
 				}

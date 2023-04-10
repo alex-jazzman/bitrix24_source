@@ -16,8 +16,21 @@ class Modification extends LogMessage
 {
 	public function getIconCode(): ?string
 	{
-		$modifiedField = $this->getHistoryItemModel()->get('MODIFIED_FIELD');
+		if (in_array(
+			$this->getModel()->getAssociatedEntityTypeId(),
+			[
+				\CCrmOwnerType::Order,
+				\CCrmOwnerType::OrderShipment,
+				\CCrmOwnerType::OrderPayment,
+			],
+			true
+		))
+		{
+			return 'store';
+		}
+		
 
+		$modifiedField = $this->getHistoryItemModel()->get('MODIFIED_FIELD');
 		switch ($modifiedField)
 		{
 			case 'STATUS_ID':

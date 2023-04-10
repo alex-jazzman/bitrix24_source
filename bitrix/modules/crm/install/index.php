@@ -1459,14 +1459,6 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler(
 			'sale',
-			'OnDeliveryRequestUpdated',
-			'crm',
-			'\Bitrix\Crm\Activity\Provider\Delivery',
-			'onDeliveryRequestUpdated'
-		);
-
-		$eventManager->registerEventHandler(
-			'sale',
 			'OnDeliveryRequestDeleted',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Delivery',
@@ -2045,14 +2037,6 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Delivery',
 			'onDeliveryRequestCreated'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'sale',
-			'OnDeliveryRequestUpdated',
-			'crm',
-			'\Bitrix\Crm\Activity\Provider\Delivery',
-			'onDeliveryRequestUpdated'
 		);
 
 		$eventManager->unRegisterEventHandler(

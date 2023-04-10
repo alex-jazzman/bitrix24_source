@@ -18,6 +18,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Catalog\StoreDocumentTable;
 
 class CCrmSaleHelper
 {
@@ -1354,5 +1355,16 @@ class CCrmSaleHelper
 			&& Loader::includeModule('catalog')
 			&& State::isUsedInventoryManagement()
 		;
+	}
+
+	public static function isRealizationCreationAvailable(): bool
+	{
+		return (
+			self::isProcessInventoryManagement()
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		);
 	}
 }

@@ -164,7 +164,7 @@ class CAdminTabControl
 		foreach($this->tabs as $key => $tab)
 		{
 			$bSelected = ($tab["DIV"] == $this->selectedTab);
-			$tabs_html .= '<span title="'.$tab["TITLE"].$hkInst->GetTitle("tab-container").'" '.
+			$tabs_html .= '<span title="'.($tab["TITLE"] ?? '').$hkInst->GetTitle("tab-container").'" '.
 				'id="tab_cont_'.$tab["DIV"].'" '.
 				'class="adm-detail-tab'.($bSelected ? ' adm-detail-tab-active':'').($key==$len-1? ' adm-detail-tab-last':'').'" '.
 				'onclick="'.$this->name.'.SelectTab(\''.$tab["DIV"].'\');">'.htmlspecialcharsex($tab["TAB"]).'</span>';
@@ -241,7 +241,7 @@ class CAdminTabControl
 
 		if (!isset($options["showTitle"]) || $options["showTitle"] === true)
 		{
-			echo '<div class="adm-detail-title">'.$this->tabs[$this->tabIndex]["TITLE"].'</div>';
+			echo '<div class="adm-detail-title">'.($this->tabs[$this->tabIndex]["TITLE"] ?? '').'</div>';
 		}
 
 echo '

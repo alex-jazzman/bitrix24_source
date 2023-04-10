@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_TIMELINE_SMS"] = "SMS-повідомлення";
+$MESS["CRM_TIMELINE_SMS_TITLE"] = "SMS";
+$MESS["CRM_TIMELINE_SMS_TITLE2"] = "SMS/WhatsApp";

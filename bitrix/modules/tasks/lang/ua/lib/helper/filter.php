@@ -15,6 +15,7 @@ $MESS["TASKS_FILTER_EPIC"] = "Епік";
 $MESS["TASKS_FILTER_GROUP_NAME"] = "Назва групи";
 $MESS["TASKS_FILTER_ID"] = "ID";
 $MESS["TASKS_FILTER_MARK"] = "Оцінка";
+$MESS["TASKS_FILTER_MARK_MSGVER_1"] = "Оцінка";
 $MESS["TASKS_FILTER_NO"] = "Ні";
 $MESS["TASKS_FILTER_ORIGINATOR_NAME"] = "Постановник";
 $MESS["TASKS_FILTER_PARAMS"] = "Параметри завдання";
