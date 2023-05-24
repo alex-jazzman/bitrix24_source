@@ -34,6 +34,7 @@ $MESS["LANDING_TPL_FEATURES_OL_PROMO_LINK"] = "How do I add a widget to my site?
 $MESS["LANDING_TPL_FEATURES_OL_TITLE"] = "Customer communication";
 $MESS["LANDING_TPL_FEATURES_SETTINGS"] = "Configure";
 $MESS["LANDING_TPL_FEATURES_STORE"] = "Online store features";
+$MESS["LANDING_TPL_PREVIEW_EXIT"] = "Close editor";
 $MESS["LANDING_TPL_PREVIEW_URL"] = "Preview";
 $MESS["LANDING_TPL_PREVIEW_URL_HINT"] = "See how your site will look when published, without actually making it public.";
 $MESS["LANDING_TPL_PREVIEW_URL_OPEN"] = "Open site";

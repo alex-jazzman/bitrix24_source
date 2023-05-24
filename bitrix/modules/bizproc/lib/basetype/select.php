@@ -78,6 +78,7 @@ class Select extends Base
 				$value = (string) $originalValue;
 				break;
 			case FieldType::SELECT:
+			case FieldType::INTERNALSELECT:
 				$value = (string) $key;
 				break;
 			case FieldType::USER:
@@ -377,7 +378,11 @@ class Select extends Base
 	protected static function extractValue(FieldType $fieldType, array $field, array $request)
 	{
 		$value = parent::extractValue($fieldType, $field, $request);
-		$value = self::validateValueSingle($value, $fieldType);
+		$value =
+			!empty(static::getFieldOptions($fieldType))
+				? self::validateValueSingle($value, $fieldType)
+				: null
+		;
 
 		$errors = static::getErrors();
 		if (!empty($errors) && $value === null)
@@ -492,7 +497,7 @@ class Select extends Base
 	 */
 	protected static function normalizeOptions($options)
 	{
-		$normalized = array();
+		$normalized = [];
 		if (is_array($options))
 		{
 			foreach ($options as $key => $value)
@@ -506,8 +511,11 @@ class Select extends Base
 				$normalized[$key] = $value;
 			}
 		}
-		else
+		elseif ($options !== '')
+		{
 			$normalized[$options] = $options;
+		}
+
 		return $normalized;
 	}
 
@@ -540,16 +548,20 @@ class Select extends Base
 	{
 		$options = static::getFieldOptions($fieldType);
 
-		if (\CBPActivity::isExpression($value))
+		if (\CBPActivity::isExpression($value) || empty($options))
 		{
 			return $value;
 		}
 
-		if ($value === '' || empty($options))
+		if ($value === '')
 		{
 			$value = null;
 		}
-		elseif ($value !== null && !isset($options[$value]))
+		elseif (!(is_string($value) || is_int($value)))
+		{
+			$value = null;
+		}
+		elseif (!isset($options[$value]))
 		{
 			$value = null;
 			static::addError([

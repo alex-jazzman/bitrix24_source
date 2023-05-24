@@ -133,12 +133,13 @@ Vue.component(config.templateFieldQuantity,
 				:value="quantity"
 				@input="onInputQuantityHandler"
 				:disabled="!editable"
+				data-name="quantity"
 			>
 			<div 
 				class="catalog-pf-product-input-info catalog-pf-product-input-info--action" 
 				@click="showPopupMenu($event.target)"
 			>
-				<span>{{ measureName }}</span>
+				<span :title="measureName">{{ measureName }}</span>
 			</div>
 		</div>
 	`

@@ -50,6 +50,10 @@ else
 	{
 		$titleBlock = Loc::getMessage('REST_CONFIGURATION_IMPORT_TITLE_BLOCK');
 	}
+	if (isset($_GET['createType']) && $_GET['createType'] === 'PAGE')
+	{
+		$titleBlock = Loc::getMessage('REST_CONFIGURATION_IMPORT_PAGE_TITLE');
+	}
 }
 
 ?>

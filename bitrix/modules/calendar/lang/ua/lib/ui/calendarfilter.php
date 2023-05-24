@@ -14,4 +14,5 @@ $MESS["CALENDAR_FILTER_MEETING_STATUS_Q"] = "Запрошений";
 $MESS["CALENDAR_FILTER_MEETING_STATUS_Y"] = "Беру участь";
 $MESS["CALENDAR_PRESET_I_AM_ATTENDEE"] = "Я учасник";
 $MESS["CALENDAR_PRESET_I_AM_HOST"] = "Я організатор";
+$MESS["CALENDAR_PRESET_I_DECLINED"] = "Я відмовляюся брати участь";
 $MESS["CALENDAR_PRESET_MEETING_STATUS_Q"] = "Запрошення";

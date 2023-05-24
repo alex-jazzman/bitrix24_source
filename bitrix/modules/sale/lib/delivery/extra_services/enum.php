@@ -69,7 +69,7 @@ class Enum extends Base
 				if(!isset($params["PARAMS"]["PRICES"][$id]))
 					$params["PARAMS"]["PRICES"][$id] = 0;
 
-				$result .= self::getValueHtml($name, $id, $price["TITLE"], $price["PRICE"], $currency)."<br><br>";
+				$result .= self::getValueHtml($name, $id, $price["TITLE"], $price["PRICE"] ?? 0, $currency)."<br><br>";
 			}
 		}
 
@@ -85,8 +85,8 @@ class Enum extends Base
 
 	protected static function getValueHtml($name, $id, $title = "", $price = "", $currency = "")
 	{
-		$price = roundEx(floatval($price), SALE_VALUE_PRECISION);
-		$currency = htmlspecialcharsbx($currency);
+		$price = roundEx((float)$price, SALE_VALUE_PRECISION);
+		$currency = htmlspecialcharsbx((string)$currency);
 
 		return Loc::getMessage("DELIVERY_EXTRA_SERVICE_ENUM_NAME").
 			':&nbsp;<input name="'.$name.'[PARAMS][PRICES]['.$id.'][TITLE]" value="'.htmlspecialcharsbx($title).'">&nbsp;&nbsp;'.
@@ -123,28 +123,38 @@ class Enum extends Base
 
 	protected function createOptions()
 	{
-		$this->params["OPTIONS"] = array();
+		$this->params["OPTIONS"] = [];
 
-		if(empty($this->params["PRICES"]) || !is_array($this->params["PRICES"]))
-			return;
-
-		foreach($this->params["PRICES"] as $key => $price)
+		if (empty($this->params["PRICES"]) || !is_array($this->params["PRICES"]))
 		{
-			if($price["TITLE"] == '')
-				continue;
+			return;
+		}
 
-			$priceVal = floatval($price["PRICE"]);
-			$this->params["OPTIONS"][$key] =
-				htmlspecialcharsbx($price["TITLE"]).
-				" (".
-				strip_tags(
+		foreach ($this->params["PRICES"] as $key => $price)
+		{
+			if (!is_array($price))
+			{
+				continue;
+			}
+			$priceTitle = trim((string)($price['TITLE'] ?? ''));
+			if ($priceTitle === '')
+			{
+				continue;
+			}
+
+			$priceVal = (float)($price['PRICE'] ?? 0);
+			$this->params['OPTIONS'][$key] =
+				htmlspecialcharsbx($price['TITLE'])
+				. ' ('
+				. strip_tags(
 					SaleFormatCurrency(
 						$this->convertToOperatingCurrency($priceVal),
 						$this->operatingCurrency,
 						false
 					)
-				).
-				")";
+				)
+				. ')'
+			;
 		}
 	}
 

@@ -132,6 +132,10 @@ class CBPPropertyVariableCondition extends CBPActivityCondition
 				$i = 0;
 				foreach ($defaultValue as $value)
 				{
+					if (!isset($arCurrentValues["variable_condition_count"]))
+					{
+						$arCurrentValues["variable_condition_count"] = '';
+					}
 					if (!CBPHelper::isEmptyValue($arCurrentValues["variable_condition_count"]))
 					{
 						$arCurrentValues["variable_condition_count"] .= ",";
@@ -272,7 +276,7 @@ class CBPPropertyVariableCondition extends CBPActivityCondition
 					];
 				}
 			}
-			$joiner = (int)$arCurrentValues["variable_condition_joiner_" . $i];
+			$joiner = (int)($arCurrentValues["variable_condition_joiner_" . $i] ?? 0);
 
 			$result[] = [$fieldId, $operator, $inputResult->getData()['value'] ?? '', $joiner];
 		}

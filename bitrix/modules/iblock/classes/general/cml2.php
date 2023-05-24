@@ -1038,7 +1038,7 @@ class CIBlockCMLImport
 			if($this->bCatalog && $this->next_step["bOffer"])
 			{
 				$obCatalog = new CCatalog();
-				$intParentID = $this->GetIBlockByXML_ID($arIBlock["CATALOG_XML_ID"] ?? $arIBlock["XML_ID"]);
+				$intParentID = $this->GetIBlockByXML_ID($arIBlock["CATALOG_XML_ID"] ?? '');
 				if (0 < intval($intParentID) && $this->use_offers)
 				{
 					$mxSKUProp = $obCatalog->LinkSKUIBlock($intParentID,$arIBlock["ID"]);

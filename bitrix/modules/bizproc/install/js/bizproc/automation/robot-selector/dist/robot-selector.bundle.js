@@ -1205,9 +1205,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        item: event.getData().eventData,
 	        stageId: babelHelpers.classPrivateFieldLooseBase(this, _stageId)[_stageId]
 	      });
-	      if (originalEvent.ctrlKey || originalEvent.metaKey) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _getCatalog)[_getCatalog]().close();
-	      }
 	    };
 	  };
 	  const availableTriggers = babelHelpers.classPrivateFieldLooseBase(this, _context)[_context].availableTriggers;
@@ -1342,7 +1339,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      lang: 'en',
 	      sec: 'yu3ljc'
 	    }, {
-	      zones: ['es'],
+	      zones: ['la', 'co', 'mx'],
 	      id: 1947,
 	      lang: 'es',
 	      sec: 'wuezi9'

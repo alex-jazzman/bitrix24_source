@@ -166,9 +166,8 @@ $urls = $arResult['TOP_PANEL_CONFIG']['urls'];
 $this->getComponent()->initAPIKeys();
 $formEditor = $arResult['SPECIAL_TYPE'] == Site\Type::PSEUDO_SCOPE_CODE_FORMS;
 
-$urlLandingAdd = str_replace(['#site_show#', '#landing_edit#'], [$siteId, 0], $arParams['~PARAMS']['sef_url']['landing_edit'] ?? '');
+$urlLandingAdd = $component->getUrlAdd(false);
 $urlFolderAdd = str_replace(['#site_show#', '#landing_edit#'], [$siteId, 0], $arParams['~PARAMS']['sef_url']['site_show'] ?? '');
-$urlLandingAdd = $component->getPageParam($urlLandingAdd, ['folderId' => $folderId]);
 $urlFolderAdd = $component->getPageParam($urlFolderAdd, ['folderId' => $folderId, 'folderNew' => 'Y']);
 $urlFormAdd = '/crm/webform/edit/0/';
 

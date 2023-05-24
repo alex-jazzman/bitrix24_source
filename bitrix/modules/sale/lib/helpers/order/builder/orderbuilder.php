@@ -403,13 +403,17 @@ abstract class OrderBuilder
 			;
 
 			$settableShipmentFields = $this->getSettableShipmentFields();
-			if(count($settableShipmentFields)>0)
+			if (!empty($settableShipmentFields))
 			{
 				//for backward compatibility
-				$product = $item['PRODUCT'];
+				$product = $item['PRODUCT'] ?? null;
 				$storeId = (int)($item['DELIVERY_STORE_ID'] ?? 0);
 				$item = array_intersect_key($item, array_flip($settableShipmentFields));
-				$item['PRODUCT'] = $product;
+				if ($product !== null)
+				{
+					$item['PRODUCT'] = $product;
+				}
+				unset($product);
 			}
 
 			if($isNew)
@@ -460,7 +464,7 @@ abstract class OrderBuilder
 					}
 				}
 			}
-			elseif(is_array($item['PRODUCT']))
+			elseif (isset($item['PRODUCT']) && is_array($item['PRODUCT']))
 			{
 				$products = $item['PRODUCT'];
 			}
@@ -631,9 +635,13 @@ abstract class OrderBuilder
 					$property = $propValue->getProperty();
 					$relatedDeliveryIds = (isset($property['RELATION']) && is_array($property['RELATION']))
 						? array_column(
-							array_filter($property['RELATION'], function ($item) {
-								return $item['ENTITY_TYPE'] === 'D';
-							}),
+							array_filter(
+								$property['RELATION'],
+								function ($item)
+								{
+									return $item['ENTITY_TYPE'] === 'D';
+								}
+							),
 							'ENTITY_ID'
 						)
 						: [];

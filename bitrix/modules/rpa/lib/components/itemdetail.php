@@ -75,7 +75,7 @@ abstract class ItemDetail extends Base implements Controllerable
 			}
 
 			$this->stage = $this->item->getStage();
-			$stageId = (int) $this->arParams['stageId'];
+			$stageId = (int)($this->arParams['stageId'] ?? null);
 			if($stageId > 0)
 			{
 				$stage = $this->type->getStages()->getByPrimary($stageId);
@@ -423,10 +423,10 @@ abstract class ItemDetail extends Base implements Controllerable
 		{
 			$userId = $this->item->get($fieldName);
 			$data[$fieldName] = $userId;
-			$data[$fieldName . '_FORMATTED_NAME'] = $users[$userId]['fullName'];
-			$data[$fieldName . '_WORK_POSITION'] = $users[$userId]['workPosition'];
-			$data[$fieldName . '_PHOTO_URL'] = $users[$userId]['photo'];
-			$data[$fieldName . '_SHOW_URL'] = $users[$userId]['link'];
+			$data[$fieldName . '_FORMATTED_NAME'] = $users[$userId]['fullName'] ?? null;
+			$data[$fieldName . '_WORK_POSITION'] = $users[$userId]['workPosition'] ?? null;
+			$data[$fieldName . '_PHOTO_URL'] = $users[$userId]['photo'] ?? null;
+			$data[$fieldName . '_SHOW_URL'] = $users[$userId]['link'] ?? null;
 		}
 
 		foreach($userFields as $userField)

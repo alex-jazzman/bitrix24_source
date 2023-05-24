@@ -1,6 +1,8 @@
 <?php
+$MESS["EC_SHARINGAJAX_ACTIVITY_SUBJECT"] = "Зустріч із клієнтом";
 $MESS["EC_SHARINGAJAX_EVENT_ACCESS_DENIED"] = "Недостатньо прав";
 $MESS["EC_SHARINGAJAX_EVENT_DELETE_ERROR"] = "Помилка видалення події.";
+$MESS["EC_SHARINGAJAX_EVENT_NAME"] = "Зустріч";
 $MESS["EC_SHARINGAJAX_EVENT_NOT_FOUND"] = "Подія не знайдена.";
 $MESS["EC_SHARINGAJAX_EVENT_SAVE_ERROR"] = "Помилка під час збереження події.";
 $MESS["EC_SHARINGAJAX_ICS_FILE_GET_ERROR"] = "Помилка під час завантаження ICS-файлу.";

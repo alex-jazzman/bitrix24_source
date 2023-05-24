@@ -60,7 +60,10 @@ if($USER->IsAdmin() && $lAdmin->EditAction()) // Save button was pressed
 			$lAdmin->AddUpdateError(GetMessage("IBLOCK_TYPE_ADMIN_ERR_SAVE")." (&quot;".htmlspecialcharsbx($ID)."&quot;): ".$obBlocktype->LAST_ERROR, $ID);
 			$DB->Rollback();
 		}
-		$DB->Commit();
+		else
+		{
+			$DB->Commit();
+		}
 	}
 }
 if($USER->IsAdmin() && ($arID = $lAdmin->GroupAction()))
@@ -86,7 +89,10 @@ if($USER->IsAdmin() && ($arID = $lAdmin->GroupAction()))
 				$DB->Rollback();
 				$lAdmin->AddGroupError(GetMessage("IBLOCK_TYPE_ADMIN_ERR_DEL")." (&quot;".htmlspecialcharsbx($ID)."&quot;)", $ID);
 			}
-			$DB->Commit();
+			else
+			{
+				$DB->Commit();
+			}
 			break;
 		}
 	}

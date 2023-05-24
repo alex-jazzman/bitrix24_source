@@ -3,6 +3,7 @@
 /** @global CUser $USER */
 /** @global string $DBType */
 /** @global CDatabase $DB */
+use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
@@ -438,12 +439,13 @@ if(isset($filter_person_type) && is_array($filter_person_type) && count($filter_
 	}
 }
 
-if(isset($filter_source) && $filter_source != 0)
+if (isset($filter_source))
 {
-	if($filter_source == -1)
-		$arFilter["=SOURCE.TRADING_PLATFORM_ID"] = "";
-	else
-		$arFilter["=SOURCE.TRADING_PLATFORM_ID"] = $filter_source;
+	$filter_source = (int)$filter_source;
+	if ($filter_source)
+	{
+		$arFilter["=SOURCE.TRADING_PLATFORM_ID"] = $filter_source !== -1 ? $filter_source : "";
+	}
 }
 
 if(!empty($filter_pay_system) && is_array($filter_pay_system))
@@ -2033,25 +2035,31 @@ if (!empty($orderList) && is_array($orderList))
 			if(in_array("CANCELED", $arVisibleColumns))
 			{
 				$fieldValue .= '<span id="cancel_'.$arOrder['ID'].'">'.(($arOrder["CANCELED"] == "Y") ? Loc::getMessage("SO_YES") : Loc::getMessage("SO_NO"))."</span>";
-				$fieldValueTmp = $arOrder["DATE_CANCELED"];
-				if(intval($arOrder["DATE_CANCELED"]) > 0)
+				$fieldValueTmp = '';
+				if ($arOrder['DATE_CANCELED'] instanceof Main\Type\DateTime)
 				{
-					if(intval($arOrder["EMP_CANCELED_ID"]) > 0)
-						$fieldValueTmp .= '<br />'.$formattedUserNames[$arOrder["EMP_CANCELED_ID"]];
-
-					if(!$bExport)
+					$fieldValueTmp = $arOrder['DATE_CANCELED']->toString();
+					if ($arOrder['DATE_CANCELED']->getTimestamp() > 0)
 					{
-						$sScript .= "
+						if ((int)$arOrder['EMP_CANCELED_ID'] > 0)
+						{
+							$fieldValueTmp .= '<br />' . $formattedUserNames[$arOrder["EMP_CANCELED_ID"]];
+						}
+
+						if (!$bExport)
+						{
+							$sScript .= "
 							new topWindow.BX.CHint({
-								parent: topWindow.BX('cancel_".$arOrder["ID"]."'),
+								parent: topWindow.BX('cancel_" . $arOrder["ID"] . "'),
 								show_timeout: 10,
 								hide_timeout: 100,
 								dx: 2,
 								preventHide: true,
 								min_width: 250,
-								hint: '".CUtil::JSEscape($fieldValueTmp)."'
+								hint: '" . CUtil::JSEscape($fieldValueTmp) . "'
 							});
 						";
+						}
 					}
 				}
 			}

@@ -50,11 +50,13 @@ if (
 
 				if (!!result.open)
 				{
+					BX.SidePanel.Instance.isReload = true;
 					BX.SidePanel.Instance.reload();
 					top.BX.rest.AppLayout.openApplication(result.id, {});
 				}
 				else
 				{
+					BX.SidePanel.Instance.isReload = true;
 					BX.SidePanel.Instance.reload();
 				}
 			}

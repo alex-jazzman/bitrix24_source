@@ -750,6 +750,9 @@ class CBitrix24NetTransport
 	const METHOD_BRANCH_UPDATE = 'branch.update';
 	const METHOD_BRANCH_REMOVE = 'branch.remove';
 	const METHOD_BRANCH_PROFILE_REFRESH = 'branch.profile.refresh';
+	const METHOD_BRANCH_APPEND = 'branch.append';
+	const METHOD_BRANCH_REGISTRATION_START = 'branch.registration.start';
+	const METHOD_BRANCH_REGISTRATION_CHECK = 'branch.registration.check';
 
 	const RESTORE_PASSWORD_METHOD_EMAIL = 'EMAIL';
 	const RESTORE_PASSWORD_METHOD_PHONE = 'PHONE';
@@ -949,7 +952,7 @@ class CBitrix24NetTransport
 	 */
 	public function branchList(array $params = [])
 	{
-		return $this->call(self::METHOD_BRANCH_LIST, $params);
+		return $this->call(self::METHOD_BRANCH_LIST, $params, LANGUAGE_ID);
 	}
 
 	/**
@@ -959,7 +962,7 @@ class CBitrix24NetTransport
 	 */
 	public function branchUpdate(array $params = [])
 	{
-		return $this->call(self::METHOD_BRANCH_UPDATE, $params);
+		return $this->call(self::METHOD_BRANCH_UPDATE, $params, LANGUAGE_ID);
 	}
 
 	/**
@@ -969,12 +972,27 @@ class CBitrix24NetTransport
 	 */
 	public function branchRemove(array $params = [])
 	{
-		return $this->call(self::METHOD_BRANCH_REMOVE, $params);
+		return $this->call(self::METHOD_BRANCH_REMOVE, $params, LANGUAGE_ID);
 	}
 
 	public function branchProfileRefresh($params)
 	{
-		return $this->call(self::METHOD_BRANCH_PROFILE_REFRESH, $params);
+		return $this->call(self::METHOD_BRANCH_PROFILE_REFRESH, $params, LANGUAGE_ID);
+	}
+
+	public function branchAppend($params)
+	{
+		return $this->call(self::METHOD_BRANCH_APPEND, $params, LANGUAGE_ID);
+	}
+
+	public function branchRegistrationStart($params)
+	{
+		return $this->call(self::METHOD_BRANCH_REGISTRATION_START, $params, LANGUAGE_ID);
+	}
+
+	public function branchRegistrationCheck($params)
+	{
+		return $this->call(self::METHOD_BRANCH_REGISTRATION_CHECK, $params, LANGUAGE_ID);
 	}
 }
 

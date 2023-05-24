@@ -576,7 +576,7 @@ abstract class Mailbox
 						array(
 							'id' => $this->mailbox['ID'],
 							'status' => sprintf('%.3f', $status),
-							'sessid' => $this->syncParams['sessid'] ?: $this->session,
+							'sessid' => $this->syncParams['sessid'] ?? $this->session,
 							'timestamp' => microtime(true),
 						),
 						$params

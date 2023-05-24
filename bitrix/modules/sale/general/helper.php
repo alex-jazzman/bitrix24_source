@@ -341,7 +341,7 @@ class CSaleHelper
 				$shopLocationId[$siteId] = $locParams['ID'];
 		}
 
-		return $shopLocationId[$siteId];
+		return $shopLocationId[$siteId] ?? '';
 	}
 
 	public static function getShopLocationZIP()

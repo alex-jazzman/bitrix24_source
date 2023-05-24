@@ -34,6 +34,15 @@ else
 	$lastPage = true;
 }
 
+$urlAdd = '';
+if ($arResult['ACCESS_SITE_NEW'] === 'Y' && !$arResult['IS_DELETED'])
+{
+	$urlAdd = ($arParams['TYPE'] === 'STORE')
+		? $component->getUrlAdd(true, ['super' => 'Y'])
+		: $component->getUrlAdd()
+	;
+}
+
 // errors title
 Manager::setPageTitle($component->getMessageType('LANDING_TPL_TITLE'));
 if ($arResult['ERRORS'])
@@ -337,25 +346,6 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 		];
 	}
 
-	if ($arResult['ACCESS_SITE_NEW'] === 'Y' && !$arResult['IS_DELETED'])
-	{
-		if ($arParams['TYPE'] === 'STORE')
-		{
-			$urlAdd = $component->getPageParam(
-				str_replace('#site_edit#', 0, $arParams['~PAGE_URL_SITE_EDIT']),
-				['super' => 'Y']
-			);
-		}
-		else
-		{
-			$urlAdd = str_replace('#site_edit#', 0, $arParams['~PAGE_URL_SITE_EDIT']);
-		}
-	}
-	else
-	{
-		$urlAdd = '';
-	}
-
 	$APPLICATION->includeComponent(
 		'bitrix:landing.site_tile',
 		'.default',
@@ -636,12 +626,16 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 	)
 	{
 		var condition = [];
-		<?php if ($arParams['PAGE_URL_SITE_SETTINGS']):?>
+		<?php if ($arParams['PAGE_URL_SITE_SETTINGS']): ?>
 		condition.push('<?= str_replace(['#site_edit#', '?'], ['(\\\d+)', '\\\?'], CUtil::jsEscape($arParams['PAGE_URL_SITE_SETTINGS']))?>');
 		<?php endif; ?>
-		<?if ($arParams['PAGE_URL_LANDING_EDIT']):?>
+		<?php if ($arParams['PAGE_URL_LANDING_EDIT']): ?>
 		condition.push('<?= str_replace(['#site_show#', '#landing_edit#', '?'], ['(\\\d+)', '(\\\d+)', '\\\?'], CUtil::jsEscape($arParams['PAGE_URL_LANDING_EDIT'])) ?>');
 		<?php endif; ?>
+		<?php if ($urlAdd <> ''): ?>
+		condition.push('<?= $urlAdd ?>');
+		<?php endif; ?>
+
 		if (condition)
 		{
 			BX.SidePanel.Instance.bindAnchors(

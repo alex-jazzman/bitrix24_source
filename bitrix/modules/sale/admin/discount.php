@@ -419,7 +419,8 @@ $headerList['USE_COUPONS'] = array(
 	'default' => true
 );
 
-if (Option::get('sale', 'use_sale_discount_only') !== 'Y')
+$saleDiscountOnly = Option::get('sale', 'use_sale_discount_only') === 'Y';
+if (!$saleDiscountOnly)
 {
 	unset($headerList['EXECUTE_MODULE']);
 }
@@ -429,6 +430,10 @@ $adminList->AddHeaders($headerList);
 $selectFields = array_fill_keys($adminList->GetVisibleHeaderColumns(), true);
 $selectFields['ID'] = true;
 $selectFieldsMap = array_fill_keys(array_keys($headerList), false);
+if (!$saleDiscountOnly)
+{
+	$selectFieldsMap['EXECUTE_MODULE'] = false;
+}
 
 $selectFieldsMap = array_merge($selectFieldsMap, $selectFields);
 $selectFields['ACTIVE'] = true;

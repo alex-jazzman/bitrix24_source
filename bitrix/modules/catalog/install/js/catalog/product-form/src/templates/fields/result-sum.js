@@ -71,6 +71,7 @@ Vue.component(config.templateFieldResultSum,
 					:value="sum"
 					@input="onInputSumHandler"
 					:disabled="!editable"
+					data-name="sum"
 			>
 			<div class="catalog-pf-product-input-info"
 				 :class="{ 'catalog-pf-product-input--disabled': !editable }"

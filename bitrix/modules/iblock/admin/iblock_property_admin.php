@@ -134,7 +134,6 @@ if($lAdmin->EditAction())
 {
 	foreach($_REQUEST['FIELDS'] as $ID => $arFields)
 	{
-		$DB->StartTransaction();
 		$ID = (int)$ID;
 
 		if(!$lAdmin->IsUpdated($ID))
@@ -147,13 +146,18 @@ if($lAdmin->EditAction())
 				[$arFields["PROPERTY_TYPE"], $arFields["USER_TYPE"]] = explode(':', $arFields["PROPERTY_TYPE"], 2);
 		}
 
+		$DB->StartTransaction();
+
 		$ibp = new CIBlockProperty;
 		if(!$ibp->Update($ID, $arFields))
 		{
 			$lAdmin->AddUpdateError(GetMessage("IBP_ADM_SAVE_ERROR", array("#ID#"=>$ID, "#ERROR_TEXT#"=>$ibp->LAST_ERROR)), $ID);
 			$DB->Rollback();
 		}
-		$DB->Commit();
+		else
+		{
+			$DB->Commit();
+		}
 	}
 }
 

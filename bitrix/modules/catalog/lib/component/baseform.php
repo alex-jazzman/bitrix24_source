@@ -611,7 +611,9 @@ abstract class BaseForm
 					}
 					else
 					{
-						$controlId = $description['name'] . '_uploader_' . $this->entity->getId();
+						// generate new IDs for new elements to avoid duplicate IDs in HTML inputs
+						$entityId = $this->entity->getId() ?? uniqid();
+						$controlId = $description['name'] . '_uploader_' . $entityId;
 
 						$additionalValues[$descriptionData['view']] = '';
 						$additionalValues[$descriptionData['viewList']]['SINGLE'] = '';

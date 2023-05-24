@@ -1667,7 +1667,7 @@ class CCatalogAdminTools extends CCatalogAdminToolsAll
 			'CAN_BUY_ZERO' => false,
 			'CATALOG_PURCHASING_PRICE' => [],
 			'CATALOG_MEASURE_RATIO' => false,
-			'CATALOG_MEASURE' => false,
+			'CATALOG_MEASURE' => [],
 			'CATALOG_VAT_INCLUDED' => [],
 			'VAT_ID' => [],
 			'CATALOG_WEIGHT' => false,

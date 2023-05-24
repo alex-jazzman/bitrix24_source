@@ -659,6 +659,7 @@ if(
 	}
 	foreach ($intList as $fieldId)
 	{
+		$value = $request->getPost($fieldId);
 		if (is_string($value))
 		{
 			$value = (int)$value;

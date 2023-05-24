@@ -336,8 +336,20 @@ class GridVariationForm extends VariationForm
 					}
 					break;
 				case 'boolean':
-					$code = ($currentValue !== '') ? 'YES' : 'NO';
-					$values[$name] = Loc::getMessage('CATALOG_PRODUCT_CARD_VARIATION_GRID_VALUE_'.$code);
+					$code = '';
+					if (
+						$description['id'] === static::formatFieldName('ACTIVE')
+						|| $description['id'] === static::formatFieldName('AVAILABLE')
+						|| $description['id'] === static::formatFieldName('VAT_INCLUDED')
+					)
+					{
+						$code = $currentValue === 'Y' ? 'YES' : 'NO';
+					}
+					else
+					{
+						$code = ($currentValue !== '') ? 'YES' : 'NO';
+					}
+					$values[$name] = Loc::getMessage('CATALOG_PRODUCT_CARD_VARIATION_GRID_VALUE_' . $code);
 					break;
 				case 'list':
 					$values[$name] = HtmlFilter::encode($description['editable']['items'][$currentValue] ?? '');
@@ -450,6 +462,33 @@ class GridVariationForm extends VariationForm
 		}
 
 		return $this->loadGridHeaders();
+	}
+
+	/**
+	 * Columns that are sent in the grid request.
+	 *
+	 * @return array
+	 */
+	public function getGridSupportedAjaxColumns(): array
+	{
+		$columns = array_fill_keys(
+			array_column($this->getGridHeaders(), 'id'),
+			true
+		);
+
+		foreach ($this->getIblockPropertiesDescriptions() as $property)
+		{
+			$name = $property['name'];
+
+			// files are not supported because new files are not sent in the request
+			$isFile = $property['settings']['PROPERTY_TYPE'] === PropertyTable::TYPE_FILE;
+			if ($isFile)
+			{
+				unset($columns[$name]);
+			}
+		}
+
+		return array_keys($columns);
 	}
 
 	protected function getProductFieldHeaders(array $fields, int $defaultWidth): array
@@ -876,6 +915,92 @@ class GridVariationForm extends VariationForm
 		}
 
 		return $values;
+	}
+
+	/**
+	 * Leaves only the values of the grid fields used.
+	 *
+	 * For price fields, converts values to `['PRICE' => '...', 'CURRENCY' => '...']` format.
+	 *
+	 * @param array $dirtyValues
+	 *
+	 * @return array with fields values, and additional fields `PRICES` and `PROPERTIES`.
+	 */
+	public function prepareFieldsValues(array $dirtyValues): array
+	{
+		$result = [
+			'PROPERTIES' => [],
+			'BARCODES' => [],
+			'PRICES' => [],
+		];
+
+		$pricePrefix = self::GRID_FIELD_PREFIX . self::PRICE_FIELD_PREFIX;
+		$purchacingPricePrefix = self::GRID_FIELD_PREFIX . 'PURCHASING_PRICE';
+
+		foreach ($this->getDescriptions() as $description)
+		{
+			$name = $description['name'];
+			$value = $dirtyValues[$name] ?? null;
+			if (!isset($value))
+			{
+				continue;
+			}
+
+			if (isset($description['propertyId']))
+			{
+				$type = $description['type'] ?? null;
+				if ($type === 'multilist' && empty($value))
+				{
+					$value = [];
+				}
+
+				$propertyId = (int)$description['propertyId'];
+				$result['PROPERTIES'][$propertyId] = $value;
+			}
+			elseif (mb_strpos($name, $pricePrefix) === 0)
+			{
+				if (
+					is_array($value)
+					&& isset($value['PRICE']['NAME'], $value['PRICE']['VALUE'], $value['CURRENCY']['VALUE'])
+				)
+				{
+					$priceGroupId = str_replace($pricePrefix, '', $value['PRICE']['NAME']);
+					if ($priceGroupId)
+					{
+						$result['PRICES'][$priceGroupId] = [
+							'PRICE' => (float)$value['PRICE']['VALUE'],
+							'CURRENCY' => (string)$value['CURRENCY']['VALUE'],
+						];
+					}
+				}
+			}
+			elseif (mb_strpos($name, $purchacingPricePrefix) === 0)
+			{
+				if (is_array($value) && isset($value['PRICE']['VALUE'], $value['CURRENCY']['VALUE']))
+				{
+					$result['PURCHASING_PRICE'] = (float)$value['PRICE']['VALUE'];
+					$result['PURCHASING_CURRENCY'] = (string)$value['CURRENCY']['VALUE'];
+				}
+			}
+			elseif (isset($description['originalName']))
+			{
+				$name = $description['originalName'];
+				$result[$name] = $value;
+			}
+			elseif (isset($description['entity']) && $description['entity'] === 'barcode')
+			{
+				if (is_array($value))
+				{
+					array_push($result['BARCODES'], ...$value);
+				}
+				else
+				{
+					$result['BARCODES'][] = $value;
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	protected function getAdditionalValues(array $values, array $descriptions = null): array

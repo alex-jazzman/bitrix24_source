@@ -1800,7 +1800,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 					$this->setErrors(new Bitrix\Main\Error(Loc::getMessage('LANDING_TPL_REPO_NOT_INSTALL')));
 				}
 			}
-			$cacheId .= ($isNeedMarket && $hasMarket) ? 'Market' : 'NoMarket';
+			$cacheId .= ($isNeedMarket && $hasMarket) ? 'Market_v2' : 'NoMarket';
 
 			// nfr - without cache
 			$cachePath = 'landing/demo';
@@ -1969,8 +1969,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 							$marketIdDelimiter,
 							[
 								$marketPrefix,
-								$site['APP_CODE'],
-								$site['ID'],
+								$site['APP_CODE']
 							]
 						);
 						if ($code && ($code !== $key))

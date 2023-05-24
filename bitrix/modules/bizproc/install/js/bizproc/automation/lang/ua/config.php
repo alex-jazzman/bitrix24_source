@@ -149,6 +149,7 @@ $MESS["BIZPROC_AUTOMATION_ROBOT_CONDITION_NOT_IN"] = "не міститься в
 $MESS["BIZPROC_AUTOMATION_ROBOT_CONDITION_OR"] = "або";
 $MESS["BIZPROC_AUTOMATION_ROBOT_SETTINGS_TITLE"] = "Налаштування робота";
 $MESS["BIZPROC_AUTOMATION_TOUR_GUIDE_BEGINNING_SUBTITLE"] = "Працювати продуктивніше можна без додаткових витрат і найму нових співробітників! Система сама виконає потрібну дію або нагадає менеджеру, що потрібно зробити. Ви не проґавите жодної можливості для продажу!";
+$MESS["BIZPROC_AUTOMATION_TOUR_GUIDE_BEGINNING_SUBTITLE_1"] = "Автоматизуйте будь-які процеси у вашій компанії. Бітрікс24 виконає потрібну дію і нагадає, що треба зробити. Працюйте продуктивніше без додаткових витрат і найму нових співробітників.";
 $MESS["BIZPROC_AUTOMATION_TOUR_GUIDE_BEGINNING_TITLE"] = "Підвищуйте ефективність бізнесу";
 $MESS["BIZPROC_AUTOMATION_TOUR_GUIDE_ROBOT_SUBTITLE_1"] = "Розмістіть робота на тій стадії, де він має спрацьовувати.";
 $MESS["BIZPROC_AUTOMATION_TOUR_GUIDE_ROBOT_SUBTITLE_2"] = "Дізнайтеся докладніше про роботів та їх налаштування у статті";

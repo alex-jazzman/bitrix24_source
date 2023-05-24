@@ -3,6 +3,7 @@
 namespace Bitrix\Landing\History\Action;
 
 use Bitrix\Landing\Block;
+use Bitrix\Main\Text\Emoji;
 
 class EditTextAction extends BaseAction
 {
@@ -38,13 +39,18 @@ class EditTextAction extends BaseAction
 		 */
 		$block = $params['block'];
 
+		$valueBefore = $params['valueBefore'] ?: '';
+		$valueBefore = Emoji::encode($valueBefore);
+		$valueAfter = $params['valueAfter'] ?: '';
+		$valueAfter = Emoji::encode($valueAfter);
+
 		return [
 			'block' => $block->getId(),
 			'selector' => $params['selector'] ?: '',
 			'position' => $params['position'] ?: 0,
 			'lid' => $block->getLandingId(),
-			'valueAfter' => $params['valueAfter'] ?: '',
-			'valueBefore' => $params['valueBefore'] ?: '',
+			'valueAfter' => $valueAfter,
+			'valueBefore' => $valueBefore,
 		];
 	}
 

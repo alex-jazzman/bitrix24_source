@@ -354,7 +354,7 @@
 			}
 			else
 			{
-				context = top;
+				context = BX.Landing.PageObject.getRootWindow();
 			}
 
 			return new Promise(function(resolve) {

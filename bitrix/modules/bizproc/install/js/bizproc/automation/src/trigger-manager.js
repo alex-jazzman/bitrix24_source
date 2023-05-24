@@ -343,6 +343,7 @@ export class TriggerManager extends EventEmitter
 					self.destroySettingsDialogControls();
 					popup.destroy();
 					Dom.removeClass(self.#triggersContainerNode, 'automation-base-blocked');
+					self.emit('TriggerManager:onCloseTriggerSettingsDialog')
 				}
 			},
 			buttons: [

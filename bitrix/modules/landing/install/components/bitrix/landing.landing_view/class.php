@@ -160,6 +160,7 @@ class LandingViewComponent extends LandingBaseComponent
 				$landing
 			),
 			'sliderConditions' => $this->getSliderConditions(),
+			'sliderFullConditions' => $this->getSliderFullConditions(),
 			'rights' => [
 				'settings' => in_array(
 					Rights::ACCESS_TYPES['sett'],
@@ -1161,6 +1162,18 @@ class LandingViewComponent extends LandingBaseComponent
 		}
 
 		return array_values($sliderConditions);
+	}
+
+	/**
+	 * Gets conditions for slider init, open in fullscrean
+	 * @return array
+	 */
+	public function getSliderFullConditions(): array
+	{
+		$addUrl = $this->getUrlAdd(false);
+		$addUrl = strpos($addUrl, '?') ? explode('?', $addUrl)[0] : $addUrl;
+
+		return [$addUrl];
 	}
 
 	/**

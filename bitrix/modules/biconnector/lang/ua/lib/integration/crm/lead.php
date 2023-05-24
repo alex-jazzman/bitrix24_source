@@ -31,6 +31,7 @@ $MESS["CRM_BIC_LEAD_FIELD_CREATED_BY_FULL"] = "Ідентифікатор та �
 $MESS["CRM_BIC_LEAD_FIELD_CREATED_BY_ID"] = "Ідентифікатор творця";
 $MESS["CRM_BIC_LEAD_FIELD_CREATED_BY_ID_FULL"] = "Ідентифікатор користувача, який створив лід";
 $MESS["CRM_BIC_LEAD_FIELD_CRM_PRODUCT"] = "Товар із CRM (множ.)";
+$MESS["CRM_BIC_LEAD_FIELD_CRM_PRODUCT_COUNT"] = "Кількість товарів із CRM (множ.)";
 $MESS["CRM_BIC_LEAD_FIELD_CRM_PRODUCT_ID"] = "Ідентифікатор товару з CRM (множ.)";
 $MESS["CRM_BIC_LEAD_FIELD_CRM_PRODUCT_NAME"] = "Найменування товару з CRM (множ.)";
 $MESS["CRM_BIC_LEAD_FIELD_CURRENCY_ID"] = "Валюта";

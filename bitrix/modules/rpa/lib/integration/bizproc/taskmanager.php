@@ -279,7 +279,10 @@ class TaskManager
 		$tasks = [];
 		while ($row = $tasksIterator->fetch())
 		{
-			$tasks[$typeInstanceIds[$row['WORKFLOW_ID']]][$row['ID']] = $row;
+			if (isset($typeInstanceIds[$row['WORKFLOW_ID']]))
+			{
+				$tasks[$typeInstanceIds[$row['WORKFLOW_ID']]][$row['ID']] = $row;
+			}
 		}
 		return $tasks;
 	}

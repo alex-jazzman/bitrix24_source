@@ -1849,6 +1849,10 @@ this.BX = this.BX || {};
 	    return this.mode === ProductSelector.MODE_VIEW;
 	  }
 
+	  isShortViewFormat() {
+	    return this.getConfig('VIEW_FORMAT', ProductSelector.FULL_VIEW_FORMAT) === ProductSelector.SHORT_VIEW_FORMAT;
+	  }
+
 	  isSaveable() {
 	    return !this.isViewMode() && this.model.isSaveable();
 	  }
@@ -2137,6 +2141,10 @@ this.BX = this.BX || {};
 	    if (this.isViewMode()) {
 	      main_core.Dom.addClass(wrapper, 'catalog-product-view');
 	      main_core.Dom.removeClass(wrapper, 'catalog-product-edit');
+
+	      if (this.isShortViewFormat()) {
+	        main_core.Dom.addClass(wrapper, '--short-format');
+	      }
 	    } else {
 	      main_core.Dom.addClass(wrapper, 'catalog-product-edit');
 	      main_core.Dom.removeClass(wrapper, 'catalog-product-view');
@@ -2230,7 +2238,8 @@ this.BX = this.BX || {};
 	      this.skuTreeInstance = new catalog_skuTree.SkuTree({
 	        skuTree: this.getModel().getSkuTree(),
 	        selectable: this.getConfig('ENABLE_SKU_SELECTION', true),
-	        hideUnselected: this.getConfig('HIDE_UNSELECTED_ITEMS', false)
+	        hideUnselected: this.getConfig('HIDE_UNSELECTED_ITEMS', false),
+	        isShortView: this.isViewMode() && this.isShortViewFormat()
 	      });
 	    }
 
@@ -2491,6 +2500,8 @@ this.BX = this.BX || {};
 	}
 	ProductSelector.MODE_VIEW = 'view';
 	ProductSelector.MODE_EDIT = 'edit';
+	ProductSelector.SHORT_VIEW_FORMAT = 'short';
+	ProductSelector.FULL_VIEW_FORMAT = 'full';
 	ProductSelector.INPUT_FIELD_NAME = 'NAME';
 	ProductSelector.INPUT_FIELD_BARCODE = 'BARCODE';
 	ProductSelector.ErrorCodes = SelectorErrorCode;

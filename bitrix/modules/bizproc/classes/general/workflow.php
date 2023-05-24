@@ -64,7 +64,7 @@ class CBPWorkflow
 
 	/**
 	* Public constructor initializes a new workflow instance with the specified ID.
-	* 
+	*
 	* @param mixed $instanceId - ID of the new workflow instance.
 	* @param mixed $runtime - Runtime object.
 	* @return CBPWorkflow
@@ -132,7 +132,7 @@ class CBPWorkflow
 		{
 			foreach ($workflowVariablesTypes as $k => $v)
 			{
-				$variableValue = $v["Default"];
+				$variableValue = $v["Default"] ?? null;
 				if ($documentType && $fieldTypeObject = $documentService->getFieldTypeObject($documentType, $v))
 				{
 					$fieldTypeObject->setDocumentId($arDocumentId);
@@ -185,7 +185,7 @@ class CBPWorkflow
 
 	/**
 	* Starts new workflow instance.
-	* 
+	*
 	*/
 	public function start()
 	{
@@ -227,7 +227,7 @@ class CBPWorkflow
 
 	/**
 	* Resume existing workflow.
-	* 
+	*
 	*/
 	public function resume()
 	{
@@ -268,7 +268,7 @@ class CBPWorkflow
 
 	/**
 	* Resume the workflow instance and transfer the specified event to it.
-	* 
+	*
 	* @param mixed $eventName - Event name.
 	* @param mixed $arEventParameters - Event parameters.
 	*/
@@ -305,7 +305,7 @@ class CBPWorkflow
 
 	/**
 	* Returns activity by its name.
-	* 
+	*
 	* @param mixed $activityName - Activity name.
 	* @return CBPActivity - Returns activity object or null if activity is not found.
 	*/
@@ -328,7 +328,7 @@ class CBPWorkflow
 
 	/**
 	* Initializes the specified activity by calling its method Initialize.
-	* 
+	*
 	* @param CBPActivity $activity
 	*/
 	public function initializeActivity(CBPActivity $activity)
@@ -344,7 +344,7 @@ class CBPWorkflow
 
 	/**
 	* Plans specified activity for execution.
-	* 
+	*
 	* @param CBPActivity $activity - Activity object.
 	* @param mixed $arEventParameters - Optional parameters.
 	*/
@@ -362,7 +362,7 @@ class CBPWorkflow
 
 	/**
 	* Close specified activity.
-	* 
+	*
 	* @param CBPActivity $activity - Activity object.
 	* @param mixed $arEventParameters - Optional parameters.
 	*/
@@ -391,7 +391,7 @@ class CBPWorkflow
 
 	/**
 	* Cancel specified activity.
-	* 
+	*
 	* @param CBPActivity $activity - Activity object.
 	* @param mixed $arEventParameters - Optional parameters.
 	*/
@@ -661,7 +661,7 @@ class CBPWorkflow
 
 	/**
 	* Add new event handler to the specified event.
-	* 
+	*
 	* @param mixed $eventName - Event name.
 	* @param IBPActivityExternalEventListener $eventHandler - Event handler.
 	*/
@@ -683,7 +683,7 @@ class CBPWorkflow
 
 	/**
 	* Remove the event handler from the specified event.
-	* 
+	*
 	* @param mixed $eventName - Event name.
 	* @param IBPActivityExternalEventListener $eventHandler - Event handler.
 	*/
@@ -707,7 +707,7 @@ class CBPWorkflow
 
 	/**
 	* Returns available events for current state of state machine workflow activity.
-	* 
+	*
 	*/
 	public function getAvailableStateEvents()
 	{

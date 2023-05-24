@@ -130,6 +130,12 @@ class History
 		while ($row = $res->fetch())
 		{
 			$row['ID'] = (int)$row['ID'];
+			if (!is_array($row['ACTION_PARAMS']))
+			{
+				$this->fixBroken($row['ID']);
+				continue;
+			}
+
 			$row['STEP'] = $step;
 			$row['ENTITY_ID'] = (int)$row['ENTITY_ID'];
 			$row['MULTIPLY_ID'] = (int)$row['MULTIPLY_ID'];
@@ -173,6 +179,57 @@ class History
 
 			$step++;
 		}
+	}
+
+	/**
+	 * For some reasons history row can be broken.
+	 * For consistency need remove row and decrease step.
+	 * @param int $id
+	 * @return bool
+	 */
+	protected function fixBroken(int $id): bool
+	{
+		$resDelete = HistoryTable::delete($id);
+		if ($resDelete->isSuccess())
+		{
+			if ($this->entityType === self::ENTITY_TYPE_LANDING)
+			{
+				$landing = LandingTable::query()
+					->addSelect('HISTORY_STEP')
+					->where('ID', '=', $this->entityId)
+					->exec()
+					->fetch()
+				;
+				$currentStep = $landing['HISTORY_STEP'] ?? 0;
+				$newStep = max(--$currentStep, 0);
+				$resUpdate = LandingTable::update(
+					$this->entityId,
+					['HISTORY_STEP' => $newStep]
+				);
+
+				return $resUpdate->isSuccess();
+			}
+
+			if ($this->entityType === self::ENTITY_TYPE_DESIGNER_BLOCK)
+			{
+				$block = BlockTable::query()
+					->addSelect('HISTORY_STEP_DESIGNER')
+					->where('ID', '=', $this->entityId)
+					->exec()
+					->fetch()
+				;
+				$currentStep = $block['HISTORY_STEP_DESIGNER'] ?? 0;
+				$newStep = max(--$currentStep, 0);
+				$resUpdate = BlockTable::update(
+					$this->entityId,
+					['HISTORY_STEP_DESIGNER' => $newStep]
+				);
+
+				return $resUpdate->isSuccess();
+			}
+		}
+
+		return false;
 	}
 
 	protected function loadStep(): void

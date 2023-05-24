@@ -17,6 +17,7 @@ use \Bitrix\Main\Page\Asset;
 use \Bitrix\Main\Service\GeoIp;
 use \Bitrix\Main\UI\PageNavigation;
 use Bitrix\UI\Fonts;
+use Bitrix\Main\Web\Uri;
 
 class LandingBaseComponent extends \CBitrixComponent
 {
@@ -87,34 +88,30 @@ class LandingBaseComponent extends \CBitrixComponent
 	protected $currentRequest = null;
 
 	/**
-	 * Required initialization made in this instance.
-	 * @var bool
-	 */
-	private ?bool $initiated = null;
-
-	/**
 	 * Init class' vars, check conditions.
 	 * @return bool
 	 */
-	protected function init(): bool
+	protected function init()
 	{
-		if ($this->initiated !== null)
+		static $init = null;
+
+		if ($init !== null)
 		{
-			return $this->initiated;
+			return $init;
 		}
 
-		$this->initiated = true;
+		$init = true;
 
 		Loc::loadMessages($this->getFile());
 
-		if ($this->initiated && !Loader::includeModule('landing'))
+		if ($init && !Loader::includeModule('landing'))
 		{
 			$this->addError('LANDING_CMP_NOT_INSTALLED');
-			$this->initiated = false;
+			$init = false;
 		}
 		$this->initRequest();
 
-		return $this->initiated;
+		return $init;
 	}
 
 	/**
@@ -795,37 +792,22 @@ class LandingBaseComponent extends \CBitrixComponent
 	}
 
 	/**
-	 * Wrapper for Loc::getMessage (adds site type as suffix to message code).
-	 *
+	 * Get loc::getMessage by type of site.
 	 * @param string $code Mess code.
-	 * @param array|null $replace Array for replace, e.g. array('#NUM#' => 5).
-	 * @param int|null $version Version of new phrase if needed.
+	 * @param array $replace Array for replace, e.g. array('#NUM#' => 5).
 	 * @return string
 	 */
-	public function getMessageType(string $code, ?array $replace = null, ?int $version = null): string
+	public function getMessageType($code, $replace = null)
 	{
 		static $codes = [];
 
 		if (!array_key_exists($code, $codes))
 		{
-			if ($version)
-			{
-				$mess = Loc::getMessage($code . '_' . $version . '_' . $this->arParams['TYPE'], $replace);
-				if (!$mess)
-				{
-					$mess = Loc::getMessage($code . '_' . $this->arParams['TYPE'], $replace);
-				}
-			}
-			else
-			{
-				$mess = Loc::getMessage($code . '_' . $this->arParams['TYPE'], $replace);
-			}
-
+			$mess = Loc::getMessage($code . '_' . $this->arParams['TYPE'], $replace);
 			if (!$mess)
 			{
 				$mess = Loc::getMessage($code, $replace);
 			}
-
 			$codes[$code] = $mess;
 		}
 
@@ -1364,6 +1346,79 @@ class LandingBaseComponent extends \CBitrixComponent
 		}
 
 		return "<script>window.fontsProxyUrl = '{$domain}';</script>";
+	}
+
+	/**
+	 * Get URI for create new ...
+	 * @param bool $isSite - if true - create new site, false - new page in current site
+	 * @param array $urlParams - additional url params, join with url (old or new type)
+	 * @return string
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function getUrlAdd(bool $isSite = true, array $urlParams = []): string
+	{
+		$paramName = $isSite ? 'PAGE_URL_SITE_EDIT' : 'PAGE_URL_LANDING_EDIT';
+
+		if (
+			!isset($this->arParams[$paramName])
+			|| !isset($this->arParams['TYPE'])
+		)
+		{
+			return '';
+		}
+
+		$search = ['#site_edit#', '#landing_edit#', '#site_show#'];
+		$replace = [
+			0,
+			0,
+			$this->arParams['SITE_ID'] ?? 0
+		];
+		$urlTemplate =
+			(!$isSite && isset($this->arParams['~PARAMS']['sef_url']['landing_edit']))
+			? $this->arParams['~PARAMS']['sef_url']['landing_edit']
+			: $this->arParams[$paramName]
+		;
+		$createViaLandingUrl = str_replace($search, $replace, $urlTemplate);
+
+		// add FOLDER
+		if (!$isSite && isset($this->arParams['ACTION_FOLDER']) && $this->arParams['ACTION_FOLDER'])
+		{
+			$folderId = (int)$this->request->get($this->arParams['ACTION_FOLDER']);
+			if ($folderId)
+			{
+				$createViaLandingUrl = $this->getPageParam($createViaLandingUrl, [
+					$this->arParams['ACTION_FOLDER'] => $folderId
+				]);
+			}
+		}
+
+		// additional url params
+		if (!empty($urlParams))
+		{
+			$createViaLandingUrl = $this->getPageParam($createViaLandingUrl, [
+				'super' => 'Y'
+			]);
+		}
+
+		// OLD style showcase
+		if (
+			$this->arParams['TYPE'] !== 'PAGE'
+			|| !Manager::isB24()
+			|| !Loader::includeModule('market')
+		)
+		{
+			return $createViaLandingUrl;
+		}
+
+		// NEW - create via market module
+		$createViaMarketUrl = new Uri(
+			'/market/?placement=landings'
+		);
+		$createViaMarketUrl->addParams([
+			'create_uri' => $createViaLandingUrl
+		]);
+
+		return $createViaMarketUrl->getUri();
 	}
 
 	/**

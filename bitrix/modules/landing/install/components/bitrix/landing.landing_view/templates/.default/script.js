@@ -74,6 +74,7 @@
 			this.helperFrameOpenUrl = options.helperFrameOpenUrl || null;
 			this.helpCodes = options.helpCodes || {};
 			this.sliderConditions = options.sliderConditions || [];
+			this.sliderFullConditions = options.sliderFullConditions || [];
 			top.window.autoPublicationEnabled = !!options.autoPublicationEnabled;
 			if (!this.rights.public)
 			{
@@ -198,19 +199,19 @@
 				return;
 			}
 
-			var conditions = [];
-
-			for (var i = 0, c = this.sliderConditions.length; i < c; i++)
+			const conditions = [];
+			for (let i = 0, c = this.sliderConditions.length; i < c; i++)
 			{
 				conditions.push(this.sliderConditions[i]);
 			}
+			const conditionsFull = this.sliderFullConditions;
 
-			if (conditions.length <= 0)
+			if (conditions.length <= 0 && conditionsFull.length <= 0)
 			{
 				return;
 			}
 
-			var sliderOptions = top.BX.clone({
+			const sliderOptions = top.BX.clone({
 				rules: [
 					{
 						condition: conditions,
@@ -225,8 +226,21 @@
 					}
 				]
 			});
-
 			BX.SidePanel.Instance.bindAnchors(sliderOptions);
+
+			const sliderFullOptions = top.BX.clone({
+				rules: [
+					{
+						condition: conditionsFull,
+						options: {
+							allowChangeHistory: false,
+							customLeftBoundary: 0,
+							cacheable: false,
+						}
+					}
+				]
+			});
+			BX.SidePanel.Instance.bindAnchors(sliderFullOptions);
 		},
 
 		/**

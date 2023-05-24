@@ -6,6 +6,7 @@ $MESS["MAIN_COUPON_ACTIVATION_BUTTON_RENEW"] = "Поновити ліцензі�
 $MESS["MAIN_COUPON_ACTIVATION_BUTTON_SEND"] = "Надіслати";
 $MESS["MAIN_COUPON_ACTIVATION_COPYRIGHT"] = "© «Бітрікс», #YEAR#";
 $MESS["MAIN_COUPON_ACTIVATION_EMAIL_FIELD"] = "Адреса ел. пошти";
+$MESS["MAIN_COUPON_ACTIVATION_HEADER_TITLE"] = "Активація продукту";
 $MESS["MAIN_COUPON_ACTIVATION_LICENSE_KEY_FIELD"] = "Код активації:";
 $MESS["MAIN_COUPON_ACTIVATION_LICENSE_OVER_DESCRIPTION"] = "Поновіть ліцензію, щоб і надалі використовувати Бітрікс24. <br>
 Оплатити подовження можна самостійно або через вашого партнера Бітрікс.";

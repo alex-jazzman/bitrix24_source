@@ -61,6 +61,7 @@ class ExportOffer implements \Iterator
 	 *
 	 * @return array
 	 */
+	#[\ReturnTypeWillChange]
 	public function current()
 	{
 		return $this->currentRecord;
@@ -71,6 +72,7 @@ class ExportOffer implements \Iterator
 	 *
 	 * @return int
 	 */
+	#[\ReturnTypeWillChange]
 	public function key()
 	{
 		return $this->currentKey;
@@ -81,6 +83,7 @@ class ExportOffer implements \Iterator
 	 *
 	 * @return void
 	 */
+	#[\ReturnTypeWillChange]
 	public function next()
 	{
 		$this->currentKey++;
@@ -93,6 +96,7 @@ class ExportOffer implements \Iterator
 	 *
 	 * @return void
 	 */
+	#[\ReturnTypeWillChange]
 	public function rewind()
 	{
 		$this->currentKey = 0;
@@ -107,6 +111,7 @@ class ExportOffer implements \Iterator
 	 *
 	 * @return bool
 	 */
+	#[\ReturnTypeWillChange]
 	public function valid ()
 	{
 		return is_array($this->currentRecord);
@@ -130,7 +135,7 @@ class ExportOffer implements \Iterator
 			$filter["INCLUDE_SUBSECTIONS"] = $this->includeSubsections ? "Y" : "N";
 			$filter["SECTION_ID"] = $this->arSections;
 		}
-		
+
 		if($this->onlyAvailableElements)
 			$filter["CATALOG_AVAILABLE"] = "Y";
 		$filter["ACTIVE"] = "Y";
@@ -301,7 +306,7 @@ class ExportOffer implements \Iterator
 
 		return (isset($currencyList['RUR']) ? 'RUR' : 'RUB');
 	}
-	
+
 	/**
 	 * Change setting "export only available elements".
 	 *

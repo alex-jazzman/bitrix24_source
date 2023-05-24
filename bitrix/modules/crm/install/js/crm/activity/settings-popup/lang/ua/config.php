@@ -13,4 +13,5 @@ $MESS["CRM_SETTINGS_POPUP_CANCEL"] = "Скасувати (Esc)";
 $MESS["CRM_SETTINGS_POPUP_ERROR"] = "Не вдалося завантажити налаштування справи, спробуйте ще раз пізніше.";
 $MESS["CRM_SETTINGS_POPUP_SECTION_SWITCH"] = "Увімкнути";
 $MESS["CRM_SETTINGS_POPUP_SECTION_SWITCH_CALENDAR"] = "Додати в календар";
+$MESS["CRM_SETTINGS_POPUP_SECTION_SWITCH_PING"] = "Сповіщення";
 $MESS["CRM_SETTINGS_POPUP_TITLE"] = "Налаштування";

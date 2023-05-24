@@ -100,7 +100,11 @@ class CDeliveryUPS
 
 	public static function SetSettings($arSettings)
 	{
-		return $arSettings["zones_csv"].";".$arSettings["export_csv"];
+		return
+			($arSettings['zones_csv'] ?? '')
+			. ';'
+			. ($arSettings['export_csv'] ?? '')
+		;
 	}
 
 	public static function __parseZonesFile($file)
@@ -319,14 +323,14 @@ class CDeliveryUPS
 		$arOrder["WEIGHT"] = CSaleMeasure::Convert($arOrder["WEIGHT"], "G", "KG");
 
 		$arLocationTo = CSaleLocation::GetByID($arOrder["LOCATION_TO"]);
-		
+
 		if (LANGUAGE_ID !== 'en')
 		{
 			$arCountry = CSaleLocation::GetCountryLangByID($arLocationTo['COUNTRY_ID'], 'en');
 			if (false !== $arCountry)
 				$arLocationTo['COUNTRY_NAME_LANG'] = $arCountry['NAME'];
 		}
-		
+
 		CDeliveryUPS::__GetLocation($arLocationTo, $arConfig);
 
 		$arPriceTable = CDeliveryUPS::__GetExport($arConfig["export_csv"]["VALUE"]);
@@ -353,13 +357,13 @@ class CDeliveryUPS
 
 	public static function Compability($arOrder, $arConfig)
 	{
-		if (intval($arOrder["LOCATION_FROM"]) <= 0) 
+		if (intval($arOrder["LOCATION_FROM"]) <= 0)
 			return array();
 
 		$arLocationFrom = CSaleLocation::GetByID($arOrder["LOCATION_FROM"]);
 		$arLocationTo = CSaleLocation::GetByID($arOrder["LOCATION_TO"]);
 
-		if ($arLocationFrom["COUNTRY_ID"] == $arLocationTo["COUNTRY_ID"]) 
+		if ($arLocationFrom["COUNTRY_ID"] == $arLocationTo["COUNTRY_ID"])
 			return array();
 
 		if (LANGUAGE_ID !== 'en')
@@ -368,7 +372,7 @@ class CDeliveryUPS
 			if (false !== $arCountry)
 				$arLocationTo['COUNTRY_NAME_LANG'] = $arCountry['NAME'];
 		}
-			
+
 		CDeliveryUPS::__GetLocation($arLocationTo, $arConfig);
 
 		if ($arLocationTo["COUNTRY_SID"] == '')
@@ -379,9 +383,9 @@ class CDeliveryUPS
 
 		$arZoneTo = $arZones[$arLocationTo["COUNTRY_SID"]];
 
-		if (intval($arZoneTo[1]) > 0) 
+		if (intval($arZoneTo[1]) > 0)
 			return array("express", "express_saver");
-		else 
+		else
 			return array("express");
 	}
 }

@@ -29,9 +29,9 @@ $arColumns = array(
 );
 
 $arIblockIDs = array();
+$arIblockNames = array();
 if (Loader::includeModule('catalog'))
 {
-	$arIblockNames = array();
 	$parameters = array(
 		'select' => array('IBLOCK_ID', 'NAME' => 'IBLOCK.NAME', 'SITE_ID' => 'IBLOCK_SITE.SITE_ID'),
 		'order' => array('IBLOCK_ID' => 'ASC'),
@@ -265,9 +265,7 @@ $arComponentParameters = array(
 		"SPOT_LOCATION_BY_GEOIP" => array(
 			"NAME" => GetMessage("SBB_SPOT_LOCATION_BY_GEOIP"),
 			"TYPE" => "CHECKBOX",
-			"MULTIPLE" => "N",
 			"DEFAULT" => "Y",
-			"ADDITIONAL_VALUES" => "N",
 			"PARENT" => "BASE",
 		),
 		"DELIVERY_TO_PAYSYSTEM" => array(
@@ -283,18 +281,14 @@ $arComponentParameters = array(
 		"SHOW_VAT_PRICE" => array(
 			"NAME" => GetMessage('SOA_SHOW_VAT_PRICE'),
 			"TYPE" => "CHECKBOX",
-			"MULTIPLE" => "N",
 			"DEFAULT" => "Y",
-			"ADDITIONAL_VALUES" => "N",
 			"PARENT" => "BASE",
 		),
 		"SET_TITLE" => array(),
 		"USE_PREPAYMENT" => array(
 			"NAME" => GetMessage('SBB_USE_PREPAYMENT'),
 			"TYPE" => "CHECKBOX",
-			"MULTIPLE" => "N",
 			"DEFAULT" => "N",
-			"ADDITIONAL_VALUES" => "N",
 			"PARENT" => "BASE",
 		),
 		"DISABLE_BASKET_REDIRECT" => array(

@@ -1,4 +1,20 @@
 <?php
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_CANCEL_BUTTON"] = "Скасувати";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_CONFIGURE_SLOTS"] = "Як це працює?";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_COPY_LINK_NOTIFICATION"] = "Посилання скопійовано";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_1"] = "Клієнт сам вибере зручний слот.";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_2"] = "Зустріч з'явиться у ваших справах.";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_INFO_TITLE"] = "Надішліть клієнту посилання для запису на зустріч";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_MORE_INFO_BUTTON"] = "Докладніше про слоти в CRM";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_1"] = "Під'єднайте WhatsApp і SMS, щоб миттєво надсилати клієнтам посилання на ваші вільні слоти.";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2"] = "Подивіться, як це працює:<span data-role=\"crm-timeline-calendar-sharing_open-configure-slots\">заплануйте тестову зустріч</span> просто зараз.";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TITLE"] = "У вас ще не під'єднані WhatsApp і SMS";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT"] = "Укажіть номер телефону клієнта, щоб ми могли надіслати посилання на вільні слоти.";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TITLE"] = "Укажіть контакти клієнта в угоді";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TEXT"] = "Як швидко запланувати зустріч із клієнтом? В один клац надішліть посилання на свої вільні слоти, а клієнт сам вибере час. Спробуйте, як це зручно!";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TITLE"] = "Вільні слоти для зустрічей";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_RECEIVER"] = "Отримувач";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON"] = "Надіслати";
 $MESS["CRM_TIMELINE_CANCEL_BTN"] = "Скасувати";
 $MESS["CRM_TIMELINE_CHOOSE"] = "Обрати";
 $MESS["CRM_TIMELINE_COLLAPSE"] = "Згорнути";

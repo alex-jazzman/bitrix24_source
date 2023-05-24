@@ -47,20 +47,26 @@ $isAjax = $component->isAjax();
 			]
 		});
 		<?endif;?>
-		<?if ($arResult['SIDE_PANEL'] && !$isAjax):?>
+		<?php if ($arResult['SIDE_PANEL'] && !$isAjax): ?>
 		BX.SidePanel.Instance.bindAnchors({
 			rules: [
-				<?if ($arParams['PAGE_URL_SITE_ADD']):?>
+				<?php if ($arParams['PAGE_URL_SITE_ADD']): ?>
 				{
-					condition: ['<?= strpos($arParams['PAGE_URL_SITE_ADD'], '?') ? explode('?', $arParams['PAGE_URL_SITE_ADD'])[0] : $arParams['PAGE_URL_SITE_ADD']?>'],
+					condition: ['<?=
+							strpos($arParams['PAGE_URL_SITE_ADD'], '?')
+								? explode('?', $arParams['PAGE_URL_SITE_ADD'])[0]
+								: $arParams['PAGE_URL_SITE_ADD']
+						?>'],
 					options: {
-						allowChangeHistory: false
-						<?if ($arParams['TYPE'] === 'STORE'):?>
-						,width: 1200
-						<?endif;?>
+						allowChangeHistory: false,
+						customLeftBoundary: 0,
+						cacheable: false,
+						<?php if ($arParams['TYPE'] === 'STORE'): ?>
+							width: 1200,
+						<?php endif; ?>
 					}
 				},
-				<?endif?>
+				<?php endif; ?>
 				{
 					condition: <?= \CUtil::PhpToJSObject($arResult['SIDE_PANEL'])?>,
 					stopParameters: ['tab', 'action'],
@@ -68,7 +74,7 @@ $isAjax = $component->isAjax();
 				}
 			]
 		});
-		<?endif;?>
+		<?php endif; ?>
 	});
 </script>
 
@@ -91,10 +97,7 @@ $isAjax = $component->isAjax();
 	{
 		$features[] = $component->getMessageType('LANDING_SITE_TILE_EMPTY_FEAT4');
 	}
-	if ($arParams['TYPE']  === 'STORE')
-	{
-		$features[] = $component->getMessageType('LANDING_SITE_TILE_EMPTY_FEAT5');
-	}
+	$features[] = $component->getMessageType('LANDING_SITE_TILE_EMPTY_FEAT5');
 	\trimArr($features, true);
 	$langImg = \Bitrix\Landing\Manager::availableOnlyForZone('ru') ? 'ru' : 'en';
 	?>

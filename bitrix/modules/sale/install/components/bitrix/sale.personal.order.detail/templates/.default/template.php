@@ -218,7 +218,7 @@ else
 										<li class="sale-order-detail-about-order-inner-container-list-item">
 											<?= Loc::getMessage('SPOD_EMAIL')?>:
 											<a class="sale-order-detail-about-order-inner-container-list-item-link"
-											   href="mailto:<?= htmlspecialcharsbx($arResult["USER"]["EMAIL"]) ?>"><?= htmlspecialcharsbx($arResult["USER"]["EMAIL"]) ?></a>
+												href="mailto:<?= htmlspecialcharsbx($arResult["USER"]["EMAIL"]) ?>"><?= htmlspecialcharsbx($arResult["USER"]["EMAIL"]) ?></a>
 										</li>
 										<?
 									}
@@ -362,7 +362,7 @@ else
 												<div class="row sale-order-detail-payment-options-methods-information-block">
 													<div class="col-md-2 col-sm-5 col-xs-12 sale-order-detail-payment-options-methods-image-container">
 													<span class="sale-order-detail-payment-options-methods-image-element"
-														  style="background-image: url('<?= $payment['PAY_SYSTEM']["SRC_LOGOTIP"] <> ''? htmlspecialcharsbx($payment['PAY_SYSTEM']["SRC_LOGOTIP"]) : '/bitrix/images/sale/nopaysystem.gif'?>');"></span>
+														style="background-image: url('<?= $payment['PAY_SYSTEM']["SRC_LOGOTIP"] <> ''? htmlspecialcharsbx($payment['PAY_SYSTEM']["SRC_LOGOTIP"]) : '/bitrix/images/sale/nopaysystem.gif'?>');"></span>
 													</div>
 													<div class="col-md-8 col-sm-7 col-xs-10 sale-order-detail-payment-options-methods-info">
 														<div class="sale-order-detail-payment-options-methods-info-title">
@@ -472,8 +472,8 @@ else
 															{
 																?>
 																<a class="btn-theme sale-order-detail-payment-options-methods-button-element-new-window"
-																   target="_blank"
-																   href="<?=htmlspecialcharsbx($payment['PAY_SYSTEM']['PSA_ACTION_FILE'])?>">
+																	target="_blank"
+																	href="<?=htmlspecialcharsbx($payment['PAY_SYSTEM']['PSA_ACTION_FILE'])?>">
 																	<?= Loc::getMessage('SPOD_ORDER_PAY') ?>
 																</a>
 																<?
@@ -635,7 +635,7 @@ else
 																<div
 																	class="col-md-2 col-sm-12 sale-order-detail-payment-options-shipment-button-container">
 																	<a class="sale-order-detail-payment-options-shipment-button-element"
-																	   href="<?= $shipment['TRACKING_URL'] ?>">
+																		href="<?= $shipment['TRACKING_URL'] ?>">
 																		<?= Loc::getMessage('SPOD_ORDER_CHECK_TRACKING') ?>
 																	</a>
 																</div>
@@ -725,14 +725,14 @@ else
 																						<div class="sale-order-detail-order-item-table">
 																							<div class="sale-order-detail-order-item-tr hidden-sm hidden-xs">
 																								<div class="sale-order-detail-order-item-td"
-																									 style="padding-bottom: 5px;">
+																									style="padding-bottom: 5px;">
 																									<div class="sale-order-detail-order-item-td-title">
 																										<?= Loc::getMessage('SPOD_NAME')?>
 																									</div>
 																								</div>
 																								<div class="sale-order-detail-order-item-nth-4p1"></div>
 																								<div class="sale-order-detail-order-item-td sale-order-detail-order-item-properties bx-text-right"
-																									 style="padding-bottom: 5px;">
+																									style="padding-bottom: 5px;">
 																									<div class="sale-order-detail-order-item-td-title">
 																										<?= Loc::getMessage('SPOD_QUANTITY')?>
 																									</div>
@@ -745,12 +745,12 @@ else
 																									?>
 																									<div class="sale-order-detail-order-item-tr sale-order-detail-order-basket-info sale-order-detail-order-item-tr-first">
 																										<div class="sale-order-detail-order-item-td"
-																											 style="min-width: 300px;">
+																											style="min-width: 300px;">
 																											<div class="sale-order-detail-order-item-block">
 																												<div class="sale-order-detail-order-item-img-block">
 																													<a href="<?=htmlspecialcharsbx($basketItem['DETAIL_PAGE_URL'])?>">
 																														<?
-																														if($basketItem['PICTURE']['SRC'] <> '')
+																														if (is_array($basketItem['PICTURE']))
 																														{
 																															$imageSrc = htmlspecialcharsbx($basketItem['PICTURE']['SRC']);
 																														}
@@ -760,10 +760,10 @@ else
 																														}
 																														?>
 																														<div class="sale-order-detail-order-item-imgcontainer"
-																															 style="background-image: url(<?=$imageSrc?>);
-																																 background-image:
-																																 -webkit-image-set(url(<?=$imageSrc?>) 1x,
-																																 url(<?=$imageSrc?>) 2x)">
+																															style="background-image: url(<?=$imageSrc?>);
+																																background-image:
+																																-webkit-image-set(url(<?=$imageSrc?>) 1x,
+																																url(<?=$imageSrc?>) 2x)">
 																														</div>
 																													</a>
 																												</div>
@@ -888,7 +888,7 @@ else
 															<div class="sale-order-detail-order-item-img-block">
 																<a href="<?=$basketItem['DETAIL_PAGE_URL']?>">
 																	<?
-																	if($basketItem['PICTURE']['SRC'] <> '')
+																	if (is_array($basketItem['PICTURE']))
 																	{
 																		$imageSrc = $basketItem['PICTURE']['SRC'];
 																	}
@@ -898,9 +898,9 @@ else
 																	}
 																	?>
 																	<div class="sale-order-detail-order-item-imgcontainer"
-																		 style="background-image: url(<?=$imageSrc?>);
-																			 background-image: -webkit-image-set(url(<?=$imageSrc?>) 1x,
-																			 url(<?=$imageSrc?>) 2x)">
+																		style="background-image: url(<?=$imageSrc?>);
+																			background-image: -webkit-image-set(url(<?=$imageSrc?>) 1x,
+																			url(<?=$imageSrc?>) 2x)">
 																	</div>
 																</a>
 															</div>

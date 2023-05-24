@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
-(function (exports,ui_alerts,bizproc_condition,ui_entitySelector,main_date,main_popup,main_core_events,bizproc_automation,ui_designTokens,ui_fonts_opensans,main_core,ui_tour) {
+(function (exports,ui_alerts,bizproc_condition,ui_entitySelector,main_date,main_popup,main_core_events,bizproc_automation,bizproc_globals,ui_designTokens,ui_fonts_opensans,main_core,ui_tour) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -59,10 +59,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return TemplateScope;
 	}();
 
-	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return generator._invoke = function (innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; }(innerFn, self, context), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; this._invoke = function (method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); }; } function maybeInvokeDelegate(delegate, context) { var method = delegate.iterator[context.method]; if (undefined === method) { if (context.delegate = null, "throw" === context.method) { if (delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method)) return ContinueSentinel; context.method = "throw", context.arg = new TypeError("The iterator does not provide a 'throw' method"); } return ContinueSentinel; } var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) { if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; } return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, define(Gp, "constructor", GeneratorFunctionPrototype), define(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (object) { var keys = []; for (var key in object) { keys.push(key); } return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) { "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); } }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -152,42 +152,40 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  var generator = /*#__PURE__*/_regeneratorRuntime().mark(function generator(scheme) {
 	    var _iterator3, _step3, scope;
 	    return _regeneratorRuntime().wrap(function generator$(_context) {
-	      while (1) {
-	        switch (_context.prev = _context.next) {
-	          case 0:
-	            _iterator3 = _createForOfIteratorHelper(scheme);
-	            _context.prev = 1;
-	            _iterator3.s();
-	          case 3:
-	            if ((_step3 = _iterator3.n()).done) {
-	              _context.next = 10;
-	              break;
-	            }
-	            scope = _step3.value;
-	            if (!predicate(scope)) {
-	              _context.next = 8;
-	              break;
-	            }
+	      while (1) switch (_context.prev = _context.next) {
+	        case 0:
+	          _iterator3 = _createForOfIteratorHelper(scheme);
+	          _context.prev = 1;
+	          _iterator3.s();
+	        case 3:
+	          if ((_step3 = _iterator3.n()).done) {
+	            _context.next = 10;
+	            break;
+	          }
+	          scope = _step3.value;
+	          if (!predicate(scope)) {
 	            _context.next = 8;
-	            return scope;
-	          case 8:
-	            _context.next = 3;
 	            break;
-	          case 10:
-	            _context.next = 15;
-	            break;
-	          case 12:
-	            _context.prev = 12;
-	            _context.t0 = _context["catch"](1);
-	            _iterator3.e(_context.t0);
-	          case 15:
-	            _context.prev = 15;
-	            _iterator3.f();
-	            return _context.finish(15);
-	          case 18:
-	          case "end":
-	            return _context.stop();
-	        }
+	          }
+	          _context.next = 8;
+	          return scope;
+	        case 8:
+	          _context.next = 3;
+	          break;
+	        case 10:
+	          _context.next = 15;
+	          break;
+	        case 12:
+	          _context.prev = 12;
+	          _context.t0 = _context["catch"](1);
+	          _iterator3.e(_context.t0);
+	        case 15:
+	          _context.prev = 15;
+	          _iterator3.f();
+	          return _context.finish(15);
+	        case 18:
+	        case "end":
+	          return _context.stop();
 	      }
 	    }, generator, null, [[1, 12, 15, 18]]);
 	  });
@@ -836,7 +834,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
-	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
 	function _classStaticPrivateFieldSpecGet$1(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "get"); return _classApplyDescriptorGet$1(receiver, descriptor); }
@@ -1316,6 +1314,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	            self.destroySettingsDialogControls();
 	            popup.destroy();
 	            main_core.Dom.removeClass(babelHelpers.classPrivateFieldGet(self, _triggersContainerNode), 'automation-base-blocked');
+	            self.emit('TriggerManager:onCloseTriggerSettingsDialog');
 	          }
 	        },
 	        buttons: [new BX.PopupWindowButton({
@@ -2645,7 +2644,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
-	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _entryId = /*#__PURE__*/new WeakMap();
@@ -2800,7 +2799,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
-	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _ajaxUrl = /*#__PURE__*/new WeakMap();
@@ -2939,7 +2938,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 	function _createForOfIteratorHelper$4(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
-	function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
@@ -3922,9 +3921,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "hasBrokenLink",
 	    value: function hasBrokenLink() {
-	      var usages = BX.clone(this.collectUsages());
+	      return this.getBrokenLinks().length > 0;
+	    }
+	  }, {
+	    key: "getBrokenLinks",
+	    value: function getBrokenLinks() {
+	      var usages = main_core.Runtime.clone(this.collectUsages());
 	      if (!this.template) {
-	        return false;
+	        return [];
 	      }
 	      var objectsData = {
 	        Document: babelHelpers.classPrivateFieldGet(this, _document$1).getFields(),
@@ -3935,6 +3939,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        Parameter: babelHelpers.classPrivateFieldGet(this, _template).getParameters(),
 	        Activity: babelHelpers.classPrivateFieldGet(this, _template).getSerializedRobots()
 	      };
+	      var brokenLinks = [];
 	      for (var object in usages) {
 	        if (usages[object].size > 0) {
 	          var source = new Set();
@@ -3957,12 +3962,27 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	                id = value[1];
 	              }
 	              if (!source.has(searchInSource)) {
-	                return true;
+	                if (object === 'Activity') {
+	                  brokenLinks.push('{=' + searchInSource + ':' + id + '}');
+	                } else {
+	                  var brokenLinkObject = object;
+	                  if (brokenLinkObject === 'GlobalVariable') {
+	                    brokenLinkObject = 'GlobalVar';
+	                  }
+	                  if (brokenLinkObject === 'GlobalConstant') {
+	                    brokenLinkObject = 'GlobalConst';
+	                  }
+	                  if (brokenLinkObject === 'Parameter') {
+	                    brokenLinkObject = 'Template';
+	                  }
+	                  brokenLinks.push('{=' + brokenLinkObject + ':' + searchInSource + '}');
+	                }
+	                continue;
 	              }
 	              if (object === 'Activity') {
 	                var robot = babelHelpers.classPrivateFieldGet(this, _template).getRobotById(searchInSource);
 	                if (!robot.getReturnProperty(id)) {
-	                  return true;
+	                  brokenLinks.push('{=' + searchInSource + ':' + id + '}');
 	                }
 	              }
 	            }
@@ -3973,7 +3993,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	          }
 	        }
 	      }
-	      return false;
+	      return brokenLinks;
 	    }
 	  }, {
 	    key: "node",
@@ -4057,6 +4077,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return UserOptions;
 	}();
 
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$d(obj, privateSet); privateSet.add(obj); }
@@ -4076,6 +4097,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _data$2 = /*#__PURE__*/new WeakMap();
 	var _getUserSelectorAdditionalFields = /*#__PURE__*/new WeakSet();
 	var _addRobotReturnFieldsToSelector = /*#__PURE__*/new WeakSet();
+	var _addConstantsToSelector = /*#__PURE__*/new WeakSet();
+	var _addVariablesToSelector = /*#__PURE__*/new WeakSet();
 	var _getRobotsWithReturnFields = /*#__PURE__*/new WeakSet();
 	var Template = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Template, _EventEmitter);
@@ -4085,6 +4108,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    babelHelpers.classCallCheck(this, Template);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Template).call(this));
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getRobotsWithReturnFields);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _addVariablesToSelector);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _addConstantsToSelector);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _addRobotReturnFieldsToSelector);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getUserSelectorAdditionalFields);
 	    _classPrivateFieldInitSpec$d(babelHelpers.assertThisInitialized(_this), _context, {
@@ -4134,9 +4159,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    _this.setEventNamespace('BX.Bizproc.Automation');
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _context, (_params$context = params.context) !== null && _params$context !== void 0 ? _params$context : bizproc_automation.getGlobalContext());
 	    _this.constants = params.constants;
-	    _this.globalConstants = main_core.Type.isArray(params.globalConstants) ? params.globalConstants : [];
 	    _this.variables = params.variables;
-	    _this.globalVariables = main_core.Type.isArray(params.globalVariables) ? params.globalVariables : [];
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _templateContainerNode, params.templateContainerNode);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _delayMinLimitM, params.delayMinLimitM);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userOptions, params.userOptions);
@@ -4656,8 +4679,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      });
 	      form.appendChild(this.renderDelaySettings(robot));
 	      form.appendChild(this.renderConditionSettings(robot));
-	      if (robot.hasBrokenLink()) {
-	        form.appendChild(this.renderBrokenLinkAlert());
+	      var robotBrokenLinks = robot.getBrokenLinks();
+	      if (robotBrokenLinks.length > 0) {
+	        main_core.Dom.append(this.renderBrokenLinkAlert(robotBrokenLinks), form);
 	      }
 	      var iconHelp = main_core.Dom.create('div', {
 	        attrs: {
@@ -4671,6 +4695,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      });
 	      form.appendChild(iconHelp);
 	      context['DOCUMENT_CATEGORY_ID'] = babelHelpers.classPrivateFieldGet(this, _context).document.getCategoryId();
+	      if (main_core.Type.isPlainObject(robot.data.DialogContext) && robot.data.DialogContext.hasOwnProperty('addMenuGroup')) {
+	        context['addMenuGroup'] = robot.data.DialogContext.addMenuGroup;
+	      }
 	      BX.ajax({
 	        method: 'POST',
 	        dataType: 'html',
@@ -5092,6 +5119,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    key: "onOpenMenu",
 	    value: function onOpenMenu(event, robot) {
 	      _classPrivateMethodGet$2(this, _addRobotReturnFieldsToSelector, _addRobotReturnFieldsToSelector2).call(this, event, robot);
+	      _classPrivateMethodGet$2(this, _addConstantsToSelector, _addConstantsToSelector2).call(this, event);
+	      _classPrivateMethodGet$2(this, _addVariablesToSelector, _addVariablesToSelector2).call(this, event);
 	      this.emit('Template:onSelectorMenuOpen', _objectSpread$2({
 	        template: this,
 	        robot: robot
@@ -5106,28 +5135,20 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "renderBrokenLinkAlert",
 	    value: function renderBrokenLinkAlert() {
-	      var alert = main_core.Dom.create('div', {
-	        attrs: {
-	          className: 'ui-alert ui-alert-warning ui-alert-icon-info ui-alert-xs'
-	        }
+	      var brokenLinks = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+	      var moreInfoNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-robot-broken-link-full-info\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), brokenLinks.map(function (value) {
+	        return main_core.Text.encode(value);
+	      }).join('<br>'));
+	      var showMoreLabel = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"bizproc-automation-robot-broken-link-show-more\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t"])), main_core.Loc.getMessage('JS_BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR_MORE_INFO'));
+	      main_core.Event.bindOnce(showMoreLabel, 'click', function () {
+	        main_core.Dom.style(moreInfoNode, 'height', moreInfoNode.scrollHeight + 'px');
+	        main_core.Dom.remove(showMoreLabel);
 	      });
-	      var message = main_core.Dom.create('span', {
-	        attrs: {
-	          className: 'ui-alert-message'
-	        },
-	        text: main_core.Loc.getMessage('BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR')
+	      var closeBtn = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-alert-close-btn\"></span>"])));
+	      var alert = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-alert ui-alert-warning ui-alert-icon-info\">\n\t\t\t\t<div class=\"ui-alert-message\">\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR'), showMoreLabel, moreInfoNode, closeBtn);
+	      main_core.Event.bindOnce(closeBtn, 'click', function () {
+	        main_core.Dom.remove(alert);
 	      });
-	      alert.appendChild(message);
-	      alert.appendChild(main_core.Dom.create('span', {
-	        attrs: {
-	          className: 'ui-alert-close-btn'
-	        },
-	        events: {
-	          click: function click() {
-	            alert.style.display = 'none';
-	          }
-	        }
-	      }));
 	      return alert;
 	    }
 	  }, {
@@ -5222,7 +5243,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      var _this9 = this;
 	      var constants = [];
 	      Object.keys(babelHelpers.classPrivateFieldGet(this, _data$2).CONSTANTS).forEach(function (id) {
-	        var constant = BX.clone(babelHelpers.classPrivateFieldGet(_this9, _data$2).CONSTANTS[id]);
+	        var constant = main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(_this9, _data$2).CONSTANTS[id]);
 	        constant.Id = id;
 	        constant.ObjectId = 'Constant';
 	        constant.SystemExpression = '{=Constant:' + id + '}';
@@ -5376,7 +5397,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      var _this11 = this;
 	      var variables = [];
 	      Object.keys(babelHelpers.classPrivateFieldGet(this, _data$2).VARIABLES).forEach(function (id) {
-	        var variable = BX.clone(babelHelpers.classPrivateFieldGet(_this11, _data$2).VARIABLES[id]);
+	        var variable = main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(_this11, _data$2).VARIABLES[id]);
 	        variable.Id = id;
 	        variable.ObjectId = 'Variable';
 	        variable.SystemExpression = '{=Variable:' + id + '}';
@@ -5445,20 +5466,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      });
 	    }
 	  }, {
-	    key: "setGlobalVariables",
-	    value: function setGlobalVariables() {
-	      var globalVariables = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-	      this.globalVariables = globalVariables;
-	      return this;
-	    }
-	  }, {
-	    key: "setGlobalConstants",
-	    value: function setGlobalConstants() {
-	      var globalConstants = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
-	      this.globalConstants = globalConstants;
-	      return this;
-	    }
-	  }, {
 	    key: "robots",
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _robots);
@@ -5467,6 +5474,16 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    key: "userOptions",
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _userOptions);
+	    }
+	  }, {
+	    key: "globalConstants",
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _context).automationGlobals ? babelHelpers.classPrivateFieldGet(this, _context).automationGlobals.globalConstants : [];
+	    }
+	  }, {
+	    key: "globalVariables",
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _context).automationGlobals ? babelHelpers.classPrivateFieldGet(this, _context).automationGlobals.globalVariables : [];
 	    }
 	  }], [{
 	    key: "copyRobotTo",
@@ -5534,6 +5551,66 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      id: '__RESULT',
 	      title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ROBOT_LIST'),
 	      children: robotMenuItems
+	    });
+	  }
+	}
+	function _addConstantsToSelector2(event) {
+	  var selector = event.getData().selector;
+	  var isMixedCondition = event.getData().isMixedCondition;
+	  if (main_core.Type.isBoolean(isMixedCondition) && !isMixedCondition) {
+	    return;
+	  }
+
+	  // TODO - test !this.showTemplatePropertiesMenuOnSelecting
+	  var constants = this.getConstants().map(function (constant) {
+	    return {
+	      id: constant.SystemExpression,
+	      title: constant.Name,
+	      supertitle: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_TEMPLATE_CONSTANTS_LIST'),
+	      customData: {
+	        field: constant
+	      }
+	    };
+	  });
+	  this.globalConstants.forEach(function (constant) {
+	    constants.push({
+	      id: constant.SystemExpression,
+	      title: constant['Name'],
+	      supertitle: constant.SuperTitle,
+	      customData: {
+	        field: constant
+	      }
+	    });
+	  });
+	  if (main_core.Type.isArrayFilled(constants)) {
+	    selector.addGroup('__CONSTANTS', {
+	      id: '__CONSTANTS',
+	      title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
+	      children: constants
+	    });
+	  }
+	}
+	function _addVariablesToSelector2(event) {
+	  var selector = event.getData().selector;
+	  var isMixedCondition = event.getData().isMixedCondition;
+	  if (main_core.Type.isBoolean(isMixedCondition) && !isMixedCondition) {
+	    return;
+	  }
+	  var gVariables = this.globalVariables.map(function (variable) {
+	    return {
+	      id: variable.SystemExpression,
+	      title: variable.Name,
+	      supertitle: variable.SuperTitle,
+	      customData: {
+	        field: variable
+	      }
+	    };
+	  });
+	  if (main_core.Type.isArrayFilled(gVariables)) {
+	    selector.addGroup('__GLOB_VARIABLES', {
+	      id: '__GLOB_VARIABLES',
+	      title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
+	      children: gVariables
 	    });
 	  }
 	}
@@ -5820,7 +5897,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }
 	});
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5, _templateObject6;
 	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$g(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$g(obj, privateMap, value) { _checkPrivateRedeclaration$g(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$g(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -5988,13 +6065,13 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      if (babelHelpers.classPrivateFieldGet(this, _condition$2).field !== '') {
 	        var field = this.getField(babelHelpers.classPrivateFieldGet(this, _condition$2).object, babelHelpers.classPrivateFieldGet(this, _condition$2).field) || '?';
 	        var valueLabel = _classPrivateMethodGet$3(this, _getValueLabel, _getValueLabel2).call(this, field);
-	        main_core.Dom.append(main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<span class=\"bizproc-automation-popup-settings-link\">", "</span>"])), main_core.Text.encode(field.Name)), this.labelNode);
-	        main_core.Dom.append(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-link\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t"])), main_core.Text.encode(this.getOperatorLabel(babelHelpers.classPrivateFieldGet(this, _condition$2).operator))), this.labelNode);
+	        main_core.Dom.append(main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<span class=\"bizproc-automation-popup-settings-link\">", "</span>"])), main_core.Text.encode(field.Name)), this.labelNode);
+	        main_core.Dom.append(main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-link\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t"])), main_core.Text.encode(this.getOperatorLabel(babelHelpers.classPrivateFieldGet(this, _condition$2).operator))), this.labelNode);
 	        if (valueLabel) {
-	          main_core.Dom.append(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<span class=\"bizproc-automation-popup-settings-link\">", "</span>"])), main_core.Text.encode(valueLabel)), this.labelNode);
+	          main_core.Dom.append(main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["<span class=\"bizproc-automation-popup-settings-link\">", "</span>"])), main_core.Text.encode(valueLabel)), this.labelNode);
 	        }
 	      } else {
-	        main_core.Dom.append(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-link\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t"])), main_core.Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_CONDITION_EMPTY')), this.labelNode);
+	        main_core.Dom.append(main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"bizproc-automation-popup-settings-link\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t"])), main_core.Text.encode(this.getOperatorLabel(bizproc_condition.Operator.EMPTY))), this.labelNode);
 	      }
 	    }
 	  }, {
@@ -6573,6 +6650,19 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    babelHelpers.classCallCheck(this, Manager);
 	  }
 	  babelHelpers.createClass(Manager, null, [{
+	    key: "getSelectorByTarget",
+	    value: function getSelectorByTarget(targetInput) {
+	      var _Designer$getInstance;
+	      // TODO - save created selectors with Manager
+	      var template = (_Designer$getInstance = bizproc_automation.Designer.getInstance().getRobotSettingsDialog()) === null || _Designer$getInstance === void 0 ? void 0 : _Designer$getInstance.template;
+	      if (template && main_core.Type.isArray(template.robotSettingsControls)) {
+	        return template.robotSettingsControls.find(function (selector) {
+	          return selector.targetInput === targetInput;
+	        });
+	      }
+	      return undefined;
+	    }
+	  }, {
 	    key: "createSelectorByRole",
 	    value: function createSelectorByRole(role, selectorProps) {
 	      if (role === this.SELECTOR_ROLE_USER) {
@@ -6726,7 +6816,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  babelHelpers.classPrivateFieldGet(this, _selector).show();
 	}
 
-	var _templateObject$1, _templateObject2$1;
+	var _templateObject$2, _templateObject2$2;
 	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$j(obj, privateSet); privateSet.add(obj); }
@@ -6796,10 +6886,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    value: function renderWith(targetInput) {
 	      this.targetInput = main_core.Runtime.clone(targetInput);
 	      this.targetInput.setAttribute('autocomplete', 'off');
-	      this.menuButton = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span \n\t\t\t\tonclick=\"", "\"\n\t\t\t\tclass=\"bizproc-automation-popup-select-dotted\"\n\t\t\t></span>\n\t\t"])), this.openMenu.bind(this));
+	      this.menuButton = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span \n\t\t\t\tonclick=\"", "\"\n\t\t\t\tclass=\"bizproc-automation-popup-select-dotted\"\n\t\t\t></span>\n\t\t"])), this.openMenu.bind(this));
 	      this.parseTargetProperties();
 	      this.replaceOnWrite |= this.targetInput.getAttribute('data-select-mode') === 'replace';
-	      return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-popup-select\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.targetInput, this.menuButton);
+	      return main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"bizproc-automation-popup-select\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.targetInput, this.menuButton);
 	    }
 	  }, {
 	    key: "renderTo",
@@ -7043,15 +7133,19 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	          this.targetInput.value = field.Expression;
 	          this.targetInput.selectionEnd = this.targetInput.value.length;
 	        } else {
-	          var beforePart = this.targetInput.value.substr(0, this.targetInput.selectionEnd);
+	          var beforePart = '';
 	          var middlePart = field.Expression;
-	          var afterPart = this.targetInput.value.substr(this.targetInput.selectionEnd);
+	          var afterPart = '';
+	          if (main_core.Type.isStringFilled(this.targetInput.value)) {
+	            beforePart = this.targetInput.value.substr(0, this.targetInput.selectionEnd);
+	            afterPart = this.targetInput.value.substr(this.targetInput.selectionEnd);
+	          }
 	          this.targetInput.value = beforePart + middlePart + afterPart;
 	          this.targetInput.selectionEnd = beforePart.length + middlePart.length;
 	        }
 	      }
 	      BX.fireEvent(this.targetInput, 'change');
-	      this.emit('change', {
+	      this.emit('Field:Selected', {
 	        field: field
 	      });
 	    }
@@ -7266,7 +7360,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return babelHelpers.classPrivateFieldGet(this, _condition$3) && babelHelpers.classPrivateFieldGet(this, _condition$3).parentGroup && babelHelpers.classPrivateFieldGet(this, _condition$3).parentGroup.type === bizproc_automation.ConditionGroup.CONDITION_TYPE.Mixed;
 	}
 
-	var _templateObject$2;
+	var _templateObject$3;
 	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$l(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$l(obj, privateMap, value) { _checkPrivateRedeclaration$l(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$l(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -7313,7 +7407,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    value: function renderTo(targetInput) {
 	      this.targetInput = targetInput;
 	      babelHelpers.classPrivateFieldSet(this, _editorNode, targetInput.querySelector('.bx-html-editor'));
-	      this.menuButton = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span\n\t\t\t\tonclick=\"", "\"\n\t\t\t\tclass=\"bizproc-automation-popup-select-dotted\"\n\t\t\t></span>\n\t\t"])), this.openMenu.bind(this));
+	      this.menuButton = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span\n\t\t\t\tonclick=\"", "\"\n\t\t\t\tclass=\"bizproc-automation-popup-select-dotted\"\n\t\t\t></span>\n\t\t"])), this.openMenu.bind(this));
 	      this.parseTargetProperties();
 	      this.bindTargetEvents();
 	      targetInput.firstElementChild.appendChild(this.menuButton);
@@ -7503,10 +7597,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return UserSelector;
 	}(InlineSelector);
 
-	var _templateObject$3, _templateObject2$2, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7, _templateObject8;
+	var _templateObject$4, _templateObject2$3, _templateObject3$2, _templateObject4$2, _templateObject5$1, _templateObject6$1, _templateObject7, _templateObject8;
 	function _createForOfIteratorHelper$5(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$5(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$5(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$5(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$5(o, minLen); }
-	function _arrayLikeToArray$5(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$5(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$n(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$n(obj, privateMap, value) { _checkPrivateRedeclaration$n(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$n(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -7708,7 +7802,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      try {
 	        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
 	          var id = _step2.value;
-	          this.targetInput.appendChild(main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input\n\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\tname=\"", "\"\n\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t/>\n\t\t\t"])), babelHelpers.classPrivateFieldGet(this, _valueInputName) + (babelHelpers.classPrivateFieldGet(this, _multiple) ? '[]' : ''), id));
+	          this.targetInput.appendChild(main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input\n\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\tname=\"", "\"\n\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t/>\n\t\t\t"])), babelHelpers.classPrivateFieldGet(this, _valueInputName) + (babelHelpers.classPrivateFieldGet(this, _multiple) ? '[]' : ''), id));
 	        }
 	      } catch (err) {
 	        _iterator2.e(err);
@@ -7724,10 +7818,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  var fileRadio = null;
 	  var fileTypeOptions = [];
 	  if (this.context.get('fileFields').length > 0) {
-	    fileRadio = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input\n\t\t\t\t\tid=\"type-1", "\"\n\t\t\t\t\tclass=\"bizproc-automation-popup-select-input\"\n\t\t\t\t\ttype=\"radio\"\n\t\t\t\t\tname=\"", "\"\n\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t", "\n\t\t\t\t/>\n\t\t\t"])), idSalt, babelHelpers.classPrivateFieldGet(this, _typeInputName), FileSelector.TYPE.File, babelHelpers.classPrivateFieldGet(this, _type$3) === FileSelector.TYPE.File ? 'checked' : '');
+	    fileRadio = main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input\n\t\t\t\t\tid=\"type-1", "\"\n\t\t\t\t\tclass=\"bizproc-automation-popup-select-input\"\n\t\t\t\t\ttype=\"radio\"\n\t\t\t\t\tname=\"", "\"\n\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t", "\n\t\t\t\t/>\n\t\t\t"])), idSalt, babelHelpers.classPrivateFieldGet(this, _typeInputName), FileSelector.TYPE.File, babelHelpers.classPrivateFieldGet(this, _type$3) === FileSelector.TYPE.File ? 'checked' : '');
 	  }
-	  var diskFileRadio = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input\n\t\t\t\tid=\"type-2", "\"\n\t\t\t\tclass=\"bizproc-automation-popup-select-input\"\n\t\t\t\ttype=\"radio\"\n\t\t\t\tname=\"", "\"\n\t\t\t\tvalue=\"", "\"\n\t\t\t\t", "\n\t\t\t/>\n\t\t"])), idSalt, babelHelpers.classPrivateFieldGet(this, _typeInputName), FileSelector.TYPE.Disk, babelHelpers.classPrivateFieldGet(this, _type$3) === FileSelector.TYPE.Disk ? 'checked' : '');
-	  fileTypeOptions.push(main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"bizproc-automation-popup-settings-title\">", ":</span>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _label)));
+	  var diskFileRadio = main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input\n\t\t\t\tid=\"type-2", "\"\n\t\t\t\tclass=\"bizproc-automation-popup-select-input\"\n\t\t\t\ttype=\"radio\"\n\t\t\t\tname=\"", "\"\n\t\t\t\tvalue=\"", "\"\n\t\t\t\t", "\n\t\t\t/>\n\t\t"])), idSalt, babelHelpers.classPrivateFieldGet(this, _typeInputName), FileSelector.TYPE.Disk, babelHelpers.classPrivateFieldGet(this, _type$3) === FileSelector.TYPE.Disk ? 'checked' : '');
+	  fileTypeOptions.push(main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"bizproc-automation-popup-settings-title\">", ":</span>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _label)));
 	  if (fileRadio) {
 	    fileTypeOptions.push(fileRadio, main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<label\n\t\t\t\t\tclass=\"bizproc-automation-popup-settings-link\"\n\t\t\t\t\tfor=\"type-1", "\"\n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t>\n\t\t\t\t", "\n\t\t\t\t</label>\n\t\t\t"])), idSalt, _classPrivateMethodGet$9(this, _onTypeChange, _onTypeChange2).bind(this, FileSelector.TYPE.File), babelHelpers.classPrivateFieldGet(this, _labelFile)));
 	  }
@@ -7979,7 +8073,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return BX.date.format(timeFormat, datetime);
 	}
 
-	var _templateObject$4;
+	var _templateObject$5;
 	function _classPrivateMethodInitSpec$b(obj, privateSet) { _checkPrivateRedeclaration$p(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$p(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$b(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
@@ -8444,7 +8538,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        });
 	        labelIn.appendChild(helpNode);
 	      }
-	      var inTime = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t <span>\n\t\t\t \tTime: <input type=\"time\" value=\"", "\" name=\"basis_in_time\"/>\n\t\t\t</span>\n\t\t"])), delay.inTimeString);
+	      var inTime = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t <span>\n\t\t\t \tTime: <input type=\"time\" value=\"", "\" name=\"basis_in_time\"/>\n\t\t\t</span>\n\t\t"])), delay.inTimeString);
 
 	      // Dom.append(inTime, labelIn); // TODO interface
 
@@ -8873,17 +8967,187 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    get: function get() {
 	      return this.get('parametersEditorUrl');
 	    }
+	  }, {
+	    key: "automationGlobals",
+	    get: function get() {
+	      return this.get('automationGlobals');
+	    }
 	  }]);
 	  return Context;
 	}(BaseContext);
 
+	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$r(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$q(obj, privateMap, value) { _checkPrivateRedeclaration$r(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$r(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _globalVariables = /*#__PURE__*/new WeakMap();
+	var _globalConstants = /*#__PURE__*/new WeakMap();
+	var _isCorrectMode = /*#__PURE__*/new WeakSet();
+	var _getAutomationGlobalsProperty = /*#__PURE__*/new WeakSet();
+	var _getExpression = /*#__PURE__*/new WeakSet();
+	var _getSystemExpression = /*#__PURE__*/new WeakSet();
+	var _getObjectId = /*#__PURE__*/new WeakSet();
+	var _getGlobals = /*#__PURE__*/new WeakSet();
+	var _setGlobals = /*#__PURE__*/new WeakSet();
+	var AutomationGlobals = /*#__PURE__*/function () {
+	  function AutomationGlobals(parameters) {
+	    var _this = this;
+	    babelHelpers.classCallCheck(this, AutomationGlobals);
+	    _classPrivateMethodInitSpec$c(this, _setGlobals);
+	    _classPrivateMethodInitSpec$c(this, _getGlobals);
+	    _classPrivateMethodInitSpec$c(this, _getObjectId);
+	    _classPrivateMethodInitSpec$c(this, _getSystemExpression);
+	    _classPrivateMethodInitSpec$c(this, _getExpression);
+	    _classPrivateMethodInitSpec$c(this, _getAutomationGlobalsProperty);
+	    _classPrivateMethodInitSpec$c(this, _isCorrectMode);
+	    _classPrivateFieldInitSpec$q(this, _globalVariables, {
+	      writable: true,
+	      value: []
+	    });
+	    _classPrivateFieldInitSpec$q(this, _globalConstants, {
+	      writable: true,
+	      value: []
+	    });
+	    if (main_core.Type.isArrayFilled(parameters.variables)) {
+	      var variables = [];
+	      parameters.variables.forEach(function (property) {
+	        variables.push(_classPrivateMethodGet$c(_this, _getAutomationGlobalsProperty, _getAutomationGlobalsProperty2).call(_this, property.Id, property, bizproc_globals.Globals.Manager.Instance.mode.variable));
+	      });
+	      babelHelpers.classPrivateFieldSet(this, _globalVariables, variables);
+	    }
+	    if (main_core.Type.isArrayFilled(parameters.constants)) {
+	      var constants = [];
+	      parameters.constants.forEach(function (property) {
+	        constants.push(_classPrivateMethodGet$c(_this, _getAutomationGlobalsProperty, _getAutomationGlobalsProperty2).call(_this, property.Id, property, bizproc_globals.Globals.Manager.Instance.mode.constant));
+	      });
+	      babelHelpers.classPrivateFieldSet(this, _globalConstants, constants);
+	    }
+	  }
+	  babelHelpers.createClass(AutomationGlobals, [{
+	    key: "updateGlobals",
+	    value: function updateGlobals(mode, updatedGlobals) {
+	      var _this2 = this;
+	      if (!_classPrivateMethodGet$c(this, _isCorrectMode, _isCorrectMode2).call(this, mode) || Object.keys(updatedGlobals).length < 1) {
+	        return;
+	      }
+	      var globals = _classPrivateMethodGet$c(this, _getGlobals, _getGlobals2).call(this, mode);
+	      var newGlobals = [];
+	      var _loop = function _loop(id) {
+	        var property = updatedGlobals[id];
+	        var index = globals.findIndex(function (prop) {
+	          return prop.Id === id;
+	        });
+	        if (index > -1) {
+	          if (globals[index].Name !== property.Name) {
+	            globals[index].Name = property.Name;
+	            globals[index].Expression = _classPrivateMethodGet$c(_this2, _getExpression, _getExpression2).call(_this2, property.Name, property.VisibilityName);
+	          }
+	          return "continue";
+	        }
+	        newGlobals.push(_classPrivateMethodGet$c(_this2, _getAutomationGlobalsProperty, _getAutomationGlobalsProperty2).call(_this2, id, property, mode));
+	      };
+	      for (var id in updatedGlobals) {
+	        var _ret = _loop(id);
+	        if (_ret === "continue") continue;
+	      }
+	      if (main_core.Type.isArrayFilled(newGlobals)) {
+	        globals = globals.concat(newGlobals);
+	      }
+	      _classPrivateMethodGet$c(this, _setGlobals, _setGlobals2).call(this, mode, globals);
+	    }
+	  }, {
+	    key: "deleteGlobals",
+	    value: function deleteGlobals(mode, deletedGlobals) {
+	      if (!_classPrivateMethodGet$c(this, _isCorrectMode, _isCorrectMode2).call(this, mode) || !main_core.Type.isArrayFilled(deletedGlobals)) {
+	        return;
+	      }
+	      var globals = _classPrivateMethodGet$c(this, _getGlobals, _getGlobals2).call(this, mode);
+	      deletedGlobals.forEach(function (id) {
+	        var index = globals.findIndex(function (prop) {
+	          return prop.Id === id;
+	        });
+	        if (index > -1) {
+	          globals.splice(index, 1);
+	        }
+	      });
+	      _classPrivateMethodGet$c(this, _setGlobals, _setGlobals2).call(this, mode, globals);
+	    }
+	  }, {
+	    key: "globalVariables",
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _globalVariables);
+	    },
+	    set: function set(variables) {
+	      if (!main_core.Type.isArray(variables)) {
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _globalVariables, variables);
+	    }
+	  }, {
+	    key: "globalConstants",
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _globalConstants);
+	    },
+	    set: function set(constants) {
+	      if (!main_core.Type.isArray(constants)) {
+	        return;
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _globalConstants, constants);
+	    }
+	  }]);
+	  return AutomationGlobals;
+	}();
+	function _isCorrectMode2(mode) {
+	  return main_core.Type.isStringFilled(mode) && Object.values(bizproc_globals.Globals.Manager.Instance.mode).includes(mode);
+	}
+	function _getAutomationGlobalsProperty2(id, property, mode) {
+	  return {
+	    ObjectId: _classPrivateMethodGet$c(this, _getObjectId, _getObjectId2).call(this, mode),
+	    SuperTitle: String(property.VisibilityName),
+	    Id: String(id),
+	    Name: String(property.Name),
+	    Type: String(property.Type),
+	    BaseType: String(property.BaseType || property.Type),
+	    Expression: main_core.Type.isStringFilled(property.Expression) ? property.Expression : _classPrivateMethodGet$c(this, _getExpression, _getExpression2).call(this, property.Name, property.VisibilityName),
+	    SystemExpression: main_core.Type.isStringFilled(property.SystemExpression) ? property.SystemExpression : _classPrivateMethodGet$c(this, _getSystemExpression, _getSystemExpression2).call(this, mode, id),
+	    Options: property.Options,
+	    Multiple: main_core.Type.isBoolean(property.Multiple) ? property.Multiple : property.Multiple === 'Y',
+	    Visibility: String(property.Visibility)
+	  };
+	}
+	function _getExpression2(name, visibilityName) {
+	  return '{{' + String(visibilityName) + ': ' + String(name) + '}}';
+	}
+	function _getSystemExpression2(mode, id) {
+	  return '{=' + _classPrivateMethodGet$c(this, _getObjectId, _getObjectId2).call(this, mode) + ':' + String(id) + '}';
+	}
+	function _getObjectId2(mode) {
+	  return mode === bizproc_globals.Globals.Manager.Instance.mode.variable ? 'GlobalVar' : 'GlobalConst';
+	}
+	function _getGlobals2(mode) {
+	  if (mode === bizproc_globals.Globals.Manager.Instance.mode.variable) {
+	    return this.globalVariables;
+	  }
+	  if (mode === bizproc_globals.Globals.Manager.Instance.mode.constant) {
+	    return this.globalConstants;
+	  }
+	}
+	function _setGlobals2(mode, globals) {
+	  if (mode === bizproc_globals.Globals.Manager.Instance.mode.variable) {
+	    babelHelpers.classPrivateFieldSet(this, _globalVariables, globals);
+	  }
+	  if (mode === bizproc_globals.Globals.Manager.Instance.mode.constant) {
+	    babelHelpers.classPrivateFieldSet(this, _globalConstants, globals);
+	  }
+	}
+
+	function _classPrivateFieldInitSpec$r(obj, privateMap, value) { _checkPrivateRedeclaration$s(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$s(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _guide = /*#__PURE__*/new WeakMap();
 	var BeginningGuide = /*#__PURE__*/function () {
 	  function BeginningGuide(options) {
 	    babelHelpers.classCallCheck(this, BeginningGuide);
-	    _classPrivateFieldInitSpec$q(this, _guide, {
+	    _classPrivateFieldInitSpec$r(this, _guide, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -8915,13 +9179,13 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 	function _createForOfIteratorHelper$6(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$6(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$6(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$6(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$6(o, minLen); }
-	function _arrayLikeToArray$6(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$s(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$r(obj, privateMap, value) { _checkPrivateRedeclaration$s(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$s(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _arrayLikeToArray$6(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+	function _classPrivateMethodInitSpec$d(obj, privateSet) { _checkPrivateRedeclaration$t(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$s(obj, privateMap, value) { _checkPrivateRedeclaration$t(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$t(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classStaticPrivateMethodGet$2(receiver, classConstructor, method) { _classCheckPrivateStaticAccess$5(receiver, classConstructor); return method; }
 	function _classCheckPrivateStaticAccess$5(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
-	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$d(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _isShownRobotGuide = /*#__PURE__*/new WeakMap();
 	var _isShownTriggerGuide = /*#__PURE__*/new WeakMap();
 	var _isShownSupportingRobotGuide = /*#__PURE__*/new WeakMap();
@@ -8937,36 +9201,36 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var AutomationGuide = /*#__PURE__*/function () {
 	  function AutomationGuide(options) {
 	    babelHelpers.classCallCheck(this, AutomationGuide);
-	    _classPrivateMethodInitSpec$c(this, _getSupportingRobotGuide);
-	    _classPrivateMethodInitSpec$c(this, _getTriggerGuide);
-	    _classPrivateMethodInitSpec$c(this, _getRobotGuide);
-	    _classPrivateMethodInitSpec$c(this, _getGuide);
-	    _classPrivateMethodInitSpec$c(this, _resolveShowGuides);
-	    _classPrivateFieldInitSpec$r(this, _isShownRobotGuide, {
+	    _classPrivateMethodInitSpec$d(this, _getSupportingRobotGuide);
+	    _classPrivateMethodInitSpec$d(this, _getTriggerGuide);
+	    _classPrivateMethodInitSpec$d(this, _getRobotGuide);
+	    _classPrivateMethodInitSpec$d(this, _getGuide);
+	    _classPrivateMethodInitSpec$d(this, _resolveShowGuides);
+	    _classPrivateFieldInitSpec$s(this, _isShownRobotGuide, {
 	      writable: true,
 	      value: true
 	    });
-	    _classPrivateFieldInitSpec$r(this, _isShownTriggerGuide, {
+	    _classPrivateFieldInitSpec$s(this, _isShownTriggerGuide, {
 	      writable: true,
 	      value: true
 	    });
-	    _classPrivateFieldInitSpec$r(this, _isShownSupportingRobotGuide, {
+	    _classPrivateFieldInitSpec$s(this, _isShownSupportingRobotGuide, {
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec$r(this, _showRobotGuide, {
+	    _classPrivateFieldInitSpec$s(this, _showRobotGuide, {
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec$r(this, _showTriggerGuide, {
+	    _classPrivateFieldInitSpec$s(this, _showTriggerGuide, {
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec$r(this, _showSupportingRobotGuide, {
+	    _classPrivateFieldInitSpec$s(this, _showSupportingRobotGuide, {
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec$r(this, _guideTargets, {
+	    _classPrivateFieldInitSpec$s(this, _guideTargets, {
 	      writable: true,
 	      value: {}
 	    });
@@ -9004,8 +9268,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }, {
 	    key: "start",
 	    value: function start() {
-	      _classPrivateMethodGet$c(this, _resolveShowGuides, _resolveShowGuides2).call(this);
-	      var guide = _classPrivateMethodGet$c(this, _getGuide, _getGuide2).call(this);
+	      _classPrivateMethodGet$d(this, _resolveShowGuides, _resolveShowGuides2).call(this);
+	      var guide = _classPrivateMethodGet$d(this, _getGuide, _getGuide2).call(this);
 	      if (guide) {
 	        var bindElement = guide.getCurrentStep().target;
 	        if (main_core.Type.isDomNode(bindElement) && document.body.contains(bindElement)) {
@@ -9048,21 +9312,21 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  var guide = null;
 	  if (babelHelpers.classPrivateFieldGet(this, _showSupportingRobotGuide)) {
 	    if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldGet(this, _guideTargets)['supportingRobot'])) {
-	      guide = _classPrivateMethodGet$c(this, _getSupportingRobotGuide, _getSupportingRobotGuide2).call(this);
+	      guide = _classPrivateMethodGet$d(this, _getSupportingRobotGuide, _getSupportingRobotGuide2).call(this);
 	      guide.getPopup().setAutoHide(true);
 	    }
 	    return guide;
 	  }
 	  if (babelHelpers.classPrivateFieldGet(this, _showTriggerGuide)) {
 	    if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldGet(this, _guideTargets)['trigger'])) {
-	      guide = _classPrivateMethodGet$c(this, _getTriggerGuide, _getTriggerGuide2).call(this);
+	      guide = _classPrivateMethodGet$d(this, _getTriggerGuide, _getTriggerGuide2).call(this);
 	      guide.getPopup().setAutoHide(true);
 	    }
 	    return guide;
 	  }
 	  if (babelHelpers.classPrivateFieldGet(this, _showRobotGuide)) {
 	    if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldGet(this, _guideTargets)['robot'])) {
-	      guide = _classPrivateMethodGet$c(this, _getRobotGuide, _getRobotGuide2).call(this);
+	      guide = _classPrivateMethodGet$d(this, _getRobotGuide, _getRobotGuide2).call(this);
 	      guide.getPopup().setAutoHide(true);
 	    }
 	    return guide;
@@ -9075,7 +9339,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return new ui_tour.Guide({
 	    steps: [{
 	      target: babelHelpers.classPrivateFieldGet(this, _guideTargets)['robot'],
-	      title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_ROBOT_TITLE'),
+	      title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_ROBOT_TITLE_1'),
 	      text: _classStaticPrivateMethodGet$2(_this$constructor = this.constructor, AutomationGuide, _getText).call(_this$constructor, [main_core.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_ROBOT_SUBTITLE_1'), main_core.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_ROBOT_SUBTITLE_2')]),
 	      article: '16547618',
 	      condition: {
@@ -9099,7 +9363,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return new ui_tour.Guide({
 	    steps: [{
 	      target: babelHelpers.classPrivateFieldGet(this, _guideTargets)['trigger'],
-	      title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_TRIGGER_TITLE'),
+	      title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_TRIGGER_TITLE_1'),
 	      text: _classStaticPrivateMethodGet$2(_this$constructor2 = this.constructor, AutomationGuide, _getText).call(_this$constructor2, [main_core.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_TRIGGER_SUBTITLE_1'), main_core.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_TRIGGER_SUBTITLE_2')]),
 	      article: '16547632',
 	      condition: {
@@ -9211,6 +9475,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	exports.DelayIntervalSelector = DelayIntervalSelector$$1;
 	exports.HelpHint = HelpHint;
 	exports.SelectorContext = SelectorContext;
+	exports.AutomationGlobals = AutomationGlobals;
 	exports.Helper = Helper;
 	exports.BeginningGuide = BeginningGuide;
 	exports.AutomationGuide = AutomationGuide;
@@ -9222,5 +9487,5 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	exports.Tracker = Tracker;
 	exports.WorkflowStatus = WorkflowStatus;
 
-}((this.BX.Bizproc.Automation = this.BX.Bizproc.Automation || {}),BX.UI,BX.Bizproc,BX.UI.EntitySelector,BX.Main,BX.Main,BX.Event,BX.Bizproc.Automation,BX,BX,BX,BX.UI.Tour));
+}((this.BX.Bizproc.Automation = this.BX.Bizproc.Automation || {}),BX.UI,BX.Bizproc,BX.UI.EntitySelector,BX.Main,BX.Main,BX.Event,BX.Bizproc.Automation,BX.Bizproc,BX,BX,BX,BX.UI.Tour));
 //# sourceMappingURL=automation.bundle.js.map

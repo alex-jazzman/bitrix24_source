@@ -4,3 +4,5 @@ $MESS["ERROR_MESSAGE_NOTIFY_BUTTONS"] = "Вказаний некоректний
 $MESS["ERROR_MESSAGE_NOTIFY_EVENT"] = "Не вказане мнемонічне ім'я сповіщення";
 $MESS["ERROR_MESSAGE_NOTIFY_MODULE"] = "Не вказаний модуль відправник повідомлення";
 $MESS["ERROR_MESSAGE_NOTIFY_TYPE"] = "Вказаний некоректний тип сповіщення";
+$MESS["ERROR_MESSAGE_SENDING_FAILED"] = "Помилка";
+$MESS["ERROR_MESSAGE_SENDING_FAILED_DESC"] = "Помилка надсилання повідомлення.";

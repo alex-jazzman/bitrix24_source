@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Catalog = this.BX.Catalog || {};
-(function (exports,ui_entityEditor,ui_notification,ui_feedback_form,ui_hint,ui_fonts_opensans,ui_designTokens,translit,main_popup,main_core,main_core_events,catalog_storeUse) {
+(function (exports,ui_entityEditor,ui_feedback_form,ui_hint,ui_fonts_opensans,ui_designTokens,translit,ui_notification,main_popup,main_core,main_core_events,catalog_storeUse) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
@@ -830,6 +830,181 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  return IblockSectionController;
 	}(BX.UI.EntityEditorController);
 
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _onFileIsAddedHandler = /*#__PURE__*/new WeakSet();
+
+	var _onFileIsDeletedHandler = /*#__PURE__*/new WeakSet();
+
+	var _showFileNotification = /*#__PURE__*/new WeakSet();
+
+	var _getSupportedAjaxFields = /*#__PURE__*/new WeakSet();
+
+	var GridStore = /*#__PURE__*/function () {
+	  function GridStore(gridId) {
+	    babelHelpers.classCallCheck(this, GridStore);
+
+	    _classPrivateMethodInitSpec$1(this, _getSupportedAjaxFields);
+
+	    _classPrivateMethodInitSpec$1(this, _showFileNotification);
+
+	    _classPrivateMethodInitSpec$1(this, _onFileIsDeletedHandler);
+
+	    _classPrivateMethodInitSpec$1(this, _onFileIsAddedHandler);
+
+	    babelHelpers.defineProperty(this, "editedRowsIndexes", []);
+	    this.gridId = gridId;
+	    main_core_events.EventEmitter.subscribe('onItemIsAdded', _classPrivateMethodGet$1(this, _onFileIsAddedHandler, _onFileIsAddedHandler2).bind(this));
+	    main_core_events.EventEmitter.subscribe('onFileIsDeleted', _classPrivateMethodGet$1(this, _onFileIsDeletedHandler, _onFileIsDeletedHandler2).bind(this));
+	  }
+
+	  babelHelpers.createClass(GridStore, [{
+	    key: "getGrid",
+	    value: function getGrid() {
+	      return BX.Main.gridManager.getInstanceById(this.gridId);
+	    }
+	  }, {
+	    key: "saveEditedRows",
+	    value: function saveEditedRows() {
+	      var _this = this;
+
+	      this.editedRowsIndexes = [];
+	      this.getGrid().getRows().getBodyChild().forEach(function (row) {
+	        if (row.isEdit()) {
+	          _this.editedRowsIndexes.push(row.getNode().rowIndex);
+	        }
+	      });
+	    }
+	  }, {
+	    key: "loadEditedRows",
+	    value: function loadEditedRows() {
+	      var rows = this.getGrid().getRows();
+	      this.editedRowsIndexes.forEach(function (index) {
+	        var row = rows.getByIndex(index);
+
+	        if (row) {
+	          //row.edit(); not used, because for child listeners need fire event
+	          BX.fireEvent(row.getNode(), 'click');
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getEditedRowsFields",
+	    value: function getEditedRowsFields() {
+	      var result = {};
+
+	      var fillCellValue = function fillCellValue(result, name, editData, value) {
+	        if (main_core.Type.isPlainObject(editData) && editData.TYPE === 'MONEY') {
+	          if (main_core.Type.isArray(value)) {
+	            value.forEach(function (item) {
+	              if (item.RAW_NAME === undefined && item.NAME === name) {
+	                result[name] = item.VALUE;
+	              }
+	            });
+	          } else {
+	            console.error('Error value type for `MONEY` column', value);
+	          }
+	        } else if (main_core.Type.isPlainObject(value)) {
+	          var _value$VALUE;
+
+	          result[name] = (_value$VALUE = value.VALUE) !== null && _value$VALUE !== void 0 ? _value$VALUE : '';
+	        } else if (main_core.Type.isArray(value)) {
+	          result[name] = [];
+	          value.forEach(function (item) {
+	            if (main_core.Type.isPlainObject(item)) {
+	              result[name].push(item.VALUE);
+	            } else {
+	              result[name].push(item);
+	            }
+	          });
+	        } else {
+	          result[name] = value;
+	        }
+	      };
+
+	      var rows = this.getGrid().getRows();
+	      var headRow = rows.getHeadFirstChild();
+
+	      var supportedAjaxFields = _classPrivateMethodGet$1(this, _getSupportedAjaxFields, _getSupportedAjaxFields2).call(this);
+
+	      rows.getBodyChild().filter(function (row) {
+	        return row.isEdit();
+	      }).forEach(function (row) {
+	        var values = {};
+	        Array.prototype.forEach.call(row.getCells(), function (cell, index) {
+	          var cellName = headRow.getCellNameByCellIndex(index);
+
+	          if (!cellName) {
+	            return;
+	          }
+
+	          if (supportedAjaxFields.length > 0 && !supportedAjaxFields.includes(cellName)) {
+	            return;
+	          }
+
+	          var cellValues = row.getCellEditorValue(cell);
+	          var cellEditData = headRow.getCellEditDataByCellIndex(index);
+	          fillCellValue(values, cellName, cellEditData, cellValues);
+	        });
+	        result[row.getId()] = values;
+	      });
+	      return result;
+	    }
+	  }]);
+	  return GridStore;
+	}();
+
+	function _onFileIsAddedHandler2(event) {
+	  var file = event.getCompatData()[0];
+	  var isFileUploaded = file instanceof File;
+	  var uploader = event.getCompatData()[2];
+
+	  if (uploader && main_core.Type.isDomNode(uploader.fileInput) && isFileUploaded) {
+	    var isFileUploaderInGrid = this.getGrid().getContainer().contains(uploader.fileInput);
+
+	    if (isFileUploaderInGrid) {
+	      _classPrivateMethodGet$1(this, _showFileNotification, _showFileNotification2).call(this);
+	    }
+	  }
+	}
+
+	function _onFileIsDeletedHandler2(event) {
+	  var uploader = event.getCompatData()[2];
+
+	  if (uploader && main_core.Type.isDomNode(uploader.fileInput)) {
+	    var isFileUploaderInGrid = this.getGrid().getContainer().contains(uploader.fileInput);
+
+	    if (isFileUploaderInGrid) {
+	      _classPrivateMethodGet$1(this, _showFileNotification, _showFileNotification2).call(this);
+	    }
+	  }
+	}
+
+	function _showFileNotification2() {
+	  BX.UI.Notification.Center.notify({
+	    id: 'fileCloseNotification',
+	    blinkOnUpdate: false,
+	    content: main_core.Loc.getMessage('CATALOG_ENTITY_CARD_FILE_CLOSE_NOTIFICATION_2'),
+	    position: 'top-right',
+	    width: 'auto',
+	    autoHideDelay: 5000
+	  });
+	}
+
+	function _getSupportedAjaxFields2() {
+	  var params = this.getGrid().getParam('SUPPORTED_AJAX_FIELDS');
+
+	  if (main_core.Type.isArray(params)) {
+	    return params;
+	  }
+
+	  return [];
+	}
+
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
@@ -855,13 +1030,14 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      babelHelpers.get(babelHelpers.getPrototypeOf(VariationGridController.prototype), "doInitialize", this).call(this);
 	      main_core_events.EventEmitter.subscribe('Grid::thereEditedRows', this.markAsChangedHandler.bind(this));
 	      main_core_events.EventEmitter.subscribe('Grid::noEditedRows', this.checkEditorToolbar.bind(this));
-	      main_core_events.EventEmitter.subscribe('Grid::updated', this.checkEditorToolbar.bind(this));
+	      main_core_events.EventEmitter.subscribe('Grid::updated', this.onGridUpdated.bind(this));
 	      main_core_events.EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequest.bind(this));
 	      main_core_events.EventEmitter.subscribe('onAjaxSuccess', this.ajaxSuccessHandler.bind(this));
 	      main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorIncludedArea:onBeforeLoad', this.onBeforeIncludedAreaLoaded.bind(this));
 	      main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorIncludedArea:onAfterLoad', this.onAfterIncludedAreaLoaded.bind(this));
 	      main_core_events.EventEmitter.subscribe("BX.UI.EntityEditor:onNothingChanged", this.onNothingChanged.bind(this));
 	      this.subscribeToFormSubmit();
+	      this.gridStore = new GridStore(this.getGridId());
 	    }
 	  }, {
 	    key: "onBeforeIncludedAreaLoaded",
@@ -1005,12 +1181,30 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      return this._editor.getControlById('variation_grid');
 	    }
 	  }, {
+	    key: "onGridUpdated",
+	    value: function onGridUpdated(event) {
+	      var _this2 = this;
+
+	      var _event$getCompatData3 = event.getCompatData(),
+	          _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 1),
+	          grid = _event$getCompatData4[0];
+
+	      this.checkEditorToolbar();
+
+	      if (grid.getId() === this.getGrid().getId()) {
+	        setTimeout(function () {
+	          _this2.gridStore.loadEditedRows();
+	        }, 0 // delay for re-render grid
+	        );
+	      }
+	    }
+	  }, {
 	    key: "onBeforeGridRequest",
 	    value: function onBeforeGridRequest(event) {
-	      var _event$getCompatData3 = event.getCompatData(),
-	          _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 2),
-	          grid = _event$getCompatData4[0],
-	          eventArgs = _event$getCompatData4[1];
+	      var _event$getCompatData5 = event.getCompatData(),
+	          _event$getCompatData6 = babelHelpers.slicedToArray(_event$getCompatData5, 2),
+	          grid = _event$getCompatData6[0],
+	          eventArgs = _event$getCompatData6[1];
 
 	      if (!grid || !grid.parent || grid.parent.getId() !== this.getGridId()) {
 	        return;
@@ -1035,10 +1229,12 @@ this.BX.Catalog = this.BX.Catalog || {};
 	        url = this.getReloadUrl();
 	      }
 
+	      this.gridStore.saveEditedRows();
 	      eventArgs.sessid = BX.bitrix_sessid();
 	      eventArgs.method = 'POST';
 	      eventArgs.url = url;
 	      eventArgs.data = _objectSpread$1(_objectSpread$1({}, eventArgs.data), {}, {
+	        rows: this.gridStore.getEditedRowsFields(),
 	        signedParameters: this.getSignedParameters()
 	      });
 	      this.unsubscribeGridEvents();
@@ -1070,9 +1266,9 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "onBeforeSubmitForm",
 	    value: function onBeforeSubmitForm(event) {
-	      var _event$getCompatData5 = event.getCompatData(),
-	          _event$getCompatData6 = babelHelpers.slicedToArray(_event$getCompatData5, 2),
-	          eventArgs = _event$getCompatData6[1];
+	      var _event$getCompatData7 = event.getCompatData(),
+	          _event$getCompatData8 = babelHelpers.slicedToArray(_event$getCompatData7, 2),
+	          eventArgs = _event$getCompatData8[1];
 
 	      var grid = this.getGrid();
 
@@ -1670,13 +1866,14 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      babelHelpers.get(babelHelpers.getPrototypeOf(ProductServiceGridController.prototype), "doInitialize", this).call(this);
 	      main_core_events.EventEmitter.subscribe('Grid::thereEditedRows', this.markAsChangedHandler.bind(this));
 	      main_core_events.EventEmitter.subscribe('Grid::noEditedRows', this.checkEditorToolbar.bind(this));
-	      main_core_events.EventEmitter.subscribe('Grid::updated', this.checkEditorToolbar.bind(this));
+	      main_core_events.EventEmitter.subscribe('Grid::updated', this.onGridUpdated.bind(this));
 	      main_core_events.EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequest.bind(this));
 	      main_core_events.EventEmitter.subscribe('onAjaxSuccess', this.ajaxSuccessHandler.bind(this));
 	      main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorIncludedArea:onBeforeLoad', this.onBeforeIncludedAreaLoaded.bind(this));
 	      main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorIncludedArea:onAfterLoad', this.onAfterIncludedAreaLoaded.bind(this));
 	      main_core_events.EventEmitter.subscribe("BX.UI.EntityEditor:onNothingChanged", this.onNothingChanged.bind(this));
 	      this.subscribeToFormSubmit();
+	      this.gridStore = new GridStore(this.getGridId());
 	    }
 	  }, {
 	    key: "onBeforeIncludedAreaLoaded",
@@ -1820,21 +2017,41 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      return this._editor.getControlById('service_grid');
 	    }
 	  }, {
+	    key: "onGridUpdated",
+	    value: function onGridUpdated(event) {
+	      var _this2 = this;
+
+	      var _event$getCompatData3 = event.getCompatData(),
+	          _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 1),
+	          grid = _event$getCompatData4[0];
+
+	      this.checkEditorToolbar();
+
+	      if (grid.getId() === this.getGrid().getId()) {
+	        setTimeout(function () {
+	          _this2.gridStore.loadEditedRows();
+	        }, 0 // delay for re-render grid
+	        );
+	      }
+	    }
+	  }, {
 	    key: "onBeforeGridRequest",
 	    value: function onBeforeGridRequest(event) {
-	      var _event$getCompatData3 = event.getCompatData(),
-	          _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 2),
-	          grid = _event$getCompatData4[0],
-	          eventArgs = _event$getCompatData4[1];
+	      var _event$getCompatData5 = event.getCompatData(),
+	          _event$getCompatData6 = babelHelpers.slicedToArray(_event$getCompatData5, 2),
+	          grid = _event$getCompatData6[0],
+	          eventArgs = _event$getCompatData6[1];
 
 	      if (!grid || !grid.parent || grid.parent.getId() !== this.getGridId()) {
 	        return;
 	      }
 
+	      this.gridStore.saveEditedRows();
 	      eventArgs.sessid = BX.bitrix_sessid();
 	      eventArgs.method = 'POST';
 	      eventArgs.url = this.getReloadUrl();
 	      eventArgs.data = _objectSpread$3(_objectSpread$3({}, eventArgs.data), {}, {
+	        rows: this.gridStore.getEditedRowsFields(),
 	        signedParameters: this.getSignedParameters()
 	      });
 	      this.unsubscribeGridEvents();
@@ -1866,9 +2083,9 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "onBeforeSubmitForm",
 	    value: function onBeforeSubmitForm(event) {
-	      var _event$getCompatData5 = event.getCompatData(),
-	          _event$getCompatData6 = babelHelpers.slicedToArray(_event$getCompatData5, 2),
-	          eventArgs = _event$getCompatData6[1];
+	      var _event$getCompatData7 = event.getCompatData(),
+	          _event$getCompatData8 = babelHelpers.slicedToArray(_event$getCompatData7, 2),
+	          eventArgs = _event$getCompatData8[1];
 
 	      var grid = this.getGrid();
 
@@ -3022,21 +3239,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "openCreationPageUrl",
 	    value: function openCreationPageUrl(typeId) {
-	      var _this = this;
-
-	      var okCallback = function okCallback() {
-	        return _this.openCreationPageSlider(_this.getCreationPageUrl(typeId));
-	      };
-
-	      var variationGridInstance = main_core.Reflection.getClass('BX.Catalog.VariationGrid.Instance');
-
-	      if (variationGridInstance) {
-	        variationGridInstance.askToLossGridData(okCallback, null, {
-	          message: main_core.Loc.getMessage('CATALOG_ENTITY_CARD_UNSAVED_DATA_MESSAGE')
-	        });
-	      } else {
-	        okCallback();
-	      }
+	      this.openCreationPageSlider(this.getCreationPageUrl(typeId));
 	    }
 	  }, {
 	    key: "openCreationPageSlider",
@@ -3389,6 +3592,10 @@ this.BX.Catalog = this.BX.Catalog || {};
 
 	var _templateObject$6, _templateObject2$5, _templateObject3$5, _templateObject4$5, _templateObject5$5, _templateObject6$3, _templateObject7$2;
 
+	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
 	var EntityCard = /*#__PURE__*/function (_BaseCard) {
 	  babelHelpers.inherits(EntityCard, _BaseCard);
 
@@ -3596,7 +3803,9 @@ this.BX.Catalog = this.BX.Catalog || {};
 	          popup = _event$getCompatData6[0];
 
 	      if (popup && popup.getId() === 'popupFM' && popup.onApplyFlag) {
-	        this.showNotification(main_core.Loc.getMessage('CATALOG_ENTITY_CARD_FILE_CLOSE_NOTIFICATION'), {
+	        this.showNotification(main_core.Loc.getMessage('CATALOG_ENTITY_CARD_FILE_CLOSE_NOTIFICATION_2'), {
+	          id: 'fileCloseNotification',
+	          blinkOnUpdate: false,
 	          autoHideDelay: 5000
 	        });
 	      }
@@ -3751,14 +3960,12 @@ this.BX.Catalog = this.BX.Catalog || {};
 	        options.stack = this.getStackWithOffset();
 	      }
 
-	      BX.UI.Notification.Center.notify({
+	      BX.UI.Notification.Center.notify(_objectSpread$6({
 	        content: content,
-	        stack: options.stack || null,
 	        position: 'top-right',
 	        width: 'auto',
-	        category: options.category || null,
-	        autoHideDelay: options.autoHideDelay || 3000
-	      });
+	        autoHideDelay: 3000
+	      }, options));
 	    }
 	  }, {
 	    key: "getStackWithOffset",
@@ -3865,35 +4072,23 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "showCardSettingsPopup",
 	    value: function showCardSettingsPopup() {
-	      var _this2 = this;
-
-	      var okCallback = function okCallback() {
-	        return _this2.getCardSettingsPopup().show();
-	      };
-
-	      var variationGridInstance = main_core.Reflection.getClass('BX.Catalog.VariationGrid.Instance');
-
-	      if (variationGridInstance) {
-	        variationGridInstance.askToLossGridData(okCallback);
-	      } else {
-	        okCallback();
-	      }
+	      this.getCardSettingsPopup().show();
 	    }
 	  }, {
 	    key: "prepareCardSettingsContent",
 	    value: function prepareCardSettingsContent() {
-	      var _this3 = this;
+	      var _this2 = this;
 
 	      var content = main_core.Tag.render(_templateObject4$5 || (_templateObject4$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class='ui-entity-editor-popup-create-field-list'></div>\n\t\t"])));
 	      this.cardSettings.map(function (item) {
-	        content.append(_this3.getSettingItem(item));
+	        content.append(_this2.getSettingItem(item));
 	      });
 	      return content;
 	    }
 	  }, {
 	    key: "getSettingItem",
 	    value: function getSettingItem(item) {
-	      var _this4 = this;
+	      var _this3 = this;
 
 	      var input = '';
 
@@ -3913,9 +4108,9 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      if (item.id === 'SLIDER') {
 	        main_core.Event.bind(setting, 'change', function (event) {
 	          new catalog_storeUse.Slider().open(item.url, {}).then(function () {
-	            _this4.reloadGrid();
+	            _this3.reloadGrid();
 
-	            _this4.getCardSettingsPopup().close();
+	            _this3.getCardSettingsPopup().close();
 	          });
 	        });
 	      } else if (item.id === 'SEO') {
@@ -3924,7 +4119,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	            cacheable: false,
 	            allowChangeHistory: false,
 	            data: {
-	              'ELEMENT_ID': _this4.entityId
+	              'ELEMENT_ID': _this3.entityId
 	            },
 	            width: 1000
 	          });
@@ -3971,7 +4166,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "requestGridSettings",
 	    value: function requestGridSettings(setting, enabled) {
-	      var _this5 = this;
+	      var _this4 = this;
 
 	      if (!this.getVariationGrid()) ;
 
@@ -3994,14 +4189,14 @@ this.BX.Catalog = this.BX.Catalog || {};
 	        var message = null;
 	        setting.checked = enabled;
 
-	        _this5.reloadVariationGrid();
+	        _this4.reloadVariationGrid();
 
-	        _this5.postSliderMessage('onUpdate', {});
+	        _this4.postSliderMessage('onUpdate', {});
 
-	        _this5.getCardSettingsPopup().close();
+	        _this4.getCardSettingsPopup().close();
 
 	        if (setting.id === 'WAREHOUSE') {
-	          _this5.reloadGrid();
+	          _this4.reloadGrid();
 
 	          message = enabled ? main_core.Loc.getMessage('CATALOG_ENTITY_CARD_WAREHOUSE_ENABLED') : main_core.Loc.getMessage('CATALOG_ENTITY_CARD_WAREHOUSE_DISABLED');
 	        } else {
@@ -4009,7 +4204,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	          message = message.replace('#NAME#', setting.title);
 	        }
 
-	        _this5.showNotification(message, {
+	        _this4.showNotification(message, {
 	          category: 'popup-settings'
 	        });
 	      });
@@ -4017,7 +4212,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "requestCardSettings",
 	    value: function requestCardSettings(setting, enabled) {
-	      var _this6 = this;
+	      var _this5 = this;
 
 	      BX.ajax.runComponentAction(this.componentName, 'setCardSetting', {
 	        mode: 'class',
@@ -4030,18 +4225,18 @@ this.BX.Catalog = this.BX.Catalog || {};
 	        setting.checked = enabled;
 
 	        if (setting.id === 'CATALOG_PARAMETERS') {
-	          var section = _this6.getEditorInstance().getControlByIdRecursive('catalog_parameters');
+	          var section = _this5.getEditorInstance().getControlByIdRecursive('catalog_parameters');
 
 	          if (section) {
 	            section.refreshLayout();
 	          }
 	        }
 
-	        _this6.getCardSettingsPopup().close();
+	        _this5.getCardSettingsPopup().close();
 
 	        var message = enabled ? main_core.Loc.getMessage('CATALOG_ENTITY_CARD_SETTING_ENABLED') : main_core.Loc.getMessage('CATALOG_ENTITY_CARD_SETTING_DISABLED');
 
-	        _this6.showNotification(message.replace('#NAME#', setting.title), {
+	        _this5.showNotification(message.replace('#NAME#', setting.title), {
 	          category: 'popup-settings'
 	        });
 	      });
@@ -4049,7 +4244,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	  }, {
 	    key: "updateSettingsCheckboxState",
 	    value: function updateSettingsCheckboxState() {
-	      var _this7 = this;
+	      var _this6 = this;
 
 	      var popupContainer = this.getCardSettingsPopup().getContentContainer();
 	      this.cardSettings.filter(function (item) {
@@ -4059,7 +4254,7 @@ this.BX.Catalog = this.BX.Catalog || {};
 	      }).forEach(function (item) {
 	        var allColumnsExist = true;
 	        item.columns.ITEMS.forEach(function (columnName) {
-	          if (!_this7.getVariationGrid().getColumnHeaderCellByName(columnName)) {
+	          if (!_this6.getVariationGrid().getColumnHeaderCellByName(columnName)) {
 	            allColumnsExist = false;
 	          }
 	        });

@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_SIP_HELPER_REPEATED_APPROACH_DEAL"] = "Повторне звернення";
+$MESS["CRM_SIP_HELPER_REPEATED_REPEATED_DEAL"] = "Повторна угода";
+$MESS["CRM_SIP_HELPER_REPEATED_REPEATED_LEAD"] = "Повторний лід";

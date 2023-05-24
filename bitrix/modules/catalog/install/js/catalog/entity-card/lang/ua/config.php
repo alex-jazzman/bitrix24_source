@@ -4,6 +4,7 @@ $MESS["CATALOG_ENTITY_CARD_DICTIONARY_TITLE"] = "Довідник";
 $MESS["CATALOG_ENTITY_CARD_DIRECTORY_TABLE_NAME"] = "Назва довідника";
 $MESS["CATALOG_ENTITY_CARD_EMPTY_SECTION"] = "розділ не обраний";
 $MESS["CATALOG_ENTITY_CARD_FILE_CLOSE_NOTIFICATION"] = "Натисніть кнопку \"зберегти\", щоб зміни у файлах вступили в силу";
+$MESS["CATALOG_ENTITY_CARD_FILE_CLOSE_NOTIFICATION_2"] = "Натисніть \"Зберегти\", щоб застосувати зміни у файлах.";
 $MESS["CATALOG_ENTITY_CARD_HIDE_SYMBOLIC_CODE"] = "Приховати символьний код";
 $MESS["CATALOG_ENTITY_CARD_LIST_LEGEND"] = "Ідеально використовувати для задання: розмірів, виробників, матеріалів або інших текстових і числових значень";
 $MESS["CATALOG_ENTITY_CARD_LIST_TITLE"] = "Список";

@@ -35,6 +35,7 @@ $MESS["CRM_BIC_DEAL_FIELD_CREATED_BY_NAME"] = "Ім'я автора";
 $MESS["CRM_BIC_DEAL_FIELD_CREATED_BY_NAME_FULL"] = "Ім’я користувача, який створив угоду";
 $MESS["CRM_BIC_DEAL_FIELD_CRM_PRODUCT"] = "Товар із CRM (множ.)";
 $MESS["CRM_BIC_DEAL_FIELD_CRM_PRODUCT_COUNT"] = "Кількість товарів із CRM (множ.)";
+$MESS["CRM_BIC_DEAL_FIELD_CRM_PRODUCT_ID"] = "Ідентифікатор товару з CRM (множ.)";
 $MESS["CRM_BIC_DEAL_FIELD_CURRENCY_ID"] = "Валюта";
 $MESS["CRM_BIC_DEAL_FIELD_CURRENCY_ID_FULL"] = "Ідентифікатор валюти";
 $MESS["CRM_BIC_DEAL_FIELD_DATE_CREATE"] = "Час створення";

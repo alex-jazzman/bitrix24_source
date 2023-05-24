@@ -78,89 +78,82 @@ class Action
 	private static function importDataStudio($content, Event $event)
 	{
 		$result = null;
-		if (!empty($content['DATA']['reportTemplateId']))
-		{
-			$appId = (int)$event->getParameter('APP_ID');
-			$host = Context::getCurrent()->getServer()->get('HTTP_HOST');
-			$accessKey = false;
-			$res = KeyTable::getList(
-				[
-					'select' => [
-						'ACCESS_KEY',
-					],
-					'filter' => [
-						'=ACTIVE' => 'Y',
-						'=APP_ID' => $appId,
-					],
-					'order' => [
-						'ID' => 'DESC',
-					],
-					'limit' => 1,
-				]
-			);
+		$appId = (int)$event->getParameter('APP_ID');
+		$host = Context::getCurrent()->getServer()->get('HTTP_HOST');
+		$accessKey = false;
+		$res = KeyTable::getList([
+			'select' => [
+				'ACCESS_KEY',
+			],
+			'filter' => [
+				'=ACTIVE' => 'Y',
+				'=APP_ID' => $appId,
+			],
+			'order' => [
+				'ID' => 'DESC',
+			],
+			'limit' => 1,
+		]);
 
-			if ($key = $res->fetch())
+		if ($key = $res->fetch())
+		{
+			$accessKey = $key['ACCESS_KEY'];
+		}
+		else
+		{
+			$userId = (int)$event->getParameter('USER_ID');
+			if ($userId <= 0)
 			{
-				$accessKey = $key['ACCESS_KEY'];
+				global $USER;
+				$userId = $USER->getID();
+			}
+
+			$key = KeyManager::generateAccessKey();
+			$resultSave = KeyManager::save([
+				'USER_ID' => $userId,
+				'ACTIVE' => true,
+				'ACCESS_KEY' => $key,
+				'USERS' => [
+					$userId,
+				],
+				'APP_ID' => $appId,
+			]);
+
+			if ($resultSave instanceof ErrorCollection)
+			{
+				foreach ($resultSave->getValues() as $error)
+				{
+					if ($error instanceof \Bitrix\Main\Error)
+					{
+						$result['ERROR_EXCEPTION'] = [
+							'code' => $error->getCode(),
+							'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_ERROR_DATA_STUDIO_SAVE_KEY') . ' ' . $error->getMessage(),
+						];
+					}
+				}
 			}
 			else
 			{
-				$userId = (int)$event->getParameter('USER_ID');
-				if ($userId <= 0)
-				{
-					global $USER;
-					$userId = $USER->getID();
-				}
-				$key = KeyManager::generateAccessKey();
-				$resultSave = KeyManager::save(
-					[
-						'USER_ID' => $userId,
-						'ACTIVE' => true,
-						'ACCESS_KEY' => $key,
-						'USERS' => [
-							$userId,
-						],
-						'APP_ID' => $appId,
-					]
-				);
-				if ($resultSave instanceof ErrorCollection)
-				{
-					foreach ($resultSave->getValues() as $error)
-					{
-						if ($error instanceof \Bitrix\Main\Error)
-						{
-							$result['ERROR_EXCEPTION'] = [
-								'code' => $error->getCode(),
-								'message' => Loc::getMessage('BI_CONNECTOR_CONFIGURATION_ACTION_ERROR_DATA_STUDIO_SAVE_KEY') . ' ' . $error->getMessage(),
-							];
-						}
-					}
-				}
-				else
-				{
-					$accessKey = $key;
-				}
+				$accessKey = $key;
 			}
+		}
 
-			if ($accessKey)
-			{
-				$url = [
-					'connectorId' => Option::get('biconnector', GoogleDataStudio::OPTION_DEPLOYMENT_ID),
-					'connectorConfig' => Json::encode(
-						[
-							'server_name' => Option::get('main', 'server_name', $host),
-							'key' => $accessKey . LANGUAGE_ID,
-							'table' => $content['DATA']['table'] ?? '',
-						]
-					),
-					'reportTemplateId' => $content['DATA']['reportTemplateId'],
-				];
+		if ($accessKey)
+		{
+			$url = [
+				'connectorId' => Option::get('biconnector', GoogleDataStudio::OPTION_DEPLOYMENT_ID),
+				'connectorConfig' => Json::encode([
+						'server_name' => Option::get('main', 'server_name', $host),
+						'key' => $accessKey . LANGUAGE_ID,
+						'table' => $content['DATA']['table'] ?? '',
+				]),
+				'reportTemplateId' => $content['DATA']['reportTemplateId'],
+			];
 
-				$uri = new Uri(GoogleDataStudio::URL_CREATE);
-				$uri->addParams($url);
+			$uri = new Uri(GoogleDataStudio::URL_CREATE);
+			$uri->addParams($url);
 
-				$result['RATIO']['URL'] = $uri->getLocator();
-			}
+			$result['RATIO']['URL'] = $uri->getLocator();
 		}
 
 		return $result;

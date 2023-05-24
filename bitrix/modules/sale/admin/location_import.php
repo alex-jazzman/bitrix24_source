@@ -1,14 +1,21 @@
-<?
+<?php
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Location\Admin\Helper;
 
-define("NO_AGENT_CHECK", true);
-define("NO_KEEP_STATISTIC", true);
+/** @global CMain $APPLICATION */
+
+const NO_AGENT_CHECK = true;
+const NO_KEEP_STATISTIC = true;
 
 $initialTime = time();
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/prolog.php");
+
+/** @global CAdminPage $adminPage */
+global $adminPage;
+/** @global CAdminSidePanelHelper $adminSidePanelHelper */
+global $adminSidePanelHelper;
 
 Loc::loadMessages(__FILE__);
 
@@ -19,14 +26,20 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 // check for indexes
 $indexes = \Bitrix\Sale\Location\Import\ImportProcess::getIndexMap();
 $absent = array();
-if(is_array($indexes) && !empty($indexes))
+if (is_array($indexes) && !empty($indexes))
 {
-	foreach($indexes as $name => $params)
+	foreach ($indexes as $name => $params)
 	{
-		if((string) $params['TABLE'] != '' && !$params['DROP_ONLY'])
+		if ((string)$params['TABLE'] !== '' && !($params['DROP_ONLY'] ?? false))
 		{
-			if(!\Bitrix\Sale\Location\DB\Helper::checkIndexNameExists($name, $params['TABLE']))
-				$absent[] = 'create index '.$name.' on '.$params['TABLE'].' ('.implode(', ', $params['COLUMNS']).')'.\Bitrix\Sale\Location\DB\Helper::getQuerySeparatorSql();
+			if (!\Bitrix\Sale\Location\DB\Helper::checkIndexNameExists($name, $params['TABLE']))
+			{
+				$absent[] =
+					'create index ' . $name . ' on ' . $params['TABLE']
+					. ' (' . implode(', ', $params['COLUMNS']) . ')'
+					. \Bitrix\Sale\Location\DB\Helper::getQuerySeparatorSql()
+				;
+			}
 		}
 	}
 }

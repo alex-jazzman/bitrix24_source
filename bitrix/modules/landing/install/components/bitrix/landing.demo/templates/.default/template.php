@@ -14,8 +14,9 @@ use \Bitrix\Landing\Manager;
 use \Bitrix\Main\Page\Asset;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\ModuleManager;
+use Bitrix\Main\UI\Extension;
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'ui.fonts.opensans',
 	'sidepanel',
 	'ui.design-tokens',
@@ -134,9 +135,9 @@ if (!$component->isAjax())
 	}
 
 	// create empty button
-	if ($arParams['TYPE'] !== 'STORE')
+	if ($arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP')
 	{
-		$emptyTpl = ($arParams['TYPE'] === 'KNOWLEDGE' && !$arParams['SITE_ID'])
+		$emptyTpl = !$arParams['SITE_ID']
 			? 'empty-multipage/main'
 			: 'empty'
 		;

@@ -1,4 +1,4 @@
-import {Type, Dom, Loc, Event, Runtime, Uri} from 'main.core';
+import {Type, Dom, Loc, Event, Runtime, Uri, Text, Tag} from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import {
 	Context,
@@ -23,9 +23,7 @@ export class Template extends EventEmitter
 	#context: Context;
 
 	constants: Object<string, any>;
-	globalConstants: Array<Object>;
 	variables: Object<string, any>;
-	globalVariables: Array<Object>;
 	robotSettingsControls;
 
 	#delayMinLimitM: number;
@@ -45,9 +43,7 @@ export class Template extends EventEmitter
 		context: ?Context,
 		templateContainerNode: Element,
 		constants: Object<string, any>,
-		globalConstants: ?Array<Object>,
 		variables: Object<string, any>,
-		globalVariables: ?Array<Object>,
 		userOptions: ?UserOptions,
 		delayMinLimitM: number,
 	})
@@ -57,9 +53,7 @@ export class Template extends EventEmitter
 
 		this.#context = params.context ?? getGlobalContext();
 		this.constants = params.constants;
-		this.globalConstants = Type.isArray(params.globalConstants) ? params.globalConstants : [];
 		this.variables = params.variables;
-		this.globalVariables = Type.isArray(params.globalVariables) ? params.globalVariables : [];
 
 		this.#templateContainerNode = params.templateContainerNode;
 		this.#delayMinLimitM = params.delayMinLimitM;
@@ -696,9 +690,11 @@ export class Template extends EventEmitter
 
 		form.appendChild(this.renderDelaySettings(robot));
 		form.appendChild(this.renderConditionSettings(robot));
-		if (robot.hasBrokenLink())
+
+		const robotBrokenLinks = robot.getBrokenLinks();
+		if (robotBrokenLinks.length > 0)
 		{
-			form.appendChild(this.renderBrokenLinkAlert());
+			Dom.append(this.renderBrokenLinkAlert(robotBrokenLinks), form);
 		}
 
 		const iconHelp = Dom.create('div', {
@@ -709,6 +705,10 @@ export class Template extends EventEmitter
 		});
 		form.appendChild(iconHelp);
 		context['DOCUMENT_CATEGORY_ID'] = this.#context.document.getCategoryId();
+		if (Type.isPlainObject(robot.data.DialogContext) && (robot.data.DialogContext.hasOwnProperty('addMenuGroup')))
+		{
+			context['addMenuGroup'] = robot.data.DialogContext.addMenuGroup;
+		}
 
 		BX.ajax({
 			method: 'POST',
@@ -1019,6 +1019,80 @@ export class Template extends EventEmitter
 		}
 	}
 
+	#addConstantsToSelector(event: BaseEvent)
+	{
+		const selector = event.getData().selector;
+		const isMixedCondition = event.getData().isMixedCondition;
+
+		if (Type.isBoolean(isMixedCondition) && !isMixedCondition)
+		{
+			return;
+		}
+
+		// TODO - test !this.showTemplatePropertiesMenuOnSelecting
+		const constants = this.getConstants().map((constant) => {
+			return {
+				id: constant.SystemExpression,
+				title: constant.Name,
+				supertitle: Loc.getMessage('BIZPROC_AUTOMATION_CMP_TEMPLATE_CONSTANTS_LIST'),
+				customData: { field: constant }
+			};
+		});
+
+		this.globalConstants.forEach((constant) => {
+			constants.push({
+				id: constant.SystemExpression,
+				title: constant['Name'],
+				supertitle: constant.SuperTitle,
+				customData: { field: constant },
+			});
+		});
+
+		if (Type.isArrayFilled(constants))
+		{
+			selector.addGroup(
+				'__CONSTANTS',
+				{
+					id: '__CONSTANTS',
+					title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
+					children: constants
+				}
+			);
+		}
+	}
+
+	#addVariablesToSelector(event: BaseEvent)
+	{
+		const selector = event.getData().selector;
+		const isMixedCondition = event.getData().isMixedCondition;
+
+		if (Type.isBoolean(isMixedCondition) && !isMixedCondition)
+		{
+			return;
+		}
+
+		const gVariables = this.globalVariables.map((variable) => {
+			return {
+				id: variable.SystemExpression,
+				title: variable.Name,
+				supertitle: variable.SuperTitle,
+				customData: {field: variable},
+			};
+		});
+
+		if (Type.isArrayFilled(gVariables))
+		{
+			selector.addGroup(
+				'__GLOB_VARIABLES',
+				{
+					id: '__GLOB_VARIABLES',
+					title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
+					children: gVariables,
+				}
+			);
+		}
+	}
+
 	#getRobotsWithReturnFields(skipRobot: ?Robot = undefined): Array<Robot>
 	{
 		const skipId = skipRobot?.getId() || '';
@@ -1294,6 +1368,8 @@ export class Template extends EventEmitter
 	onOpenMenu(event: BaseEvent, robot: Robot): void
 	{
 		this.#addRobotReturnFieldsToSelector(event, robot);
+		this.#addConstantsToSelector(event);
+		this.#addVariablesToSelector(event);
 
 		this.emit(
 			'Template:onSelectorMenuOpen',
@@ -1312,26 +1388,40 @@ export class Template extends EventEmitter
 		return this;
 	}
 
-	renderBrokenLinkAlert()
+	renderBrokenLinkAlert(brokenLinks: [] = [])
 	{
-		const alert = Dom.create('div', {
-			attrs: {className:'ui-alert ui-alert-warning ui-alert-icon-info ui-alert-xs'}
+		const moreInfoNode = Tag.render`
+			<div class="bizproc-automation-robot-broken-link-full-info">
+				${brokenLinks.map((value) => {return Text.encode(value)}).join('<br>')}
+			</div>
+		`;
+
+		const showMoreLabel = Tag.render`
+			<span class="bizproc-automation-robot-broken-link-show-more">
+				${Loc.getMessage('JS_BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR_MORE_INFO')}
+			</span>
+		`;
+		Event.bindOnce(showMoreLabel, 'click', () => {
+			Dom.style(moreInfoNode, 'height', moreInfoNode.scrollHeight + 'px');
+			Dom.remove(showMoreLabel);
 		});
 
-		const message = Dom.create('span', {
-			attrs: {className: 'ui-alert-message'},
-			text: Loc.getMessage('BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR')
-		});
+		const closeBtn = Tag.render`<span class="ui-alert-close-btn"></span>`;
 
-		alert.appendChild(message);
-		alert.appendChild(Dom.create('span', {
-			attrs: {className: 'ui-alert-close-btn'},
-			events: {
-				click() {
-					alert.style.display = 'none';
-				}
-			}
-		}));
+		const alert = Tag.render`
+			<div class="ui-alert ui-alert-warning ui-alert-icon-info">
+				<div class="ui-alert-message">
+					<div>
+						<span>${Loc.getMessage('BIZPROC_AUTOMATION_BROKEN_LINK_MESSAGE_ERROR')}</span>
+						${showMoreLabel}
+					</div>
+					${moreInfoNode}
+				</div>
+				${closeBtn}
+			</div>
+		`;
+
+		Event.bindOnce(closeBtn, 'click', () => {Dom.remove(alert)});
 
 		return alert;
 	}
@@ -1437,12 +1527,12 @@ export class Template extends EventEmitter
 		}
 	}
 
-	getConstants()
+	getConstants(): []
 	{
 		const constants = [];
 
 		Object.keys(this.#data.CONSTANTS).forEach(id => {
-			const constant = BX.clone(this.#data.CONSTANTS[id]);
+			const constant = Runtime.clone(this.#data.CONSTANTS[id]);
 
 			constant.Id = id;
 			constant.ObjectId = 'Constant';
@@ -1619,12 +1709,12 @@ export class Template extends EventEmitter
 		return false;
 	}
 
-	getVariables()
+	getVariables(): []
 	{
 		const variables = [];
 
 		Object.keys(this.#data.VARIABLES).forEach(id => {
-			const variable = BX.clone(this.#data.VARIABLES[id]);
+			const variable = Runtime.clone(this.#data.VARIABLES[id]);
 
 			variable.Id = id;
 			variable.ObjectId = 'Variable';
@@ -1698,17 +1788,13 @@ export class Template extends EventEmitter
 		return this.#context.availableRobots.find(item => item['CLASS'] === type);
 	}
 
-	setGlobalVariables(globalVariables: Array = []): this
+	get globalConstants(): []
 	{
-		this.globalVariables = globalVariables;
-
-		return this;
+		return this.#context.automationGlobals ? this.#context.automationGlobals.globalConstants : [];
 	}
 
-	setGlobalConstants(globalConstants: Array = []): this
+	get globalVariables(): []
 	{
-		this.globalConstants = globalConstants;
-
-		return this;
+		return this.#context.automationGlobals ? this.#context.automationGlobals.globalVariables : [];
 	}
 }

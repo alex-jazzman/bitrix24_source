@@ -698,7 +698,6 @@ class ProductSearchComponent extends \CBitrixComponent
 				$arSkuTmp["PRODUCT_ID"] = $productId;
 				$arSkuTmp["CAN_BUY"] = $arOffer["CAN_BUY"];
 				$arSkuTmp["ACTIVE"] = $arOffer["ACTIVE"];
-				$arSkuTmp["EXTERNAL_ID"] = $arOffer['EXTERNAL_ID'];
 				if (isset($arOffer['PREVIEW_PICTURE']))
 					$arSkuTmp['PREVIEW_PICTURE'] = $arOffer['PREVIEW_PICTURE'];
 				if (isset($arOffer['DETAIL_PICTURE']))
@@ -1834,6 +1833,10 @@ class ProductSearchComponent extends \CBitrixComponent
 	{
 		$filter = $this->getFilter();
 		$dbResultList = $this->getMixedList($this->getListSort(), $filter, false, ['ID', 'IBLOCK_ID']);
+
+		$filter['QUERY'] ??= '';
+		$filter['USE_SUBSTRING_QUERY'] ??= 'N';
+
 		$this->arResult = array(
 			'DB_RESULT_LIST' => $dbResultList,
 			'PRODUCTS' => $this->makeItemsFromDbResult($dbResultList),

@@ -108,38 +108,39 @@ elseif ($request->get('IS_AJAX') == 'Y')
 	\Bitrix\Landing\Manager::getApplication()->restartBuffer();
 }
 // add filter and action button
-elseif (in_array($this->getPageName(), array('template', 'site_show')))
+
+elseif (in_array($this->getPageName(), ['template', 'site_show']))
 {
 	$link = '';
 	$title = '';
 
-	if ($this->getPageName() == 'site_show')
-	{
-		if ($arResult['ACCESS_PAGE_NEW'] == 'Y')
-		{
-			$title = Loc::getMessage('LANDING_TPL_ADD_PAGE');
-			$link = $arParams['PAGE_URL_LANDING_EDIT'];
-			$link = str_replace(
-				array('#site_show#', '#landing_edit#'),
-				array($arResult['VARS']['site_show'], 0),
-				$link);
+	/**
+	 * @return LandingBaseComponent
+	 */
+	$getComponent = function () use ($arParams, $arResult) {
+		$componentClass = \CBitrixComponent::includeComponentClass('bitrix:landing.base');
+		$component = new $componentClass;
+		$component->arParams['TYPE'] = $arParams['TYPE'];
+		$component->arParams['PAGE_URL_LANDING_EDIT'] = $arParams['PAGE_URL_LANDING_EDIT'];
+		$component->arParams['PAGE_URL_SITE_EDIT'] = $arParams['PAGE_URL_SITE_EDIT'];
+		$component->arParams['ACTION_FOLDER'] = $arParams['ACTION_FOLDER'];
+		$component->arParams['SITE_ID'] = $arResult['VARS']['site_show'] ?? 0;
 
-			$folderId = $request->get($arParams['ACTION_FOLDER']);
-			if ($folderId)
-			{
-				$link = new \Bitrix\Main\Web\Uri($link);
-				$link->addParams(array(
-					$arParams['ACTION_FOLDER'] => $folderId
-				));
-				$link = $link->getUri();
-			}
-		}
+		return $component;
+	};
+
+	if (
+		$this->getPageName() == 'site_show'
+		&& $arResult['ACCESS_PAGE_NEW'] == 'Y'
+	)
+	{
+		$link = $getComponent()->getUrlAdd(false);
+		$title = Loc::getMessage('LANDING_TPL_ADD_PAGE');
 	}
 	else if ($arResult['ACCESS_SITE_NEW'] == 'Y')
 	{
+		$link = $getComponent()->getUrlAdd(true);
 		$title = Loc::getMessage('LANDING_TPL_ADD_SITE_2');
-		$link = $arParams['PAGE_URL_SITE_EDIT'];
-		$link = str_replace('#site_edit#', 0, $link);
 	}
 
 	$folderId = $request->get($arParams['ACTION_FOLDER']);

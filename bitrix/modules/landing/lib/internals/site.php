@@ -240,6 +240,21 @@ class SiteTable extends Entity\DataManager
 	}
 
 	/**
+	 * On controller must save only correctly (existing) languages
+	 * @param string $lang
+	 * @return string
+	 */
+	protected static function prepareLangForController(string $lang): string
+	{
+		$replaces = [
+			'in' => 'en',
+			'hi' => 'en',
+		];
+
+		return in_array($lang, array_keys($replaces)) ? $replaces[$lang] : $lang;
+	}
+
+	/**
 	 * Check 'bitrix'-named domain.
 	 * @param string $domainName Domain name.
 	 * @return boolean
@@ -1017,7 +1032,8 @@ class SiteTable extends Entity\DataManager
 												$domainName,
 												$publicUrl,
 												'N',
-												$row['TYPE']
+												$row['TYPE'],
+												self::prepareLangForController(Manager::getZone())
 											);
 										}
 										else
@@ -1025,7 +1041,7 @@ class SiteTable extends Entity\DataManager
 											$domainName = $siteController::addRandomDomain(
 												$publicUrl,
 												$row['TYPE'],
-												Manager::getZone()
+												self::prepareLangForController(Manager::getZone())
 											);
 										}
 									}
@@ -1165,7 +1181,7 @@ class SiteTable extends Entity\DataManager
 						Manager::getPublicationPath($domains[$i == 0 ? 1 : 0]['ID']),
 						'Y',
 						($domains[$i]['TYPE'] == 'STORE') ? 'shop' : $domains[$i]['TYPE'],
-						$domains[$i]['LANG']
+						self::prepareLangForController($domains[$i]['LANG'])
 					);
 				}
 			}
@@ -1203,7 +1219,7 @@ class SiteTable extends Entity\DataManager
 				$domainName = $siteController::addRandomDomain(
 					$publicUrl,
 					($row['TYPE'] == 'STORE') ? 'shop' : $row['TYPE'],
-					Manager::getZone()
+					self::prepareLangForController(Manager::getZone())
 				);
 				if ($domainName)
 				{

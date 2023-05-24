@@ -61,23 +61,41 @@ abstract class Process
 
 	public function addStage($params)
 	{
-		if(empty($params['CODE']) || empty($params['CALLBACK']))
+		if (empty($params['CODE']) || empty($params['CALLBACK']))
+		{
 			throw new Main\SystemException('Not enought params to add stage');
+		}
 
-		$ss = intval($params['STEP_SIZE']);
+		$ss = (int)($params['STEP_SIZE'] ?? 0);
+		$order = count($this->stages);
+		$type = (string)($params['TYPE'] ?? '');
+		if ($type === '')
+		{
+			$type = static::CALLBACK_TYPE_MANUAL;
+		}
 
-		$this->stages[] = array(
-			'STEP_SIZE' => 				$ss ? $ss : 1,
-			'PERCENT' => 				intval($params['PERCENT']),
-			'CODE' => 					$params['CODE'],
-			'ORDER' => 					count($this->stages),
-			'TYPE' => $params['TYPE'] <> ''? $params['TYPE'] : static::CALLBACK_TYPE_MANUAL,
+		$beforeCallback = (string)($params['ON_BEFORE_CALLBACK'] ?? '');
+		if ($beforeCallback === '')
+		{
+			$beforeCallback = false;
+		}
+		$afterCallback = (string)($params['ON_AFTER_CALLBACK'] ?? '');
+		if ($afterCallback === '')
+		{
+			$afterCallback = false;
+		}
 
-			'CALLBACK' => 				$params['CALLBACK'],
-			'SUBPERCENT_CALLBACK' => 	$params['SUBPERCENT_CALLBACK'],
-			'ON_BEFORE_CALLBACK' => $params['ON_BEFORE_CALLBACK'] <> ''? $params['ON_BEFORE_CALLBACK'] : false,
-			'ON_AFTER_CALLBACK' => $params['ON_AFTER_CALLBACK'] <> ''? $params['ON_AFTER_CALLBACK'] : false
-		);
+		$this->stages[] = [
+			'STEP_SIZE' => $ss ?: 1,
+			'PERCENT' => (int)($params['PERCENT'] ?? 0),
+			'CODE' => $params['CODE'],
+			'ORDER' => $order,
+			'TYPE' => $type,
+			'CALLBACK' => $params['CALLBACK'],
+			'SUBPERCENT_CALLBACK' => $params['SUBPERCENT_CALLBACK'] ?? null,
+			'ON_BEFORE_CALLBACK' => $beforeCallback,
+			'ON_AFTER_CALLBACK' => $afterCallback,
+		];
 		$this->stagesByCode[$params['CODE']] =& $this->stages[count($this->stages) - 1];
 	}
 
@@ -313,7 +331,7 @@ abstract class Process
 	public function getPercent()
 	{
 		$percent = $this->stage > 0 ? $this->stages[$this->stage - 1]['PERCENT'] : 0;
-	
+
 		$addit = 0;
 		$cb = $this->stages[$this->stage]['SUBPERCENT_CALLBACK'];
 		if(mb_strlen($cb) && method_exists($this, $cb))
@@ -567,5 +585,5 @@ abstract class Process
 		}
 
 		return $block;
-	}	
+	}
 }

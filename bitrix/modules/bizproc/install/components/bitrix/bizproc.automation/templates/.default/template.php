@@ -127,17 +127,15 @@ $menuTabs[] = [
 	'IS_ACTIVE' => true,
 ];
 
-$docType = CUtil::JSEscape(CBPDocument::signDocumentType($arResult['DOCUMENT_TYPE']));
-
 $menuTabs[] = [
 	'ID' => 'global_variables',
 	'TEXT' => \Bitrix\Main\Localization\Loc::getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VAR_MENU'),
-	'ON_CLICK' => "BX.Bizproc.Automation.showGlobals.showVariables('{$docType}')",
+	'ON_CLICK' => 'BX.Bizproc.Automation.showGlobals.showVariables()',
 ];
 $menuTabs[] = [
 	'ID' => 'global_constants',
 	'TEXT' => \Bitrix\Main\Localization\Loc::getMessage('BIZPROC_AUTOMATION_CMP_GLOB_CONST_MENU'),
-	'ON_CLICK' => "BX.Bizproc.Automation.showGlobals.showConstants('{$docType}')",
+	'ON_CLICK' => 'BX.Bizproc.Automation.showGlobals.showConstants()',
 ];
 if ($arResult['CAN_DEBUG'])
 {

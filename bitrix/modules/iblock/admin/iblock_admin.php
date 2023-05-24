@@ -90,7 +90,6 @@ if($lAdmin->EditAction())
 {
 	foreach($FIELDS as $ID => $postFields)
 	{
-		$DB->StartTransaction();
 		$ID = intval($ID);
 
 		if(!$lAdmin->IsUpdated($ID))
@@ -117,13 +116,18 @@ if($lAdmin->EditAction())
 				$arFields[$fieldId] = $postFields[$fieldId];
 		}
 
+		$DB->StartTransaction();
+
 		$ib = new CIBlock;
-		if(!$ib->Update($ID, $arFields))
+		if (!$ib->Update($ID, $arFields))
 		{
 			$lAdmin->AddUpdateError(GetMessage("IBLOCK_ADM_SAVE_ERROR", array("#ID#"=>$ID, "#ERROR_TEXT#"=>$ib->LAST_ERROR)), $ID);
 			$DB->Rollback();
 		}
-		$DB->Commit();
+		else
+		{
+			$DB->Commit();
+		}
 	}
 }
 
@@ -168,8 +172,8 @@ if($arID = $lAdmin->GroupAction())
 						serialize($res_log)
 					);
 				}
+				$DB->Commit();
 			}
-			$DB->Commit();
 			break;
 		case "activate":
 		case "deactivate":

@@ -220,7 +220,7 @@ export class ConditionSelector
 			Dom.append(
 				Tag.render`
 					<span class="bizproc-automation-popup-settings-link">
-						${Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_CONDITION_EMPTY')}
+						${Text.encode(this.getOperatorLabel(Operator.EMPTY))}
 					</span>
 				`,
 				this.labelNode

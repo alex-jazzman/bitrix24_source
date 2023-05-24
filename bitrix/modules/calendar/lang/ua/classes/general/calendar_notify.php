@@ -2,6 +2,8 @@
 $MESS["EC_COMMENT_MESSAGE_ADD"] = "Додав(додала) коментар до події \"#EVENT_TITLE#\": #COMMENT#";
 $MESS["EC_COMMENT_MESSAGE_ADD_F"] = "Додала коментар до події \"#EVENT_TITLE#\": #COMMENT#";
 $MESS["EC_COMMENT_MESSAGE_ADD_M"] = "Додав коментар до події \"#EVENT_TITLE#\": #COMMENT#";
+$MESS["EC_MESS_AUTO_INVITE_ACCEPT"] = "Створена зустріч «[B]#TITLE#[/B]» з вашою участю, яка відбудеться [B]#ACTIVE_FROM#[/B].";
+$MESS["EC_MESS_AUTO_INVITE_ACCEPT_DETAILS"] = "Подивитися деталі або відмовитися від зустрічі ви можете у [url=#LINK#]своєму календарі[/url].";
 $MESS["EC_MESS_FAIL_ICAL_INVITE_TITLE_CANCEL"] = "Не вдалося відправити інформацію про скасування події \"#NAME#\"";
 $MESS["EC_MESS_FAIL_ICAL_INVITE_TITLE_EDIT"] = "Не вдалося відправити інформацію про зміну події \"#NAME#\"";
 $MESS["EC_MESS_FAIL_ICAL_INVITE_TITLE_REQUEST"] = "Не вдалося відправити запрошення на подію \"#NAME#\"";

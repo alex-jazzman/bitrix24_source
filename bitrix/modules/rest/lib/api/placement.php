@@ -127,12 +127,15 @@ class Placement extends \IRestService
 		if (is_array($placementInfo) && !$placementInfo['private'])
 		{
 			$placementLangList = [];
+			$paramsOptions = $params['OPTIONS'] ?? [];
+			$placementInfoOptions = $placementInfo['options'] ?? [];
+
 			$placementBind = array(
 				'APP_ID' => $appInfo['ID'],
 				'USER_ID' => (int) $params['USER_ID'] > 0 ? (int) $params['USER_ID'] : PlacementTable::DEFAULT_USER_ID_VALUE,
 				'PLACEMENT' => $placement,
 				'PLACEMENT_HANDLER' => $placementHandler,
-				'OPTIONS' => static::prepareOptions($params['OPTIONS'], $placementInfo['options']),
+				'OPTIONS' => static::prepareOptions($paramsOptions, $placementInfoOptions),
 			);
 
 			if (
@@ -300,30 +303,135 @@ class Placement extends \IRestService
 		);
 	}
 
-	private static function prepareOptions($data = [], $setting = []): array
+	private static function prepareOptions($paramsOptions = [], $placementInfoOptions = []): array
 	{
 		$result = [];
-
-		if (!empty($setting) && is_array($data))
+		if (empty($placementInfoOptions))
 		{
-			foreach ($data as $key => $value)
+			return $result;
+		}
+		$requiredOptions = self::getRequiredOptions($placementInfoOptions);
+		$defaultOptions = self::getDefaultOptions($placementInfoOptions);
+
+		if (!is_array($paramsOptions))
+		{
+			if (!empty($requiredOptions))
 			{
-				if (!empty($setting[$key]))
-				{
-					switch ($setting[$key])
-					{
-						case 'int':
-							$result[$key] = (int) $value;
-							break;
-						case 'string':
-							$result[$key] = (string) $value;
-							break;
-					}
-				}
+				throw new ArgumentTypeException('options', 'array');
+			}
+
+			return $defaultOptions;
+		}
+
+		self::checkRequiredOptionsInParamsOptions($paramsOptions, $requiredOptions);
+
+		foreach ($placementInfoOptions as $optionName => $optionSetting)
+		{
+			$optionValue = $paramsOptions[$optionName] ?? $defaultOptions[$optionName] ?? null;
+			$optionType = null;
+
+			if (!is_array($optionSetting))
+			{
+				$optionType = $optionSetting;
+			}
+			else
+			{
+				$optionType = $optionSetting['type'];
+			}
+
+			switch($optionType)
+			{
+				case 'int':
+					$result[$optionName] = (int)$optionValue;
+					break;
+				case 'string':
+					$result[$optionName] = (string)$optionValue;
+					break;
 			}
 		}
 
 		return $result;
+	}
+
+	/**
+	 * if the option configuration has the "default" key
+	 * [
+	 * 	optionName => [
+	 * 		"default" => defaultValue
+	 * 	],
+	 * ]
+	 * then return array in format
+	 * [
+	 * 	optionName => defaultValue
+	 * ]
+	 *
+	 * @param array $placementInfoOptions
+	 * @return array
+	 */
+	private static function getDefaultOptions(array $placementInfoOptions): array
+	{
+		$result = [];
+
+		foreach ($placementInfoOptions as $optionName => $optionSetting)
+		{
+			if (isset($optionSetting['default']))
+			{
+				$result[$optionName] = $optionSetting['default'];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $paramsOptions
+	 * @param array $requiredOptions
+	 * @return void
+	 * @throws ArgumentNullException
+	 */
+	private static function checkRequiredOptionsInParamsOptions(array $paramsOptions, array $requiredOptions): void
+	{
+		foreach ($requiredOptions as $requiredOption)
+		{
+			if (!array_key_exists($requiredOption, $paramsOptions))
+			{
+				throw new ArgumentNullException($requiredOption);
+			}
+		}
+	}
+
+
+	/**
+	 * get a list of names of all required options
+	 * @param array $placementInfoOptions
+	 * @return array
+	 */
+	private static function getRequiredOptions(array $placementInfoOptions): array
+	{
+		$result = [];
+		foreach ($placementInfoOptions as $optionName => $optionSettings)
+		{
+			if (self::isRequiredOption($optionSettings))
+			{
+				$result[] = $optionName;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array|string $optionSettings
+	 * @return bool
+	 */
+	private static function isRequiredOption($optionSettings): bool
+	{
+		if (!isset($optionSettings['require']))
+		{
+			return false;
+		}
+
+		return (bool)$optionSettings['require'];
 	}
 
 	public static function unbind($params, $n, \CRestServer $server)

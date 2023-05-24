@@ -47,6 +47,7 @@ $MESS["TASKS_LIST_SEARCH_EMPTY_RESULT"] = "За вашим запитом ніч
 $MESS["TASKS_LIST_SEARCH_HINT"] = "Введіть назву завдання, ім'я відповідального або щось ще";
 $MESS["TASKS_LIST_SEARCH_SECTION_LAST"] = "НЕДАВНІЙ ПОШУК ";
 $MESS["TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS"] = "РЕЗУЛЬТАТИ ПОШУКУ";
+$MESS["TASKS_LIST_SEARCH_SPOTLIGHT_TEXT"] = "У пошуку тепер доступні збережені фільтри. Вони допоможуть вам знаходити потрібні завдання так само швидко, як у вебверсії.";
 $MESS["TASKS_LIST_STATE_INPROGRESS"] = "В роботі";
 $MESS["TASKS_LIST_SUB_HEADER_DEADLINES"] = " (Терміни)";
 $MESS["TASKS_NO_INTERNET_CONNECTION"] = "Ймовірно, втрачено з'єднання з інтернетом. Будь ласка, спробуйте ще раз пізніше.";

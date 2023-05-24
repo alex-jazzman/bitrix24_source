@@ -1396,13 +1396,18 @@
 	font-size: 13px;
 	font-weight: var(--ui-font-weight-bold);
 	color: #0b66c3;
-	border-bottom: 1px dashed #0b66c3;
+	border-bottom: 1px dashed rgba(11,102,195,.4);
 	line-height: normal;
 	text-decoration: none;
 	cursor: pointer;
 	-webkit-transition: .1s;
 	-moz-transition: .1s;
 	transition: .1s;
+}
+
+.bizproc-automation-popup-settings-link:hover,
+.bizproc-automation-popup-settings-button:hover {
+	border-bottom-color: rgba(11,102,195,1);
 }
 
 .bizproc-automation-popup-settings-link-light {

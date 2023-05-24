@@ -138,8 +138,8 @@ else
 										?>
 										<div class="personal-order-detail-info-shipment-description-btn-container">
 											<a href="" onclick="return false"
-											   class="personal-order-detail-order-btn-track"
-											   href="<?= htmlspecialcharsbx($shipment['TRACKING_URL']) ?>"><?= Loc::getMessage('SPOD_ORDER_CHECK_TRACKING') ?></a>
+												class="personal-order-detail-order-btn-track"
+												href="<?= htmlspecialcharsbx($shipment['TRACKING_URL']) ?>"><?= Loc::getMessage('SPOD_ORDER_CHECK_TRACKING') ?></a>
 										</div>
 										<?
 									}
@@ -308,7 +308,7 @@ else
 							<div>
 								<a href="<?=$basketItem['DETAIL_PAGE_URL']?>" target="_blank" class="personal-order-detail-products-item-image-link">
 									<?
-									if($basketItem['PICTURE']['SRC'] <> '')
+									if(is_array($basketItem['PICTURE']))
 									{
 										$imageSrc = htmlspecialcharsbx($basketItem['PICTURE']['SRC']);
 									}

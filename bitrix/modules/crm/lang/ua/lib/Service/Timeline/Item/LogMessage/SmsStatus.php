@@ -7,4 +7,4 @@ $MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_FAILURE"] = "SMS-повідомленн
 $MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_READ"] = "SMS-повідомлення прочитане";
 $MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_SUCCESS"] = "SMS-повідомлення доставлено";
 $MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_UNKNOWN"] = "Статус не визначено";
-$MESS["CRM_TIMELINE_LOG_TAG_SENDING_ERROR"] = "Помилка надсилання.";
+$MESS["CRM_TIMELINE_LOG_TAG_SENDING_ERROR"] = "Помилка надсилання";

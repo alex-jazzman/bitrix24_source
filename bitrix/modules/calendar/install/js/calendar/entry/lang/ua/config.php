@@ -12,6 +12,7 @@ $MESS["CALENDAR_EVENT_DO_RELEASE"] = "Відміна резервування";
 $MESS["CALENDAR_EVENT_DO_SAVE"] = "Зберегти";
 $MESS["CALENDAR_EVENT_DO_VIEW"] = "Переглянути";
 $MESS["CALENDAR_EVENT_DURATION_CHANGE"] = "Тривалість події змінена";
+$MESS["CALENDAR_EVENT_DURATION_CHANGE_NEW"] = "Тривалість події змінена: #DURATION#";
 $MESS["CALENDAR_EVENT_FULL_FORM"] = "Повна форма";
 $MESS["CALENDAR_EVENT_WAITING_CONVERSION"] = "Відбувається конвертація";
 $MESS["CALENDAR_NEW_EVENT_NOTIFICATION"] = "Подія успішно додана";

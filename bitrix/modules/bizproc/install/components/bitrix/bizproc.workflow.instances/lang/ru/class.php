@@ -20,6 +20,7 @@ $MESS["BPWI_FILTER_DOCTYPE_CRM"] = "CRM";
 $MESS["BPWI_FILTER_DOCTYPE_DISK"] = "Файлы";
 $MESS["BPWI_FILTER_DOCTYPE_LISTS"] = "Списки";
 $MESS["BPWI_FILTER_STATUS"] = "Статус";
+$MESS["BPWI_FILTER_TYPE"] = "Тип процесса";
 $MESS["BPWI_DELETE_LABEL"] = "Удалить";
 $MESS["BPWI_DELETE_CONFIRM"] = "Вы действительно хотите удалить процесс и связанные с ним данные?";
 $MESS["BPWI_OPEN_DOCUMENT"] = "Документ (в новом окне)";

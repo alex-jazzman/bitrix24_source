@@ -27,4 +27,5 @@ $MESS["SHOP_MENU_SETTINGS_USER_FIELDS"] = "Поля користувача";
 $MESS["SHOP_MENU_SHOP_MARKETING"] = "Маркетинг Магазину";
 $MESS["SHOP_MENU_SHOP_TITLE"] = "Магазини";
 $MESS["SHOP_MENU_SITES"] = "Сайти";
+$MESS["SHOP_MENU_TERMINAL"] = "Платіжний термінал";
 $MESS["SHOP_MENU_WEBFORMS"] = "Форми";

@@ -68,6 +68,7 @@ $APPLICATION->SetPageProperty(
 	isWithOrdersMode = <?= CUtil::PhpToJSObject((bool)$arResult['IS_WITH_ORDERS_MODE']) ?>;
 	isLeadEnabled = <?= CUtil::PhpToJSObject((bool)$arResult['IS_LEAD_ENABLED']) ?>;
 	isPlanRestricted = <?= CUtil::PhpToJSObject((bool)$arResult['IS_PLAN_RESTRICTED']) ?>;
+	isRestrictedAccess = <?= CUtil::PhpToJSObject((bool)$arResult['IS_RESTRICTED_ACCESS']) ?>;
 	isUsed = <?= CUtil::PhpToJSObject((bool)$arResult['IS_USED']) ?>;
 	isEmpty = <?= CUtil::PhpToJSObject((bool)$arResult['IS_EMPTY']) ?>;
 	presetList = <?= CUtil::PhpToJSObject($arResult['PRESET_LIST']) ?>;
@@ -79,6 +80,7 @@ $APPLICATION->SetPageProperty(
 		data: () => ({
 			isEmpty: isEmpty,
 			isPlanRestricted: isPlanRestricted,
+			isRestrictedAccess: isRestrictedAccess,
 			isUsedOneC: isUsedOneC,
 			mode: mode,
 			isWithOrdersMode: isWithOrdersMode,
@@ -129,6 +131,10 @@ $APPLICATION->SetPageProperty(
 					{
 						classes.push('ui-btn-wait');
 					}
+					if (this.isRestrictedAccess === true)
+					{
+						classes.push('ui-btn-disabled');
+					}
 					return classes;
 				},
 				getObjectClassMP()
@@ -143,6 +149,10 @@ $APPLICATION->SetPageProperty(
 					if (this.showLoaderMP === true)
 					{
 						classes.push('ui-btn-wait');
+					}
+					if (this.isRestrictedAccess === true)
+					{
+						classes.push('ui-btn-disabled');
 					}
 					return classes;
 				},
@@ -198,6 +208,13 @@ $APPLICATION->SetPageProperty(
 				},
 				handleEnableClick(sliderType)
 				{
+					if (this.isRestrictedAccess)
+					{
+						this.showRestrictedRightsErrorPopup();
+
+						return;
+					}
+
 					this.setSliderType(sliderType);
 					var storeControlHelpArticleId = 15718276;
 
@@ -230,6 +247,13 @@ $APPLICATION->SetPageProperty(
 				},
 				handleDisableClick()
 				{
+					if (this.isRestrictedAccess)
+					{
+						this.showRestrictedRightsErrorPopup();
+
+						return;
+					}
+
 					this.showConfirmDisablePopup();
 				},
 				isGridAlreadyOpened()
@@ -411,6 +435,15 @@ $APPLICATION->SetPageProperty(
 				showErrorPopup(options)
 				{
 					(new BX.Catalog.StoreUse.DialogError(options)).popup();
+				},
+				showRestrictedRightsErrorPopup()
+				{
+					var storeControlHelpArticleId = 16556596;
+
+					this.showErrorPopup({
+						text: this.loc.CAT_WAREHOUSE_MASTER_CLEAR_RIGHTS_RESTRICTED,
+						helpArticleId: storeControlHelpArticleId
+					});
 				},
 				showEnablePopup()
 				{

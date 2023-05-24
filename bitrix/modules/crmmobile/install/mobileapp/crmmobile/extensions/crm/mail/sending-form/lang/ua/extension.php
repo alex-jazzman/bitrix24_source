@@ -1,6 +1,7 @@
 <?php
 $MESS["MESSAGE_SEND_BUTTON_SEND"] = "Відправити";
 $MESS["MESSAGE_SEND_BUTTON_SENDING"] = "Надсилання...";
+$MESS["MESSAGE_SEND_BUTTON_UPLOADING_FILES"] = "Завантажуємо файли...";
 $MESS["MESSAGE_SEND_CONTACT_PLACEHOLDER"] = "Уведіть адресу ел. пошти";
 $MESS["MESSAGE_SEND_FIELD_BCC"] = "Прихована копія";
 $MESS["MESSAGE_SEND_FIELD_CC"] = "Копія";

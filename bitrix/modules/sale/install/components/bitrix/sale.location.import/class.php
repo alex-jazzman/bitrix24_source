@@ -39,7 +39,7 @@ class CBitrixSaleLocationImportComponent extends CBitrixComponent
 	 */
 	public function onPrepareComponentParams($arParams)
 	{
-		self::tryParseInt($arParams['INITIAL_TIME']);
+		$arParams['INITIAL_TIME'] = (int)($arParams['INITIAL_TIME'] ?? 0);
 
 		if (
 			isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y" &&
@@ -51,6 +51,8 @@ class CBitrixSaleLocationImportComponent extends CBitrixComponent
 				"IFRAME" => "Y", "IFRAME_TYPE" => "Y", "publicSidePanel" => "Y"
 			));
 		}
+
+
 
 		return $arParams;
 	}
@@ -75,22 +77,31 @@ class CBitrixSaleLocationImportComponent extends CBitrixComponent
 
 	protected static function checkAccessPermissions($parameters = array())
 	{
-		if(!is_array($parameters))
-			$parameters = array();
+		if (!is_array($parameters))
+		{
+			$parameters = [];
+		}
+		$parameters['CHECK_CSRF'] ??= false;
 
 		$errors = array();
 
 		if ($GLOBALS['APPLICATION']->GetGroupRight("sale") < "W")
-			$errors[] = Loc::getMessage("SALE_SLI_SALE_MODULE_WRITE_ACCESS_DENIED");
-
-		if(!LocationHelper::checkLocationEnabled())
-			$errors[] = 'Locations were disabled or data has not been converted';
-
-		if($parameters['CHECK_CSRF'])
 		{
-			$post = \Bitrix\Main\Context::getCurrent()->getRequest()->getPostList();
-			if(!mb_strlen($post['csrf']) || bitrix_sessid() != $post['csrf'])
+			$errors[] = Loc::getMessage("SALE_SLI_SALE_MODULE_WRITE_ACCESS_DENIED");
+		}
+
+		if (!LocationHelper::checkLocationEnabled())
+		{
+			$errors[] = 'Locations were disabled or data has not been converted';
+		}
+
+		if ($parameters['CHECK_CSRF'])
+		{
+			$csrf = (string)\Bitrix\Main\Context::getCurrent()->getRequest()->getPost('csrf');
+			if ($csrf === '' || bitrix_sessid() !== $csrf)
+			{
 				$errors[] = 'CSRF token is not valid';
+			}
 		}
 
 		return $errors;
@@ -379,8 +390,8 @@ class CBitrixSaleLocationImportComponent extends CBitrixComponent
 		}
 
 		return 	str_replace(array(
-					'{{CODE}}', 
-					'{{NAME}}', 
+					'{{CODE}}',
+					'{{NAME}}',
 					'{{CHILDREN}}',
 					'{{INPUT_NAME}}',
 					'{{EXPANDER_CLASS}}'
@@ -394,6 +405,8 @@ class CBitrixSaleLocationImportComponent extends CBitrixComponent
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * Function reduces input value to integer type, and, if gets null, passes the default value
 	 * @param mixed $fld Field value
 	 * @param int $default Default value
@@ -405,7 +418,7 @@ class CBitrixSaleLocationImportComponent extends CBitrixComponent
 		$fld = intval($fld);
 		if(!$allowZero && !$fld && $default !== false)
 			$fld = $default;
-			
+
 		return $fld;
 	}
 }

@@ -26,6 +26,7 @@ export { DelayIntervalSelector } from './delay-interval-selector';
 export { HelpHint } from './help-hint';
 export { SelectorContext } from './context/selector-context';
 import { Context } from './context/context';
+export { AutomationGlobals } from './automation-globals';
 
 export { Helper } from './helper';
 

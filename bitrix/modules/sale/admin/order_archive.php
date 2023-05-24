@@ -824,6 +824,7 @@ if (!empty($orderList) && is_array($orderList))
 
 		$allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 
+		$arActions = [];
 		if (in_array($arOrder["STATUS_ID"], $allowedStatusesUpdate))
 		{
 			$arActions[] = array("ICON"=>"copy", "TEXT"=>Loc::getMessage("SOA_RESTORE_ORDER"), "ACTION"=>$lAdmin->ActionRedirect("sale_order_create.php?restoreID=".$arOrder['ID']."&lang=".LANGUAGE_ID."&".'SITE_ID='.$arOrder['LID'].'&'.bitrix_sessid_get().GetFilterParams("filter_")));
@@ -839,20 +840,20 @@ if (!empty($orderList) && is_array($orderList))
 		unset($arActions);
 	}
 }
-
 unset($rowsList);
+
+$arGroupActionsTmp = [];
 if ($saleModulePermissions == "W")
 {
 	$arGroupActionsTmp = array(
 		"delete" => Loc::getMessage("MAIN_ADMIN_LIST_DELETE")
 	);
 }
-
 $lAdmin->AddGroupActionTable($arGroupActionsTmp);
+unset($arGroupActionsTmp);
+
 $aContext = array();
-
 $allowedStatusesDelete = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($intUserID, array('delete'));
-
 if($saleModulePermissions >= "W" || !empty($allowedStatusesDelete))
 {
 	$aContext = array(
@@ -863,8 +864,9 @@ if($saleModulePermissions >= "W" || !empty($allowedStatusesDelete))
 		),
 	);
 }
-
 $lAdmin->AddAdminContextMenu($aContext);
+unset($aContext);
+
 $lAdmin->CheckListMode();
 
 \Bitrix\Main\Page\Asset::getInstance()->addString('<style>.adm-filter-item-center, .adm-filter-content {overflow: visible !important;}</style>');

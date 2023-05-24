@@ -480,7 +480,15 @@ class RestService extends \IRestService
 			self::deleteAppPlacement(self::getAppId($params['APP_ID']), $params['CODE']);
 		}
 
-		RestActivityTable::update($result['ID'], $toUpdate);
+		$updateResult = RestActivityTable::update($result['ID'], $toUpdate);
+
+		if (!$updateResult->isSuccess())
+		{
+			throw new RestException(
+				implode('; ', $updateResult->getErrorMessages()),
+				self::ERROR_ACTIVITY_VALIDATION_FAILURE
+			);
+		}
 
 		return true;
 	}

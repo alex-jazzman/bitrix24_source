@@ -549,7 +549,10 @@ class CBitrixBasketComponent extends CBitrixComponent
 		$arr = [];
 		foreach ($array as $key => $value)
 		{
-			if (is_array($value) || preg_match("/[;&<>\"]/", $value))
+			if (
+				is_array($value)
+				|| (is_string($value) && preg_match("/[;&<>\"]/", $value))
+			)
 			{
 				$arr[$key] = htmlspecialcharsEx($value);
 			}
@@ -692,11 +695,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 					{
 						$saveResult = $basket->save();
 
-						if ($saveResult->isSuccess())
-						{
-							$_SESSION['SALE_BASKET_NUM_PRODUCTS'][$this->getSiteId()]--;
-						}
-						else
+						if (!$saveResult->isSuccess())
 						{
 							$deleteResult->addErrors($saveResult->getErrors());
 						}
@@ -732,11 +731,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 					{
 						$saveResult = $basket->save();
 
-						if ($saveResult->isSuccess())
-						{
-							$_SESSION['SALE_BASKET_NUM_PRODUCTS'][$this->getSiteId()]--;
-						}
-						else
+						if (!$saveResult->isSuccess())
 						{
 							$delayResult->addErrors($saveResult->getErrors());
 						}
@@ -774,11 +769,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 						{
 							$saveResult = $basket->save();
 
-							if ($saveResult->isSuccess())
-							{
-								$_SESSION['SALE_BASKET_NUM_PRODUCTS'][$this->getSiteId()]++;
-							}
-							else
+							if (!$saveResult->isSuccess())
 							{
 								$delayResult->addErrors($saveResult->getErrors());
 							}
@@ -870,7 +861,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 	{
 		$result = $this->recalculateBasket($this->request->get('basket'));
 
-		list($basketRefreshed, $changedBasketItems) = $this->refreshAndCorrectRatio();
+		[$basketRefreshed, $changedBasketItems] = $this->refreshAndCorrectRatio();
 		$result['BASKET_REFRESHED'] = $basketRefreshed;
 		$result['CHANGED_BASKET_ITEMS'] = array_merge($result['CHANGED_BASKET_ITEMS'], $changedBasketItems);
 
@@ -974,7 +965,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 
 		if ($this->arParams['USE_GIFTS'] === 'Y')
 		{
-			list($found, $coupon) = $this->getCouponFromRequest($this->request->toArray());
+			[$found, $coupon] = $this->getCouponFromRequest($this->request->toArray());
 
 			if ($found && !empty($coupon) && $result['VALID_COUPON'] === true)
 			{
@@ -1608,6 +1599,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 			$filterItems = array_fill_keys($filterItems, true);
 		}
 
+		$this->storage['ORDERABLE_BASKET_ITEMS_COUNT'] = 0;
 		if (!$fullBasket->isEmpty())
 		{
 			$orderableBasket = $basketStorage->getOrderableBasket();
@@ -2092,7 +2084,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 			elseif (
 				empty($item['PREVIEW_PICTURE'])
 				&& empty($item['DETAIL_PICTURE'])
-				&& $additionalImages[$parentId]
+				&& isset($additionalImages[$parentId])
 			)
 			{
 				$item['PREVIEW_PICTURE'] = $additionalImages[$parentId];
@@ -2647,7 +2639,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 			$basketBasePrice = $basket->getBasePrice();
 			$basketVatSum = $basket->getVatSum();
 
-			list($result['FULL_DISCOUNT_LIST'], $result['APPLIED_DISCOUNT_LIST']) = $this->getDiscountData($basket);
+			[$result['FULL_DISCOUNT_LIST'], $result['APPLIED_DISCOUNT_LIST']] = $this->getDiscountData($basket);
 		}
 
 		$siteCurrency = Sale\Internals\SiteCurrencyTable::getSiteCurrency($this->getSiteId());
@@ -3288,9 +3280,14 @@ class CBitrixBasketComponent extends CBitrixComponent
 												['width' => self::IMAGE_SIZE_STANDARD, 'height' => self::IMAGE_SIZE_STANDARD],
 												BX_RESIZE_IMAGE_PROPORTIONAL, false, false
 											);
-											$arValue['PICT']['SRC'] = Iblock\Component\Tools::getImageSrc([
-												'SRC' => $tmpImg['src']
-											]);
+											if (is_array($tmpImg))
+											{
+												$arValue['PICT'] = [
+													'SRC' => Iblock\Component\Tools::getImageSrc([
+														'SRC' => $tmpImg['src']
+													]),
+												];
+											}
 										}
 									}
 								}
@@ -3397,7 +3394,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 		}
 		else
 		{
-			list($found, $coupon) = $this->getCouponFromRequest($postList);
+			[$found, $coupon] = $this->getCouponFromRequest($postList);
 
 			if ($found)
 			{
@@ -3659,8 +3656,6 @@ class CBitrixBasketComponent extends CBitrixComponent
 			{
 				unset($_SESSION['NOTIFY_PRODUCT'][$userId][$item->getProductId()]);
 			}
-
-			$_SESSION['SALE_BASKET_NUM_PRODUCTS'][$this->getSiteId()]--;
 		}
 		else
 		{
@@ -3706,14 +3701,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 	protected function processDelay(&$result, Sale\BasketItemBase $item, $delay)
 	{
 		$res = $item->setField('DELAY', $delay);
-		if ($res->isSuccess())
-		{
-			if ($delay === 'Y')
-			{
-				$_SESSION['SALE_BASKET_NUM_PRODUCTS'][$this->getSiteId()]--;
-			}
-		}
-		else
+		if (!$res->isSuccess())
 		{
 			$this->addErrors($res->getErrors(), $item->getId());
 		}

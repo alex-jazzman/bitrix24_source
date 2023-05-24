@@ -2527,10 +2527,15 @@ class CatalogProductDetailsComponent
 			]
 		);
 		$chunks = array_map(
-			static function ($string) {
-				return mb_strtoupper(mb_substr($string, 0, 1)).mb_substr($string, 1);
+			static function ($string)
+			{
+				return mb_strtoupper(mb_substr($string, 0, 1)) . mb_substr($string, 1);
 			},
-			['Property', $translitName, $tableId]
+			[
+				'Property',
+				$translitName,
+				$tableId,
+			]
 		);
 		$dictionaryName = implode('', $chunks);
 		$tableName = CIBlockPropertyDirectory::createHighloadTableName($tableId);

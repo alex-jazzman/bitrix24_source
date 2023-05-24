@@ -4,8 +4,9 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admi
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use	Bitrix\Sale\Internals\Input;
+use Bitrix\Sale\Internals\Input;
 use Bitrix\Sale\Internals\OrderPropsTable;
+use Bitrix\Sale\Internals\OrderPropsRelationTable;
 
 $saleModulePermissions = $APPLICATION->GetGroupRight('sale');
 if ($saleModulePermissions < 'W')
@@ -323,10 +324,10 @@ foreach(\Bitrix\Sale\Delivery\Services\Manager::getActiveList(true) as $delivery
 	$deliveryOptions[$deliveryId] = $name;
 }
 
-$relationsSettings = array(
-	'P' => array('TYPE' => 'ENUM', 'LABEL' => Loc::getMessage('SALE_PROPERTY_PAYSYSTEM'), 'OPTIONS' => $paymentOptions , 'MULTIPLE' => 'Y', 'SIZE' => '5'),
-	'D' => array('TYPE' => 'ENUM', 'LABEL' => Loc::getMessage('SALE_PROPERTY_DELIVERY' ), 'OPTIONS' => $deliveryOptions, 'MULTIPLE' => 'Y', 'SIZE' => '5'),
-);
+$relationsSettings = [
+	OrderPropsRelationTable::ENTITY_TYPE_PAY_SYSTEM => ['TYPE' => 'ENUM', 'LABEL' => Loc::getMessage('SALE_PROPERTY_PAYSYSTEM'), 'OPTIONS' => $paymentOptions , 'MULTIPLE' => 'Y', 'SIZE' => '5'],
+	OrderPropsRelationTable::ENTITY_TYPE_DELIVERY => ['TYPE' => 'ENUM', 'LABEL' => Loc::getMessage('SALE_PROPERTY_DELIVERY' ), 'OPTIONS' => $deliveryOptions, 'MULTIPLE' => 'Y', 'SIZE' => '5'],
+];
 
 $landingOptions = [];
 $dbRes = Bitrix\Sale\TradingPlatform\Manager::getList(
@@ -345,7 +346,39 @@ foreach ($dbRes as $item)
 
 if ($landingOptions)
 {
-	$relationsSettings['L'] = ['TYPE' => 'ENUM', 'LABEL' => Loc::getMessage('SALE_PROPERTY_TP_LANDING'), 'OPTIONS' => $landingOptions, 'MULTIPLE' => 'Y', 'SIZE' => '5'];
+	$relationsSettings[OrderPropsRelationTable::ENTITY_TYPE_LANDING] = [
+		'TYPE' => 'ENUM',
+		'LABEL' => Loc::getMessage('SALE_PROPERTY_TP_LANDING'),
+		'OPTIONS' => $landingOptions,
+		'MULTIPLE' => 'Y',
+		'SIZE' => '5'
+	];
+}
+
+$tradingPlatformOptions = [];
+$dbRes = Bitrix\Sale\TradingPlatform\Manager::getList(
+	[
+		'select' => ['ID', 'NAME'],
+		'filter' => [
+			'=ACTIVE' => 'Y',
+			'!%CODE' => Bitrix\Sale\TradingPlatform\Landing\Landing::TRADING_PLATFORM_CODE,
+		]
+	]
+);
+foreach ($dbRes as $item)
+{
+	$tradingPlatformOptions[$item['ID']] = "{$item['NAME']} [{$item['ID']}]";
+}
+
+if ($tradingPlatformOptions)
+{
+	$relationsSettings[OrderPropsRelationTable::ENTITY_TYPE_TRADING_PLATFORM] = [
+		'TYPE' => 'ENUM',
+		'LABEL' => Loc::getMessage('SALE_PROPERTY_TP'),
+		'OPTIONS' => $tradingPlatformOptions,
+		'MULTIPLE' => 'Y',
+		'SIZE' => '5'
+	];
 }
 
 // VALIDATE AND SAVE POST //////////////////////////////////////////////////////////////////////////////////////////////

@@ -24,7 +24,7 @@ class PropertyProduct
 	public static function getSkuProperties(int $iblockId, int $skuId): array
 	{
 		$properties = self::getIblockProperties($iblockId, $skuId);
-		$product = Catalog\ProductTable::getList([
+		$product = Catalog\ProductTable::getRow([
 			'select' => [
 				'SKU_NAME' => 'IBLOCK_ELEMENT.NAME',
 				'SKU_DESCRIPTION' => 'IBLOCK_ELEMENT.DETAIL_TEXT',
@@ -35,18 +35,36 @@ class PropertyProduct
 				'HEIGHT',
 				'WEIGHT',
 			],
-			'filter' => ['ID' => $skuId],
-		])->fetch();
+			'filter' => ['=ID' => $skuId],
+		]);
 
 		$properties['SKU_ID'] = $skuId;
-		$properties['PURCHASING_PRICE'] = round((float)$product['PURCHASING_PRICE'], self::PRICE_PRECISION);
-		$properties['PURCHASING_PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($product['PURCHASING_PRICE'], $product['PURCHASING_CURRENCY']);
-		$properties['LENGTH'] = $product['LENGTH'];
-		$properties['WEIGHT'] = $product['WEIGHT'];
-		$properties['WIDTH'] = $product['WIDTH'];
-		$properties['HEIGHT'] = $product['HEIGHT'];
-		$properties['SKU_NAME'] = htmlspecialcharsbx($product['SKU_NAME']);
-		$properties['SKU_DESCRIPTION'] = (new \CBXSanitizer())->SanitizeHtml($product['SKU_DESCRIPTION']);
+
+		if ($product !== null)
+		{
+			$properties['PURCHASING_PRICE'] = round((float)$product['PURCHASING_PRICE'], self::PRICE_PRECISION);
+			$properties['PURCHASING_PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString(
+				$product['PURCHASING_PRICE'],
+				$product['PURCHASING_CURRENCY']
+			);
+			$properties['LENGTH'] = $product['LENGTH'];
+			$properties['WEIGHT'] = $product['WEIGHT'];
+			$properties['WIDTH'] = $product['WIDTH'];
+			$properties['HEIGHT'] = $product['HEIGHT'];
+			$properties['SKU_NAME'] = htmlspecialcharsbx($product['SKU_NAME']);
+			$properties['SKU_DESCRIPTION'] = (new \CBXSanitizer())->SanitizeHtml($product['SKU_DESCRIPTION']);
+		}
+		else
+		{
+			$properties['PURCHASING_PRICE'] = 0;
+			$properties['PURCHASING_PRICE_FORMATTED'] = '';
+			$properties['LENGTH'] = null;
+			$properties['WEIGHT'] = null;
+			$properties['WIDTH'] = null;
+			$properties['HEIGHT'] = null;
+			$properties['SKU_NAME'] = '';
+			$properties['SKU_DESCRIPTION'] = '';
+		}
 
 		return $properties;
 	}

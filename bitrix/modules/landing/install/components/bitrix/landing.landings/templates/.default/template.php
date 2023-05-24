@@ -55,46 +55,9 @@ Asset::getInstance()->addCSS(
 );
 
 // prepare urls
-$arParams['PAGE_URL_LANDING_ADD'] = str_replace('#landing_edit#', 0, $arParams['PAGE_URL_LANDING_EDIT']);
-if ($folderId)
-{
-	$arParams['PAGE_URL_LANDING_ADD'] = new Uri(
-		$arParams['PAGE_URL_LANDING_ADD']
-	);
-	$arParams['PAGE_URL_LANDING_ADD']->addParams(array(
-		$arParams['ACTION_FOLDER'] => $folderId
-	));
-	$arParams['PAGE_URL_LANDING_ADD'] = $arParams['PAGE_URL_LANDING_ADD']->getUri();
-}
+$arParams['PAGE_URL_LANDING_ADD'] = $component->getUrlAdd(false);
 
 $sliderConditions = [
-	str_replace(
-		array(
-			'#landing_edit#', '?'
-		),
-		array(
-			'(\d+)', '\?'
-		),
-		CUtil::jsEscape($arParams['PAGE_URL_LANDING_EDIT'])
-	),
-	str_replace(
-		array(
-			'#landing_edit#', '?'
-		),
-		array(
-			'(\d+)', '\?'
-		),
-		CUtil::jsEscape($arParams['PAGE_URL_LANDING_ADD'])
-	),
-	str_replace(
-		array(
-			'#landing_edit#', '?'
-		),
-		array(
-			'(\d+)', '\?'
-		),
-		CUtil::jsEscape($arParams['PAGE_URL_LANDING_DESIGN'])
-	),
 	str_replace(
 		array(
 			'#landing_edit#', '?'
@@ -119,6 +82,20 @@ if ($arParams['TILE_MODE'] === 'view')
 	);
 }
 
+$addCondition = strpos($arParams['PAGE_URL_LANDING_ADD'], '?')
+	? CUtil::jsEscape(explode('?', $arParams['PAGE_URL_LANDING_ADD'])[0])
+	: CUtil::jsEscape($arParams['PAGE_URL_LANDING_ADD'])
+;
+
+if ($arParams['TYPE'] === 'PAGE')
+{
+	$sliderFullConditions[] = $addCondition;
+}
+else
+{
+	$sliderConditions[] = $addCondition;
+}
+
 $sliderShortConditions = [
 	str_replace(
 		array(
@@ -131,6 +108,7 @@ $sliderShortConditions = [
 	)
 ];
 
+\trimArr($sliderFullConditions, true);
 \trimArr($sliderConditions, true);
 \trimArr($sliderShortConditions, true);
 ?>
@@ -483,6 +461,14 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 								}
 							}
 						}
+					}
+				},
+				{
+					condition: <?= CUtil::phpToJSObject($sliderFullConditions);?>,
+					options: {
+						allowChangeHistory: false,
+						cacheable: false,
+						customLeftBoundary: 0,
 					}
 				},
 				{

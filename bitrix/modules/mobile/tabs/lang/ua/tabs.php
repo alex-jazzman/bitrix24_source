@@ -1,6 +1,10 @@
 <?php
+$MESS["TAB_NAME_CALENDAR"] = "Календар";
+$MESS["TAB_NAME_CALENDAR_SHORT"] = "Календар";
 $MESS["TAB_NAME_CALLTRACKER"] = "Трекер дзвінків";
 $MESS["TAB_NAME_CALLTRACKER_SHORT"] = "Дзвінки";
+$MESS["TAB_NAME_CATALOG_STORE"] = "Складський облік";
+$MESS["TAB_NAME_CATALOG_STORE_SHORT"] = "Склади";
 $MESS["TAB_NAME_CRM"] = "CRM";
 $MESS["TAB_NAME_IM_OPENLINES"] = "Відкриті Лінії";
 $MESS["TAB_NAME_IM_OPENLINES_SHORT"] = "Лінії";
@@ -12,9 +16,12 @@ $MESS["TAB_NAME_MORE_SHORT"] = "Ще";
 $MESS["TAB_NAME_NEWS"] = "Новини";
 $MESS["TAB_NAME_NEWS_SHORT"] = "Новини";
 $MESS["TAB_NAME_NOTIFY"] = "Сповіщення";
+$MESS["TAB_NAME_PROJECTS"] = "Проєкти";
+$MESS["TAB_NAME_PROJECTS_SHORT"] = "Проєкти";
 $MESS["TAB_NAME_STREAM"] = "Жива Стрічка";
 $MESS["TAB_NAME_TASKS_LIST"] = "Завдання та проєкти";
 $MESS["TAB_NAME_TASKS_LIST_SHORT"] = "Завдання";
+$MESS["TAB_NAME_TERMINAL"] = "Термінал";
 $MESS["TAB_STREAM_NAVIGATION_HEADER"] = "Новини";
 $MESS["TAB_STREAM_NAVIGATION_HEADER2"] = "Спільна робота";
 $MESS["TAB_STREAM_NAVIGATION_TAB_BP"] = "Процеси";

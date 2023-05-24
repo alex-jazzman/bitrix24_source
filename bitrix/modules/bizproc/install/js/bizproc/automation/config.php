@@ -16,6 +16,7 @@ return [
 		'main.popup',
 		'main.core.events',
 		'bizproc.automation',
+		'bizproc.globals',
 		'ui.design-tokens',
 		'ui.fonts.opensans',
 		'main.core',

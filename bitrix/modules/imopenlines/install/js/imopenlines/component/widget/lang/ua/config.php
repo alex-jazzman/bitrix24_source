@@ -54,6 +54,7 @@ $MESS["BX_LIVECHAT_SYSTEM_MESSAGE"] = "Системне повідомлення
 $MESS["BX_LIVECHAT_TITLE"] = "Відкрита лінія";
 $MESS["BX_LIVECHAT_USER"] = "консультант";
 $MESS["BX_LIVECHAT_VOTE_BUTTON"] = "Оцінити якість обслуговування";
+$MESS["BX_LIVECHAT_VOTE_LATER"] = "Оцінити пізніше";
 $MESS["BX_LIVECHAT_VOTE_MINUS"] = "Не подобається";
 $MESS["BX_LIVECHAT_VOTE_MINUS_TITLE"] = "Дуже шкода, що ми не змогли допомогти вам, ми намагатимемося стати краще.";
 $MESS["BX_LIVECHAT_VOTE_PLUS"] = "Подобається";

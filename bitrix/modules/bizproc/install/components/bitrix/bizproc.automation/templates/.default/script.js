@@ -6,7 +6,9 @@
 	var Component = function(baseNode)
 	{
 		if (!BX.type.isDomNode(baseNode))
+		{
 			throw 'baseNode must be Dom Node Element';
+		}
 
 		this.node = baseNode;
 
@@ -130,7 +132,7 @@
 		},
 		initContext: function()
 		{
-			var context = new BX.Bizproc.Automation.Context({
+			const context = new BX.Bizproc.Automation.Context({
 				document: this.document,
 				signedDocument: this.documentSigned,
 				ajaxUrl: this.getAjaxUrl(),
@@ -147,7 +149,12 @@
 				isFrameMode: this.isFrameMode,
 
 				marketplaceRobotCategory: this.data['MARKETPLACE_ROBOT_CATEGORY'],
-				showTemplatePropertiesMenuOnSelecting: this.data['SHOW_TEMPLATE_PROPERTIES_MENU_ON_SELECTING'] === true
+				showTemplatePropertiesMenuOnSelecting: this.data['SHOW_TEMPLATE_PROPERTIES_MENU_ON_SELECTING'] === true,
+
+				automationGlobals: new BX.Bizproc.Automation.AutomationGlobals({
+					variables: this.data['GLOBAL_VARIABLES'],
+					constants: this.data['GLOBAL_CONSTANTS'],
+				}),
 			});
 			context.set('TRIGGER_CAN_SET_EXECUTE_BY', this.data['TRIGGER_CAN_SET_EXECUTE_BY']);
 			context.set('IS_WORKTIME_AVAILABLE', this.data['IS_WORKTIME_AVAILABLE']);
@@ -636,60 +643,6 @@
 							children: triggerMenuItems,
 						});
 					}
-
-					// TODO - test !this.showTemplatePropertiesMenuOnSelecting
-					const constantList = template.getConstants().map(function (constant)
-					{
-						return {
-							id: constant.SystemExpression,
-							title: constant['Name'],
-							supertitle: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_TEMPLATE_CONSTANTS_LIST'),
-							customData: { field: constant }
-						};
-					});
-
-					if (this.data['GLOBAL_CONSTANTS'])
-					{
-						this.getConstants().forEach(function(constant) {
-							constantList.push({
-								id: constant.SystemExpression,
-								title: constant['Name'],
-								supertitle: constant.SuperTitle,
-								customData: { field: constant },
-							});
-						}.bind(this));
-					}
-
-					if (constantList.length > 0)
-					{
-						selector.addGroup('__CONSTANTS', {
-							id: '__CONSTANTS',
-							title: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
-							children: constantList
-						});
-					}
-
-					if (this.data['GLOBAL_VARIABLES'])
-					{
-						const globalVariableList = this.getGVariables().map(function(variable)
-						{
-							return {
-								id: variable.SystemExpression,
-								title: variable['Name'],
-								supertitle: variable.SuperTitle,
-								customData: { field: variable }
-							};
-						}.bind(this));
-
-						if (globalVariableList.length > 0)
-						{
-							selector.addGroup('__GLOB_VARIABLES', {
-								id: '__GLOB_VARIABLES',
-								title: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
-								children: globalVariableList
-							});
-						}
-					}
 				}.bind(this)
 			);
 		},
@@ -1100,35 +1053,9 @@
 		},
 		getConstants: function()
 		{
-			if (!this.data['GLOBAL_CONSTANTS'])
-			{
-				return [];
-			}
+			const context = BX.Bizproc.Automation.getGlobalContext();
 
-			if (!BX.Type.isArrayFilled(this.data['GLOBAL_CONSTANTS']))
-			{
-				return [];
-			}
-
-			const constants = [];
-			const globalConstants = this.data['GLOBAL_CONSTANTS'];
-			globalConstants.forEach((property) => {
-				constants.push({
-					ObjectId: 'GlobalConst',
-					SuperTitle: property['VisibilityName'],
-					Id: property['Id'],
-					Name: property['Name'],
-					Type: property['Type'],
-					BaseType: property['BaseType'],
-					Expression: property['Expression'],
-					SystemExpression: property['SystemExpression'],
-					Options: property['Options'],
-					Multiple: property['Multiple'],
-					Visibility: property['Visibility'],
-				});
-			});
-
-			return constants;
+			return context.automationGlobals.globalConstants;
 		},
 		getConstant: function(id)
 		{
@@ -1136,35 +1063,9 @@
 		},
 		getGVariables: function()
 		{
-			if (!this.data['GLOBAL_VARIABLES'])
-			{
-				return [];
-			}
+			const context = BX.Bizproc.Automation.getGlobalContext();
 
-			if (!BX.Type.isArrayFilled(this.data['GLOBAL_VARIABLES']))
-			{
-				return [];
-			}
-
-			const variables = [];
-			const globalVariables = this.data['GLOBAL_VARIABLES'];
-			globalVariables.forEach((property) => {
-				variables.push({
-					ObjectId: 'GlobalVar',
-					SuperTitle: property['VisibilityName'],
-					Id: property['Id'],
-					Name: property['Name'],
-					Type: property['Type'],
-					BaseType: property['BaseType'],
-					Expression: property['Expression'],
-					SystemExpression: property['SystemExpression'],
-					Options: property['Options'],
-					Multiple: property['Multiple'],
-					Visibility: property['Visibility'],
-				});
-			});
-
-			return variables;
+			return context.automationGlobals.globalVariables;
 		},
 		getGVariable: function(id)
 		{
@@ -1174,7 +1075,6 @@
 		{
 			return this.document.getFields();
 		},
-
 		initRobotSelector()
 		{
 			if (!this.robotSelector)
@@ -1219,14 +1119,20 @@
 											? 'setShowSupportingRobotGuide'
 											: 'setShowRobotGuide'
 									;
-									automationGuide[setShowRobotGuide](true, robot.node);
 
 									this.notifyAboutNewRobot(template, robot);
 
-									if (originalEvent.ctrlKey || originalEvent.metaKey)
+									if (!(originalEvent.ctrlKey || originalEvent.metaKey))
 									{
 										self.robotSelector.close();
 										template.openRobotSettingsDialog(robot);
+
+										template.subscribeOnce('Template:robot:closeSettings', () => {
+											automationGuide[setShowRobotGuide](true, robot.node);
+											automationGuide.start();
+											settings.set('robot-guide-shown', automationGuide.isShownRobotGuide);
+											settings.set('trigger-guide-shown', automationGuide.isShownTriggerGuide);
+										});
 									}
 								});
 							}
@@ -1255,14 +1161,22 @@
 								this.triggerManager.insertTriggerNode(stageId, trigger.node);
 								this.triggerManager.insertTrigger(trigger);
 
-								automationGuide.setShowTriggerGuide(true, trigger.node);
-
 								this.notifyAboutNewTrigger(trigger);
 
-								if (originalEvent.ctrlKey || originalEvent.metaKey)
+								if (!(originalEvent.ctrlKey || originalEvent.metaKey))
 								{
 									self.robotSelector.close();
 									this.triggerManager.openTriggerSettingsDialog(trigger);
+
+									this.triggerManager.subscribeOnce(
+										'TriggerManager:onCloseTriggerSettingsDialog',
+										() => {
+											automationGuide.setShowTriggerGuide(true, trigger.node);
+											automationGuide.start();
+											settings.set('robot-guide-shown', automationGuide.isShownRobotGuide);
+											settings.set('trigger-guide-shown', automationGuide.isShownTriggerGuide);
+										}
+									);
 								}
 							});
 						},
@@ -1292,10 +1206,6 @@
 							{
 								this.markModified();
 							}
-
-							automationGuide.start();
-							settings.set('robot-guide-shown', automationGuide.isShownRobotGuide);
-							settings.set('trigger-guide-shown', automationGuide.isShownTriggerGuide);
 						}
 					}
 				});
@@ -1495,11 +1405,9 @@
 		},
 		createTemplate: function (templateData)
 		{
-			var template = new BX.Bizproc.Automation.Template({
+			const template = new BX.Bizproc.Automation.Template({
 				constants: {},
-				globalConstants: this.component.getConstants(),
 				variables: {},
-				globalVariables: this.component.getGVariables(),
 				templateContainerNode: this.component.node,
 				delayMinLimitM: this.component.data['DELAY_MIN_LIMIT_M'],
 				userOptions: this.component.userOptions,
@@ -1771,20 +1679,6 @@
 			}
 			return modified;
 		},
-		updateGVariables: function ()
-		{
-			this.templates.forEach((template) =>
-			{
-				template.setGlobalVariables(this.component.getGVariables());
-			});
-		},
-		updateGConstants: function ()
-		{
-			this.templates.forEach((template) =>
-			{
-				template.setGlobalConstants(this.component.getConstants());
-			});
-		}
 	};
 
 	// -> FileSelector
@@ -2228,45 +2122,49 @@
 		}
 	};
 
-	var API = {
+	const API = {
 		documentName: null,
 		documentType: null,
 		documentFields: null,
 		documentSigned: null,
-		showRobotSettings: function(robotData, documentType, documentStatus, onSaveCallback)
-		{
-			var document = new BX.Bizproc.Automation.Document({
+		showRobotSettings: function (robotData, documentType, documentStatus, onSaveCallback) {
+			const document = new BX.Bizproc.Automation.Document({
 				rawDocumentType: documentType,
 				statusId: documentStatus,
 				documentFields: this.documentFields,
 				title: this.documentName,
 			});
-			var robot = new Robot({
+			const robot = new Robot({
 				document: document,
 				isFrameMode: false,
 			});
+			const automationGlobals = new BX.Bizproc.Automation.AutomationGlobals({
+				variables: [],
+				constants: [],
+			});
+
 			robot.init(robotData, BX.Bizproc.Automation.ViewMode.none());
 			BX.Bizproc.Automation.setGlobalContext(new BX.Bizproc.Automation.Context({
 				document: document,
 				signedDocument: this.documentSigned,
 				ajaxUrl: getAjaxUrl(),
+				automationGlobals: automationGlobals,
 			}));
 
-			var config = {
+			const config = {
 				document: document,
 				documentSigned: this.documentSigned,
 
 				ajaxUrl: getAjaxUrl(),
 			};
-			var tpl = new Template({
+			const tpl = new Template({
 				config: config,
 			});
 			tpl.init({DOCUMENT_FIELDS: this.documentFields}, Component.ViewMode.None);
 
 			tpl.subscribe('Template:help:show', event => {
 				event.preventDefault();
-				if (top.BX.Helper)
-				{
+				if (top.BX.Helper) {
 					top.BX.Helper.show('redirect=detail&code=14889274');
 				}
 			});
@@ -2275,55 +2173,60 @@
 		}
 	};
 
-	var showGlobals = {
-		showVariables: function (documentType)
+	const showGlobals = {
+		showVariables: function ()
 		{
-			var me = this;
-			BX.Bizproc.Globals.Manager.Instance.showGlobals(
-				BX.Bizproc.Globals.Manager.Instance.mode.variable,
-				documentType
-			).then(function (slider) {
-				me.onAfterSliderClose(slider, 'GLOBAL_VARIABLES');
-			});
+			const documentTypeSigned = this.component.data['DOCUMENT_TYPE_SIGNED'];
+			const mode = BX.Bizproc.Globals.Manager.Instance.mode.variable;
+
+			BX.Bizproc.Globals.Manager.Instance.showGlobals(mode, documentTypeSigned)
+				.then(this.onAfterSliderClose.bind(this, mode))
+			;
 		},
-		showConstants: function (documentType)
+		showConstants: function ()
 		{
-			var me = this;
-			BX.Bizproc.Globals.Manager.Instance.showGlobals(
-				BX.Bizproc.Globals.Manager.Instance.mode.constant,
-				documentType
-			).then(function (slider) {
-				me.onAfterSliderClose(slider, 'GLOBAL_CONSTANTS');
-			});
+			const documentTypeSigned = this.component.data['DOCUMENT_TYPE_SIGNED'];
+			const mode = BX.Bizproc.Globals.Manager.Instance.mode.constant;
+
+			BX.Bizproc.Globals.Manager.Instance.showGlobals(mode, documentTypeSigned)
+				.then(this.onAfterSliderClose.bind(this, mode))
+			;
 		},
-		onAfterSliderClose: function (slider, componentDataKey)
+		onAfterSliderClose: function (mode, slider)
 		{
-			var sliderInfo = slider.getData();
-			if (sliderInfo.get('upsert'))
+			if (!this.isCorrectMode(mode) || !slider)
 			{
-				var newGFields = sliderInfo.get('upsert');
-				for (var fieldId in newGFields)
-				{
-					this.component.data[componentDataKey][fieldId] = newGFields[fieldId];
-				}
-			}
-			if (sliderInfo.get('delete'))
-			{
-				var deletedGFields = sliderInfo.get('delete');
-				for (var i in deletedGFields)
-				{
-					delete this.component.data[componentDataKey][deletedGFields[i]];
-				}
+				return;
 			}
 
-			if (componentDataKey === 'GLOBAL_VARIABLES')
+			const updatedGlobals = slider.getData().get('upsert');
+			const deletedGlobals = slider.getData().get('delete');
+
+			const context = BX.Bizproc.Automation && BX.Bizproc.Automation.tryGetGlobalContext();
+			if (!context)
 			{
-				this.component.templateManager.updateGVariables();
+				return;
 			}
-			else if (componentDataKey === 'GLOBAL_CONSTANTS')
+
+			const automationGlobals = context.automationGlobals;
+			if (!automationGlobals)
 			{
-				this.component.templateManager.updateGConstants();
+				return;
 			}
+
+			if (BX.Type.isPlainObject(updatedGlobals))
+			{
+				automationGlobals.updateGlobals(mode, updatedGlobals);
+			}
+
+			if (BX.Type.isArrayFilled(deletedGlobals))
+			{
+				automationGlobals.deleteGlobals(mode, deletedGlobals);
+			}
+		},
+		isCorrectMode: function (mode)
+		{
+			return BX.Type.isStringFilled(mode) && Object.values(BX.Bizproc.Globals.Manager.Instance.mode).includes(mode);
 		}
 	}
 
@@ -2360,13 +2263,13 @@
 		},
 	};
 
-	var Designer = BX.Bizproc.Automation.Designer;
-	var Tracker = BX.Bizproc.Automation.Tracker;
-	var Helper = BX.Bizproc.Automation.Helper;
+	const Designer = BX.Bizproc.Automation.Designer;
+	const Tracker = BX.Bizproc.Automation.Tracker;
+	const Helper = BX.Bizproc.Automation.Helper;
 
-	var TriggerManager = BX.Bizproc.Automation.TriggerManager;
-	var Robot = BX.Bizproc.Automation.Robot;
-	var Template = BX.Bizproc.Automation.Template;
+	const TriggerManager = BX.Bizproc.Automation.TriggerManager;
+	const Robot = BX.Bizproc.Automation.Robot;
+	const Template = BX.Bizproc.Automation.Template;
 
 	BX.Bizproc.Automation.Component = Component;
 	BX.Bizproc.Automation.API = API;

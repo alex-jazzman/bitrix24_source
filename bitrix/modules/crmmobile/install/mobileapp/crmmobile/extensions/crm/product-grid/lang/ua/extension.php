@@ -13,4 +13,4 @@ $MESS["M_CRM_PRODUCT_GRID_EMPTY_TITLE2_QUOTE"] = "Додайте товари в
 $MESS["M_CRM_PRODUCT_GRID_EMPTY_TITLE2_SMART_INVOICE"] = "Додайте товари в рахунок";
 $MESS["M_CRM_PRODUCT_GRID_SUM_LOADING_ERROR"] = "Під час оновлення суми сталася помилка. Спробуйте повторити спробу трохи пізніше.";
 $MESS["M_CRM_RECEIVE_PAYMENT_PRODUCT_GRID_PICK_UP_PRODUCTS"] = "Виберіть товари";
-$MESS["M_CRM_RECEIVE_PAYMENT_PRODUCT_GRID_PICK_UP_PRODUCTS_DESCRIPTION"] = "Для цього натисніть на кнопку [b]«+»[/b] у правому нижньому кутку екрана";
+$MESS["M_CRM_RECEIVE_PAYMENT_PRODUCT_GRID_PICK_UP_PRODUCTS_DESCRIPTION"] = "В угоді немає неоплачених товарів. Додайте їх тут";

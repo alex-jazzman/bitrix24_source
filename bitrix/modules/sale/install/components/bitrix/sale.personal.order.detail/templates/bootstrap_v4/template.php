@@ -130,9 +130,9 @@ else
 									</div>
 									<div class="pt-3">
 										<a href="" onclick="return false;"
-										   class="sale-order-detail-more-info-less"><?= Loc::getMessage('SPOD_LIST_LESS') ?></a>
+											class="sale-order-detail-more-info-less"><?= Loc::getMessage('SPOD_LIST_LESS') ?></a>
 										<a href="" onclick="return false;"
-										   class="sale-order-detail-more-info-more"><?= Loc::getMessage('SPOD_LIST_MORE') ?></a>
+											class="sale-order-detail-more-info-more"><?= Loc::getMessage('SPOD_LIST_MORE') ?></a>
 									</div>
 								</div>
 
@@ -165,7 +165,7 @@ else
 									?>
 									<div class="col-sm-auto mb-3 text-center">
 										<a href="<?=$arResult["URL_TO_COPY"]?>"
-										   class="btn btn-primary btn-block btn-sm my-1"><?= Loc::getMessage('SPOD_ORDER_REPEAT') ?></a>
+											class="btn btn-primary btn-block btn-sm my-1"><?= Loc::getMessage('SPOD_ORDER_REPEAT') ?></a>
 										<? if ($arResult["CAN_CANCEL"] === "Y")
 										{
 											?>
@@ -579,8 +579,8 @@ else
 														<div
 															class="mb-2 sale-order-detail-payment-options-shipment-button-container">
 															<a href="" onclick="return false"
-															   class="sale-order-detail-payment-options-shipment-button-element"
-															   href="<?= $shipment['TRACKING_URL'] ?>"><?= Loc::getMessage('SPOD_ORDER_CHECK_TRACKING') ?></a>
+																class="sale-order-detail-payment-options-shipment-button-element"
+																href="<?= $shipment['TRACKING_URL'] ?>"><?= Loc::getMessage('SPOD_ORDER_CHECK_TRACKING') ?></a>
 														</div>
 														<?
 													}
@@ -596,7 +596,15 @@ else
 
 											<div class="row sale-order-detail-payment-options-shipment-composition-map" style="display: none;">
 												<div class="col">
-													<? $store = $arResult['DELIVERY']['STORE_LIST'][$shipment['STORE_ID']];
+													<?php
+													$store = null;
+													if (
+														isset($shipment['STORE_ID'])
+														&& isset($arResult['DELIVERY']['STORE_LIST'][$shipment['STORE_ID']])
+													)
+													{
+														$store = $arResult['DELIVERY']['STORE_LIST'][$shipment['STORE_ID']];
+													}
 													if (isset($store))
 													{
 														?>
@@ -667,7 +675,8 @@ else
 																			<tr>
 																				<td class="sale-order-detail-order-item-img-block">
 																					<a href="<?=htmlspecialcharsbx($basketItem['DETAIL_PAGE_URL'])?>">
-																						<? if($basketItem['PICTURE']['SRC'] <> '')
+																						<?
+																						if(is_array($basketItem['PICTURE']))
 																						{
 																							$imageSrc = htmlspecialcharsbx($basketItem['PICTURE']['SRC']);
 																						}
@@ -681,7 +690,7 @@ else
 																				</td>
 																				<td class="sale-order-detail-order-item-properties" style="min-width: 250px;">
 																					<a class="sale-order-detail-order-item-title"
-																					   href="<?=htmlspecialcharsbx($basketItem['DETAIL_PAGE_URL'])?>">
+																						href="<?=htmlspecialcharsbx($basketItem['DETAIL_PAGE_URL'])?>">
 																						<?=htmlspecialcharsbx($basketItem['NAME'])?>
 																					</a>
 																					<? if (isset($basketItem['PROPS']) && is_array($basketItem['PROPS']))
@@ -761,7 +770,7 @@ else
 													<td class="sale-order-detail-order-item-img-block">
 														<a href="<?=$basketItem['DETAIL_PAGE_URL']?>">
 															<?
-															if($basketItem['PICTURE']['SRC'] <> '')
+															if(is_array($basketItem['PICTURE']))
 															{
 																$imageSrc = $basketItem['PICTURE']['SRC'];
 															}
@@ -775,7 +784,7 @@ else
 													</td>
 													<td class="sale-order-detail-order-item-properties" style="min-width: 250px;">
 														<a class="sale-order-detail-order-item-title"
-														   href="<?=$basketItem['DETAIL_PAGE_URL']?>"><?=htmlspecialcharsbx($basketItem['NAME'])?></a>
+															href="<?=$basketItem['DETAIL_PAGE_URL']?>"><?=htmlspecialcharsbx($basketItem['NAME'])?></a>
 														<? if (isset($basketItem['PROPS']) && is_array($basketItem['PROPS']))
 														{
 															foreach ($basketItem['PROPS'] as $itemProps)
@@ -842,14 +851,16 @@ else
 						<div class="col sale-order-detail-total-payment-container">
 							<div class="row">
 								<ul class="col-md-8 col sale-order-detail-total-payment-list-left">
-									<? if (floatval($arResult["ORDER_WEIGHT"])) { ?>
-										<li class="sale-order-detail-total-payment-list-left-item"><?= Loc::getMessage('SPOD_TOTAL_WEIGHT')?>:</li>
-									<? }
+									<?php
+									if (floatval($arResult["ORDER_WEIGHT"]))
+									{
+										?><li class="sale-order-detail-total-payment-list-left-item"><?= Loc::getMessage('SPOD_TOTAL_WEIGHT')?>:</li><?php
+									}
 
-									if ($arResult['PRODUCT_SUM_FORMATED'] != $arResult['PRICE_FORMATED'] && !empty($arResult['PRODUCT_SUM_FORMATED'])) {
-									?>
-										<li class="sale-order-detail-total-payment-list-left-item"><?= Loc::getMessage('SPOD_COMMON_SUM')?>:</li>
-									<? }
+									if ($arResult['PRODUCT_SUM_FORMATED'] != $arResult['PRICE_FORMATED'] && !empty($arResult['PRODUCT_SUM_FORMATED']))
+									{
+										?><li class="sale-order-detail-total-payment-list-left-item"><?= Loc::getMessage('SPOD_COMMON_SUM')?>:</li><?
+									}
 
 									if($arResult["PRICE_DELIVERY_FORMATED"] <> '')
 									{
@@ -857,9 +868,11 @@ else
 										<li class="sale-order-detail-total-payment-list-left-item"><?= Loc::getMessage('SPOD_DELIVERY') ?>
 											:
 										</li>
-									<? }
+									<?php
+									}
 
-									if ((float)$arResult["TAX_VALUE"] > 0) {
+									if ((float)$arResult["TAX_VALUE"] > 0)
+									{
 									?>
 										<li class="sale-order-detail-total-payment-list-left-item"><?= Loc::getMessage('SPOD_TAX') ?>:</li>
 									<? } ?>
@@ -867,22 +880,26 @@ else
 								</ul>
 								<ul class="col-md-4 col sale-order-detail-total-payment-list-right">
 									<?
-									if (floatval($arResult["ORDER_WEIGHT"])) { ?>
-										<li class="sale-order-detail-total-payment-list-right-item"><?= $arResult['ORDER_WEIGHT_FORMATED'] ?></li>
-									<? }
+									if (floatval($arResult["ORDER_WEIGHT"]))
+									{
+										?><li class="sale-order-detail-total-payment-list-right-item"><?= $arResult['ORDER_WEIGHT_FORMATED'] ?></li><?
+									}
 
-									if ($arResult['PRODUCT_SUM_FORMATED'] != $arResult['PRICE_FORMATED'] && !empty($arResult['PRODUCT_SUM_FORMATED'])) { ?>
-										<li class="sale-order-detail-total-payment-list-right-item"><?=$arResult['PRODUCT_SUM_FORMATED']?></li>
-									<? }
+									if ($arResult['PRODUCT_SUM_FORMATED'] != $arResult['PRICE_FORMATED'] && !empty($arResult['PRODUCT_SUM_FORMATED']))
+									{
+										?><li class="sale-order-detail-total-payment-list-right-item"><?=$arResult['PRODUCT_SUM_FORMATED']?></li><?php
+									}
 
 									if($arResult["PRICE_DELIVERY_FORMATED"] <> '')
 									{ ?>
 										<li class="sale-order-detail-total-payment-list-right-item"><?= $arResult["PRICE_DELIVERY_FORMATED"] ?></li>
 									<? }
 
-									if ((float)$arResult["TAX_VALUE"] > 0) { ?>
-										<li class="sale-order-detail-total-payment-list-right-item"><?= $arResult["TAX_VALUE_FORMATED"] ?></li>
-									<? } ?>
+									if ((float)$arResult["TAX_VALUE"] > 0)
+									{
+										?><li class="sale-order-detail-total-payment-list-right-item"><?= $arResult["TAX_VALUE_FORMATED"] ?></li><?
+									}
+									?>
 									<li class="sale-order-detail-total-payment-list-right-item"><?=$arResult['PRICE_FORMATED']?></li>
 								</ul>
 							</div>
@@ -920,5 +937,3 @@ else
 	</script>
 <?
 }
-?>
-

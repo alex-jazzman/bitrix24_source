@@ -406,11 +406,6 @@ export class RobotSelector extends EventEmitter
 					item: event.getData().eventData,
 					stageId: this.#stageId,
 				});
-
-				if (originalEvent.ctrlKey || originalEvent.metaKey)
-				{
-					this.#getCatalog().close();
-				}
 			}
 		};
 
@@ -570,7 +565,7 @@ export class RobotSelector extends EventEmitter
 				{zones: ['kz'], id: 1923, lang: 'ru', sec: 'skbmjc'},
 				{zones: ['by'], id: 1931, lang: 'ru', sec: 'om1f4c'},
 				{zones: ['en'], id: 1937, lang: 'en', sec: 'yu3ljc'},
-				{zones: ['es'], id: 1947, lang: 'es', sec: 'wuezi9'},
+				{zones: ['la', 'co', 'mx'], id: 1947, lang: 'es', sec: 'wuezi9'},
 				{zones: ['br'], id: 1948, lang: 'br', sec: 'j5gglp'},
 				{zones: ['de'], id: 1946, lang: 'de', sec: '6tpoy4'},
 			],

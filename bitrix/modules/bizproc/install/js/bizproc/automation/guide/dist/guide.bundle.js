@@ -64,7 +64,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    const guide = babelHelpers.classPrivateFieldLooseBase(this, _getGuide)[_getGuide]({
 	      target: '[data-id="tab_automation"]',
 	      title: main_core.Loc.getMessage('BIZPROC_JS_WOW_MOMENT_CRM_CHECK_AUTOMATION_TITLE'),
-	      text: main_core.Loc.getMessage('BIZPROC_JS_WOW_MOMENT_CRM_CHECK_AUTOMATION_TEXT')
+	      text: main_core.Loc.getMessage('BIZPROC_JS_WOW_MOMENT_CRM_CHECK_AUTOMATION_TEXT'),
+	      condition: {
+	        top: true,
+	        bottom: false,
+	        color: 'primary'
+	      }
 	    });
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isTargetExist)[_isTargetExist](guide.getCurrentStep().getTarget()) || guide.getCurrentStep().getTarget().offsetTop > 0) {
 	      guide.getCurrentStep().setTarget('.main-buttons-item.main-buttons-item-more-default.main-buttons-item-more.--has-menu');
@@ -193,6 +198,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	function _deleteUserOption2() {
 	  BX.userOptions.del('bizproc.automation.guide', 'crm_check_automation');
 	}
+	// region guide
 	function _getGuide2(options) {
 	  var _options$article;
 	  return new ui_tour.Guide({
@@ -201,11 +207,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      title: options.title,
 	      text: options.text,
 	      position: options.position | 'bottom',
-	      condition: main_core.Type.isPlainObject(options.condition) ? options.condition : {
-	        top: true,
-	        bottom: false,
-	        color: 'primary'
-	      },
+	      condition: main_core.Type.isPlainObject(options.condition) ? options.condition : null,
 	      article: (_options$article = options.article) != null ? _options$article : null
 	    }],
 	    onEvents: true

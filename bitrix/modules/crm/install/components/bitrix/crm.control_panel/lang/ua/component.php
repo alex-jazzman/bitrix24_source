@@ -72,6 +72,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_STORE_DOCS"] = "Складський облік";
 $MESS["CRM_CTRL_PANEL_ITEM_STREAM"] = "Стрічка";
 $MESS["CRM_CTRL_PANEL_ITEM_STREAM_TITLE"] = "Жива стрічка CRM";
 $MESS["CRM_CTRL_PANEL_ITEM_TELEPHONY"] = "Телефонія";
+$MESS["CRM_CTRL_PANEL_ITEM_TERMINAL"] = "Платіжний термінал";
 $MESS["CRM_CTRL_PANEL_ITEM_WEBFORM"] = "CRM-форми";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не встановлений.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонено";

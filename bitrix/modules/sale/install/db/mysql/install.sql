@@ -1252,7 +1252,8 @@ create table if not exists b_sale_order_payment_item(
 	QUANTITY DECIMAL(18,4) NOT NULL,
 	XML_ID varchar(255) null,
 	PRIMARY KEY (ID),
-	INDEX IX_S_O_PI_ENTITY_ID_TYPE (ENTITY_ID, ENTITY_TYPE)
+	INDEX IX_S_O_PI_ENTITY_ID_TYPE (ENTITY_ID, ENTITY_TYPE),
+	INDEX IX_S_O_PI_PAYMENT_ID (PAYMENT_ID)
 );
 
 create table if not exists b_sale_product2product

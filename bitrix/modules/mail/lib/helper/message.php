@@ -19,7 +19,7 @@ class Message
 
 	public static function getMaxAttachedFilesSize()
 	{
-		return (int)Option::get('main', 'max_file_size', 0);
+		return (int)Option::get('main', 'max_file_size_mail_attachments', '20000000');
 	}
 
 	public static function getMaxAttachedFilesSizeAfterEncoding()
