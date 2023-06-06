@@ -425,7 +425,7 @@ endif;
 	BX.ready(
 		function()
 		{
-			var editor = BX.CrmActivityEditor.create(
+			BX.CrmActivityEditor.create(
 			'<?= CUtil::JSEscape($editorID) ?>',
 			<?= CUtil::PhpToJSObject($editorCfg) ?>,
 			<?= CUtil::PhpToJSObject(isset($arResult['EDITOR_ITEMS']) ? $arResult['EDITOR_ITEMS'] : array()) ?>

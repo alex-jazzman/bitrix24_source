@@ -111,6 +111,7 @@ else
 
 
 	$DB->Query("FLUSH TABLES WITH READ LOCK", false, '', array("fixed_connection"=>true));
+	$nodeDB->Query("SET FOREIGN_KEY_CHECKS=0", false, '', array("fixed_connection"=>true));
 
 	$strError = "";
 	$end_time = time()+5;

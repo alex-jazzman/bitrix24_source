@@ -139,6 +139,7 @@ Vue.component(config.templateRowName,
 							iblockId: Text.toNumber(this.options.iblockId),
 							basePriceId: Text.toNumber(this.options.basePriceId),
 							currency: this.options.currency,
+							isStoreCollectable: false,
 							isSimpleModel: (
 								Type.isStringFilled(this.basketItem.fields?.name)
 								&& productId <= 0

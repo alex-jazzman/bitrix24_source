@@ -184,13 +184,29 @@ final class Assembler
 					$value->setValue((string)$compatibleValue['VALUE']);
 				}
 
-				// update extra data
-				$extra = $value->getValueExtra();
-				if ($extra instanceof ValueExtra)
+				$compatibleValueCountryCode = null;
+				if (isset($compatibleValue['VALUE_EXTRA']['COUNTRY_CODE']))
 				{
-					if ($extra->getCountryCode() !== $compatibleValue['VALUE_COUNTRY_CODE'])
+					$compatibleValueCountryCode = (string)$compatibleValue['VALUE_EXTRA']['COUNTRY_CODE'];
+				}
+				elseif (isset($compatibleValue['VALUE_COUNTRY_CODE']))
+				{
+					$compatibleValueCountryCode = (string)$compatibleValue['VALUE_COUNTRY_CODE'];
+				}
+
+				if ($compatibleValueCountryCode === null && $value->getValueExtra())
+				{
+					$value->getValueExtra()->setCountryCode(null);
+				}
+				elseif ($compatibleValueCountryCode !== null)
+				{
+					if ($value->getValueExtra() && $value->getValueExtra()->getCountryCode() !== $compatibleValueCountryCode)
 					{
-						$value->setValueExtra((new ValueExtra())->setCountryCode((string)$compatibleValue['VALUE_COUNTRY_CODE']));
+						$value->getValueExtra()->setCountryCode($compatibleValueCountryCode);
+					}
+					elseif ($value->getValueExtra() === null)
+					{
+						$value->setValueExtra((new ValueExtra())->setCountryCode($compatibleValueCountryCode));
 					}
 				}
 

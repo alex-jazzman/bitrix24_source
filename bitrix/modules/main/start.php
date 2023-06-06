@@ -13,7 +13,10 @@ require_once(__DIR__."/lib/loader.php");
 require_once(__DIR__.'/include/autoload.php');
 
 define("START_EXEC_TIME", microtime(true));
-define("B_PROLOG_INCLUDED", true);
+if (!defined('B_PROLOG_INCLUDED'))
+{
+	define("B_PROLOG_INCLUDED", true);
+}
 
 require_once(__DIR__."/classes/general/version.php");
 
@@ -95,14 +98,11 @@ if ($show_sql_stat == "Y")
 	$application->getConnection()->startTracker();
 }
 
-//licence key
-$LICENSE_KEY = "";
-if(file_exists(($_fname = $_SERVER["DOCUMENT_ROOT"].BX_ROOT."/license_key.php")))
-	include($_fname);
-if($LICENSE_KEY == "" || strtoupper($LICENSE_KEY) == "DEMO")
-	define("LICENSE_KEY", "DEMO");
-else
-	define("LICENSE_KEY", $LICENSE_KEY);
+/**
+ * License key.
+ * @deprecated Use $application->getLicense()->getKey()
+ */
+define("LICENSE_KEY", $application->getLicense()->getKey());
 
 //language independed classes
 require_once(__DIR__."/classes/general/cache.php");
@@ -112,6 +112,6 @@ error_reporting(E_COMPILE_ERROR|E_ERROR|E_CORE_ERROR|E_PARSE);
 
 if (file_exists(($fname = __DIR__."/classes/general/update_db_updater.php")))
 {
-	$US_HOST_PROCESS_MAIN = True;
+	$US_HOST_PROCESS_MAIN = true;
 	include($fname);
 }

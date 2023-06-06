@@ -192,7 +192,7 @@ class YandexCheckoutHandler
 	 */
 	protected function needCreateYandexPayment(Payment $payment, Request $request, $additionalParams = []): bool
 	{
-		if (isset($additionalParams) && $additionalParams["status"] === self::PAYMENT_STATUS_SUCCEEDED)
+		if (($additionalParams['status'] ?? '') === self::PAYMENT_STATUS_SUCCEEDED)
 		{
 			return false;
 		}

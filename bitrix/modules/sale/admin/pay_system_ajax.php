@@ -45,6 +45,7 @@ if($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_ses
 	switch ($action)
 	{
 		case "get_restriction_params_html":
+			Manager::getClassesList();
 			$className = trim((string)$request->get('className'));
 			$params = $request->get('params');
 			if (!is_array($params))
@@ -59,7 +60,6 @@ if($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_ses
 				throw new \Bitrix\Main\ArgumentNullException("className");
 			}
 
-			Manager::getClassesList();
 			/** @var \Bitrix\Sale\Services\Base\Restriction $className */
 			$paramsStructure = $className::getParamsStructure($paySystemId);
 			$params = $className::prepareParamsValues($params, $paySystemId);

@@ -143,7 +143,7 @@ class EventMessageCompiler
 			{
 				$eventSiteFields["HTML_".$fieldKey] = nl2br(htmlspecialcharsbx($fieldValue, ENT_COMPAT, false));
 
-				if (mb_strpos($fieldValue, "<") === false)
+				if (strpos($fieldValue, "<") === false)
 				{
 					$eventSiteFields[$fieldKey] = nl2br($fieldValue);
 				}
@@ -240,7 +240,7 @@ class EventMessageCompiler
 		}
 
 
-		if(count($eventMessageAttachment)>0)
+		if(!empty($eventMessageAttachment))
 		{
 			$attachFileList = array();
 			$eventMessageAttachment = array_unique($eventMessageAttachment);
@@ -263,7 +263,7 @@ class EventMessageCompiler
 			$this->mailAttachment = $attachFileList;
 		}
 
-		if (count($eventFilesContent) > 0)
+		if (!empty($eventFilesContent))
 		{
 			foreach ($eventFilesContent as $item)
 			{
@@ -302,7 +302,7 @@ class EventMessageCompiler
 		if(isset($messageFields["BCC"]) && $messageFields["BCC"]!='')
 		{
 			$bcc = $this->replaceTemplate($messageFields["BCC"], $arFields);
-			if(mb_strpos($bcc, "@") !== false)
+			if(strpos($bcc, "@") !== false)
 				$arMailFields["BCC"] = $bcc;
 		}
 
@@ -339,7 +339,7 @@ class EventMessageCompiler
 		if(isset($this->event["DUPLICATE"]) && $this->event["DUPLICATE"]=="Y")
 		{
 			$all_bcc = Config\Option::get("main", "all_bcc");
-			if(mb_strpos($all_bcc, "@") !== false)
+			if(strpos($all_bcc, "@") !== false)
 				$arMailFields["BCC"] .= ($all_bcc <> ''?($arMailFields["BCC"] <> ''?",":"").$all_bcc:"");
 		}
 

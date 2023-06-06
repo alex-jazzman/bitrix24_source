@@ -1821,6 +1821,7 @@ abstract class Mailbox
 				$this->mailbox['USER_ID'],
 				'new_message',
 				array(
+					'mailboxOwnerId' => $this->mailbox['USER_ID'],
 					'mailboxId' => $this->mailbox['ID'],
 					'count' => $count,
 					'message' => $message,

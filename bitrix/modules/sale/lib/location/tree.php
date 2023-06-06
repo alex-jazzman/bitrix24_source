@@ -826,7 +826,7 @@ abstract class Tree extends Entity\DataManager
 				$neighbourId,
 				($data['INSERT_BEFORE'] ? self::SORT_FREE_BEFORE : self::SORT_FREE_AFTER),
 				$data['PARENT_ID'],
-				isset($data['SORT']) ? $data['SORT'] : false
+				$data['SORT'] ?? false
 			);
 
 			unset($data['INSERT_AFTER']);
@@ -861,7 +861,7 @@ abstract class Tree extends Entity\DataManager
 	}
 
 	// act in assumption sort field is always defined for each node and also it`s value positive signed
-	protected final static function makeSortSpace($primary, $direction = self::SORT_FREE_AFTER, $primaryParent, $knownSort = false)
+	protected final static function makeSortSpace($primary, $direction, $primaryParent, $knownSort = false)
 	{
 		$primary = Assert::expectIntegerPositive($primary, '$primary');
 		$primaryParent = Assert::expectIntegerPositive($primary, '$primaryParent');

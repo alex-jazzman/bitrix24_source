@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Service\Factory;
 
-use Bitrix\Crm\Automation\Trigger\InvoiceTrigger;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
@@ -22,7 +21,6 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\AddResult;
 use Bitrix\Main\ORM\Fields;
-use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 
 class SmartInvoice extends Dynamic
@@ -72,7 +70,9 @@ class SmartInvoice extends Dynamic
 
 		$settings[Item\SmartInvoice::FIELD_NAME_COMMENTS] = [
 			'TYPE' => Field::TYPE_TEXT,
-			'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+			'SETTINGS' => [
+				'isFlexibleContentType' => true,
+			],
 		];
 		$settings[Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = [
 			'TYPE' => Field::TYPE_STRING,

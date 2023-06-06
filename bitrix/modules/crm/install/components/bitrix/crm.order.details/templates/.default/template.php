@@ -120,7 +120,6 @@ $APPLICATION->IncludeComponent(
 		),
 		'TIMELINE' => array(
 			'GUID' => "{$guid}_timeline",
-			'ENABLE_WAIT' => true,
 			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES'],
 			'ENABLE_SALESCENTER' => false,
 		),

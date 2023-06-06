@@ -244,12 +244,21 @@ $strPath = "";
 $jsPath  = "";
 if(intval($find_section_section) > 0)
 {
-	$nav = CIBlockSection::GetNavChain($IBLOCK_ID, $find_section_section);
-	while($ar_nav = $nav->GetNext())
+	$nav = CIBlockSection::GetNavChain(
+		$IBLOCK_ID,
+		$find_section_section,
+		[
+			'ID',
+			'NAME',
+		],
+		true
+	);
+	foreach ($nav as $ar_nav)
 	{
-		$strPath .= htmlspecialcharsbx($ar_nav["~NAME"], ENT_QUOTES)."&nbsp;/&nbsp;";
-		$jsPath .= htmlspecialcharsbx(CUtil::JSEscape($ar_nav["~NAME"]), ENT_QUOTES)."&nbsp;/&nbsp;";
+		$strPath .= htmlspecialcharsbx($ar_nav["NAME"], ENT_QUOTES)."&nbsp;/&nbsp;";
+		$jsPath .= htmlspecialcharsbx(CUtil::JSEscape($ar_nav["NAME"]), ENT_QUOTES)."&nbsp;/&nbsp;";
 	}
+	unset($nav);
 }
 
 $arUsersCache = array();
@@ -333,8 +342,16 @@ if($IBLOCK_ID > 0)
 	$chain = $lAdmin->CreateChain();
 	if(intval($find_section_section)>0)
 	{
-		$nav = CIBlockSection::GetNavChain($IBLOCK_ID, $find_section_section);
-		while($ar_nav = $nav->GetNext())
+		$nav = CIBlockSection::GetNavChain(
+			$IBLOCK_ID,
+			$find_section_section,
+			[
+				'ID',
+				'NAME',
+			],
+			true
+		);
+		foreach ($nav as $ar_nav)
 		{
 			if($find_section_section==$ar_nav["ID"])
 			{

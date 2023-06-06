@@ -3,8 +3,8 @@
 use Bitrix\Crm\Category\ItemCategoryUserField;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
-use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UserField\Display;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -1447,9 +1447,9 @@ class CCrmUserType
 	}
 
 	// Get Fields Metadata
-	public function PrepareFieldsInfo(&$fieldsInfo)
+	public function PrepareFieldsInfo(&$fieldsInfo, array $params = [])
 	{
-		$arUserFields = $this->GetAbstractFields();
+		$arUserFields = $this->GetAbstractFields($params);
 
 		$enumFields = [];
 		foreach($arUserFields as $FIELD_NAME => $arUserField)
@@ -1898,14 +1898,27 @@ class CCrmUserType
 			elseif ($typeID == 'crm' && isset($arFields[$FIELD_NAME]))
 			{
 				if (!is_array($arFields[$FIELD_NAME]))
+				{
 					$arFields[$FIELD_NAME] = explode(';', $arFields[$FIELD_NAME]);
+				}
 				else
 				{
-					$ar = Array();
+					$ar = [];
 					foreach ($arFields[$FIELD_NAME] as $value)
-						foreach(explode(';', $value) as $val)
+					{
+						if (!is_array($value))
+						{
+							$value = explode(';', $value);
+						}
+
+						foreach ($value as $val)
+						{
 							if (!empty($val))
+							{
 								$ar[$val] = $val;
+							}
+						}
+					}
 					$arFields[$FIELD_NAME] = $ar;
 				}
 

@@ -12,6 +12,7 @@
 	var _stages = /*#__PURE__*/new WeakMap();
 	var _categoryContainer = /*#__PURE__*/new WeakMap();
 	var _stagesContainer = /*#__PURE__*/new WeakMap();
+	var _isRobot = /*#__PURE__*/new WeakMap();
 	var CompleteTaskActivity = /*#__PURE__*/function () {
 	  function CompleteTaskActivity(options) {
 	    babelHelpers.classCallCheck(this, CompleteTaskActivity);
@@ -35,16 +36,29 @@
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _isRobot, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldSet(this, _form, document.forms.namedItem(options.formName));
 	    babelHelpers.classPrivateFieldSet(this, _categoryContainer, babelHelpers.classPrivateFieldGet(this, _form)['target_category']);
 	    babelHelpers.classPrivateFieldSet(this, _stagesContainer, babelHelpers.classPrivateFieldGet(this, _form)['target_status[]']);
 	    babelHelpers.classPrivateFieldSet(this, _stages, options.stages);
 	    babelHelpers.classPrivateFieldSet(this, _chosenStages, new Set(options.chosenStages));
+	    babelHelpers.classPrivateFieldSet(this, _isRobot, options.isRobot);
 	  }
 	  babelHelpers.createClass(CompleteTaskActivity, [{
 	    key: "init",
 	    value: function init() {
-	      this.updateStages();
+	      if (babelHelpers.classPrivateFieldGet(this, _categoryContainer).options.length <= 1) {
+	        if (babelHelpers.classPrivateFieldGet(this, _isRobot)) {
+	          main_core.Dom.remove(babelHelpers.classPrivateFieldGet(this, _categoryContainer).parentElement);
+	        } else {
+	          main_core.Dom.remove(babelHelpers.classPrivateFieldGet(this, _categoryContainer).parentElement.parentElement);
+	        }
+	      } else {
+	        this.updateStages();
+	      }
 	    }
 	  }, {
 	    key: "updateStages",

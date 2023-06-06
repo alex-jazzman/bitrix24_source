@@ -5,18 +5,15 @@ use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
-
+use Bitrix\Disk;
 use Bitrix\ImOpenLines;
-
 use Bitrix\ImConnector;
 use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\InteractiveMessage;
-
 use Bitrix\Im\Bot\Keyboard;
-
-use Bitrix\Im\Text as ImText;
-use Bitrix\Im\User as ImUser;
+use Bitrix\Im\Text;
+use Bitrix\Im\User;
 use Bitrix\Im\Model\ChatTable;
 
 Loc::loadMessages(__FILE__);
@@ -25,7 +22,6 @@ class Connector
 {
 	public const TYPE_LIVECHAT = 'livechat';
 	public const TYPE_NETWORK = 'network';
-	public const TYPE_CONNECTOR = 'connector';
 
 	public const EVENT_IMOPENLINE_MESSAGE_SEND = 'OnImopenlineMessageSend';
 	public const EVENT_IMOPENLINE_MESSAGE_RECEIVE = 'OnImopenlineMessageReceive';
@@ -34,7 +30,6 @@ class Connector
 
 	public static $noVote = [
 		self::TYPE_LIVECHAT,
-		//self::TYPE_NETWORK
 	];
 
 	/** @var BasicError|Error|null */
@@ -415,11 +410,13 @@ class Connector
 							)
 							{
 								$tracker = new ImOpenLines\Tracker();
-								$tracker->setSession($session);
-								$tracker->message([
-									'ID' => $messageId,
-									'TEXT' => $addMessage["MESSAGE"]
-								]);
+								$tracker
+									->setSession($session)
+									->trackMessage([
+										'ID' => $messageId,
+										'TEXT' => $addMessage["MESSAGE"]
+									])
+								;
 							}
 							if ($params['message']['id'])
 							{
@@ -445,6 +442,7 @@ class Connector
 									\CIMMessageParam::SendPull($params['message']['id'], array_keys($updateParams));
 
 									ImOpenLines\Mail::removeSessionFromMailQueue($session->getData('ID'), false);
+									Session::setLastSendMailId($session->getData(), $params['message']['id']);
 								}
 
 								\CIMMessageParam::Set($messageId, ['CONNECTOR_MID' => $params['message']['id']]);
@@ -545,7 +543,7 @@ class Connector
 							$this->callMessageTrigger($session, $messageId, $addMessage);
 
 							//In case it's not a vote message or system message we make a new record
-							if (!$voteSession && $params['message']['user_id'] != 0 && !ImUser::getInstance($params['message']['user_id'])->isBot())
+							if (!$voteSession && $params['message']['user_id'] != 0 && !User::getInstance($params['message']['user_id'])->isBot())
 							{
 								$kpi = new KpiManager($session->getData('ID'));
 								$kpi->addMessage(
@@ -611,7 +609,7 @@ class Connector
 			];
 			if (Loader::includeModule('im'))
 			{
-				$message['PLAIN_TEXT'] = ImText::removeBbCodes($messageData['MESSAGE']);
+				$message['PLAIN_TEXT'] = Text::removeBbCodes($messageData['MESSAGE']);
 			}
 
 			$result = $crm->executeAutomationMessageTrigger(
@@ -626,6 +624,8 @@ class Connector
 		return $result;
 	}
 
+	//region Output
+
 	/**
 	 * @param $params
 	 * @return bool
@@ -637,14 +637,29 @@ class Connector
 			return false;
 		}
 
-		$chat = new Chat();
-		$result = $chat->load(Array(
-			'USER_CODE' => self::getUserCode($params['connector']),
-			'ONLY_LOAD' => 'Y',
-		));
-		if (!$result)
+		$connector = $params['connector'];
+		if (self::isEnableGroupByChat($params['connector']['connector_id']))
 		{
-			return false;
+			$userCodeFail = self::getUserCode($connector);
+
+			$connector['user_id'] = '0';
+			$userCode = self::getUserCode($connector);
+		}
+		else
+		{
+			$userCode = self::getUserCode($connector);
+
+			$connector['user_id'] = '0';
+			$userCodeFail = self::getUserCode($connector);
+		}
+
+		$chat = new Chat();
+		if (!$chat->load(['USER_CODE' => $userCode, 'ONLY_LOAD' => 'Y']))
+		{
+			if (!$chat->load(['USER_CODE' => $userCodeFail, 'ONLY_LOAD' => 'Y']))
+			{
+				return false;
+			}
 		}
 
 		$messageIds = \CIMMessageParam::GetMessageIdByParam('CONNECTOR_MID', $params['message']['id'], $chat->getData('ID'));
@@ -674,14 +689,29 @@ class Connector
 			return false;
 		}
 
-		$chat = new Chat();
-		$result = $chat->load(Array(
-			'USER_CODE' => self::getUserCode($params['connector']),
-			'ONLY_LOAD' => 'Y',
-		));
-		if (!$result)
+		$connector = $params['connector'];
+		if (self::isEnableGroupByChat($params['connector']['connector_id']))
 		{
-			return false;
+			$userCodeFail = self::getUserCode($connector);
+
+			$connector['user_id'] = '0';
+			$userCode = self::getUserCode($connector);
+		}
+		else
+		{
+			$userCode = self::getUserCode($connector);
+
+			$connector['user_id'] = '0';
+			$userCodeFail = self::getUserCode($connector);
+		}
+
+		$chat = new Chat();
+		if (!$chat->load(['USER_CODE' => $userCode, 'ONLY_LOAD' => 'Y']))
+		{
+			if (!$chat->load(['USER_CODE' => $userCodeFail, 'ONLY_LOAD' => 'Y']))
+			{
+				return false;
+			}
 		}
 
 		$messageIds = \CIMMessageParam::GetMessageIdByParam('CONNECTOR_MID', $params['message']['id'], $chat->getData('ID'));
@@ -816,7 +846,7 @@ class Connector
 				$params['no_session'] !== 'Y' &&
 				$params['message']['system'] !== 'Y' &&
 				$result->isSuccess() &&
-				!ImUser::getInstance($session->getData('OPERATOR_ID'))->isBot()
+				!User::getInstance($session->getData('OPERATOR_ID'))->isBot()
 			)
 			{
 				KpiManager::setSessionLastKpiMessageAnswered($session->getData('ID'));
@@ -932,6 +962,8 @@ class Connector
 		return false;
 	}
 
+	//endregion
+
 	/**
 	 * @param $params
 	 * @return string
@@ -967,7 +999,7 @@ class Connector
 			return true;
 		}
 
-		if (ImUser::getInstance($fields['FROM_USER_ID'])->isConnector())
+		if (User::getInstance($fields['FROM_USER_ID'])->isConnector())
 		{
 			return true;
 		}
@@ -1171,7 +1203,7 @@ class Connector
 
 		if ($messageFields['AUTHOR_ID'] > 0)
 		{
-			$user = ImUser::getInstance($messageFields['AUTHOR_ID']);
+			$user = User::getInstance($messageFields['AUTHOR_ID']);
 			if ($user->isConnector())
 			{
 				return false;
@@ -1324,7 +1356,7 @@ class Connector
 					//for livechat only condition
 					if (
 						$messageFields['SYSTEM'] !== 'Y'
-						&& !ImUser::getInstance($session->getData('OPERATOR_ID'))->isBot()
+						&& !User::getInstance($session->getData('OPERATOR_ID'))->isBot()
 
 					)
 					{
@@ -1432,60 +1464,57 @@ class Connector
 			}
 
 			$files = [];
-			if (isset($messageFields['FILES']) && Loader::includeModule('disk'))
+			if (
+				!empty($messageFields['FILES'])
+				&& is_array($messageFields['FILES'])
+				&& Loader::includeModule('disk')
+			)
 			{
-				$config = Model\ConfigTable::getById($lineId)->fetch();
-				$langId = '';
-				if ($config && $config['LANGUAGE_ID'])
-				{
-					$langId = mb_strtolower($config['LANGUAGE_ID']);
-				}
-
 				foreach ($messageFields['FILES'] as $file)
 				{
-					$fileModel = \Bitrix\Disk\File::loadById($file['id']);
+					$fileModel = Disk\File::loadById($file['id']);
 					if (!$fileModel)
 					{
 						continue;
 					}
 
 					$file['link'] = \CIMDisk::GetFileLink($fileModel);
-
 					if (!$file['link'])
 					{
 						continue;
 					}
 
-					$merged = false;
-					if (\Bitrix\Disk\TypeFile::isImage($fileModel))
-					{
-						$source = $fileModel->getFile();
-						if ($source)
-						{
-							$files[] = [
-								'name' => $file['name'],
-								'type' => $file['type'],
-								'link' => $file['link'],
-								'width' => $source["WIDTH"],
-								'height' => $source["HEIGHT"],
-								'size' => $file['size']
-							];
-							$merged = true;
-						}
-					}
+					$source = $fileModel->getFile();
 
-					if (!$merged)
+					$file['mime'] = $source['CONTENT_TYPE'] ?? Disk\TypeFile::getMimeTypeByFilename($file['name']);
+					$file['sizef'] = \CFile::FormatSize($file['size']);
+
+					if (Disk\TypeFile::isImage($fileModel))
 					{
 						$files[] = [
 							'name' => $file['name'],
 							'type' => $file['type'],
+							'mime' => $file['mime'],
 							'link' => $file['link'],
-							'size' => $file['size']
+							'width' => $source["WIDTH"],
+							'height' => $source["HEIGHT"],
+							'size' => $file['size'],
+							'sizef' => $file['sizef'],
+						];
+					}
+					else
+					{
+						$files[] = [
+							'name' => $file['name'],
+							'type' => $file['type'],
+							'mime' => $file['mime'],
+							'link' => $file['link'],
+							'size' => $file['size'],
+							'sizef' => $file['sizef'],
 						];
 					}
 				}
 			}
-
 
 			if (
 				empty($attaches)
@@ -1508,7 +1537,7 @@ class Connector
 			{
 				$messageFields['MESSAGE'] =
 					'[b]' . htmlspecialchars_decode(self::getOperatorName($lineId, $messageFields['AUTHOR_ID'], $messageFields['CHAT_ENTITY_ID'])) . ':[/b]'.
-					($messageFields['MESSAGE'] !== '' ? '[br] '.$messageFields['MESSAGE'] : '');
+					($messageFields['MESSAGE'] !== '' ? '[br]'. $messageFields['MESSAGE'] : '');
 			}
 
 			$fields = [
@@ -1547,8 +1576,6 @@ class Connector
 						'SENDING_TS'
 					]
 				);
-				//TODO: To turn on the new messenger
-				//Pull\Event::send();
 			}
 
 			$resultSendMessage = (new self())->sendMessage($fields);
@@ -1740,6 +1767,7 @@ class Connector
 	}
 
 	/**
+	 * Event handler for `im:OnAfterChatRead`
 	 * @param $params
 	 * @return bool
 	 */
@@ -1762,11 +1790,12 @@ class Connector
 			$connectorId = self::TYPE_LIVECHAT;
 			//TODO: Replace with the method ImOpenLines\Chat::parseLiveChatEntityId
 			[$lineId, $connectorUserId] = explode('|', $params['CHAT_ENTITY_ID']);
+			$userCode = $connectorId.'|'.$lineId.'|'.$chatId.'|'.$connectorUserId;
 
 			$orm = Model\SessionTable::getList(array(
 				'select' => Array('ID', 'CHAT_ID'),
 				'filter' => array(
-					'=USER_CODE' => $connectorId.'|'.$lineId.'|'.$chatId.'|'.$connectorUserId,
+					'=USER_CODE' => $userCode,
 					'=CLOSED' => 'N'
 				)
 			));
@@ -1774,6 +1803,7 @@ class Connector
 			{
 				$connectorChatId = $session['CHAT_ID'];
 				ImOpenLines\Mail::removeSessionFromMailQueue($session['ID'], false);
+				Session::setLastSendMailId(['ID' => $session['ID'], 'USER_CODE' => $userCode], (int)$params['END_ID']);
 			}
 			$connectorId = 'lines';
 		}
@@ -1822,7 +1852,7 @@ class Connector
 			&&
 			(
 				!Loader::includeModule('im')
-				|| ImUser::getInstance($userId)->isConnector()
+				|| User::getInstance($userId)->isConnector()
 			)
 		)
 		{
@@ -2397,7 +2427,7 @@ class Connector
 		if ($userArray)
 		{
 			$result =  array_merge(
-				ImUser::getInstance($userId)->getFields(),
+				User::getInstance($userId)->getFields(),
 				array_change_key_case($userArray, CASE_LOWER)
 			);
 		}

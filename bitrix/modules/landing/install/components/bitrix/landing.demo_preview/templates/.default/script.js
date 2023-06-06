@@ -464,6 +464,27 @@
 		{
 			event.preventDefault();
 
+			if (BX.Dom.hasClass(this.createButton.parentNode, 'needed-market-subscription'))
+			{
+				top.BX.UI.InfoHelper.show('limit_subscription_market_templates');
+				const promise = new Promise(function(resolve) {
+					setInterval(
+						() => {
+							if (BX.Dom.hasClass(this.createButton, 'ui-btn-clock'))
+							{
+								resolve();
+							}
+						},
+						500
+					);
+				}.bind(this));
+				promise.then(() => {
+					BX.Dom.removeClass(this.createButton, 'ui-btn-clock');
+					BX.Dom.attr(this.createButton, 'style', '');
+				});
+				return;
+			}
+
 			const metrika = new BX.Landing.Metrika(true);
 			metrika.sendLabel(
 				null,
@@ -595,7 +616,7 @@
 					const popupImport = document.querySelector(".landing-popup-import");
 					const popupImportLoaderContainer = document.querySelector(".landing-popup-import-loader");
 					const previewFrame = document.querySelector(".preview-left");
-					if (previewFrame)
+					if (previewFrame && popupImportLoaderContainer)
 					{
 						this.loader.show(popupImportLoaderContainer);
 						BX.Dom.addClass(previewFrame, 'landing-import-start');
@@ -605,46 +626,56 @@
 					{
 						add['createType'] = 'PAGE';
 					}
+					let interval;
 					BX.ajax({
 						method: 'POST',
 						dataType: 'html',
 						url: addQueryParams(this.zipInstallPath, add),
 						onsuccess: data => {
-							const promise = new Promise(function(resolve) {
+							const promise = new Promise((resolve, reject) => {
 								const result = BX.Dom.create('div', {html: data});
 								BX.Dom.style(result, 'display', 'none');
 								popupImport.append(result);
 								let restImportElement;
-								let helperLandingElement;
-								setInterval(
+								let count = 0;
+								interval = setInterval(
 									() => {
+										if (count > 100)
+										{
+											reject(new Error('Time is up'));
+										}
 										restImportElement = result.querySelector('.rest-configuration-wrapper');
-										helperLandingElement = result.querySelector('.app-install-helper-landing');
 										if (restImportElement !== null)
 										{
 											resolve(restImportElement);
 										}
-										if (helperLandingElement !== null)
-										{
-											resolve(helperLandingElement);
-										}
+										count++;
 									},
 									300
 								);
 							});
-							promise.then(result => {
-								if (BX.Dom.hasClass(result, 'rest-configuration-wrapper'))
-								{
-									this.loader.hide();
-									BX.Dom.append(result, popupImport);
-									BX.Dom.style(popupImportLoaderContainer, 'display', 'none');
+							promise.then(
+								result => {
+									clearInterval(interval);
+									if (BX.Dom.hasClass(result, 'rest-configuration-wrapper'))
+									{
+										const importTitle = result.querySelector('.rest-configuration-title');
+										const importIconContainer = result.querySelector('.rest-configuration-start-icon-main-container');
+										if (importTitle && importIconContainer)
+										{
+											BX.Dom.remove(importTitle);
+											BX.Dom.insertBefore(importTitle, importIconContainer.nextSibling);
+										}
+										this.loader.hide();
+										BX.Dom.append(result, popupImport);
+										BX.Dom.style(popupImportLoaderContainer, 'display', 'none');
+									}
+								},
+								error => {
+									clearInterval(interval);
+									this.addRepeatCreateButton();
 								}
-								if (BX.Dom.hasClass(result, 'app-install-helper-landing'))
-								{
-									BX.Dom.removeClass(previewFrame, 'landing-import-start');
-									top.BX.UI.InfoHelper.show('limit_subscription_market_access');
-								}
-							});
+							);
 						}
 					});
 				}
@@ -670,6 +701,34 @@
 			else
 			{
 				window.location = url;
+			}
+		},
+
+		addRepeatCreateButton: function()
+		{
+			const popupImportError = document.querySelector(".landing-popup-import-repeat");
+			if (popupImportError)
+			{
+				BX.Dom.removeClass(popupImportError, 'hide');
+			}
+			const repeatButton = document.querySelector(".landing-popup-import-repeat-button");
+			if (repeatButton)
+			{
+				bind(repeatButton, "click", this.onRepeatButtonClick);
+			}
+		},
+
+		onRepeatButtonClick: function()
+		{
+			const popupImportError = document.querySelector(".landing-popup-import-repeat");
+			if (popupImportError)
+			{
+				BX.Dom.addClass(popupImportError, 'hide');
+			}
+			const createButton = document.querySelector(".landing-template-preview-create");
+			if (createButton)
+			{
+				createButton.click();
 			}
 		},
 

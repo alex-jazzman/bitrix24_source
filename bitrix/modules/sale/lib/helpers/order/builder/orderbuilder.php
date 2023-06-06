@@ -832,7 +832,7 @@ abstract class OrderBuilder
 					{
 						$result->addError( new Error(
 								Loc::getMessage('SALE_ORDER_SHIPMENT_BASKET_BASKET_ITEM_NOT_FOUND',  array(
-									'#BASKET_ITEM_ID#' => $items['BASKET_ID'],
+									'#BASKET_ITEM_ID#' => $basketCode,
 								)),
 								'PROVIDER_UNRESERVED_SHIPMENT_ITEM_WRONG_BASKET_ITEM')
 						);
@@ -890,7 +890,7 @@ abstract class OrderBuilder
 						{
 							foreach ($item['BARCODE'] as $barcode)
 							{
-								$barcode['ID'] = (int)$barcode['ID'];
+								$barcode['ID'] = (int)($barcode['ID'] ?? 0);
 
 								$tmp['BARCODE_INFO'][$barcodeStoreId]['BARCODE'] = [$barcode];
 

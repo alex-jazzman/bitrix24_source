@@ -151,11 +151,11 @@ class AddPaySystemAction extends Sale\Controller\Action\BaseAction
 				]
 			);
 
-			$personTypeId = $params['PERSON_TYPE_ID'] ?? 0;
+			$personTypeId = $fields['PERSON_TYPE_ID'] ?? 0;
 
-			if (isset($params['SETTINGS']) && is_array($params['SETTINGS']))
+			if (isset($fields['SETTINGS']) && is_array($fields['SETTINGS']))
 			{
-				foreach ($params['SETTINGS'] as $key => $value)
+				foreach ($fields['SETTINGS'] as $key => $value)
 				{
 					Sale\BusinessValue::setMapping(
 						$key,

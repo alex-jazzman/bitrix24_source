@@ -779,15 +779,21 @@ class CBitrixLocationSelectorSearchComponent extends CBitrixComponent
 		// drop data that should not go to find()
 		$clean = $parameters;
 
-		// dont get NAME if there is PATH, kz we`ll get NAMES after all
-		if (is_array($clean['select']) && is_array($parameters['additionals']) && in_array('PATH', $parameters['additionals']))
+		// don't get NAME if there is PATH, kz we`ll get NAMES after all
+		if (
+			isset($clean['select'])
+			&& is_array($clean['select'])
+			&& isset($parameters['additionals'])
+			&& is_array($parameters['additionals'])
+			&& in_array('PATH', $parameters['additionals'])
+		)
 		{
 			//unset($clean['filter']['=NAME.LANGUAGE_ID']);
 			//unset($clean['filter']['NAME.LANGUAGE_ID']);
 
-			foreach($clean['select'] as $alias => $field)
+			foreach ($clean['select'] as $alias => $field)
 			{
-				if($field == 'NAME.NAME')
+				if ($field === 'NAME.NAME')
 				{
 					unset($clean['select'][$alias]);
 				}
@@ -799,25 +805,28 @@ class CBitrixLocationSelectorSearchComponent extends CBitrixComponent
 			&& (int)$clean['filter']['=GROUPLOCATION.LOCATION_GROUP_ID'] > 0
 		)
 		{
-			$clean['runtime']['GROUPLOCATION'] = array(
+			$clean['runtime'] ??= [];
+			$clean['runtime']['GROUPLOCATION'] = [
 				'data_type' => 'Bitrix\Sale\Location\GroupLocationTable',
-				'reference' => array(
-					'=this.ID' => 'ref.LOCATION_ID'
-				)
-			);
+				'reference' => [
+					'=this.ID' => 'ref.LOCATION_ID',
+				],
+			];
 		}
 
 		unset($clean['additionals']);
 
+		$clean['select'] ??= [];
 		$clean['select'][] = 'LEFT_MARGIN';
 		$clean['select'][] = 'RIGHT_MARGIN';
 		$clean['select'][] = 'ID';
+
 		return $clean;
 	}
 
 	protected static function processSearchRequestV2GetFinderBehaviour()
 	{
-		return array();
+		return [];
 	}
 
 	public static function processSearchRequestV2($parameters)
@@ -846,7 +855,10 @@ class CBitrixLocationSelectorSearchComponent extends CBitrixComponent
 			'ETC' => array()
 		);
 
-		$result = Location\Search\Finder::find(static::processSearchRequestV2ModifyParameters($parameters), static::processSearchRequestV2GetFinderBehaviour());
+		$result = Location\Search\Finder::find(
+			static::processSearchRequestV2ModifyParameters($parameters),
+			static::processSearchRequestV2GetFinderBehaviour()
+		);
 
 		while($item = $result->fetch())
 		{
@@ -854,8 +866,10 @@ class CBitrixLocationSelectorSearchComponent extends CBitrixComponent
 			if(!isset($item['ID']))
 				$item['ID'] = $item['VALUE'];
 
-			if(intval($item['CHILD_CNT']) > 0)
+			if ((int)($item['CHILD_CNT'] ?? 0) > 0)
+			{
 				$item['IS_PARENT'] = true;
+			}
 
 			unset($item['CHILD_CNT']);
 			$data['ITEMS'][] = $item;

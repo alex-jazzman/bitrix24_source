@@ -134,6 +134,7 @@ Vue.component(config.templateFieldQuantity,
 				@input="onInputQuantityHandler"
 				:disabled="!editable"
 				data-name="quantity"
+				:data-value="quantity"
 			>
 			<div 
 				class="catalog-pf-product-input-info catalog-pf-product-input-info--action" 

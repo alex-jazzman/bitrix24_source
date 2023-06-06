@@ -1,6 +1,7 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Intranet\Binding\Marketplace;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Location\Entity\Source\ConfigItem;
@@ -882,9 +883,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 					<div class="ui-alert ui-alert-warning">
 						<span class="ui-alert-message">
 						<?=GetMessage("CONFIG_GDRP_TITLE3")?><br/>
-						<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('/marketplace/detail/integrations24.gdprstaff/');"><?=GetMessage("CONFIG_GDRP_APP1")?></a>
+						<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('<?=Marketplace::getMainDirectory()?>detail/integrations24.gdprstaff/');"><?=GetMessage("CONFIG_GDRP_APP1")?></a>
 						<br/>
-						<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('/marketplace/detail/integrations24.gdpr/');"><?=GetMessage("CONFIG_GDRP_APP2")?></a>
+						<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('<?=Marketplace::getMainDirectory()?>detail/integrations24.gdpr/');"><?=GetMessage("CONFIG_GDRP_APP2")?></a>
 						</span>
 					</div>
 				</td>
@@ -1073,7 +1074,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"></td>
 			<td class="content-edit-form-field-input" colspan="2">
-				<a href="/marketplace/category/migration/"><?=GetMessage("CONFIG_MARKETPLACE_MORE")?></a>
+				<a href="<?=Marketplace::getMainDirectory()?>category/migration/"><?=GetMessage("CONFIG_MARKETPLACE_MORE")?></a>
 			</td>
 		</tr>
 		<?endif?>
@@ -1081,7 +1082,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 	}
 
 
-	if($arResult['ALLOW_DOMAIN_CHANGE'])
+	if (isset($arResult['ALLOW_DOMAIN_CHANGE']) && $arResult['ALLOW_DOMAIN_CHANGE'])
 	{
 	?>
 		<tr>

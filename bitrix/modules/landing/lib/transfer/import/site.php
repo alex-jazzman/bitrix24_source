@@ -666,7 +666,7 @@ class Site
 
 			// link for "go to site" button
 			$linkAttrs = [
-				'class' => 'ui-btn ui-btn-lg ui-btn-primary',
+				'class' => 'ui-btn ui-btn-md ui-btn-success ui-btn-round',
 				'data-is-site' => 'Y',
 				'data-site-id' => $siteId,
 				'href' => '#' . $siteId,
@@ -677,12 +677,14 @@ class Site
 				$linkAttrs['data-is-landing'] = 'Y';
 				$linkAttrs['data-landing-id'] = $mainPageId;
 			}
+			$linkText = Loc::getMessage('LANDING_IMPORT_FINISH_GOTO_SITE');
 			if ($siteType === 'KNOWLEDGE')
 			{
 				$linkAttrs['href'] = \Bitrix\Landing\Site::getPublicUrl($siteId);
 			}
 			elseif ($siteType === 'PAGE' && empty($additional))
 			{
+				$linkText = Loc::getMessage('LANDING_IMPORT_FINISH_GOTO_PAGE');
 				$url = Manager::getOption('tmp_last_show_url', '');
 				if ($url === '' && ModuleManager::isModuleInstalled('bitrix24'))
 				{
@@ -709,7 +711,7 @@ class Site
 					'TAG' => 'a',
 					'DATA' => [
 						'attrs' => $linkAttrs,
-						'text' => Loc::getMessage('LANDING_IMPORT_FINISH_GOTO_SITE')
+						'text' => $linkText,
 					]
 				]
 			];

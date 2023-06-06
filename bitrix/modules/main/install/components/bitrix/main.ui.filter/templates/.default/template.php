@@ -68,6 +68,7 @@ if ($arResult["DISABLE_SEARCH"] || !$arParams["CONFIG"]["SEARCH"])
 
 if (
 	$arResult["THEME"] === \Bitrix\Main\UI\Filter\Theme::LIGHT
+	&& isset($arResult["CURRENT_PRESET"]["FIND"])
 	&& strlen($arResult["CURRENT_PRESET"]["FIND"]) > 0
 )
 {

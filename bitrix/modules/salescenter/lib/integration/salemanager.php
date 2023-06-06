@@ -9,6 +9,7 @@ use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Cashbox\Internals\CashboxTable;
+use Bitrix\Sale\PaySystem\ServiceResult;
 use Bitrix\Sale;
 use Bitrix\Main;
 use Bitrix\Crm;
@@ -891,5 +892,33 @@ class SaleManager extends Base
 
 		return false;
 
+	}
+
+	/**
+	 * Send message to user when success payment appear
+	 *
+	 * @return void
+	 */
+	public static function onPaySystemServiceProcessRequest(Event $event): void
+	{
+		$payment = $event->getParameter('payment');
+		$serviceResult = $event->getParameter('serviceResult');
+
+		if (
+			!($payment instanceof Payment)
+			|| !($serviceResult instanceof ServiceResult)
+		)
+		{
+			return;
+		}
+
+		if (
+			$serviceResult->isSuccess()
+			&& $serviceResult->getOperationType() === ServiceResult::MONEY_COMING
+			&& CrmManager::getInstance()->isPaymentFromTerminal($payment)
+		)
+		{
+			CrmManager::getInstance()->sendPaymentSlipBySms($payment);
+		}
 	}
 }

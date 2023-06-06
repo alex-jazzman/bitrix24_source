@@ -1,10 +1,14 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Crm\Restriction\OrderRestriction;
-use Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
 /**
  * Bitrix vars
@@ -18,23 +22,24 @@ use Bitrix\Crm\UI\NavigationBarPanel;
  */
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
+
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+Extension::load(['ui.fonts.opensans', 'crm.restriction.filter-fields']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
-
 
 ?><div id="rebuildMessageWrapper"><?
 
@@ -111,6 +116,11 @@ foreach ($arResult['HEADERS'] as $arHead)
 
 $now = time() + CTimeZone::GetOffset();
 $arOrderStatusInfoValues = array();
+
+if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
+{
+	$arResult['ORDER'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Order))->appendNearestActivityBlock($arResult['ORDER']);
+}
 
 foreach($arResult['ORDER'] as $sKey => $arOrder)
 {
@@ -583,79 +593,13 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		$resultItem['columns']
 	);
 
-	$userActivityID = isset($arOrder['USER_ACTIVITY_ID']) ? intval($arOrder['USER_ACTIVITY_ID']) : 0;
-	$commonActivityID = isset($arOrder['C_ACTIVITY_ID']) ? intval($arOrder['C_ACTIVITY_ID']) : 0;
-	if($userActivityID > 0)
+	if (isset($arOrder['ACTIVITY_BLOCK']) && $arOrder['ACTIVITY_BLOCK'] instanceof \Bitrix\Crm\Component\EntityList\NearestActivity\Block)
 	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Order),
-				'ENTITY_ID' => $arOrder['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arOrder['RESPONSIBLE_ID'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $userActivityID,
-				'ACTIVITY_SUBJECT' => isset($arOrder['C_ACTIVITY_SUBJECT']) ? $arOrder['C_ACTIVITY_SUBJECT'] : '',
-				'ACTIVITY_TIME' => isset($arOrder['C_ACTIVITY_TIME']) ? $arOrder['C_ACTIVITY_TIME'] : '',
-				'ACTIVITY_EXPIRED' => isset($arOrder['ACTIVITY_EXPIRED']) ? $arOrder['ACTIVITY_EXPIRED'] : '',
-				'ALLOW_EDIT' => $arOrder['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-
-		$counterData = array(
-			'CURRENT_USER_ID' => $currentUserID,
-			'ENTITY' => $arOrder,
-			'ACTIVITY' => array(
-				'RESPONSIBLE_ID' => $currentUserID,
-				'TIME' => isset($arOrder['~ACTIVITY_TIME']) ? $arOrder['~ACTIVITY_TIME'] : '',
-				'IS_CURRENT_DAY' => isset($arOrder['~ACTIVITY_IS_CURRENT_DAY']) ? $arOrder['~ACTIVITY_IS_CURRENT_DAY'] : false
-			)
-		);
-
-		if(CCrmUserCounter::IsReckoned(CCrmUserCounter::CurrentOrderActivies, $counterData))
+		$resultItem['columns']['ACTIVITY_ID'] = $arOrder['ACTIVITY_BLOCK']->render($gridManagerID);
+		if ($arOrder['ACTIVITY_BLOCK']->needHighlight())
 		{
-			$resultItem['columnClasses'] = array('ACTIVITY_ID' => 'crm-list-order-today');
+			$resultItem['columnClasses'] = ['ACTIVITY_ID' => 'crm-list-deal-today'];
 		}
-	}
-	elseif($commonActivityID > 0)
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Order),
-				'ENTITY_ID' => $arOrder['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arOrder['RESPONSIBLE_ID'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $commonActivityID,
-				'ACTIVITY_SUBJECT' => isset($arOrder['C_ACTIVITY_SUBJECT']) ? $arOrder['C_ACTIVITY_SUBJECT'] : '',
-				'ACTIVITY_TIME' => isset($arOrder['C_ACTIVITY_TIME']) ? $arOrder['C_ACTIVITY_TIME'] : '',
-				'ACTIVITY_RESPONSIBLE_ID' => isset($arOrder['C_ACTIVITY_RESP_ID']) ? intval($arOrder['C_ACTIVITY_RESP_ID']) : 0,
-				'ACTIVITY_RESPONSIBLE_LOGIN' => isset($arOrder['C_ACTIVITY_RESP_LOGIN']) ? $arOrder['C_ACTIVITY_RESP_LOGIN'] : '',
-				'ACTIVITY_RESPONSIBLE_NAME' => isset($arOrder['C_ACTIVITY_RESP_NAME']) ? $arOrder['C_ACTIVITY_RESP_NAME'] : '',
-				'ACTIVITY_RESPONSIBLE_LAST_NAME' => isset($arOrder['C_ACTIVITY_RESP_LAST_NAME']) ? $arOrder['C_ACTIVITY_RESP_LAST_NAME'] : '',
-				'ACTIVITY_RESPONSIBLE_SECOND_NAME' => isset($arOrder['C_ACTIVITY_RESP_SECOND_NAME']) ? $arOrder['C_ACTIVITY_RESP_SECOND_NAME'] : '',
-				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-				'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
-				'ALLOW_EDIT' => $arOrder['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-	}
-	else
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Order),
-				'ENTITY_ID' => $arOrder['ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arOrder['RESPONSIBLE_ID'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ALLOW_EDIT' => $arOrder['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'HINT_TEXT' => isset($arOrder['WAITING_TITLE']) ? $arOrder['WAITING_TITLE'] : '',
-				'USE_GRID_EXTENSION' => true
-			)
-		);
 	}
 
 	$arResult['GRID_DATA'][] = &$resultItem;
@@ -1255,4 +1199,9 @@ if(!$isInternal):
 	);
 </script>
 <?endif;?>
-<?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>
+
+<?php
+
+echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+
+\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated();

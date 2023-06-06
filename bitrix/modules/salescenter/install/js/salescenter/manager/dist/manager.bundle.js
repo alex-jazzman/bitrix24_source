@@ -823,7 +823,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openHowToSell",
 	    value: function openHowToSell(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'crmstore_connect');
+	      Manager.openHelper(event, 'redirect=detail&code=17615318', 'crmstore_connect');
 	    }
 	  }, {
 	    key: "openHowToWork",
@@ -838,17 +838,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openHowPayDealWorks",
 	    value: function openHowPayDealWorks(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_deal');
-	    }
-	  }, {
-	    key: "openHowPayDynamicEntityWorks",
-	    value: function openHowPayDynamicEntityWorks(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_dynamic_entity');
+	      Manager.openHelper(event, 'redirect=detail&code=17615318', 'pay_deal');
 	    }
 	  }, {
 	    key: "openHowPaySmartInvoiceWorks",
 	    value: function openHowPaySmartInvoiceWorks(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_smart_invoice');
+	      Manager.openHelper(event, 'redirect=detail&code=17615318', 'pay_smart_invoice');
 	    }
 	  }, {
 	    key: "openFormPagesHelp",
@@ -863,7 +858,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openBitrix24NotificationsHelp",
 	    value: function openBitrix24NotificationsHelp(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=13659402', 'bitrix24_notifications');
+	      Manager.openHelper(event, 'redirect=detail&code=17615266', 'bitrix24_notifications');
+	    }
+	  }, {
+	    key: "openBitrix24NotificationsWorks",
+	    value: function openBitrix24NotificationsWorks(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=13655934', 'bitrix24_notifications_work');
 	    }
 	  }, {
 	    key: "openHelper",

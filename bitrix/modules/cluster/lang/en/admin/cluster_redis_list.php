@@ -1,4 +1,5 @@
-<?
+<?php
+$MESS["CLU_REDIS_CLUSTER_TITLE"] = "Redis cluster";
 $MESS["CLU_REDIS_DISABLED"] = "redis is disabled.";
 $MESS["CLU_REDIS_LIST_ADD"] = "Add";
 $MESS["CLU_REDIS_LIST_ADD_TITLE"] = "Add redis connection";
@@ -21,4 +22,3 @@ $MESS["CLU_REDIS_LIST_WEIGHT"] = "Usage (%)";
 $MESS["CLU_REDIS_NOCONNECTION"] = "no connection";
 $MESS["CLU_REDIS_NO_EXTENTION"] = "redis PHP extension is not installed.";
 $MESS["CLU_REDIS_UPTIME"] = "uptime";
-?>

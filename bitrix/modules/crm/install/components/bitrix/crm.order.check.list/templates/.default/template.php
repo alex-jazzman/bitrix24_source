@@ -95,7 +95,7 @@ foreach($arResult['ROWS'] as $key => $check)
 
 	}
 
-	if ($check['STATUS'] == 'E' || $check['STATUS'] == 'N')
+	if ($check['STATUS'] == 'E' || $check['STATUS'] == 'N' || $check['STATUS'] == 'P')
 	{
 		$actions[] = array(
 			'TITLE' => GetMessage('CRM_ORDER_CHECK_DELETE_TITLE'),

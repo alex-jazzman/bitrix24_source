@@ -2,6 +2,17 @@
 if (defined("STOP_WEBDAV") && STOP_WEBDAV)
 	return;
 
+$application = \Bitrix\Main\Application::getInstance();
+if($application->hasCurrentRoute())
+{
+	$route = $application->getCurrentRoute();
+	//it means that route has specific methods, not set just "any"
+	if ($route->getOptions()->getMethods())
+	{
+		return;
+	}
+}
+
 if (!function_exists("__webdav_is_dav_headers"))
 {
 	function __webdav_is_dav_headers()

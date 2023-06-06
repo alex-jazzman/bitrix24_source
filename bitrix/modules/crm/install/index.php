@@ -1418,6 +1418,10 @@ class crm extends CModule
 		$eventManager->registerEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
 		$eventManager->registerEventHandler('sale', 'onComponentSaleOrderCheckoutPaymentPayAction', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPaymentPayAction');
 		$eventManager->registerEventHandler('sale', 'onComponentSaleOrderCheckoutPrepareJsonData', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPrepareJsonData');
+		$eventManager->registerEventHandler('sale', 'OnBeforeSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Terminal\EventsHandler\Payment', 'onBeforeSalePaymentEntitySaved');
+		$eventManager->registerEventHandler('sale', 'OnSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Terminal\EventsHandler\Payment', 'onSalePaymentEntitySaved');
+		$eventManager->registerEventHandler('sale', 'OnSalePaymentEntityDeleted', 'crm', '\Bitrix\Crm\Terminal\EventsHandler\Payment', 'onSalePaymentEntityDeleted');
+		$eventManager->registerEventHandler('sale', 'OnCheckCollateDocuments', 'crm', '\Bitrix\Crm\Terminal\EventsHandler\Check', 'onCheckCollateDocuments');
 
 		$eventManager->registerEventHandler(
 			'location', 'AddressOnUpdate',
@@ -1442,11 +1446,27 @@ class crm extends CModule
 		);
 
 		$eventManager->registerEventHandler(
+			'messageservice',
+			'messageUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Sms',
+			'onMessageStatusUpdated'
+		);
+
+		$eventManager->registerEventHandler(
 			'notifications',
 			'onMessageSuccessfullyEnqueued',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Notification',
 			'onMessageSent'
+		);
+
+		$eventManager->registerEventHandler(
+			'notifications',
+			'onMessageSuccessfullyUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Notification',
+			'onMessageStatusUpdated'
 		);
 
 		$eventManager->registerEventHandler(
@@ -1640,6 +1660,14 @@ class crm extends CModule
 			'\CCrmSaleHelper',
 			'updateShopAccess'
 		);
+
+		$eventManager->registerEventHandler(
+			'calendar',
+			'onSharedCrmActions',
+			'crm',
+			'\Bitrix\Crm\Integration\Calendar\CalendarSharingTimeline',
+			'onSharedCrmActions'
+		);
 	}
 
 	private function installAgents()
@@ -1762,6 +1790,16 @@ class crm extends CModule
 				\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+600)
 			);
 		}
+
+		\CAgent::AddAgent(
+			'Bitrix\Crm\Agent\Activity\CompleteOldActivities::run();',
+			'crm',
+			'N',
+			86400,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL')
+		);
 	}
 
 	private function uninstallEventHandlers()
@@ -2024,11 +2062,27 @@ class crm extends CModule
 		);
 
 		$eventManager->unRegisterEventHandler(
+			'messageservice',
+			'messageUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Sms',
+			'onMessageStatusUpdated'
+		);
+
+		$eventManager->unRegisterEventHandler(
 			'notifications',
 			'onMessageSuccessfullyEnqueued',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Notification',
 			'onMessageSent'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'notifications',
+			'onMessageSuccessfullyUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\Notification',
+			'onMessageStatusUpdated'
 		);
 
 		$eventManager->unRegisterEventHandler(
@@ -2079,6 +2133,10 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
 		$eventManager->unRegisterEventHandler('sale', 'onComponentSaleOrderCheckoutPaymentPayAction', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPaymentPayAction');
 		$eventManager->unRegisterEventHandler('sale', 'onComponentSaleOrderCheckoutPrepareJsonData', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPrepareJsonData');
+		$eventManager->unRegisterEventHandler('sale', 'OnBeforeSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Terminal\EventsHandler\Payment', 'onBeforeSalePaymentEntitySaved');
+		$eventManager->unRegisterEventHandler('sale', 'OnSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Terminal\EventsHandler\Payment', 'onSalePaymentEntitySaved');
+		$eventManager->unRegisterEventHandler('sale', 'OnSalePaymentEntityDeleted', 'crm', '\Bitrix\Crm\Terminal\EventsHandler\Payment', 'onSalePaymentEntityDeleted');
+		$eventManager->unRegisterEventHandler('sale', 'OnCheckCollateDocuments', 'crm', '\Bitrix\Crm\Terminal\EventsHandler\Check', 'onCheckCollateDocuments');
 
 		$eventManager->unRegisterEventHandler(
 			'imopenlines',
@@ -2235,6 +2293,13 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesAdd', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterMessagesAdd');
 		$eventManager->unRegisterEventHandler('im', 'OnAfterChatRead', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterChatRead');
 
+		$eventManager->unRegisterEventHandler(
+			'calendar',
+			'onSharedCrmActions',
+			'crm',
+			'\Bitrix\Crm\Integration\Calendar\CalendarSharingTimeline',
+			'onSharedCrmActions'
+		);
 	}
 
 	private function uninstallAgents()

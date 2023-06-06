@@ -1258,6 +1258,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 				$barcode = $documentBarcode['BARCODE'];
 				if (
 					!empty($barcode)
+					&& isset($productBarcodes[$barcode])
 					&& $productBarcodes[$barcode] > 0
 					&& $documentBarcode['SKU_ID'] !== $productBarcodes[$barcode]
 				)

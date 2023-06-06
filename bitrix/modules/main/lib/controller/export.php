@@ -207,7 +207,7 @@ class Export extends Main\Engine\Controller
 		}
 
 		$progressData = $this->getProgressParameters();
-		if (count($progressData) > 0)
+		if (!empty($progressData))
 		{
 			$this->isNewProcess = (empty($progressData['processToken']) || $progressData['processToken'] !== $this->processToken);
 			if (!$this->isNewProcess)
@@ -226,7 +226,7 @@ class Export extends Main\Engine\Controller
 		if ($this->isCloudAvailable)
 		{
 			$bucketList = $this->getBucketList();
-			if (count($bucketList) == 0)
+			if (empty($bucketList))
 			{
 				$this->isCloudAvailable = false;
 			}
@@ -608,7 +608,7 @@ class Export extends Main\Engine\Controller
 			$this->addError(new Error('Uploading file not exists.'));
 		}
 
-		if (count($this->getErrors()) > 0)
+		if (!empty($this->getErrors()))
 		{
 			return AjaxJson::createError($this->errorCollection);
 		}
@@ -1048,7 +1048,7 @@ class Export extends Main\Engine\Controller
 			$this->addError(new Error('Process token is not specified.'));
 		}
 
-		return count($this->getErrors()) === 0;
+		return empty($this->getErrors());
 	}
 
 
@@ -1064,7 +1064,7 @@ class Export extends Main\Engine\Controller
 			$this->errorCollection[] = new Error(Loc::getMessage('MAIN_EXPORT_ERROR_NO_CLOUD_BUCKET'));
 		}
 
-		return count($this->getErrors()) === 0;
+		return empty($this->getErrors());
 	}
 
 

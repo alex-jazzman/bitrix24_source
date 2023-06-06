@@ -217,6 +217,6 @@ abstract class CommonHelper
 
 	public static function needSelectFieldsInOrderByWhenDistinct()
 	{
-		return false;
+		return true;
 	}
 }

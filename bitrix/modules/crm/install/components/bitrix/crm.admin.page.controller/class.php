@@ -490,6 +490,20 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					]
 				);
 			}
+
+			/**
+			 * Terminal
+			 */
+			if ($menuItemId === 'terminal')
+			{
+				$this->listMenuItems[$menuItemId] = array_merge(
+					$menuItem,
+					[
+						'PARENT_ID' => 'sale_pay_system_root',
+						'SORT' => 200,
+					]
+				);
+			}
 		}
 	}
 
@@ -924,6 +938,20 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				'on_click' => 'BX.SidePanel.Instance.open("' . CUtil::JSescape($webformsUrl) . '");',
 				'url_constant' => true,
 				'items_id' => 'webforms',
+			];
+		}
+
+		if (Crm\Terminal\AvailabilityManager::getInstance()->isAvailable())
+		{
+			$result[] = [
+				'parent_menu' => 'global_menu_store',
+				'sort' => 350,
+				'text' => Loc::getMessage('SHOP_MENU_TERMINAL'),
+				'title' => Loc::getMessage('SHOP_MENU_TERMINAL'),
+				'additional' => 'Y',
+				'url' => '/shop/terminal/',
+				'url_constant' => true,
+				'items_id' => 'terminal',
 			];
 		}
 

@@ -17,6 +17,7 @@ $MESS["CLU_REDIS_LIST_TITLE"] = "Подключения к redis";
 $MESS["CLU_REDIS_NOCONNECTION"] = "нет подключения";
 $MESS["CLU_REDIS_NO_EXTENTION"] = "Отсутствует php расширение redis.";
 $MESS["CLU_REDIS_DISABLED"] = "Использование redis отключенно.";
+$MESS['CLU_REDIS_CLUSTER_TITLE'] = 'Redis cluster';
 $MESS["CLU_REDIS_LIST_WARNING_NO_CACHE"] = "Внимание! Кеширование отключено. Для включения начните использовать одно из подключений к redis или измените настройки в файле .settings.php.";
 $MESS["CLU_REDIS_LIST_NOTE"] = "<p>Для запуска нескольких веб-серверов необходимо настроить синхронизацию их файловых систем.</p>
 <p>Для снижения нагрузки по синхронизации файлов рекомендуем использовать redis. Основная его функция - сохранение кеша не в файлах, а в оперативной памяти.</p>

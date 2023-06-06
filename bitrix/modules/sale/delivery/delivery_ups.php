@@ -1,4 +1,4 @@
-<?
+<?php
 /******************************************************************************/
 /* UPS Delivery Handler. Tarifification files can be found at http://ups.com  */
 /* Delete ups/*.php files if you change tarification csv files                */
@@ -7,8 +7,8 @@ CModule::IncludeModule("sale");
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/sale/delivery/delivery_ups.php');
 
-define('DELIVERY_UPS_ZONES_PHP_FILE', 'ups/zones.php');
-define('DELIVERY_UPS_EXPORT_PHP_FILE', 'ups/export.php');
+const DELIVERY_UPS_ZONES_PHP_FILE = 'ups/zones.php';
+const DELIVERY_UPS_EXPORT_PHP_FILE = 'ups/export.php';
 
 class CDeliveryUPS
 {
@@ -90,7 +90,7 @@ class CDeliveryUPS
 
 	public static function GetSettings($strSettings)
 	{
-		list($zones_path, $export_path) = explode(";", $strSettings);
+		[$zones_path, $export_path] = explode(";", $strSettings);
 
 		return array(
 			"zones_csv" => $zones_path,
@@ -334,6 +334,7 @@ class CDeliveryUPS
 		CDeliveryUPS::__GetLocation($arLocationTo, $arConfig);
 
 		$arPriceTable = CDeliveryUPS::__GetExport($arConfig["export_csv"]["VALUE"]);
+		$zones_file = $arConfig["zones_csv"]["VALUE"];
 		$arZones = CDeliveryUPS::__GetZones($zones_file);
 
 		reset($arPriceTable);
@@ -363,6 +364,11 @@ class CDeliveryUPS
 		$arLocationFrom = CSaleLocation::GetByID($arOrder["LOCATION_FROM"]);
 		$arLocationTo = CSaleLocation::GetByID($arOrder["LOCATION_TO"]);
 
+		if ($arLocationFrom === false || $arLocationTo === false)
+		{
+			return [];
+		}
+
 		if ($arLocationFrom["COUNTRY_ID"] == $arLocationTo["COUNTRY_ID"])
 			return array();
 
@@ -391,4 +397,3 @@ class CDeliveryUPS
 }
 
 AddEventHandler("sale", "onSaleDeliveryHandlersBuildList", array('CDeliveryUPS', 'Init'));
-?>

@@ -638,6 +638,10 @@ class Base
 			{
 				$result->addError(new Error($error->getString()));
 			}
+			elseif (!empty($user->LAST_ERROR))
+			{
+				$result->addError(new Error($user->LAST_ERROR));
+			}
 		}
 
 		return $result;
@@ -670,6 +674,10 @@ class Base
 					{
 						$result->addError(new Error($error->getString()));
 					}
+					elseif (!empty($user->LAST_ERROR))
+					{
+						$result->addError(new Error($user->LAST_ERROR));
+					}
 				}
 			}
 		}
@@ -699,11 +707,8 @@ class Base
 			if (is_array($userFields))
 			{
 				$updateResult = $this->updateUser($user, $userFields);
-				if ($updateResult->isSuccess())
-				{
-					$userId = $updateResult->getResult();
-				}
-				else
+				$userId = $updateResult->getResult();
+				if (empty($userId) && !$updateResult->isSuccess())
 				{
 					$result->addErrors($updateResult->getErrors());
 				}
@@ -757,6 +762,7 @@ class Base
 	 */
 	protected function getBasicFieldsNewUser($user): array
 	{
+		$fields = [];
 		$fields['LOGIN'] = Library::MODULE_ID . '_' . md5($user['id'] . '_' . randString(5));
 		$fields['PASSWORD'] = md5($fields['LOGIN'] . '|' . rand(1000,9999) . '|' . time());
 		$fields['CONFIRM_PASSWORD'] = $fields['PASSWORD'];

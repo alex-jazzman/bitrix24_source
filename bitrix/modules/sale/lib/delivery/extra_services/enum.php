@@ -25,17 +25,22 @@ class Enum extends Base
 
 	public function getCost()
 	{
-		if(!isset($this->params["PRICES"]) || !is_array($this->params["PRICES"]))
-			throw new SystemException("Service id: ".$this->id." doesn't have field array PRICES");
+		if (
+			!isset($this->params["PRICES"])
+			|| !is_array($this->params["PRICES"])
+		)
+		{
+			throw new SystemException("Service id: " . $this->id . " doesn't have field array PRICES");
+		}
 
-		if(isset($this->params["PRICES"][$this->value]["PRICE"]))
+		if (isset($this->params["PRICES"][$this->value]["PRICE"]))
 		{
 			$result = $this->params["PRICES"][$this->value]["PRICE"];
 		}
 		else
 		{
-			reset($this->params["PRICES"]);
-			$result = $this->params["PRICES"][key($this->params["PRICES"])]["PRICE"];
+			$row = reset($this->params["PRICES"]);
+			$result =$row["PRICE"] ?? 0;
 		}
 
 		return $this->convertToOperatingCurrency($result);

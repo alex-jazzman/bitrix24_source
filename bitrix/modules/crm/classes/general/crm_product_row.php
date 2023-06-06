@@ -1224,18 +1224,7 @@ class CAllCrmProductRow
 			$owner = null;
 			if (!isset($totalInfo['CURRENCY']) || !isset($totalInfo['PERSON_TYPE_ID']))
 			{
-				if($ownerType === CCrmOwnerTypeAbbr::Deal)
-				{
-					$owner = CCrmDeal::GetByID($ownerID, false);
-				}
-				elseif($ownerType === CCrmOwnerTypeAbbr::Quote)
-				{
-					$owner = CCrmQuote::GetByID($ownerID, false);
-				}
-				elseif($ownerType === CCrmOwnerTypeAbbr::Lead)
-				{
-					$owner = CCrmLead::GetByID($ownerID, false);
-				}
+				$owner = self::getOwnerData($ownerType, $ownerID);
 			}
 
 			// Determine person type
@@ -1334,19 +1323,8 @@ class CAllCrmProductRow
 	protected static function PrepareAccountingContext($ownerType, $ownerID)
 	{
 		$result = array();
-		$owner = null;
-		if($ownerType === CCrmOwnerTypeAbbr::Deal)
-		{
-			$owner = CCrmDeal::GetByID($ownerID, false);
-		}
-		elseif($ownerType === CCrmOwnerTypeAbbr::Quote)
-		{
-			$owner = CCrmQuote::GetByID($ownerID, false);
-		}
-		elseif($ownerType === CCrmOwnerTypeAbbr::Lead)
-		{
-			$owner = CCrmLead::GetByID($ownerID, false);
-		}
+
+		$owner = self::getOwnerData($ownerType, $ownerID);
 
 		if(is_array($owner))
 		{
@@ -1649,18 +1627,7 @@ class CAllCrmProductRow
 			}
 			else
 			{
-				if ($ownerType === 'L')
-				{
-					$arParams = CCrmLead::GetByID($ownerID, $checkPerms);
-				}
-				elseif ($ownerType === 'D')
-				{
-					$arParams = CCrmDeal::GetByID($ownerID, $checkPerms);
-				}
-				elseif ($ownerType === CCrmQuote::OWNER_TYPE)
-				{
-					$arParams = CCrmQuote::GetByID($ownerID, $checkPerms);
-				}
+				$arParams = self::getOwnerData($ownerType, $ownerID, $checkPerms);
 			}
 
 			if(!is_array($arParams))
@@ -2026,4 +1993,24 @@ class CAllCrmProductRow
 		");
 	}
 	// <-- Contract
+
+	public static function getOwnerData(string $ownerType, $ownerID, $bCheckPerms = false): ?array
+	{
+		$owner = null;
+
+		if($ownerType === CCrmOwnerTypeAbbr::Deal)
+		{
+			$owner = CCrmDeal::GetByID($ownerID, $bCheckPerms);
+		}
+		elseif($ownerType === CCrmOwnerTypeAbbr::Quote)
+		{
+			$owner = CCrmQuote::GetByID($ownerID, $bCheckPerms);
+		}
+		elseif($ownerType === CCrmOwnerTypeAbbr::Lead)
+		{
+			$owner = CCrmLead::GetByID($ownerID, $bCheckPerms);
+		}
+
+		return is_array($owner) ? $owner : null;
+	}
 }

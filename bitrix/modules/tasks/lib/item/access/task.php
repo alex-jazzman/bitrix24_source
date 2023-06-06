@@ -12,6 +12,7 @@ use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Log\Log;
@@ -61,7 +62,21 @@ final class Task extends \Bitrix\Tasks\Item\Access
 	public function canCreate($item, $userId = 0)
 	{
 		$accessController = $this->getAccessController($item->getUserId());
-		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createNew(), $this->getTaskModel($item));
+		$model = $this->getTaskModel($item);
+		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createNew(), $model);
+		if (!$res)
+		{
+			$director = $model->getMembers(RoleDictionary::ROLE_DIRECTOR)[0] ?? 'no data';
+			$logData = [
+				'ACCESS_CONTROLLER_USER_ID' => $item->getUserId(),
+				'MODEL_DIRECTOR_ID' => $director,
+				'ITEM_ID' => $item->getId(),
+				'ERRORS' => implode(', ', $accessController->getErrors()),
+				'OPERATION' => 'CREATE',
+			];
+			(new Log())->collect($logData);
+		}
+
 		return $this->makeResult($res, 'create');
 	}
 
@@ -69,6 +84,16 @@ final class Task extends \Bitrix\Tasks\Item\Access
 	{
 		$accessController = $this->getAccessController($item->getUserId());
 		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createFromId($item->getId()), $this->getTaskModel($item));
+		if (!$res)
+		{
+			$logData = [
+				'USER_ID' => $item->getUserId(),
+				'ITEM_ID' => $item->getId(),
+				'ERRORS' => implode(', ', $accessController->getErrors()),
+				'OPERATION' => 'UPDATE',
+			];
+			(new Log())->collect($logData);
+		}
 		return $this->makeResult($res, 'update');
 	}
 

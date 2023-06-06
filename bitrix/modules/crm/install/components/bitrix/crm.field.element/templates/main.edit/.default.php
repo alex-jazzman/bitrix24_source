@@ -95,7 +95,8 @@ else
 					'CONVERT_TO_SYMBOLIC_ID' => (!$arResult['USE_SYMBOLIC_ID'] ? 'N' : false),
 //				"BUTTON_SELECT_CAPTION" => Loc::getMessage("CRM_SL_EVENT_EDIT_MPF_WHERE_1"),
 					'API_VERSION' => 3,
-					'SELECTOR_OPTIONS' => $selectorOptions
+					'SELECTOR_OPTIONS' => $selectorOptions,
+					'CALLBACK_BEFORE' => $arParams['additionalParameters']['CALLBACK_BEFORE'] ?? [],
 				]
 			);
 			?>

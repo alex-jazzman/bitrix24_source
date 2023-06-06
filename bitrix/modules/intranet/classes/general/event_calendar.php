@@ -6822,22 +6822,11 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 		}
 	}
 
-	function CheckVR($Params)
+	/**
+	 * @deprecated
+	 */
+	public static function CheckVR($Params)
 	{
-		if (!$Params['allowVideoMeeting'])
-			return false;
-		if(CModule::IncludeModule("video"))
-		{
-			$vParams = Array(
-				"regularity" => $Params["regularity"],
-				"dateFrom" => $Params["dateFrom"],
-				"dateTo" => $Params["dateTo"],
-				"iblockId" => $Params["VMiblockId"],
-				"ID" => $Params["ID"],
-			);
-
-			return CVideo::CheckRooms($vParams);
-		}
 		return false;
 	}
 

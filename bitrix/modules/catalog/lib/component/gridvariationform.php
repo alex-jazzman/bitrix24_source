@@ -322,7 +322,7 @@ class GridVariationForm extends VariationForm
 						$formatted = [];
 						$items = [];
 
-						foreach ($description['editable']['DATA']['ITEMS'] as $item)
+						foreach ($description['data']['items'] as $item)
 						{
 							$items[$item['VALUE']] = $item['HTML'] ?? HtmlFilter::encode($item['NAME']);
 						}
@@ -352,10 +352,25 @@ class GridVariationForm extends VariationForm
 					$values[$name] = Loc::getMessage('CATALOG_PRODUCT_CARD_VARIATION_GRID_VALUE_' . $code);
 					break;
 				case 'list':
-					$values[$name] = HtmlFilter::encode($description['editable']['items'][$currentValue] ?? '');
+					if (isset($description['editable']['items']))
+					{
+						$values[$name] = HtmlFilter::encode($description['editable']['items'][$currentValue] ?? '');
+						break;
+					}
+					foreach ($description['data']['items'] as $item)
+					{
+						if ($currentValue === $item['VALUE'])
+						{
+							$values[$name] = HtmlFilter::encode($item['NAME'] ?? '');
+							break;
+						}
+					}
 					break;
 				case 'custom':
 					$values[$name] = $values[$description['data']['view']];
+					break;
+				case 'user':
+					$values[$name] = HtmlFilter::encode($values[$name . '_FORMATTED_NAME'] ?? '');
 					break;
 				case 'readOnlyVat':
 					$currentVat = (int)$values[$name];
@@ -441,7 +456,7 @@ class GridVariationForm extends VariationForm
 					'AVAILABLE', 'VAT_ID', 'VAT_INCLUDED', 'QUANTITY', 'QUANTITY_RESERVED',
 					'QUANTITY_TRACE', 'CAN_BUY_ZERO', // 'SUBSCRIBE',
 					'WEIGHT', 'WIDTH', 'LENGTH', 'HEIGHT',
-					'SHOW_COUNTER', 'CODE', 'TIMESTAMP_X', 'USER_NAME',
+					'SHOW_COUNTER', 'CODE', 'TIMESTAMP_X', 'MODIFIED_BY',
 					'DATE_CREATE', 'XML_ID',
 					// 'BAR_CODE', 'TAGS', 'DISCOUNT', 'STORE', 'PRICE_TYPE',
 				],
@@ -498,7 +513,7 @@ class GridVariationForm extends VariationForm
 		$numberFields = ['QUANTITY', 'QUANTITY_RESERVED', 'QUANTITY_COMMON', 'MEASURE_RATIO', 'WEIGHT', 'WIDTH', 'LENGTH', 'HEIGHT'];
 		$numberFields = array_fill_keys($numberFields, true);
 
-		$immutableFields = ['TIMESTAMP_X', 'USER_NAME', 'DATE_CREATE', 'CREATED_USER_NAME', 'AVAILABLE'];
+		$immutableFields = ['TIMESTAMP_X', 'MODIFIED_BY', 'DATE_CREATE', 'CREATED_USER_NAME', 'AVAILABLE'];
 		$immutableFields = array_fill_keys($immutableFields, true);
 
 		$defaultFields = ['QUANTITY', 'MEASURE', 'NAME', 'BARCODE'];
@@ -511,7 +526,7 @@ class GridVariationForm extends VariationForm
 			'ACTIVE' =>'ACTIVE',
 			'MEASURE' =>'MEASURE',
 			'TIMESTAMP_X' => 'TIMESTAMP_X',
-			'USER_NAME' => 'MODIFIED_BY',
+			'MODIFIED_BY' => 'MODIFIED_BY',
 			'DATE_CREATE' => 'CREATED',
 			'CREATED_USER_NAME' => 'CREATED_BY',
 			'CODE' => 'CODE',
@@ -534,6 +549,10 @@ class GridVariationForm extends VariationForm
 				case 'ACTIVE':
 				case 'VAT_INCLUDED':
 					$type = 'boolean';
+					break;
+
+				case 'MODIFIED_BY':
+					$type = 'user';
 					break;
 
 				case 'VAT_ID':
@@ -669,7 +688,11 @@ class GridVariationForm extends VariationForm
 				}
 			}
 
-			$headerName = static::getHeaderName($code);
+			$headerName =
+				$code === 'MODIFIED_BY'
+					? static::getHeaderName('USER_NAME')
+					: static::getHeaderName($code)
+			;
 
 			$sortField = $sortableFields[$code] ?? false;
 

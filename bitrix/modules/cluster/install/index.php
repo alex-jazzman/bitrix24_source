@@ -27,25 +27,19 @@ Class cluster extends CModule
 
 	function InstallDB($arParams = array())
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 		$this->errors = false;
 
 		// Database tables creation
 		if(!$DB->Query("SELECT 'x' FROM b_cluster_dbnode WHERE 1=0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/cluster/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/cluster/install/db/mysql/install.sql");
 
-			if($DB->type == "MSSQL")
-				$DB->Query("SET IDENTITY_INSERT B_CLUSTER_GROUP ON");
 			$DB->Add("b_cluster_group", array(
 				"ID" => 1,
 				"NAME" => GetMessage("CLU_GROUP_NO_ONE"),
 			));
-			if($DB->type == "MSSQL")
-				$DB->Query("SET IDENTITY_INSERT B_CLUSTER_GROUP OFF");
 
-			if($DB->type == "MSSQL")
-				$DB->Query("SET IDENTITY_INSERT B_CLUSTER_DBNODE ON");
 			$DB->Add("b_cluster_dbnode", array(
 				"ID" => 1,
 				"GROUP_ID" => 1,
@@ -63,8 +57,6 @@ Class cluster extends CModule
 				"SERVER_ID" => false,
 				"STATUS" => "ONLINE",
 			));
-			if($DB->type == "MSSQL")
-				$DB->Query("SET IDENTITY_INSERT B_CLUSTER_DBNODE OFF");
 		}
 
 
@@ -83,12 +75,12 @@ Class cluster extends CModule
 
 	function UnInstallDB($arParams = array())
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 		$this->errors = false;
 
 		if(!array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y")
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/cluster/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/cluster/install/db/mysql/uninstall.sql");
 		}
 
 		UnRegisterModule("cluster");
@@ -119,8 +111,7 @@ Class cluster extends CModule
 		{
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/cluster/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/cluster/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
-			if($DB->type == "MYSQL")
-				CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/cluster/install/wizards", $_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards", true, true);
+			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/cluster/install/wizards", $_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards", true, true);
 		}
 		return true;
 	}

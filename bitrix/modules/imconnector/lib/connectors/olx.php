@@ -53,7 +53,7 @@ class Olx extends Base
 			if(!empty($data) && $dataOld!==$data)
 			{
 				$status->setData($data);
-				Status::save();
+				$status->save();
 			}
 
 			if (!Library::isEmpty($message['message']['attach']))

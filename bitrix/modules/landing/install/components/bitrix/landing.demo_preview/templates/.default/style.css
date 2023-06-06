@@ -570,11 +570,19 @@ input {
 	box-shadow: 0 9px 18px rgb(0 0 0 / 12%);
 	z-index: 100;
 	border-radius: 16px;
-	padding-top: 10px;
 	overflow: auto;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+.landing-popup-import::-webkit-scrollbar {
+	display: none;
 }
 .landing-import-start .landing-popup-import {
-	display: block;
+	display: flex;
+}
+.landing-popup-import .rest-configuration-wrapper {
+	height: fit-content;
+	margin-top: 35px;
 }
 
 .landing-popup-import-title {
@@ -608,4 +616,30 @@ input {
 
 .right-part .ui-btn-disabled {
 	cursor: default !important
+}
+
+.landing-popup-import .rest-configuration {
+	min-height: fit-content;
+}
+
+.landing-popup-import .rest-configuration-title {
+	margin-bottom: 10px;
+}
+
+.landing-popup-import-repeat {
+	display: flex;
+	flex-direction: column;
+	margin: auto auto 100px;
+}
+.landing-popup-import-repeat.hide {
+	display: none;
+}
+.landing-popup-import-repeat-button {
+	width: fit-content;
+	min-width: 150px;
+	margin: auto;
+}
+.landing-popup-import-repeat-text {
+	text-align: center;
+	padding-bottom: 15px;
 }

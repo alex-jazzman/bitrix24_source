@@ -83,6 +83,7 @@ const SPECIFIC_REALIZATION_ERROR_CODES = [
 	'REALIZATION_PRODUCT_NOT_FOUND',
 	'SHIPMENT_ACCESS_DENIED',
 	'PAYMENT_ACCESS_DENIED',
+	'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS',
 ];
 
 const SPECIFIC_ERROR_CODES = SPECIFIC_REALIZATION_ERROR_CODES.concat([
@@ -91,6 +92,7 @@ const SPECIFIC_ERROR_CODES = SPECIFIC_REALIZATION_ERROR_CODES.concat([
 	'SALE_SHIPMENT_EXIST_SHIPPED',
 	'SALE_PAYMENT_DELETE_EXIST_PAID',
 	'DDCT_DEDUCTION_QUANTITY_STORE_ERROR',
+	'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS',
 ]);
 
 type AjaxHandler = (...args: Array<any>) => any;
@@ -242,7 +244,10 @@ export class EntityEditorPaymentDocuments
 
 	_renderPaymentDocument(doc: PaymentDocument): HTMLElement
 	{
-		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_1')
+			.replace(/#DATE#/gi, doc.FORMATTED_DATE)
+			.replace(/#ACCOUNT_NUMBER#/gi, doc.ACCOUNT_NUMBER)
+		;
 		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 		const labelOptions = {
 			text: Loc.getMessage(`CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_${doc.STAGE}`),
@@ -390,7 +395,10 @@ export class EntityEditorPaymentDocuments
 			labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_DELIVERED');
 			labelOptions.color = LabelColor.LIGHT_GREEN;
 		}
-		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_1')
+			.replace(/#DATE#/gi, doc.FORMATTED_DATE)
+			.replace(/#ACCOUNT_NUMBER#/gi, doc.ACCOUNT_NUMBER)
+		;
 		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 
 		let popupMenu;
@@ -1102,6 +1110,7 @@ export class EntityEditorPaymentDocuments
 
 					BX.UI.Notification.Center.notify({
 						content: notifyMessage,
+						width: 'auto',
 						actions: [
 							{
 								title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN_REALIZATION_DOCUMENT'),

@@ -47,6 +47,7 @@ else
 	else
 	{
 		$table_name = array_pop($arTablesToDelete);
+		$nodeDB->Query("SET FOREIGN_KEY_CHECKS=0", false, '', array("fixed_connection"=>true));
 		$nodeDB->Query("drop table ".$table_name, false, '', array("fixed_connection"=>true));
 		echo GetMessage('CLUWIZ_TABLE_DROPPED', array("#table_name#" => $table_name));
 		echo '<br />';

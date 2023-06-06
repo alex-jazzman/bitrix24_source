@@ -12,9 +12,9 @@
 	word-break: break-all;
 }
 
-.crm-timeline__item_sms-message > span {
+.crm-timeline__item_sms-message>span {
 	position: relative;
 	display: block;
 	margin-top: -16px;
-	padding: 4px 12px;
+	padding: 4px 12px
 }

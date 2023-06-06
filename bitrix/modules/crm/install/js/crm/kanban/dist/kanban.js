@@ -237,7 +237,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            _this.loadItemsTimer = null;
 	          };
 	          babelHelpers.classPrivateFieldSet(_this, _isProgress, true);
-	          babelHelpers.classPrivateFieldGet(_this, _grid).loadNew(ids, false, true, true).then(loadNextOnSuccess, doNothingOnError);
+	          babelHelpers.classPrivateFieldGet(_this, _grid).loadNew(ids, false, true, true, true).then(loadNextOnSuccess, doNothingOnError);
 	        }
 	      }, ignoreDelay ? 0 : LOAD_ITEMS_DELAY);
 	    }
@@ -589,7 +589,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return main_popup.PopupManager.create({
 	        id: 'kanban_custom_fields_' + this.type,
 	        className: 'crm-kanban-popup-field',
-	        titleBar: BX.message('CRM_KANBAN_CUSTOM_FIELDS_' + this.type.toUpperCase()),
+	        titleBar: main_core.Loc.getMessage('CRM_KANBAN_CUSTOM_FIELDS_' + this.type.toUpperCase()),
 	        cacheable: false,
 	        closeIcon: true,
 	        lightShadow: true,
@@ -600,7 +600,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        maxHeight: window.innerHeight - 50,
 	        events: {
 	          onClose: function onClose() {
-	            return _this.popup = null;
+	            _this.fieldsPopupItems = null;
+	            _this.popup = null;
 	          }
 	        },
 	        buttons: [new BX.UI.SaveButton({

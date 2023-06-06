@@ -103,13 +103,16 @@ if($lAdmin->EditAction() && !$bReadOnly)
 					$lAdmin->AddGroupError(GetMessage("BT_CAT_DISC_SAVE_ADM_ERR_UPDATE_UNKNOWN"), $ID);
 				$DB->Rollback();
 			}
+			else
+			{
+				$DB->Commit();
+			}
 		}
 		else
 		{
 			$lAdmin->AddGroupError(GetMessage('BT_CAT_DISC_SAVE_ADM_ERR_UPDATE_ABSENT'), $ID);
 			$DB->Rollback();
 		}
-		$DB->Commit();
 	}
 }
 

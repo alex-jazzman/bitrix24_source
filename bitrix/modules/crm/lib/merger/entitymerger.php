@@ -1120,7 +1120,12 @@ abstract class EntityMerger
 			$destinationID,
 			$destinationFields,
 			self::ROLE_TARG,
-			array('DISABLE_USER_FIELD_CHECK' => true)
+			[
+				'DISABLE_USER_FIELD_CHECK' => true,
+				'EXCLUDE_FROM_RELATION_REGISTRATION' => [
+					new Crm\ItemIdentifier((int)$sourceMerger->getEntityTypeID(), (int)$sourceID),
+				],
+			]
 		);
 	}
 

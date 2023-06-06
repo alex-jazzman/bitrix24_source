@@ -273,17 +273,15 @@ $APPLICATION->SetPageProperty(
 				{
 					var list = [];
 					var preset = [];
-					list = BX.UI.Switcher.getList()
-					.filter(function (item) {
-						return item.checked === true;
-					});
-					if (list.length>0)
+					list = BX.UI.Switcher.getList().filter((item) => item.isChecked());
+					if (list.length > 0)
 					{
-						list.forEach((item)=>{
+						list.forEach((item) => {
 							preset.push(item.id)
 						})
 					}
-					return preset.length>0 ? preset : ['empty'];
+
+					return preset.length > 0 ? preset : ['empty'];
 				},
 				_processEnableResponse(promise)
 				{
@@ -500,7 +498,7 @@ $APPLICATION->SetPageProperty(
 						<div class="catalog-warehouse__master-clear--selection-block">
 							<div class="catalog-warehouse__master-clear--item" :class="{'--disable': item.available === 'N'}"  v-for="(item, index) in this.presetList">
 								<div class="catalog-warehouse__master-clear--switcher">
-									<span class="ui-switcher-color-green ui-switcher ui-switcher-size-sm" :data-switcher="getDataSwitcher(item, index)">
+									<span class="ui-switcher ui-switcher-color-green ui-switcher-size-sm" :data-switcher="getDataSwitcher(item, index)">
 										<span class="ui-switcher-cursor"></span>
 										<span class="ui-switcher-enabled"><?=Loc::getMessage('CAT_WAREHOUSE_MASTER_CLEAR_7')?></span>
 										<span class="ui-switcher-disabled"><?=Loc::getMessage('CAT_WAREHOUSE_MASTER_CLEAR_8')?></span>

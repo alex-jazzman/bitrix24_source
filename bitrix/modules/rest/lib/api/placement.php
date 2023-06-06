@@ -124,7 +124,7 @@ class Placement extends \IRestService
 		$placementList = static::getPlacementList($server, $scopeList);
 		$placementInfo = $placementList[$placement];
 
-		if (is_array($placementInfo) && !$placementInfo['private'])
+		if (is_array($placementInfo) && (!isset($placementInfo['private']) || !$placementInfo['private']))
 		{
 			$placementLangList = [];
 			$paramsOptions = $params['OPTIONS'] ?? [];
@@ -132,7 +132,7 @@ class Placement extends \IRestService
 
 			$placementBind = array(
 				'APP_ID' => $appInfo['ID'],
-				'USER_ID' => (int) $params['USER_ID'] > 0 ? (int) $params['USER_ID'] : PlacementTable::DEFAULT_USER_ID_VALUE,
+				'USER_ID' => (isset($params['USER_ID']) && (int)$params['USER_ID'] > 0) ? (int)$params['USER_ID'] : PlacementTable::DEFAULT_USER_ID_VALUE,
 				'PLACEMENT' => $placement,
 				'PLACEMENT_HANDLER' => $placementHandler,
 				'OPTIONS' => static::prepareOptions($paramsOptions, $placementInfoOptions),
@@ -343,15 +343,82 @@ class Placement extends \IRestService
 			{
 				case 'int':
 					$result[$optionName] = (int)$optionValue;
+
 					break;
 				case 'string':
 					$result[$optionName] = (string)$optionValue;
+
+					break;
+				case 'array':
+					if (!is_array($optionValue))
+					{
+						throw new ArgumentTypeException($optionName, 'array');
+					}
+					$result[$optionName] = self::prepareCompositeOptions($optionValue, $optionSetting);
+
 					break;
 			}
 		}
 
 		return $result;
 	}
+
+	/**
+	 * handling arrays in options
+	 * @param array $paramOptionData
+	 * @param array $optionSetting
+	 * @return array
+	 * @throws ArgumentTypeException
+	 */
+	private static function prepareCompositeOptions(array $paramOptionData, array $optionSetting): array
+	{
+		$result = [];
+		if (!is_array($optionSetting['typeValue']))
+		{
+			throw new ArgumentTypeException('typeValue', 'array');
+		}
+
+		$allowedTypes = ['integer', 'string', 'array'];
+		$optionSetting['typeValue'] = str_replace('int', 'integer', $optionSetting['typeValue']);
+		$optionSetting['typeValue'] = array_intersect($optionSetting['typeValue'], $allowedTypes);
+
+		//1. check transmitted placement data
+		foreach ($paramOptionData as $keyOption => $valueOption)
+		{
+			$typeValue = gettype($valueOption);
+			//do not take arrays, they are processed as a separate entity
+			if (in_array($typeValue, $optionSetting['typeValue']) && $typeValue !== 'array')
+			{
+				$result[$keyOption] = $valueOption;
+			}
+		}
+
+		//2. check default placement setting
+		foreach ($optionSetting as $keySetting => $valueSetting)
+		{
+			//type and typeValue - service data
+			if ($keySetting === 'type' || $keySetting === 'typeValue')
+			{
+				continue;
+			}
+
+			$typeValueSetting = gettype($valueSetting);
+
+			if (
+				$typeValueSetting === 'array'
+				&& in_array('array', $optionSetting['typeValue'])
+				&& isset($valueSetting['type'])
+				&& isset($valueSetting['typeValue'])
+				&& isset($paramOptionData[$keySetting])
+			)
+			{
+				$result[$keySetting] = self::prepareCompositeOptions($paramOptionData[$keySetting], $valueSetting);
+			}
+		}
+
+		return $result;
+	}
+
 
 	/**
 	 * if the option configuration has the "default" key

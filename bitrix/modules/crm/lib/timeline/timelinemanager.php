@@ -67,6 +67,16 @@ class TimelineManager
 			return LogMessageController::getInstance();
 		}
 
+		if ($typeID === TimelineType::CALENDAR_SHARING)
+		{
+			return CalendarSharing\Controller::getInstance();
+		}
+
+		if ($typeID === TimelineType::TASK)
+		{
+			return Tasks\Controller::getInstance();
+		}
+
 		if($assocEntityTypeID === \CCrmOwnerType::Activity)
 		{
 			if($typeID === TimelineType::MODIFICATION)
@@ -233,11 +243,30 @@ class TimelineManager
 					false,
 					false,
 					[
-						'ID', 'OWNER_ID', 'OWNER_TYPE_ID', 'TYPE_ID', 'RESPONSIBLE_ID',  'CREATED',
-						'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'PROVIDER_PARAMS',
-						'ASSOCIATED_ENTITY_ID', 'DIRECTION', 'SUBJECT', 'STATUS', 'DEADLINE',
-						'DESCRIPTION', 'DESCRIPTION_TYPE', 'ASSOCIATED_ENTITY_ID',
-						'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'ORIGIN_ID', 'SETTINGS', 'RESULT_MARK'
+						'ID',
+						'OWNER_ID',
+						'OWNER_TYPE_ID',
+						'TYPE_ID',
+						'RESPONSIBLE_ID',
+						'CREATED',
+						'PROVIDER_ID',
+						'PROVIDER_TYPE_ID',
+						'PROVIDER_PARAMS',
+						'PROVIDER_DATA',
+						'ASSOCIATED_ENTITY_ID',
+						'DIRECTION',
+						'SUBJECT',
+						'STATUS',
+						'DEADLINE',
+						'DESCRIPTION',
+						'DESCRIPTION_TYPE',
+						'ASSOCIATED_ENTITY_ID',
+						'STORAGE_TYPE_ID',
+						'STORAGE_ELEMENT_IDS',
+						'ORIGIN_ID',
+						'SETTINGS',
+						'RESULT_MARK',
+						'CALENDAR_EVENT_ID'
 					]
 				);
 				$noteData = [];
@@ -297,8 +326,6 @@ class TimelineManager
 							unset($items[$itemID]);
 						}
 					}
-
-					$items = \Bitrix\Crm\Timeline\Entity\NoteTable::loadForItems($items, NoteTable::NOTE_TYPE_ACTIVITY);
 				}
 
 				$communications = \CCrmActivity::PrepareCommunicationInfos(

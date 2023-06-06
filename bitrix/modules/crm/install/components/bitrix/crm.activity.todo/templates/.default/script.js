@@ -4,7 +4,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 	{
 		this._ccontainer = settings.ccontainer || 'crm-activity-todo-items';
 		this._citem = settings.citem || 'crm-activity-todo-item';
-		this._clink = settings.clink || 'crm-activity-todo-link';
+		this._clink = settings.clink || 'crm-activity-todo-link --active';
 		this._ccheck = settings.ccheck || 'crm-activity-todo-check';
 		this._cbuttoncancel = settings.cbuttoncancel || 'popup-window-button-link-cancel';
 		this._ccheckprefix = settings.ccheckprefix || 'check';
@@ -15,7 +15,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 		this._activityId = 0;
 		
 		//bind click on activity title
-		var activityLink = BX.findChild(BX(this._ccontainer), { class: this._clink, tag: 'a' }, true, true);
+		var activityLink = BX.findChild(BX(this._ccontainer), { class: this._clink }, true, true);
 		if (activityLink)
 		{
 			for (i=0; i<activityLink.length; i++)
@@ -82,7 +82,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 				}
 				if (fieldCompleted)
 				{
-					BX.remove(BX.findParent(fieldCompleted, {tag: 'label'}));
+					BX.remove(BX.findParent(fieldCompleted, {tag: 'div'}));
 					/*if (fieldCompleted.checked)
 					{
 						fieldCompleted.disabled = true;

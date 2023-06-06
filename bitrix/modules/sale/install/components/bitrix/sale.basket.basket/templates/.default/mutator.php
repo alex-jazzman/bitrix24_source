@@ -273,7 +273,7 @@ foreach ($this->basketItems as $row)
 					$rowData['COLUMN_LIST'][] = array(
 						'CODE' => $value['id'],
 						'NAME' => $value['name'],
-						'VALUE' => isset($row['~NOTES']) ? $row['~NOTES'] : $row['NOTES'],
+						'VALUE' => $row['~NOTES'] ?? $row['NOTES'],
 						'IS_TEXT' => true,
 						'HIDE_MOBILE' => !isset($mobileColumns[$value['id']])
 					);
@@ -358,7 +358,7 @@ foreach ($this->basketItems as $row)
 			}
 			elseif (!empty($row[$value['id']]))
 			{
-				$rawValue = isset($row['~'.$value['id']]) ? $row['~'.$value['id']] : $row[$value['id']];
+				$rawValue = $row['~' . $value['id']] ?? $row[$value['id']];
 				$isHtml = !empty($row[$value['id'].'_HTML']);
 
 				$rowData['COLUMN_LIST'][] = array(

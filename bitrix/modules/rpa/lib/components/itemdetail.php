@@ -526,7 +526,11 @@ abstract class ItemDetail extends Base implements Controllerable
 		$setData = [];
 		$userFields = $this->type->getUserFieldCollection();
 		global $USER_FIELD_MANAGER;
-		$USER_FIELD_MANAGER->EditFormAddFields($userFields->toArray(), $data, array('FORM' => $data));
+		$USER_FIELD_MANAGER->EditFormAddFields(
+			$this->type->getItemUserFieldsEntityId(),
+			$data,
+			['FORM' => $data]
+		);
 		foreach($data as $name => $value)
 		{
 			$userField = $userFields->getByName($name);

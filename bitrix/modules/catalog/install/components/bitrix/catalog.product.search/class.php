@@ -1643,8 +1643,17 @@ class ProductSearchComponent extends \CBitrixComponent
 		$this->activeSectionNavChain = array();
 		if ($activeSectionId)
 		{
-			$rsSections = \CIBlockSection::GetNavChain($iblockId, $activeSectionId, array('ID', 'IBLOCK_ID', 'NAME'));
-			while ($arSection = $rsSections->Fetch())
+			$sectionList = \CIBlockSection::GetNavChain(
+				$iblockId,
+				$activeSectionId,
+				[
+					'ID',
+					'IBLOCK_ID',
+					'NAME',
+				],
+				true
+			);
+			foreach ($sectionList as $arSection)
 			{
 				$this->activeSectionNavChain[$arSection["ID"]] = $arSection;
 			}
@@ -1799,18 +1808,28 @@ class ProductSearchComponent extends \CBitrixComponent
 		return $this->iblockList;
 	}
 
-	protected function getParentSectionId()
+	protected function getParentSectionId(): int
 	{
-		if (!$this->getSectionId()) return -1;
-		$nav = \CIBlockSection::GetNavChain($this->getIblockId(), $this->getSectionId(), array('ID', 'IBLOCK_ID', 'NAME'));
-		$navIds = array();
-		while ($tmp = $nav->Fetch())
-			$navIds[] = $tmp["ID"];
-		array_pop($navIds);
-		$parentId = 0;
-		if ($navIds)
-			$parentId = end($navIds);
-		return $parentId;
+		if (!$this->getSectionId())
+		{
+			return -1;
+		}
+		$section = Iblock\SectionTable::getRow([
+			'select' => [
+				'ID',
+				'IBLOCK_SECTION_ID',
+			],
+			'filter' => [
+				'=IBLOCK_ID' => $this->getIblockId(),
+				'=ID' => (int)$this->getSectionId(),
+			]
+		]);
+		if (empty($section))
+		{
+			return -1;
+		}
+
+		return (int)$section['IBLOCK_SECTION_ID'];
 	}
 
 	protected function getListSort()

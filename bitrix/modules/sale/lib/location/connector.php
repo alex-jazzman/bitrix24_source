@@ -277,10 +277,34 @@ abstract class Connector extends Entity\DataManager
 			// get existed relations
 			$existed = static::getLinkedLocations($entityPrimary);
 
-			static::updateMultipleLinkType($entityPrimary, array(), $existed[static::DB_LOCATION_FLAG], static::DB_LOCATION_FLAG, true);
+			if (
+				!empty($existed[static::DB_LOCATION_FLAG])
+				&& is_array($existed[static::DB_LOCATION_FLAG])
+			)
+			{
+				static::updateMultipleLinkType(
+					$entityPrimary,
+					[],
+					$existed[static::DB_LOCATION_FLAG],
+					static::DB_LOCATION_FLAG,
+					true
+				);
+			}
 
-			if(static::getUseGroups())
-				static::updateMultipleLinkType($entityPrimary, array(), $existed[static::DB_GROUP_FLAG], static::DB_GROUP_FLAG, true);
+			if (
+				static::getUseGroups()
+				&& !empty($existed[static::DB_GROUP_FLAG])
+				&& is_array($existed[static::DB_GROUP_FLAG])
+			)
+			{
+				static::updateMultipleLinkType(
+					$entityPrimary,
+					[],
+					$existed[static::DB_GROUP_FLAG],
+					static::DB_GROUP_FLAG,
+					true
+				);
+			}
 		}
 
 		static::setLinkUsage($entityPrimary, static::DB_LOCATION_FLAG, false);
@@ -906,17 +930,33 @@ abstract class Connector extends Entity\DataManager
 	{
 		$entityPrimary = Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
 
-		$existed = array();
+		$existed = [];
 		$linkFld = static::getLocationLinkField();
 		$typeFld = static::getTypeField();
-		$res = static::getList(array('filter' => array(static::getLinkField() => $entityPrimary)));
+		if ($typeFld === '')
+		{
+			return $existed;
+		}
+		$res = static::getList([
+			'filter' => [
+				static::getLinkField() => $entityPrimary
+			],
+		]);
 		while($item = $res->fetch())
 		{
-			if(!in_array($item[static::getTypeField()], array(static::DB_GROUP_FLAG, static::DB_LOCATION_FLAG))) // strange record found. skip it
+			if ($item[$typeFld] !== static::DB_GROUP_FLAG && $item[$typeFld] !== static::DB_LOCATION_FLAG) // strange record found. skip it
+			{
+				continue;
+			}
+			$existed[$item[$typeFld]] ??= [];
+			$existed[$item[$typeFld]][$item[$linkFld]] = true;
+
+			/*if(!in_array($item[static::getTypeField()], array(static::DB_GROUP_FLAG, static::DB_LOCATION_FLAG))) // strange record found. skip it
 				continue;
 
-			$existed[$item[static::getTypeField()]][$item[$linkFld]] = true;
+			$existed[$item[static::getTypeField()]][$item[$linkFld]] = true; */
 		}
+		unset($item, $res);
 
 		return $existed;
 	}
@@ -926,7 +966,7 @@ abstract class Connector extends Entity\DataManager
 	 *
 	 *
 	 */
-	public static function getLinkStatusForMultipleNodes($nodeInfo = array(), $entityPrimary, $connectors = false) // rename to: getConnectionStatusForMultipleNodes
+	public static function getLinkStatusForMultipleNodes($nodeInfo, $entityPrimary, $connectors = false) // rename to: getConnectionStatusForMultipleNodes
 	{
 		$nodeInfo = Assert::expectArray($nodeInfo, '$nodeInfo');
 		$entityPrimary = Assert::expectStringNotNull($entityPrimary, '$entityPrimary');

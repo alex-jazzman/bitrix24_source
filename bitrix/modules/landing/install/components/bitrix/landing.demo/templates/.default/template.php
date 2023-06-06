@@ -263,7 +263,7 @@ if (!$component->isAjax())
 					<div class="landing-title-overflow">
 						<?= \htmlspecialcharsbx($item['TITLE'])?>
 					</div>
-					<?if ($item['IS_NEW'] === 'Y'): ?>
+					<?if (($item['IS_NEW'] ?? null) === 'Y'): ?>
 						<span class="landing-title-new"><?= Loc::getMessage('LANDING_TPL_LABEL_NEW');?></span>
 					<?endif;?>
 				</div>
@@ -276,7 +276,7 @@ if (!$component->isAjax())
 						srcset="<?= \htmlspecialcharsbx($item['PREVIEW2X'] ? $item['PREVIEW2X'] : $item['PREVIEW'])?> 2x,
 									<?= \htmlspecialcharsbx($item['PREVIEW3X'] ? $item['PREVIEW3X'] : $item['PREVIEW'])?> 3x">
 				<?endif;?>
-				<?php if ($item['LABELS']):?>
+				<?php if ($item['LABELS'] ?? null):?>
 					<span class="landing-item-label">
 						<?=Loc::getMessage('LANDING_TPL_LABEL_SUBSCRIPTION')?>
 					</span>

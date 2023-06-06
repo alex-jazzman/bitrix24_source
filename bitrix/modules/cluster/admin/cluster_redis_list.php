@@ -1,40 +1,77 @@
 <?php
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/cluster/prolog.php");
+/** @global CMain $APPLICATION */
+/** @global CUser $USER */
+
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Localization\Loc;
+
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/cluster/prolog.php');
 IncludeModuleLangFile(__FILE__);
+
+$asset = Asset::getInstance();
+$asset->addString('<link rel="stylesheet" type="text/css" href="' . $asset->getFullAssetPath('/bitrix/css/cluster/cluster_list.css') . '">');
 
 if (!$USER->IsAdmin())
 {
-	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
 
-$cacheType = COption::GetOptionString('cluster', 'cache_type', 'memcache');
+$cacheType = Bitrix\Main\Config\Option::get('cluster', 'cache_type', 'memcache');
 if (!extension_loaded('redis') || $cacheType != 'redis')
 {
-	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+	require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 	if ($cacheType != 'redis')
 	{
-		ShowError(GetMessage("CLU_REDIS_DISABLED"));
+		ShowError(Loc::getMessage('CLU_REDIS_DISABLED'));
 	}
 	else
 	{
-		ShowError(GetMessage("CLU_REDIS_NO_EXTENTION"));
+		ShowError(Loc::getMessage('CLU_REDIS_NO_EXTENTION'));
 	}
 
-	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+	require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
 	die();
 }
 
-$group_id = intval($_GET["group_id"]);
+$group_id = intval($_GET['group_id']);
 if (!CClusterGroup::GetArrayByID($group_id))
 {
-	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
+}
+
+function getHtml($server)
+{
+	$html = '<table width="100%">';
+	$status = CClusterRedis::getStatus($server);
+
+	foreach ($status as $key => $val)
+	{
+		switch ($key)
+		{
+			case 'maxbytes':
+			case 'total_system_memory':
+				$html .= '<tr><td width="50%" align=right>' . $key . ':</td><td align=left>' . CFile::FormatSize($val) . '</td></tr>';
+				break;
+			case 'used_memory':
+				$html .= '<tr><td width="50%" align=right>' . $key . ':</td><td align=left>' . CFile::FormatSize($val)
+					. ($status['maxbytes'] > 0 ? ' (' . round($val / $status['maxbytes'] * 100, 2) . '%)' : '')
+					. '</td></tr>';
+				break;
+			default:
+				$html .= '<tr><td width="50%" align=right>' . $key . ':</td><td align=left>' . $val . '</td></tr>';
+				break;
+		}
+	}
+	$html .= '</table>';
+
+	return ['html' => $html, 'status' => $status];
 }
 
 $errorMessage = null;
-$sTableID = "tbl_cluster_redis_list";
-$oSort = new CAdminSorting($sTableID, "ID", "ASC");
-$lAdmin = new CAdminList($sTableID, $oSort);
+$tableID = 'tbl_cluster_redis_list';
+// $sort = new CAdminSorting($tableID, 'ID', 'ASC');
+$lAdmin = new CAdminList($tableID);
 
 if ($arID = $lAdmin->GroupAction())
 {
@@ -48,237 +85,291 @@ if ($arID = $lAdmin->GroupAction())
 		$ID = intval($ID);
 		switch ($_REQUEST['action'])
 		{
-			case "delete":
+			case 'delete':
 				CClusterRedis::delete($ID);
 				break;
-			case "pause":
+
+			case 'pause':
 				CClusterRedis::pause($ID);
-				if(CClusterRedis::$systemConfigurationUpdate === false)
-					$errorMessage = new CAdminMessage(GetMessage("CLU_REDIS_LIST_WARNING_NO_CACHE"));
+				if (CClusterRedis::$systemConfigurationUpdate === false)
+				{
+					$errorMessage = new CAdminMessage(Loc::getMessage('CLU_REDIS_LIST_WARNING_NO_CACHE'));
+				}
 				break;
-			case "resume":
+
+			case 'resume':
 				CClusterRedis::resume($ID);
+				break;
+
+			case 'resumecluster':
+
+				$masterCnt = 0;
+				$redisList = [];
+
+				$cluster = new CClusterRedis;
+				$rsList = $cluster->getList();
+				while ($item = $rsList->Fetch())
+				{
+					if (
+						$item['GROUP_ID'] == $group_id
+						&& $item['MODE'] == 'CLUSTER'
+						&& $item['STATUS'] == 'READY'
+					)
+					{
+						if ($item['ROLE'] == 'MASTER')
+						{
+							$masterCnt++;
+						}
+						$redisList[] = $item['ID'];
+					}
+				}
+
+				if ($masterCnt > 2)
+				{
+					CClusterRedis::resume($redisList);
+				}
+				break;
+
+			case 'pausecluster':
+				$redisList = [];
+
+				$cluster = new CClusterRedis;
+				$rsList = $cluster->getList();
+				while ($item = $rsList->Fetch())
+				{
+					if (
+						$item['GROUP_ID'] == $group_id
+						&& $item['MODE'] == 'CLUSTER'
+						&& $item['STATUS'] == 'ONLINE'
+					)
+					{
+						$redisList[] = $item['ID'];
+					}
+				}
+
+				if (count($redisList) > 0)
+				{
+					CClusterRedis::pause($redisList);
+				}
+
 				break;
 		}
 	}
 }
 
 $arHeaders = [[
-		"id" => "ID",
-		"content" => GetMessage("CLU_REDIS_LIST_ID"),
-		"align" => "right",
-		"default" => true,
+		'id' => 'ID',
+		'content' => Loc::getMessage('CLU_REDIS_LIST_ID'),
+		'align' => 'right',
+		'default' => true,
 	], [
-		"id" => "FLAG",
-		"content" => GetMessage("CLU_REDIS_LIST_FLAG"),
-		"align" => "center",
-		"default" => true,
+		'id' => 'FLAG',
+		'content' => Loc::getMessage('CLU_REDIS_LIST_FLAG'),
+		'align' => 'center',
+		'default' => true,
 	], [
-		"id" => "STATUS",
-		"content" => GetMessage("CLU_REDIS_LIST_STATUS"),
-		"align" => "center",
-		"default" => true,
+		'id' => 'STATUS',
+		'content' => Loc::getMessage('CLU_REDIS_LIST_STATUS'),
+		'align' => 'center',
+		'default' => true,
 	], [
-		"id" => "HOST",
-		"content" => GetMessage("CLU_REDIS_LIST_HOST"),
-		"align" => "left",
-		"default" => true,
+		'id' => 'HOST',
+		'content' => Loc::getMessage('CLU_REDIS_LIST_HOST'),
+		'align' => 'left',
+		'default' => true,
 	],
 ];
 
 $lAdmin->AddHeaders($arHeaders);
 
-if (!isset($_SESSION["REDIS_LIST"]))
+if (!isset($_SESSION['REDIS_LIST']))
 {
-	$_SESSION["REDIS_LIST"] = [];
+	$_SESSION['REDIS_LIST'] = [];
+}
+
+function serverSort($a, $b)
+{
+	if ($a['MODE'] == $b['MODE'])
+	{
+		return 0;
+	}
+	return $a['MODE'] > $b['MODE'] ? -1 : 1;
 }
 
 $cData = new CClusterRedis;
-$rsData = $cData->getList();
+$data = $cData->getList();
 
 $uptime = false;
-$rsData = new CAdminResult($rsData, $sTableID);
-while ($arRes = $rsData->Fetch()):
+$data = new CAdminResult($data, $tableID);
 
-	if (!$arRes["GROUP_ID"])
+$servers = [];
+$cluster = [
+	'ONLINE' => 0,
+	'MASTER' => 0,
+	'READY' => 0
+];
+
+while ($server = $data->Fetch())
+{
+	$servers[] = $server;
+
+	if ($server['STATUS'] == 'ONLINE')
 	{
-		$arRes = CClusterRedis::getByID($arRes["ID"]);
-		$cData->Update($arRes["ID"], $arRes);
-		$arRes = CClusterRedis::getByID($arRes["ID"]);
+		$cluster['ONLINE']++;
 	}
 
-	if ($arRes["GROUP_ID"] != $group_id)
+	if ($server['MODE'] == 'CLUSTER')
+	{
+		if ($server['STATUS'] != 'ONLINE')
+		{
+			$cluster['READY']++;
+		}
+	}
+}
+
+uasort($servers,  'serverSort');
+$first = true;
+
+foreach ($servers as $server)
+{
+	$actions = [];
+
+	if (!$server['GROUP_ID'])
+	{
+		$server = CClusterRedis::getByID($server['ID']);
+		$cData->Update($server['ID'], $server);
+		$server = CClusterRedis::getByID($server['ID']);
+	}
+
+	if ($server['GROUP_ID'] != $group_id)
 	{
 		continue;
 	}
 
-	$row =& $lAdmin->AddRow($arRes["ID"], $arRes);
-
-	$row->AddViewField("ID", '<a href="cluster_redis_edit.php?lang='.LANGUAGE_ID.'&group_id='.$group_id.'&ID='.$arRes["ID"].'">'.$arRes["ID"].'</a>');
-
-	$html = '';
-	if (true)
+	if ($server['MODE'] == 'CLUSTER' && $first)
 	{
-		$html .= '<table width="100%">';
-		$arSlaveStatus = CClusterRedis::getStatus($arRes["ID"]);
-		foreach ($arSlaveStatus as $key => $value)
+		$first = false;
+		$row = &$lAdmin->AddRow('separator', ['STATUS' => Loc::getMessage('CLU_REDIS_CLUSTER_TITLE')]);
+
+		if ($server['STATUS'] == 'READY' && $cluster['ONLINE'] < 1)
 		{
-			if ($key == 'uptime_in_seconds')
-			{
-				$uptime = $value;
-			}
-			elseif ($key == 'keyspace_misses')
-			{
-				$get_misses = $value;
-			}
-
-			if ($key == 'uptime')
-			{
-			}
-			elseif ($key == 'limit_maxbytes')
-				$html .= '
-				<tr>
-					<td width="50%" align=right>'.$key.':</td>
-					<td align=left>'.CFile::FormatSize($value).'</td>
-				</tr>';
-
-			elseif ($key == 'using_bytes')
-				$html .= '
-				<tr>
-					<td width="50%" align=right>'.$key.':</td>
-					<td align=left>'.CFile::FormatSize($value).(
-					$limit_maxbytes > 0?
-						' ('.round($value/$limit_maxbytes*100,2).'%)':
-						''
-					).'</td>
-				</tr>';
-			elseif ($key == 'listen_disabled_num')
-				$html .= '
-				<tr>
-					<td width="50%" align=right>'.$key.':</td>
-					<td align=left>'.(
-					$value > 0?
-						"<span style=\"color:red\">".$value."</span>":
-						"<span style=\"color:green\">".$value."</span>"
-					).'</td>
-				</tr>';
-			elseif ($key == 'get_hits')
-				$html .= '
-				<tr>
-					<td width="50%" align=right>'.$key.':</td>
-					<td align=left>'.$value.' '.(
-					$value > 0?
-						'('.(round($value/($value+$get_misses)*100,2)).'%)':
-						''
-					).'</td>
-				</tr>';
-			elseif ($key == 'cmd_get')
-				$html .= '
-				<tr>
-					<td width="50%" align=right>'.$key.':</td>
-					<td align=left>'.$value.(
-					isset($_SESSION["REDIS_LIST"][$arRes["ID"]]) && $value > $_SESSION["REDIS_LIST"][$arRes["ID"]]?
-						" (<span style=\"color:green\">+".($value - $_SESSION["REDIS_LIST"][$arRes["ID"]])."</span>)":
-						""
-					).'</td>
-				</tr>';
-			else
-				$html .= '
-				<tr>
-					<td width="50%" align=right>'.$key.':</td>
-					<td align=left>'.$value.'</td>
-				</tr>';
-
-			if ($key == 'cmd_get')
-			{
-				$_SESSION["REDIS_LIST"][$arRes["ID"]] = $value;
-			}
+			$actions[] = [
+				'TEXT' => Loc::getMessage('CLU_REDIS_LIST_START_USING'),
+				'ACTION' => $lAdmin->ActionDoGroup($server['ID'], 'resumecluster', 'group_id=' . $group_id),
+			];
 		}
-		$html .= '</table>';
+		elseif ($server['STATUS'] == 'ONLINE')
+		{
+			$actions[] = [
+				'TEXT' => Loc::getMessage('CLU_REDIS_LIST_STOP_USING'),
+				'ACTION' => $lAdmin->ActionDoGroup($server['ID'], 'pausecluster', 'group_id=' . $group_id),
+			];
+		}
+
+		if (!empty($actions))
+		{
+			$row->AddActions($actions);
+			$actions = [];
+		}
 	}
 
-	$html = $arRes["STATUS"]."<br />".$html;
-	$row->AddViewField("STATUS", $html);
+	$row =& $lAdmin->AddRow($server['ID'], $server);
 
-	if ($arRes["STATUS"] == "ONLINE" && $uptime > 0)
+	$row->AddViewField("ID", '<a href="cluster_redis_edit.php?lang=' . LANGUAGE_ID
+		. '&group_id=' . $group_id . '&ID=' . $server['ID'] . '">' . $server['ID'].'</a>');
+
+
+	$res = getHtml($server);
+
+	$html = $res['html'];
+	$status = $res['status'];
+	$uptime = $status['uptime_in_seconds'];
+	$html = $server['STATUS'] . '<br />' . $html;
+	$row->AddViewField('STATUS', $html);
+
+	if ($server['STATUS'] == 'ONLINE' && $uptime > 0)
 	{
-		$htmlFLAG = '<div class="lamp-green"></div>';
+		$htmlFlag = '<div class="lamp-green"></div>';
 	}
 	else
 	{
-		$htmlFLAG = '<div class="lamp-red"></div>';
+		$htmlFlag = '<div class="lamp-red"></div>';
 	}
+
 	if ($uptime === false)
 	{
-		$htmlFLAG .= GetMessage("CLU_REDIS_NOCONNECTION");
+		$htmlFlag .= Loc::getMessage('CLU_REDIS_NOCONNECTION');
 	}
 	else
 	{
-		$htmlFLAG .= GetMessage("CLU_REDIS_UPTIME") . "<br>" . FormatDate([
-			"s" => "sdiff",
-			"i" => "idiff",
-			"H" => "Hdiff",
-			"" => "ddiff",
-		], time() - $uptime);
+		$htmlFlag .= Loc::getMessage('CLU_REDIS_UPTIME') . '<br>' . FormatDate(['s' => 'sdiff', 'i' => 'idiff', 'H' => 'Hdiff', '' => 'ddiff',], time() - $uptime);
 	}
 
-	$row->AddViewField("FLAG", $htmlFLAG);
-	$row->AddViewField("HOST", $arRes["HOST"].":".$arRes["PORT"]);
+	$row->AddViewField('FLAG', $htmlFlag);
+	$row->AddViewField('HOST', $server['HOST'] . ':' . $server['PORT']);
 
-	$arActions = [];
-	$arActions[] = [
-		"ICON" => "edit",
-		"DEFAULT" => true,
-		"TEXT" => GetMessage("CLU_REDIS_LIST_EDIT"),
-		"ACTION" => $lAdmin->ActionRedirect('cluster_redis_edit.php?lang='.LANGUAGE_ID.'&group_id='.$group_id.'&ID='.$arRes["ID"])
-	];
-
-	if ($arRes["STATUS"] == "READY")
+	if ($server['MODE'] != 'CLUSTER' || $server['STATUS'] != 'ONLINE')
 	{
-		$arActions[] = [
-			"ICON" => "delete",
-			"TEXT" => GetMessage("CLU_REDIS_LIST_DELETE"),
-			"ACTION" => "if(confirm('".GetMessage("CLU_REDIS_LIST_DELETE_CONF")."')) ".$lAdmin->ActionDoGroup($arRes["ID"], "delete", 'group_id='.$group_id)
-		];
-		$arActions[] = [
-			"TEXT" => GetMessage("CLU_REDIS_LIST_START_USING"),
-			"ACTION" => $lAdmin->ActionDoGroup($arRes["ID"], "resume", 'group_id='.$group_id),
-		];
-	}
-	elseif ($arRes["STATUS"] == "ONLINE")
-	{
-		$arActions[] = [
-			"TEXT" => GetMessage("CLU_REDIS_LIST_STOP_USING"),
-			"ACTION" => $lAdmin->ActionDoGroup($arRes["ID"], "pause", 'group_id='.$group_id),
+		$actions[] = [
+			'ICON' => 'edit',
+			'DEFAULT' => true,
+			'TEXT' => Loc::getMessage('CLU_REDIS_LIST_EDIT'),
+			'ACTION' => $lAdmin->ActionRedirect('cluster_redis_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id . '&ID=' . $server["ID"])
 		];
 	}
 
-	if (!empty($arActions))
+	if ($server['STATUS'] == 'READY')
 	{
-		$row->AddActions($arActions);
+		$actions[] = [
+			'ICON' => 'delete',
+			'TEXT' => Loc::getMessage('CLU_REDIS_LIST_DELETE'),
+			'ACTION' => "if(confirm('" . Loc::getMessage("CLU_REDIS_LIST_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup($server['ID'], 'delete', 'group_id=' . $group_id)
+		];
+
+		if ($server['MODE'] != 'CLUSTER' && $cluster['ONLINE'] < 1)
+		{
+			$actions[] = [
+				'TEXT' => Loc::getMessage('CLU_REDIS_LIST_START_USING'),
+				'ACTION' => $lAdmin->ActionDoGroup($server['ID'], 'resume', 'group_id=' . $group_id),
+			];
+		}
+	}
+	elseif ($server['STATUS'] == 'ONLINE' && $server['MODE'] != 'CLUSTER')
+	{
+		$actions[] = [
+			'TEXT' => Loc::getMessage('CLU_REDIS_LIST_STOP_USING'),
+			'ACTION' => $lAdmin->ActionDoGroup($server['ID'], 'pause', 'group_id=' . $group_id),
+		];
 	}
 
-endwhile;
+	if (!empty($actions))
+	{
+		$row->AddActions($actions);
+	}
+}
 
-$lAdmin->AddFooter([[
-			"title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"),
-			"value" => $rsData->SelectedRowsCount(),
-		], [
-			"counter" => true,
-			"title" => GetMessage("MAIN_ADMIN_LIST_CHECKED"),
-			"value" => "0",
-		],
-	]
-);
+$lAdmin->AddFooter([
+	[
+		'title' => Loc::getMessage('MAIN_ADMIN_LIST_SELECTED'),
+		'value' => $data->SelectedRowsCount(),
+	],
+	[
+		'counter' => true,
+		'title' => Loc::getMessage('MAIN_ADMIN_LIST_CHECKED'),
+		'value' => '0',
+	],
+]);
 
-$aContext = [[
-		"TEXT" => GetMessage("CLU_REDIS_LIST_ADD"),
-		"LINK" => "/bitrix/admin/cluster_redis_edit.php?lang=".LANGUAGE_ID.'&group_id='.$group_id,
-		"TITLE" => GetMessage("CLU_REDIS_LIST_ADD_TITLE"),
-		"ICON" => "btn_new",
-	], [
-		"TEXT" => GetMessage("CLU_REDIS_LIST_REFRESH"),
-		"LINK" => "cluster_redis_list.php?lang=".LANGUAGE_ID.'&group_id='.$group_id,
+$aContext = [
+	[
+		'TEXT' => Loc::getMessage('CLU_REDIS_LIST_ADD'),
+		'LINK' => '/bitrix/admin/cluster_redis_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id,
+		'TITLE' => Loc::getMessage('CLU_REDIS_LIST_ADD_TITLE'),
+		'ICON' => 'btn_new',
+	],
+	[
+		'TEXT' => Loc::getMessage('CLU_REDIS_LIST_REFRESH'),
+		'LINK' => 'cluster_redis_list.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id,
 	],
 ];
 
@@ -289,15 +380,16 @@ if ($errorMessage)
 }
 
 $lAdmin->CheckListMode();
-$APPLICATION->SetTitle(GetMessage("CLU_REDIS_LIST_TITLE"));
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+$APPLICATION->SetTitle(Loc::getMessage('CLU_REDIS_LIST_TITLE'));
+require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
 
-if ($message)
-{
-	echo $message->Show();
-}
-$lAdmin->DisplayList();
+$params = [
+	'ACTION_PANEL' => false,
+	'SHOW_TOTAL_COUNTER' => false,
+];
 
-echo BeginNote(), GetMessage("CLU_REDIS_LIST_NOTE"), EndNote();
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+$lAdmin->DisplayList($params);
+
+echo BeginNote(), Loc::getMessage('CLU_REDIS_LIST_NOTE'), EndNote();
+require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
 ?>

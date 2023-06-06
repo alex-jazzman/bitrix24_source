@@ -9,8 +9,10 @@ IncludeModuleLangFile(__FILE__);
 $sTableID = "tbl_iblock_type";
 
 // Sorting init
-$oSort = new CAdminSorting($sTableID, "ID", "asc");
-$arOrder = (mb_strtoupper($by) === "ID"? array($by => $order): array($by => $order, "ID" => "ASC"));
+$oSort = new CAdminSorting($sTableID, "ID", "ASC");
+$by = mb_strtoupper($oSort->getField());
+$order = mb_strtoupper($oSort->getOrder());
+$arOrder = ($by === "ID"? array($by => $order): array($by => $order, "ID" => "ASC"));
 // List init
 $lAdmin = new CAdminList($sTableID, $oSort);
 

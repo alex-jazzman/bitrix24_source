@@ -9,6 +9,7 @@ use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Converter;
 use Bitrix\ImConnector\Provider\Base;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\ModuleManager;
@@ -452,16 +453,17 @@ class Output extends Base\Output
 	 */
 	public function instanceHttpClient(bool $waitResponse = false): HttpClient
 	{
-		return new HttpClient([
-			'socketTimeout' => 20,
-			'streamTimeout' => 60,
-			'waitResponse' => $waitResponse,
-			'disableSslVerification' => true, //TODO: Enable if you have not signed the certificate
-			'headers' => [
-				'User-Agent' => 'Bitrix Connector Client',
-				'x-bitrix-licence' => $this->licenceCode,
-			]
-		]);
+		$httpClient = new HttpClient();
+		$httpClient
+			->waitResponse($waitResponse)
+			->setTimeout(20)
+			->setStreamTimeout(60)
+			->disableSslVerification() //TODO: Enable if you have not signed the certificate
+			->setHeader('User-Agent', 'Bitrix Connector Client')
+			->setHeader('x-bitrix-licence', $this->licenceCode)
+		;
+
+		return $httpClient;
 	}
 
 	/**
@@ -491,8 +493,6 @@ class Output extends Base\Output
 	 */
 	protected function requestSign($type, $str): string
 	{
-		$result = '';
-
 		if (
 			$type == self::TYPE_BITRIX24 &&
 			function_exists('bx_sign')
@@ -502,13 +502,7 @@ class Output extends Base\Output
 		}
 		else
 		{
-			include($_SERVER['DOCUMENT_ROOT'] . '/bitrix/license_key.php');
-
-			/** @var string $LICENSE_KEY */
-			if (!empty($LICENSE_KEY))
-			{
-				$result = \md5($str. \md5($LICENSE_KEY));
-			}
+			$result = \md5($str . Application::getInstance()->getLicense()->getHashLicenseKey());
 		}
 
 		return $result;
@@ -519,27 +513,13 @@ class Output extends Base\Output
 	 */
 	protected function getLicenceCode(): string
 	{
-		$result = '';
-
 		if (defined('BX24_HOST_NAME'))
 		{
 			$result = \BX24_HOST_NAME;
 		}
 		else
 		{
-			$licenceCode = false;
-			require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/main/classes/general/update_client.php');
-
-			if (method_exists('CUpdateClient','GetLicenseKey'))
-			{
-				$licenceCode = \CUpdateClient::GetLicenseKey();
-			}
-
-			if (!empty($licenceCode))
-			{
-				$result = \md5('BITRIX' . \CUpdateClient::GetLicenseKey() . 'LICENCE');
-			}
-
+			$result = Application::getInstance()->getLicense()->getPublicHashKey();
 		}
 
 		return $result;

@@ -11,11 +11,13 @@ export class CompleteTaskActivity
 	#stages: Object<string, Array<StageInfo>>;
 	#categoryContainer: HTMLSelectElement;
 	#stagesContainer: HTMLSelectElement;
+	#isRobot: boolean;
 
 	constructor(options: {
 		formName: string,
 		stages: Object<string, Array<{id: string, name: string}>>,
 		chosenStages: Array<string>,
+		isRobot: boolean,
 	})
 	{
 		this.#form = document.forms.namedItem(options.formName);
@@ -24,11 +26,26 @@ export class CompleteTaskActivity
 		this.#stagesContainer = this.#form['target_status[]'];
 		this.#stages = options.stages;
 		this.#chosenStages = new Set(options.chosenStages);
+		this.#isRobot = options.isRobot;
 	}
 
 	init()
 	{
-		this.updateStages();
+		if (this.#categoryContainer.options.length <= 1)
+		{
+			if (this.#isRobot)
+			{
+				Dom.remove(this.#categoryContainer.parentElement);
+			}
+			else
+			{
+				Dom.remove(this.#categoryContainer.parentElement.parentElement);
+			}
+		}
+		else
+		{
+			this.updateStages();
+		}
 	}
 
 	updateStages()

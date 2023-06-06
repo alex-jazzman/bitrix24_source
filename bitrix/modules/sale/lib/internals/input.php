@@ -1118,14 +1118,16 @@ class Enum extends Base
 
 	public static function getViewHtmlSingle(array $input, $value) // TODO optimize to getViewHtml
 	{
-		$options = $input['OPTIONS'];
+		$options = $input['OPTIONS'] ?? [];
 
 		if (is_array($options))
 		{
 			$options = self::flatten($options);
 
-			if ($v = $options[$value])
-				$value = $v;
+			if (isset($options[$value]))
+			{
+				$value = $options[$value];
+			}
 		}
 
 		return htmlspecialcharsbx($value);

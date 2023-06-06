@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Type\DateTime;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 {
 	die();
@@ -158,10 +160,20 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 			'DIRECTION',
 			'IS_INCOMING_CHANNEL',
 			'ORIGIN_ID',
+			'LIGHT_COUNTER_AT',
 		];
 
-		$activityList = \CCrmActivity::GetList($sort, $filter, false, false, $select);
-		while ($activity = $activityList->getNext())
+		$activityListRaw = \CCrmActivity::GetList($sort, $filter, false, false, $select);
+		$activitiesList = [];
+		while ($activity = $activityListRaw->getNext()) {
+			$activitiesList[] = $activity;
+		}
+		$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+		$dateFormat = $culture->getShortDateFormat();
+		$timeFormat = $culture->getShortTimeFormat();
+		$datetimeFormat = $dateFormat . ' ' . $timeFormat;
+
+		foreach ($activitiesList as $activity)
 		{
 			if (!($activity['PROVIDER'] = \CCrmActivity::GetActivityProvider($activity)))
 			{
@@ -196,6 +208,10 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 			{
 				$activity['DEADLINE'] = '';
 			}
+			if (($activity['DEADLINE'] ?? '') !== '')
+			{
+				$activity['DEADLINE'] = DateTime::createFromUserTime($activity['DEADLINE'])->toUserTime()->format($datetimeFormat);
+			}
 
 			if (
 				$activity['COMPLETED'] === 'N'
@@ -206,12 +222,11 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 				$activity['COMPLETED'] = 'Y';
 			}
 
-			if ($activity['DEADLINE'] && $activity['COMPLETED'] !== 'Y')
+			if ($activity['LIGHT_COUNTER_AT'] && $activity['COMPLETED'] !== 'Y')
 			{
-				$date = \Bitrix\Main\Type\DateTime::createFromUserTime($activity['DEADLINE']);
-				$tomorrowDate = CCrmDateTimeHelper::getUserDate((new \Bitrix\Main\Type\DateTime())->add('+1 day'));
-				$tomorrow = CCrmDateTimeHelper::getServerTime(\Bitrix\Main\Type\DateTime::createFromTimestamp($tomorrowDate->getTimestamp()));
-				$activity['DEADLINED'] = $date->getTimeStamp() < $tomorrow->getTimestamp();
+				/** @var DateTime $lightCounterAt */
+				$lightCounterAt = $activity['LIGHT_COUNTER_AT'];
+				$activity['DEADLINED'] = (new DateTime())->getTimestamp() > $lightCounterAt->getTimestamp();
 			}
 			else
 			{

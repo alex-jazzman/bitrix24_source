@@ -206,7 +206,6 @@ class OpenLine extends Base
 			$logMessageId = LogMessageEntry::detectIdByParams(
 				$activityFields['PROVIDER_PARAMS']['USER_CODE'],
 				LogMessageType::OPEN_LINE_INCOMING,
-				'SOURCE'
 			);
 			if (isset($logMessageId))
 			{

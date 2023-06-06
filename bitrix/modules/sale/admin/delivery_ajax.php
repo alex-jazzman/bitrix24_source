@@ -63,6 +63,7 @@ if($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_ses
 			break;
 
 		case "get_restriction_params_html":
+			Restrictions\Manager::getClassesList();
 			$className = trim((string)$request->get('className'));
 			$params = $request->get('params');
 			if (!is_array($params))
@@ -77,7 +78,6 @@ if($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_ses
 				throw new \Bitrix\Main\ArgumentNullException('className');
 			}
 
-			Restrictions\Manager::getClassesList();
 			/** @var \Bitrix\Sale\Delivery\Restrictions\Base $className*/
 			$paramsStructure = $className::getParamsStructure($deliveryId);
 			$params = htmlspecialcharsback($params);
@@ -127,6 +127,7 @@ if($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_ses
 			break;
 
 		case "save_restriction":
+			Restrictions\Manager::getClassesList();
 			$className = trim((string)$request->get('className'));
 			$params = $request->get('params');
 			if (!is_array($params))
@@ -147,7 +148,6 @@ if($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_ses
 				throw new \Bitrix\Main\ArgumentNullException('deliveryId');
 			}
 
-			Restrictions\Manager::getClassesList();
 			/** @var \Bitrix\Sale\Delivery\Restrictions\Base $className*/
 			foreach($className::getParamsStructure() as $key => $rParams)
 			{
@@ -176,6 +176,7 @@ if($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_ses
 			break;
 
 		case "delete_restriction":
+			Restrictions\Manager::getClassesList();
 			$deliveryId = (int)$request->get('deliveryId');
 			$restrictionId = (int)$request->get('restrictionId');
 
@@ -183,7 +184,6 @@ if($arResult["ERROR"] == '' && $saleModulePermissions >= "W" && check_bitrix_ses
 				throw new \Bitrix\Main\ArgumentNullException('restrictionId');
 
 			$dbRes =  \Bitrix\Sale\Internals\ServiceRestrictionTable::getById($restrictionId);
-			Restrictions\Manager::getClassesList();
 			if($fields = $dbRes->fetch())
 			{
 				$res = $fields["CLASS_NAME"]::delete($restrictionId, $deliveryId);

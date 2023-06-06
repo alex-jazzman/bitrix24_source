@@ -1,4 +1,8 @@
 <?php
+
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Localization\Loc;
+
 IncludeModuleLangFile(__FILE__);
 
 class CClusterRedis
@@ -6,17 +10,17 @@ class CClusterRedis
 	public static $systemConfigurationUpdate = null;
 	private static $arList = false;
 
-	public static function loadConfig()
+	public static function loadConfig() : array
 	{
 		if (self::$arList === false)
 		{
 			$arList = false;
-			if (file_exists($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/cluster/redis.php"))
+			if (file_exists($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php'))
 			{
-				include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/cluster/redis.php");
+				include($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php');
 			}
 
-			if (defined("BX_REDIS_CLUSTER") && is_array($arList))
+			if (defined('BX_REDIS_CLUSTER') && is_array($arList))
 			{
 				self::$arList = $arList;
 			}
@@ -29,56 +33,60 @@ class CClusterRedis
 		return self::$arList;
 	}
 
-	public static function saveConfig($servers)
+	public static function saveConfig($servers) : void
 	{
 		self::$arList = false;
 		$isOnline = false;
 
-		$content = '<'.'?
-define("BX_REDIS_CLUSTER", "'.EscapePHPString(CMain::GetServerUniqID()).'");
-$arList = [
-';
-		$defGroup = 1;
+		$content = "<?\n"
+			. 'define(\'BX_REDIS_CLUSTER\', \'' . EscapePHPString(CMain::GetServerUniqID()) . '\');'
+			. "\n" . '$arList = [' . "\n";
+
 		$groups = [];
-		$clusterGroups = CClusterGroup::GetList(["ID" => "DESC"]);
+		$defaultGroup = 1;
+		$clusterGroups = CClusterGroup::GetList(['ID' => 'DESC']);
 		while ($group = $clusterGroups->Fetch())
 		{
-			$defGroup = $groups[$group["ID"]] = intval($group["ID"]);
+			$defaultGroup = $groups[$group['ID']] = (int) $group['ID'];
 		}
 
 		foreach ($servers as $i => $server)
 		{
-			$isOnline |= ($server["STATUS"] == "ONLINE");
+			$isOnline |= ($server['STATUS'] == 'ONLINE');
 
-			$GROUP_ID = intval($server["GROUP_ID"]);
-			if (!array_key_exists($server["GROUP_ID"], $groups))
+			$groupID = (int) $server['GROUP_ID'];
+			if (!array_key_exists($server['GROUP_ID'], $groups))
 			{
-				$GROUP_ID = $defGroup;
+				$groupID = $defaultGroup;
 			}
 
-			$content .= "\t".intval($i)." => [\n";
-			$content .= "\t\t'ID' => \"".EscapePHPString($server["ID"])."\",\n";
-			$content .= "\t\t'GROUP_ID' => ".$GROUP_ID.",\n";
-			$content .= "\t\t'HOST' => \"".EscapePHPString($server["HOST"])."\",\n";
-			$content .= "\t\t'PORT' => ".intval($server["PORT"]).",\n";
-			if ($server["STATUS"] == "ONLINE")
+			$content .= "\t" . intval($i) . " => [\n";
+			$content .= "\t\t'ID' => " . EscapePHPString($server['ID']) . ",\n";
+			$content .= "\t\t'GROUP_ID' => " . $groupID . ",\n";
+			$content .= "\t\t'HOST' => '" . EscapePHPString($server['HOST']) . "',\n";
+			$content .= "\t\t'PORT' => " . intval($server['PORT']) . ",\n";
+
+			switch ($server['STATUS'])
 			{
-				$content .= "\t\t'STATUS' => \"ONLINE\",\n";
+				case 'ONLINE':
+					$content .= "\t\t'STATUS' => 'ONLINE',\n";
+					break;
+				case 'OFFLINE':
+					$content .= "\t\t'STATUS' => 'OFFLINE',\n";
+					break;
+				default:
+					$content .= "\t\t'STATUS' => 'READY',\n";
+					break;
 			}
-			elseif ($server["STATUS"] == "OFFLINE")
-			{
-				$content .= "\t\t'STATUS' => \"OFFLINE\",\n";
-			}
-			else
-			{
-				$content .= "\t\t'STATUS' => \"READY\",\n";
-			}
+
+			$content .= "\t\t'MODE' => '" . $server['MODE'] . "',\n";
+			$content .= "\t\t'ROLE' => '" . $server['ROLE'] . "',\n";
 			$content .= "\t],\n";
 		}
 
-		$content .= '];
-?'.'>';
-		file_put_contents($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/cluster/redis.php", $content);
+		$content .= "];\n?>";
+
+		file_put_contents($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php', $content);
 		bx_accelerator_reset();
 
 		self::$systemConfigurationUpdate = null;
@@ -100,10 +108,10 @@ $arList = [
 						'extension' => 'redis',
 						'required_file' => 'modules/cluster/classes/general/redis_cache.php',
 					],
-					'failover' => \Bitrix\Main\Config\Option::get('cluster', 'failower_settings'),
-					'timeout' => \Bitrix\Main\Config\Option::get('cluster', 'redis_timeoit'),
-					'read_timeout' => \Bitrix\Main\Config\Option::get('cluster', 'redis_read_timeout'),
-					'persistent' => (\Bitrix\Main\Config\Option::get('cluster', 'redis_persistent') == "Y"),
+					'failover' => Option::get('cluster', 'failower_settings'),
+					'timeout' => Option::get('cluster', 'redis_timeoit'),
+					'read_timeout' => Option::get('cluster', 'redis_read_timeout'),
+					'persistent' => (Option::get('cluster', 'redis_persistent') == 'Y'),
 				]);
 				self::$systemConfigurationUpdate = true;
 			}
@@ -131,31 +139,38 @@ $arList = [
 		return $res;
 	}
 
-	public static function getServerList()
+	public static function getServerList() : array
 	{
 		$result = [];
 		foreach (CClusterRedis::loadConfig() as $data)
 		{
 			$result[] = [
-				"ID" => $data["ID"],
-				"GROUP_ID" => $data["GROUP_ID"],
-				"SERVER_TYPE" => "redis",
-				"ROLE_ID" => "",
-				"HOST" => $data["HOST"],
-				"DEDICATED" => "Y",
-				"EDIT_URL" => "/bitrix/admin/cluster_redis_edit.php?lang=".LANGUAGE_ID."&group_id=".$data["GROUP_ID"]."&ID=".$data["ID"],
+				'ID' => $data['ID'],
+				'GROUP_ID' => $data['GROUP_ID'],
+				'SERVER_TYPE' => 'redis',
+				'ROLE_ID' => '',
+				'HOST' => $data['HOST'],
+				'DEDICATED' => 'Y',
+				'EDIT_URL' => '/bitrix/admin/cluster_redis_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $data['GROUP_ID'] . '&ID=' . $data['ID'],
 			];
 		}
 		return $result;
 	}
 
-	public static function getByID($id)
+	public static function getByID($id) : array
 	{
+		$result = [];
 		$ar = CClusterRedis::loadConfig();
-		return $ar[$id];
+
+		if (is_array($ar[$id]))
+		{
+			$result = $ar[$id];
+		}
+
+		return $result;
 	}
 
-	public function add($fields)
+	public function add($fields) : int
 	{
 		if (!$this->checkFields($fields, false))
 		{
@@ -164,31 +179,39 @@ $arList = [
 
 		$servers = CClusterRedis::loadConfig();
 
-		$ID = 1;
+		$id = 1;
+		if (!is_array($servers))
+		{
+			return false;
+		}
+
 		foreach ($servers as $server)
 		{
-			if ($server["ID"] >= $ID)
+			if ($server['ID'] >= $id)
 			{
-				$ID = $server["ID"] + 1;
+				$id = $server['ID'] + 1;
 			}
 		}
 
-		$servers[$ID] =[
-			"ID" => $ID,
-			"GROUP_ID" => intval($fields["GROUP_ID"]),
-			"STATUS" => "READY",
-			"WEIGHT" => $fields["WEIGHT"],
-			"HOST" => $fields["HOST"],
-			"PORT" => $fields["PORT"],
+		$status = self::getStatus($fields);
+		$servers[$id] = [
+			'ID' => $id,
+			'GROUP_ID' => (int) $fields['GROUP_ID'],
+			'STATUS' => 'READY',
+			'HOST' => $fields['HOST'],
+			'PORT' => $fields['PORT'],
+			'MODE' => mb_strtoupper($status['redis_mode']),
+			'ROLE' => mb_strtoupper($status['role']),
 		];
+
 		CClusterRedis::saveConfig($servers);
-		return $ID;
+		return $id;
 	}
 
-	public static function delete($id)
+	public static function delete($id) : bool
 	{
 		$servers = CClusterRedis::loadConfig();
-		if(array_key_exists($id, $servers))
+		if (array_key_exists($id, $servers))
 		{
 			unset($servers[$id]);
 			CClusterRedis::saveConfig($servers);
@@ -196,138 +219,171 @@ $arList = [
 		return true;
 	}
 
-	public function update($id, $fields)
+	public function update($serverID, $fields) : bool
 	{
-		$id = intval($id);
+		if (!is_array($serverID))
+		{
+			$serverID = [ 0 => (int) $serverID];
+		}
+
 		$servers = CClusterRedis::loadConfig();
-
-		if (!array_key_exists($id, $servers))
+		foreach ($serverID as $id)
 		{
-			return false;
+			if (!array_key_exists($id, $servers))
+			{
+				return false;
+			}
+
+			$status = $this->checkFields($servers[$id]);
+			if (empty($status) || $status['message'] !== null || intval($status['uptime_in_seconds']) <= 0)
+			{
+				return false;
+			}
+
+			$servers[$id] = [
+				'ID' => $id,
+				'GROUP_ID' => $servers[$id]['GROUP_ID'],
+				'STATUS' => $fields['STATUS'] ?? $servers[$id]['STATUS'],
+				'HOST' => $fields['HOST'] ?? $servers[$id]['HOST'],
+				'PORT' => $fields['PORT'] ?? $servers[$id]['PORT'],
+				'MODE' => mb_strtoupper($servers[$id]['MODE']),
+				'ROLE' => mb_strtoupper($servers[$id]['ROLE'])
+			];
 		}
 
-		if (!$this->checkFields($fields, $id))
-		{
-			return false;
-		}
-
-		$servers[$id] = [
-			"ID" => $id,
-			"GROUP_ID" => $servers[$id]["GROUP_ID"],
-			"STATUS" => isset($fields["STATUS"])? $fields["STATUS"]: $servers[$id]["STATUS"],
-			"HOST" => isset($fields["HOST"])? $fields["HOST"]: $servers[$id]["HOST"],
-			"PORT" => isset($fields["PORT"])? $fields["PORT"]: $servers[$id]["PORT"],
-		];
 		CClusterRedis::saveConfig($servers);
-		return $id;
-	}
-
-	public function checkFields(&$fields, $id)
-	{
-		global $APPLICATION;
-		$aMsg = [];
-
-		if (isset($fields["PORT"]))
-		{
-			$fields["PORT"] = intval($fields["PORT"]);
-		}
-
-		if (isset($fields["WEIGHT"]) || $id === false)
-		{
-			$weight = intval($fields["WEIGHT"]);
-			if ($weight < 0)
-			{
-				$weight = 0;
-			}
-			elseif ($weight > 100)
-			{
-				$weight = 100;
-			}
-
-			$fields["WEIGHT"] = $weight;
-		}
-
-		if (isset($fields["HOST"]) && isset($fields["PORT"]))
-		{
-			$ob = new \Redis();
-			if (!@$ob->connect($fields["HOST"], $fields["PORT"]))
-			{
-				$aMsg[] = array("id" => "HOST", "text" => GetMessage("CLU_REDIS_CANNOT_CONNECT"));
-			}
-		}
-
-		if (!empty($aMsg))
-		{
-			$e = new CAdminException($aMsg);
-			$APPLICATION->ThrowException($e);
-			return false;
-		}
 		return true;
 	}
 
-	public static function pause($id)
+	public function checkFields(&$fields) : array
 	{
-		$servers = CClusterRedis::getByID($id);
-		if (is_array($servers) && $servers["STATUS"] != "READY")
-		{
-			$ob = new CClusterRedis;
-			$ob->update($id, ["STATUS" => "READY"]);
-		}
-	}
+		global $APPLICATION;
 
-	public static function resume($id)
-	{
-		$servers = CClusterRedis::getByID($id);
-		if (is_array($servers) && $servers["STATUS"] == "READY")
-		{
-			$ob = new CClusterRedis;
-			$ob->update($id, ["STATUS" => "ONLINE"]);
-		}
-	}
+		$error = [];
+		$status = [];
 
-	public static function getStatus($id)
-	{
-		$stats = [];
-		$servers = CClusterRedis::getByID($id);
-		if (is_array($servers))
+		$fields['PORT'] = intval($fields['PORT']);
+		if ($fields['PORT'] > 0 && isset($fields['HOST']))
 		{
-			$redis = new \Redis();
-			if(@$redis->connect($servers["HOST"], $servers["PORT"]))
+			$status = self::getStatus($fields);
+
+			if ($status['message'] !== null)
 			{
-				$stats = [
-					'redis_version' => null,
-					'os' => null,
-					'uptime_in_seconds' => null,
-					'connected_clients' => null,
-					'used_memory_human' => null,
-					'total_system_memory_human' => null,
-					'maxmemory_human' => null,
-					'maxmemory_policy' => null,
-					'mem_fragmentation_ratio' => null,
-					'loading' => null,
-					'keyspace_hits' => null,
-					'keyspace_misses' => null,
-					'evicted_keys' => null,
-					'expired_keys' => null,
-					'expired_stale_perc' => null,
-					'used_cpu_sys' => null,
-					'used_cpu_user' => null,
-					'used_cpu_sys_children' => null,
-					'used_cpu_user_children' => null,
-					'role' => null,
-					'cluster_enabled' => null,
-					'connected_slaves' => null,
-					'master_replid' => null,
-					'master_replid2' => null,
-					'master_repl_offset' => null,
-					'slave_expires_tracked_keys' => null,
+				$error[] = [
+					'id' => $fields['HOST'],
+					'text' => Loc:: getMessage('CLU_REDIS_CANNOT_CONNECT')
 				];
+			}
+		}
 
-				$info = $redis->info();
-				foreach ($stats as $key => $value)
+		if (!empty($error))
+		{
+			$e = new CAdminException($error);
+			$APPLICATION->ThrowException($e);
+			return [];
+		}
+
+		return $status;
+	}
+
+	public static function pause($serverID) : void
+	{
+
+		$servers = CClusterRedis::loadConfig();
+
+		if (!is_array($serverID))
+		{
+			$serverID = [0 => $serverID];
+		}
+
+		foreach ($serverID as $i => $key)
+		{
+			if (!isset($servers[$key]) || $servers[$key]['STATUS'] != 'ONLINE')
+			{
+				unset($serverID[$i]);
+			}
+		}
+
+		if (!empty($serverID))
+		{
+			$ob = new CClusterRedis;
+			$ob->update($serverID, ['STATUS' => 'READY']);
+		}
+	}
+
+	public static function resume($serverID) : void
+	{
+		$servers = CClusterRedis::loadConfig();
+		if (!is_array($serverID))
+		{
+			$serverID = [ 0 => $serverID];
+		}
+
+		foreach ($serverID as $i => $key)
+		{
+			if (!isset($servers[$key]) || $servers[$key]['STATUS'] != 'READY')
+			{
+				unset($serverID[$i]);
+			}
+		}
+
+		if (!empty($serverID))
+		{
+			$ob = new CClusterRedis;
+			$ob->update($serverID, ['STATUS' => 'ONLINE']);
+		}
+	}
+
+	public static function getStatus($server) : array
+	{
+		$stats = [
+			'message' => null,
+			'redis_version' => null,
+			'redis_mode' => null,
+			'os' => null,
+			'uptime_in_seconds' => null,
+			'connected_clients' => null,
+			'total_system_memory' => null,
+			'used_memory' => null,
+			'maxmemory' => null,
+			'maxmemory_policy' => null,
+			'mem_fragmentation_ratio' => null,
+			'loading' => null,
+			'keyspace_hits' => null,
+			'keyspace_misses' => null,
+			'evicted_keys' => null,
+			'expired_keys' => null,
+			'expired_stale_perc' => null,
+			'used_cpu_sys' => null,
+			'used_cpu_user' => null,
+			'used_cpu_sys_children' => null,
+			'used_cpu_user_children' => null,
+			'role' => null,
+			'cluster_enabled' => null,
+			'connected_slaves' => null,
+			'master_replid' => null,
+			'master_replid2' => null,
+			'master_repl_offset' => null,
+			'slave_expires_tracked_keys' => null
+		];
+
+		if (is_array($server))
+		{
+			try
+			{
+				$redis = new \Redis();
+				if (@$redis->connect($server["HOST"], $server["PORT"]))
 				{
-					$stats[$key] = $info[$key];
+					$info = $redis->info();
+					foreach ($stats as $key => $value)
+					{
+						$stats[$key] = $info[$key];
+					}
 				}
+			}
+			catch (RedisException $e)
+			{
+				$stats['message'] = $e->getMessage();
 			}
 		}
 

@@ -173,6 +173,8 @@ class ReservationService
 	}
 
 	/**
+	 * @deprecated use `::reservationProductsByEntityProductRows` method.
+	 *
 	 * Reservation products of deal.
 	 *
 	 * @param int $dealId
@@ -181,6 +183,20 @@ class ReservationService
 	 * @return Result
 	 */
 	public function reservationProductsByDealProductRows(int $dealId, array $productRows): Result
+	{
+		return $this->reservationProductsByEntityProductRows(CCrmOwnerType::Deal, $dealId, $productRows);
+	}
+
+	/**
+	 * Reservation products of entity.
+	 *
+	 * @param int $entityTypeId
+	 * @param int $entityId
+	 * @param array $productRows
+	 *
+	 * @return Result
+	 */
+	public function reservationProductsByEntityProductRows(int $entityTypeId, int $entityId, array $productRows): Result
 	{
 		$result = new Result();
 
@@ -219,7 +235,7 @@ class ReservationService
 
 		if (!$isHasManualReserves)
 		{
-			return $this->reservationProducts(CCrmOwnerType::Deal, $dealId);
+			return $this->reservationProducts($entityTypeId, $entityId);
 		}
 
 		return $result;

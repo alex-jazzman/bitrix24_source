@@ -164,16 +164,20 @@ Extension::load([
 									<?= $arResult['SETTINGS_FORM_LINK_NAME'] ?>
 								</a>
 							<?php endif; ?>
-						<?php endif ?>
+						<?php elseif ($arResult['IS_PS_INNER_SETUP']): ?>
+							<a id="bx-salescenter-add-button" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-width">
+								<?=Loc::getMessage('SALESCENTER_SP_ADD_PAYMENT_BUTTON')?>
+							</a>
+						<?php endif; ?>
 					</div>
 				</div>
 			</div>
 		</div>
 
+		<div class="ui-alert ui-alert-danger" style="display: none;">
+			<span class="ui-alert-message" id="salescenter-paysystem-error"></span>
+		</div>
 		<div data-bx-salescenter-block="form" style="display: none;" class="salescenter-main-settings">
-			<div class="ui-alert ui-alert-danger" style="display: none;">
-				<span class="ui-alert-message" id="salescenter-paysystem-error"></span>
-			</div>
 			<?php
 			$name = '';
 			if (isset($arResult['PAYSYSTEM']['NAME']))

@@ -3664,9 +3664,9 @@ class CAllSaleUser
 		}
 		elseif (is_array($payerName))
 		{
-			$autoName = $payerName["NAME"];
-			$autoLastName = $payerName["LAST_NAME"];
-			$autoSecondName = $payerName["SECOND_NAME"];
+			$autoName = $payerName["NAME"] ?? '';
+			$autoLastName = $payerName["LAST_NAME"] ?? '';
+			$autoSecondName = $payerName["SECOND_NAME"] ?? '';
 		}
 
 		if (!empty($autoEmail))

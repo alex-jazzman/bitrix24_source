@@ -162,7 +162,6 @@ class LandingSiteDomainComponent extends LandingBaseComponent
 
 	/**
 	 * Returns postfix for domain.
-	 *
 	 * @return string
 	 */
 	protected function getPostFix(): string

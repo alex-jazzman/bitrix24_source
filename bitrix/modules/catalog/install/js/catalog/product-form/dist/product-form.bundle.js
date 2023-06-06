@@ -363,6 +363,7 @@ this.BX = this.BX || {};
 				@input="onInputQuantityHandler"
 				:disabled="!editable"
 				data-name="quantity"
+				:data-value="quantity"
 			>
 			<div 
 				class="catalog-pf-product-input-info catalog-pf-product-input-info--action" 
@@ -445,6 +446,7 @@ this.BX = this.BX || {};
 					@input="onInputPriceHandler"
 					:disabled="!editable"
 					data-name="price"
+					:data-value="price"
 			>
 			<div class="catalog-pf-product-input-info" v-html="currencySymbol"></div>
 		</div>
@@ -558,6 +560,7 @@ this.BX = this.BX || {};
 				placeholder="0"
 				:disabled="!editable"
 				data-name="discount"
+				:data-value="getDiscountInputValue"
 			/>
 			<div class="catalog-pf-product-input-info catalog-pf-product-input-info--action"
 				@click="showPopupMenu">
@@ -1001,6 +1004,7 @@ this.BX = this.BX || {};
 					@input="onInputSumHandler"
 					:disabled="!editable"
 					data-name="sum"
+					:data-value="sum"
 			>
 			<div class="catalog-pf-product-input-info"
 				 :class="{ 'catalog-pf-product-input--disabled': !editable }"
@@ -1116,6 +1120,7 @@ this.BX = this.BX || {};
 	        iblockId: main_core.Text.toNumber(this.options.iblockId),
 	        basePriceId: main_core.Text.toNumber(this.options.basePriceId),
 	        currency: this.options.currency,
+	        isStoreCollectable: false,
 	        isSimpleModel: main_core.Type.isStringFilled((_this$basketItem$fiel11 = this.basketItem.fields) == null ? void 0 : _this$basketItem$fiel11.name) && productId <= 0 && skuId <= 0,
 	        fields: this.prepareModelFields()
 	      });

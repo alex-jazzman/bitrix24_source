@@ -15,8 +15,8 @@ use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Landing\Restriction;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Rest\Marketplace\Client;
 use Bitrix\Rest\Marketplace\Url;
-use Bitrix\Landing\Rights;
 
 Manager::setPageTitle(
 	Loc::getMessage('LANDING_TPL_TITLE')
@@ -52,9 +52,12 @@ $themeSite = $arResult['THEME_SITE'] ?: null;
 $colorSite = $arResult['THEME_COLOR'] ?: $colors[$themeSite]['color'];
 $template = $arResult['TEMPLATE'];
 $siteGroup = $arResult['SITE_GROUP'];
-$hasAccessCreate = Rights::hasAdditionalRight(
-	Rights::ADDITIONAL_RIGHTS['create']
-);
+$hasAccessCreate = $arResult['RIGHTS_CREATE'] ?: null;
+$marketSubscriptionNeeded = false;
+if ($arResult['NEEDED_SUBSCRIPTION'] === true && !Client::isSubscriptionAvailable())
+{
+	$marketSubscriptionNeeded = true;
+}
 
 $sliderCode = Restriction\Hook::getRestrictionCodeByHookCode('THEME');
 $allowed = Restriction\Manager::isAllowed($sliderCode);
@@ -97,8 +100,8 @@ if ($createStore)
 else
 {
 	$uriSelect = new Uri($arResult['CUR_URI']);
-	preg_match('/preview.bitrix24.site\/pub\/site\/(\d+)/i', $template['PREVIEW_URL'], $matches);
-	$previewId = $matches[1];
+	preg_match('/preview.bitrix24.site\/pub\/site\/(\d+)/i', $template['PREVIEW_URL'] ?? '', $matches);
+	$previewId = $matches[1] ?? 0;
 	$uriSelect->addParams([
 		'action' => 'select',
 		'no_redirect' => ($request->get('no_redirect') === 'Y') ? 'Y' : 'N',
@@ -116,7 +119,7 @@ else
 		<div class="landing-template-demo-preview-header-logo">
 			<span class="landing-ui-panel-top-logo-text"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_BITRIX')?></span>
 			<span class="landing-ui-panel-top-logo-color">24</span>
-			<?php if ($arParams['TYPE'] === 'KNOWLEDGE'):?>
+			<?php if ($arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP'):?>
 				<span class="landing-ui-panel-top-logo-text">.<?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_KB')?></span>
 			<?php else:?>
 				<span class="landing-ui-panel-top-logo-text">.<?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_SITE')?></span>
@@ -129,12 +132,16 @@ else
 			<div class="mobile-view ui-btn ui-btn-light-border ui-btn-round">
 				<?= Loc::getMessage('LANDING_TPL_BUTTON_SHOW_IN_MOBILE')?>
 			</div>
-			<div class="create">
+			<?php if (!$marketSubscriptionNeeded) : ?>
+				<div class="create">
+			<?php else : ?>
+				<div class="create needed-market-subscription">
+			<?php endif;?>
 				<?php
 				if (!$hasAccessCreate)
 				{
 					?>
-					<span class="ui-btn ui-btn-success ui-btn-round ui-btn-disabled" data-hint="<?= Loc::getMessage('LANDING_TPL_HEADER_RIGHT_CREATE_HINT') ?>" data-hint-no-icon>
+					<span class="ui-btn ui-btn-success ui-btn-round ui-btn-disabled" data-hint="<?= Loc::getMessage('LANDING_TPL_HEADER_RIGHT_CREATE_HINT_MSGVER_1') ?>" data-hint-no-icon>
 						<?php if ($arParams['SITE_ID'] !== 0) : ?>
 							<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE_PAGE') ?>
 						<?php else : ?>
@@ -187,7 +194,7 @@ else
 					<a href="<?= $uriSelect->getUri() ?>" class="ui-btn ui-btn-success ui-btn-round landing-template-preview-create"
 					   title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_SITE') ?>"
 					   data-slider-ignore-autobinding="true">
-						<?php if ($arParams['TYPE'] === 'KNOWLEDGE'):?>
+						<?php if ($arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP'):?>
 							<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_KB') ?>
 						<?php else:?>
 							<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_SITE') ?>
@@ -212,6 +219,14 @@ else
 				</div>
 				<div class="landing-popup-import">
 					<div class="landing-popup-import-loader"></div>
+					<div class="landing-popup-import-repeat hide">
+						<div class="landing-popup-import-repeat-text">
+							<?= Loc::getMessage('LANDING_TPL_POPUP_REPEAT_TEXT') ?>
+						</div>
+						<span class="landing-popup-import-repeat-button ui-btn ui-btn-light-border ui-btn-round">
+							<?= Loc::getMessage('LANDING_TPL_POPUP_REPEAT_BUTTON') ?>
+						</span>
+					</div>
 				</div>
 			</div>
 			<div class="preview-right">
@@ -407,19 +422,30 @@ else
 <?php if ($template['URL_PREVIEW']):?>
 <script type="text/javascript">
 	// Force init template preview layout
+	<?php
+	$popupTextCode = 'LANDING_TPL_POPUP_TEXT';
+	if ($createStore)
+	{
+		$popupTextCode = 'LANDING_TPL_POPUP_TEXT_STORE';
+	}
+	elseif ($arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP')
+	{
+		$popupTextCode = 'LANDING_TPL_POPUP_TEXT_KB';
+	}
+	?>
 	BX.Landing.TemplatePreviewInstance = BX.Landing.TemplatePreview.getInstance({
 		createStore: <?= ($createStore ? 'true' : 'false') ?>,
 		disableClickHandler: <?=(isset($arResult['EXTERNAL_IMPORT']['onclick']) ? 'true' : 'false') ?>,
 		messages: {
-			LANDING_LOADER_WAIT: "<?= CUtil::jsEscape(Loc::getMessage('LANDING_LOADER_WAIT')) ?>",
+			LANDING_LOADER_WAIT: "<?= CUtil::jsEscape(Loc::getMessage('LANDING_LOADER_WAIT_MSGVER_1')) ?>",
 			LANDING_TPL_POPUP_TITLE: "<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_BUTTON_SHOW_IN_MOBILE')) ?>",
-			LANDING_TPL_POPUP_TEXT: "<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_POPUP_TEXT')) ?>",
+			LANDING_TPL_POPUP_TEXT: "<?= CUtil::jsEscape(Loc::getMessage($popupTextCode)) ?>",
 		},
 		disableStoreRedirect: <?= ($arParams['DISABLE_REDIRECT'] === 'Y') ? 'true' : 'false' ?>,
-		zipInstallPath: '<?=$template['ZIP_ID'] ? Url::getConfigurationImportZipUrl($template['ZIP_ID']) : '' ?>',
+		zipInstallPath: '<?= ($template['ZIP_ID'] ?? null) ? Url::getConfigurationImportZipUrl($template['ZIP_ID']) : '' ?>',
 		siteId: <?= ($arParams['SITE_ID'] > 0) ? $arParams['SITE_ID'] : 0 ?>,
 		langId: "<?= is_string($arParams['LANG_ID']) ? $arParams['LANG_ID'] : ''?>",
-		folderId: <?= ($arResult['FOLDER_ID'] && $arResult['FOLDER_ID'] > 0) ? $arResult['FOLDER_ID'] : 0 ?>,
+		folderId: <?= ($arResult['FOLDER_ID'] ?? 0 && $arResult['FOLDER_ID'] > 0) ? $arResult['FOLDER_ID'] : 0 ?>,
 		adminSection: <?= $arParams['ADMIN_SECTION'] === 'Y' ? 'true' : 'false'?>,
 		urlPreview: <?=CUtil::PhpToJSObject($template['URL_PREVIEW'])?>,
 	});

@@ -6,6 +6,7 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Text\Encoding;
+use Bitrix\Main\Web\MimeType;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\UtfSafeString;
@@ -64,7 +65,6 @@ class Library
 
 	// Agent time constants
 	public const
-		GLOBAL_AGENT_EXEC_INTERVAL = 21600, //6 hours
 		LOCAL_AGENT_EXEC_INTERVAL  = 30,
 		INSTANT_AGENT_EXEC_INTERVAL  = 10;
 
@@ -297,7 +297,7 @@ class Library
 	];
 
 	/** @var array Association mime type of the file and its corresponding expansion */
-	public static $mimeTypeAssociationExtension = [
+	private static $mimeTypeAssociationExtension = [
 		'application/vnd.hzn-3d-crossword' => '.x3d',
 		'video/3gpp' => '.3gp',
 		'video/3gpp2' => '.3g2',
@@ -990,6 +990,12 @@ class Library
 		'audio/amr' => '.amr'
 	];
 
+
+	public static function getMimeTypeList(): array
+	{
+		return self::$mimeTypeAssociationExtension;
+	}
+
 	/**
 	 * Load language constants library.
 	 *
@@ -1255,6 +1261,19 @@ class Library
 							$fileName = self::getNameFile($effectiveUrl);
 						}
 					}
+
+					if (MimeType::isImage($type) && !MimeType::isImage(MimeType::getByFilename($fileName)))
+					{
+						$normalizeType = MimeType::normalize($type);
+						foreach (MimeType::getMimeTypeList() as $extension => $checkAgainstMime)
+						{
+							if ($normalizeType == $checkAgainstMime)
+							{
+								$fileName .= '.'. $extension;
+								break;
+							}
+						}
+					}
 				}
 
 				if (
@@ -1269,11 +1288,11 @@ class Library
 
 				//The definition of the file extension, it is not specified.
 				if (
-					!empty(self::$mimeTypeAssociationExtension[$type])
-					&& mb_strpos($fileName, '.') === false
+					mb_strpos($fileName, '.') === false
+					&& !empty(self::getMimeTypeList()[$type])
 				)
 				{
-					$fileName .= self::$mimeTypeAssociationExtension[$type];
+					$fileName .= self::getMimeTypeList()[$type];
 				}
 
 				if (empty($type))

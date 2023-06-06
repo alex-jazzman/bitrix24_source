@@ -246,6 +246,15 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 								'ENTITY_ID' => $companyID,
 								'IS_PRIMARY' => 'Y'
 							]);
+
+							$arErrors = [];
+
+							\CCrmBizProcHelper::AutoStartWorkflows(
+								CCrmOwnerType::Company,
+								$companyID,
+								\CCrmBizProcEventType::Create,
+								$arErrors
+							);
 						}
 					}
 					else
@@ -307,6 +316,8 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 								'ENTITY_ID' => $contactID,
 								'IS_PRIMARY' => $clientCollection->isPrimaryItemExists(\CCrmOwnerType::Contact) ? 'N' : 'Y'
 							]);
+
+							$arErrors = [];
 
 							\CCrmBizProcHelper::AutoStartWorkflows(
 							    CCrmOwnerType::Contact,

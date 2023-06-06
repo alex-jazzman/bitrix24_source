@@ -25,6 +25,7 @@ export class ProductSelector extends EventEmitter
 	static INPUT_FIELD_BARCODE = 'BARCODE';
 
 	static ErrorCodes = SelectorErrorCode;
+	static UIInputRequest = null;
 	#inAjaxProcess = false;
 	mode: ProductSelector.MODE_EDIT | ProductSelector.MODE_VIEW = ProductSelector.MODE_EDIT;
 	cache = new Cache.MemoryCache();
@@ -357,15 +358,28 @@ export class ProductSelector extends EventEmitter
 		{
 			if (!Reflection.getClass('BX.UI.ImageInput'))
 			{
-				ajax
-					.runAction(	'catalog.productSelector.getFileInput', {
-						json:{
-							iblockId: this.getModel().getIblockId()
-						}
-					})
-					.then(() => {
+				if (ProductSelector.UIInputRequest instanceof Promise)
+				{
+					ProductSelector.UIInputRequest.then(() => {
 						this.layoutImage();
 					});
+				}
+				else
+				{
+					ProductSelector.UIInputRequest = new Promise(resolve => {
+						ajax
+							.runAction(	'catalog.productSelector.getFileInput', {
+								json:{
+									iblockId: this.getModel().getIblockId()
+								}
+							})
+							.then(() => {
+								this.layoutImage();
+								ProductSelector.UIInputRequest = null;
+								resolve();
+							});
+					});
+				}
 			}
 			else
 			{

@@ -85,6 +85,11 @@ class OrderDealSynchronizer
 	 */
 	private static function fillingProducts(array $dealProducts): array
 	{
+		if (empty($dealProducts))
+		{
+			return [];
+		}
+
 		$map = [];
 		$dealProductsIds = [];
 

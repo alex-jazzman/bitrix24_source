@@ -1,6 +1,6 @@
 <?php
 $MESS["LANDING_404_ERROR"] = "Template was not found";
-$MESS["LANDING_LOADER_WAIT"] = "The online store is being imported. Please wait...";
+$MESS["LANDING_LOADER_WAIT_MSGVER_1"] = "Please wait, creating the online store now...";
 $MESS["LANDING_PREVIEW_NOTICE"] = "Text will be shown as preview on social pages";
 $MESS["LANDING_TPL_BUTTON_CANCEL"] = "Cancel";
 $MESS["LANDING_TPL_BUTTON_CREATE"] = "Create";
@@ -14,8 +14,12 @@ $MESS["LANDING_TPL_HEADER_COLOR"] = "Color theme";
 $MESS["LANDING_TPL_HEADER_LOGO_BITRIX"] = "Bitrix";
 $MESS["LANDING_TPL_HEADER_LOGO_KB"] = "Knowledge bases";
 $MESS["LANDING_TPL_HEADER_LOGO_SITE"] = "Sites";
-$MESS["LANDING_TPL_HEADER_RIGHT_CREATE_HINT"] = "You do not have sufficient permission to create sites. Please contact your administrator.";
+$MESS["LANDING_TPL_HEADER_RIGHT_CREATE_HINT_MSGVER_1"] = "You do not have sufficient permission to create sites. Please contact your administrator.";
 $MESS["LANDING_TPL_HEADER_SITE_GROUP"] = "Design suggestion";
 $MESS["LANDING_TPL_MY_COLOR"] = "Custom color";
+$MESS["LANDING_TPL_POPUP_REPEAT_BUTTON"] = "Restart";
+$MESS["LANDING_TPL_POPUP_REPEAT_TEXT"] = "Something went wrong. Click Restart to try again.";
 $MESS["LANDING_TPL_POPUP_TEXT"] = "Scan the QR code to open the site";
+$MESS["LANDING_TPL_POPUP_TEXT_KB"] = "Scan the QR code to open the knowledge base.";
+$MESS["LANDING_TPL_POPUP_TEXT_STORE"] = "Scan the QR code to proceed to the online store.";
 $MESS["LANDING_TPL_TITLE"] = "Template Preview";

@@ -583,10 +583,13 @@ class Input
 
 		if ($result->isSuccess())
 		{
-			Status::getInstance($this->connector, (int)$this->line)->setError(true);
-			$cacheId = Connector::getCacheIdConnector($this->line, $this->connector);
+			Status::getInstance($this->connector, (int)$this->line)
+				->setError(true)
+				->save()
+			;
 
 			//Reset cache
+			$cacheId = Connector::getCacheIdConnector($this->line, $this->connector);
 			$cache = Cache::createInstance();
 			$cache->clean($cacheId, Library::CACHE_DIR_COMPONENT);
 		}
@@ -639,8 +642,11 @@ class Input
 		return $result;
 	}
 
-	//TODO: Event
+
+	//region Incoming event
+
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedMessage
 	 * @param $data
 	 * @return Result
 	 */
@@ -650,6 +656,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedMessageUpdate
 	 * @param $data
 	 * @return Result
 	 */
@@ -659,6 +666,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedMessageDelete
 	 * @param $data
 	 * @return Result
 	 */
@@ -668,6 +676,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedStatusWrites
 	 * @param $data
 	 * @return Result
 	 */
@@ -695,6 +704,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedStatusDelivery
 	 * @param $data
 	 * @return Result
 	 */
@@ -751,4 +761,5 @@ class Input
 
 		return $result;
 	}
+	//endregion
 }

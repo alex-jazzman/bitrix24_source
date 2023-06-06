@@ -188,7 +188,16 @@ class CCatalogAdminTools extends CCatalogAdminToolsAll
 
 		$arItems = array();
 
-		$productLimits = Catalog\Config\State::getExceedingProductLimit($intIBlockID, $arParams['find_section_section'] ?? null);
+		$sectionId = $arParams['find_section_section'] ?? null;
+		if ($sectionId !== null)
+		{
+			$sectionId = (int)$sectionId;
+			if ($sectionId <= 0)
+			{
+				$sectionId = null;
+			}
+		}
+		$productLimits = Catalog\Config\State::getExceedingProductLimit($intIBlockID, $sectionId);
 		if (!empty($productLimits))
 		{
 			if (!empty($productLimits['HELP_MESSAGE']))

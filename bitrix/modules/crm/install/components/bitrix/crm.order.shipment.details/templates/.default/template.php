@@ -140,7 +140,6 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_ID' => $arResult['ENTITY_DATA']['ORDER_ID'],
 			'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
 			'GUID' => "{$guid}_timeline",
-			'ENABLE_WAIT' => true,
 			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES'],
 			'ENABLE_SALESCENTER' => false,
 		),

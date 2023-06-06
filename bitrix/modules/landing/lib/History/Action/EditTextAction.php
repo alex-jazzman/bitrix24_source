@@ -22,6 +22,7 @@ class EditTextAction extends BaseAction
 			if (isset($resultList[$position]))
 			{
 				$content = $undo ? $this->params['valueBefore'] : $this->params['valueAfter'];
+				$content = Emoji::decode($content);
 				$resultList[$position]->setInnerHTML($content);
 				$block->saveContent($doc->saveHTML());
 
@@ -68,6 +69,7 @@ class EditTextAction extends BaseAction
 				? $params['params']['valueBefore']
 				: $params['params']['valueAfter']
 			;
+		$params['params']['value'] = Emoji::decode($params['params']['value']);
 
 		unset(
 			$params['params']['valueAfter'],

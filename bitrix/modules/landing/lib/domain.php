@@ -51,14 +51,17 @@ class Domain extends \Bitrix\Landing\Internals\BaseTable
 
 	/**
 	 * Returns Bitrix24 sub domain name from full domain name.
+	 *
 	 * @param string $domainName Full domain name.
-	 * @return string Null, if $domainName isn't sub domain of B24.
+	 * @param string|null &$baseUrl If specified will be set to base url from full domain.
+	 * @return string|null Null, if $domainName isn't Bitrix24's subdomain.
 	 */
-	public static function getBitrix24Subdomain($domainName)
+	public static function getBitrix24Subdomain(string $domainName, ?string &$baseUrl = null): ?string
 	{
 		$re = '/^([^\.]+)\.(' . implode('|', self::B24_DOMAINS) . ')$/i';
 		if (preg_match($re, $domainName, $matches))
 		{
+			$baseUrl = ".{$matches[2]}";
 			return $matches[1];
 		}
 
@@ -75,7 +78,7 @@ class Domain extends \Bitrix\Landing\Internals\BaseTable
 	public static function getBitrix24Postfix(string $type): string
 	{
 		$zone = Manager::getZone();
-		$postfix = '.bitrix24.site';
+		$postfix = ($type === 'STORE') ? '.bitrix24.shop' : '.bitrix24.site';
 		$type = mb_strtoupper($type);
 
 		// local domain

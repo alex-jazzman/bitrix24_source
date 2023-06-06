@@ -47,7 +47,7 @@ final class Section extends Controller
 
 			return new Page('SECTIONS', $result, function() use ($filter)
 			{
-				return (int)\CIBlockSection::GetList([], $filter, []);
+				return \CIBlockSection::GetCount($filter);
 			});
 		}
 		else

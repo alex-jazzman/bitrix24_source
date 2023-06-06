@@ -127,7 +127,9 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	protected static function extractPropertiesValues(PropertiesDialog $dialog, array $fieldsMap): Result
 	{
-		$result = parent::extractPropertiesValues($dialog, $fieldsMap);
+		$simpleMap = $fieldsMap;
+		unset($simpleMap['DynamicEntitiesFields']);
+		$result = parent::extractPropertiesValues($dialog, $simpleMap);
 
 		if ($result->isSuccess())
 		{

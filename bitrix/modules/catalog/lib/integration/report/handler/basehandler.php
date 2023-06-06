@@ -99,6 +99,8 @@ abstract class BaseHandler extends BaseReport  implements IReportMultipleData
 				{
 					$groupedStoreTotals[$storeId][$measureId]['SOLD_AMOUNTS_DIFFERENCE'] = $soldAmountsDifference[$storeId];
 				}
+
+				ksort($groupedStoreTotals[$storeId]);
 			}
 			ksort($groupedStoreTotals);
 

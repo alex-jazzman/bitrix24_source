@@ -56,6 +56,7 @@ Asset::getInstance()->addCSS(
 
 // prepare urls
 $arParams['PAGE_URL_LANDING_ADD'] = $component->getUrlAdd(false);
+$arParams['PAGE_URL_LANDING_ADD_SIDEPANEL_CONDITION'] = $component->getUrlAddSidepanelCondition(false);
 
 $sliderConditions = [
 	str_replace(
@@ -82,18 +83,14 @@ if ($arParams['TILE_MODE'] === 'view')
 	);
 }
 
-$addCondition = strpos($arParams['PAGE_URL_LANDING_ADD'], '?')
-	? CUtil::jsEscape(explode('?', $arParams['PAGE_URL_LANDING_ADD'])[0])
-	: CUtil::jsEscape($arParams['PAGE_URL_LANDING_ADD'])
-;
-
-if ($arParams['TYPE'] === 'PAGE')
+$sliderFullConditions = [];
+if ($arParams['TYPE'] === 'PAGE' && $component->isUseNewMarket())
 {
-	$sliderFullConditions[] = $addCondition;
+	$sliderFullConditions[] = $arParams['PAGE_URL_LANDING_ADD_SIDEPANEL_CONDITION'];
 }
 else
 {
-	$sliderConditions[] = $addCondition;
+	$sliderConditions[] = $arParams['PAGE_URL_LANDING_ADD_SIDEPANEL_CONDITION'];
 }
 
 $sliderShortConditions = [
@@ -364,7 +361,7 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 						style="background-image: url(<?= htmlspecialcharsbx($item['PREVIEW']) ?>);"
 						<?php if (
 							$item['PUBLISHED']
-							&& $item['CLOUD_PREVIEW']
+							&& ($item['CLOUD_PREVIEW'] ?? null)
 							&& ($item['CLOUD_PREVIEW'] !== $item['PREVIEW'])
 						) :?>
 							data-cloud-preview="<?= $item['CLOUD_PREVIEW'] ?>"
@@ -437,55 +434,88 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 	</div>
 <?endif;?>
 
-
 <script type="text/javascript">
-	BX.SidePanel.Instance.bindAnchors(
-		top.BX.clone({
-			rules: [
-				{
-					condition: <?= CUtil::phpToJSObject($sliderConditions);?>,
-					stopParameters: [
-						'action',
-						'folderUp',
-						'fields%5Bdelete%5D',
-						'nav'
-					],
-					options: {
-						allowChangeHistory: false,
-						events: {
-							onOpen: function(event)
-							{
-								if (BX.hasClass(BX('landing-create-element'), 'ui-btn-disabled'))
-								{
-									event.denyAction();
+	(() => {
+		const sliderConditions = <?= CUtil::phpToJSObject($sliderConditions);?>;
+		if (sliderConditions.length > 0)
+		{
+			BX.SidePanel.Instance.bindAnchors(
+				top.BX.clone({
+					rules: [
+						{
+							condition: sliderConditions,
+							stopParameters: [
+								'action',
+								'folderUp',
+								'fields%5Bdelete%5D',
+								'nav'
+							],
+							options: {
+								allowChangeHistory: false,
+								events: {
+									onOpen: function(event)
+									{
+										if (BX.hasClass(BX('landing-create-element'), 'ui-btn-disabled'))
+										{
+											event.denyAction();
+										}
+									}
 								}
 							}
-						}
-					}
-				},
-				{
-					condition: <?= CUtil::phpToJSObject($sliderFullConditions);?>,
-					options: {
-						allowChangeHistory: false,
-						cacheable: false,
-						customLeftBoundary: 0,
-					}
-				},
-				{
-					condition: <?= CUtil::phpToJSObject($sliderShortConditions);?>,
-					options: {
-						allowChangeHistory: false,
-						cacheable: false,
-						width: 800
-					}
-				}
-			]
-		})
-    );
+						},
+					]
+				})
+			);
+		}
 
-	BX.bind(document.querySelector('.landing-item-add-new span.landing-item-inner'), 'click', function(event) {
+		const sliderFullConditions = <?= CUtil::phpToJSObject($sliderFullConditions);?>;
+		if (sliderFullConditions.length > 0)
+		{
+			BX.SidePanel.Instance.bindAnchors(
+				top.BX.clone({
+					rules: [
+						{
+							condition: sliderFullConditions,
+							options: {
+								allowChangeHistory: false,
+								cacheable: false,
+								customLeftBoundary: 0,
+							}
+						},
+					]
+				})
+			);
+		}
+
+		const sliderShortConditions = <?= CUtil::phpToJSObject($sliderShortConditions);?>;
+		if (sliderShortConditions.length > 0)
+		{
+			BX.SidePanel.Instance.bindAnchors(
+				top.BX.clone({
+					rules: [
+						{
+							condition: sliderShortConditions,
+							options: {
+								allowChangeHistory: false,
+								cacheable: false,
+								width: 800
+							}
+						}
+					]
+				})
+			);
+		}
+	})();
+</script>
+<script type="text/javascript">
+	// + button open page add slider
+	BX.bind(document.querySelector('.landing-item-add-new span.landing-item-inner'), 'click', event => {
 		BX.SidePanel.Instance.open(event.currentTarget.dataset.href, {
-			allowChangeHistory: false
+			allowChangeHistory: false,
+			<?php
+				echo $component->isUseNewMarket() ? 'customLeftBoundary: 0,' : '';
+				echo $component->isUseNewMarket() ? 'cacheable: false,' : '';
+			?>
 		});
 	});
 
@@ -500,6 +530,7 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 
 		tileGrid = new BX.Landing.TileGrid({
 			wrapper: wrapper,
+			siteId: <?= $arParams['SITE_ID'];?>,
 			siteType: '<?= $arParams['TYPE'];?>',
 			inner: BX('grid-tile-inner'),
 			tiles: title_list,

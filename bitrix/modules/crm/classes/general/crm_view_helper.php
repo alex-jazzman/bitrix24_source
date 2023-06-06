@@ -1,12 +1,13 @@
 <?php
 IncludeModuleLangFile(__FILE__);
 
-use Bitrix\Crm\Order;
-use Bitrix\Crm\Conversion\LeadConversionType;
 use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Color\PhaseColorScheme;
+use Bitrix\Crm\Conversion\LeadConversionType;
+use Bitrix\Crm\Integration\OpenLineManager;
+use Bitrix\Crm\Order;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline;
 use Bitrix\Crm\Workflow\PaymentStage;
 use Bitrix\Main\UI\Extension;
 
@@ -548,6 +549,11 @@ class CCrmViewHelper
 		}
 		//endregion
 	}
+
+	/**
+	 * @deprecated Will be removed soon
+	 * @see \Bitrix\Crm\Component\EntityList\NearestActivity\Manager::appendNearestActivityBlock
+	 */
 	public static function RenderNearestActivity($arParams)
 	{
 		$gridManagerID = isset($arParams['GRID_MANAGER_ID']) ? $arParams['GRID_MANAGER_ID'] : '';
@@ -578,20 +584,40 @@ class CCrmViewHelper
 
 			$timestamp = $time !== '' ? MakeTimeStamp($time) : 0;
 			$timeFormatted = $timestamp > 0 ? CCrmComponentHelper::TrimDateTimeString(FormatDate('FULL', $timestamp)) : GetMessage('CRM_ACTIVITY_TIME_NOT_SPECIFIED');
-			$isExpired = isset($arParams['ACTIVITY_EXPIRED']) ? $arParams['ACTIVITY_EXPIRED'] : ($timestamp <= (time() + CTimeZone::GetOffset()));
+			$isExpired = $arParams['ACTIVITY_EXPIRED'] ?? ($timestamp <= (time() + CTimeZone::GetOffset()));
+			$isDetailExist = true;
+			if (isset($arParams['ACTIVITY_PROVIDER_ID']))
+			{
+				$provider = \CCrmActivity::GetProviderById($arParams['ACTIVITY_PROVIDER_ID']);
+				if ($provider)
+				{
+					$isDetailExist = $provider::hasPlanner($arParams);
+				}
+			}
 
-			if($useGridExtension)
+			$activityEl = '<span class="crm-link">' . htmlspecialcharsbx($timeFormatted) . '</span>';
+			if ($isDetailExist)
 			{
-				$result = '<div class="crm-nearest-activity-wrapper"><div class="crm-list-deal-date crm-nearest-activity-time'.($isExpired ? '-expiried' : '').'"><a class="crm-link" target = "_self" href = "#"
-				onclick="BX.CrmUIGridExtension.viewActivity(\''.CUtil::JSEscape($gridManagerID).'\', '.$ID.', { enableEditButton:'.($allowEdit ? 'true' : 'false').' }); return false;">'
-					.htmlspecialcharsbx($timeFormatted).'</a></div><div class="crm-nearest-activity-subject">'.htmlspecialcharsbx($subject).'</div>';
+				$activityEl = $useGridExtension
+					? '<a class="crm-link" target = "_self"href = "#"
+							onclick="BX.CrmUIGridExtension.viewActivity(\''
+							. CUtil::JSEscape($gridManagerID) . '\', ' . $ID . ', { enableEditButton:'
+							. ($allowEdit ? 'true' : 'false') . ' }); return false;"
+						>' . htmlspecialcharsbx($timeFormatted) . '
+						</a>'
+					: '<a class="crm-link" target = "_self" href = "#"
+							onclick="BX.CrmInterfaceGridManager.viewActivity(\''
+							. CUtil::JSEscape($gridManagerID) . '\', ' . $ID . ', { enableEditButton:'
+							. ($allowEdit ? 'true' : 'false') . ' }); return false;"
+						>' . htmlspecialcharsbx($timeFormatted) . '
+						</a>';
 			}
-			else
-			{
-				$result = '<div class="crm-nearest-activity-wrapper"><div class="crm-list-deal-date crm-nearest-activity-time'.($isExpired ? '-expiried' : '').'"><a class="crm-link" target = "_self" href = "#"
-				onclick="BX.CrmInterfaceGridManager.viewActivity(\''.CUtil::JSEscape($gridManagerID).'\', '.$ID.', { enableEditButton:'.($allowEdit ? 'true' : 'false').' }); return false;">'
-					.htmlspecialcharsbx($timeFormatted).'</a></div><div class="crm-nearest-activity-subject">'.htmlspecialcharsbx($subject).'</div>';
-			}
+
+			$result = '
+				<div class="crm-nearest-activity-wrapper">
+					<div class="crm-list-deal-date crm-nearest-activity-time' . ($isExpired ? '-expiried' : '') . '">' . $activityEl . '</div>
+					<div class="crm-nearest-activity-subject">' . htmlspecialcharsbx($subject) . '</div>
+			';
 
 			if($allowEdit && !empty($menuItems))
 			{
@@ -599,7 +625,8 @@ class CCrmViewHelper
 				{
 					if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
 					{
-						$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ");";
+						$currentUser = CUtil::PhpToJSObject(static::getUserInfo(true, false));
+						$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser . ");";
 					}
 					else
 					{
@@ -666,7 +693,8 @@ class CCrmViewHelper
 			{
 				if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
 				{
-					$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ");";
+					$currentUser = CUtil::PhpToJSObject(static::getUserInfo(true, false));
+					$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ", " . $currentUser . ");";
 				}
 				else
 				{
@@ -2075,8 +2103,8 @@ class CCrmViewHelper
 			'checkErrorTitle' => GetMessage('CRM_LEAD_STAGE_MANAGER_CHECK_ERROR_TTL'),
 			'checkErrorHelp' => GetMessage('CRM_STAGE_MANAGER_CHECK_ERROR_HELP'),
 			'checkErrorHelpArticleCode' => '8233923',
-			'conversionCancellationTitle' => GetMessage('CRM_CONFIRMATION_DLG_TTL'),
-			'conversionCancellationContent' => GetMessage('CRM_LEAD_STATUS_MANAGER_CONVERSION_CANCEL_CNT')
+			'conversionCancellationTitle' => GetMessage('CRM_CONFIRMATION_DLG_TTL_MSGVER_1'),
+			'conversionCancellationContent' => GetMessage('CRM_LEAD_STATUS_MANAGER_CONVERSION_CANCEL_CNT_MSGVER_1')
 		);
 
 		return '<script type="text/javascript">'
@@ -3326,5 +3354,23 @@ class CCrmViewHelper
 			. ');' . PHP_EOL
 			. '</script>'
 		);
+	}
+
+	public static function getUserInfo(bool $isTitleProtect = false, bool $isImageUrlEncode = true): array
+	{
+		$userInfo = Timeline\Layout\User::current()->toArray();
+		$userInfo['userId'] = Container::getInstance()->getContext()->getUserId();
+
+		if ($isTitleProtect)
+		{
+			$userInfo['title'] = htmlspecialcharsbx($userInfo['title']);
+		}
+
+		if ($isImageUrlEncode)
+		{
+			$userInfo['imageUrl'] = \Bitrix\Main\Web\Uri::urnEncode($userInfo['imageUrl']);
+		}
+
+		return $userInfo;
 	}
 }

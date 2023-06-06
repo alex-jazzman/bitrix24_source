@@ -12,6 +12,9 @@ class CAllSaleAffiliate
 {
 	public static function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
+		/** @global CDatabase $DB */
+		global $DB;
+
 		if ((is_set($arFields, "SITE_ID") || $ACTION=="ADD") && $arFields["SITE_ID"] == '')
 		{
 			$GLOBALS["APPLICATION"]->ThrowException(GetMessage("ACGA1_NO_SITE"), "EMPTY_SITE_ID");
@@ -98,6 +101,9 @@ class CAllSaleAffiliate
 			$arFields["ITEMS_SUM"] = str_replace(",", ".", $arFields["ITEMS_SUM"]);
 			$arFields["ITEMS_SUM"] = DoubleVal($arFields["ITEMS_SUM"]);
 		}
+
+		unset($arFields['TIMESTAMP_X']);
+		$arFields['~TIMESTAMP_X'] = $DB->GetNowFunction();
 
 		return True;
 	}

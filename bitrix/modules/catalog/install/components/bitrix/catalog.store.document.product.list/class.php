@@ -711,10 +711,6 @@ final class CatalogStoreDocumentProductListComponent
 		foreach ($documentProducts as $id => $document)
 		{
 			$productId = (int)($document['ELEMENT_ID'] ?? null);
-			if (!$productId)
-			{
-				continue;
-			}
 
 			if (isset($productInfo[$productId]))
 			{
@@ -727,17 +723,15 @@ final class CatalogStoreDocumentProductListComponent
 			}
 
 			$productName = $product['NAME'] ?? '';
+			$rowId = (int)($product['ID'] ?? 0);
 			if (
 				isset($product)
 				&& $productName === ''
 				&& is_numeric($product['ID'])
-				&& $product['ID'] !== self::PRODUCT_ID_MASK
+				&& $rowId > 0
 			)
 			{
-				$productName = ((int)$product['ID'] > 0 && isset($product['NAME'])
-					? $product['NAME']
-					: "[{$product['ID']}]"
-				);
+				$productName = "[{$rowId}]";
 			}
 
 
@@ -754,13 +748,13 @@ final class CatalogStoreDocumentProductListComponent
 			$existsStoreFrom = isset($document['STORE_FROM']) && (int)$document['STORE_FROM'] > 0;
 
 			$availableAmountTo = 0;
-			if ($existsStoreTo)
+			if ($productId && $existsStoreTo)
 			{
 				$availableAmountTo = $this->getAvailableProductAmountOnStore($productStoreInfo, $productId, $document['STORE_TO']);
 			}
 
 			$availableAmountFrom = 0;
-			if ($existsStoreFrom)
+			if ($productId && $existsStoreFrom)
 			{
 				$availableAmountFrom = $this->getAvailableProductAmountOnStore($productStoreInfo, $productId, $document['STORE_FROM']);
 			}
@@ -782,7 +776,7 @@ final class CatalogStoreDocumentProductListComponent
 				'OFFERS_IBLOCK_ID' => $product['OFFERS_IBLOCK_ID'] ?? null,
 				'SKU_ID' => $product['SKU_ID'] ?? null,
 				'PRODUCT_ID' => $product['PRODUCT_ID'] ?? null,
-				'SKU_TREE' => Json::encode($product['SKU_TREE'] ?? null) ?? null,
+				'SKU_TREE' => !empty($product['SKU_TREE']) ? Json::encode($product['SKU_TREE']) : null,
 				'DETAIL_URL' => $product['DETAIL_URL'] ?? null,
 				'IMAGE_INFO' => $product['IMAGE_INFO'] ?? null,
 				'MEASURE_NAME' => $product['MEASURE_NAME'] ?? null,
@@ -2016,7 +2010,7 @@ final class CatalogStoreDocumentProductListComponent
 						'NAME' => $row['NAME'],
 						'IBLOCK_ID' => $row['IBLOCK_ID'] ?? null,
 						'SKU_IBLOCK_ID' => $row['OFFERS_IBLOCK_ID'] ?? null,
-						'SKU_ID' => $row['OFFER_ID'] ?? null,
+						'SKU_ID' => $row['SKU_ID'] ?? null,
 						'BASE_PRICE_ID' => $row['BASE_PRICE_ID'] ?? null,
 					],
 					'SKU_TREE' => $row['SKU_TREE'] ? Json::decode($row['SKU_TREE']) : '',

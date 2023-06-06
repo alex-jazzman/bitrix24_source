@@ -5,7 +5,7 @@
  */
 jn.define('im/messenger/cache/base', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
+	const { Type } = require('type');
 
 	class Cache
 	{

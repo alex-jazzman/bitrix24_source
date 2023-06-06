@@ -4,13 +4,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Access\Permission\PermissionDictionary;
 use Bitrix\Catalog\Component\ImageInput;
 use Bitrix\Catalog\StoreProductTable;
+use Bitrix\Catalog\StoreTable;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Crm;
+use Bitrix\Crm\Component\EntityDetails\ProductList;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Product\Url\ProductBuilder;
-use Bitrix\Crm\Component\EntityDetails\ProductList;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Iblock;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Main;
@@ -20,14 +27,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale;
-use Bitrix\Catalog;
-use Bitrix\Catalog\StoreTable;
-use Bitrix\Crm\Service\Container;
 use Bitrix\UI\Util;
-use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
-use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\ActionDictionary;
-use Bitrix\Catalog\Access\Permission\PermissionDictionary;
 
 if (!Loader::includeModule('crm'))
 {
@@ -1021,7 +1021,7 @@ final class CCrmEntityProductListComponent
 			return;
 		}
 
-		if (is_array($this->arParams['~PRODUCTS']))
+		if (isset($this->arParams['~PRODUCTS']) && is_array($this->arParams['~PRODUCTS']))
 		{
 			$this->rows = $this->arParams['~PRODUCTS'];
 

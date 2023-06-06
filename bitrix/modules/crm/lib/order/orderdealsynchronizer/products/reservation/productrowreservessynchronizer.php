@@ -8,6 +8,7 @@ use Bitrix\Crm\Service\Sale\BasketService;
 use Bitrix\Main\Result;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Order;
 use Bitrix\Sale\ReserveQuantity;
 use CCrmOwnerType;
 use DomainException;
@@ -34,6 +35,17 @@ class ProductRowReservesSynchronizer
 	}
 
 	/**
+	 * @return int[] in format `[rowId => basketId]`
+	 */
+	protected function getProductRowsToBasketItemsMap(): array
+	{
+		return BasketService::getInstance()->getRowIdsToBasketIdsByEntity(
+			CCrmOwnerType::Deal,
+			$this->dealId
+		);
+	}
+
+	/**
 	 * Sync the product rows with the reserve quantity of the basket item.
 	 *
 	 * @return array in format [$isNeedSave, [`rowId` => `reserveQuantity`]]
@@ -48,7 +60,7 @@ class ProductRowReservesSynchronizer
 			return [$isNeedSave, []];
 		}
 
-		$productRowToBasket = BasketService::getInstance()->getRowIdsToBasketIdsByEntity(CCrmOwnerType::Deal, $this->dealId);
+		$productRowToBasket = $this->getProductRowsToBasketItemsMap();
 		$productRowReserveToBasket = [];
 
 		foreach ($reservedProductRows as $rowId => $reserveInfo)
@@ -102,6 +114,14 @@ class ProductRowReservesSynchronizer
 
 				$basketReserve = $basketReserveCollection->create();
 				$quantity = $reserveInfo->getReserveQuantity();
+			}
+
+			// checking and subtracting the shipped quantity
+			$order = $this->basket->getOrder();
+			if ($order instanceof Order)
+			{
+				$shippedQuantity = $order->getShipmentCollection()->getBasketItemShippedQuantity($basketItem);
+				$quantity = min($quantity, $basketItem->getQuantity() - $shippedQuantity);
 			}
 
 			$fields = [

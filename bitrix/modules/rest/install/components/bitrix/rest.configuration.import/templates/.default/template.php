@@ -32,11 +32,11 @@ $bodyClasses = 'rest-configuration-import-slider-modifier';
 $APPLICATION->setPageProperty("BodyClass", trim(sprintf("%s %s", $bodyClass, $bodyClasses)));
 
 $titleBlock = '';
-if ($arParams['MODE'] === 'ROLLBACK')
+if (isset($arParams['MODE']) && $arParams['MODE'] === 'ROLLBACK')
 {
 	$titleBlock = Loc::getMessage('REST_CONFIGURATION_IMPORT_ROLLBACK_TITLE_BLOCK');
 }
-elseif ($arParams['MODE'] === 'ZIP' && !empty($arResult['INSTALL_APP']))
+elseif (isset($arParams['MODE']) && $arParams['MODE'] === 'ZIP' && !empty($arResult['INSTALL_APP']))
 {
 	$titleBlock = '';
 }
@@ -46,13 +46,17 @@ else
 	{
 		$titleBlock = $arResult['MANIFEST']['IMPORT_TITLE_BLOCK'];
 	}
-	else
+	if (!empty($arResult['MANIFEST']['IMPORT_TITLE_PAGE_CREATE']) && isset($arParams['FROM']) && $arParams['FROM'] !== 'configuration')
 	{
-		$titleBlock = Loc::getMessage('REST_CONFIGURATION_IMPORT_TITLE_BLOCK');
+		$titleBlock = $arResult['MANIFEST']['IMPORT_TITLE_PAGE_CREATE'];
 	}
 	if (isset($_GET['createType']) && $_GET['createType'] === 'PAGE')
 	{
-		$titleBlock = Loc::getMessage('REST_CONFIGURATION_IMPORT_PAGE_TITLE');
+		$titleBlock = Loc::getMessage('REST_CONFIGURATION_IMPORT_PAGE_TITLE_CREATE');
+	}
+	if ($titleBlock === '')
+	{
+		$titleBlock = Loc::getMessage('REST_CONFIGURATION_IMPORT_TITLE_BLOCK');
 	}
 }
 
@@ -70,7 +74,7 @@ else
 			</div>
 			<p class="rest-configuration-info"><?=htmlspecialcharsbx($arResult['ERRORS_UPLOAD_FILE'])?></p>
 		<? elseif($arResult['IMPORT_ACCESS'] === true):?>
-			<? if($arParams['MODE'] == 'ROLLBACK'):?>
+			<? if(isset($arParams['MODE']) && $arParams['MODE'] == 'ROLLBACK'):?>
 				<? if(!empty($arResult['IMPORT_FOLDER_FILES'])):?>
 					<?php
 					$APPLICATION->includeComponent(
@@ -203,6 +207,8 @@ else
 					'APP_CODE' => $arResult['INSTALL_APP'],
 					'IFRAME' => 'Y',
 					'FROM' => $arResult['FROM'],
+					'ADDITIONAL' => $arParams['ADDITIONAL'],
+					'ZIP_ID' => $arParams['ZIP_ID'],
 				),
 				$component,
 				array('HIDE_ICONS' => 'Y')

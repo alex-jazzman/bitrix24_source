@@ -18,12 +18,13 @@ class PropertyProduct
 	 *
 	 * @param int $iblockId
 	 * @param int $skuId
+	 * @param array $filter
 	 *
 	 * @return array in format ['PROPERTY_CODE' => 'readable value']
 	 */
-	public static function getSkuProperties(int $iblockId, int $skuId): array
+	public static function getSkuProperties(int $iblockId, int $skuId, array $filter = []): array
 	{
-		$properties = self::getIblockProperties($iblockId, $skuId);
+		$properties = self::getIblockProperties($iblockId, $skuId, $filter);
 		$product = Catalog\ProductTable::getRow([
 			'select' => [
 				'SKU_NAME' => 'IBLOCK_ELEMENT.NAME',
@@ -74,13 +75,17 @@ class PropertyProduct
 	 *
 	 * @param int $iblockId
 	 * @param int $productId
+	 * @param array $filter
 	 *
 	 * @return array in format ['PROPERTY_CODE' => 'readable value']
 	 */
-	public static function getIblockProperties(int $iblockId, int $productId): array
+	public static function getIblockProperties(int $iblockId, int $productId, array $filter = []): array
 	{
 		$result = [];
-		$props = \CIBlockElement::GetProperty($iblockId, $productId, 'id', 'asc');
+
+		$filter['ACTIVE'] = 'Y';
+
+		$props = \CIBlockElement::GetProperty($iblockId, $productId, 'id', 'asc', $filter);
 		while ($prop = $props->GetNext())
 		{
 			if (empty($prop['VALUE'])

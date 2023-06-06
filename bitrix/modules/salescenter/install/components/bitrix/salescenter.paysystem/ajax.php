@@ -259,9 +259,9 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 						$applyRestrictionsResult = Restrictions\Manager::setupDefaultRestrictions($service);
 						if (!$applyRestrictionsResult->isSuccess())
 						{
-							$this->errorCollection->add([new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_ERROR_DEFAULT_RSRT_SETUP'))]);
+							$this->errorCollection->add([new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_ERROR_DEFAULT_RSRT_SETUP_MSGVER_1'))]);
 
-							// TODO: Add public messages of errors while applied concrete restrictions
+							$this->errorCollection->add($applyRestrictionsResult->getErrors());
 						}
 					}
 					else
@@ -638,13 +638,19 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		$registerPaymentSucceededResult = $oauthService->registerPaymentSucceededWebhook();
-		if ($registerPaymentSucceededResult->isSuccess())
+		$registerPaymentCanceledWebhookResult = $oauthService->registerPaymentCanceledWebhook();
+		if ($registerPaymentSucceededResult->isSuccess() && $registerPaymentCanceledWebhookResult->isSuccess())
 		{
 			Option::set('sale', 'YANDEX_CHECKOUT_OAUTH_WEBHOOK_REGISTER', true);
 		}
-		else
+
+		if (!$registerPaymentSucceededResult->isSuccess())
 		{
 			$this->errorCollection->add($registerPaymentSucceededResult->getErrors());
+		}
+		elseif (!$registerPaymentCanceledWebhookResult->isSuccess())
+		{
+			$this->errorCollection->add($registerPaymentCanceledWebhookResult->getErrors());
 		}
 
 		return [];

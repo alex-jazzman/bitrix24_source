@@ -124,7 +124,7 @@ class OpenLineManager
 				MESSAGE, 
 				AUTHOR_ID,
 				FILE.ID as MESSAGE_FILE,
-				ATTACH.ID as MESSAGE_ATTACH
+				ATTACH.PARAM_VALUE as MESSAGE_ATTACH
 			FROM
 			   b_imopenlines_session S
 			   INNER JOIN b_im_message M ON 
@@ -147,7 +147,7 @@ class OpenLineManager
 			$messageFields['MESSAGE'] = Im\Text::removeBbCodes(
 				$messageFields['MESSAGE'],
 				$messageFields['MESSAGE_FILE'] > 0,
-				$messageFields['MESSAGE_ATTACH'] > 0
+				$messageFields['MESSAGE_ATTACH']
 			);
 			$messageFields['IS_EXTERNAL'] = Im\User::getInstance($messageFields['AUTHOR_ID'])->isConnector();
 
@@ -230,7 +230,7 @@ class OpenLineManager
 		{
 			$counters = Counter::get($userId);
 
-			return (int)$counters['LINES'][$chatId];
+			return isset($counters['LINES'][$chatId]) ? (int)$counters['LINES'][$chatId] : 0;
 		}
 
 		return 0;

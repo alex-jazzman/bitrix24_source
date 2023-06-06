@@ -74,3 +74,5 @@ $MESS['CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS'] = 'Товары и склады
 $MESS["CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST"] = "Список смарт-процессов";
 $MESS["CRM_CTRL_PANEL_ITEM_CATALOGUE_GOODS"] = "Каталог товаров";
 $MESS["CRM_CTRL_PANEL_ITEM_CONTRACTORS"] = "Поставщики";
+$MESS["CRM_CTRL_PANEL_ITEM_SIGN_COUNTERPARTY"] = "Контрагенты подписания";
+$MESS["CRM_CTRL_PANEL_ITEM_TERMINAL"] = "Платёжный терминал";

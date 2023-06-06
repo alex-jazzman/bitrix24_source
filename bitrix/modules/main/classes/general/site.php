@@ -44,7 +44,7 @@ class CAllSite
 	{
 		global $USER;
 		$arUserGroups = $USER->GetUserGroupArray();
-		if (count(array_intersect($arUserGroups,$arGroups))>0)
+		if (!empty(array_intersect($arUserGroups,$arGroups)))
 			return true;
 		return false;
 	}

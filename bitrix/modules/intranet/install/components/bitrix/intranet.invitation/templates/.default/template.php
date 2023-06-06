@@ -29,6 +29,7 @@ use Bitrix\Main\Localization\Loc;
 
 \CJSCore::Init(['phone_number']);
 
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background invite-body');
 
 $menuContainerId = 'invitation-form-menu-'.$this->randString();
@@ -333,7 +334,7 @@ if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 										id="ADD_SEND_PASSWORD"
 										value="Y"
 										class="invite-dialog-inv-form-checkbox"
-										<?= ($_POST["ADD_SEND_PASSWORD"] === "Y" ? " checked" : "") ?>
+										<?= (isset($_POST["ADD_SEND_PASSWORD"]) && $_POST["ADD_SEND_PASSWORD"] === "Y" ? " checked" : "") ?>
 									>
 									<label class="invite-dialog-inv-form-checkbox-label" for="ADD_SEND_PASSWORD">
 										<?=Loc::getMessage($arResult["IS_CLOUD"] ? "BX24_INVITE_DIALOG_ADD_WO_CONFIRMATION_TITLE" : "BX24_INVITE_DIALOG_ADD_SEND_PASSWORD_TITLE")?><?

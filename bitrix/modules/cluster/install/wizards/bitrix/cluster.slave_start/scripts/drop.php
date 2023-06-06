@@ -56,6 +56,7 @@ else
 	}
 	else
 	{
+		$nodeDB->Query("SET FOREIGN_KEY_CHECKS=0", false, '', array("fixed_connection"=>true));
 		$etime = time() + 2;
 		while ((!empty($arTablesToDelete)) && ($etime > time()))
 		{

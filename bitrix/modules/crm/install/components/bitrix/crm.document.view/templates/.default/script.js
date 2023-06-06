@@ -335,7 +335,7 @@
 							})
 							, [
 							new BX.PopupWindowButton({
-								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON'),
+								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_1'),
 								className: "ui-btn ui-btn-md ui-btn-primary",
 								events: {
 									click: function () {
@@ -345,7 +345,7 @@
 								}
 							}),
 							new BX.PopupWindowButton({
-								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON'),
+								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_1'),
 								className: "ui-btn ui-btn-md ui-btn-primary",
 								events: {
 									click: function () {
@@ -354,7 +354,7 @@
 									}
 								}
 							})
-						], BX.message('CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE'), (function () {
+						], BX.message('CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_1'), (function () {
 							this.sendedToSign = false;
 							this.rightPanelLoader.hide();
 						}).bind(this));

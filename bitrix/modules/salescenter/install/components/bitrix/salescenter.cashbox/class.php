@@ -468,6 +468,8 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				}
 
 				$result['KKM_ID'] = $this->kkmId;
+
+				$result['ACTIVE'] = 'Y';
 			}
 
 

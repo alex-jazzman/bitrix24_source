@@ -665,6 +665,8 @@ class CCrmDocumentLead extends CCrmDocument
 			$arFields['MODIFY_BY_ID'] = $modifiedById;
 		}
 
+		$updatedFields = $arFields;
+
 		$CCrmEntity = new CCrmLead(false);
 		$res = $CCrmEntity->Update(
 			$arDocumentID['ID'],
@@ -714,7 +716,7 @@ class CCrmDocumentLead extends CCrmDocument
 
 		//region automation
 		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Lead, $arDocumentID['ID']);
-		$starter->setContextToBizproc()->runOnUpdate($arFields, $arPresentFields);
+		$starter->setContextToBizproc()->runOnUpdate($updatedFields, $arPresentFields);
 		//endregion
 
 		if ($res && $useTransaction)

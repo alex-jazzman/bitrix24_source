@@ -2,10 +2,12 @@
 
 use Bitrix\Crm\Service\Sale\Order\BuyerService;
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Controller\PhoneAuth;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Session\Session;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale;
 use Bitrix\Sale\Delivery;
@@ -4636,12 +4638,10 @@ class SaleOrderAjax extends \CBitrixComponent
 					}
 					else
 					{
-						if (count($calcResult->getErrorMessages()) > 0)
+						$errorMessages = $calcResult->getErrorMessages();
+						if (!empty($errorMessages))
 						{
-							foreach ($calcResult->getErrorMessages() as $message)
-							{
-								$arDelivery['CALCULATE_ERRORS'] .= $message.'<br>';
-							}
+							$arDelivery['CALCULATE_ERRORS'] = implode('<br>', $errorMessages);
 						}
 						else
 						{
@@ -5867,21 +5867,34 @@ class SaleOrderAjax extends \CBitrixComponent
 
 	protected function addStatistic()
 	{
-		if (Loader::includeModule("statistic"))
+		if (Loader::includeModule('statistic'))
 		{
-			$event1 = "eStore";
-			$event2 = "order_confirm";
+			$session = static::getSession();
+			if ($session === null)
+			{
+				return;
+			}
+			$event1 = 'eStore';
+			$event2 = 'order_confirm';
 			$event3 = $this->order->getId();
 			$money = $this->order->getPrice();
 			$currency = $this->order->getCurrency();
 
-			$e = $event1."/".$event2."/".$event3;
+			$e = $event1 . '/' . $event2 . '/' . $event3;
 
-			if (!is_array($_SESSION["ORDER_EVENTS"]) || (is_array($_SESSION["ORDER_EVENTS"]) && !in_array($e, $_SESSION["ORDER_EVENTS"])))
+			$session['ORDER_EVENTS'] ??= [];
+			if (!is_array($session['ORDER_EVENTS']))
 			{
-				CStatistic::Set_Event($event1, $event2, $event3, $goto = "", $money, $currency);
-				$_SESSION["ORDER_EVENTS"][] = $e;
+				$session['ORDER_EVENTS'] = [];
 			}
+
+			if (!in_array($e, $session['ORDER_EVENTS']))
+			{
+				$goto = '';
+				CStatistic::Set_Event($event1, $event2, $event3, $goto, $money, $currency);
+				$session['ORDER_EVENTS'][] = $e;
+			}
+			unset($session);
 		}
 	}
 
@@ -6317,8 +6330,18 @@ class SaleOrderAjax extends \CBitrixComponent
 			$arResult["ORDER_ID"] = $arOrder["ID"];
 			$arResult["ACCOUNT_NUMBER"] = $arOrder["ACCOUNT_NUMBER"];
 			$arOrder["IS_ALLOW_PAY"] = $order->isAllowPay() ? 'Y' : 'N';
-			$checkedBySession = !empty($_SESSION['SALE_ORDER_ID']) && is_array($_SESSION['SALE_ORDER_ID'])
-				&& in_array(intval($order->getId()), $_SESSION['SALE_ORDER_ID']);
+
+			$session = static::getSession();
+			if ($session !== null)
+			{
+				$session['SALE_ORDER_ID'] ??= [];
+				if (!is_array($session['SALE_ORDER_ID']))
+				{
+					$session['SALE_ORDER_ID'] = [];
+				}
+				$checkedBySession = in_array($order->getId(), $session['SALE_ORDER_ID']);
+			}
+			unset($session);
 		}
 
 		if (!empty($arOrder) && ($order->getUserId() == $USER->GetID() || $checkedBySession))
@@ -6463,12 +6486,17 @@ class SaleOrderAjax extends \CBitrixComponent
 
 			if ($saveToSession)
 			{
-				if (!is_array($_SESSION['SALE_ORDER_ID']))
+				$session = static::getSession();
+				if ($session !== null)
 				{
-					$_SESSION['SALE_ORDER_ID'] = [];
+					$session['SALE_ORDER_ID'] ??= [];
+					if (!is_array($session['SALE_ORDER_ID']))
+					{
+						$session['SALE_ORDER_ID'] = [];
+					}
+					$session['SALE_ORDER_ID'][] = $res->getId();
 				}
-
-				$_SESSION['SALE_ORDER_ID'][] = $res->getId();
+				unset($session);
 			}
 		}
 
@@ -6508,5 +6536,24 @@ class SaleOrderAjax extends \CBitrixComponent
 		{
 			$APPLICATION->FinalActions();
 		}
+	}
+
+	/**
+	 * Session object.
+	 *
+	 * If session is not accessible, returns null.
+	 *
+	 * @return Session|null
+	 */
+	protected static function getSession(): ?Session
+	{
+		/** @var Session $session */
+		$session = Application::getInstance()->getSession();
+		if (!$session->isAccessible())
+		{
+			return null;
+		}
+
+		return $session;
 	}
 }

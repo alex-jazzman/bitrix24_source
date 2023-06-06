@@ -1150,7 +1150,9 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 									'addressFieldId': 'ADDRESS',
 									'requisiteBinding': BX.prop.getObject(this._settings, "requisiteBinding", null),
 									'enableRequisiteSelection': this._enableRequisiteSelection,
-									'enableMyCompanyOnly': BX.prop.getBoolean(this._settings, "enableMyCompanyOnly", false)
+									'enableMyCompanyOnly': BX.prop.getBoolean(this._settings, 'enableMyCompanyOnly', false),
+									'permissionToken': BX.prop.getString(this._settings, 'permissionToken', null),
+									'entityCategoryId': this._categoryId
 								}
 							}],
 							initialMode: BX.UI.EntityEditorMode.names.edit,
@@ -1865,13 +1867,23 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				{
 					return;
 				}
+				var loaderParams = {
+					'ENTITY_TYPE_NAME': this._entityTypeName,
+					'ENTITY_ID': entityId,
+					'NORMALIZE_MULTIFIELDS': 'Y'
+				};
+				if (this._editor)
+				{
+					loaderParams.ownerEntityTypeId = BX.CrmEntityType.resolveId(this._editor.getEntityTypeName());
+					loaderParams.ownerEntityId = this._editor.getEntityId();
+				}
 
 				BX.CrmDataLoader.create(
 					this._id,
 					{
 						serviceUrl: loader["url"],
 						action: loader["action"],
-						params: { "ENTITY_TYPE_NAME": this._entityTypeName, "ENTITY_ID": entityId, "NORMALIZE_MULTIFIELDS": "Y" }
+						params: loaderParams
 					}
 				).load(BX.delegate(this.onEntityInfoLoad, this));
 			},
@@ -3263,7 +3275,8 @@ if(typeof BX.Crm.ClientEditorEntityPanel === "undefined")
 							formElement: editor ? editor.getFormElement() : null,
 							contextId: editor ? editor.getContextId() : null,
 							enableAddress: this._enableAddress,
-							enableTooltip: this._enableRequisitesTooltip
+							enableTooltip: this._enableRequisitesTooltip,
+							permissionToken: BX.prop.getString(this._settings, 'permissionToken', null),
 						});
 					BX.Event.EventEmitter.subscribe(this._clientRequisites, 'onSetSelectedRequisite', this._requisiteChangeHandler);
 					BX.Event.EventEmitter.subscribe(this._clientRequisites, 'onChangeRequisiteList', this.onChangeRequisiteList.bind(this));

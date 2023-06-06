@@ -743,13 +743,35 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 		{
 			$fields['COMMENTS'] = static::sanitizeCommentsValue($fields['COMMENTS']);
 		}
-		if(isset($fields['BEGINDATE']) && $fields['BEGINDATE'] instanceof Main\Type\Date)
+		if(isset($fields['BEGINDATE']))
 		{
-			$fields['BEGINDATE'] = (string)$fields['BEGINDATE'];
+			if ($fields['BEGINDATE'] instanceof Main\Type\Date)
+			{
+				$fields['BEGINDATE'] = (string)$fields['BEGINDATE'];
+			}
+			elseif(
+				is_object($fields['BEGINDATE'])
+				&& method_exists($fields['BEGINDATE'], '__toString')
+				&& Main\Type\Date::isCorrect((string)$fields['BEGINDATE'])
+			)
+			{
+				$fields['BEGINDATE'] = (string)$fields['BEGINDATE'];
+			}
 		}
-		if(isset($fields['CLOSEDATE']) && $fields['CLOSEDATE'] instanceof Main\Type\Date)
+		if(isset($fields['CLOSEDATE']))
 		{
-			$fields['CLOSEDATE'] = (string)$fields['CLOSEDATE'];
+			if ($fields['CLOSEDATE'] instanceof Main\Type\Date)
+			{
+				$fields['CLOSEDATE'] = (string)$fields['CLOSEDATE'];
+			}
+			elseif(
+				is_object($fields['CLOSEDATE'])
+				&& method_exists($fields['CLOSEDATE'], '__toString')
+				&& Main\Type\Date::isCorrect((string)$fields['CLOSEDATE'])
+			)
+			{
+				$fields['CLOSEDATE'] = (string)$fields['CLOSEDATE'];
+			}
 		}
 
 		return $fields;

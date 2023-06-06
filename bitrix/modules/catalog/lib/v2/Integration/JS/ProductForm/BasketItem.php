@@ -306,7 +306,7 @@ class BasketItem
 				]
 			);
 
-			$displayProperty = \CIBlockFormatProperties::GetDisplayValue([], $displayProperty, '');
+			$displayProperty = \CIBlockFormatProperties::GetDisplayValue([], $displayProperty);
 
 			$formattedValues[$propertyValueId]['DISPLAY_VALUE'] = $displayProperty['DISPLAY_VALUE'];
 		}

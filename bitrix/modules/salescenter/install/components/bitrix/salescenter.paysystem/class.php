@@ -208,6 +208,23 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			}
 		}
 
+		$externalConnectionHandlers = [
+			mb_strtolower(\Sale\Handlers\PaySystem\YandexCheckoutHandler::class),
+			mb_strtolower(\Sale\Handlers\PaySystem\RoboxchangeHandler::class),
+		];
+
+		if (
+			($this->arResult['AUTH']['HAS_AUTH'] || $this->arResult['AUTH']['CAN_AUTH'])
+			|| in_array(mb_strtolower($className), $externalConnectionHandlers, true)
+		)
+		{
+			$this->arResult['IS_PS_INNER_SETUP'] = false;
+		}
+		else
+		{
+			$this->arResult['IS_PS_INNER_SETUP'] = true;
+		}
+
 		$this->arResult = array_merge($this->arResult, $this->getPaySystemSettingsData($className));
 
 		$this->arResult['PAYSYSTEM_HANDLER_STYLE'] = mb_strtolower($this->arResult['PAYSYSTEM_HANDLER']);

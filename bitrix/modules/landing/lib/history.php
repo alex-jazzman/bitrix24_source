@@ -238,18 +238,18 @@ class History
 
 		if ($this->entityType === self::ENTITY_TYPE_LANDING)
 		{
-			$block = Internals\LandingTable::query()
+			$landing = LandingTable::query()
 				->addSelect('HISTORY_STEP')
 				->where('ID', '=', $this->entityId)
 				->exec()
 				->fetch()
 			;
-			$this->step = $block['HISTORY_STEP'] ?? 0;
+			$this->step = $landing['HISTORY_STEP'] ?? 0;
 		}
 
 		if ($this->entityType === self::ENTITY_TYPE_DESIGNER_BLOCK)
 		{
-			$block = Internals\BlockTable::query()
+			$block = BlockTable::query()
 				->addSelect('HISTORY_STEP_DESIGNER')
 				->where('ID', '=', $this->entityId)
 				->exec()
@@ -379,7 +379,7 @@ class History
 			return false;
 		}
 
-		if (is_array($item['MULTIPLY']) && !empty($item['MULTIPLY']))
+		if (isset($item['MULTIPLY']) && is_array($item['MULTIPLY']) && !empty($item['MULTIPLY']))
 		{
 			foreach ($item['MULTIPLY'] as $multyId)
 			{
@@ -486,28 +486,30 @@ class History
 	protected function getActionForStep(int $step, bool $undo): ?BaseAction
 	{
 		$step = $undo ? $step : ++$step;
-		$action = $this->actions[$step];
+		if (isset($this->actions[$step]))
+		{
+			return $this->actions[$step];
+		}
+
+		$current = $this->stack[$step];
+		$params = $current['ACTION_PARAMS'];
+		if ($this->entityType === self::ENTITY_TYPE_LANDING)
+		{
+			$params['lid'] = $this->entityId;
+		}
+		if ($this->entityType === self::ENTITY_TYPE_DESIGNER_BLOCK)
+		{
+			$params['blockId'] = $this->entityId;
+		}
+
+		$action = ActionFactory::getAction($current['ACTION'], $undo);
 		if (!$action)
 		{
-			$current = $this->stack[$step];
-			$params = $current['ACTION_PARAMS'];
-			if ($this->entityType === self::ENTITY_TYPE_LANDING)
-			{
-				$params['lid'] = $this->entityId;
-			}
-			if ($this->entityType === self::ENTITY_TYPE_DESIGNER_BLOCK)
-			{
-				$params['blockId'] = $this->entityId;
-			}
-
-			$action = ActionFactory::getAction($current['ACTION'], $undo);
-			if (!$action)
-			{
-				return null;
-			}
-			$action->setParams($params, true);
-			$this->actions[$step] = $action;
+			return null;
 		}
+
+		$action->setParams($params, true);
+		$this->actions[$step] = $action;
 
 		return $action;
 	}

@@ -222,9 +222,6 @@ This connection is required by many cloud related routine tasks (CDN, cloud back
 
 Then, the test downloads a list of certification centers from the Bitrix server which is required by the SSL certificate test.
 ";
-$MESS["SC_HELP_CHECK_CLONE"] = "Since verion 5, PHP passes objects by reference rather than copy. However, there are PHP 5 builds that support legacy conventions and pass objects as copies.
-
-To resolve this problem, download and install the latest PHP 5 build.";
 $MESS["SC_HELP_CHECK_COMPRESSION"] = "HTML compression reduces file size and decreases file transmission time.
 
 To reduce server load, make sure a special web server module is used to compress HTML files.

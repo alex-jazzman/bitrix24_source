@@ -143,6 +143,11 @@ class CSocServBitrix24Net extends CSocServAuth
 				$this->getEntityOAuth()->setCode($_REQUEST["code"]);
 			}
 
+			if (isset($_REQUEST['saml']) && is_string($_REQUEST['saml']))
+			{
+				$this->getEntityOAuth()->setSamlEncodedValue($_REQUEST['saml']);
+			}
+
 			if($this->getEntityOAuth()->GetAccessToken($redirect_uri) !== false)
 			{
 				$arB24NetUser = $this->getEntityOAuth()->GetCurrentUser();
@@ -373,9 +378,11 @@ class CBitrix24NetOAuthInterface
 	protected $accessTokenExpires = 0;
 	protected $lastAuth = null;
 	protected $refresh_token = '';
+	protected string $samlEncodedValue;
 	protected $scope = array(
 		'auth',
 	);
+	protected ?int $samlStatus;
 
 	protected $arResult = array();
 	protected $networkNode;
@@ -479,6 +486,16 @@ class CBitrix24NetOAuthInterface
 	public function getScopeEncode()
 	{
 		return implode(',', array_map('urlencode', array_unique($this->getScope())));
+	}
+
+	public function getSamlEncodedValue(): string
+	{
+		return $this->samlEncodedValue;
+	}
+
+	public function setSamlEncodedValue(string $samlEncodedValue): void
+	{
+		$this->samlEncodedValue = $samlEncodedValue;
 	}
 
 	public function getResult()
@@ -662,7 +679,7 @@ class CBitrix24NetOAuthInterface
 			$ob = new CBitrix24NetTransport($this->access_token);
 			$res = $ob->getProfile();
 
-			if(!isset($res['error']))
+			if($res && !isset($res['error']))
 			{
 				return $res['result'];
 			}
@@ -729,6 +746,11 @@ class CBitrix24NetOAuthInterface
 	public function setNetworkNode(string $hostWithScheme): void
 	{
 		$this->networkNode = $hostWithScheme;
+	}
+
+	public function getSamlStatus(): ?int
+	{
+		return $this->samlStatus;
 	}
 }
 
@@ -802,7 +824,7 @@ class CBitrix24NetTransport
 	{
 		$result = Json::decode($result);
 
-		if(is_array($result) && is_array($result["result"]) && array_key_exists(static::REPONSE_KEY_BROADCAST, $result["result"]))
+		if(is_array($result) && isset($result["result"]) && is_array($result["result"]) && array_key_exists(static::REPONSE_KEY_BROADCAST, $result["result"]))
 		{
 			try
 			{

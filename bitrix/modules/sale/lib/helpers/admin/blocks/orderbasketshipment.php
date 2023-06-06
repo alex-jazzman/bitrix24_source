@@ -730,7 +730,7 @@ class OrderBasketShipment extends OrderBasket
 						);
 
 						$barcodeCount = 0;
-						if ($item['BARCODE'])
+						if (!empty($item['BARCODE']) && is_array($item['BARCODE']))
 						{
 							foreach ($item['BARCODE'] as $barcode)
 							{

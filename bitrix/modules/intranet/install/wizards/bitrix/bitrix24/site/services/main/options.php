@@ -55,6 +55,7 @@ COption::SetOptionString("main", "map_left_menu_type", "left");
 COption::SetOptionString("main", "url_preview_enable", "Y");
 COption::SetOptionString("main", "imageeditor_proxy_enabled", "Y");
 COption::SetOptionString("main", "ALLOW_SPREAD_COOKIE", "N");
+COption::SetOptionString("main", "max_file_size", "20000000");
 
 SetMenuTypes(Array("left" => GetMessage("MAIN_OPT_MENU_SECT"), "top" => GetMessage("MAIN_OPT_MENU_MAIN"), "bottom" => GetMessage("MAIN_OPT_MENU_BOTTOM"), "top_links" => GetMessage("MAIN_OPT_MENU_TOPLINKS"), "department" => GetMessage("MAIN_OPT_MENU_DEPARTMENT")),WIZARD_SITE_ID);
 SetMenuTypes(Array("left" => GetMessage("MAIN_OPT_MENU_SECT"), "top" => GetMessage("MAIN_OPT_MENU_MAIN"), "bottom" => GetMessage("MAIN_OPT_MENU_BOTTOM"), "top_links" => GetMessage("MAIN_OPT_MENU_TOPLINKS"), "department" => GetMessage("MAIN_OPT_MENU_DEPARTMENT")),"");

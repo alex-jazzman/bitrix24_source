@@ -339,12 +339,22 @@ if($filter_buyer <> '') $arFilter["%BUYER"] = trim($filter_buyer);
 if($filter_user_login <> '') $arFilter["USER.LOGIN"] = trim($filter_user_login);
 if($filter_user_email <> '') $arFilter["USER.EMAIL"] = trim($filter_user_email);
 if(intval($filter_user_id)>0) $arFilter["=USER_ID"] = intval($filter_user_id);
-if(is_array($filter_group_id) && count($filter_group_id) > 0)
+if (!empty($filter_group_id) && is_array($filter_group_id))
 {
-	foreach($filter_group_id as $v)
+	Main\Type\Collection::normalizeArrayValuesByInt($filter_group_id);
+	if (!empty($filter_group_id))
 	{
-		if(intval($v) > 0)
-			$arFilter["USER_GROUP.GROUP_ID"][] = $v;
+		$whereExpression = '(' . implode(', ', $filter_group_id) . ')';
+		$runtimeFields['REQUIRED_UG_PRESENTED'] = [
+			'data_type' => 'boolean',
+			'expression' => [
+				'case when exists (select USER_ID from b_user_group where USER_ID = %s and GROUP_ID in '
+					. $whereExpression . ') then 1 else 0 end'
+				,
+				'USER_ID',
+			],
+		];
+		$arFilter['=REQUIRED_UG_PRESENTED'] = 1;
 	}
 }
 
@@ -1574,6 +1584,8 @@ foreach ($arVisibleColumns as $visibleColumn)
 	}
 }
 
+$WEIGHT_UNIT = [];
+$WEIGHT_KOEF = [];
 $dbSite = CSite::GetList();
 while ($arSite = $dbSite->Fetch())
 {

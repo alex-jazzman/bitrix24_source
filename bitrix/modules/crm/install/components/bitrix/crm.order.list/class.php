@@ -1,19 +1,25 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 const PUBLIC_MODE = 1;
 
-use Bitrix\Main;
-use Bitrix\Crm\Order;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\Product\Url;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Main\Grid;
-use Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent;
-use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Catalog;
+use Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Order;
+use Bitrix\Crm\Product\Url;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Iblock\Url\AdminPage\BuilderManager;
+use Bitrix\Main;
+use Bitrix\Main\Grid;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -23,7 +29,10 @@ class CCrmOrderListComponent extends \CBitrixComponent
 	protected $userPermissions;
 	protected $errors = array();
 	protected $isInternal = false;
-	private $exportParams = [];
+	protected FieldRestrictionManager $fieldRestrictionManager;
+
+	private $entityFilter;
+	private array $exportParams = [];
 
 	/** @var null|\Bitrix\Iblock\Url\AdminPage\BaseBuilder  */
 	private $urlBuilder = null;
@@ -103,6 +112,10 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		}
 
 		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		$this->fieldRestrictionManager = new FieldRestrictionManager(
+			FieldRestrictionManager::MODE_GRID,
+			[FieldRestrictionManagerTypes::ACTIVITY]
+		);
 
 		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $this->userPermissions))
 		{
@@ -193,77 +206,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		foreach(array('LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME') as $field)
 			$select[$prefix.'_'.$field] = 'USER_'.$prefix.'.'.$field;
-	}
-
-	protected function addActivitySelection(array &$select, array &$runtime)
-	{
-		$runtime[] =
-			new Main\Entity\ReferenceField('C_USER_ACTIVITY',
-				\Bitrix\Crm\UserActivityTable::getEntity(),
-				array(
-					'=ref.OWNER_ID' => 'this.ID',
-					'=ref.OWNER_TYPE_ID' => new Main\DB\SqlExpression($this->getEntityTypeId()),
-					'=ref.USER_ID' => new Main\DB\SqlExpression(0)
-				),
-				array('join_type' => 'LEFT')
-			);
-
-		$select['C_ACTIVITY_ID'] = 'C_USER_ACTIVITY.ACTIVITY_ID';
-		$select['C_ACTIVITY_TIME'] = 'C_USER_ACTIVITY.ACTIVITY_TIME';
-
-		$runtime[] =
-			new Main\Entity\ReferenceField('C_ACTIVITY',
-				\Bitrix\Crm\ActivityTable::getEntity(),
-				array(
-					'=ref.ID' => 'this.C_ACTIVITY_ID',
-				),
-				array('join_type' => 'LEFT')
-			);
-
-		$select['C_ACTIVITY_RESP_ID'] = 'C_ACTIVITY.RESPONSIBLE_ID';
-		$select['C_ACTIVITY_SUBJECT'] = 'C_ACTIVITY.SUBJECT';
-
-		$runtime[] =
-			new Main\Entity\ReferenceField('C_USER',
-				Main\UserTable::getEntity(),
-				array(
-					'=ref.ID' => 'this.C_ACTIVITY_RESP_ID',
-				),
-				array('join_type' => 'LEFT')
-			);
-
-		$select['C_ACTIVITY_RESP_LOGIN'] = 'C_USER.LOGIN';
-		$select['C_ACTIVITY_RESP_NAME'] = 'C_USER.NAME';
-		$select['C_ACTIVITY_RESP_LAST_NAME'] = 'C_USER.LAST_NAME';
-		$select['C_ACTIVITY_RESP_SECOND_NAME'] = 'C_USER.SECOND_NAME';
-
-		if($this->userId > 0)
-		{
-			$runtime[] =
-				new Main\Entity\ReferenceField('USER_ACTIVITY',
-					\Bitrix\Crm\UserActivityTable::getEntity(),
-					array(
-						'=ref.OWNER_ID' => 'this.ID',
-						'=ref.OWNER_TYPE_ID' => new Main\DB\SqlExpression($this->getEntityTypeId()),
-						'=ref.USER_ID' => new Main\DB\SqlExpression($this->userId)
-					),
-					array('join_type' => 'LEFT')
-				);
-
-			$select['USER_ACTIVITY_ID'] = 'USER_ACTIVITY.ACTIVITY_ID';
-			$select['USER_ACTIVITY_TIME'] = 'USER_ACTIVITY.ACTIVITY_TIME';
-
-			$runtime[] =
-				new Main\Entity\ReferenceField('ACTIVITY',
-					\Bitrix\Crm\ActivityTable::getEntity(),
-					array(
-						'=ref.ID' => 'this.USER_ACTIVITY_ID',
-					),
-					array('join_type' => 'LEFT')
-				);
-
-			$select['USER_ACTIVITY_SUBJECT'] = 'ACTIVITY.SUBJECT';
-		}
 	}
 
 	/**
@@ -598,7 +540,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		return $result;
 	}
 
-	protected function createFilter()
+	protected function createFilter($filterOptions)
 	{
 		$filter = array();
 
@@ -620,21 +562,20 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				$this->arResult['IS_EXTERNAL_FILTER'] = true;
 			}
 
-			$entityFilter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
+			$this->entityFilter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
 				new \Bitrix\Crm\Filter\OrderSettings(
 					array('ID' => $this->arResult['GRID_ID'])
 				)
 			);
-			$filterFields = $entityFilter->getFieldArrays();
+			$filterFields = $this->entityFilter->getFieldArrays();
 
-			$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->arResult['GRID_ID'], $this->arResult['FILTER_PRESETS']);
 			$filter += $filterOptions->getFilter($filterFields);
 
 			$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
 
 			if(empty($effectiveFilterFieldIDs))
 			{
-				$effectiveFilterFieldIDs = $entityFilter->getDefaultFieldIDs();
+				$effectiveFilterFieldIDs = $this->entityFilter->getDefaultFieldIDs();
 			}
 
 			if(!in_array('ACTIVITY_COUNTER', $effectiveFilterFieldIDs, true))
@@ -646,7 +587,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			foreach($effectiveFilterFieldIDs as $filterFieldID)
 			{
-				$filterField = $entityFilter->getField($filterFieldID);
+				$filterField = $this->entityFilter->getField($filterFieldID);
 
 				if($filterField)
 				{
@@ -1346,8 +1287,11 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			'nPageSize' => $this->arParams['ORDER_COUNT']
 		);
 
+		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->arResult['GRID_ID'], $this->arResult['FILTER_PRESETS']);
 		$gridOptions = new \Bitrix\Main\Grid\Options($this->arResult['GRID_ID'], $this->arResult['FILTER_PRESETS']);
-		$filter = $this->createFilter();
+		$filter = $this->createFilter($filterOptions);
+
+		$this->fieldRestrictionManager->removeRestrictedFields($filterOptions, $gridOptions);
 
 		$arNavParams = $gridOptions->GetNavParams($arNavParams);
 		$arNavParams['bShowAll'] = false;
@@ -1490,7 +1434,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		if(in_array('ACTIVITY_ID', $visibleColumns, true))
 		{
-			$this->addActivitySelection($arSelect, $runtime);
+			$this->arResult['NEED_ADD_ACTIVITY_BLOCK'] = true;
 		}
 
 		if(in_array('SUM', $visibleColumns, true))
@@ -1690,7 +1634,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		$this->arResult['PAGINATION']['URL'] = $APPLICATION->GetCurPageParam('', array('apply_filter', 'clear_filter', 'save', 'page', 'sessid', 'internal'));
 		$now = time() + CTimeZone::GetOffset();
-		$aclivitylessItems = array();
 
 		$currencyList = \CCrmCurrencyHelper::PrepareListItems();
 		$personTypes = \Bitrix\Crm\Order\PersonType::load(SITE_ID);
@@ -1717,7 +1660,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		{
 			$paymentData = $this->loadPaymentData($ordersIds);
 		}
-
 
 		$clientData = [];
 		$needContactAndCompany = in_array('CLIENT', $columns, true);
@@ -1974,13 +1916,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			//endregion
 
-			if(isset($arOrder['ACTIVITY_TIME']))
-			{
-				$time = MakeTimeStamp($arOrder['ACTIVITY_TIME']);
-				$arOrder['ACTIVITY_EXPIRED'] = $time <= $now;
-				$arOrder['ACTIVITY_IS_CURRENT_DAY'] = $arOrder['ACTIVITY_EXPIRED'] || CCrmActivity::IsCurrentDay($time);
-			}
-
 			if(isset($arOrder['TRADING_PLATFORM_CODE']))
 			{
 				$arOrder['SOURCE'] = htmlspecialcharsbx(
@@ -2119,28 +2054,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			$this->arResult['ORDER'][$entityID] = $arOrder;
 
-			$userActivityID = isset($arOrder['USER_ACTIVITY_ID']) ? intval($arOrder['USER_ACTIVITY_ID']) : 0;
-			$commonActivityID = isset($arOrder['C_ACTIVITY_ID']) ? intval($arOrder['C_ACTIVITY_ID']) : 0;
-			if($userActivityID <= 0 && $commonActivityID <= 0)
-			{
-				$aclivitylessItems[] = $entityID;
-			}
-
 		}
 		unset($arOrder);
-
-		if(!empty($aclivitylessItems))
-		{
-			$waitingInfos = \Bitrix\Crm\Pseudoactivity\WaitEntry::getRecentInfos(CCrmOwnerType::Order, $aclivitylessItems);
-			foreach($waitingInfos as $waitingInfo)
-			{
-				$entityID = (int)$waitingInfo['OWNER_ID'];
-				if(isset($this->arResult['ORDER'][$entityID]))
-				{
-					$this->arResult['ORDER'][$entityID]['WAITING_TITLE'] = $waitingInfo['TITLE'];
-				}
-			}
-		}
 
 		$CCrmUserType->ListAddEnumFieldsValue(
 			$this->arResult,
@@ -2243,8 +2158,17 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			);
 		}
 
+		$restrictedFields = $this->fieldRestrictionManager->fetchRestrictedFields(
+			$this->arResult['GRID_ID'] ?? '',
+			$this->arResult['HEADERS'] ?? [],
+			$this->entityFilter
+		);
+		$this->arResult = array_merge($this->arResult, $restrictedFields);
+
 		$this->IncludeComponentTemplate();
+
 		include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.order/include/nav.php');
+
 		return $this->arResult['ROWS_COUNT'];
 	}
 

@@ -84,7 +84,7 @@ else
 		? 'REST_CONFIGURATION_IMPORT_INSTALL_APP_DESCRIPTION'
 		: 'REST_CONFIGURATION_IMPORT_INSTALL_DESCRIPTION'
 	;
-	if ($arParams['MODE'])
+	if (isset($arParams['MODE']) && $arParams['MODE'])
 	{
 		$description .= '_' . $arParams['MODE'];
 	}
@@ -99,24 +99,24 @@ if (isset($arResult['MANIFEST']['IMPORT_FINISH_DESCRIPTION']))
 {
 	$messageList['REST_CONFIGURATION_IMPORT_FINISH_DESCRIPTION_MSGVER_1'] = htmlspecialcharsbx($arResult['MANIFEST']['IMPORT_FINISH_DESCRIPTION']);
 }
-if ($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_TITLE'])
+if (isset($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_TITLE']) && $arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_TITLE'])
 {
 	$messageList['REST_CONFIGURATION_IMPORT_HOLD_CLOSE_POPUP_TITLE'] = htmlspecialcharsbx($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_TITLE']);
 }
-if ($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_DESCRIPTION'])
+if (isset($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_DESCRIPTION']) && $arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_DESCRIPTION'])
 {
 	$messageList['REST_CONFIGURATION_IMPORT_HOLD_CLOSE_POPUP_DESCRIPTION'] = htmlspecialcharsbx($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_DESCRIPTION']);
 }
-if ($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_BTN_CONTINUE'])
+if (isset($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_BTN_CONTINUE']) && $arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_BTN_CONTINUE'])
 {
 	$messageList['REST_CONFIGURATION_IMPORT_HOLD_CLOSE_POPUP_BTN_CONTINUE'] = htmlspecialcharsbx($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_BTN_CONTINUE']);
 }
-if ($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_BTN_CLOSE'])
+if (isset($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_BTN_CLOSE']) && $arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_BTN_CLOSE'])
 {
 	$messageList['REST_CONFIGURATION_IMPORT_HOLD_CLOSE_POPUP_BTN_CLOSE'] = htmlspecialcharsbx($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_BTN_CLOSE']);
 }
 ?>
-<? if(is_array($arResult['NOTIFY'])):?>
+<? if(isset($arResult['NOTIFY']) && is_array($arResult['NOTIFY'])):?>
 	<div class="rest-configuration-alert">
 		<? foreach ($arResult['NOTIFY'] as $notify): ?>
 			<div class="rest-configuration-alert-text"><?=$notify?></div>
@@ -124,10 +124,12 @@ if ($arResult['MANIFEST']['MESSAGE_HOLD_CLOSE_POPUP_BTN_CLOSE'])
 	</div>
 <? endif?>
 <div id="<?=htmlspecialcharsbx($containerId)?>" class="rest-configuration-import-install">
-	<div class="rest-configuration-start-icon-main rest-configuration-start-icon-main-zip">
-		<div class="rest-configuration-start-icon-refresh"></div>
-		<div class="rest-configuration-start-icon"></div>
-		<div class="rest-configuration-start-icon-circle"></div>
+	<div class="rest-configuration-start-icon-main-container">
+		<div class="rest-configuration-start-icon-main rest-configuration-start-icon-main-zip">
+			<div class="rest-configuration-start-icon-refresh"></div>
+			<div class="rest-configuration-start-icon"></div>
+			<div class="rest-configuration-start-icon-circle"></div>
+		</div>
 	</div>
 	<div class="rest-configuration-controls start-btn-block">
 		<? if($arResult['NEED_START_BTN']): ?>

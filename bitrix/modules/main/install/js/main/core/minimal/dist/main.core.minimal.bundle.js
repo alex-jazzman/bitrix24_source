@@ -9354,8 +9354,11 @@ window._main_polyfill_core = true;
 	      var replacements = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 	      var mess = message(messageId);
 	      if (Type.isString(mess) && Type.isPlainObject(replacements)) {
+	        var _escape = function _escape(str) {
+	          return String(str).replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
+	        };
 	        Object.keys(replacements).forEach(function (replacement) {
-	          var globalRegexp = new RegExp(replacement, 'gi');
+	          var globalRegexp = new RegExp(_escape(replacement), 'gi');
 	          mess = mess.replace(globalRegexp, function () {
 	            return Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
 	          });

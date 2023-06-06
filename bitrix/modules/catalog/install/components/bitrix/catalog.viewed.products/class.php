@@ -1212,7 +1212,7 @@ class CCatalogViewedProductsComponent extends CBitrixComponent
 								|| (!$boolArr && $prop["VALUE"] <> '')
 							)
 							{
-								$element['DISPLAY_PROPERTIES'][$propertyName] = CIBlockFormatProperties::GetDisplayValue($element, $prop, 'catalog_out');
+								$element['DISPLAY_PROPERTIES'][$propertyName] = CIBlockFormatProperties::GetDisplayValue($element, $prop);
 							}
 							unset($prop);
 						}
@@ -1231,6 +1231,11 @@ class CCatalogViewedProductsComponent extends CBitrixComponent
 							$element['PRODUCT_PROPERTIES_FILL'] = CIBlockPriceTools::getFillProductProperties($element['PRODUCT_PROPERTIES']);
 					}
 				}
+				CCatalogDiscount::ClearDiscountCache([
+					'PRODUCT' => true,
+					'SECTIONS' => true,
+					'PROPERTIES' => true,
+				]);
 			}
 			unset($element, $this->linkItems);
 		}
