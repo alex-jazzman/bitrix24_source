@@ -1606,6 +1606,14 @@ class crm extends CModule
 		);
 
 		$eventManager->registerEventHandler(
+			'sale',
+			'OnSaleShipmentEntitySaved',
+			'crm',
+			'\Bitrix\Crm\Integration\Sale\ShipmentDocumentTimeline',
+			'onSaleShipmentEntitySaved'
+		);
+
+		$eventManager->registerEventHandler(
 			'crm',
 			'OnBeforeCrmDealProductRowsSave',
 			'crm',
@@ -2231,6 +2239,14 @@ class crm extends CModule
 			'OnSaleShipmentEntitySaved',
 			'crm',
 			'\Bitrix\Crm\Integration\Sale\ShipmentDocumentAnalytics',
+			'onSaleShipmentEntitySaved'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnSaleShipmentEntitySaved',
+			'crm',
+			'\Bitrix\Crm\Integration\Sale\ShipmentDocumentTimeline',
 			'onSaleShipmentEntitySaved'
 		);
 

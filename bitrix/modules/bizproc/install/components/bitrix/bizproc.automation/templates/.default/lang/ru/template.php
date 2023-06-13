@@ -55,3 +55,4 @@ $MESS['BIZPROC_AUTOMATION_ROBOT_SELECTOR_NEW_TRIGGER_ADDED'] = 'Добавлен
 $MESS['BIZPROC_AUTOMATION_ROBOT_SELECTOR_NEW_TRIGGER_ADDED_ON_STAGE'] = 'Добавлен новый триггер: "#TRIGGER_NAME#" на стадию "#STAGE_NAME#"';
 $MESS["BIZPROC_AUTOMATION_CMP_ON_CLOSE_SLIDER_MESSAGE"] = "Вы действительно хотите выйти? В этом случае внесённые изменения не сохранятся";
 $MESS["BIZPROC_AUTOMATION_CMP_ON_CLOSE_SLIDER_OK_TITLE"] = "Выйти без сохранения";
+$MESS['BIZPROC_AUTOMATION_TOUR_GUIDE_BEGINNING_SUBTITLE_SELLING_DOCUMENT_TYPE'] = 'Работать продуктивнее можно без дополнительных затрат и найма новых сотрудников! Система сама выполнит нужное действие или напомнит менеджеру, что нужно сделать. Вы не упустите ни одной возможности для продажи';

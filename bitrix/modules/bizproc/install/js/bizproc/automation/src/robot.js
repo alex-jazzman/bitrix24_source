@@ -970,7 +970,7 @@ export class Robot extends EventEmitter
 	getDescriptionTitle()
 	{
 		let name = 'untitled';
-		const description = this.template.getRobotDescription(this.#data['Type']);
+		const description = this.template?.getRobotDescription(this.#data['Type']) ?? {};
 		if (description['NAME'])
 		{
 			name = description['NAME'];

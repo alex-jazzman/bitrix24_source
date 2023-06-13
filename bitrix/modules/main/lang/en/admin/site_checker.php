@@ -129,6 +129,7 @@ $MESS["MAIN_SC_WARN_EXPAND_SESSION"] = "If the Instant Messenger module is insta
 $MESS["MAIN_SC_WINDOWS_ENV"] = "Windows environment integration";
 $MESS["MAIN_TMP_FILE_ERROR"] = "Could not create a temporary test file";
 $MESS["MAIN_WRONG_ANSWER_PULL"] = "PUSH server replied with an unknown response.";
+$MESS["PHP_VER_NOTIFY"] = "Attention! You are not receiving system or security updates because your PHP version #CUR# is outdated. Please update your PHP to version #REQ#. Make sure you've read this <a href=\"https://helpdesk.bitrix24.com/open/17347208/\">Helpdesk page</a> before updating PHP.";
 $MESS["SC_BX_UTF"] = "Use the following code in <i>/bitrix/php_interface/dbconn.php</i>:
 <code>define('BX_UTF', true);</code> ";
 $MESS["SC_BX_UTF_DISABLE"] = "The BX_UTF constant must not be defined";

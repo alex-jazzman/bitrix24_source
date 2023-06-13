@@ -195,7 +195,17 @@ class BizprocWorkflowInstances extends \CBitrixComponent
 
 	protected function getFilterPresets()
 	{
-		return [];
+		return [
+			'filter_all' => [
+				'name' => GetMessage('BPWI_FILTER_PRESET_ALL'),
+				'fields' => ['TYPE' => ''],
+				'default' => true,
+			],
+			'filter_is_locked' => [
+				'name' => GetMessage('BPWI_FILTER_PRESET_LOCKED'),
+				'fields' => ['TYPE' => 'is_locked'],
+			],
+		];
 	}
 
 	protected function getDocumentTypes()

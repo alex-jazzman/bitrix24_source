@@ -241,7 +241,7 @@ class HttpClient implements Log\LoggerAwareInterface, ClientInterface, Http\Debu
 
 	/**
 	 * Performs multipart/form-data encoding.
-	 * Accepts file as a resource or as an array with keys 'resource' (or 'content') and optionally 'filename' and 'contentType'
+	 * Accepts file as a resource or as an array with keys 'resource' (or 'content') and optionally 'filename' and 'contentType'.
 	 *
 	 * @param array|string|resource $postData Entity of POST/PUT request
 	 * @return Http\MultipartStream|bool False on error
@@ -642,6 +642,7 @@ class HttpClient implements Log\LoggerAwareInterface, ClientInterface, Http\Debu
 
 	/**
 	 * Returns URL of the last redirect if request was redirected, or initial URL if request was not redirected.
+	 *
 	 * @return string
 	 */
 	public function getEffectiveUrl()
@@ -662,7 +663,7 @@ class HttpClient implements Log\LoggerAwareInterface, ClientInterface, Http\Debu
 	}
 
 	/**
-	 * Returns parsed HTTP response headers
+	 * Returns parsed HTTP response headers.
 	 *
 	 * @return HttpHeaders
 	 */
@@ -686,7 +687,7 @@ class HttpClient implements Log\LoggerAwareInterface, ClientInterface, Http\Debu
 	}
 
 	/**
-	 * Returns HTTP response status code
+	 * Returns HTTP response status code.
 	 *
 	 * @return int
 	 */
@@ -724,7 +725,17 @@ class HttpClient implements Log\LoggerAwareInterface, ClientInterface, Http\Debu
 	}
 
 	/**
-	 * Returns array of errors on failure
+	 * Returns PSR-7 response.
+	 *
+	 * @return Http\Response|null
+	 */
+	public function getResponse()
+	{
+		return $this->response;
+	}
+
+	/**
+	 * Returns array of errors on failure.
 	 *
 	 * @return array Array with "error_code" => "error_message" pair
 	 */
@@ -734,7 +745,7 @@ class HttpClient implements Log\LoggerAwareInterface, ClientInterface, Http\Debu
 	}
 
 	/**
-	 * Returns response content type
+	 * Returns response content type.
 	 *
 	 * @return string
 	 */
@@ -744,7 +755,7 @@ class HttpClient implements Log\LoggerAwareInterface, ClientInterface, Http\Debu
 	}
 
 	/**
-	 * Returns response content encoding
+	 * Returns response content encoding.
 	 *
 	 * @return string
 	 */

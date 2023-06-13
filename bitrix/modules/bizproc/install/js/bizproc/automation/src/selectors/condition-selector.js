@@ -22,6 +22,7 @@ export class ConditionSelector
 	#rootGroupTitle: ?string;
 	#onOpenFieldMenu: ?(BaseEvent) => void;
 	#onOpenMenu: ?(BaseEvent) => void;
+	#showValuesSelector: boolean;
 
 	node: ?HTMLElement;
 	objectNode: ?HTMLElement;
@@ -65,6 +66,7 @@ export class ConditionSelector
 			this.#rootGroupTitle = options.rootGroupTitle;
 			this.#onOpenFieldMenu = options.onOpenFieldMenu;
 			this.#onOpenMenu = options.onOpenMenu;
+			this.#showValuesSelector = options.showValuesSelector ?? true;
 		}
 	}
 
@@ -765,16 +767,24 @@ export class ConditionSelector
 					fields: getGlobalContext().document.getFields(),
 					useSwitcherMenu: false,
 					rootGroupTitle: this.#rootGroupTitle ?? getGlobalContext().document.title,
-				})
+				}),
 			});
 
 			if (selector)
 			{
-				if (Type.isFunction(this.#onOpenMenu))
+				if (this.#showValuesSelector === true)
 				{
-					selector.subscribe('onOpenMenu', this.#onOpenMenu);
+					if (Type.isFunction(this.#onOpenMenu))
+					{
+						selector.subscribe('onOpenMenu', this.#onOpenMenu);
+					}
+					selector.renderTo(node);
 				}
-				selector.renderTo(node);
+				else
+				{
+					selector.targetInput = node;
+					selector.parseTargetProperties();
+				}
 			}
 		});
 

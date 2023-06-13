@@ -145,7 +145,7 @@ class CAdminPage
 		$abs_theme_path = $_SERVER["DOCUMENT_ROOT"].$rel_theme_path;
 
 		$module_id = (string)$module_id;
-		if ($module_id !== '' && in_array($module_id, $this->aModules, true))
+		if ($module_id !== '' && isset($this->aModules[$module_id]) && $this->aModules[$module_id] !== '')
 		{
 			if(file_exists($abs_theme_path.$module_id.".css"))
 				return array($rel_theme_path.$module_id.'.css');

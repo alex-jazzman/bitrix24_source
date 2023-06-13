@@ -198,7 +198,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	function _deleteUserOption2() {
 	  BX.userOptions.del('bizproc.automation.guide', 'crm_check_automation');
 	}
-	// region guide
 	function _getGuide2(options) {
 	  var _options$article;
 	  return new ui_tour.Guide({

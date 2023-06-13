@@ -111,6 +111,7 @@ export class RobotSelector extends EventEmitter
 						))
 						.getData()
 				,
+				canDeselectGroups: false,
 				customTitleBar: this.#getTitleBar(),
 				slots: this.#getSlots(),
 				showEmptyGroups: false,
@@ -535,7 +536,7 @@ export class RobotSelector extends EventEmitter
 		return {
 			[EntityCatalog.SLOT_GROUP_LIST_HEADER]: this.#getGroupsHeader(),
 			[EntityCatalog.SLOT_MAIN_CONTENT_HEADER]: this.#getItemsHeader(),
-			[EntityCatalog.SLOT_MAIN_CONTENT_NO_SELECTED_GROUP_STUB]: this.#getItemsStub(),
+			[EntityCatalog.SLOT_MAIN_CONTENT_WELCOME_STUB]: this.#getItemsStub(),
 			[EntityCatalog.SLOT_GROUP_LIST_FOOTER]: this.#getGroupsFooter(),
 			[EntityCatalog.SLOT_MAIN_CONTENT_SEARCH_NOT_FOUND]: this.#getSearchNotFoundStub(),
 			[EntityCatalog.SLOT_MAIN_CONTENT_EMPTY_GROUP_STUB]: `<EmptyGroupStub/>`,

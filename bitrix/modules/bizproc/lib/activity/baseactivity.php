@@ -323,7 +323,7 @@ abstract class BaseActivity extends \CBPActivity
 		{
 			if(
 				\CBPHelper::getBool($fieldProperties['Required'] ?? null)
-				&& \CBPHelper::isEmptyValue($testProperties[$propertyKey])
+				&& \CBPHelper::isEmptyValue($testProperties[$propertyKey] ?? null)
 			)
 			{
 				$errors[] = [

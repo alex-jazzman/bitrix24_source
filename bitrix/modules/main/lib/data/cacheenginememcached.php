@@ -15,7 +15,8 @@ class CacheEngineMemcached extends CacheEngineMemcache
 
 	public function set($key, $ttl, $value) : bool
 	{
-		return self::$engine->set($key, $value, (int) $ttl);
+		$ttl = self::getExpire($ttl);
+		return self::$engine->set($key, $value, $ttl);
 	}
 
 	public function del($key)

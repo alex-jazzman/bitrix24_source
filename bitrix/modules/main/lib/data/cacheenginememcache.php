@@ -13,9 +13,21 @@ class CacheEngineMemcache extends CacheEngine
 		return MemcacheConnection::class;
 	}
 
+	protected static function getExpire($ttl)
+	{
+		$ttl = (int) $ttl;
+		if ($ttl > 2592000)
+		{
+			$ttl = microtime(1) + $ttl;
+		}
+
+		return $ttl;
+	}
+
 	public function set($key, $ttl, $value)
 	{
-		return self::$engine->set($key, $value, 0, (int) $ttl);
+		$ttl = self::getExpire($ttl);
+		return self::$engine->set($key, $value, 0, $ttl);
 	}
 
 	public function get($key)
@@ -40,7 +52,7 @@ class CacheEngineMemcache extends CacheEngine
 
 	public function setNotExists($key, $ttl, $value)
 	{
-		$ttl = (int) $ttl;
+		$ttl = self::getExpire($ttl);
 		return self::$engine->add($key, $value, 0, $ttl);
 	}
 

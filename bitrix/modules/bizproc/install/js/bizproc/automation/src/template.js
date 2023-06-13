@@ -17,6 +17,7 @@ import { ViewMode } from './view-mode';
 import { Helper } from './helper';
 import { HelpHint } from './help-hint';
 import { DelayInterval } from './delay-interval';
+import 'ui.hint';
 
 export class Template extends EventEmitter
 {
@@ -770,16 +771,35 @@ export class Template extends EventEmitter
 			}
 		}
 
-		let titleBar;
-		const robotTitle =
-			robot.hasTitle()
-				? robot.getTitle()
-				: Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SETTINGS_TITLE')
-		;
+		let robotTitle = Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SETTINGS_TITLE');
+		let descriptionTitle = Loc.getMessage('BIZPROC_AUTOMATION_ROBOT_SETTINGS_TITLE');
+
+		if (robot.hasTitle())
+		{
+			robotTitle = robot.getTitle();
+			descriptionTitle = robot.getDescriptionTitle();
+
+			if (descriptionTitle === 'untitled')
+			{
+				descriptionTitle = robotTitle;
+			}
+		}
+
+		const titleBarContent = Tag.render`
+			<div class="popup-window-titlebar-text bizproc-automation-robot-settings-popup-titlebar">
+				<span class="bizproc-automation-robot-settings-popup-titlebar-text">${Text.encode(robotTitle)}</span>
+				<div class="ui-hint">
+					<span class="ui-hint-icon" data-text="${Text.encode(descriptionTitle)}"></span>
+				</div>
+			</div>
+		`;
+		HelpHint.bindAll(titleBarContent);
 
 		const me = this;
 		const popup = new BX.PopupWindow(Helper.generateUniqueId(), null, {
-			titleBar: titleBar || robotTitle,
+			titleBar: {
+				content: titleBarContent,
+			},
 			content: form,
 			closeIcon: true,
 			width: popupWidth,

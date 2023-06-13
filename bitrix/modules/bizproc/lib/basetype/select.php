@@ -555,19 +555,28 @@ class Select extends Base
 
 		if ($value === '')
 		{
-			$value = null;
+			return null;
 		}
-		elseif (!(is_string($value) || is_int($value)))
+
+		if (!(is_string($value) || is_int($value)))
 		{
-			$value = null;
+			return null;
 		}
-		elseif (!isset($options[$value]))
+
+		if (!isset($options[$value]))
 		{
-			$value = null;
-			static::addError([
-				'code' => 'ErrorValue',
-				'message' => Loc::getMessage('BPDT_SELECT_INVALID'),
-			]);
+			$key = array_search($value, $options, false);
+			if ($key === false)
+			{
+				static::addError([
+					'code' => 'ErrorValue',
+					'message' => Loc::getMessage('BPDT_SELECT_INVALID'),
+				]);
+
+				return null;
+			}
+
+			return $key;
 		}
 
 		return $value;
@@ -577,6 +586,6 @@ class Select extends Base
 	{
 		$value = parent::validateValueMultiple($value, $fieldType);
 
-		return array_filter($value, fn($v) => (!is_null($v)));
+		return array_values(array_filter($value, fn($v) => (!is_null($v))));
 	}
 }

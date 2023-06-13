@@ -78,7 +78,10 @@
 			this.initButtonsPosition();
 			this.initHelpTips();
 			this.initSelectors();
-			this.fixTitleColors();
+
+			const stages = new BX.Bizproc.Automation.Statuses(this.node);
+			stages.init(this.templateManager.templates);
+			stages.fixColors();
 
 			this.initRobotSelector();
 
@@ -665,27 +668,6 @@
 			this.templateManager.disableDragAndDrop();
 			this.triggerManager.disableDragAndDrop();
 		},
-		fixTitleColors: function()
-		{
-			var i, bgcolor, titles = this.node.querySelectorAll('[data-role="automation-status-title"]');
-			for (i = 0; i < titles.length; ++i)
-			{
-				bgcolor = titles[i].getAttribute('data-bgcolor');
-				if (bgcolor)
-				{
-					var bigint = parseInt(bgcolor, 16);
-					var r = (bigint >> 16) & 255;
-					var g = (bigint >> 8) & 255;
-					var b = bigint & 255;
-					var y = 0.21 * r + 0.72 * g + 0.07 * b;
-
-					if (y < 145) // dark background
-					{
-						titles[i].style.color =  'white';
-					}
-				}
-			}
-		},
 		initTracker: function()
 		{
 			this.tracker = new Tracker(this.document, this.getAjaxUrl());
@@ -736,16 +718,32 @@
 				if (me.canEdit())
 				{
 					BX.bind(button, 'click', () => {
-						this.robotSelector.setStageId(this.templateManager.templates[0].getStatusId());
+						this.robotSelector.setStageId(this.templateManager.templates[0]?.getStatusId());
 						this.robotSelector.show();
 					});
 
 					const settings = new BX.Bizproc.LocalSettings.Settings('aut-cmp');
 					if (settings.get('beginning-guide-shown') !== true)
 					{
+						const documentRawType = this.document.getRawType();
+						const module = documentRawType[0];
+						const documentType = documentRawType[2];
+						const isSellingDocumentType = (
+							module === 'crm'
+							&& ['LEAD', 'DEAL', 'INVOICE', 'SMART_INVOICE', 'QUOTE'].includes(documentType)
+						);
+
 						(new BX.Bizproc.Automation.BeginningGuide({
 							target: button,
-						})).start();
+							text: (
+								isSellingDocumentType
+									? BX.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_BEGINNING_SUBTITLE_SELLING_DOCUMENT_TYPE')
+									: null
+							),
+							article: isSellingDocumentType ? '16547606' : null,
+						}))
+							.start()
+						;
 					}
 
 					settings.set('beginning-guide-shown', true);
@@ -1089,7 +1087,7 @@
 
 				this.robotSelector = new BX.Bizproc.Automation.RobotSelector({
 					context: BX.Bizproc.Automation.getGlobalContext(),
-					stageId: this.templateManager.templates[0].getStatusId(),
+					stageId: this.templateManager.templates[0]?.getStatusId(),
 					events: {
 						robotSelected: (event) => {
 							if (!this.canEdit())

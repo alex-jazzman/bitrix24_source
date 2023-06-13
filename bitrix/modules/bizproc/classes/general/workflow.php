@@ -5,8 +5,9 @@
 */
 class CBPWorkflow
 {
-	private $isNew = false;
-	private $instanceId = "";
+	private bool $isNew = false;
+	private bool $isAbandoned = false;
+	private string $instanceId = "";
 
 	protected CBPRuntime $runtime;
 	protected CBPWorkflowPersister $persister;
@@ -14,10 +15,10 @@ class CBPWorkflow
 	/** @var CBPCompositeActivity */
 	protected $rootActivity = null;
 
-	protected $activitiesQueue = array();
-	protected $eventsQueue = array();
+	protected array $activitiesQueue = [];
+	protected array $eventsQueue = [];
 
-	private $activitiesNamesMap = array();
+	private array $activitiesNamesMap = [];
 
 	/************************  PROPERTIES  *******************************/
 
@@ -92,7 +93,14 @@ class CBPWorkflow
 
 	/************************  CREATE / LOAD WORKFLOW  ****************************************/
 
-	public function initialize(CBPActivity $rootActivity, $documentId, $workflowParameters = array(), $workflowVariablesTypes = array(), $workflowParametersTypes = array(), $workflowTemplateId = 0)
+	public function initialize(
+		CBPActivity $rootActivity,
+		$documentId,
+		$workflowParameters = [],
+		$workflowVariablesTypes = [],
+		$workflowParametersTypes = [],
+		$workflowTemplateId = 0
+	)
 	{
 		$this->rootActivity = $rootActivity;
 		$rootActivity->SetWorkflow($this);
@@ -264,6 +272,16 @@ class CBPWorkflow
 		return $this->isNew;
 	}
 
+	public function abandon(): void
+	{
+		$this->isAbandoned = true;
+	}
+
+	public function isAbandoned(): bool
+	{
+		return $this->isAbandoned;
+	}
+
 	/**********************  EXTERNAL EVENTS  **************************************************************/
 
 	/**
@@ -282,25 +300,31 @@ class CBPWorkflow
 
 	private function fillNameActivityMapInternal(CBPActivity $activity)
 	{
-		$this->activitiesNamesMap[$activity->GetName()] = $activity;
+		$this->activitiesNamesMap[$activity->getName()] = $activity;
 
-		if (is_a($activity, "CBPCompositeActivity"))
+		if (is_a($activity, 'CBPCompositeActivity'))
 		{
-			$arSubActivities = $activity->CollectNestedActivities();
+			$arSubActivities = $activity->collectNestedActivities();
 			foreach ($arSubActivities as $subActivity)
-				$this->FillNameActivityMapInternal($subActivity);
+			{
+				$this->fillNameActivityMapInternal($subActivity);
+			}
 		}
 	}
 
 	private function fillNameActivityMap()
 	{
 		if (!is_array($this->activitiesNamesMap))
-			$this->activitiesNamesMap = array();
+		{
+			$this->activitiesNamesMap = [];
+		}
 
 		if (count($this->activitiesNamesMap) > 0)
+		{
 			return;
+		}
 
-		$this->FillNameActivityMapInternal($this->rootActivity);
+		$this->fillNameActivityMapInternal($this->rootActivity);
 	}
 
 	/**
@@ -312,14 +336,18 @@ class CBPWorkflow
 	public function getActivityByName($activityName)
 	{
 		if ($activityName == '')
-			throw new Exception("activityName");
+		{
+			throw new Exception('activityName');
+		}
 
 		$activity = null;
 
-		$this->FillNameActivityMap();
+		$this->fillNameActivityMap();
 
 		if (array_key_exists($activityName, $this->activitiesNamesMap))
+		{
 			$activity = $this->activitiesNamesMap[$activityName];
+		}
 
 		return $activity;
 	}

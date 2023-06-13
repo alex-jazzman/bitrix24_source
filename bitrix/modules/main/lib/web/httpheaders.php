@@ -396,7 +396,7 @@ class HttpHeaders implements IteratorAggregate
 			{
 				$headers->parseStatus($header);
 			}
-			if (strpos($header, ':') !== false)
+			elseif (strpos($header, ':') !== false)
 			{
 				[$headerName, $headerValue] = explode(':', $header, 2);
 				$headers->add($headerName, trim($headerValue));

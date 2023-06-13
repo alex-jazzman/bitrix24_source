@@ -2,6 +2,8 @@
 
 class CSiteCheckerTest
 {
+	const MIN_PHP_VER = '8.0.0';
+
 	var $arTestVars;
 	var $percent;
 	var $last_function;
@@ -469,9 +471,10 @@ class CSiteCheckerTest
 	function check_php_settings()
 	{
 		$strError = '';
-		$PHP_vercheck_min = '7.3.0';
-		if (version_compare($v = phpversion(), $PHP_vercheck_min, '<'))
-			$strError = GetMessage('SC_VER_ERR', array('#CUR#' => $v, '#REQ#' => $PHP_vercheck_min))."<br>";
+		if (version_compare($v = phpversion(), self::MIN_PHP_VER, '<'))
+		{
+			$strError = GetMessage('SC_VER_ERR', array('#CUR#' => $v, '#REQ#' => self::MIN_PHP_VER))."<br>";
+		}
 
 		$arRequiredParams = array(
 			'safe_mode' => 0,
@@ -2837,6 +2840,27 @@ class CSiteCheckerTest
 		$_SERVER['HTTP_USER_AGENT'] = $HTTP_USER_AGENT;
 
 		return "CSiteCheckerTest::CommonTest();";
+	}
+
+	public static function PhpTestAgent()
+	{
+		IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/admin/site_checker.php');
+
+		if (version_compare($v = phpversion(), self::MIN_PHP_VER, '<'))
+		{
+			CAdminNotify::Add([
+				'MESSAGE' => GetMessage('PHP_VER_NOTIFY', ['#CUR#' => $v, '#REQ#' => self::MIN_PHP_VER]),
+				'TAG' => 'PHP_VERSION',
+				'MODULE_ID' => 'MAIN',
+				'NOTIFY_TYPE' => CAdminNotify::TYPE_ERROR,
+			]);
+
+			return "CSiteCheckerTest::PhpTestAgent();";
+		}
+
+		CAdminNotify::DeleteByTag('PHP_VERSION');
+
+		return '';
 	}
 }
 

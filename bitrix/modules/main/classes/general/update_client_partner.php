@@ -52,7 +52,7 @@ class CUpdateClientPartner
 
 		CUpdateClientPartner::AddMessage2Log(preg_replace("/LICENSE_KEY=[^&]*/i", "LICENSE_KEY=X", $strQuery));
 
-		$stime = CUpdateClientPartner::__GetMicroTime();
+		$stime = microtime(true);
 		$content = CUpdateClientPartner::__GetHTTPPage("REG", $strQuery, $strError_tmp);
 
 		if ($content == '')
@@ -61,7 +61,7 @@ class CUpdateClientPartner
 				$strError_tmp = "[GNSU02] ".GetMessage("SUPZ_EMPTY_ANSWER").". ";
 		}
 
-		CUpdateClientPartner::AddMessage2Log("TIME RegisterModules(request) ".Round(CUpdateClientPartner::__GetMicroTime() - $stime, 3)." sec");
+		CUpdateClientPartner::AddMessage2Log("TIME RegisterModules(request) ".Round(microtime(true) - $stime, 3)." sec");
 
 		if ($strError_tmp == '')
 		{
@@ -250,7 +250,7 @@ class CUpdateClientPartner
 		{
 			CUpdateClientPartner::AddMessage2Log(preg_replace("/LICENSE_KEY=[^&]*/i", "LICENSE_KEY=X", $strQuery));
 
-			$stime = CUpdateClientPartner::__GetMicroTime();
+			$stime = microtime(true);
 			$content = CUpdateClientPartner::__GetHTTPPage("MODULE", $strQuery, $strError_tmp);
 			if ($content == '')
 			{
@@ -258,7 +258,7 @@ class CUpdateClientPartner
 					$strError_tmp = "[GNSU02] ".GetMessage("SUPZ_EMPTY_ANSWER").". ";
 			}
 
-			CUpdateClientPartner::AddMessage2Log("TIME LoadModuleNoDemand(request) ".Round(CUpdateClientPartner::__GetMicroTime() - $stime, 3)." sec");
+			CUpdateClientPartner::AddMessage2Log("TIME LoadModuleNoDemand(request) ".Round(microtime(true) - $stime, 3)." sec");
 		}
 
 		if ($strError_tmp == '')
@@ -348,10 +348,10 @@ class CUpdateClientPartner
 
 		CUpdateClientPartner::AddMessage2Log(preg_replace("/LICENSE_KEY=[^&]*/i", "LICENSE_KEY=X", $strQuery));
 
-		$stime = CUpdateClientPartner::__GetMicroTime();
+		$stime = microtime(true);
 		$content = CUpdateClientPartner::__GetHTTPPage("SEARCH", $strQuery, $strError_tmp);
 
-		CUpdateClientPartner::AddMessage2Log("TIME SearchModulesEx(request) ".Round(CUpdateClientPartner::__GetMicroTime() - $stime, 3)." sec");
+		CUpdateClientPartner::AddMessage2Log("TIME SearchModulesEx(request) ".Round(microtime(true) - $stime, 3)." sec");
 
 		$arResult = Array();
 		if ($strError_tmp == '')
@@ -409,10 +409,10 @@ class CUpdateClientPartner
 
 		CUpdateClientPartner::AddMessage2Log(preg_replace("/LICENSE_KEY=[^&]*/i", "LICENSE_KEY=X", $strQuery));
 
-		$stime = CUpdateClientPartner::__GetMicroTime();
+		$stime = microtime(true);
 		$content = CUpdateClientPartner::__GetHTTPPage("SEARCH", $strQuery, $strError_tmp);
 
-		CUpdateClientPartner::AddMessage2Log("TIME SearchModules(request) ".Round(CUpdateClientPartner::__GetMicroTime() - $stime, 3)." sec");
+		CUpdateClientPartner::AddMessage2Log("TIME SearchModules(request) ".Round(microtime(true) - $stime, 3)." sec");
 
 		$arResult = Array();
 		if ($strError_tmp == '')
@@ -539,6 +539,15 @@ class CUpdateClientPartner
 		return $arRequestedModules;
 	}
 
+	/**
+	 * @deprecated Use \Bitrix\Main\License::getKey()
+	 */
+	public static function GetLicenseKey()
+	{
+		$license = \Bitrix\Main\Application::getInstance()->getLicense();
+		return $license->getKey();
+	}
+
 	/* ѕолучить обновлени€ следующего шага */
 	public static function GetNextStepUpdates(&$strError, $lang = false, $stableVersionsOnly = "Y", $arRequestedModules = array(), $bStrongList = false)
 	{
@@ -557,7 +566,7 @@ class CUpdateClientPartner
 		{
 			CUpdateClientPartner::AddMessage2Log(preg_replace("/LICENSE_KEY=[^&]*/i", "LICENSE_KEY=X", $strQuery));
 
-			$stime = CUpdateClientPartner::__GetMicroTime();
+			$stime = microtime(true);
 			$content = CUpdateClientPartner::__GetHTTPPage("STEPM", $strQuery, $strError_tmp);
 			if ($content == '')
 			{
@@ -565,7 +574,7 @@ class CUpdateClientPartner
 					$strError_tmp = "[GNSU02] ".GetMessage("SUPZ_EMPTY_ANSWER").". ";
 			}
 
-			CUpdateClientPartner::AddMessage2Log("TIME GetNextStepUpdates(request) ".Round(CUpdateClientPartner::__GetMicroTime() - $stime, 3)." sec");
+			CUpdateClientPartner::AddMessage2Log("TIME GetNextStepUpdates(request) ".Round(microtime(true) - $stime, 3)." sec");
 		}
 
 		if ($strError_tmp == '')
@@ -596,7 +605,7 @@ class CUpdateClientPartner
 		$strError_tmp = "";
 
 		CUpdateClientPartner::AddMessage2Log("exec CUpdateClientPartner::UnGzipArchive");
-		$stime = CUpdateClientPartner::__GetMicroTime();
+		$stime = microtime(true);
 
 		$archiveFileName = $_SERVER["DOCUMENT_ROOT"]."/bitrix/updates/update_archive.gz";
 
@@ -760,7 +769,7 @@ class CUpdateClientPartner
 				@unlink($archiveFileName);
 		}
 
-		CUpdateClientPartner::AddMessage2Log("TIME UnGzipArchive ".Round(CUpdateClientPartner::__GetMicroTime()-$stime, 3)." sec");
+		CUpdateClientPartner::AddMessage2Log("TIME UnGzipArchive ".Round(microtime(true) - $stime, 3)." sec");
 
 		if ($strError_tmp <> '')
 		{
@@ -1069,10 +1078,10 @@ class CUpdateClientPartner
 
 		CUpdateClientPartner::AddMessage2Log(preg_replace("/LICENSE_KEY=[^&]*/i", "LICENSE_KEY=X", $strQuery));
 
-		$stime = CUpdateClientPartner::__GetMicroTime();
+		$stime = microtime(true);
 		$content = CUpdateClientPartner::__GetHTTPPage("LIST", $strQuery, $strError_tmp);
 
-		CUpdateClientPartner::AddMessage2Log("TIME GetUpdatesList(request) ".Round(CUpdateClientPartner::__GetMicroTime() - $stime, 3)." sec");
+		CUpdateClientPartner::AddMessage2Log("TIME GetUpdatesList(request) ".Round(microtime(true) - $stime, 3)." sec");
 
 		$arResult = Array();
 		if ($strError_tmp == '')
@@ -1159,7 +1168,7 @@ class CUpdateClientPartner
 				preg_replace("/LICENSE_KEY=[^&]*/i", "LICENSE_KEY=X", $updateServerQueryString)
 			);
 
-			$stime = CUpdateClientPartner::__GetMicroTime();
+			$stime = microtime(true);
 
 			$content = CUpdateClientPartner::__GetHTTPPage("STEPM", $updateServerQueryString, $errorMessage);
 			if ($content == '')
@@ -1172,7 +1181,7 @@ class CUpdateClientPartner
 			}
 
 			CUpdateClientPartner::AddMessage2Log(
-				"TIME LoadModulesUpdates(request) ".Round(CUpdateClientPartner::__GetMicroTime() - $stime, 3)." sec"
+				"TIME LoadModulesUpdates(request) ".Round(microtime(true) - $stime, 3)." sec"
 			);
 
 			CUpdateClientPartner::__ParseServerData($content, $arUpdateDescription, $errorMessage);
@@ -1446,7 +1455,7 @@ class CUpdateClientPartner
 		$isFinished = true;
 		while (true)
 		{
-			if ($timeout > 0 && (CUpdateClientPartner::__GetMicroTime() - $startTime) > $timeout)
+			if ($timeout > 0 && (microtime(true) - $startTime) > $timeout)
 			{
 				$isFinished = false;
 				break;
@@ -1462,7 +1471,7 @@ class CUpdateClientPartner
 		fclose($fileHandler);
 		fclose($socketHandler);
 
-		CUpdateClientPartner::AddMessage2Log("Time - ".(CUpdateClientPartner::__GetMicroTime() - $startTime)." sec", "DOWNLOAD");
+		CUpdateClientPartner::AddMessage2Log("Time - ".(microtime(true) - $startTime)." sec", "DOWNLOAD");
 
 		$sizeTmp = (file_exists($outputFilename.".tmp") ? filesize($outputFilename.".tmp") : 0);
 		if ($sizeTmp == $realSize)
@@ -1650,7 +1659,7 @@ class CUpdateClientPartner
 		if (!defined("US_SAVE_UPDATERS_DIR") || US_SAVE_UPDATERS_DIR == '')
 			$bSaveUpdaters = false;
 
-		$stime = CUpdateClientPartner::__GetMicroTime();
+		$stime = microtime(true);
 
 		$updatesDirFull = $_SERVER["DOCUMENT_ROOT"]."/bitrix/updates/".$updatesDir;
 
@@ -1818,7 +1827,7 @@ class CUpdateClientPartner
 			CUpdateClientPartner::ClearUpdateFolder($updatesDirFull);
 		}
 
-		CUpdateClientPartner::AddMessage2Log("TIME UpdateStepModules ".Round(CUpdateClientPartner::__GetMicroTime()-$stime, 3)." sec");
+		CUpdateClientPartner::AddMessage2Log("TIME UpdateStepModules ".Round(microtime(true) - $stime, 3)." sec");
 
 		if ($strError_tmp <> '')
 		{
@@ -1870,7 +1879,7 @@ class CUpdateClientPartner
 				$strQuery .= "&".$key."=".urlencode($value);
 			*/
 
-			$stime = CUpdateClientPartner::__GetMicroTime();
+			$stime = microtime(true);
 			$content = CUpdateClientPartner::__GetHTTPPage("ACTIV", $strQuery, $strError_tmp);
 			if ($content == '')
 			{
@@ -1878,7 +1887,7 @@ class CUpdateClientPartner
 					$strError_tmp = "[GNSU02] ".GetMessage("SUPZ_EMPTY_ANSWER").". ";
 			}
 
-			CUpdateClientPartner::AddMessage2Log("TIME ActivateCoupon(request) ".Round(CUpdateClientPartner::__GetMicroTime() - $stime, 3)." sec");
+			CUpdateClientPartner::AddMessage2Log("TIME ActivateCoupon(request) ".Round(microtime(true) - $stime, 3)." sec");
 		}
 
 		if ($strError_tmp == '')
@@ -2465,9 +2474,11 @@ class CUpdateClientPartner
 		return $result;
 	}
 
+	/**
+	 * @deprecated Use microtime(true)
+	 */
 	public static function __GetMicroTime()
 	{
-		list($usec, $sec) = explode(" ", microtime());
-		return ((float)$usec + (float)$sec);
+		return microtime(true);
 	}
 }

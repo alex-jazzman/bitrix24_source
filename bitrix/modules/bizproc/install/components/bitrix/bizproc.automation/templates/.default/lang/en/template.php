@@ -54,3 +54,4 @@ $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_NEW_ROBOT_ADDED"] = "New automation rul
 $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_NEW_ROBOT_ADDED_ON_STAGE"] = "Added new automation rule \"#ROBOT_NAME#\" to stage \"#STAGE_NAME#\".";
 $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_NEW_TRIGGER_ADDED"] = "Added new trigger: \"#TRIGGER_NAME#\"";
 $MESS["BIZPROC_AUTOMATION_ROBOT_SELECTOR_NEW_TRIGGER_ADDED_ON_STAGE"] = "Added new trigger \"#TRIGGER_NAME#\" to stage \"#STAGE_NAME#\".";
+$MESS["BIZPROC_AUTOMATION_TOUR_GUIDE_BEGINNING_SUBTITLE_SELLING_DOCUMENT_TYPE"] = "Improve your business performance while saving on operational costs and avoiding overblown staff! The CRM will remind you of things that need to be done or even do it on its own. Never miss a lead!";
