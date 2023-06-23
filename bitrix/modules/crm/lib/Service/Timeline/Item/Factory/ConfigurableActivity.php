@@ -112,7 +112,7 @@ class ConfigurableActivity
 				return new Item\Activity\Sms\Notification($context, $model);
 			}
 
-			if ($providerId === CalendarSharing::getId() && Crm::isCalendarSharingEnabled())
+			if ($providerId === CalendarSharing::getId())
 			{
 				return new Item\Activity\CalendarSharing($context, $model);
 			}

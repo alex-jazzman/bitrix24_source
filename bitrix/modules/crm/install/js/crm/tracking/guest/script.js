@@ -265,7 +265,6 @@
 	var ClientTracker = {
 		getData: function ()
 		{
-			debugger;
 			var data = {
 				gaId: this.getGaId(),
 				yaId: this.getYaId(),

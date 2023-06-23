@@ -208,6 +208,11 @@ class UncompletedActivityChange
 
 	public function hasChanges(): bool
 	{
+		if ($this->isChangedAlreadyCompletedActivity())
+		{
+			return false;
+		}
+
 		return
 			$this->isIncomingChannelChanged()
 			|| $this->isDeadlineChanged()

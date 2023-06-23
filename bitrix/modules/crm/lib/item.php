@@ -891,11 +891,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		}
 
 		// if we set fm again from compatible data, new values will be duplicated
-		$changedValues = array_filter(
-			$this->getCompatibleData(Values::CURRENT),
-			fn($fieldName) => $fieldName !== static::FIELD_NAME_FM,
-			ARRAY_FILTER_USE_KEY,
-		);
+		$changedValues = $this->getCompatibleData(Values::CURRENT);
 
 		$entityFieldsToFill = $this->getEntityFieldNames(FieldTypeMask::SCALAR|FieldTypeMask::USERTYPE);
 		foreach ($this->getAllImplementations() as $implementation)
@@ -2072,7 +2068,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	{
 		$this->loadExpressionField($commonFieldName);
 
-		return $this->currentValues[$commonFieldName] ?? $this->actualValues[$commonFieldName] ?? null;
+		if (array_key_exists($commonFieldName, $this->currentValues))
+		{
+			return $this->currentValues[$commonFieldName];
+		}
+		else
+		{
+			return $this->actualValues[$commonFieldName] ?? null;
+		}
 	}
 
 	protected function setExpressionField(string $commonFieldName, $value): self

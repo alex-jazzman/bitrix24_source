@@ -114,6 +114,8 @@ class SmartDocument extends Dynamic
 
 		$clientField = $adapter->getAdditionalField($adapter::FIELD_CLIENT);
 		$clientField['data']['fixedLayoutType'] = 'CONTACT';
+
+		unset($clientField['data']['duplicateControl']);
 		$adapter->addEntityField($clientField);
 
 		return $adapter;

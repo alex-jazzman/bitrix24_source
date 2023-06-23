@@ -1,10 +1,11 @@
 <?php
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
-require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php');
 
 use Bitrix\Crm;
 use Bitrix\Crm\Conversion\DealConversionConfig;
@@ -28,7 +29,9 @@ if (!CModule::IncludeModule('crm'))
  * 'GET_DEFAULT_SECONDARY_ENTITIES'
  */
 global $DB, $APPLICATION, $USER_FIELD_MANAGER;
+
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+
 Container::getInstance()->getLocalization()->loadMessages();
 
 if(!function_exists('__CrmDealDetailsEndJsonResonse'))
@@ -417,7 +420,7 @@ elseif($action === 'SAVE')
 				}
 			}
 			elseif(
-				$contactItem['title']
+				!empty($contactItem['title'])
 				|| (isset($contactItem['multifields']) && is_array($contactItem['multifields']))
 				|| (isset($contactItem['requisites']) && is_array($contactItem['requisites']))
 			)

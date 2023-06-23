@@ -680,7 +680,7 @@ if ($factory && $category)
 	}
 }
 
-$CCrmUserType->ListAddHeaders($arResult['HEADERS']);
+$CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 $arResult['HEADERS_SECTIONS'] = [
 	[

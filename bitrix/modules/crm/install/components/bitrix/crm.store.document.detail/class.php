@@ -361,6 +361,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		}
 
 		$this->checkIfInventoryManagementIsUsed();
+		$this->checkIfInventoryManagementIsDisabled();
 
 		$this->arResult['DOCUMENT_PERMISSIONS'] = [
 			'conduct' => $this->checkDocumentConductRight(),
@@ -1295,6 +1296,19 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
 			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 			$this->arResult['MASTER_SLIDER_URL'] = $sliderPath;
+		}
+	}
+
+	private function checkIfInventoryManagementIsDisabled(): void
+	{
+		$this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'] = !\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled();
+		if ($this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'])
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = \Bitrix\Catalog\Config\Feature::getInventoryManagementHelpLink()['FEATURE_CODE'] ?? null;
+		}
+		else
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = null;
 		}
 	}
 

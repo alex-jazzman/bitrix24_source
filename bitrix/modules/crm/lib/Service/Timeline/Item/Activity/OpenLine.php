@@ -7,15 +7,17 @@ use Bitrix\Crm\Badge\Model\BadgeTable;
 use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Layout;
-use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Action;
+use Bitrix\Crm\Service\Timeline\Layout\Action\Animation;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ClientMark;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Link;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
+use Bitrix\Crm\Service\Timeline\Layout\Header\ChangeStreamButton;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Main\Localization\Loc;
 use CCrmActivity;
@@ -29,7 +31,7 @@ class OpenLine extends Activity
 
 	public function getIconCode(): ?string
 	{
-		return Icon::IM;
+		return Icon::OPENLINE_INCOMING_MESSAGE;
 	}
 
 	public function getTitle(): string
@@ -180,7 +182,10 @@ class OpenLine extends Activity
 		$responsibleId = $this->getAssociatedEntityModel()->get('RESPONSIBLE_ID');
 
 		// the tag will not be removed until the responsible user reads all messages
-		if (OpenLineManager::getChatUnReadMessages($userCode, $responsibleId) > 0)
+		if (
+			$this->isScheduled()
+			&& OpenLineManager::getChatUnReadMessages($userCode, $responsibleId) > 0
+		)
 		{
 			$tags['notReadChat'] = new Tag(
 				Loc::getMessage('CRM_TIMELINE_TAG_CHAT_NOT_READ'),
@@ -215,6 +220,27 @@ class OpenLine extends Activity
 
 		return (new JsEvent('Openline:OpenChat'))
 			->addActionParamString('dialogId', $dialogId)
+		;
+	}
+
+	protected function getCompleteButton(): ?ChangeStreamButton
+	{
+		if (!$this->isScheduled())
+		{
+			return null;
+		}
+
+		$completeAction =  (new JsEvent('Openline:Complete'))
+			->addActionParamInt('activityId', $this->getActivityId())
+			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+			->setAnimation(Animation::disableItem()->setForever())
+		;
+
+		return (new ChangeStreamButton())
+			->setTypeComplete()
+			->setDisableIfReadonly()
+			->setAction($completeAction)
 		;
 	}
 

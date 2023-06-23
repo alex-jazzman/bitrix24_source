@@ -2,31 +2,27 @@
 
 namespace Bitrix\Crm\Integration\Calendar\Notification;
 
-use Bitrix\Calendar\Core\Event\Event;
+use Bitrix\Crm\Integration\NotificationsManager;
+use Bitrix\Crm\MessageSender;
 use Bitrix\Calendar\Sharing;
-use Bitrix\Calendar\Sharing\Link\EventLink;
-use Bitrix\Calendar\Sharing\Link\CrmDealLink;
-use Bitrix\Crm;
+use Bitrix\Crm\ItemIdentifier;
 
-class NotificationService
+class NotificationService extends AbstractService
 {
 	private const TEMPLATE_SHARING_EVENT_INVITATION = 'SHARING_EVENT_INVITATION';
 	private const TEMPLATE_SHARING_EVENT_AUTO_ACCEPTED = 'SHARING_EVENT_ACCEPTED_2';
 	private const TEMPLATE_SHARING_EVENT_CANCELLED_LINK_ACTIVE = 'SHARING_EVENT_CANCELLED_1';
 	private const TEMPLATE_SHARING_EVENT_CANCELLED = 'SHARING_EVENT_CANCELLED_2';
 
-	protected CrmDealLink $crmDealLink;
-	protected Event $event;
-	protected EventLink $eventLink;
-
 	/**
-	 * @param Crm\ItemIdentifier $entity
+	 * @param ItemIdentifier $entity
 	 * @return bool
 	 */
-	public static function canSendMessage(Crm\ItemIdentifier $entity): bool
+	public static function canSendMessage(ItemIdentifier $entity): bool
 	{
-		$repo = Crm\MessageSender\Channel\ChannelRepository::create($entity);
-		$channel = $repo->getDefaultForSender(Crm\Integration\NotificationsManager::getSenderCode());
+		$repo = MessageSender\Channel\ChannelRepository::create($entity);
+
+		$channel = $repo->getDefaultForSender(NotificationsManager::getSenderCode());
 		if (is_null($channel))
 		{
 			return false;
@@ -35,38 +31,41 @@ class NotificationService
 		return $channel->checkChannel()->isSuccess();
 	}
 
-	/**
-	 * @param CrmDealLink $crmDealLink
-	 * @return $this
-	 */
-	public function setCrmDealLink(CrmDealLink $crmDealLink): self
-	{
-		$this->crmDealLink = $crmDealLink;
-		return $this;
-	}
 
 	/**
-	 * @param EventLink $eventLink
-	 * @return $this
+	 * @param string $template
+	 * @param array $placeholders
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	public function setEventLink(Eventlink $eventLink): self
+	protected function sendMessage(string $template, array $placeholders): bool
 	{
-		$this->eventLink = $eventLink;
-		return $this;
-	}
+		$entity = new ItemIdentifier(\CCrmOwnerType::Deal, $this->crmDealLink->getEntityId());
+		$channel = $this->getEntityChannel($entity);
+		if (is_null($channel))
+		{
+			return false;
+		}
 
-	/**
-	 * @param Event $event
-	 * @return $this
-	 */
-	public function setEvent(Event $event): self
-	{
-		$this->event = $event;
-		return $this;
+		$to = $this->getToEntity($channel, $this->crmDealLink->getContactId(), $this->crmDealLink->getContactType());
+		if (!$to)
+		{
+			return false;
+		}
+
+		return (new MessageSender\SendFacilitator\Notifications($channel))
+			->setTo($to)
+			->setPlaceholders($placeholders)
+			->setTemplateCode($template)
+			->setLanguageId('ru')
+			->send()
+			->isSuccess()
+		;
 	}
 
 	/**
 	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public function sendCrmSharingInvited(): bool
 	{
@@ -82,6 +81,7 @@ class NotificationService
 
 	/**
 	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public function sendCrmSharingAutoAccepted(): bool
 	{
@@ -92,7 +92,6 @@ class NotificationService
 			'DATE' => Sharing\Helper::formatDate($this->event->getStart()),
 			'EVENT_URL' => Sharing\Helper::getShortUrl($this->eventLink->getUrl()),
 			'VIDEOCONFERENCE_URL' => Sharing\Helper::getShortUrl($this->eventLink->getUrl() . Sharing\Helper::ACTION_CONFERENCE),
-
 			'EVENT_NAME' => Sharing\SharingEventManager::getSharingEventNameByUserName($fullName), // for title
 		];
 
@@ -101,11 +100,11 @@ class NotificationService
 
 	/**
 	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public function sendCrmSharingCancelled(): bool
 	{
 		$manager = Sharing\Helper::getOwnerInfo($this->crmDealLink->getOwnerId());
-
 		$template = self::TEMPLATE_SHARING_EVENT_CANCELLED;
 		$placeholders = [
 			'NAME' => Sharing\Helper::getPersonFullNameLoc($manager['name'], $manager['lastName']),
@@ -123,62 +122,18 @@ class NotificationService
 	}
 
 	/**
-	 * @param string $template
-	 * @param array $placeholders
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @param ItemIdentifier $entity
+	 * @return MessageSender\Channel|null
 	 */
-	protected function sendMessage(string $template, array $placeholders): bool
+	protected function getEntityChannel(ItemIdentifier $entity): ?MessageSender\Channel
 	{
-		$channel = $this->getEntityChannel(\CCrmOwnerType::Deal, $this->crmDealLink->getEntityId());
-		if (is_null($channel))
-		{
-			return false;
-		}
-
-		$to = $this->getToEntity($channel, $this->crmDealLink->getContactId(), $this->crmDealLink->getContactType());
-		if (!$to)
-		{
-			return false;
-		}
-
-		return (new Crm\MessageSender\SendFacilitator\Notifications($channel))
-			->setTo($to)
-			->setPlaceholders($placeholders)
-			->setTemplateCode($template)
-			->setLanguageId('ru')
-			->send()
-			->isSuccess()
-		;
-	}
-
-	/**
-	 * @param int $entityTypeId
-	 * @param int $entityId
-	 * @return Crm\MessageSender\Channel|null
-	 */
-	private function getEntityChannel(int $entityTypeId, int $entityId): ?Crm\MessageSender\Channel
-	{
-		$entity = new Crm\ItemIdentifier($entityTypeId, $entityId);
-		$repo = Crm\MessageSender\Channel\ChannelRepository::create($entity);
-		$channel = $repo->getDefaultForSender(Crm\Integration\NotificationsManager::getSenderCode());
+		$repo = MessageSender\Channel\ChannelRepository::create($entity);
+		$channel = $repo->getDefaultForSender(NotificationsManager::getSenderCode());
 		if (is_null($channel))
 		{
 			return null;
 		}
 
 		return $channel;
-	}
-
-	/**
-	 * @param Crm\MessageSender\Channel $channel
-	 * @param int $contactId
-	 * @return false|mixed
-	 */
-	private function getToEntity(Crm\MessageSender\Channel $channel, int $contactId, int $contactTypeId)
-	{
-		return current(array_filter($channel->getToList(), static function ($to) use ($contactId, $contactTypeId) {
-			return $to->getAddressSource()->getEntityId() === $contactId && $to->getAddressSource()->getEntityTypeId() === $contactTypeId;
-		}));
 	}
 }

@@ -22,7 +22,10 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 			return false;
 		}
 
-		if (!isset($this->arParams['OWNER_TYPE_ID']) || !isset($this->arParams['OWNER_ID']) || empty($this->arParams['OWNER_ID']))
+		if (
+			!isset($this->arParams['OWNER_TYPE_ID'], $this->arParams['OWNER_ID'])
+			|| empty($this->arParams['OWNER_ID'])
+		)
 		{
 			return false;
 		}
@@ -36,7 +39,7 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 			}
 		}
 
-		if (!isset($this->arParams['IS_AJAX']) || $this->arParams['IS_AJAX'] != 'Y')
+		if (!isset($this->arParams['IS_AJAX']) || $this->arParams['IS_AJAX'] !== 'Y')
 		{
 			$this->arParams['IS_AJAX'] = 'N';
 		}
@@ -54,9 +57,10 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 		$params = $this->arParams;
 
 		$pathKey = 'PATH_TO_'.mb_strtoupper($type).'_SHOW';
-		$url = !array_key_exists($pathKey, $params) ? \CrmCheckPath($pathKey, '', '') : $params[$pathKey];
 
-		return $url;
+		return!array_key_exists($pathKey, $params)
+			? \CrmCheckPath($pathKey, '', '')
+			: $params[$pathKey];
 	}
 
 	/**
@@ -73,38 +77,47 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 		{
 			return 'no';
 		}
-		if ($activity['TYPE_ID'] == \CCrmActivityType::Call)
+
+		if ((int)$activity['TYPE_ID'] === \CCrmActivityType::Call)
 		{
-			return $activity['DIRECTION'] == \CCrmActivityDirection::Outgoing ? 'call-outgoing' : 'call';
+			return (int)$activity['DIRECTION'] === \CCrmActivityDirection::Outgoing ? 'call-outgoing' : 'call';
 		}
-		if ($activity['TYPE_ID'] == \CCrmActivityType::Meeting)
+
+		if ((int)$activity['TYPE_ID'] === \CCrmActivityType::Meeting)
 		{
 			return 'meet';
 		}
-		if ($activity['TYPE_ID'] == \CCrmActivityType::Email)
+
+		if ((int)$activity['TYPE_ID'] === \CCrmActivityType::Email)
 		{
-			return $activity['DIRECTION'] == \CCrmActivityDirection::Outgoing ? 'mail' : 'mail-send';
+			return (int)$activity['DIRECTION'] === \CCrmActivityDirection::Outgoing ? 'mail' : 'mail-send';
 		}
-		if ($activity['PROVIDER_ID'] == 'CRM_EXTERNAL_CHANNEL')
+
+		if ($activity['PROVIDER_ID'] === 'CRM_EXTERNAL_CHANNEL')
 		{
 			return 'onec';
 		}
-		if ($activity['PROVIDER_ID'] == 'CRM_LF_MESSAGE')
+
+		if ($activity['PROVIDER_ID'] === 'CRM_LF_MESSAGE')
 		{
 			return 'live-feed';
 		}
-		if ($activity['PROVIDER_ID'] == 'CRM_WEBFORM')
+
+		if ($activity['PROVIDER_ID'] === 'CRM_WEBFORM')
 		{
 			return 'form';
 		}
-		if ($activity['PROVIDER_ID'] == 'IMOPENLINES_SESSION')
+
+		if ($activity['PROVIDER_ID'] === 'IMOPENLINES_SESSION')
 		{
 			return 'chat';
 		}
-		if ($activity['PROVIDER_ID'] != '')
+
+		if ($activity['PROVIDER_ID'] !== '')
 		{
 			return mb_strtolower($activity['PROVIDER_ID']);
 		}
+
 		return 'no';
 	}
 
@@ -240,9 +253,12 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 				$activity['PROVIDER_TYPE_ID'],
 				$activity['DIRECTION']
 			);
+
+			$priority = (int)($activity['PRIORITY'] ?? null);
+
 			$activity['PROVIDER_ANCHOR'] = (array)$activity['PROVIDER']::getStatusAnchor();
 			$activity['ICON'] = $this->getTypeIcon($activity);
-			$activity['HIGH'] = ((int)$activity['PRIORITY'] === \CCrmActivityPriority::High ? 'Y' : 'N');
+			$activity['HIGH'] = $priority === \CCrmActivityPriority::High ? 'Y' : 'N';
 			$activity['DETAIL_EXIST'] = $activity['PROVIDER']::hasPlanner($activity);
 			$activity['IS_INCOMING_CHANNEL'] = ($activity['IS_INCOMING_CHANNEL'] === 'Y');
 

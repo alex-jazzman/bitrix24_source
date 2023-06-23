@@ -1236,7 +1236,7 @@ if ($show1cSection)
 {
 	$stdItems['ONEC'] = [
 		'ID' => 'ONEC',
-		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ONEC'),
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ONEC_MSGVER_1'),
 		'URL' => '/onec/',
 	];
 }

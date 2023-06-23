@@ -163,7 +163,7 @@ class CrmDocumentViewComponent extends ViewComponent
 				$this->arResult['clientRequisites'] = [
 					'title' =>
 						Format\Requisite::formatOrganizationName($clientRequisiteData)
-						?? $companyProvider->getValue('NAME')
+						?? $companyProvider->getValue('TITLE')
 						?: $this->arResult['clientRequisites']['title']
 					,
 					'link' =>
@@ -271,7 +271,7 @@ class CrmDocumentViewComponent extends ViewComponent
 
 		return false;
 	}
-	
+
 	/**
 	 * @return CrmEntityDataProvider|false
 	 */

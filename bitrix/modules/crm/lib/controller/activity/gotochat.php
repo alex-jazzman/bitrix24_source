@@ -174,7 +174,7 @@ class GoToChat extends Base
 				'shortName' => $channel->getShortName(),
 				'canUse' => $canUse,
 			];
-		}
+ 		}
 
 		if ($currentChannelId === null)
 		{
@@ -182,7 +182,7 @@ class GoToChat extends Base
 		}
 
 		return [
-			'region' =>  (Application::getInstance()->getLicense()->getRegion() ?? 'ru'),
+			'region' => (Application::getInstance()->getLicense()->getRegion() ?? 'ru'),
 			'channels' => $data,
 			'currentSender' => $this->getCurrentSender(),
 			'currentChannelId' => $currentChannelId,
@@ -190,9 +190,9 @@ class GoToChat extends Base
 			// @todo check this for all entity types
 			'communications' => $this->getCommunications($entityTypeId, $entityId),
 			'contactCenterUrl' => (
-			Loader::includeModule('bitrix24')
-				? '/contact_center/'
-				: '/services/contact_center/'
+				Loader::includeModule('bitrix24')
+					? '/contact_center/'
+					: '/services/contact_center/'
 			),
 		];
 	}

@@ -669,7 +669,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 				'id' => static::TAB_NAME_ORDERS,
 				'name' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Order),
 				'loader' => [
-					'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
+					'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => [
 						'template' => '',
 						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
@@ -681,7 +681,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable, Sup
 							'GRID_ID_SUFFIX' => $this->getGuid(),
 							'TAB_ID' => static::TAB_NAME_ORDERS,
 							'PRESERVE_HISTORY' => true,
-							'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID
+							'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID,
 						], 'crm.order.list')
 					]
 				],

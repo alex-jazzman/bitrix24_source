@@ -65,7 +65,7 @@ $options = CUserOptions::GetOption('crm.widget_panel', $arResult['GUID'], array(
 // todo tmp: a workaround to avoid updating options for all users
 if (Bitrix\Main\Loader::includeModule('bitrix24') && !Bitrix\Bitrix24\Feature::isFeatureEnabled("crm_sale_target"))
 {
-	if (is_array($options['rows']))
+	if (isset($options['rows']) && is_array($options['rows']))
 	{
 		foreach ($options['rows'] as $parentKey => $parentValue)
 		{

@@ -1434,6 +1434,7 @@ class crm extends CModule
 		$eventManager->registerEventHandler('sale', 'onSalePsInitiatePayError', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsInitiatePayError');
 
 		$eventManager->registerEventHandler('intranet', 'onBuildBindingMenu', 'crm', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMenu');
+		$eventManager->registerEventHandler('intranet', 'onBuildBindingMap', 'crm', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMap');
 
 		$eventManager->registerEventHandler('main', 'onGetUserFieldTypeFactory', $this->MODULE_ID, '\Bitrix\Crm\Service\EventHandler', 'onGetUserFieldTypeFactory', 100);
 
@@ -1531,6 +1532,22 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\ImOpenLines\EventHandler',
 			'OnImOpenLineRegisteredInCrm'
+		);
+
+		$eventManager->registerEventHandler(
+			'imopenlines',
+			'OnChatFinish',
+			'crm',
+			'\Bitrix\Crm\Integration\ImOpenLines\EventHandler',
+			'OnChatFinish'
+		);
+
+		$eventManager->registerEventHandler(
+			'imopenlines',
+			'OnOperatorTransfer',
+			'crm',
+			'\Bitrix\Crm\Integration\ImOpenLines\EventHandler',
+			'OnOperatorTransfer'
 		);
 
 		$eventManager->registerEventHandler(
@@ -1808,6 +1825,13 @@ class crm extends CModule
 			'Y',
 			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL')
 		);
+
+		\CAgent::AddAgent(
+			'Bitrix\Crm\Agent\Activity\LightCounterAgent::run();',
+			'crm',
+			'N',
+			60,
+		);
 	}
 
 	private function uninstallEventHandlers()
@@ -2047,6 +2071,7 @@ class crm extends CModule
 		);
 
 		$eventManager->unRegisterEventHandler('intranet', 'onBuildBindingMenu', 'crm', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMenu');
+		$eventManager->unRegisterEventHandler('intranet', 'onBuildBindingMap', 'crm', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMap');
 
 		$eventManager->unRegisterEventHandler(
 			'pull',
@@ -2168,6 +2193,22 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\ImOpenLines\EventHandler',
 			'OnImOpenLineRegisteredInCrm'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'imopenlines',
+			'OnChatFinish',
+			'crm',
+			'\Bitrix\Crm\Integration\ImOpenLines\EventHandler',
+			'OnChatFinish'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'imopenlines',
+			'OnOperatorTransfer',
+			'crm',
+			'\Bitrix\Crm\Integration\ImOpenLines\EventHandler',
+			'OnOperatorTransfer'
 		);
 
 		$eventManager->unRegisterEventHandler(

@@ -20,6 +20,10 @@ export class Task extends Base
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
 		const { action, actionType, actionData, animationCallbacks } = actionParams;
+		if (!actionData)
+		{
+			return;
+		}
 
 		const taskId = actionData.taskId ?? null;
 		if (!taskId)
@@ -94,7 +98,7 @@ export class Task extends Base
 				data: {
 					taskId: actionData.taskId,
 					fields: {
-						DEADLINE: actionData.value,
+						DEADLINE: (new Date(actionData.valueTs * 1000)).toISOString(),
 					},
 					params: {
 						skipTimeZoneOffset: 'DEADLINE',

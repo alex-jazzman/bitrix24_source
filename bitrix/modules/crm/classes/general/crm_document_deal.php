@@ -446,6 +446,10 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 			$CCrmBizProc = new CCrmBizProc('DEAL');
 			if (false === $CCrmBizProc->CheckFields(false, true))
 			{
+				if ($useTransaction)
+				{
+					$DB->Rollback();
+				}
 				throw new Exception($CCrmBizProc->LAST_ERROR);
 			}
 
@@ -575,6 +579,10 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 			$CCrmBizProc = new CCrmBizProc('DEAL');
 			if (false === $CCrmBizProc->CheckFields($arDocumentID['ID'], true))
 			{
+				if ($useTransaction)
+				{
+					$DB->Rollback();
+				}
 				throw new Exception($CCrmBizProc->LAST_ERROR);
 			}
 

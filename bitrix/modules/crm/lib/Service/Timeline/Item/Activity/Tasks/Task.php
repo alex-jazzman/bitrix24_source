@@ -14,6 +14,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Action\Analytics;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Date;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\EditableDate;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\FileList;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Link;

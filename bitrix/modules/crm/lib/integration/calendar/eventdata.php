@@ -18,6 +18,7 @@ class EventData
 	private ?int $associatedEntityTypeId = null;
 	private ?int $linkId = null;
 	private ?string $contactCommunication = null;
+	private ?string $channelName = null;
 
 	public const SHARING_ON_NOT_VIEWED = 'SHARING_ON_NOT_VIEWED';
 	public const SHARING_ON_VIEWED = 'SHARING_ON_VIEWED';
@@ -85,6 +86,11 @@ class EventData
 	public function getContactCommunication(): ?string
 	{
 		return $this->contactCommunication;
+	}
+
+	public function getChannelName(): ?string
+	{
+		return $this->channelName;
 	}
 
 	public function setEventType(?string $eventType)
@@ -167,6 +173,13 @@ class EventData
 	public function setContactCommunication(?string $contactCommunication): self
 	{
 		$this->contactCommunication = $contactCommunication;
+
+		return $this;
+	}
+
+	public function setChannelName(?string $channelName): self
+	{
+		$this->channelName = $channelName;
 
 		return $this;
 	}

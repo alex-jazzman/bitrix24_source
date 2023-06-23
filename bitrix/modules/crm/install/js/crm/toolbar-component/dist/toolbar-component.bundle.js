@@ -1,7 +1,10 @@
 this.BX = this.BX || {};
-(function (exports,main_core_events,ui_buttons,crm_router,main_popup,ui_hint,main_core,ui_navigationpanel) {
+(function (exports,main_core_events,ui_buttons,crm_router,main_popup,ui_tour,ui_hint,main_core,ui_navigationpanel) {
 	'use strict';
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var namespace = main_core.Reflection.namespace('BX.Crm');
 	var instance = null;
 	var ToolbarEvents = function ToolbarEvents() {
@@ -12,12 +15,14 @@ this.BX = this.BX || {};
 	 */
 	babelHelpers.defineProperty(ToolbarEvents, "TYPE_UPDATED", 'TypeUpdated');
 	babelHelpers.defineProperty(ToolbarEvents, "CATEGORIES_UPDATED", 'CategoriesUpdated');
+	var _bindAutomationGuide = /*#__PURE__*/new WeakSet();
 	var ToolbarComponent = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(ToolbarComponent, _EventEmitter);
 	  function ToolbarComponent() {
 	    var _this;
 	    babelHelpers.classCallCheck(this, ToolbarComponent);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ToolbarComponent).call(this));
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _bindAutomationGuide);
 	    _this.initHints();
 	    _this.setEventNamespace('BX.Crm.ToolbarComponent');
 	    main_core.Event.ready(_this.bindEvents.bind(babelHelpers.assertThisInitialized(_this)));
@@ -51,6 +56,7 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      }
+	      _classPrivateMethodGet(this, _bindAutomationGuide, _bindAutomationGuide2).call(this);
 	    }
 	  }, {
 	    key: "emitTypeUpdatedEvent",
@@ -216,10 +222,45 @@ this.BX = this.BX || {};
 	  }]);
 	  return ToolbarComponent;
 	}(main_core_events.EventEmitter);
+	function _bindAutomationGuide2() {
+	  var hash = document.location.hash;
+	  var guide;
+	  if (hash === '#robots') {
+	    var robotsBtn = document.querySelector('.crm-robot-btn');
+	    if (robotsBtn) {
+	      guide = new ui_tour.Guide({
+	        steps: [{
+	          target: robotsBtn,
+	          title: main_core.Loc.getMessage('CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT'),
+	          text: ''
+	        }],
+	        onEvents: true
+	      });
+	    }
+	  } else if (hash === '#scripts') {
+	    var scriptsBtn = document.querySelector('.intranet-binding-menu-btn');
+	    if (scriptsBtn) {
+	      guide = new ui_tour.Guide({
+	        steps: [{
+	          target: scriptsBtn,
+	          title: main_core.Loc.getMessage('CRM_TOOLBAR_COMPONENT_SCRIPTS_GUIDE_TEXT'),
+	          article: '13281632',
+	          text: ''
+	        }],
+	        onEvents: true
+	      });
+	    }
+	  }
+	  if (guide) {
+	    guide.start();
+	    guide.getPopup().setAutoHide(true);
+	    guide.getPopup().setClosingByEsc(true);
+	  }
+	}
 	namespace.ToolbarComponent = ToolbarComponent;
 
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var namespace$1 = main_core.Reflection.namespace('BX.Crm');
 	var _id = /*#__PURE__*/new WeakMap();
 	var _binding = /*#__PURE__*/new WeakMap();
@@ -296,5 +337,5 @@ this.BX = this.BX || {};
 	exports.ToolbarComponent = ToolbarComponent;
 	exports.NavigationBar = NavigationBar;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Event,BX.UI,BX.Crm,BX.Main,BX,BX,BX.UI));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Event,BX.UI,BX.Crm,BX.Main,BX.UI.Tour,BX,BX,BX.UI));
 //# sourceMappingURL=toolbar-component.bundle.js.map

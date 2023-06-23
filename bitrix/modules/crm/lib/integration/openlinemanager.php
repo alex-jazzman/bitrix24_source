@@ -7,9 +7,11 @@ use Bitrix\Im\Counter;
 use Bitrix\ImOpenLines\Chat;
 use Bitrix\ImOpenLines\Config;
 use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Operator;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Result;
 
 Loc::loadMessages(__FILE__);
 
@@ -234,5 +236,27 @@ class OpenLineManager
 		}
 
 		return 0;
+	}
+
+	public static function closeDialog(?string $code): ?Result
+	{
+		if (
+			!isset($code)
+			|| !Loader::includeModule('im')
+			|| !Loader::includeModule('imopenlines')
+		)
+		{
+			return null;
+		}
+
+		$chatId = Chat::getChatIdByUserCode($code);
+		if (isset($chatId))
+		{
+			$control = new Operator($chatId);
+
+			return $control->closeDialog();
+		}
+
+		return null;
 	}
 }

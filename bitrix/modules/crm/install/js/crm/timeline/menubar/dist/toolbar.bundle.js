@@ -1664,7 +1664,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t5$1,
 	  _t6$1,
 	  _t7$1,
-	  _t8$1;
+	  _t8$1,
+	  _t9$1,
+	  _t10$1,
+	  _t11$1,
+	  _t12$1;
 
 	/** @memberof BX.Crm.Timeline.MenuBar */
 	class Sharing extends WithEditor {
@@ -1679,10 +1683,27 @@ this.BX.Crm = this.BX.Crm || {};
 	    const config = settings.config;
 	    this.link = config.link;
 	    this.setContacts(config.contacts);
+	    this.isNotificationsAvailable = config.isNotificationsAvailable;
 	    this.areCommunicationChannelsAvailable = config.areCommunicationChannelsAvailable;
+	    if (this.areCommunicationChannelsAvailable) {
+	      this.setCommunicationChannels(config.communicationChannels, config.selectedChannelId);
+	    }
 	    this.doPayAttentionToNewFeature = config.doPayAttentionToNewFeature;
 	    super.initialize(context, settings);
-	    this.bindEvents();
+	    if (this.getSetting('isAvailable')) {
+	      this.bindEvents();
+	    }
+	  }
+	  activate() {
+	    if (this.getSetting('isAvailable')) {
+	      this.setVisible(true);
+	    } else {
+	      var _BX$UI, _BX$UI$InfoHelper;
+	      (_BX$UI = BX.UI) == null ? void 0 : (_BX$UI$InfoHelper = _BX$UI.InfoHelper) == null ? void 0 : _BX$UI$InfoHelper.show('limit_crm_calendar_free_slots');
+	    }
+	  }
+	  supportsLayout() {
+	    return this.getSetting('isAvailable');
 	  }
 	  bindEvents() {
 	    main_core_events.EventEmitter.subscribe('CalendarSharing:LinkCopied', () => this.onLinkCopied());
@@ -1805,12 +1826,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.showSettingsPopup();
 	  }
 	  onSendButtonClick() {
-	    if (!this.areCommunicationChannelsAvailable) {
-	      this.showWarningNoCommunicationChannels();
-	      return;
-	    }
 	    if (!this.isContactAvailable()) {
 	      this.showWarningNoContact();
+	      return;
+	    }
+	    if (!this.areCommunicationChannelsAvailable) {
+	      this.showWarningNoCommunicationChannels();
 	      return;
 	    }
 	    this.onSaveButtonClick();
@@ -1845,16 +1866,45 @@ this.BX.Crm = this.BX.Crm || {};
 	    return (_this$settingsMenu = this.settingsMenu) == null ? void 0 : _this$settingsMenu.popupWindow.isShown();
 	  }
 	  getSettingsMenu() {
+	    const items = [this.getSharingReceiverItem()];
+	    if (this.areCommunicationChannelsAvailable && this.isChannelsAvailable()) {
+	      items.push(this.getSharingChannelsItem());
+	    }
+	    if (this.currentFromList) {
+	      items.push(this.getSharingSenderItem());
+	    }
 	    return main_popup.MenuManager.create({
 	      id: 'crm-calendar-sharing-settings',
 	      bindElement: this.DOM.settingsButton,
-	      items: [{
-	        text: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_RECEIVER'),
-	        items: this.contacts.map(contact => {
-	          return this.getContactMenuItem(contact);
-	        })
-	      }]
+	      items: items
 	    });
+	  }
+	  getSharingReceiverItem() {
+	    return {
+	      id: 'sharing_receiver',
+	      text: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_RECEIVER'),
+	      items: this.contacts.map(contact => {
+	        return this.getContactMenuItem(contact);
+	      })
+	    };
+	  }
+	  getSharingChannelsItem() {
+	    return {
+	      id: 'sharing_channels',
+	      text: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNELS'),
+	      items: this.channels.map(channel => {
+	        return this.getChannelMenuItem(channel);
+	      })
+	    };
+	  }
+	  getSharingSenderItem() {
+	    return {
+	      id: 'sharing_sender',
+	      text: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_SENDER'),
+	      items: this.currentFromList.map(from => {
+	        return this.getFromMenuItem(from);
+	      })
+	    };
 	  }
 	  getContactMenuItem(contact) {
 	    const isSelected = contact.entityId === this.contact.entityId && contact.entityTypeId === this.contact.entityTypeId;
@@ -1876,13 +1926,65 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    };
 	  }
+	  getChannelMenuItem(channel) {
+	    const isSelected = channel.id === this.channel.id;
+	    const itemHtml = main_core.Tag.render(_t9$1 || (_t9$1 = _$3`
+			<div class="crm-entity-stream-calendar-sharing-settings-check">
+				<div>${0}</div>
+			</div>
+		`), channel.name);
+	    channel.check = main_core.Tag.render(_t10$1 || (_t10$1 = _$3`
+			<div class="crm-entity-stream-calendar-sharing-settings-check-icon ${0}"></div>
+		`), isSelected ? '--show' : '');
+	    itemHtml.append(channel.check);
+	    return {
+	      html: itemHtml,
+	      onclick: () => {
+	        main_core.Dom.removeClass(this.channel.check, '--show');
+	        main_core.Dom.addClass(channel.check, '--show');
+	        this.channel = channel;
+	        this.updateSenderList();
+	      }
+	    };
+	  }
+	  getFromMenuItem(from) {
+	    const isSelected = from.id === this.currentFrom.id;
+	    const itemHtml = main_core.Tag.render(_t11$1 || (_t11$1 = _$3`
+			<div class="crm-entity-stream-calendar-sharing-settings-check">
+				<div>${0}</div>
+			</div>
+		`), from.name);
+	    from.check = main_core.Tag.render(_t12$1 || (_t12$1 = _$3`
+			<div class="crm-entity-stream-calendar-sharing-settings-check-icon ${0}"></div>
+		`), isSelected ? '--show' : '');
+	    itemHtml.append(from.check);
+	    return {
+	      html: itemHtml,
+	      onclick: () => {
+	        main_core.Dom.removeClass(this.currentFrom.check, '--show');
+	        main_core.Dom.addClass(from.check, '--show');
+	        this.currentFrom = from;
+	      }
+	    };
+	  }
 	  showWarningNoCommunicationChannels() {
-	    const title = main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TITLE');
-	    const text = `
-			<div>${main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_1')}</div>
-			</br>
-			<div>${main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2')}</div>
-		`;
+	    let title;
+	    let text;
+	    if (this.isNotificationsAvailable) {
+	      title = main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TITLE');
+	      text = `
+				<div>${main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_1')}</div>
+				</br>
+				<div>${main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2')}</div>
+			`;
+	    } else {
+	      title = main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE');
+	      text = `
+				<div>${main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE_1')}</div>
+				</br>
+				<div>${main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2')}</div>
+			`;
+	    }
 	    const noCommunicationChannelsWarningGuide = this.getWarningGuide(title, text);
 	    noCommunicationChannelsWarningGuide.showNextStep();
 	    const guidePopup = noCommunicationChannelsWarningGuide.getPopup();
@@ -1898,6 +2000,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    const text = main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT');
 	    const noContactWarningGuide = this.getWarningGuide(title, text);
 	    noContactWarningGuide.showNextStep();
+	  }
+	  updateSenderList() {
+	    this.currentFromList = this.channel.fromList;
+	    this.currentFrom = this.channel.fromList[0];
+	    if (this.settingsMenu) {
+	      this.settingsMenu.removeMenuItem('sharing_sender');
+	      const item = this.getSharingSenderItem();
+	      this.settingsMenu.addMenuItem(item);
+	    }
 	  }
 	  copyLink(link) {
 	    BX.clipboard.copy(link);
@@ -1921,10 +2032,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      ownerId: this.getEntityId(),
 	      ownerTypeId: this.getEntityTypeId()
 	    };
-	    if (this.isContactAvailable() && !options.isActionCopy) {
+	    if (this.isContactAvailable() && this.isChannelsAvailable() && !options.isActionCopy) {
 	      action = 'crm.api.timeline.calendar.sharing.sendLink';
 	      data.contactId = this.contact.entityId || null;
 	      data.contactTypeId = this.contact.entityTypeId || null;
+	      data.channelId = this.channel.id || null;
+	      data.senderId = this.currentFrom.id || null;
 	    } else {
 	      action = 'crm.api.timeline.calendar.sharing.onLinkCopied';
 	      data.linkHash = this.link.hash;
@@ -1983,8 +2096,26 @@ this.BX.Crm = this.BX.Crm || {};
 	      return contact.entityTypeId === ((_this$contact = this.contact) == null ? void 0 : _this$contact.entityTypeId) && contact.entityId === ((_this$contact2 = this.contact) == null ? void 0 : _this$contact2.entityId);
 	    })) != null ? _contacts$find : this.contacts[0];
 	  }
+	  setCommunicationChannels(channels, selectedId) {
+	    this.channels = channels || [];
+	    if (selectedId) {
+	      var _channels$find;
+	      this.channel = (_channels$find = channels.find(channel => {
+	        return channel.id === selectedId;
+	      })) != null ? _channels$find : this.channels[0];
+	    } else {
+	      this.channel = this.channels ? this.channels[0] : null;
+	    }
+	    if (this.channel && this.channel.fromList) {
+	      this.currentFromList = this.channel.fromList;
+	      this.currentFrom = this.channel.fromList[0];
+	    }
+	  }
 	  isContactAvailable() {
 	    return main_core.Type.isArrayFilled(this.contacts);
+	  }
+	  isChannelsAvailable() {
+	    return main_core.Type.isArrayFilled(this.channels);
 	  }
 	  openHelpDesk() {
 	    if (top.BX.Helper) {

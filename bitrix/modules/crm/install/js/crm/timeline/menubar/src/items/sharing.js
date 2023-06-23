@@ -22,11 +22,39 @@ export default class Sharing extends WithEditor
 
 		this.setContacts(config.contacts);
 
+		this.isNotificationsAvailable = config.isNotificationsAvailable;
+
 		this.areCommunicationChannelsAvailable = config.areCommunicationChannelsAvailable;
+		if (this.areCommunicationChannelsAvailable)
+		{
+			this.setCommunicationChannels(config.communicationChannels, config.selectedChannelId);
+		}
+
 		this.doPayAttentionToNewFeature = config.doPayAttentionToNewFeature;
 
 		super.initialize(context, settings);
-		this.bindEvents();
+
+		if (this.getSetting('isAvailable'))
+		{
+			this.bindEvents();
+		}
+	}
+
+	activate()
+	{
+		if (this.getSetting('isAvailable'))
+		{
+			this.setVisible(true);
+		}
+		else
+		{
+			BX.UI?.InfoHelper?.show('limit_crm_calendar_free_slots');
+		}
+	}
+
+	supportsLayout(): Boolean
+	{
+		return this.getSetting('isAvailable');
 	}
 
 	bindEvents()
@@ -184,15 +212,15 @@ export default class Sharing extends WithEditor
 
 	onSendButtonClick()
 	{
-		if (!this.areCommunicationChannelsAvailable)
-		{
-			this.showWarningNoCommunicationChannels();
-			return;
-		}
-
 		if (!this.isContactAvailable())
 		{
 			this.showWarningNoContact();
+			return;
+		}
+
+		if (!this.areCommunicationChannelsAvailable)
+		{
+			this.showWarningNoCommunicationChannels();
 			return;
 		}
 
@@ -241,18 +269,56 @@ export default class Sharing extends WithEditor
 
 	getSettingsMenu()
 	{
+		const items = [this.getSharingReceiverItem()];
+
+		if (this.areCommunicationChannelsAvailable && this.isChannelsAvailable())
+		{
+			items.push(this.getSharingChannelsItem());
+		}
+
+		if (this.currentFromList)
+		{
+			items.push(this.getSharingSenderItem());
+		}
+
 		return MenuManager.create({
 			id: 'crm-calendar-sharing-settings',
 			bindElement: this.DOM.settingsButton,
-			items: [
-				{
-					text: Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_RECEIVER'),
-					items: this.contacts.map((contact) => {
-						return this.getContactMenuItem(contact);
-					}),
-				},
-			],
+			items: items
 		});
+	}
+
+	getSharingReceiverItem()
+	{
+		return {
+			id: 'sharing_receiver',
+			text: Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_RECEIVER'),
+			items: this.contacts.map((contact) => {
+				return this.getContactMenuItem(contact);
+			})
+		};
+	}
+
+	getSharingChannelsItem()
+	{
+		return {
+			id: 'sharing_channels',
+			text: Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNELS'),
+			items: this.channels.map((channel) => {
+				return this.getChannelMenuItem(channel);
+			}),
+		}
+	}
+
+	getSharingSenderItem()
+	{
+		return {
+			id: 'sharing_sender',
+			text: Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_SENDER'),
+			items: this.currentFromList.map((from) => {
+				return this.getFromMenuItem(from);
+			}),
+		};
 	}
 
 	getContactMenuItem(contact)
@@ -274,18 +340,81 @@ export default class Sharing extends WithEditor
 				Dom.removeClass(this.contact.check, '--show');
 				Dom.addClass(contact.check, '--show');
 				this.contact = contact;
-			}
+			},
+		};
+	}
+
+	getChannelMenuItem(channel)
+	{
+		const isSelected = channel.id === this.channel.id;
+		const itemHtml = Tag.render`
+			<div class="crm-entity-stream-calendar-sharing-settings-check">
+				<div>${channel.name}</div>
+			</div>
+		`;
+		channel.check = Tag.render`
+			<div class="crm-entity-stream-calendar-sharing-settings-check-icon ${isSelected ? '--show' : ''}"></div>
+		`;
+		itemHtml.append(channel.check);
+
+		return {
+			html: itemHtml,
+			onclick: () => {
+				Dom.removeClass(this.channel.check, '--show');
+				Dom.addClass(channel.check, '--show');
+				this.channel = channel;
+
+				this.updateSenderList();
+			},
+		};
+	}
+
+	getFromMenuItem(from)
+	{
+		const isSelected = from.id === this.currentFrom.id;
+		const itemHtml = Tag.render`
+			<div class="crm-entity-stream-calendar-sharing-settings-check">
+				<div>${from.name}</div>
+			</div>
+		`;
+		from.check = Tag.render`
+			<div class="crm-entity-stream-calendar-sharing-settings-check-icon ${isSelected ? '--show' : ''}"></div>
+		`;
+		itemHtml.append(from.check);
+
+		return {
+			html: itemHtml,
+			onclick: () => {
+				Dom.removeClass(this.currentFrom.check, '--show');
+				Dom.addClass(from.check, '--show');
+				this.currentFrom = from;
+			},
 		};
 	}
 
 	showWarningNoCommunicationChannels()
 	{
-		const title = Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TITLE');
-		const text = `
-			<div>${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_1')}</div>
-			</br>
-			<div>${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2')}</div>
-		`;
+		let title;
+		let text;
+
+		if (this.isNotificationsAvailable)
+		{
+			title = Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TITLE');
+			text = `
+				<div>${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_1')}</div>
+				</br>
+				<div>${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2')}</div>
+			`;
+		}
+		else
+		{
+			title = Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE');
+			text = `
+				<div>${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE_1')}</div>
+				</br>
+				<div>${Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2')}</div>
+			`;
+		}
 
 		const noCommunicationChannelsWarningGuide = this.getWarningGuide(title, text);
 		noCommunicationChannelsWarningGuide.showNextStep();
@@ -305,6 +434,19 @@ export default class Sharing extends WithEditor
 		const text = Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT');
 		const noContactWarningGuide = this.getWarningGuide(title, text);
 		noContactWarningGuide.showNextStep();
+	}
+
+	updateSenderList()
+	{
+		this.currentFromList = this.channel.fromList;
+		this.currentFrom = this.channel.fromList[0];
+
+		if (this.settingsMenu)
+		{
+			this.settingsMenu.removeMenuItem('sharing_sender');
+			const item = this.getSharingSenderItem();
+			this.settingsMenu.addMenuItem(item);
+		}
 	}
 
 	copyLink(link)
@@ -332,11 +474,13 @@ export default class Sharing extends WithEditor
 			ownerTypeId: this.getEntityTypeId(),
 		};
 
-		if (this.isContactAvailable() && !options.isActionCopy)
+		if (this.isContactAvailable() && this.isChannelsAvailable() && !options.isActionCopy)
 		{
 			action = 'crm.api.timeline.calendar.sharing.sendLink';
 			data.contactId = this.contact.entityId || null;
 			data.contactTypeId = this.contact.entityTypeId || null;
+			data.channelId = this.channel.id || null;
+			data.senderId = this.currentFrom.id || null;
 		}
 		else
 		{
@@ -408,14 +552,41 @@ export default class Sharing extends WithEditor
 		}) ?? this.contacts[0];
 	}
 
+	setCommunicationChannels(channels, selectedId)
+	{
+		this.channels = channels || [];
+
+		if (selectedId)
+		{
+			this.channel = channels.find((channel) => {
+				return channel.id === selectedId
+			}) ?? this.channels[0];
+		}
+		else
+		{
+			this.channel = this.channels ? this.channels[0] : null;
+		}
+
+		if (this.channel && this.channel.fromList)
+		{
+			this.currentFromList = this.channel.fromList;
+			this.currentFrom = this.channel.fromList[0];
+		}
+	}
+
 	isContactAvailable()
 	{
 		return Type.isArrayFilled(this.contacts);
 	}
 
+	isChannelsAvailable()
+	{
+		return Type.isArrayFilled(this.channels);
+	}
+
 	openHelpDesk()
 	{
-		if(top.BX.Helper)
+		if (top.BX.Helper)
 		{
 			top.BX.Helper.show(`redirect=detail&code=${this.HELPDESK_CODE}`);
 		}

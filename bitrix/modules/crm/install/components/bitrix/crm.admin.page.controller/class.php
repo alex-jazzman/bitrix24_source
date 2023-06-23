@@ -367,7 +367,6 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			{
 				if (
 					Loader::includeModule('intranet') // TODO: erase this code row after remove public files from intranet wizard 'portal'
-					&& Catalog\Config\Feature::isInventoryManagementEnabled()
 				)
 				{
 					if ($menuItemId === 'menu_catalog_store')

@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main;
-use Bitrix\Main\Config;
 use Bitrix\Main\Type;
 
 class IntranetNotifyPanelComponent extends \CBitrixComponent implements Main\Engine\Contract\Controllerable
@@ -105,7 +104,7 @@ class IntranetNotifyPanelComponent extends \CBitrixComponent implements Main\Eng
 				: self::TYPES_LICENSE_NOTIFICATION['almost-expired-60'];
 			$data['expireDate'] = $expireDate->getTimestamp();
 			$data['blockDate'] = $expireDate->add('+15 days')->getTimestamp();
-			$data['isPortalWithPartner'] = (int)Config\Option::get('main', '~PARAM_PARTNER_ID', 0) > 0;
+			$data['isPortalWithPartner'] = $this->license->getPartnerId() > 0;
 			$data['urlBuyWithPartner'] = self::URL_PARTNER_BUY;
 			$data['urlDefaultBuy'] = $this->license->getBuyLink();
 			$data['urlArticle'] = $this->license->getDocumentationLink();

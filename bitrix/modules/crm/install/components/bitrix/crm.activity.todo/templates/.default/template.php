@@ -1,11 +1,16 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
-\Bitrix\Main\UI\Extension::load('ui.cnt');
+Extension::load(['ui.fonts.opensans', 'ui.cnt']);
 
-if ($arParams['IS_AJAX'] == 'Y')
+if ($arParams['IS_AJAX'] === 'Y')
 {
 	echo '<link rel="stylesheet" type="text/css" href="', $this->getFolder(), '/style.css?6" />';
 	echo '<script type="text/javascript" src="', $this->getFolder(), '/script.js?v14"></script>';
@@ -15,7 +20,10 @@ if ($arParams['IS_AJAX'] == 'Y')
 <script type="text/javascript">
 	BX.message({
 		CRM_ACTIVITY_TODO_VIEW_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_VIEW_TITLE'));?>',
-		CRM_ACTIVITY_TODO_CLOSE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_CLOSE'));?>'
+		CRM_ACTIVITY_TODO_CLOSE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_CLOSE'));?>',
+		CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF'));?>',
+		CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT'));?>',
+		CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE'));?>'
 	});
 	BX.ready(function()
 	{

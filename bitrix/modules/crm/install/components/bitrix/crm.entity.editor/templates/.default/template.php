@@ -564,7 +564,16 @@ if(!empty($htmlEditorConfigs))
 				entityEditTag: "<?=GetMessageJS('CRM_ENTITY_ED_EDIT_TAG')?>",
 				notFound: "<?=GetMessageJS('CRM_ENTITY_ED_NOT_FOUND')?>",
 				unnamed: "<?=CUtil::JSEscape(\CCrmContact::GetDefaultName())?>",
-				untitled: "<?=CUtil::JSEscape(\CCrmCompany::GetDefaultTitle())?>"
+				untitled: "<?=CUtil::JSEscape(\CCrmCompany::GetDefaultTitle())?>",
+				companyChangeButtonHint: "<?=GetMessageJS('CRM_ENTITY_ED_COMPANY_CHANGE_BUTTON_HINT')?>",
+				notifyContactToDeal: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_DEAL')?>",
+				notifyCompanyToDeal: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_DEAL')?>",
+				notifyContactToLead: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_LEAD')?>",
+				notifyCompanyToLead: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_LEAD')?>",
+				notifyContactToSmartInvoice: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_INVOICE')?>",
+				notifyCompanyToSmartInvoice: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_INVOICE')?>",
+				notifyContactToCompany: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_COMPANY')?>",
+				notifyCompanyToContact: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_CONTACT')?>",
 			};
 
 			BX.Crm.ClientEditorCommunicationButton.messages =

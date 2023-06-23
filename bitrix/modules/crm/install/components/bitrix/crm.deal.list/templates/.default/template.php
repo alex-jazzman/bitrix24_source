@@ -103,6 +103,7 @@ echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 		</div><?
 	}
 	?></div><?
+
 $isRecurring = isset($arParams['IS_RECURRING']) && $arParams['IS_RECURRING'] === 'Y';
 $isInternal = $arResult['INTERNAL'];
 $callListUpdateMode = $arResult['CALL_LIST_UPDATE_MODE'];
@@ -111,7 +112,7 @@ $allowDelete = $arResult['PERMS']['DELETE'];
 $allowExclude = $arResult['CAN_EXCLUDE'];
 $currentUserID = $arResult['CURRENT_USER_ID'];
 $activityEditorID = '';
-if(!$isInternal)
+if (!$isInternal)
 {
 	$activityEditorID = "{$arResult['GRID_ID']}_activity_editor";
 	$APPLICATION->IncludeComponent(
@@ -143,8 +144,10 @@ $gridManagerCfg = array(
 	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 	'filterFields' => []
 );
+
 echo CCrmViewHelper::RenderDealStageSettings($arParams['CATEGORY_ID'] ?? null);
-$prefix = $arResult['GRID_ID'];
+
+$prefix = $arResult['GRID_ID'] ?? '';
 $prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $arResult['GRID_DATA'] = [];
@@ -163,7 +166,7 @@ if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 	$arResult['DEAL'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Deal))->appendNearestActivityBlock($arResult['DEAL']);
 }
 
-foreach($arResult['DEAL'] as $sKey =>  $arDeal)
+foreach ($arResult['DEAL'] as $sKey =>  $arDeal)
 {
 	$jsTitle = isset($arDeal['~TITLE']) ? CUtil::JSEscape($arDeal['~TITLE']) : '';
 	$jsShowUrl = isset($arDeal['PATH_TO_DEAL_SHOW']) ? CUtil::JSEscape($arDeal['PATH_TO_DEAL_SHOW']) : '';
@@ -179,7 +182,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 		'DEFAULT' => true
 	);
 
-	if($arDeal['EDIT'])
+	if ($arDeal['EDIT'])
 	{
 		$arActions[] = array(
 			'TITLE' => GetMessage('CRM_DEAL_EDIT_TITLE'),
@@ -197,7 +200,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 		}
 	}
 
-	if(!$isInternal && $arDeal['DELETE'])
+	if (!$isInternal && $arDeal['DELETE'])
 	{
 		$pathToRemove = CUtil::JSEscape($arDeal['PATH_TO_DEAL_DELETE']);
 		$arActions[] = array(
@@ -211,7 +214,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 		);
 	}
 
-	if($allowExclude && $arDeal['CAN_EXCLUDE'])
+	if ($allowExclude && $arDeal['CAN_EXCLUDE'])
 	{
 		$pathToExclude = CUtil::JSEscape($arDeal['PATH_TO_DEAL_EXCLUDE']);
 		$arActions[] = array(
@@ -227,11 +230,11 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 
 	$arActions[] = array('SEPARATOR' => true);
 
-	if(!$isInternal && $arParams['IS_RECURRING'] !== 'Y')
+	if (!$isInternal && $arParams['IS_RECURRING'] !== 'Y')
 	{
-		if($arResult['CAN_CONVERT'])
+		if ($arResult['CAN_CONVERT'])
 		{
-			if($arResult['CONVERSION_PERMITTED'])
+			if ($arResult['CONVERSION_PERMITTED'])
 			{
 				$arSchemeDescriptions = \Bitrix\Crm\Conversion\DealConversionScheme::getJavaScriptDescriptions(true);
 				if (!\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
@@ -239,7 +242,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 					unset($arSchemeDescriptions[\Bitrix\Crm\Conversion\DealConversionScheme::INVOICE_NAME]);
 				}
 				$arSchemeList = [];
-				foreach($arSchemeDescriptions as $name => $description)
+				foreach ($arSchemeDescriptions as $name => $description)
 				{
 					$arSchemeList[] = array(
 						'TITLE' => $description,
@@ -247,7 +250,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 						'ONCLICK' => "BX.CrmDealConverter.getCurrent().convert({$arDeal['ID']}, BX.CrmDealConversionScheme.createConfig('{$name}'), '".CUtil::JSEscape($APPLICATION->GetCurPage())."');"
 					);
 				}
-				if(!empty($arSchemeList))
+				if (!empty($arSchemeList))
 				{
 					$arActions[] = array('SEPARATOR' => true);
 					$arActions[] = array(
@@ -269,7 +272,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 			$arActions[] = array('SEPARATOR' => true);
 		}
 
-		if($arDeal['EDIT'])
+		if ($arDeal['EDIT'])
 		{
 			if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
 			{
@@ -293,7 +296,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 				);
 			}
 
-			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
+			if (IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
 			{
 				$arActivityMenuItems[] = array(
 					'TITLE' => GetMessage('CRM_DEAL_ADD_CALL_TITLE'),
@@ -336,7 +339,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 				);
 			}
 
-			if(IsModuleInstalled('tasks'))
+			if (IsModuleInstalled('tasks'))
 			{
 				$arActivityMenuItems[] = array(
 					'TITLE' => GetMessage('CRM_DEAL_TASK_TITLE'),
@@ -359,7 +362,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 				);
 			}
 
-			if(!empty($arActivitySubMenuItems))
+			if (!empty($arActivitySubMenuItems))
 			{
 				$arActions[] = array(
 					'TITLE' => GetMessage('CRM_DEAL_ADD_ACTIVITY_TITLE'),
@@ -368,19 +371,19 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 				);
 			}
 
-			if($arResult['IS_BIZPROC_AVAILABLE'])
+			if ($arResult['IS_BIZPROC_AVAILABLE'])
 			{
 				$arActions[] = array('SEPARATOR' => true);
-				if(isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
+				if (isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
 					$arActions[] = array(
 						'TITLE' => GetMessage('CRM_DEAL_BIZPROC_TITLE'),
 						'TEXT' => GetMessage('CRM_DEAL_BIZPROC'),
 						'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arDeal['PATH_TO_BIZPROC_LIST'])."');"
 					);
-				if(!empty($arDeal['BIZPROC_LIST']))
+				if (!empty($arDeal['BIZPROC_LIST']))
 				{
 					$arBizprocList = [];
-					foreach($arDeal['BIZPROC_LIST'] as $arBizproc)
+					foreach ($arDeal['BIZPROC_LIST'] as $arBizproc)
 					{
 						$arBizprocList[] = array(
 							'TITLE' => $arBizproc['DESCRIPTION'],
@@ -406,10 +409,51 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 		'CALL_LIST_CONTEXT' => $arResult['CALL_LIST_CONTEXT'],
 		'GRID_ID' => $arResult['GRID_ID']
 	);
-	foreach(GetModuleEvents('crm', 'onCrmDealListItemBuildMenu', true) as $event)
+
+	foreach (GetModuleEvents('crm', 'onCrmDealListItemBuildMenu', true) as $event)
 	{
 		ExecuteModuleEventEx($event, array('CRM_DEAL_LIST_MENU', $eventParam, &$arActions));
 	}
+
+	$bizprocStatus = empty($arDeal['BIZPROC_STATUS']) ? '' : 'bizproc bizproc_status_' . $arDeal['BIZPROC_STATUS'];
+	$bizprocStatusHint = empty($arDeal['BIZPROC_STATUS_HINT'])
+		? ''
+		: 'onmouseover="BX.hint(this, \'' . CUtil::JSEscape($arDeal['BIZPROC_STATUS_HINT']) . '\');"';
+	$title = '<a target="_self" href="' . $arDeal['PATH_TO_DEAL_SHOW'] . '" class="' . $bizprocStatus . '"' . $bizprocStatusHint . '>' . $arDeal['TITLE'] . '</a>';
+
+	$dateCreate = $arDeal['DATE_CREATE'] ?? '';
+	$dateModify = $arDeal['DATE_MODIFY'] ?? '';
+	$webformId = null;
+	if (isset($arDeal['WEBFORM_ID']))
+	{
+		$webformId = $arResult['WEBFORM_LIST'][$arDeal['WEBFORM_ID']] ?? $arDeal['WEBFORM_ID'];
+	}
+
+	$typeId = null;
+	if (isset($arDeal['TYPE_ID']))
+	{
+		$typeId = $arResult['TYPE_LIST'][$arDeal['TYPE_ID']] ?? $arDeal['TYPE_ID'];
+	}
+
+	$sourceId = null;
+	if (isset($arDeal['SOURCE_ID']))
+	{
+		$sourceId = $arResult['SOURCE_LIST'][$arDeal['SOURCE_ID']] ?? $arDeal['SOURCE_ID'];
+	}
+
+	$eventId = null;
+	if (isset($arDeal['EVENT_ID']))
+	{
+		$eventId = $arResult['EVENT_LIST'][$arDeal['EVENT_ID']] ?? $arDeal['EVENT_ID'];
+	}
+
+	$stateId = null;
+	if (isset($arDeal['STATE_ID']))
+	{
+		$stateId = $arResult['STATE_LIST'][$arDeal['STATE_ID']] ?? $arDeal['STATE_ID'];
+	}
+
+	$probability = isset($arDeal['PROBABILITY']) ? "{$arDeal['PROBABILITY']}%" : '';
 
 	$resultItem = array(
 		'id' => $arDeal['ID'],
@@ -418,47 +462,49 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 		'editable' => !$arDeal['EDIT'] ? ($arResult['INTERNAL'] ? 'N' : $arColumns) : 'Y',
 		'columns' => array(
 				'DEAL_SUMMARY' => CCrmViewHelper::RenderInfo(
-					$arDeal['PATH_TO_DEAL_SHOW'],
+					$arDeal['PATH_TO_DEAL_SHOW'] ?? '',
 					($arDeal['TITLE_PREFIX'] ?? '') . ($arDeal['TITLE'] ?? ('[' . $arDeal['ID'] . ']')),
 					Tracking\UI\Grid::enrichSourceName(
 						\CCrmOwnerType::Deal,
 						$arDeal['ID'],
 						$arDeal['DEAL_DESCRIPTION']
 					),
-					array(
+					[
 						'TARGET' => '_top',
-						'LEGEND' => $arDeal['DEAL_LEGEND']
-					)
+						'LEGEND' => $arDeal['DEAL_LEGEND'],
+					]
 				),
 				'DEAL_CLIENT' => isset($arDeal['CLIENT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['CLIENT_INFO']) : '',
 				'COMPANY_ID' => isset($arDeal['COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['COMPANY_INFO']) : '',
 				'CONTACT_ID' => isset($arDeal['CONTACT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arDeal['CONTACT_INFO']) : '',
-				'TITLE' => '<a target="_self" href="'.$arDeal['PATH_TO_DEAL_SHOW'].'"
-				class="'.($arDeal['BIZPROC_STATUS'] != '' ? 'bizproc bizproc_status_'.$arDeal['BIZPROC_STATUS'] : '').'"
-				'.($arDeal['BIZPROC_STATUS_HINT'] != '' ? 'onmouseover="BX.hint(this, \''.CUtil::JSEscape($arDeal['BIZPROC_STATUS_HINT']).'\');"' : '').'>'.$arDeal['TITLE'].'</a>',
-				'CLOSED' => $arDeal['CLOSED'] == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-				'ASSIGNED_BY' => $arDeal['~ASSIGNED_BY_ID'] > 0
+				'TITLE' => $title,
+				'CLOSED' => isset($arDeal['CLOSED']) && $arDeal['CLOSED'] === 'Y'
+					? GetMessage('MAIN_YES')
+					: GetMessage('MAIN_NO'),
+				'ASSIGNED_BY' => isset($arDeal['~ASSIGNED_BY_ID']) && $arDeal['~ASSIGNED_BY_ID'] > 0
 					? CCrmViewHelper::PrepareUserBaloonHtml(
-						array(
+						[
 							'PREFIX' => "DEAL_{$arDeal['~ID']}_RESPONSIBLE",
 							'USER_ID' => $arDeal['~ASSIGNED_BY_ID'],
 							'USER_NAME'=> $arDeal['ASSIGNED_BY'],
-							'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_PROFILE']
-						)
+							'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_PROFILE'],
+						]
 					) : '',
-				'COMMENTS' => htmlspecialcharsback($arDeal['COMMENTS']),
+				'COMMENTS' => htmlspecialcharsback($arDeal['COMMENTS'] ?? ''),
 				'SUM' => $arDeal['FORMATTED_OPPORTUNITY'],
-				'OPPORTUNITY' => $arDeal['OPPORTUNITY'],
-				'PROBABILITY' => "{$arDeal['PROBABILITY']}%",
-				'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arDeal['DATE_CREATE']), $now),
-				'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arDeal['DATE_MODIFY']), $now),
-				'TYPE_ID' => isset($arResult['TYPE_LIST'][$arDeal['TYPE_ID']]) ? $arResult['TYPE_LIST'][$arDeal['TYPE_ID']] : $arDeal['TYPE_ID'],
-				'SOURCE_ID' => isset($arResult['SOURCE_LIST'][$arDeal['SOURCE_ID']]) ? $arResult['SOURCE_LIST'][$arDeal['SOURCE_ID']] : $arDeal['SOURCE_ID'],
-				'EVENT_ID' => isset($arResult['EVENT_LIST'][$arDeal['EVENT_ID']]) ? $arResult['EVENT_LIST'][$arDeal['EVENT_ID']] : $arDeal['EVENT_ID'],
-				'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName	($arDeal['CURRENCY_ID']),
-				'PRODUCT_ID' => isset($arDeal['PRODUCT_ROWS']) ? htmlspecialcharsbx(CCrmProductRow::RowsToString($arDeal['PRODUCT_ROWS'])) : '',
-				'STATE_ID' => isset($arResult['STATE_LIST'][$arDeal['STATE_ID']]) ? $arResult['STATE_LIST'][$arDeal['STATE_ID']] : $arDeal['STATE_ID'],
-				'WEBFORM_ID' => isset($arResult['WEBFORM_LIST'][$arDeal['WEBFORM_ID']]) ? $arResult['WEBFORM_LIST'][$arDeal['WEBFORM_ID']] : $arDeal['WEBFORM_ID'],
+				'OPPORTUNITY' => $arDeal['OPPORTUNITY'] ?? 0.0,
+				'PROBABILITY' => $probability,
+				'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
+				'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
+				'TYPE_ID' => $typeId,
+				'SOURCE_ID' => $sourceId,
+				'EVENT_ID' => $eventId,
+				'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arDeal['CURRENCY_ID'] ?? null),
+				'PRODUCT_ID' => isset($arDeal['PRODUCT_ROWS'])
+					? htmlspecialcharsbx(CCrmProductRow::RowsToString($arDeal['PRODUCT_ROWS']))
+					: '',
+				'STATE_ID' => $stateId,
+				'WEBFORM_ID' => $webformId,
 				'PAYMENT_STAGE' => ($arDeal['PAYMENT_STAGE'] ?? ''),
 				'DELIVERY_STAGE' => ($arDeal['DELIVERY_STAGE'] ?? ''),
 				'STAGE_ID' => CCrmViewHelper::RenderDealStageControl(
@@ -474,17 +520,16 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 				'CATEGORY_ID' => $arDeal['DEAL_CATEGORY_NAME'],
 				'IS_RETURN_CUSTOMER' => $arDeal['IS_RETURN_CUSTOMER'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 				'IS_REPEATED_APPROACH' => $arDeal['IS_REPEATED_APPROACH'] === 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-				'ORIGINATOR_ID' => isset($arDeal['ORIGINATOR_NAME']) ? $arDeal['ORIGINATOR_NAME'] : '',
-				'CREATED_BY' => $arDeal['~CREATED_BY'] > 0
-					? CCrmViewHelper::PrepareUserBaloonHtml(
-						array(
-							'PREFIX' => "DEAL_{$arDeal['~ID']}_CREATOR",
-							'USER_ID' => $arDeal['~CREATED_BY'],
-							'USER_NAME'=> $arDeal['CREATED_BY_FORMATTED_NAME'],
-							'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_CREATOR']
-						)
-					) : '',
-				'MODIFY_BY' => $arDeal['~MODIFY_BY'] > 0
+				'ORIGINATOR_ID' => $arDeal['ORIGINATOR_NAME'] ?? '',
+				'CREATED_BY' => isset($arDeal['~CREATED_BY']) && $arDeal['~CREATED_BY'] > 0
+					? CCrmViewHelper::PrepareUserBaloonHtml([
+						'PREFIX' => "DEAL_{$arDeal['~ID']}_CREATOR",
+						'USER_ID' => $arDeal['~CREATED_BY'],
+						'USER_NAME'=> $arDeal['CREATED_BY_FORMATTED_NAME'],
+						'USER_PROFILE_URL' => $arDeal['PATH_TO_USER_CREATOR']
+					])
+					: '',
+				'MODIFY_BY' => isset($arDeal['~MODIFY_BY']) && $arDeal['~MODIFY_BY'] > 0
 					? CCrmViewHelper::PrepareUserBaloonHtml(
 						array(
 							'PREFIX' => "DEAL_{$arDeal['~ID']}_MODIFIER",
@@ -550,14 +595,17 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 	{
 		$resultItem['columns']['CONTACT_SOURCE_DESCRIPTION'] = nl2br($arDeal['CONTACT_SOURCE_DESCRIPTION']);
 	}
+
 	if (isset($arDeal['CONTACT_COMMENTS']))
 	{
 		$resultItem['columns']['CONTACT_COMMENTS'] = htmlspecialcharsback($arDeal['CONTACT_COMMENTS']);
 	}
+
 	if (isset($arDeal['COMPANY_BANKING_DETAILS']))
 	{
 		$resultItem['columns']['COMPANY_BANKING_DETAILS'] = nl2br($arDeal['COMPANY_BANKING_DETAILS']);
 	}
+
 	if (isset($arDeal['COMPANY_COMMENTS']))
 	{
 		$resultItem['columns']['COMPANY_COMMENTS'] = htmlspecialcharsback($arDeal['COMPANY_COMMENTS']);
@@ -599,7 +647,7 @@ $APPLICATION->IncludeComponent('bitrix:main.user.link',
 //region Action Panel
 $controlPanel = array('GROUPS' => array(array('ITEMS' => array())));
 
-if(!$isInternal
+if (!$isInternal
 	&& ($allowWrite || $allowExclude || $allowDelete))
 {
 	$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
@@ -621,7 +669,7 @@ if(!$isInternal
 		array('NAME' => GetMessage('MAIN_NO'), 'VALUE' => 'N')
 	);
 
-	if($allowWrite && $arParams['IS_RECURRING'] !== "Y")
+	if ($allowWrite && $arParams['IS_RECURRING'] !== "Y")
 	{
 		//region Add Task
 		if (IsModuleInstalled('tasks'))
@@ -646,29 +694,29 @@ if(!$isInternal
 		if ($arParams['IS_RECURRING'] !== "Y")
 		{
 			//region Set Stage
-			if($arResult['EFFECTIVE_CATEGORY_ID'] >= 0)
+			if ($arResult['EFFECTIVE_CATEGORY_ID'] >= 0)
 			{
 				//TODO: if category not selected show 2 selectors: category and stage
 				$stageList = array(array('NAME' => GetMessage('CRM_STAGE_INIT'), 'VALUE' => ''));
-				if(isset($arResult['CATEGORY_STAGE_LIST']))
+				if (isset($arResult['CATEGORY_STAGE_LIST']))
 				{
-					foreach($arResult['CATEGORY_STAGE_LIST'] as $stageID => $stageName)
+					foreach ($arResult['CATEGORY_STAGE_LIST'] as $stageID => $stageName)
 					{
 						$stageList[] = array('NAME' => $stageName, 'VALUE' => $stageID);
 					}
 				}
 				elseif(isset($arResult['CATEGORY_STAGE_GROUPS']))
 				{
-					foreach($arResult['CATEGORY_STAGE_GROUPS'] as $group)
+					foreach ($arResult['CATEGORY_STAGE_GROUPS'] as $group)
 					{
 						$groupName = isset($group['name']) ? $group['name'] : '';
-						if($groupName !== '')
+						if ($groupName !== '')
 						{
 							$stageList[] = array('NAME' => $groupName, 'VALUE' => '', 'IS_GROUP' => true);
 						}
 
 						$groupItems = isset($group['items']) && is_array($group['items']) ? $group['items'] : [];
-						foreach($groupItems as $itemKey => $itemName)
+						foreach ($groupItems as $itemKey => $itemName)
 						{
 							$stageList[] = array('NAME' => $itemName, 'VALUE' => $itemKey);
 						}
@@ -721,7 +769,7 @@ if(!$isInternal
 
 		//region Assign To
 		//region Render User Search control
-		if(!Bitrix\Main\Grid\Context::isInternalRequest())
+		if (!Bitrix\Main\Grid\Context::isInternalRequest())
 		{
 			//action_assigned_by_search + _control
 			//Prefix control will be added by main.ui.grid
@@ -735,7 +783,7 @@ if(!$isInternal
 					'SHOW_EXTRANET_USERS' => 'NONE',
 					'POPUP' => 'Y',
 					'SITE_ID' => SITE_ID,
-					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE']
+					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'] ?? ''
 				),
 				null,
 				array('HIDE_ICONS' => 'Y')
@@ -776,7 +824,7 @@ if(!$isInternal
 		);
 		//endregion
 		//region Create call list
-		if(IsModuleInstalled('voximplant'))
+		if (IsModuleInstalled('voximplant'))
 		{
 			$actionList[] = array(
 				'NAME' => GetMessage('CRM_DEAL_CREATE_CALL_LIST'),
@@ -811,7 +859,7 @@ if(!$isInternal
 		);
 		//endregion
 
-		if($allowDelete && !$arResult['IS_EXTERNAL_FILTER'])
+		if ($allowDelete && !$arResult['IS_EXTERNAL_FILTER'])
 		{
 			$actionList[] = [
 				'NAME' => GetMessage('CRM_DEAL_ACTION_MERGE'),
@@ -838,7 +886,7 @@ if(!$isInternal
 		}
 	}
 
-	if($allowDelete)
+	if ($allowDelete)
 	{
 		//region Remove button
 		//$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getRemoveButton();
@@ -872,7 +920,7 @@ if(!$isInternal
 		);
 	}
 
-	if($allowExclude)
+	if ($allowExclude)
 	{
 		$actionList[] = array(
 			'NAME' => GetMessage('CRM_DEAL_EXCLUDE'),
@@ -890,7 +938,7 @@ if(!$isInternal
 		);
 	}
 
-	if($allowWrite)
+	if ($allowWrite)
 	{
 		//region Edit Button
 		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getEditButton();
@@ -923,12 +971,12 @@ if(!$isInternal
 		//endregion
 
 		//region Change category
-		if($arResult['HAVE_CUSTOM_CATEGORIES'] && $arResult['CATEGORY_ID'] >= 0)
+		if ($arResult['HAVE_CUSTOM_CATEGORIES'] && $arResult['CATEGORY_ID'] >= 0)
 		{
 			$categoryList = [];
-			foreach($arResult['CATEGORY_LIST'] as $categoryID => $categoryName)
+			foreach ($arResult['CATEGORY_LIST'] as $categoryID => $categoryName)
 			{
-				if($categoryID !== $arResult['CATEGORY_ID'])
+				if ($categoryID !== $arResult['CATEGORY_ID'])
 				{
 					$categoryList[] = array('NAME' => $categoryName, 'VALUE' => $categoryID);
 				}
@@ -958,7 +1006,7 @@ if(!$isInternal
 		}
 	}
 
-	if($callListUpdateMode)
+	if ($callListUpdateMode)
 	{
 		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
 		$controlPanel['GROUPS'][0]['ITEMS'][] = [
@@ -977,7 +1025,7 @@ if(!$isInternal
 	else
 	{
 		//region Create & start call list
-		if(IsModuleInstalled('voximplant'))
+		if (IsModuleInstalled('voximplant'))
 		{
 			$controlPanel['GROUPS'][0]['ITEMS'][] = array(
 				"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
@@ -1004,7 +1052,7 @@ if(!$isInternal
 }
 //endregion
 
-if($arResult['ENABLE_TOOLBAR'])
+if ($arResult['ENABLE_TOOLBAR'])
 {
 	$addButton =array(
 		'TEXT' => GetMessage('CRM_DEAL_LIST_ADD_SHORT'),
@@ -1013,7 +1061,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'ICON' => 'btn-new'
 	);
 
-	if($arResult['ADD_EVENT_NAME'] !== '')
+	if ($arResult['ADD_EVENT_NAME'] !== '')
 	{
 		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
 	}
@@ -1038,9 +1086,9 @@ if($arResult['ENABLE_TOOLBAR'])
 }
 
 $messages = [];
-if(isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
+if (isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 {
-	foreach($arResult['ERRORS'] as $error)
+	foreach ($arResult['ERRORS'] as $error)
 	{
 		$messages[] = array(
 			'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
@@ -1049,9 +1097,9 @@ if(isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 		);
 	}
 }
-if(isset($arResult['MESSAGES']) && is_array($arResult['MESSAGES']))
+if (isset($arResult['MESSAGES']) && is_array($arResult['MESSAGES']))
 {
-	foreach($arResult['MESSAGES'] as $message)
+	foreach ($arResult['MESSAGES'] as $message)
 	{
 		$messages[] = array(
 			'TYPE' => \Bitrix\Main\Grid\MessageType::MESSAGE,
@@ -1152,7 +1200,7 @@ $APPLICATION->IncludeComponent(
 				'exclusionDialogButtonTitle' => GetMessage('CRM_DEAL_EXCLUDE'),
 			],
 		],
-		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
 	],
 	$component
 );
@@ -1269,7 +1317,7 @@ if (
 </script><?php
 endif;
 
-if(!$isInternal):
+if (!$isInternal):
 	?><script type="text/javascript">
 	BX.ready(
 		function()
@@ -1281,7 +1329,7 @@ if(!$isInternal):
 				}
 			);
 			BX.namespace('BX.Crm.Activity');
-			if(typeof BX.Crm.Activity.Planner !== 'undefined')
+			if (typeof BX.Crm.Activity.Planner !== 'undefined')
 			{
 				BX.Crm.Activity.Planner.Manager.setCallback('onAfterActivitySave', function()
 				{
@@ -1292,7 +1340,7 @@ if(!$isInternal):
 	);
 </script>
 <?endif;?>
-<?if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
+<?if ($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1355,7 +1403,7 @@ if(!$isInternal):
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("rebuildDealSearch"))
+				if (BX.AutorunProcessPanel.isExists("rebuildDealSearch"))
 				{
 					return;
 				}
@@ -1383,7 +1431,7 @@ if(!$isInternal):
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("rebuildTimelineSearch"))
+				if (BX.AutorunProcessPanel.isExists("rebuildTimelineSearch"))
 				{
 					return;
 				}
@@ -1431,7 +1479,7 @@ if(!$isInternal):
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("buildDealTimeline"))
+				if (BX.AutorunProcessPanel.isExists("buildDealTimeline"))
 				{
 					return;
 				}
@@ -1459,7 +1507,7 @@ if(!$isInternal):
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("refreshDealAccounting"))
+				if (BX.AutorunProcessPanel.isExists("refreshDealAccounting"))
 				{
 					return;
 				}
@@ -1487,7 +1535,7 @@ if(!$isInternal):
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("rebuildDealSemantics"))
+				if (BX.AutorunProcessPanel.isExists("rebuildDealSemantics"))
 				{
 					return;
 				}
@@ -1516,7 +1564,7 @@ if(!$isInternal):
 			function()
 			{
 				var link = BX("rebuildDealAttrsLink");
-				if(link)
+				if (link)
 				{
 					BX.bind(
 						link,
@@ -1524,7 +1572,7 @@ if(!$isInternal):
 						function(e)
 						{
 							var msg = BX("rebuildDealAttrsMsg");
-							if(msg)
+							if (msg)
 							{
 								msg.style.display = "none";
 							}

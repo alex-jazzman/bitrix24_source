@@ -11,6 +11,7 @@ use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Settings\WorkTime;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use COption;
 
@@ -42,12 +43,8 @@ class InvitationSent extends Configurable
 
 	public function getContentBlocks(): ?array
 	{
-		$contactName = $this->getContactNameFromHistoryModel();
-		$contactUrl = $this->getContactUrlFromHistoryModel();
-		$contactCommunication = $this->getHistoryItemModel()->get('CONTACT_COMMUNICATION');
-
 		return [
-			'guest' => $this->getGuestContentBlock($contactName, $contactUrl, $contactCommunication),
+			'guest' => $this->getGuestContentBlock(),
 			'communicationChannel' => $this->getCommunicationChannelContentBlock(),
 			'accessibility' => $this->getAccessibilityContentBlock()->setScopeWeb(),
 		];
@@ -108,6 +105,13 @@ class InvitationSent extends Configurable
 		return $result;
 	}
 
+	private function getChannelNameFromHistoryModel(): string
+	{
+		$channelName = $this->getHistoryItemModel()->get('CHANNEL_NAME');
+
+		return $channelName ?? $this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNEL_VALUE');
+	}
+
 	public function getAdditionalIconButton(): ?Layout\Footer\IconButton
 	{
 		$result = null;
@@ -139,8 +143,12 @@ class InvitationSent extends Configurable
 		return true;
 	}
 
-	private function getGuestContentBlock(string $contactName, ?Uri $contactUrl, ?string $contactCommunication): Layout\Body\ContentBlock
+	private function getGuestContentBlock(): Layout\Body\ContentBlock
 	{
+		$contactName = $this->getContactNameFromHistoryModel();
+		$contactUrl = $this->getContactUrlFromHistoryModel();
+		$contactCommunication = $this->getHistoryItemModel()->get('CONTACT_COMMUNICATION');
+
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
 			->setInline()
 			->setTitle(
@@ -172,9 +180,7 @@ class InvitationSent extends Configurable
 			)
 			->setContentBlock(
 				(new Layout\Body\ContentBlock\Text())
-					->setValue(
-						$this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNEL_VALUE')
-					)
+					->setValue($this->getChannelNameFromHistoryModel())
 			)
 		;
 	}

@@ -781,13 +781,50 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 		},
 		setActivityCompleted: function(id, completed, callback, options)
 		{
-			if(!BX.type.isPlainObject(options))
+			if (!BX.type.isPlainObject(options))
 			{
 				options = {};
 			}
 
-			var disableNotification = !!options['disableNotification'];
+			providerID = '';
+			var item = this.getItemById(id);
+			if (item)
+			{
+				providerID = item.getSetting('providerID', '');
+			}
 
+			if (completed && providerID === 'IMOPENLINES_SESSION')
+			{
+				BX.UI.Dialogs.MessageBox.show({
+					title: BX.message('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE'),
+					message: BX.message('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF'),
+					modal: true,
+					okCaption: BX.message('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT'),
+					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+					onOk: (messageBox) => {
+						this._completeActivity(id, completed, callback, options);
+
+						messageBox.close();
+					},
+					onCancel: (messageBox) => {
+						if (options.fieldElement)
+						{
+							options.fieldElement.checked = false;
+							options.fieldElement.disabled = false;
+						}
+
+						messageBox.close();
+					},
+				});
+			}
+			else
+			{
+				this._completeActivity(id, completed, callback, options);
+			}
+		},
+		_completeActivity: function(id, completed, callback, options)
+		{
+			var disableNotification = !!options['disableNotification'];
 			var item = this.getItemById(id);
 			var serviceUrl = BX.util.add_url_param(this.getSetting('serviceUrl', ''),
 				{
@@ -799,6 +836,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				}
 			);
 			var self = this;
+
 			BX.ajax({
 				'url': serviceUrl,
 				'method': 'POST',

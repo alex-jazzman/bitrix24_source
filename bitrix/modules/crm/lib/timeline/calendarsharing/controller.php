@@ -145,6 +145,11 @@ final class Controller extends Timeline\Controller
 			$result['CONTACT_COMMUNICATION'] = $eventData->getContactCommunication();
 		}
 
+		if ($eventData->getChannelName())
+		{
+			$result['CHANNEL_NAME'] = $eventData->getChannelName();
+		}
+
 		return $result;
 	}
 

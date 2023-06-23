@@ -254,7 +254,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 						continue;
 					}
 
-					$schemeElement = $availableFields[$name];
+					$schemeElement = $availableFields[$name] ?? [];
 					$fieldType = $schemeElement['type'] ?? '';
 
 					$title = '';

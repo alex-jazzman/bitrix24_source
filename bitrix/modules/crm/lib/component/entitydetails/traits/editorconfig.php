@@ -34,7 +34,7 @@ trait EditorConfig
 			'GUID' => $editorGuid,
 			'CONFIG_ID' => $this->arResult['EDITOR_CONFIG_ID'],
 			'ENTITY_CONFIG' => $this->arResult['ENTITY_CONFIG'],
-			'DUPLICATE_CONTROL' => $this->arResult['DUPLICATE_CONTROL'],
+			'DUPLICATE_CONTROL' => $this->arResult['DUPLICATE_CONTROL'] ?? [],
 			'ENTITY_CONTROLLERS' => $this->arResult['ENTITY_CONTROLLERS'],
 			'ENTITY_FIELDS' => $this->arResult['ENTITY_FIELDS'],
 			'ENTITY_DATA' => $this->arResult['ENTITY_DATA'],

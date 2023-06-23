@@ -217,6 +217,18 @@ class OpenLine extends Base
 		}
 	}
 
+	public static function onBeforeComplete(int $id, array $activityFields, array $params = null)
+	{
+		if (
+			isset($activityFields['COMPLETED'])
+			&& $activityFields['COMPLETED'] === 'N'
+			&& !empty($activityFields['PROVIDER_PARAMS']['USER_CODE'])
+		)
+		{
+			OpenLineManager::closeDialog($activityFields['PROVIDER_PARAMS']['USER_CODE']);
+		}
+	}
+
 	/**
 	 * @inheritdoc
 	 */

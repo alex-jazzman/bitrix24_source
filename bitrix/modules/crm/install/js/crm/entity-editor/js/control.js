@@ -3943,6 +3943,21 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 			this._maskedPhoneInput.setAttribute("placeholder", placeholder);
 		}
 
+		if(this._editor.isDuplicateControlEnabled())
+		{
+			var dupControlConfig = this.getDuplicateControlConfig();
+			if(dupControlConfig)
+			{
+				if(!BX.type.isPlainObject(dupControlConfig["field"]))
+				{
+					dupControlConfig["field"] = {};
+				}
+				dupControlConfig["field"]["id"] = this.getId();
+				dupControlConfig["field"]["element"] = this._maskedPhoneInput;
+				this._editor.getDuplicateManager().registerField(dupControlConfig);
+			}
+		}
+
 		return [
 			BX.create(
 				"div",
@@ -3973,6 +3988,20 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 	};
 	BX.Crm.EntityEditorPhone.prototype.doClearLayout = function(options)
 	{
+		if(this._editor.isDuplicateControlEnabled())
+		{
+			var dupControlConfig = this.getDuplicateControlConfig();
+			if(dupControlConfig)
+			{
+				if(!BX.type.isPlainObject(dupControlConfig["field"]))
+				{
+					dupControlConfig["field"] = {};
+				}
+				dupControlConfig["field"]["id"] = this.getId();
+				this._editor.getDuplicateManager().unregisterField(dupControlConfig);
+			}
+		}
+
 		BX.Crm.EntityEditorPhone.superclass.doClearLayout.apply(this, arguments);
 		this._maskedPhoneInput = null;
 		this._maskedPhone = null;
@@ -7663,7 +7692,8 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					isRequired: (this.isRequired() || this.isRequiredByAttribute()),
 					enableMyCompanyOnly: this._schemeElement.getDataBooleanParam('enableMyCompanyOnly', false),
 					enableRequisiteSelection: this._schemeElement.getDataBooleanParam('enableRequisiteSelection', false),
-					permissionToken: this._schemeElement.getDataStringParam('permissionToken', null)
+					permissionToken: this._schemeElement.getDataStringParam('permissionToken', null),
+					duplicateControl: this.getDuplicateControlConfig(BX.CrmEntityType.enumeration.company)
 				}
 			)
 		);
@@ -7734,6 +7764,25 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		}
 		return -1;
 	};
+	BX.Crm.EntityEditorClientLight.prototype.getDuplicateControlConfig = function(entityTypeId)
+	{
+		let result = {};
+
+		if (BX.CrmEntityType.isDefined(entityTypeId))
+		{
+			const duplicateControlConfigs = this._schemeElement.getDataObjectParam("duplicateControl", {});
+
+			if (
+				duplicateControlConfigs.hasOwnProperty(entityTypeId)
+				&& BX.Type.isPlainObject(duplicateControlConfigs[entityTypeId])
+			)
+			{
+				result = duplicateControlConfigs[entityTypeId];
+			}
+		}
+
+		return result;
+	};
 	BX.Crm.EntityEditorClientLight.prototype.createContactSearchBox = function(params)
 	{
 		var entityInfo = BX.prop.get(params, "entityInfo", null);
@@ -7794,7 +7843,8 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					requisiteBinding: this._model.getField("REQUISITE_BINDING", {}),
 					isRequired: (this.isRequired() || this.isRequiredByAttribute()),
 					enableRequisiteSelection: enableRequisiteSelection,
-					permissionToken: this._schemeElement.getDataStringParam('permissionToken', null)
+					permissionToken: this._schemeElement.getDataStringParam('permissionToken', null),
+					duplicateControl: this.getDuplicateControlConfig(BX.CrmEntityType.enumeration.contact)
 				}
 			)
 		);

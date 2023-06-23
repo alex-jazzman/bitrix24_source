@@ -31,6 +31,9 @@ Library::loadMessages();
  */
 class Base
 {
+	/** The prefix for start parameter. */
+	public const REF_PREFIX = 'btrx';
+
 	/**
 	 * @var string Full (or virtual) connector id (for example "botframework.skype", NOT "botframework").
 	 */
@@ -132,6 +135,30 @@ class Base
 		return $this->processingInputUpdateMessage($message, $line);
 	}
 
+	/**
+	 * @param string $command
+	 * @param array $message
+	 * @param int $line
+	 * @return Result
+	 */
+	public function processingInputCommand(string $command, array $message, int $line): Result
+	{
+		$result = new Result();
+
+		$result->addError(new Error(
+			'Does not support this method call',
+			'ERROR_IMCONNECTOR_DOES_NOT_SUPPORT_THIS_METHOD_CALL',
+			__METHOD__
+		));
+
+		return $result;
+	}
+
+	/**
+	 * @param array $message
+	 * @param int $line
+	 * @return Result
+	 */
 	public function processingInputWelcomeMessage(array $message, int $line): Result
 	{
 		$result = new Result();
@@ -489,14 +516,14 @@ class Base
 		)
 		{
 			//Getting user id
-			$user = $this->processingUser($message['user']);
-			if ($user->isSuccess())
+			$userResult = $this->processingUser($message['user']);
+			if ($userResult->isSuccess())
 			{
-				$message['user'] = $user->getResult();
+				$message['user'] = $userResult->getResult();
 			}
 			else
 			{
-				$result->addErrors($user->getErrors());
+				$result->addErrors($userResult->getErrors());
 			}
 
 			if ($result->isSuccess())

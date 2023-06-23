@@ -4233,45 +4233,7 @@ class CAllCrmDeal
 
 	public static function LoadProductRows($ID)
 	{
-		$result = [];
-
-		$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-		if ($factory && $factory->isInventoryManagementEnabled())
-		{
-			$items = $factory->getItems([
-				'select' => [Crm\Item::FIELD_NAME_PRODUCTS],
-				'filter' => [
-					'=' . Crm\Item::FIELD_NAME_ID => $ID,
-				]
-			]);
-			if ($items)
-			{
-				foreach ($items as $item)
-				{
-					$productRows = $item->getProductRows();
-					if ($productRows)
-					{
-						foreach ($productRows as $productRow)
-						{
-							$row = $productRow->toArray();
-							$productReservation = $productRow->getProductRowReservation();
-							if ($productReservation)
-							{
-								$row += $productReservation->toArray();
-							}
-
-							$result[] = $row;
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			$result = CCrmProductRow::LoadRows(\CCrmOwnerTypeAbbr::Deal, $ID);
-		}
-
-		return $result;
+		return CCrmProductRow::LoadRows(\CCrmOwnerTypeAbbr::Deal, $ID);
 	}
 
 	/**

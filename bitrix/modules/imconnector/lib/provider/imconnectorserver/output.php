@@ -176,7 +176,7 @@ class Output extends Base\Output
 
 		if ($result->isSuccess())
 		{
-			foreach ($data as $id=>$message)
+			foreach ($data as $id => $message)
 			{
 				$data[$id]['message']['type'] = 'typing_start';
 				unset($data[$id]['user']);
@@ -410,9 +410,9 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		foreach ($data as $key => $value)
+		foreach ($data as $value)
 		{
-			if ($value['connector']['connector_id'] === 'telegrambot')
+			if ($value['connector']['connector_id'] === Library::ID_TELEGRAMBOT_CONNECTOR)
 			{
 				$messageData = [
 					'lineId' => $value['connector']['line_id'],
@@ -431,9 +431,9 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		foreach ($data as $key => $value)
+		foreach ($data as $value)
 		{
-			if ($value['connector']['connector_id'] === 'telegrambot')
+			if ($value['connector']['connector_id'] === Library::ID_TELEGRAMBOT_CONNECTOR)
 			{
 				$messageData = [
 					'lineId' => $value['connector']['line_id'],
@@ -481,6 +481,7 @@ class Output extends Base\Output
 		{
 			$type = self::TYPE_CP;
 		}
+
 		return $type;
 	}
 

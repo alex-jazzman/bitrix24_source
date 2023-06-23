@@ -747,7 +747,7 @@ if ($this->StartResultCache(false, $arParams['IBLOCK_ID'].'|'.$arResult['CAN_EDI
 					'PROFILE_URL' => $arRes['PROFILE_URL'],
 					'PERSONAL_PHOTO' => $arRes['PERSONAL_PHOTO'],
 					'WORK_POSITION' => $arRes['WORK_POSITION'],
-					'UF_DEPARTMENT' => $arRes['UF_DEPARTMENT']
+					'UF_DEPARTMENT' => $arRes['UF_DEPARTMENT'] ?? null,
 				);
 			}
 

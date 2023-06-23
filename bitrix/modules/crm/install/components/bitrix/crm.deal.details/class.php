@@ -1,13 +1,17 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Component\EntityDetails\Traits;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Crm\Component\EntityDetails\Traits;
 use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Conversion\LeadConversionWizard;
 use Bitrix\Crm\Conversion\QuoteConversionWizard;
@@ -23,9 +27,10 @@ use Bitrix\Currency;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
-if(!Main\Loader::includeModule('crm'))
+if (!Main\Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
@@ -524,14 +529,16 @@ class CCrmDealDetailsComponent
 		}
 
 		//region Entity Info
+		$isRecurring = isset($this->entityData['IS_RECURRING']) && $this->entityData['IS_RECURRING'] === 'Y';
+
 		$this->arResult['ENTITY_INFO'] = array(
 			'ENTITY_ID' => $this->entityID,
-			'ENTITY_TYPE_ID' => $this->entityData['IS_RECURRING'] !== "Y" ? CCrmOwnerType::Deal : CCrmOwnerType::DealRecurring,
-			'ENTITY_TYPE_NAME' =>  $this->entityData['IS_RECURRING'] !== "Y" ? CCrmOwnerType::DealName : CCrmOwnerType::DealRecurringName,
+			'ENTITY_TYPE_ID' => $isRecurring ? CCrmOwnerType::DealRecurring : CCrmOwnerType::Deal,
+			'ENTITY_TYPE_NAME' => $isRecurring ? CCrmOwnerType::DealRecurringName : CCrmOwnerType::DealName,
 			'ENTITY_TYPE_CODE' => CCrmOwnerTypeAbbr::Deal,
-			'TITLE' => isset($this->entityData['TITLE']) ? $this->entityData['TITLE'] : '',
-			'SHOW_URL' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $this->entityID, false),
-			'ORDER_LIST' => $this->entityData['ORDER_LIST'],
+			'TITLE' => $this->entityData['TITLE'] ?? '',
+			'SHOW_URL' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $this->entityID),
+			'ORDER_LIST' => $this->entityData['ORDER_LIST'] ?? [],
 		);
 		//endregion
 
@@ -616,8 +623,8 @@ class CCrmDealDetailsComponent
 				'LOCATION_ID' => $this->isTaxMode && isset($this->entityData['LOCATION_ID']) ? $this->entityData['LOCATION_ID'] : '',
 				'CLIENT_SELECTOR_ID' => '', //TODO: Add Client Selector
 				'PRODUCTS' => $this->entityData['PRODUCT_ROWS'] ?? null,
-				'PRODUCT_DATA_FIELD_NAME' => $this->arResult['PRODUCT_DATA_FIELD_NAME'],
-				'CATEGORY_ID' => $this->entityData['CATEGORY_ID'],
+				'PRODUCT_DATA_FIELD_NAME' => $this->arResult['PRODUCT_DATA_FIELD_NAME'] ?? '',
+				'CATEGORY_ID' => $this->entityData['CATEGORY_ID'] ?? null,
 				'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
 			],
 			false,
@@ -633,7 +640,7 @@ class CCrmDealDetailsComponent
 			'html' => ob_get_clean()
 		);
 
-		if ($this->entityData['IS_RECURRING'] !== "Y")
+		if (!$isRecurring)
 		{
 			if($this->entityID > 0)
 			{
@@ -730,7 +737,7 @@ class CCrmDealDetailsComponent
 						'id' => 'tab_order',
 						'name' => Loc::getMessage('CRM_DEAL_TAB_ORDERS'),
 						'loader' => array(
-							'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
+							'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 							'componentData' => array(
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
@@ -748,7 +755,7 @@ class CCrmDealDetailsComponent
 									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 									//									'ENABLE_TOOLBAR' => 'N',
 									'PRESERVE_HISTORY' => true,
-									'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID
+									'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
 								], 'crm.order.list')
 							)
 						)
@@ -1369,7 +1376,10 @@ class CCrmDealDetailsComponent
 					'clientEditorFieldsParams' => CCrmComponentHelper::prepareClientEditorFieldsParams(
 						['categoryParams' => $categoryParams]
 					),
-					'useExternalRequisiteBinding' => true
+					'useExternalRequisiteBinding' => true,
+					'duplicateControl' => CCrmComponentHelper::prepareClientEditorDuplicateControlParams(
+						['entityTypes' => [CCrmOwnerType::Company, CCrmOwnerType::Contact]]
+					),
 				)
 			),
 			array(

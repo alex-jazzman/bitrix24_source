@@ -50,9 +50,9 @@ final class Comment extends Base
 		return self::SUBJECT;
 	}
 
-	public static function getName(): string
+	public static function getName()
 	{
-		return Loc::getMessage('TASKS_TASK_INTEGRATION_TASK_COMMENT');
+		return Loc::getMessage('TASKS_TASK_INTEGRATION_TASK_COMMENT_V2') ?? Loc::getMessage('TASKS_TASK_INTEGRATION_TASK_COMMENT');
 	}
 
 	public static function getTypes(): array

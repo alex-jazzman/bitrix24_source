@@ -41,16 +41,24 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 
 		$documentService = $this->workflow->GetService("DocumentService");
 
-		if ($this->workflow->isDebug())
+		try
 		{
-			$map = $this->getDebugInfo(
-				$fieldValue,
-				$documentService->GetDocumentFields(\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact))
-			);
-			$this->writeDebugInfo($map);
-		}
+			if ($this->workflow->isDebug())
+			{
+				$map = $this->getDebugInfo(
+					$fieldValue,
+					$documentService->GetDocumentFields(\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact))
+				);
+				$this->writeDebugInfo($map);
+			}
 
-		$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+			$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+		}
+		catch (Exception $e)
+		{
+			$this->writeToTrackingService($e->getMessage(), 0, CBPTrackingType::Error);
+			$this->ErrorMessage = $e->getMessage();
+		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}

@@ -9,6 +9,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\Date;
+use function Symfony\Component\String\s;
 
 
 class RestrictionManager
@@ -88,6 +89,8 @@ class RestrictionManager
 	private static $invoicesRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $inventoryControlIntegrationRestriction;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $calendarSharingRestriction;
 
 	/**
 	 * @return SqlRestriction
@@ -1004,6 +1007,30 @@ class RestrictionManager
 		}
 
 		return static::$visitRestriction;
+	}
+
+	public static function getCalendarSharingRestriction(): Bitrix24AccessRestriction
+	{
+		if (is_null(static::$calendarSharingRestriction))
+		{
+			static::$calendarSharingRestriction = new Bitrix24AccessRestriction(
+				'crm_event_sharing',
+				false,
+				null,
+				[
+					'ID' => 'limit_crm_calendar_free_slots'
+				],
+			);
+
+			if (!static::$calendarSharingRestriction->load())
+			{
+				static::$calendarSharingRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_event_sharing')
+				);
+			}
+		}
+
+		return static::$calendarSharingRestriction;
 	}
 
 	public static function getActivityRestriction(

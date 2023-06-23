@@ -274,10 +274,10 @@ abstract class Operation
 		if ($result->isSuccess() && $this->isBizProcEnabled())
 		{
 			$bizProcResult = $this->runBizProc();
-			if (!$bizProcResult->isSuccess())
-			{
-				$result->addErrors($bizProcResult->getErrors());
-			}
+			// if (!$bizProcResult->isSuccess())
+			// {
+			// 	$result->addErrors($bizProcResult->getErrors());
+			// }
 		}
 
 		if ($result->isSuccess() && $this->isAutomationEnabled())
@@ -543,6 +543,19 @@ abstract class Operation
 				{
 					$result->addError(Field::getRequiredEmptyError($fieldName, $factory->getFieldCaption($fieldName)));
 				}
+			}
+			elseif (
+				Multifield\TypeRepository::isTypeDefined($fieldName)
+				&& $this->item->hasField(Item::FIELD_NAME_FM)
+				&& count($this->item->getFm()->filterByType($fieldName)) <= 0
+			)
+			{
+				$result->addError(
+					Field::getRequiredEmptyError(
+						$fieldName,
+						Multifield\TypeRepository::getTypeCaption($fieldName),
+					)
+				);
 			}
 		}
 

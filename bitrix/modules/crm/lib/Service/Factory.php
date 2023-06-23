@@ -598,6 +598,9 @@ abstract class Factory
 		$rawSelect = empty($parameters['select']) ? ['*'] : $parameters['select'];
 		$parameters['select'] = $this->prepareSelect($rawSelect);
 
+		$rawFilter = empty($parameters['filter']) ? [] : $parameters['filter'];
+		$parameters['filter'] = $this->prepareFilter($rawFilter);
+
 		return $this->replaceCommonFieldNames($parameters);
 	}
 
@@ -672,6 +675,42 @@ abstract class Factory
 		return $select;
 	}
 
+	private function prepareFilter(array $filter): array
+	{
+		$processed = [];
+		foreach ($filter as $key => $value)
+		{
+			if (is_array($value))
+			{
+				$value = $this->prepareFilter($value);
+			}
+
+			if (is_string($key) && !$this->isReference($key))
+			{
+				if (mb_strpos($key, Item::FIELD_NAME_CONTACT_IDS) !== false)
+				{
+					$key = str_replace(Item::FIELD_NAME_CONTACT_IDS, Item::FIELD_NAME_CONTACT_BINDINGS . '.CONTACT_ID', $key);
+				}
+				elseif (mb_strpos($key, Item\Contact::FIELD_NAME_COMPANY_IDS) !== false)
+				{
+					$key = str_replace(
+						Item\Contact::FIELD_NAME_COMPANY_IDS,
+						Item\Contact::FIELD_NAME_COMPANY_BINDINGS . '.COMPANY_ID',
+						$key,
+					);
+				}
+				elseif (mb_strpos($key, Item::FIELD_NAME_OBSERVERS) !== false)
+				{
+					$key = str_replace(Item::FIELD_NAME_OBSERVERS, Item::FIELD_NAME_OBSERVERS . '.USER_ID', $key);
+				}
+			}
+
+			$processed[$key] = $value;
+		}
+
+		return $processed;
+	}
+
 	/**
 	 * Replaces common field names in getList parameters with entity-specific names if it's needed
 	 *
@@ -720,9 +759,7 @@ abstract class Factory
 
 	protected function replaceCommonFieldName(string $key): string
 	{
-		$isReference = (mb_strpos($key, '.') !== false);
-
-		if ($isReference)
+		if ($this->isReference($key))
 		{
 			$regex = '|^[!=%@><]*#COMMON_FIELD_NAME#\.|';
 		}
@@ -743,6 +780,11 @@ abstract class Factory
 		}
 
 		return $key;
+	}
+
+	private function isReference(string $key): bool
+	{
+		return (strpos($key, '.') !== false);
 	}
 
 	/**

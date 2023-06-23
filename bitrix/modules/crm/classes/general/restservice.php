@@ -5454,6 +5454,26 @@ class CCrmProductRowRestProxy extends CCrmRestProxyBase
 				$fields['PRODUCT_NAME'] ??= $productRow['PRODUCT_NAME'];
 			}
 		}
+
+		if (isset($fields['TAX_RATE']))
+		{
+			if (
+				(float)$fields['TAX_RATE'] > 0
+				|| $fields['TAX_RATE'] === 0
+				|| (
+					is_string($fields['TAX_RATE'])
+					&& isset($fields['TAX_RATE'][0])
+					&& $fields['TAX_RATE'][0] === '0'
+				)
+			)
+			{
+				$fields['TAX_RATE'] = (float)$fields['TAX_RATE'];
+			}
+			else
+			{
+				$fields['TAX_RATE'] = null;
+			}
+		}
 	}
 }
 

@@ -743,7 +743,7 @@ if ($factory && $category)
 	}
 }
 
-$CCrmUserType->ListAddHeaders($arResult['HEADERS']);
+$CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 $arResult['HEADERS_SECTIONS'] = [
 	[
@@ -1185,13 +1185,13 @@ if($actionData['ACTIVE'])
 							if (!$isMyCompanyMode)
 							{
 								$arErrors = [];
-							CCrmBizProcHelper::AutoStartWorkflows(
-								CCrmOwnerType::Company,
-								$ID,
-								CCrmBizProcEventType::Edit,
-								$arErrors
-							);
-						}
+								CCrmBizProcHelper::AutoStartWorkflows(
+									CCrmOwnerType::Company,
+									$ID,
+									CCrmBizProcEventType::Edit,
+									$arErrors
+								);
+							}
 						}
 						else
 						{
@@ -1284,13 +1284,13 @@ if($actionData['ACTIVE'])
 						if (!$isMyCompanyMode)
 						{
 							$arErrors = [];
-						CCrmBizProcHelper::AutoStartWorkflows(
-							CCrmOwnerType::Company,
-							$ID,
-							CCrmBizProcEventType::Edit,
-							$arErrors
-						);
-					}
+							CCrmBizProcHelper::AutoStartWorkflows(
+								CCrmOwnerType::Company,
+								$ID,
+								CCrmBizProcEventType::Edit,
+								$arErrors
+							);
+						}
 					}
 					else
 					{
@@ -1369,13 +1369,13 @@ if($actionData['ACTIVE'])
 						if (!$isMyCompanyMode)
 						{
 							$arErrors = [];
-						CCrmBizProcHelper::AutoStartWorkflows(
-							CCrmOwnerType::Company,
-							$ID,
-							CCrmBizProcEventType::Edit,
-							$arErrors
-						);
-					}
+							CCrmBizProcHelper::AutoStartWorkflows(
+								CCrmOwnerType::Company,
+								$ID,
+								CCrmBizProcEventType::Edit,
+								$arErrors
+							);
+						}
 					}
 					else
 					{

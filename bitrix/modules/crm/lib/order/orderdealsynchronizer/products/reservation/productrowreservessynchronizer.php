@@ -53,14 +53,19 @@ class ProductRowReservesSynchronizer
 	 */
 	public function sync(): array
 	{
-		$isNeedSave = false;
 		$reservedProductRows = $this->reservationResult->getChangedReserveInfos();
 		if (empty($reservedProductRows))
 		{
-			return [$isNeedSave, []];
+			return [false, []];
 		}
 
 		$productRowToBasket = $this->getProductRowsToBasketItemsMap();
+		if (empty($productRowToBasket))
+		{
+			return [false, []];
+		}
+
+		$isNeedSave = false;
 		$productRowReserveToBasket = [];
 
 		foreach ($reservedProductRows as $rowId => $reserveInfo)
@@ -203,6 +208,11 @@ class ProductRowReservesSynchronizer
 		]);
 		if ($exist)
 		{
+			if ((int)$exist['BASKET_RESERVATION_ID'] === $basketReservationId)
+			{
+				return new Result();
+			}
+
 			return ProductReservationMapTable::update($exist['ID'], [
 				'BASKET_RESERVATION_ID' => $basketReservationId,
 			]);

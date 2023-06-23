@@ -1053,6 +1053,9 @@ class CCrmLeadDetailsComponent
 						['categoryParams' => $categoryParams]
 					)
 				,
+				'duplicateControl' => CCrmComponentHelper::prepareClientEditorDuplicateControlParams(
+					['entityTypes' => [CCrmOwnerType::Company, CCrmOwnerType::Contact]]
+				),
 			]
 		];
 		//endregion

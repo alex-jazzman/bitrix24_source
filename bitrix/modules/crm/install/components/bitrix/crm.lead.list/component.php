@@ -677,7 +677,7 @@ foreach ($utmList as $utmCode => $utmName)
 	);
 }
 
-$CCrmUserType->ListAddHeaders($arResult['HEADERS']);
+$CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
 	\CCrmOwnerType::Lead,
@@ -1652,7 +1652,7 @@ if (empty($arSelectMap))
 {
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
-		if ($arHeader['default'])
+		if ($arHeader['default'] ?? false)
 		{
 			$arSelectMap[$arHeader['id']] = true;
 		}

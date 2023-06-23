@@ -79,6 +79,8 @@ if (
 		'/shop/documents/inventory/',
 		[
 			'/shop/documents/',
+			'/shop/documents-catalog/',
+			'/shop/documents-stores/',
 		],
 		['menu_item_id' => 'menu_crm_store'],
 		''
@@ -150,13 +152,13 @@ if (CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled())
 		"/crm/menu/",
 		[
 			"/crm/",
-			"/shop/documents/",
-			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/'],
+			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/',
+		],
 		[
 			"real_link" => \Bitrix\Crm\Settings\EntityViewSettings::getDefaultPageUrl(),
 			"counter_id" => $counterId,
 			"menu_item_id" => "menu_crm_favorite",
-			"top_menu_id" => "crm_control_panel_menu"
+			"top_menu_id" => "crm_control_panel_menu",
 		],
 		""
 	);

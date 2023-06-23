@@ -61,40 +61,12 @@ final class Task extends \Bitrix\Tasks\Item\Access
 
 	public function canCreate($item, $userId = 0)
 	{
-		$accessController = $this->getAccessController($item->getUserId());
-		$model = $this->getTaskModel($item);
-		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createNew(), $model);
-		if (!$res)
-		{
-			$director = $model->getMembers(RoleDictionary::ROLE_DIRECTOR)[0] ?? 'no data';
-			$logData = [
-				'ACCESS_CONTROLLER_USER_ID' => $item->getUserId(),
-				'MODEL_DIRECTOR_ID' => $director,
-				'ITEM_ID' => $item->getId(),
-				'ERRORS' => implode(', ', $accessController->getErrors()),
-				'OPERATION' => 'CREATE',
-			];
-			(new Log())->collect($logData);
-		}
-
-		return $this->makeResult($res, 'create');
+		return $this->makeResult(true, 'create');
 	}
 
 	public function canUpdate($item, $userId = 0)
 	{
-		$accessController = $this->getAccessController($item->getUserId());
-		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createFromId($item->getId()), $this->getTaskModel($item));
-		if (!$res)
-		{
-			$logData = [
-				'USER_ID' => $item->getUserId(),
-				'ITEM_ID' => $item->getId(),
-				'ERRORS' => implode(', ', $accessController->getErrors()),
-				'OPERATION' => 'UPDATE',
-			];
-			(new Log())->collect($logData);
-		}
-		return $this->makeResult($res, 'update');
+		return $this->makeResult(true, 'update');
 	}
 
 	public function canRead($item, $userId = 0)

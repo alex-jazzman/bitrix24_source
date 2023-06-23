@@ -430,10 +430,13 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		$statuses = [];
 		foreach (static::getFullItemStatusesList($factory, $categoryId) as $categoryStatuses)
 		{
-			$statuses = array_merge($statuses, $categoryStatuses);
+			foreach ($categoryStatuses as $statusId => $statusName)
+			{
+				$statuses[$statusId] = $statusName;
+			}
 		}
 
-		return isset($categoryId) ? $statuses[$categoryId] : $statuses;
+		return $statuses;
 	}
 
 	protected static function getFullItemStatusesList(Factory $factory, ?int $categoryId = null): array

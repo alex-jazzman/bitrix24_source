@@ -1,6 +1,6 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
@@ -17,6 +17,7 @@ use Bitrix\Main\Localization\Loc;
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
+$isRecurring = isset($arResult['ENTITY_DATA']['IS_RECURRING']) && $arResult['ENTITY_DATA']['IS_RECURRING'] === 'Y';
 
 \Bitrix\Main\UI\Extension::load([
 	'crm.scoringbutton',
@@ -65,22 +66,23 @@ $APPLICATION->IncludeComponent(
 	'bitrix:crm.deal.menu',
 	'',
 	array(
-		'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'] ?? null,
-		'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'],
-		'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
-		'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? null,
-		'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'] ?? null,
+		'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'] ?? '',
+		'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'] ?? '',
+		'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'] ?? '',
+		'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
+		'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'] ?? '',
 		'ELEMENT_ID' => $arResult['ENTITY_ID'],
 		'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 		'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
-			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : array(),
-		'OWNER_INFO' => $arResult['ENTITY_INFO'],
+			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA']
+			: [],
+		'OWNER_INFO' => $arResult['ENTITY_INFO'] ?? [],
 		'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
 		'CONVERSION_CONTAINER_ID' => $arResult['CONVERSION_CONTAINER_ID'],
 		'CONVERSION_LABEL_ID' => $arResult['CONVERSION_LABEL_ID'],
 		'CONVERSION_BUTTON_ID' => $arResult['CONVERSION_BUTTON_ID'],
-		'IS_RECURRING' => $arResult['ENTITY_DATA']['IS_RECURRING'],
-		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'],
+		'IS_RECURRING' => $isRecurring ? 'Y' : 'N' ,
+		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 		'TYPE' => 'details',
 		'SCRIPTS' => array(
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();',
@@ -112,9 +114,7 @@ $APPLICATION->IncludeComponent(
 	'',
 	[
 		'GUID' => $guid,
-		'ENTITY_TYPE_ID' => ($arResult['ENTITY_DATA']['IS_RECURRING'] !== 'Y')
-			? \CCrmOwnerType::Deal
-			: \CCrmOwnerType::DealRecurring,
+		'ENTITY_TYPE_ID' => $isRecurring ? \CCrmOwnerType::DealRecurring : \CCrmOwnerType::Deal,
 		'ENTITY_ID' => $arResult['IS_EDIT_MODE'] ? $arResult['ENTITY_ID'] : 0,
 		'ENTITY_INFO' => $arResult['ENTITY_INFO'],
 		'READ_ONLY' => $arResult['READ_ONLY'],
@@ -127,11 +127,11 @@ $APPLICATION->IncludeComponent(
 			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES']
 		],
 		'ENABLE_PROGRESS_BAR' => true,
-		'ENABLE_PROGRESS_CHANGE' => ($arResult['ENTITY_DATA']['IS_RECURRING'] !== 'Y' && !$arResult['READ_ONLY']),
+		'ENABLE_PROGRESS_CHANGE' => (!$isRecurring && !$arResult['READ_ONLY']),
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
 		'EXTRAS' => ['CATEGORY_ID' => $arResult['CATEGORY_ID']],
 		'ANALYTIC_PARAMS' => ['deal_category' => $arResult['CATEGORY_ID']],
-		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE']
+		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'] ?? ''
 	]
 );
 

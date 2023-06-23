@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load([
@@ -487,7 +488,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
 	BX.message({
 		BX24_INVITE_DIALOG_USERS_LIMIT_TEXT: "<?=GetMessageJS("BX24_INVITE_DIALOG_USERS_LIMIT_TEXT", array(
-			"#NUM#" => COption::GetOptionString("main", "PARAM_MAX_USERS")))?>",
+			"#NUM#" => Application::getInstance()->getLicense()->getMaxUsers()))?>",
 		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_VALIDATE_ERROR: "<?=Loc::getMessage("INTRANET_INVITE_DIALOG_VALIDATE_ERROR_".($arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL"))?>",
 		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_EMPTY_ERROR: "<?=Loc::getMessage("INTRANET_INVITE_DIALOG_EMPTY_ERROR_".($arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL"))?>",
 		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT: "<?=Loc::getMessage("INTRANET_INVITE_DIALOG_INPUT_".($arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL"))?>"

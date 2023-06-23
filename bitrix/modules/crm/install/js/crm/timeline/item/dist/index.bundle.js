@@ -412,7 +412,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            });
 	            resolve(response);
 	          }, response => {
-	            _classPrivateMethodGet(this, _stopAnimation, _stopAnimation2).call(this, vueComponent);
+	            _classPrivateMethodGet(this, _stopAnimation, _stopAnimation2).call(this, vueComponent, true);
 	            ui_notification.UI.Notification.Center.notify({
 	              content: response.errors[0].message,
 	              autoHideDelay: 5000
@@ -593,11 +593,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }
 	}
-	function _stopAnimation2(vueComponent) {
+	function _stopAnimation2(vueComponent, force = false) {
 	  if (!_classPrivateMethodGet(this, _isAnimationValid, _isAnimationValid2).call(this)) {
 	    return;
 	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _animation).forever) {
+	  if (babelHelpers.classPrivateFieldGet(this, _animation).forever && !force) {
 	    return; // should not be stopped
 	  }
 
@@ -652,7 +652,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  data() {
 	    return {
-	      isReadonlyMode: false
+	      isReadonlyMode: false,
+	      isComplete: false
 	    };
 	  },
 	  inject: ['isReadOnly'],
@@ -672,6 +673,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.action) {
 	        return;
 	      }
+	      this.isComplete = true;
 	      const action = new Action(this.action);
 	      action.execute(this);
 	    },
@@ -688,6 +690,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (disabled) {
 	        this.isReadonlyMode = true;
 	      }
+	    },
+	    markCheckboxUnchecked() {
+	      this.isComplete = false;
 	    }
 	  },
 	  template: `
@@ -697,6 +702,7 @@ this.BX.Crm = this.BX.Crm || {};
 				@click="executeAction"
 				type="checkbox"
 				:disabled="isReadonlyMode"
+				:checked="isComplete"
 				class="crm-timeline__card-top_checkbox"
 			/>
 			<div
@@ -4430,6 +4436,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      const actionDescription = main_core.Runtime.clone(this.action);
 	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
 	      actionDescription.actionParams.value = this.currentDateInSiteFormat;
+	      actionDescription.actionParams.valueTs = this.currentTimestamp;
 	      const action = new Action(actionDescription);
 	      action.execute(this);
 	      this.initialTimestamp = this.currentTimestamp;
@@ -5073,12 +5080,16 @@ this.BX.Crm = this.BX.Crm || {};
 	function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _openChat = /*#__PURE__*/new WeakSet();
+	var _onComplete = /*#__PURE__*/new WeakSet();
+	var _runCompleteAction = /*#__PURE__*/new WeakSet();
 	let OpenLines = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(OpenLines, _Base);
 	  function OpenLines(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, OpenLines);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OpenLines).call(this, ...args));
+	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _runCompleteAction);
+	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _onComplete);
 	    _classPrivateMethodInitSpec$4(babelHelpers.assertThisInitialized(_this), _openChat);
 	    return _this;
 	  }
@@ -5095,13 +5106,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      const {
 	        action,
 	        actionType,
-	        actionData
+	        actionData,
+	        animationCallbacks
 	      } = actionParams;
 	      if (actionType !== 'jsEvent') {
 	        return;
 	      }
 	      if (action === 'Openline:OpenChat' && actionData && actionData.dialogId) {
 	        _classPrivateMethodGet$4(this, _openChat, _openChat2).call(this, actionData.dialogId);
+	      }
+	      if (action === 'Openline:Complete' && actionData && actionData.activityId) {
+	        _classPrivateMethodGet$4(this, _onComplete, _onComplete2).call(this, item, actionData, animationCallbacks);
 	      }
 	    }
 	  }], [{
@@ -5119,6 +5134,51 @@ this.BX.Crm = this.BX.Crm || {};
 	      MENU: 'N'
 	    });
 	  }
+	}
+	function _onComplete2(item, actionData, animationCallbacks) {
+	  ui_dialogs_messagebox.MessageBox.show({
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_TITLE'),
+	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF'),
+	    modal: true,
+	    okCaption: BX.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_OK_TEXT'),
+	    buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	    onOk: () => {
+	      return _classPrivateMethodGet$4(this, _runCompleteAction, _runCompleteAction2).call(this, actionData.activityId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+	    },
+	    onCancel: messageBox => {
+	      const changeStreamButton = item.getLayoutHeaderChangeStreamButton();
+	      if (changeStreamButton) {
+	        changeStreamButton.markCheckboxUnchecked();
+	      }
+	      messageBox.close();
+	    }
+	  });
+	}
+	function _runCompleteAction2(activityId, ownerTypeId, ownerId, animationCallbacks) {
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
+	  return main_core.ajax.runAction('crm.timeline.activity.complete', {
+	    data: {
+	      activityId,
+	      ownerTypeId,
+	      ownerId
+	    }
+	  }).then(() => {
+	    if (animationCallbacks.onStop) {
+	      animationCallbacks.onStop();
+	    }
+	    return true;
+	  }, response => {
+	    ui_notification.UI.Notification.Center.notify({
+	      content: response.errors[0].message,
+	      autoHideDelay: 5000
+	    });
+	    if (animationCallbacks.onStop) {
+	      animationCallbacks.onStop();
+	    }
+	    return true;
+	  });
 	}
 
 	var ValueChange = {
@@ -7216,6 +7276,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        actionData,
 	        animationCallbacks
 	      } = actionParams;
+	      if (!actionData) {
+	        return;
+	      }
 	      const taskId = (_actionData$taskId = actionData.taskId) !== null && _actionData$taskId !== void 0 ? _actionData$taskId : null;
 	      if (!taskId) {
 	        return;
@@ -7273,7 +7336,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        data: {
 	          taskId: actionData.taskId,
 	          fields: {
-	            DEADLINE: actionData.value
+	            DEADLINE: new Date(actionData.valueTs * 1000).toISOString()
 	          },
 	          params: {
 	            skipTimeZoneOffset: 'DEADLINE'

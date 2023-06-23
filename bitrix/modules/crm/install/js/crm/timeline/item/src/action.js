@@ -122,7 +122,7 @@ export class Action
 					},
 					(response) =>
 					{
-						this.#stopAnimation(vueComponent);
+						this.#stopAnimation(vueComponent, true);
 						UI.Notification.Center.notify({
 							content: response.errors[0].message,
 							autoHideDelay: 5000,
@@ -365,13 +365,13 @@ export class Action
 		}
 	}
 
-	#stopAnimation(vueComponent)
+	#stopAnimation(vueComponent, force = false)
 	{
 		if (!this.#isAnimationValid())
 		{
 			return;
 		}
-		if (this.#animation.forever)
+		if (this.#animation.forever && !force)
 		{
 			return; // should not be stopped
 		}

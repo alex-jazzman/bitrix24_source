@@ -554,7 +554,8 @@ final class Controller extends FactoryBasedController
 
 			case CategoryType::STATUS_CHANGED:
 				$desiredStatus = (new TaskActivityStatus())->onStatusChange(
-					(int)$params['TASK_CURRENT_STATUS']
+					(int)$params['TASK_CURRENT_STATUS'],
+					$params['IS_EXPIRED'] ?? false
 				);
 				break;
 

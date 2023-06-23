@@ -10,7 +10,14 @@ use Bitrix\Main\Error;
 
 class Sharing extends Controller
 {
-	public function sendLinkAction(int $contactId, int $contactTypeId, int $ownerId, int $ownerTypeId): bool
+	public function sendLinkAction(
+		int $contactId,
+		int $contactTypeId,
+		int $ownerId,
+		int $ownerTypeId,
+		string $channelId,
+		string $senderId
+	): bool
 	{
 		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
 		{
@@ -19,7 +26,7 @@ class Sharing extends Controller
 			return false;
 		}
 
-		$sendingResult = Helper::getInstance()->sendLinkToClient($ownerId, $contactId, $contactTypeId);
+		$sendingResult = Helper::getInstance()->sendLinkToClient($ownerId, $contactId, $contactTypeId, $channelId, $senderId);
 		if ($sendingResult->getErrors())
 		{
 			$this->addErrors($sendingResult->getErrors());

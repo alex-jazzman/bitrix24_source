@@ -24,7 +24,7 @@ class GoToChat
 			&& Loader::includeModule('imconnector')
 			&& class_exists(\Bitrix\ImOpenLines\Tracker::class)
 			&& method_exists(\Bitrix\ImOpenLines\Tracker::class, 'getMessengerLink')
-			;
+		;
 	}
 
 	public static function isValidLineId(string $lineId): bool
@@ -82,7 +82,7 @@ class GoToChat
 			->setFrom($from)
 			->setTo($to)
 			->send()
-			;
+		;
 	}
 
 	private function getSmsText(string $lineId, Channel\Correspondents\To $to): string

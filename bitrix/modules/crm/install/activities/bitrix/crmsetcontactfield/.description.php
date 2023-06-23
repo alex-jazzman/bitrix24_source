@@ -18,6 +18,12 @@ $arActivityDescription = [
 		'OWN_ID' => 'crm',
 		'OWN_NAME' => 'CRM',
 	],
+	'RETURN' => [
+		'ErrorMessage' => [
+			'NAME' => GetMessage('CRM_ACTIVITY_SET_CONTACT_ERROR_MESSAGE'),
+			'TYPE' => 'string',
+		],
+	],
 	'FILTER' => [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentLead'],

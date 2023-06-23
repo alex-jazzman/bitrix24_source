@@ -897,6 +897,9 @@ class EditorAdapter
 				'useExternalRequisiteBinding' => true,
 				'enableRequisiteSelection' => true,
 				'enableTooltip' => $enableTooltip,
+				'duplicateControl' => CCrmComponentHelper::prepareClientEditorDuplicateControlParams(
+					['entityTypes' => [CCrmOwnerType::Company, CCrmOwnerType::Contact]]
+				),
 			],
 		];
 	}

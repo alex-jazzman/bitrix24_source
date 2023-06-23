@@ -475,6 +475,17 @@ class Base
 	}
 
 	/**
+	 * Activity before complete callback
+	 *
+	 * @param int $id
+	 * @param array $activityFields
+	 * @param array|null $params
+	 */
+	public static function onBeforeComplete(int $id, array $activityFields, array $params = null)
+	{
+	}
+
+	/**
 	 * Process activity creation.
 	 * @param array $activityFields
 	 * @param array|null $params

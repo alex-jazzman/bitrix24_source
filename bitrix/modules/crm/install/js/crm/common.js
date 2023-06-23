@@ -4483,7 +4483,15 @@ if(typeof(BX.CrmDupController) === "undefined")
 					this._lastSummaryGroupId = groupId;
 					this._lastSummaryFieldId = fieldId;
 				}
-				this._showSearchSummary(anchorField);
+
+				if (this._isSearchSummaryShown())
+				{
+					this._replaceShownSearchSummary(anchorField);
+				}
+				else
+				{
+					this._showSearchSummary(anchorField);
+				}
 			}
 			else
 			{
@@ -4570,9 +4578,7 @@ if(typeof(BX.CrmDupController) === "undefined")
 		},
 		_showSearchSummary: function(anchorField)
 		{
-			this._closeSearchSummary();
-
-			var anchor = null;
+			let anchor = null;
 			if(anchorField)
 			{
 				anchor = anchorField ? anchorField.getElementTitle() : null;
@@ -4582,16 +4588,50 @@ if(typeof(BX.CrmDupController) === "undefined")
 				}
 			}
 
-			this._searchSummary = BX.CrmDuplicateSummaryPopup.create(
-				this._id + "_summary",
-				{
-					"controller": this,
-					"anchor": anchor,
-					"position": this.getSetting("searchSummaryPosition", "bottom")
-				}
-			);
+			const form = this.getSetting("form", null);
+			if (form && BX.Type.isFunction(form["getElementNode"]))
+			{
+				const formElement = form.getElementNode();
+				this._searchSummary = BX.Crm.Duplicate.SummaryList.create(
+					this._id + "_summary",
+					{
+						"controller": this,
+						"anchor": anchor,
+						"wrapper": formElement,
+						"clientSearchBox": this.getSetting("clientSearchBox", null),
+						"enableEntitySelect": this.getSetting("enableEntitySelect", false)
+					}
+				);
+			}
+			else
+			{
+				this._searchSummary = BX.CrmDuplicateSummaryPopup.create(
+					this._id + "_summary",
+					{
+						"controller": this,
+						"anchor": anchor,
+						"position": this.getSetting("searchSummaryPosition", "bottom")
+					}
+				);
+			}
 			this._searchSummary.show();
 		},
+
+		_replaceShownSearchSummary: function(anchorField)
+		{
+			if (BX.Type.isFunction(this._searchSummary["subscribe"]))
+			{
+				this._searchSummary.subscribe('close', () => {
+					this._showSearchSummary(anchorField);
+				});
+				this._closeSearchSummary();
+			}
+			else
+			{
+				this._showSearchSummary(anchorField);
+			}
+		},
+
 		_isSearchSummaryShown: function()
 		{
 			return this._searchSummary && this._searchSummary.isShown();
@@ -6885,7 +6925,6 @@ if(typeof(BX.CrmDuplicateSummaryItem) === "undefined")
 		this._groupId = "";
 		this._controller = null;
 		this._container = null;
-		//this._popup = null;
 	};
 	BX.CrmDuplicateSummaryItem.prototype =
 	{

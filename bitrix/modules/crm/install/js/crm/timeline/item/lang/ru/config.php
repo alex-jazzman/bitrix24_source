@@ -31,3 +31,6 @@ $MESS["CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_MINUTES"] = "минут";
 $MESS['CRM_TIMELINE_ITEM_TASK_PING_SENT'] = 'Пинг-уведомление отправлено';
 $MESS['CRM_TIMELINE_ITEM_TASK_DELETE'] = 'Задача успешно удалена';
 $MESS['CRM_TIMELINE_ITEM_TASK_CONFIRM_DELETE'] = 'Вы действительно хотите удалить эту задачу?';
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF'] = 'При завершении дела диалог с клиентом автоматически закрывается';
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_OK_TEXT'] = 'Завершить дело';
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_TITLE'] = 'Вы уверены, что хотите завершить дело?';

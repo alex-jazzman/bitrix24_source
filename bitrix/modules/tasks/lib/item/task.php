@@ -374,7 +374,7 @@ final class Task extends \Bitrix\Tasks\Item
 
 			\CTaskSync::addItem($data); // MS Exchange
 
-			$commentPoster = CommentPoster::getInstance($taskId, $data['CREATED_BY']);
+			$commentPoster = CommentPoster::getInstance($taskId, $data['CREATED_BY'] ?? 0);
 			$commentPoster->postCommentsOnTaskAdd($data);
 
 			$this->sendPullEvents($data, $result);

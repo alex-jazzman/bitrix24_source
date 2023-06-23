@@ -170,7 +170,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_renderTitle",
 	    value: function _renderTitle() {
-	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-caption\">", "</div>\n\t\t\t</div>\n\t\t"])), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE'));
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-caption\">", "</div>\n\t\t\t</div>\n\t\t"])), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE_MSGVER_1'));
 	    }
 	  }, {
 	    key: "_renderDocuments",
@@ -266,8 +266,8 @@ this.BX = this.BX || {};
 	          }
 	          popupMenu.close();
 	          ui_dialogs_messagebox.MessageBox.show({
-	            title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
-	            message: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_PAYMENT_CONFIRM_TEXT'),
+	            title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE_MSGVER_1'),
+	            message: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_PAYMENT_CONFIRM_TEXT_MSGVER_1'),
 	            modal: true,
 	            buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
 	            onOk: function onOk(messageBox) {
@@ -293,7 +293,7 @@ this.BX = this.BX || {};
 	        popupMenu.show();
 	        var removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-payment-menu-item-remove');
 	        if (removeDocumentMenuItem) {
-	          removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_REMOVE_TIP'));
+	          removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_REMOVE_TIP_MSGVER_1'));
 	          removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
 	          BX.UI.Hint.init(popupMenu.itemsContainer);
 	        }
@@ -344,8 +344,8 @@ this.BX = this.BX || {};
 	          }
 	          popupMenu.close();
 	          ui_dialogs_messagebox.MessageBox.show({
-	            title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
-	            message: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_DELIVERY_CONFIRM_TEXT'),
+	            title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE_MSGVER_1'),
+	            message: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_DELIVERY_CONFIRM_TEXT_MSGVER_1'),
 	            modal: true,
 	            buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
 	            onOk: function onOk(messageBox) {
@@ -371,7 +371,7 @@ this.BX = this.BX || {};
 	        popupMenu.show();
 	        var removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-shipment-menu-item-remove');
 	        if (removeDocumentMenuItem) {
-	          removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_REMOVE_TIP'));
+	          removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_REMOVE_TIP_MSGVER_1'));
 	          removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
 	          BX.UI.Hint.init(popupMenu.itemsContainer);
 	        }
@@ -440,7 +440,7 @@ this.BX = this.BX || {};
 	              }
 	              popupMenu.close();
 	              ui_dialogs_messagebox.MessageBox.show({
-	                title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
+	                title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE_MSGVER_1'),
 	                message: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT'),
 	                modal: true,
 	                buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
@@ -469,7 +469,7 @@ this.BX = this.BX || {};
 	        popupMenu.show();
 	        var removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-realization-menu-item-remove');
 	        if (removeDocumentMenuItem) {
-	          removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REALIZATION_REMOVE_TIP'));
+	          removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REALIZATION_REMOVE_TIP_MSGVER_1'));
 	          removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
 	          BX.UI.Hint.init(popupMenu.itemsContainer);
 	        }
@@ -515,7 +515,7 @@ this.BX = this.BX || {};
 	        popupMenu.show();
 	        _this6._menus.push(popupMenu);
 	      };
-	      return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-add-box\">\n\t\t\t\t<a href=\"#\" class=\"crm-entity-widget-payment-add\" onclick=\"", "\">\n\t\t\t\t\t+ ", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT'));
+	      return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-add-box\">\n\t\t\t\t<a href=\"#\" class=\"crm-entity-widget-payment-add\" onclick=\"", "\">\n\t\t\t\t\t+ ", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT_MSGVER_1'));
 	    }
 	  }, {
 	    key: "_getRealizationMenuItem",
@@ -944,7 +944,7 @@ this.BX = this.BX || {};
 	    key: "_showCommonError",
 	    value: function _showCommonError() {
 	      BX.UI.Notification.Center.notify({
-	        content: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_COMMON_ERROR')
+	        content: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_COMMON_ERROR_MSGVER_1')
 	      });
 	    }
 	  }, {

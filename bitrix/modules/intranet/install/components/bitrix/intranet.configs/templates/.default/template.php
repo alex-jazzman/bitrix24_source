@@ -531,45 +531,92 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		</tr>
 
 	<!-- im general chat right-->
-		<?
+		<?php if (COption::GetOptionString("im", "im_general_chat_new_rights") !== 'Y'): ?>
+			<?
 			$imAllow = COption::GetOptionString("im", "allow_send_to_general_chat_all");
+			?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="allow_general_chat_toall"><?=GetMessage('CONFIG_IM_CHAT_RIGHTS')?></label></td>
+				<td class="content-edit-form-field-input">
+					<input type="checkbox" id="allow_general_chat_toall" name="allow_general_chat_toall" <?if ($imAllow == "Y" || $imAllow == "N" && !empty($arResult['arChatToAllRights'])):?>checked<?endif?> class="content-edit-form-field-input-selector"/>
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<tr id="chat_rights_all" style="display: <?=($imAllow == "Y" || $imAllow == "N" && !empty($arResult['arChatToAllRights']) ? "table-row" : "none")?>;">
+				<td class="content-edit-form-field-name content-edit-form-field-name-left">&nbsp;</td>
+				<td class="content-edit-form-field-input">
+					<?
 
-		?>
-		<tr>
-			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="allow_general_chat_toall"><?=GetMessage('CONFIG_IM_CHAT_RIGHTS')?></label></td>
-			<td class="content-edit-form-field-input">
-				<input type="checkbox" id="allow_general_chat_toall" name="allow_general_chat_toall" <?if ($imAllow == "Y" || $imAllow == "N" && !empty($arResult['arChatToAllRights'])):?>checked<?endif?> class="content-edit-form-field-input-selector"/>
-			</td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
-		<tr id="chat_rights_all" style="display: <?=($imAllow == "Y" || $imAllow == "N" && !empty($arResult['arChatToAllRights']) ? "table-row" : "none")?>;">
-			<td class="content-edit-form-field-name content-edit-form-field-name-left">&nbsp;</td>
-			<td class="content-edit-form-field-input">
-				<?
+					$APPLICATION->IncludeComponent(
+						"bitrix:main.user.selector",
+						"",
+						[
+							"ID" => "imchat_toall_rights",
+							"INPUT_NAME" => 'imchat_toall_rights[]',
+							"LIST" => $arResult['arChatToAllRights'],
+							"USE_SYMBOLIC_ID" => true,
+							"API_VERSION" => 3,
+							"SELECTOR_OPTIONS" => array(
+								'contextCode' => 'U',
+								'context' => "imchat_toall_rights",
+								'departmentSelectDisable' => 'N',
+								'userSearchArea' => 'I',
+								'enableAll' => 'Y',
+								'departmentFlatEnable' => 'Y',
+							),
+						]
+					);
+					?>
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+		<?php else: ?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="allow_general_chat_toall"><?=GetMessage('CONFIG_IM_CHAT_RIGHTS')?></label></td>
+				<td class="content-edit-form-field-input">
+					<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+						<select class="ui-ctl-element" name="general_chat_can_post" id="general_chat_can_post_select">
+							<?php foreach($arResult["generalChatCanPostList"] as $code => $name): ?>
+								<option value="<?=$code?>" <?= ($code == $arResult["generalChatCanPost"]) ? 'selected' : '' ?>><?= $name ?></option>
+							<?php endforeach ?>
+						</select>
+					</div>
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+			<tr id="chat_rights_all" style="display: <?= ($arResult["generalChatCanPost"] === $arResult["generalChatShowManagersList"]) ? "table-row" : "none" ?>;">
+				<td class="content-edit-form-field-name content-edit-form-field-name-left">&nbsp;</td>
+				<td class="content-edit-form-field-input">
+					<!--
+					<?php print_r($arResult['generalChatManagersList']); ?>
+					-->
 
-				$APPLICATION->IncludeComponent(
-					"bitrix:main.user.selector",
-					"",
-					[
-						"ID" => "imchat_toall_rights",
-						"INPUT_NAME" => 'imchat_toall_rights[]',
-						"LIST" => $arResult['arChatToAllRights'],
-						"USE_SYMBOLIC_ID" => true,
-						"API_VERSION" => 3,
-						"SELECTOR_OPTIONS" => array(
-							'contextCode' => 'U',
-							'context' => "imchat_toall_rights",
-							'departmentSelectDisable' => 'N',
-							'userSearchArea' => 'I',
-							'enableAll' => 'Y',
-							'departmentFlatEnable' => 'Y',
-						),
-					]
-				);
-				?>
-			</td>
-			<td class="content-edit-form-field-error"></td>
-		</tr>
+					<?php
+					$APPLICATION->IncludeComponent(
+						"bitrix:main.user.selector",
+						"",
+						[
+							"ID" => "imchat_toall_rights",
+							"INPUT_NAME" => 'imchat_toall_rights[]',
+							"LIST" => $arResult['generalChatManagersList'],
+							"USE_SYMBOLIC_ID" => true,
+							"API_VERSION" => 3,
+							"SELECTOR_OPTIONS" => array(
+								'contextCode' => 'U',
+								'context' => "imchat_toall_rights",
+								'departmentSelectDisable' => 'Y',
+								'userSearchArea' => 'I',
+								'enableAll' => 'N',
+								'departmentFlatEnable' => 'Y',
+							),
+						]
+					);
+					?>
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+		<?php endif ?>
 
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="general_chat_message_join"><?=GetMessage('CONFIG_IM_GENERSL_CHAT_MESSAGE_JOIN')?></label></td>

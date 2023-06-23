@@ -5,17 +5,14 @@ namespace Bitrix\Crm\Controller\Action\Entity;
 use Bitrix\Crm\Category\NamingHelper;
 use Bitrix\Crm\Controller\EntitySearchScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
-
+use Bitrix\Crm\Search\Result;
+use Bitrix\Crm\Search\Result\Factory;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Search;
 use Bitrix\Main\UI\PageNavigation;
-
-use \Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Search\Result\Factory;
-use Bitrix\Crm\Search\Result;
 
 Loc::loadMessages(__FILE__);
 
@@ -267,7 +264,7 @@ class SearchAction extends Search\SearchAction
 			/**
 			 * Assuming that all entity type's items have the same category
 			 */
-			$entityTypeToCategoryMap[$entityTypeId] = $item['CATEGORY_ID'];
+			$entityTypeToCategoryMap[$entityTypeId] = $item['CATEGORY_ID'] ?? null;
 			$itemsByEntityType[$entityTypeId][] = (int)$item['ENTITY_ID'];
 		}
 

@@ -401,7 +401,14 @@ final class Task extends Base
 			&& $task->getTaskControl()
 		)
 		{
-			$updateData['STATUS'] = TaskActivityStatus::TASKS_STATE_SUPPOSEDLY_COMPLETED;
+			if ($task->getResponsibleId() === $task->getCreatedBy())
+			{
+				$updateData['STATUS'] = TaskActivityStatus::TASKS_STATE_COMPLETED;
+			}
+			else
+			{
+				$updateData['STATUS'] = TaskActivityStatus::TASKS_STATE_SUPPOSEDLY_COMPLETED;
+			}
 		}
 		elseif (
 			$status !== TaskActivityStatus::TASKS_STATE_COMPLETED
@@ -734,8 +741,6 @@ final class Task extends Base
 				'REGISTER_SONET_EVENT' => true
 			]
 		);
-
-		self::invalidateAll();
 	}
 
 	public function getIdsToDelete(Bindings $toRemove, int $taskId): array

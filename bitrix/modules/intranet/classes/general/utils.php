@@ -1268,6 +1268,11 @@ class CIntranetUtils
 
 	public static function getDepartmentEmployees($arDepartments, $bRecursive = false, $bSkipSelf = false, $onlyActive = 'Y', $arSelect = null)
 	{
+		if (empty($arDepartments))
+		{
+			return new CDBResult();
+		}
+
 		global $USER;
 
 		return \Bitrix\Intranet\Util::getDepartmentEmployees(array(

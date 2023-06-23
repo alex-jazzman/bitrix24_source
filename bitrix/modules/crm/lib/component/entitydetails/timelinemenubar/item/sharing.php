@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Crm;
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
 use Bitrix\Crm\Integration\SmsManager;
@@ -38,15 +38,24 @@ class Sharing extends Item
 		;
 	}
 
+	public function hasTariffRestrictions(): bool
+	{
+		return !\Bitrix\Crm\Restriction\RestrictionManager::getCalendarSharingRestriction()->hasPermission();
+	}
+
 	public function prepareSettings(): array
 	{
 		return [
 			'config' => [
 				'link' => $this->prepareLink(),
 				'contacts' => $this->getPhoneContacts(),
+				'selectedChannelId' => $this->getSelectedChannelId(),
+				'communicationChannels' => $this->getCommunicationChannels(),
+				'isNotificationsAvailable' => $this->isNotificationsAvailable(),
 				'doPayAttentionToNewFeature' => $this->doPayAttentionToNewFeatureAction(),
 				'areCommunicationChannelsAvailable' => $this->areCommunicationChannelsAvailable(),
 			],
+			'isAvailable' => \Bitrix\Crm\Restriction\RestrictionManager::getCalendarSharingRestriction()->hasPermission(),
 		];
 	}
 
@@ -147,10 +156,44 @@ class Sharing extends Item
 		if ($this->getEntityId() > 0 && $this->getEntityTypeId() > 0)
 		{
 			$entity = new Crm\ItemIdentifier($this->getEntityTypeId(), $this->getEntityId());
-			$result = Crm\Integration\Calendar\Notification\NotificationService::canSendMessage($entity);
+			$result = Crm\Integration\Calendar\Notification\NotificationService::canSendMessage($entity)
+				|| Crm\Integration\Calendar\Notification\SmsService::canSendMessage($entity)
+			;
 		}
 
 		return $result;
 	}
 
+	protected function getSelectedChannelId(): ?string
+	{
+		$result = null;
+
+		if ($this->getEntityId() > 0 && $this->getEntityTypeId() > 0)
+		{
+			$entity = new Crm\ItemIdentifier($this->getEntityTypeId(), $this->getEntityId());
+			$result = Crm\Integration\Calendar\Notification\Manager::getOptimalChannelId($entity);
+		}
+
+		return $result;
+	}
+
+	protected function getCommunicationChannels(): array
+	{
+		$result = [];
+
+		if ($this->getEntityId() > 0 && $this->getEntityTypeId() > 0)
+		{
+			$entity = new Crm\ItemIdentifier($this->getEntityTypeId(), $this->getEntityId());
+			$result = Crm\Integration\Calendar\Notification\Manager::getCommunicationChannels($entity);
+		}
+
+		return $result;
+	}
+
+	protected function isNotificationsAvailable(): bool
+	{
+		return Loader::includeModule('bitrix24')
+			&& Application::getInstance()->getLicense()->getRegion() === 'ru'
+		;
+	}
 }

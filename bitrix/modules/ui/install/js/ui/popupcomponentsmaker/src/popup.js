@@ -58,7 +58,6 @@ class PopupComponentsMaker
 
 			this.popup = new Popup(popupId, this.target, {
 				className: 'ui-popupcomponentmaker',
-
 				contentBackground: 'transparent',
 				contentPadding: this.contentPadding,
 				angle: {

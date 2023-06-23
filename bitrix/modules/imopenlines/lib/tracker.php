@@ -34,6 +34,10 @@ class Tracker
 
 	protected const EXPECTATION_LIVE_TIME = '30 days';
 
+	/** The prefix for trckerId. */
+	public const PREFIX = 'btrx';
+
+
 	/* @var Session $session */
 	protected $session;
 
@@ -219,7 +223,7 @@ class Tracker
 			return $row['TRACK_ID'];
 		}
 
-		$trackId = Random::getString(10);
+		$trackId = self::PREFIX . Random::getString(10);
 
 		$add['ACTION'] = Tracker::ACTION_EXPECT;
 		$add['TRACK_ID'] = $trackId;
@@ -237,7 +241,7 @@ class Tracker
 	 * @param string $trackId
 	 * @return array|null
 	 */
-	private function findExpectationByTrackId(string $trackId): ?array
+	public function findExpectationByTrackId(string $trackId): ?array
 	{
 		$filter = [
 			'=TRACK_ID' => $trackId,

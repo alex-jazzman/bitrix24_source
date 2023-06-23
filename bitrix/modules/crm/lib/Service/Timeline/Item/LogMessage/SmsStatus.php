@@ -118,7 +118,10 @@ class SmsStatus extends LogMessage
 
 		$statusTag = new Tag(Loc::getMessage('CRM_TIMELINE_LOG_TAG_SENDING_ERROR'), Tag::TYPE_FAILURE);
 
-		$errorText = $this->isSmsChannel ? $this->messageInfo['errorText'] : $this->messageInfo['ERROR_MESSAGE'];
+		$errorText = $this->isSmsChannel
+			? ($this->messageInfo['errorText'] ?? '')
+			: ($this->messageInfo['ERROR_MESSAGE'] ?? '');
+
 		if (!empty($errorText))
 		{
 			$statusTag->setHint($errorText);

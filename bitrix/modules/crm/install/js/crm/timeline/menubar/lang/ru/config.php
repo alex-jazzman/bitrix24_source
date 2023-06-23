@@ -60,12 +60,17 @@ $MESS['CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON'] = 'Отправить';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_CANCEL_BUTTON'] = 'Отменить';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_MORE_INFO_BUTTON'] = 'Подробнее о слотах в CRM';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_RECEIVER'] = 'Получатель';
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNELS'] = 'Канал отправки';
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_SENDER'] = 'Отправитель';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_COPY_LINK_NOTIFICATION'] = 'Ссылка скопирована';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TITLE'] = 'Свободные слоты для встреч';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TEXT'] = 'Как быстро запланировать встречу с клиентом? В один клик отправьте ссылку на свои свободные слоты, а клиент сам выберет время. Попробуйте, как это удобно!';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TITLE'] = 'У вас ещё не подключены WhatsApp и СМС';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_1'] = 'Подключите WhatsApp и СМС, чтобы мгновенно отправлять клиентам ссылку на ваши свободные слоты.';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2'] = 'Посмотрите, как это работает: <span data-role="crm-timeline-calendar-sharing_open-configure-slots">поставьте себе тестовую встречу</span> прямо сейчас.';
+
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE'] = 'У вас не подключен сервис для отправки СМС';
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE_1'] = '<a href="/marketplace/category/crm_robot_sms/" target="_blank">Подключите СМС-сервис</a>, чтобы мгновенно отправлять клиентам ссылку на ваши свободные слоты.';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TITLE'] = 'Укажите контакты клиента в сделке';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT'] = 'Укажите номер телефона клиента, чтобы мы могли отправить ссылку на свободные слоты.';
 

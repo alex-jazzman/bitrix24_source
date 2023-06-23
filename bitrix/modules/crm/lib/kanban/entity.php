@@ -1175,7 +1175,7 @@ abstract class Entity
 			$item['PRICE'] = $item['OPPORTUNITY_ACCOUNT'];
 		}
 
-		$item['ENTITY_CURRENCY_ID'] = $item['CURRENCY_ID'];
+		$item['ENTITY_CURRENCY_ID'] = $item['CURRENCY_ID'] ?? null;
 		if (!empty($item['ACCOUNT_CURRENCY_ID']))
 		{
 			$item['CURRENCY_ID'] = $item['ACCOUNT_CURRENCY_ID'];
@@ -1186,25 +1186,31 @@ abstract class Entity
 		$currency = $this->getCurrency();
 		if (empty($item['CURRENCY_ID']) || $item['CURRENCY_ID'] === $currency)
 		{
-			$item['PRICE'] = (float)$item['PRICE'];
-			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['OPPORTUNITY'], $item['ENTITY_CURRENCY_ID']);
+			$item['PRICE'] = (float)($item['PRICE'] ?? 0.0);
+			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString(
+				$item['OPPORTUNITY'] ?? 0.0,
+				$item['ENTITY_CURRENCY_ID']
+			);
 		}
 		else
 		{
 			$item['PRICE'] = \CCrmCurrency::ConvertMoney($item['PRICE'], $item['CURRENCY_ID'], $currency);
-			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['OPPORTUNITY'], $item['ENTITY_CURRENCY_ID']);
+			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString(
+				$item['OPPORTUNITY'] ?? 0.0,
+				$item['ENTITY_CURRENCY_ID']
+			);
 		}
 
-		$item['OPPORTUNITY_VALUE'] = $item['OPPORTUNITY'];
+		$item['OPPORTUNITY_VALUE'] = $item['OPPORTUNITY'] ?? 0.0;
 
 		$item['OPPORTUNITY'] = [
-			'SUM' => $item['OPPORTUNITY'],
+			'SUM' => $item['OPPORTUNITY'] ?? 0.0,
 			'CURRENCY' => $item['ENTITY_CURRENCY_ID'],
 		];
 
 		$opened = $item['OPENED'] ?? null;
 		$item['OPENED'] = in_array($opened, ['Y', '1', 1, true], true) ? 'Y' : 'N';
-		$item['DATE_FORMATTED'] = $this->dateFormatter->format($item['DATE'], (bool)$item['FORMAT_TIME']);
+		$item['DATE_FORMATTED'] = $this->dateFormatter->format($item['DATE'] ?? '', (bool)$item['FORMAT_TIME']);
 
 		return $item;
 	}

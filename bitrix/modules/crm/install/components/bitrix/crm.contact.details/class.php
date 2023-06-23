@@ -391,7 +391,7 @@ class CCrmContactDetailsComponent
 					'id' => 'tab_order',
 					'name' => Loc::getMessage('CRM_CONTACT_TAB_ORDERS'),
 					'loader' => array(
-						'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
+						'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 						'componentData' => array(
 							'template' => '',
 							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
@@ -409,7 +409,8 @@ class CCrmContactDetailsComponent
 								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 								'ENABLE_TOOLBAR' => 'Y',
 								'PRESERVE_HISTORY' => true,
-								'ADD_EVENT_NAME' => 'CrmCreateOrderFromContact'
+								'ADD_EVENT_NAME' => 'CrmCreateOrderFromContact',
+								'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
 							], 'crm.order.list')
 						)
 					)
@@ -950,7 +951,10 @@ class CCrmContactDetailsComponent
 					),
 					'clientEditorFieldsParams' => CCrmComponentHelper::prepareClientEditorFieldsParams(
 						['categoryParams' => $categoryParams]
-					)
+					),
+					'duplicateControl' => CCrmComponentHelper::prepareClientEditorDuplicateControlParams(
+						['entityTypes' => [CCrmOwnerType::Company, CCrmOwnerType::Contact]]
+					),
 				)
 			),
 			array(

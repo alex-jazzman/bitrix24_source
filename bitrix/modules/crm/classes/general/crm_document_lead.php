@@ -507,7 +507,13 @@ class CCrmDocumentLead extends CCrmDocument
 		{
 			$CCrmBizProc = new CCrmBizProc('LEAD');
 			if (false === $CCrmBizProc->CheckFields(false, true))
+			{
+				if ($useTransaction)
+				{
+					$DB->Rollback();
+				}
 				throw new Exception($CCrmBizProc->LAST_ERROR);
+			}
 
 			if ($id && $id > 0 && !$CCrmBizProc->StartWorkflow($id))
 			{
@@ -693,7 +699,13 @@ class CCrmDocumentLead extends CCrmDocument
 		{
 			$CCrmBizProc = new CCrmBizProc('LEAD');
 			if (false === $CCrmBizProc->CheckFields($arDocumentID['ID'], true))
+			{
+				if ($useTransaction)
+				{
+					$DB->Rollback();
+				}
 				throw new Exception($CCrmBizProc->LAST_ERROR);
+			}
 
 			if ($res && !$CCrmBizProc->StartWorkflow($arDocumentID['ID']))
 			{

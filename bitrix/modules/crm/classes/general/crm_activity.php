@@ -5,6 +5,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\FillActLightCounter;
 use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
 use Bitrix\Crm\Activity\Provider\Eventable\PingOffset;
 use Bitrix\Crm\Activity\Provider\Eventable\PingQueue;
@@ -20,7 +21,6 @@ use Bitrix\Disk\SpecificFolder;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Crm\Activity\FillActLightCounter;
 use Bitrix\Main\Web\Uri;
 
 class CAllCrmActivity
@@ -4117,16 +4117,18 @@ class CAllCrmActivity
 		$dbRes = CCrmActivity::GetList(array(), $filter, false, false, array('ID'));
 		return is_array($dbRes->Fetch());
 	}
-	public static function Complete($ID, $completed = true, $options = array())
+
+	public static function Complete($ID, $completed = true, $options = [])
 	{
-		$ID = intval($ID);
-		if($ID <= 0)
+		$ID = (int)($ID ?? 0);
+		if ($ID <= 0)
 		{
-			self::RegisterError(array('text' => 'Invalid arguments are supplied.'));
+			self::RegisterError(['text' => 'Invalid arguments are supplied.']);
+
 			return false;
 		}
 
-		if(is_string($completed))
+		if (is_string($completed))
 		{
 			$completed = mb_strtoupper($completed) === 'Y' ? 'Y' : 'N';
 		}
@@ -4136,24 +4138,34 @@ class CAllCrmActivity
 		}
 
 		$dbRes = CCrmActivity::GetList(
-			array(),
-				array('ID'=> $ID, 'CHECK_PERMISSIONS' => 'N'),
-				false,
-				false,
-				array('ID', 'COMPLETED')
+			[],
+			['ID'=> $ID, 'CHECK_PERMISSIONS' => 'N'],
+			false,
+			false,
+			['ID', 'COMPLETED', 'PROVIDER_ID', 'PROVIDER_PARAMS']
 		);
 		$fields = $dbRes->Fetch();
-		if(!is_array($fields))
+		if (!is_array($fields))
 		{
 			return false;
 		}
 
-		if(isset($fields['COMPLETED']) && $fields['COMPLETED'] === $completed)
+		if (isset($fields['COMPLETED']) && $fields['COMPLETED'] === $completed)
 		{
 			return true;
 		}
 
-		return self::Update($ID, array('COMPLETED' => $completed), true, true, $options);
+		$skipBeforeHandler = $options['SKIP_BEFORE_HANDLER'] ?? false;
+		if (!$skipBeforeHandler)
+		{
+			$provider = self::GetActivityProvider($fields);
+			if ($provider !== null)
+			{
+				$provider::onBeforeComplete($ID, $fields);
+			}
+		}
+
+		return self::Update($ID, ['COMPLETED' => $completed], true, true, $options);
 	}
 
 	public static function SetAutoCompleted($ID, $options = array())
@@ -7909,12 +7921,16 @@ class CCrmActivityType
 
 	public static function PrepareListItems()
 	{
-		return CCrmEnumeration::PrepareListItems(self::GetAllDescriptions(), array(self::Undefined));
+		$desctiptions = self::GetAllDescriptions();
+
+		return CCrmEnumeration::PrepareListItems($desctiptions, array(self::Undefined));
 	}
 
 	public static function PrepareFilterItems()
 	{
-		return CCrmEnumeration::PrepareFilterItems(self::GetAllDescriptions(), array(self::Undefined));
+		$desctiptions = self::GetAllDescriptions();
+
+		return CCrmEnumeration::PrepareFilterItems($desctiptions, array(self::Undefined));
 	}
 }
 
@@ -8043,12 +8059,16 @@ class CCrmActivityPriority
 
 	public static function PrepareListItems()
 	{
-		return CCrmEnumeration::PrepareListItems(self::GetAllDescriptions(), array(self::None));
+		$descriptions = self::GetAllDescriptions();
+
+		return CCrmEnumeration::PrepareListItems($descriptions, array(self::None));
 	}
 
 	public static function PrepareFilterItems()
 	{
-		return CCrmEnumeration::PrepareFilterItems(self::GetAllDescriptions(), array(self::None));
+		$descriptions = self::GetAllDescriptions();
+
+		return CCrmEnumeration::PrepareFilterItems($descriptions, array(self::None));
 	}
 
 	public static function ResolveDescription($priorityID)

@@ -189,12 +189,23 @@
 
 	BX.Crm.DocumentView.initButtons = function()
 	{
-		BX.bind(document.getElementById('crm-document-stamp'), 'click', BX.proxy(this.showChangeStampsDisabledMessage, this));
-		BX.bind(document.getElementById('crm-document-stamp'), 'change', BX.proxy(this.onChangeStamps, this));
+		const stampInput = document.getElementById('crm-document-stamp');
+		if (stampInput)
+		{
+			if (stampInput.parentNode)
+			{
+				BX.bind(stampInput.parentNode, 'click', BX.proxy(this.showChangeStampsDisabledMessage, this));
+			}
+			BX.bind(document.getElementById('crm-document-stamp'), 'change', BX.proxy(this.onChangeStamps, this));
+		}
+
 		var qrCodeInput = document.getElementById('crm-document-qr');
 		if (qrCodeInput)
 		{
-			BX.Event.bind(qrCodeInput, 'click', this.handleQrCodeInputClick.bind(this));
+			if (qrCodeInput.parentNode)
+			{
+				BX.Event.bind(qrCodeInput.parentNode, 'click', this.handleQrCodeInputClick.bind(this));
+			}
 			BX.Event.bind(qrCodeInput, 'change', this.handleQrCodeInputChange.bind(this));
 		}
 		BX.bind(document.getElementById('crm-document-edit-template'), 'click', BX.proxy(function(event)
@@ -687,7 +698,7 @@
 		if (this.changeQrCodeDisabledReason)
 		{
 			BX.Crm.DocumentView.showPopupNotice(
-				this.this.changeQrCodeDisabledReason
+				this.changeQrCodeDisabledReason
 			);
 		}
 	};

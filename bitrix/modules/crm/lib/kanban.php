@@ -1315,11 +1315,12 @@ abstract class Kanban
 				$row = $this->mergeItemFieldsValues($row, $renderedRows[$rowId]);
 			}
 
-			if ($row['CONTACT_ID'] > 0)
+			if (isset($row['CONTACT_ID']) && $row['CONTACT_ID'] > 0)
 			{
 				$row['CONTACT_TYPE'] = 'CRM_CONTACT';
 			}
-			if ($row['COMPANY_ID'] > 0)
+
+			if (isset($row['COMPANY_ID']) && $row['COMPANY_ID'] > 0)
 			{
 				$row['CONTACT_TYPE'] = 'CRM_COMPANY';
 			}
@@ -1430,7 +1431,7 @@ abstract class Kanban
 				'currency' => $row['CURRENCY_ID'],
 				'entity_currency' => $row['ENTITY_CURRENCY_ID'],
 				'date' => $row['DATE_FORMATTED'],
-				'dateCreate' => $row['DATE_CREATE'],
+				'dateCreate' => $row['DATE_CREATE'] ?? '',
 				'contactId' => (int)$row['CONTACT_ID'],
 				'companyId' => (!empty($row['COMPANY_ID']) ? (int)$row['COMPANY_ID'] : null),
 				'contactType' => $row['CONTACT_TYPE'],

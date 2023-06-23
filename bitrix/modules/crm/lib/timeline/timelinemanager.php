@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Service;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\Service;
 
 class TimelineManager
 {
@@ -384,7 +384,10 @@ class TimelineManager
 				{
 					$shipment['SHOW_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
 						->getShipmentDetailsLink($shipment['ID']);
-					$shipment['PRICE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($shipment['PRICE'], $shipment['CURRENCY']);
+					$shipment['PRICE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
+						$shipment['PRICE'] ?? 0.0,
+						$shipment['CURRENCY']
+					);
 					$orderShipmentMap[$shipment['ORDER_ID']][$shipment['ID']] = $shipment;
 				}
 

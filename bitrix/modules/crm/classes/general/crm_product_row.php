@@ -656,7 +656,6 @@ class CAllCrmProductRow
 
 	public static function LoadRows($ownerType, $ownerID, $assoc = false)
 	{
-		// @todo. move code from \CAllCrmDeal::LoadProductRows here and remove fillBasketReserves below
 		$ownerType = strval($ownerType);
 		$filter = array();
 
@@ -708,8 +707,6 @@ class CAllCrmProductRow
 			$ary['MEASURE_CODE'] = isset($ary['MEASURE_CODE']) ? (int)$ary['MEASURE_CODE'] : 0;
 			$ary['MEASURE_NAME'] = isset($ary['MEASURE_NAME']) ? $ary['MEASURE_NAME'] : '';
 
-			$ary['RESERVE_ID'] = null;
-
 			$ary['TYPE'] = isset($ary['TYPE']) ? (int)$ary['TYPE'] : \Bitrix\Crm\ProductType::TYPE_PRODUCT;
 
 			if($productID > 0 && $ary['MEASURE_CODE'] <= 0)
@@ -742,7 +739,7 @@ class CAllCrmProductRow
 			}
 		}
 
-		$results = \Bitrix\Crm\Service\Sale\Reservation\ReservationService::getInstance()->fillBasketReserves($results);
+		$results = \Bitrix\Crm\Service\Sale\Reservation\ReservationService::getInstance()->fillCrmReserves($results);
 
 		if(!empty($measurelessProductIDs))
 		{
@@ -1460,7 +1457,7 @@ class CAllCrmProductRow
 			}
 			unset($discountSum, $presentDiscountSum);
 
-			$taxRate = 
+			$taxRate =
 				isset($arRow['TAX_RATE'])
 					? round((double)($arRow['TAX_RATE']), 2)
 					: null

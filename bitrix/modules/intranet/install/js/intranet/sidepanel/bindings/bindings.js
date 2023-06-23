@@ -690,7 +690,7 @@
 			},
 			{
 				condition: [
-					'^' + siteDir + 'mail/message/\\d+'
+					new RegExp(siteDir + 'mail/message/\\d+'),
 				],
 				options: {
 					width: 1080,

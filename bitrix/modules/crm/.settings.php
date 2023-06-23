@@ -110,6 +110,9 @@ return array(
 			'crm.service.converter.category' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\Category',
 			],
+			'crm.service.converter.caseCache' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Converter\\InMemoryCaseCache',
+			],
 			'crm.service.broker.user' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\User',
 			],
@@ -358,7 +361,7 @@ return array(
 			],
 			'crm.activity.actcounterlighttimerepo' => [
 				'className' => \Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo::class,
-			]
+			],
 		],
 		'readonly' => true,
 	],

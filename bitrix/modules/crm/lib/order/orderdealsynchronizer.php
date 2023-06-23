@@ -355,10 +355,11 @@ class OrderDealSynchronizer
 	 *
 	 * @param int $dealId
 	 * @param ReservationResult $result
+	 * @param bool $beforeSyncProducts
 	 *
 	 * @return void
 	 */
-	public function syncOrderReservesFromDeal(int $dealId, ReservationResult $result): void
+	public function syncOrderReservesFromDeal(int $dealId, ReservationResult $result, bool $beforeSyncProducts = false): void
 	{
 		if (!$this->isSupportSync)
 		{
@@ -385,6 +386,11 @@ class OrderDealSynchronizer
 		try
 		{
 			$this->lockOrder($order->getId());
+
+			if ($beforeSyncProducts)
+			{
+				$this->syncOrderProductsByDeal($order, $dealId);
+			}
 
 			$this->syncOrderProductsReservesByReservationResult($order, $dealId, $result);
 		}

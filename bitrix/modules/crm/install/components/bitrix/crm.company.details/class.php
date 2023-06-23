@@ -13,6 +13,7 @@ use Bitrix\Crm\Component\EntityDetails\Traits;
 use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integrity\DuplicateControl;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\Tracking;
@@ -388,7 +389,7 @@ class CCrmCompanyDetailsComponent
 						'id' => 'tab_order',
 						'name' => Loc::getMessage('CRM_COMPANY_TAB_ORDERS'),
 						'loader' => array(
-							'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
+							'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 							'componentData' => array(
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
@@ -406,7 +407,8 @@ class CCrmCompanyDetailsComponent
 									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 									'ENABLE_TOOLBAR' => 'Y',
 									'PRESERVE_HISTORY' => true,
-									'ADD_EVENT_NAME' => 'CrmCreateOrderFromCompany'
+									'ADD_EVENT_NAME' => 'CrmCreateOrderFromCompany',
+									'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
 								], 'crm.order.list')
 							)
 						)
@@ -931,7 +933,10 @@ class CCrmCompanyDetailsComponent
 					),
 					'clientEditorFieldsParams' => CCrmComponentHelper::prepareClientEditorFieldsParams(
 						['categoryParams' => $categoryParams]
-					)
+					),
+					'duplicateControl' => CCrmComponentHelper::prepareClientEditorDuplicateControlParams(
+						['entityTypes' => [CCrmOwnerType::Contact]]
+					),
 				)
 			),
 			array(
@@ -939,7 +944,7 @@ class CCrmCompanyDetailsComponent
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_REQUISITES'),
 				'type' => 'requisite',
 				'editable' => true,
-				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite'),
+				'data' => CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite'),
 				'enableAttributes' => false
 			)
 		);
@@ -1013,7 +1018,7 @@ class CCrmCompanyDetailsComponent
 				'editable' => true,
 				'enableAttributes' => false,
 				'virtual' => true,
-				'data' => \CCrmComponentHelper::getRequisiteAddressFieldData(
+				'data' => CCrmComponentHelper::getRequisiteAddressFieldData(
 					CCrmOwnerType::Company,
 					$this->getCategoryId()
 				)
@@ -1740,7 +1745,7 @@ class CCrmCompanyDetailsComponent
 		$contactData = [];
 		if ($this->entityID > 0)
 		{
-			\CCrmComponentHelper::prepareMultifieldData(
+			CCrmComponentHelper::prepareMultifieldData(
 				\CCrmOwnerType::Company,
 				[$this->entityID],
 				[],

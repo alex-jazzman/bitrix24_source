@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
@@ -1875,7 +1876,9 @@ class Connector
 				'user_id' => $params['user'],
 			],
 			'chat' => $params['chat'],
-			'message' => $params['message']
+			'message' => $params['message'],
+			'ref' => $params['ref'] ?? [],
+			'extra' => $params['extra'] ?? [],
 		];
 	}
 
@@ -1886,8 +1889,6 @@ class Connector
 	public static function onReceivedEntity($params)
 	{
 		$fields = self::processReceivedEntity($params);
-
-		$fields['extra'] = $params['extra'] ?? [];
 
 		Log::write($fields, 'CONNECTOR - ENTITY ADD');
 
@@ -1971,6 +1972,76 @@ class Connector
 		Log::write($fields, 'CONNECTOR - ENTITY DELETE');
 
 		return (new self())->deleteMessage($fields);
+	}
+
+	/**
+	 * Event handler for command /start.
+	 * @param Event $event
+	 * @event 'imconnector:OnReceivedCommandStart'
+	 * @see \Bitrix\ImConnector\Provider\Base\Input::sendEventCommand
+	 * @return bool
+	 */
+	public static function onReceivedCommandStart(Event $event)
+	{
+		$params = $event->getParameters();
+		if (empty($params))
+		{
+			return false;
+		}
+
+		$fields = self::processReceivedEntity($params);
+
+		Log::write($fields, 'CONNECTOR - COMMAND START');
+
+		$chat = new ImOpenLines\Chat();
+		$chat->load([
+			'USER_CODE' => self::getUserCode($fields['connector']),
+			'USER_ID' => $fields['connector']['user_id'],
+			'CONNECTOR' => $fields['connector'],
+		]);
+
+		$session = new ImOpenLines\Session();
+		$session->setChat($chat);
+
+		/** @var ImOpenLines\Tracker $tracker */
+		$tracker = ServiceLocator::getInstance()->get('ImOpenLines.Services.Tracker');
+
+		$hasTrackerRef = false;
+		if (!empty($fields['ref']['source']))
+		{
+			$hasTrackerRef = !empty($tracker->findExpectationByTrackId($fields['ref']['source'])); //todo: Replace it with session method
+		}
+
+			// start parameter
+		if ($hasTrackerRef)
+		{
+			$hasSession = $session->load([
+				'USER_CODE' => self::getUserCode($fields['connector']),
+				'CONFIG_ID' => $fields['connector']['line_id'],
+				'USER_ID' => $fields['connector']['user_id'],
+				'SOURCE' => $fields['connector']['connector_id'],
+				'MODE' => ImOpenLines\Session::MODE_INPUT,
+				'SKIP_CRM' => 'Y',// do not auto create crm objects
+			]);
+
+			if ($hasSession)
+			{
+				// CRM expectation
+				$tracker->bindExpectationToChat($fields['ref']['source'], $chat, $session);
+			}
+		}
+		else
+		{
+			$session->load([
+				'USER_CODE' => self::getUserCode($fields['connector']),
+				'CONFIG_ID' => $fields['connector']['line_id'],
+				'USER_ID' => $fields['connector']['user_id'],
+				'SOURCE' => $fields['connector']['connector_id'],
+				'MODE' => ImOpenLines\Session::MODE_INPUT,
+			]);
+		}
+
+		return true;
 	}
 
 	/**

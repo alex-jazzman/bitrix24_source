@@ -634,7 +634,7 @@ if (!$bInternal)
 
 	if ($arParams['IS_RECURRING'] !== 'Y')
 	{
-		if ($externalFilterId)
+		if (!empty($externalFilterId))
 		{
 			$fields = $entityFilter->getFields();
 			foreach ($fields as $field)
@@ -724,7 +724,7 @@ if (!$bInternal)
 	}
 	//endregion
 
-	if (!$externalFilterId)
+	if (empty($externalFilterId))
 	{
 		foreach ($effectiveFilterFieldIDs as $filterFieldID)
 		{
@@ -884,7 +884,7 @@ if ($arParams['IS_RECURRING'] !== 'Y')
 	}
 }
 
-$CCrmUserType->ListAddHeaders($arResult['HEADERS']);
+$CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
 	\CCrmOwnerType::Deal,
@@ -2217,8 +2217,11 @@ if ($isInCalendarMode)
 	{
 		if ($calendarModeItem['selected'])
 		{
-			[$calendarModeItemUserFieldId, $calendarModeItemUserFieldType, $calendarModeItemUserFieldName] =
-				\Bitrix\Crm\Integration\Calendar::parseUserfieldKey($calendarModeItem['id']);
+			$calendarModeItemUser = \Bitrix\Crm\Integration\Calendar::parseUserfieldKey($calendarModeItem['id']);
+			$calendarModeItemUserFieldId = $calendarModeItemUser[0];
+			$calendarModeItemUserFieldType = $calendarModeItemUser[1] ?? '';
+			$calendarModeItemUserFieldName = $calendarModeItemUser[2] ?? '';
+
 			if ($calendarModeItemUserFieldName && !in_array($calendarModeItemUserFieldName, $arSelect, true))
 			{
 				$arSelect[] = $calendarModeItemUserFieldName;
@@ -2284,6 +2287,7 @@ if (isset($arSort['contact_full_name']))
 	$arSort['contact_name'] = $arSort['contact_full_name'];
 	unset($arSort['contact_full_name']);
 }
+
 if (isset($arSort['deal_client']))
 {
 	$arSort['contact_last_name'] = $arSort['deal_client'];
@@ -2292,13 +2296,13 @@ if (isset($arSort['deal_client']))
 	unset($arSort['deal_client']);
 }
 
-if ($arSort['date_create'])
+if (isset($arSort['date_create']))
 {
 	$arSort['id'] = $arSort['date_create'];
 	unset($arSort['date_create']);
 }
 
-if ($arParams['IS_RECURRING'] === 'Y')
+if (isset($arParams['IS_RECURRING']) && $arParams['IS_RECURRING'] === 'Y')
 {
 	$arOptions['FIELD_OPTIONS']['ADDITIONAL_FIELDS'][] = 'RECURRING';
 	$recurringSortedFields = array('active', 'counter_repeat', 'next_execution', 'start_date', 'limit_date', 'limit_repeat');
@@ -2666,14 +2670,13 @@ foreach($arResult['DEAL'] as &$arDeal)
 	$arDeal['~BEGINDATE'] = $arDeal['BEGINDATE'];
 	$arDeal['~EVENT_DATE'] = $arDeal['EVENT_DATE'];
 
-	$currencyID =  isset($arDeal['~CURRENCY_ID']) ? $arDeal['~CURRENCY_ID'] : CCrmCurrency::GetBaseCurrencyID();
+	$currencyID = $arDeal['~CURRENCY_ID'] ?? CCrmCurrency::GetBaseCurrencyID();
 	$arDeal['~CURRENCY_ID'] = $currencyID;
 	$arDeal['CURRENCY_ID'] = htmlspecialcharsbx($currencyID);
-
-	$arDeal['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($arDeal['~OPPORTUNITY'], $arDeal['~CURRENCY_ID']);
+	$arDeal['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($arDeal['~OPPORTUNITY'] ?? 0.0, $arDeal['~CURRENCY_ID']);
 
 	$arDeal['PATH_TO_DEAL_DETAILS'] = CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_DEAL_DETAILS'],
+		$arParams['PATH_TO_DEAL_DETAILS'] ?? '',
 		array('deal_id' => $entityID)
 	);
 
@@ -2681,7 +2684,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 	{
 		$arDeal['PATH_TO_DEAL_SHOW'] = $arDeal['PATH_TO_DEAL_DETAILS'];
 		$arDeal['PATH_TO_DEAL_EDIT'] = CCrmUrlUtil::AddUrlParams(
-			$arDeal['PATH_TO_DEAL_DETAILS'],
+			$arDeal['PATH_TO_DEAL_DETAILS'] ?? '',
 			array('init_mode' => 'edit')
 		);
 	}
@@ -2698,8 +2701,8 @@ foreach($arResult['DEAL'] as &$arDeal)
 		);
 	}
 
-	$arDeal['PATH_TO_DEAL_COPY'] =  CHTTP::urlAddParams(
-		$arDeal['PATH_TO_DEAL_EDIT'],
+	$arDeal['PATH_TO_DEAL_COPY'] = CHTTP::urlAddParams(
+		$arDeal['PATH_TO_DEAL_EDIT'] ?? '',
 		array('copy' => 1)
 	);
 
@@ -2707,7 +2710,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 	{
 		$arDeal['PATH_TO_DEAL_DELETE'] = CHTTP::urlAddParams(
 			CComponentEngine::makePathFromTemplate(
-				$arParams['PATH_TO_DEAL_CATEGORY'],
+				$arParams['PATH_TO_DEAL_CATEGORY'] ?? '',
 				array('category_id' => $arResult['CATEGORY_ID'])
 			),
 			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $arResult['SESSION_ID'])
@@ -2716,44 +2719,53 @@ foreach($arResult['DEAL'] as &$arDeal)
 	else
 	{
 		$arDeal['PATH_TO_DEAL_DELETE'] =  CHTTP::urlAddParams(
-			$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_CURRENT_LIST'],
+			$bInternal ? $APPLICATION->GetCurPage() : ($arParams['PATH_TO_CURRENT_LIST'] ?? ''),
 			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $arResult['SESSION_ID'])
 		);
 	}
 
-	$contactID = isset($arDeal['~CONTACT_ID']) ? intval($arDeal['~CONTACT_ID']) : 0;
-	$arDeal['PATH_TO_CONTACT_SHOW'] = $contactID <= 0 ? ''
-		: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'], array('contact_id' => $contactID));
+	$contactID = (int)($arDeal['~CONTACT_ID'] ?? 0);
+	$arDeal['PATH_TO_CONTACT_SHOW'] = $contactID <= 0
+		? ''
+		: CComponentEngine::MakePathFromTemplate(
+			$arParams['PATH_TO_CONTACT_SHOW'] ?? '',
+			['contact_id' => $contactID]
+		);
 
 	$arDeal['~CONTACT_FORMATTED_NAME'] = $contactID <= 0 ? ''
 		: CCrmContact::PrepareFormattedName(
 			array(
-				'HONORIFIC' => isset($arDeal['~CONTACT_HONORIFIC']) ? $arDeal['~CONTACT_HONORIFIC'] : '',
-				'NAME' => isset($arDeal['~CONTACT_NAME']) ? $arDeal['~CONTACT_NAME'] : '',
-				'LAST_NAME' => isset($arDeal['~CONTACT_LAST_NAME']) ? $arDeal['~CONTACT_LAST_NAME'] : '',
-				'SECOND_NAME' => isset($arDeal['~CONTACT_SECOND_NAME']) ? $arDeal['~CONTACT_SECOND_NAME'] : ''
+				'HONORIFIC' => $arDeal['~CONTACT_HONORIFIC'] ?? '',
+				'NAME' => $arDeal['~CONTACT_NAME'] ?? '',
+				'LAST_NAME' => $arDeal['~CONTACT_LAST_NAME'] ?? '',
+				'SECOND_NAME' => $arDeal['~CONTACT_SECOND_NAME'] ?? ''
 			)
 		);
-	$arDeal['CONTACT_FORMATTED_NAME'] = htmlspecialcharsbx($arDeal['~CONTACT_FORMATTED_NAME']);
+
+	$arDeal['CONTACT_FORMATTED_NAME'] = htmlspecialcharsbx($arDeal['~CONTACT_FORMATTED_NAME'] ?? '');
 
 	$arDeal['~CONTACT_FULL_NAME'] = $contactID <= 0 ? ''
 		: CCrmContact::GetFullName(
 			array(
-				'HONORIFIC' => isset($arDeal['~CONTACT_HONORIFIC']) ? $arDeal['~CONTACT_HONORIFIC'] : '',
-				'NAME' => isset($arDeal['~CONTACT_NAME']) ? $arDeal['~CONTACT_NAME'] : '',
-				'LAST_NAME' => isset($arDeal['~CONTACT_LAST_NAME']) ? $arDeal['~CONTACT_LAST_NAME'] : '',
-				'SECOND_NAME' => isset($arDeal['~CONTACT_SECOND_NAME']) ? $arDeal['~CONTACT_SECOND_NAME'] : ''
+				'HONORIFIC' => $arDeal['~CONTACT_HONORIFIC'] ?? '',
+				'NAME' => $arDeal['~CONTACT_NAME'] ?? '',
+				'LAST_NAME' => $arDeal['~CONTACT_LAST_NAME'] ?? '',
+				'SECOND_NAME' => $arDeal['~CONTACT_SECOND_NAME'] ?? ''
 			)
 		);
-	$arDeal['CONTACT_FULL_NAME'] = htmlspecialcharsbx($arDeal['~CONTACT_FULL_NAME']);
+	$arDeal['CONTACT_FULL_NAME'] = htmlspecialcharsbx($arDeal['~CONTACT_FULL_NAME'] ?? '');
 
-	$companyID = isset($arDeal['~COMPANY_ID']) ? intval($arDeal['~COMPANY_ID']) : 0;
-	$arDeal['PATH_TO_COMPANY_SHOW'] = $companyID <= 0 ? ''
-		: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'], array('company_id' => $companyID));
+	$companyID = (int)($arDeal['~COMPANY_ID'] ?? 0);
+	$arDeal['PATH_TO_COMPANY_SHOW'] = $companyID <= 0
+		? ''
+		: CComponentEngine::MakePathFromTemplate(
+			$arParams['PATH_TO_COMPANY_SHOW'] ?? '',
+			array('company_id' => $companyID)
+		);
 
 	if ($arResult['CAN_EXCLUDE'])
 	{
-		$arDeal['PATH_TO_DEAL_EXCLUDE'] =  CHTTP::urlAddParams(
+		$arDeal['PATH_TO_DEAL_EXCLUDE'] = CHTTP::urlAddParams(
 			$curPage,
 			array(
 				'action_'.$arResult['GRID_ID'] => 'exclude',
@@ -2763,9 +2775,10 @@ foreach($arResult['DEAL'] as &$arDeal)
 		);
 	}
 
-	$arDeal['PATH_TO_USER_PROFILE'] = $arDeal['ASSIGNED_BY_SHOW_URL'];
+	$arDeal['PATH_TO_USER_PROFILE'] = $arDeal['ASSIGNED_BY_SHOW_URL'] ?? '';
 
-	$arDeal['PATH_TO_USER_BP'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_BP'],
+	$arDeal['PATH_TO_USER_BP'] = CComponentEngine::MakePathFromTemplate(
+		$arParams['PATH_TO_USER_BP'] ?? '',
 		array('user_id' => $userID)
 	);
 
@@ -2773,19 +2786,22 @@ foreach($arResult['DEAL'] as &$arDeal)
 	{
 		$arDeal['CREATED_BY'] = $arDeal['~CREATED_BY'] = $arDeal['CREATED_BY_ID'];
 	}
-	$arDeal['PATH_TO_USER_CREATOR'] = $arDeal['CREATED_BY_SHOW_URL'];
+
+	$arDeal['PATH_TO_USER_CREATOR'] = $arDeal['CREATED_BY_SHOW_URL'] ?? '';
 
 	if (!empty($arDeal['MODIFY_BY_ID']))
 	{
 		$arDeal['MODIFY_BY'] = $arDeal['~MODIFY_BY'] = $arDeal['MODIFY_BY_ID'];
 	}
-	$arDeal['PATH_TO_USER_MODIFIER'] = $arDeal['MODIFY_BY_SHOW_URL'];
 
-	$typeID = isset($arDeal['TYPE_ID']) ? $arDeal['TYPE_ID'] : '';
+	$arDeal['PATH_TO_USER_MODIFIER'] = $arDeal['MODIFY_BY_SHOW_URL'] ?? '';
+
+	$typeID = $arDeal['TYPE_ID'] ?? '';
 	$arDeal['DEAL_TYPE_NAME'] = isset($arResult['TYPE_LIST'][$typeID]) ? $arResult['TYPE_LIST'][$typeID] : $typeID;
 
-	$stageID = $arDeal['STAGE_ID'] = isset($arDeal['STAGE_ID']) ? $arDeal['STAGE_ID'] : '';
-	$categoryID = $arDeal['CATEGORY_ID'] = isset($arDeal['CATEGORY_ID']) ? (int)$arDeal['CATEGORY_ID'] : 0;
+	$stageID = $arDeal['STAGE_ID'] ?? '';
+	$arDeal['STAGE_ID'] = $stageID;
+	$categoryID = $arDeal['CATEGORY_ID'] = (int)($arDeal['CATEGORY_ID'] ?? 0);
 	$arDeal['DEAL_STAGE_NAME'] = CCrmDeal::GetStageName($stageID, $categoryID);
 	$arDeal['~DEAL_CATEGORY_NAME'] = DealCategory::getName($categoryID);
 	$arDeal['DEAL_CATEGORY_NAME'] = htmlspecialcharsbx($arDeal['~DEAL_CATEGORY_NAME']);
@@ -2813,13 +2829,14 @@ foreach($arResult['DEAL'] as &$arDeal)
 				array_merge(
 					$arDeal['CONTACT_INFO'],
 					array(
-						'TITLE' => isset($arDeal['~CONTACT_FORMATTED_NAME']) ? $arDeal['~CONTACT_FORMATTED_NAME'] : ('['.$contactID.']'),
+						'TITLE' => $arDeal['~CONTACT_FORMATTED_NAME'] ?? ('['.$contactID.']'),
 						'PREFIX' => "DEAL_{$arDeal['~ID']}",
-						'DESCRIPTION' => isset($arDeal['~COMPANY_TITLE']) ? $arDeal['~COMPANY_TITLE'] : ''
+						'DESCRIPTION' => $arDeal['~COMPANY_TITLE'] ?? ''
 					)
 				);
 		}
 	}
+
 	if ($companyID > 0)
 	{
 		$arDeal['COMPANY_INFO'] = array(
@@ -2842,7 +2859,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 				array_merge(
 					$arDeal['COMPANY_INFO'],
 					array(
-						'TITLE' => isset($arDeal['~COMPANY_TITLE']) ? $arDeal['~COMPANY_TITLE'] : ('['.$companyID.']'),
+						'TITLE' => $arDeal['~COMPANY_TITLE'] ?? ('['.$companyID.']'),
 						'PREFIX' => "DEAL_{$arDeal['~ID']}"
 					)
 				);
@@ -2892,18 +2909,12 @@ foreach($arResult['DEAL'] as &$arDeal)
 		? $arResult['SOURCE_LIST'][$arDeal['SOURCE_ID']] : '';
 	//endregion
 
-	if (isset($arDeal['~ACTIVITY_TIME']))
-	{
-		$time = MakeTimeStamp($arDeal['~ACTIVITY_TIME']);
-		$arDeal['~ACTIVITY_EXPIRED'] = $time <= $now;
-		$arDeal['~ACTIVITY_IS_CURRENT_DAY'] = $arDeal['~ACTIVITY_EXPIRED'] || CCrmActivity::IsCurrentDay($time);
-	}
-
-	$originatorID = isset($arDeal['~ORIGINATOR_ID']) ? $arDeal['~ORIGINATOR_ID'] : '';
+	$originatorID = $arDeal['~ORIGINATOR_ID'] ?? '';
 	if ($originatorID !== '')
 	{
 		$arDeal['~ORIGINATOR_NAME'] = isset($arResult['EXTERNAL_SALES'][$originatorID])
-			? $arResult['EXTERNAL_SALES'][$originatorID] : '';
+			? $arResult['EXTERNAL_SALES'][$originatorID]
+			: '';
 
 		$arDeal['ORIGINATOR_NAME'] = htmlspecialcharsbx($arDeal['~ORIGINATOR_NAME']);
 	}
@@ -2931,7 +2942,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 		$arDeal['PATH_TO_QUOTE_ADD'] =
 			CHTTP::urlAddParams(
 				CComponentEngine::makePathFromTemplate(
-					$arParams['PATH_TO_QUOTE_EDIT'],
+					$arParams['PATH_TO_QUOTE_EDIT'] ?? '',
 					array('quote_id' => 0)
 				),
 				array('deal_id' => $entityID)
@@ -2939,7 +2950,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 		$arDeal['PATH_TO_INVOICE_ADD'] =
 			CHTTP::urlAddParams(
 				CComponentEngine::makePathFromTemplate(
-					$arParams['PATH_TO_INVOICE_EDIT'],
+					$arParams['PATH_TO_INVOICE_EDIT'] ?? '',
 					array('invoice_id' => 0)
 				),
 				array('deal' => $entityID)
@@ -2958,7 +2969,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 
 		$arDeal['PATH_TO_BIZPROC_LIST'] =  CHTTP::urlAddParams(
 			CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_DEAL_SHOW'],
+				$arParams['PATH_TO_DEAL_SHOW'] ?? '',
 				array('deal_id' => $entityID)
 			),
 			array('CRM_DEAL_SHOW_V12_active_tab' => 'tab_bizproc')
@@ -2972,9 +2983,9 @@ foreach($arResult['DEAL'] as &$arDeal)
 
 			$docTemplateID = $arDocState['TEMPLATE_ID'];
 			$paramName = "BIZPROC_{$docTemplateID}";
-			$docTtl = isset($arDocState['STATE_TITLE']) ? $arDocState['STATE_TITLE'] : '';
-			$docName = isset($arDocState['STATE_NAME']) ? $arDocState['STATE_NAME'] : '';
-			$docTemplateName = isset($arDocState['TEMPLATE_NAME']) ? $arDocState['TEMPLATE_NAME'] : '';
+			$docTtl = $arDocState['STATE_TITLE'] ?? '';
+			$docName = $arDocState['STATE_NAME'] ?? '';
+			$docTemplateName = $arDocState['TEMPLATE_NAME'] ?? '';
 
 			if ($isInExportMode)
 			{
@@ -3005,7 +3016,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 			{
 				$docTemplateID = $arDocState['TEMPLATE_ID'];
 				$paramName = "BIZPROC_{$docTemplateID}";
-				$docTtl = isset($arDocState['STATE_TITLE']) ? $arDocState['STATE_TITLE'] : '';
+				$docTtl = $arDocState['STATE_TITLE'] ?? '';
 
 				if ($isInExportMode)
 				{
@@ -3057,9 +3068,13 @@ foreach($arResult['DEAL'] as &$arDeal)
 	}
 
 	if (!isset($arDeal['ASSIGNED_BY_ID']))
-		$arDeal['ASSIGNED_BY_ID'] = $arDeal['~ASSIGNED_BY_ID'] = isset($arDeal['~ASSIGNED_BY']) ? (int)$arDeal['~ASSIGNED_BY'] : 0;
+	{
+		$dealAssignedBy = (int)($arDeal['~ASSIGNED_BY'] ?? 0);
+		$arDeal['ASSIGNED_BY_ID'] = $dealAssignedBy;
+		$arDeal['~ASSIGNED_BY_ID'] = $dealAssignedBy;
+	}
 
-	$arDeal['~ASSIGNED_BY'] = $arDeal['~ASSIGNED_BY_FORMATTED_NAME'];
+	$arDeal['~ASSIGNED_BY'] = $arDeal['~ASSIGNED_BY_FORMATTED_NAME'] ?? '';
 	$arDeal['ASSIGNED_BY'] = htmlspecialcharsbx($arDeal['~ASSIGNED_BY']);
 	if (isset($arDeal['~TITLE']))
 	{
@@ -3215,7 +3230,7 @@ if (isset($arResult['DEAL_ID']) && !empty($arResult['DEAL_ID']))
 			continue;
 		}
 
-		if ($paymentStages[$dealId])
+		if (isset($paymentStages[$dealId]))
 		{
 			$arResult['DEAL'][$dealId]['PAYMENT_STAGE'] = $paymentStages[$dealId];
 			$displayFields['PAYMENT_STAGE'] =
@@ -3224,7 +3239,7 @@ if (isset($arResult['DEAL_ID']) && !empty($arResult['DEAL_ID']))
 			;
 		}
 
-		if ($shipmentStages[$dealId])
+		if (isset($shipmentStages[$dealId]))
 		{
 			$arResult['DEAL'][$dealId]['DELIVERY_STAGE'] = $shipmentStages[$dealId];
 			$displayFields['DELIVERY_STAGE'] =
@@ -3274,7 +3289,7 @@ if (!empty($restrictedItemIds) && $itemsMutator)
 }
 unset($item);
 
-$arResult['ENABLE_TOOLBAR'] = isset($arParams['ENABLE_TOOLBAR']) ? $arParams['ENABLE_TOOLBAR'] : false;
+$arResult['ENABLE_TOOLBAR'] = $arParams['ENABLE_TOOLBAR'] ?? false;
 if ($arResult['ENABLE_TOOLBAR'])
 {
 	$arResult['PATH_TO_DEAL_ADD'] = CComponentEngine::MakePathFromTemplate(
@@ -3342,6 +3357,7 @@ foreach($arResult['CATEGORIES'] as $categoryID => $IDs)
 				['ENTITY_ATTRS' => $entityAttrs]
 			)
 		;
+
 		$arResult['DEAL'][$ID]['DELETE'] = CCrmDeal::CheckDeletePermission(
 			$ID,
 			$userPermissions,

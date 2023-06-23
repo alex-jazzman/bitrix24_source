@@ -2803,12 +2803,18 @@ class CCrmViewHelper
 	public static function GetGridOptionalColumns($gridID)
 	{
 		$aOptions = CUserOptions::GetOption('main.interface.grid', $gridID, array());
-		if(!is_array($aOptions['views']))
-			$aOptions['views'] = array();
+		if(!(isset($aOptions['views']) && is_array($aOptions['views'])))
+		{
+			$aOptions['views'] = [];
+		}
 		if(!array_key_exists('default', $aOptions['views']))
-			$aOptions['views']['default'] = array('columns'=>'');
-		if($aOptions['current_view'] == '' || !array_key_exists($aOptions['current_view'], $aOptions['views']))
+		{
+			$aOptions['views']['default'] = ['columns'=>''];
+		}
+		if(($aOptions['current_view'] ?? '') == '' || !array_key_exists($aOptions['current_view'], $aOptions['views']))
+		{
 			$aOptions['current_view'] = 'default';
+		}
 		$aCurView = $aOptions['views'][$aOptions['current_view']];
 		$aColsTmp = explode(',', $aCurView['columns']);
 		$aCols = array();

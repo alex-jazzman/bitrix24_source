@@ -263,8 +263,9 @@ BX.CRM.Kanban.Grid.prototype = {
 				this.isItKanban(el.target) ? this.currentNode = el.target : this.currentNode = null;
 
 				if(
-					!BX.findParent(el.target, {"className": "main-kanban-item"}) &&
-					!BX.findParent(el.target, {"className": "ui-action-panel"})
+					!BX.findParent(el.target, {'className': 'main-kanban-item'})
+					&& !BX.findParent(el.target, {'className': 'ui-action-panel'})
+					&& !BX.findParent(el.target, {'className': 'ui-action-panel-item-popup-menu'})
 				)
 				{
 					this.unSetKanbanDragMode();

@@ -401,14 +401,15 @@ class EntityFieldProvider
 						$field['name'] = 'RQ_' . $field['name'];
 					}
 
+					$fieldName = $field['name'] ?? '';
 					$fieldsMap[] = [
 						'type' => $field['type'],
-						'entity_field_name' => $field['name'],
+						'entity_field_name' => $fieldName,
 						'entity_name' => $entityName,
-						'name' => "{$entityName}_{$field['name']}",
-						'caption' => $field['label'],
-						'multiple' => $field['multiple'],
-						'required' => $field['required'],
+						'name' => "{$entityName}_$fieldName",
+						'caption' => $field['label'] ?? '',
+						'multiple' => $field['multiple'] ?? false,
+						'required' => $field['required'] ?? false,
 						'size' => $field['size'] ?? null,
 					];
 				}

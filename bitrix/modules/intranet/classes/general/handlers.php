@@ -1373,13 +1373,6 @@ RegisterModuleDependences('iblock', 'OnAfterIBlockSectionUpdate', 'intranet', 'C
 	public static function OnBeforeProlog()
 	{
 		$conditionList = array();
-		if (\Bitrix\Main\ModuleManager::isModuleInstalled('replica'))
-		{
-			$conditionList[] = array(
-				'PATTERN' => 'EXTERNAL_AUTH_ID',
-				'VALUE' => "WHEN %s = 'replica' THEN 'network'"
-			);
-		}
 		if (\Bitrix\Main\ModuleManager::isModuleInstalled('sale'))
 		{
 			$conditionList[] = array(

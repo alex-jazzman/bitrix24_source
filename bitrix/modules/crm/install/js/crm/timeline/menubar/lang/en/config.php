@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_CANCEL_BUTTON"] = "Cancel";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNELS"] = "Communication channel";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_CONFIGURE_SLOTS"] = "How does it work?";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_COPY_LINK_NOTIFICATION"] = "Link copied";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_1"] = "The customer will pick a preferred time slot.";
@@ -11,9 +12,12 @@ $MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2"] 
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TITLE"] = "WhatsApp and SMS are not connected";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT"] = "Specify customer's phone number in the deal to send them a link to available time slots.";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TITLE"] = "Add customer contacts";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE"] = "SMS service is not connected";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE_1"] = "<a href=\"/marketplace/category/crm_robot_sms/\" target=\"_blank\">Connect SMS service</a> to send available time slots to your customers.";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TEXT"] = "Need to schedule a meeting with your customer? Send them a link to your available time slots and let the customer pick one.";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TITLE"] = "Available meeting slots";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_RECEIVER"] = "Recipient";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_SENDER"] = "Sender";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON"] = "Send";
 $MESS["CRM_TIMELINE_CANCEL_BTN"] = "Cancel";
 $MESS["CRM_TIMELINE_CHOOSE"] = "Select";

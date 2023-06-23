@@ -219,10 +219,9 @@
 					this.items.push(item);
 				}
 
-				if (item.isCountable() && !item.notChangeTotal)
+				if (item.isCountable())
 				{
 					this.incrementTotal();
-					item.notChangeTotal = false;
 				}
 			}
 
@@ -1435,10 +1434,7 @@
 					}).then(function(value){
 						if (itemToRemove.isCountable() && itemToRemove.isVisible())
 						{
-							if (!itemToRemove.notChangeTotal)
-							{
-								this.decrementTotal();
-							}
+							this.decrementTotal();
 							this.getGrid().resetMultiSelectMode();
 						}
 						if (this.getGrid().isRendered())

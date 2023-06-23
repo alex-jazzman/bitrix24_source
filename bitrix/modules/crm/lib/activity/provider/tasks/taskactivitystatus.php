@@ -32,12 +32,12 @@ class TaskActivityStatus
 	const TASKS_STATE_SUPPOSEDLY_COMPLETED = 4;
 	const TASKS_STATE_COMPLETED = 5;
 
-	public function onStatusChange(int $currStatus): string
+	public function onStatusChange(int $currStatus, bool $expired = false): string
 	{
 		switch ($currStatus)
 		{
 			case self::TASKS_STATE_PENDING:
-				return self::STATUS_WAITING;
+				return ($expired === true) ? self::STATUS_EXPIRED : self::STATUS_WAITING;
 			case self::TASKS_STATE_COMPLETED:
 				return self::STATUS_FINISHED;
 			case self::TASKS_STATE_IN_PROGRESS:
@@ -192,6 +192,7 @@ class TaskActivityStatus
 				'next' => [
 					self::STATUS_WAITING,
 					self::STATUS_IN_PROGRESS,
+					self::STATUS_EXPIRED,
 					self::STATUS_FINISHED,
 				],
 				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_CONTROL_WAITING),

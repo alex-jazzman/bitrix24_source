@@ -7,10 +7,14 @@ use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\ClientResolver;
+use Bitrix\Crm\Integrity\DuplicateControl;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages(__FILE__);
 
 class CCrmComponentHelper
 {
@@ -788,6 +792,58 @@ class CCrmComponentHelper
 						static::getRequisiteAddressFieldData($entityTypeId, $entityTypeCategoryMap[$entityTypeId])
 					;
 				}
+			}
+		}
+
+		return $result;
+	}
+
+	public static function prepareClientEditorDuplicateControlParams(array $params = []): array
+	{
+		$result = [];
+
+		$entityTypes =
+			(isset($params['entityTypes']) && is_array($params['entityTypes']))
+				? $params['entityTypes']
+				: []
+		;
+
+		foreach ($entityTypes as $entityTypeId)
+		{
+			$entityTypeId = (int)$entityTypeId;
+			if (
+				CCrmOwnerType::IsDefined($entityTypeId)
+				&& DuplicateControl::isControlEnabledFor($entityTypeId)
+			)
+			{
+				$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
+				$entityTypeNameLower = mb_strtolower($entityTypeName);
+				$result[$entityTypeId] = [
+					'enabled' => true,
+					'serviceUrl' =>
+						'/bitrix/components/bitrix/crm.'
+						. $entityTypeNameLower
+						. '.edit/ajax.php?'
+						. bitrix_sessid_get(),
+					'entityTypeName' => $entityTypeName,
+					'groups' => [
+						'title' => [
+							'parameterName' => 'TITLE',
+							'groupType' => 'single',
+							'groupSummaryTitle' => Loc::getMessage('CRM_COMPONENT_HELPER_DUP_CTRL_TTL_SUMMARY_TITLE')
+						],
+						'email' => [
+							'groupType' => 'communication',
+							'communicationType' => 'EMAIL',
+							'groupSummaryTitle' => Loc::getMessage('CRM_COMPONENT_HELPER_DUP_CTRL_EMAIL_SUMMARY_TITLE')
+						],
+						'phone' => [
+							'groupType' => 'communication',
+							'communicationType' => 'PHONE',
+							'groupSummaryTitle' => Loc::getMessage('CRM_COMPONENT_HELPER_DUP_CTRL_PHONE_SUMMARY_TITLE')
+						],
+					],
+				];
 			}
 		}
 

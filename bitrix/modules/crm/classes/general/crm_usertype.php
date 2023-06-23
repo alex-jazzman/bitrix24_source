@@ -1345,6 +1345,17 @@ class CCrmUserType
 		return $values;
 	}
 
+	public function appendGridHeaders(array &$headers): void
+	{
+		$this->ListAddHeaders($headers);
+
+		foreach ($headers as &$header)
+		{
+			$header['name'] = htmlspecialcharsback($header['name']);
+		}
+		unset($header);
+	}
+
 	public function ListAddHeaders(&$arHeaders, $bImport = false)
 	{
 		$arUserFields = $this->GetAbstractFields();

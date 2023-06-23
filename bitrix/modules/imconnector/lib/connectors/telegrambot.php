@@ -2,6 +2,7 @@
 
 namespace Bitrix\ImConnector\Connectors;
 
+use Bitrix\ImConnector\Error;
 use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Status;
@@ -24,15 +25,91 @@ class TelegramBot extends Base implements MessengerUrl
 	}
 
 	/**
+	 * Command handler for message like
+	 * /start
+	 * /start smth
+	 * /start btrxSmth
+	 *
+	 * @param string $command
 	 * @param array $message
 	 * @param int $line
 	 * @return Result
+	 */
+	public function processingInputCommand(string $command, array $message, int $line): Result
+	{
+		$result = new Result();
+
+		// getting user id
+		$userResult = $this->processingUser($message['user']);
+		if ($userResult->isSuccess())
+		{
+			$userId = $userResult->getResult();
+		}
+		else
+		{
+			return $result->addErrors($userResult->getErrors());
+		}
+
+		// chat id
+		$chat = $this->getChat([
+			'USER_CODE' => $this->generateChatCode($line, (int)$message['user']['id'], (int)$userId),
+			'USER_ID' => $userId,
+			'CONNECTOR' => $message,
+		]);
+		$chatId = $chat->getData('ID');
+		if (!$chatId)
+		{
+			return $result->addError(new Error(
+				'Failed to create chat',
+				'ERROR_IMCONNECTOR_FAILED_CHAT',
+				__METHOD__,
+				$message
+			));
+		}
+
+		$statusData = Status::getInstance(self::TELEGRAM_BOT, $line)->getData();
+
+		if (!empty($statusData['welcome_message']))
+		{
+			$this->sendMessage($statusData['welcome_message'], $chatId);
+		}
+
+		if (
+			!empty($statusData['eshop_enabled'])
+			&& $statusData['eshop_enabled'] == 'Y'
+		)
+		{
+			$messageToSend = [
+				'chatId' => $message['chat']['id'],
+				'userId' => $userId,
+				'lineId' => $line,
+			];
+			$connectorOutput = new Output(self::TELEGRAM_BOT, $line);
+			$connectorOutput->registerEshop($messageToSend);
+		}
+
+		if ($result->isSuccess())
+		{
+			// getting user id
+			$message['user'] = $userId;
+
+			$result->setResult($message);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $message
+	 * @param int $line
+	 * @return Result
+	 * @deprecated
 	 */
 	public function processingInputWelcomeMessage(array $message, int $line): Result
 	{
 		$result = new Result();
 
-		$telegramUserId = $message['user']['id'];
+		$telegramUserId = (int)$message['user']['id'];
 
 		$userId = 0;
 		$user = $this->getUserByUserCode(['id' => $telegramUserId]);
@@ -41,7 +118,7 @@ class TelegramBot extends Base implements MessengerUrl
 			$addResult = $this->addUser($message['user']);
 			if ($addResult->isSuccess())
 			{
-				$userId = $addResult->getResult();
+				$userId = (int)$addResult->getResult();
 			}
 			else
 			{
@@ -57,7 +134,7 @@ class TelegramBot extends Base implements MessengerUrl
 			return $result;
 		}
 
-		$fullUserCode = "telegrambot|{$line}|{$telegramUserId}|{$userId}";
+		$fullUserCode = $this->generateChatCode($line, $telegramUserId, $userId);
 		$chat = $this->getChat([
 			'USER_CODE' => $fullUserCode,
 			'USER_ID' => $userId,
@@ -72,6 +149,7 @@ class TelegramBot extends Base implements MessengerUrl
 		// CRM expectation
 		if (
 			!empty($message['ref']['source']) // start parameter
+			&& strpos($message['ref']['source'], self::REF_PREFIX) === 0 // start parameter begins with "btrx" prefix
 			&& Loader::includeModule('imopenlines')
 		)
 		{
@@ -112,10 +190,19 @@ class TelegramBot extends Base implements MessengerUrl
 			return $result;
 		}
 
-		$this->sendWelcomeMessage($statusData['welcome_message'], $chatId);
+		if (!empty($statusData['welcome_message']))
+		{
+			$this->sendMessage($statusData['welcome_message'], $chatId);
+		}
+
 		$connectorOutput->registerEshop($messageToSend);
 
 		return $result;
+	}
+
+	private function generateChatCode(int $lineId, int $connectorUserId, int $userId): string
+	{
+		return implode('|', [self::TELEGRAM_BOT, $lineId, $connectorUserId, $userId]);
 	}
 
 	/**
@@ -135,16 +222,12 @@ class TelegramBot extends Base implements MessengerUrl
 		return $chat;
 	}
 
-	public function sendWelcomeMessage(string $messageText, int $chatId)
-	{
-		if (empty($messageText))
-		{
-			return null;
-		}
-
-		return $this->sendMessage($messageText, $chatId);
-	}
-
+	/**
+	 * @param string $messageText
+	 * @param string $crmEntityType
+	 * @param int $crmEntityId
+	 * @return int|null
+	 */
 	public function sendAutomaticMessage(string $messageText, string $crmEntityType, int $crmEntityId): ?int
 	{
 		if (!Loader::includeModule('imopenlines'))
@@ -175,6 +258,11 @@ class TelegramBot extends Base implements MessengerUrl
 		return $this->sendMessage($messageText, $chatId);
 	}
 
+	/**
+	 * @param string $messageText
+	 * @param int $chatId
+	 * @return false|int
+	 */
 	private function sendMessage(string $messageText, int $chatId)
 	{
 		if (empty($messageText) || $chatId <= 0)

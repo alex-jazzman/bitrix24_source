@@ -8,6 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load(['ui.button', 'ui.fonts.opensans']);
+
 $frame = $this->createFrame()->begin();
 ?>
 

@@ -6,13 +6,13 @@ use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Layout\Action;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
-use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Settings\WorkTime;
 use Bitrix\Main\Localization\Loc;
@@ -148,8 +148,8 @@ class Email extends Activity
 
 	private function buildRecipientBlock(): ?ContentBlock
 	{
-		$header = $this->getHeader();
-		$to = $header['to'];
+		$header = $this->getHeader() ?? [];
+		$to = $header['to'] ?? [];
 
 		if (!isset($to[0]))
 		{
@@ -157,13 +157,14 @@ class Email extends Activity
 		}
 
 		$recipient = $to[0];
+		
 		return $this->buildContactBlock(Loc::getMessage("CRM_TIMELINE_BLOCK_EMAIL_TITLE_RECIPIENT"), $recipient);
 	}
 
 	private function buildSenderBlock(): ?ContentBlock
 	{
-		$header = $this->getHeader();
-		$from = $header['from'];
+		$header = $this->getHeader() ?? [];
+		$from = $header['from'] ?? [];
 
 		if (!isset($from[0]))
 		{
@@ -171,6 +172,7 @@ class Email extends Activity
 		}
 
 		$sender = $from[0];
+
 		return $this->buildContactBlock(Loc::getMessage("CRM_TIMELINE_BLOCK_EMAIL_TITLE_SENDER"), $sender);
 	}
 

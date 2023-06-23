@@ -230,6 +230,34 @@ class Message
 		return preg_replace('/^("(.*)"|\'(.*)\')$/', '$2$3', $text);
 	}
 
+	/**
+	 * In different mail services, if you do not specify the recipient's name,
+	 * it will be framed differently in the technical header.
+	 *
+	 * To make sure that the recipient's name is not really there,
+	 * you should check through this function.
+	 *
+	 * @param $name
+	 * @param $email
+	 * @return bool
+	 */
+	public static function nameIsEquivalentToEmail($name, $email): bool
+	{
+		if (empty($name) || $name === $email)
+		{
+			return true;
+		}
+
+		$emailParts = explode("@", $email);
+
+		if (isset($emailParts[0]) && (trim($name) === trim($emailParts[0])))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	public static function getHeader(array $activity, $convertContactsTypeForBinding = true): Main\Result
 	{
 		$header = [];
@@ -310,29 +338,49 @@ class Message
 					{
 						if ($contact['email'] === $ownerEmail)
 						{
-							$mailboxOwner = MailboxTable::getList([
-								'select' => [
-									'ID',
-								],
-								'filter' => [
-									'=EMAIL' => $ownerEmail,
-								],
-							])->fetch();
+							$mailboxesWithTheSpecifiedEmail = MailboxTable::getMailboxesWithEmail($ownerEmail);
+							$countMailboxesWithTheSpecifiedEmail = $mailboxesWithTheSpecifiedEmail->getCount();
 
-							if (isset($mailboxOwner['ID']))
+							while ($mailboxOwner = $mailboxesWithTheSpecifiedEmail->fetch())
 							{
-								$users = MailboxAccessTable::getUsersDataByName(
-									(int)$mailboxOwner['ID'],
-									$contact['name']
-								);
-								if (count($users) === 1)
+								if (isset($mailboxOwner['ID']))
 								{
-									$user = $users[0];
-									$contact['name'] = $user['name'];
-									$contact['id'] = $user['id'];
+									if (!self::nameIsEquivalentToEmail($contact['name'], $contact['email']))
+									{
+										$users = MailboxAccessTable::getUsersDataByName(
+											(int)$mailboxOwner['ID'],
+											$contact['name']
+										);
+										if (count($users) === 1)
+										{
+											$user = $users[0];
+											$contact['name'] = $user['name'];
+											$contact['id'] = $user['id'];
+										}
+									}
+									elseif (
+										/*
+											If several users have connected the same mailbox,
+											we cannot find out who the message is addressed to.
+										*/
+										$countMailboxesWithTheSpecifiedEmail === 1
+										&& isset($mailboxOwner['USER_ID'])
+									)
+									{
+										$user = MailboxAccessTable::getUserDataById(
+											(int)$mailboxOwner['ID'],
+											(int)$mailboxOwner['USER_ID'],
+										);
+										$contact['name'] = $user['name'];
+										$contact['id'] = $user['id'];
+									}
+									else
+									{
+										$contact['name'] = '';
+									}
 								}
-								$contact['isUser'] = true;
 							}
+							$contact['isUser'] = true;
 						}
 					}
 				}

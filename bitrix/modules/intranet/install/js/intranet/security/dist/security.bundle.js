@@ -6,6 +6,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var Security = /*#__PURE__*/function () {
 	  function Security() {
 	    var _this = this;
+
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, Security);
 	    this.signedParameters = params.signedParameters;
@@ -16,6 +17,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.currentPage = params.currentPage;
 	    this.menuContainer = params.menuContainer;
 	    this.changeContent(this.currentPage);
+
 	    if (main_core.Type.isDomNode(this.menuContainer)) {
 	      this.menuItems = this.menuContainer.querySelectorAll("a");
 	      (this.menuItems || []).forEach(function (item) {
@@ -24,16 +26,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        });
 	      });
 	    }
+
 	    BX.addCustomEvent('BX.Security.UserOtpInit:afterOtpSetup', function (event) {
 	      this.showOtpConnectedComponent();
 	    }.bind(this));
 	  }
+
 	  babelHelpers.createClass(Security, [{
 	    key: "changeContent",
 	    value: function changeContent(action) {
 	      if (!action) {
 	        return;
 	      }
+
 	      switch (action) {
 	        case "auth":
 	        case "otpConnected":
@@ -43,6 +48,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          };
 	          this.sendAction(action, requestData);
 	          break;
+
 	        case "otp":
 	        case "appPasswords":
 	        case "synchronize":
@@ -50,9 +56,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        case "sso":
 	          this.sendAction(action, {});
 	          break;
+
 	        case "recoveryCodes":
 	          this.showRecoveryCodesComponent();
 	          break;
+
 	        case "socserv":
 	          this.showSocservComponent();
 	          break;
@@ -63,6 +71,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function clearHtml() {
 	      BX.html(this.container, "");
 	      var uiButtons = document.getElementsByClassName("ui-entity-wrap");
+
 	      if (uiButtons && uiButtons[0]) {
 	        main_core.Dom.remove(uiButtons[0]);
 	      }
@@ -105,6 +114,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      if (!componentMode) {
 	        componentMode = "";
 	      }
+
 	      this.sendAction("recoveryCodes", {
 	        componentMode: componentMode
 	      });
@@ -114,14 +124,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function showSocservComponent() {
 	      this.clearHtml();
 	      var socServNode = document.querySelector("[data-action='socserv']");
+
 	      if (BX.type.isDomNode(socServNode)) {
 	        var url = BX.data(socServNode, 'url');
+
 	        if (top.BX.SidePanel.Instance.open(url, {
 	          'cacheable': false,
 	          'width': 840
 	        })) {
 	          top.BX.addCustomEvent(top.BX.SidePanel.Instance.getSlider(url), "SidePanel.Slider:onClose", BX.proxy(function () {
 	            var authNode = document.querySelector("[data-action='auth']");
+
 	            if (BX.type.isDomNode(authNode)) {
 	              authNode.click();
 	            }
@@ -133,10 +146,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "showComponentData",
 	    value: function showComponentData(result, pageName) {
 	      var errors = BX.prop.getArray(result, "errors", []);
+
 	      if (errors.length > 0) {
 	        this.showErrorPopup(result["errors"][0].message);
 	        return;
 	      }
+
 	      if (!result.data) {
 	        this.showErrorPopup("Unknown error");
 	        this.hideLoader({
@@ -144,6 +159,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        });
 	        return;
 	      }
+
 	      var promise = new Promise(BX.delegate(function (resolve, reject) {
 	        if (result.data.hasOwnProperty("assets") && result.data.assets['css'].length) {
 	          BX.load(result.data.assets['css'], function () {
@@ -154,6 +170,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                    BX.html(null, result.data.assets['string'][i]);
 	                  }
 	                }
+
 	                resolve();
 	              });
 	            }
@@ -172,6 +189,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "showLoader",
 	    value: function showLoader(params) {
 	      var loader = null;
+
 	      if (params.node) {
 	        if (params.loader === null) {
 	          loader = new BX.Loader({
@@ -181,8 +199,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        } else {
 	          loader = params.loader;
 	        }
+
 	        loader.show();
 	      }
+
 	      return loader;
 	    }
 	  }, {
@@ -191,9 +211,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      if (params.loader !== null) {
 	        params.loader.hide();
 	      }
+
 	      if (params.node) {
 	        main_core.Dom.clean(params.node);
 	      }
+
 	      if (params.loader !== null) {
 	        params.loader = null;
 	      }
@@ -204,6 +226,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      if (!error) {
 	        return;
 	      }
+
 	      BX.PopupWindowManager.create({
 	        id: "intranet-user-profile-error-popup",
 	        content: BX.create("div", {
