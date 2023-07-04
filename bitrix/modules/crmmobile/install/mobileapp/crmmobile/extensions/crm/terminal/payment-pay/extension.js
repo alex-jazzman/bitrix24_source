@@ -24,6 +24,7 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		FieldNameStatus,
 	} = require('crm/terminal/services/field-manager');
 	const { AnalyticsLabel } = require('analytics-label');
+	const FISCALIZATION_ERROR_CODE = 'fiscalization_enabled';
 
 	/**
 	 * @class PaymentPay
@@ -516,11 +517,33 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 		showError(errors = [])
 		{
 			const errorText = errors.map((error) => error.message).join('\n');
+			const hasFiscalizationError = errors.some((error) => error.code === FISCALIZATION_ERROR_CODE);
 
-			Alert.alert(
-				Loc.getMessage('M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_TITLE'),
-				errorText || Loc.getMessage('M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_MESSAGE'),
-			);
+			if (hasFiscalizationError)
+			{
+				Alert.confirm(
+					Loc.getMessage('M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_TITLE'),
+					errorText || Loc.getMessage('M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_MESSAGE'),
+					[
+						{
+							text: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_BUTTON_CONFIRM_TITLE'),
+							type: 'default',
+						},
+						{
+							text: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_BUTTON_HELP_TITLE'),
+							type: 'default',
+							onPress: () => helpdesk.openHelpArticle('17886650', 'helpdesk'),
+						},
+					],
+				);
+			}
+			else
+			{
+				Alert.alert(
+					Loc.getMessage('M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_TITLE'),
+					errorText || Loc.getMessage('M_CRM_TL_PAYMENT_PAY_DEFAULT_ERROR_MESSAGE'),
+				);
+			}
 
 			this.setStep(Steps.view);
 		}

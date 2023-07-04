@@ -501,6 +501,7 @@ class SaleManager extends Base
 				'\Bitrix\Sale\Cashbox\CashboxOrangeDataFfd12',
 				'\Bitrix\Sale\Cashbox\CashboxBusinessRu',
 				'\Bitrix\Sale\Cashbox\CashboxBusinessRuV5',
+				'\Bitrix\Sale\Cashbox\CashboxYooKassa',
 			]);
 		}
 		if ($zone === 'ua' || ($zone === 'ru' && !$isCloud))

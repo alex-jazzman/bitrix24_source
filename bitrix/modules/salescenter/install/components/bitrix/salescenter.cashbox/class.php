@@ -937,6 +937,12 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 					'title' => 'SC_CASHBOX_ATOL_FFD_12_TITLE',
 					'description' => 'SC_CASHBOX_ATOL_DESCRITION',
 				];
+			case Sale\Cashbox\CashboxYooKassa::getCode():
+				return [
+					'code' => Cashbox\CashboxYooKassa::getCode(),
+					'title' => Cashbox\CashboxYooKassa::getName(),
+					'description' => 'SC_CASHBOX_YOOKASSA_DESCRIPTION',
+				];
 		}
 
 		return null;

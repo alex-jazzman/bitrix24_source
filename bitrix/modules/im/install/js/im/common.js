@@ -4112,7 +4112,19 @@
 	MessengerCommon.prototype.getCounter = function(dialogId)
 	{
 		var element = this.recentListGetItem(dialogId);
-		return element? element.counter: 0;
+		if (typeof element !== 'undefined')
+		{
+			return element.counter;
+		}
+		else if (
+			typeof this.BXIM.dialogDetailCounter !== 'undefined'
+			&& typeof this.BXIM.dialogDetailCounter[dialogId] !== 'undefined'
+		)
+		{
+			return this.BXIM.dialogDetailCounter[dialogId];
+		}
+
+		return 0;
 	};
 
 	MessengerCommon.prototype.getVideoconfLink = function(dialogId)

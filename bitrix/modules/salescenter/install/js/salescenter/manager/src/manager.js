@@ -935,6 +935,11 @@ export class Manager
 		Manager.openHelper(event, 'redirect=detail&code=12849128', 'cashbox_connect');
 	}
 
+	static openHowToConfigYooKassaCashBox(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=17776800', 'cashbox_connect');
+	}
+
 	static openHowToSetupCheckboxCashBoxAndKeys(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=12334663', 'cashbox_connect');

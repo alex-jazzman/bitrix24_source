@@ -505,10 +505,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 		/** @var Cashbox\CashboxPaySystem $cashboxHandler */
 		$cashboxHandler = $service->getCashboxClass();
 
-		$supportedKkmModels = BusinessValue::getValuesByCode(
-			$service->getConsumerName(),
-			$cashboxHandler::getPaySystemCodeForKkm()
-		);
+		$supportedKkmModels = $cashboxHandler::getKkmValue($service);
 		$result['SUPPORTED_KKM_MODELS'] = $supportedKkmModels;
 
 		if (!$kkmId && $supportedKkmModels)
@@ -527,6 +524,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			'filter' => [
 				'=HANDLER' => $cashboxHandler,
 				'=KKM_ID' => $kkmId,
+				'=ACTIVE' => 'Y',
 			],
 		])->fetch();
 		if (!$cashbox)
@@ -539,9 +537,11 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			];
 		}
 
+		$cashboxDocCode = $this->getHelpdeskDocumentationCashboxCode($cashboxHandler);
+
 		$result['CASHBOX'] = $this->getCashboxSettings($cashbox);
 		$result['CASHBOX']['code'] = mb_strtoupper($cashboxHandler::getCode());
-		$result['CASHBOX']['documentationCode'] = $this->getHelpdeskDocumentationCashboxCode($cashboxHandler);
+		$result['CASHBOX']['documentationCode'] = $cashboxDocCode;
 
 		return $result;
 	}
@@ -618,6 +618,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 	{
 		$helpdeskCodeMap = [
 			'\\'.Cashbox\CashboxRobokassa::class => '12849128',
+			'\\'.Cashbox\CashboxYooKassa::class => '17776800',
 		];
 
 		return $helpdeskCodeMap[$cashboxHandler] ?? null;
@@ -666,15 +667,24 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 				foreach ($settings as $group => $block)
 				{
 					$warning = '';
+					$hint = '';
 					if ($group === 'VAT')
 					{
 						$warning = Loc::getMessage('SALESCENTER_SP_CASHBOX_VAT_ATTENTION');
+						$hint = Loc::getMessage('SALESCENTER_SP_CASHBOX_VAT_HINT');
+					}
+
+					if ($group === 'MEASURE')
+					{
+						$hint = Loc::getMessage('SALESCENTER_SP_CASHBOX_MEASURE_HINT');
 					}
 
 					$result['section'][$group] = [
 						'title' => htmlspecialcharsbx($block['LABEL']),
 						'type' => 'cashboxSettings',
 						'warning' => $warning,
+						'collapsed' => $block['COLLAPSED'],
+						'hint' => $hint,
 					];
 
 					foreach ($block['ITEMS'] as $code => $item)

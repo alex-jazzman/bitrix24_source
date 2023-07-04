@@ -1,11 +1,16 @@
 <?php
 $MESS["SALESCENTER_SP_ADD_PAYMENT_BUTTON"] = "Configure";
 $MESS["SALESCENTER_SP_BUTTON_CLOSE"] = "Cancel";
-$MESS["SALESCENTER_SP_CAHSBOX_HINT"] = "There are no cash registers. <a href='#CASHBOX_SETTINGS_LINK#'>Configure cash registers</a>";
+$MESS["SALESCENTER_SP_CASHBOX_HINT"] = "There are no cash registers. <a href='#CASHBOX_SETTINGS_LINK#'>Configure cash registers</a>";
+$MESS["SALESCENTER_SP_CASHBOX_HINT_CASHBOXROBOKASSA"] = "You don't have a cash register. You can use Robocheki or use a different online cash register. <br><a href='#CASHBOX_SETTINGS_LINK#' target='_blank'>How to configure an online cash register</a>";
+$MESS["SALESCENTER_SP_CASHBOX_HINT_CASHBOXYOOKASSA"] = "You don't have a cash register. You can use YooMoney receipts or use a different online cash register. <br><a href='#CASHBOX_SETTINGS_LINK#' target='_blank'>How to configure an online cash register</a>";
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXROBOKASSA_DESCRIPTION"] = "Fiscal receipts will be transmitted via Robokassa.";
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXROBOKASSA_LINK_TEXT"] = "How Robo-receipts work";
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXROBOKASSA_SECTION_TITLE"] = "Robo-receipts";
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXROBOKASSA_TITLE"] = "Use Robo-receipts";
+$MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXYOOKASSA_DESCRIPTION"] = "Auto send receipts to customers and tax authorities using YooMoney. <br>To connect this service, please proceed to your YooMoney account.";
+$MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXYOOKASSA_LINK_TEXT"] = "Connection instructions";
+$MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXYOOKASSA_TITLE"] = "Use YooMoney receipts";
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_TITLE"] = "Print receipts via \"#PAY_SYSTEM_NAME#\"";
 $MESS["SALESCENTER_SP_CONNECT_HINT"] = "Use a YouMoney account to authenticate";
 $MESS["SALESCENTER_SP_CONNECT_PAYMENT_BUTTON"] = "Connect";
@@ -15,6 +20,7 @@ $MESS["SALESCENTER_SP_ERROR_POPUP_TITLE"] = "Error";
 $MESS["SALESCENTER_SP_LINK_CONNECT"] = "How to connect a payment system";
 $MESS["SALESCENTER_SP_LINK_SBP_CONNECT"] = "Learn more about rapid payment system in Bitrix24";
 $MESS["SALESCENTER_SP_PARAMS_FORM_ACTIVE"] = "Active";
+$MESS["SALESCENTER_SP_PARAMS_FORM_ADDITIONAL_TITLE"] = "Additional parameters";
 $MESS["SALESCENTER_SP_PARAMS_FORM_CAN_PRINT_CHECK"] = "Enable receipt printouts";
 $MESS["SALESCENTER_SP_PARAMS_FORM_CASHBOX"] = "Cash registers";
 $MESS["SALESCENTER_SP_PARAMS_FORM_CASHBOX_TITLE"] = "FZ-54";

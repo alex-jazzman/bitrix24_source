@@ -347,10 +347,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 
 		if (!$kkmId)
 		{
-			$supportedKkmModels = BusinessValue::getValuesByCode(
-				$service->getConsumerName(),
-				$cashboxClass::getPaySystemCodeForKkm()
-			);
+			$supportedKkmModels = $cashboxClass::getKkmValue($service);
 			if ($supportedKkmModels)
 			{
 				$kkmId = current($supportedKkmModels);
@@ -393,6 +390,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 				'KKM_ID' => $kkmId,
 				'USE_OFFLINE' => 'N',
 				'ENABLED' => 'Y',
+				'ACTIVE' => 'Y',
 				'SORT' => 100,
 				'SETTINGS' => $cashboxSettings['CASHBOX_SETTINGS'],
 			];

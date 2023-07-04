@@ -63,6 +63,7 @@ trait SalescenterControllerWrapper
 				],
 				'taxIncluded' => $taxIncluded,
 				'taxId' => VatTable::getActiveVatIdByRate((float)$product['TAX_RATE']),
+				'type' => $product['TYPE'],
 			];
 
 			$basketCode = $product['BASKET_ITEM_FIELDS']['BASKET_CODE'] ?? '';
