@@ -2,6 +2,7 @@
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_BACKDROP_TITLE"] = "Дані товару";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_CLOSE"] = "Закрити";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_DESKTOP_VERSION"] = "Відкрити в повній версії";
+$MESS["PRODUCT_GRID_PRODUCT_DETAILS_DESKTOP_VERSION_MSGVER_1"] = "Відкрити у вебверсії";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_DONE"] = "Готово";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_FIELD_BARCODE"] = "Штрихкод";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_FIELD_CHANGE_NOT_PERMITTED_BODY"] = "Зверніться до адміністратора вашого Бітрікс24";
@@ -24,6 +25,7 @@ $MESS["PRODUCT_GRID_PRODUCT_DETAILS_FIELD_TAX_INCLUDED"] = "ПДВ включе�
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_FIELD_TAX_RATE"] = "ПДВ";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION"] = "Залишки на складах і резервування прямо в картці угоди";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_BODY"] = "Наразі доступно лише в повній версії";
+$MESS["PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_BODY_MSGVER_1"] = "Наразі доступно лише у вебверсії.";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_TITLE"] = "Залишки й резервування";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_MORE_OPPORTUNITIES"] = "Додаткові можливості";
 $MESS["PRODUCT_GRID_PRODUCT_DETAILS_PHOTOS_UPLOADING"] = "Фотографії товару завантажуються";

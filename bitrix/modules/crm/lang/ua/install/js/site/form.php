@@ -1,4 +1,6 @@
-<?
+<?php
+$MESS["CRM_SITE_FORM_ABUSE_INFO_HINT"] = "Компанія Бітрікс24 не несе відповідальності за вміст форми, але ви можете повідомити нам про порушення.";
+$MESS["CRM_SITE_FORM_ABUSE_LINK"] = "Повідомити про порушення";
 $MESS["CRM_SITE_FORM_BASKET_DISCOUNT"] = "Економія";
 $MESS["CRM_SITE_FORM_BASKET_SUM"] = "Без знижки";
 $MESS["CRM_SITE_FORM_BASKET_TOTAL"] = "До сплати";
@@ -18,4 +20,3 @@ $MESS["CRM_SITE_FORM_STATE_DISABLED"] = "Форма неактуальна";
 $MESS["CRM_SITE_FORM_STATE_ERROR"] = "Сталася помилка";
 $MESS["CRM_SITE_FORM_STATE_SUCCESS"] = "Дякуємо за увагу";
 $MESS["CRM_SITE_FORM_STATE_SUCCESS_TITLE"] = "Відправлено!";
-?>

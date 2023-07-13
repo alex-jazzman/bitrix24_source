@@ -15,6 +15,7 @@ $MESS["TASKSMOBILE_LAYOUT_CHECKLIST_MOVE_RIGHT"] = "Перемістити пр�
 $MESS["TASKSMOBILE_LAYOUT_CHECKLIST_MOVE_TO"] = "До іншого контрольного списку";
 $MESS["TASKSMOBILE_LAYOUT_CHECKLIST_MOVE_TO_NEW"] = "Створити новий";
 $MESS["TASKSMOBILE_LAYOUT_CHECKLIST_REMOVE"] = "Видалити";
+$MESS["TASKSMOBILE_LAYOUT_CHECKLIST_STUB_CREATE_CHECKLIST"] = "Створити контрольний список";
 $MESS["TASKSMOBILE_LAYOUT_CHECKLIST_STUB_TEXT"] = "Чек-лист";
 $MESS["TASKSMOBILE_LAYOUT_ITEM_INPUT_PLACEHOLDER"] = "Назва пункту";
 $MESS["TASKSMOBILE_LAYOUT_LIST_INPUT_PLACEHOLDER"] = "Назва контрольного списку";

@@ -1,4 +1,12 @@
 <?php
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_CONTACT"] = "Компанія додана до контакту";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_DEAL"] = "Компанія додана до угоди";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_INVOICE"] = "Компанія додана до рахунку";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_LEAD"] = "Компанія додана до ліда";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_COMPANY"] = "Контакт доданий до компанії";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_DEAL"] = "Контакт доданий до угоди";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_INVOICE"] = "Контакт доданий до рахунку";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_LEAD"] = "Контакт доданий до ліда";
 $MESS["CRM_EDITOR_ADDRESS"] = "Адреса";
 $MESS["CRM_EDITOR_ADD_BANK_DETAILS"] = "Додати банківські реквізити";
 $MESS["CRM_EDITOR_ADD_REQUISITE"] = "Додати реквізити";

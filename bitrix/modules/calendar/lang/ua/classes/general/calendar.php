@@ -1,4 +1,8 @@
 <?php
+$MESS["CALENDAR_SHARING_COMPONENT_CLASS_CALENDAR_TITLE"] = "Слоти";
+$MESS["CALENDAR_SHARING_COMPONENT_CLASS_EVENT_TITLE"] = "Зустріч";
+$MESS["CALENDAR_SHARING_COMPONENT_OG_DESCRIPTION"] = "Тут ви можете вибрати зручний час для зустрічі.";
+$MESS["CALENDAR_SHARING_COMPONENT_OG_TITLE"] = "Мої вільні слоти";
 $MESS["DEL_CON_CALENDARS"] = "Видалити календарі";
 $MESS["EC_ACCEPTED_STATUS"] = "Ви приймаєте участь в цій події.";
 $MESS["EC_ACCEPT_MAYBE_MEETING"] = "Можливо";
@@ -364,6 +368,8 @@ $MESS["EC_JUN"] = "Червень ";
 $MESS["EC_JUN_R"] = "Червня";
 $MESS["EC_LF_ADD_COMMENT_SOURCE_ERROR"] = "Не вдалося додати коментар до джерела події.";
 $MESS["EC_LOCATION"] = "Місце проведення";
+$MESS["EC_LOCATION_REPEAT_BUSY"] = "У ці дати переговорна зайнята: #DATES#. Укажіть інше місце проведення або збережіть зустріч із поточною переговорною.";
+$MESS["EC_LOCATION_REPEAT_BUSY_TOO_MANY"] = "У ці дати переговорна зайнята: #DATES# та інші дні. Укажіть інше місце проведення або збережіть зустріч із поточною переговорною.";
 $MESS["EC_LOCATION_TITLE"] = "Місце проведення події";
 $MESS["EC_LOST_SESSION_ERROR"] = "Помилка Ваша сесія закінчилася. Будь ласка, авторизуйтесь!";
 $MESS["EC_MANAGE_CALDAV"] = "Налаштувати зовнішні календарі (CalDAV)";

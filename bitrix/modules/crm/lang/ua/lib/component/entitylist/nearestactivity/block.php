@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_ACTIVITY_TIME_NOT_SPECIFIED"] = "без терміну";
+$MESS["CRM_ENTITY_ACTIVITY_FOR_RESPONSIBLE"] = "для";
+$MESS["CRM_ENTITY_ADD_ACTIVITY"] = "Додати справу";
+$MESS["CRM_ENTITY_ADD_ACTIVITY_HINT"] = "Справи відсутні";

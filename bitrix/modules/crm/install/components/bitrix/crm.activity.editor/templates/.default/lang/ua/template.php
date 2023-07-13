@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ACTION_SET_TIME"] = "Встановити час";
 $MESS["CRM_ACTIVITY_DATA_LOADING"] = "Завантаження даних...";
 $MESS["CRM_ACTIVITY_DISK_ATTACHED_FILES"] = "Прикріплені файли";
@@ -77,6 +77,9 @@ $MESS["CRM_ACTIVITY_NEXT_PAGE"] = "Вперед";
 $MESS["CRM_ACTIVITY_NOTIFY_DESCR"] = "за %VALUE% %TYPE%";
 $MESS["CRM_ACTIVITY_PREV_PAGE"] = "Назад";
 $MESS["CRM_ACTIVITY_SHOW_ALL_COMMUNICATIONS"] = "Всі";
+$MESS["CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF"] = "Після завершення справи діалог із клієнтом автоматично закривається.";
+$MESS["CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT"] = "Завершити справу";
+$MESS["CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE"] = "Справді завершити справу?";
 $MESS["CRM_ACTIVITY_TYPE_ACTIVITY"] = "Дія";
 $MESS["CRM_ACTIVITY_TYPE_CALL"] = "Дзвінок";
 $MESS["CRM_ACTIVITY_TYPE_EMAIL"] = "Лист";
@@ -92,4 +95,3 @@ $MESS["CRM_ACTIVITY_WEBDAV_SELECT_FROM_LIB"] = "Вибрати з бібліот
 $MESS["CRM_ACTIVITY_WEBDAV_TITLE"] = "Файли";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Зателефонувати";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Невідомий абонент";
-?>

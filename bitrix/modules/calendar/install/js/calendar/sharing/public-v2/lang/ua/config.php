@@ -16,6 +16,7 @@ $MESS["CALENDAR_SHARING_MEETING_NOT_CREATED"] = "Не вдалося створ�
 $MESS["CALENDAR_SHARING_MY_FREE_SLOTS"] = "Мої вільні слоти";
 $MESS["CALENDAR_SHARING_NAV_NEXT"] = "Наступний місяць";
 $MESS["CALENDAR_SHARING_NAV_PREV"] = "Попередній місяць";
+$MESS["CALENDAR_SHARING_OPEN_VIDEOCONFERENCE"] = "Відеоконференція";
 $MESS["CALENDAR_SHARING_POPUP_CANCEL"] = "Так, скасувати";
 $MESS["CALENDAR_SHARING_POPUP_LEAVE"] = "Залишити";
 $MESS["CALENDAR_SHARING_POPUP_MEETING_CANCELED"] = "Скасувати зустріч?";

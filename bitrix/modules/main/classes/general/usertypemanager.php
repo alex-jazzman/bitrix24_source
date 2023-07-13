@@ -817,10 +817,7 @@ class CUserTypeManager
 			}
 			else
 			{
-				if (array_key_exists($fieldName, $filterData))
-				{
-					$value = $filterData[$fieldName];
-				}
+				$value = $filterData[$fieldName] ?? null;
 			}
 			if(
 				$arUserField['SHOW_FILTER'] != 'N'

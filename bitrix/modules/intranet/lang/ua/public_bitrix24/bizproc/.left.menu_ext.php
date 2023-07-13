@@ -1,5 +1,7 @@
 <?php
 $MESS["MENU_BIZPROC_ACTIVE"] = "Всі активні";
+$MESS["MENU_BIZPROC_CRM"] = "Процеси в CRM";
+$MESS["MENU_BIZPROC_DISK"] = "Процеси в Загальному диску компанії";
 $MESS["MENU_BIZPROC_TASKS"] = "Завдання бізнес-процесів";
 $MESS["MENU_BIZPROC_TASKS_1"] = "Завдання бізнес-процесів";
 $MESS["MENU_MY_PROCESS"] = "Мої процеси";

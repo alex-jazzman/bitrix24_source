@@ -7,6 +7,7 @@ $MESS["IM_NOTIFICATIONS_CONTEXT_POPUP_SET_READ"] = "Позначити як пр
 $MESS["IM_NOTIFICATIONS_CONTEXT_POPUP_SET_UNREAD"] = "Позначити як непрочитане";
 $MESS["IM_NOTIFICATIONS_DELETED_ITEM_STUB"] = "Сповіщення було видалене";
 $MESS["IM_NOTIFICATIONS_HEADER"] = "Сповіщення";
+$MESS["IM_NOTIFICATIONS_ITEM_SYSTEM"] = "Системне сповіщення";
 $MESS["IM_NOTIFICATIONS_MORE_USERS"] = "і ще #COUNT# людина(людей)";
 $MESS["IM_NOTIFICATIONS_NO_ITEMS"] = "Немає сповіщень";
 $MESS["IM_NOTIFICATIONS_NO_ITEMS_30_DAYS"] = "Немає сповіщень за останні 30 днів";

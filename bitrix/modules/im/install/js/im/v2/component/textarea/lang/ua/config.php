@@ -1,4 +1,8 @@
 <?php
+$MESS["IM_TEXTAREA_CREATE_AI_IMAGE_SUBTITLE"] = "ШІ створить будь-яку картинку за вашим описом.";
+$MESS["IM_TEXTAREA_CREATE_AI_IMAGE_TITLE"] = "Створити зображення";
+$MESS["IM_TEXTAREA_CREATE_AI_TEXT_SUBTITLE"] = "ШІ придумає текст за вас або поліпшить його в потрібному стилі.";
+$MESS["IM_TEXTAREA_CREATE_AI_TEXT_TITLE"] = "Створити текст";
 $MESS["IM_TEXTAREA_CREATE_AND_SEND_FILE"] = "Створіть і надішліть файл";
 $MESS["IM_TEXTAREA_CREATE_DOCUMENT"] = "Документ";
 $MESS["IM_TEXTAREA_CREATE_MEETING_SUBTITLE"] = "Усі учасники чату отримають запрошення на зустріч.";
@@ -27,6 +31,16 @@ $MESS["IM_TEXTAREA_ICON_SEND_TEXT"] = "Надіслати повідомленн
 $MESS["IM_TEXTAREA_ICON_SEND_VOICE"] = "Надіслати голосове повідомлення";
 $MESS["IM_TEXTAREA_ICON_SMILE"] = "Емодзі й GIF-картинки";
 $MESS["IM_TEXTAREA_ICON_UPLOAD"] = "Надіслати файл";
+$MESS["IM_TEXTAREA_MARKET_APPS_EMPTY_STATE"] = "Ви поки не додали застосунок. Використовуйте Бітрікс24.Маркет, щоб вибрати потрібні застосунки й встановити їх.";
+$MESS["IM_TEXTAREA_MARKET_APPS_SHOW_MORE_BUTTON"] = "Ще #NUMBER#";
+$MESS["IM_TEXTAREA_MARKET_OTHER_APPS"] = "Інші застосунки";
 $MESS["IM_TEXTAREA_PLACEHOLDER"] = "Введіть повідомлення...";
 $MESS["IM_TEXTAREA_SELECT_FROM_BITRIX24_DISK"] = "Вибрати на Диску";
 $MESS["IM_TEXTAREA_SELECT_FROM_COMPUTER"] = "Вибрати на комп'ютері";
+$MESS["IM_TEXTAREA_SMILE_SELECTOR_SMILES_TAB"] = "Смайли";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_CANCEL"] = "Скасувати";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_SEND"] = "Надіслати";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER"] = "Додати коментар";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_SEND_AS_FILE"] = "Надіслати як файл";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE"] = "Завантаження зображень";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_UPLOAD_ERROR"] = "Не вдалося завантажити зображення.";

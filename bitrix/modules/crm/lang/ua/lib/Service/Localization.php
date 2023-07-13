@@ -174,6 +174,7 @@ $MESS["CRM_TYPE_ITEM_SAVE_EDITOR_AND_RELOAD"] = "Збережіть дані т�
 $MESS["CRM_TYPE_ITEM_TITLE"] = "Елемент";
 $MESS["CRM_TYPE_QUOTE_FIELD_FILES"] = "Файли";
 $MESS["CRM_TYPE_QUOTE_FIELD_STATUS"] = "Статус пропозиції";
+$MESS["CRM_TYPE_QUOTE_FIELD_STATUS_MSGVER_1"] = "Стадія пропозиції";
 $MESS["CRM_TYPE_SMART_DOCUMENT_FIELD_NUMBER"] = "Номер документа";
 $MESS["CRM_TYPE_SMART_INVOICE_FIELD_ACCOUNT_NUMBER"] = "Номер рахунку";
 $MESS["CRM_TYPE_SMART_INVOICE_FIELD_BEGIN_DATE"] = "Дата виставлення";

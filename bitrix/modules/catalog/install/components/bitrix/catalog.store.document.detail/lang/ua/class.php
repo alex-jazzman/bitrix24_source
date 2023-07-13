@@ -11,6 +11,7 @@ $MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOC_TYPE_A"] = "Прибуття товар
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOC_TYPE_D"] = "Списання товару";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_DOC_TYPE_M"] = "Переміщення товару між складами";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_INCORRECT_VALUE"] = "Поле \"#FIELD_NAME#\" заповнено некоректно";
+$MESS["CATALOG_STORE_DOCUMENT_DETAIL_NO_INVENTORY_MANAGEMENT_ENABLED_ERROR"] = "Складський облік недоступний на вашому тарифі.";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_NO_VIEW_RIGHTS_ERROR"] = "Недостатньо прав для перегляду документа";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_NO_WRITE_RIGHTS_ERROR"] = "Недостатньо прав для збереження документа";
 $MESS["CATALOG_STORE_DOCUMENT_DETAIL_SAVE_ERROR"] = "Сталася помилка при збереженні документа";

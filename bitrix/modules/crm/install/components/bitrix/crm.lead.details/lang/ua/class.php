@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_LEAD_COPY_PAGE_TITLE"] = "Копіювання ліда";
 $MESS["CRM_LEAD_CREATE_ON_BASIS"] = "Створити на підставі";
 $MESS["CRM_LEAD_CREATION_PAGE_TITLE"] = "Створення ліда";
@@ -29,7 +29,9 @@ $MESS["CRM_LEAD_FIELD_SECOND_NAME"] = "По батькові";
 $MESS["CRM_LEAD_FIELD_SOURCE_DESCRIPTION"] = "Додатково про джерело";
 $MESS["CRM_LEAD_FIELD_SOURCE_ID"] = "Джерело";
 $MESS["CRM_LEAD_FIELD_STATUS_DESCRIPTION"] = "Додатково про статус";
+$MESS["CRM_LEAD_FIELD_STATUS_DESCRIPTION_MSGVER_1"] = "Додатково про стадію";
 $MESS["CRM_LEAD_FIELD_STATUS_ID"] = "Статус";
+$MESS["CRM_LEAD_FIELD_STATUS_ID_MSGVER_1"] = "Стадія";
 $MESS["CRM_LEAD_FIELD_TITLE"] = "Назва ліда";
 $MESS["CRM_LEAD_FIELD_UTM"] = "UTM-мітки";
 $MESS["CRM_LEAD_HONORIFIC_NOT_SELECTED"] = "Не обрано";
@@ -46,4 +48,3 @@ $MESS["CRM_LEAD_TAB_QUOTE"] = "Пропозиції";
 $MESS["CRM_LEAD_TAB_TREE"] = "Зв'язки";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не встановлено.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонено";
-?>

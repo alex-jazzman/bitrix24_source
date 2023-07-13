@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_CANCEL_BUTTON"] = "Скасувати";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNELS"] = "Канали комунікації";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_CONFIGURE_SLOTS"] = "Як це працює?";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_COPY_LINK_NOTIFICATION"] = "Посилання скопійовано";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_1"] = "Клієнт сам вибере зручний слот.";
@@ -11,9 +12,12 @@ $MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TEXT_2"] 
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_COMMUNICATION_CHANNELS_WARNING_TITLE"] = "У вас ще не під'єднані WhatsApp і SMS";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT"] = "Укажіть номер телефону клієнта, щоб ми могли надіслати посилання на вільні слоти.";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TITLE"] = "Укажіть контакти клієнта в угоді";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE"] = "У вас не підключений сервіс для надсилання SMS";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE_1"] = "<a href=\"/marketplace/category/crm_robot_sms/\" target=\"_blank\">Під'єднайте SMS-сервіс</a>, щоб миттєво надсилати клієнтам посилання на вільні слоти.";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TEXT"] = "Як швидко запланувати зустріч із клієнтом? В один клац надішліть посилання на свої вільні слоти, а клієнт сам вибере час. Спробуйте, як це зручно!";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TITLE"] = "Вільні слоти для зустрічей";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_RECEIVER"] = "Отримувач";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_SENDER"] = "Відправник";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON"] = "Надіслати";
 $MESS["CRM_TIMELINE_CANCEL_BTN"] = "Скасувати";
 $MESS["CRM_TIMELINE_CHOOSE"] = "Обрати";

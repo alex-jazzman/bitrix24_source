@@ -7,4 +7,6 @@ $MESS["CRM_NOTIFY_SCHEME_LIVEFEED_MENTION"] = "Вас згадали в пові
 $MESS["CRM_NOTIFY_SCHEME_LIVEFEED_POST"] = "Вам адресоване повідомлення";
 $MESS["CRM_NOTIFY_SCHEME_MERGE"] = "Сповіщення контролю дублікатів";
 $MESS["CRM_NOTIFY_SCHEME_OTHER"] = "Інші сповіщення";
+$MESS["CRM_NOTIFY_SCHEME_PING_TODO_ACTIVITY"] = "Нагадування про справу";
 $MESS["CRM_NOTIFY_SCHEME_WEBFORM"] = "Заповнена CRM-форма";
+$MESS["CRM_NOTIFY_TITLE"] = "CRM";

@@ -18,6 +18,7 @@ $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_LINK"] = "Посилання на
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_FINAL_FORM_DESCRIPTION"] = "Telegram успішно підключений до вашої Відкритої лінії. Тепер всі звернення до вашого боту будуть автоматично спрямовані на ваш Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION"] = "Для підключення необхідно <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">створити бота в Telegram</a> або підключити вже існуючий. Якщо у вас ще немає публічного акаунта, ми допоможемо створити його за кілька кроків і підключити до вашого Бітрікс24.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "Для підключення необхідно #LINK_START#створити Telegram-бота#LINK_END# або під'єднати наявний. Якщо у вас ще немає облікового запису, ми допоможемо створити його й під'єднати до Бітрікс24.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW_MSGVER_2"] = "Щоб під'єднати Telegram до вашого Бітрікс24, #LINK_START#створіть бота в Telegram#LINK_END# або приєднайте наявний. Якщо у вас ще немає публічного акаунта, ми підкажемо, як створити його за кілька кроків.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_1"] = "Контакти та листування зберігаються в CRM";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_2"] = "CRM допомагає вести клієнта воронкою продажів";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_3"] = "Ви відповідаєте клієнтам швидко й там, де їм зручно";

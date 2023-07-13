@@ -220,6 +220,7 @@ $MESS["IM_M_CL_CHAT"] = "Мої чати";
 $MESS["IM_M_CL_NOT_IN"] = "Користувач не знайдений в списку контактів, щоб почати з ним діалог, вам необхідно додати його до друзів.";
 $MESS["IM_M_CL_NOT_IN_ADD"] = "Додати до друзів";
 $MESS["IM_M_CONTACT_LIST"] = "Список контактів";
+$MESS["IM_M_CREATE_CALL_BETA"] = "Відеодзвінок HD (beta)";
 $MESS["IM_M_CREATE_JITSI"] = "Конференція Jitsi";
 $MESS["IM_M_CREATE_MENU"] = "Створити";
 $MESS["IM_M_CREATE_MENU_TOOLTIP"] = "Створюйте чати та відеоконференції в один клік";

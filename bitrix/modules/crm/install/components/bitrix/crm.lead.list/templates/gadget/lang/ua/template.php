@@ -1,4 +1,4 @@
-<?
-$MESS["CRM_DATA_EMPTY"] = "Немає записів";
+<?php
 $MESS["CRM_COLUMN_STATUS"] = "Статус";
-?>
+$MESS["CRM_COLUMN_STATUS_MSGVER_1"] = "Стадія";
+$MESS["CRM_DATA_EMPTY"] = "Немає записів";

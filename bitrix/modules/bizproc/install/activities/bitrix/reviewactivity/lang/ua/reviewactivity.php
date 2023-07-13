@@ -9,5 +9,4 @@ $MESS["BPAR_ACT_PROP_EMPTY1"] = "Властивість 'Користувачі'
 $MESS["BPAR_ACT_PROP_EMPTY4"] = "Властивість 'Назва' не вказана.";
 $MESS["BPAR_ACT_REVIEWED"] = "Ознайомлення з документом завершено.";
 $MESS["BPAR_ACT_REVIEW_TRACK"] = "Користувач #PERSON# ознайомився з документом #COMMENT#";
-$MESS["BPAR_ACT_TRACK2"] = "Ознайомлення з документом користувачами зі списку: #VAL#";
 $MESS["BPAR_ACT_TRACK3"] = "Користувачі зі списку, що ознайомилися з документом: #VAL#";

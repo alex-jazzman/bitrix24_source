@@ -1,5 +1,6 @@
 <?php
 $MESS["IM_SEARCH_ITEM_CHAT_TYPE_GROUP"] = "Груповий чат";
+$MESS["IM_SEARCH_ITEM_CHAT_TYPE_GROUP_V2"] = "Груповий чат";
 $MESS["IM_SEARCH_ITEM_CHAT_TYPE_OPEN"] = "Канал";
 $MESS["IM_SEARCH_RESULT_NOT_FOUND"] = "Нічого не знайдено";
 $MESS["IM_SEARCH_RESULT_NOT_FOUND_DESCRIPTION"] = "Спробуйте змінити пошукову фразу.";

@@ -56,6 +56,7 @@ $MESS["UI_ENTITY_EDITOR_SAVE"] = "Зберегти";
 $MESS["UI_ENTITY_EDITOR_SAVE_ERROR_CONTENT"] = "При збереженні сталася помилка";
 $MESS["UI_ENTITY_EDITOR_SAVE_ERROR_TITLE"] = "Помилка збереження";
 $MESS["UI_ENTITY_EDITOR_SECTION_OPEN_DETAILS"] = "відкрити";
+$MESS["UI_ENTITY_EDITOR_SECTION_WITH_HIDDEN_FIELDS"] = "Приховані поля";
 $MESS["UI_ENTITY_EDITOR_SELECT"] = "Обрати";
 $MESS["UI_ENTITY_EDITOR_SELECT_FIELD"] = "Обрати поле";
 $MESS["UI_ENTITY_EDITOR_SELECT_FIELD_FROM_OTHER_SECTION"] = "Обрати з іншого розділу";

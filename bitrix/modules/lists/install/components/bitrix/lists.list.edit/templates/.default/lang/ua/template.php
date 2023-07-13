@@ -1,14 +1,19 @@
-<?
+<?php
 $MESS["CT_BLLE_ACCESS_RIGHTS"] = "Групи користувачів, що мають доступ до списку";
+$MESS["CT_BLLE_COPY_CONFIRM_BUTTON"] = "Так, копіювати";
 $MESS["CT_BLLE_COPY_POPUP_ACCEPT_BUTTON"] = "Копіювати";
 $MESS["CT_BLLE_COPY_POPUP_CANCEL_BUTTON"] = "Скасування";
 $MESS["CT_BLLE_COPY_POPUP_CONTENT"] = "Ви впевнені, що хочете копіювати?";
 $MESS["CT_BLLE_COPY_POPUP_COPIED_SUCCESS"] = "Список скопійовано. <a href=\"#URL#\">Перейти до налаштувань нового списку</a>";
 $MESS["CT_BLLE_COPY_POPUP_COPIED_SUCCESS_PROCESS"] = "Процес скопійовано. <a href=\"#URL#\">Перейти до налаштувань нового процесу</a>";
+$MESS["CT_BLLE_COPY_POPUP_TEXT_PROCESS"] = "Справді копіювати процес?";
 $MESS["CT_BLLE_COPY_POPUP_TITLE"] = "Підтвердження копіювання";
+$MESS["CT_BLLE_COPY_POPUP_TITLE_1"] = "Копіювати процес";
+$MESS["CT_BLLE_DELETE_CONFIRM_BUTTON"] = "Так, видалити";
 $MESS["CT_BLLE_DELETE_POPUP_ACCEPT_BUTTON"] = "Видалити";
 $MESS["CT_BLLE_DELETE_POPUP_CANCEL_BUTTON"] = "Скасування";
 $MESS["CT_BLLE_DELETE_POPUP_TITLE"] = "Підтвердження видалення";
+$MESS["CT_BLLE_DELETE_POPUP_TITLE_1"] = "Видалити процес";
 $MESS["CT_BLLE_FIELD_BIZPROC"] = "Увімкнути підтримку бізнес процесів";
 $MESS["CT_BLLE_FIELD_DESCRIPTION"] = "Опис списку";
 $MESS["CT_BLLE_FIELD_DESCRIPTION_PROCESS"] = "Опис процесу";
@@ -45,7 +50,9 @@ $MESS["CT_BLLE_TOOLBAR_DELETE_PROCESS"] = "Видалити процес";
 $MESS["CT_BLLE_TOOLBAR_DELETE_TITLE"] = "Видаляє список і всю пов'язану з ним інформацію";
 $MESS["CT_BLLE_TOOLBAR_DELETE_TITLE_PROCESS"] = "Видаляє процес і всю пов'язану з ним інформацію";
 $MESS["CT_BLLE_TOOLBAR_DELETE_WARNING"] = "Ви впевнені, що хочете видалити цей список?";
+$MESS["CT_BLLE_TOOLBAR_DELETE_WARNING_1"] = "Справді видалити цей список?";
 $MESS["CT_BLLE_TOOLBAR_DELETE_WARNING_PROCESS"] = "Ви впевнені, що хочете видалити цей процес?";
+$MESS["CT_BLLE_TOOLBAR_DELETE_WARNING_PROCESS_1"] = "Справді видалити процес?";
 $MESS["CT_BLLE_TOOLBAR_FIELDS"] = "Поля списку";
 $MESS["CT_BLLE_TOOLBAR_FIELDS_PROCESS"] = "Поля процесу";
 $MESS["CT_BLLE_TOOLBAR_FIELDS_TITLE"] = "Налаштувати поля списку";
@@ -59,4 +66,3 @@ $MESS["CT_BLLE_TOOLBAR_LIST_TITLE"] = "Перегляд і редагуванн�
 $MESS["CT_BLLE_TOOLBAR_MIGRATE_PROCESSES"] = "Перенести в процеси";
 $MESS["CT_BLLE_TOOLBAR_MIGRATE_WARNING_PROCESS"] = "Ви впевнені, що хочете перенести цей список?";
 $MESS["CT_BLLE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ";
-?>

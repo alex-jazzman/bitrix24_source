@@ -6,6 +6,7 @@ $MESS["CRM_ENT_SEL_HLP_HIDDEN_DYNAMIC"] = "Прихований елемент";
 $MESS["CRM_ENT_SEL_HLP_HIDDEN_LEAD"] = "Прихований лід";
 $MESS["CRM_ENT_SEL_HLP_HIDDEN_ORDER"] = "Приховане замовлення";
 $MESS["CRM_ENT_SEL_HLP_HIDDEN_QUOTE"] = "Прихована ком. пропозиція";
+$MESS["CRM_ENT_SEL_HLP_HIDDEN_SMART_INVOICE"] = "Прихований рахунок";
 $MESS["CRM_ENT_SEL_HLP_ORDER_SUMMARY"] = "Замовлення № #ORDER_NUMBER#";
 $MESS["CRM_ENT_SEL_HLP_PREF_CONTACT_TYPE"] = "Тип";
 $MESS["CRM_ENT_SEL_HLP_PREF_EMAIL"] = "E-mail";

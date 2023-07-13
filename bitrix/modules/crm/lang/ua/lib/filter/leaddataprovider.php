@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_LEAD_FILTER_ACTIVE_TIME_PERIOD"] = "Період активності";
 $MESS["CRM_LEAD_FILTER_ACTIVITY_COUNTER"] = "Справи";
 $MESS["CRM_LEAD_FILTER_COMMUNICATION_TYPE"] = "Спосіб зв'язку";
@@ -10,9 +10,10 @@ $MESS["CRM_LEAD_FILTER_PHONE"] = "Телефон";
 $MESS["CRM_LEAD_FILTER_PRODUCT_ROW_PRODUCT_ID"] = "Товар";
 $MESS["CRM_LEAD_FILTER_STATUS_CONVERTED"] = "Сконвертовані";
 $MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_HISTORY"] = "Статус за історією";
+$MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_HISTORY_MSGVER_1"] = "Стадія за історією";
 $MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_SUPPOSED_HISTORY"] = "Статус за історією (з передбачуваними переходами)";
+$MESS["CRM_LEAD_FILTER_STATUS_ID_FROM_SUPPOSED_HISTORY_MSGVER_1"] = "Стадія за історією (з передбачуваними переходами)";
 $MESS["CRM_LEAD_FILTER_STATUS_PROCESSED"] = "Закрито";
 $MESS["CRM_LEAD_FILTER_STATUS_SEMANTIC_ID"] = "Стан";
 $MESS["CRM_LEAD_FILTER_STATUS_SEMANTIC_ID_FROM_HISTORY"] = "Стан за історією";
 $MESS["CRM_LEAD_FILTER_WEB"] = "Сайт";
-?>

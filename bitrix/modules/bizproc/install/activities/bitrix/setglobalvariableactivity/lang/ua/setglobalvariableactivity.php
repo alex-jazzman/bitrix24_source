@@ -1,5 +1,4 @@
 <?php
-$MESS["BPSGCA_ACCESS_DENIED"] = "Налаштування дії доступні тільки адміністраторам порталу.";
 $MESS["BPSGCA_EMPTY_VARIABLES"] = "Не вказано значення жодної глобальної змінної";
 $MESS["BPSGVA_ADD_PARAMETER"] = "+ додати параметр";
 $MESS["BPSGVA_ADD_VARIABLE"] = "+ додати змінну";
@@ -14,8 +13,6 @@ $MESS["BPSGVA_DOCUMENT"] = "Значення поля";
 $MESS["BPSGVA_EMPTY"] = "Не обрано";
 $MESS["BPSGVA_GCONSTANT_NOT_FOUND"] = "Константа не знайдена";
 $MESS["BPSGVA_GCONSTANT_NO_EXIST"] = "Констант поки що немає";
-$MESS["BPSGVA_GLOBAL_CONST"] = "Глобальні константи";
-$MESS["BPSGVA_GLOBAL_VAR"] = "Глобальні змінні";
 $MESS["BPSGVA_GVARIABLE_NOT_FOUND"] = "Змінна не знайдена";
 $MESS["BPSGVA_GVARIABLE_NO_EXIST"] = "Змінних поки що немає";
 $MESS["BPSGVA_INPUT_TEXT"] = "Введіть значення";

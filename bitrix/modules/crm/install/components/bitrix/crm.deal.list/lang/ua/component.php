@@ -40,6 +40,7 @@ $MESS["CRM_COLUMN_LIMIT_DATE"] = "Дата закінчення";
 $MESS["CRM_COLUMN_LIMIT_REPEAT"] = "Ліміт виставлення";
 $MESS["CRM_COLUMN_MODIFY_BY"] = "Ким змінена";
 $MESS["CRM_COLUMN_NEXT_EXECUTION"] = "Дата наступного виставлення";
+$MESS["CRM_COLUMN_OBSERVERS"] = "Спостерігачі";
 $MESS["CRM_COLUMN_OPPORTUNITY"] = "Сума";
 $MESS["CRM_COLUMN_ORDER_STAGE"] = "Статус оплати угоди";
 $MESS["CRM_COLUMN_ORIGINATOR_ID"] = "Інтернет-магазин";

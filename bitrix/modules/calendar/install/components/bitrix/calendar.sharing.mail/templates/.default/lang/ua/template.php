@@ -8,5 +8,6 @@ $MESS["CALENDAR_SHARING_MAIL_CREATE_NEW_MEETING"] = "Створити нову �
 $MESS["CALENDAR_SHARING_MAIL_FOOTER_LOGO_FREE_SITES_AND_CRM"] = "На основі <b>Бітрікс24</b>. Безплатні <#TAG# style=\"#STYLE#\" href=\"#HREF#\">завдання та CRM</#TAG#>";
 $MESS["CALENDAR_SHARING_MAIL_FOOTER_REPORT"] = "Якщо посилання на слоти прийшло помилково, <a style=\"#STYLE#\" href=\"#HREF#\">повідомте</a> про це.";
 $MESS["CALENDAR_SHARING_MAIL_MORE_ATTENDEES"] = "Ще учасники";
+$MESS["CALENDAR_SHARING_MAIL_OPEN_VIDEOCONFERENCE"] = "Відеоконференція";
 $MESS["CALENDAR_SHARING_MAIL_WHO_CANCELLED"] = "Хто скасував: #NAME#";
 $MESS["CALENDAR_SHARING_MAIL_YOU_INVITED"] = "Ви запросили";

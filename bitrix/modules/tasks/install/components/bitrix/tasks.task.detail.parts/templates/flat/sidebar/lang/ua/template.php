@@ -38,3 +38,4 @@ $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_CONFIRM"] = "При вихо�
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ORIGINATOR"] = "Постановник";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE"] = "Відповідальний";
 $MESS["TASK_RESULT_SIDEBAR_HINT"] = "Потрібен звіт про роботу";
+$MESS["TASK_RESULT_SIDEBAR_HINT_MSGVER_1"] = "Потрібен звіт про роботу";

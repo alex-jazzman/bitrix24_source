@@ -23,3 +23,4 @@ $MESS["M_CSDL_TAB_MOVING"] = "Переміщення";
 $MESS["M_CSDL_TAB_REALIZATION"] = "Реалізація";
 $MESS["M_CSDL_TAB_RECEIPT_ADJUSTMENT"] = "Прибуття";
 $MESS["M_CSDL_TO_LOGIN_ON_DESKTOP"] = "Перейти до повної версії";
+$MESS["M_CSDL_TO_LOGIN_ON_DESKTOP_MSGVER_1"] = "Перейти до вебверсії";

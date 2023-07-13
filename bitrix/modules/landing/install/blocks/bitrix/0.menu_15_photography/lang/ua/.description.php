@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["LANDING_BLOCK_0.MENU_1_NAME_NEW"] = "Меню з шаблону «Фотографія», зверху контакти, знизу меню з логотипом ліворуч та пунктами меню праворуч";
 $MESS["LANDING_BLOCK_0.MENU_1_NODES_LANDINGBLOCKNODEMENUCONTACTTITLE_NEW"] = "Заголовок";
 $MESS["LANDING_BLOCK_0.MENU_1_NODES_LANDINGBLOCKNODEMENUCONTACT_TEXT"] = "Текст";
@@ -11,6 +11,7 @@ $MESS["LANDING_BLOCK_0.MENU_1_STYLE_LANDINGBLOCKNODEMENULIST"] = "Пункт м�
 $MESS["LANDING_BLOCK_0.MENU_1_STYLE_LANDINGBLOCKNODEMENULISTITEMLINK"] = "Пункт меню";
 $MESS["LANDING_BLOCK_0.MENU_1_STYLE_LANDINGBLOCKNODE_BOTTOM_BLOCK"] = "Нижній блок";
 $MESS["LANDING_BLOCK_0.MENU_1_STYLE_LANDINGBLOCKNODE_TOP_BLOCK"] = "Верхній блок";
+$MESS["LANDING_BLOCK_0_MENU_1_STYLE_LANDINGBLOCKNODE_HAMB"] = "Вигляд меню в мобільній версії";
 $MESS["LANDING_BLOCK_MENU_15_NODE_MENUCONTACTLINK"] = "Посилання";
 $MESS["LANDING_BLOCK_MENU_15_SOCIAL_ITEM"] = "Кнопка соціальної мережі";
 $MESS["LANDING_BLOCK_MENU_15_SOCIAL_ITEMICON"] = "Іконка";
@@ -18,4 +19,3 @@ $MESS["LANDING_BLOCK_MENU_15_SOCIAL_ITEMLINK"] = "Посилання";
 $MESS["LNDNGBLCK15_CARD_LABEL_1"] = "Пункти меню";
 $MESS["LNDNGBLCK15_CARD_LABEL_2"] = "Контакти";
 $MESS["LNDNGBLCK15_CARD_LABEL_3"] = "Кнопки соцмереж";
-?>

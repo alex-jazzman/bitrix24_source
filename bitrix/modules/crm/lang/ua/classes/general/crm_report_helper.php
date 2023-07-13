@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ACTIVITY_RESPONSIBLE_NOT_ASSIGNED"] = "не призначено";
 $MESS["CRM_COMPANY_NOT_FOUND"] = "Компанія не знайдена";
 $MESS["CRM_CONTACT_NOT_FOUND"] = "Контакт не знайдено";
@@ -89,6 +89,8 @@ $MESS["CRM_REPORT_DEFAULT_LEADS_BY_STATUS_ALIAS_6"] = "Частка по кол-
 $MESS["CRM_REPORT_DEFAULT_LEADS_BY_STATUS_ALIAS_7"] = "Можлива сума";
 $MESS["CRM_REPORT_DEFAULT_LEADS_BY_STATUS_ALIAS_8"] = "Частка можливої суми";
 $MESS["CRM_REPORT_DEFAULT_LEADS_BY_STATUS_DESCR"] = "Дає уявлення про розподіл лидов по статусах.";
+$MESS["CRM_REPORT_DEFAULT_LEADS_BY_STATUS_DESCR_MSGVER_1"] = "Дає уявлення про розподіл лідів за стадіями.";
+$MESS["CRM_REPORT_DEFAULT_LEADS_BY_STATUS_MSGVER_1"] = "Розподіл лідів за стадіями";
 $MESS["CRM_REPORT_DEFAULT_PRODUCTS_PROFIT"] = "Прибутковість по товарах";
 $MESS["CRM_REPORT_DEFAULT_PRODUCTS_PROFIT_DESCR"] = "Звіт показує скільки, на яку суму і якого товару було продано за звітний період. Дозволяє виділити найбільш продавані товари та призначений для керівників.";
 $MESS["CRM_REPORT_DEFAULT_VOLUME_BY_COMPANIES"] = "Обсяг угод по компаніях";
@@ -130,4 +132,3 @@ $MESS["REPORT_crm_product_row_DEAL_OWNER.COMPANY_BY.EMPLOYEES_BY.STATUS_ID"] = "
 $MESS["REPORT_crm_product_row_DEAL_OWNER.COMPANY_BY.INDUSTRY_BY.STATUS_ID"] = "Сфера діяльності";
 $MESS["REPORT_crm_product_row_DEAL_OWNER.CONTACT_BY.SOURCE_BY.STATUS_ID"] = "Джерело";
 $MESS["REPORT_crm_product_row_DEAL_OWNER.CONTACT_BY.TYPE_BY.STATUS_ID"] = "Тип";
-?>

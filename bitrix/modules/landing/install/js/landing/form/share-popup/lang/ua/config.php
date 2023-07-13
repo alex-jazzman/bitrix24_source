@@ -1,4 +1,7 @@
 <?php
+$MESS["LANDING_FORM_PHONE_VERIFY_CUSTOM_DESCRIPTION"] = "Щоб убезпечити публікацію форми, вам необхідно вказати код перевірки з SMS. Цю дію треба виконати одноразово для кожної форми.";
+$MESS["LANDING_FORM_PHONE_VERIFY_CUSTOM_SLIDER_TITLE"] = "Публікація форми";
+$MESS["LANDING_FORM_PHONE_VERIFY_CUSTOM_TITLE"] = "Отримайте код перевірки в SMS";
 $MESS["LANDING_FORM_SHARE__COMMUNICATION_ACTION_LABEL"] = "Налаштувати";
 $MESS["LANDING_FORM_SHARE__COMMUNICATION_LINK_LABEL"] = "Як налаштувати віджет для сайту";
 $MESS["LANDING_FORM_SHARE__COMMUNICATION_TITLE"] = "Комунікації з клієнтом";

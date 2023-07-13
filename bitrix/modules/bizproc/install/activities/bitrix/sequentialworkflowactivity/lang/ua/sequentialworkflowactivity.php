@@ -1,5 +1,3 @@
-<?
-$MESS["BPSWA_IN_PROGRESS"] = "Виконується";
+<?php
 $MESS["BPSWA_COMPLETED"] = "Завершений";
-$MESS["BPSWA_EMPTY_NAME"] = "Змінна '#NAME#' не визначена";
-?>
+$MESS["BPSWA_IN_PROGRESS"] = "Виконується";

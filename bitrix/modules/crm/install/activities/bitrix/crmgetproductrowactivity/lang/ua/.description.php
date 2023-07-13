@@ -1,8 +1,10 @@
 <?php
 $MESS["CRM_BP_GPR_DESC"] = "Отримати дані про товарну позицію";
 $MESS["CRM_BP_GPR_DESC_1"] = "Передає дані про товар іншим роботам. Допоміжний робот.";
+$MESS["CRM_BP_GPR_DESC_2"] = "Передає дані про товарну позицію іншим роботам. Допоміжний робот.";
 $MESS["CRM_BP_GPR_NAME"] = "Інформація про товарну позицію";
 $MESS["CRM_BP_GPR_NAME_1"] = "Отримати інформацію про товар";
+$MESS["CRM_BP_GPR_NAME_2"] = "Отримати інформацію про товарну позицію";
 $MESS["CRM_BP_GPR_RETURN_ROW_DISCOUNT_RATE"] = "Знижка";
 $MESS["CRM_BP_GPR_RETURN_ROW_DISCOUNT_SUM"] = "Сума знижки";
 $MESS["CRM_BP_GPR_RETURN_ROW_MEASURE_NAME"] = "Од. виміру";

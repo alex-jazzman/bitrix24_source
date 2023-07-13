@@ -1,5 +1,6 @@
 <?php
 $MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION"] = "Створити товар у повній версії";
+$MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1"] = "Створити товар у вебверсії";
 $MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS_V2"] = "У документі зараз немає товарів";
 $MESS["CSPL_INSUFFICIENT_PERMISSIONS_FOR_PRODUCT_ADD"] = "Недостатньо прав для створення товару";
 $MESS["CSPL_MENU"] = "Меню";

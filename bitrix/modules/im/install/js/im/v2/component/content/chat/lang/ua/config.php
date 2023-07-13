@@ -7,3 +7,4 @@ $MESS["IM_CONTENT_CHAT_HEADER_USER_COUNT_PLURAL_1"] = "#COUNT# учасника"
 $MESS["IM_CONTENT_CHAT_HEADER_USER_COUNT_PLURAL_2"] = "#COUNT# учасників";
 $MESS["IM_CONTENT_CHAT_HEADER_VIDEOCALL_HD"] = "Відеодзвінок HD";
 $MESS["IM_CONTENT_CHAT_START_MESSAGE"] = "Виберіть чат зліва й почніть діалог.";
+$MESS["IM_CONTENT_DROP_AREA"] = "Перетягніть файли сюди";

@@ -1,7 +1,10 @@
 <?php
 $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_ADD_PHONE_TO_CLIENT"] = "Додати номер";
 $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_CLIENT"] = "Надіслати клієнту на номер";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SMS_CLIENTS_SELECTOR_TITLE"] = "Виберіть клієнта";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SMS_CURRENT_TEMPLATE"] = "Вибраний шаблон";
 $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_EMPTY_CLIENT"] = "Клієнт відсутній";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SMS_EMPTY_TEMPLATES_LIST"] = "У зазначеному вами сервісі немає шаблонів для надсилання повідомлень. Вибраний інший доступний сервіс.";
 $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_NO_CLIENT_TEXT"] = "Поверніться в картку елемента й додайте клієнта, щоб надіслати повідомлення";
 $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_NO_CLIENT_TEXT_COMPANY"] = "Поверніться в компанію і додайте телефон, щоб надіслати SMS";
 $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_NO_CLIENT_TEXT_CONTACT"] = "Поверніться в контакт і додайте телефон, щоб надіслати SMS";
@@ -27,3 +30,5 @@ $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_SETTINGS_EMPTY_PROVIDER_TITLE"] = "Серв�
 $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_SETTINGS_PHONE"] = "З номера телефону";
 $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_SETTINGS_PROVIDER"] = "Сервіс SMS";
 $MESS["M_CRM_TIMELINE_SCHEDULER_SMS_SETTINGS_TITLE"] = "Налаштування SMS";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SMS_SETTINGS_TO_LOGIN_ON_DESKTOP"] = "Перейти до вебверсії";
+$MESS["M_CRM_TIMELINE_SCHEDULER_SMS_TEMPLATE_SELECTOR_TITLE"] = "Вибрати шаблон";
