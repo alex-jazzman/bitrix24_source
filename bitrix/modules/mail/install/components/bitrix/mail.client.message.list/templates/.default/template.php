@@ -4,6 +4,7 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UI\Filter\Theme;
+use Bitrix\Mail\Helper\LicenseManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -56,7 +57,7 @@ $unseenCountInOtherMailboxes = 0;
 $mailboxMenu = array();
 foreach ($arResult['MAILBOXES'] as $mailboxId => $item)
 {
-	if($item['ID'] !== $arResult['MAILBOX']['ID'])
+	if ($mailboxId !== $arResult['MAILBOX']['ID'])
 	{
 		$unseenCountInOtherMailboxes += $item['__unseen'];
 	}
@@ -65,10 +66,18 @@ foreach ($arResult['MAILBOXES'] as $mailboxId => $item)
 		$unseenCountInCurrentMailbox += $item['__unseen'];
 	}
 
-	$mailboxMenu[] = array(
+	$mailboxLockIconHtml = '';
+
+    if (!LicenseManager::checkTheMailboxForSyncAvailability($mailboxId))
+    {
+		$mailboxLockIconHtml = '<span class="mail-connect-lock-icon"></span>';
+    }
+
+    $mailboxMenu[] = array(
 		'html' => sprintf(
-			'<span class="main-buttons-item-text">%s</span> %s',
+			'<span class="mail-menu-popup-item-text-wrapper"><span class="main-buttons-item-text">%s</span>%s</span> %s',
 			htmlspecialcharsbx($item['NAME']),
+			$mailboxLockIconHtml,
 			sprintf('<span class="main-buttons-item-counter %s">%u</span>',
 				$item['__unseen'] > 0 ? 'js-unseen-mailbox' : 'main-ui-hide',
 				$item['__unseen']
@@ -103,16 +112,13 @@ $addMailboxMenuItem = array(
 $userMailboxesLimit = $arResult['MAX_ALLOWED_CONNECTED_MAILBOXES'];
 if ($userMailboxesLimit >= 0 && $arResult['USER_OWNED_MAILBOXES_COUNT'] >= $userMailboxesLimit)
 {
-	if (\CModule::includeModule('bitrix24'))
-	{
-		$addMailboxMenuItem = array(
-			'html' => '<div onclick="BX.UI.InfoHelper.show(\'limit_contact_center_mail_box_number\')">'.
-				'<span class="mail-connect-lock-text">' . Loc::getMessage('MAIL_CLIENT_MAILBOX_ADD') . '</span>' .
-				'<span class="mail-connect-lock-icon"></span>' .
-			'</div>',
-			'className' => 'dummy',
-		);
-	}
+    $addMailboxMenuItem = array(
+        'html' => '<div onclick="BX.UI.InfoHelper.show(\'limit_contact_center_mail_box_number\')">'.
+            '<span class="mail-connect-lock-text">' . Loc::getMessage('MAIL_CLIENT_MAILBOX_ADD') . '</span>' .
+            '<span class="mail-connect-lock-icon"></span>' .
+        '</div>',
+        'className' => 'dummy',
+    );
 }
 
 $mailboxMenu[] = array(
@@ -267,6 +273,8 @@ $this->endViewTarget();
 	<?=$APPLICATION->getViewContent('progress') ?>
 
 	<?=$APPLICATION->getViewContent('mail-msg-counter-panel') ?>
+
+	<?=$APPLICATION->getViewContent('mail-msg-temp-alert') ?>
 
 	<? $this->endViewTarget();
 
@@ -714,6 +722,7 @@ $APPLICATION->includeComponent(
 	}
 
 	BX.message({
+		MAILBOX_IS_SYNC_AVAILABILITY: '<?= CUtil::JSEscape($arResult['MAILBOX_IS_SYNC_AVAILABILITY']) ?>',
 		DEFAULT_DIR: '<?= CUtil::JSEscape($arResult['defaultDir']) ?>',
 		MESSAGES_ALREADY_EXIST_IN_FOLDER : '<?= Loc::getMessage('MESSAGES_ALREADY_EXIST_IN_FOLDER') ?>',
 		MAILBOX_LINK: '<?= CUtil::JSEscape($arResult['MAILBOX']['LINK'])?>',

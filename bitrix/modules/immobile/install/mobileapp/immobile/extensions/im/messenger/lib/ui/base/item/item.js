@@ -2,11 +2,10 @@
  * @module im/messenger/lib/ui/base/item/item
  */
 jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
-
 	const { Avatar } = require('im/messenger/lib/ui/base/avatar');
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles } = require('im/messenger/lib/ui/base/item/style');
-	const { arrowRight } = require('im/messenger/assets/common');
+	const { buttonIcons, arrowRight } = require('im/messenger/assets/common');
 
 	/**
 	 * @typedef {Object} ItemData
@@ -17,12 +16,10 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	 * @property {string} avatarColor
 	 * @property {string} size
 	 */
-
 	class Item extends LayoutComponent
 	{
-
 		/**
-		 * @param {ItemData}props
+		 * @param {ItemProps} props
 		 */
 		constructor(props)
 		{
@@ -31,13 +28,18 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 
 		getStyleBySize()
 		{
+			if (this.props.isCustomStyle)
+			{
+				return this.props.data.style;
+			}
+
 			const size = this.props.size === 'L' ? 'L' : 'M';
 			if (size === 'L')
 			{
 				return itemStyles.large;
 			}
 
-			return itemStyles.medium
+			return itemStyles.medium;
 		}
 
 		render()
@@ -48,20 +50,30 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'column',
+						backgroundColor: style.parentView.backgroundColor,
 					},
 					clickable: true,
 					onClick: () => {
-						const openDialogData = {
-							dialogId: this.props.data.id,
-							dialogTitleParams: {
-								name: this.props.data.title,
-								description: this.props.data.description,
-								avatar: this.props.data.avatarUri,
-								color: this.props.data.avatarColor
-							}
-						};
-						this.props.onClick(openDialogData);
-					}
+						if (this.props.onClick)
+						{
+							const openDialogData = {
+								dialogId: this.props.data.id,
+								dialogTitleParams: {
+									name: this.props.data.title,
+									description: this.props.data.description,
+									avatar: this.props.data.avatarUri,
+									color: this.props.data.avatarColor,
+								},
+							};
+							this.props.onClick(openDialogData);
+						}
+					},
+					onLongClick: () => {
+						if (this.props.onLongClick)
+						{
+							this.props.onLongClick(this.props.data);
+						}
+					},
 				},
 				View(
 					{
@@ -69,10 +81,10 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 					},
 					View(
 						{
-							style: {
+							style: style.avatarContainer || {
 								marginBottom: 6,
 								marginTop: 6,
-							}
+							},
 						},
 						new Avatar({
 							text: this.props.data.title,
@@ -80,10 +92,11 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 							color: this.props.data.avatarColor,
 							size: this.props.size,
 						}),
+						this.renderStatusInAvatar(),
 					),
 					View(
 						{
-							style: {
+							style: style.itemInfoContainer || {
 								flexDirection: 'row',
 								borderBottomWidth: 1,
 								borderBottomColor: '#e9e9e9',
@@ -92,20 +105,60 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 								marginBottom: 6,
 								marginTop: 6,
 								height: '100%',
-							}
+							},
 						},
 						new ItemInfo(
-						{
-							title: this.props.data.title,
-							subtitle: this.props.data.subtitle,
-							size: this.props.data.size,
-							style: style.itemInfo,
-							status: this.props.data.status,
-						}
+							{
+								title: this.props.data.title,
+								isYouTitle: this.props.data.isYouTitle,
+								subtitle: this.props.data.subtitle,
+								size: this.props.data.size,
+								style: style.itemInfo,
+								status: this.props.data.status,
+							},
 						),
 						this.getArrowRightImage(),
+						this.getEllipsisButton(),
 					),
 				),
+			);
+		}
+
+		renderStatusInAvatar()
+		{
+			if (!this.props.isCustomStyle)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						zIndex: 2,
+						flexDirection: 'column',
+						alignSelf: 'flex-end',
+					},
+				},
+				this.props.data.crownStatus
+					? Image({
+						style: {
+							width: 18,
+							height: 18,
+							marginBottom: 14,
+						},
+						svg: { content: this.props.data.crownStatus },
+						onFailure: (e) => Logger.error(e),
+					})
+					: null,
+				Image({
+					style: {
+						width: 18,
+						height: 18,
+					},
+					svg: { content: this.props.data.status },
+					onFailure: (e) => Logger.error(e),
+				}),
 			);
 		}
 
@@ -127,16 +180,46 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 					},
 				},
 				Image({
-					style:{
+					style: {
 						width: 9,
 						height: 12,
 					},
 					svg: {
 						content: arrowRight(),
 					},
-				})
+				}),
+			);
+		}
+
+		getEllipsisButton()
+		{
+			if (!this.props.isEllipsis)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						alignSelf: 'center',
+					},
+				},
+				ImageButton({
+					style: {
+						width: 24,
+						height: 24,
+					},
+					svg: { content: buttonIcons.ellipsis() },
+					onClick: () => {
+						if (this.props.onEllipsisClick)
+						{
+							this.props.onEllipsisClick(this.props.data);
+						}
+					},
+				}),
 			);
 		}
 	}
+
 	module.exports = { Item };
 });

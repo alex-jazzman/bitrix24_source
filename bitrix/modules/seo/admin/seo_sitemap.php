@@ -67,8 +67,7 @@ if (($arID = $adminList->GroupAction()))
 		switch ($_REQUEST['action'])
 		{
 			case "delete":
-				RuntimeTable::clearByPid($ID);
-				SitemapTable::delete($ID);
+				SitemapTable::fullDelete($ID);
 				break;
 		}
 	}

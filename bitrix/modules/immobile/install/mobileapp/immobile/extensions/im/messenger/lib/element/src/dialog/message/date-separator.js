@@ -1,11 +1,7 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/element/dialog/message/date-separator
  */
 jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, exports, module) => {
-
 	const {
 		MessageAlign,
 		MessageTextAlign,
@@ -30,7 +26,14 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 			this.setMessageAlign(MessageAlign.center);
 			this.setTextAlign(MessageTextAlign.center);
 			this.setFontColor('#FFFFFF');
-			this.setBackgroundColor('#525C69');
+			this.setBackgroundColor('#525C6966');
+			this.setMarginTop(12);
+			this.setMarginBottom(4);
+		}
+
+		getType()
+		{
+			return 'system-text';
 		}
 
 		setMessage(date)
@@ -42,9 +45,9 @@ jn.define('im/messenger/lib/element/dialog/message/date-separator', (require, ex
 			return this;
 		}
 
-		getType()
+		setShowTail()
 		{
-			return 'text';
+			return this;
 		}
 	}
 

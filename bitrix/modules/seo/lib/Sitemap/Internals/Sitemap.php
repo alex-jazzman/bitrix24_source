@@ -4,6 +4,7 @@ namespace Bitrix\Seo\Sitemap\Internals;
 
 use \Bitrix\Main\Entity;
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Seo\Sitemap\Job;
 
 Loc::loadMessages(__FILE__);
 
@@ -177,5 +178,23 @@ class SitemapTable extends Entity\DataManager
 		}
 
 		return $arSettings;
+	}
+
+	/**
+	 * Delete sitemap and all related settings
+	 * @param int $id
+	 * @return void
+	 * @throws \Exception
+	 */
+	public static function fullDelete(int $id): void
+	{
+		$delRes = self::delete($id);
+		if ($delRes->isSuccess())
+		{
+			RuntimeTable::clearByPid($id);
+			ForumTable::clearBySitemap($id);
+			IblockTable::clearBySitemap($id);
+			Job::clearBySitemap($id);
+		}
 	}
 }

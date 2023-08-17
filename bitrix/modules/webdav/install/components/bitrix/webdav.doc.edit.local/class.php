@@ -132,9 +132,12 @@ class CWebDavDocEditLocalComponent extends CBitrixComponent
 
 			$this->sendJsonResponse(array('status' => self::STATUS_ERROR, 'message' => 'Error in commit.', 'description' => $webdav->LAST_ERROR));
 		}
-		$this->getDb()->commit();
+		else
+		{
+			$this->getDb()->commit();
 
-		$this->sendJsonResponse(array('status' => self::STATUS_SUCCESS));
+			$this->sendJsonResponse(array('status' => self::STATUS_SUCCESS));
+		}
 	}
 
 	protected function checkPermission(array $wdElement = array())

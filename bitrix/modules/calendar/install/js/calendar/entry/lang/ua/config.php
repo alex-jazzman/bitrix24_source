@@ -6,6 +6,7 @@ $MESS["CALENDAR_EVENT_DO_ADD"] = "Створити";
 $MESS["CALENDAR_EVENT_DO_CANCEL"] = "Скасувати";
 $MESS["CALENDAR_EVENT_DO_DELETE"] = "Видалити";
 $MESS["CALENDAR_EVENT_DO_EDIT"] = "Редагувати";
+$MESS["CALENDAR_EVENT_DO_MORE"] = "Ще";
 $MESS["CALENDAR_EVENT_DO_OPEN"] = "Відкрити";
 $MESS["CALENDAR_EVENT_DO_OPEN_PARENT"] = "Переглянути подію";
 $MESS["CALENDAR_EVENT_DO_RELEASE"] = "Відміна резервування";

@@ -213,3 +213,5 @@ $MESS["MAIL_MESSAGE_LIST_COLUMN_ICAL"] = "Приглашение на мероп
 
 $MESS["MAIL_MESSAGE_WARNING_GO_TO_MAILBOX"] = "Ошибка синхронизации. Открыть письмо в #LINK#";
 $MESS["MAIL_MESSAGE_WARNING_SYNC_ERROR"] = "Ошибка синхронизации";
+
+$MESS["MAIL_MESSAGE_SEPARATOR_OF_NAMES_AND_EMAILS_IN_LISTS"] = ',';

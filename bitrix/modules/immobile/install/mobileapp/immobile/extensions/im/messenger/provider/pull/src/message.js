@@ -1,13 +1,9 @@
-/* eslint-disable bitrix-rules/no-pseudo-private */
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-bx-message */
+/* eslint-disable promise/catch-or-return */
 
 /**
  * @module im/messenger/provider/pull/message
  */
 jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
 	const { PullHandler } = require('im/messenger/provider/pull/base');
@@ -19,6 +15,8 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { ReactionType } = require('im/messenger/const');
+	const { restManager } = require('im/messenger/lib/rest-manager');
+	const { RestMethod } = require('im/messenger/const/rest');
 
 	/**
 	 * @class MessagePullHandler
@@ -32,23 +30,23 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			const dialogId = params.message.recipientId;
 			const userId = MessengerParams.getUserId();
 
-			const recipientId =
-				params.message.senderId === userId
-					? params.message.recipientId
-					: params.message.senderId
+			const recipientId = params.message.senderId === userId
+				? params.message.recipientId
+				: params.message.senderId
 			;
 
 			const recentParams = clone(params);
+			const userData = recentParams.users[recipientId];
 			const recentItem = RecentConverter.fromPushToModel({
 				id: recipientId,
-				user: recentParams.users[recipientId],
+				user: userData,
 				message: recentParams.message,
 				counter: recentParams.counter,
 				writing: false,
 			});
 
 			this.store.dispatch('usersModel/set', Object.values(params.users));
-			this.store.dispatch('recentModel/set', [ recentItem ])
+			this.store.dispatch('recentModel/set', [recentItem])
 				.then(() => {
 					Counters.updateDelayed();
 
@@ -78,9 +76,9 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				return;
 			}
 
-			const message = DialogConverter.fromPushToMessage(params);
-			this.store.dispatch('filesModel/set', Object.values(params.files)).then(() => {
-				this.store.dispatch('messagesModel/add', message);
+			this.setFiles(params).then(() => {
+				this.setMessage(params);
+				this.checkWritingTimer(params.dialogId, userData);
 			});
 		}
 
@@ -103,13 +101,18 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			}
 
 			const recentParams = clone(params);
-			recentParams.message.text = ChatMessengerCommon.purifyText(recentParams.message.text, recentParams.message.params);
+			recentParams.message.text = ChatMessengerCommon.purifyText(
+				recentParams.message.text,
+				recentParams.message.params,
+			);
 			recentParams.message.status = recentParams.message.senderId === userId ? 'received' : '';
-
+			const userData = recentParams.message.senderId > 0
+				? recentParams.users[recentParams.message.senderId]
+				: { id: 0 };
 			const recentItem = RecentConverter.fromPushToModel({
 				id: dialogId,
 				chat: recentParams.chat[recentParams.chatId],
-				user: recentParams.message.senderId > 0 ? recentParams.users[recentParams.message.senderId]: { id: 0 },
+				user: userData,
 				lines: recentParams.lines,
 				message: recentParams.message,
 				counter: recentParams.counter,
@@ -117,7 +120,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				writing: false,
 			});
 
-			this.store.dispatch('recentModel/set', [ recentItem ])
+			this.store.dispatch('recentModel/set', [recentItem])
 				.then(() => {
 					Counters.updateDelayed();
 
@@ -134,7 +137,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				Notifier.notify({
 					dialogId: recentItem.id,
 					title: recentItem.chat.name,
-					text: (recentItem.user.name ? recentItem.user.name + ': ' : '') + recentItem.message.text,
+					text: (recentItem.user.name ? `${recentItem.user.name}: ` : '') + recentItem.message.text,
 					avatar: recentItem.chat.avatar,
 				});
 			}
@@ -151,9 +154,9 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				return;
 			}
 
-			const message = DialogConverter.fromPushToMessage(params);
-			this.store.dispatch('filesModel/set', Object.values(params.files)).then(() => {
-				this.store.dispatch('messagesModel/add', message);
+			this.setFiles(params).then(() => {
+				this.setMessage(params);
+				this.checkWritingTimer(dialogId, userData);
 			});
 		}
 
@@ -166,8 +169,9 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 		handleMessageDelete(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleMessageDelete: ', params);
+			Logger.info('MessagePullHandler.handleMessageDelete: ', params, extra);
 
+			// eslint-disable-next-line no-param-reassign
 			params.text = Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED');
 
 			this.updateMessage(params);
@@ -175,21 +179,28 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 		handleMessageDeleteComplete(params, extra, command)
 		{
-			Logger.info('MessagePullHandler.handleMessageDeleteComplete: ', params);
+			Logger.info('MessagePullHandler.handleMessageDeleteComplete: ', params, extra);
 
-			this.updateMessage(params);
+			this.fullDeleteMessage(params);
 		}
 
-		handleStartWriting(params, extra, command)
+		async handleStartWriting(params, extra, command)
 		{
-			const dialogId = params.dialogId;
-
-			const isSuccess = this.setRecentItemWriting(dialogId, true);
-			if (isSuccess)
+			const isHasRecent = this.setRecentItemWriting(params, true);
+			const isHasDialog = await this.setDialogItemWriting(params, true);
+			if (isHasRecent || isHasDialog)
 			{
-				ChatTimer.start('writing', dialogId, 29500, () => {
-					this.setRecentItemWriting(dialogId, false);
-				});
+				ChatTimer.start('writing', `${params.dialogId} ${params.userName}`, 25000, () => {
+					if (isHasRecent)
+					{
+						this.setRecentItemWriting(params, false);
+					}
+
+					if (isHasDialog)
+					{
+						this.setDialogItemWriting(params, false);
+					}
+				}, params);
 			}
 		}
 
@@ -229,14 +240,12 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 		{
 			this.store.dispatch('messagesModel/readMessages', {
 				chatId: params.chatId,
-				messageIds: params.viewedMessages
+				messageIds: params.viewedMessages,
 			});
 		}
 
 		unreadMessage(params)
-		{
-
-		}
+		{}
 
 		updateMessage(params)
 		{
@@ -254,7 +263,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				fields: {
 					text: params.text,
 					params: params.params,
-				}
+				},
 			});
 
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
@@ -268,8 +277,14 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			{
 				message.text = ChatMessengerCommon.purifyText(recentParams.text, recentParams.params);
 				message.params = recentParams.params;
-				message.file = recentParams.params && recentParams.params.FILE_ID ? recentParams.params.FILE_ID.length > 0: false;
-				message.attach = recentParams.params && recentParams.params.ATTACH ? recentParams.params.ATTACH.length > 0: false;
+				message.file = recentParams.params && recentParams.params.FILE_ID
+					? recentParams.params.FILE_ID.length > 0
+					: false
+				;
+				message.attach = recentParams.params && recentParams.params.ATTACH
+					? recentParams.params.ATTACH.length > 0
+					: false
+				;
 
 				recentItem.message = {
 					...recentItem.message,
@@ -278,8 +293,36 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 			}
 
 			recentItem.writing = false;
+			this.store.dispatch('recentModel/set', [recentItem]);
+		}
 
-			this.store.dispatch('recentModel/set', [ recentItem ]);
+		fullDeleteMessage(params)
+		{
+			const dialogId = params.dialogId;
+			const messageId = params.id;
+
+			this.store.dispatch('messagesModel/delete', { id: messageId })
+				.catch((err) => Logger.error(err));
+
+			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
+			if (!recentItem)
+			{
+				return;
+			}
+
+			const newLastMessage = params.newLastMessage;
+			if (newLastMessage && newLastMessage.message)
+			{
+				recentItem.message = {
+					text: newLastMessage.message.text,
+					date: newLastMessage.message.date,
+					author_id: newLastMessage.message.author_id,
+					id: newLastMessage.message.id,
+					file: newLastMessage.files.length > 0,
+				};
+				this.store.dispatch('recentModel/set', [recentItem])
+					.catch((err) => Logger.error(err));
+			}
 		}
 
 		handleReadMessageOpponent(params, extra, command)
@@ -322,7 +365,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 				dialogId,
 				messageId: params.id,
 				reactionId: ReactionType.like,
-				userList: params.users.map(userId => Number(userId)),
+				userList: params.users.map((userId) => Number(userId)),
 			};
 
 			this.store.dispatch('messagesModel/setReaction', payload);
@@ -375,7 +418,7 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			this.store.dispatch('recentModel/set', [recentUserItem]);
 
-			//TODO: also change data in user model
+			// TODO: also change data in user model
 		}
 
 		updateMessageViewedByOthers(params)
@@ -403,13 +446,14 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			recentItem.counter = params.counter;
 
-			this.store.dispatch('recentModel/set', [ recentItem ])
+			this.store.dispatch('recentModel/set', [recentItem])
 				.then(() => Counters.update())
 			;
 		}
 
-		setRecentItemWriting(dialogId, isWriting)
+		setRecentItemWriting(params, isWriting)
 		{
+			const { dialogId } = params;
 			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
 			if (!recentItem)
 			{
@@ -420,9 +464,38 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 
 			recentItem.writing = isWriting;
 
-			this.store.dispatch('recentModel/set', [ recentItem ]);
+			this.store.dispatch('recentModel/set', [recentItem]);
 
 			return true;
+		}
+
+		/**
+		 * @desc set writing list data to dialog model
+		 * @param {object} params
+		 * @param {string} params.dialogId
+		 * @param {number} params.userId
+		 * @param {string} params.userName
+		 * @param {boolean} isWriting
+		 * @return (Promise|boolean}
+		 */
+		setDialogItemWriting(params, isWriting)
+		{
+			const { dialogId, userId } = params;
+			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const user = this.store.getters['usersModel/getUserById'](userId);
+			if (!dialog || !user)
+			{
+				return false;
+			}
+
+			Logger.info('MessagePullHandler.handleStartWriting.setDialogItemWriting ', params);
+
+			return this.store.dispatch('dialoguesModel/updateWritingList', {
+				dialogId,
+				fields: {
+					writingList: [{ ...params, isWriting }],
+				},
+			}).then(() => true);
 		}
 
 		saveShareDialogCache()
@@ -436,6 +509,116 @@ jn.define('im/messenger/provider/pull/message', (require, exports, module) => {
 					Logger.log('MessagePullHandler: Saving recent items for share dialog failed.', firstPage, cache);
 				})
 			;
+		}
+
+		setFiles(params)
+		{
+			if (!params.files)
+			{
+				return Promise.resolve();
+			}
+
+			const promises = [];
+			const files = Object.values(params.files);
+			files.forEach((file) => {
+				const templateFileIdExists = this.store.getters['filesModel/isInCollection']({
+					fileId: params.message?.templateFileId,
+				});
+
+				if (templateFileIdExists)
+				{
+					const updateFileWithIdPromise = this.store.dispatch('filesModel/updateWithId', {
+						id: params.message?.templateFileId,
+						fields: file,
+					});
+
+					promises.push(updateFileWithIdPromise);
+				}
+				else
+				{
+					const setFilePromise = this.store.dispatch('filesModel/set', file);
+					promises.push(setFilePromise);
+				}
+			});
+
+			return Promise.all(promises);
+		}
+
+		setMessage(params)
+		{
+			const message = DialogConverter.fromPushToMessage(params);
+
+			const messageWithTemplateId = this.store.getters['messagesModel/isInChatCollection']({
+				messageId: params.message.templateId,
+			});
+
+			const messageWithRealId = this.store.getters['messagesModel/isInChatCollection']({
+				messageId: params.message.id,
+			});
+
+			if (messageWithRealId)
+			{
+				Logger.warn('New message pull handler: we already have this message', params.message);
+				this.store.dispatch('messagesModel/update', {
+					id: params.message.id,
+					fields: params.message,
+				});
+			}
+			else if (!messageWithRealId && messageWithTemplateId)
+			{
+				Logger.warn('New message pull handler: we already have the TEMPORARY message', params.message);
+				this.store.dispatch('messagesModel/updateWithId', {
+					id: params.message.templateId,
+					fields: params.message,
+				});
+			}
+			// it's an opponent message or our own message from somewhere else
+			else if (!messageWithRealId && !messageWithTemplateId)
+			{
+				Logger.warn('New message pull handler: we dont have this message', params.message);
+
+				this.store.dispatch('messagesModel/add', message);
+			}
+		}
+
+		/**
+		 * @desc Check is has writing timer by user and stop it
+		 * @param {string} dialogId
+		 * @param {object} userData
+		 * @void
+		 */
+		checkWritingTimer(dialogId, userData) {
+			let userModel = userData;
+
+			if (!userModel.name)
+			{
+				userModel = this.store.getters['usersModel/getUserById'](userData.id);
+			}
+			const timerId = `${dialogId} ${userModel.name}`;
+			if (this.isHasTimerWriting(timerId))
+			{
+				this.stopTimerWriting(timerId);
+			}
+		}
+
+		/**
+		 * @desc Returns check is has timer with 'writing' type by id
+		 * @param {string|number} timerId
+		 * @return (boolean}
+		 */
+		isHasTimerWriting(timerId)
+		{
+			return ChatTimer.isHasTimer('writing', timerId);
+		}
+
+		/**
+		 * @desc Stop timer with 'writing' type by id
+		 * @param {string|number} timerId
+		 * @return (boolean}
+		 */
+		stopTimerWriting(timerId)
+		{
+			return ChatTimer.stop('writing', timerId);
 		}
 	}
 

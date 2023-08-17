@@ -19,6 +19,7 @@ $MESS["CRM_ELEMENT_OK"] = "Вибрати";
 $MESS["CRM_ELEMENT_ORDER"] = "Замовлення";
 $MESS["CRM_ELEMENT_PERMISSION_DENIED"] = "Доступ заборонено";
 $MESS["CRM_ELEMENT_QUOTE"] = "Пропозиції";
+$MESS["CRM_ELEMENT_QUOTE_MSGVER_1"] = "Пропозиції";
 $MESS["CRM_ELEMENT_SEARCH"] = "Пошук";
 $MESS["CRM_ENTITY_ITEM_DELETED"] = "Видалений елемент";
 $MESS["CRM_SFE_ENTITY_NOT_SELECTED"] = "Не обраний жодний тип сутності в налаштуваннях поля";

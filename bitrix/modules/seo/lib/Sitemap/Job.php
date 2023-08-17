@@ -2,11 +2,14 @@
 
 namespace Bitrix\Seo\Sitemap;
 
+use Bitrix\Iblock\IblockTable;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Converter;
+use Bitrix\Seo\Sitemap\Internals\EntityTable;
 use Bitrix\Seo\Sitemap\Internals\JobTable;
+use Bitrix\Seo\Sitemap\Internals\SitemapTable;
 use Bitrix\Seo\Sitemap\Type\Step;
 
 Loc::loadMessages(__DIR__ . '/../../admin/seo_sitemap.php');
@@ -70,16 +73,43 @@ class Job
 			$this->statusMessage = $job['STATUS_MESSAGE'];
 			$this->step = (int)$job['STEP'];
 			$this->state = $job['STATE'] ?? [];
+
+			if (!self::checkSitemapExists($sitemapId))
+			{
+				$this->finish();
+
+				throw new SystemException('Sitemap for current job is not exists.');
+			}
 		}
 		else
 		{
-			throw new SystemException('Job for current sitemap not exists.');
+			throw new SystemException('Job for current sitemap is not exists.');
 		}
 	}
 
 	/**
+	 * Try to find sitemap by ID
+	 * @param int $sitemapId ID of sitemap
+	 * @return bool
+	 * @throws SystemException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 */
+	protected static function checkSitemapExists(int $sitemapId): bool
+	{
+		$sitemap = SitemapTable::query()
+			->setSelect(['ID'])
+			->where('ID', $sitemapId)
+			->exec()
+			->fetch()
+		;
+
+		return (bool)$sitemap;
+	}
+
+	/**
 	 * Find job for sitemap, If find - return object, null if not
-	 * @param int $sitemapId
+	 * @param int $sitemapId Id of map.
 	 * @return Job|null
 	 */
 	public static function findJob(int $sitemapId): ?Job
@@ -98,7 +128,7 @@ class Job
 
 	/**
 	 * Register new job or get existing
-	 * @param int $sitemapId
+	 * @param int $sitemapId Id of map.
 	 * @return Job|null
 	 * @throws SystemException
 	 */
@@ -151,6 +181,11 @@ class Job
 		return null;
 	}
 
+	/**
+	 * Create agent for automatic re-generate sitemap in background.
+	 * @param int $sitemapId Id of map.
+	 * @return bool
+	 */
 	public static function markToRegenerate(int $sitemapId): bool
 	{
 		try
@@ -174,6 +209,12 @@ class Job
 		}
 
 		return false;
+	}
+
+	public static function clearBySitemap(int $sitemapId)
+	{
+		$job = self::findJob($sitemapId);
+		$job?->finish();
 	}
 
 	/**
@@ -240,7 +281,7 @@ class Job
 
 	/**
 	 * Method for run agent
-	 * @param int $sitemapId
+	 * @param int $sitemapId Id of map.
 	 * @return string
 	 */
 	public static function doJobAgent(int $sitemapId): string
@@ -259,6 +300,10 @@ class Job
 		return '';
 	}
 
+	/**
+	 * Run one step of generation
+	 * @return Result
+	 */
 	public function doStep(): Result
 	{
 		$result = new Result();
@@ -363,6 +408,10 @@ class Job
 		return $res->isSuccess();
 	}
 
+	/**
+	 * Get data od generation process
+	 * @return array
+	 */
 	public function getData(): array
 	{
 		return [

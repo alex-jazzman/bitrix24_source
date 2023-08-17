@@ -1,14 +1,11 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/provider/rest/dialog
  */
 jn.define('im/messenger/provider/rest/dialog', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { RestMethod } = require('im/messenger/const');
+	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
 	 * @class DialogRest
@@ -87,7 +84,7 @@ jn.define('im/messenger/provider/rest/dialog', (require, exports, module) => {
 
 			if (!Type.isNumber(messageId))
 			{
-				throw new Error('DialogRest: options.dialogId is invalid.');
+				throw new TypeError('DialogRest: options.dialogId is invalid.');
 			}
 
 			const messageReadParams = {
@@ -112,7 +109,7 @@ jn.define('im/messenger/provider/rest/dialog', (require, exports, module) => {
 
 			if (!Type.isNumber(messageId))
 			{
-				throw new Error('DialogRest: options.dialogId is invalid.');
+				throw new TypeError('DialogRest: options.dialogId is invalid.');
 			}
 
 			const messageReadParams = {
@@ -121,6 +118,74 @@ jn.define('im/messenger/provider/rest/dialog', (require, exports, module) => {
 			};
 
 			return BX.rest.callMethod(RestMethod.imDialogUnread, messageReadParams);
+		}
+
+		/**
+		 * @desc Call rest method imDialogWriting
+		 * @param {string} dialogId
+		 * @return {Promise}
+		 */
+		writingMessage(dialogId)
+		{
+			if (!dialogId)
+			{
+				throw new Error('DialogRest: options.dialogId is required.');
+			}
+
+			if (!DialogHelper.isDialogId(dialogId) && !DialogHelper.isChatId(dialogId))
+			{
+				throw new Error('DialogRest: options.dialogId is invalid.');
+			}
+
+			const params = {
+				DIALOG_ID: dialogId,
+			};
+
+			return BX.rest.callMethod(RestMethod.imDialogWriting, params)
+				.then((result) => {
+					if (result.error())
+					{
+						Logger.error('DialogRest.writingMessage.response.err', result.error().ex);
+
+						return result.error();
+					}
+					Logger.log('DialogRest.writingMessage.response', result.data());
+
+					return result.data();
+				})
+				.catch((err) => Logger.error('DialogRest.writingMessage', err));
+		}
+
+		/**
+		 * @desc Call rest method imDialogStartRecordVoice
+		 * @param {string} dialogId
+		 * @return {Promise}
+		 */
+		recordVoiceMessage(dialogId)
+		{
+			if (!dialogId)
+			{
+				throw new Error('DialogRest: options.dialogId is required.');
+			}
+
+			if (!DialogHelper.isDialogId(dialogId) && !DialogHelper.isChatId(dialogId))
+			{
+				throw new Error('DialogRest: options.dialogId is invalid.');
+			}
+
+			return BX.rest.callMethod(RestMethod.imDialogStartRecordVoice, { dialogId })
+				.then((result) => {
+					if (result.error())
+					{
+						Logger.error('DialogRest.recordVoiceMessage.response.err', result.error().ex);
+
+						return result.error();
+					}
+					Logger.log('DialogRest.recordVoiceMessage.response', result.data());
+
+					return result.data();
+				})
+				.catch((err) => Logger.error('DialogRest.recordVoiceMessage', err));
 		}
 	}
 

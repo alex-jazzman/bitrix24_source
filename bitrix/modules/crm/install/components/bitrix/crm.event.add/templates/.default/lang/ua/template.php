@@ -9,6 +9,7 @@ $MESS["CRM_EVENT_MESSAGE_OBSOLETE"] = "Тип «Відправлено e-mail» 
 $MESS["CRM_EVENT_PHONE_OBSOLETE"] = "Тип «Телефонний дзвінок» застарів та залишений тільки для забезпечення зворотної сумісності. Будь ласка, скористайтеся командою «Додати дзвінок».";
 $MESS["CRM_EVENT_QUOTE_STATUS_ID"] = "Статус пропозиції";
 $MESS["CRM_EVENT_QUOTE_STATUS_ID_MSGVER_1"] = "Стадія пропозиції";
+$MESS["CRM_EVENT_QUOTE_STATUS_ID_MSGVER_2"] = "Стадія пропозиції";
 $MESS["CRM_EVENT_STAGE_ID"] = "Стадія угоди";
 $MESS["CRM_EVENT_STATUS_ID"] = "Статус ліда";
 $MESS["CRM_EVENT_STATUS_ID_MSGVER_1"] = "Стадія ліда";

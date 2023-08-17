@@ -2404,6 +2404,10 @@ class CreateModulesStep extends CWizardStep
 		elseif ($currentStepStage == "database")
 		{
 			$DBDebug = true;
+			if (class_exists('\Dev\Main\Migrator\ModuleUpdater'))
+			{
+				\Dev\Main\Migrator\ModuleUpdater::checkUpdates($moduleID, $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$moduleID, false);
+			}
 			if (!$module->InstallDB())
 			{
 				if ($ex = $APPLICATION->GetException())

@@ -13,6 +13,14 @@ if($application->hasCurrentRoute())
 	}
 }
 
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS')
+{
+	if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']) && preg_match("/Crm-Webform-Cors/i", $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+	{
+		return;
+	}
+}
+
 if (!function_exists("__webdav_is_dav_headers"))
 {
 	function __webdav_is_dav_headers()

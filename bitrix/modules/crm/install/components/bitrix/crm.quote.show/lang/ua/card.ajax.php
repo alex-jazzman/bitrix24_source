@@ -6,5 +6,6 @@ $MESS["CRM_COLUMN_OPPORTUNITY"] = "Сума";
 $MESS["CRM_COLUMN_PRODUCTS"] = "Продукт";
 $MESS["CRM_COLUMN_STATUS_ID"] = "Статус пропозиції";
 $MESS["CRM_COLUMN_STATUS_ID_MSGVER_1"] = "Стадія пропозиції";
+$MESS["CRM_COLUMN_STATUS_ID_MSGVER_2"] = "Стадія пропозиції";
 $MESS["CRM_OPER_EDIT"] = "Редагувати";
 $MESS["CRM_OPER_SHOW"] = "Переглянути";

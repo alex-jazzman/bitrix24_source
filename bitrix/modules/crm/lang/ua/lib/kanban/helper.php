@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_KANBAN_HELPER_DPR_MY"] = "Мої угоди";
 $MESS["CRM_KANBAN_HELPER_DPR_WON"] = "Закриті угоди";
 $MESS["CRM_KANBAN_HELPER_DPR_WORK"] = "Угоди в роботі";
@@ -50,8 +50,9 @@ $MESS["CRM_KANBAN_HELPER_ORDER_PRESET_MY"] = "Мої замовлення";
 $MESS["CRM_KANBAN_HELPER_ORDER_PRESET_MY_WORK"] = "Замовлення в роботі";
 $MESS["CRM_KANBAN_HELPER_ORDER_PRESET_WON"] = "Успішно завершені";
 $MESS["CRM_KANBAN_HELPER_QT_MY"] = "Мої пропозиції";
+$MESS["CRM_KANBAN_HELPER_QT_MY_MSGVER_1"] = "Мої пропозиції";
 $MESS["CRM_KANBAN_HELPER_QT_MY_NOT_OVERDUE"] = "Мої не протерміновані";
 $MESS["CRM_KANBAN_HELPER_QT_MY_OVERDUE"] = "Мої протерміновані";
 $MESS["CRM_KANBAN_HELPER_QT_MY_WORK"] = "Мої в роботі";
 $MESS["CRM_KANBAN_HELPER_QT_NEW"] = "Нові пропозиції";
-?>
+$MESS["CRM_KANBAN_HELPER_QT_NEW_MSGVER_1"] = "Нові пропозиції";

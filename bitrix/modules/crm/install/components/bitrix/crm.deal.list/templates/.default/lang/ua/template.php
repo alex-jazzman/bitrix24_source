@@ -44,6 +44,7 @@ $MESS["CRM_DEAL_COPY_TITLE"] = "Копіювати";
 $MESS["CRM_DEAL_CREATE_CALL_LIST"] = "Створити обдзвін";
 $MESS["CRM_DEAL_CREATE_ON_BASIS"] = "Створити на підставі";
 $MESS["CRM_DEAL_CREATE_ON_BASIS_TITLE"] = "Створення рахунку і пропозиції на підставі угоди";
+$MESS["CRM_DEAL_CREATE_ON_BASIS_TITLE_MSGVER_1"] = "Створення рахунку і пропозиції на підставі угоди";
 $MESS["CRM_DEAL_DELETE"] = "Видалити";
 $MESS["CRM_DEAL_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити?";
 $MESS["CRM_DEAL_DELETE_TITLE"] = "Видалити угоду";

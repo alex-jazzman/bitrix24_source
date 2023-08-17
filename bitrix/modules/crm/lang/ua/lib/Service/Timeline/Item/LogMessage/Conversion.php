@@ -6,3 +6,4 @@ $MESS["CRM_TIMELINE_CONVERSION_TITLE_DEAL"] = "Створено на підст�
 $MESS["CRM_TIMELINE_CONVERSION_TITLE_INVOICE"] = "Створено на підставі рахунку";
 $MESS["CRM_TIMELINE_CONVERSION_TITLE_LEAD"] = "Створено на підставі ліда";
 $MESS["CRM_TIMELINE_CONVERSION_TITLE_QUOTE"] = "Створено на підставі пропозиції";
+$MESS["CRM_TIMELINE_CONVERSION_TITLE_QUOTE_MSGVER_1"] = "Створено на підставі пропозиції";

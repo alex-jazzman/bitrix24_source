@@ -4,6 +4,7 @@ $MESS["MCRM_CONVERSION_WIZARD_LAYOUT_ENTITIES_CREATION_IN_COMPANY"] = "Ство�
 $MESS["MCRM_CONVERSION_WIZARD_LAYOUT_ENTITIES_CREATION_IN_CONTACT"] = "Створити в контакті";
 $MESS["MCRM_CONVERSION_WIZARD_LAYOUT_ENTITIES_CREATION_IN_DEAL"] = "Створити в угоді";
 $MESS["MCRM_CONVERSION_WIZARD_LAYOUT_ENTITIES_CREATION_IN_QUOTE"] = "Створити в пропозиції";
+$MESS["MCRM_CONVERSION_WIZARD_LAYOUT_ENTITIES_CREATION_IN_QUOTE_MSGVER_1"] = "Створити в пропозиції";
 $MESS["MCRM_CONVERSION_WIZARD_LAYOUT_ENTITIES_CREATION_IN_SMART_INVOICE"] = "Створити в рахунку";
 $MESS["MCRM_CONVERSION_WIZARD_LAYOUT_ENTITIES_NOT_CREATION_IN"] = "Не створювати в елементі";
 $MESS["MCRM_CONVERSION_WIZARD_LAYOUT_ENTITIES_NOT_CREATION_IN_COMPANY"] = "Не створювати в компанії";

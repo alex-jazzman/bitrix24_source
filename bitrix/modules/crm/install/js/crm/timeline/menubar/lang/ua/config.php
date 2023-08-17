@@ -36,6 +36,7 @@ $MESS["CRM_TIMELINE_SMS_FROM"] = "з номера";
 $MESS["CRM_TIMELINE_SMS_MANAGE_TEXT_1"] = "Використовуйте всі можливості мобільного SMS маркетингу";
 $MESS["CRM_TIMELINE_SMS_MANAGE_TEXT_2"] = "Відправку SMS легко налаштувати та використовувати в CRM Бітрікс24";
 $MESS["CRM_TIMELINE_SMS_MANAGE_TEXT_3"] = "Надсилайте повідомлення прямо з картки угоди, ліда, клієнта, рахунку або пропозиції.";
+$MESS["CRM_TIMELINE_SMS_MANAGE_TEXT_3_MSGVER_1"] = "Надсилайте повідомлення прямо з картки угоди, ліда, клієнта, рахунку або пропозиції.";
 $MESS["CRM_TIMELINE_SMS_MANAGE_URL"] = "налаштувати";
 $MESS["CRM_TIMELINE_SMS_REST_MARKETPLACE"] = "Обрати інший сервіс";
 $MESS["CRM_TIMELINE_SMS_SALESCENTER_STARTER"] = "Продажі в SMS";

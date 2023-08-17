@@ -9,3 +9,4 @@ $MESS["CRM_FIELD_STATUS"] = "Статус";
 $MESS["CRM_FIELD_STATUS_MSGVER_1"] = "Стадія";
 $MESS["CRM_NO_DATE"] = "немає";
 $MESS["CRM_TITLE_QUOTE"] = "Пропозиція";
+$MESS["CRM_TITLE_QUOTE_MSGVER_1"] = "Пропозиція";

@@ -47,6 +47,7 @@ $MESS["SALESCENTER_JS_POPUP_CLOSE"] = "Закрити";
 $MESS["SALESCENTER_LEFT_CATALOG"] = "Каталог";
 $MESS["SALESCENTER_LEFT_CREATE_LINK_AND_SEND"] = "Створити та відправити посилання на сторінку оплати";
 $MESS["SALESCENTER_LEFT_CREATE_SHIPMENT"] = "Тільки доставка";
+$MESS["SALESCENTER_LEFT_CREATE_SHIPMENT_MSGVER_1"] = "Доставка";
 $MESS["SALESCENTER_LEFT_FORMS_ALL"] = "Форми CRM";
 $MESS["SALESCENTER_LEFT_ORDERS"] = "Список замовлень";
 $MESS["SALESCENTER_LEFT_ORDER_ADD"] = "Створити замовлення";

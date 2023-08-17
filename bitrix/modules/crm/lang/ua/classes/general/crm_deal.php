@@ -42,6 +42,7 @@ $MESS["CRM_DEAL_FIELD_ORIGIN_ID"] = "Ідентифікатор елемента
 $MESS["CRM_DEAL_FIELD_PROBABILITY"] = "Ймовірність";
 $MESS["CRM_DEAL_FIELD_PRODUCT_ROWS"] = "Товари";
 $MESS["CRM_DEAL_FIELD_QUOTE_ID"] = "Пропозиція";
+$MESS["CRM_DEAL_FIELD_QUOTE_ID_MSGVER_1"] = "Пропозиція";
 $MESS["CRM_DEAL_FIELD_SOURCE_DESCRIPTION"] = "Додатково про джерело";
 $MESS["CRM_DEAL_FIELD_SOURCE_ID"] = "Джерело";
 $MESS["CRM_DEAL_FIELD_STAGE_ID"] = "Стадія угоди";

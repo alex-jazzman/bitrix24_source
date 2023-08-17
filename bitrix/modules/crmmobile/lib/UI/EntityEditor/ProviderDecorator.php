@@ -59,7 +59,6 @@ final class ProviderDecorator implements ReturnsEditorFields
 	];
 
 	private const IMMUTABLE_COLLECTION_FIELDS = [
-		self::ADDRESS_FIELD => true,
 		self::RESOURCE_BOOKING_FIELD => true,
 		self::LOCATION_FIELD => true,
 	];
@@ -282,10 +281,7 @@ final class ProviderDecorator implements ReturnsEditorFields
 					$field['title'] = Loc::getMessage('MOBILE_UI_EDITOR_OPPORTUNITY_TITLE');
 				}
 
-				$field['data']['isReceivePaymentAvailable'] =
-					$field['type'] === 'moneyPay'
-					&& \Bitrix\Main\Config\Option::get('crmmobile', 'release-spring-2023', true)
-				;
+				$field['data']['isReceivePaymentAvailable'] = $field['type'] === 'moneyPay';
 				$field['type'] = self::OPPORTUNITY_FIELD;
 			}
 

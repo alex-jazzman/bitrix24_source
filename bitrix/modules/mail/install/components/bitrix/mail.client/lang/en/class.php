@@ -168,3 +168,4 @@ $MESS["MAIL_READ_ALL_BUTTON"] = "Read all";
 $MESS["MAIL_SYNC_NOT_AVAILABLE"] = "Email synchronization is not available on your current plan.";
 $MESS["MAIL_THE_MAILBOX_HAS_BEEN_DELETED"] = "This mailbox no longer exists.";
 $MESS["MESSAGES_ALREADY_EXIST_IN_FOLDER"] = "Selected messages are already in this folder";
+$MESS["MAIL_MESSAGE_SEPARATOR_OF_NAMES_AND_EMAILS_IN_LISTS"] = ',';

@@ -495,7 +495,6 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 			$service = Mail\MailServicesTable::getList(array(
 				'filter' => array(
 					'=ID'          => $fields['service_id'],
-					'ACTIVE'       => 'Y',
 					'SERVICE_TYPE' => 'imap',
 				),
 			))->fetch();
@@ -542,6 +541,10 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 
 		if (empty($mailbox))
 		{
+			if ($service['ACTIVE'] !== 'Y')
+			{
+				return $this->error(Loc::getMessage('MAIL_CLIENT_FORM_ERROR'));
+			}
 			if (!$this->canConnectNewMailbox())
 			{
 				return $this->error(Loc::getMessage('MAIL_CLIENT_DENIED'));

@@ -1,12 +1,9 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
 
 /**
  * @module im/messenger/core
  */
 jn.define('im/messenger/core', (require, exports, module) => {
-
 	const { createStore } = require('statemanager/vuex');
 	const { VuexManager } = require('statemanager/vuex-manager');
 
@@ -17,11 +14,14 @@ jn.define('im/messenger/core', (require, exports, module) => {
 		usersModel,
 		dialoguesModel,
 		filesModel,
+		sidebarModel,
+		draftModel,
 	} = require('im/messenger/model');
 	const {
 		RecentCache,
 		UsersCache,
 		FilesCache,
+		DraftCache,
 	} = require('im/messenger/cache');
 	const { Logger } = require('im/messenger/lib/logger');
 
@@ -42,10 +42,9 @@ jn.define('im/messenger/core', (require, exports, module) => {
 			this.siteDir = env.siteDir || '/';
 
 			this.initStore();
+			// eslint-disable-next-line promise/catch-or-return
 			this.fillStoreFromCache()
-				.then(() => {
-					this.initComplete();
-				})
+				.then(this.initComplete.bind(this))
 			;
 		}
 
@@ -59,12 +58,13 @@ jn.define('im/messenger/core', (require, exports, module) => {
 					usersModel,
 					dialoguesModel,
 					filesModel,
-				}
+					sidebarModel,
+					draftModel,
+				},
 			});
 
-			this.storeManager =
-				new VuexManager(this.getStore())
-					.build()
+			this.storeManager = new VuexManager(this.getStore())
+				.build()
 			;
 		}
 
@@ -73,6 +73,7 @@ jn.define('im/messenger/core', (require, exports, module) => {
 			const recentState = RecentCache.get();
 			const usersState = UsersCache.get();
 			const filesState = FilesCache.get();
+			const draftState = DraftCache.get();
 
 			const cachePromiseList = [];
 
@@ -91,12 +92,22 @@ jn.define('im/messenger/core', (require, exports, module) => {
 				cachePromiseList.push(this.getStore().dispatch('filesModel/setState', filesState));
 			}
 
+			if (draftState)
+			{
+				cachePromiseList.push(this.getStore().dispatch('draftModel/setState', draftState));
+			}
+
 			return Promise.all(cachePromiseList);
 		}
 
 		getHost()
 		{
 			return this.host;
+		}
+
+		isCloud()
+		{
+			return CoreApplication.getOption('isCloud', false);
 		}
 
 		getUserId()
@@ -114,11 +125,17 @@ jn.define('im/messenger/core', (require, exports, module) => {
 			return this.siteDir;
 		}
 
+		/**
+		 * @return {MessengerCoreStore}
+		 */
 		getStore()
 		{
 			return this.store;
 		}
 
+		/**
+		 * @return {MessengerCoreStoreManager}
+		 */
 		getStoreManager()
 		{
 			return this.storeManager;
@@ -140,6 +157,22 @@ jn.define('im/messenger/core', (require, exports, module) => {
 			}
 
 			return this.initPromise;
+		}
+
+		/**
+		 * @private
+		 */
+		static getOption(name, defaultValue)
+		{
+			const options = jnExtensionData.get('im:messenger/core');
+
+			// eslint-disable-next-line no-prototype-builtins
+			if (options.hasOwnProperty(name))
+			{
+				return options[name];
+			}
+
+			return defaultValue;
 		}
 	}
 

@@ -7,6 +7,7 @@ $MESS["CRM_EVENT_DATE"] = "Дата дзвінка";
 $MESS["CRM_EVENT_DESC_TITLE"] = "Введіть опис розмови";
 $MESS["CRM_EVENT_QUOTE_STATUS_ID"] = "Статус пропозиції";
 $MESS["CRM_EVENT_QUOTE_STATUS_ID_MSGVER_1"] = "Стадія пропозиції";
+$MESS["CRM_EVENT_QUOTE_STATUS_ID_MSGVER_2"] = "Стадія пропозиції";
 $MESS["CRM_EVENT_STAGE_ID"] = "Стадія угоди";
 $MESS["CRM_EVENT_STATUS_ID"] = "Статус ліда";
 $MESS["CRM_EVENT_STATUS_ID_MSGVER_1"] = "Стадія ліда";

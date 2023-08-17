@@ -31,6 +31,7 @@ $MESS["DEAL_COPY_TITLE"] = "Копіювати угоду";
 $MESS["DEAL_CREATE"] = "Створити угоду";
 $MESS["DEAL_CREATE_ON_BASIS"] = "Створити на підставі:";
 $MESS["DEAL_CREATE_ON_BASIS_TITLE"] = "Створення рахунку і пропозиції на підставі угоди";
+$MESS["DEAL_CREATE_ON_BASIS_TITLE_MSGVER_1"] = "Створення рахунку і пропозиції на підставі угоди";
 $MESS["DEAL_CRM_RECURRING_LIST"] = "Шаблони регулярних угод";
 $MESS["DEAL_CRM_TYPE"] = "Режим роботи СRM";
 $MESS["DEAL_DELETE"] = "Видалити угоду";

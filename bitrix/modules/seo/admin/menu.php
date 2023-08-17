@@ -12,12 +12,10 @@ use \Bitrix\Main\Localization\Loc;
 
 if($APPLICATION->GetGroupRight("seo") > "D")
 {
-	$isb24 =
-		ModuleManager::isModuleInstalled('bitrix24') ||
-		ModuleManager::isModuleInstalled('crm') ||
-		ModuleManager::isModuleInstalled('intranet')
-	;
-	if (!$isb24 && ModuleManager::isModuleInstalled('seo'))
+	if (
+		ModuleManager::isModuleInstalled('seo')
+		&& !ModuleManager::isModuleInstalled('bitrix24')
+	)
 	{
 		IncludeModuleLangFile(__FILE__);
 

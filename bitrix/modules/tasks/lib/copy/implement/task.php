@@ -599,7 +599,15 @@ class Task extends Base
 			$projectFinishDate = TasksDateTime::createFrom($endPoint);
 
 			$datePlanTime = TasksDateTime::createFrom($datePlan);
+			if (!$datePlanTime)
+			{
+				return '';
+			}
 			$startPointTime = TasksDateTime::createFrom($startPoint);
+			if (!$startPointTime)
+			{
+				$startPointTime = new TasksDateTime();
+			}
 			if ($datePlanTime->getTimestamp() < $startPointTime->getTimestamp())
 			{
 				$phpDateTimeFormat = DateTime::convertFormatToPhp(FORMAT_DATETIME);

@@ -76,6 +76,7 @@ $MESS["CRM_STATUS_TYPE_ORDER_STATUS"] = "Статуси замовлення";
 $MESS["CRM_STATUS_TYPE_PRODUCT"] = "Продукти";
 $MESS["CRM_STATUS_TYPE_QUOTE_STATUS"] = "Статуси пропозиції";
 $MESS["CRM_STATUS_TYPE_QUOTE_STATUS_MSGVER_1"] = "Стадії пропозиції";
+$MESS["CRM_STATUS_TYPE_QUOTE_STATUS_MSGVER_2"] = "Стадії пропозиції";
 $MESS["CRM_STATUS_TYPE_SMART_DOCUMENT_STATUS"] = "Стадії документа";
 $MESS["CRM_STATUS_TYPE_SOURCE"] = "Джерела";
 $MESS["CRM_STATUS_TYPE_SOURCE_ADVERTISING"] = "Реклама";

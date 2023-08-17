@@ -6,7 +6,6 @@
 # mailto:admin@bitrixsoft.com				 #
 ##############################################
 IncludeModuleLangFile(__FILE__);
-include_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/classes/general/xml.php');
 
 class CWebDavBase
 {

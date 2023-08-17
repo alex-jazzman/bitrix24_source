@@ -10,6 +10,7 @@ $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_CONTACT"] = "Копіювати конт�
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_DEAL"] = "Копіювати угоду";
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_LEAD"] = "Копіювати лід";
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_QUOTE"] = "Копіювати пропозицію";
+$MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_QUOTE_MSGVER_1"] = "Копіювати пропозицію";
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_SMART_INVOICE"] = "Копіювати рахунок";
 $MESS["M_CRM_ENTITY_ACTION_DEFAULT_ERROR"] = "Виникла внутрішня помилка. Повторіть спробу трохи згодом.";
 $MESS["M_CRM_ENTITY_ACTION_ERROR_ON_CHANGE"] = "Не вдалося змінити вирву";

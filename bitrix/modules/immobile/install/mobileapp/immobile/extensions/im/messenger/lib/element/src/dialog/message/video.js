@@ -1,45 +1,116 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-
 /**
  * @module im/messenger/lib/element/dialog/message/video
  */
 jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, module) => {
-
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
-	const { formatFileSize, getShortFileName } = require('im/messenger/lib/helper/file');
+	const { Type } = require('type');
 
 	/**
 	 * @class VideoMessage
 	 */
 	class VideoMessage extends Message
 	{
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {CreateMessageOptions} options
+		 * @param {FilesModelState} file
+		 */
 		constructor(modelMessage = {}, options = {}, file = {})
 		{
 			super(modelMessage, options);
+			this.videoUrl = null;
+			this.localVideoUrl = null;
+			this.previewImage = null;
 
-			const tvEmoji = String.fromCodePoint(128250);
-			const playEmoji = String.fromCodePoint(9199);
-			const videoText = `${tvEmoji} ${getShortFileName(file.name, 25)} ${playEmoji}\n      ${formatFileSize(file.size)}`;
 			if (modelMessage.text !== '')
 			{
-				this.setMessage(videoText + '\n\n' + modelMessage.text);
+				this.setMessage(modelMessage.text);
+			}
+
+			if (Type.isStringFilled(file.urlShow))
+			{
+				this.setVideoUrl(file.urlShow);
+			}
+
+			if (Type.isStringFilled(file.localUrl))
+			{
+				this.setLocalVideoUrl(file.localUrl);
+			}
+
+			if (Type.isStringFilled(file.urlPreview))
+			{
+				this.setPreviewImage(file.urlPreview);
+			}
+
+			this.setPreviewParams(file.image);
+
+			this.setShowTail(true);
+		}
+
+		/**
+		 * @param {string} value
+		 * @private
+		 */
+		setVideoUrl(value)
+		{
+			this.videoUrl = value;
+		}
+
+		/**
+		 * @param {string} value
+		 * @private
+		 */
+		setLocalVideoUrl(value)
+		{
+			this.localVideoUrl = value;
+		}
+
+		/**
+		 * @param {string} value
+		 * @private
+		 */
+		setPreviewImage(value)
+		{
+			this.previewImage = value;
+		}
+
+		/**
+		 * @param {object|boolean} param
+		 * @param {number} param.height
+		 * @param {number} param.width
+		 * @private
+		 */
+		setPreviewParams(param)
+		{
+			if (Type.isObject(param))
+			{
+				this.previewParams = {
+					height: param.height || 0,
+					width: param.width || 0,
+				};
 			}
 			else
 			{
-				this.setMessage(videoText);
+				this.previewParams = {
+					height: 0,
+					width: 0,
+				};
 			}
-
-			this.setShowTail(true);
 		}
 
 		getType()
 		{
 			return 'video';
 		}
+
+		setShowTail()
+		{
+			return this;
+		}
 	}
 
 	module.exports = {
 		VideoMessage,
 	};
-});
+})
+;

@@ -12,4 +12,5 @@ $MESS["CRM_STAGE_LIST_VIEW_TITLE"] = "Виберіть стадію елемен
 $MESS["CRM_STAGE_LIST_VIEW_TITLE_DEAL"] = "Виберіть стадію угоди";
 $MESS["CRM_STAGE_LIST_VIEW_TITLE_LEAD"] = "Виберіть стадію ліда";
 $MESS["CRM_STAGE_LIST_VIEW_TITLE_QUOTE"] = "Виберіть стадію пропозиції";
+$MESS["CRM_STAGE_LIST_VIEW_TITLE_QUOTE_MSGVER_1"] = "Виберіть стадію пропозиції";
 $MESS["CRM_STAGE_LIST_VIEW_TITLE_SMART_INVOICE"] = "Виберіть стадію рахунку";

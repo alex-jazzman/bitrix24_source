@@ -9,5 +9,6 @@ $MESS["CRM_PROCESS_ENTITY_ORDER_ADD"] = "Створено замовлення";
 $MESS["CRM_PROCESS_ENTITY_ORDER_PAYMENT_ADD"] = "Створено оплату";
 $MESS["CRM_PROCESS_ENTITY_ORDER_SHIPMENT_ADD"] = "Створено відвантаження";
 $MESS["CRM_PROCESS_ENTITY_QUOTE_ADD"] = "Створено пропозицію";
+$MESS["CRM_PROCESS_ENTITY_QUOTE_ADD_MSGVER_1"] = "Створено пропозицію";
 $MESS["CRM_PROCESS_ENTITY_RECURRING_DEAL_ADD"] = "Створено шаблон угоди";
 $MESS["CRM_PROCESS_ENTITY_SMART_INVOICE_ADD"] = "Створено рахунок";

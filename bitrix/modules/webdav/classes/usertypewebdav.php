@@ -340,7 +340,10 @@ class CUserTypeWebdavElement
 								$DB->rollback();
 								$arError[] = array('id' => 'WD_ERR_IBLOCK_ELEMENT_UPDATE', 'text' => $ibe->LAST_MESSAGE);
 							}
-							$DB->commit();
+							else
+							{
+								$DB->commit();
+							}
 						}
 					}
 					else

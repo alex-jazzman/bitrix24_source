@@ -11,12 +11,17 @@ use Bitrix\Seo\Sitemap\Internals\SitemapTable;
 use Bitrix\Seo\Sitemap\Internals\EntityTable;
 use Bitrix\Seo\Sitemap\Internals\IblockTable;
 use Bitrix\Seo\Sitemap\Internals\ForumTable;
-use Bitrix\Seo\Sitemap\Internals\RuntimeTable;
 use Bitrix\Seo\RobotsFile;
 use Bitrix\Seo\Sitemap\Job;
 
 Loc::loadMessages(__DIR__ . '/../../main/tools.php');
 Loc::loadMessages(__DIR__ . '/seo_sitemap.php');
+
+/**
+ * Bitrix vars
+ * @global \CUser $USER
+ * @global \CMain $APPLICATION
+ */
 
 if (!$USER->CanDoOperation('seo_tools'))
 {
@@ -53,8 +58,7 @@ if ($mapId > 0)
 	{
 		if ($_REQUEST['action'] == 'delete' && check_bitrix_sessid())
 		{
-			RuntimeTable::clearByPid($mapId);
-			SitemapTable::delete($mapId);
+			SitemapTable::fullDelete($mapId);
 			LocalRedirect(BX_ROOT . "/admin/seo_sitemap.php?lang=" . LANGUAGE_ID);
 		}
 
@@ -853,7 +857,7 @@ if ($bIBlock)
 				style="width:70%"
 				oninput="onPathInput(this)"
 			>
-		</td>t
+		</td>
 	</tr>
 
 	<tr>

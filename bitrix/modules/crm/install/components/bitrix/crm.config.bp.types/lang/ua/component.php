@@ -11,6 +11,7 @@ $MESS["CRM_BP_ENTITY_LIST"] = "Список типів";
 $MESS["CRM_BP_LEAD"] = "Лід";
 $MESS["CRM_BP_LEAD_DESC"] = "Шаблони бізнес-процесів для \"Лідів\"";
 $MESS["CRM_BP_QUOTE_DESC"] = "Шаблони бізнес-процесів для \"Комерційних пропозицій\"";
+$MESS["CRM_BP_QUOTE_DESC_MSGVER_1"] = "Шаблони бізнес-процесів для \"Комерційних пропозицій\"";
 $MESS["CRM_BP_SMART_INVOICE_DESC"] = "Шаблони бізнес-процесів для \"Рахунків\"";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не встановлено.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонений";

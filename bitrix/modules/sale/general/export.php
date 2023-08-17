@@ -78,7 +78,7 @@ final class ExportOneCCRM extends CSaleExport
 
 	protected static function getUserTimeStapmX(array $arOrder)
 	{
-		return new \Bitrix\Main\Type\DateTime(\CAllDatabase::FormatDate($arOrder["CRM_INVOICE_INTERNALS_INVOICE_USER_TIMESTAMP_X"]));
+		return new \Bitrix\Main\Type\DateTime(CDatabase::FormatDate($arOrder["CRM_INVOICE_INTERNALS_INVOICE_USER_TIMESTAMP_X"]));
 	}
 
 	protected static function getUserXmlId(array $arOrder, array $arProp)
@@ -215,7 +215,7 @@ class CSaleExport
 
     protected static function getUserTimeStapmX(array $arOrder)
     {
-		return new \Bitrix\Main\Type\DateTime(\CAllDatabase::FormatDate($arOrder["SALE_INTERNALS_ORDER_USER_TIMESTAMP_X"]));
+		return new \Bitrix\Main\Type\DateTime(CDatabase::FormatDate($arOrder["SALE_INTERNALS_ORDER_USER_TIMESTAMP_X"]));
     }
 
     protected static function getUserXmlId(array $arOrder, array $arProp)
@@ -1396,7 +1396,7 @@ class CSaleExport
 						return false;
 					while($data = zip_entry_read($entry, 102400))
 					{
-						$data_len = function_exists('mb_strlen')? mb_strlen($data, 'latin1') : mb_strlen($data);
+						$data_len = strlen($data);
 						$result = fwrite($fout, $data);
 						if($result !== $data_len)
 							return false;
@@ -2438,7 +2438,7 @@ class CSaleExport
 			switch ($typeDocument)
 			{
                 case 'Order':
-					$filedsTolog['ENTITY_DATE_UPDATE'] = new \Bitrix\Main\Type\DateTime(\CAllDatabase::FormatDate($document['DATE_UPDATE']));
+					$filedsTolog['ENTITY_DATE_UPDATE'] = new \Bitrix\Main\Type\DateTime(CDatabase::FormatDate($document['DATE_UPDATE']));
 					if(self::getVersionSchema() >= self::CONTAINER_VERSION)
 						$filedsTolog['PARENT_ID'] = $document["ID"];
                     break;

@@ -1,15 +1,15 @@
-/* eslint-disable flowtype/require-return-type */
+/* eslint-disable no-param-reassign */
 
 /**
  * @module im/messenger/model/dialogues
  */
 jn.define('im/messenger/model/dialogues', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { DialogType } = require('im/messenger/const');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { Color } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { clone } = require('utils/object');
 
 	const dialogState = {
 		dialogId: '0',
@@ -22,13 +22,14 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		extranet: false,
 		counter: 0,
 		userCounter: 0,
+		participants: [],
 		lastReadId: 0,
 		markedId: 0,
 		lastMessageId: 0,
 		lastMessageViews: {
 			countOfViewers: 0,
 			firstViewer: null,
-			messageId: 0
+			messageId: 0,
 		},
 		savedPositionMessageId: 0,
 		managerList: [],
@@ -43,12 +44,13 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		dateCreate: null,
 		public: {
 			code: '',
-			link: ''
+			link: '',
 		},
 		inited: false,
 		loading: false,
 		hasPrevPage: false,
 		hasNextPage: false,
+		diskFolderId: 0,
 	};
 
 	const dialoguesModel = {
@@ -59,40 +61,52 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			saveChatList: [],
 		}),
 		getters: {
-			/** @function dialoguesModel/getById */
+			/**
+			 * @function dialoguesModel/getById
+			 * @return {DialoguesModelState}
+			 */
 			getById: (state) => (id) => {
 				return state.collection[id];
 			},
 
-			/** @function dialoguesModel/getByChatId */
+			/**
+			 * @function dialoguesModel/getByChatId
+			 * @return {DialoguesModelState}
+			 */
 			getByChatId: (state) => (chatId) => {
 				chatId = Number.parseInt(chatId, 10);
-				return Object.values(state.collection).find(item => {
+
+				return Object.values(state.collection).find((item) => {
 					return item.chatId === chatId;
 				});
 			},
 
-			/** @function dialoguesModel/getLastReadId */
+			/**
+			 * @function dialoguesModel/getLastReadId
+			 * @return {number}
+			 */
 			getLastReadId: (state) => (dialogId) => {
 				if (!state.collection[dialogId])
 				{
 					return 0;
 				}
 
-				const {lastReadId, lastMessageId} = state.collection[dialogId];
+				const { lastReadId, lastMessageId } = state.collection[dialogId];
 
 				return lastReadId === lastMessageId ? 0 : lastReadId;
 			},
 
-			/** @function dialoguesModel/getInitialMessageId */
-			getInitialMessageId: (state) => (dialogId) =>
-			{
+			/**
+			 * @function dialoguesModel/getInitialMessageId
+			 * @return {number}
+			 */
+			getInitialMessageId: (state) => (dialogId) => {
 				if (!state.collection[dialogId])
 				{
 					return 0;
 				}
 
-				const {lastReadId, markedId} = state.collection[dialogId];
+				const { lastReadId, markedId } = state.collection[dialogId];
 				if (markedId === 0)
 				{
 					return lastReadId;
@@ -103,59 +117,56 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		},
 		actions: {
 			/** @function dialoguesModel/set */
-			set: (store, payload) =>
-			{
+			set: (store, payload) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
 				{
 					payload = [payload];
 				}
 
-				payload.map(element => {
+				payload.map((element) => {
 					return validate(store, element);
-				}).forEach(element => {
+				}).forEach((element) => {
 					const existingItem = store.state.collection[element.dialogId];
 					if (existingItem)
 					{
 						store.commit('update', {
 							dialogId: element.dialogId,
-							fields: element
+							fields: element,
 						});
 					}
 					else
 					{
 						store.commit('add', {
 							dialogId: element.dialogId,
-							fields: {...dialogState, ...element}
+							fields: { ...dialogState, ...element },
 						});
 					}
 				});
 			},
 
 			/** @function dialoguesModel/add */
-			add: (store, payload) =>
-			{
+			add: (store, payload) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
 				{
 					payload = [payload];
 				}
 
-				payload.map(element => {
+				payload.map((element) => {
 					return validate(store, element);
-				}).forEach(element => {
+				}).forEach((element) => {
 					const existingItem = store.state.collection[element.dialogId];
 					if (!existingItem)
 					{
 						store.commit('add', {
 							dialogId: element.dialogId,
-							fields: {...dialogState, ...element},
+							fields: { ...dialogState, ...element },
 						});
 					}
 				});
 			},
 
 			/** @function dialoguesModel/update */
-			update: (store, payload) =>
-			{
+			update: (store, payload) => {
 				const existingItem = store.state.collection[payload.dialogId];
 				if (!existingItem)
 				{
@@ -166,11 +177,55 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					dialogId: payload.dialogId,
 					fields: validate(store, payload.fields),
 				});
+
+				return true;
+			},
+
+			/** @function dialoguesModel/updateWritingList */
+			updateWritingList: (store, payload) => {
+				const existingItem = store.state.collection[String(payload.dialogId)];
+
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const oldWritingList = clone(existingItem.writingList);
+				let newWritingList = clone(oldWritingList);
+				let isHasChange = false;
+				payload.fields.writingList.forEach((user) => {
+					const userId = user.userId;
+					const isWriting = user.isWriting;
+
+					const userIndex = oldWritingList.findIndex((user) => user.userId === userId);
+					if (userIndex !== -1 && !isWriting)
+					{
+						isHasChange = true;
+						newWritingList = newWritingList.filter((el, index) => index !== userIndex);
+					}
+
+					if (userIndex === -1)
+					{
+						isHasChange = true;
+						newWritingList.push({ ...user });
+					}
+				});
+
+				const validateList = validate(store, { writingList: newWritingList });
+				if (isHasChange)
+				{
+					store.commit('update', {
+						actionName: 'updateWritingList',
+						dialogId: payload.dialogId,
+						fields: validateList,
+					});
+				}
+
+				return true;
 			},
 
 			/** @function dialoguesModel/delete */
-			delete: (store, payload) =>
-			{
+			delete: (store, payload) => {
 				const existingItem = store.state.collection[payload.dialogId];
 				if (!existingItem)
 				{
@@ -178,11 +233,12 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				}
 
 				store.commit('delete', payload.dialogId);
+
+				return true;
 			},
 
 			/** @function dialoguesModel/decreaseCounter */
-			decreaseCounter: (store, payload) =>
-			{
+			decreaseCounter: (store, payload) => {
 				const existingItem = store.state.collection[payload.dialogId];
 				if (!existingItem)
 				{
@@ -204,25 +260,153 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					dialogId: payload.dialogId,
 					fields: {
 						counter: decreasedCounter,
-						previousCounter: existingItem.counter
-					}
+						previousCounter: existingItem.counter,
+					},
+				});
+
+				return true;
+			},
+
+			/** @function dialoguesModel/updateUserCounter */
+			updateUserCounter(store, payload)
+			{
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				if (existingItem.userCounter === payload.userCounter)
+				{
+					return false;
+				}
+
+				store.commit('update', {
+					actionName: 'updateUserCounter',
+					dialogId: payload.dialogId,
+					fields: {
+						userCounter: payload.userCounter,
+					},
+				});
+
+				return true;
+			},
+
+			mute(store, payload)
+			{
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const currentUserId = MessengerParams.getUserId();
+				if (existingItem.muteList.includes(currentUserId))
+				{
+					return false;
+				}
+
+				const muteList = [...existingItem.muteList, currentUserId];
+
+				store.commit('update', {
+					actionName: 'mute',
+					dialogId: payload.dialogId,
+					fields: validate(store, { muteList }),
+				});
+
+				return true;
+			},
+
+			unmute(store, payload)
+			{
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const currentUserId = MessengerParams.getUserId();
+				const muteList = existingItem.muteList.filter((item) => item !== currentUserId);
+
+				store.commit('update', {
+					actionName: 'unmute',
+					dialogId: payload.dialogId,
+					fields: validate(store, { muteList }),
+				});
+
+				return true;
+			},
+
+			/** @function dialoguesModel/addParticipants */
+			addParticipants(store, payload)
+			{
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const newParticipants = payload.participants;
+				if (Type.isUndefined(newParticipants))
+				{
+					return false;
+				}
+
+				const validUsersId = validate(store, { participants: newParticipants });
+				const uniqId = validUsersId.participants.filter((userId) => !existingItem.participants.includes(userId));
+				if (uniqId.length === 0)
+				{
+					return false;
+				}
+
+				const newState = [...existingItem.participants, ...uniqId];
+				const userCounter = payload.userCounter || existingItem.userCounter + newState.length;
+				store.commit('update', {
+					actionName: 'addParticipants',
+					dialogId: payload.dialogId,
+					fields: { participants: newState, userCounter },
+				});
+			},
+
+			/** @function dialoguesModel/removeParticipants */
+			removeParticipants(store, payload)
+			{
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				const newParticipants = payload.participants;
+				if (Type.isUndefined(newParticipants))
+				{
+					return false;
+				}
+				const validUsersId = validate(store, { participants: newParticipants });
+				const newState = existingItem.participants.filter(
+					(userId) => !validUsersId.participants.includes(userId),
+				);
+				const userCounter = payload.userCounter || existingItem.userCounter + newState.length;
+
+				store.commit('update', {
+					actionName: 'removeParticipants',
+					removeData: validUsersId.participants,
+					dialogId: payload.dialogId,
+					fields: { participants: newState, userCounter },
 				});
 			},
 		},
 		mutations: {
-			add: (state, payload) =>
-			{
+			add: (state, payload) => {
 				state.collection[payload.dialogId] = payload.fields;
 			},
-			update: (state, payload) =>
-			{
-				state.collection[payload.dialogId] = {...state.collection[payload.dialogId], ...payload.fields};
+			update: (state, payload) => {
+				state.collection[payload.dialogId] = { ...state.collection[payload.dialogId], ...payload.fields };
 			},
-			delete: (state, payload) =>
-			{
+			delete: (state, payload) => {
 				delete state.collection[payload.dialogId];
 			},
-		}
+		},
 	};
 
 	function validate(store, fields)
@@ -233,6 +417,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.dialogId = fields.dialog_id;
 		}
+
 		if (Type.isNumber(fields.dialogId) || Type.isStringFilled(fields.dialogId))
 		{
 			result.dialogId = fields.dialogId.toString();
@@ -246,6 +431,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.chatId = fields.id;
 		}
+
 		if (Type.isNumber(fields.chatId) || Type.isStringFilled(fields.chatId))
 		{
 			result.chatId = Number.parseInt(fields.chatId, 10);
@@ -270,6 +456,14 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			result.userCounter = fields.user_counter;
 		}
+
+		if (!Type.isUndefined(fields.participants))
+		{
+			result.participants = fields.participants.map(
+				(userId) => (Type.isString(userId) ? parseInt(userId, 10) : userId),
+			);
+		}
+
 		if (Type.isNumber(fields.userCounter) || Type.isStringFilled(fields.userCounter))
 		{
 			result.userCounter = Number.parseInt(fields.userCounter, 10);
@@ -279,6 +473,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.lastId = fields.last_id;
 		}
+
 		if (Type.isNumber(fields.lastId))
 		{
 			result.lastReadId = fields.lastId;
@@ -288,6 +483,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.markedId = fields.marked_id;
 		}
+
 		if (Type.isNumber(fields.markedId))
 		{
 			result.markedId = fields.markedId;
@@ -297,6 +493,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.lastMessageId = fields.last_message_id;
 		}
+
 		if (Type.isNumber(fields.lastMessageId) || Type.isStringFilled(fields.lastMessageId))
 		{
 			result.lastMessageId = Number.parseInt(fields.lastMessageId, 10);
@@ -306,6 +503,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.lastMessageViews = fields.last_message_views;
 		}
+
 		if (Type.isPlainObject(fields.lastMessageViews))
 		{
 			result.lastMessageViews = prepareLastMessageViews(fields.lastMessageViews);
@@ -330,6 +528,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.name = fields.title;
 		}
+
 		if (Type.isNumber(fields.name) || Type.isStringFilled(fields.name))
 		{
 			result.name = ChatUtils.htmlspecialcharsback(fields.name.toString());
@@ -339,6 +538,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.ownerId = fields.owner;
 		}
+
 		if (Type.isNumber(fields.ownerId) || Type.isStringFilled(fields.ownerId))
 		{
 			result.owner = Number.parseInt(fields.ownerId, 10);
@@ -363,14 +563,17 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.entityType = fields.entity_type;
 		}
+
 		if (Type.isStringFilled(fields.entityType))
 		{
 			result.entityType = fields.entityType;
 		}
+
 		if (!Type.isUndefined(fields.entity_id))
 		{
 			fields.entityId = fields.entity_id;
 		}
+
 		if (Type.isNumber(fields.entityId) || Type.isStringFilled(fields.entityId))
 		{
 			result.entityId = fields.entityId.toString();
@@ -380,6 +583,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.dateCreate = fields.date_create;
 		}
+
 		if (!Type.isUndefined(fields.dateCreate))
 		{
 			result.dateCreate = DateHelper.cast(fields.dateCreate);
@@ -409,25 +613,26 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		// 	result.readList = this.prepareReadList(fields.readList);
 		// }
 
-		// if (!Type.isUndefined(fields.writing_list))
-		// {
-		// 	fields.writingList = fields.writing_list;
-		// }
-		// if (Type.isArray(fields.writingList))
-		// {
-		// 	result.writingList = this.prepareWritingList(fields.writingList);
-		// }
+		if (!Type.isUndefined(fields.writing_list))
+		{
+			fields.writingList = fields.writing_list;
+		}
+
+		if (Type.isArray(fields.writingList))
+		{
+			result.writingList = prepareWritingList(fields.writingList);
+		}
 
 		if (!Type.isUndefined(fields.manager_list))
 		{
 			fields.managerList = fields.manager_list;
 		}
+
 		if (Type.isArray(fields.managerList))
 		{
 			result.managerList = [];
 
-			fields.managerList.forEach(userId =>
-			{
+			fields.managerList.forEach((userId) => {
 				userId = Number.parseInt(userId, 10);
 				if (userId > 0)
 				{
@@ -436,14 +641,15 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			});
 		}
 
-		// if (!Type.isUndefined(fields.mute_list))
-		// {
-		// 	fields.muteList = fields.mute_list;
-		// }
-		// if (Type.isArray(fields.muteList) || Type.isPlainObject(fields.muteList))
-		// {
-		// 	result.muteList = this.prepareMuteList(fields.muteList);
-		// }
+		if (!Type.isUndefined(fields.mute_list))
+		{
+			fields.muteList = fields.mute_list;
+		}
+
+		if (Type.isArray(fields.muteList) || Type.isPlainObject(fields.muteList))
+		{
+			result.muteList = prepareMuteList(fields.muteList);
+		}
 
 		if (Type.isBoolean(fields.inited))
 		{
@@ -460,6 +666,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			result.description = fields.description;
 		}
 
+		if (Type.isNumber(fields.disk_folder_id))
+		{
+			result.diskFolderId = fields.disk_folder_id;
+		}
+
 		return result;
 	}
 
@@ -468,11 +679,11 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		const {
 			count_of_viewers: countOfViewers,
 			first_viewers: rawFirstViewers,
-			message_id: messageId
+			message_id: messageId,
 		} = rawLastMessageViews;
 
 		let firstViewer;
-		rawFirstViewers.forEach(rawFirstViewer => {
+		rawFirstViewers.forEach((rawFirstViewer) => {
 			if (rawFirstViewer.user_id === MessengerParams.getUserId())
 			{
 				return;
@@ -481,7 +692,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			firstViewer = {
 				userId: rawFirstViewer.user_id,
 				userName: rawFirstViewer.user_name,
-				date: DateHelper.cast(rawFirstViewer.date)
+				date: DateHelper.cast(rawFirstViewer.date),
 			};
 		});
 
@@ -493,8 +704,40 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		return {
 			countOfViewers,
 			firstViewer,
-			messageId
+			messageId,
 		};
+	}
+
+	function prepareMuteList(muteList)
+	{
+		const result = [];
+
+		if (Type.isArray(muteList))
+		{
+			muteList.forEach((userId) => {
+				userId = Number.parseInt(userId, 10);
+				if (userId > 0)
+				{
+					result.push(userId);
+				}
+			});
+		}
+		else if (Type.isPlainObject(muteList))
+		{
+			Object.entries(muteList).forEach(([key, value]) => {
+				if (!value)
+				{
+					return;
+				}
+				const userId = Number.parseInt(key, 10);
+				if (userId > 0)
+				{
+					result.push(userId);
+				}
+			});
+		}
+
+		return result;
 	}
 
 	function prepareAvatar(store, avatar)
@@ -518,6 +761,28 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			result = encodeURI(result);
 		}
+
+		return result;
+	}
+
+	function prepareWritingList(writingList)
+	{
+		const result = [];
+
+		writingList.forEach((user) => {
+			const item = {};
+
+			if (!user.userId)
+			{
+				return false;
+			}
+
+			item.userId = Number.parseInt(user.userId, 10);
+			item.userName = user.userName;
+			result.push(item);
+
+			return true;
+		});
 
 		return result;
 	}

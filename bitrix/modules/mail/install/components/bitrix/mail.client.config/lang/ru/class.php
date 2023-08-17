@@ -127,3 +127,4 @@ $MESS["MAIL_MAILBOX_LICENSE_SHARED_LIMIT_BODY"] = "Количество почт
 
 $MESS["MAIL_MAILBOX_REMOVE_CONFIRM_TEXT"] = "Вы действительно хотите отключить почтовый ящик?";
 $MESS["MAIL_MAILBOX_REMOVE_CONFIRM"] = "Отключить почтовый ящик?";
+

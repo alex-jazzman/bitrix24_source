@@ -45,6 +45,7 @@ $MESS["CRM_LEAD_TAB_BIZPROC"] = "Бізнес процеси";
 $MESS["CRM_LEAD_TAB_EVENT"] = "Історія";
 $MESS["CRM_LEAD_TAB_PRODUCTS"] = "Товари";
 $MESS["CRM_LEAD_TAB_QUOTE"] = "Пропозиції";
+$MESS["CRM_LEAD_TAB_QUOTE_MSGVER_1"] = "Пропозиції";
 $MESS["CRM_LEAD_TAB_TREE"] = "Зв'язки";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не встановлено.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонено";
