@@ -779,7 +779,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Get select array.
 	 * @return array
 	 */
-	protected function getSelect(bool $withSorting = true)
+	protected function getSelect()
 	{
 		// by default
 		$this->select[] = 'ID';
@@ -809,11 +809,6 @@ class TasksKanbanComponent extends \CBitrixComponent
 				'UF_CRM_TASK',
 			]
 		);
-
-		if ($withSorting)
-		{
-			$this->select[] = 'SORTING';
-		}
 
 		$this->select = array_unique($this->select);
 
@@ -923,7 +918,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		else
 		{
 			$this->order = [
-				'SORTING' => 'ASC',
+				'SORTING_ORDER' => 'ASC',
 				'STATUS_COMPLETE' => 'ASC',
 				'DEADLINE' => 'ASC,NULLS',
 				'ID' => 'ASC'
@@ -1483,13 +1478,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * @param bool $skipCommonFilter Skip merge with common filter.
 	 * @return array
 	 */
-	protected function getData(array $additionalFilter = [], $skipCommonFilter = false, bool $withSorting = true)
+	protected function getData(array $additionalFilter = [], $skipCommonFilter = false)
 	{
 		$items = array();
 		$order = $this->getOrder();
 		$filter = $this->getFilter();
 		$listParams = $this->getListParams();
-		$select = $this->getSelect($withSorting);
+		$select = $this->getSelect();
 
 		if ($skipCommonFilter)
 		{
@@ -2981,7 +2976,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$this->setPageId($pageId);
 			}
 
-			$items = $this->getData(withSorting: false);
+			$items = $this->getData();
 
 			$isSprintView = (($this->arParams['SPRINT_SELECTED'] ?? null) === 'Y');
 			if ($isSprintView)

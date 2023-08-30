@@ -5279,9 +5279,9 @@ class CAllCrmActivity
 		$providerID = $arRow['PROVIDER_ID'] ?? '';
 		$typeName = self::ResolveEventTypeName($typeID, self::ACTIVITY_DEFAULT, $providerID);
 
-		$subject = isset($arRow['SUBJECT']) ? $arRow['SUBJECT'] : '';
-		$location = isset($arRow['LOCATION']) ? $arRow['LOCATION'] : '';
-		$description = isset($arRow['DESCRIPTION']) ? $arRow['DESCRIPTION'] : '';
+		$subject = $arRow['SUBJECT'] ?? '';
+		$location = $arRow['LOCATION'] ?? '';
+		$description = $arRow['DESCRIPTION'] ?? '';
 		$descriptionType = isset($arRow['DESCRIPTION_TYPE']) ? (int)$arRow['DESCRIPTION_TYPE'] : CCrmContentType::PlainText;
 
 		$eventText = '';

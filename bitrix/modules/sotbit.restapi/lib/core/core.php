@@ -6,16 +6,19 @@ namespace Sotbit\RestAPI\Core;
 
 use Bitrix\Main\Application;
 use Sotbit\RestAPI\Localisation as l;
+use Sotbit\RestAPI\Exception;
 
 class Core
 {
     public const DIR_APP = 'app';
     public const DIR_CUSTOM = 'custom';
 
+    public const DIR_CONFIG = 'config';
+
     public function run()
     {
         if(\SotbitRestAPI::isModuleActive()) {
-            if($this->checkRoute()) {
+            if($this->checkSite() && $this->checkRoute()) {
                 $this->initConstants();
                 $this->initAutoload();
                 $this->initApp();
@@ -27,8 +30,9 @@ class Core
     public function checkRoute(): bool
     {
         $request = Application::getInstance()->getContext()->getRequest();
+        $requestPage = $request->getRequestedPage() ?? $_SERVER['REQUEST_URI'];
 
-        return (strpos($request->getRequestedPage(), \SotbitRestAPI::getRouteMainPath()) === 0);
+        return (strpos($requestPage, \SotbitRestAPI::getRouteMainPath()) === 0);
     }
 
     public function initConstants(): void
@@ -44,8 +48,9 @@ class Core
 
         define('DS', DIRECTORY_SEPARATOR);
         define('SR_ROOT_PATH', __DIR__.DS.'..'.DS.'..'.DS);
-        define('SR_CONFIG_PATH', SR_ROOT_PATH.self::DIR_APP.DS);
-        define('SR_CONFIG_CUSTOM_PATH', SR_CONFIG_PATH.DS.self::DIR_CUSTOM.DS);
+        define('SR_APP_PATH', SR_ROOT_PATH.self::DIR_APP.DS);
+        define('SR_CONFIG_PATH', SR_ROOT_PATH.self::DIR_CONFIG.DS);
+        define('SR_APP_CUSTOM_PATH', SR_APP_PATH.self::DIR_CUSTOM.DS);
     }
 
     public function initAutoload(): void
@@ -56,5 +61,10 @@ class Core
     public function initApp(): void
     {
         require SR_ROOT_PATH.self::DIR_APP.DS.'app.php';
+    }
+
+    private function checkSite(): bool
+    {
+        return \Bitrix\Main\Config\Option::get("main", "site_stopped", "N") !== 'Y';
     }
 }

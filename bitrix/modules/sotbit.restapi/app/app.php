@@ -26,13 +26,12 @@ $app = new \Slim\App($settings);
 $app->add(new \CorsSlim\CorsSlim());
 
 // Add Cache
-$app->add(new \Slim\HttpCache\Cache(SotbitRestAPI::MODULE_ID, 86400));
+$app->add(new \Slim\HttpCache\Cache('public', 86400));
 
 // Get container
 $container = $app->getContainer();
 
 require __DIR__ . DS . 'dependencies.php';
-require __DIR__ . DS . 'services.php';
 require __DIR__ . DS . 'repositories.php';
 require __DIR__ . DS . 'events.php';
 require __DIR__ . DS . 'routes.php';

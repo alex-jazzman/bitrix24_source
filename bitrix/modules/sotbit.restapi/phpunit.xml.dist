@@ -4,8 +4,8 @@
     <ini name="error_reporting" value="0" />
     <ini name="display_errors" value="0" />
     <ini name="memory_limit" value="-1" />
-    <env name="RESTAPI_USER" value="android" />
-    <env name="RESTAPI_PASS" value="123123123" />
+    <env name="RESTAPI_USER" value="admin" />
+    <env name="RESTAPI_PASS" value="admin123" />
   </php>
 
   <coverage includeUncoveredFiles="true">

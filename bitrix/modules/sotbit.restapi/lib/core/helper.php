@@ -6,7 +6,9 @@ namespace Sotbit\RestAPI\Core;
 
 use Bitrix\Main\Type;
 use Bitrix\Main\Text\Encoding;
-
+use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
+use Sotbit\RestAPI\Config\Config;
 
 class Helper
 {
@@ -35,8 +37,8 @@ class Helper
      */
     public static function checkCustomFile(string $file)
     {
-        if(is_dir(SR_CONFIG_CUSTOM_PATH) && is_file(SR_CONFIG_CUSTOM_PATH.$file)) {
-            return realpath(SR_CONFIG_CUSTOM_PATH.$file);
+        if(is_dir(SR_APP_CUSTOM_PATH) && is_file(SR_APP_CUSTOM_PATH.$file)) {
+            return realpath(SR_APP_CUSTOM_PATH.$file);
         }
 
         return false;
@@ -71,7 +73,11 @@ class Helper
      */
     public static function convertDate($date): string
     {
-        return $date->format("Y-m-d H:i:s");
+        if(method_exists($date, 'toString')) {
+            return $date->toString();
+        }
+
+        return $date->format("H:i:s Y.m.d");
     }
 
     /**
@@ -87,7 +93,7 @@ class Helper
             array_walk_recursive(
                 $array,
                 function(&$v) {
-                    if($v instanceof Type\DateTime || $v instanceof Type\Date) {
+                    if($v instanceof Type\Date || $v instanceof Type\DateTime) {
                         $v = self::convertDate($v);
                     } elseif(is_string($v)) {
                         $v = trim($v);
@@ -145,4 +151,140 @@ class Helper
             </div>';
     }
 
+    /**
+     * @return array
+     */
+    public static function getSites()
+    {
+        $sites = [];
+        try {
+            $rs = SiteTable::getList(
+                [
+                    'select' => [
+                        'SITE_NAME',
+                        'LID',
+                    ],
+                    'filter' => ['ACTIVE' => 'Y'],
+                ]
+            );
+            while($site = $rs->fetch()) {
+                $sites[$site['LID']] = $site['SITE_NAME'];
+            }
+        } catch(ObjectPropertyException $e) {
+            $e->getMessage();
+        } catch(ArgumentException $e) {
+            $e->getMessage();
+        } catch(SystemException $e) {
+            $e->getMessage();
+        }
+        try {
+            if(!is_array($sites) || count($sites) == 0) {
+                throw new SystemException("Cannot get sites");
+            }
+        } catch(SystemException $exception) {
+            echo $exception->getMessage();
+        }
+
+        return $sites;
+    }
+
+    public static function getIblockIds($type)
+    {
+        $return = [];
+        $iType = Config::getInstance()->get('CATALOG_TYPE');
+        try {
+            Loader::includeModule('iblock');
+        } catch (LoaderException $e) {
+            echo $e->getMessage();
+        }
+
+        $rs = \Bitrix\Iblock\IblockTable::getList(
+            [
+                'select' => [
+                    'ID',
+                    'NAME',
+                ],
+                'filter' => [
+                    'ACTIVE' => 'Y',
+                    'IBLOCK_TYPE_ID' => $iType,
+                ],
+            ]
+        );
+        while ($iId = $rs->fetch()) {
+            $return[$iId['ID']] = '['.$iId['ID'].'] '.$iId['NAME'];
+        }
+
+        return $return;
+    }
+
+    public static function getIblockTypes()
+    {
+        $return = [];
+        try {
+            Loader::includeModule('iblock');
+        } catch (LoaderException $e) {
+            echo $e->getMessage();
+        }
+
+        $rs = \Bitrix\Iblock\TypeTable::getList(
+            [
+                'select' => [
+                    'ID',
+                    'LANG_MESSAGE.NAME',
+                ],
+                'filter' => [
+                    'LANG_MESSAGE.LANGUAGE_ID' => LANGUAGE_ID,
+                ],
+            ]
+        );
+        while ($iType = $rs->fetch()) {
+            $return[$iType['ID']] = '['.$iType['ID'].'] '.$iType['IBLOCK_TYPE_LANG_MESSAGE_NAME'];
+        }
+
+        return $return;
+    }
+
+    public static function isJson($string): bool
+    {
+        json_decode($string);
+        return json_last_error() === JSON_ERROR_NONE;
+    }
+
+
+    public static function getIdFromLoginUser($login)
+    {
+        $query = \CUser::GetByLogin($login)->fetch();
+        return $query ? $query['ID'] : null;
+    }
+    public static function getUserGroups(int $userId): array
+    {
+        $return = [];
+        $result = \Bitrix\Main\UserGroupTable::getList(
+            [
+                'filter' => [
+                    'USER_ID'      => $userId,
+                    'GROUP.ACTIVE' => 'Y',
+                ],
+                'select' => ['GROUP_ID']
+            ]
+        );
+
+        while($arGroup = $result->fetch()) {
+            $return[] = $arGroup['GROUP_ID'];
+        }
+
+        return $return;
+    }
+
+    public static function multisortArrayKey(&$array): void
+    {
+        if(is_array($array)) {
+            foreach ($array as &$value) {
+                if (is_array($value)) {
+                    static::multisortArrayKey($value, SORT_NATURAL);
+                }
+            }
+            ksort($array);
+        }
+    }
 }

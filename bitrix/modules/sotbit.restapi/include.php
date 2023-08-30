@@ -5,67 +5,35 @@ declare(strict_types=1);
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity\DataManager;
-use Sotbit\RestAPI\Core\Config;
+use Sotbit\RestAPI\Config\Config;
 
 Loc::loadMessages(__FILE__);
 global $DB;
 
 class SotbitRestAPI
 {
-    const MODULE_ID = "sotbit.restapi";
-    const DEFAULT_PATH = "sotbit_restapi";
-    static private $demo;
-
-    /**
-     * set demo
-     */
-    private static function setDemo()
-    {
-        self::$demo = Loader::includeSharewareModule(self::MODULE_ID);
-    }
-
-    /**
-     * @return bool
-     */
-    public static function isDemoEnd()
-    {
-        if(is_null(self::$demo)) {
-            self::setDemo();
-        }
-
-        return self::$demo === 0 || self::$demo === 3;
-    }
-
-    /**
-     * @return int
-     */
-    public static function getDemo()
-    {
-        if(is_null(self::$demo)) {
-            self::setDemo();
-        }
-
-        return self::$demo;
-    }
+    public const MODULE_ID = "sotbit.restapi";
+    public const DEFAULT_PATH = "sotbit_restapi";
+    public const B2BMOBILE_MODULE_ID = "sotbit.b2bmobile";
 
     public static function isModuleActive(): bool
     {
-        return Config::isModuleActive();
+        return Config::getInstance()->isModuleActive();
     }
 
     public static function isDebug(): bool
     {
-        return Config::isDebug();
+        return Config::getInstance()->isDebug();
     }
 
     public static function isLog(): bool
     {
-        return Config::isLog();
+        return Config::getInstance()->isLog();
     }
 
     public static function getRouteMainPath(): string
     {
-        return Config::getRouteMainPath();
+        return Config::getInstance()->getRouteMainPath();
     }
 }
 

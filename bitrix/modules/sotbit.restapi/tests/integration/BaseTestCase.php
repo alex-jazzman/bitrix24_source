@@ -9,7 +9,7 @@ use Slim\Http\Request;
 use Slim\Http\Response;
 use Slim\Http\Environment;
 use Psr\Http\Message\ResponseInterface;
-use Sotbit\RestAPI\Core\Config;
+use Sotbit\RestAPI\Config\Config;
 
 /**
  * Class BaseTestCase
@@ -20,8 +20,38 @@ use Sotbit\RestAPI\Core\Config;
  */
 class BaseTestCase extends \PHPUnit\Framework\TestCase
 {
+    public const VERSION_API = 'v1';
+
     public static string $jwt = '';
     public static int $userId = 0;
+
+    /**
+     * Isset available catalog
+     *
+     * @var int
+     */
+    protected static int $catalog = 0;
+
+    /**
+     * Isset available section in catalog
+     *
+     * @var int
+     */
+    protected static int $section = 0;
+
+    /**
+     * Isset available product in catalog
+     *
+     * @var int
+     */
+    protected static int $product = 0;
+
+    /**
+     * Isset available ticket in support
+     *
+     * @var int
+     */
+    protected static int $ticket = 0;
 
     protected $backupGlobalsBlacklist = ['DB'];
 
@@ -40,8 +70,15 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
         array $requestData = null,
         bool $isAuth = true
     ): ResponseInterface {
+        global $argv, $argc;
+
         // From config module
         $requestUri = \SotbitRestAPI::getRouteMainPath().$requestUri;
+
+        if($argv[4]) {
+            $requestUri .= '?setting='.$argv[4];
+        }
+
 
         $environment = Environment::mock(
             [
@@ -66,8 +103,8 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
 
         $container = $app->getContainer();
 
+        require __DIR__.'/../../app/events.php';
         require __DIR__.'/../../app/dependencies.php';
-        require __DIR__.'/../../app/services.php';
         require __DIR__.'/../../app/repositories.php';
         require __DIR__.'/../../app/routes.php';
 
@@ -78,7 +115,7 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
     {
         $response = $this->runApp(
             'GET',
-            '/v1',
+            '/'.self::VERSION_API,
             null,
             false
         );
@@ -103,7 +140,7 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
     {
         $response = $this->runApp(
             'POST',
-            '/v1',
+            '/'.self::VERSION_API,
             null,
             false
         );
@@ -114,5 +151,11 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
         $this->assertEquals('application/problem+json', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('error', $result);
         $this->assertStringNotContainsString('success', $result);
+    }
+
+    public function getJson(ResponseInterface $response) {
+        $result = (string) $response->getBody();
+        $this->assertJson($result);
+        return json_decode($result, true, 512, JSON_THROW_ON_ERROR);
     }
 }

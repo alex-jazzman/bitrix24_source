@@ -30,7 +30,7 @@ $moduleId = 'sotbit.restapi';
 	.data-collection-wrapper
 	{
 		display:flex;
-		justify-content:space-between;
+		justify-content: flex-start;
 	}
 
 	.data-collection-left
@@ -39,6 +39,7 @@ $moduleId = 'sotbit.restapi';
 	}
 	.data-collection-right
 	{
+        align-self: center;
 		border:1px solid #535b6b;
 		border-radius:3px;
 		width:410px;
@@ -66,11 +67,13 @@ $moduleId = 'sotbit.restapi';
 		font-family:'Open Sans';
 		font-size:13px;
 		color:#7f848f;
+        margin-bottom: 6px;
 	}
 
 	.data-collection-wrapper .wizard-field
 	{
 		width:calc(100% - 30px);
+        margin-top: 6px !important;
 	}
 
 
@@ -132,11 +135,10 @@ $moduleId = 'sotbit.restapi';
 		height: 41px!important;
 		outline: none!important;
 		padding: 0 15px!important;
-		width: 558px!important;
 	}
 	.wizard-input-form-block
 	{
-		margin-bottom:30px;
+		margin-bottom:16px;
 	}
 	.error-message
 	{
@@ -215,31 +217,35 @@ $moduleId = 'sotbit.restapi';
 				<label for="dataCollectionName" class="wizard-input-title"><?=GetMessage("wiz_datacollection_name")?></label><br>
 				<input type="text" name="Name" value="" class="wizard-field" id="dataCollectionName">
 			</div>
-			
+
 			<div class="wizard-input-form-block">
 				<label for="dataCollectionEmail" class="wizard-input-title"><?=GetMessage("wiz_datacollection_email")?></label><br>
 				<input type="email" name="Email" value="" class="wizard-field" id="dataCollectionEmail">
 			</div>
-			
+
 			<div class="wizard-input-form-block">
 				<label for="dataCollectionPhone" class="wizard-input-title"><?=GetMessage("wiz_datacollection_phone")?></label><br>
 				<input type="tel" name="Phone" value="" class="wizard-field" id="dataCollectionPhone" pattern="^[0-9
 				()+\s]+$">
 			</div>
+            <div class="wizard-input-form-block">
+                <label for="dataCollectionSite" class="wizard-input-title"><?=GetMessage("wiz_datacollection_site")?></label><br>
+                <input type="tel" name="Site" value="<?=$_SERVER['SERVER_NAME'] ?: $_SERVER['HTTP_HOST']?>" class="wizard-field" id="dataCollectionSite">
+			</div>
 			<div class="data-collection-left__bottom-text"><?=GetMessage("wiz_datacollection_bottom_text")?></div>
+            <input type="button" name="" onclick="validate(this.form)" value="<?echo GetMessage("APPLY"); ?>">
+
 		</div>
 		<div class="data-collection-right">
 			<div class="data-collection-right__avatar">
 				<img class="data-collection-right__avatar-img" src="/bitrix/themes/.default/<?=$moduleId?>/images/manager.png">
 			</div>
-			<div class="data-collection-right__personal-manager"><?=GetMessage("wiz_datacollection_personal_manager")?></div>
-			<div class="data-collection-right__personal-manager-name"><?=GetMessage("wiz_datacollection_personal_manager_name")?></div>
-			<ul class="data-collection-right__plusses">
+            <div class="data-collection-right__personal-manager-name"><?=GetMessage("wiz_datacollection_personal_manager")?></div>
+            <ul class="data-collection-right__plusses">
 				<li><?=GetMessage("wiz_datacollection_plus1")?></li>
 				<li><?=GetMessage("wiz_datacollection_plus2")?></li>
 				<li><?=GetMessage("wiz_datacollection_plus3")?></li>
 			</ul>
 		</div>
 	</div>
-	<input type="button" name="" onclick="validate(this.form)" value="<?echo GetMessage("APPLY"); ?>">
 <form>

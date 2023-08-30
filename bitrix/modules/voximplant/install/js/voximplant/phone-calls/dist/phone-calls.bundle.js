@@ -7988,7 +7988,7 @@ this.BX = this.BX || {};
 	      }
 	      this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_ONLINE'));
 	      this.callView.setUiState(UiState.connected);
-	      if (this.isCallTransfer) {
+	      if (this.phoneTransferCallId !== '') {
 	        this.phoneCommand('cancelTransfer', {
 	          'CALL_ID': this.phoneTransferCallId
 	        });
@@ -8002,9 +8002,6 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "errorInviteTransfer",
 	    value: function errorInviteTransfer(code, reason) {
-	      if (!this.isCallTransfer) {
-	        return false;
-	      }
 	      if (code == '403' || code == '410' || code == '486') {
 	        this.callView.setStatusText(main_core.Loc.getMessage('IM_M_CALL_ST_TRANSFER_' + code));
 	      } else {

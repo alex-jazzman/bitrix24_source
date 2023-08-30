@@ -27,7 +27,8 @@ class SupportRepository extends BaseRepository
     public const DICTIONARY_MARK = 'MARK';
 
     public const UPLOAD_DIR = '/upload/';
-    public const IMAGE_PREVIEW = 100;
+
+    public $user;
 
     /**
      * SupportRepository constructor.
@@ -41,6 +42,8 @@ class SupportRepository extends BaseRepository
         if(!Loader::includeModule("support")) {
             throw new SupportException(l::get('ERROR_MODULE_SUPPORT'), StatusCode::HTTP_BAD_REQUEST);
         }
+
+        $this->user = new UserRepository();
     }
 
     /**
@@ -121,6 +124,8 @@ class SupportRepository extends BaseRepository
 
         if($query->NavRecordCount) {
             while($ticket = $query->NavNext()) {
+                $ticket['OWNER_USER_ID_PHOTO'] = $this->getUserPhoto((int)$ticket['OWNER_USER_ID']);
+
                 $data[$ticket['ID']] = $ticket;
             }
         }
@@ -166,6 +171,8 @@ class SupportRepository extends BaseRepository
         if(!$ticket) {
             throw new SupportException(l::get('ERROR_SUPPORT_TICKET_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
         }
+
+        $ticket['OWNER_USER_ID_PHOTO'] = $this->getUserPhoto((int)$ticket['OWNER_USER_ID']);
 
         return $ticket;
     }
@@ -308,6 +315,9 @@ class SupportRepository extends BaseRepository
                 }
             }
 
+            // user photo
+            $message['OWNER_USER_ID_PHOTO'] = $this->getUserPhoto((int)$message['OWNER_USER_ID']);
+
             $data[$message['ID']] = $message;
         }
 
@@ -397,6 +407,8 @@ class SupportRepository extends BaseRepository
             }
         }
 
+        // user photo
+        $result['OWNER_USER_ID_PHOTO'] = $this->getUserPhoto((int)$result['OWNER_USER_ID']);
 
         return $result;
     }
@@ -753,6 +765,17 @@ class SupportRepository extends BaseRepository
         }
 
         return $result;
+    }
+
+    public function getUserPhoto(int $id)
+    {
+        $src = null;
+        if($id) {
+            $src = $this->user->getUserAvatarSrc($id);
+            $src = empty($src) ? null : $src;
+        }
+
+        return $src;
     }
 
 }

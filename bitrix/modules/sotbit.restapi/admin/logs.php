@@ -7,7 +7,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Sotbit\RestAPI\Model\LogTable;
-use Sotbit\RestAPI\Core\Config;
+use Sotbit\RestAPI\Config\Config;
 use Sotbit\RestAPI\Core\Helper;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -178,7 +178,7 @@ $objectList->CheckListMode();
 $oFilter = new CAdminFilter($tableName.'_filter', $fields);
 require_once $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_after.php';
 
-if(!Config::isLog()) {
+if(!Config::getInstance()->isLog()) {
     echo Helper::error(Loc::getMessage($moduleId."_LOG_IS_DISABLE"));
 }
 

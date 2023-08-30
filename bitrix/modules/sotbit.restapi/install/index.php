@@ -10,9 +10,6 @@ use Sotbit\RestAPI\Core;
 
 Loc::loadMessages(__FILE__);
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client_partner.php");
-
 Class sotbit_restapi extends CModule {
     const MODULE_ID = 'sotbit.restapi';
     public $MODULE_ID = 'sotbit.restapi';
@@ -22,6 +19,9 @@ Class sotbit_restapi extends CModule {
     public $MODULE_DESCRIPTION;
     public $MODULE_CSS;
     public $strError = '';
+    public $db;
+    public $request;
+    public $tables;
 
     public function __construct() {
         $arModuleVersion = array();
@@ -32,20 +32,25 @@ Class sotbit_restapi extends CModule {
         $this->MODULE_DESCRIPTION   = Loc::getMessage("SOTBIT_RESTAPI_MODULE_DESC");
         $this->PARTNER_NAME         = Loc::getMessage("SOTBIT_RESTAPI_PARTNER_NAME");
         $this->PARTNER_URI          = Loc::getMessage("SOTBIT_RESTAPI_PARTNER_URI");
+
+        $this->db = Application::getConnection();
+        $this->request = Application::getInstance()->getContext()->getRequest();
+        $this->tables = [
+            Model\LogTable::class
+        ];
     }
 
     public function DoInstall() {
         global $APPLICATION;
         $this->InstallFiles();
-        $request = Application::getInstance()->getContext()->getRequest();
 
-        if($request->get('step') == 1)
+        if($this->request->get('step') == 1)
         {
             RegisterModule(self::MODULE_ID);
             $this->InstallDB();
             $this->InstallEvents();
 
-            $this->sendMetric($request);
+            $this->sendMetric($this->request);
         }
         else
         {
@@ -110,20 +115,20 @@ Class sotbit_restapi extends CModule {
 
     public function InstallDB($arParams = array()) {
         Loader::includeModule(self::MODULE_ID);
-        $db = Application::getConnection();
 
         // Options
         Option::set(self::MODULE_ID, "ACTIVE", "Y");
         Option::set(self::MODULE_ID, "DEBUG", "N");
         Option::set(self::MODULE_ID, "URL", "/sotbit_api");
-        Option::set(self::MODULE_ID, "SECRET_KEY", Core\Helper::generateSecretKey());
+        Option::set(self::MODULE_ID, "SECRET_KEY", $this->generateSecretKey());
         Option::set(self::MODULE_ID, "TOKEN_EXPIRE", 7 * 24 * 60 * 60);
 
         // Tables
-        $logTable = Model\LogTable::getEntity();
-
-        if(!$db->isTableExists($logTable->getDBTableName())) {
-            $logTable->createDbTable();
+        foreach($this->tables as $class) {
+            $classEntity = $class::getEntity();
+            if(!$this->db->isTableExists($classEntity->getDBTableName())) {
+                $classEntity->createDbTable();
+            }
         }
 
         return true;
@@ -131,12 +136,13 @@ Class sotbit_restapi extends CModule {
 
     public function UnInstallDB($arParams = array()) {
         Loader::includeModule(self::MODULE_ID);
-        $db = Application::getConnection();
 
-        $logTable = Model\LogTable::getEntity();
-
-        if($db->isTableExists($logTable->getDBTableName())) {
-            $db->dropTable($logTable->getDBTableName());
+        // Tables
+        foreach($this->tables as $class) {
+            $classEntity = $class::getEntity();
+            if($this->db->isTableExists($classEntity->getDBTableName())) {
+                $this->db->dropTable($classEntity->getDBTableName());
+            }
         }
 
         return true;
@@ -148,25 +154,14 @@ Class sotbit_restapi extends CModule {
      */
     public function sendMetric($request)
     {
-        if($_SERVER['SERVER_NAME']){
-            $site = $_SERVER['SERVER_NAME'];
-        }
-        elseif($_SERVER['HTTP_HOST']){
-            $site = $_SERVER['HTTP_HOST'];
-        }
-        $str = '';
-        $arUpdateList = \CUpdateClient::GetUpdatesList($str);
         $content = array(
             'ACTION' => 'ADD',
-            'SITE' => $site,
-            'KEY' => md5("BITRIX".\CUpdateClientPartner::GetLicenseKey()."LICENCE"),
-            'LICENSE' => $arUpdateList["CLIENT"][0]["@"]["LICENSE"],
+            'KEY' => md5("BITRIX". \Bitrix\Main\Application::getInstance()->getLicense()->getKey() . "LICENCE"),
             'MODULE' => self::MODULE_ID,
             'NAME' => $request->get('Name'),
             'EMAIL' => $request->get('Email'),
             'PHONE' => $request->get('Phone'),
-            'BITRIX_DATE_FROM' => $arUpdateList["CLIENT"][0]["@"]["DATE_FROM"],
-            'BITRIX_DATE_TO' => $arUpdateList["CLIENT"][0]["@"]["DATE_TO"],
+            'SITE' => $request->get('Site'),
         );
 
         $jsonContent = json_encode($content);
@@ -186,5 +181,20 @@ Class sotbit_restapi extends CModule {
             $context = stream_context_create($options);
             $answer =  file_get_contents('https://www.sotbit.ru:443/api/datacollection/index.php', 0, $context);
         }
+    }
+
+    public function generateSecretKey(): string
+    {
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            random_int(0, 0xffff),
+            random_int(0, 0xffff),
+            random_int(0, 0xffff),
+            random_int(0, 0x0fff) | 0x4000,
+            random_int(0, 0x3fff) | 0x8000,
+            random_int(0, 0xffff),
+            random_int(0, 0xffff),
+            random_int(0, 0xffff)
+        );
     }
 }

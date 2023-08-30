@@ -6,7 +6,6 @@ use Sotbit\RestAPI\Handler\ErrorHandler;
 use Sotbit\RestAPI\Handler\PhpErrorHandler;
 use Sotbit\RestAPI\Handler\NotFoundErrorHandler;
 use Sotbit\RestAPI\Handler\NotAllowedErrorHandler;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Slim\HttpCache\CacheProvider;
 use Sotbit\RestAPI\Core\Helper;
 
@@ -21,15 +20,6 @@ $container['cache'] = static function() {
     return new CacheProvider();
 };
 
-/**
- * Events
- *
- * @link https://symfony.com/doc/current/components/event_dispatcher.html
- * @return EventDispatcher
- */
-$container['event_dispatcher'] = static function(): EventDispatcher {
-    return new EventDispatcher();
-};
 
 /**
  * @return ErrorHandler

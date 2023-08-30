@@ -14,6 +14,7 @@ use const PHP_SAPI;
 use const PHP_VERSION;
 use function array_diff;
 use function array_map;
+use function array_merge;
 use function assert;
 use function class_exists;
 use function count;
@@ -26,6 +27,7 @@ use function is_string;
 use function mt_srand;
 use function range;
 use function realpath;
+use function sort;
 use function sprintf;
 use function time;
 use PHPUnit\Framework\Exception;
@@ -86,16 +88,9 @@ use SebastianBergmann\Timer\Timer;
  */
 final class TestRunner extends BaseTestRunner
 {
-    public const SUCCESS_EXIT = 0;
-
-    public const FAILURE_EXIT = 1;
-
+    public const SUCCESS_EXIT   = 0;
+    public const FAILURE_EXIT   = 1;
     public const EXCEPTION_EXIT = 2;
-
-    /**
-     * @var bool
-     */
-    private static $versionStringPrinted = false;
 
     /**
      * @var CodeCoverageFilter
@@ -150,6 +145,8 @@ final class TestRunner extends BaseTestRunner
         }
 
         $this->handleConfiguration($arguments);
+
+        $warnings = array_merge($warnings, $arguments['warnings']);
 
         if (is_int($arguments['columns']) && $arguments['columns'] < 16) {
             $arguments['columns']   = 16;
@@ -245,8 +242,8 @@ final class TestRunner extends BaseTestRunner
 
         unset($listener, $listenerNeeded);
 
-        if (!$arguments['convertDeprecationsToExceptions']) {
-            $result->convertDeprecationsToExceptions(false);
+        if ($arguments['convertDeprecationsToExceptions']) {
+            $result->convertDeprecationsToExceptions(true);
         }
 
         if (!$arguments['convertErrorsToExceptions']) {
@@ -309,7 +306,7 @@ final class TestRunner extends BaseTestRunner
                     } catch (ReflectionException $e) {
                         throw new Exception(
                             $e->getMessage(),
-                            (int) $e->getCode(),
+                            $e->getCode(),
                             $e
                         );
                     }
@@ -327,11 +324,7 @@ final class TestRunner extends BaseTestRunner
             $this->printer->setShowProgressAnimation(!$arguments['noInteraction']);
         }
 
-        $this->printer->write(
-            Version::getVersionString() . "\n"
-        );
-
-        self::$versionStringPrinted = true;
+        $this->write(Version::getVersionString() . "\n");
 
         foreach ($arguments['listeners'] as $listener) {
             $result->addListener($listener);
@@ -577,6 +570,9 @@ final class TestRunner extends BaseTestRunner
             $warnings[] = 'Directives printerClass and testdox are mutually exclusive';
         }
 
+        $warnings = array_merge($warnings, $suite->warnings());
+        sort($warnings);
+
         foreach ($warnings as $warning) {
             $this->writeMessage('Warning', $warning);
         }
@@ -618,7 +614,7 @@ final class TestRunner extends BaseTestRunner
             exit(self::SUCCESS_EXIT);
         }
 
-        $this->printer->write("\n");
+        $this->write("\n");
 
         if (isset($codeCoverage)) {
             $result->setCodeCoverage($codeCoverage);
@@ -650,18 +646,6 @@ final class TestRunner extends BaseTestRunner
             if ($extension instanceof BeforeFirstTestHook) {
                 $extension->executeBeforeFirstTest();
             }
-        }
-
-        $testSuiteWarningsPrinted = false;
-
-        foreach ($suite->warnings() as $warning) {
-            $this->writeMessage('Warning', $warning);
-
-            $testSuiteWarningsPrinted = true;
-        }
-
-        if ($testSuiteWarningsPrinted) {
-            $this->write(PHP_EOL);
         }
 
         $suite->run($result);
@@ -889,6 +873,10 @@ final class TestRunner extends BaseTestRunner
             $arguments['configurationObject'] = (new Loader)->load($arguments['configuration']);
         }
 
+        if (!isset($arguments['warnings'])) {
+            $arguments['warnings'] = [];
+        }
+
         $arguments['debug']     = $arguments['debug'] ?? false;
         $arguments['filter']    = $arguments['filter'] ?? false;
         $arguments['listeners'] = $arguments['listeners'] ?? [];
@@ -1018,17 +1006,19 @@ final class TestRunner extends BaseTestRunner
                 $arguments['excludeGroups'] = array_diff($groupConfiguration->exclude()->asArrayOfStrings(), $groupCliArgs);
             }
 
-            $extensionHandler = new ExtensionHandler;
+            if (!isset($this->arguments['noExtensions'])) {
+                $extensionHandler = new ExtensionHandler;
 
-            foreach ($arguments['configurationObject']->extensions() as $extension) {
-                $extensionHandler->registerExtension($extension, $this);
+                foreach ($arguments['configurationObject']->extensions() as $extension) {
+                    $extensionHandler->registerExtension($extension, $this);
+                }
+
+                foreach ($arguments['configurationObject']->listeners() as $listener) {
+                    $arguments['listeners'][] = $extensionHandler->createTestListenerInstance($listener);
+                }
+
+                unset($extensionHandler);
             }
-
-            foreach ($arguments['configurationObject']->listeners() as $listener) {
-                $arguments['listeners'][] = $extensionHandler->createTestListenerInstance($listener);
-            }
-
-            unset($extensionHandler);
 
             foreach ($arguments['unavailableExtensions'] as $extension) {
                 $arguments['warnings'][] = sprintf(
@@ -1094,7 +1084,7 @@ final class TestRunner extends BaseTestRunner
         $arguments['cacheResult']                                     = $arguments['cacheResult'] ?? true;
         $arguments['colors']                                          = $arguments['colors'] ?? DefaultResultPrinter::COLOR_DEFAULT;
         $arguments['columns']                                         = $arguments['columns'] ?? 80;
-        $arguments['convertDeprecationsToExceptions']                 = $arguments['convertDeprecationsToExceptions'] ?? true;
+        $arguments['convertDeprecationsToExceptions']                 = $arguments['convertDeprecationsToExceptions'] ?? false;
         $arguments['convertErrorsToExceptions']                       = $arguments['convertErrorsToExceptions'] ?? true;
         $arguments['convertNoticesToExceptions']                      = $arguments['convertNoticesToExceptions'] ?? true;
         $arguments['convertWarningsToExceptions']                     = $arguments['convertWarningsToExceptions'] ?? true;
@@ -1135,6 +1125,11 @@ final class TestRunner extends BaseTestRunner
         $arguments['timeoutForMediumTests']                           = $arguments['timeoutForMediumTests'] ?? 10;
         $arguments['timeoutForSmallTests']                            = $arguments['timeoutForSmallTests'] ?? 1;
         $arguments['verbose']                                         = $arguments['verbose'] ?? false;
+
+        if ($arguments['reportLowUpperBound'] > $arguments['reportHighLowerBound']) {
+            $arguments['reportLowUpperBound']  = 50;
+            $arguments['reportHighLowerBound'] = 90;
+        }
     }
 
     private function processSuiteFilters(TestSuite $suite, array $arguments): void
@@ -1167,7 +1162,8 @@ final class TestRunner extends BaseTestRunner
             $filterFactory->addFilter(
                 new ReflectionClass(IncludeGroupFilterIterator::class),
                 array_map(
-                    static function (string $name): string {
+                    static function (string $name): string
+                    {
                         return '__phpunit_covers_' . $name;
                     },
                     $arguments['testsCovering']
@@ -1179,7 +1175,8 @@ final class TestRunner extends BaseTestRunner
             $filterFactory->addFilter(
                 new ReflectionClass(IncludeGroupFilterIterator::class),
                 array_map(
-                    static function (string $name): string {
+                    static function (string $name): string
+                    {
                         return '__phpunit_uses_' . $name;
                     },
                     $arguments['testsUsing']
@@ -1232,7 +1229,7 @@ final class TestRunner extends BaseTestRunner
 
     private function codeCoverageGenerationStart(string $format): void
     {
-        $this->printer->write(
+        $this->write(
             sprintf(
                 "\nGenerating code coverage report in %s format ... ",
                 $format
@@ -1244,7 +1241,7 @@ final class TestRunner extends BaseTestRunner
 
     private function codeCoverageGenerationSucceeded(): void
     {
-        $this->printer->write(
+        $this->write(
             sprintf(
                 "done [%s]\n",
                 $this->timer->stop()->asString()
@@ -1254,7 +1251,7 @@ final class TestRunner extends BaseTestRunner
 
     private function codeCoverageGenerationFailed(\Exception $e): void
     {
-        $this->printer->write(
+        $this->write(
             sprintf(
                 "failed [%s]\n%s\n",
                 $this->timer->stop()->asString(),

@@ -7,7 +7,6 @@ namespace Sotbit\RestAPI\Handler;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Sotbit\RestAPI\Core;
-use Sotbit\RestAPI\Core\Config;
 use Sotbit\RestAPI\Middleware;
 use Sotbit\RestAPI\Localisation as l;
 

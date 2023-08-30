@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Sotbit\RestAPI\Core\Config;
+use Sotbit\RestAPI\Config\Config;
 use Sotbit\RestAPI\Core\Helper;
 use Sotbit\RestAPI\Controller;
 use Sotbit\RestAPI\Middleware;

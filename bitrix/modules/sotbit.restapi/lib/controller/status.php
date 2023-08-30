@@ -51,7 +51,15 @@ class Status extends BaseController
             'SUPPORT get file'                    => 'GET  /v1/support/file/{hash}',
             'SUPPORT filter help'                 => 'https://dev.1c-bitrix.ru/api_help/support/classes/cticket/getmessagelist.php',
             '[?filter]'                           => '`select` => ID,NAME , `filter` =>  filter[USER_ID]=1, `limit` => 10, `page` => 1, `order` => order[ID]=DESC',
-        ];
+
+            'CATALOG get catalog'                 => 'GET  /v1/catalog',
+            'CATALOG get catalog current'         => 'GET  /v1/catalog/[id]',
+            'CATALOG get section all'             => 'GET  /v1/catalog/[id]/section',
+            'CATALOG get section current'         => 'GET  /v1/catalog/[id]/section/[section_id]',
+            'CATALOG get products all'            => 'GET  /v1/catalog/[id]/products',
+            'CATALOG get products current'        => 'GET  /v1/catalog/[id]/products/[products_id]',
+
+            ];
         $message = [
             'router' => $router,
         ];

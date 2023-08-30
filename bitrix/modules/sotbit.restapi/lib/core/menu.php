@@ -8,6 +8,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Sotbit\RestAPI\Config\Config;
 use Sotbit\RestAPI\Localisation as l;
 
 /**
@@ -36,7 +37,7 @@ class Menu
 
         /*$settings = [];
         $develop = [];
-        $sites = Config::getSites();
+        $sites = Config::getInstance()->getSites();
         foreach ($sites as $lid => $name) {
             $settings[$lid] = [
                 "text"  => ' ['.$lid.'] '.$name,
@@ -65,20 +66,20 @@ class Menu
         }
 
         $menu = [];
-        if ($moduleInclude && !\SotbitRestAPI::isDemoEnd()) {
+        if ($moduleInclude) {
             if ($GLOBALS['APPLICATION']->GetGroupRight(\SotbitRestAPI::MODULE_ID)
                 >= 'R'
             ) {
                 $menu = [
                     "section"   => "sotbit_restapi",
                     "menu_id"   => "sotbit_restapi",
-                    "sort"      => 1,
+                    "sort"      => 1000,
                     'id'        => 'restapi',
                     "text"      => l::get('CORE_GLOBAL_MENU_RESTAPI'
                     ),
                     "title"     => l::get('CORE_GLOBAL_MENU_RESTAPI'
                     ),
-                    "icon"      => "adm-submenu-item-link-icon bitrixcloud_menu_icon",
+                    "icon"      => "sotbit_restapi_menu_icon",
                     "page_icon" => "",
                     "items_id"  => "global_menu_sotbit_restapi",
                     "items"     => [

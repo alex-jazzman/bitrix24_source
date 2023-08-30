@@ -2289,7 +2289,7 @@ export class PhoneCallsController
 		this.callView.setStatusText(Loc.getMessage('IM_M_CALL_ST_ONLINE'));
 		this.callView.setUiState(UiState.connected);
 
-		if (this.isCallTransfer)
+		if (this.phoneTransferCallId !== '')
 		{
 			this.phoneCommand('cancelTransfer', {'CALL_ID': this.phoneTransferCallId});
 		}
@@ -2303,11 +2303,6 @@ export class PhoneCallsController
 
 	errorInviteTransfer(code, reason)
 	{
-		if (!this.isCallTransfer)
-		{
-			return false;
-		}
-
 		if (code == '403' || code == '410' || code == '486')
 		{
 			this.callView.setStatusText(Loc.getMessage('IM_M_CALL_ST_TRANSFER_' + code));

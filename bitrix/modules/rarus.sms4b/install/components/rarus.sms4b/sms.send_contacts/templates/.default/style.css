@@ -1,0 +1,119 @@
+.wrap_modul_sms {
+	font: 12px/15px Arial, Tahoma, Verdana, Helvetica, sans-serif;
+	color:#000;
+	margin: 20px 0 40px;
+}
+.wrap_modul_sms a {
+	color: #1122cc !important;
+	text-decoration: underline;
+	border: none;
+}
+.wrap_modul_sms a:hover {
+	text-decoration: none;
+	border: none;
+}
+#demo_form {
+	width: 470px;
+	padding: 15px 15px 10px 20px;
+	position: relative;
+	overflow: hidden;
+	border: 1px solid #fff;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	-moz-box-shadow: 0px 2px 5px 0px #848484;
+	-webkit-box-shadow: 0px 2px 5px 0px #848484;
+	box-shadow: 0px 2px 5px 0px #848484;
+	background-color: #ededed;
+	background-image: -ms-linear-gradient(top, #fafafa, #ededed);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fafafa), to(#ededed));
+	background-image: -webkit-linear-gradient(top, #fafafa, #ededed);
+	background-image: -o-linear-gradient(top, #fafafa, #ededed);
+	background-image: -moz-linear-gradient(top, #fafafa, #ededed);
+	background-image: linear-gradient(top, #fafafa, #ededed);
+	background-image: url('images/demo-form.png') repeat-x 0 0\0/;
+	background-image: url('images/demo-form.png') repeat-x 0 0\9;
+	behavior: url(/bitrix/components/rarus.sms4b/sms.send_contacts/templates/.default/js/PIE.htc);
+}
+#demo_form .title_block {
+	font: 24px/26px Arial;
+}
+#demo_form .work-technology {
+	font-size: 11px;
+	color: #666;
+	margin: 0;
+}
+#demo_form .two-blocks {
+	width: 100%;
+	position: relative;
+	overflow: hidden;
+}
+#demo_form .two-blocks .left-block {
+	width: 232px;
+	float: left;
+}
+#demo_form .two-blocks .right-block {
+	width: 185px;
+	float: right;
+}
+#demo_form input.contact_number {
+	width: 204px;
+	height: 34px;
+	position: relative;
+	margin: 4px 0 17px 0; 
+	padding: 0 12px !important;
+	font-size: 18px !important;
+	line-height: 34px !important;
+	color: #999;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	behavior: url(/bitrix/components/rarus.sms4b/sms.send_contacts/templates/.default/js/PIE.htc);
+}
+#demo_form .send_contacts {
+	width: 230px;
+	height: 34px;
+	display: block;
+	position: relative;
+	text-align: center;
+	padding: 0;
+	margin-bottom: 18px;
+	cursor: pointer;
+	color: #fff;
+	text-shadow: 0px -1px #1d3d06;
+	/* filter: dropshadow(color=#1d3d06, offx=0, offy=-1); */
+	font: 14px/34px Arial !important;
+	border: 1px solid #55752e;
+	border-top-color: #517328;
+	background-image: -ms-linear-gradient(top, #6a9b30, #5c882b);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#6a9b30), to(#5c882b));
+	background-image: -webkit-linear-gradient(top, #6a9b30, #5c882b);
+	background-image: -o-linear-gradient(top, #6a9b30, #5c882b);
+	background-image: -moz-linear-gradient(top, #6a9b30, #5c882b);
+	background-image: linear-gradient(top, #6a9b30, #5c882b);
+	background: url('images/send-contacts.png') repeat-x 0 0\0/;
+	background: url('images/send-contacts.png') repeat-x 0 0\9;
+	-webkit-border-radius: 5px;
+	-moz-border-radius: 5px;
+	border-radius: 5px;
+	behavior: url(/bitrix/components/rarus.sms4b/sms.send_contacts/templates/.default/js/PIE.htc);
+	
+}
+#demo_result{
+	margin-top: 20px;
+	display: none;
+}
+#demo_loader{
+	margin-top: 20px;
+	text-align: center;
+	display: none;
+}
+
+#demo_form .content {
+	width:185px;
+	height:150px;
+	padding:15px 10px 30px 15px;
+	overflow:auto;
+	font-size: 11px;
+	background: url('images/content-modul.png') no-repeat 0 0;
+}

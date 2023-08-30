@@ -1,0 +1,70 @@
+/* basic scrollbar styling */
+/* vertical scrollbar */
+.mCSB_container{
+	width:auto;
+	margin-right:30px;
+	overflow:hidden;
+}
+.mCSB_container.mCS_no_scrollbar{
+	margin-right:0;
+}
+.mCustomScrollBox .mCSB_scrollTools{
+	width:16px;
+	height:100%;
+	top:0;
+	right:0;
+}
+.mCSB_scrollTools .mCSB_draggerContainer{
+	height:100%;
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing:border-box;
+	box-sizing:border-box;
+}
+.mCSB_scrollTools .mCSB_buttonUp+.mCSB_draggerContainer{
+	padding-bottom:40px;
+}
+.mCSB_scrollTools .mCSB_draggerRail{
+	width:7px;
+	height:100%;
+	position: relative;
+	margin:0 0 0 5px;
+	-webkit-border-radius:15px;
+	-moz-border-radius:15px;
+	border-radius:15px;
+	border: 1px solid #cbcbcb;
+	border-left-color: #9c9c9c;
+	border-right-color: #f6f6f6;
+	background: #ccc;
+	-moz-box-shadow: inset -1px 0px 2px 0px #888;
+	-webkit-box-shadow: inset -1px 0px 2px 0px #888;
+	box-shadow: inset -1px 0px 2px 0px #888;
+	-webkit-box-sizing:border-box; 
+	-moz-box-sizing:border-box; 
+	box-sizing:border-box;
+	z-index:3;
+	behavior: url(/bitrix/components/rarus.sms4b/sms.send_contacts/templates/.default/js/PIE.htc);
+}
+.mCSB_scrollTools .mCSB_dragger{
+	width:100%;
+	height:16px;
+	z-index: 4;
+	left: 0;
+}
+.mCSB_scrollTools .mCSB_dragger .mCSB_dragger_bar{
+	width:14px;
+	height:14px;
+	position: relative;
+	margin:0 auto;
+	-webkit-border-radius:16px;
+	-moz-border-radius:16px;
+	border-radius:16px;
+	background-color: #68982f;
+	border: 1px solid #4c6e23;
+	
+	behavior: url(/bitrix/components/rarus.sms4b/sms.send_contacts/templates/.default/js/PIE.htc);
+}
+
+/* content_3 scrollbar */
+.content.mCSB_scrollTools .mCSB_dragger{
+	height:11px;
+}

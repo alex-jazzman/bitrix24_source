@@ -8,7 +8,7 @@ use Slim\Http\Request;
 use Slim\Http\Response;
 use Slim\Http\StatusCode;
 use Sotbit\RestAPI\Controller\BaseController;
-use Sotbit\RestAPI\Core\Config;
+use Sotbit\RestAPI\Config\Config;
 use Sotbit\RestAPI\EventDispatcher\Events\RouteEvent;
 use Sotbit\RestAPI\EventDispatcher\Listeners\OrderListener;
 use Sotbit\RestAPI\Exception\EventException;
@@ -104,8 +104,8 @@ class Router extends BaseController
         $params = [
             'post' => (array)$post,
             'get'  => (array)$request->getQueryParams(),
-            'args' => (array)$args,
-            'user' => (array)$user,
+            'args' => $args,
+            'user' => $user,
         ];
 
         if(!is_callable($args['callable'])) {

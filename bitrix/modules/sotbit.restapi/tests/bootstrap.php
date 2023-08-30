@@ -13,5 +13,6 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.ph
 define('DS', DIRECTORY_SEPARATOR);
 
 define('SR_ROOT_PATH', __DIR__ . DS .'..'.DS.'..'.DS);
-define('SR_CONFIG_PATH', SR_ROOT_PATH.'app'.DS);
-define('SR_CONFIG_CUSTOM_PATH', SR_CONFIG_PATH.DS.'custom'.DS);
+define('SR_APP_PATH', SR_ROOT_PATH.'app'.DS);
+define('SR_APP_CUSTOM_PATH', SR_APP_PATH.'custom'.DS);
+define('SR_CONFIG_PATH', SR_ROOT_PATH.DS.'config'.DS);

@@ -6,9 +6,10 @@ namespace Sotbit\RestAPI\Middleware;
 
 use Slim\Http\Request;
 use Slim\Http\Response;
-use Sotbit\RestAPI\Core\Config;
+use Sotbit\RestAPI\Config\Config;
 use Sotbit\RestAPI\Exception\AuthException;
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Sotbit\RestAPI\Localisation as l;
 
 /**
@@ -53,7 +54,7 @@ abstract class Base
     protected function checkToken(string $token)
     {
         try {
-            $decoded = JWT::decode($token, Config::getSecretKey(), ['HS256']);
+            $decoded = JWT::decode($token, new Key(Config::getInstance()->getInstance()->getSecretKey(), 'HS512'));
             if(is_object($decoded) && isset($decoded->sub)) {
                 return $decoded;
             }
