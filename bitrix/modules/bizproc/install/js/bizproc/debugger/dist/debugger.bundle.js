@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
 (function (exports,main_popup,ui_buttons,ui_buttons_icons,ui_entitySelector,bp_field_type,ui_layoutForm,ui_hint,main_date,main_loader,bizproc_condition,ui_fonts_robotomono,bizproc_automation,bizproc_debugger,pull_client,bizproc_localSettings,main_core_events,main_core,ui_tour,ui_dialogs_messagebox) {
@@ -3345,7 +3346,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return `
 			<ul class="bizproc-debugger-filter-guide-list">
 				<li class="bizproc-debugger-filter-guide-list-item">
-					${Helper.toHtml(main_core.Loc.getMessage('BIZPROC_JS_DEBUGGER_FILTER_TOUR_TEXT_LINE_1'))}
+					${Helper.toHtml(main_core.Loc.getMessage('BIZPROC_JS_DEBUGGER_FILTER_TOUR_TEXT_LINE_1_MSGVER_1'))}
 				</li>
 				<li class="bizproc-debugger-filter-guide-list-item">
 					${Helper.toHtml(main_core.Loc.getMessage('BIZPROC_JS_DEBUGGER_FILTER_TOUR_TEXT_LINE_2'))}

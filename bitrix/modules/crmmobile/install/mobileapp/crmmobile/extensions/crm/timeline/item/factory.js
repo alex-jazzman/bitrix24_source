@@ -4,9 +4,12 @@
 jn.define('crm/timeline/item/factory', (require, exports, module) => {
 	const { TimelineItemCompatible } = require('crm/timeline/item/compatible');
 	const { GenericTimelineItem } = require('crm/timeline/item/generic');
+	const { TimelineSchedulerCommentProvider } = require('crm/timeline/scheduler/providers');
+
 	const {
 		CallActivity,
 		Modification,
+		OpenlineChat,
 	} = require('crm/timeline/item/custom-types');
 
 	/**
@@ -52,11 +55,20 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'CalendarSharingEventConfirmed',
 		'CalendarSharingInvitationSent',
 		'CalendarSharingLinkCopied',
+		'CalendarSharingRuleUpdated',
 		'Activity:TasksTask',
 		'Activity:TasksTaskComment',
 		'TasksTaskCreation',
 		'TasksTaskModification',
+		'StoreDocumentRealization:Modification',
+		'StoreDocumentRealization:Creation',
+		'StoreDocumentConduction:Modification',
 	];
+
+	if (TimelineSchedulerCommentProvider.isSupported())
+	{
+		SupportedTypes.push('Comment');
+	}
 
 	/**
 	 * You can specify custom item class here. It MUST inherit TimelineItemBase.
@@ -65,6 +77,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 	const TypeAliases = {
 		Modification,
 		'Activity:Call': CallActivity,
+		'Activity:OpenLine': OpenlineChat,
 	};
 
 	/**

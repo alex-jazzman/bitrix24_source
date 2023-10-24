@@ -10,6 +10,7 @@ use Bitrix\Crm\Kanban\EntityActivityCounter;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline;
+use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity\AddResult;
 use Bitrix\Main\Error;
@@ -37,6 +38,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 	protected $currentUserID = 0;
 	protected $componentParams = [];
+	protected bool $needPrepareColumns = false;
 
 	public function onPrepareComponentParams($arParams): array
 	{
@@ -322,6 +324,12 @@ class CrmKanbanComponent extends \CBitrixComponent
 				}
 			}
 
+			if ($this->needPrepareColumns)
+			{
+				$this->getColumns(true);
+				$this->needPrepareColumns = false;
+			}
+
 			if ($this->arParams['IS_AJAX'] !== 'Y')
 			{
 				$uri = new Uri($request->getRequestUri());
@@ -349,6 +357,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$this->arResult['CATEGORIES'] = $this->componentParams['CATEGORIES'];
 		$this->arResult['FIELDS_SECTIONS'] = $this->componentParams['FIELDS_SECTIONS'] ?? null;
 		//$this->arResult['STUB'] = $this->getStub(); TODO: исправить, когда по€в€тс€ актуальные тексты
+		$this->arResult['SHOW_ERROR_COUNTER_BY_ACTIVITY_RESPONSIBLE'] = $this->showErrorCounterByActivityResponsible();
 
 		$context = Application::getInstance()->getContext();
 		$request = $context->getRequest();
@@ -1156,7 +1165,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			return $result;
 		}
 
-		$this->getColumns(true);
+		$this->needPrepareColumns = true;
 
 		return $result;
 	}
@@ -1426,7 +1435,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		if ($type === CCrmOwnerType::QuoteName)
 		{
 			return [
-				'title' => Loc::getMessage('CRM_KANBAN_TITLE_QUOTE'),
+				'title' => Loc::getMessage('CRM_KANBAN_TITLE_QUOTE_MSGVER_1'),
 				'description' => Loc::getMessage('CRM_KANBAN_NO_DATA_TEXT')
 			];
 		}
@@ -1435,5 +1444,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'title' => '',
 			'description' => Loc::getMessage('CRM_KANBAN_NO_DATA_TEXT')
 		];
+	}
+
+	private function showErrorCounterByActivityResponsible(): bool
+	{
+		return CounterSettings::getInstance()->useActivityResponsible();
 	}
 }

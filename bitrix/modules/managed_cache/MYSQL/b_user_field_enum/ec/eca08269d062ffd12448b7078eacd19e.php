@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001697790509';
+$dateexpire = '001697794109';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:6:{i:0;a:6:{s:2:"ID";s:3:"372";s:13:"USER_FIELD_ID";s:4:"2215";s:5:"VALUE";s:5:"Accor";s:3:"DEF";s:1:"N";s:4:"SORT";s:1:"0";s:6:"XML_ID";s:32:"937131449bdf4005f41c21056c549901";}i:1;a:6:{s:2:"ID";s:3:"373";s:13:"USER_FIELD_ID";s:4:"2215";s:5:"VALUE";s:8:"Radisson";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"100";s:6:"XML_ID";s:32:"8702d26f5f4432d622596592a9d283e7";}i:2;a:6:{s:2:"ID";s:3:"374";s:13:"USER_FIELD_ID";s:4:"2215";s:5:"VALUE";s:10:"Pomponchik";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"200";s:6:"XML_ID";s:32:"e0cfcb61ec79186d9fbb81993c43ae2a";}i:3;a:6:{s:2:"ID";s:3:"375";s:13:"USER_FIELD_ID";s:4:"2215";s:5:"VALUE";s:8:"Rosinter";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"300";s:6:"XML_ID";s:32:"2302cdcddbcf9f9566bfb36c92cdbd52";}i:4;a:6:{s:2:"ID";s:3:"376";s:13:"USER_FIELD_ID";s:4:"2215";s:5:"VALUE";s:8:"Cinnabon";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"400";s:6:"XML_ID";s:32:"f1abb7c2e6eb81e298cad4e1110d62bb";}i:5;a:6:{s:2:"ID";s:3:"377";s:13:"USER_FIELD_ID";s:4:"2215";s:5:"VALUE";s:15:"Burger King Rus";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"500";s:6:"XML_ID";s:32:"2b1552fe316f04f9af18ef07781de9d4";}}}';
+return true;
+?>

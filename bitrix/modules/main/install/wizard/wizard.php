@@ -499,7 +499,44 @@ class DBTypeStep extends CWizardStep
 		}
 		$this->content .= '<br /><table border="0" class="data-table">';
 
-		$wizard->SetVar("dbType", $wizard->GetDefaultVar("dbType"));
+		$arDBTypes = BXInstallServices::GetDBTypes();
+
+		if (count($arDBTypes) > 1)
+		{
+			$strDBTypes = "";
+			foreach ($arDBTypes as $dbType => $active)
+			{
+				$arParams = ($active ? Array() : Array("disabled" => "disabled"));
+				$strDBTypes .= $this->ShowRadioField("dbType", $dbType, Array("id" => "dbType_".$dbType) + $arParams);
+
+				if ($dbType == "mysql")
+					$dbName = "MySQL";
+				elseif ($dbType == "pgsql")
+					$dbName = "PostgreSQL";
+
+				$strDBTypes .= '<label for="'."dbType_".$dbType.'">&nbsp;'.$dbName.'</label><br>';
+			}
+
+			$this->content .= '
+				<tr>
+					<td colspan="2" class="header">'.InstallGetMessage("INS_DB_SELECTION").'</td>
+				</tr>
+				<tr>
+					<td align="right" valign="top" width="40%">
+						<span style="color:red">*</span>&nbsp;'.InstallGetMessage("INS_DB_PROMT").':<br><small>'.InstallGetMessage("INS_DB_PROMT_ALT").'<br></small>
+					</td>
+					<td valign="top" width="60%">
+						'.$strDBTypes.'
+						<small>'.InstallGetMessage("INS_DB_PROMT_HINT").'<br></small>
+					</td>
+				</tr>';
+		}
+		else
+		{
+			$wizard->SetVar("dbType", $wizard->GetDefaultVar("dbType"));
+		}
+
+		$dbType = $wizard->GetVar("dbType", $useDefault = true);
 
 		$this->content .= '
 			<tr id="utf-row-one">
@@ -994,12 +1031,17 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 		$arDBTypes = BXInstallServices::GetDBTypes();
 		$success = (array_key_exists($dbType, $arDBTypes) && $arDBTypes[$dbType] === true);
 
+		if ($dbType == "mysql")
+			$library = '<a href="https://www.php.net/manual/en/book.mysqli.php" target="_blank">'.InstallGetMessage("SC_MOD_MYSQL").'</a>';
+		elseif ($dbType == "pgsql")
+			$library = '<a href="https://www.php.net/manual/en/book.pgsql.php" target="_blank">PostgreSQL</a>';
+
 		$this->content .= '
 		<tr>
 			<td colspan="3"><b>'.InstallGetMessage("SC_REQUIED_PHP_MODS").'</b></td>
 		</tr>
 		<tr>
-			<td valign="top"><a href="http://www.php.net/manual/en/ref.mysql.php" target="_blank">'.InstallGetMessage("SC_MOD_MYSQL").'</a></td>
+			<td valign="top">'.$library.'</td>
 			<td valign="top">'.InstallGetMessage("SC_SETTED").'</td>
 			<td valign="top">
 			'.(
@@ -1326,9 +1368,7 @@ class CreateDBStep extends CWizardStep
 		$dbType = $wizard->GetVar("dbType");
 
 		$wizard->SetDefaultVar("database", "sitemanager");
-
-		if ($dbType == "mysql")
-			$wizard->SetDefaultVar("host", "localhost");
+		$wizard->SetDefaultVar("host", "localhost");
 	}
 
 	function OnPostForm()
@@ -1421,47 +1461,67 @@ class CreateDBStep extends CWizardStep
 			return;
 		}
 
-		if(extension_loaded('mysqli'))
+		$connectionParameters = array(
+			'className' => '',
+			'host' => $this->dbHost,
+			'database' => $this->dbName,
+			'login' => $this->dbUser,
+			'password' => $this->dbPassword,
+			'options' => 2,
+		);
+
+		if ($this->dbType == 'pgsql')
 		{
-			$dbClassName = "\\Bitrix\\Main\\DB\\MysqliConnection";
-			define("BX_USE_MYSQLI", true);
+			$connectionParameters['className'] = "\\Bitrix\\Main\\DB\\PgsqlConnection";
+			if ($this->utf8)
+				$connectionParameters['charset'] = 'utf8';
+			elseif (LANGUAGE_ID == 'ru')
+				$connectionParameters['charset'] = "win1251";
 		}
 		else
 		{
-			$dbClassName = "\\Bitrix\\Main\\DB\\MysqlConnection";
+			$connectionParameters['className'] = "\\Bitrix\\Main\\DB\\MysqliConnection";
 		}
 
 		$application = \Bitrix\Main\HttpApplication::getInstance();
 		$conPool = $application->getConnectionPool();
 		$conPool->setConnectionParameters(
 			\Bitrix\Main\Data\ConnectionPool::DEFAULT_CONNECTION_NAME,
-			array(
-				'className' => $dbClassName,
-				'host' => $this->dbHost,
-				'database' => $this->dbName,
-				'login' => $this->dbUser,
-				'password' => $this->dbPassword,
-				'options' => 2
-			)
+			$connectionParameters
 		);
 
 		$conPool->useMasterOnly(true);
 
-		if (!$this->CreateMySQL())
+		if ($this->dbType == "mysql" && !$this->CreateMySQL())
 			return;
 
-		if (!$this->CreateAfterConnect())
+		if ($this->dbType == "pgsql" && !$this->CreatePgSQL())
 			return;
 
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/".$this->dbType."/database.php");
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/tools.php");
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/time.php");
+		if ($this->dbType == "mysql" && !$this->CreateAfterConnect())
+			return;
+
 		IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
 
+		\Bitrix\Main\Loader::registerAutoLoadClasses(
+			'main',
+			[
+				'CDatabase' => 'classes/' . $this->dbType . '/database.php',
+				'CDBResult' => 'classes/' . $this->dbType . '/dbresult.php',
+			]
+		);
+
 		global $DB;
-		$DB = new CDatabase;
-		$this->DB =& $DB;
+		try
+		{
+			$DB = new CDatabase();
+			$this->DB = $DB;
+		}
+		catch (\Exception $e)
+		{
+			$this->SetError((string)$e);
+			return false;
+		}
 
 		$DB->DebugToFile = false;
 
@@ -1479,7 +1539,7 @@ class CreateDBStep extends CWizardStep
 		if (!$this->CheckDBOperation())
 			return;
 
-		if (!$this->createSettings())
+		if (!$this->createSettings($connectionParameters))
 			return;
 
 		if (!$this->CreateDBConn())
@@ -1505,6 +1565,176 @@ class CreateDBStep extends CWizardStep
 		}
 
 		return false;
+	}
+
+	function CreatePgSQL()
+	{
+		if (
+			preg_match("/[\\x0\\xFF\\/\\\\\\.]/", $this->dbName)
+			|| preg_match("/\\s$/", $this->dbName)
+			|| strlen($this->dbName) > 63
+		)
+		{
+			$this->SetError(InstallGetMessage("ERR_DATABASE_NAME"));
+			return false;
+		}
+
+		$config = array(
+			'host' => $this->dbHost,
+		);
+		if ($this->createDatabase || $this->createUser)
+		{
+			$config['login'] = $this->rootUser;
+			$config['password'] = $this->rootPassword;
+		}
+		else
+		{
+			$config['login'] = $this->dbUser;
+			$config['password'] = $this->dbPassword;
+			$config['database'] = $this->dbName;
+		}
+
+		$conn = new \Bitrix\Main\DB\PgsqlConnection($config);
+
+		try
+		{
+			$conn->connect();
+			//Check PostgreSQL version
+			$version = $conn->getVersion();
+		}
+		catch(\Bitrix\Main\DB\ConnectionException $e)
+		{
+			$this->SetError(InstallGetMessage("ERR_CONNECT2MYSQL")." ".$e->getDatabaseMessage());
+			return false;
+		}
+
+		if (!BXInstallServices::VersionCompare($version[0], "11.0.0"))
+		{
+			$this->SetError(InstallGetMessage("SC_DB_PGSQL_VERSION_ER"));
+			return false;
+		}
+
+		if ($this->createDatabase)
+		{
+			$dbResult = $conn->query("SELECT datname FROM pg_database WHERE datname = '" . $conn->getSqlHelper()->forSql($this->dbName) . "'");
+			if ($dbResult->fetch())
+			{
+				$this->SetError(str_replace("#DB#", $this->dbName, InstallGetMessage("ERR_EXISTS_DB1")));
+				return false;
+			}
+
+			try
+			{
+				$conn->queryExecute("CREATE DATABASE " . $conn->getSqlHelper()->quote($this->dbName));
+			}
+			catch (\Bitrix\Main\DB\SqlQueryException $e)
+			{
+				$this->SetError(str_replace("#DB#", $this->dbName, InstallGetMessage("ERR_CREATE_DB1")) . ' ' . (string)$e);
+				return false;
+			}
+
+			$config['database'] = $this->dbName;
+			$conn = new \Bitrix\Main\DB\PgsqlConnection($config);
+			try
+			{
+				$conn->queryExecute("CREATE EXTENSION IF NOT EXISTS pgcrypto");
+			}
+			catch (\Bitrix\Main\DB\SqlQueryException $e)
+			{
+				$this->SetError(str_replace("#DB#", $this->dbName, InstallGetMessage("ERR_CREATE_DB1")) . ' ' . (string)$e);
+				return false;
+			}
+		}
+
+		if ($this->dbUser != $this->rootUser)
+		{
+			if ($this->createUser)
+			{
+				$createUser = "create user " . $conn->getSqlHelper()->quote($this->dbUser) ." with password '" . $conn->getSqlHelper()->forSql($this->dbPassword) . "'";
+				try
+				{
+					$conn->queryExecute($createUser);
+				}
+				catch (\Bitrix\Main\DB\SqlQueryException $e)
+				{
+					$this->SetError(InstallGetMessage("ERR_CREATE_USER")." ".$e->getDatabaseMessage());
+					return false;
+				}
+
+			}
+
+			if ($this->createUser || $this->createDatabase)
+			{
+				$grantPrivileges = "grant all privileges on database  " . $conn->getSqlHelper()->quote($this->dbName) ." to " . $conn->getSqlHelper()->quote($this->dbUser);
+				try
+				{
+					$conn->queryExecute($grantPrivileges);
+				}
+				catch (\Bitrix\Main\DB\SqlQueryException $e)
+				{
+					$this->SetError(InstallGetMessage("ERR_GRANT_USER")." ".$e->getDatabaseMessage());
+					return false;
+				}
+			}
+		}
+
+		if (!$this->createDatabase)
+		{
+			$config['login'] = $this->dbUser;
+			$config['password'] = $this->dbPassword;
+			$config['database'] = $this->dbName;
+
+			//Check pgcrypto extention
+			$dbResult = $conn->query("select * from pg_available_extensions where name = 'pgcrypto' and installed_version is not null");
+			if (!$dbResult->fetch())
+			{
+				$this->SetError(InstallGetMessage("SC_DB_PGSQL_PGCRYPTO_ER"));
+				return false;
+			}
+
+			if (defined("DEBUG_MODE") || (isset($_COOKIE["clear_db"]) && $_COOKIE["clear_db"] == "Y") )
+			{
+				$conn = new \Bitrix\Main\DB\PgsqlConnection($config);
+				try
+				{
+					$conn->query("
+						DO \$\$
+						DECLARE
+							mytab RECORD;
+							myfunc RECORD;
+							myseq RECORD;
+							myview RECORD;
+						BEGIN
+							FOR mytab IN (SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = 'public')
+							LOOP
+								EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(mytab.table_name) || ' CASCADE';
+								COMMIT;
+							END LOOP;
+							FOR myfunc IN (SELECT routine_name FROM information_schema.routines WHERE routine_type='FUNCTION' AND specific_schema='public' AND external_language in ('SQL', 'PLPGSQL'))
+							LOOP
+								EXECUTE format('DROP FUNCTION %I.%I', 'public', myfunc.routine_name);
+							END LOOP;
+							FOR myseq IN (SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema='public')
+							LOOP
+								EXECUTE format('DROP SEQUENCE %I.%I', 'public', myseq.sequence_name);
+							END LOOP;
+							FOR myview IN (SELECT viewname FROM pg_catalog.pg_views WHERE schemaname='public')
+							LOOP
+								EXECUTE format('DROP VIEW %I.%I', 'public', myview.viewname);
+							END LOOP;
+						END
+						\$\$
+					");
+				}
+				catch (\Bitrix\Main\DB\SqlQueryException $e)
+				{
+					$this->SetError((string)$e);
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 	function CreateMySQL()
@@ -1535,14 +1765,7 @@ class CreateDBStep extends CWizardStep
 			$config['password'] = $this->dbPassword;
 		}
 
-		if(extension_loaded('mysqli'))
-		{
-			$conn = new \Bitrix\Main\DB\MysqliConnection($config);
-		}
-		else
-		{
-			$conn = new \Bitrix\Main\DB\MysqlConnection($config);
-		}
+		$conn = new \Bitrix\Main\DB\MysqliConnection($config);
 
 		try
 		{
@@ -1671,10 +1894,11 @@ class CreateDBStep extends CWizardStep
 		return true;
 	}
 
-	function createSettings()
+	function createSettings($connectionParameters)
 	{
+		global $arWizardConfig;
 		$filePath = $_SERVER["DOCUMENT_ROOT"]."/bitrix/.settings.php";
-
+		@umask(~(octdec($this->filePermission) | octdec($this->folderPermission)) & 0777);
 		if (!BXInstallServices::CheckDirPath($filePath, octdec($this->folderPermission)))
 		{
 			$this->SetError(str_replace("#ROOT#", "/bitrix/", InstallGetMessage("ERR_C_SAVE_DBCONN")));
@@ -1696,34 +1920,23 @@ class CreateDBStep extends CWizardStep
 
 		$ar["exception_handling"] = array(
 			"value" => array(
-				"debug" => false,
+				"debug" => (isset($arWizardConfig['debug']) && $arWizardConfig['debug'] === 'yes'),
 				"handled_errors_types" => E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR,
 				"exception_errors_types" => E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR,
 				"ignore_silence" => false,
 				"assertion_throws_exception" => true,
 				"assertion_error_type" => E_USER_ERROR,
-				"log" => null,
+				"log" => (isset($arWizardConfig['error_log']) ? [
+					'settings' => [
+					  'file' => $arWizardConfig['error_log'],
+					  'log_size' => 1000000,
+					],
+				 ] : null),
 			),
 			"readonly" => false
 		);
 
-		if(extension_loaded('mysqli'))
-		{
-			$dbClassName = "\\Bitrix\\Main\\DB\\MysqliConnection";
-		}
-		else
-		{
-			$dbClassName = "\\Bitrix\\Main\\DB\\MysqlConnection";
-		}
-
-		$ar['connections']['value']['default'] = array(
-			'className' => $dbClassName,
-			'host' => $this->dbHost,
-			'database' => $this->dbName,
-			'login' => $this->dbUser,
-			'password' => $this->dbPassword,
-			'options' => 2
-		);
+		$ar['connections']['value']['default'] = $connectionParameters;
 
 		$ar['connections']['readonly'] = true;
 
@@ -1750,8 +1963,9 @@ class CreateDBStep extends CWizardStep
 
 	function CreateDBConn()
 	{
+		global $arWizardConfig;
 		$filePath = $_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/php_interface/dbconn.php";
-
+		@umask(~(octdec($this->filePermission) | octdec($this->folderPermission)) & 0777);
 		if (!BXInstallServices::CheckDirPath($filePath, octdec($this->folderPermission)))
 		{
 			$this->SetError(str_replace("#ROOT#", BX_PERSONAL_ROOT."/", InstallGetMessage("ERR_C_SAVE_DBCONN")));
@@ -1760,8 +1974,7 @@ class CreateDBStep extends CWizardStep
 
 		// Various params
 		$fileContent = "<"."?php\n".
-			(extension_loaded('mysqli')? "define(\"BX_USE_MYSQLI\", true);\n": '').
-			"$"."DBDebug = false;\n".
+			"$"."DBDebug = " . (isset($arWizardConfig['debug']) && $arWizardConfig['debug'] === 'yes' ? 'true' : 'false') . ";\n".
 			"$"."DBDebugToFile = false;\n".
 			($this->createDBType=='innodb'?'define("MYSQL_TABLE_TYPE", "INNODB");'."\n":'').
 			"\n".
@@ -1827,6 +2040,12 @@ class CreateDBStep extends CWizardStep
 				"setlocale(LC_ALL, 'ru_RU.CP1251');\n".
 				"setlocale(LC_NUMERIC, 'C');\n".
 				"mb_internal_encoding(\"Windows-1251\");\n";
+		}
+
+		if (isset($arWizardConfig['debug_log']))
+		{
+			$fileContent .= "\n".
+				"define('LOG_FILENAME', '" . $arWizardConfig['debug_log'] . "');\n";
 		}
 
 		if (!$fp = @fopen($filePath, "wb"))
@@ -2004,69 +2223,64 @@ class CreateDBStep extends CWizardStep
 		<table border="0" class="data-table">
 			<tr>
 				<td colspan="2" class="header">'.InstallGetMessage("INS_DATABASE_SETTINGS").'</td>
+			</tr>
+			<tr>
+				<td nowrap align="right" valign="top" width="40%" >
+					<span style="color:red">*</span>&nbsp;'.InstallGetMessage("INS_HOST").'
+				</td>
+				<td width="60%" valign="top">
+					'.$this->ShowInputField("text", "host", Array("size" => "30")).'
+					<br /><small>'.InstallGetMessage("INS_HOST_DESCR").'<br></small>
+				</td>
+			</tr>
+			<tr>
+				<td align="right" valign="top">'.InstallGetMessage("INS_CREATE_USER").'</td>
+				<td valign="top">
+					'.$this->ShowRadioField("create_user", "N", Array("id" => "create_user_N", "onclick" => "NeedRootUser()")).' <label for="create_user_N">'.InstallGetMessage("INS_USER").'</label><br>
+					'.$this->ShowRadioField("create_user", "Y", Array("id" => "create_user_Y", "onclick" => "NeedRootUser()")).' <label for="create_user_Y">'.InstallGetMessage("INS_USER_NEW").'</label>
+				</td>
+			</tr>
+			<tr>
+				<td nowrap align="right" valign="top"><span style="color:red">*</span>&nbsp;'.InstallGetMessage("INS_USERNAME").'</td>
+				<td valign="top">
+					'.$this->ShowInputField("text", "user", Array("size" => "30")).'<br />
+					<small>'.InstallGetMessage("INS_USER_DESCR").'<br></small>
+				</td>
+			</tr>
+			<tr>
+				<td nowrap align="right" valign="top">'.InstallGetMessage("INS_PASSWORD").'</td>
+				<td valign="top">
+					'.$this->ShowInputField("password", "password", Array("size" => "30")).'<br />
+					<small>'.InstallGetMessage("INS_PASSWORD_DESCR").'<br></small>
+				</td>
+			</tr>
+			<tr>
+				<td nowrap align="right" valign="top">'.InstallGetMessage("INS_CREATE_DB").'</td>
+				<td valign="top">
+					'.$this->ShowRadioField("create_database", "N", Array("id" => "create_db_N", "onclick" => "NeedRootUser()")).' <label for=create_db_N>'.InstallGetMessage("INS_DB_EXISTS").'</label><br>
+					'.$this->ShowRadioField("create_database", "Y", Array("id" => "create_db_Y", "onclick" => "NeedRootUser()")).' <label for=create_db_Y>'.InstallGetMessage("INS_DB_NEW").'</label>
+				</td>
+			</tr>
+			<tr>
+				<td nowrap align="right" valign="top">
+					<div id="db_exists"><span style="color:red">*</span>'.InstallGetMessage("INS_DATABASE").'</div>
+					<div id="db_new" style="display:none"><span style="color:red">*</span>'.InstallGetMessage("INS_DATABASE_NEW").'</div>
+				</td>
+				<td valign="top">
+					'.$this->ShowInputField("text", "database", Array("size" => "30")).'<br />
+					<small>'.InstallGetMessage("INS_DATABASE_MY_DESC").'<br></small>
+				</td>
 			</tr>';
-
-		$this->content .= '
-		<tr>
-			<td nowrap align="right" valign="top" width="40%" >
-				<span style="color:red">*</span>&nbsp;'.InstallGetMessage("INS_HOST").'
-			</td>
-			<td width="60%" valign="top">
-				'.$this->ShowInputField("text", "host", Array("size" => "30")).'
-				<br /><small>'.InstallGetMessage("INS_HOST_DESCR").'<br></small>
-			</td>
-		</tr>';
-
-		$this->content .= '
-		<tr>
-			<td align="right" valign="top">'.InstallGetMessage("INS_CREATE_USER").'</td>
-			<td valign="top">
-				'.$this->ShowRadioField("create_user", "N", Array("id" => "create_user_N", "onclick" => "NeedRootUser()")).' <label for="create_user_N">'.InstallGetMessage("INS_USER").'</label><br>
-				'.$this->ShowRadioField("create_user", "Y", Array("id" => "create_user_Y", "onclick" => "NeedRootUser()")).' <label for="create_user_Y">'.InstallGetMessage("INS_USER_NEW").'</label>
-			</td>
-		</tr>';
-
-		$this->content .= '
-		<tr>
-			<td nowrap align="right" valign="top"><span style="color:red">*</span>&nbsp;'.InstallGetMessage("INS_USERNAME").'</td>
-			<td valign="top">
-				'.$this->ShowInputField("text", "user", Array("size" => "30")).'<br />
-				<small>'.InstallGetMessage("INS_USER_DESCR").'<br></small>
-			</td>
-		</tr>
-		<tr>
-			<td nowrap align="right" valign="top">'.InstallGetMessage("INS_PASSWORD").'</td>
-			<td valign="top">
-				'.$this->ShowInputField("password", "password", Array("size" => "30")).'<br />
-				<small>'.InstallGetMessage("INS_PASSWORD_DESCR").'<br></small>
-			</td>
-		</tr>
-		<tr>
-			<td nowrap align="right" valign="top">'.InstallGetMessage("INS_CREATE_DB").'</td>
-			<td valign="top">
-				'.$this->ShowRadioField("create_database", "N", Array("id" => "create_db_N", "onclick" => "NeedRootUser()")).' <label for=create_db_N>'.InstallGetMessage("INS_DB_EXISTS").'</label><br>
-				'.$this->ShowRadioField("create_database", "Y", Array("id" => "create_db_Y", "onclick" => "NeedRootUser()")).' <label for=create_db_Y>'.InstallGetMessage("INS_DB_NEW").'</label>
-			</td>
-		</tr>
-		<tr>
-			<td nowrap align="right" valign="top">
-				<div id="db_exists"><span style="color:red">*</span>'.InstallGetMessage("INS_DATABASE").'</div>
-				<div id="db_new" style="display:none"><span style="color:red">*</span>'.InstallGetMessage("INS_DATABASE_NEW").'</div>
-			</td>
-			<td valign="top">
-				'.$this->ShowInputField("text", "database", Array("size" => "30")).'<br />
-				<small>'.InstallGetMessage("INS_DATABASE_MY_DESC").'<br></small>
-			</td>
-		</tr>';
-
-		$this->content .= '
+		if ($dbType == 'mysql')
+		{
+			$this->content .= '
 			<tr>
 				<td nowrap align="right" valign="top" >'.InstallGetMessage("INS_CREATE_DB_TYPE").'</td>
 				<td valign="top">
 					'.$this->ShowSelectField("create_database_type", Array("" => InstallGetMessage("INS_C_DB_TYPE_STAND"), "innodb" => "Innodb")).'<br>
 				</td>
 			</tr>';
-
+		}
 		$this->content .= '
 			<tr id="line1">
 				<td colspan="2" class="header">'.InstallGetMessage("ADMIN_PARAMS").'</td>
@@ -2087,9 +2301,7 @@ class CreateDBStep extends CWizardStep
 					'.$this->ShowInputField("password", "root_password", Array("size" => "30", "id" => "root_password")).'<br />
 					<small>'.InstallGetMessage("INS_ROOT_PASSWORD_DESCR").'<br></small>
 				</td>
-			</tr>';
-
-		$this->content .= '
+			</tr>
 			<tr>
 				<td colspan="2" class="header">'.InstallGetMessage("INS_ADDITIONAL_PARAMS").'</td>
 			</tr>
@@ -2338,25 +2550,15 @@ class CreateModulesStep extends CWizardStep
 
 	function InstallModule($moduleID, $currentStepStage)
 	{
+		global $DB, $DBHost, $DBLogin, $DBPassword, $DBName, $DBDebug, $DBDebugToFile, $APPLICATION, $USER;
+
 		if ($moduleID == "main")
 		{
-			error_reporting(E_COMPILE_ERROR|E_ERROR|E_CORE_ERROR|E_PARSE);
-			global $DB, $DBHost, $DBLogin, $DBPassword, $DBName, $DBDebug, $DBDebugToFile, $APPLICATION;
-
-			$application = \Bitrix\Main\HttpApplication::getInstance();
-
-			require_once($_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/php_interface/dbconn.php");
+			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/start.php");
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/autoload.php");
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/mysql/database.php");
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/cache.php");
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/module.php");
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/usertype.php");
 		}
 		else
 		{
-			global $DB, $DBHost, $DBLogin, $DBPassword, $DBName, $DBDebug, $DBDebugToFile, $APPLICATION, $USER;
-
 			require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/include.php");
 
 			if ($DB->type == "MYSQL" && defined("MYSQL_TABLE_TYPE") && MYSQL_TABLE_TYPE <> '')

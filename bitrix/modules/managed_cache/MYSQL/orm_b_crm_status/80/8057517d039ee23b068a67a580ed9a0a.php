@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001698053988';
+$dateexpire = '001698057588';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:5:{i:0;a:10:{s:2:"ID";s:1:"1";s:9:"ENTITY_ID";s:6:"STATUS";s:9:"STATUS_ID";s:3:"NEW";s:4:"NAME";s:23:"Не обработан";s:9:"NAME_INIT";s:23:"Не обработан";s:4:"SORT";s:2:"10";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#39a8ef";s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}i:1;a:10:{s:2:"ID";s:2:"92";s:9:"ENTITY_ID";s:6:"STATUS";s:9:"STATUS_ID";s:9:"UC_VKKE2M";s:4:"NAME";s:24:"Взят в работу";s:9:"NAME_INIT";s:0:"";s:4:"SORT";s:2:"10";s:6:"SYSTEM";s:1:"N";s:5:"COLOR";s:7:"#00c4fb";s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}i:2;a:10:{s:2:"ID";s:4:"2305";s:9:"ENTITY_ID";s:6:"STATUS";s:9:"STATUS_ID";s:1:"1";s:4:"NAME";s:23:"Новый статус";s:9:"NAME_INIT";s:0:"";s:4:"SORT";s:2:"20";s:6:"SYSTEM";s:1:"N";s:5:"COLOR";s:7:"#39A8EF";s:9:"SEMANTICS";s:0:"";s:11:"CATEGORY_ID";s:1:"0";}i:3;a:10:{s:2:"ID";s:1:"4";s:9:"ENTITY_ID";s:6:"STATUS";s:9:"STATUS_ID";s:9:"CONVERTED";s:4:"NAME";s:31:"Качественный лид";s:9:"NAME_INIT";s:31:"Качественный лид";s:4:"SORT";s:2:"30";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#7BD500";s:9:"SEMANTICS";s:1:"S";s:11:"CATEGORY_ID";s:1:"0";}i:4;a:10:{s:2:"ID";s:1:"5";s:9:"ENTITY_ID";s:6:"STATUS";s:9:"STATUS_ID";s:4:"JUNK";s:4:"NAME";s:35:"Некачественный лид";s:9:"NAME_INIT";s:35:"Некачественный лид";s:4:"SORT";s:2:"40";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#FF5752";s:9:"SEMANTICS";s:1:"F";s:11:"CATEGORY_ID";s:1:"0";}}}';
+return true;
+?>

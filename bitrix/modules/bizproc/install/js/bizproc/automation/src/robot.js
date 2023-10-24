@@ -1,4 +1,4 @@
-import { Dom, Type, Event, Text, Loc, Runtime } from 'main.core';
+import { Dom, Type, Event, Text, Loc, Runtime, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Document } from './document/document';
 import { Template } from './template';
@@ -8,6 +8,7 @@ import { HelpHint } from './help-hint';
 import { ConditionGroup, Helper } from 'bizproc.automation';
 import { Tracker } from './tracker/tracker'
 import { TrackingStatus } from './tracker/types';
+import { Menu, MenuItem } from 'main.popup';
 
 export class Robot extends EventEmitter
 {
@@ -137,6 +138,7 @@ export class Robot extends EventEmitter
 		{
 			this.#data.Name = Robot.generateName();
 		}
+		this.#data.Activated = !Type.isNil(this.#data.Activated) ? Text.toBoolean(this.#data.Activated) : true;
 
 		this.#delay = new DelayInterval(this.#data.Delay);
 		this.#condition = new ConditionGroup(this.#data.Condition);
@@ -265,6 +267,13 @@ export class Robot extends EventEmitter
 		if (this.#node)
 		{
 			Dom.addClass(this.#node, '--selected');
+
+			const checkboxNode = this.#node.querySelector('input');
+			if (checkboxNode)
+			{
+				checkboxNode.checked = true;
+			}
+
 			this.emit('Robot:selected');
 		}
 	}
@@ -274,6 +283,13 @@ export class Robot extends EventEmitter
 		if (this.#node)
 		{
 			Dom.removeClass(this.#node, '--selected');
+
+			const checkboxNode = this.#node.querySelector('input');
+			if (checkboxNode)
+			{
+				checkboxNode.checked = false;
+			}
+
 			this.emit('Robot:unselected');
 		}
 	}
@@ -281,6 +297,24 @@ export class Robot extends EventEmitter
 	isSelected()
 	{
 		return this.#node && Dom.hasClass(this.#node, '--selected');
+	}
+
+	isActivated(): boolean
+	{
+		return Text.toBoolean(this.#data.Activated);
+	}
+
+	isInvalid(): boolean
+	{
+		return this.#data.viewData?.isInvalid === true;
+	}
+
+	setActivated(activated: boolean): this
+	{
+		this.#data.Activated = Text.toBoolean(activated);
+		this.emit(this.#data.Activated === true ? 'Robot:onAfterActivated' : 'Robot:onAfterDeactivated');
+
+		return this;
 	}
 
 	enableManageMode(isActive: boolean)
@@ -329,27 +363,39 @@ export class Robot extends EventEmitter
 		let wrapperClass = 'bizproc-automation-robot-container-wrapper';
 		let containerClass = 'bizproc-automation-robot-container';
 
-		if (this.#viewMode.isEdit() && this.canEdit())
+		if (this.#viewMode.isEdit() && this.canEdit() && this.#canEditRobot())
 		{
 			wrapperClass += ' bizproc-automation-robot-container-wrapper-draggable';
 		}
+
+		if (this.isActivated() === false)
+		{
+			containerClass += ' --deactivated';
+			wrapperClass += ' --deactivated';
+		}
+
+		if (this.isInvalid())
+		{
+			containerClass += ' --invalid';
+			wrapperClass += ' --invalid';
+		}
+
 		if (this.draft)
 		{
 			containerClass += ' --draft';
 		}
 
 		const targetLabel = Loc.getMessage('BIZPROC_AUTOMATION_CMP_TO');
-		const targetNode = Dom.create("a", {
-			attrs: {
-				className: "bizproc-automation-robot-settings-name " + (this.#viewMode.isView() ? '--mode-view' : ''),
-				title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_AUTOMATICALLY')
-			},
-			text: Loc.getMessage('BIZPROC_AUTOMATION_CMP_AUTOMATICALLY')
-		});
+		const targetNode = Tag.render`
+			<a
+				class="bizproc-automation-robot-settings-name ${(this.#viewMode.isView() ? '--mode-view' : '')}"
+				title="${Loc.getMessage('BIZPROC_AUTOMATION_CMP_AUTOMATICALLY')}"
+			>${Loc.getMessage('BIZPROC_AUTOMATION_CMP_AUTOMATICALLY')}</a>
+		`;
 
 		if (Type.isPlainObject(this.#data.viewData) && this.#data.viewData.responsibleLabel)
 		{
-			let labelText =
+			let labelText = (
 				this.#data.viewData.responsibleLabel
 					.replace('{=Document:ASSIGNED_BY_ID}', Loc.getMessage('BIZPROC_AUTOMATION_CMP_RESPONSIBLE'))
 					.replace('author', Loc.getMessage('BIZPROC_AUTOMATION_CMP_RESPONSIBLE'))
@@ -357,24 +403,24 @@ export class Robot extends EventEmitter
 					.replace(/\{\{~&\:Constant[0-9]+\}\}/, Loc.getMessage('BIZPROC_AUTOMATION_ASK_CONSTANT'))
 					.replace(/\{=Template\:Parameter[0-9]+\}/, Loc.getMessage('BIZPROC_AUTOMATION_ASK_PARAMETER'))
 					.replace(/\{\{~&:\:Parameter[0-9]+\}\}/, Loc.getMessage('BIZPROC_AUTOMATION_ASK_PARAMETER'))
-			;
+			);
 
 			if (labelText.indexOf('{=Document') >= 0)
 			{
-				this.#document.getFields().forEach(field => {
+				this.#document.getFields().forEach((field) => {
 					labelText = labelText.replace(field['SystemExpression'], field['Name']);
 				});
 			}
 
 			if (labelText.indexOf('{=A') >= 0)
 			{
-				this.#template.robots.forEach(robot => {
-					robot.getReturnFieldsDescription().forEach(field => {
+				this.#template.robots.forEach((robot) => {
+					robot.getReturnFieldsDescription().forEach((field) => {
 						if (field['Type'] === 'user')
 						{
 							labelText = labelText.replace(
 								field['SystemExpression'],
-								robot.getTitle() + ': ' + field['Name']
+								robot.getTitle() + ': ' + field['Name'],
 							);
 						}
 					});
@@ -383,14 +429,14 @@ export class Robot extends EventEmitter
 
 			if (labelText.indexOf('{=GlobalVar:') >= 0 && Type.isArrayFilled(this.#template.globalVariables))
 			{
-				this.#template.globalVariables.forEach(variable => {
+				this.#template.globalVariables.forEach((variable) => {
 					labelText = labelText.replace(variable.SystemExpression, variable.Name);
 				});
 			}
 
 			if (labelText.indexOf('{=GlobalConst:') >= 0 && Type.isArrayFilled(this.#template.globalConstants))
 			{
-				this.#template.globalConstants.forEach(constant => {
+				this.#template.globalConstants.forEach((constant) => {
 					labelText = labelText.replace(constant.SystemExpression, constant.Name);
 				});
 			}
@@ -415,42 +461,38 @@ export class Robot extends EventEmitter
 
 		let delayLabel = this.getDelayInterval().format(
 			Loc.getMessage('BIZPROC_AUTOMATION_CMP_AT_ONCE'),
-			this.#document.getFields()
+			this.#document.getFields(),
 		);
 
 		if (this.isExecuteAfterPrevious())
 		{
-			delayLabel = (delayLabel !== Loc.getMessage('BIZPROC_AUTOMATION_CMP_AT_ONCE')) ? delayLabel + ', ' : '';
+			delayLabel = (delayLabel === Loc.getMessage('BIZPROC_AUTOMATION_CMP_AT_ONCE')) ? '' : `${delayLabel}, `;
 			delayLabel += Loc.getMessage('BIZPROC_AUTOMATION_CMP_AFTER_PREVIOUS');
 		}
 
 		if (this.getCondition().items.length > 0)
 		{
-			delayLabel += ', ' + Loc.getMessage('BIZPROC_AUTOMATION_CMP_BY_CONDITION');
+			delayLabel += `, ${Loc.getMessage('BIZPROC_AUTOMATION_CMP_BY_CONDITION')}`;
 		}
 
 		const delayNode = Dom.create(
-			this.#viewMode.isEdit() ? "a" : "span",
+			(this.#canEditRobot()) ? 'a' : 'span',
 			{
 				attrs: {
-					className: this.#viewMode.isEdit() ? 'bizproc-automation-robot-link' : 'bizproc-automation-robot-text',
-					title: delayLabel
+					className: this.#canEditRobot() ? 'bizproc-automation-robot-link' : 'bizproc-automation-robot-text',
+					title: delayLabel,
 				},
 				text: delayLabel,
-			}
+			},
 		);
 
-		const statusNode = Dom.create("div", {
-			attrs: {
-				className: "bizproc-automation-robot-information"
-			}
-		});
+		const statusNode = Tag.render`<div class="bizproc-automation-robot-information"></div>`;
 		this.subscribeOnce('Robot:destroyed', () => {
 			if (HelpHint.isBindedToNode(statusNode))
 			{
 				HelpHint.hideHint();
 			}
-		})
+		});
 
 		switch (this.getLogStatus())
 		{
@@ -483,107 +525,132 @@ export class Robot extends EventEmitter
 		}
 
 		let titleClassName = 'bizproc-automation-robot-title-text';
-		if (this.#viewMode.isEdit() && this.canEdit())
+		if (this.#canEditRobot() && this.canEdit())
 		{
 			titleClassName += ' bizproc-automation-robot-title-text-editable';
 		}
 
-		const div = Dom.create("div", {
-			attrs: {
-				className: containerClass,
-				'data-role': 'robot-container',
-				'data-type': 'item-robot',
-				'data-id': this.getId()
-			},
-			children: [
-				Dom.create("div", {
-					props: {
-						className: "bizproc-automation-robot-container-checkbox"
-					}
-				}),
-				Dom.create('div', {
-					attrs: {
-						className: wrapperClass
-					},
-					children: [
-						Dom.create("div", {
-							attrs: { className: "bizproc-automation-robot-deadline" },
-							children: [delayNode]
-						}),
-						Dom.create("div", {
-							attrs: {
-								className: "bizproc-automation-robot-title"
-							},
-							children: [
-								Dom.create("div", {
-									attrs: {
-										className: titleClassName,
-										title: this.getTitle(),
-									},
-									html: this.clipTitle(this.getTitle()),
-									events: {
-										click: event => {
-											if (this.#viewMode.isEdit() && this.canEdit() && !this.#viewMode.isManage())
-											{
-												this.onTitleEditClick(event);
-											}
-										},
-									}
-								})
-							]
-						}),
-						Dom.create("div", {
-							attrs: { className: "bizproc-automation-robot-settings" },
-							children: [
-								Dom.create("div", {
-									attrs: { className: "bizproc-automation-robot-settings-title" },
-									text: targetLabel + ':'
-								}),
-								targetNode
-							]
-						}),
-						statusNode,
-					]
-				})
-			]
+		const { root: div, titleNode } = Tag.render`
+			<div
+				class="${containerClass}"
+				data-role="robot-container"
+				data-type="item-robot"
+				data-id="${Text.encode(this.getId())}"
+			>
+				${this.#renderCheckbox()}
+				${this.#renderDeactivatedInfoBlock()}
+				${this.#renderInvalidInfoBlock()}
+				<div class="${wrapperClass}">
+					<div class="bizproc-automation-robot-deadline">${delayNode}</div>
+					<div class="bizproc-automation-robot-title">
+						<div ref="titleNode" class="${titleClassName}" title="${Text.encode(this.getTitle())}">
+							${this.clipTitle(this.getTitle())}
+						</div>
+					</div>
+					<div class="bizproc-automation-robot-settings">
+						<div class="bizproc-automation-robot-settings-title">${targetLabel}:</div>
+						${targetNode}
+					</div>
+					${statusNode}
+				</div>
+			</div>
+		`;
+		Event.bind(titleNode, 'click', (event) => {
+			if (this.#canEditRobot() && this.canEdit() && !this.#viewMode.isManage())
+			{
+				this.onTitleEditClick(event);
+			}
 		});
 
-		if (this.canEdit())
+		if (this.canEdit() && this.#canEditRobot())
 		{
 			this.registerItem(div);
 		}
 
 		if (this.#viewMode.isEdit())
 		{
-			const deleteBtn = Dom.create('SPAN', {
-				attrs: {
-					className: 'bizproc-automation-robot-btn-delete'
-				}
-			});
+			const deleteBtn = Tag.render`<span class="bizproc-automation-robot-btn-delete"></span>`;
 			Event.bind(deleteBtn, 'click', this.onDeleteButtonClick.bind(this, deleteBtn));
-			div.lastChild.appendChild(deleteBtn);
+			Dom.append(deleteBtn, div.lastChild);
 
-			const copyBtn = Dom.create('div', {
-				attrs: {
-					className: 'bizproc-automation-robot-btn-copy'
-				},
-				text: Loc.getMessage('BIZPROC_AUTOMATION_CMP_COPY') || 'copy'
-			});
-			Event.bind(copyBtn, 'click', this.onCopyButtonClick.bind(this, copyBtn));
-			div.appendChild(copyBtn);
+			if (this.isInvalid())
+			{
+				const deleteBottomButton = Tag.render`
+					<div class="bizproc-automation-robot-btn-settings">
+						${Loc.getMessage('BIZPROC_AUTOMATION_DELETE_BUTTON_TITLE')}
+					</div>
+				`;
+				Event.bind(deleteBottomButton, 'click', this.onDeleteButtonClick.bind(this, deleteBottomButton));
+				Dom.append(deleteBottomButton, div);
+			}
+			else
+			{
+				const actionsButton = Tag.render`
+					<div class="bizproc-automation-robot-btn-copy">
+						${Loc.getMessage('BIZPROC_AUTOMATION_ACTIONS_BUTTON_TEXT')}
+					</div>
+				`;
+				Event.bind(actionsButton, 'click', this.#onActionsButtonClick.bind(this, actionsButton));
+				Dom.append(actionsButton, div);
 
-			const settingsBtn = Dom.create('div', {
-				attrs: {
-					className: 'bizproc-automation-robot-btn-settings'
-				},
-				text: Loc.getMessage('BIZPROC_AUTOMATION_CMP_EDIT')
-			});
-			Event.bind(div, 'click', this.onSettingsButtonClick.bind(this, div));
-
-			div.appendChild(settingsBtn);
+				const settingsBtn = Tag.render`
+					<div class="bizproc-automation-robot-btn-settings">
+						${Loc.getMessage('BIZPROC_AUTOMATION_CMP_EDIT')}
+					</div>
+				`;
+				Event.bind(div, 'click', this.onSettingsButtonClick.bind(this, div));
+				Dom.append(settingsBtn, div);
+			}
 		}
 
 		return div;
+	}
+
+	#renderCheckbox(): string | HTMLElement
+	{
+		if (this.isInvalid())
+		{
+			return '';
+		}
+
+		return Tag.render`
+			<div class="ui-ctl ui-ctl-inline bizproc-automation-robot-container-checkbox">
+				<input class="ui-ctl-checkbox" type="checkbox" name="name"/>
+			</div>
+		`
+	}
+
+	#canEditRobot(): boolean
+	{
+		return this.#viewMode.isEdit() && !this.isInvalid();
+	}
+
+	#renderDeactivatedInfoBlock()
+	{
+		if (this.#data.Activated === true)
+		{
+			return '';
+		}
+
+		return Tag.render`
+			<div class="bizproc-automation-robot-deactivated">
+				${Loc.getMessage('BIZPROC_AUTOMATION_DEACTIVATED_ROBOT_BLOCK_TITLE')}
+			</div>
+		`;
+	}
+
+	#renderInvalidInfoBlock()
+	{
+		if (!this.isInvalid())
+		{
+			return '';
+		}
+
+		return Tag.render`
+			<div class="bizproc-automation-robot-invalid">
+				${Loc.getMessage('BIZPROC_AUTOMATION_INVALID_REST_ROBOT_BLOCK_TITLE')}
+			</div>
+		`;
 	}
 
 	onDeleteButtonClick(button, event)
@@ -613,6 +680,56 @@ export class Robot extends EventEmitter
 		}
 	}
 
+	#onActionsButtonClick(button, event)
+	{
+		if (!this.canEdit())
+		{
+			event.stopPropagation();
+			HelpHint.showNoPermissionsHint(button);
+
+			return;
+		}
+
+		if (!this.#viewMode.isManage())
+		{
+			event.stopPropagation();
+			const buttonText = (
+				this.#data.Activated
+					? Loc.getMessage('BIZPROC_AUTOMATION_ACTIONS_DEACTIVATE_BUTTON_TEXT')
+					: Loc.getMessage('BIZPROC_AUTOMATION_ACTIONS_ACTIVATE_BUTTON_TEXT')
+			);
+
+			const menu = new Menu({
+				bindElement: button,
+				width: 150,
+				height: 90,
+				autoHide: true,
+				angle: {
+					offset: (Dom.getPosition(button).width / 2) + 23,
+				},
+				items: [
+					{
+						text: Loc.getMessage('BIZPROC_AUTOMATION_ACTIONS_COPY_BUTTON_TEXT'),
+						title: Loc.getMessage('BIZPROC_AUTOMATION_ACTIONS_COPY_BUTTON_TEXT'),
+						onclick: (e: PointerEvent, menuItem: MenuItem) => {
+							this.onCopyButtonClick(menuItem, e);
+							menu.destroy();
+						},
+					},
+					{
+						text: buttonText,
+						title: buttonText,
+						onclick: () => {
+							this.#onDeactivateButtonClick();
+							menu.destroy();
+						},
+					},
+				],
+			});
+			menu.show();
+		}
+	}
+
 	onCopyButtonClick(button, event)
 	{
 		event.stopPropagation();
@@ -634,6 +751,12 @@ export class Robot extends EventEmitter
 
 			Template.copyRobotTo(this.#template, copiedRobot, this.#template.getNextRobot(this));
 		}
+	}
+
+	#onDeactivateButtonClick()
+	{
+		this.setActivated(!this.isActivated());
+		this.reInit();
 	}
 
 	onTitleEditClick(e)
@@ -755,6 +878,7 @@ export class Robot extends EventEmitter
 		if (Type.isPlainObject(data))
 		{
 			this.#data = data;
+			this.#data.Activated = !Type.isNil(this.#data.Activated) ? Text.toBoolean(this.#data.Activated) : true;
 		}
 		else
 		{
@@ -769,6 +893,7 @@ export class Robot extends EventEmitter
 		delete result['DialogContext'];
 		result.Delay = this.#delay.serialize();
 		result.Condition = this.#condition.serialize();
+		result.Activated = result.Activated ? 'Y' : 'N';
 
 		return result;
 	}

@@ -42,6 +42,8 @@ class CAW_microservice_activity extends CModule
 
             if (PHP_VERSION >= self::REQUIRE_PHP_VERSION) {
                     $this->InstallActivity();
+                    $this->InstallComponents();
+                    
                     RegisterModule("CAW.microservice.activity");
                     $APPLICATION->IncludeAdminFile(Loc::getMessage('MAIN_INST_INST_TITLE'),
                         $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/CAW.microservice.activity/install/step.php');
@@ -63,9 +65,32 @@ class CAW_microservice_activity extends CModule
         );
     }
 
+    public function InstallComponents()
+    {
+        CopyDirFiles(
+            $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/' . GetModuleID(__FILE__) . "/install/admin",
+            $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . "/admin",
+            true,
+            true
+        );
+        CopyDirFiles(
+            $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/' . GetModuleID(__FILE__) . '/install/components',
+            $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/components/mywebstor',
+            true,
+            true
+        );
+        return CopyDirFiles(
+        $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/' . GetModuleID(__FILE__) . '/install/initComponents',
+        $_SERVER['DOCUMENT_ROOT'],
+        true,
+        true
+        );
+    }
+
     public function DoUninstall()
     {
         $this->UnInstallActivity();
+        $this->UnInstallComponents();
         $GLOBALS['errors'] = $this->errors;
         UnRegisterModule("CAW.microservice.activity");
         $GLOBALS['APPLICATION']->IncludeAdminFile(Loc::getMessage('MAIN_INST_UNINST_TITLE'),
@@ -76,6 +101,16 @@ class CAW_microservice_activity extends CModule
     public function UnInstallActivity()
     {
         if (DeleteDirFilesEx(BX_ROOT . '/activities/custom/informationwithaddition')) {
+             return true;
+        } else {
+            return false;
+        }
+    
+    }
+
+    public function UnInstallComponents()
+    {
+        if (DeleteDirFilesEx(BX_ROOT . '/components/mywebstor/caw.chang_status_activity') && DeleteDirFilesEx('/CAW') && DeleteDirFilesEx('/admin/CAWSettings.php')) {
              return true;
         } else {
             return false;

@@ -268,6 +268,11 @@ if (!$bInternal)
 		$effectiveFilterFieldIDs[] = 'ACTIVITY_COUNTER';
 	}
 
+	if(!in_array('ACTIVITY_RESPONSIBLE_IDS', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'ACTIVITY_RESPONSIBLE_IDS';
+	}
+
 	Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
 	//endregion
 
@@ -294,8 +299,8 @@ $factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quot
 //region Headers initialization
 $arResult['HEADERS'] = 	array(
 	// default fields
-	array('id' => 'QUOTE_SUMMARY', 'name' => GetMessage('CRM_COLUMN_QUOTE'), 'sort' => 'quote_summary', 'width' => 200, 'default' => true, 'editable' => false),
-	array('id' => 'STATUS_ID', 'name' => GetMessage('CRM_COLUMN_STATUS_ID_MSGVER_1'), 'sort' => 'status_sort', 'width' => 200, 'default' => true, 'prevent_default' => false, 'editable' => array('items' => $arResult['STATUS_LIST_WRITE']), 'type' => 'list'),
+	array('id' => 'QUOTE_SUMMARY', 'name' => GetMessage('CRM_COLUMN_QUOTE_MSGVER_1'), 'sort' => 'quote_summary', 'width' => 200, 'default' => true, 'editable' => false),
+	array('id' => 'STATUS_ID', 'name' => GetMessage('CRM_COLUMN_STATUS_ID_MSGVER_2'), 'sort' => 'status_sort', 'width' => 200, 'default' => true, 'prevent_default' => false, 'editable' => array('items' => $arResult['STATUS_LIST_WRITE']), 'type' => 'list'),
 	array('id' => 'SUM', 'name' => GetMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
 	array('id' => 'ENTITIES_LINKS', 'name' => GetMessage('CRM_COLUMN_ENTITIES_LINKS'), 'default' => true, 'editable' => false),
 	array('id' => 'CLOSEDATE', 'name' => $factory->getFieldCaption('CLOSEDATE'), 'sort' => 'closedate', 'default' => true, 'editable' => true, 'type' => 'date'),
@@ -340,7 +345,7 @@ $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
 $arResult['HEADERS_SECTIONS'] = [
 	[
 		'id' => 'QUOTE',
-		'name' => Loc::getMessage('CRM_COLUMN_QUOTE'),
+		'name' => Loc::getMessage('CRM_COLUMN_QUOTE_MSGVER_1'),
 		'default' => true,
 		'selected' => true,
 	],
@@ -557,8 +562,10 @@ else
 	);
 }
 
+Crm\Filter\FieldsTransform\UserBasedField::applyTransformWrapper($arFilter);
+
 //region Activity Counter Filter
-CCrmEntityHelper::applyCounterFilterWrapper(
+CCrmEntityHelper::applySubQueryBasedFiltersWrapper(
 	\CCrmOwnerType::Quote,
 	$arResult['GRID_ID'],
 	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),

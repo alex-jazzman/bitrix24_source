@@ -16,7 +16,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Web\HttpClient;
-use COffice365OAuthInterface;
 use CSocServOffice365OAuth;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
@@ -233,7 +232,7 @@ class Office365Context implements ContextInterface
 			}
 			else
 			{
-				throw new AuthException('Access token not recived', 401);
+				throw new AuthException('Access token not received', 401);
 			}
 		}
 		else
@@ -251,14 +250,23 @@ class Office365Context implements ContextInterface
 	/**
 	 * @param $userId
 	 *
-	 * @return COffice365OAuthInterface
+	 * @return \COffice365OAuthInterface
 	 */
-	public function prepareAuthEntity($userId): COffice365OAuthInterface
+	public function prepareAuthEntity($userId): \COffice365OAuthInterface
 	{
 		$oauth = new CSocServOffice365OAuth($userId);
 		$oAuthEntity = $oauth->getEntityOAuth();
 		$oAuthEntity->addScope($this->helper::NEED_SCOPE);
 		$oAuthEntity->setUser($this->owner->getId());
+		
+		$tokens = $this->getStorageToken($userId);
+		if ($tokens)
+		{
+			$oAuthEntity->setToken($tokens['OATOKEN']);
+			$oAuthEntity->setAccessTokenExpires($tokens['OATOKEN_EXPIRES']);
+			$oAuthEntity->setRefreshToken($tokens['REFRESH_TOKEN']);
+		}
+		
 		if (!$oAuthEntity->checkAccessToken())
 		{
 			$oAuthEntity->getNewAccessToken(
@@ -269,6 +277,23 @@ class Office365Context implements ContextInterface
 		}
 
 		return $oAuthEntity;
+	}
+	
+	/**
+	 * @param $userId
+	 * @return array|false
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getStorageToken($userId)
+	{
+		return \Bitrix\Socialservices\UserTable::query()
+			->setSelect(['USER_ID', 'EXTERNAL_AUTH_ID', 'OATOKEN', 'OATOKEN_EXPIRES', 'REFRESH_TOKEN'])
+			->where('USER_ID', $userId)
+			->where('EXTERNAL_AUTH_ID', 'Office365')
+			->exec()->fetch()
+		;
 	}
 
 	public function getIncomingManager()

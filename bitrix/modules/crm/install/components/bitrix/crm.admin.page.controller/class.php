@@ -411,12 +411,17 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			 */
 			if ($menuItemId === $catalogListId)
 			{
+				$this->initUrlBuilder();
+				$this->urlBuilder->setIblockId(Crm\Product\Catalog::getDefaultId());
+				$url = $this->urlBuilder->getElementListUrl(-1);
+
 				$this->listMenuItems[$menuItemId] = array_merge(
 					$menuItem,
 					[
 						'PARENT_ID' => 'menu_sale_goods_and_documents',
 						'SORT' => 50,
 						'TEXT' => Loc::getMessage('SHOP_MENU_CATALOG_GOODS'),
+						'URL' => $url,
 					]
 				);
 			}
@@ -1201,6 +1206,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			"menu_sale_bizval",
 			"sale_status",
 			"sale_ps_handler_refund",
+			"cat_agent_scheme",
 		];
 
 		if (!self::checkCatalogReadPermission())

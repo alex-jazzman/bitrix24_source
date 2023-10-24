@@ -68,11 +68,12 @@ final class WorkflowEntity extends Entity
 	private function checkHasAccess($userId)
 	{
 		global $USER;
-
+		
 		if($this->hasAccess === null)
 		{
 			if (Loader::includeModule("bizproc"))
 			{
+			
 				if(
 					$USER->isAdmin()
 					|| $USER->canDoOperation('bitrix24_config')

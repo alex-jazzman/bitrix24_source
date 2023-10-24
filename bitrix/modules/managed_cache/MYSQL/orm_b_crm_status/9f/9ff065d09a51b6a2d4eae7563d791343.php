@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001697798920';
+$dateexpire = '001697802520';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:4:{i:0;a:10:{s:2:"ID";s:2:"31";s:9:"ENTITY_ID";s:9:"CALL_LIST";s:9:"STATUS_ID";s:7:"IN_WORK";s:4:"NAME";s:15:"В работе";s:9:"NAME_INIT";s:15:"В работе";s:4:"SORT";s:2:"10";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";N;s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}i:1;a:10:{s:2:"ID";s:2:"32";s:9:"ENTITY_ID";s:9:"CALL_LIST";s:9:"STATUS_ID";s:7:"SUCCESS";s:4:"NAME";s:14:"Успешно";s:9:"NAME_INIT";s:14:"Успешно";s:4:"SORT";s:2:"20";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";N;s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}i:2;a:10:{s:2:"ID";s:2:"33";s:9:"ENTITY_ID";s:9:"CALL_LIST";s:9:"STATUS_ID";s:12:"WRONG_NUMBER";s:4:"NAME";s:27:"Неверный номер";s:9:"NAME_INIT";s:27:"Неверный номер";s:4:"SORT";s:2:"30";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";N;s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}i:3;a:10:{s:2:"ID";s:2:"34";s:9:"ENTITY_ID";s:9:"CALL_LIST";s:9:"STATUS_ID";s:12:"STOP_CALLING";s:4:"NAME";s:32:"Больше не звонить";s:9:"NAME_INIT";s:32:"Больше не звонить";s:4:"SORT";s:2:"40";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";N;s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}}}';
+return true;
+?>

@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001698053988';
+$dateexpire = '001698057588';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:7:{i:0;a:6:{s:2:"ID";s:3:"365";s:13:"USER_FIELD_ID";s:4:"2214";s:5:"VALUE";s:5:"Hotel";s:3:"DEF";s:1:"N";s:4:"SORT";s:1:"0";s:6:"XML_ID";s:32:"835fce3a932c74005edf7c1904715a4e";}i:1;a:6:{s:2:"ID";s:3:"366";s:13:"USER_FIELD_ID";s:4:"2214";s:5:"VALUE";s:9:"Fast-food";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"100";s:6:"XML_ID";s:32:"bce9bed431c2a354ebcf594ee782dc56";}i:2;a:6:{s:2:"ID";s:3:"367";s:13:"USER_FIELD_ID";s:4:"2214";s:5:"VALUE";s:10:"Restaurant";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"200";s:6:"XML_ID";s:32:"c8b2312d3987857234feb4c96b3b9265";}i:3;a:6:{s:2:"ID";s:3:"368";s:13:"USER_FIELD_ID";s:4:"2214";s:5:"VALUE";s:5:"Café";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"300";s:6:"XML_ID";s:32:"1a4fe45bdcc4bf96d4582dbef72ec7fc";}i:4;a:6:{s:2:"ID";s:3:"369";s:13:"USER_FIELD_ID";s:4:"2214";s:5:"VALUE";s:9:"Transport";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"400";s:6:"XML_ID";s:32:"a2866f0e876c437641289a0cfeb756cf";}i:5;a:6:{s:2:"ID";s:3:"370";s:13:"USER_FIELD_ID";s:4:"2214";s:5:"VALUE";s:6:"Office";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"500";s:6:"XML_ID";s:32:"9e445ffec5f437aed5dfd774215d7c95";}i:6;a:6:{s:2:"ID";s:3:"371";s:13:"USER_FIELD_ID";s:4:"2214";s:5:"VALUE";s:11:"Distributor";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"600";s:6:"XML_ID";s:32:"c6d27bde3372b553c77eeeb7ad3afeda";}}}';
+return true;
+?>

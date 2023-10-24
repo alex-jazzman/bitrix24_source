@@ -26,10 +26,11 @@ $arServices = Array(
 			"rating.php",
 			"extranet.php",
 			"events.php",
-			"smiles.php"
+			"smiles.php",
+			"dev.php", // Bitrix24 Dev Environment
 		),
 	),
-	
+
 	"forum" => Array(
 		"NAME" => GetMessage("SERVICE_FORUM"),
 	),
@@ -52,7 +53,7 @@ $arServices = Array(
 			"group_photogallery.php",
 		),
 	),
-	
+
 	"pull" => Array(
 		"NAME" => "Push & Pull",
 	),
@@ -94,7 +95,7 @@ $arServices = Array(
 
 	"wiki" => Array(
 		"NAME" => GetMessage("SERVICE_WIKI"),
-	),	
+	),
 	"crm" => Array(
 		"NAME" => GetMessage("SERVICE_CRM"),
 	),
@@ -103,7 +104,7 @@ $arServices = Array(
 	],
 	"timeman" => Array(
 		"NAME" => GetMessage("SERVICE_TIMEMAN"),
-	), 
+	),
 	"vote" => Array(
 		"NAME" => GetMessage("SERVICE_VOTE"),
 	),

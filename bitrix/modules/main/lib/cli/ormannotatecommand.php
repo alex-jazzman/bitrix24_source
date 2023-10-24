@@ -220,7 +220,7 @@ class OrmAnnotateCommand extends Command implements AnnotationInterface
 			}
 		}
 
-        return 0;
+		return 0;
 	}
 
 	protected function getDirsToScan($inputModules, InputInterface $input, OutputInterface $output)

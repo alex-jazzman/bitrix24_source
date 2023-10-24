@@ -1,4 +1,4 @@
 <?
-$MESS ['BPRIOA_OK'] = "Ок";
-$MESS ['BPRIOA_CANCEL'] = "Отмена";
+$MESS ['BPRIOA_OK'] = "Одобрен";
+$MESS ['BPRIOA_CANCEL'] = "Отказ";
 ?>

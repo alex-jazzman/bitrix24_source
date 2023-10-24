@@ -1,4 +1,5 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) { die(); }
+
 foreach (GetModuleEvents('forum', 'OnCommentFormDisplay', true) as $arEvent)
 {
 	$arExt = ExecuteModuleEventEx($arEvent);
@@ -94,7 +95,8 @@ if (!empty($arResult["ERROR_MESSAGE"]))
 					"iframeCss" => "html body {padding-left: 14px!important;}",
 					"fontSize" => "14px",
 					"bInitByJS" => ($arParams['SHOW_MINIMIZED'] == "Y"),
-					"height" => 80
+					"height" => 80,
+					'copilotParams' => $arParams['LHE']['copilotParams'] ?? null,
 				),
 				"DESTINATION" => Array(
 					"VALUE" => array(),

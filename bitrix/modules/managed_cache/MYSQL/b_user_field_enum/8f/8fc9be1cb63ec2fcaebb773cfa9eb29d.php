@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001698053988';
+$dateexpire = '001698057588';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:7:{i:0;a:6:{s:2:"ID";s:3:"384";s:13:"USER_FIELD_ID";s:4:"2218";s:5:"VALUE";s:5:"Paper";s:3:"DEF";s:1:"N";s:4:"SORT";s:1:"0";s:6:"XML_ID";s:32:"9832ba798984f40958caaee7e6313a4e";}i:1;a:6:{s:2:"ID";s:3:"385";s:13:"USER_FIELD_ID";s:4:"2218";s:5:"VALUE";s:4:"Foil";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"100";s:6:"XML_ID";s:32:"235757b2300b40a98e47786280ff44e6";}i:2;a:6:{s:2:"ID";s:3:"386";s:13:"USER_FIELD_ID";s:4:"2218";s:5:"VALUE";s:3:"Bio";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"200";s:6:"XML_ID";s:32:"ad47817f84117054dca9e19a49061ed6";}i:3;a:6:{s:2:"ID";s:3:"387";s:13:"USER_FIELD_ID";s:4:"2218";s:5:"VALUE";s:8:"Pot bags";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"300";s:6:"XML_ID";s:32:"16c4cdd223c665dd79bea86b531a7898";}i:4;a:6:{s:2:"ID";s:3:"388";s:13:"USER_FIELD_ID";s:4:"2218";s:5:"VALUE";s:6:"Elexir";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"400";s:6:"XML_ID";s:32:"fe75040abacff918f940ad35d5705fa8";}i:5;a:6:{s:2:"ID";s:3:"389";s:13:"USER_FIELD_ID";s:4:"2218";s:5:"VALUE";s:15:"T-series Sachet";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"500";s:6:"XML_ID";s:32:"04f81110287a651cc7fa1ca69671a49b";}i:6;a:6:{s:2:"ID";s:3:"390";s:13:"USER_FIELD_ID";s:4:"2218";s:5:"VALUE";s:13:"T-series Leaf";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"600";s:6:"XML_ID";s:32:"536f7d1000fcad46ea6e284f40e935d5";}}}';
+return true;
+?>

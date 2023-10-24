@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001697794824';
+$dateexpire = '001697881224';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:4:{i:0;a:10:{s:2:"ID";s:2:"93";s:9:"ENTITY_ID";s:21:"SMART_INVOICE_STAGE_2";s:9:"STATUS_ID";s:8:"DT31_2:N";s:4:"NAME";s:10:"Новый";s:9:"NAME_INIT";s:10:"Новый";s:4:"SORT";s:2:"10";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#39A8EF";s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"2";}i:1;a:10:{s:2:"ID";s:2:"94";s:9:"ENTITY_ID";s:21:"SMART_INVOICE_STAGE_2";s:9:"STATUS_ID";s:8:"DT31_2:S";s:4:"NAME";s:33:"Отправлен клиенту";s:9:"NAME_INIT";s:33:"Отправлен клиенту";s:4:"SORT";s:2:"20";s:6:"SYSTEM";s:1:"N";s:5:"COLOR";s:7:"#2FC6F6";s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"2";}i:2;a:10:{s:2:"ID";s:2:"95";s:9:"ENTITY_ID";s:21:"SMART_INVOICE_STAGE_2";s:9:"STATUS_ID";s:8:"DT31_2:P";s:4:"NAME";s:14:"Оплачен";s:9:"NAME_INIT";s:14:"Оплачен";s:4:"SORT";s:2:"30";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#7BD500";s:9:"SEMANTICS";s:1:"S";s:11:"CATEGORY_ID";s:1:"2";}i:3;a:10:{s:2:"ID";s:2:"96";s:9:"ENTITY_ID";s:21:"SMART_INVOICE_STAGE_2";s:9:"STATUS_ID";s:8:"DT31_2:D";s:4:"NAME";s:19:"Не оплачен";s:9:"NAME_INIT";s:19:"Не оплачен";s:4:"SORT";s:2:"40";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#FF5752";s:9:"SEMANTICS";s:1:"F";s:11:"CATEGORY_ID";s:1:"2";}}}';
+return true;
+?>

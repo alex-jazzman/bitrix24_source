@@ -19,6 +19,7 @@ if (isset($arResult['ERROR']))
 	return;
 }
 
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Conversion\LeadConversionScheme;
@@ -275,6 +276,7 @@ else
 								// We use negation so as not to confuse when working, since the default has always been allowed
 								addItemNotPermittedByTariff: <?= !($arParams['EXTRA']['ADD_ITEM_PERMITTED_BY_TARIFF'] ?? true) ? 'true' : 'false' ?>,
 							},
+							showErrorCounterByActivityResponsible: <?= $arResult['SHOW_ERROR_COUNTER_BY_ACTIVITY_RESPONSIBLE'] ? 'true' : 'false' ?>,
 						}
 				}
 			);
@@ -339,6 +341,7 @@ else
 					new PushCrmSettings({
 						smartActivityNotificationSupported: <?= $smartActivityNotificationSupported ? 'true' : 'false' ?>,
 						entityTypeId: <?= $entityTypeId ?>,
+						pingSettings: <?= CUtil::PhpToJSObject((new TodoPingSettingsProvider($entityTypeId, (int)($arParams['EXTRA']['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
 						rootMenu: Kanban.getSettingsButtonMenu(),
 						targetItemId: 'crm_kanban_cc_delimiter',
 						controller: BX.CRM.Kanban.Sort.SettingsController.Instance,

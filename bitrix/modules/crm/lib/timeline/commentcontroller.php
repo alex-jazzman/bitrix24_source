@@ -225,12 +225,15 @@ class CommentController extends EntityController
 			{
 				$rules["USERFIELDS"] = $fileFields[self::UF_COMMENT_FILE_NAME];
 
-				if ($options['LAZYLOAD'] === 'Y')
+				if (isset($options['LAZYLOAD']) &&$options['LAZYLOAD'] === 'Y')
+				{
 					$parser->LAZYLOAD = 'Y';
+				}
 
 				$parser->arUserfields = $fileFields;
 			}
 		}
+		
 		$parser->bMobile = (($options['MOBILE'] ?? null) === 'Y');
 		if (self::$parser instanceof \blogTextParser)
 		{
@@ -421,6 +424,10 @@ class CommentController extends EntityController
 				$phrase = "CRM_ENTITY_TITLE_" . \CCrmOwnerType::InvoiceName;
 			}
 			$entityTitle = Loc::getMessage($phrase, ["#ENTITY_NAME#" => $nameLink]);
+			if (!$entityTitle)
+			{
+				$entityTitle = Loc::getMessage($phrase . '_MSGVER_1', ["#ENTITY_NAME#" => $nameLink]);
+			}
 			$message = Loc::getMessage("CRM_COMMENT_IM_MENTION_POST" . $genderSuffix, [
 				"#COMMENT#" => $cuttedComment,
 				"#ENTITY_TITLE#" => $entityTitle

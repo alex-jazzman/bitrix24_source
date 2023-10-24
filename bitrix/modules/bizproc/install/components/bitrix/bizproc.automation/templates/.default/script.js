@@ -1,10 +1,10 @@
 ;if (!BX.getClass('BX.Bizproc.Automation.Component')) (function(BX)
 {
 	'use strict';
+
 	BX.namespace('BX.Bizproc.Automation');
 
-	var Component = function(baseNode)
-	{
+	const Component = function(baseNode) {
 		if (!BX.type.isDomNode(baseNode))
 		{
 			throw 'baseNode must be Dom Node Element';
@@ -12,7 +12,7 @@
 
 		this.node = baseNode;
 
-		//set current instance
+		// set current instance
 		Designer.getInstance().component = this;
 		showGlobals.component = this;
 		Debugger.component = this;
@@ -20,37 +20,35 @@
 
 	Component.ViewMode = {
 		None: 0,
-		View : 1,
+		View: 1,
 		Edit: 2,
 		Manage: 3,
 	};
 
-	var getAjaxUrl = function(url)
-	{
+	const getAjaxUrl = function(url) {
 		url = url || '/bitrix/components/bitrix/bizproc.automation/ajax.php';
-		return  BX.util.add_url_param(url, {
-			site_id: BX.message('SITE_ID'),
-			sessid: BX.bitrix_sessid()
+
+		return BX.util.add_url_param(url, {
+			site_id: BX.Loc.getMessage('SITE_ID'),
+			sessid: BX.bitrix_sessid(),
 		});
 	};
 
-	var getResponsibleUserExpression = function(fields)
-	{
-		var exp;
+	const getResponsibleUserExpression = function(fields) {
+		let exp;
 
 		if (BX.type.isArray(fields))
 		{
-			var i, field;
-			for (i = 0; i < fields.length; ++i)
+			for (const field of fields)
 			{
-				field = fields[i];
-				if (field['Id'] === 'ASSIGNED_BY_ID' || field['Id'] === 'RESPONSIBLE_ID')
+				if (field.Id === 'ASSIGNED_BY_ID' || field.Id === 'RESPONSIBLE_ID')
 				{
-					exp = '{{'+field['Name']+'}}';
+					exp = '{{' + field.Name + '}}';
 					break;
 				}
 			}
 		}
+
 		return exp;
 	};
 
@@ -89,14 +87,14 @@
 
 			if (!this.embeddedMode)
 			{
-				window.onbeforeunload = () =>
-				{
+				window.onbeforeunload = () => {
 					if (this.isNeedSave())
 					{
 						return BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_NEED_SAVE');
 					}
 				};
 			}
+
 			if (this.frameMode)
 			{
 				this.subscribeOnSliderClose();
@@ -114,7 +112,7 @@
 				categoryId: this.data.DOCUMENT_CATEGORY_ID,
 				statusList: this.data.DOCUMENT_STATUS_LIST,
 				documentFields: this.data.DOCUMENT_FIELDS,
-				title: this.data['ENTITY_NAME'],
+				title: this.data.ENTITY_NAME,
 			});
 			this.documentSigned = this.data.DOCUMENT_SIGNED;
 
@@ -124,7 +122,7 @@
 
 			this.setDocumentStatus(this.data.DOCUMENT_STATUS);
 
-			var rawUserOptions = {};
+			let rawUserOptions = {};
 			if (BX.type.isPlainObject(this.data.USER_OPTIONS))
 			{
 				rawUserOptions = this.data.USER_OPTIONS;
@@ -139,9 +137,9 @@
 				document: this.document,
 				signedDocument: this.documentSigned,
 				ajaxUrl: this.getAjaxUrl(),
-				availableRobots: BX.type.isArray(this.data['AVAILABLE_ROBOTS']) ? this.data['AVAILABLE_ROBOTS'] : [],
-				availableTriggers: BX.Type.isArray(this.data['AVAILABLE_TRIGGERS']) ? this.data['AVAILABLE_TRIGGERS'] : [],
-				canManage: this.data['IS_TEMPLATES_SCHEME_SUPPORTED'],
+				availableRobots: BX.type.isArray(this.data.AVAILABLE_ROBOTS) ? this.data.AVAILABLE_ROBOTS : [],
+				availableTriggers: BX.Type.isArray(this.data.AVAILABLE_TRIGGERS) ? this.data.AVAILABLE_TRIGGERS : [],
+				canManage: this.data.IS_TEMPLATES_SCHEME_SUPPORTED,
 				canEdit: this.canEdit(),
 				userOptions: this.userOptions,
 				tracker: this.tracker,
@@ -151,16 +149,16 @@
 				parametersEditorUrl: this.parametersEditorUrl,
 				isFrameMode: this.isFrameMode,
 
-				marketplaceRobotCategory: this.data['MARKETPLACE_ROBOT_CATEGORY'],
-				showTemplatePropertiesMenuOnSelecting: this.data['SHOW_TEMPLATE_PROPERTIES_MENU_ON_SELECTING'] === true,
+				marketplaceRobotCategory: this.data.MARKETPLACE_ROBOT_CATEGORY,
+				showTemplatePropertiesMenuOnSelecting: this.data.SHOW_TEMPLATE_PROPERTIES_MENU_ON_SELECTING === true,
 
 				automationGlobals: new BX.Bizproc.Automation.AutomationGlobals({
-					variables: this.data['GLOBAL_VARIABLES'],
-					constants: this.data['GLOBAL_CONSTANTS'],
+					variables: this.data.GLOBAL_VARIABLES,
+					constants: this.data.GLOBAL_CONSTANTS,
 				}),
 			});
-			context.set('TRIGGER_CAN_SET_EXECUTE_BY', this.data['TRIGGER_CAN_SET_EXECUTE_BY']);
-			context.set('IS_WORKTIME_AVAILABLE', this.data['IS_WORKTIME_AVAILABLE']);
+			context.set('TRIGGER_CAN_SET_EXECUTE_BY', this.data.TRIGGER_CAN_SET_EXECUTE_BY);
+			context.set('IS_WORKTIME_AVAILABLE', this.data.IS_WORKTIME_AVAILABLE);
 
 			BX.Bizproc.Automation.setGlobalContext(context);
 		},
@@ -172,14 +170,15 @@
 		},
 		isPreviousStatus: function(needle)
 		{
-			var previousStatuses = this.document.getPreviousStatusIdList();
-			for (var i = 0; i < previousStatuses.length; ++i)
+			const previousStatuses = this.document.getPreviousStatusIdList();
+			for (const previousStatus of previousStatuses)
 			{
-				if (needle === previousStatuses[i])
+				if (needle === previousStatus)
 				{
-					 return true;
+					return true;
 				}
 			}
+
 			return false;
 		},
 		isCurrentStatus: function(needle)
@@ -188,10 +187,10 @@
 		},
 		isNextStatus: function(needle)
 		{
-			var nextStatuses = this.document.getNextStatusIdList();
-			for (var i = 0; i < nextStatuses.length; ++i)
+			const nextStatuses = this.document.getNextStatusIdList();
+			for (const nextStatus of nextStatuses)
 			{
-				if (needle === nextStatuses[i])
+				if (needle === nextStatus)
 				{
 					return true;
 				}
@@ -199,9 +198,9 @@
 
 			return false;
 		},
-		initActionPanel: function ()
+		initActionPanel: function()
 		{
-			var panelNode = document.querySelector('[data-role="automation-actionpanel"]');
+			const panelNode = document.querySelector('[data-role="automation-actionpanel"]');
 			if (!panelNode)
 			{
 				return;
@@ -211,25 +210,30 @@
 				renderTo: panelNode,
 				removeLeftPosition: true,
 				maxHeight: 58,
-				parentPosition: "bottom",
+				parentPosition: 'bottom',
 				autoHide: false,
 			});
 
 			this.actionPanel.draw();
 
-			var pathToIcons = '/bitrix/components/bitrix/bizproc.automation/templates/.default/image/';
+			const pathToIconSetMain = '/bitrix/js/ui/icon-set/main/images/';
+			const pathToIconSetCRM = '/bitrix/js/ui/icon-set/crm/images/';
+			const pathToIconSetActions = '/bitrix/js/ui/icon-set/actions/images/';
+
 			this.actionPanel.appendItem({
 				id: 'automation_choose_all',
-				text: BX.message('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_CHOOSE_ALL'),
-				icon: pathToIcons + 'bizproc-automation--panel-icon-choose-all.svg',
-				onclick: function ()
+				text: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_CHOOSE_ALL'),
+				icon: `${pathToIconSetMain}complete.svg`,
+				onclick: function()
 				{
-					var status = this.templateManager.targetManageModeStatus;
-					var template = this.templateManager.getTemplateByStatusId(status);
+					const status = this.templateManager.targetManageModeStatus;
+					const triggers = this.triggerManager.findTriggersByDocumentStatus(status);
+					triggers.forEach((trigger) => trigger.selectNode());
+
+					const template = this.templateManager.getTemplateByStatusId(status);
 					if (template)
 					{
-						template.robots.forEach(function (robot)
-						{
+						template.robots.forEach((robot) => {
 							robot.selectNode();
 						});
 					}
@@ -238,45 +242,62 @@
 
 			this.actionPanel.appendItem({
 				id: 'automation_copy_to',
-				text: BX.message('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_COPY'),
-				icon: pathToIcons + 'bizproc-automation--panel-icon-copy.svg',
+				text: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_COPY_1'),
+				icon: `${pathToIconSetActions}copy-plates.svg`,
 				onclick: this.onCopyMoveButtonClick.bind(this, 'copy'),
 			});
 
 			this.actionPanel.appendItem({
 				id: 'automation_move_to',
-				text: BX.message('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_MOVE'),
-				icon: pathToIcons + 'bizproc-automation--panel-icon-move.svg',
+				text: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_MOVE_1'),
+				icon: `${pathToIconSetCRM}stages.svg`,
 				onclick: this.onCopyMoveButtonClick.bind(this, 'move'),
 			});
 
 			this.actionPanel.appendItem({
+				id: 'automation_deactivate',
+				text: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_DEACTIVATE'),
+				icon: `${pathToIconSetMain}switch.svg`,
+				onclick: this.onDeactivateActionPanelButtonClick.bind(this),
+			});
+
+			this.actionPanel.appendItem({
+				id: 'automation_activate',
+				text: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_ACTIVATE'),
+				icon: `${pathToIconSetMain}switch.svg`,
+				hide: true,
+				onclick: this.onDeactivateActionPanelButtonClick.bind(this),
+			});
+
+			this.actionPanel.appendItem({
 				id: 'automation_delete',
-				text: BX.message('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_DELETE'),
-				icon: pathToIcons + 'bizproc-automation--panel-icon-delete.svg',
+				text: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ACTIONPANEL_DELETE_1'),
+				icon: `${pathToIconSetMain}trash-bin.svg`,
 				onclick: this.onDeleteButtonClick.bind(this),
 			});
 
-			BX.addCustomEvent("BX.UI.ActionPanel:hidePanel", function ()
-			{
+			BX.addCustomEvent('BX.UI.ActionPanel:hidePanel', () => {
 				if (this.templateManager.isManageModeEnabled())
 				{
 					this.disableManageMode();
 				}
-			}.bind(this));
+			});
 		},
-		onCopyMoveButtonClick: function (action)
+		onCopyMoveButtonClick: function(action)
 		{
 			this.viewMode = Component.ViewMode.Edit;
-			var selectedStatus = this.templateManager.targetManageModeStatus;
-			var template = this.templateManager.getTemplateByStatusId(selectedStatus);
-			var selectedRobots = template.getSelectedRobotNames();
-			if (selectedRobots.length === 0)
+			const selectedStatus = this.templateManager.targetManageModeStatus;
+			const template = this.templateManager.getTemplateByStatusId(selectedStatus);
+			const selectedRobots = template.getSelectedRobotNames();
+			const selectedTriggers = this.triggerManager.getSelectedTriggers().map(trigger => trigger.getId());
+
+			if (selectedRobots.length + selectedTriggers.length === 0)
 			{
-				BX.UI.Notification.Center.notify({
-					content: BX.message('BIZPOC_AUTOMATION_NO_ROBOT_SELECTED'),
+				this.showNotification({
+					content: BX.Loc.getMessage('BIZPOC_AUTOMATION_NO_ROBOT_OR_TRIGGER_SELECTED'),
 					autoHideDelay: 4000,
 				});
+
 				return;
 			}
 
@@ -289,108 +310,165 @@
 					templateStatus: this.templateManager.targetManageModeStatus,
 					action: action,
 					selectedRobots: selectedRobots,
+					selectedTriggers: selectedTriggers,
 				},
 				events: {
-					onDestroy: function (event)
+					onCloseComplete: function(event)
 					{
-						var slider = event.slider;
+						const slider = event.slider;
 						if (slider)
 						{
-							var data = slider.getData();
-							var restoreData = data.get('restoreData');
-							var targetScope = data.get('targetScope');
+							const data = slider.getData();
+							const targetScope = data.get('targetScope');
 
-							var acceptedRobots = action === 'copy' ? data.get('copied') : data.get('moved');
-							var deniedRobots = data.get('denied');
-
-							if (!BX.type.isArray(acceptedRobots) || !BX.type.isArray(deniedRobots))
+							if (BX.type.isNil(targetScope))
 							{
 								return;
 							}
 
-							var messageId = 'BIZPROC_AUTOMATION_CMP_ROBOTS_' + (action === 'copy' ? 'COPIED' : 'MOVED');
-							var notifyMessage = BX.message(messageId);
-							notifyMessage = notifyMessage.replace('#ACCEPTED_COUNT#', acceptedRobots.length);
-							notifyMessage =
-								notifyMessage.replace('#TOTAL_COUNT#', acceptedRobots.length + deniedRobots.length)
-							;
+							const confirmObject = (item) => (BX.type.isPlainObject(item) ? item : {});
+							const confirmArray = (item) => (BX.type.isArray(item) ? item : []);
+
+							const allRobots = confirmObject(data.get('robots'));
+							const allTriggers = confirmObject(data.get('triggers'));
+
+							const acceptedRobots = confirmArray(action === 'copy' ? allRobots.copied : allRobots.moved);
+							const deniedRobots = confirmArray(allRobots.denied);
+							const manageRobotsCount = acceptedRobots.length + deniedRobots.length;
+
+							const acceptedTriggers = confirmArray(action === 'copy' ? allTriggers.copied : allTriggers.moved);
+							const deniedTriggers = confirmArray(allTriggers.denied);
+							const manageTriggersCount = acceptedTriggers.length + deniedTriggers.length;
+
+							let messageId = 'BIZPROC_AUTOMATION_CMP_';
+							const messageShards = [];
+							if (manageRobotsCount > 0 && manageTriggersCount === 0)
+							{
+								messageShards.push('ROBOTS');
+							}
+							else if (manageTriggersCount > 0 && manageRobotsCount === 0)
+							{
+								messageShards.push('TRIGGERS');
+							}
+							else
+							{
+								messageShards.push('ROBOTS', 'AND', 'TRIGGERS');
+							}
+
+							if (action === 'copy')
+							{
+								messageShards.push('COPIED');
+							}
+							else
+							{
+								messageShards.push('MOVED');
+							}
+							messageId += messageShards.join('_');
+							let notifyMessage = BX.Loc.getMessage(messageId);
+							notifyMessage = notifyMessage.replace(
+								'#ACCEPTED_COUNT#',
+								acceptedRobots.length + acceptedTriggers.length,
+							);
+							notifyMessage = notifyMessage.replace(
+								'#TOTAL_COUNT#',
+								acceptedRobots.length
+									+ deniedRobots.length
+									+ acceptedTriggers.length
+									+ deniedTriggers.length,
+							);
 
 							BX.UI.Notification.Center.notify({
 								content: notifyMessage,
 								actions: [
 									{
-										title: BX.message('JS_CORE_WINDOW_CANCEL'),
+										title: BX.Loc.getMessage('JS_CORE_WINDOW_CANCEL'),
 										events: {
 											click: function(event, balloon) {
 												event.preventDefault();
-												if (BX.type.isArray(restoreData))
+												if (BX.type.isArray(allRobots.restoreData))
 												{
-													this.saveTemplates(restoreData);
+													this.saveTemplates(allRobots.restoreData, allTriggers.restoreData);
 													balloon.close();
 												}
-											}.bind(this)
-										}
-									}
-								]
+											}.bind(this),
+										},
+									},
+								],
 							});
-							var updatedTemplateStatuses = [];
-							var targetStatus = this.templateManager.targetManageModeStatus;
+							const updatedStatuses = [];
+							const targetStatus = this.templateManager.targetManageModeStatus;
 							if (action === 'move')
 							{
-								updatedTemplateStatuses.push(targetStatus);
+								updatedStatuses.push(targetStatus);
 							}
+
 							if (
 								targetScope
 								&& this.data.DOCUMENT_TYPE_SIGNED === targetScope.documentType.Type
 								&& this.templateManager.getTemplateByStatusId(targetScope.status.Id)
 							)
 							{
-								updatedTemplateStatuses.push(targetScope.status.Id);
+								updatedStatuses.push(targetScope.status.Id);
 							}
 
-							this.templateManager.updateTemplates(updatedTemplateStatuses).onload = function ()
-							{
-								var srcTemplate = this.templateManager.getTemplateByStatusId(targetStatus);
+							this.triggerManager.fetchTriggers(updatedStatuses).then(() => {
+								deniedTriggers.forEach((triggerId) => {
+									const trigger = this.triggerManager.findTriggerById(parseInt(triggerId, 10));
 
-								deniedRobots.forEach(function(robotName)
-								{
-									var robot = srcTemplate.getRobotById(robotName);
-									if (robot)
+									if (trigger)
+									{
+										BX.Dom.addClass(trigger.node, '--denied');
+										setTimeout(
+											BX.Dom.removeClass.bind(null, trigger.node, '--denied'),
+											10 * 1000,
+										);
+									}
+								});
+							});
+							this.templateManager.updateTemplates(updatedStatuses).onload = function()
+							{
+								const srcTemplate = this.templateManager.getTemplateByStatusId(targetStatus);
+
+								deniedRobots.forEach((robotName) => {
+									const robot = srcTemplate.getRobotById(robotName);
+									if (robot && !robot.isInvalid())
 									{
 										BX.Dom.addClass(robot.node, '--denied');
 										setTimeout(
 											BX.Dom.removeClass.bind(null, robot.node, '--denied'),
-											10 * 1000
+											10 * 1000,
 										);
 									}
-								}.bind(this));
+								});
 							}.bind(this);
 						}
 						this.disableManageMode();
-					}.bind(this)
-				}
+					}.bind(this),
+				},
 			});
 		},
 		onDeleteButtonClick: function()
 		{
 			this.viewMode = Component.ViewMode.Edit;
-			var status = this.templateManager.targetManageModeStatus;
-			var template = this.templateManager.getTemplateByStatusId(status);
+			const status = this.templateManager.targetManageModeStatus;
+			const template = this.templateManager.getTemplateByStatusId(status);
 			if (!template)
 			{
 				return;
 			}
-			var templateIndex = this.templateManager.templatesData.findIndex(function (templateData) {
+			const templateIndex = this.templateManager.templatesData.findIndex((templateData) => {
 				return templateData.ID === template.getId();
 			});
 
-			var deletingRobots = template.getSelectedRobotNames();
-			if (deletingRobots.length === 0)
+			const deletingRobots = template.getSelectedRobotNames();
+			const deletingTriggers = this.triggerManager.getSelectedTriggers().map((trigger) => trigger.getId());
+			if (deletingRobots.length + deletingTriggers.length === 0)
 			{
-				BX.UI.Notification.Center.notify({
-					content: BX.message('BIZPOC_AUTOMATION_NO_ROBOT_SELECTED'),
+				this.showNotification({
+					content: BX.Loc.getMessage('BIZPOC_AUTOMATION_NO_ROBOT_OR_TRIGGER_SELECTED'),
 					autoHideDelay: 4000,
 				});
+
 				return;
 			}
 			BX.ajax({
@@ -402,17 +480,32 @@
 					document_signed: this.documentSigned,
 					selected_status: template.getStatusId(),
 					robot_names: Helper.toJsonString(deletingRobots),
+					trigger_names: Helper.toJsonString(deletingTriggers),
 				},
-				onsuccess: function (response)
+				onsuccess: function(response)
 				{
-					var notifyMessage = BX.message('BIZPROC_AUTOMATION_CMP_ROBOTS_DELETED');
-					notifyMessage = notifyMessage.replace('#TOTAL_COUNT#', deletingRobots.length);
+					const messageShards = [];
+					if (deletingRobots.length > 0 && deletingTriggers.length === 0)
+					{
+						messageShards.push('ROBOTS');
+					}
+					else if (deletingTriggers.length > 0 && deletingRobots.length === 0)
+					{
+						messageShards.push('TRIGGERS');
+					}
+					else
+					{
+						messageShards.push('ROBOTS', 'AND', 'TRIGGERS');
+					}
+					let notifyMessage = BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_' + messageShards.join('_') + '_DELETED');
+					notifyMessage = notifyMessage.replace('#TOTAL_COUNT#', deletingRobots.length + deletingTriggers.length);
 					if (response.SUCCESS)
 					{
+						this.triggerManager.fetchTriggers().then();
 						template.reInit(response.DATA.template, this.viewMode);
 						this.templateManager.templatesData[templateIndex] = response.DATA.template;
 						this.disableManageMode();
-						notifyMessage = notifyMessage.replace('#ACCEPTED_COUNT#', deletingRobots.length);
+						notifyMessage = notifyMessage.replace('#ACCEPTED_COUNT#', deletingRobots.length + deletingTriggers.length);
 
 						var restoreData = response.DATA.restoreData;
 					}
@@ -424,60 +517,108 @@
 						content: notifyMessage,
 						actions: [
 							{
-								title: BX.message('JS_CORE_WINDOW_CANCEL'),
+								title: BX.Loc.getMessage('JS_CORE_WINDOW_CANCEL'),
 								events: {
 									click: function(event, balloon) {
 										event.preventDefault();
-										if (BX.type.isArray(restoreData))
+										if (BX.type.isPlainObject(restoreData))
 										{
-											this.saveTemplates(restoreData);
+											this.saveTemplates([restoreData.template], restoreData.triggers);
 											balloon.close();
 										}
-									}.bind(this)
-								}
-							}
-						]
+									}.bind(this),
+								},
+							},
+						],
 					});
-				}.bind(this)
+				}.bind(this),
+			});
+		},
+		onDeactivateActionPanelButtonClick: function()
+		{
+			const selectedStatus = this.templateManager.targetManageModeStatus;
+			const template = this.templateManager.getTemplateByStatusId(selectedStatus);
+			const selectedRobots = template.getSelectedRobotNames();
+			if (selectedRobots.length === 0)
+			{
+				this.showNotification({
+					content: BX.Loc.getMessage('BIZPOC_AUTOMATION_NO_ROBOT_SELECTED'),
+					autoHideDelay: 4000,
+				});
+
+				return;
+			}
+
+			const selectedTriggers = this.triggerManager.getSelectedTriggers().map((trigger) => trigger.getId());
+			if (selectedTriggers.length > 0)
+			{
+				this.showNotification({
+					autoHideDelay: 4000,
+					content: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_DEACTIVATE_TRIGGER_ALERT_MESSAGE'),
+				});
+			}
+
+			const deactivatedRobots = template.getDeactivatedRobotNames();
+			const activate = selectedRobots.every((selectedRobotName) => deactivatedRobots.includes(selectedRobotName));
+
+			this.disableManageMode();
+			template.markModified(true);
+
+			selectedRobots.forEach((id) => {
+				const robot = template.getRobotById(id);
+				if (robot)
+				{
+					robot.setActivated(activate).reInit();
+				}
 			});
 		},
 		initTriggerManager: function()
 		{
-			this.triggerManager = new TriggerManager(this.node);
+			this.triggerManager = new TriggerManager(this.node, { userOptions: this.userOptions });
 			this.subscribeTriggerManagerEvents();
 			this.triggerManager.init(this.data, BX.Bizproc.Automation.ViewMode.fromRaw(this.viewMode));
 
-			this.triggerManager.subscribe('TriggerManager:onHelpClick', function (event)
-			{
-				this.onGlobalHelpClick.call(this, event.data)
-			}.bind(this));
+			this.triggerManager.onTriggerEvent('Trigger:selected', () => {
+				const template = this.templateManager.getTemplateByStatusId(this.templateManager.targetManageModeStatus);
+				const totalSelectedCount = (
+					template.getSelectedRobotNames().length
+					+ this.triggerManager.getSelectedTriggers().length
+				);
+				this.actionPanel.setTotalSelectedItems(totalSelectedCount);
+			});
+			this.triggerManager.onTriggerEvent('Trigger:unselected', () => {
+				const template = this.templateManager.getTemplateByStatusId(this.templateManager.targetManageModeStatus);
+				const selectedRobots = BX.type.isNil(template) ? [] : template.getSelectedRobotNames();
+				const totalSelectedCount = (
+					selectedRobots.length
+					+ this.triggerManager.getSelectedTriggers().length
+				);
+				this.actionPanel.setTotalSelectedItems(totalSelectedCount);
+			});
 
 			BX.Event.EventEmitter.subscribe(
 				this,
 				'BX.Bizproc.Automation.Component:onSearch',
-				this.triggerManager.onSearch.bind(this.triggerManager)
+				this.triggerManager.onSearch.bind(this.triggerManager),
 			);
 		},
-		subscribeTriggerManagerEvents: function ()
+		subscribeTriggerManagerEvents: function()
 		{
-			const self = this;
-			this.triggerManager.subscribe('TriggerManager:dataModified', function ()
-			{
-				self.markModified();
+			this.triggerManager.subscribe('TriggerManager:dataModified', () => {
+				this.markModified();
 			});
-			this.triggerManager.subscribe('TriggerManager:trigger:delete', function (event)
-			{
+			this.triggerManager.subscribe('TriggerManager:trigger:delete', (event) => {
 				const deletedTrigger = event.getData().trigger;
 
-				//analytics
+				// analytics
 				BX.ajax.runAction(
 					'bizproc.analytics.push',
 					{
 						analyticsLabel: {
 							automation_trigger_delete: 'Y',
 							delete_trigger: deletedTrigger.getCode().toLowerCase(),
-						}
-					}
+						},
+					},
 				);
 			});
 		},
@@ -497,7 +638,9 @@
 		reInitTemplateManager: function(templates)
 		{
 			if (BX.type.isArray(templates))
+			{
 				this.data.TEMPLATES = templates;
+			}
 			this.templateManager.reInit(this.data, this.viewMode);
 		},
 		initButtons: function()
@@ -507,7 +650,7 @@
 				this.initAddButtons();
 			}
 
-			var buttonsNode = this.node.querySelector('[data-role="automation-buttons"]');
+			const buttonsNode = this.node.querySelector('[data-role="automation-buttons"]');
 
 			if (buttonsNode)
 			{
@@ -516,13 +659,11 @@
 			}
 			this.bindCreationButton();
 		},
-		initAddButtons: function () {
+		initAddButtons: function() {
 			const addButtonNodes = this.node.querySelectorAll('[data-role="add-button-container"]');
-			const self = this;
 
-			addButtonNodes.forEach(function (node)
-			{
-				const template = self.templateManager.getTemplateByStatusId(node.dataset.statusId);
+			addButtonNodes.forEach((node) => {
+				const template = this.templateManager.getTemplateByStatusId(node.dataset.statusId);
 				if (!template)
 				{
 					return;
@@ -531,16 +672,16 @@
 				const btnAddNode = BX.Dom.create('span', {
 					events: {
 						click: () => {
-							if (self.canEdit())
+							if (this.canEdit())
 							{
-								self.robotSelector.setStageId(node.dataset.statusId);
-								self.robotSelector.show();
+								this.robotSelector.setStageId(node.dataset.statusId);
+								this.robotSelector.show();
 							}
 							else
 							{
 								BX.Bizproc.Automation.HelpHint.showNoPermissionsHint(btnAddNode);
 							}
-						}
+						},
 					},
 					attrs: {
 						className: 'bizproc-automation-robot-btn-add',
@@ -550,9 +691,9 @@
 							attrs: {
 								className: 'bizproc-automation-btn-add-text',
 							},
-							text: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD')
-						})
-					]
+							text: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD'),
+						}),
+					],
 				});
 
 				BX.Dom.append(btnAddNode, node);
@@ -560,25 +701,22 @@
 		},
 		initButtonsPosition: function()
 		{
-			var buttonsNode = this.node.querySelector('[data-role="automation-buttons"]');
+			const buttonsNode = this.node.querySelector('[data-role="automation-buttons"]');
 
-			if (buttonsNode)
+			if (buttonsNode && this.frameMode)
 			{
-				if (this.frameMode)
-				{
-					BX.addClass(buttonsNode, 'bizproc-automation-buttons-fixed-slider');
-				}
+				BX.addClass(buttonsNode, 'bizproc-automation-buttons-fixed-slider');
 			}
 		},
 		initSearch: function()
 		{
-			var searchNode = this.node.querySelector('[data-role="automation-search"]');
+			const searchNode = this.node.querySelector('[data-role="automation-search"]');
 			if (searchNode)
 			{
 				BX.bind(searchNode, 'input', BX.debounce(this.onSearch.bind(this, searchNode), 255));
 				BX.Event.EventEmitter.setMaxListeners(this, 'BX.Bizproc.Automation.Component:onSearch', 500);
 
-				var clearNode = this.node.querySelector('[data-role="automation-search-clear"]');
+				const clearNode = this.node.querySelector('[data-role="automation-search-clear"]');
 				if (clearNode)
 				{
 					BX.bind(clearNode, 'click', this.onClearSearch.bind(this, searchNode));
@@ -587,7 +725,7 @@
 		},
 		reInitSearch: function()
 		{
-			var searchNode = this.node.querySelector('[data-role="automation-search"]');
+			const searchNode = this.node.querySelector('[data-role="automation-search"]');
 			if (searchNode)
 			{
 				this.onSearch(searchNode);
@@ -597,9 +735,10 @@
 		{
 			BX.Event.EventEmitter.emit(
 				this,
-				'BX.Bizproc.Automation.Component:onSearch', {
+				'BX.Bizproc.Automation.Component:onSearch',
+				{
 					queryString: searchNode.value.toLowerCase(),
-				}
+				},
 			);
 		},
 		onClearSearch: function(searchNode)
@@ -614,12 +753,11 @@
 		{
 			BX.UI.Hint.init(this.node);
 		},
-		initSelectors: function ()
+		initSelectors: function()
 		{
 			BX.Event.EventEmitter.subscribe(
 				'BX.Bizproc.Automation:Template:onSelectorMenuOpen',
-				function (event)
-				{
+				(event) => {
 					const template = event.getData().template;
 					const selector = event.getData().selector;
 					const isMixedCondition = event.getData().isMixedCondition;
@@ -632,9 +770,9 @@
 					const triggersReturnProperties = this.triggerManager.getReturnProperties(template.getStatusId());
 
 					const triggerMenuItems = triggersReturnProperties.map((property) => ({
-						id: property['SystemExpression'],
-						title: property['Name'] || property['Id'],
-						subtitle: property['ObjectName'] || property['ObjectId'],
+						id: property.SystemExpression,
+						title: property.Name || property.Id,
+						subtitle: property.ObjectName || property.ObjectId,
 						customData: { field: property },
 					}));
 
@@ -646,16 +784,17 @@
 							children: triggerMenuItems,
 						});
 					}
-				}.bind(this)
+				},
 			);
 		},
 		reInitButtons: function()
 		{
-			var changeViewBtn = this.node.querySelector('[data-role="automation-btn-change-view"]');
+			const changeViewBtn = this.node.querySelector('[data-role="automation-btn-change-view"]');
 			if (changeViewBtn)
 			{
-				changeViewBtn.innerHTML = changeViewBtn.getAttribute('data-label-'
-					+(this.viewMode === Component.ViewMode.View ? 'edit' : 'view'));
+				changeViewBtn.innerHTML = changeViewBtn.getAttribute(
+					'data-label-' + (this.viewMode === Component.ViewMode.View ? 'edit' : 'view'),
+				);
 			}
 		},
 		enableDragAndDrop: function()
@@ -675,15 +814,14 @@
 		},
 		bindSaveButton: function()
 		{
-			var me = this, button = BX('ui-button-panel-save');
+			const button = BX('ui-button-panel-save');
 
 			if (button)
 			{
-				BX.bind(button, 'click', function(e)
-				{
-					e.preventDefault();
-					me.saveAutomation();
-					button.classList.remove('ui-btn-wait');
+				BX.Event.bind(button, 'click', (event) => {
+					event.preventDefault();
+					this.saveAutomation();
+					BX.Dom.removeClass(button, 'ui-btn-wait');
 				});
 			}
 		},
@@ -696,7 +834,7 @@
 				BX.bind(button, 'click', this.onCancelButtonClick.bind(this));
 			}
 		},
-		onCancelButtonClick: function (event)
+		onCancelButtonClick: function(event)
 		{
 			if (event)
 			{
@@ -710,44 +848,40 @@
 		},
 		bindCreationButton: function()
 		{
-			const me = this;
 			const button = this.node.querySelector('[data-role="automation-btn-create"]');
 
-			if (button)
+			if (button && this.canEdit())
 			{
-				if (me.canEdit())
+				BX.bind(button, 'click', () => {
+					this.robotSelector.setStageId(this.templateManager.templates[0]?.getStatusId());
+					this.robotSelector.show();
+				});
+
+				const settings = new BX.Bizproc.LocalSettings.Settings('aut-cmp');
+				if (settings.get('beginning-guide-shown') !== true)
 				{
-					BX.bind(button, 'click', () => {
-						this.robotSelector.setStageId(this.templateManager.templates[0]?.getStatusId());
-						this.robotSelector.show();
-					});
+					const documentRawType = this.document.getRawType();
+					const module = documentRawType[0];
+					const documentType = documentRawType[2];
+					const isSellingDocumentType = (
+						module === 'crm'
+						&& ['LEAD', 'DEAL', 'INVOICE', 'SMART_INVOICE', 'QUOTE'].includes(documentType)
+					);
 
-					const settings = new BX.Bizproc.LocalSettings.Settings('aut-cmp');
-					if (settings.get('beginning-guide-shown') !== true)
-					{
-						const documentRawType = this.document.getRawType();
-						const module = documentRawType[0];
-						const documentType = documentRawType[2];
-						const isSellingDocumentType = (
-							module === 'crm'
-							&& ['LEAD', 'DEAL', 'INVOICE', 'SMART_INVOICE', 'QUOTE'].includes(documentType)
-						);
-
-						(new BX.Bizproc.Automation.BeginningGuide({
-							target: button,
-							text: (
-								isSellingDocumentType
-									? BX.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_BEGINNING_SUBTITLE_SELLING_DOCUMENT_TYPE')
-									: null
-							),
-							article: isSellingDocumentType ? '16547606' : null,
-						}))
-							.start()
-						;
-					}
-
-					settings.set('beginning-guide-shown', true);
+					(new BX.Bizproc.Automation.BeginningGuide({
+						target: button,
+						text: (
+							isSellingDocumentType
+								? BX.Loc.getMessage('BIZPROC_AUTOMATION_TOUR_GUIDE_BEGINNING_SUBTITLE_SELLING_DOCUMENT_TYPE')
+								: null
+						),
+						article: isSellingDocumentType ? '16547606' : null,
+					}))
+						.start()
+					;
 				}
+
+				settings.set('beginning-guide-shown', true);
 			}
 		},
 		getAjaxUrl: function()
@@ -756,14 +890,14 @@
 		},
 		getLimits: function()
 		{
-			const limit = this.data['ROBOTS_LIMIT'];
+			const limit = this.data.ROBOTS_LIMIT;
 			if (limit <= 0)
 			{
 				return false;
 			}
 
 			const triggersCnt = this.triggerManager.countAllTriggers();
-			const robotsCnt = this.templateManager.countAllRobots();
+			const robotsCnt = this.templateManager.countAllActivatedRobots();
 
 			return (triggersCnt + robotsCnt > limit) ? [limit, triggersCnt, robotsCnt] : false;
 		},
@@ -787,14 +921,18 @@
 
 				BX.UI.Dialogs.MessageBox.show({
 					title: BX.Loc.getMessage('BIZPROC_AUTOMATION_ROBOTS_LIMIT_ALERT_TITLE'),
-					message: BX.Loc.getMessage('BIZPROC_AUTOMATION_ROBOTS_LIMIT_SAVE_ALERT')
-								.replace('#LIMIT#', limits[0])
-								.replace('#SUM#', limits[1] + limits[2])
-								.replace('#TRIGGERS#', limits[1])
-								.replace('#ROBOTS#', limits[2]),
+					message: BX.Loc.getMessage(
+						'BIZPROC_AUTOMATION_ROBOTS_LIMIT_SAVE_ALERT',
+						{
+							'#LIMIT#': limits[0],
+							'#SUM#': limits[1] + limits[2],
+							'#TRIGGERS#': limits[1],
+							'#ROBOTS#': limits[2],
+						},
+					),
 					modal: true,
 					buttons: BX.UI.Dialogs.MessageBoxButtons.OK,
-					okCaption: BX.Loc.getMessage('BIZPROC_AUTOMATION_CLOSE_CAPTION')
+					okCaption: BX.Loc.getMessage('BIZPROC_AUTOMATION_CLOSE_CAPTION'),
 				});
 
 				return;
@@ -805,28 +943,29 @@
 				ajax_action: 'save_automation',
 				document_signed: this.documentSigned,
 				triggers_json: Helper.toJsonString(this.triggerManager.serialize()),
-				templates_json: Helper.toJsonString(this.templateManager.serializeModified())
+				templates_json: Helper.toJsonString(this.templateManager.serializeModified()),
 			};
 
 			const analyticsLabel = {
-				'automation_save': 'Y',
-				'robots_count': this.templateManager.countAllRobots(),
-				'triggers_count': this.triggerManager.countAllTriggers(),
-				'automation_module': this.document.getRawType()[0],
-				'automation_entity': this.document.getRawType()[2] + '_' + this.document.getCategoryId()
+				automation_save: 'Y',
+				robots_count: this.templateManager.countAllActivatedRobots(),
+				triggers_count: this.triggerManager.countAllTriggers(),
+				automation_module: this.document.getRawType()[0],
+				automation_entity: this.document.getRawType()[2] + '_' + this.document.getCategoryId(),
 			};
 
 			this.savingAutomation = true;
+
 			return BX.ajax({
 				method: 'POST',
 				dataType: 'json',
-				url: BX.Uri.addParam(this.getAjaxUrl(), {analyticsLabel}),
+				url: BX.Uri.addParam(this.getAjaxUrl(), { analyticsLabel }),
 				data: data,
 				onsuccess: function(response)
 				{
 					me.savingAutomation = null;
-					response.DATA.templates.forEach(function (updatedTemplate) {
-						const updatedTemplateIndex = me.data.TEMPLATES.findIndex(function (template) {
+					response.DATA.templates.forEach((updatedTemplate) => {
+						const updatedTemplateIndex = me.data.TEMPLATES.findIndex((template) => {
 							return template.ID === updatedTemplate.ID;
 						});
 
@@ -840,18 +979,18 @@
 						me.markModified(false);
 						BX.Event.EventEmitter.emit(
 							'BX.Bizproc.Component.Automation.Component:onSuccessAutomationSave',
-							new BX.Event.BaseEvent({data: {analyticsLabel}})
+							new BX.Event.BaseEvent({ data: { analyticsLabel } }),
 						);
 						if (callback)
 						{
-							callback(response.DATA)
+							callback(response.DATA);
 						}
 					}
 					else
 					{
 						alert(response.ERRORS[0]);
 					}
-				}
+				},
 			});
 		},
 		subscribeOnSliderClose: function()
@@ -895,16 +1034,16 @@
 			const module = documentRawType[0];
 			const documentType = documentRawType[2];
 			const categoryId = this.document.getCategoryId();
-			const documentId = this.data['DOCUMENT_ID'];
+			const documentId = this.data.DOCUMENT_ID;
 
 			if (module === 'crm')
 			{
 				const rawUserOptions = BX.Type.isPlainObject(this.data.USER_OPTIONS) ? this.data.USER_OPTIONS : {};
-				const hasCrmCheckAutomationOption =
-					BX.Type.isPlainObject(rawUserOptions['crm_check_automation'])
-						? Object.keys(rawUserOptions['crm_check_automation']).length > 0
+				const hasCrmCheckAutomationOption = (
+					BX.Type.isPlainObject(rawUserOptions.crm_check_automation)
+						? Object.keys(rawUserOptions.crm_check_automation).length > 0
 						: false
-				;
+				);
 				if (this.canEdit() && !hasCrmCheckAutomationOption)
 				{
 					BX.Bizproc.Automation.CrmCheckAutomationGuide.startCheckAutomationTour(documentType, Number(categoryId));
@@ -915,26 +1054,28 @@
 					BX.Bizproc.Automation.CrmCheckAutomationGuide.showSuccessAutomation(
 						documentType,
 						categoryId,
-						rawUserOptions['crm_check_automation']
+						rawUserOptions.crm_check_automation,
 					);
 				}
 			}
 		},
-		saveTemplates: function(templatesData)
+		saveTemplates: function(templatesData, triggersData)
 		{
 			if (this.savingAutomation)
 			{
 				return;
 			}
 
-			var data = {
+			const data = {
 				ajax_action: 'save_automation',
 				document_signed: this.documentSigned,
-				templates_json: Helper.toJsonString(templatesData)
+				templates_json: Helper.toJsonString(templatesData),
+				triggers_json: Helper.toJsonString(triggersData),
 			};
 
 			this.savingAutomation = true;
-			var self = this;
+			const self = this;
+
 			return BX.ajax({
 				method: 'POST',
 				dataType: 'json',
@@ -946,8 +1087,9 @@
 
 					if (response.SUCCESS)
 					{
-						templatesData.forEach(function(updatedTemplate) {
-							var template = self.templateManager.getTemplateById(updatedTemplate.ID);
+						self.triggerManager.fetchTriggers().then();
+						templatesData.forEach((updatedTemplate) => {
+							const template = self.templateManager.getTemplateById(updatedTemplate.ID);
 							if (template)
 							{
 								template.reInit(updatedTemplate, self.viewMode);
@@ -958,19 +1100,22 @@
 					{
 						alert(response.ERRORS[0]);
 					}
-				}
+				},
 			});
 		},
 		changeViewMode: function(mode, silent)
 		{
 			if (!silent && this.isNeedSave())
 			{
-				alert(BX.message('BIZPROC_AUTOMATION_CMP_NEED_SAVE'));
+				alert(BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_NEED_SAVE'));
+
 				return;
 			}
 
 			if (mode !== Component.ViewMode.View && mode !== Component.ViewMode.Edit)
+			{
 				throw 'Unknown view mode';
+			}
 
 			this.viewMode = mode;
 
@@ -978,13 +1123,13 @@
 			this.reInitTemplateManager();
 			this.reInitButtons();
 		},
-		enableManageMode: function (status)
+		enableManageMode: function(status)
 		{
 			if (!this.isNeedSave())
 			{
 				this.viewMode = Component.ViewMode.Manage;
 				this.templateManager.enableManageMode(status);
-				this.triggerManager.enableManageMode();
+				this.triggerManager.enableManageMode(status);
 			}
 		},
 		disableManageMode: function()
@@ -998,7 +1143,7 @@
 			modified = modified !== false;
 
 			const addingRobots = this.robotSelector && this.robotSelector.isShown();
-			var buttonsNode = this.node.querySelector('[data-role="automation-buttons"]');
+			const buttonsNode = this.node.querySelector('[data-role="automation-buttons"]');
 
 			if (!buttonsNode)
 			{
@@ -1019,7 +1164,7 @@
 		},
 		canEdit: function()
 		{
-			return this.data['CAN_EDIT'];
+			return this.data.CAN_EDIT;
 		},
 		updateTracker: function()
 		{
@@ -1047,6 +1192,7 @@
 		setUserOption: function(category, key, value)
 		{
 			this.userOptions.set(category, key, value);
+
 			return this;
 		},
 		getConstants: function()
@@ -1069,7 +1215,7 @@
 		{
 			return this.getGVariables().find((variable) => variable.Id === id) || null;
 		},
-		getDocumentFields: function ()
+		getDocumentFields: function()
 		{
 			return this.document.getFields();
 		},
@@ -1101,7 +1247,7 @@
 							const originalEvent = event.getData().originalEvent;
 
 							robotData.NAME = item.title;
-							robotData.DIALOG_CONTEXT = {addMenuGroup: item.groupIds[0]};
+							robotData.DIALOG_CONTEXT = { addMenuGroup: item.groupIds[0] };
 
 							const template = this.templateManager.getTemplateByStatusId(stageId);
 							if (!template)
@@ -1109,14 +1255,20 @@
 								return;
 							}
 
-							if (!template.isExternalModified())
+							if (template.isExternalModified())
+							{
+								this.showNotification({
+									content: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_EXTERNAL_EDIT_STAGE_TEXT'),
+								});
+							}
+							else
 							{
 								template.addRobot(robotData, (robot) => {
-									const setShowRobotGuide =
-										BX.Type.isBoolean(robotData['ROBOT_SETTINGS']['IS_SUPPORTING_ROBOT'])
+									const setShowRobotGuide = (
+										BX.Type.isBoolean(robotData.ROBOT_SETTINGS.IS_SUPPORTING_ROBOT)
 											? 'setShowSupportingRobotGuide'
 											: 'setShowRobotGuide'
-									;
+									);
 
 									this.notifyAboutNewRobot(template, robot);
 
@@ -1134,12 +1286,6 @@
 									}
 								});
 							}
-							else
-							{
-								this.showNotification({
-									content: BX.message('BIZPROC_AUTOMATION_CMP_EXTERNAL_EDIT_STAGE_TEXT')
-								});
-							}
 						},
 						triggerSelected: (event) => {
 							if (!this.canEdit())
@@ -1152,7 +1298,7 @@
 							const triggerData = BX.Runtime.clone(item.customData.triggerData);
 							const originalEvent = event.getData().originalEvent;
 
-							triggerData['DOCUMENT_STATUS'] = stageId;
+							triggerData.DOCUMENT_STATUS = stageId;
 
 							this.triggerManager.addTrigger(triggerData, (trigger) => {
 								trigger.setName(item.title);
@@ -1173,7 +1319,7 @@
 											automationGuide.start();
 											settings.set('robot-guide-shown', automationGuide.isShownRobotGuide);
 											settings.set('trigger-guide-shown', automationGuide.isShownTriggerGuide);
-										}
+										},
 									);
 								}
 							});
@@ -1184,16 +1330,16 @@
 							if (!this.isOpenRobotSelectorAnalyticsPushed)
 							{
 								const document = this.document;
-								//analytics
+								// analytics
 								BX.ajax.runAction(
 									'bizproc.analytics.push',
 									{
 										analyticsLabel: {
 											automation_enter_dialog: 'Y',
 											start_module: document.getRawType()[0],
-											start_entity: document.getRawType()[2] + '_' + document.getCategoryId()
-										}
-									}
+											start_entity: document.getRawType()[2] + '_' + document.getCategoryId(),
+										},
+									},
 								);
 								this.isOpenRobotSelectorAnalyticsPushed = true;
 							}
@@ -1204,8 +1350,8 @@
 							{
 								this.markModified();
 							}
-						}
-					}
+						},
+					},
 				});
 			}
 		},
@@ -1225,23 +1371,23 @@
 					messageId,
 					{
 						'#ROBOT_NAME#': BX.Text.encode(robot.getTitle()),
-						'#STAGE_NAME#': BX.Text.encode(status.NAME || status.TITLE)
-					}
+						'#STAGE_NAME#': BX.Text.encode(status.NAME || status.TITLE),
+					},
 				),
 				actions: [
 					{
 						title: BX.Loc.getMessage('JS_CORE_WINDOW_CANCEL'),
 						events: {
-							click: function (event, baloon)
+							click: function(event, baloon)
 							{
 								event.preventDefault();
 								template.deleteRobot(robot);
 								robot.destroy();
 
 								baloon.close();
-							}
+							},
 						},
-					}
+					},
 				],
 			});
 		},
@@ -1262,35 +1408,35 @@
 					messageId,
 					{
 						'#TRIGGER_NAME#': BX.Text.encode(trigger.getName()),
-						'#STAGE_NAME#': BX.Text.encode(status.NAME || status.TITLE)
-					}
+						'#STAGE_NAME#': BX.Text.encode(status.NAME || status.TITLE),
+					},
 				),
 				actions: [
 					{
 						title: BX.Loc.getMessage('JS_CORE_WINDOW_CANCEL'),
 						events: {
-							click: function (event, baloon)
+							click: function(event, baloon)
 							{
 								event.preventDefault();
 								self.triggerManager.deleteTrigger(trigger);
 								BX.Dom.remove(trigger.node);
 
 								baloon.close();
-							}
-						}
-					}
-				]
+							},
+						},
+					},
+				],
 			});
 		},
 		showNotification(notificationOptions)
 		{
-			const defaultSettings = {autoHideDelay: 3000};
+			const defaultSettings = { autoHideDelay: 3000 };
 
 			BX.UI.Notification.Center.notify(Object.assign(defaultSettings, notificationOptions));
 		},
 	};
 
-	var TemplateManager = function(component)
+	const TemplateManager = function(component)
 	{
 		this.component = component;
 	};
@@ -1300,7 +1446,9 @@
 		init: function(data, viewMode)
 		{
 			if (!BX.type.isPlainObject(data))
+			{
 				data = {};
+			}
 
 			this.viewMode = viewMode || Component.ViewMode.Edit;
 			this.availableRobots = BX.type.isArray(data.AVAILABLE_ROBOTS) ? data.AVAILABLE_ROBOTS : [];
@@ -1311,13 +1459,16 @@
 		reInit: function(data, viewMode)
 		{
 			if (!BX.type.isPlainObject(data))
+			{
 				data = {};
+			}
 
 			this.viewMode = viewMode || Component.ViewMode.Edit;
 			if (BX.type.isArray(data.TEMPLATES))
 			{
 				this.templatesData = data.TEMPLATES;
 			}
+
 			if (this.viewMode !== Component.ViewMode.Edit)
 			{
 				this.targetManageModeStatus = '';
@@ -1333,21 +1484,20 @@
 				this.disableManageMode();
 			}
 		},
-		isManageModeSupported: function ()
+		isManageModeSupported: function()
 		{
 			return this.component.data.IS_TEMPLATES_SCHEME_SUPPORTED;
 		},
-		isManageModeEnabled: function ()
+		isManageModeEnabled: function()
 		{
 			return (BX.type.isString(this.targetManageModeStatus) && this.targetManageModeStatus !== '');
 		},
-		enableManageMode: function (status)
+		enableManageMode: function(status)
 		{
 			this.viewMode = Component.ViewMode.Manage;
 			this.targetManageModeStatus = status;
 
-			this.templates.forEach(function (template)
-			{
+			this.templates.forEach((template) => {
 				if (template.getStatusId() === status)
 				{
 					template.enableManageMode(true);
@@ -1356,35 +1506,32 @@
 				{
 					template.enableManageMode(false);
 				}
-			}.bind(this));
+			});
 
 			this.component.disableDragAndDrop();
 			this.component.actionPanel.showPanel();
 		},
-		disableManageMode: function ()
+		disableManageMode: function()
 		{
 			this.viewMode = Component.ViewMode.Edit;
 			this.targetManageModeStatus = '';
 			this.component.actionPanel.hidePanel();
 
-			this.templates.forEach(function (template)
-			{
+			this.templates.forEach((template) => {
 				template.disableManageMode();
 			});
 
 			this.component.enableDragAndDrop();
 		},
-		enableDragAndDrop: function ()
+		enableDragAndDrop: function()
 		{
-			this.templates.forEach(function (template)
-			{
+			this.templates.forEach((template) => {
 				template.enableDragAndDrop();
 			});
 		},
-		disableDragAndDrop: function ()
+		disableDragAndDrop: function()
 		{
-			this.templates.forEach(function (template)
-			{
+			this.templates.forEach((template) => {
 				template.disableDragAndDrop();
 			});
 		},
@@ -1393,21 +1540,21 @@
 			this.templates = [];
 			this.templatesMap = {};
 
-			for (var i = 0; i < this.templatesData.length; ++i)
+			for (let i = 0; i < this.templatesData.length; ++i)
 			{
-				var tpl = this.createTemplate(this.templatesData[i]);
+				const tpl = this.createTemplate(this.templatesData[i]);
 
 				this.templates.push(tpl);
 				this.templatesMap[tpl.getStatusId()] = tpl;
 			}
 		},
-		createTemplate: function (templateData)
+		createTemplate: function(templateData)
 		{
 			const template = new BX.Bizproc.Automation.Template({
 				constants: {},
 				variables: {},
 				templateContainerNode: this.component.node,
-				delayMinLimitM: this.component.data['DELAY_MIN_LIMIT_M'],
+				delayMinLimitM: this.component.data.DELAY_MIN_LIMIT_M,
 				userOptions: this.component.userOptions,
 			});
 
@@ -1416,7 +1563,7 @@
 			BX.Event.EventEmitter.subscribe(
 				this.component,
 				'BX.Bizproc.Automation.Component:onSearch',
-				template.onSearch.bind(template)
+				template.onSearch.bind(template),
 			);
 
 			this.subscribeTemplateEvents(template);
@@ -1424,118 +1571,127 @@
 
 			return template;
 		},
-		subscribeTemplateEvents: function (template)
+		subscribeTemplateEvents: function(template)
 		{
-			this.getTemplateEventListeners(template).forEach(function (eventListener) {
+			this.getTemplateEventListeners(template).forEach((eventListener) => {
 				template.subscribe(eventListener.eventName, eventListener.listener);
 			});
 		},
-		subscribeRobotEvents: function (template)
+		subscribeRobotEvents: function(template)
 		{
-			this.getRobotEventListeners(template).forEach(function (eventListener) {
+			this.getRobotEventListeners(template).forEach((eventListener) => {
 				template.subscribeRobotEvents(eventListener.eventName, eventListener.listener);
 			});
 		},
-		getTemplateEventListeners: function (template)
+		getTemplateEventListeners: function(template)
 		{
 			return [
 				{
 					eventName: 'Template:help:show',
-					listener: function (event) {
+					listener: function(event) {
 						this.component.onGlobalHelpClick(event.data);
-					}.bind(this)
+					}.bind(this),
 				},
 				{
 					eventName: 'Template:robot:showSettings',
-					listener: function () {
+					listener: function() {
 						BX.Dom.addClass(this.component.node, 'automation-base-blocked');
-					}.bind(this)
+					}.bind(this),
 				},
 				{
 					eventName: 'Template:robot:closeSettings',
-					listener: function () {
+					listener: function() {
 						BX.Dom.removeClass(this.component.node, 'automation-base-blocked');
-					}.bind(this)
+					}.bind(this),
 				},
 				{
 					eventName: 'Template:robot:add',
-					listener: function (event) {
-						var draftRobot = event.getData().robot;
-						this.getRobotEventListeners(template).forEach(function (eventListener) {
+					listener: function(event) {
+						const draftRobot = event.getData().robot;
+						this.getRobotEventListeners(template).forEach((eventListener) => {
 							draftRobot.subscribe(eventListener.eventName, eventListener.listener);
 						});
-					}.bind(this)
+					}.bind(this),
 				},
 				{
 					eventName: 'Template:robot:delete',
-					listener: function (event) {
+					listener: function(event) {
 						const deletedRobot = event.getData().robot;
 
-						//analytics
+						// analytics
 						BX.ajax.runAction(
 							'bizproc.analytics.push',
 							{
 								analyticsLabel: {
 									automation_robot_delete: 'Y',
 									delete_robot: deletedRobot.data.Type.toLowerCase(),
-								}
-							}
+								},
+							},
 						);
-
-					}.bind(this)
+					}.bind(this),
 				},
 				{
 					eventName: 'Template:modified',
-					listener: function () {
+					listener: function() {
 						this.component.markModified();
-					}.bind(this)
+					}.bind(this),
 				},
 				{
 					eventName: 'Template:enableManageMode',
-					listener: function (event) {
+					listener: function(event) {
 						if (this.viewMode === Component.ViewMode.Edit)
 						{
 							this.component.enableManageMode(event.getData().documentStatus);
 						}
-					}.bind(this)
-				}
+					}.bind(this),
+				},
 			];
 		},
-		getRobotEventListeners: function (template)
+		getRobotEventListeners: function(template)
 		{
 			return [
 				{
 					eventName: 'Robot:selected',
-					listener: function () {
-						this.component.actionPanel.setTotalSelectedItems(template.getSelectedRobotNames().length);
-					}.bind(this)
+					listener: function() {
+						const totalSelectedCount = (
+							this.component.triggerManager.getSelectedTriggers().length
+							+ template.getSelectedRobotNames().length
+						);
+						this.component.actionPanel.setTotalSelectedItems(totalSelectedCount);
+						this.toggleActionDeactivateItem(template);
+					}.bind(this),
 				},
 				{
 					eventName: 'Robot:unselected',
-					listener: function () {
-						this.component.actionPanel.setTotalSelectedItems(template.getSelectedRobotNames().length);
-					}.bind(this)
+					listener: function() {
+						const totalSelectedCount = (
+							this.component.triggerManager.getSelectedTriggers().length
+							+ template.getSelectedRobotNames().length
+						);
+						this.component.actionPanel.setTotalSelectedItems(totalSelectedCount);
+						this.toggleActionDeactivateItem(template);
+					}.bind(this),
 				},
 				{
 					eventName: 'Robot:title:editStart',
-					listener: function () {
+					listener: function() {
 						BX.addClass(this.component.node, 'automation-base-blocked');
-					}.bind(this)
+					}.bind(this),
 				},
 				{
 					eventName: 'Robot:title:editCompleted',
-					listener: function () {
+					listener: function() {
 						BX.removeClass(this.component.node, 'automation-base-blocked');
-					}.bind(this)
+					}.bind(this),
 				},
 				{
 					eventName: 'Robot:manage',
-					listener: function (event) {
-						var dstTemplate = this.getTemplateByColumnNode(event.getData().templateNode);
-						var droppableItem = event.getData().droppableItem;
-						var robot = event.getData().robot;
+					listener: function(event) {
+						const dstTemplate = this.getTemplateByColumnNode(event.getData().templateNode);
+						const droppableItem = event.getData().droppableItem;
+						const robot = event.getData().robot;
 
-						var beforeRobot = undefined;
+						let beforeRobot;
 						if (!BX.Type.isNil(droppableItem))
 						{
 							beforeRobot = dstTemplate.getRobotById(droppableItem.getAttribute('data-id'));
@@ -1552,13 +1708,50 @@
 								robot.moveTo(dstTemplate, beforeRobot);
 							}
 						}
-					}.bind(this)
-				}
+					}.bind(this),
+				},
+				{
+					eventName: 'Robot:onAfterActivated',
+					listener: function() {
+						if (template)
+						{
+							template.markModified(true);
+						}
+					},
+				},
+				{
+					eventName: 'Robot:onAfterDeactivated',
+					listener: function() {
+						if (template)
+						{
+							template.markModified(true);
+						}
+					},
+				},
 			];
+		},
+		toggleActionDeactivateItem(template)
+		{
+			const deactivateItem = this.component.actionPanel?.getItemById('automation_deactivate');
+			const activateItem = this.component.actionPanel?.getItemById('automation_activate');
+
+			if (deactivateItem && activateItem)
+			{
+				const selectedRobots = template.getSelectedRobotNames();
+				let activate = false;
+				if (selectedRobots.length > 0)
+				{
+					const deactivatedRobots = template.getDeactivatedRobotNames();
+					activate = selectedRobots.every((selectedRobotName) => deactivatedRobots.includes(selectedRobotName));
+				}
+
+				activateItem[activate ? 'showAsInlineBlock' : 'hide']();
+				deactivateItem[activate ? 'hide' : 'showAsInlineBlock']();
+			}
 		},
 		reInitTemplates: function(templates)
 		{
-			for (var i = 0; i < this.templates.length; ++i)
+			for (let i = 0; i < this.templates.length; ++i)
 			{
 				if (templates[i])
 				{
@@ -1567,7 +1760,7 @@
 				}
 			}
 		},
-		updateTemplates: function (statuses)
+		updateTemplates: function(statuses)
 		{
 			return BX.ajax({
 				method: 'POST',
@@ -1578,17 +1771,17 @@
 					document_signed: this.component.documentSigned,
 					statuses: statuses,
 				},
-				onsuccess: function (response)
+				onsuccess: function(response)
 				{
 					if (response.SUCCESS)
 					{
-						var updatedTemplates = response.DATA.templates;
-						for (var updatedStatus in updatedTemplates)
+						const updatedTemplates = response.DATA.templates;
+						for (const updatedStatus in updatedTemplates)
 						{
 							if (updatedTemplates.hasOwnProperty(updatedStatus))
 							{
-								var template = this.getTemplateByStatusId(updatedStatus);
-								var templateIndex = this.templatesData.findIndex(function (templateData) {
+								const template = this.getTemplateByStatusId(updatedStatus);
+								const templateIndex = this.templatesData.findIndex((templateData) => {
 									return templateData.ID === template.getId();
 								});
 
@@ -1606,15 +1799,15 @@
 		},
 		getRobotDescription: function(type)
 		{
-			return this.availableRobots.find(function(item) {
-				return item['CLASS'] === type;
+			return this.availableRobots.find((item) => {
+				return item.CLASS === type;
 			});
 		},
 		serialize: function()
 		{
-			var templates = [];
+			const templates = [];
 
-			for (var i = 0; i < this.templates.length; ++i)
+			for (let i = 0; i < this.templates.length; ++i)
 			{
 				templates.push(this.templates[i].serialize());
 			}
@@ -1623,36 +1816,45 @@
 		},
 		serializeModified: function()
 		{
-			var templates = [];
+			const templates = [];
 
-			this.templates.forEach(function (template) {
+			this.templates.forEach((template) => {
 				if (template.isModified())
 				{
 					templates.push(template.serialize());
 				}
-			})
+			});
 
 			return templates;
 		},
 		countAllRobots: function()
 		{
-			var cnt = 0;
+			let cnt = 0;
 
-			this.templates.forEach(function(template)
-			{
+			this.templates.forEach((template) => {
 				cnt += template.robots.length;
 			});
+
 			return cnt;
+		},
+		countAllActivatedRobots: function()
+		{
+			let count = 0;
+			this.templates.forEach((template) => {
+				count += (template.getActivatedRobotNames()).length;
+			});
+
+			return count;
 		},
 		getTemplateByColumnNode: function(node)
 		{
-			var statusId = node.getAttribute('data-status-id');
+			const statusId = node.getAttribute('data-status-id');
+
 			return this.getTemplateByStatusId(statusId);
 		},
 		getTemplateById: function(id)
 		{
-			return this.templates.find(function (template)
-			{
+			return this.templates.find((template) => {
 				return template.getId() === id;
 			});
 		},
@@ -1666,8 +1868,8 @@
 		},
 		needSave: function()
 		{
-			var modified = false;
-			for (var i = 0; i < this.templates.length; ++i)
+			let modified = false;
+			for (let i = 0; i < this.templates.length; ++i)
 			{
 				if (this.templates[i].isModified())
 				{
@@ -1675,27 +1877,31 @@
 					break;
 				}
 			}
+
 			return modified;
 		},
 	};
 
 	// -> FileSelector
-	var FileSelector = function(robot, container)
+	const FileSelector = function(robot, container)
 	{
-		var config, configString = container.getAttribute('data-config');
+		let config;
+		const configString = container.getAttribute('data-config');
 		if (configString)
 		{
 			config = BX.parseJSON(configString);
 		}
 
 		if (!BX.type.isPlainObject(config))
+		{
 			config = {};
+		}
 
 		this.container = container;
 
-		//read configuration
+		// read configuration
 		this.type = config.type || FileSelector.Type.File;
-		if (config.selected && !config.selected.length)
+		if (config.selected && config.selected.length === 0)
 		{
 			this.type = FileSelector.Type.None;
 		}
@@ -1709,7 +1915,7 @@
 		this.labelFile = config.labelFile || 'File';
 		this.labelDisk = config.labelDisk || 'Disk';
 
-		var templateRobots = robot.template ? robot.template.robots : [];
+		const templateRobots = robot.template ? robot.template.robots : [];
 		this.setFileFields(robot.getDocument().getFields(), templateRobots);
 		this.createDom();
 
@@ -1719,38 +1925,36 @@
 		}
 	};
 
-	FileSelector.Type = {None: '', Disk: 'disk', File: 'file'};
+	FileSelector.Type = { None: '', Disk: 'disk', File: 'file' };
 
 	FileSelector.prototype =
 	{
 		setFileFields: function(documentFields, templateRobots)
 		{
-			var fields = [];
-			var labels = {};
-			for (var i = 0; i < documentFields.length; ++i)
+			const fields = [];
+			const labels = {};
+			for (const documentField of documentFields)
 			{
-				if (documentFields[i]['Type'] === 'file')
+				if (documentField.Type === 'file')
 				{
-					fields.push(documentFields[i]);
+					fields.push(documentField);
 				}
 			}
 
 			if (BX.type.isArray(templateRobots))
 			{
-				templateRobots.forEach(function(robot)
-				{
-					robot.getReturnFieldsDescription().forEach(function(field)
-					{
-						if (field['Type'] === 'file')
+				templateRobots.forEach((robot) => {
+					robot.getReturnFieldsDescription().forEach((field) => {
+						if (field.Type === 'file')
 						{
-							var expression = '{{~'+robot.getId()+':'+field['Id']+'}}';
+							const expression = '{{~' + robot.getId() + ':' + field.Id + '}}';
 							fields.push({
 								Id: expression,
-								Name: robot.getTitle() + ': ' + field['Name'],
+								Name: robot.getTitle() + ': ' + field.Name,
 								Type: 'file',
-								Expression: expression
+								Expression: expression,
 							});
-							labels[expression] = robot.getTitle() + ': ' + field['Name'];
+							labels[expression] = robot.getTitle() + ': ' + field.Name;
 						}
 					});
 				});
@@ -1758,29 +1962,30 @@
 
 			this.fileFields = fields;
 			this.fileLabels = labels;
+
 			return this;
 		},
 
 		createDom: function()
 		{
-			this.container.appendChild(this.createBaseNode());
+			BX.Dom.append(this.createBaseNode(), this.container);
 			this.showTypeControllerLayout(this.type);
 		},
 		createBaseNode: function()
 		{
-			var idSalt = BX.Bizproc.Automation.Helper.generateUniqueId();
-			var typeRadio1 = null;
+			const idSalt = BX.Bizproc.Automation.Helper.generateUniqueId();
+			let typeRadio1 = null;
 
 			if (this.fileFields.length > 0)
 			{
-				typeRadio1 = BX.create("input", {
+				typeRadio1 = BX.create('input', {
 					attrs: {
-						className: "bizproc-automation-popup-select-input",
-						type: "radio",
-						id: "type-1" + idSalt,
+						className: 'bizproc-automation-popup-select-input',
+						type: 'radio',
+						id: 'type-1' + idSalt,
 						name: this.typeInputName,
-						value: FileSelector.Type.File
-					}
+						value: FileSelector.Type.File,
+					},
 				});
 				if (this.type === FileSelector.Type.File)
 				{
@@ -1788,14 +1993,14 @@
 				}
 			}
 
-			var typeRadio2 = BX.create("input", {
+			const typeRadio2 = BX.create('input', {
 				attrs: {
-					className: "bizproc-automation-popup-select-input",
-					type: "radio",
-					id: "type-2" + idSalt,
+					className: 'bizproc-automation-popup-select-input',
+					type: 'radio',
+					id: 'type-2' + idSalt,
 					name: this.typeInputName,
-					value: FileSelector.Type.Disk
-				}
+					value: FileSelector.Type.Disk,
+				},
 			});
 
 			if (this.type === FileSelector.Type.Disk)
@@ -1803,44 +2008,44 @@
 				typeRadio2.setAttribute('checked', 'checked');
 			}
 
-			var children = [BX.create("span", {
-				attrs: { className: "bizproc-automation-popup-settings-title" },
-				text: this.label + ":"
+			const children = [BX.create('span', {
+				attrs: { className: 'bizproc-automation-popup-settings-title' },
+				text: this.label + ':',
 			})];
 
 			if (typeRadio1)
 			{
-				children.push(typeRadio1, BX.create("label", {
+				children.push(typeRadio1, BX.create('label', {
 					attrs: {
-						className: "bizproc-automation-popup-settings-link",
-						for: "type-1" + idSalt
+						className: 'bizproc-automation-popup-settings-link',
+						for: 'type-1' + idSalt,
 					},
 					text: this.labelFile,
 					events: {
-						click: this.onTypeChange.bind(this, FileSelector.Type.File)
-					}
+						click: this.onTypeChange.bind(this, FileSelector.Type.File),
+					},
 				}));
 			}
 
-			children.push(typeRadio2, BX.create("label", {
+			children.push(typeRadio2, BX.create('label', {
 				attrs: {
-					className: "bizproc-automation-popup-settings-link",
-					for: "type-2" + idSalt
+					className: 'bizproc-automation-popup-settings-link',
+					for: 'type-2' + idSalt,
 				},
 				text: this.labelDisk,
 				events: {
-					click: this.onTypeChange.bind(this, FileSelector.Type.Disk)
-				}
+					click: this.onTypeChange.bind(this, FileSelector.Type.Disk),
+				},
 			}));
 
-			return BX.create("div", {
-				attrs: { className: "bizproc-automation-popup-settings" },
+			return BX.create('div', {
+				attrs: { className: 'bizproc-automation-popup-settings' },
 				children: [
-					BX.create("div", {
-						attrs: { className: "bizproc-automation-popup-settings-block" },
-						children: children
-					})
-				]
+					BX.create('div', {
+						attrs: { className: 'bizproc-automation-popup-settings-block' },
+						children: children,
+					}),
+				],
 			});
 		},
 		showTypeControllerLayout: function(type)
@@ -1863,17 +2068,17 @@
 		},
 		showDiskControllerLayout: function()
 		{
-			if (!this.diskControllerNode)
+			if (this.diskControllerNode)
 			{
-				this.diskControllerNode = BX.create('div');
-				this.container.appendChild(this.diskControllerNode);
-				var diskUploader = this.getDiskUploader();
-				diskUploader.layout(this.diskControllerNode);
-				diskUploader.show(true);
+				BX.show(this.diskControllerNode);
 			}
 			else
 			{
-				BX.show(this.diskControllerNode);
+				this.diskControllerNode = BX.create('div');
+				BX.Dom.append(this.diskControllerNode, this.container);
+				const diskUploader = this.getDiskUploader();
+				diskUploader.layout(this.diskControllerNode);
+				diskUploader.show(true);
 			}
 		},
 		hideDiskControllerLayout: function()
@@ -1885,23 +2090,23 @@
 		},
 		showFileControllerLayout: function()
 		{
-			if (!this.fileControllerNode)
+			if (this.fileControllerNode)
 			{
-				this.fileItemsNode = BX.create('span');
-				this.fileControllerNode = BX.create('div', {children: [this.fileItemsNode]});
-				this.container.appendChild(this.fileControllerNode);
-				var addButtonNode = BX.create('a', {
-					attrs: {className: 'bizproc-automation-popup-settings-link bizproc-automation-popup-settings-link-thin'},
-					text: BX.message('BIZPROC_AUTOMATION_CMP_ADD')
-				});
-
-				this.fileControllerNode.appendChild(addButtonNode);
-
-				BX.bind(addButtonNode, 'click', this.onFileFieldAddClick.bind(this, addButtonNode));
+				BX.show(this.fileControllerNode);
 			}
 			else
 			{
-				BX.show(this.fileControllerNode);
+				this.fileItemsNode = BX.create('span');
+				this.fileControllerNode = BX.create('div', { children: [this.fileItemsNode] });
+				BX.Dom.append(this.fileControllerNode, this.container);
+				const addButtonNode = BX.create('a', {
+					attrs: { className: 'bizproc-automation-popup-settings-link bizproc-automation-popup-settings-link-thin' },
+					text: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_ADD'),
+				});
+
+				BX.Dom.append(addButtonNode, this.fileControllerNode);
+
+				BX.bind(addButtonNode, 'click', this.onFileFieldAddClick.bind(this, addButtonNode));
 			}
 		},
 		hideFileControllerLayout: function()
@@ -1920,14 +2125,14 @@
 					{
 						msg:
 							{
-								'diskAttachFiles' : BX.message('BIZPROC_AUTOMATION_CMP_DISK_ATTACH_FILE'),
-								'diskAttachedFiles' : BX.message('BIZPROC_AUTOMATION_CMP_DISK_ATTACHED_FILES'),
-								'diskSelectFile' : BX.message('BIZPROC_AUTOMATION_CMP_DISK_SELECT_FILE'),
-								'diskSelectFileLegend' : BX.message('BIZPROC_AUTOMATION_CMP_DISK_SELECT_FILE_LEGEND'),
-								'diskUploadFile' : BX.message('BIZPROC_AUTOMATION_CMP_DISK_UPLOAD_FILE'),
-								'diskUploadFileLegend' : BX.message('BIZPROC_AUTOMATION_CMP_DISK_UPLOAD_FILE_LEGEND')
-							}
-					}
+								diskAttachFiles: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_DISK_ATTACH_FILE'),
+								diskAttachedFiles: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_DISK_ATTACHED_FILES'),
+								diskSelectFile: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_DISK_SELECT_FILE'),
+								diskSelectFileLegend: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_DISK_SELECT_FILE_LEGEND'),
+								diskUploadFile: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_DISK_UPLOAD_FILE'),
+								diskUploadFileLegend: BX.Loc.getMessage('BIZPROC_AUTOMATION_CMP_DISK_UPLOAD_FILE_LEGEND'),
+							},
+					},
 				);
 
 				this.diskUploader.setMode(1);
@@ -1945,7 +2150,8 @@
 		},
 		isFileItemSelected: function(item)
 		{
-			var itemNode = this.fileItemsNode.querySelector('[data-file-id="'+item.id+'"]');
+			const itemNode = this.fileItemsNode.querySelector('[data-file-id="' + item.id + '"]');
+
 			return !!itemNode;
 		},
 		addFileItem: function(item)
@@ -1955,42 +2161,41 @@
 				return false;
 			}
 
-			var node = this.createFileItemNode(item);
+			const node = this.createFileItemNode(item);
 			if (!this.multiple)
 			{
-				BX.cleanNode(this.fileItemsNode)
+				BX.cleanNode(this.fileItemsNode);
 			}
 
-			this.fileItemsNode.appendChild(node);
+			BX.Dom.append(node, this.fileItemsNode);
 		},
 		addItems: function(items)
 		{
 			if (this.type === FileSelector.Type.File)
 			{
-				for(var i = 0; i < items.length; ++i)
+				for (const item of items)
 				{
-					this.addFileItem(items[i])
+					this.addFileItem(item);
 				}
 			}
 			else
 			{
 				this.getDiskUploader()
 					.setValues(
-						this.convertToDiskItems(items)
+						this.convertToDiskItems(items),
 					);
 			}
 		},
 		convertToDiskItems: function(items)
 		{
-			var diskItems = [];
-			for (var i = 0; i < items.length; ++i)
+			const diskItems = [];
+			for (const item of items)
 			{
-				var item = items[i];
 				diskItems.push({
-					ID: item['id'],
-					NAME: item['name'],
-					SIZE: item['size'],
-					VIEW_URL: ''
+					ID: item.id,
+					NAME: item.name,
+					SIZE: item.size,
+					VIEW_URL: '',
 				});
 			}
 
@@ -1998,7 +2203,7 @@
 		},
 		removeFileItem: function(item)
 		{
-			var itemNode = this.fileItemsNode.querySelector('[data-file-id="'+item.id+'"]');
+			const itemNode = this.fileItemsNode.querySelector('[data-file-id="' + item.id + '"]');
 			if (itemNode)
 			{
 				this.fileItemsNode.removeChild(itemNode);
@@ -2006,19 +2211,20 @@
 		},
 		onFileFieldAddClick: function(addButtonNode, e)
 		{
-			var me = this, i, menuItems = [];
+			const me = this;
+			const menuItems = [];
 
-			var fields = this.fileFields;
-			for (i = 0; i < fields.length; ++i)
+			const fields = this.fileFields;
+			for (const field of fields)
 			{
 				menuItems.push({
-					text: BX.util.htmlspecialchars(fields[i]['Name']),
-					field: fields[i],
+					text: BX.util.htmlspecialchars(field.Name),
+					field: field,
 					onclick: function(e, item)
 					{
 						this.popupWindow.close();
 						me.onFieldSelect(item.field);
-					}
+					},
 				});
 			}
 
@@ -2033,9 +2239,9 @@
 				menuItems,
 				{
 					autoHide: true,
-					offsetLeft: (BX.pos(addButtonNode)['width'] / 2),
-					angle: { position: 'top', offset: 0 }
-				}
+					offsetLeft: (BX.pos(addButtonNode).width / 2),
+					angle: { position: 'top', offset: 0 },
+				},
 			);
 			this.menu = BX.PopupMenu.currentItem;
 			e.preventDefault();
@@ -2046,7 +2252,7 @@
 				id: field.Id,
 				expression: field.Expression,
 				name: field.Name,
-				type: FileSelector.Type.File
+				type: FileSelector.Type.File,
 			});
 		},
 		destroy: function()
@@ -2058,7 +2264,7 @@
 		},
 		createFileItemNode: function(item)
 		{
-			var label = item.name || '';
+			let label = item.name || '';
 			if (this.fileLabels[label])
 			{
 				label = this.fileLabels[label];
@@ -2068,56 +2274,55 @@
 				attrs: {
 					className: 'bizproc-automation-popup-autocomplete-item',
 					'data-file-id': item.id,
-					'data-file-expression': item.expression
+					'data-file-expression': item.expression,
 				},
 				children: [
 					BX.create('span', {
 						attrs: {
-							className: 'bizproc-automation-popup-autocomplete-name'
+							className: 'bizproc-automation-popup-autocomplete-name',
 						},
-						text: label
+						text: label,
 					}),
 					BX.create('span', {
 						attrs: {
-							className: 'bizproc-automation-popup-autocomplete-delete'
+							className: 'bizproc-automation-popup-autocomplete-delete',
 						},
 						events: {
-							click: this.removeFileItem.bind(this, item)
-						}
-					})
-				]
+							click: this.removeFileItem.bind(this, item),
+						},
+					}),
+				],
 			});
 		},
 		onBeforeSave: function()
 		{
-			var ids = [];
+			let ids = [];
 			if (this.type === FileSelector.Type.Disk)
 			{
 				ids = this.getDiskUploader().getValues();
 			}
 			else if (this.type === FileSelector.Type.File)
 			{
-				this.fileItemsNode.childNodes.forEach(function(node)
-				{
-					var id = node.getAttribute('data-file-expression');
+				this.fileItemsNode.childNodes.forEach((node) => {
+					const id = node.getAttribute('data-file-expression');
 					if (id !== '')
 					{
 						ids.push(id);
 					}
-				})
+				});
 			}
 
-			for (var i = 0; i < ids.length; ++i)
+			for (const id of ids)
 			{
 				this.container.appendChild(BX.create('input', {
 					props: {
 						type: 'hidden',
 						name: this.valueInputName + (this.multiple ? '[]' : ''),
-						value: ids[i]
-					}
+						value: id,
+					},
 				}));
 			}
-		}
+		},
 	};
 
 	const API = {
@@ -2125,7 +2330,7 @@
 		documentType: null,
 		documentFields: null,
 		documentSigned: null,
-		showRobotSettings: function (robotData, documentType, documentStatus, onSaveCallback) {
+		showRobotSettings: function(robotData, documentType, documentStatus, onSaveCallback) {
 			const document = new BX.Bizproc.Automation.Document({
 				rawDocumentType: documentType,
 				statusId: documentStatus,
@@ -2158,39 +2363,41 @@
 			const tpl = new Template({
 				config: config,
 			});
-			tpl.init({DOCUMENT_FIELDS: this.documentFields}, Component.ViewMode.None);
+			tpl.init({ DOCUMENT_FIELDS: this.documentFields }, Component.ViewMode.None);
 
-			tpl.subscribe('Template:help:show', event => {
+			tpl.subscribe('Template:help:show', (event) => {
 				event.preventDefault();
-				if (top.BX.Helper) {
+
+				if (top.BX.Helper)
+				{
 					top.BX.Helper.show('redirect=detail&code=14889274');
 				}
 			});
 
 			tpl.openRobotSettingsDialog(robot, null, onSaveCallback);
-		}
+		},
 	};
 
 	const showGlobals = {
-		showVariables: function ()
+		showVariables: function()
 		{
-			const documentTypeSigned = this.component.data['DOCUMENT_TYPE_SIGNED'];
+			const documentTypeSigned = this.component.data.DOCUMENT_TYPE_SIGNED;
 			const mode = BX.Bizproc.Globals.Manager.Instance.mode.variable;
 
 			BX.Bizproc.Globals.Manager.Instance.showGlobals(mode, documentTypeSigned)
 				.then(this.onAfterSliderClose.bind(this, mode))
 			;
 		},
-		showConstants: function ()
+		showConstants: function()
 		{
-			const documentTypeSigned = this.component.data['DOCUMENT_TYPE_SIGNED'];
+			const documentTypeSigned = this.component.data.DOCUMENT_TYPE_SIGNED;
 			const mode = BX.Bizproc.Globals.Manager.Instance.mode.constant;
 
 			BX.Bizproc.Globals.Manager.Instance.showGlobals(mode, documentTypeSigned)
 				.then(this.onAfterSliderClose.bind(this, mode))
 			;
 		},
-		onAfterSliderClose: function (mode, slider)
+		onAfterSliderClose: function(mode, slider)
 		{
 			if (!this.isCorrectMode(mode) || !slider)
 			{
@@ -2222,11 +2429,11 @@
 				automationGlobals.deleteGlobals(mode, deletedGlobals);
 			}
 		},
-		isCorrectMode: function (mode)
+		isCorrectMode: function(mode)
 		{
 			return BX.Type.isStringFilled(mode) && Object.values(BX.Bizproc.Globals.Manager.Instance.mode).includes(mode);
-		}
-	}
+		},
+	};
 
 	const Debugger = {
 		showStartPage: function()
@@ -2234,13 +2441,13 @@
 			BX.Bizproc.Debugger.Manager.Instance.openDebuggerStartPage(this.component.documentSigned).then();
 		},
 
-		showDebugSessions: function ()
+		showDebugSessions: function()
 		{
-			var componentParams = {
+			const componentParams = {
 				documentSigned: this.component.documentSigned,
 			};
 
-			this.openSlider('bizproc.debugger.session.list', componentParams, {width: 1150});
+			this.openSlider('bizproc.debugger.session.list', componentParams, { width: 1150 });
 		},
 
 		openSlider(componentName, params, options)
@@ -2254,7 +2461,7 @@
 
 			const url = BX.Uri.addParam(
 				'/bitrix/components/bitrix/' + componentName,
-				BX.Type.isPlainObject(params) ? params : {}
+				BX.Type.isPlainObject(params) ? params : {},
 			);
 
 			BX.SidePanel.Instance.open(url, sliderOptions);
@@ -2276,6 +2483,5 @@
 
 	BX.namespace('BX.Bizproc.Automation.Selector');
 	BX.Bizproc.Automation.Selector.InlineSelectorCondition = BX.Bizproc.Automation.InlineSelectorCondition;
-
 
 })(window.BX || window.top.BX);

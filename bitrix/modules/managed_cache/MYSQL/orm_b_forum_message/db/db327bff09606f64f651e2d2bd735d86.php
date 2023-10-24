@@ -1,0 +1,8 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001698012393';
+$dateexpire = '001698096993';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:1:{i:0;a:31:{s:2:"ID";s:3:"829";s:8:"FORUM_ID";s:1:"8";s:8:"TOPIC_ID";s:3:"207";s:10:"USE_SMILES";s:1:"Y";s:9:"NEW_TOPIC";s:1:"N";s:8:"APPROVED";s:1:"Y";s:9:"SOURCE_ID";s:3:"WEB";s:9:"POST_DATE";O:25:"Bitrix\\Main\\Type\\DateTime":2:{s:8:"'.chr(0).'*'.chr(0).'value";O:8:"DateTime":3:{s:4:"date";s:26:"2023-10-23 01:06:33.000000";s:13:"timezone_type";i:3;s:8:"timezone";s:13:"Europe/Moscow";}s:18:"'.chr(0).'*'.chr(0).'userTimeEnabled";b:1;}s:12:"POST_MESSAGE";s:106:"Задача просрочена.
+Завершите задачу или передвиньте срок.";s:17:"POST_MESSAGE_HTML";N;s:19:"POST_MESSAGE_FILTER";N;s:18:"POST_MESSAGE_CHECK";s:32:"d66c9c39d06fae8141c219e2f5316e1a";s:10:"ATTACH_IMG";N;s:6:"PARAM1";N;s:6:"PARAM2";N;s:9:"AUTHOR_ID";s:1:"1";s:11:"AUTHOR_NAME";s:21:"Админ Админ";s:12:"AUTHOR_EMAIL";s:0:"";s:9:"AUTHOR_IP";s:12:"<no address>";s:14:"AUTHOR_REAL_IP";s:12:"<no address>";s:8:"GUEST_ID";N;s:9:"EDITOR_ID";N;s:11:"EDITOR_NAME";N;s:12:"EDITOR_EMAIL";N;s:11:"EDIT_REASON";N;s:9:"EDIT_DATE";N;s:6:"XML_ID";s:9:"TASK_1024";s:4:"HTML";N;s:11:"MAIL_HEADER";N;s:12:"SERVICE_TYPE";s:1:"1";s:12:"SERVICE_DATA";s:201:"[[["COMMENT_POSTER_COMMENT_TASK_EXPIRED_NO_MEMBERS_V2",{"LIVE_DATA":{"TASK_ID":1024,"EFFICIENCY_MEMBERS":[],"DEADLINE":1698012000,"RIGHTS":{"TASK_COMPLETE":{"1":true},"DEADLINE_CHANGE":{"1":true}}}}]]]";}}}';
+return true;
+?>

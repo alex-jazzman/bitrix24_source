@@ -21,13 +21,59 @@ class Feed extends BaseObject
 		return ($this->topic !== null);
 	}
 
+	public function moveEventCommentsToNewXmlId(string $newEntityXmlId): bool
+	{
+		if (is_null($this->topic))
+		{
+			return true;
+		}
+
+		$forumId = $this->getForum()['ID'];
+
+		$rows = \Bitrix\Forum\MessageTable::query()
+			->setSelect(['ID'])
+			->where('FORUM_ID', $forumId)
+			->where('TOPIC_ID', $this->topic['ID']);
+
+		$comments = $rows->fetchAll();
+		if (empty($comments))
+		{
+			return true;
+		}
+
+		$newFeed = new \Bitrix\Forum\Comments\Feed($forumId, [
+			'type' => 'EV',
+			'id' => $this->getEntity()->getId(),
+			'xml_id' => $newEntityXmlId,
+		]);
+
+		if (!$newFeed->checkTopic())
+		{
+			return false;
+		}
+
+		$newTopicId = $newFeed->getTopic()['ID'];
+		$commentsIds = array_map('intval', array_column($comments, 'ID'));
+		\Bitrix\Forum\MessageTable::updateMulti($commentsIds, [
+			'TOPIC_ID' => $newTopicId,
+		]);
+
+		return true;
+	}
+
 	/**
 	 * Returns true if entity allows adding
 	 * @return bool
 	 */
 	public function canAdd()
 	{
-		return $this->getEntity()->canAdd($this->getUser()->getId());
+		AddMessage2Log([
+			'id'=>$this->getUser()->getId(),
+			'let perm'=>$this->getEntity()->getPermission($this->getUser()->getId()),
+			'total'=>$this->getEntity()->getPermission($this->getUser()->getId())>='I',
+			'func'=> $this->getEntity()->canAdd($this->getUser()->getId())
+		]);
+		return $this->getEntity()->canEdit($this->getUser()->getId());
 	}
 
 	/**
@@ -44,7 +90,7 @@ class Feed extends BaseObject
 	 * @return bool
 	 */
 	public function canEdit()
-	{
+	{		
 		return $this->getEntity()->canEdit($this->getUser()->getId());
 	}
 
@@ -97,6 +143,8 @@ class Feed extends BaseObject
 	 */
 	public function add(array $params)
 	{
+		AddMessage2Log($this->getUser());
+		AddMessage2Log($this->getUser()->getId());
 		if (!$this->canAdd())
 			$this->errorCollection->addOne(new Error(Loc::getMessage("FORUM_CM_RIGHTS1"), self::ERROR_PERMISSION));
 		else if ($this->checkTopic())

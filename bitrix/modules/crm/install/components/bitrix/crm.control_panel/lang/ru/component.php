@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["CRM_CTRL_PANEL_ITEM_MY_ACTIVITY"] = "Мои дела";
@@ -10,7 +11,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_LEAD"] = "Лиды";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT"] = "Отчёты";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT_CONSTRUCTOR"] = "Конструктор отчётов";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT_CONSTRUCTOR2"] = "Конструктор отчётов";
-$MESS["CRM_CTRL_PANEL_ITEM_QUOTE"] = "Предложения";
+$MESS["CRM_CTRL_PANEL_ITEM_QUOTE_MSGVER_1"] = "Предложения";
 $MESS["CRM_CTRL_PANEL_ITEM_INVOICE"] = "Счета";
 $MESS["CRM_CTRL_PANEL_ITEM_INVOICING"] = "Выписка по счету";
 $MESS["CRM_CTRL_PANEL_ITEM_MORE"] = "Ещё";
@@ -29,7 +30,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_TITLE"] = "СRM-аналитика";
 $MESS["CRM_CTRL_PANEL_ITEM_DEAL_TITLE"] = "Список сделок";
 $MESS["CRM_CTRL_PANEL_ITEM_LEAD_TITLE"] = "Список лидов";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT_TITLE"] = "Список отчётов";
-$MESS["CRM_CTRL_PANEL_ITEM_QUOTE_TITLE"] = "Список предложений";
+$MESS["CRM_CTRL_PANEL_ITEM_QUOTE_TITLE_MSGVER_1"] = "Список предложений";
 $MESS["CRM_CTRL_PANEL_ITEM_INVOICE_TITLE"] = "Список счетов";
 $MESS["CRM_CTRL_PANEL_ITEM_MORE_TITLE"] = "Дополнительно";
 $MESS["CRM_CTRL_PANEL_ITEM_STREAM"] = "Лента";
@@ -72,7 +73,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_MY_COMPANY"] = "Мои реквизиты";
 $MESS["CRM_CTRL_PANEL_ITEM_PERMISSIONS"] = "Права доступа";
 $MESS['CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'] = 'CRM';
 $MESS['CRM_CTRL_PANEL_ITEM_CATALOG_PERMISSIONS'] = 'Товары и склады';
-$MESS["CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST"] = "Список смарт-процессов";
+$MESS["CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST_MSGVER_1"] = "Список смарт-процессов";
 $MESS["CRM_CTRL_PANEL_ITEM_CATALOGUE_GOODS"] = "Каталог товаров";
 $MESS["CRM_CTRL_PANEL_ITEM_CONTRACTORS"] = "Поставщики";
 $MESS["CRM_CTRL_PANEL_ITEM_SIGN_COUNTERPARTY"] = "Контрагенты подписания";

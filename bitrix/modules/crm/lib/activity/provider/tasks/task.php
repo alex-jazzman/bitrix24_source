@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Activity\Provider\Tasks;
 
 use Bitrix\Crm\Activity\Provider\Base;
+use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Automation\Trigger\TaskStatusTrigger;
 use Bitrix\Crm\Badge;
@@ -78,9 +79,9 @@ final class Task extends Base
 		];
 	}
 
-	public static function getDefaultPingOffsets(): array
+	public static function getDefaultPingOffsets(array $params = []): array
 	{
-		return [0, 15];
+		return TodoPingSettingsProvider::DEFAULT_OFFSETS;
 	}
 
 	public function delete(int $activityId): void
@@ -140,6 +141,7 @@ final class Task extends Base
 			'END_TIME' => is_null($task->getEndDatePlan()) ? '' : $task->getEndDatePlan()->toString(),
 			'PRIORITY' => Task2ActivityPriority::getPriority((int)$task->getPriority()),
 			'COMPLETED' => $status === TaskActivityStatus::TASKS_STATE_COMPLETED || $status === TaskActivityStatus::TASKS_STATE_SUPPOSEDLY_COMPLETED,
+			'AUTHOR_ID' => $timelineParams['AUTHOR_ID'],
 		];
 
 		if (!empty($timelineParams['TASK_FILE_IDS']))
@@ -339,7 +341,7 @@ final class Task extends Base
 		}
 		else
 		{
-			$fields['DEADLINE'] = '';
+			$fields['DEADLINE'] = null;
 		}
 
 		return $result;

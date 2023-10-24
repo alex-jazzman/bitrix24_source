@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001697177310';
+$dateexpire = '001697180910';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:12:{s:12:"access_token";s:70:"eeec28650062c1d60051fa1000000001403807261dd9f5ec775d54490ba343a4342746";s:7:"expires";i:1697180910;s:10:"expires_in";i:3600;s:5:"scope";s:558:"crm,timeman,task,pay_system,delivery,call,telephony,tasks_extended,log,sonet_group,cashbox,user,user_basic,user.userfield,user_brief,placement,pull,entity,mywebstor.logeeksmslk.ledas,mywebstor.logeeksmslk.site,mywebstor.logeeksmslk.portal,pull_channel,mobile,landing,department,contact_center,landing_cloud,mailservice,userfieldconfig,lists,rating,userconsent,smile,messageservice,im,imopenlines,imbot,faceid,disk,forum,documentgenerator,calendar,catalog,bizproc,iblock,im.import,intranet,salescenter,socialnetwork,tasksmobile,sale,tasks,configuration.import";s:6:"domain";s:17:"med.mywebstor.com";s:15:"server_endpoint";s:31:"https://oauth.bitrix.info/rest/";s:6:"status";s:1:"L";s:15:"client_endpoint";s:31:"https://med.mywebstor.com/rest/";s:9:"member_id";s:32:"7189e802dcba267e03161ff7776828fb";s:13:"refresh_token";s:70:"de6b50650062c1d60051fa100000000140380732fd4c6b0f07b6b3b46c69df330264b4";s:7:"user_id";s:1:"1";s:9:"client_id";s:29:"local.642e41b5592567.79462032";}}';
+return true;
+?>

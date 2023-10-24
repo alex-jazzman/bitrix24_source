@@ -1252,8 +1252,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      }];
 	    },
 	    iconClassname() {
-	      return ['crm-timeline__card-logo_icon', `--${this.currentIcon}`, `--type-${this.iconType}`, {
-	        '--in-circle': this.inCircle
+	      return ['crm-timeline__card-logo_icon', `--${this.currentIcon}`, {
+	        '--in-circle': this.inCircle,
+	        [`--type-${this.iconType}`]: !!this.iconType && !this.backgroundUrl,
+	        '--custom-bg': !!this.backgroundUrl
 	      }];
 	    },
 	    addIconClassname() {
@@ -2836,7 +2838,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        const confirmationText = (_actionData$confirmat = actionData.confirmationText) !== null && _actionData$confirmat !== void 0 ? _actionData$confirmat : '';
 	        if (confirmationText) {
 	          ui_dialogs_messagebox.MessageBox.show({
-	            message: confirmationText,
+	            message: main_core.Text.encode(confirmationText),
 	            modal: true,
 	            buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
 	            onYes: () => {
@@ -3724,7 +3726,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    },
 	    expandButtonText() {
-	      return this.isCollapsed ? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE') : this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW');
+	      return this.isCollapsed ? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE_MSGVER_1') : this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW_MSGVER_1');
 	    },
 	    isEditButtonVisible() {
 	      return !(this.isReadOnly || this.isEdit);
@@ -5549,15 +5551,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  console.log('touch signer document ' + documentId);
 	}
 	function _download2({
-	  documentHash,
-	  memberHash
+	  filename,
+	  downloadLink
 	}, animationCallbacks) {
 	  if (animationCallbacks.onStart) {
 	    animationCallbacks.onStart();
 	  }
 	  const link = document.createElement('a');
-	  link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' + '&memberHash=' + memberHash + '&documentHash=' + documentHash;
-	  link.setAttribute('download', '');
+	  /*link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' +
+	  	'&memberHash=' + memberHash +
+	  	'&documentHash=' + documentHash;*/
+	  link.href = downloadLink;
+	  link.setAttribute('download', filename || '');
 	  document.body.appendChild(link);
 	  link.click();
 	  document.body.removeChild(link);
@@ -5920,8 +5925,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _response$data3;
 	    if ((response === null || response === void 0 ? void 0 : (_response$data3 = response.data) === null || _response$data3 === void 0 ? void 0 : _response$data3.ID) > 0) {
 	      _classPrivateMethodGet$6(this, _showMessage, _showMessage2).call(this, main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_3', {
-	        '%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
-	        '%INITIATOR%': '<b>' + (response.data.INITIATOR || '') + '</b>'
+	        '%TITLE%': '<b>' + BX.util.htmlspecialchars(response.data.TITLE || '') + '</b>',
+	        '%INITIATOR%': '<b>' + BX.util.htmlspecialchars(response.data.INITIATOR || '') + '</b>'
 	      }), [new BX.UI.Button({
 	        text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_2'),
 	        className: "ui-btn ui-btn-md ui-btn-primary",
@@ -5964,7 +5969,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    content: main_core.Tag.render(_t || (_t = _`<div class="bx-popup-document-activity-popup-content-text">${0}</div>`), content),
 	    titleBar: title,
-	    contentColor: 'white',
 	    className: 'bx-popup-document-activity-popup',
 	    maxWidth: 510
 	  }));
@@ -6734,7 +6738,10 @@ this.BX.Crm = this.BX.Crm || {};
 	function _viewActivity2$1(id) {
 	  const editor = _classPrivateMethodGet$c(this, _getActivityEditor$1, _getActivityEditor2$1).call(this);
 	  if (editor && id) {
-	    editor.viewActivity(id);
+	    const emailActivity = BX.CrmActivityEmail.create({
+	      ID: id
+	    }, editor, {});
+	    emailActivity.openDialog(BX.CrmDialogMode.view);
 	  }
 	}
 	function _getActivityEditor2$1() {
