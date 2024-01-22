@@ -1,37 +1,39 @@
 <?php
 
+use Bitrix\Main\Loader;
+
 class CPHPCacheMemcacheCluster extends \Bitrix\Main\Data\CacheEngineMemcache
 {
-	private $bQueue = null;
+	private bool $bQueue = false;
+	private static array $servers = [];
+	private static array $otherGroups = [];
 
-	/** @var array|false $servers */
-	private static $servers = false;
-	private static $arOtherGroups = array();
-
-	public static function LoadConfig()
+	public static function LoadConfig() : array
 	{
-		if (self::$servers === false)
+		static $firstExec = true;
+		if ($firstExec)
 		{
 			$arList = false;
+			$firstExec = false;
+
 			if (file_exists($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/memcache.php'))
 			{
-				include($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/memcache.php');
+				include $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/memcache.php';
 			}
 
 			if (defined('BX_MEMCACHE_CLUSTER') && is_array($arList))
 			{
-				foreach ($arList as $i => $server)
+				foreach ($arList as $server)
 				{
-					$bOtherGroup = defined("BX_CLUSTER_GROUP") && ($server["GROUP_ID"] !== BX_CLUSTER_GROUP);
-
-					if (($server["STATUS"] !== "ONLINE") || $bOtherGroup)
+					if ($server['STATUS'] !== 'ONLINE')
 					{
 						continue;
 					}
 
-					if ($bOtherGroup)
+					if (defined('BX_CLUSTER_GROUP') && ($server['GROUP_ID'] !== constant('BX_CLUSTER_GROUP')))
 					{
-						self::$arOtherGroups[$server["GROUP_ID"]] = true;
+						self::$otherGroups[$server['GROUP_ID']] = true;
+						continue;
 					}
 
 					self::$servers[] = [
@@ -46,17 +48,18 @@ class CPHPCacheMemcacheCluster extends \Bitrix\Main\Data\CacheEngineMemcache
 				self::$servers = [];
 			}
 		}
+
 		return self::$servers;
 	}
 
-	function __construct($options = [])
+	public function __construct($options = [])
 	{
 		parent::__construct([
 			'servers' => static::LoadConfig(),
 			'type' => 'memcache'
 		]);
 
-		if (defined("BX_CLUSTER_GROUP"))
+		if (defined('BX_CLUSTER_GROUP'))
 		{
 			$this->bQueue = true;
 		}
@@ -64,23 +67,19 @@ class CPHPCacheMemcacheCluster extends \Bitrix\Main\Data\CacheEngineMemcache
 		$this->sid = BX_MEMCACHE_CLUSTER . $this->sid;
 	}
 
-	function QueueRun($param1, $param2, $param3)
+	public function QueueRun($param1, $param2, $param3)
 	{
 		$this->bQueue = false;
 		$this->clean($param1, $param2, $param3);
 	}
 
-	function clean($baseDir, $initDir = false, $filename = false)
+	public function clean($baseDir, $initDir = false, $filename = false)
 	{
-		if (self::isAvailable())
+		if ($this->isAvailable())
 		{
-			if (
-				$this->bQueue
-				&& class_exists('CModule')
-				&& CModule::IncludeModule('cluster')
-			)
+			if ($this->bQueue && Loader::includeModule('cluster'))
 			{
-				foreach (self::$arOtherGroups as $group_id => $tmp)
+				foreach (self::$otherGroups as $group_id => $_)
 				{
 					CClusterQueue::Add($group_id, 'CPHPCacheMemcacheCluster', $baseDir, $initDir, $filename);
 				}

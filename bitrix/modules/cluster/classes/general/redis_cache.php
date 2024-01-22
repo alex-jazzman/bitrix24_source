@@ -2,43 +2,45 @@
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\RedisConnection;
+use Bitrix\Main\Loader;
 
 class CPHPCacheRedisCluster extends \Bitrix\Main\Data\CacheEngineRedis
 {
-	private $bQueue = null;
+	private bool $bQueue = false;
+	private static array $servers = [];
+	private static array $otherCroups = [];
 
-	/** @var array|false $servers */
-	private static $servers = false;
-	private static $otherGroups = [];
+	protected float|null $timeout = null;
+	protected float|null $readTimeout = null;
+	protected int $failover = \RedisCluster::FAILOVER_NONE;
 
-	protected $timeout = null;
-	protected $readTimeout = null;
-	protected $failover = \RedisCluster::FAILOVER_NONE;
-
-	public static function LoadConfig()
+	public static function LoadConfig() : array
 	{
-		if (self::$servers === false)
+
+		static $firstExec = true;
+		if ($firstExec)
 		{
 			$arList = false;
+			$firstExec = false;
+
 			if (file_exists($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php'))
 			{
-				include($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php');
+				include $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php';
 			}
 
 			if (defined('BX_REDIS_CLUSTER') && is_array($arList))
 			{
 				foreach ($arList as $server)
 				{
-					$otherGroup = defined('BX_CLUSTER_GROUP') && ($server['GROUP_ID'] !== BX_CLUSTER_GROUP);
-
-					if (($server['STATUS'] !== 'ONLINE') || $otherGroup)
+					if ($server['STATUS'] !== 'ONLINE')
 					{
 						continue;
 					}
 
-					if ($otherGroup)
+					if (defined('BX_CLUSTER_GROUP') && ($server['GROUP_ID'] !== constant('BX_CLUSTER_GROUP')))
 					{
-						self::$otherGroups[$server['GROUP_ID']] = true;
+						self::$otherCroups[$server['GROUP_ID']] = true;
+						continue;
 					}
 
 					self::$servers[] = [
@@ -58,10 +60,10 @@ class CPHPCacheRedisCluster extends \Bitrix\Main\Data\CacheEngineRedis
 
 	public function __construct($options = [])
 	{
-		if (self::$engine == null)
+		if (self::$engine === null)
 		{
 			static::LoadConfig();
-			if (defined("BX_CLUSTER_GROUP"))
+			if (defined('BX_CLUSTER_GROUP'))
 			{
 				$this->bQueue = true;
 			}
@@ -83,7 +85,7 @@ class CPHPCacheRedisCluster extends \Bitrix\Main\Data\CacheEngineRedis
 					}
 				}
 
-				if (isset($config["read_timeout"]))
+				if (isset($config['read_timeout']))
 				{
 					$config['read_timeout'] = (float) $config['read_timeout'];
 					if ($config['read_timeout'] > 0)
@@ -101,7 +103,7 @@ class CPHPCacheRedisCluster extends \Bitrix\Main\Data\CacheEngineRedis
 					'servers' => self::$servers,
 					'timeout' => $this->timeout,
 					'readTimeout' => $this->readTimeout,
-					'serializer' => $config['serializer'],
+					'serializer' => $config['serializer'] ?? null,
 					'failover' => $this->failover,
 					'persistent' => $config['persistent'],
 				]
@@ -124,15 +126,11 @@ class CPHPCacheRedisCluster extends \Bitrix\Main\Data\CacheEngineRedis
 
 	public function clean($baseDir, $initDir = false, $filename = false)
 	{
-		if (self::isAvailable())
+		if ($this->isAvailable())
 		{
-			if (
-				$this->bQueue
-				&& class_exists('CModule')
-				&& CModule::IncludeModule('cluster')
-			)
+			if ($this->bQueue && Loader::includeModule('cluster'))
 			{
-				foreach (self::$otherGroups as $group_id => $tmp)
+				foreach (self::$otherCroups as $group_id => $_)
 				{
 					CClusterQueue::Add($group_id, 'CPHPCacheRedisCluster', $baseDir, $initDir, $filename);
 				}

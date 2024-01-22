@@ -1,20 +1,21 @@
 <?php
-
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-
 use Bitrix\Main\Localization\Loc;
 
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/cluster/prolog.php');
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
+/** @global CUser $USER */
+global $USER;
+/** @global CMain $APPLICATION */
+global $APPLICATION;
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/cluster/prolog.php';
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->IsAdmin())
+if (!$USER->isAdmin())
 {
 	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
 
-$server = CClusterRedis::getByID($_REQUEST["ID"]);
+$ID = intval($_REQUEST['ID'] ?? 0);
+$server = CClusterRedis::getByID($ID);
 
 $group_id = (int) $_REQUEST['group_id'];
 if (
@@ -26,23 +27,25 @@ if (
 	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
 
-$aTabs = [[
-	'DIV' => 'edit1',
-	'TAB' => Loc::getMessage('CLU_REDIS_EDIT_TAB'),
-	'ICON' => 'main_user_edit',
-	'TITLE'=> Loc::getMessage('CLU_REDIS_EDIT_TAB_TITLE'),
-]];
+$aTabs = [
+	[
+		'DIV' => 'edit1',
+		'TAB' => Loc::getMessage('CLU_REDIS_EDIT_TAB'),
+		'ICON' => 'main_user_edit',
+		'TITLE' => Loc::getMessage('CLU_REDIS_EDIT_TAB_TITLE'),
+	],
+];
 
 $tabControl = new CAdminTabControl('tabControl', $aTabs);
 
-$ID = intval($_REQUEST['ID']); // Id of the edited record
 $strError = '';
 $bVarsFromForm = false;
+$message = null;
 $cacheType = COption::GetOptionString('cluster', 'cache_type', 'memcache');
 
 if (!extension_loaded('redis')  || $cacheType != 'redis')
 {
-	require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 	if ($cacheType != 'redis')
 	{
 		ShowError(Loc::getMessage('CLU_REDIS_DISABLED'));
@@ -51,10 +54,10 @@ if (!extension_loaded('redis')  || $cacheType != 'redis')
 	{
 		ShowError(Loc::getMessage('CLU_REDIS_NO_EXTENTION'));
 	}
-	require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
+	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 {
 	if ((isset($_REQUEST['save']) && $_REQUEST['save'] != '') || (isset($_REQUEST['apply']) && $_REQUEST['apply'] != ''))
 	{
@@ -96,7 +99,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 	}
 }
 
-ClearVars("str_");
+ClearVars('str_');
 
 if ($bVarsFromForm)
 {
@@ -120,7 +123,7 @@ else
 }
 
 $APPLICATION->SetTitle(is_array($server) ? Loc::getMessage('CLU_REDIS_EDIT_EDIT_TITLE') : Loc::getMessage('CLU_REDIS_EDIT_NEW_TITLE'));
-require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 
 $arRedisServers = CClusterRedis::loadConfig();
 
@@ -129,7 +132,8 @@ $aMenu = [[
 	'TITLE' => Loc::getMessage('CLU_REDIS_EDIT_MENU_LIST_TITLE'),
 	'LINK' => 'cluster_redis_list.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id,
 	'ICON' => 'btn_list',
-]];
+]
+];
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
@@ -139,37 +143,36 @@ if ($message)
 	echo $message->Show();
 }
 
-?><form method="POST" action="<?=$APPLICATION->GetCurPage();?>"  enctype="multipart/form-data" name="editform" id="editform"><?
+?><form method="POST" action="<?=$APPLICATION->GetCurPage();?>"  enctype="multipart/form-data" name="editform" id="editform"><?php
 		$tabControl->Begin();
 		$tabControl->BeginNextTab();
 
-		if (is_array($server)):
-			?><tr><?
-				?><td><?=Loc::getMessage('CLU_REDIS_EDIT_ID')?>:</td><?
-				?><td><?=intval($server['ID']);?></td><?
-			?></tr><?
+		if (is_array($server) && isset($server['ID'])):
+			?><tr><?php
+				?><td><?=Loc::getMessage('CLU_REDIS_EDIT_ID')?>:</td><?php
+				?><td><?=intval($server['ID']);?></td><?php
+			?></tr><?php
 		endif;
 
-		?><tr><?
-			?><td width="40%"><?=Loc::getMessage('CLU_REDIS_EDIT_HOST')?>:</td><?
-			?><td width="60%"><input type="text" size="20" name="HOST" value="<?=$host?>"></td><?
-		?></tr><tr><?
-			?><td><?=Loc::getMessage('CLU_REDIS_EDIT_PORT')?>:</td><?
-			?><td><input type="text" size="6" name="PORT" value="<?=$port?>"></td><?
-		?></tr><?
+		?><tr><?php
+			?><td width="40%"><?=Loc::getMessage('CLU_REDIS_EDIT_HOST')?>:</td><?php
+			?><td width="60%"><input type="text" size="20" name="HOST" value="<?=$host?>"></td><?php
+		?></tr><tr><?php
+			?><td><?=Loc::getMessage('CLU_REDIS_EDIT_PORT')?>:</td><?php
+			?><td><input type="text" size="6" name="PORT" value="<?=$port?>"></td><?php
+		?></tr><?php
 
 		$tabControl->Buttons(['back_url' => 'cluster_redis_list.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id]);
 		echo bitrix_sessid_post();
-		?><input type="hidden" name="lang" value="<?=LANGUAGE_ID?>"><?
-		?><input type="hidden" name="group_id" value="<?=$group_id?>"><?
+		?><input type="hidden" name="lang" value="<?=LANGUAGE_ID?>"><?php
+		?><input type="hidden" name="group_id" value="<?=$group_id?>"><?php
 
-		if (is_array($server)):
-			?><input type="hidden" name="ID" value="<?=intval($server['ID'])?>"><?
+		if (is_array($server) && isset($server['ID'])):
+			?><input type="hidden" name="ID" value="<?=intval($server['ID'])?>"><?php
 		endif;
 
 		$tabControl->End();
-	?></form><?
+	?></form><?php
 
 $tabControl->ShowWarnings('editform', $message);
-require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
-?>
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';

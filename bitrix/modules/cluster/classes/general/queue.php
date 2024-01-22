@@ -7,19 +7,19 @@ class CClusterQueue
 	{
 		global $DB;
 
-		$sql_group_id = "'".intval($group_id)."'";
-		$sql_command = "'".$DB->ForSQL($command, 50)."'";
+		$sql_group_id = "'" . intval($group_id) . "'";
+		$sql_command = "'" . $DB->ForSql($command, 50) . "'";
 		$sql_param1 = CClusterQueue::QuoteParam($param1);
 		$sql_param2 = CClusterQueue::QuoteParam($param2);
 		$sql_param3 = CClusterQueue::QuoteParam($param3);
 		$DB->StartUsingMasterOnly();
-		$DB->Query("
+		$DB->Query('
 			INSERT INTO b_cluster_queue (
 			TIMESTAMP_X, GROUP_ID, COMMAND, PARAM1, PARAM2, PARAM3
 			) values (
-			".$DB->CurrentTimeFunction().", ".$sql_group_id.", ".$sql_command.", ".$sql_param1.", ".$sql_param2.", ".$sql_param3."
+			' . $DB->CurrentTimeFunction() . ', ' . $sql_group_id . ', ' . $sql_command . ', ' . $sql_param1 . ', ' . $sql_param2 . ', ' . $sql_param3 . '
 			)
-		");
+		');
 		$DB->StopUsingMasterOnly();
 	}
 
@@ -27,23 +27,33 @@ class CClusterQueue
 	{
 		global $DB;
 
-		if(is_bool($str))
-			return "'b:".($str === true? "t": "f")."'";
-		elseif(is_string($str))
-			return "'s:".$DB->ForSQL($str, 250)."'";
+		if (is_bool($str))
+		{
+			return "'b:" . ($str === true ? 't' : 'f') . "'";
+		}
+		elseif (is_string($str))
+		{
+			return "'s:" . $DB->ForSql($str, 250) . "'";
+		}
 		else
-			return "null";
+		{
+			return 'null';
+		}
 	}
 
 	public static function UnQuoteParam($str)
 	{
-		if($str <> '')
+		if ($str <> '')
 		{
 			$prefix = mb_substr($str, 0, 2);
-			if($prefix === "s:")
+			if ($prefix === 's:')
+			{
 				return mb_substr($str, 2);
-			if($prefix === "b:")
-				return mb_substr($str, 2) === "t";
+			}
+			if ($prefix === 'b:')
+			{
+				return mb_substr($str, 2) === 't';
+			}
 		}
 		return null;
 	}
@@ -55,27 +65,27 @@ class CClusterQueue
 		do
 		{
 			//read data
-			$ids = array();
-			$queue = array();
-			$rs = $DB->Query($DB->TopSql("
+			$ids = [];
+			$queue = [];
+			$rs = $DB->Query($DB->TopSql('
 				SELECT *
 				FROM b_cluster_queue
-				WHERE GROUP_ID = ".BX_CLUSTER_GROUP."
+				WHERE GROUP_ID = ' . constant('BX_CLUSTER_GROUP') . '
 				ORDER BY ID
-			", 100));
+			', 100));
 			while ($ar = $rs->Fetch())
 			{
-				$queueKey = $ar["COMMAND"]."|".$ar["PARAM1"]."|".$ar["PARAM2"]."|".$ar["PARAM3"];
+				$queueKey = $ar['COMMAND'] . '|' . $ar['PARAM1'] . '|' . $ar['PARAM2'] . '|' . $ar['PARAM3'];
 				$queue[$queueKey] = $ar;
-				$ids[] = intval($ar["ID"]);
+				$ids[] = intval($ar['ID']);
 			}
 
-			$uid = $DB->DBName."_cluster_queue_".BX_CLUSTER_GROUP;
+			$uid = $DB->DBName . '_cluster_queue_' . constant('BX_CLUSTER_GROUP');
 
 			if ($ids)
 			{
-				$lock = $DB->Query("SELECT GET_LOCK('".$uid."', 0) as L")->Fetch();
-				if ($lock["L"] == "0")
+				$lock = $DB->Query("SELECT GET_LOCK('" . $uid . "', 0) as L")->Fetch();
+				if ($lock['L'] == '0')
 				{
 					$DB->StopUsingMasterOnly();
 					return false;
@@ -85,14 +95,15 @@ class CClusterQueue
 			//clean cache
 			foreach ($queue as $ar)
 			{
-				$class_name = $ar["COMMAND"];
+				$class_name = $ar['COMMAND'];
 				if (class_exists($class_name))
 				{
+					/**  @var CPHPCacheRedisCluster::QueueRun | CPHPCacheMemcacheCluster::QueueRun $class_name */
 					$object = new $class_name;
 					$object->QueueRun(
-						CClusterQueue::UnQuoteParam($ar["PARAM1"]),
-						CClusterQueue::UnQuoteParam($ar["PARAM2"]),
-						CClusterQueue::UnQuoteParam($ar["PARAM3"])
+						CClusterQueue::UnQuoteParam($ar['PARAM1']),
+						CClusterQueue::UnQuoteParam($ar['PARAM2']),
+						CClusterQueue::UnQuoteParam($ar['PARAM3'])
 					);
 				}
 			}
@@ -100,8 +111,8 @@ class CClusterQueue
 			//mark as done
 			if ($ids)
 			{
-				$DB->Query("DELETE FROM b_cluster_queue WHERE ID in (".implode(",", $ids).")");
-				$DB->Query("SELECT RELEASE_LOCK('".$uid."')");
+				$DB->Query('DELETE FROM b_cluster_queue WHERE ID in (' . implode(',', $ids) . ')');
+				$DB->Query("SELECT RELEASE_LOCK('" . $uid . "')");
 			}
 		}
 		while ($queue);

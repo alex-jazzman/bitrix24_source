@@ -2,6 +2,8 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
+use Bitrix\Main\Application;
+
 //Disable statistics
 define("STOP_STATISTICS", true);
 define("NO_AGENT_STATISTIC", true);
@@ -79,7 +81,7 @@ $application->setContext($context);
 //Lang files
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/install.php");
 
-bx_accelerator_reset();
+Application::resetAccelerator();
 
 class WelcomeStep extends CWizardStep
 {
@@ -229,7 +231,6 @@ class AgreementStep4VM extends CWizardStep
 		$databaseStep->dbName = $DBName;
 		$databaseStep->filePermission = (defined("BX_FILE_PERMISSIONS")? sprintf("%04o", BX_FILE_PERMISSIONS) : 0);
 		$databaseStep->folderPermission = (defined("BX_DIR_PERMISSIONS")? sprintf("%04o", BX_DIR_PERMISSIONS) : 0);
-		$databaseStep->createDBType = (defined("MYSQL_TABLE_TYPE") ? MYSQL_TABLE_TYPE : "");
 		$databaseStep->utf8 = defined("BX_UTF");
 		$databaseStep->createCharset = null;
 
@@ -262,16 +263,6 @@ class AgreementStep4VM extends CWizardStep
 			$DB->Query("ALTER DATABASE `".$databaseStep->dbName."` CHARACTER SET UTF8 COLLATE utf8_unicode_ci", true);
 		elseif ($codePage)
 			$DB->Query("ALTER DATABASE `".$databaseStep->dbName."` CHARACTER SET ".$codePage, true);
-
-		if ($databaseStep->createDBType <> '')
-		{
-			$res = $DB->Query("SET storage_engine = '".$databaseStep->createDBType."'", true);
-			if(!$res)
-			{
-				//mysql 5.7 removed storage_engine variable
-				$DB->Query("SET default_storage_engine = '".$databaseStep->createDBType."'");
-			}
-		}
 
 		//SQL mode
 		$dbResult = $DB->Query("SELECT @@sql_mode", true);
@@ -1334,7 +1325,6 @@ class CreateDBStep extends CWizardStep
 	var $createUser;
 
 	var $createCharset = false;
-	var $createDBType;
 
 	var $rootUser;
 	var $rootPassword;
@@ -1389,8 +1379,6 @@ class CreateDBStep extends CWizardStep
 
 		$this->createUser = $wizard->GetVar("create_user");
 		$this->createUser = ($this->createUser && $this->createUser == "Y");
-
-		$this->createDBType = $wizard->GetVar("create_database_type");
 
 		$this->rootUser = $wizard->GetVar("root_user");
 		$this->rootPassword = $wizard->GetVar("root_password");
@@ -1503,13 +1491,8 @@ class CreateDBStep extends CWizardStep
 
 		IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/main.php");
 
-		\Bitrix\Main\Loader::registerAutoLoadClasses(
-			'main',
-			[
-				'CDatabase' => 'classes/' . $this->dbType . '/database.php',
-				'CDBResult' => 'classes/' . $this->dbType . '/dbresult.php',
-			]
-		);
+		// Database-dependent classes
+		CAllDatabase::registerAutoload($this->dbType);
 
 		global $DB;
 		try
@@ -1623,14 +1606,40 @@ class CreateDBStep extends CWizardStep
 				return false;
 			}
 
-			try
+			//Check default template1 collation
+			$dbResult = $conn->query("SELECT DATCTYPE FROM pg_database where datname='template1'");
+			$row = $dbResult->fetch();
+			if (preg_match('/\.(UTF-8|UTF8)$/i', $row['DATCTYPE']))
 			{
-				$conn->queryExecute("CREATE DATABASE " . $conn->getSqlHelper()->quote($this->dbName));
+				try
+				{
+					$conn->queryExecute("CREATE DATABASE " . $conn->getSqlHelper()->quote($this->dbName));
+				}
+				catch (\Bitrix\Main\DB\SqlQueryException $e)
+				{
+					$this->SetError(str_replace("#DB#", $this->dbName, InstallGetMessage("ERR_CREATE_DB1")) . ' ' . (string)$e);
+					return false;
+				}
 			}
-			catch (\Bitrix\Main\DB\SqlQueryException $e)
+			else //use slower template0 creation
 			{
-				$this->SetError(str_replace("#DB#", $this->dbName, InstallGetMessage("ERR_CREATE_DB1")) . ' ' . (string)$e);
-				return false;
+				try
+				{
+					$conn->queryExecute("CREATE DATABASE " . $conn->getSqlHelper()->quote($this->dbName) . " lc_ctype='C.UTF-8' template template0");
+				}
+				catch (\Bitrix\Main\DB\SqlQueryException $e)
+				{
+					//Windows ?
+					try
+					{
+						$conn->queryExecute("CREATE DATABASE " . $conn->getSqlHelper()->quote($this->dbName) . " lc_ctype='us.UTF8' template template0");
+					}
+					catch (\Bitrix\Main\DB\SqlQueryException $e)
+					{
+						$this->SetError(str_replace("#DB#", $this->dbName, InstallGetMessage("ERR_CREATE_DB1")) . ' ' . (string)$e);
+						return false;
+					}
+				}
 			}
 
 			$config['database'] = $this->dbName;
@@ -1665,15 +1674,21 @@ class CreateDBStep extends CWizardStep
 
 			if ($this->createUser || $this->createDatabase)
 			{
-				$grantPrivileges = "grant all privileges on database  " . $conn->getSqlHelper()->quote($this->dbName) ." to " . $conn->getSqlHelper()->quote($this->dbUser);
-				try
+				$grantPrivileges = [
+					"grant all privileges on database  " . $conn->getSqlHelper()->quote($this->dbName) ." to " . $conn->getSqlHelper()->quote($this->dbUser),
+					"grant create on schema public to " . $conn->getSqlHelper()->quote($this->dbUser), //Start with Postgre15 requires explicit privilege
+				];
+				foreach ($grantPrivileges as $grant)
 				{
-					$conn->queryExecute($grantPrivileges);
-				}
-				catch (\Bitrix\Main\DB\SqlQueryException $e)
-				{
-					$this->SetError(InstallGetMessage("ERR_GRANT_USER")." ".$e->getDatabaseMessage());
-					return false;
+					try
+					{
+						$conn->queryExecute($grant);
+					}
+					catch (\Bitrix\Main\DB\SqlQueryException $e)
+					{
+						$this->SetError(InstallGetMessage("ERR_GRANT_USER")." ".$e->getDatabaseMessage());
+						return false;
+					}
 				}
 			}
 		}
@@ -1689,6 +1704,15 @@ class CreateDBStep extends CWizardStep
 			if (!$dbResult->fetch())
 			{
 				$this->SetError(InstallGetMessage("SC_DB_PGSQL_PGCRYPTO_ER"));
+				return false;
+			}
+
+			//Check database collation
+			$dbResult = $conn->query("SELECT DATCTYPE FROM pg_database where datname='" . $conn->getSqlHelper()->forSql($this->dbName) . "'");
+			$row = $dbResult->fetch();
+			if (!preg_match('/\.(UTF-8|UTF8)$/i', $row['DATCTYPE']))
+			{
+				$this->SetError(InstallGetMessage("SC_DB_PGSQL_DATABASE_CTYPE_ER"));
 				return false;
 			}
 
@@ -1752,6 +1776,7 @@ class CreateDBStep extends CWizardStep
 		}
 
 		$config = array(
+			'options' => 0,
 			'host' => $this->dbHost,
 		);
 		if ($this->createDatabase || $this->createUser)
@@ -1778,15 +1803,68 @@ class CreateDBStep extends CWizardStep
 		}
 
 		//Check MySQL version
-		$dbResult = $conn->query("select VERSION() as ver");
+		$dbResult = $conn->query('select VERSION() as ver');
 		if ($arVersion = $dbResult->fetch())
 		{
-			$mysqlVersion = trim($arVersion["ver"]);
-			if (!BXInstallServices::VersionCompare($mysqlVersion, "5.6.0"))
+			$mysqlVersion = trim($arVersion['ver']);
+			$minVersion = '8.0.0';
+			if (!BXInstallServices::VersionCompare($mysqlVersion, $minVersion))
 			{
-				$this->SetError(InstallGetMessage("SC_DB_VERS_MYSQL_ER"));
-				return false;
+				$this->SetError(InstallGetMessage('ERR_DB_MIN_VERSION_MYSQL', ['#MIN_VERSION#' => $minVersion]));
 			}
+		}
+
+		//default_storage_engine
+		try
+		{
+			$arResult = $conn->query('SELECT @@default_storage_engine')->fetch();
+			if ($arResult)
+			{
+				if ($arResult['@@default_storage_engine'] !== 'InnoDB')
+				{
+					$this->SetError(InstallGetMessage('ERR_DB_MYSQL_DEFAULT_STORAGE_ENGINE', ['#VALUE#' => $arResult['@@default_storage_engine']]));
+				}
+			}
+		}
+		catch(\Bitrix\Main\DB\SqlQueryException $e)
+		{
+		}
+
+		//innodb_large_prefix
+		try
+		{
+			$arResult = $conn->query('SELECT @@innodb_large_prefix')->fetch();
+			if ($arResult)
+			{
+				if ($arResult['@@innodb_large_prefix'] === '0' || $arResult['@@innodb_large_prefix'] === 'OFF')
+				{
+					$this->SetError(InstallGetMessage('ERR_DB_MYSQL_INNODB_LARGE_PREFIX', ['#VALUE#' => $arResult['@@innodb_large_prefix']]));
+				}
+			}
+		}
+		catch(\Bitrix\Main\DB\SqlQueryException $e)
+		{
+		}
+
+		//innodb_default_row_format
+		try
+		{
+			$arResult = $conn->query('SELECT @@innodb_default_row_format')->fetch();
+			if ($arResult)
+			{
+				if (strtolower($arResult['@@innodb_default_row_format']) !== 'dynamic')
+				{
+					$this->SetError(InstallGetMessage('ERR_DB_MYSQL_INNODB_DEFAULT_ROW_FORMAT', ['#VALUE#' => $arResult['@@innodb_default_row_format']]));
+				}
+			}
+		}
+		catch(\Bitrix\Main\DB\SqlQueryException $e)
+		{
+		}
+
+		if ($this->GetErrors())
+		{
+			return false;
 		}
 
 		//SQL mode
@@ -1976,7 +2054,6 @@ class CreateDBStep extends CWizardStep
 		$fileContent = "<"."?php\n".
 			"$"."DBDebug = " . (isset($arWizardConfig['debug']) && $arWizardConfig['debug'] === 'yes' ? 'true' : 'false') . ";\n".
 			"$"."DBDebugToFile = false;\n".
-			($this->createDBType=='innodb'?'define("MYSQL_TABLE_TYPE", "INNODB");'."\n":'').
 			"\n".
 			"define(\"CACHED_b_file\", 3600);\n".
 			"define(\"CACHED_b_file_bucket_size\", 10);\n".
@@ -2270,18 +2347,7 @@ class CreateDBStep extends CWizardStep
 					'.$this->ShowInputField("text", "database", Array("size" => "30")).'<br />
 					<small>'.InstallGetMessage("INS_DATABASE_MY_DESC").'<br></small>
 				</td>
-			</tr>';
-		if ($dbType == 'mysql')
-		{
-			$this->content .= '
-			<tr>
-				<td nowrap align="right" valign="top" >'.InstallGetMessage("INS_CREATE_DB_TYPE").'</td>
-				<td valign="top">
-					'.$this->ShowSelectField("create_database_type", Array("" => InstallGetMessage("INS_C_DB_TYPE_STAND"), "innodb" => "Innodb")).'<br>
-				</td>
-			</tr>';
-		}
-		$this->content .= '
+			</tr>
 			<tr id="line1">
 				<td colspan="2" class="header">'.InstallGetMessage("ADMIN_PARAMS").'</td>
 			</tr>
@@ -2348,8 +2414,6 @@ class CreateModulesStep extends CWizardStep
 		}
 
 		$this->singleSteps = Array(
-			"remove_mssql" => InstallGetMessage("INST_REMOVE_TEMP_FILES")." (MS SQL Server)",
-			"remove_oracle" => InstallGetMessage("INST_REMOVE_TEMP_FILES")." (Oracle)",
 			"remove_misc" => InstallGetMessage("INST_REMOVE_TEMP_FILES"),
 		);
 
@@ -2511,15 +2575,7 @@ class CreateModulesStep extends CWizardStep
 
 	function InstallSingleStep($code)
 	{
-		if ($code == "remove_mssql")
-		{
-			BXInstallServices::DeleteDbFiles("mssql");
-		}
-		elseif ($code == "remove_oracle")
-		{
-			BXInstallServices::DeleteDbFiles("oracle");
-		}
-		elseif ($code == "remove_misc")
+		if ($code == "remove_misc")
 		{
 			BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"]."/bitrix/httest");
 			BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"]."/bxtest");
@@ -2560,20 +2616,10 @@ class CreateModulesStep extends CWizardStep
 		else
 		{
 			require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/include.php");
-
-			if ($DB->type == "MYSQL" && defined("MYSQL_TABLE_TYPE") && MYSQL_TABLE_TYPE <> '')
-			{
-				$res = $DB->Query("SET storage_engine = '".MYSQL_TABLE_TYPE."'", true);
-				if(!$res)
-				{
-					//mysql 5.7 removed storage_engine variable
-					$DB->Query("SET default_storage_engine = '".MYSQL_TABLE_TYPE."'", true);
-				}
-
-			}
-
 			if (IsModuleInstalled($moduleID) && $currentStepStage == "database")
+			{
 				return true;
+			}
 		}
 
 		@set_time_limit(3600);

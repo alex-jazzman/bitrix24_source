@@ -23,7 +23,7 @@ CGroup::SetSubordinateGroups(WIZARD_PORTAL_ADMINISTRATION_GROUP, Array(WIZARD_EM
 if(LANGUAGE_ID == "ru")
 {
 	$vendor = "1c_bitrix_portal";
-	$license = "~new_license22_0_sign";
+	$license = "~new_license23_0_sign";
 }
 elseif(LANGUAGE_ID == "ua")
 {
@@ -33,7 +33,7 @@ elseif(LANGUAGE_ID == "ua")
 else
 {
 	$vendor = "bitrix_portal";
-	$license = "~new_license17_5_sign";
+	$license = "~new_license23_0_sign";
 }
 
 COption::SetOptionString("main", "templates_visual_editor", "Y");

@@ -1,27 +1,28 @@
 <?php
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Localization\Loc;
 
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
-require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/cluster/prolog.php');
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
+/** @global CUser $USER */
+global $USER;
+/** @global CMain $APPLICATION */
+global $APPLICATION;
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/cluster/prolog.php';
 IncludeModuleLangFile(__FILE__);
 
 $asset = Asset::getInstance();
 $asset->addString('<link rel="stylesheet" type="text/css" href="' . $asset->getFullAssetPath('/bitrix/css/cluster/cluster_list.css') . '">');
 
-if (!$USER->IsAdmin())
+if (!$USER->isAdmin())
 {
 	$APPLICATION->AuthForm(Loc::getMessage('ACCESS_DENIED'));
 }
 
 $cacheType = Bitrix\Main\Config\Option::get('cluster', 'cache_type', 'memcache');
-if (!extension_loaded('redis') || $cacheType != 'redis')
+if (!extension_loaded('redis') || $cacheType !== 'redis')
 {
-	require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
-	if ($cacheType != 'redis')
+	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
+	if ($cacheType !== 'redis')
 	{
 		ShowError(Loc::getMessage('CLU_REDIS_DISABLED'));
 	}
@@ -30,7 +31,7 @@ if (!extension_loaded('redis') || $cacheType != 'redis')
 		ShowError(Loc::getMessage('CLU_REDIS_NO_EXTENTION'));
 	}
 
-	require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
+	require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';
 	die();
 }
 
@@ -70,7 +71,6 @@ function getHtml($server)
 
 $errorMessage = null;
 $tableID = 'tbl_cluster_redis_list';
-// $sort = new CAdminSorting($tableID, 'ID', 'ASC');
 $lAdmin = new CAdminList($tableID);
 
 if ($arID = $lAdmin->GroupAction())
@@ -106,8 +106,7 @@ if ($arID = $lAdmin->GroupAction())
 				$masterCnt = 0;
 				$redisList = [];
 
-				$cluster = new CClusterRedis;
-				$rsList = $cluster->getList();
+				$rsList = CClusterRedis::getList();
 				while ($item = $rsList->Fetch())
 				{
 					if (
@@ -133,8 +132,7 @@ if ($arID = $lAdmin->GroupAction())
 			case 'pausecluster':
 				$redisList = [];
 
-				$cluster = new CClusterRedis;
-				$rsList = $cluster->getList();
+				$rsList = CClusterRedis::getList();
 				while ($item = $rsList->Fetch())
 				{
 					if (
@@ -157,22 +155,26 @@ if ($arID = $lAdmin->GroupAction())
 	}
 }
 
-$arHeaders = [[
+$arHeaders = [
+	[
 		'id' => 'ID',
 		'content' => Loc::getMessage('CLU_REDIS_LIST_ID'),
 		'align' => 'right',
 		'default' => true,
-	], [
+	],
+	[
 		'id' => 'FLAG',
 		'content' => Loc::getMessage('CLU_REDIS_LIST_FLAG'),
 		'align' => 'center',
 		'default' => true,
-	], [
+	],
+	[
 		'id' => 'STATUS',
 		'content' => Loc::getMessage('CLU_REDIS_LIST_STATUS'),
 		'align' => 'center',
 		'default' => true,
-	], [
+	],
+	[
 		'id' => 'HOST',
 		'content' => Loc::getMessage('CLU_REDIS_LIST_HOST'),
 		'align' => 'left',
@@ -196,33 +198,36 @@ function serverSort($a, $b)
 	return $a['MODE'] > $b['MODE'] ? -1 : 1;
 }
 
-$cData = new CClusterRedis;
-$data = $cData->getList();
+$data = CClusterRedis::getList();
 
 $uptime = false;
 $data = new CAdminResult($data, $tableID);
 
 $servers = [];
-$cluster = [
-	'ONLINE' => 0,
-	'MASTER' => 0,
-	'READY' => 0
-];
+$cluster = [];
 
 while ($server = $data->Fetch())
 {
 	$servers[] = $server;
 
+	if (!is_set($cluster[$server['GROUP_ID']]))
+	{
+		$cluster[$server['GROUP_ID']] = [
+			'ONLINE' => 0,
+			'READY' => 0
+		];
+	}
+
 	if ($server['STATUS'] == 'ONLINE')
 	{
-		$cluster['ONLINE']++;
+		$cluster[$server['GROUP_ID']]['ONLINE']++;
 	}
 
 	if ($server['MODE'] == 'CLUSTER')
 	{
 		if ($server['STATUS'] != 'ONLINE')
 		{
-			$cluster['READY']++;
+			$cluster[$server['GROUP_ID']]['READY']++;
 		}
 	}
 }
@@ -237,7 +242,8 @@ foreach ($servers as $server)
 	if (!$server['GROUP_ID'])
 	{
 		$server = CClusterRedis::getByID($server['ID']);
-		$cData->Update($server['ID'], $server);
+		$cData = new CClusterRedis;
+		$cData->update($server['ID'], $server);
 		$server = CClusterRedis::getByID($server['ID']);
 	}
 
@@ -251,7 +257,7 @@ foreach ($servers as $server)
 		$first = false;
 		$row = &$lAdmin->AddRow('separator', ['STATUS' => Loc::getMessage('CLU_REDIS_CLUSTER_TITLE')]);
 
-		if ($server['STATUS'] == 'READY' && $cluster['ONLINE'] < 1)
+		if ($server['STATUS'] == 'READY' && $cluster[$group_id]['ONLINE'] < 1)
 		{
 			$actions[] = [
 				'TEXT' => Loc::getMessage('CLU_REDIS_LIST_START_USING'),
@@ -275,8 +281,8 @@ foreach ($servers as $server)
 
 	$row =& $lAdmin->AddRow($server['ID'], $server);
 
-	$row->AddViewField("ID", '<a href="cluster_redis_edit.php?lang=' . LANGUAGE_ID
-		. '&group_id=' . $group_id . '&ID=' . $server['ID'] . '">' . $server['ID'].'</a>');
+	$row->AddViewField('ID', '<a href="cluster_redis_edit.php?lang=' . LANGUAGE_ID
+		. '&group_id=' . $group_id . '&ID=' . $server['ID'] . '">' . $server['ID'] . '</a>');
 
 
 	$res = getHtml($server);
@@ -314,7 +320,7 @@ foreach ($servers as $server)
 			'ICON' => 'edit',
 			'DEFAULT' => true,
 			'TEXT' => Loc::getMessage('CLU_REDIS_LIST_EDIT'),
-			'ACTION' => $lAdmin->ActionRedirect('cluster_redis_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id . '&ID=' . $server["ID"])
+			'ACTION' => $lAdmin->ActionRedirect('cluster_redis_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id . '&ID=' . $server['ID'])
 		];
 	}
 
@@ -323,10 +329,10 @@ foreach ($servers as $server)
 		$actions[] = [
 			'ICON' => 'delete',
 			'TEXT' => Loc::getMessage('CLU_REDIS_LIST_DELETE'),
-			'ACTION' => "if(confirm('" . Loc::getMessage("CLU_REDIS_LIST_DELETE_CONF") . "')) " . $lAdmin->ActionDoGroup($server['ID'], 'delete', 'group_id=' . $group_id)
+			'ACTION' => "if(confirm('" . Loc::getMessage('CLU_REDIS_LIST_DELETE_CONF') . "')) " . $lAdmin->ActionDoGroup($server['ID'], 'delete', 'group_id=' . $group_id)
 		];
 
-		if ($server['MODE'] != 'CLUSTER' && $cluster['ONLINE'] < 1)
+		if ($server['MODE'] != 'CLUSTER' && $cluster[$group_id]['ONLINE'] < 1)
 		{
 			$actions[] = [
 				'TEXT' => Loc::getMessage('CLU_REDIS_LIST_START_USING'),
@@ -381,7 +387,7 @@ if ($errorMessage)
 
 $lAdmin->CheckListMode();
 $APPLICATION->SetTitle(Loc::getMessage('CLU_REDIS_LIST_TITLE'));
-require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php');
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 
 $params = [
 	'ACTION_PANEL' => false,
@@ -391,5 +397,4 @@ $params = [
 $lAdmin->DisplayList($params);
 
 echo BeginNote(), Loc::getMessage('CLU_REDIS_LIST_NOTE'), EndNote();
-require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php');
-?>
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';

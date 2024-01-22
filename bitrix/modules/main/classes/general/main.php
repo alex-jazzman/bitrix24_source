@@ -4,10 +4,11 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2022 Bitrix
+ * @copyright 2001-2023 Bitrix
  */
 
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Composite;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
@@ -17,49 +18,40 @@ use Bitrix\Main\Authentication\Internal\ModuleGroupTable;
 
 IncludeModuleLangFile(__FILE__);
 
-/**
- * @deprecated
- */
 abstract class CAllMain
 {
 	var $ma;
 	var $sDocPath2, $sDirPath, $sUriParam;
 	var $sDocTitle;
 	var $sDocTitleChanger = null;
-	var $arPageProperties = array();
-	var $arPagePropertiesChanger = array();
-	var $arDirProperties = array();
-
+	var $arPageProperties = [];
+	var $arPagePropertiesChanger = [];
+	var $arDirProperties = [];
 	/** @var Asset */
 	public $oAsset;
-
 	/**
 	 * Array of css, js, and inline strings
 	 */
-	var $sPath2css = array();
-	var $arHeadStrings = array();
-	var $arHeadScripts = array();
-
+	var $sPath2css = [];
+	var $arHeadStrings = [];
+	var $arHeadScripts = [];
 	/**
 	 * Additional css, js and inline strings. Need to include in specifik place.
 	 */
-	var $arHeadAdditionalCSS = array();
-	var $arHeadAdditionalScripts = array();
-	var $arHeadAdditionalStrings = array();
+	var $arHeadAdditionalCSS = [];
+	var $arHeadAdditionalScripts = [];
+	var $arHeadAdditionalStrings = [];
 	var $bInAjax = false;
-
 	var $version;
-	var $arAdditionalChain = array();
-	var $FILE_PERMISSION_CACHE = array();
-	var $arPanelButtons = array();
-	var $arPanelFutureButtons = array();
-
+	var $arAdditionalChain = [];
+	var $FILE_PERMISSION_CACHE = [];
+	var $arPanelButtons = [];
+	var $arPanelFutureButtons = [];
 	var $ShowPanel = null;
 	var $PanelShowed = false;
 	var $showPanelWasInvoked = false;
-
-	var $buffer_content = array();
-	var $buffer_content_type = array();
+	var $buffer_content = [];
+	var $buffer_content_type = [];
 	var $buffer_man = false;
 	var $buffer_manual = false;
 	var $auto_buffer_cleaned, $buffered = false;
@@ -67,18 +59,18 @@ abstract class CAllMain
 	 * @var CApplicationException
 	 */
 	var $LAST_ERROR = false;
-	var $ERROR_STACK = array();
-	var $arIncludeDebug = array();
-	var $aCachedComponents = array();
+	var $ERROR_STACK = [];
+	var $arIncludeDebug = [];
+	var $aCachedComponents = [];
 	var $ShowIncludeStat = false;
 	var $_menu_recalc_counter = 0;
-	var $__view = array();
+	var $__view = [];
 	/** @var CEditArea */
 	var $editArea = false;
 	/** @var array */
 	var $arComponentMatch = false;
 	var $arAuthResult;
-	private $__componentStack = array();
+	private $__componentStack = [];
 
 	public function __construct()
 	{
@@ -97,14 +89,18 @@ abstract class CAllMain
 	{
 	}
 
-	public function GetCurPage($get_index_page=null)
+	public function GetCurPage($get_index_page = null)
 	{
 		if (null === $get_index_page)
 		{
 			if (defined('BX_DISABLE_INDEX_PAGE'))
+			{
 				$get_index_page = !BX_DISABLE_INDEX_PAGE;
+			}
 			else
+			{
 				$get_index_page = true;
+			}
 		}
 
 		$str = $this->sDocPath2;
@@ -112,42 +108,56 @@ abstract class CAllMain
 		if (!$get_index_page)
 		{
 			if (($i = mb_strpos($str, '/index.php')) !== false)
-				$str = mb_substr($str, 0, $i).'/';
+			{
+				$str = mb_substr($str, 0, $i) . '/';
+			}
 		}
 
 		return $str;
 	}
 
-	public function SetCurPage($page, $param=false)
+	public function SetCurPage($page, $param = false)
 	{
 		$this->sDocPath2 = GetPagePath($page);
 		$this->sDirPath = GetDirPath($this->sDocPath2);
-		if($param !== false)
+		if ($param !== false)
+		{
 			$this->sUriParam = $param;
+		}
 	}
 
-	public function GetCurUri($addParam="", $get_index_page=null)
+	public function GetCurUri($addParam = "", $get_index_page = null)
 	{
 		$page = $this->GetCurPage($get_index_page);
 		$param = $this->GetCurParam();
-		if($param <> '')
-			$url = $page."?".$param.($addParam!=""? "&".$addParam: "");
+		if ($param <> '')
+		{
+			$url = $page . "?" . $param . ($addParam != "" ? "&" . $addParam : "");
+		}
 		else
-			$url = $page.($addParam!=""? "?".$addParam: "");
+		{
+			$url = $page . ($addParam != "" ? "?" . $addParam : "");
+		}
 		return $url;
 	}
 
-	public function GetCurPageParam($strParam="", $arParamKill=array(), $get_index_page=null)
+	public function GetCurPageParam($strParam = "", $arParamKill = [], $get_index_page = null)
 	{
 		$sUrlPath = $this->GetCurPage($get_index_page);
 
 		$strNavQueryString = DeleteParam($arParamKill);
-		if($strNavQueryString <> "" && $strParam <> "")
-			$strNavQueryString = "&".$strNavQueryString;
-		if($strNavQueryString == "" && $strParam == "")
+		if ($strNavQueryString <> "" && $strParam <> "")
+		{
+			$strNavQueryString = "&" . $strNavQueryString;
+		}
+		if ($strNavQueryString == "" && $strParam == "")
+		{
 			return $sUrlPath;
+		}
 		else
-			return $sUrlPath."?".$strParam.$strNavQueryString;
+		{
+			return $sUrlPath . "?" . $strParam . $strNavQueryString;
+		}
 	}
 
 	public function GetCurParam()
@@ -160,25 +170,31 @@ abstract class CAllMain
 		return $this->sDirPath;
 	}
 
-	public function GetFileRecursive($strFileName, $strDir=false)
+	public function GetFileRecursive($strFileName, $strDir = false)
 	{
-		if($strDir === false)
+		if ($strDir === false)
+		{
 			$strDir = $this->GetCurDir();
+		}
 
 		$io = CBXVirtualIo::GetInstance();
 		$fn = $io->CombinePath("/", $strDir, $strFileName);
 
 		$p = null;
-		while(!$io->FileExists($io->RelativeToAbsolutePath($fn)))
+		while (!$io->FileExists($io->RelativeToAbsolutePath($fn)))
 		{
 			$p = bxstrrpos($strDir, "/");
-			if($p === false)
+			if ($p === false)
+			{
 				break;
+			}
 			$strDir = mb_substr($strDir, 0, $p);
 			$fn = $io->CombinePath("/", $strDir, $strFileName);
 		}
-		if($p === false)
+		if ($p === false)
+		{
 			return false;
+		}
 
 		return $fn;
 	}
@@ -186,18 +202,21 @@ abstract class CAllMain
 	public function IncludeAdminFile($strTitle, $filepath)
 	{
 		//define all global vars
-		$keys = array_keys($GLOBALS);
-		$keys_count = count($keys);
-		for($i=0; $i<$keys_count; $i++)
-			if($keys[$i]!="i" && $keys[$i]!="GLOBALS" && $keys[$i]!="strTitle" && $keys[$i]!="filepath")
-				global ${$keys[$i]};
+		static $exclude = ["this" => 1, "exclude" => 1, "key" => 1, "GLOBALS" => 1, "strTitle" => 1, "filepath" => 1];
+		foreach ($GLOBALS as $key => $value)
+		{
+			if (!isset($exclude[$key]))
+			{
+				global ${$key};
+			}
+		}
 
 		//title
 		$this->SetTitle($strTitle);
 
-		include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
+		include($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
 		include($filepath);
-		include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");
+		include($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin.php");
 		die();
 	}
 
@@ -206,22 +225,34 @@ abstract class CAllMain
 		$this->arAuthResult = $arAuthResult;
 	}
 
-	public function AuthForm($mess, $show_prolog=true, $show_epilog=true, $not_show_links="N", $do_die=true)
+	public function AuthForm($mess, $show_prolog = true, $show_epilog = true, $not_show_links = "N", $do_die = true)
 	{
-		$excl = array("excl"=>1, "key"=>1, "GLOBALS"=>1, "mess"=>1, "show_prolog"=>1, "show_epilog"=>1, "not_show_links"=>1, "do_die"=>1);
-		foreach($GLOBALS as $key => $value)
-			if(!array_key_exists($key , $excl))
+		static $exclude = ["this" => 1, "exclude" => 1, "key" => 1, "GLOBALS" => 1, "mess" => 1, "show_prolog" => 1, "show_epilog" => 1, "not_show_links" => 1, "do_die" => 1];
+		foreach ($GLOBALS as $key => $value)
+		{
+			if (!isset($exclude[$key]))
+			{
 				global ${$key};
+			}
+		}
 
-		if(mb_substr($this->GetCurDir(), 0, mb_strlen(BX_ROOT."/admin/")) == BX_ROOT."/admin/" || (defined("ADMIN_SECTION") && ADMIN_SECTION===true))
+		if (mb_substr($this->GetCurDir(), 0, mb_strlen(BX_ROOT . "/admin/")) == BX_ROOT . "/admin/" || (defined("ADMIN_SECTION") && ADMIN_SECTION === true))
+		{
 			$isAdmin = "_admin";
+		}
 		else
+		{
 			$isAdmin = "";
+		}
 
-		if(isset($this->arAuthResult) && $this->arAuthResult !== true && (is_array($this->arAuthResult) || $this->arAuthResult <> ''))
+		if (isset($this->arAuthResult) && $this->arAuthResult !== true && (is_array($this->arAuthResult) || $this->arAuthResult <> ''))
+		{
 			$arAuthResult = $this->arAuthResult;
+		}
 		else
+		{
 			$arAuthResult = $mess;
+		}
 
 		/** @global CMain $APPLICATION */
 		global $APPLICATION, $forgot_password, $change_password, $register, $confirm_registration;
@@ -242,33 +273,33 @@ abstract class CAllMain
 		}
 
 		$inc_file = "";
-		if($forgot_password=="yes")
+		if ($forgot_password == "yes")
 		{
 			//pass request form
 			$APPLICATION->SetTitle(GetMessage("AUTH_TITLE_SEND_PASSWORD"));
 			$comp_name = "system.auth.forgotpasswd";
 			$inc_file = "forgot_password";
 		}
-		elseif($change_password=="yes")
+		elseif ($change_password == "yes")
 		{
 			//pass change form
 			$APPLICATION->SetTitle(GetMessage("AUTH_TITLE_CHANGE_PASSWORD"));
 			$comp_name = "system.auth.changepasswd";
 			$inc_file = "change_password";
 		}
-		elseif($register=="yes" && $isAdmin==""	&& COption::GetOptionString("main", "new_user_registration", "N")=="Y")
+		elseif ($register == "yes" && $isAdmin == "" && COption::GetOptionString("main", "new_user_registration", "N") == "Y")
 		{
 			//registration form
 			$APPLICATION->SetTitle(GetMessage("AUTH_TITLE_REGISTER"));
 			$comp_name = "system.auth.registration";
 		}
-		elseif(($confirm_registration === "yes") && ($isAdmin === "") && (COption::GetOptionString("main", "new_user_registration_email_confirmation", "N") === "Y"))
+		elseif (($confirm_registration === "yes") && ($isAdmin === "") && (COption::GetOptionString("main", "new_user_registration_email_confirmation", "N") === "Y"))
 		{
 			//confirm registartion
 			$APPLICATION->SetTitle(GetMessage("AUTH_TITLE_CONFIRM"));
 			$comp_name = "system.auth.confirmation";
 		}
-		elseif(
+		elseif (
 			CModule::IncludeModule("security")
 			&& \Bitrix\Security\Mfa\Otp::isOtpRequired()
 			&& (!isset($_REQUEST["login_form"]) || $_REQUEST["login_form"] !== "yes")
@@ -288,43 +319,40 @@ abstract class CAllMain
 			$inc_file = "authorize";
 		}
 
-		if($show_prolog)
+		if ($show_prolog)
 		{
 			CMain::PrologActions();
 
 			define("BX_AUTH_FORM", true);
-			include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog".$isAdmin. "_after.php");
+			include($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/prolog" . $isAdmin . "_after.php");
 		}
 
-		if($isAdmin == "")
+		if ($isAdmin == "")
 		{
 			// form by Components 2.0
 			$this->IncludeComponent(
-				"bitrix:".$comp_name,
+				"bitrix:" . $comp_name,
 				COption::GetOptionString("main", "auth_components_template", ""),
-				array(
+				[
 					"AUTH_RESULT" => $arAuthResult,
 					"NOT_SHOW_LINKS" => $not_show_links,
-				)
+				]
 			);
 		}
 		else
 		{
-			include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/interface/auth/wrapper.php");
+			include($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/interface/auth/wrapper.php");
 		}
 
 		$autoCompositeArea = Main\Composite\Internals\AutomaticArea::getCurrentArea();
-		if ($autoCompositeArea)
+		$autoCompositeArea?->end();
+
+		if ($show_epilog)
 		{
-			$autoCompositeArea->end();
+			include($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog" . $isAdmin . ".php");
 		}
 
-		if($show_epilog)
-		{
-			include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog".$isAdmin.".php");
-		}
-
-		if($do_die)
+		if ($do_die)
 		{
 			die();
 		}
@@ -350,13 +378,13 @@ abstract class CAllMain
 	public function NeedCAPTHA()
 	{
 		$kernelSession = Main\Application::getInstance()->getKernelSession();
-		return (isset($kernelSession["BX_LOGIN_NEED_CAPTCHA"]) && $kernelSession["BX_LOGIN_NEED_CAPTCHA"]);
+		return !empty($kernelSession["BX_LOGIN_NEED_CAPTCHA"]);
 	}
 
 	public function NeedCAPTHAForLogin($login)
 	{
 		//When last login was failed then ask for CAPTCHA
-		if($this->NeedCAPTHA())
+		if ($this->NeedCAPTHA())
 		{
 			return true;
 		}
@@ -367,19 +395,19 @@ abstract class CAllMain
 		$session = Main\Application::getInstance()->getSession();
 
 		//Check if SESSION cache for POLICY_ATTEMPTS is actual for given login
-		if(!$session->has("BX_LOGIN_NEED_CAPTCHA_LOGIN") || $session["BX_LOGIN_NEED_CAPTCHA_LOGIN"]["LOGIN"] !== $login)
+		if (!$session->has("BX_LOGIN_NEED_CAPTCHA_LOGIN") || $session["BX_LOGIN_NEED_CAPTCHA_LOGIN"]["LOGIN"] !== $login)
 		{
 			$POLICY_ATTEMPTS = 0;
-			if($login <> '')
+			if ($login <> '')
 			{
-				$rsUser = CUser::GetList('LOGIN', 'DESC', array(
+				$rsUser = CUser::GetList('LOGIN', 'DESC', [
 					"LOGIN_EQUAL_EXACT" => $login,
 					"EXTERNAL_AUTH_ID" => "",
-				),
-					array('FIELDS' => array('ID', 'LOGIN', 'LOGIN_ATTEMPTS'))
+				],
+					['FIELDS' => ['ID', 'LOGIN', 'LOGIN_ATTEMPTS']]
 				);
 				$arUser = $rsUser->Fetch();
-				if($arUser)
+				if ($arUser)
 				{
 					$policy = CUser::getPolicy($arUser["ID"]);
 					$POLICY_ATTEMPTS = (int)$policy->getLoginAttempts();
@@ -394,56 +422,66 @@ abstract class CAllMain
 
 		//For users who had successful login and if policy is set
 		//check for CAPTCHA display
-		if($login <> '' && $session["BX_LOGIN_NEED_CAPTCHA_LOGIN"]["POLICY_ATTEMPTS"] > 0)
+		if ($login <> '' && $session["BX_LOGIN_NEED_CAPTCHA_LOGIN"]["POLICY_ATTEMPTS"] > 0)
 		{
 			//We need to know how many attempts user made
-			if($USER_ATTEMPTS === false)
+			if ($USER_ATTEMPTS === false)
 			{
-				$rsUser = CUser::GetList('LOGIN', 'DESC', array(
+				$rsUser = CUser::GetList('LOGIN', 'DESC', [
 					"LOGIN_EQUAL_EXACT" => $login,
 					"EXTERNAL_AUTH_ID" => "",
-				),
-					array('FIELDS' => array('ID', 'LOGIN', 'LOGIN_ATTEMPTS'))
+				],
+					['FIELDS' => ['ID', 'LOGIN', 'LOGIN_ATTEMPTS']]
 				);
 				$arUser = $rsUser->Fetch();
-				if($arUser)
+				if ($arUser)
+				{
 					$USER_ATTEMPTS = intval($arUser["LOGIN_ATTEMPTS"]);
+				}
 				else
+				{
 					$USER_ATTEMPTS = 0;
+				}
 			}
 			//When user login attempts exceeding the policy we'll show the CAPTCHA
-			if($USER_ATTEMPTS >= $session["BX_LOGIN_NEED_CAPTCHA_LOGIN"]["POLICY_ATTEMPTS"])
+			if ($USER_ATTEMPTS >= $session["BX_LOGIN_NEED_CAPTCHA_LOGIN"]["POLICY_ATTEMPTS"])
+			{
 				return true;
+			}
 		}
 
 		return false;
 	}
 
-	public function GetMenuHtml($type="left", $bMenuExt=false, $template = false, $sInitDir = false)
+	public function GetMenuHtml($type = "left", $bMenuExt = false, $template = false, $sInitDir = false)
 	{
 		$menu = $this->GetMenu($type, $bMenuExt, $template, $sInitDir);
 		return $menu->GetMenuHtml();
 	}
 
-	public function GetMenuHtmlEx($type="left", $bMenuExt=false, $template = false, $sInitDir = false)
+	public function GetMenuHtmlEx($type = "left", $bMenuExt = false, $template = false, $sInitDir = false)
 	{
 		$menu = $this->GetMenu($type, $bMenuExt, $template, $sInitDir);
 		return $menu->GetMenuHtmlEx();
 	}
 
-	public function GetMenu($type="left", $bMenuExt=false, $template = false, $sInitDir = false)
+	public function GetMenu($type = "left", $bMenuExt = false, $template = false, $sInitDir = false)
 	{
 		$menu = new CMenu($type);
-		if($sInitDir===false)
+		if ($sInitDir === false)
+		{
 			$sInitDir = $this->GetCurDir();
-		if(!$menu->Init($sInitDir, $bMenuExt, $template))
+		}
+		if (!$menu->Init($sInitDir, $bMenuExt, $template))
+		{
 			$menu->MenuDir = $sInitDir;
+		}
 		return $menu;
 	}
 
 	/**
-	 * @deprecated Use HttpRequest::isHttps()
 	 * @return bool
+	 * @deprecated Use HttpRequest::isHttps()
 	 */
 	public static function IsHTTPS()
 	{
@@ -452,12 +490,18 @@ abstract class CAllMain
 
 	public function GetTitle($property_name = false, $strip_tags = false)
 	{
-		if($property_name!==false && $this->GetProperty($property_name) <> '')
+		if ($property_name !== false && $this->GetProperty($property_name) <> '')
+		{
 			$res = $this->GetProperty($property_name);
+		}
 		else
+		{
 			$res = $this->sDocTitle;
-		if($strip_tags && is_string($res))
+		}
+		if ($strip_tags && is_string($res))
+		{
 			return strip_tags($res);
+		}
 		return $res;
 	}
 
@@ -481,9 +525,9 @@ abstract class CAllMain
 					{
 						/** @var CBitrixComponent $comp */
 						$comp = $arTraceRes['object'];
-						$this->sDocTitleChanger = array(
+						$this->sDocTitleChanger = [
 							'COMPONENT_NAME' => $comp->GetName(),
-						);
+						];
 
 						break;
 					}
@@ -492,9 +536,9 @@ abstract class CAllMain
 		}
 	}
 
-	public function ShowTitle($property_name="title", $strip_tags = true)
+	public function ShowTitle($property_name = "title", $strip_tags = true)
 	{
-		$this->AddBufferContent(array(&$this, "GetTitle"), $property_name, $strip_tags);
+		$this->AddBufferContent([&$this, "GetTitle"], $property_name, $strip_tags);
 	}
 
 	public function SetPageProperty($PROPERTY_ID, $PROPERTY_VALUE, $arOptions = null)
@@ -502,30 +546,38 @@ abstract class CAllMain
 		$this->arPageProperties[mb_strtoupper($PROPERTY_ID)] = $PROPERTY_VALUE;
 
 		if (is_array($arOptions))
+		{
 			$this->arPagePropertiesChanger[mb_strtoupper($PROPERTY_ID)] = $arOptions;
+		}
 	}
 
 	public function GetPageProperty($PROPERTY_ID, $default_value = false)
 	{
-		if(isset($this->arPageProperties[mb_strtoupper($PROPERTY_ID)]))
+		if (isset($this->arPageProperties[mb_strtoupper($PROPERTY_ID)]))
+		{
 			return $this->arPageProperties[mb_strtoupper($PROPERTY_ID)];
+		}
 		return $default_value;
 	}
 
 	public function ShowProperty($PROPERTY_ID, $default_value = false)
 	{
-		$this->AddBufferContent(array(&$this, "GetProperty"), $PROPERTY_ID, $default_value);
+		$this->AddBufferContent([&$this, "GetProperty"], $PROPERTY_ID, $default_value);
 	}
 
 	public function GetProperty($PROPERTY_ID, $default_value = false)
 	{
 		$propVal = $this->GetPageProperty($PROPERTY_ID);
-		if($propVal !== false)
+		if ($propVal !== false)
+		{
 			return $propVal;
+		}
 
 		$propVal = $this->GetDirProperty($PROPERTY_ID);
-		if($propVal !== false)
+		if ($propVal !== false)
+		{
 			return $propVal;
+		}
 
 		return $default_value;
 	}
@@ -538,7 +590,7 @@ abstract class CAllMain
 	public static function InitPathVars(&$site, &$path)
 	{
 		$site = false;
-		if(is_array($path))
+		if (is_array($path))
 		{
 			$site = $path[0];
 			$path = $path[1];
@@ -546,17 +598,23 @@ abstract class CAllMain
 		return $path;
 	}
 
-	public function SetDirProperty($PROPERTY_ID, $PROPERTY_VALUE, $path=false)
+	public function SetDirProperty($PROPERTY_ID, $PROPERTY_VALUE, $path = false)
 	{
 		self::InitPathVars($site, $path);
 
-		if($path === false)
+		if ($path === false)
+		{
 			$path = $this->GetCurDir();
-		if($site === false)
+		}
+		if ($site === false)
+		{
 			$site = SITE_ID;
+		}
 
-		if(!isset($this->arDirProperties[$site][$path]))
-			$this->InitDirProperties(array($site, $path));
+		if (!isset($this->arDirProperties[$site][$path]))
+		{
+			$this->InitDirProperties([$site, $path]);
+		}
 
 		$this->arDirProperties[$site][$path][mb_strtoupper($PROPERTY_ID)] = $PROPERTY_VALUE;
 	}
@@ -567,13 +625,19 @@ abstract class CAllMain
 
 		$DOC_ROOT = CSite::GetSiteDocRoot($site);
 
-		if($path === false)
+		if ($path === false)
+		{
 			$path = $this->GetCurDir();
-		if($site === false)
+		}
+		if ($site === false)
+		{
 			$site = SITE_ID;
+		}
 
-		if(isset($this->arDirProperties[$site][$path]))
+		if (isset($this->arDirProperties[$site][$path]))
+		{
 			return true;
+		}
 
 		$io = CBXVirtualIo::GetInstance();
 
@@ -581,30 +645,36 @@ abstract class CAllMain
 		while (true) // until the root
 		{
 			$dir = rtrim($dir, "/");
-			$section_file_name = $DOC_ROOT.$dir."/.section.php";
+			$section_file_name = $DOC_ROOT . $dir . "/.section.php";
 
-			if($io->FileExists($section_file_name))
+			if ($io->FileExists($section_file_name))
 			{
 				$arDirProperties = false;
 				include($io->GetPhysicalName($section_file_name));
-				if(is_array($arDirProperties))
+				if (is_array($arDirProperties))
 				{
-					foreach($arDirProperties as $prid=>$prval)
+					foreach ($arDirProperties as $prid => $prval)
 					{
 						$prid = mb_strtoupper($prid);
-						if(!isset($this->arDirProperties[$site][$path][$prid]))
+						if (!isset($this->arDirProperties[$site][$path][$prid]))
+						{
 							$this->arDirProperties[$site][$path][$prid] = $prval;
+						}
 					}
 				}
 			}
 
-			if($dir == '')
+			if ($dir == '')
+			{
 				break;
+			}
 
 			// file or folder
 			$pos = bxstrrpos($dir, "/");
-			if($pos===false)
+			if ($pos === false)
+			{
 				break;
+			}
 
 			//parent folder
 			$dir = mb_substr($dir, 0, $pos + 1);
@@ -613,104 +683,130 @@ abstract class CAllMain
 		return true;
 	}
 
-	public function GetDirProperty($PROPERTY_ID, $path=false, $default_value = false)
+	public function GetDirProperty($PROPERTY_ID, $path = false, $default_value = false)
 	{
 		self::InitPathVars($site, $path);
 
-		if($path === false)
+		if ($path === false)
+		{
 			$path = $this->GetCurDir();
-		if($site === false)
+		}
+		if ($site === false)
+		{
 			$site = SITE_ID;
+		}
 
-		if(!isset($this->arDirProperties[$site][$path]))
-			$this->InitDirProperties(array($site, $path));
+		if (!isset($this->arDirProperties[$site][$path]))
+		{
+			$this->InitDirProperties([$site, $path]);
+		}
 
 		$prop_id = mb_strtoupper($PROPERTY_ID);
-		if(isset($this->arDirProperties[$site][$path][$prop_id]))
+		if (isset($this->arDirProperties[$site][$path][$prop_id]))
+		{
 			return $this->arDirProperties[$site][$path][$prop_id];
+		}
 
 		return $default_value;
 	}
 
-	public function GetDirPropertyList($path=false)
+	public function GetDirPropertyList($path = false)
 	{
 		self::InitPathVars($site, $path);
 
-		if($path === false)
+		if ($path === false)
+		{
 			$path = $this->GetCurDir();
-		if($site === false)
+		}
+		if ($site === false)
+		{
 			$site = SITE_ID;
+		}
 
-		if(!isset($this->arDirProperties[$site][$path]))
-			$this->InitDirProperties(array($site, $path));
+		if (!isset($this->arDirProperties[$site][$path]))
+		{
+			$this->InitDirProperties([$site, $path]);
+		}
 
-		if(is_array($this->arDirProperties[$site][$path]))
+		if (isset($this->arDirProperties[$site][$path]) && is_array($this->arDirProperties[$site][$path]))
+		{
 			return $this->arDirProperties[$site][$path];
+		}
 
 		return false;
 	}
 
-	public function GetMeta($id, $meta_name=false, $bXhtmlStyle=true)
+	public function GetMeta($id, $meta_name = false, $bXhtmlStyle = true)
 	{
-		if($meta_name==false)
-			$meta_name=$id;
+		if (!$meta_name)
+		{
+			$meta_name = $id;
+		}
 		$val = $this->GetProperty($id);
-		if(!empty($val))
-			return '<meta name="'.htmlspecialcharsbx($meta_name).'" content="'.htmlspecialcharsEx($val).'"'.($bXhtmlStyle? ' /':'').'>'."\n";
+		if (!empty($val))
+		{
+			return '<meta name="' . htmlspecialcharsbx($meta_name) . '" content="' . htmlspecialcharsEx($val) . '"' . ($bXhtmlStyle ? ' /' : '') . '>' . "\n";
+		}
 		return '';
 	}
 
 	public function GetLink($id, $rel = null, $bXhtmlStyle = true)
 	{
-		if($rel === null)
+		if ($rel === null)
 		{
 			$rel = $id;
 		}
 		$href = $this->GetProperty($id);
-		if($href <> '')
+		if ($href <> '')
 		{
-			return '<link rel="'.$rel.'" href="'.$href.'"'.($bXhtmlStyle? ' /':'').'>'."\n";
+			return '<link rel="' . $rel . '" href="' . $href . '"' . ($bXhtmlStyle ? ' /' : '') . '>' . "\n";
 		}
 		return '';
 	}
 
-	public static function ShowBanner($type, $html_before="", $html_after="")
+	public static function ShowBanner($type, $html_before = "", $html_after = "")
 	{
-		if(!CModule::IncludeModule("advertising"))
+		if (!CModule::IncludeModule("advertising"))
+		{
 			return;
+		}
 
 		/** @global CMain $APPLICATION */
 		global $APPLICATION;
-		$APPLICATION->AddBufferContent(array("CAdvBanner", "Show"), $type, $html_before, $html_after);
+		$APPLICATION->AddBufferContent(["CAdvBanner", "Show"], $type, $html_before, $html_after);
 	}
 
-	public function ShowMeta($id, $meta_name=false, $bXhtmlStyle=true)
+	public function ShowMeta($id, $meta_name = false, $bXhtmlStyle = true)
 	{
-		$this->AddBufferContent(array(&$this, "GetMeta"), $id, $meta_name, $bXhtmlStyle);
+		$this->AddBufferContent([&$this, "GetMeta"], $id, $meta_name, $bXhtmlStyle);
 	}
 
 	public function ShowLink($id, $rel = null, $bXhtmlStyle = true)
 	{
-		$this->AddBufferContent(array(&$this, "GetLink"), $id, $rel, $bXhtmlStyle);
+		$this->AddBufferContent([&$this, "GetLink"], $id, $rel, $bXhtmlStyle);
 	}
 
-	public function SetAdditionalCSS($Path2css, $additional=false)
+	public function SetAdditionalCSS($Path2css, $additional = false)
 	{
 		$this->oAsset->addCss($Path2css, $additional);
 
-		if($additional)
+		if ($additional)
+		{
 			$this->arHeadAdditionalCSS[] = $this->oAsset->getAssetPath($Path2css);
+		}
 		else
+		{
 			$this->sPath2css[] = $this->oAsset->getAssetPath($Path2css);
+		}
 	}
 
 	/** @deprecated */
 	public function GetAdditionalCSS()
 	{
 		$n = count($this->sPath2css);
-		if($n > 0)
+		if ($n > 0)
 		{
-			return $this->sPath2css[$n-1];
+			return $this->sPath2css[$n - 1];
 		}
 		return false;
 	}
@@ -723,7 +819,7 @@ abstract class CAllMain
 	/** @deprecated use Asset::getInstance()->getCss() */
 	public function GetCSS($cMaxStylesCnt = true, $bXhtmlStyle = true, $assetTargetType = Main\Page\AssetShowTargetType::ALL)
 	{
-		if($cMaxStylesCnt === true)
+		if ($cMaxStylesCnt === true)
 		{
 			$cMaxStylesCnt = Main\Config\Option::get('main', 'max_css_files', 20);
 		}
@@ -735,8 +831,8 @@ abstract class CAllMain
 
 	public function ShowCSS($cMaxStylesCnt = true, $bXhtmlStyle = true)
 	{
-		$this->AddBufferContent(array(&$this, "GetHeadStrings"), 'BEFORE_CSS');
-		$this->AddBufferContent(array(&$this, "GetCSS"), $cMaxStylesCnt, $bXhtmlStyle);
+		$this->AddBufferContent([&$this, "GetHeadStrings"], 'BEFORE_CSS');
+		$this->AddBufferContent([&$this, "GetCSS"], $cMaxStylesCnt, $bXhtmlStyle);
 	}
 
 	/** @deprecated $Asset::getInstance->addString($str, $bUnique, $location); */
@@ -749,7 +845,7 @@ abstract class CAllMain
 	public function GetHeadStrings($location = AssetLocation::AFTER_JS_KERNEL)
 	{
 		$location = Asset::getLocationByName($location);
-		if($location === AssetLocation::AFTER_JS_KERNEL)
+		if ($location === AssetLocation::AFTER_JS_KERNEL)
 		{
 			$res = $this->oAsset->getJs(1);
 		}
@@ -758,26 +854,26 @@ abstract class CAllMain
 			$res = $this->oAsset->getStrings($location);
 		}
 
-		return ($res == '' ? '' : $res."\n");
+		return ($res == '' ? '' : $res . "\n");
 	}
 
 	public function ShowHeadStrings()
 	{
-		if(!$this->oAsset->getShowHeadString())
+		if (!$this->oAsset->getShowHeadString())
 		{
 			$this->oAsset->setShowHeadString();
-			$this->AddBufferContent(array(&$this, "GetHeadStrings"), 'DEFAULT');
+			$this->AddBufferContent([&$this, "GetHeadStrings"], 'DEFAULT');
 		}
 	}
 
 	/** @deprecated use Asset::getInstance()->addJs($src, $additional) */
-	public function AddHeadScript($src, $additional=false)
+	public function AddHeadScript($src, $additional = false)
 	{
 		$this->oAsset->addJs($src, $additional);
 
-		if($src <> '')
+		if ($src <> '')
 		{
-			if($additional)
+			if ($additional)
 			{
 				$this->arHeadAdditionalScripts[] = Asset::getAssetPath($src);
 			}
@@ -806,13 +902,13 @@ abstract class CAllMain
 	}
 
 	/** @deprecated deprecated use Asset::addCssKernelInfo() */
-	public function AddCSSKernelInfo($module = '', $arCSS = array())
+	public function AddCSSKernelInfo($module = '', $arCSS = [])
 	{
 		$this->oAsset->addCssKernelInfo($module, $arCSS);
 	}
 
 	/** @deprecated deprecated use Asset::addJsKernelInfo() */
-	public function AddJSKernelInfo($module = '', $arJS = array())
+	public function AddJSKernelInfo($module = '', $arJS = [])
 	{
 		$this->oAsset->addJsKernelInfo($module, $arJS);
 	}
@@ -844,7 +940,7 @@ abstract class CAllMain
 	}
 
 	/** @deprecated */
-	public function SetUniqueJS($id = '', $jsType = 'page')
+	public function SetUniqueJS()
 	{
 		return true;
 	}
@@ -858,18 +954,18 @@ abstract class CAllMain
 	public function ShowHeadScripts()
 	{
 		$this->oAsset->setShowHeadScript();
-		$this->AddBufferContent(array(&$this, "GetHeadScripts"), 2);
+		$this->AddBufferContent([&$this, "GetHeadScripts"], 2);
 	}
 
 	public function ShowBodyScripts()
 	{
 		$this->oAsset->setShowBodyScript();
-		$this->AddBufferContent(array(&$this, "GetHeadScripts"), 3);
+		$this->AddBufferContent([&$this, "GetHeadScripts"], 3);
 	}
 
-	public function ShowHead($bXhtmlStyle=true)
+	public function ShowHead($bXhtmlStyle = true)
 	{
-		echo '<meta http-equiv="Content-Type" content="text/html; charset='.LANG_CHARSET.'"'.($bXhtmlStyle? ' /':'').'>'."\n";
+		echo '<meta http-equiv="Content-Type" content="text/html; charset=' . LANG_CHARSET . '"' . ($bXhtmlStyle ? ' /' : '') . '>' . "\n";
 		$this->ShowMeta("robots", false, $bXhtmlStyle);
 		$this->ShowMeta("keywords", false, $bXhtmlStyle);
 		$this->ShowMeta("description", false, $bXhtmlStyle);
@@ -882,33 +978,33 @@ abstract class CAllMain
 	public function ShowAjaxHead($bXhtmlStyle = true, $showCSS = true, $showStrings = true, $showScripts = true)
 	{
 		$this->RestartBuffer();
-		$this->sPath2css = array();
-		$this->arHeadAdditionalCSS = array();
-		$this->arHeadAdditionalStrings = array();
-		$this->arHeadAdditionalScripts = array();
-		$this->arHeadScripts = array();
-		$this->arHeadStrings = array();
+		$this->sPath2css = [];
+		$this->arHeadAdditionalCSS = [];
+		$this->arHeadAdditionalStrings = [];
+		$this->arHeadAdditionalScripts = [];
+		$this->arHeadScripts = [];
+		$this->arHeadStrings = [];
 		$this->bInAjax = true;
 
 		$this->oAsset = $this->oAsset->setAjax();
 
-		if($showCSS === true)
+		if ($showCSS === true)
 		{
 			$this->ShowCSS(true, $bXhtmlStyle);
 		}
 
-		if($showStrings === true)
+		if ($showStrings === true)
 		{
 			$this->ShowHeadStrings();
 		}
 
-		if($showScripts === true)
+		if ($showScripts === true)
 		{
 			$this->ShowHeadScripts();
 		}
 	}
 
-	public function SetShowIncludeAreas($bShow=true)
+	public function SetShowIncludeAreas($bShow = true)
 	{
 		Main\Application::getInstance()->getKernelSession()["SESS_INCLUDE_AREAS"] = $bShow;
 	}
@@ -917,15 +1013,19 @@ abstract class CAllMain
 	{
 		global $USER;
 
-		if(!is_object($USER) || !$USER->IsAuthorized() || defined('ADMIN_SECTION') && ADMIN_SECTION == true)
+		if (!is_object($USER) || !$USER->IsAuthorized() || defined('ADMIN_SECTION') && ADMIN_SECTION)
+		{
 			return false;
+		}
 		$kernelSession = Main\Application::getInstance()->getKernelSession();
-		if(isset($kernelSession["SESS_INCLUDE_AREAS"]) && $kernelSession["SESS_INCLUDE_AREAS"])
+		if (isset($kernelSession["SESS_INCLUDE_AREAS"]) && $kernelSession["SESS_INCLUDE_AREAS"])
+		{
 			return true;
+		}
 		static $panel_dynamic_mode = null;
 		if (!isset($panel_dynamic_mode))
 		{
-			$aUserOpt = CUserOptions::GetOption("global", "settings", array());
+			$aUserOpt = CUserOptions::GetOption("global", "settings", []);
 			$panel_dynamic_mode = (isset($aUserOpt["panel_dynamic_mode"]) && $aUserOpt["panel_dynamic_mode"] == "Y");
 		}
 		return $panel_dynamic_mode;
@@ -943,54 +1043,66 @@ abstract class CAllMain
 
 	public function SetEditArea($areaId, $arIcons)
 	{
-		if(!$this->GetShowIncludeAreas())
+		if (!$this->GetShowIncludeAreas())
+		{
 			return;
+		}
 
-		if($this->editArea === false)
+		if ($this->editArea === false)
+		{
 			$this->editArea = new CEditArea();
+		}
 
 		$this->editArea->SetEditArea($areaId, $arIcons);
 	}
 
 	public function IncludeStringBefore()
 	{
-		if($this->editArea === false)
+		if ($this->editArea === false)
+		{
 			$this->editArea = new CEditArea();
+		}
 		return $this->editArea->IncludeStringBefore();
 	}
 
-	public function IncludeStringAfter($arIcons=false, $arParams=array())
+	public function IncludeStringAfter($arIcons = false, $arParams = [])
 	{
 		return $this->editArea->IncludeStringAfter($arIcons, $arParams);
 	}
 
-	public function IncludeString($string, $arIcons=false)
+	public function IncludeString($string, $arIcons = false)
 	{
-		return $this->IncludeStringBefore().$string.$this->IncludeStringAfter($arIcons);
+		return $this->IncludeStringBefore() . $string . $this->IncludeStringAfter($arIcons);
 	}
 
 	public function GetTemplatePath($rel_path)
 	{
-		if(mb_substr($rel_path, 0, 1) != "/")
+		if (mb_substr($rel_path, 0, 1) != "/")
 		{
-			if(defined("SITE_TEMPLATE_ID"))
+			if (defined("SITE_TEMPLATE_ID"))
 			{
-				$path = getLocalPath("templates/".SITE_TEMPLATE_ID."/".$rel_path, BX_PERSONAL_ROOT);
-				if($path !== false)
+				$path = getLocalPath("templates/" . SITE_TEMPLATE_ID . "/" . $rel_path, BX_PERSONAL_ROOT);
+				if ($path !== false)
+				{
 					return $path;
+				}
 			}
 
-			$path = getLocalPath("templates/.default/".$rel_path, BX_PERSONAL_ROOT);
-			if($path !== false)
+			$path = getLocalPath("templates/.default/" . $rel_path, BX_PERSONAL_ROOT);
+			if ($path !== false)
+			{
 				return $path;
+			}
 
 			//we don't use /local folder for components 1.0
 			$module_id = mb_substr($rel_path, 0, mb_strpos($rel_path, "/"));
-			if($module_id <> '')
+			if ($module_id <> '')
 			{
-				$path = "/bitrix/modules/".$module_id."/install/templates/".$rel_path;
-				if(file_exists($_SERVER["DOCUMENT_ROOT"].$path))
+				$path = "/bitrix/modules/" . $module_id . "/install/templates/" . $rel_path;
+				if (file_exists($_SERVER["DOCUMENT_ROOT"] . $path))
+				{
 					return $path;
+				}
 			}
 
 			return false;
@@ -1001,72 +1113,83 @@ abstract class CAllMain
 
 	public function SetTemplateCSS($rel_path)
 	{
-		if($path = $this->GetTemplatePath($rel_path))
+		if ($path = $this->GetTemplatePath($rel_path))
+		{
 			$this->SetAdditionalCSS($path);
+		}
 	}
 
 	// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 	// COMPONENTS 2.0 >>>>>
-	public function IncludeComponent($componentName, $componentTemplate, $arParams = array(), $parentComponent = null, $arFunctionParams = array(), $returnResult = false)
+	public function IncludeComponent($componentName, $componentTemplate, $arParams = [], $parentComponent = null, $arFunctionParams = [], $returnResult = false)
 	{
 		/** @global CMain $APPLICATION */
 		global $APPLICATION, $USER;
 
-		if(is_array($this->arComponentMatch))
+		if (is_array($this->arComponentMatch))
 		{
 			$skipComponent = true;
-			foreach($this->arComponentMatch as $cValue)
+			foreach ($this->arComponentMatch as $cValue)
 			{
-				if(mb_strpos($componentName, $cValue) !== false)
+				if (mb_strpos($componentName, $cValue) !== false)
 				{
 					$skipComponent = false;
 					break;
 				}
 			}
-			if($skipComponent)
+			if ($skipComponent)
+			{
 				return false;
+			}
 		}
 
 		$componentRelativePath = CComponentEngine::MakeComponentPath($componentName);
 		if ($componentRelativePath == '')
+		{
 			return false;
+		}
 
 		$debug = null;
-		$bShowDebug = Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"]=="Y"
+		$bShowDebug = Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"] == "Y"
 			&& (
 				$USER->CanDoOperation('edit_php')
-				|| Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"]=="Y"
+				|| Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"] == "Y"
 			)
-			&& !defined("PUBLIC_AJAX_MODE")
-		;
-		if($bShowDebug || $APPLICATION->ShowIncludeStat)
+			&& !defined("PUBLIC_AJAX_MODE");
+		if ($bShowDebug || $APPLICATION->ShowIncludeStat)
 		{
 			$debug = new CDebugInfo();
-			$debug->Start($componentName);
+			$debug->Start();
 		}
 
 		if (is_object($parentComponent))
 		{
 			if (!($parentComponent instanceof cbitrixcomponent))
+			{
 				$parentComponent = null;
+			}
 		}
 
 		$bDrawIcons = ((!isset($arFunctionParams["HIDE_ICONS"]) || $arFunctionParams["HIDE_ICONS"] <> "Y") && $APPLICATION->GetShowIncludeAreas());
 
-		if($bDrawIcons)
+		if ($bDrawIcons)
+		{
 			echo $this->IncludeStringBefore();
+		}
 
 		$result = null;
 		$bComponentEnabled = (!isset($arFunctionParams["ACTIVE_COMPONENT"]) || $arFunctionParams["ACTIVE_COMPONENT"] <> "N");
 
 		$component = new CBitrixComponent();
-		if($component->InitComponent($componentName))
+		if ($component->InitComponent($componentName))
 		{
 			$obAjax = null;
-			if($bComponentEnabled)
+			if ($bComponentEnabled)
 			{
-				if(($arParams['AJAX_MODE'] ?? '') == 'Y')
+				if (($arParams['AJAX_MODE'] ?? '') == 'Y')
+				{
 					$obAjax = new CComponentAjax($componentName, $componentTemplate, $arParams, $parentComponent);
+				}
 
 				$this->__componentStack[] = $component;
 				$result = $component->IncludeComponent($componentTemplate, $arParams, $parentComponent, $returnResult);
@@ -1074,25 +1197,28 @@ abstract class CAllMain
 				array_pop($this->__componentStack);
 			}
 
-			if($bDrawIcons)
+			if ($bDrawIcons)
 			{
 				$panel = new CComponentPanel($component, $componentName, $componentTemplate, $parentComponent, $bComponentEnabled);
 				$arIcons = $panel->GetIcons();
 
-				echo $s = $this->IncludeStringAfter($arIcons["icons"], $arIcons["parameters"]);
+				echo $this->IncludeStringAfter($arIcons["icons"], $arIcons["parameters"]);
 			}
 
-			if($bComponentEnabled && $obAjax)
+			if ($bComponentEnabled && $obAjax)
 			{
 				$obAjax->Process();
 			}
 		}
 
-		if($bShowDebug)
-			echo $debug->Output($componentName, "/bitrix/components".$componentRelativePath."/component.php", ($arParams["CACHE_TYPE"] ?? '') . ($arParams["MENU_CACHE_TYPE"] ?? ''));
-		elseif(isset($debug))
-			$debug->Stop($componentName, "/bitrix/components".$componentRelativePath."/component.php", ($arParams["CACHE_TYPE"] ?? '') . ($arParams["MENU_CACHE_TYPE"] ?? ''));
-
+		if ($bShowDebug)
+		{
+			echo $debug->Output($componentName, "/bitrix/components" . $componentRelativePath . "/component.php", ($arParams["CACHE_TYPE"] ?? '') . ($arParams["MENU_CACHE_TYPE"] ?? ''));
+		}
+		elseif (isset($debug))
+		{
+			$debug->Stop($componentName, "/bitrix/components" . $componentRelativePath . "/component.php", ($arParams["CACHE_TYPE"] ?? '') . ($arParams["MENU_CACHE_TYPE"] ?? ''));
+		}
 
 		return $result;
 	}
@@ -1144,13 +1270,15 @@ abstract class CAllMain
 
 	public function ShowViewContent($view)
 	{
-		$this->AddBufferContent(array(&$this, "GetViewContent"), $view);
+		$this->AddBufferContent([&$this, "GetViewContent"], $view);
 	}
 
 	public function GetViewContent($view)
 	{
-		if(!isset($this->__view[$view]) || !is_array($this->__view[$view]))
+		if (!isset($this->__view[$view]) || !is_array($this->__view[$view]))
+		{
 			return '';
+		}
 
 		uasort(
 			$this->__view[$view],
@@ -1163,9 +1291,11 @@ abstract class CAllMain
 			}
 		);
 
-		$res = array();
-		foreach($this->__view[$view] as $item)
+		$res = [];
+		foreach ($this->__view[$view] as $item)
+		{
 			$res[] = $item[0];
+		}
 
 		return implode($res);
 	}
@@ -1173,16 +1303,16 @@ abstract class CAllMain
 	public static function OnChangeFileComponent($path, $site)
 	{
 		// kind of optimization
-		if(HasScriptExtension($path) && basename($path) !== '.access.php')
+		if (HasScriptExtension($path) && basename($path) !== '.access.php')
 		{
-			if($site === false)
+			if ($site === false)
 			{
 				$site = SITE_ID;
 			}
 			$docRoot = CSite::GetSiteDocRoot($site);
 
-			Main\UrlRewriter::delete($site, array("PATH" => $path, "!ID" => ''));
-			Main\Component\ParametersTable::deleteByFilter(array("SITE_ID" => $site, "REAL_PATH" => $path));
+			Main\UrlRewriter::delete($site, ["PATH" => $path, "!ID" => '']);
+			Main\Component\ParametersTable::deleteByFilter(["SITE_ID" => $site, "REAL_PATH" => $path]);
 			Main\UrlRewriter::reindexFile($site, $docRoot, $path);
 		}
 	}
@@ -1190,18 +1320,18 @@ abstract class CAllMain
 	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 	// $arParams - do not change!
-	public function IncludeFile($rel_path, $arParams = array(), $arFunctionParams = array())
+	public function IncludeFile($rel_path, $arParams = [], $arFunctionParams = [])
 	{
 		/** @global CMain $APPLICATION */
 		/** @noinspection PhpUnusedLocalVariableInspection */
 		global $APPLICATION, $USER, $DB, $MESS, $DOCUMENT_ROOT;
 
-		if(Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"]=="Y" && ($USER->CanDoOperation('edit_php') || Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"]=="Y"))
+		if (Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"] == "Y" && ($USER->CanDoOperation('edit_php') || Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"] == "Y"))
 		{
 			$debug = new CDebugInfo();
 			$debug->Start();
 		}
-		elseif($APPLICATION->ShowIncludeStat)
+		elseif ($APPLICATION->ShowIncludeStat)
 		{
 			$debug = new CDebugInfo();
 			$debug->Start();
@@ -1213,26 +1343,26 @@ abstract class CAllMain
 
 		$sType = "TEMPLATE";
 		$bComponent = false;
-		if(mb_substr($rel_path, 0, 1) != "/")
+		if (mb_substr($rel_path, 0, 1) != "/")
 		{
 			$bComponent = true;
-			$path = getLocalPath("templates/".SITE_TEMPLATE_ID."/".$rel_path, BX_PERSONAL_ROOT);
-			if($path === false)
+			$path = getLocalPath("templates/" . SITE_TEMPLATE_ID . "/" . $rel_path, BX_PERSONAL_ROOT);
+			if ($path === false)
 			{
 				$sType = "DEFAULT";
-				$path = getLocalPath("templates/.default/".$rel_path, BX_PERSONAL_ROOT);
-				if($path === false)
+				$path = getLocalPath("templates/.default/" . $rel_path, BX_PERSONAL_ROOT);
+				if ($path === false)
 				{
-					$path = BX_PERSONAL_ROOT."/templates/".SITE_TEMPLATE_ID."/".$rel_path;
+					$path = BX_PERSONAL_ROOT . "/templates/" . SITE_TEMPLATE_ID . "/" . $rel_path;
 					$module_id = mb_substr($rel_path, 0, mb_strpos($rel_path, "/"));
-					if($module_id <> '')
+					if ($module_id <> '')
 					{
-						$path = "/bitrix/modules/".$module_id."/install/templates/".$rel_path;
+						$path = "/bitrix/modules/" . $module_id . "/install/templates/" . $rel_path;
 						$sType = "MODULE";
-						if(!file_exists($_SERVER["DOCUMENT_ROOT"].$path))
+						if (!file_exists($_SERVER["DOCUMENT_ROOT"] . $path))
 						{
 							$sType = "TEMPLATE";
-							$path = BX_PERSONAL_ROOT."/templates/".SITE_TEMPLATE_ID."/".$rel_path;
+							$path = BX_PERSONAL_ROOT . "/templates/" . SITE_TEMPLATE_ID . "/" . $rel_path;
 						}
 					}
 				}
@@ -1243,31 +1373,35 @@ abstract class CAllMain
 			$path = $rel_path;
 		}
 
-		if($arFunctionParams["WORKFLOW"] && !IsModuleInstalled("workflow"))
+		if ($arFunctionParams["WORKFLOW"] && !IsModuleInstalled("workflow"))
+		{
 			$arFunctionParams["WORKFLOW"] = false;
-		elseif($sType!="TEMPLATE" && $arFunctionParams["WORKFLOW"])
+		}
+		elseif ($sType != "TEMPLATE" && $arFunctionParams["WORKFLOW"])
+		{
 			$arFunctionParams["WORKFLOW"] = false;
+		}
 
 		$bDrawIcons = (
 			$arFunctionParams["SHOW_BORDER"] !== false && $APPLICATION->GetShowIncludeAreas()
 			&& (
-				$USER->CanDoFileOperation('fm_edit_existent_file', array(SITE_ID, $path))
-				|| ($arFunctionParams["WORKFLOW"] && $USER->CanDoFileOperation('fm_edit_in_workflow', array(SITE_ID, $path)))
+				$USER->CanDoFileOperation('fm_edit_existent_file', [SITE_ID, $path])
+				|| ($arFunctionParams["WORKFLOW"] && $USER->CanDoFileOperation('fm_edit_in_workflow', [SITE_ID, $path]))
 			)
 		);
 
 		$iSrcLine = 0;
 		$sSrcFile = '';
-		$arIcons = array();
+		$arIcons = [];
 
-		if($bDrawIcons)
+		if ($bDrawIcons)
 		{
-			$path_url = "path=".$path;
+			$path_url = "path=" . $path;
 			$encSiteTemplateId = urlencode(SITE_TEMPLATE_ID);
 			$editor = '';
 			$resize = 'false';
 
-			if (!in_array($arFunctionParams['MODE'], array('html', 'text', 'php')))
+			if (!in_array($arFunctionParams['MODE'], ['html', 'text', 'php']))
 			{
 				$arFunctionParams['MODE'] = $bComponent ? 'php' : 'html';
 			}
@@ -1277,133 +1411,142 @@ abstract class CAllMain
 				switch ($arFunctionParams['MODE'])
 				{
 					case 'html':
-						$editor = "/bitrix/admin/fileman_html_edit.php?site=".SITE_ID."&";
+						$editor = "/bitrix/admin/fileman_html_edit.php?site=" . SITE_ID . "&";
 						break;
 					case 'text':
-						$editor = "/bitrix/admin/fileman_file_edit.php?site=".SITE_ID."&";
+						$editor = "/bitrix/admin/fileman_file_edit.php?site=" . SITE_ID . "&";
 						break;
 					case 'php':
-						$editor = "/bitrix/admin/fileman_file_edit.php?full_src=Y&site=".SITE_ID."&";
+						$editor = "/bitrix/admin/fileman_file_edit.php?full_src=Y&site=" . SITE_ID . "&";
 						break;
 				}
-				$editor .= "templateID=".$encSiteTemplateId."&";
+				$editor .= "templateID=" . $encSiteTemplateId . "&";
 			}
 			else
 			{
 				switch ($arFunctionParams['MODE'])
 				{
 					case 'html':
-						$editor = '/bitrix/admin/public_file_edit.php?site='.SITE_ID.'&bxpublic=Y&from=includefile&templateID='.$encSiteTemplateId.'&';
+						$editor = '/bitrix/admin/public_file_edit.php?site=' . SITE_ID . '&bxpublic=Y&from=includefile&templateID=' . $encSiteTemplateId . '&';
 						break;
 
 					case 'text':
-						$editor = '/bitrix/admin/public_file_edit.php?site='.SITE_ID.'&bxpublic=Y&from=includefile&noeditor=Y&';
+						$editor = '/bitrix/admin/public_file_edit.php?site=' . SITE_ID . '&bxpublic=Y&from=includefile&noeditor=Y&';
 						$resize = 'true';
 						break;
 
 					case 'php':
-						$editor = '/bitrix/admin/public_file_edit_src.php?site='.SITE_ID.'&templateID='.$encSiteTemplateId.'&';
+						$editor = '/bitrix/admin/public_file_edit_src.php?site=' . SITE_ID . '&templateID=' . $encSiteTemplateId . '&';
 						$resize = 'true';
 						break;
 				}
 			}
 
-			if($arFunctionParams["TEMPLATE"])
-				$arFunctionParams["TEMPLATE"] = "&template=".urlencode($arFunctionParams["TEMPLATE"]);
+			if ($arFunctionParams["TEMPLATE"])
+			{
+				$arFunctionParams["TEMPLATE"] = "&template=" . urlencode($arFunctionParams["TEMPLATE"]);
+			}
 
-			if($arFunctionParams["BACK_URL"])
-				$arFunctionParams["BACK_URL"] = "&back_url=".urlencode($arFunctionParams["BACK_URL"]);
+			if ($arFunctionParams["BACK_URL"])
+			{
+				$arFunctionParams["BACK_URL"] = "&back_url=" . urlencode($arFunctionParams["BACK_URL"]);
+			}
 			else
-				$arFunctionParams["BACK_URL"] = "&back_url=".urlencode($_SERVER["REQUEST_URI"]);
+			{
+				$arFunctionParams["BACK_URL"] = "&back_url=" . urlencode($_SERVER["REQUEST_URI"]);
+			}
 
-			if($arFunctionParams["LANG"])
-				$arFunctionParams["LANG"] = "&lang=".urlencode($arFunctionParams["LANG"]);
+			if ($arFunctionParams["LANG"])
+			{
+				$arFunctionParams["LANG"] = "&lang=" . urlencode($arFunctionParams["LANG"]);
+			}
 			else
-				$arFunctionParams["LANG"] = "&lang=".LANGUAGE_ID;
+			{
+				$arFunctionParams["LANG"] = "&lang=" . LANGUAGE_ID;
+			}
 
-			$arPanelParams = array();
+			$arPanelParams = [];
 
 			$bDefaultExists = false;
-			if($USER->CanDoOperation('edit_php') && $bComponent)
+			if ($USER->CanDoOperation('edit_php') && $bComponent)
 			{
 				$bDefaultExists = true;
-				$arPanelParams["TOOLTIP"] = array(
+				$arPanelParams["TOOLTIP"] = [
 					'TITLE' => GetMessage("main_incl_component1"),
-					'TEXT' => $rel_path
-				);
+					'TEXT' => $rel_path,
+				];
 
 				$aTrace = Main\Diag\Helper::getBackTrace(1, DEBUG_BACKTRACE_IGNORE_ARGS);
 
 				$sSrcFile = $aTrace[0]["file"];
 				$iSrcLine = intval($aTrace[0]["line"]);
-				$arIcons[] = array(
-					'URL' => 'javascript:'.$APPLICATION->GetPopupLink(array(
-							'URL' => "/bitrix/admin/component_props.php?".
-								"path=".urlencode(CUtil::addslashes($rel_path)).
-								"&template_id=".urlencode(CUtil::addslashes(SITE_TEMPLATE_ID)).
-								"&lang=".LANGUAGE_ID.
-								"&src_path=".urlencode(CUtil::addslashes($sSrcFile)).
-								"&src_line=".$iSrcLine.
-								""
-						)),
-					'ICON'=>"parameters",
-					'TITLE'=>GetMessage("main_incl_file_comp_param"),
-					'DEFAULT'=>true
-				);
+				$arIcons[] = [
+					'URL' => 'javascript:' . $APPLICATION->GetPopupLink([
+							'URL' => "/bitrix/admin/component_props.php?" .
+								"path=" . urlencode(CUtil::addslashes($rel_path)) .
+								"&template_id=" . urlencode(CUtil::addslashes(SITE_TEMPLATE_ID)) .
+								"&lang=" . LANGUAGE_ID .
+								"&src_path=" . urlencode(CUtil::addslashes($sSrcFile)) .
+								"&src_line=" . $iSrcLine,
+						]),
+					'ICON' => "parameters",
+					'TITLE' => GetMessage("main_incl_file_comp_param"),
+					'DEFAULT' => true,
+				];
 			}
 
-			if($sType == "MODULE")
+			if ($sType == "MODULE")
 			{
-				$arIcons[] = array(
-					'URL'=>'javascript:if(confirm(\''.GetMessage("MAIN_INC_BLOCK_MODULE").'\'))window.location=\''.$editor.'&path='.urlencode(BX_PERSONAL_ROOT.'/templates/'.SITE_TEMPLATE_ID.'/'.$rel_path).$arFunctionParams["BACK_URL"].$arFunctionParams["LANG"].'&template='.$path.'\';',
-					'ICON'=>'copy',
-					'TITLE'=>str_replace("#MODE#", $arFunctionParams["MODE"], str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME")? GetMessage("MAIN__INC_BLOCK"): $arFunctionParams["NAME"]), GetMessage("main_incl_file_edit_copy")))
-				);
+				$arIcons[] = [
+					'URL' => 'javascript:if(confirm(\'' . GetMessage("MAIN_INC_BLOCK_MODULE") . '\'))window.location=\'' . $editor . '&path=' . urlencode(BX_PERSONAL_ROOT . '/templates/' . SITE_TEMPLATE_ID . '/' . $rel_path) . $arFunctionParams["BACK_URL"] . $arFunctionParams["LANG"] . '&template=' . $path . '\';',
+					'ICON' => 'copy',
+					'TITLE' => str_replace("#MODE#", $arFunctionParams["MODE"], str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME") ? GetMessage("MAIN__INC_BLOCK") : $arFunctionParams["NAME"]), GetMessage("main_incl_file_edit_copy"))),
+				];
 			}
-			elseif($sType == "DEFAULT")
+			elseif ($sType == "DEFAULT")
 			{
-				$arIcons[] = array(
-					'URL'=>'javascript:if(confirm(\''.GetMessage("MAIN_INC_BLOCK_COMMON").'\'))window.location=\''.$editor.$path_url.$arFunctionParams["BACK_URL"].$arFunctionParams["LANG"].$arFunctionParams["TEMPLATE"].'\';',
-					'ICON'=>'edit-common',
-					'TITLE'=>str_replace("#MODE#", $arFunctionParams["MODE"], str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME")? GetMessage("MAIN__INC_BLOCK"): $arFunctionParams["NAME"]), GetMessage("MAIN_INC_BLOCK_EDIT")))
-				);
+				$arIcons[] = [
+					'URL' => 'javascript:if(confirm(\'' . GetMessage("MAIN_INC_BLOCK_COMMON") . '\'))window.location=\'' . $editor . $path_url . $arFunctionParams["BACK_URL"] . $arFunctionParams["LANG"] . $arFunctionParams["TEMPLATE"] . '\';',
+					'ICON' => 'edit-common',
+					'TITLE' => str_replace("#MODE#", $arFunctionParams["MODE"], str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME") ? GetMessage("MAIN__INC_BLOCK") : $arFunctionParams["NAME"]), GetMessage("MAIN_INC_BLOCK_EDIT"))),
+				];
 
-				$arIcons[] = array(
-					'URL'=>$editor.'&path='.urlencode(BX_PERSONAL_ROOT.'/templates/'.SITE_TEMPLATE_ID.'/'.$rel_path).$arFunctionParams["BACK_URL"].$arFunctionParams["LANG"].'&template='.$path,
-					'ICON'=>'copy',
-					'TITLE'=>str_replace("#MODE#", $arFunctionParams["MODE"], str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME")? GetMessage("MAIN__INC_BLOCK"): $arFunctionParams["NAME"]), GetMessage("MAIN_INC_BLOCK_COMMON_COPY")))
-				);
+				$arIcons[] = [
+					'URL' => $editor . '&path=' . urlencode(BX_PERSONAL_ROOT . '/templates/' . SITE_TEMPLATE_ID . '/' . $rel_path) . $arFunctionParams["BACK_URL"] . $arFunctionParams["LANG"] . '&template=' . $path,
+					'ICON' => 'copy',
+					'TITLE' => str_replace("#MODE#", $arFunctionParams["MODE"], str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME") ? GetMessage("MAIN__INC_BLOCK") : $arFunctionParams["NAME"]), GetMessage("MAIN_INC_BLOCK_COMMON_COPY"))),
+				];
 			}
 			else
 			{
-				$arPanelParams["TOOLTIP"] = array(
+				$arPanelParams["TOOLTIP"] = [
 					'TITLE' => GetMessage('main_incl_file'),
-					'TEXT' => $path
-				);
+					'TEXT' => $path,
+				];
 
-				$arIcons[] = array(
-					'URL' => 'javascript:'.$APPLICATION->GetPopupLink(
-							array(
-								'URL' => $editor.$path_url.$arFunctionParams["BACK_URL"].$arFunctionParams["LANG"].$arFunctionParams["TEMPLATE"],
-								"PARAMS" => array(
+				$arIcons[] = [
+					'URL' => 'javascript:' . $APPLICATION->GetPopupLink(
+							[
+								'URL' => $editor . $path_url . $arFunctionParams["BACK_URL"] . $arFunctionParams["LANG"] . $arFunctionParams["TEMPLATE"],
+								"PARAMS" => [
 									'width' => 770,
 									'height' => 470,
-									'resize' => $resize
-								)
-							)
+									'resize' => $resize,
+								],
+							]
 						),
-					'ICON'=>'bx-context-toolbar-edit-icon',
-					'TITLE'=>str_replace("#MODE#", $arFunctionParams["MODE"], str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME")? GetMessage("MAIN__INC_BLOCK") : $arFunctionParams["NAME"]), GetMessage("MAIN_INC_ED"))),
-					'DEFAULT'=>!$bDefaultExists
-				);
+					'ICON' => 'bx-context-toolbar-edit-icon',
+					'TITLE' => str_replace("#MODE#", $arFunctionParams["MODE"], str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME") ? GetMessage("MAIN__INC_BLOCK") : $arFunctionParams["NAME"]), GetMessage("MAIN_INC_ED"))),
+					'DEFAULT' => !$bDefaultExists,
+				];
 
-				if($arFunctionParams["WORKFLOW"])
+				if ($arFunctionParams["WORKFLOW"])
 				{
-					$arIcons[] = array(
-						'URL'=>'/bitrix/admin/workflow_edit.php?'.$arFunctionParams["LANG"].'&fname='.urlencode($path).$arFunctionParams["TEMPLATE"].$arFunctionParams["BACK_URL"],
-						'ICON'=>'bx-context-toolbar-edit-icon',
-						'TITLE'=>str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME")? GetMessage("MAIN__INC_BLOCK"): $arFunctionParams["NAME"]), GetMessage("MAIN_INC_ED_WF"))
-					);
+					$arIcons[] = [
+						'URL' => '/bitrix/admin/workflow_edit.php?' . $arFunctionParams["LANG"] . '&fname=' . urlencode($path) . $arFunctionParams["TEMPLATE"] . $arFunctionParams["BACK_URL"],
+						'ICON' => 'bx-context-toolbar-edit-icon',
+						'TITLE' => str_replace("#BLOCK_TYPE#", (!is_set($arFunctionParams, "NAME") ? GetMessage("MAIN__INC_BLOCK") : $arFunctionParams["NAME"]), GetMessage("MAIN_INC_ED_WF")),
+					];
 				}
 			}
 
@@ -1411,29 +1554,35 @@ abstract class CAllMain
 		}
 
 		$res = null;
-		if(is_file($_SERVER["DOCUMENT_ROOT"].$path))
+		if (is_file($_SERVER["DOCUMENT_ROOT"] . $path))
 		{
-			if(is_array($arParams))
+			if (is_array($arParams))
+			{
 				extract($arParams, EXTR_SKIP);
+			}
 
-			$res = include($_SERVER["DOCUMENT_ROOT"].$path);
+			$res = include($_SERVER["DOCUMENT_ROOT"] . $path);
 		}
 
-		if(Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"]=="Y" && ($USER->CanDoOperation('edit_php') || Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"]=="Y"))
+		if (Main\Application::getInstance()->getKernelSession()["SESS_SHOW_INCLUDE_TIME_EXEC"] == "Y" && ($USER->CanDoOperation('edit_php') || Main\Application::getInstance()->getKernelSession()["SHOW_SQL_STAT"] == "Y"))
+		{
 			echo $debug->Output($rel_path, $path);
-		elseif(is_object($debug))
+		}
+		elseif (is_object($debug))
+		{
 			$debug->Stop($rel_path, $path);
+		}
 
-		if($bDrawIcons)
+		if ($bDrawIcons)
 		{
 			$comp_id = $path;
 			if ($sSrcFile)
 			{
-				$comp_id .= '|'.$sSrcFile;
+				$comp_id .= '|' . $sSrcFile;
 			}
 			if ($iSrcLine)
 			{
-				$comp_id .= '|'.$iSrcLine;
+				$comp_id .= '|' . $iSrcLine;
 			}
 
 			$arPanelParams['COMPONENT_ID'] = md5($comp_id);
@@ -1443,96 +1592,114 @@ abstract class CAllMain
 		return $res;
 	}
 
-	public function AddChainItem($title, $link="", $bUnQuote=true)
+	public function AddChainItem($title, $link = "", $bUnQuote = true)
 	{
-		if($bUnQuote)
-			$title = str_replace(array("&amp;", "&quot;", "&#039;", "&lt;", "&gt;"), array("&", "\"", "'", "<", ">"), $title);
-		$this->arAdditionalChain[] = array("TITLE"=>$title, "LINK"=>htmlspecialcharsbx($link));
+		if ($bUnQuote)
+		{
+			$title = str_replace(["&amp;", "&quot;", "&#039;", "&lt;", "&gt;"], ["&", "\"", "'", "<", ">"], $title);
+		}
+		$this->arAdditionalChain[] = ["TITLE" => $title, "LINK" => htmlspecialcharsbx($link)];
 	}
 
-	public function GetNavChain($path=false, $iNumFrom=0, $sNavChainPath=false, $bIncludeOnce=false, $bShowIcons = true)
+	public function GetNavChain($path = false, $iNumFrom = 0, $sNavChainPath = false, $bIncludeOnce = false, $bShowIcons = true)
 	{
-		if($this->GetProperty("NOT_SHOW_NAV_CHAIN") == "Y")
+		if ($this->GetProperty("NOT_SHOW_NAV_CHAIN") == "Y")
+		{
 			return "";
+		}
 
 		CMain::InitPathVars($site, $path);
 		$DOC_ROOT = CSite::GetSiteDocRoot($site);
 
-		if($path===false)
-			$path = $this->GetCurDir();
-
-		$arChain = array();
-		$strChainTemplate = $DOC_ROOT.SITE_TEMPLATE_PATH."/chain_template.php";
-		if(!file_exists($strChainTemplate))
+		if ($path === false)
 		{
-			if(($template = getLocalPath("templates/.default/chain_template.php", BX_PERSONAL_ROOT)) !== false)
+			$path = $this->GetCurDir();
+		}
+
+		$arChain = [];
+		$strChainTemplate = $DOC_ROOT . SITE_TEMPLATE_PATH . "/chain_template.php";
+		if (!file_exists($strChainTemplate))
+		{
+			if (($template = getLocalPath("templates/.default/chain_template.php", BX_PERSONAL_ROOT)) !== false)
 			{
-				$strChainTemplate = $DOC_ROOT.$template;
+				$strChainTemplate = $DOC_ROOT . $template;
 			}
 		}
 
 		$io = CBXVirtualIo::GetInstance();
 
-		while(true)//until the root
+		while (true)//until the root
 		{
 			$path = rtrim($path, "/");
 
-			$chain_file_name = $DOC_ROOT.$path."/.section.php";
-			if($io->FileExists($chain_file_name))
+			$chain_file_name = $DOC_ROOT . $path . "/.section.php";
+			if ($io->FileExists($chain_file_name))
 			{
 				$sChainTemplate = "";
 				$sSectionName = "";
 				include($io->GetPhysicalName($chain_file_name));
-				if($sSectionName <> '')
-					$arChain[] = array("TITLE"=>$sSectionName, "LINK"=>$path."/");
-				if($sChainTemplate <> '')
+				if ($sSectionName <> '')
+				{
+					$arChain[] = ["TITLE" => $sSectionName, "LINK" => $path . "/"];
+				}
+				if ($sChainTemplate <> '')
 				{
 					$strChainTemplate = $sChainTemplate;
 				}
 			}
 
-			if($path.'/' == SITE_DIR)
+			if ($path . '/' == SITE_DIR)
+			{
 				break;
+			}
 
-			if($path == '')
+			if ($path == '')
+			{
 				break;
+			}
 
 			//file or folder
 			$pos = bxstrrpos($path, "/");
-			if($pos===false)
+			if ($pos === false)
+			{
 				break;
+			}
 
 			//parent folder
 			$path = mb_substr($path, 0, $pos + 1);
 		}
 
-		if($sNavChainPath!==false)
-			$strChainTemplate = $DOC_ROOT.$sNavChainPath;
+		if ($sNavChainPath !== false)
+		{
+			$strChainTemplate = $DOC_ROOT . $sNavChainPath;
+		}
 
 		$arChain = array_reverse($arChain);
 		$arChain = array_merge($arChain, $this->arAdditionalChain);
-		if($iNumFrom>0)
+		if ($iNumFrom > 0)
+		{
 			$arChain = array_slice($arChain, $iNumFrom);
+		}
 
 		return $this->_mkchain($arChain, $strChainTemplate, $bIncludeOnce, $bShowIcons);
 	}
 
-	public function _mkchain($arChain, $strChainTemplate, $bIncludeOnce=false, $bShowIcons = true)
+	public function _mkchain($arChain, $strChainTemplate, $bIncludeOnce = false, $bShowIcons = true)
 	{
 		$strChain = $sChainProlog = $sChainEpilog = "";
-		if(file_exists($strChainTemplate))
+		if (file_exists($strChainTemplate))
 		{
 			$ITEM_COUNT = count($arChain);
 			$arCHAIN = $arChain;
 			$arCHAIN_LINK = &$arChain;
 			$arResult = &$arChain; // for component 2.0
-			if($bIncludeOnce)
+			if ($bIncludeOnce)
 			{
 				$strChain = include($strChainTemplate);
 			}
 			else
 			{
-				foreach($arChain as $i => $arChainItem)
+				foreach ($arChain as $i => $arChainItem)
 				{
 					$ITEM_INDEX = $i;
 					$TITLE = $arChainItem["TITLE"];
@@ -1540,34 +1707,38 @@ abstract class CAllMain
 					$sChainBody = "";
 					include($strChainTemplate);
 					$strChain .= $sChainBody;
-					if($i==0)
+					if ($i == 0)
+					{
 						$strChain = $sChainProlog . $strChain;
+					}
 				}
-				if(!empty($arChain))
+				if (!empty($arChain))
+				{
 					$strChain .= $sChainEpilog;
+				}
 			}
 		}
 
 		/** @global CMain $APPLICATION */
 		global $USER;
-		if($this->GetShowIncludeAreas() && $USER->CanDoOperation('edit_php') && $bShowIcons)
+		if ($this->GetShowIncludeAreas() && $USER->CanDoOperation('edit_php') && $bShowIcons)
 		{
 			$site = CSite::GetSiteByFullPath($strChainTemplate);
 			$DOC_ROOT = CSite::GetSiteDocRoot($site);
 
-			if(mb_strpos($strChainTemplate, $DOC_ROOT) === 0)
+			if (mb_strpos($strChainTemplate, $DOC_ROOT) === 0)
 			{
 				$path = mb_substr($strChainTemplate, mb_strlen($DOC_ROOT));
 
 				$templ_perm = $this->GetFileAccessPermission($path);
-				if((!defined("ADMIN_SECTION") || ADMIN_SECTION!==true) && $templ_perm>="W")
+				if ((!defined("ADMIN_SECTION") || ADMIN_SECTION !== true) && $templ_perm >= "W")
 				{
-					$arIcons = array();
-					$arIcons[] = array(
-						"URL"=>"/bitrix/admin/fileman_file_edit.php?lang=".LANGUAGE_ID."&site=".$site."&back_url=".urlencode($_SERVER["REQUEST_URI"])."&full_src=Y&path=".urlencode($path),
-						"ICON"=>"nav-template",
-						"TITLE"=>GetMessage("MAIN_INC_ED_NAV")
-					);
+					$arIcons = [];
+					$arIcons[] = [
+						"URL" => "/bitrix/admin/fileman_file_edit.php?lang=" . LANGUAGE_ID . "&site=" . $site . "&back_url=" . urlencode($_SERVER["REQUEST_URI"]) . "&full_src=Y&path=" . urlencode($path),
+						"ICON" => "nav-template",
+						"TITLE" => GetMessage("MAIN_INC_ED_NAV"),
+					];
 
 					$strChain = $this->IncludeString($strChain, $arIcons);
 				}
@@ -1576,19 +1747,19 @@ abstract class CAllMain
 		return $strChain;
 	}
 
-	public function ShowNavChain($path=false, $iNumFrom=0, $sNavChainPath=false)
+	public function ShowNavChain($path = false, $iNumFrom = 0, $sNavChainPath = false)
 	{
-		$this->AddBufferContent(array(&$this, "GetNavChain"), $path, $iNumFrom, $sNavChainPath);
+		$this->AddBufferContent([&$this, "GetNavChain"], $path, $iNumFrom, $sNavChainPath);
 	}
 
-	public function ShowNavChainEx($path=false, $iNumFrom=0, $sNavChainPath=false)
+	public function ShowNavChainEx($path = false, $iNumFrom = 0, $sNavChainPath = false)
 	{
-		$this->AddBufferContent(array(&$this, "GetNavChain"), $path, $iNumFrom, $sNavChainPath, true);
+		$this->AddBufferContent([&$this, "GetNavChain"], $path, $iNumFrom, $sNavChainPath, true);
 	}
 
 	/*****************************************************/
 
-	public function SetFileAccessPermission($path, $arPermissions, $bOverWrite=true)
+	public function SetFileAccessPermission($path, $arPermissions, $bOverWrite = true)
 	{
 		global $CACHE_MANAGER;
 
@@ -1596,74 +1767,96 @@ abstract class CAllMain
 		$DOC_ROOT = CSite::GetSiteDocRoot($site);
 
 		$path = rtrim($path, "/");
-		if($path == '')
+		if ($path == '')
+		{
 			$path = "/";
+		}
 
-		if(($p = bxstrrpos($path, "/")) !== false)
+		if (($p = bxstrrpos($path, "/")) !== false)
 		{
 			$path_file = mb_substr($path, $p + 1);
 			$path_dir = mb_substr($path, 0, $p);
 		}
 		else
+		{
 			return false;
+		}
 
-		if($path_file == "" && $path_dir == "")
+		if ($path_file == "" && $path_dir == "")
+		{
 			$path_file = "/";
+		}
 
-		$PERM = array();
+		$PERM = [];
 
 		$io = CBXVirtualIo::GetInstance();
-		if ($io->FileExists($DOC_ROOT.$path_dir."/.access.php"))
+		if ($io->FileExists($DOC_ROOT . $path_dir . "/.access.php"))
 		{
-			$fTmp = $io->GetFile($DOC_ROOT.$path_dir."/.access.php");
+			$fTmp = $io->GetFile($DOC_ROOT . $path_dir . "/.access.php");
 			//include replaced with eval in order to honor of ZendServer
-			eval("?>".$fTmp->GetContents());
+			eval("?>" . $fTmp->GetContents());
 		}
 
 		$FILE_PERM = $PERM[$path_file];
-		if(!is_array($FILE_PERM))
-			$FILE_PERM = array();
+		if (!is_array($FILE_PERM))
+		{
+			$FILE_PERM = [];
+		}
 
-		if(!$bOverWrite && !empty($FILE_PERM))
+		if (!$bOverWrite && !empty($FILE_PERM))
+		{
 			return true;
+		}
 
 		$bDiff = false;
 
-		$str="<?\n";
-		foreach($arPermissions as $group=>$perm)
+		$str = "<?\n";
+		foreach ($arPermissions as $group => $perm)
 		{
-			if($perm <> '')
-				$str .= "\$PERM[\"".EscapePHPString($path_file)."\"][\"".EscapePHPString($group)."\"]=\"".EscapePHPString($perm)."\";\n";
+			if ($perm <> '')
+			{
+				$str .= "\$PERM[\"" . EscapePHPString($path_file) . "\"][\"" . EscapePHPString($group) . "\"]=\"" . EscapePHPString($perm) . "\";\n";
+			}
 
-			if(!$bDiff)
+			if (!$bDiff)
 			{
 				//compatibility with group id
 				$curr_perm = $FILE_PERM[$group];
-				if(!isset($curr_perm) && preg_match('/^G[0-9]+$/', $group))
+				if (!isset($curr_perm) && preg_match('/^G[0-9]+$/', $group))
+				{
 					$curr_perm = $FILE_PERM[mb_substr($group, 1)];
+				}
 
-				if($curr_perm != $perm)
+				if ($curr_perm != $perm)
+				{
 					$bDiff = true;
+				}
 			}
 		}
 
-		foreach($PERM as $file=>$arPerm)
+		foreach ($PERM as $file => $arPerm)
 		{
-			if(strval($file) !== $path_file)
-				foreach($arPerm as $group=>$perm)
-					$str .= "\$PERM[\"".EscapePHPString($file)."\"][\"".EscapePHPString($group)."\"]=\"".EscapePHPString($perm)."\";\n";
+			if (strval($file) !== $path_file)
+			{
+				foreach ($arPerm as $group => $perm)
+				{
+					$str .= "\$PERM[\"" . EscapePHPString($file) . "\"][\"" . EscapePHPString($group) . "\"]=\"" . EscapePHPString($perm) . "\";\n";
+				}
+			}
 		}
 
-		if(!$bDiff)
+		if (!$bDiff)
 		{
-			foreach($FILE_PERM as $group=>$perm)
+			foreach ($FILE_PERM as $group => $perm)
 			{
 				//compatibility with group id
 				$new_perm = $arPermissions[$group];
-				if(!isset($new_perm) && preg_match('/^G[0-9]+$/', $group))
+				if (!isset($new_perm) && preg_match('/^G[0-9]+$/', $group))
+				{
 					$new_perm = $arPermissions[mb_substr($group, 1)];
+				}
 
-				if($new_perm != $perm)
+				if ($new_perm != $perm)
 				{
 					$bDiff = true;
 					break;
@@ -1671,25 +1864,29 @@ abstract class CAllMain
 			}
 		}
 
-		$str .= "?".">";
+		$str .= "?" . ">";
 
-		$this->SaveFileContent($DOC_ROOT.$path_dir."/.access.php", $str);
+		$this->SaveFileContent($DOC_ROOT . $path_dir . "/.access.php", $str);
 		$CACHE_MANAGER->CleanDir("menu");
 		CBitrixComponent::clearComponentCache("bitrix:menu");
-		unset($this->FILE_PERMISSION_CACHE[$site."|".$path_dir."/.access.php"]);
+		unset($this->FILE_PERMISSION_CACHE[$site . "|" . $path_dir . "/.access.php"]);
 
-		if($bDiff)
+		if ($bDiff)
 		{
-			foreach(GetModuleEvents("main", "OnChangePermissions", true) as $arEvent)
-				ExecuteModuleEventEx($arEvent, array(array($site, $path), $arPermissions, $FILE_PERM));
+			foreach (GetModuleEvents("main", "OnChangePermissions", true) as $arEvent)
+			{
+				ExecuteModuleEventEx($arEvent, [[$site, $path], $arPermissions, $FILE_PERM]);
+			}
 
-			if(COption::GetOptionString("main", "event_log_file_access", "N") === "Y")
-				CEventLog::Log("SECURITY", "FILE_PERMISSION_CHANGED", "main", "[".$site."] ".$path, print_r($FILE_PERM, true)." => ".print_r($arPermissions, true));
+			if (COption::GetOptionString("main", "event_log_file_access", "N") === "Y")
+			{
+				CEventLog::Log("SECURITY", "FILE_PERMISSION_CHANGED", "main", "[" . $site . "] " . $path, print_r($FILE_PERM, true) . " => " . print_r($arPermissions, true));
+			}
 		}
 		return true;
 	}
 
-	public function RemoveFileAccessPermission($path, $arGroups=false)
+	public function RemoveFileAccessPermission($path, $arGroups = false)
 	{
 		global $CACHE_MANAGER;
 
@@ -1697,62 +1894,78 @@ abstract class CAllMain
 		$DOC_ROOT = CSite::GetSiteDocRoot($site);
 
 		$path = rtrim($path, "/");
-		if($path == '')
+		if ($path == '')
+		{
 			$path = "/";
+		}
 
-		if(($p = bxstrrpos($path, "/")) !== false)
+		if (($p = bxstrrpos($path, "/")) !== false)
 		{
 			$path_file = mb_substr($path, $p + 1);
 			$path_dir = mb_substr($path, 0, $p);
 		}
 		else
+		{
 			return false;
+		}
 
-		$PERM = array();
+		$PERM = [];
 		$io = CBXVirtualIo::GetInstance();
-		if (!$io->FileExists($DOC_ROOT.$path_dir."/.access.php"))
+		if (!$io->FileExists($DOC_ROOT . $path_dir . "/.access.php"))
+		{
 			return true;
+		}
 
-		include($io->GetPhysicalName($DOC_ROOT.$path_dir."/.access.php"));
+		include($io->GetPhysicalName($DOC_ROOT . $path_dir . "/.access.php"));
 
 		$str = "<?\n";
-		foreach($PERM as $file=>$arPerm)
+		foreach ($PERM as $file => $arPerm)
 		{
-			if($file != $path_file || $arGroups !== false)
+			if ($file != $path_file || $arGroups !== false)
 			{
-				foreach($arPerm as $group=>$perm)
+				foreach ($arPerm as $group => $perm)
 				{
 					$bExists = false;
-					if(is_array($arGroups))
+					if (is_array($arGroups))
 					{
 						//compatibility with group id
-						if(in_array($group, $arGroups))
+						if (in_array($group, $arGroups))
+						{
 							$bExists = true;
-						elseif(preg_match('/^G[0-9]+$/', $group) && in_array(mb_substr($group, 1), $arGroups))
+						}
+						elseif (preg_match('/^G[0-9]+$/', $group) && in_array(mb_substr($group, 1), $arGroups))
+						{
 							$bExists = true;
-						elseif(preg_match('/^[0-9]+$/', $group) && in_array('G'.$group, $arGroups))
+						}
+						elseif (preg_match('/^[0-9]+$/', $group) && in_array('G' . $group, $arGroups))
+						{
 							$bExists = true;
+						}
 					}
-					if($file != $path_file || ($arGroups !== false && !$bExists))
-						$str .= "\$PERM[\"".EscapePHPString($file)."\"][\"".EscapePHPString($group)."\"]=\"".EscapePHPString($perm)."\";\n";
+					if ($file != $path_file || ($arGroups !== false && !$bExists))
+					{
+						$str .= "\$PERM[\"" . EscapePHPString($file) . "\"][\"" . EscapePHPString($group) . "\"]=\"" . EscapePHPString($perm) . "\";\n";
+					}
 				}
 			}
 		}
 
-		$str .= "?".">";
+		$str .= "?" . ">";
 
-		$this->SaveFileContent($DOC_ROOT.$path_dir."/.access.php", $str);
+		$this->SaveFileContent($DOC_ROOT . $path_dir . "/.access.php", $str);
 		$CACHE_MANAGER->CleanDir("menu");
 		CBitrixComponent::clearComponentCache("bitrix:menu");
-		unset($this->FILE_PERMISSION_CACHE[$site."|".$path_dir."/.access.php"]);
+		unset($this->FILE_PERMISSION_CACHE[$site . "|" . $path_dir . "/.access.php"]);
 
-		foreach(GetModuleEvents("main", "OnChangePermissions", true) as $arEvent)
-			ExecuteModuleEventEx($arEvent, array(array($site, $path), array()));
+		foreach (GetModuleEvents("main", "OnChangePermissions", true) as $arEvent)
+		{
+			ExecuteModuleEventEx($arEvent, [[$site, $path], []]);
+		}
 
 		return true;
 	}
 
-	public function CopyFileAccessPermission($path_from, $path_to, $bOverWrite=false)
+	public function CopyFileAccessPermission($path_from, $path_to, $bOverWrite = false)
 	{
 		CMain::InitPathVars($site_from, $path_from);
 		$DOC_ROOT_FROM = CSite::GetSiteDocRoot($site_from);
@@ -1760,102 +1973,131 @@ abstract class CAllMain
 		CMain::InitPathVars($site_to, $path_to);
 
 		//upper .access.php
-		if(($p = bxstrrpos($path_from, "/"))!==false)
+		if (($p = bxstrrpos($path_from, "/")) !== false)
 		{
 			$path_from_file = mb_substr($path_from, $p + 1);
 			$path_from_dir = mb_substr($path_from, 0, $p);
 		}
 		else
+		{
 			return false;
+		}
 
-		$PERM = array();
+		$PERM = [];
 
 		$io = CBXVirtualIo::GetInstance();
-		if (!$io->FileExists($DOC_ROOT_FROM.$path_from_dir."/.access.php"))
+		if (!$io->FileExists($DOC_ROOT_FROM . $path_from_dir . "/.access.php"))
+		{
 			return true;
+		}
 
-		include($io->GetPhysicalName($DOC_ROOT_FROM.$path_from_dir."/.access.php"));
+		include($io->GetPhysicalName($DOC_ROOT_FROM . $path_from_dir . "/.access.php"));
 
 		$FILE_PERM = $PERM[$path_from_file];
-		if(!empty($FILE_PERM))
-			return $this->SetFileAccessPermission(array($site_to, $path_to), $FILE_PERM, $bOverWrite);
+		if (!empty($FILE_PERM))
+		{
+			return $this->SetFileAccessPermission([$site_to, $path_to], $FILE_PERM, $bOverWrite);
+		}
 
 		return true;
 	}
 
-
-	public function GetFileAccessPermission($path, $groups=false, $task_mode=false) // task_mode - new access mode
+	public function GetFileAccessPermission($path, $groups = false, $task_mode = false) // task_mode - new access mode
 	{
 		global $USER;
 
-		if($groups === false)
+		if ($groups === false)
 		{
-			if(!is_object($USER))
-				$groups = array('G2');
+			if (!is_object($USER))
+			{
+				$groups = ['G2'];
+			}
 			else
+			{
 				$groups = $USER->GetAccessCodes();
+			}
 		}
-		elseif(is_array($groups) && !empty($groups))
+		elseif (is_array($groups) && !empty($groups))
 		{
 			//compatibility with user groups id
 			$bNumbers = preg_match('/^[0-9]+$/', $groups[0]);
-			if($bNumbers)
-				foreach($groups as $key=>$val)
-					$groups[$key] = "G".$val;
+			if ($bNumbers)
+			{
+				foreach ($groups as $key => $val)
+				{
+					$groups[$key] = "G" . $val;
+				}
+			}
 		}
 
 		CMain::InitPathVars($site, $path);
 		$DOC_ROOT = CSite::GetSiteDocRoot($site);
 
-		//windows files are case-insensitive
+		//Windows files are case-insensitive
 		$bWin = (strncasecmp(PHP_OS, "WIN", 3) == 0);
-		if($bWin)
-			$path = mb_strtolower($path);
-
-		if(trim($path, "/") != "")
+		if ($bWin)
 		{
-			$path = Rel2Abs("/", $path);
-			if($path == "")
-				return (!$task_mode? 'D' : array(CTask::GetIdByLetter('D', 'main', 'file')));
+			$path = mb_strtolower($path);
 		}
 
-		if(COption::GetOptionString("main", "controller_member", "N") == "Y" && COption::GetOptionString("main", "~controller_limited_admin", "N") == "Y")
-			$bAdminM = (is_object($USER)? $USER->IsAdmin() : false);
+		if (trim($path, "/") != "")
+		{
+			$path = Rel2Abs("/", $path);
+			if ($path == "")
+			{
+				return (!$task_mode ? 'D' : [CTask::GetIdByLetter('D', 'main', 'file')]);
+			}
+		}
+
+		if (COption::GetOptionString("main", "controller_member", "N") == "Y" && COption::GetOptionString("main", "~controller_limited_admin", "N") == "Y")
+		{
+			$bAdminM = (is_object($USER) && $USER->IsAdmin());
+		}
 		else
+		{
 			$bAdminM = in_array("G1", $groups);
+		}
 
-		if($bAdminM)
-			return (!$task_mode? 'X' : array(CTask::GetIdByLetter('X', 'main', 'file')));
+		if ($bAdminM)
+		{
+			return (!$task_mode ? 'X' : [CTask::GetIdByLetter('X', 'main', 'file')]);
+		}
 
-		if(mb_substr($path, -12) == "/.access.php")
-			return (!$task_mode? 'D' : array(CTask::GetIdByLetter('D', 'main', 'file')));
+		if (mb_substr($path, -12) == "/.access.php")
+		{
+			return (!$task_mode ? 'D' : [CTask::GetIdByLetter('D', 'main', 'file')]);
+		}
 
-		if(mb_substr($path, -10) == "/.htaccess")
-			return (!$task_mode? 'D' : array(CTask::GetIdByLetter('D', 'main', 'file')));
+		if (mb_substr($path, -10) == "/.htaccess")
+		{
+			return (!$task_mode ? 'D' : [CTask::GetIdByLetter('D', 'main', 'file')]);
+		}
 
 		$max_perm = "D";
-		$arGroupTask = array();
+		$arGroupTask = [];
 
 		$io = CBXVirtualIo::GetInstance();
 
 		//in the group list * === "any group"
 		$groups[] = "*";
-		while(true)//till the root
+		while (true)//till the root
 		{
 			$path = rtrim($path, "\0");
 			$path = rtrim($path, "/");
 
-			if($path == '')
+			if ($path == '')
 			{
-				$access_file_name="/.access.php";
+				$access_file_name = "/.access.php";
 				$Dir = "/";
 			}
 			else
 			{
 				//file or folder
 				$pos = bxstrrpos($path, "/");
-				if($pos === false)
+				if ($pos === false)
+				{
 					break;
+				}
 				$Dir = mb_substr($path, $pos + 1);
 
 				//security fix: under Windows "my." == "my"
@@ -1864,288 +2106,174 @@ abstract class CAllMain
 				//parent folder
 				$path = mb_substr($path, 0, $pos + 1);
 
-				$access_file_name=$path.".access.php";
+				$access_file_name = $path . ".access.php";
 			}
 
-			if(array_key_exists($site."|".$access_file_name, $this->FILE_PERMISSION_CACHE))
+			if (array_key_exists($site . "|" . $access_file_name, $this->FILE_PERMISSION_CACHE))
 			{
-				$PERM = $this->FILE_PERMISSION_CACHE[$site."|".$access_file_name];
+				$PERM = $this->FILE_PERMISSION_CACHE[$site . "|" . $access_file_name];
 			}
 			else
 			{
-				$PERM = array();
+				$PERM = [];
 
 				//file with rights array
-				if ($io->FileExists($DOC_ROOT.$access_file_name))
-					include($io->GetPhysicalName($DOC_ROOT.$access_file_name));
-
-				//windows files are case-insensitive
-				if($bWin && !empty($PERM))
+				if ($io->FileExists($DOC_ROOT . $access_file_name))
 				{
-					$PERM_TMP = array();
-					foreach($PERM as $key => $val)
+					include($io->GetPhysicalName($DOC_ROOT . $access_file_name));
+				}
+
+				//Windows files are case-insensitive
+				if ($bWin && !empty($PERM))
+				{
+					$PERM_TMP = [];
+					foreach ($PERM as $key => $val)
+					{
 						$PERM_TMP[mb_strtolower($key)] = $val;
+					}
 					$PERM = $PERM_TMP;
 				}
 
-				$this->FILE_PERMISSION_CACHE[$site."|".$access_file_name] = $PERM;
+				$this->FILE_PERMISSION_CACHE[$site . "|" . $access_file_name] = $PERM;
 			}
 
 			//check wheather the rights are assigned to this file\folder for these groups
-			if(isset($PERM[$Dir]) && is_array($PERM[$Dir]))
-			{
-				$dir_perm = $PERM[$Dir];
-				foreach($groups as $key => $group_id)
-				{
-					if(isset($dir_perm[$group_id]))
-						$perm = $dir_perm[$group_id];
-					elseif(preg_match('/^G([0-9]+)$/', $group_id, $match)) //compatibility with group id
-					{
-						if(isset($dir_perm[$match[1]]))
-							$perm = $dir_perm[$match[1]];
-						else
-							continue;
-					}
-					else
-						continue;
-
-					if ($task_mode)
-					{
-						if(mb_substr($perm, 0, 2) == 'T_')
-							$tid = intval(mb_substr($perm, 2));
-						elseif(($tid = CTask::GetIdByLetter($perm, 'main', 'file')) === false)
-							continue;
-
-						$arGroupTask[$group_id] = $tid;
-					}
-					else
-					{
-						if(mb_substr($perm, 0, 2) == 'T_')
-						{
-							$tid = intval(mb_substr($perm, 2));
-							$perm = CTask::GetLetter($tid);
-							if($perm == '')
-								$perm = 'D';
-						}
-
-						if($max_perm == "" || $perm > $max_perm)
-						{
-							$max_perm = $perm;
-							if($perm == "W")
-								break 2;
-						}
-					}
-
-					if($group_id == "*")
-						break 2;
-
-					//delete the groip from the list, we have rights alredy for it
-					unset($groups[$key]);
-
-					if(count($groups) == 1 && in_array("*", $groups))
-						break 2;
-				}
-
-				if(count($groups)<=1)
-					break;
-			}
-
-			if($path == '')
-				break;
-		}
-
-		if($task_mode)
-		{
-			$arTasks = array_unique(array_values($arGroupTask));
-			if(empty($arTasks))
-				return array(CTask::GetIdByLetter('D', 'main', 'file'));
-			sort($arTasks);
-			return $arTasks;
-		}
-		else
-			return $max_perm;
-	}
-
-	public function GetFileAccessPermissionByUser($intUserID, $path, $groups=false, $task_mode=false) // task_mode - new access mode
-	{
-		$intUserIDTmp = intval($intUserID);
-		if ($intUserIDTmp.'|' != $intUserID.'|')
-			return (!$task_mode? 'D' : array(CTask::GetIdByLetter('D', 'main', 'file')));
-		$intUserID = $intUserIDTmp;
-
-		if ($groups === false)
-		{
-			$groups = CUser::GetUserGroup($intUserID);
-			foreach ($groups as $key=>$val)
-				$groups[$key] = "G".$val;
-		}
-		elseif (is_array($groups) && !empty($groups))
-		{
-			$bNumbers = preg_match('/^[0-9]+$/', $groups[0]);
-			if($bNumbers)
-				foreach($groups as $key=>$val)
-					$groups[$key] = "G".$val;
-		}
-
-		CMain::InitPathVars($site, $path);
-		$DOC_ROOT = CSite::GetSiteDocRoot($site);
-
-		$bWin = (strncasecmp(PHP_OS, "WIN", 3) == 0);
-		if ($bWin)
-			$path = mb_strtolower($path);
-
-		if (trim($path, "/") != "")
-		{
-			$path = Rel2Abs("/", $path);
-			if($path == "")
-				return (!$task_mode? 'D' : array(CTask::GetIdByLetter('D', 'main', 'file')));
-		}
-
-		$bAdminM = in_array("G1", $groups);
-
-		if ($bAdminM)
-			return (!$task_mode? 'X' : array(CTask::GetIdByLetter('X', 'main', 'file')));
-
-		if (mb_substr($path, -12) == "/.access.php")
-			return (!$task_mode? 'D' : array(CTask::GetIdByLetter('D', 'main', 'file')));
-
-		if (mb_substr($path, -10) == "/.htaccess")
-			return (!$task_mode? 'D' : array(CTask::GetIdByLetter('D', 'main', 'file')));
-
-		$max_perm = "D";
-		$arGroupTask = array();
-
-		$io = CBXVirtualIo::GetInstance();
-
-		$groups[] = "*";
-		while (true)
-		{
-			$path = rtrim($path, "\0");
-			$path = rtrim($path, "/");
-
-			if ($path == '')
-			{
-				$access_file_name="/.access.php";
-				$Dir = "/";
-			}
-			else
-			{
-				$pos = mb_strrpos($path, "/");
-				if ($pos === false)
-					break;
-				$Dir = mb_substr($path, $pos + 1);
-
-				$Dir = TrimUnsafe($Dir);
-
-				$path = mb_substr($path, 0, $pos + 1);
-
-				$access_file_name=$path.".access.php";
-			}
-
-			if (array_key_exists($site."|".$access_file_name, $this->FILE_PERMISSION_CACHE))
-			{
-				$PERM = $this->FILE_PERMISSION_CACHE[$site."|".$access_file_name];
-			}
-			else
-			{
-				$PERM = array();
-
-				if ($io->FileExists($DOC_ROOT.$access_file_name))
-					include($io->GetPhysicalName($DOC_ROOT.$access_file_name));
-
-				if ($bWin && !empty($PERM))
-				{
-					$PERM_TMP = array();
-					foreach($PERM as $key => $val)
-						$PERM_TMP[mb_strtolower($key)] = $val;
-					$PERM = $PERM_TMP;
-				}
-
-				$this->FILE_PERMISSION_CACHE[$site."|".$access_file_name] = $PERM;
-			}
-
-			if ($PERM[$Dir] && is_array($PERM[$Dir]))
+			if (isset($PERM[$Dir]) && is_array($PERM[$Dir]))
 			{
 				$dir_perm = $PERM[$Dir];
 				foreach ($groups as $key => $group_id)
 				{
-					if(isset($dir_perm[$group_id]))
+					if (isset($dir_perm[$group_id]))
+					{
 						$perm = $dir_perm[$group_id];
-					elseif(preg_match('/^G[0-9]+$/', $group_id)) //compatibility with group id
-						$perm = $dir_perm[mb_substr($group_id, 1)];
+					}
+					elseif (preg_match('/^G([0-9]+)$/', $group_id, $match)) //compatibility with group id
+					{
+						if (isset($dir_perm[$match[1]]))
+						{
+							$perm = $dir_perm[$match[1]];
+						}
+						else
+						{
+							continue;
+						}
+					}
 					else
+					{
 						continue;
+					}
 
 					if ($task_mode)
 					{
-						if(mb_substr($perm, 0, 2) == 'T_')
+						if (mb_substr($perm, 0, 2) == 'T_')
+						{
 							$tid = intval(mb_substr($perm, 2));
-						elseif(($tid = CTask::GetIdByLetter($perm, 'main', 'file')) === false)
+						}
+						elseif (($tid = CTask::GetIdByLetter($perm, 'main', 'file')) === false)
+						{
 							continue;
+						}
 
 						$arGroupTask[$group_id] = $tid;
 					}
 					else
 					{
-						if(mb_substr($perm, 0, 2) == 'T_')
+						if (mb_substr($perm, 0, 2) == 'T_')
 						{
 							$tid = intval(mb_substr($perm, 2));
 							$perm = CTask::GetLetter($tid);
-							if($perm == '')
+							if ($perm == '')
+							{
 								$perm = 'D';
+							}
 						}
 
 						if ($max_perm == "" || $perm > $max_perm)
 						{
 							$max_perm = $perm;
-							if($perm == "W")
+							if ($perm == "W")
+							{
 								break 2;
+							}
 						}
 					}
 
-					if($group_id == "*")
+					if ($group_id == "*")
+					{
 						break 2;
+					}
 
-					unset ($groups[$key]);
+					// delete the group from the list, we have rights already for it
+					unset($groups[$key]);
 
 					if (count($groups) == 1 && in_array("*", $groups))
+					{
 						break 2;
+					}
 				}
 
-				if (count($groups)<=1)
+				if (count($groups) <= 1)
+				{
 					break;
+				}
 			}
 
-			if($path == '')
+			if ($path == '')
+			{
 				break;
+			}
 		}
 
 		if ($task_mode)
 		{
 			$arTasks = array_unique(array_values($arGroupTask));
-			if(empty($arTasks))
-				return array(CTask::GetIdByLetter('D', 'main', 'file'));
+			if (empty($arTasks))
+			{
+				return [CTask::GetIdByLetter('D', 'main', 'file')];
+			}
 			sort($arTasks);
 			return $arTasks;
 		}
 		else
+		{
 			return $max_perm;
+		}
 	}
-	/***********************************************/
+
+	/**
+	 * @deprecated Not used, will be removed.
+	 */
+	public function GetFileAccessPermissionByUser($userID, $path, $groups = false, $task_mode = false)
+	{
+		$intUserID = intval($userID);
+		if ($intUserID . '|' != $userID . '|')
+		{
+			return (!$task_mode ? 'D' : [CTask::GetIdByLetter('D', 'main', 'file')]);
+		}
+
+		if ($groups === false)
+		{
+			$groups = CUser::GetUserGroup($intUserID);
+		}
+
+		return $this->GetFileAccessPermission($path, $groups, $task_mode);
+	}
 
 	public function SaveFileContent($abs_path, $strContent)
 	{
 		$strContent = str_replace("\r\n", "\n", $strContent);
 
-		$file = array();
+		$file = [];
 		$this->ResetException();
 
-		foreach(GetModuleEvents("main", "OnBeforeChangeFile", true) as $arEvent)
+		foreach (GetModuleEvents("main", "OnBeforeChangeFile", true) as $arEvent)
 		{
-			if(ExecuteModuleEventEx($arEvent, array($abs_path, &$strContent)) == false)
+			if (!ExecuteModuleEventEx($arEvent, [$abs_path, &$strContent]))
 			{
-				if(!$this->GetException())
-					$this->ThrowException(GetMessage("main_save_file_handler_error", array("#HANDLER#"=>$arEvent["TO_NAME"])));
+				if (!$this->GetException())
+				{
+					$this->ThrowException(GetMessage("main_save_file_handler_error", ["#HANDLER#" => $arEvent["TO_NAME"]]));
+				}
 				return false;
 			}
 		}
@@ -2155,11 +2283,13 @@ abstract class CAllMain
 
 		$io->CreateDirectory($fileIo->GetPath());
 
-		if($fileIo->IsExists())
+		if ($fileIo->IsExists())
 		{
 			$file["exists"] = true;
 			if (!$fileIo->IsWritable())
+			{
 				$fileIo->MarkWritable();
+			}
 			$file["size"] = $fileIo->GetFileSize();
 		}
 
@@ -2167,7 +2297,7 @@ abstract class CAllMain
 		if (COption::GetOptionInt("main", "disk_space") > 0)
 		{
 			$quota = new CDiskQuota();
-			if (false === $quota->checkDiskQuota(array("FILE_SIZE" => intval(mb_strlen($strContent) - intVal($file["size"])))))
+			if (false === $quota->checkDiskQuota(["FILE_SIZE" => mb_strlen($strContent) - intval($file["size"])]))
 			{
 				$this->ThrowException($quota->LAST_ERROR, "BAD_QUOTA");
 				return false;
@@ -2181,36 +2311,42 @@ abstract class CAllMain
 		else
 		{
 			if ($file["exists"])
+			{
 				$this->ThrowException(GetMessage("MAIN_FILE_NOT_CREATE"), "FILE_NOT_CREATE");
+			}
 			else
+			{
 				$this->ThrowException(GetMessage("MAIN_FILE_NOT_OPENED"), "FILE_NOT_OPEN");
+			}
 			return false;
 		}
 
-		bx_accelerator_reset();
+		Application::resetAccelerator($abs_path);
 
 		$site = CSite::GetSiteByFullPath($abs_path);
 		$DOC_ROOT = CSite::GetSiteDocRoot($site);
-		if(mb_strtoupper(mb_substr(PHP_OS, 0, 3)) === 'WIN')
+		if (mb_strtoupper(mb_substr(PHP_OS, 0, 3)) === 'WIN')
 		{
 			//Fix for name case under Windows
 			$abs_path = mb_strtolower($abs_path);
 			$DOC_ROOT = mb_strtolower($DOC_ROOT);
 		}
 
-		if(mb_strpos($abs_path, $DOC_ROOT) === 0 && $site!==false)
+		if (mb_strpos($abs_path, $DOC_ROOT) === 0 && $site !== false)
 		{
 			$DOC_ROOT = rtrim($DOC_ROOT, "/\\");
-			$path = "/".ltrim(mb_substr($abs_path, mb_strlen($DOC_ROOT)), "/\\");
+			$path = "/" . ltrim(mb_substr($abs_path, mb_strlen($DOC_ROOT)), "/\\");
 
-			foreach(GetModuleEvents("main", "OnChangeFile", true) as $arEvent)
-				ExecuteModuleEventEx($arEvent, array($path, $site));
+			foreach (GetModuleEvents("main", "OnChangeFile", true) as $arEvent)
+			{
+				ExecuteModuleEventEx($arEvent, [$path, $site]);
+			}
 		}
 		/****************************** QUOTA ******************************/
 		if (COption::GetOptionInt("main", "disk_space") > 0)
 		{
 			$fs = $fileIo->GetFileSize();
-			CDiskQuota::updateDiskQuota("files", intval($fs - intVal($file["size"])), "update");
+			CDiskQuota::updateDiskQuota("files", $fs - intval($file["size"]), "update");
 		}
 		/****************************** QUOTA ******************************/
 		return true;
@@ -2222,11 +2358,15 @@ abstract class CAllMain
 
 		$io = CBXVirtualIo::GetInstance();
 
-		if(!$io->FileExists($path))
+		if (!$io->FileExists($path))
+		{
 			return false;
+		}
 		$f = $io->GetFile($path);
-		if($f->GetFileSize()<=0)
+		if ($f->GetFileSize() <= 0)
+		{
 			return "";
+		}
 		$contents = $f->GetContents();
 		return $contents;
 	}
@@ -2249,7 +2389,7 @@ abstract class CAllMain
 
 	public static function _ReplaceNonLatin($str)
 	{
-		return preg_replace("/[^a-zA-Z0-9_:\\.!\$\\-;@\\^\\~]/is", "", $str);
+		return preg_replace("/[^a-zA-Z0-9_:.!\$\\-;@^~]/i", "", $str);
 	}
 
 	public function GetLangSwitcherArray()
@@ -2261,45 +2401,53 @@ abstract class CAllMain
 	{
 		$cur_dir = $this->GetCurDir();
 		$cur_page = $this->GetCurPage();
-		$bAdmin = (mb_substr($cur_dir, 0, mb_strlen(BX_ROOT."/admin/")) == BX_ROOT."/admin/");
+		$bAdmin = (mb_substr($cur_dir, 0, mb_strlen(BX_ROOT . "/admin/")) == BX_ROOT . "/admin/");
 
 		$path_without_lang = $path_without_lang_tmp = "";
 
-		$db_res = CSite::GetList('', '', array("ACTIVE"=>"Y","ID"=>LANG));
-		if(($ar = $db_res->Fetch()) && mb_strpos($cur_page, $ar["DIR"]) === 0)
+		$db_res = CSite::GetList('', '', ["ACTIVE" => "Y", "ID" => LANG]);
+		if (($ar = $db_res->Fetch()) && mb_strpos($cur_page, $ar["DIR"]) === 0)
 		{
 			$path_without_lang = mb_substr($cur_page, mb_strlen($ar["DIR"]) - 1);
-			$path_without_lang = LTrim($path_without_lang, "/");
-			$path_without_lang_tmp = RTrim($path_without_lang, "/");
+			$path_without_lang = ltrim($path_without_lang, "/");
+			$path_without_lang_tmp = rtrim($path_without_lang, "/");
 		}
 
-		$result = array();
-		$db_res = CSite::GetList("SORT", "ASC", array("ACTIVE"=>"Y"));
-		while($ar = $db_res->Fetch())
+		$result = [];
+		$db_res = CSite::GetList("SORT", "ASC", ["ACTIVE" => "Y"]);
+		while ($ar = $db_res->Fetch())
 		{
 			$ar["NAME"] = htmlspecialcharsbx($ar["NAME"]);
-			$ar["SELECTED"] = ($ar["LID"]==LANG);
+			$ar["SELECTED"] = ($ar["LID"] == LANG);
 
-			if($bAdmin)
+			if ($bAdmin)
 			{
 				global $QUERY_STRING;
 				$p = rtrim(str_replace("&#", "#", preg_replace("/lang=[^&#]*&*/", "", $QUERY_STRING)), "&");
-				$ar["PATH"] = $this->GetCurPage()."?lang=".$ar["LID"].($p <> ''? '&'.$p : '');
+				$ar["PATH"] = $this->GetCurPage() . "?lang=" . $ar["LID"] . ($p <> '' ? '&' . $p : '');
 			}
 			else
 			{
 				$ar["PATH"] = "";
 
-				if(mb_strlen($path_without_lang) > 1 && file_exists($ar["ABS_DOC_ROOT"]."/".$ar["DIR"]."/".$path_without_lang_tmp))
-					$ar["PATH"] = $ar["DIR"].$path_without_lang;
+				if (mb_strlen($path_without_lang) > 1 && file_exists($ar["ABS_DOC_ROOT"] . "/" . $ar["DIR"] . "/" . $path_without_lang_tmp))
+				{
+					$ar["PATH"] = $ar["DIR"] . $path_without_lang;
+				}
 
-				if($ar["PATH"] == '')
+				if ($ar["PATH"] == '')
+				{
 					$ar["PATH"] = $ar["DIR"];
+				}
 
-				if($ar["ABS_DOC_ROOT"]!==$_SERVER["DOCUMENT_ROOT"])
-					$ar["FULL_URL"] = (CMain::IsHTTPS() ? "https://" : "http://").$ar["SERVER_NAME"].$ar["PATH"];
+				if ($ar["ABS_DOC_ROOT"] !== $_SERVER["DOCUMENT_ROOT"])
+				{
+					$ar["FULL_URL"] = (CMain::IsHTTPS() ? "https://" : "http://") . $ar["SERVER_NAME"] . $ar["PATH"];
+				}
 				else
+				{
 					$ar["FULL_URL"] = $ar["PATH"];
+				}
 			}
 
 			$result[] = $ar;
@@ -2317,55 +2465,65 @@ abstract class CAllMain
 	$use_default_role - "Y" - use default role
 	$max_role_for_super_admin - "Y" - for group ID=1 return max rights
 	*/
-	public static function GetUserRoles($module_id, $arGroups=false, $use_default_role="Y", $max_role_for_super_admin="Y", $site_id=false)
+	public static function GetUserRoles($module_id, $arGroups = false, $use_default_role = "Y", $max_role_for_super_admin = "Y", $site_id = false)
 	{
 		global $DB, $USER;
-		static $MODULE_ROLES = array();
+		static $MODULE_ROLES = [];
 
-		$arRoles = array();
+		$arRoles = [];
 		$min_role = "D";
 		$max_role = "W";
-		if($arGroups===false)
+		if ($arGroups === false)
 		{
-			if(is_object($USER))
+			if (is_object($USER))
+			{
 				$arGroups = $USER->GetUserGroupArray();
-			if(!is_array($arGroups))
+			}
+			if (!is_array($arGroups))
+			{
 				$arGroups[] = 2;
+			}
 		}
-		$key = $use_default_role."_".$max_role_for_super_admin;
+		$key = $use_default_role . "_" . $max_role_for_super_admin;
 		$groups = '';
-		if(is_array($arGroups) && !empty($arGroups))
+		if (is_array($arGroups) && !empty($arGroups))
 		{
-			foreach($arGroups as $grp)
-				$groups .= ($groups<>''? ',':'').intval($grp);
-			$key .= "_".$groups;
+			foreach ($arGroups as $grp)
+			{
+				$groups .= ($groups <> '' ? ',' : '') . intval($grp);
+			}
+			$key .= "_" . $groups;
 		}
 
-		$cache_site_key = ($site_id ? $site_id : "COMMON");
+		$cache_site_key = ($site_id ?: "COMMON");
 
-		if(isset($MODULE_ROLES[$module_id][$cache_site_key][$key]))
+		if (isset($MODULE_ROLES[$module_id][$cache_site_key][$key]))
 		{
 			$arRoles = $MODULE_ROLES[$module_id][$cache_site_key][$key];
 		}
 		else
 		{
-			if(is_array($arGroups) && !empty($arGroups))
+			if (is_array($arGroups) && !empty($arGroups))
 			{
-				if(in_array(1,$arGroups) && $max_role_for_super_admin=="Y")
+				if (in_array(1, $arGroups) && $max_role_for_super_admin == "Y")
+				{
 					$arRoles[] = $max_role;
+				}
 
 				$strSql =
-					"SELECT MG.G_ACCESS FROM b_group G ".
-					"	LEFT JOIN b_module_group MG ON (G.ID = MG.GROUP_ID ".
-					"		AND MG.MODULE_ID = '".$DB->ForSql($module_id,50)."') ".
-					"		AND MG.SITE_ID ".($site_id ? "= '".$DB->ForSql($site_id)."'" : "IS NULL")." ".
-					"WHERE G.ID in (".$groups.") AND G.ACTIVE = 'Y'";
+					"SELECT MG.G_ACCESS FROM b_group G " .
+					"	LEFT JOIN b_module_group MG ON (G.ID = MG.GROUP_ID " .
+					"		AND MG.MODULE_ID = '" . $DB->ForSql($module_id, 50) . "') " .
+					"		AND MG.SITE_ID " . ($site_id ? "= '" . $DB->ForSql($site_id) . "'" : "IS NULL") . " " .
+					"WHERE G.ID in (" . $groups . ") AND G.ACTIVE = 'Y'";
 
 				$t = $DB->Query($strSql);
 
 				$default_role = $min_role;
-				if($use_default_role=="Y")
+				if ($use_default_role == "Y")
+				{
 					$default_role = COption::GetOptionString($module_id, "GROUP_DEFAULT_RIGHT", $min_role);
+				}
 
 				while ($tr = $t->Fetch())
 				{
@@ -2375,11 +2533,12 @@ abstract class CAllMain
 					}
 					else
 					{
-						if($use_default_role=="Y")
+						if ($use_default_role == "Y")
+						{
 							$arRoles[] = $default_role;
+						}
 					}
 				}
-
 			}
 			//if($use_default_role=="Y")
 			//{
@@ -2501,7 +2660,7 @@ abstract class CAllMain
 		return $arRes;
 	}
 
-	public static function GetGroupRightList($arFilter, $site_id=false)
+	public static function GetGroupRightList($arFilter, $site_id = false)
 	{
 		static $fields = ['MODULE_ID' => 1, 'GROUP_ID' => 1, 'G_ACCESS' => 1];
 
@@ -2527,39 +2686,45 @@ abstract class CAllMain
 		return $query->exec();
 	}
 
-	public static function GetGroupRight($module_id, $arGroups=false, $use_default_level="Y", $max_right_for_super_admin="Y", $site_id = false)
+	public static function GetGroupRight($module_id, $arGroups = false, $use_default_level = "Y", $max_right_for_super_admin = "Y", $site_id = false)
 	{
 		return CMain::GetUserRight($module_id, $arGroups, $use_default_level, $max_right_for_super_admin, $site_id);
 	}
 
-	public static function SetGroupRight($module_id, $group_id, $right, $site_id=false)
+	public static function SetGroupRight($module_id, $group_id, $right, $site_id = false)
 	{
 		global $DB;
 
 		$group_id = intval($group_id);
 
-		if(COption::GetOptionString("main", "event_log_module_access", "N") === "Y")
+		if (COption::GetOptionString("main", "event_log_module_access", "N") === "Y")
 		{
 			//get old value
 			$sOldRight = "";
-			$rsRight = $DB->Query("SELECT G_ACCESS FROM b_module_group WHERE MODULE_ID='".$DB->ForSql($module_id,50)."' AND GROUP_ID=".$group_id." AND SITE_ID ".($site_id ? "= '".$DB->ForSql($site_id)."'" : "IS NULL"));
-			if($arRight = $rsRight->Fetch())
+			$rsRight = $DB->Query("SELECT G_ACCESS FROM b_module_group WHERE MODULE_ID='" . $DB->ForSql($module_id, 50) . "' AND GROUP_ID=" . $group_id . " AND SITE_ID " . ($site_id ? "= '" . $DB->ForSql($site_id) . "'" : "IS NULL"));
+			if ($arRight = $rsRight->Fetch())
+			{
 				$sOldRight = $arRight["G_ACCESS"];
-			if($sOldRight <> $right)
-				CEventLog::Log("SECURITY", "MODULE_RIGHTS_CHANGED", "main", $group_id, $module_id.($site_id ? "/".$site_id : "").": (".$sOldRight.") => (".$right.")");
+			}
+			if ($sOldRight <> $right)
+			{
+				CEventLog::Log("SECURITY", "MODULE_RIGHTS_CHANGED", "main", $group_id, $module_id . ($site_id ? "/" . $site_id : "") . ": (" . $sOldRight . ") => (" . $right . ")");
+			}
 		}
 
-		$arFields = array(
-			"MODULE_ID"	=> "'".$DB->ForSql($module_id,50)."'",
-			"GROUP_ID"	=> $group_id,
-			"G_ACCESS"	=> "'".$DB->ForSql($right,255)."'"
-		);
+		$arFields = [
+			"MODULE_ID" => "'" . $DB->ForSql($module_id, 50) . "'",
+			"GROUP_ID" => $group_id,
+			"G_ACCESS" => "'" . $DB->ForSql($right, 255) . "'",
+		];
 
-		$rows = $DB->Update("b_module_group", $arFields, "WHERE MODULE_ID='".$DB->ForSql($module_id,50)."' AND GROUP_ID='".$group_id."' AND SITE_ID ".($site_id ? "= '".$DB->ForSql($site_id)."'" : "IS NULL"), $err_mess.__LINE__);
-		if(intval($rows)<=0)
+		$rows = $DB->Update("b_module_group", $arFields, "WHERE MODULE_ID='" . $DB->ForSql($module_id, 50) . "' AND GROUP_ID='" . $group_id . "' AND SITE_ID " . ($site_id ? "= '" . $DB->ForSql($site_id) . "'" : "IS NULL"));
+		if (intval($rows) <= 0)
 		{
 			if ($site_id)
-				$arFields["SITE_ID"] = "'".$DB->ForSql($site_id,2)."'";
+			{
+				$arFields["SITE_ID"] = "'" . $DB->ForSql($site_id, 2) . "'";
+			}
 
 			$DB->Insert("b_module_group", $arFields);
 		}
@@ -2568,47 +2733,53 @@ abstract class CAllMain
 
 		foreach (GetModuleEvents("main", "OnAfterSetGroupRight", true) as $arEvent)
 		{
-			ExecuteModuleEventEx($arEvent, array($module_id, $group_id));
+			ExecuteModuleEventEx($arEvent, [$module_id, $group_id]);
 		}
 	}
 
-	public static function DelGroupRight($module_id='', $arGroups=array(), $site_id=false)
+	public static function DelGroupRight($module_id = '', $arGroups = [], $site_id = false)
 	{
 		global $DB;
 
 		$strSql = '';
 
 		$sGroups = '';
-		if(is_array($arGroups) && !empty($arGroups))
-			foreach($arGroups as $grp)
-				$sGroups .= ($sGroups <> ''? ',':'').intval($grp);
-
-		if($module_id <> '')
+		if (is_array($arGroups) && !empty($arGroups))
 		{
-			if($sGroups <> '')
+			foreach ($arGroups as $grp)
 			{
-				if(COption::GetOptionString("main", "event_log_module_access", "N") === "Y")
+				$sGroups .= ($sGroups <> '' ? ',' : '') . intval($grp);
+			}
+		}
+
+		if ($module_id <> '')
+		{
+			if ($sGroups <> '')
+			{
+				if (COption::GetOptionString("main", "event_log_module_access", "N") === "Y")
 				{
 					//get old value
-					$rsRight = $DB->Query("SELECT GROUP_ID, G_ACCESS FROM b_module_group WHERE MODULE_ID='".$DB->ForSql($module_id,50)."' AND GROUP_ID IN (".$sGroups.") AND SITE_ID ".($site_id ? "= '".$DB->ForSql($site_id)."'" : "IS NULL"));
-					while($arRight = $rsRight->Fetch())
-						CEventLog::Log("SECURITY", "MODULE_RIGHTS_CHANGED", "main", $arRight["GROUP_ID"], $module_id.($site_id ? "/".$site_id : "").": (".$arRight["G_ACCESS"].") => ()");
+					$rsRight = $DB->Query("SELECT GROUP_ID, G_ACCESS FROM b_module_group WHERE MODULE_ID='" . $DB->ForSql($module_id, 50) . "' AND GROUP_ID IN (" . $sGroups . ") AND SITE_ID " . ($site_id ? "= '" . $DB->ForSql($site_id) . "'" : "IS NULL"));
+					while ($arRight = $rsRight->Fetch())
+					{
+						CEventLog::Log("SECURITY", "MODULE_RIGHTS_CHANGED", "main", $arRight["GROUP_ID"], $module_id . ($site_id ? "/" . $site_id : "") . ": (" . $arRight["G_ACCESS"] . ") => ()");
+					}
 				}
-				$strSql = "DELETE FROM b_module_group WHERE MODULE_ID='".$DB->ForSql($module_id,50)."' and GROUP_ID in (".$sGroups.") AND SITE_ID ".($site_id ? "= '".$DB->ForSql($site_id)."'" : "IS NULL");
+				$strSql = "DELETE FROM b_module_group WHERE MODULE_ID='" . $DB->ForSql($module_id, 50) . "' and GROUP_ID in (" . $sGroups . ") AND SITE_ID " . ($site_id ? "= '" . $DB->ForSql($site_id) . "'" : "IS NULL");
 			}
 			else
 			{
 				//on delete module
-				$strSql = "DELETE FROM b_module_group WHERE MODULE_ID='".$DB->ForSql($module_id,50)."' AND SITE_ID ".($site_id ? "= '".$DB->ForSql($site_id)."'" : "IS NULL");
+				$strSql = "DELETE FROM b_module_group WHERE MODULE_ID='" . $DB->ForSql($module_id, 50) . "' AND SITE_ID " . ($site_id ? "= '" . $DB->ForSql($site_id) . "'" : "IS NULL");
 			}
 		}
-		elseif($sGroups <> '')
+		elseif ($sGroups <> '')
 		{
 			//on delete user group
-			$strSql = "DELETE FROM b_module_group WHERE GROUP_ID in (".$sGroups.") AND SITE_ID ".($site_id ? "= '".$DB->ForSql($site_id)."'" : "IS NULL");
+			$strSql = "DELETE FROM b_module_group WHERE GROUP_ID in (" . $sGroups . ") AND SITE_ID " . ($site_id ? "= '" . $DB->ForSql($site_id) . "'" : "IS NULL");
 		}
 
-		if($strSql <> '')
+		if ($strSql <> '')
 		{
 			$DB->Query($strSql);
 
@@ -2616,41 +2787,41 @@ abstract class CAllMain
 
 			foreach (GetModuleEvents("main", "OnAfterDelGroupRight", true) as $arEvent)
 			{
-				ExecuteModuleEventEx($arEvent, array($module_id, $arGroups));
+				ExecuteModuleEventEx($arEvent, [$module_id, $arGroups]);
 			}
 		}
 	}
 
 	public static function GetMainRightList()
 	{
-		$arr = array(
-			"reference_id" => array(
+		$arr = [
+			"reference_id" => [
 				"D",
 				"P",
 				"R",
 				"T",
 				"V",
-				"W"),
-			"reference" => array(
-				"[D] ".GetMessage("OPTION_DENIED"),
-				"[P] ".GetMessage("OPTION_PROFILE"),
-				"[R] ".GetMessage("OPTION_READ"),
-				"[T] ".GetMessage("OPTION_READ_PROFILE_WRITE"),
-				"[V] ".GetMessage("OPTION_READ_OTHER_PROFILES_WRITE"),
-				"[W] ".GetMessage("OPTION_WRITE"))
-		);
+				"W"],
+			"reference" => [
+				"[D] " . GetMessage("OPTION_DENIED"),
+				"[P] " . GetMessage("OPTION_PROFILE"),
+				"[R] " . GetMessage("OPTION_READ"),
+				"[T] " . GetMessage("OPTION_READ_PROFILE_WRITE"),
+				"[V] " . GetMessage("OPTION_READ_OTHER_PROFILES_WRITE"),
+				"[W] " . GetMessage("OPTION_WRITE")],
+		];
 		return $arr;
 	}
 
 	public static function GetDefaultRightList()
 	{
-		$arr = array(
-			"reference_id" => array("D","R","W"),
-			"reference" => array(
-				"[D] ".GetMessage("OPTION_DENIED"),
-				"[R] ".GetMessage("OPTION_READ"),
-				"[W] ".GetMessage("OPTION_WRITE"))
-		);
+		$arr = [
+			"reference_id" => ["D", "R", "W"],
+			"reference" => [
+				"[D] " . GetMessage("OPTION_DENIED"),
+				"[R] " . GetMessage("OPTION_READ"),
+				"[W] " . GetMessage("OPTION_WRITE")],
+		];
 		return $arr;
 	}
 
@@ -2660,19 +2831,21 @@ abstract class CAllMain
 	$name			: cookie name (without prefix)
 	$name_prefix	: name prefix (if not set get from options)
 	*/
-	public function get_cookie($name, $name_prefix=false)
+	public function get_cookie($name, $name_prefix = false)
 	{
-		if($name_prefix===false)
-			$name = COption::GetOptionString("main", "cookie_name", "BITRIX_SM")."_".$name;
+		if ($name_prefix === false)
+		{
+			$name = COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_" . $name;
+		}
 		else
-			$name = $name_prefix."_".$name;
+		{
+			$name = $name_prefix . "_" . $name;
+		}
 		return ($_COOKIE[$name] ?? "");
 	}
 
 	/**
 	 * Sets a cookie and spreads it through domains.
-	 *
-	 * @deprecated Use \Bitrix\Main\HttpResponse::addCookie().
 	 *
 	 * @param string $name Cookie name (without prefix)
 	 * @param string $value value
@@ -2683,22 +2856,24 @@ abstract class CAllMain
 	 * @param bool|int $spread to spread or not to spread
 	 * @param bool $name_prefix name prefix (if not set get from options)
 	 * @param bool $httpOnly
+	 * @deprecated Use \Bitrix\Main\HttpResponse::addCookie().
+	 *
 	 */
-	public function set_cookie($name, $value, $time=false, $folder="/", $domain=false, $secure=false, $spread=true, $name_prefix=false, $httpOnly=false)
+	public function set_cookie($name, $value, $time = false, $folder = "/", $domain = false, $secure = false, $spread = true, $name_prefix = false, $httpOnly = false)
 	{
-		if($time === false)
+		if ($time === false)
 		{
 			$time = null;
 		}
 
 		$cookie = new Main\Web\Cookie($name, $value, $time);
 
-		if($name_prefix !== false)
+		if ($name_prefix !== false)
 		{
-			$cookie->setName($name_prefix."_".$name);
+			$cookie->setName($name_prefix . "_" . $name);
 		}
 
-		if($domain !== false)
+		if ($domain !== false)
 		{
 			$cookie->setDomain($domain);
 		}
@@ -2706,11 +2881,11 @@ abstract class CAllMain
 		$cookie->setSecure($secure);
 		$cookie->setHttpOnly($httpOnly);
 
-		if($spread === "Y" || $spread === true)
+		if ($spread === "Y" || $spread === true)
 		{
 			$spread_mode = Main\Web\Cookie::SPREAD_DOMAIN | Main\Web\Cookie::SPREAD_SITES;
 		}
-		elseif($spread >= 1)
+		elseif ($spread >= 1)
 		{
 			$spread_mode = $spread;
 		}
@@ -2724,8 +2899,8 @@ abstract class CAllMain
 	}
 
 	/**
-	 * @deprecated Use \Bitrix\Main\Web\Cookie::getCookieDomain().
 	 * @return string
+	 * @deprecated Use \Bitrix\Main\Web\Cookie::getCookieDomain().
 	 */
 	public function GetCookieDomain()
 	{
@@ -2803,8 +2978,8 @@ abstract class CAllMain
 	 */
 	public function GetSpreadCookieUrls()
 	{
-		$res = array();
-		if(COption::GetOptionString("main", "ALLOW_SPREAD_COOKIE", "Y")=="Y")
+		$res = [];
+		if (COption::GetOptionString("main", "ALLOW_SPREAD_COOKIE", "Y") == "Y")
 		{
 			$response = Main\Context::getCurrent()->getResponse();
 			$request = Main\Context::getCurrent()->getRequest();
@@ -2813,9 +2988,9 @@ abstract class CAllMain
 			$localStorage = $application->getLocalSession('spreadCookies');
 			$cookies = $localStorage->getData();
 
-			foreach($cookies as $cookie)
+			foreach ($cookies as $cookie)
 			{
-				if($cookie instanceof Main\Web\Cookie)
+				if ($cookie instanceof Main\Web\Cookie)
 				{
 					$response->addCookie($cookie, false);
 				}
@@ -2824,68 +2999,78 @@ abstract class CAllMain
 
 			$cookies = $response->getCookies();
 
-			if(!empty($cookies))
+			if (!empty($cookies))
 			{
 				$params = "";
-				foreach($cookies as $cookie)
+				foreach ($cookies as $cookie)
 				{
-					if($cookie->getSpread() & Main\Web\Cookie::SPREAD_SITES)
+					if ($cookie->getSpread() & Main\Web\Cookie::SPREAD_SITES)
 					{
-						$params .= $cookie->getName().chr(1).
-							$cookie->getValue().chr(1).
-							$cookie->getExpires().chr(1).
-							$cookie->getPath().chr(1).
-							chr(1). //domain is empty
-							$cookie->getSecure().chr(1).
-							$cookie->getHttpOnly().chr(2);
+						$params .= $cookie->getName() . chr(1) .
+							$cookie->getValue() . chr(1) .
+							$cookie->getExpires() . chr(1) .
+							$cookie->getPath() . chr(1) .
+							chr(1) . //domain is empty
+							$cookie->getSecure() . chr(1) .
+							$cookie->getHttpOnly() . chr(2);
 					}
 				}
-				$salt = $_SERVER["REMOTE_ADDR"] . "|" . @filemtime($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/version.php") . "|" . $application->getLicense()->getKey();
-				$params = "s=".urlencode(base64_encode($params))."&k=".urlencode(md5($params.$salt));
+				$salt = $_SERVER["REMOTE_ADDR"] . "|" . @filemtime($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/version.php") . "|" . $application->getLicense()->getKey();
+				$params = "s=" . urlencode(base64_encode($params)) . "&k=" . urlencode(md5($params . $salt));
 
-				$arrDomain = array();
+				$arrDomain = [];
 				$arrDomain[] = $request->getHttpHost();
 
-				$rs = CSite::GetList('', '', array("ACTIVE" => "Y"));
-				while($ar = $rs->Fetch())
+				$rs = CSite::GetList('', '', ["ACTIVE" => "Y"]);
+				while ($ar = $rs->Fetch())
 				{
 					$arD = explode("\n", str_replace("\r", "\n", $ar["DOMAINS"]));
-					if(is_array($arD))
-						foreach($arD as $d)
-							if(trim($d) <> '')
+					if (is_array($arD))
+					{
+						foreach ($arD as $d)
+						{
+							if (trim($d) <> '')
+							{
 								$arrDomain[] = $d;
+							}
+						}
+					}
 				}
 
-				if(!empty($arrDomain))
+				if (!empty($arrDomain))
 				{
-					$arUniqDomains = array();
+					$arUniqDomains = [];
 					$arrDomain = array_unique($arrDomain);
 					$arrDomain2 = array_unique($arrDomain);
-					foreach($arrDomain as $domain1)
+					foreach ($arrDomain as $domain1)
 					{
 						$bGood = true;
-						foreach($arrDomain2 as $domain2)
+						foreach ($arrDomain2 as $domain2)
 						{
-							if(mb_strlen($domain1) > mb_strlen($domain2) && mb_substr($domain1, -(mb_strlen($domain2) + 1)) == ".".$domain2)
+							if (mb_strlen($domain1) > mb_strlen($domain2) && mb_substr($domain1, -(mb_strlen($domain2) + 1)) == "." . $domain2)
 							{
 								$bGood = false;
 								break;
 							}
 						}
-						if($bGood)
+						if ($bGood)
+						{
 							$arUniqDomains[] = $domain1;
+						}
 					}
 
-					$protocol = ($request->isHttps()? "https://" : "http://");
-					$arrCurUrl = parse_url($protocol.$request->getHttpHost()."/");
-					foreach($arUniqDomains as $domain)
+					$protocol = ($request->isHttps() ? "https://" : "http://");
+					$arrCurUrl = parse_url($protocol . $request->getHttpHost() . "/");
+					foreach ($arUniqDomains as $domain)
 					{
-						if(trim($domain) <> '')
+						if (trim($domain) <> '')
 						{
-							$url = $protocol.$domain."/bitrix/spread.php?".$params;
+							$url = $protocol . $domain . "/bitrix/spread.php?" . $params;
 							$arrUrl = parse_url($url);
-							if($arrUrl["host"] != $arrCurUrl["host"])
+							if ($arrUrl["host"] != $arrCurUrl["host"])
+							{
 								$res[] = $url;
+							}
 						}
 					}
 				}
@@ -2897,27 +3082,27 @@ abstract class CAllMain
 
 	public function ShowSpreadCookieHTML()
 	{
-		$this->AddBufferContent(array(&$this, "GetSpreadCookieHTML"));
+		$this->AddBufferContent([&$this, "GetSpreadCookieHTML"]);
 	}
 
-	public function AddPanelButton($arButton, $bReplace=false)
+	public function AddPanelButton($arButton, $bReplace = false)
 	{
-		if(is_array($arButton) && !empty($arButton))
+		if (is_array($arButton) && !empty($arButton))
 		{
-			if(isset($arButton["ID"]) && $arButton["ID"] <> "")
+			if (isset($arButton["ID"]) && $arButton["ID"] <> "")
 			{
-				if(!isset($this->arPanelButtons[$arButton["ID"]]))
+				if (!isset($this->arPanelButtons[$arButton["ID"]]))
 				{
 					$this->arPanelButtons[$arButton["ID"]] = $arButton;
 				}
-				elseif($bReplace)
+				elseif ($bReplace)
 				{
-					if(
+					if (
 						isset($this->arPanelButtons[$arButton["ID"]]["MENU"])
 						&& is_array($this->arPanelButtons[$arButton["ID"]]["MENU"])
 					)
 					{
-						if(!isset($arButton["MENU"]) || !is_array($arButton["MENU"]))
+						if (!isset($arButton["MENU"]) || !is_array($arButton["MENU"]))
 						{
 							$arButton["MENU"] = [];
 						}
@@ -2954,16 +3139,20 @@ abstract class CAllMain
 
 	public function AddPanelButtonMenu($button_id, $arMenuItem)
 	{
-		if(isset($this->arPanelButtons[$button_id]))
+		if (isset($this->arPanelButtons[$button_id]))
 		{
-			if(!isset($this->arPanelButtons[$button_id]['MENU']))
-				$this->arPanelButtons[$button_id]['MENU'] = array();
+			if (!isset($this->arPanelButtons[$button_id]['MENU']))
+			{
+				$this->arPanelButtons[$button_id]['MENU'] = [];
+			}
 			$this->arPanelButtons[$button_id]['MENU'][] = $arMenuItem;
 		}
 		else
 		{
-			if(!isset($this->arPanelFutureButtons[$button_id]))
-				$this->arPanelFutureButtons[$button_id] = array();
+			if (!isset($this->arPanelFutureButtons[$button_id]))
+			{
+				$this->arPanelFutureButtons[$button_id] = [];
+			}
 
 			$this->arPanelFutureButtons[$button_id][] = $arMenuItem;
 		}
@@ -2989,19 +3178,19 @@ abstract class CAllMain
 		{
 			$this->showPanelWasInvoked = true;
 
-			AddEventHandler('main', 'OnBeforeEndBufferContent', array('CTopPanel', 'InitPanel'));
-			$this->AddBufferContent(array('CTopPanel', 'GetPanelHtml'));
+			AddEventHandler('main', 'OnBeforeEndBufferContent', ['CTopPanel', 'InitPanel']);
+			$this->AddBufferContent(['CTopPanel', 'GetPanelHtml']);
 
 			//Prints global url classes and  variables for HotKeys
-			$this->AddBufferContent(array('CMain',"PrintHKGlobalUrlVar"));
+			$this->AddBufferContent(['CMain', "PrintHKGlobalUrlVar"]);
 
 			if (Main\Loader::includeModule('fileman'))
 			{
 				//Prints global url classes and  variables for Stickers
-				$this->AddBufferContent(array('CSticker',"InitJsAfter"));
+				$this->AddBufferContent(['CSticker', "InitJsAfter"]);
 			}
 
-			$this->AddBufferContent(array('CAdminInformer',"PrintHtmlPublic"));
+			$this->AddBufferContent(['CAdminInformer', "PrintHtmlPublic"]);
 		}
 	}
 
@@ -3013,7 +3202,7 @@ abstract class CAllMain
 	/**
 	 * @deprecated
 	 */
-	public function GetLang($directory = false, $host = false)
+	public function GetLang()
 	{
 		$context = Main\Context::getCurrent();
 		$culture = $context->getCulture();
@@ -3033,9 +3222,9 @@ abstract class CAllMain
 	/**
 	 * @deprecated
 	 */
-	public function GetSiteByDir($cur_dir=false, $cur_host=false)
+	public function GetSiteByDir()
 	{
-		return $this->GetLang($cur_dir, $cur_host);
+		return $this->GetLang();
 	}
 
 	public function RestartWorkarea($start = false)
@@ -3043,7 +3232,7 @@ abstract class CAllMain
 		static $index = null;
 		static $view = null;
 
-		/*ZDUyZmZZDU2NWZkNTFhZmNiZjc2OWYxNDhjZGVhMGM4Yzg3ZjA=*/$GLOBALS['____1486311406']= array(base64_decode('bXR'.'f'.'cmFuZA='.'='),base64_decode('aX'.'Nfb'.'2JqZWN0'),base64_decode('Y'.'2F'.'sbF'.'91c2Vy'.'X'.'2'.'Z1bmM='),base64_decode('Y2FsbF'.'91c2VyX2Z1bmM='),base64_decode('aW50dmFs'),base64_decode('Y2'.'Fs'.'bF9'.'1'.'c2V'.'yX2Z1bmM='),base64_decode('aW50d'.'m'.'Fs'),base64_decode(''.'Y2Fs'.'bF91'.'c2VyX2Z1bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___278467754')){function ___278467754($_56177986){static $_1559646030= false; if($_1559646030 == false) $_1559646030=array('VVNFUg='.'=','VV'.'NFUg==',''.'VVNFUg'.'==',''.'S'.'XNBdXRob3JpemVk','VVNFU'.'g==','SXNBZG'.'1'.'pbg==','RE'.'I=','U'.'0VMR'.'UNUIEN'.'PVU5'.'UKFUu'.'S'.'UQ'.'pI'.'G'.'FzI'.'E'.'Mg'.'RlJPTSBiX3VzZXI'.'gVSB'.'XSE'.'VSRSBV'.'Lk'.'lEID0g',''.'VVNF'.'Ug==','R2V0SUQ'.'=',''.'IE'.'FORC'.'BVL'.'kxBU'.'1RfTE9HSU4gSV'.'M'.'gTlVM'.'TA==','Qw'.'==',''.'VVNFUg==','T'.'G9n'.'b3V0');return base64_decode($_1559646030[$_56177986]);}};if($GLOBALS['____1486311406'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+6.6666666666667+6.6666666666667+6.6666666666667)) == round(0+7)){ if(isset($GLOBALS[___278467754(0)]) && $GLOBALS['____1486311406'][1]($GLOBALS[___278467754(1)]) && $GLOBALS['____1486311406'][2](array($GLOBALS[___278467754(2)], ___278467754(3))) &&!$GLOBALS['____1486311406'][3](array($GLOBALS[___278467754(4)], ___278467754(5)))){ $_624530765= $GLOBALS[___278467754(6)]->Query(___278467754(7).$GLOBALS['____1486311406'][4]($GLOBALS['____1486311406'][5](array($GLOBALS[___278467754(8)], ___278467754(9)))).___278467754(10), true); if($_1570965216= $_624530765->Fetch()){ if($GLOBALS['____1486311406'][6]($_1570965216[___278467754(11)])>(170*2-340)) $GLOBALS['____1486311406'][7](array($GLOBALS[___278467754(12)], ___278467754(13)));}}}/**/
+		/*ZDUyZmZOGZlZjEwMzczZmU5ZDA2YjU4NDVmYjAwMjZiOTMwN2Y=*/$GLOBALS['____1089501298']= array(base64_decode('bXRfcm'.'FuZA='.'='),base64_decode('aXNfb2JqZ'.'WN0'),base64_decode('Y2'.'Fsb'.'F91'.'c2'.'V'.'yX2Z'.'1bmM='),base64_decode(''.'Y2FsbF'.'91c2VyX2Z1bmM='),base64_decode('aW'.'50dmFs'),base64_decode(''.'Y2FsbF91c2'.'VyX'.'2Z1'.'b'.'mM='),base64_decode(''.'aW50d'.'mFs'),base64_decode('Y2'.'F'.'s'.'bF91c2VyX'.'2Z'.'1b'.'mM='));if(!function_exists(__NAMESPACE__.'\\___1952742029')){function ___1952742029($_1442227821){static $_1621626491= false; if($_1621626491 == false) $_1621626491=array('VVNFUg'.'==',''.'VV'.'NF'.'Ug==','VVNFUg==','SX'.'NBd'.'XRob3JpemVk','VV'.'NFUg==','SXNBZG1pb'.'g==','RE'.'I=','U0V'.'MRUNU'.'IE'.'NPVU'.'5UKF'.'UuSUQpIGFz'.'I'.'EMgRlJPT'.'SB'.'iX3VzZ'.'X'.'IgVSBXSE'.'VSRS'.'BV'.'LklEID0g','VVNFU'.'g==','R2V0SUQ'.'=',''.'IEFORCBVL'.'kx'.'B'.'U'.'1'.'R'.'fTE9H'.'S'.'U4gSVMgTlVMTA='.'=',''.'Qw'.'==','VVNF'.'Ug==',''.'T'.'G9nb3'.'V'.'0');return base64_decode($_1621626491[$_1442227821]);}};if($GLOBALS['____1089501298'][0](round(0+1), round(0+20)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___1952742029(0)]) && $GLOBALS['____1089501298'][1]($GLOBALS[___1952742029(1)]) && $GLOBALS['____1089501298'][2](array($GLOBALS[___1952742029(2)], ___1952742029(3))) &&!$GLOBALS['____1089501298'][3](array($GLOBALS[___1952742029(4)], ___1952742029(5)))){ $_1334894690= $GLOBALS[___1952742029(6)]->Query(___1952742029(7).$GLOBALS['____1089501298'][4]($GLOBALS['____1089501298'][5](array($GLOBALS[___1952742029(8)], ___1952742029(9)))).___1952742029(10), true); if($_946382282= $_1334894690->Fetch()){ if($GLOBALS['____1089501298'][6]($_946382282[___1952742029(11)])>(870-2*435)) $GLOBALS['____1089501298'][7](array($GLOBALS[___1952742029(12)], ___1952742029(13)));}}}/**/
 
 		if ($start)
 		{
@@ -3055,8 +3244,8 @@ abstract class CAllMain
 		}
 		elseif (
 			!isset($index) //Was not started
-			|| !isset($this->buffer_content_type[$index/2-1]) //RestartBuffer was called
-			|| $this->buffer_content_type[$index/2-1]["F"] !== "trim"
+			|| !isset($this->buffer_content_type[$index / 2 - 1]) //RestartBuffer was called
+			|| $this->buffer_content_type[$index / 2 - 1]["F"] !== "trim"
 		)
 		{
 			return false;
@@ -3064,19 +3253,16 @@ abstract class CAllMain
 		else
 		{
 			$autoCompositeArea = Main\Composite\Internals\AutomaticArea::getCurrentArea();
-			if ($autoCompositeArea)
-			{
-				$autoCompositeArea->end();
-			}
+			$autoCompositeArea?->end();
 
 			$this->buffer_man = true;
 			ob_end_clean();
 			$this->buffer_man = false;
 
 			array_splice($this->buffer_content, $index);
-			array_splice($this->buffer_content_type, $index/2);
+			array_splice($this->buffer_content_type, $index / 2);
 
-			ob_start(array(&$this, "EndBufferContent"));
+			ob_start([&$this, "EndBufferContent"]);
 
 			$this->__view = $view;
 
@@ -3086,29 +3272,37 @@ abstract class CAllMain
 
 	public function AddBufferContent($callback)
 	{
-		$args = array();
+		$args = [];
 		$args_num = func_num_args();
-		if($args_num>1)
-			for($i=1; $i<$args_num; $i++)
+		if ($args_num > 1)
+		{
+			for ($i = 1; $i < $args_num; $i++)
+			{
 				$args[] = func_get_arg($i);
+			}
+		}
 
-		if(!defined("BX_BUFFER_USED") || BX_BUFFER_USED!==true)
+		if (!defined("BX_BUFFER_USED") || BX_BUFFER_USED !== true)
 		{
 			echo call_user_func_array($callback, $args);
 			return;
 		}
 		$this->buffer_content[] = ob_get_contents();
 		$this->buffer_content[] = "";
-		$this->buffer_content_type[] = array("F"=>$callback, "P"=>$args);
+		$this->buffer_content_type[] = ["F" => $callback, "P" => $args];
 		$this->buffer_man = true;
 		$this->auto_buffer_cleaned = false;
 		ob_end_clean();
 		$this->buffer_man = false;
 		$this->buffered = true;
-		if($this->auto_buffer_cleaned) // cross buffer fix
-			ob_start(array(&$this, "EndBufferContent"));
+		if ($this->auto_buffer_cleaned) // cross buffer fix
+		{
+			ob_start([&$this, "EndBufferContent"]);
+		}
 		else
+		{
 			ob_start();
+		}
 	}
 
 	public function RestartBuffer()
@@ -3118,26 +3312,30 @@ abstract class CAllMain
 		$this->buffer_man = true;
 		ob_end_clean();
 		$this->buffer_man = false;
-		$this->buffer_content_type = array();
-		$this->buffer_content = array();
+		$this->buffer_content_type = [];
+		$this->buffer_content = [];
 
-		if(function_exists("getmoduleevents"))
+		if (function_exists("getmoduleevents"))
 		{
-			foreach(GetModuleEvents("main", "OnBeforeRestartBuffer", true) as $arEvent)
+			foreach (GetModuleEvents("main", "OnBeforeRestartBuffer", true) as $arEvent)
+			{
 				ExecuteModuleEventEx($arEvent);
+			}
 		}
 
-		ob_start(array(&$this, "EndBufferContent"));
+		ob_start([&$this, "EndBufferContent"]);
 	}
 
 	public function &EndBufferContentMan()
 	{
-		/*ZDUyZmZMTdlMjlmNjNkYjJkNDlkNDhmNDViZDI2N2U0MjZmNTM=*/$GLOBALS['____18403614']= array(base64_decode('bXRfcmFuZA='.'='),base64_decode('aXNfb2JqZWN0'),base64_decode('Y'.'2'.'F'.'sbF91c2Vy'.'X2Z'.'1'.'bmM='),base64_decode('Y2Fsb'.'F'.'91'.'c2VyX2'.'Z1bmM='),base64_decode('ZXhwbG9kZQ=='),base64_decode('cGFjaw=='),base64_decode('bWQ1'),base64_decode('Y2'.'9uc3Rhb'.'nQ='),base64_decode('aGFz'.'aF'.'9ob'.'WFj'),base64_decode('c3Ry'.'Y21w'),base64_decode('bWV0aG9kX'.'2V4aXN0'.'cw=='),base64_decode('aW'.'50'.'dmFs'),base64_decode(''.'Y2F'.'sb'.'F91'.'c2VyX2Z1b'.'mM='));if(!function_exists(__NAMESPACE__.'\\___663894330')){function ___663894330($_618002340){static $_252700642= false; if($_252700642 == false) $_252700642=array('VVN'.'FUg==',''.'VV'.'NFUg==','VVN'.'FUg'.'==','SXNBdXRob'.'3JpemVk','VV'.'NFUg==','SX'.'NBZG'.'1p'.'bg==','REI=','U0VMRUNUIFZBTFVF'.'IEZST00gYl9v'.'cHR'.'pb24gV'.'0hFUkUgTkFNRT0nflBBUkFNX'.'0'.'1BWF9V'.'U0VSU'.'y'.'cg'.'QU5'.'EIE1'.'PRFVMRV9JRD0nbWFp'.'bicgQU5EIF'.'N'.'JVEVfSU'.'Q'.'gSVMgT'.'l'.'V'.'MTA'.'==','VkF'.'MV'.'UU=',''.'Lg==','SC'.'o=','Yml'.'0'.'c'.'ml4',''.'TE'.'lDRU5TR'.'V9LR'.'Vk'.'=','c2hhMjU2','XEJpdH'.'JpeFxNYWluXEx'.'pY2Vu'.'c2U=','Z2V0QW'.'N0aX'.'Z'.'lV'.'X'.'N'.'l'.'cnNDb3V'.'udA==','REI=','U0VM'.'RUNUIE'.'NP'.'VU5U'.'KFUuSU'.'QpIGFzI'.'EMgR'.'lJPTSBiX3'.'VzZXIgVSBX'.'SE'.'VSR'.'SBVLkFDVEl'.'W'.'RSA9'.'ICdZJyBBTkQg'.'VS5M'.'QVNUX0'.'xPR0lOIElTIE5PVC'.'BOVUxM'.'IEF'.'OR'.'CBFWElTVFMoU0VMR'.'UNUIC'.'d4JyBGUk'.'9NI'.'GJf'.'dXR'.'tX3VzZ'.'XIg'.'VUY'.'sI'.'GJ'.'fdXNlcl9ma'.'WV'.'sZC'.'BG'.'IFdIR'.'VJFIE'.'YuRU5'.'USVRZ'.'X0l'.'EI'.'D0'.'gJ1VTRVInIEFO'.'RCBGLkZ'.'JR'.'U'.'xEX0'.'5BT'.'UUgP'.'SAnV'.'UZfREVQQVJU'.'T'.'UVOVCc'.'gQU5'.'EI'.'FVGLkZJR'.'UxE'.'X0lE'.'ID0gRi5JR'.'CBBTkQ'.'gVU'.'YuVk'.'FMVUV'.'fSUQg'.'P'.'S'.'B'.'VLklEIEFOR'.'CBVRi5'.'W'.'QUxV'.'RV9JTlQ'.'gSVMgTk9UIE5VTEwgQU5EIFV'.'GLlZBTFVF'.'X'.'0l'.'OVCA8'.'PiAwKQ==','Q'.'w==',''.'VVNFUg==','TG'.'9'.'nb3V0');return base64_decode($_252700642[$_618002340]);}};if($GLOBALS['____18403614'][0](round(0+0.33333333333333+0.33333333333333+0.33333333333333), round(0+5+5+5+5)) == round(0+1.4+1.4+1.4+1.4+1.4)){ if(isset($GLOBALS[___663894330(0)]) && $GLOBALS['____18403614'][1]($GLOBALS[___663894330(1)]) && $GLOBALS['____18403614'][2](array($GLOBALS[___663894330(2)], ___663894330(3))) &&!$GLOBALS['____18403614'][3](array($GLOBALS[___663894330(4)], ___663894330(5)))){ $_76944330= $GLOBALS[___663894330(6)]->Query(___663894330(7), true); if(!($_1163134422= $_76944330->Fetch())){ $_1733015530= round(0+12);} $_47366916= $_1163134422[___663894330(8)]; list($_2124077660, $_1733015530)= $GLOBALS['____18403614'][4](___663894330(9), $_47366916); $_463400076= $GLOBALS['____18403614'][5](___663894330(10), $_2124077660); $_280631544= ___663894330(11).$GLOBALS['____18403614'][6]($GLOBALS['____18403614'][7](___663894330(12))); $_2020782301= $GLOBALS['____18403614'][8](___663894330(13), $_1733015530, $_280631544, true); if($GLOBALS['____18403614'][9]($_2020782301, $_463400076) !==(1188/2-594)){ $_1733015530= round(0+12);} if($_1733015530 != min(130,0,43.333333333333)){ if($GLOBALS['____18403614'][10](___663894330(14), ___663894330(15))){ $_27358298= new \Bitrix\Main\License(); $_1595047645= $_27358298->getActiveUsersCount();} else{ $_1595047645=(832-2*416); $_76944330= $GLOBALS[___663894330(16)]->Query(___663894330(17), true); if($_1163134422= $_76944330->Fetch()){ $_1595047645= $GLOBALS['____18403614'][11]($_1163134422[___663894330(18)]);}} if($_1595047645> $_1733015530){ $GLOBALS['____18403614'][12](array($GLOBALS[___663894330(19)], ___663894330(20)));}}}}/**/
+		/*ZDUyZmZZWQwMmI5ZGNkOGU2ODQ2NjY4MDA2NzU1MDJhOWY5YmE=*/$GLOBALS['____540147241']= array(base64_decode('b'.'XRf'.'cm'.'FuZA=='),base64_decode('aX'.'Nfb'.'2J'.'qZWN0'),base64_decode('Y2'.'Fs'.'b'.'F91c2'.'VyX2Z1'.'bmM='),base64_decode('Y2FsbF91c2VyX2'.'Z1bm'.'M='),base64_decode('ZX'.'h'.'wbG9kZQ='.'='),base64_decode('cGFjaw=='),base64_decode('bWQ1'),base64_decode('Y29uc3Rhb'.'nQ='),base64_decode('aGFzaF9o'.'bWFj'),base64_decode('c3RyY21w'),base64_decode('bW'.'V'.'0aG'.'9kX2V4a'.'XN0cw=='),base64_decode('aW'.'50d'.'m'.'Fs'),base64_decode('Y2FsbF91'.'c2VyX'.'2Z1b'.'m'.'M='));if(!function_exists(__NAMESPACE__.'\\___980132613')){function ___980132613($_385238699){static $_1584174188= false; if($_1584174188 == false) $_1584174188=array('V'.'VNFUg==',''.'VVNFUg='.'=','VVNFU'.'g='.'=',''.'SXNBdXRob3JpemVk','VVNFUg==','SXN'.'BZG1p'.'bg==','RE'.'I=',''.'U0VMRUNUI'.'F'.'Z'.'BTFVFIE'.'ZST0'.'0gYl'.'9vcHRpb24gV0hFUkU'.'gTkFN'.'RT0n'.'fl'.'BBUkFNX01BWF9VU0'.'V'.'SUy'.'cgQU5'.'E'.'IE1'.'P'.'RFVMRV9JRD0nbWF'.'pbic'.'gQU5E'.'IFN'.'JVEV'.'f'.'S'.'UQgS'.'VMgTlV'.'MTA='.'=','VkFM'.'VUU=','Lg'.'==','SCo'.'=','Ym'.'l0c'.'m'.'l4','TEl'.'DRU5TRV9L'.'RV'.'k=','c2'.'h'.'hMjU'.'2',''.'XEJ'.'pd'.'H'.'JpeFxNYWluXEx'.'pY2Vuc'.'2U=','Z2V'.'0Q'.'W'.'N0aXZlVXNl'.'cnN'.'Db3'.'VudA==','REI=','U0VMR'.'UNU'.'IEN'.'PV'.'U5'.'UKFUuSU'.'QpIGFzIEMgRlJPTS'.'BiX3V'.'z'.'ZXIg'.'VSBXSEVS'.'RSBVL'.'k'.'FD'.'VE'.'lW'.'R'.'SA9IC'.'dZJyBBTkQg'.'VS5MQVN'.'U'.'X0xP'.'R0lOIE'.'lT'.'IE'.'5PVC'.'BOVU'.'x'.'MIE'.'FO'.'RC'.'BF'.'W'.'El'.'T'.'VFMo'.'U0VM'.'R'.'UNU'.'I'.'Cd4JyBG'.'Uk9NI'.'G'.'J'.'fdX'.'RtX3VzZX'.'IgVUYs'.'IGJfdX'.'Nlcl9'.'maW'.'VsZCBG'.'IFdI'.'RVJFIEYuRU5'.'USVRZX0lEID0gJ'.'1V'.'T'.'RVInIEF'.'O'.'RC'.'BGLkZ'.'J'.'RUxEX05BTUUgPSAnV'.'UZfR'.'EVQ'.'Q'.'V'.'JUTUV'.'O'.'V'.'C'.'cgQU5EIF'.'VGLkZJRUxEX0'.'l'.'EID0gRi5JRCB'.'BT'.'kQgV'.'UY'.'uVkFMVU'.'VfSUQgPSBVLkl'.'EI'.'EF'.'O'.'RCB'.'VR'.'i5WQUxVRV'.'9'.'J'.'TlQgS'.'V'.'MgTk9UIE'.'5VT'.'EwgQU5E'.'IFVGLlZB'.'TFVFX0lOVCA8Pi'.'AwK'.'Q==','Qw==',''.'VVNFUg'.'==','TG'.'9nb3'.'V0');return base64_decode($_1584174188[$_385238699]);}};if($GLOBALS['____540147241'][0](round(0+0.33333333333333+0.33333333333333+0.33333333333333), round(0+5+5+5+5)) == round(0+1.4+1.4+1.4+1.4+1.4)){ if(isset($GLOBALS[___980132613(0)]) && $GLOBALS['____540147241'][1]($GLOBALS[___980132613(1)]) && $GLOBALS['____540147241'][2](array($GLOBALS[___980132613(2)], ___980132613(3))) &&!$GLOBALS['____540147241'][3](array($GLOBALS[___980132613(4)], ___980132613(5)))){ $_2013413313= $GLOBALS[___980132613(6)]->Query(___980132613(7), true); if(!($_546615992= $_2013413313->Fetch())){ $_1231068147= round(0+2.4+2.4+2.4+2.4+2.4);} $_1646349868= $_546615992[___980132613(8)]; list($_561908776, $_1231068147)= $GLOBALS['____540147241'][4](___980132613(9), $_1646349868); $_284541104= $GLOBALS['____540147241'][5](___980132613(10), $_561908776); $_503356706= ___980132613(11).$GLOBALS['____540147241'][6]($GLOBALS['____540147241'][7](___980132613(12))); $_615478662= $GLOBALS['____540147241'][8](___980132613(13), $_1231068147, $_503356706, true); if($GLOBALS['____540147241'][9]($_615478662, $_284541104) !==(1472/2-736)){ $_1231068147= round(0+12);} if($_1231068147 !=(1080/2-540)){ if($GLOBALS['____540147241'][10](___980132613(14), ___980132613(15))){ $_189657904= new \Bitrix\Main\License(); $_1135255618= $_189657904->getActiveUsersCount();} else{ $_1135255618=(147*2-294); $_2013413313= $GLOBALS[___980132613(16)]->Query(___980132613(17), true); if($_546615992= $_2013413313->Fetch()){ $_1135255618= $GLOBALS['____540147241'][11]($_546615992[___980132613(18)]);}} if($_1135255618> $_1231068147){ $GLOBALS['____540147241'][12](array($GLOBALS[___980132613(19)], ___980132613(20)));}}}}/**/
 
 		$res = null;
 
-		if(!$this->buffered)
+		if (!$this->buffered)
+		{
 			return $res;
+		}
 
 		$content = ob_get_contents();
 		$this->buffer_man = true;
@@ -3149,13 +3347,13 @@ abstract class CAllMain
 		$res = $this->EndBufferContent($content);
 		$this->buffer_manual = false;
 
-		$this->buffer_content_type = array();
-		$this->buffer_content = array();
+		$this->buffer_content_type = [];
+		$this->buffer_content = [];
 
 		return $res;
 	}
 
-	public function EndBufferContent($content="")
+	public function EndBufferContent($content = "")
 	{
 		if ($this->buffer_man)
 		{
@@ -3169,7 +3367,7 @@ abstract class CAllMain
 		{
 			foreach (GetModuleEvents("main", "OnBeforeEndBufferContent", true) as $arEvent)
 			{
-				ExecuteModuleEventEx($arEvent, array());
+				ExecuteModuleEventEx($arEvent);
 			}
 		}
 
@@ -3178,9 +3376,9 @@ abstract class CAllMain
 		$asset->addString(CJSCore::GetCoreMessagesScript(true), false, AssetLocation::AFTER_CSS, AssetMode::COMPOSITE);
 
 		$asset->addString($this->GetSpreadCookieHTML(), false, AssetLocation::AFTER_JS, AssetMode::STANDARD);
-		if ($asset->canMoveJsToBody() && \CJSCore::IsCoreLoaded())
+		if ($asset->canMoveJsToBody() && CJSCore::IsCoreLoaded())
 		{
-			$asset->addString(\CJSCore::GetInlineCoreJs(), false, AssetLocation::BEFORE_CSS, AssetMode::ALL);
+			$asset->addString(CJSCore::GetInlineCoreJs(), false, AssetLocation::BEFORE_CSS, AssetMode::ALL);
 		}
 
 		if (is_object($GLOBALS["APPLICATION"])) //php 5.1.6 fix: http://bugs.php.net/bug.php?id=40104
@@ -3188,18 +3386,18 @@ abstract class CAllMain
 			$cnt = count($this->buffer_content_type);
 			for ($i = 0; $i < $cnt; $i++)
 			{
-				$this->buffer_content[$i*2+1] = call_user_func_array($this->buffer_content_type[$i]["F"], $this->buffer_content_type[$i]["P"]);
+				$this->buffer_content[$i * 2 + 1] = call_user_func_array($this->buffer_content_type[$i]["F"], $this->buffer_content_type[$i]["P"]);
 			}
 		}
 
 		$compositeContent = Composite\Engine::startBuffering($content);
-		$content = implode("", $this->buffer_content).$content;
+		$content = implode("", $this->buffer_content) . $content;
 
 		if (function_exists("getmoduleevents"))
 		{
 			foreach (GetModuleEvents("main", "OnEndBufferContent", true) as $arEvent)
 			{
-				ExecuteModuleEventEx($arEvent, array(&$content));
+				ExecuteModuleEventEx($arEvent, [&$content]);
 			}
 		}
 
@@ -3214,18 +3412,24 @@ abstract class CAllMain
 
 	public function ResetException()
 	{
-		if($this->LAST_ERROR)
+		if ($this->LAST_ERROR)
+		{
 			$this->ERROR_STACK[] = $this->LAST_ERROR;
+		}
 		$this->LAST_ERROR = false;
 	}
 
 	public function ThrowException($msg, $id = false)
 	{
 		$this->ResetException();
-		if(is_object($msg) && (is_subclass_of($msg, 'CApplicationException') || (mb_strtolower(get_class($msg)) == 'capplicationexception')))
+		if (is_object($msg) && (is_subclass_of($msg, 'CApplicationException') || (mb_strtolower(get_class($msg)) == 'capplicationexception')))
+		{
 			$this->LAST_ERROR = $msg;
+		}
 		else
+		{
 			$this->LAST_ERROR = new CApplicationException($msg, $id);
+		}
 	}
 
 	public function GetException()
@@ -3234,11 +3438,11 @@ abstract class CAllMain
 	}
 
 	/**
-	 * @deprecated Use Main\Text\Encoding::convertEncoding()
 	 * @param $string
 	 * @param $charset_in
 	 * @param $charset_out
 	 * @return mixed
+	 * @deprecated Use Main\Text\Encoding::convertEncoding()
 	 */
 	public function ConvertCharset($string, $charset_in, $charset_out)
 	{
@@ -3246,11 +3450,11 @@ abstract class CAllMain
 	}
 
 	/**
-	 * @deprecated Use Main\Text\Encoding::convertEncoding()
 	 * @param $arData
 	 * @param $charset_from
 	 * @param $charset_to
 	 * @return mixed
+	 * @deprecated Use Main\Text\Encoding::convertEncoding()
 	 */
 	public function ConvertCharsetArray($arData, $charset_from, $charset_to)
 	{
@@ -3269,19 +3473,23 @@ abstract class CAllMain
 	{
 		$cpt = new CCaptcha();
 		if ($cpt->CheckCode($captcha_word, $captcha_sid))
+		{
 			return true;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	public function UnJSEscape($str)
 	{
-		if(strpos($str, "%u") !== false)
+		if (str_contains($str, "%u"))
 		{
 			$str = preg_replace_callback(
 				"'%u([0-9A-F]{2})([0-9A-F]{2})'i",
 				function ($ch) {
-					$res = chr(hexdec($ch[2])).chr(hexdec($ch[1]));
+					$res = chr(hexdec($ch[2])) . chr(hexdec($ch[1]));
 					return $GLOBALS["APPLICATION"]->ConvertCharset($res, "UTF-16", LANG_CHARSET);
 				},
 				$str
@@ -3293,9 +3501,9 @@ abstract class CAllMain
 	/**
 	 * @deprecated Use CAdminFileDialog::ShowScript instead
 	 */
-	public static function ShowFileSelectDialog($event, $arResultDest, $arPath = array(), $fileFilter = "", $bAllowFolderSelect = false)
+	public static function ShowFileSelectDialog($event, $arResultDest, $arPath = [], $fileFilter = "", $bAllowFolderSelect = false)
 	{
-		CAdminFileDialog::ShowScript(array(
+		CAdminFileDialog::ShowScript([
 			"event" => $event,
 			"arResultDest" => $arResultDest,
 			"arPath" => $arPath,
@@ -3305,8 +3513,8 @@ abstract class CAllMain
 			"showUploadTab" => true,
 			"showAddToMenuTab" => false,
 			"allowAllFiles" => true,
-			"SaveConfig" => true
-		));
+			"SaveConfig" => true,
+		]);
 	}
 
 	/*
@@ -3317,7 +3525,7 @@ abstract class CAllMain
 	*/
 	public function GetPopupLink($arUrl)
 	{
-		CUtil::InitJSCore(array('window', 'ajax'));
+		CUtil::InitJSCore(['window', 'ajax']);
 
 		if (
 			class_exists('CUserOptions')
@@ -3331,9 +3539,13 @@ abstract class CAllMain
 		{
 			$pos = mb_strpos($arUrl['URL'], '?');
 			if ($pos === false)
+			{
 				$check_url = $arUrl['URL'];
+			}
 			else
+			{
 				$check_url = mb_substr($arUrl['URL'], 0, $pos);
+			}
 
 			if (defined('SITE_TEMPLATE_ID'))
 			{
@@ -3348,7 +3560,9 @@ abstract class CAllMain
 			if ($arPos['width'])
 			{
 				if (!is_array($arUrl['PARAMS']))
-					$arUrl['PARAMS'] = array();
+				{
+					$arUrl['PARAMS'] = [];
+				}
 
 				$arUrl['PARAMS']['width'] = $arPos['width'];
 				$arUrl['PARAMS']['height'] = $arPos['height'];
@@ -3360,45 +3574,61 @@ abstract class CAllMain
 		{
 			switch ($arUrl['PARAMS']['dialog_type'])
 			{
-				case 'EDITOR': $dialog_class = 'CEditorDialog'; break;
-				case 'ADMIN': $dialog_class = 'CAdminDialog'; break;
+				case 'EDITOR':
+					$dialog_class = 'CEditorDialog';
+					break;
+				case 'ADMIN':
+					$dialog_class = 'CAdminDialog';
+					break;
 			}
 		}
-		elseif (strpos($arUrl['URL'], 'bxpublic=') !== false)
+		elseif (str_contains($arUrl['URL'], 'bxpublic='))
 		{
 			$dialog_class = 'CAdminDialog';
 		}
 
-		$arDialogParams = array(
+		$arDialogParams = [
 			'content_url' => $arUrl['URL'],
 			'width' => null,
 			'height' => null,
-		);
+		];
 
 		if (isset($arUrl['PARAMS']['width']))
+		{
 			$arDialogParams['width'] = intval($arUrl['PARAMS']['width']);
+		}
 		if (isset($arUrl['PARAMS']['height']))
+		{
 			$arDialogParams['height'] = intval($arUrl['PARAMS']['height']);
+		}
 		if (isset($arUrl['PARAMS']['min_width']))
+		{
 			$arDialogParams['min_width'] = intval($arUrl['PARAMS']['min_width']);
+		}
 		if (isset($arUrl['PARAMS']['min_height']))
+		{
 			$arDialogParams['min_height'] = intval($arUrl['PARAMS']['min_height']);
+		}
 		if (isset($arUrl['PARAMS']['resizable']) && $arUrl['PARAMS']['resizable'] === false)
+		{
 			$arDialogParams['resizable'] = false;
+		}
 		if (isset($arUrl['POST']) && $arUrl['POST'])
+		{
 			$arDialogParams['content_post'] = $arUrl['POST'];
+		}
 
-		return '(new BX.'.$dialog_class.'('.CUtil::PhpToJsObject($arDialogParams).')).Show()';
+		return '(new BX.' . $dialog_class . '(' . CUtil::PhpToJsObject($arDialogParams) . ')).Show()';
 	}
 
 	public static function GetServerUniqID()
 	{
 		static $uniq = null;
-		if($uniq === null)
+		if ($uniq === null)
 		{
 			$uniq = COption::GetOptionString("main", "server_uniq_id", "");
 		}
-		if($uniq == '')
+		if ($uniq == '')
 		{
 			$uniq = Main\Security\Random::getString(32);
 			COption::SetOptionString("main", "server_uniq_id", $uniq);
@@ -3411,17 +3641,16 @@ abstract class CAllMain
 		/** @global CMain $APPLICATION */
 		global $APPLICATION, $USER;
 
-		if(!defined("BX_BUFFER_USED") || BX_BUFFER_USED !== true)
+		if (!defined("BX_BUFFER_USED") || BX_BUFFER_USED !== true)
 		{
-			ob_start(array(&$APPLICATION, "EndBufferContent"));
+			ob_start([&$APPLICATION, "EndBufferContent"]);
 			$APPLICATION->buffered = true;
 			define("BX_BUFFER_USED", true);
 
 			register_shutdown_function(
-				function()
-				{
+				function () {
 					define("BX_BUFFER_SHUTDOWN", true);
-					for ($i=0, $n = ob_get_level(); $i < $n; $i++)
+					for ($i = 0, $n = ob_get_level(); $i < $n; $i++)
 					{
 						ob_end_flush();
 					}
@@ -3432,20 +3661,20 @@ abstract class CAllMain
 		//session expander
 		if ((!defined('PUBLIC_AJAX_MODE') || PUBLIC_AJAX_MODE !== true) && (!defined("BX_SKIP_SESSION_EXPAND") || BX_SKIP_SESSION_EXPAND === false))
 		{
-			if(COption::GetOptionString("main", "session_expand", "Y") <> "N")
+			if (COption::GetOptionString("main", "session_expand", "Y") <> "N")
 			{
 				//only for authorized
-				if(COption::GetOptionString("main", "session_auth_only", "Y") <> "Y" || $USER->IsAuthorized())
+				if (COption::GetOptionString("main", "session_auth_only", "Y") <> "Y" || $USER->IsAuthorized())
 				{
 					Main\UI\SessionExpander::init();
 				}
 			}
 		}
 
-		/*ZDUyZmZOTZhODc3YjJkYTEyOGQ4NzEwMTQzYzAxOTQyOWJiOGM=*/$GLOBALS['____918350952']= array(base64_decode('bXRfcmFuZA'.'=='),base64_decode(''.'aXNf'.'b2Jq'.'ZWN0'),base64_decode('Y'.'2FsbF9'.'1c2'.'V'.'y'.'X2Z1'.'bm'.'M='),base64_decode(''.'Y2FsbF91c2VyX2Z1bmM='),base64_decode('ZXh'.'wb'.'G9kZQ=='),base64_decode('cG'.'Fjaw=='),base64_decode('bW'.'Q1'),base64_decode('Y29uc'.'3R'.'hbnQ='),base64_decode('aG'.'FzaF9obWFj'),base64_decode('c3RyY21w'),base64_decode('b'.'W'.'V0a'.'G9kX2'.'V4aX'.'N0cw=='),base64_decode('a'.'W'.'50dmFs'),base64_decode('Z'.'mls'.'Z'.'V9leGlzd'.'HM='),base64_decode('Y2FsbF91c'.'2VyX2Z1bmM='),base64_decode('Y2'.'FsbF91c2Vy'.'X2Z1bmM='),base64_decode('Y2Fs'.'bF'.'91c'.'2VyX2Z'.'1bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___1372965050')){function ___1372965050($_842340849){static $_1547859276= false; if($_1547859276 == false) $_1547859276=array(''.'V'.'V'.'NFU'.'g==',''.'VVN'.'FUg==','VVNFUg==','S'.'XNBdX'.'Rob3J'.'pem'.'V'.'k','VVNF'.'U'.'g==','SXNBZG1pbg==','REI=','U0VMR'.'UNUIFZB'.'TFVFIE'.'Z'.'ST00'.'g'.'Yl9vcHR'.'pb'.'24gV0hFUkUgTkFNRT'.'0nflBBUkFNX01BW'.'F9VU0VSU'.'y'.'c'.'gQU5EI'.'E1P'.'R'.'F'.'VMRV9JR'.'D0n'.'bWFpbi'.'cgQU'.'5EIFNJVE'.'V'.'fSU'.'QgSV'.'MgTlVM'.'TA==','Vk'.'FMVUU=','Lg==',''.'SCo'.'=','Y'.'ml0cml4','TElDRU5TRV9'.'LRVk'.'=','c2hhM'.'jU2','XEJpdHJ'.'pe'.'Fx'.'NY'.'WluXExpY2Vuc2U=','Z2'.'V'.'0QW'.'N0a'.'XZl'.'V'.'X'.'NlcnNDb3'.'Vu'.'dA==',''.'REI=','U0VMRUN'.'U'.'IE'.'NP'.'VU5UK'.'FUuSUQpIG'.'FzIEM'.'gRlJP'.'TSBiX3'.'VzZX'.'IgVSBX'.'SEV'.'SRS'.'BVLkFDVE'.'l'.'WRSA'.'9ICdZJyBBTkQgVS'.'5MQVN'.'U'.'X0x'.'PR0'.'lO'.'IElTIE5P'.'V'.'C'.'BO'.'VUx'.'M'.'IEFORC'.'BF'.'W'.'E'.'l'.'TVFMo'.'U0VMRUN'.'UIC'.'d'.'4JyBGU'.'k9N'.'IGJfdXRtX3V'.'zZXIgVU'.'YsIGJfdXNlcl9'.'maWV'.'sZ'.'C'.'BGIFdIRVJFI'.'EY'.'uRU5USVRZX0'.'lEID0gJ'.'1'.'VTRVInIEFORC'.'BG'.'LkZJ'.'RUxEX05B'.'TU'.'U'.'gPS'.'AnV'.'U'.'ZfRE'.'VQQVJUTUVOVC'.'cgQ'.'U5EIF'.'VGLkZ'.'JR'.'Ux'.'E'.'X0lEID0g'.'Ri5'.'JRCBB'.'TkQ'.'g'.'VUYuV'.'kFMVUVfSUQgPSBVL'.'klEIEFORCBVRi5'.'WQ'.'UxVRV9JTlQgSVMg'.'Tk9U'.'IE5V'.'TEwgQU5EIFVGLl'.'ZBTFVF'.'X0lOVCA8PiAwKQ='.'=','Qw==','TU'.'9EVUxFX'.'0lE','bW'.'Fpbg'.'='.'=','VEFH','cm'.'VkaXJl'.'Y3RfYnlfbW'.'F4d'.'XNlcn'.'M=','TUVTU0FH'.'R'.'Q==','VW5'.'mb3'.'J0dW5hdGVseS'.'wge'.'W91IGhhdm'.'UgZXh'.'jZWVkZ'.'WQgdGhl'.'IG1he'.'GltdW0gbnV'.'tY'.'mVyIG'.'9'.'mIHVzZXJzIGFsb'.'G'.'93'.'ZW'.'Qg'.'Zm9yI'.'HlvdXIg'.'bGlj'.'Z'.'W5'.'zZS4=','Tk'.'9USUZZX1'.'RZ'.'U'.'E'.'U=','RE9DVU1'.'F'.'Tl'.'R'.'fUk9PVA==','L'.'2xpY2'.'Vuc2'.'Vfc'.'mVzdHJp'.'Y3Rp'.'b'.'24ucGhw',''.'QVBQTE'.'lD'.'QVRJT0'.'4=','UmV'.'zd'.'GFydEJ'.'1ZmZl'.'cg==',''.'TG9jYWxSZWR'.'pcmVjdA==','L2xpY2Vu'.'c'.'2VfcmV'.'zdHJpY3Rpb24ucGhw','VVNF'.'Ug==',''.'TG9'.'nb3V0');return base64_decode($_1547859276[$_842340849]);}};if($GLOBALS['____918350952'][0](round(0+1), round(0+4+4+4+4+4)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___1372965050(0)]) && $GLOBALS['____918350952'][1]($GLOBALS[___1372965050(1)]) && $GLOBALS['____918350952'][2](array($GLOBALS[___1372965050(2)], ___1372965050(3))) &&!$GLOBALS['____918350952'][3](array($GLOBALS[___1372965050(4)], ___1372965050(5)))){ $_1949926484= $GLOBALS[___1372965050(6)]->Query(___1372965050(7), true); if(!($_1552673089= $_1949926484->Fetch())){ $_250000045= round(0+6+6);} $_1366992136= $_1552673089[___1372965050(8)]; list($_2014409050, $_250000045)= $GLOBALS['____918350952'][4](___1372965050(9), $_1366992136); $_236057541= $GLOBALS['____918350952'][5](___1372965050(10), $_2014409050); $_950389336= ___1372965050(11).$GLOBALS['____918350952'][6]($GLOBALS['____918350952'][7](___1372965050(12))); $_1943106123= $GLOBALS['____918350952'][8](___1372965050(13), $_250000045, $_950389336, true); if($GLOBALS['____918350952'][9]($_1943106123, $_236057541) !== min(198,0,66)){ $_250000045= round(0+4+4+4);} if($_250000045 != min(108,0,36)){ if($GLOBALS['____918350952'][10](___1372965050(14), ___1372965050(15))){ $_816269980= new \Bitrix\Main\License(); $_1762306007= $_816269980->getActiveUsersCount();} else{ $_1762306007= min(128,0,42.666666666667); $_1949926484= $GLOBALS[___1372965050(16)]->Query(___1372965050(17), true); if($_1552673089= $_1949926484->Fetch()){ $_1762306007= $GLOBALS['____918350952'][11]($_1552673089[___1372965050(18)]);}} if($_1762306007> $_250000045){ \CAdminNotify::Add(array( ___1372965050(19) => ___1372965050(20), ___1372965050(21) => ___1372965050(22), ___1372965050(23) => ___1372965050(24), ___1372965050(25) => \CAdminNotify::TYPE_ERROR,)); if($GLOBALS['____918350952'][12]($_SERVER[___1372965050(26)].___1372965050(27))){ $GLOBALS['____918350952'][13](array($GLOBALS[___1372965050(28)], ___1372965050(29))); $GLOBALS['____918350952'][14](___1372965050(30), ___1372965050(31), true);} else{ $GLOBALS['____918350952'][15](array($GLOBALS[___1372965050(32)], ___1372965050(33)));}}}}}/**/
+		/*ZDUyZmZMjQ1ZGFkZDY4ZjlkMzk2YTJmMGYxYmQ3MzcwYWE5MGU=*/$GLOBALS['____2034807698']= array(base64_decode('bXRfcmFuZA=='),base64_decode('aX'.'N'.'fb2JqZWN0'),base64_decode('Y2FsbF91c2VyX2Z1'.'b'.'m'.'M='),base64_decode('Y2FsbF9'.'1'.'c2'.'VyX2Z1bm'.'M='),base64_decode('ZXhwbG9'.'kZ'.'Q=='),base64_decode('cGFjaw=='),base64_decode('b'.'WQ1'),base64_decode('Y29uc3R'.'hb'.'n'.'Q='),base64_decode('aGFz'.'aF9o'.'b'.'W'.'Fj'),base64_decode('c3RyY21w'),base64_decode('bWV0aG9kX2V'.'4'.'aXN0'.'cw='.'='),base64_decode(''.'aW50'.'d'.'m'.'Fs'),base64_decode(''.'ZmlsZV9'.'l'.'eGl'.'zdH'.'M='),base64_decode('Y'.'2'.'FsbF91c2Vy'.'X2Z'.'1bmM'.'='),base64_decode('Y'.'2Fs'.'bF91c2VyX2Z1bmM='),base64_decode('Y2F'.'sbF9'.'1c2VyX2Z1bm'.'M='));if(!function_exists(__NAMESPACE__.'\\___1998284282')){function ___1998284282($_500525675){static $_972051027= false; if($_972051027 == false) $_972051027=array(''.'VV'.'NFUg'.'==','VVNFUg='.'=','VVNFU'.'g==','SXNBdX'.'Rob3JpemVk','VV'.'N'.'FUg='.'=',''.'S'.'XNBZG'.'1pbg==','REI=',''.'U0V'.'M'.'R'.'UNUIFZBTFVFIEZST00'.'gYl9v'.'cHRpb24gV0h'.'F'.'UkUgT'.'kFNRT0n'.'f'.'lBBUkFNX01'.'B'.'W'.'F9VU0VSUy'.'c'.'gQU5'.'EIE1PRF'.'VMRV9J'.'RD0nb'.'W'.'Fpbi'.'cgQU5EI'.'FNJ'.'VEVfSUQgSVM'.'g'.'TlV'.'MTA'.'==',''.'Vk'.'FM'.'VU'.'U'.'=','Lg==','SC'.'o'.'=','Yml0cml4','TElDRU5'.'TRV9LRVk=','c2hhM'.'j'.'U2','XE'.'JpdHJpeFx'.'NYWluXExp'.'Y2Vuc2U=',''.'Z2'.'V0QWN0aXZ'.'lVXNlcn'.'NDb3V'.'ud'.'A==','R'.'EI=','U0VM'.'R'.'UNUIENPVU5UKF'.'UuSUQp'.'I'.'GFzIEMgRlJP'.'TSBiX3VzZXIgVS'.'BX'.'S'.'EVSRS'.'BVLkFDVElWR'.'S'.'A9I'.'CdZJyBBTkQg'.'VS'.'5'.'MQ'.'VNUX0xPR0lOIElTIE5PVC'.'BO'.'VUxMIEF'.'ORCB'.'FWElTVFMoU0V'.'MRUNUICd'.'4JyBGUk9NIGJfdXRtX'.'3V'.'z'.'ZXIgVUYsIGJfd'.'XNlcl9maWVsZCBG'.'IFdIR'.'VJFIEYuRU5US'.'VRZ'.'X0lE'.'ID'.'0'.'g'.'J1VTRVInI'.'EFO'.'RCBGLkZ'.'JRU'.'xEX05BT'.'U'.'UgPSAn'.'VUZfREVQQV'.'JUTUV'.'OVC'.'cgQU'.'5EIF'.'VGLkZ'.'JRU'.'xEX0lEI'.'D0gRi5'.'JRCBBTkQgVUY'.'uVkFMVUVfSUQg'.'P'.'SBVLkl'.'EIEFO'.'R'.'CBVRi'.'5W'.'QUxVRV9'.'JTlQ'.'gSVMgTk'.'9'.'UIE'.'5VT'.'Ew'.'gQU5'.'EIFVGLlZBTF'.'VF'.'X'.'0lOVCA8Pi'.'AwKQ==','Qw==','TU'.'9'.'EVUx'.'FX'.'0lE',''.'bWFp'.'bg==','VE'.'FH','cmV'.'kaXJ'.'lY'.'3R'.'fYn'.'lf'.'bWF4dXNlcn'.'M=','TUVTU0FH'.'RQ='.'=','V'.'W'.'5mb'.'3J0d'.'W'.'5h'.'d'.'GVseSwgeW91'.'IGhhdmUgZXh'.'jZWVkZWQgd'.'G'.'hlIG'.'1heGltdW0'.'gbn'.'VtYmVyI'.'G9mIHVzZXJ'.'zIGFsb'.'G'.'93'.'ZWQg'.'Zm9yIHl'.'v'.'dXIgbGlj'.'Z'.'W5zZ'.'S'.'4=','T'.'k9USUZZX1R'.'ZUEU=','RE9D'.'V'.'U1FTlRf'.'U'.'k'.'9PVA==',''.'L2xpY'.'2Vuc2VfcmVzdHJpY'.'3Rpb24'.'ucG'.'h'.'w','Q'.'VB'.'QTE'.'lDQV'.'RJ'.'T04=',''.'U'.'mVzdGFydE'.'J'.'1'.'ZmZ'.'lcg==','TG9'.'jYWx'.'SZWRpcmVjd'.'A'.'==','L2xpY'.'2Vu'.'c2Vf'.'cmVz'.'d'.'HJp'.'Y3Rpb24'.'ucGhw','VVNFUg==','T'.'G9nb'.'3'.'V0');return base64_decode($_972051027[$_500525675]);}};if($GLOBALS['____2034807698'][0](round(0+1), round(0+4+4+4+4+4)) == round(0+2.3333333333333+2.3333333333333+2.3333333333333)){ if(isset($GLOBALS[___1998284282(0)]) && $GLOBALS['____2034807698'][1]($GLOBALS[___1998284282(1)]) && $GLOBALS['____2034807698'][2](array($GLOBALS[___1998284282(2)], ___1998284282(3))) &&!$GLOBALS['____2034807698'][3](array($GLOBALS[___1998284282(4)], ___1998284282(5)))){ $_165240420= $GLOBALS[___1998284282(6)]->Query(___1998284282(7), true); if(!($_346399129= $_165240420->Fetch())){ $_1918529304= round(0+6+6);} $_709598775= $_346399129[___1998284282(8)]; list($_820669025, $_1918529304)= $GLOBALS['____2034807698'][4](___1998284282(9), $_709598775); $_919178655= $GLOBALS['____2034807698'][5](___1998284282(10), $_820669025); $_967246382= ___1998284282(11).$GLOBALS['____2034807698'][6]($GLOBALS['____2034807698'][7](___1998284282(12))); $_1610416698= $GLOBALS['____2034807698'][8](___1998284282(13), $_1918529304, $_967246382, true); if($GLOBALS['____2034807698'][9]($_1610416698, $_919178655) !==(209*2-418)){ $_1918529304= round(0+2.4+2.4+2.4+2.4+2.4);} if($_1918529304 !=(1228/2-614)){ if($GLOBALS['____2034807698'][10](___1998284282(14), ___1998284282(15))){ $_1054140514= new \Bitrix\Main\License(); $_424590889= $_1054140514->getActiveUsersCount();} else{ $_424590889=(1020/2-510); $_165240420= $GLOBALS[___1998284282(16)]->Query(___1998284282(17), true); if($_346399129= $_165240420->Fetch()){ $_424590889= $GLOBALS['____2034807698'][11]($_346399129[___1998284282(18)]);}} if($_424590889> $_1918529304){ \CAdminNotify::Add(array( ___1998284282(19) => ___1998284282(20), ___1998284282(21) => ___1998284282(22), ___1998284282(23) => ___1998284282(24), ___1998284282(25) => \CAdminNotify::TYPE_ERROR,)); if($GLOBALS['____2034807698'][12]($_SERVER[___1998284282(26)].___1998284282(27))){ $GLOBALS['____2034807698'][13](array($GLOBALS[___1998284282(28)], ___1998284282(29))); $GLOBALS['____2034807698'][14](___1998284282(30), ___1998284282(31), true);} else{ $GLOBALS['____2034807698'][15](array($GLOBALS[___1998284282(32)], ___1998284282(33)));}}}}}/**/
 
 		//user auto time zone via js cookies
-		if(CTimeZone::Enabled() && (!defined("BX_SKIP_TIMEZONE_COOKIE") || BX_SKIP_TIMEZONE_COOKIE === false))
+		if (CTimeZone::Enabled() && (!defined("BX_SKIP_TIMEZONE_COOKIE") || BX_SKIP_TIMEZONE_COOKIE === false))
 		{
 			CTimeZone::SetAutoCookie();
 		}
@@ -3453,14 +3682,14 @@ abstract class CAllMain
 		// check user options set via cookie
 		if ($USER->IsAuthorized())
 		{
-			$cookieName = COption::GetOptionString("main", "cookie_name", "BITRIX_SM")."_LAST_SETTINGS";
-			if(!empty($_COOKIE[$cookieName]))
+			$cookieName = COption::GetOptionString("main", "cookie_name", "BITRIX_SM") . "_LAST_SETTINGS";
+			if (!empty($_COOKIE[$cookieName]))
 			{
 				CUserOptions::SetCookieOptions($cookieName);
 			}
 		}
 
-		foreach(GetModuleEvents("main", "OnProlog", true) as $arEvent)
+		foreach (GetModuleEvents("main", "OnProlog", true) as $arEvent)
 		{
 			ExecuteModuleEventEx($arEvent);
 		}
@@ -3469,12 +3698,13 @@ abstract class CAllMain
 	/**
 	 * Sends the response and terminates the application.
 	 * @param string $output String to output before termination
+	 * @return void
 	 */
 	public static function FinalActions($output = "")
 	{
 		global $APPLICATION;
 
-		if($output === "")
+		if ($output === "")
 		{
 			$output = $APPLICATION->EndBufferContentMan();
 		}
@@ -3501,10 +3731,10 @@ abstract class CAllMain
 
 		define("START_EXEC_EVENTS_1", microtime());
 
-		if(!defined('BX_SENDPULL_COUNTER_QUEUE_DISABLE') || BX_SENDPULL_COUNTER_QUEUE_DISABLE !== true)
+		if (!defined('BX_SENDPULL_COUNTER_QUEUE_DISABLE') || BX_SENDPULL_COUNTER_QUEUE_DISABLE !== true)
 		{
 			$DB->StartUsingMasterOnly();
-			if(CUserCounter::CheckLiveMode())
+			if (CUserCounter::CheckLiveMode())
 			{
 				CUserCounterPage::checkSendCounter();
 			}
@@ -3514,7 +3744,7 @@ abstract class CAllMain
 		define("START_EXEC_EVENTS_2", microtime());
 
 		//OnAfterEpilog
-		foreach($events as $event)
+		foreach ($events as $event)
 		{
 			ExecuteModuleEventEx($event);
 		}
@@ -3528,16 +3758,16 @@ abstract class CAllMain
 	}
 
 	/**
-	 * @deprecated Use \Bitrix\Main\Application::addBackgroundJob()
 	 * @param string|bool $func
 	 * @param array $args
 	 * @return bool|null
+	 * @deprecated Use \Bitrix\Main\Application::addBackgroundJob()
 	 */
-	public static function ForkActions($func = false, $args = array())
+	public static function ForkActions($func = false, $args = [])
 	{
-		if($func !== false)
+		if ($func !== false)
 		{
-			Main\Application::getInstance()->addBackgroundJob($func, $args);
+			Application::getInstance()->addBackgroundJob($func, $args);
 		}
 		return true;
 	}
@@ -3545,7 +3775,7 @@ abstract class CAllMain
 	/** @deprecated */
 	public static function __GetConditionFName()
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Application::getConnection();
 		$helper = $connection->getSqlHelper();
 		return $helper->quote('CONDITION');
 	}

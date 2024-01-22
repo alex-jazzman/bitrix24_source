@@ -4,6 +4,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Type\RandomSequence;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -11,8 +12,6 @@ class CIntranetNotify
 {
 	public static function NewUserMessage($USER_ID): void
 	{
-		static $uniqueIdCache = [];
-
 		if (!CModule::IncludeModule('socialnetwork'))
 		{
 			return;
@@ -83,12 +82,7 @@ class CIntranetNotify
 			$bExtranetUser = true;
 		}
 
-		$uniqueId = round((microtime(true) - mktime(0,0,0,1,1,2017))*10);
-		while (in_array($uniqueId, $uniqueIdCache))
-		{
-			$uniqueId += 10000000;
-		}
-		$uniqueIdCache[] = $uniqueId;
+		$randomGenerator = new RandomSequence('INTRANET_NEW_USER' . $USER_ID);
 
 		$arSoFields = array(
 			"ENTITY_TYPE" => SONET_INTRANET_NEW_USER_ENTITY,
@@ -106,7 +100,7 @@ class CIntranetNotify
 			"SITE_ID" => SITE_ID,
 			"ENABLE_COMMENTS" => "Y", //!!!
 			"RATING_TYPE_ID" => "INTRANET_NEW_USER",
-			"RATING_ENTITY_ID" => $uniqueId,
+			"RATING_ENTITY_ID" => $randomGenerator->rand(1, 2147483647),
 		);
 
 		// check earlier messages for this user
@@ -430,12 +424,12 @@ class CIntranetNotify
 					"NL2BR" => "Y", "VIDEO" => "Y",
 					"LOG_VIDEO" => "N", "SHORT_ANCHOR" => "Y",
 					"USERFIELDS" => $arFields["UF"],
-					"USER" => ($arParams["IM"] === "Y" ? "N" : "Y")
+					"USER" => (isset($arParams["IM"]) && $arParams["IM"] === "Y" ? "N" : "Y")
 				);
 
 				$parserLog->pathToUser = $parserLog->userPath = $arParams["PATH_TO_USER"];
 				$parserLog->arUserfields = $arFields["UF"];
-				$parserLog->bMobile = ($arParams["MOBILE"] === "Y");
+				$parserLog->bMobile = (isset($arParams["MOBILE"]) && $arParams["MOBILE"] === "Y");
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 			}
@@ -463,8 +457,8 @@ class CIntranetNotify
 			}
 
 			if (
-				$arParams["MOBILE"] !== "Y"
-				&& $arParams["NEW_TEMPLATE"] !== "Y"
+				(!isset($arParams["MOBILE"]) || $arParams["MOBILE"] !== "Y")
+				&& (!isset($arParams["NEW_TEMPLATE"]) || $arParams["NEW_TEMPLATE"] !== "Y")
 			)
 			{
 				if (CModule::IncludeModule("forum"))

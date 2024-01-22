@@ -1,9 +1,14 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
-	die();
+<?php
 
-if(!CModule::IncludeModule('crm'))
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+if (!CModule::IncludeModule('crm'))
+{
 	return;
+}
 
 // desktop on CRM index page
 //$sOptions = 'a:1:{s:7:"GADGETS";a:7:{s:19:"CRM_LEAD_LIST@27424";a:4:{s:6:"COLUMN";i:0;s:3:"ROW";i:0;s:4:"HIDE";s:1:"N";s:8:"SETTINGS";a:6:{s:9:"TITLE_STD";s:1:" ";s:9:"STATUS_ID";s:3:"NEW";s:7:"ONLY_MY";s:1:"N";s:4:"SORT";s:11:"DATE_CREATE";s:7:"SORT_BY";s:4:"DESC";s:10:"LEAD_COUNT";s:1:"5";}}s:18:"CRM_DEAL_LIST@9562";a:4:{s:6:"COLUMN";i:0;s:3:"ROW";i:1;s:4:"HIDE";s:1:"N";s:8:"SETTINGS";a:6:{s:9:"TITLE_STD";s:1:" ";s:8:"STAGE_ID";s:3:"WON";s:7:"ONLY_MY";s:1:"N";s:4:"SORT";s:11:"DATE_MODIFY";s:7:"SORT_BY";s:4:"DESC";s:10:"DEAL_COUNT";s:1:"5";}}s:19:"CRM_LEAD_LIST@12470";a:4:{s:6:"COLUMN";i:1;s:3:"ROW";i:0;s:4:"HIDE";s:1:"N";s:8:"SETTINGS";a:6:{s:9:"TITLE_STD";s:1:" ";s:9:"STATUS_ID";s:0:"";s:7:"ONLY_MY";s:1:"Y";s:4:"SORT";s:11:"DATE_CREATE";s:7:"SORT_BY";s:4:"DESC";s:10:"LEAD_COUNT";s:2:"10";}}s:19:"CRM_EVENT_LIST@9504";a:4:{s:6:"COLUMN";i:1;s:3:"ROW";i:1;s:4:"HIDE";s:1:"N";s:8:"SETTINGS";a:3:{s:9:"TITLE_STD";s:1:" ";s:15:"EVENT_TYPE_LIST";s:0:"";s:11:"EVENT_COUNT";s:2:"10";}}s:15:"desktop-actions";a:3:{s:6:"COLUMN";i:2;s:3:"ROW";i:0;s:4:"HIDE";s:1:"N";}s:21:"CRM_CONTACT_LIST@2435";a:4:{s:6:"COLUMN";i:2;s:3:"ROW";i:1;s:4:"HIDE";s:1:"N";s:8:"SETTINGS";a:6:{s:9:"TITLE_STD";s:1:" ";s:7:"TYPE_ID";s:0:"";s:7:"ONLY_MY";s:1:"N";s:4:"SORT";s:11:"DATE_CREATE";s:7:"SORT_BY";s:4:"DESC";s:13:"CONTACT_COUNT";s:1:"5";}}s:21:"CRM_COMPANY_LIST@8538";a:4:{s:6:"COLUMN";i:2;s:3:"ROW";i:2;s:4:"HIDE";s:1:"N";s:8:"SETTINGS";a:6:{s:9:"TITLE_STD";s:1:" ";s:7:"TYPE_ID";s:0:"";s:7:"ONLY_MY";s:1:"N";s:4:"SORT";s:11:"DATE_CREATE";s:7:"SORT_BY";s:4:"DESC";s:13:"COMPANY_COUNT";s:1:"5";}}}}';

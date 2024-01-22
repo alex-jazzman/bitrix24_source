@@ -47,6 +47,7 @@ $MESS["CLU_VERSION_MSG"] = "Версия MySQL slave базы данных (#sla
 $MESS["CLU_SLAVE_RELAY_LOG_MSG"] = "Не задано значение параметра relay-log. При смене имени хоста сервера репликация будет нарушена.";
 $MESS["CLU_RELAY_LOG_WIZREC"] = "В файле my.cnf задайте значение параметра relay-log (например: mysqld-relay-bin) и перезапустите MySQL.";
 $MESS["CLU_VERSION_WIZREC"] = "Обновите MySQL и запустите мастер еще раз.";
+$MESS["CLU_SLAVE_PRIVILEGE_MSG"] = "Привилегии пользователя для репликации.";
 $MESS["CLU_MASTER_STATUS_MSG"] = "Недостаточно привилегий для проверки статуса репликации.";
 $MESS["CLU_MASTER_STATUS_WIZREC"] = "Выполните запрос: #sql#.";
 $MESS["CLU_AUTO_INCREMENT_INCREMENT_ERR_MSG"] = "У сервера с ID равным #node_id# неверное значение параметра auto_increment_increment. Оно должно быть равным #value# (текущее значение auto_increment_increment: #current#).";

@@ -17,7 +17,7 @@ class CClusterRedis
 			$arList = false;
 			if (file_exists($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php'))
 			{
-				include($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php');
+				include $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php';
 			}
 
 			if (defined('BX_REDIS_CLUSTER') && is_array($arList))
@@ -38,8 +38,8 @@ class CClusterRedis
 		self::$arList = false;
 		$isOnline = false;
 
-		$content = "<?\n"
-			. 'define(\'BX_REDIS_CLUSTER\', \'' . EscapePHPString(CMain::GetServerUniqID()) . '\');'
+		$content = '<' . '?' . 'php' . "\n"
+			. 'if (!defined(\'BX_REDIS_CLUSTER\')) define(\'BX_REDIS_CLUSTER\', \'' . EscapePHPString(CMain::GetServerUniqID()) . '\');'
 			. "\n" . '$arList = [' . "\n";
 
 		$groups = [];
@@ -84,7 +84,7 @@ class CClusterRedis
 			$content .= "\t],\n";
 		}
 
-		$content .= "];\n?>";
+		$content .= "];\n";
 
 		file_put_contents($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/cluster/redis.php', $content);
 		bx_accelerator_reset();
@@ -111,7 +111,7 @@ class CClusterRedis
 					'failover' => Option::get('cluster', 'failower_settings'),
 					'timeout' => Option::get('cluster', 'redis_timeoit'),
 					'read_timeout' => Option::get('cluster', 'redis_read_timeout'),
-					'persistent' => (Option::get('cluster', 'redis_persistent') == 'Y'),
+					'persistent' => (Option::get('cluster', 'redis_persistent') === 'Y'),
 				]);
 				self::$systemConfigurationUpdate = true;
 			}
@@ -144,12 +144,13 @@ class CClusterRedis
 		$result = [];
 		foreach (CClusterRedis::loadConfig() as $data)
 		{
+			$host = $data['HOST'] === '127.0.0.1' || $data['HOST'] === 'localhost' ? '' : $data['HOST'];
 			$result[] = [
 				'ID' => $data['ID'],
 				'GROUP_ID' => $data['GROUP_ID'],
 				'SERVER_TYPE' => 'redis',
 				'ROLE_ID' => '',
-				'HOST' => $data['HOST'],
+				'HOST' => $host,
 				'DEDICATED' => 'Y',
 				'EDIT_URL' => '/bitrix/admin/cluster_redis_edit.php?lang=' . LANGUAGE_ID . '&group_id=' . $data['GROUP_ID'] . '&ID=' . $data['ID'],
 			];
@@ -162,7 +163,7 @@ class CClusterRedis
 		$result = [];
 		$ar = CClusterRedis::loadConfig();
 
-		if (is_array($ar[$id]))
+		if (isset($ar[$id]) && is_array($ar[$id]))
 		{
 			$result = $ar[$id];
 		}
@@ -372,10 +373,10 @@ class CClusterRedis
 			try
 			{
 				$redis = new \Redis();
-				if (@$redis->connect($server["HOST"], $server["PORT"]))
+				if (@$redis->connect($server['HOST'], $server['PORT']))
 				{
 					$info = $redis->info();
-					foreach ($stats as $key => $value)
+					foreach ($stats as $key => $_)
 					{
 						$stats[$key] = $info[$key];
 					}

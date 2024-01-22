@@ -4,7 +4,7 @@ IncludeModuleLangFile(__FILE__);
 // Never increase caching time here. There were cache clenup problems noticed.
 if (!defined('CACHED_b_cluster_dbnode'))
 {
-	define("CACHED_b_cluster_dbnode", 3600);
+	define('CACHED_b_cluster_dbnode', 3600);
 }
 
 CModule::AddAutoloadClasses(
@@ -18,7 +18,7 @@ CModule::AddAutoloadClasses(
 		'CClusterSlave' => 'classes/mysql/slave.php',
 		'CClusterMemcache' => 'classes/general/memcache.php',
 		'CClusterRedis' => 'classes/general/redis.php',
-		'CClusterWebnode' => 'classes/general/webnode.php',
+		'CClusterWebNode' => 'classes/general/webnode.php',
 	]
 );
 
@@ -47,7 +47,7 @@ class CCluster
 		static $cache = null;
 		if ($cache === null)
 		{
-			$hosts = array();
+			$hosts = [];
 			foreach (self::getServerList() as $server)
 			{
 				if ($server['DEDICATED'] == 'Y')
@@ -62,11 +62,19 @@ class CCluster
 
 	public static function getServerList()
 	{
+		$cacheType = COption::GetOptionString('cluster', 'cache_type', 'memcache');
+		if ($cacheType == 'memcache')
+		{
+			$cacheServers = CClusterMemcache::getServerList();
+		}
+		else
+		{
+			$cacheServers = CClusterRedis::getServerList();
+		}
 		$servers = array_merge(
 			CClusterDBNode::getServerList()
-			,CClusterMemcache::getServerList()
-			,CClusterRedis::getServerList()
-			,CClusterWebnode::getServerList()
+			,$cacheServers
+			,CClusterWebNode::getServerList()
 		);
 		if (empty($servers))
 		{

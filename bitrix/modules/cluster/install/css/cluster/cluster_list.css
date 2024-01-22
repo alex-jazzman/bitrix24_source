@@ -1,10 +1,10 @@
 .main-grid-row[data-id="separator"] .main-grid-cell-content {
-    margin: 5px;
+	margin: 5px;
 }
 .main-grid-row[data-id="separator"] .main-grid-cell {
-    background-color: transparent;
-    font-weight: bolder;
+	background-color: transparent;
+	font-weight: bolder;
 }
 .main-grid-row[data-id="separator"]:hover > .main-grid-cell {
-    background-color: transparent !important;
+	background-color: transparent !important;
 }

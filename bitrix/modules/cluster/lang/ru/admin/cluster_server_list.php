@@ -6,6 +6,7 @@ $MESS["CLU_SL_SERVER_TYPE"] = "Службы";
 $MESS["CLU_SL_COMMON_HOST"] = "Общий";
 $MESS["CLU_SL_SERVER_TYPE_DATABASE"] = "База данных";
 $MESS["CLU_SL_SERVER_TYPE_MEMCACHE"] = "Memcached";
+$MESS["CLU_SL_SERVER_TYPE_REDIS"] = "Redis";
 $MESS["CLU_SL_SERVER_TYPE_WEB"] = "Веб-сервер";
 $MESS["CLU_SL_SERVER_TYPE_UNKNOWN"] = "Неизвестно";
 $MESS["CLU_SL_GROUP"] = "группа";

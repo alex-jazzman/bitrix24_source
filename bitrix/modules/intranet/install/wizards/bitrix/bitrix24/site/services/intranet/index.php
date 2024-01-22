@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
 
@@ -24,8 +27,8 @@ RegisterModuleDependences("main", "OnGetStaticCacheProvider", "intranet", "\\Bit
 COption::SetOptionString("main", "~show_composite_banner", "N");
 COption::SetOptionString("intranet", "composite_enabled", "Y");
 
-$defaultThemeId = "light:milky-way";
-$theme = new \Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker(WIZARD_TEMPLATE_ID, WIZARD_SITE_ID);
+$defaultThemeId = in_array(LANGUAGE_ID, ['ru', 'kz', 'by']) ? ThemePicker::DEFAULT_THEME_ID : 'light:orbital-symphony';
+$theme = new ThemePicker(WIZARD_TEMPLATE_ID, WIZARD_SITE_ID);
 $theme->setDefaultTheme($defaultThemeId);
 
 CUserOptions::SetOption("intranet", "left_menu_collapsed", "Y", true);

@@ -1,75 +1,91 @@
+// eslint-disable-next-line no-unused-vars
 function DropTables()
 {
-	function __refreshLog(data)
-	{
-		var obContainer = document.getElementById('output');
-		if (obContainer)
-			obContainer.innerHTML = data;
-	}
-
 	BX.ajax.post(
-		path + '/scripts/drop.php',
+		`${path}/scripts/drop.php`,
 		{
-			sessid:sessid,
-			to_node_id:to_node_id,
-			module:module,
-			lang:LANG
+			sessid: sessid,
+			to_node_id: toNodeId,
+			module: module,
+			lang: LANG,
 		},
-		__refreshLog
+		(data) => {
+			const obContainer = document.getElementById('output');
+			if (obContainer)
+			{
+				obContainer.innerHTML = data;
+			}
+		},
 	);
 }
 
+// eslint-disable-next-line no-unused-vars
 function MoveTables(STEP)
 {
-	if (STEP == null) STEP = 1;
-	if (typeof(STEP) == 'object') STEP = 1;
+	let step = STEP;
 
-	function __refreshLog(data)
+	if (step == null)
 	{
-		var obContainer = document.getElementById('output');
-		if (obContainer)
-			obContainer.innerHTML = data;
+		step = 1;
+	}
+
+	if (BX.Type.isObject(step))
+	{
+		step = 1;
 	}
 
 	BX.ajax.post(
-		path + '/scripts/move.php',
+		`${path}/scripts/move.php`,
 		{
-			sessid:sessid,
-			from_node_id:from_node_id,
-			to_node_id:to_node_id,
-			module:module,
-			status:status,
-			STEP:STEP,
-			lang:LANG
+			sessid: sessid,
+			from_node_id: fromNodeId,
+			to_node_id: toNodeId,
+			module: module,
+			status: nodeStatus,
+			STEP: step,
+			lang: LANG,
 		},
-		__refreshLog
+		(data) => {
+			const obContainer = document.getElementById('output');
+			if (obContainer)
+			{
+				obContainer.innerHTML = data;
+			}
+		},
 	);
 }
 
+// eslint-disable-next-line no-unused-vars
 function RunError()
 {
-	var obErrorMessage = document.getElementById('error_message');
-	if (obErrorMessage) obErrorMessage.style.display = 'inline';
+	const obErrorMessage = document.getElementById('error_message');
+	if (obErrorMessage)
+	{
+		BX.Dom.style(obErrorMessage, 'display', 'inline');
+	}
 }
 
+// eslint-disable-next-line no-unused-vars
 function RunAgain()
 {
-	var obOut = document.getElementById('output');
-	var obErrorMessage = document.getElementById('error_message');
+	const obOut = document.getElementById('output');
+	const obErrorMessage = document.getElementById('error_message');
 
 	obOut.innerHTML = '';
-	obErrorMessage.style.display = 'none';
+	BX.Dom.style(obErrorMessage, 'display', 'none');
 	Run(1);
 }
 
+// eslint-disable-next-line no-unused-vars
 function DisableButton(e)
 {
-	var obNextButton = document.forms[formID][nextButtonID];
+	const obNextButton = document.forms[formID][nextButtonID];
 	obNextButton.disabled = true;
 }
 
+// eslint-disable-next-line no-unused-vars
 function EnableButton()
 {
-	var obNextButton = document.forms[formID][nextButtonID];
+	const obNextButton = document.forms[formID][nextButtonID];
 	obNextButton.disabled = false;
 }

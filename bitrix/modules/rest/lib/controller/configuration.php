@@ -58,7 +58,7 @@ class Configuration extends Controller
 								$entry = $archiveEntryBuilder->createFromFileArray($fileArray, $folderName . '/' . $id);
 								$files[$id] = array_merge(
 									[
-										'NAME' => $fileArray['NAME'],
+										'NAME' => $fileArray['ORIGINAL_NAME'],
 									],
 									$file
 								);

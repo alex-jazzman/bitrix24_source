@@ -47,15 +47,8 @@ $DBName = '';
 // need to be after dbconn.php
 require_once __DIR__ . '/include/constants.php';
 
-$connectionType = $application->getConnection()->getType();
-
-\Bitrix\Main\Loader::registerAutoLoadClasses(
-	'main',
-	[
-		'CDatabase' => 'classes/' . $connectionType . '/database.php',
-		'CDBResult' => 'classes/' . $connectionType . '/dbresult.php',
-	]
-);
+// Database-dependent classes
+CAllDatabase::registerAutoload();
 
 // From here global variable $DB is available (CDatabase class)
 $GLOBALS['DB'] = new CDatabase();
@@ -86,7 +79,7 @@ if ($show_sql_stat == 'Y')
 
 /**
  * License key.
- * @deprecated Use $application->getLicense()->getKey()
+ * @deprecated Use $application->getLicense()->getKey().
  */
 define('LICENSE_KEY', $application->getLicense()->getKey());
 

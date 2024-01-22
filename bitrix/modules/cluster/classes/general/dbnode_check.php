@@ -2,8 +2,8 @@
 
 class CAllClusterDBNodeCheck
 {
-	function MainNode()
+	public function MainNode()
 	{
-		return array();
+		return [];
 	}
 }

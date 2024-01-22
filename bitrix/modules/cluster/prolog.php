@@ -1,12 +1,11 @@
-<?
-define("ADMIN_MODULE_NAME", "cluster");
+<?php
+define('ADMIN_MODULE_NAME', 'cluster');
 
 $message = null;
-if(CModule::IncludeModule('cluster'))
+if (CModule::IncludeModule('cluster'))
 {
-	if(!CCluster::checkForServers(0))
+	if (!CCluster::checkForServers(0))
 	{
-		$message = new CAdminMessage(array("MESSAGE"=>GetMessage("CLUSTER_SERVER_COUNT_ERROR"), "TYPE"=>"ERROR"));
+		$message = new CAdminMessage(['MESSAGE' => GetMessage('CLUSTER_SERVER_COUNT_ERROR'), 'TYPE' => 'ERROR']);
 	}
 }
-?>

@@ -3,37 +3,60 @@ IncludeModuleLangFile(__FILE__);
 
 class CClusterGroup
 {
-	function Add($arFields)
+	public function Add($arFields)
 	{
 		global $DB;
 
-		if(!$this->CheckFields($arFields, 0))
+		if (!$this->CheckFields($arFields, 0))
+		{
 			return false;
+		}
 
-		$ID = $DB->Add("b_cluster_group", $arFields);
+		$ID = $DB->Add('b_cluster_group', $arFields);
 
 		return $ID;
 	}
 
-	function Delete($ID)
+	public function Delete($ID)
 	{
 		global $DB, $APPLICATION;
-		$aMsg = array();
+		$aMsg = [];
 		$ID = intval($ID);
 
-		$rsWebNodes = CClusterWebnode::GetList(array(), array("=GROUP_ID"=>$ID));
-		if($rsWebNodes->Fetch())
-			$aMsg[] = array("text" => GetMessage("CLU_GROUP_HAS_WEBNODE"));
-
-		$rsDBNodes = CClusterDBNode::GetList(array() ,array("=GROUP_ID"=>$ID));
-		if($rsWebNodes->Fetch())
-			$aMsg[] = array("text" => GetMessage("CLU_GROUP_HAS_DBNODE"));
-
-		/*TODO: memcache check*/
-
-		if(empty($aMsg))
+		$rsWebNodes = CClusterWebNode::GetList([], ['=GROUP_ID' => $ID]);
+		if ($rsWebNodes->Fetch())
 		{
-			$res = $DB->Query("DELETE FROM b_cluster_group WHERE ID = ".$ID, false, '', array('fixed_connection'=>true));
+			$aMsg[] = ['text' => GetMessage('CLU_GROUP_HAS_WEBNODE')];
+		}
+
+		$rsDBNodes = CClusterDBNode::GetList([] ,['=GROUP_ID' => $ID]);
+		if ($rsDBNodes->Fetch())
+		{
+			$aMsg[] = ['text' => GetMessage('CLU_GROUP_HAS_DBNODE')];
+		}
+
+		$cacheType = COption::GetOptionString('cluster', 'cache_type', 'memcache');
+		if ($cacheType == 'memcache')
+		{
+			$cacheServers = CClusterMemcache::GetList();
+		}
+		else
+		{
+			$cacheServers = CClusterRedis::GetList();
+		}
+
+		while ($server = $cacheServers->Fetch())
+		{
+			if ($server['GROUP_ID'] == $ID)
+			{
+				$aMsg[] = ['text' => GetMessage('CLU_GROUP_HAS_CACHESERVER')];
+				break;
+			}
+		}
+
+		if (empty($aMsg))
+		{
+			$res = $DB->Query('DELETE FROM b_cluster_group WHERE ID = ' . $ID, false, '', ['fixed_connection' => true]);
 		}
 		else
 		{
@@ -44,46 +67,52 @@ class CClusterGroup
 		return $res;
 	}
 
-	function Update($ID, $arFields)
+	public function Update($ID, $arFields)
 	{
 		global $DB;
 		$ID = intval($ID);
 
-		if($ID <= 0)
-			return false;
-
-		if(!$this->CheckFields($arFields, $ID))
-			return false;
-
-		$strUpdate = $DB->PrepareUpdate("b_cluster_group", $arFields);
-		if($strUpdate <> '')
+		if ($ID <= 0)
 		{
-			$strSql = "
+			return false;
+		}
+
+		if (!$this->CheckFields($arFields, $ID))
+		{
+			return false;
+		}
+
+		$strUpdate = $DB->PrepareUpdate('b_cluster_group', $arFields);
+		if ($strUpdate <> '')
+		{
+			$strSql = '
 				UPDATE b_cluster_group SET
-				".$strUpdate."
-				WHERE ID = ".$ID."
-			";
-			if(!$DB->Query($strSql, false, '', array('fixed_connection'=>true)))
+				' . $strUpdate . '
+				WHERE ID = ' . $ID . '
+			';
+			if (!$DB->Query($strSql, false, '', ['fixed_connection' => true]))
+			{
 				return false;
+			}
 		}
 
 		return true;
 	}
 
-	function CheckFields(&$arFields, $ID)
+	public function CheckFields(&$arFields, $ID)
 	{
 		global $APPLICATION;
-		$aMsg = array();
+		$aMsg = [];
 
-		unset($arFields["ID"]);
+		unset($arFields['ID']);
 
-		$arFields["NAME"] = trim($arFields["NAME"]);
-		if($arFields["NAME"] == '')
+		$arFields['NAME'] = trim($arFields['NAME']);
+		if ($arFields['NAME'] === '')
 		{
-			$aMsg[] = array("id" => "NAME", "text" => GetMessage("CLU_GROUP_EMPTY_NAME"));
+			$aMsg[] = ['id' => 'NAME', 'text' => GetMessage('CLU_GROUP_EMPTY_NAME')];
 		}
 
-		if(!empty($aMsg))
+		if (!empty($aMsg))
 		{
 			$e = new CAdminException($aMsg);
 			$APPLICATION->ThrowException($e);
@@ -96,94 +125,104 @@ class CClusterGroup
 	{
 		global $DB;
 
-		if(!is_array($arSelect))
-			$arSelect = array();
-		if(count($arSelect) < 1)
-			$arSelect = array(
-				"ID",
-				"NAME",
-			);
+		if (!is_array($arSelect))
+		{
+			$arSelect = [];
+		}
+		if (count($arSelect) < 1)
+		{
+			$arSelect = [
+				'ID',
+				'NAME',
+			];
+		}
 
-		if(!is_array($arOrder))
-			$arOrder = array();
+		if (!is_array($arOrder))
+		{
+			$arOrder = [];
+		}
 
-		$arQueryOrder = array();
-		foreach($arOrder as $strColumn => $strDirection)
+		$arQueryOrder = [];
+		foreach ($arOrder as $strColumn => $strDirection)
 		{
 			$strColumn = mb_strtoupper($strColumn);
-			$strDirection = mb_strtoupper($strDirection) == "ASC"? "ASC": "DESC";
-			switch($strColumn)
+			$strDirection = mb_strtoupper($strDirection) === 'ASC' ? 'ASC' : 'DESC';
+			switch ($strColumn)
 			{
-				case "ID":
-				case "NAME":
+				case 'ID':
+				case 'NAME':
 					$arSelect[] = $strColumn;
-					$arQueryOrder[$strColumn] = $strColumn." ".$strDirection;
+					$arQueryOrder[$strColumn] = $strColumn . ' ' . $strDirection;
 					break;
 			}
 		}
 
-		$arQuerySelect = array();
-		foreach($arSelect as $strColumn)
+		$arQuerySelect = [];
+		foreach ($arSelect as $strColumn)
 		{
 			$strColumn = mb_strtoupper($strColumn);
-			switch($strColumn)
+			switch ($strColumn)
 			{
-				case "ID":
-				case "NAME":
-					$arQuerySelect[$strColumn] = "g.".$strColumn;
+				case 'ID':
+				case 'NAME':
+					$arQuerySelect[$strColumn] = 'g.' . $strColumn;
 					break;
 			}
 		}
-		if(count($arQuerySelect) < 1)
-			$arQuerySelect = array("ID"=>"w.ID");
+		if (count($arQuerySelect) < 1)
+		{
+			$arQuerySelect = ['ID' => 'w.ID'];
+		}
 
 		$obQueryWhere = new CSQLWhere;
-		$arFields = array(
-			"ID" => array(
-				"TABLE_ALIAS" => "g",
-				"FIELD_NAME" => "g.ID",
-				"FIELD_TYPE" => "int",
-				"JOIN" => false,
-			),
-		);
+		$arFields = [
+			'ID' => [
+				'TABLE_ALIAS' => 'g',
+				'FIELD_NAME' => 'g.ID',
+				'FIELD_TYPE' => 'int',
+				'JOIN' => false,
+			],
+		];
 		$obQueryWhere->SetFields($arFields);
 
-		if(!is_array($arFilter))
-			$arFilter = array();
+		if (!is_array($arFilter))
+		{
+			$arFilter = [];
+		}
 		$strQueryWhere = $obQueryWhere->GetQuery($arFilter);
 
 		$bDistinct = $obQueryWhere->bDistinctReqired;
 
-		$strSql = "
-			SELECT ".($bDistinct? "DISTINCT": "")."
-			".implode(", ", $arQuerySelect)."
+		$strSql = '
+			SELECT ' . ($bDistinct ? 'DISTINCT' : '') . '
+			' . implode(', ', $arQuerySelect) . '
 			FROM
 				b_cluster_group g
-			".$obQueryWhere->GetJoins()."
-		";
+			' . $obQueryWhere->GetJoins() . '
+		';
 
-		if($strQueryWhere)
+		if ($strQueryWhere)
 		{
-			$strSql .= "
+			$strSql .= '
 				WHERE
-				".$strQueryWhere."
-			";
+				' . $strQueryWhere . '
+			';
 		}
 
-		if(count($arQueryOrder) > 0)
+		if (count($arQueryOrder) > 0)
 		{
-			$strSql .= "
+			$strSql .= '
 				ORDER BY
-				".implode(", ", $arQueryOrder)."
-			";
+				' . implode(', ', $arQueryOrder) . '
+			';
 		}
 
-		return $DB->Query($strSql, false, '', array('fixed_connection'=>true));
+		return $DB->Query($strSql, false, '', ['fixed_connection' => true]);
 	}
 
 	public static function GetArrayByID($ID)
 	{
-		$rs = CClusterGroup::GetList(array(), array("=ID"=>$ID));
+		$rs = CClusterGroup::GetList([], ['=ID' => $ID]);
 		return $rs->Fetch();
 	}
 }
