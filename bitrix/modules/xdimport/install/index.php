@@ -50,7 +50,7 @@ Class xdimport extends CModule
 	
 		$this->errors = false;
 		if(!$DB->Query("SELECT 'x' FROM b_xdi_lf_scheme", true))
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/xdimport/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/xdimport/install/db/mysql/install.sql");
 
 		if($this->errors !== false)
 		{
@@ -114,7 +114,7 @@ Class xdimport extends CModule
 		$this->errors = false;
 		
 		if (!$arParams['savedata'])
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/xdimport/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/xdimport/install/db/mysql/uninstall.sql");
 
 		if(is_array($this->errors))
 			$arSQLErrors = array_merge($arSQLErrors, $this->errors);

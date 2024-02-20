@@ -14540,10 +14540,8 @@ class CCrmPaySystemRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		$personTypeIds = array();
-		foreach (CCrmPaySystem::getPersonTypeIDs() as $ptId)
-			$personTypeIds[] = (int)$ptId;
-		$personTypeIds = array_values(CCrmPaySystem::getPersonTypeIDs());
+		$personTypeIds = CCrmPaySystem::getPersonTypeIDs();
+		$personTypeIds = is_array($personTypeIds) ? array_values($personTypeIds) : [];
 
 		$page = isset($navigation['iNumPage']) ? (int)$navigation['iNumPage'] : 1;
 		$limit = isset($navigation['nPageSize']) ? (int)$navigation['nPageSize'] : CCrmRestService::LIST_LIMIT;

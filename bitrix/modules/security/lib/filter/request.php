@@ -46,6 +46,9 @@ class Request implements IRequestFilter
 		'json' => [
 			'Name' => 'JSON',
 		],
+		'data' => [
+			'Name' => 'data',
+		]
 	];
 	private static $validActions = [
 		self::ACTION_NONE,

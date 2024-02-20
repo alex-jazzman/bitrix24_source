@@ -69,6 +69,20 @@ class AddressBook extends Controller
 
 		foreach ($idSet as $id)
 		{
+			$contactToDelete = MailContactTable::getRow(
+				[
+					'filter' => [
+						'=ID' => $id,
+						'=USER_ID' => $this->getCurrentUser()->getId(),
+					],
+				]
+			);
+
+			if (is_null($contactToDelete))
+			{
+				return false;
+			}
+
 			MailContactTable::delete($id);
 		}
 

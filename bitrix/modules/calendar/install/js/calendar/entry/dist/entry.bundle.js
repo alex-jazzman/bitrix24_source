@@ -943,7 +943,7 @@ this.BX = this.BX || {};
 	      this.deleteParts(recursionMode);
 	      const action = 'deleteCalendarEntry';
 	      const data = {
-	        entryId: this.id,
+	        entryId: this.parentId,
 	        recursionMode: params.recursionMode || false,
 	        requestUid: calendar_util.Util.registerRequestId()
 	      };
@@ -979,7 +979,7 @@ this.BX = this.BX || {};
 	      this.deleteParts(recursionMode);
 	      const action = 'excludeRecursionDate';
 	      const data = {
-	        entryId: this.id,
+	        entryId: this.parentId,
 	        recursionMode: recursionMode,
 	        excludeDate: this.data.DATE_FROM
 	      };
@@ -1016,10 +1016,9 @@ this.BX = this.BX || {};
 	      }]);
 	      EntryManager.showDeleteEntryNotification(this);
 	      this.deleteParts(recursionMode);
-	      const calendarContext = calendar_util.Util.getCalendarContext();
 	      const action = 'changeRecurciveEntryUntil';
 	      const data = {
-	        entryId: this.id,
+	        entryId: this.parentId,
 	        recursionMode: recursionMode,
 	        untilDate: calendar_util.Util.formatDate(this.from.getTime() - calendar_util.Util.getDayLength())
 	      };

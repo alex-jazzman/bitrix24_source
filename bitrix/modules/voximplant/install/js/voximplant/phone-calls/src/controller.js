@@ -15,6 +15,7 @@ const lsKeys = {
 	vite: 'vite',
 	dialHistory: 'vox-dial-history',
 	foldedView: 'vox-folded-call-card',
+	callView: 'bx-vox-call-view',
 }
 
 const Events = {
@@ -267,9 +268,28 @@ export class PhoneCallsController extends EventEmitter
 			return false;
 		}
 
+		if (this.callView && !this.callView?.popup)
+		{
+			this.#onCallViewClose();
+		}
+
+		if (
+			BX.localStorage.get(lsKeys.callView)
+			&& this.callView?.popup
+			&& !Boolean(this._currentCall)
+			&& !this.isCallListMode()
+			&& !this.messengerFacade.hasActiveCall()
+		)
+		{
+			this.showCallViewBalloon();
+		}
+
 		if (this.hasActiveCall() || this.isCallListMode() || this.messengerFacade.hasActiveCall())
 		{
-			BX.rest.callMethod('voximplant.call.busy', {'CALL_ID': params.callId});
+			BX.rest.callMethod('voximplant.call.busy', {
+				CALL_ID: params.callId,
+				DEBUG_INFO: this.getDebugInfo(),
+			});
 			return false;
 		}
 
@@ -278,8 +298,7 @@ export class PhoneCallsController extends EventEmitter
 			return false;
 		}
 
-		this.checkDesktop().then(() =>
-		{
+		this.checkDesktop().then(() => {
 			if (params.CRM && params.CRM.FOUND)
 			{
 				this.phoneCrm = params.CRM;
@@ -377,6 +396,7 @@ export class PhoneCallsController extends EventEmitter
 			return
 		}
 
+		this.showCallViewBalloon();
 		this.callView.setCallState(CallState.idle, {failedCode: params.failedCode});
 		if (external && params.failedCode == 486)
 		{
@@ -750,6 +770,7 @@ export class PhoneCallsController extends EventEmitter
 		BX.localStorage.remove(lsKeys.callInited);
 
 		this.callOverlayTimer('pause');
+		this.showCallViewBalloon();
 
 		if (this.currentCall)
 		{
@@ -1924,6 +1945,7 @@ export class PhoneCallsController extends EventEmitter
 
 		if (this.callView)
 		{
+			BX.localStorage.set(lsKeys.callView, this.callView.callId, 86400);
 			this.callView.setUiState(UiState.connected);
 			this.callView.setCallState(CallState.connected);
 			this.callView.setProgress(CallProgress.online);
@@ -2067,6 +2089,7 @@ export class PhoneCallsController extends EventEmitter
 		if (this.callView)
 		{
 			this.callView.dispose();
+			this.closeCallViewBalloon();
 			this.callView = null;
 		}
 
@@ -2361,6 +2384,7 @@ export class PhoneCallsController extends EventEmitter
 			if (this.callView)
 			{
 				this.callView.dispose();
+				this.closeCallViewBalloon();
 				this.callView = null;
 			}
 
@@ -2516,6 +2540,7 @@ export class PhoneCallsController extends EventEmitter
 			if (this.callView)
 			{
 				this.callView.dispose();
+				this.closeCallViewBalloon();
 				this.callView = null;
 			}
 		});
@@ -2654,8 +2679,55 @@ export class PhoneCallsController extends EventEmitter
 		return {
 			vInitedCall: BX.localStorage.get('vInitedCall') ? 'Y' : 'N',
 			isDesktop: this.messengerFacade.isDesktop() ? 'Y' : 'N',
+			appVersion: navigator.appVersion,
 			hasActiveCall: this.messengerFacade.hasActiveCall() ? 'Y' : 'N',
-			appVersion: navigator.appVersion
+			isCallListMode: this.isCallListMode() ? this.callListId : 'N',
+			currentCall: this.currentCall ? this.currentCall.id() : 'N',
+			callView: this.callView ? this.callView.callId : 'N',
+			callViewPopup: this.callView?.popup ? 'Y' : 'N',
+		};
+	}
+
+	showNotification(notificationText, actions, params = {})
+	{
+		if (!actions)
+		{
+			actions = [];
+		}
+
+		const options = {
+			content: Text.encode(notificationText),
+			position: "top-right",
+			closeButton: true,
+			actions: actions
+		};
+
+		if (params.autoHideDelay)
+		{
+			options.autoHideDelay = params.autoHideDelay;
+		}
+		else
+		{
+			options.autoHide = false;
+		}
+
+		return BX.UI.Notification.Center.notify(options);
+	}
+
+	showCallViewBalloon()
+	{
+		if (!this.openedCallViewBalloon && this.callView)
+		{
+			this.openedCallViewBalloon = this.showNotification(Loc.getMessage('VOXIMPLANT_WARN_CLOSE_CALL_VIEW'));
+		}
+	}
+
+	closeCallViewBalloon()
+	{
+		if (this.openedCallViewBalloon)
+		{
+			this.openedCallViewBalloon.close();
+			this.openedCallViewBalloon = null;
 		}
 	}
 

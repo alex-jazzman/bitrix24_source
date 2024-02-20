@@ -166,6 +166,7 @@ export class Location
 		const pushRoomToItemList = (room) => {
 			room.id = parseInt(room.id);
 			room.location_id = parseInt(room.location_id);
+			const isSelected = parseInt(this.value.value) === parseInt(room.id);
 			menuItemList.push({
 				ID: room.id,
 				LOCATION_ID: room.location_id,
@@ -176,13 +177,11 @@ export class Location
 				labelRaw: room.name,
 				labelCapacity: this.getCapacityMessage(room.capacity),
 				value: room.id,
-				type: 'calendar'
+				type: 'calendar',
+				selected: isSelected,
 			});
 
-			if (
-				this.value.type === 'calendar'
-				&& parseInt(this.value.value) === parseInt(room.id)
-			)
+			if (this.value.type === 'calendar' && isSelected)
 			{
 				selectedIndex = menuItemList.length - 1;
 			}
@@ -233,11 +232,6 @@ export class Location
 			}
 		}
 
-		if (this.selectContol)
-		{
-			this.selectContol.destroy();
-		}
-
 		let disabledControl = this.disabled;
 		if (!menuItemList.length)
 		{
@@ -246,7 +240,7 @@ export class Location
 
 		this.processValue();
 
-		this.selectContol = new SelectInput({
+		this.selectContol ??= new SelectInput({
 			input: this.DOM.input,
 			values: menuItemList,
 			valueIndex: selectedIndex,
@@ -276,9 +270,22 @@ export class Location
 					this.removeLocationRemoveButton();
 				}
 				this.addLocationRemoveButton();
+
+				menuItemList.forEach((location) => {
+					location.selected = (location.value === this.value.value);
+				});
+				this.selectContol.setValueList(menuItemList);
+
 				this.allowClick();
 			}
 		});
+
+		this.selectContol.setValueList(menuItemList);
+		this.selectContol.setValue({
+			valueIndex: selectedIndex,
+		});
+		this.selectContol.setDisabled(disabledControl);
+
 		this.allowClick();
 	}
 
@@ -422,8 +429,10 @@ export class Location
 
 	checkLocationAccessibility(params)
 	{
+		this.selectContol?.setLoading(true);
 		this.getLocationAccessibility(params.from, params.to)
 		.then(()=> {
+			this.selectContol?.setLoading(false);
 			const timezone = (params.timezone && params.timezone !== '')
 				? params.timezone
 				: Util.getUserSettings().timezoneName

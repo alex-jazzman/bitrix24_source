@@ -699,7 +699,7 @@ class Filter extends Common
 					'OVERDUED' => Loc::getMessage('TASKS_FILTER_PARAMS_OVERDUED'),
 					'FAVORITE' => Loc::getMessage('TASKS_FILTER_PARAMS_FAVORITE'),
 					'ANY_TASK' => Loc::getMessage('TASKS_FILTER_PARAMS_ANY_TASK'),
-					'IS_REGULAR' => Loc::getMessage('TASKS_FILTER_PARAMS_IS_REGULAR'),
+					// 'IS_REGULAR' => Loc::getMessage('TASKS_FILTER_PARAMS_IS_REGULAR'),
 				],
 			];
 		}

@@ -1,9 +1,9 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 (function (exports,main_core) {
     'use strict';
 
+    let isStop = false;
     class Circle {
       constructor(domNode, perimetr, progressBar, fixCounter, withoutWaves) {
         this.domNode = domNode;
@@ -108,6 +108,9 @@ this.BX.UI = this.BX.UI || {};
         let interval = 1000 / fps;
         let delta;
         function draw() {
+          if (isStop) {
+            return;
+          }
           requestAnimationFrame(draw);
           now = Date.now();
           delta = now - then;
@@ -183,6 +186,7 @@ this.BX.UI = this.BX.UI || {};
         this.animateWavesBlock(fixCounter);
       }
       show() {
+        isStop = false;
         main_core.Dom.append(this.createWrapper(), this.domNode);
         setTimeout(function () {
           this.addWrapperClass();
@@ -199,6 +203,9 @@ this.BX.UI = this.BX.UI || {};
             this.animateWavesBlock(this.fixCounter);
           }
         }.bind(this), 500);
+      }
+      stop() {
+        isStop = true;
       }
     }
 

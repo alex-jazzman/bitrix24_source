@@ -1,8 +1,7 @@
 <?php
 
-global $DBType;
-
 IncludeModuleLangFile(__FILE__);
+
 
 if (!IsModuleInstalled("socialnetwork"))
 {
@@ -21,7 +20,7 @@ CModule::AddAutoloadClasses(
 		"CXDImport" => "classes/general/xdimport.php",
 		"CXDIUser" => "classes/general/user.php",
 		"CXDILiveFeed" => "classes/general/livefeed.php",
-		"CXDILFScheme" => "classes/".$DBType."/lf_scheme.php",
+		"CXDILFScheme" => "classes/mysql/lf_scheme.php",
 		"CXDILFSchemeRights" => "classes/general/lf_scheme_rights.php",
 		"CXDILFSchemeXML" => "classes/general/lf_scheme_xml.php",
 		"CXDILFSchemeRSS" => "classes/general/lf_scheme_rss.php",
@@ -369,7 +368,18 @@ class CXDILFEventHandlers
 
 				$parserLog->pathToUser = $parserLog->userPath = $arParams["PATH_TO_USER"];
 				$parserLog->arUserfields = $arFields["UF"];
-				$parserLog->bMobile = ($arParams["MOBILE"] == "Y");
+				$parserLog->bMobile = ($arParams['MOBILE'] === 'Y');
+				if ($arParams['MOBILE'] !== 'Y')
+				{
+					if (!empty($arParams['IMAGE_MAX_WIDTH']))
+					{
+						$parserLog->imageWidth = (int)$arParams['IMAGE_MAX_WIDTH'];
+					}
+					if (!empty($arParams['IMAGE_MAX_HEIGHT']))
+					{
+						$parserLog->imageHeight = (int)$arParams['IMAGE_MAX_HEIGHT'];
+					}
+				}
 
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);

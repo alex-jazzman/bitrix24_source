@@ -4207,6 +4207,14 @@ class CCalendarEvent
 
 				CCalendar::ClearCache('event_list');
 
+				(new \Bitrix\Calendar\Integration\SocialNetwork\SpaceService())->addEvent(
+					'onAfterCalendarEventDelete',
+					[
+						'ID' => $id,
+						'ATTENDEE_LIST' => $entry['ATTENDEE_LIST'] ?? null,
+					],
+				);
+
 				$pullUserId = (int)$entry['CREATED_BY'] > 0 ? (int)$entry['CREATED_BY'] : $userId;
 				if (
 					$pullUserId

@@ -2526,7 +2526,10 @@ this.BX = this.BX || {};
 	};
 	var lsKeys = {
 	  height: 'im-phone-call-view-height',
-	  width: 'im-phone-call-view-width'
+	  width: 'im-phone-call-view-width',
+	  callView: 'bx-vox-call-view',
+	  callInited: 'viInitedCall',
+	  externalCall: 'viExternalCard'
 	};
 	var desktopEvents = {
 	  setTitle: 'phoneCallViewSetTitle',
@@ -2836,6 +2839,7 @@ this.BX = this.BX || {};
 	    value: function init() {
 	      var _this2 = this;
 	      if (this.isDesktop() && !this.slave) {
+	        console.log('Init phone call view window:', location.href);
 	        this.desktop.openCallWindow('', null, {
 	          width: this.getInitialWidth(),
 	          height: this.getInitialHeight(),
@@ -2910,6 +2914,7 @@ this.BX = this.BX || {};
 	        this.disableDocumentScroll();
 	      }
 	      this.popup.show();
+	      BX.localStorage.set(lsKeys.callView, this.callId, 86400);
 	      return this;
 	    }
 	  }, {
@@ -5838,6 +5843,9 @@ this.BX = this.BX || {};
 	      } else {
 	        window.removeEventListener('beforeunload', this._onBeforeUnloadHandler);
 	      }
+	      if (!BX.localStorage.get(lsKeys.callInited) && !BX.localStorage.get(lsKeys.externalCall)) {
+	        BX.localStorage.remove(lsKeys.callView);
+	      }
 	    }
 	  }, {
 	    key: "canBeUnloaded",
@@ -6129,7 +6137,8 @@ this.BX = this.BX || {};
 	  externalCall: 'viExternalCard',
 	  vite: 'vite',
 	  dialHistory: 'vox-dial-history',
-	  foldedView: 'vox-folded-call-card'
+	  foldedView: 'vox-folded-call-card',
+	  callView: 'bx-vox-call-view'
 	};
 	var Events$1 = {
 	  onCallCreated: 'onCallCreated',
@@ -6341,6 +6350,7 @@ this.BX = this.BX || {};
 	      clearInterval(this.phoneCallTimeInterval);
 	      BX.localStorage.remove(lsKeys$1.callInited);
 	      this.callOverlayTimer('pause');
+	      this.showCallViewBalloon();
 	      if (this.currentCall) {
 	        try {
 	          this.currentCall.hangup({
@@ -7092,6 +7102,7 @@ this.BX = this.BX || {};
 	      callView.setCallback('close', function () {
 	        if (_this12.callView) {
 	          _this12.callView.dispose();
+	          _this12.closeCallViewBalloon();
 	          _this12.callView = null;
 	        }
 	        _this12.callId = '';
@@ -7212,6 +7223,7 @@ this.BX = this.BX || {};
 	        BX.localStorage.set(lsKeys$1.externalCall, false);
 	        if (_this13.callView) {
 	          _this13.callView.dispose();
+	          _this13.closeCallViewBalloon();
 	          _this13.callView = null;
 	        }
 	      });
@@ -7318,12 +7330,52 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDebugInfo",
 	    value: function getDebugInfo() {
+	      var _this$callView;
 	      return {
 	        vInitedCall: BX.localStorage.get('vInitedCall') ? 'Y' : 'N',
 	        isDesktop: this.messengerFacade.isDesktop() ? 'Y' : 'N',
+	        appVersion: navigator.appVersion,
 	        hasActiveCall: this.messengerFacade.hasActiveCall() ? 'Y' : 'N',
-	        appVersion: navigator.appVersion
+	        isCallListMode: this.isCallListMode() ? this.callListId : 'N',
+	        currentCall: this.currentCall ? this.currentCall.id() : 'N',
+	        callView: this.callView ? this.callView.callId : 'N',
+	        callViewPopup: (_this$callView = this.callView) !== null && _this$callView !== void 0 && _this$callView.popup ? 'Y' : 'N'
 	      };
+	    }
+	  }, {
+	    key: "showNotification",
+	    value: function showNotification(notificationText, actions) {
+	      var params = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	      if (!actions) {
+	        actions = [];
+	      }
+	      var options = {
+	        content: main_core.Text.encode(notificationText),
+	        position: "top-right",
+	        closeButton: true,
+	        actions: actions
+	      };
+	      if (params.autoHideDelay) {
+	        options.autoHideDelay = params.autoHideDelay;
+	      } else {
+	        options.autoHide = false;
+	      }
+	      return BX.UI.Notification.Center.notify(options);
+	    }
+	  }, {
+	    key: "showCallViewBalloon",
+	    value: function showCallViewBalloon() {
+	      if (!this.openedCallViewBalloon && this.callView) {
+	        this.openedCallViewBalloon = this.showNotification(main_core.Loc.getMessage('VOXIMPLANT_WARN_CLOSE_CALL_VIEW'));
+	      }
+	    }
+	  }, {
+	    key: "closeCallViewBalloon",
+	    value: function closeCallViewBalloon() {
+	      if (this.openedCallViewBalloon) {
+	        this.openedCallViewBalloon.close();
+	        this.openedCallViewBalloon = null;
+	      }
 	    }
 	  }, {
 	    key: "testSimple",
@@ -7439,13 +7491,22 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _onPullInvite2(params) {
-	  var _this16 = this;
+	  var _this$callView2,
+	    _this$callView3,
+	    _this16 = this;
 	  if (!this.phoneSupport()) {
 	    return false;
 	  }
+	  if (this.callView && !((_this$callView2 = this.callView) !== null && _this$callView2 !== void 0 && _this$callView2.popup)) {
+	    _classPrivateMethodGet$1(this, _onCallViewClose, _onCallViewClose2).call(this);
+	  }
+	  if (BX.localStorage.get(lsKeys$1.callView) && (_this$callView3 = this.callView) !== null && _this$callView3 !== void 0 && _this$callView3.popup && !Boolean(this._currentCall) && !this.isCallListMode() && !this.messengerFacade.hasActiveCall()) {
+	    this.showCallViewBalloon();
+	  }
 	  if (this.hasActiveCall() || this.isCallListMode() || this.messengerFacade.hasActiveCall()) {
 	    BX.rest.callMethod('voximplant.call.busy', {
-	      'CALL_ID': params.callId
+	      CALL_ID: params.callId,
+	      DEBUG_INFO: this.getDebugInfo()
 	    });
 	    return false;
 	  }
@@ -7520,6 +7581,7 @@ this.BX = this.BX || {};
 	  if (!this.callView) {
 	    return;
 	  }
+	  this.showCallViewBalloon();
 	  this.callView.setCallState(CallState.idle, {
 	    failedCode: params.failedCode
 	  });
@@ -8157,6 +8219,7 @@ this.BX = this.BX || {};
 
 	  this.phoneLog('Call connected', e);
 	  if (this.callView) {
+	    BX.localStorage.set(lsKeys$1.callView, this.callView.callId, 86400);
 	    this.callView.setUiState(UiState.connected);
 	    this.callView.setCallState(CallState.connected);
 	    this.callView.setProgress(CallProgress.online);
@@ -8259,6 +8322,7 @@ this.BX = this.BX || {};
 	  this.callListId = 0;
 	  if (this.callView) {
 	    this.callView.dispose();
+	    this.closeCallViewBalloon();
 	    this.callView = null;
 	  }
 	  if (this.deviceType == DeviceType.Phone) {

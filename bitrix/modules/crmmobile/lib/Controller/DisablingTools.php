@@ -25,20 +25,21 @@ class DisablingTools extends Controller
 	{
 		return [
 			'getSlidersCodesForDisabledStaticEntityIds' => [
-				'+prefilters' => [
-					new CloseSession(),
-				],
+				'+prefilters' => $this->getPrefilters(),
 			],
 			'getEntitySliderCodeIfDisabled' => [
-				'+prefilters' => [
-					new CloseSession(),
-				],
+				'+prefilters' => $this->getPrefilters(),
 			],
 			'getCrmSliderCodeIfDisabled' => [
-				'+prefilters' => [
-					new CloseSession(),
-				],
+				'+prefilters' => $this->getPrefilters(),
 			],
+		];
+	}
+
+	private function getPrefilters() : array
+	{
+	    return [
+			new CloseSession(),
 		];
 	}
 
@@ -56,11 +57,7 @@ class DisablingTools extends Controller
 
 		foreach ($staticEntities as $staticEntity)
 		{
-			$result[$staticEntity] = (
-				$this->toolsManager->checkEntityTypeAvailability($staticEntity)
-				? null
-				: $this->toolsManager->getSliderCodeByEntityTypeId($staticEntity)
-			);
+			$result[$staticEntity] = $this->getSliderCodeIfDisabled($staticEntity);
 		}
 
 		return $result;
@@ -70,11 +67,7 @@ class DisablingTools extends Controller
 	{
 	    return [
 			$entityTypeId => [
-				'code' => (
-					$this->toolsManager->checkEntityTypeAvailability($entityTypeId)
-					? null
-					: $this->toolsManager->getSliderCodeByEntityTypeId($entityTypeId)
-				),
+				'code' => $this->getSliderCodeIfDisabled($entityTypeId),
 				'isExternal' => $this->toolsManager->isEntityTypeIdExternal($entityTypeId),
 			],
 		];
@@ -82,12 +75,17 @@ class DisablingTools extends Controller
 
 	public function getCrmSliderCodeIfDisabledAction(): array
 	{
-		$result = [
+		return [
 			'crm' => $this->toolsManager->checkCrmAvailability()
 				? null
 				: $this->toolsManager::CRM_SLIDER_CODE,
 		];
+	}
 
-		return $result;
+	private function getSliderCodeIfDisabled(int $entityTypeId): ?string
+	{
+	    return $this->toolsManager->checkEntityTypeAvailability($entityTypeId)
+			? null
+			: $this->toolsManager->getSliderCodeByEntityTypeId($entityTypeId);
 	}
 }

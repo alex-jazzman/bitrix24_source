@@ -62,7 +62,7 @@ abstract class AbstractDateTimeConverter implements ConverterInterface
 
 		$nextDate = $nextDate->convertToLocalTime()->getTimestamp();
 
-		return DateTime::createFromTimestamp($nextDate - User::getTimeZoneOffsetCurrentUser());
+		return DateTime::createFromTimestamp($nextDate);
 	}
 
 	private function getDateAfter(int $seconds): DateTime

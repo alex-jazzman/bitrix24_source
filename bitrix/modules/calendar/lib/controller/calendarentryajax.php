@@ -795,10 +795,12 @@ class CalendarEntryAjax extends \Bitrix\Main\Engine\Controller
 				$attendees = array_diff($request['newAttendeesList'], $excludeUsers);
 			}
 
-			$timezoneName = \CCalendar::GetUserTimezoneName(\CCalendar::GetUserId());
-			$timezoneOffset = Util::getTimezoneOffsetUTC($timezoneName);
-			$timestampFrom = \CCalendar::TimestampUTC($dateFrom) - $timezoneOffset;
-			$timestampTo = \CCalendar::TimestampUTC($dateTo) - $timezoneOffset;
+			$timezoneFrom = !empty($tzFrom) ? $tzFrom : \CCalendar::GetUserTimezoneName(\CCalendar::GetUserId());
+			$timezoneTo = !empty($tzTo) ? $tzTo : $timezoneFrom;
+			$timezoneOffsetFrom = Util::getTimezoneOffsetUTC($timezoneFrom);
+			$timezoneOffsetTo = Util::getTimezoneOffsetUTC($timezoneTo);
+			$timestampFrom = \CCalendar::TimestampUTC($dateFrom) - $timezoneOffsetFrom;
+			$timestampTo = \CCalendar::TimestampUTC($dateTo) - $timezoneOffsetTo;
 			if ($skipTime)
 			{
 				$timestampTo += \CCalendar::GetDayLen();

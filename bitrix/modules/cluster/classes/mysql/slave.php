@@ -320,8 +320,27 @@ class CClusterSlave
 			}
 		}
 
-		$rsSlaves = CClusterDBNode::GetList([], ['=MASTER_ID' => $node_id]);
-		if ($rsSlaves->Fetch())
+		$cacheID = 'slave_for_master';
+		$existSlave = false;
+		$managedCache = \Bitrix\Main\Application::getInstance()->getManagedCache();
+
+		if (
+			CACHED_b_cluster_dbnode !== false
+			&& $managedCache->Read(CACHED_b_cluster_dbnode, $cacheID, 'b_cluster_dbnode')
+		)
+		{
+			$existSlave = $managedCache->get($cacheID);
+		}
+		else
+		{
+			if (CClusterDBNode::GetList([], ['=MASTER_ID' => $node_id])->Fetch())
+			{
+				$existSlave = true;
+			}
+			$managedCache->set($cacheID, $existSlave);
+		}
+
+		if ($existSlave)
 		{
 			$arStatus = array_merge($arStatus, [
 				'File' => null,
@@ -584,6 +603,11 @@ class CClusterSlave
 		$found = false;
 		while (true)
 		{
+			if (empty($slaves))
+			{
+				return false;
+			}
+
 			$total_weight = 0;
 			foreach ($slaves as $i => $slave)
 			{

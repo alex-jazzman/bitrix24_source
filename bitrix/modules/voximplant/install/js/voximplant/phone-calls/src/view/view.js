@@ -78,7 +78,10 @@ const initialSize = {
 
 const lsKeys = {
 	height: 'im-phone-call-view-height',
-	width: 'im-phone-call-view-width'
+	width: 'im-phone-call-view-width',
+	callView: 'bx-vox-call-view',
+	callInited: 'viInitedCall',
+	externalCall: 'viExternalCard',
 };
 
 export const desktopEvents = {
@@ -442,6 +445,7 @@ export class PhoneCallView
 	{
 		if (this.isDesktop() && !this.slave)
 		{
+			console.log('Init phone call view window:', location.href);
 			this.desktop.openCallWindow('', null, {
 				width: this.getInitialWidth(),
 				height: this.getInitialHeight(),
@@ -543,6 +547,8 @@ export class PhoneCallView
 		}
 
 		this.popup.show();
+		BX.localStorage.set(lsKeys.callView, this.callId, 86400);
+
 		return this;
 	};
 
@@ -3901,6 +3907,11 @@ export class PhoneCallView
 		else
 		{
 			window.removeEventListener('beforeunload', this._onBeforeUnloadHandler);
+		}
+
+		if (!BX.localStorage.get(lsKeys.callInited) && !BX.localStorage.get(lsKeys.externalCall))
+		{
+			BX.localStorage.remove(lsKeys.callView);
 		}
 	};
 

@@ -138,10 +138,12 @@ class SharingLinkTable extends DataManager
 			(new IntegerField('CONTACT_ID',
 				[]
 			))
+				->configureNullable()
 			,
 			(new IntegerField('CONTACT_TYPE',
 				[]
 			))
+				->configureNullable()
 			,
 			(new StringField('MEMBERS_HASH',
 				[

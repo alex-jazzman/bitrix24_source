@@ -41,6 +41,16 @@ abstract class Service
 	}
 
 	/**
+	 * Return Service ID for key restrictions
+	 *
+	 * @return string
+	 */
+	public static function getServiceId(): string
+	{
+		return static::$serviceId;
+	}
+
+	/**
 	 * Changes the language if it is exists and active.
 	 * Otherwise sets the language to the current one.
 	 *
@@ -341,7 +351,19 @@ abstract class Service
 
 		if (isset($parameters['dateRange']) && is_array($parameters['dateRange']))
 		{
-			$timeFilterColumn = $parameters['configParams']['timeFilterColumn'] ?? '';
+			if (isset($parameters['configParams']['timeFilterColumn']))
+			{
+				$timeFilterColumn = $parameters['configParams']['timeFilterColumn'];
+			}
+			elseif (isset($parameters['configParams']['timefiltercolumn']))
+			{
+				$timeFilterColumn = $parameters['configParams']['timefiltercolumn'];
+			}
+			else
+			{
+				$timeFilterColumn = '';
+			}
+
 			$this->applyDateFilter($sqlWhere, $tableFields, $parameters['dateRange'], $timeFilterColumn);
 		}
 

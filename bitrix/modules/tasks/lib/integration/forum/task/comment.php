@@ -918,7 +918,8 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			[
 				'TASK_ID' => (int) $taskId,
 				'USER_ID' => (int) $occurAsUserId,
-				'SERVICE_TYPE' => $commentType
+				'SERVICE_TYPE' => $commentType,
+				'GROUP_ID' => $arTask['GROUP_ID'] ?? null,
 			]
 		);
 

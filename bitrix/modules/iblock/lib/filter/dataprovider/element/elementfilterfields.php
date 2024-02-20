@@ -193,6 +193,7 @@ class ElementFilterFields
 					{
 						continue;
 					}
+					$field['partial'] = true;
 				}
 			}
 

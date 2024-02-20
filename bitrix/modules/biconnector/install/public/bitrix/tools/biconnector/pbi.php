@@ -48,6 +48,12 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	$service = $manager->createService(isset($_GET['consumer']) && $_GET['consumer'] === 'datalens' ? 'datalens' : 'pbi');
 	$service->setLanguage($languageCode);
 
+	$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
+	if ($supersetKey)
+	{
+		$limitManager->setSupersetKey($supersetKey);
+	}
+
 	if (!$manager->checkAccessKey($accessKey))
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'WRONG_KEY']);
@@ -56,7 +62,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'DISABLED']);
 	}
-	elseif (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimit())
+	elseif (!$limitManager->checkLimit())
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'LIMIT_EXCEEDED']);
 	}
@@ -107,6 +113,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	}
 	elseif ($tableFields = $service->getTableFields($_GET['table']))
 	{
+		$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 0;
 		$result = $service->getData($_GET['table'], $input);
 		if (isset($result['error']))
 		{
@@ -180,6 +187,11 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 				$output_row = false;
 				while ($row = $res->fetch())
 				{
+					if ($limit && $count === $limit)
+					{
+						continue; //Avoid "Commands out of sync" error.
+					}
+
 					foreach ($result['onAfterFetch'] as $i => $callback)
 					{
 						$row[$i] = $callback($row[$i], $service::$dateFormats);
@@ -257,7 +269,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 					}
 				}
 
-				if ($output_row)
+				if ($output_row && !($limit && $count === $limit))
 				{
 					foreach ($concat_fields as $i => $concatInfo)
 					{
@@ -279,7 +291,8 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 				echo $out;
 				$size += strlen($out);
 
-				$isOverLimit = \Bitrix\BIConnector\LimitManager::getInstance()->fixLimit($count, $supersetKey);
+				$isOverLimit = $limitManager->fixLimit($count);
+
 				$manager->endQuery($logId, $count, $size, $isOverLimit);
 			}
 			else
@@ -306,6 +319,8 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		fclose($lockFile);
 		unlink($lockFileName);
 	}
+
+	\Bitrix\BIConnector\MemoryCache::expunge();
 }
 else
 {
@@ -314,5 +329,4 @@ else
 
 echo "\n";
 
-\Bitrix\BIConnector\MemoryCache::expunge();
 \Bitrix\Main\Application::getInstance()->terminate();

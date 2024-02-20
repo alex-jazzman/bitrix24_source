@@ -404,6 +404,11 @@ class TaskService implements Errorable
 
 	public function getTagsByTaskIds(array $taskIds): array
 	{
+		if (empty($taskIds))
+		{
+			return [];
+		}
+
 		try
 		{
 			$tags = [];
@@ -441,8 +446,13 @@ class TaskService implements Errorable
 		}
 	}
 
-	public function getTags($taskIds): array
+	public function getTags(array $taskIds): array
 	{
+		if (empty($taskIds))
+		{
+			return [];
+		}
+
 		try
 		{
 			$tags = [];
