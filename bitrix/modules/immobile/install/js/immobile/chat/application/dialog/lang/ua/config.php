@@ -9,6 +9,7 @@ $MESS["MOBILE_CHAT_PANEL_PLACEHOLDER"] = "Написати повідомлен�
 $MESS["MOBILE_CHAT_PANEL_UPLOAD_CAMERA"] = "Зробити фото";
 $MESS["MOBILE_CHAT_PANEL_UPLOAD_DISK"] = "Бітрікс24.Диск";
 $MESS["MOBILE_CHAT_PANEL_UPLOAD_DISK_FILES"] = "Файли";
+$MESS["MOBILE_CHAT_PANEL_UPLOAD_DISK_V2"] = "Бітрікс24 Диск";
 $MESS["MOBILE_CHAT_PANEL_UPLOAD_GALLERY"] = "Обрати з галереї";
 $MESS["MOBILE_CHAT_QUOTE_FILE_MESSAGE"] = "Файл";
 $MESS["MOBILE_CHAT_SYSTEM_MESSAGE"] = "Системне повідомлення";

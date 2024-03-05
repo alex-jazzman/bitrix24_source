@@ -8,6 +8,7 @@ $MESS["TASKS_TEMPLATES_NO"] = "Ні";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_COPY"] = "Копіювати";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_CREATE_SUB_TEMPLATE"] = "Додати підзавдання для шаблона";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK"] = "Додати завдання по шаблону";
+$MESS["TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK_V2"] = "Створити завдання по шаблону";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_DELETE"] = "Видалити";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_EDIT"] = "Редагувати";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_VIEW"] = "Переглянути";

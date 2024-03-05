@@ -25,6 +25,7 @@ $MESS["CRM_SITE_FORM_FIELD_ERROR_INVALID"] = "Поле заповнене неп
 $MESS["CRM_SITE_FORM_FIELD_ERROR_INVALID_EMAIL"] = "Введено неправильний email";
 $MESS["CRM_SITE_FORM_FIELD_ERROR_REQUIRED"] = "Поле обов'язкове для заповнення";
 $MESS["CRM_SITE_FORM_FIELD_FILE_CHOOSE"] = "Обрати файл";
+$MESS["CRM_SITE_FORM_FIELD_FILE_ERROR_EMPTY_CONTENT"] = "Файл порожній. Спробуйте вибрати інший";
 $MESS["CRM_SITE_FORM_FIELD_FILE_ERROR_TYPE"] = "Вибрано файл невідповідного типу. Спробуйте файли з розширеннями %extensions%";
 $MESS["CRM_SITE_FORM_FIELD_FILE_LOADING"] = "Файл завантажується";
 $MESS["CRM_SITE_FORM_FIELD_FILE_SIZE_EXCEEDED"] = "Розмір файлу перевищує допустимий: %maxFileSize% МБ";

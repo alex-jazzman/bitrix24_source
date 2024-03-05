@@ -1,4 +1,6 @@
 <?php
+$MESS["IM_CHAT_ACCESS_DENIED_EXTEND_USERS"] = "Недостатньо прав на додавання учасників до чату.";
+$MESS["IM_CHAT_ACCESS_DENIED_KICK_USERS"] = "Недостатньо прав на виключення учасників із чату.";
 $MESS["IM_CHAT_CHANGE_COLOR_F"] = "#USER_NAME# змінила колір чату на \"#CHAT_COLOR#\"";
 $MESS["IM_CHAT_CHANGE_COLOR_M"] = "#USER_NAME# змінив колір чату на \"#CHAT_COLOR#\"";
 $MESS["IM_CHAT_CHANGE_TITLE"] = "Нова тема чату \"#CHAT_TITLE#\"";

@@ -1,6 +1,8 @@
 <?php
 $MESS["TASKS_ACCESS_DENIED"] = "Недостатньо прав для вчинення дії";
 $MESS["TASKS_ACTION_NOT_ALLOWED"] = "Дія над завданням не дозволена.";
+$MESS["TASKS_BAD_ASSIGNEE"] = "Виконавець не зазначений.";
+$MESS["TASKS_BAD_ASSIGNEE_EX"] = "Користувач зазначений у полі «Виконавець» не знайдений.";
 $MESS["TASKS_BAD_CREATED_BY"] = "Не вказаний постановник";
 $MESS["TASKS_BAD_DEPENDS_ON_ID"] = "Не вказано попереднє завдання";
 $MESS["TASKS_BAD_DEPENDS_ON_ID_EX"] = "Попереднє завдання не знайдено";

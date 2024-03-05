@@ -22,6 +22,7 @@ $MESS["CRM_TIMELINE_CALL_TRANSCRIPT"] = "текст розмови";
 $MESS["CRM_TIMELINE_CALL_TRANSCRIPT_PENDING"] = "розшифровка в процесі";
 $MESS["CRM_TIMELINE_CANCEL_BTN"] = "Скасувати";
 $MESS["CRM_TIMELINE_CHAT_INVITE"] = "Запросити до обговорення";
+$MESS["CRM_TIMELINE_CHAT_INVITE_MSGVER_1"] = "Обговорити в чаті";
 $MESS["CRM_TIMELINE_CHOOSE"] = "Обрати";
 $MESS["CRM_TIMELINE_COLLAPSE"] = "Згорнути";
 $MESS["CRM_TIMELINE_COLLAPSE_SM"] = "згорнути";

@@ -129,11 +129,11 @@ class RightsManager
 
 				if(!empty($userData['UF_DEPARTMENT']))
 				{
-					$parentDepartmentList = array();
+					$departmentList = array();
 					foreach($userData['UF_DEPARTMENT'] as $departmentId)
-						$parentDepartmentList[] = \CIntranetUtils::getIBlockTopSection($departmentId);
+						$departmentList[] = $departmentId;
 
-					$childrenDepartmentList = \CIntranetUtils::getIBlockSectionChildren($parentDepartmentList);
+					$childrenDepartmentList = \CIntranetUtils::getIBlockSectionChildren($departmentList);
 					foreach($childrenDepartmentList as $departmentId)
 						$listEntity[] = Sharing::CODE_DEPARTMENT.$departmentId;
 				}

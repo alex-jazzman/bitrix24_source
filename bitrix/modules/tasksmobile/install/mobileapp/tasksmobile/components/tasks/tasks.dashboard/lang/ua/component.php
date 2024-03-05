@@ -1,0 +1,21 @@
+<?php
+$MESS["M_TASKS_VIEW_ROUTER_ALL_STAGES_DESCRIPTION"] = "Створюйте завдання й відстежуйте їхнє виконання, щоб нічого не забути";
+$MESS["M_TASKS_VIEW_ROUTER_ALL_STAGES_TITLE_MSGVER_1"] = "У вас немає завдань";
+$MESS["M_TASKS_VIEW_ROUTER_COMMENTS_READ"] = "Коментарі прочитані";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD1"] = "Усі ваші протерміновані завдання\nз'являться тут. Нехай їх буде менше :)";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD2"] = "Усі ваші завдання\nна сьогодні з'являться тут";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD3"] = "Усі ваші завдання з терміном\nдо кінця тижня з'являться тут";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD4"] = "Усі ваші завдання з терміном\nдо кінця наступного тижня з'являться тут";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD5"] = "Усі ваші завдання без терміну з'являться тут";
+$MESS["M_TASKS_VIEW_ROUTER_DEADLINE_STAGE_PERIOD6"] = "Усі ваші завдання з терміном\nпонад два тижні з'являться тут";
+$MESS["M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS"] = "У вас немає завдань у роботі";
+$MESS["M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_DESCRIPTION_MSGVER_1"] = "Спробуйте вибрати інший фільтр або сформулювати інакше";
+$MESS["M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_TITLE_MSGVER_1"] = "Таких завдань немає";
+$MESS["M_TASKS_VIEW_ROUTER_KANBAN_FILTER_DESCRIPTION"] = "Перенесіть сюди завдання або натисніть «+»,\nщоб додати нові";
+$MESS["M_TASKS_VIEW_ROUTER_KANBAN_FILTER_TITLE"] = "Тут немає завдань";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE"] = "Режим роботи із завданнями";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE_DEADLINE"] = "Терміни";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE_KANBAN"] = "Канбан";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE_LIST"] = "Список";
+$MESS["M_TASKS_VIEW_ROUTER_MENU_TITLE_PLANNER"] = "Мій план";
+$MESS["M_TASKS_VIEW_ROUTER_SELECTED_FILTER_TITLE"] = "Немає завдань за фільтром\n[b]#FILTER_NAME#[/b]";

@@ -1,6 +1,7 @@
 <?php
 $MESS["CRM_ORDER_FILTER_ACCOUNT_NUMBER"] = "Номер";
 $MESS["CRM_ORDER_FILTER_ACTIVITY_COUNTER"] = "Справи";
+$MESS["CRM_ORDER_FILTER_ACTIVITY_RESPONSIBLE_IDS"] = "Відповідальний за справу";
 $MESS["CRM_ORDER_FILTER_ALL"] = "(всі)";
 $MESS["CRM_ORDER_FILTER_CANCELED"] = "Скасовано";
 $MESS["CRM_ORDER_FILTER_CHECK_PRINTED"] = "Чек надруковано";
@@ -14,6 +15,7 @@ $MESS["CRM_ORDER_FILTER_DATE_UPDATE"] = "Дата зміни";
 $MESS["CRM_ORDER_FILTER_DEDUCTED"] = "Відвантажено";
 $MESS["CRM_ORDER_FILTER_DELIVERY_SERVICE"] = "Служби доставки";
 $MESS["CRM_ORDER_FILTER_HAS_ASSOCIATED_DEAL"] = "Має зв'язок з угодою";
+$MESS["CRM_ORDER_FILTER_LAST_ACTIVITY_TIME"] = "Остання активність";
 $MESS["CRM_ORDER_FILTER_ORDER_TOPIC"] = "Тема замовлення";
 $MESS["CRM_ORDER_FILTER_PAYED"] = "Оплачено";
 $MESS["CRM_ORDER_FILTER_PAY_SYSTEM"] = "Платіжні системи";

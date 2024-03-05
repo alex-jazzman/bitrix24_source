@@ -1,7 +1,11 @@
 <?php
+$MESS["IM_ELEMENTS_ATTACH_RICH_FILE_NO_NAME"] = "Без назви";
+$MESS["IM_ELEMENTS_ATTACH_RICH_LINK_DELETE"] = "Прибрати попередній перегляд посилання";
 $MESS["IM_ELEMENTS_CHAT_INFO_POPUP_GROUP_CHAT"] = "Груповий чат";
+$MESS["IM_ELEMENTS_CHAT_INFO_POPUP_HISTORY"] = "Історія";
 $MESS["IM_ELEMENTS_CHAT_INFO_POPUP_NO_ACCESS"] = "Немає доступу";
 $MESS["IM_ELEMENTS_CHAT_INFO_POPUP_OPEN_CHAT"] = "Перейти в чат";
 $MESS["IM_ELEMENTS_CHAT_INFO_POPUP_VIDEOCALL"] = "Відеодзвінок";
 $MESS["IM_ELEMENTS_CHAT_INFO_POPUP_WRITE_A_MESSAGE"] = "Написати повідомлення";
+$MESS["IM_ELEMENTS_KEYBOARD_BUTTON_ACTION_COPY_SUCCESS"] = "Текст скопійовано.";
 $MESS["IM_ELEMENTS_MEDIA_IMAGE_TITLE"] = "Відкрити повну версію: #NAME# (#SIZE#)";

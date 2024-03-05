@@ -32,5 +32,4 @@ $MESS["socserv_sett_common"] = "Загальні";
 $MESS["socserv_sett_common_title"] = "Загальні налаштування для всіх сайтів";
 $MESS["socserv_sett_site"] = "Налаштування для сайту";
 $MESS["socserv_sett_site_apply"] = "Застосувати індивідуальні налаштування для цього сайту:";
-$MESS["socserv_twit_to_buzz"] = "Транслювати твіти користувачів з хештегом #hash# в живу стрічку";
 $MESS["socserv_twit_to_buzz2"] = "Транслювати твіти користувачів із хештегом #hash# у стрічку новин";

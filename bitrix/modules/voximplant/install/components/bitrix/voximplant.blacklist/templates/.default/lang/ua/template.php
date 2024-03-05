@@ -10,7 +10,6 @@ $MESS["BLACKLIST_ERROR_TITLE"] = "Помилка";
 $MESS["BLACKLIST_NUMBERS"] = "Номери в чорному списку";
 $MESS["BLACKLIST_NUMBER_ADD"] = "Додати номер";
 $MESS["BLACKLIST_NUMBER_DELETE"] = "Видалити";
-$MESS["BLACKLIST_REGISTER_IN_CRM"] = "Реєструвати в CRM дзвінки з номерів із чорного списку";
 $MESS["BLACKLIST_REGISTER_IN_CRM_2"] = "Реєструвати в CRM дзвінки з номерів із чорного списку";
 $MESS["BLACKLIST_SAVE"] = "Зберегти";
 $MESS["BLACKLIST_SETTINGS_TITLE"] = "Налаштування бокування";

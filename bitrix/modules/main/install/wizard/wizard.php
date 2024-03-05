@@ -187,7 +187,10 @@ class AgreementStep4VM extends CWizardStep
 		if ($agreeLicense !== "Y")
 			$this->SetError(InstallGetMessage("ERR_AGREE_LICENSE"), "agree_license");
 
-		$this->CheckShortInstall();
+		if (BXInstallServices::IsShortInstall() && defined("VM_INSTALL"))
+		{
+			$this->CheckShortInstall();
+		}
 	}
 
 	public function CheckShortInstall()
@@ -535,7 +538,8 @@ class DBTypeStep extends CWizardStep
 			</tr>
 			<tr id="utf-row-two">
 				<td colspan="2">
-					'.$this->ShowCheckboxField("utf8", "Y", Array("id" => "utf8_inst")).'<label for="utf8_inst">&nbsp;'.InstallGetMessage("INSTALL_IN_UTF8").'</label>
+					'.$this->ShowCheckboxField("utf8", "Y", Array("id" => "utf8_inst", "disabled" => "disabled")).'<label for="utf8_inst">&nbsp;'.InstallGetMessage("INSTALL_IN_UTF8").'</label>
+					'.$this->ShowHiddenField("utf8", "Y").'
 				</td>
 			</tr>
 			</table>
@@ -4070,11 +4074,7 @@ if (defined("WIZARD_DEFAULT_TONLY") && WIZARD_DEFAULT_TONLY === true)
 elseif (BXInstallServices::IsShortInstall())
 {
 	//Short installation
-	$arSteps = Array();
-	if (defined("VM_INSTALL"))
-	{
-		$arSteps = Array("AgreementStep4VM");
-	}
+	$arSteps = Array("AgreementStep4VM");
 
 	if($_SERVER['BITRIX_ENV_TYPE'] <> "crm")
 	{

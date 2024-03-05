@@ -162,7 +162,7 @@ class EventOfflineTable extends Main\Entity\DataManager
 		}
 	}
 
-	public static function markEvents($filter, $order, $limit)
+	public static function markEvents($filter, $order, $limit): string
 	{
 		$processId = static::getProcessId();
 
@@ -213,9 +213,7 @@ class EventOfflineTable extends Main\Entity\DataManager
 			}
 		}
 
-		$sql = $query->getMarkQuery($processId);
-
-		Main\Application::getConnection()->query($sql);
+		$query->mark($processId);
 
 		return $processId;
 	}

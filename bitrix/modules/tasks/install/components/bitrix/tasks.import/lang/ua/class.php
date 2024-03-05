@@ -24,6 +24,7 @@ $MESS["TASKS_IMPORT_FIELDS_FILE_SEPARATOR_TAB"] = "Табуляція";
 $MESS["TASKS_IMPORT_HEADERS_ACCOMPLICES"] = "Співвиконавці";
 $MESS["TASKS_IMPORT_HEADERS_ALLOW_CHANGE_DEADLINE"] = "Дозволити відповідальному змінювати терміни завдання";
 $MESS["TASKS_IMPORT_HEADERS_ALLOW_TIME_TRACKING"] = "Задано час на завершення завдання";
+$MESS["TASKS_IMPORT_HEADERS_ASSIGNEE"] = "Виконавець";
 $MESS["TASKS_IMPORT_HEADERS_AUDITORS"] = "Спостерігачі";
 $MESS["TASKS_IMPORT_HEADERS_CHECKLIST"] = "Чек-лист";
 $MESS["TASKS_IMPORT_HEADERS_DEADLINE"] = "Крайній термін";

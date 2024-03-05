@@ -1,5 +1,4 @@
 <?php
-$MESS["LANDING_TPL_DOMAIN_ATTENTION"] = "Увага!";
 $MESS["LANDING_TPL_DOMAIN_ERROR_EMPTY"] = "Доменне ім'я не може бути порожнім.";
 $MESS["LANDING_TPL_DOMAIN_NAME_B24"] = "Піддомен Бітрікс24";
 $MESS["LANDING_TPL_DOMAIN_NAME_OWN"] = "Свій домен";

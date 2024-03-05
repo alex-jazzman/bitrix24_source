@@ -47,6 +47,7 @@ $MESS["MOBILE_LOG_PINNED_COLLAPSED_COUNTER_POSTS"] = "Закріплених п�
 $MESS["MOBILE_LOG_POST_FORM_CANCEL"] = "Скасувати";
 $MESS["MOBILE_LOG_POST_FORM_DEST_UA"] = "Всім співробітникам";
 $MESS["MOBILE_LOG_POST_FORM_DISK"] = "Бітрікс24.Диск";
+$MESS["MOBILE_LOG_POST_FORM_DISK_MSGVER_1"] = "Бітрікс24 Диск";
 $MESS["MOBILE_LOG_POST_FORM_DISK_TITLE"] = "Файли";
 $MESS["MOBILE_LOG_POST_FORM_PHOTO_CAMERA"] = "Зняти фото";
 $MESS["MOBILE_LOG_POST_FORM_PHOTO_GALLERY"] = "Вибрати з галереї";

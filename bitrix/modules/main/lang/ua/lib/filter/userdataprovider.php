@@ -1,8 +1,7 @@
-<?
+<?php
 $MESS["MAIN_USER_FILTER_ADMIN"] = "Адміністратор";
 $MESS["MAIN_USER_FILTER_BIRTHDAY"] = "Дата народження";
 $MESS["MAIN_USER_FILTER_COMPANY"] = "Компанія";
-$MESS["MAIN_USER_FILTER_WORK_DEPARTMENT"] = "Департамент / Відділ";
 $MESS["MAIN_USER_FILTER_DATE_REGISTER"] = "Дата реєстрації";
 $MESS["MAIN_USER_FILTER_DEPARTMENT"] = "Підрозділ";
 $MESS["MAIN_USER_FILTER_EMAIL"] = "E-Mail";
@@ -30,12 +29,13 @@ $MESS["MAIN_USER_FILTER_PRESET_COMPANY"] = "Компанія";
 $MESS["MAIN_USER_FILTER_PROFESSION"] = "Професія";
 $MESS["MAIN_USER_FILTER_SECOND_NAME"] = "По батькові";
 $MESS["MAIN_USER_FILTER_TAGS"] = "Інтереси";
+$MESS["MAIN_USER_FILTER_VISITOR"] = "Відвідувач";
 $MESS["MAIN_USER_FILTER_WORK_CITY"] = "Країна компанії";
 $MESS["MAIN_USER_FILTER_WORK_COUNTRY"] = "Країна компанії";
+$MESS["MAIN_USER_FILTER_WORK_DEPARTMENT"] = "Департамент / Відділ";
 $MESS["MAIN_USER_FILTER_WORK_MAILBOX"] = "Поштова скринька компанії";
 $MESS["MAIN_USER_FILTER_WORK_PHONE"] = "Робочий телефон";
 $MESS["MAIN_USER_FILTER_WORK_STATE"] = "Область/край компанії";
 $MESS["MAIN_USER_FILTER_WORK_STREET"] = "Вулиця, будинок компанії";
 $MESS["MAIN_USER_FILTER_WORK_ZIP"] = "Поштовий індекс компанії";
 $MESS["MAIN_USER_FILTER_Y"] = "Так";
-?>

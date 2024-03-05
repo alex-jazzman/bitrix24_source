@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IM_CHAT_CALL"] = "Телефонний дзвінок";
 $MESS["IM_CHAT_GENERAL"] = "Загальний чат";
 $MESS["IM_CHAT_GROUP_NEW"] = "Груповий чат";
@@ -13,6 +13,7 @@ $MESS["IM_F_ATTACH"] = "Вкладення";
 $MESS["IM_F_FILE"] = "Файл";
 $MESS["IM_F_RATING"] = "Рейтинг";
 $MESS["IM_M_BIRTHDAY_MESSAGE_SHORT"] = "Святкує сьогодні день народження!";
+$MESS["IM_M_CODE_BLOCK"] = "Фрагмент коду";
 $MESS["IM_M_DELETED"] = "Це повідомлення було видалено.";
 $MESS["IM_M_ICON"] = "іконка";
 $MESS["IM_M_QUOTE_BLOCK"] = "Цитата";
@@ -25,9 +26,8 @@ $MESS["IM_STATUS_LINES-ONLINE"] = "Користувач Відкритих лі�
 $MESS["IM_STATUS_MOBILE"] = "Мобільний клієнт";
 $MESS["IM_STATUS_NA"] = "Не доступний";
 $MESS["IM_STATUS_NETWORK"] = "Бітрікс24.Network";
+$MESS["IM_STATUS_NETWORK_MSGVER_1"] = "Бітрікс24 Мережа";
 $MESS["IM_STATUS_OFFLINE"] = "Не в мережі";
 $MESS["IM_STATUS_ONLINE"] = "Онлайн";
 $MESS["IM_STATUS_VACATION"] = "У відпустці";
 $MESS["IM_STATUS_VACATION_TITLE"] = "У відпустці до  #DATE#";
-$MESS["IM_M_CODE_BLOCK"] = "Фрагмент коду";
-?>

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IBSEC_A_ACTIVE"] = "Активність";
 $MESS["IBSEC_A_ADD"] = "Додати";
 $MESS["IBSEC_A_ADDEL_TITLE"] = "Натисніть для додавання нового елементу";
@@ -25,6 +25,7 @@ $MESS["IBSEC_A_ELADD_TITLE"] = "Додати елемент у даний роз
 $MESS["IBSEC_A_ELEMENT_CNT"] = "Елементів";
 $MESS["IBSEC_A_ELLIST"] = "Перейти до списку елементів даного розділу";
 $MESS["IBSEC_A_ELLIST_TITLE"] = "Перейти до списку елементів даного розділу, включаючи підрозділи";
+$MESS["IBSEC_A_ERR_BUILDER_ADSENT"] = "Не знайдений генератор посилань.";
 $MESS["IBSEC_A_IBLOCK_MANAGE_HINT"] = "Змінити властивості і права доступу до інформаційного блоку ви можете в";
 $MESS["IBSEC_A_IBLOCK_MANAGE_HINT_HREF"] = "Налаштуваннях інформаційного блоку.";
 $MESS["IBSEC_A_ID"] = "ID розділу";
@@ -50,6 +51,4 @@ $MESS["IBSEC_A_UP"] = "На один рівень вгору";
 $MESS["IBSEC_A_UPDERR"] = "Помилка змінення запису:";
 $MESS["IBSEC_A_UP_TITLE"] = "Натисніть для переходу в папку вище";
 $MESS["IBSEC_A_USERINFO"] = "Переглянути параметри користувача";
-$MESS["IBSEC_A_XML_ID"] = "Зовнішній код";
-$MESS["IBSEC_A_ERR_BUILDER_ADSENT"] = "Не знайдений генератор посилань.";
-?>
+$MESS["IBSEC_A_XML_ID_MSGVER_1"] = "Зовнішній ID";

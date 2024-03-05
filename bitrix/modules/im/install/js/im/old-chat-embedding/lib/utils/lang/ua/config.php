@@ -13,6 +13,7 @@ $MESS["IM_STATUS_LINES-ONLINE"] = "Користувач Відкритих лі�
 $MESS["IM_STATUS_MOBILE"] = "Мобільний клієнт";
 $MESS["IM_STATUS_NA"] = "Не доступний";
 $MESS["IM_STATUS_NETWORK"] = "Бітрікс24.Network";
+$MESS["IM_STATUS_NETWORK_MSGVER_1"] = "Бітрікс24 Мережа";
 $MESS["IM_STATUS_OFFLINE"] = "Не в мережі";
 $MESS["IM_STATUS_ONLINE"] = "Онлайн";
 $MESS["IM_STATUS_TEXT_AWAY"] = "Не на місці";

@@ -1,5 +1,6 @@
 <?php
 $MESS["KANBAN_SORT_ACTUAL"] = "За активністю";
+$MESS["KANBAN_SORT_ACTUAL_MSGVER_1"] = "За датою останньої активності";
 $MESS["KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Рекомендується";
 $MESS["KANBAN_SORT_ASC"] = "Знизу";
 $MESS["KANBAN_SORT_DESC"] = "Зверху";

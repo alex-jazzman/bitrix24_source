@@ -18,5 +18,7 @@ $MESS["B_B_PC_COM_ERROR"] = "Помилка:";
 $MESS["INCORRECT_SERVER_RESPONSE"] = "Некоректна відповідь від сервера.";
 $MESS["INCORRECT_SERVER_RESPONSE_2"] = "Сталася помилка, спробуйте пізніше.";
 $MESS["MPL_HIDE_COLLAPSED_COMMENTS"] = "Приховати пінги";
+$MESS["MPL_HIDE_COLLAPSED_COMMENTS_MSGVER_1"] = "Приховати пінги (#COLLAPSED_MESSAGES_COUNT#)";
 $MESS["MPL_MOBILE_PUBLISHING"] = "Публікується&hellip;";
 $MESS["MPL_SHOW_COLLAPSED_COMMENTS"] = "Показати пінги";
+$MESS["MPL_SHOW_COLLAPSED_COMMENTS_MSGVER_1"] = "Показати пінги (#COLLAPSED_MESSAGES_COUNT#)";

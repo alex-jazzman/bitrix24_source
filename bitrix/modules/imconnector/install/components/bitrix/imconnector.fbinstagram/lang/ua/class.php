@@ -1,7 +1,6 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_ERROR_REQUEST_INFORMATION_FROM_SERVER"] = "Відбулася помилка на сервері";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_INVALID_OAUTH_ACCESS_TOKEN"] = "Втрачено доступ до управління публічної сторінки. Необхідно повторно виконати підключення.";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_MODULE_NOT_INSTALLED"] = "Модуль коннекторів месенджерів не встановлено";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль \"Конектори для зовнішніх месенджерів\" не встановлений.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_NO_ACTIVE_CONNECTOR"] = "Даний коннектор не активний";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAM_NO_AUTHORIZATION_PAGE"] = "Підключити сторінку не вийшло";

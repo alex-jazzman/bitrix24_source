@@ -24,5 +24,6 @@ $MESS["CAT_WAREHOUSE_MASTER_CLEAR_DISABLE_CONFIRMATION_TEXT"] = "Дійсно в
 $MESS["CAT_WAREHOUSE_MASTER_CLEAR_DISABLE_POPUP_TITLE"] = "Вимкнення складського обліку";
 $MESS["CAT_WAREHOUSE_MASTER_CLEAR_ENABLED"] = "Складський облік увімкнений";
 $MESS["CAT_WAREHOUSE_MASTER_CLEAR_RIGHTS_RESTRICTED"] = "Недостатньо прав на роботу зі Складським обліком. Зверніться до адміністратора Бітрікс24.";
+$MESS["CAT_WAREHOUSE_MASTER_NEW_TITLE"] = "Складський облік у Бітрікс24";
 $MESS["CAT_WAREHOUSE_MASTER_STORE_LEAD_ENABLED_MODE_ERROR"] = "У режимі \"Класична CRM\" (з лідами) складський облік не працює. Щоб увімкнути складський облік, перейдіть у режим \"Проста CRM\" (без лідів).";
 $MESS["CAT_WAREHOUSE_MASTER_STORE_ORDER_DEAL_MODE_ERROR"] = "У режимі \"Угоди+Замовлення\" складський облік не працює. Щоб увімкнути складський облік, перейдіть у режим \"Угоди\".";

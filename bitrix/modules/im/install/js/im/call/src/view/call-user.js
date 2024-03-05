@@ -447,18 +447,8 @@ export class CallUser
 											props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (this.userModel.cameraState ? " hidden" : "")},
 										}),
 										this.elements.name = Dom.create("span", {
-											props: {className: "bx-messenger-videocall-user-name"},
+											props: {className: "bx-messenger-videocall-user-name", title: (this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", this.userModel.name) : this.userModel.name)},
 											text: (this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", this.userModel.name) : this.userModel.name),
-											events: {
-												mouseover: (e) =>
-												{
-													this.hintManager.show(e.currentTarget, (this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", this.userModel.name) : this.userModel.name));
-												},
-												mouseout: (e) =>
-												{
-													this.hintManager.hide();
-												}
-											}
 										}),
 										this.elements.changeNameIcon = Dom.create("div", {
 											props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-change-name-icon hidden"},

@@ -7,6 +7,7 @@ $MESS["SERVICE_COMPANY_STRUCTURE"] = "Структура компанії";
 $MESS["SERVICE_CRM"] = "CRM";
 $MESS["SERVICE_DEPARTMENTS_HEAD"] = "Керівники підрозділів";
 $MESS["SERVICE_DISK"] = "Встановлення Диска";
+$MESS["SERVICE_DISK_MSGVER_1"] = "Установлення Диска";
 $MESS["SERVICE_DOCUMENTGENERATOR"] = "Генератор документів";
 $MESS["SERVICE_FILEMAN"] = "Управління структурою";
 $MESS["SERVICE_FILES"] = "Файли корпоративного порталу";

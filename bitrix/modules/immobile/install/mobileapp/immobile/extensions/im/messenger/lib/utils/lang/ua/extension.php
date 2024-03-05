@@ -13,6 +13,7 @@ $MESS["IMMOBILE_STATUS_LINES-ONLINE"] = "Користувач Відкритих
 $MESS["IMMOBILE_STATUS_MOBILE"] = "Онлайн, з телефону";
 $MESS["IMMOBILE_STATUS_NA"] = "Недоступн.";
 $MESS["IMMOBILE_STATUS_NETWORK"] = "Бітрікс24.Network";
+$MESS["IMMOBILE_STATUS_NETWORK_MSGVER_1"] = "Бітрікс24 Мережа";
 $MESS["IMMOBILE_STATUS_OFFLINE"] = "Не в мережі";
 $MESS["IMMOBILE_STATUS_ONLINE"] = "Онлайн";
 $MESS["IMMOBILE_STATUS_TEXT_AWAY"] = "Не на місці";

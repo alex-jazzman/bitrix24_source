@@ -2,6 +2,7 @@
 $MESS["CVAT_ACTIVE"] = "Акт.";
 $MESS["CVAT_DELETE"] = "Видалити";
 $MESS["CVAT_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити цю ставку ПДВ?";
+$MESS["CVAT_EDIT_FORM_FIELD_XML_ID_MSGVER_1"] = "Зовнішній код:";
 $MESS["CVAT_ERR_ADD"] = "Помилка при додаванні ставки ПДВ";
 $MESS["CVAT_ERR_UPDATE"] = "Помилка при зміні ставки ПДВ з кодом #ID#";
 $MESS["CVAT_LIST"] = "Список";

@@ -9,7 +9,6 @@ $MESS["IMCONNECTOR_COMPONENT_SETTINGS_ERROR_LINK_FIX"] = "виправити";
 $MESS["IMCONNECTOR_COMPONENT_SETTINGS_GO_BACK_TO_BEGINNING"] = "повернутися в початок";
 $MESS["IMCONNECTOR_COMPONENT_SETTINGS_LINK"] = "Посилання";
 $MESS["IMCONNECTOR_COMPONENT_SETTINGS_LOG_IN"] = "Авторизуватися";
-$MESS["IMCONNECTOR_COMPONENT_SETTINGS_MODULE_NOT_INSTALLED"] = "Модуль коннекторів месенджерів не встановлено.";
 $MESS["IMCONNECTOR_COMPONENT_SETTINGS_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль \"Конектори для зовнішніх месенджерів\" не встановлений.";
 $MESS["IMCONNECTOR_COMPONENT_SETTINGS_NEXT"] = "Далі";
 $MESS["IMCONNECTOR_COMPONENT_SETTINGS_NO_DISABLE"] = "При відключенні каналу комунікації сталася помилка";

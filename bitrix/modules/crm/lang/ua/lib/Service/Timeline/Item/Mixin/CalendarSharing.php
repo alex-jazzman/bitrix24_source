@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_ACCESSIBILITY"] = "Слоти на вибір";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_ACCESSIBILITY_SHORT"] = "Слоти";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_APPOINTED_TAG"] = "Запланована";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_CLIENT_CAN_SET_MEETING"] = "Клієнт може призначити зустріч за посиланням.";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_COMMUNICATION_CHANNEL"] = "Канал зв'язку";
@@ -18,7 +19,13 @@ $MESS["CRM_TIMELINE_CALENDAR_SHARING_MEETING_PLANNED_TITLE"] = "Зустріч �
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_NEWS_ON_MEETING_TITLE"] = "Новини щодо зустрічі";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_NOT_VIEWED_TAG"] = "Надіслані, не переглянуті";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_QR_CODE_BUTTON"] = "Що побачить клієнт";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_RULE_UPDATED_DETAILS_DURATION"] = "Тривалість зустрічей: #DURATION#";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_RULE_UPDATED_DETAILS_RANGE"] = "#WEEKDAYS# з #FROM# до #TO#";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_RULE_UPDATED_DETAILS_TITLE"] = "Доступі слоти для клієнта:";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_RULE_UPDATED_TITLE"] = "Слоти для зустрічі змінено";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_SENT"] = "Надіслані";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_SLOTS_TITLE"] = "Слоти для зустрічей";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_VIEWED_TAG"] = "Переглянуті, слот не вибрано";
 $MESS["CRM_TIMELINE_CALENDAR_SHARING_VIEW_SLOTS"] = "Подивитися слоти";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_WORKDAYS"] = "Робочі дні";
+$MESS["CRM_TIMELINE_CALENDAR_SHARING_WORKDAYS_MSGVER_1"] = "Робочі дні";

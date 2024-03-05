@@ -1,8 +1,31 @@
 <?php
+$MESS["CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_JOINT_TEXT"] = "Тепер можна вибирати дні, час і тривалість зустрічей, а також створювати спільні слоти з урахуванням розкладу колег.";
+$MESS["CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_JOINT_TITLE"] = "Слоти стали зручнішими!";
 $MESS["CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_NOTIFY_TEXT"] = "Не забудьте про посилання на вільні слоти, це заощадить час усім учасникам. Одержувач займає слот, а зустріч з'являється у вашому календарі.";
 $MESS["CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_NOTIFY_TITLE"] = "Домовляєтеся про зовнішні зустрічі в чаті?";
 $MESS["CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_TEXT"] = "Надішліть посилання на свої вільні слоти, а одержувач сам вибере зручний час.";
 $MESS["CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_TITLE"] = "Плануйте зустрічі з тими, хто не працює у вашій компанії";
+$MESS["CALENDAR_SHARING_LINK_LIST_COPY"] = "Копіювати";
+$MESS["CALENDAR_SHARING_LINK_LIST_DATE_CREATE"] = "Дата створення посилання";
+$MESS["CALENDAR_SHARING_LINK_LIST_DELETE_MESSAGE_DESC_MSGVER_1"] = "Більше ніхто не зможе призначити зустріч за цим посиланням.";
+$MESS["CALENDAR_SHARING_LINK_LIST_DELETE_MESSAGE_TITLE_MSGVER_1"] = "Видалити посилання на слоти?";
+$MESS["CALENDAR_SHARING_LINK_LIST_SORT_DATE"] = "За датою";
+$MESS["CALENDAR_SHARING_LINK_LIST_SORT_RECENT"] = "Найуживаніші";
+$MESS["CALENDAR_SHARING_LINK_LIST_TITLE"] = "Спільні слоти";
+$MESS["CALENDAR_SHARING_LIST_EMPTY_TITLE"] = "Тут з'являться посилання на спільні слоти";
+$MESS["CALENDAR_SHARING_SETTINGS_READ_ONLY_HINT"] = "Налаштувати слоти в цій угоді може тільки відповідальний менеджер";
+$MESS["CALENDAR_SHARING_SETTINGS_SLOT_SIZE"] = "Тривалість слота:";
+$MESS["CALENDAR_SHARING_SETTINGS_SLOT_SIZE_V2"] = "Тривалість слота:";
+$MESS["CALENDAR_SHARING_SETTINGS_SUBTITLE_DEFAULT"] = "За замовчуванням вибрані всі робочі дні";
+$MESS["CALENDAR_SHARING_SETTINGS_SUBTITLE_PERSONAL"] = "Вибрано персональні налаштування";
+$MESS["CALENDAR_SHARING_SETTINGS_TITLE"] = "Укажіть діапазон слотів, які будуть доступні клієнту:";
+$MESS["CALENDAR_SHARING_SETTINGS_TITLE_V2"] = "Доступний час для зустрічей";
+$MESS["CALENDAR_SHARING_SETTINGS_WORKDAYS"] = "Робочі дні";
+$MESS["CALENDAR_SHARING_SETTINGS_WORKDAYS_MSGVER_1"] = "Робочі дні";
+$MESS["CALENDAR_SHARING_USER_SELECTOR_HINT_DESC"] = "У спільних слотах враховується розклад колег, які будуть з вами на зустрічі. Одержувач вибере час, коли доступні всі учасники.";
+$MESS["CALENDAR_SHARING_USER_SELECTOR_HINT_TITLE"] = "Спільні слоти";
+$MESS["CALENDAR_SHARING_USER_SELECTOR_TITLE"] = "Створити спільні слоти <span data-role=\"calendar-sharing_popup-joint-slots\">з колегами</span>";
+$MESS["CALENDAR_SHARING_USER_SELECTOR_TITLE_V2"] = "Додайте колег у <span data-role=\"calendar-sharing_popup-joint-slots\">спільні слоти</span>";
 $MESS["SHARING_BUTTON_TITLE"] = "Вільні слоти";
 $MESS["SHARING_COPY_LINK_NOTIFICATION"] = "Посилання скопійоване";
 $MESS["SHARING_DIALOG_CHECKBOX_OFF"] = "ВИМК.";
@@ -14,6 +37,7 @@ $MESS["SHARING_DIALOG_PREVIEW_BLOCK_CONTENT_LINK"] = "перейдіть за п
 $MESS["SHARING_DIALOG_SHARING_BLOCK_COPY_LINK_BUTTON"] = "Копіювати посилання";
 $MESS["SHARING_DIALOG_SHARING_BLOCK_COPY_LINK_BUTTON_COPIED"] = "Скопійовано";
 $MESS["SHARING_DIALOG_SHARING_BLOCK_DISABLED_COPY_LINK_BUTTON_POPUP"] = "Щоб поділитись посиланням, відкрийте доступ до календаря.";
+$MESS["SHARING_DIALOG_SHARING_BLOCK_JOINT_SLOTS_BUTTON"] = "Спільні слоти";
 $MESS["SHARING_DIALOG_SHARING_BLOCK_TITLE"] = "Посилання на календар";
 $MESS["SHARING_DIALOG_SHARING_HINT"] = "Надішліть посилання клієнту, партнеру, підряднику – вони самі знайдуть зручний час для зустрічі та додадуть подію у ваш календар.";
 $MESS["SHARING_INFO_POPUP_CONTENT_1"] = "Плануйте зустрічі без довгих листувань. Надішліть посилання, за яким клієнт, партнер або підрядник побачать ваш вільний час і зможуть самі підібрати зручний варіант.";
@@ -21,6 +45,8 @@ $MESS["SHARING_INFO_POPUP_CONTENT_2"] = "Ніхто не побачить ваш
 $MESS["SHARING_INFO_POPUP_CONTENT_3_CALENDAR"] = "Як підібрати зручний час для зустрічі з тими, хто не працює у вашій компанії? Надішліть їм посилання на ваші вільні слоти. Одержувачі самі виберуть відповідну дату й час.";
 $MESS["SHARING_INFO_POPUP_CONTENT_3_CRM"] = "Як підібрати зручний час для зустрічі з клієнтами? Надішліть їм посилання на ваші вільні слоти. Одержувачі самі виберуть відповідну дату й час.";
 $MESS["SHARING_INFO_POPUP_CONTENT_4"] = "<span><a href=\"#LINK#\" target=\"_blank\">Відкрийте посилання</a></span> та створіть тестову зустріч. Ви самі побачите, як це швидко й зручно.";
+$MESS["SHARING_INFO_POPUP_CONTENT_4_V2"] = "<span><a href=\"#LINK#\" style=\"pointer-events: none;\">Відкрийте посилання</a></span> й заплануйте тестову зустріч. Переконайтеся на власному досвіді, як це швидко й зручно.";
+$MESS["SHARING_INFO_POPUP_CONTENT_4_V3"] = "Створіть <a href=\"#LINK#\">тестову зустріч</a>";
 $MESS["SHARING_INFO_POPUP_HOW_IT_WORK"] = "Як це працює?";
 $MESS["SHARING_INFO_POPUP_MORE"] = "Докладніше";
 $MESS["SHARING_INFO_POPUP_QR_INFO"] = "Наведіть камеру смартфона на QR-код.";
@@ -33,7 +59,9 @@ $MESS["SHARING_WARNING_POPUP_CANCEL_BUTTON"] = "Скасувати";
 $MESS["SHARING_WARNING_POPUP_CONTENT"] = "Під час повторного ввімкнення доступу з'явиться нове гостьове посилання, доступ за старим посиланням буде неможливий.";
 $MESS["SHARING_WARNING_POPUP_CONTENT_1"] = "Закриття доступу призведе до деактивації поточного посилання. <br>
 Щоб отримати нове дійсне посилання, доведеться знову відкрити доступ до слотів.";
+$MESS["SHARING_WARNING_POPUP_CONTENT_2"] = "Під час повторного ввімкнення персональні слоти будуть доступні лише за новим посиланням. Спільні слоти потрібно створювати знову.";
 $MESS["SHARING_WARNING_POPUP_SUBMIT_BUTTON"] = "Закрити доступ";
 $MESS["SHARING_WARNING_POPUP_SUBMIT_BUTTON_NEW"] = "Закрити доступ";
+$MESS["SHARING_WARNING_POPUP_SUBMIT_BUTTON_NEW_MSGVER_1"] = "Закрити доступ";
 $MESS["SHARING_WARNING_POPUP_TITLE"] = "Ви вимикаєте доступ за посиланням";
 $MESS["SHARING_WARNING_POPUP_TITLE_1"] = "Закрити доступ до вільних слотів?";

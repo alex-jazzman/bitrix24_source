@@ -14,6 +14,7 @@ $MESS["TASKS_SCRUM_EPIC_GRID_TASKS_COMPLETED"] = "Завдань виконан�
 $MESS["TASKS_SCRUM_EPIC_GRID_TASKS_TOTAL"] = "Завданнь всього";
 $MESS["TASKS_SCRUM_EPIC_GRID_USER"] = "Хто створив";
 $MESS["TASKS_SCRUM_EPIC_GRID_USER_SHORT"] = "Створено";
+$MESS["TASKS_SCRUM_TASKS_GRID_ASSIGNEE"] = "Виконавець";
 $MESS["TASKS_SCRUM_TASKS_GRID_NAME"] = "Назва";
 $MESS["TASKS_SCRUM_TASKS_GRID_RESPONSIBLE"] = "Відповідальний";
 $MESS["TASKS_SCRUM_TASKS_GRID_STORY_POINTS"] = "Story points";

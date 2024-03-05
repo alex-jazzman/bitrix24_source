@@ -45,7 +45,7 @@ $obCache = new CPHPCache;
 $strCacheID = LANGUAGE_ID . $arParams['SHOW_HIDDEN'] . $this->getRelativePath();
 if ($obCache->StartDataCache($arParams['CACHE_TIME'], $strCacheID, '/' . SITE_ID . $this->getRelativePath()))
 {
-	$arFilter = ['ACTIVE' => 'Y', 'LID' => LANGUAGE_ID];
+	$arFilter = ['ACTIVE' => 'Y', 'LID' => SITE_ID];
 	if (!$arParams['SHOW_HIDDEN'])
 	{
 		$arFilter['VISIBLE'] = 'Y';

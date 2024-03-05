@@ -6,6 +6,8 @@ IncludeModuleLangFile(__FILE__);
 
 class CAllXDILFScheme
 {
+	public $LAST_ERROR = '';
+
 	public function CheckFields($action, &$arFields): bool
 	{
 		global $DB;
@@ -80,7 +82,7 @@ class CAllXDILFScheme
 			];
 		}
 
-		if ((string)$arFields["LID"] !== '')
+		if ((string) ($arFields["LID"] ?? '') !== '')
 		{
 			$r = CLang::GetByID($arFields["LID"]);
 			if (!$r->Fetch())
@@ -115,9 +117,9 @@ class CAllXDILFScheme
 			)
 			|| (
 				$action === "update"
-				&& $arFields["TYPE"] === "POST"
+				&& ($arFields["TYPE"] ?? null) === "POST"
 				&& array_key_exists("HASH", $arFields)
-				&& (string)$arFields["HASH"] === ''
+				&& (string) $arFields["HASH"] === ''
 			)
 		)
 		{
@@ -315,12 +317,12 @@ class CAllXDILFScheme
 					$arFields["HOST"] = $arURI["host"];
 				}
 
-				if ((string)$arURI["port"] !== '')
+				if ((string) ($arURI["port"] ?? null) !== '')
 				{
 					$arFields["PORT"] = $arURI["port"];
 				}
 
-				if ((string)$arURI["path"] !== '')
+				if ((string) ($arURI["path"] ?? null) !== '')
 				{
 					$arFields["PAGE"] = $arURI["path"];
 				}
@@ -329,7 +331,7 @@ class CAllXDILFScheme
 			if (
 				array_key_exists("TYPE", $arFields) 
 				&& $arFields["TYPE"] === "RSS"
-				&& (string)$arURI["query"] !== ''
+				&& (string) ($arURI["query"] ?? null) !== ''
 			)
 			{
 				$arFields["PARAMS"] = $arURI["query"];
@@ -373,7 +375,7 @@ class CAllXDILFScheme
 			}
 		}
 
-		if ($arFields["AUTO"] === "Y")
+		if (($arFields["AUTO"] ?? null) === "Y")
 		{
 			if (mb_strlen($arFields["DAYS_OF_MONTH"]) + mb_strlen($arFields["DAYS_OF_WEEK"]) <= 0)
 			{

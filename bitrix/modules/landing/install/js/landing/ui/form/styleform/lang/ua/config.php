@@ -1,0 +1,3 @@
+<?php
+$MESS["LANDING_REPLACE_BY_TEMPLATES_BUTTON"] = "Вибрати";
+$MESS["LANDING_REPLACE_BY_TEMPLATES_TITLE"] = "Шаблони для CRM-форм";

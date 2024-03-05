@@ -12,7 +12,6 @@ $MESS["WIZARD_FIELD_PRODUCT_PURCHASING_PRICE"] = "Закупівельна ці�
 $MESS["WIZARD_FIELD_PRODUCT_STORE"] = "Склад";
 $MESS["WIZARD_FIELD_PRODUCT_STORE_FROM"] = "Склад-відправник";
 $MESS["WIZARD_FIELD_PRODUCT_STORE_TO"] = "Склад-одержувач";
-$MESS["WIZARD_STEP_BUTTON_FINISH_TEXT"] = "Завершити";
 $MESS["WIZARD_STEP_FOOTER_ADD_STORE"] = "Додати склад";
 $MESS["WIZARD_STEP_FOOTER_BIND_TO_SECTION"] = "Прив'язати до розділу";
 $MESS["WIZARD_STEP_FOOTER_SECTION_BINDINGS"] = "Обраний розділ: #SECTIONS#";

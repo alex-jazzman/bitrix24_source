@@ -7,7 +7,6 @@ $MESS["REST_CONFIGURATION_IMPORT_ERRORS_POPUP_TEXT_LABEL"] = "Опис проб�
 $MESS["REST_CONFIGURATION_IMPORT_ERRORS_POPUP_TEXT_PLACEHOLDER"] = "Текст опису проблеми";
 $MESS["REST_CONFIGURATION_IMPORT_ERRORS_POPUP_TITLE"] = "Звіт про помилки";
 $MESS["REST_CONFIGURATION_IMPORT_ERRORS_REPORT_BTN"] = "Звіт про помилки";
-$MESS["REST_CONFIGURATION_IMPORT_FINISH_DESCRIPTION"] = "Налаштування успішно імпортовані";
 $MESS["REST_CONFIGURATION_IMPORT_FINISH_DESCRIPTION_MSGVER_1"] = "Готово! Можна починати редагування сайту.";
 $MESS["REST_CONFIGURATION_IMPORT_FINISH_ERROR_DESCRIPTION"] = "Налаштування імпортовані, але з деякими помилками.";
 $MESS["REST_CONFIGURATION_IMPORT_INSTALL_APP_TITLE_BLOCK"] = "Встановлення застосунку";

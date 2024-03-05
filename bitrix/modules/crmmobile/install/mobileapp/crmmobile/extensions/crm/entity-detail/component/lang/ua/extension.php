@@ -58,6 +58,7 @@ $MESS["M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_CANCEL"] = "Повер�
 $MESS["M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_OK"] = "Продовжити без збереження";
 $MESS["M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_TEXT2"] = "Зараз іде процес редагування угоди. Якщо продовжити зміну вирви, усі поточні зміни буде втрачено";
 $MESS["M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_UNSAVED_ALERT_TITLE2"] = "Зміна вирви";
+$MESS["M_CRM_ENTITY_ACTION_CHAT"] = "Обговорити у чаті";
 $MESS["M_CRM_ENTITY_ACTION_DELETE"] = "Видалення елемента";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_COMPANY"] = "Видалити компанію";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION"] = "Ви впевнені, що хочете видалити елемент?";

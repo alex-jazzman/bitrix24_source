@@ -351,7 +351,7 @@ class TaskService implements Errorable
 			}
 
 			$getListParams = [
-				'select' => ['ID'],
+				'select' => ['ID', 'SCRUM_ITEMS_SORT'],
 				'legacyFilter' => $filter,
 				'order' => [
 					'SCRUM_ITEMS_SORT' => 'ASC',
@@ -818,14 +818,26 @@ class TaskService implements Errorable
 		{
 			$taskItem = $this->getTaskItemObject($taskId);
 
-			$taskData = $taskItem->getData(false, [
-				'select' => ['DEPENDS_ON'],
-			]);
+			$taskData = $taskItem->getData(
+				false,
+				[
+					'select' => ['DEPENDS_ON'],
+				],
+				false,
+			);
 
 			return $taskData['DEPENDS_ON'];
 		}
 		catch (\Exception $exception)
 		{
+			if (
+				$exception instanceof \TasksException
+				&& $exception->checkOfType(\TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE)
+			)
+			{
+				return [];
+			}
+
 			$this->errorCollection->setError(
 				new Error(
 					$exception->getMessage(),
@@ -1509,14 +1521,26 @@ class TaskService implements Errorable
 		{
 			$taskItem = $this->getTaskItemObject($taskId);
 
-			$taskData = $taskItem->getData(false, [
-				'select' => ['DEPENDS_ON'],
-			]);
+			$taskData = $taskItem->getData(
+				false,
+				[
+					'select' => ['DEPENDS_ON'],
+				],
+				false,
+			);
 
 			return !empty($taskData['DEPENDS_ON']);
 		}
 		catch (\Exception $exception)
 		{
+			if (
+				$exception instanceof \TasksException
+				&& $exception->checkOfType(\TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE)
+			)
+			{
+				return false;
+			}
+
 			$this->errorCollection->setError(
 				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHECK_IS_LINKED_TASK)
 			);

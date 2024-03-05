@@ -3,7 +3,6 @@ $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_ERROR_REQUEST_INFORMATION_FROM_SERVER"] = 
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INVALID_OAUTH_ACCESS_TOKEN"] = "Втрачено доступ до управління публічної сторінки. Необхідно повторно виконати підключення.";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_CATALOG"] = "Каталог товарів";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_OPEN_LINES"] = "Відкриті лінії";
-$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MODULE_NOT_INSTALLED"] = "Модуль коннекторів месенджерів не встановлено";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль \"Конектори для зовнішніх месенджерів\" не встановлений.";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_NO_ACTIVE_CONNECTOR"] = "Даний коннектор не активний";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_NO_AUTHORIZATION_PAGE"] = "Підключити сторінку не вийшло";

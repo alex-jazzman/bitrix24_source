@@ -1,5 +1,5 @@
 <?php
-$MESS["INTRANET_USER_FIILDS_SETTINGS"] = "Налаштування відображення полів";
+$MESS["INTRANET_USER_FIILDS_SETTINGS"] = "Налаштування показу полів";
 $MESS["INTRANET_USER_PROFILE_ADDITIONAL_INFO"] = "Додаткова інформація";
 $MESS["INTRANET_USER_PROFILE_ADD_PHOTO"] = "Змінити фотографію";
 $MESS["INTRANET_USER_PROFILE_ADMIN_MODE"] = "Режим адміністратора";

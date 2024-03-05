@@ -705,6 +705,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      text: '',
 	      value: ''
 	    };
+	    this.isLoading = false;
 	    this.inlineEditModeEnabled = params.inlineEditModeEnabled;
 	    this.meetingRooms = params.iblockMeetingRoomList || [];
 	    Location.setMeetingRoomList(params.iblockMeetingRoomList);
@@ -717,6 +718,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    this.processValue();
 	    this.setCategoryManager();
 	    this.setValuesDebounced = BX.debounce(this.setValues.bind(this), 100);
+	    this.updateAccessibilityDebounce = main_core.Runtime.debounce(this.updateAccessibility.bind(this), 100);
+	    Location.instances.push(this);
 	  }
 	  create() {
 	    this.DOM.wrapNode.style.display = 'flex';
@@ -869,6 +872,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      disabledControl = true;
 	    }
 	    this.processValue();
+	    this.menuItemList = menuItemList;
+	    const selectControlCreated = this.selectContol;
 	    (_this$selectContol = this.selectContol) != null ? _this$selectContol : this.selectContol = new calendar_controls.SelectInput({
 	      input: this.DOM.input,
 	      values: menuItemList,
@@ -877,6 +882,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      disabled: disabledControl,
 	      minWidth: 300,
 	      onChangeCallback: () => {
+	        const menuItemList = this.menuItemList;
 	        main_core_events.EventEmitter.emit('Calendar.LocationControl.onValueChange');
 	        let i,
 	          value = this.DOM.input.value;
@@ -903,6 +909,11 @@ this.BX.Calendar = this.BX.Calendar || {};
 	        });
 	        this.selectContol.setValueList(menuItemList);
 	        this.allowClick();
+	      },
+	      onPopupShowCallback: () => {
+	        if (this.getShouldCheckLocationAccessibility()) {
+	          this.checkLocationAccessibility(this.accessibilityParams);
+	        }
 	      }
 	    });
 	    this.selectContol.setValueList(menuItemList);
@@ -910,6 +921,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      valueIndex: selectedIndex
 	    });
 	    this.selectContol.setDisabled(disabledControl);
+	    if (!selectControlCreated) {
+	      this.setLoading(this.isLoading);
+	    }
 	    this.allowClick();
 	  }
 	  processValue() {
@@ -960,6 +974,10 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      main_core.Event.bind(this.DOM.removeLocationButton, 'click', this.removeValue.bind(this));
 	    }
 	  }
+	  isShown() {
+	    var _this$selectContol$sh, _this$selectContol2;
+	    return (_this$selectContol$sh = (_this$selectContol2 = this.selectContol) == null ? void 0 : _this$selectContol2.shown) != null ? _this$selectContol$sh : false;
+	  }
 	  setViewMode(viewMode) {
 	    this.viewMode = viewMode;
 	    if (this.viewMode) {
@@ -998,12 +1016,20 @@ this.BX.Calendar = this.BX.Calendar || {};
 	      '#NUM#': capacity
 	    });
 	  }
+	  getShouldCheckLocationAccessibility() {
+	    return this.shouldCheckLocationAccessibility;
+	  }
+	  setShouldCheckLocationAccessibility(shouldCheck) {
+	    this.shouldCheckLocationAccessibility = shouldCheck;
+	  }
 	  checkLocationAccessibility(params) {
-	    var _this$selectContol2;
-	    (_this$selectContol2 = this.selectContol) == null ? void 0 : _this$selectContol2.setLoading(true);
+	    this.accessibilityParams = params;
+	    this.setLoading(true);
+	    this.updateAccessibilityDebounce();
+	  }
+	  updateAccessibility() {
+	    const params = this.accessibilityParams;
 	    this.getLocationAccessibility(params.from, params.to).then(() => {
-	      var _this$selectContol3;
-	      (_this$selectContol3 = this.selectContol) == null ? void 0 : _this$selectContol3.setLoading(false);
 	      const timezone = params.timezone && params.timezone !== '' ? params.timezone : calendar_util.Util.getUserSettings().timezoneName;
 	      const timezoneOffset = calendar_util.Util.getTimeZoneOffset(timezone) * 60 * 1000;
 	      const fromTs = new Date(params.from.getTime() + timezoneOffset).getTime();
@@ -1041,8 +1067,14 @@ this.BX.Calendar = this.BX.Calendar || {};
 	          }
 	        }
 	      }
-	      this.setValuesDebounce();
+	      this.setValues();
+	      this.setLoading(false);
 	    });
+	  }
+	  setLoading(isLoading) {
+	    var _this$selectContol3;
+	    this.isLoading = isLoading;
+	    (_this$selectContol3 = this.selectContol) == null ? void 0 : _this$selectContol3.setLoading(isLoading);
 	  }
 	  getLocationAccessibility(from, to) {
 	    return new Promise(resolve => {
@@ -1074,17 +1106,30 @@ this.BX.Calendar = this.BX.Calendar || {};
 	    });
 	  }
 	  static handlePull(params) {
-	    if (!params.fields.DATE_FROM || !params.fields.DATE_TO) {
+	    var _entry$EXDATE;
+	    const entry = params.fields;
+	    if (!entry.DATE_FROM || !entry.DATE_TO) {
 	      return;
 	    }
-	    let dateFrom = calendar_util.Util.parseDate(params.fields.DATE_FROM);
-	    let dateTo = calendar_util.Util.parseDate(params.fields.DATE_TO);
+	    let dateFrom = calendar_util.Util.parseDate(entry.DATE_FROM);
+	    let dateTo = calendar_util.Util.parseDate(entry.DATE_TO);
 	    let datesRange = Location.getDatesRange(dateFrom, dateTo);
+	    const excludedDates = (_entry$EXDATE = entry.EXDATE) == null ? void 0 : _entry$EXDATE.split(';');
+	    if (main_core.Type.isArrayFilled(excludedDates)) {
+	      datesRange.push(excludedDates.pop());
+	    }
 	    for (let date of datesRange) {
 	      if (Location.accessibility[date]) {
 	        delete Location.accessibility[date];
 	      }
 	    }
+	    Location.instances.forEach(instance => {
+	      if (instance.isShown()) {
+	        instance.checkLocationAccessibility(instance.accessibilityParams);
+	      } else {
+	        instance.setShouldCheckLocationAccessibility(true);
+	      }
+	    });
 	  }
 	  loadRoomSlider() {
 	    this.setRoomsManager();
@@ -1404,6 +1449,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 	Location.currentRoomCapacity = 0;
 	Location.accessibility = [];
 	Location.DAY_LENGTH = 86400000;
+	Location.instances = [];
 
 	class UserSelector {
 	  constructor(params = {}) {
@@ -4049,7 +4095,8 @@ this.BX.Calendar = this.BX.Calendar || {};
 	                id: 'user',
 	                options: {
 	                  inviteGuestLink: true,
-	                  emailUsers: true
+	                  emailUsers: true,
+	                  analyticsSource: 'calendar'
 	                }
 	              }, {
 	                id: 'project'

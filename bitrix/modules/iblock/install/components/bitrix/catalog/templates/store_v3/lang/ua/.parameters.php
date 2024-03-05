@@ -135,7 +135,6 @@ $MESS["CP_BC_TPL_PROP_EMPTY"] = "не вибрано";
 $MESS["CP_BC_TPL_RELATIVE_QUANTITY_FACTOR"] = "Значення, від якого відбувається підміна";
 $MESS["CP_BC_TPL_SEARCH_CHECK_DATES"] = "Шукати тільки в активних за датою документах";
 $MESS["CP_BC_TPL_SEARCH_NO_WORD_LOGIC"] = "Вимкнути обробку слів як логічних операторів";
-$MESS["CP_BC_TPL_SEARCH_PAGE_RESULT_COUNT"] = "Кількість результатів на сторінці";
 $MESS["CP_BC_TPL_SEARCH_RESTART"] = "Шукати без урахування морфології (при відсутності результату пошуку)";
 $MESS["CP_BC_TPL_SEARCH_USE_LANGUAGE_GUESS"] = "Ввімкнути автовизначення розкладки клавіатури";
 $MESS["CP_BC_TPL_SEARCH_USE_SEARCH_RESULT_ORDER"] = "Використовувати сортування результатів за релевантністю";

@@ -41,7 +41,6 @@ $MESS["CATALOG_PRODUCT_CARD_VARIATION_GRID_OFFER_TREE_HINT"] = "Це власт�
 $MESS["CATALOG_PRODUCT_CARD_VARIATION_GRID_PRICE_CURRENCY"] = "Валюта (#PRICE_NAME#)";
 $MESS["CATALOG_PRODUCT_CARD_VARIATION_GRID_PRICE_EDIT_RESTRICTED_HINT"] = "Недостатньо прав для зміни ціни.";
 $MESS["CATALOG_PRODUCT_CARD_VARIATION_GRID_SETTINGS_DESC_MEASUREMENTS"] = "Використовувати вагу та розміри товарів для розрахунку вартості доставки";
-$MESS["CATALOG_PRODUCT_CARD_VARIATION_GRID_SETTINGS_DESC_MEASURE_RATIO"] = "Включити складський облік";
 $MESS["CATALOG_PRODUCT_CARD_VARIATION_GRID_SETTINGS_DESC_PURCHASING_PRICE_FIELD"] = "Використовувати закупівельну ціну";
 $MESS["CATALOG_PRODUCT_CARD_VARIATION_GRID_SETTINGS_DESC_VAT_INCLUDED"] = "Використовувати ПДВ";
 $MESS["CATALOG_PRODUCT_CARD_VARIATION_GRID_SETTINGS_TITLE_MEASUREMENTS"] = "Вага та розміри";

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IBEL_A_BP_H"] = "Бізнес-процеси";
 $MESS["IBEL_A_BP_PROC"] = "Відсоток";
 $MESS["IBEL_A_BP_TASK"] = "Завдання";
@@ -49,6 +49,7 @@ $MESS["IBEL_CATALOG_QUANTITY_TRACE"] = "Зменшувати кількість 
 $MESS["IBEL_CATALOG_QUANTITY_TRACE_EXT"] = "Кількісний облік";
 $MESS["IBEL_CATALOG_TYPE"] = "Тип товару";
 $MESS["IBEL_CATALOG_TYPE_MESS_GROUP"] = "набір";
+$MESS["IBEL_CATALOG_TYPE_MESS_GROUP_MSGVER_1"] = "набір";
 $MESS["IBEL_CATALOG_TYPE_MESS_OFFER"] = "пропозиція";
 $MESS["IBEL_CATALOG_TYPE_TITLE"] = "Тип товару";
 $MESS["IBEL_CATALOG_VAT_ID"] = "Ставка ПДВ";
@@ -102,4 +103,3 @@ $MESS["IB_SE_L_REFRESH_ELEMENTS"] = "Оновити список";
 $MESS["IB_SE_L_REFRESH_ELEMENTS_DESCR"] = "Оновити список торгівельних пропозицій";
 $MESS["IB_SE_L_REQUIRED_FIELDS_FIND"] = "Обрані обов'язковими поля інфоблоків, які роблять роботу \"Генератора торгових пропозицій\" неможливою, необхідно прибрати їх обов'язковість";
 $MESS["IB_SE_L_SHOW_PRICES_AFTER_COPY"] = "Щоб редагувати товарні пропозиції, необхідно зберегти скопійований товар";
-?>

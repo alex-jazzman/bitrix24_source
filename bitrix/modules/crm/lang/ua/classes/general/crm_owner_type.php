@@ -33,6 +33,7 @@ $MESS["CRM_OWNER_TYPE_ORDER_TITLE"] = "Замовлення №#ACCOUNT_NUMBER#"
 $MESS["CRM_OWNER_TYPE_QUOTE"] = "Пропозиція";
 $MESS["CRM_OWNER_TYPE_QUOTE_CATEGORY"] = "Пропозиції";
 $MESS["CRM_OWNER_TYPE_QUOTE_CATEGORY_MSGVER_1"] = "Пропозиції";
+$MESS["CRM_OWNER_TYPE_QUOTE_CATEGORY_MSGVER_2"] = "Пропозиції";
 $MESS["CRM_OWNER_TYPE_QUOTE_MSGVER_1"] = "Пропозиція";
 $MESS["CRM_OWNER_TYPE_QUOTE_NOT_FOUND"] = "Пропозицію не знайдено";
 $MESS["CRM_OWNER_TYPE_QUOTE_NOT_FOUND_MSGVER_1"] = "Пропозицію не знайдено";

@@ -6,21 +6,17 @@ jn.define('crm/disabling-tools', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 
-	const STATIC_ENTITIES_LOAD_ACTION = 'crmmobile.DisablingTools.getSlidersCodesForDisabledStaticEntityIds';
+	const STATIC_ENTITIES_LOAD_ACTION = 'crmmobile.DisablingTools.getSlidersCodesForDisabledStaticEntities';
 	const ENTITY_SLIDER_CODE_LOAD_ACTION = 'crmmobile.DisablingTools.getEntitySliderCodeIfDisabled';
-	const CRM_CODE_LOAD_ACTION = 'crmmobile.DisablingTools.getCrmSliderCodeIfDisabled';
 
 	/**
 	 * @class DisablingTools
 	 */
 	class DisablingTools
 	{
-		constructor(options = {})
+		constructor()
 		{
-			this.ttl = options.ttl ?? 86_400_000;
-
-			this.load(CRM_CODE_LOAD_ACTION);
-			this.load(STATIC_ENTITIES_LOAD_ACTION);
+			this.ttl = 3600;
 		}
 
 		/**
@@ -30,11 +26,6 @@ jn.define('crm/disabling-tools', (require, exports, module) => {
 		 */
 		async getSliderCode(entityTypeId)
 		{
-			if (!this.hasCacheType('crm'))
-			{
-				await this.load(CRM_CODE_LOAD_ACTION);
-			}
-
 			if (!this.hasCacheType(entityTypeId))
 			{
 				await NotifyManager.showLoadingIndicator();
@@ -129,11 +120,6 @@ jn.define('crm/disabling-tools', (require, exports, module) => {
 		 */
 		getCacheDataByType(type)
 		{
-			if (type === 'crm')
-			{
-				return this.getCache(CRM_CODE_LOAD_ACTION);
-			}
-
 			if (Type.isDynamicTypeById(type))
 			{
 				return this.getCache(ENTITY_SLIDER_CODE_LOAD_ACTION, { entityTypeId: type });

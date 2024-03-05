@@ -5580,17 +5580,10 @@ this.BX = this.BX || {};
 	                }
 	              }), this.elements.name = main_core.Dom.create("span", {
 	                props: {
-	                  className: "bx-messenger-videocall-user-name"
+	                  className: "bx-messenger-videocall-user-name",
+	                  title: this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", this.userModel.name) : this.userModel.name
 	                },
-	                text: this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", this.userModel.name) : this.userModel.name,
-	                events: {
-	                  mouseover: function mouseover(e) {
-	                    _this.hintManager.show(e.currentTarget, _this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", _this.userModel.name) : _this.userModel.name);
-	                  },
-	                  mouseout: function mouseout(e) {
-	                    _this.hintManager.hide();
-	                  }
-	                }
+	                text: this.screenSharingUser ? BX.message('IM_CALL_USERS_SCREEN').replace("#NAME#", this.userModel.name) : this.userModel.name
 	              }), this.elements.changeNameIcon = main_core.Dom.create("div", {
 	                props: {
 	                  className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-change-name-icon hidden"

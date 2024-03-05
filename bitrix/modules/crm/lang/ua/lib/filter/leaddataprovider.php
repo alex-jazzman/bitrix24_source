@@ -1,11 +1,13 @@
 <?php
 $MESS["CRM_LEAD_FILTER_ACTIVE_TIME_PERIOD"] = "Період активності";
 $MESS["CRM_LEAD_FILTER_ACTIVITY_COUNTER"] = "Справи";
+$MESS["CRM_LEAD_FILTER_ACTIVITY_RESPONSIBLE_IDS"] = "Відповідальний за справу";
 $MESS["CRM_LEAD_FILTER_COMMUNICATION_TYPE"] = "Спосіб зв'язку";
 $MESS["CRM_LEAD_FILTER_COMPANY_ID"] = "Список компаній";
 $MESS["CRM_LEAD_FILTER_CONTACT_ID"] = "Список контактів";
 $MESS["CRM_LEAD_FILTER_EMAIL"] = "E-mail";
 $MESS["CRM_LEAD_FILTER_IM"] = "Месенджер";
+$MESS["CRM_LEAD_FILTER_LAST_ACTIVITY_TIME"] = "Остання активність";
 $MESS["CRM_LEAD_FILTER_PHONE"] = "Телефон";
 $MESS["CRM_LEAD_FILTER_PRODUCT_ROW_PRODUCT_ID"] = "Товар";
 $MESS["CRM_LEAD_FILTER_STATUS_CONVERTED"] = "Сконвертовані";

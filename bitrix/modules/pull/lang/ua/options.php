@@ -31,7 +31,6 @@ $MESS["PULL_OPTIONS_NGINX_VERSION_034"] = "Віртуальна машина 4.2
 $MESS["PULL_OPTIONS_NGINX_VERSION_034_DESC"] = "Модуль nginx-push-stream-module 0.4.0 рекомендований до обов'язкової установці. <br> При використанні модуля nginx-push-stream-module 0.3.4 не буде відкрита робота WebSocket і масова розсилка команд.";
 $MESS["PULL_OPTIONS_NGINX_VERSION_040"] = "Віртуальна машина 4.4 і вище (nginx-push-stream-module 0.4.0)";
 $MESS["PULL_OPTIONS_NGINX_VERSION_710"] = "Віртуальна машина 7.1 і вище (Bitrix Push server)";
-$MESS["PULL_OPTIONS_NGINX_VERSION_730"] = "Віртуальна машина 7.3 і новіше (Bitrix Push server 2.0)";
 $MESS["PULL_OPTIONS_PATH_TO_LISTENER"] = "Шлях для читання команд (HTTP)";
 $MESS["PULL_OPTIONS_PATH_TO_LISTENER_DESC"] = "Рекомендується використовувати стандартний порт для HTTP або HTTPS. <br> Використовуйте 8893 (HTTP) і 8894 (HTTPS) тільки для версії модуля nginx-push-stream-module 0.3.4";
 $MESS["PULL_OPTIONS_PATH_TO_LISTENER_MODERN_DESC"] = "Зверніть увагу, що сучасні браузери можуть підключатися до сервера черг розташованих на іншому сервері та з іншим доменом (робота з CORS запитами).";

@@ -69,6 +69,7 @@ $MESS["CRM_DOCUMENT_FIELD_PRODUCT_NAME"] = "Товар";
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_SUM"] = "Сума";
 $MESS["CRM_DOCUMENT_FIELD_SOURCE_DESCRIPTION"] = "Додатково про джерело";
 $MESS["CRM_DOCUMENT_FIELD_SOURCE_ID"] = "Джерело";
+$MESS["CRM_DOCUMENT_FIELD_TIME_CREATE"] = "Часу створення";
 $MESS["CRM_DOCUMENT_FIELD_TRACKING_SOURCE_ID"] = "Джерело наскрізної аналітики";
 $MESS["CRM_DOCUMENT_FIELD_URL"] = "Посилання на елемент";
 $MESS["CRM_DOCUMENT_FIELD_URL_BB"] = "Посилання на елемент (BBcode)";

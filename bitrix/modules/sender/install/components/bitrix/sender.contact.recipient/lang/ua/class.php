@@ -3,7 +3,6 @@ $MESS["SENDER_CONTACT_CONSENT_APPLY"] = "Контакт погодився на 
 $MESS["SENDER_CONTACT_CONSENT_REJECT"] = "Контакт відмовився від розсилки";
 $MESS["SENDER_CONTACT_CONSENT_WAIT"] = "Згода відправлена";
 $MESS["SENDER_CONTACT_DELETED"] = "Контакт видалений";
-$MESS["SENDER_LETTER_CONTACT_LIST_ITEM_DELETED"] = "Одержувач видалений";
 $MESS["SENDER_LETTER_RCP_LIST_TITLE"] = "Отримувачі";
 $MESS["SENDER_LETTER_RCP_LIST_TITLE_CONTACT"] = "Відправлені розсилки";
 $MESS["SENDER_LETTER_RCP_UI_COLUMN_CLICK"] = "Клікнув";

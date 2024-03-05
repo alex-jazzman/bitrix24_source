@@ -443,7 +443,7 @@ export class PhoneCallView
 
 	init()
 	{
-		if (this.isDesktop() && !this.slave)
+		if (DesktopApi.isChatWindow() && !this.slave)
 		{
 			console.log('Init phone call view window:', location.href);
 			this.desktop.openCallWindow('', null, {

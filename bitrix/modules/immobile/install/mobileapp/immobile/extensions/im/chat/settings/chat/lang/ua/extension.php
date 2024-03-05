@@ -1,6 +1,8 @@
 <?php
 $MESS["SE_CHAT_AUTOPLAY_TITLE"] = "Автовідтворення";
+$MESS["SE_CHAT_AUTOPLAY_TITLE_V2"] = "Автовідтворення";
 $MESS["SE_CHAT_AUTOPLAY_VIDEO_TITLE"] = "Відео";
+$MESS["SE_CHAT_AUTOPLAY_VIDEO_TITLE_V2"] = "Відео";
 $MESS["SE_CHAT_BACKGROUND_COLOR_CREAMY"] = "Кремовий";
 $MESS["SE_CHAT_BACKGROUND_COLOR_DARK"] = "Темний";
 $MESS["SE_CHAT_BACKGROUND_COLOR_LIGHT_GRAY"] = "Світлий";
@@ -14,7 +16,10 @@ $MESS["SE_CHAT_BETA_TITLE"] = "Новий чат (бета)";
 $MESS["SE_CHAT_DESC"] = "Налаштування з даної категорії будуть застосовані після повторного відкриття діалогу.";
 $MESS["SE_CHAT_ENABLE_TITLE"] = "Включити новий чат";
 $MESS["SE_CHAT_HISTORY_SHOW_TITLE"] = "Показати історію при запрошенні в чат";
+$MESS["SE_CHAT_HISTORY_SHOW_TITLE_V2"] = "Показувати історію під час запрошення в чат";
 $MESS["SE_CHAT_HISTORY_TITLE"] = "Історія чату";
+$MESS["SE_CHAT_LOCAL_STORAGE_ENABLE_DESCRIPTION"] = "За увімкненої опції повідомлення кешуються і зберігаються на вашому телефоні або планшеті. Це прискорює роботу чату й гарантує швидкий доступ до повідомлень за відсутності інтернету";
+$MESS["SE_CHAT_LOCAL_STORAGE_ENABLE_TITLE"] = "Кешувати повідомлення";
 $MESS["SE_CHAT_NATIVE_DIALOG_ENABLE_TITLE"] = "Увімкнути";
 $MESS["SE_CHAT_NATIVE_DIALOG_TITLE"] = "Нативний чат (Beta)";
 $MESS["SE_CHAT_QUOTE_ENABLE_TITLE"] = "Включити";

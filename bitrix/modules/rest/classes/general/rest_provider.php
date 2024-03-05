@@ -375,7 +375,7 @@ class CRestProvider
 	{
 		$arQuery = array_change_key_case($arQuery, CASE_UPPER);
 
-		if($arQuery['FULL'] == true)
+		if(isset($arQuery['FULL']) && $arQuery['FULL'])
 		{
 			$arScope = \Bitrix\Rest\Engine\ScopeManager::getInstance()->listScope();
 		}
@@ -401,7 +401,7 @@ class CRestProvider
 			if($arQuery['SCOPE'] != '')
 				$arScope = array($arQuery['SCOPE']);
 		}
-		elseif($arQuery['FULL'] == true)
+		elseif(isset($arQuery['FULL']) && $arQuery['FULL'])
 		{
 			$arScope = array_keys($arMethods);
 		}
@@ -422,7 +422,7 @@ class CRestProvider
 
 				foreach($arScopeMethods as $method => $methodDesc)
 				{
-					if(isset($methodDesc["options"]) && $methodDesc["options"]["private"] === true)
+					if(isset($methodDesc["options"]["private"]) && $methodDesc["options"]["private"] === true)
 					{
 						unset($arScopeMethods[$method]);
 					}
@@ -441,7 +441,7 @@ class CRestProvider
 			'isExisting' => false,
 			'isAvailable' => false,
 		];
-		$name = $query['name'];
+		$name = $query['name'] ?? '';
 		if (!empty($name))
 		{
 			$currentScope = self::getScope($server);

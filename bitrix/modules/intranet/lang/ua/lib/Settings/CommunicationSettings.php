@@ -1,0 +1,19 @@
+<?php
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ADMIN_MESSAGE"] = "Надсилати автоматичне повідомлення про призначення або зміну адміністратора в загальний чат";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_AUTO_CONNECT_DISK"] = "Автоматично під'єднувати диск групи під час вступу співробітника в групу";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_BLOCK_DOC"] = "Дозволити блокувати документ під час редагування";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_EDIT_DOC"] = "Дозволити редагувати документи в стрічці новин, завданнях, чатах або коментарях";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_LEAVE_MESSAGE"] = "Надсилати автоматичне повідомлення про звільнення співробітника в загальний чат";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT"] = "Дозволити надсилати повідомлення в загальний чат";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_PUBLIC_LINK"] = "Дозволити публічні посилання на файли";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_SEARCH_DOC"] = "Дозволити пошук за вмістом документів";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_URL_PREVIEW"] = "Увімкнути попередній перегляд у посиланнях";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_CREATE_OVERDUE_CHATS"] = "Створювати чат про протерміноване завдання на всіх учасників";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT"] = "Текст кнопки «Вподобайка»:";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_MAX_FILE_LIMIT"] = "Максимальна кількість записів в історії документа:";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_POST_FEED"] = "Дозволити публікувати повідомлення для всіх співробітників";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT"] = "Публікувати повідомлення для всіх співробітників за замовчуванням";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER"] = "Переглядати документи з допомогою";
+$MESS["SETTINGS_LIMIT_MAX_TIME_IN_DOCUMENT_HISTORY"] = "#NUM# дн.";
+$MESS["SETTINGS_LIMIT_MAX_TIME_IN_DOCUMENT_HISTORY_TITLE"] = "Версії зберігаються";
+$MESS["SETTINGS_UNLIMITED"] = "Безстроково";

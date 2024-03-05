@@ -20,5 +20,6 @@ $MESS["EC_PL_SETTINGS_SCALE_TIME"] = "Відображуваний час";
 $MESS["EC_PL_STATUS_H"] = "Організатор";
 $MESS["EC_PL_STATUS_N"] = "Відмовився";
 $MESS["EC_PL_STATUS_Q"] = "Участь не підтверджено";
+$MESS["EC_PL_STATUS_TZALL"] = "Деякі з учасників знаходяться в іншому часовому поясі.";
 $MESS["EC_PL_STATUS_Y"] = "Підтвердив участь";
 $MESS["EC_PL_UNLOCK_FEATURE"] = "розширити тариф";

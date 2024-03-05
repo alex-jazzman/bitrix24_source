@@ -108,8 +108,8 @@ class UserFieldType extends \IRestService
 
 		$param = array_change_key_case($param, CASE_UPPER);
 
-		$userTypeId = mb_strtolower($param['USER_TYPE_ID']);
-		$placementHandler = $param['HANDLER'];
+		$userTypeId = mb_strtolower($param['USER_TYPE_ID'] ?? '');
+		$placementHandler = $param['HANDLER'] ?? '';
 
 		if ($userTypeId == '')
 		{
@@ -131,7 +131,7 @@ class UserFieldType extends \IRestService
 			'PLACEMENT_HANDLER' => $placementHandler,
 			'TITLE' => $userTypeId,
 			'ADDITIONAL' => $userTypeId,
-			'OPTIONS' => static::prepareOption($param['OPTIONS']),
+			'OPTIONS' => static::prepareOption($param['OPTIONS'] ?? null),
 		);
 
 		$placementBind = array_merge(
@@ -143,7 +143,7 @@ class UserFieldType extends \IRestService
 					'DESCRIPTION',
 				],
 				[
-					'TITLE' => $placementBind['TITLE']
+					'TITLE' => $placementBind['TITLE'] ?? null
 				]
 			)
 		);
@@ -195,7 +195,7 @@ class UserFieldType extends \IRestService
 
 		$param = array_change_key_case($param, CASE_UPPER);
 
-		$userTypeId = toLower($param['USER_TYPE_ID']);
+		$userTypeId = mb_strtolower($param['USER_TYPE_ID'] ?? '');
 
 		if($userTypeId == '')
 		{
@@ -225,7 +225,7 @@ class UserFieldType extends \IRestService
 					'DESCRIPTION',
 				],
 				[
-					'TITLE' => $updateFields['TITLE']
+					'TITLE' => $updateFields['TITLE'] ?? null
 				]
 			)
 		);
@@ -296,7 +296,7 @@ class UserFieldType extends \IRestService
 
 		$param = array_change_key_case($param, CASE_UPPER);
 
-		$userTypeId = toLower($param['USER_TYPE_ID']);
+		$userTypeId = mb_strtolower($param['USER_TYPE_ID'] ?? '');
 
 		if($userTypeId == '')
 		{

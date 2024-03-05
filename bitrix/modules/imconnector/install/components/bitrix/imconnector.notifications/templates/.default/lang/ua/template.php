@@ -1,10 +1,7 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_HEADER"] = "СМС і WhatsApp повідомлення Бітрікс24";
-$MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_ADDITIONAL_DESCRIPTION"] = "Відправлення повідомлень за шаблоном працює для двох інструментів: «CRM + Інтернет-магазин» і «Прийняти оплату» в картці угоди.";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DESCRIPTION"] = "Підключіть Центр сповіщень Бітрікс24 до Відкритої лінії, щоб відправляти сповіщення на мобільні телефони ваших клієнтів";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DESCRIPTION_1"] = "Сценарій відправки повідомлень за шаблоном працює для нового «Інтернет-магазину» і «Прийняти оплату» в картці угоди.";
-$MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DESCRIPTION_DETAILS"] = "Докладніше про автоматичні повідомлення";
-$MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS"] = "Детальніше";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS_MSGVER_2"] = "Докладніше про автоматичні повідомлення";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_1"] = "Посилання на оплату у WhatsApp або СМС";
 $MESS["IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_LIST_ITEM_2"] = "Онлайн-оплата картою, Apple Pay, Google Pay та іншими способами";

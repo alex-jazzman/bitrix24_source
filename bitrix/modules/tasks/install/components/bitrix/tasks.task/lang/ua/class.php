@@ -5,6 +5,7 @@ $MESS["TASKS_TASK_TAG_ACCESS_DENIED"] = "Недостатньо прав";
 $MESS["TASKS_TASK_TAG_ALREADY_EXISTS"] = "Такий тег уже існує.";
 $MESS["TASKS_TASK_TAG_UNKNOWN_ERROR"] = "Не вдалося додати тег, спробуйте ще раз.";
 $MESS["TASKS_TEMPLATE_CREATE_FORBIDDEN"] = "Доступ до створення шаблонів заборонений";
+$MESS["TASKS_TT_AUTO_CHANGE_ASSIGNEE"] = "Виконавець цього завдання був змінений.";
 $MESS["TASKS_TT_AUTO_CHANGE_GROUP"] = "Завдання автоматично прив’язане до поточного проєкту";
 $MESS["TASKS_TT_AUTO_CHANGE_ORIGINATOR"] = "Постановник завдання був автоматично замінений на поточного користувача";
 $MESS["TASKS_TT_AUTO_CHANGE_PARENT"] = "Завдання автоматично прив’язане до базового завдання";

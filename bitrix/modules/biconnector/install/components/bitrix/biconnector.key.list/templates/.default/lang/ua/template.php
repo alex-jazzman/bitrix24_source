@@ -1,10 +1,8 @@
 <?php
-$MESS["CT_BBKL_COLUMN_ACCESS_KEY"] = "Ключ";
-$MESS["CT_BBKL_COLUMN_ACTIVE"] = "Активність";
-$MESS["CT_BBKL_COLUMN_APPLICATION"] = "Застосунок";
-$MESS["CT_BBKL_COLUMN_CONNECTION"] = "Підключення";
-$MESS["CT_BBKL_COLUMN_CREATED_BY"] = "Адміністратор";
-$MESS["CT_BBKL_COLUMN_DATE_CREATE"] = "Створено";
-$MESS["CT_BBKL_COLUMN_ID"] = "ID";
-$MESS["CT_BBKL_COLUMN_LAST_ACTIVITY_DATE"] = "Остання активність";
-$MESS["CT_BBKL_TOOLBAR_ADD"] = "Додати ключ";
+$MESS["CC_BBKL_ACTION_MENU_DELETE_CONF"] = "Справді видалити ключ? Цю дію не можна скасувати.";
+$MESS["CC_BBKL_ACTIVATE_KEY_ERROR"] = "Під час оновлення активності сталася помилка. Спробуйте пізніше.";
+$MESS["CC_BBKL_KEY_COPIED"] = "Ключ успішно скопійовано.";
+$MESS["CC_BBKL_KEY_COPY_ERROR"] = "Під час копіювання ключа сталася помилка.";
+$MESS["CC_BBKL_KEY_ONBOARDING_DESCRIPTION"] = "За допомогою ключів ви зможете гнучко керувати даними, які передаються до ваших BI-систем із Бітрікс24.";
+$MESS["CC_BBKL_KEY_ONBOARDING_TITLE"] = "Керуйте даними у звітах";
+$MESS["CT_BBKL_TITLE"] = "Мої ключі";

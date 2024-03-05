@@ -1,4 +1,6 @@
-<?
+<?php
+$MESS["IM_BITRIX_CALL_INVITE_BUTTON_TEMP"] = "Приєднатися до дзвінка";
+$MESS["IM_BITRIX_CALL_INVITE_TEMP"] = "[b]Розпочато відеодзвінок[/b][br]#LINK#";
 $MESS["IM_CALL_INTEGRATION_CHAT_CALL_FINISHED"] = "Дзвінок завершений";
 $MESS["IM_CALL_INTEGRATION_CHAT_CALL_MISSED_F"] = "Пропущений дзвінок від #NAME#";
 $MESS["IM_CALL_INTEGRATION_CHAT_CALL_MISSED_M"] = "Пропущений дзвінок від #NAME#";
@@ -9,4 +11,3 @@ $MESS["IM_CALL_INTEGRATION_CHAT_CALL_USER_BUSY_F"] = "#NAME# зайнята ін
 $MESS["IM_CALL_INTEGRATION_CHAT_CALL_USER_BUSY_M"] = "#NAME# зайнятий іншим дзвінком ";
 $MESS["IM_CALL_INTEGRATION_CHAT_CALL_USER_DECLINED_F"] = "#NAME# відхилила дзвінок";
 $MESS["IM_CALL_INTEGRATION_CHAT_CALL_USER_DECLINED_M"] = "#NAME# відхилив дзвінок";
-?>

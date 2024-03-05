@@ -1,7 +1,5 @@
 <?php
-$MESS["CT_BBDL_COLUMN_CREATED_BY"] = "Адміністратор";
-$MESS["CT_BBDL_COLUMN_DATE_CREATE"] = "Створено";
-$MESS["CT_BBDL_COLUMN_ID"] = "ID";
-$MESS["CT_BBDL_COLUMN_NAME"] = "Назва";
-$MESS["CT_BBDL_COLUMN_URL"] = "Посилання з BI-системи";
-$MESS["CT_BBDL_TOOLBAR_ADD"] = "Додати звіт";
+$MESS["CC_BBDL_ACTION_MENU_DELETE_CONF"] = "Справді видалити посилання на звіт? Цю дію не можна скасувати.";
+$MESS["CC_BBDL_ONBOARDING_DESCRIPTION"] = "Додайте звіти з BI-системи до Бітрікс24 та відкрийте до них доступ потрібним співробітникам.";
+$MESS["CC_BBDL_ONBOARDING_TITLE"] = "Звіти завжди під рукою ";
+$MESS["CT_BBDL_TITLE"] = "Мої BI-звіти";

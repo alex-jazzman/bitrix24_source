@@ -567,7 +567,6 @@ $MESS["EC_SELECT_USER"] = "Вибрати користувача";
 $MESS["EC_SELECT_USERS_NOTICE"] = "Виберіть потрібні підрозділи зі структури чи конкретних користувачів і натисніть \"Вибрати\"";
 $MESS["EC_SEND_FROM_EMAIL"] = "Email для відправки поштових запрошень";
 $MESS["EC_SEND_FROM_EMAIL_HELP"] = "Детальніше, для чого потрібен email";
-$MESS["EC_SEND_FROM_EMAIL_HELP_HREF"] = "https://helpdesk.bitrix24.ua/open/12484421/";
 $MESS["EC_SEND_FROM_EMAIL_HELP_TITLE"] = "Ви можете запрошувати не тільки співробітників, але й партнера або клієнта електронною поштою. Натисніть, щоб дізнатись детальніше.";
 $MESS["EC_SEP"] = "Вересень";
 $MESS["EC_SEP_R"] = "Вересня";

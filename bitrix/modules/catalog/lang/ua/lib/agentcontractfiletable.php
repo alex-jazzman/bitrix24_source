@@ -1,0 +1,4 @@
+<?php
+$MESS["AGENT_CONTRACT_FILE_ENTITY_CONTRACT_ID_FIELD"] = "Ідентифікатор агентської схеми";
+$MESS["AGENT_CONTRACT_FILE_ENTITY_FILE_ID_FIELD"] = "Ідентифікатор файлу";
+$MESS["AGENT_CONTRACT_FILE_ENTITY_ID_FIELD"] = "ID";

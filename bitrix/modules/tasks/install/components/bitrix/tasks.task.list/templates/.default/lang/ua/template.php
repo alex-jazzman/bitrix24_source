@@ -105,6 +105,7 @@ $MESS["TASKS_PRIORITY_0"] = "Низький";
 $MESS["TASKS_PRIORITY_1"] = "Середній";
 $MESS["TASKS_PRIORITY_2"] = "Високий";
 $MESS["TASKS_REDO_TASK"] = "Доопрацювати";
+$MESS["TASKS_REDO_TASK_MSGVER_1"] = "Доопрацювати";
 $MESS["TASKS_RENEW_TASK"] = "Поновити";
 $MESS["TASKS_ROW_COUNT_TITLE"] = "Всього";
 $MESS["TASKS_SHOW_ROW_COUNT"] = "Показати кількість";

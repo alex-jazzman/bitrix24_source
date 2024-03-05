@@ -1,5 +1,11 @@
 <?php
 $MESS["CANCEL_CONDUCT_BUTTON"] = "Скасувати проведення";
+$MESS["CANCEL_CONDUCT_CANCELLATION_POPUP_HINT"] = "У разі скасування скоригуються лише поточні залишки й собівартість. #HELP_LINK#";
+$MESS["CANCEL_CONDUCT_CANCELLATION_POPUP_LINK"] = "Докладніше";
+$MESS["CANCEL_CONDUCT_CANCELLATION_POPUP_NO"] = "Ні";
+$MESS["CANCEL_CONDUCT_CANCELLATION_POPUP_QUESTION"] = "Справді скасувати проведення цього документа?";
+$MESS["CANCEL_CONDUCT_CANCELLATION_POPUP_TITLE"] = "Скасування проведення документа";
+$MESS["CANCEL_CONDUCT_CANCELLATION_POPUP_YES"] = "Так, скасувати";
 $MESS["CONDUCT_BUTTON"] = "Провести документ";
 $MESS["DOCUMENT_ADD_CONTRACTOR"] = "Створити постачальника:";
 $MESS["DOCUMENT_ADD_CONTRACTOR_ERROR"] = "При створенні постачальника виникла помилка";

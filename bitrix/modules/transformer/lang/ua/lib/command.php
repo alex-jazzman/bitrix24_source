@@ -1,18 +1,12 @@
-<?
-$MESS["TRANSFORMER_COMMAND_ERROR_BANNED"] = "Помилка - команди з вашого порталу заборонені до виконання";
-$MESS["TRANSFORMER_COMMAND_ERROR_CALLBACK"] = "Помилка при спробі обробити результати після конвертації";
-$MESS["TRANSFORMER_COMMAND_ERROR_COMMAND_ERROR"] = "Помилка на сервері - неправильні параметри команди";
-$MESS["TRANSFORMER_COMMAND_ERROR_COMMAND_NOT_FOUND"] = "Помилка на сервері - команда не знайдена";
-$MESS["TRANSFORMER_COMMAND_ERROR_CONNECTION"] = "Не вдалося з'єднатися із сервером";
-$MESS["TRANSFORMER_COMMAND_ERROR_CONNECTION_COUNT"] = "Перевищена кількість спроб з'єднання з сервером";
-$MESS["TRANSFORMER_COMMAND_ERROR_CONNECTION_RESPONSE"] = "Неправильна відповідь від сервера";
-$MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD"] = "Помилка на сервері - не вдалося завантажити файл";
-$MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD_SIZE"] = "Помилка на сервері - перевищено розмір файлу";
-$MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD_STATUS"] = "Помилка на сервері - неправильний http-статус при завантаженні файлу";
-$MESS["TRANSFORMER_COMMAND_ERROR_DOWNLOAD_TYPE"] = "Помилка на сервері - неправильний mime-type при завантаженні файлу";
-$MESS["TRANSFORMER_COMMAND_ERROR_QUEUE_ADD_FAIL"] = "Помилка на сервері - не вдалося додати команду в чергу";
-$MESS["TRANSFORMER_COMMAND_ERROR_QUEUE_CANCELED_BY_EVENT"] = "Помилка на сервері - постановка в чергу була скасована подією користувача";
-$MESS["TRANSFORMER_COMMAND_ERROR_TRANSFORMATION"] = "Помилка на сервері - не вдалося провести конвертацію";
-$MESS["TRANSFORMER_COMMAND_ERROR_UNKNOWN"] = "Невідома помилка";
-$MESS["TRANSFORMER_COMMAND_ERROR_UPLOAD"] = "Помилка при спробі завантажити файли на клієнт";
-?>
+<?php
+$MESS["TRANSFORMER_COMMAND_ADD_TO_ALLOWED_LIST"] = "Не вдалося виконати дію. У налаштуваннях сервера конвертації файлів додайте цей Бітрікс24 до списку дозволених.";
+$MESS["TRANSFORMER_COMMAND_ASK_ADMIN"] = "Не вдалося виконати дію. Зверніться до адміністратора або інтегратора вашого Бітрікс24.";
+$MESS["TRANSFORMER_COMMAND_ASK_SUPPORT"] = "Не вдалося виконати дію. Зверніться до служби підтримки.";
+$MESS["TRANSFORMER_COMMAND_CANT_DOWNLOAD_FILE"] = "Не вдалося завантажити файл, спробуйте трохи пізніше.";
+$MESS["TRANSFORMER_COMMAND_CHECK_LICENSE"] = "Не вдалося виконати дію. Переконайтеся, що встановлено чинну ліцензію та спробуйте знову.";
+$MESS["TRANSFORMER_COMMAND_CHECK_SERVER_SETTINGS"] = "Не вдалося виконати дію. Перевірте налаштування сервера конвертації файлів або зверніться до адміністратора вашого Бітрікс24.";
+$MESS["TRANSFORMER_COMMAND_FILE_CORRUPTED"] = "Конвертація не вдалася. Файл пошкоджено.";
+$MESS["TRANSFORMER_COMMAND_FILE_TOO_BIG"] = "Перевищено максимальний розмір файлу.";
+$MESS["TRANSFORMER_COMMAND_INSTALL_TRANSFORMERCONTROLLER"] = "Установіть модуль Transformercontroller на сервер конвертації файлів, щоб виконати дію.";
+$MESS["TRANSFORMER_COMMAND_REFRESH_AND_TRY_LATER"] = "Не вдалося виконати дію. Оновіть сторінку й спробуйте пізніше.";
+$MESS["TRANSFORMER_COMMAND_TRY_LATER"] = "Не вдалося виконати дію, спробуйте трохи пізніше.";

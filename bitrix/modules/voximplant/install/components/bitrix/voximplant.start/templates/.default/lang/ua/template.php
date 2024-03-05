@@ -1,5 +1,6 @@
 <?php
-$MESS["VOX_START_ACCOUNT_BALANCE"] = "Баланс Бітрікс24";
+$MESS["VOX_NOT_BITRIX_BALANCE_HINT"] = " ";
+$MESS["VOX_START_ACCOUNT_BALANCE_MSGVER_1"] = "Телефонія Бітрікс24";
 $MESS["VOX_START_ACCOUNT_SIP_CONNECTOR"] = "SIP-конектор";
 $MESS["VOX_START_AUTO_PROLONG"] = "Автоподовження включено";
 $MESS["VOX_START_CALLER_IDS"] = "Прив'язані номери";

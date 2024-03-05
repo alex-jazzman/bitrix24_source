@@ -1,5 +1,6 @@
 <?php
 $MESS["ERROR_TASKS_GUID_NON_UNIQUE"] = "GUID має бути унікальним";
+$MESS["TASKS_BAD_ASSIGNEE_ID"] = "Виконавець не зазначений.";
 $MESS["TASKS_BAD_CREATED_BY"] = "Не вказаний постановник";
 $MESS["TASKS_BAD_DURATION"] = "У плануванні термінів вказана занадто велика тривалість завдання";
 $MESS["TASKS_BAD_PARENT_ID"] = "Завдання, зазначене в полі «Надзавдання», не знайдено";

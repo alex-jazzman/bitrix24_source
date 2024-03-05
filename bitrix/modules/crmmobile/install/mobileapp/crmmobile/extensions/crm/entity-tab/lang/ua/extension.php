@@ -18,6 +18,7 @@ $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_LEAD"] = "Недостатньо 
 $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_QUOTE"] = "Недостатньо прав для видалення пропозиції";
 $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_QUOTE_MSGVER_1"] = "Недостатньо прав для видалення пропозиції";
 $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_SMART_INVOICE"] = "Недостатньо прав для видалення рахунку";
+$MESS["M_CRM_ENTITY_TAB_FORBIDDEN_FOR_ALL_CATEGORIES"] = "Доступ заборонено.";
 $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_READ_SECTION2"] = "Немає доступу до вирви";
 $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_READ_SECTION_DESC2"] = "Вибрана перша доступна вирва: #SECTION_NAME#";
 $MESS["M_CRM_ENTITY_TAB_FORBIDDEN_TEXT"] = "Зверніться до адміністратора вашого Бітрікс24";

@@ -1,13 +1,14 @@
 <?php
 $MESS["SALESCENTER_SP_ADD_PAYMENT_BUTTON"] = "Налаштувати";
 $MESS["SALESCENTER_SP_BUTTON_CLOSE"] = "Скасувати";
-$MESS["SALESCENTER_SP_CAHSBOX_HINT"] = "У вас немає налаштованої каси. <a href='#CASHBOX_SETTINGS_LINK#'>Налаштування кас</a>";
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_TITLE"] = "Друкувати чеки через платіжну систему «#PAY_SYSTEM_NAME#»";
 $MESS["SALESCENTER_SP_CONNECT_HINT"] = "Використовуйте для авторизації акаунт Яндекса";
 $MESS["SALESCENTER_SP_CONNECT_PAYMENT_BUTTON"] = "Підключити";
 $MESS["SALESCENTER_SP_ERROR_POPUP_TITLE"] = "Помилка";
 $MESS["SALESCENTER_SP_LINK_CONNECT"] = "Як підключити платіжну систему";
 $MESS["SALESCENTER_SP_LINK_SBP_CONNECT"] = "Детальніше про систему швидких платежів у Бітрікс24";
+$MESS["SALESCENTER_SP_PARAMS_FORM_ACTIVE"] = "Активність";
+$MESS["SALESCENTER_SP_PARAMS_FORM_ADDITIONAL_TITLE"] = "Додаткові параметри";
 $MESS["SALESCENTER_SP_PARAMS_FORM_CAN_PRINT_CHECK"] = "Дозволити друк чеків";
 $MESS["SALESCENTER_SP_PARAMS_FORM_CASHBOX"] = "Каси";
 $MESS["SALESCENTER_SP_PARAMS_FORM_CASHBOX_TITLE"] = "ФЗ-54";
@@ -103,7 +104,10 @@ $MESS["SALESCENTER_SP_PAY_SYSTEM_EXPERT_SETTINGS"] = "Розширені нал�
 $MESS["SALESCENTER_SP_PAY_SYSTEM_SETTINGS_LOGOUT"] = "Відключити";
 $MESS["SALESCENTER_SP_POPUP_BUTTON_CANCEL"] = "Скасувати";
 $MESS["SALESCENTER_SP_POPUP_BUTTON_CLOSE"] = "Закрити";
+$MESS["SALESCENTER_SP_POPUP_BUTTON_CLOSE_MSGVER_1"] = "Так, закрити";
+$MESS["SALESCENTER_SP_POPUP_BUTTON_STAY"] = "Скасувати";
 $MESS["SALESCENTER_SP_POPUP_CONTENT"] = "Ви не зберегли зміни. Впевнені, що хочете закрити?";
+$MESS["SALESCENTER_SP_POPUP_CONTENT_MSGVER_1"] = "Ви не зберегли зміни. Справді закрити налаштування?";
 $MESS["SALESCENTER_SP_POPUP_TITLE"] = "Підтвердження";
 $MESS["SALESCENTER_SP_SAVE_NEW_BUTTON_CAPTION"] = "Підключити";
 $MESS["SALESCENTER_SP_YANDEX_LOGOUT"] = "Відключити";

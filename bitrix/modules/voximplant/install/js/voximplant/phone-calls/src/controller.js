@@ -126,6 +126,9 @@ export class PhoneCallsController extends EventEmitter
 
 		this.hasSipPhone = options.deviceActive === true;
 
+		this.skippedCallsList = [];
+		this.skipIncomingCallTimer = null;
+
 		this.readDefaults();
 		this.restoreFoldedCallView();
 
@@ -293,7 +296,11 @@ export class PhoneCallsController extends EventEmitter
 			return false;
 		}
 
-		if (BX.localStorage.get(lsKeys.callInited) || BX.localStorage.get(lsKeys.externalCall))
+		if (
+			BX.localStorage.get(lsKeys.callInited)
+			|| BX.localStorage.get(lsKeys.externalCall)
+			|| this.skippedCallsList.includes(params.callId)
+		)
 		{
 			return false;
 		}
@@ -371,6 +378,11 @@ export class PhoneCallsController extends EventEmitter
 
 	#onPullTimeout(params)
 	{
+		if (!this.skippedCallsList.includes(params.callId))
+		{
+			this.skippedCallsList.push(params.callId);
+		}
+
 		if (this.phoneTransferCallId === params.callId)
 		{
 			return this.errorInviteTransfer(params.failedCode, params.failedReason);
@@ -2008,6 +2020,10 @@ export class PhoneCallsController extends EventEmitter
 
 	#onCallViewAnswer()
 	{
+		if (this.skipIncomingCallTimer)
+		{
+			clearTimeout(this.skipIncomingCallTimer);
+		}
 		this.phoneIncomingAnswer();
 	}
 
@@ -2221,6 +2237,8 @@ export class PhoneCallsController extends EventEmitter
 			this.callView.setPortalCallData(params.portalCallData);
 			this.callView.setPortalCallUserId(params.portalCallUserId);
 		}
+
+		this.skipIncomingCallTimer = setTimeout(() => this.callView?._onSkipButtonClick(), 35000);
 	}
 
 	sendInviteTransfer()

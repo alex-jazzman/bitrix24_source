@@ -1,4 +1,5 @@
-<?
+<?php
+$MESS["TASKS_ASSIGNEE"] = "Виконавець";
 $MESS["TASKS_DATE_COMPLETED"] = "Дата завершення";
 $MESS["TASKS_DATE_CREATED"] = "Дата створення";
 $MESS["TASKS_DATE_DEADLINE"] = "Крайній термін";
@@ -21,4 +22,3 @@ $MESS["TASKS_STATUS_NEW"] = "Нове";
 $MESS["TASKS_STATUS_OVERDUE"] = "Протерміноване";
 $MESS["TASKS_STATUS_WAITING"] = "Чекає контролю";
 $MESS["TASKS_TASK_TITLE_LABEL"] = "Завдання";
-?>

@@ -10,6 +10,7 @@ $MESS["MB_CRM_CATEGORY_LIST"] = "Cписок напрямків";
 $MESS["MB_CRM_COMPANY"] = "Компанії";
 $MESS["MB_CRM_CONTACT"] = "Контакти";
 $MESS["MB_CRM_DEAL"] = "Угоди";
+$MESS["MB_CRM_DYNAMIC_CUSTOM_SECTION"] = "Цифрові робочі місця";
 $MESS["MB_CRM_INVOICE"] = "Рахунки";
 $MESS["MB_CRM_LEAD"] = "Ліди";
 $MESS["MB_CRM_PRODUCT"] = "Товари";

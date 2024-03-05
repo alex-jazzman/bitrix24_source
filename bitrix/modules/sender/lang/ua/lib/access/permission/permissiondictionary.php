@@ -2,7 +2,6 @@
 $MESS["ADS_CLIENT_VIEW"] = "Доступ на перегляд Клієнтів у Рекламі";
 $MESS["ADS_CONNECT_CABINET"] = "Право на Підключення і Авторизацію Кабінетів";
 $MESS["ADS_FB_INSTAGRAM_EDIT"] = "Має право працювати з Рекламою Facebook+Instagram";
-$MESS["ADS_GOOGLE_EDIT"] = "Має право працювати з Google AdWords";
 $MESS["ADS_GOOGLE_EDIT_MSGVER_1"] = "Має право працювати з Google Ads";
 $MESS["ADS_LOOK_ALIKE_FB_EDIT"] = "Має право працювати з Рекламою Look-alike Facebook+Instagram";
 $MESS["ADS_MARKETING_FB_EDIT"] = "Має право працювати з рекламою Facebook";

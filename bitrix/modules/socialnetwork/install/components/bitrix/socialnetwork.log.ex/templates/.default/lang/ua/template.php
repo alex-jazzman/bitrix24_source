@@ -10,6 +10,7 @@ $MESS["SONET_C30_FEED_NOTIFICATION_NOTASKS_BUTTON_OK"] = "зрозуміло";
 $MESS["SONET_C30_FEED_NOTIFICATION_NOTASKS_DESC"] = "Тепер завдання не будуть відображатися в Живій стрічці, і ви зможете працювати з ними безпосередньо з розділу &laquo;Завдання&raquo;. Усі повідомлення щодо завданнь, як і раніше, будуть приходити у вигляді нотифікацій у чаті.";
 $MESS["SONET_C30_FEED_NOTIFICATION_NOTASKS_DESC2"] = "Тепер завдання не будуть відображатися у стрічці новин, і ви зможете працювати з ними безпосередньо з розділу &laquo;Завдання&raquo;. Усі сповіщення щодо завдань, як і раніше, будуть приходити у вигляді нотифікацій у чаті.";
 $MESS["SONET_C30_FEED_NOTIFICATION_NOTASKS_TITLE"] = "Спробуйте нове подання в завданнях за активностю";
+$MESS["SONET_C30_FEED_NOTIFICATION_NOTASKS_TITLE_MSGVER_1"] = "Спробуйте нове подання в завданнях за датою останньої активності";
 $MESS["SONET_C30_FEED_PINNED_COLLAPSED_EXPAND"] = "Розгорнути";
 $MESS["SONET_C30_FEED_PINNED_COLLAPSED_NEW_COMMENTS"] = "Нових коментарів:";
 $MESS["SONET_C30_FEED_PINNED_COLLAPSED_POSTS"] = "Закріплених постів:";

@@ -147,6 +147,10 @@ class AppTable extends Main\Entity\DataManager
 				'data_type' => 'string',
 				'validation' => array(__CLASS__, 'validateUrlInstall'),
 			),
+			'URL_SETTINGS' => array(
+				'data_type' => 'string',
+				'validation' => array(__CLASS__, 'validateUrl'),
+			),
 			'VERSION' => array(
 				'data_type' => 'string',
 				'validation' => array(__CLASS__, 'validateVersion'),

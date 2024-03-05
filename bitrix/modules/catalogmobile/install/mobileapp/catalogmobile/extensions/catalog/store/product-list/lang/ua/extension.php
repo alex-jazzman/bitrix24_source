@@ -1,7 +1,5 @@
 <?php
 $MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION"] = "Створити товар у повній версії";
-$MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1"] = "Створити товар у вебверсії";
-$MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS"] = "У документі зараз немає товарів";
 $MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS_V2"] = "У документі зараз немає товарів";
 $MESS["CSPL_EMPTY_PRODUCTS_ARRIVAL_DESCRIPTION"] = "Виберіть або створіть товар, укажіть його ціну, кількість і склад, на який він надійде";
 $MESS["CSPL_EMPTY_PRODUCTS_DEDUCT_DESCRIPTION"] = "Виберіть товар, укажіть його кількість і склад, на якому потрібно провести списання";
@@ -23,7 +21,6 @@ $MESS["CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE_2"] = "Сканувати штрих�
 $MESS["CSPL_PRODUCT_CONTEXT_MENU_CHANGE_VARIATION"] = "Змінити варіацію";
 $MESS["CSPL_PRODUCT_CONTEXT_MENU_EDIT"] = "Редагувати";
 $MESS["CSPL_PRODUCT_CONTEXT_MENU_OPEN"] = "Відкрити";
-$MESS["CSPL_PRODUCT_CONTEXT_MENU_REMOVE"] = "Видалити";
 $MESS["CSPL_PRODUCT_DELETE_CONFIRMATION"] = "Ви впевнені, що хочете видалити запис із документа?";
 $MESS["CSPL_PRODUCT_DELETE_CONFIRMATION_CANCEL"] = "Скасувати";
 $MESS["CSPL_PRODUCT_DELETE_CONFIRMATION_OK"] = "Видалити";

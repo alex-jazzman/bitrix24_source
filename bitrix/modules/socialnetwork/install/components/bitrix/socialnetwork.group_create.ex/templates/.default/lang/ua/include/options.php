@@ -8,6 +8,7 @@ $MESS["SONET_GCE_T_PARAMS_CLOSED2_HINT"] = "Група є архівною";
 $MESS["SONET_GCE_T_PARAMS_CLOSED2_HINT_PROJECT"] = "Проєкт є архівним";
 $MESS["SONET_GCE_T_PARAMS_CLOSED2_PROJECT"] = "Архівний";
 $MESS["SONET_GCE_T_PARAMS_LANDING"] = "Дата публікації";
+$MESS["SONET_GCE_T_PARAMS_LANDING_MSGVER_2"] = "Для публікації на Бітрікс24 Сайтах";
 $MESS["SONET_GCE_T_PARAMS_OPEN2"] = "Відкрита";
 $MESS["SONET_GCE_T_PARAMS_OPEN2_HINT"] = "До групи можливо вступити без затвердження модератором";
 $MESS["SONET_GCE_T_PARAMS_OPEN2_HINT_PROJECT"] = "До проєкту можливо вступити без затвердження керівником або його помічником";

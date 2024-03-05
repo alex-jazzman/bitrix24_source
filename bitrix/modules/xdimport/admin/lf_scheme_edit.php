@@ -45,7 +45,7 @@ foreach ($arSocNetAllowedSubscribeEntityTypesDesc as $entity_type => $arEntityTy
 foreach ($arSocNetLogEvents as $event_id => $arEventTmp)
 {
 	if (
-		!$arEventTmp["HIDDEN"]
+		!($arEventTmp["HIDDEN"] ?? null)
 		&& array_key_exists("ENTITIES", $arEventTmp)
 		&& is_array($arEventTmp["ENTITIES"])
 	)
@@ -54,7 +54,7 @@ foreach ($arSocNetLogEvents as $event_id => $arEventTmp)
 		{
 			$arEvents[$entity_type][$event_id] = array(
 				"ALLOWED" => (array_key_exists("XDIMPORT_ALLOWED", $arEventTmp) && $arEventTmp["XDIMPORT_ALLOWED"] == "Y" ? "Y" : "N"),
-				"TITLE" => $arEventEntityTmp["TITLE"]
+				"TITLE" => $arEventEntityTmp["TITLE"] ?? null
 			);
 		}
 	}
@@ -70,7 +70,7 @@ foreach ($arSocNetFeaturesSettings as $feature_id => $arFeatureTmp)
 		foreach ($arFeatureTmp["subscribe_events"] as $event_id => $arEventTmp)
 		{
 			if (
-				!$arEventTmp["HIDDEN"]
+				!($arEventTmp["HIDDEN"] ?? null)
 				&& array_key_exists("ENTITIES", $arEventTmp)
 				&& is_array($arEventTmp["ENTITIES"])
 			)
@@ -79,7 +79,7 @@ foreach ($arSocNetFeaturesSettings as $feature_id => $arFeatureTmp)
 				{
 					$arEvents[$entity_type][$event_id] = array(
 						"ALLOWED" => (array_key_exists("XDIMPORT_ALLOWED", $arEventEntityTmp) && $arEventEntityTmp["XDIMPORT_ALLOWED"] == "Y" ? "Y" : "N"),
-						"TITLE" => $arEventEntityTmp["TITLE"]
+						"TITLE" => $arEventEntityTmp["TITLE"] ?? null
 					);
 				}
 			}
@@ -109,7 +109,7 @@ if (COption::GetOptionString("socialnetwork", "allow_frields", "Y") == "Y")
 $arRights["U"][SONET_RELATIONS_TYPE_AUTHORIZED] =  GetMessage("LFP_SCHEME_EDIT_RIGHTS_U_AUTHORIZED");
 $arRights["U"][SONET_RELATIONS_TYPE_ALL] =  GetMessage("LFP_SCHEME_EDIT_RIGHTS_U_ALL");
 
-$ID = intval($_REQUEST["ID"]); // Id of the edited record
+$ID = intval($_REQUEST["ID"] ?? null); // Id of the edited record
 $arError = false;
 $bVarsFromForm = false;
 $message = /*.(CAdminMessage).*/null;
@@ -212,36 +212,43 @@ if($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid())
 			$arFields = array(
 				"ACTIVE" => $_POST["ACTIVE"] === "Y"? "Y": "N",
 				"ENABLE_COMMENTS" => $_POST["ENABLE_COMMENTS"] === "Y"? "Y": "N",
-				"SORT" => $_POST["SORT"],
-				"NAME" => $_POST["NAME"],
-				"TYPE" => $_POST["TYPE"],
-				"LID" => $_POST["LID"],
-				"DAYS_OF_MONTH" => $_POST["DAYS_OF_MONTH"],
-				"DAYS_OF_WEEK" => (is_array($_POST["DAYS_OF_WEEK"])?implode(",", $_POST["DAYS_OF_WEEK"]):""),
-				"TIMES_OF_DAY" => $_POST["TIMES_OF_DAY"],
-				"LAST_EXECUTED" => $_POST["LAST_EXECUTED"],
-				"METHOD" => $_POST["METHOD"],
-				"IS_HTML" => $_POST["IS_HTML"],
-				"PARAMS" => $_POST["PARAMS"],
-				"LOGIN" => $_POST["LOGIN"],
-				"PASSWORD" => $_POST["PASSWORD"],
-				"ENTITY_TYPE" => $_POST["ENTITY_TYPE"],
-				"EVENT_ID" => ($_POST["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_PROVIDER ? "data" : $_POST["EVENT_ID_".$_POST["ENTITY_TYPE"]])
+				"SORT" => $_POST["SORT"] ?? null,
+				"NAME" => $_POST["NAME"] ?? null,
+				"TYPE" => $_POST["TYPE"] ?? null,
+				"LID" => $_POST["LID"] ?? null,
+				"DAYS_OF_MONTH" => $_POST["DAYS_OF_MONTH"] ?? null,
+				"DAYS_OF_WEEK" => (
+					is_array($_POST["DAYS_OF_WEEK"] ?? null)
+						? implode(",", $_POST["DAYS_OF_WEEK"])
+						: ""
+				),
+				"TIMES_OF_DAY" => $_POST["TIMES_OF_DAY"] ?? null,
+				"LAST_EXECUTED" => $_POST["LAST_EXECUTED"] ?? null,
+				"METHOD" => $_POST["METHOD"] ?? null,
+				"IS_HTML" => $_POST["IS_HTML"] ?? null,
+				"PARAMS" => $_POST["PARAMS"] ?? null,
+				"LOGIN" => $_POST["LOGIN"] ?? null,
+				"PASSWORD" => $_POST["PASSWORD"] ?? null,
+				"ENTITY_TYPE" => $_POST["ENTITY_TYPE"] ?? null,
+				"EVENT_ID" => ($_POST["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_PROVIDER
+					? "data"
+					: $_POST["EVENT_ID_".$_POST["ENTITY_TYPE"]]
+				)
 			);
 
-			if (in_array($_POST["PREDEFINED"], array("stat", "sale")))
+			if (in_array($_POST["PREDEFINED"] ?? null, array("stat", "sale")))
 			{
 				$arFields["HOST"] = $_POST["HOST"];
 				$arFields["PAGE"] = $_POST["PAGE"];
 			}
 			else
 			{
-				$arFields["URI"] = $_POST["URI"];
+				$arFields["URI"] = $_POST["URI"] ?? '';
 			}
 
 			if ($arFields["TYPE"] == "POST")
 			{
-				$arFields["HASH"] = $_POST["HASH"];
+				$arFields["HASH"] = $_POST["HASH"] ?? '';
 			}
 
 			if ($_POST["ENTITY_TYPE"] != SONET_SUBSCRIBE_ENTITY_PROVIDER)
@@ -336,11 +343,18 @@ if($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid())
 	}
 }
 
+$predefined = $predefined ?? '';
+
 if($ID > 0)
 {
 	$rs = CXDILFScheme::getByID($ID);
 	if ($arRes = $rs->fetch())
 	{
+		if (!is_array($arRes["RIGHTS_USER_ID"] ?? null))
+		{
+			$arRes["RIGHTS_USER_ID"] = [];
+		}
+
 		$scheme_type = $arRes["TYPE"];
 		if ($arRes["TYPE"] == "XML")
 		{
@@ -409,7 +423,7 @@ else
 	);
 }
 
-if (!$scheme_type)
+if (!($scheme_type ?? null))
 {
 	$scheme_type = $_REQUEST["TYPE"];
 }
@@ -832,9 +846,9 @@ $tabControl->BeginNextTab();
 				?>
 				<div id="LF_RIGHTS_<?=$entity_type?>_DIV" style="display: <?=($entity_type == $arRes["ENTITY_TYPE"] ? "block" : "none")?>;">
 					<select name="RIGHTS_USER_TYPE"  onchange="__LFPSchemeChangeUserRightsType(this)">
-						<option value="UN" <?=(is_array($arRes["RIGHTS_USER_ID"]) && $arRes["RIGHTS_USER_ID"][0] == "UN" ? "selected" : "")?>><?=GetMessage("LFP_SCHEME_EDIT_RIGHTS_P_ANONYMOUS")?></option>
-						<option value="UA" <?=(is_array($arRes["RIGHTS_USER_ID"]) && $arRes["RIGHTS_USER_ID"][0] == "UA" ? "selected" : "")?>><?=GetMessage("LFP_SCHEME_EDIT_RIGHTS_P_AUTHORIZED")?></option>
-						<option value="US" <?=(is_array($arRes["RIGHTS_USER_ID"]) && !in_array($arRes["RIGHTS_USER_ID"][0], array("UA", "UN")) ? "selected" : "")?>><?=GetMessage("LFP_SCHEME_EDIT_RIGHTS_P_USERS_SELECTED")?></option>
+						<option value="UN" <?=(is_array($arRes["RIGHTS_USER_ID"] ?? null) && ($arRes["RIGHTS_USER_ID"][0] ?? null) == "UN" ? "selected" : "")?>><?=GetMessage("LFP_SCHEME_EDIT_RIGHTS_P_ANONYMOUS")?></option>
+						<option value="UA" <?=(is_array($arRes["RIGHTS_USER_ID"] ?? null) && ($arRes["RIGHTS_USER_ID"][0] ?? null) == "UA" ? "selected" : "")?>><?=GetMessage("LFP_SCHEME_EDIT_RIGHTS_P_AUTHORIZED")?></option>
+						<option value="US" <?=(is_array($arRes["RIGHTS_USER_ID"] ?? null) && !in_array($arRes["RIGHTS_USER_ID"][0] ?? null, array("UA", "UN")) ? "selected" : "")?>><?=GetMessage("LFP_SCHEME_EDIT_RIGHTS_P_USERS_SELECTED")?></option>
 					</select>
 
 					<script type="text/javascript">
@@ -848,14 +862,11 @@ $tabControl->BeginNextTab();
 						}
 					</script>
 
-					<span id="LF_RIGHTS_USER_US" style="display: <?=(is_array($arRes["RIGHTS_USER_ID"]) && !in_array($arRes["RIGHTS_USER_ID"][0], array("UA", "UN")) ? "block" : "none")?>;">
+					<span id="LF_RIGHTS_USER_US" style="display: <?=(!in_array($arRes["RIGHTS_USER_ID"][0] ?? null, array("UA", "UN")) ? "block" : "none")?>;">
 						<table>
 						<tbody>
 						<?
-						if (
-							is_array($arRes["RIGHTS_USER_ID"])
-							&& !empty($arRes["RIGHTS_USER_ID"])
-						)
+						if (!empty($arRes["RIGHTS_USER_ID"]))
 						{
 							$key = false;
 							foreach($arRes["RIGHTS_USER_ID"] as $key=>$user_id_tmp)
@@ -1127,8 +1138,8 @@ $tabControl->BeginNextTab();
 		<tr id="LF_HOST_ROW" style="display: <?=($predefined <> '' ? "table-row" : "none")?>;" class="adm-detail-required-field">
 			<td><?echo GetMessage("LFP_SCHEME_EDIT_HOST")?>:</td>
 			<td>
-				<input id="LF_HOST" type="text" size="50" name="HOST" value="<?=HtmlFilter::encode($arRes["HOST"]).(intval($arRes["PORT"]) > 0 ? ":".HtmlFilter::encode($arRes["PORT"]) : "")?>">
-				<input id="LF_PAGE" type="hidden" name="PAGE" value="<?=HtmlFilter::encode($arRes["PAGE"])?>">
+				<input id="LF_HOST" type="text" size="50" name="HOST" value="<?=HtmlFilter::encode($arRes["HOST"] ?? '').(intval($arRes["PORT"] ?? null) > 0 ? ":".HtmlFilter::encode($arRes["PORT"]) : "")?>">
+				<input id="LF_PAGE" type="hidden" name="PAGE" value="<?=HtmlFilter::encode($arRes["PAGE"] ?? '')?>">
 			</td>
 		</tr>
 		<?

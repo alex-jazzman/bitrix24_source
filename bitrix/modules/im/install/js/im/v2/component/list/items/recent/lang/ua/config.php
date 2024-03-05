@@ -1,0 +1,23 @@
+<?php
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_ANOTHER_DEVICE"] = "Дзвінок на іншому пристрої";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_HANGUP"] = "Завершити";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_JOIN"] = "Приєднатися";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_JOIN_AUDIO"] = "Тільки аудіо";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_JOIN_VIDEO"] = "З відео";
+$MESS["IM_LIST_RECENT_ACTIVE_CALL_RETURN"] = "Повернутися в дзвінок";
+$MESS["IM_LIST_RECENT_BIRTHDAY"] = "Святкує сьогодні день народження!";
+$MESS["IM_LIST_RECENT_BIRTHDAY_DATE"] = "сьогодні";
+$MESS["IM_LIST_RECENT_CHAT_SELF"] = "це ви";
+$MESS["IM_LIST_RECENT_CHAT_TYPE_GROUP_V2"] = "Груповий чат";
+$MESS["IM_LIST_RECENT_CONNECT_ERROR"] = "Ми не змогли під'єднатися до вашого Бітрікс24, перевірте підключення до Інтернету й спробуйте ще раз.";
+$MESS["IM_LIST_RECENT_CREATE_CHAT_DEFAULT_TITLE"] = "Груповий чат";
+$MESS["IM_LIST_RECENT_CREATE_CHAT_SUBTITLE"] = "Створити чат";
+$MESS["IM_LIST_RECENT_CREATE_CONFERENCE_DEFAULT_TITLE"] = "Відеоконференція";
+$MESS["IM_LIST_RECENT_DELETED_MESSAGE"] = "Це повідомлення було видалено.";
+$MESS["IM_LIST_RECENT_EMPTY_STATE_INVITE_USERS"] = "Запросити колег";
+$MESS["IM_LIST_RECENT_EMPTY_STATE_SUBTITLE"] = "Співробітники, яких ви додасте в Бітрікс24, з'являться в списку чатів.";
+$MESS["IM_LIST_RECENT_EMPTY_STATE_TITLE"] = "Чатів наразі немає";
+$MESS["IM_LIST_RECENT_INVITATION_NOT_ACCEPTED"] = "Запрошення не прийнято";
+$MESS["IM_LIST_RECENT_MESSAGE_DRAFT_2"] = "Чернетка: #TEXT#";
+$MESS["IM_LIST_RECENT_NEW_USER_POPUP_TEXT"] = "Я з вами в команді!";
+$MESS["IM_LIST_RECENT_VACATION"] = "У відпустці до  #VACATION_END_DATE#";

@@ -1,0 +1,4 @@
+<?php
+$MESS["M_CRM_TL_PRODUCT_LIST_SUMMARY_TOTAL"] = "Сума до оплати: ";
+$MESS["M_CRM_TL_PRODUCT_LIST_SUMMARY_TOTAL_DISCOUNT"] = "Знижка: ";
+$MESS["M_CRM_TL_PRODUCT_LIST_TITLE"] = "Товари";

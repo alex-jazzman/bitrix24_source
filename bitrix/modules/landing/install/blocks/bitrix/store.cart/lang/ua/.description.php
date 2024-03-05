@@ -1,3 +1,3 @@
-<?
+<?php
 $MESS["LANDING_BLOCK_STORE.CART_NAME"] = "Кошик";
-?>
+$MESS["LANDING_BLOCK_STORE.SHOP_CART_NAME"] = "Кошик";

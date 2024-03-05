@@ -5,13 +5,10 @@ $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_CONNECTION_STEP"] = "Для зав
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_CONNECTION_TITLE"] = "Завершення підключення бізнес-чату до Відкритої лінії";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div>
     <div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Підключити</span> Бізнес-чат</div>";
-$MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP"] = "Для підключення необхідно <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">створити бізнес-чат</a>
- або <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">підключити вже існуючий</a>.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP_NEW"] = "Для підключення необхідно #LINK1_START#створити бізнес-чат#LINK1_END#
  або #LINK2_START#під'єднати наявний#LINK2_END#.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_TITLE"] = "Підключіть бізнес-чат до Відкритої лінії";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_FINAL_FORM_DESCRIPTION"] = "Бізнес чат успішно підключений до вашої Відкритої лінії. Тепер усі звернення у ваш бізнес-чат будуть автоматично спрямовані у ваш Бітрікс24.";
-$MESS["IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_ADDITIONAL_DESCRIPTION"] = "Для підключення необхідно  <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">створити бізнес-чат</a> або <a href=\"#\"  onclick\"top.BX.Helper.show(\'#ID#\'); return false;\">підключити вже існуючий</a>. Підключаються тільки верифіковані Apple Business Chat ID. Підключити або налаштувати вручну";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "Для підключення необхідно #LINK1_START#створити бізнес-чат#LINK1_END# або #LINK2_START#під'єднати наявний#LINK2_END#. Під'єднати можна лише верифіковані Apple Business Chat ID. Під'єднати або налаштувати вручну.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_LIST_ITEM_1"] = "Контакти та переписка зберігаються в CRM";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_LIST_ITEM_2"] = "CRM допомагає вести клієнта воронкою продажів";

@@ -1,6 +1,5 @@
 <?php
-$MESS["IMOPENLINES_CHECK_CONNECTOR"] = "У вас не встановлений модуль \"Коннектори для зовнішніх месенджерів\".";
-$MESS["IMOPENLINES_CHECK_CONNECTOR_MSGVER_1"] = "Модуль \"Конектори для зовнішніх месенджерів\" не встановлений.";
+$MESS["IMOPENLINES_CHECK_CONNECTOR"] = "Модуль \"Конектори для зовнішніх месенджерів\" не встановлений.";
 $MESS["IMOPENLINES_CHECK_IM"] = "У вас не встановлений модуль \"Веб-мессенджер\".";
 $MESS["IMOPENLINES_CHECK_IM_VERSION"] = "Вам необхідно оновити модуль \"Веб-мессенджер\" до версії 16.5.0";
 $MESS["IMOPENLINES_CHECK_PUBLIC_PATH"] = "Ви не вказали коректну публічну адресу.";

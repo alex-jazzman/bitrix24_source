@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["JS_UI_VIEWER_DEFAULT_ERROR_TITLE"] = "Сталася помилка";
 $MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE"] = "Показати повністю";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_DELETE"] = "Видалити";
@@ -14,4 +14,4 @@ $MESS["JS_UI_VIEWER_ITEM_TRANSFORMATION_TIMEOUT"] = "Невдала конвер
 $MESS["JS_UI_VIEWER_ITEM_UNKNOWN_DOWNLOAD_ACTION"] = "Скачати файл";
 $MESS["JS_UI_VIEWER_ITEM_UNKNOWN_NOTICE"] = "Але ви можете переглянути його на комп'ютері";
 $MESS["JS_UI_VIEWER_ITEM_UNKNOWN_TITLE"] = "Формат файлу не підтримується";
-?>
+$MESS["JS_UI_VIEWER_SINGLE_DOCUMENT_LISTING_PAGES"] = "С. #CURRENT#<div class=\"ui-viewer-single-document-listing-pages-all\">/#ALL#</div>";

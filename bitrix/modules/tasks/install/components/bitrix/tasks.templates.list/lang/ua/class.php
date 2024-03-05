@@ -6,6 +6,7 @@ $MESS["TASKS_TEMPLATES_LIST_CLOSE"] = "Закрити";
 $MESS["TASKS_TEMPLATES_LIST_TITLE_ERROR"] = "Помилка";
 $MESS["TASKS_TEMPLATES_NO"] = "Ні";
 $MESS["TASKS_TEMPLATES_YES"] = "Так";
+$MESS["TASKS_TEMPLATE_ASSIGNEE"] = "Виконавець";
 $MESS["TASKS_TEMPLATE_CREATED_BY"] = "Постановник";
 $MESS["TASKS_TEMPLATE_DEADLINE_AFTER"] = "Крайній термін";
 $MESS["TASKS_TEMPLATE_FOR_NEW_USER"] = "Для нових користувачів";

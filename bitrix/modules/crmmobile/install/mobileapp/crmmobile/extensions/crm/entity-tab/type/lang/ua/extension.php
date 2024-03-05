@@ -1,5 +1,6 @@
 <?php
 $MESS["M_CRM_ENTITY_TAB_ACTION_ACTIVITY"] = "Запланувати справу";
+$MESS["M_CRM_ENTITY_TAB_ACTION_CHAT"] = "Обговорити в чаті";
 $MESS["M_CRM_ENTITY_TAB_ACTION_EXCLUDE"] = "У список виключень";
 $MESS["M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION"] = "Цю дію не можна скасувати.\nДійсно додати елемент до списку винятків?";
 $MESS["M_CRM_ENTITY_TAB_ACTION_EXCLUDE_CONFIRMATION_OK"] = "Додати";
@@ -41,6 +42,8 @@ $MESS["M_CRM_ENTITY_TAB_DEAL_ACTION_EXCLUDE_CONFIRMATION"] = "Цю дію не �
 $MESS["M_CRM_ENTITY_TAB_DEAL_ACTION_EXCLUDE_CONFIRMATION_OK"] = "Додати";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION"] = "Під'єднайте [COLOR=\"#2066b0\"][URL=\"#URL#\"]канали комунікацій[/URL][/COLOR], щоб створювати #MANY_ENTITY_TYPE_TITLE# автоматично або створіть #SINGLE_ENTITY_TYPE_TITLE# вручну";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_REDIRECT_TITLE"] = "Центр комунікацій";
+$MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_ROBOTS"] = "Створюйте #MANY_ENTITY_TYPE_TITLE# вручну або налаштуйте роботів для автоматичного створення.";
+$MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_DESCRIPTION_SEND_TO_CLIENTS"] = "Створюйте #MANY_ENTITY_TYPE_TITLE# та надсилайте їх клієнтам будь-яким зручним способом.";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_COMMON"] = "позицій";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_COMPANY"] = "кіл-ть компаній";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_CONTACT"] = "контакти";
@@ -49,6 +52,7 @@ $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_DYNAMIC"] = "елементи";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_LEAD"] = "ліди";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_QUOTE"] = "пропозиції";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_QUOTE_MSGVER_1"] = "пропозиції";
+$MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_QUOTE_MSGVER_2"] = "комерційні пропозиції";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_MANY_SMART_INVOICE"] = "рахунки";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_SINGLE_COMMON"] = "елемент";
 $MESS["M_CRM_ENTITY_TAB_ENTITY_EMPTY_SINGLE_COMPANY"] = "компанію";

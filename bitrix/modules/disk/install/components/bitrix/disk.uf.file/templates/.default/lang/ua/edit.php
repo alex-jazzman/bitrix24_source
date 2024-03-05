@@ -5,7 +5,6 @@ $MESS["DISK_UF_FILE_CLOUD_IMPORT_TITLE_SERVICE_OFFICE365"] = "Office365";
 $MESS["DISK_UF_FILE_EDIT_SERVICE_LABEL"] = "Створювати документ через #NAME#";
 $MESS["WDUF_ALLOW_COLLAGE"] = "Дозволити колаж фото";
 $MESS["WDUF_ALLOW_EDIT"] = "Дозволити редагування документів";
-$MESS["WDUF_CREATE_DOCUMENT"] = "Створити документ";
 $MESS["WDUF_CREATE_DOCX"] = "Документ";
 $MESS["WDUF_CREATE_PPTX"] = "Презентація";
 $MESS["WDUF_CREATE_XLSX"] = "Таблиця";

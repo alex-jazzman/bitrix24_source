@@ -1,7 +1,17 @@
 <?php
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_ARRIVAL_AMOUNT"] = "Надійшло";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_COMMON_AMOUNT"] = "Кількість";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_COMMON_BARCODE"] = "Штрихкод";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_COMMON_PRICE"] = "Ціна продажу";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_COMMON_PURCHASING_PRICE"] = "Закупівельна ціна";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_COMMON_RESERVED"] = "Зарезервовано";
 $MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_COMMON_STORE_FROM"] = "Склад-відправник";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_COMMON_STORE_TO"] = "Склад";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_COMMON_TOTAL"] = "Сума";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_DEDUCT_STORE_FROM"] = "Склад";
 $MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_MOVING_STORE_FROM"] = "Склад-відправник";
 $MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_MOVING_STORE_TO"] = "Склад-одержувач";
+$MESS["CATALOG_STORE_DOCS_ELEMENT_FIELD_UNRESERVED_STORE_FROM"] = "Склад";
 $MESS["CATALOG_STORE_DOCS_ERR_ABSENT_DOCUMENT_ELEMENTS"] = "Не знайдено позицій документа складського обліку з ідентифікатором ##ID#";
 $MESS["CATALOG_STORE_DOCS_ERR_ADJUSTMENT_STORE_DESTINATION_IS_ABSENT_PRODUCT"] = "Для товару #PRODUCTS# не вказано склад оприбуткування.";
 $MESS["CATALOG_STORE_DOCS_ERR_ADJUSTMENT_STORE_DESTINATION_IS_ABSENT_PRODUCT_LIST"] = "Для товарів #PRODUCTS# вказано відсутній склад оприбуткування.";
@@ -26,6 +36,8 @@ $MESS["CATALOG_STORE_DOCS_ERR_BAD_POSITION_AMOUNT"] = "Некоректна кі
 $MESS["CATALOG_STORE_DOCS_ERR_BAD_PRODUCT_ID"] = "Не знайдено товар з ідентифікатором ##ID#, який є у документі складського обліку";
 $MESS["CATALOG_STORE_DOCS_ERR_BAD_PRODUCT_TYPE"] = "Неправильний тип товару ##ID# (#NAME#) у документі складського обліку";
 $MESS["CATALOG_STORE_DOCS_ERR_BARCODE_ALREADY_EXIST"] = "Штрих-код #BARCODE#, введений для товару #PRODUCT#, вже існує.";
+$MESS["CATALOG_STORE_DOCS_ERR_CANT_MOVE_PRODUCT"] = "Не вдалося перемістити товар на склад-відправник.";
+$MESS["CATALOG_STORE_DOCS_ERR_CANT_REMOVE_STORE_PRODUCT_BATCH"] = "Не вдалося скасувати документ. Частину товару на складі із залишку партії було реалізовано.";
 $MESS["CATALOG_STORE_DOCS_ERR_CANT_UPDATE_STORE_PRODUCT"] = "Не вдалося оновити інформацію про залишок на складі.";
 $MESS["CATALOG_STORE_DOCS_ERR_DEDUCT_STORE_SOURCE_IS_ABSENT_PRODUCT"] = "Для товару #PRODUCTS# не вказано склад-відправник.";
 $MESS["CATALOG_STORE_DOCS_ERR_DEDUCT_STORE_SOURCE_IS_ABSENT_PRODUCT_LIST"] = "Для товарів #PRODUCTS# вказано відсутній склад-відправник.";

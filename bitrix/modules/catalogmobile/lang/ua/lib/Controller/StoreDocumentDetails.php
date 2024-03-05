@@ -15,3 +15,4 @@ $MESS["MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_READ_PERMS"] = "Недостат�
 $MESS["MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_READ_PRODUCTS_PERMS"] = "Недостатньо прав для перегляду товарів документа.";
 $MESS["MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_UPDATE"] = "Під час редагування документа сталася помилка.";
 $MESS["MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_UPDATE_PERMS"] = "Недостатньо прав для редагування документа.";
+$MESS["MOBILE_CONTROLLER_CATALOG_DETAILS_REALIZATION_TITLE"] = "Реалізація № #DOCUMENT_ID#";

@@ -1,8 +1,5 @@
 <?php
-$MESS["CAT_DOCS"] = "Документи";
-$MESS["CAT_DOC_ADD"] = "Створити документ";
 $MESS["CAT_DOC_ADD_ITEMS"] = "Додати товар";
-$MESS["CAT_DOC_ADD_TITLE"] = "Створити новий документ";
 $MESS["CAT_DOC_BARCODE"] = "Штрих-код";
 $MESS["CAT_DOC_CANCELLATION"] = "Скасувати проведення";
 $MESS["CAT_DOC_COMMENT"] = "Коментар";
@@ -35,8 +32,6 @@ $MESS["CAT_DOC_SITE_ID"] = "Сайт";
 $MESS["CAT_DOC_STATUS"] = "Статус";
 $MESS["CAT_DOC_STORE_FROM"] = "Склад джерело";
 $MESS["CAT_DOC_STORE_TO"] = "Склад одержувач";
-$MESS["CAT_DOC_TAB"] = "Документ";
 $MESS["CAT_DOC_TOTAL"] = "Сума";
-$MESS["CAT_DOC_TYPE"] = "Тип документа";
 $MESS["CAT_DOC_VIEW"] = "Перегляд";
 $MESS["group_admin_nav"] = "Документи";

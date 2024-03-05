@@ -15,6 +15,7 @@ $MESS["CONFIG_ALLOW_SEARCH_NETWORK"] = "Дозволяти пошук Відкр
 $MESS["CONFIG_ALLOW_SELF_REGISTER"] = "Дозволити швидку реєстрацію";
 $MESS["CONFIG_ALLOW_TOALL"] = "Дозволяти адресувати \"Всім\" повідомлення в Живій стрічці";
 $MESS["CONFIG_BUY_TARIFF_BY_ALL"] = "Дозволити всім оплачувати тариф";
+$MESS["CONFIG_BUY_TARIFF_BY_ALL_MSGVER_1"] = "Дозволити всім оплачувати тариф";
 $MESS["CONFIG_CLIENT_LOGO"] = "Логотип компанії";
 $MESS["CONFIG_CLIENT_LOGO_DESCR"] = "Логотип повинен бути в форматі <b>PNG</b>. <br/> Розмірі не більше 222px*55px";
 $MESS["CONFIG_CLIENT_LOGO_DESC_RETINA"] = "Логотип повинен бути в форматі <b>PNG</b>. <br/> Розмірі не більше 444px*110px";

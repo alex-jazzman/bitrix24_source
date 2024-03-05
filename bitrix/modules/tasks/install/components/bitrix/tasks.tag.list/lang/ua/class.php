@@ -9,6 +9,7 @@ $MESS["TAG_IS_SUCCESSFULLY_UPDATED"] = "Тег змінено в усіх зав
 $MESS["TASKS_BY_TAG_LIST"] = "Завдання";
 $MESS["TASKS_TAG_ALREADY_EXISTS"] = "Такий тег уже існує.";
 $MESS["TASKS_TAG_EMPTY_TAG_NAME"] = "Ім'я не може бути порожнім.";
+$MESS["TASKS_TAG_GRID_TASK_COLUMN_TASK_ASSIGNEE"] = "Виконавець";
 $MESS["TASKS_TAG_GRID_TASK_COLUMN_TASK_NAME"] = "Назва завдання";
 $MESS["TASKS_TAG_GRID_TASK_COLUMN_TASK_RESPONSIBLE"] = "Відповідальний";
 $MESS["TASKS_TAG_GRID_TASK_COLUMN_TASK_STATUS"] = "Статус";

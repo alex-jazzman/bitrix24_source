@@ -1,3 +1,4 @@
-<?
+<?php
 $MESS["MAIL_SIGNATURE_UPDATE_SUCCESS"] = "Підпис оновлений";
-?>
+$MESS["MAIL_USERSIGNATURE_SENDER_TYPE_ADDRESS"] = "адреси";
+$MESS["MAIL_USERSIGNATURE_SENDER_TYPE_SENDER"] = "відправника";

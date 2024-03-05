@@ -1,5 +1,8 @@
-<?
-$MESS["CRM_ACTIVITY_PROVIDER_BASE_SUBJECT"] = "Нова справа (#DATE#)";
+<?php
+$MESS["CRM_ACTIVITY_INCOMING_CALL"] = "Дзвінок (вхідний)";
+$MESS["CRM_ACTIVITY_INCOMING_EMAIL"] = "Лист (отриманий)";
+$MESS["CRM_ACTIVITY_OUTGOING_CALL"] = "Дзвінок (вихідний)";
+$MESS["CRM_ACTIVITY_OUTGOING_EMAIL"] = "Лист (надісланий)";
 $MESS["CRM_ACTIVITY_PROVIDER_BASE_SOURCE_NONE"] = "(немає)";
+$MESS["CRM_ACTIVITY_PROVIDER_BASE_SUBJECT"] = "Нова справа (#DATE#)";
 $MESS["CRM_ACTIVITY_PROVIDER_COMMUNICATIONS_LABEL"] = "З ким";
-?>

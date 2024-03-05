@@ -4,7 +4,7 @@ $MESS["IMOL_PERM_ADD_ACCESS_CODE"] = "Додати право доступу";
 $MESS["IMOL_PERM_DELETE"] = "Видалити";
 $MESS["IMOL_PERM_EDIT"] = "Редагувати";
 $MESS["IMOL_PERM_ERROR"] = "Помилка";
-$MESS["IMOL_PERM_RESTRICTION"] = "Налаштувати права доступу співробітників до відкритих ліній можна <a target=\"_blank\" href=\"https://www.bitrix24.ru/prices/\">на комерційних тарифах</a>.";
+$MESS["IMOL_PERM_RESTRICTION_MSGVER_1"] = "Налаштувати права доступу співробітників до відкритих ліній можна <a target=\"_blank\" href=\"https://www.bitrix24.com/prices/\">на комерційних тарифах</a>.";
 $MESS["IMOL_PERM_ROLE"] = "Роль";
 $MESS["IMOL_PERM_ROLE_CANCEL"] = "Скасування";
 $MESS["IMOL_PERM_ROLE_DELETE"] = "Видалення ролі";

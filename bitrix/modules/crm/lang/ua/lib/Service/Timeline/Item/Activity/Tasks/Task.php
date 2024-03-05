@@ -1,4 +1,5 @@
 <?php
+$MESS["TASKS_TASK_DEAL_ASSIGNEE"] = "Виконавець";
 $MESS["TASKS_TASK_DEAL_BUTTON_OPEN"] = "Відкрити";
 $MESS["TASKS_TASK_DEAL_BUTTON_PING"] = "Пінг";
 $MESS["TASKS_TASK_DEAL_CHECKLIST"] = "Чек лист";

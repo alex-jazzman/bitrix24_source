@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["ACTION_ADD_FAVORITE"] = "Додати в обране";
 $MESS["ACTION_DELETE_FAVORITE"] = "Видалити з обраного";
 $MESS["TASKS_ACCEPT_TASK"] = "Прийняти завдання";
@@ -88,6 +88,7 @@ $MESS["TASKS_MONTHLY_DAY_NUM_TH"] = "#DAY# числа";
 $MESS["TASKS_MULTITASK"] = "Завдання кільком відповідальним";
 $MESS["TASKS_PAUSE_TASK"] = "Призупинити";
 $MESS["TASKS_REDO_TASK"] = "Доопрацювати";
+$MESS["TASKS_REDO_TASK_MSGVER_1"] = "Доопрацювати";
 $MESS["TASKS_REMOVE_DEADLINE"] = "Видалити крайній термін";
 $MESS["TASKS_RENEW_TASK"] = "Відновити";
 $MESS["TASKS_REPEAT_DAY_0"] = "понеділок";
@@ -127,4 +128,3 @@ $MESS["TASKS_UPDATES_COUNT"] = "Зміни (#NUM#)";
 $MESS["TASKS_VIEW_TASK"] = "Переглянути";
 $MESS["TASKS_VIEW_TASK_EX"] = "Переглянути детальну інформацію про завдання";
 $MESS["TASKS_WAINTING_CONFIRM"] = "Очікує прийняття";
-?>

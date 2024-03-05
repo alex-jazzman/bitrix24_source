@@ -7,7 +7,6 @@ $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_TITLE"] = "Підтверджен�
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_FORM_CONNECTION_INFORMATION"] = "Інформація про підключення";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_FORM_MANUALLY"] = "налаштувати вручну";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_FORM_OR"] = "або";
-$MESS["IMCONNECTOR_COMPONENT_IMESSAGE_MODULE_NOT_INSTALLED"] = "Модуль конекторів месенджерів не встановлено";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль \"Конектори для зовнішніх месенджерів\" не встановлений.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_NO_ACTIVE_CONNECTOR"] = "Даний конектор не активний";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_NO_CONNECT"] = "Тестове з'єднання із зазначеними даними не вдалося здійснити";

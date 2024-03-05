@@ -1,11 +1,9 @@
 <?php
-$MESS["LANDING_CMP_OL_BUTTON_NO_CHOOSE"] = "Не вказаний віджет на сайт";
 $MESS["LANDING_CMP_OL_BUTTON_NO_CHOOSE_BUTTON"] = "Відкрити налаштування";
 $MESS["LANDING_CMP_OL_BUTTON_NO_CHOOSE_PAGE_1"] = "Укажіть віджет, який показуватиметься на сторінці";
 $MESS["LANDING_CMP_OL_BUTTON_NO_CHOOSE_PAGE_TEXT_1"] = "Виберіть віджет, який показуватиме значки доступних соцмереж і месенджерів. Вибрати або створити віджет можна в налаштуваннях сторінки.";
 $MESS["LANDING_CMP_OL_BUTTON_NO_CHOOSE_SITE_1"] = "Укажіть віджет, який показуватиметься на сайті";
 $MESS["LANDING_CMP_OL_BUTTON_NO_CHOOSE_SITE_TEXT_1"] = "Виберіть віджет, який показуватиме значки доступних соцмереж і месенджерів. Вибрати або створити віджет можна в налаштуваннях сайту.";
-$MESS["LANDING_CMP_OL_BUTTON_NO_CHOOSE_TEXT"] = "Ви не вказали віджет на сайт, щоб вивести список месенджерів у цьому блоці. Включити віджет можна в налаштуваннях сайту";
 $MESS["LANDING_CMP_OL_BUTTON_REST_ERROR"] = "Блок тимчасово недоступний";
 $MESS["LANDING_CMP_OL_BUTTON_REST_ERROR_DESC"] = "Для роботи потрібно оновлення на порталі Бітрікс24. Очікуйте, будь ласка";
 $MESS["LANDING_CMP_OL_NO_BUTTON"] = "На вашому сайті немає CRM-віджетів.";

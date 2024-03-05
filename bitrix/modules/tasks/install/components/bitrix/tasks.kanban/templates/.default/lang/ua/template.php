@@ -16,6 +16,7 @@ $MESS["KANBAN_POPUP_P_TITLE"] = "Мій план";
 $MESS["KANBAN_QUICK_TASK"] = "Швидке завдання";
 $MESS["KANBAN_QUICK_TASK_ITEM_INFO"] = "Натисніть <span>Enter</span>, щоб створити";
 $MESS["KANBAN_SORT_ACTUAL"] = "За активністю";
+$MESS["KANBAN_SORT_ACTUAL_MSGVER_1"] = "За датою останньої активності";
 $MESS["KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Рекомендується";
 $MESS["KANBAN_SORT_ASC"] = "Знизу";
 $MESS["KANBAN_SORT_DESC"] = "Зверху";

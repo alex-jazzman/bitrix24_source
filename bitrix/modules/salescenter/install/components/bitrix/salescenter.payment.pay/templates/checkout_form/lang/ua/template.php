@@ -11,6 +11,5 @@ $MESS["SPP_PAID"] = "Оплачено";
 $MESS["SPP_PAID_TITLE"] = "Платіж № #ACCOUNT_NUMBER#, від #DATE_INSERT#";
 $MESS["SPP_PAY_BUTTON"] = "Оплатити";
 $MESS["SPP_PAY_RELOAD_BUTTON_NEW"] = "Інший спосіб";
-$MESS["SPP_SELECT_PAYMENT_TITLE_NEW_NEW"] = "Оберіть спосіб оплати";
 $MESS["SPP_SELECT_PAYMENT_TITLE_NEW_NEW_MSGVER_1"] = "Виберіть спосіб оплати";
 $MESS["SPP_SUM"] = "Сума: #SUM#";

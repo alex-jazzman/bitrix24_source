@@ -27,6 +27,7 @@ $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_READY_TO_FILL_TITLE"] = "Оде�
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_REQUESTED_TITLE"] = "Надіслано повторний запит щодо документа";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SEND_TITLE"] = "Документ створено";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SENT_FINAL_TITLE"] = "Надсилання фінального документа";
+$MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SENT_FINAL_TITLE_MSGVER_1"] = "Фінальний документ надісланий";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SENT_INTEGRITY_FAILURE_TITLE"] = "Повідомлення про порушену цілісність";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SENT_REPEATEDLY_TITLE"] = "Документ надіслано повторно";
 $MESS["CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SIGNED_BY_INITIATOR_TITLE"] = "Документ підписано вашою стороною";

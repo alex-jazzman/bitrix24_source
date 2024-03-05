@@ -10,6 +10,7 @@ $MESS["TASKS_TASK_DETAIL_BTN_DELETE_FAVORITE_TASK"] = "Видалити з об�
 $MESS["TASKS_TASK_DETAIL_BTN_EDIT"] = "Редагувати";
 $MESS["TASKS_TASK_DETAIL_BTN_PAUSE_TASK"] = "Призупинити";
 $MESS["TASKS_TASK_DETAIL_BTN_REDO_TASK"] = "Доопрацювати";
+$MESS["TASKS_TASK_DETAIL_BTN_REDO_TASK_MSGVER_1"] = "Доопрацювати";
 $MESS["TASKS_TASK_DETAIL_BTN_REMOVE"] = "Видалити";
 $MESS["TASKS_TASK_DETAIL_BTN_RENEW_TASK"] = "Відновити";
 $MESS["TASKS_TASK_DETAIL_BTN_START_TASK"] = "Почати виконання";

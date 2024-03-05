@@ -1,5 +1,6 @@
-<?
+<?php
 $MESS["TASKS_FIELD_ACCOMPLICE"] = "Співвиконавець";
+$MESS["TASKS_FIELD_ASSIGNEE"] = "Виконавець";
 $MESS["TASKS_FIELD_AUDITOR"] = "Спостерігач";
 $MESS["TASKS_FIELD_DIRECTOR"] = "Постановник";
 $MESS["TASKS_FIELD_GROUP"] = "Група (проєкт)";
@@ -58,4 +59,3 @@ $MESS["TASKS_OP_STRICTLY_GREATER_FOR_DATE"] = "пізніше";
 $MESS["TASKS_OP_STRICTLY_LESS"] = "менше";
 $MESS["TASKS_OP_STRICTLY_LESS_FOR_DATE"] = "раніше";
 $MESS["TASKS_OP_SUBSTRING"] = "містить";
-?>

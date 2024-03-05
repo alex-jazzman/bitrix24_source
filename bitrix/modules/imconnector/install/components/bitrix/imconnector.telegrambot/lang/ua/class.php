@@ -1,6 +1,5 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_DEFAULT_NAME"] = "Інтернет-магазин";
-$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_MODULE_NOT_INSTALLED"] = "Модуль коннекторів месенджерів не встановлено";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль \"Конектори для зовнішніх месенджерів\" не встановлений.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_ACTIVE_CONNECTOR"] = "Даний коннектор не активний";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_CONNECT"] = "Тестове з'єднання із зазначеними даними не вдалося зробити";

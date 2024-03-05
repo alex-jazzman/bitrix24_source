@@ -56,7 +56,9 @@ class UserSignature extends Base
 
 	protected function checkAccess(\Bitrix\Mail\Internals\Entity\UserSignature $userSignature): bool
 	{
-		if ($userSignature->getUserId() === (int) $this->getCurrentUser()->getId())
+		$currentUserId = $this->getCurrentUser()?->getId();
+
+		if (!is_null($currentUserId) && (int)$userSignature->getUserId() === (int)$currentUserId)
 		{
 			return true;
 		}

@@ -51,6 +51,7 @@ $MESS["BLOG_MONTH_12"] = "грудня";
 $MESS["BLOG_PHOTO"] = "Фото:";
 $MESS["BLOG_PINNED_COMMENTS"] = "Коментарі:";
 $MESS["BLOG_POST"] = "Повідомлення";
+$MESS["BLOG_POST_BUTTON_COPILOT"] = "CoPilot";
 $MESS["BLOG_POST_BUTTON_MORE"] = "Ще";
 $MESS["BLOG_POST_CREATE_TASK"] = "Створити завдання";
 $MESS["BLOG_POST_CREATE_TASK_BUTTON_TITLE"] = "Перейти до задачі";

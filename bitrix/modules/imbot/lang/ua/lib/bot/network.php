@@ -1,8 +1,12 @@
 <?php
 $MESS["IMBOT_NETWORK_BOT_DIALOG_FORWARD"] = "Діалог переадресовано на оператора";
+$MESS["IMBOT_NETWORK_BOT_NEW_MULTIDIALOG"] = "З цього діалогу створено новий [CHAT=#LINK#]діалог[/CHAT].";
 $MESS["IMBOT_NETWORK_BOT_WORK_POSITION"] = "Відкрита лінія";
+$MESS["IMBOT_NETWORK_DIALOG_GREETING"] = "Обговорімо ваше запитання в цьому діалозі.";
+$MESS["IMBOT_NETWORK_DIALOG_TITLE"] = "#LINE_NAME#: додаткове запитання — #NUMBER#";
 $MESS["IMBOT_NETWORK_ERROR_ANSWER_MALFORMED"] = "Відповідь сервера отримана не в JSON форматі";
 $MESS["IMBOT_NETWORK_ERROR_BOT_NOT_FOUND"] = "Відкрита лінія в даний момент недоступна";
+$MESS["IMBOT_NETWORK_ERROR_CANT_OPEN_NEW_DIALOG"] = "Ви відкрили максимальну кількість діалогів. Дочекайтеся завершення попередніх діалогів, щоб почати новий.";
 $MESS["IMBOT_NETWORK_ERROR_CONVERTING_PUNYCODE"] = "Помилка перетворення імені хоста #HOST# у Punycode: #ERROR# ";
 $MESS["IMBOT_NETWORK_ERROR_LICENCE_ERROR"] = "Ліцензія вказаного сайту недійсна";
 $MESS["IMBOT_NETWORK_ERROR_LINE_DISABLED"] = "Повідомлення відправлено![br]Надсилання повідомлень в цю відкриту лінію заблоковано";

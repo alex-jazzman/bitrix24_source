@@ -1,5 +1,6 @@
 <?php
 $MESS["IM_B24DISK"] = "Бітрікс24.Диск";
+$MESS["IM_B24DISK_V2"] = "Бітрікс24 Диск";
 $MESS["IM_CAMERA_ROLL"] = "Зняти фото";
 $MESS["IM_CHOOSE_FILE_TITLE"] = "Файли";
 $MESS["IM_CHOOSE_PHOTO"] = "Вибрати з галереї";

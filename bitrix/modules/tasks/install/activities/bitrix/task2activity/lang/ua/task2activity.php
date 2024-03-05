@@ -27,6 +27,7 @@ $MESS["BPTA1A_TASKACCOMPLICES"] = "Співвиконавці";
 $MESS["BPTA1A_TASKACTIVEFROM"] = "Початок";
 $MESS["BPTA1A_TASKACTIVETO"] = "Закінчення";
 $MESS["BPTA1A_TASKASSIGNEDTO"] = "Відповідальний";
+$MESS["BPTA1A_TASKASSIGNEDTO_V2"] = "Виконавець";
 $MESS["BPTA1A_TASKCREATEDBY"] = "Постановник";
 $MESS["BPTA1A_TASKDEADLINE"] = "Крайній термін";
 $MESS["BPTA1A_TASKDETAILTEXT"] = "Опис завдання";

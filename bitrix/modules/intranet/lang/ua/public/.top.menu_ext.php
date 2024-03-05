@@ -36,6 +36,7 @@ $MESS["TOP_MENU_OPENLINES"] = "Відкриті лінії";
 $MESS["TOP_MENU_PHOTO"] = "Фотографії";
 $MESS["TOP_MENU_SERVICES"] = "Сервіси";
 $MESS["TOP_MENU_SHOP"] = "Магазин";
+$MESS["TOP_MENU_SIGN"] = "Підпис";
 $MESS["TOP_MENU_SITES"] = "Сайти";
 $MESS["TOP_MENU_SITES_AND_STORES"] = "Сайти та Магазини";
 $MESS["TOP_MENU_TASKS"] = "Завдання та проєкти";

@@ -1905,6 +1905,16 @@ class crm extends CModule
 		);
 
 		\Bitrix\Crm\Update\RemoveDuplicatingMultifieldsStepper::bindOnCrmModuleInstall();
+
+		CAgent::AddAgent(
+			"Bitrix\\Crm\\Agent\\Activity\\PingAgent::run();",
+			"crm",
+			"N",
+			60,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL')
+		);
 	}
 
 	private function uninstallEventHandlers()

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SGCG_BUTTON_ACCEPT"] = "Копіювати";
 $MESS["SGCG_BUTTON_CANCEL"] = "Скасувати";
 $MESS["SGCG_EMPLOYEE_SELECT_CAPTION"] = "Додати співробітника";
@@ -28,6 +28,7 @@ $MESS["SGCG_OPTIONS_PROJECT_TYPE_VISIBLE"] = "Відомий";
 $MESS["SGCG_OPTIONS_TAGS_SELECTOR_CAPTION_MORE"] = "Додати ще";
 $MESS["SGCG_OPTIONS_TITLE"] = "Додатково";
 $MESS["SGCG_OPTIONS_TYPE_LANDING"] = "Для публікації";
+$MESS["SGCG_OPTIONS_TYPE_LANDING_MSGVER_2"] = "Для публікації на Бітрікс24 Сайтах";
 $MESS["SGCG_OPTIONS_TYPE_PROJECT"] = "Проєкт";
 $MESS["SGCG_OPTIONS_TYPE_TITLE"] = "Тип";
 $MESS["SGCG_OWNER_SELECT_CAPTION"] = "Призначити керівника";
@@ -42,4 +43,3 @@ $MESS["SGCG_REQUIRE_ERROR"] = "Обов'язкове поле для запов�
 $MESS["SGCG_UPLOAD_IMAGE"] = "Завантажити зображення";
 $MESS["SGCG_UPLOAD_IMAGE_TITLE"] = "Зображення";
 $MESS["SGCG_USER_SELECT_CAPTION"] = "Додати користувача";
-?>

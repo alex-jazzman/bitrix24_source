@@ -153,6 +153,7 @@ class Application
 							'URL' => $appDetailInfo['URL'],
 							'URL_DEMO' => $appDetailInfo['DEMO_URL'],
 							'URL_INSTALL' => $appDetailInfo['INSTALL_URL'],
+							'URL_SETTINGS' => $appDetailInfo['SETTINGS_URL'],
 							'VERSION' => $installResult['result']['version'],
 							'SCOPE' => implode(',', $installResult['result']['scope']),
 							'STATUS' => $installResult['result']['status'],

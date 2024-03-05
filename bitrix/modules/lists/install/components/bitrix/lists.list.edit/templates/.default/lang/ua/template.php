@@ -6,6 +6,7 @@ $MESS["CT_BLLE_COPY_POPUP_CANCEL_BUTTON"] = "Скасування";
 $MESS["CT_BLLE_COPY_POPUP_CONTENT"] = "Ви впевнені, що хочете копіювати?";
 $MESS["CT_BLLE_COPY_POPUP_COPIED_SUCCESS"] = "Список скопійовано. <a href=\"#URL#\">Перейти до налаштувань нового списку</a>";
 $MESS["CT_BLLE_COPY_POPUP_COPIED_SUCCESS_PROCESS"] = "Процес скопійовано. <a href=\"#URL#\">Перейти до налаштувань нового процесу</a>";
+$MESS["CT_BLLE_COPY_POPUP_TEXT"] = "Справді скопіювати цей список?";
 $MESS["CT_BLLE_COPY_POPUP_TEXT_PROCESS"] = "Справді копіювати процес?";
 $MESS["CT_BLLE_COPY_POPUP_TITLE"] = "Підтвердження копіювання";
 $MESS["CT_BLLE_COPY_POPUP_TITLE_1"] = "Копіювати процес";

@@ -37,6 +37,7 @@ $MESS["INTRANET_USER_PROFILE_MOBILE_TITLE2"] = "Вхід з телефону";
 $MESS["INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL"] = "Вхід<br>з телефону";
 $MESS["INTRANET_USER_PROFILE_OTP_DESCRIPTION"] = "Як це працює";
 $MESS["INTRANET_USER_PROFILE_OTP_MESSAGE"] = "Двофакторна авторизація";
+$MESS["INTRANET_USER_PROFILE_OTP_MESSAGE_WITH_TRANSFER"] = "Двофакторна<br>авторизація";
 $MESS["INTRANET_USER_PROFILE_OTP_TITLE"] = "Захищено OTP";
 $MESS["INTRANET_USER_PROFILE_PROFILE"] = "Профіль";
 $MESS["INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY"] = "Поки що немає даних для розрахунку активності";

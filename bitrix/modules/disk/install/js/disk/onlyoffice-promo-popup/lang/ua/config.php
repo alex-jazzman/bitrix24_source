@@ -12,5 +12,4 @@ $MESS["JS_DISK_ONLYOFFICE_PROMO_EDIT_POPUP_TITLE"] = "Ласкаво проси�
 $MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_1"] = "Бітрікс24.Документи – це зручний перегляд файлів у завданнях, чатах, стрічці Новин, календарі.";
 $MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_2"] = "Бітрікс24.Документи підтримує найпопулярніші формати файлів: docx, pptx, xls, ppt, pdf, txt, html, csv та інші.";
 $MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_3"] = "<a href=\"https://helpdesk.bitrix24.ua/open/13711753/\">Детальніше</a>";
-$MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_TITLE"] = "Включений перегляд файлу в Бітрікс24.Документи";
 $MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_TITLE_MSGVER_1"] = "Включений перегляд файлу в Бітрікс24.Документи";

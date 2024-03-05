@@ -3066,17 +3066,22 @@ class EntityRequisite
 	{
 		$entityTypeId = (int)$entityTypeId;
 		$entityId = (int)$entityId;
+		$serializedSettings = serialize($settings);
 
-		global $DB;
-		$tableName = self::CONFIG_TABLE_NAME;
-		$entityTypeId = $DB->ForSql($entityTypeId);
-		$settingsValue = $DB->ForSql(serialize($settings));
-
-		$sql =
-			"INSERT INTO {$tableName} (ENTITY_ID, ENTITY_TYPE_ID, SETTINGS)".PHP_EOL.
-			"  VALUES({$entityId}, {$entityTypeId}, '{$settingsValue}')".PHP_EOL.
-			"  ON DUPLICATE KEY UPDATE SETTINGS = '{$settingsValue}'".PHP_EOL;
-		$DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$connection = Main\Application::getConnection();
+		$sql = $connection->getSqlHelper()->prepareMerge(
+			self::CONFIG_TABLE_NAME,
+			['ENTITY_ID', 'ENTITY_TYPE_ID'],
+			[
+				'ENTITY_ID' => $entityId,
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'SETTINGS' => $serializedSettings,
+			],
+			[
+				'SETTINGS' => $serializedSettings,
+			]
+		);
+		$connection->query($sql[0]);
 	}
 
 	public function getEntityRequisiteBindings(int $entityTypeId, int $entityId, ?int $companyId, ?int $contactId): array

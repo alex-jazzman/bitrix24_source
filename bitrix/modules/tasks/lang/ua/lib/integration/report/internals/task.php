@@ -1,6 +1,7 @@
-<?
+<?php
 $MESS["TASKS_TASK_ENTITY_ADD_IN_REPORT_FIELD"] = "У звіті";
 $MESS["TASKS_TASK_ENTITY_ALLOW_TIME_TRACKING_FIELD"] = "Враховувати час";
+$MESS["TASKS_TASK_ENTITY_ASSIGNEE_FIELD"] = "Виконавець";
 $MESS["TASKS_TASK_ENTITY_CHANGED_BY_USER_FIELD"] = "Останній змінив";
 $MESS["TASKS_TASK_ENTITY_CHANGED_DATE_FIELD"] = "Дата останньої зміни";
 $MESS["TASKS_TASK_ENTITY_CLOSED_BY_USER_FIELD"] = "Завершив";
@@ -24,6 +25,7 @@ $MESS["TASKS_TASK_ENTITY_IS_OPEN_FIELD"] = "Відкрите";
 $MESS["TASKS_TASK_ENTITY_IS_OVERDUE_FIELD"] = "Протерміноване";
 $MESS["TASKS_TASK_ENTITY_IS_RUNNING_FIELD"] = "В роботі";
 $MESS["TASKS_TASK_ENTITY_MARK_FIELD"] = "Оцінка";
+$MESS["TASKS_TASK_ENTITY_MARK_FIELD_MSGVER_1"] = "Оцінка";
 $MESS["TASKS_TASK_ENTITY_MARK_FIELD_VALUE_N"] = "Негативна";
 $MESS["TASKS_TASK_ENTITY_MARK_FIELD_VALUE_NONE"] = "Немає оцінки";
 $MESS["TASKS_TASK_ENTITY_MARK_FIELD_VALUE_P"] = "Позитивна";
@@ -55,4 +57,3 @@ $MESS["TASKS_TASK_ENTITY_TIME_ESTIMATE_FIELD"] = "Плановані трудо�
 $MESS["TASKS_TASK_ENTITY_TIME_SPENT_IN_LOGS_FIELD"] = "Затрачений час";
 $MESS["TASKS_TASK_ENTITY_TIME_SPENT_IN_LOGS_FOR_PERIOD_FIELD"] = "Затрачений час (звітний період)";
 $MESS["TASKS_TASK_ENTITY_TITLE_FIELD"] = "Назва";
-?>

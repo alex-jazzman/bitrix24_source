@@ -1,5 +1,4 @@
 <?php
-$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_MODULE_NOT_INSTALLED"] = "Модуль конекторів месенджерів не встановлено";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль \"Конектори для зовнішніх месенджерів\" не встановлений.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_NO_ACTIVE_CONNECTOR"] = "Даний конектор не активний";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_NO_ANSWER_CLIENT"] = "Система не може отримати доступ до порталу. Перевірте мережеві настройки";

@@ -43,7 +43,7 @@ class DisablingTools extends Controller
 		];
 	}
 
-	public function getSlidersCodesForDisabledStaticEntityIdsAction(): array
+	public function getSlidersCodesForDisabledStaticEntitiesAction(): array
 	{
 		$staticEntities = [
 			\CCrmOwnerType::Lead,
@@ -60,6 +60,9 @@ class DisablingTools extends Controller
 			$result[$staticEntity] = $this->getSliderCodeIfDisabled($staticEntity);
 		}
 
+		$result['crm'] = $this->toolsManager->checkCrmAvailability()
+			? null : $this->toolsManager::CRM_SLIDER_CODE;
+
 		return $result;
 	}
 
@@ -70,15 +73,6 @@ class DisablingTools extends Controller
 				'code' => $this->getSliderCodeIfDisabled($entityTypeId),
 				'isExternal' => $this->toolsManager->isEntityTypeIdExternal($entityTypeId),
 			],
-		];
-	}
-
-	public function getCrmSliderCodeIfDisabledAction(): array
-	{
-		return [
-			'crm' => $this->toolsManager->checkCrmAvailability()
-				? null
-				: $this->toolsManager::CRM_SLIDER_CODE,
 		];
 	}
 

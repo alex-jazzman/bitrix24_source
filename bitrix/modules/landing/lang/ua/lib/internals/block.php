@@ -4,7 +4,6 @@ $MESS["LANDING_TABLE_FIELD_ACTIVE"] = "Активність";
 $MESS["LANDING_TABLE_FIELD_ANCHOR"] = "Якір";
 $MESS["LANDING_TABLE_FIELD_ASSETS"] = "Додаткові ресурси блока";
 $MESS["LANDING_TABLE_FIELD_CODE"] = "Код";
-$MESS["LANDING_TABLE_FIELD_CODE_ORIGINAL"] = "Код оригінальний";
 $MESS["LANDING_TABLE_FIELD_CONTENT"] = "Вміст блоку";
 $MESS["LANDING_TABLE_FIELD_CREATED_BY_ID"] = "Ідентифікатор створившего користувача";
 $MESS["LANDING_TABLE_FIELD_DATE_CREATE"] = "Дата створення";

@@ -1,0 +1,4 @@
+<?php
+$MESS["M_BP_STARTER_PARAMETERS_STEP_FINISH_BUTTON_TEXT"] = "Запустити";
+$MESS["M_BP_STARTER_PARAMETERS_STEP_SUCCESS_MESSAGE"] = "Бізнес-процес запущено";
+$MESS["M_BP_STARTER_PARAMETERS_STEP_TITLE"] = "Запусти бізнес-процес";

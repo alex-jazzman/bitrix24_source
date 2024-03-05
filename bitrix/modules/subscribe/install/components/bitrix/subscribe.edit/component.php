@@ -327,7 +327,7 @@ if ($ID > 0 && (($_REQUEST['action'] === 'unsubscribe') || check_bitrix_sessid()
 		else
 		{
 			//user account subscription
-			CUser::SendUserInfo($arSubscription['USER_ID'], LANGUAGE_ID, GetMessage('subscr_send_pass_mess'), true);
+			CUser::SendUserInfo($arSubscription['USER_ID'], SITE_ID, GetMessage('subscr_send_pass_mess'), true);
 			$iMsg = 'SENTPASS';
 			LocalRedirect(
 				$APPLICATION->GetCurPage()
@@ -398,7 +398,7 @@ $obCache = new CPHPCache;
 $strCacheID = LANGUAGE_ID . $arParams['SHOW_HIDDEN'] . $this->getRelativePath();
 if ($obCache->StartDataCache($arParams['CACHE_TIME'], $strCacheID, '/' . SITE_ID . $this->getRelativePath()))
 {
-	$arFilter = ['ACTIVE' => 'Y', 'LID' => LANGUAGE_ID];
+	$arFilter = ['ACTIVE' => 'Y', 'LID' => SITE_ID];
 	if ($arParams['SHOW_HIDDEN'] <> 'Y')
 	{
 		$arFilter['VISIBLE'] = 'Y';
