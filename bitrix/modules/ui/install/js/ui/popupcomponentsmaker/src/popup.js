@@ -86,7 +86,7 @@ class PopupComponentsMaker
 				padding: this.padding,
 				animation: 'fading-slide',
 				content: this.getContentWrapper(),
-				cacheable: this.cacheable
+				cacheable: this.cacheable,
 			});
 
 			if (this.blurBlackground)

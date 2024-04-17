@@ -16,6 +16,7 @@ Extension::load([
 	'ui.icon-set.main',
 	'ui.feedback.form',
 	'rest.listener',
+	'rest.app-form'
 ]);
 
 ?>

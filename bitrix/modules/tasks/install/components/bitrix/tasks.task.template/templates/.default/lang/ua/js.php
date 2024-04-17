@@ -1,4 +1,5 @@
-<?
+<?php
+$MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_MULTIPLE_ASSIGNEE_NOTICE"] = "Для кожного виконавця буде створено своє завдання.";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_MULTIPLE_RESPONSIBLE_NOTICE"] = "Для кожного відповідального буде створено своє завдання";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_PARENT_TEMPLATE_NOTICE"] = "Шаблон завдання не може мати батьківський шаблон, якщо встановлена опція '#TPARAM_FOR_NEW_USER#'.";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_POPUP_MENU_CHECKLIST_SECTION"] = "чек-лист";
@@ -7,4 +8,3 @@ $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_POPUP_MENU_SHOW_ONLY_MINE"] = "П�
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_CHECKLIST_ADD_NEW_CHECKLIST"] = "створити новий";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_CHECKLIST_HINT"] = "Виділіть текст з опису шаблону для додавання в чек-лист";
 $MESS["TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TPARAM_TYPE"] = "Шаблон завдання для співробітника, що знову додається";
-?>

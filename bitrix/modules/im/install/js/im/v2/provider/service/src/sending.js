@@ -3,22 +3,28 @@ import { EventEmitter } from 'main.core.events';
 
 import { Utils } from 'im.v2.lib.utils';
 import { Logger } from 'im.v2.lib.logger';
-import { runAction } from 'im.v2.lib.rest';
+import { runAction, type RunActionError } from 'im.v2.lib.rest';
 import { Core } from 'im.v2.application.core';
-import { EventType, MessageStatus, RestMethod, DialogScrollThreshold, BotType } from 'im.v2.const';
+import { EventType, RestMethod, DialogScrollThreshold } from 'im.v2.const';
 
 import { MessageService } from './registry';
 
 import type { Store } from 'ui.vue3.vuex';
-import type { ImModelChat, ImModelBot, ImModelMessage } from 'im.v2.model';
+import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 
-type SendingMessageParams = {
-	tempMessageId?: string,
+type BaseMessageParams = {
 	dialogId: string,
-	replyId?: number,
 	text: string,
-	fileId?: string,
+	tempMessageId?: string,
+};
+
+type PlainMessageParams = BaseMessageParams & {
+	replyId?: number,
 	forwardIds?: number[],
+};
+
+type FileMessageParams = BaseMessageParams & {
+	fileId: string,
 };
 
 type PreparedMessage = {
@@ -27,13 +33,13 @@ type PreparedMessage = {
 	dialogId: string,
 	authorId: number,
 	replyId: number,
+	forward: {userId: number, id: string},
 	forwardIds: {[string]: number},
 	text: string,
 	params: Object,
-	withFile: boolean,
 	unread: boolean,
 	sending: boolean,
-	status: $Keys<typeof MessageStatus>,
+	viewedByOthers: boolean,
 };
 
 export class SendingService
@@ -57,10 +63,10 @@ export class SendingService
 		this.#store = Core.getStore();
 	}
 
-	sendMessage(params: SendingMessageParams): Promise
+	async sendMessage(params: PlainMessageParams): Promise
 	{
-		const { text = '', fileId = '', dialogId } = params;
-		if (!Type.isStringFilled(text) && !Type.isStringFilled(fileId))
+		const { text = '', dialogId } = params;
+		if (!Type.isStringFilled(text))
 		{
 			return Promise.resolve();
 		}
@@ -68,46 +74,56 @@ export class SendingService
 		Logger.warn('SendingService: sendMessage', params);
 		const message = this.#prepareMessage(params);
 
-		return this.#handlePagination(dialogId)
-			.then(() => {
-				return this.#addMessageToModels(message);
-			})
-			.then(() => {
-				this.#sendScrollEvent({ force: true, dialogId });
+		await this.#handlePagination(dialogId);
+		await this.#addMessageToModels(message);
 
-				return this.#sendMessageToServer(message);
-			})
-			.then((result) => {
-				if (message.withFile)
-				{
-					return;
-				}
-				Logger.warn('SendingService: sendMessage result -', result);
-				const { id } = result;
-				if (!id)
-				{
-					return;
-				}
+		this.#sendScrollEvent({ force: true, dialogId });
 
-				this.#updateModels({
-					oldId: message.temporaryId,
-					newId: id,
-					dialogId: message.dialogId,
-				});
-			})
+		const sendResult = await this.#sendMessageToServer(message)
 			.catch((errors) => {
 				this.#updateMessageError(message.temporaryId);
-				errors.forEach((error) => {
-					// eslint-disable-next-line no-console
-					console.error(`SendingService: sendMessage error: code: ${error.code} message: ${error.message}`);
-				});
+				this.#logSendErrors(errors, 'sendMessage');
 			});
+
+		Logger.warn('SendingService: sendMessage result -', sendResult);
+		const { id } = sendResult;
+		if (!id)
+		{
+			return Promise.resolve();
+		}
+
+		this.#updateModels({
+			oldId: message.temporaryId,
+			newId: id,
+			dialogId: message.dialogId,
+		});
+
+		return Promise.resolve();
 	}
 
-	async forwardMessages(params: SendingMessageParams): Promise
+	async sendMessageWithFile(params: FileMessageParams): Promise
+	{
+		const { text = '', fileId = '', dialogId } = params;
+		if (!Type.isStringFilled(text) && !Type.isStringFilled(fileId))
+		{
+			return Promise.resolve();
+		}
+
+		Logger.warn('SendingService: sendMessage with file', params);
+		const message = this.#prepareMessageWithFile(params);
+
+		await this.#handlePagination(dialogId);
+		await this.#addMessageToModels(message);
+
+		this.#sendScrollEvent({ force: true, dialogId });
+
+		return Promise.resolve();
+	}
+
+	async forwardMessages(params: PlainMessageParams): Promise
 	{
 		Logger.warn('SendingService: forwardMessages', params);
-		const { forwardIds, dialogId } = params;
+		const { forwardIds, dialogId, text } = params;
 		if (!Type.isArrayFilled(forwardIds))
 		{
 			return Promise.resolve();
@@ -115,14 +131,15 @@ export class SendingService
 
 		await this.#handlePagination(dialogId);
 
-		const commentMessage = this.#prepareForwardCommentForModel(params);
-		if (commentMessage)
+		let commentMessage = null;
+		if (Type.isStringFilled(text))
 		{
+			commentMessage = this.#prepareMessage(params);
 			await this.#addMessageToModels(commentMessage);
 		}
 
 		const forwardUuidMap = this.#getForwardUuidMap(forwardIds);
-		const forwardedMessages = this.#prepareForwardForModel(params, forwardUuidMap);
+		const forwardedMessages = this.#prepareForwardMessages(params, forwardUuidMap);
 
 		await this.#addForwardsToModels(forwardedMessages);
 
@@ -138,16 +155,13 @@ export class SendingService
 		catch (errors)
 		{
 			this.#handleForwardMessageError({ commentMessage, forwardUuidMap });
-			errors.forEach((error) => {
-				// eslint-disable-next-line no-console
-				console.error(`SendingService: forwardMessage error: code: ${error.code} message: ${error.message}`);
-			});
+			this.#logSendErrors(errors, 'forwardMessage');
 		}
 
 		return Promise.resolve();
 	}
 
-	retrySendMessage(params: { tempMessageId: string, dialogId: string }): Promise
+	async retrySendMessage(params: { tempMessageId: string, dialogId: string }): Promise
 	{
 		const { tempMessageId, dialogId } = params;
 
@@ -157,7 +171,7 @@ export class SendingService
 			return Promise.resolve();
 		}
 
-		this.#store.dispatch('messages/update', {
+		void this.#store.dispatch('messages/update', {
 			id: tempMessageId,
 			fields: {
 				sending: true,
@@ -167,60 +181,66 @@ export class SendingService
 
 		const message = this.#prepareMessage({
 			text: unsentMessage.text,
-			tempMessageId: unsentMessage.id,
 			dialogId,
+			tempMessageId: unsentMessage.id,
 			replyId: unsentMessage.replyId,
 		});
 
-		return this.#sendMessageToServer(message).then((result) => {
-			if (message.withFile)
-			{
-				return;
-			}
-			Logger.warn('SendingService: retrySendMessage result -', result.data());
-			const { id } = result.data();
-			if (!id)
-			{
-				return;
-			}
-			this.#updateModels({
-				oldId: message.temporaryId,
-				newId: id,
-				dialogId: message.dialogId,
+		const sendResult = await this.#sendMessageToServer(message)
+			.catch((errors) => {
+				this.#updateMessageError(message.temporaryId);
+				this.#logSendErrors(errors, 'retrySendMessage');
 			});
-		}).catch((errors) => {
-			this.#updateMessageError(message.temporaryId);
-			errors.forEach((error) => {
-				// eslint-disable-next-line no-console
-				console.error(`SendingService: retrySendMessage error: code: ${error.code} message: ${error.message}`);
-			});
-		});
-	}
 
-	#prepareMessage(params: SendingMessageParams): PreparedMessage
-	{
-		const { text, fileId, tempMessageId, dialogId, replyId, forwardIds } = params;
-		const messageParams = {};
-		if (fileId)
+		Logger.warn('SendingService: retrySendMessage result -', sendResult.data());
+		const { id } = sendResult.data();
+		if (!id)
 		{
-			messageParams.FILE_ID = [fileId];
+			return Promise.resolve();
 		}
 
-		const temporaryId = tempMessageId || Utils.text.getUuidV4();
+		this.#updateModels({
+			oldId: message.temporaryId,
+			newId: id,
+			dialogId: message.dialogId,
+		});
 
-		return {
-			temporaryId,
-			chatId: this.#getDialog(dialogId).chatId,
-			dialogId,
-			replyId,
-			forwardIds,
+		return Promise.resolve();
+	}
+
+	#prepareMessage(params: PlainMessageParams): PreparedMessage
+	{
+		const { text, tempMessageId, dialogId, replyId, forwardIds } = params;
+
+		const defaultFields = {
 			authorId: Core.getUserId(),
-			text,
-			params: messageParams,
-			withFile: Boolean(fileId),
 			unread: false,
 			sending: true,
+		};
+
+		return {
+			text,
+			dialogId,
+			chatId: this.#getDialog(dialogId).chatId,
+			temporaryId: tempMessageId ?? Utils.text.getUuidV4(),
+			replyId,
+			forwardIds,
 			viewedByOthers: this.#needToSetAsViewed(dialogId),
+			...defaultFields,
+		};
+	}
+
+	#prepareMessageWithFile(params: FileMessageParams): PreparedMessage
+	{
+		const { fileId } = params;
+		if (!fileId)
+		{
+			throw new Error('SendingService: sendMessageWithFile: no fileId provided');
+		}
+
+		return {
+			...this.#prepareMessage(params),
+			params: { FILE_ID: [fileId] },
 		};
 	}
 
@@ -261,29 +281,12 @@ export class SendingService
 
 		this.#store.dispatch('recent/update', {
 			id: message.dialogId,
-			fields: {
-				message: {
-					id: message.temporaryId,
-					date: new Date(),
-					text: message.text,
-					authorId: message.authorId,
-					replyId: message.replyId,
-					status: MessageStatus.received,
-					sending: true,
-					params: { withFile: false, withAttach: false },
-				},
-				dateUpdate: new Date(),
-			},
+			fields: { messageId: message.temporaryId },
 		});
 	}
 
 	#sendMessageToServer(element: PreparedMessage): Promise
 	{
-		if (element.withFile)
-		{
-			return Promise.resolve();
-		}
-
 		const fields = {};
 
 		if (element.replyId)
@@ -310,20 +313,12 @@ export class SendingService
 		return runAction(RestMethod.imV2ChatMessageSend, { data: queryData });
 	}
 
-	#updateModels(params: {oldId: string, newId: number, dialogId: string, replyId: number})
+	#updateModels(params: { oldId: string, newId: number, dialogId: string })
 	{
-		const { oldId, newId, dialogId, replyId } = params;
+		const { oldId, newId, dialogId } = params;
 		this.#store.dispatch('messages/updateWithId', {
 			id: oldId,
-			fields: {
-				id: newId,
-			},
-		});
-		this.#store.dispatch('messages/update', {
-			id: newId,
-			fields: {
-				replyId,
-			},
+			fields: { id: newId },
 		});
 		this.#store.dispatch('chats/update', {
 			dialogId,
@@ -334,9 +329,7 @@ export class SendingService
 		});
 		this.#store.dispatch('recent/update', {
 			id: dialogId,
-			fields: {
-				message: { sending: false, date: new Date() },
-			},
+			fields: { messageId: newId },
 		});
 	}
 
@@ -344,9 +337,7 @@ export class SendingService
 	{
 		this.#store.dispatch('messages/update', {
 			id: messageId,
-			fields: {
-				error: true,
-			},
+			fields: { error: true },
 		});
 	}
 
@@ -371,9 +362,7 @@ export class SendingService
 
 	#needToSetAsViewed(dialogId: string): boolean
 	{
-		const bot: ImModelBot = this.#store.getters['users/bots/getByUserId'](dialogId);
-
-		return bot?.type === BotType.network;
+		return this.#store.getters['users/bots/isNetwork'](dialogId);
 	}
 
 	#handleForwardMessageResponse(params: { response: Object, dialogId: string, commentMessage: PreparedMessage })
@@ -404,23 +393,19 @@ export class SendingService
 		{
 			this.#store.dispatch('messages/update', {
 				id: commentMessage.temporaryId,
-				fields: {
-					error: true,
-				},
+				fields: { error: true },
 			});
 		}
 
 		Object.keys(forwardUuidMap).forEach((uuid: string) => {
 			this.#store.dispatch('messages/update', {
 				id: uuid,
-				fields: {
-					error: true,
-				},
+				fields: { error: true },
 			});
 		});
 	}
 
-	#prepareForwardForModel(params: SendingMessageParams, forwardUuidMap: {[string]: number}): PreparedMessage[]
+	#prepareForwardMessages(params: PlainMessageParams, forwardUuidMap: {[string]: number}): PreparedMessage[]
 	{
 		const { forwardIds, dialogId } = params;
 		if (forwardIds.length === 0)
@@ -439,20 +424,14 @@ export class SendingService
 			const isForward = this.#store.getters['messages/isForward'](messageId);
 
 			preparedMessages.push({
-				attach: message.attach,
-				temporaryId: uuid,
-				chatId: this.#getDialog(dialogId).chatId,
-				authorId: Core.getUserId(),
-				replyId: message.replyId,
-				text: message.text,
-				isDeleted: message.isDeleted,
+				...this.#prepareMessage({ dialogId, text: message.text, tempMessageId: uuid, replyId: message.replyId }),
 				forward: {
 					id: this.#buildForwardContextId(message.chatId, messageId),
 					userId: isForward ? message.forward.userId : message.authorId,
 				},
+				attach: message.attach,
+				isDeleted: message.isDeleted,
 				files: message.files,
-				unread: false,
-				sending: true,
 			});
 		});
 
@@ -463,12 +442,11 @@ export class SendingService
 		forwardUuidMap: { [string]: number },
 		commentMessage: ?PreparedMessage,
 		dialogId: string
-	}): { withFile: boolean, dialogId: string, forwardIds: { [string]: number }, text?: string, temporaryId?: string }
+	}): { dialogId: string, forwardIds: { [string]: number }, text?: string, temporaryId?: string }
 	{
 		const { dialogId, forwardUuidMap, commentMessage } = params;
 
 		const requestPrams = {
-			withFile: false,
 			dialogId,
 			forwardIds: forwardUuidMap,
 		};
@@ -492,27 +470,7 @@ export class SendingService
 		return Promise.all(addPromises);
 	}
 
-	#prepareForwardCommentForModel(params: SendingMessageParams): ?PreparedMessage
-	{
-		if (!Type.isStringFilled(params.text))
-		{
-			return null;
-		}
-
-		return {
-			temporaryId: Utils.text.getUuidV4(),
-			chatId: this.#getDialog(params.dialogId).chatId,
-			dialogId: params.dialogId,
-			authorId: Core.getUserId(),
-			text: params.text,
-			withFile: false,
-			unread: false,
-			sending: true,
-			status: this.#needToSetAsViewed(params.dialogId),
-		};
-	}
-
-	#getForwardUuidMap(forwardIds: number[]): {[string]: number}
+	#getForwardUuidMap(forwardIds: number[]): { [string]: number }
 	{
 		const uuidMap = {};
 		forwardIds.forEach((id) => {
@@ -533,5 +491,13 @@ export class SendingService
 		const currentUser = Core.getUserId();
 
 		return `${dialogId}:${currentUser}/${messageId}`;
+	}
+
+	#logSendErrors(errors: RunActionError[], methodName: string)
+	{
+		errors.forEach((error) => {
+			// eslint-disable-next-line no-console
+			console.error(`SendingService: ${methodName} error: code: ${error.code} message: ${error.message}`);
+		});
 	}
 }

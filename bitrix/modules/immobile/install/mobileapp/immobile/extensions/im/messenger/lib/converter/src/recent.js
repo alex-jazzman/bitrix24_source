@@ -10,6 +10,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 	const {
 		RecentItem,
 		ChatItem,
+		CopilotItem,
 		UserItem,
 		CallItem,
 		AnnouncementItem,
@@ -104,6 +105,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			if (dialog.type === DialogType.support24Question)
 			{
 				return new Support24QuestionItem(modelItem);
+			}
+
+			if (dialog.type === DialogType.copilot)
+			{
+				return new CopilotItem(modelItem);
 			}
 
 			return new ChatItem(modelItem);

@@ -116,6 +116,10 @@ if(typeof BX.UI.EntityUserFieldManager === "undefined")
 			{
 				return BX.message("UI_ENTITY_EDITOR_UF_DATETIME_LABEL");
 			}
+			else if(typeId === "date")
+			{
+				return BX.message("UI_ENTITY_EDITOR_UF_DATE_LABEL");
+			}
 			else if(typeId === "enumeration")
 			{
 				return BX.message("UI_ENTITY_EDITOR_UF_ENUMERATION_LABEL");
@@ -142,6 +146,7 @@ if(typeof BX.UI.EntityUserFieldManager === "undefined")
 			items.push({ name: "string", title: BX.message("UI_ENTITY_EDITOR_UF_STRING_TITLE"), legend: BX.message("UI_ENTITY_EDITOR_UF_STRING_LEGEND") });
 			items.push({ name: "enumeration", title: BX.message("UI_ENTITY_EDITOR_UF_ENUM_TITLE"), legend: BX.message("UI_ENTITY_EDITOR_UF_ENUM_LEGEND") });
 			items.push({ name: "datetime", title: BX.message("UI_ENTITY_EDITOR_UF_DATETIME_TITLE"), legend: BX.message("UI_ENTITY_EDITOR_UF_DATETIME_LEGEND") });
+			items.push({ name: "date", title: BX.message("UI_ENTITY_EDITOR_UF_DATE_TITLE"), legend: BX.message("UI_ENTITY_EDITOR_UF_DATE_LEGEND") });
 			items.push({ name: "address", title: BX.message("UI_ENTITY_EDITOR_UF_ADDRESS_TITLE_2"), legend: BX.message("UI_ENTITY_EDITOR_UF_ADDRESS_LEGEND_2") });
 
 			items.push({ name: "url", title: BX.message("UI_ENTITY_EDITOR_UF_URL_TITLE"), legend: BX.message("UI_ENTITY_EDITOR_UF_URL_LEGEND") });
@@ -1897,7 +1902,7 @@ if(typeof BX.UI.EntityEditorUserFieldConfigurator === "undefined")
 			)
 		);
 
-		if(isNew && (this._typeId === "datetime" || this._typeId === "date"))
+		if(isNew && this._typeId === "datetime")
 		{
 			this._isTimeEnabledCheckBox = this.createOption({ caption: BX.message("UI_ENTITY_EDITOR_UF_ENABLE_TIME") });
 		}

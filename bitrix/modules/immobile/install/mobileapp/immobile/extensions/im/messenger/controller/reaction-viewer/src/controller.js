@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 	const { core } = require('im/messenger/core');
 	const { ReactionService } = require('im/messenger/provider/service');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
@@ -175,7 +175,7 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 					avatar: imageUrl,
 					color: imageColor,
 				},
-			});
+			}, ComponentCode.imMessenger);
 		}
 	}
 

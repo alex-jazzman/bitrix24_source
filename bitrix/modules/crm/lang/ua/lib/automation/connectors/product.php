@@ -3,5 +3,6 @@ $MESS["CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_ID"] = "ID товарної по�
 $MESS["CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_PRICE_BRUTTO"] = "Ціна без знижок, але з урахуванням податків";
 $MESS["CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_PRICE_NETTO"] = "Ціна без знижок і податків";
 $MESS["CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_PRODUCT_ID"] = "ID товару";
+$MESS["CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_PRODUCT_PARENT_ID"] = "ID батьківського товару";
 $MESS["CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_SUM_ACCOUNT"] = "Ціна за весь товар";
 $MESS["CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_TYPE"] = "Тип товару";

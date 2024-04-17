@@ -33,7 +33,7 @@ BX.UI.InfoHelper =
 			this.demoStatus = params.demoStatus || 'UNKNOWN';
 			this.availableDomainList = params.availableDomainList || [];
 
-			BX.bind(window, 'message', BX.proxy(function(event)
+			BX.bind(top.window, 'message', BX.proxy(function(event)
 			{
 				if (!event.origin || (!!event.origin && this.availableDomainList.indexOf(event.origin) === -1))
 				{
@@ -199,6 +199,35 @@ BX.UI.InfoHelper =
 					);
 				}
 
+				if (event.data.action === 'openPriceTable')
+				{
+					top.BX.SidePanel.Instance.open('/settings/license_all.php');
+				}
+
+				if (event.data.action === 'openCheckout')
+				{
+					if (event.data.mpSubscribe && BX.Extension.getSettings('ui.info-helper').licenseType)
+					{
+						const url = BX.Uri.addParam('/settings/order/make.php', {
+							product: BX.Extension.getSettings('ui.info-helper').licenseType + '12',
+							subscr: 'o',
+						});
+						top.BX.SidePanel.Instance.open(url);
+					}
+					else if (event.data.tariff)
+					{
+						const url = BX.Uri.addParam('/settings/order/make.php', {
+							product: event.data.period ? event.data.tariff + event.data.period : event.data.tariff + '12',
+							subscr: event.data.mpSubscribe ? 'o' : null,
+						});
+						top.BX.SidePanel.Instance.open(url);
+					}
+				}
+
+				if (event.data.action === 'openToolsSettings')
+				{
+					top.BX.SidePanel.Instance.open('/settings/configs/?page=tools');
+				}
 			}, this));
 		}
 	},

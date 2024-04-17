@@ -1501,11 +1501,6 @@ class Session
 
 				$fakeRelation = new Relation((int)$this->session['CHAT_ID']);
 				$fakeRelation->removeAllRelations(true);
-
-				if (!$auto && $this->session['STATUS'] > Session::STATUS_SKIP && $currentUserId = \Bitrix\Im\User::getInstance()->getId())
-				{
-					\CIMDisk::ChangeFolderMembers($this->session['CHAT_ID'], $currentUserId, false);
-				}
 			}
 
 			if (!empty($this->user['USER_CODE']))

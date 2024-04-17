@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { core } = require('im/messenger/core');
-	const { EventType, RestMethod } = require('im/messenger/const');
+	const { EventType, RestMethod, ComponentCode } = require('im/messenger/const');
 	const { ChatTitle } = require('im/messenger/lib/element');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -234,7 +234,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 							() => {
 								MessengerEmitter.emit(EventType.messenger.openDialog, {
 									dialogId: `chat${chatId}`,
-								});
+								}, ComponentCode.imMessenger);
 							},
 							500,
 						);

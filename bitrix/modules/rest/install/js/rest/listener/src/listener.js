@@ -24,7 +24,9 @@ export class Listener extends EventEmitter
 		BX.PULL.subscribe({
 			type: BX.PullClient.SubscriptionType.Server,
 			moduleId: 'rest',
-			callback: this.#handleCommand.bind(this)
+			callback: (data) => {
+				this.#handleCommand(data);
+			}
 		});
 		this.#listeningState = true;
 	}
@@ -34,7 +36,7 @@ export class Listener extends EventEmitter
 		if (data.command === this.#command)
 		{
 			this.emit('pull');
-			this.#handlerCommand();
+			this.#handlerCommand(data);
 		}
 	}
 }

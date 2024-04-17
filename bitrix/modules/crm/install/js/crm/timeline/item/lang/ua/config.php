@@ -51,3 +51,4 @@ $MESS["CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS"] = "Відправлен�
 $MESS["CRM_TIMELINE_ITEM_TASK_CONFIRM_DELETE"] = "Дійсно видалити це завдання?";
 $MESS["CRM_TIMELINE_ITEM_TASK_DELETE"] = "Завдання успішно видалене";
 $MESS["CRM_TIMELINE_ITEM_TASK_PING_SENT"] = "Пінг-повідомлення надіслане";
+$MESS["CRM_TIMELINE_ITEM_TEXT_IS_COPIED"] = "Текст скопійовано в буфер обміну";

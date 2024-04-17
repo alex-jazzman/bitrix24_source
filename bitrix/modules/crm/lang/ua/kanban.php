@@ -1,8 +1,12 @@
 <?php
 $MESS["CRM_EDITOR_CANCEL"] = "Скасувати";
+$MESS["CRM_EDITOR_FIELD_ALL_SECTIONS_DISABLED"] = "Виберіть елемент для показу полів.";
 $MESS["CRM_EDITOR_FIELD_CLIENT"] = "Клієнт";
 $MESS["CRM_EDITOR_FIELD_COMPANY"] = "Компанія";
+$MESS["CRM_EDITOR_FIELD_EMPTY_STATE_DESCRIPTION"] = "Перевірте, чи правильно введена назва.";
+$MESS["CRM_EDITOR_FIELD_EMPTY_STATE_TITLE"] = "Поле не знайдено";
 $MESS["CRM_EDITOR_FIELD_OPPORTUNITY_WITH_CURRENCY"] = "Сума та валюта";
+$MESS["CRM_EDITOR_FIELD_SEARCH_PLACEHOLDER"] = "Пошук за полями";
 $MESS["CRM_EDITOR_SAVE"] = "Зберегти";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DEAL"] = "У вас немає запланованих справ. Наведіть стадію угоди, <span class=\"crm-kanban-item-activity-link\">заплануйте</span> справу або поставте очікування.";
 $MESS["CRM_KANBAN_ACTIVITY_CHANGE_DEAL_MSGVER_1"] = "У вас нема запланованих справ. <span class=\"crm-kanban-item-activity-link\">Заплануйте</span> наступний крок по угоді, щоб не забути про клієнта.";

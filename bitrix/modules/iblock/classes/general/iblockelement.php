@@ -66,14 +66,14 @@ class CAllIBlockElement
 	protected $offerProperties = array();
 
 	private static array $propertyIdentifierMasks = [
-		'/^[0-9]+$/',
-		'/^[A-Z][A-Z0-9_]*$/',
+		'/^[0-9]+([A-Z_]*)$/',
+		'/^[A-Z_][A-Z0-9_]*$/',
 	];
 
 	private static array $propertyLinkFieldIdentifierMasks = [
 		'/^[A-Z][A-Z_]*$/',
 		'/^PROPERTY_[0-9]+$/',
-		'/^PROPERTY_[A-Z][A-Z0-9_]*$/',
+		'/^PROPERTY_[A-Z_][A-Z0-9_]*$/',
 	];
 
 	public function __construct()
@@ -1034,14 +1034,29 @@ class CAllIBlockElement
 		if (!is_array($arFilter))
 			$arFilter = array();
 
-		foreach($arFilter as $key=>$val)
+		foreach ($arFilter as $key => $val)
 		{
+			$origKey = $key;
+			$key = mb_strtoupper($key);
+			if (str_ends_with($key, 'PROPERTY') && is_array($val))
+			{
+				unset($arFilter[$origKey]);
+				$arFilter[$key] = array_change_key_case($val, CASE_UPPER);
+			}
+		}
+
+		foreach ($arFilter as $key => $val)
+		{
+			$origKey = $key;
 			$key = mb_strtoupper($key);
 			$p = mb_strpos($key, "PROPERTY_");
-			if($p!==false && ($p<4))
+			if ($p !== false && $p < 4)
 			{
-				$arFilter[mb_substr($key, 0, $p)."PROPERTY"][mb_substr($key, $p + 9)] = $val;
-				unset($arFilter[$key]);
+				$newIndex = mb_substr($key, 0, $p) . 'PROPERTY';
+				$arFilter[$newIndex] ??= [];
+				$arFilter[$newIndex][mb_substr($key, $p + 9)] = $val;
+				unset($newIndex);
+				unset($arFilter[$origKey]);
 			}
 			else
 			{
@@ -1055,7 +1070,7 @@ class CAllIBlockElement
 							$val['FILTER']
 						);
 					}
-					unset($arFilter[$key]);
+					unset($arFilter[$origKey]);
 				}
 			}
 		}

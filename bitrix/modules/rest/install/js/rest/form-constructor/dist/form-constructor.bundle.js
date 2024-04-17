@@ -6,12 +6,13 @@ this.BX = this.BX || {};
 	var BaseField = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(BaseField, _EventEmitter);
 	  function BaseField(options) {
+	    var _this$options$value;
 	    var _this;
 	    babelHelpers.classCallCheck(this, BaseField);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(BaseField).call(this));
 	    _this.setEventNamespace('BX.Rest.EInvoice.Field');
 	    _this.options = options;
-	    _this.value = _this.options.value;
+	    _this.value = (_this$options$value = _this.options.value) !== null && _this$options$value !== void 0 ? _this$options$value : null;
 	    _this.readySave = !(main_core.Type.isNil(_this.value) || _this.value === '');
 	    _this.options.id = main_core.Type.isStringFilled(_this.options.id) ? _this.options.id : main_core.Text.getRandom(8);
 	    return _this;
@@ -61,7 +62,6 @@ this.BX = this.BX || {};
 	      var _this2 = this;
 	      var wrapper = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t</div>\n\t\t"])));
 	      if (main_core.Type.isArray(this.options.items)) {
-	        var _this$options$items$;
 	        var itemsWrapper = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<select class=\"ui-ctl-element\" id=\"", "\" />\n\t\t\t"])), this.getId());
 	        this.options.items.forEach(function (item) {
 	          var itemElement = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<option value=\"", "\">", "</option>\n\t\t\t\t"])), item.value, item.name);
@@ -72,7 +72,7 @@ this.BX = this.BX || {};
 	          }
 	          main_core.Dom.append(itemElement, itemsWrapper);
 	        });
-	        this.value = (_this$options$items$ = this.options.items[0].value) !== null && _this$options$items$ !== void 0 ? _this$options$items$ : null;
+	        // this.value = this.options.items[0].value ?? null;
 	        main_core.Dom.append(itemsWrapper, wrapper);
 	        if (this.options.hasOwnProperty('updateForm') && this.options.updateForm) {
 	          main_core.Event.bind(itemsWrapper, 'change', function (event) {
@@ -182,14 +182,12 @@ this.BX = this.BX || {};
 	var _stepByStep = /*#__PURE__*/new WeakMap();
 	var _getContentConfig = /*#__PURE__*/new WeakSet();
 	var _getStepContent = /*#__PURE__*/new WeakSet();
-	var _onClickSaveBtn = /*#__PURE__*/new WeakSet();
 	var FormConstructor = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(FormConstructor, _EventEmitter);
 	  function FormConstructor(options) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, FormConstructor);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FormConstructor).call(this));
-	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _onClickSaveBtn);
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getStepContent);
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getContentConfig);
 	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _options, {
@@ -213,13 +211,6 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _stepByStep, new ui_stepbystep.StepByStep({
 	      content: _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _getContentConfig, _getContentConfig2).call(babelHelpers.assertThisInitialized(_this))
 	    }));
-	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'button-click', function (event) {
-	      var _event$data = babelHelpers.slicedToArray(event.data, 1),
-	        clickedBtn = _event$data[0];
-	      if (clickedBtn.TYPE === 'save') {
-	        _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onClickSaveBtn, _onClickSaveBtn2).call(babelHelpers.assertThisInitialized(_this), event);
-	      }
-	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(FormConstructor, [{
@@ -351,11 +342,6 @@ this.BX = this.BX || {};
 	    main_core.Dom.append(linkArticle, wrapper);
 	  }
 	  return wrapper;
-	}
-	function _onClickSaveBtn2() {
-	  this.emit('onSave', {
-	    form: this.getFormData()
-	  });
 	}
 
 	exports.FormConstructor = FormConstructor;

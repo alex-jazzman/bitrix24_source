@@ -147,7 +147,7 @@ class Mask extends Main\Engine\Controller
 		return new Response\DataType\Page('groupedItems', array_values($result), null);
 	}
 
-	public function getMaskAccessCodeAction($id, Main\Engine\CurrentUser $currentUser): Response\AjaxJson
+	public function getMaskAccessCodeAction(int $id, Main\Engine\CurrentUser $currentUser): Response\AjaxJson
 	{
 		$result = $this->checkEditability($id, $currentUser);
 		if ($result->isSuccess())
@@ -160,7 +160,7 @@ class Mask extends Main\Engine\Controller
 		return Response\AjaxJson::createDenied();
 	}
 
-	protected function checkEditability($id, Main\Engine\CurrentUser $currentUser): Main\Result
+	protected function checkEditability(int $id, Main\Engine\CurrentUser $currentUser): Main\Result
 	{
 		$result = new Main\Result();
 		$consumer = Avatar\Mask\Consumer::createFromId($currentUser->getId());
@@ -184,6 +184,7 @@ class Mask extends Main\Engine\Controller
 	{
 		$destCodesList = Main\UI\EntitySelector\Converter::convertToFinderCodes($accessCode);
 		$file = ($file['changed'] === 'Y' ? $this->getRequest()->getFile('file') : null);
+		$id = intval($id); //can be null
 		if ($id > 0)
 		{
 			$result = $this->checkEditability($id, $currentUser);
@@ -246,7 +247,7 @@ class Mask extends Main\Engine\Controller
 		return Response\AjaxJson::createError($result->getErrorCollection());
 	}
 
-	public function deleteAction($id, Main\Engine\CurrentUser $currentUser): Response\AjaxJson
+	public function deleteAction(int $id, Main\Engine\CurrentUser $currentUser): Response\AjaxJson
 	{
 		$result = $this->checkEditability($id, $currentUser);
 		if ($result->isSuccess())
@@ -290,7 +291,7 @@ class Mask extends Main\Engine\Controller
 		], null);
 	}
 
-	public function useRecentlyAction($id, Main\Engine\CurrentUser $currentUser): Response\AjaxJson
+	public function useRecentlyAction(int $id, Main\Engine\CurrentUser $currentUser): Response\AjaxJson
 	{
 		$consumer = Avatar\Mask\Consumer::createFromId($currentUser->getId());
 		if (Avatar\Mask\Item::getInstance($id)->isReadableBy($consumer))

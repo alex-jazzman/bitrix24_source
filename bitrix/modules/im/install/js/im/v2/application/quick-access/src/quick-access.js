@@ -54,7 +54,7 @@ export class QuickAccessApplication
 			name: this.#applicationName,
 			el: this.rootNode,
 			components: { QuickAccess },
-			template: '<QuickAccess :compactMode="true"/>',
+			template: '<QuickAccess />',
 		});
 
 		return true;

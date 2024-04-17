@@ -264,7 +264,6 @@ export const ChatHeader = {
 			</div>
 			<AddToChat
 				:bindElement="$refs['add-members'] || {}"
-				:chatId="chatId"
 				:dialogId="dialogId"
 				:showPopup="showAddToChatPopup"
 				:popupConfig="{offsetTop: 15, offsetLeft: -300}"

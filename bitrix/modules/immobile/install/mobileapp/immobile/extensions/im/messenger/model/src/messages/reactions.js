@@ -162,8 +162,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
-			 * @param {ReactionsModelState[]} payload.data
+			 * @param {MutationPayload<ReactionsStoreData>} payload
 			 */
 			store: (state, payload) => {
 				logger.log('reactionsModel: store mutation', payload);
@@ -179,8 +178,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
-			 * @param {ReactionsModelState[]} payload.data
+			 * @param {MutationPayload<ReactionsSetData, ReactionsSetActions>} payload
 			 */
 			set: (state, payload) => {
 				logger.log('reactionsModel: set mutation', payload);
@@ -214,8 +212,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
-			 * @param {ReactionsModelState} payload.data.reaction
+			 * @param {MutationPayload<ReactionsAddData, ReactionsAddActions>} payload
 			 */
 			add: (state, payload) => {
 				logger.log('reactionsModel: add mutation', payload);
@@ -229,8 +226,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
-			 * @param {ReactionsModelState} payload.data.reaction
+			 * @param {MutationPayload<ReactionsUpdateWithIdData, ReactionsUpdateWithIdActions>} payload
 			 */
 			updateWithId: (state, payload) => {
 				logger.log('reactionsModel: updateWithId mutation', payload);

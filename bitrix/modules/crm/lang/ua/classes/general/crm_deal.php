@@ -58,6 +58,7 @@ $MESS["CRM_DEAL_FIELD_UTM_SOURCE"] = "Рекламна система";
 $MESS["CRM_DEAL_FIELD_UTM_TERM"] = "Умова пошуку кампанії";
 $MESS["CRM_DEAL_FIELD_WEBFORM_ID"] = "Створена CRM-формою";
 $MESS["CRM_DEAL_NOT_RESPONSIBLE_IM_NOTIFY"] = "Ви перестали бути відповідальним за угоду \"#title#\"";
+$MESS["CRM_DEAL_NO_PERMISSIONS_TO_DELETE"] = "#DEAL_NAME#: недостатньо прав для видалення.";
 $MESS["CRM_DEAL_PROGRESS_IM_NOTIFY"] = "Статус угоди \"#title#\" змінений c \"#start_status_title#\" на \"#final_status_title#\"";
 $MESS["CRM_DEAL_PROGRESS_IM_NOTIFY_2"] = "Стадія угоди \"#title#\" змінена з \"#start_status_title#\" на \"#final_status_title#\"";
 $MESS["CRM_DEAL_RESPONSIBLE_IM_NOTIFY"] = "Ви призначені відповідальним за угоду \"#title#\"";

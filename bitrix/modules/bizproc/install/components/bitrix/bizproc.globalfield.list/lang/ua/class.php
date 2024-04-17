@@ -10,6 +10,7 @@ $MESS["BIZPROC_GLOBALFIELDS_LIST_EDIT"] = "Редагувати";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_ERR_CANT_READ_CONSTANT"] = "Доступ до перегляду списку констант заборонено.";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_ERR_CANT_READ_VARIABLE"] = "Доступ до перегляду списку змінних заборонено.";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_ERR_DOCUMENT_TYPE"] = "Неправильний тип документа.";
+$MESS["BIZPROC_GLOBALFIELDS_LIST_ERR_DOCUMENT_TYPE_MSGVER_1"] = "Неправильний тип бізнес-процесу.";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_ERR_MODE_NOT_DEFINED"] = "Не встановлено режим роботи компонента.";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_IS_MULTIPLE"] = "Множинне";
 $MESS["BIZPROC_GLOBALFIELDS_LIST_MODIFIED_BY"] = "Автор зміни";

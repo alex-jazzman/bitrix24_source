@@ -1,4 +1,14 @@
 <?php
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_ALL_USER_INSTALL_APPLICATION_CLICK_ON"] = "Будь-який співробітник може встановити застосунок із Маркета, якщо це не заборонено розробником застосунку. Якщо ця опція вимкнена, установлювати застосунки може лише адміністратор.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALLOW_MEASURE_STRESS_LEVEL_CLICK_ON_MSGVER_1"] = "У співробітників у профілі є замір рівня стресу. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_ALL_CAN_BUY_TARIFF_CLICK_ON"] = "Будь-який співробітник може купити тариф для вашого Бітрікс24. Якщо ця опція вимкнена, купити тариф може лише адміністратор.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON_MSGVER_1"] = "Дані про географічне місцеперебування користувачів збираються. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_DEFAULT_EMAIL"] = "Адреса автоматично підставлятиметься в усі листи із сайту, якщо в налаштуваннях пошти не вказані інші відправники.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_SHOW_SETTINGS_ALL_USER_CLICK_ON"] = "Усі співробітники бачать налаштування, але не можуть вносити зміни. Якщо опція вимкнена, переглядати й змінювати налаштування може лише адміністратор.";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_DATE_FORMAT"] = "Який вигляд матиме дата";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_TIME_FORMAT24"] = "Який вигляд матиме час";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_CLICK_ON_MSGVER_1"] = "Переходи фіксуються. Ви можете використовувати це для автоматизації продажів.<br> До прикладу, надіслати менеджеру повідомлення, що клієнт перейшов за посиланням на оплату. #MORE_DETAILS#";
+$MESS["INTRANET_SETTINGS_FIELD_HINT_TRACK_OUT_MAILS_ON"] = "Лист позначається як «прочитаний».";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION"] = "Дозволити всім співробітникам встановлювати застосунки з Маркета";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL"] = "Дозволити заміряти рівень стресу й показувати результат у профілі";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF"] = "Дозволити всім сплачувати тариф";
@@ -9,4 +19,10 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_DEFAULT_EMAIL"] = "Адреса ел. по�
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_TIME_FORMAT24"] = "24-годинний формат часу";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS"] = "Відстежувати статус вихідних листів";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_TRACK_OUT_MAILS_CLICKS"] = "Відстежувати переходи за посиланнями у вихідних листах";
+$MESS["INTRANET_SETTINGS_FIELD_PLACEHOLDER_NOTIFICATION_EMAIL"] = "example@inbox.mail";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL_SETTINGS"] = "Різне";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_DATETIME"] = "Формат дати й часу";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAILS"] = "Пошта";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS"] = "Мапи в CRM";
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS_PRODUCT"] = "Мапи у властивостях товарів";
 $MESS["SETTINGS_MAPS_PROVIDER_GOOGLE"] = "Google maps";

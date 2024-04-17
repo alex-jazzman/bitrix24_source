@@ -54,6 +54,7 @@
 			this.onCallJoinHandler = this.onCallJoin.bind(this);
 			this.onCallLeaveHandler = this.onCallLeave.bind(this);
 			this.onCallDestroyHandler = this.onCallDestroy.bind(this);
+			this.onCallHangupHandler = this.onCallHangup.bind(this);
 			this.onChildCallFirstStreamHandler = this.onChildCallFirstStream.bind(this);
 
 			this.onMicButtonClickHandler = this.onMicButtonClick.bind(this);
@@ -158,7 +159,7 @@
 					this.localVideoStream = stream;
 					if (!this.startCallPromise)
 					{
-						this.stopLocalVideoStream();
+						this.stopLocalVideoStream(true);
 					}
 					else if (this.callView)
 					{
@@ -171,12 +172,18 @@
 			return this.localVideoPromise;
 		}
 
-		stopLocalVideoStream()
+		stopLocalVideoStream(destroy = false)
 		{
 			if (this.localVideoStream)
 			{
-				MediaDevices.stopStreaming();
-				this.localVideoStream = null;
+				if (destroy)
+				{
+					MediaDevices.stopStreaming();
+					this.localVideoStream = null;
+					return;
+				}
+
+				MediaDevices.stopCapture();
 			}
 		}
 
@@ -771,6 +778,10 @@
 			}
 		}
 
+		onCallHangup() {
+			this.clearEverything()
+		}
+
 		bindViewEvents()
 		{
 			if (!this.callView)
@@ -834,6 +845,7 @@
 				.on(BX.Call.Event.onJoin, this.onCallJoinHandler)
 				.on(BX.Call.Event.onLeave, this.onCallLeaveHandler)
 				.on(BX.Call.Event.onDestroy, this.onCallDestroyHandler)
+				.on(BX.Call.Event.onHangup, this.onCallHangupHandler)
 			;
 		}
 
@@ -861,6 +873,7 @@
 				.off(BX.Call.Event.onJoin, this.onCallJoinHandler)
 				.off(BX.Call.Event.onLeave, this.onCallLeaveHandler)
 				.off(BX.Call.Event.onDestroy, this.onCallDestroyHandler)
+				.off(BX.Call.Event.onHangup, this.onCallHangupHandler)
 			;
 		}
 
@@ -1054,6 +1067,7 @@
 
 			if (
 				Application.getPlatform() === 'android'
+				&& BX.type.isFunction(this.currentCall.isReady)
 				&& !this.currentCall.isReady()
 				&& push.hasOwnProperty('id')
 				&& push.id.startsWith('IM_CALL_')
@@ -1087,7 +1101,7 @@
 				this.currentCall.log('onAppActive');
 				this.currentCall.setVideoPaused(false);
 
-				if (!this._hasHeadphones() && CallUtil.getSdkAudioManager().currentDevice == 'receiver')
+				if (Application.getPlatform() === 'android' && !this._hasHeadphones() && CallUtil.getSdkAudioManager().currentDevice == 'receiver')
 				{
 					CallUtil.warn('switching audio output to speaker on application activation');
 					this._selectSpeaker();
@@ -1126,7 +1140,7 @@
 
 		onAudioDeviceChanged(deviceName)
 		{
-			if (Application.isBackground())
+			if (Application.isBackground() || Application.getPlatform() === 'ios')
 			{
 				return;
 			}
@@ -1209,7 +1223,18 @@
 				return;
 			}
 			this.currentCall.switchCamera();
-			setTimeout(() => this.callView.setMirrorLocalVideo(this.currentCall.isFrontCameraUsed()), 1000);
+			if (Application.getPlatform() === 'android')
+			{
+				setTimeout(() => this.callView.setMirrorLocalVideo(this.currentCall.isFrontCameraUsed()), 1000);
+			}
+			else
+			{
+				this.callView.setHideLocalVideo(true);
+				setTimeout(() => {
+					this.callView.setMirrorLocalVideo(this.currentCall.isFrontCameraUsed());
+					this.callView.setHideLocalVideo(false);
+				}, 100);
+			}
 		}
 
 		onChatButtonClick()
@@ -1401,6 +1426,11 @@
 			{
 				this.callView.setVideoStream(env.userId, localStream, this.currentCall.isFrontCameraUsed());
 			}
+
+			if (!(this.currentCall instanceof PlainCall))
+			{
+				this.stopLocalVideoStream();
+			}
 		}
 
 		onCallLocalMediaStopped()
@@ -1465,7 +1495,7 @@
 			if (e.local)
 			{
 				CallUtil.warn('joined local call');
-				if (!this._hasHeadphones() && CallUtil.getSdkAudioManager().currentDevice == 'receiver' && !Application.isBackground())
+				if (Application.getPlatform() === 'android' && !this._hasHeadphones() && CallUtil.getSdkAudioManager().currentDevice == 'receiver' && !Application.isBackground())
 				{
 					CallUtil.warn('no headphones');
 					this._selectSpeaker();
@@ -1589,7 +1619,7 @@
 				this.rootWidget = null;
 			}
 
-			this.stopLocalVideoStream();
+			this.stopLocalVideoStream(true);
 			this.callView = null;
 			callInterface.indicator().close();
 			this.callStartTime = null;

@@ -676,9 +676,16 @@ abstract class Queue
 
 	protected function prepareToQueue(): void
 	{
-		$this->sessionManager->update([
+		$sessionData = [
 			'STATUS' => Session::STATUS_SKIP
-		]);
+		];
+
+		if (in_array((int)$this->session['STATUS'], [Session::STATUS_CLIENT, Session::STATUS_CLIENT_AFTER_OPERATOR], true))
+		{
+			$sessionData['WAIT_ANSWER'] = 'Y';
+		}
+
+		$this->sessionManager->update($sessionData);
 
 		$removeOperator = true;
 		if (

@@ -190,7 +190,7 @@ export class UploadingService
 					dialogId: messageWithFile.dialogId,
 				};
 
-				return this.#sendingService.sendMessage(message);
+				return this.#sendingService.sendMessageWithFile(message);
 			}).then(() => {
 				this.commitFile({
 					chatId: messageWithFile.chatId,
@@ -634,7 +634,7 @@ export class UploadingService
 		this.#uploaderFilesRegistry[uploaderId].wasSent = true;
 		const messagesToSend = this.#createMessagesFromFiles(uploaderId);
 		messagesToSend.forEach((message) => {
-			this.#sendingService.sendMessage(message);
+			this.#sendingService.sendMessageWithFile(message);
 		});
 		this.start(uploaderId);
 	}

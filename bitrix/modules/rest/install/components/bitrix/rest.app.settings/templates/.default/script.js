@@ -85,13 +85,17 @@ this.BX = this.BX || {};
 	      if (!(babelHelpers.classPrivateFieldGet(this, _formConstructor) instanceof rest_formConstructor.FormConstructor)) {
 	        return;
 	      }
-	      babelHelpers.classPrivateFieldGet(this, _formConstructor).subscribe('onSave', function (event) {
-	        var form = event.data.form;
-	        var data = {
-	          settings: form,
-	          handler: babelHelpers.classPrivateFieldGet(_this2, _handler)
-	        };
-	        _this2.save(data);
+	      main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'button-click', function (event) {
+	        var _event$data = babelHelpers.slicedToArray(event.data, 1),
+	          clickedBtn = _event$data[0];
+	        if (clickedBtn.TYPE === 'save') {
+	          var data = {
+	            clientId: babelHelpers.classPrivateFieldGet(_this2, _clientId),
+	            settings: babelHelpers.classPrivateFieldGet(_this2, _formConstructor).getFormData(),
+	            handler: babelHelpers.classPrivateFieldGet(_this2, _handler)
+	          };
+	          _this2.save(data);
+	        }
 	      });
 	      babelHelpers.classPrivateFieldGet(this, _formConstructor).subscribe('onReadySave', function () {
 	        if (_this2.isReadySave()) {
@@ -113,6 +117,7 @@ this.BX = this.BX || {};
 	      if (!(babelHelpers.classPrivateFieldGet(this, _formConstructor) instanceof rest_formConstructor.FormConstructor)) {
 	        return;
 	      }
+	      main_core_events.EventEmitter.unsubscribeAll(main_core_events.EventEmitter.GLOBAL_TARGET, 'button-click');
 	      babelHelpers.classPrivateFieldGet(this, _formConstructor).unsubscribeAll('onSave');
 	      babelHelpers.classPrivateFieldGet(this, _formConstructor).unsubscribeAll('onReadySave');
 	      babelHelpers.classPrivateFieldGet(this, _formConstructor).unsubscribeAll('onUnreadySave');
@@ -181,6 +186,8 @@ this.BX = this.BX || {};
 	        } else {
 	          top.document.location.href = babelHelpers.classPrivateFieldGet(_this4, _redirect);
 	        }
+	        var buttonWaitState = BX.UI.ButtonPanel.getContainer().querySelector('.ui-btn-wait');
+	        main_core.Dom.removeClass(buttonWaitState, 'ui-btn-wait');
 	      })["catch"](function (response) {
 	        var errors = response.errors;
 	        var _AppSettings$formatEr = AppSettings.formatErrors(errors),

@@ -19,7 +19,6 @@ class CSocNetGroup extends CAllSocNetGroup
 	public static function Add($arFields)
 	{
 		global $DB, $CACHE_MANAGER, $USER_FIELD_MANAGER;
-
 		$arFields1 = Util::getEqualityFields($arFields);
 
 		if (!CSocNetGroup::CheckFields("ADD", $arFields))
@@ -663,7 +662,7 @@ class CSocNetGroup extends CAllSocNetGroup
 			}
 			else
 			{
-				// ÒÎËÜÊÎ ÄËß MYSQL!!! ÄËß ORACLE ÄÐÓÃÎÉ ÊÎÄ
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ MYSQL!!! ï¿½ï¿½ï¿½ ORACLE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 				$cnt = $dbRes->SelectedRowsCount();
 			}
 
@@ -696,7 +695,7 @@ class CSocNetGroup extends CAllSocNetGroup
 				}
 				else
 				{
-					// ÒÎËÜÊÎ ÄËß MYSQL!!! ÄËß ORACLE ÄÐÓÃÎÉ ÊÎÄ
+					// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ MYSQL!!! ï¿½ï¿½ï¿½ ORACLE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 					$cnt += $dbRes->SelectedRowsCount();
 				}
 			}

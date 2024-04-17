@@ -2,6 +2,7 @@
 $MESS["CRM_NOTIFY_SCHEME_ACTIVITY_EMAIL_INCOMING"] = "Прийшов лист";
 $MESS["CRM_NOTIFY_SCHEME_CALLBACK"] = "Замовлений зворотний дзвінок";
 $MESS["CRM_NOTIFY_SCHEME_ENTITY_ASSIGNED_BY"] = "Ви призначені відповідальним";
+$MESS["CRM_NOTIFY_SCHEME_ENTITY_OBSERVER"] = "Вас додали як спостерігача";
 $MESS["CRM_NOTIFY_SCHEME_ENTITY_STAGE"] = "Змінено стадію";
 $MESS["CRM_NOTIFY_SCHEME_LIVEFEED_MENTION"] = "Вас згадали в повідомленні";
 $MESS["CRM_NOTIFY_SCHEME_LIVEFEED_POST"] = "Вам адресоване повідомлення";

@@ -9,6 +9,7 @@ use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Grid\DashboardGrid;
 use Bitrix\BIConnector\Superset\Grid\Settings\DashboardSettings;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
@@ -43,17 +44,17 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 		{
 			$superset->initSuperset();
 		}
-		else
-		{
-			$manager = \Bitrix\BIConnector\Superset\MarketDashboardManager::getInstance();
-			$manager->updateApplications();
-		}
 
 		$this->init();
 		$this->grid->processRequest();
-		$this->loadRows();
-
 		$this->grid->setSupersetAvailability($this->getSupersetController()->isExternalServiceAvailable());
+
+		if (SupersetInitializer::getSupersetStatus() === SupersetInitializer::SUPERSET_STATUS_READY)
+		{
+			$manager = MarketDashboardManager::getInstance();
+			$manager->updateApplications();
+		}
+		$this->loadRows();
 
 		$this->arResult['GRID'] = $this->grid;
 

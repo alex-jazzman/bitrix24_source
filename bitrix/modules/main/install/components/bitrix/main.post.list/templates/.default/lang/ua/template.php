@@ -40,6 +40,7 @@ $MESS["MPL_MOBILE_HINTS"] = "Створено в мобільному засто
 $MESS["MPL_MOBILE_HINTS_DETAILS"] = "Докладніше";
 $MESS["MPL_MOBILE_POPUP_BOTTOM_TEXT"] = "Скануйте QR-код і перейдіть за посиланням, щоб встановити застосунок.";
 $MESS["MPL_MOBILE_POPUP_TITLE"] = "Контролюйте завдання в мобільному застосунку";
+$MESS["MPL_QUOTE_COPILOT"] = "CoPilot";
 $MESS["MPL_SAFE_EDIT"] = "Ви пишете повідомлення. Скинути зміни?";
 $MESS["MPL_SHOW_COLLAPSED_COMMENTS"] = "Показати пінги";
 $MESS["MPL_SHOW_COLLAPSED_COMMENTS_MSGVER_1"] = "Показати пінги (#COLLAPSED_MESSAGES_COUNT#)";

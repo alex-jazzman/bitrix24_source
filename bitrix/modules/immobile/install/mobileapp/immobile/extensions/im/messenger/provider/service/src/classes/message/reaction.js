@@ -25,6 +25,20 @@ jn.define('im/messenger/provider/service/classes/message/reaction', (require, ex
 			this.chatId = chatId;
 		}
 
+		set(reaction, messageId)
+		{
+			const reactions = this.store.getters['messagesModel/reactionsModel/getByMessageId'](messageId);
+
+			if (reactions && reactions.ownReactions.has(reaction))
+			{
+				this.remove(reaction, messageId);
+			}
+			else
+			{
+				this.add(reaction, messageId);
+			}
+		}
+
 		/**
 		 * @param {ReactionType} reaction
 		 * @param messageId

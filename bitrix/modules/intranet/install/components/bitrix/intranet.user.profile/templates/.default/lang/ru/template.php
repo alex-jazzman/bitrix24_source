@@ -102,7 +102,7 @@ $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_VISIBLE"] = "Показат
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_INVISIBLE"] = "Показатель уровня вашего стресса недоступен для просмотра другим пользователям.";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_SHARE_LINK"] = "копировать в буфер";
 $MESS["INTRANET_USER_PROFILE_DISK_SPACE"] = "объем - #VALUE#";
-$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED"] = "Установлен Битрикс24.Диск";
+$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_1"] = "Установлен Битрикс24.Диск";
 $MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "Вы не можете удалить приглашенного пользователя, так как он связан с другими инструментами.
 Деактивируйте (увольте) пользователя, чтобы закрыть ему доступ к этому Битрикс24.
 <br><br>Хотите уволить?";

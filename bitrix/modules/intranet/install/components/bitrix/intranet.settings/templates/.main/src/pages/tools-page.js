@@ -132,7 +132,6 @@ export class ToolsPage extends BaseSettingsPage
 					toolSelectorItem.getSwitcher(),
 					'toggled',
 					() => {
-							{
 						this.getAnalytic()?.addEventToggleTools(
 							subgroupConfig.code,
 							toolSelectorItem.getSwitcher().isChecked()
@@ -168,12 +167,7 @@ export class ToolsPage extends BaseSettingsPage
 			return this.#mainSection;
 		}
 
-		this.#mainSection = new Section({
-			title: Loc.getMessage('INTRANET_SETTINGS_SECTION_TITLE_TOOLS_SHOW'),
-			titleIconClasses: 'ui-icon-set --service',
-			isOpen: true,
-			canCollapse: false,
-		});
+		this.#mainSection = new Section(this.getValue('sectionTools'));
 
 		return this.#mainSection;
 	}
@@ -235,7 +229,7 @@ export class ToolsPage extends BaseSettingsPage
 		this.#draggable = new Draggable({
 			container: [this.#getToolsWrapperRow().render()],
 			draggable: '.--tool-selector',
-			dragElement: '.ui-section__dragdrop-icon',
+			dragElement: '.ui-section__dragdrop-icon-wrapper',
 			type: Draggable.CLONE,
 		});
 

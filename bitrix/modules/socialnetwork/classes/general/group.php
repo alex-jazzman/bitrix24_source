@@ -800,7 +800,6 @@ class CAllSocNetGroup
 	public static function createGroup($ownerID, $arFields, $bAutoSubscribe = true)
 	{
 		global $APPLICATION, $DB;
-
 		$ownerID = (int)$ownerID;
 		if ($ownerID <= 0)
 		{

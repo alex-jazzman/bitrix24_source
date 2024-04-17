@@ -99,6 +99,7 @@ $MESS["CRM_LEAD_FIELD_UTM_SOURCE"] = "Рекламна система";
 $MESS["CRM_LEAD_FIELD_UTM_TERM"] = "Умова пошуку кампанії";
 $MESS["CRM_LEAD_FIELD_WEBFORM_ID"] = "Створений CRM-формою";
 $MESS["CRM_LEAD_NOT_RESPONSIBLE_IM_NOTIFY"] = "Ви перестали бути відповідальним за лід \"#title#\"";
+$MESS["CRM_LEAD_NO_PERMISSIONS_TO_DELETE"] = "#LEAD_NAME#: недостатньо прав для видалення.";
 $MESS["CRM_LEAD_PROGRESS_IM_NOTIFY"] = "Статус лида \"#title#\" змінений c \"#start_status_title#\" на \"#final_status_title#\"";
 $MESS["CRM_LEAD_PROGRESS_IM_NOTIFY_MSGVER_1"] = "Стадія ліда \"#title#\" змінена з \"#start_status_title#\" на \"#final_status_title#\".";
 $MESS["CRM_LEAD_RESPONSIBLE_IM_NOTIFY"] = "Ви призначені відповідальним за лід \"#title#\"";

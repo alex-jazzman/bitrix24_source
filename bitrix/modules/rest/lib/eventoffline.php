@@ -2,8 +2,8 @@
 namespace Bitrix\Rest;
 
 use Bitrix\Main;
-use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Rest\Exceptions\ArgumentTypeException;
 
 /**
  * Class EventOfflineTable

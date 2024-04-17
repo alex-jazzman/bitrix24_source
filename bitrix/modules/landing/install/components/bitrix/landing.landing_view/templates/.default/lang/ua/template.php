@@ -23,6 +23,7 @@ $MESS["LANDING_PUBLICATION_AUTO_TOGGLE_ON"] = "Вкл";
 $MESS["LANDING_PUBLICATION_BUY_RENEW"] = "Продовжити";
 $MESS["LANDING_PUBLICATION_CONFIRM_EMAIL"] = "Підтвердити";
 $MESS["LANDING_PUBLICATION_GOTO_BLOCK"] = "Показати";
+$MESS["LANDING_PUBLICATION_STORE_SUBMIT"] = "Опублікувати інтернет-магазин";
 $MESS["LANDING_PUBLICATION_SUBMIT"] = "Опублікувати сайт";
 $MESS["LANDING_SITE_HINT_AUTOPUBLISHING_AREA"] = "Для налаштування автопублікації перейдіть на сторінку, яка не входить до включеної області.";
 $MESS["LANDING_SITE_HINT_AUTOPUBLISHING_OPTIONS"] = "Параметри автопублікації";

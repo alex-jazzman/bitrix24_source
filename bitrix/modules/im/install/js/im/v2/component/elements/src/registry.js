@@ -1,5 +1,4 @@
 export { Avatar, AvatarSize } from './avatar/avatar';
-export { RecentLoadingState } from './recent-loading-state/recent-loading-state';
 export { ChatTitle } from './chat-title/chat-title';
 export { Button, ButtonColor, ButtonSize, ButtonIcon } from './button/button';
 export { MessengerPopup } from './popup/popup';

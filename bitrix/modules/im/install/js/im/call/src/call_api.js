@@ -140,7 +140,7 @@ export class Call {
 	}
 
 	async connect(options) {
-		this.setLog(`Connecting to the call (desktop: !!${window['BXDesktopSystem']})`, LOG_LEVEL.INFO);
+		this.setLog(`Connecting to the call (desktop: ${Util.isDesktop()})`, LOG_LEVEL.INFO);
 		this.#privateProperties.callState = CALL_STATE.PROGRESSING
 
 		for (let key in options) {
@@ -171,31 +171,7 @@ export class Call {
 		{
 			if (error.name !== 'AbortError')
 			{
-				if (!this.#privateProperties.isReconnecting)
-				{
-					try
-					{
-						fetch(`${this.#privateProperties.endpoint}/send-to-log`, {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json;charset=utf-8'
-							},
-							body: JSON.stringify({
-								roomId: this.#privateProperties.roomId,
-								token: this.#privateProperties.jwt,
-								data: `Can't connect to a mediaserver: ${error}`,
-							})
-						});
-					}
-					finally
-					{
-						this.triggerEvents('Failed', [error]);
-					}
-				}
-				else
-				{
-					this.#reconnect();
-				}
+				this.#reconnect();
 			}
 			return;
 		}
@@ -365,20 +341,17 @@ export class Call {
 			this.#privateProperties.iceServers = data.joinResponse.iceServers;
 			this.#privateProperties.myUserId = data.joinResponse.localParticipant.userId
 			this.#privateProperties.localParticipantSid = data.joinResponse.localParticipant.sid;
-			this.#privateProperties.callState = CALL_STATE.CONNECTED
 			this.#createPeerConnection()
-			if (this.#privateProperties.isReconnecting)
-			{
-				this.#privateProperties.isReconnecting = false;
-				this.setLog(`Reconnected to the mediaserver after ${this.#privateProperties.reconnectionAttempt} attempts`, LOG_LEVEL.INFO);
-				this.triggerEvents('Reconnected');
-				this.#privateProperties.reconnectionAttempt = 0;
-			}
-			else
-			{
-				this.setLog(`Connected to the call ${this.#privateProperties.roomId} on the mediaserver`, LOG_LEVEL.INFO);
-				this.triggerEvents('Connected')
-			}
+
+			const connectedEvent = this.#privateProperties.isReconnecting && this.isConnected()
+				? 'Reconnected'
+				: 'Connected';
+
+			this.#privateProperties.callState = CALL_STATE.CONNECTED;
+			this.setLog(`${connectedEvent} to the mediaserver after ${this.#privateProperties.reconnectionAttempt} attempts`, LOG_LEVEL.INFO);
+			this.#privateProperties.isReconnecting = false;
+			this.#privateProperties.reconnectionAttempt = 0;
+			this.triggerEvents(connectedEvent);
 
 			const participantsToDelete = {...this.#privateProperties.remoteParticipants};
 			Object.values(data.joinResponse.otherParticipants).forEach( p => {
@@ -546,9 +519,10 @@ export class Call {
 			}
 		} else if (data?.trackMuted) {
 			const participant = this.#privateProperties.remoteParticipants[data.trackMuted.track.publisher];
+			const trackId = data.trackMuted.track.shortId;
 			if (data.trackMuted.track.publisher === this.#privateProperties.myUserId)
 			{
-				const track = Object.values(this.#privateProperties.localTracks)?.find(track => track?.sid === data.trackMuted.track.shortId);
+				const track = Object.values(this.#privateProperties.localTracks)?.find(track => track?.sid === trackId);
 				if (track)
 				{
 					if (track.source === MediaStreamsKinds.Camera)
@@ -583,9 +557,17 @@ export class Call {
 				return;
 			}
 
-			const track = Object.values(participant.tracks)?.find(track => track?.id === data.trackMuted.track.shortId);
-			if (!track) {
-				this.setLog(`Got mute signal (${data.trackMuted.muted}) for a non-existent track with id ${data.trackMuted.track.shortId}`, LOG_LEVEL.WARNING);
+			const track = Object.values(participant.tracks)?.find(track => track?.id === trackId);
+			const awaitedTrack = this.#privateProperties.tracksDataFromSocket[trackId];
+			if (awaitedTrack && !track)
+			{
+				this.#privateProperties.tracksDataFromSocket[trackId].muted = data.trackMuted.muted;
+				this.setLog(`Got mute signal (${data.trackMuted.muted}) for a non-received track with id ${trackId}`, LOG_LEVEL.WARNING);
+				return;
+			}
+			else if (!track)
+			{
+				this.setLog(`Got mute signal (${data.trackMuted.muted}) for a non-existent track with id ${trackId}`, LOG_LEVEL.WARNING);
 				return;
 			}
 
@@ -707,10 +689,6 @@ export class Call {
 	};
 	socketOnErrorHandler() {
 		this.setLog(`Got a socket error`, LOG_LEVEL.ERROR);
-		if (!this.isConnected() && !this.#privateProperties.isReconnecting)
-		{
-			this.triggerEvents('Failed', [{name: 'WEBSOCKET_ERROR'}]);
-		}
 	};
 	async onIceCandidate(target, event) {
 		if (!event.candidate) return;
@@ -933,14 +911,12 @@ export class Call {
 					}
 					else
 					{
+						const encodings = this.#getEncodingsFromVideoWidth(width);
+
 						this.sender.addTransceiver(MediaStreamTrack, {
 							direction: 'sendonly',
 							streams: [this.#privateProperties.cameraStream],
-							sendEncodings: MediaStreamTrack.sendEncodings || [
-								{ rid: 'q', active: true, maxBitrate: this.#privateProperties.defaultSimulcastBitrate['q'], scaleResolutionDownBy: 4 },
-								{ rid: 'h', active: true, maxBitrate: this.#privateProperties.defaultSimulcastBitrate['h'], scaleResolutionDownBy: 2 },
-								{ rid: 'f', active: true, maxBitrate: this.#privateProperties.defaultSimulcastBitrate['f'] },
-							]
+							sendEncodings: MediaStreamTrack.sendEncodings || encodings,
 						});
 
 						this.#addPendingPublication(MediaStreamTrack.id, source);
@@ -952,26 +928,7 @@ export class Call {
 								"width":  width,
 								"height":  height,
 								"source":  source,
-								"layers":  [
-									{
-										"quality":  "LOW",
-										"width":  width / 4,
-										"height":  height / 4,
-										"bitrate":  this.#privateProperties.defaultSimulcastBitrate.q
-									},
-									{
-										"quality":  "MEDIUM",
-										"width":  width / 2,
-										"height":  height / 2,
-										"bitrate":  this.#privateProperties.defaultSimulcastBitrate.h
-									},
-									{
-										"quality":  "HIGH",
-										"width":  width,
-										"height":  height,
-										"bitrate":  this.#privateProperties.defaultSimulcastBitrate.f
-									}
-								]
+								"layers":  this.#getLayersFromEncodings(width, height, encodings),
 							}
 						});
 					}
@@ -1062,6 +1019,53 @@ export class Call {
 		}
 	}
 
+	#getMaxEncodingsByVideoWidth(width)
+	{
+		// https://source.chromium.org/chromium/chromium/src/+/main:third_party/webrtc/video/config/simulcast.cc;l=76;
+		if (width >= 960)
+		{
+			return 3;
+		}
+		else if (width >= 480)
+		{
+			return 2;
+		}
+		return 1;
+	}
+
+	#getEncodingsFromVideoWidth(width)
+	{
+		const maxEncodings = this.#getMaxEncodingsByVideoWidth(width);
+		const rids = ['q', 'h', 'f'];
+
+		const encodings = [];
+		for (let i = 0; i < maxEncodings; i++)
+		{
+			const rid = rids[i];
+			encodings.push({
+				rid,
+				active: true,
+				maxBitrate: this.#privateProperties.defaultSimulcastBitrate[rid],
+				scaleResolutionDownBy: 2 ** (maxEncodings - 1 - i)
+			});
+		}
+
+		return encodings;
+	};
+
+	#getLayersFromEncodings(width, height, encodings)
+	{
+		return encodings.map((encoding, index) =>
+		{
+			return {
+				quality: index,
+				width: width / encoding.scaleResolutionDownBy,
+				height: height / encoding.scaleResolutionDownBy,
+				bitrate: this.#privateProperties.defaultSimulcastBitrate[encoding.rid],
+			}
+		});
+	}
+
 	async changeStreamQuality(StreamQualityOptions) {
 		for (let key in StreamQualityOptions) {
 			if (this.#privateProperties[`${key}`] !== StreamQualityOptions[key]) {
@@ -1117,6 +1121,10 @@ export class Call {
 		}
 	}
 
+	toggleRemoteParticipantVideo(participantIds, showVideo, isPaginateToggle = false) {
+		this.#toggleRemoteParticipantVideo(participantIds, showVideo, isPaginateToggle);
+	}
+
 	#changeSubscriptionToTrack(trackId, participantId, subscribe)
 	{
 		this.#sendSignal({
@@ -1131,6 +1139,36 @@ export class Call {
 				],
 			}
 		});
+	}
+
+	#pauseRemoteTrack(userId, trackId, trackSource, paause)
+	{
+		this.#sendSignal({
+			trackSetting: {
+				trackSids: [trackId],
+				disabled: paause,
+				quality: this.#calculateVideoQualityForUser(userId, trackSource),
+			}
+		});
+	}
+
+	#calculateVideoQualityForUser(userId, source)
+	{
+		const participant = this.#privateProperties.remoteParticipants[userId];
+		const exactUser = this.#privateProperties.mainStream.userId == userId;
+		const exactTrack = this.#privateProperties.mainStream.kind === source;
+
+		let quality = STREAM_QUALITY.LOW;
+		if (exactUser && (exactTrack || !participant.screenSharingEnabled))
+		{
+			quality = STREAM_QUALITY.HIGH;
+		}
+		else if (!this.#privateProperties.mainStream.userId)
+		{
+			quality = this.#privateProperties.defaultRemoteStreamsQuality;
+		}
+
+		return quality;
 	}
 
 	#changeRoomStreamsQuality(userId, kind) {
@@ -1158,19 +1196,20 @@ export class Call {
 		})
 	}
 
-	#toggleRemoteParticipantVideo(participantIds, showVideo)
+	#toggleRemoteParticipantVideo(participantIds, showVideo, isPaginateToggle = false)
 	{
 		const eventType = showVideo ? 'RemoteMediaAdded' : 'RemoteMediaRemoved';
 		participantIds.forEach(participantId => {
 			const remoteParticipant = this.#privateProperties.remoteParticipants[participantId];
-			if (remoteParticipant.tracks[MediaStreamsKinds.Camera] && remoteParticipant.isLocalVideoMute === showVideo)
+			if (remoteParticipant && remoteParticipant.tracks[MediaStreamsKinds.Camera] && remoteParticipant.isLocalVideoMute === showVideo)
 			{
 				remoteParticipant.isLocalVideoMute = !showVideo;
 
-				this.#changeSubscriptionToTrack(
-					remoteParticipant.tracks[MediaStreamsKinds.Camera].id,
+				this.#pauseRemoteTrack(
 					remoteParticipant.sid,
-					showVideo
+					remoteParticipant.tracks[MediaStreamsKinds.Camera].id,
+					remoteParticipant.tracks[MediaStreamsKinds.Camera].source,
+					remoteParticipant.isLocalVideoMute
 				);
 
 				this.triggerEvents(
@@ -1183,7 +1222,10 @@ export class Call {
 			}
 		});
 
-		this.triggerEvents('ToggleRemoteParticipantVideo', [showVideo]);
+		if (!isPaginateToggle)
+		{
+			this.triggerEvents('ToggleRemoteParticipantVideo', [showVideo]);
+		}
 	}
 
 	hangup() {
@@ -1486,7 +1528,7 @@ export class Call {
 		return this.#privateProperties.screenStream?.getVideoTracks()[0];
 	}
 
-	async #getUserMedia(options) {
+	async #getUserMedia(options, fallbackMode = false) {
 		this.setLog(`Start getting user media with options: ${JSON.stringify(options)}`, LOG_LEVEL.INFO);
 		const constraints = {
 			audio: false,
@@ -1497,9 +1539,12 @@ export class Call {
 
 		try {
 			if (options.video) {
-				constraints.video = {
-					width: { ideal: this.#privateProperties.defaultVideoResolution.width },
-					height: { ideal: this.#privateProperties.defaultVideoResolution.height },
+				constraints.video = {};
+
+				if (!fallbackMode)
+				{
+					constraints.video.width = { ideal: this.#privateProperties.defaultVideoResolution.width };
+					constraints.video.height = { ideal: this.#privateProperties.defaultVideoResolution.height };
 				}
 
 				if (this.#privateProperties.videoDeviceId) {
@@ -1518,6 +1563,14 @@ export class Call {
 			stream = await navigator.mediaDevices.getUserMedia(constraints)
 			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} succeeded`, LOG_LEVEL.INFO);
 		} catch (e) {
+			if (options.video)
+			{
+				this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed (fallbackMode: ${fallbackMode}): ${e}`, LOG_LEVEL.ERROR);
+				if (!fallbackMode)
+				{
+					stream = await this.#getUserMedia(options, true);
+				}
+			}
 			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed: ${e}`, LOG_LEVEL.ERROR);
 		} finally {
 			this.triggerEvents('GetUserMediaEnded');
@@ -1724,6 +1777,8 @@ export class Call {
 			const data = {
 				timestamp: Math.floor(Date.now() / 1000),
 				event: log,
+				client: Util.isDesktop() ? 'desktop' : 'web',
+				appVersion: window['BXDesktopSystem']?.ApiVersion?.() || '-',
 			};
 			const logLength = Object.values(this.#privateProperties.logs).length;
 			this.#privateProperties.logs[logLength] = {
@@ -1914,13 +1969,15 @@ export class Call {
 
 	#createRemoteTrack(trackId, ontrackData)
 	{
-		const userId = this.#privateProperties.tracksDataFromSocket[trackId].userId;
+		const trackData = this.#privateProperties.tracksDataFromSocket[trackId];
+		const userId = trackData.userId;
 		const participant = this.#privateProperties.remoteParticipants[userId];
 		const track = ontrackData.track;
+		const trackMuted = !!trackData.muted;
 
 		this.#privateProperties.realTracksIds[track.id] = trackId;
-		track.source = this.#privateProperties.tracksDataFromSocket[trackId].source;
-		track.layers = this.#privateProperties.tracksDataFromSocket[trackId].layers || null;
+		track.source = trackData.source;
+		track.layers = trackData.layers || null;
 
 		if (!this.#privateProperties.remoteTracks?.[userId])
 		{
@@ -1928,6 +1985,20 @@ export class Call {
 		}
 		const remoteTrack = new Track(trackId, track);
 		this.#privateProperties.remoteTracks[userId][trackId] = remoteTrack;
+
+		if (remoteTrack.source === MediaStreamsKinds.Camera)
+		{
+			participant.isMutedVideo = trackMuted;
+		}
+		else if (remoteTrack.source === MediaStreamsKinds.Microphone)
+		{
+			participant.isMutedAudio = trackMuted;
+			if (trackMuted)
+			{
+				this.setLog(`Trigger mute signal (${trackMuted}) for received audio from a participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
+				this.triggerEvents('RemoteMediaMuted', [participant, remoteTrack]);
+			}
+		}
 
 		if (this.#privateProperties.pendingSubscriptions[userId]?.[trackId]?.timeout)
 		{
@@ -1944,18 +2015,7 @@ export class Call {
 
 		if (remoteTrack.source === MediaStreamsKinds.Camera)
 		{
-			const exactUser = this.#privateProperties.mainStream.userId == userId;
-			const exactTrack = this.#privateProperties.mainStream.kind === remoteTrack.source;
-
-			let quality = STREAM_QUALITY.LOW;
-			if (exactUser && (exactTrack || !participant.screenSharingEnabled))
-			{
-				quality = STREAM_QUALITY.HIGH;
-			}
-			else if (!this.#privateProperties.mainStream.userId)
-			{
-				quality = this.#privateProperties.defaultRemoteStreamsQuality;
-			}
+			const quality = this.#calculateVideoQualityForUser(userId, remoteTrack.source);
 			this.setLog(`Quality of video for a participant with id ${participant.userId} (sid: ${participant.sid}) was changed to ${quality} after receiving`, LOG_LEVEL.INFO);
 			participant.setStreamQuality(quality);
 		}

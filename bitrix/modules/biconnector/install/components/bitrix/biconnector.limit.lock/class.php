@@ -78,6 +78,11 @@ class LimitLockComponent extends CBitrixComponent
 			return true;
 		}
 
+		if ($this->fullLock)
+		{
+			return true;
+		}
+
 		$lastTimestampShow = (int)Option::get('biconnector', self::LAST_TIME_SHOW_POPUP_OPTION_NAME, 0);
 		if ($lastTimestampShow <= 0)
 		{

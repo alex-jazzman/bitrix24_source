@@ -12,6 +12,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { defaultUserIcon } = require('im/messenger/assets/common');
 	const { ColorUtils } = require('im/messenger/lib/utils');
 	const { ReactionType } = require('im/messenger/const');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
 
 	const MessageAlign = Object.freeze({
 		center: 'center',
@@ -88,7 +90,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setFontColor(options.fontColor)
 				.setIsBackgroundOn(options.isBackgroundOn)
 				.setShowReaction(options.showReaction)
-				.setCanBeQuoted(true)
+				.setCanBeQuoted(options.canBeQuoted)
 				.setRoundedCorners(true)
 				.setMarginTop(options.marginTop)
 				.setMarginBottom(options.marginBottom)
@@ -96,6 +98,10 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			;
 		}
 
+		/**
+		 * @abstract
+		 * @return {string}
+		 */
 		getType()
 		{
 			throw new Error('Message: getType() must be override in subclass.');
@@ -231,6 +237,16 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				const openAttachUrl = `${core.getHost()}/immobile/in-app/message-attach/${modelMessage.id}`;
 				const attachIcon = String.fromCodePoint(128_206);
 				messageText += `${attachIcon} [b][url=${openAttachUrl}]${openAttachText}[/url][/b]`;
+			}
+
+			if (
+				Feature.isDevelopmentEnvironment
+				&& DeveloperSettings.getSettingValue('showMessageId')
+				&& modelMessage.id
+			)
+			{
+				const messageId = modelMessage.id || modelMessage.templateId;
+				messageText += `\n\n[[b]ID:[/b] ${messageId}]`;
 			}
 
 			const message = parser.decodeMessageFromText(messageText, options);

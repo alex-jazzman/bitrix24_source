@@ -13,7 +13,7 @@ export class BaseField extends EventEmitter
 		super();
 		this.setEventNamespace('BX.Rest.EInvoice.Field');
 		this.options = options;
-		this.value = this.options.value;
+		this.value = this.options.value ?? null;
 		this.readySave = !(Type.isNil(this.value) || this.value === '');
 		this.options.id = Type.isStringFilled(this.options.id) ? this.options.id : Text.getRandom(8);
 	}

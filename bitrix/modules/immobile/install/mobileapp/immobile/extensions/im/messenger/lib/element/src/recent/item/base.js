@@ -299,7 +299,22 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			const modelItem = this.getModelItem();
 			const dialog = this.getDialogItem();
 			let subtitleStyle = {};
-			if (dialog.writingList.length > 0)
+
+			if (dialog?.writingList?.length > 0)
+			{
+				subtitleStyle = {
+					animation: {
+						color: '#777777',
+						type: 'bubbles',
+					},
+				};
+
+				this.styles.subtitle = subtitleStyle;
+
+				return this;
+			}
+
+			if (dialog?.writingList?.length > 0)
 			{
 				subtitleStyle = {
 					animation: {
@@ -321,6 +336,11 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 						sizeMultiplier: 0.7,
 					},
 				};
+
+				if (modelItem.message && modelItem.message.subTitleIcon && modelItem.message.subTitleIcon !== '')
+				{
+					subtitleStyle = { image: { name: modelItem.message.subTitleIcon, sizeMultiplier: 0.7 } };
+				}
 
 				this.styles.subtitle = subtitleStyle;
 
@@ -400,7 +420,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		createCounterStyle()
 		{
 			const dialog = this.getDialogItem();
-			this.styles.counter.backgroundColor = dialog.muteList.includes(core.getUserId())
+			this.styles.counter.backgroundColor = dialog?.muteList?.includes(core.getUserId())
 				? AppTheme.colors.base5
 				: AppTheme.colors.accentMainPrimaryalt
 			;
@@ -433,7 +453,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		{
 			const dialog = this.getDialogItem();
 
-			return dialog.muteList.includes(core.getUserId()) ? UnmuteAction : MuteAction;
+			return dialog?.muteList?.includes(core.getUserId()) ? UnmuteAction : MuteAction;
 		}
 
 		getHideAction()
@@ -453,7 +473,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			const item = this.getModelItem();
 			const dialog = this.getDialogItem();
 
-			return (item.unread === true || dialog.counter > 0) ? ReadAction : UnreadAction;
+			return (item.unread === true || dialog?.counter > 0) ? ReadAction : UnreadAction;
 		}
 
 		getProfileAction()

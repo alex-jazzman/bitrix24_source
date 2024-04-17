@@ -977,6 +977,7 @@ class CIMRestService extends IRestService
 		$skipChatParam = $arParams['SKIP_CHAT'] ?? null;
 		$skipDialogParam = $arParams['SKIP_DIALOG'] ?? null;
 		$unreadOnly = $arParams['UNREAD_ONLY'] ?? null;
+		$parseText = $arParams['PARSE_TEXT'] ?? null;
 
 		$config = Array('JSON' => 'Y');
 		if (isset($arParams['SKIP_OPENLINES']) && $arParams['SKIP_OPENLINES'] === 'Y')
@@ -1010,6 +1011,10 @@ class CIMRestService extends IRestService
 		else
 		{
 			$config['GET_ORIGINAL_TEXT'] = 'N';
+		}
+		if ($parseText === 'Y')
+		{
+			$config['PARSE_TEXT'] = 'Y';
 		}
 
 		if (isset($arParams['LAST_MESSAGE_DATE']) && $arParams['LAST_MESSAGE_DATE'])

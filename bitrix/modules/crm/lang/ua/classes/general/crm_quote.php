@@ -102,6 +102,7 @@ $MESS["CRM_QUOTE_FIELD_WEBFORM_ID"] = "Створений CRM-формою";
 $MESS["CRM_QUOTE_FILE_ADD"] = "Доданий файл";
 $MESS["CRM_QUOTE_FILE_REMOVE"] = "Вилучений файл";
 $MESS["CRM_QUOTE_NOT_RESPONSIBLE_IM_NOTIFY"] = "Ви перестали бути відповідальним за Пропозицію \"#title#\"";
+$MESS["CRM_QUOTE_NO_PERMISSIONS_TO_DELETE"] = "#QUOTE_NAME#: недостатньо прав для видалення.";
 $MESS["CRM_QUOTE_PROGRESS_IM_NOTIFY"] = "Статус пропозиції \"#title#\" змінено з \"#start_status_title#\" на \"#final_status_title#\"";
 $MESS["CRM_QUOTE_RESPONSIBLE_IM_NOTIFY"] = "Ви призначені відповідальним за пропозицію \"#title#\"";
 $MESS["CRM_QUOTE_SEARCH_FIELD_ASSIGNED_BY_INFO"] = "Відповідальний";

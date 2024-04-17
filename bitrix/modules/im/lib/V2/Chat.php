@@ -2573,6 +2573,8 @@ abstract class Chat implements RegistryEntry, ActiveRecord, Im\V2\Rest\RestEntit
 
 	protected function addUsersToRelation(array $usersToAdd, array $managerIds = [], ?bool $hideHistory = null)
 	{
+		$usersToAdd = array_filter($usersToAdd);
+
 		if (empty($usersToAdd))
 		{
 			return;

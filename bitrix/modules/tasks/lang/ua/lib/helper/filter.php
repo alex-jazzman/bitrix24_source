@@ -29,6 +29,7 @@ $MESS["TASKS_FILTER_PARAMS_SUBORDINATE"] = "Показати завдання п
 $MESS["TASKS_FILTER_PROBLEM"] = "Потребує уваги";
 $MESS["TASKS_FILTER_RESPONSIBLE_NAME"] = "Виконавець";
 $MESS["TASKS_FILTER_ROLEID"] = "Роль";
+$MESS["TASKS_FILTER_STAGE_ID"] = "Стадія канбану";
 $MESS["TASKS_FILTER_START_DATE_PLAN"] = "Запланована дата початку";
 $MESS["TASKS_FILTER_STATUS"] = "Статус";
 $MESS["TASKS_FILTER_STORY_POINTS"] = " Story Points";

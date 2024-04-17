@@ -90,7 +90,7 @@ final class Task extends Base
 		return new Engine\AutoWire\ExactParameter(
 			CTaskItem::class,
 			'task',
-			static function ($className, $id) {
+			function ($className, $id) {
 				if (($id = (int)$id) <= 0)
 				{
 					$this->addError(new Error('wrong task id'));

@@ -62,6 +62,7 @@ $MESS["TASKS_LIST_CRM_TYPE_O"] = "Замовлення";
 $MESS["TASKS_LIST_GROUP_ACTION_ADD_ACCOMPLICE"] = "Додати співвиконавця";
 $MESS["TASKS_LIST_GROUP_ACTION_ADD_AUDITOR"] = "Додати спостерігача";
 $MESS["TASKS_LIST_GROUP_ACTION_ADD_FAVORITE"] = "Додати в обране";
+$MESS["TASKS_LIST_GROUP_ACTION_CHANGE_ASSIGNEE"] = "Змінити відповідального";
 $MESS["TASKS_LIST_GROUP_ACTION_CHANGE_ORIGINATOR"] = "Змінити постановника";
 $MESS["TASKS_LIST_GROUP_ACTION_CHANGE_RESPONSIBLE"] = "Змінити відповідального";
 $MESS["TASKS_LIST_GROUP_ACTION_COMPLETE"] = "Завершити";

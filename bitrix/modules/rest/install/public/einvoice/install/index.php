@@ -1,7 +1,11 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
+
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 
+Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/rest/install/public/einvoice/install/index.php');
+$APPLICATION->SetTitle(Loc::getMessage('EINVOICE_INSTALL_TITLE'));
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',

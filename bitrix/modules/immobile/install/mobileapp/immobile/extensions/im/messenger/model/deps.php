@@ -27,5 +27,8 @@ return [
 		'./src/draft',
 		'./src/queue',
 		'./src/messages/reactions',
+		'./src/messages/pin',
+		'./src/validators/message',
+		'./src/validators/pin',
 	],
 ];

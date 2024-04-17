@@ -2,7 +2,6 @@
 
 namespace Bitrix\Rest\Controller;
 
-use Bitrix\Bitrix24\CurrentUser;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\AjaxJson;
@@ -12,16 +11,29 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Rest\AppTable;
+use Bitrix\Rest\Event\Sender;
+use Bitrix\Main\Engine\CurrentUser;
 
 class EInvoice extends Controller
 {
-	public function saveAction(array $settings, string $handler): AjaxJson
+	public function saveAction(string $clientId, array $settings, string $handler): AjaxJson
 	{
 		$formData = $settings;
 
 		$uri = new Uri($handler);
 		$httpClient = new HttpClient();
-		$result = $httpClient->post($uri, $formData);
+		$params = Sender::getDefaultEventParams();
+		$params['sendRefreshToken'] = true;
+		$event = [
+			'data' => $formData,
+			'auth' => Sender::getAuth(
+				$clientId,
+				CurrentUser::get()->getId() ?? 0,
+				[],
+				$params
+			)
+		];
+		$result = $httpClient->post($uri, $event);
 		try
 		{
 			$responseData = Json::decode($result);

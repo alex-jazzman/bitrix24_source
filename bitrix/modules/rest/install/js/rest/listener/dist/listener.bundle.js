@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core_events) {
 	'use strict';
@@ -37,13 +38,16 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(Listener, [{
 	    key: "listen",
 	    value: function listen() {
+	      var _this2 = this;
 	      if (babelHelpers.classPrivateFieldGet(this, _listeningState)) {
 	        return;
 	      }
 	      BX.PULL.subscribe({
 	        type: BX.PullClient.SubscriptionType.Server,
 	        moduleId: 'rest',
-	        callback: _classPrivateMethodGet(this, _handleCommand, _handleCommand2).bind(this)
+	        callback: function callback(data) {
+	          _classPrivateMethodGet(_this2, _handleCommand, _handleCommand2).call(_this2, data);
+	        }
 	      });
 	      babelHelpers.classPrivateFieldSet(this, _listeningState, true);
 	    }
@@ -53,7 +57,7 @@ this.BX = this.BX || {};
 	function _handleCommand2(data) {
 	  if (data.command === babelHelpers.classPrivateFieldGet(this, _command)) {
 	    this.emit('pull');
-	    babelHelpers.classPrivateFieldGet(this, _handlerCommand).call(this);
+	    babelHelpers.classPrivateFieldGet(this, _handlerCommand).call(this, data);
 	  }
 	}
 

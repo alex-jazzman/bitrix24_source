@@ -35,7 +35,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					this.layout.close();
 				},
 				onItemSelected: (itemData) => {
-					MessengerEmitter.emit(EventType.messenger.openDialog, itemData);
+					MessengerEmitter.emit(EventType.messenger.openDialog, itemData, 'im.messenger');
 					this.layout.close();
 				},
 				onCreateOpenChat: () => {

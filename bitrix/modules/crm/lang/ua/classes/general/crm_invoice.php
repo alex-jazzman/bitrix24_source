@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_CANT_ADD_USER_FIELD"] = "Не вдалося створити поле користувача #FIELD_NAME# для сутності \"ORDER\"";
 $MESS["CRM_CANT_ADD_USER_FIELD1"] = "Не вдалося створити поле користувача #FIELD_NAME# для сутності \"#ENTITY_TYPE#\"";
 $MESS["CRM_CATALOG_OFFERS_TITLE_FORMAT"] = "#CATALOG# (пропозиції)";
@@ -40,9 +40,10 @@ $MESS["CRM_INVOICE_FIELD_COMMENTS"] = "Коментар";
 $MESS["CRM_INVOICE_FIELD_CURRENCY"] = "Валюта рахунку";
 $MESS["CRM_INVOICE_FIELD_DATE_BILL"] = "Дата виставлення";
 $MESS["CRM_INVOICE_FIELD_DATE_INSERT"] = "Дата створення";
-$MESS["CRM_INVOICE_FIELD_DATE_UPDATE"] = "Дата зміни";
 $MESS["CRM_INVOICE_FIELD_DATE_MARKED"] = "Дата відхилення";
 $MESS["CRM_INVOICE_FIELD_DATE_PAY_BEFORE"] = "Термін оплати";
+$MESS["CRM_INVOICE_FIELD_DATE_STATUS"] = "Дата зміни статусу";
+$MESS["CRM_INVOICE_FIELD_DATE_UPDATE"] = "Дата зміни";
 $MESS["CRM_INVOICE_FIELD_ID"] = "ID";
 $MESS["CRM_INVOICE_FIELD_ORDER_TOPIC"] = "Тема";
 $MESS["CRM_INVOICE_FIELD_PAYER_INFO"] = "Реквізитти";
@@ -59,12 +60,12 @@ $MESS["CRM_INVOICE_FIELD_RECURRING_LAST_EXECUTION"] = "Дата останньо
 $MESS["CRM_INVOICE_FIELD_RECURRING_NEXT_EXECUTION"] = "Дата наступного виставлення";
 $MESS["CRM_INVOICE_FIELD_RESPONSIBLE_ID"] = "Відповідальний";
 $MESS["CRM_INVOICE_FIELD_STATUS_ID"] = "Статус";
-$MESS["CRM_INVOICE_FIELD_DATE_STATUS"] = "Дата зміни статусу";
 $MESS["CRM_INVOICE_FIELD_UF_CONTACT_ID"] = "Контактна особа";
 $MESS["CRM_INVOICE_FIELD_UF_DEAL_ID"] = "Угода";
 $MESS["CRM_INVOICE_FIELD_UF_MYCOMPANY_ID"] = "Реквізити вашої компанії";
 $MESS["CRM_INVOICE_FIELD_UF_QUOTE_ID"] = "Пропозиція";
 $MESS["CRM_INVOICE_NOT_RESPONSIBLE_IM_NOTIFY"] = "Ви перестали бути відповідальним за рахунок \"#title#\"";
+$MESS["CRM_INVOICE_NO_PERMISSIONS_TO_DELETE"] = "#INVOICE_NAME#: недостатньо прав для видалення.";
 $MESS["CRM_INVOICE_PROPERTY_COMPANY_ADR"] = "Адреса";
 $MESS["CRM_INVOICE_PROPERTY_COMPANY_CONTACT_PERSON"] = "Контактна особа";
 $MESS["CRM_INVOICE_PROPERTY_COMPANY_EMAIL"] = "E-mail";
@@ -98,4 +99,3 @@ $MESS["CRM_MODULE_SALE_NOT_INSTALLED"] = "Модуль sale не встанов�
 $MESS["CRM_ORD_PROP_2"] = "Місцезнаходження";
 $MESS["CRM_ORD_PROP_GROUP_UR2"] = "Контактна інформація";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ заборонено";
-?>

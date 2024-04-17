@@ -206,7 +206,7 @@ final class MailboxConnector
 			case 'yandex':
 				return Main\Config\Option::get('mail', '~disable_yandex_oauth_smtp') !== 'Y';
 			case 'mail.ru':
-				return Main\Config\Option::get('mail', '~disable_mailru_oauth_smtp') !== 'Y';
+				return Main\Config\Option::get('mail', '~disable_mailru_oauth_smtp') === 'N';
 			case 'office365':
 			case 'outlook.com':
 			case 'exchangeOnline':

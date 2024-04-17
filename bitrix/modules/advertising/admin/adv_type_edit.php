@@ -3,7 +3,7 @@
 ##############################################
 # Bitrix: SiteManager                        #
 # Copyright (c) 2004 Bitrix                  #
-# http://www.bitrix.ru                       #
+# https://www.bitrixsoft.com          #
 # mailto:admin@bitrix.ru                     #
 ##############################################
 */
@@ -26,7 +26,7 @@ if(!$isAdmin && !$isDemo && !$isManager && !$isAdvertiser) $APPLICATION->AuthFor
 IncludeModuleLangFile(__FILE__);
 
 /***************************************************************************
-						Îáðàáîòêà GET | POST
+						ÐžÐ±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° GET | POST
 ****************************************************************************/
 $aTabs = array(
 	array("DIV" => "edit1", "TAB" => GetMessage("AD_TYPE"), "ICON"=>"banner_type_edit", "TITLE"=>GetMessage("AD_TYPE")),

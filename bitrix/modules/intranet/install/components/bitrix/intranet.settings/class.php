@@ -30,9 +30,12 @@ use Bitrix\Main\Result;
 use Bitrix\Main;
 use Bitrix\Intranet;
 use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Intranet\User;
+use Bitrix\Intranet\Settings\SettingsPermission;
 
 class SettingsComponent extends CBitrixComponent implements Controllerable, Errorable
 {
+	const EXTERNAL_LINKS = 'EXTERNAL_LINKS';
 	protected ErrorCollection $errorCollection;
 
 	public function configureActions(): array
@@ -133,6 +136,13 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 
 		return (Loader::includeModule("intranet") && $currentUser->isAdmin())
 			|| (Loader::includeModule("bitrix24") && $currentUser->CanDoOperation('bitrix24_config'));
+//		$permission = static::createPermission();
+//		return $permission->canEdit() || $permission->canRead();
+	}
+
+	public static function createPermission(): SettingsPermission
+	{
+		return new SettingsPermission(CurrentUser::get());
 	}
 
 	public function executeComponent(): void
@@ -174,6 +184,7 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 		$codesOfPages = array_keys($providers);
 		$this->arResult['START_PAGE'] = $this->getStartPage($codesOfPages);
 		$this->arResult['ANALYTIC_CONTEXT'] = htmlspecialcharsbx($_REQUEST['analyticContext'] ?? '');
+		$this->arResult['OPTION_TO_MOVE'] = htmlspecialcharsbx($_REQUEST['option'] ?? '');
 		$this->arResult['MENU_ITEMS'] = [];
 
 		foreach ($providers as $type => $provider)
@@ -248,7 +259,7 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 			->getRequest();
 		$result = new Result();
 
-		if (!static::hasAccess())
+		if (!static::createPermission()->canEdit())
 		{
 			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
 			return new Result();
@@ -291,45 +302,20 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 	 */
 	public function getAction(string $type): array
 	{
-		if (!static::hasAccess())
+		if (!static::createPermission()->canRead())
 		{
 			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
 			return [];
 		}
 
 		$factory = $this->createFactory();
-		return array_merge(
-			...array_map(
-				fn($providerSettings) => $providerSettings->get()->toArray(),
-				$factory->buildAll($type)
-			)
-		);
-	}
 
-	/**
-	 * @throws ArgumentException
-	 */
-	public function getSomeAction(array $types): array
-	{
-		if (!static::hasAccess())
-		{
-			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
-			return [];
-		}
-
-		$settingsResult = [];
-		$settingsFactory = $this->createFactory();
-		foreach ($types as $type)
-		{
-			$settingsResult[$type] = $settingsFactory->build($type)->get()->toArray();
-		}
-
-		return $settingsResult;
+		return $factory->build($type)->get()->toArray();
 	}
 
 	public function getLandingAction(int $companyId, int $requisiteId, int $bankRequisiteId): array
 	{
-		if (!static::hasAccess())
+		if (!static::createPermission()->canRead())
 		{
 			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
 			return [];
@@ -393,6 +379,81 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 
 			$event->send();
 		}
+	}
+
+	/**
+	 * @throws ArgumentException
+	 */
+	public function searchAction(string $query): array
+	{
+		if (!static::hasAccess())
+		{
+			$this->errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('SETTINGS_ACCESS_DENIED')));
+			return [];
+		}
+
+		$result = [];
+		$settingsFactory = $this->createFactory();
+		foreach ($this->getProviders() as $provider)
+		{
+			$found = $settingsFactory->build($provider->getType())->find($query);
+			if (count($found) > 0)
+			{
+				$result[] = [
+					'title' => $provider->getTitle(),
+					'page' => $provider->getType(),
+					'options' => $found
+				];
+			}
+		}
+
+		/*Main\EventManager::getInstance()
+			->addEventHandler(
+				'intranet',
+				'onSettingsSearchOutLinks',
+				function(Main\Event $event) {
+				$event->addResult(new Main\EventResult(
+					Main\EventResult::SUCCESS,
+					[
+						'title' => 'Terminal',
+						'options' => [
+							[
+								'title' => 'Terminal 1',
+								'url' => '/'
+							],
+							[
+								'title' => 'Terminal 2',
+								'url' => '/company/'
+							],
+						],
+					]
+					)
+				);
+			});*/
+
+		$event = new Main\Event('intranet', 'onSettingsSearchOutLinks', ['query' => $query]);
+		$event->send();
+		foreach ($event->getResults() as $eventResult)
+		{
+			$eventParams = $eventResult->getParameters();
+			if (
+				!isset($eventParams['title'])
+				|| !isset($eventParams['options'])
+				|| !is_array($eventParams['options'])
+				|| $eventResult->getType() !== Main\EventResult::SUCCESS
+			)
+			{
+				continue;
+			}
+
+			$result[] = [
+				'title' => $eventParams['title'],
+				'page' => self::EXTERNAL_LINKS,
+				'options' => $eventParams['options']
+			];
+		}
+
+		return $result;
 	}
 
 	public function getErrors(): array

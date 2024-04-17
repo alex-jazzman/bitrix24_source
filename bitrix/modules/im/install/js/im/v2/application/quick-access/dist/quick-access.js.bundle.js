@@ -39,7 +39,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      components: {
 	        QuickAccess: im_v2_component_quickAccess.QuickAccess
 	      },
-	      template: '<QuickAccess :compactMode="true"/>'
+	      template: '<QuickAccess />'
 	    });
 	    return true;
 	  }

@@ -11,6 +11,8 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Rest\AppTable;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Rest\Event\Sender;
+use Bitrix\Main\Engine\CurrentUser;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -116,7 +118,18 @@ class RestAppSettingsComponent extends CBitrixComponent implements Controllerabl
 
 			$uri = new Uri($app['URL_SETTINGS']);
 			$httpClient = new HttpClient();
-			$result = $httpClient->post($uri, $formData);
+			$params = Sender::getDefaultEventParams();
+			$params['sendRefreshToken'] = true;
+			$event = [
+				'data' => $formData,
+				'auth' => Sender::getAuth(
+					$clientId,
+					CurrentUser::get()->getId() ?? 0,
+					[],
+					$params
+				)
+			];
+			$result = $httpClient->post($uri, $event);
 			$responseData = [];
 			$responseData = Json::decode($result);
 			if ($httpClient->getStatus() !== 200)

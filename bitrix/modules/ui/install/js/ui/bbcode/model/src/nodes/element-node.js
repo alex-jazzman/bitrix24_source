@@ -1,112 +1,128 @@
 import { Type, type JsonObject, type JsonValue } from 'main.core';
-import { Node, type NodeOptions, type ContentNode, type SerializedNode, privateMap } from './node';
-import { typeof FragmentNode } from './fragment-node';
-import { Tag } from '../reference/tag';
-import { BBCodeScheme } from '../scheme/scheme';
-import { Text } from '../reference/text';
+import { BBCodeNode, type BBCodeNodeOptions, type BBCodeContentNode, type SerializedBBCodeNode, privateMap } from './node';
+import { typeof BBCodeFragmentNode } from './fragment-node';
+import { type BBCodeNodeStringifier } from '../scheme/node-schemes/node-scheme';
+import { typeof BBCodeTagScheme } from '../scheme/node-schemes/tag-scheme';
+import { typeof BBCodeScheme } from '../scheme/bbcode-scheme';
 
-export type ElementNodeValue = string | number | boolean;
+export type BBCodeElementNodeValue = string | number | boolean;
 
-export type ElementNodeOptions = NodeOptions & {
+export type BBCodeElementNodeOptions = BBCodeNodeOptions & {
 	attributes?: JsonObject,
-	value?: ElementNodeValue,
-	void?: boolean,
-	inline?: boolean,
+	value?: BBCodeElementNodeValue,
 };
 
-export type SerializedElementNode = SerializedNode & {
+export type SerializedBBCodeElementNode = SerializedBBCodeNode & {
 	attributes: JsonObject,
-	value: ElementNodeValue,
-	void: boolean,
-	inline: boolean,
+	value: BBCodeElementNodeValue,
 };
 
 export type FilteredChildren = {
-	resolved: Array<ContentNode>,
-	unresolved: Array<ContentNode>,
+	resolved: Array<BBCodeContentNode>,
+	unresolved: Array<BBCodeContentNode>,
 };
 
-export class ElementNode extends Node
+const inlineSymbol = Symbol('inline');
+const voidSymbol = Symbol('void');
+
+export class BBCodeElementNode extends BBCodeNode
 {
 	attributes: JsonObject = {};
 	value: JsonValue = '';
-	void: boolean = false;
-	inline: boolean = false;
+	[inlineSymbol]: boolean = false;
+	[voidSymbol]: boolean = false;
 
-	constructor(options: ElementNodeOptions = {})
+	constructor(options: BBCodeElementNodeOptions = {})
 	{
 		super(options);
-		privateMap.get(this).type = Node.ELEMENT_NODE;
+		privateMap.get(this).type = BBCodeNode.ELEMENT_NODE;
 
-		const preparedOptions = {
-			inline: Tag.isInline(this.getName()),
-			...options,
-		};
-		this.setInline(preparedOptions.inline);
-		this.setValue(preparedOptions.value);
-		this.setVoid(preparedOptions.void);
-		this.setAttributes(preparedOptions.attributes);
+		const tagScheme: BBCodeTagScheme = this.getTagScheme();
+
+		this[inlineSymbol] = tagScheme.isInline();
+		this[voidSymbol] = tagScheme.isVoid();
+
+		this.setValue(options.value);
+		this.setAttributes(options.attributes);
 	}
 
-	filterChildren(children: Array<ContentNode>): FilteredChildren
+	setScheme(scheme: BBCodeScheme, onUnknown: (node: BBCodeContentNode) => any)
 	{
-		const filteredChildren = { resolved: [], unresolved: [] };
-		const byTagFilter = this.getScheme().getChildFilter(this.getName());
-		if (byTagFilter)
-		{
-			return children.reduce((acc: typeof filteredChildren, child: ContentNode) => {
-				const isAllowed = byTagFilter(child);
-				if (isAllowed)
-				{
-					acc.resolved.push(child);
-				}
-				else
-				{
-					acc.unresolved.push(child);
-				}
+		this.getChildren().forEach((node: BBCodeContentNode) => {
+			node.setScheme(scheme, onUnknown);
+		});
 
-				return acc;
-			}, filteredChildren);
+		if (scheme.isAllowedTag(this.getName()))
+		{
+			super.setScheme(scheme);
+
+			const tagScheme: BBCodeTagScheme = this.getTagScheme();
+			this[inlineSymbol] = tagScheme.isInline();
+			this[voidSymbol] = tagScheme.isVoid();
+		}
+		else
+		{
+			super.setScheme(scheme);
+			onUnknown(this, scheme);
+		}
+	}
+
+	filterChildren(children: Array<BBCodeContentNode>): FilteredChildren
+	{
+		const filteredChildren: FilteredChildren = { resolved: [], unresolved: [] };
+		const tagScheme: BBCodeTagScheme = this.getTagScheme();
+
+		const allowedChildren: Array<string> = tagScheme.getAllowedChildren();
+		if (allowedChildren.length === 0)
+		{
+			filteredChildren.resolved = children;
+
+			return filteredChildren;
 		}
 
-		if (this.isInline())
-		{
-			const inlineChildFilter = this.getScheme().getChildFilter('#inline');
-
-			return children.reduce((acc, child: ContentNode) => {
-				const isAllowed = inlineChildFilter(child);
-				if (isAllowed)
-				{
-					acc.resolved.push(child);
-				}
-				else
-				{
-					acc.unresolved.push(child);
-				}
-
-				return acc;
-			}, { resolved: [], unresolved: [] });
-		}
-
-		filteredChildren.resolved = children;
+		children.forEach((child: BBCodeContentNode) => {
+			if (
+				allowedChildren.includes(child.getName())
+				|| (
+					allowedChildren.includes('#inline')
+					&& child.getType() === BBCodeNode.ELEMENT_NODE
+					&& child.isInline()
+				)
+				|| (
+					allowedChildren.includes('#void')
+					&& child.getType() === BBCodeNode.ELEMENT_NODE
+					&& child.isVoid()
+				)
+			)
+			{
+				filteredChildren.resolved.push(child);
+			}
+			else
+			{
+				filteredChildren.unresolved.push(child);
+			}
+		});
 
 		return filteredChildren;
 	}
 
-	convertChildren(children: Array<ContentNode>): Array<ContentNode>
+	convertChildren(children: Array<BBCodeContentNode>): Array<BBCodeContentNode>
 	{
-		const childConverter = this.getScheme().getChildConverter(this.getName());
+		const tagScheme: BBCodeTagScheme = this.getTagScheme();
+		const childConverter = tagScheme.getChildConverter();
 		if (childConverter)
 		{
-			return children.map((child: Node) => {
-				return childConverter(child);
+			const scheme: BBCodeScheme = this.getScheme();
+
+			return children.map((child: BBCodeNode) => {
+				return childConverter(child, scheme);
 			});
 		}
 
 		return children;
 	}
 
-	setValue(value: ElementNodeValue)
+	setValue(value: BBCodeElementNodeValue)
 	{
 		if (Type.isString(value) || Type.isNumber(value) || Type.isBoolean(value))
 		{
@@ -114,35 +130,19 @@ export class ElementNode extends Node
 		}
 	}
 
-	getValue(): ElementNodeValue
+	getValue(): BBCodeElementNodeValue
 	{
 		return this.value;
 	}
 
-	setVoid(value: boolean)
-	{
-		if (Type.isBoolean(value))
-		{
-			this.void = value;
-		}
-	}
-
 	isVoid(): boolean
 	{
-		return this.void;
-	}
-
-	setInline(value: boolean)
-	{
-		if (Type.isBoolean(value))
-		{
-			this.inline = value;
-		}
+		return this[voidSymbol];
 	}
 
 	isInline(): boolean
 	{
-		return this.inline;
+		return this[inlineSymbol];
 	}
 
 	setAttributes(attributes: JsonObject)
@@ -188,13 +188,13 @@ export class ElementNode extends Node
 		return { ...this.attributes };
 	}
 
-	appendChild(...children: Array<ContentNode | FragmentNode>)
+	appendChild(...children: Array<BBCodeContentNode | BBCodeFragmentNode>)
 	{
-		const flattenedChildren: Array<ContentNode> = Node.flattenChildren(children);
+		const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
 		const filteredChildren: FilteredChildren = this.filterChildren(flattenedChildren);
-		const convertedChildren: Array<ContentNode> = this.convertChildren(filteredChildren.resolved);
+		const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(filteredChildren.resolved);
 
-		convertedChildren.forEach((node: ContentNode) => {
+		convertedChildren.forEach((node: BBCodeContentNode) => {
 			node.remove();
 			node.setParent(this);
 			this.children.push(node);
@@ -202,17 +202,26 @@ export class ElementNode extends Node
 
 		if (Type.isArrayFilled(filteredChildren.unresolved))
 		{
-			this.propagateChild(...filteredChildren.unresolved);
+			if (this.getScheme().isAllowedUnresolvedNodesHoisting())
+			{
+				this.propagateChild(...filteredChildren.unresolved);
+			}
+			else
+			{
+				filteredChildren.unresolved.forEach((node: BBCodeContentNode) => {
+					node.remove();
+				});
+			}
 		}
 	}
 
-	prependChild(...children: Array<ContentNode | FragmentNode>)
+	prependChild(...children: Array<BBCodeContentNode | BBCodeFragmentNode>)
 	{
-		const flattenedChildren: Array<ContentNode> = Node.flattenChildren(children);
+		const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
 		const filteredChildren: FilteredChildren = this.filterChildren(flattenedChildren);
-		const convertedChildren: Array<ContentNode> = this.convertChildren(filteredChildren.resolved);
+		const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(filteredChildren.resolved);
 
-		convertedChildren.forEach((node: ContentNode) => {
+		convertedChildren.forEach((node: BBCodeContentNode) => {
 			node.remove();
 			node.setParent(this);
 			this.children.unshift(node);
@@ -220,22 +229,31 @@ export class ElementNode extends Node
 
 		if (Type.isArrayFilled(filteredChildren.unresolved))
 		{
-			this.propagateChild(...filteredChildren.unresolved);
+			if (this.getScheme().isAllowedUnresolvedNodesHoisting())
+			{
+				this.propagateChild(...filteredChildren.unresolved);
+			}
+			else
+			{
+				filteredChildren.unresolved.forEach((node: BBCodeContentNode) => {
+					node.remove();
+				});
+			}
 		}
 	}
 
-	replaceChild(targetNode: ContentNode, ...children: Array<ContentNode | FragmentNode>)
+	replaceChild(targetNode: BBCodeContentNode, ...children: Array<BBCodeContentNode | BBCodeFragmentNode>)
 	{
-		this.children = this.children.flatMap((node: ContentNode) => {
+		this.children = this.children.flatMap((node: BBCodeContentNode) => {
 			if (node === targetNode)
 			{
 				node.setParent(null);
 
-				const flattenedChildren: Array<ContentNode> = Node.flattenChildren(children);
+				const flattenedChildren: Array<BBCodeContentNode> = BBCodeNode.flattenChildren(children);
 				const filteredChildren: FilteredChildren = this.filterChildren(flattenedChildren);
-				const convertedChildren: Array<ContentNode> = this.convertChildren(filteredChildren.resolved);
+				const convertedChildren: Array<BBCodeContentNode> = this.convertChildren(filteredChildren.resolved);
 
-				return convertedChildren.map((child: ContentNode) => {
+				return convertedChildren.map((child: BBCodeContentNode) => {
 					child.remove();
 					child.setParent(this);
 
@@ -249,7 +267,7 @@ export class ElementNode extends Node
 
 	toStringValue(): string
 	{
-		const value: ElementNodeValue = this.getValue();
+		const value: BBCodeElementNodeValue = this.getValue();
 
 		return value ? `=${value}` : '';
 	}
@@ -266,112 +284,10 @@ export class ElementNode extends Node
 			.join(' ');
 	}
 
-	getNewLineAfterOpeningTag(): string
-	{
-		if (
-			!this.isInline()
-			&& this.getScheme().isAllowNewLineAfterBlockOpeningTag()
-		)
-		{
-			const firstChild: ?ContentNode = this.getFirstChild();
-			if (firstChild && firstChild.getName() !== '#linebreak')
-			{
-				return '\n';
-			}
-		}
-
-		return '';
-	}
-
-	getNewLineBeforeClosingTag(): string
-	{
-		const scheme: BBCodeScheme = this.getScheme();
-		if (scheme.isAllowNewLineBeforeBlockClosingTag())
-		{
-			if (!this.isInline())
-			{
-				const lastChild: ?ContentNode = this.getLastChild();
-				if (lastChild && lastChild.getName() !== '#linebreak')
-				{
-					return '\n';
-				}
-			}
-
-			if (
-				Tag.isListItem(this.getName())
-				&& scheme.isAllowNewLineAfterListItem()
-			)
-			{
-				const lastChild: ContentNode = this.getParent().getLastChild();
-				if (lastChild !== this)
-				{
-					return '\n';
-				}
-			}
-		}
-
-		return '';
-	}
-
-	getNewLineBeforeOpeningTag(): string
-	{
-		if (
-			!this.isInline()
-			&& this.hasParent()
-			&& this.getScheme().isAllowNewLineBeforeBlockOpeningTag()
-		)
-		{
-			const previewsSibling: ContentNode = this.getPreviewsSibling();
-			if (
-				previewsSibling
-				&& (
-					Text.isPlainTextNode(previewsSibling)
-					|| Tag.isInline(previewsSibling.getName())
-				)
-			)
-			{
-				return '\n';
-			}
-		}
-
-		return '';
-	}
-
-	getNewLineAfterClosingTag(): string
-	{
-		if (
-			!this.isInline()
-			&& this.hasParent()
-			&& this.getScheme().isAllowNewLineAfterBlockClosingTag()
-		)
-		{
-			const nextSibling: ContentNode = this.getNextSibling();
-			if (nextSibling && nextSibling.getName() !== '#linebreak')
-			{
-				return '\n';
-			}
-		}
-
-		return '';
-	}
-
 	getContent(): string
 	{
-		if (Tag.isListItem(this.getName()))
-		{
-			return this.getChildren()
-				.reduceRight((acc: Array<ContentNode>, node: ContentNode) => {
-					if (!Type.isArrayFilled(acc) && (node.getName() === '#linebreak' || node.getName() === '#tab'))
-					{
-						return acc;
-					}
-
-					return [node.toString(), ...acc];
-				}, []);
-		}
-
 		return this.getChildren()
-			.map((child: ContentNode) => {
+			.map((child: BBCodeContentNode) => {
 				return child.toString();
 			})
 			.join('');
@@ -380,7 +296,7 @@ export class ElementNode extends Node
 	getOpeningTag(): string
 	{
 		const displayedName: string = this.getDisplayedName();
-		const tagValue: ElementNodeValue = this.toStringValue();
+		const tagValue: BBCodeElementNodeValue = this.toStringValue();
 		const attributes: JsonObject = this.toStringAttributes();
 		const formattedAttributes: string = Type.isStringFilled(attributes) ? ` ${attributes}` : '';
 
@@ -392,7 +308,7 @@ export class ElementNode extends Node
 		return `[/${this.getDisplayedName()}]`;
 	}
 
-	clone(options: { deep: boolean } = {}): ElementNode
+	clone(options: { deep: boolean } = {}): BBCodeElementNode
 	{
 		const children = (() => {
 			if (options.deep)
@@ -405,48 +321,101 @@ export class ElementNode extends Node
 			return [];
 		})();
 
-		return new ElementNode({
+		return this.getScheme().createElement({
 			name: this.getName(),
 			void: this.isVoid(),
 			inline: this.isInline(),
 			value: this.getValue(),
 			attributes: { ...this.getAttributes() },
-			scheme: this.getScheme(),
 			children,
 		});
 	}
 
+	splitByChildIndex(index: number): Array<BBCodeElementNode | null>
+	{
+		if (!Type.isNumber(index))
+		{
+			throw new TypeError('index is not a number');
+		}
+
+		const childrenCount = this.getChildrenCount();
+		if (index < 0 || index > childrenCount)
+		{
+			throw new TypeError(`index '${index}' is out of range ${0}-${childrenCount}`);
+		}
+
+		const leftNode = (() => {
+			if (index === childrenCount)
+			{
+				return this;
+			}
+
+			if (index === 0)
+			{
+				return null;
+			}
+
+			const leftChildren = this.getChildren().filter((child, childIndex) => {
+				return childIndex < index;
+			});
+
+			const node = this.clone();
+			node.setChildren(leftChildren);
+
+			return node;
+		})();
+
+		const rightNode = (() => {
+			if (index === 0)
+			{
+				return this;
+			}
+
+			if (index === childrenCount)
+			{
+				return null;
+			}
+
+			const rightChildren = this.getChildren();
+			const node = this.clone();
+			node.setChildren(rightChildren);
+
+			return node;
+		})();
+
+		if (leftNode && rightNode)
+		{
+			this.replace(leftNode, rightNode);
+		}
+
+		return [leftNode, rightNode];
+	}
+
 	toString(): string
 	{
+		const tagScheme: BBCodeTagScheme = this.getTagScheme();
+		const stringifier: BBCodeNodeStringifier = tagScheme.getStringifier();
+		if (Type.isFunction(stringifier))
+		{
+			const scheme: BBCodeScheme = this.getScheme();
+
+			return stringifier(this, scheme);
+		}
+
 		const openingTag: string = this.getOpeningTag();
+		const content: string = this.getContent();
 
 		if (this.isVoid())
 		{
-			return openingTag;
+			return `${openingTag}${content}`;
 		}
 
-		if (Tag.isListItem(this.getName()))
-		{
-			return `${openingTag}${this.getContent()}${this.getNewLineBeforeClosingTag()}`;
-		}
+		const closingTag: string = this.getClosingTag();
 
-		if (this.isInline())
-		{
-			return `${openingTag}${this.getContent()}${this.getClosingTag()}`;
-		}
-
-		return [
-			this.getNewLineBeforeOpeningTag(),
-			openingTag,
-			this.getNewLineAfterOpeningTag(),
-			this.getContent(),
-			this.getNewLineBeforeClosingTag(),
-			this.getClosingTag(),
-			this.getNewLineAfterClosingTag(),
-		].join('');
+		return `${openingTag}${content}${closingTag}`;
 	}
 
-	toJSON(): SerializedElementNode
+	toJSON(): SerializedBBCodeElementNode
 	{
 		return {
 			...super.toJSON(),

@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_ACTIVITY_TIME_NOT_SPECIFIED"] = "без терміну";
+$MESS["CRM_ACTIVITY_TIME_NOT_SPECIFIED_MSGVER_1"] = "без терміну";
 $MESS["CRM_CLIENT_SUMMARY_COMPANY_NOT_SPECIFIED"] = "Компанія не обрана";
 $MESS["CRM_CLIENT_SUMMARY_CONTACT_NOT_SPECIFIED"] = "Контакт не визначений";
 $MESS["CRM_CLIENT_SUMMARY_HIDDEN"] = "Прихований клієнт";

@@ -11,7 +11,8 @@ class TimeZoneDecorator extends WorkTimeServiceDecorator
 
 	public function getClosestWorkTime(int $offsetInDays = 7): DateTime
 	{
-		return $this->source->getClosestWorkTime($offsetInDays)
-			->add(-User::getTimeZoneOffset($this->source->userId) / static::SECONDS_IN_HOUR . ' hours');
+		$offset = (int)(User::getTimeZoneOffset($this->source->userId) / static::SECONDS_IN_HOUR);
+
+		return $this->source->getClosestWorkTime($offsetInDays)->add(-$offset . ' hours');
 	}
 }

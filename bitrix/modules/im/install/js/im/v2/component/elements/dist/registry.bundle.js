@@ -97,7 +97,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return im_v2_lib_utils.Utils.text.getFirstLetters(this.dialog.name);
 	    },
 	    isEnoughSizeForText() {
-	      const avatarSizesWithText = [AvatarSize.L, AvatarSize.XL, AvatarSize.XXL, AvatarSize.XXXL];
+	      const avatarSizesWithText = [AvatarSize.M, AvatarSize.L, AvatarSize.XL, AvatarSize.XXL, AvatarSize.XXXL];
 	      return avatarSizesWithText.includes(this.size.toUpperCase());
 	    },
 	    avatarUrl() {
@@ -128,46 +128,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				{{ avatarText }}
 			</div>
 			<div v-else :style="backgroundColorStyle" class="bx-im-avatar__content bx-im-avatar__icon"></div>
-		</div>
-	`
-	};
-
-	const RecentLoadingState = {
-	  name: 'RecentLoadingState',
-	  props: {
-	    compactMode: {
-	      type: Boolean,
-	      default: false
-	    },
-	    itemsToShow: {
-	      type: Number,
-	      default: 50
-	    }
-	  },
-	  methods: {
-	    isThreeLineVersion() {
-	      return Math.random() < 0.5;
-	    }
-	  },
-	  template: `
-		<div v-if="!compactMode" class="bx-im-component-recent-loading-state">
-			<div v-for="index in itemsToShow" class="bx-im-component-recent-loading-state-item">
-				<div class="bx-im-component-recent-loading-state-avatar-wrap">
-					<div class="bx-im-component-recent-loading-state-avatar-placeholder"></div>
-				</div>
-				<div class="bx-im-component-recent-loading-state-content">
-					<div class="bx-im-component-recent-loading-state-line bx-im-component-recent-loading-state-line-long"></div>
-					<div class="bx-im-component-recent-loading-state-line bx-im-component-recent-loading-state-line-short"></div>
-					<div v-if="isThreeLineVersion()" class="bx-im-component-recent-loading-state-line bx-im-component-recent-loading-state-line-short"></div>
-				</div>
-			</div>
-		</div>
-		<div v-if="compactMode" class="bx-im-component-recent-loading-state bx-im-component-recent-loading-state-compact">
-			<div v-for="index in itemsToShow" class="bx-im-component-recent-loading-state-item">
-				<div class="bx-im-component-recent-loading-state-avatar-wrap">
-					<div class="bx-im-component-recent-loading-state-avatar-placeholder"></div>
-				</div>
-			</div>
 		</div>
 	`
 	};
@@ -3184,7 +3144,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.Avatar = Avatar;
 	exports.AvatarSize = AvatarSize;
-	exports.RecentLoadingState = RecentLoadingState;
 	exports.ChatTitle = ChatTitle;
 	exports.Button = Button;
 	exports.ButtonColor = ButtonColor;

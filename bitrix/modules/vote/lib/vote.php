@@ -526,7 +526,11 @@ class Vote extends BaseObject implements \ArrayAccess
 						"QUESTIONS" => array());
 				if ($vote["IMAGE_ID"] > 0)
 					$images[$vote["IMAGE_ID"]] = &$vote["IMAGE"];
-				$question = array("ID" => null);
+				$question = [
+					'ID' => null,
+					'FIELD_TYPE' => \Bitrix\Vote\QuestionTypes::RADIO,
+					'COUNTER' => 0,
+				];
 				do
 				{
 					$answer = array();

@@ -128,6 +128,9 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onBeforeUserUpdateHandler');
 			$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onAfterUserUpdateHandler');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_server_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'refreshSupersetDomainConnection');
+			//bizproc
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Bizproc\Task', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Bizproc\WorkflowState', 'onBIConnectorDataSources');
 
 			$this->InstallTasks();
 

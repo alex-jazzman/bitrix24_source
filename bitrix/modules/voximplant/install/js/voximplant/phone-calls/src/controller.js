@@ -366,6 +366,7 @@ export class PhoneCallsController extends EventEmitter
 			return false;
 		}
 
+		this.clearSkipIncomingCallTimer();
 		this.messengerFacade.stopRepeatSound('ringtone');
 		this.messengerFacade.stopRepeatSound('dialtone');
 
@@ -397,6 +398,7 @@ export class PhoneCallsController extends EventEmitter
 
 		var external = this.hasExternalCall;
 
+		this.clearSkipIncomingCallTimer();
 		this.messengerFacade.stopRepeatSound('ringtone');
 		this.messengerFacade.stopRepeatSound('dialtone');
 
@@ -519,6 +521,8 @@ export class PhoneCallsController extends EventEmitter
 
 	#onPullStart(params)
 	{
+		this.clearSkipIncomingCallTimer();
+
 		if (this.phoneTransferCallId === params.callId)
 		{
 			this.callView.setStatusText(Loc.getMessage('IM_M_CALL_ST_TRANSFER_CONNECTED'));
@@ -1783,6 +1787,7 @@ export class PhoneCallsController extends EventEmitter
 
 	phoneIncomingAnswer()
 	{
+		this.clearSkipIncomingCallTimer();
 		this.messengerFacade.stopRepeatSound('ringtone');
 		this.callSelfDisabled = true;
 		BX.rest.callMethod('voximplant.call.answer', {'CALL_ID': this.callId});
@@ -2020,10 +2025,6 @@ export class PhoneCallsController extends EventEmitter
 
 	#onCallViewAnswer()
 	{
-		if (this.skipIncomingCallTimer)
-		{
-			clearTimeout(this.skipIncomingCallTimer);
-		}
 		this.phoneIncomingAnswer();
 	}
 
@@ -2098,6 +2099,7 @@ export class PhoneCallsController extends EventEmitter
 
 	#onCallViewClose()
 	{
+		this.clearSkipIncomingCallTimer();
 		this.messengerFacade.stopRepeatSound('ringtone');
 		this.messengerFacade.stopRepeatSound('dialtone');
 
@@ -2238,7 +2240,7 @@ export class PhoneCallsController extends EventEmitter
 			this.callView.setPortalCallUserId(params.portalCallUserId);
 		}
 
-		this.skipIncomingCallTimer = setTimeout(() => this.callView?._onSkipButtonClick(), 35000);
+		this.skipIncomingCallTimer = setTimeout(() => this.callView?._onSkipButtonClick(), 40000);
 	}
 
 	sendInviteTransfer()
@@ -2663,6 +2665,7 @@ export class PhoneCallsController extends EventEmitter
 
 		this.phoneCallFinish();
 
+		this.clearSkipIncomingCallTimer();
 		this.messengerFacade.stopRepeatSound('ringtone');
 		this.messengerFacade.stopRepeatSound('dialtone');
 
@@ -2746,6 +2749,15 @@ export class PhoneCallsController extends EventEmitter
 		{
 			this.openedCallViewBalloon.close();
 			this.openedCallViewBalloon = null;
+		}
+	}
+
+	clearSkipIncomingCallTimer()
+	{
+		if (this.skipIncomingCallTimer)
+		{
+			clearTimeout(this.skipIncomingCallTimer);
+			this.skipIncomingCallTimer = null;
 		}
 	}
 

@@ -41,7 +41,12 @@ export class Tab extends EventEmitter
 		this.#helpDeskCode = Type.isStringFilled(options.helpDeskCode) ? options.helpDeskCode : null;
 
 		this.#initHead(options.head);
-		this.#initBody(options.body);
+		this.#initBody();
+	}
+
+	getId(): string
+	{
+		return this.#id;
 	}
 
 	getSort()
@@ -81,27 +86,23 @@ export class Tab extends EventEmitter
 		}
 
 		this.#head = Tag.render`<span class="ui-tabs__tab-header-container ${Text.encode(options.className ?? '')}" data-bx-role="tab-header" data-bx-name="${Text.encode(this.#id)}">${innerHeader}</span>`;
+
+		Event.bind(
+			this.#head,
+			'click',
+			() => {
+				this.emit('changeTab');
+			},
+		);
 	}
 
 	#initBody(body: Function | Promise | string | HTMLElement)
 	{
-		if (!this.#dataContainer)
-		{
-			this.#dataContainer = Tag.render`<div class="ui-tabs__tab-body_data"></div>`;
-		}
-		Dom.clean(this.#dataContainer);
-
-		if (!this.#body)
-		{
-			this.#body = Tag.render`<div class="ui-tabs__tab-body_inner"></div>`;
-			this.#body.dataset.id = this.#id;
-			this.#body.dataset.role = 'body';
-			this.#body.appendChild(this.#dataContainer);
-		}
-
-		this.subscribeOnce('onActive', () => {
-			this.#loadBody(body);
-		});
+		this.#dataContainer = Tag.render`<div class="ui-tabs__tab-body_data"></div>`;
+		this.#body = Tag.render`<div class="ui-tabs__tab-body_inner"></div>`;
+		this.#body.dataset.id = this.#id;
+		this.#body.dataset.role = 'body';
+		this.#body.appendChild(this.#dataContainer);
 	}
 
 	#loadBody(body)
@@ -213,13 +214,19 @@ export class Tab extends EventEmitter
 	}
 
 	// Here just in case
-	#getBodyDataContainer(): HTMLElement
+	getBodyDataContainer(): HTMLElement
 	{
 		return this.#dataContainer;
 	}
 
-	inactivate(): Tab
+	inactivate(withAnimation: boolean = true): Tab
 	{
+		Dom.removeClass(this.#body, 'ui-tabs__tab-active-animation');
+		if (withAnimation !== false)
+		{
+			Dom.addClass(this.#body, 'ui-tabs__tab-active-animation');
+		}
+
 		if (this.#active === true)
 		{
 			Dom.removeClass(this.#head, '--header-active');
@@ -231,8 +238,14 @@ export class Tab extends EventEmitter
 		return this;
 	}
 
-	activate(): Tab
+	activate(withAnimation: boolean = true): Tab
 	{
+		Dom.removeClass(this.#body, 'ui-tabs__tab-active-animation');
+		if (withAnimation !== false)
+		{
+			Dom.addClass(this.#body, 'ui-tabs__tab-active-animation');
+		}
+
 		if (this.#active !== true)
 		{
 			Dom.addClass(this.#head, '--header-active');

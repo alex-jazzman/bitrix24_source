@@ -137,13 +137,6 @@ class ApacheSupersetSettingComponent
 			return $result;
 		}
 
-		if (Option::get('biconnector', 'release_bi_superset', 'N') !== 'Y')
-		{
-			$result->addError(new Error(Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_FEATURE_UNAVAILABLE')));
-
-			return $result;
-		}
-
 		return $result;
 	}
 

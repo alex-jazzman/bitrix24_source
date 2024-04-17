@@ -2,14 +2,14 @@
  * @module im/messenger/controller/dialog-creator/dialog-creator
  */
 jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exports, module) => {
-
 	const { Type } = require('type');
 	const { core } = require('im/messenger/core');
 	const { NavigationSelector } = require('im/messenger/controller/dialog-creator/navigation-selector');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod } = require('im/messenger/const');
+	const { RestMethod, DialogType, EventType, ComponentCode } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	class DialogCreator
@@ -26,19 +26,56 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			restManager.on(
 				RestMethod.imUserGet,
 				{ ID: MessengerParams.getUserId() },
-				this.handleUserGet.bind(this)
+				this.handleUserGet.bind(this),
 			);
 		}
 
 		open()
 		{
-			const userList = this.prepareItems(this.getUserList())
+			const userList = this.prepareItems(this.getUserList());
 
 			NavigationSelector.open(
 				{
 					userList,
-				}
+				},
 			);
+		}
+
+		createCopilotDialog()
+		{
+			BX.rest.callMethod(
+				RestMethod.imV2ChatAdd,
+				{
+					fields: {
+						type: DialogType.copilot.toUpperCase(),
+					},
+				},
+			).then((result) => {
+				const chatId = parseInt(result.data().chatId, 10);
+				if (chatId > 0)
+				{
+					setTimeout(
+						() => {
+							MessengerEmitter.emit(
+								EventType.messenger.openDialog,
+								{ dialogId: `chat${chatId}` },
+								ComponentCode.imCopilotMessenger,
+							);
+						},
+						200,
+					);
+
+					if (result.answer.error || result.error())
+					{
+						Logger.error('DialogCreator.createCopilotDialog.error', result.error());
+					}
+				}
+			})
+				.catch(
+					(err) => {
+						Logger.error(err);
+					},
+				);
 		}
 
 		getUserList()
@@ -52,7 +89,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
-				recentUserList.forEach(recentUserChat => {
+				recentUserList.forEach((recentUserChat) => {
 					recentUserListIndex[recentUserChat.user.id] = true;
 
 					userItems.push(recentUserChat.user);
@@ -94,7 +131,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 		prepareItems(itemList)
 		{
-			return itemList.map(item => {
+			return itemList.map((item) => {
 				const chatTitle = ChatTitle.createFromDialogId(item.id);
 				const chatAvatar = ChatAvatar.createFromDialogId(item.id);
 

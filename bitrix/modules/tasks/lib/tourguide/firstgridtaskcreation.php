@@ -108,8 +108,8 @@ class FirstGridTaskCreation extends TourGuide
 		return [
 			[
 				[
-					'title' => Loc::getMessage("{$prefix}_POPUP_0_TITLE"),
-					'text' => Loc::getMessage("{$prefix}_POPUP_0_TEXT"),
+					'title' => Loc::getMessage("{$prefix}_POPUP_0_TITLE_V2"),
+					'text' => Loc::getMessage("{$prefix}_POPUP_0_TEXT_V2"),
 				],
 			],
 		];

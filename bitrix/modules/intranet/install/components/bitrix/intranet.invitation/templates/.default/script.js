@@ -546,7 +546,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        });
 	        main_core.Event.bind(closeIcon, 'click', function (event) {
 	          event.preventDefault();
-	          node.value = "";
 	          if (main_core.Type.isDomNode(node.parentNode)) {
 	            var phoneBlock = node.parentNode.querySelector("[data-role='phone-block']");
 	            if (main_core.Type.isDomNode(phoneBlock)) {
@@ -708,6 +707,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return ActiveDirectory;
 	}();
 
+	var _class;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -749,11 +749,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }]);
 	  return Analytics;
 	}();
+	_class = Analytics;
 	function _getAdminAllowMode2() {
-	  return document.querySelector('#allow_register_confirm').checked ? Analytics.ADMIN_ALLOW_MODE_Y : Analytics.ADMIN_ALLOW_MODE_N;
+	  return document.querySelector('#allow_register_confirm').checked ? _class.ADMIN_ALLOW_MODE_Y : _class.ADMIN_ALLOW_MODE_N;
 	}
 	function _getIsAdmin2() {
-	  return babelHelpers.classPrivateFieldGet(this, _isAdmin) ? Analytics.IS_ADMIN_Y : Analytics.IS_ADMIN_N;
+	  return babelHelpers.classPrivateFieldGet(this, _isAdmin) ? _class.IS_ADMIN_Y : _class.IS_ADMIN_N;
 	}
 	function _getCSection2() {
 	  return babelHelpers.classPrivateFieldGet(this, _cSection).source;

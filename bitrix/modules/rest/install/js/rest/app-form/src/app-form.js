@@ -19,6 +19,7 @@ export class AppForm
 			width: this.#width,
 			requestMethod: 'post',
 			requestParams: this.#options,
+			allowChangeHistory: false,
 		});
 	}
 }

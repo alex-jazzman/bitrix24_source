@@ -12100,14 +12100,14 @@ namespace Bitrix\Main {
 	 * @method \string fillUfConnectorMd5()
 	 * @method \Bitrix\Main\EO_User setUfConnectorMd5(\string $ufConnectorMd5)
 	 * @method bool isUfConnectorMd5Changed()
-	 * @method \int getUf1c()
-	 * @method \int remindActualUf1c()
-	 * @method \int requireUf1c()
+	 * @method \boolean getUf1c()
+	 * @method \boolean remindActualUf1c()
+	 * @method \boolean requireUf1c()
 	 * @method bool hasUf1c()
 	 * @method bool isUf1cFilled()
 	 * @method \Bitrix\Main\EO_User unsetUf1c()
-	 * @method \int fillUf1c()
-	 * @method \Bitrix\Main\EO_User setUf1c(\int $uf1c)
+	 * @method \boolean fillUf1c()
+	 * @method \Bitrix\Main\EO_User setUf1c(\boolean $uf1c)
 	 * @method bool isUf1cChanged()
 	 * @method \string getUfInn()
 	 * @method \string remindActualUfInn()
@@ -12316,14 +12316,14 @@ namespace Bitrix\Main {
 	 * @method \string fillUfMwsSub()
 	 * @method \Bitrix\Main\EO_User setUfMwsSub(\string $ufMwsSub)
 	 * @method bool isUfMwsSubChanged()
-	 * @method \int getUfPublic()
-	 * @method \int remindActualUfPublic()
-	 * @method \int requireUfPublic()
+	 * @method \boolean getUfPublic()
+	 * @method \boolean remindActualUfPublic()
+	 * @method \boolean requireUfPublic()
 	 * @method bool hasUfPublic()
 	 * @method bool isUfPublicFilled()
 	 * @method \Bitrix\Main\EO_User unsetUfPublic()
-	 * @method \int fillUfPublic()
-	 * @method \Bitrix\Main\EO_User setUfPublic(\int $ufPublic)
+	 * @method \boolean fillUfPublic()
+	 * @method \Bitrix\Main\EO_User setUfPublic(\boolean $ufPublic)
 	 * @method bool isUfPublicChanged()
 	 * @method \string getUfUserCompany()
 	 * @method \string remindActualUfUserCompany()
@@ -12334,6 +12334,24 @@ namespace Bitrix\Main {
 	 * @method \string fillUfUserCompany()
 	 * @method \Bitrix\Main\EO_User setUfUserCompany(\string $ufUserCompany)
 	 * @method bool isUfUserCompanyChanged()
+	 * @method \int getUfPuser()
+	 * @method \int remindActualUfPuser()
+	 * @method \int requireUfPuser()
+	 * @method bool hasUfPuser()
+	 * @method bool isUfPuserFilled()
+	 * @method \Bitrix\Main\EO_User unsetUfPuser()
+	 * @method \int fillUfPuser()
+	 * @method \Bitrix\Main\EO_User setUfPuser(\int $ufPuser)
+	 * @method bool isUfPuserChanged()
+	 * @method \string getUfUsrMyTestFieldStr3()
+	 * @method \string remindActualUfUsrMyTestFieldStr3()
+	 * @method \string requireUfUsrMyTestFieldStr3()
+	 * @method bool hasUfUsrMyTestFieldStr3()
+	 * @method bool isUfUsrMyTestFieldStr3Filled()
+	 * @method \Bitrix\Main\EO_User unsetUfUsrMyTestFieldStr3()
+	 * @method \string fillUfUsrMyTestFieldStr3()
+	 * @method \Bitrix\Main\EO_User setUfUsrMyTestFieldStr3(\string[] $ufUsrMyTestFieldStr3)
+	 * @method bool isUfUsrMyTestFieldStr3Changed()
 	 * @method \int getUfTimeman()
 	 * @method \int remindActualUfTimeman()
 	 * @method \int requireUfTimeman()
@@ -12496,8 +12514,8 @@ namespace Bitrix\Main {
 	 * @method \string[] fillUfImSearch()
 	 * @method \string[] getUfConnectorMd5List()
 	 * @method \string[] fillUfConnectorMd5()
-	 * @method \int[] getUf1cList()
-	 * @method \int[] fillUf1c()
+	 * @method \boolean[] getUf1cList()
+	 * @method \boolean[] fillUf1c()
 	 * @method \string[] getUfInnList()
 	 * @method \string[] fillUfInn()
 	 * @method \string[] getUfDistrictList()
@@ -12544,10 +12562,14 @@ namespace Bitrix\Main {
 	 * @method \Bitrix\Main\Type\DateTime[] fillUfMwsReactivation()
 	 * @method \string[] getUfMwsSubList()
 	 * @method \string[] fillUfMwsSub()
-	 * @method \int[] getUfPublicList()
-	 * @method \int[] fillUfPublic()
+	 * @method \boolean[] getUfPublicList()
+	 * @method \boolean[] fillUfPublic()
 	 * @method \string[] getUfUserCompanyList()
 	 * @method \string[] fillUfUserCompany()
+	 * @method \int[] getUfPuserList()
+	 * @method \int[] fillUfPuser()
+	 * @method \string[] getUfUsrMyTestFieldStr3List()
+	 * @method \string[] fillUfUsrMyTestFieldStr3()
 	 * @method \int[] getUfTimemanList()
 	 * @method \int[] fillUfTimeman()
 	 * @method \string[] getUfTmMaxStartList()
@@ -25208,4 +25230,791 @@ namespace Bitrix\Iblock\Elements {
 	 * @method \Bitrix\Iblock\Elements\EO_IblockProperty2272_Collection wakeUpCollection($rows)
 	 */
 	class EO_IblockProperty2272_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Mywebstor\Relatedlists\App\Model\RelationsTable */
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * EO_Relations
+	 * @see \Mywebstor\Relatedlists\App\Model\RelationsTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method ?\int getRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations setRelatedListId(?\int|\Bitrix\Main\DB\SqlExpression $relatedListId)
+	 * @method bool hasRelatedListId()
+	 * @method bool isRelatedListIdFilled()
+	 * @method bool isRelatedListIdChanged()
+	 * @method ?\int remindActualRelatedListId()
+	 * @method ?\int requireRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations resetRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations unsetRelatedListId()
+	 * @method ?\int fillRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists getRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists remindActualRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists requireRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations setRelatedList(\Mywebstor\Relatedlists\App\Model\EO_RelatedLists $object)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations resetRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations unsetRelatedList()
+	 * @method bool hasRelatedList()
+	 * @method bool isRelatedListFilled()
+	 * @method bool isRelatedListChanged()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists fillRelatedList()
+	 * @method ?\string getParentField()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations setParentField(?\string|\Bitrix\Main\DB\SqlExpression $parentField)
+	 * @method bool hasParentField()
+	 * @method bool isParentFieldFilled()
+	 * @method bool isParentFieldChanged()
+	 * @method ?\string remindActualParentField()
+	 * @method ?\string requireParentField()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations resetParentField()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations unsetParentField()
+	 * @method ?\string fillParentField()
+	 * @method ?\string getParentValue()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations setParentValue(?\string|\Bitrix\Main\DB\SqlExpression $parentValue)
+	 * @method bool hasParentValue()
+	 * @method bool isParentValueFilled()
+	 * @method bool isParentValueChanged()
+	 * @method ?\string remindActualParentValue()
+	 * @method ?\string requireParentValue()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations resetParentValue()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations unsetParentValue()
+	 * @method ?\string fillParentValue()
+	 * @method ?\string getChildField()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations setChildField(?\string|\Bitrix\Main\DB\SqlExpression $childField)
+	 * @method bool hasChildField()
+	 * @method bool isChildFieldFilled()
+	 * @method bool isChildFieldChanged()
+	 * @method ?\string remindActualChildField()
+	 * @method ?\string requireChildField()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations resetChildField()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations unsetChildField()
+	 * @method ?\string fillChildField()
+	 * @method ?\string getChildValue()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations setChildValue(?\string|\Bitrix\Main\DB\SqlExpression $childValue)
+	 * @method bool hasChildValue()
+	 * @method bool isChildValueFilled()
+	 * @method bool isChildValueChanged()
+	 * @method ?\string remindActualChildValue()
+	 * @method ?\string requireChildValue()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations resetChildValue()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations unsetChildValue()
+	 * @method ?\string fillChildValue()
+	 * @method ?\Bitrix\Main\Type\DateTime getCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations setCreatedAt(?\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdAt)
+	 * @method bool hasCreatedAt()
+	 * @method bool isCreatedAtFilled()
+	 * @method bool isCreatedAtChanged()
+	 * @method ?\Bitrix\Main\Type\DateTime remindActualCreatedAt()
+	 * @method ?\Bitrix\Main\Type\DateTime requireCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations resetCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations unsetCreatedAt()
+	 * @method ?\Bitrix\Main\Type\DateTime fillCreatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations set($fieldName, $value)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations reset($fieldName)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Relations wakeUp($data)
+	 */
+	class EO_Relations {
+		/* @var \Mywebstor\Relatedlists\App\Model\RelationsTable */
+		static public $dataClass = '\Mywebstor\Relatedlists\App\Model\RelationsTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * EO_Relations_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method ?\int[] getRelatedListIdList()
+	 * @method ?\int[] fillRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists[] getRelatedListList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations_Collection getRelatedListCollection()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection fillRelatedList()
+	 * @method ?\string[] getParentFieldList()
+	 * @method ?\string[] fillParentField()
+	 * @method ?\string[] getParentValueList()
+	 * @method ?\string[] fillParentValue()
+	 * @method ?\string[] getChildFieldList()
+	 * @method ?\string[] fillChildField()
+	 * @method ?\string[] getChildValueList()
+	 * @method ?\string[] fillChildValue()
+	 * @method ?\Bitrix\Main\Type\DateTime[] getCreatedAtList()
+	 * @method ?\Bitrix\Main\Type\DateTime[] fillCreatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Mywebstor\Relatedlists\App\Model\EO_Relations $object)
+	 * @method bool has(\Mywebstor\Relatedlists\App\Model\EO_Relations $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations getByPrimary($primary)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations[] getAll()
+	 * @method bool remove(\Mywebstor\Relatedlists\App\Model\EO_Relations $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Relations_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_Relations_Collection merge(?EO_Relations_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_Relations_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Mywebstor\Relatedlists\App\Model\RelationsTable */
+		static public $dataClass = '\Mywebstor\Relatedlists\App\Model\RelationsTable';
+	}
+}
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * @method static EO_Relations_Query query()
+	 * @method static EO_Relations_Result getByPrimary($primary, array $parameters = [])
+	 * @method static EO_Relations_Result getById($id)
+	 * @method static EO_Relations_Result getList(array $parameters = [])
+	 * @method static EO_Relations_Entity getEntity()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Relations createObject($setDefaultValues = true)
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Relations_Collection createCollection()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Relations wakeUpObject($row)
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Relations_Collection wakeUpCollection($rows)
+	 */
+	class RelationsTable extends \Bitrix\Main\ORM\Data\DataManager {}
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Relations_Result exec()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations fetchObject()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Relations_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations fetchObject()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations_Collection fetchCollection()
+	 */
+	class EO_Relations_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations createObject($setDefaultValues = true)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations_Collection createCollection()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations wakeUpObject($row)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Relations_Collection wakeUpCollection($rows)
+	 */
+	class EO_Relations_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Mywebstor\Relatedlists\App\Model\FieldsTable */
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * EO_Fields
+	 * @see \Mywebstor\Relatedlists\App\Model\FieldsTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method ?\int getRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields setRelatedListId(?\int|\Bitrix\Main\DB\SqlExpression $relatedListId)
+	 * @method bool hasRelatedListId()
+	 * @method bool isRelatedListIdFilled()
+	 * @method bool isRelatedListIdChanged()
+	 * @method ?\int remindActualRelatedListId()
+	 * @method ?\int requireRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields resetRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields unsetRelatedListId()
+	 * @method ?\int fillRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists getRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists remindActualRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists requireRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields setRelatedList(\Mywebstor\Relatedlists\App\Model\EO_RelatedLists $object)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields resetRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields unsetRelatedList()
+	 * @method bool hasRelatedList()
+	 * @method bool isRelatedListFilled()
+	 * @method bool isRelatedListChanged()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists fillRelatedList()
+	 * @method \string getFieldId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields setFieldId(\string|\Bitrix\Main\DB\SqlExpression $fieldId)
+	 * @method bool hasFieldId()
+	 * @method bool isFieldIdFilled()
+	 * @method bool isFieldIdChanged()
+	 * @method \string remindActualFieldId()
+	 * @method \string requireFieldId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields resetFieldId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields unsetFieldId()
+	 * @method \string fillFieldId()
+	 * @method \string getDisplayColumn()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields setDisplayColumn(\string|\Bitrix\Main\DB\SqlExpression $displayColumn)
+	 * @method bool hasDisplayColumn()
+	 * @method bool isDisplayColumnFilled()
+	 * @method bool isDisplayColumnChanged()
+	 * @method \string remindActualDisplayColumn()
+	 * @method \string requireDisplayColumn()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields resetDisplayColumn()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields unsetDisplayColumn()
+	 * @method \string fillDisplayColumn()
+	 * @method \string getEntityId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields setEntityId(\string|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \string remindActualEntityId()
+	 * @method \string requireEntityId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields resetEntityId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields unsetEntityId()
+	 * @method \string fillEntityId()
+	 * @method \int getOrder()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields setOrder(\int|\Bitrix\Main\DB\SqlExpression $order)
+	 * @method bool hasOrder()
+	 * @method bool isOrderFilled()
+	 * @method bool isOrderChanged()
+	 * @method \int remindActualOrder()
+	 * @method \int requireOrder()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields resetOrder()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields unsetOrder()
+	 * @method \int fillOrder()
+	 * @method ?\Bitrix\Main\Type\DateTime getCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields setCreatedAt(?\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdAt)
+	 * @method bool hasCreatedAt()
+	 * @method bool isCreatedAtFilled()
+	 * @method bool isCreatedAtChanged()
+	 * @method ?\Bitrix\Main\Type\DateTime remindActualCreatedAt()
+	 * @method ?\Bitrix\Main\Type\DateTime requireCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields resetCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields unsetCreatedAt()
+	 * @method ?\Bitrix\Main\Type\DateTime fillCreatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields set($fieldName, $value)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields reset($fieldName)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Fields wakeUp($data)
+	 */
+	class EO_Fields {
+		/* @var \Mywebstor\Relatedlists\App\Model\FieldsTable */
+		static public $dataClass = '\Mywebstor\Relatedlists\App\Model\FieldsTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * EO_Fields_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method ?\int[] getRelatedListIdList()
+	 * @method ?\int[] fillRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists[] getRelatedListList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields_Collection getRelatedListCollection()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection fillRelatedList()
+	 * @method \string[] getFieldIdList()
+	 * @method \string[] fillFieldId()
+	 * @method \string[] getDisplayColumnList()
+	 * @method \string[] fillDisplayColumn()
+	 * @method \string[] getEntityIdList()
+	 * @method \string[] fillEntityId()
+	 * @method \int[] getOrderList()
+	 * @method \int[] fillOrder()
+	 * @method ?\Bitrix\Main\Type\DateTime[] getCreatedAtList()
+	 * @method ?\Bitrix\Main\Type\DateTime[] fillCreatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Mywebstor\Relatedlists\App\Model\EO_Fields $object)
+	 * @method bool has(\Mywebstor\Relatedlists\App\Model\EO_Fields $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields getByPrimary($primary)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields[] getAll()
+	 * @method bool remove(\Mywebstor\Relatedlists\App\Model\EO_Fields $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Fields_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_Fields_Collection merge(?EO_Fields_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_Fields_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Mywebstor\Relatedlists\App\Model\FieldsTable */
+		static public $dataClass = '\Mywebstor\Relatedlists\App\Model\FieldsTable';
+	}
+}
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * @method static EO_Fields_Query query()
+	 * @method static EO_Fields_Result getByPrimary($primary, array $parameters = [])
+	 * @method static EO_Fields_Result getById($id)
+	 * @method static EO_Fields_Result getList(array $parameters = [])
+	 * @method static EO_Fields_Entity getEntity()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Fields createObject($setDefaultValues = true)
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Fields_Collection createCollection()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Fields wakeUpObject($row)
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Fields_Collection wakeUpCollection($rows)
+	 */
+	class FieldsTable extends \Bitrix\Main\ORM\Data\DataManager {}
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Fields_Result exec()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields fetchObject()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Fields_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields fetchObject()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields_Collection fetchCollection()
+	 */
+	class EO_Fields_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields createObject($setDefaultValues = true)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields_Collection createCollection()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields wakeUpObject($row)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Fields_Collection wakeUpCollection($rows)
+	 */
+	class EO_Fields_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Mywebstor\Relatedlists\App\Model\EntitiesTable */
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * EO_Entities
+	 * @see \Mywebstor\Relatedlists\App\Model\EntitiesTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method ?\int getRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities setRelatedListId(?\int|\Bitrix\Main\DB\SqlExpression $relatedListId)
+	 * @method bool hasRelatedListId()
+	 * @method bool isRelatedListIdFilled()
+	 * @method bool isRelatedListIdChanged()
+	 * @method ?\int remindActualRelatedListId()
+	 * @method ?\int requireRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities resetRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities unsetRelatedListId()
+	 * @method ?\int fillRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists getRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists remindActualRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists requireRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities setRelatedList(\Mywebstor\Relatedlists\App\Model\EO_RelatedLists $object)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities resetRelatedList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities unsetRelatedList()
+	 * @method bool hasRelatedList()
+	 * @method bool isRelatedListFilled()
+	 * @method bool isRelatedListChanged()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists fillRelatedList()
+	 * @method \string getEntityId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities setEntityId(\string|\Bitrix\Main\DB\SqlExpression $entityId)
+	 * @method bool hasEntityId()
+	 * @method bool isEntityIdFilled()
+	 * @method bool isEntityIdChanged()
+	 * @method \string remindActualEntityId()
+	 * @method \string requireEntityId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities resetEntityId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities unsetEntityId()
+	 * @method \string fillEntityId()
+	 * @method ?\string getCategoryId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities setCategoryId(?\string|\Bitrix\Main\DB\SqlExpression $categoryId)
+	 * @method bool hasCategoryId()
+	 * @method bool isCategoryIdFilled()
+	 * @method bool isCategoryIdChanged()
+	 * @method ?\string remindActualCategoryId()
+	 * @method ?\string requireCategoryId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities resetCategoryId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities unsetCategoryId()
+	 * @method ?\string fillCategoryId()
+	 * @method ?\Bitrix\Main\Type\DateTime getCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities setCreatedAt(?\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdAt)
+	 * @method bool hasCreatedAt()
+	 * @method bool isCreatedAtFilled()
+	 * @method bool isCreatedAtChanged()
+	 * @method ?\Bitrix\Main\Type\DateTime remindActualCreatedAt()
+	 * @method ?\Bitrix\Main\Type\DateTime requireCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities resetCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities unsetCreatedAt()
+	 * @method ?\Bitrix\Main\Type\DateTime fillCreatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities set($fieldName, $value)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities reset($fieldName)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Entities wakeUp($data)
+	 */
+	class EO_Entities {
+		/* @var \Mywebstor\Relatedlists\App\Model\EntitiesTable */
+		static public $dataClass = '\Mywebstor\Relatedlists\App\Model\EntitiesTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * EO_Entities_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method ?\int[] getRelatedListIdList()
+	 * @method ?\int[] fillRelatedListId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists[] getRelatedListList()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities_Collection getRelatedListCollection()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection fillRelatedList()
+	 * @method \string[] getEntityIdList()
+	 * @method \string[] fillEntityId()
+	 * @method ?\string[] getCategoryIdList()
+	 * @method ?\string[] fillCategoryId()
+	 * @method ?\Bitrix\Main\Type\DateTime[] getCreatedAtList()
+	 * @method ?\Bitrix\Main\Type\DateTime[] fillCreatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Mywebstor\Relatedlists\App\Model\EO_Entities $object)
+	 * @method bool has(\Mywebstor\Relatedlists\App\Model\EO_Entities $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities getByPrimary($primary)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities[] getAll()
+	 * @method bool remove(\Mywebstor\Relatedlists\App\Model\EO_Entities $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Entities_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_Entities_Collection merge(?EO_Entities_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_Entities_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Mywebstor\Relatedlists\App\Model\EntitiesTable */
+		static public $dataClass = '\Mywebstor\Relatedlists\App\Model\EntitiesTable';
+	}
+}
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * @method static EO_Entities_Query query()
+	 * @method static EO_Entities_Result getByPrimary($primary, array $parameters = [])
+	 * @method static EO_Entities_Result getById($id)
+	 * @method static EO_Entities_Result getList(array $parameters = [])
+	 * @method static EO_Entities_Entity getEntity()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Entities createObject($setDefaultValues = true)
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Entities_Collection createCollection()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Entities wakeUpObject($row)
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_Entities_Collection wakeUpCollection($rows)
+	 */
+	class EntitiesTable extends \Bitrix\Main\ORM\Data\DataManager {}
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Entities_Result exec()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities fetchObject()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Entities_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities fetchObject()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities_Collection fetchCollection()
+	 */
+	class EO_Entities_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities createObject($setDefaultValues = true)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities_Collection createCollection()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities wakeUpObject($row)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_Entities_Collection wakeUpCollection($rows)
+	 */
+	class EO_Entities_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Mywebstor\Relatedlists\App\Model\RelatedListsTable */
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * EO_RelatedLists
+	 * @see \Mywebstor\Relatedlists\App\Model\RelatedListsTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \string getTitle()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists setTitle(\string|\Bitrix\Main\DB\SqlExpression $title)
+	 * @method bool hasTitle()
+	 * @method bool isTitleFilled()
+	 * @method bool isTitleChanged()
+	 * @method \string remindActualTitle()
+	 * @method \string requireTitle()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists resetTitle()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists unsetTitle()
+	 * @method \string fillTitle()
+	 * @method \string getType()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists setType(\string|\Bitrix\Main\DB\SqlExpression $type)
+	 * @method bool hasType()
+	 * @method bool isTypeFilled()
+	 * @method bool isTypeChanged()
+	 * @method \string remindActualType()
+	 * @method \string requireType()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists resetType()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists unsetType()
+	 * @method \string fillType()
+	 * @method ?\Bitrix\Main\Type\DateTime getCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists setCreatedAt(?\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdAt)
+	 * @method bool hasCreatedAt()
+	 * @method bool isCreatedAtFilled()
+	 * @method bool isCreatedAtChanged()
+	 * @method ?\Bitrix\Main\Type\DateTime remindActualCreatedAt()
+	 * @method ?\Bitrix\Main\Type\DateTime requireCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists resetCreatedAt()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists unsetCreatedAt()
+	 * @method ?\Bitrix\Main\Type\DateTime fillCreatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists set($fieldName, $value)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists reset($fieldName)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_RelatedLists wakeUp($data)
+	 */
+	class EO_RelatedLists {
+		/* @var \Mywebstor\Relatedlists\App\Model\RelatedListsTable */
+		static public $dataClass = '\Mywebstor\Relatedlists\App\Model\RelatedListsTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * EO_RelatedLists_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \string[] getTitleList()
+	 * @method \string[] fillTitle()
+	 * @method \string[] getTypeList()
+	 * @method \string[] fillType()
+	 * @method ?\Bitrix\Main\Type\DateTime[] getCreatedAtList()
+	 * @method ?\Bitrix\Main\Type\DateTime[] fillCreatedAt()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Mywebstor\Relatedlists\App\Model\EO_RelatedLists $object)
+	 * @method bool has(\Mywebstor\Relatedlists\App\Model\EO_RelatedLists $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists getByPrimary($primary)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists[] getAll()
+	 * @method bool remove(\Mywebstor\Relatedlists\App\Model\EO_RelatedLists $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_RelatedLists_Collection merge(?EO_RelatedLists_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_RelatedLists_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Mywebstor\Relatedlists\App\Model\RelatedListsTable */
+		static public $dataClass = '\Mywebstor\Relatedlists\App\Model\RelatedListsTable';
+	}
+}
+namespace Mywebstor\Relatedlists\App\Model {
+	/**
+	 * @method static EO_RelatedLists_Query query()
+	 * @method static EO_RelatedLists_Result getByPrimary($primary, array $parameters = [])
+	 * @method static EO_RelatedLists_Result getById($id)
+	 * @method static EO_RelatedLists_Result getList(array $parameters = [])
+	 * @method static EO_RelatedLists_Entity getEntity()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_RelatedLists createObject($setDefaultValues = true)
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection createCollection()
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_RelatedLists wakeUpObject($row)
+	 * @method static \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection wakeUpCollection($rows)
+	 */
+	class RelatedListsTable extends \Bitrix\Main\ORM\Data\DataManager {}
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_RelatedLists_Result exec()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists fetchObject()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_RelatedLists_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists fetchObject()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection fetchCollection()
+	 */
+	class EO_RelatedLists_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists createObject($setDefaultValues = true)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection createCollection()
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists wakeUpObject($row)
+	 * @method \Mywebstor\Relatedlists\App\Model\EO_RelatedLists_Collection wakeUpCollection($rows)
+	 */
+	class EO_RelatedLists_Entity extends \Bitrix\Main\ORM\Entity {}
 }

@@ -50,4 +50,9 @@ abstract class AbstractSettings implements SettingsInterface
 	{
 		return true;
 	}
+
+	public function find(string $query): array
+	{
+		return [];
+	}
 }

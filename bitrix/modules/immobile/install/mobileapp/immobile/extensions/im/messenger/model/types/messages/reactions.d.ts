@@ -1,3 +1,5 @@
+import {PayloadData} from "../base";
+
 export enum ReactionType
 {
 	like = 'like',
@@ -61,3 +63,36 @@ export type ReactionsModelMutation =
 	| 'messagesModel/reactionsModel/set'
 	| 'messagesModel/reactionsModel/add'
 	| 'messagesModel/reactionsModel/updateWithId'
+
+
+export interface ReactionsStoreData extends PayloadData
+{
+	reactionList: Array<ReactionsModelState>;
+}
+
+
+export type ReactionsSetActions =
+	'setFromPullEvent'
+	| 'set'
+;
+export interface ReactionsSetData extends PayloadData
+{
+	reactionList: Array<ReactionsModelState>;
+}
+
+
+export type ReactionsAddActions = 'setReaction';
+export interface ReactionsAddData extends PayloadData
+{
+	reaction: ReactionsModelState;
+}
+
+
+export type ReactionsUpdateWithIdActions =
+	'setReaction'
+	| 'removeReaction'
+;
+export interface ReactionsUpdateWithIdData extends PayloadData
+{
+	reaction: ReactionsModelState;
+}

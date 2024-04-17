@@ -184,7 +184,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesSetStateData, FilesSetStateActions>} payload
 			 */
 			setState: (state, payload) => {
 				const {
@@ -196,7 +196,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesAddData, FilesAddActions>} payload
 			 */
 			add: (state, payload) => {
 				logger.log('filesModel: add mutation', payload);
@@ -212,7 +212,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesUpdateData, FilesUpdateActions>} payload
 			 */
 			update: (state, payload) => {
 				logger.log('filesModel: update mutation', payload);
@@ -231,7 +231,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesUpdateWithIdData, FilesUpdateWithIdActions>} payload
 			 */
 			updateWithId: (state, payload) => {
 				logger.log('filesModel: updateWithId mutation', payload);
@@ -252,7 +252,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<FilesDeleteData, FilesDeleteActions>} payload
 			 */
 			delete: (state, payload) => {
 				logger.log('filesModel: delete mutation', payload);

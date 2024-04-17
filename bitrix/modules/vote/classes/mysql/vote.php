@@ -397,7 +397,7 @@ class CVote extends CAllVote
 					".($is_admin ? "2" : "max(G.PERMISSION)")." as MAX_PERMISSION, 
 					(CASE WHEN (C.VOTE_SINGLE = 'Y') THEN 
 						(CASE WHEN (V.ID = VV.ACTIVE_VOTE_ID) THEN 'green' ELSE 'red' END) ELSE 
-						(CASE WHEN (V.ACTIVE = 'Y' AND V.DATE_START <= NOW() AND NOW() <= V.DATE_END) THEN 'green' ELSE 'red' END)) END LAMP 
+						(CASE WHEN (V.ACTIVE = 'Y' AND V.DATE_START <= NOW() AND NOW() <= V.DATE_END) THEN 'green' ELSE 'red' END) END) AS LAMP 
 				FROM b_vote V
 				INNER JOIN b_vote_channel C ON (C.ACTIVE = 'Y' AND C.HIDDEN = 'N' AND V.CHANNEL_ID = C.ID)
 				LEFT JOIN (
@@ -411,7 +411,7 @@ class CVote extends CAllVote
 				WHERE
 					$strSqlSearch
 					AND V.ACTIVE = 'Y' AND V.DATE_START <= NOW()
-				GROUP BY V.CHANNEL_ID, V.ID
+				GROUP BY V.CHANNEL_ID, V.ID, C.VOTE_SINGLE, VV.ACTIVE_VOTE_ID
 				".($is_admin ? "" : "
 				HAVING MAX_PERMISSION > 0")."
 			) V4

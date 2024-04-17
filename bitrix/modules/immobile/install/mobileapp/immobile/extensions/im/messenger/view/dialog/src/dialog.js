@@ -7,7 +7,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 
 	const { core } = require('im/messenger/core');
 	const { View } = require('im/messenger/view/base');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, MessageType } = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -131,6 +131,14 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 		get mentionPanel()
 		{
 			return this.ui.mentionPanel;
+		}
+
+		/**
+		 * @return {PinPanel}
+		 */
+		get pinPanel()
+		{
+			return this.ui.pinPanel;
 		}
 
 		/* endregion nested objects */
@@ -600,6 +608,19 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			}
 
 			return this.messageList[0];
+		}
+
+		/**
+		 * @return {Array<Message|any>}
+		 */
+		getImageMessages()
+		{
+			if (!Type.isArrayFilled(this.messageList))
+			{
+				return [];
+			}
+
+			return this.messageList.filter((mess) => mess.type === MessageType.image).reverse();
 		}
 
 		/* endregion ViewMessageList */

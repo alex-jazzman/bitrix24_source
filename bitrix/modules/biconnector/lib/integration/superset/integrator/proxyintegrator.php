@@ -711,17 +711,7 @@ final class ProxyIntegrator implements SupersetIntegrator
 
 		if (!$this->isServiceStatusChecked)
 		{
-			$result = $this->sender->performRequest(self::PROXY_ACTION_PING_SUPERSET);
-			$response = self::createResponse($result);
-
-			if (SupersetInitializer::isSupersetActive())
-			{
-				$this->isServiceAvailable = $response->getStatus() < 400 || $response->getStatus() === IntegratorResponse::STATUS_FROZEN;
-			}
-			else
-			{
-				$this->isServiceAvailable = $response->getStatus() !== IntegratorResponse::STATUS_SERVER_DOWN;
-			}
+			$this->performRequest(self::PROXY_ACTION_PING_SUPERSET);
 		}
 
 		return $this->isServiceAvailable;

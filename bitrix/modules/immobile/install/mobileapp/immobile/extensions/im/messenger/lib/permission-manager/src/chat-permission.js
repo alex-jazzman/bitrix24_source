@@ -15,9 +15,9 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		}
 
 		/**
-		 * @desc check is can call by dialog data ( use id dialog "chat#" or dialog state object )
+		 * @desc check is can call by dialog data (use id dialog "chat#" or dialog state object)
 		 * @param {DialoguesModelState|string} dialogData
-		 * @param {boolean} [verbose=false] - prop for verbose response, returns object with key
+		 * @param {boolean} [verbose=false] - prop for verbose response, returns an object with a key
 		 * @return {boolean|object}
 		 */
 		isCanCall(dialogData, verbose = false)
@@ -32,7 +32,8 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			const isMoreOne = this.dialogData.userCounter > 1;
 			const isLimit = this.dialogData.userCounter > userLimit;
 			const isEntityType = this.isCanCallByEntityType(this.dialogData.entityType);
-			const isCanCall = isHTTPS && isMoreOne && !isLimit && isEntityType;
+			const isDialogType = this.isCanCallByDialogType(this.dialogData.type);
+			const isCanCall = isHTTPS && isMoreOne && !isLimit && isEntityType && isDialogType;
 
 			if (verbose)
 			{
@@ -42,6 +43,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 					isMoreOne,
 					isLimit,
 					isEntityType,
+					isDialogType,
 				};
 			}
 
@@ -341,6 +343,16 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			}
 
 			return userChatOptions.DEFAULT.CALL;
+		}
+
+		/**
+		 * @desc check is can call by dialog type ( chat )
+		 * @param {string} type
+		 * @return {boolean}
+		 */
+		isCanCallByDialogType(type)
+		{
+			return type !== DialogType.copilot;
 		}
 
 		/**

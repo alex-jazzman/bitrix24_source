@@ -7,6 +7,5 @@ export const LocalStorageKey = Object.freeze({
 	textareaHeight: 'textareaHeight',
 	lastCallType: 'lastCallType',
 	lastNotificationId: 'lastNotificationId',
-	findByParticipants: 'findByParticipants',
 	layoutConfig: 'layoutConfig',
 });

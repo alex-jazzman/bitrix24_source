@@ -1644,6 +1644,8 @@ this.BX.UI = this.BX.UI || {};
 	          this.getSubtitleContainer().innerHTML = Highlighter.mark(this.getItem().getSubtitleNode(), matchField.getMatches());
 	        } else if (field.getName() === 'supertitle') {
 	          this.getSupertitleContainer().innerHTML = Highlighter.mark(this.getItem().getSupertitleNode(), matchField.getMatches());
+	        } else if (field.getName() === 'caption') {
+	          this.getCaptionContainer().innerHTML = Highlighter.mark(this.getItem().getCaptionNode(), matchField.getMatches());
 	        }
 	      });
 	    }
@@ -1978,6 +1980,10 @@ this.BX.UI = this.BX.UI || {};
 	            const textNode = item.getSupertitleNode();
 	            const stripTags = textNode !== null && textNode.getType() === 'html';
 	            index.addIndex(this.createIndex(field, item.getSupertitle(), stripTags));
+	          } else if (field.getName() === 'caption') {
+	            const textNode = item.getCaptionNode();
+	            const stripTags = textNode !== null && textNode.getType() === 'html';
+	            index.addIndex(this.createIndex(field, item.getCaption(), stripTags));
 	          }
 	        } else {
 	          const customData = item.getCustomData().get(field.getName());

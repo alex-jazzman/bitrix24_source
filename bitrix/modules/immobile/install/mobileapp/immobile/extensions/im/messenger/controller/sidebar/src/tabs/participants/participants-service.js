@@ -12,7 +12,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 	const { SidebarUserService } = require('im/messenger/controller/sidebar/sidebar-user-service');
 	const { SidebarRestService } = require('im/messenger/controller/sidebar/sidebar-rest-service');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType, DialogType, BBCode } = require('im/messenger/const');
+	const { EventType, DialogType, BBCode, ComponentCode } = require('im/messenger/const');
 
 	/**
 	 * @class ParticipantsService
@@ -58,7 +58,8 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		getParticipantsFromStore()
 		{
 			const dialogState = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			if (!dialogState)
+
+			if (!dialogState && !Type.isArray(dialogState.participants))
 			{
 				return [];
 			}
@@ -234,7 +235,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		 */
 		onClickGetNotes()
 		{
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: MessengerParams.getUserId() });
+			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: MessengerParams.getUserId() }, ComponentCode.imMessenger);
 		}
 
 		/**
@@ -277,7 +278,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 		 */
 		onClickSendMessage(userId)
 		{
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: userId });
+			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: userId }, ComponentCode.imMessenger);
 		}
 
 		/**

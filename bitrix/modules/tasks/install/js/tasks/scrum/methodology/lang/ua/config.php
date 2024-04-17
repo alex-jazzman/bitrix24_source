@@ -1,7 +1,7 @@
 <?php
 $MESS["TSF_DOD_CREATE_BUTTON"] = "Створити";
 $MESS["TSF_DOD_HINT"] = "Чек-лист із критеріями, за якими визначається готовність результату";
-$MESS["TSF_DOD_HINT_NEW"] = "Контрольний список із критеріями, за якими визначається готовність завдання.";
+$MESS["TSF_DOD_HINT_NEW"] = "Чек-лист із критеріями, за якими визначається готовність завдання.";
 $MESS["TSF_DOD_OPEN_BUTTON"] = "Відкрити";
 $MESS["TSF_DOD_TITLE"] = "DOD";
 $MESS["TSF_DOD_TITLE_NEW"] = "DoD";

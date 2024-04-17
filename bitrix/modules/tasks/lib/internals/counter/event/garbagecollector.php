@@ -190,7 +190,7 @@ class GarbageCollector
 	 * @throws \Bitrix\Main\ArgumentTypeException
 	 * @throws \Bitrix\Main\DB\SqlQueryException
 	 */
-	private function readTopics(int $userId, array $topicIds)
+	public function readTopics(int $userId, array $topicIds)
 	{
 		$forumId = Comment::getForumId();
 
@@ -202,6 +202,7 @@ class GarbageCollector
 		{
 			$inserts[] = '(' . (int) $topicId . ', ' . $userId . ', ' . $forumId . ', ' . $viewedTime . ')';
 		}
+		$inserts = array_unique($inserts);
 		$values = implode(',', $inserts);
 		$values = " VALUES {$values}";
 		$sql = $sqlHelper->prepareMergeSelect(

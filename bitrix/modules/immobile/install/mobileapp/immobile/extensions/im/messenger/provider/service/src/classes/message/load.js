@@ -5,7 +5,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 	const { Type } = require('type');
 
 	const { core } = require('im/messenger/core');
-	const { Settings } = require('im/messenger/lib/settings');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { RestMethod } = require('im/messenger/const/rest');
@@ -86,7 +86,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 		async loadHistory()
 		{
-			if (Settings.isLocalStorageEnabled && this.isLoadingFromDb === false)
+			if (Feature.isLocalStorageEnabled && this.isLoadingFromDb === false)
 			{
 				this.isLoadingFromDb = true;
 

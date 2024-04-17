@@ -1670,6 +1670,11 @@ class CAllCrmCompany
 				}
 			}
 
+			if (isset($arFields['IS_MY_COMPANY']) && $arFields['IS_MY_COMPANY'] === 'Y')
+			{
+				Crm\Requisite\EntityLink::clearMyCompanyCache();
+			}
+
 			$afterEvents = GetModuleEvents('crm', 'OnAfterCrmCompanyAdd');
 			while ($arEvent = $afterEvents->Fetch())
 			{
@@ -2465,6 +2470,11 @@ class CAllCrmCompany
 
 			if($bResult)
 			{
+				if (isset($arFields['IS_MY_COMPANY']))
+				{
+					Crm\Requisite\EntityLink::clearMyCompanyCache();
+				}
+
 				$afterEvents = GetModuleEvents('crm', 'OnAfterCrmCompanyUpdate');
 				while ($arEvent = $afterEvents->Fetch())
 					ExecuteModuleEventEx($arEvent, array(&$arFields));
@@ -2599,6 +2609,11 @@ class CAllCrmCompany
 				$sWherePerm = " AND ASSIGNED_BY_ID = {$iUserId}";
 			else if ($sEntityPerm == BX_CRM_PERM_OPEN)
 				$sWherePerm = " AND (OPENED = 'Y' OR ASSIGNED_BY_ID = {$iUserId})";
+		}
+
+		if (isset($arFields['IS_MY_COMPANY']) && $arFields['IS_MY_COMPANY'] === 'Y')
+		{
+			Crm\Requisite\EntityLink::clearMyCompanyCache();
 		}
 
 		$APPLICATION->ResetException();

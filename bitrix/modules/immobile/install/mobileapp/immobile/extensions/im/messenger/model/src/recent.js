@@ -449,7 +449,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<RecentSetStateData, RecentSetStateActions>} payload
 			 */
 			setState: (state, payload) => {
 				const {
@@ -472,7 +472,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<RecentAddData, RecentAddActions>} payload
 			 */
 			add: (state, payload) => {
 				logger.warn('RecentModel.addMutation', payload);
@@ -511,7 +511,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<RecentUpdateData, RecentUpdateActions>} payload
 			 */
 			update: (state, payload) => {
 				logger.warn('RecentModel.updateMutation', payload);
@@ -534,7 +534,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<RecentDeleteData, RecentDeleteActions>} payload
 			 */
 			delete: (state, payload) => {
 				const {
@@ -662,6 +662,15 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 		if (Type.isString(fields.message.text))
 		{
 			message.text = fields.message.text;
+		}
+
+		if (Type.isStringFilled(fields.message.subTitleIcon))
+		{
+			message.subTitleIcon = fields.message.subTitleIcon;
+		}
+		else
+		{
+			message.subTitleIcon = '';
 		}
 
 		if (

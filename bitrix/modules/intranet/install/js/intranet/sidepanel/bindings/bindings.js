@@ -996,15 +996,86 @@
 				}
 			},
 			{
+				condition: ['/settings/license_all.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 1250,
+					customRightBoundary: 0,
+				},
+			},
+			{
+				condition: ['/settings/order/make.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 1250,
+					customRightBoundary: 0,
+				},
+			},
+			{
 				condition: [
 					new RegExp("/settings/configs/\\?analyticContext=[a-z]+", 'i'),
 					'/settings/configs/index.php',
 					new RegExp("/settings/configs/\\?page=[a-z]+", 'i'),
+					new RegExp("/configs/\\?analyticContext=[a-z]+", 'i'),
+					'/configs/index.php',
+					new RegExp("/configs/\\?page=[a-z]+", 'i'),
 				],
 				options: {
-					loader: 'intranet:settings',
+					loader: 'intranet:slider-settings',
 					width: 1034
 				}
+			},
+			{
+				condition: ['/einvoice/install/'],
+				options: {
+					width: 575,
+					allowChangeHistory: false,
+				},
+			},
+			{
+				condition: [
+					new RegExp('/sign/link/member/(\\d+)/', 'i'),
+				],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 900,
+				},
+				handler(event, link)
+				{
+					let newWindowLink = link.url;
+					if (!link.url.startsWith(document.location.origin))
+					{
+						newWindowLink = document.location.origin + link.url;
+					}
+
+					BX.SidePanel.Instance.open('sign:stub:sign-link', {
+						width: 900,
+						cacheable: false,
+						allowCrossOrigin: true,
+						allowCrossDomain: true,
+						allowChangeHistory: false,
+						newWindowUrl: newWindowLink,
+						copyLinkLabel: true,
+						newWindowLabel: true,
+						loader: '/bitrix/js/intranet/sidepanel/bindings/images/sign_mask.svg',
+						label: {
+							text: BX.message('INTRANET_BINDINGS_SMART_DOCUMENT_MSGVER_1'),
+							bgColor: '#C48300',
+						},
+						async contentCallback(slider) {
+							return BX.Runtime.loadExtension('sign.v2.b2e.sign-link').then(() => {
+								return (new BX.Sign.V2.B2e.SignLink({ memberId: link.matches[1], slider }))
+									.render()
+								;
+							});
+						},
+					});
+
+					event.preventDefault();
+				},
 			},
 		]
 	});

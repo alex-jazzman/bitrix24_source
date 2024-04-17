@@ -135,8 +135,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	  components: {
 	    SettingsSection: SettingsSection,
 	    Sms: Sms,
-	    SmsProviderSelect: SmsProviderSelect,
-	    Notification: Notification
+	    SmsProviderSelect: SmsProviderSelect
 	  },
 	  computed: _objectSpread$1(_objectSpread$1({}, ui_vue3_vuex.mapGetters(['isSmsSendingActive', 'isAnyServiceEnabled', 'isNotificationsEnabled', 'getSelectedService'])), {}, {
 	    getSectionTitle: function getSectionTitle() {

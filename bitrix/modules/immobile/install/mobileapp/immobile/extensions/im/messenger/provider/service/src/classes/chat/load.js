@@ -6,13 +6,14 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 
 	const { core } = require('im/messenger/core');
 	const { RestManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod, EventType } = require('im/messenger/const');
+	const { RestMethod, EventType, DialogType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { RestDataExtractor } = require('im/messenger/provider/service/classes/rest-data-extractor');
 	const { MessageService } = require('im/messenger/provider/service/message');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { RecentConverter } = require('im/messenger/lib/converter');
 
 	const logger = LoggerManager.getInstance().getLogger('load-service--chat');
 
@@ -51,8 +52,9 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 					dialogId,
 					limit: MessageService.getMessageRequestLimit(),
 				})
-				.once(RestMethod.imChatPinGet, {
-					chat_id: `$result[${RestMethod.imChatGet}][id]`,
+				.once(RestMethod.imV2ChatPinTail, {
+					dialogId,
+					limit: MessageService.getMessageRequestLimit(),
 				})
 			;
 
@@ -71,6 +73,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 					});
 				})
 				.catch((error) => {
+					logger.error(error);
 					const extractor = new RestDataExtractor(error);
 					Object.values(extractor.errors).forEach((methodError) => {
 						if (!methodError)
@@ -93,12 +96,16 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 		{
 			const extractor = new RestDataExtractor(response);
 			extractor.extractData();
-
 			const usersPromise = [
 				this.store.dispatch('usersModel/set', extractor.getUsers()),
 				this.store.dispatch('usersModel/addShort', extractor.getUsersShort()),
 			];
 			const dialogList = this.prepareDialogues(extractor.getDialogues());
+
+			if (this.isCopilotDialog(extractor))
+			{
+				this.setRecent(extractor).catch((err) => logger.log('LoadService.updateModels.setRecent error', err));
+			}
 
 			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', dialogList);
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
@@ -110,10 +117,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 					messages: extractor.getMessages(),
 					clearCollection: true,
 				}),
-				this.store.dispatch('messagesModel/setPinned', {
-					chatId: extractor.getChatId(),
-					pinnedMessages: extractor.getPinnedMessages(),
-				}),
+				this.store.dispatch('messagesModel/pinModel/setChatCollection', extractor.getPinnedMessages()),
 			];
 
 			return Promise.all([
@@ -125,6 +129,46 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 				.then(() => Promise.all(messagesPromise))
 				.then(() => this.updateCounters(dialogList))
 			;
+		}
+
+		/**
+		 * @desc check is copilot dialog
+		 * @param {RestDataExtractor} extractor
+		 * @return {Boolean}
+		 */
+		isCopilotDialog(extractor)
+		{
+			const dialogData = extractor.dialogues[extractor.dialogId];
+
+			return dialogData.type === DialogType.copilot;
+		}
+
+		/**
+		 * @desc Set recent item by extract data response
+		 * @param {RestDataExtractor} extractor
+		 * @return {Promise}
+		 */
+		setRecent(extractor)
+		{
+			const messages = extractor.getMessages();
+			const message = messages[messages.length - 1];
+			message.text = ChatMessengerCommon.purifyText(
+				message.text,
+				message.params,
+			);
+			const userId = message.author_id || message.authorId;
+			const userData = extractor.getUsers().filter((user) => user.id === userId);
+
+			const recentItem = RecentConverter.fromPushToModel({
+				id: extractor.dialogId,
+				chat: extractor.dialogues[extractor.dialogId],
+				user: userData,
+				message,
+				counter: 0,
+				liked: false,
+			});
+
+			return this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
 		/**

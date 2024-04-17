@@ -9,4 +9,4 @@ $MESS["RECYCLEBIN_PRESET_CURRENT_DAY"] = "Видалені сьогодні";
 $MESS["RECYCLEBIN_PRESET_CURRENT_MONTH"] = "Видалені в цьому місяці";
 $MESS["RECYCLEBIN_PRESET_CURRENT_WEEK"] = "Видалені на цьому тижні";
 $MESS["RECYCLEBIN_SHOW_TOTAL_COUNT"] = "Показати кількість";
-$MESS["RECYCLEBIN_TOTAL_COUNT"] = "Всього:";
+$MESS["RECYCLEBIN_TOTAL_COUNT"] = "Усього:";

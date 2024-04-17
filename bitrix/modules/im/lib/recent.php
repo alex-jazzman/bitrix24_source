@@ -16,6 +16,7 @@ use Bitrix\Im\V2\Settings\UserConfiguration;
 use Bitrix\Im\V2\Sync;
 use Bitrix\Imbot\Bot\CopilotChatBot;
 use Bitrix\Main\Application, Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields\ExpressionField;
@@ -221,7 +222,10 @@ class Recent
 
 		$generalChatId = \CIMChat::GetGeneralChatId();
 
-		$viewCommonUsers = (bool)\CIMSettings::GetSetting(\CIMSettings::SETTINGS, 'viewCommonUsers');
+		$viewCommonUsers = Option::get('im', 'view_common_users', 'Y') === 'N'
+			? false
+			: (bool)\CIMSettings::GetSetting(\CIMSettings::SETTINGS, 'viewCommonUsers')
+		;
 
 		$onlyOpenlinesOption = $options['ONLY_OPENLINES'] ?? null;
 		$onlyCopilotOption = $options['ONLY_COPILOT'] ?? null;
@@ -231,6 +235,7 @@ class Recent
 		$withoutCommonUsers = !$viewCommonUsers || $onlyOpenlinesOption === 'Y';
 		$unreadOnly = isset($options['UNREAD_ONLY']) && $options['UNREAD_ONLY'] === 'Y';
 		$shortInfo = isset($options['SHORT_INFO']) && $options['SHORT_INFO'] === 'Y';
+		$parseText = $options['PARSE_TEXT'] ?? null;
 
 		$showOpenlines = (
 			\Bitrix\Main\Loader::includeModule('imopenlines')
@@ -351,6 +356,7 @@ class Recent
 				'WITHOUT_COMMON_USERS' => $withoutCommonUsers,
 				'GET_ORIGINAL_TEXT' => $options['GET_ORIGINAL_TEXT'] ?? null,
 				'SHORT_INFO' => $shortInfo,
+				'PARSE_TEXT' => $parseText,
 			]);
 			if (!$item)
 			{
@@ -701,7 +707,12 @@ class Recent
 			$text = $row['MESSAGE_TEXT'] ?? '';
 
 			$getOriginalTextOption = $options['GET_ORIGINAL_TEXT'] ?? null;
-			if ($getOriginalTextOption === 'Y')
+			$parseText = $options['PARSE_TEXT'] ?? null;
+			if ($parseText === 'Y')
+			{
+				$text = Text::parse($text);
+			}
+			elseif ($getOriginalTextOption === 'Y')
 			{
 				$text = Text::populateUserBbCode($text);
 			}
@@ -729,7 +740,7 @@ class Recent
 		{
 			$row['MESSAGE_DATE'] ??= null;
 			$message = [
-				'ID' => 0,
+				'ID' => (int)($row['ITEM_MID'] ?? 0),
 				'TEXT' => "",
 				'FILE' => false,
 				'AUTHOR_ID' =>  0,

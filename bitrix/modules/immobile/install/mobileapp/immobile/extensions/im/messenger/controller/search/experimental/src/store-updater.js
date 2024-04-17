@@ -109,7 +109,6 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 		}
 
 		/**
-		 * @private
 		 * @param {Array<object>} users
 		 */
 		async setUsersToModel(users)
@@ -123,7 +122,6 @@ jn.define('im/messenger/controller/search/experimental/store-updater', (require,
 		 */
 		async setRecentItemsToModel(recentItems)
 		{
-			console.log('setRecentItemsToModel' , recentItems);
 			return this.store.dispatch('recentModel/update', recentItems);
 		}
 

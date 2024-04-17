@@ -1,7 +1,9 @@
 <?php
 $MESS["DOCUMENT_LIST_ACTION_CANCEL_TEXT"] = "Скасувати проведення";
+$MESS["DOCUMENT_LIST_ACTION_CANCEL_TEXT_2"] = "Скасувати проведення";
 $MESS["DOCUMENT_LIST_ACTION_CANCEL_TITLE"] = "Скасувати проведення";
 $MESS["DOCUMENT_LIST_ACTION_CONDUCT_TEXT"] = "Провести документ";
+$MESS["DOCUMENT_LIST_ACTION_CONDUCT_TEXT_2"] = "Провести";
 $MESS["DOCUMENT_LIST_ACTION_CONDUCT_TITLE"] = "Провести документ";
 $MESS["DOCUMENT_LIST_ACTION_DELETE_TEXT"] = "Видалити";
 $MESS["DOCUMENT_LIST_ACTION_DELETE_TITLE"] = "Видалити документ";

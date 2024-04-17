@@ -41,8 +41,7 @@ if (defined("BX_COMP_MANAGED_CACHE"))
 
 $isNewLiveFeedCounterAvailable = (
 	Loader::includeModule('socialnetwork')
-	&& \Bitrix\Socialnetwork\Space\Service::isAvailable()
-	&& \Bitrix\Socialnetwork\Internals\LiveFeed\Counter\CounterController::isEnabled((int)$userId)
+	&& \Bitrix\Socialnetwork\Space\Service::isAvailable(true)
 );
 
 $arMenu = [
@@ -122,7 +121,7 @@ $diskPath =
 ;
 
 $arMenu[] = array(
-	GetMessage("MENU_DISK_SECTION"),
+	GetMessage("MENU_DISK_SECTION_MSGVER_1"),
 	"/docs/",
 	array(
 		$diskPath,
@@ -393,7 +392,7 @@ $arMenu[] = [
 	'',
 ];
 
-if (IsModuleInstalled("bitrix24"))
+if (Loader::includeModule("bitrix24"))
 {
 	$arMenu[] = array(
 		GetMessage("MENU_TARIFF"),
@@ -402,7 +401,7 @@ if (IsModuleInstalled("bitrix24"))
 		array(
 			"real_link" => getLeftMenuItemLink(
 				"top_menu_id_settings",
-				$GLOBALS['USER']->CanDoOperation('bitrix24_config') ? "/settings/license.php" : "/settings/license_all.php"
+				($GLOBALS['USER']->CanDoOperation('bitrix24_config') || \CBitrix24::canAllBuyLicense()) ? '/settings/license.php' : '/settings/license_all.php',
 			),
 			"class" => "menu-tariff",
 			"menu_item_id" => "menu_tariff",

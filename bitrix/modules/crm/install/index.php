@@ -1070,46 +1070,6 @@ class crm extends CModule
 		return true;
 	}
 
-	function __CopyDir($target, $source, $bReWriteAdditionalFiles = false, $siteDir = '/', $lang)
-	{
-		CheckDirPath($target);
-		$dh = opendir($source);
-		while ($file = readdir($dh))
-		{
-			if (is_file($source . $file))
-			{
-				if ($file == '.' || $file == '..')
-				{
-					continue;
-				}
-
-				if ($bReWriteAdditionalFiles || !file_exists($target . $file))
-				{
-					$fh = fopen($source . $file, 'rb');
-					$php_source = fread($fh, filesize($source . $file));
-					fclose($fh);
-					if (preg_match_all('/GetMessage\("(.*?)"\)/', $php_source, $matches))
-					{
-						IncludeModuleLangFile($source . $file, $lang);
-						foreach ($matches[0] as $i => $text)
-						{
-							$php_source = str_replace(
-								$text,
-								'"' . Loc::getMessage($matches[1][$i]) . '"',
-								$php_source
-							);
-						}
-					}
-
-					$php_source = str_replace('#SITE_DIR#', $siteDir, $php_source);
-					$fh = fopen($target . $file, 'wb');
-					fwrite($fh, $php_source);
-					fclose($fh);
-				}
-			}
-		}
-	}
-
 	function __AddMenuItem($menuFile, $menuItem, $siteID, $pos = -1)
 	{
 		if (CModule::IncludeModule('fileman'))
@@ -1740,6 +1700,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Terminal\EventsHandler\OnSalePsBeforeInitiatePay',
 			'handle'
+		);
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnAfterSetOption_def_mycompany_id',
+			'crm',
+			'\Bitrix\Crm\Requisite\EntityLink',
+			'clearMyCompanyCache'
 		);
 	}
 
@@ -2493,6 +2461,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Terminal\EventsHandler\OnSalePsBeforeInitiatePay',
 			'handle'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnAfterSetOption_def_mycompany_id',
+			'crm',
+			'\Bitrix\Crm\Requisite\EntityLink',
+			'clearMyCompanyCache'
 		);
 	}
 

@@ -1,4 +1,5 @@
-<?
+<?php
+
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
@@ -10,6 +11,7 @@ use Bitrix\Main\HttpRequest;
 use Bitrix\Rest\Engine\ScopeManager;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Loader;
+use Bitrix\Rest\OAuth\Client;
 use Bitrix\Rest\RestException;
 use Bitrix\Rest\AccessException;
 use Bitrix\OAuth;
@@ -266,21 +268,21 @@ class CRestProvider
 
 		$bHalt = (isset($arQuery['HALT'])) ? ((bool) $arQuery['HALT']) : false;
 
-		$arResult = array(
-			'result' => array(),
-			'next' => array(),
-			'total' => array(),
-			'time' => array(),
-			'error' => array(),
-		);
-		if(isset($arQuery['CMD']))
+		$arResult = [
+			'result' => [],
+			'next' => [],
+			'total' => [],
+			'time' => [],
+			'error' => [],
+		];
+		if (isset($arQuery['CMD']))
 		{
 			$cnt = 0;
 
 			$authData = $server->getAuth();
 			foreach ($arQuery['CMD'] as $key => $call)
 			{
-				if(($cnt++) < \CRestUtil::BATCH_MAX_LENGTH)
+				if (($cnt++) < \CRestUtil::BATCH_MAX_LENGTH)
 				{
 					if (!is_string($call))
 					{
@@ -292,14 +294,25 @@ class CRestProvider
 					$query = $queryData['query'];
 
 					$arParams = \CRestUtil::ParseBatchQuery($query, $arResult);
-
-					if($method === \CRestUtil::METHOD_DOWNLOAD || $method === \CRestUtil::METHOD_UPLOAD)
+					if (method_exists('CSecurityFilter', 'processVar'))
 					{
-						$res = array('error' => self::ERROR_BATCH_METHOD_NOT_ALLOWED, 'error_description' => 'Method is not allowed for batch usage');
+						$arParams = CSecurityFilter::processVar($arParams);
+					}
+
+					if (
+						$method === \CRestUtil::METHOD_DOWNLOAD
+						|| $method === \CRestUtil::METHOD_UPLOAD
+						|| $method === Client::METHOD_BATCH
+					)
+					{
+						$res = [
+							'error' => self::ERROR_BATCH_METHOD_NOT_ALLOWED,
+							'error_description' => 'Method is not allowed for batch usage',
+						];
 					}
 					else
 					{
-						if(is_array($authData))
+						if (is_array($authData))
 						{
 							foreach($authData as $authParam => $authValue)
 							{
@@ -326,7 +339,11 @@ class CRestProvider
 							unset($pseudoServer);
 
 							// try original controller name if lower is not found
-							if (is_array($res) && !empty($res['error']) && $res['error'] === 'ERROR_METHOD_NOT_FOUND')
+							if (
+								is_array($res)
+								&& !empty($res['error'])
+								&& $res['error'] === 'ERROR_METHOD_NOT_FOUND'
+							)
 							{
 								continue;
 							}
@@ -338,13 +355,15 @@ class CRestProvider
 				}
 				else
 				{
-
-					$res = array('error' => self::ERROR_BATCH_LENGTH_EXCEEDED, 'error_description' => 'Max batch length exceeded');
+					$res = [
+						'error' => self::ERROR_BATCH_LENGTH_EXCEEDED,
+						'error_description' => 'Max batch length exceeded',
+					];
 				}
 
-				if(is_array($res))
+				if (is_array($res))
 				{
-					if(isset($res['error']))
+					if (isset($res['error']))
 					{
 						$res['error'] = $res;
 					}
@@ -355,20 +374,20 @@ class CRestProvider
 					}
 				}
 
-				if(isset($res['error']) && $res['error'] && $bHalt)
+				if (isset($res['error']) && $res['error'] && $bHalt)
 				{
 					break;
 				}
 			}
 		}
 
-		return array(
+		return [
 			'result' => $arResult['result'],
 			'result_error' => $arResult['error'],
 			'result_total' => $arResult['total'],
 			'result_next' => $arResult['next'],
 			'result_time' => $arResult['time'],
-		);
+		];
 	}
 
 	public static function scopeList($arQuery, $n, \CRestServer $server)

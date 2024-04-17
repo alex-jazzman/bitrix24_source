@@ -899,6 +899,13 @@ class Call
 		return $isEnabled === 'Y';
 	}
 
+	public static function isIosBetaEnabled(): bool
+	{
+		$isEnabled = Option::get('im', 'call_beta_ios', 'N');
+
+		return $isEnabled === 'Y';
+	}
+
 	public static function isVoximplantCallServerEnabled(): bool
 	{
 		return self::isCallServerEnabled();

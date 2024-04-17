@@ -140,8 +140,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  search: {
 	    close: 'IM.Search:close',
-	    keyPressed: 'IM.Search:keyPressed',
-	    openContextMenu: 'IM.Search:openContextMenu'
+	    keyPressed: 'IM.Search:keyPressed'
 	  },
 	  recent: {
 	    openSearch: 'IM.Recent:openSearch'
@@ -259,6 +258,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  copilotCreation: 'ChatCopilotCreationMessage',
 	  copilotMessage: 'CopilotMessage',
 	  conferenceCreation: 'ConferenceCreationMessage',
+	  supervisorUpdateFeature: 'SupervisorUpdateFeatureMessage',
+	  supervisorEnableFeature: 'SupervisorEnableFeatureMessage',
 	  supportVote: 'SupportVoteMessage',
 	  supportSessionNumber: 'SupportSessionNumberMessage',
 	  system: 'SystemMessage'
@@ -281,6 +282,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  viewed: 'viewed',
 	  error: 'error'
 	});
+	const FakeMessagePrefix = 'temp';
 
 	const RecentCallStatus = {
 	  waiting: 'waiting',
@@ -377,16 +379,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 	const UserIdNetworkPrefix = 'network';
 
-	const MainPanelBlock = Object.freeze({
-	  chat: 'chat',
-	  user: 'user',
-	  info: 'info',
-	  file: 'file',
-	  fileUnsorted: 'fileUnsorted',
-	  task: 'task',
-	  meeting: 'meeting',
-	  market: 'market'
-	});
 	const SidebarDetailBlock = Object.freeze({
 	  main: 'main',
 	  members: 'members',
@@ -495,7 +487,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  textareaHeight: 'textareaHeight',
 	  lastCallType: 'lastCallType',
 	  lastNotificationId: 'lastNotificationId',
-	  findByParticipants: 'findByParticipants',
 	  layoutConfig: 'layoutConfig'
 	});
 
@@ -685,6 +676,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.MessageMentionType = MessageMentionType;
 	exports.MessageStatus = MessageStatus;
 	exports.OwnMessageStatus = OwnMessageStatus;
+	exports.FakeMessagePrefix = FakeMessagePrefix;
 	exports.RecentCallStatus = RecentCallStatus;
 	exports.NotificationTypesCodes = NotificationTypesCodes;
 	exports.NotificationSettingsMode = NotificationSettingsMode;
@@ -695,7 +687,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.UserRole = UserRole;
 	exports.UserIdNetworkPrefix = UserIdNetworkPrefix;
 	exports.SidebarDetailBlock = SidebarDetailBlock;
-	exports.MainPanelBlock = MainPanelBlock;
 	exports.SidebarFileTabTypes = SidebarFileTabTypes;
 	exports.SidebarFileTypes = SidebarFileTypes;
 	exports.Color = Color;

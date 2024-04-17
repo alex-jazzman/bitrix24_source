@@ -3,6 +3,9 @@
 namespace Bitrix\Intranet\Component;
 
 use Bitrix\Intranet\Util;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -18,6 +21,9 @@ use Bitrix\UI;
 
 class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
 {
+	private const STATUS_INVITED = 'invited';
+	public const ON_PROFILE_CONFIG_ADDITIONAL_BLOCKS = 'onProfileConfigAdditionalBlocks';
+
 	/** @var ErrorCollection errorCollection */
 	protected $errorCollection;
 	protected $form;
@@ -25,6 +31,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 	protected $tags;
 	protected $profilePost;
 	protected $stressLevel;
+	private ?array $userData;
 
 	public function __construct($component = null)
 	{
@@ -242,13 +249,23 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		return $this->errorCollection->toArray();
 	}
 
-	protected function getUserData(): ?array
+	/**
+	 * @param bool $resetCache if `TRUE` reset cache and returns actual data.
+	 *
+	 * @return array|null
+	 */
+	protected function getUserData(bool $resetCache = false): ?array
 	{
+		global $USER;
+
 		if ($this->arParams["ID"] <= 0)
 		{
 			return null;
 		}
-		global $USER;
+		elseif (isset($this->userData) && !$resetCache)
+		{
+			return $this->userData;
+		}
 
 		$filter = [
 			"ID_EQUAL_EXACT" => $this->arParams["ID"]
@@ -336,7 +353,9 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			$user["IS_INTEGRATOR"] = true;
 		}
 
-		return $user;
+		$this->userData = $user;
+
+		return $this->userData;
 	}
 
 	protected function isCurrentUserAdmin()
@@ -378,8 +397,6 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			}
 		}
 
-
-
 		$fields = [
 			'NAME', 'LAST_NAME', 'SECOND_NAME', 'PERSONAL_GENDER', 'PERSONAL_BIRTHDAY',
 			'EMAIL', 'PERSONAL_MOBILE', 'PERSONAL_WWW',  'PERSONAL_COUNTRY', 'PERSONAL_CITY', 'PERSONAL_STATE',
@@ -407,6 +424,27 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				}
 
 				$newFields[$key] = $data[$key];
+			}
+		}
+
+		$changedFields = $this->getChangedFields($newFields);
+		if (Loader::includeModule('bitrix24') && $this->isUserInvited())
+		{
+			if (isset($changedFields['EMAIL']))
+			{
+				$this->errorCollection[] = new Error(
+					Loc::getMessage('INTRANET_USER_PROFILE_CANNOT_CHANGE_EMAIL_FOR_INVITED_USER')
+				);
+
+				return null;
+			}
+			elseif (isset($changedFields['PERSONAL_MOBILE']))
+			{
+				$this->errorCollection[] = new Error(
+					Loc::getMessage('INTRANET_USER_PROFILE_CANNOT_CHANGE_PHONE_FOR_INVITED_USER')
+				);
+
+				return null;
 			}
 		}
 
@@ -469,7 +507,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
 		}
 
-		$this->arResult['User'] = $this->getUserData();
+		$this->arResult['User'] = $this->getUserData(true);
 		return [
 			'ENTITY_DATA' => $this->getFormInstance()->getData($this->arResult),
 			'SUCCESS' => 'Y'
@@ -584,7 +622,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			&& !empty($user["CONFIRM_CODE"])
 		)
 		{
-			$user["STATUS"] = "invited";
+			$user["STATUS"] = self::STATUS_INVITED;
 		}
 
 		if (in_array($user["EXTERNAL_AUTH_ID"], [ 'email' ]))
@@ -1135,5 +1173,65 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				Option::set("bitrix24", $type, $value);
 			}
 		}
+	}
+
+	/**
+	 * Changed fields.
+	 *
+	 * @param array $newFields
+	 *
+	 * @return array
+	 */
+	private function getChangedFields(array $newFields): array
+	{
+		$result = [];
+
+		$currentFields = $this->getUserData();
+		foreach ($newFields as $name => $value)
+		{
+			if ((string)$currentFields[$name] !== (string)$newFields[$name])
+			{
+				$result[$name] = $value;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Checks if current user is invited.
+	 *
+	 * @return bool
+	 */
+	private function isUserInvited(): bool
+	{
+		return $this->getUserData()['STATUS'] === self::STATUS_INVITED;
+	}
+
+	public function getAdditionalBlocks(): array
+	{
+		$result = [];
+		$event = new Event(
+			'intranet',
+			self::ON_PROFILE_CONFIG_ADDITIONAL_BLOCKS,
+			[
+				'profileId' => $this->getUserId()
+			]
+		);
+		EventManager::getInstance()->send($event);
+		foreach ($event->getResults() as $eventResult)
+		{
+			if (
+				($eventResult->getType() === EventResult::SUCCESS)
+				&& ($additionalBlock = $eventResult->getParameters()['additionalBlock'])
+				&& isset($additionalBlock['COMPONENT_NAME'])
+				&& is_string($additionalBlock['COMPONENT_NAME'])
+			)
+			{
+				$result[] = $additionalBlock;
+			}
+		}
+
+		return $result;
 	}
 }

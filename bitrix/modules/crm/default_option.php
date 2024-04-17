@@ -73,6 +73,8 @@ $crm_default_option = [
 	'path_to_invoice_activity' => '/crm/invoice/activity/',
 
 	'path_to_activity_list' => '/crm/activity/',
+	'path_to_activity_kanban' => '/crm/activity/kanban/',
+	'path_to_activity_report' => '/crm/activity/widget/',
 	'path_to_activity_show' => '/crm/activity/?ID=#activity_id#&open_view=#activity_id#',
 	'path_to_activity_edit' => '/crm/activity/?ID=#activity_id#&open_edit=#activity_id#',
 	'path_to_activity_custom_type_list' => '/crm/configs/custom_activity/',

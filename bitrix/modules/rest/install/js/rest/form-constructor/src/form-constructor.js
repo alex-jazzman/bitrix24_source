@@ -26,18 +26,6 @@ export class FormConstructor extends EventEmitter
 		this.#stepByStep = new StepByStep({
 			content: this.#getContentConfig(),
 		});
-
-		EventEmitter.subscribe(
-			EventEmitter.GLOBAL_TARGET,
-			'button-click',
-			(event) => {
-				const [clickedBtn] = event.data;
-				if (clickedBtn.TYPE === 'save')
-				{
-					this.#onClickSaveBtn(event);
-				}
-			},
-		);
 	}
 
 	getFields()
@@ -146,13 +134,6 @@ export class FormConstructor extends EventEmitter
 		}
 
 		return wrapper;
-	}
-
-	#onClickSaveBtn(): void
-	{
-		this.emit('onSave', {
-			form: this.getFormData()
-		});
 	}
 
 	getFormData(): Object

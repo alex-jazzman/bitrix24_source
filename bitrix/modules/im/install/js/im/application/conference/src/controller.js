@@ -1281,7 +1281,9 @@ class ConferenceApplication
 				click: () =>
 				{
 					this.onCallViewToggleMuteButtonClick({
-						muted: false
+						data: {
+							muted: false
+						}
 					});
 					this.mutePopup.destroy();
 					this.mutePopup = null;
@@ -1591,6 +1593,7 @@ class ConferenceApplication
 			share: this.onCallViewShareButtonClick.bind(this),
 			fullscreen: this.onCallViewFullScreenButtonClick.bind(this),
 			floorRequest: this.onCallViewFloorRequestButtonClick.bind(this),
+			feedback: this.onCallViewFeedbackButtonClick.bind(this)
 		};
 
 		if(handlers[buttonName])
@@ -1904,6 +1907,26 @@ class ConferenceApplication
 	onCallViewToggleUsersButtonClick()
 	{
 		this.toggleUserList();
+	}
+
+	onCallViewFeedbackButtonClick()
+	{
+		BX.loadExt('ui.feedback.form').then(() => {
+			BX.UI.Feedback.Form.open({
+				id: 'im-v2-feedback',
+				forms: [
+					{ zones: ['ru'], id: 406, sec: '9lhjhn', lang: 'ru' },
+				],
+				presets: {
+					sender_page: 'call',
+					call_type: this.currentCall.provider,
+					call_amount: this.currentCall.users.length + 1,
+					call_id: this.currentCall.id,
+					id_of_user: this.currentCall.userId,
+					from_domain: location.origin
+				},
+			});
+		})
 	}
 
 	onCallViewFloorRequestButtonClick()

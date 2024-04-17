@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Loader;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -13,6 +16,9 @@ return [
 	],
 	"rel" => [
 		"sidepanel",
-		"loader"
-	]
+		"loader",
+	],
+	'settings' => [
+		'licenseType' => Loader::includeModule('bitrix24') ? strtoupper(\CBitrix24::getLicenseType()) : null,
+	],
 ];

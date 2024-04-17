@@ -3254,6 +3254,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	private function autoChangeGroup(array $data): array
 	{
 		$groupId = (int)($this->request['GROUP_ID']);
+
 		if ($groupId > 0)
 		{
 			$data[Task\Project::getCode(true)] = ['ID' => $groupId];
@@ -3355,7 +3356,8 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		$this->arResult['CAN_SHOW_AI_CHECKLIST_BUTTON'] = (new Integration\AI\Restriction\Text())->isChecklistAvailable();
 		$this->arResult['CAN_USE_AI_CHECKLIST_BUTTON'] = Integration\AI\Settings::isTextAvailable();
 
-		$this->shiftDeadline();
+		// http://jabber.bx/view.php?id=185636
+		// $this->shiftDeadline();
 		$this->fillWithIMData();
 		// obtaining additional data: calendar settings, user fields
 		$this->getDataAux();
@@ -4380,7 +4382,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		}
 	}
 
-	private function rememberGroup(int $groupId): void
+	private function rememberGroup($groupId): void
 	{
 		$this->groups2Get[] = $groupId;
 	}

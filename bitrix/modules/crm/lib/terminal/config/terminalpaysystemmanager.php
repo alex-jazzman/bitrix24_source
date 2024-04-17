@@ -98,12 +98,29 @@ final class TerminalPaysystemManager
 		$reflection = new \ReflectionClass($className);
 		$className = $reflection->getName();
 
-		if (mb_strtolower($className) === mb_strtolower(\Sale\Handlers\PaySystem\YandexCheckoutHandler::class))
+		if (
+			$this->isOauth($paysystem['ID'])
+			&& mb_strtolower($className) === mb_strtolower(\Sale\Handlers\PaySystem\YandexCheckoutHandler::class)
+		)
 		{
 			return $this->hasAuth();
 		}
 
 		return true;
+	}
+
+	private function isOAuth($id): bool
+	{
+		$shopId = \Bitrix\Sale\BusinessValue::getMapping(
+			'YANDEX_CHECKOUT_SHOP_ID',
+			"PAYSYSTEM_".$id,
+			null,
+			[
+				'MATCH' => \Bitrix\Sale\BusinessValue::MATCH_EXACT
+			]
+		);
+
+		return !(isset($shopId['PROVIDER_VALUE']) && $shopId['PROVIDER_VALUE']);
 	}
 
 	private static function getPaySystemList(array $filter): array
@@ -124,7 +141,10 @@ final class TerminalPaysystemManager
 		return
 			isset($sbpPaySystem['ID'])
 			&& $sbpPaySystem['ACTIVE'] === 'Y'
-			&& $this->hasAuth()
+			&& (
+				!$this->isOAuth($sbpPaySystem['ID'])
+				|| $this->hasAuth()
+			)
 		;
 	}
 
@@ -135,7 +155,10 @@ final class TerminalPaysystemManager
 		return
 			isset($sberQrPaySystem['ID'])
 			&& $sberQrPaySystem['ACTIVE'] === 'Y'
-			&& $this->hasAuth()
+			&& (
+				!$this->isOAuth($sberQrPaySystem['ID'])
+				|| $this->hasAuth()
+			)
 		;
 	}
 

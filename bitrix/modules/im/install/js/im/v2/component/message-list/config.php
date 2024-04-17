@@ -40,6 +40,8 @@ return [
 		'im.v2.component.message.support.vote',
 		'im.v2.component.message.support.session-number',
 		'im.v2.component.message.conference-creation',
+		'im.v2.component.message.supervisor.update-feature',
+		'im.v2.component.message.supervisor.enable-feature',
 		'im.v2.component.message.own-chat-creation',
 		'im.v2.component.message.zoom-invite',
 	],

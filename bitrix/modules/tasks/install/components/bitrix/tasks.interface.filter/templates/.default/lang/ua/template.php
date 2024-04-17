@@ -39,6 +39,7 @@ $MESS["TASKS_BTN_SORT_ORIGINATOR_NAME"] = "Постановник";
 $MESS["TASKS_BTN_SORT_PRIORITY"] = "Важливість";
 $MESS["TASKS_BTN_SORT_RECOMMENDED_LABEL"] = "Рекомендується";
 $MESS["TASKS_BTN_SORT_RESPONSIBLE_NAME"] = "Відповідальний";
+$MESS["TASKS_BTN_SORT_RESPONSIBLE_NAME_MSGVER_1"] = "Виконавець";
 $MESS["TASKS_BTN_SORT_SORTING"] = "Моє сортування";
 $MESS["TASKS_BTN_SORT_TIME_ESTIMATE"] = "Планові трудовитрати";
 $MESS["TASKS_BTN_SORT_TITLE"] = "Назва";

@@ -1,6 +1,6 @@
-import { AppSettings } from './app-settings';
-// import './style.css';
+import { FormConstructor } from './form-constructor';
+import './style.css';
 
 export {
-	AppSettings,
+	FormConstructor,
 };

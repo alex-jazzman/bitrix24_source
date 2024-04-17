@@ -62,6 +62,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			manageSettings: UserRole.none,
 			canPost: UserRole.none,
 		},
+		aiProvider: '',
 	};
 
 	const dialoguesModel = {
@@ -166,7 +167,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			/** @function dialoguesModel/setState */
 			setState: (store, payload) => {
 				Object.entries(payload.collection).forEach(([key, value]) => {
-					payload.collection[key].writingList = [];
+					payload.collection[key] = { ...dialogState, ...payload.collection[key] };
 				});
 
 				store.commit('setState', {
@@ -625,7 +626,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		mutations: {
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<DialoguesSetStateData, DialoguesSetStateActions>} payload
 			 */
 			setState: (state, payload) => {
 				logger.log('dialoguesModel: setState mutation', payload);
@@ -639,7 +640,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<DialoguesAddData, DialoguesAddActions>} payload
 			 */
 			add: (state, payload) => {
 				logger.log('dialoguesModel: add mutation', payload);
@@ -654,7 +655,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<DialoguesUpdateData, DialoguesUpdateActions>} payload
 			 */
 			update: (state, payload) => {
 				logger.log('dialoguesModel: update mutation', payload);
@@ -669,7 +670,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 			/**
 			 * @param state
-			 * @param {MutationPayload} payload
+			 * @param {MutationPayload<DialoguesDeleteData, DialoguesDeleteActions>} payload
 			 */
 			delete: (state, payload) => {
 				logger.log('dialoguesModel: delete mutation', payload);
@@ -982,6 +983,16 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			{
 				result.permissions = preparedPermissions;
 			}
+		}
+
+		if (Type.isStringFilled(fields.aiProvider))
+		{
+			result.aiProvider = fields.aiProvider;
+		}
+
+		if (Type.isStringFilled(fields.ai_provider))
+		{
+			result.aiProvider = fields.ai_provider;
 		}
 
 		return result;

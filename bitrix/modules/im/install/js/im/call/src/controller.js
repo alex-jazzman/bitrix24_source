@@ -227,6 +227,7 @@ export class CallController extends EventEmitter
 		}
 		this.showFloatingWindowTimeout = 0;
 		this.hideIncomingCallTimeout = 0;
+		this.ignoreDeclinedCallsTimeout = {};
 
 		if (DesktopApi.isDesktop())
 		{
@@ -455,6 +456,15 @@ export class CallController extends EventEmitter
 
 		if (!isCurrentCallActive)
 		{
+			if (this.ignoreDeclinedCallsTimeout[newCall.id])
+			{
+				clearTimeout(this.ignoreDeclinedCallsTimeout[newCall.id]);
+				this.ignoreDeclinedCallsTimeout[newCall.id] = setTimeout(
+					() => this.answeredOrDeclinedCalls.delete(newCall.id),
+					15000
+				);
+			}
+
 			if (this.callView || this.answeredOrDeclinedCalls.has(newCall.id))
 			{
 				return;
@@ -540,6 +550,11 @@ export class CallController extends EventEmitter
 			}
 			else if (newCall.parentId == this.currentCall.id)
 			{
+				if (this.currentCall.isScreenSharingStarted())
+				{
+					this.currentCall.stopScreenSharing();
+				}
+
 				if (!this.childCall)
 				{
 					this.childCall = newCall;
@@ -650,6 +665,7 @@ export class CallController extends EventEmitter
 		this.callView.setCallback(View.Event.onOpenAdvancedSettings, this._onCallViewOpenAdvancedSettings.bind(this));
 		this.callView.setCallback(View.Event.onReplaceSpeaker, this._onCallViewReplaceSpeaker.bind(this));
 		this.callView.setCallback(View.Event.onHasMainStream, this._onCallViewHasMainStream.bind(this));
+		this.callView.setCallback(View.Event.onToggleSubscribe, this._onCallToggleSubscribe.bind(this));
 	}
 
 	updateCallViewUsers(callId, userList)
@@ -838,11 +854,6 @@ export class CallController extends EventEmitter
 		if (this.currentCall.associatedEntity && this.currentCall.associatedEntity.id)
 		{
 			this.messengerFacade.openMessenger(this.currentCall.associatedEntity.id);
-		}
-
-		if (oldCall.muted)
-		{
-			this.currentCall.setMuted(true);
 		}
 
 		this.bindCallEvents();
@@ -1074,6 +1085,11 @@ export class CallController extends EventEmitter
 		return result;
 	}
 
+	prepareUserCall(callData)
+	{
+		this.preparedUserCall = callData;
+	}
+
 	startCall(dialogId, video)
 	{
 		if (!this.isUserAgentSupported())
@@ -1103,6 +1119,7 @@ export class CallController extends EventEmitter
 		{
 			provider = Util.getConferenceProvider();
 		}
+		const isCallPrepared = provider === Provider.Plain && this.preparedUserCall?.dialogId === dialogId;
 
 		const debug1 = +(new Date());
 		this.initCallPromise = this.messengerFacade.openMessenger(dialogId)
@@ -1112,6 +1129,11 @@ export class CallController extends EventEmitter
 			})
 			.then(() =>
 			{
+				if (video && isCallPrepared)
+				{
+					this._prepareLocalStream();
+				}
+
 				this.createContainer();
 				let hiddenButtons = [];
 				if (provider === Provider.Plain)
@@ -1140,6 +1162,28 @@ export class CallController extends EventEmitter
 				});
 
 				this.bindCallViewEvents();
+
+				if (isCallPrepared)
+				{
+					this.callView.isPreparing = true;
+					this.callView.appendUsers({
+						[this.preparedUserCall.user]: UserState.Calling,
+					});
+					this.callView.updateUserData({
+						...this.preparedUserCall.userData,
+					});
+					if (this.localStream)
+					{
+						const streamData = {
+							stream: this.localStream,
+							tag: 'main',
+							flipVideo: Hardware.enableMirroring,
+						};
+
+						this.callView.setLocalStream(streamData);
+					}
+					this.callView.show();
+				}
 
 				if (video && !Hardware.hasCamera())
 				{
@@ -1187,8 +1231,15 @@ export class CallController extends EventEmitter
 				this.bindCallEvents();
 				this.createVideoStrategy();
 
-				this.callView.appendUsers(this.currentCall.getUsers());
-				this.updateCallViewUsers(this.currentCall.id, this.getCallUsers(true));
+				if (isCallPrepared)
+				{
+					this.callView.isPreparing = false;
+				}
+				else
+				{
+					this.callView.appendUsers(this.currentCall.getUsers());
+					this.updateCallViewUsers(this.currentCall.id, this.getCallUsers(true));
+				}
 
 				this.callView.show();
 
@@ -1232,10 +1283,15 @@ export class CallController extends EventEmitter
 					message: error.message || "",
 				})
 
+				if (this.hasStreamFromCall)
+				{
+					this._stopLocalStream();
+				}
 			})
 			.finally(() =>
 			{
 				this.initCallPromise = null;
+				this.preparedUserCall = null;
 			});
 	}
 
@@ -1348,7 +1404,7 @@ export class CallController extends EventEmitter
 			this.callView.releaseLocalMedia();
 		}
 
-		if (this.currentCall && this.currentCall.ready)
+		if (this.currentCall)
 		{
 			this.answeredOrDeclinedCalls.delete(this.currentCall.id);
 			this.currentCall.hangup();
@@ -1358,6 +1414,9 @@ export class CallController extends EventEmitter
 		{
 			this.callView.close();
 		}
+
+		this.hasStreamFromCall = false;
+		this._stopLocalStream();
 	}
 
 	hasActiveCall()
@@ -2227,7 +2286,10 @@ export class CallController extends EventEmitter
 				{
 					const callId = this.currentCall.id;
 					this.answeredOrDeclinedCalls.add(callId);
-					setTimeout(() => this.answeredOrDeclinedCalls.delete(callId), 30000);
+					this.ignoreDeclinedCallsTimeout[callId] = setTimeout(
+						() => this.answeredOrDeclinedCalls.delete(callId),
+						15000
+					);
 					this.removeVideoStrategy();
 					this.removeCallEvents();
 					this.currentCall.decline();
@@ -2274,6 +2336,12 @@ export class CallController extends EventEmitter
 			})
 			.then(() =>
 			{
+				if (!this.currentCall)
+				{
+					this.log('The call was destroyed while being answered');
+					return;
+				}
+
 				this.createContainer();
 				let hiddenButtons = [];
 				if (this.currentCall instanceof PlainCall)
@@ -2447,6 +2515,7 @@ export class CallController extends EventEmitter
 			fullscreen: this._onCallViewFullScreenButtonClick.bind(this),
 			document: this._onCallViewDocumentButtonClick.bind(this),
 			microphoneSideIcon: this._onCallViewMicrophoneSideIconClick.bind(this),
+			feedback: this._onCallViewFeedbackButtonClick.bind(this)
 		};
 
 		if (Type.isFunction(handlers[buttonName]))
@@ -2793,6 +2862,26 @@ export class CallController extends EventEmitter
 		}
 	}
 
+	_onCallViewFeedbackButtonClick()
+	{
+		BX.loadExt('ui.feedback.form').then(() => {
+			BX.UI.Feedback.Form.open({
+				id: 'im-v2-feedback',
+				forms: [
+					{ zones: ['ru'], id: 406, sec: '9lhjhn', lang: 'ru' },
+				],
+				presets: {
+					sender_page: 'call',
+					call_type: this.currentCall.provider,
+					call_amount: this.currentCall.users.length + 1,
+					call_id: this.currentCall.id,
+					id_of_user: this.currentCall.userId,
+					from_domain: location.origin
+				},
+			});
+		})
+	}
+
 	_onCallViewShowHistoryButtonClick()
 	{
 		this.messengerFacade.openHistory(this.currentCall.associatedEntity.id);
@@ -2930,6 +3019,10 @@ export class CallController extends EventEmitter
 		{
 			this.callView.close();
 		}
+
+		this.hasStreamFromCall = false;
+		this._stopLocalStream();
+
 		if (this.floatingWindow)
 		{
 			this.floatingWindow.close();
@@ -3174,6 +3267,7 @@ export class CallController extends EventEmitter
 	_onCallLocalMediaReceived(e)
 	{
 		this.log("Received local media stream " + e.tag);
+		this.hasStreamFromCall = true;
 		if (this.callView)
 		{
 			const flipVideo = (e.tag == "main" || e.mediaRenderer) ? Hardware.enableMirroring : false;
@@ -3211,6 +3305,11 @@ export class CallController extends EventEmitter
 					this.callView.unblockSwitchCamera();
 					this.callView.updateButtons();
 				}
+			}
+
+			if (this.localStream)
+			{
+				this._stopLocalStream();
 			}
 		}
 
@@ -3275,6 +3374,60 @@ export class CallController extends EventEmitter
 			{
 				this.callView.setUserMedia(e.userId, e.kind, null);
 			}
+		}
+	}
+
+	_prepareLocalStream(fallback = false)
+	{
+		const video = {};
+
+		if (Hardware.defaultCamera)
+		{
+			video.deviceId = { exact: Hardware.defaultCamera };
+		}
+
+		if (!fallback)
+		{
+			video.width = { ideal: 1280 };
+			video.height = { ideal: 720 };
+		}
+
+		const constraints = { audio: false, video };
+		navigator.mediaDevices.getUserMedia(constraints)
+			.then((stream) =>
+			{
+				this.localStream = stream;
+				if (!this.initCallPromise)
+				{
+					this._stopLocalStream();
+				}
+				else if (this.callView)
+				{
+					const streamData = {
+						stream,
+						tag: 'main',
+						flipVideo: Hardware.enableMirroring,
+					};
+
+					this.callView.setLocalStream(streamData);
+				}
+			})
+			.catch((error) =>
+			{
+				this.log(`Attempt to get video (fallback: ${!!fallback}) for call before it has been created failed`, error);
+				if (!fallback)
+				{
+					this._prepareLocalStream(true);
+				}
+			});
+	}
+
+	_stopLocalStream()
+	{
+		if (this.localStream)
+		{
+			Util.stopMediaStream(this.localStream);
+			this.localStream = null;
 		}
 	}
 
@@ -3778,6 +3931,9 @@ export class CallController extends EventEmitter
 			this.callView.close();
 		}
 
+		this.hasStreamFromCall = false;
+		this._stopLocalStream();
+
 		if (this.invitePopup)
 		{
 			this.invitePopup.close();
@@ -3878,6 +4034,10 @@ export class CallController extends EventEmitter
 			// trying to switch to the server version of the call
 			this.removeVideoStrategy();
 			this.removeCallEvents();
+			if (this.currentCall.isScreenSharingStarted())
+			{
+				this.currentCall.stopScreenSharing();
+			}
 			CallEngine.createChildCall(
 				this.currentCall.id,
 				Util.getConferenceProvider(),
@@ -4481,6 +4641,13 @@ export class CallController extends EventEmitter
 				}
 			}
 		})
+	}
+
+	_onCallToggleSubscribe(e) {
+		if (this.currentCall && this.currentCall.provider === Provider.Bitrix)
+		{
+			this.currentCall.toggleRemoteParticipantVideo(e.participantIds, e.showVideo, true)
+		}
 	}
 
 	toggleRoomMenu(bindElement)

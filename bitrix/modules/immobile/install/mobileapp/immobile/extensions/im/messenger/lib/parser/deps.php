@@ -26,6 +26,7 @@ return [
 		'./src/functions/font',
 		'./src/functions/image',
 		'./src/functions/smile',
+		'./src/functions/context',
 		'./src/utils/parsed-elements',
 		'./src/utils/utils',
 		'./src/elements/dialog/message/quote-active',

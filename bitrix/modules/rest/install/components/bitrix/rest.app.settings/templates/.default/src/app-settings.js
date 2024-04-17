@@ -58,15 +58,23 @@ export class AppSettings extends EventEmitter
 		{
 			return;
 		}
-		this.#formConstructor.subscribe('onSave', (event) => {
-			const { form } = event.data;
-			const data = {
-				settings: form,
-				handler: this.#handler
-			};
+		EventEmitter.subscribe(
+			EventEmitter.GLOBAL_TARGET,
+			'button-click',
+			(event) => {
+				const [clickedBtn] = event.data;
+				if (clickedBtn.TYPE === 'save')
+				{
+					const data = {
+						clientId: this.#clientId,
+						settings: this.#formConstructor.getFormData(),
+						handler: this.#handler
+					};
+					this.save(data);
+				}
+			},
+		);
 
-			this.save(data);
-		});
 		this.#formConstructor.subscribe('onReadySave', () => {
 			if (this.isReadySave())
 			{
@@ -91,6 +99,8 @@ export class AppSettings extends EventEmitter
 		{
 			return;
 		}
+
+		EventEmitter.unsubscribeAll(EventEmitter.GLOBAL_TARGET, 'button-click');
 		this.#formConstructor.unsubscribeAll('onSave');
 		this.#formConstructor.unsubscribeAll('onReadySave');
 		this.#formConstructor.unsubscribeAll('onUnreadySave');
@@ -166,6 +176,9 @@ export class AppSettings extends EventEmitter
 			{
 				top.document.location.href = this.#redirect;
 			}
+
+			const buttonWaitState = BX.UI.ButtonPanel.getContainer().querySelector('.ui-btn-wait');
+			Dom.removeClass(buttonWaitState, 'ui-btn-wait');
 		}).catch((response) => {
 			const errors = response.errors;
 			let { fieldErrors, otherErrors } = AppSettings.formatErrors(errors);

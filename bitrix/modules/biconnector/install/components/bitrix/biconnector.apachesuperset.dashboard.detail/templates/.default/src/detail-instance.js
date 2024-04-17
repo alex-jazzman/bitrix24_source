@@ -58,6 +58,7 @@ export class DetailInstance
 	#subscribeEvents()
 	{
 		EventEmitter.subscribe('BiConnector:DashboardSelector.onSelect', (event) => {
+			this.#embeddedParams = event.data.credentials;
 			Dom.clean(this.#frameNode);
 			this.#initFrame(event.data.credentials);
 			this.#initHeaderButtons();

@@ -95,7 +95,8 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 			{
 				const eventParticipants = payload.data.fields.participants;
 				const currentParticipants = this.state.participants;
-				if (eventParticipants && eventParticipants.length !== currentParticipants.length)
+
+				if (Type.isArray(eventParticipants) && eventParticipants.length !== currentParticipants.length)
 				{
 					const newParticipants = this.participantsService.getParticipantsFromStore();
 					this.updateState({ participants: newParticipants });

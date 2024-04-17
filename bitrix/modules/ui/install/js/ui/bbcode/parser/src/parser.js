@@ -1,41 +1,101 @@
 import { Type } from 'main.core';
 import {
-	ModelFactory,
-	Tag,
-	Text,
-	typeof RootNode,
-	typeof ElementNode,
-	typeof TextNode,
-	type ContentNode,
-	type SpecialCharNode,
+	BBCodeScheme,
+	DefaultBBCodeScheme,
+	BBCodeNode,
+	typeof BBCodeRootNode,
+	typeof BBCodeElementNode,
+	typeof BBCodeTextNode,
+	typeof BBCodeTagScheme,
+	type BBCodeContentNode,
+	type BBCodeSpecialCharNode,
 } from 'ui.bbcode.model';
+import { ParserScheme } from './parser-scheme';
 
-const TAG_REGEX: RegExp = /\[(\/)?(\w+|\*)([\s\w./:=]+)?]/gs;
+const TAG_REGEX: RegExp = /\[(\/)?(\w+|\*)([\s\w"'./:=]+)?]/gs;
+const isSpecialChar = (symbol: string): boolean => {
+	return ['\n', '\t'].includes(symbol);
+};
 
-class Parser
+const isList = (tagName: string): boolean => {
+	return ['list', 'ul', 'ol'].includes(tagName);
+};
+
+const isListItem = (tagName: string): boolean => {
+	return ['*', 'li'].includes(tagName);
+};
+
+const parserScheme = new ParserScheme();
+
+type BBCodeParserOptions = {
+	scheme?: BBCodeScheme,
+	onUnknown?: (node: BBCodeContentNode, scheme: BBCodeScheme) => void,
+};
+
+class BBCodeParser
 {
-	factory: ModelFactory;
+	scheme: BBCodeScheme;
+	onUnknownHandler: () => any;
 
-	constructor(options: { factory: ModelFactory } = {})
+	constructor(options: BBCodeParserOptions = {})
 	{
-		if (options.factory)
+		if (options.scheme)
 		{
-			this.setFactory(options.factory);
+			this.setScheme(options.scheme);
 		}
 		else
 		{
-			this.setFactory(new ModelFactory());
+			this.setScheme(new DefaultBBCodeScheme());
+		}
+
+		if (Type.isFunction(options.onUnknown))
+		{
+			this.setOnUnknown(options.onUnknown);
+		}
+		else
+		{
+			this.setOnUnknown(BBCodeParser.defaultOnUnknownHandler);
 		}
 	}
 
-	setFactory(factory: ModelFactory)
+	setScheme(scheme: BBCodeScheme)
 	{
-		this.factory = factory;
+		this.scheme = scheme;
 	}
 
-	getFactory(): ModelFactory
+	getScheme(): BBCodeScheme
 	{
-		return this.factory;
+		return this.scheme;
+	}
+
+	setOnUnknown(handler: () => any)
+	{
+		if (!Type.isFunction(handler))
+		{
+			throw new TypeError('handler is not a function');
+		}
+
+		this.onUnknownHandler = handler;
+	}
+
+	getOnUnknownHandler(): () => any
+	{
+		return this.onUnknownHandler;
+	}
+
+	static defaultOnUnknownHandler(node: BBCodeContentNode, scheme: BBCodeScheme): ?Array<BBCodeContentNode>
+	{
+		if (node.getType() === BBCodeNode.ELEMENT_NODE)
+		{
+			const openingTag: string = node.getOpeningTag();
+			const closingTag: string = node.getClosingTag();
+
+			node.replace(
+				scheme.createText(openingTag),
+				...node.getChildren(),
+				scheme.createText(closingTag),
+			);
+		}
 	}
 
 	static toLowerCase(value: string): string
@@ -48,22 +108,20 @@ class Parser
 		return value;
 	}
 
-	parseText(text: string): Array<TextNode | SpecialCharNode>
+	parseText(text: string): Array<BBCodeTextNode | BBCodeSpecialCharNode>
 	{
-		const factory: ModelFactory = this.getFactory();
-
 		if (Type.isStringFilled(text))
 		{
 			return [...text]
-				.reduce((acc: Array<TextNode | SpecialCharNode>, symbol: string) => {
-					if (Text.isSpecialCharContent(symbol))
+				.reduce((acc: Array<BBCodeTextNode | BBCodeSpecialCharNode>, symbol: string) => {
+					if (isSpecialChar(symbol))
 					{
 						acc.push(symbol);
 					}
 					else
 					{
 						const lastItem: string = acc.at(-1);
-						if (Text.isSpecialCharContent(lastItem) || Type.isNil(lastItem))
+						if (isSpecialChar(lastItem) || Type.isNil(lastItem))
 						{
 							acc.push(symbol);
 						}
@@ -76,17 +134,17 @@ class Parser
 					return acc;
 				}, [])
 				.map((fragment: string) => {
-					if (Text.isNewLineContent(fragment))
+					if (fragment === '\n')
 					{
-						return factory.createNewLineNode();
+						return parserScheme.createNewLine();
 					}
 
-					if (Text.isTabContent(fragment))
+					if (fragment === '\t')
 					{
-						return factory.createTabNode();
+						return parserScheme.createTab();
 					}
 
-					return factory.createTextNode({ content: fragment });
+					return parserScheme.createText({ content: fragment });
 				});
 		}
 
@@ -105,26 +163,42 @@ class Parser
 		return -1;
 	}
 
+	static trimQuotes(value: string): string
+	{
+		const source = String(value);
+		if ((/^["'].*["']$/g).test(source))
+		{
+			return source.slice(1, -1);
+		}
+
+		return value;
+	}
+
 	parseAttributes(sourceAttributes: string): { value: ?string, attributes: Array<[string, string]> }
 	{
 		const result: {value: string, attributes: Array<Array<string, string>>} = { value: '', attributes: [] };
 
 		if (Type.isStringFilled(sourceAttributes))
 		{
+			if (sourceAttributes.startsWith('='))
+			{
+				result.value = BBCodeParser.trimQuotes(
+					sourceAttributes.slice(1),
+				);
+
+				return result;
+			}
+
 			return sourceAttributes
 				.trim()
 				.split(' ')
 				.filter(Boolean)
 				.reduce((acc: typeof result, item: string) => {
-					if (item.startsWith('='))
-					{
-						acc.value = item.slice(1);
-
-						return acc;
-					}
-
 					const [key: string, value: string = ''] = item.split('=');
-					acc.attributes.push([Parser.toLowerCase(key), value]);
+					acc.attributes.push([
+						BBCodeParser.toLowerCase(key),
+						BBCodeParser.trimQuotes(value),
+					]);
 
 					return acc;
 				}, result);
@@ -133,15 +207,14 @@ class Parser
 		return result;
 	}
 
-	parse(bbcode: string): RootNode
+	parse(bbcode: string): BBCodeRootNode
 	{
-		const factory: ModelFactory = this.getFactory();
-		const result: RootNode = factory.createRootNode();
-		const stack: Array<ElementNode> = [];
-		let current: ?ElementNode = null;
+		const result: BBCodeRootNode = parserScheme.createRoot();
+		const stack: Array<BBCodeElementNode> = [];
+		let current: ?BBCodeElementNode = null;
 		let level: number = -1;
 
-		const firstTagIndex: number = Parser.findNextTagIndex(bbcode);
+		const firstTagIndex: number = BBCodeParser.findNextTagIndex(bbcode);
 		if (firstTagIndex !== 0)
 		{
 			const textBeforeFirstTag: string = firstTagIndex === -1 ? bbcode : bbcode.slice(0, firstTagIndex);
@@ -155,8 +228,8 @@ class Parser
 			const startIndex: number = fullTag.length + index;
 			const nextContent: string = bbcode.slice(startIndex);
 			const attributes = this.parseAttributes(attrs);
-			const lowerCaseTagName: string = Parser.toLowerCase(tagName);
-			let parent: ?(RootNode | ElementNode) = null;
+			const lowerCaseTagName: string = BBCodeParser.toLowerCase(tagName);
+			let parent: ?(BBCodeRootNode | BBCodeElementNode) = null;
 
 			if (isOpenTag)
 			{
@@ -164,16 +237,16 @@ class Parser
 
 				if (
 					nextContent.includes(`[/${tagName}]`)
-					|| Tag.isListItem(lowerCaseTagName)
+					|| isListItem(lowerCaseTagName)
 				)
 				{
-					current = factory.createElementNode({
+					current = parserScheme.createElement({
 						name: lowerCaseTagName,
 						value: attributes.value,
 						attributes: Object.fromEntries(attributes.attributes),
 					});
 
-					const nextTagIndex: number = Parser.findNextTagIndex(bbcode, startIndex);
+					const nextTagIndex: number = BBCodeParser.findNextTagIndex(bbcode, startIndex);
 					if (nextTagIndex !== 0)
 					{
 						const content: string = nextTagIndex === -1 ? nextContent : bbcode.slice(startIndex, nextTagIndex);
@@ -184,12 +257,21 @@ class Parser
 				}
 				else
 				{
-					current = factory.createElementNode({
-						name: lowerCaseTagName,
-						value: attributes.value,
-						attributes: Object.fromEntries(attributes.attributes),
-						void: true,
-					});
+					const tagScheme: BBCodeTagScheme = this.getScheme().getTagScheme(lowerCaseTagName);
+					if (tagScheme.isVoid())
+					{
+						current = parserScheme.createElement({
+							name: lowerCaseTagName,
+							value: attributes.value,
+							attributes: Object.fromEntries(attributes.attributes),
+						});
+
+						current.setScheme(this.getScheme());
+					}
+					else
+					{
+						current = parserScheme.createText(fullTag);
+					}
 				}
 
 				if (level === 0)
@@ -199,20 +281,24 @@ class Parser
 
 				parent = stack[level - 1];
 
-				if (Tag.isList(current.getName()))
+				if (isList(current.getName()))
 				{
-					if (parent && Tag.isList(parent.getName()))
+					if (parent && isList(parent.getName()))
 					{
 						stack[level].appendChild(current);
+					}
+					else if (parent)
+					{
+						parent.appendChild(current);
 					}
 				}
 				else if (
 					parent
-					&& Tag.isList(parent.getName())
-					&& !Tag.isListItem(current.getName())
+					&& isList(parent.getName())
+					&& !isListItem(current.getName())
 				)
 				{
-					const lastItem: ?ContentNode = parent.getChildren().at(-1);
+					const lastItem: ?BBCodeContentNode = parent.getChildren().at(-1);
 					if (lastItem)
 					{
 						lastItem.appendChild(current);
@@ -225,14 +311,19 @@ class Parser
 
 				stack[level] = current;
 
-				if (Tag.isListItem(lowerCaseTagName) && level > -1)
+				if (isListItem(lowerCaseTagName) && level > -1)
 				{
 					level--;
 					current = level === -1 ? result : stack[level];
 				}
 			}
 
-			if (!isOpenTag || current.isVoid())
+			if (current.getName() === '#text')
+			{
+				level--;
+			}
+
+			if (!isOpenTag || current.getName() === '#text' || current.isVoid())
 			{
 				if (level > -1 && current.getName() === lowerCaseTagName)
 				{
@@ -240,15 +331,15 @@ class Parser
 					current = level === -1 ? result : stack[level];
 				}
 
-				const nextTagIndex: number = Parser.findNextTagIndex(bbcode, startIndex);
+				const nextTagIndex: number = BBCodeParser.findNextTagIndex(bbcode, startIndex);
 				if (nextTagIndex !== startIndex)
 				{
 					parent = level === -1 ? result : stack[level];
 
 					const content: ?string = bbcode.slice(startIndex, nextTagIndex === -1 ? undefined : nextTagIndex);
-					if (Tag.isList(parent.getName()))
+					if (isList(parent.getName()))
 					{
-						const lastItem: ?ContentNode = parent.getChildren().at(-1);
+						const lastItem: ?BBCodeContentNode = parent.getChildren().at(-1);
 						if (lastItem)
 						{
 							lastItem.appendChild(
@@ -266,10 +357,54 @@ class Parser
 			}
 		});
 
+		const getFinalLineBreaksIndexes = (node: BBCodeContentNode) => {
+			let skip = false;
+
+			return node
+				.getChildren()
+				.reduceRight((acc: Array<BBCodeContentNode>, child: BBCodeContentNode, index: number) => {
+					if (!skip && child.getName() === '#linebreak')
+					{
+						acc.push(index);
+					}
+					else if (!skip && child.getName() !== '#tab')
+					{
+						skip = true;
+					}
+
+					return acc;
+				}, []);
+		};
+
+		BBCodeNode.flattenAst(result).forEach((node: BBCodeContentNode) => {
+			if (node.getName() === '*')
+			{
+				const finalLinebreaksIndexes: Array<number> = getFinalLineBreaksIndexes(node);
+				if (finalLinebreaksIndexes.length === 1)
+				{
+					node.setChildren(
+						node.getChildren().slice(0, finalLinebreaksIndexes.at(0)),
+					);
+				}
+
+				if (finalLinebreaksIndexes.length > 1 && (finalLinebreaksIndexes & 2) === 0)
+				{
+					node.setChildren(
+						node.getChildren().slice(0, finalLinebreaksIndexes.at(0)),
+					);
+				}
+			}
+		});
+
+		result.setScheme(
+			this.getScheme(),
+			this.getOnUnknownHandler(),
+		);
+
 		return result;
 	}
 }
 
 export {
-	Parser,
+	BBCodeParser,
 };

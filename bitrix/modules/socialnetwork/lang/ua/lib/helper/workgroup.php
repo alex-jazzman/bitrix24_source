@@ -42,6 +42,7 @@ $MESS["SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_EXTERNAL"] = "Зовнішня г
 $MESS["SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_EXTERNAL_DESC"] = "Група видима лише її членам, до неї можна запрошувати зовнішніх користувачів.";
 $MESS["SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_LANDING"] = "Група для зовнішніх публікацій";
 $MESS["SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_LANDING2"] = "Для публікації на Бітрікс24 Сайтах";
+$MESS["SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_LANDING2_MSGVER_1"] = "Для публікації на Бітрікс24 Сайтах";
 $MESS["SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_LANDING_DESC"] = "Публікація новин і постів на Бітрікс24.Сайтах. Група видима тільки її членам, вступити в неї можна тільки після схвалення модератором.";
 $MESS["SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_LANDING_DESC2"] = "Публікація новин і постів на Бітрікс24.Сайтах. Видно тільки учасникам, вступити можна лише після схвалення модератором.";
 $MESS["SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_LANDING_DESC2_MSGVER_2"] = "Публікація новин і постів на Бітрікс24 Сайтах. Група видима лише її учасникам, вступити до неї можна лише після схвалення модератором.";

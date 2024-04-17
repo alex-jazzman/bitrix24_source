@@ -42,15 +42,6 @@ else
 	$lastPage = true;
 }
 
-$urlAdd = '';
-if ($arResult['ACCESS_SITE_NEW'] === 'Y' && !$arResult['IS_DELETED'])
-{
-	$urlAdd = ($arParams['TYPE'] === 'STORE')
-		? $component->getUrlAdd(true, ['super' => 'Y'])
-		: $component->getUrlAdd()
-	;
-}
-
 $urlAddCondition = '';
 if ($arResult['ACCESS_SITE_NEW'] === 'Y' && !$arResult['IS_DELETED'])
 {
@@ -169,37 +160,6 @@ if ($arResult['EXPORT_DISABLED'] === 'Y')
 								sitePath = sitePath.replace(replace[0], replace[1]);
 							});
 
-							if (
-								event.data.from !== undefined
-								&& typeof BX.Landing.Metrika !== 'undefined'
-							)
-							{
-								var dataFrom = event.data.from.split('|');
-								var appCode = dataFrom[1];
-								var title = dataFrom[2];
-								var previewId = dataFrom[3];
-								if (
-									appCode !== null
-									&& title !== null
-									&& previewId !== null
-								)
-								{
-									var metrikaValue =
-										sitePath
-										+ '?action=templateCreated&app_code='
-										+ appCode
-										+ '&title='
-										+ title
-										+ '&preview_id='
-										+ previewId;
-									var metrika = new BX.Landing.Metrika(true);
-									metrika.sendLabel(
-										null,
-										'templateCreated',
-										metrikaValue
-									);
-								}
-							}
 							gotoSiteButton.setAttribute('href', sitePath);
 							setTimeout(() => {window.location.href = sitePath}, 3000);
 						}
@@ -211,6 +171,24 @@ if ($arResult['EXPORT_DISABLED'] === 'Y')
 		}
 	);
 </script>
+
+	<?php if (isset($arResult['FORCE_VERIFY_SITE_ID']) && $arResult['FORCE_VERIFY_SITE_ID'] > 0): ?>
+		<script>
+			if (
+				top.BX.Bitrix24
+				&& BX.Type.isObject(BX.Bitrix24.PhoneVerify)
+			)
+			{
+				BX.Bitrix24.PhoneVerify
+					.getInstance()
+					.setEntityType('landing_site')
+					.setEntityId(<?= $arResult['FORCE_VERIFY_SITE_ID'] ?>)
+					.startVerify({mandatory: false})
+				;
+			}
+		</script>
+	<?php endif; ?>
+
 <?endif?>
 
 <?
@@ -299,7 +277,10 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 	}
 	else
 	{
-		$urlCreatePage = $component->getUrlAdd(false);
+		$urlCreatePage = $component->getUrlAdd(false, [
+			'context_section' => 'site_list',
+			'context_element' => 'tile_menu_link',
+		]);
 		$urlCreatePage = str_replace('%23', '#', $urlCreatePage);
 		$menuItems = [
 			[
@@ -365,6 +346,20 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 		];
 	}
 
+	$urlAdd = '';
+	if ($arResult['ACCESS_SITE_NEW'] === 'Y' && !$arResult['IS_DELETED'])
+	{
+		$urlAddParams = [
+			'context_section' => 'site_list',
+			'context_element' => 'banner',
+		];
+		if ($arParams['TYPE'] === 'STORE')
+		{
+			$urlAddParams['super'] = 'Y';
+		}
+		$urlAdd = $component->getUrlAdd(true, $urlAddParams);
+	}
+
 	$APPLICATION->includeComponent(
 		'bitrix:landing.site_tile',
 		'.default',
@@ -428,7 +423,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 		<?php elseif ($arResult['ACCESS_SITE_NEW'] === 'Y' && !$arResult['IS_DELETED']): ?>
 		<div class="landing-item landing-item-add-new">
 			<?php $urlEdit = str_replace('#site_edit#', 0, $arParams['PAGE_URL_SITE_EDIT']);?>
-			<span class="landing-item-inner" data-href="<?= $urlEdit ?>">
+			<span class="landing-item-inner" data-href="<?= \htmlspecialcharsbx($urlEdit) ?>">
 				<span class="landing-item-add-new-inner">
 					<span class="landing-item-add-icon"></span>
 					<span class="landing-item-text">

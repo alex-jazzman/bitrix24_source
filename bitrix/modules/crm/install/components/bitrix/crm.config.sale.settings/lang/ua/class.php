@@ -29,6 +29,7 @@ $MESS["CRM_CF_PRODUCT_RESERVED"] = "Товар резервується";
 $MESS["CRM_CF_PRODUCT_RESERVE_CLEAR_PERIOD"] = "Зняття резервів (через скільки днів)";
 $MESS["CRM_CF_PRODUCT_RESERVE_CONDITION"] = "Товар резервується";
 $MESS["CRM_CF_PRODUCT_SETTINGS_CHANGE"] = "Змінити";
+$MESS["CRM_CF_PRODUCT_SETTINGS_DISABLE"] = "Відключити";
 $MESS["CRM_CF_PRODUCT_SETTINGS_STATUS_NO"] = "Ні";
 $MESS["CRM_CF_PRODUCT_SETTINGS_STATUS_YES"] = "Так";
 $MESS["CRM_CF_PRODUCT_SUBSCRIBE"] = "Дозволити підписку при відсутності товару";

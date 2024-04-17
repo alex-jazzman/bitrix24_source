@@ -843,7 +843,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 			<AddToChat
 				:bindElement="$refs['add-members'] || {}"
-				:chatId="chatId"
 				:dialogId="dialogId"
 				:showPopup="showAddToChatPopup"
 				:popupConfig="{offsetTop: 15, offsetLeft: -300}"

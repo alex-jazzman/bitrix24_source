@@ -1,0 +1,9 @@
+<?php
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_"] = "Доступ закритий";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_A"] = "Свої";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_AUTOMATION_ALL"] = "Редагування";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_AUTOMATION_NONE"] = "Читання";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_D"] = "Свої + свого відділу";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_F"] = "Свої + свого відділу + підвідділів";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_O"] = "Усі відкриті";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_X"] = "Усі";

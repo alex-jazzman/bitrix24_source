@@ -144,7 +144,19 @@ export class BaseSettingsPage extends BaseSettingsElement
 
 		this.appendSections(contentNode);
 
+		EventEmitter.emit(
+			EventEmitter.GLOBAL_TARGET,
+			'BX.Intranet.Settings:onContentFetched', {
+				page: this,
+			},
+		);
+
 		return this.#content;
+	}
+
+	hasContent(): boolean
+	{
+		return !Type.isNil(this.#content);
 	}
 
 	headerWidgetRender(): HTMLElement
@@ -223,6 +235,13 @@ export class BaseSettingsPage extends BaseSettingsElement
 			this.#content = null;
 			Dom.append(this.render(), this.#page);
 		}
+
+		EventEmitter.emit(
+			EventEmitter.GLOBAL_TARGET,
+			'BX.Intranet.Settings:onPageComplete', {
+				page: this,
+			},
+		);
 	}
 
 	onFailDataFetched(response): void

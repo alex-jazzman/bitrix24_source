@@ -52,11 +52,18 @@ export const ChatSidebar = {
 		{
 			return this.needSecondLevelTransition ? 'second-level-panel' : '';
 		},
-		canShowTopPanelForChat(): boolean
+		canShowTopPanel(): boolean
 		{
+			const membersPanel = this.topLevelPanelType === SidebarDetailBlock.members;
 			const personalChat = !this.originDialogId.startsWith('chat');
+			if (membersPanel && personalChat)
+			{
+				return false;
+			}
 
-			return !(personalChat && this.topLevelPanelType === SidebarDetailBlock.members);
+			const messageSearchPanel = this.topLevelPanelType === SidebarDetailBlock.messageSearch;
+
+			return !messageSearchPanel;
 		},
 	},
 	watch:
@@ -69,7 +76,7 @@ export const ChatSidebar = {
 				this.needTopLevelTransition = false;
 			}
 
-			if (!this.secondLevelPanelStandalone && !this.topLevelPanelStandalone)
+			if (!this.topLevelPanelStandalone)
 			{
 				this.updateTopPanelOriginDialogId(newValue);
 			}
@@ -80,7 +87,7 @@ export const ChatSidebar = {
 				this.closeSecondLevelPanel();
 			}
 
-			if (!this.canShowTopPanelForChat)
+			if (!this.canShowTopPanel)
 			{
 				this.closeTopPanel();
 			}

@@ -38,7 +38,7 @@ class Relation
 		$this->sendPullAdd();
 	}
 
-	public function removeRelation(int $userId, bool $changeFolderMembers = true): void
+	public function removeRelation(int $userId): void
 	{
 		$this->userId = $userId;
 		$this->userIds = array_unique(array_diff($this->userIds, [$this->userId]));
@@ -46,29 +46,17 @@ class Relation
 		$this->sendPullChatHide();
 
 		Recent::removeRecent($this->userId, $this->chatId);
-
-		if ($changeFolderMembers)
-		{
-			\CIMDisk::ChangeFolderMembers($this->chatId, $this->userId, false);
-		}
 	}
 
 	public function removeAllRelations(bool $force = false, array $excludeUserIds = []): void
 	{
 		$this->userIds = array_diff($this->userIds, $excludeUserIds);
-		$folderMembersIds = [];
 		foreach ($this->userIds as $userId)
 		{
 			if ($force || !isset($this->userId) || $this->userId !== $userId)
 			{
-				$this->removeRelation($userId, false);
-				$folderMembersIds[] = $userId;
+				$this->removeRelation($userId);
 			}
-		}
-
-		if (!empty($folderMembersIds))
-		{
-			\CIMDisk::ChangeFolderMembers($this->chatId, $folderMembersIds, false);
 		}
 	}
 

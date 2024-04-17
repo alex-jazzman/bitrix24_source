@@ -37,7 +37,7 @@ export class DropdownList extends BaseField
 
 				Dom.append(itemElement, itemsWrapper);
 			});
-			this.value = this.options.items[0].value ?? null;
+			// this.value = this.options.items[0].value ?? null;
 			Dom.append(itemsWrapper, wrapper);
 
 			if (this.options.hasOwnProperty('updateForm') && this.options.updateForm)

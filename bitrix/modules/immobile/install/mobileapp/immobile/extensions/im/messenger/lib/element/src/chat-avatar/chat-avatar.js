@@ -66,6 +66,13 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				return;
 			}
 
+			if (dialog.type === DialogType.copilot)
+			{
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_copilot.png`;
+
+				return;
+			}
+
 			this.avatar = dialog.avatar;
 			this.color = dialog.color;
 		}

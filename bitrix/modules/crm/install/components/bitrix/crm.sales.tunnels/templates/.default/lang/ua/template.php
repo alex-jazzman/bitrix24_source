@@ -1,10 +1,14 @@
 <?php
 $MESS["CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL"] = "Відкрити доступ всім менеджерам";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL_MSGVER_1"] = "Відкрити доступ усім менеджерам";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS"] = "Скопіювати права доступу з воронки";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS2"] = "Копіювати права доступу з вирви";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_CUSTOM"] = "Індивідуальні налаштування прав";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL"] = "Закрити доступ всім менеджерам";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL_MSGVER_1"] = "Закрити доступ усім менеджерам";
 $MESS["CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL"] = "Дати доступ тільки на свої угоди";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL_MSGVER_1"] = "Дати доступ лише на свої угоди";
+$MESS["CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ELEMENT_MSGVER_1"] = "Дати доступ лише до своїх елементів";
 $MESS["CRM_ST_ACTION_COPY"] = "копіювати";
 $MESS["CRM_ST_ACTION_MOVE"] = "перемістити";
 $MESS["CRM_ST_ADD_FUNNEL_BUTTON"] = "Додати воронку";

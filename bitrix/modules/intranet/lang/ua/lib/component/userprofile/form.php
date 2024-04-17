@@ -5,8 +5,11 @@ $MESS["INTRANET_USER_PROFILE_FIELD_AUTO_TIME_ZONE_NO"] = "Ні, вибрати �
 $MESS["INTRANET_USER_PROFILE_FIELD_AUTO_TIME_ZONE_YES"] = "Так, визначити за браузером";
 $MESS["INTRANET_USER_PROFILE_FIELD_DATE_REGISTER"] = "Дата реєстрації";
 $MESS["INTRANET_USER_PROFILE_FIELD_EMAIL"] = "Контактний Email";
+$MESS["INTRANET_USER_PROFILE_FIELD_EMAIL_MSG_1"] = "Контактний Email";
 $MESS["INTRANET_USER_PROFILE_FIELD_EMPTY"] = "Не вказано";
 $MESS["INTRANET_USER_PROFILE_FIELD_FULL_NAME"] = "ПІБ";
+$MESS["INTRANET_USER_PROFILE_FIELD_HELP_PASSWORD_TAB"] = "Змінити пошту, яку ви використовуєте для авторизації в Бітрікс24, можна в розділі <span class=\"--underline\"><a target=\"_blank\" href=\"#HELP_LINK#\">«Паролі»</a></span>.";
+$MESS["INTRANET_USER_PROFILE_FIELD_LANGUAGE_ID"] = "Мова для сповіщень";
 $MESS["INTRANET_USER_PROFILE_FIELD_LAST_ACTIVITY_DATE"] = "Дата останньої активності";
 $MESS["INTRANET_USER_PROFILE_FIELD_LAST_NAME"] = "Прізвище";
 $MESS["INTRANET_USER_PROFILE_FIELD_LOGIN"] = "Логін";
@@ -41,4 +44,3 @@ $MESS["INTRANET_USER_PROFILE_FIELD_WORK_PHONE"] = "Робочий телефон
 $MESS["INTRANET_USER_PROFILE_FIELD_WORK_POSITION"] = "Посада";
 $MESS["INTRANET_USER_PROFILE_FIELD_WORK_PROFILE"] = "Напрямки діяльності";
 $MESS["INTRANET_USER_PROFILE_SECTION_CONTACT_TITLE"] = "Контактна інформація";
-$MESS["INTRANET_USER_PROFILE_FIELD_LANGUAGE_ID"] = "Мова для сповіщень";

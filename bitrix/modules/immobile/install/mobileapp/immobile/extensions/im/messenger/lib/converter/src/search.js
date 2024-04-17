@@ -36,7 +36,7 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 
 			if (!item.imageUrl && !preparedUser.lastActivityDate)
 			{
-				item.imageUrl = `${component.path}images` + '/avatar_wait_x3.png';
+				item.imageUrl = '/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/png/avatar_wait_x3.png';
 			}
 
 			item.color = preparedUser.color;

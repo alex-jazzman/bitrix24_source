@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_loader,main_core,ui_popupcomponentsmaker,ui_buttons,main_core_events,rest_listener,rest_appForm) {
 	'use strict';
@@ -573,10 +574,9 @@ this.BX = this.BX || {};
 	    _this.setEventNamespace('BX.Rest.EInvoiceInstaller');
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _options$1, options);
 	    _this.render('selection');
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _formListener, new rest_listener.Listener('showForm', function () {
-	      var _BX$SidePanel$Instanc;
-	      (_BX$SidePanel$Instanc = BX.SidePanel.Instance.getSlider('/einvoice/install/')) === null || _BX$SidePanel$Instanc === void 0 ? void 0 : _BX$SidePanel$Instanc.close();
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _formListener, new rest_listener.Listener('showForm', function (data) {
 	      new rest_appForm.AppForm(data.params).show();
+	      _this.render('selection');
 	    }));
 	    _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _getPageProvider, _getPageProvider2).call(babelHelpers.assertThisInitialized(_this)).getPageByType('selection').subscribe('start-install-app', _classPrivateMethodGet$5(babelHelpers.assertThisInitialized(_this), _onStartInstall, _onStartInstall2).bind(babelHelpers.assertThisInitialized(_this)));
 	    return _this;
