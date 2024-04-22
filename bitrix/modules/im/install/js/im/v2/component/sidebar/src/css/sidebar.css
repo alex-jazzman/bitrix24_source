@@ -1,0 +1,43 @@
+.bx-im-sidebar__container {
+	--im-sidebar__width_container: 320px;
+
+	height: 100%;
+	position: relative;
+	border-left: 1px solid rgb(0 0 0 / 6%);
+}
+
+.top-level-panel-enter-active,
+.top-level-panel-leave-active {
+	transition: all 0.3s;
+}
+
+.top-level-panel-enter-from,
+.top-level-panel-leave-to {
+	width: 0;
+	min-width: 0;
+}
+
+.top-level-panel-enter-to,
+.top-level-panel-leave-from {
+	width: var(--im-sidebar__width_container);
+	min-width: var(--im-sidebar__width_container);
+}
+
+
+.second-level-panel-enter-active,
+.second-level-panel-leave-active {
+	transition: all 0.3s;
+}
+
+.second-level-panel-enter-from,
+.second-level-panel-leave-to {
+	transform: translateX(var(--im-sidebar__width_container));
+}
+
+.second-level-panel-enter-to,
+.second-level-panel-leave-from {
+	transform: translateX(0);
+}
+
+
+

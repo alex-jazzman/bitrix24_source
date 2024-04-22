@@ -1,0 +1,5 @@
+<?php
+$MESS["CATALOG_IBLOCKSECTIONFIELD_SELECT"] = "выбрать раздел";
+$MESS["CATALOG_IBLOCKSECTIONFIELD_IS_EMPTY_TITLE"] = "Раздел не найден";
+$MESS["CATALOG_IBLOCKSECTIONFIELD_IS_EMPTY_SUBTITLE"] = "Создать новый раздел?";
+$MESS["CATALOG_IBLOCKSECTIONFIELD_PLACEHOLDER"] = "Найти или создать новый раздел";

@@ -1,0 +1,46 @@
+.crm-timeline__item_sms-message {
+	--crm-timeline__item_sms-message-border-color: #BFE7F9;
+
+	max-width: 90%;
+	position: relative;
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--crm-timeline__item_sms-message-border-color);
+	color: var(--ui-color-text-secondary, #525c69);
+	font-size: var(--ui-font-size-sm, 13px);
+	line-height: var(--ui-font-line-height-lg, 1.5);
+	font-weight: var(--ui-font-weight-normal, 400);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	word-break: break-all;
+}
+
+.crm-timeline__item_sms-message>span {
+	position: relative;
+	display: block;
+	padding: 4px 12px
+}
+
+.crm-timeline__item_sms-message::after {
+	content: '';
+	position: absolute;
+	width: 14px;
+	height: 10px;
+	mask-image: url("../../images/common/crm-timeline__sms-message-block-angle.svg");
+	mask-position: center center;
+	/*mask-size: contain;*/
+	background-color: var(--crm-timeline__item_sms-message-border-color);
+	top: 5px;
+	right: -13px;
+	z-index: 3;
+}
+
+.crm-timeline__item_sms-message::before {
+	content: '';
+	width: 1px;
+	height: 7px;
+	background-color: var(--crm-timeline__card-color-background);
+	position: absolute;
+	top: 6px;
+	right: -1px;
+	z-index: 2;
+}

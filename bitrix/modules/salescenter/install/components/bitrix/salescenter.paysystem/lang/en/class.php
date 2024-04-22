@@ -1,0 +1,25 @@
+<?php
+$MESS["SALESCENTER_SP_CASHBOX_COMMON_SETTINGS"] = "Cash register parameters";
+$MESS["SALESCENTER_SP_CASHBOX_COMMON_SETTINGS_CASHBOXROBOKASSA"] = "Configure Robo-receipts";
+$MESS["SALESCENTER_SP_CASHBOX_COMMON_SETTINGS_CASHBOXYOOKASSA"] = "YooMoney receipt configuration";
+$MESS["SALESCENTER_SP_CASHBOX_EMAIL_HINT"] = "A message will be sent to this email if a receipt could not be printed";
+$MESS["SALESCENTER_SP_CASHBOX_ERROR_NO_HANDLER_EXIST"] = "Cash register handler is incorrect";
+$MESS["SALESCENTER_SP_CASHBOX_MEASURE_HINT"] = "Unit of measurement is printed on the receipt for reference.";
+$MESS["SALESCENTER_SP_CASHBOX_OFD_OPTION_OTHER"] = "Other";
+$MESS["SALESCENTER_SP_CASHBOX_OFD_SETTINGS"] = "OFD settings";
+$MESS["SALESCENTER_SP_CASHBOX_OFD_TITLE"] = "OFD";
+$MESS["SALESCENTER_SP_CASHBOX_VAT_ATTENTION"] = "The value of \"No Tax [0%]\" must be the same as \"No Tax [Default]\" if you are tax exempt.";
+$MESS["SALESCENTER_SP_CASHBOX_VAT_HINT"] = "Tax rate is printed on the receipt for reference.";
+$MESS["SALESCENTER_SP_PAYSYSTEM_NAME_TEMPLATE"] = "#PAYSYSTEMS_NAME# using #HANDLERS_NAME#";
+$MESS["SP_MENU_ITEM_CASHBOX"] = "FZ-54";
+$MESS["SP_MENU_ITEM_PARAMS"] = "Parameters";
+$MESS["SP_MENU_ITEM_RESTRICTION"] = "Restrictions";
+$MESS["SP_MENU_ITEM_RESTRICTION_SET"] = "My restrictions";
+$MESS["SP_MENU_ITEM_SORT"] = "Sort";
+$MESS["SP_PAYMENT_SUB_TITLE"] = "(payment via #SUB_TITLE#)";
+$MESS["SP_RP_CONFIRM_DEL_MESSAGE"] = "Are you sure you want to delete this restriction?";
+$MESS["SP_RP_DELETE_DESCR"] = "Delete";
+$MESS["SP_RP_EDIT_DESCR"] = "Edit";
+$MESS["SP_SALESCENTER_MODULE_ERROR_MSGVER_1"] = "The \"Sales Center\" module is not installed.";
+$MESS["SP_SALESCENTER_SALE_ACCESS_DENIED"] = "Access denied.";
+$MESS["SP_SEO_MODULE_ERROR"] = "The \"SEO\" module is not installed";

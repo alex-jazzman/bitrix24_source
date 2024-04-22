@@ -1,0 +1,4 @@
+.bx-im-sidebar-meeting-detail__date-group_container {
+	display: flex;
+	flex-direction: column;
+}

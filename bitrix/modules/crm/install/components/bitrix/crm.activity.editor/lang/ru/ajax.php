@@ -1,0 +1,36 @@
+<?php
+$MESS["CRM_ACTIVITY_EDITOR_MAIL_MODULE_NOT_INSTALLED"] = "Модуль Mail не установлен.";
+$MESS['CRM_ACTION_DEFAULT_SUBJECT'] = 'Новое дело (#DATE#)';
+$MESS['CRM_CALL_ACTION_DEFAULT_SUBJECT'] = 'Новый звонок (#DATE#)';
+$MESS['CRM_MEETING_ACTION_DEFAULT_SUBJECT'] = 'Новая встреча (#DATE#)';
+$MESS['CRM_EMAIL_ACTION_DEFAULT_SUBJECT'] = 'Новое письмо (#DATE#)';
+$MESS['CRM_TITLE_EMAIL_SUBJECT'] = 'Тема';
+$MESS['CRM_TITLE_EMAIL_FROM'] = 'От кого';
+$MESS['CRM_TITLE_EMAIL_TO'] = 'Кому';
+$MESS['CRM_COMMUNICATION_TAB_LEAD'] = 'Лид';
+$MESS['CRM_COMMUNICATION_TAB_DEAL'] = 'Сделка';
+$MESS['CRM_COMMUNICATION_TAB_COMPANY'] = 'Компания';
+$MESS['CRM_COMMUNICATION_TAB_CONTACT'] = 'Контакт';
+$MESS['CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD'] = "Пожалуйста, укажите отправителя в поле 'от кого'.";
+$MESS['CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD'] = "Пожалуйста, укажите получателя в поле 'кому'.";
+$MESS['CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED'] = "Превышен максимальный размер вложений (#SIZE#)";
+$MESS['CRM_ACTIVITY_INVALID_EMAIL'] = "'#VALUE#' указан с ошибками, введите корректный e-mail";
+$MESS['CRM_ACTIVITY_RESPONSIBLE_NOT_FOUND'] = "Не удалось найти ответственного за действие пользователя.";
+$MESS['CRM_INCOMING_CALL_ACTION_DEFAULT_SUBJECT_EXT'] = 'Входящий звонок #TITLE#';
+$MESS['CRM_OUTGOING_CALL_ACTION_DEFAULT_SUBJECT_EXT'] = 'Исходящий звонок #TITLE#';
+$MESS['CRM_MEETING_ACTION_DEFAULT_SUBJECT_EXT'] = 'Встреча с #TITLE#';
+$MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
+$MESS["CRM_EMAIL_ACTION_DEFAULT_DESCRIPTION"] = "[без текста]";
+$MESS["CRM_CONTACT_UPDATE_PERMISSION_DENIED"] = "Отсутствует разрешение на редактирование дел контакта \"#TITLE#\". Пожалуйста, обратитесь к администратору портала.";
+$MESS["CRM_COMPANY_UPDATE_PERMISSION_DENIED"] = "Отсутствует разрешение на редактирование дел компании \"#TITLE#\". Пожалуйста, обратитесь к администратору портала.";
+$MESS["CRM_LEAD_UPDATE_PERMISSION_DENIED"] = "Отсутствует разрешение на редактирование дел лида \"#TITLE#\". Пожалуйста, обратитесь к администратору портала.";
+$MESS["CRM_DEAL_UPDATE_PERMISSION_DENIED"] = "Отсутствует разрешение на редактирование дел сделки \"#TITLE#\". Пожалуйста, обратитесь к администратору портала.";
+$MESS["CRM_ACTIVITY_COULD_NOT_CREATE_POSTING"] = "Не удалось зарегистрировать письмо для отправки.";
+$MESS["CRM_ACTIVITY_COULD_NOT_SAVE_POSTING_FILE"] = "Не удалось присоединить файл \"#FILE_NAME#\" к письму.";
+$MESS["CRM_ACTIVITY_EMAIL_CREATION_CANCELED"] = "Операция создания письма отменена.";
+$MESS["CRM_ACTIVITY_EMAIL_CREATION_LIMITED"] = "Вы достигли лимита на отправку писем в этом месяце. %link_start%Подробнее%link_end%.";
+$MESS["CRM_ACTIVITY_EMAIL_CUSTOM_LIMITED"] = "Вы достигли лимита на отправку писем в сутки. Измените лимит в настройках отправителя. %link_start%Подробне%link_end%.";
+$MESS["CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS"] = "Получателей не может быть больше 10";
+$MESS["CRM_ACTIVITY_EMAIL_BLACKLISTED"] = "Мы не отправили ваше письмо, так как эти адреса находятся в %link_start% черном списке %link_end%: %emails%";
+$MESS["CRM_MESSAGE_NEW_TARIFF_RESTRICTION"] = "На вашем тарифном плане действуют ограничения:<br/>\"Кому\", \"Копия\", \"Скрытая копия\" - #COUNT# Email (получатель)";
+?>

@@ -1,0 +1,27 @@
+<?php
+$MESS["CRM_SITE_FORM_ABUSE_INFO"] = "Bitrix24 is in no way affiliated with or responsible for this publisher or the publisher's content.";
+$MESS["CRM_SITE_FORM_ABUSE_INFO_HINT"] = "Bitrix24 is not responsible for information supplied in this form. However, you can always report a violation.";
+$MESS["CRM_SITE_FORM_ABUSE_INFO_TEXT"] = "Bitrix24 is not responsible for information supplied in this form.";
+$MESS["CRM_SITE_FORM_ABUSE_LINK"] = "Report abuse";
+$MESS["CRM_SITE_FORM_BASKET_DISCOUNT"] = "You save";
+$MESS["CRM_SITE_FORM_BASKET_SUM"] = "Without discount";
+$MESS["CRM_SITE_FORM_BASKET_TOTAL"] = "Total";
+$MESS["CRM_SITE_FORM_CONSENT_ACCEPT"] = "I accept";
+$MESS["CRM_SITE_FORM_CONSENT_READ_ALL"] = "Please scroll to the bottom to read the full text";
+$MESS["CRM_SITE_FORM_CONSENT_REJECT"] = "I don't accept";
+$MESS["CRM_SITE_FORM_DEF_BUTTON"] = "Send request";
+$MESS["CRM_SITE_FORM_DEF_TITLE"] = "Complete the form";
+$MESS["CRM_SITE_FORM_FILES_LOADING_TIME_LEFT_FEW_MINUTES"] = "a few minutes";
+$MESS["CRM_SITE_FORM_FILES_LOADING_TIME_LEFT_FEW_SECONDS"] = "a few seconds";
+$MESS["CRM_SITE_FORM_FILES_LOADING_TIME_LEFT_LESS_THAN_MINUTE"] = "less than a minute";
+$MESS["CRM_SITE_FORM_MORE_FIELDS_YET"] = "There are more fields below";
+$MESS["CRM_SITE_FORM_NAV_BACK"] = "Back";
+$MESS["CRM_SITE_FORM_NAV_NEXT"] = "Next";
+$MESS["CRM_SITE_FORM_SIGN"] = "Powered by";
+$MESS["CRM_SITE_FORM_SIGN_BY"] = "Bitrix24";
+$MESS["CRM_SITE_FORM_STATE_BUTTON_PAY"] = "Proceed to payment";
+$MESS["CRM_SITE_FORM_STATE_BUTTON_RESEND"] = "Resend";
+$MESS["CRM_SITE_FORM_STATE_DISABLED"] = "The form is disabled";
+$MESS["CRM_SITE_FORM_STATE_ERROR"] = "That's an error.";
+$MESS["CRM_SITE_FORM_STATE_SUCCESS"] = "Thank you!";
+$MESS["CRM_SITE_FORM_STATE_SUCCESS_TITLE"] = "Request has been sent!";

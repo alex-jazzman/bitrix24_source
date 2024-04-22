@@ -1,0 +1,27 @@
+<?php
+$MESS["IMBOT_NETWORK_BOT_DIALOG_FORWARD"] = "Conversation forwarded to an agent";
+$MESS["IMBOT_NETWORK_BOT_NEW_MULTIDIALOG"] = "New [CHAT=#LINK#]chat[/CHAT] has been created from this chat.";
+$MESS["IMBOT_NETWORK_BOT_WORK_POSITION"] = "Open Channel";
+$MESS["IMBOT_NETWORK_DIALOG_GREETING"] = "Hello! We will provide further assistance in this chat.";
+$MESS["IMBOT_NETWORK_DIALOG_TITLE"] = "#LINE_NAME#: further assistance, #NUMBER#";
+$MESS["IMBOT_NETWORK_ERROR_ANSWER_MALFORMED"] = "Server didn't respond in JSON format";
+$MESS["IMBOT_NETWORK_ERROR_BOT_NOT_FOUND"] = "Open Channel is currently not available";
+$MESS["IMBOT_NETWORK_ERROR_CANT_OPEN_NEW_DIALOG"] = "Maximum possible number of concurrent chats reached. Please wait for one of the existing chats to close to start a new one.";
+$MESS["IMBOT_NETWORK_ERROR_CONVERTING_PUNYCODE"] = "Error converting hostname #HOST# to Punycode: #ERROR#";
+$MESS["IMBOT_NETWORK_ERROR_LICENCE_ERROR"] = "This website's license is invalid";
+$MESS["IMBOT_NETWORK_ERROR_LINE_DISABLED"] = "Message not sent![br] This open channel is blocked for new messages";
+$MESS["IMBOT_NETWORK_ERROR_LINE_NOT_FOUND"] = "Open Channel is currently not available";
+$MESS["IMBOT_NETWORK_ERROR_NETWORK_ERROR"] = "Network connectivity error";
+$MESS["IMBOT_NETWORK_ERROR_NOT_FOUND"] = "Message not sent![br] This open channel is not currently available";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_ANSWER_MALFORMED"] = "Error verifying public site address: unrecognized server response";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_CONNECT_ERROR"] = "Error verifying public site address: cannot connect";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_EMPTY"] = "Please provide the public site address in the \"Bitrix24 Chat Bots\" module settings";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_FAIL"] = "The public site address you specified is not available (code: #ERROR#)";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_HANDLER_PATH"] = "Cannot find handler file in the public area. Required file: #PATH#";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_LOCALHOST"] = "Public site address resolves to a local host: #HOST#";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_MALFORMED"] = "Incorrect public site address specified";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER"] = "Error verifying public site address: invalid server response";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER_CODE"] = "Error verifying public site address: server returned invalid HTTP response code";
+$MESS["IMBOT_NETWORK_ERROR_SETTINGS_FAIL"] = "Cannot get settings (code: #ERROR#)";
+$MESS["IMBOT_NETWORK_ERROR_TARIFF_NOT_FOUND"] = "Cannot get settings for this plan";
+$MESS["IMBOT_NETWORK_ERROR_UNKNOWN_COMMAND"] = "Unknown command or wrong version";

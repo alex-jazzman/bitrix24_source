@@ -1,0 +1,169 @@
+.crm-timeline__card-note {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 7px 5px 21px 8px;
+	margin-bottom: 15px;
+	--height-base: 38px;
+	--user-icon-container-size: 22px;
+	--user-icon-container-right-margin: 8px;
+	box-shadow: 0 2px 3px rgba(0, 0, 0, .06);
+	background: var(--ui-color-background-note, #fff8cf);
+	position: relative;
+}
+
+.crm-timeline__card-note.--highlighted {
+	padding-bottom: 10px;
+}
+
+.crm-timeline__card-note_user {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--user-icon-container-size);
+	height: var(--user-icon-container-size);
+	margin-right: var(--user-icon-container-right-margin);
+}
+
+.crm-timeline__card-note_area {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	flex: 1;
+	overflow: hidden;
+}
+
+.crm-timeline__card-note_value {
+	min-height: 21px;
+	width: 100%;
+}
+
+.crm-timeline__card-note_edit {
+	display: inline-flex;
+	vertical-align: top;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 21px;
+	cursor: pointer;
+	opacity: .33;
+	transition: var(--crm-timeline__transition-hover);
+}
+
+.crm-timeline__card-note_edit:hover {
+	opacity: .6;
+	transition: unset;
+}
+
+.crm-timeline__card-note_edit i {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	background: url(../image/crm-timeline_icon-edit.svg) center no-repeat;
+}
+
+.crm-timeline__card-note_dimmer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(255, 255, 255, 0.3);
+	display: block;
+}
+
+.crm-timeline__card-note_cross {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+	opacity: .2;
+	transition: var(--crm-timeline__transition-hover);
+}
+
+.crm-timeline__card-note_cross:hover {
+	opacity: .6;
+	transition: unset;
+}
+
+.crm-timeline__card-note_cross i {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	background: url(../image/crm-timeline_icon-cross.svg) center no-repeat;
+}
+
+.crm-timeline__card-note_text {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	white-space: pre-wrap;
+	height: 24px;
+	width: 100%;
+	vertical-align: middle;
+	border: none;
+	background-color: transparent;
+	outline: none;
+	resize: none;
+	word-break: break-word;
+	font-family: inherit;
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-typography-text-md-line-height, 18px);
+	color: var(--ui-color-text-primary, rgba(51, 51, 51, 1));
+}
+
+.crm-timeline__card-note_text::placeholder {
+	font-family: inherit;
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-typography-text-md-line-height, 18px);
+	color: var(--ui-color-base-50, #A8ADB4);
+}
+
+.crm-timeline__card-note_placeholder {
+	position: relative;
+	left: 0;
+	top: 0;
+	color: var(--ui-color-base-50, #A8ADB4);
+}
+
+.crm-timeline__card-note__controls {
+	margin-top: 10px;
+	display: flex;
+	width: 100%;
+}
+
+.crm-timeline__card-note__control:not(:last-child) {
+	margin-right: var(--ui-space-inline-2xs, 4px);
+}
+
+.crm-timeline__card-note_expand-note-btn {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 0 11px 0px 11px;
+	min-height: 24px;
+	position: absolute;
+	bottom: -13px;
+	left: 49.9%;
+	transform: translateX(-50%);
+	text-align: center;
+	font-family: var(--ui-font-family-primary, 'Helvetica Neue');
+	font-size: var(--ui-font-size-sm, 13px);
+	line-height: var(--ui-font-line-height-3xs, 1.2);
+	color: var(--ui-color-base-70, #828B95);
+	background-color: var(--ui-color-background-note, #fff8cf);
+	outline: none;
+	border: 1px solid rgba(0, 0, 0, 0.1);
+	border-radius: 64px;
+	box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.08);
+	transition: box-shadow 0.2s linear;
+	cursor: pointer;
+}
+
+.crm-timeline__card-note_expand-note-btn:hover,
+.crm-timeline__card-note_expand-note-btn:focus {
+	transition-duration: unset;
+	box-shadow: unset;
+}

@@ -1,0 +1,68 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 1285"
+	 preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 1285px" fill="none">
+
+	<svg height="1285px">
+		<defs>
+			<g id="block-line">
+				<rect x="19" y="0" width="100%" height="1" fill="#C6CDD3" />
+			</g>
+
+			<g id="block-table-line">
+				<rect x="19" y="0" width="100%" height="1" fill="#eaeaea" />
+			</g>
+		</defs>
+
+		<rect x="0" y="0" width="100%" height="375" rx="10" fill="white" />
+		<use xlink:href="#block-line" y="54"></use>
+		<use xlink:href="#block-line" y="120"></use>
+		<use xlink:href="#block-line" y="171"></use>
+		<use xlink:href="#block-line" y="224"></use>
+		<use xlink:href="#block-line" y="276"></use>
+		<use xlink:href="#block-line" y="328"></use>
+
+	</svg>
+
+	<svg height="1285px" id="animated-elements">
+		<defs>
+			<g id="block-table-title--animat">
+				<rect x="22" y="0" width="26%" height="8" rx="2" fill="#ecedee" />
+			</g>
+			<g id="block-table-row--animat">
+				<rect x="22" y="85" width="92" height="8" rx="2" fill="#ecedee" />
+				<rect x="164" y="85" width="92" height="8" rx="2" fill="#ecedee" />
+				<rect x="306" y="85" width="92" height="8" rx="2" fill="#ecedee" />
+				<rect x="448" y="85" width="92" height="8" rx="2" fill="#ecedee" />
+				<rect x="590" y="85" width="92" height="8" rx="2" fill="#ecedee" />
+				<rect x="732" y="85" width="92" height="8" rx="2" fill="#ecedee" />
+			</g>
+		</defs>
+
+		<use xlink:href="#block-table-title--animat" y="25"></use>
+
+		<use xlink:href="#block-table-row--animat"></use>
+
+		<use xlink:href="#block-table-row--animat" y="57"></use>
+		<use xlink:href="#block-table-row--animat" y="110"></use>
+		<use xlink:href="#block-table-row--animat" y="162"></use>
+		<use xlink:href="#block-table-row--animat" y="214"></use>
+
+	</svg>
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+	<svg height="100%">
+		<rect width="20" height="340" fill="#ffffff" x="100%" y="10" transform="translate(-20)" />
+	</svg>
+</svg>

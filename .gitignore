@@ -1,0 +1,6 @@
+/**
+
+!.gitignore
+!/bitrix/
+!/bitrix/modules/
+!/bitrix/modules/**

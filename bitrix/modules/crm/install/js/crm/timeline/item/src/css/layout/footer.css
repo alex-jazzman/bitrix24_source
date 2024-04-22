@@ -1,0 +1,144 @@
+
+.crm-timeline__card-action {
+	padding: calc(var(--ui-space-inset-sm, 12px) * -1) var(--ui-space-inset-md, 16px) 0 var(--ui-space-inset-md, 16px);
+	display: flex;
+	margin-top: 16px;
+	margin-bottom: 16px;
+}
+
+.crm-timeline__card-action.--no-margin-top {
+	margin-top: 6px;
+}
+
+.crm-timeline__card-action:last-child {
+	margin-bottom: unset;
+}
+
+.crm-timeline__card-action_buttons {
+	display: flex;
+	flex-wrap: wrap;
+	flex: 1;
+	margin-bottom: -4px;
+}
+
+.crm-timeline__card-action_menu {
+	display: flex;
+	margin: -1px 0 0 14px;
+}
+
+.crm-timeline__card-action_menu-item {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 9px;
+}
+
+.crm-timeline__card-action_menu-item:first-child {
+	margin-left: unset;
+}
+
+.crm-timeline__card-action-btn {
+	display: inline-block;
+	min-width: 126px;
+	max-width: 50%;
+	margin: 0 8px 8px 0;
+}
+
+.crm-timeline__card-action-btn .ui-btn {
+	width: 100%;
+}
+
+.crm-timeline__card-action-btn.ui-btn:last-child {
+	margin-right: unset;
+}
+
+.crm-timeline__card-action-btn:has(.ui-btn-icon-ai) {
+	min-width: 100px;
+}
+
+.crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn.ui-btn-disabled {
+	background-color: transparent;
+	border-color: #c6cdd3;
+	color: #535b69;
+}
+
+.crm-timeline__card-action-btn .ui-btn-icon-ai.ui-btn.ui-btn-disabled::after {
+	background-color: #535b69;
+}
+
+.crm-timeline__card_add-button {
+	width: 28px;
+	height: 28px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	mask-size: 28px 28px;
+	mask-repeat: no-repeat;
+	mask-position: center center;
+	cursor: pointer;
+	transition: filter var(--crm-timeline__transition-hover) linear;
+}
+
+.crm-timeline__card_add-button .main-ui-loader-svg-circle {
+	stroke: var(--ui-color-base-40, #bdc1c6);
+	stroke-width: 4px;
+}
+
+.crm-timeline__card_add-button.--hover,
+.crm-timeline__card_add-button:hover {
+	filter: brightness(90%);
+	transition-duration: unset;
+}
+
+.crm-timeline__card_add-button.--state-disabled,
+.crm-timeline__card_add-button.--state-disabled:hover {
+	filter: brightness(115%);
+	cursor: not-allowed;
+}
+
+.crm-timeline__card_add-button.--state-hidden{
+	display: none;
+}
+
+.crm-timeline__card_add-button.--color-default {
+	background-color: var(--ui-color-base-40, #bdc1c6);
+}
+
+.crm-timeline__card_add-button.--color-primary {
+	background-color: rgba(var(--ui-color-primary-rgb), 1);
+}
+
+.crm-timeline__card_add-button.--icon-note {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-note.svg);
+}
+
+.crm-timeline__card_add-button.--icon-print {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-print.svg);
+}
+
+.crm-timeline__card_add-button.--icon-script {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-script.svg);
+}
+
+.crm-timeline__card_add-button.--icon-dots {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-dots.svg);
+}
+
+.crm-timeline__card_add-button.--icon-qr-code {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-qr-code.svg);
+}
+
+.crm-timeline__card_add-button.--icon-videoconference {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-videoconference.svg);
+}
+
+.crm-timeline__card_add-button-fade-enter-active,
+.crm-timeline__card_add-button-fade-leave-active {
+	transition: opacity 0.25s ease-in-out;
+}
+
+.crm-timeline__card_add-button-fade-enter-from,
+.crm-timeline__card_add-button-fade-leave-to {
+	opacity: 0;
+}

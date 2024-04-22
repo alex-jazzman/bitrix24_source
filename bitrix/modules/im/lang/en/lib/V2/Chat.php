@@ -1,0 +1,19 @@
+<?php
+$MESS["IM_CHAT_CAN_POST_ALL"] = "All chat members";
+$MESS["IM_CHAT_CAN_POST_MANAGERS"] = "Chat administrators";
+$MESS["IM_CHAT_CAN_POST_NONE"] = "Nobody";
+$MESS["IM_CHAT_CAN_POST_OWNER"] = "Chat owner";
+$MESS["IM_CHAT_NAME_FORMAT"] = "#COLOR# Chat ##NUMBER#";
+$MESS["IM_CHAT_SELF_JOIN"] = "#USERS_NAME# have joined the chat";
+$MESS["IM_CHAT_SELF_JOIN_F"] = "#USER_NAME# has joined the chat";
+$MESS["IM_CHAT_SELF_JOIN_M"] = "#USER_NAME# has joined the chat";
+$MESS["IM_CHAT_JOIN_M"] = "#USER_1_NAME# invited #USER_2_NAME# to chat.";
+$MESS["IM_CHAT_JOIN_F"] = "#USER_1_NAME# invited #USER_2_NAME# to chat.";
+$MESS["IM_CHAT_KICK_F"] = "#USER_1_NAME# ejected #USER_2_NAME# from chat.";
+$MESS["IM_CHAT_KICK_M"] = "#USER_1_NAME# ejected #USER_2_NAME# from chat.";
+$MESS["IM_CHAT_KICK_NOTIFICATION_F"] = "#USER_NAME# removed you from chat";
+$MESS["IM_CHAT_KICK_NOTIFICATION_M"] = "#USER_NAME# removed you from chat";
+$MESS["IM_CHAT_LEAVE_F"] = "#USER_NAME# left the chat.";
+$MESS["IM_CHAT_LEAVE_M"] = "#USER_NAME# left the chat.";
+$MESS["IM_CHAT_AVATAR_CHANGE_M"] = "#USER_NAME# changed the chat icon";
+$MESS["IM_CHAT_AVATAR_CHANGE_F"] = "#USER_NAME# changed the chat icon";

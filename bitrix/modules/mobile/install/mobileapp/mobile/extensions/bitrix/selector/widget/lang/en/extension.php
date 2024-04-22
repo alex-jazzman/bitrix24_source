@@ -1,0 +1,12 @@
+<?php
+$MESS["PROVIDER_SEARCH_CREATE_PLACEHOLDER"] = "Find or create";
+$MESS["PROVIDER_SEARCH_NO_RESULTS"] = "No entries have been found.";
+$MESS["PROVIDER_SEARCH_RECENT_SECTION_TITLE"] = "Recent search";
+$MESS["PROVIDER_SEARCH_SECTION_TITLE"] = "Search results";
+$MESS["PROVIDER_WIDGET_CLOSE"] = "Close";
+$MESS["PROVIDER_WIDGET_CREATE_ITEM"] = "Create item";
+$MESS["PROVIDER_WIDGET_CREATING_ITEM"] = "Creating item...";
+$MESS["PROVIDER_WIDGET_DONE"] = "Done";
+$MESS["PROVIDER_WIDGET_SELECT"] = "Select";
+$MESS["PROVIDER_WIDGET_START_TYPING_TO_CREATE"] = "Start typing to create item";
+$MESS["PROVIDER_WIDGET_START_TYPING_TO_SEARCH"] = "Start typing to find items";

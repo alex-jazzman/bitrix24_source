@@ -1,0 +1,1 @@
+{"version":3,"file":"field-configurator.map.js","names":["BX","Crm","EntityEditorFieldConfigurator","UI"],"sources":["field-configurator.js"],"mappings":"AAAA,UAAUA,GAAGC,IAAIC,gCAAkC,YACnD,CAICF,GAAGC,IAAIC,8BAAgCF,GAAGG,GAAGD,6BAC9C"}

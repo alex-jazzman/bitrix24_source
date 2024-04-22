@@ -1,0 +1,37 @@
+.bx-im-element-attach {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: stretch;
+	flex-direction: row;
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	position: relative;
+	margin-top: 2px;
+}
+.bx-im-element-attach a {
+	font-size: 14px;
+	line-height: 18px;
+}
+
+.bx-im-message-content-text + .bx-im-element-attach {
+	margin-top: 5px;
+}
+.bx-im-element-attach-border {
+	display: inline-block;
+	border: 2px solid transparent;
+	border-radius: 4px/6px;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	margin-right: 10px;
+}
+.bx-im-element-attach-content {
+	display: inline-block;
+	flex-grow: 1;
+	box-sizing: border-box;
+    width: calc(100% - 14px);
+}
+
+.bx-im-element-attach-type-ajax-link {
+	border-bottom: 1px dashed #2067b0;
+	color: #2067b0;
+	cursor: pointer;
+}

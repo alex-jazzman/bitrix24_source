@@ -1,0 +1,63 @@
+.bx-im-keyboard__container {
+	--im-keyboard__background-color: var(--im-color-palette-white-base);
+	--im-keyboard__font-color: var(--im-color-palette-black-base);
+
+	display: block;
+	text-align: left;
+	word-break: break-all;
+	margin-top: 2px;
+	margin-bottom: 7px;
+}
+
+.bx-im-keyboard-button__container {
+	display: block;
+	min-width: 37px;
+	margin-top: 5px;
+	padding: 4px 10px;
+
+	font: var(--im-font-size-sm)/20px var(--im-font-family-system);
+	text-decoration: none;
+	background-color: var(--im-keyboard__background-color);
+	border-radius: 4px;
+	color: var(--im-keyboard__font-color);
+	text-align: center;
+
+	transition: opacity .5s;
+	opacity: 1;
+	box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.15);
+
+	cursor: pointer;
+	user-select: none;
+}
+
+.bx-im-keyboard-button__container.--disabled {
+	cursor: default;
+	opacity: .6;
+}
+
+.bx-im-keyboard-button__container.--loading {
+	cursor: wait;
+	opacity: .6;
+}
+
+.bx-im-keyboard-button__container.--block {
+	width: 225px;
+}
+
+.bx-im-keyboard-button__container.--line {
+	display: inline-block;
+	margin-right: 4px;
+}
+
+.bx-im-keyboard-button__container.--line:last-child {
+	margin-right: 0;
+}
+
+.bx-im-keyboard-button__container:hover {
+	text-decoration: none;
+	color: #000;
+}
+
+.bx-im-keyboard-button__separator {
+	display: block;
+}

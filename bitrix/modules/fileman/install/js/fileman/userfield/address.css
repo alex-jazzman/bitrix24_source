@@ -1,0 +1,52 @@
+span.fields.address { display: block; }
+
+span.fields.address .multiple { padding-right: 15px; }
+
+.fields.address a, .uf-address-trial-more {
+	display: inline;
+	border-bottom: 1px dashed;
+}
+
+.fields.address .separator {
+	display: block;
+	height: 7px;
+}
+
+.uf-address-search-input { width: 300px; margin-right: 20px; }
+
+.uf-search-result-list-item {
+}
+
+.uf-search-result-list-item .menu-popup-item-icon
+{
+	display: none;
+}
+
+.uf-search-result-list-item .menu-popup-item-text
+{
+	max-width: calc(100% - 20px);
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.uf-address-search-map {
+	position: absolute;
+	z-index: 800;
+	overflow: hidden;
+	width: 500px;
+	height: 500px;
+	border: 1px solid #d3d7db;
+	border-radius: 3px;
+	box-shadow: 0 2px 10px 0 rgba(0, 0, 0, .15);
+	box-sizing: border-box;
+}
+
+.uf-address-search-onmap-result {
+	display: block;
+	min-width: 200px !important;
+	cursor: pointer;
+}
+
+/**/
+.crm-entity-widget-content-block-position-btn-hide-container { padding-bottom: 10px; }
+

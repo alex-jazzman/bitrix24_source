@@ -1,0 +1,21 @@
+<?php
+$MESS['LANDING_TPL_ADD_SITE_2'] = 'Создать';
+$MESS['LANDING_TPL_ADD_PAGE'] = 'Новая страница';
+$MESS['LANDING_TPL_ACCEPT'] = 'Я согласен';
+$MESS['LANDING_TPL_ACCEPTED'] = 'Вы уже дали согласие';
+$MESS['LANDING_TPL_JS_PAY_TARIFF'] = 'Перейти на расширенный тариф';
+$MESS['LANDING_TPL_JS_PAY_TARIFF_TITLE'] = 'Ограничение по тарифу';
+$MESS['LANDING_TPL_MENU_SITES'] = 'Список сайтов';
+$MESS['LANDING_TPL_MENU_SITES_KNOWLEDGE'] = 'База знаний';
+$MESS['LANDING_TPL_MENU_RIGHTS'] = 'Права доступа';
+$MESS['LANDING_TPL_MENU_FORMS'] = 'CRM-формы';
+$MESS['LANDING_TPL_MENU_TRACKING'] = 'Сквозная аналитика';
+$MESS['LANDING_TPL_MENU_MARKETING'] = 'Маркетинг';
+$MESS['LANDING_TPL_MENU_AGREEMENT'] = 'Соглашение';
+$MESS['LANDING_TPL_IMPORT_SITE_PAGE'] = 'Импорт сайта';
+$MESS['LANDING_TPL_IMPORT_SITE_KNOWLEDGE'] = 'Импорт базы знаний';
+$MESS['LANDING_TPL_IMPORT_SITE_STORE'] = 'Импорт магазина';
+$MESS['LANDING_TPL_SETTING'] = 'Настройки';
+$MESS['LANDING_TPL_FOLDER_EDIT'] = 'Настройки папки';
+$MESS['LANDING_TPL_DEV_SITE'] = 'Создать девелоперский сайт';
+$MESS['LANDING_TPL_AI_SETTING_TITLE'] = 'Настройки AI 2';

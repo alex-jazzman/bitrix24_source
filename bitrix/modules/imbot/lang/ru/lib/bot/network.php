@@ -1,0 +1,27 @@
+<?php
+$MESS["IMBOT_NETWORK_BOT_WORK_POSITION"] = "Открытая линия";
+$MESS["IMBOT_NETWORK_ERROR_LINE_DISABLED"] = "Сообщение не отправлено![br]Отправка сообщений в данную открытую линию заблокирована";
+$MESS["IMBOT_NETWORK_ERROR_NOT_FOUND"] = "Сообщение не отправлено![br]Открытая линия в данный момент не доступна";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_EMPTY"] = "В настройках модуля \"Чат-боты Битрикс24\" необходимо указать публичный адрес сайта";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_MALFORMED"] = "Указан некорректный публичный адрес сайта";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_LOCALHOST"] = "Публичный адрес сайта указывает на локальный хост: #HOST#";
+$MESS["IMBOT_NETWORK_ERROR_CONVERTING_PUNYCODE"] = "Ошибка преобразования имени хоста #HOST# в Punycode: #ERROR#";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_HANDLER_PATH"] = "Файл обработчик в публичной части сайта не найден. Необходимо наличие: #PATH#";
+$MESS["IMBOT_NETWORK_ERROR_NETWORK_ERROR"] = "Ошибка сетевого соединения";
+$MESS["IMBOT_NETWORK_ERROR_ANSWER_MALFORMED"] = "Получен ответ сервера не в JSON формате";
+$MESS["IMBOT_NETWORK_ERROR_UNKNOWN_COMMAND"] = "Неправильная команда или несоответствие версий";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_CONNECT_ERROR"] = "Ошибка проверки публичного адреса сайта: соединение не установлено";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER_CODE"] = "Ошибка проверки публичного адреса сайта: неправильный http код ответа сервера";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_ANSWER_MALFORMED"] = "Ошибка проверки публичного адреса сайта: нераспознаваемый ответ сервера";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER"] = "Ошибка проверки публичного адреса сайта: неправильный ответ сервера";
+$MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_FAIL"] = "Указанный публичный адрес сайта не доступен (код: #ERROR#)";
+$MESS["IMBOT_NETWORK_ERROR_TARIFF_NOT_FOUND"] = "Не удалось получить настройки для данного тарифа";
+$MESS["IMBOT_NETWORK_ERROR_SETTINGS_FAIL"] = "Не удалось получить настройки (код: #ERROR#)";
+$MESS["IMBOT_NETWORK_ERROR_BOT_NOT_FOUND"] = "Открытая линия в данный момент не доступна";
+$MESS["IMBOT_NETWORK_ERROR_LINE_NOT_FOUND"] = "Открытая линия в данный момент не доступна";
+$MESS["IMBOT_NETWORK_ERROR_LICENCE_ERROR"] = "Лицензия указанного сайта недействительна";
+$MESS["IMBOT_NETWORK_BOT_DIALOG_FORWARD"] = "Диалог переадресован на оператора";
+$MESS["IMBOT_NETWORK_BOT_NEW_MULTIDIALOG"] = "Из этого диалога создан новый [CHAT=#LINK#]диалог[/CHAT]";
+$MESS['IMBOT_NETWORK_DIALOG_TITLE'] = "#LINE_NAME#: дополнительный вопрос - #NUMBER#";
+$MESS['IMBOT_NETWORK_DIALOG_GREETING'] = "Давайте обсудим ваш вопрос в этом диалоге";
+$MESS['IMBOT_NETWORK_ERROR_CANT_OPEN_NEW_DIALOG'] = "Вы открыли максимальное число диалогов. Дождитесь завершения предыдущих диалогов, чтобы начать новый";

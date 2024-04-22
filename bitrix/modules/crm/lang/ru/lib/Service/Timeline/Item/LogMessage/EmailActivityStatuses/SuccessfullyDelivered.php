@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_TIMELINE_LOG_EMAIL_ACTIVITY_SUCCESSFULLY_DELIVERED'] = 'Исходящее письмо просмотрено';

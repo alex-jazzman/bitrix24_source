@@ -1,0 +1,15 @@
+.bx-im-sidebar-detail__container {
+	--im-sidebar-detail__height_header: 64px;
+	--im-sidebar-detail__height_tabs: 50px;
+
+	display: flex;
+	flex-direction: column;
+	overflow-y: scroll;
+	height: calc(100% - var(--im-sidebar-detail__height_header));
+	padding-bottom: 18px;
+}
+
+.bx-im-sidebar-detail__loader-container {
+	height: 55px;
+	flex-shrink: 0;
+}

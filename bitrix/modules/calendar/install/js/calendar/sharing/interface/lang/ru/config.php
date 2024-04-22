@@ -1,0 +1,75 @@
+<?php
+$MESS['SHARING_BUTTON_TITLE'] = 'Свободные слоты';
+$MESS['SHARING_DIALOG_CHECKBOX_ON'] = 'ВКЛ';
+$MESS['SHARING_DIALOG_CHECKBOX_OFF'] = 'ВЫКЛ';
+$MESS['SHARING_DIALOG_SHARING_BLOCK_TITLE'] = 'Ссылка на календарь';
+$MESS['SHARING_DIALOG_SHARING_HINT'] = 'Отправьте ссылку клиенту, партнеру, подрядчику – они сами найдут удобное время для встречи и добавят событие в ваш календарь';
+$MESS['SHARING_DIALOG_SHARING_BLOCK_COPY_LINK_BUTTON'] = 'Копировать ссылку';
+$MESS['SHARING_DIALOG_SHARING_BLOCK_JOINT_SLOTS_BUTTON'] = 'Совместные слоты';
+$MESS['SHARING_DIALOG_SHARING_BLOCK_COPY_LINK_BUTTON_COPIED'] = 'Скопировано';
+$MESS['SHARING_DIALOG_SHARING_BLOCK_DISABLED_COPY_LINK_BUTTON_POPUP'] = 'Чтобы поделиться ссылкой, откройте доступ к календарю';
+$MESS['SHARING_DIALOG_PREVIEW_BLOCK_CONTENT'] = "Наведите камеру смартфона на QR-код или #LINK#, чтобы посмотреть, как получатели увидят ваше свободное время в календаре.";
+$MESS['SHARING_DIALOG_PREVIEW_BLOCK_CONTENT_LINK'] = "перейдите по ссылке";
+$MESS['SHARING_DIALOG_INFO_POPUP'] = "Планируйте встречи без долгих переписок. Отправьте ссылку, по которой клиент, партнер или подрядчик увидят ваше свободное время и смогут сами подобрать удобный вариант.\n\nНикто не увидит ваше расписание, мы покажем только время, когда вы свободны ";
+$MESS['SHARING_DIALOG_MORE_DETAILED'] = 'Подробнее';
+$MESS['SHARING_WARNING_POPUP_TITLE']  = 'Вы отключаете доступ по ссылке';
+$MESS['SHARING_WARNING_POPUP_CONTENT'] = 'При повторном включении доступа появится новая гостевая ссылка, доступ по старой будет невозможен.';
+$MESS['SHARING_WARNING_POPUP_TITLE_1'] = 'Закрыть доступ к слотам?';
+$MESS['SHARING_WARNING_POPUP_CONTENT_1'] = 'При повторном включении слоты будут доступны только по новой ссылке';
+$MESS['SHARING_WARNING_POPUP_CONTENT_2'] = 'При повторном включении персональные слоты будут доступны только по новой ссылке. Совместные слоты нужно будет создать заново';
+$MESS['SHARING_WARNING_POPUP_SUBMIT_BUTTON'] = 'Закрыть доступ';
+$MESS['SHARING_WARNING_POPUP_SUBMIT_BUTTON_NEW'] = 'Закрыть доступ';
+$MESS['SHARING_WARNING_POPUP_CANCEL_BUTTON'] = 'Отменить';
+$MESS['SHARING_INFO_POPUP_CONTENT_1'] = 'Планируйте встречи без долгих переписок. Отправьте ссылку, по которой клиент, партнер или подрядчик увидят ваше свободное время и смогут сами подобрать удобный вариант.';
+$MESS['SHARING_INFO_POPUP_CONTENT_2'] = 'Никто не увидит ваше расписание, мы покажем только время, когда вы свободны.';
+$MESS['SHARING_INFO_POPUP_CONTENT_3_CALENDAR'] = 'Как подобрать удобное время для встречи с теми, кто не работает в вашей компании? Отправьте им ссылку на ваши <span data-role="calendar-sharing_popup-open-link">свободные слоты</span>. Получатели сами выберут подходящую дату и время.';
+$MESS['SHARING_INFO_POPUP_CONTENT_3_CRM'] = 'Как подобрать удобное время для встречи с клиентами? Отправьте им ссылку на ваши <span data-role="calendar-sharing_popup-open-link">свободные слоты</span>. Получатели сами выберут подходящую дату и время.';
+$MESS['SHARING_INFO_POPUP_CONTENT_4'] = '<span><a href="#LINK#" target="_blank">Откройте ссылку</a></span> и поставьте тестовую встречу. Вы сами увидите, как это быстро и удобно.';
+$MESS['SHARING_INFO_POPUP_CONTENT_4_V2'] = '<span><a href="#LINK#" style="pointer-events: none;">Откройте ссылку</a></span> и поставьте тестовую встречу. Вы сами увидите, как это быстро и удобно.';
+$MESS['SHARING_INFO_POPUP_CONTENT_4_V3'] = 'Создайте <a href="#LINK#">тестовую встречу</a>';
+$MESS['SHARING_INFO_POPUP_SLOT_DESC'] = 'Слот – от английского slot, фиксированный промежуток времени в расписании, который можно «зарезервировать» для встречи или другого события. Сленг, активно используется в бизнес-среде: «Пришли мне свои слоты на пятницу», «Кинь слоты на следующую неделю».';
+$MESS['SHARING_INFO_POPUP_MORE'] = 'Подробнее';
+$MESS['SHARING_INFO_POPUP_WHAT_SEE_USERS'] = 'Что увидят получатели';
+$MESS['SHARING_INFO_POPUP_QR_TITLE_CALENDAR'] = 'Посмотрите, как получатели ссылки увидят ваши свободные слоты';
+$MESS['SHARING_INFO_POPUP_QR_TITLE_CRM'] = 'Посмотрите, как клиенты увидят ваши свободные слоты';
+$MESS['SHARING_INFO_POPUP_QR_INFO'] = 'Наведите камеру смартфона на QR-код';
+$MESS['SHARING_INFO_POPUP_QR_OPEN_LINK'] = 'Открыть в новой вкладке';
+$MESS['SHARING_INFO_POPUP_HOW_IT_WORK'] = 'Как это работает';
+$MESS['SHARING_COPY_LINK_NOTIFICATION'] = 'Ссылка скопирована';
+// $MESS['SHARING_COPY_LINK_TEXT'] = "Это мой календарь, выберите удобное время для встречи ";
+$MESS['CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_TITLE'] = 'Планируйте встречи с теми, кто не работает в вашей компании';
+$MESS['CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_TEXT'] = 'Отправьте ссылку на свои свободные слоты, а получатель сам выберет удобное время';
+$MESS['CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_NOTIFY_TITLE'] = 'Договариваетесь о внешних встречах в чате?';
+$MESS['CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_NOTIFY_TEXT'] = 'Не забудьте про ссылку на свободные слоты, это сэкономит время всем участникам. Получатель занимает слот, а встреча появляется у вас в календаре';
+$MESS['CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_JOINT_TITLE'] = 'Слоты стали удобнее';
+$MESS['CALENDAR_PAY_ATTENTION_TO_NEW_FEATURE_JOINT_TEXT'] = 'Теперь можно выбирать дни, время и длительность встреч, а также создавать совместные слоты с учётом расписания коллег';
+
+//settings
+$MESS['CALENDAR_SHARING_SETTINGS_TITLE'] = 'Укажите диапазон слотов, которые будут доступны клиенту';
+$MESS['CALENDAR_SHARING_SETTINGS_SLOT_SIZE'] = 'Свободное время будет разбито на слоты';
+$MESS['CALENDAR_SHARING_SETTINGS_WORKDAYS'] = 'Рабочие дни';
+$MESS['CALENDAR_SHARING_SETTINGS_WORKDAYS_MSGVER_1'] = 'Рабочие дни';
+$MESS['CALENDAR_SHARING_SETTINGS_READ_ONLY_HINT'] = 'Настроить слоты в этой сделке может только ответственный менеджер';
+$MESS['CALENDAR_SHARING_SETTINGS_TITLE_V2'] = 'Доступное время для встреч';
+$MESS['CALENDAR_SHARING_SETTINGS_SUBTITLE_DEFAULT'] = 'По умолчанию выбраны все рабочие дни';
+$MESS['CALENDAR_SHARING_SETTINGS_SUBTITLE_PERSONAL'] = 'Выбраны персональные настройки';
+$MESS['CALENDAR_SHARING_SETTINGS_SLOT_SIZE_V2'] = 'Длительность слота';
+
+$MESS['CALENDAR_SHARING_USER_SELECTOR_TITLE'] = 'Создать совместные слоты <span data-role="calendar-sharing_popup-joint-slots">с коллегами</span>';
+$MESS['CALENDAR_SHARING_USER_SELECTOR_TITLE_V2'] = 'Добавьте коллег в <span data-role="calendar-sharing_popup-joint-slots">совместные слоты</span>';
+$MESS['CALENDAR_SHARING_USER_SELECTOR_HINT_TITLE'] = 'Совместные слоты';
+$MESS['CALENDAR_SHARING_USER_SELECTOR_HINT_DESC'] = 'В совместных слотах учитывается расписание коллег, которые будут с вами на встрече. Получатель выберет время, когда доступны все участники';
+
+$MESS['CALENDAR_SHARING_LINK_LIST_TITLE'] = 'Совместные слоты';
+$MESS['CALENDAR_SHARING_LINK_LIST_COPY'] = 'Копировать';
+$MESS['CALENDAR_SHARING_LINK_LIST_SORT_RECENT'] = 'Часто используемые';
+$MESS['CALENDAR_SHARING_LINK_LIST_SORT_DATE'] = 'По дате';
+$MESS['CALENDAR_SHARING_LINK_LIST_DELETE_MESSAGE_TITLE'] = 'Удалить ссылку на слоты?';
+$MESS['CALENDAR_SHARING_LINK_LIST_DELETE_MESSAGE_DESC'] = 'Больше никто не сможет назначить встречу по этой ссылке';
+$MESS['CALENDAR_SHARING_LINK_LIST_DATE_CREATE'] = 'Дата создания ссылки';
+$MESS['CALENDAR_SHARING_LIST_EMPTY_TITLE'] = 'Здесь будут ссылки на совместные слоты';
+
+$MESS['CALENDAR_SHARING_LINK_LIST_DELETE_MESSAGE_TITLE_MSGVER_1'] = 'Удалить ссылку на слоты?';
+$MESS['CALENDAR_SHARING_LINK_LIST_DELETE_MESSAGE_DESC_MSGVER_1'] = 'Больше никто не сможет назначить встречу по этой ссылке';
+$MESS['SHARING_WARNING_POPUP_SUBMIT_BUTTON_NEW_MSGVER_1'] = 'Закрыть доступ';
+$MESS['SHARING_WARNING_POPUP_DELETE'] = 'Да, удалить';

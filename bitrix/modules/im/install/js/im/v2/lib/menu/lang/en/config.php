@@ -1,0 +1,22 @@
+<?php
+$MESS["IM_LIB_INVITE_CANCEL"] = "Cancel invitation";
+$MESS["IM_LIB_INVITE_CANCEL_CONFIRM"] = "Are you sure you want to cancel invitation?";
+$MESS["IM_LIB_INVITE_CANCEL_DONE"] = "Invitation has been canceled.";
+$MESS["IM_LIB_INVITE_RESEND"] = "Invite again";
+$MESS["IM_LIB_INVITE_RESEND_DONE"] = "Invitation has been sent.";
+$MESS["IM_LIB_MENU_CALL_2"] = "Video call";
+$MESS["IM_LIB_MENU_FIND_CHATS_WITH_USER"] = "Find chats with this user";
+$MESS["IM_LIB_MENU_HIDE"] = "Hide chat";
+$MESS["IM_LIB_MENU_LEAVE"] = "Leave chat";
+$MESS["IM_LIB_MENU_MUTE_2"] = "Mute";
+$MESS["IM_LIB_MENU_OPEN"] = "Open";
+$MESS["IM_LIB_MENU_OPEN_CALENDAR"] = "View employee calendar";
+$MESS["IM_LIB_MENU_OPEN_HISTORY"] = "View history";
+$MESS["IM_LIB_MENU_OPEN_IN_NEW_TAB"] = "Open in new tab";
+$MESS["IM_LIB_MENU_OPEN_PROFILE"] = "View employee profile";
+$MESS["IM_LIB_MENU_PIN"] = "Pin chat";
+$MESS["IM_LIB_MENU_READ"] = "Mark all as read";
+$MESS["IM_LIB_MENU_UNMUTE_2"] = "Unmute";
+$MESS["IM_LIB_MENU_UNPIN"] = "Unpin chat";
+$MESS["IM_LIB_MENU_UNREAD"] = "Mark to read later";
+$MESS["IM_LIB_MENU_WRITE"] = "Send message";

@@ -1,0 +1,12 @@
+.ui-select input {
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.ui-select .ui-ctl-icon-angle
+{
+	transition: transform 0.150s ease-in-out;
+}
+.ui-select.--open .ui-ctl-icon-angle {
+	transform: rotateX(180deg);
+}

@@ -1,0 +1,106 @@
+.calendar-sharing__switcher-wrap {
+	display: flex;
+	align-items: center;
+	order: -1;
+	margin-right: -1px;
+	height: 26px;
+	border: 1px solid rgba(255, 255, 255, .4);
+	border-right: 0;
+	border-radius: calc(var(--ui-btn-height) / 2) 0 0 calc(var(--ui-btn-height) / 2);
+	background-color: rgba(255, 255, 255, .15);
+	box-sizing: border-box;
+}
+
+.bitrix24-dark-theme .calendar-sharing__switcher-wrap {
+	border-color: rgba(0, 0, 0, .06);
+	background-color: rgba(0, 0, 0, .07);
+}
+
+.bitrix24-default-theme .calendar-sharing__switcher-wrap,
+.ui-page-slider-wrapper-default-theme .calendar-sharing__switcher-wrap {
+	border-color: #c6cdd3;
+	background-color: transparent;
+}
+
+.calendar-sharing__switcher.ui-switcher {
+	margin: 0 8px 0 7px;
+	order: -1;
+}
+
+.calendar-sharing__switcher .ui-switcher-enabled,
+.calendar-sharing__switcher .ui-switcher-disabled {
+	color: rgba(81, 92, 105, .5);
+}
+
+.calendar-sharing__switcher.ui-switcher .ui-switcher-cursor,
+.calendar-sharing__switcher.ui-switcher .ui-switcher-enabled,
+.calendar-sharing__switcher.ui-switcher .ui-switcher-disabled {
+	left: 0;
+}
+
+.calendar-sharing__switcher.ui-switcher .ui-switcher-disabled {
+	padding-right: 4px;
+}
+
+.calendar-sharing__btn-wrap {
+	display: flex;
+	align-items: center;
+	position: relative;
+}
+
+.calendar-sharing__new-feature-counter {
+	position: absolute;
+	top: 0;
+	right: 0;
+	transform: translate(0, -6px);
+}
+
+.ui-btn.calendar-sharing__btn {
+	padding-left: 10px;
+	order: 1;
+	border-radius: 0 calc(var(--ui-btn-height) / 2) calc(var(--ui-btn-height) / 2) 0;
+	border-left: 0;
+}
+
+.ui-btn.calendar-sharing__btn::after {
+	position: relative;
+	order: 2;
+	width: 20px;
+	height: 23px;
+	left: auto;
+	margin-left: 2px;
+	margin-right: -11px;
+	background-size: 100%;
+}
+
+.ui-btn.calendar-sharing__btn .ui-btn-text {
+	order: 1;
+}
+
+.calendar-sharing__switcher_divider {
+	width: 1px;
+	height: 16px;
+	background-color: rgba(255, 255, 255, .44);
+}
+
+.bitrix24-dark-theme .calendar-sharing__switcher_divider,
+.bitrix24-default-theme .calendar-sharing__switcher_divider,
+.ui-page-slider-wrapper-default-theme .calendar-sharing__switcher_divider {
+	background-color: rgba(0, 0, 0, .14);
+}
+
+.calendar-popup-ui-tour-animate {
+	animation-name: calendar-popup-ui-tour-animate;
+	animation-duration: .5s;
+}
+
+@keyframes calendar-popup-ui-tour-animate {
+	0% {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

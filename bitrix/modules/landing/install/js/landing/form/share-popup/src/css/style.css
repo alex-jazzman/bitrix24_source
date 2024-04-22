@@ -1,0 +1,19 @@
+.landing-form-features-share-icon > i {
+	--ui-icon-service-bg-color: rgba(255, 255, 255, .2);
+	background-image: url(images/share-icon.svg);
+}
+
+.landing-form-features-communication-icon > i {
+	--ui-icon-service-bg-color: #3BC8F5;
+	background-image: url(images/communication-icon.svg);
+}
+
+.landing-form-features-help-icon > i {
+	--ui-icon-service-bg-color: #EBECEE;
+	background-image: url(images/help-icon.svg);
+}
+
+.landing-form-features-settings-icon > i {
+	--ui-icon-service-bg-color: #EBECEE;
+	background-image: url(images/settings-icon.svg);
+}

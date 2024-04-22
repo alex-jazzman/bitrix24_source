@@ -1,0 +1,25 @@
+<?php
+$MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1"] = "Create product in web version";
+$MESS["CSPL_DETAIL_PRODUCT_MENU_TITLE"] = "Add product";
+$MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS"] = "Inventory object has no products";
+$MESS["CSPL_MENU"] = "Menu";
+$MESS["CSPL_MENU_ADD_NEW_PRODUCT_TITLE"] = "New product";
+$MESS["CSPL_MENU_CHOOSE_FROM_DB"] = "Pick from catalog";
+$MESS["CSPL_MENU_CREATE_ARTNUMBER"] = "Create product with S/N";
+$MESS["CSPL_MENU_CREATE_BARCODE"] = "Create product with barcode";
+$MESS["CSPL_MENU_CREATE_PRODUCT"] = "Create product";
+$MESS["CSPL_MENU_CREATE_SKU"] = "Create SKU";
+$MESS["CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE"] = "Find by barcode";
+$MESS["CSPL_PRODUCT_CONTEXT_MENU_EDIT"] = "Edit";
+$MESS["CSPL_PRODUCT_CONTEXT_MENU_OPEN"] = "Open";
+$MESS["CSPL_PRODUCT_DELETE_CONFIRMATION"] = "Are you sure you want to delete this record from inventory object?";
+$MESS["CSPL_PRODUCT_DELETE_CONFIRMATION_CANCEL"] = "Cancel";
+$MESS["CSPL_PRODUCT_DELETE_CONFIRMATION_OK"] = "Delete";
+$MESS["CSPL_PRODUCT_DETAIL_BACKDROP_TITLE"] = "Product data";
+$MESS["CSPL_PRODUCT_NOT_FOUND_BY_BARCODE"] = "No product with this barcode was found in the catalog";
+$MESS["CSPL_REMOVE_PRODUCT_ERROR"] = "Cannot remove product from inventory object";
+$MESS["CSPL_UNKNOWN_ERROR"] = "Something went wrong...";
+$MESS["CSPL_UPDATE_TAB_ERROR"] = "Error loading data";
+$MESS["CSPL_VALIDATION_ERROR_EMPTY_NAME"] = "Item ##NUM# has no product name";
+$MESS["CSPL_VALIDATION_ERROR_PHOTO_HAS_ERROR"] = "Item ##NUM# has invalid product images. Delete those images and upload them again.";
+$MESS["CSPL_VALIDATION_ERROR_PHOTO_IS_LOADING"] = "Item ##NUM# has no product photos.";

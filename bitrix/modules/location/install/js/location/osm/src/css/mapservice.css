@@ -1,0 +1,7 @@
+.location-osm-map-container {
+	height: 100%;
+}
+
+.location-source-OSM .location-map-address-changed {
+	right: 9px;
+}

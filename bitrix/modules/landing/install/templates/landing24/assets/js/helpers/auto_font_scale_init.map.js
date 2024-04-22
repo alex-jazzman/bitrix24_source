@@ -1,0 +1,1 @@
+{"version":3,"file":"auto_font_scale_init.map.js","names":["BX","ready","Landing","UI","Tool","AutoFontScale","init","document"],"sources":["auto_font_scale_init.js"],"mappings":"CAAC,WACA,aAEAA,GAAGC,OAAM,WACRD,GAAGE,QAAQC,GAAGC,KAAKC,cAAcC,KAAKC,SACvC,GACA,EANA"}

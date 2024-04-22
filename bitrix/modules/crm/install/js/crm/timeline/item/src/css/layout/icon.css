@@ -1,0 +1,312 @@
+.crm-timeline__card_icon_container {
+	position: absolute;
+	left: calc(var(--crm-timeline-card-icon-left-indent) - var(--crm-timeline-card-icon-size));
+	top: var(--crm-timeline-card-icon-top-indent);
+	z-index: 1000;
+}
+
+.crm-timeline__card_icon {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	width: calc(var(--crm-timeline-card-icon-size) - 2px);
+	height: calc(var(--crm-timeline-card-icon-size) - 2px);
+	background-color: var(--ui-color-primary, #2fc6f6);
+	background-repeat: no-repeat;
+	background-position: center center;
+	border: 1px solid var(--ui-color-primary, #2fc6f6);
+	border-radius: 50%;
+	z-index: 1000;
+}
+
+.crm-timeline__card_icon i {
+	display: block;
+	width: 24px;
+	height: 24px;
+	background-image: none;
+	background-color: var(--ui-color-background-primary);
+	mask-repeat: no-repeat;
+	mask-size: contain;
+	mask-position: center;
+	mask-image: url(../../../image/crm-timeline_icons-sprite.svg);
+	border-radius: 50%;
+}
+
+.crm-timeline__card_icon.--bg-primary_alt {
+	background-color: var(--ui-color-primary-alt, #9dcf00);
+	border-color: var(--ui-color-primary-alt, #9dcf00);
+}
+
+.crm-timeline__card_icon.--bg-failure {
+	background-color: var(--ui-color-text-alert, #ff5752);
+	border-color: var(--ui-color-text-alert, #ff5752);
+}
+
+.crm-timeline__card_icon.--muted {
+	background-color: var(--ui-color-background-primary, #fff);
+	border-color: var(--ui-color-background-primary, #fff);
+}
+
+.crm-timeline__card_icon.--muted i {
+	background-color: var(--ui-color-base-40, #bdc1c6);
+}
+
+.crm-timeline__card_icon_counter {
+	position: absolute;
+	top: var(--ui-space-stack-xs-neg, -8px);
+	right: var(--ui-space-inline-xs-neg, -8px);
+}
+
+.crm-timeline__card_icon.--code-email i {
+	mask-image: url("../../images/timeline-card-icons/mail/crm-timeline__mail-icon.svg");
+}
+
+.crm-timeline__card_icon.--code-mail-income i {
+	mask-image: url("../../images/timeline-card-icons/mail/crm-timeline__mail-icon.svg");
+}
+
+.crm-timeline__card_icon.--code-mail-outcome i {
+	mask-image: url("../../images/timeline-card-icons/mail/crm-timeline__mail-outcome-icon.svg");
+}
+
+.crm-timeline__card_icon.--code-IM i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__chats-icon.svg");
+}
+
+.crm-timeline__card_icon.--code-call i {
+	mask-image: url('../../images/timeline-card-icons/call/crm-timeline__call-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-call-completed i {
+	mask-image: url('../../images/timeline-card-icons/call/crm-timeline__call-completed.svg');
+}
+
+.crm-timeline__card_icon.--code-call-incoming i {
+	mask-image: url('../../images/timeline-card-icons/call/crm-timeline__call-incoming.svg');
+}
+
+.crm-timeline__card_icon.--code-call-incoming-missed i {
+	mask-image: url('../../images/timeline-card-icons/call/crm-timeline__call-incoming-missing.svg');
+}
+
+.crm-timeline__card_icon.--code-call-outcoming i {
+	mask-image: url('../../images/timeline-card-icons/call/crm-timeline__call-outcoming.svg');
+}
+
+.crm-timeline__card_icon.--code-crmForm i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__crm-form-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-store i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__store-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-task i,
+.crm-timeline__card_icon.--code-store-document i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__task-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-meeting i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__meeting-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-visit i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__visit-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-bp i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__bp-icon.svg");
+}
+
+.crm-timeline__card_icon.--code-info i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__info-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-comment i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__comment-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-complete i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__complete-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-convert i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__convert-icon.svg");
+}
+
+.crm-timeline__card_icon.--code-link i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__link-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-unlink i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__unlink-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-bank-card i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__bank-card-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-wallet i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__wallet-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-robot i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__robot-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-rest i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__rest-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-taxi i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__delivery-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-terminal i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__terminal-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-restApp i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__rest-app-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-sms i,
+.crm-timeline__card_icon.--code-new i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__chat-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-zoom i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__zoom-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-check i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__check-receipt-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-document i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__document-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-bank-card i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__bank-card-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-stage-change i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__stage.svg');
+}
+
+.crm-timeline__card_icon.--code-relation i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__relation.svg');
+}
+
+.crm-timeline__card_icon.--code-link i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__link.svg');
+}
+
+.crm-timeline__card_icon.--code-unlink i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__unlink.svg');
+}
+
+.crm-timeline__card_icon.--code-sum i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__sum.svg');
+}
+
+.crm-timeline__card_icon.--code-circle-check i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__circle-check.svg');
+}
+
+.crm-timeline__card_icon.--code-clock i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__clock.svg');
+}
+
+.crm-timeline__card_icon.--code-open-line-incoming-message i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__open_line_message.svg');
+}
+
+.crm-timeline__card_icon.--code-view i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__view.svg');
+}
+
+.crm-timeline__card_icon.--code-pipeline i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__funnel-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-attention i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__attention-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-task-ping i {
+	mask-image: url('../../images/timeline-card-icons/tasks/crm-timeline__task-ping.svg');
+	width: 20px;
+	height: 20px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--custom-bg i{
+	mask-image: none;
+	background-color: transparent;
+	background-size: contain;
+}
+
+.crm-timeline__card_icon.--code-conversion i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__conversion-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-calendar i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__calendar.svg");
+	width: 24px;
+	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-circle-crossed i {
+	mask-image: url("../../images/timeline-card-icons/crm-timeline__circle-crossed.svg");
+	width: 18px;
+	height: 18px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-task-new-comment i {
+	mask-image: url('../../images/timeline-card-icons/tasks/crm-timelime__task-new-comment.svg');
+	width: 24px;
+	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-task-viewed-comment i {
+	mask-image: url('../../images/timeline-card-icons/tasks/crm-timeline__task-viewed-comment.svg');
+	width: 24px;
+	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-task-activity i {
+	mask-image: url('../../images/timeline-card-icons/tasks/crm-timeline__task-activity.svg');
+	width: 22px;
+	height: 22px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-sms i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__sms.svg');
+	width: 24px;
+	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-ai-copilot i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__ai-copilot-icon.svg');
+	width: 24px;
+	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}

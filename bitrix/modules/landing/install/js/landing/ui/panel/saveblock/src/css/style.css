@@ -1,0 +1,20 @@
+.landing-ui-panel.landing-ui-panel-save-block {
+	width: 496px;
+	z-index: 333;
+}
+
+.landing-ui-panel-content-overlay.landing-ui-panel-save-block {
+	z-index: 332;
+}
+
+.landing-ui-panel.landing-ui-panel-save-block .landing-ui-form-header {
+	display: none;
+}
+
+.landing-ui-panel-save-block-fail {
+	display: flex;
+	height: 100%;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+}

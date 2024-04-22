@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_WAIT_ACTIVITY_WAIT_TYPE"] = "Wait type";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_AFTER"] = "Wait for specified number of days";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_BEFORE"] = "Wait for specified number of days until selected day";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_DURATION"] = "Time-out interval, days";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_TARGET"] = "Until specified date";
+$MESS["CRM_WAIT_ACTIVITY_WAIT_DESCRIPTION"] = "Comment or instructions";
+$MESS["CRM_WAIT_ACTIVITY_ERROR_WAIT_TYPE"] = "Wait type is not specified";
+$MESS["CRM_WAIT_ACTIVITY_ERROR_WAIT_DURATION"] = "Time-out is not specified";
+$MESS["CRM_WAIT_ACTIVITY_ERROR_WAIT_TARGET"] = "Wait-until date is not specified";
+$MESS["CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_TARGET_1"] = "Target element field was not found";
+$MESS["CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_TARGET_TIME_1"] = "Cannot get the date value from the element field";
+$MESS["CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_BEFORE"] = "The wait end date needs to be beyond the current date. The date you entered may be in the past or too far in the future.";
+$MESS["CRM_WAIT_ACTIVITY_DESCRIPTION_TYPE_AFTER"] = "Wait for #DURATION# or any input from customer";
+$MESS["CRM_WAIT_ACTIVITY_DESCRIPTION_TYPE_BEFORE"] = "Wait for #DURATION# until \"#TARGET_DATE#\" or any input from customer";
+$MESS["CRM_WAIT_ACTIVITY_DAY_PLURAL_0"] = "day";
+$MESS["CRM_WAIT_ACTIVITY_DAY_PLURAL_1"] = "days";
+$MESS["CRM_WAIT_ACTIVITY_DAY_PLURAL_2"] = "days";
+$MESS["CRM_WAIT_ACTIVITY_WEEK_PLURAL_0"] = "week";
+$MESS["CRM_WAIT_ACTIVITY_WEEK_PLURAL_1"] = "weeks";
+$MESS["CRM_WAIT_ACTIVITY_WEEK_PLURAL_2"] = "weeks";

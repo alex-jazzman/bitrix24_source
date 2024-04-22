@@ -1,0 +1,9 @@
+<?
+$MESS["CRM_MANAGER_CNTR_SUCCEED"] = "Completed";
+$MESS["CRM_MANAGER_CNTR_FAILED"] = "Remaining";
+$MESS["CRM_MANAGER_CNTR_LEAD"] = "Leads";
+$MESS["CRM_MANAGER_CNTR_CONTACT"] = "Contacts";
+$MESS["CRM_MANAGER_CNTR_COMPANY"] = "Companies";
+$MESS["CRM_MANAGER_CNTR_DEAL"] = "Deals";
+$MESS["CRM_MANAGER_CNTR_TITLE"] = "Manager counters";
+?>

@@ -1,0 +1,2 @@
+<?php
+$MESS['MOBILE_CONTROLLER_CATALOG_ERROR_DOCUMENTS_NOT_FOUND_MSGVER_2'] = 'Таких документов нет';
