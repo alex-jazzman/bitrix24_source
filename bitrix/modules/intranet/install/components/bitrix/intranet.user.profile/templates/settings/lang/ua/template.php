@@ -1,0 +1,7 @@
+<?
+$MESS["INTRANET_USER_PROFILE_SETTINGS_CANCEL"] = "Скасувати";
+$MESS["INTRANET_USER_PROFILE_SETTINGS_FIELDS_EDIT"] = "Список полів для редагування";
+$MESS["INTRANET_USER_PROFILE_SETTINGS_FIELDS_VIEW"] = "Список полів для перегляду";
+$MESS["INTRANET_USER_PROFILE_SETTINGS_SAVE"] = "Зберегти";
+$MESS["INTRANET_USER_PROFILE_SETTINGS_TITLE"] = "Налаштування полів";
+?>

@@ -1,0 +1,6 @@
+<?
+$MESS["REPORT_JS_STATUS_ACTION_SUCCESS"] = "Успішно";
+$MESS["REPORT_JS_STATUS_ACTION_ERROR"] = "Виникла помилка";
+$MESS["REPORT_JS_SHARING_RIGHT_READ"] = "Читання";
+$MESS["REPORT_JS_SHARING_RIGHT_EDIT"] = "Редагування";
+?>

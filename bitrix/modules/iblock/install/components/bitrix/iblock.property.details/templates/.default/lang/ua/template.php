@@ -1,0 +1,10 @@
+<?php
+$MESS["IBLOCK_PROPERTY_DETAILS_MENU_ADDITIONAL"] = "Додатково";
+$MESS["IBLOCK_PROPERTY_DETAILS_MENU_COMMON"] = "Основні";
+$MESS["IBLOCK_PROPERTY_DETAILS_MENU_DIRECTORY"] = "Значення довідника";
+$MESS["IBLOCK_PROPERTY_DETAILS_MENU_LIST"] = "Значення списку";
+$MESS["IBLOCK_PROPERTY_DETAILS_MENU_TITLE"] = "Налаштування";
+$MESS["IBLOCK_PROPERTY_DETAILS_NEW_RECORD_TITLE"] = "Додавання властивості";
+$MESS["IBLOCK_PROPERTY_DETAILS_POPUP_OPEN_SLIDER_CONFIRM_SAVE_BUTTON"] = "Зберегти";
+$MESS["IBLOCK_PROPERTY_DETAILS_POPUP_OPEN_SLIDER_CONFIRM_TEXT"] = "Збережіть властивість, щоб перейти до заповнення значень.";
+$MESS["IBLOCK_PROPERTY_DETAILS_REMOVE_POPUP_MESSAGE"] = "Справді видалити цю властивість? Усі дані буде втрачено.";

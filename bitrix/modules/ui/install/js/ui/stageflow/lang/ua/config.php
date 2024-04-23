@@ -1,0 +1,5 @@
+<?php
+$MESS["UI_STAGEFLOW_FINAL_STAGE_NAME"] = "Завершити";
+$MESS["UI_STAGEFLOW_FINAL_STAGE_POPUP_FAIL"] = "Провал";
+$MESS["UI_STAGEFLOW_FINAL_STAGE_POPUP_TITLE"] = "Оберіть результат завершення";
+$MESS["UI_STAGEFLOW_FINAL_STAGE_SELECTOR_TITLE"] = "Завершення:";

@@ -1,0 +1,33 @@
+<?
+$MESS["SUP_NO_LIMITS"] = "< не обмежено >";
+$MESS["SUP_RESPONSE_TIME"] = "Час реакції";
+$MESS["SUP_FORGOT_NAME"] = "Ви забули ввести «Назву» для запису # #ID#";
+$MESS["SUP_DELETE_CONFIRMATION"] = "Ви впевнені, що бажаєте видалити даний SLA?";
+$MESS["SUP_USER_GROUPS"] = "Групи користувачів";
+$MESS["SUP_DAY_1"] = "день";
+$MESS["SUP_DAY_5"] = "днів";
+$MESS["SUP_DAY_3"] = "дні";
+$MESS["SUP_MINUTE_5"] = "хвилин";
+$MESS["SUP_MINUTE_1"] = "хвилина";
+$MESS["SUP_MINUTE_3"] = "хвилини";
+$MESS["SUP_NAME"] = "Назва";
+$MESS["SUP_DESCRIPTION"] = "Опис";
+$MESS["SUP_RESPONSIBLE"] = "Відповідальний";
+$MESS["SUP_PRIORITY"] = "Пріоритет";
+$MESS["SUP_SITE"] = "Сайт";
+$MESS["SUP_PAGES"] = "Рівні";
+$MESS["SUP_PAGE_TITLE"] = "Рівні техпідтримки (SLA)";
+$MESS["SUP_HOUR_1"] = "година";
+$MESS["SUP_HOUR_3"] = "години";
+$MESS["SUP_HOUR_5"] = "годин";
+$MESS["SUP_SHEDULE_S"] = "Розклад";
+$MESS["MAIN_ADMIN_MENU_EDIT"] = "Змінити";
+$MESS["SUP_EDIT"] = "Змінити";
+$MESS["MAIN_ADMIN_LIST_SELECTED"] = "Обрано:";
+$MESS["SUP_DELETE"] = "Видалити";
+$MESS["MAIN_ADMIN_LIST_CHECKED"] = "Позначено:";
+$MESS["MAIN_ADMIN_LIST_DELETE"] = "видалити";
+$MESS["SUP_ADD"] = "Додати";
+$MESS["SUP_EXACT_MATCH"] = "Шукати точний збіг при фільтрації";
+$MESS["SUP_ALL"] = "(всі)";
+?>

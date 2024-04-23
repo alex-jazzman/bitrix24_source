@@ -1,0 +1,19 @@
+<?php
+$MESS["VI_CANCEL_DELETE_NUMBER_ERROR"] = "При спробі скасування відключення, оператор номера повернув помилку. Будь ласка, спробуйте пізніше.";
+$MESS["VI_DELETE_NUMBER_ERROR"] = "При спробі відключення, оператор номера повернув помилку. Будь ласка, спробуйте пізніше.";
+$MESS["VI_NUMBER_BUNDLE_WILL_BE_DELETED"] = "Пакет номерів буде відключений протягом доби.";
+$MESS["VI_NUMBER_CONFIRM_ACTION"] = "Підтвердіть дію";
+$MESS["VI_NUMBER_CONFIRM_BUNDLE_DISCONNECTION"] = "Пакет номерів може бути відключений тільки повністю. Вимкнути всі номери пакета?";
+$MESS["VI_NUMBER_ERROR"] = "Помилка";
+$MESS["VI_NUMBER_NUMBER_DELETE_CONFIRM"] = "Ви впевнені, що хочете відключити номер #NUMBER# від вашого Bitrix24?";
+$MESS["VI_NUMBER_NUMBER_RENTED_IN_BUNDLE"] = "Цей номер був орендований у складі пакету з #COUNT# номерів:";
+$MESS["VI_NUMBER_NUMBER_WILL_BE_DELETED"] = "Номер буде відключений протягом доби.";
+$MESS["VI_NUMBER_RENT_CLOSE"] = "Закрити";
+$MESS["VI_NUMBER_RENT_CONFIGURE_NUMBER"] = "Налаштувати номер";
+$MESS["VI_NUMBER_RENT_CONFIGURE_NUMBERS"] = "Налаштувати номери";
+$MESS["VI_NUMBER_RENT_CONGRATULATIONS"] = "Вітаємо!";
+$MESS["VI_NUMBER_RENT_DOCUMENTS_REQUIRED"] = "Для початку роботи з орендованим номером, потрібно завантажити юридичні документи";
+$MESS["VI_NUMBER_RENT_NUMBERS_ATTACHED"] = "Номери #NUMBERS# підключені до вашого Бітрікс24!";
+$MESS["VI_NUMBER_RENT_NUMBER_ATTACHED"] = "Номер #NUMBER# підключений до вашого Бітрікс24!";
+$MESS["VI_NUMBER_RENT_NUMBER_RESERVED"] = "Номер #NUMBER# зарезервований за вами!";
+$MESS["VI_NUMBER_RENT_UPLOAD_DOCUMENTS"] = "Завантажити документи";

@@ -1,0 +1,35 @@
+<?
+$MESS["STAT_RECORDS_LIST"] = "Пошукові фрази";
+$MESS["STAT_F_SEARCH_SYSTEM"] = "Пошукова система:";
+$MESS["STAT_F_ID"] = "ID:";
+$MESS["STAT_F_SESSION"] = "ID сесії:";
+$MESS["STAT_F_REFERER"] = "ID того, що посилається:";
+$MESS["STAT_F_SEARCH_PHRASE"] = "Пошукова фраза:";
+$MESS["STAT_F_PAGE_TO"] = "Куди прийшли:";
+$MESS["STAT_PHRASE"] = "Пошукова фраза";
+$MESS["STAT_SERVER"] = "Пошукова система";
+$MESS["STAT_REFERER"] = "Посил.";
+$MESS["STAT_QUANTITY"] = "Кількість";
+$MESS["STAT_DATE_INSERT"] = "Дата";
+$MESS["STAT_PAGE_TO"] = "Куди прийшли";
+$MESS["STAT_SESSION"] = "Сесія";
+$MESS["STAT_PHRASE_PAGES"] = "Записи";
+$MESS["STAT_REFERRING_SITE"] = "Сайт, що посилається";
+$MESS["STAT_AVERAGE_HITS"] = "Хітів у середньому";
+$MESS["STAT_SEARCHER_INDEXING"] = "Індексація сайту даним пошуковиком";
+$MESS["STAT_SEARCHER_PHRASES"] = "Пошукові фрази даного пошуковика";
+$MESS["STAT_NAME"] = "ім'я";
+$MESS["STAT_PHRASES"] = "Фрази";
+$MESS["STAT_FL_ID"] = "ID фрази";
+$MESS["STAT_FL_SEARCHER"] = "Пошукова система";
+$MESS["STAT_FL_DATE"] = "Дата";
+$MESS["STAT_FL_PAGE"] = "Куди прийшли";
+$MESS["STAT_FL_ID_REF"] = "ID того, що посилається:";
+$MESS["STAT_FL_ID_SESS"] = "ID сесії";
+$MESS["STAT_PHRASE_SORT"] = "Фільтрувати за фразою";
+$MESS["STAT_LINK_OPEN"] = "Перейти до сторінки";
+$MESS["STAT_FIND_SESSION"] = "Перейти до списку сесій";
+$MESS["STAT_SITE_EDIT"] = "Змінити налаштування сайту";
+$MESS["STAT_NUM"] = "Номер";
+$MESS["STAT_GRAPH"] = "Графік";
+?>

@@ -1,0 +1,3 @@
+<?php
+$MESS["SELECTOR_COMPONENT_PICK_IBLOCK_SECTION"] = "Елемент інфоблоку";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_IBLOCK_SECTION"] = "Список розділів порожній.";

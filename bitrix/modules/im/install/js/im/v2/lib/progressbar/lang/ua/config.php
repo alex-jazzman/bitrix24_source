@@ -1,0 +1,10 @@
+<?php
+$MESS["IM_LIB_PROGRESSBAR_FILE_SIZE_EXCEEDED"] = "Розмір вибраного файлу \"#FILE_NAME#\" перевищує максимальний (#LIMIT# Мб).";
+$MESS["IM_LIB_PROGRESSBAR_FILE_SIZE_MB"] = "Мб";
+$MESS["IM_LIB_PROGRESSBAR_FILE_UPLOAD_CANCELED"] = "Скасовано";
+$MESS["IM_LIB_PROGRESSBAR_FILE_UPLOAD_CANCEL_TITLE"] = "Скасувати завантаження";
+$MESS["IM_LIB_PROGRESSBAR_FILE_UPLOAD_COMPLETED"] = "Завантажено";
+$MESS["IM_LIB_PROGRESSBAR_FILE_UPLOAD_ERROR"] = "Помилка завантаження";
+$MESS["IM_LIB_PROGRESSBAR_FILE_UPLOAD_LOADING"] = "Завантаження...";
+$MESS["IM_LIB_PROGRESSBAR_FILE_UPLOAD_SAVING"] = "Обробка...";
+$MESS["IM_LIB_PROGRESSBAR_FILE_UPLOAD_WAITING"] = "Файл завантажується...";

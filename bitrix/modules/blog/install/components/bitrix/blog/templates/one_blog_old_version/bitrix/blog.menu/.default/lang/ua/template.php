@@ -1,0 +1,32 @@
+<?
+$MESS["BLOG_MENU_LOGIN"] = "Увійти";
+$MESS["BLOG_MENU_LOGIN_TITLE"] = "Увійти";
+$MESS["BLOG_MENU_LOGOUT"] = "Вийти";
+$MESS["BLOG_MENU_LOGOUT_TITLE"] = "Вийти";
+$MESS["BLOG_MENU_CURRENT_BLOG_TITLE"] = "Головна сторінка блогу &quot;#NAME#&quot;";
+$MESS["BLOG_MENU_BLOGS_LIST_TITLE"] = "Головна сторінка блогів";
+$MESS["BLOG_MENU_FR_A_F"] = "Додати в друзі";
+$MESS["BLOG_MENU_ADD_MESSAGE_TITLE"] = "Додати нове повідомлення";
+$MESS["BLOG_MENU_FRIENDS"] = "Стрічка друзів";
+$MESS["BLOG_MENU_FRIENDS_TITLE"] = "Стрічка друзів";
+$MESS["BLOG_MENU_MY_BLOG"] = "Мій блог";
+$MESS["BLOG_MENU_MY_BLOG_TITLE"] = "Мій блог";
+$MESS["BLOG_MENU_PROFILE"] = "Мій профіль";
+$MESS["BLOG_MENU_PROFILE_TITLE"] = "Мій профіль";
+$MESS["BLOG_MENU_BLOG_EDIT"] = "Налаштування блогу";
+$MESS["BLOG_MENU_GROUP_EDIT"] = "Налаштування груп";
+$MESS["BLOG_MENU_GROUP_EDIT_TITLE"] = "Налаштування груп мого блогу";
+$MESS["BLOG_MENU_BLOG_EDIT_TITLE"] = "Налаштування мого блогу";
+$MESS["BLOG_MENU_USER_SETTINGS"] = "Налаштування користувачів";
+$MESS["BLOG_MENU_USER_SETTINGS_TITLE"] = "Налаштування користувачів мого блогу";
+$MESS["BLOG_MENU_CATEGORY_EDIT"] = "Налаштування тегів";
+$MESS["BLOG_MENU_CATEGORY_EDIT_TITLE"] = "Налаштування тегів мого блогу";
+$MESS["BLOG_MENU_DRAFT_MESSAGES"] = "Недописані повідомлення";
+$MESS["BLOG_MENU_DRAFT_MESSAGES_TITLE"] = "Недописані повідомлення";
+$MESS["BLOG_MENU_ADD_MESSAGE"] = "Нове повідомлення";
+$MESS["BLOG_MENU_REGISTER"] = "Реєстрація";
+$MESS["BLOG_MENU_REGISTER_TITLE"] = "Реєстрація";
+$MESS["BLOG_MENU_BLOGS_LIST"] = "Список блогів";
+$MESS["BLOG_MENU_FR_B_F"] = "Стати другом";
+$MESS["BLOG_MENU_CURRENT_BLOG"] = "Поточний блог";
+?>

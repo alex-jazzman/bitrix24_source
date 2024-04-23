@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_DUP_CRITERION_ORG_ENTITY_TOTAL"] = "#QTY# по компанії #DESCR#";
+$MESS["CRM_DUP_CRITERION_ORG_ENTITY_TOTAL_EXCEEDED"] = "Більш #QTY# по компанії #DESCR#";
+$MESS["CRM_DUP_CRITERION_ORG_SUMMARY"] = "Збіг за компанією #DESCR#";
+?>

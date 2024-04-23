@@ -1,0 +1,35 @@
+<?
+$MESS["FORM_WEB_FORMS"] = "[веб-форми]";
+$MESS["FORM_L_USER_EMAIL"] = "E-mail користувача";
+$MESS["FORM_L_USER_ID"] = "ID користувача";
+$MESS["FORM_L_STAT_GUEST_ID"] = "ID відвідувача";
+$MESS["FORM_L_RESULT_ID"] = "ID результата";
+$MESS["FORM_L_STAT_SESSION_ID"] = "ID сесії";
+$MESS["FORM_L_FORM_ID"] = "ID форми";
+$MESS["FORM_L_SID"] = "SID форми";
+$MESS["FORM_AUTHORIZED"] = "авторизований";
+$MESS["FORM_PAGE_TITLE"] = "Генерація поштових шаблонів";
+$MESS["FORM_GENERATING_FINISHED"] = "Генерація поштових шаблонів завершена.";
+$MESS["FORM_DATE_CREATE"] = "Дата —";
+$MESS["FORM_L_DATE_CREATE"] = "Дата заповнення форми";
+$MESS["FORM_VIEW"] = "Для перегляду скористайтеся посиланням:";
+$MESS["FORM_FILLING"] = "Заповнена web-форма";
+$MESS["FORM_FILLING_S"] = "Заповнена web-форма";
+$MESS["FORM_L_NAME"] = "Ім'я форми";
+$MESS["FORM_NOT_AUTHORIZED"] = "не авторизований";
+$MESS["FORM_NOT_REGISTERED"] = "не зареєстрований";
+$MESS["FORM_L_RAW"] = "оригінальне значення";
+$MESS["FORM_GENERATED_AUTOMATICALLY"] = "Лист сгенеровано автоматично.";
+$MESS["FORM_USER"] = "Користувач —";
+$MESS["FORM_L_USER_AUTH"] = "Користувач був авторизований?";
+$MESS["FORM_STAT_GUEST_ID"] = "Відвідувач";
+$MESS["FORM_VIEW_TEMPLATE"] = "перегляд шаблонів";
+$MESS["FORM_RESULT_ID"] = "Результат —";
+$MESS["FORM_STAT_SESSION_ID"] = "Сесія —";
+$MESS["FORM_L_USER_NAME"] = "Прізвище, ім'я користувача";
+$MESS["FILE_SIZE_b"] = "Б";
+$MESS["FILE_SIZE_Kb"] = "КБ";
+$MESS["FILE_SIZE_Mb"] = "МБ";
+$MESS["FILE_SIZE_Gb"] = "ГБ";
+$MESS["FILE_SIZE_Tb"] = "ТБ";
+?>

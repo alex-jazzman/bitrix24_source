@@ -1,0 +1,23 @@
+<?php
+$MESS["LANDING_BLOCK_ATTRS_ANIMATION"] = "Анімація при перегортанні";
+$MESS["LANDING_BLOCK_ATTRS_ANIMATION_HINT"] = "Оберіть ефект переходу між слайдами. Анімація 'fade in' доступна лише тоді, коли на екрані 1 слайд";
+$MESS["LANDING_BLOCK_ATTRS_ANIMATION_OFF"] = "Без анімації";
+$MESS["LANDING_BLOCK_ATTRS_ARROWS"] = "Дизайн кнопок";
+$MESS["LANDING_BLOCK_ATTRS_ARROWS_0"] = "Без кнопок";
+$MESS["LANDING_BLOCK_ATTRS_AUTO"] = "Авто";
+$MESS["LANDING_BLOCK_ATTRS_AUTOPLAY"] = "Автовідтворення";
+$MESS["LANDING_BLOCK_ATTRS_AUTOPLAY_SPEED"] = "Швидкість";
+$MESS["LANDING_BLOCK_ATTRS_DOTS"] = "Додати навігацію (крапки)";
+$MESS["LANDING_BLOCK_ATTRS_NO"] = "Ні";
+$MESS["LANDING_BLOCK_ATTRS_OFF"] = "Відключити";
+$MESS["LANDING_BLOCK_ATTRS_ON"] = "Включити";
+$MESS["LANDING_BLOCK_ATTRS_PAUSE_HOVER"] = "Пауза при наведенні";
+$MESS["LANDING_BLOCK_ATTRS_SLIDES_SHOW"] = "Кількість слайдів";
+$MESS["LANDING_BLOCK_ATTRS_SLIDES_SHOW_HINT"] = "Оберіть кількість слайдів, які будуть відображатися на екрані одночасно. Доступно лише при перегляді сайту на комп'ютері";
+$MESS["LANDING_BLOCK_ATTRS_TIME_1"] = "1 с";
+$MESS["LANDING_BLOCK_ATTRS_TIME_3"] = "3 с";
+$MESS["LANDING_BLOCK_ATTRS_TIME_5"] = "5 с";
+$MESS["LANDING_BLOCK_ATTRS_TIME_10"] = "10 с";
+$MESS["LANDING_BLOCK_ATTRS_TIME_15"] = "15 с";
+$MESS["LANDING_BLOCK_ATTRS_TIME_30"] = "30 с";
+$MESS["LANDING_BLOCK_ATTRS_YES"] = "Так";

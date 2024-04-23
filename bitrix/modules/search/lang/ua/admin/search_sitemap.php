@@ -1,0 +1,30 @@
+<?
+$MESS["SEARCH_SITEMAP_INSTR5"] = "Введіть у полі <strong>«URL»</strong> адресу вашого файлу індексу Sitemap і натисніть кнопку <strong>«Передати URL»</strong>";
+$MESS["SEARCH_SITEMAP_FORUM_TOPICS_ONLY"] = "Включати в Google Sitemap тільки теми форумів, але не повідомлення";
+$MESS["SEARCH_SITEMAP_WARN"] = "Увага! Під час створення файлів Sitemap були виявлені несумісні URL, які записані у окремий файл";
+$MESS["SEARCH_SITEMAP_NOTE"] = "Увага! При створенні файлів Google Sitemap всі файли вигляду «sitemap_*.xml», що розташовані у кореневій папці обраного сайту, будуть перезаписані";
+$MESS["SEARCH_SITEMAP_ERR"] = "Під час створення Sitemap сталася помилка";
+$MESS["SEARCH_SITEMAP_SESSION_ERR"] = "Під час створення Sitemap сталася помилка перевірки сесії. Ймовірно сесія закінчилася. Запустіть створення Sitemap знову.";
+$MESS["SEARCH_SITEMAP_INSTR8"] = "Додайте першу карту сайту";
+$MESS["SEARCH_SITEMAP_INSTR1"] = "Якщо ви ще не зареєстровані у програмі Google Sitemaps, необхідно виконати наступні кроки";
+$MESS["SEARCH_SITEMAP_INSTR6"] = "Якщо ви вже додавали файл індексу, то можете оновити посилання на файл у інтерфейсі Google Sitemaps";
+$MESS["SEARCH_SITEMAP_INSTR2"] = "Зареєструйтеся у";
+$MESS["SEARCH_SITEMAP_ERR_COUNT"] = "З них із помилками";
+$MESS["SEARCH_SITEMAP_USE_HTTPS"] = "Використовувати HTTPS";
+$MESS["SEARCH_SITEMAP_RECORD_LIMIT"] = "Максимальна кількість документів для обробки на одному кроці:";
+$MESS["SEARCH_SITEMAP_BLOG_NO_COMMENTS"] = "Не включати у Google Sitemap коментарі до повідомлень блогів";
+$MESS["SEARCH_SITEMAP_WARN1"] = "Несумісними вважаються URL довжиною більше 2048 символів або містять розширені ASCII символи";
+$MESS["SEARCH_SITEMAP_DOC_COUNT"] = "Опрацьовано документів";
+$MESS["SEARCH_SITEMAP_STOP"] = "Зупинити";
+$MESS["SEARCH_SITEMAP_TAB_TITLE"] = "Параметри створення";
+$MESS["SEARCH_SITEMAP_INSTR4"] = "Перейдіть за посиланню";
+$MESS["SEARCH_SITEMAP_CONTINUE"] = "Продовжити";
+$MESS["SEARCH_SITEMAP_INSTR3"] = "з використанням вашого";
+$MESS["SEARCH_SITEMAP_SITE"] = "Сайт:";
+$MESS["SEARCH_SITEMAP_STEP_sec"] = "секунд";
+$MESS["SEARCH_SITEMAP_TITLE"] = "Створення Google Sitemap";
+$MESS["SEARCH_SITEMAP_CREATE"] = "Створити";
+$MESS["SEARCH_SITEMAP_INSTR7"] = "облікового запису Google";
+$MESS["SEARCH_SITEMAP_CREATED"] = "Файл індексу для Google Sitemap створений і доступний за адресою";
+$MESS["SEARCH_SITEMAP_STEP"] = "Крок:";
+?>

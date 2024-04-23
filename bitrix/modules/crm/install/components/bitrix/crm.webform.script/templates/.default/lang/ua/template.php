@@ -1,0 +1,35 @@
+<?
+$MESS["CRM_WEBFORM_SCRIPT_BTN_COPY"] = "копіювати";
+$MESS["CRM_WEBFORM_SCRIPT_BTN_EDIT"] = "налаштувати";
+$MESS["CRM_WEBFORM_SCRIPT_COPY_ONE_LINE"] = "одним рядком";
+$MESS["CRM_WEBFORM_SCRIPT_HINT_INJECT"] = "Вставте код перед кнопкою або посиланням";
+$MESS["CRM_WEBFORM_SCRIPT_INLINE"] = "На сторінці";
+$MESS["CRM_WEBFORM_SCRIPT_LINK"] = "Посилання";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_ANIMATION"] = "Анімація появи";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_ANIMATION_BOTTOM"] = "Знизу";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_ANIMATION_TOP"] = "Зверху";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_DELAY"] = "Показати із затримкою";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_POSITION"] = "Положення";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_POSITION_CENTER"] = "По центру";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_POSITION_LEFT"] = "Зліва";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_POSITION_RIGHT"] = "Справа";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_VIEW_TYPE"] = "Вид";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_VIEW_TYPE_PANEL"] = "Панель";
+$MESS["CRM_WEBFORM_SCRIPT_PARAM_VIEW_TYPE_POPUP"] = "Вікно";
+$MESS["CRM_WEBFORM_SCRIPT_SCRIPT_ON_SITE"] = "Код на сайті";
+$MESS["CRM_WEBFORM_SCRIPT_SEC"] = "сек";
+$MESS["CRM_WEBFORM_SCRIPT_SELECTOR"] = "Показати старий код на сайт";
+$MESS["CRM_WEBFORM_SCRIPT_SEND_TO_EMAIL"] = "відправити коди на e-mail";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_ONPAGE"] = "На сторінці";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_BUTTON"] = "Клік по кнопці";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_CLICK"] = "Клік по кнопці або посиланню";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_DELAY"] = "Автопоказ";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_INLINE"] = "На сторінці";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_SCRIPT_LINK"] = "Клік по посиланню";
+$MESS["CRM_WEBFORM_SCRIPT_TAB_WINDOW"] = "У вікні";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_BUTTON"] = "Спливаюче вікно - клік по кнопці";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_CLICK"] = "Спливаюче вікно - клік по кнопці або посиланню";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_DELAY"] = "Спливаюче вікно - автопоказ";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_INLINE"] = "На сторінці";
+$MESS["CRM_WEBFORM_SCRIPT_WINDOW_LINK"] = "Спливаюче вікно - клік по посиланню";
+?>

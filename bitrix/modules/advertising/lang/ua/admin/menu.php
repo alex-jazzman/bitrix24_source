@@ -1,0 +1,30 @@
+<?
+$MESS["AD_MENU_MAIN"] = "Реклама";
+$MESS["AD_MENU_BANNER_LIST"] = "Банери";
+$MESS["AD_MENU_BANNER_LIST_ALT"] = "Список банерів";
+$MESS["AD_MENU_TYPE_LIST"] = "Типи банерів";
+$MESS["AD_MENU_TYPE_LIST_ALT"] = "Список типів банерів";
+$MESS["AD_MENU_CONTRACT_LIST"] = "Контракти";
+$MESS["AD_MENU_CONTRACT_LIST_ALT"] = "Список контрактів на показ реклами";
+$MESS["AD_MENU_STATISTICS_GRAPH"] = "Графіки";
+$MESS["AD_MENU_STATISTICS_ALT_GRAPH"] = "Графіки показу та кликів на банери";
+$MESS["AD_MENU_STATISTICS_DIAGRAM"] = "Діаграми";
+$MESS["AD_MENU_STATISTICS_ALT_DIAGRAM"] = "Діаграми показа и кликов на баннеры";
+$MESS["AD_MENU_BANNER_LIST_GRAPH"] = "Банери";
+$MESS["AD_MENU_CONTRACT_LIST_GRAPH"] = "Контракти";
+$MESS["AD_MENU_TYPE_LIST_GRAPH"] = "Типи банерів";
+$MESS["AD_MENU_BANNER_LIST_DIAGRAM"] = "Банери";
+$MESS["AD_MENU_CONTRACT_LIST_DIAGRAM"] = "Контракти";
+$MESS["AD_MENU_TYPE_LIST_DIAGRAM"] = "Типи банерів";
+$MESS["AD_MENU_STATISTICS"] = "Діаграми";
+$MESS["AD_MENU_STATISTICS_ALT"] = "Діаграми банерів";
+$MESS["AD_MENU_MAIN_TITLE"] = "Управління рекламою";
+$MESS["AD_MENU_REPORTS"] = "Звіти";
+$MESS["AD_MENU_REPORTS_TITLE"] = "Графічні звіти по банерах та контрактах";
+$MESS["AD_MENU_BAN_GR"] = "Графіки по банерах";
+$MESS["AD_MENU_BAN_CO"] = "Графіки по контрактах";
+$MESS["AD_MENU_BAN_CO_TITLE"] = "Графіки по контрактах";
+$MESS["AD_MENU_DIAG_BAN"] = "Діаграми банерів";
+$MESS["AD_MENU_DIAG_CO"] = "Діаграми контрактів";
+$MESS["AD_MENU_DIAG_CO_TITLE"] = "Діаграми по контрактах";
+?>

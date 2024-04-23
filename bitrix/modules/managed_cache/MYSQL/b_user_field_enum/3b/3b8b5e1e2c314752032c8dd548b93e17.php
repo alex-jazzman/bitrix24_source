@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001697794841';
+$dateexpire = '001697798441';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:6:{i:0;a:6:{s:2:"ID";s:3:"410";s:13:"USER_FIELD_ID";s:4:"2623";s:5:"VALUE";s:12:"Москва";s:3:"DEF";s:1:"N";s:4:"SORT";s:1:"0";s:6:"XML_ID";s:32:"7e69b985861ea1ee5a11f0369e7bfd12";}i:1;a:6:{s:2:"ID";s:3:"411";s:13:"USER_FIELD_ID";s:4:"2623";s:5:"VALUE";s:29:"Санкт-Петербург";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"100";s:6:"XML_ID";s:32:"e752cea712cb5e99620c42825909bb33";}i:2;a:6:{s:2:"ID";s:3:"412";s:13:"USER_FIELD_ID";s:4:"2623";s:5:"VALUE";s:29:"Сочи (Краснодар)";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"200";s:6:"XML_ID";s:32:"3336cb636ebe9eb1edd4b54d346b5667";}i:3;a:6:{s:2:"ID";s:3:"413";s:13:"USER_FIELD_ID";s:4:"2623";s:5:"VALUE";s:12:"Казань";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"300";s:6:"XML_ID";s:32:"864fe4b45d272566e6204083ac41a7e5";}i:4;a:6:{s:2:"ID";s:3:"414";s:13:"USER_FIELD_ID";s:4:"2623";s:5:"VALUE";s:24:"Екатеринбург";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"400";s:6:"XML_ID";s:32:"5e1e5a0942b5eba86d6d7d3d8633c19d";}i:5;a:6:{s:2:"ID";s:3:"415";s:13:"USER_FIELD_ID";s:4:"2623";s:5:"VALUE";s:12:"Другие";s:3:"DEF";s:1:"N";s:4:"SORT";s:3:"500";s:6:"XML_ID";s:32:"cd7a1c85bf5a604ab2f9af98f5f20d36";}}}';
+return true;
+?>

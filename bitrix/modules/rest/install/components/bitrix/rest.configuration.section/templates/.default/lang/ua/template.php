@@ -1,0 +1,4 @@
+<?
+$MESS["REST_CONFIGURATION_SECTION_LABEL"] = "Оберіть напрямки";
+$MESS["REST_CONFIGURATION_SECTION_LINK_NAME"] = "ПЕРЕЙТИ";
+?>

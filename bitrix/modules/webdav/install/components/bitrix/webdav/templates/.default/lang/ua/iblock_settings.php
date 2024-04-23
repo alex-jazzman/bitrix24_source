@@ -1,0 +1,31 @@
+<?
+$MESS["IB_E_ACCESS_D"] = "Немає доступу";
+$MESS["IB_E_ACCESS_R"] = "Читання";
+$MESS["IB_E_ACCESS_U"] = "Документообіг";
+$MESS["IB_E_ACCESS_U2"] = "Бізнес-процeси";
+$MESS["IB_E_ACCESS_W"] = "Змінення";
+$MESS["IB_E_ACCESS_X"] = "Повний доступ";
+$MESS["IB_E_BIZPROC"] = "Бере участь у бізнес-процесах:";
+$MESS["IB_E_DEFAULT_ACCESS"] = "За умовчанням";
+$MESS["IB_E_DEFAULT_ACCESS_TITLE"] = "Доступ за умовчанням";
+$MESS["IB_E_EVERYONE"] = "Для всіх користувачів";
+$MESS["IB_E_GROUP_ACCESS_TITLE"] = "Доступ для груп користувачів";
+$MESS["IB_E_PERMISSIONS_WARN"] = "Перемикання на простий режим управління правами доступу призведе до скидання всіх поточних прав на інформаційний блок.";
+$MESS["IB_E_RIGHTS"] = "Розширене управління правами:";
+$MESS["IB_E_RIGHTS_WARN"] = "Ви впевнені, що хочете змінити режим управління доступом на інформаційний блок \"#IB_NAME#\"?";
+$MESS["IB_E_WF_TYPE"] = "Бере участь у документообігу або бізнес-процесах";
+$MESS["IB_E_WF_TYPE_BIZPROC"] = "бізнес-процeси";
+$MESS["IB_E_WF_TYPE_LABEL"] = "бере участь";
+$MESS["IB_E_WF_TYPE_NONE"] = "ні";
+$MESS["IB_E_WF_TYPE_WORKFLOW"] = "Документообіг";
+$MESS["IB_E_WORKFLOW"] = "Бере участь у документообігу:";
+$MESS["IB_WDUF_ADD"] = "Додати поле користувача";
+$MESS["WD_ACCESS_DENIED"] = "Доступ заборонений.";
+$MESS["WD_ADD_GROUP"] = "Додати групу";
+$MESS["WD_ERROR_BAD_SESSID"] = "Ваша сесія закінчилася. Повторіть дію.";
+$MESS["WD_IBLOCK_ID_EMPTY"] = "Не зазначений інфоблок.";
+$MESS["WD_TAB15_TITLE"] = "Поля користувача";
+$MESS["WD_TAB1_TITLE"] = "Властивості";
+$MESS["WD_TAB2_TITLE"] = "Доступ";
+$MESS["WD_TAB3_TITLE"] = "Права доступу до інформаційного блоку";
+?>

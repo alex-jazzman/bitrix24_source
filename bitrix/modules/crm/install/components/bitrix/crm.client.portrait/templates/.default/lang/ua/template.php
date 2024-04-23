@@ -1,0 +1,31 @@
+<?
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_IDEAL"] = "Ідеальна";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_VERY_LOW"] = "Дуже низька";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_LOW"] = "Низька";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_DESIRABLE"] = "Максимально-бажана";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_HIGH"] = "Висока";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_VERY_HIGH"] = "Дуже висока";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_ITEM_CRITICAL"] = "Критична";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_EMAIL"] = "E-mail";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_PHONE"] = "Телефон";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMPANY"] = "Компанія";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_POST"] = "Посада";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_RESPONSIBLE"] = "Відповідальний";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMMENTS"] = "Коментар";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMMENTS_HIDE"] = "приховати";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMMENTS_SHOW"] = "показати";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_WON_DEALS"] = "Сума виграних угод";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_CONVERSION"] = "Конверсія";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_PIE_TITLE"] = "Завантаженість по каналам";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_WEB"] = "Сайт";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_COMPANY_TYPE"] = "Тип компанії";
+$MESS["CRM_CLIENT_PORTRAIT_INFO_INDUSTRY"] = "Сфера діяльності";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_TITLE"] = "Максимально бажане навантаження";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_SAVE"] = "Зберегти";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_CANCEL"] = "Скасувати";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_DESCRIPTION"] = "Максимально бажане навантаження від клієнта - це кількість справ на одну операцію, яка прийнятна для вашої компанії.";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_HELP"] = "Ви можете задати значення середнього навантаження від клієнта вручну або скористатися автоматичним визначенням цього числа. При автоматичному розраховується середня кількість справ на одну угоду.";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_AUTO"] = "Автоматично";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_CONFIG_MANUAL"] = "Вказати вручну";
+$MESS["CRM_CLIENT_PORTRAIT_LOAD_SHOW_DEAL_CATEGORIES"] = "показати напрями";
+?>

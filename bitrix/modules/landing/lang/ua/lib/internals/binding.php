@@ -1,0 +1,6 @@
+<?
+$MESS["LANDING_TABLE_FIELD_BINDING_ID"] = "ID прив'язки";
+$MESS["LANDING_TABLE_FIELD_BINDING_TYPE"] = "Тип прив'язки";
+$MESS["LANDING_TABLE_FIELD_ENTITY_ID"] = "ID сутності";
+$MESS["LANDING_TABLE_FIELD_ENTITY_TYPE"] = "Тип сутності";
+?>

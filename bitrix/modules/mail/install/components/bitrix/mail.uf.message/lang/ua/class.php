@@ -1,0 +1,15 @@
+<?php
+$MESS["MAIL_UF_MESSAGE_ATTACHES"] = "Файли (#NUM#)";
+$MESS["MAIL_UF_MESSAGE_BODY_EXPAND"] = "детальніше";
+$MESS["MAIL_UF_MESSAGE_DELETED"] = "Лист видалений";
+$MESS["MAIL_UF_MESSAGE_DENIED"] = "Немає доступу";
+$MESS["MAIL_UF_MESSAGE_H"] = "Лист";
+$MESS["MAIL_UF_MESSAGE_NOT_FOUND"] = "Лист не знайдений";
+$MESS["MAIL_UF_MESSAGE_RCPT"] = "Кому";
+$MESS["MAIL_UF_MESSAGE_RCPT_BCC"] = "Прихована копія";
+$MESS["MAIL_UF_MESSAGE_RCPT_CC"] = "Копія";
+$MESS["MAIL_UF_MESSAGE_READ_AWAITING"] = "не прочитано";
+$MESS["MAIL_UF_MESSAGE_READ_CONFIRMED"] = "прочитано #DATETIME#";
+$MESS["MAIL_UF_MESSAGE_READ_CONFIRMED_SHORT"] = "прочитано";
+$MESS["MAIL_UF_MESSAGE_RECEIVED"] = "отримано #DATETIME#";
+$MESS["MAIL_UF_MESSAGE_SENT"] = "відправлено #DATETIME#";

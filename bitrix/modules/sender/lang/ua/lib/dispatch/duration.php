@@ -1,0 +1,4 @@
+<?
+$MESS["SENDER_DISPATCH_DURATION_LESS_HOUR"] = "менше 1 години";
+$MESS["SENDER_DISPATCH_DURATION_MORE_3_DAYS"] = "більше 3-х днів";
+?>

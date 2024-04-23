@@ -1,0 +1,7 @@
+<?
+$MESS["IDEA_SUBSCRIBE_TITLE"] = "Назва";
+$MESS["IDEA_SUBSCRIBE_STATUS"] = "Статус";
+$MESS["IDEA_SUBSCRIBE_AUTHOR"] = "Автор";
+$MESS["IDEA_SUBSCRIBE_PUBLISHED"] = "Опубліковано";
+$MESS["IDEA_SUBSCRIBE_TOTAL"] = "Підписок";
+?>

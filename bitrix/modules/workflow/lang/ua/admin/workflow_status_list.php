@@ -1,0 +1,30 @@
+<?
+$MESS["FLOW_CANNOT_DELETE_STATUS"] = "Існують документи, що знаходяться в статусі, що видаляється";
+$MESS["FLOW_CANNOT_DELETE_STATUS_IBLOCK"] = "Існують елементи інформаційних блоків, що знаходяться в статусі, що видаляється";
+$MESS["FLOW_PAGE_TITLE"] = "Статуси документів";
+$MESS["FLOW_F_ACTIVE"] = "Активний";
+$MESS["FLOW_F_DESCRIPTION"] = "Опис";
+$MESS["FLOW_F_DOCUMENTS"] = "Документів";
+$MESS["FLOW_PAGES"] = "Статуси";
+$MESS["FLOW_TIMESTAMP"] = "Дата зм.";
+$MESS["FLOW_ACTIVE"] = "Акт.";
+$MESS["FLOW_C_SORT"] = "Сорт.";
+$MESS["FLOW_DESCRIPTION"] = "Опис";
+$MESS["FLOW_DOCUMENTS"] = "Документів";
+$MESS["FLOW_DELETE_STATUS_CONFIRM"] = "Ви впевнені, що бажаєте видалити даний статус?";
+$MESS["FLOW_F_LOGIC"] = "Логіка між полями";
+$MESS["FLOW_TITLE"] = "Заголовок";
+$MESS["FLOW_FORGOT_NAME"] = "Ви забули ввести «Заголовок» для запису ##ID#";
+$MESS["FLOW_TILL"] = "до";
+$MESS["FLOW_ADD"] = "Додати";
+$MESS["FLOW_DELETE"] = "Видалити";
+$MESS["FLOW_EDIT"] = "Змінити";
+$MESS["MAIN_ADMIN_LIST_SELECTED"] = "Обрано:";
+$MESS["MAIN_FIND"] = "Знайти";
+$MESS["MAIN_ADMIN_LIST_CHECKED"] = "Позначено:";
+$MESS["MAIN_FIND_TITLE"] = "Введіть рядок для пошуку";
+$MESS["MAIN_ADMIN_LIST_ACTIVATE"] = "активувати";
+$MESS["MAIN_ALL"] = "(всі)";
+$MESS["MAIN_ADMIN_LIST_DEACTIVATE"] = "деактивувати";
+$MESS["MAIN_ADMIN_LIST_DELETE"] = "видалити";
+?>

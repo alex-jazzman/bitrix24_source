@@ -1,0 +1,34 @@
+<?
+$MESS["MOD_BACK"] = "Повернутись до списку модулів";
+$MESS["TYPE_ID"] = "Символьний код";
+$MESS["TYPE_TITLE"] = "Назва";
+$MESS["TYPE_CONVERT_IT"] = "Конвертувати цей тип";
+$MESS["CAL_SETTINGS"] = "Налаштування";
+$MESS["CAL_PRODUCT_SETTINGS"] = "Налаштування продукту";
+$MESS["CAL_MODULES"] = "Модулі";
+$MESS["CAL_CONVERT"] = "Конвертація календарів";
+$MESS["CAL_CONVERT_IBLOCK_LIST"] = "Список інфоблоків для конвертації в типи календарів";
+$MESS["CAL_CONVERT_START"] = "Конвертувати";
+$MESS["CAL_CONVERT_PROCESSING"] = "Йде конвертація";
+$MESS["CAL_CONVERT_PROCESSING_NOTICE"] = "Увага! Не переривайте процес конвертації і не закривайте  браузеру, це може призвести до помилок в конвертації даних.";
+$MESS["CAL_CONVERT_FROM"] = "з";
+$MESS["CAL_CONVERT_USERS"] = "Календарі користувачів";
+$MESS["CAL_CONVERT_GROUPS"] = "Календарі груп";
+$MESS["CAL_CONVERT_STAGE_PREPARE"] = "підготовка до конвертації";
+$MESS["CAL_CONVERT_STAGE_SAVE"] = "збереження параметрів";
+$MESS["CAL_CONVERT_STAGE_CREATE_TYPES"] = "створення типів календарів";
+$MESS["CAL_CONVERT_STAGE_USER_CALS"] = "конвертація календарів користувача #USER_NAME#: (Календарів: #SECT_COUNT#, Подій: #EVENTS_COUNT#)";
+$MESS["CAL_CONVERT_STAGE_GROUP_CALS"] = "конвертація календарів із \"#GROUP_NAME# \": (Календарів: #SECT_COUNT#, Подій: #EVENTS_COUNT#)";
+$MESS["CAL_CONVERT_STAGE_TYPE"] = "конвертація календарів из \"#TYPE_NAME# \": (Календарів: #SECT_COUNT#, Подій: #EVENTS_COUNT#)";
+$MESS["CAL_CONVERT_SET"] = "Налаштування для модуля календарів";
+$MESS["CAL_CONVERT_PROCES"] = "Процес конвертації";
+$MESS["CAL_GO_TO_SETTINGS"] = "Прейти в настройки модуля";
+$MESS["CAL_CONVERT_SUCCESS"] = "Конвертація завершена";
+$MESS["CAL_NOT_1"] = "Відмітьте  прапорцями інфоблоки, які  мають бути сконвертовані, в типы календарів, змініть назви і/або символьні коди для выбраних типів, якщо це необхідно";
+$MESS["CAL_NOT_2"] = "Перевірте налаштування  для модуля календарів, запропоновані на основі параметрів компонентів, що використовуються";
+$MESS["CAL_NOT_3"] = "Натисніть на кнопку \"Конвертувати\"";
+$MESS["CAL_NOT_4"] = "Після закінчення процесу конвертації перейдіть в налаштування модуля \"Календар подій\", перевірте коректність встановлених типів ";
+$MESS["CAL_PARSE_CONTENT"] = "Аналізувати публічні файли";
+$MESS["CAL_NOT_PARSE"] = "Для правильної установки параметрів модуля треба аналізувати публічні файли";
+$MESS["CAL_PROC_WAIT"] = "Йде аналіз публічних файлів";
+?>

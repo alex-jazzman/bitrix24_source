@@ -1,0 +1,31 @@
+<?
+$MESS["STAT_RECORDS_LIST"] = "Сайти, що посилаються";
+$MESS["STAT_F_SESSION"] = "ID сесії:";
+$MESS["STAT_F_ID"] = "ID:";
+$MESS["STAT_F_FROM"] = "Звідки прийшли";
+$MESS["STAT_F_TO"] = "Куди прийшли:";
+$MESS["STAT_F_GROUP"] = "Групування";
+$MESS["STAT_BY_SERVER"] = "за доменом";
+$MESS["STAT_BY_LINK"] = "за посиланням";
+$MESS["STAT_NO_GROUP"] = "немає групування";
+$MESS["STAT_SESSION"] = "Сесія";
+$MESS["STAT_URL_FROM"] = "Звідки прийшли";
+$MESS["STAT_QUANTITY"] = "Кількість";
+$MESS["STAT_DATE_HIT"] = "Дата";
+$MESS["STAT_PAGE_TO"] = "Куди прийшли";
+$MESS["STAT_REF_PAGES"] = "Записи";
+$MESS["STAT_PERCENT"] = "%";
+$MESS["STAT_AVERAGE_HITS"] = "Хітів у середньому";
+$MESS["STAT_GO_LINK"] = "Перейти за вказаним URL";
+$MESS["STAT_FL_SID"] = "Сесія";
+$MESS["STAT_FL_URL"] = "Куди прийшли";
+$MESS["STAT_FL_PRD"] = "Період";
+$MESS["STAT_FL_LGC"] = "Логіка";
+$MESS["STAT_EDIT_SITE"] = "Змінити параметри сайту";
+$MESS["STAT_SESS_OPEN"] = "Перейти до списку сесій";
+$MESS["STAT_F_PROTOCOL"] = "Протокол";
+$MESS["STAT_F_DOMAIN"] = "Домен";
+$MESS["STAT_F_PAGE"] = "Сторінка";
+$MESS["STAT_NUM"] = "Номер";
+$MESS["STAT_GRAPH"] = "Графік";
+?>

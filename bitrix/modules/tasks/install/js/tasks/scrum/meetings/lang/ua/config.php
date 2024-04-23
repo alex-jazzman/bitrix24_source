@@ -1,0 +1,27 @@
+<?php
+$MESS["TSM_CHATS_CREATE_BUTTON"] = "Створити";
+$MESS["TSM_CHATS_EMPTY_TEXT"] = "створіть зустрічі команди й ми створимо чати автоматично";
+$MESS["TSM_CHATS_EMPTY_TITLE"] = "Немає чатів пов'язаних із проєктом";
+$MESS["TSM_CHATS_HEADER_TITLE"] = "Чати";
+$MESS["TSM_MEETINGS_CREATE_BUTTON"] = "Створити";
+$MESS["TSM_MEETINGS_CREATE_ONE_CLICK"] = "Створити в один клік";
+$MESS["TSM_MEETINGS_EMPTY_TEXT"] = "створіть регулярні зустрічі команди";
+$MESS["TSM_MEETINGS_EMPTY_TITLE"] = "Немає зустрічей пов'язаних із проєктом";
+$MESS["TSM_MEETINGS_ERROR_POPUP_TITLE"] = "Виникла помилка";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATES_INFO"] = "Створити регулярні зустрічі команди в один клік. Для кожної зустрічі буде створено чат на потрібних учасників.";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_BLANK"] = "ШАБЛОНИ ЗУСТРІЧ ПО SCRUM";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_HINT_DAILY"] = "<b>Щоденний скрам</b> – коротка зустріч на 15 хвилин для обговорення спільного просування команди до цілей спринту. Кожен учасник розповідає, що він зробив, що робитиме, які виникли складнощі.";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_HINT_PLANNING"] = "<b>Планування спринту</b> – зустріч для планування нового спринту та формування беклогу завдань. Ця зустріч може бути на кілька годин.";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_HINT_RETROSPECTIVE"] = "<b>Ретроспектива спринту</b> – зустріч для обговорення всередині команди: що виконано добре, а що можна покращити в наступному спринті. Проходить після Огляду спринту перед Плануванням.";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_HINT_REVIEW"] = "<b>Огляд спринту</b> – зустріч для підбиття підсумків спринту (демо спринту), де команда показує, що вона зробила за спринт, готовий інкремент продукту.";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_DAILY"] = "Щоденний скрам";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_PLANNING"] = "Планування спринту";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_RETROSPECTIVE"] = "Ретроспектива спринту";
+$MESS["TSM_MEETINGS_EVENT_TEMPLATE_NAME_REVIEW"] = "Огляд спринту";
+$MESS["TSM_MEETINGS_HEADER_TITLE"] = "Зустрічі команди";
+$MESS["TSM_MEETINGS_SCHEDULED_BUTTON"] = "Заплановані зустрічі";
+$MESS["TSM_MEETINGS_SCHEDULED_BUTTON_HIDE"] = "Приховати";
+$MESS["TSM_PLANNING_EVENTS_TITLE"] = "Заплановані зустрічі";
+$MESS["TSM_REPETITION_TITLE"] = "регулярна подія";
+$MESS["TSM_TODAY_EVENT_TITLE"] = "На сьогодні";
+$MESS["TSM_VIDEO_CALL_BUTTON"] = "Відеодзвінок HD";

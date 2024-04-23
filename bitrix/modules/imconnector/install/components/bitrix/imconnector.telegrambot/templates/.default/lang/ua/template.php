@@ -1,0 +1,35 @@
+<?php
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_API_TOKEN"] = "Токен доступу:";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_BOT_LINK"] = "Посилання на бота";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_BOT_NAME"] = "Ім'я бота";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CHANGE_ANY_TIME"] = "Ви можете в будь-який час змінити або відключити";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECTED"] = "Telegram підключений";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_BOT"] = "<span class=\"imconnector-field-box-text-bold\">Підключити</span> Telegram-бота";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_ESHOP"] = "Хочу під'єднати інтернет-магазин до мого Telegram-бота";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_ESHOP_MORE"] = "Докладніше";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div>
+				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Підключити</span> Telegram-бота</div>";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_STEP_NEW"] = "Для підключення необхідно #LINK_START#створити Telegram-бота#LINK_END# або під'єднати наявний. Якщо у вас ще немає бота, ми допоможемо створити його й під'єднати до Бітрікс24.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_TITLE"] = "Підключіть Telegram до Відкритої лінії";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CREATE_BOT"] = "<span class=\"imconnector-field-box-text-bold\">Створити</span> Telegram-бота";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_LINK"] = "Посилання на інтернет-магазин";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_FINAL_FORM_DESCRIPTION"] = "Telegram успішно підключений до вашої Відкритої лінії. Тепер всі звернення до вашого боту будуть автоматично спрямовані на ваш Бітрікс24.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW_MSGVER_2"] = "Щоб під'єднати Telegram до вашого Бітрікс24, #LINK_START#створіть бота в Telegram#LINK_END# або приєднайте наявний. Якщо у вас ще немає публічного акаунта, ми підкажемо, як створити його за кілька кроків.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_1"] = "Контакти та листування зберігаються в CRM";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_2"] = "CRM допомагає вести клієнта воронкою продажів";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_3"] = "Ви відповідаєте клієнтам швидко й там, де їм зручно";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_4"] = "Питання від клієнтів автоматично розподіляються між менеджерами за правилами черги";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_SUBTITLE"] = "Відповідайте клієнтам там, де їм зручно й звично. Якщо клієнтові зручніше написати вам у Telegram, дайте йому таку можливість. Ось побачите, клієнти це оцінять.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_TITLE"] = "Спілкуйтеся з клієнтами в Telegram";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO"] = "Інформація";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO_CONNECT_CONNECT_ID"] = "redirect=detail&code=6352401";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO_CONNECT_ID"] = "redirect=detail&code=6352401";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO_CREATE_CONNECT_ID"] = "redirect=detail&code=6352401";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Інструкція</span> по отриманню ключа публічного акаунта";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_I_KNOW_TOKEN"] = "Я знаю токен";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_SELECT_ESHOP"] = "Виберіть інтернет-магазин";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_SELECT_ESHOP_EXTERNAL"] = "Зовнішній інтернет-магазин";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_TESTED"] = "Тестування з'єднання";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_URL_ESHOP"] = "Уведіть URL-адресу зовнішнього інтернет-магазину";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_USING_TITLE"] = "Я хочу";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_WELCOME_MESSAGE"] = "Текст вітального повідомлення, яке покупець побачить ще до того, як напише перше повідомлення менеджеру";

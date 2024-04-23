@@ -1,0 +1,5 @@
+<?php
+$MESS["BICONNECOR_CRM_MENU_BI_REPORT_LIST"] = "Мої звіти";
+$MESS["BICONNECOR_CRM_MENU_BI_REPORT_MARKET"] = "Готові звіти в Маркеті";
+$MESS["BICONNECOR_CRM_MENU_BI_REPORT_ORDER"] = "Замовити звіт";
+$MESS["BICONNECOR_CRM_MENU_BI_REPORT_SETTINGS"] = "Налаштування";

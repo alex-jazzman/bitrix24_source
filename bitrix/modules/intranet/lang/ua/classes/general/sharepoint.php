@@ -1,0 +1,31 @@
+<?
+$MESS["SP_LIST_FIELD_CREATE_NONE"] = "(виберіть тип поля)";
+$MESS["SP_IGNORE"] = "(не вибрано)";
+$MESS["SP_LIST_FIELD_TIMESTAMP_X"] = "Дата змінення";
+$MESS["SP_LIST_FIELD_DATE_CREATE"] = "Дата створення";
+$MESS["SP_LIST_FIELD_DETAIL_PICTURE"] = "Докладне зображення";
+$MESS["SP_LIST_FIELD_DETAIL_TEXT"] = "Докладний текст";
+$MESS["SP_LIST_FIELD_PREVIEW_PICTURE"] = "Зображення для анонсу";
+$MESS["SP_ERROR_IBLOCK_EXISTS"] = "Інфоблок вже пов'язаний зі списком SharePoint";
+$MESS["SP_LIST_FIELD_MODIFIED_BY"] = "Ким змінено";
+$MESS["SP_LIST_FIELD_CREATED_BY"] = "Ким створено";
+$MESS["SP_ERROR_CLASS_NOT_EXISTS"] = "Клас-обробник не існує";
+$MESS["SP_ERROR_METHOD_NOT_EXISTS"] = "Клієнт #CLASS# не підтримує метод #METHOD#";
+$MESS["SP_ERROR_MODULE_NOT_INSTALLED"] = "Модуль не встановлено";
+$MESS["SP_LIST_FIELD_NAME"] = "Назва";
+$MESS["SP_LIST_FIELD_ACTIVE_FROM"] = "Початок активності";
+$MESS["SP_ERROR_WRONG_URL"] = "Невірний URL сервера SharePoint";
+$MESS["SP_ERROR_WRONG_SP_LIST_ID"] = "Невірний ідентифікатор списку";
+$MESS["SP_ERROR_WRONG_IBLOCK_ID"] = "Невірний інфоблок";
+$MESS["SP_LIST_FIELD_ACTIVE_TO"] = "Закінчення активності";
+$MESS["SP_ERROR_MAX_ERRORS"] = "Перевищено максимальну кількість помилок сервісу.";
+$MESS["SP_LIST_FIELD_G"] = "Прив'язка до розділів";
+$MESS["SP_LIST_FIELD_E"] = "Прив'язка до елементів";
+$MESS["SP_LIST_FIELD_SORT"] = "Сортування";
+$MESS["SP_LIST_FIELD_L"] = "Список";
+$MESS["SP_ERROR_LIST_EXISTS"] = "Список SharePoint вже пов'язаний з інфоблоком";
+$MESS["SP_LIST_FIELD_S"] = "Рядок";
+$MESS["SP_LIST_FIELD_PREVIEW_TEXT"] = "Текст анонсу";
+$MESS["SP_LIST_FIELD_F"] = "Файл";
+$MESS["SP_LIST_FIELD_N"] = "Число";
+?>

@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001698056054';
+$dateexpire = '001698059654';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:4:{i:0;a:10:{s:2:"ID";s:4:"2546";s:9:"ENTITY_ID";s:22:"HMS_APPOINTMENT_STATUS";s:9:"STATUS_ID";s:7:"RESERVE";s:4:"NAME";s:12:"Резерв";s:9:"NAME_INIT";s:12:"Резерв";s:4:"SORT";s:2:"10";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#392fc1";s:9:"SEMANTICS";s:1:"P";s:11:"CATEGORY_ID";s:1:"0";}i:1;a:10:{s:2:"ID";s:4:"2547";s:9:"ENTITY_ID";s:22:"HMS_APPOINTMENT_STATUS";s:9:"STATUS_ID";s:3:"NEW";s:4:"NAME";s:23:"Новая заявка";s:9:"NAME_INIT";s:23:"Новая заявка";s:4:"SORT";s:2:"20";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#39a8ef";s:9:"SEMANTICS";s:1:"P";s:11:"CATEGORY_ID";s:1:"0";}i:2;a:10:{s:2:"ID";s:4:"2548";s:9:"ENTITY_ID";s:22:"HMS_APPOINTMENT_STATUS";s:9:"STATUS_ID";s:7:"SUCCESS";s:4:"NAME";s:10:"Успех";s:9:"NAME_INIT";s:10:"Успех";s:4:"SORT";s:2:"30";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#00ff00";s:9:"SEMANTICS";s:1:"S";s:11:"CATEGORY_ID";s:1:"0";}i:3;a:10:{s:2:"ID";s:4:"2549";s:9:"ENTITY_ID";s:22:"HMS_APPOINTMENT_STATUS";s:9:"STATUS_ID";s:7:"FAILURE";s:4:"NAME";s:12:"Провал";s:9:"NAME_INIT";s:12:"Провал";s:4:"SORT";s:2:"40";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";s:7:"#ff0000";s:9:"SEMANTICS";s:1:"F";s:11:"CATEGORY_ID";s:1:"0";}}}';
+return true;
+?>

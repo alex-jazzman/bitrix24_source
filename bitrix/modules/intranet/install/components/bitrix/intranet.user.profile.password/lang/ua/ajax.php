@@ -1,0 +1,8 @@
+<?
+$MESS["INTRANET_USER_PROFILE_AUTH_TITLE"] = "Авторизація";
+$MESS["INTRANET_USER_PROFILE_RECOVERY_CODES_TITLE"] = "Резервні коди";
+$MESS["INTRANET_USER_PROFILE_SECURITY_OTP_TITLE"] = "Налаштування додаткового захисту";
+$MESS["INTRANET_USER_PROFILE_SECURITY_PASSWORDS_TITLE"] = "Паролі застосунків";
+$MESS["INTRANET_USER_PROFILE_SOCNET_EMAIL_TITLE"] = "Пересилання повідомлень у свій Бітрікс24";
+$MESS["INTRANET_USER_PROFILE_SYNCHRONIZE_TITLE"] = "Синхронізація";
+?>

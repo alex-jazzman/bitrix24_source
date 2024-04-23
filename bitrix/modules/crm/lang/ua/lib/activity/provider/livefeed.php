@@ -1,0 +1,15 @@
+<?
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_NAME"] = "Жива стрічка";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_TYPE_LOG_ENTRY"] = "Повідомлення ЖС";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_TYPE_LOG_COMMENT"] = "Коментар до повідомлення ЖС";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_TYPE_LOG_COMMENT_OUT"] = "Коментар до повідомлення ЖС (вихідний)";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_TYPE_LOG_COMMENT_IN"] = "Коментар до повідомлення ЖС (вхідний)";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_TITLE_ENTRY"] = "Повідомлення живої стрічки";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_TITLE_COMMENT_IN"] = "Вхідний коментар до повідомлення живої стрічки";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_TITLE_COMMENT_OUT"] = "Вихідний коментар до повідомлення живої стрічки";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_LINK_ENTRY"] = "Перейти до повідомлення";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_LINK_COMMENT"] = "Перейти до коментаря";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_AUTHOR_ACTION"] = "#USER_NAME# написав(ла):";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_AUTHOR_ACTIONM"] = "#USER_NAME# написала:";
+$MESS["CRM_ACTIVITY_PROVIDER_LIVEFEED_AUTHOR_ACTIONF"] = "#USER_NAME# написала:";
+?>

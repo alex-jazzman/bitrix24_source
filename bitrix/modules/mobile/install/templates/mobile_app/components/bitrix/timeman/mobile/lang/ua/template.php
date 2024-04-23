@@ -1,0 +1,37 @@
+<?
+$MESS["TM_STATUS_WORK"] = "Працюю";
+$MESS["TM_STATUS_COMPLETED"] = "Завершено";
+$MESS["TM_STATUS_START"] = "Почати";
+$MESS["TM_STATUS_PAUSED"] = "Перерва";
+$MESS["TM_STATUS_EXPIRED"] = "Ви <strong>не закрили</strong> <br/>попередній робочий день.";
+$MESS["PULLDOWN_PULL"] = "Потягніть, щоб оновити";
+$MESS["PULLDOWN_DOWN"] = "Відпустіть, щоб оновити";
+$MESS["PULLDOWN_LOADING"] = "Оновлення даних...";
+$MESS["PAGE_TITLE1"] = "Зроблено за день";
+$MESS["TM_ERROR1"] = "Ви не можете зберегти звіт. Потрібно почати робочий день.";
+$MESS["TM_ERROR2"] = "Ви не закрили попередній робочий день";
+$MESS["TM_PLACEHODER0"] = "Обов'язковий робочий звіт про виконану роботу не написаний.";
+$MESS["TM_PLACEHODER1"] = "Напишіть короткий звіт про виконану роботу";
+$MESS["PAGE_TITLE2"] = "Робочий день";
+$MESS["TM_SAVE"] = "Зберегти";
+$MESS["TM_BEGINNING"] = "початок";
+$MESS["TM_END"] = "закінчення";
+$MESS["TM_PAUSE"] = "перерва";
+$MESS["TM_DURATION"] = "тривалість<br>робочого дня";
+$MESS["TM_DURATION2"] = "Тривалість робочого дня";
+$MESS["TM_REASON2"] = "Причина зміни";
+$MESS["TM_REASON_START"] = "Причина зміни";
+$MESS["TM_REASON_END"] = "Причина зміни";
+$MESS["TM_START"] = "Почати робочий день";
+$MESS["TM_RESUME"] = "Продовжити";
+$MESS["TM_PAUSE2"] = "Перерва";
+$MESS["TM_FINISH"] = "Завершити робочий день";
+$MESS["TM_MENU_START"] = "Почати з поточним часом";
+$MESS["TM_MENU_START1"] = "Почати з іншим часом";
+$MESS["TM_MENU_STOP"] = "Скасувати зміну з іншим часом";
+$MESS["TM_MENU_STOP1"] = "Завершити з іншим часом";
+$MESS["TM_MENU_EDIT"] = "Змінити робочий день";
+$MESS["TM_MENU_REPORT"] = "Зроблено за день";
+$MESS["TM_MENU_SAVE"] = "Зберегти";
+$MESS["TM_MENU_CANCEL"] = "Скасувати";
+?>

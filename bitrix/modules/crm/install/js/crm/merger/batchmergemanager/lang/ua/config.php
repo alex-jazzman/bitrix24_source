@@ -1,0 +1,21 @@
+<?
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_TITLE"] = "Об'єднання лідів";
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_CONFIRMATION"] = "Буде здійснено об'єднання обраних лідів. Виконання цієї операції може зайняти тривалий час.";
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYCAPTION"] = "Об'єднання лідів завершено.";
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYSUCCEEDED"] = "Успішно об'єднано: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYFAILED"] = "Не вдалося об'єднати: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_TITLE"] = "Об'єднання контактів";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_CONFIRMATION"] = "Буде здійснено об'єднання обраних контактів. Виконання цієї операції може зайняти тривалий час.";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYCAPTION"] = "Об'єднання контактів завершено.";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYSUCCEEDED"] = "Успішно об'єднано: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYFAILED"] = "Не вдалося об'єднати: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_TITLE"] = "Об'єднання компаній";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_CONFIRMATION"] = "Буде проведено об'єднання обраних компаній. Виконання цієї операції може зайняти тривалий час.";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYCAPTION"] = "Об'єднання компаній завершено.";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYSUCCEEDED"] = "Успішно об'єднано: #number#. ";
+$MESS["CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYFAILED"] = "Не вдалося об'єднати: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_TITLE"] = "";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_CONFIRMATION"] = "Буде здійснено об'єднання обраних угод. Виконання цієї операції може зайняти тривалий час.";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYCAPTION"] = "Об'єднання угод";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYSUCCEEDED"] = "Успішно об'єднано: #number#.";
+$MESS["CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYFAILED"] = "Не вдалося об'єднати: #number#.";

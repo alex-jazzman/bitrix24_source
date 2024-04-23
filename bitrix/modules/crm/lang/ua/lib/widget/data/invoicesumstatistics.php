@@ -1,0 +1,4 @@
+<?
+$MESS["CRM_INVOICE_SUM_STAT_PRESET_OVERALL_COUNT"] = "Кількість рахунків";
+$MESS["CRM_INVOICE_SUM_STAT_PRESET_OVERALL_SUM"] = "Сума рахунків";
+?>

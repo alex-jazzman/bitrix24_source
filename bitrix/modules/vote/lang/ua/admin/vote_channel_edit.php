@@ -1,0 +1,31 @@
+<?
+$MESS["VOTE_SORTING"] = "Порядок сортування:";
+$MESS["VOTE_SITE"] = "Сайти:";
+$MESS["VOTE_EDIT_RECORD"] = "Параметри групи опитувань # #ID#";
+$MESS["VOTE_NEW_RECORD"] = "Нова група опитувань";
+$MESS["VOTE_RECORDS_LIST"] = "Список груп";
+$MESS["VOTE_TIMESTAMP"] = "Дата зміни:";
+$MESS["VOTE_ACTIVE"] = "Активна:";
+$MESS["VOTE_HIDDEN"] = "Прихована";
+$MESS["VOTE_VOTE_SINGLE"] = "Дозволити лише одне поточне опитування в групі:";
+$MESS["VOTE_SYMBOLIC_NAME"] = "Символьний ідентифікатор:";
+$MESS["VOTE_TITLE"] = "Заголовок:";
+$MESS["VOTE_VOTES"] = "Опитування";
+$MESS["VOTE_RIGHTS"] = "Доступи груп користувачів";
+$MESS["VOTE_VOTE_ADD"] = "Додати опитування у поточну групу";
+$MESS["VOTE_CREATE_NEW_RECORD"] = "Створити нову групу";
+$MESS["VOTE_DELETE_RECORD"] = "Видалити групу";
+$MESS["VOTE_DELETE_RECORD_CONFIRM"] = "Ви впевнені, що хочете видалити групу і всі опитування, що в неї входять?";
+$MESS["VOTE_PROP"] = "Властивості";
+$MESS["VOTE_ACCESS"] = "Доступ";
+$MESS["VOTE_GRP_PROP"] = "Властивості групи";
+$MESS["VOTE_SITE_EDIT"] = "Редагувати сайт";
+$MESS["VOTE_GOT_ERROR"] = "Помилка при збереженні групи";
+$MESS["VOTE_VOTES_TITLE"] = "Список опитувань поточної групи";
+$MESS["VOTE_CREATE_VOTE"] = "Створити опитування";
+$MESS["VOTE_CREATE"] = "Створити";
+$MESS["VOTE_LIST"] = "Список";
+$MESS["VOTE_DELETE"] = "Видалити";
+$MESS["VOTE_USE_CAPTCHA"] = "Використовувати CAPTCHA";
+$MESS["VOTE_CHANNEL_IS_NOT_EXISTS"] = "Група опитувань із номером #ID# не знайдена.";
+?>

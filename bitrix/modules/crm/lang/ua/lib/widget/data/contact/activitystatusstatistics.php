@@ -1,0 +1,6 @@
+<?
+$MESS["CRM_CONTACT_ACTIVITY_STATUS_STAT_TOTAL"] = "Кількість звернень";
+$MESS["CRM_CONTACT_ACTIVITY_STATUS_STAT_ANSWERED_QTY"] = "Кількість прийнятих звернень";
+$MESS["CRM_CONTACT_ACTIVITY_STATUS_STAT_UNANSWERED_QTY"] = "Кількість пропущених звернень";
+$MESS["CRM_CONTACT_ACTIVITY_STATUS_STAT_GROUP_BY_STATUS"] = "Статус справи";
+?>

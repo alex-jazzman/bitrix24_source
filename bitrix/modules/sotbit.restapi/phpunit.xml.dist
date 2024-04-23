@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" bootstrap="tests/bootstrap.php" colors="true" cacheResult="false" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+  <php>
+    <ini name="error_reporting" value="0" />
+    <ini name="display_errors" value="0" />
+    <ini name="memory_limit" value="-1" />
+    <env name="RESTAPI_USER" value="admin" />
+    <env name="RESTAPI_PASS" value="admin123" />
+  </php>
+
+  <coverage includeUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">lib</directory>
+    </include>
+  </coverage>
+  <testsuites>
+    <testsuite name="sotbit-rest-api">
+      <directory suffix=".php">tests/</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>

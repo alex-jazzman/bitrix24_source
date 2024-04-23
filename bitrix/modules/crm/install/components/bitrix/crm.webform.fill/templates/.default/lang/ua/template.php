@@ -1,0 +1,24 @@
+<?
+$MESS["CRM_WEBFORM_FILL_ERROR_FIELD_EMPTY"] = "Заповніть обов'язкове поле";
+$MESS["CRM_WEBFORM_FILL_ERROR_TITLE"] = "Увага!";
+$MESS["CRM_WEBFORM_FILL_NOT_SELECTED"] = "Не вибрано";
+$MESS["CRM_WEBFORM_FILL_FILE_SELECT"] = "Вибрати";
+$MESS["CRM_WEBFORM_FILL_FILE_NOT_SELECTED"] = "Файл не вибрано";
+$MESS["CRM_WEBFORM_FILL_FIELD_ADD_OTHER"] = "Ще поле";
+$MESS["CRM_WEBFORM_FILL_PRODUCT_TITLE"] = "Вибрано товарів";
+$MESS["CRM_WEBFORM_FILL_PRODUCT_SUMMARY"] = "Разом";
+$MESS["CRM_WEBFORM_FILL_COPYRIGHT_CHARGED_BY"] = "Заряджено";
+$MESS["CRM_WEBFORM_FILL_FILL_AGAIN"] = "Заповнити форму ще раз";
+$MESS["CRM_WEBFORM_FILL_LICENCE_PROMPT"] = "Умови ліцензійної угоди:";
+$MESS["CRM_WEBFORM_FILL_LICENCE_ACCEPT"] = "Приймаю";
+$MESS["CRM_WEBFORM_FILL_LICENCE_DECLINE"] = "Не приймаю";
+$MESS["CRM_WEBFORM_FILL_REDIRECT_DESC"] = "Ви будете перенаправлені через";
+$MESS["CRM_WEBFORM_FILL_REDIRECT_SECONDS"] = "сек.";
+$MESS["CRM_WEBFORM_FILL_REDIRECT_GO_NOW"] = "Перейти зараз";
+$MESS["CRM_WEBFORM_FILL_RESULT_SENT"] = "Форма успішно заповнена.";
+$MESS["CRM_WEBFORM_FILL_RESULT_ERROR"] = "Не вдалося відправити форму.";
+$MESS["CRM_WEBFORM_FILL_BUTTON_DEFAULT"] = "Відправити";
+$MESS["CRM_WEBFORM_FILL_CALLBACK_FREE"] = "Дзвінок безкоштовний";
+$MESS["CRM_WEBFORM_FILL_COPYRIGHT_BITRIX"] = "Бітрікс";
+$MESS["CRM_WEBFORM_FILL_LICENCE_PROMPT1"] = "Умови згоди:";
+?>

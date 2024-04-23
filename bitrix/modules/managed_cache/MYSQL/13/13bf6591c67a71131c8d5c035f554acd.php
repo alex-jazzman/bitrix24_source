@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001696500341';
+$dateexpire = '001696503941';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:12:{s:12:"access_token";s:70:"85981e650044c2a60051fa1000000001403807c46468b83015e743857992914c0eef92";s:7:"expires";i:1696503941;s:10:"expires_in";i:3600;s:5:"scope";s:71:"crm,entity,department,tasks_extended,task,im,lists,placement,user_brief";s:6:"domain";s:17:"med.mywebstor.com";s:15:"server_endpoint";s:31:"https://oauth.bitrix.info/rest/";s:6:"status";s:1:"F";s:15:"client_endpoint";s:31:"https://med.mywebstor.com/rest/";s:9:"member_id";s:32:"7189e802dcba267e03161ff7776828fb";s:13:"refresh_token";s:70:"751746650044c2a60051fa1000000001403807ed893fcb65e092d7477f7295697669a1";s:7:"user_id";s:1:"1";s:9:"client_id";s:27:"app.5e4f6842bcaf57.86682490";}}';
+return true;
+?>

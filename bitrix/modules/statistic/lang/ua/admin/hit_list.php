@@ -1,0 +1,37 @@
+<?
+$MESS["STAT_F_LOGIC"] = "Логіка між полями";
+$MESS["STAT_GUEST_ID"] = "ID відвідувача";
+$MESS["STAT_EDIT_USER"] = "Профайл користувача";
+$MESS["STAT_VIEW_SESSION_LIST"] = "Сесії даного відвідувача";
+$MESS["STAT_NEW_GUEST_1"] = "вперше";
+$MESS["STAT_OLD_GUEST_1"] = "повернувся";
+$MESS["STAT_RECORDS_LIST"] = "Хіти відвідувачів за останні #STATISTIC_DAYS# днів";
+$MESS["STAT_F_ID"] = "ID хіта";
+$MESS["STAT_F_SESSION"] = "ID сесії";
+$MESS["STAT_F_AUTH"] = "Зареєстрований";
+$MESS["STAT_F_LOGIN"] = "ID, логін, ім'я, прізвище";
+$MESS["STAT_F_GUEST_ID"] = "ID відвідувача";
+$MESS["STAT_F_NEW_GUEST"] = "Вперше/повернувся";
+$MESS["STAT_F_IP"] = "IP адреса";
+$MESS["STAT_F_PAGE"] = "Сторінка";
+$MESS["STAT_HIT_PAGES"] = "Хіти відвідувачів за останні #STATISTIC_DAYS# днів";
+$MESS["STAT_NOT_REGISTERED"] = "не зареєстр.";
+$MESS["STAT_DETAIL"] = "детально";
+$MESS["STAT_SESSION"] = "Сесія";
+$MESS["STAT_DATE"] = "Дата";
+$MESS["STAT_USER"] = "Відвідувач";
+$MESS["STAT_IP"] = "IP адреса";
+$MESS["STAT_PAGE"] = "Сторінка";
+$MESS["STAT_NOT_AUTH"] = "(не авторизований)";
+$MESS["STAT_F_USER_AGENT"] = "UserAgent";
+$MESS["STAT_F_STOP_LIST_ID"] = "ID запису стоп-листа";
+$MESS["STAT_F_STOP"] = "Потрапив у стоп-лист";
+$MESS["STAT_COUNTRY"] = "Країна";
+$MESS["STAT_CITY"] = "Місто";
+$MESS["STAT_F_COUNTRY"] = "Країна";
+$MESS["STAT_F_REGION"] = "Регіон";
+$MESS["STAT_F_CITY"] = "Місто";
+$MESS["STAT_F_COOKIE"] = "Cookie";
+$MESS["STAT_REGION"] = "Регіон";
+$MESS["STAT_SITE"] = "Сайт";
+?>

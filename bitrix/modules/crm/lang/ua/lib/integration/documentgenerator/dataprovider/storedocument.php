@@ -1,0 +1,9 @@
+<?php
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_CURRENT_TIME"] = "Поточні дата і час";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_CREATE_TIME"] = "Дата створення";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_NUMBER"] = "Номер";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_RESPONSIBLE"] = "Відповідальний";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_STORE_FROM_TITLE"] = "Склад відправника";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_FLD_DOCUMENT_STORE_TO_TITLE"] = "Склад отримувача";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_MULTI_STORE_PRINT_NOT_AVAILABLE"] = "У документі вказано кілька складів. Можливість друку таких документів з’явиться пізніше.";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_TITLE"] = "Документ складського обліку";

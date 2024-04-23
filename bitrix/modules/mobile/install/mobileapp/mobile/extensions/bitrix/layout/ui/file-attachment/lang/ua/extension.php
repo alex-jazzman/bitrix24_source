@@ -1,0 +1,7 @@
+<?php
+$MESS["UI_FILE_ATTACHMENT_BUTTON_ADD"] = "Додати файл";
+$MESS["UI_FILE_ATTACHMENT_DELETE_CONFIRM_OK"] = "Видалити";
+$MESS["UI_FILE_ATTACHMENT_DELETE_CONFIRM_TITLE"] = "Ви дійсно бажаєте видалити файл?";
+$MESS["UI_FILE_ATTACHMENT_NAVIGATION_EDIT"] = "Змінити";
+$MESS["UI_FILE_ATTACHMENT_NAVIGATION_SAVE"] = "Зберегти";
+$MESS["UI_FILE_ATTACHMENT_NO_FILES"] = "Нічого не вибрано";

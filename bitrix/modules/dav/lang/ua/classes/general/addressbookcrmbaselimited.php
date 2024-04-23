@@ -1,0 +1,4 @@
+<?
+$MESS["DAV_EXPORT_FILTER_RESPONSIBLE"] = "Свої";
+$MESS["DAV_EXPORT_FILTER_ALL"] = "Усе";
+?>

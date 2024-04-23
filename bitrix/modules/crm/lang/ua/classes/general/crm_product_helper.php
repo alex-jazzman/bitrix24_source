@@ -1,0 +1,4 @@
+<?
+$MESS["CRM_PRODUCT_SECTION_NOT_SELECTED"] = "[Не вибрано]";
+$MESS["CRM_PRODUCT_CATALOG_NOT_SELECTED"] = "[Не вибрано]";
+?>

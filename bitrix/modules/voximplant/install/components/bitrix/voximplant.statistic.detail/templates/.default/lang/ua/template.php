@@ -1,0 +1,23 @@
+<?php
+$MESS["CT_BLL_SELECTED"] = "Число записів";
+$MESS["TEL_STAT_ACTION_CLOSE"] = "Закрити";
+$MESS["TEL_STAT_ACTION_DOWNLOAD"] = "Завантажити записи на портал";
+$MESS["TEL_STAT_ACTION_EXECUTE"] = "Виконати";
+$MESS["TEL_STAT_ACTION_STOP"] = "Зупинити";
+$MESS["TEL_STAT_BACK"] = "Назад";
+$MESS["TEL_STAT_BACK_TITLE"] = "Повернутися назад";
+$MESS["TEL_STAT_CANCEL"] = "Скасувати";
+$MESS["TEL_STAT_DOWNLOAD_VOX_RECORD_ERROR"] = "При спробі завантаження оператор повернув помилку. Будь ласка, спробуйте пізніше.";
+$MESS["TEL_STAT_ERROR"] = "Помилка";
+$MESS["TEL_STAT_EXPORT_DETAIL_TO_EXCEL"] = "Експорт деталізації дзвінків у Excel";
+$MESS["TEL_STAT_EXPORT_DETAIL_TO_EXCEL_DESCRIPTION"] = "Буде сформований файл експорту для деталізації дзвінків.";
+$MESS["TEL_STAT_EXPORT_DETAIL_TO_EXCEL_LONG_PROCESS"] = "Виконання цієї операції може зайняти тривалий час при великій кількості даних.";
+$MESS["TEL_STAT_EXPORT_ERROR"] = "Виникла помилка. Будь ласка, спробуйте пізніше або зверніться до адміністратора порталу.";
+$MESS["TEL_STAT_EXPORT_TO_EXCEL"] = "Експорт в Excel";
+$MESS["TEL_STAT_FILTER_CANCEL"] = "Скасувати фільтр";
+$MESS["TEL_STAT_FILTER_CANCEL_TITLE"] = "Скасувати фільтр";
+$MESS["TEL_STAT_LOADING"] = "Виконується завантаження";
+$MESS["TEL_STAT_SHOW_COUNT"] = "Показати кількість";
+$MESS["TEL_STAT_TOTAL"] = "Всього";
+$MESS["TEL_STAT_USER_ID_CANCEL"] = "Скасувати фільтр по співробітнику";
+$MESS["TEL_STAT_USER_ID_CANCEL_TITLE"] = "Скасувати фільтр по співробітнику";

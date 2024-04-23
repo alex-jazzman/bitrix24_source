@@ -1,0 +1,16 @@
+<?
+$MESS["CHAT_ENTITY_ID_FIELD"] = "ID";
+$MESS["CHAT_ENTITY_TITLE_FIELD"] = "Тема чату";
+$MESS["CHAT_ENTITY_AUTHOR_ID_FIELD"] = "ID автора чату";
+$MESS["CHAT_ENTITY_CALL_TYPE_FIELD"] = "Тип дзвінка";
+$MESS["CHAT_ENTITY_CALL_NUMBER_FIELD"] = "Номер для дзвінка";
+$MESS["CHAT_ENTITY_ENTITY_TYPE_FIELD"] = "Сутність";
+$MESS["CHAT_ENTITY_ENTITY_ID_FIELD"] = "ID сутності";
+$MESS["CHAT_ENTITY_TYPE_FIELD"] = "Тип чату";
+$MESS["CHAT_ENTITY_EXTRANET_FIELD"] = "Екстранет";
+$MESS["CHAT_ENTITY_COLOR_FIELD"] = "Колір чату";
+$MESS["CHAT_ENTITY_DESCRIPTION_FIELD"] = "Опис чату";
+$MESS["CHAT_ENTITY_ENTITY_DATA_1_FIELD"] = "Дані сутності 1";
+$MESS["CHAT_ENTITY_ENTITY_DATA_2_FIELD"] = "Дані сутності 2";
+$MESS["CHAT_ENTITY_ENTITY_DATA_3_FIELD"] = "Дані сутності 3";
+?>

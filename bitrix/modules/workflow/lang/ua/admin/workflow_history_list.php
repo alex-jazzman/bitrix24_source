@@ -1,0 +1,33 @@
+<?
+$MESS["FLOW_PAGE_TITLE"] = "Історія змін";
+$MESS["FLOW_F_DOCUMENT"] = "ID документу";
+$MESS["FLOW_F_FILENAME"] = "Ім'я файлу";
+$MESS["FLOW_F_TITLE"] = "Заголовок";
+$MESS["FLOW_F_STATUS"] = "Статус документу";
+$MESS["FLOW_F_DATE_MODIFY"] = "Дата зміни";
+$MESS["FLOW_F_MODIFIED_BY"] = "Ким змінено";
+$MESS["FLOW_F_BODY"] = "Вміст";
+$MESS["FLOW_PAGES"] = "Документ";
+$MESS["FLOW_DATE_MODIFY"] = "Дата зміни";
+$MESS["FLOW_MODIFIED_BY"] = "Ким змінено";
+$MESS["FLOW_TITLE"] = "Заголовок";
+$MESS["FLOW_FILENAME"] = "Ім'я файлу";
+$MESS["FLOW_STATUS"] = "Статус";
+$MESS["FLOW_F_LOGIC"] = "Логіка між полями";
+$MESS["FLOW_VIEW"] = "Перегляд";
+$MESS["FLOW_DOCUMENT"] = "ID документу";
+$MESS["FLOW_DELETE_CONFIRM"] = "Ви впевнені, що бажаєте видалити запис в історії документу?";
+$MESS["FLOW_USER_ALT"] = "Переглянути інформацію про користувача";
+$MESS["FLOW_STATUS_ALT"] = "Переглянути інформацію про статус";
+$MESS["FLOW_COMPARE"] = "Порівняти";
+$MESS["FLOW_COMPARE_ALERT"] = "Для порівняння необхідно обрати два документи.";
+$MESS["FLOW_DELETE"] = "Видалити";
+$MESS["FLOW_RECORDS_LIST"] = "Список документів";
+$MESS["MAIN_ADMIN_LIST_SELECTED"] = "Обрано:";
+$MESS["MAIN_FIND"] = "Знайти";
+$MESS["MAIN_ADMIN_LIST_CHECKED"] = "Позначено:";
+$MESS["MAIN_FIND_TITLE"] = "Введіть рядок для пошуку";
+$MESS["MAIN_ADMIN_LIST_DELETE"] = "видалити";
+$MESS["MAIN_ALL"] = "(всі)";
+$MESS["FLOW_SITE_ID"] = "Сайт";
+?>

@@ -1,0 +1,6 @@
+<?php
+$MESS["LANDING_BLOCK_52_2_BTN_AREA"] = "Область кнопки";
+$MESS["LANDING_BLOCK_52_2_CONTAINER"] = "Набір елементів";
+$MESS["LANDING_BLOCK_52_TEXT_WITH_BTN_LEFT-BTN"] = "Кнопка";
+$MESS["LANDING_BLOCK_52_TEXT_WITH_BTN_LEFT-NAME"] = "Текст з кнопкою ліворуч";
+$MESS["LANDING_BLOCK_52_TEXT_WITH_BTN_LEFT-TEXT"] = "Текст";

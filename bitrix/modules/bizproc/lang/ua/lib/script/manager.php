@@ -1,0 +1,3 @@
+<?php
+$MESS["BIZPROC_SCRIPT_MANAGER_NEW_DESCRIPTION"] = "Опишіть сценарій";
+$MESS["BIZPROC_SCRIPT_MANAGER_NEW_SCRIPT"] = "Новий сценарій";

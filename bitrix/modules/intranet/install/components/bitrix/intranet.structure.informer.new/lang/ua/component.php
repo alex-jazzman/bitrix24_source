@@ -1,0 +1,5 @@
+<?
+$MESS["INTR_ISIN_NAME_TEMPLATE_DEFAULT"] = "#NOBR##LAST_NAME# #NAME##/NOBR#";
+$MESS["INTR_ISIN_ICON_ADD"] = "Додати завдання";
+$MESS["INTR_ISIN_ACCEPTED"] = "Прийнято";
+?>

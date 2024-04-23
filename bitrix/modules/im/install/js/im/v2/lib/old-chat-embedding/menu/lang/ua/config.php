@@ -1,0 +1,19 @@
+<?php
+$MESS["IM_RECENT_CONTEXT_MENU_CALL"] = "Відеодзвінок HD";
+$MESS["IM_RECENT_CONTEXT_MENU_HIDE"] = "Приховати чат";
+$MESS["IM_RECENT_CONTEXT_MENU_HISTORY"] = "Переглянути журнал повідомлень";
+$MESS["IM_RECENT_CONTEXT_MENU_INVITE_CANCEL"] = "Скасувати запрошення";
+$MESS["IM_RECENT_CONTEXT_MENU_INVITE_CANCEL_CONFIRM"] = "Ви впевнені, що хочете скасувати запрошення?";
+$MESS["IM_RECENT_CONTEXT_MENU_INVITE_CANCEL_DONE"] = "Запрошення скасовано.";
+$MESS["IM_RECENT_CONTEXT_MENU_INVITE_RESEND"] = "Запросити повторно";
+$MESS["IM_RECENT_CONTEXT_MENU_INVITE_RESEND_DONE"] = "Запрошення успішно надіслано.";
+$MESS["IM_RECENT_CONTEXT_MENU_LEAVE"] = "Залишити чат";
+$MESS["IM_RECENT_CONTEXT_MENU_LOADING"] = "Завантаження меню…";
+$MESS["IM_RECENT_CONTEXT_MENU_MUTE"] = "Вимкнути сповіщення";
+$MESS["IM_RECENT_CONTEXT_MENU_PIN"] = "Закріпити діалог";
+$MESS["IM_RECENT_CONTEXT_MENU_PROFILE"] = "Відкрити профіль";
+$MESS["IM_RECENT_CONTEXT_MENU_READ"] = "Відзначити як прочитане";
+$MESS["IM_RECENT_CONTEXT_MENU_UNMUTE"] = "Включити сповіщення";
+$MESS["IM_RECENT_CONTEXT_MENU_UNPIN"] = "Відкріпити діалог";
+$MESS["IM_RECENT_CONTEXT_MENU_UNREAD"] = "Позначити як непрочитане";
+$MESS["IM_RECENT_CONTEXT_MENU_WRITE"] = "Надіслати повідомлення";

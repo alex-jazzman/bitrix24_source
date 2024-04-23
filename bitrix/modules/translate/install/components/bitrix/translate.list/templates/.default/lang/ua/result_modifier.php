@@ -1,0 +1,32 @@
+<?
+$MESS["TR_FILE_EDIT"] = "Редагувати PHP";
+$MESS["TR_FILE_SHOW"] = "Показати PHP код";
+$MESS["TR_FILE_TITLE"] = "Натисніть для релагування файлу";
+$MESS["TR_FOLDER_TITLE"] = "Натисніть для переходу в папку";
+$MESS["TR_INDEX_ERROR_ETHALON_FILE_NOT_FOUND"] = "Файл перекладу на поточній мові не знайдений";
+$MESS["TR_INDEX_ERROR_ETHALON_NOT_FOUND"] = "Переклади на поточній мові не знайдені";
+$MESS["TR_INDEX_ERROR_NOINDEX"] = "Для поточної папки індекс мовних файлів не знайдений.";
+$MESS["TR_INDEX_ERROR_SOURCE_FILE_NOT_FOUND"] = "Мовний файл відсутній в основному репозитарії перекладів";
+$MESS["TR_INDEX_ERROR_SOURCE_FOLDER_NOT_FOUND"] = "Папка відсутня в основному репозитарії перекладів";
+$MESS["TR_INDEX_ERROR_TRANSLATION_FILE_NOT_FOUND"] = "Файл перекладу не знайдений";
+$MESS["TR_INDEX_ERROR_TRANSLATION_NOT_FOUND"] = "Переклади не знайдені";
+$MESS["TR_INDEX_START_INDEXING"] = "Виконати індексування.";
+$MESS["TR_INDEX_TRANSLATION_FILE_OK"] = "Файл перекладу в наявності";
+$MESS["TR_INDEX_TRANSLATION_LESS"] = "Фраз перекладу менше, ніж на поточній мові";
+$MESS["TR_INDEX_TRANSLATION_MORE"] = "Фраз перекладу більше, ніж на поточній мові";
+$MESS["TR_INDEX_TRANSLATION_OK"] = "Переклад виконано";
+$MESS["TR_INDEX_TRANSLATION_USELESS"] = "Переклад на дану мову не потрібен";
+$MESS["TR_INDEX_VIEW_MODE_MENU_COUNT_FILES"] = "Показати загальну кількість мовних файлів";
+$MESS["TR_INDEX_VIEW_MODE_MENU_COUNT_PHRASES"] = "Показати загальну кількість фраз";
+$MESS["TR_INDEX_VIEW_MODE_MENU_DIFF_LINKS"] = "Показати посилання на файли без перекладів";
+$MESS["TR_INDEX_VIEW_MODE_MENU_EMPTY_FOLDERS"] = "Приховати папки без мовних файлів";
+$MESS["TR_INDEX_VIEW_MODE_MENU_UNTRANSLATED"] = "Показати кількість фраз без перекладів";
+$MESS["TR_INDEX_VIEW_MODE_MENU_UNTRANSLATED_FILES"] = "Показати кількість файлів без перекладів";
+$MESS["TR_INDEX_VIEW_MODE_TITLE_COUNT_FILES"] = "Загальна кількість мовних файлів";
+$MESS["TR_INDEX_VIEW_MODE_TITLE_COUNT_PHRASES"] = "Загальна кількість фраз";
+$MESS["TR_INDEX_VIEW_MODE_TITLE_UNTRANSLATED"] = "Кількість фраз без перекладів";
+$MESS["TR_INDEX_VIEW_MODE_TITLE_UNTRANSLATED_FILES"] = "Кількість файлів без перекладів";
+$MESS["TR_MESSAGE_EDIT"] = "Редагувати повідомлення";
+$MESS["TR_PATH_GO"] = "Перейди до папки";
+$MESS["TR_UP_TITLE"] = "Натисніть для переходу на рівень вище";
+?>

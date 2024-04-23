@@ -1,0 +1,23 @@
+<?php
+$MESS["SONET_FILTER_CREATED_BY"] = "Автор";
+$MESS["SONET_FILTER_CREATED_BY_COMMENTS"] = "Шукати автора в коментарях";
+$MESS["SONET_FILTER_DATE_CREATE"] = "Дата";
+$MESS["SONET_FILTER_EVENT_ID"] = "Тип";
+$MESS["SONET_FILTER_EVENT_ID_BLOG_POST"] = "Повідомлення";
+$MESS["SONET_FILTER_EVENT_ID_BLOG_POST_GRAT"] = "Подяки";
+$MESS["SONET_FILTER_EVENT_ID_BLOG_POST_IMPORTANT"] = "Важливі повідомлення";
+$MESS["SONET_FILTER_EVENT_ID_BLOG_POST_VOTE"] = "Опитування";
+$MESS["SONET_FILTER_EVENT_ID_BP"] = "Бізнес-процеси";
+$MESS["SONET_FILTER_EVENT_ID_CALENDAR"] = "Календар";
+$MESS["SONET_FILTER_EVENT_ID_DATA"] = "Повідомлення зовнішніх джерел";
+$MESS["SONET_FILTER_EVENT_ID_FORUM"] = "Обговорення";
+$MESS["SONET_FILTER_EVENT_ID_PHOTO"] = "Фотогалерея";
+$MESS["SONET_FILTER_EVENT_ID_REPORT"] = "Робочі звіти";
+$MESS["SONET_FILTER_EVENT_ID_TASK"] = "Завдання";
+$MESS["SONET_FILTER_EVENT_ID_TIMEMAN_ENTRY"] = "Облік робочого часу";
+$MESS["SONET_FILTER_EVENT_ID_WIKI"] = "Вікі";
+$MESS["SONET_FILTER_EXTRANET"] = "Екстранет";
+$MESS["SONET_FILTER_FAVORITES"] = "Вибрані записи користувача";
+$MESS["SONET_FILTER_LIST_YES"] = "Так";
+$MESS["SONET_FILTER_TAG"] = "Тег";
+$MESS["SONET_FILTER_TO"] = "Кому";

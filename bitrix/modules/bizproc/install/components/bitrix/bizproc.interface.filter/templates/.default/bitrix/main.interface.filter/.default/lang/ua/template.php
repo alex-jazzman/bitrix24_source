@@ -1,0 +1,20 @@
+<?
+$MESS["BP_INTERFACE_FILTER_CURRENT"] = "Фільтр";
+$MESS["BP_INTERFACE_FILTER_LIST_VALUE_NOT_SELECTED"] = "(Немає)";
+$MESS["BP_INTERFACE_FILTER_SHOW_ALL"] = "Показати всі умови";
+$MESS["BP_INTERFACE_FILTER_HIDE_ALL"] = "Приховати всі умови";
+$MESS["BP_INTERFACE_FILTER_SAVE_AS"] = "Зберегти як";
+$MESS["BP_INTERFACE_FILTER_SAVE"] = "Зберегти";
+$MESS["BP_INTERFACE_FILTER_DELETE"] = "Видалити";
+$MESS["BP_INTERFACE_FILTER_FIND"] = "Знайти";
+$MESS["BP_INTERFACE_FILTER_CANCEL"] = "Відміна";
+$MESS["BP_INTERFACE_FILTER_SAVE_AS_DIALOG_TITLE"] = "Зберегти фільтр";
+$MESS["BP_INTERFACE_FILTER_SAVE_AS_DIALOG_FIELD_NAME"] = "Назва фільтра";
+$MESS["BP_INTERFACE_FILTER_SAVE_AS_DIALOG_FIELD_NAME_DEFAULT"] = "Новий фільтр";
+$MESS["BP_INTERFACE_FILTER_MINIMIZE"] = "Згорнути фільтр";
+$MESS["BP_INTERFACE_FILTER_MAXIMIZE"] = "Розгорнути фільтр";
+$MESS["BP_INTERFACE_FILTER_DELETE_FIELD"] = "Приховати умову пошуку";
+$MESS["BP_INTERFACE_FILTER_ADD_FIELD"] = "Додаткові умови пошуку";
+$MESS["BP_INTERFACE_FILTER_SETTINGS"] = "Дії з фільтром";
+$MESS["BP_INTERFACE_FILTER_ADD"] = "Створити новий фільтр";
+?>

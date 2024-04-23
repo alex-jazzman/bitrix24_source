@@ -1,0 +1,32 @@
+<?
+$MESS["F_URL_TEMPLATES"] = "Управління адресами сторінок";
+$MESS["F_SET_NAVIGATION"] = "Встановлювати посторінкову навігацію";
+$MESS["F_COMMENTS_PER_PAGE"] = "Кількість коментарів на сторінці";
+$MESS["F_SHOW_FORUM_ANOTHER_SITE"] = "Показувати форуми інших сайтів";
+$MESS["F_INDEX_TEMPLATE"] = "Сторінка списку форумів";
+$MESS["F_READ_TEMPLATE"] = "Сторінка читання теми";
+$MESS["F_LIST_TEMPLATE"] = "Сторінка списку тем";
+$MESS["F_PROFILE_VIEW_TEMPLATE"] = "Сторінка профілю користувача";
+$MESS["F_DEFAULT_FID"] = "ID форуму";
+$MESS["F_DATE_TIME_FORMAT"] = "Формат показу дати та часу";
+$MESS["F_TOPICS"] = "Теми";
+$MESS["F_DISPLAY_PANEL"] = "Додавати в адмін. панель кнопки для даного компонента";
+$MESS["F_MESSAGE_TEMPLATE"] = "Сторінка читання повідомлення";
+$MESS["F_TOPIC_POST_MESSAGE_SETTINGS"] = "Налаштування виведення повідомлення теми";
+$MESS["F_TOPIC_POST_MESSAGE_LENGTH"] = "Максимальна довжина повідомлення";
+$MESS["ALLOW_SMILES_TITLE"] = "дозволити смайли";
+$MESS["ALLOW_HTML_TITLE"] = "дозволити HTML-код";
+$MESS["ALLOW_NL2BR_TITLE"] = "замінювати символ перекладу каретки на <br>";
+$MESS["ALLOW_ANCHOR_TITLE"] = "дозволити посилання";
+$MESS["ALLOW_BIU_TITLE"] = "дозволити теги B, U, I, S";
+$MESS["ALLOW_IMG_TITLE"] = "дозволити зображення";
+$MESS["ALLOW_VIDEO_TITLE"] = "дозволити відео";
+$MESS["ALLOW_LIST_TITLE"] = "дозволити списки";
+$MESS["ALLOW_TABLE_TITLE"] = "дозволити таблиці";
+$MESS["ALLOW_QUOTE_TITLE"] = "дозволити цитування";
+$MESS["ALLOW_ALIGN_TITLE"] = "дозволити вирівнювання";
+$MESS["ALLOW_CODE_TITLE"] = "дозволити коди";
+$MESS["ALLOW_FONT_TITLE"] = "дозволити шрифти";
+$MESS["F_IMAGE_HTML_SIZE"] = "Додатковий розмір малюнків в тексті повідомлення (px) (використовується для html-стиснення)";
+$MESS["F_IMAGE_SIZE"] = "Розмір малюнків в тексті повідомлення (px)";
+?>

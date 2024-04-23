@@ -1,0 +1,24 @@
+<?
+$MESS["CRM_CH_TRACKER_WGT_ACTIVITY_DYNAMIC"] = "Контроль комунікацій";
+$MESS["CRM_CH_TRACKER_WGT_AMOUNT_OF_SALE"] = "Рейтинг за сумою виграних угод";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC"] = "Динаміка комунікаційного навантаження";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_EMAIL"] = "E-mail";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_FORM"] = "CRM - форми";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_OPENLINES"] = "Месенджери та соц. мережі";
+$MESS["CRM_CH_TRACKER_WGT_COMMUNICATION_DYNAMIC_TELEPHONY"] = "Телефонія";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_PROCESS_SUM"] = "Сума продажів";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM"] = "Сума продажів";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM_PER_DAY"] = "Продажі за сьогодні";
+$MESS["CRM_CH_TRACKER_WGT_DEAL_SUCCESS_SUM_PER_MONTH"] = "Продажі за місяць";
+$MESS["CRM_CH_TRACKER_WGT_MANAGERS_FAILS"] = "Лічильники по менеджерам";
+$MESS["CRM_CH_TRACKER_WGT_MANAGERS_SUCCESSES"] = "Внесок менеджерів в продажі";
+$MESS["CRM_CH_TRACKER_WGT_NEW_CLIENTS"] = "Нові клієнти";
+$MESS["CRM_CH_TRACKER_WGT_NEW_CLIENTS_PER_DAY"] = "Нові клієнти за сьогодні";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD"] = "Навантаження по менеджерам";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_EMAIL"] = "E-mail";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_FORM"] = "CRM - форми";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_OPENLINES"] = "Месенджери та соц. мережі";
+$MESS["CRM_CH_TRACKER_WGT_PERSONAL_LOAD_TELEPHONY"] = "Телефонія";
+$MESS["CRM_CH_TRACKER_WGT_RATING_BY_SUCCESSFUL_DEALS"] = "Рейтинг за сумою виграних угод";
+$MESS["CRM_CH_TRACKER_WGT_SALE_TARGET_NAME"] = "План продажів";
+?>

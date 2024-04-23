@@ -1,0 +1,7 @@
+<?
+$MESS["TASKS_EMPLOYEEPLAN_TEMPLATE_TITLE"] = "Зайнятість по завданням";
+$MESS["TASKS_EMPLOYEEPLAN_SHOW_MORE"] = "Показати ще";
+$MESS["TASKS_EMPLOYEEPLAN_BY_DEPARTMENT"] = "По відділу";
+$MESS["TASKS_EMPLOYEEPLAN_OF_EMPLOYEE"] = "Співробітника";
+$MESS["TASKS_EMPLOYEEPLAN_BY_PERIOD"] = "За період";
+?>

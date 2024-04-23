@@ -1,0 +1,19 @@
+<?
+$MESS["IDEA_USER_INFO_LAST_ACTIVITY_DATE_TITLE"] = "Дата останнього входу";
+$MESS["IDEA_USER_INFO_WORK_COMPANY_TITLE"] = "Найменування компанії";
+$MESS["IDEA_USER_INFO_PERSONAL_PHONE_TITLE"] = "Телефон";
+$MESS["IDEA_USER_INFO_PERSONAL_CITY_TITLE"] = "Місто";
+$MESS["IDEA_USER_INFO_PERSONAL_STATE_TITLE"] = "Область / край";
+$MESS["IDEA_USER_INFO_PERSONAL_COUNTRY_TITLE"] = "Країна";
+$MESS["IDEA_USER_INFO_WORK_POSITION_TITLE"] = "Посада в компанії";
+$MESS["IDEA_USER_INFO_WORK_WWW_TITLE"] = "WWW-сторінка компанії";
+$MESS["IDEA_USER_INFO_WORK_PHONE_TITLE"] = "Робочий телефон";
+$MESS["IDEA_USER_INFO_WORK_CITY_TITLE"] = "Місто компанії";
+$MESS["IDEA_USER_INFO_WORK_STATE_TITLE"] = "Область / край компанії";
+$MESS["IDEA_USER_INFO_WORK_COUNTRY_TITLE"] = "Країна компанії";
+$MESS["IDEA_USER_INFO_WORK_PROFILE_TITLE"] = "Напрямки діяльності компанії";
+$MESS["IDEA_USER_INFO_DATE_REGISTER_TITLE"] = "Дата реєстрації";
+$MESS["IDEA_USER_INFO_PERSONAL_GENDER_TITLE"] = "Стать";
+$MESS["IDEA_USER_INFO_PERSONAL_BIRTHDATE_TITLE"] = "День народження";
+$MESS["IDEA_USER_INFO_SECOND_NAME_TITLE"] = "По батькові";
+?>

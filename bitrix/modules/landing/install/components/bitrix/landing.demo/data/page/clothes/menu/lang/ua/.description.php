@@ -1,0 +1,3 @@
+<?
+$MESS["LANDING_DEMO_STORE_CLOTHES-MENU--NAME"] = "Бокове меню";
+?>

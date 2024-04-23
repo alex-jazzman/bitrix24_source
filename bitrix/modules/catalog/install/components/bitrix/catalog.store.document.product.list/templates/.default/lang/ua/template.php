@@ -1,0 +1,25 @@
+<?php
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACCESS_DENIED_PRODUCT_CREATION_HINT"] = "Недостатньо прав для створення товару в каталозі.";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACCESS_DENIED_PURCHASING_PRICE_HINT"] = "Недостатньо прав для перегляду закупівельної ціни товару.";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACCESS_DENIED_STORE_HINT"] = "У вас немає доступу до складу, на який було прийнято товар. Щоб переглядати інформацію по складу, запросіть доступ у керівника або адміністратора.";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACCESS_DENIED_TEXT"] = "Недостатньо прав";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACTION_DEFAULT"] = "— дії —";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACTION_STORE_CHANGED_HINT"] = "Склад змінено на «#STORE_NAME#»";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACTION_STORE_FROM_INFO_CHANGED_HINT"] = "Склад-відправник змінено на «#STORE_NAME#»";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ACTION_STORE_TO_INFO_CHANGED_HINT"] = "Склад-одержувач змінено на «#STORE_NAME#»";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ADD_PRODUCT"] = "Додати рядок";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_ADD_PRODUCT_TITLE"] = "Знайти чи створити новий товар";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_BARCODE_SETTING_PRODUCT"] = "Налаштування сканування";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_BARCODE_SETTING_PRODUCT_TITLE"] = "Налаштування сканування";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_COPY_ACTION"] = "Копіювати";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_CREATE_PRODUCT"] = "Створити товар";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_CREATE_PRODUCT_TITLE"] = "Створити новий товар у каталозі";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_DELETE_ACTION"] = "Видалити";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_INVALID_AMOUNT"] = "Укажіть кількість прийнятого на складу товару, щоб провести документ";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_INVALID_AMOUNT_2"] = "Укажіть кількість товару, щоб провести документ";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_INVALID_AMOUNT_REALIZATION"] = "Укажіть кількість товару";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_IS_EMPTY"] = "Уведіть принаймні один товар";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_NEGATIVE_PRICE_NOTICE"] = "Ціна може бути негативною.";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_SETTING_DISABLED"] = "Налаштування \"#NAME#\" відключено";
+$MESS["CATALOG_DOCUMENT_PRODUCT_LIST_SETTING_ENABLED"] = "Налаштування \"#NAME#\" включено";
+$MESS["CATALOG_PRODUCT_SUM_TOTAL"] = "Загальна сума";

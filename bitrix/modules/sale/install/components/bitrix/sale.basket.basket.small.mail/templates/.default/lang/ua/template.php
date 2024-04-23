@@ -1,0 +1,32 @@
+<?
+$MESS["TSBS_READY"] = "Позиції у Вашому кошику:";
+$MESS["TSBS_PRICE"] = "Ціна:";
+$MESS["TSBS_QUANTITY"] = "Кількість:";
+$MESS["TSBS_2BASKET"] = "Змінити кількість";
+$MESS["TSBS_2ORDER"] = "Оформити замовлення";
+$MESS["TSBS_DELAY"] = "Відкладені позиції:";
+$MESS["TSBS_UNAVAIL"] = "Недоступні для купівлі:";
+$MESS["TSBS_SUBSCRIBE"] = "Підписка:";
+$MESS["SALE_NAME"] = "Товари";
+$MESS["SALE_PROPS"] = "Властивості";
+$MESS["SALE_PRICE"] = "Ціна";
+$MESS["SALE_TYPE"] = "Тип ціни";
+$MESS["SALE_QUANTITY"] = "Кількість";
+$MESS["SALE_SUM"] = "Сума";
+$MESS["SALE_DELETE"] = "Видалити";
+$MESS["SALE_DELAY"] = "Відкласти";
+$MESS["SALE_ADD_TO_BASKET"] = "Додати до замовлення";
+$MESS["SALE_WEIGHT"] = "Вага";
+$MESS["SALE_TOTAL_WEIGHT"] = "Загальна вага:";
+$MESS["SALE_WEIGHT_G"] = "г";
+$MESS["SALE_DELAYED_TITLE"] = "Відкладено";
+$MESS["SALE_UNAVAIL_TITLE"] = "Немає у продажу";
+$MESS["STB_ORDER_PROMT"] = "Для того щоб почати оформлення замовлення, натисніть кнопку \"Оформити замовлення\".";
+$MESS["STB_COUPON_PROMT"] = "Введіть код купона на знижку:";
+$MESS["SALE_VAT"] = "ПДВ:";
+$MESS["SALE_VAT_EXCLUDED"] = "Товарів на:";
+$MESS["SALE_VAT_INCLUDED"] = "В тому числі ПДВ:";
+$MESS["SALE_TOTAL"] = "Разом:";
+$MESS["SALE_CONTENT_DISCOUNT"] = "Знижка";
+$MESS["SALE_DISCOUNT"] = "Знижка";
+?>

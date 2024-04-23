@@ -1,0 +1,30 @@
+<?
+$MESS["subscr_title_edit"] = "Редагування адреси #";
+$MESS["subscr_title_add"] = "Додавання адреси підписки";
+$MESS["subscr_list"] = "Список адрес";
+$MESS["subscr_conf"] = "Підписку підтверджено:";
+$MESS["subscr_conf_code"] = "Код підтвердження підписки:";
+$MESS["subscr_date_conf"] = "Дата генерації коду підтвердження:";
+$MESS["subscr_user"] = "Користувач (ID):";
+$MESS["subscr_active"] = "Підписка активна:";
+$MESS["subscr_send_conf"] = "Вислати підписчику код підтвердження при зміні (додаванні) адреси:";
+$MESS["subscr_rub"] = "Рубрики підписки:";
+$MESS["subscr_fmt"] = "Формат:";
+$MESS["subscr_fmt_text"] = "Текст";
+$MESS["subscr_date_add"] = "Дата додавання:";
+$MESS["subscr_date_upd"] = "Дата модифікації:";
+$MESS["subscr_anonym"] = "Анонімний підписчик:";
+$MESS["subscr_mnu_add"] = "Додати нового підписчика";
+$MESS["subscr_mnu_del"] = "Видалити даного підписчика";
+$MESS["subscr_mnu_del_conf"] = "Видалити адресу підписки?";
+$MESS["subscr_templ"] = "Надіслати лист на основі шаблону сайту:";
+$MESS["subscr_tab_subscriber"] = "Підписчик";
+$MESS["subscr_tab_subscriber_title"] = "Параметри підписки";
+$MESS["subscr_tab_subscription"] = "Підписки";
+$MESS["subscr_tab_subscription_title"] = "Рубрики підписки";
+$MESS["subs_save_error"] = "Помилка при збереженні адреси підписки.";
+$MESS["subscr_list_text"] = "Список";
+$MESS["subscr_add_text"] = "Додати";
+$MESS["subscr_del_text"] = "Видалити";
+$MESS["subs_saved"] = "Адресу підписки успішно збережено.";
+?>

@@ -1,0 +1,33 @@
+<?
+$MESS["CRM_OIIE_DEL_REFERENCE"] = "Відключити";
+$MESS["CRM_OIIE_AUTHORIZATION"] = "Авторизація";
+$MESS["CRM_OIIE_LOG_IN_UNDER_AN_ADMINISTRATOR_ACCOUNT_PAGE"] = "До магазину Бітрікс24 можна підключити тільки бізнес-профіль Instagram. Авторизуйтесь під профілем адміністратора сторінки Facebook, яка прив'язана до потрібного бізнес-профілю в Instagram.";
+$MESS["CRM_OIIE_THERE_IS_NO_PAGE_WHERE_THE_ADMINISTRATOR"] = "У вас поки немає сторінок Facebook з прив'язаним бізнес-профілем Instagram, де ви є адміністратором.<br>Ви можете створити свою сторінку прямо зараз або виконайте прив'язку бізнес-профілю Instagram.";
+$MESS["CRM_OIIE_TO_CREATE_A_PAGE"] = "Створити";
+$MESS["CRM_OIIE_SELECT_THE_PAGE"] = "Виберіть потрібний бізнес-профіль Instagram для підключення до магазину Бітрікс24";
+$MESS["CRM_OIIE_INSTAGRAM_TITLE"] = "Підключити Instagram";
+$MESS["CRM_OIIE_DESCRIPTION"] = "Налаштуйте синхронізацію каталогу з профілем компанії в Instagram.<br>Нові публікації з Instagram будуть автоматично потрапляти в каталог.";
+$MESS["CRM_OIIE_AUTHORIZE"] = "Авторизуватись";
+$MESS["CRM_OIIE_INFO"] = "Інформація";
+$MESS["CRM_OIIE_CHANGE_ANY_TIME"] = "Ви можете в будь-який час змінити або відключити імпорт товарів";
+$MESS["CRM_OIIE_SETTINGS_CHANGE_SETTING"] = "змінити";
+$MESS["CRM_OIIE_SETTINGS_TO_CONNECT"] = "Підключити";
+$MESS["CRM_OIIE_SETTINGS_DISABLE"] = "відключити";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DISABLE_TITLE"] = "Підтвердження відключення ";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DISABLE"] = "Імпорт товарів буде відключений з видаленням всіх зроблених вами налаштувань. Раніше імпортовані товари видалені не будуть.<br><br>Ви впевнені?";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_CHANGE_PAGE_TITLE"] = "Підтвердження зміни бізнес-профілю";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_CHANGE_PAGE"] = "Імпорт товарів буде відключений від поточного бізнес-профілю Instagram і підключений до вибраного бізнес-профілю. Раніше імпортовані товари видалені не будуть.<br><br>Ви впевнені?";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DELETE_PAGE_TITLE"] = "Підтвердження відключення бізнес-профілю";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DELETE_PAGE"] = "Імпорт товарів буде відключений від поточного бізнес-профілю Instagram. Раніше імпортовані товари видалені не будуть.<br><br>Ви впевнені?";
+$MESS["CRM_OIIE_SETTINGS_CONFIRM_DISABLE_BUTTON_CANCEL"] = "Скасувати";
+$MESS["CRM_OIIE_INSTAGRAM_CONNECTED"] = "Instagram підключений";
+$MESS["CRM_OIIE_FACEBOOK_CONNECTED"] = "Facebook підключений";
+$MESS["CRM_OIIE_FACEBOOK_CONNECTED_ACCOUNT"] = "Авторизація Facebook";
+$MESS["CRM_OIIE_FACEBOOK_CONNECTED_PAGE"] = "Підключена сторінка Facebook";
+$MESS["CRM_OIIE_INSTAGRAM_CONNECTED_ACCOUNT"] = "Підключений бізнес-профіль Instagram";
+$MESS["CRM_OIIE_INSTAGRAM_CONNECTION_TITLE"] = "Підключення Instagram";
+$MESS["CRM_OIIE_INSTAGRAM_OTHER_ACCOUNTS"] = "Інші бізнес-профілі";
+$MESS["CRM_OIIE_CREATE_WITHOUT_CONNECTION"] = "Створити магазин без підключення";
+$MESS["CRM_OIIE_IMPORT_FEEDBACK"] = "Зворотний зв'язок";
+$MESS["CRM_OIIE_RTFM_NOTE"] = "Прочитайте, #LINK_START#як це працює#LINK_END#";
+?>

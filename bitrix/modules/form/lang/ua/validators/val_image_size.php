@@ -1,0 +1,11 @@
+<?
+$MESS["FORM_VALIDATOR_IMAGE_SIZE_ERROR_HEIGHT_MORE"] = "#FIELD_NAME#: занадто велика висота зображення";
+$MESS["FORM_VALIDATOR_IMAGE_SIZE_ERROR_WIDTH_MORE"] = "#FIELD_NAME#: занадто велика ширина зображення";
+$MESS["FORM_VALIDATOR_IMAGE_SIZE_ERROR_HEIGHT_LESS"] = "#FIELD_NAME#: занадто мала висота зображення";
+$MESS["FORM_VALIDATOR_IMAGE_SIZE_ERROR_WIDTH_LESS"] = "#FIELD_NAME#: занадто мала ширина зображення";
+$MESS["FORM_VALIDATOR_IMAGE_SIZE_SETTINGS_HEIGHT_TO"] = "Максимальна висота";
+$MESS["FORM_VALIDATOR_IMAGE_SIZE_SETTINGS_WIDTH_TO"] = "Максимальна ширина";
+$MESS["FORM_VALIDATOR_IMAGE_SIZE_SETTINGS_HEIGHT_FROM"] = "Мінімальна висота";
+$MESS["FORM_VALIDATOR_IMAGE_SIZE_SETTINGS_WIDTH_FROM"] = "Мінімальна ширина";
+$MESS["FORM_VALIDATOR_IMAGE_SIZE_DESCRIPTION"] = "Розмір зображення";
+?>

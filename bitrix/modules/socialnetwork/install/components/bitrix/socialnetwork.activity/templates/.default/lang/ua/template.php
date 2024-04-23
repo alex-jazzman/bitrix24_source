@@ -1,0 +1,17 @@
+<?
+$MESS["SONET_ACTIVITY_T_BLOG"] = "блоги/звіти";
+$MESS["SONET_ACTIVITY_T_ALL"] = "всі";
+$MESS["SONET_ACTIVITY_T_GROUP_TITLE"] = "Група #NAME#";
+$MESS["SONET_ACTIVITY_T_SYSTEM_GROUPS"] = "групи";
+$MESS["SONET_ACTIVITY_T_SYSTEM_FRIENDS"] = "друзі";
+$MESS["SONET_ACTIVITY_T_TASKS"] = "завдання";
+$MESS["SONET_ACTIVITY_T_CALENDAR"] = "календарі";
+$MESS["SONET_ACTIVITY_T_NO_UPDATES"] = "Немає оновлень.";
+$MESS["SONET_ACTIVITY_T_SWITCH2"] = "Подробиці";
+$MESS["SONET_ACTIVITY_T_USER_TITLE1"] = "Користувач";
+$MESS["SONET_ACTIVITY_T_SWITCH1"] = "Згорнути";
+$MESS["SONET_ACTIVITY_T_SYSTEM"] = "системні";
+$MESS["SONET_ACTIVITY_T_FILES"] = "Файли";
+$MESS["SONET_ACTIVITY_T_FORUM"] = "форуми/обговорення";
+$MESS["SONET_ACTIVITY_T_PHOTO"] = "фото";
+?>

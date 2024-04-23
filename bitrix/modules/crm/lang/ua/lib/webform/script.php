@@ -1,0 +1,5 @@
+<?
+$MESS["CRM_WEBFORM_SCRIPT_BUTTON_TEXT"] = "Назва кнопки";
+$MESS["CRM_WEBFORM_SCRIPT_WIDGET_FORM_DEFAULT_TITLE"] = "Заповніть форму";
+$MESS["CRM_WEBFORM_SCRIPT_WIDGET_FORM_CALLBACK_TITLE"] = "Ми зателефонуємо вам";
+?>

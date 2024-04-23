@@ -1,0 +1,4 @@
+<?
+$MESS["LANDING_BLOCK_32.2.1.IMG_ONE_BIG_FULL__NAME"] = "Велике зображення на весь экран";
+$MESS["LANDING_BLOCK_32.2.1.IMG_ONE_BIG_FULL__NODES_LANDINGBLOCKNODEIMG"] = "Зображення";
+?>

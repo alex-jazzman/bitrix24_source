@@ -1,0 +1,6 @@
+<?
+$MESS["ERROR_PRODUCT_LIST_IS_EMPTY"] = "Список товарів порожній!";
+$MESS["CRM_PRODUCT_EXP_COLUMN_CURRENCY_ID"] = "Валюта";
+$MESS["CRM_PRODUCT_EXP_COLUMN_SECTION_ID"] = "Розділ (рівень #LEVEL_NUM#)";
+$MESS["CRM_PRODUCT_EXP_COLUMN_DESCRIPTION_TYPE"] = "Формат опису";
+?>

@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL"] = "Додайте клієнта з номером телефону для здійснення виклику";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_COMPANY"] = "Додайте клієнта з номером телефону в компанію для здійснення дзвінка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_CONTACT"] = "Додайте номер телефону в контакт для здійснення дзвінка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_DEAL"] = "Додайте клієнта з номером телефону в угоду для здійснення дзвінка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_INVOICE"] = "Додайте клієнта з номером телефону в рахунок для здійснення дзвінка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_LEAD"] = "Додайте клієнта з номером телефону в лід для здійснення дзвінка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_QUOTE"] = "Додайте клієнта з номером телефону в пропозицію для здійснення дзвінка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_CALL_SMART_INVOICE"] = "Додайте клієнта з номером телефону в рахунок для здійснення дзвінка";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND"] = "Додайте клієнта з адресою електронної пошти, щоб надіслати лист";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_COMPANY"] = "Додайте клієнта з адресою електронної пошти в компанію, щоб надіслати лист";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_CONTACT"] = "Додайте адресу електронної пошти в контакт, щоб надіслати лист";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_DEAL"] = "Додайте клієнта з адресою електронної пошти в угоду, щоб надіслати лист";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_INVOICE"] = "Додайте клієнта з адресою електронної пошти в рахунок, щоб надіслати лист";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_LEAD"] = "Додайте клієнта з адресою електронної пошти в лід, щоб надіслати лист";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_QUOTE"] = "Додайте клієнта з адресою електронної пошти в пропозицію, щоб надіслати лист";
+$MESS["CRM_TOOLBAR_ADD_CLIENT_FOR_EMAIL_SEND_SMART_INVOICE"] = "Додайте клієнта з адресою електронної пошти в рахунок, щоб надіслати лист";
+$MESS["CRM_TOOLBAR_BIZPROC_STARTER_LABEL"] = "Запустити Бізнес-процес";
+$MESS["CRM_TOOLBAR_INSTALL_CALENDAR_FOR_CALL"] = "Установіть модуль «Календар» для здійснення дзвінків.";
+$MESS["CRM_TOOLBAR_TELEPHONY_NOT_SUPPORTED"] = "Телефонні дзвінки не підтримуються в даному контексті";

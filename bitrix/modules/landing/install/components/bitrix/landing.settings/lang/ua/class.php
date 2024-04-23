@@ -1,0 +1,14 @@
+<?php
+$MESS["LANDING_SITE_SETTINGS_CATALOG_EDIT"] = "Налаштування каталогу";
+$MESS["LANDING_SITE_SETTINGS_LANDING_DESIGN"] = "Дизайн сторінки";
+$MESS["LANDING_SITE_SETTINGS_LANDING_EDIT"] = "Налаштування сторінки";
+$MESS["LANDING_SITE_SETTINGS_SITE_DESIGN"] = "Дизайн сайту";
+$MESS["LANDING_SITE_SETTINGS_SITE_DESIGN_GROUP"] = "Дизайн бази знань";
+$MESS["LANDING_SITE_SETTINGS_SITE_DESIGN_KNOWLEDGE"] = "Дизайн бази знань";
+$MESS["LANDING_SITE_SETTINGS_SITE_DESIGN_PAGE"] = "Дизайн сайту";
+$MESS["LANDING_SITE_SETTINGS_SITE_DESIGN_STORE"] = "Дизайн магазину";
+$MESS["LANDING_SITE_SETTINGS_SITE_EDIT"] = "Налаштування для сайту";
+$MESS["LANDING_SITE_SETTINGS_SITE_EDIT_GROUP"] = "Налаштування бази знань";
+$MESS["LANDING_SITE_SETTINGS_SITE_EDIT_KNOWLEDGE"] = "Налаштування бази знань";
+$MESS["LANDING_SITE_SETTINGS_SITE_EDIT_PAGE"] = "Налаштування сайту";
+$MESS["LANDING_SITE_SETTINGS_SITE_EDIT_STORE"] = "Налаштування магазину";

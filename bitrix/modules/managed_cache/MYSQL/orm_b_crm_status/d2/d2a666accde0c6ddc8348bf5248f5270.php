@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001698050777';
+$dateexpire = '001698054377';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:5:{i:0;a:10:{s:2:"ID";s:2:"46";s:9:"ENTITY_ID";s:9:"DEAL_TYPE";s:9:"STATUS_ID";s:4:"SALE";s:4:"NAME";s:14:"Продажа";s:9:"NAME_INIT";s:14:"Продажа";s:4:"SORT";s:2:"10";s:6:"SYSTEM";s:1:"Y";s:5:"COLOR";N;s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}i:1;a:10:{s:2:"ID";s:2:"47";s:9:"ENTITY_ID";s:9:"DEAL_TYPE";s:9:"STATUS_ID";s:7:"COMPLEX";s:4:"NAME";s:37:"Комплексная продажа";s:9:"NAME_INIT";s:0:"";s:4:"SORT";s:2:"20";s:6:"SYSTEM";s:1:"N";s:5:"COLOR";N;s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}i:2;a:10:{s:2:"ID";s:2:"48";s:9:"ENTITY_ID";s:9:"DEAL_TYPE";s:9:"STATUS_ID";s:5:"GOODS";s:4:"NAME";s:27:"Продажа товара";s:9:"NAME_INIT";s:0:"";s:4:"SORT";s:2:"30";s:6:"SYSTEM";s:1:"N";s:5:"COLOR";N;s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}i:3;a:10:{s:2:"ID";s:2:"49";s:9:"ENTITY_ID";s:9:"DEAL_TYPE";s:9:"STATUS_ID";s:8:"SERVICES";s:4:"NAME";s:27:"Продажа услуги";s:9:"NAME_INIT";s:0:"";s:4:"SORT";s:2:"40";s:6:"SYSTEM";s:1:"N";s:5:"COLOR";N;s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}i:4;a:10:{s:2:"ID";s:2:"50";s:9:"ENTITY_ID";s:9:"DEAL_TYPE";s:9:"STATUS_ID";s:7:"SERVICE";s:4:"NAME";s:43:"Сервисное обслуживание";s:9:"NAME_INIT";s:0:"";s:4:"SORT";s:2:"50";s:6:"SYSTEM";s:1:"N";s:5:"COLOR";N;s:9:"SEMANTICS";N;s:11:"CATEGORY_ID";s:1:"0";}}}';
+return true;
+?>

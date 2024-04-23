@@ -1,0 +1,5 @@
+<?
+$MESS["TASKS_RECYCLEBIN_MODULE_NAME"] = "Завдання";
+$MESS["TASKS_RECYCLEBIN_ENTITY_NAME"] = "Завдання";
+$MESS["TASKS_TEMPLATE_RECYCLEBIN_ENTITY_NAME"] = "Шаблон завдання";
+?>

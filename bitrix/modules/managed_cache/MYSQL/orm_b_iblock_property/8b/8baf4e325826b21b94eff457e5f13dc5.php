@@ -1,0 +1,7 @@
+<?
+if($INCLUDE_FROM_CACHE!='Y')return false;
+$datecreate = '001698027494';
+$dateexpire = '001698113894';
+$ser_content = 'a:2:{s:7:"CONTENT";s:0:"";s:4:"VARS";a:8:{i:0;a:5:{s:2:"ID";s:4:"1766";s:4:"NAME";s:4:"test";s:4:"CODE";s:4:"TEST";s:13:"PROPERTY_TYPE";s:1:"L";s:9:"USER_TYPE";N;}i:1;a:5:{s:2:"ID";s:2:"70";s:4:"NAME";s:46:"Время в минутах на услугу";s:4:"CODE";s:7:"MINUTES";s:13:"PROPERTY_TYPE";s:1:"N";s:9:"USER_TYPE";N;}i:2;a:5:{s:2:"ID";s:4:"2355";s:4:"NAME";s:33:"Длительность (мин)";s:4:"CODE";s:0:"";s:13:"PROPERTY_TYPE";s:1:"N";s:9:"USER_TYPE";N;}i:3;a:5:{s:2:"ID";s:4:"2325";s:4:"NAME";s:12:"Список";s:4:"CODE";s:0:"";s:13:"PROPERTY_TYPE";s:1:"L";s:9:"USER_TYPE";N;}i:4;a:5:{s:2:"ID";s:4:"2326";s:4:"NAME";s:65:"тестовое поле для поиска в таблицах";s:4:"CODE";s:45:"TESTOVOE_POLE_DLYA_POISKA_V_TABLITSAKH_XDDSHC";s:13:"PROPERTY_TYPE";s:1:"S";s:9:"USER_TYPE";N;}i:5;a:5:{s:2:"ID";s:4:"2327";s:4:"NAME";s:66:"тестовое поле для поиска в таблицах2";s:4:"CODE";s:46:"TESTOVOE_POLE_DLYA_POISKA_V_TABLITSAKH2_AMI698";s:13:"PROPERTY_TYPE";s:1:"S";s:9:"USER_TYPE";N;}i:6;a:5:{s:2:"ID";s:4:"2218";s:4:"NAME";s:16:"Материал";s:4:"CODE";s:0:"";s:13:"PROPERTY_TYPE";s:1:"S";s:9:"USER_TYPE";s:0:"";}i:7;a:5:{s:2:"ID";s:4:"2217";s:4:"NAME";s:8:"Цвет";s:4:"CODE";s:0:"";s:13:"PROPERTY_TYPE";s:1:"S";s:9:"USER_TYPE";s:0:"";}}}';
+return true;
+?>

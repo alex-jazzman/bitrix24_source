@@ -1,0 +1,8 @@
+#global_menu_sotbit .adm-main-menu-item-icon{
+    background: url("icons/sotbit/icon.png") no-repeat 50% 55%;
+}
+.sotbit_restapi_menu_icon {
+    background: url("icons/sotbit.restapi/icon.png") no-repeat center;
+    margin-top:0!important;
+    background-size: 60%;
+}

@@ -1,0 +1,64 @@
+<?
+$MESS["WD_PULL_HELP"] = "<b>Ви завантажили даний елемент для редагування і заблокували його від змін іншими користувачами.<br> Після завершення роботи з документом завантажте його оновлену версію на цій сторінці.<br> Після натискання кнопки «Зберегти» документ буде розблоковано.</b>";
+$MESS["WD_FILE_CREATED"] = "Створив";
+$MESS["IBEL_E_TAB_BIZPROC"] = "Бізнес-процеси";
+$MESS["WD_DOCUMENT_BP"] = "Бізнес-процеси";
+$MESS["WD_VERSION"] = "Версія";
+$MESS["WD_CONTENT"] = "Верхній рівень";
+$MESS["WD_UNDELETE"] = "Відновити";
+$MESS["WD_UNDELETE_TITLE"] = "Відновити документ";
+$MESS["WD_ASK_UNLOCK"] = "Ви збираєтеся покинути сторінку картки документа.
+
+Натисніть «OK», щоб перервати сеанс редагування, або
+«Скасування», щоб пізніше продовжити редагування цього документа.";
+$MESS["IBEL_BIZPROC_RUN_CMD"] = "Виконати команду";
+$MESS["WD_Y"] = "Так";
+$MESS["WD_WF"] = "Документообіг";
+$MESS["WD_OTHER_ACTIONS"] = "Інші дії";
+$MESS["WD_OTHER_ACTIONS_TITLE"] = "Інші дії над документом";
+$MESS["WD_HISTORY"] = "Журнал";
+$MESS["WD_END_EDIT"] = "Завантажити нову копію";
+$MESS["IBEL_BIZPROC_TASKS"] = "Завдання з бізнес-процесу";
+$MESS["WD_FILE_REPLACE"] = "Замінити файл";
+$MESS["WD_LOCK_TITLE"] = "Захистити документ від змін іншими користувачами.";
+$MESS["WD_FILE_MODIFIED"] = "Змінено";
+$MESS["WD_EDIT_PROPS"] = "Змінити властивості";
+$MESS["WD_HISTORY_FILE"] = "Історія";
+$MESS["WD_FILE_COMMENTS"] = "Коментарі";
+$MESS["WD_NAME"] = "Назва";
+$MESS["IBEL_BIZPROC_RUN_CMD_NO"] = "Не виконувати";
+$MESS["WD_N"] = "Ні";
+$MESS["WD_DESCRIPTION"] = "Опис";
+$MESS["IBEL_E_PUBLISHED"] = "Опублікований";
+$MESS["WD_ORIGINAL"] = "Оригінал";
+$MESS["WD_VERSION_ALT"] = "Основні властивості версії документа";
+$MESS["IBEL_BIZPROC_STOP"] = "Зупинити";
+$MESS["WD_CANCEL"] = "Скасувати редагування";
+$MESS["WD_PARENT_SECTION"] = "Папка";
+$MESS["WD_WF_PARAMS"] = "Параметри документообігу";
+$MESS["WD_VERSIONS_ALT"] = "Перейти до списку версій документа #NAME#";
+$MESS["WD_COLLAPSE_FIELDS"] = "Показати додаткові властивості";
+$MESS["WD_FILE_SIZE"] = "Розмір";
+$MESS["WD_EDIT_OFFICE"] = "Редагувати в MS Office";
+$MESS["WD_EDIT"] = "Редагувати документ";
+$MESS["WD_DOCUMENT"] = "Властивості";
+$MESS["WD_COLLAPSE_NAME"] = "Властивості";
+$MESS["WD_DOCUMENT_ALT"] = "Властивості документу";
+$MESS["WD_DOWNLOAD_FILE"] = "скачати";
+$MESS["WD_DOCUMENT_BP_ALT2"] = "Дивитися історію бізнес-процесів версії документа";
+$MESS["WD_DOCUMENT_BP_ALT"] = "Дивитися історію бізнес-процесів документа";
+$MESS["WD_HISTORY_FILE_ALT2"] = "Дивитися історію змін версій документа";
+$MESS["WD_HISTORY_FILE_ALT"] = "Дивитись історію змін версій документа";
+$MESS["WD_SAVE"] = "Зберегти зміни";
+$MESS["WD_VERSIONS"] = "Список версій";
+$MESS["WD_FILE_STATUS"] = "Статус";
+$MESS["WD_TAGS"] = "Теги";
+$MESS["IBEL_BIZPROC_STATE"] = "Поточний статус";
+$MESS["BPCGDOC_INVALID_TYPE"] = "Тип параметра не визначений";
+$MESS["WD_DELETE_FILE"] = "Видалити";
+$MESS["WD_DESTROY_FILE_CONFIRM"] = "Видалити без можливості відновлення?";
+$MESS["WD_DELETE_FILE_ALT2"] = "Видалити версію документа";
+$MESS["WD_DELETE_FILE_ALT"] = "Видалити документ";
+$MESS["WD_FILE"] = "Файл";
+$MESS["WD_RATING"] = "Рейтинг";
+?>

@@ -1,0 +1,6 @@
+<?php
+$MESS["IM_SEARCH_SECTION_CHAT_PARTICIPANTS"] = "Учасники чатів";
+$MESS["IM_SEARCH_SECTION_DEPARTMENTS"] = "Відділи";
+$MESS["IM_SEARCH_SECTION_RECENT"] = "Нещодавній пошук";
+$MESS["IM_SEARCH_SECTION_TITLE_SHOW_MORE"] = "Показати ще";
+$MESS["IM_SEARCH_SECTION_USERS_AND_CHATS"] = "Користувачі та чати";

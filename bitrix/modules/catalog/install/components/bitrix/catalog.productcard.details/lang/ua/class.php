@@ -1,0 +1,25 @@
+<?php
+$MESS["CPD_ACCESS_DENIED_ERROR_TITLE"] = "Недостатньо прав для перегляду товару.";
+$MESS["CPD_ADD_PRODUCT_DENIED_ERROR_TITLE"] = "Недостатньо прав для створення товару";
+$MESS["CPD_CREATE_DOCUMENT_BUTTON"] = "Додати документ";
+$MESS["CPD_CREATE_DOCUMENT_BUTTON_POPUP_ADJUSTMENT"] = "Прибуття";
+$MESS["CPD_CREATE_DOCUMENT_BUTTON_POPUP_DEDUCT"] = "Списання";
+$MESS["CPD_CREATE_DOCUMENT_BUTTON_POPUP_MOVING"] = "Переміщення";
+$MESS["CPD_CREATE_DOCUMENT_BUTTON_POPUP_SHIPMENT"] = "Реалізація";
+$MESS["CPD_EDIT_PRODUCT_DENIED_ERROR_TITLE"] = "Недостатньо прав для зміни товару";
+$MESS["CPD_ENABLE_INVENTORY_MANAGEMENT_DENIED_ERROR_TITLE"] = "Недостатньо прав для ввімкнення складського обліку.";
+$MESS["CPD_ERROR_ADD_HIGHLOAD_BLOCK"] = "Не вдалося створити довідник із такою назвою";
+$MESS["CPD_ERROR_CATALOG_SERVICES_LIMIT_EDITION"] = "Функціонал послуг не входить до вашої редакції продукту.";
+$MESS["CPD_ERROR_CATALOG_SERVICES_LIMIT_TARIFF"] = "Функціонал послуг недоступний на <a onclick=\"#LINK#\" style=\"cursor: pointer\">поточному тарифі</a> Бітрікс24.";
+$MESS["CPD_ERROR_EMPTY_DIRECTORY_ITEMS"] = "Додайте елементи для списку довідника";
+$MESS["CPD_ERROR_EMPTY_LIST_ITEMS"] = "Додайте елементи для списку";
+$MESS["CPD_ERROR_NOT_SUPPORTED_PRODUCT_TYPE"] = "Ви вибрали тип товару «#TYPE#», який не підтримується в новій картці. Подивитися та відредагувати такий товар можна в розділі «Магазин».<br>#LINK#";
+$MESS["CPD_ERROR_NOT_SUPPORTED_PRODUCT_TYPE_BUS"] = "Ви вибрали тип товару \"#TYPE#\", який не підтримується в новій картці. Переглядати й редагувати цей товар можна після перемикання на стару картку в налаштуваннях модуля «Товарний каталог».<br>#LINK#";
+$MESS["CPD_ERROR_UNKNOWN_PRODUCT_TYPE"] = "Невідомий тип товару.";
+$MESS["CPD_NEW_LIST_ELEMENT_EMPTY_NAME"] = "Новий елемент";
+$MESS["CPD_NEW_PRODUCT_TITLE"] = "Новий товар";
+$MESS["CPD_NEW_SERVICE_TITLE"] = "Нова послуга";
+$MESS["CPD_NOT_FOUND_ERROR_TITLE"] = "Товар не знайдений або видалений";
+$MESS["CPD_SETS_ENABLE_PRODUCT_SLIDER_LINK"] = "Відкрити налаштування";
+$MESS["CPD_SETS_NOT_SUPPORTED_LINK"] = "Перейти до онлайн-магазину";
+$MESS["CPD_SETS_NOT_SUPPORTED_TITLE"] = "Ви вибрали тип товару «Комплект», який не підтримується в новій картці. Подивитися й відредагувати такий товар можна в розділі «Магазин».<br>#LINK#";

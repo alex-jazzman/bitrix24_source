@@ -1,0 +1,32 @@
+<?
+$MESS["STAT_TITLE"] = "Завантаження подій";
+$MESS["STAT_CHARGEBACK"] = "Повернення грошей";
+$MESS["STAT_EVENT_TYPE"] = "ID типа<br>події";
+$MESS["STAT_DATE"] = "Дата<br>";
+$MESS["STAT_PARAM"] = "Дод. параметр<br>(#GROUP_SITE_ID#.сесія.<br>відвідувач.країна.<br>рекламна_кампанія.<br>повернення.сайт)";
+$MESS["STAT_COPY"] = "Копіювати в нижній рядок";
+$MESS["STAT_CALENDAR"] = "Календар";
+$MESS["STAT_SELECT_EVENT"] = "Вибір типу події";
+$MESS["STAT_LOAD"] = "Завантажити";
+$MESS["STAT_FILE"] = "CSV-файл:";
+$MESS["STAT_MONEY"] = "Грошова сума";
+$MESS["STAT_PREVIEW"] = "Попередній перегляд:";
+$MESS["STAT_STEP"] = "Крок завантаження, сек.:";
+$MESS["STAT_HANDLER"] = "Оброблювач CSV-файлу:";
+$MESS["STAT_LOADING_FROM_TABLE"] = "Ручне введення подій";
+$MESS["STAT_LOADING_FROM_CSV"] = "Завантаження подій із CSV-файлу";
+$MESS["STAT_UNIQUE"] = "Завантажити тільки унікальні події";
+$MESS["STAT_UNIQUE_ALT"] = "унікальність перевіряється за комбінацією всіх завантажуваних полів (крім грошової суми)";
+$MESS["STAT_CURRENCY"] = "Валюта";
+$MESS["STAT_NEXT_STEP"] = "наступний крок";
+$MESS["STAT_EVENTS_LOADING"] = "Триває завантаження подій. Зачекайте...";
+$MESS["STAT_LOADED"] = "Завантажено:";
+$MESS["STAT_PROCESSED"] = "Оброблено:";
+$MESS["STAT_ON_STEP"] = "На кроці";
+$MESS["STAT_TOTAL_CSV"] = "Усього рядків у CSV:";
+$MESS["STAT_DUPLICATE"] = "Дублікатів:";
+$MESS["STAT_CONVERT_TO_DEFAULT_CUR"] = "Перед завантаженням всі грошові суми будуть сконвертовані в базову валюту.";
+$MESS["STAT_FROM_FILE"] = "З файлу";
+$MESS["STAT_FROM_FORM"] = "Ручне введення";
+$MESS["STAT_ATTENTION_1"] = "Увага";
+?>

@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_TIMELINE_LOG_CALL_INCOMING_CLIENT"] = "Клієнт";
+$MESS["CRM_TIMELINE_LOG_CALL_INCOMING_TITLE"] = "Вхідний дзвінок";

@@ -1,0 +1,4 @@
+<?php
+$MESS["BICONNECTOR_ROLE_ADMINISTRATOR"] = "Адміністратор";
+$MESS["BICONNECTOR_ROLE_ANALYST"] = "Аналітик";
+$MESS["BICONNECTOR_ROLE_MANAGER"] = "Користувач";

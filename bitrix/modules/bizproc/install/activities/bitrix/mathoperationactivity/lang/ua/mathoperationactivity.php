@@ -1,0 +1,20 @@
+<?php
+$MESS["BPMOA_CHOOSE_PARAMETER"] = "Обрати параметр";
+$MESS["BPMOA_CHOOSE_VARIABLE"] = "Обрати змінну";
+$MESS["BPMOA_CREATE_GCONSTANT"] = "Створити константу";
+$MESS["BPMOA_CREATE_GCONSTANT_QUESTION"] = "Створити нову константу?";
+$MESS["BPMOA_CREATE_GVARIABLE"] = "Створити змінну";
+$MESS["BPMOA_CREATE_GVARIABLE_QUESTION"] = "Створити нову змінну?";
+$MESS["BPMOA_DOCUMENT"] = "Значення поля";
+$MESS["BPMOA_EMPTY"] = "Не обрано";
+$MESS["BPMOA_EMPTY_OPERATION"] = "Не вказаний оператор";
+$MESS["BPMOA_EMPTY_VARIABLE"] = "Не вказано значення жодної змінної";
+$MESS["BPMOA_GCONSTANT_NOT_FOUND"] = "Константа не знайдена";
+$MESS["BPMOA_GCONSTANT_NO_EXIST"] = "Констант поки що немає";
+$MESS["BPMOA_GVARIABLE_NOT_FOUND"] = "Змінна не знайдена";
+$MESS["BPMOA_GVARIABLE_NO_EXIST"] = "Змінних поки що немає";
+$MESS["BPMOA_INPUT_NUMBER"] = "Введіть число";
+$MESS["BPMOA_INVALID_VALUE"] = "Одне зі значень виразу не є числовим значенням";
+$MESS["BPMOA_LIST_OF_VALUES"] = "Список значень";
+$MESS["BPMOA_NUMBER"] = "Своє значення";
+$MESS["BPMOA_TYPE_OF_PARAMETER"] = "Тип параметра";
