@@ -5,6 +5,7 @@
  */
 jn.define('im/messenger/provider/pull/lib/message-base', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Type } = require('type');
 	const { clone } = require('utils/object');
 
 	const { BasePullHandler } = require('im/messenger/provider/pull/lib/pull-handler-base');
@@ -40,7 +41,7 @@ jn.define('im/messenger/provider/pull/lib/message-base', (require, exports, modu
 			{
 				return;
 			}
-			this.logger.info(`${this.getClassName()}.handleMessage `, params, extra);
+			this.logger.log(`${this.getClassName()}.handleMessage `, params, extra);
 
 			const dialogId = params.message.recipientId;
 			const userId = MessengerParams.getUserId();
@@ -116,7 +117,7 @@ jn.define('im/messenger/provider/pull/lib/message-base', (require, exports, modu
 				return;
 			}
 
-			this.logger.info(`${this.getClassName()}.handleMessageChat`, params, extra);
+			this.logger.log(`${this.getClassName()}.handleMessageChat`, params, extra);
 
 			const dialogId = params.message.recipientId;
 			const userId = MessengerParams.getUserId();
@@ -274,6 +275,7 @@ jn.define('im/messenger/provider/pull/lib/message-base', (require, exports, modu
 				actualReactions: { reaction: actualReactionsState, usersShort },
 				userId,
 				reaction,
+				dialogId,
 			} = params;
 			const message = this.store.getters['messagesModel/getById'](actualReactionsState.messageId);
 			if (!message)
@@ -294,6 +296,25 @@ jn.define('im/messenger/provider/pull/lib/message-base', (require, exports, modu
 					});
 				})
 				.catch((err) => this.logger.error(`${this.getClassName()}.handleAddReaction.usersModel/addShort.catch err:`, err));
+
+			if (this.store.getters['applicationModel/getOpenDialogs']().includes(dialogId))
+			{
+				return;
+			}
+
+			const recentItem = this.store.getters['recentModel/getById'](dialogId);
+			const isOwnLike = MessengerParams.getUserId() === userId;
+			const isOwnLastMessage = MessengerParams.getUserId() === recentItem.message.senderId;
+			if (isOwnLike || !isOwnLastMessage)
+			{
+				return;
+			}
+
+			this.store.dispatch('recentModel/like', {
+				messageId: actualReactionsState.messageId,
+				id: dialogId,
+				liked: true,
+			});
 		}
 
 		/**
@@ -561,15 +582,17 @@ jn.define('im/messenger/provider/pull/lib/message-base', (require, exports, modu
 				return;
 			}
 
+
+			const fieldsCount = {
+				counter: params.counter,
+			};
 			let isNeedUpdateRecentItem = false;
-			if (params.lastMessageViews.countOfViewers !== dialogItem.lastMessageViews.countOfViewers)
+			if (params.lastMessageViews?.countOfViewers
+				&& (params.lastMessageViews.countOfViewers !== dialogItem.lastMessageViews.countOfViewers))
 			{
-				const fieldsCount = {
-					lastMessageId: params.newLastMessage.id,
-					lastId: dialogItem.lastReadId === dialogItem.lastMessageId
-						? params.newLastMessage.id : dialogItem.lastReadId,
-					counter: params.counter,
-				};
+				fieldsCount.lastMessageId = params.newLastMessage.id;
+				fieldsCount.lastId = dialogItem.lastReadId === dialogItem.lastMessageId
+					? params.newLastMessage.id : dialogItem.lastReadId;
 
 				const fieldsViews = {
 					...params.lastMessageViews.firstViewers[0],
@@ -577,26 +600,26 @@ jn.define('im/messenger/provider/pull/lib/message-base', (require, exports, modu
 					countOfViewers: params.lastMessageViews.countOfViewers,
 				};
 
-				await this.store.dispatch('dialoguesModel/update', {
-					dialogId,
-					fields: fieldsCount,
-				});
-
 				await this.store.dispatch('dialoguesModel/setLastMessageViews', {
 					dialogId,
 					fields: fieldsViews,
 				});
 			}
 
+			await this.store.dispatch('dialoguesModel/update', {
+				dialogId,
+				fields: fieldsCount,
+			});
+
 			const newLastMessage = params.newLastMessage;
 			if (newLastMessage)
 			{
 				recentItem.message = {
-					text: newLastMessage.text,
+					text: newLastMessage.file ? `[${BX.message('IM_F_FILE')}]` : newLastMessage.text,
 					date: newLastMessage.date,
 					author_id: newLastMessage.author_id,
 					id: newLastMessage.id,
-					file: newLastMessage.files ? (newLastMessage.files.length > 0) : false,
+					file: newLastMessage.file ?? false,
 				};
 
 				isNeedUpdateRecentItem = true;
@@ -832,9 +855,27 @@ jn.define('im/messenger/provider/pull/lib/message-base', (require, exports, modu
 			return Promise.all(promises);
 		}
 
-		setMessage(params)
+		async setMessage(params)
 		{
 			const message = DialogConverter.fromPushToMessage(params);
+
+			/**
+			 * @type {MessagePullHandlerAdditionalEntities || un}
+			 */
+			const { additionalEntities } = params.message;
+
+			if (Type.isObject(additionalEntities))
+			{
+				if (Type.isArrayFilled(additionalEntities?.users))
+				{
+					await this.setUsers(additionalEntities);
+				}
+
+				if (Type.isArrayFilled(additionalEntities?.files))
+				{
+					await this.setFiles(additionalEntities);
+				}
+			}
 
 			const messageWithTemplateId = this.store.getters['messagesModel/isInChatCollection']({
 				messageId: params.message.templateId,

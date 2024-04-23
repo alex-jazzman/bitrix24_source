@@ -5,7 +5,7 @@ return [
 		'type',
 		'utils/object',
 		'utils/uuid',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/lib/converter',
 		'im:messenger/lib/element',

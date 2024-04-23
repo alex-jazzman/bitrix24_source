@@ -10,7 +10,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		DialogType,
 		BotType,
 	} = require('im/messenger/const');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 
@@ -50,7 +50,9 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		constructor(dialogId, options = {})
 		{
-			this.store = core.getStore();
+			this.core = serviceLocator.get('core');
+			this.messengerStore = this.core.getMessengerStore();
+			this.store = this.core.getStore();
 			this.dialogId = dialogId;
 			this.name = null;
 			this.nameColor = AppTheme.colors.base1;
@@ -96,7 +98,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			}
 			else if (dialog.type && dialog.type === DialogSpecialType.copilot)
 			{
-				this.description = Type.isStringFilled(dialog.aiProvider) ? dialog.aiProvider : Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_BOT');
+				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_ONLINE');
 			}
 			else
 			{
@@ -112,7 +114,12 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		createUserTitle(options = {})
 		{
-			const user = this.store.getters['usersModel/getById'](this.dialogId);
+			let user = this.messengerStore.getters['usersModel/getById'](this.dialogId);
+			if (!user)
+			{
+				user = this.store.getters['usersModel/getById'](this.dialogId);
+			}
+
 			if (!user)
 			{
 				return;
@@ -250,7 +257,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				);
 			}
 
-			if (this.dialogSpecialType === DialogSpecialType.copilot)
+			if (this.userCounter <= 2 && this.dialogSpecialType === DialogSpecialType.copilot)
 			{
 				titleParams.detailText = this.description;
 			}

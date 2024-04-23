@@ -14,6 +14,7 @@ return [
 		'statemanager/vuex-manager',
 		'im:chat/timer',
 		'im:chat/selector/adapter/dialog-list',
+		'im:messenger/core/chat',
 		'im:messenger/const',
 		'im:messenger/lib/helper',
 		'im:messenger/controller/recent/chat',
@@ -43,7 +44,8 @@ return [
 		'im:messenger/lib/ui/header',
 		'im:messenger/controller/search/experimental',
 		'im:messenger/lib/feature',
-		'im:messenger/lib/smile-manager'
+		'im:messenger/lib/smile-manager',
+		'im:messenger/lib/di/service-locator',
 	],
 	'components' => [],
 	//'packer' => [],

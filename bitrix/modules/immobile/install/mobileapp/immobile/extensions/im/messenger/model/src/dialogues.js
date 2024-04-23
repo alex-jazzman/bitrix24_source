@@ -213,6 +213,41 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				});
 			},
 
+			/** @function dialoguesModel/setFromLocalDatabase */
+			setFromLocalDatabase: (store, payload) => {
+				if (!Array.isArray(payload) && Type.isPlainObject(payload))
+				{
+					payload = [payload];
+				}
+
+				payload.map((element) => {
+					return validate(store, element);
+				}).forEach((element) => {
+					/** @type {DialoguesModelState} */
+					const existingItem = store.state.collection[element.dialogId];
+					if (existingItem)
+					{
+						store.commit('update', {
+							actionName: 'setFromLocalDatabase',
+							data: {
+								dialogId: element.dialogId,
+								fields: element,
+							},
+						});
+					}
+					else
+					{
+						store.commit('add', {
+							actionName: 'setFromLocalDatabase',
+							data: {
+								dialogId: element.dialogId,
+								fields: { ...dialogState, ...element },
+							},
+						});
+					}
+				});
+			},
+
 			/** @function dialoguesModel/add */
 			add: (store, payload) => {
 				if (!Array.isArray(payload) && Type.isPlainObject(payload))
@@ -791,17 +826,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 		if (Type.isPlainObject(fields.lastMessageViews))
 		{
-			if (
-				Type.isNumber(fields.lastMessageViews.messageId)
-				&& Type.isNumber(fields.lastMessageViews.countOfViewers)
-			)
-			{
-				result.lastMessageViews = fields.lastMessageViews;
-			}
-			else
-			{
-				result.lastMessageViews = prepareLastMessageViews(fields.lastMessageViews);
-			}
+			result.lastMessageViews = prepareLastMessageViews(fields.lastMessageViews);
 		}
 
 		if (Type.isBoolean(fields.hasPrevPage))
@@ -1000,26 +1025,60 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 	function prepareLastMessageViews(rawLastMessageViews)
 	{
-		const {
-			count_of_viewers: countOfViewers,
-			first_viewers: rawFirstViewers,
-			message_id: messageId,
-		} = rawLastMessageViews;
-
-		let firstViewer;
-		for (const rawFirstViewer of rawFirstViewers)
+		if (Type.isObject(rawLastMessageViews.firstViewer) || rawLastMessageViews.firstViewer === null)
 		{
-			if (rawFirstViewer.user_id === MessengerParams.getUserId())
-			{
-				continue;
-			}
+			return rawLastMessageViews;
+		}
 
-			firstViewer = {
-				userId: rawFirstViewer.user_id,
-				userName: rawFirstViewer.user_name,
-				date: DateHelper.cast(rawFirstViewer.date),
-			};
-			break;
+		let countOfViewers = rawLastMessageViews.countOfViewers;
+		let rawFirstViewers = rawLastMessageViews.firstViewers;
+		let messageId = rawLastMessageViews.messageId;
+		let firstViewer = null;
+
+		try
+		{
+			if (Type.isUndefined(countOfViewers) && rawLastMessageViews.count_of_viewers) // old rest response
+			{
+				countOfViewers = rawLastMessageViews.count_of_viewers;
+				rawFirstViewers = rawLastMessageViews.first_viewers;
+				messageId = rawLastMessageViews.message_id;
+
+				for (const rawFirstViewer of rawFirstViewers)
+				{
+					if (rawFirstViewer.user_id === MessengerParams.getUserId())
+					{
+						continue;
+					}
+
+					firstViewer = {
+						userId: rawFirstViewer.user_id,
+						userName: rawFirstViewer.user_name,
+						date: DateHelper.cast(rawFirstViewer.date),
+					};
+					break;
+				}
+			}
+			else
+			{
+				for (const rawFirstViewer of rawFirstViewers)
+				{
+					if (rawFirstViewer.userId === MessengerParams.getUserId())
+					{
+						continue;
+					}
+
+					firstViewer = {
+						userId: rawFirstViewer.userId,
+						userName: rawFirstViewer.userName,
+						date: DateHelper.cast(rawFirstViewer.date),
+					};
+					break;
+				}
+			}
+		}
+		catch (error)
+		{
+			logger.error('dialoguesModel.prepareLastMessageViews.catch:', error);
 		}
 
 		if (countOfViewers > 0 && !firstViewer)

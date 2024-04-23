@@ -4,7 +4,7 @@
  * @module im/messenger/controller/recent/lib/recent-base
  */
 jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
 	const { RecentRenderer } = require('im/messenger/controller/recent/lib/renderer');
@@ -99,9 +99,9 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 
 		initStore()
 		{
-			this.store = core.getStore();
-			this.storeManager = core.getStoreManager();
-			this.recentRepository = core.getRepository().recent;
+			this.store = serviceLocator.get('core').getStore();
+			this.storeManager = serviceLocator.get('core').getStoreManager();
+			this.recentRepository = serviceLocator.get('core').getRepository().recent;
 		}
 
 		initServices()
@@ -164,7 +164,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			if (Feature.isLocalStorageEnabled)
 			{
 				const userIdList = Object.keys(cache.users.collection);
-				const userList = await core.getRepository().user.userTable.getListByIds(userIdList);
+				const userList = await serviceLocator.get('core').getRepository().user.userTable.getListByIds(userIdList);
 				if (userList.items.length > 0)
 				{
 					const dbUserCache = {
@@ -188,7 +188,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			if (Feature.isLocalStorageEnabled)
 			{
 				const dialogIdList = Object.keys(cache.dialogues.collection);
-				const dialogList = await core.getRepository().dialog.dialogTable.getListByDialogIds(dialogIdList);
+				const dialogList = await serviceLocator.get('core').getRepository().dialog.dialogTable.getListByDialogIds(dialogIdList);
 				if (dialogList.items.length > 0)
 				{
 					const dbDialogCache = {

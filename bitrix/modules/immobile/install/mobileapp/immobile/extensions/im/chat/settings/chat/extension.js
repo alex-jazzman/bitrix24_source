@@ -51,21 +51,6 @@
 			});
 		}
 
-		/**
-		 * @param {boolean} value
-		 */
-		setCopilotSettings(value)
-		{
-			BX.ajax.runAction('immobile.api.Settings.setCopilotMobileBeta', { data: { value: value ? 'Y' : 'N' } })
-				.then((result) => {
-					console.log('immobile.api.Settings.setCopilotMobileBeta result:', result);
-					Application.relogin();
-				})
-				.catch((error) => {
-					console.error('immobile.api.Settings.setCopilotMobileBeta.catch:', error);
-				});
-		}
-
 		async getForm()
 		{
 			this.values = Application.storage.getObject('settings.chat', {
@@ -76,15 +61,12 @@
 				backgroundType: SettingsChat.BackgroundType.lightGray,
 				chatBetaEnable: false,
 				localStorageEnable: true,
-				copilotBetaEnable: false,
 			});
 
 			const settings = await this.loadSettingsPromise;
 
 			const isBetaAvailable = settings.IS_BETA_AVAILABLE === true;
 			const isChatM1Enabled = settings.IS_CHAT_M1_ENABLED === true;
-			const isCopilotEnable = settings.IS_COPILOT_AVAILABLE === true;
-			const isCopilotMobileBetaEnable = settings.IS_COPILOT_MOBILE_BETA_AVAILABLE === true;
 
 			let chatBetaOption = null;
 			if (isBetaAvailable)
@@ -99,20 +81,6 @@
 				if (typeof chatBetaEnableSwitch.setTestId === 'function')
 				{
 					chatBetaEnableSwitch.setTestId('CHAT_SETTINGS_CHAT_BETA_ENABLE');
-				}
-
-				if (isCopilotEnable)
-				{
-					const copilotBetaEnableSwitch = FormItem
-						.create('copilotBetaEnable', FormItemType.SWITCH, BX.message('SE_CHAT_BETA_COPILOT_ENABLE_TITLE_V2'))
-						.setValue(isCopilotMobileBetaEnable)
-					;
-					items.push(copilotBetaEnableSwitch);
-
-					if (typeof copilotBetaEnableSwitch.setTestId === 'function')
-					{
-						copilotBetaEnableSwitch.setTestId('CHAT_SETTINGS_COPILOT_BETA_ENABLE');
-					}
 				}
 
 				// // TODO this setting may need to be reverted
@@ -240,12 +208,6 @@
 			if (item && item.id === 'chatBetaEnable')
 			{
 				BX.postComponentEvent('ImMobile.Messenger.Settings.Chat:change', [{ id: item.id, value: item.value }]);
-			}
-
-			if (item && item.id === 'copilotBetaEnable')
-			{
-				// eslint-disable-next-line no-undef
-				this.setCopilotSettings(item.value);
 			}
 
 			return true;

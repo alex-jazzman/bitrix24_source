@@ -30,7 +30,7 @@ class CopilotChatBot extends Base
 	// option amount of the messages to select for context
 	public const
 		OPTION_CONTEXT_AMOUNT = 'copilot_context_amount',
-		CONTEXT_AMOUNT_DEFAULT = 50 // default value
+		CONTEXT_AMOUNT_DEFAULT = 25 // default value
 	;
 
 	// option mode interaction with ai service

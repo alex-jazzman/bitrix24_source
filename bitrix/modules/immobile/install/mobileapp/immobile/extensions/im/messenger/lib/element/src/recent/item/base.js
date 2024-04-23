@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { DateHelper } = require('im/messenger/lib/helper');
@@ -328,7 +328,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				return this;
 			}
 
-			if (modelItem.message.senderId === core.getUserId())
+			if (modelItem.message.senderId === serviceLocator.get('core').getUserId())
 			{
 				subtitleStyle = {
 					image: {
@@ -362,7 +362,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			let url = '';
 			let sizeMultiplier = 0.7;
 
-			if (message.senderId === core.getUserId())
+			if (message.senderId === serviceLocator.get('core').getUserId())
 			{
 				if (item.liked)
 				{
@@ -420,7 +420,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		createCounterStyle()
 		{
 			const dialog = this.getDialogItem();
-			this.styles.counter.backgroundColor = dialog?.muteList?.includes(core.getUserId())
+			this.styles.counter.backgroundColor = dialog?.muteList?.includes(serviceLocator.get('core').getUserId())
 				? AppTheme.colors.base5
 				: AppTheme.colors.accentMainPrimaryalt
 			;
@@ -430,7 +430,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 		getDialogById(dialogId)
 		{
-			return core.getStore().getters['dialoguesModel/getById'](dialogId);
+			return serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
 		}
 
 		/**
@@ -453,7 +453,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		{
 			const dialog = this.getDialogItem();
 
-			return dialog?.muteList?.includes(core.getUserId()) ? UnmuteAction : MuteAction;
+			return dialog?.muteList?.includes(serviceLocator.get('core').getUserId()) ? UnmuteAction : MuteAction;
 		}
 
 		getHideAction()
@@ -483,7 +483,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 
 		getImageUrlByFileName(fileName = '')
 		{
-			return `${Path.toComponents}images/${fileName}`;
+			return `${Path.toExtensions}assets/common/png/${fileName}`;
 		}
 	}
 

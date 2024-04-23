@@ -14,7 +14,7 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 	{
 		/**
 		 *
-		 * @param {UsersModelState || RecentUser} user
+		 * @param {UsersModelState} user
 		 * @return {RecentCarouselItem}
 		 */
 		toUserCarouselItem(user)

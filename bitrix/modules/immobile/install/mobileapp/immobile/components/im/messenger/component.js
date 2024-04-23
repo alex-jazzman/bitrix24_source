@@ -18,7 +18,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 /* endregion Clearing session variables after script reload */
 
 (async () => {
-	/* global dialogList, PageManager, Application, ChatTimer, InAppNotifier, ChatUtils, reloadAllScripts */
+	/* global dialogList, ChatTimer, InAppNotifier, ChatUtils, reloadAllScripts */
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
@@ -26,10 +26,23 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { Loc } = require('loc');
 	const { get, isEqual } = require('utils/object');
 	const { Feature: MobileFeature } = require('feature');
-	const { core } = require('im/messenger/core');
-	await core.init({
+
+	const { Logger } = require('im/messenger/lib/logger');
+	const { ChatApplication } = require('im/messenger/core/chat');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+
+	const core = new ChatApplication({
 		localStorageEnable: true,
 	});
+	try
+	{
+		await core.init();
+	}
+	catch (error)
+	{
+		Logger.error('ChatApplication init error: ', error);
+	}
+	serviceLocator.add('core', core);
 
 	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { Feature } = require('im/messenger/lib/feature');
@@ -55,7 +68,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { Logger } = require('im/messenger/lib/logger');
 
 	const { ChatRecent } = require('im/messenger/controller/recent/chat');
 	const { RecentView } = require('im/messenger/view/recent');
@@ -105,10 +117,12 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		initCore()
 		{
+			this.serviceLocator = serviceLocator;
+
 			/**
 			 * @type {CoreApplication}
-			*/
-			this.core = core;
+			 */
+			this.core = this.serviceLocator.get('core');
 			this.repository = this.core.getRepository();
 
 			/**

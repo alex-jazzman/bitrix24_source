@@ -14,6 +14,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',
 		'im:messenger/lib/utils',
+		'im:messenger/lib/feature',
 	],
 	'bundle' => [
 		'./src/application',

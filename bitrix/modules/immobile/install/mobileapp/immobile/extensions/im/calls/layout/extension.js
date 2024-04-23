@@ -273,6 +273,7 @@
 		ReplaceSpeaker: "replaceSpeaker",
 		SetCentralUser: "setCentralUser",
 		SelectAudioDevice: "selectAudioDevice",
+		ToggleSubscriptionRemoteVideo: "toggleSubscriptionRemoteVideo"
 	};
 
 	class CallLayout extends LayoutComponent
@@ -302,6 +303,7 @@
 			this.state = {
 				screenWidth: 0,
 				screenHeight: 0,
+				toggleListPrev: [],
 				width: "100%",
 				height: "100%",
 				status: props.status || "none",
@@ -442,6 +444,13 @@
 				localStream: this.videoStreams.hasOwnProperty(this.userId) ? this.videoStreams[this.userId] : null,
 			});
 			this.emit(EventName.SetCentralUser, [userId]);
+			console.log(this.userRegistry, typeof this.userRegistry.users, 'userReg')
+
+			const userIds = [];
+			this.userRegistry.users.forEach(user => {
+				userIds.push(user.id)
+			})
+			this.toggleSubscriptionRemoteVideo(userIds)
 		}
 
 		pinUser(userId)
@@ -688,10 +697,18 @@
 					this.switchPresenter();
 				}
 			}
+
 			this.setState({
 				connectedUsers: this.getConnectedUsers(),
+				floorRequestUsers: this.getFloorRequestUsers(),
 				status: newCallStatus,
 			});
+
+			const userIds = [];
+			this.userRegistry.users.forEach(user => {
+				userIds.push(user.id)
+			})
+			this.toggleSubscriptionRemoteVideo(userIds)
 		}
 
 		getUserTalking(userId)
@@ -800,6 +817,68 @@
 			if (userId != this.userId)
 			{
 				this.switchPresenter();
+			}
+		}
+
+		toggleSubscriptionRemoteVideo(ids)
+		{
+			if (!ids.length) return;
+
+			const toggleList = [];
+			const leftUserId = this.getLeftUser(this.centralUserId)
+			const rigthUserId = this.getRightUser(this.centralUserId)
+
+			const checkNecessityAddUser = (newState) => {
+				const currentUser = this.state.toggleListPrev.find(user => user.id === newState.id);
+
+				return !!(!currentUser ||
+					(
+						currentUser &&
+						(
+							currentUser.quality !== newState.quality ||
+							currentUser.isShowVideo !== newState.isShowVideo
+						)
+					));
+
+
+			}
+
+			ids.forEach(id => {
+				const userModel = this.userRegistry.get(id);
+
+				if (!userModel || userModel.localUser || userModel.state !== "Connected") return;
+
+				const isActiveUser = id === this.centralUserId || id === leftUserId || id === rigthUserId;
+
+				if (isActiveUser)
+				{
+					toggleList.push({
+						id,
+						quality: id === this.centralUserId ? 2 : 1,
+						isShowVideo: true,
+					})
+
+
+				}
+
+				if (!isActiveUser) {
+					toggleList.push( {
+						id,
+						quality: 1,
+						isShowVideo: false,
+					})
+				}
+			})
+
+
+
+			const filterToggleList = toggleList.filter(item => checkNecessityAddUser(item))
+
+			this.state.toggleListPrev = toggleList;
+
+
+			if (filterToggleList.length) {
+				this.emit(EventName.ToggleSubscriptionRemoteVideo, [filterToggleList])
 			}
 		}
 

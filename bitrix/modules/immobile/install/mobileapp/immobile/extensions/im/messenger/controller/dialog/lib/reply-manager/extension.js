@@ -18,6 +18,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 	const { parser } = require('im/messenger/lib/parser');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
+	const { DialogConverter } = require('im/messenger/lib/converter');
 
 	const QUOTE_DELIMITER = '-'.repeat(54);
 
@@ -36,7 +37,9 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			this.inputTextBuffer = null;
 			this._isQuoteInProcess = false;
 			this._isQuoteInBackground = false;
+			this._isForwardInBackground = false;
 			this._isEditInProcess = false;
+			this._isForwardInProcess = false;
 			/** @type {DraftManager} */
 			this.draftManager = null;
 
@@ -53,9 +56,19 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			return this._isQuoteInBackground;
 		}
 
+		get isForwardInBackground()
+		{
+			return this._isForwardInBackground;
+		}
+
 		get isEditInProcess()
 		{
 			return this._isEditInProcess;
+		}
+
+		get isForwardInProcess()
+		{
+			return this._isForwardInProcess;
 		}
 
 		/**
@@ -70,7 +83,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 
-			const quoteMessage = clone(message);
+			const quoteMessage = DialogConverter.createMessage(modelMessage);
 			const isSystemMessage = modelMessage.authorId === 0;
 			// const isAudioMessage = message.type === MessageType.audio;
 			// const isEmptyText = !modelMessage.text || modelMessage.text === '';
@@ -101,10 +114,18 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			return this.quoteMessage;
 		}
 
+		getForwardMessage()
+		{
+			return this.forwardMessage;
+		}
+
 		getQuoteText(message = this.getQuoteMessage())
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
-			if (Type.isUndefined(modelMessage) || (Type.isObject(modelMessage) && !('id' in modelMessage)))
+			if (
+				Type.isUndefined(modelMessage)
+				|| (Type.isObject(modelMessage) && !('id' in modelMessage))
+			)
 			{
 				return '';
 			}
@@ -126,9 +147,13 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			{
 				quoteContext = `#${dialog.dialogId}:${MessengerParams.getUserId()}/${modelMessage.id}`;
 			}
-			else
+			else if (dialog && dialog.dialogId)
 			{
 				quoteContext = `#${dialog.dialogId}/${modelMessage.id}`;
+			}
+			else
+			{
+				quoteContext = '';
 			}
 
 			return (
@@ -142,7 +167,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		setEditMessage(message)
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
-			const editMessage = clone(message);
+			const editMessage = DialogConverter.createMessage(modelMessage);
 			editMessage.username = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_MESSAGE_EDIT_FIELD');
 
 			const isAudioMessage = message.type === MessageType.audio;
@@ -162,6 +187,29 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			this.editMessage = editMessage;
 		}
 
+		/**
+		 *
+		 * @param {Message} message
+		 */
+		setForwardMessage(message)
+		{
+			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			const forwardMessage = clone(message);
+			if (message.type === MessageType.systemText)
+			{
+				forwardMessage.username = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_REPLY_MANAGER_FORWARD_DEFAULT_TITLE');
+			}
+
+			forwardMessage.message = [
+				{
+					type: 'text',
+					text: parser.simplifyMessage(modelMessage),
+				},
+			];
+
+			this.forwardMessage = forwardMessage;
+		}
+
 		getEditMessage()
 		{
 			return this.editMessage;
@@ -175,6 +223,12 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				this._isQuoteInBackground = true;
 
 				return;
+			}
+
+			if (this._isForwardInProcess)
+			{
+				this._isForwardInProcess = false;
+				this.dialogView.enableAlwaysSendButtonMode(false);
 			}
 
 			// this.inputTextBuffer will be filled if we replied to the message, but did not send it,
@@ -220,6 +274,12 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				this.inputTextBuffer = inputText;
 			}
 
+			if (this._isForwardInProcess)
+			{
+				this._isForwardInProcess = false;
+				this.dialogView.enableAlwaysSendButtonMode(false);
+			}
+
 			if (this._isQuoteInProcess)
 			{
 				this._isQuoteInBackground = true;
@@ -239,6 +299,33 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			{
 				this.draftManager.setQuotMessageInStore(editMessage, InputQuoteType.edit, editMessageText);
 			}
+		}
+
+		/**
+		 *
+		 * @param {number ||string || Message} message
+		 */
+		startForwardingMessage(message)
+		{
+			if (!Type.isObject(message))
+			{
+				const messageModel = this.store.getters['messagesModel/getById'](Number(message));
+
+				message = DialogConverter.createMessage(messageModel);
+			}
+
+			this.setForwardMessage(message);
+
+			if (this.isEditInProcess)
+			{
+				this._isForwardInBackground = true;
+
+				return;
+			}
+			this._isForwardInProcess = true;
+
+			this.dialogView.setInputQuote(this.getForwardMessage(), InputQuoteType.forward, false);
+			this.dialogView.enableAlwaysSendButtonMode(true);
 		}
 
 		finishQuotingMessage()
@@ -264,20 +351,49 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				if (this.isQuoteInBackground)
 				{
 					this.startQuotingMessage(this.getQuoteMessage());
+
+					return;
+				}
+
+				if (this.isForwardInBackground)
+				{
+					this.startForwardingMessage(this.getForwardMessage());
+
+					return;
 				}
 			});
 		}
 
-		initializeEditingMessage(message)
+		finishForwardingMessage()
+		{
+			this._isForwardInProcess = false;
+			if (this.isQuoteInBackground)
+			{
+				this._isQuoteInBackground = false;
+			}
+			this.dialogView.clearInput();
+			this.draftManager.saveDraft('');
+			this.dialogView.removeInputQuote();
+			this.dialogView.enableAlwaysSendButtonMode(false);
+		}
+
+		initializeEditingMessage(message, initWithForward)
 		{
 			this.setEditMessage(message);
+
 			this._isEditInProcess = true;
 			this.dialogView.setInputQuote(message, InputQuoteType.edit, false);
 		}
 
-		initializeQuotingMessage(message)
+		initializeQuotingMessage(message, initWithForward)
 		{
 			this.setQuoteMessage(message);
+			if (initWithForward)
+			{
+				this._isQuoteInBackground = true;
+
+				return;
+			}
 			this._isQuoteInProcess = true;
 			this.dialogView.setInputQuote(message, InputQuoteType.reply, false);
 		}

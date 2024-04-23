@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports, module) => {
 	const { debounce } = require('utils/function');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { DraftType } = require('im/messenger/const');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
 
@@ -13,16 +13,23 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 		 * @param {DialogView} view
 		 * @param {ReplyManager} replyManager
 		 * @param {string|number} dialogId
+		 * @param {boolean} initWithExternalForward
 		 */
-		constructor({ view, replyManager, dialogId })
+		constructor({ view, replyManager, dialogId, initWithExternalForward })
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.view = view;
 			this.dialogId = dialogId;
 			this.replyManager = replyManager;
+			this.initWithExternalForward = initWithExternalForward;
 			this.setInStore = debounce(this.setInStore, 250, this, true);
 
 			this.changeTextHandler = this.saveDraft.bind(this);
+
+			if (initWithExternalForward)
+			{
+				this.clearDraft();
+			}
 
 			this.start();
 		}
@@ -52,14 +59,14 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 			{
 				case DraftType.edit:
 				{
-					this.replyManager.initializeEditingMessage(draftMessage);
+					this.replyManager.initializeEditingMessage(draftMessage, this.initWithExternalForward);
 
 					break;
 				}
 
 				case DraftType.reply:
 				{
-					this.replyManager.initializeQuotingMessage(draftMessage);
+					this.replyManager.initializeQuotingMessage(draftMessage, this.initWithExternalForward);
 
 					break;
 				}

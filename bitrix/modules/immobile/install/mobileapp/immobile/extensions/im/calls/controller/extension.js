@@ -34,7 +34,6 @@
 			this.chatCounter = 0;
 
 			this.callVideoEnabled = false; // for proximity sensor
-			this.skipNextDeviceChangeEvent = false; // workaround to change device to speaker if headphones are removed
 
 			this.onCallUserInvitedHandler = this.onCallUserInvited.bind(this);
 			this.onCallUserStateChangedHandler = this.onCallUserStateChanged.bind(this);
@@ -68,6 +67,7 @@
 			this.onDeclineButtonClickHandler = this.onDeclineButtonClick.bind(this);
 			this.onSetCentralUserHandler = this.onSetCentralUser.bind(this);
 			this.onSelectAudioDeviceHandler = this.onSelectAudioDevice.bind(this);
+			this.onToggleSubscriptionRemoteVideoHandler = this.onToggleSubscriptionRemoteVideo.bind(this);
 
 			this.onNativeCallAnsweredHandler = this.onNativeCallAnswered.bind(this);
 			this.onNativeCallEndedHandler = this.onNativeCallEnded.bind(this);
@@ -78,7 +78,6 @@
 			this.ignoreNativeCallAnswer = false;
 
 			this.onProximitySensorDebounced = CallUtil.debounce(this.onProximitySensor.bind(this), 500);
-			this.onAudioDeviceChangedDebounced = CallUtil.debounce(this.onAudioDeviceChanged.bind(this), 100);
 			this.init();
 		}
 
@@ -106,8 +105,7 @@
 			});
 
 			device.on('proximityChanged', this.onProximitySensorDebounced);
-			CallUtil.getSdkAudioManager().on('changed', this.onAudioDeviceChangedDebounced);
-		}
+				}
 
 		onCallInvite(e)
 		{
@@ -266,6 +264,12 @@
 						}
 						else
 						{
+							if (this.getCallUsers(true).length > this.getMaxActiveMicrophonesCount())
+							{
+								this.currentCall.setMuted(true);
+								this.callView.setMuted(true);
+							}
+
 							this.callView.setState({
 								status: 'call',
 							});
@@ -293,7 +297,7 @@
 						}
 						else
 						{
-							navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E004'));
+							navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
 						}
 						this.clearEverything();
 					});
@@ -375,7 +379,7 @@
 					}
 					else
 					{
-						navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E004'));
+						navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
 					}
 					this.clearEverything();
 				});
@@ -442,7 +446,7 @@
 					}
 					else
 					{
-						navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E004'));
+						navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
 					}
 				});
 		}
@@ -609,6 +613,11 @@
 			this.callAnswered = true;
 
 			this.requestDeviceAccess(useVideo).then(() => {
+				if (!useVideo)
+				{
+					this.onCallLocalMediaStopped();
+					this.stopLocalVideoStream(true);
+				}
 				this.currentCall.answer({
 					useVideo,
 				});
@@ -641,7 +650,7 @@
 				}
 				else
 				{
-					navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', 'E006'));
+					navigator.notification.alert(BX.message('MOBILE_CALL_INTERNAL_ERROR').replace('#ERROR_CODE#', `${error.code}`));
 				}
 				this.clearEverything();
 			});
@@ -665,6 +674,7 @@
 			{
 				params = {};
 			}
+
 			params.video = params.video === true;
 
 			this.startCallPromise = this.requestDeviceAccess(params.video).then(() => {
@@ -749,22 +759,28 @@
 			}
 			else
 			{
+				let outsideOfDialogTap = 0;
+				let startCallWithVideo = 1;
+				let startCallWithoutVideo = 2;
+				let openChatButton = 3;
 				navigator.notification.confirm(
 					'',
 					(button) => {
-						if (button == 4)
+						if (button == 4 || button == outsideOfDialogTap)
 						{
 							return;
 						}
 
-						if (button == 3)
+						if (button == openChatButton)
 						{
 							BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{ callId }], 'im.messenger');
 
 							return;
 						}
 
-						this.joinCall(callId, button == 1);
+						if (button == startCallWithVideo || button == startCallWithoutVideo) {
+							this.joinCall(callId, button == startCallWithVideo);
+						}
 					},
 					BX.message('MOBILE_CALL_JOIN_GROUP_CALL'),
 					[
@@ -799,6 +815,7 @@
 			this.callView.on(CallLayout.Event.DeclineButtonClick, this.onDeclineButtonClickHandler);
 			this.callView.on(CallLayout.Event.SetCentralUser, this.onSetCentralUserHandler);
 			this.callView.on(CallLayout.Event.SelectAudioDevice, this.onSelectAudioDeviceHandler);
+			this.callView.on(CallLayout.Event.ToggleSubscriptionRemoteVideo, this.onToggleSubscriptionRemoteVideoHandler);
 		}
 
 		removeViewEvents()
@@ -818,6 +835,7 @@
 			this.callView.off(CallLayout.Event.DeclineButtonClick, this.onDeclineButtonClickHandler);
 			this.callView.off(CallLayout.Event.SetCentralUser, this.onSetCentralUserHandler);
 			this.callView.off(CallLayout.Event.SelectAudioDevice, this.onSelectAudioDeviceHandler);
+			this.callView.off(CallLayout.Event.ToggleSubscriptionRemoteVideo, this.onToggleSubscriptionRemoteVideoHandler);
 		}
 
 		bindCallEvents()
@@ -1138,29 +1156,6 @@
 			}
 		}
 
-		onAudioDeviceChanged(deviceName)
-		{
-			if (Application.isBackground() || Application.getPlatform() === 'ios')
-			{
-				return;
-			}
-			CallUtil.log('onAudioDeviceChanged', deviceName);
-			if (this.skipNextDeviceChangeEvent)
-			{
-				this.skipNextDeviceChangeEvent = false;
-
-				return;
-			}
-
-			if (this.currentCall) {
-				if (deviceName == 'receiver') {
-					this._selectSpeaker();
-				} else {
-					CallUtil.getSdkAudioManager().selectAudioDevice(deviceName);
-				}
-			}
-		}
-
 		onMicButtonClick()
 		{
 			if (!this.currentCall)
@@ -1309,6 +1304,13 @@
 			this.clearEverything();
 		}
 
+		onToggleSubscriptionRemoteVideo(toggleList) {
+			if (this.currentCall.toggleSubscriptionRemoteVideo) {
+				this.currentCall.toggleSubscriptionRemoteVideo(toggleList);
+			}
+
+		}
+
 		onSetCentralUser(userId)
 		{
 			if (this.currentCall.allowVideoFrom) {
@@ -1322,7 +1324,6 @@
 
 		onSelectAudioDevice(deviceName)
 		{
-			this.skipNextDeviceChangeEvent = true;
 			CallUtil.getSdkAudioManager().selectAudioDevice(deviceName);
 		}
 
@@ -1339,6 +1340,7 @@
 
 		onCallUserStateChanged(userId, state, prevState, isLegacyMobile)
 		{
+			console.log('onCallUserStateChanged', userId, state)
 			if (this.callView)
 			{
 				this.callView.setUserState(userId, state);
@@ -1631,7 +1633,6 @@
 			device.setProximitySensorEnabled(false);
 			this.callWithLegacyMobile = false;
 			this.callVideoEnabled = false;
-			this.skipNextDeviceChangeEvent = false;
 
 			this.startCallPromise = null;
 			this.localVideoPromise = null;
@@ -1664,7 +1665,7 @@
 
 		_selectSpeaker()
 		{
-			this.skipNextDeviceChangeEvent = true;
+			if (Application.getPlatform() === 'android') return;
 			CallUtil.getSdkAudioManager().selectAudioDevice('speaker');
 		}
 

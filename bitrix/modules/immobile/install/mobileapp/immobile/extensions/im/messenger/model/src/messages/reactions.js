@@ -82,6 +82,26 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 				});
 			},
 			/**
+			 * @function messagesModel/reactionsModel/setFromLocalDatabase
+			 * @param store
+			 * @param {ReactionsModelSetPayload} payload
+			 */
+			setFromLocalDatabase: (store, payload) => {
+				const reactionList = prepareSetPayload(payload);
+
+				if (reactionList.length === 0)
+				{
+					return;
+				}
+
+				store.commit('set', {
+					actionName: 'setFromLocalDatabase',
+					data: {
+						reactionList,
+					},
+				});
+			},
+			/**
 			 * @function messagesModel/reactionsModel/setReaction
 			 * @param store
 			 * @param {ReactionsModelSetReactionPayload} payload

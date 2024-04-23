@@ -8,7 +8,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 	const { clone, isEqual } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
 
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessageIdType, MessageType, DialogType } = require('im/messenger/const');
 	const { DialogConverter } = require('im/messenger/lib/converter');
 
@@ -33,7 +33,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.chatId = chatId;
 			this.dialogId = dialogId;
 
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			/** @type {Array<MessagesModelState>} */
 			this.messageList = [];
 			/** @type {Record<number || string, Message>} */
@@ -1242,7 +1242,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				message.setAuthorBottomMessage(true);
 			}
 
-			const isYourMessage = modelMessage.authorId === core.getUserId();
+			const isYourMessage = modelMessage.authorId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
 				message.setShowAvatar(modelMessage, false);

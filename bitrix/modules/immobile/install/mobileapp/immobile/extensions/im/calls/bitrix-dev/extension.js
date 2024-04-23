@@ -348,6 +348,13 @@
 			}
 		}
 
+		toggleSubscriptionRemoteVideo(toggleList) {
+			if (this.bitrixCallDev && this.bitrixCallDev.toggleSubscriptionRemoteVideo)
+			{
+				this.bitrixCallDev.toggleSubscriptionRemoteVideo(toggleList);
+			}
+		}
+
 		onCentralUserSwitch(userId) {
 			if (this.bitrixCallDev && this.bitrixCallDev.onCentralUserSwitch)
 			{
@@ -618,6 +625,7 @@
 						}
 
 						const callOptions = {
+							callId: `${this.id}`,
 							sendVideo: this.videoEnabled,
 							receiveVideo: true,
 							enableSimulcast: true,

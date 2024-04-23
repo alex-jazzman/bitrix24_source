@@ -11,6 +11,7 @@ return [
 		'im:messenger/assets/common',
 		'im:messenger/const',
 		'im:messenger/controller/user-profile',
+		'im:messenger/controller/forward-selector',
 		'im:messenger/lib/params',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/feature',

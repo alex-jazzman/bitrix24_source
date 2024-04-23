@@ -38,7 +38,7 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 		muteOff: (color = AppTheme.colors.accentMainPrimaryalt) => `<svg xmlns="http://www.w3.org/2000/svg" width="33" height="32" viewBox="0 0 33 32" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.5553 8.87196C17.7141 8.87196 18.6243 9.07788 19.3477 9.43024L6.91199 21.866C6.9326 21.1967 7.0958 20.5258 7.39403 19.9352C7.62703 19.4777 8.05804 19.0601 8.50196 18.6299C8.97636 18.1703 9.46549 17.6964 9.74343 17.1442C10.0952 16.4422 10.316 15.5682 10.5471 14.6536C11.2324 11.9414 12.0079 8.87196 16.5553 8.87196ZM16.5379 22.6648L14.4922 22.6673L22.4343 14.7253L22.447 14.7811C22.6595 15.7114 22.861 16.5936 23.1964 17.2885C23.4181 17.7475 23.9036 18.2328 24.3757 18.7048L24.3757 18.7049C24.7984 19.1275 25.2104 19.5393 25.4127 19.9119C25.8515 20.6291 26.0949 21.4462 26.122 22.2822C26.1289 22.4961 25.9506 22.6644 25.7365 22.6639C22.6703 22.657 19.6041 22.6609 16.5379 22.6648ZM16.5172 4.34375C15.7869 4.34375 15.1948 4.93578 15.1948 5.66609V6.58161C15.1948 7.31192 15.7869 7.90395 16.5172 7.90395C17.2475 7.90395 17.8395 7.31192 17.8395 6.58161V5.66609C17.8395 4.93578 17.2475 4.34375 16.5172 4.34375ZM14.6353 23.6706V24.444C14.6353 25.4833 15.4778 26.3258 16.5171 26.3258C17.5563 26.3258 18.3988 25.4833 18.3988 24.444V23.6706H14.6353ZM26.0018 6.9671C25.5585 6.52383 24.8398 6.52383 24.3965 6.9671L6.99773 24.3659C6.55447 24.8092 6.55447 25.5279 6.99773 25.9711C7.441 26.4144 8.15968 26.4144 8.60294 25.9711L26.0018 8.57231C26.445 8.12904 26.445 7.41036 26.0018 6.9671Z" fill="${color}"/></svg>`,
 		muteOn: (color = AppTheme.colors.accentMainPrimaryalt) => `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.001 2.48828C11.4163 2.48828 10.9422 2.96234 10.9422 3.54712V4.2802C10.9422 4.86498 11.4163 5.33904 12.001 5.33904C12.5858 5.33904 13.0599 4.86498 13.0599 4.2802V3.54712C13.0599 2.96234 12.5858 2.48828 12.001 2.48828ZM19.3833 17.1578C19.5547 17.1582 19.6975 17.0234 19.6919 16.8521C19.6702 16.1827 19.4753 15.5284 19.1239 14.9542C18.962 14.6558 18.6321 14.326 18.2936 13.9876C17.9156 13.6097 17.5268 13.221 17.3493 12.8536C17.0807 12.2971 16.9194 11.5907 16.7492 10.8457C16.2471 8.64737 15.6685 6.11416 12.0316 6.11416C8.39034 6.11416 7.76935 8.57196 7.22065 10.7437C7.03561 11.4761 6.85878 12.1759 6.57711 12.738C6.35456 13.1801 5.96289 13.5596 5.58303 13.9277C5.22757 14.2721 4.88245 14.6065 4.69588 14.9728C4.40275 15.5534 4.27253 16.2307 4.31643 16.8836C4.32708 17.0421 4.46314 17.1588 4.62197 17.1592C7.08719 17.1648 9.5524 17.1617 12.0176 17.1585C14.4728 17.1554 16.928 17.1522 19.3833 17.1578ZM10.4942 17.9638V18.5831C10.4942 19.4153 11.1688 20.0899 12.001 20.0899C12.8331 20.0899 13.5078 19.4153 13.5078 18.5831V17.9638H10.4942Z" fill="${color}"/></svg>`,
 		ellipsis: (color = AppTheme.colors.base4) => `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 12C8 13.1046 7.10457 14 6 14C4.89543 14 4 13.1046 4 12C4 10.8954 4.89543 10 6 10C7.10457 10 8 10.8954 8 12ZM14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10C13.1046 10 14 10.8954 14 12ZM18 14C19.1046 14 20 13.1046 20 12C20 10.8954 19.1046 10 18 10C16.8954 10 16 10.8954 16 12C16 13.1046 16.8954 14 18 14Z" fill="${color}"/></svg>`,
-		specialAdd: (color = AppTheme.colors.accentSoftBlue2) => `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M21 41.9981C32.598 41.9981 42 32.5966 42 20.9991C42 9.4016 32.598 0 21 0C9.40201 0 0 9.4016 0 20.9991C0 32.5966 9.40201 41.9981 21 41.9981Z" fill="${color}"/><path d="M19.5681 13.8409H22.4317V28.1591H19.5681V13.8409Z" fill="#29A8DF"/><path d="M28.159 19.5682V22.4318L13.8408 22.4318L13.8408 19.5682L28.159 19.5682Z" fill="#29A8DF"/></svg>`,
+		specialAdd: (colorFirst = AppTheme.colors.accentSoftBlue2, colorSecond = AppTheme.colors.accentMainPrimaryalt) => `<svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M21 41.9981C32.598 41.9981 42 32.5966 42 20.9991C42 9.4016 32.598 0 21 0C9.40201 0 0 9.4016 0 20.9991C0 32.5966 9.40201 41.9981 21 41.9981Z" fill="${colorFirst}"/><path d="M19.5681 13.8409H22.4317V28.1591H19.5681V13.8409Z" fill="${colorSecond}"/><path d="M28.159 19.5682V22.4318L13.8408 22.4318L13.8408 19.5682L28.159 19.5682Z" fill="${colorSecond}"/></svg>`,
 	};
 
 	const menuIcons = {
@@ -80,7 +80,8 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 
 	class ReactionAssets
 	{
-		static getLottieUrl(reactionType) {
+		static getLottieUrl(reactionType)
+		{
 			return `${ReactionAssets.getLottiePath() + reactionType}.json`;
 		}
 
@@ -90,6 +91,16 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 		 */
 		static getImageUrl(reactionType) {
 			return `${ReactionAssets.getImagePath() + reactionType}.png`;
+		}
+
+		/**
+		 *
+		 * @param reactionType
+		 * @return {string}
+		 */
+		static getSvgUrl(reactionType)
+		{
+			return `${ReactionAssets.getSvgPath() + reactionType}.svg`;
 		}
 
 		/**
@@ -108,6 +119,15 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 		static getLottiePath()
 		{
 			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/reactions/lottie/`;
+		}
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		static getSvgPath()
+		{
+			return `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/reactions/svg/`;
 		}
 	}
 

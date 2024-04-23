@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DialogType, EventType } = require('im/messenger/const');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserManager } = require('im/messenger/lib/user-manager');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sync-service');
@@ -16,7 +16,7 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 	{
 		constructor()
 		{
-			this.core = core;
+			this.core = serviceLocator.get('core');
 			this.store = this.core.getStore();
 
 			this.userManager = new UserManager(this.store);

@@ -8,7 +8,7 @@
 jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { parserUrl } = require('im/messenger/lib/parser/functions/url');
 	const { parserQuote } = require('im/messenger/lib/parser/functions/quote');
@@ -70,7 +70,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 		{
 			if (!messageFiles)
 			{
-				messageFiles = core.getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
+				messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
 			}
 
 			return this.simplify({
@@ -164,7 +164,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 			} = modelMessage;
 
 			const attach = params.ATTACH || false;
-			const files = core.getStore().getters['messagesModel/getMessageFiles'](id);
+			const files = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](id);
 
 			text = text.trim();
 

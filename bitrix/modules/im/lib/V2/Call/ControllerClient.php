@@ -14,7 +14,7 @@ class ControllerClient extends BaseSender
 		'us' => 'https://videocalls-us.bitrix.info',
 	];
 	private const REGION_RU = ['ru', 'by', 'kz'];
-	private const REGION_EU = ['de', 'en', 'eu', 'fr', 'it', 'pl', 'tr', 'ua', 'uk'];
+	private const REGION_EU = ['de', 'eu', 'fr', 'it', 'pl', 'tr', 'uk'];
 
 	/**
 	 * Returns controller service endpoint url.

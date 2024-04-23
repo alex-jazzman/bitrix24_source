@@ -13,7 +13,7 @@ return [
 		'utils/url',
 		'im:lib/theme',
 		'im:messenger/assets/common',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/controller/file-download-menu',
 		'im:messenger/controller/reaction-viewer',

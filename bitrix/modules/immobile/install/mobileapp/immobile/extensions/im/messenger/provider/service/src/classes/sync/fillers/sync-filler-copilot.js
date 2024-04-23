@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-copilot', (require, exports, module) => {
 	const { SyncFillerBase } = require('im/messenger/provider/service/classes/sync/fillers/sync-filler-base');
-	const { EventType, ComponentCode } = require('im/messenger/const');
+	const { EventType, ComponentCode, BotCode } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sync-service');
@@ -87,7 +87,7 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-copilo
 					return false;
 				}
 
-				return user.botData.code === 'copilot';
+				return user.botData.code === BotCode.copilot;
 			});
 
 			return syncListResult;

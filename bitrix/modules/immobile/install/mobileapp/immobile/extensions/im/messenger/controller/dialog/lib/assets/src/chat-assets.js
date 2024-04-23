@@ -22,13 +22,13 @@ jn.define('im/messenger/controller/dialog/lib/assets/chat-assets', (require, exp
 		preloadReactions()
 		{
 			backgroundCache.downloadImages([
-				ReactionAssets.getImageUrl(ReactionType.like),
-				ReactionAssets.getImageUrl(ReactionType.kiss),
-				ReactionAssets.getImageUrl(ReactionType.laugh),
-				ReactionAssets.getImageUrl(ReactionType.wonder),
-				ReactionAssets.getImageUrl(ReactionType.angry),
-				ReactionAssets.getImageUrl(ReactionType.cry),
-				ReactionAssets.getImageUrl(ReactionType.facepalm),
+				ReactionAssets.getSvgUrl(ReactionType.like),
+				ReactionAssets.getSvgUrl(ReactionType.kiss),
+				ReactionAssets.getSvgUrl(ReactionType.cry),
+				ReactionAssets.getSvgUrl(ReactionType.laugh),
+				ReactionAssets.getSvgUrl(ReactionType.angry),
+				ReactionAssets.getSvgUrl(ReactionType.facepalm),
+				ReactionAssets.getSvgUrl(ReactionType.wonder),
 			]);
 
 			backgroundCache.downloadLottieAnimations([

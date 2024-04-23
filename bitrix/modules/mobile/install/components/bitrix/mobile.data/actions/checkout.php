@@ -289,8 +289,7 @@ else
 					"callLogService" => Main\Config\Option::get("im", "call_log_service", ""),
 					"jitsiServer" => Main\Config\Option::get("im", "jitsi_server", ""),
 					"sfuServerEnabled" => $isImModuleInstalled && Im\Call\Call::isCallServerEnabled(),
-					"bitrixCallsEnabled" => $isImModuleInstalled && Im\Call\Call::isBitrixCallServerEnabled(),
-					'callBetaIosEnabled' => $isImModuleInstalled && Im\Call\Call::isIosBetaEnabled(),
+					"bitrixCallsEnabled" => $isImModuleInstalled && Im\Call\Call::isBitrixCallEnabled(),
 				]
 			],
 			[

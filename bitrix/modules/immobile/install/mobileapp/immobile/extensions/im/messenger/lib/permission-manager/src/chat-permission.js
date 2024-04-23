@@ -2,7 +2,7 @@
  * @module im/messenger/lib/permission-manager/chat-permission
  */
 jn.define('im/messenger/lib/permission-manager/chat-permission', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { UserRole, DialogActionType, DialogType } = require('im/messenger/const');
@@ -273,7 +273,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		{
 			if (Type.isString(dialogData))
 			{
-				this.store = core.getStore();
+				this.store = serviceLocator.get('core').getStore();
 				const dialogState = this.store.getters['dialoguesModel/getById'](dialogData);
 
 				if (Type.isUndefined(dialogState))

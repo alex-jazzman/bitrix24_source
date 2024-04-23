@@ -5,6 +5,8 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 	const { Type } = require('type');
 	const { Uuid } = require('utils/uuid');
 	const { isEqual } = require('utils/object');
+	const { EntityReady } = require('entity-ready');
+
 	const { RestMethod, ComponentCode, EventType } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Feature } = require('im/messenger/lib/feature');
@@ -88,7 +90,8 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			];
 
 			const copilotRequestResultSavedUuid = `${ComponentCode.imCopilotMessenger}-${Uuid.getV4()}`;
-			if (Feature.isCopilotEnabled)
+			const shouldAwaitCopilot = Feature.isCopilotAvailable && this.isEntityReady('copilot-messenger');
+			if (shouldAwaitCopilot)
 			{
 				expectedRequestResultSavedIdList.push(copilotRequestResultSavedUuid);
 			}
@@ -128,7 +131,7 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 				result,
 			}, ComponentCode.imMessenger);
 
-			if (Feature.isCopilotEnabled)
+			if (shouldAwaitCopilot)
 			{
 				MessengerEmitter.emit(EventType.sync.requestResultReceived, {
 					uuid: copilotRequestResultSavedUuid,
@@ -139,6 +142,16 @@ jn.define('im/messenger/provider/service/classes/sync/load', (require, exports, 
 			logger.log('SyncService waits for a response from SyncFillers', expectedRequestResultSavedIdList);
 
 			return syncListPromise;
+		}
+
+		isEntityReady(entityId)
+		{
+			if (Type.isFunction(EntityReady.isReady))
+			{
+				return EntityReady.isReady(entityId);
+			}
+
+			return EntityReady.readyEntitiesCollection.has(entityId);
 		}
 	}
 

@@ -6,6 +6,7 @@
 jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module) => {
 	const { DialogBasePullHandler } = require('im/messenger/provider/pull/lib');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { Counters } = require('im/messenger/lib/counters');
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--copilot-dialog');
 
 	/**
@@ -42,18 +43,6 @@ jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module
 			// TODO unread action is not available now for copilot chat
 		}
 
-		handleChatUserAdd(params, extra, command)
-		{
-			logger.info(`${this.getClassName()}.handleChatUserAdd and nothing happened`, params, extra);
-			// TODO user add action is not available now for copilot chat
-		}
-
-		handleChatUserLeave(params, extra, command)
-		{
-			logger.info(`${this.getClassName()}.handleChatUserLeave and nothing happened`, params);
-			// TODO user leave action is not available now for copilot chat
-		}
-
 		handleChatAvatar(params, extra, command)
 		{
 			logger.info(`${this.getClassName()}.handleChatAvatar and nothing happened`, params);
@@ -64,6 +53,16 @@ jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module
 		{
 			logger.info(`${this.getClassName()}.handleChatChangeColor and nothing happened`, params);
 			// TODO change color action is not available now for copilot chat
+		}
+
+		/**
+		 * @override
+		 * @param {String} dialogId
+		 * @void
+		 */
+		deleteCounters(dialogId)
+		{
+			delete Counters.copilotCounter.detail[dialogId];
 		}
 	}
 

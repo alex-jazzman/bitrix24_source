@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/dialog/lib/header/title', (require, exports, 
 	const { isEqual } = require('utils/object');
 
 	const { AppStatus } = require('im/messenger/const');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserUtils } = require('im/messenger/lib/utils');
 	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
 	const { DialogHelper } = require('im/messenger/lib/helper');
@@ -62,7 +62,7 @@ jn.define('im/messenger/controller/dialog/lib/header/title', (require, exports, 
 				status = (new UserUtils()).getLastDateText(store.getters['usersModel/getById'](dialogId));
 			}
 
-			const appStatus = core.getAppStatus();
+			const appStatus = serviceLocator.get('core').getAppStatus();
 			switch (appStatus)
 			{
 				case AppStatus.networkWaiting:

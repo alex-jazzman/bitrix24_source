@@ -5,7 +5,7 @@ return [
 		'loc',
 		'type',
 		'utils/object',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/element',
 		'im:messenger/lib/helper',
 		'im:messenger/lib/params',

@@ -4,8 +4,8 @@
 jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 	const { Type } = require('type');
 
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { AppStatus, ComponentCode, EventType } = require('im/messenger/const');
-	const { core } = require('im/messenger/core');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DateService } = require('im/messenger/provider/service/classes/sync/date');
 	const { LoadService } = require('im/messenger/provider/service/classes/sync/load');
@@ -80,8 +80,8 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			this.syncStartDate = Date.now();
 			this.syncInProgress = true;
 
-			const lastSyncId = await core.getRepository().option.get(LAST_SYNC_ID_OPTION);
-			const lastSyncServerDate = await core.getRepository().option.get(LAST_SYNC_SERVER_DATE_OPTION);
+			const lastSyncId = await serviceLocator.get('core').getRepository().option.get(LAST_SYNC_ID_OPTION);
+			const lastSyncServerDate = await serviceLocator.get('core').getRepository().option.get(LAST_SYNC_SERVER_DATE_OPTION);
 			const lastSyncDate = await this.dateService.getLastSyncDate();
 
 			const changeLogOption = {
@@ -101,7 +101,7 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 		 */
 		setAppStatus(value)
 		{
-			core.setAppStatus(AppStatus.sync, value);
+			serviceLocator.get('core').setAppStatus(AppStatus.sync, value);
 		}
 
 		/**
@@ -123,7 +123,7 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 				return false;
 			}
 
-			return (this.isSyncInProgress && !extra.fromSyncService) || core.getAppStatus() === AppStatus.connection;
+			return (this.isSyncInProgress && !extra.fromSyncService) || serviceLocator.get('core').getAppStatus() === AppStatus.connection;
 		}
 
 		storePullEvent(params, extra, command)
@@ -175,13 +175,13 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 			if (Type.isNumber(lastSyncId))
 			{
 				logger.log('SyncService.loadChangelog: save last sync id', lastSyncId);
-				await core.getRepository().option.set(LAST_SYNC_ID_OPTION, lastSyncId);
+				await serviceLocator.get('core').getRepository().option.set(LAST_SYNC_ID_OPTION, lastSyncId);
 			}
 
 			if (Type.isStringFilled(lastServerDate))
 			{
 				logger.log('SyncService.loadChangelog: save last server sync date', lastServerDate);
-				await core.getRepository().option.set(LAST_SYNC_SERVER_DATE_OPTION, lastServerDate);
+				await serviceLocator.get('core').getRepository().option.set(LAST_SYNC_SERVER_DATE_OPTION, lastServerDate);
 			}
 
 			if (hasMore === true)

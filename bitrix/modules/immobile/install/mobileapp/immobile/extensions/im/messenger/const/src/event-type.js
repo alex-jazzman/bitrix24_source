@@ -86,6 +86,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageFileDownloadTap: 'messageFileDownloadTap',
 			messageFileUploadCancelTap: 'messageFileUploadCancelTap',
 			messageButtonTap: 'messageButtonTap',
+			copilotFootnoteTap: 'copilotFootnoteTap',
 			urlTap: 'urlTap',
 			imageTap: 'imageTap',
 			audioTap: 'audioTap',

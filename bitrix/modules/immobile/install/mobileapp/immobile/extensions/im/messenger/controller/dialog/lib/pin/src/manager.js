@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType } = require('im/messenger/const');
 	const { parser } = require('im/messenger/lib/parser');
 	const { DialogConverter } = require('im/messenger/lib/converter');
@@ -29,7 +29,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		constructor({ dialogId, locator })
 		{
 			this.dialogId = dialogId;
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			/** @type {PinModelState || null} */
 			this.currentPin = null;
 
@@ -67,7 +67,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				return;
 			}
 
-			core.getStoreManager()
+			serviceLocator.get('core').getStoreManager()
 				.on('messagesModel/pinModel/setChatCollection', this.onSetChatCollection)
 				.on('messagesModel/pinModel/add', this.onAddPin)
 				.on('messagesModel/pinModel/delete', this.onDeletePin)
@@ -85,7 +85,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				return;
 			}
 
-			core.getStoreManager()
+			serviceLocator.get('core').getStoreManager()
 				.off('messagesModel/pinModel/setChatCollection', this.onSetChatCollection)
 				.off('messagesModel/pinModel/add', this.onAddPin)
 				.off('messagesModel/pinModel/delete', this.onDeletePin)
@@ -301,7 +301,7 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			if (user)
 			{
 				message.username = user.id === MessengerParams.getUserId()
-					? `${Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_PIN_PANEL_YOU')}:`
+					? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_PIN_PANEL_YOU_MSGVER_1')
 					: `${user.firstName}:`
 				;
 			}

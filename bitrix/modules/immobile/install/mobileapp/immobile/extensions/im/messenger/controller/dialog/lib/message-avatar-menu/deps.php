@@ -5,7 +5,7 @@ return [
 		'loc',
 		'layout/ui/context-menu',
 		'im:messenger/assets/common',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/controller/user-profile',
 		'im:messenger/lib/emitter',

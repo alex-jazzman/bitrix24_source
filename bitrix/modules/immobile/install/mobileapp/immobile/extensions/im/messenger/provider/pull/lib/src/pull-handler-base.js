@@ -4,7 +4,7 @@
  * @module im/messenger/provider/pull/lib/pull-handler-base
  */
 jn.define('im/messenger/provider/pull/lib/pull-handler-base', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { SyncService } = require('im/messenger/provider/service/sync');
 	const { Logger } = require('im/messenger/lib/logger');
 
@@ -16,7 +16,7 @@ jn.define('im/messenger/provider/pull/lib/pull-handler-base', (require, exports,
 	{
 		constructor(options = {})
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.logger = options.logger || Logger;
 		}
 

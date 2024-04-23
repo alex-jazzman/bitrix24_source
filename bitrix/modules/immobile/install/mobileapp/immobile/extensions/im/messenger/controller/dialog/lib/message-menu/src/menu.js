@@ -20,6 +20,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
+	const { ForwardSelector } = require('im/messenger/controller/forward-selector');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
 
 	const {
@@ -429,7 +430,19 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onForward(message)
 		{
-			Notification.showComingSoon();
+			if (!Feature.isMessageForwardSupported)
+			{
+				Notification.showComingSoon();
+
+				return;
+			}
+
+			const forwardController = new ForwardSelector();
+			forwardController.open({
+				messageId: message.id,
+				fromDialogId: this.dialogId,
+				locator: this.locator,
+			});
 		}
 
 		/**

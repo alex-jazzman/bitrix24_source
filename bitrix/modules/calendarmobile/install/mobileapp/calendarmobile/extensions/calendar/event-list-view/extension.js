@@ -416,7 +416,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 				// eslint-disable-next-line promise/catch-or-return
 				new BottomSheet({ component })
 					.setBackgroundColor(AppTheme.colors.bgNavigation)
-					.setMediumPositionPercent(80)
+					.setMediumPositionPercent(70)
 					.disableContentSwipe()
 					.open()
 					.then((widget) => component.setLayoutWidget(widget))

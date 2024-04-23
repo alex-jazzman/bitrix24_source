@@ -7,7 +7,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
 
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
@@ -29,7 +29,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		/* region Init */
 		constructor()
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 		}
 
 		do(action, itemId)

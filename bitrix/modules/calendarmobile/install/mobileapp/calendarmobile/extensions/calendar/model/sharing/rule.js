@@ -118,7 +118,7 @@ jn.define('calendar/model/sharing/rule', (require, exports, module) => {
 		}
 
 		/**
-		 * @param range {from, to, weekDays}
+		 * @param range {from, to, weekdays}
 		 * @param {boolean} isNew
 		 */
 		addRange(range, isNew = true)

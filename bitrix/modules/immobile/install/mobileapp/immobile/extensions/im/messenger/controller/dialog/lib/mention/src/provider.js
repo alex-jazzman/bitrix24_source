@@ -114,6 +114,15 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 			this.isChatParticipantsLoaded = false;
 			this.chatParticipants = [];
 		}
+
+		loadMessengerRecentUsers()
+		{
+			return this.messengerStore.getters['recentModel/getSortedCollection']()
+				.sort((item1, item2) => item2.dateMessage - item1.dateMessage)
+				.map((recentItem) => recentItem.id)
+				.filter((recentId) => !String(recentId).startsWith('chat'))
+			;
+		}
 	}
 
 	module.exports = { MentionProvider };

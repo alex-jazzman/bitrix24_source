@@ -8,6 +8,8 @@ var { ChatSelector } = jn.require('im/chat/selector/chat');
 var { EntityReady } = jn.require('entity-ready');
 var { SelectorDialogListAdapter } = jn.require('im/chat/selector/adapter/dialog-list');
 var { Theme } = jn.require('im/lib/theme');
+var { openIntranetInviteWidget } = jn.require('intranet/invite-opener');
+var { AnalyticsEvent } = jn.require('analytics');
 
 var REVISION = 19; // api revision - sync with im/lib/revision.php
 
@@ -168,8 +170,6 @@ RecentList.init = function()
 	{
 		EntityReady.wait('chat').then(() => this.refresh({ start: true }));
 	}
-
-	IntranetInvite.init();
 
 	BX.addCustomEvent('onImDetailShowed', (data) => {
 		this.updateElement(data.dialogId, {
@@ -597,18 +597,18 @@ RecentList.callUser = function(userId, action, number)
 		BX.postComponentEvent('onCallInvite', [{ userId: element.id, video: false, userData }], 'calls');
 	}
 	else
-	if (action == 'video')
-	{
-		BX.postComponentEvent('onCallInvite', [{ userId: element.id, video: true, userData }], 'calls');
-	}
-	else if (action == 'phone')
-	{
-		BX.postComponentEvent('onPhoneTo', [{ number, userData }], 'calls');
-	}
-	else
-	{
-		BX.postComponentEvent('onCallInvite', [{ userId: element.id, video: false, userData }], 'calls');
-	}
+		if (action == 'video')
+		{
+			BX.postComponentEvent('onCallInvite', [{ userId: element.id, video: true, userData }], 'calls');
+		}
+		else if (action == 'phone')
+		{
+			BX.postComponentEvent('onPhoneTo', [{ number, userData }], 'calls');
+		}
+		else
+		{
+			BX.postComponentEvent('onCallInvite', [{ userId: element.id, video: false, userData }], 'calls');
+		}
 };
 
 RecentList.updateCounter = function(delay)
@@ -1384,13 +1384,8 @@ RecentList.openEmptyScreen = function()
 				upperText: BX.message('IM_EMPTY_TEXT_1'),
 				lowerText: BX.message('IM_EMPTY_TEXT_INVITE'),
 				iconName: 'ws_employees',
-				listener: () => IntranetInvite.openRegisterSlider({
-					originator: 'im.recent',
-					registerUrl: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_URL', ''),
-					rootStructureSectionId: BX.componentParameters.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
-					adminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
-					disableAdminConfirm: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
-					sharingMessage: BX.componentParameters.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', ''),
+				listener: () => openIntranetInviteWidget({
+					analytics: new AnalyticsEvent().setSection('chat'),
 				}),
 			};
 		}
@@ -1732,7 +1727,7 @@ RecentList.capturePullEvent = function(status)
 	}
 
 	console.info(`RecentList.capturePullEvent: capture "Pull Event" ${status ? 'enabled' : 'disabled'}`);
-	this.debugLog = !!status;
+	this.debugLog = Boolean(status);
 
 	BX.componentParameters.set('PULL_DEBUG', this.debugLog);
 };
@@ -2062,10 +2057,10 @@ RecentList.push.actionExecute = function()
 			}
 		}
 		else
-		if (pushParams.CHAT_TYPE !== 'L')
-		{
-			return false;
-		}
+			if (pushParams.CHAT_TYPE !== 'L')
+			{
+				return false;
+			}
 
 		const chatId = parseInt(pushParams.ACTION.slice(8));
 		if (chatId > 0)
@@ -3468,25 +3463,30 @@ RecentList.action.read = function(elementId)
 		requestMethods.dialogRead = ['im.dialog.read', { DIALOG_ID: elementId }];
 	}
 
-	BX.rest.callBatch(requestMethods, (result) => {
-		ChatRestRequest.unregister('read');
+	BX.rest.callBatch(
+		requestMethods,
+		(result) => {
+			ChatRestRequest.unregister('read');
 
-		const unreadError = result.setReadStatus.error();
-		const dialogReadError = element.counter ? result.dialogRead.error() : false;
+			const unreadError = result.setReadStatus.error();
+			const dialogReadError = element.counter ? result.dialogRead.error() : false;
 
-		if (unreadError || dialogReadError)
-		{
-			console.log('Action.read error', result);
-			this.base.unblockElement(elementId, true);
-		}
-		else
-		{
-			console.log('Action.read result', result);
-			this.base.unblockElement(elementId);
-		}
-	}, false, (xhr) => 
-                      { ChatRestRequest.register('read', xhr);
-	});
+			if (unreadError || dialogReadError)
+			{
+				console.log('Action.read error', result);
+				this.base.unblockElement(elementId, true);
+			}
+			else
+			{
+				console.log('Action.read result', result);
+				this.base.unblockElement(elementId);
+			}
+		},
+		false,
+		(xhr) => {
+			ChatRestRequest.register('read', xhr);
+		},
+	);
 
 	return true;
 };

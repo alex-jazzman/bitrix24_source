@@ -2,21 +2,22 @@
  * @module im/messenger/controller/dialog-creator/dialog-creator
  */
 jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exports, module) => {
+	/* global ChatUtils */
 	const { Type } = require('type');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { NavigationSelector } = require('im/messenger/controller/dialog-creator/navigation-selector');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod, DialogType, EventType, ComponentCode } = require('im/messenger/const');
+	const { RestMethod, DialogType, EventType, ComponentCode, BotCode } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	class DialogCreator
 	{
 		constructor(options = {})
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.selector = () => {};
 			this.initRequests();
 		}
@@ -90,9 +91,13 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			if (Type.isArrayFilled(recentUserList))
 			{
 				recentUserList.forEach((recentUserChat) => {
-					recentUserListIndex[recentUserChat.user.id] = true;
+					const userStateModel = this.store.getters['usersModel/getById'](recentUserChat.id);
+					if (userStateModel)
+					{
+						recentUserListIndex[recentUserChat.id] = true;
 
-					userItems.push(recentUserChat.user);
+						userItems.push(userStateModel);
+					}
 				});
 			}
 
@@ -118,6 +123,11 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				if (userItem.connector)
 				{
 					return false;
+				}
+
+				if (userItem?.botData?.code)
+				{
+					return userItem?.botData?.code !== BotCode.copilot;
 				}
 
 				if (userItem.network)

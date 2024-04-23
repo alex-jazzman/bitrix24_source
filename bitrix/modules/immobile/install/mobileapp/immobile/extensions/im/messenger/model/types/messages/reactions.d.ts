@@ -53,6 +53,7 @@ type ReactionsModelState = {
 export type ReactionsModelActions =
 	'messagesModel/reactionsModel/store'
 	| 'messagesModel/reactionsModel/set'
+	| 'messagesModel/reactionsModel/setFromLocalDatabase'
 	| 'messagesModel/reactionsModel/setFromPullEvent'
 	| 'messagesModel/reactionsModel/setReaction'
 	| 'messagesModel/reactionsModel/removeReaction'

@@ -91,6 +91,7 @@ export type DialogPermissions = {
 export type DialoguesModelActions =
 	'dialoguesModel/setState'
 	| 'dialoguesModel/set'
+	| 'dialoguesModel/setFromLocalDatabase'
 	| 'dialoguesModel/add'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'

@@ -78,8 +78,11 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			 * @function recentModel/getUserList
 			 * @return {RecentModelState[]}
 			 */
-			getUserList: (state) => () => {
-				return state.collection.filter((recentItem) => recentItem.type === 'user').sort(sortListByMessageDate);
+			getUserList: (state, getters, rootState, rootGetters) => () => {
+				return state.collection.filter((recentItem) => {
+					return !recentItem.id.startsWith('chat') && rootGetters['usersModel/getById'](recentItem.id);
+				})
+					.sort(sortListByMessageDate);
 			},
 
 			/**

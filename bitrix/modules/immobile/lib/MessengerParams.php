@@ -33,8 +33,8 @@ class MessengerParams
 			'IS_CHAT_LOCAL_STORAGE_AVAILABLE' => Settings::isChatLocalStorageAvailable(),
 			'SHOULD_SHOW_CHAT_V2_UPDATE_HINT' => Settings::shouldShowChatV2UpdateHint(),
 			'SMILE_LAST_UPDATE_DATE' => \CSmile::getLastUpdate()->format(\DateTime::ATOM),
-			'IS_COPILOT_AVAILABLE' => Settings::isCopilotEnabled(),
-			'IS_COPILOT_ENABLED' => Settings::isCopilotMobileBetaEnabled(),
+			'IS_COPILOT_AVAILABLE' => Settings::isCopilotAvailable(),
+			'IS_COPILOT_ADD_USERS' => Settings::isCopilotAddUsersEnabled(),
 		];
 	}
 }

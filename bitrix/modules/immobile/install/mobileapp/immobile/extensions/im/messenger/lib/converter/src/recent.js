@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { Uuid } = require('utils/uuid');
@@ -60,8 +60,8 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
 		toItem(item)
 		{
-			const modelItem = core.getStore().getters['recentModel/getById'](item.id);
-			const dialog = core.getStore().getters['dialoguesModel/getById'](modelItem.id);
+			const modelItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](item.id);
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](modelItem.id);
 			if (!dialog)
 			{
 				logger.error(`RecentConverter.toItem: there is no dialog "${item.id}" in model`);
@@ -79,7 +79,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
 		toChatItem(modelItem)
 		{
-			const dialog = core.getStore().getters['dialoguesModel/getById'](modelItem.id);
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](modelItem.id);
 			if (!dialog)
 			{
 				logger.error(`RecentConverter.toChatItem: there is no dialog "${modelItem.id}" in model`);
@@ -117,7 +117,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
 		toUserItem(modelItem)
 		{
-			const user = core.getStore().getters['usersModel/getById'](modelItem.id);
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](modelItem.id);
 			if (!user)
 			{
 				logger.error(`RecentConverter.toUserItem: there is no user "${modelItem.id}" in model`);
@@ -125,7 +125,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 				return new RecentItem(modelItem);
 			}
 
-			if (user.id === core.getUserId())
+			if (user.id === serviceLocator.get('core').getUserId())
 			{
 				return new CurrentUserItem(modelItem);
 			}
@@ -169,7 +169,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			const listItem = new CallItem(callStatus, call);
 
 			const dialogId = call.associatedEntity.id;
-			const recentItem = core.getStore().getters['recentModel/getById'](dialogId);
+			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId);
 			if (recentItem && recentItem.color)
 			{
 				listItem.color = recentItem.color;
@@ -182,7 +182,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 		fromPushToModel(element)
 		{
 			let newElement = {};
-			const recentItem = core.getStore().getters['recentModel/getById'](element.id);
+			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](element.id);
 			if (recentItem)
 			{
 				newElement = clone(recentItem);

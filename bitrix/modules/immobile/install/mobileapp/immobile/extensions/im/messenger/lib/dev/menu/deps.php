@@ -10,7 +10,7 @@ return [
 		'statemanager/vuex',
 		'statemanager/vuex-manager',
 		'im:messenger/const',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/element',
 		'im:messenger/lib/emitter',
 		'im:messenger/lib/ui/selector',

@@ -29,10 +29,15 @@ jn.define('im/messenger/lib/parser/functions/url', (require, exports, module) =>
 
 		prepareGifUrl(text)
 		{
-			text = text.replace(/(\[url=|\[url])?http.*?\.gif(\[\/url])?/gim, (match, p1) => {
-				if (p1 !== '')
+			text = text.replace(/(\[url=|\[url])?http.*?\.(gif|webp)(\[\/url])?/gim, (match, p1, p2) => {
+				if (p1 && p2)
 				{
 					return match.replace(/\[\/url]/gim, '[/IMG]').replace(/\[url=|(\[url])/gim, '[IMG]');
+				}
+
+				if (p1 === undefined || p2 === undefined)
+				{
+					return match;
 				}
 
 				return `[IMG]${match}[/IMG]`;

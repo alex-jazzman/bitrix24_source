@@ -339,6 +339,43 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				});
 			},
 
+			/** @function messagesModel/setFromLocalDatabase */
+			setFromLocalDatabase: (store, { messages, clearCollection }) => {
+				clearCollection = clearCollection || false;
+				if (!Array.isArray(messages) && Type.isPlainObject(messages))
+				{
+					messages = [messages];
+				}
+
+				messages = messages.map((message) => {
+					return { ...messageState, ...validate(message) };
+				});
+
+				const chatId = messages[0]?.chatId;
+				if (chatId && clearCollection)
+				{
+					store.commit('clearCollection', {
+						actionName: 'setFromLocalDatabase',
+						data: {
+							chatId,
+						},
+					});
+				}
+
+				store.commit('store', {
+					actionName: 'setFromLocalDatabase',
+					data: {
+						messageList: messages,
+					},
+				});
+				store.commit('setChatCollection', {
+					actionName: 'setFromLocalDatabase',
+					data: {
+						messageList: messages,
+					},
+				});
+			},
+
 			/** @function messagesModel/store */
 			store: (store, messages) => {
 				if (!Array.isArray(messages) && Type.isPlainObject(messages))
@@ -539,6 +576,13 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				});
 
 				messageIdsToRead.forEach((messageId) => {
+					if (!store.state.collection[messageId])
+					{
+						logger.warn('MessageModel.readMessages error: update unread a missing message', messageId, chatId, messageIds);
+
+						return;
+					}
+
 					store.commit('update', {
 						actionName: 'readMessages',
 						data: {
@@ -551,6 +595,13 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				});
 
 				messageIdsToView.forEach((messageId) => {
+					if (!store.state.collection[messageId])
+					{
+						logger.warn('MessageModel.readMessages error: update viewed a missing message', messageId, chatId, messageIds);
+
+						return;
+					}
+
 					store.commit('update', {
 						actionName: 'readMessages',
 						data: {
@@ -782,7 +833,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				const currentMessage = { ...state.collection[id] };
 
 				delete state.collection[id];
-				state.collection[fields.id] = { ...currentMessage, ...fields, sending: false };
+				state.collection[fields.id] = merge(currentMessage, fields, { sending: false });
 
 				if (state.chatCollection[currentMessage.chatId].has(id))
 				{

@@ -1,4 +1,4 @@
-// eslint-disable-next-line no-var
+// eslint-disable-next-line no-var,no-implicit-globals
 var REVISION = 19; // API revision - sync with im/lib/revision.php
 
 /* region Environment variables */
@@ -18,7 +18,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 /* endregion Clearing session variables after script reload */
 
 (async () => {
-	/* global dialogList, PageManager, Application, ChatTimer, InAppNotifier, ChatUtils, reloadAllScripts */
+	/* global dialogList, ChatTimer, InAppNotifier, ChatUtils, reloadAllScripts */
 	/* region import */
 	const require = (ext) => jn.require(ext); // for IDE hints
 
@@ -26,10 +26,27 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { isEqual } = require('utils/object');
-	const { core } = require('im/messenger/core');
-	await core.init({
+
+	const { Logger } = require('im/messenger/lib/logger');
+	const { CopilotApplication } = require('im/messenger/core/copilot');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { EntityReady } = require('entity-ready');
+
+	// Copilot uses the immobile-messenger-store and must be initialized after chat
+	await EntityReady.wait('chat');
+
+	const core = new CopilotApplication({
 		localStorageEnable: true,
 	});
+	try
+	{
+		await core.init();
+	}
+	catch (error)
+	{
+		Logger.error('CopilotApplication init error: ', error);
+	}
+	serviceLocator.add('core', core);
 
 	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { Feature } = require('im/messenger/lib/feature');
@@ -50,7 +67,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 	} = require('im/messenger/const');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { Logger } = require('im/messenger/lib/logger');
 
 	const { CopilotRecent } = require('im/messenger/controller/recent/copilot');
 	const { RecentView } = require('im/messenger/view/recent');
@@ -58,7 +74,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 	const { CopilotAssets } = require('im/messenger/controller/dialog/lib/assets');
 	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { Counters } = require('im/messenger/lib/counters');
-	const { EntityReady } = require('entity-ready');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
 	const { Promotion } = require('im/messenger/lib/promotion');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
@@ -66,7 +81,9 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
 	const { SyncFillerCopilot } = require('im/messenger/provider/service');
+	const { SidebarController } = require('im/messenger/controller/sidebar/sidebar-controller');
 	const AppTheme = require('apptheme');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	/* endregion import */
 
 	class CopilotMessenger extends MessengerBase
@@ -99,10 +116,12 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 
 		initCore()
 		{
+			this.serviceLocator = serviceLocator;
+
 			/**
 			 * @type {CoreApplication}
-			*/
-			this.core = core;
+			 */
+			this.core = this.serviceLocator.get('core');
 			this.repository = this.core.getRepository();
 
 			/**
@@ -171,11 +190,11 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
 			this.onChatDialogAccessError = this.onChatDialogAccessError.bind(this);
 			this.onTaskStatusSuccess = this.onTaskStatusSuccess.bind(this);
-			this.onNotificationOpen = this.onNotificationOpen.bind(this);
 			this.onNotificationReload = this.onNotificationReload.bind(this);
 			this.onAppActiveBefore = this.onAppActiveBefore.bind(this);
 			this.onChatSettingChange = this.onChatSettingChange.bind(this);
 			this.onAppStatusChange = this.onAppStatusChange.bind(this);
+			this.openSidebar = this.openSidebar.bind(this);
 		}
 
 		/**
@@ -202,6 +221,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
+			BX.addCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
 		}
 
 		unsubscribeMessengerEvents()
@@ -212,6 +232,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
+			BX.removeCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
 		}
 
 		/**
@@ -223,7 +244,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			BX.addCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
 			BX.addCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.addCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
-			BX.addCustomEvent(EventType.notification.open, this.onNotificationOpen);
 			BX.addCustomEvent(EventType.notification.reload, this.onNotificationReload);
 			BX.addCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
 			BX.addCustomEvent(EventType.app.failRestoreConnection, this.refresh);
@@ -240,7 +260,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			BX.removeCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
 			BX.removeCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.removeCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
-			BX.removeCustomEvent(EventType.notification.open, this.onNotificationOpen);
 			BX.removeCustomEvent(EventType.notification.reload, this.onNotificationReload);
 			BX.removeCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
 			BX.removeCustomEvent(EventType.app.failRestoreConnection, this.refresh);
@@ -442,7 +461,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			if (this.isFirstLoad)
 			{
 				Logger.warn('CopilotMessenger.ready');
-				EntityReady.ready('chat');
+				EntityReady.ready('copilot-messenger');
 			}
 
 			this.isFirstLoad = false;
@@ -510,14 +529,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			{
 				this.dialogCreator.createCopilotDialog();
 			}
-		}
-
-		onNotificationOpen()
-		{
-			Logger.log('CopilotMessenger.notification.open');
-
-			Counters.notificationCounter.reset();
-			Counters.update();
 		}
 
 		onNotificationReload()
@@ -599,6 +610,22 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			});
 
 			this.dialog.deleteCurrentDialog();
+		}
+
+		/**
+		 * desc Handler call open sidebar event
+		 * @param {{dialogId: string|number}} params
+		 * @override
+		 */
+		openSidebar(params)
+		{
+			Logger.info('CopilotMessenger.openSidebar', params);
+			const isOpenSidebarEnabled = MessengerParams.isCopilotAddUsersEnabled();
+			if (isOpenSidebarEnabled)
+			{
+				this.sidebar = new SidebarController(params);
+				this.sidebar.open();
+			}
 		}
 		/* endregion legacy dialog integration */
 

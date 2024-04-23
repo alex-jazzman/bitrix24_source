@@ -16,6 +16,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 
 			this
 				.setCopilotButtons()
+				.setFootNote()
 				.setCanBeQuoted(false)
 			;
 		}
@@ -35,6 +36,13 @@ jn.define('im/messenger/lib/element/dialog/message/copilot', (require, exports, 
 					leftIcon: `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/svg/copy.svg`,
 				},
 			];
+
+			return this;
+		}
+
+		setFootNote()
+		{
+			this.copilot.footnote = `${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_BASIC')} [U]${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_FOOT_NOTE_UNDERLINE')}[/U]`;
 
 			return this;
 		}

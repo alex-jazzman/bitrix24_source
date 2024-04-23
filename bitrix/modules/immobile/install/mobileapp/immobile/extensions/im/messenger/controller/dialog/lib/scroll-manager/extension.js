@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog/lib/scroll-manager
  */
 jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType, AppStatus } = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
 	const { AfterScrollMessagePosition } = require('im/messenger/view/dialog');
@@ -26,7 +26,7 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 			this.view = view;
 			this.dialogId = dialogId;
 			this.visibilityManager = VisibilityManager.getInstance();
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.needScrollToFirstUnread = true;
 
 			this.isScrollToBottomEnable = true;
@@ -89,7 +89,7 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 				return;
 			}
 
-			const status = core.getStore().getters['applicationModel/getStatus']();
+			const status = serviceLocator.get('core').getStore().getters['applicationModel/getStatus']();
 			logger.log(`${this.constructor.name}.onScrollToBottom status`, status);
 			if (status !== AppStatus.running)
 			{

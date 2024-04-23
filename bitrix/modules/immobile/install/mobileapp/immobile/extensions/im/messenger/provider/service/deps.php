@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'type',
+		'entity-ready',
 		'uploader/client',
 		'utils/uuid',
 		'utils/object',
@@ -15,7 +16,7 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/user-manager',
 		'im:messenger/lib/rest',
-		'im:messenger/core',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/cache',
 		'im:messenger/controller/users-read-message-list',
 		'im:messenger/lib/counters',
@@ -52,6 +53,6 @@ return [
 		'./src/classes/sync/fillers/sync-filler-base',
 		'./src/classes/sync/fillers/sync-filler-chat',
 		'./src/classes/sync/fillers/sync-filler-copilot',
-		'./src/classes/rest-data-extractor',
+		'./src/classes/chat-data-extractor',
 	],
 ];

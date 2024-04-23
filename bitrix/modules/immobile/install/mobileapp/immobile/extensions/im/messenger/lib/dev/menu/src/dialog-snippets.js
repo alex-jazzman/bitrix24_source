@@ -2,7 +2,7 @@
  * @module im/messenger/lib/dev/menu/dialog-snippets
  */
 jn.define('im/messenger/lib/dev/menu/dialog-snippets', (require, exports, module) => {
-	const { core } = require('im/messenger/core');
+    const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { SingleSelector } = require('im/messenger/lib/ui/selector');
 	const { CheckBox } = require('im/messenger/lib/ui/base/checkbox');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
@@ -20,7 +20,7 @@ jn.define('im/messenger/lib/dev/menu/dialog-snippets', (require, exports, module
 		constructor(props)
 		{
 			super(props);
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.state.spam = {
 				dialogId: 'null',
 				counter: 10,

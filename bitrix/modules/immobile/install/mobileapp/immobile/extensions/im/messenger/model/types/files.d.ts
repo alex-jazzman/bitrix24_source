@@ -47,6 +47,7 @@ export type FilesModelState = {
 export type FilesModelActions =
 	'filesModel/setState'
 	| 'filesModel/set'
+	| 'filesModel/setFromLocalDatabase'
 	| 'filesModel/updateWithId'
 	| 'filesModel/delete'
 

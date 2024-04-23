@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		FileType,
 		DialogType,
@@ -44,7 +44,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 			}
 
 			const chatId = modelMessageList[0].chatId;
-			const dialog = core.getStore().getters['dialoguesModel/getByChatId'](chatId);
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getByChatId'](chatId);
 			const options = DialogConverter.prepareOptionsForMessage(dialog);
 
 			return modelMessageList.map((modelMessage) => DialogConverter.createMessage(modelMessage, options));
@@ -92,7 +92,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 			let file = null;
 			if (isMessageWithFile)
 			{
-				file = core.getStore().getters['filesModel/getById'](modelMessage.files[0]);
+				file = serviceLocator.get('core').getStore().getters['filesModel/getById'](modelMessage.files[0]);
 			}
 
 			if (isMessageWithFile && file && file.type === FileType.image)
@@ -149,7 +149,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 		static createRecentMessage(dialogId)
 		{
-			const recentItem = core.getStore().getters['recentModel/getById'](dialogId);
+			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId);
 			if (!recentItem || !recentItem.message || !recentItem.message.text)
 			{
 				return null;

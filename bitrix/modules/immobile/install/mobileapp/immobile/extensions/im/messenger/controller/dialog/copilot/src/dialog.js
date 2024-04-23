@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 	const {
 		CopilotButtonType,
 		EventType,
+		BotCode,
 	} = require('im/messenger/const');
 	const { MessageService } = require('im/messenger/provider/service');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -30,6 +31,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			super();
 
 			this.messageButtonTapHandler = this.onMessageButtonTap.bind(this);
+			this.onCopilotFootnoteTap = this.onCopilotFootnoteTap.bind(this);
 		}
 
 		getDialogType()
@@ -55,17 +57,42 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		subscribeViewEvents()
 		{
 			super.subscribeViewEvents();
+			this.disableParentClassViewEvents();
+			this.subscribeCustomViewEvents();
+		}
 
+		disableParentClassViewEvents()
+		{
+			this.view
+				.off(EventType.dialog.statusFieldTap, this.statusFieldTapHandler)
+			;
+		}
+
+		subscribeCustomViewEvents()
+		{
 			this.view
 				.on(EventType.dialog.messageButtonTap, this.messageButtonTapHandler)
+			;
+			this.view
+				.on(EventType.dialog.copilotFootnoteTap, this.onCopilotFootnoteTap)
 			;
 		}
 
 		initManagers()
 		{
 			super.initManagers();
+		}
 
-			this.mentionManager = new CopilotMentionManager(this.view);
+		initMentionManager()
+		{
+			const dialogModelState = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			if (dialogModelState && dialogModelState.userCounter > 2)
+			{
+				this.mentionManager = new CopilotMentionManager({
+					view: this.view,
+					dialogId: this.dialogId,
+				});
+			}
 		}
 
 		async open(options)
@@ -119,7 +146,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			const dialogModel = this.store.getters['usersModel/getById'](messageModel.authorId);
 
-			if (dialogModel.botData?.code === 'copilot')
+			if (dialogModel.botData?.code === BotCode.copilot)
 			{
 				return;
 			}
@@ -158,41 +185,15 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 
 			if (button.id === CopilotButtonType.promtSend)
 			{
-				const uuid = Uuid.getV4();
-
-				const message = {
-					chatId: this.getChatId(),
-					authorId: MessengerParams.getUserId(),
-					text: button.text.trim(),
-					unread: false,
-					templateId: uuid,
-					date: new Date(),
-					sending: true,
-				};
-
-				const messageSendOption = {
-					dialogId: this.getDialogId(),
-					text: button.text,
-					messageType: 'self',
-					templateId: uuid,
-				};
-
-				this.store.dispatch('messagesModel/add', message)
-					.then(() => {
-						/** @type {ScrollToBottomEvent} */
-						const scrollToBottomEventData = {
-							dialogId: this.getDialogId(),
-							withAnimation: true,
-							force: true,
-						};
-
-						BX.postComponentEvent(EventType.dialog.external.scrollToBottom, [scrollToBottomEventData]);
-
-						// eslint-disable-next-line no-underscore-dangle
-						return this._sendMessage(messageSendOption);
-					})
-					.catch((ex) => logger.error('Dialog.sendMessage.error', ex));
+				this.sendMessage(button.text);
 			}
+		}
+
+		onCopilotFootnoteTap()
+		{
+			const articleCode = '20418172';
+			logger.log('Dialog.onCopilotFootnoteTap, articleCode:', articleCode);
+			helpdesk.openHelpArticle(articleCode, 'helpdesk');
 		}
 
 		/**
@@ -203,6 +204,33 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		drawStatusField(isCheckBottom = true)
 		{
 			// TODO if need show the status field then remove this override
+		}
+
+		/**
+		 * @override
+		 * @param {Object} mutation
+		 * @void
+		 */
+		checkAvailableMention(mutation)
+		{
+			if (!mutation.type.includes('dialoguesModel'))
+			{
+				return;
+			}
+
+			// eslint-disable-next-line es/no-optional-chaining
+			if (mutation.payload.data?.fields?.userCounter > 2)
+			{
+				this.mentionManager ??= new CopilotMentionManager({
+					view: this.view,
+					dialogId: this.dialogId,
+				});
+			}
+			else
+			{
+				this.mentionManager?.unsubscribeEvents();
+				this.mentionManager = null;
+			}
 		}
 	}
 

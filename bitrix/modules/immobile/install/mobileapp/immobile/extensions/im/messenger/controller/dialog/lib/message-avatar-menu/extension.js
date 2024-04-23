@@ -4,7 +4,7 @@
 jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EventType, BBCode, ComponentCode } = require('im/messenger/const');
 	const { menuIcons } = require('im/messenger/assets/common');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -26,7 +26,7 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 		{
 			this.authorId = authorId;
 			this.options = options;
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 
 			this.menu = new ContextMenu({
 				actions: this.createActions(),

@@ -74,11 +74,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('IS_COPILOT_AVAILABLE', false);
 		}
 
-		isCopilotEnabled()
-		{
-			return this.get('IS_COPILOT_ENABLED', false);
-		}
-
 		shouldShowChatV2UpdateHint()
 		{
 			return this.get('SHOULD_SHOW_CHAT_V2_UPDATE_HINT', false);
@@ -92,6 +87,11 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		hasActiveCloudStorageBucket()
 		{
 			return this.get('HAS_ACTIVE_CLOUD_STORAGE_BUCKET', false);
+		}
+
+		isCopilotAddUsersEnabled()
+		{
+			return this.get('IS_COPILOT_ADD_USERS', false);
 		}
 	}
 

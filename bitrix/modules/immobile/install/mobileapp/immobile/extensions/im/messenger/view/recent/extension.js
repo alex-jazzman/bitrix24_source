@@ -9,6 +9,8 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const { EventType, FeatureFlag, ComponentCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const AppTheme = require('apptheme');
+	const { openIntranetInviteWidget } = require('intranet/invite-opener');
+	const { AnalyticsEvent } = require('analytics');
 
 	class RecentView extends View
 	{
@@ -36,8 +38,6 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			this.initTopMenu();
 			this.initSections();
 			this.initChatCreateButton();
-
-			IntranetInvite.init();
 		}
 
 		get isLoaderShown()
@@ -295,13 +295,8 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_1'),
 					lowerText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_TEXT_INVITE'),
 					iconName: 'ws_employees',
-					listener: () => IntranetInvite.openRegisterSlider({
-						originator: ComponentCode.imMessenger,
-						registerUrl: MessengerParams.get('INTRANET_INVITATION_REGISTER_URL', ''),
-						rootStructureSectionId: MessengerParams.get('INTRANET_INVITATION_ROOT_STRUCTURE_SECTION_ID', 0),
-						adminConfirm: MessengerParams.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM', false),
-						disableAdminConfirm: MessengerParams.get('INTRANET_INVITATION_REGISTER_ADMIN_CONFIRM_DISABLE', false),
-						sharingMessage: MessengerParams.get('INTRANET_INVITATION_REGISTER_SHARING_MESSAGE', ''),
+					listener: () => openIntranetInviteWidget({
+						analytics: new AnalyticsEvent().setSection('chat'),
 					}),
 				};
 			}

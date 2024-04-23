@@ -222,3 +222,4 @@ DROP TABLE IF EXISTS b_crm_company_fields_context;
 DROP TABLE IF EXISTS b_crm_quote_fields_context;
 DROP TABLE IF EXISTS b_crm_ai_queue;
 DROP TABLE IF EXISTS b_crm_terminal_payment;
+DROP TABLE IF EXISTS b_crm_act_sms_placeholder;

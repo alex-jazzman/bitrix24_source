@@ -9,7 +9,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 	const { clone } = require('utils/object');
 
 	const { Theme } = require('im/lib/theme');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		ChatAvatar,
 		ChatTitle,
@@ -72,7 +72,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 			backgroundConfig.url = currentDomain + backgroundConfig.url;
 
 			let titleParams;
-			const recentItem = clone(core.getStore().getters['recentModel/getById'](dialogId));
+			const recentItem = clone(serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId));
 			if (recentItem)
 			{
 				const avatar = ChatAvatar.createFromDialogId(dialogId);
@@ -252,7 +252,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 
 		static isOpenlineDialog(dialogId, dialogTitleParams = null, userCode = null)
 		{
-			const recentItem = clone(core.getStore().getters['recentModel/getById'](dialogId));
+			const recentItem = clone(serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId));
 
 			return (
 				recentItem

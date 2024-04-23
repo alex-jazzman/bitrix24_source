@@ -63,6 +63,11 @@ jn.define('im/messenger/lib/dev/menu/logging-settings', (require, exports, modul
 				}
 
 				this.setValueLogger(value, id);
+
+				if (!value)
+				{
+					this.disableAllLoggerItem();
+				}
 			});
 		}
 
@@ -88,8 +93,6 @@ jn.define('im/messenger/lib/dev/menu/logging-settings', (require, exports, modul
 
 					this.loggerManager.getLogger(name).disable(type);
 				});
-
-				this.disableAllLoggerItem();
 			}
 		}
 

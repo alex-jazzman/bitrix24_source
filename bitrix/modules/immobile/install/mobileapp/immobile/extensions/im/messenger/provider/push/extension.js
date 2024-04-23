@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/push', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { EventType, DialogType, ComponentCode } = require('im/messenger/const');
@@ -15,7 +15,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 	{
 		constructor()
 		{
-			this.store = core.getStore();
+			this.store = serviceLocator.get('core').getStore();
 			this.manager = Application.getNotificationHistory('im_message');
 
 			this.manager.setOnChangeListener(this.handleChange.bind(this));

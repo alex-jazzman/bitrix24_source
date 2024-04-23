@@ -5,7 +5,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { View } = require('im/messenger/view/base');
 	const { EventType, MessageType } = require('im/messenger/const');
 	const { VisibilityManager } = require('im/messenger/lib/visibility-manager');
@@ -232,7 +232,7 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					return false;
 				}
 
-				const modelMessage = core.getStore().getters['messagesModel/getById'](messageId);
+				const modelMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](messageId);
 
 				return modelMessage.viewed === false;
 			});
@@ -647,6 +647,11 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 			{
 				this.ui.textField.setQuote(message);
 			}
+		}
+
+		enableAlwaysSendButtonMode(enable)
+		{
+			this.ui.textField?.enableAlwaysSendButtonMode?.(enable);
 		}
 
 		removeInputQuote()

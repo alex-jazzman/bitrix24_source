@@ -25,6 +25,16 @@ jn.define('calendar/model/sharing/settings', (require, exports, module) => {
 			this.rule = new Rule(rule, this.weekStart);
 		}
 
+		isDefaultRule()
+		{
+			return !this.isDifferentFrom(this.getDefaultRule());
+		}
+
+		isDifferentFrom(anotherRule)
+		{
+			return !this.objectsEqual(anotherRule, this.getRuleArray());
+		}
+
 		getChanges()
 		{
 			const defaultRule = this.getDefaultRule();
@@ -58,8 +68,39 @@ jn.define('calendar/model/sharing/settings', (require, exports, module) => {
 				ranges: [{
 					from: parseInt(workTimeStart * 60, 10),
 					to: parseInt(workTimeEnd * 60, 10),
-					weekDays: workDays,
+					weekdays: workDays,
 				}],
+			};
+		}
+
+		objectsEqual(obj1, obj2)
+		{
+			return JSON.stringify(this.sortKeys(obj1)) === JSON.stringify(this.sortKeys(obj2));
+		}
+
+		sortKeys(object)
+		{
+			return Object.keys(object).sort().reduce(
+				(obj, key) => {
+					obj[key] = object[key];
+
+					return obj;
+				},
+				{},
+			);
+		}
+
+		getRuleArray()
+		{
+			return {
+				ranges: this.getRule().getRanges().map((range) => {
+					return {
+						from: range.getFrom(),
+						to: range.getTo(),
+						weekdays: range.getWeekDays(),
+					};
+				}),
+				slotSize: this.getRule().getSlotSize(),
 			};
 		}
 

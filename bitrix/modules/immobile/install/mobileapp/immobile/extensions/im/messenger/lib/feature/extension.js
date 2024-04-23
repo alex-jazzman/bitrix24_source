@@ -67,11 +67,6 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return MessengerParams.isCopilotAvailable();
 		}
 
-		static get isCopilotEnabled()
-		{
-			return Feature.isCopilotAvailable && MessengerParams.isCopilotEnabled();
-		}
-
 		static get isAutoplayVideoEnabled()
 		{
 			return Feature.getChatSettings().autoplayVideo;
@@ -90,6 +85,16 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isMessagePinSupported()
 		{
 			return Feature.isChatBetaEnabled && Application.getApiVersion() >= 53;
+		}
+
+		static get isMessageForwardSupported()
+		{
+			return Feature.isChatBetaEnabled && Application.getApiVersion() >= 54;
+		}
+
+		static get isSupportBMPImageType()
+		{
+			return Application.getApiVersion() >= 53;
 		}
 
 		static get isDevelopmentEnvironment()

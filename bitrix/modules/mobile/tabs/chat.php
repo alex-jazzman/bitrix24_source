@@ -146,7 +146,7 @@ class Chat implements Tabable
 		$openlinesChatComponent = $this->getRecentComponent();
 		$copilot = null;
 
-		if ($this->isCopilotAvailable() && $this->isCopilotMobileBetaEnabled())
+		if ($this->isCopilotAvailable() && $this->isCopilotMobileEnabled())
 		{
 			$copilot = $this->getMessengerCopilotComponent();
 		}
@@ -470,9 +470,9 @@ class Chat implements Tabable
 		return \Bitrix\Im\V2\Chat\CopilotChat::isAvailable();
 	}
 
-	public function isCopilotMobileBetaEnabled(): bool
+	public function isCopilotMobileEnabled(): bool
 	{
-		return \CUserOptions::GetOption('immobile', 'copilot_mobile_beta_available', 'N') === 'Y';
+		return \Bitrix\Main\Config\Option::get('immobile', 'copilot_mobile_chat_enabled', 'N') === 'Y';
 	}
 
 	public function getIconId(): string

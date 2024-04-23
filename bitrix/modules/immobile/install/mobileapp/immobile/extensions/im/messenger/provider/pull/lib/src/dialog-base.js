@@ -222,8 +222,7 @@ jn.define('im/messenger/provider/pull/lib/dialog-base', (require, exports, modul
 			const dialogId = params.dialogId;
 			const chatId = params.chatId;
 
-			delete Counters.chatCounter.detail[params.dialogId];
-			delete Counters.openlinesCounter.detail[params.dialogId];
+			this.deleteCounters(params.dialogId);
 
 			if (Number(params.userId) === MessengerParams.getUserId())
 			{
@@ -243,6 +242,16 @@ jn.define('im/messenger/provider/pull/lib/dialog-base', (require, exports, modul
 				participants: [params.userId],
 				userCounter: params.userCount,
 			}).catch((err) => this.logger.error(`${this.getClassName()}.handleChatUserLeave.dialoguesModel/removeParticipants.catch:`, err));
+		}
+
+		/**
+		 * @param {String} dialogId
+		 * @void
+		 */
+		deleteCounters(dialogId)
+		{
+			delete Counters.chatCounter.detail[dialogId];
+			delete Counters.openlinesCounter.detail[dialogId];
 		}
 
 		handleChatAvatar(params, extra, command)

@@ -1,7 +1,8 @@
-import { RawReaction, ReactionType, ReactionUser } from '../../../model/types/messages/reactions';
+import { ReactionType, ReactionUser } from '../../../model/types/messages/reactions';
 import { UsersModelState } from '../../../model/types/users';
 import { DialoguesModelState } from '../../../model/types/dialogues';
 import {RawFile, RawMessage, RawPin, RawUser} from "../../../service/src/types/sync-list-result";
+import {RawReaction} from "../../../../model/types/messages/reactions";
 
 export type AddReactionParams = {
 	actualReactions: {
@@ -91,4 +92,12 @@ declare type MessagePullHandlerPinDeleteParams = {
 	chatId: number,
 	linkId: number,
 	messageId: number
+}
+
+declare type MessagePullHandlerAdditionalEntities = {
+	additionalMessages: Array<RawMessage>,
+	files: Array<RawFile>,
+	messages: Array<RawMessage>,
+	users: Array<RawUser>,
+	reactions: any,
 }

@@ -7,7 +7,8 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 	const { ChatTitle } = require('im/messenger/lib/element');
 	const { EventType, BBCode } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { core } = require('im/messenger/core');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { Type } = require('type');
 
@@ -91,6 +92,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			this.externalMention = this.onExternalMention.bind(this);
 
 			this.initProvider();
+			this.subscribeEvents();
 		}
 
 		/**
@@ -188,7 +190,15 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		 */
 		initProvider()
 		{
-			this.provider = new MentionProvider({
+			this.provider = new MentionProvider(this.getProviderOptions());
+		}
+
+		/**
+		 * @return {object}
+		 */
+		getProviderOptions()
+		{
+			return {
 				dialogId: this.dialogId,
 				loadSearchProcessed: (dialogIdList, isStartServerSearch) => {
 					if (isStartServerSearch)
@@ -225,7 +235,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 					}
 					this.drawItems(dialogIdList);
 				},
-			});
+			};
 		}
 
 		/**
@@ -269,7 +279,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			{
 				if (DialogHelper.isChatId(this.dialogId))
 				{
-					const userIdList = this.provider.loadRecentUsers();
+					const userIdList = this.getRecentUsers();
 
 					this.drawItems(userIdList);
 
@@ -283,7 +293,6 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			}
 
 			this.curruntQuery = text.slice(this.mentionSymbolPosition + 1, cursorPosition);
-
 			this.provider.doSearch(this.curruntQuery);
 		}
 
@@ -300,7 +309,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return;
 			}
 
-			logger.warn('Mention: open mention panel');
+			logger.warn('Mention: open mention panel, cursorPosition:', cursorPosition);
 
 			this.mentionSymbolPosition = cursorPosition - 1;
 			const userIdList = await this.loadUsersForInitial();
@@ -380,7 +389,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			if (DialogHelper.isDialogId(item.id))
 			{
-				const id = core.getStore().getters['dialoguesModel/getById'](item.id).chatId;
+				const id = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](item.id).chatId;
 				bbCodeText = this.wrapTextInBBCode(item.title, BBCode.chat, id);
 			}
 			else
@@ -417,7 +426,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			let bbCodeText = '';
 			if (type === BBCode.user)
 			{
-				const userModelState = core.getStore().getters['usersModel/getById'](id);
+				const userModelState = serviceLocator.get('core').getStore().getters['usersModel/getById'](id);
 				if (Type.isUndefined(userModelState))
 				{
 					return false;
@@ -429,7 +438,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			}
 			else
 			{
-				const dialogModelState = core.getStore().getters['dialoguesModel/getById'](id);
+				const dialogModelState = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](id);
 				bbCodeText = this.wrapTextInBBCode(dialogModelState.name, BBCode.chat, dialogModelState.dialogId);
 			}
 
@@ -510,6 +519,11 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			itemIds.forEach((itemId) => {
 				const item = this.prepareItemForDrawing(itemId);
+				const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](item.id)
+					?? serviceLocator.get('core').getStore().getters['recentModel/searchModel/getById'](item.id)
+				;
+
+				item.displayedDate = DateFormatter.getRecentFormat(recentItem.dateMessage);
 
 				result.push(item);
 			});
@@ -526,6 +540,15 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 				this.isProcessed = true;
 			}
+		}
+
+		/**
+		 * @override
+		 * @return {Array<string>}
+		 */
+		getRecentUsers()
+		{
+			return this.provider.loadRecentUsers();
 		}
 
 		drawParticipantsItems(userIdList)
@@ -548,7 +571,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		{
 			if (DialogHelper.isChatId(this.dialogId))
 			{
-				return this.provider.loadRecentUsers();
+				return this.getRecentUsers();
 			}
 
 			this.view.mentionPanel.open([]);

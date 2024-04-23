@@ -136,6 +136,7 @@ declare type AttachRichItem = {
 export type MessagesModelActions =
 	'messagesModel/forceUpdateByChatId'
 	| 'messagesModel/store'
+	| 'messagesModel/setFromLocalDatabase'
 	| 'messagesModel/add'
 	| 'messagesModel/addToChatCollection'
 	| 'messagesModel/setPinned'
