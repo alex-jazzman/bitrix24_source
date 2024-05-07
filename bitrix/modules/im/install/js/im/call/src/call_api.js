@@ -896,10 +896,10 @@ export class Call {
 
 	setCodec(transceiver)
 	{
-		if (!('getCapabilities' in RTCRtpSender)) {
+		if (!('getCapabilities' in RTCRtpReceiver)) {
 			return;
 		}
-		const cap = RTCRtpSender.getCapabilities('video');
+		const cap = RTCRtpReceiver.getCapabilities('video');
 		if (!cap) return;
 		const matched = [];
 		const partialMatched = [];

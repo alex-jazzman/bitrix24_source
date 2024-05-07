@@ -3518,10 +3518,10 @@ this.BX = this.BX || {};
 	    key: "setCodec",
 	    value: function setCodec(transceiver) {
 	      var _this5 = this;
-	      if (!('getCapabilities' in RTCRtpSender)) {
+	      if (!('getCapabilities' in RTCRtpReceiver)) {
 	        return;
 	      }
-	      var cap = RTCRtpSender.getCapabilities('video');
+	      var cap = RTCRtpReceiver.getCapabilities('video');
 	      if (!cap) return;
 	      var matched = [];
 	      var partialMatched = [];
