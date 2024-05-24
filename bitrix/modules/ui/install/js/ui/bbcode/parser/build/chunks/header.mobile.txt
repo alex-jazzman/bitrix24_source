@@ -2,3 +2,4 @@
 jn.define('bbcode/parser', (require, exports, module) => {
 	const {Type} = jn.require('type');
 	const Model = jn.require('bbcode/model');
+	const {BBCodeEncoder} = jn.require('bbcode/encoder');

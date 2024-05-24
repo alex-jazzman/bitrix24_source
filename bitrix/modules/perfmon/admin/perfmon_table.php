@@ -72,7 +72,7 @@ foreach ($arFieldsEx as $FIELD_NAME => $FIELD_INFO)
 $arUniqueIndexes = $obTable->GetUniqueIndexes();
 $sTableID = 'tbl_perfmon_table' . md5($table_name);
 $oSort = new CAdminUiSorting($sTableID, 'ID', 'asc');
-$by = mb_strtoupper($oSort->getField());
+$by = $oSort->getField();
 $order = mb_strtoupper($oSort->getOrder());
 $lAdmin = new CAdminUiList($sTableID, $oSort);
 
@@ -420,7 +420,7 @@ while ($arRes = $rsData->Fetch())
 
 			if (array_key_exists($FIELD_NAME, $arParents) && TableExists($arParents[$FIELD_NAME]['PARENT_TABLE']))
 			{
-				$href = 'perfmon_table.php?lang=' . LANGUAGE_ID . '&table_name=' . $arParents[$FIELD_NAME]['PARENT_TABLE'] . '&apply_filter=Y&find=' . urlencode($arRes[$FIELD_NAME]) . '&find_type=' . urlencode($arParents[$FIELD_NAME]['PARENT_COLUMN']) . '&' . urlencode($arParents[$FIELD_NAME]['PARENT_COLUMN']) . '=' . urlencode($arRes[$FIELD_NAME]);
+				$href = 'perfmon_table.php?lang=' . LANGUAGE_ID . '&table_name=' . $arParents[$FIELD_NAME]['PARENT_TABLE'] . '&apply_filter=Y&find=' . urlencode($arRes[$FIELD_NAME]) . '&find_type=' . urlencode($arParents[$FIELD_NAME]['PARENT_COLUMN']) . '&' . urlencode('f_' . $arParents[$FIELD_NAME]['PARENT_COLUMN']) . '=' . urlencode($arRes[$FIELD_NAME]);
 				$val = '<a onmouseover="addTimer(this)" onmouseout="removeTimer(this)" href="' . htmlspecialcharsbx($href) . '" onclick="' . htmlspecialcharsbx('window.location=\'' . CUtil::JSEscape($href) . '\'') . '	">' . $val . '</a>';
 			}
 
@@ -464,7 +464,7 @@ while ($arRes = $rsData->Fetch())
 		{
 			if (TableExists($arChild['CHILD_TABLE']))
 			{
-				$href = 'perfmon_table.php?lang=' . LANGUAGE_ID . '&table_name=' . urlencode($arChild['CHILD_TABLE']) . '&apply_filter=Y&' . urlencode($arChild['CHILD_COLUMN']) . '=' . urlencode($arRes[$arChild['PARENT_COLUMN']]);
+				$href = 'perfmon_table.php?lang=' . LANGUAGE_ID . '&table_name=' . urlencode($arChild['CHILD_TABLE']) . '&apply_filter=Y&' . urlencode('f_' . $arChild['CHILD_COLUMN']) . '=' . urlencode($arRes[$arChild['PARENT_COLUMN']]);
 				$arActions[] = [
 					'ICON' => '',
 					'DEFAULT' => false,

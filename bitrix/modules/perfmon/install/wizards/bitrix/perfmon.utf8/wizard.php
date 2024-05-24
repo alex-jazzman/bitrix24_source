@@ -144,11 +144,11 @@ class CUtf8BackupWarningStep extends CBaseUtf8WizardStep
 {
 	public function InitStep()
 	{
-		global $DB;
+		$connection = \Bitrix\Main\Application::getConnection();
 
 		$this->SetTitle(GetMessage('UTFWIZ_STEP1_TITLE'));
 
-		if ($DB->type !== 'MYSQL')
+		if (!is_a($connection, '\Bitrix\Main\DB\MysqliConnection'))
 		{
 			$this->SetError(GetMessage('UTFWIZ_DATABASE_NOT_SUPPORTED'));
 		}
@@ -188,8 +188,8 @@ class CUtf8BackupWarningStep extends CBaseUtf8WizardStep
 				'formID' => $wizard->GetFormName(),
 			];
 			$this->content .= '
-				<script type="text/javascript">
-					BX.Wizard.Utf8.init(' . CUtil::PhpToJSObject($init) . ');
+				<script>
+					BX.Wizard.Utf8.init(' . \Bitrix\Main\Web\Json::encode($init) . ');
 					BX.ready(() => {BX.Wizard.Utf8.DisableButton()});
 				</script>
 			';
@@ -367,9 +367,9 @@ class CUtf8DatabaseConvertStep extends CBaseUtf8WizardStep
 				'sessid' => bitrix_sessid(),
 			];
 			$this->content .= '
-				<script type="text/javascript">
-					BX.message(' . CUtil::PhpToJSObject($message) . ');
-					BX.Wizard.Utf8.init(' . CUtil::PhpToJSObject($init) . ');
+				<script>
+					BX.message(' . \Bitrix\Main\Web\Json::encode($message) . ');
+					BX.Wizard.Utf8.init(' . \Bitrix\Main\Web\Json::encode($init) . ');
 					BX.ready(() => {BX.Wizard.Utf8.DisableButton()});
 					BX.ready(() => {BX.Wizard.Utf8.action(\'database\')});
 				</script>
@@ -419,38 +419,41 @@ class CUtf8DatabaseConnectionStep extends CBaseUtf8WizardStep
 
 	public function MakeCheckList()
 	{
-		global $DB;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$arList = [];
 
-		$res = $DB->Query('SHOW VARIABLES LIKE "character_set_connection"');
-		$f = $res->Fetch();
-		$character_set_connection = $f['Value'];
+		if (is_a($connection, '\Bitrix\Main\DB\MysqliConnection'))
+		{
+			$res = $connection->query('SHOW VARIABLES LIKE "character_set_connection"');
+			$f = $res->fetch();
+			$character_set_connection = $f['Value'];
 
-		$res = $DB->Query('SHOW VARIABLES LIKE "character_set_results"');
-		$f = $res->Fetch();
-		$character_set_results = $f['Value'];
+			$res = $connection->query('SHOW VARIABLES LIKE "character_set_results"');
+			$f = $res->fetch();
+			$character_set_results = $f['Value'];
 
-		$res = $DB->Query('SHOW VARIABLES LIKE "collation_connection"');
-		$f = $res->Fetch();
-		$collation_connection = $f['Value'];
+			$res = $connection->query('SHOW VARIABLES LIKE "collation_connection"');
+			$f = $res->fetch();
+			$collation_connection = $f['Value'];
 
-		$arList[] = [
-			'IS_OK' => in_array($character_set_connection, ['utf8', 'utf8mb3', 'utf8mb4']),
-			'MESSAGE' => GetMessage('UTFWIZ_CONNECTION_CHARSET'),
-		];
+			$arList[] = [
+				'IS_OK' => in_array($character_set_connection, ['utf8', 'utf8mb3', 'utf8mb4']),
+				'MESSAGE' => GetMessage('UTFWIZ_CONNECTION_CHARSET'),
+			];
 
-		$arList[] = [
-			'IS_OK' => preg_match('/^(utf8|utf8mb3|utf8mb4)_/', $collation_connection),
-			'MESSAGE' => GetMessage('UTFWIZ_CONNECTION_COLLATION'),
-		];
+			$arList[] = [
+				'IS_OK' => preg_match('/^(utf8|utf8mb3|utf8mb4)_/', $collation_connection),
+				'MESSAGE' => GetMessage('UTFWIZ_CONNECTION_COLLATION'),
+			];
 
-		$arList[] = [
-			'IS_OK' => $character_set_connection === $character_set_results,
-			'MESSAGE' => GetMessage('UTFWIZ_CHARSET_CONN_VS_RES', [
-				'#CONN#' => $character_set_connection,
-				'#RES#' => $character_set_results,
-			]),
-		];
+			$arList[] = [
+				'IS_OK' => $character_set_connection === $character_set_results,
+				'MESSAGE' => GetMessage('UTFWIZ_CHARSET_CONN_VS_RES', [
+					'#CONN#' => $character_set_connection,
+					'#RES#' => $character_set_results,
+				]),
+			];
+		}
 
 		return $arList;
 	}
@@ -529,9 +532,9 @@ class CUtf8SerializeFixStep extends CBaseUtf8WizardStep
 				'sourceEncoding' => $wizard->GetVar('source_encoding') ?: $wizard->GetVar('source_encoding_other'),
 			];
 			$this->content .= '
-				<script type="text/javascript">
-					BX.message(' . CUtil::PhpToJSObject($message) . ');
-					BX.Wizard.Utf8.init(' . CUtil::PhpToJSObject($init) . ');
+				<script>
+					BX.message(' . \Bitrix\Main\Web\Json::encode($message) . ');
+					BX.Wizard.Utf8.init(' . \Bitrix\Main\Web\Json::encode($init) . ');
 					BX.ready(() => {BX.Wizard.Utf8.DisableButton()});
 					BX.ready(() => {BX.Wizard.Utf8.action(\'fix\')});
 				</script>
@@ -621,9 +624,9 @@ class CUtf8FileConvertStep extends CBaseUtf8WizardStep
 				'skipLinks' => $wizard->GetVar('skip_links'),
 			];
 			$this->content .= '
-				<script type="text/javascript">
-					BX.message(' . CUtil::PhpToJSObject($message) . ');
-					BX.Wizard.Utf8.init(' . CUtil::PhpToJSObject($init) . ');
+				<script>
+					BX.message(' . \Bitrix\Main\Web\Json::encode($message) . ');
+					BX.Wizard.Utf8.init(' . \Bitrix\Main\Web\Json::encode($init) . ');
 					BX.ready(() => {BX.Wizard.Utf8.DisableButton()});
 					BX.ready(() => {BX.Wizard.Utf8.action(\'files\')});
 				</script>
@@ -682,8 +685,8 @@ class CUtf8CacheResetStep extends CBaseUtf8WizardStep
 			'sessid' => bitrix_sessid(),
 		];
 		$this->content .= '
-			<script type="text/javascript">
-				BX.Wizard.Utf8.init(' . CUtil::PhpToJSObject($init) . ');
+			<script>
+				BX.Wizard.Utf8.init(' . \Bitrix\Main\Web\Json::encode($init) . ');
 				BX.ready(() => {BX.Wizard.Utf8.DisableButton()});
 				BX.ready(() => {BX.Wizard.Utf8.action(\'cache\')});
 			</script>

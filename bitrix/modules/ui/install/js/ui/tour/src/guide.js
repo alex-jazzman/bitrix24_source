@@ -312,9 +312,8 @@ export class Guide extends Event.EventEmitter
 				Event.unbind(currentStep.getTarget(), 'click', close);
 			});
 
-			const targetPos = currentStep.getTarget().getBoundingClientRect();
 			const targetPosWindow = Dom.getPosition(currentStep.getTarget());
-			if (!this.isTargetVisible(targetPos))
+			if (!this.isTargetVisible(targetPosWindow))
 			{
 				this.scrollToTarget(targetPosWindow);
 			}
@@ -712,25 +711,43 @@ export class Guide extends Event.EventEmitter
 	{
 		if (!this.layout.content)
 		{
+			let iconNode = '';
+			if (this.getCurrentStep().getIconSrc())
+			{
+				iconNode = Tag.render`
+					<div
+						class="ui-tour-popup-icon"
+						style="background-image: url(${encodeURI(this.getCurrentStep().getIconSrc())});"
+					></div>
+				`;
+			}
+
 			let linkNode = '';
 			if(this.getCurrentStep().getLink() || this.getCurrentStep().getArticle())
 			{
 				linkNode = this.getLink();
 			}
+
 			this.layout.content = Tag.render`
-				<div class="ui-tour-popup ${this.simpleMode ? 'ui-tour-popup-simple' : ''} ${this.onEvents ? 'ui-tour-popup-events' : ''}" >
-					${this.getTitle()}
-					<div class="ui-tour-popup-content">
-						${this.getText()}
-						${linkNode}
-					</div>
-					${linkNode}
-					<div class="ui-tour-popup-footer">
-						<div class="ui-tour-popup-index">
-							${this.onEvents ? '' : this.getCounterItems()}
-							${this.onEvents ? '' : this.getCurrentCounter()}
+				<div
+					class="ui-tour-popup ${this.simpleMode ? 'ui-tour-popup-simple' : ''} ${this.onEvents ? 'ui-tour-popup-events' : ''}"
+					style="${iconNode ? 'padding-left: 13px;' : ''};"
+				>
+					${iconNode}
+					<div>
+						${this.getTitle()}
+						<div class="ui-tour-popup-content">
+							${this.getText()}
+							${linkNode}
 						</div>
-							${this.onEvents ? '' : this.getBtnContainer()}
+						${linkNode}
+						<div class="ui-tour-popup-footer">
+							<div class="ui-tour-popup-index">
+								${this.onEvents ? '' : this.getCounterItems()}
+								${this.onEvents ? '' : this.getCurrentCounter()}
+							</div>
+								${this.onEvents ? '' : this.getBtnContainer()}
+						</div>
 					</div>
 				</div>
 			`;

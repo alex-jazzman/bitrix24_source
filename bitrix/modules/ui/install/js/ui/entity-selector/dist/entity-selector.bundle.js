@@ -584,11 +584,13 @@ this.BX.UI = this.BX.UI || {};
 	      this.badges = [];
 	      this.captionOptions = {
 	        fitContent: null,
-	        maxWidth: null
+	        maxWidth: null,
+	        justifyContent: null
 	      };
 	      this.badgesOptions = {
 	        fitContent: null,
-	        maxWidth: null
+	        maxWidth: null,
+	        justifyContent: null
 	      };
 	    }
 	    this.setTitle(options.title);
@@ -1005,6 +1007,13 @@ this.BX.UI = this.BX.UI || {};
 	      if (main_core.Type.isBoolean(captionFitContent)) {
 	        main_core.Dom.style(this.getCaptionContainer(), 'flex-shrink', captionFitContent ? 0 : null);
 	      }
+	      const captionJustifyContent = this.getCaptionOption('justifyContent');
+	      if (main_core.Type.isStringFilled(captionJustifyContent) || captionJustifyContent === null) {
+	        main_core.Dom.style(this.getCaptionContainer(), {
+	          flexGrow: captionJustifyContent ? '1' : null,
+	          textAlign: captionJustifyContent || null
+	        });
+	      }
 	      const captionMaxWidth = this.getCaptionOption('maxWidth');
 	      if (main_core.Type.isString(captionMaxWidth) || main_core.Type.isNumber(captionMaxWidth)) {
 	        main_core.Dom.style(this.getCaptionContainer(), 'max-width', main_core.Type.isNumber(captionMaxWidth) ? `${captionMaxWidth}px` : captionMaxWidth);
@@ -1056,6 +1065,13 @@ this.BX.UI = this.BX.UI || {};
 	      const badgesFitContent = this.getBadgesOption('fitContent');
 	      if (main_core.Type.isBoolean(badgesFitContent)) {
 	        main_core.Dom.style(this.getBadgeContainer(), 'flex-shrink', badgesFitContent ? 0 : null);
+	      }
+	      const badgesJustifyContent = this.getBadgesOption('justifyContent');
+	      if (main_core.Type.isStringFilled(badgesJustifyContent) || badgesJustifyContent === null) {
+	        main_core.Dom.style(this.getBadgeContainer(), {
+	          flexGrow: badgesJustifyContent ? '1' : null,
+	          justifyContent: badgesJustifyContent || null
+	        });
 	      }
 	      const badgesMaxWidth = this.getBadgesOption('maxWidth');
 	      if (main_core.Type.isString(badgesMaxWidth) || main_core.Type.isNumber(badgesMaxWidth)) {
@@ -3410,6 +3426,9 @@ this.BX.UI = this.BX.UI || {};
 	    key: "getDefaultTitle",
 	    value: function getDefaultTitle() {
 	      const titleNode = this.getTab().getTitleNode();
+	      if (titleNode === null) {
+	        return main_core.Loc.getMessage('UI_SELECTOR_TAB_STUB_TITLE').replace(/#TAB_TITLE#/, '');
+	      }
 	      const titleContainer = main_core.Tag.render(_t4 || (_t4 = _$1`<span class="ui-selector-tab-default-stub-title"></span>`));
 	      titleNode.renderTo(titleContainer);
 	      return main_core.Loc.getMessage('UI_SELECTOR_TAB_STUB_TITLE').replace(/#TAB_TITLE#/, titleContainer.innerHTML);
@@ -5696,7 +5715,6 @@ this.BX.UI = this.BX.UI || {};
 	    value: function handleDialogDestroy() {
 	      this.sliders.clear();
 	      this.unbindEvents();
-	      this.getDialog().unfreeze();
 	    }
 	  }, {
 	    key: "handleSliderOpen",
@@ -6313,6 +6331,8 @@ this.BX.UI = this.BX.UI || {};
 	  }, {
 	    key: "handleMetaEnter",
 	    value: function handleMetaEnter(event) {
+	      const keyboardEvent = event.getData().event;
+	      keyboardEvent.stopPropagation();
 	      if (this.getDialog().getActiveTab() !== this.getTab()) {
 	        return;
 	      }
@@ -6687,6 +6707,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "tagSelectorHeight", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "saveRecentItemsWithDebounce", main_core.Runtime.debounce(_this.saveRecentItems, 2000, babelHelpers.assertThisInitialized(_this)));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "recentItemsToSave", []);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "recentItemsLimit", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "navigation", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "header", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "footer", null);
@@ -6695,6 +6716,7 @@ this.BX.UI = this.BX.UI || {};
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "focusedNode", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "clearUnavailableItems", false);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "overlappingObserver", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "offsetAnimation", true);
 	    _this.setEventNamespace('BX.UI.EntitySelector.Dialog');
 	    const options = main_core.Type.isPlainObject(dialogOptions) ? dialogOptions : {};
 	    _this.id = main_core.Type.isStringFilled(options.id) ? options.id : `ui-selector-${main_core.Text.getRandom().toLowerCase()}`;
@@ -6746,6 +6768,8 @@ this.BX.UI = this.BX.UI || {};
 	    _this.setCacheable(options.cacheable);
 	    _this.setFocusOnFirst(options.focusOnFirst);
 	    _this.setShowAvatars(options.showAvatars);
+	    _this.setRecentItemsLimit(options.recentItemsLimit);
+	    _this.setOffsetAnimation(options.offsetAnimation);
 	    _this.recentTab = new RecentTab(babelHelpers.assertThisInitialized(_this), options.recentTabOptions);
 	    _this.searchTab = new SearchTab(babelHelpers.assertThisInitialized(_this), options.searchTabOptions, options.searchOptions);
 	    _this.addTab(_this.recentTab);
@@ -6758,7 +6782,7 @@ this.BX.UI = this.BX.UI || {};
 	      _this.load();
 	    }
 	    if (main_core.Type.isPlainObject(options.popupOptions)) {
-	      const allowedOptions = new Set(['overlay', 'bindOptions', 'targetContainer', 'zIndexOptions', 'events']);
+	      const allowedOptions = new Set(['overlay', 'bindOptions', 'targetContainer', 'zIndexOptions', 'events', 'animation', 'className']);
 	      const popupOptions = {};
 	      Object.keys(options.popupOptions).forEach(option => {
 	        if (allowedOptions.has(option)) {
@@ -7499,6 +7523,28 @@ this.BX.UI = this.BX.UI || {};
 	      return this.showAvatars;
 	    }
 	  }, {
+	    key: "setRecentItemsLimit",
+	    value: function setRecentItemsLimit(recentItemsLimit) {
+	      if (main_core.Type.isNumber(recentItemsLimit) && recentItemsLimit > 0) {
+	        this.recentItemsLimit = recentItemsLimit;
+	      }
+	    }
+	  }, {
+	    key: "getRecentItemsLimit",
+	    value: function getRecentItemsLimit() {
+	      return this.recentItemsLimit;
+	    }
+	  }, {
+	    key: "setOffsetAnimation",
+	    value: function setOffsetAnimation(flag) {
+	      if (main_core.Type.isBoolean(flag)) {
+	        this.offsetAnimation = flag;
+	        if (this.isRendered() && !this.offsetAnimation) {
+	          main_core.Dom.removeClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-offset-animation');
+	        }
+	      }
+	    }
+	  }, {
 	    key: "isCompactView",
 	    value: function isCompactView() {
 	      return this.compactView;
@@ -7855,6 +7901,7 @@ this.BX.UI = this.BX.UI || {};
 	        cacheable: this.isCacheable(),
 	        events: {
 	          onFirstShow: this.handlePopupFirstShow.bind(this),
+	          onShow: this.handlePopupShow.bind(this),
 	          onAfterShow: this.handlePopupAfterShow.bind(this),
 	          onAfterClose: this.handlePopupAfterClose.bind(this),
 	          onDestroy: this.handlePopupDestroy.bind(this)
@@ -8290,12 +8337,21 @@ this.BX.UI = this.BX.UI || {};
 	    key: "handlePopupFirstShow",
 	    value: function handlePopupFirstShow() {
 	      this.emit('onFirstShow');
-	      requestAnimationFrame(() => {
-	        requestAnimationFrame(() => {
-	          main_core.Dom.addClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-container');
-	        });
-	      });
 	      this.observeTabOverlapping();
+	    }
+	    /**
+	     * @private
+	     */
+	  }, {
+	    key: "handlePopupShow",
+	    value: function handlePopupShow() {
+	      if (this.offsetAnimation) {
+	        requestAnimationFrame(() => {
+	          requestAnimationFrame(() => {
+	            main_core.Dom.addClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-offset-animation');
+	          });
+	        });
+	      }
 	    }
 	    /**
 	     * @private
@@ -8362,6 +8418,9 @@ this.BX.UI = this.BX.UI || {};
 	        this.getTagSelector().clearTextBox();
 	        this.getTagSelector().showAddButton();
 	        this.getTagSelector().hideTextBox();
+	      }
+	      if (this.offsetAnimation) {
+	        main_core.Dom.removeClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-offset-animation');
 	      }
 	      this.emit('onHide');
 	    }
@@ -8438,6 +8497,7 @@ this.BX.UI = this.BX.UI || {};
 	        context: this.getContext(),
 	        entities: this.getEntities(),
 	        preselectedItems: this.getPreselectedItems(),
+	        recentItemsLimit: this.getRecentItemsLimit(),
 	        clearUnavailableItems: this.shouldClearUnavailableItems()
 	      };
 	    }

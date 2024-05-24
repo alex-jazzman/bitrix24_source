@@ -123,6 +123,9 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Socialnetwork\Group', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Voximplant\Call', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Main\User', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Product', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\ProductProperty', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\ProductPropertyValue', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'onBitrix24LicenseChange');
 			$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onBeforeUserUpdateHandler');
@@ -191,6 +194,9 @@ class BIConnector extends \CModule
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Socialnetwork\Group', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Voximplant\Call', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Main\User', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Product', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\ProductProperty', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\ProductPropertyValue', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'onBitrix24LicenseChange');
 		$eventManager->unRegisterEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onBeforeUserUpdateHandler');

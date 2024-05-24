@@ -34,11 +34,11 @@ describe('ui.bbcode.model/nodes', () => {
 			assert.ok(node.toString() === 'test text');
 		});
 
-		it('Should encode return decoded content', () => {
+		it('Should return decoded content', () => {
 			const node = scheme.createText('&#91;text&#93;');
 
-			assert.ok(node.getContent() === '[text]');
-			assert.ok(node.toString() === '[text]');
+			assert.ok(node.getContent() === '&#91;text&#93;');
+			assert.ok(node.toString() === '&amp;#91;text&amp;#93;');
 		});
 
 		it('TextNode.setParent()', () => {

@@ -45,6 +45,7 @@ CREATE TABLE b_voximplant_statistic (
   TRANSCRIPT_ID int,
   REDIAL_ATTEMPT int,
   COMMENT text,
+  RECORD_DURATION int,
   PRIMARY KEY (ID)
 );
 CREATE INDEX ix_b_voximplant_statistic_call_start_date ON b_voximplant_statistic (call_start_date);

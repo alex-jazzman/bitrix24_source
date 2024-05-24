@@ -22,6 +22,7 @@ export class Step extends Event.EventEmitter
 		this.linkTitle = options.linkTitle || null;
 		this.rounded = options.rounded || false;
 		this.title = options.title || null;
+		this.iconSrc = options.iconSrc || null;
 		this.article = options.article || null;
 		this.position = options.position || null;
 		this.cursorMode = options.cursorMode || false;
@@ -109,6 +110,11 @@ export class Step extends Event.EventEmitter
 	getTitle()
 	{
 		return this.title;
+	}
+
+	getIconSrc(): ?string
+	{
+		return this.iconSrc;
 	}
 
 	getPosition()

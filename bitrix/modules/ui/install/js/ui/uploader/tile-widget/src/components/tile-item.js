@@ -1,13 +1,13 @@
-import { PopupOptions, MenuManager } from 'main.popup';
-import { Text, Loc, Type } from 'main.core';
+import { Loc, Text, Type } from 'main.core';
+import { MenuManager, PopupOptions } from 'main.popup';
 import { FileOrigin, FileStatus, FileStatusType } from 'ui.uploader.core';
+import { TileWidgetSlot } from 'ui.uploader.tile-widget';
 
-import { UploadLoader } from './upload-loader';
+import type { BitrixVueComponentProps } from 'ui.vue3';
 import { ErrorPopup } from './error-popup';
 import { FileIconComponent } from './file-icon';
 
-import type { BitrixVueComponentProps } from 'ui.vue3';
-import { TileWidgetSlot } from 'ui.uploader.tile-widget';
+import { UploadLoader } from './upload-loader';
 
 export const TileItem: BitrixVueComponentProps = {
 	components: {
@@ -171,36 +171,41 @@ export const TileItem: BitrixVueComponentProps = {
 
 		toggleMenu(): void
 		{
-			if (this.menu)
-			{
-				if (this.menu.getPopupWindow().isShown())
+			setTimeout(() => {
+				if (this.menu)
 				{
-					this.menu.close();
+					if (this.menu.getPopupWindow().isShown())
+					{
+						this.menu.close();
 
-					return;
-				}
-				else
-				{
+						return;
+					}
+
 					this.menu.destroy();
 				}
-			}
 
-			this.menu = MenuManager.create({
-				id: this.tileId,
-				bindElement: this.$refs.menu,
-				angle: true,
-				offsetLeft: 13,
-				minWidth: 100,
-				cacheable: false,
-				items: this.menuItems,
-				events: {
-					onDestroy: () => this.menu = null,
-				},
+				this.menu = MenuManager.create({
+					id: this.tileId,
+					bindElement: this.$refs.menu,
+					angle: true,
+					offsetLeft: 13,
+					minWidth: 100,
+					cacheable: false,
+					items: this.menuItems,
+					events: {
+						onDestroy: () => {
+							this.menu = null;
+						},
+					},
+				});
+
+				this.emitter.emit('TileItem:onMenuCreate', {
+					menu: this.menu,
+					item: this.item,
+				});
+
+				this.menu.show();
 			});
-
-			this.emitter.emit('TileItem:onMenuCreate', { menu: this.menu, item: this.item })
-
-			this.menu.show();
 		},
 	},
 	// language=Vue

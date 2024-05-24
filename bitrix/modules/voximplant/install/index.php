@@ -669,9 +669,4 @@ class voximplant extends \CModule
 
 		return true;
 	}
-
-	public function migrateToBox()
-	{
-		\Bitrix\Main\Config\Option::delete($this->MODULE_ID);
-	}
 }

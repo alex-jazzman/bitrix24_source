@@ -11,6 +11,7 @@ import {
 	type BBCodeContentNode,
 	type BBCodeSpecialCharNode,
 } from 'ui.bbcode.model';
+import { BBCodeEncoder } from 'ui.bbcode.encoder';
 import { ParserScheme } from './parser-scheme';
 
 const TAG_REGEX: RegExp = /\[(\/)?(\w+|\*)(.*?)]/gs;
@@ -31,11 +32,13 @@ const parserScheme = new ParserScheme();
 type BBCodeParserOptions = {
 	scheme?: BBCodeScheme,
 	onUnknown?: (node: BBCodeContentNode, scheme: BBCodeScheme) => void,
+	encoder?: BBCodeEncoder,
 };
 
 class BBCodeParser
 {
 	scheme: BBCodeScheme;
+	encoder: BBCodeEncoder;
 	onUnknownHandler: () => any;
 
 	constructor(options: BBCodeParserOptions = {})
@@ -56,6 +59,15 @@ class BBCodeParser
 		else
 		{
 			this.setOnUnknown(BBCodeParser.defaultOnUnknownHandler);
+		}
+
+		if (options.encoder instanceof BBCodeEncoder)
+		{
+			this.setEncoder(options.encoder);
+		}
+		else
+		{
+			this.setEncoder(new BBCodeEncoder());
 		}
 	}
 
@@ -82,6 +94,23 @@ class BBCodeParser
 	getOnUnknownHandler(): () => any
 	{
 		return this.onUnknownHandler;
+	}
+
+	setEncoder(encoder: BBCodeEncoder)
+	{
+		if (encoder instanceof BBCodeEncoder)
+		{
+			this.encoder = encoder;
+		}
+		else
+		{
+			throw new TypeError('encoder is not BBCodeEncoder instance');
+		}
+	}
+
+	getEncoder(): BBCodeEncoder
+	{
+		return this.encoder;
 	}
 
 	static defaultOnUnknownHandler(node: BBCodeContentNode, scheme: BBCodeScheme): ?Array<BBCodeContentNode>
@@ -167,7 +196,9 @@ class BBCodeParser
 						return parserScheme.createTab();
 					}
 
-					return parserScheme.createText({ content: fragment });
+					return parserScheme.createText({
+						content: this.getEncoder().decodeText(fragment),
+					});
 				});
 		}
 
@@ -205,8 +236,10 @@ class BBCodeParser
 		{
 			if (sourceAttributes.startsWith('='))
 			{
-				result.value = BBCodeParser.trimQuotes(
-					sourceAttributes.slice(1),
+				result.value = this.getEncoder().decodeAttribute(
+					BBCodeParser.trimQuotes(
+						sourceAttributes.slice(1),
+					),
 				);
 
 				return result;
@@ -220,7 +253,9 @@ class BBCodeParser
 					const [key: string, value: string = ''] = item.split('=');
 					acc.attributes.push([
 						BBCodeParser.toLowerCase(key),
-						BBCodeParser.trimQuotes(value),
+						this.getEncoder().decodeAttribute(
+							BBCodeParser.trimQuotes(value),
+						),
 					]);
 
 					return acc;

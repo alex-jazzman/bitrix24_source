@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_core) {
+(function (exports,ui_bbcode_encoder,main_core) {
 	'use strict';
 
 	function getByIndex(array, index) {
@@ -75,6 +75,9 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getTagScheme() {
 	    return this.getScheme().getTagScheme(this.getName());
+	  }
+	  getEncoder() {
+	    return this.getScheme().getEncoder();
 	  }
 	  prepareCase(value) {
 	    const scheme = this.getScheme();
@@ -632,12 +635,14 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  toStringValue() {
 	    const value = this.getValue();
-	    return value ? `=${value}` : '';
+	    const encodedValue = this.getEncoder().encodeAttribute(value);
+	    return value ? `=${encodedValue}` : '';
 	  }
 	  toStringAttributes() {
 	    return Object.entries(this.getAttributes()).map(([key, attrValue]) => {
 	      const preparedKey = this.prepareCase(key);
-	      return attrValue ? `${preparedKey}=${attrValue}` : preparedKey;
+	      const encodedValue = this.getEncoder().encodeAttribute(attrValue);
+	      return attrValue ? `${preparedKey}=${encodedValue}` : preparedKey;
 	    }).join(' ');
 	  }
 	  getContent() {
@@ -831,17 +836,14 @@ this.BX.UI = this.BX.UI || {};
 	  static isTextNodeContent(value) {
 	    return main_core.Type.isString(value) || main_core.Type.isNumber(value);
 	  }
-	  static decodeSpecialChars(content) {
-	    return String(content).replaceAll('&#91;', '[').replaceAll('&#93;', ']');
-	  }
 	  setName(name) {}
 	  setContent(content) {
 	    if (BBCodeTextNode.isTextNodeContent(content)) {
-	      this[contentSymbol] = BBCodeTextNode.decodeSpecialChars(content);
+	      this[contentSymbol] = content;
 	    }
 	  }
 	  getContent() {
-	    return BBCodeTextNode.decodeSpecialChars(this[contentSymbol]);
+	    return this[contentSymbol];
 	  }
 	  adjustChildren() {}
 	  getLength() {
@@ -906,7 +908,7 @@ this.BX.UI = this.BX.UI || {};
 	    return [leftNode, rightNode];
 	  }
 	  toString() {
-	    return this.getContent();
+	    return this.getEncoder().encodeText(this.getContent());
 	  }
 	  toPlainText() {
 	    return this.toString();
@@ -1121,12 +1123,14 @@ this.BX.UI = this.BX.UI || {};
 	    this.tagSchemes = [];
 	    this.outputTagCase = BBCodeScheme.Case.LOWER;
 	    this.unresolvedNodesHoisting = true;
+	    this.encoder = new ui_bbcode_encoder.BBCodeEncoder();
 	    if (!main_core.Type.isPlainObject(options)) {
 	      throw new TypeError('options is not a object');
 	    }
 	    this.setTagSchemes(options.tagSchemes);
 	    this.setOutputTagCase(options.outputTagCase);
 	    this.setUnresolvedNodesHoisting(options.unresolvedNodesHoisting);
+	    this.setEncoder(options.encoder);
 	  }
 	  setTagSchemes(tagSchemes) {
 	    if (main_core.Type.isArray(tagSchemes)) {
@@ -1194,6 +1198,14 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  isAllowedUnresolvedNodesHoisting() {
 	    return this.unresolvedNodesHoisting;
+	  }
+	  setEncoder(encoder) {
+	    if (encoder instanceof ui_bbcode_encoder.BBCodeEncoder) {
+	      this.encoder = encoder;
+	    }
+	  }
+	  getEncoder() {
+	    return this.encoder;
 	  }
 	  getAllowedTags() {
 	    return this.getTagSchemes().flatMap(tagScheme => {
@@ -1384,111 +1396,115 @@ this.BX.UI = this.BX.UI || {};
 
 	class DefaultBBCodeScheme extends BBCodeScheme {
 	  constructor(options = {}) {
-	    super({
-	      tagSchemes: [new BBCodeTagScheme({
-	        name: ['b', 'u', 'i', 's'],
-	        group: ['#inline', '#format'],
-	        allowedChildren: ['#text', '#linebreak', '#inline'],
-	        canBeEmpty: false
-	      }), new BBCodeTagScheme({
-	        name: ['span'],
-	        group: ['#inline'],
-	        allowedChildren: ['#text', '#linebreak', '#inline'],
-	        canBeEmpty: false
-	      }), new BBCodeTagScheme({
-	        name: ['img'],
-	        group: ['#inlineBlock'],
-	        allowedChildren: ['#text'],
-	        canBeEmpty: false
-	      }), new BBCodeTagScheme({
-	        name: ['url'],
-	        group: ['#inline'],
-	        allowedChildren: ['#text', '#format', 'img'],
-	        canBeEmpty: false
-	      }), new BBCodeTagScheme({
-	        name: 'p',
-	        group: ['#block'],
-	        allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
-	        stringify: BBCodeTagScheme.defaultBlockStringifier,
-	        allowedIn: ['#root', '#shadowRoot']
-	      }), new BBCodeTagScheme({
-	        name: 'list',
-	        group: ['#block'],
-	        allowedChildren: ['*'],
-	        stringify: BBCodeTagScheme.defaultBlockStringifier,
-	        allowedIn: ['#root', '#shadowRoot'],
-	        canBeEmpty: false
-	      }), new BBCodeTagScheme({
-	        name: ['*'],
-	        allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
-	        stringify: node => {
-	          const openingTag = node.getOpeningTag();
-	          const content = node.getContent().trim();
-	          return `${openingTag}${content}`;
-	        },
-	        allowedIn: ['list']
-	      }), new BBCodeTagScheme({
-	        name: 'table',
-	        group: ['#block'],
-	        allowedChildren: ['tr'],
-	        stringify: BBCodeTagScheme.defaultBlockStringifier,
-	        allowedIn: ['#root', 'quote', 'spoiler'],
-	        canBeEmpty: false
-	      }), new BBCodeTagScheme({
-	        name: 'tr',
-	        allowedChildren: ['th', 'td'],
-	        allowedIn: ['table'],
-	        canBeEmpty: false
-	      }), new BBCodeTagScheme({
-	        name: ['th', 'td'],
-	        group: ['#shadowRoot'],
-	        allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock', '#block'],
-	        allowedIn: ['tr']
-	      }), new BBCodeTagScheme({
-	        name: 'quote',
-	        group: ['#block', '#shadowRoot'],
-	        allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock', '#block'],
-	        allowedIn: ['#root', '#shadowRoot']
-	      }), new BBCodeTagScheme({
-	        name: 'code',
-	        group: ['#block'],
-	        stringify: BBCodeTagScheme.defaultBlockStringifier,
-	        allowedChildren: ['#text', '#linebreak', '#tab'],
-	        allowedIn: ['#root', '#shadowRoot']
-	      }), new BBCodeTagScheme({
-	        name: 'video',
-	        group: ['#inlineBlock'],
-	        allowedChildren: ['#text'],
-	        allowedIn: ['#root', '#shadowRoot', 'p'],
-	        canBeEmpty: false
-	      }), new BBCodeTagScheme({
-	        name: 'spoiler',
-	        group: ['#block', '#shadowRoot'],
-	        allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock', '#block'],
-	        allowedIn: ['#root', '#shadowRoot']
-	      }), new BBCodeTagScheme({
-	        name: ['user', 'project', 'department'],
-	        group: ['#inline', '#mention'],
-	        allowedChildren: ['#text', '#format'],
-	        canBeEmpty: false
-	      }), new BBCodeTagScheme({
-	        name: 'disk',
+	    const tagSchemes = [new BBCodeTagScheme({
+	      name: ['b', 'u', 'i', 's'],
+	      group: ['#inline', '#format'],
+	      allowedChildren: ['#text', '#linebreak', '#inline'],
+	      canBeEmpty: false
+	    }), new BBCodeTagScheme({
+	      name: ['span'],
+	      group: ['#inline'],
+	      allowedChildren: ['#text', '#linebreak', '#inline'],
+	      canBeEmpty: false
+	    }), new BBCodeTagScheme({
+	      name: ['img'],
+	      group: ['#inlineBlock'],
+	      allowedChildren: ['#text'],
+	      canBeEmpty: false
+	    }), new BBCodeTagScheme({
+	      name: ['url'],
+	      group: ['#inline'],
+	      allowedChildren: ['#text', '#format', 'img'],
+	      canBeEmpty: false
+	    }), new BBCodeTagScheme({
+	      name: 'p',
+	      group: ['#block'],
+	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
+	      stringify: BBCodeTagScheme.defaultBlockStringifier,
+	      allowedIn: ['#root', '#shadowRoot']
+	    }), new BBCodeTagScheme({
+	      name: 'list',
+	      group: ['#block'],
+	      allowedChildren: ['*'],
+	      stringify: BBCodeTagScheme.defaultBlockStringifier,
+	      allowedIn: ['#root', '#shadowRoot'],
+	      canBeEmpty: false
+	    }), new BBCodeTagScheme({
+	      name: ['*'],
+	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock'],
+	      stringify: node => {
+	        const openingTag = node.getOpeningTag();
+	        const content = node.getContent().trim();
+	        return `${openingTag}${content}`;
+	      },
+	      allowedIn: ['list']
+	    }), new BBCodeTagScheme({
+	      name: 'table',
+	      group: ['#block'],
+	      allowedChildren: ['tr'],
+	      stringify: BBCodeTagScheme.defaultBlockStringifier,
+	      allowedIn: ['#root', 'quote', 'spoiler'],
+	      canBeEmpty: false
+	    }), new BBCodeTagScheme({
+	      name: 'tr',
+	      allowedChildren: ['th', 'td'],
+	      allowedIn: ['table'],
+	      canBeEmpty: false
+	    }), new BBCodeTagScheme({
+	      name: ['th', 'td'],
+	      group: ['#shadowRoot'],
+	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock', '#block'],
+	      allowedIn: ['tr']
+	    }), new BBCodeTagScheme({
+	      name: 'quote',
+	      group: ['#block', '#shadowRoot'],
+	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock', '#block'],
+	      allowedIn: ['#root', '#shadowRoot']
+	    }), new BBCodeTagScheme({
+	      name: 'code',
+	      group: ['#block'],
+	      stringify: BBCodeTagScheme.defaultBlockStringifier,
+	      allowedChildren: ['#text', '#linebreak', '#tab'],
+	      allowedIn: ['#root', '#shadowRoot']
+	    }), new BBCodeTagScheme({
+	      name: 'video',
+	      group: ['#inlineBlock'],
+	      allowedChildren: ['#text'],
+	      allowedIn: ['#root', '#shadowRoot', 'p'],
+	      canBeEmpty: false
+	    }), new BBCodeTagScheme({
+	      name: 'spoiler',
+	      group: ['#block', '#shadowRoot'],
+	      allowedChildren: ['#text', '#linebreak', '#inline', '#inlineBlock', '#block'],
+	      allowedIn: ['#root', '#shadowRoot']
+	    }), new BBCodeTagScheme({
+	      name: ['user', 'project', 'department'],
+	      group: ['#inline', '#mention'],
+	      allowedChildren: ['#text', '#format'],
+	      canBeEmpty: false
+	    }), new BBCodeTagScheme({
+	      name: ['#root']
+	    }), new BBCodeTagScheme({
+	      name: ['#fragment']
+	    }), new BBCodeTagScheme({
+	      name: ['#text']
+	    }), new BBCodeTagScheme({
+	      name: ['#linebreak']
+	    }), new BBCodeTagScheme({
+	      name: ['#tab'],
+	      stringify: () => {
+	        return '';
+	      }
+	    })];
+	    if ((options == null ? void 0 : options.fileTag) !== 'none') {
+	      tagSchemes.push(new BBCodeTagScheme({
+	        name: (options == null ? void 0 : options.fileTag) === 'file' ? 'file' : 'disk',
 	        group: ['#inline'],
 	        void: true
-	      }), new BBCodeTagScheme({
-	        name: ['#root']
-	      }), new BBCodeTagScheme({
-	        name: ['#fragment']
-	      }), new BBCodeTagScheme({
-	        name: ['#text']
-	      }), new BBCodeTagScheme({
-	        name: ['#linebreak']
-	      }), new BBCodeTagScheme({
-	        name: ['#tab'],
-	        stringify: () => {
-	          return '';
-	        }
-	      })],
+	      }));
+	    }
+	    super({
+	      tagSchemes,
 	      outputTagCase: BBCodeScheme.Case.LOWER,
 	      unresolvedNodesHoisting: true
 	    });
@@ -1514,5 +1530,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.BBCodeTabScheme = BBCodeTabScheme;
 	exports.DefaultBBCodeScheme = DefaultBBCodeScheme;
 
-}((this.BX.UI.Bbcode = this.BX.UI.Bbcode || {}),BX));
+}((this.BX.UI.BBCode = this.BX.UI.BBCode || {}),BX.UI.BBCode,BX));
 //# sourceMappingURL=model.bundle.js.map

@@ -102,6 +102,7 @@ export default class Dialog extends EventEmitter
 
 	saveRecentItemsWithDebounce: Function = Runtime.debounce(this.saveRecentItems, 2000, this);
 	recentItemsToSave = [];
+	recentItemsLimit: ?number = null;
 
 	navigation: Navigation = null;
 	header: BaseHeader = null;
@@ -113,6 +114,7 @@ export default class Dialog extends EventEmitter
 
 	clearUnavailableItems: boolean = false;
 	overlappingObserver: MutationObserver = null;
+	offsetAnimation: boolean = true;
 
 	static getById(id: string): ?Dialog
 	{
@@ -162,7 +164,7 @@ export default class Dialog extends EventEmitter
 				showTextBox: true,
 				showAddButton: false,
 				showCreateButton: false,
-				multiple: this.isMultiple()
+				multiple: this.isMultiple(),
 			};
 
 			const tagSelectorOptions = Object.assign(defaultOptions, customOptions, mandatoryOptions);
@@ -186,6 +188,8 @@ export default class Dialog extends EventEmitter
 		this.setCacheable(options.cacheable);
 		this.setFocusOnFirst(options.focusOnFirst);
 		this.setShowAvatars(options.showAvatars);
+		this.setRecentItemsLimit(options.recentItemsLimit);
+		this.setOffsetAnimation(options.offsetAnimation);
 
 		this.recentTab = new RecentTab(this, options.recentTabOptions);
 		this.searchTab = new SearchTab(this, options.searchTabOptions, options.searchOptions);
@@ -212,6 +216,8 @@ export default class Dialog extends EventEmitter
 				'targetContainer',
 				'zIndexOptions',
 				'events',
+				'animation',
+				'className',
 			]);
 
 			const popupOptions = {};
@@ -1223,6 +1229,32 @@ export default class Dialog extends EventEmitter
 		return this.showAvatars;
 	}
 
+	setRecentItemsLimit(recentItemsLimit: number): void
+	{
+		if (Type.isNumber(recentItemsLimit) && recentItemsLimit > 0)
+		{
+			this.recentItemsLimit = recentItemsLimit;
+		}
+	}
+
+	getRecentItemsLimit(): ?number
+	{
+		return this.recentItemsLimit;
+	}
+
+	setOffsetAnimation(flag: boolean): any
+	{
+		if (Type.isBoolean(flag))
+		{
+			this.offsetAnimation = flag;
+
+			if (this.isRendered() && !this.offsetAnimation)
+			{
+				Dom.removeClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-offset-animation');
+			}
+		}
+	}
+
 	isCompactView(): boolean
 	{
 		return this.compactView;
@@ -1622,6 +1654,7 @@ export default class Dialog extends EventEmitter
 			cacheable: this.isCacheable(),
 			events: {
 				onFirstShow: this.handlePopupFirstShow.bind(this),
+				onShow: this.handlePopupShow.bind(this),
 				onAfterShow: this.handlePopupAfterShow.bind(this),
 				onAfterClose: this.handlePopupAfterClose.bind(this),
 				onDestroy: this.handlePopupDestroy.bind(this),
@@ -2160,13 +2193,22 @@ export default class Dialog extends EventEmitter
 	{
 		this.emit('onFirstShow');
 
-		requestAnimationFrame(() => {
-			requestAnimationFrame(() => {
-				Dom.addClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-container');
-			});
-		});
-
 		this.observeTabOverlapping();
+	}
+
+	/**
+	 * @private
+	 */
+	handlePopupShow(): void
+	{
+		if (this.offsetAnimation)
+		{
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					Dom.addClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-offset-animation');
+				});
+			});
+		}
 	}
 
 	/**
@@ -2254,6 +2296,11 @@ export default class Dialog extends EventEmitter
 			this.getTagSelector().hideTextBox();
 		}
 
+		if (this.offsetAnimation)
+		{
+			Dom.removeClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-offset-animation');
+		}
+
 		this.emit('onHide');
 	}
 
@@ -2337,7 +2384,8 @@ export default class Dialog extends EventEmitter
 			context: this.getContext(),
 			entities: this.getEntities(),
 			preselectedItems: this.getPreselectedItems(),
-			clearUnavailableItems: this.shouldClearUnavailableItems()
+			recentItemsLimit: this.getRecentItemsLimit(),
+			clearUnavailableItems: this.shouldClearUnavailableItems(),
 		};
 	}
 }

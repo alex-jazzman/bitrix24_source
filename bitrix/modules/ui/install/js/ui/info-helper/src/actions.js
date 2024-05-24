@@ -1,4 +1,5 @@
 import { ajax, Extension, Uri } from 'main.core';
+import { sendData } from 'ui.analytics';
 
 export class Actions
 {
@@ -30,6 +31,48 @@ export class Actions
 	static openPriceTable(): void
 	{
 		Actions.openSlider({ url: '/settings/license_all.php' });
+	}
+
+	static openChatWithHead(data): void
+	{
+		const opener = top.BX.Messenger.Public.openChat();
+		const analyticData = {
+			tool: 'InfoHelper',
+			category: 'slider',
+			event: 'create_chatforrequest',
+		};
+
+		if (data.toolId)
+		{
+			ajax.runAction('intranet.tools.tool.createHeadChat', {
+				data: {
+					toolId: data.toolId,
+				},
+			}).then((response) => {
+				opener.then(() => {
+					top.BX.Messenger.Public.openChat(`chat${response.data.chatId}`);
+				});
+				analyticData.c_section = data.toolId;
+				analyticData.type = 'tool_off';
+				sendData(analyticData);
+			});
+		}
+
+		if (data.featureCode)
+		{
+			ajax.runAction('bitrix24.license.upgraderequest.createHeadChat', {
+				data: {
+					code: data.featureCode,
+				},
+			}).then((response) => {
+				opener.then(() => {
+					top.BX.Messenger.Public.openChat(`chat${response.data.chatId}`);
+				});
+				analyticData.c_section = data.featureCode;
+				analyticData.type = 'limit';
+				sendData(analyticData);
+			});
+		}
 	}
 
 	static openCheckout(data): void

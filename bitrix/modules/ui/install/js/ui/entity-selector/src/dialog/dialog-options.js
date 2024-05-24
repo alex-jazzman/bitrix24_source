@@ -50,5 +50,7 @@ export type DialogOptions = {
 	footerOptions?: FooterOptions,
 	clearUnavailableItems?: boolean,
 	showAvatars?: boolean,
-	compactView?: boolean
+	compactView?: boolean,
+	recentItemsLimit?: number,
+	offsetAnimation?: boolean,
 };

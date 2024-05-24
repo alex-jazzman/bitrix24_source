@@ -1,10 +1,13 @@
-import { Loc, Type, Tag, Reflection, Dom, Text, Event } from 'main.core';
+import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { EventEmitter } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import type { DashboardAnalyticInfo } from 'biconnector.apache-superset-analytics';
+import { Dialog } from 'ui.entity-selector';
+import { TagFooter } from 'biconnector.entity-selector';
+import 'ui.alerts';
 
 type Props = {
 	gridId: ?string,
@@ -21,12 +24,16 @@ class SupersetDashboardGridManager
 {
 	#dashboardManager: DashboardManager = null;
 	#grid: BX.Main.grid;
+	#filter: BX.Main.Filter;
+	#tagSelectorDialog: ?Dialog;
 
 	constructor(props: Props)
 	{
 		this.#dashboardManager = new DashboardManager();
 
 		this.#grid = BX.Main.gridManager.getById(props.gridId)?.instance;
+		this.#filter = BX.Main.filterManager.getById(props.gridId);
+
 		this.#subscribeToEvents();
 	}
 
@@ -42,6 +49,48 @@ class SupersetDashboardGridManager
 				{
 					this.onUpdatedDashboardBatchStatus(eventArgs.dashboardList);
 				}
+			}
+			else if (
+				sliderEvent.getEventId() === 'BIConnector.Superset.DashboardTagGrid:onTagChange'
+				|| sliderEvent.getEventId() === 'BIConnector.Superset.DashboardTagGrid:onTagDelete'
+			)
+			{
+				if (this.#tagSelectorDialog)
+				{
+					this.#tagSelectorDialog.destroy();
+					this.#tagSelectorDialog = null;
+				}
+
+				const filterTagValues = this.getFilter().getFilterFieldsValues();
+				if (Type.isUndefined(filterTagValues['TAGS.ID']) || filterTagValues['TAGS.ID'].length === 0)
+				{
+					this.getGrid().reload();
+
+					return;
+				}
+
+				const { tagId, title } = sliderEvent.getData();
+				const currentFilteredTags = filterTagValues['TAGS.ID'] ?? [];
+				const currentFilteredTagLabels = filterTagValues['TAGS.ID_label'] ?? [];
+
+				const index = currentFilteredTags.findIndex((id) => Text.toInteger(id) === Text.toInteger(tagId));
+				if (sliderEvent.getEventId() === 'BIConnector.Superset.DashboardTagGrid:onTagDelete')
+				{
+					currentFilteredTags.splice(index, 1);
+					currentFilteredTagLabels.splice(index, 1);
+				}
+				else
+				{
+					currentFilteredTagLabels[index] = title;
+				}
+
+				const filterApi = this.getFilter().getApi();
+				filterApi.extendFilter({
+					'TAGS.ID': currentFilteredTags,
+					'TAGS.ID_label': currentFilteredTagLabels,
+				});
+
+				filterApi.apply();
 			}
 		});
 
@@ -59,6 +108,10 @@ class SupersetDashboardGridManager
 		EventEmitter.subscribe('BX.Rest.Configuration.Install:onFinish', () => {
 			this.#grid.reload();
 		});
+
+		EventEmitter.subscribe('Grid::updated', () => {
+			BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+		});
 	}
 
 	onUpdatedDashboardBatchStatus(dashboardList: Array)
@@ -72,6 +125,11 @@ class SupersetDashboardGridManager
 	getGrid(): BX.Main.grid
 	{
 		return this.#grid;
+	}
+
+	getFilter(): BX.Main.Filter
+	{
+		return this.#filter;
 	}
 
 	/**
@@ -137,20 +195,24 @@ class SupersetDashboardGridManager
 			}
 		}
 
-		this.#dashboardManager.restartDashboardImport(dashboardId).then(
-			(response) => {
-				const dashboardIds = response?.data?.restartedDashboardIds;
-				if (!dashboardIds)
-				{
-					return;
-				}
+		this.#dashboardManager
+			.restartDashboardImport(dashboardId)
+			.then(
+				(response) => {
+					const dashboardIds = response?.data?.restartedDashboardIds;
+					if (!dashboardIds)
+					{
+						return;
+					}
 
-				for (const restartedDashboardId of dashboardIds)
-				{
-					this.updateDashboardStatus(restartedDashboardId, 'L');
-				}
-			},
-		);
+					for (const restartedDashboardId of dashboardIds)
+					{
+						this.updateDashboardStatus(restartedDashboardId, 'L');
+					}
+				},
+			)
+			.catch()
+		;
 	}
 
 	setDashboardStatusReady(dashboardId: number): void
@@ -174,7 +236,8 @@ class SupersetDashboardGridManager
 			const label = labelWrapper.querySelector('.dashboard-status-label');
 			const reloadBtn = labelWrapper.querySelector('#restart-dashboard-load-btn');
 
-			switch (status) {
+			switch (status)
+			{
 				case DashboardManager.DASHBOARD_STATUS_READY:
 					if (reloadBtn)
 					{
@@ -383,6 +446,7 @@ class SupersetDashboardGridManager
 				grid.tableUnfade();
 				const counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
 				counterTotalTextContainer.textContent++;
+				BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
 			})
 			.catch((response) => {
 				grid.tableUnfade();
@@ -630,6 +694,167 @@ class SupersetDashboardGridManager
 
 		Dom.replace(cellContent, newCellContent);
 		BX.UI.Hint.init(dateModifyCell);
+	}
+
+	handleTagClick(tagJson: string): void
+	{
+		const tag = JSON.parse(tagJson);
+		const filterTagValues = this.getFilter().getFilterFieldsValues();
+		let currentFilteredTags = filterTagValues['TAGS.ID'] ?? [];
+		let currentFilteredTagLabels = filterTagValues['TAGS.ID_label'] ?? [];
+		tag.ID = String(tag.ID);
+		if (tag.IS_FILTERED)
+		{
+			currentFilteredTags = currentFilteredTags.filter((value) => value !== tag.ID);
+			currentFilteredTagLabels = currentFilteredTagLabels.filter((value) => value !== tag.TITLE);
+		}
+		else if (!currentFilteredTags.includes(tag.ID))
+		{
+			currentFilteredTags.push(tag.ID);
+			currentFilteredTagLabels.push(tag.TITLE);
+		}
+
+		const filterApi = this.getFilter().getApi();
+		filterApi.extendFilter({
+			'TAGS.ID': currentFilteredTags,
+			'TAGS.ID_label': currentFilteredTagLabels,
+		});
+
+		filterApi.apply();
+	}
+
+	handleTagAddClick(dashboardId: number, preselectedIds: [], event: BaseEvent): void
+	{
+		const onTagsChange = () => {
+			const tags = this.#tagSelectorDialog.getSelectedItems().map((item) => item.getId());
+			this.#dashboardManager
+				.setDashboardTags(dashboardId, tags)
+				.then(
+					() => {
+						this.getGrid().updateRow(dashboardId, null, null, () => {
+							const anchor = this.getGrid()
+								.getRows()
+								.getById(dashboardId)
+								?.getCellById('TAGS')
+							;
+
+							if (anchor && this.#tagSelectorDialog)
+							{
+								this.#tagSelectorDialog.setTargetNode(anchor);
+							}
+						});
+						const filterTagValues = this.getFilter().getFilterFieldsValues();
+						const currentFilteredTags = filterTagValues['TAGS.ID'] ?? [];
+						if (currentFilteredTags.length > 0)
+						{
+							const filtered = tags.filter((tagId) => currentFilteredTags.includes(String(tagId)));
+							if (filtered.length === 0)
+							{
+								this.#tagSelectorDialog.destroy();
+
+								this.#tagSelectorDialog = null;
+							}
+						}
+					},
+				);
+		};
+		const entityId = 'biconnector-superset-dashboard-tag';
+
+		const preselectedItems = [];
+		JSON.parse(preselectedIds).forEach((id) => preselectedItems.push([entityId, id]));
+		this.#tagSelectorDialog = new Dialog({
+			id: 'biconnector-superset-tag-widget',
+			targetNode: event.getData().button,
+			enableSearch: true,
+			width: 350,
+			height: 400,
+			multiple: true,
+			dropdownMode: true,
+			compactView: true,
+			context: entityId,
+			clearUnavailableItems: true,
+			entities: [
+				{
+					id: entityId,
+					options: {
+						dashboardId,
+					},
+				},
+			],
+			preselectedItems,
+			searchOptions: {
+				allowCreateItem: false,
+			},
+			footer: TagFooter,
+			events: {
+				onSearch: (event: BaseEvent) => {
+					const query = event.getData().query;
+					const footer = this.#tagSelectorDialog.getFooterContainer();
+					if (Type.isStringFilled(query.trim()))
+					{
+						Dom.show(footer.querySelector('#tags-widget-custom-footer-add-new'));
+						Dom.show(footer.querySelector('#tags-widget-custom-footer-conjunction'));
+
+						return;
+					}
+
+					Dom.hide(footer.querySelector('#tags-widget-custom-footer-add-new'));
+					Dom.hide(footer.querySelector('#tags-widget-custom-footer-conjunction'));
+				},
+				'Search:onItemCreateAsync': (searchEvent: BaseEvent) => {
+					return new Promise((resolve, reject) => {
+						const { searchQuery } = searchEvent.getData();
+						const name = searchQuery.getQuery().toLowerCase();
+
+						this.#dashboardManager.addTag(name)
+							.then((result) => {
+								const newTag = result.data;
+								const item = this.#tagSelectorDialog.addItem({
+									id: newTag.ID,
+									entityId,
+									title: name,
+									tabs: 'all',
+								});
+								if (item)
+								{
+									item.select();
+								}
+
+								resolve();
+							})
+							.catch((result) => {
+								const errors = result.errors;
+								errors.forEach((error) => {
+									const alert = Tag.render`
+										<div class="dashboard-tag-already-exists-alert">
+											<div class='ui-alert ui-alert-xs ui-alert-danger'> 
+												<span class='ui-alert-message'>
+													${error.message}
+												</span> 
+											</div>
+										</div>
+									`;
+
+									Dom.prepend(alert, this.#tagSelectorDialog.getFooterContainer());
+									setTimeout(
+										() => {
+											Dom.remove(alert);
+										},
+										3000,
+									);
+
+									reject();
+								});
+							})
+						;
+					});
+				},
+				'Item:onSelect': Runtime.debounce(onTagsChange, 100, this),
+				'Item:onDeselect': Runtime.debounce(onTagsChange, 100, this),
+			},
+		});
+
+		this.#tagSelectorDialog.show();
 	}
 }
 

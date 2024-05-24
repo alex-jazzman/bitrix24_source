@@ -13,6 +13,7 @@ return [
 		'main.loader',
 		'pull.client',
 		'main.qrcode',
+		'ui.icon-set.main',
 		'ui.design-tokens',
 		'ui.fonts.opensans',
 	],

@@ -776,4 +776,44 @@ describe('ui.bbcode.parser/Parser', () => {
 
 		assert.equal(ast.toString(), bbcode);
 	});
+
+	describe('Encoding/decoding', () => {
+		it('should decode source bbcode', () => {
+		    const bbcode = stripIndent(`
+				[p]&#91;&#93;[/p]
+				&#91;&#93;
+				&amp;#91;&amp;#93;
+				&#39;&quot;
+				&lt;&gt;
+		    `);
+
+			const parser = new BBCodeParser();
+			const ast = parser.parse(bbcode);
+
+			assert.equal(
+				ast.getChildren().at(0).getChildren().at(0).getContent(),
+				'[]'
+			);
+
+			assert.equal(
+				ast.getChildren().at(2).getContent(),
+				'[]'
+			);
+
+			assert.equal(
+				ast.getChildren().at(4).getContent(),
+				'&#91;&#93;'
+			);
+
+			assert.equal(
+				ast.getChildren().at(6).getContent(),
+				'\'"',
+			);
+
+			assert.equal(
+				ast.getChildren().at(8).getContent(),
+				'<>',
+			);
+		});
+	});
 });

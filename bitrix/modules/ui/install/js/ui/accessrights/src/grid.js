@@ -184,9 +184,14 @@ export default class Grid {
 				const waitContainer = this.buttonPanel.getContainer().querySelector('.ui-btn-wait');
 				Dom.removeClass(waitContainer, 'ui-btn-wait');
 			},
-			() => {
+			(response) => {
+				let errorMessage = 'Error message';
+				if (response.errors)
+				{
+					errorMessage = response.errors[0].message;
+				}
 				this.isRequested = false;
-				this.showNotification('Error message');
+				this.showNotification(errorMessage);
 				this.unBlockGrid();
 				clearTimeout(this.timer);
 				const waitContainer = this.buttonPanel.getContainer().querySelector('.ui-btn-wait');
@@ -243,9 +248,14 @@ export default class Grid {
 				this.unBlockGrid();
 				clearTimeout(this.timer);
 			},
-			() => {
+			(response) => {
+				let errorMessage = 'Error message';
+				if (response.errors)
+				{
+					errorMessage = response.errors[0].message;
+				}
 				this.isRequested = false;
-				this.showNotification('Error message');
+				this.showNotification(errorMessage);
 				this.unBlockGrid();
 				clearTimeout(this.timer);
 			}

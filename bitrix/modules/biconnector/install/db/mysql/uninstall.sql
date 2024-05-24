@@ -7,3 +7,5 @@ DROP TABLE IF EXISTS b_biconnector_dictionary_data;
 DROP TABLE IF EXISTS b_biconnector_log;
 DROP TABLE IF EXISTS b_biconnector_superset_dashboard;
 DROP TABLE IF EXISTS b_biconnector_superset_user;
+DROP TABLE IF EXISTS b_biconnector_superset_tag;
+DROP TABLE IF EXISTS b_biconnector_superset_dashboard_tag;

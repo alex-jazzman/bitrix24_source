@@ -114,6 +114,11 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 		this.eventIds = new Set();
 		this.needReloadStorageKey = 'UI.EntityEditor.needReload';
+
+		this._attributeManager = null;
+
+		this._validationEnabled = true;
+
 	};
 	BX.UI.EntityEditor.prototype =
 	{
@@ -388,13 +393,13 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		initializeManagers: function()
 		{
-
 			this._userFieldManager = BX.prop.get(this._settings, "userFieldManager", null);
 			this._configurationFieldManager = BX.UI.EntityConfigurationManager.create(
 				this._id,
 				{ editor: this }
 			);
-			var eventArgs = {
+
+			let eventArgs = {
 				id: this._id,
 				editor: this,
 				type: 'editor',
@@ -494,6 +499,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 
 			this.releaseAjaxForm();
 			this.releaseReloadAjaxForm();
+			this._attributeManager = null;
 			this._container = BX.remove(this._container);
 
 			this._isReleased = true;
@@ -850,9 +856,18 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		{
 			return this._userFieldManager;
 		},
+		setAttributeManager: function(attributeManager)
+		{
+			if (BX.Type.isObject(attributeManager))
+			{
+				this._attributeManager = attributeManager;
+			}
+
+			return this._attributeManager;
+		},
 		getAttributeManager: function()
 		{
-			return null;
+			return this._attributeManager;
 		},
 		getHtmlEditorConfig: function(fieldName)
 		{
@@ -2383,17 +2398,44 @@ if(typeof BX.UI.EntityEditor === "undefined")
 				this._reloadAjaxForm.submit();
 			}
 		},
+		setValidationEnabled: function(isEnabled)
+		{
+			isEnabled = !!isEnabled;
+
+			this._validationEnabled = isEnabled;
+
+			if (this._userFieldManager)
+			{
+				this._userFieldManager.setValidationEnabled(isEnabled);
+			}
+		},
 		validate: function(result)
 		{
-			for(var i = 0, length = this._activeControls.length; i < length; i++)
+			const promise = new BX.Promise();
+
+			if (this._validationEnabled)
 			{
-				this._activeControls[i].validate(result);
+				for(let i = 0, length = this._activeControls.length; i < length; i++)
+				{
+					this._activeControls[i].validate(result);
+				}
+
+				if (this._userFieldManager)
+				{
+					this._userFieldManager.validate(result).then(
+						BX.delegate(function() { promise.fulfill(); }, this)
+					);
+				}
+				else
+				{
+					promise.fulfill();
+				}
+			}
+			else
+			{
+				promise.fulfill();
 			}
 
-			var promise = new BX.Promise();
-			this._userFieldManager.validate(result).then(
-				BX.delegate(function() { promise.fulfill(); }, this)
-			);
 			return promise;
 		},
 		isRequestRunning: function()

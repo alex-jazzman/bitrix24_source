@@ -15,3 +15,4 @@ $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_READY
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_NOT_EMPTY'] = "Добавьте название отчёта";
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_ONLY_CUSTOM'] = 'Нельзя менять названия системных отчётов и отчётов из Маркета. Вы можете скопировать отчёт и изменить название копии';
 $MESS['BICONNECTOR_CONTROLLER_DASHBOARD_RENAME_ERROR_CANNOT_EDIT_TITLE_UNHANDLED'] = 'Не удалось изменить название отчёта, попробуйте ещё раз';
+

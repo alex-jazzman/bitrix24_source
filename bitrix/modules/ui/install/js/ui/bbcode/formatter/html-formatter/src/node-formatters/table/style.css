@@ -1,0 +1,9 @@
+.ui-formatter-table {
+    border-collapse: collapse;
+}
+
+.ui-formatter-table td,
+.ui-formatter-table th {
+    border: 1px solid grey;
+    padding: 3px;
+}

@@ -28,6 +28,8 @@ export const Content = {
 		'categories',
 		'options',
 		'params',
+		'context',
+		'onToggleOption',
 	],
 
 	data()
@@ -616,6 +618,7 @@ export const Content = {
 						v-if="dataParams.useSectioning"
 						v-for="category in categoryBySection"
 						:key="category.key"
+						:context="context"
 						:category="category"
 						:columnCount="columnCount"
 						:options="getOptionsByCategory(category.key)"
@@ -627,6 +630,7 @@ export const Content = {
 	
 					<checkbox-list-category
 						v-else
+						:context="context"
 						:columnCount="columnCount"
 						:options="getOptions()"
 						:isActiveSearch="search.length > 0"

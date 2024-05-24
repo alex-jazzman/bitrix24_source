@@ -1,8 +1,8 @@
 /* eslint-disable */
-(function (exports,main_core,main_date,biconnector_apacheSupersetDashboardManager,main_core_events,ui_dialogs_messagebox,biconnector_apacheSupersetAnalytics) {
+(function (exports,main_core,main_date,biconnector_apacheSupersetDashboardManager,main_core_events,ui_dialogs_messagebox,biconnector_apacheSupersetAnalytics,ui_entitySelector,biconnector_entitySelector) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
@@ -12,6 +12,8 @@
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _dashboardManager = /*#__PURE__*/new WeakMap();
 	var _grid = /*#__PURE__*/new WeakMap();
+	var _filter = /*#__PURE__*/new WeakMap();
+	var _tagSelectorDialog = /*#__PURE__*/new WeakMap();
 	var _subscribeToEvents = /*#__PURE__*/new WeakSet();
 	var _notifyErrors = /*#__PURE__*/new WeakSet();
 	var _buildDashboardTitleEditor = /*#__PURE__*/new WeakSet();
@@ -34,8 +36,17 @@
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _filter, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _tagSelectorDialog, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldSet(this, _dashboardManager, new biconnector_apacheSupersetDashboardManager.DashboardManager());
 	    babelHelpers.classPrivateFieldSet(this, _grid, (_BX$Main$gridManager$ = BX.Main.gridManager.getById(props.gridId)) === null || _BX$Main$gridManager$ === void 0 ? void 0 : _BX$Main$gridManager$.instance);
+	    babelHelpers.classPrivateFieldSet(this, _filter, BX.Main.filterManager.getById(props.gridId));
 	    _classPrivateMethodGet(this, _subscribeToEvents, _subscribeToEvents2).call(this);
 	  }
 	  babelHelpers.createClass(SupersetDashboardGridManager, [{
@@ -58,6 +69,11 @@
 	    key: "getGrid",
 	    value: function getGrid() {
 	      return babelHelpers.classPrivateFieldGet(this, _grid);
+	    }
+	  }, {
+	    key: "getFilter",
+	    value: function getFilter() {
+	      return babelHelpers.classPrivateFieldGet(this, _filter);
 	    }
 	    /**
 	     * @param params LoginPopupParams
@@ -131,7 +147,7 @@
 	        } finally {
 	          _iterator2.f();
 	        }
-	      });
+	      })["catch"]();
 	    }
 	  }, {
 	    key: "setDashboardStatusReady",
@@ -320,6 +336,7 @@
 	        grid.tableUnfade();
 	        var counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
 	        counterTotalTextContainer.textContent++;
+	        BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
 	      })["catch"](function (response) {
 	        grid.tableUnfade();
 	        if (response.errors) {
@@ -409,11 +426,143 @@
 	        main_core.Dom.style(previewSection, 'display', 'flex');
 	      }
 	    }
+	  }, {
+	    key: "handleTagClick",
+	    value: function handleTagClick(tagJson) {
+	      var _filterTagValues$TAGS, _filterTagValues$TAGS2;
+	      var tag = JSON.parse(tagJson);
+	      var filterTagValues = this.getFilter().getFilterFieldsValues();
+	      var currentFilteredTags = (_filterTagValues$TAGS = filterTagValues['TAGS.ID']) !== null && _filterTagValues$TAGS !== void 0 ? _filterTagValues$TAGS : [];
+	      var currentFilteredTagLabels = (_filterTagValues$TAGS2 = filterTagValues['TAGS.ID_label']) !== null && _filterTagValues$TAGS2 !== void 0 ? _filterTagValues$TAGS2 : [];
+	      tag.ID = String(tag.ID);
+	      if (tag.IS_FILTERED) {
+	        currentFilteredTags = currentFilteredTags.filter(function (value) {
+	          return value !== tag.ID;
+	        });
+	        currentFilteredTagLabels = currentFilteredTagLabels.filter(function (value) {
+	          return value !== tag.TITLE;
+	        });
+	      } else if (!currentFilteredTags.includes(tag.ID)) {
+	        currentFilteredTags.push(tag.ID);
+	        currentFilteredTagLabels.push(tag.TITLE);
+	      }
+	      var filterApi = this.getFilter().getApi();
+	      filterApi.extendFilter({
+	        'TAGS.ID': currentFilteredTags,
+	        'TAGS.ID_label': currentFilteredTagLabels
+	      });
+	      filterApi.apply();
+	    }
+	  }, {
+	    key: "handleTagAddClick",
+	    value: function handleTagAddClick(dashboardId, preselectedIds, event) {
+	      var _this5 = this;
+	      var onTagsChange = function onTagsChange() {
+	        var tags = babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).getSelectedItems().map(function (item) {
+	          return item.getId();
+	        });
+	        babelHelpers.classPrivateFieldGet(_this5, _dashboardManager).setDashboardTags(dashboardId, tags).then(function () {
+	          var _filterTagValues$TAGS3;
+	          _this5.getGrid().updateRow(dashboardId, null, null, function () {
+	            var _this5$getGrid$getRow;
+	            var anchor = (_this5$getGrid$getRow = _this5.getGrid().getRows().getById(dashboardId)) === null || _this5$getGrid$getRow === void 0 ? void 0 : _this5$getGrid$getRow.getCellById('TAGS');
+	            if (anchor && babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog)) {
+	              babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).setTargetNode(anchor);
+	            }
+	          });
+	          var filterTagValues = _this5.getFilter().getFilterFieldsValues();
+	          var currentFilteredTags = (_filterTagValues$TAGS3 = filterTagValues['TAGS.ID']) !== null && _filterTagValues$TAGS3 !== void 0 ? _filterTagValues$TAGS3 : [];
+	          if (currentFilteredTags.length > 0) {
+	            var filtered = tags.filter(function (tagId) {
+	              return currentFilteredTags.includes(String(tagId));
+	            });
+	            if (filtered.length === 0) {
+	              babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).destroy();
+	              babelHelpers.classPrivateFieldSet(_this5, _tagSelectorDialog, null);
+	            }
+	          }
+	        });
+	      };
+	      var entityId = 'biconnector-superset-dashboard-tag';
+	      var preselectedItems = [];
+	      JSON.parse(preselectedIds).forEach(function (id) {
+	        return preselectedItems.push([entityId, id]);
+	      });
+	      babelHelpers.classPrivateFieldSet(this, _tagSelectorDialog, new ui_entitySelector.Dialog({
+	        id: 'biconnector-superset-tag-widget',
+	        targetNode: event.getData().button,
+	        enableSearch: true,
+	        width: 350,
+	        height: 400,
+	        multiple: true,
+	        dropdownMode: true,
+	        compactView: true,
+	        context: entityId,
+	        clearUnavailableItems: true,
+	        entities: [{
+	          id: entityId,
+	          options: {
+	            dashboardId: dashboardId
+	          }
+	        }],
+	        preselectedItems: preselectedItems,
+	        searchOptions: {
+	          allowCreateItem: false
+	        },
+	        footer: biconnector_entitySelector.TagFooter,
+	        events: {
+	          onSearch: function onSearch(event) {
+	            var query = event.getData().query;
+	            var footer = babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).getFooterContainer();
+	            if (main_core.Type.isStringFilled(query.trim())) {
+	              main_core.Dom.show(footer.querySelector('#tags-widget-custom-footer-add-new'));
+	              main_core.Dom.show(footer.querySelector('#tags-widget-custom-footer-conjunction'));
+	              return;
+	            }
+	            main_core.Dom.hide(footer.querySelector('#tags-widget-custom-footer-add-new'));
+	            main_core.Dom.hide(footer.querySelector('#tags-widget-custom-footer-conjunction'));
+	          },
+	          'Search:onItemCreateAsync': function SearchOnItemCreateAsync(searchEvent) {
+	            return new Promise(function (resolve, reject) {
+	              var _searchEvent$getData = searchEvent.getData(),
+	                searchQuery = _searchEvent$getData.searchQuery;
+	              var name = searchQuery.getQuery().toLowerCase();
+	              babelHelpers.classPrivateFieldGet(_this5, _dashboardManager).addTag(name).then(function (result) {
+	                var newTag = result.data;
+	                var item = babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).addItem({
+	                  id: newTag.ID,
+	                  entityId: entityId,
+	                  title: name,
+	                  tabs: 'all'
+	                });
+	                if (item) {
+	                  item.select();
+	                }
+	                resolve();
+	              })["catch"](function (result) {
+	                var errors = result.errors;
+	                errors.forEach(function (error) {
+	                  var alert = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t\t<div class=\"dashboard-tag-already-exists-alert\">\n\t\t\t\t\t\t\t\t\t\t\t<div class='ui-alert ui-alert-xs ui-alert-danger'> \n\t\t\t\t\t\t\t\t\t\t\t\t<span class='ui-alert-message'>\n\t\t\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t\t\t</span> \n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t"])), error.message);
+	                  main_core.Dom.prepend(alert, babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).getFooterContainer());
+	                  setTimeout(function () {
+	                    main_core.Dom.remove(alert);
+	                  }, 3000);
+	                  reject();
+	                });
+	              });
+	            });
+	          },
+	          'Item:onSelect': main_core.Runtime.debounce(onTagsChange, 100, this),
+	          'Item:onDeselect': main_core.Runtime.debounce(onTagsChange, 100, this)
+	        }
+	      }));
+	      babelHelpers.classPrivateFieldGet(this, _tagSelectorDialog).show();
+	    }
 	  }]);
 	  return SupersetDashboardGridManager;
 	}();
 	function _subscribeToEvents2() {
-	  var _this5 = this;
+	  var _this6 = this;
 	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', function (event) {
 	    var _event$getCompatData = event.getCompatData(),
 	      _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
@@ -421,8 +570,39 @@
 	    if (sliderEvent.getEventId() === 'BIConnector.Superset.DashboardDetail:onDashboardBatchStatusUpdate') {
 	      var eventArgs = sliderEvent.getData();
 	      if (eventArgs.dashboardList) {
-	        _this5.onUpdatedDashboardBatchStatus(eventArgs.dashboardList);
+	        _this6.onUpdatedDashboardBatchStatus(eventArgs.dashboardList);
 	      }
+	    } else if (sliderEvent.getEventId() === 'BIConnector.Superset.DashboardTagGrid:onTagChange' || sliderEvent.getEventId() === 'BIConnector.Superset.DashboardTagGrid:onTagDelete') {
+	      var _filterTagValues$TAGS4, _filterTagValues$TAGS5;
+	      if (babelHelpers.classPrivateFieldGet(_this6, _tagSelectorDialog)) {
+	        babelHelpers.classPrivateFieldGet(_this6, _tagSelectorDialog).destroy();
+	        babelHelpers.classPrivateFieldSet(_this6, _tagSelectorDialog, null);
+	      }
+	      var filterTagValues = _this6.getFilter().getFilterFieldsValues();
+	      if (main_core.Type.isUndefined(filterTagValues['TAGS.ID']) || filterTagValues['TAGS.ID'].length === 0) {
+	        _this6.getGrid().reload();
+	        return;
+	      }
+	      var _sliderEvent$getData = sliderEvent.getData(),
+	        tagId = _sliderEvent$getData.tagId,
+	        title = _sliderEvent$getData.title;
+	      var currentFilteredTags = (_filterTagValues$TAGS4 = filterTagValues['TAGS.ID']) !== null && _filterTagValues$TAGS4 !== void 0 ? _filterTagValues$TAGS4 : [];
+	      var currentFilteredTagLabels = (_filterTagValues$TAGS5 = filterTagValues['TAGS.ID_label']) !== null && _filterTagValues$TAGS5 !== void 0 ? _filterTagValues$TAGS5 : [];
+	      var index = currentFilteredTags.findIndex(function (id) {
+	        return main_core.Text.toInteger(id) === main_core.Text.toInteger(tagId);
+	      });
+	      if (sliderEvent.getEventId() === 'BIConnector.Superset.DashboardTagGrid:onTagDelete') {
+	        currentFilteredTags.splice(index, 1);
+	        currentFilteredTagLabels.splice(index, 1);
+	      } else {
+	        currentFilteredTagLabels[index] = title;
+	      }
+	      var filterApi = _this6.getFilter().getApi();
+	      filterApi.extendFilter({
+	        'TAGS.ID': currentFilteredTags,
+	        'TAGS.ID_label': currentFilteredTagLabels
+	      });
+	      filterApi.apply();
 	    }
 	  });
 	  main_core_events.EventEmitter.subscribe('BIConnector.Superset.DashboardManager:onDashboardBatchStatusUpdate', function (event) {
@@ -431,10 +611,13 @@
 	      return;
 	    }
 	    var dashboardList = data.dashboardList;
-	    _this5.onUpdatedDashboardBatchStatus(dashboardList);
+	    _this6.onUpdatedDashboardBatchStatus(dashboardList);
 	  });
 	  main_core_events.EventEmitter.subscribe('BX.Rest.Configuration.Install:onFinish', function () {
-	    babelHelpers.classPrivateFieldGet(_this5, _grid).reload();
+	    babelHelpers.classPrivateFieldGet(_this6, _grid).reload();
+	  });
+	  main_core_events.EventEmitter.subscribe('Grid::updated', function () {
+	    BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
 	  });
 	}
 	function _notifyErrors2(errors) {
@@ -445,7 +628,7 @@
 	  }
 	}
 	function _buildDashboardTitleEditor2(id, title, onCancel, onSave) {
-	  var input = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input class=\"main-grid-editor main-grid-editor-text\" type=\"text\">\n\t\t"])));
+	  var input = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input class=\"main-grid-editor main-grid-editor-text\" type=\"text\">\n\t\t"])));
 	  input.value = title;
 	  var saveInputValue = function saveInputValue() {
 	    var value = input.value;
@@ -470,14 +653,14 @@
 	      event.preventDefault();
 	    }
 	  });
-	  var applyButton = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a>\n\t\t\t\t<i\n\t\t\t\t\tclass=\"ui-icon-set --check\"\n\t\t\t\t\tstyle=\"--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);\"\n\t\t\t\t></i>\n\t\t\t</a>\n\t\t"])));
-	  var cancelButton = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a>\n\t\t\t\t<i\n\t\t\t\t\tclass=\"ui-icon-set --cross-60\"\n\t\t\t\t\tstyle=\"--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);\"\n\t\t\t\t></i>\n\t\t\t</a>\n\t\t"])));
-	  var buttons = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"dashboard-title-wrapper__buttons\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), applyButton, cancelButton);
+	  var applyButton = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a>\n\t\t\t\t<i\n\t\t\t\t\tclass=\"ui-icon-set --check\"\n\t\t\t\t\tstyle=\"--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);\"\n\t\t\t\t></i>\n\t\t\t</a>\n\t\t"])));
+	  var cancelButton = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a>\n\t\t\t\t<i\n\t\t\t\t\tclass=\"ui-icon-set --cross-60\"\n\t\t\t\t\tstyle=\"--ui-icon-set__icon-size: 21px; --ui-icon-set__icon-color: var(--ui-color-palette-gray-40);\"\n\t\t\t\t></i>\n\t\t\t</a>\n\t\t"])));
+	  var buttons = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"dashboard-title-wrapper__buttons\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), applyButton, cancelButton);
 	  main_core.Event.bind(cancelButton, 'click', function () {
 	    onCancel();
 	  });
 	  main_core.Event.bind(applyButton, 'click', saveInputValue);
-	  return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"dashboard-title-wrapper__item dashboard-title-edit\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"dashboard-title-wrapper__buttons-wrapper\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), input, buttons);
+	  return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"dashboard-title-wrapper__item dashboard-title-edit\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"dashboard-title-wrapper__buttons-wrapper\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), input, buttons);
 	}
 	function _getTitlePreview2(dashboardId) {
 	  var _row$getCellById5;
@@ -505,11 +688,11 @@
 	  var cellContent = dateModifyCell.querySelector('.main-grid-cell-content span');
 	  var date = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('FORMAT_DATETIME'), Math.floor(Date.now() / 1000));
 	  var readableDate = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DATE_MODIFY_NOW');
-	  var newCellContent = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span data-hint=\"", "\" data-hint-no-icon data-hint-interactivity>", "</span>\n\t\t"])), date, readableDate);
+	  var newCellContent = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span data-hint=\"", "\" data-hint-no-icon data-hint-interactivity>", "</span>\n\t\t"])), date, readableDate);
 	  main_core.Dom.replace(cellContent, newCellContent);
 	  BX.UI.Hint.init(dateModifyCell);
 	}
 	main_core.Reflection.namespace('BX.BIConnector').SupersetDashboardGridManager = SupersetDashboardGridManager;
 
-}((this.window = this.window || {}),BX,BX.Main,BX.BIConnector,BX.Event,BX.UI.Dialogs,BX.BIConnector));
+}((this.window = this.window || {}),BX,BX.Main,BX.BIConnector,BX.Event,BX.UI.Dialogs,BX.BIConnector,BX.UI.EntitySelector,BX.BIConnector.EntitySelector));
 //# sourceMappingURL=script.js.map

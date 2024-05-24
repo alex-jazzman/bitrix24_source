@@ -27,7 +27,8 @@ export type IconConfig = {
 
 export type MoreLinkConfig = {
 	text: TextConfig,
-	code: string,
+	code?: string,
+	articleId?: string,
 }
 
 export type ButtonConfig = {

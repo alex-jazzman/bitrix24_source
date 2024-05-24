@@ -3325,8 +3325,8 @@ this.BX.UI = this.BX.UI || {};
 	  });
 	};
 
-	const isVideo = blob => {
-	  return /^video\/[\d.a-z-]+$/i.test(blob.type);
+	const isVideo = file => {
+	  return /^video\/[\d.a-z-]+$/i.test(file.getType()) || file.getExtension() === 'mkv';
 	};
 
 	const createVideoPreview = (blob, options = {
@@ -3457,7 +3457,7 @@ this.BX.UI = this.BX.UI || {};
 	          }
 	          resolve();
 	        });
-	      } else if (isVideo(file.getBinary()) && !main_core.Browser.isSafari()) {
+	      } else if (isVideo(file) && !main_core.Browser.isSafari()) {
 	        createVideoPreview(file.getBinary(), babelHelpers.classPrivateFieldLooseBase(this, _getResizeImageOptions)[_getResizeImageOptions]()).then(({
 	          preview,
 	          width,

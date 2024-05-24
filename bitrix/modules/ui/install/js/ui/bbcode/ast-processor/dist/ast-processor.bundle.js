@@ -148,5 +148,5 @@ this.BX.UI = this.BX.UI || {};
 
 	exports.AstProcessor = AstProcessor;
 
-}((this.BX.UI.Bbcode = this.BX.UI.Bbcode || {}),BX));
+}((this.BX.UI.BBCode = this.BX.UI.BBCode || {}),BX));
 //# sourceMappingURL=ast-processor.bundle.js.map

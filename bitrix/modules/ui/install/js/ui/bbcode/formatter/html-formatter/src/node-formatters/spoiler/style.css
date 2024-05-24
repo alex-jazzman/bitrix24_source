@@ -1,0 +1,44 @@
+.ui-formatter__spoiler {
+    background: #fcfcfc;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    margin: var(--ui-formatter-block-space);
+}
+
+.ui-formatter__spoiler-title {
+    cursor: pointer;
+    padding: 5px 5px 5px 24px;
+    position: relative;
+    font-weight: bold;
+    list-style: none;
+    outline: none;
+    user-select: contain;
+}
+
+.ui-formatter__spoiler-title::marker,
+.ui-formatter__spoiler-title::-webkit-details-marker {
+    display: none;
+}
+
+.ui-formatter__spoiler-title::before {
+    display: block;
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 4px;
+    width: 20px;
+    height: 20px;
+    mask-image: var(--ui-icon-set__path_plus-in-circle);
+    mask-size: 20px;
+    mask-position: center;
+    background-color: rgba(var(--ui-color-text-secondary-rgb), 0.5);
+}
+
+.ui-formatter__spoiler[open] > .ui-formatter__spoiler-title::before {
+    mask-image: var(--ui-icon-set__path_minus-in-circle);
+}
+
+.ui-formatter__spoiler-content {
+    padding: 0 5px 0 20px;
+    margin-top: calc(var(--ui-bbcode-block-space-stack) / -2);
+}

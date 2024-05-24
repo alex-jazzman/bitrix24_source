@@ -112,7 +112,7 @@ this.BX = this.BX || {};
 	      arrowTop: '--chevron-up',
 	      arrowDown: '--chevron-down',
 	      arrowRight: '--chevron-right',
-	      bodyActive: '--body-active'
+	      bodyActive: '--body-active '
 	    });
 	    babelHelpers.defineProperty(this, "singleLink", {
 	      href: '',
@@ -123,6 +123,9 @@ this.BX = this.BX || {};
 	    main_core.Type.isStringFilled(params.iconArrowDown) ? this.className.arrowDown = params.iconArrowDown : '';
 	    main_core.Type.isStringFilled(params.iconArrowTop) ? this.className.arrowTop = params.iconArrowTop : '';
 	    main_core.Type.isStringFilled(params.iconArrowRight) ? this.className.arrowRight = params.iconArrowRight : '';
+	    if (main_core.Type.isStringFilled(params.bodyActive)) {
+	      this.className.bodyActive += params.bodyActive;
+	    }
 	    this.isOpen = main_core.Type.isBoolean(params.isOpen) ? params.isOpen : true;
 	    this.isEnable = main_core.Type.isBoolean(params.isEnable) ? params.isEnable : true;
 	    this.canCollapse = params.canCollapse !== false;
@@ -235,6 +238,11 @@ this.BX = this.BX || {};
 	    key: "append",
 	    value: function append(content) {
 	      main_core.Dom.append(content, _classPrivateMethodGet(this, _getRowsWrapper, _getRowsWrapper2).call(this));
+	    }
+	  }, {
+	    key: "prepend",
+	    value: function prepend(content) {
+	      main_core.Dom.prepend(content, _classPrivateMethodGet(this, _getRowsWrapper, _getRowsWrapper2).call(this));
 	    }
 	  }, {
 	    key: "renderTo",

@@ -212,7 +212,7 @@ this.BX = this.BX || {};
 	    const arScroll = BX.GetWindowScrollPos();
 	    const body = document.body;
 	    this.hMirror = false;
-	    this.vMirror = top - arScroll.scrollTop < 0;
+	    this.vMirror = top - arScroll.scrollTop - 50 < 0;
 	    if (body.clientWidth + arScroll.scrollLeft < left + this.width) {
 	      left = this.anchorRight - this.width;
 	      this.hMirror = true;

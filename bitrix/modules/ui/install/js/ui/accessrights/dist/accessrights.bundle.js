@@ -123,9 +123,13 @@ this.BX = this.BX || {};
 	      clearTimeout(this.timer);
 	      const waitContainer = this.buttonPanel.getContainer().querySelector('.ui-btn-wait');
 	      main_core.Dom.removeClass(waitContainer, 'ui-btn-wait');
-	    }, () => {
+	    }, response => {
+	      let errorMessage = 'Error message';
+	      if (response.errors) {
+	        errorMessage = response.errors[0].message;
+	      }
 	      this.isRequested = false;
-	      this.showNotification('Error message');
+	      this.showNotification(errorMessage);
 	      this.unBlockGrid();
 	      clearTimeout(this.timer);
 	      const waitContainer = this.buttonPanel.getContainer().querySelector('.ui-btn-wait');
@@ -161,9 +165,13 @@ this.BX = this.BX || {};
 	      this.showNotification(main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_ROLE_REMOVE'));
 	      this.unBlockGrid();
 	      clearTimeout(this.timer);
-	    }, () => {
+	    }, response => {
+	      let errorMessage = 'Error message';
+	      if (response.errors) {
+	        errorMessage = response.errors[0].message;
+	      }
 	      this.isRequested = false;
-	      this.showNotification('Error message');
+	      this.showNotification(errorMessage);
 	      this.unBlockGrid();
 	      clearTimeout(this.timer);
 	    });

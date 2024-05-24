@@ -49,4 +49,9 @@ export class FeaturePromoter
 	{
 		return this.#provider.show(this.#code, {});
 	}
+
+	close(): void
+	{
+		return this.#provider.close();
+	}
 }

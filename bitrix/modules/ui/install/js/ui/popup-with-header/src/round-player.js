@@ -170,6 +170,7 @@ export class RoundPlayer
 
 	#onVideoEnded(): void
 	{
+		this.#analyticsCallback('video_finished', `isMuted_${this.#videoNode.muted ? 'Y' : 'N'}`);
 		this.stop();
 		Dom.remove(this.#progressBar.getContainer());
 		this.setMute(true);

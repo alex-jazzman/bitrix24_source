@@ -68,7 +68,7 @@ if($isBitrix24Template)
 		</div>
 	</div>
 </div>
-<script type="text/javascript">
+<script>
 	BX.Voximplant.Sip.init({
 		publicFolder: '<?=CVoxImplantMain::GetPublicFolder()?>',
 		type: '<?=CUtil::JSEscape($arResult['SIP_TYPE'])?>',

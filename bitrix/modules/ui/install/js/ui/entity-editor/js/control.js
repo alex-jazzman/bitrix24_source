@@ -4043,10 +4043,18 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 	{
 		for(var i = 0, length = this._fields.length; i < length; i++)
 		{
-			var field = this._fields[i];
+			let field = this._fields[i];
 			if(field.getId() === childId)
 			{
 				return field;
+			}
+			if ("getActiveControlById" in field && BX.Type.isFunction(field["getActiveControlById"]))
+			{
+				let child = field.getActiveControlById(childId);
+				if (child)
+				{
+					return child;
+				}
 			}
 		}
 		return null;
@@ -4351,9 +4359,13 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 			scrollIntoView: true
 		});
 
-		if (this._fieldConfigurator instanceof BX.UI.EntityEditorUserFieldConfigurator)
+		if (BX.Type.isObject(params.mandatoryConfigurator))
 		{
 			this._mandatoryConfigurator = params.mandatoryConfigurator;
+		}
+
+		if (this._fieldConfigurator instanceof BX.UI.EntityEditorUserFieldConfigurator)
+		{
 			BX.addCustomEvent(this._fieldConfigurator, "onSave", BX.delegate(this.onUserFieldConfigurationSave, this));
 			BX.addCustomEvent(this._fieldConfigurator, "onCancel", BX.delegate(this.onFieldConfigurationCancel, this));
 		}
@@ -4445,6 +4457,14 @@ if(typeof BX.UI.EntityEditorSection === "undefined")
 								);
 								field.removeAttributeConfiguration(attributeTypeId);
 							}
+							const attrConfigs = BX.Runtime.clone(
+								field.getSchemeElement().getDataParam("attrConfigs", [])
+							);
+							BX.onCustomEvent(
+								this._editor,
+								this._editor.eventsNamespace + ":onFieldModifyAttributeConfigs",
+								[ this, { field: field, attrConfigs: attrConfigs } ]
+							);
 						}
 						this._mandatoryConfigurator = null;
 						this._visibilityConfigurator = null;
@@ -7191,7 +7211,7 @@ if(typeof BX.UI.EntityEditorTextarea === "undefined")
 			return this.executeValidators(result);
 		}
 
-		var isValid = !this.isRequired() || BX.util.trim(this._input.value) !== "";
+		var isValid = !(this.isRequired() || this.isRequiredByAttribute()) || BX.util.trim(this._input.value) !== "";
 		if(!isValid)
 		{
 			result.addError(BX.UI.EntityValidationError.create({ field: this }));
@@ -9937,7 +9957,7 @@ if(typeof BX.UI.EntityEditorLink === "undefined")
 			return this.executeValidators(result);
 		}
 
-		var isValid = !this.isRequired() || BX.util.trim(this._input.value) !== "";
+		var isValid = !(this.isRequired() || this.isRequiredByAttribute()) || BX.util.trim(this._input.value) !== "";
 		if(!isValid)
 		{
 			result.addError(BX.UI.EntityValidationError.create({ field: this }));

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_core,ui_bbcode_model) {
+(function (exports,main_core,ui_bbcode_encoder,ui_bbcode_model) {
 	'use strict';
 
 	function getByIndex(array, index) {
@@ -63,6 +63,11 @@ this.BX.UI = this.BX.UI || {};
 	    } else {
 	      this.setOnUnknown(BBCodeParser.defaultOnUnknownHandler);
 	    }
+	    if (options.encoder instanceof ui_bbcode_encoder.BBCodeEncoder) {
+	      this.setEncoder(options.encoder);
+	    } else {
+	      this.setEncoder(new ui_bbcode_encoder.BBCodeEncoder());
+	    }
 	  }
 	  setScheme(scheme) {
 	    this.scheme = scheme;
@@ -78,6 +83,16 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getOnUnknownHandler() {
 	    return this.onUnknownHandler;
+	  }
+	  setEncoder(encoder) {
+	    if (encoder instanceof ui_bbcode_encoder.BBCodeEncoder) {
+	      this.encoder = encoder;
+	    } else {
+	      throw new TypeError('encoder is not BBCodeEncoder instance');
+	    }
+	  }
+	  getEncoder() {
+	    return this.encoder;
 	  }
 	  static defaultOnUnknownHandler(node, scheme) {
 	    if (node.getType() === ui_bbcode_model.BBCodeNode.ELEMENT_NODE) {
@@ -127,7 +142,7 @@ this.BX.UI = this.BX.UI || {};
 	          return parserScheme.createTab();
 	        }
 	        return parserScheme.createText({
-	          content: fragment
+	          content: this.getEncoder().decodeText(fragment)
 	        });
 	      });
 	    }
@@ -155,12 +170,12 @@ this.BX.UI = this.BX.UI || {};
 	    };
 	    if (main_core.Type.isStringFilled(sourceAttributes)) {
 	      if (sourceAttributes.startsWith('=')) {
-	        result.value = BBCodeParser.trimQuotes(sourceAttributes.slice(1));
+	        result.value = this.getEncoder().decodeAttribute(BBCodeParser.trimQuotes(sourceAttributes.slice(1)));
 	        return result;
 	      }
 	      return sourceAttributes.trim().split(' ').filter(Boolean).reduce((acc, item) => {
 	        const [key, value = ''] = item.split('=');
-	        acc.attributes.push([BBCodeParser.toLowerCase(key), BBCodeParser.trimQuotes(value)]);
+	        acc.attributes.push([BBCodeParser.toLowerCase(key), this.getEncoder().decodeAttribute(BBCodeParser.trimQuotes(value))]);
 	        return acc;
 	      }, result);
 	    }
@@ -275,5 +290,5 @@ this.BX.UI = this.BX.UI || {};
 
 	exports.BBCodeParser = BBCodeParser;
 
-}((this.BX.UI.Bbcode = this.BX.UI.Bbcode || {}),BX,BX.UI.Bbcode));
+}((this.BX.UI.BBCode = this.BX.UI.BBCode || {}),BX,BX.UI.BBCode,BX.UI.BBCode));
 //# sourceMappingURL=parser.bundle.js.map

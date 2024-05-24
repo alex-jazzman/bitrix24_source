@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bitrix24;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
@@ -39,13 +41,25 @@ if (\Bitrix\Main\Loader::includeModule('pull'))
 Extension::load([
 	'biconnector.apache-superset-dashboard-manager',
 	'biconnector.apache-superset-analytics',
+	'biconnector.apache-superset-cleaner',
 	'ui.dialogs.messagebox',
 	'ui.hint',
 	'pull.client',
 	'ui.icons',
+	'ui.alerts',
 ]);
 
+if (
+	CurrentUser::get()->isAdmin()
+	&& Bitrix24\LicenseScanner\Manager::getInstance()->shouldWarnPortal()
+):
 ?>
+
+<div class='ui-alert ui-alert-danger'>
+	<span class='ui-alert-message'><?= Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCK_NOTIFICATION') ?></span>
+</div>
+
+<?php endif; ?>
 
 <div id="biconnector-dashboard-grid">
 <?php
@@ -76,9 +90,11 @@ if (!$limitManager->checkLimitWarning())
 <script>
 	BX.ready(() => {
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
-		BX.BIConnector.SupersetDashboardGridManager.Instance = new BX.BIConnector.SupersetDashboardGridManager(<?=CUtil::PhpToJSObject([
+		BX.BIConnector.SupersetDashboardGridManager.Instance = new BX.BIConnector.SupersetDashboardGridManager(<?= Json::encode([
 			'gridId' => $grid?->getId(),
 		])?>);
 		BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+
+		BX.BIConnector.ApacheSupersetCleaner.Instance = new BX.BIConnector.ApacheSupersetCleaner();
 	});
 </script>

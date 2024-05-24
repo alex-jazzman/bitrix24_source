@@ -616,7 +616,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		$this->arResult["NAV_OBJECT"] = $nav;
 		$this->arResult["HEADERS"] = array(
 			array("id" => "USER_NAME", "name" => GetMessage("TELEPHONY_HEADER_USER"), "default" => true, "editable" => false),
-			array("id" => "PORTAL_NUMBER", "name" => GetMessage("TELEPHONY_HEADER_PORTAL_PHONE"), "default" => false, "editable" => false),
+			array("id" => "PORTAL_NUMBER", "name" => GetMessage("TELEPHONY_HEADER_PORTAL_PHONE_MSGVER_1"), "default" => false, "editable" => false),
 			array("id" => "PHONE_NUMBER", "name" => GetMessage("TELEPHONY_HEADER_PHONE"), "sort" => "PHONE_NUMBER", "default" => true, "editable" => false),
 			array("id" => "INCOMING_TEXT", "name" => GetMessage("TELEPHONY_HEADER_INCOMING"), "default" => true, "editable" => false),
 			array("id" => "CALL_DURATION_TEXT", "name" => GetMessage("TELEPHONY_HEADER_DURATION"), "default" => true, "editable" => false),

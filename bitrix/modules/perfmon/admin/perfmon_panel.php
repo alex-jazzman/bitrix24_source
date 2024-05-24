@@ -629,7 +629,7 @@ $bComponentCache = COption::GetOptionString('main', 'component_cache_on', 'Y') =
 
 $arModulesInstalled = [];
 $rsModules = CModule::GetDropDownList();
-while ($arModule = $rsModules->Fetch())
+while ($arModule = $rsModules->fetch())
 {
 	$arModulesInstalled[] = $arModule['REFERENCE_ID'];
 }
@@ -671,8 +671,6 @@ $arConstants = [
 	'CACHED_b_iblock',
 	'CACHED_b_lang',
 	'CACHED_b_option',
-	'CACHED_b_lang_domain',
-	'CACHED_b_site_template',
 	'CACHED_b_event',
 	'CACHED_b_agent',
 	'CACHED_b_user_field',

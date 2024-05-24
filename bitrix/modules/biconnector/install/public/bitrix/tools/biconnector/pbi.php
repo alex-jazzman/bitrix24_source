@@ -78,7 +78,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 			ob_start();
 			\Bitrix\BIConnector\PrettyPrinter::printRowsArray($tableFields);
 			$c = ob_get_clean();
-			echo \Bitrix\Main\Text\Encoding::convertEncoding($c, SITE_CHARSET, 'UTF-8');
+			echo $c;
 		}
 		else
 		{

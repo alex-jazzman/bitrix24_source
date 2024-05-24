@@ -1,4 +1,5 @@
 import { Type } from 'main.core';
+import { BBCodeEncoder } from 'ui.bbcode.encoder';
 import { BBCodeTagScheme } from './node-schemes/tag-scheme';
 import { BBCodeNode, type BBCodeNodeOptions } from '../nodes/node';
 import { BBCodeRootNode, type RootNodeOptions } from '../nodes/root-node';
@@ -25,6 +26,7 @@ export type BBCodeSchemeOptions = {
 	tagSchemes: Array<BBCodeTagScheme>,
 	outputTagCase?: OutputTagCases,
 	unresolvedNodesHoisting?: boolean,
+	encoder?: BBCodeEncoder,
 };
 
 export class BBCodeScheme
@@ -37,6 +39,7 @@ export class BBCodeScheme
 	tagSchemes: Array<BBCodeTagScheme> = [];
 	outputTagCase: OutputTagCases = BBCodeScheme.Case.LOWER;
 	unresolvedNodesHoisting: boolean = true;
+	encoder: BBCodeEncoder = new BBCodeEncoder();
 
 	static isNodeScheme(value: any): boolean
 	{
@@ -68,6 +71,7 @@ export class BBCodeScheme
 		this.setTagSchemes(options.tagSchemes);
 		this.setOutputTagCase(options.outputTagCase);
 		this.setUnresolvedNodesHoisting(options.unresolvedNodesHoisting);
+		this.setEncoder(options.encoder);
 	}
 
 	setTagSchemes(tagSchemes: Array<BBCodeTagScheme>)
@@ -174,6 +178,19 @@ export class BBCodeScheme
 	isAllowedUnresolvedNodesHoisting(): boolean
 	{
 		return this.unresolvedNodesHoisting;
+	}
+
+	setEncoder(encoder: BBCodeEncoder)
+	{
+		if (encoder instanceof BBCodeEncoder)
+		{
+			this.encoder = encoder;
+		}
+	}
+
+	getEncoder(): BBCodeEncoder
+	{
+		return this.encoder;
 	}
 
 	getAllowedTags(): Array<string>

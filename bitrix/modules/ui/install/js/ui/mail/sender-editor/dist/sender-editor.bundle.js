@@ -646,8 +646,12 @@ this.BX.UI = this.BX.UI || {};
 	var _openSmtpSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openSmtpSettings");
 	var _openMailboxSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openMailboxSettings");
 	var _hasNameInvalidCharacters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasNameInvalidCharacters");
+	var _checkAliasCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkAliasCounter");
 	class AliasEditor {
 	  constructor(options) {
+	    Object.defineProperty(this, _checkAliasCounter, {
+	      value: _checkAliasCounter2
+	    });
 	    Object.defineProperty(this, _hasNameInvalidCharacters, {
 	      value: _hasNameInvalidCharacters2
 	    });
@@ -706,6 +710,7 @@ this.BX.UI = this.BX.UI || {};
 	      value: _createContentContainer2$1
 	    });
 	    this.wasSenderUpdated = false;
+	    this.aliasCounter = 0;
 	    this.senderId = Number(options.senderId);
 	    this.email = options.email;
 	    this.setSender = options.setSenderCallback;
@@ -923,6 +928,7 @@ this.BX.UI = this.BX.UI || {};
 	        canEdit: true
 	      });
 	      main_core.Dom.append(senderNode, this.senderList);
+	      this.aliasCounter++;
 	      hideInputContainer();
 	    }).catch(() => {
 	      hideInputContainer();
@@ -1116,6 +1122,8 @@ this.BX.UI = this.BX.UI || {};
 	      if (Number(senderId) === this.senderId) {
 	        this.setSender();
 	      }
+	      this.aliasCounter--;
+	      babelHelpers.classPrivateFieldLooseBase(this, _checkAliasCounter)[_checkAliasCounter]();
 	    }).catch(() => {
 	      main_core.Dom.removeClass(deleteButton, 'ui-btn-wait');
 	    });
@@ -1169,6 +1177,7 @@ this.BX.UI = this.BX.UI || {};
 	  senders.forEach(sender => {
 	    const senderNode = babelHelpers.classPrivateFieldLooseBase(this, _renderSenderItem)[_renderSenderItem](sender);
 	    main_core.Dom.append(senderNode, this.senderList);
+	    this.aliasCounter++;
 	  });
 	}
 	function _openSmtpSettings2(senderId) {
@@ -1197,6 +1206,14 @@ this.BX.UI = this.BX.UI || {};
 	    return true;
 	  }
 	  return false;
+	}
+	function _checkAliasCounter2() {
+	  if (this.aliasCounter === 0) {
+	    const slider = BX.SidePanel.Instance.getSlider(aliasSliderUrl);
+	    if (slider) {
+	      slider.close();
+	    }
+	  }
 	}
 
 	exports.AliasEditor = AliasEditor;

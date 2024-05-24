@@ -252,8 +252,9 @@ export class BBCodeElementNode extends BBCodeNode
 	toStringValue(): string
 	{
 		const value: BBCodeElementNodeValue = this.getValue();
+		const encodedValue: string = this.getEncoder().encodeAttribute(value);
 
-		return value ? `=${value}` : '';
+		return value ? `=${encodedValue}` : '';
 	}
 
 	toStringAttributes(): string
@@ -262,8 +263,9 @@ export class BBCodeElementNode extends BBCodeNode
 			.entries(this.getAttributes())
 			.map(([key: string, attrValue: string]) => {
 				const preparedKey: string = this.prepareCase(key);
+				const encodedValue: string = this.getEncoder().encodeAttribute(attrValue);
 
-				return attrValue ? `${preparedKey}=${attrValue}` : preparedKey;
+				return attrValue ? `${preparedKey}=${encodedValue}` : preparedKey;
 			})
 			.join(' ');
 	}

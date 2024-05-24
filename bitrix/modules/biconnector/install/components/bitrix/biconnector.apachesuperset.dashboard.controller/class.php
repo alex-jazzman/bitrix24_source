@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -30,6 +31,9 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 
 	public function executeComponent()
 	{
+		global $APPLICATION;
+		$APPLICATION->setTitle(Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_TITLE'));
+
 		$templateUrls = self::getTemplateUrls();
 
 		$variables = [];
@@ -51,20 +55,36 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 
 		if (!\CCrmPerms::IsAccessEnabled())
 		{
-			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_CONTROLLER');
+			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_PERMISSION_ERROR');
 			$this->includeComponentTemplate($template);
 
 			return;
 		}
 
-		if (
-			!Loader::includeModule('bitrix24')
-			|| !\Bitrix\Bitrix24\Feature::isFeatureEnabled('bi_constructor')
-		)
+		if (Loader::includeModule('bitrix24'))
 		{
-			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_CONTROLLER');
-			$this->arResult['FEATURE_AVAILABLE'] = false;
-			$this->arResult['HELPER_CODE'] = 'limit_crm_BI_constructor';
+			if (!\Bitrix\Bitrix24\Feature::isFeatureEnabled('bi_constructor'))
+			{
+				$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_TARIFF_ERROR');
+				$this->arResult['FEATURE_AVAILABLE'] = false;
+				$this->arResult['HELPER_CODE'] = 'limit_crm_BI_constructor';
+				$this->includeComponentTemplate($template);
+
+				return;
+			}
+
+			if (SupersetInitializer::getSupersetStatus() === SupersetInitializer::SUPERSET_STATUS_DELETED_BY_CLIENT)
+			{
+				$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_DISABLED_MANUALLY');
+				$this->arResult['ERROR_DESCRIPTIONS'][] = '';
+				$this->includeComponentTemplate($template);
+
+				return;
+			}
+		}
+		else
+		{
+			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_BOX_ERROR');
 			$this->includeComponentTemplate($template);
 
 			return;
@@ -75,7 +95,7 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 			&& !ToolsManager::getInstance()->checkAvailabilityByMenuId('crm_bi')
 		)
 		{
-			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_APACHESUPERSET_DASHBOARD_CONTROLLER');
+			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_PERMISSION_ERROR');
 			$this->arResult['TOOLS_AVAILABLE'] = false;
 			$this->arResult['HELPER_CODE'] = 'limit_BI_off';
 		}
@@ -90,11 +110,11 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 
 	private static function canSendStartupSupersetMetric(): bool
 	{
-		$supersetStatus = \Bitrix\BIConnector\Integration\Superset\SupersetInitializer::getSupersetStatus();
+		$supersetStatus = SupersetInitializer::getSupersetStatus();
 		$metricAlreadySend = \Bitrix\Main\Config\Option::get('biconnector', 'superset_startup_metric_send', false);
 
 		return (
-			$supersetStatus === \Bitrix\BIConnector\Integration\Superset\SupersetInitializer::SUPERSET_STATUS_READY
+			$supersetStatus === SupersetInitializer::SUPERSET_STATUS_READY
 			&& !$metricAlreadySend
 		);
 	}
@@ -129,5 +149,10 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 		CComponentEngine::InitComponentVariables($template, [], $variableAliases, $variables);
 
 		return [$template, $variables, $variableAliases];
+	}
+
+	public function isIframeMode(): bool
+	{
+		return $this->request->get('IFRAME') === 'Y' && $this->request->get('IFRAME_TYPE') === 'SIDE_SLIDER';
 	}
 }

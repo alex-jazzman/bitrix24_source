@@ -9,6 +9,7 @@ this.BX.UI = this.BX.UI || {};
 	var _uploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploader");
 	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
 	var _uploaderError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderError");
+	var _removeFilesFromServer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeFilesFromServer");
 	var _handleFileAdd = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFileAdd");
 	var _handleFileRemove = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFileRemove");
 	var _handleFileStateChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFileStateChange");
@@ -56,6 +57,10 @@ this.BX.UI = this.BX.UI || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _removeFilesFromServer, {
+	      writable: true,
+	      value: true
+	    });
 	    this.setEventNamespace('BX.UI.Uploader.Vue.Adapter');
 	    babelHelpers.classPrivateFieldLooseBase(this, _items)[_items] = ui_vue3.ref([]);
 	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderError)[_uploaderError] = ui_vue3.shallowRef(null);
@@ -89,8 +94,13 @@ this.BX.UI = this.BX.UI || {};
 	  getItem(id) {
 	    return this.getItems().find(item => item.id === id) || null;
 	  }
+	  setRemoveFilesFromServerWhenDestroy(value = true) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _removeFilesFromServer)[_removeFilesFromServer] = value;
+	  }
 	  destroy() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].destroy();
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader].destroy({
+	      removeFilesFromServer: babelHelpers.classPrivateFieldLooseBase(this, _removeFilesFromServer)[_removeFilesFromServer]
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _uploader)[_uploader] = null;
 	  }
 	}

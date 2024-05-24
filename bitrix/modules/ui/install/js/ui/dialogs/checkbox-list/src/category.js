@@ -5,6 +5,7 @@ export const CheckboxListCategory = {
 		'columnCount',
 		'category',
 		'options',
+		'context',
 		'isActiveSearch',
 		'isEditableOptionsTitle',
 		'onChange',
@@ -42,7 +43,7 @@ export const CheckboxListCategory = {
 					:key="option.id"
 				>
 					<checkbox-list-option
-						v-else
+						:context="context"
 						:id="option.id"
 						:title="option.title"
 						:isChecked="option.value"

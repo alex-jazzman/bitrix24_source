@@ -1,4 +1,5 @@
 import { Type } from 'main.core';
+import type { BBCodeEncoder } from 'ui.bbcode.encoder';
 import { getByIndex } from '../../../shared';
 import { typeof BBCodeElementNode } from './element-node';
 import { typeof BBCodeTextNode } from './text-node';
@@ -117,6 +118,11 @@ export class BBCodeNode
 	getTagScheme(): BBCodeNodeScheme
 	{
 		return this.getScheme().getTagScheme(this.getName());
+	}
+
+	getEncoder(): BBCodeEncoder
+	{
+		return this.getScheme().getEncoder();
 	}
 
 	prepareCase(value: string): string

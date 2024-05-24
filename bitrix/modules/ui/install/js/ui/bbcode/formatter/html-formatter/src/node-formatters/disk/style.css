@@ -1,0 +1,4 @@
+.ui-formatter-image img,
+.ui-formatter-video video {
+    max-width: 100%;
+}

@@ -1,0 +1,12 @@
+.ui-formatter-code-block {
+    font-family: var(--ui-font-family-system-mono), Consolas, monospace;
+    background-color: #F3F6F7;
+    padding: 8px 40px 8px 27px;
+    border: solid 1px #E0E2E3;
+    border-radius: var(--ui-border-radius-sm);
+    overflow: scroll;
+}
+
+.ui-formatter-code-line {
+    display: inline-block;
+}

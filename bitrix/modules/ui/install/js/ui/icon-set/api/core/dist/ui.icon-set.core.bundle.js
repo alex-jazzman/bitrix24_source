@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 (function (exports,main_core) {
@@ -270,6 +271,7 @@ this.BX.UI = this.BX.UI || {};
 	  WINDOW_WITH_POINT: 'window-with-point',
 	  WINDOW_CHECK_ARROW: 'window-check-arrow',
 	  VIDEO_1: 'video-1',
+	  VIDEO_3: 'video-3',
 	  VIDEO_AND_CHAT: 'video-and-chat',
 	  NO_VIDEO: 'no-video',
 	  PICTURE: 'picture',
@@ -528,7 +530,8 @@ this.BX.UI = this.BX.UI || {};
 	  PARALLEL_QUEUE: 'parallel-queue',
 	  CONDITION: 'condition',
 	  COMPLETE: 'complete',
-	  TRANSLATION: 'translation'
+	  TRANSLATION: 'translation',
+	  TORRENT: 'torrent'
 	});
 	const ContactCenter = Object.freeze({
 	  DIAL_5: 'dial-5',
@@ -538,6 +541,10 @@ this.BX.UI = this.BX.UI || {};
 	  MAIL_SENT: 'mail-sent',
 	  INCOMING_CALL_SOUND_ON: 'incoming-call-sound-on',
 	  SEND_ATTACH_FILE: 'send-attach-file'
+	});
+	const Animated = Object.freeze({
+	  LOADER_CLOCK: 'loader-clock',
+	  LOADER_WAIT: 'loader-wait'
 	});
 	const CRM = Object.freeze({
 	  SEND_CONTACT: 'send-contact',
@@ -686,7 +693,8 @@ this.BX.UI = this.BX.UI || {};
 	  ...ContactCenter,
 	  ...CRM,
 	  ...Editor,
-	  ...Special
+	  ...Special,
+	  ...Animated
 	});
 
 	let _ = t => t,
@@ -749,6 +757,7 @@ this.BX.UI = this.BX.UI || {};
 	exports.CRM = CRM;
 	exports.Editor = Editor;
 	exports.Special = Special;
+	exports.Animated = Animated;
 
 }((this.BX.UI.IconSet = this.BX.UI.IconSet || {}),BX));
 //# sourceMappingURL=ui.icon-set.core.bundle.js.map

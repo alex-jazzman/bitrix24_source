@@ -41,6 +41,7 @@ const aliasSliderUrl = 'mailAliasSlider';
 export class AliasEditor
 {
 	wasSenderUpdated: boolean = false;
+	aliasCounter: number = 0;
 	constructor(options: Options)
 	{
 		this.senderId = Number(options.senderId);
@@ -311,6 +312,7 @@ export class AliasEditor
 					canEdit: true,
 				});
 				Dom.append(senderNode, this.senderList);
+				this.aliasCounter++;
 				hideInputContainer();
 			}).catch(() => {
 				hideInputContainer();
@@ -564,6 +566,8 @@ export class AliasEditor
 				{
 					this.setSender();
 				}
+				this.aliasCounter--;
+				this.#checkAliasCounter();
 			}).catch(() => {
 				Dom.removeClass(deleteButton, 'ui-btn-wait');
 			});
@@ -640,6 +644,7 @@ export class AliasEditor
 		senders.forEach((sender: Sender) => {
 			const senderNode = this.#renderSenderItem(sender);
 			Dom.append(senderNode, this.senderList);
+			this.aliasCounter++;
 		});
 	}
 
@@ -700,5 +705,17 @@ export class AliasEditor
 			})
 			.catch(() => {})
 		;
+	}
+
+	#checkAliasCounter(): void
+	{
+		if (this.aliasCounter === 0)
+		{
+			const slider = BX.SidePanel.Instance.getSlider(aliasSliderUrl);
+			if (slider)
+			{
+				slider.close();
+			}
+		}
 	}
 }

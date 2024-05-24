@@ -33,13 +33,6 @@ export class BBCodeTextNode extends BBCodeNode
 		return Type.isString(value) || Type.isNumber(value);
 	}
 
-	static decodeSpecialChars(content: BBCodeTextNodeContent): string
-	{
-		return String(content)
-			.replaceAll('&#91;', '[')
-			.replaceAll('&#93;', ']');
-	}
-
 	setName(name: string)
 	{}
 
@@ -47,13 +40,13 @@ export class BBCodeTextNode extends BBCodeNode
 	{
 		if (BBCodeTextNode.isTextNodeContent(content))
 		{
-			this[contentSymbol] = BBCodeTextNode.decodeSpecialChars(content);
+			this[contentSymbol] = content;
 		}
 	}
 
 	getContent(): BBCodeTextNodeContent
 	{
-		return BBCodeTextNode.decodeSpecialChars(this[contentSymbol]);
+		return this[contentSymbol];
 	}
 
 	adjustChildren()
@@ -152,7 +145,7 @@ export class BBCodeTextNode extends BBCodeNode
 
 	toString(): string
 	{
-		return this.getContent();
+		return this.getEncoder().encodeText(this.getContent());
 	}
 
 	toPlainText(): string

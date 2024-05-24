@@ -1,5 +1,6 @@
 import { Cache, Dom, Tag } from 'main.core';
 import { Button } from 'ui.buttons';
+import { FeaturePromotersRegistry } from 'ui.info-helper';
 import type {
 	ButtonConfig,
 	MoreLinkConfig,
@@ -108,7 +109,16 @@ export class SaleTemplate extends BaseTemplate
 	#getMoreLink(config: MoreLinkConfig): HTMLElement
 	{
 		const onclick = () => {
-			top.BX.Helper.show(`redirect=detail&code=${config.code}`);
+			if (config.code)
+			{
+				FeaturePromotersRegistry.getPromoter({
+					code: config.code,
+				}).show();
+			}
+			else if (config.articleId)
+			{
+				top.BX.Helper.show(`redirect=detail&code=${config.articleId}`);
+			}
 		};
 
 		const moreLink = Tag.render`

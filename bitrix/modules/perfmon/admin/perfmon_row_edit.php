@@ -314,7 +314,6 @@ if (
 )
 {
 	require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_js.php';
-	CUtil::JSPostUnescape();
 
 	switch ($request->get('action'))
 	{
@@ -484,7 +483,7 @@ $aTabs = [
 		'TITLE' => GetMessage('PERFMON_ROW_CACHE_TAB_TITLE'),
 	],
 ];
-$tabControl = new CAdminTabControl('tabControl_' . ToLower($table_name), $aTabs);
+$tabControl = new CAdminTabControl('tabControl_' . mb_strtolower($table_name), $aTabs);
 $bVarsFromForm = false;
 $strError = '';
 

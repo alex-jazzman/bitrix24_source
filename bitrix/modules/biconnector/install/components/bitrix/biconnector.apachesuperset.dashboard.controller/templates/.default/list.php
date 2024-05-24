@@ -38,7 +38,8 @@ if (!empty($arResult['ERROR_MESSAGES']))
 		'',
 		[
 			'TITLE' => $arResult['ERROR_MESSAGES'][0],
-		]
+			'DESCRIPTION' => $arResult['ERROR_DESCRIPTIONS'][0] ?? null,
+		],
 	);
 
 	if ($arResult['FEATURE_AVAILABLE'] === false || $arResult['TOOLS_AVAILABLE'] === false)

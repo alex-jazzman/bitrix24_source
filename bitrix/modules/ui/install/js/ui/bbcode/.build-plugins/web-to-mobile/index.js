@@ -30,7 +30,7 @@ module.exports = function webToMobilePlugin(options) {
 				fs.mkdirSync(extensionDirectoryPath, { recursive: true });
 			}
 
-			let bundleContent = fs.readFileSync(bundle.file, 'ascii');
+			let bundleContent = fs.readFileSync(bundle.file, 'utf8');
 			if (Array.isArray(options.replacements))
 			{
 				options.replacements.forEach(([pattern, replacement]) => {
@@ -43,7 +43,7 @@ module.exports = function webToMobilePlugin(options) {
 			{
 				const depsPhpContent = makeDepsPhpContent(dependencies);
 				const depsPhpPath = path.join(extensionDirectoryPath, 'deps.php');
-				fs.writeFileSync(depsPhpPath, depsPhpContent, 'ascii');
+				fs.writeFileSync(depsPhpPath, depsPhpContent, 'utf8');
 			}
 
 			if (typeof options.banner === 'string')
@@ -51,7 +51,7 @@ module.exports = function webToMobilePlugin(options) {
 				bundleContent = `${options.banner}\n${bundleContent}`;
 			}
 
-			fs.writeFileSync(extensionJsPath, bundleContent, 'ascii');
+			fs.writeFileSync(extensionJsPath, bundleContent, 'utf8');
 		}
 	}
 }

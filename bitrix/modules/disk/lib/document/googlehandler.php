@@ -131,6 +131,13 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 
 	protected function getScopesForRemove(): array
 	{
+		if (ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			return [
+				'https://www.googleapis.com/auth/drive',
+			];
+		}
+
 		return [];
 	}
 

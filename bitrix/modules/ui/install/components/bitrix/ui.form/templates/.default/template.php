@@ -167,7 +167,7 @@ if (!empty($htmlEditorConfigs))
 ?>
 <div class="ui-entity-editor-container" id="<?=htmlspecialcharsbx($containerID)?>"></div>
 <div class="ui-entity-editor-section-add-btn-container" id="<?=htmlspecialcharsbx($buttonContainerID)?>"></div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

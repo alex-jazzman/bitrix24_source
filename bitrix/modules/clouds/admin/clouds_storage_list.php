@@ -536,7 +536,7 @@ while(is_array($arRes = $rsData->Fetch()))
 	$row =& $lAdmin->AddRow($arRes["ID"], $arRes);
 
 	$row->AddViewField("ID", '<a href="clouds_storage_edit.php?lang='.LANGUAGE_ID.'&ID='.$arRes["ID"].'">'.$arRes["ID"].'</a>');
-	$row->AddViewField("FILE_COUNT", '<a href="clouds_file_list.php?lang='.LANGUAGE_ID.'&bucket='.$arRes["ID"].'&path=%2F">'.$arRes["ID"].'</a>');
+	$row->AddViewField("FILE_COUNT", '<a href="clouds_file_list.php?lang='.LANGUAGE_ID.'&bucket='.$arRes["ID"].'&path=%2F">'.intval($arRes["FILE_COUNT"]).'</a>');
 
 	if($arRes["ACTIVE"] === "Y")
 		$html = '<div class="lamp-green"></div>';

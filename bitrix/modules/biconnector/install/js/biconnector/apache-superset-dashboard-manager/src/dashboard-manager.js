@@ -267,6 +267,25 @@ export class DashboardManager
 		);
 	}
 
+	setDashboardTags(dashboardId: number, tags: {}): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.setDashboardTags', {
+			data: {
+				id: dashboardId,
+				tags,
+			},
+		});
+	}
+
+	addTag(title: string): Promise
+	{
+		return Ajax.runAction('biconnector.dashboardTag.add', {
+			data: {
+				title,
+			},
+		});
+	}
+
 	static openSettingPeriodSlider(dashboardId: number = null)
 	{
 		const componentLink = dashboardId === null

@@ -18,11 +18,20 @@ Loader::includeModule('ui');
 if (!empty($arResult['ERROR_MESSAGES']))
 {
 	$APPLICATION->IncludeComponent(
-		'bitrix:ui.info.error',
+		'bitrix:ui.sidepanel.wrapper',
 		'',
 		[
-			'TITLE' => $arResult['ERROR_MESSAGES'][0],
-		]
+			'POPUP_COMPONENT_NAME' => 'bitrix:ui.info.error',
+			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+			'POPUP_COMPONENT_PARAMS' => [
+				'TITLE' => $arResult['ERROR_MESSAGES'][0],
+			],
+			'USE_UI_TOOLBAR' => 'N',
+			'PAGE_MODE' => false,
+			'PAGE_MODE_OFF_BACK_URL' => '/bi/dashboard/',
+			'USE_PADDING' => false,
+			'PLAIN_VIEW' => true,
+		],
 	);
 
 	if ($arResult['FEATURE_AVAILABLE'] === false || $arResult['TOOLS_AVAILABLE'] === false)

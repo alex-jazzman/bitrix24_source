@@ -105,6 +105,7 @@
 	--ui-icon-set__path_window-with-point: url('/bitrix/js/ui/icon-set/main/images/window-with-point.svg');
 	--ui-icon-set__path_window-check-arrow: url('/bitrix/js/ui/icon-set/main/images/window-check-arrow.svg');
 	--ui-icon-set__path_video-1: url('/bitrix/js/ui/icon-set/main/images/video-1.svg');
+	--ui-icon-set__path_video-3: url('/bitrix/js/ui/icon-set/main/images/video-3.svg');
 	--ui-icon-set__path_video-and-chat: url('/bitrix/js/ui/icon-set/main/images/video-and-chat.svg');
 	--ui-icon-set__path_no-video: url('/bitrix/js/ui/icon-set/main/images/no-video.svg');
 	--ui-icon-set__path_picture: url('/bitrix/js/ui/icon-set/main/images/picture.svg');
@@ -382,10 +383,15 @@
 	--ui-icon-set__path_shield-2-defended: url('/bitrix/js/ui/icon-set/main/images/shield-2-defended.svg');
 	--ui-icon-set__path_shield-2-update: url('/bitrix/js/ui/icon-set/main/images/shield-2-update.svg');
 	--ui-icon-set__path_shield-2-core-problem: url('/bitrix/js/ui/icon-set/main/images/shield-2-core-problem.svg');
+	--ui-icon-set__path_torrent: url('/bitrix/js/ui/icon-set/main/images/torrent.svg');
 }
 
 .ui-icon-set.--shield-2-core-problem {
 	--ui-icon-set__icon-path: var(--ui-icon-set__path_shield-2-core-problem);
+}
+
+.ui-icon-set.--torrent {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_torrent);
 }
 
 .ui-icon-set.--shield-2-update {
@@ -878,6 +884,10 @@
 
 .ui-icon-set.--video-1 {
 	--ui-icon-set__icon-path: var(--ui-icon-set__path_video-1);
+}
+
+.ui-icon-set.--video-3 {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_video-3);
 }
 
 .ui-icon-set.--video-and-chat {

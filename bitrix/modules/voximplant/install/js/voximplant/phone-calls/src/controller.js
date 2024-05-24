@@ -16,6 +16,7 @@ const lsKeys = {
 	dialHistory: 'vox-dial-history',
 	foldedView: 'vox-folded-call-card',
 	callView: 'bx-vox-call-view',
+	currentCall: 'bx-vox-current-call',
 }
 
 const Events = {
@@ -192,6 +193,11 @@ export class PhoneCallsController extends EventEmitter
 				call: this._currentCall
 			});
 		}
+		call?.id()
+			? BX.localStorage.set(lsKeys.currentCall, call?.id(), 86400)
+			: BX.localStorage.remove(lsKeys.currentCall)
+		;
+
 		this._currentCall = call;
 		this.hasActiveCallView = Boolean(this._currentCall);
 
@@ -227,7 +233,7 @@ export class PhoneCallsController extends EventEmitter
 		return true; // TODO ??
 	}
 
-	readDefaults()
+	async readDefaults()
 	{
 		if (!localStorage)
 		{
@@ -238,6 +244,19 @@ export class PhoneCallsController extends EventEmitter
 		this.defaultCamera = localStorage.getItem('bx-im-settings-default-camera');
 		this.defaultSpeaker = localStorage.getItem('bx-im-settings-default-speaker');
 		this.enableMicAutoParameters = (localStorage.getItem('bx-im-settings-enable-mic-auto-parameters') !== 'N');
+
+		if (
+			!navigator.mediaDevices
+			|| !navigator.mediaDevices.enumerateDevices
+			|| !this.defaultMicrophone
+		)
+		{
+			return;
+		}
+
+		const deviceList = await navigator.mediaDevices.enumerateDevices();
+		const result = deviceList.filter(device => device.kind === 'audioinput' && device.deviceId === this.defaultMicrophone);
+		this.defaultMicrophone = result.length ? this.defaultMicrophone : null;
 	}
 
 	#onPullEvent(command, params)
@@ -278,6 +297,7 @@ export class PhoneCallsController extends EventEmitter
 			&& !this.callView?.autoCloseTimer
 			&& !this.hasActiveCallView
 		;
+
 		if (
 			(this.callView && !this.callView?.popup && !this.currentCall)
 			|| (popupConditions && !this.currentCall)
@@ -341,7 +361,7 @@ export class PhoneCallsController extends EventEmitter
 			this.phoneCallConfig = params.config ? params.config : {};
 			this.phoneCallTime = 0;
 
-			this.messengerFacade.repeatSound('ringtone', 5000);
+			this.messengerFacade.repeatSound('ringtone', 5000, true);
 
 			BX.rest.callMethod('voximplant.call.sendWait', {
 				'CALL_ID': params.callId,
@@ -1865,7 +1885,7 @@ export class PhoneCallsController extends EventEmitter
 		return new Promise((resolve, reject) =>
 		{
 			BX.Voximplant.getClient({
-				// debug: this.debug,
+				debug: this.debug,
 				apiParameters: phoneApiParameters
 			}).then((client) =>
 			{

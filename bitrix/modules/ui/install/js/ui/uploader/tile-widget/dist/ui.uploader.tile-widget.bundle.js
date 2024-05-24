@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports,main_core_events,ui_uploader_vue,ui_progressround,main_popup,ui_icons_generator,ui_uploader_tileWidget,main_core,ui_uploader_core) {
+(function (exports,main_core_events,ui_uploader_vue,main_popup,ui_icons_generator,ui_progressround,ui_uploader_tileWidget,main_core,ui_uploader_core) {
 	'use strict';
 
 	const SettingsButton = {
@@ -65,67 +65,6 @@ this.BX.UI = this.BX.UI || {};
 			</div>
 		</div>
 	`
-	};
-
-	/**
-	 * @memberof BX.UI.Uploader
-	 */
-	const UploadLoader = {
-	  props: {
-	    progress: {
-	      type: Number,
-	      default: 0
-	    },
-	    width: {
-	      type: Number,
-	      default: 45
-	    },
-	    lineSize: {
-	      type: Number,
-	      default: 3
-	    },
-	    colorTrack: {
-	      type: String,
-	      default: '#eeeff0'
-	    },
-	    colorBar: {
-	      type: String,
-	      default: '#2fc6f6'
-	    },
-	    rotation: {
-	      type: Boolean,
-	      default: true
-	    }
-	  },
-	  mounted() {
-	    this.createProgressbar();
-	  },
-	  watch: {
-	    progress() {
-	      this.updateProgressbar();
-	    }
-	  },
-	  methods: {
-	    createProgressbar() {
-	      this.loader = new ui_progressround.ProgressRound({
-	        width: this.width,
-	        lineSize: this.lineSize,
-	        colorBar: this.colorBar,
-	        colorTrack: this.colorTrack,
-	        rotation: this.rotation,
-	        value: this.progress,
-	        color: ui_progressround.ProgressRound.Color.SUCCESS
-	      });
-	      this.loader.renderTo(this.$refs.container);
-	    },
-	    updateProgressbar() {
-	      if (!this.loader) {
-	        this.createProgressbar();
-	      }
-	      this.loader.update(this.progress);
-	    }
-	  },
-	  template: `<span ref="container"></span>`
 	};
 
 	/**
@@ -263,6 +202,67 @@ this.BX.UI = this.BX.UI || {};
 	  template: '<span></span>'
 	};
 
+	/**
+	 * @memberof BX.UI.Uploader
+	 */
+	const UploadLoader = {
+	  props: {
+	    progress: {
+	      type: Number,
+	      default: 0
+	    },
+	    width: {
+	      type: Number,
+	      default: 45
+	    },
+	    lineSize: {
+	      type: Number,
+	      default: 3
+	    },
+	    colorTrack: {
+	      type: String,
+	      default: '#eeeff0'
+	    },
+	    colorBar: {
+	      type: String,
+	      default: '#2fc6f6'
+	    },
+	    rotation: {
+	      type: Boolean,
+	      default: true
+	    }
+	  },
+	  mounted() {
+	    this.createProgressbar();
+	  },
+	  watch: {
+	    progress() {
+	      this.updateProgressbar();
+	    }
+	  },
+	  methods: {
+	    createProgressbar() {
+	      this.loader = new ui_progressround.ProgressRound({
+	        width: this.width,
+	        lineSize: this.lineSize,
+	        colorBar: this.colorBar,
+	        colorTrack: this.colorTrack,
+	        rotation: this.rotation,
+	        value: this.progress,
+	        color: ui_progressround.ProgressRound.Color.SUCCESS
+	      });
+	      this.loader.renderTo(this.$refs.container);
+	    },
+	    updateProgressbar() {
+	      if (!this.loader) {
+	        this.createProgressbar();
+	      }
+	      this.loader.update(this.progress);
+	    }
+	  },
+	  template: `<span ref="container"></span>`
+	};
+
 	const TileItem = {
 	  components: {
 	    UploadLoader,
@@ -377,31 +377,34 @@ this.BX.UI = this.BX.UI || {};
 	      this.showError = false;
 	    },
 	    toggleMenu() {
-	      if (this.menu) {
-	        if (this.menu.getPopupWindow().isShown()) {
-	          this.menu.close();
-	          return;
-	        } else {
+	      setTimeout(() => {
+	        if (this.menu) {
+	          if (this.menu.getPopupWindow().isShown()) {
+	            this.menu.close();
+	            return;
+	          }
 	          this.menu.destroy();
 	        }
-	      }
-	      this.menu = main_popup.MenuManager.create({
-	        id: this.tileId,
-	        bindElement: this.$refs.menu,
-	        angle: true,
-	        offsetLeft: 13,
-	        minWidth: 100,
-	        cacheable: false,
-	        items: this.menuItems,
-	        events: {
-	          onDestroy: () => this.menu = null
-	        }
+	        this.menu = main_popup.MenuManager.create({
+	          id: this.tileId,
+	          bindElement: this.$refs.menu,
+	          angle: true,
+	          offsetLeft: 13,
+	          minWidth: 100,
+	          cacheable: false,
+	          items: this.menuItems,
+	          events: {
+	            onDestroy: () => {
+	              this.menu = null;
+	            }
+	          }
+	        });
+	        this.emitter.emit('TileItem:onMenuCreate', {
+	          menu: this.menu,
+	          item: this.item
+	        });
+	        this.menu.show();
 	      });
-	      this.emitter.emit('TileItem:onMenuCreate', {
-	        menu: this.menu,
-	        item: this.item
-	      });
-	      this.menu.show();
 	    }
 	  },
 	  // language=Vue
@@ -809,5 +812,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.UploadLoader = UploadLoader;
 	exports.DragOverMixin = DragOverMixin;
 
-}((this.BX.UI.Uploader = this.BX.UI.Uploader || {}),BX.Event,BX.UI.Uploader,BX.UI,BX.Main,BX.UI.Icons.Generator,BX.UI.Uploader,BX,BX.UI.Uploader));
+}((this.BX.UI.Uploader = this.BX.UI.Uploader || {}),BX.Event,BX.UI.Uploader,BX.Main,BX.UI.Icons.Generator,BX.UI,BX.UI.Uploader,BX,BX.UI.Uploader));
 //# sourceMappingURL=ui.uploader.tile-widget.bundle.js.map

@@ -38,21 +38,26 @@ export class PopupProvider extends BaseProvider
 
 		if (config.dataSource && config.dataSource instanceof Promise)
 		{
-			this.dataSource = config.dataSource;
+			this.#dataSource = config.dataSource;
 		}
 		else
 		{
-			this.dataSource = (new ProviderRequestFactory(ProvidersType.POPUP, this.#code)).getRequest();
+			this.#dataSource = (new ProviderRequestFactory(ProvidersType.POPUP, this.#code)).getRequest();
 		}
 
 		this.#analytics = new Analytics(this.#code, ProvidersType.POPUP);
-		this.#dataSource = this.fetchInitParams();
 	}
 
 	show(code, params): void
 	{
 		this.#getPopup().show();
 		this.#analytics.sendByEventName('show');
+	}
+
+	close()
+	{
+		this.#getPopup().close();
+		this.#analytics.sendByEventName('close');
 	}
 
 	#getPopup(): PopupWithHeader

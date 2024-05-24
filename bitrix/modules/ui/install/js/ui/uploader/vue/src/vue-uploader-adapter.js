@@ -19,6 +19,7 @@ export default class VueUploaderAdapter extends EventEmitter
 	#uploader: Uploader = null;
 	#items: VueRefValue<Array> = null;
 	#uploaderError = null;
+	#removeFilesFromServer: boolean = true;
 
 	constructor(uploaderOptions: UploaderOptions)
 	{
@@ -70,9 +71,14 @@ export default class VueUploaderAdapter extends EventEmitter
 		return this.getItems().find((item: UploaderFileInfo): boolean => item.id === id) || null;
 	}
 
+	setRemoveFilesFromServerWhenDestroy(value: boolean = true): void
+	{
+		this.#removeFilesFromServer = value;
+	}
+
 	destroy(): void
 	{
-		this.#uploader.destroy();
+		this.#uploader.destroy({ removeFilesFromServer: this.#removeFilesFromServer });
 		this.#uploader = null;
 	}
 

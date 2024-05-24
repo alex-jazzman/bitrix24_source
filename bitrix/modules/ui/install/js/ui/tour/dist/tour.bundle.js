@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 (function (exports,main_core_events,main_popup,ui_designTokens,main_core) {
@@ -25,6 +26,7 @@ this.BX.UI = this.BX.UI || {};
 	    this.linkTitle = options.linkTitle || null;
 	    this.rounded = options.rounded || false;
 	    this.title = options.title || null;
+	    this.iconSrc = options.iconSrc || null;
 	    this.article = options.article || null;
 	    this.position = options.position || null;
 	    this.cursorMode = options.cursorMode || false;
@@ -82,6 +84,9 @@ this.BX.UI = this.BX.UI || {};
 	  getTitle() {
 	    return this.title;
 	  }
+	  getIconSrc() {
+	    return this.iconSrc;
+	  }
 	  getPosition() {
 	    return this.position;
 	  }
@@ -126,7 +131,8 @@ this.BX.UI = this.BX.UI || {};
 	  _t14,
 	  _t15,
 	  _t16,
-	  _t17;
+	  _t17,
+	  _t18;
 	class Guide extends main_core.Event.EventEmitter {
 	  constructor(options = {}) {
 	    super(options);
@@ -356,9 +362,8 @@ this.BX.UI = this.BX.UI || {};
 	      this.subscribe('UI.Tour.Guide:onFinish', () => {
 	        main_core.Event.unbind(currentStep.getTarget(), 'click', close);
 	      });
-	      const targetPos = currentStep.getTarget().getBoundingClientRect();
 	      const targetPosWindow = main_core.Dom.getPosition(currentStep.getTarget());
-	      if (!this.isTargetVisible(targetPos)) {
+	      if (!this.isTargetVisible(targetPosWindow)) {
 	        this.scrollToTarget(targetPosWindow);
 	      }
 	    }
@@ -655,27 +660,42 @@ this.BX.UI = this.BX.UI || {};
 	   */
 	  getContent() {
 	    if (!this.layout.content) {
+	      let iconNode = '';
+	      if (this.getCurrentStep().getIconSrc()) {
+	        iconNode = main_core.Tag.render(_t4 || (_t4 = _`
+					<div
+						class="ui-tour-popup-icon"
+						style="background-image: url(${0});"
+					></div>
+				`), encodeURI(this.getCurrentStep().getIconSrc()));
+	      }
 	      let linkNode = '';
 	      if (this.getCurrentStep().getLink() || this.getCurrentStep().getArticle()) {
 	        linkNode = this.getLink();
 	      }
-	      this.layout.content = main_core.Tag.render(_t4 || (_t4 = _`
-				<div class="ui-tour-popup ${0} ${0}" >
+	      this.layout.content = main_core.Tag.render(_t5 || (_t5 = _`
+				<div
+					class="ui-tour-popup ${0} ${0}"
+					style="${0};"
+				>
 					${0}
-					<div class="ui-tour-popup-content">
+					<div>
 						${0}
-						${0}
-					</div>
-					${0}
-					<div class="ui-tour-popup-footer">
-						<div class="ui-tour-popup-index">
+						<div class="ui-tour-popup-content">
 							${0}
 							${0}
 						</div>
-							${0}
+						${0}
+						<div class="ui-tour-popup-footer">
+							<div class="ui-tour-popup-index">
+								${0}
+								${0}
+							</div>
+								${0}
+						</div>
 					</div>
 				</div>
-			`), this.simpleMode ? 'ui-tour-popup-simple' : '', this.onEvents ? 'ui-tour-popup-events' : '', this.getTitle(), this.getText(), linkNode, linkNode, this.onEvents ? '' : this.getCounterItems(), this.onEvents ? '' : this.getCurrentCounter(), this.onEvents ? '' : this.getBtnContainer());
+			`), this.simpleMode ? 'ui-tour-popup-simple' : '', this.onEvents ? 'ui-tour-popup-events' : '', iconNode ? 'padding-left: 13px;' : '', iconNode, this.getTitle(), this.getText(), linkNode, linkNode, this.onEvents ? '' : this.getCounterItems(), this.onEvents ? '' : this.getCurrentCounter(), this.onEvents ? '' : this.getBtnContainer());
 	    }
 	    return this.layout.content;
 	  }
@@ -735,7 +755,7 @@ this.BX.UI = this.BX.UI || {};
 	   */
 	  getTitle() {
 	    if (this.layout.title === null) {
-	      this.layout.title = main_core.Tag.render(_t5 || (_t5 = _`
+	      this.layout.title = main_core.Tag.render(_t6 || (_t6 = _`
 				<div class="ui-tour-popup-title"></div>
 			`));
 	    }
@@ -747,7 +767,7 @@ this.BX.UI = this.BX.UI || {};
 	   */
 	  getText() {
 	    if (this.layout.text === null) {
-	      this.layout.text = main_core.Tag.render(_t6 || (_t6 = _`
+	      this.layout.text = main_core.Tag.render(_t7 || (_t7 = _`
 				<div class="ui-tour-popup-text"></div>
 			`));
 	    }
@@ -761,7 +781,7 @@ this.BX.UI = this.BX.UI || {};
 	    if (!this.layout.link) {
 	      var _this$steps$this$curr;
 	      const title = (_this$steps$this$curr = this.steps[this.currentStepIndex].getLinkTitle()) != null ? _this$steps$this$curr : main_core.Loc.getMessage('JS_UI_TOUR_LINK');
-	      this.layout.link = main_core.Tag.render(_t7 || (_t7 = _`
+	      this.layout.link = main_core.Tag.render(_t8 || (_t8 = _`
 				<a target="_blank" href="" class="ui-tour-popup-link">
 					${0}
 				</a>
@@ -775,7 +795,7 @@ this.BX.UI = this.BX.UI || {};
 	   */
 	  getCurrentCounter() {
 	    if (this.layout.currentCounter === null) {
-	      this.layout.currentCounter = main_core.Tag.render(_t8 || (_t8 = _`
+	      this.layout.currentCounter = main_core.Tag.render(_t9 || (_t9 = _`
 				<span class="ui-tour-popup-counter">
 					${0}
 				</span>
@@ -789,15 +809,15 @@ this.BX.UI = this.BX.UI || {};
 	   */
 	  getBtnContainer() {
 	    if (this.layout.btnContainer === null) {
-	      this.layout.btnContainer = main_core.Tag.render(_t9 || (_t9 = _`
+	      this.layout.btnContainer = main_core.Tag.render(_t10 || (_t10 = _`
 				<div class="ui-tour-popup-btn-block"></div>
 			`));
-	      this.layout.nextBtn = main_core.Tag.render(_t10 || (_t10 = _`
+	      this.layout.nextBtn = main_core.Tag.render(_t11 || (_t11 = _`
 				<button id="next" class="ui-tour-popup-btn-next">
 					${0}
 				</button>
 			`), this.simpleMode ? main_core.Loc.getMessage("JS_UI_TOUR_BUTTON_SIMPLE") : main_core.Loc.getMessage("JS_UI_TOUR_BUTTON"));
-	      this.layout.backBtn = main_core.Tag.render(_t11 || (_t11 = _`
+	      this.layout.backBtn = main_core.Tag.render(_t12 || (_t12 = _`
 				<button id="back" class="ui-tour-popup-btn-back">
 				</button>
 			`));
@@ -810,14 +830,14 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getCounterItems() {
 	    if (this.layout.counter === null) {
-	      this.layout.counter = main_core.Tag.render(_t12 || (_t12 = _`
+	      this.layout.counter = main_core.Tag.render(_t13 || (_t13 = _`
 				<span class="ui-tour-popup-index-items">
 				</span>
 			`));
 	    }
 	    this.layout.counterItems = [];
 	    for (let i = 0; i < this.steps.length; i++) {
-	      const currentStepIndex = main_core.Tag.render(_t13 || (_t13 = _`
+	      const currentStepIndex = main_core.Tag.render(_t14 || (_t14 = _`
 				<span class="ui-tour-popup-index-item">
 				</span>
 			`));
@@ -909,7 +929,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getFinalContent() {
 	    if (!this.layout.finalContent) {
-	      this.layout.finalContent = main_core.Tag.render(_t14 || (_t14 = _`
+	      this.layout.finalContent = main_core.Tag.render(_t15 || (_t15 = _`
 				<div class="ui-tour-popup">
 					<div class="ui-tour-popup-title">
 						${0}
@@ -931,7 +951,7 @@ this.BX.UI = this.BX.UI || {};
 	    const buttons = [];
 	    if (this.buttons !== "") {
 	      for (let i = 0; i < this.buttons.length; i++) {
-	        let btn = main_core.Tag.render(_t15 || (_t15 = _`
+	        let btn = main_core.Tag.render(_t16 || (_t16 = _`
 					<button class="${0}" onclick="${0}">
 					${0}
 					</button>
@@ -939,7 +959,7 @@ this.BX.UI = this.BX.UI || {};
 	        buttons.push(btn);
 	      }
 	    } else {
-	      let btn = main_core.Tag.render(_t16 || (_t16 = _`
+	      let btn = main_core.Tag.render(_t17 || (_t17 = _`
 				<button class="ui-btn ui-btn-sm ui-btn-primary ui-btn-round" onclick="${0}">
 				${0}
 				</button>
@@ -977,7 +997,7 @@ this.BX.UI = this.BX.UI || {};
 	  }
 	  getCursor() {
 	    if (!this.layout.cursor) {
-	      this.layout.cursor = main_core.Tag.render(_t17 || (_t17 = _`
+	      this.layout.cursor = main_core.Tag.render(_t18 || (_t18 = _`
 				<div class="ui-tour-cursor"></div>
 			`));
 	      main_core.Event.bind(this.layout.cursor, 'transitionend', () => {
