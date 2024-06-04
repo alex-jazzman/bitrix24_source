@@ -1,8 +1,20 @@
 import { Loc } from 'main.core';
+import { sendData } from 'ui.analytics';
 
 import { EnableFeatures } from '../../../base/src/const/features';
 
-const onOpenToolsSettings = () => BX.SidePanel.Instance.open(`${window.location.origin}/settings/configs/?page=tools`);
+const onOpenToolsSettings = (toolId: string) => {
+	return () => {
+		sendData({
+			tool: 'InfoHelper',
+			category: 'chat',
+			event: 'open_settings',
+			type: 'tool_off',
+			c_section: toolId,
+		});
+		BX.SidePanel.Instance.open(`${window.location.origin}/settings/configs/?page=tools`);
+	};
+};
 const onHelpClick = (ARTICLE_CODE: string) => BX.Helper.show(`redirect=detail&code=${ARTICLE_CODE}`);
 
 export const metaData = {
@@ -11,7 +23,7 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_COPILOT_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.copilot),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
@@ -23,11 +35,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_NEWS_LINE_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.newsLine),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('18634548'),
 		},
 	},
 	[EnableFeatures.chatCalls]: {
@@ -35,7 +47,7 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CHAT_CALLS_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.chatCalls),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
@@ -47,11 +59,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CALENDAR_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.calendar),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('17525000'),
 		},
 	},
 	[EnableFeatures.documents]: {
@@ -59,11 +71,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_DOCUMENTS_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.documents),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('20338924'),
 		},
 	},
 	[EnableFeatures.mail]: {
@@ -71,11 +83,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_MAIL_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.mail),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('12487078'),
 		},
 	},
 	[EnableFeatures.groups]: {
@@ -83,11 +95,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_GROUPS_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.groups),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('6481473'),
 		},
 	},
 	[EnableFeatures.tasks]: {
@@ -95,11 +107,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_TASKS_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.tasks),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('17962166'),
 		},
 	},
 	[EnableFeatures.crm]: {
@@ -107,11 +119,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CRM_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.crm),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('1470510'),
 		},
 	},
 	[EnableFeatures.marketing]: {
@@ -119,11 +131,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_MARKETING_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.marketing),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('10437776'),
 		},
 	},
 	[EnableFeatures.automation]: {
@@ -131,11 +143,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_AUTOMATION_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.automation),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('16547618'),
 		},
 	},
 	[EnableFeatures.warehouseAccounting]: {
@@ -143,11 +155,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_WAREHOUSE_ACCOUNTING_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.warehouseAccounting),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('17792018'),
 		},
 	},
 	[EnableFeatures.sign]: {
@@ -155,11 +167,11 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SIGN_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.sign),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('16555500'),
 		},
 	},
 	[EnableFeatures.websitesStores]: {
@@ -167,11 +179,47 @@ export const metaData = {
 		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_WEBSITES_STORES_DESCRIPTION'),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
-			callback: onOpenToolsSettings,
+			callback: onOpenToolsSettings(EnableFeatures.websitesStores),
 		},
 		infoButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
-			callback: () => onHelpClick('12925062'),
+			callback: () => onHelpClick('17540360'),
+		},
+	},
+	[EnableFeatures.scrum]: {
+		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SCRUM_TITLE'),
+		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SCRUM_DESCRIPTION'),
+		detailButton: {
+			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
+			callback: onOpenToolsSettings(EnableFeatures.scrum),
+		},
+		infoButton: {
+			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
+			callback: () => onHelpClick('13660630'),
+		},
+	},
+	[EnableFeatures.invoices]: {
+		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_INVOICES_TITLE'),
+		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_INVOICES_DESCRIPTION'),
+		detailButton: {
+			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
+			callback: onOpenToolsSettings(EnableFeatures.invoices),
+		},
+		infoButton: {
+			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
+			callback: () => onHelpClick('17614982'),
+		},
+	},
+	[EnableFeatures.saleshub]: {
+		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SALESHUB_TITLE'),
+		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SALESHUB_DESCRIPTION'),
+		detailButton: {
+			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS'),
+			callback: onOpenToolsSettings(EnableFeatures.saleshub),
+		},
+		infoButton: {
+			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED'),
+			callback: () => onHelpClick('9289135'),
 		},
 	},
 };

@@ -1629,20 +1629,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "editSpacesPost",
 	    value: function editSpacesPost(postId, groupId) {
-	      if (main_core.Type.isUndefined(window.listPostForms)) {
-	        window.listPostForms = new Map();
-	      }
-	      if (window.listPostForms.has(postId)) {
-	        var postForm = window.listPostForms.get(postId);
-	        postForm.show();
-	      } else {
-	        var _postForm = new socialnetwork_postForm.PostForm({
-	          postId: postId,
-	          groupId: groupId
-	        });
-	        window.listPostForms.set(postId, _postForm);
-	        _postForm.show();
-	      }
+	      var postForm = new socialnetwork_postForm.PostForm({
+	        postId: postId,
+	        groupId: groupId
+	      });
+	      postForm.show();
 	    }
 	  }]);
 	  return Post$$1;

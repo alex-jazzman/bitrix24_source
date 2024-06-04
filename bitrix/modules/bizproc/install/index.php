@@ -102,7 +102,7 @@ Class bizproc extends CModule
 	{
 		global $DB;
 
-		$dbResult = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME = 'BIZPROC_MAIL_TEMPLATE' ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$dbResult = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME = 'BIZPROC_MAIL_TEMPLATE' ");
 		$arResult = $dbResult->Fetch();
 		if ($arResult["C"] <= 0)
 			include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/events/set_events.php");

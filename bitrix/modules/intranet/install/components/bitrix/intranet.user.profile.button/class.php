@@ -123,7 +123,7 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 	{
 		if (
 			class_exists(Bitrix\UI\Avatar\Mask\Helper::class)
-			&& (Option::get('ui', 'avatar-editor-availability-delete-after-10.2022', 'N') === 'Y')
+			&& (Option::get('ui', 'avatar-editor-availability', 'N') === 'Y')
 		)
 		{
 			return Bitrix\UI\Avatar\Mask\Helper::getData($photoId);

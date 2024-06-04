@@ -3,7 +3,7 @@ import { EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import { Core } from 'im.v2.application.core';
-import { ChatActionType, EventType, SidebarDetailBlock } from 'im.v2.const';
+import { ChatActionType, EventType, SidebarDetailBlock, UserRole, ChatType } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
 import { ChatService, RecentService } from 'im.v2.provider.service';
 import { Utils } from 'im.v2.lib.utils';
@@ -15,7 +15,7 @@ import { BaseMenu } from '../base/base';
 import { InviteManager } from './invite-manager';
 
 import type { MenuItem } from 'im.v2.lib.menu';
-import type { ImModelRecentItem, ImModelUser } from 'im.v2.model';
+import type { ImModelRecentItem, ImModelUser, ImModelChat } from 'im.v2.model';
 
 export class RecentMenu extends BaseMenu
 {
@@ -91,8 +91,13 @@ export class RecentMenu extends BaseMenu
 		};
 	}
 
-	getUnreadMessageItem(): MenuItem
+	getUnreadMessageItem(): ?MenuItem
 	{
+		if (this.isChannel())
+		{
+			return null;
+		}
+
 		const dialog = this.store.getters['chats/get'](this.context.dialogId, true);
 		const showReadOption = this.context.unread || dialog.counter > 0;
 
@@ -112,7 +117,7 @@ export class RecentMenu extends BaseMenu
 		};
 	}
 
-	getPinMessageItem(): MenuItem
+	getPinMessageItem(): ?MenuItem
 	{
 		const isPinned = this.context.pinned;
 
@@ -346,5 +351,19 @@ export class RecentMenu extends BaseMenu
 		const user: ImModelUser = this.store.getters['users/get'](this.context.dialogId);
 
 		return user.bot === true;
+	}
+
+	isChannel(): boolean
+	{
+		const { type }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
+
+		return [ChatType.channel, ChatType.openChannel].includes(type);
+	}
+
+	isCommentsChat(): boolean
+	{
+		const { type }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
+
+		return type === ChatType.comment;
 	}
 }

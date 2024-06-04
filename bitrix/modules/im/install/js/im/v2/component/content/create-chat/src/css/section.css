@@ -13,6 +13,7 @@
 	border-radius: var(--im-border-radius-xs);
 	background-color: var(--im-content-create-chat__background-color_folded-section);
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+	margin-bottom: 16px;
 }
 
 .bx-im-content-create-chat__section:hover {
@@ -94,6 +95,10 @@
 
 .bx-im-content-create-chat__section.--conference .bx-im-content-create-chat__section_icon {
 	background-image: url('./images/conference.svg');
+}
+
+.bx-im-content-create-chat__section.--privacy .bx-im-content-create-chat__section_icon {
+	background-image: url('./images/privacy.svg');
 }
 
 .bx-im-content-create-chat__section_block {

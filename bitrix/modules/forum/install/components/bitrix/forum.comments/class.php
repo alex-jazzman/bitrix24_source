@@ -150,6 +150,11 @@ final class ForumCommentsComponent extends CBitrixComponent implements Main\Engi
 
 	protected function handleException(\Exception $e)
 	{
+		$exceptionHandling = Config\Configuration::getValue("exception_handling");
+		if($exceptionHandling["debug"])
+		{
+			throw $e;
+		}
 		if ($this->isAjaxRequest())
 		{
 			$this->sendJsonResponse(array(
@@ -165,15 +170,7 @@ final class ForumCommentsComponent extends CBitrixComponent implements Main\Engi
 		}
 		else
 		{
-			$exceptionHandling = Config\Configuration::getValue("exception_handling");
-			if($exceptionHandling["debug"])
-			{
-				throw $e;
-			}
-			else
-			{
-				ShowError($e->getMessage());
-			}
+			ShowError($e->getMessage());
 		}
 	}
 

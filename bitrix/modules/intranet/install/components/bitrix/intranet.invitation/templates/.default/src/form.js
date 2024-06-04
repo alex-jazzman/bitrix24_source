@@ -220,7 +220,9 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
 			Event.bind(this.button, 'click',() => {
-				this.submit.submitInvite();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitInvite();
+				}
 			});
 		}
 		else if (action === "mass-invite")
@@ -228,15 +230,19 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
 			Event.bind(this.button, 'click',() => {
-				this.submit.submitMassInvite();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitMassInvite();
+				}
 			});
 		}
 		else if (action === "invite-with-group-dp")
 		{
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
-			Event.bind(this.button, 'click',() => {
-				this.submit.submitInviteWithGroupDp();
+			Event.bind(this.button, 'click', () => {
+				if (!this.submit.waitingResponse) {
+					this.submit.submitInviteWithGroupDp();
+				}
 			});
 		}
 		else if (action === "add")
@@ -244,7 +250,9 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_ADD');
 
 			Event.bind(this.button, 'click', () => {
-				this.submit.submitAdd();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitAdd();
+				}
 			});
 		}
 		else if (action === "self")
@@ -264,7 +272,9 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
 			Event.bind(this.button, 'click', () => {
-				this.submit.submitIntegrator();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitIntegrator();
+				}
 			});
 		}
 		else if (action === "extranet")
@@ -272,7 +282,9 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
 			Event.bind(this.button, 'click', () => {
-				this.submit.submitExtranet();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitExtranet();
+				}
 			});
 		}
 		else if (action === "success")

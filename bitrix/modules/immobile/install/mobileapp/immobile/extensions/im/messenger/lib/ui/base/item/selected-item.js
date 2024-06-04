@@ -169,6 +169,7 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 								uri: this.props.data.avatarUri,
 								color: this.props.data.avatarColor,
 								size: this.props.size,
+								isSuperEllipse: this.props.isSuperEllipseAvatar,
 							}),
 						),
 						View(

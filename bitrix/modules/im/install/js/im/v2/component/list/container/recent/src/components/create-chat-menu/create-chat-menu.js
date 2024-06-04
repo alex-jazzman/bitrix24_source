@@ -1,12 +1,11 @@
-import { MessengerMenu, MenuItem, MenuItemIcon } from 'im.v2.component.elements';
+import { MessengerMenu, MenuItem, MenuItemIcon, CreateChatPromo } from 'im.v2.component.elements';
 import { Layout, PromoId, ChatType } from 'im.v2.const';
 import { PromoManager } from 'im.v2.lib.promo';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { LayoutManager } from 'im.v2.lib.layout';
+import { Extension } from 'main.core';
 
 import { CreateChatHelp } from './create-chat-help';
-import { CreateChatPromo } from './promo/create-chat';
-import { GroupChatPromo } from './promo/group-chat';
 
 import type { JsonObject } from 'main.core';
 import type { MenuOptions } from 'main.popup';
@@ -14,11 +13,12 @@ import type { MenuOptions } from 'main.popup';
 const PromoByChatType = {
 	[ChatType.chat]: PromoId.createGroupChat,
 	[ChatType.videoconf]: PromoId.createConference,
+	[ChatType.channel]: PromoId.createChannel,
 };
 
 // @vue/component
 export const CreateChatMenu = {
-	components: { MessengerMenu, MenuItem, CreateChatHelp, CreateChatPromo, GroupChatPromo },
+	components: { MessengerMenu, MenuItem, CreateChatHelp, CreateChatPromo },
 	data(): JsonObject {
 		return {
 			showPopup: false,
@@ -34,7 +34,7 @@ export const CreateChatMenu = {
 		{
 			return {
 				id: 'im-create-chat-menu',
-				width: 255,
+				width: 275,
 				bindElement: this.$refs.icon || {},
 				offsetTop: 4,
 				padding: 0,
@@ -74,15 +74,17 @@ export const CreateChatMenu = {
 			{
 				return;
 			}
-			CreateChatManager.getInstance().setCreationStatus(false);
-			void LayoutManager.getInstance().setLayout({
-				name: Layout.createChat.name,
-				entityId: this.chatTypeToCreate,
-			});
+			CreateChatManager.getInstance().startChatCreation(this.chatTypeToCreate);
 		},
 		getPromoType(): string
 		{
 			return PromoByChatType[this.chatTypeToCreate] ?? '';
+		},
+		isChannelCreationAvailable(): boolean
+		{
+			const settings = Extension.getSettings('im.v2.component.list.container.recent');
+
+			return settings.get('channelCreationAvailable');
 		},
 		loc(phraseCode: string): string
 		{
@@ -100,21 +102,21 @@ export const CreateChatMenu = {
 			<MenuItem
 				:icon="MenuItemIcon.chat"
 				:title="loc('IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2')"
-				:subtitle="loc('IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE')"
+				:subtitle="loc('IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_V2')"
 				@click="onChatCreateClick(ChatType.chat)"
+			/>
+			<MenuItem
+				v-if="isChannelCreationAvailable()"
+				:icon="MenuItemIcon.channel"
+				:title="loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2')"
+				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_V3')"
+				@click="onChatCreateClick(ChatType.channel)"
 			/>
 			<MenuItem
 				:icon="MenuItemIcon.conference"
 				:title="loc('IM_RECENT_CREATE_CONFERENCE_TITLE')"
-				:subtitle="loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE')"
+				:subtitle="loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_V2')"
 				@click="onChatCreateClick(ChatType.videoconf)"
-			/>
-			<MenuItem
-				v-if="false"
-				:icon="MenuItemIcon.channel"
-				:title="loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2')"
-				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_V2')"
-				:disabled="true"
 			/>
 			<template #footer>
 				<CreateChatHelp @articleOpen="showPopup = false" />

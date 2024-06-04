@@ -32,7 +32,7 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 		}
 
 		/**
-		 * @param {MutationPayload<FilesUpdateData, FilesUpdateActions>} mutation.payload
+		 * @param {MutationPayload<FilesAddData, FilesAddActions>} mutation.payload
 		 */
 		addRouter(mutation)
 		{
@@ -112,7 +112,7 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 		}
 
 		/**
-		 * @param {MutationPayload<FilesUpdateData, FilesUpdateActions>} mutation.payload
+		 * @param {MutationPayload<FilesUpdateWithIdData, FilesUpdateWithIdActions>} mutation.payload
 		 */
 		updateWithIdRouter(mutation)
 		{
@@ -148,7 +148,7 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 		}
 
 		/**
-		 * @param {MutationPayload<FilesUpdateData, FilesUpdateActions>} mutation.payload
+		 * @param {MutationPayload<FilesDeleteData, FilesDeleteActions>} mutation.payload
 		 */
 		deleteRouter(mutation)
 		{}

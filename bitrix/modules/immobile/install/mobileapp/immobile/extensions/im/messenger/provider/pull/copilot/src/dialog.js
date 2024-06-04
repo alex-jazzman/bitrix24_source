@@ -4,7 +4,7 @@
  * @module im/messenger/provider/pull/copilot/dialog
  */
 jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module) => {
-	const { DialogBasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BaseDialogPullHandler } = require('im/messenger/provider/pull/base');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { Counters } = require('im/messenger/lib/counters');
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--copilot-dialog');
@@ -12,7 +12,7 @@ jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module
 	/**
 	 * @class CopilotDialogPullHandler
 	 */
-	class CopilotDialogPullHandler extends DialogBasePullHandler
+	class CopilotDialogPullHandler extends BaseDialogPullHandler
 	{
 		constructor()
 		{

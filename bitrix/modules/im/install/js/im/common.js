@@ -2643,10 +2643,6 @@
 		else
 		{
 			this.BXIM.messenger.openMessenger(BX.proxy_context.getAttribute('data-userId'));
-			if (this.BXIM.callController && this.BXIM.callController.hasActiveCall())
-			{
-				this.BXIM.callController.fold();
-			}
 		}
 	}
 
@@ -2927,7 +2923,7 @@
 				if (this.BXIM.messenger.contactListSearchText <= 0 && !this.BXIM.messenger.chatList)
 				{
 					this.BXIM.messenger.popupContactListSearchInput.value = "";
-					if (!this.isMobile() && this.BXIM.messenger.popupMessenger && !this.BXIM.messenger.desktop.ready() && this.BXIM.callController && !this.BXIM.callController.hasActiveCall())
+					if (!this.isMobile() && this.BXIM.messenger.popupMessenger && !this.BXIM.messenger.desktop.ready())
 					{
 						this.BXIM.messenger.popupMessenger.destroy();
 						return true;
@@ -3889,10 +3885,7 @@
 				this.BXIM.messenger.openLinesFlag = false;
 				this.BXIM.messenger.extraClose();
 			}
-			else if (
-				!this.BXIM.callController
-				|| !this.BXIM.callController.hasActiveCall()
-			)
+			else
 			{
 				this.BXIM.messenger.openMessenger();
 			}
@@ -8759,15 +8752,6 @@
 				{
 					this.readMessage('chat'+params.chatId, true, false, true);
 					this.leaveFromChat(params.chatId, false);
-
-					if (
-						this.BXIM.callController
-						&& this.BXIM.callController.hasActiveCall()
-						&& this.BXIM.callController.currentCall.associatedEntity.id == 'chat'+params.chatId
-					)
-					{
-						this.BXIM.callController.currentCall.hangup();
-					}
 				}
 				else if (this.MobileActionEqual('DIALOG'))
 				{
@@ -9654,15 +9638,6 @@
 		{
 			skipCheck = skipCheck == true || this.isMobile();
 			if (!skipCheck && !BX.MessengerCommon.getCounter(dialogId))
-			{
-				return false;
-			}
-
-			if (
-				this.BXIM.callController
-				&& this.BXIM.callController.hasActiveCall()
-				&& this.BXIM.callController.hasVisibleCall()
-			)
 			{
 				return false;
 			}
@@ -11181,9 +11156,6 @@
 
 		if (extraClose)
 			this.BXIM.messenger.extraClose();
-
-		if (callToggle && this.BXIM.callController && this.BXIM.callController.hasActiveCall())
-			this.BXIM.callController.showChat();
 
 		if (this.isMobile())
 		{

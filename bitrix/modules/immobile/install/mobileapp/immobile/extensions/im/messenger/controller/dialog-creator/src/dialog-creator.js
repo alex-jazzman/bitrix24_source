@@ -10,8 +10,9 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod, DialogType, EventType, ComponentCode, BotCode } = require('im/messenger/const');
+	const { RestMethod, DialogType, EventType, ComponentCode, BotCode, Analytics } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
+	const { AnalyticsEvent } = require('analytics');
 
 	class DialogCreator
 	{
@@ -59,9 +60,20 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 						() => {
 							MessengerEmitter.emit(
 								EventType.messenger.openDialog,
-								{ dialogId: `chat${chatId}` },
+								{ dialogId: `chat${chatId}`, isNew: true },
 								ComponentCode.imCopilotMessenger,
 							);
+
+							const analytics = new AnalyticsEvent()
+								.setTool(Analytics.Tool.ai)
+								.setCategory(Analytics.Category.chatOperations)
+								.setEvent(Analytics.Event.createNewChat)
+								.setType(Analytics.Type.ai)
+								.setSection(Analytics.Section.copilotTab)
+								.setP3(Analytics.CopilotChatType.private)
+								.setP5(`chatId_${chatId}`);
+
+							analytics.send();
 						},
 						200,
 					);
@@ -156,7 +168,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 					type: 'chats',
 					selected: false,
 					disable: false,
-					isPressed: true,
+					isWithPressed: true,
 				};
 			});
 		}

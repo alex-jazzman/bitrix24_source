@@ -4,23 +4,23 @@
  * @module im/messenger/provider/pull/chat/message
  */
 jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) => {
-	const { clone } = require('utils/object');
-	const { MessageBasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BaseMessagePullHandler } = require('im/messenger/provider/pull/base');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Counters } = require('im/messenger/lib/counters');
-	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { Notifier } = require('im/messenger/lib/notifier');
 	const {
 		DialogType,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { ChatRecentMessageManager } = require('im/messenger/provider/pull/lib/recent/chat');
+
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--chat-message');
 
 	/**
 	 * @class ChatMessagePullHandler
 	 */
-	class ChatMessagePullHandler extends MessageBasePullHandler
+	class ChatMessagePullHandler extends BaseMessagePullHandler
 	{
 		constructor()
 		{
@@ -34,17 +34,25 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				return;
 			}
 
-			if (params.chat && params.chat[params.chatId].type === DialogType.copilot)
+			const recentMessageManager = this.getRecentMessageManager(params, extra);
+			if (recentMessageManager.isCopilotChat())
+			{
+				return;
+			}
+
+			if (recentMessageManager.isOpenChannelChat() && recentMessageManager.isChannelListEvent())
 			{
 				return;
 			}
 
 			logger.info(`${this.getClassName()}.handleMessageChat `, params, extra);
 
-			const dialogId = params.message.recipientId;
-			const userId = MessengerParams.getUserId();
+			if (recentMessageManager.isCommentChat())
+			{
+				this.setCommentInfo(params);
+			}
 
-			if (params.lines)
+			if (recentMessageManager.isLinesChat())
 			{
 				if (MessengerParams.isOpenlinesOperator())
 				{
@@ -55,54 +63,17 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				return;
 			}
 
-			const recentParams = clone(params);
-			recentParams.message.text = ChatMessengerCommon.purifyText(
-				recentParams.message.text,
-				recentParams.message.params,
-			);
-			recentParams.message.status = recentParams.message.senderId === userId ? 'received' : '';
-			const userData = recentParams.message.senderId > 0
-				? recentParams.users[recentParams.message.senderId]
-				: { id: 0 };
-			const recentItem = RecentConverter.fromPushToModel({
-				id: dialogId,
-				chat: recentParams.chat[recentParams.chatId],
-				user: userData,
-				lines: recentParams.lines,
-				message: recentParams.message,
-				counter: recentParams.counter,
-				liked: false,
-			});
-
 			this.updateDialog(params)
-				.then(() => this.store.dispatch('recentModel/set', [recentItem]))
+				.then(() => recentMessageManager.updateRecent())
 				.then(() => {
-					const dialog = this.getDialog(dialogId);
-					if (
-						extra && extra.server_time_ago <= 5
-						&& params.message.senderId !== userId
-						&& dialog && !dialog.muteList.includes(userId)
-					)
-					{
-						const dialogTitle = ChatTitle.createFromDialogId(dialogId).getTitle();
-						const userName = ChatTitle.createFromDialogId(userData.id).getTitle();
-						const avatar = ChatAvatar.createFromDialogId(dialogId).getAvatarUrl();
-
-						Notifier.notify({
-							dialogId: dialog.dialogId,
-							title: dialogTitle,
-							text: (userName ? `${userName}: ` : '') + recentItem.message.text,
-							avatar,
-						});
-					}
-
+					this.messageNotify(params, extra, recentMessageManager.getMessageText());
 					Counters.updateDelayed();
 
 					this.saveShareDialogCache();
 				})
 			;
 
-			const dialog = this.getDialog(dialogId);
+			const dialog = this.getDialog(recentMessageManager.getDialogId());
 			if (!dialog || dialog.hasNextPage)
 			{
 				return;
@@ -114,12 +85,16 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 				return;
 			}
 
-			this.setUsers(params).then(() => {
-				this.setFiles(params).then(() => {
+			this.setUsers(params)
+				.then(() => this.setFiles(params))
+				.then(() => {
 					this.setMessage(params);
-					this.checkWritingTimer(dialogId, userData);
-				});
-			});
+					this.checkWritingTimer(
+						recentMessageManager.getDialogId(),
+						recentMessageManager.getSender(),
+					);
+				})
+			;
 		}
 
 		/**
@@ -167,6 +142,87 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 					logger.error('ChatMessagePullHandler.handlePinDelete delete pin error', error);
 				})
 			;
+		}
+
+		isNeedUpdateRecent(params)
+		{
+			const chatType = params?.chat?.[params?.chatId]?.type;
+
+			return ![DialogType.comment, DialogType.openChannel].includes(chatType);
+		}
+
+		isNeedNotify(params)
+		{
+			const chatType = params?.chat?.[params?.chatId]?.type;
+
+			return ![DialogType.comment].includes(chatType);
+		}
+
+		async updateRecent(params, recentItem)
+		{
+			if (!this.isNeedUpdateRecent(params))
+			{
+				return;
+			}
+
+			// eslint-disable-next-line consistent-return
+			return this.store.dispatch('recentModel/set', [recentItem]);
+		}
+
+		messageNotify(params, extra, messageText)
+		{
+			if (!this.isNeedNotify(params))
+			{
+				return;
+			}
+
+			const dialogId = params.message.recipientId;
+			const userId = MessengerParams.getUserId();
+			const userData = params.message.senderId > 0
+				? params.users[params.message.senderId]
+				: { id: 0 };
+
+			const dialog = this.getDialog(dialogId);
+			if (
+				extra && extra.server_time_ago <= 5
+				&& params.message.senderId !== userId
+				&& dialog && !dialog.muteList.includes(userId)
+			)
+			{
+				const dialogTitle = ChatTitle.createFromDialogId(dialogId).getTitle();
+				const userName = ChatTitle.createFromDialogId(userData.id).getTitle();
+				const avatar = ChatAvatar.createFromDialogId(dialogId).getAvatarUrl();
+
+				Notifier.notify({
+					dialogId: dialog.dialogId,
+					title: dialogTitle,
+					text: (userName ? `${userName}: ` : '') + messageText,
+					avatar,
+				});
+			}
+		}
+
+		async setCommentInfo(params)
+		{
+			const chat = params.chat?.[params.chatId];
+
+			await this.store.dispatch('commentModel/setCommentWithCounter', {
+				messageId: chat.parent_message_id,
+				chatId: params.chatId,
+				messageCount: chat.message_count,
+				dialogId: params.dialogId,
+				newUserId: params.message.senderId,
+				chatCounterMap: {
+					[chat.parent_chat_id]: {
+						[chat.id]: params.counter,
+					},
+				},
+			});
+		}
+
+		getRecentMessageManager(params, extra = {})
+		{
+			return new ChatRecentMessageManager(params, extra);
 		}
 	}
 

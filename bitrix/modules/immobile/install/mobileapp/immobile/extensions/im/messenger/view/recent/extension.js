@@ -64,7 +64,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			const topMenuPopup = dialogs.createPopupMenu();
 			const topMenuButtons = [];
 
-			if (!this.isCopilotComponent())
+			if (this.isMessengerComponent())
 			{
 				topMenuButtons.push(
 					{
@@ -116,7 +116,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				);
 			}
 
-			if (!this.isCopilotComponent())
+			if (this.isMessengerComponent())
 			{
 				buttons.unshift({
 					type: 'search',
@@ -153,6 +153,11 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		initChatCreateButton()
 		{
+			if (MessengerParams.get('COMPONENT_CODE') === ComponentCode.imChannelMessenger)
+			{
+				return;
+			}
+
 			this.setFloatingButton(this.getChatCreateButtonOption());
 		}
 
@@ -161,6 +166,20 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			const componentCode = MessengerParams.get('COMPONENT_CODE');
 
 			return componentCode === ComponentCode.imCopilotMessenger;
+		}
+
+		isChannelComponent()
+		{
+			const componentCode = MessengerParams.get('COMPONENT_CODE');
+
+			return componentCode === ComponentCode.imChannelMessenger;
+		}
+
+		isMessengerComponent()
+		{
+			const componentCode = MessengerParams.get('COMPONENT_CODE');
+
+			return componentCode === ComponentCode.imMessenger;
 		}
 
 		getChatCreateButtonOption()

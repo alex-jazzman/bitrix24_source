@@ -73,7 +73,7 @@ CREATE TABLE b_bp_workflow_instance (
 );
 
 CREATE TABLE b_bp_tracking (
-	ID int NOT NULL auto_increment,
+	ID bigint NOT NULL auto_increment,
 	WORKFLOW_ID varchar(32) NOT NULL,
 	TYPE int NOT NULL,
 	MODIFIED datetime NOT NULL,

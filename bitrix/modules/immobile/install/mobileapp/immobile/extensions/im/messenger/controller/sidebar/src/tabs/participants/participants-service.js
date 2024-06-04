@@ -183,6 +183,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 				isAdmin,
 				isYou,
 				isCopilot,
+				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			};
 		}
 
@@ -317,6 +318,11 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 			}
 
 			BX.onCustomEvent(EventType.dialog.external.mention, [userId, BBCode.user]);
+		}
+
+		isSuperEllipseAvatar()
+		{
+			return false;
 		}
 	}
 

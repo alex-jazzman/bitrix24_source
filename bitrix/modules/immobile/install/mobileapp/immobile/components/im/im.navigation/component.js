@@ -4,6 +4,8 @@
 	console.log('Navigation is loaded.');
 
 	const { EntityReady } = jn.require('entity-ready');
+	const { AnalyticsEvent } = jn.require('analytics');
+	const { Analytics } = jn.require('im/messenger/const');
 
 	class NavigationManager
 	{
@@ -84,6 +86,23 @@
 				current: this.currentTab,
 				previous: this.previousTab,
 			});
+
+			BX.postComponentEvent('ImMobile.Navigation:tabChanged', [{ newTab: this.currentTab, previousTab: this.previousTab }]);
+			if (this.currentTab === 'copilot')
+			{
+				this.sendAnalytics();
+			}
+		}
+
+		sendAnalytics()
+		{
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.Tool.ai)
+				.setCategory(Analytics.Category.chatOperations)
+				.setEvent(Analytics.Event.openTab)
+				.setSection(Analytics.Section.copilotTab);
+
+			analytics.send();
 		}
 
 		onUpdateCounters(counters, delay)

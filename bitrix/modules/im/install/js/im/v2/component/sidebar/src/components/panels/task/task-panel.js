@@ -2,7 +2,8 @@ import { EventEmitter } from 'main.core.events';
 
 import { Loader } from 'im.v2.component.elements';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
-import { EventType, SidebarDetailBlock } from 'im.v2.const';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { EventType, SidebarDetailBlock, ChatActionType } from 'im.v2.const';
 
 import { TaskItem } from './task-item';
 import { Task } from '../../../classes/panels/task';
@@ -51,6 +52,10 @@ export const TaskPanel = {
 		isEmptyState(): boolean
 		{
 			return this.formattedCollection.length === 0;
+		},
+		showAddButton(): boolean
+		{
+			return PermissionManager.getInstance().canPerformAction(ChatActionType.createTask, this.dialogId);
 		},
 		dialog(): ImModelChat
 		{
@@ -118,7 +123,7 @@ export const TaskPanel = {
 			<DetailHeader
 				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_TASK_DETAIL_TITLE')"
 				:secondLevel="secondLevel"
-				:withAddButton="true"
+				:withAddButton="showAddButton"
 				@addClick="onAddClick"
 				@back="onBackClick"
 			/>
@@ -128,6 +133,7 @@ export const TaskPanel = {
 					<TaskItem
 						v-for="task in dateGroup.items"
 						:task="task"
+						:contextDialogId="dialogId"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>

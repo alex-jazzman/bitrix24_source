@@ -162,7 +162,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 					}
 					?>
 					<div class="tel-set-destination-container" id="users_for_queue"></div>
-					<script type="text/javascript">
+					<script>
 						BX.ready(function () {
 							BX.message({
 								LM_ADD: '<?=GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LM_ADD')?>',

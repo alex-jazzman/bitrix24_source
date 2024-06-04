@@ -87,7 +87,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 		{
 			return [
 				this.getNewChatButton(),
-				this.getNewChannelButton(),
+				// this.getNewChannelButton(),
 				this.getInviteButton(),
 			];
 		}

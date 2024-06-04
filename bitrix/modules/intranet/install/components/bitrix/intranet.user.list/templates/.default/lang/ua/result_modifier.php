@@ -1,4 +1,5 @@
 <?php
+$MESS["INTRANET_USER_LIST_ACTION_CONFIRM"] = "Підтвердити вхід";
 $MESS["INTRANET_USER_LIST_ACTION_DEACTIVATE"] = "Звільнити";
 $MESS["INTRANET_USER_LIST_ACTION_DEACTIVATE_TITLE"] = "Звільнити співробітника";
 $MESS["INTRANET_USER_LIST_ACTION_DELETE"] = "Видалити";
@@ -8,6 +9,7 @@ $MESS["INTRANET_USER_LIST_ACTION_MESSAGE"] = "Написати повідомл�
 $MESS["INTRANET_USER_LIST_ACTION_MESSAGE_HISTORY"] = "Історія переписки";
 $MESS["INTRANET_USER_LIST_ACTION_MESSAGE_HISTORY_TITLE"] = "Показати історію переписки з користувачем";
 $MESS["INTRANET_USER_LIST_ACTION_MESSAGE_TITLE"] = "Написати повідомлення користувачу";
+$MESS["INTRANET_USER_LIST_ACTION_REFUSE"] = "Відмовити";
 $MESS["INTRANET_USER_LIST_ACTION_REINVITE"] = "Запросити ще раз";
 $MESS["INTRANET_USER_LIST_ACTION_REINVITE_TITLE"] = "Запросити користувача ще раз";
 $MESS["INTRANET_USER_LIST_ACTION_RESTORE"] = "Прийняти на роботу";
@@ -19,8 +21,10 @@ $MESS["INTRANET_USER_LIST_ACTION_VIDEOCALL_TITLE"] = "Почати відеод�
 $MESS["INTRANET_USER_LIST_ACTION_VIEW"] = "Відкрити профіль";
 $MESS["INTRANET_USER_LIST_ACTION_VIEW_TITLE"] = "Перейти до перегляду профілю користувача";
 $MESS["INTRANET_USER_LIST_BUTTON_INVITE_TITLE"] = "Запросити співробітників";
+$MESS["INTRANET_USER_LIST_BUTTON_INVITE_TITLE_MSG_1"] = "Запросити";
 $MESS["INTRANET_USER_LIST_GENDER_F"] = "жіноча";
 $MESS["INTRANET_USER_LIST_GENDER_M"] = "чоловіча";
 $MESS["INTRANET_USER_LIST_MENU_EXPORT_EXCEL_TITLE"] = "Експортувати в Excel";
+$MESS["INTRANET_USER_LIST_MENU_SORT_DEFAULT"] = "Сортувати за замовчуванням";
 $MESS["INTRANET_USER_LIST_MENU_SYNC_CARDDAV_TITLE"] = "Синхронізувати з CardDAV";
 $MESS["INTRANET_USER_LIST_MENU_SYNC_OUTLOOK_TITLE"] = "Синхронізувати з Outlook";

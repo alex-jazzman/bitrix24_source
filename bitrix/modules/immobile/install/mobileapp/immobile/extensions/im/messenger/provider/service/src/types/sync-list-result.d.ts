@@ -89,6 +89,10 @@ export type RawChat = {
     type: string,
     unreadId: number,
     userCounter: number
+	parentChatId: number,
+	parentMessageId: number,
+	parent_chat_id: number, // Pull only
+	parent_message_id: number, // Pull only
 };
 
 export type RawRestrictions = {

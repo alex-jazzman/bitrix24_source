@@ -2783,7 +2783,7 @@ this.BX = this.BX || {};
 	            inputName: 'name',
 	            label: this.getValue('portalSettingsLabels').name,
 	            value: this.getValue('portalSettings').name,
-	            placeholder: window.document.location.hostname,
+	            placeholder: main_core.Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_TITLE'),
 	            inputDefaultWidth: true
 	          })
 	        })

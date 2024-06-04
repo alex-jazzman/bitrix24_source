@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'im:messenger/provider/pull/lib',
+		'im:messenger/provider/pull/base',
 		'type',
 		'loc',
 		'utils/object',
@@ -22,6 +22,7 @@ return [
 		'im:chat/utils',
 		'im:chat/messengercommon',
 		'im:chat/dataconverter',
+		'im:messenger/provider/pull/lib/recent/chat',
 	],
 	'bundle' => [
 		'./src/dialog',
@@ -31,5 +32,6 @@ return [
 		'./src/desktop',
 		'./src/notification',
 		'./src/online',
+		'./src/recent',
 	],
 ];

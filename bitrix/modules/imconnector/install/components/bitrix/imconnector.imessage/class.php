@@ -78,7 +78,7 @@ class ImConnectorImessage extends CBitrixComponent
 			$cookieNameIdLine = $cookiePrefix . '_' . $cookieNameIdLine;
 		}
 
-		return '<script type="text/javascript">
+		return '<script>
 			BX.message({
 				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_TITLE: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_TITLE') . '\',
 				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_DESCRIPTION: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_DESCRIPTION_NEW_2', ['#ID#' => $this->helpDeskParams, '#ID_LIMIT#' => $this->helpLimitDeskParams]) . '\',

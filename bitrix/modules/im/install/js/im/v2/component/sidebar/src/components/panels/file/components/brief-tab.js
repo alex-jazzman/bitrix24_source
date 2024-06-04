@@ -105,6 +105,7 @@ export const BriefTab = {
 				<BriefItem
 					v-for="file in dateGroup.items"
 					:brief="file"
+					:contextDialogId="dialogId"
 					@contextMenuClick="onContextMenuClick"
 				/>
 			</div>

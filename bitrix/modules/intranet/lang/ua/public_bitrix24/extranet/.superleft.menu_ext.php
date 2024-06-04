@@ -7,4 +7,5 @@ $MESS["MENU_GROUPS"] = "Групи";
 $MESS["MENU_GROUPS_EXTRANET_ALL"] = "Всі групи";
 $MESS["MENU_LIVE_FEED"] = "Жива стрічка";
 $MESS["MENU_LIVE_FEED2"] = "Новини";
+$MESS["MENU_LIVE_FEED3"] = "Стрічка";
 $MESS["MENU_TASKS"] = "Завдання";

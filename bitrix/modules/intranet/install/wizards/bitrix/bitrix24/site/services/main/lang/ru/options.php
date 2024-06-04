@@ -5,7 +5,7 @@ $MESS["MAIN_OPT_MENU_MAIN"] = "Главное меню сайта";
 $MESS["MAIN_OPT_MENU_BOTTOM"] = "Нижнее меню";
 $MESS["MAIN_OPT_MENU_DEPARTMENT"] = "Департаменты";
 $MESS["MAIN_OPT_MENU_TOPLINKS"] = "Меню быстрых ссылок";
-$MESS["MAIN_OPT_DEF_LINKS1"] = "[IMG]/images/icons/bullet_dot.gif[/IMG] [url=http://www.1c-bitrix.ru]Сайт нашей компании[/url]
+$MESS["MAIN_OPT_DEF_LINKS1"] = "[IMG]/images/icons/bullet_dot.gif[/IMG] [url=https://www.1c-bitrix.ru]Сайт нашей компании[/url]
 
 [IMG]/images/icons/bullet_dot.gif[/IMG] [url=http://v8.1c.ru/enterprise/]Вход в УПП[/url]
 

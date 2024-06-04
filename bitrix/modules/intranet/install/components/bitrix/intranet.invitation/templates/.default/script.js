@@ -11,6 +11,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Submit);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Submit).call(this));
+	    _this.waitingResponse = false;
 	    _this.parent = parent;
 	    _this.setEventNamespace("BX.Intranet.Invitation.Submit");
 	    _this.parent.subscribe("onButtonClick", function (event) {});
@@ -298,8 +299,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        return;
 	      }
 	      if (isDisable) {
+	        this.waitingResponse = true;
 	        main_core.Dom.addClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 	      } else {
+	        this.waitingResponse = false;
 	        main_core.Dom.removeClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 	      }
 	    }
@@ -958,22 +961,30 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      if (action === "invite") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitInvite();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitInvite();
+	          }
 	        });
 	      } else if (action === "mass-invite") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitMassInvite();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitMassInvite();
+	          }
 	        });
 	      } else if (action === "invite-with-group-dp") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitInviteWithGroupDp();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitInviteWithGroupDp();
+	          }
 	        });
 	      } else if (action === "add") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_ADD');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitAdd();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitAdd();
+	          }
 	        });
 	      } else if (action === "self") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_SAVE');
@@ -986,12 +997,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      } else if (action === "integrator") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitIntegrator();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitIntegrator();
+	          }
 	        });
 	      } else if (action === "extranet") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitExtranet();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitExtranet();
+	          }
 	        });
 	      } else if (action === "success") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE_MORE');

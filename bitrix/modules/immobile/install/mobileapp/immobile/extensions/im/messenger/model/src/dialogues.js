@@ -56,6 +56,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		diskFolderId: 0,
 		role: UserRole.guest,
 		permissions: {
+			manageMessages: UserRole.none,
 			manageUsersAdd: UserRole.none,
 			manageUsersDelete: UserRole.none,
 			manageUi: UserRole.none,
@@ -63,8 +64,12 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			canPost: UserRole.none,
 		},
 		aiProvider: '',
+		parentChatId: 0, // unsafe in local database
+		parentMessageId: 0, // unsafe in local database
+		messageCount: 0, // unsafe in local database
 	};
 
+	/** @type {DialoguesMessengerModel} */
 	const dialoguesModel = {
 		namespaced: true,
 		state: () => ({
@@ -161,6 +166,26 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				}
 
 				return Math.min(lastReadId, markedId);
+			},
+
+			/**
+			 * @function dialoguesModel/getByParentMessageId
+			 * @return {DialoguesModelState | undefined}
+			 */
+			getByParentMessageId: (state) => (parentMessageId) => {
+				return Object.values(state.collection).find((item) => {
+					return item.parentMessageId === parentMessageId;
+				});
+			},
+
+			/**
+			 * @function dialoguesModel/getByParentChatId
+			 * @return {DialoguesModelState | undefined}
+			 */
+			getByParentChatId: (state) => (parentChatId) => {
+				return Object.values(state.collection).find((item) => {
+					return item.parentChatId === parentChatId;
+				});
 			},
 		},
 		actions: {
@@ -436,6 +461,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function dialoguesModel/mute */
 			mute(store, payload)
 			{
 				const existingItem = store.state.collection[payload.dialogId];
@@ -463,6 +489,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function dialoguesModel/unmute */
 			unmute(store, payload)
 			{
 				const existingItem = store.state.collection[payload.dialogId];
@@ -1020,6 +1047,16 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			result.aiProvider = fields.ai_provider;
 		}
 
+		if (Type.isNumber(fields.parentChatId))
+		{
+			result.parentChatId = fields.parentChatId;
+		}
+
+		if (Type.isNumber(fields.parentMessageId))
+		{
+			result.parentMessageId = fields.parentMessageId;
+		}
+
 		return result;
 	}
 
@@ -1202,7 +1239,12 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 		if (Type.isStringFilled(fields.can_post) || Type.isStringFilled(fields.canPost))
 		{
-			result.canPost = fields.can_post || fields.canPost;
+			fields.manageMessages = fields.can_post || fields.canPost;
+		}
+
+		if (Type.isStringFilled(fields.manage_messages) || Type.isStringFilled(fields.manageMessages))
+		{
+			result.manageMessages = fields.manage_messages || fields.manageMessages;
 		}
 
 		return result;

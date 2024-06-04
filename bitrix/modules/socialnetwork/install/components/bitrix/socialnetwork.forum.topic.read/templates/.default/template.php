@@ -277,7 +277,7 @@ if ($arResult["VIEW"] == "Y")
 	);
 }
 
-?><script type="text/javascript">
+?><script>
 	BX.ready(function() {
 		BX.viewElementBind(
 			'forum-block-container-<?=$arResult["TOPIC"]["ID"]?>',

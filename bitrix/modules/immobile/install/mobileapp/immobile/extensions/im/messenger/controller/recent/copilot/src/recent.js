@@ -140,6 +140,7 @@ jn.define('im/messenger/controller/recent/copilot/recent', (require, exports, mo
 			MessengerEmitter.emit(EventType.messenger.createChat, {}, ComponentCode.imCopilotMessenger);
 		}
 
+
 		onRefresh()
 		{
 			MessengerEmitter.emit(EventType.messenger.refresh, true, ComponentCode.imCopilotMessenger);

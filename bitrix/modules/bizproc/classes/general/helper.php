@@ -2513,38 +2513,6 @@ class CBPHelper
 				$data[$k] = isset($data[$k]) ? (array) CUtil::JsObjectToPhp($data[$k]) : array();
 			}
 		}
-
-		if (mb_strtolower(LANG_CHARSET) != 'utf-8')
-		{
-			foreach ($data as $key => $value)
-			{
-				if (!in_array($key, $jsonParams))
-				{
-					$data[$key] = static::decodeArrayKeys($data[$key]);
-				}
-			}
-		}
-	}
-
-	/**
-	 * @deprecated
-	 * @param $item
-	 * @param false $reverse
-	 * @return array
-	 */
-	public static function decodeArrayKeys($item, $reverse = false)
-	{
-		$from = !$reverse ? 'UTF-8' : LANG_CHARSET;
-		$to = !$reverse ? LANG_CHARSET : 'UTF-8';
-
-		if (is_array($item))
-		{
-			$ar = array();
-			foreach ($item as $k => $v)
-				$ar[$GLOBALS["APPLICATION"]->ConvertCharset($k, $from, $to)] = self::decodeArrayKeys($v, $reverse);
-			return $ar;
-		}
-		return $item;
 	}
 
 	public static function makeTimestamp($date)
@@ -2552,6 +2520,11 @@ class CBPHelper
 		if (!$date)
 		{
 			return 0;
+		}
+
+		if (is_array($date))
+		{
+			$date = current(static::flatten($date));
 		}
 
 		//serialized date string

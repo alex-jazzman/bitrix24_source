@@ -136,7 +136,7 @@ endif;
 if (empty($arParams["~TEMPLATE"]) || !empty($arParams["PICTURES"]))
 {
 ?>
-<script type="text/javascript">
+<script>
 var phpVars;
 if (typeof(phpVars) != "object")
 	var phpVars = {};
@@ -277,7 +277,7 @@ if ($arParams["SHOW_FORM"] == "Y"):
 	</div>
 	</noindex>
 </form>
-<script type="text/javascript">
+<script>
 function Delete(form)
 {
 	if (!form || !__check_form(form, 'items[]')){

@@ -1,5 +1,6 @@
 import {DialogId} from "../../types/common";
-import {PayloadData} from "./base";
+import {MessengerModel, PayloadData} from "./base";
+import {CommentModelCollection} from "./comment";
 
 export enum DialogType {
 	user = 'user',
@@ -18,6 +19,9 @@ export enum DialogType {
 	thread = 'thread',
 	mail = 'mail',
 	copilot = 'copilot',
+	channel = 'channel',
+	openChannel = 'openChannel',
+	comment = 'comment',
 }
 
 export type DialoguesModelState = {
@@ -59,6 +63,9 @@ export type DialoguesModelState = {
 	role: string,
 	permissions: DialogPermissions,
 	aiProvider: string,
+	parentChatId: number,
+	parentMessageId: number,
+	messageCount: number,
 };
 
 export type LastMessageViews = {
@@ -80,12 +87,21 @@ export type WritingUserData = {
 }
 
 export type DialogPermissions = {
-	manageUsersAdd: string,
-	manageUsersDelete: string,
-	manageUi: string,
-	manageSettings: string,
-	canPost: string,
+	manageUsersAdd: PermissionRoles,
+	manageUsersDelete: PermissionRoles,
+	manageUi: PermissionRoles,
+	manageSettings: PermissionRoles,
+	canPost?: PermissionRoles,
+	manageMessages: PermissionRoles,
 }
+
+declare type PermissionRoles = 'guest' | 'member' | 'manager' | 'owner' | 'none';
+
+declare type DialoguesModelCollection = {
+	collection: Record<DialogId, DialoguesModelState>,
+};
+
+export type DialoguesMessengerModel = MessengerModel<DialoguesModelCollection>;
 
 
 export type DialoguesModelActions =
@@ -103,6 +119,8 @@ export type DialoguesModelActions =
 	| 'dialoguesModel/clearAllCounters'
 	| 'dialoguesModel/addParticipants'
 	| 'dialoguesModel/removeParticipants'
+	| 'dialoguesModel/unmute'
+	| 'dialoguesModel/mute'
 
 export type DialoguesModelMutation =
 	'dialoguesModel/add'

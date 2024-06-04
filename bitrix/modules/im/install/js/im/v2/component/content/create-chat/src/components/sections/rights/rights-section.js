@@ -6,6 +6,7 @@ import { OwnerSelector } from './owner';
 import { ManagersSelector } from './managers';
 import { rightsDropdownItems } from './dropdown-items';
 
+import type { JsonObject } from 'main.core';
 import type { DropdownItem } from 'im.v2.component.elements';
 
 type UserRoleItem = $Keys<typeof UserRole>;
@@ -38,13 +39,13 @@ export const RightsSection = {
 			type: String,
 			required: true,
 		},
-		canPost: {
+		manageMessages: {
 			type: String,
 			required: true,
 		},
 	},
-	emits: ['ownerChange', 'managersChange', 'manageUsersAddChange', 'manageUsersDeleteChange', 'manageUiChange', 'canPostChange'],
-	data()
+	emits: ['ownerChange', 'managersChange', 'manageUsersAddChange', 'manageUsersDeleteChange', 'manageUiChange', 'manageMessagesChange'],
+	data(): JsonObject
 	{
 		return {};
 	},
@@ -93,10 +94,10 @@ export const RightsSection = {
 				return { ...item };
 			});
 		},
-		canPostItems(): DropdownItem[]
+		manageMessagesItems(): DropdownItem[]
 		{
 			return rightsDropdownItems.map((item) => {
-				if (item.value === this.canPost)
+				if (item.value === this.manageMessages)
 				{
 					return {
 						...item,
@@ -130,9 +131,9 @@ export const RightsSection = {
 		{
 			this.$emit('manageUiChange', newValue);
 		},
-		onCanPostChange(newValue: UserRoleItem)
+		onManageMessagesChange(newValue: UserRoleItem)
 		{
-			this.$emit('canPostChange', newValue);
+			this.$emit('manageMessagesChange', newValue);
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
@@ -182,7 +183,7 @@ export const RightsSection = {
 					{{ loc('IM_CREATE_CHAT_RIGHTS_SECTION_MANAGE_SENDING_MSGVER_1') }}
 				</div>
 				<div class="bx-im-content-create-chat-settings__manage-select">
-					<Dropdown :items="canPostItems" :id="PopupType.createChatCanPostMenu" @itemChange="onCanPostChange" />
+					<Dropdown :items="manageMessagesItems" :id="PopupType.createChatManageMessagesMenu" @itemChange="onManageMessagesChange" />
 				</div>
 			</div>
 		</CreateChatSection>

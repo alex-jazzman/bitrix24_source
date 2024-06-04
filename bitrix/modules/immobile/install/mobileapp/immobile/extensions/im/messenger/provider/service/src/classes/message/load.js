@@ -4,6 +4,7 @@
 jn.define('im/messenger/provider/service/classes/message/load', (require, exports, module) => {
 	const { Type } = require('type');
 
+	const { DialogType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -86,7 +87,13 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 
 		async loadHistory()
 		{
-			if (Feature.isLocalStorageEnabled && this.isLoadingFromDb === false)
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](this.chatId);
+
+			if (
+				Feature.isLocalStorageEnabled
+				&& this.isLoadingFromDb === false
+				&& ![DialogType.openChannel, DialogType.channel, DialogType.comment].includes(dialog?.type)
+			)
 			{
 				this.isLoadingFromDb = true;
 
@@ -261,6 +268,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				hasPrevPage,
 				hasNextPage,
 				additionalMessages,
+				commentInfo
 			} = rawData;
 
 			const dialogPromise = this.store.dispatch('dialoguesModel/update', {
@@ -277,11 +285,18 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			const filesPromise = this.store.dispatch('filesModel/set', files);
 			const additionalMessagesPromise = this.store.dispatch('messagesModel/store', additionalMessages.sort((a, b) => a.id - b.id));
 
+			let commentPromise = Promise.resolve();
+			if (Type.isArrayFilled(commentInfo))
+			{
+				commentPromise = this.store.dispatch('commentModel/setComments', commentInfo);
+			}
+
 			return Promise.all([
 				dialogPromise,
 				Promise.all(usersPromise),
 				filesPromise,
 				additionalMessagesPromise,
+				commentPromise,
 			]);
 		}
 

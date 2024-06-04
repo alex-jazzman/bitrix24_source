@@ -1,4 +1,6 @@
 <?php
+$MESS["CRM_PHASE_SEMANTICS_ACTIVITY_PROCESS_MSGVER_1"] = "Група стадій \"Поточні справи\"";
+$MESS["CRM_PHASE_SEMANTICS_ACTIVITY_SUCCESS_MSGVER_1"] = "Стадія \"Завершені справи\"";
 $MESS["CRM_PHASE_SEMANTICS_DEAL_CAPTION"] = "Виберіть стадії";
 $MESS["CRM_PHASE_SEMANTICS_DEAL_FAILURE"] = "Група стадій \"Угода провалена\"";
 $MESS["CRM_PHASE_SEMANTICS_DEAL_GROUP_TITLE"] = "Стадії";

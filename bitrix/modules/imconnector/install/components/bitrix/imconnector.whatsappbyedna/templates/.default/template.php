@@ -117,7 +117,7 @@ if (empty($arResult['PAGE']))
 								</li>
 							</ul>
 							<div class="imconnector-field-box-content-text-light">
-								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_ADDITIONAL_DESCRIPTION')?>
+								<?=(Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_ADDITIONAL_DESCRIPTION_MSGVER_1') ?? Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_ADDITIONAL_DESCRIPTION') )?>
 							</div>
 						</div>
 						<div class="imconnector-field-box-content-btn">

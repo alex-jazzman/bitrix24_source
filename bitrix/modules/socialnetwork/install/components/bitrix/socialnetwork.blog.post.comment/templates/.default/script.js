@@ -2,9 +2,9 @@
 	if (!!window.__blogEditComment)
 		return;
 
-window.checkForQuote = function(e, node, ENTITY_XML_ID, author_id) {
+window.checkForQuote = function(e, node, ENTITY_XML_ID, author_id, options) {
 	if (window.mplCheckForQuote)
-		mplCheckForQuote(e, node, ENTITY_XML_ID, author_id)
+		mplCheckForQuote(e, node, ENTITY_XML_ID, author_id, options)
 };
 
 window.__blogLinkEntity = function(entities, xmlId) {

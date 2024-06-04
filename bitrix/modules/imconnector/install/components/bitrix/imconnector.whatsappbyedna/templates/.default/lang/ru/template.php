@@ -25,5 +25,7 @@ $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_SUBTITLE_IO"] = "Сервис 
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_LIST_ITEM_1"] = "Автосообщения отправляются по шаблону из карточки сделки";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_LIST_ITEM_2"] = "Вся переписка сохраняется в чате в CRM";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_LIST_ITEM_3"] = "CRM помогает вести клиента по воронке продаж";
-$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_ADDITIONAL_DESCRIPTION"] = "Как только клиент ответит на ваше сообщение в WhatsApp, в сделке откроется чат, вы получите уведомление и сможете мгновенно продолжить общение из Битрикс24.";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_ADDITIONAL_DESCRIPTION_MSGVER_1"] = "При подключении аккаунта Edna к Битрикс24 вы получите в подарок готовые шаблоны сообщений. Просмотреть и отредактировать их можно в личном кабинете Edna. Вы сможете использовать их в CRM Битрикс24, как только они пройдут регистрацию в Edna.<br><br>
+Как только клиент ответит вам в WhatsApp, в сделке появится чат.<br><br>
+Вы получите уведомление и сможете продолжить общение прямо из сделки.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_ADDITIONAL_DESCRIPTION2"] = "Узнайте больше и подключите WhatsApp Edna.";

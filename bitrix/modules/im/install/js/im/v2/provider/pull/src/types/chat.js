@@ -1,3 +1,5 @@
+import type { JsonObject } from 'main.core';
+
 import type { RawUser } from './common';
 
 export type ChatOwnerParams = {
@@ -72,4 +74,11 @@ export type ChatHideParams = {
 	dialogId: string,
 	chatId: string,
 	lines: Object | false,
+};
+
+export type ChatConvertParams = {
+	dialogId: string,
+	oldType: string,
+	newType: string,
+	newPermissions: JsonObject,
 };

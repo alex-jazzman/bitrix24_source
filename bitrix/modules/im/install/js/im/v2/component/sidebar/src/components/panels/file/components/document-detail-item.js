@@ -1,17 +1,21 @@
 import 'ui.icons';
 import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
 import { Utils } from 'im.v2.lib.utils';
-import { Avatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { MessageAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
 
 import '../css/document-detail-item.css';
 
 // @vue/component
 export const DocumentDetailItem = {
 	name: 'DocumentDetailItem',
-	components: { Avatar, ChatTitle },
+	components: { MessageAvatar, ChatTitle },
 	props: {
 		fileItem: {
 			type: Object,
+			required: true,
+		},
+		contextDialogId: {
+			type: String,
 			required: true,
 		},
 	},
@@ -97,8 +101,9 @@ export const DocumentDetailItem = {
 					</div>
 					<div class="bx-im-sidebar-file-document-detail-item__author-container">
 						<template v-if="authorId > 0">
-							<Avatar
-								:dialogId="authorId"
+							<MessageAvatar
+								:messageId="sidebarFileItem.messageId"
+								:authorId="sidebarFileItem.authorId"
 								:size="AvatarSize.XS"
 								class="bx-im-sidebar-file-document-detail-item__author-avatar"
 							/>

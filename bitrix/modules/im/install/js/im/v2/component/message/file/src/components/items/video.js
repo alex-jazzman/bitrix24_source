@@ -1,3 +1,5 @@
+import { ImModelMessage } from 'im.v2.model';
+import { Type } from 'main.core';
 import { SocialVideo } from 'ui.vue3.components.socialvideo';
 
 import { Utils } from 'im.v2.lib.utils';
@@ -21,20 +23,24 @@ export const VideoItem = {
 	components: { SocialVideo, ProgressBar },
 	props:
 	{
-		item: {
-			type: Object,
+		id: {
+			type: [String, Number],
 			required: true,
 		},
-		messageId: {
-			type: [String, Number],
+		message: {
+			type: Object,
 			required: true,
 		},
 	},
 	computed:
 	{
+		messageItem(): ImModelMessage
+		{
+			return this.message;
+		},
 		file(): ImModelFile
 		{
-			return this.item;
+			return this.$store.getters['files/get'](this.id, true);
 		},
 		autoplay(): boolean
 		{
@@ -93,6 +99,10 @@ export const VideoItem = {
 		{
 			return this.file.progress === 100;
 		},
+		isForward(): boolean
+		{
+			return Type.isStringFilled(this.messageItem.forward.id);
+		},
 	},
 	methods:
 	{
@@ -117,8 +127,12 @@ export const VideoItem = {
 		},
 	},
 	template: `
-		<div @click="download" class="bx-im-video-item__container bx-im-video-item__scope">
-			<ProgressBar v-if="!isLoaded" :item="file" :messageId="messageId" />
+		<div
+			@click="download"
+			class="bx-im-video-item__container bx-im-video-item__scope"
+			:class="{'--with-forward': isForward}"
+		>
+			<ProgressBar v-if="!isLoaded" :item="file" :messageId="message.id" />
 			<SocialVideo
 				v-bind="viewerAttributes"
 				:id="file.id"

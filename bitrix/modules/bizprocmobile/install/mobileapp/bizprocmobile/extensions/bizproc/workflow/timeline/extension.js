@@ -68,6 +68,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 						layout: readyLayout,
 						workflowId: props.workflowId,
 						taskId: props.taskId,
+						readOnly: props.readOnly || false,
 					}));
 				},
 			});
@@ -523,8 +524,12 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 							testId: `${this.testId}TaskButton_${task.id}`,
 							text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_TASK_START'),
 							onclick: () => {
-								this.openTaskDetails(task.id).catch((err) => console.error(err));
+								if (!this.props.readOnly)
+								{
+									this.openTaskDetails(task.id).catch((err) => console.error(err));
+								}
 							},
+							readOnly: this.props.readOnly,
 						};
 					}
 

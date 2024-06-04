@@ -90,8 +90,10 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			urlTap: 'urlTap',
 			imageTap: 'imageTap',
 			audioTap: 'audioTap',
+			audioRateTap: 'audioRateTap',
 			videoTap: 'videoTap',
 			fileTap: 'fileTap',
+			phoneTap: 'phoneTap',
 			statusFieldTap: 'statusFieldTap',
 			chatJoinButtonTap: 'chatJoinButtonTap',
 			mentionTap: 'mentionTap',
@@ -105,6 +107,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			richNameTap: 'richNameTap',
 			richPreviewTap: 'richPreviewTap',
 			richCancelTap: 'richCancelTap',
+			channelCommentTap: 'channelCommentTap',
 			updateUploadProgressByMessageId: 'updateUploadProgressByMessageId',
 			external: {
 				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',
@@ -159,6 +162,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		sync: {
 			requestResultReceived: 'requestResultReceived',
 			requestResultSaved: 'requestResultSaved',
+		},
+		navigation: {
+			tabChanged: 'ImMobile.Navigation:tabChanged',
 		},
 	});
 

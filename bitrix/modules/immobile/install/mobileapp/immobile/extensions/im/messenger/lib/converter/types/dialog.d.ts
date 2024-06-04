@@ -8,4 +8,7 @@ type CreateMessageOptions = {
 	showReaction?: boolean,
 	marginTop?: number,
 	marginBottom?: number,
+	showCommentInfo?: boolean,
+	audioRate?: number,
+	showAvatarsInReaction?: boolean,
 };

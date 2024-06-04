@@ -23,6 +23,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 		 * @param {Object} [props.listStyle]
 		 * @param {Array} [props.buttons]
 		 * @param {Function} [props.ref]
+		 * @param {boolean} [props.isSuperEllipseAvatar]
 		 */
 		constructor(props)
 		{
@@ -51,6 +52,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 				onUnselectItem: (itemData) => this.deleteItemInCarousel(itemData),
 				isCarouselEnabled: this.getSelectedItems().length > 0,
 				style: this.props.listStyle,
+				isSuperEllipseAvatar: this.props.isSuperEllipseAvatar,
 				ref: (ref) => {
 					this.listRef = ref;
 
@@ -68,6 +70,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 				isShadow: this.state.isShadow,
 				itemList: this.selectedItems,
 				size: this.props.carouselSize,
+				isSuperEllipseAvatar: this.props.isSuperEllipseAvatar,
 				onItemSelected: (itemData) => this.unselectItemInList(itemData),
 				ref: (ref) => this.carouselRef = ref,
 			});

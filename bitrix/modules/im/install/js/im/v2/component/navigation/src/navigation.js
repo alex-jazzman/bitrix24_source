@@ -59,7 +59,13 @@ export const MessengerNavigation = {
 					id: Layout.copilot.name,
 					text: this.prepareNavigationText('IM_NAVIGATION_COPILOT'),
 					counter: this.formatCounter(this.$store.getters['counters/getTotalCopilotCounter']),
-					showCondition: this.isCopilotActive,
+					showCondition: this.isCopilotAvailable,
+					active: true,
+				},
+				{
+					id: Layout.channel.name,
+					text: this.prepareNavigationText('IM_NAVIGATION_CHANNELS'),
+					showCondition: this.isChannelListAvailable,
 					active: true,
 				},
 				{
@@ -76,7 +82,7 @@ export const MessengerNavigation = {
 				},
 				{
 					id: Layout.call.name,
-					text: this.prepareNavigationText('IM_NAVIGATION_CALLS'),
+					text: this.prepareNavigationText('IM_NAVIGATION_CALLS_V2'),
 					clickHandler: this.onCallClick,
 					showCondition: PhoneManager.getInstance().canCall.bind(PhoneManager.getInstance()),
 					active: true,
@@ -255,11 +261,17 @@ export const MessengerNavigation = {
 		{
 			return Boolean(BX.Timeman?.Monitor?.isEnabled());
 		},
-		isCopilotActive(): boolean
+		isCopilotAvailable(): boolean
 		{
 			const settings = Extension.getSettings('im.v2.component.navigation');
 
-			return settings.get('copilotActive');
+			return settings.get('copilotAvailable');
+		},
+		isChannelListAvailable(): boolean
+		{
+			const settings = Extension.getSettings('im.v2.component.navigation');
+
+			return settings.get('channelListAvailable');
 		},
 		async onTimeManagerClick()
 		{

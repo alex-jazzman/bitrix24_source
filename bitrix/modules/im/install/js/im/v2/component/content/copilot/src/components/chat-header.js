@@ -2,10 +2,13 @@ import 'ui.notification';
 import { Loc, Extension } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
+import { PromoManager } from 'im.v2.lib.promo';
 import { ChatService } from 'im.v2.provider.service';
 import { AddToChat } from 'im.v2.component.entity-selector';
-import { EditableChatTitle } from 'im.v2.component.elements';
-import { EventType, SidebarDetailBlock } from 'im.v2.const';
+import { EditableChatTitle, AvatarSize, ChatAvatar } from 'im.v2.component.elements';
+import { EventType, PromoId, SidebarDetailBlock } from 'im.v2.const';
+
+import { AddToChatHint } from './add-to-chat-hint';
 
 import '../css/chat-header.css';
 
@@ -15,7 +18,7 @@ import type { ImModelChat } from 'im.v2.model';
 // @vue/component
 export const ChatHeader = {
 	name: 'ChatHeader',
-	components: { EditableChatTitle, AddToChat },
+	components: { EditableChatTitle, AddToChat, ChatAvatar, AddToChatHint },
 	props:
 	{
 		dialogId: {
@@ -31,10 +34,12 @@ export const ChatHeader = {
 	{
 		return {
 			showAddToChatPopup: false,
+			showAddToChatHint: false,
 		};
 	},
 	computed:
 	{
+		AvatarSize: () => AvatarSize,
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -57,12 +62,30 @@ export const ChatHeader = {
 		{
 			return this.dialog.userCounter > 2;
 		},
-		isAddToChatAvailable(): boolean
+		isSidebarOpened(): boolean
+		{
+			return this.currentSidebarPanel.length > 0;
+		},
+		copilotRole(): string
+		{
+			const role = this.$store.getters['copilot/chats/getRole'](this.dialogId);
+			if (!role)
+			{
+				return '';
+			}
+
+			return role.name;
+		},
+		isCopilotRolesAvailable(): boolean
 		{
 			const settings = Extension.getSettings('im.v2.component.content.copilot');
 
-			return settings.isAddToChatAvailable === 'Y';
+			return settings.copilotRolesAvailable === 'Y';
 		},
+	},
+	mounted()
+	{
+		this.showAddToChatHint = PromoManager.getInstance().needToShow(PromoId.addUsersToCopilotChat);
 	},
 	methods:
 	{
@@ -110,12 +133,36 @@ export const ChatHeader = {
 				dialogId: this.dialogId,
 			});
 		},
+		toggleRightPanel()
+		{
+			if (this.currentSidebarPanel)
+			{
+				EventEmitter.emit(EventType.sidebar.close, { panel: '' });
+
+				return;
+			}
+
+			EventEmitter.emit(EventType.sidebar.open, {
+				panel: SidebarDetailBlock.main,
+				dialogId: this.dialogId,
+			});
+		},
+		onHintHide()
+		{
+			void PromoManager.getInstance().markAsWatched(PromoId.addUsersToCopilotChat);
+			this.showAddToChatHint = false;
+		},
 	},
 	template: `
 		<div class="bx-im-copilot-header__container">
 			<div class="bx-im-copilot-header__left">
 				<div class="bx-im-copilot-header__avatar">
-					<div class="bx-im-copilot-header__avatar_default"></div>
+					<ChatAvatar
+						:avatarDialogId="dialogId"
+						:contextDialogId="dialogId"
+						:withSpecialTypes="false"
+						:size="AvatarSize.L"
+					/>
 				</div>
 				<div class="bx-im-copilot-header__info">
 					<EditableChatTitle :dialogId="dialogId" @newTitleSubmit="onNewTitleSubmit" />
@@ -128,18 +175,30 @@ export const ChatHeader = {
 						{{ userCounter }}
 					</div>
 					<div v-else class="bx-im-copilot-header__subtitle">
-						{{ loc('IM_CONTENT_COPILOT_HEADER_SUBTITLE') }}
+						{{ copilotRole }}
 					</div>
 				</div>
 			</div>
-			<div class="bx-im-copilot-header__right">
+			<div v-if="isCopilotRolesAvailable" class="bx-im-copilot-header__right">
 				<div
-					v-if="isAddToChatAvailable"
 					:title="loc('IM_CONTENT_COPILOT_HEADER_OPEN_INVITE_POPUP_TITLE')"
 					:class="{'--active': showAddToChatPopup}"
 					class="bx-im-copilot-header__icon --add-users"
 					@click="openAddToChatPopup"
 					ref="add-users"
+				>
+					<AddToChatHint
+						v-if="showAddToChatHint"
+						:bindElement="$refs['add-users']"
+						@close="showAddToChatHint = false"
+						@hide="onHintHide"
+					/>
+				</div>
+				<div
+					class="bx-im-copilot-header__icon --panel"
+					:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SIDEBAR')"
+					:class="{'--active': isSidebarOpened}"
+					@click="toggleRightPanel"
 				></div>
 			</div>
 			<AddToChat

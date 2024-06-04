@@ -1,7 +1,9 @@
-import { EventType, SidebarDetailBlock } from 'im.v2.const';
+import { EventEmitter } from 'main.core.events';
+
+import { EventType, SidebarDetailBlock, ChatActionType } from 'im.v2.const';
 import { Loader } from 'im.v2.component.elements';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
-import { EventEmitter } from 'main.core.events';
+import { PermissionManager } from 'im.v2.lib.permission';
 
 import { MeetingItem } from './meeting-item';
 import { DateGroup } from '../../elements/date-group/date-group';
@@ -49,6 +51,10 @@ export const MeetingPanel = {
 		isEmptyState(): boolean
 		{
 			return this.formattedCollection.length === 0;
+		},
+		showAddButton(): boolean
+		{
+			return PermissionManager.getInstance().canPerformAction(ChatActionType.createMeeting, this.dialogId);
 		},
 		dialog(): ImModelChat
 		{
@@ -115,7 +121,7 @@ export const MeetingPanel = {
 			<DetailHeader
 				:title="$Bitrix.Loc.getMessage('IM_SIDEBAR_MEETING_DETAIL_TITLE')"
 				:secondLevel="secondLevel"
-				:withAddButton="true"
+				:withAddButton="showAddButton"
 				@addClick="onAddClick"
 				@back="onBackClick"
 			/>

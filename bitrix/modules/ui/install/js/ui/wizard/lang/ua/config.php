@@ -1,0 +1,3 @@
+<?php
+$MESS["SIGN_WIZARD_FOOTER_BUTTON_BACK"] = "Назад";
+$MESS["SIGN_WIZARD_FOOTER_BUTTON_NEXT"] = "Продовжити";

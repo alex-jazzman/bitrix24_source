@@ -52,6 +52,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		ChatFilePullHandler,
 		ChatDialogPullHandler,
 		ChatUserPullHandler,
+		ChatRecentPullHandler,
 		DesktopPullHandler,
 		NotificationPullHandler,
 		OnlinePullHandler,
@@ -64,6 +65,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		FeatureFlag,
 		UserRole,
 		ComponentCode,
+		DialogType,
 	} = require('im/messenger/const');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -380,6 +382,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.PULL.subscribe(new ChatFilePullHandler());
 			BX.PULL.subscribe(new ChatDialogPullHandler());
 			BX.PULL.subscribe(new ChatUserPullHandler());
+			BX.PULL.subscribe(new ChatRecentPullHandler());
 			BX.PULL.subscribe(new DesktopPullHandler());
 			BX.PULL.subscribe(new NotificationPullHandler());
 			BX.PULL.subscribe(new OnlinePullHandler());
@@ -631,6 +634,11 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 			// if curren role guest then open sidebar is none for it
 			if (dialogModel && dialogModel.role && dialogModel.role === UserRole.guest)
+			{
+				return;
+			}
+
+			if ([DialogType.comment, DialogType.channel, DialogType.openChannel].includes(dialogModel.type))
 			{
 				return;
 			}

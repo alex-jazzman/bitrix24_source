@@ -12,6 +12,7 @@ $MESS["CRM_TYPE_DETAIL_CONVERSION_SOURCE"] = "Типи джерел";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_HINT_ABOUT_CUSTOM_SECTIONS_IN_CRM"] = "Ви перебуваєте в розділі CRM. Створити смартпроцес всередині робочого місця (HR, «Документи», «Виробництво» та ін.) можна в розділі «Автоматизація».";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL"] = "Оберіть розділ";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL_MSGVER_1"] = "Виберіть або створіть робоче місце";
+$MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL_SELECT"] = "Виберіть робоче місце";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST"] = "Список розділів";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1"] = "Список робочих місць";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_SWITCHER"] = "Відобразити цей смарт-процес у окремому розділі";

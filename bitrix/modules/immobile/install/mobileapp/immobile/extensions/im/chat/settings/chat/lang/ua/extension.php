@@ -27,3 +27,4 @@ $MESS["SE_CHAT_QUOTE_FROM_LEFT_TITLE"] = "Від лівого краю";
 $MESS["SE_CHAT_QUOTE_FROM_RIGHT_TITLE"] = "Від правого краю";
 $MESS["SE_CHAT_QUOTE_TITLE"] = "Цитування жестом";
 $MESS["SE_CHAT_TITLE"] = "Чати";
+$MESS["SE_MESSENGER_TITLE"] = "Месенджер";

@@ -1,12 +1,16 @@
 import 'ui.forms';
 
-import { Dropdown, Toggle, ToggleSize } from 'im.v2.component.elements';
+import { Dropdown } from 'im.v2.component.elements';
 
 import { CreateChatSection } from '../section';
+import { TextareaInput } from '../../elements/textarea';
+import { RadioOption, type RadioOptionItem } from '../../elements/radio';
+
+import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const SettingsSection = {
-	components: { CreateChatSection, Dropdown, Toggle },
+	components: { CreateChatSection, Dropdown, TextareaInput, RadioOption },
 	props: {
 		description: {
 			type: String,
@@ -22,13 +26,29 @@ export const SettingsSection = {
 		},
 	},
 	emits: ['chatTypeChange', 'descriptionChange'],
-	data()
+	data(): JsonObject
 	{
 		return {};
 	},
 	computed:
 	{
-		ToggleSize: () => ToggleSize,
+		privacyOptions(): RadioOptionItem[]
+		{
+			return [
+				{
+					value: false,
+					text: this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_PRIVATE_TITLE'),
+					subtext: this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_PRIVATE_SUBTITLE'),
+					selected: !this.isAvailableInSearch,
+				},
+				{
+					value: true,
+					text: this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_OPEN_TITLE'),
+					subtext: this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_OPEN_SUBTITLE'),
+					selected: this.isAvailableInSearch,
+				},
+			];
+		},
 		descriptionPlaceholderText(): string
 		{
 			return this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_DESCRIPTION_PLACEHOLDER', {
@@ -44,13 +64,9 @@ export const SettingsSection = {
 		{
 			this.$emit('chatTypeChange', isAvailableInSearch);
 		},
-		onDescriptionChange(event: Event)
+		onDescriptionChange(description: string)
 		{
-			this.$emit('descriptionChange', event.target.value);
-		},
-		onToggleLabelClick()
-		{
-			this.$refs.toggle.toggle();
+			this.$emit('descriptionChange', description);
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
@@ -63,24 +79,17 @@ export const SettingsSection = {
 				<div class="bx-im-content-create-chat__heading">
 					{{ loc('IM_CREATE_CHAT_SETTINGS_SECTION_PRIVACY') }}
 				</div>
-				<div class="bx-im-content-create-chat-settings__type-select">
-					<Toggle :size="ToggleSize.M" :isEnabled="isAvailableInSearch" @change="onTypeChange" ref="toggle" />
-					<div @click="onToggleLabelClick" class="bx-im-content-create-chat-settings__type-select_label">
-						{{ loc('IM_CREATE_CHAT_SETTINGS_SECTION_AVAILABLE_FOR_SEARCH') }}
-					</div>
-				</div>	
+				<RadioOption :items="privacyOptions" @change="onTypeChange" />
 			</div>
 			<div class="bx-im-content-create-chat__section_block">
 				<div class="bx-im-content-create-chat__heading">{{ loc('IM_CREATE_CHAT_SETTINGS_SECTION_DESCRIPTION') }}</div>
 				<div class="bx-im-content-create-chat-settings__description_container">
-					<div class="ui-ctl ui-ctl-textarea ui-ctl-w100 ui-ctl-no-resize">
-						<textarea
-							@input="onDescriptionChange"
-							:value="description"
-							:placeholder="descriptionPlaceholderText"
-							class="bx-im-content-create-chat-settings__description ui-ctl-element"
-						></textarea>
-					</div>
+					<TextareaInput
+						:value="description"
+						:placeholder="descriptionPlaceholderText"
+						:rounded="false"
+						@input="onDescriptionChange"
+					/>
 				</div>
 			</div>
 		</CreateChatSection>

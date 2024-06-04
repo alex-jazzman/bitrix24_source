@@ -1,13 +1,17 @@
 import { EventEmitter, BaseEvent } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
+import { Analytics } from 'im.v2.lib.analytics';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
+import { ChatType, EventType, Layout, LocalStorageKey } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
-import { EventType, Layout, LocalStorageKey } from 'im.v2.const';
 
-import type { ImModelLayout } from 'im.v2.model';
+import type { ImModelLayout, ImModelChat } from 'im.v2.model';
 
 type EntityId = string;
+
+const TypesWithoutContext: Set<string> = new Set([ChatType.comment]);
+const LayoutsWithoutLastOpenedElement: Set<string> = new Set([Layout.channel.name]);
 
 export class LayoutManager
 {
@@ -42,6 +46,13 @@ export class LayoutManager
 		{
 			this.setLastOpenedElement(config.name, config.entityId);
 		}
+
+		if (this.#isSameChat(config))
+		{
+			this.#onSameChatReopen(config);
+		}
+
+		this.#sendAnalytics(config);
 
 		return Core.getStore().dispatch('application/setLayout', config);
 	}
@@ -83,7 +94,24 @@ export class LayoutManager
 
 	setLastOpenedElement(layoutName: string, entityId: string): void
 	{
+		if (LayoutsWithoutLastOpenedElement.has(layoutName))
+		{
+			return;
+		}
+
 		this.#lastOpenedElement[layoutName] = entityId;
+	}
+
+	isChatContextAvailable(dialogId: string): boolean
+	{
+		if (!this.getLayout().contextId)
+		{
+			return false;
+		}
+
+		const { type }: ImModelChat = this.#getChat(dialogId);
+
+		return !TypesWithoutContext.has(type);
 	}
 
 	destroy(): void
@@ -100,8 +128,16 @@ export class LayoutManager
 			return;
 		}
 
-		this.setLayout({
-			name: Layout.chat.name,
+		const { type }: ImModelChat = this.#getChat(dialogId);
+		if (TypesWithoutContext.has(type))
+		{
+			return;
+		}
+
+		const isCopilotLayout = type === ChatType.copilot;
+
+		void this.setLayout({
+			name: isCopilotLayout ? Layout.copilot.name : Layout.chat.name,
 			entityId: dialogId,
 			contextId: messageId,
 		});
@@ -110,5 +146,52 @@ export class LayoutManager
 	#onDesktopReload()
 	{
 		this.saveCurrentLayout();
+	}
+
+	#sendAnalytics(config: ImModelLayout)
+	{
+		const currentLayout = this.getLayout();
+		if (currentLayout.name === Layout.copilot.name && currentLayout.entityId === '')
+		{
+			return;
+		}
+
+		if (config.name === Layout.copilot.name && config.entityId === '')
+		{
+			Analytics.getInstance().openCopilotTab(config.entityId);
+		}
+	}
+
+	#isSameChat(config: ImModelLayout): boolean
+	{
+		const { name, entityId } = this.getLayout();
+		const sameLayout = name === config.name;
+		const sameEntityId = entityId && entityId === config.entityId;
+
+		return sameLayout && sameEntityId;
+	}
+
+	#onSameChatReopen(config: ImModelLayout): void
+	{
+		const { entityId: dialogId, contextId } = config;
+		const { type }: ImModelChat = this.#getChat(dialogId);
+		const isChannel = [ChatType.openChannel, ChatType.channel].includes(type);
+		if (isChannel)
+		{
+			EventEmitter.emit(EventType.dialog.closeComments);
+		}
+
+		if (contextId)
+		{
+			EventEmitter.emit(EventType.dialog.goToMessageContext, {
+				messageId: contextId,
+				dialogId,
+			});
+		}
+	}
+
+	#getChat(dialogId: string): ImModelChat
+	{
+		return Core.getStore().getters['chats/get'](dialogId, true);
 	}
 }

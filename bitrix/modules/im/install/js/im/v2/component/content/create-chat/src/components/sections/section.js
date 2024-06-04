@@ -2,6 +2,8 @@ import { ExpandAnimation } from 'im.v2.component.animation';
 
 import '../../css/section.css';
 
+import type { JsonObject } from 'main.core';
+
 // @vue/component
 export const CreateChatSection = {
 	components: { ExpandAnimation },
@@ -14,40 +16,45 @@ export const CreateChatSection = {
 			type: String,
 			required: true,
 		},
+		openByDefault: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
-	data()
+	data(): JsonObject
 	{
 		return {
-			isFolded: true,
+			isOpened: false,
 		};
 	},
 	computed:
 	{
 		containerClasses(): string[]
 		{
-			return [`--${this.name}`, { '--active': !this.isFolded }];
+			return [`--${this.name}`, { '--active': this.isOpened }];
 		},
+	},
+	created()
+	{
+		if (this.openByDefault)
+		{
+			this.isOpened = true;
+		}
 	},
 	methods:
 	{
 		onContainerClick()
 		{
-			if (this.isFolded)
+			if (!this.isOpened)
 			{
-				this.isFolded = false;
-			}
-		},
-		onHeaderClick()
-		{
-			if (!this.isFolded)
-			{
-				this.isFolded = true;
+				this.isOpened = true;
 			}
 		},
 	},
 	template: `
 		<div :class="containerClasses" class="bx-im-content-create-chat__section bx-im-content-create-chat__section_scope">
-			<div @click="isFolded = !isFolded" class="bx-im-content-create-chat__section_header">
+			<div @click="isOpened = !isOpened" class="bx-im-content-create-chat__section_header">
 				<div class="bx-im-content-create-chat__section_left">
 					<div class="bx-im-content-create-chat__section_icon"></div>
 					<div class="bx-im-content-create-chat__section_text">{{ title }}</div>
@@ -55,7 +62,7 @@ export const CreateChatSection = {
 				<div class="bx-im-content-create-chat__section_right"></div>	
 			</div>
 			<ExpandAnimation>
-				<div v-if="!isFolded" class="bx-im-content-create-chat__section_content_container">
+				<div v-if="isOpened" class="bx-im-content-create-chat__section_content_container">
 					<div class="bx-im-content-create-chat__section_content">
 						<slot></slot>
 					</div>

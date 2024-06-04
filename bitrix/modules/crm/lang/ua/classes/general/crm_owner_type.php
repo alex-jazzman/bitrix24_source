@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_OWNER_TYPE_ACTIVITY"] = "Справа";
+$MESS["CRM_OWNER_TYPE_B2E_DOCUMENT_CATEGORY"] = "Документи компанії";
 $MESS["CRM_OWNER_TYPE_COMPANY"] = "Компанія";
 $MESS["CRM_OWNER_TYPE_COMPANY_CATEGORY"] = "Компанії";
 $MESS["CRM_OWNER_TYPE_COMPANY_NOT_FOUND"] = "Компанія не знайдена";
@@ -41,5 +42,6 @@ $MESS["CRM_OWNER_TYPE_RECURRING_DEAL"] = "Шаблон угоди";
 $MESS["CRM_OWNER_TYPE_REQUISITE"] = "Реквізити";
 $MESS["CRM_OWNER_TYPE_REQUISITE_CATEGORY"] = "Реквізити";
 $MESS["CRM_OWNER_TYPE_SHIPMENT_DOCUMENT"] = "Реалізація ##ACCOUNT_NUMBER#";
+$MESS["CRM_OWNER_TYPE_SMART_B2E_DOC"] = "Документ компанії";
 $MESS["CRM_OWNER_TYPE_SMART_DOCUMENT"] = "Документ";
 $MESS["CRM_OWNER_TYPE_SYSTEM"] = "Система";

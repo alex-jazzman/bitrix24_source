@@ -25,6 +25,7 @@ type SidebarViewProps = {
 		onClickInfoBLock: Function
 	},
 	restService: object,
+	isSuperEllipseAvatar: boolean,
 }
 
 type SidebarViewState = {

@@ -55,9 +55,12 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { Promo, PromoType } = require('im/messenger/const/promo');
 	const { CopilotButtonType } = require('im/messenger/const/copilot-button');
 	const { ComponentCode } = require('im/messenger/const/component-code');
+	const { Analytics } = require('im/messenger/const/analytics');
+	const { HeaderButton } = require('im/messenger/const/header-button');
 
 	module.exports = {
 		AppStatus,
+		Analytics,
 		CacheNamespace,
 		CacheName,
 		RawBotType,
@@ -95,5 +98,6 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		PromoType,
 		CopilotButtonType,
 		ComponentCode,
+		HeaderButton,
 	};
 });

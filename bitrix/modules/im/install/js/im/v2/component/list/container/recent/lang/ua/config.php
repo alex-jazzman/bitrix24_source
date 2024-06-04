@@ -1,8 +1,13 @@
 <?php
 $MESS["IM_RECENT_CREATE_CHANNEL_SUBTITLE"] = "Використовуйте публічні чати для публікації новин.";
 $MESS["IM_RECENT_CREATE_CHANNEL_SUBTITLE_V2"] = "Використовуйте канали для публікації новин.";
+$MESS["IM_RECENT_CREATE_CHANNEL_SUBTITLE_V3"] = "Для публікації новин";
 $MESS["IM_RECENT_CREATE_CHANNEL_TITLE"] = "Канал";
 $MESS["IM_RECENT_CREATE_CHANNEL_TITLE_V2"] = "Канал";
+$MESS["IM_RECENT_CREATE_CHAT_PROMO_CHANNEL_DESCRIPTION_1"] = "Канал зручно використовувати для публікації звітів, новин, розкладу та іншої інформації, яка завжди має бути на очах у співробітників.";
+$MESS["IM_RECENT_CREATE_CHAT_PROMO_CHANNEL_DESCRIPTION_2"] = "Канал — це своєрідна новинна стрічка, де повідомлення пише лише власник або модератор.";
+$MESS["IM_RECENT_CREATE_CHAT_PROMO_CHANNEL_DESCRIPTION_3"] = "За бажанням власника учасники можуть залишати свої коментарі, але кожне обговорення ведеться в окремому вікні й не відвертає увагу від основної інформації.";
+$MESS["IM_RECENT_CREATE_CHAT_PROMO_CHANNEL_TITLE"] = "Як працюють канали";
 $MESS["IM_RECENT_CREATE_CHAT_PROMO_CONFERENCE_DESCRIPTION_1"] = "Завдяки відеоконференціям можна швидко організувати аудіо- або відеозустріч із тими, хто не працює у вашій компанії, як-от партнерами або клієнтами.";
 $MESS["IM_RECENT_CREATE_CHAT_PROMO_CONFERENCE_DESCRIPTION_2"] = "Створюйте конференцію і надсилайте посилання тим, з ким плануєте поспілкуватися. Запрошеним учасникам не потрібно реєструватися в Бітрікс24, вони просто переходять за вашим посиланням і приєднуються до спілкування.";
 $MESS["IM_RECENT_CREATE_CHAT_PROMO_CONFERENCE_DESCRIPTION_3"] = "Слугує якнайкраще для обговорення проєктів і замовлень, проведення переговорів і презентацій із зовнішніми учасниками.";
@@ -15,8 +20,10 @@ $MESS["IM_RECENT_CREATE_CHAT_PROMO_GROUP_CHAT_DESCRIPTION_3"] = "Можна ст
 $MESS["IM_RECENT_CREATE_CHAT_PROMO_GROUP_CHAT_TITLE"] = "Як працюють групові чати";
 $MESS["IM_RECENT_CREATE_CHAT_WHAT_TO_CHOOSE"] = "Що вибрати?";
 $MESS["IM_RECENT_CREATE_CONFERENCE_SUBTITLE"] = "Відео- й аудіоповідомлення та конференції.";
+$MESS["IM_RECENT_CREATE_CONFERENCE_SUBTITLE_V2"] = "Для зустрічей із зовнішніми учасниками";
 $MESS["IM_RECENT_CREATE_CONFERENCE_TITLE"] = "Відеоконференція";
 $MESS["IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE"] = "Спілкуйтеся з колегами й командами.";
+$MESS["IM_RECENT_CREATE_GROUP_CHAT_SUBTITLE_V2"] = "Для обговорення питань";
 $MESS["IM_RECENT_CREATE_GROUP_CHAT_TITLE"] = "Груповий чат";
 $MESS["IM_RECENT_CREATE_GROUP_CHAT_TITLE_V2"] = "Груповий чат";
 $MESS["IM_RECENT_HEADER_MENU_CHAT_GROUPS_SUBTITLE"] = "Згрупуйте чати за папками для швидкого доступу до потрібного діалогу.";

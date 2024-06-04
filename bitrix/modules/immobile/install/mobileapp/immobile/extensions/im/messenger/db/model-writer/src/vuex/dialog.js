@@ -6,6 +6,8 @@
 jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 
+	const { DialogType } = require('im/messenger/const');
+
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
 
@@ -30,7 +32,7 @@ jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module)
 		}
 
 		/**
-		 * @param {MutationPayload} mutation.payload
+		 * @param {MutationPayload<DialoguesAddData, DialoguesAddActions>} mutation.payload
 		 */
 		addRouter(mutation)
 		{
@@ -64,9 +66,17 @@ jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module)
 				return;
 			}
 
+			if (dialog.type === DialogType.comment)
+			{
+				return;
+			}
+
 			this.repository.dialog.saveFromModel([dialog]);
 		}
 
+		/**
+		 * @param {MutationPayload<DialoguesUpdateData, DialoguesUpdateActions>} mutation.payload
+		 */
 		updateRouter(mutation)
 		{
 			if (this.checkIsValidMutation(mutation) === false)
@@ -104,10 +114,17 @@ jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module)
 
 				return;
 			}
+			if (dialog.type === DialogType.comment)
+			{
+				return;
+			}
 
 			this.repository.dialog.saveFromModel([dialog]);
 		}
 
+		/**
+		 * @param {MutationPayload<DialoguesDeleteData, DialoguesDeleteActions>} mutation.payload
+		 */
 		deleteRouter(mutation)
 		{
 			if (this.checkIsValidMutation(mutation) === false)

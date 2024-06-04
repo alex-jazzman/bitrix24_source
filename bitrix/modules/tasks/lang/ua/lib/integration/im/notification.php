@@ -1,4 +1,7 @@
 <?php
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_F"] = "У потік [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] додано завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Призначте співробітника, який буде його виконувати.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_M"] = "У потік [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] додано завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Призначте співробітника, який буде його виконувати.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_N"] = "У потік [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] додано завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Призначте співробітника, який буде його виконувати.";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_F"] = "Додала коментар до завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_M"] = "Додав коментар до завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_N"] = "Додав коментар до завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
@@ -208,6 +211,8 @@ $MESS["TASKS_TASK_STATUS_MESSAGE_2_M"] = "Призупинив виконанн�
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_N"] = "Завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END# прийняте виконавцем";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_PUSH_F"] = "#USER_NAME# призупинила виконання завдання #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_PUSH_M"] = "#USER_NAME# призупинив виконання завдання #TASK_TITLE#";
+$MESS["TASKS_TASK_STATUS_MESSAGE_2_V2_F"] = "Завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END# чекає на виконання.";
+$MESS["TASKS_TASK_STATUS_MESSAGE_2_V2_M"] = "Завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END# чекає на виконання.";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_F"] = "Почала виконувати завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_M"] = "Почав виконувати завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_N"] = "Статус завдання #TASK_URL_BEGIN##TASK_TITLE##URL_END# змінився на \"Виконується\"";

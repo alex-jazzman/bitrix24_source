@@ -1258,14 +1258,14 @@ class CIntranetUserListComponent extends UserList
 		foreach ($gridFilter as $key => $value)
 		{
 			if (
-				preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $key, $match)
+				preg_match('/(.*)_from$/iu', $key, $match)
 				&& in_array($match[1], $ufCodesList)
 			)
 			{
 				Filter\Range::prepareFrom($result, $match[1], $value);
 			}
 			elseif (
-				preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $key, $match)
+				preg_match('/(.*)_to$/iu', $key, $match)
 				&& in_array($match[1], $ufCodesList)
 			)
 			{

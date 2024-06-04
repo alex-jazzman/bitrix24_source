@@ -370,11 +370,6 @@ else
 			&& check_bitrix_sessid()
 		)
 		{
-			if (isset($_POST["ajax_request"]) && $_POST["ajax_request"] == "Y")
-			{
-				CUtil::JSPostUnescape();
-			}
-
 			$errorMessage = "";
 
 			if ($arParams['PAGE_ID'] === "group_features")

@@ -1,10 +1,13 @@
 <?php
 $MESS["MARKET_POPUP_INSTALL_JS_ACCESS"] = "Доступи";
 $MESS["MARKET_POPUP_INSTALL_JS_APPLICATION"] = "Застосунок «#APP_NAME#»<br> установлений на ваш Бітрікс24";
+$MESS["MARKET_POPUP_INSTALL_JS_APPLICATION_SHORT"] = "Застосунок #APP_NAME# встановлено.";
 $MESS["MARKET_POPUP_INSTALL_JS_APP_REQUESTS_PERMISSIONS_TO_WORK"] = "Застосунок запитує дозволи на роботу з:";
 $MESS["MARKET_POPUP_INSTALL_JS_APP_WILL_OPEN_AUTO_AFTER"] = "Застосунок відкриється через <span class=\"market-popup__info-app-launch_counter\">#COUNTER#</span> сек.";
 $MESS["MARKET_POPUP_INSTALL_JS_APP_WORKS_AUTOMATICALLY"] = "Застосунок працює в автоматичному режимі. Видалити його можна на вкладці «Установлені застосунки».";
 $MESS["MARKET_POPUP_INSTALL_JS_AVAILABLE_IN_SUBSCRIPTION"] = "Доступно в підписці";
+$MESS["MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED"] = "/bitrix/js/market/images/market-app-established-img_en.jpg";
+$MESS["MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED_INTERFACE"] = "/bitrix/js/market/images/market-app-established-interface-img_en.jpg";
 $MESS["MARKET_POPUP_INSTALL_JS_INSTALLED_APP_LOCATED_APP_TAB"] = "Усі ваші встановлені застосунки знаходяться у вкладці «Застосунки» в головному меню Бітрікс24.";
 $MESS["MARKET_POPUP_INSTALL_JS_INSTALLING_THE_APP_ON_YOUR_BITRIX"] = "Установлення застосунку на ваш Бітрікс24";
 $MESS["MARKET_POPUP_INSTALL_JS_INSTALL_TITLE"] = "Установити <span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>?";

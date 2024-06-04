@@ -4,19 +4,28 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+if (\Bitrix\Im\Call\Call::isNewCallLayoutEnabled())
+{
+	$cssBundleFile = './dist/conference.bundle.css';
+}
+else
+{
+	$cssBundleFile = './dist/conference_old.bundle.css';
+}
+
 return [
 	'js' => [
 		'./dist/conference.bundle.js',
 	],
 	'css' =>[
-		'./dist/conference.bundle.css',
+		$cssBundleFile,
 	],
 	'rel' => [
+		'call.core',
 		'im.debug',
 		'im.application.launch',
 		'im.component.conference.conference-public',
 		'im.v2.lib.desktop-api',
-		'im.call',
 		'im.model',
 		'im.controller',
 		'im.lib.cookie',

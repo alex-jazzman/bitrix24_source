@@ -7,10 +7,28 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { UserRole, DialogActionType, DialogType } = require('im/messenger/const');
 
+	const MinimalRoleForAction = {
+		[DialogActionType.readMessage]: UserRole.member,
+		[DialogActionType.partialQuote]: UserRole.member,
+		[DialogActionType.setReaction]: UserRole.member,
+		[DialogActionType.openMessageMenu]: UserRole.member,
+		[DialogActionType.openAvatarMenu]: UserRole.member,
+		[DialogActionType.openSidebarMenu]: UserRole.member,
+		[DialogActionType.followComments]: UserRole.member,
+		[DialogActionType.reply]: UserRole.member,
+		[DialogActionType.mention]: UserRole.member,
+
+		[DialogActionType.openComments]: UserRole.guest,
+		[DialogActionType.openSidebar]: UserRole.guest,
+	};
+
 	class ChatPermission
 	{
 		constructor()
 		{
+			/**
+			 * @type {DialoguesModelState}
+			 */
 			this.dialogData = Object.create(null);
 		}
 
@@ -286,6 +304,11 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 			if (Type.isObject(dialogData))
 			{
+				if (Type.isUndefined(dialogData.permissions))
+				{
+					return false;
+				}
+
 				this.dialogData = dialogData;
 			}
 
@@ -352,7 +375,13 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		isCanCallByDialogType(type)
 		{
-			return type !== DialogType.copilot;
+			return ![
+				DialogType.copilot,
+				DialogType.channel,
+				DialogType.openChannel,
+				DialogType.comment,
+			].includes(type)
+			;
 		}
 
 		/**
@@ -380,14 +409,82 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			}
 
 			if (Type.isUndefined(this.dialogData.permissions)
-				|| Type.isUndefined(this.dialogData.permissions.canPost)
-				|| this.dialogData.permissions.canPost === UserRole.none
+				|| Type.isUndefined(this.dialogData.permissions.manageMessages)
+				|| this.dialogData.permissions.manageMessages === UserRole.none
 			)
 			{
 				return true;
 			}
 
-			return this.getRightByLowRole(this.dialogData.permissions.canPost);
+			return this.getRightByLowRole(this.dialogData.permissions.manageMessages);
+		}
+
+		isCanReply(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const minimalRole = MinimalRoleForAction[DialogActionType.reply];
+			if (!this.#checkMinimalRole(minimalRole, this.dialogData.role))
+			{
+				return false;
+			}
+
+			return this.isCanPost(dialogData);
+		}
+
+		isCanMention(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const minimalRole = MinimalRoleForAction[DialogActionType.mention];
+			if (!this.#checkMinimalRole(minimalRole, this.dialogData.role))
+			{
+				return false;
+			}
+
+			return this.isCanPost(dialogData);
+		}
+
+		isCanOpenMessageMenu(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const minimalRole = MinimalRoleForAction[DialogActionType.openMessageMenu];
+
+			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
+		}
+
+
+		isCanOpenAvatarMenu(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const minimalRole = MinimalRoleForAction[DialogActionType.openAvatarMenu];
+
+			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
+		}
+
+		#checkMinimalRole(minimalRole, roleToCheck)
+		{
+			if (minimalRole === UserRole.none)
+			{
+				return false;
+			}
+
+			const roleWeights = {};
+			Object.values(UserRole).forEach((role, index) => {
+				roleWeights[role] = index;
+			});
+
+			return roleWeights[roleToCheck] >= roleWeights[minimalRole];
 		}
 	}
 

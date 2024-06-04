@@ -78,6 +78,33 @@ jn.define('im/messenger/lib/counters/lib/base-counters', (require, exports, modu
 			return counter;
 		}
 
+		/**
+		 *
+		 * @param {RecentModelState} recentItem
+		 * @param {DialoguesModelState} dialogItem
+		 * @return {number}
+		 */
+		calculateChatCounter(recentItem = {}, dialogItem = {})
+		{
+			let counter = 0;
+			const commentCounter = this.store.getters['commentModel/getChannelCounters'](dialogItem?.chatId);
+			if (commentCounter > 0)
+			{
+				counter += commentCounter;
+			}
+
+			if (dialogItem.counter && dialogItem.counter > 0)
+			{
+				counter = dialogItem.counter;
+			}
+			else if (recentItem.unread)
+			{
+				counter = 1;
+			}
+
+			return counter;
+		}
+
 		clearUpdateTimeout()
 		{
 			clearTimeout(this.updateTimeout);

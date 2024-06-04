@@ -1,10 +1,23 @@
 <?php
+$MESS["IM_CHANNEL_JOIN_F"] = "#USER_1_NAME# запросила в канал користувача #USER_2_NAME#.";
+$MESS["IM_CHANNEL_JOIN_M"] = "#USER_1_NAME# запросив у канал користувача #USER_2_NAME#.";
+$MESS["IM_CHAT_AVATAR_CHANGE_F"] = "#USER_NAME# змінила іконку чату.";
+$MESS["IM_CHAT_AVATAR_CHANGE_M"] = "#USER_NAME# змінив іконку чату.";
 $MESS["IM_CHAT_CAN_POST_ALL"] = "Усі учасники чату";
+$MESS["IM_CHAT_CAN_POST_ALL_MSGVER_1"] = "Усі учасники";
 $MESS["IM_CHAT_CAN_POST_MANAGERS"] = "Адміністратори чату";
+$MESS["IM_CHAT_CAN_POST_MANAGERS_MSGVER_1"] = "Власник та адміністратори";
 $MESS["IM_CHAT_CAN_POST_NONE"] = "Ніхто";
 $MESS["IM_CHAT_CAN_POST_OWNER"] = "Власник чату";
+$MESS["IM_CHAT_CAN_POST_OWNER_MSGVER_1"] = "Власник";
 $MESS["IM_CHAT_JOIN_F"] = "#USER_1_NAME# запросила в чат #USER_2_NAME#";
 $MESS["IM_CHAT_JOIN_M"] = "#USER_1_NAME# запросив в чат #USER_2_NAME#";
+$MESS["IM_CHAT_KICK_F"] = "#USER_1_NAME# виключила користувача #USER_2_NAME# з чату.";
+$MESS["IM_CHAT_KICK_M"] = "#USER_1_NAME# виключив користувача #USER_2_NAME# з чату.";
+$MESS["IM_CHAT_KICK_NOTIFICATION_F"] = "#USER_NAME# виключила вас із чату.";
+$MESS["IM_CHAT_KICK_NOTIFICATION_M"] = "#USER_NAME# виключив вас із чату.";
+$MESS["IM_CHAT_LEAVE_F"] = "#USER_NAME# покинула чат.";
+$MESS["IM_CHAT_LEAVE_M"] = "#USER_NAME# покинув чат.";
 $MESS["IM_CHAT_NAME_FORMAT"] = "#COLOR# чат №#NUMBER#";
 $MESS["IM_CHAT_SELF_JOIN"] = "До чату приєдналися #USERS_NAME#";
 $MESS["IM_CHAT_SELF_JOIN_F"] = "До чату приєдналася #USER_NAME#";

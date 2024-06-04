@@ -11,6 +11,7 @@ return [
 		'utils/function',
 		'utils/uuid',
 		'utils/url',
+		'communication/phone-menu',
 		'im:lib/theme',
 		'im:messenger/assets/common',
 		'im:messenger/lib/di/service-locator',
@@ -46,7 +47,9 @@ return [
 		'im:messenger/controller/dialog/lib/locator',
 		'im:messenger/controller/dialog/lib/message-menu',
 		'im:messenger/controller/dialog/lib/pin',
-		
+		'im:messenger/controller/dialog/lib/pull-watch-manager',
+		'im:messenger/controller/dialog/lib/comment-button',
+		'im:messenger/controller/dialog/lib/emitter',
 	],
 	'bundle' => [
 		'./src/dialog',

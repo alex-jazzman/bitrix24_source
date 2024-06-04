@@ -23,11 +23,6 @@ Class extranet extends CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = EXTRANET_VERSION;
-			$this->MODULE_VERSION_DATE = EXTRANET_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = GetMessage("EXTRANET_MODULE_NAME");
 		$this->MODULE_DESCRIPTION = GetMessage("EXTRANET_MODULE_DESC");
@@ -160,7 +155,7 @@ Class extranet extends CModule
 		global $DB;
 
 		$sIn = "'EXTRANET_WG_TO_ARCHIVE', 'EXTRANET_WG_FROM_ARCHIVE', 'EXTRANET_INVITATION'";
-		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		$ar = $rs->Fetch();
 		if($ar["C"] <= 0)
 		{
@@ -237,8 +232,8 @@ Class extranet extends CModule
 	{
 		global $DB;
 		$sIn = "'EXTRANET_WG_TO_ARCHIVE', 'EXTRANET_WG_FROM_ARCHIVE', 'EXTRANET_INVITATION'";
-		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
-		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME IN (".$sIn.") ");
+		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		return true;
 	}
 

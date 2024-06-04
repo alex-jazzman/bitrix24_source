@@ -18,6 +18,7 @@ jn.define('im/messenger/lib/element/dialog/message/emoji-only', (require, export
 			super(modelMessage, options);
 
 			this.setMessage(modelMessage.text, { enableBigSmile: true });
+			this.commentInfo = null;
 		}
 
 		getType()

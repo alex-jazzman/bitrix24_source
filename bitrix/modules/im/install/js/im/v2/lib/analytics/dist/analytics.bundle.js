@@ -13,19 +13,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openChat: 'open_chat',
 	  createNewChat: 'create_new_chat',
 	  audioUse: 'audio_use',
-	  openTab: 'open_tab'
+	  openTab: 'open_tab',
+	  popupOpen: 'popup_open'
 	});
 	const AnalyticsTool = Object.freeze({
-	  ai: 'ai'
+	  ai: 'ai',
+	  checkin: 'checkin'
 	});
 	const AnalyticsCategory = Object.freeze({
-	  chatOperations: 'chat_operations'
+	  chatOperations: 'chat_operations',
+	  shift: 'shift'
 	});
 	const AnalyticsType = Object.freeze({
 	  ai: 'ai'
 	});
 	const AnalyticsSection = Object.freeze({
-	  copilotTab: 'copilot_tab'
+	  copilotTab: 'copilot_tab',
+	  chat: 'chat'
 	});
 
 	var _createdChats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createdChats");
@@ -92,6 +96,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      tool: AnalyticsTool.ai,
 	      category: AnalyticsCategory.chatOperations,
 	      c_section: AnalyticsSection.copilotTab
+	    });
+	  }
+	  openCheckInPopup() {
+	    ui_analytics.sendData({
+	      event: AnalyticsEvent.popupOpen,
+	      tool: AnalyticsTool.checkin,
+	      category: AnalyticsCategory.shift,
+	      c_section: AnalyticsSection.chat
 	    });
 	  }
 	}

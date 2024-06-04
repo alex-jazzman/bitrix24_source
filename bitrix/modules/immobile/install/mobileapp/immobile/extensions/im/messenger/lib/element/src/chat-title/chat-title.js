@@ -19,12 +19,6 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		chat: 'chat',
 	});
 
-	const DialogSpecialType = Object.freeze({
-		group: 'chat',
-		channel: 'open',
-		copilot: 'copilot',
-	});
-
 	/**
 	 * @class ChatTitle
 	 */
@@ -59,7 +53,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			this.description = null;
 			this.userCounter = 0;
 			this.writingList = [];
-			this.dialogSpecialType = DialogSpecialType.group;
+			this.dialogType = null;
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
@@ -89,23 +83,53 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			this.name = dialog.name;
 			this.userCounter = dialog.userCounter;
-			this.dialogSpecialType = dialog.type;
+			this.dialogType = dialog.type;
 
-			// TODO: add special types like announcement, call etc.
-			if (dialog.type && dialog.type === DialogSpecialType.channel)
+			this.description = ChatTitle.getChatDescriptionByDialogType(this.dialogType);
+
+			if (this.dialogType === DialogType.comment)
 			{
-				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_CHANNEL');
-			}
-			else if (dialog.type && dialog.type === DialogSpecialType.copilot)
-			{
-				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_ONLINE');
-			}
-			else
-			{
-				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_GROUP');
+				const parentDialog = this.store.getters['dialoguesModel/getByChatId'](dialog.parentChatId);
+
+				const parentDialogName = parentDialog?.name ?? '';
+
+				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COMMENT_DETAIL_TEXT')
+					.replace('#CHANNEL_TITLE#', parentDialogName)
+				;
+
+				this.name = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COMMENT');
 			}
 
 			this.createDialogNameColor(dialog);
+		}
+
+		/**
+		 * @param {DialogType} dialogType
+		 */
+		static getChatDescriptionByDialogType(dialogType)
+		{
+			switch (dialogType)
+			{
+				case DialogType.copilot:
+				{
+					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_ONLINE');
+				}
+
+				case DialogType.channel:
+				{
+					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_CHANNEL_V2');
+				}
+
+				case DialogType.openChannel:
+				{
+					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_OPEN_CHANNEL');
+				}
+
+				default:
+				{
+					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_GROUP');
+				}
+			}
 		}
 
 		/**
@@ -223,6 +247,16 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		getTitleParams(options = {})
 		{
+			if (this.type === ChatType.user)
+			{
+				return this.#getUserTitleParams(options);
+			}
+
+			return this.#getDialogTitleParams(options);
+		}
+
+		#getUserTitleParams(options = {})
+		{
 			const {
 				useTextColor = true,
 			} = options;
@@ -241,23 +275,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				titleParams.textColor = this.getTitleColor();
 			}
 
-			if (this.type === ChatType.user && this.description)
-			{
-				titleParams.detailText = this.description;
-			}
-
-			if (this.type === ChatType.chat && this.userCounter)
-			{
-				titleParams.detailText = Loc.getMessagePlural(
-					'IMMOBILE_ELEMENT_CHAT_TITLE_USER_COUNT',
-					this.userCounter,
-					{
-						'#COUNT#': this.userCounter,
-					},
-				);
-			}
-
-			if (this.userCounter <= 2 && this.dialogSpecialType === DialogSpecialType.copilot)
+			if (this.description)
 			{
 				titleParams.detailText = this.description;
 			}
@@ -266,7 +284,76 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			{
 				titleParams.detailText = this.buildWritingListText();
 				titleParams.isWriting = true;
-				titleParams.detailTextColor = this.dialogSpecialType === DialogSpecialType.copilot
+				titleParams.detailTextColor = AppTheme.colors.accentMainPrimaryalt;
+			}
+
+			return titleParams;
+		}
+
+		#getDialogTitleParams(options = {})
+		{
+			const {
+				useTextColor = true,
+			} = options;
+
+			const titleParams = {
+				detailTextColor: AppTheme.colors.base3,
+			};
+
+			if (this.name)
+			{
+				titleParams.text = this.name;
+			}
+
+			if (useTextColor)
+			{
+				titleParams.textColor = this.getTitleColor();
+			}
+
+			if (this.description)
+			{
+				titleParams.detailText = this.description;
+			}
+
+			if (this.userCounter)
+			{
+				if ((this.dialogType === DialogType.channel || this.dialogType === DialogType.openChannel))
+				{
+					titleParams.detailText = Loc.getMessagePlural(
+						'IMMOBILE_ELEMENT_CHAT_TITLE_SUBSCRIBER_COUNT',
+						this.userCounter,
+						{
+							'#COUNT#': this.userCounter,
+						},
+					);
+				}
+				else
+				{
+					titleParams.detailText = Loc.getMessagePlural(
+						'IMMOBILE_ELEMENT_CHAT_TITLE_USER_COUNT',
+						this.userCounter,
+						{
+							'#COUNT#': this.userCounter,
+						},
+					);
+				}
+			}
+
+			if (this.dialogType === DialogType.comment)
+			{
+				titleParams.detailText = this.description;
+			}
+
+			if (this.userCounter <= 2 && this.dialogType === DialogType.copilot)
+			{
+				titleParams.detailText = this.description;
+			}
+
+			if (this.writingList.length > 0)
+			{
+				titleParams.detailText = this.buildWritingListText();
+				titleParams.isWriting = true;
+				titleParams.detailTextColor = this.dialogType === DialogType.copilot
 					? AppTheme.colors.accentMainCopilot
 					: AppTheme.colors.accentMainPrimaryalt;
 			}
@@ -312,7 +399,8 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				return;
 			}
 
-			this.writingList = dialogModel.writingList;
+			const currentUserId = serviceLocator.get('core').getUserId();
+			this.writingList = dialogModel.writingList.filter((user) => user.userId !== currentUserId);
 		}
 
 		/**

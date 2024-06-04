@@ -34,6 +34,7 @@ return [
 		'./src/recent/item/chat/extranet',
 		'./src/recent/item/chat/support-24-notifier',
 		'./src/recent/item/chat/support-24-question',
+		'./src/recent/item/chat/channel',
 		'./src/recent/item/user',
 		'./src/recent/item/user/current',
 		'./src/recent/item/user/bot',

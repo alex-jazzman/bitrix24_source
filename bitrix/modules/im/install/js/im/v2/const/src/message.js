@@ -21,9 +21,12 @@ export const MessageComponent = Object.freeze({
 	supervisorUpdateFeature: 'SupervisorUpdateFeatureMessage',
 	supervisorEnableFeature: 'SupervisorEnableFeatureMessage',
 	sign: 'SignMessage',
+	checkIn: 'CheckInMessage',
 	supportVote: 'SupportVoteMessage',
 	supportSessionNumber: 'SupportSessionNumberMessage',
+	supportChatCreation: 'SupportChatCreationMessage',
 	system: 'SystemMessage',
+	channelPost: 'ChannelPost',
 });
 
 export const MessageMentionType = Object.freeze({

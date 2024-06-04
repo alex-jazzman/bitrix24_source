@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
 		'ui.fonts.opensans',
+		'im.v2.lib.copilot',
 		'ui.icons.disk',
 		'im.v2.lib.parser',
 		'rest.client',
@@ -30,9 +31,11 @@ return [
 		'main.core',
 		'im.v2.lib.date-formatter',
 		'im.v2.application.core',
-		'im.v2.const',
 		'im.v2.lib.user',
 		'im.v2.lib.logger',
+		'im.v2.const',
+		'ui.lottie',
+		'ai.roles-dialog',
 	],
 	'skip_core' => false,
 ];

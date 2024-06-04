@@ -1,5 +1,15 @@
 import { ReactionsModelState } from './messages/reactions';
-import { PayloadData } from "./base";
+import {MessengerModel, PayloadData} from "./base";
+import {channelChatId, commentChatId, CommentInfo, commentMessageId} from "./comment";
+import {DialogType} from "./dialogues";
+
+declare type MessagesModelCollection = {
+	collection: Record<number | string, MessagesModelState>,
+	chatCollection: Record<number, Set<number>>,
+	temporaryMessages: Record<string, MessagesModelState>,
+}
+
+export type MessagesMessengerModel = MessengerModel<MessagesModelCollection>;
 
 export type MessagesModelState = {
 	id: number | string,
@@ -28,7 +38,12 @@ export type MessagesModelState = {
 	retry: boolean,
 	audioPlaying: boolean,
 	playingTime: number,
-	forward: object,
+	forward?: {
+		id: string,
+		userId: number,
+		chatTitle: string | null,
+		chatType: DialogType,
+	},
 	reactions?: ReactionsModelState // extended property
 	attach: Array<AttachConfig>,
 	richLinkId: number,
@@ -153,6 +168,7 @@ export type MessagesModelActions =
 	| 'messagesModel/deleteTemporaryMessages'
 	| 'messagesModel/deleteByChatId'
 	| 'messagesModel/deleteAttach'
+	| 'messagesModel/clearChatCollection'
 
 export type MessagesModelMutation =
 	'messagesModel/setChatCollection'

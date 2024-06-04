@@ -1,16 +1,9 @@
-import { BaseMessage } from 'im.v2.component.message.base';
 import { SendingService } from 'im.v2.provider.service';
+import { BaseMessage } from 'im.v2.component.message.base';
 
 import './css/copilot-creation-message.css';
 
-import type { ImModelMessage } from 'im.v2.model';
-
-const SAMPLE_MESSAGES = {
-	IM_MESSAGE_COPILOT_CREATION_ACTION_1: 'plan',
-	IM_MESSAGE_COPILOT_CREATION_ACTION_2: 'vacancy',
-	IM_MESSAGE_COPILOT_CREATION_ACTION_3: 'ideas',
-	IM_MESSAGE_COPILOT_CREATION_ACTION_4: 'letter',
-};
+import type { ImModelMessage, ImModelCopilotPrompt, ImModelCopilotRole } from 'im.v2.model';
 
 // @vue/component
 export const ChatCopilotCreationMessage = {
@@ -28,35 +21,48 @@ export const ChatCopilotCreationMessage = {
 	},
 	computed:
 	{
-		sampleMessages(): string[]
-		{
-			return Object.keys(SAMPLE_MESSAGES);
-		},
 		message(): ImModelMessage
 		{
 			return this.item;
 		},
-		chatId(): number
+		preparedTitle(): string
 		{
-			return this.message.chatId;
-		},
-		preparedText(): string
-		{
-			return this.loc('IM_MESSAGE_COPILOT_CREATION_TEXT', {
-				'#BR#': '\n',
+			const phrase = this.message.componentParams?.copilotRoleUpdated
+				? 'IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE_AFTER_CHANGE'
+				: 'IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE'
+			;
+
+			return this.loc(phrase, {
+				'#COPILOT_ROLE_NAME#': this.role.name,
 			});
+		},
+		promptList(): ImModelCopilotPrompt[]
+		{
+			return this.$store.getters['copilot/messages/getPrompts'](this.message.id);
+		},
+		role(): ImModelCopilotRole
+		{
+			return this.$store.getters['copilot/messages/getRole'](this.message.id);
+		},
+		roleAvatar(): string
+		{
+			return this.role.avatar.medium;
+		},
+		roleName(): string
+		{
+			return this.role.name;
 		},
 	},
 	methods:
 	{
-		onMessageClick(promptLangCode: string)
+		onMessageClick(prompt: ImModelCopilotPrompt)
 		{
 			void this.getSendingService().sendCopilotPrompt({
-				text: this.loc(promptLangCode),
-				dialogId: this.dialogId,
+				text: prompt.text,
 				copilot: {
-					promptCode: SAMPLE_MESSAGES[promptLangCode],
+					promptCode: prompt.code,
 				},
+				dialogId: this.dialogId,
 			});
 		},
 		getSendingService(): SendingService
@@ -77,20 +83,38 @@ export const ChatCopilotCreationMessage = {
 		<BaseMessage
 			:dialogId="dialogId"
 			:item="item"
-			:withDefaultContextMenu="false"
+			:withContextMenu="false"
+			:withReactions="false"
 			:withBackground="false"
 		>
 			<div class="bx-im-message-copilot-creation__container">
-				<div class="bx-im-message-copilot-creation__title">CoPilot</div>
-				<div class="bx-im-message-copilot-creation__text">{{ preparedText }}</div>
+				<div class="bx-im-message-copilot-creation__header">
+					<div class="bx-im-message-copilot-creation__avatar">
+						<img :src="roleAvatar" :alt="roleName"/>
+					</div>
+					<div class="bx-im-message-copilot-creation__info">
+						<div class="bx-im-message-copilot-creation__title" :title="preparedTitle">
+							{{ preparedTitle }}
+						</div>
+						<div 
+							class="bx-im-message-copilot-creation__text" 
+							:title="loc('IM_MESSAGE_COPILOT_CREATION_HEADER_DESC')"
+						>
+							{{ loc('IM_MESSAGE_COPILOT_CREATION_HEADER_DESC') }}
+						</div>
+					</div>
+				</div>
+				<div class="bx-im-message-copilot-creation__separator"><div></div></div>
 				<div class="bx-im-message-copilot-creation__actions">
 					<div
-						v-for="message in sampleMessages"
-						:key="message"
-						@click="onMessageClick(message)"
+						v-for="prompt in promptList"
+						:key="prompt.code"
+						@click="onMessageClick(prompt)"
 						class="bx-im-message-copilot-creation__action"
 					>
-						{{ loc(message) }}
+						<span class="bx-im-message-copilot-creation__action-text">
+							{{ prompt.title }}
+						</span>
 					</div>
 				</div>
 			</div>

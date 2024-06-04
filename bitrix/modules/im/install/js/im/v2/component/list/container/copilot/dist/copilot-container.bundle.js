@@ -3,33 +3,179 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_public,im_v2_component_list_items_copilot,im_v2_const,im_v2_lib_logger,im_v2_provider_service) {
+(function (exports,main_core,im_public,im_v2_component_list_items_copilot,im_v2_const,im_v2_lib_logger,im_v2_provider_service,im_v2_component_elements) {
 	'use strict';
+
+	// @vue/component
+	const RoleItem = {
+	  name: 'RoleItem',
+	  props: {
+	    role: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    roleItem() {
+	      return this.role;
+	    },
+	    roleAvatar() {
+	      return this.roleItem.avatar.medium;
+	    },
+	    roleName() {
+	      return this.roleItem.name;
+	    },
+	    roleSDescription() {
+	      return this.roleItem.desc;
+	    }
+	  },
+	  template: `
+		<div class="bx-im-role-item__container">
+			<div class="bx-im-role-item__avatar">
+				<img :src="roleAvatar" :alt="roleName">
+			</div>
+			<div class="bx-im-role-item__info">
+				<div class="bx-im-role-item__name" :title="roleName">{{ roleName }}</div>
+				<div class="bx-im-role-item__description" :title="roleSDescription">{{ roleSDescription }}</div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const RoleSelectorMiniContent = {
+	  name: 'RoleSelectorMiniContent',
+	  components: {
+	    RoleItem
+	  },
+	  emits: ['selectedRole', 'openMainSelector'],
+	  computed: {
+	    rolesToShow() {
+	      return this.$store.getters['copilot/getRecommendedRoles']();
+	    }
+	  },
+	  methods: {
+	    openMainSelector() {
+	      this.$emit('openMainSelector');
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    },
+	    onRoleClick(role) {
+	      this.$emit('selectedRole', role.code);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-role-selector-mini-content__container">
+			<span class="bx-im-role-selector-mini-content__title">
+				{{ loc('IM_LIST_CONTAINER_COPILOT_ROLES_LIST') }}
+			</span>
+			<div class="bx-im-role-selector-mini-content__items">
+				<RoleItem 
+					v-for="role in rolesToShow" 
+					:role="role"
+					@click="onRoleClick(role)"
+				/>
+				<div class="bx-im-role-selector-mini-content__main-selector" @click="openMainSelector">
+					<div class="bx-im-role-selector-mini-content__main-selector-info">
+						<div class="bx-im-role-selector-mini-content__main-selector-avatar"></div>
+						<div class="bx-im-role-selector-mini-content__main-selector-name">
+							{{ loc('IM_LIST_CONTAINER_COPILOT_SELECT_ROLE_FROM_LIST') }}
+						</div>
+					</div>
+					<div class="bx-im-role-selector-mini-content__main-selector-arrow"></div>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	const POPUP_ID = 'im-role-selector-mini-popup';
+
+	// @vue/component
+	const RoleSelectorMini = {
+	  name: 'RoleSelectorMini',
+	  components: {
+	    MessengerPopup: im_v2_component_elements.MessengerPopup,
+	    RoleSelectorMiniContent
+	  },
+	  props: {
+	    bindElement: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  emits: ['close', 'selectedRole', 'openMainSelector'],
+	  computed: {
+	    POPUP_ID: () => POPUP_ID,
+	    config() {
+	      return {
+	        width: 294,
+	        closeIcon: false,
+	        bindElement: this.bindElement,
+	        offsetTop: 0,
+	        offsetLeft: 0,
+	        padding: 0,
+	        contentPadding: 0,
+	        contentBackground: '#fff'
+	      };
+	    }
+	  },
+	  template: `
+		<MessengerPopup
+			v-slot="{enableAutoHide, disableAutoHide}"
+			:config="config"
+			@close="$emit('close')"
+			:id="POPUP_ID"
+		>
+			<RoleSelectorMiniContent
+				@selectedRole="$emit('selectedRole', $event)"
+				@openMainSelector="$emit('openMainSelector')"
+				@close="$emit('close')"
+			/>
+		</MessengerPopup>
+	`
+	};
 
 	// @vue/component
 	const CopilotListContainer = {
 	  name: 'CopilotListContainer',
 	  components: {
-	    CopilotList: im_v2_component_list_items_copilot.CopilotList
+	    CopilotList: im_v2_component_list_items_copilot.CopilotList,
+	    RoleSelectorMini,
+	    CopilotRolesDialog: im_v2_component_elements.CopilotRolesDialog
 	  },
 	  emits: ['selectEntity'],
 	  data() {
 	    return {
+	      showRoleSelector: false,
+	      showRolesDialog: false,
 	      isCreatingChat: false
 	    };
+	  },
+	  computed: {
+	    isCopilotRolesAvailable() {
+	      const settings = main_core.Extension.getSettings('im.v2.component.content.copilot');
+	      return settings.copilotRolesAvailable === 'Y';
+	    },
+	    defaultRole() {
+	      return this.$store.getters['copilot/roles/getDefault'];
+	    }
 	  },
 	  created() {
 	    im_v2_lib_logger.Logger.warn('List: Copilot container created');
 	  },
+	  deactivated() {
+	    this.showRolesDialog = false;
+	    this.showRoleSelector = false;
+	  },
 	  methods: {
 	    async onCreateChatClick() {
-	      this.isCreatingChat = true;
-	      const newDialogId = await this.getCopilotService().createChat().catch(() => {
-	        this.isCreatingChat = false;
-	        this.showCreateChatError();
-	      });
-	      this.isCreatingChat = false;
-	      void im_public.Messenger.openCopilot(newDialogId);
+	      if (!this.isCopilotRolesAvailable) {
+	        void this.createChat(this.defaultRole.code);
+	        return;
+	      }
+	      this.showRoleSelector = true;
 	    },
 	    onChatClick(dialogId) {
 	      this.$emit('selectEntity', {
@@ -48,8 +194,28 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      return this.copilotService;
 	    },
+	    async createChat(roleCode) {
+	      this.showRoleSelector = false;
+	      this.showRolesDialog = false;
+	      this.isCreatingChat = true;
+	      const newDialogId = await this.getCopilotService().createChat({
+	        roleCode
+	      }).catch(() => {
+	        this.isCreatingChat = false;
+	        this.showCreateChatError();
+	      });
+	      this.isCreatingChat = false;
+	      void im_public.Messenger.openCopilot(newDialogId);
+	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    },
+	    onCopilotDialogSelectRole(role) {
+	      void this.createChat(role.code);
+	    },
+	    onOpenMainSelector() {
+	      this.showRoleSelector = false;
+	      this.showRolesDialog = true;
 	    }
 	  },
 	  template: `
@@ -59,6 +225,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div
 					class="bx-im-list-container-copilot__create-chat"
 					:class="{'--loading': isCreatingChat}"
+					ref="createChatButton"
 					@click="onCreateChatClick"
 				>
 					<div class="bx-im-list-container-copilot__create-chat_icon"></div>
@@ -69,11 +236,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<CopilotList @chatClick="onChatClick" />
 				</div>
 			</div>
+			<RoleSelectorMini
+				v-if="showRoleSelector && isCopilotRolesAvailable"
+				:bindElement="$refs.createChatButton"
+				@close="showRoleSelector = false"
+				@selectedRole="createChat"
+				@openMainSelector="onOpenMainSelector"
+			/>
+			<CopilotRolesDialog
+				v-if="showRolesDialog"
+				@selectRole="onCopilotDialogSelectRole"
+				@close="showRolesDialog = false"
+			/>
 		</div>
 	`
 	};
 
 	exports.CopilotListContainer = CopilotListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=copilot-container.bundle.js.map

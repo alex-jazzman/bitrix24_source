@@ -80,12 +80,6 @@
 	text-decoration: none;
 }
 
-.bx-im-copilot-header__avatar_default {
-	width: 42px;
-	height: 42px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='42' height='42' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='42' height='42' rx='21' fill='%238E52EC'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M21.05 26.889a6.038 6.038 0 100-12.077 6.038 6.038 0 000 12.077zm-.964-10.56a.169.169 0 00-.317 0l-.601 1.625a1.69 1.69 0 01-.998.998l-1.625.601a.169.169 0 000 .317l1.624.601c.463.171.828.536.999.998l.6 1.624a.169.169 0 00.318 0l.6-1.624a1.69 1.69 0 01.999-.998l1.624-.601a.169.169 0 000-.317l-1.624-.601a1.69 1.69 0 01-.998-.998l-.601-1.625zm3.45 4.694a.098.098 0 00-.183 0l-.347.939a.976.976 0 01-.577.577l-.938.347a.098.098 0 000 .183l.938.347c.267.1.478.31.577.577l.347.939a.098.098 0 00.183 0l.348-.939a.976.976 0 01.576-.577l.939-.347a.098.098 0 000-.183l-.939-.347a.977.977 0 01-.576-.577l-.348-.939z' fill='%23fff'/%3E%3Cpath d='M29.739 21.217c.593.026 1.06.53.97 1.116-.715 4.692-4.767 8.285-9.659 8.285-5.396 0-9.77-4.374-9.77-9.77 0-5.397 4.374-9.771 9.77-9.771 2.571 0 4.91.992 6.655 2.615.435.406.381 1.091-.07 1.48-.45.388-1.125.33-1.573-.06a7.618 7.618 0 102.479 7.13c.109-.586.603-1.05 1.198-1.025z' fill='%23fff'/%3E%3C/svg%3E");
-}
-
 .bx-im-copilot-header__avatar_input {
 	display: none;
 }
@@ -142,6 +136,15 @@
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='19' height='14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.582 10.49l.273 1.521a.957.957 0 01-.624 1.086c-1.612.543-3.423.864-5.341.903h-.794c-1.922-.04-3.737-.361-5.352-.906a.97.97 0 01-.637-1.059c.06-.434.124-.875.19-1.12.237-.872 1.567-1.52 2.79-2.018.32-.13.514-.234.709-.34.19-.102.384-.206.698-.336.036-.16.05-.324.043-.488l.542-.061s.071.123-.043-.598c0 0-.609-.149-.637-1.296 0 0-.458.144-.486-.55-.005-.139-.043-.272-.08-.4-.086-.305-.164-.58.232-.818l-.286-.72S3.48.504 4.796.73c-.534-.8 3.974-1.467 4.274.987.117.74.117 1.49 0 2.23 0 0 .673-.073.224 1.139 0 0-.248.872-.628.676 0 0 .061 1.102-.537 1.289 0 0 .043.586.043.626l.5.07s-.015.49.085.543c.456.28.956.49 1.482.627 1.554.373 2.343 1.013 2.343 1.573zM14.064 1.6h1.952V4h2.5v1.967h-2.5v2.52h-1.952v-2.52h-2.38V3.999h2.38V1.6z' fill='%238E52EC'/%3E%3C/svg%3E");
 	opacity: 1;
 }
+
+.bx-im-copilot-header__icon.--panel {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='15' height='14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.273 0A3.273 3.273 0 000 3.273v7.454A3.273 3.273 0 003.273 14h8.454A3.273 3.273 0 0015 10.727V3.273A3.273 3.273 0 0011.727 0H3.273zM1.696 3.432c0-.96.777-1.736 1.736-1.736h8.136c.959 0 1.736.777 1.736 1.736v7.136c0 .959-.777 1.736-1.736 1.736H3.432a1.736 1.736 0 01-1.736-1.736V3.432zM8 4.09c0-.602.488-1.09 1.09-1.09h1.819C11.511 3 12 3.488 12 4.09v5.818c0 .603-.489 1.091-1.091 1.091H9.091A1.09 1.09 0 018 9.91V4.09z' fill='%23525C69'/%3E%3C/svg%3E");
+}
+
+.bx-im-copilot-header__icon.--panel.--active {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='15' height='14' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.273 0A3.273 3.273 0 000 3.273v7.454A3.273 3.273 0 003.273 14h8.454A3.273 3.273 0 0015 10.727V3.273A3.273 3.273 0 0011.727 0H3.273zM1.696 3.432c0-.96.777-1.736 1.736-1.736h8.136c.959 0 1.736.777 1.736 1.736v7.136c0 .959-.777 1.736-1.736 1.736H3.432a1.736 1.736 0 01-1.736-1.736V3.432zM8 4.09c0-.602.488-1.09 1.09-1.09h1.819C11.511 3 12 3.488 12 4.09v5.818c0 .603-.489 1.091-1.091 1.091H9.091A1.09 1.09 0 018 9.91V4.09z' fill='%238E52EC'/%3E%3C/svg%3E");
+	opacity: 1;
+}
 .bx-im-content-copilot-empty-state__container {
 	--im-content-copilot-empty-state__background-color_container: rgba(var(--im-color-palette-gray-90-rgb), 0.1);
 	--im-content-copilot-empty-state__font-color_text: var(--im-color-palette-white-base);
@@ -157,7 +160,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	width: 520px;
+	width: 549px;
 	padding: 40px 32px;
 	border-radius: 28px;
 	background-color: var(--im-content-copilot-empty-state__background-color_container);
@@ -178,9 +181,6 @@
 	white-space: pre-line;
 }
 
-.bx-im-content-copilot-empty-state__button {
-
-}
 .bx-im-textarea__content {
 	padding-left: 16px;
 }
@@ -188,9 +188,26 @@
 .bx-im-copilot-send-panel__container .bx-im-send-panel__button_container {
 	background-color: #8e52ec;
 }
-.bx-im-content-copilot__container .bx-im-dialog-chat__block .bx-im-message-context-menu__container {
-	pointer-events: none;
-	visibility: hidden;
+.bx-im-copilot-add-to-chat-hint__scope {
+	--im-copilot-add-to-chat-hint__color_hide-button: var(--im-color-accent-purple);
+
+	padding: 20px 10px;
+	font-size: var(--im-font-size-md);
+	font-family: var(--im-font-family-system);
+	line-height: var(--im-font-line-height-2xs);
+}
+
+.bx-im-copilot-add-to-chat-hint__title {
+	font-weight: var(--im-font-weight-bold);
+}
+
+.bx-im-copilot-add-to-chat-hint__hide {
+	font: inherit;
+	color: var(--im-copilot-add-to-chat-hint__color_hide-button);
+	background-color: transparent;
+	border: none;
+	cursor: pointer;
+	padding: 0;
 }
 .bx-im-copilot-audio-input__container {
 	width: 24px;

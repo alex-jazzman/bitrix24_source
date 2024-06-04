@@ -2,6 +2,7 @@
  * @module im/messenger/lib/element/recent/item/chat
  */
 jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Loc } = require('loc');
 
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
@@ -26,6 +27,12 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 		createTitleStyle()
 		{
 			const dialog = this.getDialogItem();
+
+			if (!dialog || !Type.isArray(dialog.muteList))
+			{
+				return this;
+			}
+
 			if (dialog.muteList.includes(serviceLocator.get('core').getUserId()))
 			{
 				this.styles.title = merge(this.styles.title, {

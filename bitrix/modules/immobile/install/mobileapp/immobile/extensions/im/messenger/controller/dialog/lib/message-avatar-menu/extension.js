@@ -54,15 +54,20 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 					},
 					onClickCallback: openDialogWithUserHandler,
 				},
-				{
+
+			];
+
+			if (this.options.isCanMention)
+			{
+				actions.push({
 					id: 'mention',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_AVATAR_MENU_MENTION'),
 					data: {
 						svgIcon: menuIcons.mention(),
 					},
 					onClickCallback: mentionUserHandler,
-				},
-			];
+				});
+			}
 
 			if (!this.options.isBot)
 			{

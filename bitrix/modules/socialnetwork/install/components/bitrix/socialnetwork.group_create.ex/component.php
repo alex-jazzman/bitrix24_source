@@ -216,11 +216,6 @@ else
 			&& check_bitrix_sessid()
 		)
 		{
-			if (isset($_POST['ajax_request']) && $_POST['ajax_request'] === 'Y')
-			{
-				CUtil::JSPostUnescape();
-			}
-
 			$moderatorIdList = [];
 			$ownerId = (int)(
 				isset($arResult['POST']['OWNER_ID'])
@@ -622,25 +617,22 @@ else
 					'AVATAR_TYPE' => $avatarType,
 				);
 
-				if(\Bitrix\Main\Config\Configuration::getValue("utf_mode") === true)
-				{
-					$conn = \Bitrix\Main\Application::getConnection();
-					$table = \Bitrix\Socialnetwork\WorkgroupTable::getTableName();
+				$conn = \Bitrix\Main\Application::getConnection();
+				$table = \Bitrix\Socialnetwork\WorkgroupTable::getTableName();
 
-					if (
-						((string)$arFields["NAME"] !== '')
-						&& !$conn->isUtf8mb4($table, 'NAME')
-					)
-					{
-						$arFields["NAME"] = Emoji::encode($arFields["NAME"]);
-					}
-					if (
-						((string)$arFields["DESCRIPTION"] !== '')
-						&& !$conn->isUtf8mb4($table, 'DESCRIPTION')
-					)
-					{
-						$arFields["DESCRIPTION"] = Emoji::encode($arFields["DESCRIPTION"]);
-					}
+				if (
+					((string)$arFields["NAME"] !== '')
+					&& !$conn->isUtf8mb4($table, 'NAME')
+				)
+				{
+					$arFields["NAME"] = Emoji::encode($arFields["NAME"]);
+				}
+				if (
+					((string)$arFields["DESCRIPTION"] !== '')
+					&& !$conn->isUtf8mb4($table, 'DESCRIPTION')
+				)
+				{
+					$arFields["DESCRIPTION"] = Emoji::encode($arFields["DESCRIPTION"]);
 				}
 
 				if (!empty($arImageID))

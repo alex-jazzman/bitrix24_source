@@ -733,7 +733,6 @@ if(
 				&& $USER->IsAuthorized()
 			)
 			{
-				CUtil::JSPostUnescape();
 				$APPLICATION->RestartBuffer();
 
 				$perms2update = array();
@@ -860,10 +859,10 @@ if(
 				else
 				{
 					$strTitle = $arPost["DETAIL_TEXT"];
-					$strTitle = preg_replace("/\\[(\\/?)(url)(.*?)\\]/is".BX_UTF_PCRE_MODIFIER, "", $strTitle);
+					$strTitle = preg_replace("/\\[(\\/?)(url)(.*?)\\]/isu", "", $strTitle);
 					$parser = new CTextParser();
 					$parser->allow = array('CLEAR_SMILES' => 'Y', 'IMG' => 'Y');
-					$strTitle = preg_replace("/&nbsp;/is".BX_UTF_PCRE_MODIFIER, "", $parser->convertText($strTitle));
+					$strTitle = preg_replace("/&nbsp;/isu", "", $parser->convertText($strTitle));
 					$strTitle = str_replace("<br />", " ", $strTitle);
 					$strTitle = blogTextParser::killAllTags($strTitle);
 					$strTitle = htmlspecialcharsback(TruncateText($strTitle, 100));
@@ -1258,7 +1257,7 @@ if(
 				if ($arAllow["VIDEO"] === "Y")
 				{
 					$arResult["Post"]["hasVideoInline"] = preg_match(
-						"/<video([^>]*)>(.+?)<\\/video[\\s]*>/is".BX_UTF_PCRE_MODIFIER,
+						"/<video([^>]*)>(.+?)<\\/video[\\s]*>/isu",
 						$arResult["Post"]["textFormated"]
 					);
 				}
@@ -1294,8 +1293,8 @@ if(
 				$arResult["Post"]["DATE_PUBLISH_DATE"] = FormatDateFromDB($arResult["Post"]["DATE_PUBLISH"], FORMAT_DATE);
 				if (strcasecmp(LANGUAGE_ID, 'EN') !== 0 && strcasecmp(LANGUAGE_ID, 'DE') !== 0)
 				{
-					$arResult["Post"]["DATE_PUBLISH_FORMATED"] = ToLower($arResult["Post"]["DATE_PUBLISH_FORMATED"]);
-					$arResult["Post"]["DATE_PUBLISH_DATE"] = ToLower($arResult["Post"]["DATE_PUBLISH_DATE"]);
+					$arResult["Post"]["DATE_PUBLISH_FORMATED"] = mb_strtolower($arResult["Post"]["DATE_PUBLISH_FORMATED"]);
+					$arResult["Post"]["DATE_PUBLISH_DATE"] = mb_strtolower($arResult["Post"]["DATE_PUBLISH_DATE"]);
 				}
 				// strip current year
 				if (!empty($arParams['DATE_TIME_FORMAT_S']) && ($arParams['DATE_TIME_FORMAT_S'] === 'j F Y G:i' || $arParams['DATE_TIME_FORMAT_S'] === 'j F Y g:i a'))
@@ -1320,7 +1319,7 @@ if(
 				);
 				if (strcasecmp(LANGUAGE_ID, 'EN') !== 0 && strcasecmp(LANGUAGE_ID, 'DE') !== 0)
 				{
-					$arResult["Post"]["DATE_PUBLISH_TIME"] = ToLower($arResult["Post"]["DATE_PUBLISH_TIME"]);
+					$arResult["Post"]["DATE_PUBLISH_TIME"] = mb_strtolower($arResult["Post"]["DATE_PUBLISH_TIME"]);
 				}
 				$arResult["arUser"] = CBlogUser::GetUserInfo($arPost["AUTHOR_ID"], $arParams["PATH_TO_USER"], array("AVATAR_SIZE" => (isset($arParams["AVATAR_SIZE_COMMON"]) ? $arParams["AVATAR_SIZE_COMMON"] : $arParams["AVATAR_SIZE"]), "AVATAR_SIZE_COMMENT" => $arParams["AVATAR_SIZE_COMMENT"]));
 				$arResult["arUser"]["isExtranet"] = (

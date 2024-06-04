@@ -254,6 +254,17 @@ BitrixVue.component('bx-im-component-conference-public',
 
 			return classes;
 		},
+		callComponentClasses()
+		{
+			const classes = ['bx-im-component-call'];
+
+			if (navigator.platform.indexOf('Mac') !== -1)
+			{
+				classes.push('with-blur')
+			}
+
+			return classes;
+		},
 		chatId()
 		{
 			if (this.application)
@@ -478,7 +489,7 @@ BitrixVue.component('bx-im-component-conference-public',
 	},
 	template: `
 	<div :class="wrapClasses">
-		<div class="bx-im-component-call">
+		<div :class="callComponentClasses">
 			<div class="bx-im-component-call-left">
 				<div id="bx-im-component-call-container" :class="callContainerClasses"></div>
 				<div v-if="isPreparationStep" class="bx-im-component-call-left-preparation">
@@ -527,6 +538,7 @@ BitrixVue.component('bx-im-component-conference-public',
 								<!-- Step 4: Permissions page -->
 								<template v-if="!isDesktop() && !permissionsRequested">
 									<ConferenceInfo/>
+									<div class="bx-im-component-call-info-separator"></div>
 									<RequestPermissions>
 										<template v-if="isMobile()">
 											<MobileChatButton/>

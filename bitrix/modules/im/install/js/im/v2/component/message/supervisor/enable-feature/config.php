@@ -11,6 +11,7 @@ return [
 		'im.v2.component.elements',
 		'im.v2.component.message.supervisor.base',
 		'main.core',
+		'ui.analytics',
 	],
 	'skip_core' => false,
 ];

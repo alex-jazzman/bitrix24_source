@@ -429,23 +429,6 @@ if (Loader::includeModule("bitrix24"))
 		""
 	);
 }
-else
-{
-	$arMenu[] = array(
-		GetMessage("MENU_LICENSE"),
-		"/updates/",
-		array(),
-		array(
-			"real_link" => getLeftMenuItemLink(
-				"top_menu_id_updates",
-				"/updates/"
-			),
-			"menu_item_id" => "menu_updates",
-			"top_menu_id" => "top_menu_id_updates"
-		),
-		""
-	);
-}
 
 if (
 	IsModuleInstalled("bitrix24") && $GLOBALS['USER']->CanDoOperation('bitrix24_config')

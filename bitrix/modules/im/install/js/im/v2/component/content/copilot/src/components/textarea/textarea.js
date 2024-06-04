@@ -33,6 +33,16 @@ export const CopilotTextarea = BitrixVue.cloneComponent(ChatTextarea, {
 		{
 			return this.showMention && this.dialog.userCounter > 2;
 		},
+		excludedChatsFromMentions(): string[]
+		{
+			const copilotUserId = this.$store.getters['users/bots/getCopilotUserId'];
+			if (copilotUserId && this.dialog.userCounter > 2)
+			{
+				return [copilotUserId.toString()];
+			}
+
+			return [];
+		},
 	},
 	methods:
 	{
@@ -118,6 +128,7 @@ export const CopilotTextarea = BitrixVue.cloneComponent(ChatTextarea, {
 				:query="mentionQuery"
 				:searchChats="false"
 				@close="closeMentionPopup"
+				:exclude="excludedChatsFromMentions"
 			/>
 		</div>
 	`,

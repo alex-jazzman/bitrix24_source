@@ -14,10 +14,13 @@ $MESS["INTRANET_USER_PROFILE_BLOG_POST_TITLE"] = "Про мене";
 $MESS["INTRANET_USER_PROFILE_CHAT"] = "Чат";
 $MESS["INTRANET_USER_PROFILE_CHAT_HISTORY"] = "Історія листування";
 $MESS["INTRANET_USER_PROFILE_CLOSE"] = "Закрити";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_NO"] = "Не призначати";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_YES"] = "Так, призначити";
 $MESS["INTRANET_USER_PROFILE_CONTACT_INFO"] = "Контактна інформація";
 $MESS["INTRANET_USER_PROFILE_DELETE"] = "Видалити";
 $MESS["INTRANET_USER_PROFILE_DELETE_CONFIRM"] = "Ви впевнені, що хочете видалити запрошеного користувача?";
 $MESS["INTRANET_USER_PROFILE_DISK_INSTALLED"] = "Встановлено Бітрікс24.Диск";
+$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_2"] = "Установлено Бітрікс24 Диск #DATE#";
 $MESS["INTRANET_USER_PROFILE_DISK_SPACE"] = "обсяг - #VALUE#";
 $MESS["INTRANET_USER_PROFILE_FIELD_LAST_NAME"] = "Прізвище";
 $MESS["INTRANET_USER_PROFILE_FIELD_MANAGERS"] = "Керівник";
@@ -28,7 +31,7 @@ $MESS["INTRANET_USER_PROFILE_FIRE"] = "Звільнити";
 $MESS["INTRANET_USER_PROFILE_FIRE_CONFIRM"] = "Співробітник більше не зможе зайти на портал, не з'явиться в структурі компанії, але всі його дані (файли, повідомлення, завдання і т.п.) збережуться.
 <br/><br/>
 Ви впевнені, що хочете закрити доступ співробітникові?";
-$MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "Ви не можете видалити запрошеного користувача, так як він пов'язаний з іншими інструментами. Деактивуйте (видаліть) користувача, щоб закрити йому доступ до цього Бітрікс24. <br><br> Хочете звільнити?";
+$MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "Ви не можете видалити запрошеного користувача, бо він пов'язаний з іншими інструментами. Деактивуйте (видаліть) користувача, щоб закрити йому доступ до цього Бітрікс24. <br><br> Хочете звільнити?";
 $MESS["INTRANET_USER_PROFILE_HIRE"] = "Прийняти на роботу";
 $MESS["INTRANET_USER_PROFILE_HIRE_CONFIRM"] = "Співробітник зможе зайти на портал, з'явиться в структурі компанії.
 <br/><br/>
@@ -47,6 +50,8 @@ $MESS["INTRANET_USER_PROFILE_MOVE"] = "Перевести";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"] = "На вашому Бітрікс24 призначена максимально допустима<br/> кількість адміністраторів.
 При призначенні даного<br/> користувача ви позбудетеся права адмініструвати портал. Ви впевнені, що хочете передати права адміністратора?";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM_PROMO"] = "#LINK_START#Отримати#LINK_END# додаткові можливості для вашого Бітрікс24";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION"] = "Адміністратор має повний доступ до персональних даних співробітників і клієнтів, може запрошувати та звільняти співробітників, змінювати права й налаштування вашого Бітрікс24.";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE"] = "Призначити співробітника адміністратором?";
 $MESS["INTRANET_USER_PROFILE_MOVE_TO_INTRANET"] = "Перевести в інтранет";
 $MESS["INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE"] = "Перевести в інтранет";
 $MESS["INTRANET_USER_PROFILE_NO"] = "Ні";

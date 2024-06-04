@@ -188,6 +188,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 					onClickRightBtn: this.onClickRightBtn,
 				},
 				isCopilotDialog: this.options.isCopilotDialog,
+				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			});
 		}
 
@@ -266,6 +267,11 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 					}
 				}).catch((err) => Logger.error('UserAdd.Rest.imChatAdd.catch:', err));
 			});
+		}
+
+		isSuperEllipseAvatar()
+		{
+			return false;
 		}
 	}
 

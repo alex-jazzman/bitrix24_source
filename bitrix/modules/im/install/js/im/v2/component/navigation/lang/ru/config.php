@@ -1,8 +1,9 @@
 <?php
 $MESS["IM_NAVIGATION_CHATS"] = "Чаты";
+$MESS["IM_NAVIGATION_CHANNELS"] = "Каналы";
 $MESS["IM_NAVIGATION_NOTIFICATIONS"] = "Уведомления";
 $MESS["IM_NAVIGATION_OPENLINES"] = "Контакт-центр";
-$MESS["IM_NAVIGATION_CALLS"] = "Звонки";
+$MESS["IM_NAVIGATION_CALLS_V2"] = "Телефония";
 $MESS["IM_NAVIGATION_SETTINGS"] = "Настройки";
 $MESS["IM_NAVIGATION_COPILOT"] = "CoPilot";
 $MESS["IM_NAVIGATION_TIMEMANAGER"] = "Время";

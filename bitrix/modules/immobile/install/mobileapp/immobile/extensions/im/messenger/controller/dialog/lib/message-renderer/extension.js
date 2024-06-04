@@ -47,6 +47,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			window.renderer = this;
 		}
 
+		/**
+		 * @param {Array<MessagesModelState>} messageList
+		 */
 		render(messageList)
 		{
 			logger.log('MessageRenderer.render:', messageList);
@@ -83,6 +86,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			{
 				this.updateMessageList(updateMessageList);
 			}
+		}
+
+		isMessageRendered(messageId)
+		{
+			return this.messageIdCollection.has(messageId);
 		}
 
 		delete(messageIdList)
@@ -145,7 +153,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			this.updateMessageIndex(this.messageList);
 
-			const viewMessageList = DialogConverter.createMessageList(clone(messageList.reverse()));
+			const viewMessageList = DialogConverter.createMessageList(clone(messageList.reverse()), this.dialogId);
 			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
 
 			const messageForStack = [...viewMessageListWithTemplate];
@@ -293,7 +301,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			messageList = messageList.reverse();
 
 			this.updateMessageIndex(messageList);
-			const viewMessageList = DialogConverter.createMessageList(clone(messageList));
+			const viewMessageList = DialogConverter.createMessageList(clone(messageList), this.dialogId);
 			const viewMessageListWithTemplate = this.addTemplateMessagesToList(viewMessageList);
 
 			this.putMessageIdToStackStart(viewMessageListWithTemplate);
@@ -322,7 +330,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			logger.info('MessageRenderer.addMessageListBelow:', messageList);
 			this.updateMessageIndex(messageList);
 
-			const viewMessageList = DialogConverter.createMessageList(clone(messageList));
+			const viewMessageList = DialogConverter.createMessageList(clone(messageList), this.dialogId);
 			const endedMessage = this.getBottomMessage();
 
 			viewMessageList.unshift(endedMessage);
@@ -364,7 +372,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			{
 				logger.info('MessageRenderer.addMessageListBetween:', pointedMessageId, messageList);
 
-				const viewMessageList = DialogConverter.createMessageList(clone(messageList));
+				const viewMessageList = DialogConverter.createMessageList(clone(messageList), this.dialogId);
 				const referenceMessage = this.viewMessageCollection[pointedMessageId];
 				const nextMessage = this.getRealNextMessage(pointedMessageId);
 				const maybeNextMessage = this.getNextMessage(pointedMessageId); // maybe date or unread separator
@@ -736,9 +744,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
-		 * @private
+		 *
+		 * @param {Array<MessagesModelState>} messageList
+		 * @param {string} section
 		 */
-		updateMessageList(messageList)
+		updateMessageList(messageList, section = null)
 		{
 			logger.info('MessageRenderer.updateMessageList:', messageList);
 
@@ -760,8 +770,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				}
 			});
 
-			const chatId = messageList[0].chatId;
-			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
 			const options = DialogConverter.prepareOptionsForMessage(dialog);
 
 			messageList.forEach((messageListItem) => {
@@ -780,7 +789,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				const isMessageChanged = !isEqual(formattedMessage, this.viewMessageCollection[formattedMessage.id]);
 				if (isMessageChanged)
 				{
-					this.view.updateMessageById(formattedMessage.id, formattedMessage);
+					this.view.updateMessageById(formattedMessage.id, formattedMessage, section);
 					this.viewMessageCollection[formattedMessage.id] = formattedMessage;
 				}
 
@@ -794,7 +803,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 					if (isTemplateMessageChanged)
 					{
-						this.view.updateMessageById(messageListItem.templateId, formattedMessage);
+						this.view.updateMessageById(messageListItem.templateId, formattedMessage, section);
 						this.viewMessageCollection[messageListItem.templateId] = formattedMessage;
 					}
 				}
@@ -1146,7 +1155,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					message.setAuthorTopMessage(false);
 				}
 
-				if (nextModelMessage?.authorId !== modelMessage?.authorId)
+				if (
+					nextModelMessage?.authorId !== modelMessage?.authorId
+					&& modelMessage.id !== this.getDialog().parentMessageId // scenario for comments chat when initial message is your
+				)
 				{
 					message.setShowAvatar(modelMessage, true);
 				}
@@ -1385,6 +1397,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 		/**
 		 * @private
+		 * @return {DialoguesModelState}
 		 */
 		getDialog()
 		{

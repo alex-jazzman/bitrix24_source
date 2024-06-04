@@ -29,6 +29,7 @@ $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_TITLE"] = "Документи р�
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_TITLE_MSGVER_1"] = "Документи рахунку";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_TOTAL_SUM"] = "Разом до сплати за рахунком";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_TOTAL_SUM_TOOLTIP"] = "Сума рахунку мінус виконані клієнтом оплати";
+$MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN"] = "Відкрити";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN_REALIZATION_DOCUMENT"] = "Відкрити реалізацію";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT"] = "до сплати #SUM#";
 $MESS["CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE"] = "Оплата від #DATE#";

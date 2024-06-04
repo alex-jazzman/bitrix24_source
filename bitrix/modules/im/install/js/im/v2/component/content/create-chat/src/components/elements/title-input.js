@@ -29,10 +29,6 @@ export const TitleInput = {
 		{
 			this.$emit('update:modelValue', event.target.value);
 		},
-		loc(phraseCode: string): string
-		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
-		},
 	},
 	template: `
 		<div class="bx-im-content-create-chat__title_container">

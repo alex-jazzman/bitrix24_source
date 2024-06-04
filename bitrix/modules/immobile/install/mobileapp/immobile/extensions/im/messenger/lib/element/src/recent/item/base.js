@@ -11,6 +11,8 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 	const {
 		Path,
 		MessageStatus,
+		DialogType,
+		ComponentCode
 	} = require('im/messenger/const');
 	const {
 		PinAction,
@@ -22,6 +24,8 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		ProfileAction,
 		HideAction,
 	} = require('im/messenger/lib/element/recent/item/action/action');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { parser } = require('im/messenger/lib/parser');
 
 	const RecentItemSectionCode = Object.freeze({
 		pinned: 'pinned',
@@ -73,6 +77,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				},
 				counter: {},
 			};
+			this.isSuperEllipseIcon = false;
 
 			this
 				.initParams(modelItem, options)
@@ -183,7 +188,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createDate()
 		{
-			const date = DateHelper.cast(this.getModelItem().message.date, new Date());
+			const date = DateHelper.cast(this.getModelItem().lastActivityDate, new Date());
 			this.date = Math.round(date.getTime() / 1000);
 
 			return this;
@@ -194,7 +199,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createDisplayedDate()
 		{
-			const date = DateHelper.cast(this.getModelItem().message.date, null);
+			const date = DateHelper.cast(this.getModelItem().lastActivityDate, null);
 			this.displayedDate = DateFormatter.getRecentFormat(date);
 
 			return this;
@@ -205,10 +210,21 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createMessageCount()
 		{
+			if (MessengerParams.get('COMPONENT_CODE') === ComponentCode.imChannelMessenger)
+			{
+				return this;
+			}
+
 			const dialog = this.getDialogItem();
 			if (dialog && dialog.counter)
 			{
 				this.messageCount = dialog.counter;
+			}
+
+			if ([DialogType.channel, DialogType.openChannel].includes(dialog?.type))
+			{
+				const commentCounter = serviceLocator.get('core').getStore().getters['commentModel/getChannelCounters'](dialog.chatId);
+				this.messageCount += commentCounter;
 			}
 
 			return this;
@@ -441,8 +457,30 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			return this.params.model.recent;
 		}
 
+		getMessageText()
+		{
+			const item = this.getModelItem();
+			const message = item.message;
+
+			let messageText = message.text;
+			const modelMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](message.id);
+			if (modelMessage.id)
+			{
+				const messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
+
+				messageText = parser.simplify({
+					text: modelMessage.text,
+					attach: modelMessage?.params?.ATTACH ?? false,
+					files: messageFiles,
+					showFilePrefix: false,
+				});
+			}
+
+			return messageText;
+		}
+
 		/**
-		 * @return {DialoguesModelState}
+		 * @return {DialoguesModelState || undefined}
 		 */
 		getDialogItem()
 		{

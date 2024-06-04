@@ -184,6 +184,7 @@ class WorkflowStateService
 					'ID' => $stateElement->getStartedBy(),
 				],
 				'TASKS_INFO' => $tasksInfo,
+				'WORKFLOW_TEMPLATE_ID' => $stateElement->getWorkflowTemplateId(),
 				'TEMPLATE_NAME' => $stateElement->getTemplate()?->getName(),
 				'META' => $stateElement->getMeta()?->collectValues() ?? [],
 			];

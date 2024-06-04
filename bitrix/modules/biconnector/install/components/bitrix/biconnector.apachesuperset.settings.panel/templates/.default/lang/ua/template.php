@@ -9,3 +9,4 @@ $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_RANGE_FIELD_HINT"] = "Зміна 
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Під час оновлення ключа сталася помилка.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Ключ успішно оновлено.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK"] = "Виберіть співробітників, яким надходитимуть сповіщення про нові системні звіти та їхні оновлення. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK"] = "Власник має повний доступ до звіту. Якщо ви зміните власника, то можете втратити доступ до цього звіту. #HINT_LINK#";

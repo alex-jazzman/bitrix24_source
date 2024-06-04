@@ -5,7 +5,9 @@ jn.define('im/messenger/lib/counters', (require, exports, module) => {
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { CopilotCounters } = require('im/messenger/lib/counters/copilot-counters');
 	const { ChatCounters } = require('im/messenger/lib/counters/chat-counters');
+	const { ChannelCounters } = require('im/messenger/lib/counters/channel-counters');
 	const COPILOT_COMPONENT_CODE = 'im.copilot.messenger';
+	const CHANNEL_COMPONENT_CODE = 'im.channel.messenger';
 
 	function createByComponent()
 	{
@@ -13,6 +15,11 @@ jn.define('im/messenger/lib/counters', (require, exports, module) => {
 		if (componentCode === COPILOT_COMPONENT_CODE)
 		{
 			return new CopilotCounters();
+		}
+
+		if (componentCode === CHANNEL_COMPONENT_CODE)
+		{
+			return new ChannelCounters();
 		}
 
 		return new ChatCounters();

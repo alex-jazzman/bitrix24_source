@@ -9,11 +9,18 @@ export const EventType = Object.freeze({
 	{
 		onDialogInited: 'IM.Dialog:onDialogInited',
 		onMessageDeleted: 'IM.Dialog:onMessageDeleted',
+		onMessageIsVisible: 'IM.Dialog:onMessageIsVisible',
+		onMessageIsNotVisible: 'IM.Dialog:onMessageIsNotVisible',
 
 		scrollToBottom: 'IM.Dialog:scrollToBottom',
 		goToMessageContext: 'IM.Dialog:goToMessageContext',
 		onClickMessageContextMenu: 'IM.Dialog:onClickMessageContextMenu',
 		showForwardPopup: 'IM.Dialog:showForwardPopup',
+		openComments: 'IM.Dialog:openComments',
+		closeComments: 'IM.Dialog:closeComments',
+		showLoadingBar: 'IM.Dialog:showLoadingBar',
+		hideLoadingBar: 'IM.Dialog:hideLoadingBar',
+		showQuoteButton: 'IM.Dialog:showQuoteButton',
 
 		errors: {
 			accessDenied: 'IM.Dialog.errors:accessDenied',
@@ -27,6 +34,7 @@ export const EventType = Object.freeze({
 		insertMention: 'IM.Textarea:insertMention',
 		insertForward: 'IM.Textarea:insertForward',
 		sendMessage: 'IM.Textarea:sendMessage',
+		openUploadPreview: 'IM.Textarea:openUploadPreview',
 	},
 	uploader:
 	{
@@ -72,6 +80,7 @@ export const EventType = Object.freeze({
 		onBxLink: 'BXProtocolUrl',
 		onExit: 'BXExitApplication',
 		onIconClick: 'BXApplicationClick',
+		onNewTabClick: 'BXNewTabClick',
 	},
 	lines:
 	{
@@ -86,5 +95,9 @@ export const EventType = Object.freeze({
 	request:
 	{
 		onAuthError: 'IM.request:onAuthError',
+	},
+	channel:
+	{
+		onChannelJoin: 'IM.Channel:onChannelJoin',
 	},
 });

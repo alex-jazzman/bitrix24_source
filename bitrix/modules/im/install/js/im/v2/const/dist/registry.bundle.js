@@ -19,6 +19,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatJoin: 'im.v2.Chat.join',
 	  imV2ChatDeleteUser: 'im.v2.Chat.deleteUser',
 	  imV2ChatExtendPullWatch: 'im.v2.Chat.extendPullWatch',
+	  imV2RecentChannelExtendPullWatch: 'im.v2.Recent.Channel.extendPullWatch',
 	  imV2ChatMessageGetContext: 'im.v2.Chat.Message.getContext',
 	  imV2ChatMessageSend: 'im.v2.Chat.Message.send',
 	  imV2ChatMessageList: 'im.v2.Chat.Message.list',
@@ -34,9 +35,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2ChatMessageUnpin: 'im.v2.Chat.Message.unpin',
 	  imV2ChatMessageTailViewers: 'im.v2.Chat.Message.tailViewers',
 	  imV2ChatMessageDeleteRichUrl: 'im.v2.Chat.Message.deleteRichUrl',
+	  imV2ChatMessageCommentInfoList: 'im.v2.Chat.Message.CommentInfo.list',
 	  imV2ChatPinTail: 'im.v2.Chat.Pin.tail',
 	  imV2ChatUserList: 'im.v2.Chat.User.list',
 	  imV2ChatListShared: 'im.v2.Chat.listShared',
+	  imV2ChatCommentSubscribe: 'im.v2.Chat.Comment.subscribe',
+	  imV2ChatCommentUnsubscribe: 'im.v2.Chat.Comment.unsubscribe',
+	  imV2ChatCommentReadAll: 'im.v2.Chat.Comment.readAll',
+	  imV2ChatAddManagers: 'im.v2.Chat.addManagers',
+	  imV2ChatDeleteManagers: 'im.v2.Chat.deleteManagers',
 	  imV2SettingsGeneralUpdate: 'im.v2.Settings.General.update',
 	  imV2SettingsNotifyUpdate: 'im.v2.Settings.Notify.update',
 	  imV2SettingsNotifySwitchScheme: 'im.v2.Settings.Notify.switchScheme',
@@ -45,6 +52,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imV2BetaEnable: 'im.v2.Beta.enable',
 	  imV2BetaDisable: 'im.v2.Beta.disable',
 	  imV2ChatTaskPrepare: 'im.v2.Chat.Task.prepare',
+	  imV2RecentChannelTail: 'im.v2.Recent.Channel.Tail',
+	  imV2ChatCopilotUpdateRole: 'im.v2.Chat.Copilot.updateRole',
 	  imV2CallZoomCreate: 'im.v2.Call.Zoom.create',
 	  imCallBetaCreateRoom: 'im.call.beta.createRoom',
 	  imMessageAdd: 'im.message.add',
@@ -103,6 +112,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  imBotGiphyListPopular: 'imbot.Giphy.listPopular',
 	  imBotGiphyList: 'imbot.Giphy.list',
 	  imBotDialogVote: 'imbot.dialog.vote',
+	  imBotNetworkChatCount: 'imbot.Network.Chat.count',
+	  imBotNetworkChatList: 'imbot.Network.Chat.list',
+	  imBotNetworkChatAdd: 'imbot.Network.Chat.add',
 	  linesDialogGet: 'imopenlines.dialog.get'
 	});
 
@@ -115,10 +127,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  dialog: {
 	    onDialogInited: 'IM.Dialog:onDialogInited',
 	    onMessageDeleted: 'IM.Dialog:onMessageDeleted',
+	    onMessageIsVisible: 'IM.Dialog:onMessageIsVisible',
+	    onMessageIsNotVisible: 'IM.Dialog:onMessageIsNotVisible',
 	    scrollToBottom: 'IM.Dialog:scrollToBottom',
 	    goToMessageContext: 'IM.Dialog:goToMessageContext',
 	    onClickMessageContextMenu: 'IM.Dialog:onClickMessageContextMenu',
 	    showForwardPopup: 'IM.Dialog:showForwardPopup',
+	    openComments: 'IM.Dialog:openComments',
+	    closeComments: 'IM.Dialog:closeComments',
+	    showLoadingBar: 'IM.Dialog:showLoadingBar',
+	    hideLoadingBar: 'IM.Dialog:hideLoadingBar',
+	    showQuoteButton: 'IM.Dialog:showQuoteButton',
 	    errors: {
 	      accessDenied: 'IM.Dialog.errors:accessDenied'
 	    }
@@ -129,7 +148,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    insertText: 'IM.Textarea:insertText',
 	    insertMention: 'IM.Textarea:insertMention',
 	    insertForward: 'IM.Textarea:insertForward',
-	    sendMessage: 'IM.Textarea:sendMessage'
+	    sendMessage: 'IM.Textarea:sendMessage',
+	    openUploadPreview: 'IM.Textarea:openUploadPreview'
 	  },
 	  uploader: {
 	    cancel: 'IM.Uploader:cancel'
@@ -166,7 +186,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    onWakeUp: 'BXWakeAction',
 	    onBxLink: 'BXProtocolUrl',
 	    onExit: 'BXExitApplication',
-	    onIconClick: 'BXApplicationClick'
+	    onIconClick: 'BXApplicationClick',
+	    onNewTabClick: 'BXNewTabClick'
 	  },
 	  lines: {
 	    onInit: 'onLinesInit',
@@ -178,6 +199,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  request: {
 	    onAuthError: 'IM.request:onAuthError'
+	  },
+	  channel: {
+	    onChannelJoin: 'IM.Channel:onChannelJoin'
 	  }
 	});
 
@@ -198,7 +222,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  thread: 'thread',
 	  mail: 'mail',
 	  lines: 'lines',
-	  copilot: 'copilot'
+	  copilot: 'copilot',
+	  channel: 'channel',
+	  openChannel: 'openChannel',
+	  comment: 'comment'
 	});
 	const DialogScrollThreshold = Object.freeze({
 	  none: 'none',
@@ -262,9 +289,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  supervisorUpdateFeature: 'SupervisorUpdateFeatureMessage',
 	  supervisorEnableFeature: 'SupervisorEnableFeatureMessage',
 	  sign: 'SignMessage',
+	  checkIn: 'CheckInMessage',
 	  supportVote: 'SupportVoteMessage',
 	  supportSessionNumber: 'SupportSessionNumberMessage',
-	  system: 'SystemMessage'
+	  supportChatCreation: 'SupportChatCreationMessage',
+	  system: 'SystemMessage',
+	  channelPost: 'ChannelPost'
 	});
 	const MessageMentionType = Object.freeze({
 	  user: 'USER',
@@ -310,6 +340,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    name: 'createChat',
 	    list: 'RecentListContainer',
 	    content: 'CreateChatContent'
+	  },
+	  channel: {
+	    name: 'channel',
+	    list: 'ChannelListContainer',
+	    content: 'ChatContent'
 	  },
 	  notification: {
 	    name: 'notification',
@@ -397,7 +432,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  meeting: 'meeting',
 	  market: 'market',
 	  messageSearch: 'messageSearch',
-	  chatsWithUser: 'chatsWithUser'
+	  chatsWithUser: 'chatsWithUser',
+	  multidialog: 'multidialog'
 	});
 	const SidebarFileTypes = Object.freeze({
 	  media: 'media',
@@ -512,7 +548,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  createChatManageUsersAddMenu: 'im-content-create-chat-manage-users-add',
 	  createChatManageUsersDeleteMenu: 'im-content-create-chat-manage-users-delete',
 	  createChatManageUiMenu: 'im-content-create-chat-manage-ui',
-	  createChatCanPostMenu: 'im-content-create-chat-can-post',
+	  createChatManageMessagesMenu: 'im-content-create-chat-can-post',
 	  messageBaseFileMenu: 'im-message-base-file-context-menu',
 	  desktopItemMenu: 'im-navigation-desktop-item-context-menu'
 	});
@@ -569,6 +605,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  send: 'send',
 	  dialtone: 'dialtone',
 	  ringtone: 'ringtone',
+	  ringtoneModern: 'ringtoneModern',
 	  start: 'start',
 	  stop: 'stop',
 	  error: 'error'
@@ -577,7 +614,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const PromoId = Object.freeze({
 	  copilot: 'im:ai:15062023:all',
 	  createGroupChat: 'im:group-chat-create:20062023:all',
-	  createConference: 'im:conference-create:24082023:all'
+	  createConference: 'im:conference-create:24082023:all',
+	  createChannel: 'im:channel-create:04032024:all',
+	  addUsersToCopilotChat: 'im:add-users-to-copilot-chat:09042024:all',
+	  changeRoleCopilot: 'im:change-role-copilot-chat:09042024:all'
 	});
 
 	const ChatActionType = Object.freeze({
@@ -590,14 +630,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  mute: 'mute',
 	  rename: 'rename',
 	  send: 'send',
-	  userList: 'userList'
+	  deleteOthersMessage: 'deleteOthersMessage',
+	  userList: 'userList',
+	  changeOwner: 'changeOwner',
+	  changeManagers: 'changeManagers',
+	  readMessage: 'readMessage',
+	  openComments: 'openComments',
+	  subscribeToComments: 'subscribeToComments',
+	  openSidebar: 'openSidebar',
+	  pinMessage: 'pinMessage',
+	  setReaction: 'setReaction',
+	  createMeeting: 'createMeeting',
+	  createTask: 'createTask',
+	  openAvatarMenu: 'openAvatarMenu',
+	  openMessageMenu: 'openMessageMenu',
+	  openSidebarMenu: 'openSidebarMenu'
 	});
 	const ChatActionGroup = Object.freeze({
 	  manageSettings: 'manageSettings',
 	  manageUi: 'manageUi',
 	  manageUsersAdd: 'manageUsersAdd',
 	  manageUsersDelete: 'manageUsersDelete',
-	  canPost: 'canPost'
+	  manageMessages: 'manageMessages'
 	});
 
 	const RawBotType = Object.freeze({
@@ -626,6 +680,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  openNotifications: 'IM_NOTIFY',
 	  openHistory: 'IM_HISTORY',
 	  openChat: 'IM_DIALOG',
+	  openMessage: 'IM_MESSAGE',
 	  openLines: 'IM_LINES',
 	  openSettings: 'IM_SETTINGS',
 	  openCopilotChat: 'IM_COPILOT',
@@ -662,6 +717,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  deal: 'DEAL',
 	  lead: 'LEAD',
 	  dynamic: 'DYNAMIC'
+	});
+
+	const MultidialogStatus = Object.freeze({
+	  new: 'new',
+	  open: 'open',
+	  close: 'close'
 	});
 
 	exports.RestMethod = RestMethod;
@@ -719,6 +780,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.CallViewState = CallViewState;
 	exports.TextareaPanelType = TextareaPanelType;
 	exports.ChatEntityLinkType = ChatEntityLinkType;
+	exports.MultidialogStatus = MultidialogStatus;
 
 }((this.BX.Messenger.v2.Const = this.BX.Messenger.v2.Const || {}),BX.Messenger.v2.Const));
 //# sourceMappingURL=registry.bundle.js.map

@@ -223,7 +223,7 @@ export class PortalPage extends BaseSettingsPage
 					inputName: 'name',
 					label: this.getValue('portalSettingsLabels').name,
 					value: this.getValue('portalSettings').name,
-					placeholder: window.document.location.hostname,
+					placeholder: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_TITLE'),
 					inputDefaultWidth: true,
 				})),
 			}),

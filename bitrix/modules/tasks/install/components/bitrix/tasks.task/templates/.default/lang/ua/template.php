@@ -1,6 +1,8 @@
 <?php
 $MESS["TASKS_ADD_PROJECT"] = "Створити проєкт";
 $MESS["TASKS_CANCEL"] = "Скасування";
+$MESS["TASKS_NOTIFY_TASK_CREATED"] = "Завдання успішно створене";
+$MESS["TASKS_NOTIFY_TASK_DO_VIEW"] = "Переглянути";
 $MESS["TASKS_SELECT"] = "Вибрати";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_ACCOMPLICES"] = "Співвиконавці";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_ADD"] = "Додати";
@@ -112,3 +114,8 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_TO_LIST"] = "До списку";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_VIEW_TASK"] = "Подивитися";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_WHAT_TO_BE_DONE"] = "Введіть назву завдання";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_WHAT_TO_BE_DONE_MSGVER_1"] = "Уведіть назву завдання";
+$MESS["TASKS_TASK_FLOW_CHANGE_CANCEL_CAPTION"] = "Скасувати";
+$MESS["TASKS_TASK_FLOW_CHANGE_MESSAGE"] = "Опис завдання не збережеться. Скопіюйте його й додайте після вибору потоку.";
+$MESS["TASKS_TASK_FLOW_CHANGE_OK_CAPTION"] = "Вибрати";
+$MESS["TASKS_TASK_FLOW_CHANGE_TITLE"] = "Вибрати потік?";
+$MESS["TASKS_TASK_FLOW_SELECTOR_CREATE_BUTTON"] = "Створити потік";

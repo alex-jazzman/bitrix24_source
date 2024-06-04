@@ -37,6 +37,11 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imChatUserDelete: 'im.chat.user.delete',
 		imChatUserAdd: 'im.chat.user.add',
 
+		imV2RecentChannelTail: 'im.v2.Recent.Channel.tail',
+
+		imV2ChatGet: 'im.v2.Chat.get',
+		imV2ChatExtendPullWatch: 'im.v2.Chat.extendPullWatch',
+
 		imV2ChatRead: 'im.v2.Chat.read',
 		imV2ChatReadAll: 'im.v2.Chat.readAll',
 		imV2ChatUnread: 'im.v2.Chat.unread',
@@ -67,6 +72,9 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatMessageReactionAdd: 'im.v2.Chat.Message.Reaction.add',
 		imV2ChatMessageReactionDelete: 'im.v2.Chat.Message.Reaction.delete',
 		imV2ChatMessageReactionTail: 'im.v2.Chat.Message.Reaction.tail',
+
+		imV2ChatCommentSubscribe: 'im.v2.Chat.Comment.subscribe',
+		imV2ChatCommentUnsubscribe: 'im.v2.Chat.Comment.unsubscribe',
 
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',

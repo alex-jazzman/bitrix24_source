@@ -53,6 +53,7 @@ $MESS["SONET_UM_MOD"] = "Редагувати модераторів";
 $MESS["SONET_UM_MOD1"] = "Модератори";
 $MESS["SONET_UM_MODS"] = "Модератори";
 $MESS["SONET_UM_NEWS"] = "Новини";
+$MESS["SONET_UM_NEWS2"] = "Стрічка";
 $MESS["SONET_UM_PHOTO"] = "Фото";
 $MESS["SONET_UM_REQUESTS"] = "Запрошення та запити";
 $MESS["SONET_UM_REQUESTS_OUT"] = "Запрошення до групи";

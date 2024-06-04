@@ -227,6 +227,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  getUnreadMessageItem() {
+	    if (this.isChannel()) {
+	      return null;
+	    }
 	    const dialog = this.store.getters['chats/get'](this.context.dialogId, true);
 	    const showReadOption = this.context.unread || dialog.counter > 0;
 	    return {
@@ -412,6 +415,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    const user = this.store.getters['users/get'](this.context.dialogId);
 	    return user.bot === true;
+	  }
+	  isChannel() {
+	    const {
+	      type
+	    } = this.store.getters['chats/get'](this.context.dialogId, true);
+	    return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(type);
+	  }
+	  isCommentsChat() {
+	    const {
+	      type
+	    } = this.store.getters['chats/get'](this.context.dialogId, true);
+	    return type === im_v2_const.ChatType.comment;
 	  }
 	}
 

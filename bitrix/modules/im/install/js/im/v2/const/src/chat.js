@@ -16,6 +16,9 @@ export const ChatType = Object.freeze({
 	mail: 'mail',
 	lines: 'lines',
 	copilot: 'copilot',
+	channel: 'channel',
+	openChannel: 'openChannel',
+	comment: 'comment',
 });
 
 export const DialogScrollThreshold = Object.freeze({

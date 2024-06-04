@@ -23,3 +23,5 @@ $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_NEGATIVE_PRICE_NOTICE"] = "Ціна мож�
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_SETTING_DISABLED"] = "Налаштування \"#NAME#\" відключено";
 $MESS["CATALOG_DOCUMENT_PRODUCT_LIST_SETTING_ENABLED"] = "Налаштування \"#NAME#\" включено";
 $MESS["CATALOG_PRODUCT_SUM_TOTAL"] = "Загальна сума";
+$MESS["CATALOG_PRODUCT_SUM_TOTAL_BEFORE_TAX"] = "Сума без податку";
+$MESS["CATALOG_PRODUCT_SUM_TOTAL_TAX"] = "Сума податку";

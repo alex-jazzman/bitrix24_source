@@ -49,13 +49,12 @@ export class MainMenu extends RecentMenu
 
 	getOpenUserCalendarItem(): ?MenuItem
 	{
-		const isUser = this.store.getters['chats/isUser'](this.context.dialogId);
-		if (!isUser)
+		if (!this.isUser())
 		{
 			return null;
 		}
-		const user = this.store.getters['users/get'](this.context.dialogId, true);
-		if (user.bot)
+
+		if (this.isBot())
 		{
 			return null;
 		}
@@ -73,8 +72,7 @@ export class MainMenu extends RecentMenu
 
 	getAddMembersToChatItem(): MenuItem
 	{
-		const user: ImModelUser = this.store.getters['users/get'](this.context.dialogId);
-		if (user?.bot === true)
+		if (this.isBot())
 		{
 			return null;
 		}
@@ -91,32 +89,5 @@ export class MainMenu extends RecentMenu
 				this.menuInstance.close();
 			},
 		};
-	}
-
-	getJoinChatItem(): ?MenuItem
-	{
-		const dialog = this.store.getters['chats/get'](this.context.dialogId);
-		const isUser = dialog.type === ChatType.user;
-		if (isUser)
-		{
-			return null;
-		}
-
-		// todo: check if user is in chat already
-
-		return {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_JOIN_CHAT'),
-			onclick: () => {
-				console.warn('sidebar menu: join chat is not implemented');
-				this.menuInstance.close();
-			},
-		};
-	}
-
-	canShowFullMenu(dialogId: string): boolean
-	{
-		const recentItem: ImModelRecentItem = this.store.getters['recent/get'](dialogId);
-
-		return Boolean(recentItem);
 	}
 }

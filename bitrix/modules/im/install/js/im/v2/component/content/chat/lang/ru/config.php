@@ -1,10 +1,12 @@
 <?
 $MESS["IM_CONTENT_CHAT_NO_CHATS_START_MESSAGE"] = "Пригласите коллег и начните общение";
 $MESS["IM_CONTENT_CHAT_START_MESSAGE_V2"] = "Выберите чат и начните общение";
+$MESS["IM_CONTENT_CHANNEL_START_MESSAGE_V2"] = "Подписывайтесь на каналы и следите за актуальной информацией";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_MEMBERS"] = "Кликните для открытия списка пользователей";
 $MESS["IM_CONTENT_CHAT_HEADER_RENAME_ERROR"] = "При переименовании чата произошла ошибка, повторите попытку позже";
 $MESS["IM_CONTENT_CHAT_HEADER_VIDEOCALL"] = "Видеозвонок";
 $MESS["IM_CONTENT_CHAT_HEADER_CALL_MENU_AUDIO"] = "Аудиозвонок";
+$MESS["IM_CONTENT_CHAT_HEADER_SUPPORT_SUBTITLE"] = "Готовы ответить на ваши вопросы";
 $MESS["IM_CONTENT_CHAT_HEADER_CALL_MENU_BETA_2"] = "Видеозвонок (beta)";
 $MESS["IM_CONTENT_CHAT_HEADER_CALL_MENU_PERSONAL_PHONE"] = "Мобильный телефон";
 $MESS["IM_CONTENT_CHAT_HEADER_CALL_MENU_WORK_PHONE"] = "Рабочий телефон";
@@ -16,12 +18,16 @@ $MESS["IM_CONTENT_CHAT_HEADER_START_CONFERENCE"] = "Начать конфере�
 $MESS["IM_CONTENT_CHAT_HEADER_USER_COUNT_PLURAL_0"] = "#COUNT# участник";
 $MESS["IM_CONTENT_CHAT_HEADER_USER_COUNT_PLURAL_1"] = "#COUNT# участника";
 $MESS["IM_CONTENT_CHAT_HEADER_USER_COUNT_PLURAL_2"] = "#COUNT# участников";
+$MESS["IM_CONTENT_CHAT_HEADER_CHANNEL_USER_COUNT_PLURAL_0"] = "#COUNT# подписчик";
+$MESS["IM_CONTENT_CHAT_HEADER_CHANNEL_USER_COUNT_PLURAL_1"] = "#COUNT# подписчика";
+$MESS["IM_CONTENT_CHAT_HEADER_CHANNEL_USER_COUNT_PLURAL_2"] = "#COUNT# подписчиков";
 $MESS["IM_CONTENT_CHAT_ACCESS_ERROR"] = "У вас нет доступа к этому чату";
 $MESS["IM_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND"] = "Сообщение не найдено";
 $MESS["IM_CONTENT_DROP_AREA"] = "Переместите файлы в эту область";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_ENABLE_NOTIFICATIONS"] = "Включить звук";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_DISABLE_NOTIFICATIONS"] = "Выключить звук";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHAT"] = "Вступить в чат";
+$MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL"] = "Вступить в канал";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_TASK"] = "Открыть задачу";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_MEETING_MSGVER_1"] = "Открыть встречу";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_GROUP_MSGVER_1"] = "Открыть группу";
@@ -35,3 +41,6 @@ $MESS["IM_CONTENT_CHAT_HEADER_OPEN_DYNAMIC_ELEMENT"] = "Открыть элем�
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_INVITE_POPUP_TITLE"] = "Добавить участников";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_SEARCH"] = "Поиск по чату";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_SIDEBAR"] = "Сайдбар";
+
+$MESS["IM_CONTENT_COMMENTS_HEADER_TITLE"] = "Комментарии";
+$MESS["IM_CONTENT_COMMENTS_FOLLOW_TOGGLE_TEXT"] = "Следить";

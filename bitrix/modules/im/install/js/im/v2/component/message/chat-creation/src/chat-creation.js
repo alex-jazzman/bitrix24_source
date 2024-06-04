@@ -84,7 +84,8 @@ export const ChatCreationMessage = {
 		<BaseMessage
 			:dialogId="dialogId"
 			:item="item"
-			:withDefaultContextMenu="false"
+			:withContextMenu="false"
+			:withReactions="false"
 			:withBackground="false"
 			class="bx-im-message-chat-creation__scope"
 		>

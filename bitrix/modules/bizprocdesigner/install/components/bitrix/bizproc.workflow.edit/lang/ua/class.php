@@ -16,6 +16,7 @@ $MESS["BIZPROC_WFEDIT_IMPORT_ERROR"] = "Помилка імпортування 
 $MESS["BIZPROC_WFEDIT_PARAMETERS_SAVE_ERROR"] = "Розмір параметрів шаблону занадто великий. Не вдалося зберегти шаблон.";
 $MESS["BIZPROC_WFEDIT_PARAMETERS_SAVE_ERROR_MSGVER_1"] = "Розмір параметрів шаблону занадто великий. Не вдалося зберегти шаблон.";
 $MESS["BIZPROC_WFEDIT_SAVE_ERROR"] = "Помилка збереження:";
+$MESS["BIZPROC_WFEDIT_SAVE_ERROR_CAUSE_FILTER"] = "Помилка збереження: Дані не пройшли перевірку фільтра безпеки.";
 $MESS["BIZPROC_WFEDIT_TITLE_ADD"] = "Створення шаблона бізнес-процесу";
 $MESS["BIZPROC_WFEDIT_TITLE_EDIT"] = "Редагування шаблона бізнес-процесу";
 $MESS["BIZPROC_WFEDIT_VARIABLES_SAVE_ERROR"] = "Розмір змінних шаблону занадто великий. Не вдалося зберегти шаблон.";

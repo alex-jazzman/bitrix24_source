@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core_events,im_v2_lib_user,im_v2_lib_userStatus,im_v2_lib_logger,im_v2_lib_utils,im_v2_const,main_core,ui_vue3_vuex,im_v2_application_core) {
+(function (exports,main_core_events,im_v2_lib_user,im_v2_lib_userStatus,im_v2_lib_logger,im_v2_lib_utils,im_v2_const,im_v2_application_core,ui_vue3_vuex,main_core,im_v2_model) {
 	'use strict';
 
 	const isNumberOrString = target => {
@@ -314,7 +314,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      /** @function application/isChatOpen */
 	      isChatOpen: state => dialogId => {
-	        const allowedLayouts = [im_v2_const.Layout.chat.name, im_v2_const.Layout.copilot.name];
+	        const allowedLayouts = [im_v2_const.Layout.chat.name, im_v2_const.Layout.copilot.name, im_v2_const.Layout.channel.name];
 	        if (!allowedLayouts.includes(state.layout.name)) {
 	          return false;
 	        }
@@ -761,7 +761,175 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const commentFieldsConfig = [{
+	  fieldName: 'chatId',
+	  targetFieldName: 'chatId',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'lastUserIds',
+	  targetFieldName: 'lastUserIds',
+	  checkFunction: main_core.Type.isArray
+	}, {
+	  fieldName: 'messageCount',
+	  targetFieldName: 'messageCount',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'messageId',
+	  targetFieldName: 'messageId',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'isUserSubscribed',
+	  targetFieldName: 'isUserSubscribed',
+	  checkFunction: main_core.Type.isBoolean
+	}];
+
+	const LAST_USERS_TO_SHOW = 3;
 	var _formatFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
+	var _isMessageAuthor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMessageAuthor");
+	class CommentsModel extends ui_vue3_vuex.BuilderModel {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _isMessageAuthor, {
+	      value: _isMessageAuthor2
+	    });
+	    Object.defineProperty(this, _formatFields, {
+	      value: _formatFields2
+	    });
+	  }
+	  getState() {
+	    return {
+	      collection: {}
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      chatId: 0,
+	      lastUserIds: [],
+	      messageCount: 0,
+	      messageId: 0,
+	      isUserSubscribed: false
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function messages/comments/getByMessageId */
+	      getByMessageId: state => messageId => {
+	        var _state$collection$mes;
+	        return (_state$collection$mes = state.collection[messageId]) != null ? _state$collection$mes : this.getElementState();
+	      },
+	      /** @function messages/comments/getMessageIdByChatId */
+	      getMessageIdByChatId: state => chatId => {
+	        const collection = Object.values(state.collection);
+	        const foundItem = collection.find(item => {
+	          return item.chatId === chatId;
+	        });
+	        return foundItem == null ? void 0 : foundItem.messageId;
+	      },
+	      /** @function messages/comments/isUserSubscribed */
+	      isUserSubscribed: state => messageId => {
+	        var _element$isUserSubscr;
+	        const element = state.collection[messageId];
+	        if (!element && babelHelpers.classPrivateFieldLooseBase(this, _isMessageAuthor)[_isMessageAuthor](messageId)) {
+	          return true;
+	        }
+	        return (_element$isUserSubscr = element == null ? void 0 : element.isUserSubscribed) != null ? _element$isUserSubscr : false;
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function messages/comments/set */
+	      set: (store, rawPayload) => {
+	        let payload = rawPayload;
+	        if (!payload) {
+	          return;
+	        }
+	        if (!Array.isArray(payload) && main_core.Type.isPlainObject(payload)) {
+	          payload = [payload];
+	        }
+	        payload = payload.map(item => {
+	          const currentItem = store.state.collection[item.messageId];
+	          if (currentItem) {
+	            return {
+	              ...currentItem,
+	              ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields)[_formatFields](item)
+	            };
+	          }
+	          return {
+	            ...this.getElementState(),
+	            isUserSubscribed: babelHelpers.classPrivateFieldLooseBase(this, _isMessageAuthor)[_isMessageAuthor](item.messageId),
+	            ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields)[_formatFields](item)
+	          };
+	        });
+	        store.commit('set', payload);
+	      },
+	      /** @function messages/comments/setLastUser */
+	      setLastUser: (store, payload) => {
+	        const {
+	          messageId,
+	          newUserId
+	        } = payload;
+	        const currentItem = store.state.collection[messageId];
+	        if (!currentItem || newUserId === 0) {
+	          return;
+	        }
+	        store.commit('setLastUser', payload);
+	      },
+	      /** @function messages/comments/subscribe */
+	      subscribe: (store, messageId) => {
+	        im_v2_application_core.Core.getStore().dispatch('messages/comments/set', {
+	          messageId,
+	          isUserSubscribed: true
+	        });
+	      },
+	      /** @function messages/comments/unsubscribe */
+	      unsubscribe: (store, messageId) => {
+	        im_v2_application_core.Core.getStore().dispatch('messages/comments/set', {
+	          messageId,
+	          isUserSubscribed: false
+	        });
+	      }
+	    };
+	  }
+
+	  /* eslint-disable no-param-reassign */
+	  getMutations() {
+	    return {
+	      set: (state, payload) => {
+	        payload.forEach(item => {
+	          state.collection[item.messageId] = item;
+	        });
+	      },
+	      setLastUser: (state, payload) => {
+	        const {
+	          messageId,
+	          newUserId
+	        } = payload;
+	        const {
+	          lastUserIds: currentUsers
+	        } = state.collection[messageId];
+	        if (currentUsers.includes(newUserId)) {
+	          return;
+	        }
+	        if (currentUsers.length < LAST_USERS_TO_SHOW) {
+	          currentUsers.unshift(newUserId);
+	          return;
+	        }
+	        currentUsers.pop();
+	        currentUsers.unshift(newUserId);
+	      }
+	    };
+	  }
+	}
+	function _formatFields2(fields) {
+	  return im_v2_model.formatFieldsWithConfig(fields, commentFieldsConfig);
+	}
+	function _isMessageAuthor2(messageId) {
+	  const message = im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
+	  return (message == null ? void 0 : message.authorId) === im_v2_application_core.Core.getUserId();
+	}
+
+	var _formatFields$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
 	var _needToSwapAuthorId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needToSwapAuthorId");
 	var _prepareSwapAuthorId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareSwapAuthorId");
 	var _getMaxMessageId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMaxMessageId");
@@ -797,8 +965,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _needToSwapAuthorId, {
 	      value: _needToSwapAuthorId2
 	    });
-	    Object.defineProperty(this, _formatFields, {
-	      value: _formatFields2
+	    Object.defineProperty(this, _formatFields$1, {
+	      value: _formatFields2$1
 	    });
 	  }
 	  getName() {
@@ -807,7 +975,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  getNestedModules() {
 	    return {
 	      pin: PinModel,
-	      reactions: ReactionsModel
+	      reactions: ReactionsModel,
+	      comments: CommentsModel
 	    };
 	  }
 	  getState() {
@@ -846,8 +1015,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  // eslint-disable-next-line max-lines-per-function
 	  getGetters() {
 	    return {
-	      /** @function messages/get */
-	      get: state => chatId => {
+	      /** @function messages/getByChatId */
+	      getByChatId: state => chatId => {
 	        if (!state.chatCollection[chatId]) {
 	          return [];
 	        }
@@ -1005,7 +1174,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        messages = messages.map(message => {
 	          return {
 	            ...this.getElementState(),
-	            ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields)[_formatFields](message)
+	            ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1](message)
 	          };
 	        });
 	        const chatId = (_messages$ = messages[0]) == null ? void 0 : _messages$.chatId;
@@ -1032,12 +1201,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          if (currentMessage) {
 	            return {
 	              ...currentMessage,
-	              ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields)[_formatFields](message)
+	              ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1](message)
 	            };
 	          }
 	          return {
 	            ...this.getElementState(),
-	            ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields)[_formatFields](message)
+	            ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1](message)
 	          };
 	        });
 	        if (preparedMessages.length === 0) {
@@ -1051,7 +1220,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      add: (store, payload) => {
 	        const message = {
 	          ...this.getElementState(),
-	          ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields)[_formatFields](payload)
+	          ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1](payload)
 	        };
 	        store.commit('store', {
 	          messages: [message]
@@ -1072,7 +1241,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        store.commit('updateWithId', {
 	          id,
-	          fields: babelHelpers.classPrivateFieldLooseBase(this, _formatFields)[_formatFields](fields)
+	          fields: babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1](fields)
 	        });
 	      },
 	      /** @function messages/update */
@@ -1089,7 +1258,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          id,
 	          fields: {
 	            ...currentMessage,
-	            ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields)[_formatFields](fields)
+	            ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1](fields)
 	          }
 	        });
 	      },
@@ -1171,7 +1340,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          id: messageId,
 	          fields: {
 	            ...message,
-	            ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields)[_formatFields]({
+	            ...babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1]({
 	              attach
 	            })
 	          }
@@ -1230,6 +1399,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        };
 	      },
 	      delete: (state, payload) => {
+	        var _state$chatCollection2;
 	        im_v2_lib_logger.Logger.warn('Messages model: delete mutation', payload);
 	        const {
 	          id
@@ -1237,7 +1407,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        const {
 	          chatId
 	        } = state.collection[id];
-	        state.chatCollection[chatId].delete(id);
+	        (_state$chatCollection2 = state.chatCollection[chatId]) == null ? void 0 : _state$chatCollection2.delete(id);
 	        delete state.collection[id];
 	      },
 	      clearCollection: (state, payload) => {
@@ -1283,13 +1453,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	}
-	function _formatFields2(rawFields) {
+	function _formatFields2$1(rawFields) {
 	  const messageParams = main_core.Type.isPlainObject(rawFields.params) ? rawFields.params : {};
 	  const fields = {
 	    ...rawFields,
 	    ...messageParams
 	  };
-	  const formattedFields = formatFieldsWithConfig(fields, messageFieldsConfig);
+	  const formattedFields = im_v2_model.formatFieldsWithConfig(fields, messageFieldsConfig);
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _needToSwapAuthorId)[_needToSwapAuthorId](formattedFields, messageParams)) {
 	    formattedFields.authorId = babelHelpers.classPrivateFieldLooseBase(this, _prepareSwapAuthorId)[_prepareSwapAuthorId](formattedFields, messageParams);
 	  }
@@ -1312,7 +1482,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  const fakeAuthorId = convertToNumber(userId);
 	  const userManager = new im_v2_lib_user.UserManager();
 	  const networkId = `${im_v2_const.UserIdNetworkPrefix}-${originalAuthorId}-${fakeAuthorId}`;
-	  userManager.setUsersToModel({
+	  void userManager.setUsersToModel({
 	    networkId,
 	    name: authorName,
 	    avatar: avatar != null ? avatar : ''
@@ -1574,7 +1744,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  targetFieldName: 'entityLink',
 	  checkFunction: main_core.Type.isPlainObject,
 	  formatFunction: target => {
-	    return formatFieldsWithConfig(target, chatEntityFieldsConfig);
+	    return im_v2_model.formatFieldsWithConfig(target, chatEntityFieldsConfig);
 	  }
 	}, {
 	  fieldName: 'dateCreate',
@@ -1624,6 +1794,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  fieldName: 'permissions',
 	  targetFieldName: 'permissions',
 	  checkFunction: main_core.Type.isPlainObject
+	}, {
+	  fieldName: 'parentChatId',
+	  targetFieldName: 'parentChatId',
+	  checkFunction: main_core.Type.isNumber
 	}];
 	const chatEntityFieldsConfig = [{
 	  fieldName: 'type',
@@ -1688,8 +1862,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        manageSettings: im_v2_const.UserRole.none,
 	        manageUsersAdd: im_v2_const.UserRole.none,
 	        manageUsersDelete: im_v2_const.UserRole.none,
-	        canPost: im_v2_const.UserRole.none
-	      }
+	        manageMessages: im_v2_const.UserRole.none
+	      },
+	      parentChatId: 0
 	    };
 	  }
 
@@ -1707,11 +1882,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return state.collection[dialogId];
 	      },
 	      /** @function chats/getByChatId */
-	      getByChatId: state => chatId => {
+	      getByChatId: state => (chatId, getBlank = false) => {
 	        const preparedChatId = Number.parseInt(chatId, 10);
-	        return Object.values(state.collection).find(item => {
+	        const chat = Object.values(state.collection).find(item => {
 	          return item.chatId === preparedChatId;
 	        });
+	        if (!chat && getBlank) {
+	          return this.getElementState();
+	        }
+	        return chat;
 	      },
 	      /** @function chats/getQuoteId */
 	      getQuoteId: state => dialogId => {
@@ -1733,10 +1912,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return 0;
 	        }
 	        const {
-	          lastReadId,
-	          lastMessageId
+	          lastReadId
 	        } = state.collection[dialogId];
-	        return lastReadId === lastMessageId ? 0 : lastReadId;
+	        const lastReadIdMessage = im_v2_application_core.Core.getStore().getters['messages/getById'](lastReadId);
+	        if (!lastReadIdMessage) {
+	          return 0;
+	        }
+	        return lastReadId;
 	      },
 	      /** @function chats/getInitialMessageId */
 	      getInitialMessageId: state => dialogId => {
@@ -1751,6 +1933,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return lastReadId;
 	        }
 	        return Math.min(lastReadId, markedId);
+	      },
+	      /** @function chats/isSupport */
+	      isSupport: state => dialogId => {
+	        if (!state.collection[dialogId]) {
+	          return false;
+	        }
+	        return state.collection[dialogId].type === im_v2_const.ChatType.support24Question;
 	      }
 	    };
 	  }
@@ -1957,7 +2146,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  formatFields(fields) {
-	    return formatFieldsWithConfig(fields, chatFieldsConfig);
+	    return im_v2_model.formatFieldsWithConfig(fields, chatFieldsConfig);
 	  }
 	}
 
@@ -2001,6 +2190,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          }
 	        }
 	        return null;
+	      },
+	      /** @function users/bots/isCopilot */
+	      isCopilot: (state, getters) => userId => {
+	        const copilotUserId = getters.getCopilotUserId;
+	        return copilotUserId === Number.parseInt(userId, 10);
 	      }
 	    };
 	  }
@@ -2323,7 +2517,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      getPosition: state => rawUserId => {
 	        const userId = Number.parseInt(rawUserId, 10);
 	        const user = state.collection[userId];
-	        if (userId <= 0 || !user) {
+	        const isSupportBot = im_v2_application_core.Core.getStore().getters['users/bots/isSupport'](userId);
+	        if (userId <= 0 || !user || isSupportBot) {
 	          return '';
 	        }
 	        if (user.workPosition) {
@@ -2437,7 +2632,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	  formatFields(fields) {
-	    const preparedFields = formatFieldsWithConfig(fields, userFieldsConfig);
+	    const preparedFields = im_v2_model.formatFieldsWithConfig(fields, userFieldsConfig);
 	    const isBot = preparedFields.bot === true;
 	    if (isBot) {
 	      im_v2_application_core.Core.getStore().dispatch('users/bots/set', {
@@ -2826,6 +3021,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  fieldName: 'isBirthdayPlaceholder',
 	  targetFieldName: 'isBirthdayPlaceholder',
 	  checkFunction: main_core.Type.isBoolean
+	}, {
+	  fieldName: ['dateLastActivity', 'lastActivityDate'],
+	  targetFieldName: 'lastActivityDate',
+	  checkFunction: [main_core.Type.isString, main_core.Type.isDate],
+	  formatFunction: im_v2_lib_utils.Utils.date.cast
 	}];
 
 	class CallsModel extends ui_vue3_vuex.BuilderModel {
@@ -2947,17 +3147,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
-	var _formatFields$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
+	var _formatFields$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatFields");
 	var _updateUnloadedRecentCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateUnloadedRecentCounters");
 	var _updateUnloadedCopilotCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateUnloadedCopilotCounters");
 	var _updateUnloadedCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateUnloadedCounters");
 	var _getMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMessage");
+	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
 	var _hasTodayMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasTodayMessage");
+	var _isChannel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChannel");
+	var _canDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canDelete");
 	class RecentModel extends ui_vue3_vuex.BuilderModel {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _canDelete, {
+	      value: _canDelete2
+	    });
+	    Object.defineProperty(this, _isChannel, {
+	      value: _isChannel2
+	    });
 	    Object.defineProperty(this, _hasTodayMessage, {
 	      value: _hasTodayMessage2
+	    });
+	    Object.defineProperty(this, _getDialog, {
+	      value: _getDialog2
 	    });
 	    Object.defineProperty(this, _getMessage, {
 	      value: _getMessage2
@@ -2971,8 +3183,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    Object.defineProperty(this, _updateUnloadedRecentCounters, {
 	      value: _updateUnloadedRecentCounters2
 	    });
-	    Object.defineProperty(this, _formatFields$1, {
-	      value: _formatFields2$1
+	    Object.defineProperty(this, _formatFields$2, {
+	      value: _formatFields2$2
 	    });
 	  }
 	  getName() {
@@ -2988,7 +3200,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      collection: {},
 	      recentCollection: new Set(),
 	      unreadCollection: new Set(),
-	      copilotCollection: new Set()
+	      copilotCollection: new Set(),
+	      channelCollection: new Set()
 	    };
 	  }
 	  getElementState() {
@@ -3008,7 +3221,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        canResend: false
 	      },
 	      isFakeElement: false,
-	      isBirthdayPlaceholder: false
+	      isBirthdayPlaceholder: false,
+	      lastActivityDate: null
 	    };
 	  }
 
@@ -3033,6 +3247,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      /** @function recent/getCopilotCollection */
 	      getCopilotCollection: state => {
 	        return [...state.copilotCollection].filter(dialogId => {
+	          const dialog = this.store.getters['chats/get'](dialogId);
+	          return Boolean(dialog);
+	        }).map(id => {
+	          return state.collection[id];
+	        });
+	      },
+	      /** @function recent/getChannelCollection */
+	      getChannelCollection: state => {
+	        return [...state.channelCollection].filter(dialogId => {
 	          const dialog = this.store.getters['chats/get'](dialogId);
 	          return Boolean(dialog);
 	        }).map(id => {
@@ -3103,8 +3326,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        const hasTodayMessage = babelHelpers.classPrivateFieldLooseBase(this, _hasTodayMessage)[_hasTodayMessage](currentItem.messageId);
 	        return !hasTodayMessage && dialog.counter === 0;
 	      },
-	      /** @function recent/getMessageDate */
-	      getMessageDate: state => dialogId => {
+	      /** @function recent/getSortDate */
+	      getSortDate: state => dialogId => {
 	        const currentItem = state.collection[dialogId];
 	        if (!currentItem) {
 	          return null;
@@ -3116,6 +3339,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        const needsBirthdayPlaceholder = this.store.getters['recent/needsBirthdayPlaceholder'](currentItem.dialogId);
 	        if (needsBirthdayPlaceholder) {
 	          return im_v2_lib_utils.Utils.date.getStartOfTheDay();
+	        }
+	        const dialog = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](currentItem.dialogId);
+	        const lastActivity = currentItem.lastActivityDate;
+	        const needToUseActivityDate = main_core.Type.isDate(lastActivity) && lastActivity > message.date;
+	        if (babelHelpers.classPrivateFieldLooseBase(this, _isChannel)[_isChannel](dialog) && needToUseActivityDate) {
+	          return lastActivity;
 	        }
 	        return message.date;
 	      }
@@ -3143,6 +3372,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        store.commit('setCopilotCollection', itemIds);
 	        babelHelpers.classPrivateFieldLooseBase(this, _updateUnloadedCopilotCounters)[_updateUnloadedCopilotCounters](payload);
 	      },
+	      /** @function recent/setChannel */
+	      setChannel: async (store, payload) => {
+	        const itemIds = await this.store.dispatch('recent/store', payload);
+	        store.commit('setChannelCollection', itemIds);
+	      },
+	      /** @function recent/clearChannelCollection */
+	      clearChannelCollection: store => {
+	        store.commit('clearChannelCollection');
+	      },
 	      /** @function recent/store */
 	      store: (store, payload) => {
 	        if (!Array.isArray(payload) && main_core.Type.isPlainObject(payload)) {
@@ -3151,7 +3389,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        const itemsToUpdate = [];
 	        const itemsToAdd = [];
 	        payload.map(element => {
-	          return babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1](element);
+	          return babelHelpers.classPrivateFieldLooseBase(this, _formatFields$2)[_formatFields$2](element);
 	        }).forEach(element => {
 	          const preparedElement = {
 	            ...element
@@ -3189,7 +3427,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        }
 	        store.commit('update', {
 	          dialogId: existingItem.dialogId,
-	          fields: babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1](fields)
+	          fields: babelHelpers.classPrivateFieldLooseBase(this, _formatFields$2)[_formatFields$2](fields)
 	        });
 	      },
 	      /** @function recent/unread */
@@ -3256,25 +3494,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      /** @function recent/setDraft */
 	      setDraft: (store, payload) => {
-	        let existingItem = store.state.collection[payload.id];
+	        const existingItem = store.state.collection[payload.id];
 	        if (!existingItem) {
-	          if (payload.text === '') {
-	            return;
-	          }
-	          const messageId = `${im_v2_const.FakeMessagePrefix}-${payload.id}`;
-	          const newItem = {
-	            dialogId: payload.id.toString(),
-	            messageId
-	          };
-	          store.commit('add', {
-	            ...this.getElementState(),
-	            ...newItem
-	          });
-	          im_v2_application_core.Core.getStore().dispatch('messages/store', {
-	            id: messageId,
-	            date: new Date()
-	          });
-	          existingItem = store.state.collection[payload.id];
+	          return;
 	        }
 	        const existingCollectionItem = store.state[payload.collectionName].has(payload.id);
 	        if (!existingCollectionItem) {
@@ -3283,7 +3505,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          }
 	          store.commit(payload.addMethodName, [payload.id.toString()]);
 	        }
-	        const fields = babelHelpers.classPrivateFieldLooseBase(this, _formatFields$1)[_formatFields$1]({
+	        const fields = babelHelpers.classPrivateFieldLooseBase(this, _formatFields$2)[_formatFields$2]({
 	          draft: {
 	            text: payload.text.toString()
 	          }
@@ -3302,11 +3524,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        if (!existingItem) {
 	          return;
 	        }
+	        store.commit('deleteFromRecentCollection', existingItem.dialogId);
+	        store.commit('deleteFromCopilotCollection', existingItem.dialogId);
+	        const canDelete = babelHelpers.classPrivateFieldLooseBase(this, _canDelete)[_canDelete](existingItem.dialogId);
+	        if (!canDelete) {
+	          return;
+	        }
 	        store.commit('delete', {
 	          id: existingItem.dialogId
 	        });
-	        store.commit('deleteFromRecentCollection', existingItem.dialogId);
-	        store.commit('deleteFromCopilotCollection', existingItem.dialogId);
+	      },
+	      /** @function recent/deleteFromChannelCollection */
+	      deleteFromChannelCollection: (store, dialogId) => {
+	        const existingItem = store.state.collection[dialogId];
+	        if (!existingItem) {
+	          return;
+	        }
+	        store.commit('deleteFromChannelCollection', dialogId);
 	      },
 	      /** @function recent/clearUnread */
 	      clearUnread: store => {
@@ -3336,6 +3570,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      deleteFromCopilotCollection: (state, payload) => {
 	        state.copilotCollection.delete(payload);
+	      },
+	      deleteFromChannelCollection: (state, dialogId) => {
+	        state.channelCollection.delete(dialogId);
+	      },
+	      setChannelCollection: (state, payload) => {
+	        payload.forEach(dialogId => {
+	          state.channelCollection.add(dialogId);
+	        });
+	      },
+	      clearChannelCollection: state => {
+	        state.channelCollection = new Set();
 	      },
 	      add: (state, payload) => {
 	        if (!Array.isArray(payload) && main_core.Type.isPlainObject(payload)) {
@@ -3378,13 +3623,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  }
 	}
-	function _formatFields2$1(rawFields) {
+	function _formatFields2$2(rawFields) {
 	  const options = main_core.Type.isPlainObject(rawFields.options) ? rawFields.options : {};
 	  const fields = {
 	    ...rawFields,
 	    ...options
 	  };
-	  return formatFieldsWithConfig(fields, recentFieldsConfig);
+	  return im_v2_model.formatFieldsWithConfig(fields, recentFieldsConfig);
 	}
 	function _updateUnloadedRecentCounters2(payload) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _updateUnloadedCounters)[_updateUnloadedCounters](payload, 'counters/setUnloadedChatCounters');
@@ -3405,10 +3650,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _getMessage2(messageId) {
 	  return im_v2_application_core.Core.getStore().getters['messages/getById'](messageId);
 	}
+	function _getDialog2(dialogId) {
+	  return im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	}
 	function _hasTodayMessage2(messageId) {
 	  const message = babelHelpers.classPrivateFieldLooseBase(this, _getMessage)[_getMessage](messageId);
 	  const hasMessage = im_v2_lib_utils.Utils.text.isUuidV4(message.id) || message.id > 0;
 	  return hasMessage && im_v2_lib_utils.Utils.date.isToday(message.date);
+	}
+	function _isChannel2(dialog) {
+	  return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(dialog.type);
+	}
+	function _canDelete2(dialogId) {
+	  const NOT_DELETABLE_TYPES = [im_v2_const.ChatType.openChannel];
+	  const {
+	    type
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId);
+	  return !NOT_DELETABLE_TYPES.includes(type);
 	}
 
 	class NotificationsModel extends ui_vue3_vuex.BuilderModel {
@@ -5119,6 +5377,214 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	}
 
+	const sidebarMultidialogFieldsConfig = [{
+	  fieldName: 'dialogId',
+	  targetFieldName: 'dialogId',
+	  checkFunction: main_core.Type.String
+	}, {
+	  fieldName: 'chatId',
+	  targetFieldName: 'chatId',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'openSessionsLimit',
+	  targetFieldName: 'openSessionsLimit',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'status',
+	  targetFieldName: 'status',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'dateMessage',
+	  targetFieldName: 'date',
+	  checkFunction: main_core.Type.isString,
+	  formatFunction: im_v2_lib_utils.Utils.date.cast
+	}];
+
+	/* eslint-disable no-param-reassign */
+	class MultidialogModel extends ui_vue3_vuex.BuilderModel {
+	  getState() {
+	    return {
+	      isInited: false,
+	      isInitedDetail: false,
+	      chatsCount: 0,
+	      unreadChats: new Set(),
+	      openSessionsLimit: 0,
+	      multidialogs: {}
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      dialogId: '',
+	      chatId: 0,
+	      status: '',
+	      date: new Date()
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function sidebar/multidialog/isInited */
+	      isInited: ({
+	        isInited
+	      }) => {
+	        return isInited;
+	      },
+	      /** @function sidebar/multidialog/isInitedDetail */
+	      isInitedDetail: ({
+	        isInitedDetail
+	      }) => {
+	        return isInitedDetail;
+	      },
+	      /** @function sidebar/multidialog/getOpenSessionsLimit */
+	      getOpenSessionsLimit: ({
+	        openSessionsLimit
+	      }) => {
+	        return openSessionsLimit;
+	      },
+	      /** @function sidebar/multidialog/getChatsCount */
+	      getChatsCount: ({
+	        chatsCount
+	      }) => {
+	        return chatsCount;
+	      },
+	      /** @function sidebar/multidialog/getTotalChatCounter */
+	      getTotalChatCounter: ({
+	        unreadChats
+	      }) => {
+	        let count = 0;
+	        unreadChats.forEach(chatId => {
+	          count += im_v2_application_core.Core.getStore().getters['counters/getChatCounterByChatId'](chatId);
+	        });
+	        return count;
+	      },
+	      /** @function sidebar/multidialog/get */
+	      get: ({
+	        multidialogs
+	      }) => chatId => {
+	        return multidialogs[chatId];
+	      },
+	      /** @function sidebar/multidialog/isSupport */
+	      isSupport: () => dialogId => {
+	        const isSupportBot = im_v2_application_core.Core.getStore().getters['users/bots/isSupport'](dialogId);
+	        const isSupportChat = im_v2_application_core.Core.getStore().getters['chats/isSupport'](dialogId);
+	        return isSupportChat || isSupportBot;
+	      },
+	      /** @function sidebar/multidialog/hasNextPage */
+	      hasNextPage: ({
+	        chatsCount,
+	        multidialogs
+	      }) => {
+	        return chatsCount > Object.keys(multidialogs).length;
+	      },
+	      /** @function sidebar/multidialog/getNumberMultidialogs */
+	      getNumberMultidialogs: ({
+	        multidialogs
+	      }) => {
+	        return Object.keys(multidialogs).length;
+	      },
+	      /** @function sidebar/multidialog/getMultidialogsByStatus */
+	      getMultidialogsByStatus: ({
+	        multidialogs
+	      }) => status => {
+	        return Object.values(multidialogs).filter(multidialog => status.includes(multidialog.status));
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function sidebar/multidialog/setInited */
+	      setInited: (store, isInited) => {
+	        store.commit('setInited', isInited);
+	      },
+	      /** @function sidebar/multidialog/setInitedDetail */
+	      setInitedDetail: (store, isInitedDetail) => {
+	        store.commit('setInitedDetail', isInitedDetail);
+	      },
+	      /** @function sidebar/multidialog/addMultidialogs */
+	      addMultidialogs: (store, multidialogs) => {
+	        if (!main_core.Type.isArray(multidialogs)) {
+	          return;
+	        }
+	        multidialogs.forEach(multidialog => {
+	          const preparedTicket = {
+	            ...this.getElementState(),
+	            ...this.formatFields(multidialog)
+	          };
+	          store.commit('addMultidialog', preparedTicket);
+	        });
+	      },
+	      /** @function sidebar/multidialog/setOpenSessionsLimit */
+	      setOpenSessionsLimit: (store, openSessionsLimit) => {
+	        if (main_core.Type.isNumber(openSessionsLimit)) {
+	          store.commit('setOpenSessionsLimit', openSessionsLimit);
+	        }
+	      },
+	      /** @function sidebar/multidialog/setChatsCount */
+	      setChatsCount: (store, chatsCount) => {
+	        if (main_core.Type.isNumber(chatsCount)) {
+	          store.commit('setChatsCount', chatsCount);
+	        }
+	      },
+	      /** @function sidebar/multidialog/setUnreadChats */
+	      setUnreadChats: (store, unreadChats) => {
+	        if (main_core.Type.isArray(unreadChats)) {
+	          store.commit('setUnreadChats', unreadChats);
+	        }
+	      },
+	      /** @function sidebar/multidialog/set */
+	      set: (store, payload) => {
+	        const {
+	          unreadChats,
+	          multidialogs,
+	          chatsCount,
+	          openSessionsLimit
+	        } = payload;
+	        store.dispatch('setUnreadChats', unreadChats);
+	        store.dispatch('setChatsCount', chatsCount);
+	        store.dispatch('setOpenSessionsLimit', openSessionsLimit);
+	        store.dispatch('addMultidialogs', multidialogs);
+	      },
+	      /** @function sidebar/multidialog/deleteUnreadChats */
+	      deleteUnreadChats: (store, chatId) => {
+	        store.commit('deleteUnreadChats', chatId);
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      /** @function sidebar/multidialog/setInited */
+	      setInited: (state, isInited) => {
+	        state.isInited = isInited;
+	      },
+	      /** @function sidebar/multidialog/setInitedDetail */
+	      setInitedDetail: (state, isInitedDetail) => {
+	        state.isInitedDetail = isInitedDetail;
+	      },
+	      addMultidialog: (state, multidialog) => {
+	        state.multidialogs[multidialog.chatId] = multidialog;
+	      },
+	      setChatsCount: (state, chatsCount) => {
+	        state.chatsCount = chatsCount;
+	      },
+	      setOpenSessionsLimit: (state, openSessionsLimit) => {
+	        state.openSessionsLimit = openSessionsLimit;
+	      },
+	      setUnreadChats: (state, unreadChats) => {
+	        unreadChats.forEach(chatId => {
+	          state.unreadChats.add(chatId);
+	        });
+	      },
+	      deleteUnreadChats: ({
+	        unreadChats
+	      }, chatId) => {
+	        unreadChats.delete(chatId);
+	      }
+	    };
+	  }
+	  formatFields(fields) {
+	    return formatFieldsWithConfig(fields, sidebarMultidialogFieldsConfig);
+	  }
+	}
+
 	/* eslint-disable no-param-reassign */
 	class SidebarModel extends ui_vue3_vuex.BuilderModel {
 	  getName() {
@@ -5131,7 +5597,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      favorites: FavoritesModel,
 	      tasks: TasksModel,
 	      meetings: MeetingsModel,
-	      files: FilesModel$1
+	      files: FilesModel$1,
+	      multidialog: MultidialogModel
 	    };
 	  }
 	  getState() {
@@ -5348,7 +5815,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return result;
 	}
 
+	var _getChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChat");
+	var _getChatByChatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatByChatId");
+	var _isChatMuted = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChatMuted");
+	var _getRecentItemCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecentItemCounter");
 	class CountersModel extends ui_vue3_vuex.BuilderModel {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _getRecentItemCounter, {
+	      value: _getRecentItemCounter2
+	    });
+	    Object.defineProperty(this, _isChatMuted, {
+	      value: _isChatMuted2
+	    });
+	    Object.defineProperty(this, _getChatByChatId, {
+	      value: _getChatByChatId2
+	    });
+	    Object.defineProperty(this, _getChat, {
+	      value: _getChat2
+	    });
+	  }
 	  getName() {
 	    return 'counters';
 	  }
@@ -5356,7 +5842,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return {
 	      unloadedChatCounters: {},
 	      unloadedLinesCounters: {},
-	      unloadedCopilotCounters: {}
+	      unloadedCopilotCounters: {},
+	      commentCounters: {}
 	    };
 	  }
 
@@ -5368,35 +5855,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        let loadedChatsCounter = 0;
 	        const recentCollection = im_v2_application_core.Core.getStore().getters['recent/getRecentCollection'];
 	        recentCollection.forEach(recentItem => {
-	          const dialog = this.store.getters['chats/get'](recentItem.dialogId, true);
-	          const isMuted = dialog.muteList.includes(im_v2_application_core.Core.getUserId());
-	          if (isMuted) {
-	            return;
-	          }
-	          const isMarked = recentItem.unread;
-	          if (dialog.counter === 0 && isMarked) {
-	            loadedChatsCounter++;
-	            return;
-	          }
-	          loadedChatsCounter += dialog.counter;
+	          const recentItemCounter = babelHelpers.classPrivateFieldLooseBase(this, _getRecentItemCounter)[_getRecentItemCounter](recentItem);
+	          loadedChatsCounter += recentItemCounter;
 	        });
 	        let unloadedChatsCounter = 0;
 	        Object.values(state.unloadedChatCounters).forEach(counter => {
 	          unloadedChatsCounter += counter;
 	        });
-	        return loadedChatsCounter + unloadedChatsCounter;
+	        const channelCommentsCounter = im_v2_application_core.Core.getStore().getters['counters/getTotalCommentsCounter'];
+	        return loadedChatsCounter + unloadedChatsCounter + channelCommentsCounter;
 	      },
 	      /** @function counters/getTotalCopilotCounter */
 	      getTotalCopilotCounter: state => {
 	        let loadedChatsCounter = 0;
 	        const recentCollection = im_v2_application_core.Core.getStore().getters['recent/getCopilotCollection'];
 	        recentCollection.forEach(recentItem => {
-	          const dialog = this.store.getters['chats/get'](recentItem.dialogId, true);
-	          const isMuted = dialog.muteList.includes(im_v2_application_core.Core.getUserId());
-	          if (isMuted) {
+	          const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat](recentItem.dialogId);
+	          if (babelHelpers.classPrivateFieldLooseBase(this, _isChatMuted)[_isChatMuted](chat)) {
 	            return;
 	          }
-	          loadedChatsCounter += dialog.counter;
+	          loadedChatsCounter += chat.counter;
 	        });
 	        let unloadedChatsCounter = 0;
 	        Object.values(state.unloadedCopilotCounters).forEach(counter => {
@@ -5418,6 +5896,63 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return 0;
 	        }
 	        return state.unloadedLinesCounters[chatId];
+	      },
+	      /** @function counters/getTotalCommentsCounter */
+	      getTotalCommentsCounter: state => {
+	        let totalCounter = 0;
+	        Object.entries(state.commentCounters).forEach(([channelChatId, channelCounters]) => {
+	          const channel = babelHelpers.classPrivateFieldLooseBase(this, _getChatByChatId)[_getChatByChatId](channelChatId);
+	          if (babelHelpers.classPrivateFieldLooseBase(this, _isChatMuted)[_isChatMuted](channel)) {
+	            return;
+	          }
+	          Object.values(channelCounters).forEach(commentCounter => {
+	            totalCounter += commentCounter;
+	          });
+	        });
+	        return totalCounter;
+	      },
+	      /** @function counters/getChannelComments */
+	      getChannelComments: state => chatId => {
+	        if (!state.commentCounters[chatId]) {
+	          return [];
+	        }
+	        return state.commentCounters[chatId];
+	      },
+	      /** @function counters/getChannelCommentsCounter */
+	      getChannelCommentsCounter: state => chatId => {
+	        if (!state.commentCounters[chatId]) {
+	          return 0;
+	        }
+	        let result = 0;
+	        Object.values(state.commentCounters[chatId]).forEach(counter => {
+	          result += counter;
+	        });
+	        return result;
+	      },
+	      /** @function counters/getChatCounterByChatId */
+	      getChatCounterByChatId: state => chatId => {
+	        const recentCollection = im_v2_application_core.Core.getStore().getters['recent/getRecentCollection'];
+	        const recentItem = recentCollection.find(element => {
+	          const chat = this.store.getters['chats/get'](element.dialogId, true);
+	          return chat.chatId === chatId;
+	        });
+	        if (!recentItem) {
+	          var _state$unloadedChatCo;
+	          return (_state$unloadedChatCo = state.unloadedChatCounters[chatId]) != null ? _state$unloadedChatCo : 0;
+	        }
+	        return babelHelpers.classPrivateFieldLooseBase(this, _getRecentItemCounter)[_getRecentItemCounter](recentItem);
+	      },
+	      /** @function counters/getSpecificCommentsCounter */
+	      getSpecificCommentsCounter: state => payload => {
+	        var _state$commentCounter;
+	        const {
+	          channelId,
+	          commentChatId
+	        } = payload;
+	        if (!state.commentCounters[channelId]) {
+	          return 0;
+	        }
+	        return (_state$commentCounter = state.commentCounters[channelId][commentChatId]) != null ? _state$commentCounter : 0;
 	      }
 	    };
 	  }
@@ -5446,6 +5981,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          return;
 	        }
 	        store.commit('setUnloadedCopilotCounters', payload);
+	      },
+	      /** @function counters/setCommentCounters */
+	      setCommentCounters: (store, payload) => {
+	        if (!main_core.Type.isPlainObject(payload)) {
+	          return;
+	        }
+	        store.commit('setCommentCounters', payload);
+	      },
+	      /** @function counters/readAllChannelComments */
+	      readAllChannelComments: (store, channelChatId) => {
+	        if (!main_core.Type.isNumber(channelChatId)) {
+	          return;
+	        }
+	        store.commit('readAllChannelComments', channelChatId);
 	      }
 	    };
 	  }
@@ -5477,8 +6026,438 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          }
 	          state.unloadedCopilotCounters[chatId] = counter;
 	        });
+	      },
+	      setCommentCounters: (state, payload) => {
+	        Object.entries(payload).forEach(([channelChatId, countersMap]) => {
+	          if (!state.commentCounters[channelChatId]) {
+	            state.commentCounters[channelChatId] = {};
+	          }
+	          const channelMap = state.commentCounters[channelChatId];
+	          Object.entries(countersMap).forEach(([commentChatId, counter]) => {
+	            if (counter === 0) {
+	              delete channelMap[commentChatId];
+	              return;
+	            }
+	            channelMap[commentChatId] = counter;
+	          });
+	        });
+	      },
+	      readAllChannelComments: (state, channelChatId) => {
+	        delete state.commentCounters[channelChatId];
 	      }
 	    };
+	  }
+	}
+	function _getChat2(dialogId) {
+	  return im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
+	}
+	function _getChatByChatId2(chatId) {
+	  return im_v2_application_core.Core.getStore().getters['chats/getByChatId'](chatId, true);
+	}
+	function _isChatMuted2(chat) {
+	  return chat.muteList.includes(im_v2_application_core.Core.getUserId());
+	}
+	function _getRecentItemCounter2(recentItem) {
+	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat](recentItem.dialogId);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isChatMuted)[_isChatMuted](chat)) {
+	    return 0;
+	  }
+	  const isMarked = recentItem.unread;
+	  if (chat.counter === 0 && isMarked) {
+	    return 1;
+	  }
+	  return chat.counter;
+	}
+
+	const copilotFieldsConfig = [{
+	  fieldName: 'recommendedRoles',
+	  targetFieldName: 'recommendedRoles',
+	  checkFunction: main_core.Type.isArray
+	}, {
+	  fieldName: 'roles',
+	  targetFieldName: 'roles',
+	  checkFunction: main_core.Type.isPlainObject,
+	  formatFunction: target => {
+	    return Object.values(target).map(role => {
+	      return formatFieldsWithConfig(role, rolesFieldsConfig);
+	    });
+	  }
+	}];
+
+	const chatFieldsConfig$1 = [{
+	  fieldName: 'dialogId',
+	  targetFieldName: 'dialogId',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'role',
+	  targetFieldName: 'role',
+	  checkFunction: main_core.Type.isString
+	}];
+
+	/* eslint-disable no-param-reassign */
+	class ChatsModel$1 extends ui_vue3_vuex.BuilderModel {
+	  getState() {
+	    return {
+	      collection: {}
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      dialogId: '',
+	      role: ''
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function copilot/chats/getRole */
+	      getRole: state => dialogId => {
+	        const chat = state.collection[dialogId];
+	        if (!chat) {
+	          return null;
+	        }
+	        return im_v2_application_core.Core.getStore().getters['copilot/roles/getByCode'](chat.role);
+	      },
+	      /** @function copilot/chats/getRoleAvatar */
+	      getRoleAvatar: (state, getters) => dialogId => {
+	        const role = getters.getRole(dialogId);
+	        if (!role) {
+	          return '';
+	        }
+	        return im_v2_application_core.Core.getStore().getters['copilot/roles/getAvatar'](role.code);
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function copilot/chats/add */
+	      add: (store, payload) => {
+	        if (!payload) {
+	          return;
+	        }
+	        const chatsToAdd = main_core.Type.isArrayFilled(payload) ? payload : [payload];
+	        chatsToAdd.forEach(chat => {
+	          const preparedChat = {
+	            ...this.getElementState(),
+	            ...this.formatFields(chat)
+	          };
+	          store.commit('add', preparedChat);
+	        });
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      add: (state, payload) => {
+	        const {
+	          dialogId
+	        } = payload;
+	        state.collection[dialogId] = payload;
+	      }
+	    };
+	  }
+	  formatFields(fields) {
+	    return formatFieldsWithConfig(fields, chatFieldsConfig$1);
+	  }
+	}
+
+	const messagesFieldsConfig = [{
+	  fieldName: 'id',
+	  targetFieldName: 'id',
+	  checkFunction: main_core.Type.isNumber
+	}, {
+	  fieldName: 'role',
+	  targetFieldName: 'roleCode',
+	  checkFunction: main_core.Type.isString
+	}];
+
+	/* eslint-disable no-param-reassign */
+	class MessagesModel$1 extends ui_vue3_vuex.BuilderModel {
+	  getState() {
+	    return {
+	      collection: {}
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      id: 0,
+	      roleCode: ''
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function copilot/messages/getRole */
+	      getRole: state => messageId => {
+	        const message = state.collection[messageId];
+	        if (!message) {
+	          return im_v2_application_core.Core.getStore().getters['copilot/roles/getDefault'];
+	        }
+	        return im_v2_application_core.Core.getStore().getters['copilot/roles/getByCode'](message.roleCode);
+	      },
+	      /** @function copilot/messages/getPrompts */
+	      getPrompts: state => messageId => {
+	        const message = state.collection[messageId];
+	        if (!message) {
+	          return [];
+	        }
+	        return im_v2_application_core.Core.getStore().getters['copilot/roles/getPrompts'](message.roleCode);
+	      },
+	      getAvatar: (state, getters) => messageId => {
+	        const role = getters.getRole(messageId);
+	        if (!role) {
+	          return '';
+	        }
+	        return im_v2_application_core.Core.getStore().getters['copilot/roles/getAvatar'](role.code);
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function copilot/messages/add */
+	      add: (store, payload) => {
+	        if (!main_core.Type.isArrayFilled(payload)) {
+	          return;
+	        }
+	        payload.forEach(message => {
+	          const preparedMessage = {
+	            ...this.getElementState(),
+	            ...this.formatFields(message)
+	          };
+	          store.commit('add', preparedMessage);
+	        });
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      add: (state, payload) => {
+	        state.collection[payload.id] = payload;
+	      }
+	    };
+	  }
+	  formatFields(fields) {
+	    return formatFieldsWithConfig(fields, messagesFieldsConfig);
+	  }
+	}
+
+	const rolesFieldsConfig$1 = [{
+	  fieldName: 'avatar',
+	  targetFieldName: 'avatar',
+	  checkFunction: main_core.Type.isPlainObject,
+	  formatFunction: target => {
+	    return im_v2_model.formatFieldsWithConfig(target, avatarFieldsConfig);
+	  }
+	}, {
+	  fieldName: 'code',
+	  targetFieldName: 'code',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: ['desc', 'description'],
+	  targetFieldName: 'desc',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'name',
+	  targetFieldName: 'name',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'default',
+	  targetFieldName: 'default',
+	  checkFunction: main_core.Type.isBoolean
+	}, {
+	  fieldName: 'prompts',
+	  targetFieldName: 'prompts',
+	  checkFunction: main_core.Type.isArray,
+	  formatFunction: target => {
+	    return target.map(prompt => {
+	      return im_v2_model.formatFieldsWithConfig(prompt, promptsFieldsConfig);
+	    });
+	  }
+	}];
+	const promptsFieldsConfig = [{
+	  fieldName: 'code',
+	  targetFieldName: 'code',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'promptType',
+	  targetFieldName: 'promptType',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'text',
+	  targetFieldName: 'text',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'title',
+	  targetFieldName: 'title',
+	  checkFunction: main_core.Type.isString
+	}];
+	const avatarFieldsConfig = [{
+	  fieldName: 'small',
+	  targetFieldName: 'small',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'medium',
+	  targetFieldName: 'medium',
+	  checkFunction: main_core.Type.isString
+	}, {
+	  fieldName: 'large',
+	  targetFieldName: 'large',
+	  checkFunction: main_core.Type.isString
+	}];
+
+	const AvatarSizes = Object.freeze({
+	  S: 'small',
+	  M: 'medium',
+	  L: 'large'
+	});
+
+	/* eslint-disable no-param-reassign */
+	class RolesModel extends ui_vue3_vuex.BuilderModel {
+	  getState() {
+	    return {
+	      roles: {}
+	    };
+	  }
+	  getElementState() {
+	    return {
+	      code: '',
+	      name: '',
+	      desc: '',
+	      default: false,
+	      avatar: {
+	        small: '',
+	        medium: '',
+	        large: ''
+	      },
+	      prompts: []
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function copilot/roles/get */
+	      get: state => () => {
+	        return Object.values(state.roles);
+	      },
+	      /** @function copilot/roles/getByCode */
+	      getByCode: (state, getters) => code => {
+	        var _state$roles$code;
+	        return (_state$roles$code = state.roles[code]) != null ? _state$roles$code : getters.getDefault;
+	      },
+	      /** @function copilot/roles/getPrompts */
+	      getPrompts: (state, getters) => roleCode => {
+	        if (!state.roles[roleCode]) {
+	          var _getters$getDefault$p, _getters$getDefault;
+	          return (_getters$getDefault$p = (_getters$getDefault = getters.getDefault) == null ? void 0 : _getters$getDefault.prompts) != null ? _getters$getDefault$p : [];
+	        }
+	        return state.roles[roleCode].prompts;
+	      },
+	      /** @function copilot/roles/getDefault */
+	      getDefault: state => {
+	        return Object.values(state.roles).find(role => role.default);
+	      },
+	      /** @function copilot/roles/getAvatar */
+	      getAvatar: (state, getters) => (roleCode, size = 'M') => {
+	        if (!state.roles[roleCode]) {
+	          var _getters$getDefault$p2, _getters$getDefault2;
+	          return (_getters$getDefault$p2 = (_getters$getDefault2 = getters.getDefault) == null ? void 0 : _getters$getDefault2.prompts) != null ? _getters$getDefault$p2 : [];
+	        }
+	        return state.roles[roleCode].avatar[AvatarSizes[size]];
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function copilot/roles/add */
+	      add: (store, payload) => {
+	        const roles = Object.values(payload);
+	        if (!main_core.Type.isArrayFilled(roles)) {
+	          return;
+	        }
+	        roles.forEach(role => {
+	          const preparedRole = {
+	            ...this.getElementState(),
+	            ...this.formatFields(role)
+	          };
+	          store.commit('add', preparedRole);
+	        });
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      add: (state, payload) => {
+	        state.roles[payload.code] = payload;
+	      }
+	    };
+	  }
+	  formatFields(fields) {
+	    return formatFieldsWithConfig(fields, rolesFieldsConfig$1);
+	  }
+	}
+
+	const RECOMMENDED_ROLES_LIMIT = 4;
+
+	/* eslint-disable no-param-reassign */
+	class CopilotModel extends ui_vue3_vuex.BuilderModel {
+	  getNestedModules() {
+	    return {
+	      roles: RolesModel,
+	      messages: MessagesModel$1,
+	      chats: ChatsModel$1
+	    };
+	  }
+	  getName() {
+	    return 'copilot';
+	  }
+	  getState() {
+	    return {
+	      recommendedRoles: [],
+	      aiProvider: ''
+	    };
+	  }
+	  getGetters() {
+	    return {
+	      /** @function copilot/getProvider */
+	      getProvider: state => {
+	        return state.aiProvider;
+	      },
+	      /** @function copilot/getRecommendedRoles */
+	      getRecommendedRoles: state => () => {
+	        const roles = state.recommendedRoles.map(roleCode => {
+	          return im_v2_application_core.Core.getStore().getters['copilot/roles/getByCode'](roleCode);
+	        });
+	        return roles.slice(0, RECOMMENDED_ROLES_LIMIT);
+	      }
+	    };
+	  }
+	  getActions() {
+	    return {
+	      /** @function copilot/setRecommendedRoles */
+	      setRecommendedRoles: (store, payload) => {
+	        if (!main_core.Type.isArrayFilled(payload)) {
+	          return;
+	        }
+	        store.commit('setRecommendedRoles', payload);
+	      },
+	      /** @function copilot/setProvider */
+	      setProvider: (store, payload) => {
+	        if (!main_core.Type.isStringFilled(payload)) {
+	          return;
+	        }
+	        store.commit('setProvider', payload);
+	      }
+	    };
+	  }
+	  getMutations() {
+	    return {
+	      setRecommendedRoles: (state, payload) => {
+	        state.recommendedRoles = payload;
+	      },
+	      setProvider: (state, payload) => {
+	        state.aiProvider = payload;
+	      }
+	    };
+	  }
+	  formatFields(fields) {
+	    return im_v2_model.formatFieldsWithConfig(fields, copilotFieldsConfig);
 	  }
 	}
 
@@ -5492,6 +6471,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.SidebarModel = SidebarModel;
 	exports.MarketModel = MarketModel;
 	exports.CountersModel = CountersModel;
+	exports.CopilotModel = CopilotModel;
+	exports.formatFieldsWithConfig = formatFieldsWithConfig;
 
-}((this.BX.Messenger.v2.Model = this.BX.Messenger.v2.Model || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Vue3.Vuex,BX.Messenger.v2.Application));
+}((this.BX.Messenger.v2.Model = this.BX.Messenger.v2.Model || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Application,BX.Vue3.Vuex,BX,BX.Messenger.v2.Model));
 //# sourceMappingURL=registry.bundle.js.map

@@ -8,7 +8,22 @@ export const ChatActionType = Object.freeze({
 	mute: 'mute',
 	rename: 'rename',
 	send: 'send',
+	deleteOthersMessage: 'deleteOthersMessage',
 	userList: 'userList',
+	changeOwner: 'changeOwner',
+	changeManagers: 'changeManagers',
+
+	readMessage: 'readMessage',
+	openComments: 'openComments',
+	subscribeToComments: 'subscribeToComments',
+	openSidebar: 'openSidebar',
+	pinMessage: 'pinMessage',
+	setReaction: 'setReaction',
+	createMeeting: 'createMeeting',
+	createTask: 'createTask',
+	openAvatarMenu: 'openAvatarMenu',
+	openMessageMenu: 'openMessageMenu',
+	openSidebarMenu: 'openSidebarMenu',
 });
 
 export const ChatActionGroup = Object.freeze({
@@ -16,5 +31,5 @@ export const ChatActionGroup = Object.freeze({
 	manageUi: 'manageUi',
 	manageUsersAdd: 'manageUsersAdd',
 	manageUsersDelete: 'manageUsersDelete',
-	canPost: 'canPost',
+	manageMessages: 'manageMessages',
 });

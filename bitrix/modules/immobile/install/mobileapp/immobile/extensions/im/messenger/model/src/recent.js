@@ -32,6 +32,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			},
 		},
 		dateMessage: null,
+		lastActivityDate: new Date(),
 		unread: false,
 		pinned: false,
 		liked: false,
@@ -62,7 +63,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 				return list
 					.splice((pageNumber - 1) * itemsPerPage, itemsPerPage)
-					.sort(sortListByMessageDateWithPinned)
+					.sort(sortListByLastActivityDateWithPinned)
 				;
 			},
 
@@ -82,7 +83,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 				return state.collection.filter((recentItem) => {
 					return !recentItem.id.startsWith('chat') && rootGetters['usersModel/getById'](recentItem.id);
 				})
-					.sort(sortListByMessageDate);
+					.sort(sortListByLastActivityDate);
 			},
 
 			/**
@@ -591,6 +592,25 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			result.dateMessage = DateHelper.cast(fields.message.date);
 		}
 
+		if (Type.isString(fields.date_last_activity))
+		{
+			fields.dateLastActivity = fields.date_last_activity;
+		}
+
+		if (Type.isString(fields.dateLastActivity))
+		{
+			fields.lastActivityDate = fields.dateLastActivity;
+		}
+
+		if (Type.isString(fields.lastActivityDate) || Type.isDate(fields.lastActivityDate))
+		{
+			result.lastActivityDate = DateHelper.cast(fields.lastActivityDate, null);
+		}
+		else if (Type.isUndefined(fields.lastActivityDate) && Type.isPlainObject(fields.message))
+		{
+			result.lastActivityDate = DateHelper.cast(fields.message.date);
+		}
+
 		// TODO: move part to file model
 
 		if (Type.isPlainObject(fields.message))
@@ -792,6 +812,42 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 		{
 			const timestampA = new Date(a.message.date).getTime();
 			const timestampB = new Date(b.message.date).getTime();
+
+			return timestampB - timestampA;
+		}
+
+		return 0;
+	}
+
+	function sortListByLastActivityDate(a, b)
+	{
+		if (a.lastActivityDate && b.lastActivityDate)
+		{
+			const timestampA = new Date(a.lastActivityDate).getTime();
+			const timestampB = new Date(b.lastActivityDate).getTime();
+
+			return timestampB - timestampA;
+		}
+
+		return 0;
+	}
+
+	function sortListByLastActivityDateWithPinned(a, b)
+	{
+		if (!a.pinned && b.pinned)
+		{
+			return 1;
+		}
+
+		if (a.pinned && !b.pinned)
+		{
+			return -1;
+		}
+
+		if (a.lastActivityDate && b.lastActivityDate)
+		{
+			const timestampA = new Date(a.lastActivityDate).getTime();
+			const timestampB = new Date(b.lastActivityDate).getTime();
 
 			return timestampB - timestampA;
 		}

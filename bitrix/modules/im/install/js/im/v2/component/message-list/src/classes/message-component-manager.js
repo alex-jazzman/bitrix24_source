@@ -16,11 +16,13 @@ const serverComponentList = new Set([
 	MessageComponent.copilotMessage,
 	MessageComponent.supportVote,
 	MessageComponent.supportSessionNumber,
+	MessageComponent.supportChatCreation,
 	MessageComponent.zoomInvite,
 	MessageComponent.copilotAddedUsers,
 	MessageComponent.supervisorUpdateFeature,
 	MessageComponent.supervisorEnableFeature,
 	MessageComponent.sign,
+	MessageComponent.checkIn,
 ]);
 
 export class MessageComponentManager

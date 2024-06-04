@@ -28,6 +28,8 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			this.store = serviceLocator.get('core').getStore();
 			this.avatar = null;
 			this.color = null;
+			this.isSuperEllipseIcon = false;
+			this.type = null;
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
@@ -52,6 +54,13 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				return;
 			}
 			this.color = dialog.color;
+
+			this.type = dialog.type;
+
+			if (dialog.type === DialogType.channel || dialog.type === DialogType.openChannel)
+			{
+				this.isSuperEllipseIcon = true;
+			}
 
 			if (dialog.chatId === MessengerParams.getGeneralChatId())
 			{
@@ -102,8 +111,14 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		getTitleParams()
 		{
+			if (this.type === DialogType.comment)
+			{
+				return {};
+			}
+
 			const titleParams = {
 				useLetterImage: true,
+				isSuperEllipseIcon: this.isSuperEllipseIcon,
 			};
 
 			if (this.avatar)
@@ -135,6 +150,11 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		getColor()
 		{
 			return this.color;
+		}
+
+		getIsSuperEllipseIcon()
+		{
+			return this.isSuperEllipseIcon;
 		}
 
 		isUser(userId)

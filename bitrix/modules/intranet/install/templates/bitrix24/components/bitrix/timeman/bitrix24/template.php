@@ -35,7 +35,7 @@ elseif ($arResult["START_INFO"]["STATE"] == "EXPIRED")
 	$statusName = "";
 	$statusClass = "timeman-expired";
 }
-
+$arResult["START_INFO"]['PLANNER']['TASKS_COUNT'] = $arResult["START_INFO"]['PLANNER']['TASKS_COUNT'] ?? 0;
 $bInfoRow = $arResult["START_INFO"]['PLANNER']["EVENT_TIME"] != '' || $arResult["START_INFO"]['PLANNER']["TASKS_COUNT"] > 0;
 $bTaskTimeRow = isset($arResult["START_INFO"]['PLANNER']['TASKS_TIMER']) && is_array($arResult["START_INFO"]['PLANNER']['TASKS_TIMER']) && $arResult["START_INFO"]['PLANNER']['TASKS_TIMER']['TIMER_STARTED_AT'] > 0;
 

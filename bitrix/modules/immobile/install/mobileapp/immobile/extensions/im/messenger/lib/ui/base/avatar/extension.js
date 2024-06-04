@@ -2,7 +2,9 @@
  * @module im/messenger/lib/ui/base/avatar
  */
 jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
+	/* global WordSeparator */
 	const { avatarStyle } = require('im/messenger/lib/ui/base/avatar/style');
+	const { clone } = require('utils/object');
 
 	class Avatar extends LayoutComponent
 	{
@@ -14,6 +16,7 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 		 * @param { string } props.color
 		 * @param { string } props.text
 		 * @param { string } props.size 'L','M','XL'. Default 'M'
+		 * @param { boolean | undefined } props.isSuperEllipse
 		 */
 		constructor(props)
 		{
@@ -61,8 +64,15 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 
 		render()
 		{
-			const style = avatarStyle[this.props.size] || avatarStyle.M;
-			const uri = this.props.uri ? this.props.uri : null;
+			const style = clone(avatarStyle[this.props.size] || avatarStyle.M);
+			const uri = this.props.uri ?? null;
+
+			let defaultIconBorderRadius = style.defaultIcon.borderRadius;
+			if (this.props.isSuperEllipse ?? false)
+			{
+				defaultIconBorderRadius = style.defaultIcon.squareBorderRadius;
+				style.icon.borderRadius = style.icon.squareBorderRadius;
+			}
 
 			return View(
 				{
@@ -85,7 +95,7 @@ jn.define('im/messenger/lib/ui/base/avatar', (require, exports, module) => {
 								backgroundColor: this.props.color || '#aa79dc',
 								width: style.defaultIcon.width,
 								height: style.defaultIcon.height,
-								borderRadius: style.defaultIcon.borderRadius,
+								borderRadius: defaultIconBorderRadius,
 								alignContent: style.defaultIcon.alignContent,
 								justifyContent: style.defaultIcon.justifyContent,
 								marginBottom: style.defaultIcon.marginBottom,

@@ -92,7 +92,18 @@ export const CopilotContent = {
 		{
 			Logger.warn(`CopilotContent: switching from ${oldValue || 'empty'} to ${newValue}`);
 			this.onChatChange();
-			EventEmitter.emit(EventType.sidebar.close, { panel: SidebarDetailBlock.members });
+		},
+		textareaHeight(newValue, oldValue)
+		{
+			if (!this.dialog.inited || oldValue === 0)
+			{
+				return;
+			}
+
+			EventEmitter.emit(EventType.dialog.scrollToBottom, {
+				chatId: this.dialog.chatId,
+				animation: false,
+			});
 		},
 	},
 	created()
@@ -137,6 +148,11 @@ export const CopilotContent = {
 			}
 
 			await this.loadChat();
+		},
+		onTextareaMount()
+		{
+			const textareaContainer: HTMLDivElement = this.$refs['textarea-container'];
+			this.textareaHeight = textareaContainer.clientHeight;
 		},
 		loadChatWithContext(): Promise
 		{
@@ -211,8 +227,8 @@ export const CopilotContent = {
 						<CopilotDialog :dialogId="entityId" :key="entityId" :textareaHeight="textareaHeight" />
 					</div>
 				</div>
-				<div v-textarea-observer class="bx-im-content-copilot__textarea_container">
-					<CopilotTextarea :dialogId="entityId" :key="entityId" />
+				<div v-textarea-observer class="bx-im-content-copilot__textarea_container" ref="textarea-container">
+					<CopilotTextarea :dialogId="entityId" :key="entityId" @mounted="onTextareaMount" />
 				</div>
 			</div>
 			<EmptyState v-else />

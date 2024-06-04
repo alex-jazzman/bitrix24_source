@@ -7,12 +7,15 @@
  * @copyright 2001-2021 Bitrix
  */
 
+// call
+import * as Call from 'call.core';
+import './css/view.css';
+
 // im
 import 'im.debug';
 import 'im.application.launch';
 import 'im.component.conference.conference-public';
 import {DesktopApi} from 'im.v2.lib.desktop-api';
-import * as Call from 'im.call';
 import { ConferenceModel, CallModel } from "im.model";
 import { Controller } from 'im.controller';
 import { Utils } from "im.lib.utils";
@@ -392,6 +395,7 @@ class ConferenceApplication
 					isIntranetOrExtranet: !!this.params.isIntranetOrExtranet,
 					language: this.params.language,
 					layout: Utils.device.isMobile() ? Call.View.Layout.Mobile : Call.View.Layout.Centered,
+					enableNewLayoutLogic: Call.Util.isNewCallLayoutEnabled(),
 					uiState: Call.View.UiState.Preparing,
 					blockedButtons: ['camera', 'microphone', 'floorRequest', 'screen', 'record'],
 					localUserState: Call.UserState.Idle,
@@ -804,11 +808,7 @@ class ConferenceApplication
 					{
 						const newDeviceId = Call.Hardware.getDefaultDeviceIdByGroupId(deviceInfo.groupId, 'audioinput');
 						this.currentCall.setMicrophoneId(newDeviceId);
-
-						if (this.currentCall.provider === Call.Provider.Bitrix)
-						{
-							this.callView.setMicrophoneId(newDeviceId);
-						}
+						this.callView.setMicrophoneId(newDeviceId);
 					}
 					break;
 				case "videoinput":
@@ -1071,7 +1071,7 @@ class ConferenceApplication
 		});
 	}
 
-	endCall()
+	endCall(finishCall = false)
 	{
 		if (this.currentCall)
 		{
@@ -1086,7 +1086,7 @@ class ConferenceApplication
 			}
 
 			this.removeCallEvents();
-			this.currentCall.hangup();
+			this.currentCall.hangup(false, '', finishCall);
 		}
 
 		if (this.isRecording())
@@ -1581,6 +1581,7 @@ class ConferenceApplication
 
 		const handlers = {
 			hangup: this.onCallViewHangupButtonClick.bind(this),
+			hangupOptions: this._onCallViewHangupOptionsButtonClick.bind(this),
 			close: this.onCallViewCloseButtonClick.bind(this),
 			//inviteUser: this.onCallViewInviteUserButtonClick.bind(this),
 			toggleMute: this.onCallViewToggleMuteButtonClick.bind(this),
@@ -1612,6 +1613,66 @@ class ConferenceApplication
 		this.endCall();
 	}
 
+	_onCallViewHangupOptionsButtonClick()
+	{
+		if (this.hangupOptionsMenu)
+		{
+			this.hangupOptionsMenu.destroy();
+			return;
+		}
+
+		const targetNodeWidth = this.callView.buttons.hangupOptions.elements.root.offsetWidth;
+
+		let menuItems = [
+			{
+				text: BX.message("CALL_M_BTN_HANGUP_OPTION_FINISH"),
+				onclick: () => {
+					this.stopLocalVideoStream();
+					this.endCall(true);
+				},
+			},
+			{
+				text: BX.message("CALL_M_BTN_HANGUP_OPTION_LEAVE"),
+				onclick: () => {
+					this.stopLocalVideoStream();
+					this.endCall(false);
+				},
+			},
+		];
+
+		this.hangupOptionsMenu = new BX.PopupMenuWindow({
+			className: 'bx-messenger-videocall-hangup-options-container',
+			background: '#22272B',
+			contentBackground: '#22272B',
+			darkMode: true,
+			contentBorderRadius: '6px',
+			angle: false,
+			bindElement: this.callView.buttons.hangupOptions.elements.root,
+			targetContainer: this.container,
+			offsetTop: -15,
+			bindOptions: {position: "top"},
+			cacheable: false,
+			subMenuOptions: {
+				maxWidth: 450
+			},
+			events: {
+				onShow: (event) =>
+				{
+					const popup = event.getTarget();
+					popup.getPopupContainer().style.display = 'block'; // bad hack
+
+					const offsetLeft = (targetNodeWidth / 2) - popup.getPopupContainer().offsetWidth / 2;
+					popup.setOffset({offsetLeft: offsetLeft + 40, offsetTop: 0});
+					popup.setAngle({offset: popup.getPopupContainer().offsetWidth / 2 - 17});
+				},
+				onDestroy: () => this.hangupOptionsMenu = null
+			},
+			items: menuItems,
+		});
+
+		this.hangupOptionsMenu.show();
+	}
+
 	onCallViewCloseButtonClick(e)
 	{
 		this.stopLocalVideoStream();
@@ -1636,7 +1697,10 @@ class ConferenceApplication
 			BXDesktopSystem.CallRecordMute(event.data.muted);
 		}
 
-		this.updateCallUser(this.currentCall.userId, {microphoneState: !event.data.muted});
+		if (this.currentCall?.userId)
+		{
+			this.updateCallUser(this.currentCall.userId, {microphoneState: !event.data.muted});
+		}
 	}
 
 	onCallViewToggleScreenSharingButtonClick()
@@ -2307,7 +2371,7 @@ class ConferenceApplication
 				dialogName,
 				muted: Call.Hardware.isMicrophoneMuted,
 				cropTop: 72,
-				cropBottom: 73,
+				cropBottom: 85,
 				shareMethod: 'im.disk.record.share'
 			});
 		}

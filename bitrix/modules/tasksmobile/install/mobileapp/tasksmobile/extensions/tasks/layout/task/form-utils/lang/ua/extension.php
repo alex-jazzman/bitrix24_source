@@ -1,0 +1,9 @@
+<?php
+$MESS["M_TASK_FORM_FIELD_ACCOMPLICES_TITLE"] = "Співвиконавці";
+$MESS["M_TASK_FORM_FIELD_AUDITORS_TITLE"] = "Спостерігачі";
+$MESS["M_TASK_FORM_FIELD_FILES_TITLE"] = "Файлы";
+$MESS["M_TASK_FORM_FIELD_PROJECT_TITLE"] = "Проєкт";
+$MESS["M_TASK_FORM_FIELD_RELATED_TITLE"] = "Пов'язані завдання";
+$MESS["M_TASK_FORM_FIELD_RELATED_TITLE_MULTI"] = "Пов'язані завдання: #COUNT#";
+$MESS["M_TASK_FORM_FIELD_SUBTASK_TITLE"] = "Підзавдання";
+$MESS["M_TASK_FORM_FIELD_SUBTASK_TITLE_MULTI"] = "Підзавдання: #COUNT#";

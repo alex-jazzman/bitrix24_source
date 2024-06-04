@@ -10,6 +10,7 @@ import {SidebarModelActions, SidebarModelMutation} from "../../model/types/sideb
 import {RecentSearchModelActions, RecentSearchModelMutation} from "../../model/types/recent/search";
 import {QueueModelActions, QueueModelMutation} from "../../model/types/queue";
 import {PinModelActions, PinModelMutation} from "../../model/types/messages/pin";
+import {CommentModelActions, CommentModelMutation} from "../../model/types/comment";
 
 
 export type MessengerStoreActions =
@@ -25,6 +26,7 @@ export type MessengerStoreActions =
 	| RecentSearchModelActions
 	| QueueModelActions
 	| PinModelActions
+	| CommentModelActions
 
 export type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -39,6 +41,7 @@ export type MessengerStoreMutation =
 	| RecentSearchModelMutation
 	| QueueModelMutation
 	| PinModelMutation
+	| CommentModelMutation
 
 type MessengerCoreStore = {
 	dispatch(actionName: MessengerStoreActions, params?: any) : Promise<any>,

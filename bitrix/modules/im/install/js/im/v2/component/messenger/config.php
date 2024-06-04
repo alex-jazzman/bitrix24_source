@@ -16,6 +16,7 @@ return [
 		'im.v2.component.navigation',
 		'im.v2.component.list.container.recent',
 		'im.v2.component.list.container.openline',
+		'im.v2.component.list.container.channel',
 		'im.v2.component.content.chat',
 		'im.v2.component.content.create-chat',
 		'im.v2.component.content.openlines',

@@ -614,7 +614,7 @@ class CBPTaskService extends CBPRuntimeService
 		$strSql =
 			"INSERT INTO b_bp_task (".$arInsert[0].", MODIFIED) ".
 			"VALUES(".$arInsert[1].", ".$DB->CurrentTimeFunction().")";
-		$DB->Query($strSql, False, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$DB->Query($strSql);
 
 		$taskId = intval($DB->LastID());
 
@@ -670,7 +670,7 @@ class CBPTaskService extends CBPRuntimeService
 				"	".$strUpdate.", ".
 				"	MODIFIED = ".$DB->CurrentTimeFunction()." ".
 				"WHERE ID = ".intval($id)." ";
-			$DB->Query($strSql, False, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$DB->Query($strSql);
 		}
 
 		$removedUsers = $addedUsers = $decremented = $incremented = [];
@@ -808,7 +808,7 @@ class CBPTaskService extends CBPRuntimeService
 			if ($arSqls["GROUPBY"] <> '')
 				$strSql .= "GROUP BY ".$arSqls["GROUPBY"]." ";
 
-			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbRes = $DB->Query($strSql);
 			if ($arRes = $dbRes->Fetch())
 				return $arRes["CNT"];
 			else
@@ -837,7 +837,7 @@ class CBPTaskService extends CBPRuntimeService
 			if ($arSqls["GROUPBY"] <> '')
 				$strSql_tmp .= "GROUP BY ".$arSqls["GROUPBY"]." ";
 
-			$dbRes = $DB->Query($strSql_tmp, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbRes = $DB->Query($strSql_tmp);
 			$cnt = 0;
 			if ($arSqls["GROUPBY"] == '')
 			{
@@ -856,7 +856,7 @@ class CBPTaskService extends CBPRuntimeService
 		{
 			if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0)
 				$strSql .= "LIMIT ".intval($arNavStartParams["nTopCount"]);
-			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbRes = $DB->Query($strSql);
 		}
 
 		$dbRes = new CBPTaskResult($dbRes);

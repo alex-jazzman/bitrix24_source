@@ -26,6 +26,7 @@ export { GetParameter } from './get-params';
 export { CallViewState } from './call';
 export { TextareaPanelType } from './textarea';
 export { ChatEntityLinkType } from './chat-entity-link';
+export { MultidialogStatus } from './multidialog';
 
 export type {
 	OnLayoutChangeEvent,

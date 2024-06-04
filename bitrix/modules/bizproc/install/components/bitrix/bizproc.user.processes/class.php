@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Api\Data\WorkflowStateService\WorkflowStateFilter;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
@@ -345,6 +346,10 @@ class BizprocUserProcesses
 	{
 		$workflowsRequest->setFilterUserId($this->getTargetUserId());
 		$userFilter = $this->filterOptions->getFilter();
+		if (empty($userFilter) && $this->filterOptions->getCurrentFilterId() === 'default_filter')
+		{
+			$userFilter['SYSTEM_PRESET'] = WorkflowStateFilter::PRESET_DEFAULT;
+		}
 
 		if (isset($userFilter['SYSTEM_PRESET']))
 		{
@@ -892,7 +897,7 @@ class BizprocUserProcesses
 
 	private function getFilterPresets(): array
 	{
-		$systemPresets = \Bitrix\Bizproc\Api\Data\WorkflowStateService\WorkflowStateFilter::getPresetList();
+		$systemPresets = WorkflowStateFilter::getPresetList();
 		$userPresets = [];
 
 		foreach ($systemPresets as $preset)

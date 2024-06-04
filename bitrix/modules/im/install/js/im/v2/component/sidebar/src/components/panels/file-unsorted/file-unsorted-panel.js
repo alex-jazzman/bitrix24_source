@@ -122,6 +122,7 @@ export const FileUnsortedPanel = {
 					<DocumentDetailItem
 						v-for="file in dateGroup.items"
 						:fileItem="file"
+						:contextDialogId="dialogId"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>

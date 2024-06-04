@@ -12,3 +12,4 @@ $MESS["IM_NS_MENTION_2"] = "Вас згадали в чаті";
 $MESS["IM_NS_MESSAGE_NEW"] = "Повідомлення в чаті";
 $MESS["IM_NS_MESSAGE_NEW_MSGVER_1"] = "Повідомлення в прямому чаті";
 $MESS["IM_NS_OPEN_NEW"] = "Повідомлення в каналах";
+$MESS["IM_NS_OPEN_NEW_MSGVER_1"] = "Повідомлення в каналах";

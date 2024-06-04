@@ -1,12 +1,21 @@
+import { ChatType, Layout } from 'im.v2.const';
 import { Parser } from 'im.v2.lib.parser';
-import { ChatType } from 'im.v2.const';
 
 import './chat-description.css';
+import { Loc } from 'main.core';
 
 import type { JsonObject } from 'main.core';
-import type { ImModelUser, ImModelChat } from 'im.v2.model';
+import type { ImModelChat, ImModelUser } from 'im.v2.model';
 
 const MAX_DESCRIPTION_SYMBOLS = 25;
+
+const DescriptionByChatType = {
+	[ChatType.user]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_USER'),
+	[ChatType.channel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
+	[ChatType.openChannel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
+	[ChatType.comment]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_COMMENTS'),
+	default: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_GROUP_V2'),
+};
 
 // @vue/component
 export const ChatDescription = {
@@ -62,17 +71,17 @@ export const ChatDescription = {
 		},
 		chatTypeText(): string
 		{
+			if (this.isCopilotLayout)
+			{
+				return this.$store.getters['copilot/getProvider'];
+			}
+
 			if (this.isBot)
 			{
 				return this.$Bitrix.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_BOT');
 			}
 
-			if (this.isUser)
-			{
-				return this.$Bitrix.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_USER');
-			}
-
-			return this.$Bitrix.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_GROUP_V2');
+			return DescriptionByChatType[this.dialog.type] ?? DescriptionByChatType.default;
 		},
 		showExpandButton(): boolean
 		{
@@ -82,6 +91,12 @@ export const ChatDescription = {
 			}
 
 			return this.dialog.description.length >= MAX_DESCRIPTION_SYMBOLS;
+		},
+		isCopilotLayout(): boolean
+		{
+			const { name: currentLayoutName } = this.$store.getters['application/getLayout'];
+
+			return currentLayoutName === Layout.copilot.name;
 		},
 	},
 	methods:

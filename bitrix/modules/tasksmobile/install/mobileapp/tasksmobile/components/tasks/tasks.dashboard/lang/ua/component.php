@@ -1,4 +1,6 @@
 <?php
+$MESS["M_TASKS_VIEW_FLOW_DEFAULT_NAVIGATION_TITLE"] = "Завдання потоку";
+$MESS["M_TASKS_VIEW_FLOW_EFFICIENCY_NAVIGATION_SUBTITLE"] = "Ефективність: #EFFICIENCY#%";
 $MESS["M_TASKS_VIEW_ROUTER_ALL_STAGES_DESCRIPTION"] = "Створюйте завдання й відстежуйте їхнє виконання, щоб нічого не забути";
 $MESS["M_TASKS_VIEW_ROUTER_ALL_STAGES_TITLE_MSGVER_1"] = "У вас немає завдань";
 $MESS["M_TASKS_VIEW_ROUTER_COMMENTS_READ"] = "Коментарі прочитані";

@@ -1,6 +1,10 @@
 <?php
 $MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"crm__document-view--details-link\">Заповнити <br> або редагувати</a>
 <span class=\"crm__document-view--details-text\">реквізити моєї компанії</span>";
+$MESS["CRM_DOCUMENT_VIEW_DOCUMENT_SEND_HINT"] = "надіслати";
+$MESS["CRM_DOCUMENT_VIEW_DOCUMENT_SEND_NOTIFY_SUCCESS"] = "Надіслано";
+$MESS["CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN"] = "Надіслати повторно";
+$MESS["CRM_DOCUMENT_VIEW_DOCUMENT_SEND_SEND_AGAIN_TIMER"] = "Надіслати ще раз через #COUNTDOWN#";
 $MESS["CRM_DOCUMENT_VIEW_NO_AVAILABLE_FILES"] = "Немає доступних для надсилання файлів.";
 $MESS["CRM_DOCUMENT_VIEW_PUBLIC_LINK"] = "Публічне посилання";
 $MESS["CRM_DOCUMENT_VIEW_PUBLIC_URL_VIEWED_TIME"] = "Клієнт перейшов за публічним посиланням <span>#TIME#</span>";

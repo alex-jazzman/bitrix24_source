@@ -5,6 +5,7 @@
  */
 jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module) => {
 	const { Type } = require('type');
+	const { DialogType } = require('im/messenger/const');
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
@@ -40,7 +41,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 		}
 
 		/**
-		 * @param {MutationPayload<MessagesStoreData, MessagesStoreActions>} mutation.payload
+		 * @param {MutationPayload<MessagesSetChatCollectionData, MessagesSetChatCollectionActions>} mutation.payload
 		 */
 		addRouter(mutation)
 		{
@@ -62,6 +63,13 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			}
 
 			if (!Type.isArrayFilled(data.messageList))
+			{
+				return;
+			}
+			const chatId = data.messageList[0].chatId;
+
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
+			if (DialogType.comment === dialog?.type)
 			{
 				return;
 			}
@@ -121,8 +129,16 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
+			const chatId = message.chatId;
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
+			if (DialogType.comment === dialog?.type)
+			{
+				return;
+			}
+
 			this.repository.message.saveFromModel([message])
-				.catch((error) => Logger.error('MessageWriter.updateRouter.saveFromModel.catch:', error));
+				.catch((error) => Logger.error('MessageWriter.updateRouter.saveFromModel.catch:', error))
+			;
 		}
 
 		/**
@@ -155,6 +171,13 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			}
 
 			if (!Type.isNumber(message.id))
+			{
+				return;
+			}
+
+			const chatId = message.chatId;
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
+			if (DialogType.comment === dialog?.type)
 			{
 				return;
 			}

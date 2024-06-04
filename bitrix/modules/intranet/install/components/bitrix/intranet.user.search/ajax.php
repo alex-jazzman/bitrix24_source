@@ -181,7 +181,6 @@ window.arLastSelected = <?echo CUtil::PhpToJsObject($arLastSelected)?>;
 }
 elseif ($_REQUEST['MODE'] == 'SEARCH')
 {
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 
 	$search = $_REQUEST['search'];

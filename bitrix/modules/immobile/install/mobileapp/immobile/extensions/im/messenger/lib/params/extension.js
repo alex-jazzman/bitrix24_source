@@ -93,6 +93,11 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		{
 			return this.get('IS_COPILOT_ADD_USERS', false);
 		}
+
+		isCanUseTelephony()
+		{
+			return this.get('CAN_USE_TELEPHONY', false);
+		}
 	}
 
 	module.exports = {

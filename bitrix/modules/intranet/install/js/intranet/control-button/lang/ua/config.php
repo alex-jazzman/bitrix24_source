@@ -2,6 +2,7 @@
 $MESS["INTRANET_JS_CONTROL_BUTTON_CHAT"] = "Відкрити чат";
 $MESS["INTRANET_JS_CONTROL_BUTTON_MEETING"] = "Створити зустріч";
 $MESS["INTRANET_JS_CONTROL_BUTTON_NAME"] = "Відеодзвінок HD";
+$MESS["INTRANET_JS_CONTROL_BUTTON_NAME_MSG_1"] = "Відеодзвінок";
 $MESS["INTRANET_JS_CONTROL_BUTTON_POST"] = "Написати пост";
 $MESS["INTRANET_JS_CONTROL_BUTTON_TASK"] = "Створити завдання";
 $MESS["INTRANET_JS_CONTROL_BUTTON_VIDEOCALL"] = "Почати відеодзвінок";

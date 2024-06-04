@@ -11,3 +11,4 @@ $MESS["IM_NS_MENTION"] = "You have been mentioned in a public chat";
 $MESS["IM_NS_MENTION_2"] = "Someone mentioned you in the chat";
 $MESS["IM_NS_MESSAGE_NEW_MSGVER_1"] = "Direct chat messages";
 $MESS["IM_NS_OPEN_NEW"] = "Public chat messages";
+$MESS["IM_NS_OPEN_NEW_MSGVER_1"] = "Channel messages";

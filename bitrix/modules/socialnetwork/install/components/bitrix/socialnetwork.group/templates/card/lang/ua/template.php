@@ -32,6 +32,7 @@ $MESS["SONET_C6_CARD_MEMBERS_TITLE_SCRUM"] = "Учасники скрам-ком
 $MESS["SONET_C6_CARD_MENU_ABOUT"] = "Про групу";
 $MESS["SONET_C6_CARD_MENU_ABOUT_PROJECT"] = "Про проєкт";
 $MESS["SONET_C6_CARD_MENU_ABOUT_SCRUM"] = "Про Скрам";
+$MESS["SONET_C6_CARD_MENU_FLOWS"] = "Потоки";
 $MESS["SONET_C6_CARD_MENU_MEMBERS"] = "Учасники";
 $MESS["SONET_C6_CARD_MENU_ROLES"] = "Ролі та права";
 $MESS["SONET_C6_CARD_MOD"] = "Модератори";

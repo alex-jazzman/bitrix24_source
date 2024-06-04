@@ -11,6 +11,7 @@ jn.define('im/messenger/model', (require, exports, module) => {
 	const { sidebarModel } = require('im/messenger/model/sidebar');
 	const { draftModel } = require('im/messenger/model/draft');
 	const { queueModel } = require('im/messenger/model/queue');
+	const { commentModel } = require('im/messenger/model/comment');
 
 	module.exports = {
 		applicationModel,
@@ -22,5 +23,6 @@ jn.define('im/messenger/model', (require, exports, module) => {
 		sidebarModel,
 		draftModel,
 		queueModel,
+		commentModel,
 	};
 });

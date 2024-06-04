@@ -23,7 +23,7 @@ $frame = $this->createFrame()->begin("");
 		const bindCallbackInitial = () => {
 			BX.unbindAll(button);
 			BX.Intranet.SettingsWidgetLoader.init({
-				isRequisite: <?= \CUtil::PhpToJSObject((bool)$arParams['REQUISITE']) ?>,
+				isRequisite: <?= \CUtil::PhpToJSObject($arParams['IS_REQUISITE']) ?>,
 				isBitrix24: <?= \CUtil::PhpToJSObject($arParams['IS_BITRIX24']) ?>,
 				isAdmin: <?= \CUtil::PhpToJSObject($arParams['IS_ADMIN']) ?>,
 			}).showOnce(button);

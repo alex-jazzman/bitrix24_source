@@ -125,7 +125,10 @@ export const LinkPanel = {
 				<div v-for="dateGroup in formattedCollection" class="bx-im-sidebar-link-detail__date-group_container">
 					<DateGroup :dateText="dateGroup.dateGroupTitle" />
 					<template v-for="link in dateGroup.items">
-						<LinkItem :link="link" @contextMenuClick="onContextMenuClick" />
+						<LinkItem
+							:contextDialogId="dialogId"
+							:link="link" @contextMenuClick="onContextMenuClick"
+						/>
 					</template>
 				</div>
 				<DetailEmptyState

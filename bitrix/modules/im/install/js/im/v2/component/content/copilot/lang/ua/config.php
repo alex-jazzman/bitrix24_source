@@ -1,8 +1,13 @@
 <?php
+$MESS["IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_DESCRIPTION"] = "Так ви зможете всі разом ставити йому запитання й обговорювати ідеї. Відповіді CoPilot побачать усі учасники чату.";
+$MESS["IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_HIDE"] = "Більше не показувати";
+$MESS["IM_CONTENT_COPILOT_ADD_TO_CHAT_HINT_TITLE"] = "Додайте учасників у чат із CoPilot";
+$MESS["IM_CONTENT_COPILOT_CONTEXT_MENU_FEEDBACK"] = "Зворотний зв'язок";
 $MESS["IM_CONTENT_COPILOT_DIALOG_STATUS_TYPING"] = "CoPilot пише відповідь...";
 $MESS["IM_CONTENT_COPILOT_EMPTY_STATE_ASK_QUESTION"] = "Поставити запитання";
 $MESS["IM_CONTENT_COPILOT_EMPTY_STATE_ERROR_CREATING_CHAT"] = "Не вдалося створити чат, спробуйте пізніше.";
 $MESS["IM_CONTENT_COPILOT_EMPTY_STATE_MESSAGE"] = "Я — CoPilot, штучний інтелект.#BR#Готовий запропонувати креативні рішення,#BR#написати текст або відредагувати ваш.#BR#А ще зі мною можна обговорити ідеї.";
+$MESS["IM_CONTENT_COPILOT_EMPTY_STATE_MESSAGE_MSGVER_1"] = "Я — CoPilot, штучний інтелект.#BR#Готовий обговорити з вами ідеї,#BR#написати текст або виправити ваш.#BR#Виберіть для мене роль, щоб поговорити#BR#зі мною як з експертом у будь-якій галузі.";
 $MESS["IM_CONTENT_COPILOT_HEADER_OPEN_INVITE_POPUP_TITLE"] = "Додати учасників";
 $MESS["IM_CONTENT_COPILOT_HEADER_OPEN_MEMBERS_TITLE"] = "Клацніть для відкриття списку користувачів";
 $MESS["IM_CONTENT_COPILOT_HEADER_RENAME_ERROR"] = "Не вдалося перейменувати чат, спробуйте пізніше.";

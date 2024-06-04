@@ -6,6 +6,7 @@ jn.define('im/messenger/const/component-code', (require, exports, module) => {
 		imNavigation: 'im.navigation',
 		imMessenger: 'im.messenger',
 		imCopilotMessenger: 'im.copilot.messenger',
+		imChannelMessenger: 'im.channel.messenger',
 		imNotify: 'im.notify',
 		imOpenlinesRecent: 'im.openlines.recent',
 	});

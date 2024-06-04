@@ -6,6 +6,7 @@ export const Await = Object.freeze({
 	inviteEmployeeTaxcom: 'inviteEmployeeTaxcom',
 	inviteEmployeeGosKey: 'inviteEmployeeGosKey',
 	inviteReviewer: 'inviteReviewer',
+	inviteEditor: 'inviteEditor',
 });
 
 export const Success = Object.freeze({

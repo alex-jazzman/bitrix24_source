@@ -105,6 +105,7 @@ export const MediaTab = {
 					<MediaDetailItem
 						v-for="file in dateGroup.items"
 						:fileItem="file"
+						:contextDialogId="dialogId"
 						@contextMenuClick="onContextMenuClick"
 					/>
 				</div>

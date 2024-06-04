@@ -284,18 +284,13 @@ export class MentionManager extends EventEmitter
 	extractMentions(text: string): MentionReplacementMap
 	{
 		const mentions = {};
-		const mentionRegExp = /\[user=(?<userId>\d+)](?<mentionText>.*?)\[\/user]/gi;
+		const mentionRegExp = /\[(user|chat)=(?<dialogId>\w+)](?<mentionText>.*?)\[\/(user|chat)]/gi;
 
 		const matches = text.matchAll(mentionRegExp);
 		for (const match of matches)
 		{
-			const { userId, mentionText } = match.groups;
-			const user: ImModelUser = Core.getStore().getters['users/get'](userId);
-			if (!user)
-			{
-				continue;
-			}
-			mentions[mentionText] = Utils.text.getMentionBbCode(user.id, mentionText);
+			const { dialogId, mentionText } = match.groups;
+			mentions[mentionText] = Utils.text.getMentionBbCode(dialogId, mentionText);
 		}
 
 		return mentions;

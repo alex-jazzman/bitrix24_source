@@ -5,6 +5,7 @@ namespace Bitrix\BizprocMobile\UI;
 use Bitrix\Bizproc\WorkflowInstanceTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Json;
 
 class WorkflowView implements \JsonSerializable
 {
@@ -202,20 +203,23 @@ class WorkflowView implements \JsonSerializable
 			},
 		);
 
-		return $this->unescapeMyTasks(array_map(
-			static function($task) {
-				$controls = \CBPDocument::getTaskControls($task);
+		$preparedTasks = [];
+		foreach (array_values($myTasks) as $task)
+		{
+			$controls = \CBPDocument::getTaskControls($task);
 
-				return [
-					'id' => $task['ID'],
-					'name' => $task['~NAME'],
-					'isInline' => \CBPHelper::getBool($task['IS_INLINE']),
-					'buttons' => $controls['BUTTONS'] ?? null,
-					'createdDate' => $task['~CREATED_DATE'] ?? null,
-				];
-			},
-			array_values($myTasks),
-		));
+			$preparedTasks[] = [
+				'id' => $task['ID'],
+				'name' => $task['~NAME'],
+				'activity' => $task['ACTIVITY'],
+				'hash' => $this->getTaskHash($task),
+				'isInline' => \CBPHelper::getBool($task['IS_INLINE']),
+				'buttons' => $controls['BUTTONS'] ?? null,
+				'createdDate' => $task['~CREATED_DATE'] ?? null,
+			];
+		}
+
+		return $this->unescapeMyTasks($preparedTasks);
 	}
 
 	private function unescapeMyTasks(array $myTasks): array
@@ -235,6 +239,45 @@ class WorkflowView implements \JsonSerializable
 		}
 
 		return $myTasks;
+	}
+
+	private function getTaskHash(array $task): string
+	{
+		$hashData = [
+			'TEMPLATE_ID' => $this->workflow['WORKFLOW_TEMPLATE_ID'] ?? 0,
+		];
+
+		if (isset($task['ACTIVITY_NAME']))
+		{
+			$hashData['ACTIVITY_NAME'] = $task['ACTIVITY_NAME'];
+		}
+
+		$parameters = $task['PARAMETERS'] ?? null;
+
+		if (is_array($parameters))
+		{
+			if (isset($parameters['ShowComment']))
+			{
+				$hashData['ShowComment'] = $parameters['ShowComment'];
+			}
+			if (isset($parameters['REQUEST']))
+			{
+				$hashData['REQUEST'] = $parameters['REQUEST'];
+				if (is_array($parameters['REQUEST']))
+				{
+					foreach ($parameters['REQUEST'] as $property)
+					{
+						if ($property['Type'] === 'file' || $property['Type'] === 'S:DiskFile')
+						{
+							$hashData['TASK_ID'] = $task['ID'];
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		return md5(Json::encode($hashData));
 	}
 
 	private function extractUserIds(array $users): array

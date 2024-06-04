@@ -40,7 +40,7 @@ export const ConferenceSection = {
 		},
 		onToggleLabelClick()
 		{
-			this.$refs.toggle.toggle();
+			this.onPasswordNeededChange(!this.passwordNeeded);
 		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
@@ -53,9 +53,9 @@ export const ConferenceSection = {
 				<div class="bx-im-content-create-chat__heading">
 					{{ loc('IM_CREATE_CHAT_CONFERENCE_SECTION_PRIVACY') }}
 				</div>
-				<div class="bx-im-content-create-chat-settings__type-select">
-					<Toggle :size="ToggleSize.M" :isEnabled="passwordNeeded" @change="onPasswordNeededChange" ref="toggle" />
-					<div @click="onToggleLabelClick" class="bx-im-content-create-chat-settings__type-select_label">
+				<div @click="onToggleLabelClick" class="bx-im-content-create-chat-settings__type-select">
+					<Toggle :size="ToggleSize.M" :isEnabled="passwordNeeded" />
+					<div class="bx-im-content-create-chat-settings__type-select_label">
 						{{ loc('IM_CREATE_CHAT_CONFERENCE_SECTION_USE_PASSWORD') }}
 					</div>
 				</div>

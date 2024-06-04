@@ -11,6 +11,7 @@ $MESS["LANDING_SITE_TILE_DEV_STORE_HELP"] = "Потрібна допомога �
 $MESS["LANDING_SITE_TILE_DEV_STORE_ORDER"] = "Залишіть заявку нашим партнерам!";
 $MESS["LANDING_SITE_TILE_EMPTY_ADD_2"] = "Створити";
 $MESS["LANDING_SITE_TILE_EMPTY_ADD_NO_RIGHT"] = "Недостатньо прав для створення сайту";
+$MESS["LANDING_SITE_TILE_EMPTY_BALLOON_TEXT"] = "Тепер із CoPilot";
 $MESS["LANDING_SITE_TILE_EMPTY_FEAT1_PAGE"] = "Легко створіть сайт самостійно в простому й зручному конструкторі";
 $MESS["LANDING_SITE_TILE_EMPTY_FEAT1_STORE"] = "Миттєвий запуск без складних налаштувань";
 $MESS["LANDING_SITE_TILE_EMPTY_FEAT2_PAGE"] = "На сайті вже є онлайн-чат, зворотний дзвінок, форма заявки";

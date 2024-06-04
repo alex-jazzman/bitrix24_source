@@ -1,6 +1,7 @@
 <?php
 
 $MESS["IM_TEXTAREA_PLACEHOLDER_V3"] = "Нажмите @, чтобы упомянуть человека или чат";
+$MESS["IM_TEXTAREA_CHANNEL_PLACEHOLDER"] = "Добавьте публикацию";
 $MESS["IM_TEXTAREA_ICON_SEND_VOICE"] = "Отправить голосовое сообщение";
 $MESS["IM_TEXTAREA_ICON_SEND_TEXT"] = "Отправить сообщение (#SEND_MESSAGE_COMBINATION#)";
 $MESS["IM_TEXTAREA_ICON_UPLOAD"] = "Отправить файл";
@@ -47,6 +48,7 @@ $MESS["IM_TEXTAREA_MARKET_APPS_EMPTY_STATE"] = "Вы пока не добави�
 $MESS["IM_TEXTAREA_SMILE_SELECTOR_SMILES_TAB"] = "Смайлы";
 
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE"] = "Загрузка изображений";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE_FILES"] = "Загрузка файлов";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_SEND"] = "Отправить";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_CANCEL"] = "Отменить";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER"] = "Добавить комментарий";
@@ -71,3 +73,5 @@ $MESS["IM_TEXTAREA_MENTION_ENTER_CONTROL"] = "для выбора";
 $MESS["IM_TEXTAREA_MENTION_ESC_CONTROL"] = "для отмены";
 $MESS["IM_TEXTAREA_MENTION_USER_TYPE"] = "Пользователь";
 $MESS["IM_TEXTAREA_MENTION_CHAT_TYPE"] = "Групповой чат";
+$MESS["IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE"] = "Открытый канал";
+$MESS["IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE"] = "Закрытый канал";

@@ -8,11 +8,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Intranet;
 use Bitrix\Security\Mfa\Otp;
-use Bitrix\Intranet\Settings\Requisite;
+use Bitrix\Intranet\Settings\Widget\Requisite;
 use Bitrix\Main\Engine\Response\AjaxJson;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Bitrix24;
-use Bitrix\Main;
 
 class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable
 {
@@ -28,7 +26,7 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 
 	private Intranet\CurrentUser $user;
 
-	private $requisites;
+	private bool $isRequisiteAvailable = false;
 
 	private static int $number = 0;
 	private static array $cachedAffiliates = [];
@@ -49,6 +47,11 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 		{
 			$this->isBitrix24 = true;
 			$this->initAffiliates();
+		}
+
+		if (Loader::includeModule('crm') && $this->getUser()->isAdmin())
+		{
+			$this->isRequisiteAvailable = true;
 		}
 	}
 
@@ -136,38 +139,6 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 		[$this->isHolding, $this->affiliates, $this->canBeHolding, $this->canBeAffiliate] = self::$cachedAffiliates[$this->getUser()->getId()];
 	}
 
-	private function getRequisites(): ?array
-	{
-		if (
-			!Loader::includeModule('crm')
-			|| !class_exists('Bitrix\Crm\Integration\Landing\RequisitesLanding')
-		)
-		{
-			return null;
-		}
-
-		$companyId = \Bitrix\Crm\Requisite\EntityLink::getDefaultMyCompanyId();
-		$company = new Requisite\CompanyList(['=ID' => $companyId], ['DATE_CREATE' => 'DESC'], ['ID'], ['ID', 'ENTITY_ID']);
-
-		if ($companyId)
-		{
-			if ($this->requisites = $company->getLandingList()->toArray()[$companyId])
-			{
-				return [
-					'isCompanyCreated' => true,
-					'isConnected' => $this->requisites->isLandingConnected(),
-					'isPublic' => $this->requisites->isLandingPublic(),
-					'publicUrl' => $this->requisites->getLandingPublicUrl(),
-					'editUrl' => $this->requisites->getLandingEditUrl(),
-				];
-			}
-		}
-
-		return [
-			'isCompanyCreated' => false,
-		];
-	}
-
 	public function getDataAction(): Bitrix\Main\Response
 	{
 		if (!$this->showWidget)
@@ -184,10 +155,10 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 
 	public function getRequisitesAction(): Bitrix\Main\Response
 	{
-		if ($this->showWidget)
+		if ($this->showWidget && $this->isRequisiteAvailable)
 		{
 			return AjaxJson::createSuccess([
-				'requisite' => $this->getRequisites(),
+				'requisite' => Requisite::getInstance()->getRequisitesData(),
 			]);
 		}
 
@@ -197,21 +168,58 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 	public function createRequisiteLandingAction(): Bitrix\Main\Response
 	{
 		if (
-			$this->requisites
+			$this->isRequisiteAvailable
 			&& $this->showWidget
 		)
 		{
-			$this->requisites->connectLanding();
+			if ($requisites = Requisite::getInstance()->getRequisites())
+			{
+				$requisites->connectLanding();
 
-			return AjaxJson::createSuccess([
-				'isConnected' => $this->requisites->isLandingConnected(),
-				'isPublic' => $this->requisites->isLandingPublic(),
-				'publicUrl' => $this->requisites->getLandingPublicUrl(),
-				'editUrl' => $this->requisites->getLandingEditUrl(),
-			]);
+				return AjaxJson::createSuccess([
+					'isConnected' => $requisites->isLandingConnected(),
+					'isPublic' => $requisites->isLandingPublic(),
+					'publicUrl' => $requisites->getLandingPublicUrl(),
+					'editUrl' => $requisites->getLandingEditUrl(),
+				]);
+			}
 		}
 
 		return AjaxJson::createDenied();
+	}
+
+	public function getAdditionalArguments(): array
+	{
+		if (!$this->showWidget)
+		{
+			return [];
+		}
+
+		$result['SETTINGS_PATH'] = Intranet\Portal::getInstance()->getSettings()->getSettingsUrl();
+		$result['IS_FREE_LICENSE'] = false;
+		$result['MARKET_URL'] = Intranet\Binding\Marketplace::getMainDirectory();
+		$result['THEME'] = Intranet\Integration\Templates\Bitrix24\ThemePicker::getInstance()->getCurrentTheme();
+		$result['OTP'] = $this->getOtpData();
+		$result['HOLDING'] = null;
+
+		if ($this->isRequisiteAvailable)
+		{
+			$result['REQUISITE'] = Requisite::getInstance()->getRequisitesData();
+		}
+
+		if ($this->isBitrix24)
+		{
+			$result['IS_RENAMEABLE'] = Bitrix24\Domain::getCurrent()->isRenameable() && $this->user->isAdmin();
+			$result['IS_FREE_LICENSE'] = \CBitrix24::isFreeLicense();
+			$result['HOLDING'] = [
+				'isHolding' => $this->isHolding,
+				'affiliate' => $this->getAffiliate(),
+				'canBeHolding' => $this->canBeHolding,
+				'canBeAffiliate' => $this->canBeAffiliate,
+			];
+		}
+
+		return $result;
 	}
 
 	public function onPrepareComponentParams($arParams): array
@@ -224,27 +232,9 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 			return [];
 		}
 
-		$arParams['SETTINGS_PATH'] = Intranet\Portal::getInstance()->getSettings()->getSettingsUrl();
-		$arParams['REQUISITE'] = $this->getRequisites();
-		$arParams['IS_BITRIX24'] = $this->isBitrix24;
-		$arParams['IS_FREE_LICENSE'] = false;
 		$arParams['IS_ADMIN'] = $this->getUser()->isAdmin();
-		$arParams['MARKET_URL'] = Intranet\Binding\Marketplace::getMainDirectory();
-		$arParams['THEME'] = Intranet\Integration\Templates\Bitrix24\ThemePicker::getInstance()->getCurrentTheme();
-		$arParams['OTP'] = $this->getOtpData();
-		$arParams['HOLDING'] = null;
-
-		if ($this->isBitrix24)
-		{
-			$arParams['IS_RENAMEABLE'] = Bitrix24\Domain::getCurrent()->isRenameable() && $this->user->isAdmin();
-			$arParams['IS_FREE_LICENSE'] = \CBitrix24::isFreeLicense();
-			$arParams['HOLDING'] = [
-				'isHolding' => $this->isHolding,
-				'affiliate' => $this->getAffiliate(),
-				'canBeHolding' => $this->canBeHolding,
-				'canBeAffiliate' => $this->canBeAffiliate,
-			];
-		}
+		$arParams['IS_REQUISITE'] = $this->isRequisiteAvailable;
+		$arParams['IS_BITRIX24'] = $this->isBitrix24;
 
 		return $arParams;
 	}

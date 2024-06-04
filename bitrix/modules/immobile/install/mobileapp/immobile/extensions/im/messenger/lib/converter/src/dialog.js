@@ -34,17 +34,17 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 	{
 		/**
 		 * @param {Array<MessagesModelState>} modelMessageList
+		 * @param dialogId
 		 * @return {Array<Message>}
 		 */
-		static createMessageList(modelMessageList)
+		static createMessageList(modelMessageList, dialogId)
 		{
 			if (!Type.isArrayFilled(modelMessageList))
 			{
 				return [];
 			}
 
-			const chatId = modelMessageList[0].chatId;
-			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getByChatId'](chatId);
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
 			const options = DialogConverter.prepareOptionsForMessage(dialog);
 
 			return modelMessageList.map((modelMessage) => DialogConverter.createMessage(modelMessage, options));
@@ -63,7 +63,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return new SystemTextMessage(modelMessage, options);
 			}
 
-			const isDeletedMessage = modelMessage.params.IS_DELETED === 'Y';
+			const isDeletedMessage = modelMessage.params?.IS_DELETED === 'Y';
 			if (isDeletedMessage)
 			{
 				return new DeletedMessage(modelMessage, options);
@@ -278,6 +278,15 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				options.showReaction = false;
 				options.canBeQuoted = false;
 			}
+
+			if (dialog.type === DialogType.openChannel || dialog.type === DialogType.channel)
+			{
+				options.showCommentInfo = true;
+				options.showAvatarsInReaction = false;
+			}
+
+			const applicationSettingState = serviceLocator.get('core').getStore().getters['applicationModel/getSettings']();
+			options.audioRate = applicationSettingState ? applicationSettingState.audioRate : 1;
 
 			return options;
 		}

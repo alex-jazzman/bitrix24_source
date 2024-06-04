@@ -1,0 +1,69 @@
+<?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+if (!\Bitrix\Main\Loader::includeModule('im'))
+{
+	return [];
+}
+
+if (\Bitrix\Im\Call\Call::isNewCallLayoutEnabled())
+{
+	$cssBundleFile = './dist/call.bundle.css';
+}
+else
+{
+	$cssBundleFile = './dist/call_old.bundle.css';
+}
+
+return [
+	'js' => [
+		'./dist/call.bundle.js',
+	],
+	'css' => [
+		$cssBundleFile,
+	],
+	'rel' => [
+		'im.lib.utils',
+		'ui.switcher',
+		'ui.dialogs.messagebox',
+		'ui.buttons',
+		'im.v2.lib.desktop-api',
+		'im.v2.const',
+		'main.core.events',
+		'main.popup',
+		'main.core',
+		'im.v2.lib.utils',
+		'loader',
+		'resize_observer',
+		'webrtc_adapter',
+		'im.lib.localstorage',
+		'ui.hint',
+		'voximplant',
+	],
+	'oninit' => function () {
+		return [
+			'lang_additional' => [
+				'turn_server' => COption::GetOptionString('im', 'turn_server'),
+				'turn_server_firefox' => COption::GetOptionString('im', 'turn_server_firefox'),
+				'turn_server_login' => COption::GetOptionString('im', 'turn_server_login'),
+				'turn_server_password' => COption::GetOptionString('im', 'turn_server_password'),
+				'turn_server_max_users' => \Bitrix\Main\Config\Option::get('im', 'turn_server_max_users'),
+				'call_server_enabled' => \Bitrix\Im\Call\Call::isCallServerEnabled() ? 'Y' : 'N',
+				'bitrix_call_server_enabled' => \Bitrix\Im\Call\Call::isBitrixCallEnabled() ? 'Y' : 'N',
+				'call_beta_ios_enabled' => \Bitrix\Im\Call\Call::isIosBetaEnabled() ? 'Y' : 'N',
+				'new_call_layout_enabled' => \Bitrix\Im\Call\Call::isNewCallLayoutEnabled() ? 'Y' : 'N',
+				'voximplant_call_server_enabled' => \Bitrix\Im\Call\Call::isVoximplantCallServerEnabled() ? 'Y' : 'N',
+				'call_server_max_users' => \Bitrix\Im\Call\Call::getMaxCallServerParticipants(),
+				'call_log_service' => \Bitrix\Im\Call\Call::getLogService(),
+				'call_collect_stats' => COption::GetOptionString('im', 'collect_call_stats', 'N'),
+				'call_docs_status' => \Bitrix\Im\Integration\Disk\Documents::getDocumentsInCallStatus(),
+				'call_resumes_status' => \Bitrix\Im\Integration\Disk\Documents::getResumesOfCallStatus(),
+				'jitsi_server' => COption::GetOptionString('im', 'jitsi_server'),
+			],
+		];
+	},
+	'skip_core' => false,
+];

@@ -20,20 +20,22 @@ use Bitrix\Main\Localization\Loc;
 	'ui.analytics',
 ]);
 
+$additionalArguments = $this->getComponent()->getAdditionalArguments();
+
 $widgetArguments = [
-	'marketUrl' => $arParams['MARKET_URL'],
-	'requisite' => $arParams['REQUISITE'],
+	'marketUrl' => $additionalArguments['MARKET_URL'],
+	'requisite' => $additionalArguments['REQUISITE'] ?? null,
 	'isBitrix24' => $arParams['IS_BITRIX24'],
 	'isAdmin' => $arParams['IS_ADMIN'],
-	'theme' => $arParams['THEME'],
-	'otp' => $arParams['OTP'],
-	'settingsPath' => $arParams['SETTINGS_PATH']
+	'theme' => $additionalArguments['THEME'],
+	'otp' => $additionalArguments['OTP'],
+	'settingsPath' => $additionalArguments['SETTINGS_PATH']
 ];
 if ($arParams['IS_BITRIX24'])
 {
-	$widgetArguments['isFreeLicense'] = $arParams['IS_FREE_LICENSE'];
-	$widgetArguments['holding'] = $arParams['HOLDING'];
-	$widgetArguments['isRenameable'] = $arParams['IS_RENAMEABLE'];
+	$widgetArguments['isFreeLicense'] = $additionalArguments['IS_FREE_LICENSE'];
+	$widgetArguments['holding'] = $additionalArguments['HOLDING'];
+	$widgetArguments['isRenameable'] = $additionalArguments['IS_RENAMEABLE'];
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:bitrix24.holding',

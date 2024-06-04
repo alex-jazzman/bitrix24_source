@@ -198,6 +198,13 @@
 				loader: 'intranet:crm-button-view-loader'
 			},
 			{
+				condition: ['/marketplace/einvoice/'],
+				options: {
+					width: 575,
+					allowChangeHistory: false,
+				},
+			},
+			{
 				condition: [
 					new RegExp("/marketplace\/view\/quick\/"),
 				],
@@ -350,7 +357,7 @@
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY|IM_LINES)=([^&]+)/i
+					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT)=([^&]+)/i
 				],
 				handler: function(event, link)
 				{
@@ -369,6 +376,10 @@
 					else if (type === "IM_LINES")
 					{
 						BX.Messenger.Public.openLines(dialogId);
+					}
+					else if (type === 'IM_COPILOT')
+					{
+						BX.Messenger.Public.openCopilot(dialogId);
 					}
 					else
 					{
@@ -811,11 +822,19 @@
 			},
 			{
 				condition: [
-					'^' + siteDir + 'mail/(config|message)'
+					'^' + siteDir + 'mail/message'
 				],
 				options: {
 					width: 1080
 				}
+			},
+			{
+				condition: [
+					'^' + siteDir + 'mail/config',
+				],
+				options: {
+					width: 820,
+				},
 			},
 			{
 				condition: [
@@ -1037,13 +1056,6 @@
 				}
 			},
 			{
-				condition: ['/einvoice/install/'],
-				options: {
-					width: 575,
-					allowChangeHistory: false,
-				},
-			},
-			{
 				condition: [
 					new RegExp('/sign/link/member/(\\d+)/', 'i'),
 				],
@@ -1085,6 +1097,20 @@
 
 					event.preventDefault();
 				},
+			},
+			{
+				condition: [ '/bitrix/components/bitrix/bitrix24.license.scan/' ],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 1195,
+				}
+			},
+			{
+				condition: [ new RegExp("/company/personal/user/[0-9]+/common_security/\\?page=auth") ],
+				options: {
+					width: 1100,
+				}
 			},
 		]
 	});

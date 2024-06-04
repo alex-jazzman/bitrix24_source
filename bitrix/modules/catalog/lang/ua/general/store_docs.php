@@ -2,9 +2,10 @@
 $MESS["CAT_DOC_AND_MORE"] = "і ще #COUNT# товарів.";
 $MESS["CAT_DOC_BARCODE_ALREADY_EXIST"] = "Штрих-код #BARCODE#, введений для товару #PRODUCT#, вже існує.";
 $MESS["CAT_DOC_CONDUCT_UNCONDUCT_NOT_AVAILABLE"] = "Проведення документів можливе лише при включеному складському обліку";
+$MESS["CAT_DOC_CONDUCT_UNCONDUCT_NOT_AVAILABLE_EXTERNAL_CATALOG"] = "Проведення документів неможливе при використанні зовнішнього каталогу товарів.";
 $MESS["CAT_DOC_ERROR_CANCEL_STATUS"] = "Документ ще не проведений.";
 $MESS["CAT_DOC_ERROR_ELEMENT_IN_DOCUMENT_EXISTS"] = "Товар ##ID# (#NAME#) неможливо видалити, бо він використовується в документах складського обліку.";
-$MESS["CAT_DOC_ERROR_ELEMENT_IN_DOCUMENT_EXT"] = "Проведені документи складського обліку містять даний товар. Відмініть активність документів і видаліть товар.";
+$MESS["CAT_DOC_ERROR_ELEMENT_IN_DOCUMENT_EXT"] = "Проведені документи складського обліку містять даний товар. Скасуйте активність документів і видаліть товар.";
 $MESS["CAT_DOC_ERROR_ELEMENT_IN_DOCUMENT_EXT_2"] = "Цей товар міститься у документах складського обліку. Для видалення товару необхідно видалити його з документів.";
 $MESS["CAT_DOC_ERROR_MODULE_SALE_NOT_INSTALLED"] = "Модуль Інтернет магазин не встановлено";
 $MESS["CAT_DOC_ERROR_SHIPMENT_NOT_FOUND"] = "Не знайдено відвантаження для документа реалізації";

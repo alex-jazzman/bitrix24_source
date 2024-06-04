@@ -92,4 +92,14 @@ export class Analytics
 			c_section: AnalyticsSection.copilotTab,
 		});
 	}
+
+	openCheckInPopup()
+	{
+		sendData({
+			event: AnalyticsEvent.popupOpen,
+			tool: AnalyticsTool.checkin,
+			category: AnalyticsCategory.shift,
+			c_section: AnalyticsSection.chat,
+		});
+	}
 }

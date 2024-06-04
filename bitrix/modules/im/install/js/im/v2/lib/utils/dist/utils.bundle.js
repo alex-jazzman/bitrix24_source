@@ -370,6 +370,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return `[CHAT=${dialogId.slice(4)}]${name}[/CHAT]`;
 	    }
 	    return `[USER=${dialogId}]${name}[/USER]`;
+	  },
+	  getMessageLink(dialogId, messageId) {
+	    return `${location.origin}/online/?${im_v2_const.GetParameter.openChat}=${dialogId}&${im_v2_const.GetParameter.openMessage}=${messageId}`;
+	  },
+	  async copyToClipboard(textToCopy) {
+	    var _BX$clipboard;
+	    if (navigator.clipboard) {
+	      return navigator.clipboard.writeText(textToCopy);
+	    }
+	    return (_BX$clipboard = BX.clipboard) != null && _BX$clipboard.copy(textToCopy) ? Promise.resolve() : Promise.reject();
 	  }
 	};
 
@@ -866,6 +876,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      maxNodeLevel--;
 	    }
 	    return null;
+	  },
+	  isOneScreenRemaining(target) {
+	    const bottomPointOfVisibleContent = target.scrollTop + target.clientHeight;
+	    const containerHeight = target.scrollHeight;
+	    const oneScreenHeight = target.clientHeight;
+	    return bottomPointOfVisibleContent >= containerHeight - oneScreenHeight;
 	  }
 	};
 

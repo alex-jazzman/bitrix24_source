@@ -7,6 +7,7 @@ import { MembersModel } from './nested-modules/members';
 import { TasksModel } from './nested-modules/tasks/tasks';
 import { MeetingsModel } from './nested-modules/meeting/meeting';
 import { FilesModel } from './nested-modules/files/files';
+import { MultidialogModel } from './nested-modules/multidialog/multidialog';
 
 import type { GetterTree, ActionTree, MutationTree, NestedModuleTree } from 'ui.vue3.vuex';
 
@@ -27,6 +28,7 @@ export class SidebarModel extends BuilderModel
 			tasks: TasksModel,
 			meetings: MeetingsModel,
 			files: FilesModel,
+			multidialog: MultidialogModel,
 		};
 	}
 

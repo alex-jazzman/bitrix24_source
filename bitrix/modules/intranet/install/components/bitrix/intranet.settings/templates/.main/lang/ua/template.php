@@ -145,6 +145,7 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_ACCEPTED_IP"] = "Перелічіт�
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_FILE_VIEWER"] = "Переглядати документи з допомогою";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_ACCESS_IP"] = "Кому дозволити доступ лише із зазначених IP-адрес";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS"] = "Виберіть, кому буде доступна публікація повідомлень для всіх";
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS_CHANNEL"] = "Призначте адміністраторів:";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_BIRTH_YEAR"] = "Показувати рік народження в профілі";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_GEOCODING_SERVICE"] = "Показувати мапу для нерозпізнаних адрес";
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE"] = "Показувати сповіщення про нового співробітника";

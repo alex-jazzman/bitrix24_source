@@ -9,7 +9,6 @@ return [
 	'js' => 'dist/recent-container.bundle.js',
 	'rel' => [
 		'main.core.events',
-		'main.core',
 		'im.public',
 		'im.v2.lib.utils',
 		'im.v2.component.list.items.recent',
@@ -17,12 +16,15 @@ return [
 		'im.v2.component.search.chat-search',
 		'im.v2.lib.logger',
 		'im.v2.provider.service',
+		'im.v2.component.elements',
+		'im.v2.const',
 		'im.v2.lib.promo',
 		'im.v2.lib.create-chat',
 		'im.v2.lib.layout',
-		'im.v2.const',
-		'ui.lottie',
-		'im.v2.component.elements',
+		'main.core',
 	],
 	'skip_core' => false,
+	'settings' => [
+		'channelCreationAvailable' => \Bitrix\Im\V2\Chat\ChannelChat::isCreationAvailable(),
+	]
 ];

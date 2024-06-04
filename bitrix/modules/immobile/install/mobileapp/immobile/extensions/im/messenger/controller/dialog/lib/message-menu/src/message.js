@@ -1,6 +1,7 @@
 /**
  * @module im/messenger/controller/dialog/lib/message-menu/message
  */
+
 jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, exports, module) => {
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -9,6 +10,8 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 		DialogType,
 		FeatureFlag,
 	} = require('im/messenger/const');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+
 	/**
 	 * @class MessageMenuMessage
 	 */
@@ -38,7 +41,17 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossibleReply()
 		{
-			return this.dialog.type !== DialogType.copilot;
+			if ([DialogType.channel, DialogType.openChannel, DialogType.copilot].includes(this.dialog.type))
+			{
+				return false;
+			}
+
+			if (Number(this.dialog.parentMessageId) === Number(this.message.id))
+			{
+				return false;
+			}
+
+			return ChatPermission.isCanReply(this.dialog);
 		}
 
 		isPossibleCopy()
@@ -48,11 +61,41 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isPossiblePin()
 		{
+			if (this.dialog.type === DialogType.comment)
+			{
+				return false;
+			}
+
+			if (!ChatPermission.isCanPost(this.dialog))
+			{
+				return false;
+			}
+
 			return !this.isPinned;
+		}
+
+		isPossibleUnpin()
+		{
+			if (this.dialog.type === DialogType.comment)
+			{
+				return false;
+			}
+
+			if (!ChatPermission.isCanPost(this.dialog))
+			{
+				return false;
+			}
+
+			return this.isPinned;
 		}
 
 		isPossibleForward()
 		{
+			if (this.dialog.type === DialogType.comment)
+			{
+				return false;
+			}
+
 			return true;
 		}
 

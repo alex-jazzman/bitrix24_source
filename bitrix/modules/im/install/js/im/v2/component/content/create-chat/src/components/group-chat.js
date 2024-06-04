@@ -1,3 +1,5 @@
+import 'ui.notification';
+
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
@@ -15,9 +17,6 @@ import { ButtonPanel } from './elements/button-panel';
 import { SettingsSection } from './sections/settings/settings-section';
 import { RightsSection } from './sections/rights/rights-section';
 import { AppearanceSection } from './sections/appearance/appearance-section';
-
-import 'ui.notification';
-import '../css/create-chat-content.css';
 
 import type { JsonObject } from 'main.core';
 
@@ -53,7 +52,7 @@ export const GroupChatCreation = {
 				manageUsersDelete: '',
 				manageSettings: '',
 				manageUi: '',
-				canPost: '',
+				manageMessages: '',
 			},
 		};
 	},
@@ -78,7 +77,7 @@ export const GroupChatCreation = {
 	},
 	beforeUnmount()
 	{
-		if (this.exitByCancel || this.exitByChatTypeSwitch)
+		if (this.exitByCancel || this.exitByChatTypeSwitch || this.exitByCreation)
 		{
 			return;
 		}
@@ -118,9 +117,9 @@ export const GroupChatCreation = {
 		{
 			this.rights.manageUi = newValue;
 		},
-		onCanPostChange(newValue: UserRoleItem)
+		onManageMessagesChange(newValue: UserRoleItem)
 		{
-			this.rights.canPost = newValue;
+			this.rights.manageMessages = newValue;
 		},
 		async onCreateClick()
 		{
@@ -138,7 +137,7 @@ export const GroupChatCreation = {
 				manageUsersDelete: this.rights.manageUsersDelete,
 				manageUi: this.rights.manageUi,
 				manageSettings: this.rights.manageSettings,
-				canPost: this.rights.canPost,
+				manageMessages: this.rights.manageMessages,
 			}).catch(() => {
 				this.isCreating = false;
 				BX.UI.Notification.Center.notify({
@@ -147,6 +146,7 @@ export const GroupChatCreation = {
 			});
 
 			this.isCreating = false;
+			this.exitByCreation = true;
 			CreateChatManager.getInstance().setCreationStatus(false);
 			void Messenger.openChat(newDialogId);
 		},
@@ -166,7 +166,7 @@ export const GroupChatCreation = {
 			MenuManager.getMenuById(PopupType.createChatManageUsersAddMenu)?.close();
 			MenuManager.getMenuById(PopupType.createChatManageUsersDeleteMenu)?.close();
 			MenuManager.getMenuById(PopupType.createChatManageUiMenu)?.close();
-			MenuManager.getMenuById(PopupType.createChatCanPostMenu)?.close();
+			MenuManager.getMenuById(PopupType.createChatManageMessagesMenu)?.close();
 		},
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 		{
@@ -208,13 +208,14 @@ export const GroupChatCreation = {
 				manageUsersDelete,
 				manageUi,
 				manageSettings,
+				manageMessages,
 			} = PermissionManager.getInstance().getDefaultRolesForActionGroups();
 
 			this.rights.manageUsersAdd = manageUsersAdd;
 			this.rights.manageUsersDelete = manageUsersDelete;
 			this.rights.manageUi = manageUi;
 			this.rights.manageSettings = manageSettings;
-			this.rights.canPost = UserRole.member;
+			this.rights.manageMessages = manageMessages;
 		},
 		getChatService(): ChatService
 		{
@@ -236,7 +237,9 @@ export const GroupChatCreation = {
 				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" />
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHAT_TITLE_PLACEHOLDER')" />
 			</div>
-			<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			<div class="bx-im-content-create-chat__members_container">
+				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			</div>
 			<SettingsSection
 				:isAvailableInSearch="settings.isAvailableInSearch"
 				:description="settings.description"
@@ -250,13 +253,13 @@ export const GroupChatCreation = {
 				:manageUsersDelete="rights.manageUsersDelete"
 				:manageUi="rights.manageUi"
 				:manageSettings="rights.manageSettings"
-				:canPost="rights.canPost"
+				:manageMessages="rights.manageMessages"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
 				@manageUsersAddChange="onManageUsersAddChange"
 				@manageUsersDeleteChange="onManageUsersDeleteChange"
 				@manageUiChange="onManageUiChange"
-				@canPostChange="onCanPostChange"
+				@manageMessagesChange="onManageMessagesChange"
 			/> 
 		</div>
 		<ButtonPanel

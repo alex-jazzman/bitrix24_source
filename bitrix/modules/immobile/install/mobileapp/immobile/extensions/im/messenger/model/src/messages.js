@@ -42,6 +42,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		forward: {},
 	};
 
+	/** @type {MessagesMessengerModel} */
 	const messagesModel = {
 		namespaced: true,
 		state: () => ({
@@ -760,6 +761,23 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				});
 
 				return true;
+			},
+
+			/** @function messagesModel/clearChatCollection */
+			clearChatCollection: (store, payload) =>
+			{
+				const { chatId } = payload;
+				if (!Type.isNumber(chatId))
+				{
+					return;
+				}
+
+				store.commit('clearCollection', {
+					actionName: 'clearChatCollection',
+					data: {
+						chatId,
+					},
+				});
 			},
 		},
 		mutations: {

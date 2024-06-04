@@ -121,7 +121,7 @@ $APPLICATION->SetPageProperty('FavoriteTitleTemplate', $arResult['PAGES_TITLE_TE
 			$component,
 			["HIDE_ICONS" => "Y"]
 		); ?>
-		<script type="text/javascript">
+		<script>
 			BX.ready(function() {
 				if (BX('BXDiskRightInputPlug') && BX.DiskUpload.getObj('FolderList'))
 				{

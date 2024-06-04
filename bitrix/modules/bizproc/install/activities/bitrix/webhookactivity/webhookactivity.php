@@ -60,7 +60,8 @@ class CBPWebHookActivity extends CBPActivity
 				}
 				if (isset($handlerData['query']))
 				{
-					$target .= '?'.CHTTP::urnEncode($handlerData['query']);
+					parse_str($handlerData['query'], $queryString);
+					$target .= '?' . http_build_query($queryString);
 				}
 				if (isset($handlerData['fragment']))
 				{

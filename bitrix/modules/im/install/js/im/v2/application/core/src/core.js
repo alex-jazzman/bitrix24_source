@@ -18,6 +18,7 @@ import {
 	SidebarModel,
 	MarketModel,
 	CountersModel,
+	CopilotModel,
 } from 'im.v2.model';
 import {
 	BasePullHandler,
@@ -100,6 +101,7 @@ class CoreApplication
 			.addModel(NotificationsModel.create())
 			.addModel(SidebarModel.create())
 			.addModel(MarketModel.create())
+			.addModel(CopilotModel.create())
 		;
 
 		return builder.build().then((result) => {
@@ -187,12 +189,12 @@ class CoreApplication
 			const bitrixVue = BitrixVue.createApp(initConfig);
 			bitrixVue.config.errorHandler = function(err, vm, info) {
 				// eslint-disable-next-line no-console
-				console.error(err, info);
+				console.error(err, vm, info);
 			};
 
 			bitrixVue.config.warnHandler = function(warn, vm, trace) {
 				// eslint-disable-next-line no-console
-				console.warn(warn, trace);
+				console.warn(warn, vm, trace);
 			};
 			// eslint-disable-next-line no-param-reassign
 			application.bitrixVue = bitrixVue;

@@ -52,5 +52,6 @@ export type Chat = {
 	hasNextPage: boolean,
 	diskFolderId: number,
 	role: RoleItem,
-	permissions: Object<ActionGroupItem, RoleItem>
+	permissions: Object<ActionGroupItem, RoleItem>,
+	parentChatId: number,
 };

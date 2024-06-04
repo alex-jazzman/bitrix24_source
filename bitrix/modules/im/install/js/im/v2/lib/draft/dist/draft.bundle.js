@@ -74,7 +74,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return;
 	    }
 	    this.inited = true;
-	    const draftHistory = await IndexedDbManager.getInstance().get(this.getStorageKey(), {});
+	    let draftHistory = null;
+	    try {
+	      draftHistory = await IndexedDbManager.getInstance().get(this.getStorageKey(), {});
+	    } catch (error) {
+	      // eslint-disable-next-line no-console
+	      console.error('DraftManager: error initing draft history', error);
+	      this.initPromiseResolver();
+	      return;
+	    }
 	    this.fillDraftsFromStorage(draftHistory);
 	    im_v2_lib_logger.Logger.warn('DraftManager: initDrafts:', this.drafts);
 	    this.initPromiseResolver();

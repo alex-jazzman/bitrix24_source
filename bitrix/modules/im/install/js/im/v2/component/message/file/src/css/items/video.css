@@ -9,6 +9,11 @@
 	background-color: var(--im-video-item__background-color_container);
 }
 
+.bx-im-video-item__container.--with-forward {
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+}
+
 .bx-im-video-item__container .ui-vue-socialvideo-timers-container {
 	font: 11px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }

@@ -50,7 +50,7 @@ if (CModule::IncludeModule('webservice'))
 			return;
 		}
 
-		$arParams["PR_NAMESPACE"]=($arParams["PR_NAMESPACE"]=="")? "http://www.1c-bitrix.ru": $arParams["PR_NAMESPACE"];
+		$arParams["PR_NAMESPACE"]=($arParams["PR_NAMESPACE"]=="")? "https://www.1c-bitrix.ru": $arParams["PR_NAMESPACE"];
 		$arParams["CACHE_TIME"]=(intval($arParams['CACHE_TIME'])<0)? 3600: intval($arParams['CACHE_TIME']);
 		$arSoapParams = Array(
 					GetMessage("SOAP_PORTAL_EMP_ID")=>$USER->GetID(),

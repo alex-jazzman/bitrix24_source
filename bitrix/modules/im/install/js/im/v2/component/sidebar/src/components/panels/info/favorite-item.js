@@ -2,7 +2,7 @@ import { EventEmitter } from 'main.core.events';
 
 import { EventType } from 'im.v2.const';
 import { Parser } from 'im.v2.lib.parser';
-import { Avatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { MessageAvatar, AvatarSize, MessageAuthorTitle } from 'im.v2.component.elements';
 
 import './css/favorite-item.css';
 
@@ -11,7 +11,7 @@ import type { ImModelSidebarFavoriteItem, ImModelMessage } from 'im.v2.model';
 // @vue/component
 export const FavoriteItem = {
 	name: 'FavoriteItem',
-	components: { Avatar, ChatTitle },
+	components: { MessageAvatar, MessageAuthorTitle },
 	props:
 	{
 		favorite: {
@@ -50,7 +50,11 @@ export const FavoriteItem = {
 		},
 		messageText(): string
 		{
-			return Parser.purifyMessage(this.favoriteMessage);
+			return Parser.decodeMessage(this.favoriteMessage);
+		},
+		isCopilot(): boolean
+		{
+			return this.$store.getters['users/bots/isCopilot'](this.favoriteMessage.authorId);
 		},
 	},
 	methods:
@@ -87,12 +91,19 @@ export const FavoriteItem = {
 		>
 			<div class="bx-im-favorite-item__header-container">
 				<div class="bx-im-favorite-item__author-container">
-					<Avatar
+					<MessageAvatar
+						:messageId="favoriteItem.messageId"
+						:authorId="authorDialogId"
 						:size="AvatarSize.XS"
-						:dialogId="authorDialogId"
 						class="bx-im-favorite-item__author-avatar"
 					/>
-					<ChatTitle :dialogId="authorDialogId" :showItsYou="false" class="bx-im-favorite-item__author-text" />
+					<MessageAuthorTitle 
+						:dialogId="authorDialogId"
+						:messageId="favoriteItem.messageId"
+						:withLeftIcon="!isCopilot"
+						:showItsYou="false" 
+						class="bx-im-favorite-item__author-text"
+					/>
 				</div>
 				<button 
 					v-if="showContextButton"

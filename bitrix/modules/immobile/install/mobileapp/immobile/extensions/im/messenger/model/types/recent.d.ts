@@ -29,6 +29,7 @@ export type RecentModelState = {
 		params: object,
 	},
 	dateMessage: Date | null,
+	lastActivityDate: Date,
 	unread: boolean,
 	pinned: boolean,
 	liked: boolean,

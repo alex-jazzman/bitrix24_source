@@ -27,9 +27,11 @@ return [
 		'./src/sidebar',
 		'./src/draft',
 		'./src/queue',
+		'./src/comment',
 		'./src/messages/reactions',
 		'./src/messages/pin',
 		'./src/validators/message',
 		'./src/validators/pin',
+		'./src/validators/comment',
 	],
 ];

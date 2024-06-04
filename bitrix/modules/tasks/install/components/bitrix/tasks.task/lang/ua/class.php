@@ -1,6 +1,8 @@
 <?php
 $MESS["TASKS_ACTION_RESULT_REQUIRED"] = "Постановник зробив запит на результат роботи.<br> Залиште коментар до завдання та позначте його як звіт.";
 $MESS["TASKS_REST_BUTTON_TITLE_2"] = "Бітрікс24.Маркет";
+$MESS["TASKS_TASK_FLOW_DEADLINE_LABEL"] = "Установлюється автоматично";
+$MESS["TASKS_TASK_FLOW_SECRET_PROJECT_LABEL"] = "Прихований проєкт";
 $MESS["TASKS_TASK_TAG_ACCESS_DENIED"] = "Недостатньо прав";
 $MESS["TASKS_TASK_TAG_ALREADY_EXISTS"] = "Такий тег уже існує.";
 $MESS["TASKS_TASK_TAG_UNKNOWN_ERROR"] = "Не вдалося додати тег, спробуйте ще раз.";

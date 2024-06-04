@@ -226,7 +226,7 @@ if ($arResult["MODE"] === "AJAX")
 			</span>
 		</div>
 
-		<script type="text/javascript">
+		<script>
 			BX.ready(function(){
 				__logOnDateChange(document.forms['log_filter'].flt_date_datesel);
 			});

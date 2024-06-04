@@ -1,4 +1,4 @@
-import { Extension, type JsonObject } from 'main.core';
+import { Extension } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
@@ -9,6 +9,7 @@ import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { CheckUtils } from './classes/check-utils';
 import { Conference } from './classes/conference';
 import { Desktop } from './classes/desktop';
+import { Browser } from './classes/browser';
 import { Encoder } from './classes/encoder';
 
 const DESKTOP_PROTOCOL_VERSION = 2;
@@ -51,9 +52,16 @@ export class DesktopManager
 	{
 		this.#initDesktopStatus();
 
-		if (DesktopManager.isDesktop() && DesktopApi.isChatWindow())
+		if (DesktopManager.isDesktop())
 		{
-			Desktop.init();
+			if (DesktopApi.isChatWindow())
+			{
+				Desktop.init();
+			}
+			else
+			{
+				Browser.init();
+			}
 		}
 	}
 
@@ -189,7 +197,7 @@ export class DesktopManager
 
 	checkStatusInDifferentContext(): Promise
 	{
-		if (!this.#desktopIsActive)
+		if (!this.isDesktopActive())
 		{
 			return Promise.resolve(false);
 		}

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_uploader_core,im_v2_lib_localStorage,im_v2_lib_soundNotification,rest_client,im_v2_lib_smileManager,im_v2_lib_rest,im_v2_lib_entityCreator,im_v2_provider_service,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_lib_draft,main_core_events,im_v2_lib_textHighlighter,im_v2_application_core,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,rest_client,im_v2_lib_smileManager,im_v2_lib_rest,im_v2_lib_entityCreator,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_application_core,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -159,18 +159,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  extractMentions(text) {
 	    const mentions = {};
-	    const mentionRegExp = /\[user=(?<userId>\d+)](?<mentionText>.*?)\[\/user]/gi;
+	    const mentionRegExp = /\[(user|chat)=(?<dialogId>\w+)](?<mentionText>.*?)\[\/(user|chat)]/gi;
 	    const matches = text.matchAll(mentionRegExp);
 	    for (const match of matches) {
 	      const {
-	        userId,
+	        dialogId,
 	        mentionText
 	      } = match.groups;
-	      const user = im_v2_application_core.Core.getStore().getters['users/get'](userId);
-	      if (!user) {
-	        continue;
-	      }
-	      mentions[mentionText] = im_v2_lib_utils.Utils.text.getMentionBbCode(user.id, mentionText);
+	      mentions[mentionText] = im_v2_lib_utils.Utils.text.getMentionBbCode(dialogId, mentionText);
 	    }
 	    return mentions;
 	  }
@@ -295,10 +291,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	MentionManager.eventNamespace = 'BX.Messenger.v2.Textarea.MentionManager';
 
+	const ResizeDirection = {
+	  up: 'up',
+	  down: 'down'
+	};
+	var _calculateNewMaxPoint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("calculateNewMaxPoint");
 	class ResizeManager extends main_core_events.EventEmitter {
-	  constructor() {
+	  constructor(options = {}) {
 	    super();
+	    Object.defineProperty(this, _calculateNewMaxPoint, {
+	      value: _calculateNewMaxPoint2
+	    });
 	    this.isDragging = false;
+	    const {
+	      direction,
+	      maxHeight,
+	      minHeight
+	    } = options;
+	    this.direction = direction;
+	    this.maxHeight = maxHeight;
+	    this.minHeight = minHeight;
 	    this.setEventNamespace(ResizeManager.eventNamespace);
 	  }
 	  onResizeStart(event, currentHeight) {
@@ -315,10 +327,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return;
 	    }
 	    this.resizeCursorControlPoint = event.clientY;
-	    const maxPoint = Math.min(this.resizeHeightStartPoint + this.resizeCursorStartPoint - this.resizeCursorControlPoint, ResizeManager.maxHeight);
-	    const newHeight = Math.max(maxPoint, ResizeManager.minHeight);
+	    const maxPoint = babelHelpers.classPrivateFieldLooseBase(this, _calculateNewMaxPoint)[_calculateNewMaxPoint]();
+	    const newHeight = Math.max(maxPoint, this.minHeight);
 	    this.emit(ResizeManager.events.onHeightChange, {
-	      newHeight: newHeight
+	      newHeight
 	    });
 	  }
 	  onResizeStop() {
@@ -349,9 +361,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.removeResizeEvents();
 	  }
 	}
+	function _calculateNewMaxPoint2() {
+	  const distance = this.direction === ResizeDirection.up ? this.resizeCursorStartPoint - this.resizeCursorControlPoint : this.resizeCursorControlPoint - this.resizeCursorStartPoint;
+	  return Math.min(this.resizeHeightStartPoint + distance, this.maxHeight);
+	}
 	ResizeManager.eventNamespace = 'BX.Messenger.v2.Textarea.ResizeManager';
-	ResizeManager.minHeight = 22;
-	ResizeManager.maxHeight = 400;
 	ResizeManager.events = {
 	  onHeightChange: 'onHeightChange',
 	  onResizeStop: 'onResizeStop'
@@ -3377,6 +3391,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	// @vue/component
 	const TabSmiles = {
 	  name: 'SmilesContent',
+	  props: {
+	    dialogId: {
+	      type: String,
+	      required: true
+	    }
+	  },
 	  emits: ['close'],
 	  data() {
 	    return {
@@ -3459,7 +3479,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    onSmileClick(smileCode, event) {
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertText, {
-	        text: smileCode
+	        text: smileCode,
+	        dialogId: this.dialogId
 	      });
 	      if (!im_v2_lib_utils.Utils.key.isAltOrOption(event)) {
 	        this.$emit('close');
@@ -3991,7 +4012,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<div class="bx-im-smile-popup__tabs-container">
 					<MessengerTabs :colorScheme="TabsColorScheme.gray" :tabs="tabs" @tabSelect="tabSelect"  />
 				</div>
-				<TabSmiles v-show="currentTab === TabType.default" @close="$emit('close')" />
+				<TabSmiles v-show="currentTab === TabType.default" :dialogId="dialogId" @close="$emit('close')" />
 				<TabGiphy v-show="currentTab === TabType.giphy" @close="$emit('close')" :dialogId="dialogId" />
 				<TabMarket v-if="currentTab === TabType.market" :entityId="currentEntityId" :dialogId="dialogId" />
 			</div>
@@ -4346,10 +4367,115 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
+	const ErrorPreviewItem = {
+	  name: 'ErrorPreviewItem',
+	  template: `
+		<div class="bx-im-upload-preview-file-item__item-error">
+			<div class="bx-im-upload-preview-file-item__item-error-icon"></div>
+			<div class="bx-im-upload-preview-file-item__item-error-text">
+				{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_UPLOAD_ERROR') }}
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const FilePreviewItem = {
+	  name: 'FilePreviewItem',
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    file() {
+	      return this.item;
+	    },
+	    source() {
+	      return this.file.urlPreview;
+	    },
+	    name() {
+	      return this.file.name;
+	    },
+	    fileIconClass() {
+	      return `ui-icon ui-icon-file-${this.file.icon}`;
+	    },
+	    fileShortName() {
+	      const NAME_MAX_LENGTH = 25;
+	      return im_v2_lib_utils.Utils.file.getShortFileName(this.file.name, NAME_MAX_LENGTH);
+	    },
+	    fileSize() {
+	      return im_v2_lib_utils.Utils.file.formatFileSize(this.file.size);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-upload-preview-file-item__file-container">
+			<div class="bx-im-upload-preview-file-item__icon">
+				<div :class="fileIconClass"><i></i></div>
+			</div>
+			<div class="bx-im-upload-preview-file-item__info">
+				<div class="bx-im-upload-preview-file-item__name">{{ fileShortName }}</div>
+				<div class="bx-im-upload-preview-file-item__size">{{ fileSize }}</div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const ImagePreviewItem = {
+	  name: 'ImagePreviewItem',
+	  components: {
+	    Spinner: im_v2_component_elements.Spinner
+	  },
+	  props: {
+	    item: {
+	      type: Object,
+	      required: true
+	    }
+	  },
+	  computed: {
+	    SpinnerSize: () => im_v2_component_elements.SpinnerSize,
+	    file() {
+	      return this.item;
+	    },
+	    source() {
+	      return this.file.urlPreview;
+	    },
+	    name() {
+	      return this.file.name;
+	    },
+	    hasPreview() {
+	      return main_core.Type.isStringFilled(this.file.urlPreview);
+	    },
+	    isVideo() {
+	      return this.file.type === im_v2_const.FileType.video;
+	    }
+	  },
+	  template: `
+		<div class="bx-im-upload-preview-file-item__image-container">
+			<Spinner v-if="!hasPreview" :size="SpinnerSize.s" />
+			<img
+				v-else
+				:src="source"
+				:alt="name"
+				:title="name"
+				class="bx-im-upload-preview-file-item__item-image"
+			>
+			<div v-if="isVideo" class="bx-im-upload-preview-file-item__play-icon-container">
+				<div class="bx-im-upload-preview-file-item__play-icon"></div>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
 	const FileItem = {
 	  name: 'FileItem',
 	  components: {
-	    Spinner: im_v2_component_elements.Spinner
+	    ErrorPreviewItem,
+	    ImagePreviewItem,
+	    FilePreviewItem
 	  },
 	  props: {
 	    file: {
@@ -4364,35 +4490,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    };
 	  },
 	  computed: {
-	    SpinnerSize: () => im_v2_component_elements.SpinnerSize,
 	    fileFromStore() {
 	      return this.file;
 	    },
-	    hasPreview() {
-	      return this.fileFromStore.urlPreview !== '';
-	    },
 	    hasError() {
 	      return this.fileFromStore.status === im_v2_const.FileStatus.error;
+	    },
+	    previewComponentName() {
+	      if (this.hasError) {
+	        return ErrorPreviewItem;
+	      }
+	      if (this.fileFromStore.type === im_v2_const.FileType.image || this.fileFromStore.type === im_v2_const.FileType.video) {
+	        return ImagePreviewItem;
+	      }
+	      return FilePreviewItem;
 	    }
 	  },
 	  template: `
-		<div class="bx-im-upload-preview-file-item__container bx-im-upload-preview-file-item__scope">
-			<div v-if="hasError" class="bx-im-upload-preview-file-item__item-error">
-				<div class="bx-im-upload-preview-file-item__item-error-icon"></div>
-				<div class="bx-im-upload-preview-file-item__item-error-text">
-					{{ $Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_UPLOAD_ERROR') }}
-				</div>
-			</div>
-			<Spinner v-else-if="!hasPreview" :size="SpinnerSize.s" />
-			<img 
-				v-else 
-				:src="fileFromStore.urlPreview" 
-				:alt="fileFromStore.name"
-				:title="fileFromStore.name"
-				class="bx-im-upload-preview-file-item__item-image"
-			>
+		<div class="bx-im-upload-preview-file-item__scope">
+			<component
+				:is="previewComponentName"
+				:item="fileFromStore"
+			/>
 		</div>
 	`
+	};
+
+	const BUTTONS_CONTAINER_HEIGHT = 74;
+	const TextareaHeight = {
+	  max: 208,
+	  min: 46
 	};
 
 	// @vue/component
@@ -4417,12 +4544,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      default: ''
 	    }
 	  },
-	  emits: ['sendFiles', 'close'],
+	  emits: ['sendFiles', 'close', 'updateTitle'],
 	  data() {
 	    return {
 	      text: '',
 	      sendAsFile: false,
-	      files: []
+	      files: [],
+	      textareaHeight: TextareaHeight.min,
+	      textareaResizedHeight: 0
 	    };
 	  },
 	  computed: {
@@ -4447,9 +4576,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    inputMaxLength() {
 	      const settings = main_core.Extension.getSettings('im.v2.component.textarea');
 	      return settings.get('maxLength');
+	    },
+	    textareaHeightStyle() {
+	      return this.textareaHeight === 'auto' ? 'auto' : `${this.textareaHeight}px`;
+	    },
+	    title() {
+	      const onlyImages = this.filesFromStore.every(file => {
+	        return file.type === im_v2_const.FileType.image;
+	      });
+	      return onlyImages ? this.$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE') : this.$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE_FILES');
 	    }
 	  },
 	  watch: {
+	    text() {
+	      void this.adjustTextareaHeight();
+	    },
+	    title() {
+	      this.$emit('updateTitle', this.title);
+	    },
 	    sendAsFile(newValue) {
 	      this.files.forEach(file => {
 	        file.setCustomData('sendAsFile', newValue);
@@ -4457,18 +4601,40 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  created() {
-	    this.text = this.textareaValue;
-	    this.insertText('');
+	    this.initResizeManager();
 	    this.files = this.getUploadingService().getFiles(this.uploaderId);
 	  },
 	  mounted() {
+	    this.text = this.textareaValue;
+	    this.insertText('');
 	    this.$refs.messageText.focus();
 	  },
 	  beforeUnmount() {
 	    this.insertText(this.text);
 	    im_v2_lib_draft.DraftManager.getInstance().setDraftText(this.dialogId, this.text);
+	    this.resizeManager.destroy();
 	  },
 	  methods: {
+	    async adjustTextareaHeight() {
+	      this.textareaHeight = 'auto';
+	      await this.$nextTick();
+	      if (!this.$refs.messageText) {
+	        return;
+	      }
+	      const TEXTAREA_BORDERS_WIDTH = 2;
+	      const newMaxPoint = Math.min(TextareaHeight.max, this.$refs.messageText.scrollHeight + TEXTAREA_BORDERS_WIDTH);
+	      if (this.doesContentOverflowScreen(newMaxPoint)) {
+	        const textareaTopPoint = this.$refs.messageText.getBoundingClientRect().top;
+	        const availableHeight = window.innerHeight - textareaTopPoint - BUTTONS_CONTAINER_HEIGHT;
+	        this.textareaHeight = Math.max(TextareaHeight.min, availableHeight);
+	        return;
+	      }
+	      if (this.resizedTextareaHeight) {
+	        this.textareaHeight = Math.max(newMaxPoint, this.resizedTextareaHeight);
+	        return;
+	      }
+	      this.textareaHeight = Math.max(newMaxPoint, TextareaHeight.min);
+	    },
 	    getUploadingService() {
 	      if (!this.uploadingService) {
 	        this.uploadingService = im_v2_provider_service.UploadingService.getInstance();
@@ -4519,8 +4685,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    insertText(text) {
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertText, {
 	        text,
+	        dialogId: this.dialogId,
 	        replace: true
 	      });
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    },
+	    initResizeManager() {
+	      this.resizeManager = new ResizeManager({
+	        direction: ResizeDirection.down,
+	        minHeight: TextareaHeight.min,
+	        maxHeight: TextareaHeight.max
+	      });
+	      this.resizeManager.subscribe(ResizeManager.events.onHeightChange, ({
+	        data: {
+	          newHeight
+	        }
+	      }) => {
+	        this.textareaHeight = newHeight;
+	      });
+	      this.resizeManager.subscribe(ResizeManager.events.onResizeStop, () => {
+	        this.resizedTextareaHeight = this.textareaHeight;
+	      });
+	    },
+	    onResizeStart(event) {
+	      this.resizeManager.onResizeStart(event, this.textareaHeight);
+	    },
+	    doesContentOverflowScreen(newMaxPoint) {
+	      const textareaTop = this.$refs.messageText.getBoundingClientRect().top;
+	      return textareaTop + newMaxPoint + BUTTONS_CONTAINER_HEIGHT > window.innerHeight;
 	    }
 	  },
 	  template: `
@@ -4537,13 +4731,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				<!--</label>-->
 				<textarea
 					ref="messageText"
-					type="text"
 					v-model="text"
-					@keydown="onKeyDownHandler"
+					:placeholder="loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER')"
+					:maxlength="inputMaxLength"
+					:style="{'height': textareaHeightStyle}"
 					class="bx-im-upload-preview__message-text"
 					rows="1"
-					:placeholder="$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER')"
-					:maxlength="inputMaxLength"
+					@keydown="onKeyDownHandler"
+					@mousedown="onResizeStart"
 				></textarea>
 			</div>
 			<div class="bx-im-upload-preview__controls-buttons">
@@ -4551,14 +4746,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					:color="ButtonColor.Primary"
 					:size="ButtonSize.L"
 					:isRounded="true"
-					:text="$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_SEND')"
+					:text="loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_SEND')"
 					@click="onSend"
 				/>
 				<MessengerButton
 					:color="ButtonColor.LightBorder"
 					:size="ButtonSize.L"
 					:isRounded="true"
-					:text="$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_CANCEL')"
+					:text="loc('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_CANCEL')"
 					@click="onCancel"
 				/>
 			</div>
@@ -4598,11 +4793,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        width: 400,
 	        targetContainer: document.body,
 	        fixed: true,
-	        draggable: true,
+	        draggable: {
+	          restrict: true
+	        },
+	        titleBar: this.$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE'),
 	        offsetTop: 0,
 	        padding: 0,
 	        closeIcon: true,
-	        titleBar: this.$Bitrix.Loc.getMessage('IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE'),
 	        contentColor: 'transparent',
 	        contentPadding: 0,
 	        className: 'bx-im-upload-preview__scope',
@@ -4614,6 +4811,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    onSendFiles(event) {
 	      this.$emit('sendFiles', event);
 	      this.$emit('close');
+	    },
+	    onUpdateTitle(title) {
+	      var _PopupManager$getPopu;
+	      (_PopupManager$getPopu = main_popup.PopupManager.getPopupById(POPUP_ID)) == null ? void 0 : _PopupManager$getPopu.setTitleBar(title);
 	    }
 	  },
 	  template: `
@@ -4628,16 +4829,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				:textareaValue="textareaValue"
 				@close="$emit('close')"
 				@sendFiles="onSendFiles"
+				@updateTitle="onUpdateTitle"
 			/>
 		</MessengerPopup>
 	`
+	};
+
+	const ItemTextByChatType = {
+	  [im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
+	  default: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE')
 	};
 
 	// @vue/component
 	const MentionItem = {
 	  name: 'MentionItem',
 	  components: {
-	    Avatar: im_v2_component_elements.Avatar,
+	    ChatAvatar: im_v2_component_elements.ChatAvatar,
 	    ChatTitleWithHighlighting: im_v2_component_elements.ChatTitleWithHighlighting
 	  },
 	  props: {
@@ -4652,6 +4860,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    selected: {
 	      type: Boolean,
 	      default: false
+	    },
+	    contextDialogId: {
+	      type: String,
+	      required: true
 	    }
 	  },
 	  emits: ['itemClick', 'itemHover'],
@@ -4682,7 +4894,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return im_v2_lib_textHighlighter.highlightText(main_core.Text.encode(this.position), this.query);
 	    },
 	    chatItemText() {
-	      return this.$Bitrix.Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE');
+	      var _ItemTextByChatType$t;
+	      return (_ItemTextByChatType$t = ItemTextByChatType[this.dialog.type]) != null ? _ItemTextByChatType$t : ItemTextByChatType.default;
 	    }
 	  },
 	  methods: {
@@ -4699,7 +4912,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			:class="{'--selected': selected}"
 			@mouseover="$emit('itemHover')"
 		>
-			<Avatar :dialogId="dialogId" :size="AvatarSize.M" class="bx-im-mention-item__avatar-container" />
+			<ChatAvatar 
+				:avatarDialogId="dialogId"
+				:contextDialogId="dialogId"
+				:size="AvatarSize.M" 
+				class="bx-im-mention-item__avatar-container" 
+			/>
 			<div class="bx-im-mention-item__content-container">
 				<ChatTitleWithHighlighting 
 					:dialogId="dialogId" 
@@ -5053,7 +5271,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (this.isLoading) {
 	        return false;
 	      }
-	      return this.searchResult.length === 0 && this.preparedQuery.length > 0;
+	      return this.itemsToShow.length === 0 && this.preparedQuery.length > 0;
 	    },
 	    searchConfig() {
 	      return {
@@ -5161,7 +5379,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertMention, {
 	        mentionText,
 	        mentionReplacement,
-	        textToReplace: this.query
+	        textToReplace: this.query,
+	        dialogId: this.dialogId
 	      });
 	    },
 	    getMentionText(dialogId) {
@@ -5225,9 +5444,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			>
 				<div class="bx-im-mention-popup-content__items">
 					<MentionItem
-						v-for="(dialogId, index) in itemsToShow"
+						v-for="(itemDialogId, index) in itemsToShow"
 						:data-index="index"
-						:dialogId="dialogId"
+						:dialogId="itemDialogId"
+						:contextDialogId="dialogId"
 						:query="query"
 						:selected="selectedIndex === index"
 						@itemClick="onItemClick"
@@ -5934,6 +6154,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const MESSAGE_ACTION_PANELS = new Set([im_v2_const.TextareaPanelType.edit, im_v2_const.TextareaPanelType.reply, im_v2_const.TextareaPanelType.forward]);
+	const TextareaHeight$1 = {
+	  max: 400,
+	  min: 22
+	};
 
 	// @vue/component
 	const ChatTextarea = {
@@ -5950,12 +6174,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    dialogId: {
 	      type: String,
 	      default: ''
+	    },
+	    withCreateMenu: {
+	      type: Boolean,
+	      default: true
+	    },
+	    withMarket: {
+	      type: Boolean,
+	      default: true
 	    }
 	  },
+	  emits: ['mounted'],
 	  data() {
 	    return {
 	      text: '',
-	      textareaHeight: ResizeManager.minHeight,
+	      textareaHeight: TextareaHeight$1.min,
 	      showMention: false,
 	      mentionQuery: '',
 	      showUploadPreviewPopup: false,
@@ -5986,6 +6219,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    isDisabled() {
 	      return this.text.trim() === '' && !this.editMode && !this.forwardMode;
 	    },
+	    textareaPlaceholder() {
+	      if (this.isChannelType) {
+	        return this.loc('IM_TEXTAREA_CHANNEL_PLACEHOLDER');
+	      }
+	      return this.loc('IM_TEXTAREA_PLACEHOLDER_V3');
+	    },
 	    textareaStyle() {
 	      let height = `${this.textareaHeight}px`;
 	      if (this.textareaHeight === 'auto') {
@@ -5999,6 +6238,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    textareaMaxLength() {
 	      const settings = main_core.Extension.getSettings('im.v2.component.textarea');
 	      return settings.get('maxLength');
+	    },
+	    isChannelType() {
+	      return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(this.dialog.type);
 	    }
 	  },
 	  watch: {
@@ -6021,11 +6263,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
 	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 	  },
 	  mounted() {
 	    this.initMentionManager();
 	    this.focus();
+	    this.$emit('mounted');
 	  },
 	  beforeUnmount() {
 	    this.resizeManager.destroy();
@@ -6035,6 +6279,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.replyMessage, this.onReplyMessage);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertForward, this.onInsertForward);
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.openUploadPreview, this.onOpenUploadPreview);
 	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 	  },
 	  methods: {
@@ -6135,12 +6380,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    async adjustTextareaHeight() {
 	      this.textareaHeight = 'auto';
 	      await this.$nextTick();
-	      const newMaxPoint = Math.min(ResizeManager.maxHeight, this.$refs.textarea.scrollHeight);
+	      const newMaxPoint = Math.min(TextareaHeight$1.max, this.$refs.textarea.scrollHeight);
 	      if (this.resizedTextareaHeight) {
 	        this.textareaHeight = Math.max(newMaxPoint, this.resizedTextareaHeight);
 	        return;
 	      }
-	      this.textareaHeight = Math.max(newMaxPoint, ResizeManager.minHeight);
+	      this.textareaHeight = Math.max(newMaxPoint, TextareaHeight$1.min);
 	    },
 	    saveTextareaHeight() {
 	      const WRITE_TO_STORAGE_TIMEOUT = 200;
@@ -6156,7 +6401,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.resizedTextareaHeight = savedHeight;
-	      this.adjustTextareaHeight();
+	      this.textareaHeight = savedHeight;
 	    },
 	    async restoreDraft() {
 	      const {
@@ -6227,8 +6472,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    onSendMessage(event) {
 	      const {
-	        text
+	        text,
+	        dialogId
 	      } = event.getData();
+	      if (this.dialogId !== dialogId) {
+	        return;
+	      }
 	      this.getSendingService().sendMessage({
 	        text,
 	        dialogId: this.dialogId
@@ -6237,12 +6486,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    onResizeStart(event) {
 	      this.resizeManager.onResizeStart(event, this.textareaHeight);
 	    },
-	    onFileSelect({
+	    async onFileSelect({
 	      event,
 	      sendAsFile
 	    }) {
-	      const files = Object.values(event.target.files);
-	      this.getUploadingService().addFilesFromInput(files, this.dialogId, sendAsFile);
+	      const uploaderId = await this.getUploadingService().uploadFromInput({
+	        event,
+	        sendAsFile,
+	        autoUpload: !this.isChannelType,
+	        dialogId: this.dialogId
+	      });
+	      if (this.isChannelType) {
+	        this.showUploadPreviewPopup = true;
+	        this.previewPopupUploaderId = uploaderId;
+	      }
 	    },
 	    onDiskFileSelect({
 	      files
@@ -6253,8 +6510,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const {
 	        mentionText,
 	        mentionReplacement,
-	        textToReplace = ''
+	        textToReplace = '',
+	        dialogId
 	      } = event.getData();
+	      if (this.dialogId !== dialogId) {
+	        return;
+	      }
 	      const mentions = this.mentionManager.addMentionReplacement(mentionText, mentionReplacement);
 	      this.draftManager.setDraftMentions(this.dialogId, mentions);
 	      this.text = this.mentionManager.prepareMentionText({
@@ -6265,44 +6526,62 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.focus();
 	    },
 	    onInsertText(event) {
+	      const {
+	        dialogId
+	      } = event.getData();
+	      if (this.dialogId !== dialogId) {
+	        return;
+	      }
 	      this.text = im_v2_lib_textarea.Textarea.insertText(this.$refs.textarea, event.getData());
 	      this.focus();
 	    },
 	    onEditMessage(event) {
 	      const {
-	        messageId
+	        messageId,
+	        dialogId
 	      } = event.getData();
+	      if (this.dialogId !== dialogId) {
+	        return;
+	      }
 	      this.openEditPanel(messageId);
 	    },
 	    onReplyMessage(event) {
 	      const {
-	        messageId
+	        messageId,
+	        dialogId
 	      } = event.getData();
+	      if (this.dialogId !== dialogId) {
+	        return;
+	      }
 	      this.openReplyPanel(messageId);
 	    },
 	    onInsertForward(event) {
 	      const {
-	        messageId
+	        messageId,
+	        dialogId
 	      } = event.getData();
+	      if (this.dialogId !== dialogId) {
+	        return;
+	      }
 	      this.openForwardPanel(messageId);
 	    },
 	    async onPaste(clipboardEvent) {
-	      const {
-	        clipboardData
-	      } = clipboardEvent;
-	      if (!clipboardData || !ui_uploader_core.isFilePasted(clipboardData)) {
-	        return;
-	      }
-	      clipboardEvent.preventDefault();
-	      const {
-	        files,
-	        uploaderId
-	      } = await this.getUploadingService().addFilesFromClipboard(clipboardData, this.dialogId).catch(error => {
-	        im_v2_lib_logger.Logger.error('Textarea: error paste file from clipboard', error);
+	      const uploaderId = await this.getUploadingService().uploadFromClipboard({
+	        clipboardEvent,
+	        dialogId: this.dialogId,
+	        autoUpload: false,
+	        imagesOnly: !this.isChannelType
 	      });
-	      if (files.length === 0) {
+	      if (!uploaderId) {
 	        return;
 	      }
+	      this.showUploadPreviewPopup = true;
+	      this.previewPopupUploaderId = uploaderId;
+	    },
+	    onOpenUploadPreview(event) {
+	      const {
+	        uploaderId
+	      } = event.getData();
 	      this.showUploadPreviewPopup = true;
 	      this.previewPopupUploaderId = uploaderId;
 	    },
@@ -6318,7 +6597,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }
 	    },
 	    initResizeManager() {
-	      this.resizeManager = new ResizeManager();
+	      this.resizeManager = new ResizeManager({
+	        direction: ResizeDirection.up,
+	        maxHeight: TextareaHeight$1.max,
+	        minHeight: TextareaHeight$1.min
+	      });
 	      this.resizeManager.subscribe(ResizeManager.events.onHeightChange, ({
 	        data: {
 	          newHeight
@@ -6395,7 +6678,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      const textWithMentions = this.mentionManager.replaceMentions(text);
-	      this.getUploadingService().sendSeparateMessagesWithFiles({
+	      this.getUploadingService().sendMessageWithFiles({
 	        uploaderId,
 	        text: textWithMentions
 	      });
@@ -6412,7 +6695,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    focus() {
 	      var _this$$refs;
-	      (_this$$refs = this.$refs) == null ? void 0 : _this$$refs.textarea.focus();
+	      (_this$$refs = this.$refs) == null ? void 0 : _this$$refs.textarea.focus({
+	        preventScroll: true
+	      });
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -6436,7 +6721,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						<textarea
 							v-model="text"
 							:style="textareaStyle"
-							:placeholder="loc('IM_TEXTAREA_PLACEHOLDER_V3')"
+							:placeholder="textareaPlaceholder"
 							:maxlength="textareaMaxLength"
 							@keydown="onKeyDown"
 							@paste="onPaste"
@@ -6447,8 +6732,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					</div>
 					<div class="bx-im-textarea__right">
 						<div class="bx-im-textarea__action-panel">
-							<CreateEntityMenu :dialogId="dialogId" :textareaValue="text" />
-							<div 
+							<CreateEntityMenu v-if="withCreateMenu" :dialogId="dialogId" :textareaValue="text" />
+							<div
+								v-if="withMarket"
 								:title="loc('IM_TEXTAREA_ICON_APPLICATION')"
 								@click="onMarketIconClick"
 								class="bx-im-textarea__icon --market"
@@ -6481,5 +6767,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.UI.Uploader,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=textarea.bundle.js.map

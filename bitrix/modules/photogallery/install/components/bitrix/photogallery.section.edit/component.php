@@ -164,9 +164,6 @@ elseif (
 	// Edit album
 	elseif ($arParams["ACTION"] != "NEW" && $arParams["ACTION"] != "DROP")
 	{
-		if ($arParams["AJAX_CALL"] == "Y")
-			CUtil::JSPostUnEscape();
-
 		if (!$bMultipleAction)
 		{
 			$arFields = array("IBLOCK_ID" => $iblockId);
@@ -372,8 +369,6 @@ elseif (
 	}
 	elseif ($arParams["ACTION"] == "NEW")
 	{
-		if ($arParams["AJAX_CALL"] == "Y")
-			CUtil::JSPostUnEscape();
 		$arFields = Array(
 			"ACTIVE" => "Y",
 			"IBLOCK_ID" => $iblockId,

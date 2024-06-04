@@ -4,7 +4,9 @@ return [
 	'extensions' => [
 		'apptheme',
 		'loc',
+		'toast',
 		'utils/object',
+		'im:messenger/assets/common',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/lib/element',

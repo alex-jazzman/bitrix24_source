@@ -85,7 +85,8 @@ export const ConferenceCreationMessage = {
 		<BaseMessage
 			:dialogId="dialogId"
 			:item="item"
-			:withDefaultContextMenu="false"
+			:withContextMenu="false"
+			:withReactions="false"
 			:withBackground="false"
 			class="bx-im-message-conference-creation__scope"
 		>

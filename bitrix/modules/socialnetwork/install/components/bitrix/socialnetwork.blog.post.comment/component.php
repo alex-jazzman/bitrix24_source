@@ -657,11 +657,6 @@ if (
 		&& $_POST["post"] <> ''
 	)
 	{
-		if (($_POST["decode"] ?? null) === "Y")
-		{
-			CUtil::JSPostUnescape();
-		}
-
 		if ($arResult["Perm"] >= Permissions::PREMODERATE)
 		{
 			if (!empty($arBlog))
@@ -752,15 +747,6 @@ if (
 					}
 				}
 
-				if (
-					isset($_POST['webdav_history'], $_POST['comment'])
-					&& $_POST['webdav_history'] === 'Y'
-					&& $_POST['comment'] <> ''
-				)
-				{
-					$_POST["comment"] = Text\Encoding::convertEncoding($_POST["comment"], 'UTF-8', LANG_CHARSET);
-				}
-
 				$UserIP = CBlogUser::GetUserIP();
 				$arFields = Array(
 					"POST_ID" => $arPost["ID"],
@@ -774,18 +760,15 @@ if (
 					"SEARCH_GROUP_ID" => Option::get("socialnetwork", "userbloggroup_id", false, SITE_ID)
 				);
 
-				if (\Bitrix\Main\Config\Configuration::getValue("utf_mode") === true)
-				{
-					$conn = \Bitrix\Main\Application::getConnection();
-					$table = \Bitrix\Blog\CommentTable::getTableName();
+				$conn = \Bitrix\Main\Application::getConnection();
+				$table = \Bitrix\Blog\CommentTable::getTableName();
 
-					if (
-						((string)$arFields['POST_TEXT'] !== '')
-						&& !$conn->isUtf8mb4($table, 'POST_TEXT')
-					)
-					{
-						$arFields["POST_TEXT"] = Text\Emoji::encode($arFields["POST_TEXT"]);
-					}
+				if (
+					((string)$arFields['POST_TEXT'] !== '')
+					&& !$conn->isUtf8mb4($table, 'POST_TEXT')
+				)
+				{
+					$arFields["POST_TEXT"] = Text\Emoji::encode($arFields["POST_TEXT"]);
 				}
 
 				if ($arResult["Perm"] === Permissions::PREMODERATE)
@@ -2003,8 +1986,8 @@ if (
 							$arComment["DATE_CREATE_DATE"] = FormatDateFromDB($arComment["DATE_CREATE"], FORMAT_DATE);
 							if (strcasecmp(LANGUAGE_ID, 'EN') !== 0 && strcasecmp(LANGUAGE_ID, 'DE') !== 0)
 							{
-								$arComment["DateFormated"] = ToLower($arComment["DateFormated"]);
-								$arComment["DATE_CREATE_DATE"] = ToLower($arComment["DATE_CREATE_DATE"]);
+								$arComment["DateFormated"] = mb_strtolower($arComment["DateFormated"]);
+								$arComment["DATE_CREATE_DATE"] = mb_strtolower($arComment["DATE_CREATE_DATE"]);
 							}
 							// strip current year
 							if (!empty($arParams['DATE_TIME_FORMAT_S']) && ($arParams['DATE_TIME_FORMAT_S'] === 'j F Y G:i' || $arParams['DATE_TIME_FORMAT_S'] === 'j F Y g:i a'))

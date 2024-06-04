@@ -43,6 +43,7 @@ $MESS["DOCUMENT_LIST_STUB_LINK_SHIPMENT"] = "Як фіксувати прода�
 $MESS["DOCUMENT_LIST_STUB_MIGRATION_LINK"] = "Перенести";
 $MESS["DOCUMENT_LIST_STUB_MIGRATION_MORE"] = "і більше";
 $MESS["DOCUMENT_LIST_STUB_MIGRATION_TITLE"] = "Перенесіть свої документи з інших систем до Бітрікс24";
+$MESS["DOCUMENT_LIST_STUB_MIGRATION_TITLE_MSGVER_1"] = "Перенесіть свої документи з інших систем у Бітрікс24";
 $MESS["DOCUMENT_LIST_STUB_NO_DATA_DESCRIPTION"] = "Спробуйте скинути значення у фільтрі або змінити запит пошуку";
 $MESS["DOCUMENT_LIST_STUB_NO_DATA_TITLE"] = "За вашим запитом нічого не знайдено";
 $MESS["DOCUMENT_LIST_STUB_TITLE_ARRIVAL"] = "Створіть перший прихід товару";

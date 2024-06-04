@@ -3,7 +3,6 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, module) => {
 	const { Type } = require('type');
-
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 
 	/**
@@ -35,6 +34,8 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 				size: null,
 				isPlaying: null,
 				playingTime: null,
+				/** @type {AudioRate} */
+				rate: 1,
 			};
 
 			this.setAudioId(file.id);
@@ -43,6 +44,7 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 			this.setPlayingTime(modelMessage.playingTime);
 			this.setSize(file.size);
 			this.setIsPlaying(modelMessage.audioPlaying);
+			this.setRate(options.audioRate);
 
 			if (modelMessage.text !== '')
 			{
@@ -115,6 +117,14 @@ jn.define('im/messenger/lib/element/dialog/message/audio', (require, exports, mo
 		{
 			this.isPlaying = Boolean(audioPlaying);
 			this.audio.isPlaying = Boolean(audioPlaying);
+		}
+
+		/**
+		 * @param {AudioRate} rate
+		 */
+		setRate(rate)
+		{
+			this.audio.rate = rate;
 		}
 	}
 

@@ -9,8 +9,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 	const { Counters } = require('im/messenger/lib/counters');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { runAction } = require('im/messenger/lib/rest');
-	const { RestMethod } = require('im/messenger/const/rest');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, RestMethod, DialogType } = require('im/messenger/const');
 	const { QueueService } = require('im/messenger/provider/service/queue');
 
 	class ActionService
@@ -41,21 +40,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 		{
 			await this.saveMessage(modelMessage);
 
-			let clientDonePromise;
-			if (this.isViewedByOtherUsers(modelMessage))
-			{
-				// eslint-disable-next-line no-param-reassign
-				modelMessage.text = Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED');
-
-				clientDonePromise = this.updateMessage(modelMessage, modelMessage.text, dialogId, true)
-					.catch((r) => Logger.error(r));
-			}
-			else
-			{
-				clientDonePromise = this.fullDeleteMessage(modelMessage, dialogId).catch((r) => Logger.error(r));
-			}
-
-			clientDonePromise
+			this.#localDelete(modelMessage, dialogId)
 				.then(() => this.deleteRequest(modelMessage.id))
 				.catch((errors) => {
 					Logger.error('ActionService.delete.deleteRequest.catch: ', errors);
@@ -65,6 +50,51 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				.finally(() => this.deleteTemporaryMessage(modelMessage.id))
 				.catch((errors) => Logger.error('ActionService.delete.deleteTemporaryMessage.catch: ', errors))
 			;
+		}
+
+		async #localDelete(modelMessage, dialogId)
+		{
+			const dialogModel = this.store.getters['dialoguesModel/getById'](dialogId);
+
+			switch (dialogModel.type)
+			{
+				case DialogType.comment:
+				{
+					return this.updateMessage(
+						modelMessage,
+						Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED'),
+						dialogId,
+						true,
+					)
+						.catch((error) => Logger.error(error))
+					;
+				}
+
+				case DialogType.channel:
+				case DialogType.openChannel:
+				{
+					return this.fullDeleteMessage(modelMessage, dialogId)
+						.catch((error) => Logger.error(error))
+					;
+				}
+
+				default:
+				{
+					if (this.isViewedByOtherUsers(modelMessage))
+					{
+						return this.updateMessage(
+							modelMessage,
+							Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED'),
+							dialogId,
+							true,
+						)
+							.catch((error) => Logger.error(error))
+						;
+					}
+
+					return this.fullDeleteMessage(modelMessage, dialogId).catch((r) => Logger.error(r));
+				}
+			}
 		}
 
 		/**

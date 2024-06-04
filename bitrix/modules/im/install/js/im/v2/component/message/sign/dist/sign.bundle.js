@@ -11,7 +11,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  inviteEmployeeSes: 'inviteEmployeeSes',
 	  inviteEmployeeTaxcom: 'inviteEmployeeTaxcom',
 	  inviteEmployeeGosKey: 'inviteEmployeeGosKey',
-	  inviteReviewer: 'inviteReviewer'
+	  inviteReviewer: 'inviteReviewer',
+	  inviteEditor: 'inviteEditor'
 	});
 	const Success = Object.freeze({
 	  doneCompany: 'doneCompany',
@@ -36,7 +37,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      callback: ({
 	        user,
 	        document
-	      }) => {},
+	      }) => {
+	        goToPrimaryLink(document, true);
+	      },
 	      color: im_v2_component_elements.ButtonColor.Primary
 	    }
 	  },
@@ -48,7 +51,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      callback: ({
 	        user,
 	        document
-	      }) => {},
+	      }) => {
+	        goToPrimaryLink(document, true);
+	      },
 	      color: im_v2_component_elements.ButtonColor.Primary
 	    }
 	  },
@@ -60,7 +65,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      callback: ({
 	        user,
 	        document
-	      }) => {},
+	      }) => {
+	        goToPrimaryLink(document, true);
+	      },
 	      color: im_v2_component_elements.ButtonColor.Primary
 	    }
 	  },
@@ -71,13 +78,29 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  [Await.inviteReviewer]: {
 	    title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_INVITE_REVIEWER_TITLE'),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_INVITE_REVIEWER_DESCRIPTION'),
+	    description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_INVITE_REVIEWER_DESCRIPTION_MSGVER_1'),
 	    button: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SIGN_INVITE_REVIEWER_BUTTON_TEXT'),
 	      callback: ({
 	        user,
 	        document
-	      }) => {},
+	      }) => {
+	        goToPrimaryLink(document, true);
+	      },
+	      color: im_v2_component_elements.ButtonColor.Primary
+	    }
+	  },
+	  [Await.inviteEditor]: {
+	    title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_INVITE_EDITOR_TITLE'),
+	    description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_INVITE_EDITOR_DESCRIPTION'),
+	    button: {
+	      text: main_core.Loc.getMessage('IM_MESSAGE_SIGN_INVITE_EDITOR_BUTTON_TEXT'),
+	      callback: ({
+	        user,
+	        document
+	      }) => {
+	        goToPrimaryLink(document, true);
+	      },
 	      color: im_v2_component_elements.ButtonColor.Primary
 	    }
 	  },
@@ -89,7 +112,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      callback: ({
 	        user,
 	        document
-	      }) => {},
+	      }) => {
+	        goToPrimaryLink(document, false);
+	      },
 	      color: im_v2_component_elements.ButtonColor.PrimaryBorder
 	    }
 	  },
@@ -101,7 +126,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      callback: ({
 	        user,
 	        document
-	      }) => {},
+	      }) => {
+	        goToPrimaryLink(document, true);
+	      },
 	      color: im_v2_component_elements.ButtonColor.PrimaryBorder
 	    }
 	  },
@@ -113,7 +140,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      callback: ({
 	        user,
 	        document
-	      }) => {},
+	      }) => {
+	        goToPrimaryLink(document, true);
+	      },
 	      color: im_v2_component_elements.ButtonColor.PrimaryBorder
 	    }
 	  },
@@ -129,7 +158,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  [Success.doneFromReviewer]: {
 	    title: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_TITLE'),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_DESCRIPTION'),
+	    description: main_core.Loc.getMessage('IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_DESCRIPTION_MSGVER_1'),
 	    button: null
 	  },
 	  [Failure.refusedCompany]: {
@@ -148,6 +177,47 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    button: null
 	  }
 	};
+	function goToPrimaryLink(document, openInSlider = false) {
+	  if (document.link !== undefined) {
+	    if (!main_core.Browser.isMobile() && openInSlider) {
+	      openLinkInSlider(document.link);
+	    } else {
+	      window.open(document.link);
+	    }
+	  }
+	}
+	function openLinkInSlider(link) {
+	  if (!isValidSigningLink(link)) {
+	    return;
+	  }
+	  BX.SidePanel.Instance.open('sign:stub:sign-link', {
+	    width: 900,
+	    cacheable: false,
+	    allowCrossOrigin: true,
+	    allowCrossDomain: true,
+	    allowChangeHistory: false,
+	    newWindowUrl: link,
+	    copyLinkLabel: true,
+	    newWindowLabel: true,
+	    loader: '/bitrix/js/intranet/sidepanel/bindings/images/sign_mask.svg',
+	    label: {
+	      text: main_core.Loc.getMessage('IM_MESSAGE_SIGN_SIDEPANEL_BTN_SIGN'),
+	      bgColor: '#C48300'
+	    },
+	    contentCallback(slider) {
+	      return BX.Runtime.loadExtension('sign.v2.b2e.sign-link').then(exports => {
+	        const memberIdFromLinkToSigning = /\/sign\/link\/member\/(\d+)\//i.exec(link);
+	        return new exports.SignLink({
+	          memberId: memberIdFromLinkToSigning[1],
+	          slider
+	        }).render();
+	      });
+	    }
+	  });
+	}
+	function isValidSigningLink(link) {
+	  return /^\/sign\/link\/member\/\d+\/$/.test(link);
+	}
 
 	const PARAMS_KEY = {
 	  STAGE_ID: 'stageId',
@@ -263,6 +333,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			v-else
 			:dialogId="dialogId"
 			:item="item"
+			:withContextMenu="false"
+			:withReactions="false"
 			:withBackground="false"
 			class="bx-im-message-sign__scope"
 		>

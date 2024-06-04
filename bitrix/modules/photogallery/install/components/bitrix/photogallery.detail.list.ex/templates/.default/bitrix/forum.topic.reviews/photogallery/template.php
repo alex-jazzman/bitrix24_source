@@ -50,7 +50,7 @@ $arResult["MESSAGES_REV"] = array_reverse($arResult["MESSAGES"], true);
 							);
 					$arRatingParams = array_merge($arRatingParams, $res['RATING']);
 					// mantis:48973
-					?><script type="text/javascript">if (!window.BX && top.BX){window.BX = top.BX;}</script><?
+					?><script>if (!window.BX && top.BX){window.BX = top.BX;}</script><?
 					$GLOBALS["APPLICATION"]->IncludeComponent( "bitrix:rating.vote", $arParams["RATING_TYPE"], $arRatingParams, $component, array("HIDE_ICONS" => "Y"));
 					?>
 				</span>

@@ -4,8 +4,6 @@ import { ChatDialog } from 'im.v2.component.dialog.chat';
 
 import { CopilotMessageList } from './message-list';
 
-import '../css/dialog.css';
-
 import type { BitrixVueComponentProps } from 'ui.vue3';
 
 // @vue/component

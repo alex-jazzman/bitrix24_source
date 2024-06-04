@@ -38,12 +38,6 @@
 	text-decoration: none;
 }
 
-.bx-im-copilot-header__avatar_default {
-	width: 42px;
-	height: 42px;
-	background-image: url('./images/avatar.svg?v2');
-}
-
 .bx-im-copilot-header__avatar_input {
 	display: none;
 }
@@ -98,5 +92,14 @@
 
 .bx-im-copilot-header__icon.--add-users.--active {
 	background-image: url('./images/add-users-active.svg');
+	opacity: 1;
+}
+
+.bx-im-copilot-header__icon.--panel {
+	background-image: url('./images/panel.svg');
+}
+
+.bx-im-copilot-header__icon.--panel.--active {
+	background-image: url('./images/panel-active.svg');
 	opacity: 1;
 }

@@ -1,9 +1,11 @@
 <?php
 $MESS['IM_SIDEBAR_HEADER_TITLE'] = "О чате";
+$MESS['IM_SIDEBAR_CHANNEL_HEADER_TITLE'] = "О канале";
+$MESS['IM_SIDEBAR_COMMENTS_HEADER_TITLE'] = "О посте";
+$MESS['IM_SIDEBAR_COMMENTS_POST_PREVIEW_TITLE'] = "Комментарии";
 $MESS['IM_SIDEBAR_ENABLE_NOTIFICATION_TITLE_2'] = "Звук";
 $MESS['IM_SIDEBAR_ENABLE_AUTODELETE_TITLE'] = "Автоудаление сообщений";
 $MESS['IM_SIDEBAR_AUTODELETE_STATUS_OFF'] = "Выкл";
-$MESS['IM_SIDEBAR_ADD_BUTTON_TEXT'] = "Добавить";
 $MESS['IM_SIDEBAR_CREATE_GROUP_CHAT'] = "Создать групповой чат";
 $MESS['IM_SIDEBAR_COPY_INVITE_LINK'] = "Скопировать ссылку на чат";
 $MESS['IM_SIDEBAR_COPIED_SUCCESS'] = "Ссылка скопирована";
@@ -19,15 +21,18 @@ $MESS['IM_SIDEBAR_SEARCH_MESSAGE_START_TITLE'] = "Здесь появятся с
 // detail titles
 $MESS['IM_SIDEBAR_MAIN_DETAIL_TITLE'] = "Участники: #NUMBER#";
 $MESS['IM_SIDEBAR_MEMBERS_DETAIL_TITLE'] = "Участники: #NUMBER#";
+$MESS['IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE'] = "Подписчики: #NUMBER#";
 $MESS['IM_SIDEBAR_FAVORITE_DETAIL_TITLE'] = "Избранное";
 $MESS['IM_SIDEBAR_LINK_DETAIL_TITLE'] = "Ссылки из сообщений";
 $MESS['IM_SIDEBAR_TASK_DETAIL_TITLE'] = "Задачи";
 $MESS['IM_SIDEBAR_MEDIA_DETAIL_TITLE'] = "Медиа и файлы";
 $MESS['IM_SIDEBAR_FILEUNSORTED_DETAIL_TITLE'] = "Медиа и файлы";
 $MESS['IM_SIDEBAR_MEETING_DETAIL_TITLE'] = "Встречи";
+$MESS['IM_SIDEBAR_SUPPORT_TICKET_DETAIL_TITLE'] = "Все чаты";
 $MESS['IM_SIDEBAR_BRIEF_DETAIL_TITLE'] = "Резюме встреч";
 $MESS['IM_SIDEBAR_MARKET_DETAIL_TITLE'] = "Приложения";
 $MESS['IM_SIDEBAR_CHATSWITHUSER_DETAIL_TITLE'] = "Чаты с сотрудником";
+$MESS['IM_SIDEBAR_SUPPORT_TICKET_TITLE'] = "Все чаты";
 
 //context menu
 $MESS['IM_SIDEBAR_MENU_VIEW_FILE'] = "Просмотреть";
@@ -47,6 +52,8 @@ $MESS['IM_SIDEBAR_MENU_DELETE_FROM_LINKS'] = "Скрыть из списка";
 $MESS['IM_SIDEBAR_MENU_INSERT_NAME'] = "Упомянуть в чате";
 $MESS['IM_SIDEBAR_MENU_DELETE_TASK_CONNECTION'] = "Удалить связь задачи с чатом";
 $MESS['IM_SIDEBAR_MENU_DELETE_MEETING_CONNECTION'] = "Удалить связь встречи с чатом";
+$MESS['IM_SIDEBAR_MENU_MANAGER_ADD'] = "Сделать администратором";
+$MESS['IM_SIDEBAR_MENU_MANAGER_REMOVE'] = "Исключить из администраторов";
 
 // empty states
 $MESS['IM_SIDEBAR_LINKS_EMPTY'] = "Нет ссылок";
@@ -71,3 +78,18 @@ $MESS['IM_SIDEBAR_FILES_OTHER_TAB'] = "Другое";
 $MESS['IM_SIDEBAR_CHAT_TYPE_GROUP_V2'] = "Групповой чат";
 $MESS['IM_SIDEBAR_CHAT_TYPE_USER'] = "Пользователь";
 $MESS['IM_SIDEBAR_CHAT_TYPE_BOT'] = "Чат-бот";
+$MESS['IM_SIDEBAR_CHAT_TYPE_CHANNEL'] = "Канал";
+$MESS['IM_SIDEBAR_CHAT_TYPE_COMMENTS'] = "Комментарии";
+
+//support statuses
+$MESS['IM_SIDEBAR_SUPPORT_TICKET_STATUS_NEW'] = "открыт";
+$MESS['IM_SIDEBAR_SUPPORT_TICKET_STATUS_OPEN'] = "открыт";
+$MESS['IM_SIDEBAR_SUPPORT_TICKET_STATUS_CLOSE'] = "закрыт";
+
+// add buttons
+$MESS['IM_SIDEBAR_ADD_BUTTON_TEXT'] = "Добавить";
+$MESS['IM_SIDEBAR_SUPPORT_TICKET_ADD_BUTTON_TEXT'] = "Открыть новый";
+
+$MESS['IM_SIDEBAR_SUPPORT_TICKET_LIMIT'] = "Превышено число вопросов в поддержку, которые ждут решения.";
+$MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_DIALOG_TITLE'] = "Изменить роль";
+$MESS['IM_SIDEBAR_COPILOT_CHANGE_ROLE_PROMO_TEXT'] = "Выберите роль [copilot_color]CoPilot[/copilot_color] для более точных ответов в нужной области";

@@ -20,6 +20,11 @@ export const ChatAvatar = {
 			type: String,
 			required: true,
 		},
+		squared: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	emits: ['avatarChange'],
 	data(): JsonObject
@@ -72,7 +77,7 @@ export const ChatAvatar = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-create-chat__avatar_container" @click="onAvatarChangeClick">
+		<div class="bx-im-content-create-chat__avatar_container" :class="{'--squared': squared}" @click="onAvatarChangeClick">
 			<img v-if="preparedAvatar" class="bx-im-content-create-chat__avatar_image" :src="preparedAvatar" :alt="chatTitle" />
 		</div>
 		<input type="file" @change="onAvatarSelect" accept="image/*" class="bx-im-content-create-chat__avatar_input" ref="avatarInput">

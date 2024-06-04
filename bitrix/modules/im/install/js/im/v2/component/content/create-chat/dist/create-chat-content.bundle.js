@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_animation,ui_entitySelector,main_core,main_core_events,main_popup,im_public,im_v2_application_core,im_v2_lib_createChat,im_v2_lib_permission,im_v2_provider_service,im_v2_const,ui_forms,im_v2_component_elements) {
+(function (exports,im_v2_component_animation,ui_entitySelector,main_core,im_v2_component_elements,ui_notification,main_core_events,main_popup,im_public,im_v2_application_core,im_v2_lib_createChat,im_v2_lib_permission,im_v2_provider_service,im_v2_const) {
 	'use strict';
 
 	// @vue/component
@@ -29,9 +29,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  methods: {
 	    onInput(event) {
 	      this.$emit('update:modelValue', event.target.value);
-	    },
-	    loc(phraseCode) {
-	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
 	  },
 	  template: `
@@ -60,6 +57,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    chatTitle: {
 	      type: String,
 	      required: true
+	    },
+	    squared: {
+	      type: Boolean,
+	      required: false,
+	      default: false
 	    }
 	  },
 	  emits: ['avatarChange'],
@@ -98,7 +100,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<div class="bx-im-content-create-chat__avatar_container" @click="onAvatarChangeClick">
+		<div class="bx-im-content-create-chat__avatar_container" :class="{'--squared': squared}" @click="onAvatarChangeClick">
 			<img v-if="preparedAvatar" class="bx-im-content-create-chat__avatar_image" :src="preparedAvatar" :alt="chatTitle" />
 		</div>
 		<input type="file" @change="onAvatarSelect" accept="image/*" class="bx-im-content-create-chat__avatar_input" ref="avatarInput">
@@ -235,35 +237,40 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    title: {
 	      type: String,
 	      required: true
+	    },
+	    openByDefault: {
+	      type: Boolean,
+	      required: false,
+	      default: false
 	    }
 	  },
 	  data() {
 	    return {
-	      isFolded: true
+	      isOpened: false
 	    };
 	  },
 	  computed: {
 	    containerClasses() {
 	      return [`--${this.name}`, {
-	        '--active': !this.isFolded
+	        '--active': this.isOpened
 	      }];
+	    }
+	  },
+	  created() {
+	    if (this.openByDefault) {
+	      this.isOpened = true;
 	    }
 	  },
 	  methods: {
 	    onContainerClick() {
-	      if (this.isFolded) {
-	        this.isFolded = false;
-	      }
-	    },
-	    onHeaderClick() {
-	      if (!this.isFolded) {
-	        this.isFolded = true;
+	      if (!this.isOpened) {
+	        this.isOpened = true;
 	      }
 	    }
 	  },
 	  template: `
 		<div :class="containerClasses" class="bx-im-content-create-chat__section bx-im-content-create-chat__section_scope">
-			<div @click="isFolded = !isFolded" class="bx-im-content-create-chat__section_header">
+			<div @click="isOpened = !isOpened" class="bx-im-content-create-chat__section_header">
 				<div class="bx-im-content-create-chat__section_left">
 					<div class="bx-im-content-create-chat__section_icon"></div>
 					<div class="bx-im-content-create-chat__section_text">{{ title }}</div>
@@ -271,7 +278,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div class="bx-im-content-create-chat__section_right"></div>	
 			</div>
 			<ExpandAnimation>
-				<div v-if="!isFolded" class="bx-im-content-create-chat__section_content_container">
+				<div v-if="isOpened" class="bx-im-content-create-chat__section_content_container">
 					<div class="bx-im-content-create-chat__section_content">
 						<slot></slot>
 					</div>
@@ -282,11 +289,115 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
+	const TextareaInput = {
+	  name: 'TextareaInput',
+	  props: {
+	    value: {
+	      type: String,
+	      default: ''
+	    },
+	    placeholder: {
+	      type: String,
+	      required: true
+	    },
+	    border: {
+	      type: Boolean,
+	      required: false,
+	      default: true
+	    },
+	    rounded: {
+	      type: Boolean,
+	      required: false,
+	      default: true
+	    }
+	  },
+	  emits: ['input'],
+	  data() {
+	    return {};
+	  },
+	  computed: {
+	    containerClasses() {
+	      return {
+	        '--no-border': !this.border,
+	        '--rounded': this.rounded
+	      };
+	    }
+	  },
+	  methods: {
+	    onInput(event) {
+	      this.$emit('input', event.target.value);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-content-create-chat__textarea_container" :class="containerClasses">
+			<div class="ui-ctl ui-ctl-textarea ui-ctl-w100 ui-ctl-no-resize">
+				<textarea
+					:value="value"
+					:placeholder="placeholder"
+					@input="onInput"
+					class="bx-im-content-create-chat__textarea ui-ctl-element"
+				></textarea>
+			</div>
+		</div>
+	`
+	};
+
+	// @vue/component
+	const RadioOption = {
+	  name: 'RadioOption',
+	  props: {
+	    items: {
+	      type: Array,
+	      required: true
+	    }
+	  },
+	  emits: ['change'],
+	  data() {
+	    return {
+	      groupName: main_core.Text.getRandom()
+	    };
+	  },
+	  computed: {
+	    options() {
+	      return this.items;
+	    },
+	    selectedValue() {
+	      return this.options.find(option => {
+	        return option.selected === true;
+	      });
+	    }
+	  },
+	  methods: {
+	    onInput(option) {
+	      this.$emit('change', option.value);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-content-create-chat-radio__container">
+			<label v-for="option in options" class="bx-im-content-create-chat-radio__item ui-ctl ui-ctl-radio">
+				<input type="radio" class="ui-ctl-element" :name="groupName" :checked="option.selected" @input="onInput(option)">
+				<div class="ui-ctl-label-text">
+					<!-- Text -->
+					<div v-if="option.html" class="bx-im-content-create-chat-radio__label_title" v-html="option.text"></div>
+					<div v-else class="bx-im-content-create-chat-radio__label_title">{{ option.text }}</div>
+					<!-- Subtext -->
+					<template v-if="option.subtext">
+						<div v-if="option.html" class="bx-im-content-create-chat-radio__label_subtitle" v-html="option.subtext"></div>
+						<div v-else class="bx-im-content-create-chat-radio__label_subtitle">{{ option.subtext }}</div>
+					</template>
+				</div>
+			</label>
+		</div>
+	`
+	};
+
+	// @vue/component
 	const SettingsSection = {
 	  components: {
 	    CreateChatSection,
 	    Dropdown: im_v2_component_elements.Dropdown,
-	    Toggle: im_v2_component_elements.Toggle
+	    TextareaInput,
+	    RadioOption
 	  },
 	  props: {
 	    description: {
@@ -307,7 +418,19 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    return {};
 	  },
 	  computed: {
-	    ToggleSize: () => im_v2_component_elements.ToggleSize,
+	    privacyOptions() {
+	      return [{
+	        value: false,
+	        text: this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_PRIVATE_TITLE'),
+	        subtext: this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_PRIVATE_SUBTITLE'),
+	        selected: !this.isAvailableInSearch
+	      }, {
+	        value: true,
+	        text: this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_OPEN_TITLE'),
+	        subtext: this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_OPEN_SUBTITLE'),
+	        selected: this.isAvailableInSearch
+	      }];
+	    },
 	    descriptionPlaceholderText() {
 	      return this.loc('IM_CREATE_CHAT_SETTINGS_SECTION_DESCRIPTION_PLACEHOLDER', {
 	        '#BR#': '\n',
@@ -320,11 +443,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    onTypeChange(isAvailableInSearch) {
 	      this.$emit('chatTypeChange', isAvailableInSearch);
 	    },
-	    onDescriptionChange(event) {
-	      this.$emit('descriptionChange', event.target.value);
-	    },
-	    onToggleLabelClick() {
-	      this.$refs.toggle.toggle();
+	    onDescriptionChange(description) {
+	      this.$emit('descriptionChange', description);
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -336,24 +456,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div class="bx-im-content-create-chat__heading">
 					{{ loc('IM_CREATE_CHAT_SETTINGS_SECTION_PRIVACY') }}
 				</div>
-				<div class="bx-im-content-create-chat-settings__type-select">
-					<Toggle :size="ToggleSize.M" :isEnabled="isAvailableInSearch" @change="onTypeChange" ref="toggle" />
-					<div @click="onToggleLabelClick" class="bx-im-content-create-chat-settings__type-select_label">
-						{{ loc('IM_CREATE_CHAT_SETTINGS_SECTION_AVAILABLE_FOR_SEARCH') }}
-					</div>
-				</div>	
+				<RadioOption :items="privacyOptions" @change="onTypeChange" />
 			</div>
 			<div class="bx-im-content-create-chat__section_block">
 				<div class="bx-im-content-create-chat__heading">{{ loc('IM_CREATE_CHAT_SETTINGS_SECTION_DESCRIPTION') }}</div>
 				<div class="bx-im-content-create-chat-settings__description_container">
-					<div class="ui-ctl ui-ctl-textarea ui-ctl-w100 ui-ctl-no-resize">
-						<textarea
-							@input="onDescriptionChange"
-							:value="description"
-							:placeholder="descriptionPlaceholderText"
-							class="bx-im-content-create-chat-settings__description ui-ctl-element"
-						></textarea>
-					</div>
+					<TextareaInput
+						:value="description"
+						:placeholder="descriptionPlaceholderText"
+						:rounded="false"
+						@input="onDescriptionChange"
+					/>
 				</div>
 			</div>
 		</CreateChatSection>
@@ -527,12 +640,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      type: String,
 	      required: true
 	    },
-	    canPost: {
+	    manageMessages: {
 	      type: String,
 	      required: true
 	    }
 	  },
-	  emits: ['ownerChange', 'managersChange', 'manageUsersAddChange', 'manageUsersDeleteChange', 'manageUiChange', 'canPostChange'],
+	  emits: ['ownerChange', 'managersChange', 'manageUsersAddChange', 'manageUsersDeleteChange', 'manageUiChange', 'manageMessagesChange'],
 	  data() {
 	    return {};
 	  },
@@ -577,9 +690,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        };
 	      });
 	    },
-	    canPostItems() {
+	    manageMessagesItems() {
 	      return rightsDropdownItems.map(item => {
-	        if (item.value === this.canPost) {
+	        if (item.value === this.manageMessages) {
 	          return {
 	            ...item,
 	            default: true
@@ -607,8 +720,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    onManageUiChange(newValue) {
 	      this.$emit('manageUiChange', newValue);
 	    },
-	    onCanPostChange(newValue) {
-	      this.$emit('canPostChange', newValue);
+	    onManageMessagesChange(newValue) {
+	      this.$emit('manageMessagesChange', newValue);
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -657,7 +770,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					{{ loc('IM_CREATE_CHAT_RIGHTS_SECTION_MANAGE_SENDING_MSGVER_1') }}
 				</div>
 				<div class="bx-im-content-create-chat-settings__manage-select">
-					<Dropdown :items="canPostItems" :id="PopupType.createChatCanPostMenu" @itemChange="onCanPostChange" />
+					<Dropdown :items="manageMessagesItems" :id="PopupType.createChatManageMessagesMenu" @itemChange="onManageMessagesChange" />
 				</div>
 			</div>
 		</CreateChatSection>
@@ -706,7 +819,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageUsersDelete: '',
 	        manageSettings: '',
 	        manageUi: '',
-	        canPost: ''
+	        manageMessages: ''
 	      }
 	    };
 	  },
@@ -725,7 +838,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    im_v2_lib_createChat.CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
 	  },
 	  beforeUnmount() {
-	    if (this.exitByCancel || this.exitByChatTypeSwitch) {
+	    if (this.exitByCancel || this.exitByChatTypeSwitch || this.exitByCreation) {
 	      return;
 	    }
 	    this.saveFields();
@@ -755,8 +868,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    onManageUiChange(newValue) {
 	      this.rights.manageUi = newValue;
 	    },
-	    onCanPostChange(newValue) {
-	      this.rights.canPost = newValue;
+	    onManageMessagesChange(newValue) {
+	      this.rights.manageMessages = newValue;
 	    },
 	    async onCreateClick() {
 	      this.isCreating = true;
@@ -774,7 +887,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageUsersDelete: this.rights.manageUsersDelete,
 	        manageUi: this.rights.manageUi,
 	        manageSettings: this.rights.manageSettings,
-	        canPost: this.rights.canPost
+	        manageMessages: this.rights.manageMessages
 	      }).catch(() => {
 	        this.isCreating = false;
 	        BX.UI.Notification.Center.notify({
@@ -782,6 +895,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        });
 	      });
 	      this.isCreating = false;
+	      this.exitByCreation = true;
 	      im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
 	      void im_public.Messenger.openChat(newDialogId);
 	    },
@@ -799,7 +913,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      (_MenuManager$getMenuB = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersAddMenu)) == null ? void 0 : _MenuManager$getMenuB.close();
 	      (_MenuManager$getMenuB2 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersDeleteMenu)) == null ? void 0 : _MenuManager$getMenuB2.close();
 	      (_MenuManager$getMenuB3 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUiMenu)) == null ? void 0 : _MenuManager$getMenuB3.close();
-	      (_MenuManager$getMenuB4 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatCanPostMenu)) == null ? void 0 : _MenuManager$getMenuB4.close();
+	      (_MenuManager$getMenuB4 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageMessagesMenu)) == null ? void 0 : _MenuManager$getMenuB4.close();
 	    },
 	    onLayoutChange(event) {
 	      const {
@@ -841,13 +955,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageUsersAdd,
 	        manageUsersDelete,
 	        manageUi,
-	        manageSettings
+	        manageSettings,
+	        manageMessages
 	      } = im_v2_lib_permission.PermissionManager.getInstance().getDefaultRolesForActionGroups();
 	      this.rights.manageUsersAdd = manageUsersAdd;
 	      this.rights.manageUsersDelete = manageUsersDelete;
 	      this.rights.manageUi = manageUi;
 	      this.rights.manageSettings = manageSettings;
-	      this.rights.canPost = im_v2_const.UserRole.member;
+	      this.rights.manageMessages = manageMessages;
 	    },
 	    getChatService() {
 	      if (!this.chatService) {
@@ -865,7 +980,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" />
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHAT_TITLE_PLACEHOLDER')" />
 			</div>
-			<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			<div class="bx-im-content-create-chat__members_container">
+				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			</div>
 			<SettingsSection
 				:isAvailableInSearch="settings.isAvailableInSearch"
 				:description="settings.description"
@@ -879,13 +996,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:manageUsersDelete="rights.manageUsersDelete"
 				:manageUi="rights.manageUi"
 				:manageSettings="rights.manageSettings"
-				:canPost="rights.canPost"
+				:manageMessages="rights.manageMessages"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
 				@manageUsersAddChange="onManageUsersAddChange"
 				@manageUsersDeleteChange="onManageUsersDeleteChange"
 				@manageUiChange="onManageUiChange"
-				@canPostChange="onCanPostChange"
+				@manageMessagesChange="onManageMessagesChange"
 			/> 
 		</div>
 		<ButtonPanel
@@ -929,7 +1046,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      this.$emit('passwordChange', event.target.value);
 	    },
 	    onToggleLabelClick() {
-	      this.$refs.toggle.toggle();
+	      this.onPasswordNeededChange(!this.passwordNeeded);
 	    },
 	    loc(phraseCode, replacements = {}) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -941,9 +1058,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div class="bx-im-content-create-chat__heading">
 					{{ loc('IM_CREATE_CHAT_CONFERENCE_SECTION_PRIVACY') }}
 				</div>
-				<div class="bx-im-content-create-chat-settings__type-select">
-					<Toggle :size="ToggleSize.M" :isEnabled="passwordNeeded" @change="onPasswordNeededChange" ref="toggle" />
-					<div @click="onToggleLabelClick" class="bx-im-content-create-chat-settings__type-select_label">
+				<div @click="onToggleLabelClick" class="bx-im-content-create-chat-settings__type-select">
+					<Toggle :size="ToggleSize.M" :isEnabled="passwordNeeded" />
+					<div class="bx-im-content-create-chat-settings__type-select_label">
 						{{ loc('IM_CREATE_CHAT_CONFERENCE_SECTION_USE_PASSWORD') }}
 					</div>
 				</div>
@@ -994,7 +1111,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageUsersDelete: '',
 	        manageSettings: '',
 	        manageUi: '',
-	        canPost: ''
+	        manageMessages: ''
 	      }
 	    };
 	  },
@@ -1040,8 +1157,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    onManageUiChange(newValue) {
 	      this.rights.manageUi = newValue;
 	    },
-	    onCanPostChange(newValue) {
-	      this.rights.canPost = newValue;
+	    onManageMessagesChange(newValue) {
+	      this.rights.manageMessages = newValue;
 	    },
 	    onAvatarChange(newAvatarFile) {
 	      this.avatarFile = newAvatarFile;
@@ -1073,7 +1190,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageUsersDelete: this.rights.manageUsersDelete,
 	        manageUi: this.rights.manageUi,
 	        manageSettings: this.rights.manageSettings,
-	        canPost: this.rights.canPost,
+	        manageMessages: this.rights.manageMessages,
 	        conferencePassword: this.conference.passwordNeeded ? this.conference.password : ''
 	      }).catch(() => {
 	        this.isCreating = false;
@@ -1095,7 +1212,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      (_MenuManager$getMenuB = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersAddMenu)) == null ? void 0 : _MenuManager$getMenuB.close();
 	      (_MenuManager$getMenuB2 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersDeleteMenu)) == null ? void 0 : _MenuManager$getMenuB2.close();
 	      (_MenuManager$getMenuB3 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUiMenu)) == null ? void 0 : _MenuManager$getMenuB3.close();
-	      (_MenuManager$getMenuB4 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatCanPostMenu)) == null ? void 0 : _MenuManager$getMenuB4.close();
+	      (_MenuManager$getMenuB4 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageMessagesMenu)) == null ? void 0 : _MenuManager$getMenuB4.close();
 	    },
 	    onLayoutChange(event) {
 	      const {
@@ -1140,13 +1257,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        manageUsersAdd,
 	        manageUsersDelete,
 	        manageUi,
-	        manageSettings
+	        manageSettings,
+	        manageMessages
 	      } = im_v2_lib_permission.PermissionManager.getInstance().getDefaultRolesForActionGroups();
 	      this.rights.manageUsersAdd = manageUsersAdd;
 	      this.rights.manageUsersDelete = manageUsersDelete;
 	      this.rights.manageUi = manageUi;
 	      this.rights.manageSettings = manageSettings;
-	      this.rights.canPost = im_v2_const.UserRole.member;
+	      this.rights.manageMessages = manageMessages;
 	    },
 	    checkPassword() {
 	      const PASSWORD_MIN_LENGTH = 3;
@@ -1174,10 +1292,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  template: `
 		<div class="bx-im-content-create-chat__content" @scroll="onScroll">
 			<div class="bx-im-content-create-chat__header">
-				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" />
+				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" :squared="true" />
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CONFERENCE_TITLE_PLACEHOLDER')" />
 			</div>
-			<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			<div class="bx-im-content-create-chat__members_container">
+				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			</div>
 			<ConferenceSection
 				:passwordNeeded="conference.passwordNeeded"
 				:password="conference.password"
@@ -1196,13 +1316,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:manageUsersDelete="rights.manageUsersDelete"
 				:manageUi="rights.manageUi"
 				:manageSettings="rights.manageSettings"
-				:canPost="rights.canPost"
+				:manageMessages="rights.manageMessages"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
 				@manageUsersAddChange="onManageUsersAddChange"
 				@manageUsersDeleteChange="onManageUsersDeleteChange"
 				@manageUiChange="onManageUiChange"
-				@canPostChange="onCanPostChange"
+				@manageMessagesChange="onManageMessagesChange"
 			/>
 		</div>
 		<ButtonPanel
@@ -1215,11 +1335,298 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	// @vue/component
+	const PrivacySection = {
+	  components: {
+	    CreateChatSection,
+	    RadioOption
+	  },
+	  props: {
+	    withSearchOption: {
+	      type: Boolean,
+	      default: true
+	    },
+	    isAvailableInSearch: {
+	      type: Boolean,
+	      default: false
+	    }
+	  },
+	  emits: ['chatTypeChange'],
+	  data() {
+	    return {};
+	  },
+	  computed: {
+	    privacyOptions() {
+	      return [{
+	        value: true,
+	        text: this.loc('IM_CREATE_CHAT_PRIVACY_SECTION_OPEN_TITLE'),
+	        subtext: this.loc('IM_CREATE_CHAT_PRIVACY_SECTION_OPEN_SUBTITLE'),
+	        selected: this.isAvailableInSearch
+	      }, {
+	        value: false,
+	        text: this.loc('IM_CREATE_CHAT_PRIVACY_SECTION_PRIVATE_TITLE'),
+	        subtext: this.loc('IM_CREATE_CHAT_PRIVACY_SECTION_PRIVATE_SUBTITLE'),
+	        selected: !this.isAvailableInSearch
+	      }];
+	    }
+	  },
+	  methods: {
+	    onTypeChange(isAvailableInSearch) {
+	      this.$emit('chatTypeChange', isAvailableInSearch);
+	    },
+	    loc(phraseCode, replacements = {}) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
+	    }
+	  },
+	  template: `
+		<CreateChatSection name="privacy" :title="loc('IM_CREATE_CHAT_PRIVACY_SECTION')" :openByDefault="true">
+			<div class="bx-im-content-create-chat__section_block">
+				<RadioOption :items="privacyOptions" @change="onTypeChange" />
+			</div>
+		</CreateChatSection>
+	`
+	};
+
+	// @vue/component
+	const ChannelCreation = {
+	  name: 'ChannelCreation',
+	  components: {
+	    TitleInput,
+	    ChatAvatar,
+	    ChatMembersSelector,
+	    SettingsSection,
+	    RightsSection,
+	    AppearanceSection,
+	    PrivacySection,
+	    ButtonPanel,
+	    TextareaInput
+	  },
+	  data() {
+	    return {
+	      isCreating: false,
+	      avatarFile: null,
+	      chatTitle: '',
+	      chatMembers: [],
+	      settings: {
+	        isAvailableInSearch: true,
+	        description: ''
+	      },
+	      rights: {
+	        ownerId: 0,
+	        managerIds: [],
+	        manageUsersAdd: '',
+	        manageUsersDelete: '',
+	        manageSettings: '',
+	        manageUi: '',
+	        manageMessages: ''
+	      }
+	    };
+	  },
+	  watch: {
+	    chatTitle(newValue) {
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setChatTitle(newValue);
+	    }
+	  },
+	  created() {
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.layout.onLayoutChange, this.onLayoutChange);
+	    this.rights.ownerId = im_v2_application_core.Core.getUserId();
+	    this.initDefaultRolesForRights();
+	    this.restoreFields();
+	    im_v2_lib_createChat.CreateChatManager.getInstance().setChatType(im_v2_const.ChatType.channel);
+	    im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(true);
+	    im_v2_lib_createChat.CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.layout.onLayoutChange, this.onLayoutChange);
+	    if (this.exitByCancel || this.exitByChatTypeSwitch || this.exitByCreation) {
+	      return;
+	    }
+	    this.saveFields();
+	  },
+	  methods: {
+	    onMembersChange(currentTags) {
+	      this.chatMembers = currentTags;
+	    },
+	    onOwnerChange(ownerId) {
+	      this.rights.ownerId = ownerId;
+	    },
+	    onManagersChange(managerIds) {
+	      this.rights.managerIds = managerIds;
+	    },
+	    onChatTypeChange(isAvailableInSearch) {
+	      this.settings.isAvailableInSearch = isAvailableInSearch;
+	    },
+	    onDescriptionChange(description) {
+	      this.settings.description = description;
+	    },
+	    onManageUsersAddChange(newValue) {
+	      this.rights.manageUsersAdd = newValue;
+	    },
+	    onManageUsersDeleteChange(newValue) {
+	      this.rights.manageUsersDelete = newValue;
+	    },
+	    onManageUiChange(newValue) {
+	      this.rights.manageUi = newValue;
+	    },
+	    onManageMessagesChange(newValue) {
+	      this.rights.manageMessages = newValue;
+	    },
+	    async onCreateClick() {
+	      this.isCreating = true;
+	      const {
+	        newDialogId
+	      } = await this.getChatService().createChat({
+	        type: im_v2_const.ChatType.channel,
+	        title: this.chatTitle,
+	        avatar: this.avatarFile,
+	        members: this.chatMembers,
+	        ownerId: this.rights.ownerId,
+	        managers: this.rights.managerIds,
+	        isAvailableInSearch: this.settings.isAvailableInSearch,
+	        description: this.settings.description,
+	        manageUsersAdd: this.rights.manageUsersAdd,
+	        manageUsersDelete: this.rights.manageUsersDelete,
+	        manageUi: this.rights.manageUi,
+	        manageSettings: this.rights.manageSettings,
+	        manageMessages: this.rights.manageMessages
+	      }).catch(() => {
+	        this.isCreating = false;
+	        BX.UI.Notification.Center.notify({
+	          content: this.loc('IM_CREATE_CHAT_ERROR')
+	        });
+	      });
+	      this.isCreating = false;
+	      this.exitByCreation = true;
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
+	      void im_public.Messenger.openChat(newDialogId);
+	    },
+	    onCancelClick() {
+	      this.exitByCancel = true;
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
+	      im_public.Messenger.openChat();
+	    },
+	    onAvatarChange(newAvatarFile) {
+	      this.avatarFile = newAvatarFile;
+	      im_v2_lib_createChat.CreateChatManager.getInstance().setChatAvatar(this.avatarFile);
+	    },
+	    onScroll() {
+	      var _MenuManager$getMenuB, _MenuManager$getMenuB2, _MenuManager$getMenuB3, _MenuManager$getMenuB4;
+	      (_MenuManager$getMenuB = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersAddMenu)) == null ? void 0 : _MenuManager$getMenuB.close();
+	      (_MenuManager$getMenuB2 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersDeleteMenu)) == null ? void 0 : _MenuManager$getMenuB2.close();
+	      (_MenuManager$getMenuB3 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUiMenu)) == null ? void 0 : _MenuManager$getMenuB3.close();
+	      (_MenuManager$getMenuB4 = main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageMessagesMenu)) == null ? void 0 : _MenuManager$getMenuB4.close();
+	    },
+	    onLayoutChange(event) {
+	      const {
+	        to
+	      } = event.getData();
+	      if (to.name === im_v2_const.Layout.createChat.name && to.entityId !== im_v2_const.ChatType.channel) {
+	        this.exitByChatTypeSwitch = true;
+	      }
+	    },
+	    saveFields() {
+	      im_v2_lib_createChat.CreateChatManager.getInstance().saveFields({
+	        chatTitle: this.chatTitle,
+	        avatarFile: this.avatarFile,
+	        chatMembers: this.chatMembers,
+	        settings: this.settings,
+	        rights: this.rights
+	      });
+	    },
+	    restoreFields() {
+	      const savedFields = im_v2_lib_createChat.CreateChatManager.getInstance().getFields();
+	      if (!savedFields) {
+	        return;
+	      }
+	      const {
+	        chatTitle,
+	        avatarFile,
+	        chatMembers,
+	        settings,
+	        rights
+	      } = savedFields;
+	      this.chatTitle = chatTitle;
+	      this.avatarFile = avatarFile;
+	      this.chatMembers = chatMembers;
+	      this.settings = settings;
+	      this.rights = rights;
+	    },
+	    initDefaultRolesForRights() {
+	      const {
+	        manageUsersAdd,
+	        manageUsersDelete,
+	        manageUi,
+	        manageSettings,
+	        manageMessages
+	      } = im_v2_lib_permission.PermissionManager.getInstance().getDefaultRolesForActionGroups(im_v2_const.ChatType.channel);
+	      this.rights.manageUsersAdd = manageUsersAdd;
+	      this.rights.manageUsersDelete = manageUsersDelete;
+	      this.rights.manageUi = manageUi;
+	      this.rights.manageSettings = manageSettings;
+	      this.rights.manageMessages = manageMessages;
+	    },
+	    getChatService() {
+	      if (!this.chatService) {
+	        this.chatService = new im_v2_provider_service.ChatService();
+	      }
+	      return this.chatService;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
+	  template: `
+		<div class="bx-im-content-create-chat__content" @scroll="onScroll">
+			<div class="bx-im-content-create-chat__header">
+				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" :squared="true" />
+				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHANNEL_TITLE_PLACEHOLDER')" />
+			</div>
+			<div class="bx-im-content-create-channel__description_container">
+				<TextareaInput
+					:value="settings.description"
+					:placeholder="loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER')"
+					:border="false"
+					@input="onDescriptionChange"
+				/>
+			</div>
+			<PrivacySection
+				:isAvailableInSearch="settings.isAvailableInSearch"
+				@chatTypeChange="onChatTypeChange"
+			/>
+			<RightsSection
+				:ownerId="rights.ownerId"
+				:managerIds="rights.managerIds"
+				:manageUsersAdd="rights.manageUsersAdd"
+				:manageUsersDelete="rights.manageUsersDelete"
+				:manageUi="rights.manageUi"
+				:manageSettings="rights.manageSettings"
+				:manageMessages="rights.manageMessages"
+				@ownerChange="onOwnerChange"
+				@managersChange="onManagersChange"
+				@manageUsersAddChange="onManageUsersAddChange"
+				@manageUsersDeleteChange="onManageUsersDeleteChange"
+				@manageUiChange="onManageUiChange"
+				@manageMessagesChange="onManageMessagesChange"
+			/>
+			<div class="bx-im-content-create-channel__members_container">
+				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			</div>
+		</div>
+		<ButtonPanel
+			:isCreating="isCreating"
+			:createButtonTitle="loc('IM_CREATE_CHANNEL_CONFIRM')"
+			@create="onCreateClick"
+			@cancel="onCancelClick"
+		/>
+	`
+	};
+
+	// @vue/component
 	const CreateChatContent = {
 	  name: 'CreateChatContent',
 	  components: {
 	    GroupChatCreation,
-	    ConferenceCreation
+	    ConferenceCreation,
+	    ChannelCreation
 	  },
 	  props: {
 	    entityId: {
@@ -1240,11 +1647,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-content-create-chat__container bx-im-content-create-chat__scope">
 			<GroupChatCreation v-if="chatType === ChatType.chat" />
 			<ConferenceCreation v-else-if="chatType === ChatType.videoconf" />
+			<ChannelCreation v-else-if="chatType === ChatType.channel" />
 		</div>
 	`
 	};
 
 	exports.CreateChatContent = CreateChatContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Component.Animation,BX.UI.EntitySelector,BX,BX.Event,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Component.Animation,BX.UI.EntitySelector,BX,BX.Messenger.v2.Component.Elements,BX,BX.Event,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Const));
 //# sourceMappingURL=create-chat-content.bundle.js.map

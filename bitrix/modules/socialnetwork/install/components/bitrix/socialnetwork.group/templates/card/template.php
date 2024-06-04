@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 use Bitrix\Main\Web\Uri;
@@ -233,7 +234,7 @@ else
 			'TEXT' => Loc::getMessage('SONET_C6_CARD_MENU_MEMBERS'),
 			'ON_CLICK' => '',
 			'URL' => $arResult['Urls']['GroupUsers'],
-		]
+		],
 	];
 
 	if ($arResult['CurrentUserPerms']['UserCanModifyGroup'])
@@ -245,6 +246,23 @@ else
 			'URL' => $arResult['Urls']['Features'],
 		];
 	}
+
+	// todo: tasks 24.100.0
+	$doShowFlowsButton =
+		Loader::includeModule('tasks')
+		&& class_exists('\Bitrix\Tasks\Flow\Path\FlowPathMaker')
+		&& \Bitrix\Socialnetwork\Integration\Tasks\Flow\FlowFeature::isOn()
+	;
+	if ($doShowFlowsButton)
+	{
+		$menuTabs[] = [
+			'ID' => 'flows',
+			'TEXT' => Loc::getMessage('SONET_C6_CARD_MENU_FLOWS'),
+			'ON_CLICK' => "BX.SidePanel.Instance.open('{$arResult['Urls']['Flows']}')",
+			'URL' => '',
+		];
+	}
+
 
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.interface.buttons",

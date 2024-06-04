@@ -8,6 +8,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		CopilotButtonType,
 		EventType,
 		BotCode,
+		Analytics,
 	} = require('im/messenger/const');
 	const { MessageService } = require('im/messenger/provider/service');
 	const { LoggerManager } = require('im/messenger/lib/logger');
@@ -20,6 +21,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 	const { CopilotMentionManager } = require('im/messenger/controller/dialog/copilot/component/mention/manager');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--dialog');
+	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @class CopilotDialog
@@ -100,10 +102,11 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			const {
 				dialogId,
 				dialogTitleParams,
+				isNew,
 			} = options;
 
 			this.dialogId = dialogId;
-
+			this.isNew = isNew;
 			void this.store.dispatch('applicationModel/openDialogId', dialogId);
 
 			const hasDialog = await this.loadDialogFromDb();
@@ -185,7 +188,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 
 			if (button.id === CopilotButtonType.promtSend)
 			{
-				this.sendMessage(button.text);
+				this.sendMessage(button.text, button.code);
 			}
 		}
 
@@ -230,6 +233,25 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			{
 				this.mentionManager?.unsubscribeEvents();
 				this.mentionManager = null;
+			}
+		}
+
+		sendAnalytics()
+		{
+			if (!this.isNew)
+			{
+				const userCounter = this.getDialog().userCounter;
+				const p3type = userCounter > 2 ? Analytics.CopilotChatType.multiuser : Analytics.CopilotChatType.private;
+				const analytics = new AnalyticsEvent()
+					.setTool(Analytics.Tool.ai)
+					.setCategory(Analytics.Category.chatOperations)
+					.setEvent(Analytics.Event.openChat)
+					.setType(Analytics.Type.ai)
+					.setSection(Analytics.Section.copilotTab)
+					.setP3(p3type)
+					.setP5(`chatId_${this.getDialog()?.chatId}`);
+
+				analytics.send();
 			}
 		}
 	}

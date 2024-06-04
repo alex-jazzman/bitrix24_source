@@ -2,7 +2,9 @@
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_COPY"] = "Недостатньо прав для копіювання звіту. Зверніться до керівника або адміністратора Бітрікс24.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_CREATE"] = "Недостатньо прав для створення звіту. Зверніться до керівника або адміністратора Бітрікс24.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_DELETE"] = "Недостатньо прав для видалення звіту. Зверніться до керівника або адміністратора Бітрікс24.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_EDIT"] = "Недостатньо прав для редагування звіту. Зверніться до вашого керівника або адміністратора Бітрікс24.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_EXPORT"] = "Недостатньо прав для експортування звіту. Зверніться до керівника або адміністратора Бітрікс24.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_TAG_MODIFY"] = "Недостатньо прав для керування тегами звіту. Зверніться до вашого керівника або адміністратора Бітрікс24.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_VIEW"] = "Недостатньо прав для перегляду звіту. Зверніться до керівника або адміністратора Бітрікс24.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_COPIED_DASHBOARD_TITLE"] = "#DASHBOARD_TITLE# (копія)";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_COPY_ERROR"] = "Не вдалося скопіювати звіт. Спробуйте ще раз.";

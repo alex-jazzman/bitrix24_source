@@ -58,6 +58,7 @@ export class AvatarMenu extends BaseMenu
 				EventEmitter.emit(EventType.textarea.insertMention, {
 					mentionText: this.context.user.name,
 					mentionReplacement: Utils.text.getMentionBbCode(this.context.user.id, this.context.user.name),
+					dialogId: this.context.dialog.dialogId,
 				});
 				this.menuInstance.close();
 			},

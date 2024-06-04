@@ -609,7 +609,7 @@ while ($site = $oSites->Fetch())
 	);
 ?>
 <form action="<?=$APPLICATION->GetCurPage()?>" name="form1">
-	<script language="JavaScript">
+	<script>
 	<!--
 		CJSIdeaStep1 = {
 			NeedCreateNewIB: function(val)

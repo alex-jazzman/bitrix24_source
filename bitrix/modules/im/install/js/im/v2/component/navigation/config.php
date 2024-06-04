@@ -36,7 +36,8 @@ return [
 	],
 	'skip_core' => false,
 	'settings' => [
-		'copilotActive' => \Bitrix\Im\V2\Chat\CopilotChat::isAvailable(),
+		'copilotAvailable' => \Bitrix\Im\V2\Chat\CopilotChat::isAvailable(),
+		'channelListAvailable' => \Bitrix\Im\V2\Chat\ChannelChat::isListAvailable(),
 		'v2' => !\Bitrix\Im\Settings::isLegacyChatActivated(),
 	]
 ];

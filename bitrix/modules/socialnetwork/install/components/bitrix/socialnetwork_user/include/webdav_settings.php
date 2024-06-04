@@ -243,7 +243,6 @@ if (!$bSectionPerms)
 //Save permissions
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid())
 {
-	CUtil::JSPostUnescape();
 	$strWarning = GetMessage("MAIN_SESSION_EXPIRED");
 }
 elseif ($_SERVER["REQUEST_METHOD"] == "POST")

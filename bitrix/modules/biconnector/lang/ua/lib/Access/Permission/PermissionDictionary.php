@@ -5,6 +5,7 @@ $MESS["BIC_DASHBOARD_CREATE"] = "Створення звітів";
 $MESS["BIC_DASHBOARD_DELETE"] = "Видалення";
 $MESS["BIC_DASHBOARD_EDIT"] = "Редагування";
 $MESS["BIC_DASHBOARD_EXPORT"] = "Експорт";
+$MESS["BIC_DASHBOARD_TAG_MODIFY"] = "Створення та зміна тегів для звітів.";
 $MESS["BIC_DASHBOARD_VIEW"] = "Перегляд";
 $MESS["BIC_SETTINGS_ACCESS"] = "Загальні налаштування";
 $MESS["BIC_SETTINGS_EDIT_RIGHTS"] = "Керування правами доступу";

@@ -630,25 +630,22 @@ class SocialnetworkGroupCopy extends CBitrixComponent implements Controllerable,
 			"IMAGE_ID" => $post["image_id"],
 		];
 
-		if(Configuration::getValue("utf_mode") === true)
+		$connection = Application::getConnection();
+		$table = WorkgroupTable::getTableName();
+
+		if ($changedFields["NAME"] <> "")
 		{
-			$connection = Application::getConnection();
-			$table = WorkgroupTable::getTableName();
-
-			if ($changedFields["NAME"] <> "")
+			if (!$connection->isUtf8mb4($table, "NAME"))
 			{
-				if (!$connection->isUtf8mb4($table, "NAME"))
-				{
-					$changedFields["NAME"] = Emoji::encode($changedFields["NAME"]);
-				}
+				$changedFields["NAME"] = Emoji::encode($changedFields["NAME"]);
 			}
+		}
 
-			if ($changedFields["DESCRIPTION"] <> "")
+		if ($changedFields["DESCRIPTION"] <> "")
+		{
+			if (!$connection->isUtf8mb4($table, "DESCRIPTION"))
 			{
-				if (!$connection->isUtf8mb4($table, "DESCRIPTION"))
-				{
-					$changedFields["DESCRIPTION"] = Emoji::encode($changedFields["DESCRIPTION"]);
-				}
+				$changedFields["DESCRIPTION"] = Emoji::encode($changedFields["DESCRIPTION"]);
 			}
 		}
 

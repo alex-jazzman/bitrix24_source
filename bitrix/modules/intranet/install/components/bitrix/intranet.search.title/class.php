@@ -1060,8 +1060,6 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			)
 		)
 		{
-			CUtil::decodeURIComponent($query);
-
 			$this->arResult["alt_query"] = "";
 			$this->arResult["query"] = $query;
 

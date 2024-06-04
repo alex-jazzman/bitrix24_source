@@ -61,6 +61,11 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 
 	const statusPath = `${currentDomain}/bitrix/mobileapp/immobile/components/im/messenger/images/`;
 
+	const headerIconsPath = {
+		subscribe: `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/svg/eye.svg`,
+		unsubscribe: `${currentDomain}/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/svg/crossed-eye.svg`,
+	};
+
 	const statusImage = {
 		owner: `${statusPath}status_user_owner.png`,
 	};
@@ -146,5 +151,6 @@ jn.define('im/messenger/assets/common', (require, exports, module) => {
 		getArrowInCircle,
 		defaultUserIcon,
 		ReactionAssets,
+		headerIconsPath,
 	};
 });

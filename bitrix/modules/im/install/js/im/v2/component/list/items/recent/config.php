@@ -14,6 +14,7 @@ return [
 		'main.date',
 		'im.v2.lib.parser',
 		'im.v2.lib.date-formatter',
+		'im.public',
 		'im.v2.lib.call',
 		'im.v2.lib.create-chat',
 		'im.v2.lib.layout',

@@ -24,11 +24,6 @@ Class photogallery extends CModule
 			$this->MODULE_VERSION = $arModuleVersion["VERSION"];
 			$this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
 		}
-		else
-		{
-			$this->MODULE_VERSION = FORUM_VERSION;
-			$this->MODULE_VERSION_DATE = FORUM_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = GetMessage("P_MODULE_NAME");
 		$this->MODULE_DESCRIPTION = GetMessage("P_MODULE_DESCRIPTION");

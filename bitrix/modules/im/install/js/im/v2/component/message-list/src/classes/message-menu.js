@@ -6,9 +6,10 @@ import { BaseMenu } from 'im.v2.lib.menu';
 import { Parser } from 'im.v2.lib.parser';
 import { EntityCreator } from 'im.v2.lib.entity-creator';
 import { MessageService, DiskService } from 'im.v2.provider.service';
-import { EventType, PlacementType } from 'im.v2.const';
+import { EventType, PlacementType, ChatActionType } from 'im.v2.const';
 import { MarketManager } from 'im.v2.lib.market';
 import { Utils } from 'im.v2.lib.utils';
+import { PermissionManager } from 'im.v2.lib.permission';
 
 import '../css/message-menu.css';
 
@@ -46,6 +47,7 @@ export class MessageMenu extends BaseMenu
 		return [
 			this.getReplyItem(),
 			this.getCopyItem(),
+			this.getCopyLinkItem(),
 			this.getCopyFileItem(),
 			this.getPinItem(),
 			this.getForwardItem(),
@@ -70,6 +72,7 @@ export class MessageMenu extends BaseMenu
 			onclick: () => {
 				EventEmitter.emit(EventType.textarea.replyMessage, {
 					messageId: this.context.id,
+					dialogId: this.context.dialogId,
 				});
 				this.menuInstance.close();
 			},
@@ -103,12 +106,29 @@ export class MessageMenu extends BaseMenu
 
 		return {
 			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY'),
-			onclick: () => {
+			onclick: async () => {
 				const textToCopy = Parser.prepareCopy(this.context);
+
+				await Utils.text.copyToClipboard(textToCopy);
+				BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_SUCCESS'),
+				});
+
+				this.menuInstance.close();
+			},
+		};
+	}
+
+	getCopyLinkItem(): MenuItem
+	{
+		return {
+			text: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_LINK'),
+			onclick: () => {
+				const textToCopy = Utils.text.getMessageLink(this.context.dialogId, this.context.id);
 				if (BX.clipboard?.copy(textToCopy))
 				{
 					BX.UI.Notification.Center.notify({
-						content: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_SUCCESS'),
+						content: Loc.getMessage('IM_DIALOG_CHAT_MENU_COPY_LINK_SUCCESS'),
 					});
 				}
 				this.menuInstance.close();
@@ -118,7 +138,7 @@ export class MessageMenu extends BaseMenu
 
 	getCopyFileItem(): ?MenuItem
 	{
-		if (this.context.files.length === 0)
+		if (this.context.files.length !== 1)
 		{
 			return null;
 		}
@@ -138,9 +158,10 @@ export class MessageMenu extends BaseMenu
 		};
 	}
 
-	getPinItem(): MenuItem
+	getPinItem(): ?MenuItem
 	{
-		if (this.#isDeletedMessage())
+		const canPin = PermissionManager.getInstance().canPerformAction(ChatActionType.pinMessage, this.context.dialogId);
+		if (this.#isDeletedMessage() || !canPin)
 		{
 			return null;
 		}
@@ -273,6 +294,7 @@ export class MessageMenu extends BaseMenu
 			onclick: () => {
 				EventEmitter.emit(EventType.textarea.editMessage, {
 					messageId: this.context.id,
+					dialogId: this.context.dialogId,
 				});
 				this.menuInstance.close();
 			},
@@ -281,7 +303,17 @@ export class MessageMenu extends BaseMenu
 
 	getDeleteItem(): ?MenuItem
 	{
-		if (!this.#isOwnMessage() || this.#isDeletedMessage())
+		if (this.#isDeletedMessage())
+		{
+			return null;
+		}
+
+		const permissionManager = PermissionManager.getInstance();
+		const canDeleteOthersMessage = permissionManager.canPerformAction(
+			ChatActionType.deleteOthersMessage,
+			this.context.dialogId,
+		);
+		if (!this.#isOwnMessage() && !canDeleteOthersMessage)
 		{
 			return null;
 		}
@@ -385,7 +417,7 @@ export class MessageMenu extends BaseMenu
 
 	#getMessageFile(): ?ImModelFile
 	{
-		if (this.context.files.length === 0)
+		if (this.context.files.length !== 1)
 		{
 			return null;
 		}

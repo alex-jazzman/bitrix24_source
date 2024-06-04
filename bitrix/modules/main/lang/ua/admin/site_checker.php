@@ -465,7 +465,6 @@ $MESS["SC_MOD_GD"] = "Бібліотека GD";
 $MESS["SC_MOD_GD_JPEG"] = "Підтримка jpeg в GD";
 $MESS["SC_MOD_JSON"] = "Підтримка JSON";
 $MESS["SC_MOD_MBSTRING"] = "Підтримка mbstring";
-$MESS["SC_MOD_PERL_REG"] = "підтримка регулярних виразів (Perl-Compatible)";
 $MESS["SC_MOD_XML"] = "підтримка XML";
 $MESS["SC_MYSQL_ERR_VER"] = "Встановлено MySQL версії #CUR#, потрібно #REQ#";
 $MESS["SC_NOT_FILLED"] = "Не введено опис проблеми";

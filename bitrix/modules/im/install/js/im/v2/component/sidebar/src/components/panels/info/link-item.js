@@ -1,4 +1,4 @@
-import { Avatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { MessageAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
 import { Utils } from 'im.v2.lib.utils';
 
 import './css/link-item.css';
@@ -8,11 +8,15 @@ import type { ImModelSidebarLinkItem } from 'im.v2.model';
 // @vue/component
 export const LinkItem = {
 	name: 'LinkItem',
-	components: { Avatar, ChatTitle },
+	components: { MessageAvatar, ChatTitle },
 	props:
 	{
 		link: {
 			type: Object,
+			required: true,
+		},
+		contextDialogId: {
+			type: String,
 			required: true,
 		},
 	},
@@ -120,9 +124,10 @@ export const LinkItem = {
 					{{ description }}
 				</a>
 				<div class="bx-im-link-item__author-container">
-					<Avatar 
+					<MessageAvatar 
+						:messageId="linkItem.messageId" 
+						:authorId="linkItem.authorId"
 						:size="AvatarSize.XS"
-						:dialogId="authorDialogId" 
 						class="bx-im-link-item__author-avatar" 
 					/>
 					<ChatTitle :dialogId="authorDialogId" :showItsYou="false" class="bx-im-link-item__author-text" />

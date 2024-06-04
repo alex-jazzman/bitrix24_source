@@ -24,10 +24,12 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 		ExtranetUserItem,
 		InvitedUserItem,
 		NetworkUserItem,
+		ChannelItem,
 	} = require('im/messenger/lib/element');
 	const {
 		DialogType,
 		BotType,
+		ComponentCode,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('recent--converter');
@@ -110,6 +112,13 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			if (dialog.type === DialogType.copilot)
 			{
 				return new CopilotItem(modelItem);
+			}
+
+			if (dialog.type === DialogType.channel || dialog.type === DialogType.openChannel)
+			{
+				return new ChannelItem(modelItem, {
+					isNeedShowActions: MessengerParams.get('COMPONENT_CODE') !== ComponentCode.imChannelMessenger,
+				});
 			}
 
 			return new ChatItem(modelItem);
@@ -251,6 +260,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			if (typeof element.writing !== 'undefined')
 			{
 				newElement.writing = element.writing;
+			}
+
+			if (typeof element.lastActivityDate !== 'undefined')
+			{
+				newElement.lastActivityDate = element.lastActivityDate;
 			}
 
 			if (typeof element.user !== 'undefined')

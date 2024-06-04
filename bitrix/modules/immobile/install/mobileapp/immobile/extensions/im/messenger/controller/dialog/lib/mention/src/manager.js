@@ -505,6 +505,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				imageUrl: avatarTitleParams.getAvatarUrl(),
 				imageColor: avatarTitleParams.getColor(),
 				titleColor: chatTitleParams.getTitleColor(),
+				isSuperEllipseIcon: avatarTitleParams.getIsSuperEllipseIcon(),
 				testId: itemId.toString(),
 			};
 		}

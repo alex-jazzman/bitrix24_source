@@ -939,10 +939,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }).outerHTML;
 	  },
 	  executeClickEvent(event) {
+	    var _getDialogIdByMessage;
 	    if (!main_core.Dom.hasClass(event.target, 'bx-im-message-command')) {
 	      return;
 	    }
 	    const element = event.target;
+	    const messageId = getMessageIdForClickElement(element);
+	    const dialogId = (_getDialogIdByMessage = getDialogIdByMessageId(messageId)) != null ? _getDialogIdByMessage : '';
 	    if (element.dataset.entity === ActionType.put) {
 	      const {
 	        innerText: textToInsert = ''
@@ -951,7 +954,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      main_core_events.EventEmitter.emit(EventType$1.textarea.insertText, {
-	        text: textToInsert
+	        text: textToInsert,
+	        dialogId
 	      });
 	    } else if (element.dataset.entity === ActionType.send) {
 	      const {
@@ -961,10 +965,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      main_core_events.EventEmitter.emit(EventType$1.textarea.sendMessage, {
-	        text: textToSend
+	        text: textToSend,
+	        dialogId
 	      });
 	    }
 	  }
+	};
+	const getMessageIdForClickElement = element => {
+	  const messageElement = element.closest('.bx-im-message-base__wrap');
+	  if (!messageElement || !messageElement.dataset.id) {
+	    return null;
+	  }
+	  return messageElement.dataset.id;
+	};
+	const getDialogIdByMessageId = messageId => {
+	  const message = getCore().getStore().getters['messages/getById'](messageId);
+	  if (!message) {
+	    return null;
+	  }
+	  const dialog = getCore().getStore().getters['chats/getByChatId'](message.chatId);
+	  if (!dialog) {
+	    return null;
+	  }
+	  return dialog.dialogId;
 	};
 
 	const {

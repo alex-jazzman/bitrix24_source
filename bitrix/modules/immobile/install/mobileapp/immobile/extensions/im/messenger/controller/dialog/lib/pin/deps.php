@@ -8,7 +8,8 @@ return [
 		'im:messenger/lib/converter',
 		'im:messenger/lib/params',
 		'im:messenger/lib/feature',
-		'im:messenger/lib/ui/notification'
+		'im:messenger/lib/ui/notification',
+		'im:messenger/lib/permission-manager',
 	],
 	'bundle' => [
 		'./src/manager',

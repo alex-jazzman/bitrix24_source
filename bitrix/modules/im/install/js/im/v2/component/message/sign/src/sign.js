@@ -140,6 +140,8 @@ export const SignMessage = {
 			v-else
 			:dialogId="dialogId"
 			:item="item"
+			:withContextMenu="false"
+			:withReactions="false"
 			:withBackground="false"
 			class="bx-im-message-sign__scope"
 		>

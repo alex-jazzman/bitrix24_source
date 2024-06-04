@@ -776,7 +776,7 @@ a.license-widget-item-info-text:hover { color: #2b89ea; }
 
 .license-widget-item--expired .license-widget-item-icon {
 	background-color: rgba(255, 255, 255, .2);
-	background-size: 18px 10px;
+	background-size: 14px 12px;
 }
 
 .license-widget-item--expired.license-widget-item--main .license-widget-item-icon,

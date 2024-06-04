@@ -1,0 +1,3 @@
+<?php
+$MESS["INTRANET_USER_LIST_GENDER_F"] = "жіноча";
+$MESS["INTRANET_USER_LIST_GENDER_M"] = "чоловіча";

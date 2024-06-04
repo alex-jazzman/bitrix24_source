@@ -115,6 +115,7 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 		toDialogSearchItem(dialog, sectionCode)
 		{
 			const chatTitle = ChatTitle.createFromDialogId(dialog.dialogId);
+			const chatAvatar = ChatAvatar.createFromDialogId(dialog.dialogId);
 			const item = {
 				title: dialog.name,
 				subtitle: chatTitle.getDescription(),
@@ -127,7 +128,8 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 				},
 				useLetterImage: true,
 				id: `chat/${dialog.dialogId}`,
-				imageUrl: ChatAvatar.createFromDialogId(dialog.dialogId).getAvatarUrl(),
+				imageUrl: chatAvatar.getAvatarUrl(),
+				isSuperEllipseIcon: chatAvatar.getIsSuperEllipseIcon(),
 				params: {
 					id: dialog.dialogId,
 				},

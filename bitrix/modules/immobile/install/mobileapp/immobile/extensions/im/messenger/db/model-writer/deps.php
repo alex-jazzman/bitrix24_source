@@ -20,5 +20,6 @@ return [
 		'./src/vuex/temp-message',
 		'./src/vuex/queue',
 		'./src/vuex/pin-message',
+		'./src/vuex/application',
 	],
 ];

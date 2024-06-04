@@ -8,6 +8,7 @@ $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_CONTROL_DEADLINE"] = "Поста�
 Необхідно вказати крайній термін. ";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_DEADLINE"] = "Поставлено завдання для #RESPONSIBLE#.
 Необхідно вказати крайній термін. ";
+$MESS["COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION"] = "#RESPONSIBLE#, призначте #TASK_CHANGE_RESPONSIBLE_START#співробітника#TASK_CHANGE_RESPONSIBLE_END#, який виконуватиме це завдання.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED"] = "Завдання протерміноване.
 Ефективність знижена.
 Необхідно змінити крайній термін або завершити завдання.";
@@ -37,6 +38,7 @@ $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_CHANGE_DEADLINE_Y"
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING"] = "Облік затраченого часу: #NEW_VALUE#";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING_N"] = "Виключений";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ALLOW_TIME_TRACKING_Y"] = "Включений";
+$MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ASSIGNEE"] = "#NEW_VALUE#, вас призначено виконавцем.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_AUDITORS"] = "Додані спостерігачі: #NEW_VALUE#";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CHECKLIST"] = "Чек-лист";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_CREATED_BY"] = "Призначений постановник: #NEW_VALUE#";

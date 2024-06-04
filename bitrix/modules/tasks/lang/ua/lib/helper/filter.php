@@ -12,6 +12,7 @@ $MESS["TASKS_FILTER_DATE_START"] = "Дата початку";
 $MESS["TASKS_FILTER_DEADLINE"] = "Крайній термін";
 $MESS["TASKS_FILTER_END_DATE_PLAN"] = "Запланована дата завершення";
 $MESS["TASKS_FILTER_EPIC"] = "Епік";
+$MESS["TASKS_FILTER_FLOW"] = "Потік";
 $MESS["TASKS_FILTER_GROUP_NAME"] = "Назва групи";
 $MESS["TASKS_FILTER_ID"] = "ID";
 $MESS["TASKS_FILTER_MARK"] = "Оцінка";

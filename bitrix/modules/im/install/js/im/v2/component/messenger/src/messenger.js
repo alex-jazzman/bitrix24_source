@@ -6,6 +6,7 @@ import 'im.v2.css.icons';
 import { MessengerNavigation } from 'im.v2.component.navigation';
 import { RecentListContainer } from 'im.v2.component.list.container.recent';
 import { OpenlineListContainer } from 'im.v2.component.list.container.openline';
+import { ChannelListContainer } from 'im.v2.component.list.container.channel';
 import { ChatContent } from 'im.v2.component.content.chat';
 import { CreateChatContent } from 'im.v2.component.content.create-chat';
 import { OpenlinesContent } from 'im.v2.component.content.openlines';
@@ -34,6 +35,7 @@ export const Messenger = {
 	components: {
 		MessengerNavigation,
 		RecentListContainer,
+		ChannelListContainer,
 		OpenlineListContainer,
 		ChatContent,
 		CreateChatContent,
@@ -47,7 +49,6 @@ export const Messenger = {
 	data(): JsonObject
 	{
 		return {
-			contextMessageId: 0,
 			openlinesContentOpened: false,
 		};
 	},
@@ -72,6 +73,10 @@ export const Messenger = {
 		isOpenline(): boolean
 		{
 			return this.layout.name === Layout.openlines.name;
+		},
+		hasList(): boolean
+		{
+			return Boolean(this.currentLayout.list);
 		},
 		containerClasses(): string[]
 		{
@@ -149,11 +154,11 @@ export const Messenger = {
 							<component :is="currentLayout.list" @selectEntity="onEntitySelect" />
 						</KeepAlive>
 					</div>
-					<div class="bx-im-messenger__content_container">
+					<div class="bx-im-messenger__content_container" :class="{'--with-list': hasList}">
 						<div v-if="openlinesContentOpened" class="bx-im-messenger__openlines_container" :class="{'--hidden': !isOpenline}">
-							<OpenlinesContent v-show="isOpenline" :entityId="entityId" :contextMessageId="contextMessageId" />
+							<OpenlinesContent v-show="isOpenline" :entityId="entityId" />
 						</div>
-						<component v-if="!isOpenline" :is="currentLayout.content" :entityId="entityId" :contextMessageId="contextMessageId" />
+						<component v-if="!isOpenline" :is="currentLayout.content" :entityId="entityId" />
 					</div>
 				</div>
 			</div>

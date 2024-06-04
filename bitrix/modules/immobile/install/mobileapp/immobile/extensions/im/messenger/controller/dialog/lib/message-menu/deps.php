@@ -15,6 +15,7 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/feature',
+		'im:messenger/lib/permission-manager',
 		'im:messenger/lib/ui/notification',
 		'im:messenger/controller/dialog/lib/helper/text',
 	],

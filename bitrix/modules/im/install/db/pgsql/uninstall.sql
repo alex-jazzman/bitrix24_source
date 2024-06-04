@@ -46,3 +46,5 @@ DROP TABLE IF EXISTS b_im_file_temporary;
 DROP TABLE IF EXISTS b_im_reaction;
 DROP TABLE IF EXISTS b_im_message_disappearing;
 DROP TABLE IF EXISTS b_im_log;
+DROP TABLE IF EXISTS b_im_last_message;
+DROP TABLE IF EXISTS b_im_chat_param;

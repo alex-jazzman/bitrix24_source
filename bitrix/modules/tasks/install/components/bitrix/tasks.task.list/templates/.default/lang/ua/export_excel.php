@@ -21,6 +21,7 @@ $MESS["TASKS_EXCEL_DATE_START"] = "Дата старту";
 $MESS["TASKS_EXCEL_DEADLINE"] = "Крайній термін";
 $MESS["TASKS_EXCEL_DESCRIPTION"] = "Опис";
 $MESS["TASKS_EXCEL_END_DATE_PLAN"] = "Запланована дата закінчення";
+$MESS["TASKS_EXCEL_FLOW"] = "Потік";
 $MESS["TASKS_EXCEL_GROUP_ID"] = "Проєкт";
 $MESS["TASKS_EXCEL_GROUP_NAME"] = "Проєкт";
 $MESS["TASKS_EXCEL_ID"] = "ID";

@@ -45,6 +45,7 @@ jn.define('im/messenger/lib/ui/base/carousel/carousel-item', (require, exports, 
 					text: this.props.data.title,
 					size: this.props.size,
 					color: this.props.data.avatarColor,
+					isSuperEllipse: this.props.isSuperEllipseAvatar,
 				}),
 				Image(
 					{

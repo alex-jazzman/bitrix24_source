@@ -52,7 +52,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 
 			logger.info('PushHandler.updateList: parse push messages', list.IM_MESS);
 
-			const isDialogOpen = this.store.getters['applicationModel/isDialogOpen'];
+			const isDialogOpen = this.store.getters['applicationModel/isSomeDialogOpen'];
 
 			list.IM_MESS.forEach((push) => {
 				if (!push.data)

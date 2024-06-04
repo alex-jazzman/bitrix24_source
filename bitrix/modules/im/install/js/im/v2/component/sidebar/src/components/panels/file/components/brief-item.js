@@ -2,17 +2,21 @@ import 'ui.icons';
 
 import { ImModelSidebarFileItem, ImModelFile } from 'im.v2.model';
 import { Utils } from 'im.v2.lib.utils';
-import { Avatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
+import { MessageAvatar, AvatarSize, ChatTitle } from 'im.v2.component.elements';
 
 import '../css/brief-item.css';
 
 // @vue/component
 export const BriefItem = {
 	name: 'BriefItem',
-	components: { Avatar, ChatTitle },
+	components: { MessageAvatar, ChatTitle },
 	props: {
 		brief: {
 			type: Object,
+			required: true,
+		},
+		contextDialogId: {
+			type: String,
 			required: true,
 		},
 	},
@@ -87,8 +91,9 @@ export const BriefItem = {
 						<span class="bx-im-sidebar-brief-item__size-text">{{fileSize}}</span>
 					</div>
 					<div class="bx-im-sidebar-brief-item__author-container">
-						<Avatar 
-							:dialogId="sidebarFileItem.authorId" 
+						<MessageAvatar 
+							:messageId="sidebarFileItem.messageId"
+							:authorId="sidebarFileItem.authorId"
 							:size="AvatarSize.XS"
 							class="bx-im-sidebar-brief-item__author-avatar" 
 						/>

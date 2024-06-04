@@ -1,4 +1,6 @@
 <?php
+$MESS["MOBILE_LAYOUT_PROJECT_VIEW_ACCESS_DENIED_DESC"] = "Зверніться до власника проєкту або адміністратора Бітрікс24.";
+$MESS["MOBILE_LAYOUT_PROJECT_VIEW_ACCESS_DENIED_TITLE"] = "Проєкт не знайдено або доступ заборонено";
 $MESS["MOBILE_LAYOUT_PROJECT_VIEW_JOIN_BUTTON_JOIN"] = "Вступити у проєкт";
 $MESS["MOBILE_LAYOUT_PROJECT_VIEW_JOIN_BUTTON_JOINED"] = "Ви у проєкті!";
 $MESS["MOBILE_LAYOUT_PROJECT_VIEW_JOIN_BUTTON_REQUEST_SENT"] = "Запит надіслано";

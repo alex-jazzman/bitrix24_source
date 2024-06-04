@@ -1,9 +1,10 @@
+import { EventEmitter } from 'main.core.events';
 import { TagSelector } from 'ui.entity-selector';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import { ChatService } from 'im.v2.provider.service';
-import { ChatType, SearchEntityIdTypes } from 'im.v2.const';
+import { ChatType, EventType, SearchEntityIdTypes } from 'im.v2.const';
 import { ChatSearch } from 'im.v2.component.search.chat-search';
 import { Button as MessengerButton, ButtonSize, ButtonColor } from 'im.v2.component.elements';
 
@@ -55,6 +56,14 @@ export const AddToChatContent = {
 		{
 			return this.dialog.type !== ChatType.user;
 		},
+		isChannel(): boolean
+		{
+			return [ChatType.channel, ChatType.openChannel].includes(this.dialog.type);
+		},
+		showHistoryOption(): boolean
+		{
+			return this.isChat && !this.isChannel;
+		},
 	},
 	created()
 	{
@@ -87,6 +96,10 @@ export const AddToChatContent = {
 						const { tag } = event.getData();
 						this.selectedItems.add(tag.id);
 						this.focusSelector();
+					},
+					onKeyUp: (event) => {
+						const { event: keyboardEvent } = event.getData();
+						EventEmitter.emit(EventType.search.keyPressed, { keyboardEvent });
 					},
 					onBeforeTagRemove: () => {
 						clearTimeout(timeoutId);
@@ -232,7 +245,7 @@ export const AddToChatContent = {
 	template: `
 		<div class="bx-im-entity-selector-add-to-chat__container bx-im-entity-selector-add-to-chat__scope">
 			<div class="bx-im-entity-selector-add-to-chat__input" ref="tag-selector"></div>
-			<div v-if="isChat" class="bx-im-entity-selector-add-to-chat__show-history">
+			<div v-if="showHistoryOption" class="bx-im-entity-selector-add-to-chat__show-history">
 				<input type="checkbox" id="bx-im-entity-selector-add-to-chat-show-history" v-model="showHistory">
 				<label for="bx-im-entity-selector-add-to-chat-show-history">
 					{{ loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_SHOW_HISTORY')}}

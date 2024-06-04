@@ -16,14 +16,6 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	 */
 	class Item extends LayoutComponent
 	{
-		/**
-		 * @param {MessengerItemProps} props
-		 */
-		constructor(props)
-		{
-			super(props);
-		}
-
 		getStyleBySize()
 		{
 			if (this.props.isCustomStyle)
@@ -55,7 +47,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'column',
-						backgroundColor: this.props.isPressed
+						backgroundColor: this.props.isWithPressed
 							? withPressed(style.parentView.backgroundColor)
 							: style.parentView.backgroundColor,
 					},
@@ -99,6 +91,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 							uri: this.props.data.avatarUri,
 							color: this.props.data.avatarColor,
 							size: this.props.size,
+							isSuperEllipse: this.props.isSuperEllipseAvatar,
 						}),
 						this.renderStatusInAvatar(),
 					),

@@ -246,7 +246,7 @@ if (
 
 						if (class_exists(Bitrix\UI\Avatar\Mask\Helper::class)
 							&&
-							\Bitrix\Main\Config\Option::get('ui', 'avatar-editor-availability-delete-after-10.2022', 'N') === 'Y'
+							\Bitrix\Main\Config\Option::get('ui', 'avatar-editor-availability', 'N') === 'Y'
 						)
 						{
 							?><div class="intranet-user-profile-userpic-mask" id="intranet-user-profile-photo-mask">

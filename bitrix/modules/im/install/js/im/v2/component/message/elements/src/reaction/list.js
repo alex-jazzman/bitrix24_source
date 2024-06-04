@@ -1,14 +1,16 @@
 import { EventEmitter } from 'main.core.events';
 import { reactionType as Reaction } from 'ui.reactions-select';
 
-import { DialogScrollThreshold, EventType } from 'im.v2.const';
+import { DialogScrollThreshold, EventType, ChatType, ChatActionType } from 'im.v2.const';
+import { PermissionManager } from 'im.v2.lib.permission';
 
 import { ReactionItem } from './components/item';
 import { ReactionService } from './classes/reaction-service';
 
 import './list.css';
 
-import type { ImModelReactions, ImModelMessage } from 'im.v2.model';
+import type { JsonObject } from 'main.core';
+import type { ImModelReactions, ImModelMessage, ImModelChat } from 'im.v2.model';
 
 type ReactionType = $Values<typeof Reaction>;
 
@@ -22,8 +24,12 @@ export const ReactionList = {
 			type: [String, Number],
 			required: true,
 		},
+		contextDialogId: {
+			type: String,
+			required: true,
+		},
 	},
-	data()
+	data(): JsonObject
 	{
 		return {
 			mounted: false,
@@ -35,6 +41,10 @@ export const ReactionList = {
 		message(): ImModelMessage
 		{
 			return this.$store.getters['messages/getById'](this.messageId);
+		},
+		dialog(): ImModelChat
+		{
+			return this.$store.getters['chats/getByChatId'](this.message.chatId);
 		},
 		reactionsData(): ImModelReactions
 		{
@@ -51,6 +61,14 @@ export const ReactionList = {
 		showReactionsContainer(): boolean
 		{
 			return Object.keys(this.reactionCounters).length > 0;
+		},
+		isChannel(): boolean
+		{
+			return [ChatType.openChannel, ChatType.channel].includes(this.dialog.type);
+		},
+		showAvatars(): boolean
+		{
+			return !this.isChannel;
 		},
 	},
 	watch:
@@ -75,6 +93,12 @@ export const ReactionList = {
 	{
 		onReactionSelect(reaction: ReactionType, event: {animateItemFunction: () => void})
 		{
+			const permissionManager = PermissionManager.getInstance();
+			if (!permissionManager.canPerformAction(ChatActionType.setReaction, this.dialog.dialogId))
+			{
+				return;
+			}
+
 			const { animateItemFunction } = event;
 			if (this.ownReactions?.has(reaction))
 			{
@@ -118,6 +142,8 @@ export const ReactionList = {
 					:users="getReactionUsers(reactionType)"
 					:selected="ownReactions.has(reactionType)"
 					:animate="mounted"
+					:showAvatars="showAvatars"
+					:contextDialogId="contextDialogId"
 					@click="onReactionSelect(reactionType, $event)"
 				/>
 			</template>

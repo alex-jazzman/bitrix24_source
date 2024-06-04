@@ -960,6 +960,18 @@
 	top: 0;
 }
 
+.feed-new-message-informer-fixed.new-message-balloon-wrap.--spaces {
+	position: fixed;
+	left: 50%;
+	top: 0;
+	transition: height 0.3s linear 0s;
+	z-index: 200;
+}
+
+.feed-new-message-informer-place.--spaces .feed-new-message-informer-fixed.new-message-balloon-wrap {
+	top: 70px;
+}
+
 .feed-new-message-informer-place .feed-new-message-informer-fixed.new-message-balloon-wrap {
 	z-index: 1100;
 }

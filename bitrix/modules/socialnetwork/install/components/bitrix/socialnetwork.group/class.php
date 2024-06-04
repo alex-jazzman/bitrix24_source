@@ -12,6 +12,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Socialnetwork\Integration\Tasks\Flow\Path\FlowPath;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\Helper\Path;
@@ -351,6 +352,12 @@ final class SocialnetworkGroup extends CBitrixComponent implements \Bitrix\Main\
 		$result['Urls']['MessageToGroup'] = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_MESSAGE_TO_GROUP'], [ 'group_id' => $result['Group']['ID'] ]);
 		$result['Urls']['GroupLog'] = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_GROUP_LOG'], [ 'group_id' => $result['Group']['ID'] ]);
 		$result['Urls']['Copy'] = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_GROUP_COPY'] ?? '', [ 'group_id' => $result['Group']['ID'] ]);
+
+		// todo: tasks 24.100.0
+		if (Loader::includeModule('tasks') && class_exists('\Bitrix\Tasks\Flow\Path\FlowPathMaker'))
+		{
+			$result['Urls']['Flows'] = FlowPath::get((int)$USER->getId(), (int)$result['Group']['ID']);
+		}
 	}
 
 	private function setGroupAvatar(&$result): void

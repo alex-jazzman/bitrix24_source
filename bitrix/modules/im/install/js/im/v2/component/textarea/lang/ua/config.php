@@ -1,4 +1,5 @@
 <?php
+$MESS["IM_TEXTAREA_CHANNEL_PLACEHOLDER"] = "Додайте публікацію";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_SUBTITLE"] = "ШІ створить будь-яку картинку за вашим описом.";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_TITLE"] = "Створити зображення";
 $MESS["IM_TEXTAREA_CREATE_AI_TEXT_SUBTITLE"] = "ШІ придумає текст за вас або поліпшить його в потрібному стилі.";
@@ -41,10 +42,14 @@ $MESS["IM_TEXTAREA_MARKET_APPS_EMPTY_STATE"] = "Ви поки не додали 
 $MESS["IM_TEXTAREA_MARKET_APPS_SHOW_MORE_BUTTON"] = "Ще #NUMBER#";
 $MESS["IM_TEXTAREA_MARKET_OTHER_APPS"] = "Інші застосунки";
 $MESS["IM_TEXTAREA_MENTION_ARROWS_CONTROL"] = "для перемикання";
+$MESS["IM_TEXTAREA_MENTION_CHAT_TYPE"] = "Груповий чат";
 $MESS["IM_TEXTAREA_MENTION_EMPTY_STATE"] = "Нічого не знайдено.";
 $MESS["IM_TEXTAREA_MENTION_ENTER_CONTROL"] = "для вибору";
 $MESS["IM_TEXTAREA_MENTION_ESC_CONTROL"] = "для скасування";
 $MESS["IM_TEXTAREA_MENTION_LOADING_STATE"] = "Іде пошук";
+$MESS["IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE"] = "Відкритий канал";
+$MESS["IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE"] = "Закритий канал";
+$MESS["IM_TEXTAREA_MENTION_USER_TYPE"] = "Користувач";
 $MESS["IM_TEXTAREA_PLACEHOLDER"] = "Введіть повідомлення...";
 $MESS["IM_TEXTAREA_PLACEHOLDER_V2"] = "Напишіть що-небудь або натисніть @, щоб згадати співробітника";
 $MESS["IM_TEXTAREA_PLACEHOLDER_V3"] = "Натисніть @, щоб згадати людину чи чат";
@@ -62,4 +67,5 @@ $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_BUTTON_SEND"] = "Надіслати";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_INPUT_PLACEHOLDER"] = "Додати коментар";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_SEND_AS_FILE"] = "Надіслати як файл";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE"] = "Завантаження зображень";
+$MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE_FILES"] = "Завантаження файлів";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_UPLOAD_ERROR"] = "Не вдалося завантажити зображення.";

@@ -17,6 +17,7 @@ jn.define('im/messenger/lib/element/dialog/message/system-text', (require, expor
 		constructor(modelMessage = {}, options = {})
 		{
 			super(modelMessage, options);
+			this.commentInfo = null;
 
 			this.setMessage(modelMessage.text);
 			this.setIsBackgroundOn(true);

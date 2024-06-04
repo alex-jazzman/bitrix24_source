@@ -94,7 +94,7 @@ class CBPSocnetBlogPostActivity extends CBPActivity
 		{
 			$micro = 'Y';
 			$title = trim(preg_replace(
-				["/\n+/is" . BX_UTF_PCRE_MODIFIER, '/\s+/is' . BX_UTF_PCRE_MODIFIER],
+				["/\n+/isu", '/\s+/isu'],
 				' ',
 				blogTextParser::killAllTags($this->PostMessage)
 			));
@@ -167,7 +167,7 @@ class CBPSocnetBlogPostActivity extends CBPActivity
 
 			if (class_exists(\Bitrix\Disk\Integration\Bizproc\File::class))
 			{
-				$this->attachFiles($newId);
+				$this->attachFiles($newId, $ownerId);
 			}
 			$this->addTags($postFields);
 
@@ -216,7 +216,7 @@ class CBPSocnetBlogPostActivity extends CBPActivity
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	private function attachFiles(int $postId)
+	private function attachFiles(int $postId, int $ownerId)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('disk'))
 		{
@@ -246,6 +246,7 @@ class CBPSocnetBlogPostActivity extends CBPActivity
 			[
 				'HAS_PROPS' => 'Y',
 				'UF_BLOG_POST_FILE' => $fileIds,
+				'AUTHOR_ID' => $ownerId,
 			]
 		);
 	}

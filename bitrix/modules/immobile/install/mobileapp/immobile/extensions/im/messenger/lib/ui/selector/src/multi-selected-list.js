@@ -71,6 +71,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selected-list', (require, exports,
 									this.props.onUnselectItem(itemData);
 								},
 								parentEmitter: this.emitter,
+								isSuperEllipseAvatar: this.props.isSuperEllipseAvatar,
 							},
 						);
 					},

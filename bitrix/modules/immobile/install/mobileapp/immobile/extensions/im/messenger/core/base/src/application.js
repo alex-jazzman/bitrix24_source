@@ -38,6 +38,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		sidebarModel,
 		draftModel,
 		queueModel,
+		commentModel,
 	} = require('im/messenger/model');
 
 	const {
@@ -181,6 +182,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				sidebarModel,
 				draftModel,
 				queueModel,
+				commentModel,
 			});
 		}
 

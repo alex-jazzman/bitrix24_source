@@ -29,6 +29,7 @@ $MESS["PROFILE_CHANGED_FAIL"] = "Сталася помилка. Будь лас�
 $MESS["PROFILE_CHANGED_SUCCESS"] = "Профіль успішно збережений!";
 $MESS["PROFILE_EDIT"] = "Зміна профілю";
 $MESS["PROFILE_INFO"] = "Інформація";
+$MESS["PROFILE_INFO_MSGVER_1"] = "Профіль";
 $MESS["PROFILE_USER_FILES"] = "Файли користувача";
 $MESS["PROFILE_USER_MESSAGES"] = "Повідомлення користувача";
 $MESS["PROFILE_USER_TASKS"] = "Завдання користувача";

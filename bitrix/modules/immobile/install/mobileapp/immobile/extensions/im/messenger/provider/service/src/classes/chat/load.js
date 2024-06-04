@@ -16,20 +16,25 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { runAction } = require('im/messenger/lib/rest');
 
-	const logger = LoggerManager.getInstance().getLogger('load-service--chat');
+	const logger = LoggerManager.getInstance().getLogger('dialog--chat-service');
 
 	/**
 	 * @class LoadService
 	 */
 	class LoadService
 	{
-		constructor()
+		/**
+		 *
+		 * @param {DialogLocator} dialogLocator
+		 */
+		constructor(dialogLocator)
 		{
 			this.store = serviceLocator.get('core').getStore();
 			this.restManager = new RestManager();
+			this.dialogLocator = dialogLocator;
 		}
 
-		loadChatWithMessages(dialogId)
+		async loadChatWithMessages(dialogId)
 		{
 			if (!Type.isStringFilled(dialogId))
 			{
@@ -54,6 +59,64 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			};
 
 			return this.requestChat(RestMethod.imV2ChatLoadInContext, params);
+		}
+
+
+		async loadCommentChatWithMessages(dialogId)
+		{
+			if (!Type.isStringFilled(dialogId))
+			{
+				return Promise.reject(new Error('ChatService: loadCommentChatWithMessages: dialogId is not provided'));
+			}
+
+			const params = {
+				dialogId,
+				messageLimit: MessageService.getMessageRequestLimit(),
+				autoJoin: 'Y',
+				createIfNotExists: 'Y',
+				ignoreMark: true, // TODO: remove when we support look later to start receiving messages from the flagged one
+			};
+
+			return this.requestChat(RestMethod.imV2ChatLoad, params);
+		}
+
+		/**
+		 * @param {number} postId
+		 * @return {Promise<DialogId>}
+		 */
+		async loadCommentChatWithMessagesByPostId(postId)
+		{
+			if (!Type.isNumber(postId))
+			{
+				return Promise.reject(new Error('ChatService: loadCommentChatWithMessagesByPostId: postId is not provided'));
+			}
+
+			const params = {
+				postId,
+				messageLimit: MessageService.getMessageRequestLimit(),
+				autoJoin: 'Y',
+				createIfNotExists: 'Y',
+				ignoreMark: true, // TODO: remove when we support look later to start receiving messages from the flagged one
+			};
+
+			await this.requestChat(RestMethod.imV2ChatLoad, params);
+
+			const dialog = this.store.getters['dialoguesModel/getByParentMessageId'](postId);
+			if (!dialog)
+			{
+				// alarm
+				return 0;
+			}
+
+			this.store.dispatch('commentModel/setComments', {
+				messageId: postId,
+				dialogId: dialog.dialogId,
+				chatId: dialog.chatId,
+				lastUserIds: [],
+				messageCount: dialog.messageCount,
+			});
+
+			return dialog.dialogId;
 		}
 
 		async requestChat(actionName, params)
@@ -113,11 +176,16 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 				this.setRecent(extractor).catch((err) => logger.log('LoadService.updateModels.setRecent error', err));
 			}
 
-			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', dialogList);
+			void await this.store.dispatch('dialoguesModel/set', dialogList);
+
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](extractor.getChatId());
+			this.dialogLocator.get('emitter').emit('beforeFirstPageRenderFromServer', [dialog]);
+
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
 				reactions: extractor.getReactions(),
 			});
+			const commentPromise = this.store.dispatch('commentModel/setComments', extractor.getCommentInfo());
 
 			const messagesPromise = [
 				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
@@ -132,10 +200,10 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			];
 
 			await Promise.all([
-				dialoguesPromise,
 				usersPromise,
 				filesPromise,
 				reactionPromise,
+				commentPromise,
 			]);
 
 			await Promise.all(messagesPromise);

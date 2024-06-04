@@ -79,6 +79,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  name: 'DefaultMessage',
 	  components: {
 	    MessageHeader: im_v2_component_message_elements.MessageHeader,
+	    MessageFooter: im_v2_component_message_elements.MessageFooter,
 	    BaseMessage: im_v2_component_message_base.BaseMessage,
 	    DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent,
 	    ReactionSelector: im_v2_component_message_elements.ReactionSelector,
@@ -114,7 +115,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  template: `
-		<BaseMessage :item="item" :dialogId="dialogId">
+		<BaseMessage :item="item" :dialogId="dialogId" :afterMessageWidthLimit="false">
 			<template #before-message v-if="$slots['before-message']">
 				<slot name="before-message"></slot>
 			</template>
@@ -122,8 +123,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<MessageHeader :withTitle="withTitle" :item="item" />
 				<Reply v-if="isReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 				<DefaultMessageContent :item="item" :dialogId="dialogId" />
-				<ReactionSelector :messageId="message.id" />
 			</div>
+			<MessageFooter :item="item" :dialogId="dialogId" />
 			<template #after-message v-if="hasKeyboard">
 				<MessageKeyboard :item="item" :dialogId="dialogId" />
 			</template>

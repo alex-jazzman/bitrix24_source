@@ -2,7 +2,7 @@
 $tabIndex = $arParams["tabIndex"];
 $id = 'POST_MESSAGE';
 $fileControlId = 'forumfiles'.$arResult["FORUM"]["ID"];?>
-<script type="text/javascript">
+<script>
 BX.message({
 	recover_message : '<?=GetMessageJS('F_MESSAGE_RECOVER')?>',
 	no_topic_name : '<?=GetMessageJS("JERROR_NO_TOPIC_NAME")?>',
@@ -171,7 +171,7 @@ if ($arResult["SHOW_PANEL"]["TOPIC"] == "Y" && $arResult["SHOW_PANEL"]["VOTE"] =
 	?></div><?
 	$sQuestion = ob_get_clean();
 	?>
-<script type="text/javascript">
+<script>
 	var arVoteParams = {
 		'qCount': <?=(empty($arResult["QUESTIONS"]) ? 1 : count($arResult["QUESTIONS"]))?>,
 		'qNum': <?=(empty($arResult["QUESTIONS"]) ? 0 : count($arResult["QUESTIONS"]) - 1)?>,

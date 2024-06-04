@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_public,im_v2_lib_rest,im_v2_lib_call,im_v2_application_core,im_v2_const,main_core_events,main_core,im_v2_lib_logger,im_v2_lib_utils,im_v2_lib_desktopApi) {
+(function (exports,im_public,im_v2_lib_rest,im_v2_lib_call,im_v2_application_core,main_core_events,im_v2_lib_utils,im_v2_const,main_core,im_v2_lib_desktopApi,im_v2_lib_logger) {
 	'use strict';
 
 	const IMAGE_CHECK_URL = 'http://127.0.0.1:20141';
@@ -533,6 +533,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store] = im_v2_application_core.Core.getStore();
+	    babelHelpers.classPrivateFieldLooseBase(this, _onCounterChange)[_onCounterChange]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeToCountersChange)[_subscribeToCountersChange]();
 	  }
 	}
@@ -581,6 +582,33 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  });
 	}
 
+	var _subscribeToNewTabEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToNewTabEvent");
+	var _onNewTabClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onNewTabClick");
+	class NewTabHandler {
+	  static init() {
+	    return new NewTabHandler();
+	  }
+	  constructor() {
+	    Object.defineProperty(this, _onNewTabClick, {
+	      value: _onNewTabClick2
+	    });
+	    Object.defineProperty(this, _subscribeToNewTabEvent, {
+	      value: _subscribeToNewTabEvent2
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeToNewTabEvent)[_subscribeToNewTabEvent]();
+	  }
+	}
+	function _subscribeToNewTabEvent2() {
+	  im_v2_lib_desktopApi.DesktopApi.subscribe(im_v2_const.EventType.desktop.onNewTabClick, babelHelpers.classPrivateFieldLooseBase(this, _onNewTabClick)[_onNewTabClick].bind(this));
+	}
+	function _onNewTabClick2() {
+	  const siteDir = main_core.Loc.getMessage('SITE_DIR') || '/';
+	  BX.SidePanel.Instance.open(`${siteDir}sitemap/?IM_DESKTOP_NEW_TAB=Y`, {
+	    allowChangeHistory: false,
+	    customLeftBoundary: 0
+	  });
+	}
+
 	/* eslint-disable no-undef */
 	var _sendInitEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendInitEvent");
 	var _initSliderBindings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initSliderBindings");
@@ -617,6 +645,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    BxLinkHandler.init();
 	    CounterHandler.init();
 	    HotkeyHandler.init();
+	    NewTabHandler.init();
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendInitEvent)[_sendInitEvent]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnErrorEvent)[_subscribeOnErrorEvent]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initSliderBindings)[_initSliderBindings]();
@@ -657,6 +686,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _handleInvalidAuthError2() {
 	  return im_v2_lib_desktopApi.DesktopApi.login();
+	}
+
+	/* eslint-disable no-undef */
+	var _initComplete$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initComplete");
+	class Browser {
+	  static init() {
+	    return new Browser();
+	  }
+	  constructor() {
+	    Object.defineProperty(this, _initComplete$1, {
+	      value: _initComplete2$1
+	    });
+	    NewTabHandler.init();
+	    babelHelpers.classPrivateFieldLooseBase(this, _initComplete$1)[_initComplete$1]();
+	  }
+	}
+	function _initComplete2$1() {
+	  im_v2_lib_desktopApi.DesktopApi.setLogInfo = function (...params) {
+	    im_v2_lib_logger.Logger.desktop(...params);
+	  };
 	}
 
 	const DESKTOP_PROTOCOL_VERSION = 2;
@@ -702,8 +751,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      value: 1
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _initDesktopStatus)[_initDesktopStatus]();
-	    if (DesktopManager.isDesktop() && im_v2_lib_desktopApi.DesktopApi.isChatWindow()) {
-	      Desktop.init();
+	    if (DesktopManager.isDesktop()) {
+	      if (im_v2_lib_desktopApi.DesktopApi.isChatWindow()) {
+	        Desktop.init();
+	      } else {
+	        Browser.init();
+	      }
 	    }
 	  }
 	  isDesktopActive() {
@@ -787,7 +840,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.openBxLink(`bx://v2/${domainName}/openTab`);
 	  }
 	  checkStatusInDifferentContext() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _desktopIsActive)[_desktopIsActive]) {
+	    if (!this.isDesktopActive()) {
 	      return Promise.resolve(false);
 	    }
 	    if (im_v2_lib_desktopApi.DesktopApi.isChatWindow()) {
@@ -848,5 +901,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.DesktopManager = DesktopManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Event,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=desktop-manager.bundle.js.map

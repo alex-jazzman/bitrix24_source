@@ -1,7 +1,8 @@
+import { Extension } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Store } from 'ui.vue3.vuex';
+import { Controller, State as CallState } from 'call.core';
 
-import { Controller, State as CallState } from 'im.call';
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import { MessengerSlider } from 'im.v2.lib.slider';
@@ -43,18 +44,37 @@ export class CallManager
 	constructor()
 	{
 		this.#store = Core.getStore();
-		this.#controller = this.#getController();
+		if (this.isAvailable())
+		{
+			this.#controller = this.#getController();
+		}
 
 		this.#subscribeToEvents();
 	}
 
+	isAvailable(): Boolean
+	{
+		const { callInstalled } = Extension.getSettings('im.v2.lib.call');
+		return callInstalled === true;
+	}
+
 	createBetaCallRoom(chatId: number)
 	{
+		if (!this.isAvailable())
+		{
+			return;
+		}
+
 		BetaCallService.createRoom(chatId);
 	}
 
 	startCall(dialogId: string, withVideo: boolean = true)
 	{
+		if (!this.isAvailable())
+		{
+			return;
+		}
+
 		Logger.warn('CallManager: startCall', dialogId, withVideo);
 		if (this.#isUser(dialogId))
 		{
@@ -65,19 +85,29 @@ export class CallManager
 
 	joinCall(callId: string, withVideo: boolean = true)
 	{
+		if (!this.isAvailable())
+		{
+			return;
+		}
+
 		Logger.warn('CallManager: joinCall', callId, withVideo);
 		this.#controller.joinCall(callId, withVideo);
 	}
 
 	leaveCurrentCall()
 	{
+		if (!this.isAvailable())
+		{
+			return;
+		}
+
 		Logger.warn('CallManager: leaveCurrentCall');
 		this.#controller.leaveCurrentCall();
 	}
 
 	foldCurrentCall()
 	{
-		if (!this.#controller.hasActiveCall() || !this.#controller.hasVisibleCall())
+		if (!this.isAvailable() || !this.#controller.hasActiveCall() || !this.#controller.hasVisibleCall())
 		{
 			return;
 		}
@@ -87,7 +117,7 @@ export class CallManager
 
 	unfoldCurrentCall()
 	{
-		if (!this.#controller.hasActiveCall())
+		if (!this.isAvailable() || !this.#controller.hasActiveCall())
 		{
 			return;
 		}
@@ -97,7 +127,7 @@ export class CallManager
 
 	getCurrentCallDialogId(): string
 	{
-		if (!this.#controller.hasActiveCall())
+		if (!this.isAvailable() || !this.#controller.hasActiveCall())
 		{
 			return '';
 		}
@@ -107,7 +137,7 @@ export class CallManager
 
 	getCurrentCall(): boolean
 	{
-		if (!this.#controller.hasActiveCall())
+		if (!this.isAvailable() || !this.#controller.hasActiveCall())
 		{
 			return false;
 		}
@@ -117,12 +147,17 @@ export class CallManager
 
 	hasCurrentCall(): boolean
 	{
+		if (!this.isAvailable())
+		{
+			return false;
+		}
+
 		return this.#controller.hasActiveCall();
 	}
 
 	hasCurrentScreenSharing(): boolean
 	{
-		if (!this.#controller.hasActiveCall())
+		if (!this.isAvailable() || !this.#controller.hasActiveCall())
 		{
 			return false;
 		}
@@ -132,7 +167,7 @@ export class CallManager
 
 	hasVisibleCall(): boolean
 	{
-		if (!this.#controller.hasActiveCall())
+		if (!this.isAvailable() || !this.#controller.hasActiveCall())
 		{
 			return false;
 		}
@@ -142,6 +177,11 @@ export class CallManager
 
 	startTest()
 	{
+		if (!this.isAvailable())
+		{
+			return;
+		}
+
 		this.#controller.test();
 	}
 
@@ -153,6 +193,19 @@ export class CallManager
 		}
 
 		this.#controller.debug = debug;
+	}
+
+	chatCanBeCalled(dialogId: string): boolean
+	{
+		if (!this.isAvailable())
+		{
+			return false;
+		}
+
+		const callSupported = this.#checkCallSupport(dialogId);
+		const hasCurrentCall = this.#store.getters['recent/calls/hasActiveCall'](dialogId);
+
+		return callSupported && !hasCurrentCall;
 	}
 
 	#getController(): Controller
@@ -279,14 +332,6 @@ export class CallManager
 		this.foldCurrentCall();
 	}
 
-	chatCanBeCalled(dialogId: string): boolean
-	{
-		const callSupported = this.#checkCallSupport(dialogId);
-		const hasCurrentCall = this.#store.getters['recent/calls/hasActiveCall'](dialogId);
-
-		return callSupported && !hasCurrentCall;
-	}
-
 	#checkCallSupport(dialogId: string): boolean
 	{
 		if (!this.#pushServerIsActive() || !BX.Call.Util.isWebRTCSupported())
@@ -350,6 +395,11 @@ export class CallManager
 
 	#prepareUserCall(dialogId: string)
 	{
+		if (!this.isAvailable())
+		{
+			return;
+		}
+
 		const currentUserId = Core.getUserId();
 		const currentUser: ImModelUser = Core.getStore().getters['users/get'](currentUserId);
 		const currentCompanion: ImModelUser = Core.getStore().getters['users/get'](dialogId);

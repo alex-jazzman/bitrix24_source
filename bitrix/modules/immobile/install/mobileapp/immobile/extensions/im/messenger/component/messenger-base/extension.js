@@ -102,22 +102,29 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.initRequests();
 
 			BX.onViewLoaded(async () => {
-				await this.initComponents();
-				this.subscribeEvents();
-				this.initPullHandlers();
-				this.initServices();
-				await this.initCurrentUser();
-				await this.initQueueRequests();
+				try
+				{
+					await this.initComponents();
+					this.subscribeEvents();
+					this.initPullHandlers();
+					this.initServices();
+					await this.initCurrentUser();
+					await this.initQueueRequests();
 
-				this.connectionService.updateStatus();
+					this.connectionService.updateStatus();
 
-				EntityReady.wait('im.navigation')
-					.then(() => this.executeStoredPullEvents())
-					.catch((error) => Logger.error(error))
-				;
+					EntityReady.wait('im.navigation')
+						.then(() => this.executeStoredPullEvents())
+						.catch((error) => Logger.error(error))
+					;
 
-				this.checkChatV2Support();
-				await this.refresh();
+					this.checkChatV2Support();
+					await this.refresh();
+				}
+				catch (error)
+				{
+					Logger.error(`${this.constructor.name} init error:`, error);
+				}
 			});
 		}
 

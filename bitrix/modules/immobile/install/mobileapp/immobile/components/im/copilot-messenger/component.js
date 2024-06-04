@@ -75,7 +75,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
-	const { Promotion } = require('im/messenger/lib/promotion');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
@@ -186,7 +185,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			this.openChatCreate = this.openChatCreate.bind(this);
 			this.refresh = this.refresh.bind(this);
 
-			this.onChatDialogInitComplete = this.onChatDialogInitComplete.bind(this);
 			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
 			this.onChatDialogAccessError = this.onChatDialogAccessError.bind(this);
 			this.onTaskStatusSuccess = this.onTaskStatusSuccess.bind(this);
@@ -240,7 +238,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		 */
 		subscribeExternalEvents()
 		{
-			BX.addCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
 			BX.addCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
 			BX.addCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.addCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
@@ -256,7 +253,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		 */
 		unsubscribeExternalEvents()
 		{
-			BX.removeCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
 			BX.removeCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
 			BX.removeCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.removeCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
@@ -484,6 +480,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		{
 			Logger.info('CopilotMessenger.openDialog', options);
 			const openDialogOptions = options;
+			openDialogOptions.isNew = Type.isBoolean(options.isNew) ? options.isNew : false;
 			if (openDialogOptions.dialogId)
 			{
 				openDialogOptions.dialogId = openDialogOptions.dialogId.toString();

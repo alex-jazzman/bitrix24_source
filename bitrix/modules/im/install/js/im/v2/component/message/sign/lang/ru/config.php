@@ -11,8 +11,12 @@ $MESS["IM_MESSAGE_SIGN_INVITE_EMPLOYEE_GOS_KEY_TITLE"] = "Подпишите д�
 $MESS["IM_MESSAGE_SIGN_INVITE_EMPLOYEE_GOS_KEY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# отправлен в приложение Госключ и будет доступен 24 часа. Если не подписать за это время, документ удалится. [helpdesklink]Как подписать в Госключе[/helpdesklink]";
 
 $MESS["IM_MESSAGE_SIGN_INVITE_REVIEWER_TITLE"] = "Согласуйте документ";
-$MESS["IM_MESSAGE_SIGN_INVITE_REVIEWER_DESCRIPTION"] = "После вашего согласования документ #DOCUMENT_NAME# будет отправлен на подпись представителю компании";
+$MESS["IM_MESSAGE_SIGN_INVITE_REVIEWER_DESCRIPTION_MSGVER_1"] = "После вашего согласования документ #DOCUMENT_NAME# будет отправлен остальным участникам";
 $MESS["IM_MESSAGE_SIGN_INVITE_REVIEWER_BUTTON_TEXT"] = "Перейти к согласованию";
+
+$MESS["IM_MESSAGE_SIGN_INVITE_EDITOR_TITLE"] = "Проверьте и заполните документ";
+$MESS["IM_MESSAGE_SIGN_INVITE_EDITOR_DESCRIPTION"] = "После проверки документ #DOCUMENT_NAME# будет отправлен на подпись представителю компании";
+$MESS["IM_MESSAGE_SIGN_INVITE_EDITOR_BUTTON_TEXT"] = "Проверить и заполнить";
 
 $MESS["IM_MESSAGE_SIGN_INVITE_EMPLOYEE_TAXCOM_TITLE"] = "Подпишите документ";
 $MESS["IM_MESSAGE_SIGN_INVITE_EMPLOYEE_TAXCOM_DESCRIPTION"] = "После проверки документ #DOCUMENT_NAME# будет отправлен на подпись представителю компании";
@@ -37,13 +41,15 @@ $MESS["IM_MESSAGE_SIGN_DONE_FROM_EDITOR_TITLE"] = "Документ провер
 $MESS["IM_MESSAGE_SIGN_DONE_FROM_EDITOR_DESCRIPTION"] = "Документ #DOCUMENT_NAME# проверен, заполнен и отправлен на подпись представителю компании";
 
 $MESS["IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_TITLE"] = "Документ согласован";
-$MESS["IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_DESCRIPTION"] = "Документ #DOCUMENT_NAME# согласован и отправлен на подпись представителю компании";
+$MESS["IM_MESSAGE_SIGN_DONE_FROM_REVIEWER_DESCRIPTION_MSGVER_1"] = "Документ #DOCUMENT_NAME# согласован и отправлен остальным участникам";
 
-$MESS["IM_MESSAGE_SIGN_REFUSED_COMPANY_TITLE"] = "Подписание документа отменено";
-$MESS["IM_MESSAGE_SIGN_REFUSED_COMPANY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# больше недоступен для подписи";
+$MESS["IM_MESSAGE_SIGN_REFUSED_COMPANY_TITLE"] = "Отказ от подписания";
+$MESS["IM_MESSAGE_SIGN_REFUSED_COMPANY_DESCRIPTION"] = "Документ #DOCUMENT_NAME# не подписан";
 
 $MESS["IM_MESSAGE_SIGN_EMPLOYEE_STOPPED_TO_COMPANY_TITLE"] = "Подписание с сотрудником отменено";
 $MESS["IM_MESSAGE_SIGN_EMPLOYEE_STOPPED_TO_COMPANY_DESCRIPTION"] = "Отменено подписание документа #DOCUMENT_NAME# с сотрудником #USER_LINK#";
 
-$MESS["IM_MESSAGE_SIGN_DOCUMENT_STOPPED_TITLE"] = "Отказ от подписания";
-$MESS["IM_MESSAGE_SIGN_DOCUMENT_STOPPED_DESCRIPTION"] = "Документ #DOCUMENT_NAME# не подписан";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_STOPPED_TITLE"] = "Подписание документа отменено";
+$MESS["IM_MESSAGE_SIGN_DOCUMENT_STOPPED_DESCRIPTION"] = "Документ #DOCUMENT_NAME# больше недоступен для подписи";
+
+$MESS["IM_MESSAGE_SIGN_SIDEPANEL_BTN_SIGN"] = "Подпись";

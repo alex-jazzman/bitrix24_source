@@ -1,3 +1,5 @@
+import 'ui.notification';
+
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
@@ -16,9 +18,6 @@ import { SettingsSection } from './sections/settings/settings-section';
 import { RightsSection } from './sections/rights/rights-section';
 import { AppearanceSection } from './sections/appearance/appearance-section';
 import { ConferenceSection } from './sections/conference/conference-section';
-
-import 'ui.notification';
-import '../css/create-chat-content.css';
 
 import type { JsonObject } from 'main.core';
 import type { OnLayoutChangeEvent } from 'im.v2.const';
@@ -59,7 +58,7 @@ export const ConferenceCreation = {
 				manageUsersDelete: '',
 				manageSettings: '',
 				manageUi: '',
-				canPost: '',
+				manageMessages: '',
 			},
 		};
 	},
@@ -120,9 +119,9 @@ export const ConferenceCreation = {
 		{
 			this.rights.manageUi = newValue;
 		},
-		onCanPostChange(newValue: UserRoleItem)
+		onManageMessagesChange(newValue: UserRoleItem)
 		{
-			this.rights.canPost = newValue;
+			this.rights.manageMessages = newValue;
 		},
 		onAvatarChange(newAvatarFile: File)
 		{
@@ -160,7 +159,7 @@ export const ConferenceCreation = {
 				manageUsersDelete: this.rights.manageUsersDelete,
 				manageUi: this.rights.manageUi,
 				manageSettings: this.rights.manageSettings,
-				canPost: this.rights.canPost,
+				manageMessages: this.rights.manageMessages,
 				conferencePassword: this.conference.passwordNeeded ? this.conference.password : '',
 			}).catch(() => {
 				this.isCreating = false;
@@ -184,7 +183,7 @@ export const ConferenceCreation = {
 			MenuManager.getMenuById(PopupType.createChatManageUsersAddMenu)?.close();
 			MenuManager.getMenuById(PopupType.createChatManageUsersDeleteMenu)?.close();
 			MenuManager.getMenuById(PopupType.createChatManageUiMenu)?.close();
-			MenuManager.getMenuById(PopupType.createChatCanPostMenu)?.close();
+			MenuManager.getMenuById(PopupType.createChatManageMessagesMenu)?.close();
 		},
 		onLayoutChange(event: BaseEvent<OnLayoutChangeEvent>)
 		{
@@ -228,13 +227,14 @@ export const ConferenceCreation = {
 				manageUsersDelete,
 				manageUi,
 				manageSettings,
+				manageMessages,
 			} = PermissionManager.getInstance().getDefaultRolesForActionGroups();
 
 			this.rights.manageUsersAdd = manageUsersAdd;
 			this.rights.manageUsersDelete = manageUsersDelete;
 			this.rights.manageUi = manageUi;
 			this.rights.manageSettings = manageSettings;
-			this.rights.canPost = UserRole.member;
+			this.rights.manageMessages = manageMessages;
 		},
 		checkPassword(): boolean
 		{
@@ -270,10 +270,12 @@ export const ConferenceCreation = {
 	template: `
 		<div class="bx-im-content-create-chat__content" @scroll="onScroll">
 			<div class="bx-im-content-create-chat__header">
-				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" />
+				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" :squared="true" />
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CONFERENCE_TITLE_PLACEHOLDER')" />
 			</div>
-			<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			<div class="bx-im-content-create-chat__members_container">
+				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			</div>
 			<ConferenceSection
 				:passwordNeeded="conference.passwordNeeded"
 				:password="conference.password"
@@ -292,13 +294,13 @@ export const ConferenceCreation = {
 				:manageUsersDelete="rights.manageUsersDelete"
 				:manageUi="rights.manageUi"
 				:manageSettings="rights.manageSettings"
-				:canPost="rights.canPost"
+				:manageMessages="rights.manageMessages"
 				@ownerChange="onOwnerChange"
 				@managersChange="onManagersChange"
 				@manageUsersAddChange="onManageUsersAddChange"
 				@manageUsersDeleteChange="onManageUsersDeleteChange"
 				@manageUiChange="onManageUiChange"
-				@canPostChange="onCanPostChange"
+				@manageMessagesChange="onManageMessagesChange"
 			/>
 		</div>
 		<ButtonPanel

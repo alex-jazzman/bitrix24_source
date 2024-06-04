@@ -5,6 +5,7 @@ return [
 		'type',
 	],
 	'bundle' => [
+		'./src/analytics',
 		'./src/app-status',
 		'./src/bot',
 		'./src/connection-status',
@@ -29,6 +30,7 @@ return [
 		'./src/promo',
 		'./src/copilot-button',
 		'./src/component-code',
+		'./src/header-button',
 		'./src/cache',
 	],
 ];

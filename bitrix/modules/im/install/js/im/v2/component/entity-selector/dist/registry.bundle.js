@@ -45,6 +45,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    isChat() {
 	      return this.dialog.type !== im_v2_const.ChatType.user;
+	    },
+	    isChannel() {
+	      return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(this.dialog.type);
+	    },
+	    showHistoryOption() {
+	      return this.isChat && !this.isChannel;
 	    }
 	  },
 	  created() {
@@ -75,6 +81,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	            } = event.getData();
 	            this.selectedItems.add(tag.id);
 	            this.focusSelector();
+	          },
+	          onKeyUp: event => {
+	            const {
+	              event: keyboardEvent
+	            } = event.getData();
+	            main_core_events.EventEmitter.emit(im_v2_const.EventType.search.keyPressed, {
+	              keyboardEvent
+	            });
 	          },
 	          onBeforeTagRemove: () => {
 	            clearTimeout(timeoutId);
@@ -201,7 +215,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  template: `
 		<div class="bx-im-entity-selector-add-to-chat__container bx-im-entity-selector-add-to-chat__scope">
 			<div class="bx-im-entity-selector-add-to-chat__input" ref="tag-selector"></div>
-			<div v-if="isChat" class="bx-im-entity-selector-add-to-chat__show-history">
+			<div v-if="showHistoryOption" class="bx-im-entity-selector-add-to-chat__show-history">
 				<input type="checkbox" id="bx-im-entity-selector-add-to-chat-show-history" v-model="showHistory">
 				<label for="bx-im-entity-selector-add-to-chat-show-history">
 					{{ loc('IM_ENTITY_SELECTOR_ADD_TO_CHAT_SHOW_HISTORY')}}
@@ -338,7 +352,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      } = event;
 	      await im_public.Messenger.openChat(dialogId);
 	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertForward, {
-	        messageId: this.messageId
+	        messageId: this.messageId,
+	        dialogId
 	      });
 	      this.$emit('close');
 	    }

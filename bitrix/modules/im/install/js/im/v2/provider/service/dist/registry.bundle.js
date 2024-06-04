@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
-(function (exports,im_v2_provider_service,im_v2_lib_layout,im_v2_lib_uuid,im_public,ui_vue3_vuex,ui_notification,main_core,im_v2_lib_user,rest_client,im_v2_lib_utils,main_core_events,ui_uploader_core,im_v2_lib_logger,im_v2_lib_rest,im_v2_application_core,im_v2_const,im_v2_lib_analytics) {
+(function (exports,im_v2_provider_service,im_v2_lib_layout,im_v2_lib_uuid,im_public,im_v2_lib_copilot,ui_vue3_vuex,ui_notification,main_core,im_v2_lib_user,rest_client,im_v2_lib_utils,main_core_events,ui_uploader_core,im_v2_lib_logger,im_v2_lib_analytics,im_v2_application_core,im_v2_lib_rest,im_v2_const) {
 	'use strict';
 
 	var _restResult = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restResult");
@@ -88,7 +88,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  getItems() {
 	    const {
-	      items = []
+	      items = [],
+	      copilot
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _restResult)[_restResult];
 	    items.forEach(item => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _extractUser)[_extractUser](item);
@@ -102,7 +103,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      chats: Object.values(babelHelpers.classPrivateFieldLooseBase(this, _chats)[_chats]),
 	      messages: Object.values(babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages]),
 	      files: Object.values(babelHelpers.classPrivateFieldLooseBase(this, _files)[_files]),
-	      recentItems: Object.values(babelHelpers.classPrivateFieldLooseBase(this, _recentItems)[_recentItems])
+	      recentItems: Object.values(babelHelpers.classPrivateFieldLooseBase(this, _recentItems)[_recentItems]),
+	      copilot
 	    };
 	  }
 	}
@@ -195,7 +197,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  return {
 	    ...item.chat,
 	    counter: item.counter,
-	    dialogId: item.id
+	    dialogId: item.id,
+	    copilot: item.copilot
 	  };
 	}
 	function _prepareChatForUser2(item) {
@@ -351,7 +354,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      chats,
 	      messages,
 	      files,
-	      recentItems
+	      recentItems,
+	      copilot
 	    } = extractedItems;
 	    im_v2_lib_logger.Logger.warn('RecentService: prepared data for models', extractedItems);
 	    const usersPromise = im_v2_application_core.Core.getStore().dispatch('users/set', users);
@@ -359,7 +363,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    const messagesPromise = im_v2_application_core.Core.getStore().dispatch('messages/store', messages);
 	    const filesPromise = im_v2_application_core.Core.getStore().dispatch('files/set', files);
 	    const recentPromise = im_v2_application_core.Core.getStore().dispatch(this.getModelSaveMethod(), recentItems);
-	    return Promise.all([usersPromise, dialoguesPromise, messagesPromise, filesPromise, recentPromise]);
+	    const copilotManager = new im_v2_lib_copilot.CopilotManager();
+	    const copilotPromise = copilotManager.handleRecentListResponse(copilot);
+	    return Promise.all([usersPromise, dialoguesPromise, messagesPromise, filesPromise, recentPromise, copilotPromise]);
 	  }
 	  getLastMessageDate(items) {
 	    if (items.length === 0) {
@@ -390,6 +396,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  isOpenlinesChat() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].chat.type === im_v2_const.ChatType.lines;
+	  }
+	  isCopilotChat() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].chat.type === im_v2_const.ChatType.copilot;
 	  }
 	  getChats() {
 	    const mainChat = {
@@ -428,22 +437,29 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    var _babelHelpers$classPr4;
 	    return (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].messages) != null ? _babelHelpers$classPr4 : [];
 	  }
-	  getMessagesToStore() {
+	  getCommentInfo() {
 	    var _babelHelpers$classPr5;
-	    return (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].additionalMessages) != null ? _babelHelpers$classPr5 : [];
+	    return (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].commentInfo) != null ? _babelHelpers$classPr5 : [];
+	  }
+	  getMessagesToStore() {
+	    var _babelHelpers$classPr6;
+	    return (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].additionalMessages) != null ? _babelHelpers$classPr6 : [];
 	  }
 	  getPinnedMessageIds() {
-	    var _babelHelpers$classPr6;
+	    var _babelHelpers$classPr7;
 	    const pinnedMessageIds = [];
-	    const pins = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].pins) != null ? _babelHelpers$classPr6 : [];
+	    const pins = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].pins) != null ? _babelHelpers$classPr7 : [];
 	    pins.forEach(pin => {
 	      pinnedMessageIds.push(pin.messageId);
 	    });
 	    return pinnedMessageIds;
 	  }
 	  getReactions() {
-	    var _babelHelpers$classPr7;
-	    return (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].reactions) != null ? _babelHelpers$classPr7 : [];
+	    var _babelHelpers$classPr8;
+	    return (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].reactions) != null ? _babelHelpers$classPr8 : [];
+	  }
+	  getCopilot() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _restResult$1)[_restResult$1].copilot;
 	  }
 	}
 
@@ -454,8 +470,24 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _markDialogAsNotLoaded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markDialogAsNotLoaded");
 	var _isDialogLoadedMarkNeeded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDialogLoadedMarkNeeded");
 	var _updateModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateModels");
+	var _needLayoutRedirect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needLayoutRedirect");
+	var _redirectToLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("redirectToLayout");
+	var _needRedirectToCopilotLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needRedirectToCopilotLayout");
+	var _needRedirectToOpenLinesLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("needRedirectToOpenLinesLayout");
 	class LoadService {
 	  constructor() {
+	    Object.defineProperty(this, _needRedirectToOpenLinesLayout, {
+	      value: _needRedirectToOpenLinesLayout2
+	    });
+	    Object.defineProperty(this, _needRedirectToCopilotLayout, {
+	      value: _needRedirectToCopilotLayout2
+	    });
+	    Object.defineProperty(this, _redirectToLayout, {
+	      value: _redirectToLayout2
+	    });
+	    Object.defineProperty(this, _needLayoutRedirect, {
+	      value: _needLayoutRedirect2
+	    });
 	    Object.defineProperty(this, _updateModels, {
 	      value: _updateModels2
 	    });
@@ -516,10 +548,57 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      console.error('ChatService: Load: error preparing external id', error);
 	    });
 	  }
+	  async loadComments(postId) {
+	    const params = {
+	      postId,
+	      messageLimit: im_v2_provider_service.MessageService.getMessageRequestLimit(),
+	      autoJoin: true,
+	      createIfNotExists: true
+	    };
+	    const {
+	      chatId
+	    } = await babelHelpers.classPrivateFieldLooseBase(this, _requestChat)[_requestChat](im_v2_const.RestMethod.imV2ChatLoad, params);
+	    return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/comments/set', {
+	      messageId: postId,
+	      chatId
+	    });
+	  }
+	  async loadCommentInfo(channelDialogId) {
+	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/get'](channelDialogId, true);
+	    const messages = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['messages/getByChatId'](dialog.chatId);
+	    const messageIds = messages.map(message => message.id);
+	    const {
+	      commentInfo,
+	      usersShort
+	    } = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageCommentInfoList, {
+	      data: {
+	        messageIds
+	      }
+	    }).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('ChatService: Load: error loading comment info', error);
+	    });
+	    const userManager = new im_v2_lib_user.UserManager();
+	    void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/comments/set', commentInfo);
+	    void userManager.addUsersToModel(usersShort);
+	  }
+	  resetChat(dialogId) {
+	    const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/get'](dialogId, true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/clearChatCollection', {
+	      chatId: dialog.chatId
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('chats/update', {
+	      dialogId,
+	      fields: {
+	        inited: false
+	      }
+	    });
+	  }
 	}
 	async function _requestChat2(actionName, params) {
 	  const {
-	    dialogId
+	    dialogId,
+	    messageId
 	  } = params;
 	  babelHelpers.classPrivateFieldLooseBase(this, _markDialogAsLoading)[_markDialogAsLoading](dialogId);
 	  const actionResult = await im_v2_lib_rest.runAction(actionName, {
@@ -530,18 +609,23 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _markDialogAsNotLoaded)[_markDialogAsNotLoaded](dialogId);
 	    throw error;
 	  });
-	  const updateModelResult = await babelHelpers.classPrivateFieldLooseBase(this, _updateModels)[_updateModels](actionResult);
-	  if (main_core.Type.isStringFilled(updateModelResult == null ? void 0 : updateModelResult.linesDialogId)) {
-	    im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.chat.name, '');
-	    return im_public.Messenger.openLines(updateModelResult.linesDialogId);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _needLayoutRedirect)[_needLayoutRedirect](actionResult)) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _redirectToLayout)[_redirectToLayout](actionResult, messageId);
 	  }
+	  const {
+	    dialogId: loadedDialogId,
+	    chatId
+	  } = await babelHelpers.classPrivateFieldLooseBase(this, _updateModels)[_updateModels](actionResult);
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isDialogLoadedMarkNeeded)[_isDialogLoadedMarkNeeded](actionName)) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _markDialogAsLoaded)[_markDialogAsLoaded](dialogId);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _markDialogAsLoaded)[_markDialogAsLoaded](loadedDialogId);
 	  }
-	  return true;
+	  return {
+	    dialogId: loadedDialogId,
+	    chatId
+	  };
 	}
 	function _markDialogAsLoading2(dialogId) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('chats/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('chats/update', {
 	    dialogId,
 	    fields: {
 	      loading: true
@@ -568,13 +652,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	function _isDialogLoadedMarkNeeded2(actionName) {
 	  return actionName !== im_v2_const.RestMethod.imV2ChatShallowLoad;
 	}
-	function _updateModels2(restResult) {
+	async function _updateModels2(restResult) {
 	  const extractor = new ChatDataExtractor(restResult);
-	  if (extractor.isOpenlinesChat()) {
-	    return Promise.resolve({
-	      linesDialogId: extractor.getDialogId()
-	    });
-	  }
 	  const chatsPromise = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('chats/set', extractor.getChats());
 	  const filesPromise = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('files/set', extractor.getFiles());
 	  const userManager = new im_v2_lib_user.UserManager();
@@ -585,8 +664,37 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }), babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/store', extractor.getMessagesToStore()), babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/pin/setPinned', {
 	    chatId: extractor.getChatId(),
 	    pinnedMessages: extractor.getPinnedMessageIds()
-	  }), babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/reactions/set', extractor.getReactions())]);
-	  return Promise.all([chatsPromise, filesPromise, usersPromise, messagesPromise]);
+	  }), babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/reactions/set', extractor.getReactions()), babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].dispatch('messages/comments/set', extractor.getCommentInfo())]);
+	  const copilotManager = new im_v2_lib_copilot.CopilotManager();
+	  const copilotPromise = copilotManager.handleChatLoadResponse(extractor.getCopilot());
+	  await Promise.all([chatsPromise, filesPromise, usersPromise, messagesPromise, copilotPromise]);
+	  return {
+	    dialogId: extractor.getDialogId(),
+	    chatId: extractor.getChatId()
+	  };
+	}
+	function _needLayoutRedirect2(actionResult) {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _needRedirectToCopilotLayout)[_needRedirectToCopilotLayout](actionResult) || babelHelpers.classPrivateFieldLooseBase(this, _needRedirectToOpenLinesLayout)[_needRedirectToOpenLinesLayout](actionResult);
+	}
+	function _redirectToLayout2(actionResult, contextId = 0) {
+	  const extractor = new ChatDataExtractor(actionResult);
+	  im_v2_lib_layout.LayoutManager.getInstance().setLastOpenedElement(im_v2_const.Layout.chat.name, '');
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _needRedirectToCopilotLayout)[_needRedirectToCopilotLayout](actionResult)) {
+	    return im_public.Messenger.openCopilot(extractor.getDialogId(), contextId);
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _needRedirectToOpenLinesLayout)[_needRedirectToOpenLinesLayout](actionResult)) {
+	    return im_public.Messenger.openLines(extractor.getDialogId());
+	  }
+	  return Promise.resolve();
+	}
+	function _needRedirectToCopilotLayout2(actionResult) {
+	  const extractor = new ChatDataExtractor(actionResult);
+	  const currentLayoutName = im_v2_lib_layout.LayoutManager.getInstance().getLayout().name;
+	  return extractor.isCopilotChat() && currentLayoutName !== im_v2_const.Layout.copilot.name;
+	}
+	function _needRedirectToOpenLinesLayout2(actionResult) {
+	  const extractor = new ChatDataExtractor(actionResult);
+	  return extractor.isOpenlinesChat() && main_core.Type.isStringFilled(extractor.getDialogId());
 	}
 
 	const PRIVATE_CHAT = 'CHAT';
@@ -637,7 +745,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	}
 	async function _prepareFields2(chatConfig) {
-	  var _preparedConfig$manag, _preparedConfig$membe, _preparedConfig$type$, _preparedConfig$type, _preparedConfig$entit, _preparedConfig$entit2, _preparedConfig$title, _preparedConfig$avata, _preparedConfig$descr, _preparedConfig$owner, _preparedConfig$manag2, _preparedConfig$manag3, _preparedConfig$manag4, _preparedConfig$manag5, _preparedConfig$canPo, _preparedConfig$confe;
+	  var _preparedConfig$manag, _preparedConfig$membe, _preparedConfig$type, _preparedConfig$entit;
 	  const preparedConfig = {
 	    ...chatConfig
 	  };
@@ -651,23 +759,30 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    allMembers.push(preparedConfig.ownerId);
 	  }
 	  preparedConfig.members = [...new Set(allMembers)];
-	  return {
-	    type: (_preparedConfig$type$ = (_preparedConfig$type = preparedConfig.type) == null ? void 0 : _preparedConfig$type.toUpperCase()) != null ? _preparedConfig$type$ : null,
-	    entityType: (_preparedConfig$entit = (_preparedConfig$entit2 = preparedConfig.entityType) == null ? void 0 : _preparedConfig$entit2.toUpperCase()) != null ? _preparedConfig$entit : null,
-	    title: (_preparedConfig$title = preparedConfig.title) != null ? _preparedConfig$title : null,
-	    avatar: (_preparedConfig$avata = preparedConfig.avatar) != null ? _preparedConfig$avata : null,
-	    description: (_preparedConfig$descr = preparedConfig.description) != null ? _preparedConfig$descr : null,
+	  const result = {
+	    type: (_preparedConfig$type = preparedConfig.type) == null ? void 0 : _preparedConfig$type.toUpperCase(),
+	    entityType: (_preparedConfig$entit = preparedConfig.entityType) == null ? void 0 : _preparedConfig$entit.toUpperCase(),
+	    title: preparedConfig.title,
+	    avatar: preparedConfig.avatar,
+	    description: preparedConfig.description,
 	    users: preparedConfig.members,
 	    managers: preparedConfig.managers,
-	    ownerId: (_preparedConfig$owner = preparedConfig.ownerId) != null ? _preparedConfig$owner : null,
+	    ownerId: preparedConfig.ownerId,
 	    searchable: preparedConfig.isAvailableInSearch ? 'Y' : 'N',
-	    manageUsersAdd: (_preparedConfig$manag2 = preparedConfig.manageUsersAdd) != null ? _preparedConfig$manag2 : null,
-	    manageUsersDelete: (_preparedConfig$manag3 = preparedConfig.manageUsersDelete) != null ? _preparedConfig$manag3 : null,
-	    manageUi: (_preparedConfig$manag4 = preparedConfig.manageUi) != null ? _preparedConfig$manag4 : null,
-	    manageSettings: (_preparedConfig$manag5 = preparedConfig.manageSettings) != null ? _preparedConfig$manag5 : null,
-	    canPost: (_preparedConfig$canPo = preparedConfig.canPost) != null ? _preparedConfig$canPo : null,
-	    conferencePassword: (_preparedConfig$confe = preparedConfig.conferencePassword) != null ? _preparedConfig$confe : null
+	    manageUsersAdd: preparedConfig.manageUsersAdd,
+	    manageUsersDelete: preparedConfig.manageUsersDelete,
+	    manageUi: preparedConfig.manageUi,
+	    manageSettings: preparedConfig.manageSettings,
+	    manageMessages: preparedConfig.manageMessages,
+	    conferencePassword: preparedConfig.conferencePassword,
+	    copilotMainRole: preparedConfig.copilotMainRole
 	  };
+	  Object.entries(result).forEach(([key, value]) => {
+	    if (main_core.Type.isUndefined(value)) {
+	      delete result[key];
+	    }
+	  });
+	  return result;
 	}
 	function _addChatToModel2(newDialogId, chatConfig) {
 	  let chatType = chatConfig.searchable === 'Y' ? OPEN_CHAT : PRIVATE_CHAT;
@@ -683,17 +798,23 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    name: chatConfig.title,
 	    userCounter: chatConfig.users.length,
 	    role: im_v2_const.UserRole.owner,
-	    canPost: chatConfig.canPost
+	    permissions: {
+	      manageUi: chatConfig.manageUi,
+	      manageSettings: chatConfig.manageSettings,
+	      manageUsersAdd: chatConfig.manageUsersAdd,
+	      manageUsersDelete: chatConfig.manageUsersDelete,
+	      manageMessages: chatConfig.manageMessages
+	    }
 	  });
 	}
 
-	const MAX_AVATAR_SIZE = 180;
 	class UpdateService {
 	  async prepareAvatar(avatarFile) {
 	    if (!ui_uploader_core.isResizableImage(avatarFile)) {
 	      // eslint-disable-next-line no-console
 	      return Promise.reject(new Error('UpdateService: prepareAvatar: incorrect image'));
 	    }
+	    const MAX_AVATAR_SIZE = 180;
 	    const {
 	      preview: resizedAvatar
 	    } = await ui_uploader_core.resizeImage(avatarFile, {
@@ -750,9 +871,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$1)[_restClient$1].callMethod(im_v2_const.RestMethod.imChatUpdateTitle, {
 	      dialog_id: dialogId,
 	      title: newName
-	    }).then(result => {
-	      im_v2_lib_logger.Logger.warn('ChatService: renameChat result', result.data());
-	      return Promise.resolve();
 	    }).catch(() => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _updateChatTitleInModel)[_updateChatTitleInModel](dialogId, oldName);
 	      throw new Error('Chat rename error');
@@ -791,7 +909,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3] = im_v2_application_core.Core.getStore();
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$2)[_restClient$2] = im_v2_application_core.Core.getRestClient();
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendMuteRequestDebounced)[_sendMuteRequestDebounced] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _sendMuteRequest)[_sendMuteRequest], ChatService.DEBOUNCE_TIME);
+	    const DEBOUNCE_TIME = 500;
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendMuteRequestDebounced)[_sendMuteRequestDebounced] = main_core.Runtime.debounce(babelHelpers.classPrivateFieldLooseBase(this, _sendMuteRequest)[_sendMuteRequest], DEBOUNCE_TIME);
 	  }
 	  muteChat(dialogId) {
 	    im_v2_lib_logger.Logger.warn('ChatService: muteChat', dialogId);
@@ -799,8 +918,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      dialogId
 	    });
 	    const queryParams = {
-	      'dialog_id': dialogId,
-	      'action': 'Y'
+	      dialog_id: dialogId,
+	      action: 'Y'
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendMuteRequestDebounced)[_sendMuteRequestDebounced](queryParams);
 	  }
@@ -810,8 +929,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      dialogId
 	    });
 	    const queryParams = {
-	      'dialog_id': dialogId,
-	      'action': 'N'
+	      dialog_id: dialogId,
+	      action: 'N'
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendMuteRequestDebounced)[_sendMuteRequestDebounced](queryParams);
 	  }
@@ -823,6 +942,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  } = queryParams;
 	  return babelHelpers.classPrivateFieldLooseBase(this, _restClient$2)[_restClient$2].callMethod(im_v2_const.RestMethod.imChatMute, queryParams).catch(error => {
 	    const actionText = action === 'Y' ? 'muting' : 'unmuting';
+	    // eslint-disable-next-line no-console
 	    console.error(`Im.RecentList: error ${actionText} chat`, error);
 	    const actionType = action === 'Y' ? 'chats/unmute' : 'chats/mute';
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$3)[_store$3].dispatch(actionType, {
@@ -853,10 +973,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      action: true
 	    });
 	    const queryParams = {
-	      'DIALOG_ID': dialogId,
-	      'ACTION': 'Y'
+	      DIALOG_ID: dialogId,
+	      ACTION: 'Y'
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$3)[_restClient$3].callMethod(im_v2_const.RestMethod.imRecentPin, queryParams).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error('PinService: error pinning chat', error);
 	      babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4].dispatch('recent/pin', {
 	        id: dialogId,
@@ -871,10 +992,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      action: false
 	    });
 	    const queryParams = {
-	      'DIALOG_ID': dialogId,
-	      'ACTION': 'N'
+	      DIALOG_ID: dialogId,
+	      ACTION: 'N'
 	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$3)[_restClient$3].callMethod(im_v2_const.RestMethod.imRecentPin, queryParams).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error('PinService: error unpinning chat', error);
 	      babelHelpers.classPrivateFieldLooseBase(this, _store$4)[_store$4].dispatch('recent/pin', {
 	        id: dialogId,
@@ -890,6 +1012,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _messagesToRead = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messagesToRead");
 	var _readMessagesForChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("readMessagesForChat");
 	var _readMessageOnClient = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("readMessageOnClient");
+	var _decreaseCommentCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("decreaseCommentCounter");
 	var _decreaseChatCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("decreaseChatCounter");
 	var _readMessageOnServer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("readMessageOnServer");
 	var _checkChatCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkChatCounter");
@@ -911,6 +1034,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	    Object.defineProperty(this, _decreaseChatCounter, {
 	      value: _decreaseChatCounter2
+	    });
+	    Object.defineProperty(this, _decreaseCommentCounter, {
+	      value: _decreaseCommentCounter2
 	    });
 	    Object.defineProperty(this, _readMessageOnClient, {
 	      value: _readMessageOnClient2
@@ -1049,8 +1175,24 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    messageIds
 	  });
 	}
+	function _decreaseCommentCounter2(chatId, readMessagesCount) {
+	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getDialogByChatId)[_getDialogByChatId](chatId);
+	  let newCounter = chat.counter - readMessagesCount;
+	  if (newCounter < 0) {
+	    newCounter = 0;
+	  }
+	  const counters = {
+	    [chat.parentChatId]: {
+	      [chatId]: newCounter
+	    }
+	  };
+	  return im_v2_application_core.Core.getStore().dispatch('counters/setCommentCounters', counters);
+	}
 	function _decreaseChatCounter2(chatId, readMessagesCount) {
 	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getDialogByChatId)[_getDialogByChatId](chatId);
+	  if (chat.type === im_v2_const.ChatType.comment) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _decreaseCommentCounter)[_decreaseCommentCounter](chatId, readMessagesCount);
+	  }
 	  let newCounter = chat.counter - readMessagesCount;
 	  if (newCounter < 0) {
 	    newCounter = 0;
@@ -1164,6 +1306,58 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      console.error('UserService: error joining chat', error);
 	    });
 	  }
+	  addManager(dialogId, userId) {
+	    im_v2_lib_logger.Logger.warn(`UserService: add manager ${userId} to ${dialogId}`);
+	    const {
+	      managerList
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['chats/get'](dialogId);
+	    if (managerList.includes(userId)) {
+	      return;
+	    }
+	    const newManagerList = [...managerList, userId];
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
+	      dialogId,
+	      fields: {
+	        managerList: newManagerList
+	      }
+	    });
+	    const payload = {
+	      data: {
+	        dialogId,
+	        userIds: [userId]
+	      }
+	    };
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatAddManagers, payload).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('UserService: add manager error', error);
+	    });
+	  }
+	  removeManager(dialogId, userId) {
+	    im_v2_lib_logger.Logger.warn(`UserService: remove manager ${userId} from ${dialogId}`);
+	    const {
+	      managerList
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['chats/get'](dialogId);
+	    if (!managerList.includes(userId)) {
+	      return;
+	    }
+	    const newManagerList = managerList.filter(managerId => managerId !== userId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
+	      dialogId,
+	      fields: {
+	        managerList: newManagerList
+	      }
+	    });
+	    const payload = {
+	      data: {
+	        dialogId,
+	        userIds: [userId]
+	      }
+	    };
+	    im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatDeleteManagers, payload).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('UserService: remove manager error', error);
+	    });
+	  }
 	}
 
 	var _loadService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadService");
@@ -1225,8 +1419,17 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  loadChatWithContext(dialogId, messageId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService)[_loadService].loadChatWithContext(dialogId, messageId);
 	  }
+	  loadComments(postId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService)[_loadService].loadComments(postId);
+	  }
+	  loadCommentInfo(channelDialogId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService)[_loadService].loadCommentInfo(channelDialogId);
+	  }
 	  prepareDialogId(dialogId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService)[_loadService].prepareDialogId(dialogId);
+	  }
+	  resetChat(dialogId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService)[_loadService].resetChat(dialogId);
 	  }
 	  // endregion 'load'
 
@@ -1300,6 +1503,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  joinChat(dialogId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _userService)[_userService].joinChat(dialogId);
 	  }
+	  addManager(dialogId, userId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _userService)[_userService].addManager(dialogId, userId);
+	  }
+	  removeManager(dialogId, userId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _userService)[_userService].removeManager(dialogId, userId);
+	  }
 	  // endregion 'user
 	}
 	function _initServices2() {
@@ -1312,10 +1521,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _readService)[_readService] = new ReadService();
 	  babelHelpers.classPrivateFieldLooseBase(this, _userService)[_userService] = new UserService();
 	}
-	ChatService.DEBOUNCE_TIME = 500;
 
 	var _store$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
-	var _restClient$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _chatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
 	var _userManager = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userManager");
 	var _preparedHistoryMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preparedHistoryMessages");
@@ -1347,10 +1554,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _restClient$6, {
-	      writable: true,
-	      value: void 0
-	    });
 	    Object.defineProperty(this, _chatId, {
 	      writable: true,
 	      value: void 0
@@ -1372,7 +1575,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      value: false
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7] = im_v2_application_core.Core.getStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$6)[_restClient$6] = im_v2_application_core.Core.getRestClient();
 	    babelHelpers.classPrivateFieldLooseBase(this, _userManager)[_userManager] = new im_v2_lib_user.UserManager();
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId] = chatId;
 	  }
@@ -1482,6 +1684,35 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      return true;
 	    });
 	  }
+	  async loadFirstPage() {
+	    im_v2_lib_logger.Logger.warn('MessageService: loadFirstPage for: ', babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
+	    babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = true;
+	    const payload = {
+	      data: {
+	        chatId: babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId],
+	        limit: LoadService$1.MESSAGE_REQUEST_LIMIT,
+	        order: {
+	          id: 'ASC'
+	        }
+	      }
+	    };
+	    const restResult = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageTail, payload).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('MessageService: loadFirstPage error:', error);
+	      babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
+	      throw new Error(error);
+	    });
+	    im_v2_lib_logger.Logger.warn('MessageService: loadFirstPage result', restResult);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _handleLoadedMessages)[_handleLoadedMessages](restResult);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/update', {
+	      dialogId: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().dialogId,
+	      fields: {
+	        hasPrevPage: false,
+	        hasNextPage: restResult.hasNextPage
+	      }
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
+	  }
 	  loadContext(messageId) {
 	    const query = {
 	      [im_v2_const.RestMethod.imV2ChatMessageGetContext]: {
@@ -1505,6 +1736,25 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    }).finally(() => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
 	    });
+	  }
+	  async loadContextByChatId(chatId) {
+	    const queryParams = {
+	      data: {
+	        commentChatId: chatId
+	      }
+	    };
+	    const result = await im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatMessageGetContext, queryParams).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('MessageService: loadHistory error:', error);
+	    });
+	    const commentInfo = result.commentInfo;
+	    const targetCommentInfo = commentInfo.find(item => {
+	      return item.chatId === chatId;
+	    });
+	    const targetMessageId = targetCommentInfo == null ? void 0 : targetCommentInfo.messageId;
+	    im_v2_lib_logger.Logger.warn('MessageService: loadContextByChatId result', result);
+	    void babelHelpers.classPrivateFieldLooseBase(this, _handleLoadedMessages)[_handleLoadedMessages](result);
+	    return targetMessageId;
 	  }
 	  reloadMessageList() {
 	    im_v2_lib_logger.Logger.warn('MessageService: loadChatOnExit for: ', babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
@@ -1561,7 +1811,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  if (newMaxId >= lastMessageId) {
 	    return rawMessages;
 	  }
-	  const messagesCollection = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['messages/get'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
+	  const messagesCollection = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].getters['messages/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId)[_chatId]);
 	  const additionalMessages = messagesCollection.filter(message => {
 	    return message.id > newMaxId;
 	  });
@@ -1587,7 +1837,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    reactions,
 	    hasPrevPage,
 	    hasNextPage,
-	    additionalMessages
+	    additionalMessages,
+	    commentInfo,
+	    copilot
 	  } = rawData;
 	  const dialogPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('chats/update', {
 	    dialogId: babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog]().dialogId,
@@ -1600,7 +1852,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  const filesPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('files/set', files);
 	  const reactionsPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('messages/reactions/set', reactions);
 	  const additionalMessagesPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('messages/store', additionalMessages);
-	  return Promise.all([dialogPromise, filesPromise, usersPromise, reactionsPromise, additionalMessagesPromise]);
+	  const commentInfoPromise = babelHelpers.classPrivateFieldLooseBase(this, _store$7)[_store$7].dispatch('messages/comments/set', commentInfo);
+	  const copilotManager = new im_v2_lib_copilot.CopilotManager();
+	  const copilotPromise = copilotManager.handleChatLoadResponse(copilot);
+	  return Promise.all([dialogPromise, filesPromise, usersPromise, reactionsPromise, additionalMessagesPromise, commentInfoPromise, copilotPromise]);
 	}
 	function _setDialogInited2(flag, wasInitedBefore = true) {
 	  const fields = {
@@ -1621,19 +1876,19 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	LoadService$1.MESSAGE_REQUEST_LIMIT = 25;
 
 	var _store$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
-	var _restClient$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
+	var _restClient$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	class PinService$1 {
 	  constructor() {
 	    Object.defineProperty(this, _store$8, {
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _restClient$7, {
+	    Object.defineProperty(this, _restClient$6, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8] = im_v2_application_core.Core.getStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$7)[_restClient$7] = im_v2_application_core.Core.getRestClient();
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$6)[_restClient$6] = im_v2_application_core.Core.getRestClient();
 	  }
 	  pinMessage(chatId, messageId) {
 	    im_v2_lib_logger.Logger.warn(`Dialog: PinManager: pin message ${messageId}`);
@@ -1641,10 +1896,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      chatId,
 	      messageId
 	    });
-	    // EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId});
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$7)[_restClient$7].callMethod(im_v2_const.RestMethod.imV2ChatMessagePin, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$6)[_restClient$6].callMethod(im_v2_const.RestMethod.imV2ChatMessagePin, {
 	      id: messageId
 	    }).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error('Dialog: PinManager: error pinning message', error);
 	      babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/pin/delete', {
 	        chatId,
@@ -1658,9 +1913,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      chatId,
 	      messageId
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$7)[_restClient$7].callMethod(im_v2_const.RestMethod.imV2ChatMessageUnpin, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$6)[_restClient$6].callMethod(im_v2_const.RestMethod.imV2ChatMessageUnpin, {
 	      id: messageId
 	    }).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error('Dialog: PinManager: error unpinning message', error);
 	      babelHelpers.classPrivateFieldLooseBase(this, _store$8)[_store$8].dispatch('messages/pin/add', {
 	        chatId,
@@ -1719,6 +1975,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _store$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _chatId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
 	var _shallowMessageDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shallowMessageDelete");
+	var _canDeleteCompletely = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canDeleteCompletely");
 	var _completeMessageDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("completeMessageDelete");
 	var _updateRecentForCompleteDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateRecentForCompleteDelete");
 	var _updateChatForCompleteDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateChatForCompleteDelete");
@@ -1726,8 +1983,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _deleteTemporaryMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deleteTemporaryMessage");
 	var _getPreviousMessageId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPreviousMessageId");
 	var _sendDeleteEvent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendDeleteEvent");
+	var _getChat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChat");
 	class DeleteService {
 	  constructor(chatId) {
+	    Object.defineProperty(this, _getChat, {
+	      value: _getChat2
+	    });
 	    Object.defineProperty(this, _sendDeleteEvent, {
 	      value: _sendDeleteEvent2
 	    });
@@ -1748,6 +2009,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	    Object.defineProperty(this, _completeMessageDelete, {
 	      value: _completeMessageDelete2
+	    });
+	    Object.defineProperty(this, _canDeleteCompletely, {
+	      value: _canDeleteCompletely2
 	    });
 	    Object.defineProperty(this, _shallowMessageDelete, {
 	      value: _shallowMessageDelete2
@@ -1771,11 +2035,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendDeleteEvent)[_sendDeleteEvent](messageId);
 	    const message = babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['messages/getById'](messageId);
-	    if (message.viewedByOthers) {
-	      await babelHelpers.classPrivateFieldLooseBase(this, _shallowMessageDelete)[_shallowMessageDelete](message);
-	    } else {
-	      await babelHelpers.classPrivateFieldLooseBase(this, _completeMessageDelete)[_completeMessageDelete](message);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _canDeleteCompletely)[_canDeleteCompletely](message)) {
+	      void babelHelpers.classPrivateFieldLooseBase(this, _completeMessageDelete)[_completeMessageDelete](message);
+	      return;
 	    }
+	    void babelHelpers.classPrivateFieldLooseBase(this, _shallowMessageDelete)[_shallowMessageDelete](message);
 	  }
 	}
 	function _shallowMessageDelete2(message) {
@@ -1791,9 +2055,21 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	  return babelHelpers.classPrivateFieldLooseBase(this, _deleteMessageOnServer)[_deleteMessageOnServer](message.id);
 	}
+	function _canDeleteCompletely2(message) {
+	  const alwaysCompleteDeleteChats = [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel];
+	  const neverCompleteDeleteChats = [im_v2_const.ChatType.comment];
+	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
+	  if (alwaysCompleteDeleteChats.includes(chat.type)) {
+	    return true;
+	  }
+	  if (neverCompleteDeleteChats.includes(chat.type)) {
+	    return false;
+	  }
+	  return !message.viewedByOthers;
+	}
 	function _completeMessageDelete2(message) {
-	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$1)[_chatId$1]);
-	  if (message.id === dialog.lastMessageId) {
+	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
+	  if (message.id === chat.lastMessageId) {
 	    const newLastId = babelHelpers.classPrivateFieldLooseBase(this, _getPreviousMessageId)[_getPreviousMessageId](message.id);
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateRecentForCompleteDelete)[_updateRecentForCompleteDelete](newLastId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateChatForCompleteDelete)[_updateChatForCompleteDelete](newLastId);
@@ -1804,31 +2080,31 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _deleteMessageOnServer)[_deleteMessageOnServer](message.id);
 	}
 	function _updateRecentForCompleteDelete2(newLastId) {
-	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$1)[_chatId$1]);
+	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
 	  if (!newLastId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('recent/delete', {
-	      id: dialog.dialogId
+	      id: chat.dialogId
 	    });
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('recent/update', {
-	    id: dialog.dialogId,
+	    id: chat.dialogId,
 	    fields: {
 	      messageId: newLastId
 	    }
 	  });
 	}
 	function _updateChatForCompleteDelete2(newLastId) {
-	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$1)[_chatId$1]);
+	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('chats/update', {
-	    dialogId: dialog.dialogId,
+	    dialogId: chat.dialogId,
 	    fields: {
 	      lastMessageId: newLastId,
 	      lastId: newLastId
 	    }
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].dispatch('chats/clearLastMessageViews', {
-	    dialogId: dialog.dialogId
+	    dialogId: chat.dialogId
 	  });
 	}
 	function _deleteMessageOnServer2(messageId) {
@@ -1842,7 +2118,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _deleteTemporaryMessage2(messageId) {
-	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$1)[_chatId$1]);
+	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
 	  const recentItem = babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['recent/get'](chat.dialogId);
 	  if (recentItem.messageId === messageId) {
 	    const newLastId = babelHelpers.classPrivateFieldLooseBase(this, _getPreviousMessageId)[_getPreviousMessageId](messageId);
@@ -1870,10 +2146,13 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    messageId
 	  });
 	}
+	function _getChat2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _store$9)[_store$9].getters['chats/getByChatId'](babelHelpers.classPrivateFieldLooseBase(this, _chatId$1)[_chatId$1]);
+	}
 
 	var _chatId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
 	var _store$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
-	var _restClient$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
+	var _restClient$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	class MarkService {
 	  constructor(chatId) {
 	    Object.defineProperty(this, _chatId$2, {
@@ -1884,13 +2163,13 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _restClient$8, {
+	    Object.defineProperty(this, _restClient$7, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatId$2)[_chatId$2] = chatId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$a)[_store$a] = im_v2_application_core.Core.getStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$8)[_restClient$8] = im_v2_application_core.Core.getRestClient();
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$7)[_restClient$7] = im_v2_application_core.Core.getRestClient();
 	  }
 	  markMessage(messageId) {
 	    im_v2_lib_logger.Logger.warn('MessageService: markMessage', messageId);
@@ -1907,10 +2186,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	        markedId: messageId
 	      }
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$8)[_restClient$8].callMethod(im_v2_const.RestMethod.imV2ChatMessageMark, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$7)[_restClient$7].callMethod(im_v2_const.RestMethod.imV2ChatMessageMark, {
 	      dialogId,
 	      id: messageId
 	    }).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error('MessageService: error marking message', error);
 	    });
 	  }
@@ -1918,7 +2198,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 
 	var _chatId$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatId");
 	var _store$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
-	var _restClient$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
+	var _restClient$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	class FavoriteService {
 	  constructor(chatId) {
 	    Object.defineProperty(this, _chatId$3, {
@@ -1929,19 +2209,20 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _restClient$9, {
+	    Object.defineProperty(this, _restClient$8, {
 	      writable: true,
 	      value: void 0
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _chatId$3)[_chatId$3] = chatId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b] = im_v2_application_core.Core.getStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$9)[_restClient$9] = im_v2_application_core.Core.getRestClient();
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$8)[_restClient$8] = im_v2_application_core.Core.getRestClient();
 	  }
 	  addMessageToFavorite(messageId) {
 	    im_v2_lib_logger.Logger.warn('MessageService: addMessageToFavorite', messageId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$9)[_restClient$9].callMethod(im_v2_const.RestMethod.imChatFavoriteAdd, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$8)[_restClient$8].callMethod(im_v2_const.RestMethod.imChatFavoriteAdd, {
 	      MESSAGE_ID: messageId
 	    }).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error('MessageService: error adding message to favorite', error);
 	    });
 	    BX.UI.Notification.Center.notify({
@@ -1952,11 +2233,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    im_v2_lib_logger.Logger.warn('MessageService: removeMessageFromFavorite', messageId);
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$b)[_store$b].dispatch('sidebar/favorites/deleteByMessageId', {
 	      chatId: babelHelpers.classPrivateFieldLooseBase(this, _chatId$3)[_chatId$3],
-	      messageId: messageId
+	      messageId
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$9)[_restClient$9].callMethod(im_v2_const.RestMethod.imChatFavoriteDelete, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$8)[_restClient$8].callMethod(im_v2_const.RestMethod.imChatFavoriteDelete, {
 	      MESSAGE_ID: messageId
 	    }).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error('MessageService: error removing message from favorite', error);
 	    });
 	  }
@@ -2034,6 +2316,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  loadContext(messageId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService$1)[_loadService$1].loadContext(messageId);
 	  }
+	  loadContextByChatId(chatId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService$1)[_loadService$1].loadContextByChatId(chatId);
+	  }
+	  loadFirstPage() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _loadService$1)[_loadService$1].loadFirstPage();
+	  }
 	  // endregion 'context
 
 	  // region 'reload messages'
@@ -2095,7 +2383,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _handleAddingMessageToModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleAddingMessageToModels");
 	var _sendAndProcessMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAndProcessMessage");
 	var _prepareMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessage");
-	var _prepareMessageWithFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessageWithFile");
+	var _prepareMessageWithFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessageWithFiles");
 	var _preparePrompt = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preparePrompt");
 	var _handlePagination = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handlePagination");
 	var _addMessageToModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addMessageToModels");
@@ -2111,6 +2399,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _handleForwardMessageResponse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleForwardMessageResponse");
 	var _handleForwardMessageError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleForwardMessageError");
 	var _prepareForwardMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareForwardMessages");
+	var _prepareForwardParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareForwardParams");
 	var _prepareSendForwardRequest = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareSendForwardRequest");
 	var _addForwardsToModels = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addForwardsToModels");
 	var _getForwardUuidMap = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getForwardUuidMap");
@@ -2138,6 +2427,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	    Object.defineProperty(this, _prepareSendForwardRequest, {
 	      value: _prepareSendForwardRequest2
+	    });
+	    Object.defineProperty(this, _prepareForwardParams, {
+	      value: _prepareForwardParams2
 	    });
 	    Object.defineProperty(this, _prepareForwardMessages, {
 	      value: _prepareForwardMessages2
@@ -2184,8 +2476,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _preparePrompt, {
 	      value: _preparePrompt2
 	    });
-	    Object.defineProperty(this, _prepareMessageWithFile, {
-	      value: _prepareMessageWithFile2
+	    Object.defineProperty(this, _prepareMessageWithFiles, {
+	      value: _prepareMessageWithFiles2
 	    });
 	    Object.defineProperty(this, _prepareMessage, {
 	      value: _prepareMessage2
@@ -2216,16 +2508,16 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    const message = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage](params);
 	    return babelHelpers.classPrivateFieldLooseBase(this, _processMessageSending)[_processMessageSending](message);
 	  }
-	  async sendMessageWithFile(params) {
+	  async sendMessageWithFiles(params) {
 	    const {
 	      text = '',
-	      fileId = ''
+	      fileIds = []
 	    } = params;
-	    if (!main_core.Type.isStringFilled(text) && !main_core.Type.isStringFilled(fileId)) {
+	    if (!main_core.Type.isStringFilled(text) && !main_core.Type.isArrayFilled(fileIds)) {
 	      return Promise.resolve();
 	    }
-	    im_v2_lib_logger.Logger.warn('SendingService: sendMessage with file', params);
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessageWithFile)[_prepareMessageWithFile](params);
+	    im_v2_lib_logger.Logger.warn('SendingService: sendMessage with files', params);
+	    const message = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessageWithFiles)[_prepareMessageWithFiles](params);
 	    await babelHelpers.classPrivateFieldLooseBase(this, _handleAddingMessageToModels)[_handleAddingMessageToModels](message);
 	    return Promise.resolve();
 	  }
@@ -2359,17 +2651,17 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    ...defaultFields
 	  };
 	}
-	function _prepareMessageWithFile2(params) {
+	function _prepareMessageWithFiles2(params) {
 	  const {
-	    fileId
+	    fileIds
 	  } = params;
-	  if (!fileId) {
+	  if (!main_core.Type.isArrayFilled(fileIds)) {
 	    throw new Error('SendingService: sendMessageWithFile: no fileId provided');
 	  }
 	  return {
 	    ...babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage](params),
 	    params: {
-	      FILE_ID: [fileId]
+	      FILE_ID: fileIds
 	    }
 	  };
 	}
@@ -2566,7 +2858,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    if (!message) {
 	      return;
 	    }
-	    const isForward = babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['messages/isForward'](messageId);
 	    preparedMessages.push({
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _prepareMessage)[_prepareMessage]({
 	        dialogId,
@@ -2574,16 +2865,30 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	        tempMessageId: uuid,
 	        replyId: message.replyId
 	      }),
-	      forward: {
-	        id: babelHelpers.classPrivateFieldLooseBase(this, _buildForwardContextId)[_buildForwardContextId](message.chatId, messageId),
-	        userId: isForward ? message.forward.userId : message.authorId
-	      },
+	      forward: babelHelpers.classPrivateFieldLooseBase(this, _prepareForwardParams)[_prepareForwardParams](messageId),
 	      attach: message.attach,
 	      isDeleted: message.isDeleted,
 	      files: message.files
 	    });
 	  });
 	  return preparedMessages;
+	}
+	function _prepareForwardParams2(messageId) {
+	  const message = babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['messages/getById'](messageId);
+	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getDialogByChatId$1)[_getDialogByChatId$1](message.chatId);
+	  const isForward = babelHelpers.classPrivateFieldLooseBase(this, _store$c)[_store$c].getters['messages/isForward'](messageId);
+	  const userId = isForward ? message.forward.userId : message.authorId;
+	  const chatType = isForward ? message.forward.chatType : chat.type;
+	  let chatTitle = isForward ? message.forward.chatTitle : chat.name;
+	  if (chatType === im_v2_const.ChatType.channel) {
+	    chatTitle = null;
+	  }
+	  return {
+	    id: babelHelpers.classPrivateFieldLooseBase(this, _buildForwardContextId)[_buildForwardContextId](message.chatId, messageId),
+	    userId,
+	    chatType,
+	    chatTitle
+	  };
 	}
 	function _prepareSendForwardRequest2(params) {
 	  const {
@@ -2671,65 +2976,61 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  sendConfirmAction(notificationId, value) {
 	    const requestParams = {
-	      'NOTIFY_ID': notificationId,
-	      'NOTIFY_VALUE': value
+	      NOTIFY_ID: notificationId,
+	      NOTIFY_VALUE: value
 	    };
 	    this.store.dispatch('notifications/delete', {
 	      id: notificationId
 	    });
-	    this.restClient.callMethod('im.notify.confirm', requestParams).then(response => {
-	      im_v2_lib_logger.Logger.warn(`NotificationService: sendConfirmAction: success`, response);
-	    }).catch(error => {
+	    this.restClient.callMethod('im.notify.confirm', requestParams).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error(error);
-	      //revert?
 	    });
 	  }
-
-	  sendQuickAnswer(params) {
+	  async sendQuickAnswer(params) {
 	    const {
 	      id,
 	      text,
 	      callbackSuccess = () => {},
 	      callbackError = () => {}
 	    } = params;
-	    this.restClient.callMethod(im_v2_const.RestMethod.imNotifyAnswer, {
-	      notify_id: id,
-	      answer_text: text
-	    }).then(response => {
+	    try {
+	      const response = await this.restClient.callMethod(im_v2_const.RestMethod.imNotifyAnswer, {
+	        notify_id: id,
+	        answer_text: text
+	      });
 	      callbackSuccess(response);
-	    }).catch(error => {
+	    } catch (error) {
+	      // eslint-disable-next-line no-console
 	      console.error(error);
 	      callbackError();
-	    });
+	    }
 	  }
 	  deleteRequest() {
 	    const idsToDelete = [...this.notificationsToDelete];
 	    this.restClient.callMethod('im.notify.delete', {
 	      id: idsToDelete
-	    }).then(response => {
-	      im_v2_lib_logger.Logger.warn(`NotificationService: deleteRequest: success for ids: ${idsToDelete}`, response);
 	    }).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error(error);
-	      //revert?
 	    });
-
 	    this.notificationsToDelete.clear();
 	  }
 	  requestItems({
 	    firstPage = false
 	  } = {}) {
 	    const imNotifyGetQueryParams = {
-	      'LIMIT': this.limitPerPage,
-	      'CONVERT_TEXT': 'Y'
+	      LIMIT: this.limitPerPage,
+	      CONVERT_TEXT: 'Y'
 	    };
 	    const batchQueryParams = {
 	      [im_v2_const.RestMethod.imNotifyGet]: [im_v2_const.RestMethod.imNotifyGet, imNotifyGetQueryParams]
 	    };
-	    if (!firstPage) {
+	    if (firstPage) {
+	      batchQueryParams[im_v2_const.RestMethod.imNotifySchemaGet] = [im_v2_const.RestMethod.imNotifySchemaGet, {}];
+	    } else {
 	      imNotifyGetQueryParams.LAST_ID = this.lastId;
 	      imNotifyGetQueryParams.LAST_TYPE = this.lastType;
-	    } else {
-	      batchQueryParams[im_v2_const.RestMethod.imNotifySchemaGet] = [im_v2_const.RestMethod.imNotifySchemaGet, {}];
 	    }
 	    return new Promise(resolve => {
 	      this.restClient.callBatch(batchQueryParams, response => {
@@ -2769,24 +3070,24 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    return item.notify_type === im_v2_const.NotificationTypesCodes.confirm ? im_v2_const.NotificationTypesCodes.confirm : im_v2_const.NotificationTypesCodes.simple;
 	  }
 	  isLastPage(notifications) {
-	    if (!main_core.Type.isArrayFilled(notifications) || notifications.length < this.limitPerPage) {
+	    if (!main_core.Type.isArrayFilled(notifications)) {
 	      return true;
 	    }
-	    return false;
+	    return notifications.length < this.limitPerPage;
 	  }
 	  destroy() {
 	    im_v2_lib_logger.Logger.warn('Notification service destroyed');
 	  }
 	}
 
-	var _restClient$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
+	var _restClient$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	class DiskService {
 	  constructor() {
-	    Object.defineProperty(this, _restClient$a, {
+	    Object.defineProperty(this, _restClient$9, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a] = im_v2_application_core.Core.getRestClient();
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$9)[_restClient$9] = im_v2_application_core.Core.getRestClient();
 	  }
 	  delete({
 	    chatId,
@@ -2796,7 +3097,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      chat_id: chatId,
 	      file_id: fileId
 	    };
-	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a].callMethod(im_v2_const.RestMethod.imDiskFileDelete, queryParams).catch(error => {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$9)[_restClient$9].callMethod(im_v2_const.RestMethod.imDiskFileDelete, queryParams).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error('DiskService: error deleting file', error);
 	    });
 	  }
@@ -2804,62 +3106,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    const queryParams = {
 	      file_id: fileId
 	    };
-	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a].callMethod(im_v2_const.RestMethod.imDiskFileSave, queryParams).catch(error => {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$9)[_restClient$9].callMethod(im_v2_const.RestMethod.imDiskFileSave, queryParams).catch(error => {
+	      // eslint-disable-next-line no-console
 	      console.error('DiskService: error saving file on disk', error);
 	    });
 	  }
 	}
 
-	class UnreadRecentService extends RecentService {
-	  static getInstance() {
-	    if (!this.instance) {
-	      this.instance = new this();
-	    }
-	    return this.instance;
-	  }
-	  getCollection() {
-	    return this.store.getters['recent/getUnreadCollection'];
-	  }
-	  loadFirstPage({
-	    ignorePreloadedItems = false
-	  } = {}) {
-	    this.isLoading = true;
-	    return this.requestItems({
-	      firstPage: true
-	    });
-	  }
-	  updateModels(rawData) {
-	    const {
-	      users,
-	      dialogues,
-	      recent
-	    } = this.prepareDataForModels(rawData);
-	    const usersPromise = this.store.dispatch('users/set', users);
-	    const dialoguesPromise = this.store.dispatch('chats/set', dialogues);
-	    const fakeRecent = this.getFakeData(recent);
-	    const recentPromise = this.store.dispatch('recent/setUnread', fakeRecent);
-	    return Promise.all([usersPromise, dialoguesPromise, recentPromise]);
-	  }
-	  getFakeData(itemsForModel) {
-	    itemsForModel = itemsForModel.slice(-4);
-	    itemsForModel.forEach(item => {
-	      this.store.dispatch('chats/update', {
-	        dialogId: item.id,
-	        fields: {
-	          counter: 7
-	        }
-	      });
-	    });
-	    return itemsForModel;
-	  }
-	  onUpdateState({
-	    data
-	  }) {
-	    //
-	  }
-	}
-	UnreadRecentService.instance = null;
-
+	const MAX_FILES_IN_ONE_MESSAGE = 10;
 	var _uploaderRegistry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderRegistry");
 	var _onUploadCancelHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onUploadCancelHandler");
 	var _addFile = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFile");
@@ -2952,7 +3206,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	        [ui_uploader_core.UploaderEvent.MAX_FILE_COUNT_EXCEEDED]: event => {
 	          this.emit(UploaderWrapper.events.onMaxFileCountExceeded, event);
 	        },
-	        [ui_uploader_core.UploaderEvent.UPLOAD_COMPLETE]: () => {
+	        [ui_uploader_core.UploaderEvent.UPLOAD_COMPLETE]: event => {
+	          this.emit(UploaderWrapper.events.onUploadComplete, {
+	            uploaderId
+	          });
 	          babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].destroy({
 	            removeFilesFromServer: false
 	          });
@@ -2965,8 +3222,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].start();
 	  }
 	  addFiles(tasks) {
+	    const firstTenTasks = tasks.slice(0, MAX_FILES_IN_ONE_MESSAGE);
 	    const addedFiles = [];
-	    tasks.forEach(task => {
+	    firstTenTasks.forEach(task => {
 	      const file = babelHelpers.classPrivateFieldLooseBase(this, _addFile)[_addFile](task);
 	      if (file) {
 	        addedFiles.push(file);
@@ -3028,22 +3286,24 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  onFileUploadComplete: 'onFileUploadComplete',
 	  onFileUploadError: 'onFileUploadError',
 	  onFileUploadCancel: 'onFileUploadCancel',
-	  onMaxFileCountExceeded: 'onMaxFileCountExceeded'
+	  onMaxFileCountExceeded: 'onMaxFileCountExceeded',
+	  onUploadComplete: 'onUploadComplete'
 	};
 
 	var _store$d = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
-	var _restClient$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
+	var _restClient$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
 	var _isRequestingDiskFolderId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRequestingDiskFolderId");
 	var _diskFolderIdRequestPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("diskFolderIdRequestPromise");
 	var _uploaderWrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderWrapper");
 	var _sendingService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendingService");
 	var _uploaderFilesRegistry = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploaderFilesRegistry");
 	var _createUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createUploader");
+	var _addFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFiles");
 	var _addFileFromDiskToModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFileFromDiskToModel");
 	var _initUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initUploader");
 	var _requestDiskFolderId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestDiskFolderId");
 	var _uploadPreview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploadPreview");
-	var _prepareMessageWithFile$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMessageWithFile");
+	var _prepareFileForUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareFileForUploader");
 	var _updateFileProgress = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFileProgress");
 	var _cancelUpload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cancelUpload");
 	var _addFileToStore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFileToStore");
@@ -3061,7 +3321,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _setMessagesText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMessagesText");
 	var _setAutoUpload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAutoUpload");
 	var _createMessagesFromFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createMessagesFromFiles");
+	var _createMessageFromFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createMessageFromFiles");
 	var _readyToAddMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("readyToAddMessages");
+	var _tryToSendMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryToSendMessage");
 	var _tryToSendMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryToSendMessages");
 	var _prepareFileFromDisk = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareFileFromDisk");
 	var _showError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showError");
@@ -3086,8 +3348,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _tryToSendMessages, {
 	      value: _tryToSendMessages2
 	    });
+	    Object.defineProperty(this, _tryToSendMessage, {
+	      value: _tryToSendMessage2
+	    });
 	    Object.defineProperty(this, _readyToAddMessages, {
 	      value: _readyToAddMessages2
+	    });
+	    Object.defineProperty(this, _createMessageFromFiles, {
+	      value: _createMessageFromFiles2
 	    });
 	    Object.defineProperty(this, _createMessagesFromFiles, {
 	      value: _createMessagesFromFiles2
@@ -3140,8 +3408,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _updateFileProgress, {
 	      value: _updateFileProgress2
 	    });
-	    Object.defineProperty(this, _prepareMessageWithFile$1, {
-	      value: _prepareMessageWithFile2$1
+	    Object.defineProperty(this, _prepareFileForUploader, {
+	      value: _prepareFileForUploader2
 	    });
 	    Object.defineProperty(this, _uploadPreview, {
 	      value: _uploadPreview2
@@ -3155,6 +3423,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _addFileFromDiskToModel, {
 	      value: _addFileFromDiskToModel2
 	    });
+	    Object.defineProperty(this, _addFiles, {
+	      value: _addFiles2
+	    });
 	    Object.defineProperty(this, _createUploader, {
 	      value: _createUploader2
 	    });
@@ -3162,7 +3433,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _restClient$b, {
+	    Object.defineProperty(this, _restClient$a, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -3187,66 +3458,86 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      value: {}
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d] = im_v2_application_core.Core.getStore();
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$b)[_restClient$b] = im_v2_application_core.Core.getRestClient();
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a] = im_v2_application_core.Core.getRestClient();
 	    babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService] = SendingService$$1.getInstance();
 	    babelHelpers.classPrivateFieldLooseBase(this, _initUploader)[_initUploader]();
 	  }
-	  addFilesFromClipboard(clipboardData, dialogId) {
-	    return ui_uploader_core.getFilesFromDataTransfer(clipboardData).then(files => {
-	      const imagesOnly = files.filter(file => im_v2_lib_utils.Utils.file.isImage(file.name));
-	      if (imagesOnly.length === 0) {
-	        return {
-	          files: [],
-	          uploaderId: ''
-	        };
-	      }
-	      return this.addFiles({
-	        files: imagesOnly,
-	        dialogId,
-	        autoUpload: false
-	      });
-	    });
-	  }
-	  addFilesFromInput(files, dialogId, sendAsFile) {
-	    if (files.length === 0) {
-	      return;
-	    }
-	    this.addFiles({
-	      files,
-	      dialogId,
-	      autoUpload: true,
-	      sendAsFile
-	    }).then(({
-	      uploaderId
-	    }) => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _tryToSendMessages)[_tryToSendMessages](uploaderId);
-	    }).catch(error => {
-	      im_v2_lib_logger.Logger.error('SendingService: sendFilesFromInput error', error);
-	    });
-	  }
-	  addFiles(params) {
+	  async uploadFromClipboard(params) {
 	    const {
-	      files,
+	      clipboardEvent,
 	      dialogId,
 	      autoUpload,
-	      sendAsFile = false
+	      imagesOnly
 	    } = params;
-	    return babelHelpers.classPrivateFieldLooseBase(this, _createUploader)[_createUploader]({
+	    const {
+	      clipboardData
+	    } = clipboardEvent;
+	    if (!clipboardData || !ui_uploader_core.isFilePasted(clipboardData)) {
+	      return '';
+	    }
+	    clipboardEvent.preventDefault();
+	    let files = await ui_uploader_core.getFilesFromDataTransfer(clipboardData);
+	    if (imagesOnly) {
+	      files = files.filter(file => im_v2_lib_utils.Utils.file.isImage(file.name));
+	      if (imagesOnly.length === 0) {
+	        return '';
+	      }
+	    }
+	    const {
+	      uploaderFiles,
+	      uploaderId
+	    } = await babelHelpers.classPrivateFieldLooseBase(this, _addFiles)[_addFiles]({
+	      files,
 	      dialogId,
 	      autoUpload
-	    }).then(uploaderId => {
-	      const filesForUploader = [];
-	      files.forEach(file => {
-	        const messageWithFile = babelHelpers.classPrivateFieldLooseBase(this, _prepareMessageWithFile$1)[_prepareMessageWithFile$1](file, dialogId, uploaderId, sendAsFile);
-	        filesForUploader.push(messageWithFile);
-	      });
-	      const addedFiles = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].addFiles(filesForUploader);
-	      babelHelpers.classPrivateFieldLooseBase(this, _registerFiles)[_registerFiles](uploaderId, addedFiles, dialogId, autoUpload);
-	      return {
-	        files: addedFiles,
-	        uploaderId
-	      };
 	    });
+	    if (uploaderFiles.length === 0) {
+	      return '';
+	    }
+	    return uploaderId;
+	  }
+	  async uploadFromInput(params) {
+	    const {
+	      event,
+	      sendAsFile,
+	      autoUpload,
+	      dialogId
+	    } = params;
+	    const rawFiles = Object.values(event.target.files);
+	    if (rawFiles.length === 0) {
+	      return '';
+	    }
+	    const {
+	      uploaderId
+	    } = await babelHelpers.classPrivateFieldLooseBase(this, _addFiles)[_addFiles]({
+	      files: rawFiles,
+	      dialogId,
+	      autoUpload,
+	      sendAsFile
+	    });
+	    return uploaderId;
+	  }
+	  async uploadFromDragAndDrop(params) {
+	    const {
+	      event,
+	      dialogId,
+	      autoUpload,
+	      sendAsFile
+	    } = params;
+	    event.preventDefault();
+	    const rawFiles = await ui_uploader_core.getFilesFromDataTransfer(event.dataTransfer);
+	    if (rawFiles.length === 0) {
+	      return '';
+	    }
+	    const {
+	      uploaderId
+	    } = await babelHelpers.classPrivateFieldLooseBase(this, _addFiles)[_addFiles]({
+	      files: rawFiles,
+	      dialogId,
+	      autoUpload,
+	      sendAsFile
+	    });
+	    return uploaderId;
 	  }
 	  getFiles(uploaderId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].getFiles(uploaderId);
@@ -3261,10 +3552,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _addFileFromDiskToModel)[_addFileFromDiskToModel](messageWithFile).then(() => {
 	        const message = {
 	          tempMessageId: messageWithFile.tempMessageId,
-	          fileId: messageWithFile.tempFileId,
+	          fileIds: [messageWithFile.tempFileId],
 	          dialogId: messageWithFile.dialogId
 	        };
-	        return babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService].sendMessageWithFile(message);
+	        return babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService].sendMessageWithFiles(message);
 	      }).then(() => {
 	        this.commitFile({
 	          chatId: messageWithFile.chatId,
@@ -3274,6 +3565,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	          fromDisk: true
 	        });
 	      }).catch(error => {
+	        // eslint-disable-next-line no-console
 	        console.error('SendingService: sendFilesFromDisk error:', error);
 	      });
 	    });
@@ -3304,7 +3596,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    } else {
 	      fileIdParams.upload_id = realFileId.toString().slice(1);
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$b)[_restClient$b].callMethod(im_v2_const.RestMethod.imDiskFileCommit, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a].callMethod(im_v2_const.RestMethod.imDiskFileCommit, {
 	      chat_id: chatId,
 	      message: messageText,
 	      template_id: tempMessageId,
@@ -3317,6 +3609,26 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      im_v2_lib_logger.Logger.error('commitFile error', error);
 	    });
 	  }
+	  commitMessage(uploaderId) {
+	    const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].dialogId;
+	    const chatId = babelHelpers.classPrivateFieldLooseBase(this, _getChatId)[_getChatId](dialogId);
+	    const fileIds = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].getFiles(uploaderId).map(file => {
+	      return file.getServerFileId().toString().slice(1);
+	    });
+	    const sendAsFile = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].getFiles(uploaderId).every(file => {
+	      return file.getCustomData('sendAsFile');
+	    });
+	    void babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a].callMethod(im_v2_const.RestMethod.imDiskFileCommit, {
+	      chat_id: chatId,
+	      message: babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].text,
+	      template_id: babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].tempMessageId,
+	      // file_template_id: temporaryFileId,
+	      as_file: sendAsFile ? 'Y' : 'N',
+	      upload_id: fileIds
+	    });
+	  }
+	  // we don't use it now, because we always send several files in ONE message
+	  // noinspection JSUnusedGlobalSymbols
 	  sendSeparateMessagesWithFiles(params) {
 	    const {
 	      uploaderId,
@@ -3325,6 +3637,15 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _setMessagesText)[_setMessagesText](uploaderId, text);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setAutoUpload)[_setAutoUpload](uploaderId, true);
 	    babelHelpers.classPrivateFieldLooseBase(this, _tryToSendMessages)[_tryToSendMessages](uploaderId);
+	  }
+	  sendMessageWithFiles(params) {
+	    const {
+	      uploaderId,
+	      text
+	    } = params;
+	    babelHelpers.classPrivateFieldLooseBase(this, _setMessagesText)[_setMessagesText](uploaderId, text);
+	    babelHelpers.classPrivateFieldLooseBase(this, _setAutoUpload)[_setAutoUpload](uploaderId, true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _tryToSendMessage)[_tryToSendMessage](uploaderId);
 	  }
 	  destroy() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].destroy();
@@ -3343,6 +3664,30 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      autoUpload
 	    });
 	    return uploaderId;
+	  });
+	}
+	function _addFiles2(params) {
+	  const {
+	    files,
+	    dialogId,
+	    autoUpload,
+	    sendAsFile = false
+	  } = params;
+	  return babelHelpers.classPrivateFieldLooseBase(this, _createUploader)[_createUploader]({
+	    dialogId,
+	    autoUpload
+	  }).then(uploaderId => {
+	    const filesForUploader = [];
+	    files.forEach(file => {
+	      const preparedFile = babelHelpers.classPrivateFieldLooseBase(this, _prepareFileForUploader)[_prepareFileForUploader](file, dialogId, uploaderId, sendAsFile);
+	      filesForUploader.push(preparedFile);
+	    });
+	    const addedFiles = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].addFiles(filesForUploader);
+	    babelHelpers.classPrivateFieldLooseBase(this, _registerFiles)[_registerFiles](uploaderId, addedFiles, dialogId, autoUpload);
+	    return {
+	      uploaderFiles: addedFiles,
+	      uploaderId
+	    };
 	  });
 	}
 	function _addFileFromDiskToModel2(messageWithFile) {
@@ -3374,7 +3719,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    } = event.getData();
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateFilePreviewInStore)[_updateFilePreviewInStore](file);
 	    babelHelpers.classPrivateFieldLooseBase(this, _setReadyFilePreview)[_setReadyFilePreview](uploaderId, file.getId());
-	    babelHelpers.classPrivateFieldLooseBase(this, _tryToSendMessages)[_tryToSendMessages](uploaderId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _tryToSendMessage)[_tryToSendMessage](uploaderId);
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadStart, event => {
 	    const {
@@ -3393,20 +3738,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      file
 	    } = event.getData();
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](file.getId(), file.getProgress(), im_v2_const.FileStatus.wait);
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploadPreview)[_uploadPreview](file).then(() => {
-	      var _file$getCustomData;
-	      this.commitFile({
-	        realFileId: file.getServerFileId(),
-	        temporaryFileId: file.getId(),
-	        chatId: file.getCustomData('chatId'),
-	        tempMessageId: file.getCustomData('tempMessageId'),
-	        messageText: (_file$getCustomData = file.getCustomData('messageText')) != null ? _file$getCustomData : '',
-	        sendAsFile: file.getCustomData('sendAsFile'),
-	        fromDisk: false
-	      });
-	    }).catch(error => {
-	      im_v2_lib_logger.Logger.warn('UploadingService: upload preview error', error);
-	    });
+	    void babelHelpers.classPrivateFieldLooseBase(this, _uploadPreview)[_uploadPreview](file);
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadError, event => {
 	    const {
@@ -3425,12 +3757,18 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    } = event.getData();
 	    babelHelpers.classPrivateFieldLooseBase(this, _cancelUpload)[_cancelUpload](tempMessageId, tempFileId);
 	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onUploadComplete, event => {
+	    const {
+	      uploaderId
+	    } = event.getData();
+	    this.commitMessage(uploaderId);
+	  });
 	}
 	function _requestDiskFolderId2(dialogId) {
 	  return new Promise((resolve, reject) => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _isRequestingDiskFolderId)[_isRequestingDiskFolderId] = true;
 	    const chatId = babelHelpers.classPrivateFieldLooseBase(this, _getChatId)[_getChatId](dialogId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$b)[_restClient$b].callMethod(im_v2_const.RestMethod.imDiskFolderGet, {
+	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a].callMethod(im_v2_const.RestMethod.imDiskFolderGet, {
 	      chat_id: chatId
 	    }).then(response => {
 	      const {
@@ -3469,7 +3807,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    im_v2_lib_logger.Logger.error('imDiskFilePreviewUpload request error', error);
 	  });
 	}
-	function _prepareMessageWithFile2$1(file, dialogId, uploaderId, sendAsFile) {
+	function _prepareFileForUploader2(file, dialogId, uploaderId, sendAsFile) {
 	  const tempMessageId = im_v2_lib_utils.Utils.text.getUuidV4();
 	  const tempFileId = im_v2_lib_utils.Utils.text.getUuidV4();
 	  const chatId = babelHelpers.classPrivateFieldLooseBase(this, _getChatId)[_getChatId](dialogId);
@@ -3480,11 +3818,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    dialogId,
 	    chatId,
 	    uploaderId,
-	    sendAsFile: sendAsFile && babelHelpers.classPrivateFieldLooseBase(this, _getFileType)[_getFileType](file) !== im_v2_const.FileType.file
+	    sendAsFile
 	  };
 	}
 	function _updateFileProgress2(id, progress, status) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/update', {
 	    id,
 	    fields: {
 	      progress: progress === 100 ? 99 : progress,
@@ -3493,10 +3831,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _cancelUpload2(tempMessageId, tempFileId) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/delete', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/delete', {
 	    id: tempMessageId
 	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/delete', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/delete', {
 	    id: tempFileId
 	  });
 	}
@@ -3504,12 +3842,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  const taskId = file.getId();
 	  const fileBinary = file.getBinary();
 	  const previewData = babelHelpers.classPrivateFieldLooseBase(this, _preparePreview)[_preparePreview](file);
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/add', {
+	  const asFile = file.getCustomData('sendAsFile');
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/add', {
 	    id: taskId,
 	    chatId: file.getCustomData('chatId'),
 	    authorId: im_v2_application_core.Core.getUserId(),
 	    name: fileBinary.name,
-	    type: babelHelpers.classPrivateFieldLooseBase(this, _getFileType)[_getFileType](fileBinary),
+	    size: file.getSize(),
+	    type: asFile ? im_v2_const.FileType.file : babelHelpers.classPrivateFieldLooseBase(this, _getFileType)[_getFileType](fileBinary),
 	    extension: babelHelpers.classPrivateFieldLooseBase(this, _getFileExtension)[_getFileExtension](fileBinary),
 	    status: file.isFailed() ? im_v2_const.FileStatus.error : im_v2_const.FileStatus.progress,
 	    progress: 0,
@@ -3519,7 +3859,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 	function _updateFilePreviewInStore2(file) {
 	  const previewData = babelHelpers.classPrivateFieldLooseBase(this, _preparePreview)[_preparePreview](file);
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/update', {
 	    id: file.getId(),
 	    fields: {
 	      ...previewData
@@ -3527,7 +3867,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 	function _updateFileSizeInStore2(file) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('files/update', {
 	    id: file.getId(),
 	    fields: {
 	      size: file.getSize()
@@ -3626,7 +3966,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    };
 	  }
 	  files.forEach(file => {
-	    var _file$getCustomData2;
+	    var _file$getCustomData;
 	    if (file.getError()) {
 	      return;
 	    }
@@ -3636,13 +3976,32 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      file.setCustomData('messageText', text);
 	    }
 	    messagesToSend.files.push({
-	      fileId: file.getId(),
+	      fileIds: [file.getId()],
 	      tempMessageId: file.getCustomData('tempMessageId'),
 	      dialogId,
-	      text: (_file$getCustomData2 = file.getCustomData('messageText')) != null ? _file$getCustomData2 : ''
+	      text: (_file$getCustomData = file.getCustomData('messageText')) != null ? _file$getCustomData : ''
 	    });
 	  });
 	  return messagesToSend;
+	}
+	function _createMessageFromFiles2(uploaderId) {
+	  const tempMessageId = im_v2_lib_utils.Utils.text.getUuidV4();
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].tempMessageId = tempMessageId;
+	  const fileIds = [];
+	  const files = this.getFiles(uploaderId);
+	  files.forEach(file => {
+	    if (!file.getError()) {
+	      fileIds.push(file.getId());
+	    }
+	  });
+	  const text = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].text;
+	  const dialogId = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].dialogId;
+	  return {
+	    fileIds,
+	    tempMessageId,
+	    dialogId,
+	    text
+	  };
 	}
 	function _readyToAddMessages2(uploaderId) {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId] || !babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].autoUpload || babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].wasSent) {
@@ -3652,6 +4011,15 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    filesPreviewStatus
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId];
 	  return Object.values(filesPreviewStatus).every(flag => flag === true);
+	}
+	function _tryToSendMessage2(uploaderId) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _readyToAddMessages)[_readyToAddMessages](uploaderId)) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].wasSent = true;
+	  const message = babelHelpers.classPrivateFieldLooseBase(this, _createMessageFromFiles)[_createMessageFromFiles](uploaderId);
+	  void babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService].sendMessageWithFiles(message);
+	  this.start(uploaderId);
 	}
 	function _tryToSendMessages2(uploaderId) {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _readyToAddMessages)[_readyToAddMessages](uploaderId)) {
@@ -3666,7 +4034,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    void babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService].sendMessage(comment);
 	  }
 	  files.forEach(message => {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService].sendMessageWithFile(message);
+	    void babelHelpers.classPrivateFieldLooseBase(this, _sendingService)[_sendingService].sendMessageWithFiles(message);
 	  });
 	  this.start(uploaderId);
 	}
@@ -3690,7 +4058,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	}
 	function _setMessageError2(tempMessageId) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/update', {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$d)[_store$d].dispatch('messages/update', {
 	    id: tempMessageId,
 	    fields: {
 	      error: true
@@ -3709,7 +4077,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      data: {
 	        userId: im_v2_application_core.Core.getUserId(),
 	        name: settingName,
-	        value: value
+	        value
 	      }
 	    }).catch(error => {
 	      // eslint-disable-next-line no-console
@@ -3719,24 +4087,23 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 
 	class LinesService {
-	  getDialogIdByUserCode(userCode) {
-	    return im_v2_application_core.Core.getRestClient().callMethod(im_v2_const.RestMethod.linesDialogGet, {
+	  async getDialogIdByUserCode(userCode) {
+	    const result = await im_v2_application_core.Core.getRestClient().callMethod(im_v2_const.RestMethod.linesDialogGet, {
 	      USER_CODE: userCode
-	    }).then(result => {
-	      const {
-	        dialog_id: dialogId
-	      } = result.data();
-	      return dialogId;
 	    }).catch(error => {
 	      // eslint-disable-next-line no-console
 	      console.error('LinesService: error getting dialog id', error);
 	    });
+	    const {
+	      dialog_id: dialogId
+	    } = result.data();
+	    return dialogId;
 	  }
 	}
 
 	var _onCreateError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCreateError");
 	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
-	class CopilotService {
+	class CopilotService$$1 {
 	  constructor() {
 	    Object.defineProperty(this, _sendAnalytics, {
 	      value: _sendAnalytics2
@@ -3745,13 +4112,16 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      value: _onCreateError2
 	    });
 	  }
-	  async createChat() {
+	  async createChat({
+	    roleCode
+	  }) {
 	    const chatService = new ChatService();
 	    const {
 	      newDialogId,
 	      newChatId
 	    } = await chatService.createChat({
-	      type: im_v2_const.ChatType.copilot
+	      type: im_v2_const.ChatType.copilot,
+	      copilotMainRole: roleCode
 	    }).catch(error => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _onCreateError)[_onCreateError](error);
 	    });
@@ -3780,17 +4150,62 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  });
 	}
 
+	const CommentsService = {
+	  subscribe(messageId) {
+	    im_v2_application_core.Core.getStore().dispatch('messages/comments/subscribe', messageId);
+	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatCommentSubscribe, {
+	      data: {
+	        postId: messageId,
+	        createIfNotExists: true,
+	        autoJoin: true
+	      }
+	    }).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('CommentsService: subscribe error', error);
+	    });
+	  },
+	  unsubscribe(messageId) {
+	    im_v2_application_core.Core.getStore().dispatch('messages/comments/unsubscribe', messageId);
+	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatCommentUnsubscribe, {
+	      data: {
+	        postId: messageId,
+	        createIfNotExists: true,
+	        autoJoin: true
+	      }
+	    }).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('CommentsService: unsubscribe error', error);
+	    });
+	  },
+	  readAllChannelComments(channelDialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](channelDialogId, true);
+	    const currentChannelCounter = im_v2_application_core.Core.getStore().getters['counters/getChannelCommentsCounter'](chat.chatId);
+	    if (currentChannelCounter === 0) {
+	      return Promise.resolve();
+	    }
+	    im_v2_application_core.Core.getStore().dispatch('counters/readAllChannelComments', chat.chatId);
+	    return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatCommentReadAll, {
+	      data: {
+	        dialogId: channelDialogId
+	      }
+	    }).catch(error => {
+	      // eslint-disable-next-line no-console
+	      console.error('CommentsService: readAllChannelComments error', error);
+	    });
+	  }
+	};
+
 	exports.RecentService = RecentService;
 	exports.ChatService = ChatService;
 	exports.MessageService = MessageService;
 	exports.SendingService = SendingService$$1;
 	exports.NotificationService = NotificationService;
 	exports.DiskService = DiskService;
-	exports.UnreadRecentService = UnreadRecentService;
 	exports.UploadingService = UploadingService$$1;
 	exports.SettingsService = SettingsService;
 	exports.LinesService = LinesService;
-	exports.CopilotService = CopilotService;
+	exports.CopilotService = CopilotService$$1;
+	exports.CommentsService = CommentsService;
 
-}((this.BX.Messenger.v2.Provider.Service = this.BX.Messenger.v2.Provider.Service || {}),BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Event,BX.UI.Uploader,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Provider.Service = this.BX.Messenger.v2.Provider.Service || {}),BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX,BX,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Event,BX.UI.Uploader,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const));
 //# sourceMappingURL=registry.bundle.js.map

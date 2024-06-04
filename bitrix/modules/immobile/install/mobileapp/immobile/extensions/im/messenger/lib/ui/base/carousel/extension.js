@@ -13,6 +13,7 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 		 * @param {array} props.itemList
 		 * @param {string} props.size
 		 * @param {Function} [props.ref]
+		 * @param {boolean} [props.isSuperEllipseAvatar]
 		 */
 		constructor(props)
 		{
@@ -45,6 +46,7 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 				renderItem: (props) => {
 					return new CarouselItem({
 						...props,
+						isSuperEllipseAvatar: this.props.isSuperEllipseAvatar,
 						onClick: (itemData) => {
 							this.removeItem(itemData);
 							this.props.onItemSelected(itemData);

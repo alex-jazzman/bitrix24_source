@@ -4,8 +4,9 @@
 jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { OwnMessageStatus } = require('im/messenger/const');
+	const { OwnMessageStatus, DialogType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { parser } = require('im/messenger/lib/parser');
@@ -14,6 +15,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { ReactionType } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
+
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 
 	const MessageAlign = Object.freeze({
 		center: 'center',
@@ -62,6 +65,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.reactions = [];
 			/** @deprecated */
 			this.ownReactions = []; // TODO delete after the new format is supported on iOS
+			this.showAvatarsInReaction = true;
 
 			/** @type {MessageRichLink || null} */
 			this.richLink = null;
@@ -71,6 +75,8 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.userColor = '#428ae8';
 			this.isAuthorBottomMessage = false;
 			this.isAuthorTopMessage = false;
+
+			this.commentInfo = null;
 
 			this
 				.setId(modelMessage.id)
@@ -85,6 +91,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setForwardText(modelMessage)
 				.setLikes(modelMessage.reactions)
 				.setReactions(modelMessage.reactions)
+				.setShowAvatarsInReaction(options.showAvatarsInReaction)
 				.setShowUsername(modelMessage, options.showUsername)
 				.setShowAvatar(modelMessage, options.showAvatar)
 				.setFontColor(options.fontColor)
@@ -95,6 +102,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setMarginTop(options.marginTop)
 				.setMarginBottom(options.marginBottom)
 				.setRichLink(modelMessage)
+				.setCommentInfo(modelMessage, Boolean(options.showCommentInfo))
 			;
 		}
 
@@ -369,6 +377,92 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				})
 			;
 			this.reactions = reactions;
+
+			return this;
+		}
+
+		setShowAvatarsInReaction(showAvatarsInReaction)
+		{
+			if (Type.isBoolean(showAvatarsInReaction))
+			{
+				this.showAvatarsInReaction = showAvatarsInReaction;
+			}
+
+			return this;
+		}
+
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {boolean} showCommentInfo
+		 */
+		setCommentInfo(modelMessage, showCommentInfo)
+		{
+			if (!showCommentInfo)
+			{
+				return this;
+			}
+
+			const commentInfo = serviceLocator.get('core').getStore().getters['commentModel/getByMessageId']?.(modelMessage.id);
+			if (!commentInfo)
+			{
+				this.commentInfo = {
+					title: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT'),
+					totalCounter: 0,
+				};
+
+				return this;
+			}
+			let messageCount = commentInfo.messageCount;
+			// remove first system message from count
+			if (commentInfo.messageCount > 0)
+			{
+				messageCount = commentInfo.messageCount - 1;
+			}
+			const colorUtils = new ColorUtils();
+
+			const users = serviceLocator.get('core').getStore().getters['usersModel/getByIdList'](commentInfo.lastUserIds);
+
+			const commentUsers = users.map((user) => {
+				const result = {};
+
+				if (user.avatar !== '')
+				{
+					result.imageUrl = user.avatar;
+
+					return result;
+				}
+
+				result.defaultIconSvg = defaultUserIcon(
+					user
+						? user.color
+						: colorUtils.getColorByNumber(user.id),
+				);
+
+				return result;
+			});
+
+			const unreadCounter = serviceLocator.get('core').getStore().getters['commentModel/getCommentsCounter']?.({
+				channelId: modelMessage.chatId,
+				commentChatId: commentInfo.chatId,
+			}) ?? null;
+
+			const title = messageCount === 0
+				? Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT')
+				: Loc.getMessagePlural('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COMMENT_COUNT', messageCount, {
+					'#COUNT#': messageCount,
+				})
+			;
+
+
+			this.commentInfo = {
+				title,
+				totalCounter: messageCount,
+				unreadCounter: unreadCounter ? {
+					color: AppTheme.colors.accentMainPrimary,
+					value: unreadCounter,
+				} : null,
+				users: commentUsers.length > 0 ? commentUsers : null,
+			};
 
 			return this;
 		}
@@ -674,25 +768,57 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
+		/**
+		 *
+		 * @param {MessagesModelState} modelMessage
+		 * @return {Message}
+		 */
 		setForwardText(modelMessage)
 		{
 			const { forward } = modelMessage;
-			if (forward && forward.id)
+
+			if (!forward || !forward.id)
 			{
-				if (forward.userId)
-				{
-					const authorId = forward.userId;
-					const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
-					if (user)
-					{
-						this.forwardText = `${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD')} ${user.name || user.lastName || user.firstName}`;
-					}
-				}
-				else
-				{
-					this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_SYSTEM');
-				}
+				return this;
 			}
+
+			const authorId = forward.userId;
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
+
+			if (!forward.userId || !user)
+			{
+				// forward system message
+				this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_SYSTEM');
+
+				return this;
+			}
+
+			const userName = user.name || user.lastName || user.firstName;
+
+			if (forward.chatType === DialogType.openChannel)
+			{
+				this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_CHANNEL')
+					.replace('#USER_NAME#', userName)
+					.replace('#CHANNEL_NAME#', forward.chatTitle)
+				;
+
+				return this;
+			}
+
+			if (forward.chatType === DialogType.channel)
+			{
+				const channelDescription = ChatTitle.getChatDescriptionByDialogType(forward.chatType);
+				this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_CHANNEL')
+					.replace('#USER_NAME#', userName)
+					.replace('#CHANNEL_NAME#', channelDescription)
+				;
+
+				return this;
+			}
+
+			this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_MSGVER_1')
+				.replace('#USER_NAME#', userName)
+			;
 
 			return this;
 		}

@@ -11,7 +11,7 @@ import { showKickUserConfirm, showLeaveFromChatConfirm } from 'im.v2.lib.confirm
 
 import { SidebarMenu } from '../sidebar-base-menu';
 
-import type { ImModelUser } from 'im.v2.model';
+import type { ImModelUser, ImModelChat } from 'im.v2.model';
 import type { MenuItem } from 'im.v2.lib.menu';
 
 type MembersMenuContext = {
@@ -40,6 +40,7 @@ export class MembersMenu extends SidebarMenu
 		return [
 			this.getInsertNameItem(),
 			this.getSendMessageItem(),
+			this.getManagerItem(),
 			this.getCallItem(),
 			this.getOpenProfileItem(),
 			this.getOpenUserCalendarItem(),
@@ -58,6 +59,7 @@ export class MembersMenu extends SidebarMenu
 				EventEmitter.emit(EventType.textarea.insertMention, {
 					mentionText: user.name,
 					mentionReplacement: Utils.text.getMentionBbCode(this.context.dialogId, user.name),
+					dialogId: this.context.contextDialogId,
 				});
 				this.menuInstance.close();
 			},
@@ -70,6 +72,39 @@ export class MembersMenu extends SidebarMenu
 			text: Loc.getMessage('IM_LIB_MENU_WRITE'),
 			onclick: () => {
 				Messenger.openChat(this.context.dialogId);
+				this.menuInstance.close();
+			},
+		};
+	}
+
+	getManagerItem(): ?MenuItem
+	{
+		const userId = Number.parseInt(this.context.dialogId, 10);
+		const chat: ImModelChat = this.store.getters['chats/get'](this.context.contextDialogId);
+		const isOwner = userId === chat.ownerId;
+		const canChangeManagers = PermissionManager.getInstance().canPerformAction(
+			ChatActionType.changeManagers,
+			this.context.contextDialogId,
+		);
+
+		if (isOwner || !canChangeManagers)
+		{
+			return null;
+		}
+
+		const isManager = chat.managerList.includes(userId);
+
+		return {
+			text: isManager ? Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_REMOVE') : Loc.getMessage('IM_SIDEBAR_MENU_MANAGER_ADD'),
+			onclick: () => {
+				if (isManager)
+				{
+					this.chatService.removeManager(this.context.contextDialogId, userId);
+				}
+				else
+				{
+					this.chatService.addManager(this.context.contextDialogId, userId);
+				}
 				this.menuInstance.close();
 			},
 		};

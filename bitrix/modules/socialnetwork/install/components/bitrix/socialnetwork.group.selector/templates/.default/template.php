@@ -5,7 +5,7 @@ $GLOBALS['APPLICATION']->SetAdditionalCSS("/bitrix/js/main/core/css/core_finder.
 
 CUtil::InitJSCore(array('popup'));
 ?>
-<script type="text/javascript">
+<script>
 	var <?php echo ($arParams["JS_OBJECT_NAME"] ?? '') <> '' ? CUtil::JSEscape($arParams["JS_OBJECT_NAME"]) : "groupsPopup"?>;
 	var __bx_group_site_id = '<?=CUtil::JSEscape(SITE_ID)?>';
 

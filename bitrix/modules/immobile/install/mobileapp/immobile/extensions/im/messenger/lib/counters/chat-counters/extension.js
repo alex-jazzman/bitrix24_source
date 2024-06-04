@@ -40,6 +40,7 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 			}
 
 			const counters = response.data();
+
 			logger.log(`${this.getClassName()}.handleCountersGet`, counters);
 
 			counters.chatUnread.forEach((chatId) => {
@@ -57,6 +58,7 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 			this.chatCounter.value = counters.type.chat;
 			this.openlinesCounter.value = counters.type.lines;
 			this.notificationCounter.value = counters.type.notify;
+			this.store.dispatch('commentModel/setCounters', counters.channelComment);
 
 			MessengerEmitter.emit(EventType.notification.reload);
 			this.update();
@@ -108,7 +110,7 @@ jn.define('im/messenger/lib/counters/chat-counters', (require, exports, module) 
 						DialogHelper.isDialogId(dialog.dialogId)
 						&& !(dialog && dialog.muteList.includes(userId)))
 					{
-						return counter + this.calculateItemCounter(item, dialog);
+						return counter + this.calculateChatCounter(item, dialog);
 					}
 
 					return counter;

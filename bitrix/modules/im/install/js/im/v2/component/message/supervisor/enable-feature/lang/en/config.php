@@ -1,7 +1,7 @@
 <?php
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_AUTOMATION_DESCRIPTION"] = "Automate sales and tasks, and manage workflows.";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_AUTOMATION_TITLE"] = "Enable Automation";
-$MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED"] = "Details";
+$MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_MORE_DETAILED"] = "Learn more";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_BUTTON_OPEN_SETTINGS"] = "Open settings";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CALENDAR_DESCRIPTION"] = "Plan meetings with your colleagues and external users in just a few clicks.";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_CALENDAR_TITLE"] = "Enable Calendar";
@@ -15,12 +15,18 @@ $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_DOCUMENTS_DESCRIPTION"] = "Collabora
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_DOCUMENTS_TITLE"] = "Enable Online documents";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_GROUPS_DESCRIPTION"] = "Engage in tasks and projects, discuss events and share information inside dedicated workgroups.";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_GROUPS_TITLE"] = "Enable Workgroups";
+$MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_INVOICES_DESCRIPTION"] = "Invoices will be populated with product information, and your and customer details automatically.";
+$MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_INVOICES_TITLE"] = "Enable invoices";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_MAIL_DESCRIPTION"] = "Create mailboxes for employees and save customer emails to the CRM.";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_MAIL_TITLE"] = "Enable Webmail";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_MARKETING_DESCRIPTION"] = "Send newsletters via email, SMS and messengers. Create ad campaigns and increase repeat sales.";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_MARKETING_TITLE"] = "Enable Marketing";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_NEWS_LINE_DESCRIPTION"] = "Discuss ideas and events, share news and add comments to other user's posts.";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_NEWS_LINE_TITLE"] = "Enable Feed";
+$MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SALESHUB_DESCRIPTION"] = "Connect payment systems, online terminals and delivery services. Receive payments the way you want.";
+$MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SALESHUB_TITLE"] = "Enable Sales Center";
+$MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SCRUM_DESCRIPTION"] = "Use the backlog, create scrum teams, assign roles and plan sprints.";
+$MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SCRUM_TITLE"] = "Enable Scrum";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SIGN_DESCRIPTION"] = "Create and sign documents online. Send documents for signing to other parties.";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_SIGN_TITLE"] = "Enable e-Signature";
 $MESS["IM_MESSAGE_SUPERVISOR_ENABLE_FEATURE_TASKS_DESCRIPTION"] = "Assign participants and observers, add comments to tasks and keep an eye on deadlines.";

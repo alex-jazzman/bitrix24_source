@@ -21,6 +21,10 @@ use Bitrix\Main\Localization\Loc;
 
 class TaskService
 {
+	private const TASK_ALREADY_DONE_ERROR_CODE = 'TASK_ALREADY_DONE';
+	private const TASK_USER_NOT_MEMBER_ERROR_CODE = 'TASK_USER_NOT_MEMBER';
+	private const TASK_NOT_FOUND_ERROR_CODE = 'TASK_NOT_FOUND';
+
 	public function __construct(
 		private TaskAccessService $accessService
 	)
@@ -187,7 +191,12 @@ class TaskService
 
 		if ((int)$task['USER_STATUS'] !== \CBPTaskUserStatus::Waiting)
 		{
-			return $result->addError(new Error(Loc::getMessage('BIZPROC_LIB_API_TASK_SERVICE_DO_TASK_ERROR_ALREADY_DONE')));
+			return $result->addError(
+				new Error(
+					Loc::getMessage('BIZPROC_LIB_API_TASK_SERVICE_DO_TASK_ERROR_ALREADY_DONE'),
+					self::TASK_ALREADY_DONE_ERROR_CODE
+				)
+			);
 		}
 
 		$task['PARAMETERS']['DOCUMENT_ID'] = \CBPStateService::GetStateDocumentId($task['WORKFLOW_ID']);
@@ -298,18 +307,29 @@ class TaskService
 				if ((int)$task['STATUS'] !== \CBPTaskStatus::Running)
 				{
 					$response->addError(
-						new Error(Loc::getMessage('BIZPROC_LIB_API_TASK_SERVICE_ERROR_TASK_ALREADY_DONE'))
+						new Error(
+							Loc::getMessage('BIZPROC_LIB_API_TASK_SERVICE_ERROR_TASK_ALREADY_DONE'),
+							self::TASK_ALREADY_DONE_ERROR_CODE
+						)
 					);
 				}
 				elseif ($this->accessService->isCurrentUser($userId))
 				{
 					$response->addError(
-						new Error(Loc::getMessage('BIZPROC_LIB_API_TASK_SERVICE_ERROR_CURRENT_USER_NOT_MEMBER'))
+						new Error(
+							Loc::getMessage('BIZPROC_LIB_API_TASK_SERVICE_ERROR_CURRENT_USER_NOT_MEMBER'),
+							self::TASK_USER_NOT_MEMBER_ERROR_CODE,
+						)
 					);
 				}
 				else
 				{
-					$response->addError(new Error(Loc::getMessage('BIZPROC_LIB_API_TASK_SERVICE_ERROR_TARGET_USER_NOT_MEMBER')));
+					$response->addError(
+						new Error(
+							Loc::getMessage('BIZPROC_LIB_API_TASK_SERVICE_ERROR_TARGET_USER_NOT_MEMBER'),
+							self::TASK_USER_NOT_MEMBER_ERROR_CODE,
+						)
+					);
 				}
 
 				return;
@@ -319,7 +339,7 @@ class TaskService
 		$response->addError(
 			new Error(
 				Loc::getMessage('BIZPROC_LIB_API_TASK_SERVICE_DO_TASK_ERROR_NO_TASK'),
-				'TASK_NOT_FOUND_ERROR'
+				self::TASK_NOT_FOUND_ERROR_CODE
 			)
 		);
 	}

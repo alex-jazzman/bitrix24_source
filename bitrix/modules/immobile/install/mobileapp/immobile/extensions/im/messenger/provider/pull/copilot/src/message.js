@@ -5,7 +5,7 @@
  */
 jn.define('im/messenger/provider/pull/copilot/message', (require, exports, module) => {
 	const { clone } = require('utils/object');
-	const { MessageBasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BaseMessagePullHandler } = require('im/messenger/provider/pull/base');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Counters } = require('im/messenger/lib/counters');
@@ -20,7 +20,7 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 	/**
 	 * @class CopilotMessagePullHandler
 	 */
-	class CopilotMessagePullHandler extends MessageBasePullHandler
+	class CopilotMessagePullHandler extends BaseMessagePullHandler
 	{
 		constructor()
 		{
@@ -74,6 +74,7 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 				message: recentParams.message,
 				counter: recentParams.counter,
 				liked: false,
+				lastActivityDate: recentParams.dateLastActivity,
 			});
 
 			this.updateDialog(params)

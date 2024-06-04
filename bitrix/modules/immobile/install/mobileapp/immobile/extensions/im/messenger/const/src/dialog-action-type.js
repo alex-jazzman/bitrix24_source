@@ -13,6 +13,23 @@ jn.define('im/messenger/const/dialog-action-type', (require, exports, module) =>
 		rename: 'rename',
 		send: 'send',
 		userList: 'userList',
+		changeOwner: 'changeOwner',
+		changeManagers: 'changeManagers',
+
+		mention: 'mention',
+		reply: 'reply',
+		readMessage: 'readMessage',
+		openComments: 'openComments',
+		followComments: 'followComments',
+		openSidebar: 'openSidebar',
+		pinMessage: 'pinMessage',
+		setReaction: 'setReaction',
+		partialQuote: 'partialQuote',
+		createMeeting: 'createMeeting',
+		createTask: 'createTask',
+		openAvatarMenu: 'openAvatarMenu',
+		openMessageMenu: 'openMessageMenu',
+		openSidebarMenu: 'openSidebarMenu',
 	});
 
 	module.exports = { DialogActionType };

@@ -19,6 +19,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { ForwardSelector } = require('im/messenger/controller/forward-selector');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
@@ -119,6 +120,11 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			const isRealMessage = Type.isNumber(messageId);
 
 			if (!isRealMessage)
+			{
+				return;
+			}
+
+			if (!ChatPermission.isCanOpenMessageMenu(this.dialogId))
 			{
 				return;
 			}
@@ -260,7 +266,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		addUnpinAction(menu, message)
 		{
-			if (!message.isPossiblePin())
+			if (message.isPossibleUnpin())
 			{
 				menu.addAction(UnpinAction);
 			}

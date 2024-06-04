@@ -11,6 +11,8 @@ return [
 		'im.v2.component.animation',
 		'ui.entity-selector',
 		'main.core',
+		'im.v2.component.elements',
+		'ui.notification',
 		'main.core.events',
 		'main.popup',
 		'im.public',
@@ -20,8 +22,6 @@ return [
 		'im.v2.provider.service',
 		'im.v2.const',
 		'ui.forms',
-		'im.v2.component.elements',
-		'ui.notification',
 	],
 	'skip_core' => false,
 ];

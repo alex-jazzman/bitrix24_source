@@ -20,62 +20,21 @@ use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Engine\ActionFilter;
-use Bitrix\Intranet\Internals\InvitationTable;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Entity;
 use Bitrix\Intranet;
 
 class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
 	private Analytics $analytics;
 
-	protected function isInvitingUsersAllowed(): bool
-	{
-		if (!Invitation::canCurrentUserInvite())
-		{
-			return false;
-		}
-
-		if (Loader::includeModule("bitrix24"))
-		{
-			if (!CBitrix24::isEmailConfirmed())
-			{
-				return false;
-			}
-
-			$licensePrefix = CBitrix24::getLicensePrefix();
-			$licenseType = CBitrix24::getLicenseType();
-			if (
-				$licenseType === "project"
-				&& in_array($licensePrefix, ['cn', 'en', 'vn', 'jp'])
-			)
-			{
-				$res = InvitationTable::getList([
-					'filter' => [
-						'>=DATE_CREATE' => new Date
-					],
-					'select' => ['CNT'],
-					'runtime' => array(
-						new Entity\ExpressionField('CNT', 'COUNT(*)')
-					)
-				])->fetch();
-
-				if ((int)$res['CNT'] >= 10)
-				{
-					$this->addError(new \Bitrix\Main\Error(Loc::getMessage('INTRANET_INVITE_DIALOG_USER_COUNT_ERROR')));
-					return false;
-				}
-			}
-		}
-
-		return true;
-	}
-
 	protected function getDefaultPreFilters()
 	{
 		return array_merge(
 			parent::getDefaultPreFilters(),
-			[ new \Bitrix\Intranet\ActionFilter\UserType(['employee']) ]
+			[
+				new Intranet\ActionFilter\UserType(['employee']),
+				new Intranet\ActionFilter\InviteAccessControl(),
+				new Intranet\ActionFilter\InviteLimitControl(),
+			]
 		);
 	}
 
@@ -85,6 +44,8 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			'getSliderContent' => [
 				'-prefilters' => [
 					ActionFilter\Csrf::class,
+					Intranet\ActionFilter\InviteAccessControl::class,
+					Intranet\ActionFilter\InviteLimitControl::class,
 				]
 			],
 		];
@@ -155,11 +116,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	protected function isInvitationBySmsAvailable(): bool
 	{
 		return Loader::includeModule("bitrix24") && Option::get('bitrix24', 'phone_invite_allowed', 'N') === 'Y';
-	}
-
-	protected function isMoreUserAvailable(): bool
-	{
-		return !(Loader::includeModule("bitrix24") && !CBitrix24::isMoreUserAvailable());
 	}
 
 	protected function getHeadDepartmentId(): ?int
@@ -320,17 +276,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function inviteAction()
 	{
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
-
-		if (!$this->isMoreUserAvailable())
-		{
-			$this->addError(new \Bitrix\Main\Error("User limit"));
-			return "user_limit";
-		}
-
 		$departmentId = $this->getHeadDepartmentId();
 		$strError = "";
 		$items = $_POST["ITEMS"];
@@ -373,17 +318,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function inviteWithGroupDpAction()
 	{
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
-
-		if (!$this->isMoreUserAvailable())
-		{
-			$this->addError(new \Bitrix\Main\Error("User limit"));
-			return "user_limit";
-		}
-
 		$userData = $_POST;
 		$departmentId = $this->filterDepartment($userData["UF_DEPARTMENT"]) ?: [$this->getHeadDepartmentId()];
 		$countEmails = 0;
@@ -427,11 +361,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function massInviteAction()
 	{
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
-
 		$strError = "";
 		$errorFormatItems = [];
 		$errorLengthItems = [];
@@ -521,12 +450,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			return false;
 		}
 
-		if (!$this->isMoreUserAvailable())
-		{
-			$this->addError(new \Bitrix\Main\Error("User limit"));
-			return "user_limit";
-		}
-
 		$userOptions = \Bitrix\Main\Context::getCurrent()->getRequest()->getPost('userOptions');
 
 		if (
@@ -580,11 +503,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPost('allow_register')
 		);
 
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
-
 		$isCurrentUserAdmin = Intranet\CurrentUser::get()->isAdmin();
 
 		if (Loader::includeModule("socialservices"))
@@ -609,17 +527,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	public function addAction()
 	{
 		$this->getAnalyticsInstance()->sendRegistration();
-
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
-
-		if (!$this->isMoreUserAvailable())
-		{
-			$this->addError(new \Bitrix\Main\Error("User limit"));
-			return "user_limit";
-		}
 
 		$userData = $_POST;
 		$userData["DEPARTMENT_ID"] = $this->filterDepartment($userData["UF_DEPARTMENT"] ?? null) ?: [$this->getHeadDepartmentId()];
@@ -658,11 +565,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		);
 
 		if (!Loader::includeModule("bitrix24"))
-		{
-			return false;
-		}
-
-		if (!$this->isInvitingUsersAllowed())
 		{
 			return false;
 		}

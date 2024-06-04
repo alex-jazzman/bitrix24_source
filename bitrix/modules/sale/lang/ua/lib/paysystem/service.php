@@ -1,6 +1,7 @@
 <?php
 $MESS["SALE_PS_SERVICE_ERROR_CONNECT_PS"] = "Помилка підключення до платіжної системи";
 $MESS["SALE_PS_SERVICE_ERROR_HOLD_IS_NOT_SUPPORTED"] = "Оброблювач не підтримує режим холдування";
+$MESS["SALE_PS_SERVICE_ERROR_ON_BEFORE_INITIATE_PAY"] = "Помилка оплати";
 $MESS["SALE_PS_SERVICE_ERROR_PARTIAL_CONFIRM_IS_NOT_SUPPORTED"] = "Оброблювач не підтримує режим холдування з частковим підтвердженням платежу";
 $MESS["SALE_PS_SERVICE_ORDER_CANCELED"] = "Замовлення №#ORDER_ID# скасовано";
 $MESS["SALE_PS_SERVICE_ORDER_ERROR"] = "Замовлення №#ORDER_ID# не існує";
