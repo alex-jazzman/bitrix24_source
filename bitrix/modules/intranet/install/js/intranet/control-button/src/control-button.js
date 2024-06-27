@@ -130,7 +130,7 @@ export class ControlButton
 	{
 		const isChatButton = (!this.isVideoCallEnabled || this.mainItem === 'chat');
 		const onClickValue = (isChatButton ? this.openChat.bind(this) : this.startVideoCall.bind(this));
-		const buttonTitle = (isChatButton ? Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME'));
+		const buttonTitle = (isChatButton ? Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME_MSG_1'));
 		const buttonClass = `${isChatButton ? 'ui-btn-icon-chat-blue' : 'ui-btn-icon-camera-blue'} intranet-control-btn ui-btn-light-border ui-btn-icon-inline ${this.buttonClassName}`;
 
 		this.button = (

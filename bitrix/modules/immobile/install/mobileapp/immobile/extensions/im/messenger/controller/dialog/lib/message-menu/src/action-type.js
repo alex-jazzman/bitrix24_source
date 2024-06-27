@@ -15,6 +15,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action-type', (requir
 		delete: 'delete',
 		downloadToDisk: 'download-to-disk',
 		downloadToDevice: 'download-to-device',
+		create: 'create',
+		feedback: 'feedback',
+		subscribe: 'subscribe',
+		unsubscribe: 'unsubscribe',
 	};
 
 	module.exports = { ActionType };

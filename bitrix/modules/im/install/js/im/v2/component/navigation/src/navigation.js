@@ -1,4 +1,4 @@
-import { Extension, Type } from 'main.core';
+import { Type } from 'main.core';
 import { hint } from 'ui.vue3.directives.hint';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
@@ -8,6 +8,7 @@ import { CallManager } from 'im.v2.lib.call';
 import { Layout } from 'im.v2.const';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
 import { PhoneManager } from 'im.v2.lib.phone';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { UserSettings } from './components/user-settings';
 import { MarketApps } from './components/market-apps';
@@ -65,7 +66,6 @@ export const MessengerNavigation = {
 				{
 					id: Layout.channel.name,
 					text: this.prepareNavigationText('IM_NAVIGATION_CHANNELS'),
-					showCondition: this.isChannelListAvailable,
 					active: true,
 				},
 				{
@@ -263,15 +263,7 @@ export const MessengerNavigation = {
 		},
 		isCopilotAvailable(): boolean
 		{
-			const settings = Extension.getSettings('im.v2.component.navigation');
-
-			return settings.get('copilotAvailable');
-		},
-		isChannelListAvailable(): boolean
-		{
-			const settings = Extension.getSettings('im.v2.component.navigation');
-
-			return settings.get('channelListAvailable');
+			return FeatureManager.isFeatureAvailable(Feature.copilot);
 		},
 		async onTimeManagerClick()
 		{

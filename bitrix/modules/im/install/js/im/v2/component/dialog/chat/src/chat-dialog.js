@@ -1,4 +1,4 @@
-import { Runtime, Event, Dom, Type } from 'main.core';
+import { Runtime, Event, Dom } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { PopupManager } from 'main.popup';
 import { PullStatus } from 'pull.vue3.status';
@@ -119,7 +119,7 @@ export const ChatDialog = {
 		{
 			const READING_DEBOUNCE_DELAY = 50;
 
-			return Runtime.debounce(this.readVisibleMessages, READING_DEBOUNCE_DELAY, this);
+			return Runtime.debounce(this.readQueuedMessages, READING_DEBOUNCE_DELAY, this);
 		},
 		messageListComponent(): BitrixVueComponentProps
 		{
@@ -129,10 +129,14 @@ export const ChatDialog = {
 		{
 			return this.isScrolledUp || this.dialog.hasNextPage;
 		},
+		hasCommentsOnTop(): boolean
+		{
+			return this.$store.getters['messages/comments/areOpenedForChannel'](this.dialogId);
+		},
 	},
 	watch:
 	{
-		dialogInited(newValue, oldValue)
+		dialogInited(newValue: boolean, oldValue: boolean)
 		{
 			if (!newValue || oldValue)
 			{
@@ -141,6 +145,19 @@ export const ChatDialog = {
 			// first opening
 			this.getPullWatchManager().subscribe();
 			this.onChatInited();
+		},
+		hasCommentsOnTop: {
+			handler(newValue: boolean)
+			{
+				const commentsWereClosed = newValue === false;
+				if (!commentsWereClosed)
+				{
+					return;
+				}
+
+				this.readVisibleMessages();
+			},
+			flush: 'post',
 		},
 	},
 	created()
@@ -181,25 +198,6 @@ export const ChatDialog = {
 	},
 	methods:
 	{
-		readVisibleMessages()
-		{
-			if (!this.dialogInited || !this.windowFocused || this.hasVisibleCall())
-			{
-				return;
-			}
-
-			const permissionManager = PermissionManager.getInstance();
-			if (!permissionManager.canPerformAction(ChatActionType.readMessage, this.dialogId))
-			{
-				return;
-			}
-
-			const messagesToRead: number[] = [...this.messagesToRead];
-			messagesToRead.forEach((messageId) => {
-				this.getChatService().readMessage(this.dialog.chatId, messageId);
-				this.messagesToRead.delete(messageId);
-			});
-		},
 		async scrollOnStart()
 		{
 			await this.$nextTick();
@@ -347,6 +345,49 @@ export const ChatDialog = {
 				void this.getMessageService().reloadMessageList();
 			}, LOAD_MESSAGE_ON_EXIT_DELAY);
 		},
+		/* region Reading */
+		readQueuedMessages(): void
+		{
+			if (!this.messagesCanBeRead())
+			{
+				return;
+			}
+
+			[...this.messagesToRead].forEach((messageId) => {
+				this.getChatService().readMessage(this.dialog.chatId, messageId);
+				this.messagesToRead.delete(messageId);
+			});
+		},
+		readVisibleMessages(): void
+		{
+			if (!this.messagesCanBeRead())
+			{
+				return;
+			}
+
+			const visibleMessages = this.getVisibleMessagesManager().getVisibleMessages();
+			visibleMessages.forEach((messageId) => {
+				const message: ImModelMessage = this.$store.getters['messages/getById'](messageId);
+				if (message.viewed)
+				{
+					return;
+				}
+
+				this.getChatService().readMessage(this.dialog.chatId, messageId);
+			});
+		},
+		messagesCanBeRead(): boolean
+		{
+			if (!this.dialogInited || !this.isChatVisible())
+			{
+				return false;
+			}
+
+			const permissionManager = PermissionManager.getInstance();
+
+			return permissionManager.canPerformAction(ChatActionType.readMessage, this.dialogId);
+		},
+		/* endregion Reading */
 		/* region Event handlers */
 		onChatInited()
 		{
@@ -598,7 +639,7 @@ export const ChatDialog = {
 			this.getVisibleMessagesManager().setMessageAsVisible(messageId);
 
 			const message: ImModelMessage = this.$store.getters['messages/getById'](messageId);
-			if (!message.viewed)
+			if (!message.viewed && this.isChatVisible())
 			{
 				this.messagesToRead.add(messageId);
 				this.debouncedReadHandler();
@@ -679,6 +720,10 @@ export const ChatDialog = {
 			return this.visibleMessagesManager;
 		},
 		/* endregion Init methods */
+		isChatVisible(): boolean
+		{
+			return this.windowFocused && !this.hasVisibleCall() && !this.hasCommentsOnTop;
+		},
 		hasVisibleCall(): boolean
 		{
 			return CallManager.getInstance().hasVisibleCall();

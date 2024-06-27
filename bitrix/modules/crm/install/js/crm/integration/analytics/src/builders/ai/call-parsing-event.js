@@ -12,6 +12,7 @@ export class CallParsingEvent
 	#type: CallParsingEventStructure['type'] = Dictionary.TYPE_MANUAL;
 	#element: ?CallParsingEventStructure['c_element'];
 	#activityId: number;
+	#activityDirection: ?string;
 	#status: CallParsingEventStructure['status'];
 
 	static createDefault(
@@ -43,6 +44,13 @@ export class CallParsingEvent
 		return this;
 	}
 
+	setActivityDirection(direction: 'incoming' | 'outgoing'): CallParsingEvent
+	{
+		this.#activityDirection = direction;
+
+		return this;
+	}
+
 	buildData(): ?CallParsingEventStructure
 	{
 		const analyticsEntityType = getAnalyticsEntityType(this.#entityType);
@@ -60,6 +68,13 @@ export class CallParsingEvent
 			return null;
 		}
 
+		if (this.#activityDirection !== 'incoming' && this.#activityDirection !== 'outgoing')
+		{
+			console.error('crm.integration.analytics: invalid activity direction');
+
+			return null;
+		}
+
 		return filterOutNilValues({
 			tool: Dictionary.TOOL_AI,
 			category: Dictionary.CATEGORY_CRM_OPERATIONS,
@@ -70,6 +85,7 @@ export class CallParsingEvent
 			c_element: this.#element,
 			status: this.#status,
 			p1: getCrmMode(),
+			p2: `callDirection_${this.#activityDirection}`,
 			p5: `idCall_${this.#activityId}`,
 		});
 	}

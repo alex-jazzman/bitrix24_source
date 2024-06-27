@@ -4,7 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 __IncludeLang($_SERVER['DOCUMENT_ROOT'].$this->GetFolder().'/lang/'.LANGUAGE_ID.'/template.php');
 ?>
 
-<script type="text/javascript">
+<script>
 var oberror = null;
 var step = 1;
 function SLshowError(msg)

@@ -18,19 +18,6 @@ Loader::includeModule('ui');
 
 /** @var array $arResult */
 
-if (\CCrmPerms::IsAccessEnabled())
-{
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.control_panel',
-		'',
-		[
-			'ID' => 'BI_REPORT_LIST',
-			'ACTIVE_ITEM_ID' => 'BI_REPORT_LIST',
-		],
-		$component
-	);
-}
-
 if (!empty($arResult['ERROR_MESSAGES']))
 {
 	$APPLICATION->IncludeComponent(
@@ -42,13 +29,41 @@ if (!empty($arResult['ERROR_MESSAGES']))
 		],
 	);
 
-	if ($arResult['FEATURE_AVAILABLE'] === false || $arResult['TOOLS_AVAILABLE'] === false)
+	if ($arResult['FEATURE_AVAILABLE'] === false)
+	{
+		Extension::load([
+			'biconnector.apache-superset-cleaner',
+		]);
+		$helperCode = \CUtil::JSEscape($arResult['HELPER_CODE']);
+
+		echo <<<HTML
+			<script>top.BX.UI.InfoHelper.show("{$helperCode}")
+			BX.ready(() => {
+				BX.BIConnector.ApacheSupersetCleaner.Instance = new BX.BIConnector.ApacheSupersetCleaner();
+			})
+			</script>
+		HTML;
+	}
+
+	if ($arResult['TOOLS_AVAILABLE'] === false)
 	{
 		echo '<script>top.BX.UI.InfoHelper.show("' . \CUtil::JSEscape($arResult['HELPER_CODE']) . '")</script>';
 	}
 
 	return;
 }
+
+$this->setViewTarget('above_pagetitle');
+$APPLICATION->IncludeComponent(
+	'bitrix:biconnector.apachesuperset.control_panel',
+	'',
+	[
+		'ID' => 'DASHBOARD_LIST',
+		'ACTIVE_ITEM_ID' => 'DASHBOARD_LIST',
+	],
+	$component
+);
+$this->endViewTarget();
 
 $APPLICATION->IncludeComponent(
 	'bitrix:biconnector.apachesuperset.dashboard.list',

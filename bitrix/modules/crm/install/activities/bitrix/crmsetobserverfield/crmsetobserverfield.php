@@ -111,6 +111,10 @@ class CBPCrmSetObserverField extends CBPActivity
 				$observerIds = array_diff($item->getObservers(), $observerIds);
 				break;
 
+			case self::ACTION_REPLACE_OBSERVERS:
+				// if we're replacing observers then identifiers list is ready-to-use, keep as is
+				break;
+
 			default:
 				$observerIds = [];
 		}

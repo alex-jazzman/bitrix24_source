@@ -132,6 +132,12 @@ BX.namespace('Tasks.Component');
 					}
 				}.bind(this));
 
+				var flowButton = BX('tasks_panel_menu_view_flow');
+				if (flowButton)
+				{
+					flowButton.querySelector('.main-buttons-item-counter').innerText = this.getCounterValue(data.flow_total);
+				}
+
 				var scrumButton = BX('tasks_panel_menu_view_scrum');
 				if (scrumButton)
 				{

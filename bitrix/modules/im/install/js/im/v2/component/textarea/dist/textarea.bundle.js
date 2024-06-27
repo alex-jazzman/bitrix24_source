@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,rest_client,im_v2_lib_smileManager,im_v2_lib_rest,im_v2_lib_entityCreator,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_application_core,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_channel,rest_client,im_v2_lib_smileManager,im_v2_lib_rest,im_v2_lib_entityCreator,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_application_core,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -135,20 +135,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _mentionReplacementMap)[_mentionReplacementMap][textToReplace] = textToInsert;
 	    return babelHelpers.classPrivateFieldLooseBase(this, _mentionReplacementMap)[_mentionReplacementMap];
 	  }
-	  prepareMentionText(config) {
-	    const {
-	      currentText,
-	      textToInsert,
-	      textToReplace = ''
-	    } = config;
-	    let resultText = '';
-	    const queryWithMentionSymbol = `${babelHelpers.classPrivateFieldLooseBase(this, _mentionSymbol)[_mentionSymbol]}${textToReplace}`;
-	    if (queryWithMentionSymbol.length > 0) {
-	      resultText = currentText.replace(queryWithMentionSymbol, `${textToInsert} `);
-	    } else {
-	      resultText = `${currentText}${textToInsert} `;
-	    }
-	    return resultText;
+	  getMentionSymbol() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _mentionSymbol)[_mentionSymbol];
 	  }
 	  replaceMentions(text) {
 	    let resultText = text;
@@ -158,14 +146,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return resultText;
 	  }
 	  extractMentions(text) {
+	    const CHAT_MENTION_CODE = 'chat';
 	    const mentions = {};
-	    const mentionRegExp = /\[(user|chat)=(?<dialogId>\w+)](?<mentionText>.*?)\[\/(user|chat)]/gi;
+	    const mentionRegExp = /\[(?<type>user|chat)=(?<dialogId>\w+)](?<mentionText>.*?)\[\/(user|chat)]/gi;
 	    const matches = text.matchAll(mentionRegExp);
 	    for (const match of matches) {
 	      const {
-	        dialogId,
 	        mentionText
 	      } = match.groups;
+	      let {
+	        type: mentionType,
+	        dialogId
+	      } = match.groups;
+	      mentionType = mentionType.toLowerCase();
+	      if (mentionType === CHAT_MENTION_CODE) {
+	        dialogId = `${mentionType}${dialogId}`;
+	      }
 	      mentions[mentionText] = im_v2_lib_utils.Utils.text.getMentionBbCode(dialogId, mentionText);
 	    }
 	    return mentions;
@@ -4738,8 +4734,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					class="bx-im-upload-preview__message-text"
 					rows="1"
 					@keydown="onKeyDownHandler"
-					@mousedown="onResizeStart"
 				></textarea>
+				<div @mousedown="onResizeStart" class="bx-im-upload-preview__drag-handle"></div>
 			</div>
 			<div class="bx-im-upload-preview__controls-buttons">
 				<MessengerButton
@@ -4837,6 +4833,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const ItemTextByChatType = {
 	  [im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+	  [im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
 	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
 	  default: main_core.Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE')
 	};
@@ -6240,7 +6237,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return settings.get('maxLength');
 	    },
 	    isChannelType() {
-	      return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(this.dialog.type);
+	      return im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
 	    }
 	  },
 	  watch: {
@@ -6510,20 +6507,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const {
 	        mentionText,
 	        mentionReplacement,
-	        textToReplace = '',
 	        dialogId
+	      } = event.getData();
+	      let {
+	        textToReplace = ''
 	      } = event.getData();
 	      if (this.dialogId !== dialogId) {
 	        return;
 	      }
 	      const mentions = this.mentionManager.addMentionReplacement(mentionText, mentionReplacement);
 	      this.draftManager.setDraftMentions(this.dialogId, mentions);
-	      this.text = this.mentionManager.prepareMentionText({
-	        currentText: this.text,
+	      const mentionSymbol = this.mentionManager.getMentionSymbol();
+	      textToReplace = `${mentionSymbol}${textToReplace}`;
+	      this.text = im_v2_lib_textarea.Textarea.insertMention(this.$refs.textarea, {
 	        textToInsert: mentionText,
 	        textToReplace
 	      });
-	      this.focus();
 	    },
 	    onInsertText(event) {
 	      const {
@@ -6533,7 +6532,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        return;
 	      }
 	      this.text = im_v2_lib_textarea.Textarea.insertText(this.$refs.textarea, event.getData());
-	      this.focus();
 	    },
 	    onEditMessage(event) {
 	      const {
@@ -6767,5 +6765,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=textarea.bundle.js.map

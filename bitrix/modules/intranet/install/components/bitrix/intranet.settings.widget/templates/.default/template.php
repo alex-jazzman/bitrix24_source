@@ -1,12 +1,13 @@
 <?php
 
+use Bitrix\Main\Web\Json;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
 /**
- * @var array $arParams
  * @var array $arResult
  */
 
@@ -23,9 +24,9 @@ $frame = $this->createFrame()->begin("");
 		const bindCallbackInitial = () => {
 			BX.unbindAll(button);
 			BX.Intranet.SettingsWidgetLoader.init({
-				isRequisite: <?= \CUtil::PhpToJSObject($arParams['IS_REQUISITE']) ?>,
-				isBitrix24: <?= \CUtil::PhpToJSObject($arParams['IS_BITRIX24']) ?>,
-				isAdmin: <?= \CUtil::PhpToJSObject($arParams['IS_ADMIN']) ?>,
+				isRequisite: <?= Json::encode($arResult['IS_REQUISITE']) ?>,
+				isBitrix24: <?= Json::encode($arResult['IS_BITRIX24']) ?>,
+				isAdmin: <?= Json::encode($arResult['IS_ADMIN']) ?>,
 			}).showOnce(button);
 		}
 		BX.bind(button, 'click', bindCallbackInitial);

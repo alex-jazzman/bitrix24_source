@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_popup,pull_vue3_status,im_v2_component_messageList,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_layout,im_v2_provider_service,main_core_events,im_v2_lib_logger,im_v2_lib_animation,im_v2_application_core,im_v2_lib_rest,im_v2_const,im_v2_lib_permission,im_v2_lib_parser,main_core,im_v2_lib_quote,im_v2_lib_utils,im_v2_lib_slider) {
+(function (exports,main_popup,pull_vue3_status,im_v2_component_messageList,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_layout,im_v2_provider_service,main_core_events,im_v2_lib_logger,im_v2_lib_animation,im_v2_application_core,im_v2_lib_rest,im_v2_lib_channel,im_v2_const,im_v2_lib_permission,im_v2_lib_parser,main_core,im_v2_lib_quote,im_v2_lib_utils,im_v2_lib_slider) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Dialog.ScrollManager';
@@ -243,7 +243,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 	function _isChannel2() {
 	  var _babelHelpers$classPr3;
-	  return [im_v2_const.ChatType.openChannel, im_v2_const.ChatType.channel].includes((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog]) == null ? void 0 : _babelHelpers$classPr3.type);
+	  return im_v2_lib_channel.ChannelManager.isChannel((_babelHelpers$classPr3 = babelHelpers.classPrivateFieldLooseBase(this, _dialog)[_dialog]) == null ? void 0 : _babelHelpers$classPr3.dialogId);
 	}
 	function _isCommentsChat2() {
 	  var _babelHelpers$classPr4;
@@ -263,6 +263,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  }
 	  setMessageAsNotVisible(messageId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _visibleMessages)[_visibleMessages].delete(messageId);
+	  }
+	  getVisibleMessages() {
+	    return [...babelHelpers.classPrivateFieldLooseBase(this, _visibleMessages)[_visibleMessages]];
 	  }
 	  getFirstMessageId() {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _visibleMessages)[_visibleMessages].size === 0) {
@@ -586,13 +589,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    debouncedReadHandler() {
 	      const READING_DEBOUNCE_DELAY = 50;
-	      return main_core.Runtime.debounce(this.readVisibleMessages, READING_DEBOUNCE_DELAY, this);
+	      return main_core.Runtime.debounce(this.readQueuedMessages, READING_DEBOUNCE_DELAY, this);
 	    },
 	    messageListComponent() {
 	      return im_v2_component_messageList.MessageList;
 	    },
 	    showScrollButton() {
 	      return this.isScrolledUp || this.dialog.hasNextPage;
+	    },
+	    hasCommentsOnTop() {
+	      return this.$store.getters['messages/comments/areOpenedForChannel'](this.dialogId);
 	    }
 	  },
 	  watch: {
@@ -603,6 +609,16 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      // first opening
 	      this.getPullWatchManager().subscribe();
 	      this.onChatInited();
+	    },
+	    hasCommentsOnTop: {
+	      handler(newValue) {
+	        const commentsWereClosed = newValue === false;
+	        if (!commentsWereClosed) {
+	          return;
+	        }
+	        this.readVisibleMessages();
+	      },
+	      flush: 'post'
 	    }
 	  },
 	  created() {
@@ -634,20 +650,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    this.forwardPopup.show = false;
 	  },
 	  methods: {
-	    readVisibleMessages() {
-	      if (!this.dialogInited || !this.windowFocused || this.hasVisibleCall()) {
-	        return;
-	      }
-	      const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
-	      if (!permissionManager.canPerformAction(im_v2_const.ChatActionType.readMessage, this.dialogId)) {
-	        return;
-	      }
-	      const messagesToRead = [...this.messagesToRead];
-	      messagesToRead.forEach(messageId => {
-	        this.getChatService().readMessage(this.dialog.chatId, messageId);
-	        this.messagesToRead.delete(messageId);
-	      });
-	    },
 	    async scrollOnStart() {
 	      await this.$nextTick();
 
@@ -775,6 +777,37 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        void this.getMessageService().reloadMessageList();
 	      }, LOAD_MESSAGE_ON_EXIT_DELAY);
 	    },
+	    /* region Reading */
+	    readQueuedMessages() {
+	      if (!this.messagesCanBeRead()) {
+	        return;
+	      }
+	      [...this.messagesToRead].forEach(messageId => {
+	        this.getChatService().readMessage(this.dialog.chatId, messageId);
+	        this.messagesToRead.delete(messageId);
+	      });
+	    },
+	    readVisibleMessages() {
+	      if (!this.messagesCanBeRead()) {
+	        return;
+	      }
+	      const visibleMessages = this.getVisibleMessagesManager().getVisibleMessages();
+	      visibleMessages.forEach(messageId => {
+	        const message = this.$store.getters['messages/getById'](messageId);
+	        if (message.viewed) {
+	          return;
+	        }
+	        this.getChatService().readMessage(this.dialog.chatId, messageId);
+	      });
+	    },
+	    messagesCanBeRead() {
+	      if (!this.dialogInited || !this.isChatVisible()) {
+	        return false;
+	      }
+	      const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+	      return permissionManager.canPerformAction(im_v2_const.ChatActionType.readMessage, this.dialogId);
+	    },
+	    /* endregion Reading */
 	    /* region Event handlers */
 	    onChatInited() {
 	      this.scrollOnStart();
@@ -982,7 +1015,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      this.getVisibleMessagesManager().setMessageAsVisible(messageId);
 	      const message = this.$store.getters['messages/getById'](messageId);
-	      if (!message.viewed) {
+	      if (!message.viewed && this.isChatVisible()) {
 	        this.messagesToRead.add(messageId);
 	        this.debouncedReadHandler();
 	      }
@@ -1047,6 +1080,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.visibleMessagesManager;
 	    },
 	    /* endregion Init methods */
+	    isChatVisible() {
+	      return this.windowFocused && !this.hasVisibleCall() && !this.hasCommentsOnTop;
+	    },
 	    hasVisibleCall() {
 	      return im_v2_lib_call.CallManager.getInstance().hasVisibleCall();
 	    },
@@ -1132,5 +1168,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.ScrollManager = ScrollManager;
 	exports.PinnedMessages = PinnedMessages;
 
-}((this.BX.Messenger.v2.Component.Dialog = this.BX.Messenger.v2.Component.Dialog || {}),BX.Main,window,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Dialog = this.BX.Messenger.v2.Component.Dialog || {}),BX.Main,window,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=chat-dialog.bundle.js.map

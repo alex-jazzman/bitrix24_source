@@ -10,6 +10,7 @@ import type { ImModelChat, ImModelRecentItem, ImModelUser } from 'im.v2.model';
 
 const ItemTextByChatType = {
 	[ChatType.openChannel]: Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
+	[ChatType.generalChannel]: Loc.getMessage('IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE'),
 	[ChatType.channel]: Loc.getMessage('IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE'),
 	default: Loc.getMessage('IM_TEXTAREA_MENTION_CHAT_TYPE'),
 };

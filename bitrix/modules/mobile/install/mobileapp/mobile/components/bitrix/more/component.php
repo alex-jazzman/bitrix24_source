@@ -180,41 +180,54 @@ foreach ($event->getResults() as $eventResult)
 	}
 }
 
-$editProfilePath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("user.profile");
-$workPosition = \CUtil::addslashes($arResult["user"]["WORK_POSITION"] ?? '');
-$canEditProfile = $USER->CanDoOperation('edit_own_profile');
-$arResult["menu"][] = [
-	"title" => "",
-	"sort" => 0,
-	"items" => [
-		[
-			"title" => $arResult["user"]["fullName"],
-			"imageUrl" => $arResult["user"]["avatar"],
-			"type" => "userinfo",
-			"color" => '#404f5d',
-			"styles" => [
-				"subtitle" => [
-					"image" => [
-						"useTemplateRender" => true
+$isAvaMenuAvailable = \Bitrix\MobileApp\Mobile::getInstance()::getApiVersion() >= 54;
+
+if ($isAvaMenuAvailable)
+{
+	$arResult["menu"][] = [
+		"title" => "",
+		"sort" => 0,
+		"items" => []
+	];
+}
+else
+{
+	$editProfilePath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("user.profile");
+	$workPosition = \CUtil::addslashes($arResult["user"]["WORK_POSITION"] ?? '');
+	$canEditProfile = $USER->CanDoOperation('edit_own_profile');
+
+	$arResult["menu"][] = [
+		"title" => "",
+		"sort" => 0,
+		"items" => [
+			[
+				"title" => $arResult["user"]["fullName"],
+				"imageUrl" => $arResult["user"]["avatar"],
+				"type" => "userinfo",
+				"color" => '#404f5d',
+				"styles" => [
+					"subtitle" => [
+						"image" => [
+							"useTemplateRender" => true
+						],
+						"additionalImage" => [
+							"name" => $canEditProfile ? "pencil" : "",
+							"useTemplateRender" => true
+						]
 					],
-					"additionalImage" => [
-						"name" => $canEditProfile ? "pencil" : "",
-						"useTemplateRender" => true
+					"title" => [
+						"font" => [
+							"fontStyle" => "medium",
+							"size" => 19,
+							"color" => "#333333"
+						]
 					]
 				],
-				"title" => [
-					"font" => [
-						"fontStyle" => "medium",
-						"size" => 19,
-						"color" => "#333333"
-					]
-				]
-			],
-			"useLetterImage" => true,
-			"subtitle" => $canEditProfile ? GetMessage("MENU_EDIT_PROFILE") : GetMessage("MENU_VIEW_PROFILE"),
-			"params" => [
-				"url" => SITE_DIR . "mobile/users/?ID=" . $userId,
-				"onclick" => <<<JS
+				"useLetterImage" => true,
+				"subtitle" => $canEditProfile ? GetMessage("MENU_EDIT_PROFILE") : GetMessage("MENU_VIEW_PROFILE"),
+				"params" => [
+					"url" => SITE_DIR . "mobile/users/?ID=" . $userId,
+					"onclick" => <<<JS
 					let canEdit = Boolean($canEditProfile);
 					let imageUrl =  this.imageUrl? this.imageUrl: "";
 					let top = {
@@ -272,10 +285,11 @@ $arResult["menu"][] = [
 
 JS
 
+				]
 			]
 		]
-	]
-];
+	];
+}
 
 $counterList = [];
 $isStressLevelTurnOn = Option::get('intranet', 'stresslevel_available', 'Y') == 'Y';

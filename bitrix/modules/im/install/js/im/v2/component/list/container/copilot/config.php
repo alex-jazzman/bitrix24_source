@@ -8,16 +8,14 @@ return [
 	'css' => 'dist/copilot-container.bundle.css',
 	'js' => 'dist/copilot-container.bundle.js',
 	'rel' => [
-		'main.core',
+		'main.polyfill.core',
 		'im.public',
 		'im.v2.component.list.items.copilot',
 		'im.v2.const',
+		'im.v2.lib.analytics',
 		'im.v2.lib.logger',
 		'im.v2.provider.service',
 		'im.v2.component.elements',
 	],
-	'skip_core' => false,
-	'settings' => [
-		'copilotRolesAvailable' => \Bitrix\Main\Config\Option::get('im', 'im_copilot_chat_roles_available', 'N'),
-	]
+	'skip_core' => true,
 ];

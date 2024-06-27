@@ -40,44 +40,45 @@ export const GroupChatPromo = {
 			<div class="bx-im-group-chat-promo__container">
 				<div class="bx-im-group-chat-promo__header">
 					<div class="bx-im-group-chat-promo__title">
-						{{ loc('IM_RECENT_CREATE_CHAT_PROMO_GROUP_CHAT_TITLE') }}
+						{{ loc('IM_ELEMENTS_CREATE_CHAT_PROMO_CHAT_TITLE') }}
 					</div>
 					<div class="bx-im-group-chat-promo__close" @click="$emit('close')"></div>
 				</div>
 				<div class="bx-im-group-chat-promo__content">
 					<div class="bx-im-group-chat-promo__content_image" ref="animationContainer"></div>
 					<div class="bx-im-group-chat-promo__content_item">
-						<div class="bx-im-group-chat-promo__content_icon --like"></div>
+						<div class="bx-im-group-chat-promo__content_icon --like-blue"></div>
 						<div class="bx-im-group-chat-promo__content_text">
-							{{ loc('IM_RECENT_CREATE_CHAT_PROMO_GROUP_CHAT_DESCRIPTION_1') }}
+							{{ loc('IM_ELEMENTS_CREATE_CHAT_PROMO_CHAT_DESCRIPTION_1') }}
 						</div>
 					</div>
 					<div class="bx-im-group-chat-promo__content_item">
 						<div class="bx-im-group-chat-promo__content_icon --chat"></div>
 						<div class="bx-im-group-chat-promo__content_text">
-							{{ loc('IM_RECENT_CREATE_CHAT_PROMO_GROUP_CHAT_DESCRIPTION_2') }}
+							{{ loc('IM_ELEMENTS_CREATE_CHAT_PROMO_CHAT_DESCRIPTION_2') }}
 						</div>
 					</div>
 					<div class="bx-im-group-chat-promo__content_item">
 						<div class="bx-im-group-chat-promo__content_icon --group"></div>
 						<div class="bx-im-group-chat-promo__content_text">
-							{{ loc('IM_RECENT_CREATE_CHAT_PROMO_GROUP_CHAT_DESCRIPTION_3') }}
+							{{ loc('IM_ELEMENTS_CREATE_CHAT_PROMO_CHAT_DESCRIPTION_3') }}
 						</div>
 					</div>
 				</div>
+				<div class="bx-im-group-chat-promo__separator"></div>
 				<div class="bx-im-group-chat-promo__button-panel">
 					<MessengerButton
 						:size="ButtonSize.XL"
 						:color="ButtonColor.Primary"
 						:isRounded="true" 
-						:text="loc('IM_RECENT_CREATE_CHAT_PROMO_GROUP_CHAT_CONTINUE')"
+						:text="loc('IM_ELEMENTS_CREATE_CHAT_PROMO_BUTTON_CONTINUE')"
 						@click="$emit('continue')"
 					/>
 					<MessengerButton
 						:size="ButtonSize.XL"
 						:color="ButtonColor.Link"
 						:isRounded="true"
-						:text="loc('IM_RECENT_CREATE_CHAT_PROMO_GROUP_CHAT_CANCEL')"
+						:text="loc('IM_ELEMENTS_CREATE_CHAT_PROMO_BUTTON_CANCEL')"
 						@click="$emit('close')"
 					/>
 				</div>

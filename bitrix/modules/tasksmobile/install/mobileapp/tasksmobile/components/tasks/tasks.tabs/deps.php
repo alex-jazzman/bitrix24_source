@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'reload/listeners',
 		'entity-ready',
 		'pull/client/events',
 		'qrauth/utils',
@@ -9,5 +10,5 @@ return [
 		'storage-cache',
 		'tasks:entry',
 		'utils/logger/error-logger',
-	]
+	],
 ];

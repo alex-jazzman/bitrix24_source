@@ -269,14 +269,16 @@ class CModuleMoveStep2 extends CBaseModuleMoveWizardStep
 					$this->content .= '<div id="tables" style="display:none">' . implode('<br />', $arTablesToDelete) . '</div>';
 					$this->content .= '<br /><br />' . $this->ShowCheckboxField('action', 'delete', [
 						'id' => 'action',
-						'onclick' => 'if(this.checked){EnableButton();}else{DisableButton();}',
+						'onclick' => 'if(this.checked){BX.Cluster.ModuleMove.EnableButton();}else{BX.Cluster.ModuleMove.DisableButton();}',
 					]) . '<label for="action">' . GetMessage('CLUWIZ_STEP2_DELETE_TABLES', ['#database#' => $arNode['NAME']]) . '</label>';
 
 					$this->content .= '
-						<script type="text/javascript">
-							var nextButtonID = "' . $wizard->GetNextButtonID() . '";
-							var formID = "' . $wizard->GetFormName() . '";
-							BX.ready(DisableButton);
+						<script>
+							BX.Cluster.ModuleMove.init({
+								nextButtonID: "' . $wizard->GetNextButtonID() . '",
+								formID: "' . $wizard->GetFormName() . '",
+							});
+							BX.ready(() => {BX.Cluster.ModuleMove.DisableButton()});
 						</script>
 					';
 
@@ -326,16 +328,18 @@ class CModuleMoveStep3 extends CBaseModuleMoveWizardStep
 		$this->content .= '<div id="output"><br /></div>';
 		$this->content .= '</div>';
 		$this->content .= '
-			<script type="text/javascript">
-				var nextButtonID = "' . $wizard->GetNextButtonID() . '";
-				var formID = "' . $wizard->GetFormName() . '";
-				var LANG = \'' . LANG . '\';
-				var toNodeId = "' . CUtil::JSEscape($to_node_id) . '";
-				var module = "' . CUtil::JSEscape($module) . '";
-				var path = "' . CUtil::JSEscape($path) . '";
-				var sessid = "' . bitrix_sessid() . '";
-				BX.ready(DisableButton);
-				BX.ready(DropTables);
+			<script>
+				BX.Cluster.ModuleMove.init({
+					nextButtonID: "' . $wizard->GetNextButtonID() . '",
+					formID: "' . $wizard->GetFormName() . '",
+					LANG: "' . LANG . '",
+					toNodeId: "' . CUtil::JSEscape($to_node_id) . '",
+					module: "' . CUtil::JSEscape($module) . '",
+					path: "' . CUtil::JSEscape($path) . '",
+					sessid: "' . bitrix_sessid() . '",
+				});
+				BX.ready(() => {BX.Cluster.ModuleMove.DisableButton()});
+				BX.ready(() => {BX.Cluster.ModuleMove.DropTables()});
 			</script>
 		';
 	}
@@ -344,15 +348,12 @@ class CModuleMoveStep3 extends CBaseModuleMoveWizardStep
 //Datamove
 class CModuleMoveStep4 extends CBaseModuleMoveWizardStep
 {
-	protected $location = '';
-
 	public function InitStep()
 	{
 		parent::InitStep();
 		$this->SetTitle(GetMessage('CLUWIZ_STEP4_TITLE'));
 		$this->SetStepID('step4');
-		$this->SetNextStep('step4');
-		$this->SetNextCaption(GetMessage('CLUWIZ_FINALSTEP_BUTTONTITLE'));
+		$this->SetNextStep('final');
 	}
 
 	public function ShowStepNoError()
@@ -378,48 +379,55 @@ class CModuleMoveStep4 extends CBaseModuleMoveWizardStep
 			$module = key($arNodeModules);
 		}
 
-		if ($this->location)
-		{
-			$this->content = '<script>top.window.location = \'' . CUtil::JSEscape($this->location) . '\';</script>';
-		}
-		else
-		{
-			CJSCore::Init(['ajax']);
-			\Bitrix\Main\UI\Extension::load('main.core');
-			$APPLICATION->AddHeadScript($path . '/js/import.js');
+		CJSCore::Init(['ajax']);
+		\Bitrix\Main\UI\Extension::load('main.core');
+		$APPLICATION->AddHeadScript($path . '/js/import.js');
 
-			$this->content = '';
-			$this->content .= '<div style="padding: 20px;">';
-			$this->content .= '<div id="output"><br /></div>';
-			$this->content .= '</div>';
-			if ($wizard->GetPrevStepID() == 'step1' || $wizard->GetPrevStepID() == 'step2')
-			{
-				$this->content .= '
-					<script type="text/javascript">
-						var nextButtonID = "' . $wizard->GetNextButtonID() . '";
-						var formID = "' . $wizard->GetFormName() . '";
-						var LANG = \'' . LANG . '\';
-						var fromNodeId = "' . CUtil::JSEscape($from_node_id) . '";
-						var toNodeId = "' . CUtil::JSEscape($to_node_id) . '";
-						var module = "' . CUtil::JSEscape($module) . '";
-						var nodeStatus = "' . CUtil::JSEscape($wizard->GetVar('status')) . '";
-						var path = "' . CUtil::JSEscape($path) . '";
-						var sessid = "' . bitrix_sessid() . '";
-						BX.ready(DisableButton);
-						BX.ready(MoveTables);
-					</script>
-				';
-			}
+		$this->content = '';
+		$this->content .= '<div style="padding: 20px;">';
+		$this->content .= '<div id="output"><br /></div>';
+		$this->content .= '</div>';
+		if ($wizard->GetPrevStepID() == 'step1' || $wizard->GetPrevStepID() == 'step2')
+		{
+			$this->content .= '
+				<script>
+					BX.Cluster.ModuleMove.init({
+						nextButtonID: "' . $wizard->GetNextButtonID() . '",
+						formID: "' . $wizard->GetFormName() . '",
+						LANG: "' . LANG . '",
+						fromNodeId: "' . CUtil::JSEscape($from_node_id) . '",
+						toNodeId: "' . CUtil::JSEscape($to_node_id) . '",
+						module: "' . CUtil::JSEscape($module) . '",
+						nodeStatus: "' . CUtil::JSEscape($wizard->GetVar('status')) . '",
+						path: "' . CUtil::JSEscape($path) . '",
+						sessid: "' . bitrix_sessid() . '",
+					});
+					BX.ready(() => {BX.Cluster.ModuleMove.DisableButton()});
+					BX.ready(() => {BX.Cluster.ModuleMove.MoveTables()});
+				</script>
+			';
 		}
 	}
+}
 
-	public function OnPostForm()
+class CModuleMoveFinalStep extends CBaseModuleMoveWizardStep
+{
+	public function InitStep()
 	{
-		$wizard = $this->GetWizard();
-		if ($wizard->IsNextButtonClick())
-		{
-			$this->location = '/bitrix/admin/cluster_dbnode_list.php?lang=' . LANGUAGE_ID;
-		}
+		parent::InitStep();
+		$this->SetTitle(GetMessage('CLUWIZ_FINALSTEP_TITLE'));
+		$this->SetStepID('final');
+		$this->SetCancelStep('final');
+		$this->SetCancelCaption(GetMessage('CLUWIZ_FINALSTEP_BUTTONTITLE'));
+	}
+
+	public function ShowStep()
+	{
+		$this->content = GetMessage('CLUWIZ_FINALSTEP_CONTENT');
+	}
+
+	public function ShowStepNoError()
+	{
 	}
 }
 

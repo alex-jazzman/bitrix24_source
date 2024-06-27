@@ -4,6 +4,7 @@
  */
 jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const {
 		createAsyncThunk,
 		createEntityAdapter,
@@ -20,8 +21,7 @@ jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, mod
 
 	const reducerName = 'crm:stageCounters';
 	const adapter = createEntityAdapter({});
-	const initialState = adapter.getInitialState();
-	const filledState = adapter.upsertMany(initialState, []);
+	const initialState = StateCache.getReducerState(reducerName, adapter.getInitialState());
 
 	const fetchStageCounters = createAsyncThunk(
 		`${reducerName}/fetchStageCounters`,
@@ -56,7 +56,7 @@ jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, mod
 
 	const slice = createSlice({
 		name: reducerName,
-		initialState: filledState,
+		initialState,
 		reducers: {
 			counterIncremented: (state, action) => {
 				const {

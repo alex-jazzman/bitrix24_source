@@ -22,16 +22,14 @@ if(!is_array($arUserOptions))
 
 /******* POST **********/
 
-if ($REQUEST_METHOD == "POST" && $_REQUEST['desktop_backurl'] && mb_strpos($_REQUEST['desktop_backurl'], "/") === 0)
+if ($REQUEST_METHOD == "POST" && $_REQUEST['desktop_backurl'] && str_starts_with($_REQUEST['desktop_backurl'], "/"))
 	$desktop_backurl = $_REQUEST['desktop_backurl'];
 else
 	$desktop_backurl = "";
 
 if($REQUEST_METHOD=="POST" && $_REQUEST['save'] == 'Y')
 {
-	CUtil::JSPostUnescape();
-
-	if (!is_array($ids)) 
+	if (!is_array($ids))
 		$ids = array();
 
 	$arValues = $_POST;
@@ -73,7 +71,7 @@ $obJSPopup = new CJSPopup('',
 // ======================== Show titlebar ============================= //
 $obJSPopup->ShowTitlebar();
 ?>
-<script src="/bitrix/js/main/dd.js" type="text/javascript"></script>
+<script src="/bitrix/js/main/dd.js"></script>
 
 <?
 // ======================== Show content ============================= //
@@ -124,7 +122,7 @@ for($i=1; $i<=count($arUserOptions); $i++):
 endfor?></div>
 <input type="hidden" name="itemcnt" value="<?echo $itemcnt?>" />
 <input type="hidden" name="desktop_backurl" value="<?=htmlspecialcharsbx(CUtil::JSEscape($desktop_backurl))?>">
-<script type="text/javascript">
+<script>
 var currentRow = null;
 
 var GLOBAL_bDisableActions = false;

@@ -1302,6 +1302,11 @@ export class Call {
 			{
 				remoteParticipant.isLocalVideoMute = !showVideo;
 
+				if (remoteParticipant.isMutedVideo)
+				{
+					return;
+				}
+
 				this.#pauseRemoteTrack(
 					remoteParticipant.userId,
 					remoteParticipant.tracks[MediaStreamsKinds.Camera].id,

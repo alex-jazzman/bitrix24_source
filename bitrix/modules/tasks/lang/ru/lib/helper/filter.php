@@ -14,6 +14,7 @@ $MESS["TASKS_FILTER_ACTIVE"] = "Находилась в работе";
 $MESS["TASKS_FILTER_ACTIVITY_DATE"] = "Активность";
 $MESS["TASKS_FILTER_TIME_ESTIMATE"] = "Плановые трудозатраты";
 $MESS["TASKS_FILTER_ALLOW_TIME_TRACKING"] = "Учитывать время";
+$MESS['TASKS_FILTER_STAGE_ID'] = 'Стадия канбана';
 
 $MESS["TASKS_FILTER_NO"] = "Нет";
 $MESS["TASKS_FILTER_YES"] = "Да";
@@ -62,6 +63,7 @@ $MESS["TASKS_HELPER_FLT_ACCOMPLICES"] = "Соисполнитель";
 $MESS["TASKS_HELPER_FLT_AUDITOR"] = "Наблюдатель";
 $MESS["TASKS_HELPER_FLT_GROUP"] = "Проект (группа)";
 $MESS["TASKS_FILTER_TAG"] = "Тег";
+$MESS['TASKS_FILTER_FLOW'] = 'Поток';
 $MESS["TASKS_FILTER_ROLEID"] = "Роль";
 $MESS["TASKS_FILTER_DATE_START"] = "Дата начала";
 $MESS["TASKS_FILTER_START_DATE_PLAN"] = "Планируемая дата начала";

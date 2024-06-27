@@ -2,8 +2,10 @@
  * @module layout/ui/user/empty-avatar
  */
 jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { lighten } = require('utils/color');
+	const { Type } = require('type');
+	const { makeLibraryImagePath, downloadImages } = require('asset-manager');
 
 	const COLORS = [
 		'#df532d',
@@ -100,29 +102,60 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 		additionalStyles = {},
 		onClick,
 		testId,
-	}) => View(
-		{
-			onClick,
-			testId,
-			style: {
-				...getBackgroundColorStyles(id),
-				width: size,
-				height: size,
-				borderRadius: size / 2,
-				alignContent: 'center',
-				justifyContent: 'center',
-				...additionalStyles,
-			},
-		},
-		Text({
-			style: {
-				fontSize: size / 2,
-				alignSelf: 'center',
-				color: AppTheme.colors.base8,
-			},
-			text: getFirstLetters(name).toLocaleUpperCase(env.languageId),
-		}),
-	);
+	}) => {
+		const imageUri = makeLibraryImagePath('person.svg', 'empty-avatar');
+		downloadImages([imageUri]);
 
-	module.exports = { EmptyAvatar, getColor };
+		if (Type.isNil(name))
+		{
+			return View(
+				{
+					onClick,
+					testId,
+					style: {
+						width: size,
+						height: size,
+						borderRadius: size / 2,
+						alignContent: 'center',
+						justifyContent: 'center',
+						...additionalStyles,
+					},
+				},
+				Image({
+					style: {
+						flex: 1,
+					},
+					svg: {
+						uri: imageUri,
+					},
+				}),
+			);
+		}
+
+		return View(
+			{
+				onClick,
+				testId,
+				style: {
+					...getBackgroundColorStyles(id),
+					width: size,
+					height: size,
+					borderRadius: size / 2,
+					alignContent: 'center',
+					justifyContent: 'center',
+					...additionalStyles,
+				},
+			},
+			Text({
+				style: {
+					fontSize: size / 2,
+					alignSelf: 'center',
+					color: Color.baseWhiteFixed.toHex(),
+				},
+				text: getFirstLetters(name).toLocaleUpperCase(env.languageId),
+			}),
+		);
+	};
+
+	module.exports = { EmptyAvatar, getColor, getBackgroundColorStyles };
 });

@@ -10,12 +10,13 @@ if (!isset($arParams['MENU_GROUP_ID']))
 {
 	$arParams['MENU_GROUP_ID'] = $arParams['GROUP_ID'];
 }
-?>
 
-<?php $APPLICATION->IncludeComponent(
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
+$APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
 	'',
-	array(
+	[
 		'GRID_ID' => $arParams['GRID_ID'],
 		'FILTER_ID' => $arParams['FILTER_ID'],
 		'USER_ID' => $arParams['USER_ID'],
@@ -45,11 +46,12 @@ if (!isset($arParams['MENU_GROUP_ID']))
 		'PATH_TO_CONPANY_DEPARTMENT' => $arParams[ 'PATH_TO_CONPANY_DEPARTMENT' ],
 		'DEFAULT_ROLEID' => $arParams[ 'DEFAULT_ROLEID' ],
 		'SCOPE' => $arParams['SCOPE'],
-	),
+	],
 	$component,
-	array('HIDE_ICONS' => true)
+	[
+		'HIDE_ICONS' => true
+	]
 );
-
 
 $showQuickForm = $arParams['SHOW_QUICK_FORM'] === "Y" && \Bitrix\Tasks\Util\Restriction::canManageTask();
 

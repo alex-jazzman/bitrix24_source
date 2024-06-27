@@ -14,8 +14,9 @@
 	position: relative;
 	z-index: 1;
 	border-radius: var(--ui-border-radius-lg, 12px);
-	border: 1px solid rgba(0, 0, 0, 0.1);
+	border: var( --ui-border-width-thin) solid rgba(0, 0, 0, 0.1);
 	background-color:  var(--crm-timeline__editable-text_bg-color);
+	margin-right: 20px;
 }
 
 .crm-timeline__editable-text.--bg-color-yellow {
@@ -102,6 +103,18 @@
 	overflow-y: hidden;
 }
 
+.crm-timeline__editable-text::before {
+	background: url("../../images/common/crm-timeline__corner.svg");
+	background-color: inherit;
+	width: 20px;
+	height: 15px;
+	position: absolute;
+	content: '';
+	display: block;
+	right: -10px;
+	top: -4px;
+}
+
 .crm-timeline__editable-text::after {
 	content: '';
 	display: block;
@@ -158,7 +171,8 @@
 	outline: none;
 }
 
-.crm-timeline__editable-text_clear-btn {
+.crm-timeline__editable-text_clear-btn,
+.crm-timeline__text_copy-btn {
 	position: absolute;
 	top: 9px;
 	right: 9px;
@@ -169,30 +183,38 @@
 	outline: none;
 }
 
-.crm-timeline__editable-text_clear-icon {
-	--crm-timeline__editable-text_clear-icon-opacity: 0.2;
-	--crm-timeline__editable-text_clear-icon-color-rgb: 0, 0, 0;
+.crm-timeline__editable-text_fixed-icon {
+	--crm-timeline__editable-text_fixed-icon-opacity: 0.2;
+	--crm-timeline__editable-text_fixed-icon-color-rgb: 0, 0, 0;
 	display: inline-block;
 	width: 24px;
 	height: 24px;
-	mask-image: url("../../images/common/crm-timeline__cross-circle.svg");
 	mask-repeat: no-repeat;
 	mask-size: contain;
 	background-color: rgba(
-		var(--ui-color-base-solid-rgb, var(--crm-timeline__editable-text_clear-icon-color-rgb)),
-		var(--crm-timeline__editable-text_clear-icon-opacity)
+		var(--ui-color-base-solid-rgb, var(--crm-timeline__editable-text_fixed-icon-color-rgb)),
+		var(--crm-timeline__editable-text_fixed-icon-opacity)
 	);
 	transition: background-color, opacity 0.2s linear;
 }
 
-.crm-timeline__editable-text_clear-btn:hover .crm-timeline__editable-text_clear-icon {
-	transition-duration: unset;
-	--crm-timeline__editable-text_clear-icon-opacity: 0.3;
+.crm-timeline__editable-text_fixed-icon.--clear {
+	mask-image: url("../../images/common/crm-timeline__cross-circle.svg");
 }
 
-.crm-timeline__editable-text_clear-btn:disabled .crm-timeline__editable-text_clear-icon,
-.crm-timeline__editable-text_clear-btn:disabled:hover .crm-timeline__editable-text_clear-icon {
-	--crm-timeline__editable-text_clear-icon-opacity: 0.2;
+.crm-timeline__editable-text_fixed-icon.--copy {
+	mask-image: url("../../images/common/crm-timeline__copy.svg");
+}
+
+.crm-timeline__editable-text_clear-btn:hover .crm-timeline__editable-text_fixed-icon.--clear,
+.crm-timeline__text_copy-btn:hover .crm-timeline__editable-text_fixed-icon.--copy {
+	transition-duration: unset;
+	--crm-timeline__editable-text_fixed-icon-opacity: 0.3;
+}
+
+.crm-timeline__editable-text_clear-btn:disabled .crm-timeline__editable-text_fixed-icon.--clear,
+.crm-timeline__editable-text_clear-btn:disabled:hover .crm-timeline__editable-text_fixed-icon.--clear {
+	--crm-timeline__editable-text_fixed-icon-opacity: 0.2;
 	opacity: 0.5;
 	cursor: not-allowed;
 }

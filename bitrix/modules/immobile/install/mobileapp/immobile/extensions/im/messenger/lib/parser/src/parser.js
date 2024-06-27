@@ -53,6 +53,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 				return whole;
 			});
 
+			text = parserCommon.decodeNewLine(text);
 			text = parserUrl.prepareGifUrl(text);
 			text = parserSmile.decodeSmile(text, options);
 			text = parserMention.decode(text);
@@ -150,7 +151,11 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 
 		prepareCopy(modelMessage)
 		{
-			return parserUrl.simplify(modelMessage.text);
+			let text = modelMessage.text;
+			text = parserUrl.simplify(text);
+			text = parserUrl.removeBR(text);
+
+			return text;
 		},
 
 		prepareQuote(modelMessage)

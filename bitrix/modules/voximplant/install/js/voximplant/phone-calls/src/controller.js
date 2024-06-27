@@ -302,6 +302,8 @@ export class PhoneCallsController extends EventEmitter
 			(this.callView && !this.callView?.popup && !this.currentCall)
 			|| (popupConditions && !this.currentCall)
 			|| (this.callView && this.callView?.isFolded() && !this.currentCall)
+			|| this.callView && !this.voximplantClient
+			|| (this.callView && this.voximplantClient && !this.voximplantClient.connected())
 		)
 		{
 			console.log('Close a stuck call view');
@@ -2747,6 +2749,7 @@ export class PhoneCallsController extends EventEmitter
 			callViewPopup: this.callView?.popup ? 'Y' : 'N',
 			hasActiveCallView: this.hasActiveCallView ? 'Y' : 'N',
 			isFoldedCallView: this.callView?.isFolded() ? 'Y' : 'N',
+			voximplantClient: this.voximplantClient ? this.voximplantClient?.connected() : 'N',
 		};
 	}
 

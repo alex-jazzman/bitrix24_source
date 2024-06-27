@@ -51,3 +51,4 @@ $MESS["CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS"] = "Sent";
 $MESS["CRM_TIMELINE_ITEM_TASK_CONFIRM_DELETE"] = "Are you sure you want to delete this task?";
 $MESS["CRM_TIMELINE_ITEM_TASK_DELETE"] = "Task has been deleted";
 $MESS["CRM_TIMELINE_ITEM_TASK_PING_SENT"] = "Ping notification sent";
+$MESS["CRM_TIMELINE_ITEM_TEXT_IS_COPIED"] = "Text has been copied to the Clipboard";

@@ -4,7 +4,9 @@
  * @var array $arResult
  * @var array $arParams
  * @var CMain $APPLICATION
- */
+ * @var ?\CUser $user */
+$user = $arParams['USER'] ?? null;
+
 foreach (GetModuleEvents('forum', 'OnCommentFormDisplay', true) as $arEvent)
 {
 	$arExt = ExecuteModuleEventEx($arEvent);
@@ -16,7 +18,7 @@ foreach (GetModuleEvents('forum', 'OnCommentFormDisplay', true) as $arEvent)
 }
 ob_start();
 /* GUEST PANEL */
-if (!$GLOBALS["USER"]->IsAuthorized())
+if ($user?->IsAuthorized() !== true)
 {
 	?>
 	<div class="comments-reply-fields">

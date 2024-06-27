@@ -43,6 +43,11 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 			return this.loadService.loadCommentChatWithMessagesByPostId(postId);
 		}
 
+		getByDialogId(dialogId)
+		{
+			return this.loadService.getByDialogId(dialogId);
+		}
+
 		readMessage(chatId, messageId)
 		{
 			this.readService.readMessage(chatId, messageId);
@@ -71,9 +76,24 @@ jn.define('im/messenger/provider/service/chat', (require, exports, module) => {
 			return this.commentsService.subscribe(dialogId);
 		}
 
+		subscribeToCommentsByPostId(postId)
+		{
+			return this.commentsService.subscribeByPostId(postId);
+		}
+
 		unsubscribeFromComments(dialogId)
 		{
 			return this.commentsService.unsubscribe(dialogId);
+		}
+
+		unsubscribeFromCommentsByPostId(postId)
+		{
+			return this.commentsService.unsubscribeByPostId(postId);
+		}
+
+		readChannelComments(dialogId)
+		{
+			return this.commentsService.readChannelComments(dialogId);
 		}
 
 		/**

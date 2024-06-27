@@ -397,7 +397,7 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 	}
 ?>
 
-<script type="text/javascript">
+<script>
 
 if(BX.SidePanel)
 {

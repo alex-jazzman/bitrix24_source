@@ -7,6 +7,9 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 	const { connect } = require('statemanager/redux/connect');
 	const { StageSelectorField } = require('layout/ui/fields/stage-selector');
 	const { TasksStageSelectorItem } = require('tasks/stage-selector/item');
+	const { isOnline } = require('device/connection');
+	const { showOfflineToast, showSafeToast } = require('toast');
+	const { Haptics } = require('haptics');
 	const {
 		fetchStages,
 		getUniqId,
@@ -204,16 +207,25 @@ jn.define('tasks/layout/stage-selector', (require, exports, module) => {
 		{
 			if (this.isReadonlyNotificationEnabled())
 			{
-				Notify.showUniqueMessage(
-					BX.message('TASKS_STAGE_SELECTOR_NOTIFY_READONLY_TITLE'),
-					BX.message('TASKS_STAGE_SELECTOR_NOTIFY_READONLY_TEXT'),
-					{ time: 4 },
-				);
+				const { parentWidget, readonlyNotificationMessage } = this.getConfig();
+
+				const message = readonlyNotificationMessage
+					|| Loc.getMessage('TASKS_STAGE_SELECTOR_NOTIFY_READONLY_TEXT');
+
+				Haptics.notifyWarning();
+				showSafeToast({ message }, parentWidget);
 			}
 		}
 
 		onBeforeHandleChange(actionParams)
 		{
+			if (!isOnline())
+			{
+				showOfflineToast();
+
+				return Promise.reject();
+			}
+
 			if (
 				actionParams.selectedStatusId === 'PERIOD1'
 			)

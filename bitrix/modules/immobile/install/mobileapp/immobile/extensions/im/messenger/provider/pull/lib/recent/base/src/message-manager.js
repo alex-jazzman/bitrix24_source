@@ -70,18 +70,15 @@ jn.define('im/messenger/provider/pull/lib/recent/base/message-manager', (require
 			return {
 				...this.getMessage(),
 				status: messageStatus,
-				text: this.getMessageText(),
 			};
 		}
 
 		getMessageText()
 		{
-			this.pureMessageText ??= ChatMessengerCommon.purifyText(
+			return ChatMessengerCommon.purifyText(
 				this.getMessage().text,
 				this.getMessage().params,
 			);
-
-			return this.pureMessageText;
 		}
 
 		getMessage()
@@ -150,7 +147,7 @@ jn.define('im/messenger/provider/pull/lib/recent/base/message-manager', (require
 
 		isChannelChat()
 		{
-			return [DialogType.channel, DialogType.openChannel].includes(this.getChatType());
+			return [DialogType.channel, DialogType.openChannel, DialogType.generalChannel].includes(this.getChatType());
 		}
 
 		isOpenChannelChat()
@@ -173,6 +170,11 @@ jn.define('im/messenger/provider/pull/lib/recent/base/message-manager', (require
 			const chatUsers = this.params.userInChat[this.getChatId()];
 
 			return chatUsers.includes(this.getCurrentUserId());
+		}
+
+		isCurrentChannelChatOpened()
+		{
+			return serviceLocator.get('core').getStore().getters['applicationModel/isDialogOpen'](this.getDialogId());
 		}
 
 		isChannelListEvent()

@@ -140,9 +140,14 @@ export default class PullOperation
 			return;
 		}
 
-		const oldColumn = this.grid.getColumn(oldColumnId);
-		oldColumn.decPrice(oldPrice);
-		oldColumn.renderSubTitle();
+		const groupIds = this.grid.itemMoving?.dropEvent?.groupIds ?? [];
+		if (!groupIds.includes(item.id))
+		{
+			const oldColumn = this.grid.getColumn(oldColumnId);
+			oldColumn.decPrice(oldPrice);
+			oldColumn.renderSubTitle();
+		}
+
 		if (newColumn)
 		{
 			newColumn.incPrice(newPrice);

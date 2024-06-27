@@ -1,5 +1,6 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,crm_activity_todoNotificationSkipMenu,crm_activity_todoPingSettingsMenu,main_core_events,main_core,crm_kanban_restriction,crm_kanban_sort,main_popup) {
+(function (exports,crm_activity_todoNotificationSkipMenu,crm_activity_todoPingSettingsMenu,crm_kanban_restriction,crm_kanban_sort,main_core_events,main_popup,ui_entitySelector,main_core) {
 	'use strict';
 
 	function requireClassOrNull(param, constructor, paramName) {
@@ -164,6 +165,8 @@ this.BX = this.BX || {};
 	const EntityType = main_core.Reflection.getClass('BX.CrmEntityType');
 	const CHECKED_CLASS = 'menu-popup-item-accept';
 	const NOT_CHECKED_CLASS = 'menu-popup-item-none';
+	const COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY = 750;
+	const COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH = 300;
 	var _entityTypeId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _categoryId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("categoryId");
 	var _pingSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pingSettings");
@@ -177,6 +180,7 @@ this.BX = this.BX || {};
 	var _isSetSortRequestRunning = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSetSortRequestRunning");
 	var _smartActivityNotificationSupported = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smartActivityNotificationSupported");
 	var _aiAutostartSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("aiAutostartSettings");
+	var _aiCopilotLanguageId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("aiCopilotLanguageId");
 	var _isSetAiSettingsRequestRunning = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSetAiSettingsRequestRunning");
 	var _extensionSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extensionSettings");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
@@ -190,18 +194,26 @@ this.BX = this.BX || {};
 	var _shouldShowTodoPingSettingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowTodoPingSettingsMenu");
 	var _getCoPilotSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCoPilotSettings");
 	var _handleCoPilotMenuItemClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCoPilotMenuItemClick");
+	var _handleCoPilotLanguageSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCoPilotLanguageSelect");
 	var _getAllOperationTypes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAllOperationTypes");
 	var _getTranscribeAIOperationType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTranscribeAIOperationType");
+	var _getInfoHelper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getInfoHelper");
 	/**
 	 * @memberOf BX.Crm
 	 */
 	class SettingsButtonExtender {
 	  constructor(params) {
+	    Object.defineProperty(this, _getInfoHelper, {
+	      value: _getInfoHelper2
+	    });
 	    Object.defineProperty(this, _getTranscribeAIOperationType, {
 	      value: _getTranscribeAIOperationType2
 	    });
 	    Object.defineProperty(this, _getAllOperationTypes, {
 	      value: _getAllOperationTypes2
+	    });
+	    Object.defineProperty(this, _handleCoPilotLanguageSelect, {
+	      value: _handleCoPilotLanguageSelect2
 	    });
 	    Object.defineProperty(this, _handleCoPilotMenuItemClick, {
 	      value: _handleCoPilotMenuItemClick2
@@ -288,6 +300,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _aiCopilotLanguageId, {
+	      writable: true,
+	      value: null
+	    });
 	    Object.defineProperty(this, _isSetAiSettingsRequestRunning, {
 	      writable: true,
 	      value: false
@@ -327,6 +343,7 @@ this.BX = this.BX || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings] = candidate;
 	      }
 	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _aiCopilotLanguageId)[_aiCopilotLanguageId] = params.aiCopilotLanguageId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
 	  }
 	}
@@ -442,36 +459,40 @@ this.BX = this.BX || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _todoPingSettingsMenu)[_todoPingSettingsMenu] && babelHelpers.classPrivateFieldLooseBase(this, _shouldShowLastActivitySortToggle)[_shouldShowLastActivitySortToggle]();
 	}
 	function _getCoPilotSettings2() {
-	  var _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _showInfoHelper, _showInfoHelper2, _showInfoHelper3;
-	  if (!main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings])) {
-	    return null;
+	  const showInfoHelper = babelHelpers.classPrivateFieldLooseBase(this, _getInfoHelper)[_getInfoHelper]();
+	  const menuItems = [];
+	  if (main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings])) {
+	    var _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6;
+	    const isTranscriptionAutostarted = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : (_babelHelpers$classPr5 = _babelHelpers$classPr4.autostartOperationTypes) == null ? void 0 : _babelHelpers$classPr5.includes(babelHelpers.classPrivateFieldLooseBase(this, _getTranscribeAIOperationType)[_getTranscribeAIOperationType]());
+	    const onlyFirstIncoming = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : _babelHelpers$classPr6.autostartTranscriptionOnlyOnFirstCallWithRecording;
+	    menuItems.push({
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING'),
+	      className: isTranscriptionAutostarted && onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
+	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'firstCall')
+	    }, {
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL'),
+	      className: isTranscriptionAutostarted && !onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
+	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'allCalls')
+	    }, {
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING'),
+	      className: isTranscriptionAutostarted ? NOT_CHECKED_CLASS : CHECKED_CLASS,
+	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'manual')
+	    });
 	  }
-	  const isTranscriptionAutostarted = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : (_babelHelpers$classPr5 = _babelHelpers$classPr4.autostartOperationTypes) == null ? void 0 : _babelHelpers$classPr5.includes(babelHelpers.classPrivateFieldLooseBase(this, _getTranscribeAIOperationType)[_getTranscribeAIOperationType]());
-	  const onlyFirstIncoming = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : _babelHelpers$classPr6.autostartTranscriptionOnlyOnFirstCallWithRecording;
-	  let showInfoHelper = null;
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('isAIEnabledInGlobalSettings')) {
-	    showInfoHelper = () => {
-	      if (main_core.Reflection.getClass('BX.UI.InfoHelper.show')) {
-	        BX.UI.InfoHelper.show('limit_copilot_off');
-	      }
-	    };
+	  if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _aiCopilotLanguageId)[_aiCopilotLanguageId])) {
+	    menuItems.push({
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE'),
+	      className: NOT_CHECKED_CLASS,
+	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotLanguageSelect)[_handleCoPilotLanguageSelect].bind(this)
+	    });
+	  }
+	  if (menuItems.length === 0) {
+	    return null;
 	  }
 	  return {
 	    text: main_core.Loc.getMessage('CRM_COMMON_COPILOT'),
 	    disabled: babelHelpers.classPrivateFieldLooseBase(this, _isSetAiSettingsRequestRunning)[_isSetAiSettingsRequestRunning],
-	    items: [{
-	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING'),
-	      className: isTranscriptionAutostarted && onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
-	      onclick: (_showInfoHelper = showInfoHelper) != null ? _showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'firstCall')
-	    }, {
-	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL'),
-	      className: isTranscriptionAutostarted && !onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
-	      onclick: (_showInfoHelper2 = showInfoHelper) != null ? _showInfoHelper2 : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'allCalls')
-	    }, {
-	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING'),
-	      className: isTranscriptionAutostarted ? NOT_CHECKED_CLASS : CHECKED_CLASS,
-	      onclick: (_showInfoHelper3 = showInfoHelper) != null ? _showInfoHelper3 : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'manual')
-	    }]
+	    items: menuItems
 	  };
 	}
 	function _handleCoPilotMenuItemClick2(action, event, menuItem) {
@@ -539,14 +560,65 @@ this.BX = this.BX || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _isSetAiSettingsRequestRunning)[_isSetAiSettingsRequestRunning] = false;
 	  });
 	}
+	function _handleCoPilotLanguageSelect2(event) {
+	  const languageSelector = new ui_entitySelector.Dialog({
+	    targetNode: event.target,
+	    multiple: false,
+	    showAvatars: false,
+	    dropdownMode: true,
+	    compactView: true,
+	    enableSearch: true,
+	    context: `COPILOT-LANGUAGE-SELECTOR-${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]}-${babelHelpers.classPrivateFieldLooseBase(this, _categoryId)[_categoryId]}`,
+	    width: COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH,
+	    tagSelectorOptions: {
+	      textBoxWidth: '100%'
+	    },
+	    preselectedItems: [['copilot_language', babelHelpers.classPrivateFieldLooseBase(this, _aiCopilotLanguageId)[_aiCopilotLanguageId]]],
+	    entities: [{
+	      id: 'copilot_language',
+	      options: {
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1],
+	        categoryId: babelHelpers.classPrivateFieldLooseBase(this, _categoryId)[_categoryId]
+	      }
+	    }],
+	    events: {
+	      'Item:onSelect': selectEvent => {
+	        const item = selectEvent.getData().item;
+	        const languageId = item.id.toLowerCase();
+	        if (!main_core.Type.isStringFilled(languageId)) {
+	          throw new Error('Language ID is not defined');
+	        }
+	        setTimeout(() => {
+	          let optionName = `ai_config_${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]}`;
+	          if (main_core.Type.isInteger(babelHelpers.classPrivateFieldLooseBase(this, _categoryId)[_categoryId])) {
+	            optionName += `_${babelHelpers.classPrivateFieldLooseBase(this, _categoryId)[_categoryId]}`;
+	          }
+	          main_core.userOptions.save('crm', optionName, 'languageId', languageId);
+	          babelHelpers.classPrivateFieldLooseBase(this, _aiCopilotLanguageId)[_aiCopilotLanguageId] = languageId;
+	        }, COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY);
+	      }
+	    }
+	  });
+	  languageSelector.show();
+	}
 	function _getAllOperationTypes2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('allAIOperationTypes').map(id => main_core.Text.toInteger(id));
 	}
 	function _getTranscribeAIOperationType2() {
 	  return main_core.Text.toInteger(babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('transcribeAIOperationType'));
 	}
+	function _getInfoHelper2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('isAIEnabledInGlobalSettings')) {
+	    return null;
+	  }
+	  return () => {
+	    if (main_core.Reflection.getClass('BX.UI.InfoHelper.show')) {
+	      BX.UI.InfoHelper.show(babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('aiDisabledSliderCode'));
+	    }
+	  };
+	}
 
 	exports.SettingsButtonExtender = SettingsButtonExtender;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.Activity,BX.Crm.Activity,BX.Event,BX,BX.CRM.Kanban,BX.CRM.Kanban,BX.Main));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.Activity,BX.Crm.Activity,BX.CRM.Kanban,BX.CRM.Kanban,BX.Event,BX.Main,BX.UI.EntitySelector,BX));
 //# sourceMappingURL=settings-button-extender.bundle.js.map

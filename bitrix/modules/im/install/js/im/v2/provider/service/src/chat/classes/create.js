@@ -6,6 +6,7 @@ import { Core } from 'im.v2.application.core';
 import { Logger } from 'im.v2.lib.logger';
 import { RestMethod, UserRole } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import type { ChatConfig, RestChatConfig } from '../types/chat';
 
@@ -42,6 +43,7 @@ export class CreateService
 		Logger.warn('ChatService: createChat result', newChatId);
 		const newDialogId = `chat${newChatId}`;
 		this.#addChatToModel(newDialogId, preparedFields);
+		this.#sendAnalytics(newDialogId);
 
 		return { newDialogId, newChatId };
 	}
@@ -70,6 +72,7 @@ export class CreateService
 			avatar: preparedConfig.avatar,
 			description: preparedConfig.description,
 			users: preparedConfig.members,
+			memberEntities: preparedConfig.memberEntities,
 			managers: preparedConfig.managers,
 			ownerId: preparedConfig.ownerId,
 			searchable: preparedConfig.isAvailableInSearch ? 'Y' : 'N',
@@ -119,5 +122,10 @@ export class CreateService
 				manageMessages: chatConfig.manageMessages,
 			},
 		});
+	}
+
+	#sendAnalytics(dialogId)
+	{
+		Analytics.getInstance().onCreateChat(dialogId);
 	}
 }

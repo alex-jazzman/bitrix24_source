@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_list_items_channel,im_v2_component_elements,im_v2_const,im_v2_lib_layout,im_v2_lib_logger,im_v2_lib_promo,im_v2_lib_createChat,main_core) {
+(function (exports,im_v2_component_list_items_channel,im_v2_component_elements,im_v2_const,im_v2_lib_analytics,im_v2_lib_logger,im_v2_lib_promo,im_v2_lib_createChat) {
 	'use strict';
 
 	// @vue/component
@@ -33,6 +33,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      });
 	    },
 	    onCreateClick() {
+	      im_v2_lib_analytics.Analytics.getInstance().onStartCreateNewChat(im_v2_const.ChatType.channel);
 	      const promoBannerIsNeeded = im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.createChannel);
 	      if (promoBannerIsNeeded) {
 	        this.showPromo = true;
@@ -48,10 +49,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    startChannelCreation() {
 	      im_v2_lib_createChat.CreateChatManager.getInstance().startChatCreation(im_v2_const.ChatType.channel);
 	    },
-	    isChannelCreationAvailable() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.list.container.channel');
-	      return settings.get('channelCreationAvailable');
-	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
@@ -60,7 +57,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div class="bx-im-list-container-channel__container">
 			<div class="bx-im-list-container-channel__header_container">
 				<div class="bx-im-list-container-channel__header_title">{{ loc('IM_LIST_CONTAINER_CHANNEL_HEADER_TITLE') }}</div>
-				<div v-if="isChannelCreationAvailable()" @click="onCreateClick" class="bx-im-list-container-channel__header_create-channel"></div>
+				<div @click="onCreateClick" class="bx-im-list-container-channel__header_create-channel"></div>
 			</div>
 			<div class="bx-im-list-container-channel__elements_container">
 				<div class="bx-im-list-container-channel__elements">
@@ -79,5 +76,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChannelListContainer = ChannelListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=channel-container.bundle.js.map

@@ -1,87 +1,108 @@
-// eslint-disable-next-line no-unused-vars
-window.DropTables = function()
-{
-	BX.ajax.post(
-		`${path}/scripts/drop.php`,
+// eslint-disable-next-line max-lines-per-function
+(function() {
+	BX.namespace('BX.Cluster');
+	BX.Cluster.MasterStart = {
+		path: '',
+		sessid: '',
+		nodeId: '',
+		LANG: '',
+		formID: '',
+		nextButtonID: '',
+
+		init(params)
 		{
-			sessid: sessid,
-			node_id: nodeId,
-			lang: LANG,
-		},
-		(data) => {
-			const obContainer = document.getElementById('output');
-			if (obContainer)
+			if (BX.Type.isObject(params))
 			{
-				obContainer.innerHTML = data;
+				this.path = params.path || '';
+				this.sessid = params.sessid || '';
+				this.nodeId = params.nodeId || '';
+				this.module = params.module || '';
+				this.LANG = params.LANG;
+				this.formID = params.formID || '';
+				this.nextButtonID = params.nextButtonID || '';
 			}
 		},
-	);
-}
 
-// eslint-disable-next-line no-unused-vars
-function MoveTables(STEP)
-{
-	let step = STEP;
-
-	if (step == null)
-	{
-		step = 1;
-	}
-
-	if (BX.Type.isObject(step))
-	{
-		step = 1;
-	}
-
-	BX.ajax.post(
-		`${path}/scripts/move.php`,
+		DropTables()
 		{
-			sessid: sessid,
-			node_id: nodeId,
-			STEP: step,
-			lang: LANG,
+			BX.ajax.post(
+				`${this.path}/scripts/drop.php`,
+				{
+					sessid: this.sessid,
+					node_id: this.nodeId,
+					lang: this.LANG,
+				},
+				(data) => {
+					const obContainer = document.getElementById('output');
+					if (obContainer)
+					{
+						obContainer.innerHTML = data;
+					}
+				},
+			);
 		},
-		(data) => {
-			const obContainer = document.getElementById('output');
-			if (obContainer)
+
+		MoveTables(STEP)
+		{
+			let step = STEP;
+
+			if (step === null)
 			{
-				obContainer.innerHTML = data;
+				step = 1;
+			}
+
+			if (BX.Type.isObject(step))
+			{
+				step = 1;
+			}
+
+			BX.ajax.post(
+				`${this.path}/scripts/move.php`,
+				{
+					sessid: this.sessid,
+					node_id: this.nodeId,
+					STEP: step,
+					lang: this.LANG,
+				},
+				(data) => {
+					const obContainer = document.getElementById('output');
+					if (obContainer)
+					{
+						obContainer.innerHTML = data;
+					}
+				},
+			);
+		},
+
+		RunError()
+		{
+			const obErrorMessage = document.getElementById('error_message');
+			if (obErrorMessage)
+			{
+				BX.Dom.style(obErrorMessage, 'display', 'inline');
 			}
 		},
-	);
-}
 
-// eslint-disable-next-line no-unused-vars
-function RunError()
-{
-	const obErrorMessage = document.getElementById('error_message');
-	if (obErrorMessage)
-	{
-		BX.Dom.style(obErrorMessage, 'display', 'inline');
-	}
-}
+		RunAgain()
+		{
+			const obOut = document.getElementById('output');
+			const obErrorMessage = document.getElementById('error_message');
 
-// eslint-disable-next-line no-unused-vars
-function RunAgain()
-{
-	const obOut = document.getElementById('output');
-	const obErrorMessage = document.getElementById('error_message');
+			obOut.innerHTML = '';
+			BX.Dom.style(obErrorMessage, 'display', 'none');
+			window.Run(1);
+		},
 
-	obOut.innerHTML = '';
-	BX.Dom.style(obErrorMessage, 'display', 'none');
-	Run(1);
-}
+		DisableButton(e)
+		{
+			const obNextButton = document.forms[this.formID][this.nextButtonID];
+			obNextButton.disabled = true;
+		},
 
-// eslint-disable-next-line no-unused-vars
-function DisableButton(e)
-{
-	const obNextButton = document.forms[formID][nextButtonID];
-	obNextButton.disabled = true;
-}
-
-// eslint-disable-next-line no-unused-vars
-function EnableButton()
-{
-	const obNextButton = document.forms[formID][nextButtonID];
-	obNextButton.disabled = false;
-}
+		EnableButton()
+		{
+			const obNextButton = document.forms[this.formID][this.nextButtonID];
+			obNextButton.disabled = false;
+		},
+	};
+})();

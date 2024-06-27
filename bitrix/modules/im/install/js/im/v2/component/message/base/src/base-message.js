@@ -3,6 +3,7 @@ import { Parser } from 'im.v2.lib.parser';
 import { ContextMenu, RetryButton, MessageKeyboard, ReactionSelector } from 'im.v2.component.message.elements';
 import { ChatActionType, ChatType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import './css/base-message.css';
 
@@ -71,7 +72,7 @@ export const BaseMessage = {
 		},
 		isChannelPost(): boolean
 		{
-			return [ChatType.channel, ChatType.openChannel].includes(this.dialog.type);
+			return ChannelManager.isChannel(this.dialogId);
 		},
 		showMessageAngle(): boolean
 		{

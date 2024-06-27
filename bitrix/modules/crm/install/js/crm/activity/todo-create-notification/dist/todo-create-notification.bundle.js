@@ -1,12 +1,13 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,main_core_events,main_popup,crm_activity_todoEditor,ui_buttons,crm_activity_todoNotificationSkip,crm_activity_todoNotificationSkipMenu) {
+(function (exports,crm_activity_todoEditor,crm_activity_todoEditorV2,crm_activity_todoNotificationSkip,crm_activity_todoNotificationSkipMenu,main_core,main_core_events,main_popup,ui_buttons) {
 	'use strict';
 
 	let _ = t => t,
 	  _t,
-	  _t2;
+	  _t2,
+	  _t3,
+	  _t4;
 	const SAVE_BUTTON_ID = 'save';
 	const CANCEL_BUTTON_ID = 'cancel';
 	const SKIP_BUTTON_ID = 'skip';
@@ -23,6 +24,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _skipProvider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("skipProvider");
 	var _skipMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("skipMenu");
 	var _sliderIsMinimizing = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sliderIsMinimizing");
+	var _useTodoEditorV = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useTodoEditorV2");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _getSliderInstance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSliderInstance");
 	var _isSliderMinimizeAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSliderMinimizeAvailable");
@@ -41,31 +43,51 @@ this.BX.Crm = this.BX.Crm || {};
 	var _closePopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closePopup");
 	var _closeSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeSlider");
 	var _showTodoCreationNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showTodoCreationNotification");
-	var _getPopupTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupTitle");
 	var _getPopupDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupDescription");
 	var _getPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupContent");
+	var _getNotificationTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNotificationTitle");
+	var _getPreparedForV2NotificationSkipButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPreparedForV2NotificationSkipButton");
+	var _createToDoEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createToDoEditor");
 	var _getPopupButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getPopupButtons");
+	var _createSaveButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createSaveButton");
+	var _createCancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createCancelButton");
+	var _createNotificationSkipButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createNotificationSkipButton");
 	var _getSkipMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSkipMenuItems");
 	var _showCancelNotificationInParentWindow = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showCancelNotificationInParentWindow");
 	class TodoCreateNotification {
-	  constructor(params) {
+	  constructor(_params) {
 	    Object.defineProperty(this, _showCancelNotificationInParentWindow, {
 	      value: _showCancelNotificationInParentWindow2
 	    });
 	    Object.defineProperty(this, _getSkipMenuItems, {
 	      value: _getSkipMenuItems2
 	    });
+	    Object.defineProperty(this, _createNotificationSkipButton, {
+	      value: _createNotificationSkipButton2
+	    });
+	    Object.defineProperty(this, _createCancelButton, {
+	      value: _createCancelButton2
+	    });
+	    Object.defineProperty(this, _createSaveButton, {
+	      value: _createSaveButton2
+	    });
 	    Object.defineProperty(this, _getPopupButtons, {
 	      value: _getPopupButtons2
+	    });
+	    Object.defineProperty(this, _createToDoEditor, {
+	      value: _createToDoEditor2
+	    });
+	    Object.defineProperty(this, _getPreparedForV2NotificationSkipButton, {
+	      value: _getPreparedForV2NotificationSkipButton2
+	    });
+	    Object.defineProperty(this, _getNotificationTitle, {
+	      value: _getNotificationTitle2
 	    });
 	    Object.defineProperty(this, _getPopupContent, {
 	      value: _getPopupContent2
 	    });
 	    Object.defineProperty(this, _getPopupDescription, {
 	      value: _getPopupDescription2
-	    });
-	    Object.defineProperty(this, _getPopupTitle, {
-	      value: _getPopupTitle2
 	    });
 	    Object.defineProperty(this, _showTodoCreationNotification, {
 	      value: _showTodoCreationNotification2
@@ -173,12 +195,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: false
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = params.entityTypeId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] = params.entityId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityStageId)[_entityStageId] = params.entityStageId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _stageIdField)[_stageIdField] = params.stageIdField;
-	    babelHelpers.classPrivateFieldLooseBase(this, _finalStages)[_finalStages] = params.finalStages;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isSkipped)[_isSkipped] = !!params.skipPeriod;
+	    Object.defineProperty(this, _useTodoEditorV, {
+	      writable: true,
+	      value: false
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = _params.entityTypeId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] = _params.entityId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityStageId)[_entityStageId] = _params.entityStageId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _stageIdField)[_stageIdField] = _params.stageIdField;
+	    babelHelpers.classPrivateFieldLooseBase(this, _finalStages)[_finalStages] = _params.finalStages;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isSkipped)[_isSkipped] = Boolean(_params.skipPeriod);
+	    babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV] = _params.useTodoEditorV2 === true;
 	    if (BX.CrmTimelineManager) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline] = BX.CrmTimelineManager.getDefault();
 	    }
@@ -189,7 +216,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _skipMenu)[_skipMenu] = new crm_activity_todoNotificationSkipMenu.TodoNotificationSkipMenu({
 	      entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId],
-	      selectedValue: params.skipPeriod
+	      selectedValue: _params.skipPeriod
 	    });
 	  }
 	}
@@ -231,7 +258,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    return; // timeline already has scheduled activities
 	  }
 
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _finalStages)[_finalStages].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _entityStageId)[_entityStageId]) > -1) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _finalStages)[_finalStages].includes(babelHelpers.classPrivateFieldLooseBase(this, _entityStageId)[_entityStageId])) {
 	    return; // element has final stage
 	  }
 
@@ -243,13 +270,13 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _onEntityUpdate2(event) {
 	  const [eventParams] = event.getCompatData();
-	  if (eventParams.hasOwnProperty('entityData') && eventParams.entityData.hasOwnProperty(babelHelpers.classPrivateFieldLooseBase(this, _stageIdField)[_stageIdField])) {
+	  if (Object.hasOwn(eventParams, 'entityData') && Object.hasOwn(eventParams.entityData, babelHelpers.classPrivateFieldLooseBase(this, _stageIdField)[_stageIdField])) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityStageId)[_entityStageId] = eventParams.entityData[babelHelpers.classPrivateFieldLooseBase(this, _stageIdField)[_stageIdField]];
 	  }
 	}
 	function _onEntityDelete2(event) {
 	  const [eventParams] = event.getCompatData();
-	  if (eventParams.hasOwnProperty('id') && eventParams.id == babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]) {
+	  if (Object.hasOwn(eventParams, 'id') && Text.toString(eventParams.id) === Text.toString(babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId])) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _allowCloseSlider)[_allowCloseSlider] = true;
 	  }
 	}
@@ -260,7 +287,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	function _onSkippedPeriodChange2(period) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _isSkipped)[_isSkipped] = !!period;
+	  babelHelpers.classPrivateFieldLooseBase(this, _isSkipped)[_isSkipped] = Boolean(period);
 	}
 	function _onToolbarMenuBuild2(event) {
 	  const [, {
@@ -279,13 +306,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    description
 	  } = event.getData();
 	  const saveButton = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr.getButton(SAVE_BUTTON_ID);
-	  if (!description.length && !saveButton.getState()) {
+	  if (description.length === 0 && !saveButton.getState()) {
 	    saveButton.setState(ui_buttons.ButtonState.DISABLED);
-	  } else if (description.length && saveButton.getState() === ui_buttons.ButtonState.DISABLED) {
+	  } else if (description.length > 0 && saveButton.getState() === ui_buttons.ButtonState.DISABLED) {
 	    saveButton.setState(null);
 	  }
 	}
-	function _onSaveHotkeyPressed2(event) {
+	function _onSaveHotkeyPressed2() {
 	  var _babelHelpers$classPr2;
 	  const saveButton = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : _babelHelpers$classPr2.getButton(SAVE_BUTTON_ID);
 	  if (!saveButton.getState())
@@ -307,7 +334,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr11 = _babelHelpers$classPr10.getButton(SKIP_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr11.setState(ui_buttons.ButtonState.WAITING);
 	  babelHelpers.classPrivateFieldLooseBase(this, _skipProvider)[_skipProvider].saveSkippedPeriod(period).then(() => {
 	    var _babelHelpers$classPr12;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isSkipped)[_isSkipped] = !!period;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isSkipped)[_isSkipped] = Boolean(period);
 	    babelHelpers.classPrivateFieldLooseBase(this, _skipMenu)[_skipMenu].setSelectedValue(period);
 	    babelHelpers.classPrivateFieldLooseBase(this, _revertButtonsState)[_revertButtonsState]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _allowCloseSlider)[_allowCloseSlider] = true;
@@ -324,7 +351,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  (_babelHelpers$classPr17 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr18 = _babelHelpers$classPr17.getButton(SKIP_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr18.setState(ui_buttons.ButtonState.DISABLED);
 	  babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].save().then(result => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _revertButtonsState)[_revertButtonsState]();
-	    if (!(result.hasOwnProperty('errors') && result.errors.length)) {
+	    if (!(Object.hasOwn(result, 'errors') && result.errors.length > 0)) {
 	      var _babelHelpers$classPr19;
 	      babelHelpers.classPrivateFieldLooseBase(this, _allowCloseSlider)[_allowCloseSlider] = true;
 	      babelHelpers.classPrivateFieldLooseBase(this, _closePopup)[_closePopup]();
@@ -360,9 +387,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    const popupPadding = htmlStyles.getPropertyValue('--ui-space-inset-sm');
 	    const popupPaddingNumberValue = parseFloat(popupPadding) || 12;
 	    const popupOverlayColor = htmlStyles.getPropertyValue('--ui-color-base-solid') || '#000000';
+	    const {
+	      innerWidth
+	    } = window;
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = main_popup.PopupManager.create({
-	      id: 'todo-create-confirm-' + babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] + '-' + babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
-	      closeIcon: true,
+	      id: `todo-create-confirm-${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]}-${babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId]}`,
+	      closeIcon: !babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV],
 	      padding: popupPaddingNumberValue,
 	      overlay: {
 	        opacity: 40,
@@ -370,13 +400,21 @@ this.BX.Crm = this.BX.Crm || {};
 	      },
 	      content: babelHelpers.classPrivateFieldLooseBase(this, _getPopupContent)[_getPopupContent](),
 	      buttons: babelHelpers.classPrivateFieldLooseBase(this, _getPopupButtons)[_getPopupButtons](),
-	      width: 545,
+	      minWidth: 537,
+	      width: Math.round(innerWidth * 0.45),
+	      maxWidth: 737,
 	      events: {
 	        onClose: babelHelpers.classPrivateFieldLooseBase(this, _closeSlider)[_closeSlider].bind(this)
 	      },
 	      className: 'crm-activity__todo-create-notification-popup'
 	    });
 	  }
+
+	  // if (this.#useTodoEditorV2)
+	  // {
+	  // 	this.#preparePopupForTodoEditorV2();
+	  // }
+
 	  babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
 	  setTimeout(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].setFocused();
@@ -385,11 +423,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].setClosingByEsc(true);
 	  }, 300);
 	}
-	function _getPopupTitle2() {
-	  return main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_TITLE');
-	}
 	function _getPopupDescription2() {
-	  let messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION';
+	  // eslint-disable-next-line init-declarations
+	  let messagePhrase;
 	  switch (babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]) {
 	    case BX.CrmEntityType.enumeration.lead:
 	      messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION_LEAD';
@@ -397,43 +433,122 @@ this.BX.Crm = this.BX.Crm || {};
 	    case BX.CrmEntityType.enumeration.deal:
 	      messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION_DEAL';
 	      break;
+	    default:
+	      messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION';
 	  }
 	  return main_core.Loc.getMessage(messagePhrase);
 	}
 	function _getPopupContent2() {
 	  const editorContainer = main_core.Tag.render(_t || (_t = _`<div></div>`));
-	  const content = main_core.Tag.render(_t2 || (_t2 = _`<div class="crm-activity__todo-create-notification">
-			<div class="crm-activity__todo-create-notification_title">${0}</div>
-			<div class="crm-activity__todo-create-notification_content">
-				<div class="crm-activity__todo-create-notification_description">${0}</div>
-				${0}
-			</div>
-		</div>`), babelHelpers.classPrivateFieldLooseBase(this, _getPopupTitle)[_getPopupTitle](), babelHelpers.classPrivateFieldLooseBase(this, _getPopupDescription)[_getPopupDescription](), editorContainer);
-	  babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditor.TodoEditor({
-	    container: editorContainer,
+	  let content = null;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
+	    const buttonsContainer = main_core.Tag.render(_t2 || (_t2 = _`
+				<div class="crm-activity__todo-create-notification_footer">
+					<div class="crm-activity__todo-create-notification_buttons-container">
+						<button 
+							class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round"
+							onclick="${0}"
+						>
+							${0}
+						</button>
+						<button
+							class="ui-btn ui-btn-xs ui-btn-link"
+							onclick="${0}"
+						>
+							${0}
+						</button>
+					</div>
+					${0}
+				</div>
+			`), babelHelpers.classPrivateFieldLooseBase(this, _saveTodo)[_saveTodo].bind(this), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_OK_BUTTON_V2'), babelHelpers.classPrivateFieldLooseBase(this, _closePopup)[_closePopup].bind(this), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_CANCEL_BUTTON_V2'), babelHelpers.classPrivateFieldLooseBase(this, _getPreparedForV2NotificationSkipButton)[_getPreparedForV2NotificationSkipButton]().render());
+	    content = main_core.Tag.render(_t3 || (_t3 = _`
+				<div>
+					<div class="crm-activity__todo-create-notification_title --v2">
+						${0}
+					</div>
+					<div>
+						${0}
+					</div>
+					${0}
+				</div>
+			`), babelHelpers.classPrivateFieldLooseBase(this, _getNotificationTitle)[_getNotificationTitle](), editorContainer, buttonsContainer);
+	  } else {
+	    content = main_core.Tag.render(_t4 || (_t4 = _`
+				<div class="crm-activity__todo-create-notification">
+					<div class="crm-activity__todo-create-notification_title">
+						${0}
+					</div>
+					<div class="crm-activity__todo-create-notification_content">
+						<div class="crm-activity__todo-create-notification_description">
+							${0}
+						</div>
+						${0}
+					</div>
+				</div>
+			`), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _getPopupDescription)[_getPopupDescription](), editorContainer);
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _createToDoEditor)[_createToDoEditor](editorContainer).show();
+	  return content;
+	}
+	function _getNotificationTitle2() {
+	  let code = null;
+	  switch (babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]) {
+	    case BX.CrmEntityType.enumeration.lead:
+	      code = 'CRM_ACTIVITY_TODO_NOTIFICATION_TITLE_V2_LEAD';
+	      break;
+	    case BX.CrmEntityType.enumeration.deal:
+	      code = 'CRM_ACTIVITY_TODO_NOTIFICATION_TITLE_V2_DEAL';
+	      break;
+	    default:
+	      code = 'CRM_ACTIVITY_TODO_NOTIFICATION_TITLE_V2';
+	  }
+	  return main_core.Loc.getMessage(code);
+	}
+	function _getPreparedForV2NotificationSkipButton2() {
+	  return babelHelpers.classPrivateFieldLooseBase(this, _createNotificationSkipButton)[_createNotificationSkipButton]().setNoCaps().addClass('crm-activity__todo-create-notification_skip-button');
+	}
+	function _createToDoEditor2(container) {
+	  const params = {
+	    container,
 	    ownerTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId],
 	    ownerId: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
 	    currentUser: babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline].getCurrentUser(),
 	    pingSettings: babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline].getPingSettings(),
 	    events: {
-	      onChangeDescription: babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this),
 	      onSaveHotkeyPressed: babelHelpers.classPrivateFieldLooseBase(this, _onSaveHotkeyPressed)[_onSaveHotkeyPressed].bind(this),
 	      onChangeUploaderContainerSize: babelHelpers.classPrivateFieldLooseBase(this, _onChangeUploaderContainerSize)[_onChangeUploaderContainerSize].bind(this)
 	    },
 	    borderColor: crm_activity_todoEditor.TodoEditor.BorderColor.PRIMARY
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].show();
-	  return content;
+	  };
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
+	    params.calendarSettings = babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline].getCalendarSettings();
+	    params.colorSettings = babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline].getColorSettings();
+	    params.defaultDescription = '';
+	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditorV2.TodoEditorV2(params);
+	  } else {
+	    params.events.onChangeDescription = babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditor.TodoEditor(params);
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor];
 	}
 	function _getPopupButtons2() {
-	  return [new ui_buttons.SaveButton({
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
+	    return [];
+	  }
+	  return [babelHelpers.classPrivateFieldLooseBase(this, _createSaveButton)[_createSaveButton](), babelHelpers.classPrivateFieldLooseBase(this, _createCancelButton)[_createCancelButton](), babelHelpers.classPrivateFieldLooseBase(this, _createNotificationSkipButton)[_createNotificationSkipButton]()];
+	}
+	function _createSaveButton2() {
+	  return new ui_buttons.SaveButton({
 	    id: SAVE_BUTTON_ID,
 	    round: true,
 	    state: babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].getDescription() ? null : ui_buttons.ButtonState.DISABLED,
 	    events: {
 	      click: babelHelpers.classPrivateFieldLooseBase(this, _saveTodo)[_saveTodo].bind(this)
 	    }
-	  }), new ui_buttons.CancelButton({
+	  });
+	}
+	function _createCancelButton2() {
+	  return new ui_buttons.CancelButton({
 	    text: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_CANCEL'),
 	    color: ui_buttons.ButtonColor.LIGHT_BORDER,
 	    id: CANCEL_BUTTON_ID,
@@ -441,8 +556,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    events: {
 	      click: babelHelpers.classPrivateFieldLooseBase(this, _closePopup)[_closePopup].bind(this)
 	    }
-	  }), new ui_buttons.Button({
-	    text: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP'),
+	  });
+	}
+	function _createNotificationSkipButton2() {
+	  return new ui_buttons.Button({
+	    text: main_core.Loc.getMessage(babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV] ? 'CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_V2' : 'CRM_ACTIVITY_TODO_NOTIFICATION_SKIP'),
 	    color: ui_buttons.ButtonColor.LINK,
 	    id: SKIP_BUTTON_ID,
 	    dropdown: true,
@@ -451,36 +569,31 @@ this.BX.Crm = this.BX.Crm || {};
 	      items: babelHelpers.classPrivateFieldLooseBase(this, _getSkipMenuItems)[_getSkipMenuItems](),
 	      minWidth: 233
 	    }
-	  })];
+	  });
 	}
 	function _getSkipMenuItems2() {
-	  const menuItems = [];
-	  menuItems.push({
+	  return [{
 	    id: 'day',
 	    text: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOR_DAY'),
 	    onclick: babelHelpers.classPrivateFieldLooseBase(this, _onSkipMenuItemSelect)[_onSkipMenuItemSelect].bind(this, 'day')
-	  });
-	  menuItems.push({
+	  }, {
 	    id: 'week',
 	    text: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOR_WEEK'),
 	    onclick: babelHelpers.classPrivateFieldLooseBase(this, _onSkipMenuItemSelect)[_onSkipMenuItemSelect].bind(this, 'week')
-	  });
-	  menuItems.push({
+	  }, {
 	    id: 'month',
 	    text: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOR_MONTH'),
 	    onclick: babelHelpers.classPrivateFieldLooseBase(this, _onSkipMenuItemSelect)[_onSkipMenuItemSelect].bind(this, 'month')
-	  });
-	  menuItems.push({
+	  }, {
 	    id: 'forever',
 	    text: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOREVER'),
 	    onclick: babelHelpers.classPrivateFieldLooseBase(this, _onSkipMenuItemSelect)[_onSkipMenuItemSelect].bind(this, 'forever')
-	  });
-	  return menuItems;
+	  }];
 	}
 	function _showCancelNotificationInParentWindow2() {
 	  if (top.BX && top.BX.Runtime) {
 	    const entityTypeId = babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId];
-	    top.BX.Runtime.loadExtension('crm.activity.todo-notification-skip').then(exports => {
+	    void top.BX.Runtime.loadExtension('crm.activity.todo-notification-skip').then(exports => {
 	      const skipProvider = new exports.TodoNotificationSkip({
 	        entityTypeId
 	      });
@@ -491,5 +604,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.TodoCreateNotification = TodoCreateNotification;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX,BX.Event,BX.Main,BX.Crm.Activity,BX.UI,BX.Crm.Activity,BX.Crm.Activity));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Crm.Activity,BX.Crm.Activity,BX.Crm.Activity,BX.Crm.Activity,BX,BX.Event,BX.Main,BX.UI));
 //# sourceMappingURL=todo-create-notification.bundle.js.map

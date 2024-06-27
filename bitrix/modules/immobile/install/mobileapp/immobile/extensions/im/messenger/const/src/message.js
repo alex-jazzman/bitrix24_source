@@ -8,6 +8,9 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		image: 'image',
 		status: 'status',
 		systemText: 'system-text',
+		unsupported: 'unsupported',
+		copilot: 'copilot',
+		banner: 'banner',
 	});
 
 	const MessageIdType = {
@@ -23,9 +26,27 @@ jn.define('im/messenger/const/message', (require, exports, module) => {
 		error: 'error',
 	});
 
+	const MessageParams = Object.freeze({
+		ComponentId: {
+			ChatCopilotCreationMessage: 'ChatCopilotCreationMessage',
+			ChatCopilotAddedUsersMessage: 'ChatCopilotAddedUsersMessage',
+			CopilotMessage: 'CopilotMessage',
+
+			ConferenceCreationMessage: 'ConferenceCreationMessage',
+
+			ChatCreationMessage: 'ChatCreationMessage',
+			GeneralChatCreationMessage: 'GeneralChatCreationMessage',
+
+			ChannelCreationMessage: 'ChannelCreationMessage',
+			OpenChannelCreationMessage: 'OpenChannelCreationMessage',
+			GeneralChannelCreationMessage: 'GeneralChannelCreationMessage',
+		},
+	});
+
 	module.exports = {
 		MessageType,
 		MessageIdType,
 		OwnMessageStatus,
+		MessageParams,
 	};
 });

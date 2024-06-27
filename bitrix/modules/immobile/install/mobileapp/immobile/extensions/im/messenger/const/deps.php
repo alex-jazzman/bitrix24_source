@@ -32,5 +32,6 @@ return [
 		'./src/component-code',
 		'./src/header-button',
 		'./src/cache',
+		'./src/navigation-tab',
 	],
 ];

@@ -2,7 +2,6 @@
 	position: relative;
 	display: flex;
 	flex-direction: column;
-	max-width: 305px;
 	border-radius: inherit;
 }
 

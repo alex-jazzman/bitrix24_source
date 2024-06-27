@@ -78,6 +78,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				rights: {
 					delegate: false,
 				},
+				commentCounter: null,
 			};
 
 			this.fieldList = null;
@@ -268,9 +269,10 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 							),
 							this.renderTaskButtons(),
 						),
-						this.renderComments(),
+						View({ style: { height: 100 } }),
 					),
 				),
+				this.renderComments(),
 			);
 		}
 
@@ -334,6 +336,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 						editor: data.editor,
 						taskResponsibleMessage: data.taskResponsibleMessage,
 						rights: Object.assign(this.state.rights, (data.rights || {})),
+						commentCounter: data.commentCounter,
 					});
 				})
 				.catch(({ errors }) => {
@@ -604,6 +607,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		{
 			return new WorkflowComments({
 				workflowId: this.task.workflowId,
+				commentCounter: this.state.commentCounter,
 			});
 		}
 	}

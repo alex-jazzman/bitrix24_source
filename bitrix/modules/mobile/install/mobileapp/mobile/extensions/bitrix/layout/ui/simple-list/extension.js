@@ -6,14 +6,19 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
 	const AppTheme = require('apptheme');
-	const { clone, merge, get } = require('utils/object');
+	const { clone, merge, get, isEqual } = require('utils/object');
 	const { useCallback } = require('utils/function');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 	const { ListItemType } = require('layout/ui/simple-list/items');
 	const { ViewMode } = require('layout/ui/simple-list/view-mode');
 	const { SkeletonFactory, SkeletonTypes } = require('layout/ui/simple-list/skeleton');
 	const { PureComponent } = require('layout/pure-component');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
-	const { isEqual } = require('utils/object');
+	const { StatusBlock, makeLibraryImagePath } = require('ui-system/blocks/status-block');
+	const { OptimizedListView } = require('layout/ui/optimized-list-view');
+	const { isNil } = require('utils/type');
+	const { Feature } = require('feature');
+	const { FloatingButtonComponent } = require('layout/ui/floating-button');
 
 	const MIN_ROWS_COUNT_FOR_LOAD_MORE = 10;
 	const ACTION_DELETE = 'delete';
@@ -36,6 +41,8 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 			this.currentViewMode = null;
 			this.itemViews = {};
+			this.itemRootViewRefs = {};
+			this.itemMenuViewRefs = {};
 			this.lastElementIdAddedWithAnimation = null;
 			this.delayedItemActions = new Map();
 			this.isDynamicMode = props.isDynamicMode ?? true;
@@ -205,9 +212,19 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 		{
 			const currentIdsOrderClone = [...currentIdsOrder];
 			const currentItemsClone = new Map(currentItems);
+
+			const toReplaceItems = [];
+			newItems.forEach((value, id) => {
+				if (!currentItemsClone.has(id) && currentItemsClone.has(value.idToReplace))
+				{
+					toReplaceItems.push({ ...value, key: value.idToReplace });
+					currentIdsOrderClone.splice(currentIdsOrderClone.indexOf(value.idToReplace), 1, id);
+				}
+			});
+
 			const toDeleteItems = [];
 			currentItemsClone.forEach((value, id) => {
-				if (!newItems.has(id))
+				if (!newItems.has(id) && !toReplaceItems.some((item) => item.idToReplace === id))
 				{
 					toDeleteItems.push(value);
 					currentIdsOrderClone.splice(currentIdsOrderClone.indexOf(id), 1);
@@ -217,7 +234,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 			const toAddItems = [];
 			newItems.forEach((value, id) => {
-				if (!currentItemsClone.has(id))
+				if (!currentItemsClone.has(id) && !toReplaceItems.some((item) => item.id === id))
 				{
 					const insertIndex = newIdsOrder.indexOf(value.id);
 					toAddItems.push({
@@ -229,7 +246,6 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				}
 			});
 
-			let toMoveItems = [];
 			const toUpdateItems = [];
 			currentItemsClone.forEach((value, id) => {
 				const newItem = newItems.get(id);
@@ -239,13 +255,13 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				}
 			});
 
-			toMoveItems = [...toMoveItems, ...this.getSortMoves(currentIdsOrderClone, newIdsOrder)];
-
+			const toMoveItems = [...this.getSortMoves(currentIdsOrderClone, newIdsOrder)];
 			const groupedItems = {
 				toAddItems,
 				toUpdateItems,
 				toDeleteItems,
 				toMoveItems,
+				toReplaceItems,
 			};
 
 			if (this.props.changeItemsOperations)
@@ -315,6 +331,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						toUpdateItems,
 						toDeleteItems,
 						toMoveItems,
+						toReplaceItems,
 					} = this.groupItemsByOperations(
 						this.currentItemsState,
 						newItems,
@@ -322,10 +339,13 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						newIdsOrder,
 					);
 
-					if (toAddItems.length === 0
+					if (
+						toAddItems.length === 0
 						&& toUpdateItems.length === 0
 						&& toDeleteItems.length === 0
-						&& toMoveItems.length === 0)
+						&& toMoveItems.length === 0
+						&& toReplaceItems.length === 0
+					)
 					{
 						resolve();
 
@@ -334,6 +354,11 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 					}
 
 					const modificationsPromises = [];
+					if (toReplaceItems.length > 0)
+					{
+						modificationsPromises.push(this.replaceRows(toReplaceItems));
+					}
+
 					if (toUpdateItems.length > 0)
 					{
 						modificationsPromises.push(this.updateRows(toUpdateItems, animationTypes.update));
@@ -350,17 +375,25 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						toAddItems.sort((a, b) => a.position - b.position);
 						const insertGroups = this.getItemsInsertGroups(toAddItems);
 						insertGroups.forEach((group) => {
-							modificationsPromises.push(this.insertRows(group.items, group.position, animationTypes.insert));
+							modificationsPromises.push(
+								this.insertRows(group.items, group.position, animationTypes.insert),
+							);
 						});
 					}
-					toMoveItems.forEach((item) => {
-						modificationsPromises.push(this.moveRow(
-							newItems.get(item.itemId),
-							item.newPosition,
-							sectionIndex,
-							animationTypes.move,
-						));
-					});
+
+					if (toMoveItems.length > 0)
+					{
+						toMoveItems.forEach((item) => {
+							modificationsPromises.push(
+								this.moveRow(
+									newItems.get(item.itemId),
+									item.newPosition,
+									sectionIndex,
+									animationTypes.move,
+								),
+							);
+						});
+					}
 
 					return Promise.allSettled(modificationsPromises).then(() => {
 						this.currentIdsOrder = newIdsOrder;
@@ -465,7 +498,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				return this.state.isEmpty ? ViewMode.empty : ViewMode.list;
 			}
 
-			if (this.currentIdsOrder.length === 0)
+			if (this.isEmptyList())
 			{
 				return ViewMode.loading;
 			}
@@ -476,6 +509,60 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 		scrollToBegin(animated = true)
 		{
 			this.listView?.scrollToBegin(animated);
+		}
+
+		/**
+		 * @param {string[]} itemIds
+		 * @param {boolean} animated
+		 * @param {boolean} checkVisibility
+		 * @return {Promise<void>}
+		 */
+		async scrollToTopItem(itemIds, animated = true, checkVisibility = true)
+		{
+			let topIndex = null;
+			let topItemId = null;
+
+			itemIds.forEach((itemId) => {
+				const { index } = this.listView.getElementPosition(itemId);
+				if (topIndex === null || topIndex > index)
+				{
+					topIndex = index;
+					topItemId = itemId;
+				}
+			});
+
+			if (topItemId)
+			{
+				await this.scrollToItem(topItemId, animated, checkVisibility);
+			}
+		}
+
+		/**
+		 * @param {string} itemId
+		 * @param {boolean} animated
+		 * @param {boolean} checkVisibility
+		 * @return {Promise<void>}
+		 */
+		async scrollToItem(itemId, animated = true, checkVisibility = true)
+		{
+			if (checkVisibility)
+			{
+				const isVisible = await this.listView?.isItemVisible(itemId);
+				if (isVisible)
+				{
+					return;
+				}
+			}
+
+			const { section, index } = this.listView.getElementPosition(itemId);
+			this.listView.scrollTo(section, index, animated);
+
+			if (animated)
+			{
+				await new Promise((resolve) => {
+					setTimeout(resolve, 500);
+				});
+			}
 		}
 
 		render()
@@ -524,10 +611,15 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 		{
 			const items = this.getItems();
 
-			return ListView({
+			return OptimizedListView({
 				testId: `${this.testId}_LIST_VIEW`,
 				style: this.getStyle('container'),
 				data: [{ items }],
+				onScrollCalculated: this.props.onScrollCalculated,
+				onMomentumScrollEnd: this.props.onMomentumScrollEnd,
+				onMomentumScrollBegin: this.props.onMomentumScrollBegin,
+				onScrollEndDrag: this.props.onScrollEndDrag,
+				onScroll: this.props.onScroll,
 				renderItem: (item, section, row) => {
 					const customStyles = (
 						this.props.getItemCustomStyles
@@ -540,6 +632,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 					return itemFactory.create(itemType, {
 						testId: this.testId,
 						layout: this.props.layout,
+						showAirStyle: this.props.showAirStyle,
 						item,
 						params: this.props.itemParams || {},
 						customStyles,
@@ -557,9 +650,20 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 						ref: useCallback((ref) => {
 							if (item.id)
 							{
-								const { id } = item;
-								this.itemViews[id] = ref;
-								this.processDelayedItemActions(id);
+								this.itemViews[item.id] = ref;
+								this.processDelayedItemActions(item.id);
+							}
+						}, [item.id]),
+						forwardRef: useCallback((ref) => {
+							if (item.id)
+							{
+								this.itemRootViewRefs[item.id] = ref;
+							}
+						}, [item.id]),
+						menuViewRef: useCallback((ref) => {
+							if (item.id)
+							{
+								this.itemMenuViewRefs[item.id] = ref;
 							}
 						}, [item.id]),
 					});
@@ -600,6 +704,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 					return this.renderSkeleton({
 						itemParams: this.props.itemParams || {},
+						showAirStyle: this.props.showAirStyle,
 						length: 1,
 					});
 				},
@@ -609,41 +714,77 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			});
 		}
 
+		isEmptyList()
+		{
+			return this.getItemsCount() === 0;
+		}
+
+		getItemsCount()
+		{
+			return this.currentIdsOrder.length;
+		}
+
 		getEmptyScreenContainer()
 		{
-			const { isSearchEnabled, getEmptyListComponent, emptySearchText, emptyListText } = this.props;
+			const { isSearchEnabled, getEmptyListComponent } = this.props;
 
 			return View(
 				{
 					style: this.getStyle('container'),
 				},
-				(
-					getEmptyListComponent
-						? getEmptyListComponent({ isSearchEnabled })
-						: new EmptyScreen({
-							title: (
-								isSearchEnabled
-									? (emptySearchText || Loc.getMessage('SIMPLELIST_SEARCH_EMPTY'))
-									: (emptyListText || Loc.getMessage('SIMPLELIST_LIST_EMPTY'))
-							),
-							image: {
-								svg: {
-									uri: EmptyScreen.makeLibraryImagePath('empty-list.svg'),
-								},
-							},
-						})
-				),
+				getEmptyListComponent
+					? getEmptyListComponent({ isSearchEnabled })
+					: this.renderEmptyScreen(),
 			);
+		}
+
+		renderEmptyScreen()
+		{
+			const { showAirStyle } = this.props;
+
+			const imageParams = {
+				resizeMode: 'contain',
+				style: {
+					width: 172,
+					height: 172,
+				},
+				svg: {
+					uri: makeLibraryImagePath('empty-list.svg'),
+				},
+			};
+
+			return showAirStyle
+				? StatusBlock({
+					emptyScreen: true,
+					title: this.getEmptyScreenTitle(),
+					image: Image(imageParams),
+				})
+				: new EmptyScreen({
+					title: this.getEmptyScreenTitle(),
+					image: imageParams,
+				});
+		}
+
+		getEmptyScreenTitle()
+		{
+			const { isSearchEnabled, emptySearchText, emptyListText } = this.props;
+
+			return isSearchEnabled
+				? (emptySearchText || Loc.getMessage('SIMPLELIST_SEARCH_EMPTY'))
+				: (emptyListText || Loc.getMessage('SIMPLELIST_LIST_EMPTY'));
 		}
 
 		getLoadingScreenContainer()
 		{
-			if (this.props.forcedShowSkeleton && SkeletonTypes[this.props.itemType])
+			const { showAirStyle, forcedShowSkeleton, itemParams = {}, itemType } = this.props;
+
+			if (forcedShowSkeleton && SkeletonTypes[itemType])
 			{
 				return View(
 					{},
 					this.renderSkeleton({
-						itemParams: this.props.itemParams || {},
+						itemParams,
+						showAirStyle,
 						fullScreen: true,
 					}),
 				);
@@ -653,7 +794,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				{
 					style: this.getStyle('container'),
 				},
-				new LoadingScreenComponent(),
+				new LoadingScreenComponent({ showAirStyle }),
 			);
 		}
 
@@ -679,10 +820,14 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		renderFloatingButton()
 		{
-			return new UI.FloatingButtonComponent({
+			const { layout, onFloatingButtonLongClick, onFloatingButtonClick } = this.props;
+
+			return new FloatingButtonComponent({
 				testId: `${this.testId}_ADD_BTN`,
-				onClick: this.props.onFloatingButtonClick,
-				onLongClick: this.props.onFloatingButtonLongClick,
+				onClick: onFloatingButtonClick,
+				onLongClick: onFloatingButtonLongClick,
+				accent: this.isEmptyList(),
+				parentLayout: layout,
 			});
 		}
 
@@ -799,7 +944,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 							this.state.countOfNewElementsFromPull = 0;
 
-							if (this.listView)
+							if (!isNil(this.listView))
 							{
 								this.listView.scrollToBegin(true);
 							}
@@ -822,7 +967,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 							height: 16,
 						},
 						svg: {
-							content: `<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><defs><style>.cls-1 { fill: ${AppTheme.colors.baseWhiteFixed}; fill-rule: evenodd; }</style></defs><path class="cls-1" d="M8.094 13.558a5.558 5.558 0 1 1 3.414-9.944l-1.466 1.78 5.95.585L14.22.324l-1.146 1.39a7.99 7.99 0 1 0 .926 11.736l-1.744-1.726a5.62 5.62 0 0 1-4.16 1.834z"/></svg>`,
+							content: `<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><defs><style>.cls-1 { fill: ${this.colors.baseWhiteFixed}; fill-rule: evenodd; }</style></defs><path class="cls-1" d="M8.094 13.558a5.558 5.558 0 1 1 3.414-9.944l-1.466 1.78 5.95.585L14.22.324l-1.146 1.39a7.99 7.99 0 1 0 .926 11.736l-1.744-1.726a5.62 5.62 0 0 1-4.16 1.834z"/></svg>`,
 						},
 					}),
 					Text({
@@ -877,7 +1022,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 		insertRows(items, elementIndex, animationType, section = 0)
 		{
-			const wasEmpty = this.currentIdsOrder.length === 0;
+			const wasEmpty = this.isEmptyList();
 			const animation = animationType || get(this.props, 'animationTypes.insertRows', 'fade');
 
 			// ToDo temp fix for kanban view, remove it when single update method will be implemented
@@ -917,24 +1062,82 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				}
 
 				this.operationsQueue = this.operationsQueue.then(() => {
-					if (wasEmpty)
-					{
-						return new Promise((_resolve) => {
+					return new Promise((_resolve) => {
+						if (wasEmpty)
+						{
 							this.setState({
 								isEmpty: false,
 							}, () => {
 								_resolve();
 								resolve();
 							});
-						});
-					}
 
-					return this.listView.insertRows(items, section, elementIndex, animation)
-						.then(resolve)
-						.catch((error) => {
-							console.error(error);
+							return;
+						}
+
+						if (isNil(this.listView))
+						{
+							_resolve();
 							reject();
+
+							return;
+						}
+
+						this.listView.insertRows(items, section, elementIndex, animation)
+							.then(resolve)
+							.catch((error) => {
+								console.error(error);
+								reject();
+							})
+							.finally(_resolve);
+					});
+				});
+			});
+		}
+
+		replaceRows(items)
+		{
+			if (!Feature.isListViewUpdateRowByKeySupported() || !items || items.length === 0)
+			{
+				return new Promise((resolve) => {
+					resolve();
+				});
+			}
+
+			items.forEach((item) => {
+				const { id, idToReplace } = item;
+				if (this.currentItemsState.has(idToReplace))
+				{
+					this.currentIdsOrder.splice(this.currentIdsOrder.indexOf(idToReplace), 1, id);
+					this.currentItemsState.delete(idToReplace);
+					this.currentItemsState.set(id, item);
+				}
+			});
+
+			return new Promise((resolve, reject) => {
+				this.operationsQueue = this.operationsQueue.then(() => {
+					return new Promise((_resolve) => {
+						if (isNil(this.listView))
+						{
+							_resolve();
+							reject();
+
+							return;
+						}
+
+						const promises = items.map((item) => {
+							return this.listView.updateRowByKey(item.key, { ...item, key: String(item.id) }, 'none');
 						});
+
+						Promise.allSettled(promises)
+							.then(() => this.listView.updateRows(items, 'none'))
+							.then(resolve)
+							.catch((error) => {
+								console.error(error);
+								reject();
+							})
+							.finally(_resolve);
+					});
 				});
 			});
 		}
@@ -966,12 +1169,23 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				}
 
 				this.operationsQueue = this.operationsQueue.then(() => {
-					return this.listView.updateRows(items, animation)
-						.then(resolve)
-						.catch((error) => {
-							console.error(error);
+					return new Promise((_resolve) => {
+						if (isNil(this.listView))
+						{
+							_resolve();
 							reject();
-						});
+
+							return;
+						}
+
+						this.listView.updateRows(items, animation)
+							.then(resolve)
+							.catch((error) => {
+								console.error(error);
+								reject();
+							})
+							.finally(_resolve);
+					});
 				});
 			});
 		}
@@ -1014,12 +1228,23 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				}
 
 				this.operationsQueue = this.operationsQueue.then(() => {
-					return this.listView.appendRowsToSection(items, 0, animation)
-						.then(resolve)
-						.catch((error) => {
-							console.error(error);
+					return new Promise((_resolve) => {
+						if (isNil(this.listView))
+						{
+							_resolve();
 							reject();
-						});
+
+							return;
+						}
+
+						this.listView.appendRowsToSection(items, 0, animation)
+							.then(resolve)
+							.catch((error) => {
+								console.error(error);
+								reject();
+							})
+							.finally(_resolve);
+					});
 				});
 			});
 		}
@@ -1042,13 +1267,20 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 				this.operationsQueue = this.operationsQueue.then(() => {
 					return new Promise((_resolve) => {
+						if (isNil(this.listView))
+						{
+							_resolve();
+							reject();
+
+							return;
+						}
 						const { section, index } = this.getItemPosition(id);
 						this.listView.deleteRow(
 							section,
 							index,
 							animation,
 							() => {
-								if (this.currentIdsOrder.length === 0 && this.state.allItemsLoaded)
+								if (this.isEmptyList() && this.state.allItemsLoaded)
 								{
 									this.setState({
 										isEmpty: true,
@@ -1090,8 +1322,15 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 
 				this.operationsQueue = this.operationsQueue.then(() => {
 					return new Promise((_resolve) => {
+						if (isNil(this.listView))
+						{
+							_resolve();
+							reject();
+
+							return;
+						}
 						this.listView.deleteRowsByKeys(existsIds.map((id) => String(id)), animation, () => {
-							if (this.currentIdsOrder.length === 0 && this.state.allItemsLoaded)
+							if (this.isEmptyList() && this.state.allItemsLoaded)
 							{
 								this.setState({
 									isEmpty: true,
@@ -1132,12 +1371,23 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				}
 
 				this.operationsQueue = this.operationsQueue.then(() => {
-					return this.listView.moveRow(item, sectionIndex, elementIndex, Boolean(useAnimation))
-						.then(resolve)
-						.catch((error) => {
-							console.error(error);
+					return new Promise((_resolve) => {
+						if (isNil(this.listView))
+						{
+							_resolve();
 							reject();
-						});
+
+							return;
+						}
+
+						this.listView.moveRow(item, sectionIndex, elementIndex, Boolean(useAnimation))
+							.then(resolve)
+							.catch((error) => {
+								console.error(error);
+								reject();
+							})
+							.finally(_resolve);
+					});
 				});
 			});
 		}
@@ -1152,12 +1402,30 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 		}
 
 		/**
+		 * @param itemId
+		 * @returns {LayoutComponent}
+		 */
+		getItemRootViewRef(itemId)
+		{
+			return this.itemRootViewRefs[itemId];
+		}
+
+		/**
+		 * @param itemId
+		 * @returns {LayoutComponent}
+		 */
+		getItemMenuViewRef(itemId)
+		{
+			return this.itemMenuViewRefs[itemId];
+		}
+
+		/**
 		 * @param key
 		 * @returns {null|{section: number, index: number}}
 		 */
 		getItemPosition(key)
 		{
-			return this.listView.getElementPosition(String(key));
+			return this.listView?.getElementPosition(String(key));
 		}
 
 		blinkItem(itemId, showUpdated = true)
@@ -1211,9 +1479,18 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 			});
 		}
 
+		scrollBy = (props) => {
+			this.listView.scrollBy(props);
+		};
+
 		getStyle(name)
 		{
 			return (this.getStyles()[name] || {});
+		}
+
+		get colors()
+		{
+			return this.props.showAirStyle ? AppTheme.realColors : AppTheme.colors;
 		}
 
 		getStyles()
@@ -1222,7 +1499,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				wrapper: {
 					flexDirection: 'column',
 					flex: 1,
-					backgroundColor: AppTheme.colors.bgPrimary,
+					backgroundColor: this.colors.bgPrimary,
 				},
 				container: {
 					flexDirection: 'column',
@@ -1247,7 +1524,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 					alignItems: 'center',
 				},
 				textNotification: {
-					color: AppTheme.colors.baseWhiteFixed,
+					color: this.colors.baseWhiteFixed,
 					fontSize: 14,
 					fontWeight: '700',
 					marginLeft: 10,

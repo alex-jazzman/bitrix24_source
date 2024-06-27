@@ -12,12 +12,13 @@ jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, m
 	 */
 	class DialogTextHelper
 	{
-		static copyToClipboard(modelMessage)
+		static copyToClipboard(modelMessage, textTitle = null)
 		{
 			Application.copyToClipboard(parser.prepareCopy(modelMessage));
+			const title = textTitle || Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED');
 
 			InAppNotifier.showNotification({
-				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED'),
+				title,
 				time: 1,
 				backgroundColor: '#E6000000',
 			});

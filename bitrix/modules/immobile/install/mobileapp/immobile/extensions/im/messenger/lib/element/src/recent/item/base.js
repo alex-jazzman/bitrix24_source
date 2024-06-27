@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/recent/item/base
  */
 jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
@@ -11,8 +11,6 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 	const {
 		Path,
 		MessageStatus,
-		DialogType,
-		ComponentCode
 	} = require('im/messenger/const');
 	const {
 		PinAction,
@@ -24,7 +22,6 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		ProfileAction,
 		HideAction,
 	} = require('im/messenger/lib/element/recent/item/action/action');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const { parser } = require('im/messenger/lib/parser');
 
 	const RecentItemSectionCode = Object.freeze({
@@ -210,21 +207,10 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createMessageCount()
 		{
-			if (MessengerParams.get('COMPONENT_CODE') === ComponentCode.imChannelMessenger)
-			{
-				return this;
-			}
-
 			const dialog = this.getDialogItem();
 			if (dialog && dialog.counter)
 			{
 				this.messageCount = dialog.counter;
-			}
-
-			if ([DialogType.channel, DialogType.openChannel].includes(dialog?.type))
-			{
-				const commentCounter = serviceLocator.get('core').getStore().getters['commentModel/getChannelCounters'](dialog.chatId);
-				this.messageCount += commentCounter;
 			}
 
 			return this;
@@ -437,8 +423,8 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		{
 			const dialog = this.getDialogItem();
 			this.styles.counter.backgroundColor = dialog?.muteList?.includes(serviceLocator.get('core').getUserId())
-				? AppTheme.colors.base5
-				: AppTheme.colors.accentMainPrimaryalt
+				? Theme.colors.base5
+				: Theme.colors.accentMainPrimaryalt
 			;
 
 			return this;

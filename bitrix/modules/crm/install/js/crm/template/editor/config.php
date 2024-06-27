@@ -13,9 +13,11 @@ return [
 		'main.core.events',
 		'ui.design-tokens',
 		'ui.entity-selector',
+		'ui.buttons',
 		'main.core',
 		'main.popup',
-		'ui.buttons',
+		'ui.progressbar',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

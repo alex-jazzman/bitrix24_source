@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Catalog\Config\State;
 use Bitrix\Catalog\Product\Store\BatchManager;
 use Bitrix\Catalog\StoreBatchDocumentElementTable;
 use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
@@ -383,6 +384,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$this->arResult['INVENTORY_MANAGEMENT_SOURCE'] =
 			InventoryManagementSourceBuilder::getInstance()->getInventoryManagementSource()
 		;
+		$this->arResult['IS_ONEC_MODE'] = Catalog\Store\EnableWizard\Manager::isOnecMode();
 
 		$this->includeComponentTemplate();
 	}
@@ -1289,10 +1291,10 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 	private function checkIfInventoryManagementIsUsed()
 	{
-		$this->arResult['IS_DEDUCT_LOCKED'] = !Catalog\Component\UseStore::isUsed();
+		$this->arResult['IS_DEDUCT_LOCKED'] = !State::isUsedInventoryManagement();
 		if ($this->arResult['IS_DEDUCT_LOCKED'])
 		{
-			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.store.enablewizard');
 			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 			$this->arResult['MASTER_SLIDER_URL'] = $sliderPath;
 		}
@@ -1300,7 +1302,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 	private function checkIfInventoryManagementIsDisabled(): void
 	{
-		$this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'] = !\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled();
+		$this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'] = !\Bitrix\Catalog\Config\Feature::checkInventoryManagementFeatureByCurrentMode();
+
 		if ($this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'])
 		{
 			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = \Bitrix\Catalog\Config\Feature::getInventoryManagementHelpLink()['FEATURE_CODE'] ?? null;

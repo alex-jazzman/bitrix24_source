@@ -1,4 +1,4 @@
-import {Loc, Type} from "main.core";
+import { Loc, Type, Uri } from 'main.core';
 
 export class BatchMergeManager
 {
@@ -247,15 +247,7 @@ export class BatchMergeManager
 	{
 		this._contextId = this._id + "_" + BX.util.getRandomString(6).toUpperCase();
 
-		BX.Crm.Page.open(
-			BX.util.add_url_param(
-				BX.prop.getString(this._settings, "mergerUrl", ""),
-				{
-					externalContextId: this._contextId,
-					id: this._entityIds
-				}
-			)
-		);
+		BX.Crm.Page.open(this.#getMergerUrl());
 
 		if(!this._externalEventHandler)
 		{
@@ -263,6 +255,27 @@ export class BatchMergeManager
 			BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
 		}
 	}
+
+	#getMergerUrl(): string
+	{
+		const mergerBaseUrl = BX.prop.getString(this._settings, 'mergerUrl', this.#getDefaultMergerUrl());
+
+		const uri = new Uri(mergerBaseUrl);
+		uri.setQueryParams({
+			externalContextId: this._contextId,
+			id: this._entityIds,
+		});
+
+		return uri.toString();
+	}
+
+	#getDefaultMergerUrl(): string
+	{
+		const lowerEntityTypeName = BX.CrmEntityType.resolveName(this._entityTypeId).toLowerCase();
+
+		return `/crm/${lowerEntityTypeName}/merge/`;
+	}
+
 	complete()
 	{
 		BX.onCustomEvent(

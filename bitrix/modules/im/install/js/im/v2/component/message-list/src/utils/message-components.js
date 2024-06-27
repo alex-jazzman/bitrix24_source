@@ -19,6 +19,9 @@ import { SignMessage } from 'im.v2.component.message.sign';
 import { CheckInMessage } from 'im.v2.component.message.check-in';
 import { OwnChatCreationMessage } from 'im.v2.component.message.own-chat-creation';
 import { ZoomInviteMessage } from 'im.v2.component.message.zoom-invite';
+import { GeneralChatCreationMessage } from 'im.v2.component.message.general-chat-creation';
+import { GeneralChannelCreationMessage } from 'im.v2.component.message.general-channel-creation';
+import { ChannelCreationMessage } from 'im.v2.component.message.channel-creation';
 
 export const MessageComponents = {
 	DefaultMessage,
@@ -42,4 +45,7 @@ export const MessageComponents = {
 	SupervisorEnableFeatureMessage,
 	ChatCopilotAddedUsersMessage,
 	SignMessage,
+	GeneralChatCreationMessage,
+	GeneralChannelCreationMessage,
+	ChannelCreationMessage,
 };

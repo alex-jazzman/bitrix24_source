@@ -1,23 +1,9 @@
 <?php
 
-use Bitrix\Im\Integration\Disk\Documents;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-
-$isLinksAvailable = static function() {
-	return \Bitrix\Main\Config\Option::get('im', 'im_link_url_migration', 'N') === 'Y';
-};
-
-$isFilesMigrationFinished = static function() {
-	return \Bitrix\Main\Config\Option::get('im', 'im_link_file_migration', 'N') === 'Y';
-};
-
-$canShowBriefs = static function() {
-	return Documents::getResumesOfCallStatus() === Documents::ENABLED;
-};
 
 return [
 	'css' => 'dist/sidebar.bundle.css',
@@ -32,6 +18,7 @@ return [
 		'im.v2.lib.promo',
 		'im.v2.lib.rest',
 		'ui.promo-video-popup',
+		'im.v2.lib.feature',
 		'ui.vue3.components.socialvideo',
 		'ui.viewer',
 		'ui.icons',
@@ -60,9 +47,4 @@ return [
 		'im.v2.lib.date-formatter',
 	],
 	'skip_core' => false,
-	'settings' => [
-		'linksAvailable' => $isLinksAvailable(),
-		'filesMigrated' => $isFilesMigrationFinished(),
-		'canShowBriefs' => $canShowBriefs()
-	]
 ];

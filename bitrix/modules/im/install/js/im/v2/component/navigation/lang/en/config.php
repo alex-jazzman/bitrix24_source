@@ -1,6 +1,5 @@
 <?php
 $MESS["IM_NAVIGATION_ACTIVE_CALL_CONFIRM"] = "Are you sure you want to close the page? Your call will disconnect if you close the page.";
-$MESS["IM_NAVIGATION_CALLS"] = "Calls";
 $MESS["IM_NAVIGATION_CALLS_V2"] = "Telephony";
 $MESS["IM_NAVIGATION_CHANNELS"] = "Channels";
 $MESS["IM_NAVIGATION_CHATS"] = "Chats";

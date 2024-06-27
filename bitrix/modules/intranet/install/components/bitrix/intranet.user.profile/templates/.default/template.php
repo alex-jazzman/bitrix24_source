@@ -160,7 +160,10 @@ if (
 					}
 					?>
 					<div class="<?= implode(' ', $classList) ?>" data-role="user-profile-actions-button">
-						<span><?=ToUpper(Loc::getMessage("INTRANET_USER_PROFILE_".$arResult["User"]["STATUS"]))?></span>
+						<span><?=mb_strtoupper(
+							Loc::getMessage("INTRANET_USER_PROFILE_MSG_1_".$arResult["User"]["STATUS"])
+							?? Loc::getMessage("INTRANET_USER_PROFILE_".$arResult["User"]["STATUS"]
+							))?></span>
 						<?php
 						if ($arResult["Permissions"]['edit'])
 						{
@@ -177,7 +180,7 @@ if (
 
 			<div class="intranet-user-profile-status-info">
 				<div class="intranet-user-profile-status intranet-user-profile-status-<?= $arResult["User"]["ONLINE_STATUS"]["STATUS"] ?>">
-					<?=ToUpper($arResult["User"]["ONLINE_STATUS"]["STATUS_TEXT"])?>
+					<?=mb_strtoupper($arResult["User"]["ONLINE_STATUS"]["STATUS_TEXT"])?>
 				</div>
 				<div class="intranet-user-profile-last-time">
 					<?php
@@ -393,14 +396,14 @@ if (
 			<div class="intranet-user-profile-column-block">
 				<div class="intranet-user-profile-apps">
 					<div class="intranet-user-profile-desktop-block">
-						<?=Loc::getMessage("INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_1")?>
 						<?php
+						$installationDate = null;
 						if (
 							isset($arResult["DISK_INFO"]["INSTALLATION_DATE"])
 							&& !empty(($arResult["DISK_INFO"]["INSTALLATION_DATE"]))
 						)
 						{
-							echo $arResult["DISK_INFO"]["INSTALLATION_DATE"];
+							$installationDate = $arResult["DISK_INFO"]["INSTALLATION_DATE"];
 						}
 
 						if (
@@ -408,7 +411,15 @@ if (
 							&& !empty(($arResult["DISK_INFO"]["SPACE"]))
 						)
 						{
-							echo ", ".Loc::getMessage("INTRANET_USER_PROFILE_DISK_SPACE", array("#VALUE#" => $arResult["DISK_INFO"]["SPACE"]));
+						?>
+							<?=Loc::getMessage("INTRANET_USER_PROFILE_DISK_SPACE_MSGVER_1", ['#DATE#' => $installationDate, '#VALUE#' => $arResult["DISK_INFO"]["SPACE"]])?>
+						<?php
+						}
+						else
+						{
+						?>
+							<?=Loc::getMessage("INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_2", ['#DATE#' => $installationDate])?>
+						<?php
 						}
 						?>
 					</div>
@@ -947,7 +958,9 @@ if ($arResult["adminRightsRestricted"])
 				"#LINK_END#" => "</a>"
 			))
 		) ?>",
-		"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT")) ?>"
+		"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT")) ?>",
+		"INTRANET_USER_PROFILE_ACTION_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_ACTION_CONFIRM")) ?>",
+		"INTRANET_USERPROFILE_ACTION_REFUSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USERPROFILE_ACTION_REFUSE")) ?>"
 	});
 
 	new BX.Intranet.UserProfile.Manager({

@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Config\State;
 use Bitrix\Catalog\Integration\Report\Dashboard\DashboardManager;
 use Bitrix\Catalog\Integration\Report\Dashboard\StoreStockDashboard;
 use Bitrix\Main;
@@ -65,10 +66,10 @@ class CatalogStoreDocumentControlPanelComponent extends \CBitrixComponent
 	private function getUrlWithParams($baseUrl): string
 	{
 		$url = new \Bitrix\Main\Web\Uri($baseUrl);
-		if (!Catalog\Component\UseStore::isUsed())
+		if (!State::isUsedInventoryManagement())
 		{
 			$url->addParams([
-				Catalog\Component\UseStore::URL_PARAM_STORE_MASTER_HIDE => 'Y'
+				'STORE_MASTER_HIDE' => 'Y'
 			]);
 		}
 
@@ -253,7 +254,7 @@ class CatalogStoreDocumentControlPanelComponent extends \CBitrixComponent
 
 	private function getPanelButtonAnalytics(): ?array
 	{
-		$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+		$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.store.enablewizard');
 		$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 
 		$masterSliderSettings = CUtil::PhpToJSObject([
@@ -265,7 +266,7 @@ class CatalogStoreDocumentControlPanelComponent extends \CBitrixComponent
 
 		if (Main\Loader::includeModule('report'))
 		{
-			if (\Bitrix\Catalog\Component\UseStore::isUsed())
+			if (State::isUsedInventoryManagement())
 			{
 				$allowedDashboards = DashboardManager::getManager()->getAllowedDashboards();
 				if (!$allowedDashboards)
@@ -316,14 +317,14 @@ class CatalogStoreDocumentControlPanelComponent extends \CBitrixComponent
 			&& !\CCrmSaleHelper::isWithOrdersMode()
 		)
 		{
-			Main\UI\Extension::load(['crm.config.catalog']);
+			Main\UI\Extension::load(['catalog.config.settings']);
 
 			$settingsButton = [
 				'TEXT' => Loc::getMessage('STORE_DOCUMENTS_SETTINGS_BUTTON_TITLE'),
 				'SORT' => 60,
 				'ID' => 'settings',
 				'PARENT_ID' => '',
-				'ON_CLICK' => 'BX.Crm.Config.Catalog.Slider.open(\'' . CUtil::JSEscape($this->analyticsSource) . '\');',
+				'ON_CLICK' => 'BX.Catalog.Config.Slider.open(\'' . CUtil::JSEscape($this->analyticsSource) . '\');',
 			];
 		}
 

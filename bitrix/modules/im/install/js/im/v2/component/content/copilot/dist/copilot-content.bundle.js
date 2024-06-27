@@ -116,10 +116,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        return '';
 	      }
 	      return role.name;
-	    },
-	    isCopilotRolesAvailable() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.content.copilot');
-	      return settings.copilotRolesAvailable === 'Y';
 	    }
 	  },
 	  mounted() {
@@ -203,7 +199,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					</div>
 				</div>
 			</div>
-			<div v-if="isCopilotRolesAvailable" class="bx-im-copilot-header__right">
+			<div class="bx-im-copilot-header__right">
 				<div
 					:title="loc('IM_CONTENT_COPILOT_HEADER_OPEN_INVITE_POPUP_TITLE')"
 					:class="{'--active': showAddToChatPopup}"
@@ -268,21 +264,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        textColor: BUTTON_TEXT_COLOR,
 	        hoverColor: BUTTON_HOVER_COLOR
 	      };
-	    },
-	    isCopilotRolesAvailable() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.content.copilot');
-	      return settings.copilotRolesAvailable === 'Y';
-	    },
-	    defaultRole() {
-	      return this.$store.getters['copilot/roles/getDefault'];
 	    }
 	  },
 	  methods: {
 	    onCreateChatClick() {
-	      if (!this.isCopilotRolesAvailable) {
-	        void this.createChat(this.defaultRole);
-	        return;
-	      }
 	      this.showRolesDialog = true;
 	    },
 	    async createChat(role) {
@@ -329,7 +314,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 			</div>
 			<CopilotRolesDialog 
-				v-if="showRolesDialog && isCopilotRolesAvailable"
+				v-if="showRolesDialog"
 				@selectRole="createChat"
 				@close="showRolesDialog = false"
 			/>
@@ -584,7 +569,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    sendMessage() {
 	      this.parentSendMessage();
 	      if (this.audioUsed) {
-	        im_v2_lib_analytics.Analytics.getInstance().useAudioInput();
+	        im_v2_lib_analytics.Analytics.getInstance().onUseCopilotAudioInput();
 	        this.audioUsed = false;
 	      }
 	      this.audioMode = false;
@@ -817,7 +802,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      if (this.dialog.inited) {
 	        im_v2_lib_logger.Logger.warn(`CopilotContent: chat ${this.entityId} is already loaded`);
-	        im_v2_lib_analytics.Analytics.getInstance().openCopilotChat(this.entityId);
+	        im_v2_lib_analytics.Analytics.getInstance().onOpenChat(this.dialog);
 	        return;
 	      }
 	      if (this.dialog.loading) {
@@ -826,9 +811,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      }
 	      if (this.layout.contextId) {
 	        await this.loadChatWithContext();
+	        im_v2_lib_analytics.Analytics.getInstance().onOpenChat(this.dialog);
 	        return;
 	      }
 	      await this.loadChat();
+	      im_v2_lib_analytics.Analytics.getInstance().onOpenChat(this.dialog);
 	    },
 	    onTextareaMount() {
 	      const textareaContainer = this.$refs['textarea-container'];
@@ -850,7 +837,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      im_v2_lib_logger.Logger.warn(`CopilotContent: loading chat ${this.entityId}`);
 	      return this.getChatService().loadChatWithMessages(this.entityId).then(() => {
 	        im_v2_lib_logger.Logger.warn(`CopilotContent: chat ${this.entityId} is loaded`);
-	        im_v2_lib_analytics.Analytics.getInstance().openCopilotChat(this.entityId);
 	      }).catch(error => {
 	        const [firstError] = error;
 	        if (firstError.code === 'ACCESS_DENIED') {

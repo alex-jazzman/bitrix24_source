@@ -1,7 +1,8 @@
 import 'ui.notification';
 
+import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
-import { ChatService, MessageService } from 'im.v2.provider.service';
+import { ChatService } from 'im.v2.provider.service';
 
 import { CommentsContent } from '../../content/comments/comments';
 
@@ -61,6 +62,7 @@ export const CommentsOpener = {
 		async onCreated()
 		{
 			await this.loadChat();
+			Analytics.getInstance().onOpenChat(this.dialog);
 		},
 		async loadChat(): Promise
 		{

@@ -16,6 +16,8 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 		text: '',
 		message: [],
 		userName: '',
+		image: null,
+		video: null,
 	};
 
 	const draftModel = {
@@ -210,6 +212,16 @@ jn.define('im/messenger/model/draft', (require, exports, module) => {
 		if (Type.isStringFilled(fields.userName))
 		{
 			result.userName = fields.userName;
+		}
+
+		if (Type.isPlainObject(fields.video))
+		{
+			result.video = fields.video;
+		}
+
+		if (Type.isPlainObject(fields.image))
+		{
+			result.image = fields.image;
 		}
 
 		return result;

@@ -1,21 +1,20 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-
-use Bitrix\Main\UserField\Types\IntegerType;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 $arResult['additionalParameters']['VALIGN'] = (
 $arResult['userField']['MULTIPLE'] === 'Y' ? 'top' : 'middle'
 );
 
-if(
-	$arResult['userField']['ENTITY_VALUE_ID'] < 1
-	&&
-	mb_strlen($arResult['userField']['SETTINGS']['DEFAULT_VALUE'])
-)
+$entityValueId = (int)($arResult['userField']['ENTITY_VALUE_ID'] ?? 0);
+$defaultValue = $arResult['userField']['SETTINGS']['DEFAULT_VALUE'] ?? null;
+if ($entityValueId < 1 && mb_strlen($defaultValue))
 {
 	$value = htmlspecialcharsbx(
-		$arResult['additionalParameters']['SETTINGS']['DEFAULT_VALUE']
+		$arResult['additionalParameters']['SETTINGS']['DEFAULT_VALUE'] ?? null
 	);
 }
 

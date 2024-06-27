@@ -40,11 +40,6 @@ jn.define('im/messenger/provider/pull/chat/recent', (require, exports, module) =
 
 			const message = clone(manager.getLastMessage());
 
-			message.text = ChatMessengerCommon.purifyText(
-				message.text,
-				message.params,
-			);
-
 			message.status = message.author_id === userId ? 'received' : '';
 
 			message.senderId = message.author_id;

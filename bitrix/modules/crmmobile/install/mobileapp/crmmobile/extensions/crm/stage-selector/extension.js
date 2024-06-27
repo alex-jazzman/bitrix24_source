@@ -8,6 +8,8 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 	const { getEntityMessage } = require('crm/loc');
 	const { connect } = require('statemanager/redux/connect');
 	const { CrmStageSelectorItem } = require('crm/stage-selector/item');
+	const { isOnline } = require('device/connection');
+	const { showOfflineToast } = require('toast');
 
 	const {
 		selectStagesIdsBySemantics,
@@ -84,6 +86,13 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 
 		onBeforeHandleChange(params)
 		{
+			if (!isOnline())
+			{
+				showOfflineToast();
+
+				return Promise.reject();
+			}
+
 			const { category } = this.state;
 			const { activeStageId, selectedStageId, uid, selectedStatusId } = params;
 

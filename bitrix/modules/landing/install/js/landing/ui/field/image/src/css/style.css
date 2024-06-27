@@ -65,6 +65,11 @@
 	content: '';
 }
 
+.landing-ui-field-image-preview-inner.--shown {
+	box-shadow: 0 0 0 2px #8E52EC;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
 .landing-ui-field-image-preview.landing-ui-hide {
 	display: none;
 }

@@ -1,5 +1,8 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 abstract class CBaseSlaveAddWizardStep extends CWizardStep
 {
@@ -41,7 +44,7 @@ abstract class CBaseSlaveAddWizardStep extends CWizardStep
 		}
 
 		$wizard->SetDefaultVar('master_host', '');
-		$wizard->SetDefaultVar('master_port', '');
+		$wizard->SetDefaultVar('master_port', '3306');
 		if ($this->arMaster)
 		{
 			if ($this->arMaster['ID'] == 1)
@@ -164,24 +167,42 @@ class CSlaveAddStep2 extends CBaseSlaveAddWizardStep
 		$this->SetStepID('step2');
 		$this->SetNextStep('step4');
 		$this->SetCancelStep('cancel');
+
+		$wizard = $this->GetWizard();
+		$wizard->SetDefaultVar('db_port', '3306');
 	}
 
 	public function ShowStepNoError()
 	{
+		global $DB;
 		$wizard = $this->GetWizard();
 
+		$inputParams = [
+			'size' => 30,
+			'maxsize' => 50,
+		];
+		$portParams = [
+			'size' => 6,
+			'maxsize' => 50,
+		];
+		$passwordParams = [
+			'size' => 30,
+			'maxsize' => 50,
+			'autocomplete' => 'off',
+		];
 		$this->content = '
 		<table cellpadding="1" cellspacing="0" border="0" width="100%">
 			<tr valign="top">
 				<td width="40%" align="right">' . GetMessage('CLUWIZ_STEP2_DB_HOST') . ':</td>
-				<td width="60%">' . $this->ShowInputField('text', 'db_host', [
-					'size' => 35,
-					'maxsize' => 50,
-				]) . '</td>
+				<td width="60%">' . $this->ShowInputField('text', 'db_host', $inputParams) . '</td>
+			</tr>
+			<tr valign="top">
+				<td width="40%" align="right">' . GetMessage('CLUWIZ_STEP2_MASTER_PORT') . ':</td>
+				<td width="60%">' . $this->ShowInputField('text', 'db_port', $portParams) . '</td>
 			</tr>
 			<tr valign="top">
 				<td align="right">' . GetMessage('CLUWIZ_STEP2_DB_NAME') . ':</td>
-				<td>' . htmlspecialcharsbx($GLOBALS['DB']->DBName) . '</td>
+				<td>' . htmlspecialcharsbx($DB->DBName) . '</td>
 			</tr>
 			<tr valign="top">
 				<td >&nbsp;</td>
@@ -189,18 +210,11 @@ class CSlaveAddStep2 extends CBaseSlaveAddWizardStep
 			</tr>
 			<tr valign="top">
 				<td align="right">' . GetMessage('CLUWIZ_STEP2_DB_LOGIN') . ':</td>
-				<td>' . $this->ShowInputField('text', 'db_login', [
-					'size' => 25,
-					'maxsize' => 50,
-				]) . '</td>
+				<td>' . $this->ShowInputField('text', 'db_login', $inputParams) . '</td>
 			</tr>
 			<tr valign="top">
 				<td align="right">' . GetMessage('CLUWIZ_STEP2_DB_PASSWORD') . ':</td>
-				<td>' . $this->ShowInputField('password', 'db_password', [
-					'size' => 25,
-					'maxsize' => 50,
-					'autocomplete' => 'off',
-				]) . '</td>
+				<td>' . $this->ShowInputField('password', 'db_password', $passwordParams) . '</td>
 			</tr>
 		</table>
 		';
@@ -211,17 +225,11 @@ class CSlaveAddStep2 extends CBaseSlaveAddWizardStep
 			<table cellpadding="2" cellspacing="0" border="0" width="100%">
 				<tr valign="top">
 					<td width="40%" align="right">' . GetMessage('CLUWIZ_STEP2_MASTER_HOST') . ':</td>
-					<td width="60%">' . $this->ShowInputField('text', 'master_host', [
-						'size' => 25,
-						'maxsize' => 50,
-					]) . '</td>
+					<td width="60%">' . $this->ShowInputField('text', 'master_host', $inputParams) . '</td>
 				</tr>
 				<tr valign="top">
 					<td width="40%" align="right">' . GetMessage('CLUWIZ_STEP2_MASTER_PORT') . ':</td>
-					<td width="60%">' . $this->ShowInputField('text', 'master_port', [
-						'size' => 6,
-						'maxsize' => 50,
-					]) . '</td>
+					<td width="60%">' . $this->ShowInputField('text', 'master_port', $portParams) . '</td>
 				</tr>
 			</table>
 			';
@@ -237,6 +245,7 @@ class CSlaveAddStep4 extends CBaseSlaveAddWizardStep
 		$this->SetTitle(GetMessage('CLUWIZ_STEP4_TITLE'));
 		$this->SetPrevStep('step2');
 		$this->SetStepID('step4');
+		$this->SetNextStep('step5');
 		$this->SetCancelStep('cancel');
 	}
 
@@ -247,7 +256,7 @@ class CSlaveAddStep4 extends CBaseSlaveAddWizardStep
 
 		$obCheck = new CClusterDBNodeCheck;
 		$IsReplicationRunning = $obCheck->SlaveNodeIsReplicationRunning(
-			$wizard->GetVar('db_host'),
+			$wizard->GetVar('db_host') . ':' . $wizard->GetVar('db_port'),
 			$GLOBALS['DB']->DBName,
 			$wizard->GetVar('db_login'),
 			$wizard->GetVar('db_password'),
@@ -273,7 +282,7 @@ class CSlaveAddStep4 extends CBaseSlaveAddWizardStep
 		elseif ($IsReplicationRunning === false)
 		{
 			$DB = $obCheck->SlaveNodeConnection(
-				$wizard->GetVar('db_host'),
+				$wizard->GetVar('db_host') . ':' . $wizard->GetVar('db_port'),
 				$GLOBALS['DB']->DBName,
 				$wizard->GetVar('db_login'),
 				$wizard->GetVar('db_password'),
@@ -305,7 +314,7 @@ class CSlaveAddStep4 extends CBaseSlaveAddWizardStep
 
 		if ($bNextStep)
 		{
-			$this->SetNextStep('final');
+			$this->SetNextStep('step5');
 		}
 		else
 		{
@@ -314,40 +323,32 @@ class CSlaveAddStep4 extends CBaseSlaveAddWizardStep
 	}
 }
 
-class CSlaveAddFinalStep extends CBaseSlaveAddWizardStep
+class CSlaveAddStep5 extends CBaseSlaveAddWizardStep
 {
-	protected $location = '';
-
 	public function InitStep()
 	{
 		parent::InitStep();
-		$this->SetTitle(GetMessage('CLUWIZ_FINALSTEP_TITLE'));
+		$this->SetTitle(GetMessage('CLUWIZ_STEP5_TITLE'));
 		$this->SetPrevStep('step4');
-		$this->SetStepID('final');
+		$this->SetStepID('step5');
 		$this->SetNextStep('final');
-		$this->SetNextCaption(GetMessage('CLUWIZ_FINALSTEP_BUTTONTITLE'));
+		$this->SetCancelStep('cancel');
 	}
 
 	public function ShowStepNoError()
 	{
-		if ($this->location)
-		{
-			$this->content = '<script>top.window.location = \'' . CUtil::JSEscape($this->location) . '\';</script>';
-		}
-		else
-		{
-			$this->content = '
-			<table cellpadding="2" cellspacing="0" border="0" width="100%">
-				<tr>
-					<td width="40%" align="right">' . GetMessage('CLUWIZ_FINALSTEP_NAME') . ':</td>
-					<td width="60%">' . $this->ShowInputField('text', 'node_name', [
-						'size' => 40,
-						'maxsize' => 50,
-					]) . '</td>
-				</tr>
-			</table>
-			';
-		}
+		$inputParams = [
+			'size' => 30,
+			'maxsize' => 50,
+		];
+		$this->content = '
+		<table cellpadding="2" cellspacing="0" border="0" width="100%">
+			<tr>
+				<td width="40%" align="right">' . GetMessage('CLUWIZ_STEP5_NAME') . ':</td>
+				<td width="60%">' . $this->ShowInputField('text', 'node_name', $inputParams) . '</td>
+			</tr>
+		</table>
+		';
 	}
 
 	public function OnPostForm()
@@ -364,7 +365,7 @@ class CSlaveAddFinalStep extends CBaseSlaveAddWizardStep
 				'GROUP_ID' => $group_id,
 				'NAME' => $wizard->GetVar('node_name'),
 				'DESCRIPTION' => false,
-				'DB_HOST' => $wizard->GetVar('db_host'),
+				'DB_HOST' => $wizard->GetVar('db_host') . ':' . $wizard->GetVar('db_port'),
 				'DB_NAME' => $GLOBALS['DB']->DBName,
 				'DB_LOGIN' => $wizard->GetVar('db_login'),
 				'DB_PASSWORD' => $wizard->GetVar('db_password'),
@@ -376,8 +377,28 @@ class CSlaveAddFinalStep extends CBaseSlaveAddWizardStep
 				'SELECTABLE' => 'Y',
 				'WEIGHT' => 100,
 			]);
-			$this->location = '/bitrix/admin/cluster_slave_list.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id;
 		}
+	}
+}
+
+class CSlaveAddFinalStep extends CBaseSlaveAddWizardStep
+{
+	public function InitStep()
+	{
+		parent::InitStep();
+		$this->SetTitle(GetMessage('CLUWIZ_FINALSTEP_TITLE'));
+		$this->SetStepID('final');
+		$this->SetCancelStep('final');
+		$this->SetCancelCaption(GetMessage('CLUWIZ_FINALSTEP_BUTTONTITLE'));
+	}
+
+	public function ShowStepNoError()
+	{
+	}
+
+	public function ShowStep()
+	{
+		$this->content = GetMessage('CLUWIZ_FINALSTEP_CONTENT');
 	}
 }
 

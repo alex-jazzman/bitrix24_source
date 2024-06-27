@@ -175,12 +175,18 @@ if ($version == 2)
 
 			if (!$column['dropzone'])
 			{
+				$canSort = (
+					$isCrmAdmin
+					&& $column['type'] === 'PROGRESS'
+					&& !\Bitrix\Crm\Kanban\ViewMode::isDatesBasedView($viewMode)
+				);
+
 				$column = array(
 					'id' => $column['id'],
 					'total' => (int) $column['count'],
 					'color' => $column['color'],
 					'name' => htmlspecialcharsback($column['name']),
-					'canSort' => ($isCrmAdmin && $column['type'] === 'PROGRESS'),
+					'canSort' => $canSort,
 					'canAddItem' => $column['canAddItem'],
 					'data' => array(
 						'sort' => $column['sort'],
@@ -234,10 +240,6 @@ if ($version == 2)
 if ($result !== null)
 {
 	$GLOBALS['APPLICATION']->RestartBuffer();
-	if (SITE_CHARSET != 'UTF-8')
-	{
-		$result = $GLOBALS['APPLICATION']->ConvertCharsetArray($result, SITE_CHARSET, 'UTF-8');
-	}
 
 	header('Content-Type: application/json');
 

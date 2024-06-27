@@ -68,6 +68,18 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this.updateAutocompeteClientResolverPlacementParams();
 
 		EventEmitter.emit(this.getEditor(), 'onFieldInit', {field: this});
+
+		const schemeElementData = this.getSchemeElement().getData();
+		if (schemeElementData.hasOwnProperty('isEditMode') && schemeElementData['isEditMode'] === true)
+		{
+			schemeElementData['isEditMode'] = false;
+			if (this.getEditor().getMode() === BX.UI.EntityEditorMode.edit)
+			{
+				setTimeout(() => {
+					this.editDefaultRequisite();
+				});
+			}
+		}
 	}
 
 	setSelectModeEnabled(selectModeEnabled: boolean): void

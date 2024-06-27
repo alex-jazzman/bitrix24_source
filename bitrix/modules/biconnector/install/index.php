@@ -103,6 +103,7 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\GoogleDataStudio', 'createServiceInstance');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\MicrosoftPowerBI', 'createServiceInstance');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\YandexDataLens', 'createServiceInstance');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\ApacheSuperset', 'createServiceInstance');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorValidateDashboardUrl', 'biconnector', '\Bitrix\BIConnector\Services\GoogleDataStudio', 'validateDashboardUrl');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorValidateDashboardUrl', 'biconnector', '\Bitrix\BIConnector\Services\MicrosoftPowerBI', 'validateDashboardUrl');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorValidateDashboardUrl', 'biconnector', '\Bitrix\BIConnector\Services\YandexDataLens', 'validateDashboardUrl');
@@ -126,19 +127,27 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Product', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\ProductProperty', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\ProductPropertyValue', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\Task', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskUserField', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskStages', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'onBitrix24LicenseChange');
 			$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onBeforeUserUpdateHandler');
 			$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onAfterUserUpdateHandler');
+			$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\Superset\SystemDashboardManager', 'onAfterUserUpdateHandler');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_server_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'refreshSupersetDomainConnection');
 			//bizproc
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Bizproc\Task', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Bizproc\WorkflowState', 'onBIConnectorDataSources');
 
+			$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onBeforeUserUpdate');
+			$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onAfterUserUpdate');
+
 			$this->InstallTasks();
 
 			\CAgent::AddAgent('\\Bitrix\\BIConnector\\LogTable::cleanUpAgent();', 'biconnector', 'N', 86400);
 			\CAgent::AddAgent('\\Bitrix\\BIConnector\\Integration\\Superset\\Agent::sendRestStatistic();', 'biconnector');
+			\CAgent::AddAgent('\\Bitrix\\BIConnector\\Integration\\Superset\\Agent::createDefaultRoles();', 'biconnector');
 
 			ModuleManager::registerModule($this->MODULE_ID);
 
@@ -174,6 +183,7 @@ class BIConnector extends \CModule
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\GoogleDataStudio', 'createServiceInstance');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\MicrosoftPowerBI', 'createServiceInstance');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\YandexDataLens', 'createServiceInstance');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorCreateServiceInstance', 'biconnector', '\Bitrix\BIConnector\Services\ApacheSuperset', 'createServiceInstance');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorValidateDashboardUrl', 'biconnector', '\Bitrix\BIConnector\Services\GoogleDataStudio', 'validateDashboardUrl');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorValidateDashboardUrl', 'biconnector', '\Bitrix\BIConnector\Services\MicrosoftPowerBI', 'validateDashboardUrl');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorValidateDashboardUrl', 'biconnector', '\Bitrix\BIConnector\Services\YandexDataLens', 'validateDashboardUrl');
@@ -197,11 +207,16 @@ class BIConnector extends \CModule
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Product', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\ProductProperty', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\ProductPropertyValue', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\Task', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskUserField', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Tasks\TaskStages', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'onBitrix24LicenseChange');
 		$eventManager->unRegisterEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onBeforeUserUpdateHandler');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\DictionaryManager', 'onAfterUserUpdateHandler');
 		$eventManager->unregisterEventHandler('main', 'OnAfterSetOption_server_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'refreshSupersetDomainConnection');
+		$eventManager->unregisterEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onBeforeUserUpdate');
+		$eventManager->unregisterEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onAfterUserUpdate');
 
 		\CAgent::RemoveModuleAgents('biconnector');
 

@@ -345,7 +345,7 @@ if (!sizeof($errors))
 		{
 			if ($arTest["PASSAGE_TYPE"] == 0 || array_key_exists("answer", $_REQUEST))
 			{
-				$result = CTestResult::AddResponse($testResultID, $_REQUEST["answer"]);
+				$result = CTestResult::AddResponse($testResultID, $_REQUEST["answer"] ?? '');
 				if(!$result)
 				{
 					$sessAttemptID = null;
@@ -456,7 +456,7 @@ if (!sizeof($errors))
 		}
 
 		//User wants to finish
-		if (($_REQUEST["finish"] <> '') && $sessAttemptID)
+		if (!empty($_REQUEST["finish"]) && $sessAttemptID)
 		{
 			$rsAttempt = new CTestAttempt;
 			$rsAttempt->AttemptFinished($sessAttemptID);
@@ -720,7 +720,7 @@ if ($bCanEdit)
 		),
 	);
 
-	if ($arResult["QUESTION"]["ID"])
+	if (isset($arResult["QUESTION"]["ID"]))
 	{
 		array_unshift($arAreaButtons, array(
 			"TEXT" => GetMessage("LEARNING_COURSES_QUESTION_EDIT"),

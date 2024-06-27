@@ -24,6 +24,7 @@ SOFTWARE.
  * @module statemanager/redux/state-sync
  */
 jn.define('statemanager/redux/state-sync', (require, exports, module) => {
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const { guid } = require('utils/guid');
 	const { Logger, LogType } = require('utils/logger');
 
@@ -117,7 +118,7 @@ jn.define('statemanager/redux/state-sync', (require, exports, module) => {
 		const allowed = isActionAllowed(config);
 		let channel = null;
 
-		return ({ dispatch }) => (next) => (action) => {
+		return ({ dispatch, getState }) => (next) => (action) => {
 			try
 			{
 				if (!channel)
@@ -139,7 +140,14 @@ jn.define('statemanager/redux/state-sync', (require, exports, module) => {
 						}
 					}
 
-					return next(stampedAction);
+					const nextResult = next(stampedAction);
+
+					if (!stampedAction.meta?.$isSync)
+					{
+						StateCache.setState(getState());
+					}
+
+					return nextResult;
 				}
 			}
 			catch (error)

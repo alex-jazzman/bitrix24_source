@@ -614,6 +614,126 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  return UserNotificationField;
 	}(BX.UI.EntityEditorCustom);
 
+	var _templateObject$4, _templateObject2$3, _templateObject3$3, _templateObject4$3, _templateObject5$3, _templateObject6$3;
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _ownerId = /*#__PURE__*/new WeakMap();
+	var _initialOwnerId = /*#__PURE__*/new WeakMap();
+	var DashboardOwnerField = /*#__PURE__*/function (_BX$UI$EntityEditorCu) {
+	  babelHelpers.inherits(DashboardOwnerField, _BX$UI$EntityEditorCu);
+	  function DashboardOwnerField() {
+	    var _babelHelpers$getProt;
+	    var _this;
+	    babelHelpers.classCallCheck(this, DashboardOwnerField);
+	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(DashboardOwnerField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _ownerId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _initialOwnerId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    return _this;
+	  }
+	  babelHelpers.createClass(DashboardOwnerField, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(DashboardOwnerField.prototype), "initialize", this).call(this, id, settings);
+	      babelHelpers.classPrivateFieldSet(this, _ownerId, this._model.getIntegerField(this.getName(), null));
+	      babelHelpers.classPrivateFieldSet(this, _initialOwnerId, this._model.getIntegerField(this.getName(), null));
+	    }
+	  }, {
+	    key: "layout",
+	    value: function layout(options) {
+	      var _this2 = this;
+	      this.ensureWrapperCreated({
+	        classNames: ['ui-entity-editor-field-text']
+	      });
+	      this.adjustWrapper();
+	      var message = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK', {
+	        '#HINT_LINK#': '<link></link>'
+	      });
+	      var hint = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-settings-panel-range__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), message);
+	      var link = main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"biconnector-superset-settings-panel-range__hint-link\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'));
+	      main_core.Event.bind(link, 'click', function () {
+	        top.BX.Helper.show('redirect=detail&code=20337242&anchor=DashboardOwner');
+	      });
+	      main_core.Dom.replace(hint.querySelector('link'), link);
+	      main_core.Dom.insertBefore(hint, this._container);
+	      this._innerWrapper = main_core.Tag.render(_templateObject3$3 || (_templateObject3$3 = babelHelpers.taggedTemplateLiteral(["<div class='ui-entity-editor-content-block ui-ctl-custom'></div>"])));
+	      main_core.Dom.append(this._innerWrapper, this._wrapper);
+	      var content = main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\t\n\t\t\t<div class=\"ui-ctl-w100\"></div>\n\t\t"])));
+	      main_core.Dom.append(content, this._innerWrapper);
+	      var tagSelector = new ui_entitySelector.TagSelector({
+	        multiple: false,
+	        dialogOptions: {
+	          context: 'biconnector--dashboard-owner',
+	          dropdownMode: true,
+	          entities: [{
+	            id: 'user',
+	            options: {
+	              selectMode: 'usersOnly',
+	              inviteEmployeeLink: false
+	            }
+	          }],
+	          preselectedItems: [['user', this._model.getField(this.getName(), null)]]
+	        },
+	        events: {
+	          onBeforeTagAdd: function onBeforeTagAdd(event) {
+	            var _event$getData = event.getData(),
+	              tag = _event$getData.tag;
+	            babelHelpers.classPrivateFieldSet(_this2, _ownerId, tag.getId());
+	            _this2.onChange();
+	          },
+	          onBeforeTagRemove: function onBeforeTagRemove(event) {
+	            babelHelpers.classPrivateFieldSet(_this2, _ownerId, null);
+	            _this2.onChange();
+	          }
+	        }
+	      });
+	      tagSelector.renderTo(content);
+	      main_core.Dom.addClass(tagSelector.getOuterContainer(), 'ui-ctl-element');
+	      this.registerLayout(options);
+	      this._hasLayout = true;
+	    }
+	  }, {
+	    key: "onChange",
+	    value: function onChange() {
+	      if (babelHelpers.classPrivateFieldGet(this, _initialOwnerId) !== babelHelpers.classPrivateFieldGet(this, _ownerId)) {
+	        this.markAsChanged();
+	        return;
+	      }
+	      this._isChanged = false;
+	    }
+	  }, {
+	    key: "save",
+	    value: function save() {
+	      if (main_core.Type.isDomNode(this._innerWrapper)) {
+	        var oldSaveBlock = this._innerWrapper.querySelector('.save-block');
+	        if (main_core.Type.isDomNode(oldSaveBlock)) {
+	          main_core.Dom.remove(oldSaveBlock);
+	        }
+	        var saveBlock = main_core.Tag.render(_templateObject5$3 || (_templateObject5$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"save-block\"></div>"])));
+	        main_core.Dom.append(main_core.Tag.render(_templateObject6$3 || (_templateObject6$3 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "\" value=\"", "\">"])), this.getName(), babelHelpers.classPrivateFieldGet(this, _ownerId)), saveBlock);
+	        main_core.Dom.append(saveBlock, this._innerWrapper);
+	      }
+	      this._model.setField(this.getName(), babelHelpers.classPrivateFieldGet(this, _ownerId));
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      var self = new this(id, settings);
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return DashboardOwnerField;
+	}(BX.UI.EntityEditorCustom);
+
 	var FieldFactory = /*#__PURE__*/function () {
 	  function FieldFactory() {
 	    var _this = this;
@@ -638,6 +758,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          return KeyInfoField.create(controlId, settings);
 	        case 'userNotificationSelector':
 	          return UserNotificationField.create(controlId, settings);
+	        case 'ownerSelector':
+	          return DashboardOwnerField.create(controlId, settings);
 	        default:
 	          return null;
 	      }

@@ -70,8 +70,6 @@ $bVarsFromForm = false;
 
 if($_SERVER["REQUEST_METHOD"] == "POST" && (!empty($_POST["save"]) || !empty($_POST["apply"])) && ($RIGHTS >= "W") && check_bitrix_sessid())
 {
-	$adminSidePanelHelper->decodeUriComponent();
-
 	$arFields = array(
 		"ENTITY_ID" => $_REQUEST["ENTITY_ID"] ?? '',
 		"FIELD_NAME" => $_REQUEST["FIELD_NAME"] ?? '',
@@ -237,7 +235,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 // validate list_url
 if (!empty($list_url))
 {
-	$list_url = mb_substr($list_url, 0, 1) === '/' ? $list_url : '/'.$list_url;
+	$list_url = str_starts_with($list_url, '/') ? $list_url : '/'.$list_url;
 }
 
 $aMenu = array();
@@ -274,7 +272,7 @@ $context->Show();
 if($message)
 	echo $message->Show();
 ?>
-<script language="JavaScript">
+<script>
 <!--
 function addNewRow(tableID)
 {

@@ -9,8 +9,10 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { Color } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { clone } = require('utils/object');
+	const { clone, mergeImmutable } = require('utils/object');
+	const { copilotModel } = require('im/messenger/model/dialogues/copilot');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const logger = LoggerManager.getInstance().getLogger('model--dialogues');
 
 	const dialogState = {
@@ -75,6 +77,9 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		state: () => ({
 			collection: {},
 		}),
+		modules: {
+			copilotModel,
+		},
 		getters: {
 			/**
 			 * @function dialoguesModel/getById
@@ -461,6 +466,33 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function dialoguesModel/updateManagerList */
+			updateManagerList(store, payload)
+			{
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				if (existingItem.managerList === payload.managerList)
+				{
+					return false;
+				}
+
+				store.commit('update', {
+					actionName: 'updateManagerList',
+					data: {
+						dialogId: payload.dialogId,
+						fields: {
+							managerList: payload.managerList,
+						},
+					},
+				});
+
+				return true;
+			},
+
 			/** @function dialoguesModel/mute */
 			mute(store, payload)
 			{
@@ -746,6 +778,12 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		},
 	};
 
+	/**
+	 *
+	 * @param {MessengerStore<DialoguesMessengerModel>} store
+	 * @param fields
+	 * @return {{}}
+	 */
 	function validate(store, fields)
 	{
 		const result = {};
@@ -1028,13 +1066,15 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			result.role = fields.role;
 		}
 
-		if (fields.permissions)
+		if (!Type.isUndefined(fields.permissions))
 		{
-			const preparedPermissions = preparePermissions(fields.permissions);
-			if (Object.values(preparedPermissions).length > 0)
+			result.permissions = {};
+			if (Type.isObject(fields.permissions))
 			{
-				result.permissions = preparedPermissions;
+				result.permissions = preparePermissions(fields.permissions);
 			}
+
+			result.permissions = mergeImmutable(ChatPermission.getActionGroupsByChatType(result.type), result.permissions);
 		}
 
 		if (Type.isStringFilled(fields.aiProvider))
@@ -1074,7 +1114,10 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 		try
 		{
-			if (Type.isUndefined(countOfViewers) && rawLastMessageViews.count_of_viewers) // old rest response
+			if (
+				Type.isUndefined(countOfViewers)
+				&& !Type.isUndefined(rawLastMessageViews.count_of_viewers)
+			) // old rest response
 			{
 				countOfViewers = rawLastMessageViews.count_of_viewers;
 				rawFirstViewers = rawLastMessageViews.first_viewers;
@@ -1176,7 +1219,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		}
 		else
 		{
-			result = store.rootState.applicationModel.common.host + avatar;
+			result = currentDomain + avatar;
 		}
 
 		if (result)

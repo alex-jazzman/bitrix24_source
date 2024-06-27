@@ -1402,9 +1402,25 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler(
 			'messageservice',
+			'OnMessageSuccessfullySent',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\WhatsApp',
+			'onMessageSent'
+		);
+
+		$eventManager->registerEventHandler(
+			'messageservice',
 			'messageUpdated',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Sms',
+			'onMessageStatusUpdated'
+		);
+
+		$eventManager->registerEventHandler(
+			'messageservice',
+			'messageUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\WhatsApp',
 			'onMessageStatusUpdated'
 		);
 
@@ -1891,6 +1907,11 @@ class crm extends CModule
 			'Y',
 			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL')
 		);
+
+		\CAgent::AddAgent(
+			'Bitrix\Crm\Agent\Badge\RemoveOldEntityBadgesAgent::run();',
+			'crm'
+		);
 	}
 
 	private function uninstallEventHandlers()
@@ -2155,9 +2176,25 @@ class crm extends CModule
 
 		$eventManager->unRegisterEventHandler(
 			'messageservice',
+			'OnMessageSuccessfullySent',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\WhatsApp',
+			'onMessageSent'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'messageservice',
 			'messageUpdated',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Sms',
+			'onMessageStatusUpdated'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'messageservice',
+			'messageUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\WhatsApp',
 			'onMessageStatusUpdated'
 		);
 
@@ -2555,13 +2592,6 @@ class crm extends CModule
 			$GLOBALS['errors'] = $this->errors;
 			$APPLICATION->IncludeAdminFile(Loc::getMessage('CRM_UNINSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/unstep2.php');
 		}
-	}
-
-	public function migrateToBox()
-	{
-		\Bitrix\Main\Loader::includeModule('crm');
-		\Bitrix\Crm\Restriction\RestrictionManager::onMigrateToBox();
-		\CCrmExternalSale::OnMigrateToBox();
 	}
 
 	private static function __GetMessagesForAllLang($file, $MessID, $strDefMess = false, $arLangList = [])

@@ -73,7 +73,7 @@ export class SearchContextMenu extends BaseMenu
 		const profileUri = Utils.user.getProfileLink(this.context.dialogId);
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE'),
+			text: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
 			href: profileUri,
 			onclick: () => {
 				this.menuInstance.close();

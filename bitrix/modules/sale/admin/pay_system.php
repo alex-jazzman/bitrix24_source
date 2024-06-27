@@ -78,7 +78,7 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W")
 			array(
 				'select' => array('ID'),
 				'filter' => $filter,
-				'order' => array(ToUpper($by) => ToUpper($order))
+				'order' => array(mb_strtoupper($by) => mb_strtoupper($order))
 			)
 		);
 
@@ -160,8 +160,8 @@ $params = array(
 );
 
 global $by, $order;
-if (isset($by) && ToUpper($by) != 'LID' && ToUpper($by) != 'CURRENCY')
-	$params['order'] = array(ToUpper($by) => ToUpper($order));
+if (isset($by) && mb_strtoupper($by) != 'LID' && mb_strtoupper($by) != 'CURRENCY')
+	$params['order'] = array(mb_strtoupper($by) => mb_strtoupper($order));
 
 $dbRes = \Bitrix\Sale\PaySystem\Manager::getList($params);
 

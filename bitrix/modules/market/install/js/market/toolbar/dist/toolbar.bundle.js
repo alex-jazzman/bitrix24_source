@@ -5,7 +5,7 @@ this.BX = this.BX || {};
 	let _ = t => t,
 	  _t;
 	const Toolbar = {
-	  props: ['categories', 'menuInfo', 'marketAction'],
+	  props: ['categories', 'menuInfo', 'marketAction', 'searchAction'],
 	  data() {
 	    return {
 	      hoverCategory: 0,
@@ -269,8 +269,13 @@ this.BX = this.BX || {};
 	          this.search.pages = response.data.apps.length > 0 ? parseInt(response.data.pages, 10) : 1;
 	          if (append) {
 	            this.search.foundApps = this.search.foundApps.concat(response.data.apps);
-	          } else {
-	            this.search.foundApps = response.data.apps;
+	            return;
+	          }
+	          this.search.foundApps = response.data.apps;
+	          if (this.searchAction.length > 0) {
+	            try {
+	              eval(this.searchAction.replace('#SEARCH_TEXT#', searchText));
+	            } catch (e) {}
 	          }
 	        }
 	      }, response => {
@@ -522,7 +527,7 @@ this.BX = this.BX || {};
 									<template v-else>
 										<a class="market-menu-catalog__search-item"
 										   v-for="appItem in search.foundApps"
-										   :href="$root.getDetailUri(appItem.CODE, appItem.IS_SITE_TEMPLATE === 'Y', 'search')"
+										   :href="$root.getDetailUri(appItem.CODE, appItem.IS_SITE_TEMPLATE === 'Y', 'search', search.text)"
 										   @click="$root.openSiteTemplate($event, appItem.IS_SITE_TEMPLATE === 'Y')"
 										>
 											<div class="market-menu-catalog__search-item_img-block">

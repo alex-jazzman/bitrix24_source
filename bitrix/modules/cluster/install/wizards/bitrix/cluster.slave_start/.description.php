@@ -11,6 +11,7 @@ $arWizardDescription = [
 		'CSlaveStartStep2',
 		'CSlaveStartStep3',
 		'CSlaveStartStep4',
+		'CSlaveStartFinalStep',
 		'CSlaveStartCancelStep',
 	],
 ];

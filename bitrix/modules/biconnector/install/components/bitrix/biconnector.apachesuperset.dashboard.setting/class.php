@@ -5,18 +5,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector\Access\AccessController;
+use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Access\Model\DashboardAccessItem;
 use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
+use Bitrix\BIConnector\Integration\Superset\Repository\SupersetUserRepository;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\IconController;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Section\EntityEditorSection;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\EntityEditorController;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\SettingsComponentController;
-use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field\DashboardPeriodFilterField;
-use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field\PeriodFilterField;
+use Bitrix\BIConnector\Superset\UI\SettingsPanel\Field;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\SettingsPanel;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorableImplementation;
@@ -65,6 +67,15 @@ class ApacheSupersetDashboardSettingComponent
 
 	public function executeComponent()
 	{
+		$this->initDashboard();
+		if ($this->dashboard === null)
+		{
+			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_DASHBOARD_NOT_FOUND');
+			$this->includeComponentTemplate();
+
+			return;
+		}
+
 		$checkingResult = $this->checkAccess();
 		if (!$checkingResult->isSuccess())
 		{
@@ -73,15 +84,6 @@ class ApacheSupersetDashboardSettingComponent
 				$this->arResult['ERROR_MESSAGES'][] = $message;
 			}
 
-			$this->includeComponentTemplate();
-
-			return;
-		}
-
-		$this->initDashboard();
-		if ($this->dashboard === null)
-		{
-			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_DASHBOARD_NOT_FOUND');
 			$this->includeComponentTemplate();
 
 			return;
@@ -124,6 +126,16 @@ class ApacheSupersetDashboardSettingComponent
 			->setAjaxData($ajaxData)
 		;
 
+		$accessItem = DashboardAccessItem::createFromArray([
+			'ID' => $this->dashboard->getId(),
+			'TYPE' => $this->dashboard->getType(),
+			'OWNER_ID' => $this->dashboard->getOrmObject()->getOwnerId(),
+		]);
+		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_DASHBOARD_EDIT, $accessItem))
+		{
+			$settingsPanel->addSection($this->getOwnerSection());
+		}
+
 		if (isset($this->arParams['DASHBOARD_ID']))
 		{
 			$settingsPanel->setEntityId($this->arParams['DASHBOARD_ID']);
@@ -146,6 +158,25 @@ class ApacheSupersetDashboardSettingComponent
 	{
 		$result = new Result();
 
+		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_ACCESS))
+		{
+			$result->addError(new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS_MSGVER_1')));
+
+			return $result;
+		}
+
+		if (
+			!AccessController::getCurrent()->checkByItemId(
+				ActionDictionary::ACTION_BIC_DASHBOARD_VIEW,
+				$this->dashboard->getId()
+			)
+		)
+		{
+			$result->addError(new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS_DASHBOARD')));
+
+			return $result;
+		}
+
 		if (
 			!Loader::includeModule('bitrix24')
 			|| !Feature::isFeatureEnabled('bi_constructor')
@@ -167,28 +198,49 @@ class ApacheSupersetDashboardSettingComponent
 
 	private function getFilterSection(): EntityEditorSection
 	{
-		$dateFilterSection = new EntityEditorSection('DASHBOARD_FILTER');
+		$dateFilterSection = (new EntityEditorSection(
+			name: 'DASHBOARD_FILTER',
+			title: Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_SECTION_PERIOD_TITLE'),
+		))
+			->setIconClass('--calendar-1')
+		;
+
 		if ($this->dashboard !== null)
 		{
-			$dateFilterSection->addField(new DashboardPeriodFilterField(
+			$dateFilterSection->addField(new Field\DashboardPeriodFilterField(
 				id: 'DASHBOARD_FILTER',
 				dashboard: $this->dashboard,
 			));
 		}
 		else
 		{
-			$dateFilterSection->addField(new PeriodFilterField('DASHBOARD_FILTER'));
+			$dateFilterSection->addField(new Field\PeriodFilterField(
+				id: 'DASHBOARD_FILTER',
+			));
 		}
 
 		return $dateFilterSection;
 	}
 
+	private function getOwnerSection(): EntityEditorSection
+	{
+		return (new EntityEditorSection(
+			name: 'OWNER_ID',
+			title: Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_SECTION_OWNER_TITLE'),
+		))
+			->addField(new Field\OwnerField(
+				id: 'OWNER_ID',
+				dashboard: $this->dashboard,
+			))
+			->setIconClass('--person-check')
+		;
+	}
+
 	private function getTitle(): string
 	{
-		return Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_TITLE')
-			. ': '
-			. $this->dashboard->getTitle()
-		;
+		return Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_TITLE_MSGVER_1', [
+			'#DASHBOARD_TITLE#' => $this->dashboard->getTitle(),
+		]);
 	}
 
 	private function getDashboardInfo(): ?array
@@ -207,11 +259,19 @@ class ApacheSupersetDashboardSettingComponent
 
 	public function saveAction(array $data): ?array
 	{
+		$this->initDashboard();
+		if (!$this->dashboard)
+		{
+			$error = new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_INVALID_DASHBOARD'));
+			$this->errorCollection->setError($error);
+
+			return null;
+		}
+
 		$checkingResult = $this->checkAccess();
 		if (!$checkingResult->isSuccess())
 		{
-			$error = new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS'));
-			$this->errorCollection->setError($error);
+			$this->errorCollection->add($checkingResult->getErrors());
 
 			return null;
 		}
@@ -225,31 +285,22 @@ class ApacheSupersetDashboardSettingComponent
 			return null;
 		}
 
-		$this->initDashboard();
-		if (!$this->dashboard)
-		{
-			$error = new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_INVALID_DASHBOARD'));
-			$this->errorCollection->setError($error);
-
-			return null;
-		}
-
 		$dashboardObject = $this->dashboard->getOrmObject();
+		$result = [];
 
 		if ($data['FILTER_PERIOD'] === EmbeddedFilter\DateTime::PERIOD_DEFAULT)
 		{
 			$dashboardObject->setDateFilterStart(null);
 			$dashboardObject->setDateFilterEnd(null);
 			$dashboardObject->setFilterPeriod(null);
-			$dashboardObject->save();
 
-			return ['FILTER_PERIOD' => EmbeddedFilter\DateTime::PERIOD_DEFAULT];
+			$result['FILTER_PERIOD'] = EmbeddedFilter\DateTime::PERIOD_DEFAULT;
 		}
-
-		$startTime = null;
-		$endTime = null;
-		if ($data['FILTER_PERIOD'] === EmbeddedFilter\DateTime::PERIOD_RANGE)
+		elseif ($data['FILTER_PERIOD'] === EmbeddedFilter\DateTime::PERIOD_RANGE)
 		{
+			$startTime = null;
+			$endTime = null;
+
 			try
 			{
 				$startTime = new Date($data['DATE_FILTER_START']);
@@ -262,24 +313,104 @@ class ApacheSupersetDashboardSettingComponent
 
 				return null;
 			}
-		}
 
-		$period = EmbeddedFilter\DateTime::getDefaultPeriod();
-		$innerPeriod = $data['FILTER_PERIOD'] ?? '';
-		if (is_string($innerPeriod) && EmbeddedFilter\DateTime::isAvailablePeriod($innerPeriod))
+			$dashboardObject->setDateFilterStart($startTime);
+			$dashboardObject->setDateFilterEnd($endTime);
+			$dashboardObject->setFilterPeriod(EmbeddedFilter\DateTime::PERIOD_RANGE);
+			$result['DATE_FILTER_START'] = $startTime;
+			$result['DATE_FILTER_END'] = $endTime;
+			$result['FILTER_PERIOD'] = EmbeddedFilter\DateTime::PERIOD_RANGE;
+		}
+		else
 		{
-			$period = $innerPeriod;
+			$period = EmbeddedFilter\DateTime::getDefaultPeriod();
+			$innerPeriod = $data['FILTER_PERIOD'] ?? '';
+			if (is_string($innerPeriod) && EmbeddedFilter\DateTime::isAvailablePeriod($innerPeriod))
+			{
+				$period = $innerPeriod;
+			}
+			$dashboardObject->setFilterPeriod($period);
+			$result['FILTER_PERIOD'] = $period;
 		}
 
-		$dashboardObject->setDateFilterStart($startTime);
-		$dashboardObject->setDateFilterEnd($endTime);
-		$dashboardObject->setFilterPeriod($period);
+		if (isset($data['OWNER_ID']))
+		{
+			$accessItem = DashboardAccessItem::createFromArray([
+				'ID' => $dashboardObject->getId(),
+				'TYPE' => $dashboardObject->getType(),
+				'OWNER_ID' => $dashboardObject->getOwnerId(),
+			]);
+			if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_DASHBOARD_EDIT, $accessItem))
+			{
+				$this->errorCollection->setError(
+					new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS_DASHBOARD')),
+				);
+
+				return null;
+			}
+
+			$integrator = ProxyIntegrator::getInstance();
+			$newOwnerId = (int)$data['OWNER_ID'];
+			if ($newOwnerId <= 0)
+			{
+				$this->errorCollection->setError(
+					new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_OWNER_ERROR_NOT_SELECTED')),
+				);
+
+				return null;
+			}
+
+			$userTo = (new SupersetUserRepository)->getById($newOwnerId);
+			if (!$userTo)
+			{
+				$this->errorCollection->setError(
+					new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_OWNER_ERROR_NOT_FOUND')),
+				);
+
+				return null;
+			}
+
+			if (!$userTo->clientId)
+			{
+				$superset = new SupersetController($integrator);
+				$createResult = $superset->createUser($newOwnerId);
+				if (!$createResult->isSuccess())
+				{
+					$this->errorCollection->setError(
+						new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_OWNER_ERROR_CREATE_USER')),
+					);
+
+					return null;
+				}
+				$userTo = $createResult->getData()['user'];
+			}
+
+			$currentOwnerId = $dashboardObject->getOwnerId();
+			$userFrom = (new SupersetUserRepository)->getById($currentOwnerId);
+			if (!$userFrom)
+			{
+				$this->errorCollection->setError(
+					new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_OWNER_ERROR_CREATE_USER')),
+				);
+
+				return null;
+			}
+
+			$setOwnerResult = $integrator->changeDashboardOwner($dashboardObject->getExternalId(), $userFrom, $userTo);
+			if ($setOwnerResult->hasErrors())
+			{
+				$this->errorCollection->setError(
+					new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_OWNER_ERROR_CREATE_USER')),
+				);
+
+				return null;
+			}
+			$dashboardObject->setOwnerId((int)$data['OWNER_ID']);
+			$result['OWNER_ID'] = (int)$data['OWNER_ID'];
+		}
+
 		$dashboardObject->save();
 
-		return [
-			'FILTER_PERIOD' => $period,
-			'DATE_FILTER_START' => $startTime,
-			'DATE_FILTER_END' => $endTime,
-		];
+		return $result;
 	}
 }

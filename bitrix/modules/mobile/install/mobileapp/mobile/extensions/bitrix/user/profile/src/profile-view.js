@@ -48,7 +48,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 			this.loaded = false;
 			this.name = '';
 			this.imageUrl = '';
-			BX.onViewLoaded(() => this.form.setTitle({ text: BX.message('PROFILE_INFO') }));
+			BX.onViewLoaded(() => this.form.setTitle({ text: BX.message('PROFILE_INFO_MSGVER_1'), type: 'entity' }));
 		}
 
 		loadPlaceholder()
@@ -543,9 +543,9 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 		{
 			this.popupMenu.setData(
 				[
-					{ title: BX.message('PROFILE_USER_TASKS'), sectionCode: 'usermenu', id: 'tasks' },
-					{ title: BX.message('PROFILE_USER_FILES'), sectionCode: 'usermenu', id: 'files' },
-					{ title: BX.message('PROFILE_USER_MESSAGES'), sectionCode: 'usermenu', id: 'messages' },
+					{ title: BX.message('PROFILE_USER_TASKS_MSGVER_1'), sectionCode: 'usermenu', id: 'tasks' },
+					{ title: BX.message('PROFILE_USER_FILES_MSGVER_1'), sectionCode: 'usermenu', id: 'files' },
+					{ title: BX.message('PROFILE_USER_MESSAGES_MSGVER_1'), sectionCode: 'usermenu', id: 'messages' },
 				],
 				[{ id: 'usermenu', title: '' }],
 				(event, item) => {
@@ -568,7 +568,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 
 											});
 										},
-										title: BX.message('PROFILE_INFO'),
+										title: BX.message('PROFILE_INFO_MSGVER_1'),
 									},
 								);
 
@@ -681,7 +681,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 					PageManager.openWidget(
 						'list',
 						{
-							title: params.title,
+							titleParams: { text: params.title, type: 'entity' },
 							groupStyle: true,
 							onReady: openProfile,
 							onError: (error) => console.error(error),
@@ -692,7 +692,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 				{
 					if (formObject.setTitle)
 					{
-						formObject.setTitle({ text: BX.message('PROFILE_INFO') });
+						formObject.setTitle({ text: BX.message('PROFILE_INFO_MSGVER_1'), type: 'entity' });
 					}
 
 					openProfile(formObject);
@@ -706,16 +706,10 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 
 		static openComponent(userData = {})
 		{
-			let url = '';
-			if (availableComponents && availableComponents['user.profile'])
-			{
-				url = availableComponents['user.profile'].publicUrl;
-			}
-
 			PageManager.openComponent(
 				'JSStackComponent',
 				{
-					scriptPath: url,
+					scriptPath: availableComponents?.['user.profile']?.publicUrl ?? '',
 					params: { userId: userData.userId },
 					canOpenInDefault: true,
 					rootWidget: {

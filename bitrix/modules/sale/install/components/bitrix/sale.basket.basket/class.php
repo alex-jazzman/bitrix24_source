@@ -1013,7 +1013,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 			{
 				if (strncmp($value, 'PROPERTY_', 9) === 0)
 				{
-					$propCode = ToUpper(mb_substr($value, 9));
+					$propCode = mb_strtoupper(mb_substr($value, 9));
 
 					if ($propCode == '')
 					{
@@ -2515,38 +2515,22 @@ class CBitrixBasketComponent extends CBitrixComponent
 
 	protected function getSessionFUserBasketPrice($fUserId)
 	{
-		$price = null;
-		$siteId = $this->getSiteId();
-
-		if (isset($_SESSION['SALE_USER_BASKET_PRICE'][$siteId][$fUserId]))
-		{
-			$price = $_SESSION['SALE_USER_BASKET_PRICE'][$siteId][$fUserId];
-		}
-
-		return $price;
+		return Sale\BasketComponentHelper::getFUserBasketPrice($fUserId, $this->getSiteId());
 	}
 
 	protected function setSessionFUserBasketPrice($price, $fUserId)
 	{
-		$_SESSION['SALE_USER_BASKET_PRICE'][$this->getSiteId()][$fUserId] = $price;
+		Sale\BasketComponentHelper::setFUserBasketPrice($fUserId, $price, $this->getSiteId());
 	}
 
 	protected function getSessionFUserBasketQuantity($fUserId)
 	{
-		$quantity = null;
-		$siteId = $this->getSiteId();
-
-		if (isset($_SESSION['SALE_USER_BASKET_QUANTITY'][$siteId][$fUserId]))
-		{
-			$quantity = $_SESSION['SALE_USER_BASKET_QUANTITY'][$siteId][$fUserId];
-		}
-
-		return $quantity;
+		return Sale\BasketComponentHelper::getFUserBasketQuantity($fUserId, $this->getSiteId());
 	}
 
 	protected function setSessionFUserBasketQuantity($quantity, $fUserId)
 	{
-		$_SESSION['SALE_USER_BASKET_QUANTITY'][$this->getSiteId()][$fUserId] = $quantity;
+		Sale\BasketComponentHelper::setFUserBasketQuantity($fUserId, $quantity, $this->getSiteId());
 	}
 
 	protected function getAffectedReformattedBasketItemsInDiscount(Sale\BasketBase $basket, array $discountData, array $calcResults)

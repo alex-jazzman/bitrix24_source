@@ -1543,7 +1543,7 @@
 	-webkit-box-align: start;
 	    -ms-flex-align: start;
 	        align-items: flex-start;
-	gap: 12px;
+	gap: 10px;
 	-ms-flex-negative: 0;
 	    flex-shrink: 0;
 	-ms-flex-preferred-size: 33%;
@@ -1617,7 +1617,7 @@
 }
 
 .bx-messenger-videocall-panel-item {
-	width: 50px;
+	width: 60px;
 	/*height: calc(100% - 10px);  !* 100% - top padding *!*/
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -1631,7 +1631,7 @@
 	        align-items: center;
 	gap: 4px;
 	cursor: pointer;
-	max-width: 50px;
+	max-width: 60px;
 	text-align: center;
 	-webkit-tap-highlight-color: transparent;
 }

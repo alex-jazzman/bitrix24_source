@@ -242,6 +242,7 @@
 			if (
 				this.isCurrentUserAdmin === 'Y'
 				&& this.userStatus !== "fired"
+				&& this.userStatus !== "waiting"
 				&& !this.isOwnProfile
 				&& !BX.util.in_array(this.userStatus, ['email', 'shop' ])
 			)
@@ -277,6 +278,27 @@
 					onclick: BX.proxy(function () {
 						BX.proxy_context.popupWindow.close();
 						this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_HIRE_CONFIRM"), this.hireUser.bind(this));
+					}, this)
+				});
+			}
+
+			if (this.isCurrentUserAdmin === 'Y' && this.userStatus === "waiting" && !this.isOwnProfile)
+			{
+				menuItems.push({
+					text: BX.message("INTRANET_USER_PROFILE_ACTION_CONFIRM"),
+					className: "menu-popup-no-icon",
+					onclick: BX.proxy(function () {
+						BX.proxy_context.popupWindow.close();
+						this.confirmUserRequest('Y');
+					}, this)
+				});
+
+				menuItems.push({
+					text: BX.message("INTRANET_USERPROFILE_ACTION_REFUSE"),
+					className: "menu-popup-no-icon",
+					onclick: BX.proxy(function () {
+						BX.proxy_context.popupWindow.close();
+						this.confirmUserRequest('N');
 					}, this)
 				});
 			}
@@ -319,6 +341,7 @@
 				&& this.canEditProfile && !this.isOwnProfile
 				&& !this.isIntegratorUser
 				&& this.userStatus !== "fired"
+				&& this.userStatus !== "waiting"
 			)
 			{
 				menuItems.push({
@@ -702,6 +725,39 @@
 				if (response.data === true)
 				{
 					location.reload();
+				}
+				else
+				{
+					this.hideLoader({loader: loader});
+					this.showErrorPopup("Error");
+				}
+			}, function (response) {
+
+				this.hideLoader({loader: loader});
+			}.bind(this));
+		},
+
+		confirmUserRequest: function(confirm)
+		{
+			const loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			BX.ajax.runAction('intranet.controller.invite.confirmUserRequest', {
+				signedParameters: this.signedParameters,
+				data: {
+					userId: this.userId,
+					isAccept: confirm
+				}
+			}).then(function (response) {
+				if (response.data === true)
+				{
+					if (confirm !== 'Y')
+					{
+						BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
+						BX.SidePanel.Instance.close();
+					}
+					else
+					{
+						location.reload();
+					}
 				}
 				else
 				{

@@ -7,6 +7,7 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { BaseMenu } from 'im.v2.lib.menu';
 import { CallManager } from 'im.v2.lib.call';
 import { runAction } from 'im.v2.lib.rest';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { CallTypes } from '../types/call-types';
 
@@ -179,15 +180,14 @@ export class CallMenu extends BaseMenu
 
 	#getZoomItem(): ?MenuItem
 	{
-		const settings = Extension.getSettings('im.v2.component.content.chat');
-		const isActive = settings.get('isZoomActive', false);
+		const isActive = FeatureManager.isFeatureAvailable(Feature.zoomActive);
 		if (!isActive)
 		{
 			return null;
 		}
 
 		const classNames = ['bx-im-chat-header-call-button-menu__zoom', 'menu-popup-no-icon'];
-		const isFeatureAvailable = settings.get('isZoomFeatureAvailable', false);
+		const isFeatureAvailable = FeatureManager.isFeatureAvailable(Feature.zoomAvailable);
 		if (!isFeatureAvailable)
 		{
 			classNames.push('--disabled');

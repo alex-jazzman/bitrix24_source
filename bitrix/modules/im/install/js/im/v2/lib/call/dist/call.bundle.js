@@ -96,6 +96,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _getCurrentDialogId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCurrentDialogId");
 	var _isUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isUser");
 	var _prepareUserCall = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareUserCall");
+	var _getChatUserCounter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatUserCounter");
 	class CallManager {
 	  static getInstance() {
 	    if (!this.instance) {
@@ -107,6 +108,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    CallManager.getInstance();
 	  }
 	  constructor() {
+	    Object.defineProperty(this, _getChatUserCounter, {
+	      value: _getChatUserCounter2
+	    });
 	    Object.defineProperty(this, _prepareUserCall, {
 	      value: _prepareUserCall2
 	    });
@@ -261,6 +265,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    const hasCurrentCall = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['recent/calls/hasActiveCall'](dialogId);
 	    return callSupported && !hasCurrentCall;
 	  }
+	  hasActiveCurrentCall(dialogId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['recent/calls/hasActiveCall'](dialogId) && this.getCurrentCallDialogId() === dialogId;
+	  }
+	  hasActiveAnotherCall(dialogId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['recent/calls/hasActiveCall']() && !this.hasActiveCurrentCall(dialogId);
+	  }
+	  getCallUserLimit() {
+	    return BX.Call.Util.getUserLimit();
+	  }
+	  isChatUserLimitExceeded(dialogId) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _getChatUserCounter)[_getChatUserCounter](dialogId) > this.getCallUserLimit();
+	  }
 
 	  // endregion call events
 	}
@@ -380,17 +396,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _checkUserCallSupport2(userId) {
 	  const user = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['users/get'](userId);
-	  return user && user.status !== 'guest' && !user.bot && !user.network && user.id !== im_v2_application_core.Core.getUserId() && !!user.lastActivityDate;
+	  return user && user.status !== 'guest' && !user.bot && !user.network && user.id !== im_v2_application_core.Core.getUserId() && Boolean(user.lastActivityDate);
 	}
 	function _checkChatCallSupport2(dialogId) {
-	  const dialog = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/get'](dialogId);
-	  if (!dialog) {
-	    return false;
-	  }
-	  const {
-	    userCounter
-	  } = dialog;
-	  return userCounter > 1 && userCounter <= BX.Call.Util.getUserLimit();
+	  const userCounter = babelHelpers.classPrivateFieldLooseBase(this, _getChatUserCounter)[_getChatUserCounter](dialogId);
+	  return userCounter > 1 && userCounter <= this.getCallUserLimit();
 	}
 	function _pushServerIsActive2() {
 	  return true;
@@ -421,6 +431,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      [currentCompanion.id]: currentCompanion
 	    }
 	  });
+	}
+	function _getChatUserCounter2(dialogId) {
+	  const {
+	    userCounter
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _store)[_store].getters['chats/get'](dialogId, true);
+	  return userCounter;
 	}
 	CallManager.viewContainerClass = 'bx-im-messenger__call_container';
 

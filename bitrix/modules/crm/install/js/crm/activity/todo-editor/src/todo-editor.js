@@ -1,12 +1,8 @@
+import { FileUploader as TodoEditorFileUploader } from 'crm.activity.file-uploader';
+import { DatetimeConverter } from 'crm.timeline.tools';
 import { ajax as Ajax, Dom, Loc, Reflection, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
-import { FileUploader as TodoEditorFileUploader } from 'crm.activity.file-uploader';
-import {
-	Calendar as SettingsPopupCalendar,
-	SettingsPopup as TodoEditorSettingsPopup,
-} from 'crm.activity.settings-popup';
-import { DatetimeConverter } from 'crm.timeline.tools';
 import { UI } from 'ui.notification';
 import { BitrixVue } from 'ui.vue3';
 import { TodoEditor as TodoEditorComponent } from './components/todo-editor';
@@ -25,7 +21,6 @@ declare type TodoEditorParams = {
 	copilotSettings?: Object,
 	ownerTypeId: number,
 	borderColor: string,
-	enableCalendarSync: boolean,
 	popupMode: boolean,
 };
 
@@ -34,13 +29,6 @@ type TodoEditorAdditionalButton = {
 	icon: string,
 	description: string,
 	action: () => {},
-}
-
-export type SectionSettings = {
-	id: string,
-	active: boolean,
-	component: Object,
-	params: Object,
 }
 
 export const TodoEditorMode = {
@@ -78,9 +66,6 @@ export class TodoEditor
 	#activityId: Number = null;
 	#eventEmitter: EventEmitter = null;
 	#fileUploader: TodoEditorFileUploader = null;
-	#settingsPopup: TodoEditorSettingsPopup = null;
-	#settings: Object = {};
-	#enableCalendarSync: boolean = false;
 	#popupMode: boolean = false;
 
 	constructor(params: TodoEditorParams)
@@ -135,7 +120,6 @@ export class TodoEditor
 
 		this.#bindEvents(params);
 
-		this.#enableCalendarSync = Type.isBoolean(params.enableCalendarSync) ? params.enableCalendarSync : false;
 		this.#popupMode = Type.isBoolean(params.popupMode) ? params.popupMode : false;
 	}
 
@@ -190,58 +174,9 @@ export class TodoEditor
 	{
 		const buttons = [];
 
-		if (this.#enableCalendarSync)
-		{
-			buttons.push(this.#getSettingsButton());
-		}
-
 		buttons.push(this.#getFileUploaderButton());
 
 		return buttons;
-	}
-
-	#getSettingsButton(): TodoEditorAdditionalButton
-	{
-		return {
-			id: 'settings',
-			icon: 'settings',
-			description: Loc.getMessage('CRM_ACTIVITY_TODO_SETTINGS_BUTTON_HINT'),
-			action: this.#onSettingsButtonClick.bind(this),
-		};
-	}
-
-	#onSettingsButtonClick(): void
-	{
-		if (!this.#settingsPopup)
-		{
-			this.#settingsPopup = new TodoEditorSettingsPopup({
-				onSettingsChange: this.onSettingsChange.bind(this),
-				sections: this.#getSectionSettings(),
-				settings: this.#settings,
-			});
-		}
-
-		if (this.#layoutComponent)
-		{
-			this.#settingsPopup.syncSettings(this.#layoutComponent.getData());
-		}
-
-		this.#settingsPopup.show();
-	}
-
-	onSettingsChange(settings: Object): void
-	{
-		this.setSettings(settings);
-
-		if (settings?.calendar)
-		{
-			this.setDeadlineFromTimestamp(settings['calendar'].from);
-		}
-	}
-
-	setSettings(settings: Object = {}): void
-	{
-		this.#settings = settings;
 	}
 
 	#getFileUploaderButton(): TodoEditorAdditionalButton
@@ -263,7 +198,7 @@ export class TodoEditor
 
 		// wrap BX.Promise in native js promise
 		this.#loadingPromise = new Promise((resolve, reject) => {
-			this.#getSaveActionData().then(data => {
+			this.#getSaveActionData().then((data) => {
 				Ajax
 					.runAction(this.#getSaveActionPath(), { data })
 					.then(resolve)
@@ -287,124 +222,31 @@ export class TodoEditor
 
 	#getSaveActionData(): Promise
 	{
-		return new Promise(resolve => {
-			this.#getSaveActionDataSettings().then(settings => {
-				const userData = this.#layoutComponent.getData();
-				const data = {
-					ownerTypeId: this.#ownerTypeId,
-					ownerId: this.#ownerId,
-					description: userData.description,
-					responsibleId: userData.responsibleUserId,
-					deadline: DateTimeFormat.format(DatetimeConverter.getSiteDateTimeFormat(), userData.deadline),
-					parentActivityId: this.#parentActivityId,
-					fileTokens: this.#fileUploader ? this.#fileUploader.getServerFileIds() : [],
-					settings,
-					pingOffsets: userData.pingOffsets,
-				};
+		return new Promise((resolve) => {
+			const userData = this.#layoutComponent.getData();
+			const data = {
+				ownerTypeId: this.#ownerTypeId,
+				ownerId: this.#ownerId,
+				description: userData.description,
+				responsibleId: userData.responsibleUserId,
+				deadline: DateTimeFormat.format(DatetimeConverter.getSiteDateTimeFormat(), userData.deadline),
+				parentActivityId: this.#parentActivityId,
+				fileTokens: this.#fileUploader ? this.#fileUploader.getServerFileIds() : [],
+				pingOffsets: userData.pingOffsets,
+			};
 
-				if (this.#mode === TodoEditorMode.UPDATE)
-				{
-					data.id = this.#activityId;
-				}
+			if (this.#mode === TodoEditorMode.UPDATE)
+			{
+				data.id = this.#activityId;
+			}
 
-				resolve(data);
-			});
+			resolve(data);
 		});
 	}
 
 	#getSaveActionPath(): String
 	{
 		return (this.#mode === TodoEditorMode.ADD ? 'crm.activity.todo.add' : 'crm.activity.todo.update');
-	}
-
-	#getSaveActionDataSettings(): Promise
-	{
-		if (this.#settingsPopup)
-		{
-			return this.#syncAndGetSaveActionDataSettingsFromPopup();
-		}
-
-		return this.#getSaveActionDefaultDataSettings();
-	}
-
-	#syncAndGetSaveActionDataSettingsFromPopup(): Promise
-	{
-		if (this.#layoutComponent)
-		{
-			this.#settingsPopup.syncSettings(this.#layoutComponent.getData());
-		}
-
-		// must first work out vue reactivity in nested components
-		return new Promise(resolve => {
-			setTimeout(() => {
-				resolve(this.#settingsPopup.getSettings());
-			}, 0);
-		});
-	}
-
-	#getSaveActionDefaultDataSettings(): Promise
-	{
-		const result = [];
-
-		this.#getSectionSettings().forEach(section => {
-			if (!section.active)
-			{
-				return;
-			}
-
-			const sectionSettings = section.params;
-			sectionSettings.id = section.id;
-			result.push(sectionSettings);
-		});
-
-		return Promise.resolve(result);
-	}
-
-	#getSectionSettings(): ReadonlyArray<SectionSettings>
-	{
-		const calendar = {
-			id: SettingsPopupCalendar.methods.getId(),
-			component: SettingsPopupCalendar,
-		};
-
-		if (this.#settingsPopup)
-		{
-			const settings = this.#settingsPopup.getSettings();
-			if (settings.calendar)
-			{
-				const calendarSettings = settings.calendar;
-				calendar.params = {
-					from: calendarSettings.from,
-					to: calendarSettings.to,
-					duration: calendarSettings.duration,
-				};
-				calendar.active = true;
-			}
-		}
-
-		if (!calendar.params)
-		{
-			calendar.params = this.#getDefaultCalendarParams();
-			calendar.active = false;
-		}
-
-		return [
-			calendar,
-		];
-	}
-
-	#getDefaultCalendarParams(): Object
-	{
-		const fromDate = this.getDeadline() || this.#deadline;
-		const from = fromDate.getTime() / 1000;
-		const duration = 3600;
-		const to = from + duration;
-
-		return {
-			from,
-			duration,
-			to,
-		};
 	}
 
 	getDeadline(): ?Date
@@ -515,7 +357,6 @@ export class TodoEditor
 		}
 
 		this.#fileUploader = null;
-		this.#settingsPopup = null;
 
 		return new Promise((resolve) => {
 			setTimeout(resolve, 10);

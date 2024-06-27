@@ -128,7 +128,7 @@ export const CopilotContent = {
 			{
 				Logger.warn(`CopilotContent: chat ${this.entityId} is already loaded`);
 
-				Analytics.getInstance().openCopilotChat(this.entityId);
+				Analytics.getInstance().onOpenChat(this.dialog);
 
 				return;
 			}
@@ -143,11 +143,13 @@ export const CopilotContent = {
 			if (this.layout.contextId)
 			{
 				await this.loadChatWithContext();
+				Analytics.getInstance().onOpenChat(this.dialog);
 
 				return;
 			}
 
 			await this.loadChat();
+			Analytics.getInstance().onOpenChat(this.dialog);
 		},
 		onTextareaMount()
 		{
@@ -175,7 +177,6 @@ export const CopilotContent = {
 
 			return this.getChatService().loadChatWithMessages(this.entityId).then(() => {
 				Logger.warn(`CopilotContent: chat ${this.entityId} is loaded`);
-				Analytics.getInstance().openCopilotChat(this.entityId);
 			}).catch((error) => {
 				const [firstError] = error;
 				if (firstError.code === 'ACCESS_DENIED')

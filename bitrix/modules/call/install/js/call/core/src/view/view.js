@@ -165,6 +165,7 @@ export class View
 
 		this.enableNewLayoutLogic = config.enableNewLayoutLogic;
 
+		this.limitation = null;
 		this.inactiveUsers = [];
 		this.activeUsers = [];
 		this.rerenderTimeout = null;
@@ -397,8 +398,97 @@ export class View
 		}.bind(this), 100)*/
 	};
 
+	openArticle(articleCode)
+	{
+		const infoHelper = BX.UI.InfoHelper;
+
+		if (infoHelper.isOpen())
+		{
+			infoHelper.close()
+		}
+
+		infoHelper.show(articleCode);
+	}
+
+	onClickButtonWithLimit(limitObj, handle)
+	{
+		const {enabled, articleCode} = limitObj;
+
+		if (enabled && typeof handle === "function") {
+			handle()
+
+			return;
+		}
+
+		if (!enabled && articleCode) {
+			this.openArticle(articleCode)
+		}
+	}
+
+	getLimitation()
+	{
+		this.limitation = Util.getCallFeatures();
+	}
+
+	getLimitationByType(type)
+	{
+		const defaultLimitation = {enable: true};
+
+		const currentLimitation = this.limitation?.[`call_${type}`];
+
+		if (!currentLimitation) {
+			return defaultLimitation;
+		}
+
+		return {
+			enabled: currentLimitation.enable,
+			articleCode: currentLimitation.articleCode
+		}
+	}
+
+	getBackgroundLimitation()
+	{
+		return this.getLimitationByType('background')
+	}
+
+	getBackgroundBlurLimitation()
+	{
+		return this.getLimitationByType('background_blur')
+	}
+
+	getRecordLimitation()
+	{
+		return this.getLimitationByType('record')
+	}
+
+	getScreenSharingLimitation()
+	{
+		return this.getLimitationByType('screen_sharing')
+	}
+
+	isDesktopCall()
+	{
+		return DesktopApi.isDesktop();
+	}
+	checkAvailableBackgroundImage()
+	{
+		if (!this.isDesktopCall())
+		{
+			return;
+		}
+
+		const {id: backgroundId} = DesktopApi.getBackgroundImage();
+
+		if (!backgroundId || backgroundId === 'none') {
+			DesktopApi.setCallBackground('none', 'none')
+		}
+	}
+
 	init()
 	{
+		this.getLimitation();
+		this.checkAvailableBackgroundImage();
+
 		if (this.isFullScreenSupported())
 		{
 			if (Browser.isChrome() || Browser.isSafari())
@@ -680,7 +770,7 @@ export class View
 		for (let i = 0; i < this.userRegistry.users.length; i++)
 		{
 			const userModel = this.userRegistry.users[i];
-			if (this.isUserHasActiveState(userModel))
+			if (this.isUserHasActiveState(userModel) && this.users.hasOwnProperty(userModel.id))
 			{
 				result.push(userModel.id);
 			}
@@ -946,7 +1036,7 @@ export class View
 			return;
 		}
 
-		this.renderUserList();
+		this.renderUserList(true);
 		this.toggleEars();
 	};
 
@@ -1754,23 +1844,25 @@ export class View
 		}
 
 		const user = this.users[userId];
+		const userModel = this.userRegistry.get(userId);
 		const userHasCameraVideo = user.hasCameraVideo();
 		this.users[userId].videoRenderer = mediaRenderer;
 
 		if (this.enableNewLayoutLogic)
 		{
+			if (this.skipVideoTriggerForUsers.has(userId))
+			{
+				this.skipVideoTriggerForUsers.delete(userId);
+				return;
+			}
+
 			if (mediaRenderer.stream && mediaRenderer.kind === 'video')
 			{
-				if (this.skipVideoTriggerForUsers.has(userId))
-				{
-					this.skipVideoTriggerForUsers.delete(userId);
-					return;
-				}
 				this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
 			}
 			else if (mediaRenderer.kind === 'video')
 			{
-				if (!this.activeUsers.includes(userId) || !userHasCameraVideo)
+				if (!this.activeUsers.includes(userId) && !userHasCameraVideo && !userModel.prevCameraState)
 				{
 					return;
 				}
@@ -2978,24 +3070,10 @@ export class View
 
 	toggleSubscribingVideoInRenderUserList(participantIds, showVideo)
 	{
-		const filteredParticipants = participantIds.filter(p =>
-		{
-			if (this.users[p].videoRenderer?.kind === 'sharing')
-			{
-				return !!this.users[p].previewRenderer !== showVideo;
-			}
-			else
-			{
-				return !!this.users[p].videoRenderer !== showVideo;
-			}
+		this.eventEmitter.emit(EventName.onToggleSubscribe, {
+			participantIds: participantIds,
+			showVideo: showVideo
 		});
-		if (filteredParticipants.length)
-		{
-			this.eventEmitter.emit(EventName.onToggleSubscribe, {
-				participantIds: filteredParticipants,
-				showVideo: showVideo
-			})
-		}
 	}
 
 	getOrderingRules()
@@ -3141,12 +3219,6 @@ export class View
 		if (userModel.prevCameraState)
 		{
 			params.disconnectedUserHadVideo = true;
-			params.shiftUsersWithVideo++;
-
-			if (!params.minOrderToShiftUsersWithVideo || params.minOrderToShiftUsersWithVideo > rules.userDisconnected.order)
-			{
-				params.minOrderToShiftUsersWithVideo = rules.userDisconnected.order;
-			}
 		}
 	};
 
@@ -3158,10 +3230,11 @@ export class View
 		{
 			return;
 		}
-		else if (userModel.cameraState && params.usersWithEnabledVideo.includes(userModel.id))
+		else if (params.usersWithEnabledVideo.includes(userModel.id))
 		{
 			params.incompleteSwaps.pop();
 			params.usersWithEnabledVideo.splice(params.usersWithEnabledVideo.indexOf(userModel.id), 1);
+			params.usersToKeepActive.push(userModel.id);
 		}
 		else if (!userModel.cameraState)
 		{
@@ -3206,7 +3279,7 @@ export class View
 			const skipUsers = (userWithoutVideoPage - 1) * this.usersPerPage;
 			const numberOfUsersWithVideoForSwap = params.usersWithVideo.length - skipUsers;
 			const userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - index];
-			const canCompleteVideoSwap = userToSwap.order > el.order;
+			const canCompleteVideoSwap = userToSwap && userToSwap.order > el.order;
 
 			if (canCompleteVideoSwap && (numberOfUsersWithVideoForSwap - usersProceed >= rules.videoDisabled.length - index))
 			{
@@ -3234,7 +3307,9 @@ export class View
 				}
 				else if (userToSwapPage === this.currentPage && userToSwapPage > userWithoutVideoPage)
 				{
+					params.usersToKeepActive.push(el.id);
 					params.usersToForceDeactivation.push(userToSwap.id);
+					params.usersToDeactivate++;
 				}
 			}
 		});
@@ -3255,29 +3330,6 @@ export class View
 		}
 
 		return status;
-	};
-
-	moveUsersWithoutVideo(rules, params)
-	{
-		if (!params.lastUserWithVideo || params.videoDisabledProceed)
-		{
-			return;
-		}
-
-		params.videoDisabledProceed = true;
-		const lastUserWithDisabledVideoOrder = rules.videoDisabled[rules.videoDisabled.length - 1].order;
-		const shift = lastUserWithDisabledVideoOrder > params.lastUserWithVideoOrder ? 0 : params.shiftUsersWithVideo;
-		rules.videoDisabled.forEach((el, index) =>
-		{
-			const user = this.userRegistry.get(el.id);
-			params.orderChanges.push({
-				type: SwapType.Direct,
-				to: {
-					userModel: user,
-					order: params.lastUserWithVideoOrder - shift + index + 1,
-				},
-			});
-		});
 	};
 
 	completeDisconnectSwap(rules, params)
@@ -3335,7 +3387,7 @@ export class View
 		}
 	};
 
-	renderUserList()
+	renderUserList(pageChange)
 	{
 		clearTimeout(this.rerenderTimeout);
 		this.rerenderTimeout = null;
@@ -3368,10 +3420,8 @@ export class View
 				from: null,
 				to: null,
 			},
-			shiftUsersWithVideo: 0,
 			disconnectedUserHadVideo: false,
 			usersToDeactivate: 0,
-			minOrderToShiftUsersWithVideo: 0,
 			videoDisabledProceed: false,
 		};
 
@@ -3392,8 +3442,9 @@ export class View
 			{
 				orderingParams.activeUsers = this.getActiveUsers();
 			}
-			orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers + 1, this.usersPerPage);
+			orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
 			orderingParams.lastUserWithVideoOrder = orderingParams.lastUserWithVideo?.order || 1;
+			orderingParams.usersWithVideo.sort((a, b) => a.order - b.order);
 
 			this.completeVideoDisabledSwap(orderingRules, orderingParams);
 			if (orderingRules.userDisconnected)
@@ -3472,7 +3523,8 @@ export class View
 						const previousIncompleteSwaps = orderingParams.incompleteSwaps.length;
 						const index = orderingParams.incompleteSwaps[0] - 1;
 						const userEnabledVideo = orderingParams.orderChanges[index].from;
-						const changedUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userEnabledVideo.userModel.id)
+						const currentUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userModel.id);
+						const changedUserFromCurrentPage = orderingParams.possibleActiveUsers?.includes(userEnabledVideo.userModel.id);
 
 						this.completeVideoEnableSwap(userModel, skipUsers, orderingRules, orderingParams);
 						const swapCompleted = previousIncompleteSwaps !== orderingParams.incompleteSwaps.length;
@@ -3480,14 +3532,22 @@ export class View
 						if (swapCompleted && userActive && !changedUserFromCurrentPage && !orderingParams.usersToKeepActive.includes(userModel.id))
 						{
 							userActive = false;
-							if (userModel.cameraState)
+							if (userModel.cameraState && !currentUserFromCurrentPage)
 							{
 								this.skipVideoTriggerForUsers.add(userModel.id);
 							}
+							if (!currentUserFromCurrentPage)
+							{
+								this.skipVideoTriggerForUsers.add(userEnabledVideo.userModel.id);
+							}
 						}
-						else if (swapCompleted && !userActive && (!userSkipped || userSkipped && changedUserFromCurrentPage)) // prev page
+						else if (swapCompleted && ((!userSkipped && !currentUserFromCurrentPage) || (userSkipped && changedUserFromCurrentPage)))
 						{
 							userActive = true;
+							if (!changedUserFromCurrentPage)
+							{
+								this.skipVideoTriggerForUsers.add(userEnabledVideo.userModel.id);
+							}
 						}
 					}
 
@@ -3539,6 +3599,10 @@ export class View
 					{
 						userActive = true;
 						orderingParams.usersToDeactivate--;
+						if (userModel.cameraState)
+						{
+							this.skipVideoTriggerForUsers.add(userModel.id);
+						}
 					}
 					else if (orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage)
 					{
@@ -3549,6 +3613,11 @@ export class View
 							this.skipVideoTriggerForUsers.add(userModel.id);
 						}
 					}
+				}
+				else if (pageChange && userModel.cameraState && (userActive || userSkipped))
+				{
+					// it's just a page change
+					this.skipVideoTriggerForUsers.add(userModel.id);
 				}
 			}
 
@@ -4082,7 +4151,7 @@ export class View
 							onPauseClick: this._onRecordPauseClick.bind(this),
 							onStopClick: this._onRecordStopClick.bind(this),
 							onMouseOver: this._onRecordMouseOver.bind(this),
-							onMouseOut: this._onRecordMouseOut.bind(this)
+							onMouseOut: this._onRecordMouseOut.bind(this),
 						});
 					}
 					result.appendChild(this.buttons.recordStatus.render());
@@ -5010,26 +5079,34 @@ export class View
 
 	_onRecordToggleClick(e)
 	{
-		if (this.recordState.state === View.RecordState.Stopped)
-		{
-			this._onRecordStartClick(e);
-		}
-		else
-		{
-			this._onRecordStopClick(e);
-		}
+		const limitObj = this.getRecordLimitation();
+
+		this.onClickButtonWithLimit(limitObj, () => {
+			if (this.recordState.state === View.RecordState.Stopped)
+			{
+				this._onRecordStartClick(e);
+			}
+			else
+			{
+				this._onRecordStopClick(e);
+			}
+		})
 	}
 
 	_onForceRecordToggleClick(e)
 	{
-		if (this.recordState.state === View.RecordState.Stopped)
-		{
-			this._onForceRecordStartClick(View.RecordType.Video);
-		}
-		else
-		{
-			this._onRecordStopClick(e);
-		}
+		const limitObj = this.getRecordLimitation();
+
+		this.onClickButtonWithLimit(limitObj, () => {
+			if (this.recordState.state === View.RecordState.Stopped)
+			{
+				this._onForceRecordStartClick(View.RecordType.Video);
+			}
+			else
+			{
+				this._onRecordStopClick(e);
+			}
+		})
 	}
 
 	_onForceRecordStartClick(recordType)
@@ -5238,10 +5315,15 @@ export class View
 	_onScreenButtonClick(e)
 	{
 		e.stopPropagation();
-		this.eventEmitter.emit(EventName.onButtonClick, {
-			buttonName: 'toggleScreenSharing',
-			node: e.target
-		});
+
+		const limitObj = this.getScreenSharingLimitation();
+
+		this.onClickButtonWithLimit(limitObj, () => {
+			this.eventEmitter.emit(EventName.onButtonClick, {
+				buttonName: 'toggleScreenSharing',
+				node: e.target
+			});
+		})
 	};
 
 	_onChatButtonClick(e)

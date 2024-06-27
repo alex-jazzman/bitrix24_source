@@ -88,9 +88,11 @@ export class Row
 
 				if (Type.isDomNode(node.parentNode))
 				{
-					const phoneBlock = node.parentNode.querySelector("[data-role='phone-block']");
+					const phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
+					
 					if (Type.isDomNode(phoneBlock))
 					{
+						console.log('phoneBlock', phoneBlock);
 						const newInput = Tag.render`
 							<input
 								name="EMAIL[]"

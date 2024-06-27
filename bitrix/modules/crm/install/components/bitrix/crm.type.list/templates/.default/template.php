@@ -1,10 +1,9 @@
 <?php
 
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
-use Bitrix\Main;
 use Bitrix\UI;
 
 /** @var array $arResult */
@@ -103,7 +102,6 @@ UI\Toolbar\Facade\Toolbar::addFilter($arResult['filter']);
 			gridId: '<?= CUtil::JSEscape($arResult['grid']['GRID_ID']); ?>',
 			errorTextContainer: document.getElementById('crm-type-list-error-container'),
 			welcomeMessageContainer: document.querySelector('[data-role="crm-type-list-welcome"]'),
-			isEmptyList: <?=($arResult['isEmptyList'] === true ? 'true' : 'false')?>,
 		};
 		(new BX.Crm.TypeListComponent(params)).init();
     });

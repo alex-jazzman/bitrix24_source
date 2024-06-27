@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core_events,im_v2_application_core,im_v2_lib_analytics,im_v2_lib_localStorage,im_v2_const,im_v2_lib_logger) {
+(function (exports,main_core_events,im_v2_application_core,im_v2_lib_analytics,im_v2_lib_localStorage,im_v2_const,im_v2_lib_logger,im_v2_lib_channel) {
 	'use strict';
 
 	const TypesWithoutContext = new Set([im_v2_const.ChatType.comment]);
@@ -130,12 +130,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 	function _sendAnalytics2(config) {
 	  const currentLayout = this.getLayout();
-	  if (currentLayout.name === im_v2_const.Layout.copilot.name && currentLayout.entityId === '') {
+	  if (currentLayout.name === config.name) {
 	    return;
 	  }
-	  if (config.name === im_v2_const.Layout.copilot.name && config.entityId === '') {
-	    im_v2_lib_analytics.Analytics.getInstance().openCopilotTab(config.entityId);
+	  if (config.name === im_v2_const.Layout.copilot.name) {
+	    im_v2_lib_analytics.Analytics.getInstance().onOpenCopilotTab();
 	  }
+	  im_v2_lib_analytics.Analytics.getInstance().onOpenTab(config.name);
 	}
 	function _isSameChat2(config) {
 	  const {
@@ -151,10 +152,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    entityId: dialogId,
 	    contextId
 	  } = config;
-	  const {
-	    type
-	  } = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat](dialogId);
-	  const isChannel = [im_v2_const.ChatType.openChannel, im_v2_const.ChatType.channel].includes(type);
+	  const isChannel = im_v2_lib_channel.ChannelManager.isChannel(dialogId);
 	  if (isChannel) {
 	    main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeComments);
 	  }
@@ -175,5 +173,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.LayoutManager = LayoutManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Event,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=layout.bundle.js.map

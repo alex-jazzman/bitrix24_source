@@ -14,6 +14,7 @@ return [
 		'im.v2.lib.user',
 		'im.v2.lib.user-status',
 		'im.v2.lib.logger',
+		'im.v2.lib.channel',
 		'im.v2.lib.utils',
 		'im.v2.const',
 		'im.v2.application.core',

@@ -159,7 +159,8 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 		$data = [
 			'url' => Intranet\Site\Sections\TimemanSection::getUserLoginHistoryUrl(),
 			'isCloud' => $this->isCloud,
-			'isHide' => $this->isCloud && (\CBitrix24::getPortalZone() === 'ua'),
+			'isHide' => $this->isCloud && (\CBitrix24::getPortalZone() === 'ua')
+				|| \Bitrix\Intranet\Util::isExtranetUser($this->userId),
 		];
 
 		if ($this->isCloud)

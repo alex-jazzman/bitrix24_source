@@ -43,8 +43,6 @@ class CCrmConfigEmailtrackerAjax
 			}
 		}
 
-		\CUtil::jsPostUnescape();
-
 		if ($error === false)
 		{
 			if (!empty($_REQUEST['siteid']))

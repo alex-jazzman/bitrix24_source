@@ -22,8 +22,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _prepareChatForUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareChatForUser");
 	var _prepareChatForAdditionalUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareChatForAdditionalUser");
 	var _getBirthdayPlaceholder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getBirthdayPlaceholder");
+	var _mergeFileIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mergeFileIds");
 	class RecentDataExtractor {
 	  constructor(params) {
+	    Object.defineProperty(this, _mergeFileIds, {
+	      value: _mergeFileIds2
+	    });
 	    Object.defineProperty(this, _getBirthdayPlaceholder, {
 	      value: _getBirthdayPlaceholder2
 	    });
@@ -140,19 +144,25 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  if (message.status === im_v2_const.MessageStatus.delivered) {
 	    viewedByOthers = true;
 	  }
+	  const existingMessage = im_v2_application_core.Core.getStore().getters['messages/getById'](message.id);
+	  // recent has shortened attach format, we should not rewrite attach if model has it
+	  if (main_core.Type.isArrayFilled(existingMessage == null ? void 0 : existingMessage.attach)) {
+	    delete message.attach;
+	  }
 	  if (main_core.Type.isPlainObject(message.file)) {
 	    const file = message.file;
-	    message.files = [file.id];
+	    if (existingMessage) {
+	      // recent doesn't know about several files in one message,
+	      // we should not rewrite message files, so we merge it.
+	      message.files = babelHelpers.classPrivateFieldLooseBase(this, _mergeFileIds)[_mergeFileIds](existingMessage, file.id);
+	    } else {
+	      message.files = [file.id];
+	    }
 	    const existingFile = im_v2_application_core.Core.getStore().getters['files/get'](file.id);
 	    // recent has shortened file format, we should not rewrite file if model has it
 	    if (!existingFile) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _files)[_files][file.id] = file;
 	    }
-	  }
-	  const existingMessage = im_v2_application_core.Core.getStore().getters['messages/getById'](message.id);
-	  // recent has shortened attach format, we should not rewrite attach if model has it
-	  if (main_core.Type.isArrayFilled(existingMessage == null ? void 0 : existingMessage.attach)) {
-	    delete message.attach;
 	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _messages)[_messages][message.id] = {
 	    ...message,
@@ -228,6 +238,13 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    id: item.id,
 	    isBirthdayPlaceholder: true
 	  };
+	}
+	function _mergeFileIds2(existingMessage, fileId) {
+	  const existingMessageFilesIds = existingMessage.files.map(id => {
+	    return Number.parseInt(id, 10);
+	  });
+	  const setOfFileIds = new Set([...existingMessageFilesIds, fileId]);
+	  return [...setOfFileIds];
 	}
 
 	class RecentService {
@@ -703,8 +720,12 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _store$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _prepareFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareFields");
 	var _addChatToModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addChatToModel");
+	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
 	class CreateService {
 	  constructor() {
+	    Object.defineProperty(this, _sendAnalytics, {
+	      value: _sendAnalytics2
+	    });
 	    Object.defineProperty(this, _addChatToModel, {
 	      value: _addChatToModel2
 	    });
@@ -738,6 +759,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    im_v2_lib_logger.Logger.warn('ChatService: createChat result', newChatId);
 	    const newDialogId = `chat${newChatId}`;
 	    babelHelpers.classPrivateFieldLooseBase(this, _addChatToModel)[_addChatToModel](newDialogId, preparedFields);
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics](newDialogId);
 	    return {
 	      newDialogId,
 	      newChatId
@@ -766,6 +788,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    avatar: preparedConfig.avatar,
 	    description: preparedConfig.description,
 	    users: preparedConfig.members,
+	    memberEntities: preparedConfig.memberEntities,
 	    managers: preparedConfig.managers,
 	    ownerId: preparedConfig.ownerId,
 	    searchable: preparedConfig.isAvailableInSearch ? 'Y' : 'N',
@@ -806,6 +829,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      manageMessages: chatConfig.manageMessages
 	    }
 	  });
+	}
+	function _sendAnalytics2(dialogId) {
+	  im_v2_lib_analytics.Analytics.getInstance().onCreateChat(dialogId);
 	}
 
 	class UpdateService {
@@ -1241,10 +1267,34 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _store$5)[_store$5].getters['chats/getByChatId'](chatId);
 	}
 
+	const DeleteUserErrorCode = {
+	  userInvitedFromStructure: 'USER_INVITED_FROM_STRUCTURE',
+	  userNotFound: 'USER_NOT_FOUND'
+	};
 	var _store$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
 	var _restClient$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restClient");
+	var _onChatLeave = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChatLeave");
+	var _onChatKickError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChatKickError");
+	var _onChatLeaveError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChatLeaveError");
+	var _showNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotification");
+	var _getErrorCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getErrorCode");
 	class UserService {
 	  constructor() {
+	    Object.defineProperty(this, _getErrorCode, {
+	      value: _getErrorCode2
+	    });
+	    Object.defineProperty(this, _showNotification, {
+	      value: _showNotification2
+	    });
+	    Object.defineProperty(this, _onChatLeaveError, {
+	      value: _onChatLeaveError2
+	    });
+	    Object.defineProperty(this, _onChatKickError, {
+	      value: _onChatKickError2
+	    });
+	    Object.defineProperty(this, _onChatLeave, {
+	      value: _onChatLeave2
+	    });
 	    Object.defineProperty(this, _store$6, {
 	      writable: true,
 	      value: void 0
@@ -1264,31 +1314,27 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    };
 	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$5)[_restClient$5].callMethod(im_v2_const.RestMethod.imChatUserAdd, queryParams);
 	  }
-	  kickUserFromChat(dialogId, userId) {
-	    im_v2_lib_logger.Logger.warn(`UserService: kick user ${userId} from chat ${dialogId}`);
+	  async kickUserFromChat(dialogId, userId) {
 	    const queryParams = {
 	      dialogId,
 	      userId
 	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _restClient$5)[_restClient$5].callMethod(im_v2_const.RestMethod.imV2ChatDeleteUser, queryParams).catch(error => {
-	      // eslint-disable-next-line no-console
-	      console.error('UserService: error kicking user from chat', error);
-	    });
+	    try {
+	      await babelHelpers.classPrivateFieldLooseBase(this, _restClient$5)[_restClient$5].callMethod(im_v2_const.RestMethod.imV2ChatDeleteUser, queryParams);
+	    } catch (error) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onChatKickError)[_onChatKickError](error);
+	    }
 	  }
-	  leaveChat(dialogId) {
-	    this.kickUserFromChat(dialogId, im_v2_application_core.Core.getUserId());
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
+	  async leaveChat(dialogId) {
+	    const queryParams = {
 	      dialogId,
-	      fields: {
-	        inited: false
-	      }
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('recent/delete', {
-	      id: dialogId
-	    });
-	    const chatIsOpened = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['application/isChatOpen'](dialogId);
-	    if (chatIsOpened) {
-	      im_public.Messenger.openChat();
+	      userId: im_v2_application_core.Core.getUserId()
+	    };
+	    try {
+	      await babelHelpers.classPrivateFieldLooseBase(this, _restClient$5)[_restClient$5].callMethod(im_v2_const.RestMethod.imV2ChatDeleteUser, queryParams);
+	      babelHelpers.classPrivateFieldLooseBase(this, _onChatLeave)[_onChatLeave](dialogId);
+	    } catch (error) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _onChatLeaveError)[_onChatLeaveError](error);
 	    }
 	  }
 	  joinChat(dialogId) {
@@ -1358,6 +1404,59 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      console.error('UserService: remove manager error', error);
 	    });
 	  }
+	}
+	function _onChatLeave2(dialogId) {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('chats/update', {
+	    dialogId,
+	    fields: {
+	      inited: false
+	    }
+	  });
+	  void babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].dispatch('recent/delete', {
+	    id: dialogId
+	  });
+	  const chatIsOpened = babelHelpers.classPrivateFieldLooseBase(this, _store$6)[_store$6].getters['application/isChatOpen'](dialogId);
+	  if (chatIsOpened) {
+	    void im_public.Messenger.openChat();
+	  }
+	}
+	function _onChatKickError2(error) {
+	  var _NotificationTextByEr;
+	  // eslint-disable-next-line no-console
+	  console.error('UserService: error kicking from chat', error);
+	  const NotificationTextByErrorCode = {
+	    [DeleteUserErrorCode.userInvitedFromStructure]: main_core.Loc.getMessage('IM_MESSAGE_SERVICE_KICK_CHAT_STRUCTURE_ERROR'),
+	    default: main_core.Loc.getMessage('IM_MESSAGE_SERVICE_KICK_CHAT_DEFAULT_ERROR')
+	  };
+	  const errorCode = babelHelpers.classPrivateFieldLooseBase(this, _getErrorCode)[_getErrorCode](error);
+	  const notificationText = (_NotificationTextByEr = NotificationTextByErrorCode[errorCode]) != null ? _NotificationTextByEr : NotificationTextByErrorCode.default;
+	  babelHelpers.classPrivateFieldLooseBase(this, _showNotification)[_showNotification](notificationText);
+	}
+	function _onChatLeaveError2(error) {
+	  var _NotificationTextByEr2;
+	  // eslint-disable-next-line no-console
+	  console.error('UserService: error leaving chat', error);
+	  const NotificationTextByErrorCode = {
+	    [DeleteUserErrorCode.userInvitedFromStructure]: main_core.Loc.getMessage('IM_MESSAGE_SERVICE_LEAVE_CHAT_STRUCTURE_ERROR'),
+	    default: main_core.Loc.getMessage('IM_MESSAGE_SERVICE_LEAVE_CHAT_DEFAULT_ERROR')
+	  };
+	  const errorCode = babelHelpers.classPrivateFieldLooseBase(this, _getErrorCode)[_getErrorCode](error);
+	  const notificationText = (_NotificationTextByEr2 = NotificationTextByErrorCode[errorCode]) != null ? _NotificationTextByEr2 : NotificationTextByErrorCode.default;
+	  babelHelpers.classPrivateFieldLooseBase(this, _showNotification)[_showNotification](notificationText);
+	}
+	function _showNotification2(text) {
+	  BX.UI.Notification.Center.notify({
+	    content: text,
+	    autoHideDelay: 5000
+	  });
+	}
+	function _getErrorCode2(error) {
+	  const {
+	    answer: {
+	      error: errorCode
+	    }
+	  } = error;
+	  return errorCode;
 	}
 
 	var _loadService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadService");
@@ -2056,7 +2155,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _deleteMessageOnServer)[_deleteMessageOnServer](message.id);
 	}
 	function _canDeleteCompletely2(message) {
-	  const alwaysCompleteDeleteChats = [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel];
+	  const alwaysCompleteDeleteChats = [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel, im_v2_const.ChatType.generalChannel];
 	  const neverCompleteDeleteChats = [im_v2_const.ChatType.comment];
 	  const chat = babelHelpers.classPrivateFieldLooseBase(this, _getChat)[_getChat]();
 	  if (alwaysCompleteDeleteChats.includes(chat.type)) {
@@ -4102,11 +4201,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	}
 
 	var _onCreateError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onCreateError");
-	var _sendAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
+	var _sendAnalytics$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendAnalytics");
 	class CopilotService$$1 {
 	  constructor() {
-	    Object.defineProperty(this, _sendAnalytics, {
-	      value: _sendAnalytics2
+	    Object.defineProperty(this, _sendAnalytics$1, {
+	      value: _sendAnalytics2$1
 	    });
 	    Object.defineProperty(this, _onCreateError, {
 	      value: _onCreateError2
@@ -4125,7 +4224,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    }).catch(error => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _onCreateError)[_onCreateError](error);
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics)[_sendAnalytics]({
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendAnalytics$1)[_sendAnalytics$1]({
 	      chatId: newChatId,
 	      dialogId: newDialogId
 	    });
@@ -4140,11 +4239,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  console.error('Copilot chat create error', error);
 	  throw new Error('Copilot chat create error');
 	}
-	function _sendAnalytics2({
+	function _sendAnalytics2$1({
 	  chatId,
 	  dialogId
 	}) {
-	  im_v2_lib_analytics.Analytics.getInstance().createChat({
+	  im_v2_lib_analytics.Analytics.getInstance().onCreateCopilotChat({
 	    chatId,
 	    dialogId
 	  });

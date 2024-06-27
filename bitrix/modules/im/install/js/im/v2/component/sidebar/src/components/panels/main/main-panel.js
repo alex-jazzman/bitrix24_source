@@ -82,6 +82,10 @@ export const MainPanel = {
 	},
 	watch:
 	{
+		dialogId()
+		{
+			this.initializeSidebar();
+		},
 		dialogInited()
 		{
 			this.initializeSidebar();

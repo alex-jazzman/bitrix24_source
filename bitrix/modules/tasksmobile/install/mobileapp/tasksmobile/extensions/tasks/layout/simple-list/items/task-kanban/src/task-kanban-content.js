@@ -13,9 +13,10 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 	const { usersSelector } = require('statemanager/redux/slices/users');
 	const { DeadlinePill } = require('tasks/layout/deadline-pill');
 	const {
-		selectById,
+		selectByTaskIdOrGuid,
 		selectCounter,
 		selectIsCompleted,
+		selectActions,
 		updateDeadline,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const {
@@ -23,13 +24,13 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 		selectStages: selectStageIds,
 	} = require('tasks/statemanager/redux/slices/kanban-settings');
 	const { selectById: selectStageById } = require('tasks/statemanager/redux/slices/stage-settings');
-	const { selectTaskStage, setTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages');
+	const { selectTaskStageByTaskIdOrGuid, setTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages');
 	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
 	const { get } = require('utils/object');
 	const { Moment } = require('utils/date');
 	const { date, shortTime } = require('utils/date/formats');
 	const { TextField, IconField } = require('tasks/layout/simple-list/items/task-kanban/src/field');
-	const { Loc } = require('loc');
+	const { Loc } = require('tasks/loc');
 	const { TasksStageSelector } = require('tasks/layout/stage-selector');
 	const { Crm } = require('tasks/layout/task/fields/crm');
 	const { Mark } = require('tasks/layout/task/fields/mark');
@@ -37,7 +38,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 	const { Project } = require('tasks/layout/task/fields/project');
 	const { Accomplices } = require('tasks/layout/task/fields/accomplices');
 	const { Auditors } = require('tasks/layout/task/fields/auditors');
-	const { DeadlinePeriod, ViewMode } = require('tasks/enum');
+	const { DeadlinePeriod, ViewMode, TaskCounter } = require('tasks/enum');
 
 	class TaskKanbanContent extends PureComponent
 	{
@@ -295,6 +296,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 					{
 						style: Styles.contextMenuClickableZone,
 						onClick: this.onContextMenuClick,
+						ref: this.props.menuViewRef,
 					},
 					this.renderImportantIcon(),
 					this.renderMuteIcon(),
@@ -415,13 +417,24 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 			if (counter && counter.value > 0)
 			{
+				let counterColor = AppTheme.colors.base4;
+
+				if (counter.type === TaskCounter.ALERT)
+				{
+					counterColor = AppTheme.colors.accentMainAlert;
+				}
+				else if (counter.type === TaskCounter.SUCCESS)
+				{
+					counterColor = AppTheme.colors.accentMainSuccess;
+				}
+
 				return View(
 					{},
 					CounterView(
 						counter.value,
 						{
 							isDouble: counter.isDouble,
-							firstColor: counter.color,
+							firstColor: counterColor,
 							secondColor: AppTheme.colors.accentMainSuccess,
 						},
 					),
@@ -438,15 +451,26 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				return null;
 			}
 
+			const isDeadline = this.props.view === ViewMode.DEADLINE;
+
+			const isEditable = isDeadline
+				? (this.task.canMoveStage && this.task.canChangeDeadline)
+				: this.task.canMoveStage;
+
+			const readonlyNotificationMessage = (isDeadline && !this.task.canChangeDeadline)
+				? Loc.getMessage('M_TASKS_DENIED_UPDATEDEADLINE')
+				: undefined;
+
 			return TasksStageSelector({
 				showTitle: false,
 				value: this.task?.stageId,
 				view: this.props.view,
 				projectId: this.props.projectId,
 				ownerId: this.props.ownerId,
-				readOnly: !this.task.canMoveStage,
+				readOnly: !isEditable,
 				config: {
-					isReversed: this.props.view === ViewMode.DEADLINE,
+					readonlyNotificationMessage,
+					isReversed: isDeadline,
 					useStageChangeMenu: true,
 					showReadonlyNotification: true,
 					animationMode: 'animateBeforeUpdate',
@@ -876,8 +900,8 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 	};
 
 	const mapStateToProps = (state, ownProps) => {
-		const taskId = Number(ownProps.id);
-		const task = selectById(state, taskId);
+		const taskId = ownProps.id;
+		const task = selectByTaskIdOrGuid(state, taskId);
 
 		if (!task)
 		{
@@ -886,6 +910,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 
 		const {
 			id,
+			guid,
 			name,
 			responsible,
 			priority,
@@ -906,7 +931,13 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 			timeElapsed,
 		} = task;
 
-		const { stageId, canMoveStage } = selectTaskStage(state, taskId, ownProps.view, ownProps.ownerId) || {};
+		const { stageId, canMoveStage } = selectTaskStageByTaskIdOrGuid(
+			state,
+			id,
+			guid,
+			ownProps.view,
+			ownProps.ownerId,
+		) || {};
 
 		return {
 			task: {
@@ -932,6 +963,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban/src/task-kanban-content', 
 				activityDate: activityDate - (activityDate % 60),
 				counter: selectCounter(task),
 				isCompleted: selectIsCompleted(task),
+				canChangeDeadline: selectActions(task).updateDeadline,
 				stageId,
 				canMoveStage,
 			},

@@ -12,6 +12,7 @@ $arWizardDescription = [
 		'CModuleMoveStep2',
 		'CModuleMoveStep3',
 		'CModuleMoveStep4',
+		'CModuleMoveFinalStep',
 		'CModuleMoveCancelStep',
 	],
 ];

@@ -55,6 +55,7 @@ export class CallManager
 	isAvailable(): Boolean
 	{
 		const { callInstalled } = Extension.getSettings('im.v2.lib.call');
+
 		return callInstalled === true;
 	}
 
@@ -208,6 +209,28 @@ export class CallManager
 		return callSupported && !hasCurrentCall;
 	}
 
+	hasActiveCurrentCall(dialogId: string): boolean
+	{
+		return this.#store.getters['recent/calls/hasActiveCall'](dialogId)
+			&& this.getCurrentCallDialogId() === dialogId;
+	}
+
+	hasActiveAnotherCall(dialogId: string): boolean
+	{
+		return this.#store.getters['recent/calls/hasActiveCall']()
+			&& !this.hasActiveCurrentCall(dialogId);
+	}
+
+	getCallUserLimit(): number
+	{
+		return BX.Call.Util.getUserLimit();
+	}
+
+	isChatUserLimitExceeded(dialogId: string): boolean
+	{
+		return this.#getChatUserCounter(dialogId) > this.getCallUserLimit();
+	}
+
 	#getController(): Controller
 	{
 		return new Controller({
@@ -354,21 +377,15 @@ export class CallManager
 			&& !user.bot
 			&& !user.network
 			&& user.id !== Core.getUserId()
-			&& !!user.lastActivityDate
+			&& Boolean(user.lastActivityDate)
 		);
 	}
 
 	#checkChatCallSupport(dialogId: string): boolean
 	{
-		const dialog = this.#store.getters['chats/get'](dialogId);
-		if (!dialog)
-		{
-			return false;
-		}
+		const userCounter = this.#getChatUserCounter(dialogId);
 
-		const {userCounter} = dialog;
-
-		return userCounter > 1 && userCounter <= BX.Call.Util.getUserLimit();
+		return userCounter > 1 && userCounter <= this.getCallUserLimit();
 	}
 
 	#pushServerIsActive(): boolean
@@ -390,6 +407,7 @@ export class CallManager
 	#isUser(dialogId: string): boolean
 	{
 		const dialog: ImModelChat = this.#store.getters['chats/get'](dialogId);
+
 		return dialog?.type === ChatType.user;
 	}
 
@@ -410,8 +428,15 @@ export class CallManager
 			userData: {
 				[currentUserId]: currentUser,
 				[currentCompanion.id]: currentCompanion,
-			}
+			},
 		});
+	}
+
+	#getChatUserCounter(dialogId: string): number
+	{
+		const { userCounter } = this.#store.getters['chats/get'](dialogId, true);
+
+		return userCounter;
 	}
 	// endregion call events
 }

@@ -1,7 +1,8 @@
 <?
 $MESS["IM_CONTENT_CHAT_NO_CHATS_START_MESSAGE"] = "Пригласите коллег и начните общение";
 $MESS["IM_CONTENT_CHAT_START_MESSAGE_V2"] = "Выберите чат и начните общение";
-$MESS["IM_CONTENT_CHANNEL_START_MESSAGE_V2"] = "Подписывайтесь на каналы и следите за актуальной информацией";
+$MESS["IM_CONTENT_CHANNEL_START_MESSAGE_V3"] = "Здесь будут открытые каналы компании";
+$MESS["IM_CONTENT_CHANNEL_START_MESSAGE_SUBTITLE"] = "Когда вы подпишетесь на канал, он переместится в список ваших чатов";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_MEMBERS"] = "Кликните для открытия списка пользователей";
 $MESS["IM_CONTENT_CHAT_HEADER_RENAME_ERROR"] = "При переименовании чата произошла ошибка, повторите попытку позже";
 $MESS["IM_CONTENT_CHAT_HEADER_VIDEOCALL"] = "Видеозвонок";
@@ -27,7 +28,7 @@ $MESS["IM_CONTENT_DROP_AREA"] = "Переместите файлы в эту о�
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_ENABLE_NOTIFICATIONS"] = "Включить звук";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_DISABLE_NOTIFICATIONS"] = "Выключить звук";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHAT"] = "Вступить в чат";
-$MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL"] = "Вступить в канал";
+$MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2"] = "Подписаться на канал";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_TASK"] = "Открыть задачу";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_MEETING_MSGVER_1"] = "Открыть встречу";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_GROUP_MSGVER_1"] = "Открыть группу";

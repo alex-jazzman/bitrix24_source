@@ -24,6 +24,7 @@ return [
 
 		'ui-system/form/checkbox',
 
+		'layout/ui/counter-view',
 		'bizproc:workflow/faces',
 		'bizproc:task/buttons',
 		'bizproc:task/task-constants',

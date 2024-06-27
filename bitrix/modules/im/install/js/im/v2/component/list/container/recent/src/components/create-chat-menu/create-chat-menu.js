@@ -1,9 +1,8 @@
 import { MessengerMenu, MenuItem, MenuItemIcon, CreateChatPromo } from 'im.v2.component.elements';
 import { Layout, PromoId, ChatType } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { PromoManager } from 'im.v2.lib.promo';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
-import { LayoutManager } from 'im.v2.lib.layout';
-import { Extension } from 'main.core';
 
 import { CreateChatHelp } from './create-chat-help';
 
@@ -19,7 +18,8 @@ const PromoByChatType = {
 // @vue/component
 export const CreateChatMenu = {
 	components: { MessengerMenu, MenuItem, CreateChatHelp, CreateChatPromo },
-	data(): JsonObject {
+	data(): JsonObject
+	{
 		return {
 			showPopup: false,
 			chatTypeToCreate: '',
@@ -45,6 +45,7 @@ export const CreateChatMenu = {
 	{
 		onChatCreateClick(type: $Values<typeof ChatType>)
 		{
+			Analytics.getInstance().onStartCreateNewChat(type);
 			this.chatTypeToCreate = type;
 
 			const promoBannerIsNeeded = PromoManager.getInstance().needToShow(this.getPromoType());
@@ -80,12 +81,6 @@ export const CreateChatMenu = {
 		{
 			return PromoByChatType[this.chatTypeToCreate] ?? '';
 		},
-		isChannelCreationAvailable(): boolean
-		{
-			const settings = Extension.getSettings('im.v2.component.list.container.recent');
-
-			return settings.get('channelCreationAvailable');
-		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -106,7 +101,6 @@ export const CreateChatMenu = {
 				@click="onChatCreateClick(ChatType.chat)"
 			/>
 			<MenuItem
-				v-if="isChannelCreationAvailable()"
 				:icon="MenuItemIcon.channel"
 				:title="loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2')"
 				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_V3')"

@@ -107,7 +107,15 @@ if ($isBitrix24Template)
 				$projectId = ($showViewMode ? $groupId : 'this.getAttribute(\'data-project-id\')');
 
 				$showLimitSlider = ($arResult['TASK_LIMIT_EXCEEDED'] || !Factory::canUseAutomation());
-				$openLimitSliderAction = "top.BX.UI.InfoHelper.show('limit_tasks_robots', {isLimit: true, limitAnalyticsLabels: {module: 'tasks'}})";
+				$robotsSliderId = 'limit_tasks_robots';
+
+				if (!Factory::isAutomationEnabled())
+				{
+					$showLimitSlider = true;
+					$robotsSliderId = 'limit_crm_rules_off';
+				}
+
+				$openLimitSliderAction = "top.BX.UI.InfoHelper.show('{$robotsSliderId}', {isLimit: true, limitAnalyticsLabels: {module: 'tasks'}})";
 				$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId}, {cacheable: false, customLeftBoundary: 0, loader: 'bizproc:automation-loader'});";
 
 				$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');

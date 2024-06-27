@@ -5,6 +5,7 @@
 jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, module) => {
 	const { Type } = require('crm/type');
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const {
 		createAsyncThunk,
 		createDraftSafeSelector,
@@ -89,11 +90,10 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 
 	const reducerName = 'crm:kanban';
 	const adapter = createEntityAdapter({});
-	const initialState = adapter.getInitialState({
-		isFetchedList: {},
-	});
-
-	const filledState = adapter.upsertMany(initialState, []);
+	const initialState = StateCache.getReducerState(
+		reducerName,
+		adapter.getInitialState({ isFetchedList: {} }),
+	);
 
 	const fetchCrmKanban = createAsyncThunk(
 		`${reducerName}/fetchCrmKanban`,
@@ -296,7 +296,7 @@ jn.define('crm/statemanager/redux/slices/kanban-settings', (require, exports, mo
 
 	const slice = createSlice({
 		name: reducerName,
-		initialState: filledState,
+		initialState,
 		reducers: {},
 		extraReducers: (builder) => {
 			builder

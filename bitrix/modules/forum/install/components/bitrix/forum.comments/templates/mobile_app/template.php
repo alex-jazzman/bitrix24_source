@@ -3,7 +3,6 @@
  * @var array $arParams
  * @var array $arResult
  * @var CMain $APPLICATION
- * @var CUser $USER
  * @var CBitrixComponentTemplate $this
  */
 

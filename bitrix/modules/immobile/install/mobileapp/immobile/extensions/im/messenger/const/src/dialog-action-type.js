@@ -12,6 +12,7 @@ jn.define('im/messenger/const/dialog-action-type', (require, exports, module) =>
 		mute: 'mute',
 		rename: 'rename',
 		send: 'send',
+		deleteOthersMessage: 'deleteOthersMessage',
 		userList: 'userList',
 		changeOwner: 'changeOwner',
 		changeManagers: 'changeManagers',

@@ -212,7 +212,7 @@ export type RawRecentItem = {
 		attach: boolean,
 		author_id: number,
 		date: string,
-		file: boolean,
+		file: boolean | {},
 		id: number,
 		temporaryId?: string,
 		status: $Keys<typeof MessageStatus>,

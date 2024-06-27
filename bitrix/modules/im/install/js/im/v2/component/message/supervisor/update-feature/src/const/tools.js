@@ -1,16 +1,12 @@
-import { UpdateFeatures } from '../../../base/src/const/features';
 import { Loc } from 'main.core';
-import { sendData } from 'ui.analytics';
+
+import { Analytics } from 'im.v2.lib.analytics';
+
+import { UpdateFeatures } from '../../../base/src/const/features';
 
 const onOpenPriceTable = (featureId: string) => {
 	return () => {
-		sendData({
-			tool: 'InfoHelper',
-			category: 'chat',
-			event: 'open_prices',
-			type: 'limit',
-			c_section: featureId,
-		});
+		Analytics.getInstance().onOpenPriceTable(featureId);
 		BX.SidePanel.Instance.open(`${window.location.origin}/settings/license_all.php`);
 	};
 };
@@ -18,8 +14,8 @@ const onHelpClick = (ARTICLE_CODE: string) => BX.Helper.show(`redirect=detail&co
 
 export const metaData = {
 	[UpdateFeatures.collaborativeDocumentEditing]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.collaborativeDocumentEditing),
-		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.collaborativeDocumentEditing),
+		title: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.collaborativeDocumentEditing}`),
+		description: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.collaborativeDocumentEditing}`),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 			callback: onOpenPriceTable(UpdateFeatures.collaborativeDocumentEditing),
@@ -30,8 +26,8 @@ export const metaData = {
 		},
 	},
 	[UpdateFeatures.crmAnalytics]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.crmAnalytics),
-		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.crmAnalytics),
+		title: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.crmAnalytics}`),
+		description: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.crmAnalytics}`),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 			callback: onOpenPriceTable(UpdateFeatures.crmAnalytics),
@@ -42,8 +38,8 @@ export const metaData = {
 		},
 	},
 	[UpdateFeatures.crmHistory]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.crmHistory),
-		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.crmHistory),
+		title: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.crmHistory}`),
+		description: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.crmHistory}`),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 			callback: onOpenPriceTable(UpdateFeatures.crmHistory),
@@ -54,8 +50,8 @@ export const metaData = {
 		},
 	},
 	[UpdateFeatures.leadsCRM]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.leadsCRM),
-		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.leadsCRM),
+		title: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.leadsCRM}`),
+		description: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.leadsCRM}`),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 			callback: onOpenPriceTable(UpdateFeatures.leadsCRM),
@@ -66,8 +62,8 @@ export const metaData = {
 		},
 	},
 	[UpdateFeatures.crmInvoices]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.crmInvoices),
-		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.crmInvoices),
+		title: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.crmInvoices}`),
+		description: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.crmInvoices}`),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 			callback: onOpenPriceTable(UpdateFeatures.crmInvoices),
@@ -78,8 +74,8 @@ export const metaData = {
 		},
 	},
 	[UpdateFeatures.enterpriseAdmin]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.enterpriseAdmin),
-		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.enterpriseAdmin),
+		title: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.enterpriseAdmin}`),
+		description: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.enterpriseAdmin}`),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 			callback: onOpenPriceTable(UpdateFeatures.enterpriseAdmin),
@@ -90,8 +86,8 @@ export const metaData = {
 		},
 	},
 	[UpdateFeatures.loginHistory]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.loginHistory),
-		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.loginHistory),
+		title: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.loginHistory}`),
+		description: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.loginHistory}`),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 			callback: onOpenPriceTable(UpdateFeatures.loginHistory),
@@ -102,8 +98,8 @@ export const metaData = {
 		},
 	},
 	[UpdateFeatures.mailBoxNumber]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.mailBoxNumber),
-		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.mailBoxNumber),
+		title: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.mailBoxNumber}`),
+		description: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.mailBoxNumber}`),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 			callback: onOpenPriceTable(UpdateFeatures.mailBoxNumber),
@@ -114,8 +110,8 @@ export const metaData = {
 		},
 	},
 	[UpdateFeatures.tasksRobots]: {
-		title: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.tasksRobots),
-		description: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.tasksRobots),
+		title: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.tasksRobots}`),
+		description: Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.tasksRobots}`),
 		detailButton: {
 			text: Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 			callback: onOpenPriceTable(UpdateFeatures.tasksRobots),

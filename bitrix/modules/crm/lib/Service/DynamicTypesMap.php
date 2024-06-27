@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\Dynamic\EO_Type_Collection;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Model\ItemCategoryTable;
@@ -44,6 +45,8 @@ class DynamicTypesMap
 	protected $stageEntityIds = [];
 	protected $stageFieldNames = [];
 	protected $isAutomationEnabled = [];
+
+	private ?EO_Type_Collection $typesCollection = null;
 
 	public function __construct()
 	{
@@ -157,7 +160,7 @@ class DynamicTypesMap
 					],
 					'filter' => [
 						'@ENTITY_ID' => array_keys($this->stageEntityIds),
-					]
+					],
 				])->fetchCollection() as $stage)
 			{
 				$this->stages[$stage->getEntityId()][$stage->getStatusId()] = $stage;
@@ -185,6 +188,14 @@ class DynamicTypesMap
 		}
 
 		return $this->types;
+	}
+
+	final public function getBunchOfTypesByIds(array $typeIds): array
+	{
+		return array_filter(
+			$this->getTypes(),
+			fn(Type $type) => in_array($type->getId(), $typeIds, true),
+		);
 	}
 
 	/**
@@ -286,6 +297,11 @@ class DynamicTypesMap
 	 */
 	public function getTypesCollection(): Collection
 	{
+		if ($this->typesCollection)
+		{
+			return $this->typesCollection;
+		}
+
 		$typesData = null;
 
 		$cache = Application::getInstance()->getCache();
@@ -333,7 +349,9 @@ class DynamicTypesMap
 			}
 		}
 
-		return $this->typeDataClass::wakeUpCollection($typesData);
+		$this->typesCollection = $this->typeDataClass::wakeUpCollection($typesData);
+
+		return $this->typesCollection;
 	}
 
 	public function invalidateTypesCollectionCache(): void
@@ -341,5 +359,6 @@ class DynamicTypesMap
 		$cache = Application::getInstance()->getCache();
 		$cache->clean(static::DYNAMIC_COLLECTION_CACHE_ID, static::DYNAMIC_COLLECTION_CACHE_PATH);
 		$this->isTypesLoaded = false;
+		$this->typesCollection = null;
 	}
 }

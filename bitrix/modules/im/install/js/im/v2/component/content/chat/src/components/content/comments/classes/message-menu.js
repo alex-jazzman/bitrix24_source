@@ -1,4 +1,3 @@
-import { ChatType } from 'im.v2.const';
 import { MessageMenu } from 'im.v2.component.message-list';
 
 import type { MenuItem } from 'im.v2.lib.menu';
@@ -70,8 +69,8 @@ export class CommentsMessageMenu extends MessageMenu
 
 	isPostMessage(): boolean
 	{
-		const { type }: ImModelChat = this.store.getters['chats/getByChatId'](this.context.chatId);
+		const { dialogId }: ImModelChat = this.store.getters['chats/getByChatId'](this.context.chatId);
 
-		return [ChatType.openChannel, ChatType.channel].includes(type);
+		return dialogId !== this.context.dialogId;
 	}
 }

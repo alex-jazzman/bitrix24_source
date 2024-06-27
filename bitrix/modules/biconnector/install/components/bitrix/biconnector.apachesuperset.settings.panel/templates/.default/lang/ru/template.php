@@ -11,3 +11,4 @@ $MESS['BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'] = 'Подробнее
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_COPIED'] = 'Ключ скопирован';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS'] = 'Ключ успешно обновлен';
 $MESS['BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK'] = 'Выберите сотрудников, которым будут приходить уведомления о новых системных отчётах и их обновлениях. #HINT_LINK#';
+$MESS['BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK'] = 'Владелец имеет полный доступ к отчёту. Если вы смените владельца, то можете потерять доступ к этому отчёту. #HINT_LINK#';

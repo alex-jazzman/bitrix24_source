@@ -3,6 +3,7 @@ import { reactionType as Reaction } from 'ui.reactions-select';
 
 import { DialogScrollThreshold, EventType, ChatType, ChatActionType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import { ReactionItem } from './components/item';
 import { ReactionService } from './classes/reaction-service';
@@ -64,7 +65,7 @@ export const ReactionList = {
 		},
 		isChannel(): boolean
 		{
-			return [ChatType.openChannel, ChatType.channel].includes(this.dialog.type);
+			return ChannelManager.isChannel(this.dialog.dialogId);
 		},
 		showAvatars(): boolean
 		{

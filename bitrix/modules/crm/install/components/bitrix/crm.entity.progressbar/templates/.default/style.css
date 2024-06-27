@@ -69,3 +69,13 @@
 	cursor: pointer;
 	transition: all 250ms ease;
 }
+
+.crm-entity-section-status-step.--disabled{
+	opacity: .6;
+	pointer-events: auto;
+	cursor: not-allowed;
+}
+
+.crm-entity-section-status-step.--disabled .crm-entity-section-status-step-item-text{
+	cursor: not-allowed;
+}

@@ -42,7 +42,7 @@ class Step2 extends CWizardStep
 		CUtil::InitJSCore();
 
 		$this->content .= <<<EOT
-<script type="text/javascript">
+<script>
 function checkZIP()
 {
 	var obCSVFileRus = BX('loc_ussr');
@@ -128,7 +128,7 @@ EOT;
 					$contents = fread($fp, filesize($_FILES["FILE_IMPORT_UPLOAD"]["tmp_name"]));
 					fclose($fp);
 
-					$contents = $GLOBALS["APPLICATION"]->ConvertCharset($contents, 'windows-1251', LANG_CHARSET);
+					$contents = \Bitrix\Main\Text\Encoding::convertEncoding($contents, 'windows-1251', LANG_CHARSET);
 
 					$sTmpFilePath = CTempFile::GetDirectoryName(12, 'sale');
 					CheckDirPath($sTmpFilePath);
@@ -205,9 +205,9 @@ class Step3 extends CWizardStep
 		$this->content .= '<div id="wait_message" style="display: none;"></div>';
 		$this->content .= '<div id="error_message" style="display: none;"><br /><button onclick="RunAgain(); return false">'.GetMessage('WSL_STEP3_ERROR_TRY').'</button></div>';
 		$this->content .= '</div>';
-		$this->content .= '<script type="text/javascript" src="/bitrix/js/main/cphttprequest.js"></script>';
-		$this->content .= '<script language="JavaScript" src="'.$path.'/js/import.js"></script>';
-		$this->content .= '<script language="JavaScript">
+		$this->content .= '<script src="/bitrix/js/main/cphttprequest.js"></script>';
+		$this->content .= '<script src="'.$path.'/js/import.js"></script>';
+		$this->content .= '<script>
 
 var nextButtonID = "'.$wizard->GetNextButtonID().'";
 var formID = "'.$wizard->GetFormName().'";
@@ -261,9 +261,9 @@ class Step4 extends CWizardStep
 		$this->content .= '<div id="wait_message" style="display: none;"></div>';
 		$this->content .= '<div id="output"><br /></div>';
 		$this->content .= '</div>';
-		$this->content .= '<script type="text/javascript" src="/bitrix/js/main/cphttprequest.js"></script>';
-		$this->content .= '<script type="text/javascript" src="'.$path.'/js/import.js"></script>';
-		$this->content .= '<script type="text/javascript">
+		$this->content .= '<script src="/bitrix/js/main/cphttprequest.js"></script>';
+		$this->content .= '<script src="'.$path.'/js/import.js"></script>';
+		$this->content .= '<script>
 
 var nextButtonID = "'.$wizard->GetNextButtonID().'";
 var formID = "'.$wizard->GetFormName().'";

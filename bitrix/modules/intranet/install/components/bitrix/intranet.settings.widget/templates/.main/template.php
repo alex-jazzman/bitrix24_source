@@ -8,7 +8,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 /**
- * @var array $arParams
  * @var array $arResult
  * @var \CMain $APPLICATION
  */
@@ -25,13 +24,13 @@ $additionalArguments = $this->getComponent()->getAdditionalArguments();
 $widgetArguments = [
 	'marketUrl' => $additionalArguments['MARKET_URL'],
 	'requisite' => $additionalArguments['REQUISITE'] ?? null,
-	'isBitrix24' => $arParams['IS_BITRIX24'],
-	'isAdmin' => $arParams['IS_ADMIN'],
+	'isBitrix24' => $arResult['IS_BITRIX24'],
+	'isAdmin' => $arResult['IS_ADMIN'],
 	'theme' => $additionalArguments['THEME'],
 	'otp' => $additionalArguments['OTP'],
 	'settingsPath' => $additionalArguments['SETTINGS_PATH']
 ];
-if ($arParams['IS_BITRIX24'])
+if ($arResult['IS_BITRIX24'])
 {
 	$widgetArguments['isFreeLicense'] = $additionalArguments['IS_FREE_LICENSE'];
 	$widgetArguments['holding'] = $additionalArguments['HOLDING'];
@@ -49,6 +48,6 @@ if ($arParams['IS_BITRIX24'])
 <script>
 	BX.ready(() => {
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
-		BX.Intranet.SettingsWidget.init(<?= \CUtil::PhpToJSObject($widgetArguments) ?>);
+		BX.Intranet.SettingsWidget.init(<?= Json::encode($widgetArguments) ?>);
 	});
 </script>

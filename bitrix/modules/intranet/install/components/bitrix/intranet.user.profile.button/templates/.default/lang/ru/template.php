@@ -70,3 +70,4 @@ $MESS["INTRANET_USER_PROFILE_integrator"] = "Интегратор";
 $MESS["INTRANET_USER_PROFILE_admin"] = "Администратор";
 $MESS["INTRANET_USER_PROFILE_email"] = "Почтовый пользователь";
 $MESS["INTRANET_USER_PROFILE_shop"] = "Пользователь магазина";
+$MESS["INTRANET_USER_PROFILE_DISABLED"] = "Отключён";

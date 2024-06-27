@@ -486,6 +486,7 @@ export class Row
 			rowId: this.id,
 			model: this.getModel(),
 			node: storeAvaiableNode,
+			inventoryManagementMode: this.getInventoryManagementMode(),
 		});
 	}
 
@@ -2180,6 +2181,11 @@ export class Row
 	isInventoryManagementToolEnabled(): boolean
 	{
 		return this.getSettingValue('isInventoryManagementToolEnabled', true);
+	}
+
+	getInventoryManagementMode(): ?string
+	{
+		return this.getSettingValue('inventoryManagementMode', true);
 	}
 
 	isRestrictedStoreInfo(): boolean

@@ -536,7 +536,7 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 
 </form>
 
-<script type="text/javascript">
+<script>
 
 document.getElementById('<?=\CUtil::jsEscape($bodyElementId)?>').innerHTML = '<?=CUtil::jsEscape($arParams['~ACTIVITY']['DESCRIPTION_HTML']) ?>';
 

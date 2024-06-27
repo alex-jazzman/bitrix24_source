@@ -71,6 +71,8 @@ $arResult['DATE_FORMATS'] = [
 	'longDateFormat' => $culture->getLongDateFormat(),
 ];
 
+$arResult['CURRENT_USER_ID'] = $USER->GetID();
+
 if (!(isset($arParams['TEMPLATE_HIDE']) && $arParams['TEMPLATE_HIDE'] == 'Y'))
 	$this->IncludeComponentTemplate();
 

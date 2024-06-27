@@ -1222,7 +1222,8 @@ class LandingViewComponent extends LandingBaseComponent
 			                                      || $landing->fakePublication();
 			if (
 				$this->arParams['TYPE'] === 'STORE'
-				&& \Bitrix\Main\Config\Option::get('catalog', 'is_external_catalog') === 'Y'
+				&& \Bitrix\Main\Loader::includeModule('catalog')
+				&& \Bitrix\Catalog\Config\State::isExternalCatalog()
 			)
 			{
 				$landingMeta = $landing->getMeta();

@@ -416,7 +416,7 @@ $canReadGroupTasks = (
 </div>
 
 <?php
-// получить список встроенных приложений
+// РїРѕР»СѓС‡РёС‚СЊ СЃРїРёСЃРѕРє РІСЃС‚СЂРѕРµРЅРЅС‹С… РїСЂРёР»РѕР¶РµРЅРёР№
 if(\Bitrix\Main\Loader::includeModule('rest'))
 {
 	$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_SIDEBAR);

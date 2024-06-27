@@ -1,4 +1,8 @@
 <?
+
+use Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException;
+use Bitrix\Tasks\Flow\Provider\FlowProvider;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule("tasks"))
@@ -17,9 +21,27 @@ if ($arParams["PATH_TO_USER_TASKS_TASK"] == '')
 $arParams["USER_ID"] = \Bitrix\Tasks\Util\User::getId();
 $arParams["PATH_TO_TASKS"] = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TASK"]);
 
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
+$arResult['flow'] = null;
+$arResult['flowEfficiency'] = 0;
+$flowId = (int) $request->get('FLOW_ID');
+if ($flowId)
+{
+	$flowProvider = new FlowProvider();
+	try
+	{
+		$flow = $flowProvider->getFlow($flowId);
+		$arResult['flow'] = $flow;
+		$arResult['flowEfficiency'] = $flowProvider->getEfficiency($flow);
+	}
+	catch (FlowNotFoundException $e)
+	{
+	}
+}
+
 if($this->__templateName != 'legacy')
 {
-	$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 	$arResult['IFRAME'] = $request['IFRAME'] == 'Y';
 
 	$iFrameType = '';

@@ -5,6 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector\Access\AccessController;
+use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Access\Model\DashboardAccessItem;
 use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\SupersetServiceLocation;
 use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
@@ -54,7 +57,6 @@ class ApacheSupersetDashboardDetailComponent extends CBitrixComponent
 			'NATIVE_FILTERS' => '',
 			'SOURCE_DASHBOARD_DATA' => null,
 			'MARKET_COLLECTION_URL' => MarketDashboardManager::getMarketCollectionUrl(),
-			'IS_EXPORT_ENABLED' => MarketDashboardManager::getInstance()->isExportEnabled() ? 'Y' : 'N',
 			'SUPERSET_SERVICE_LOCATION' => SupersetServiceLocation::getCurrentDatacenterLocationRegion(),
 		];
 	}
@@ -67,6 +69,20 @@ class ApacheSupersetDashboardDetailComponent extends CBitrixComponent
 		{
 			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_DETAIL_NOT_FOUND');
 			$this->includeComponentTemplate();
+			return;
+		}
+
+		$accessItem = DashboardAccessItem::createFromArray([
+			'ID' => $dashboardId,
+			'TYPE' => $dashboard['TYPE'],
+			'OWNER_ID' => $dashboard['OWNER_ID'],
+		]);
+
+		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_DASHBOARD_VIEW, $accessItem))
+		{
+			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_DETAIL_ACCESS_ERROR');
+			$this->includeComponentTemplate();
+
 			return;
 		}
 
@@ -118,6 +134,8 @@ class ApacheSupersetDashboardDetailComponent extends CBitrixComponent
 			$this->includeComponentTemplate();
 			return;
 		}
+
+		$this->prepareAccessParams();
 
 		$this->prepareEmbeddedCredentials();
 		$this->prepareNativeFilters();
@@ -187,5 +205,32 @@ class ApacheSupersetDashboardDetailComponent extends CBitrixComponent
 	private function prepareNativeFilters(): void
 	{
 		$this->arResult['NATIVE_FILTERS'] = $this->dashboard->getNativeFilter();
+	}
+
+	private function prepareAccessParams(): void
+	{
+		$accessItem = DashboardAccessItem::createFromArray([
+			'ID' => $this->dashboard->getId(),
+			'TYPE' => $this->dashboard->getType(),
+			'OWNER_ID' => $this->dashboard->getField('OWNER_ID'),
+		]);
+		$accessController = AccessController::getCurrent();
+
+		$canExport = $accessController->check(ActionDictionary::ACTION_BIC_DASHBOARD_EXPORT, $accessItem);
+		$this->arResult['CAN_EXPORT'] = $canExport ? 'Y' : 'N';
+
+		$canEdit = false;
+		if (
+			$this->dashboard->getType() === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM
+			|| $this->dashboard->getType() === SupersetDashboardTable::DASHBOARD_TYPE_MARKET
+		)
+		{
+			$canEdit = $accessController->check(ActionDictionary::ACTION_BIC_DASHBOARD_COPY, $accessItem);
+		}
+		else if ($this->dashboard->getType() === SupersetDashboardTable::DASHBOARD_TYPE_CUSTOM)
+		{
+			$canEdit = $accessController->check(ActionDictionary::ACTION_BIC_DASHBOARD_EDIT, $accessItem);
+		}
+		$this->arResult['CAN_EDIT'] = $canEdit ? 'Y' : 'N';
 	}
 }

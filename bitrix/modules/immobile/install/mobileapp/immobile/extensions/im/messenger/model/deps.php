@@ -15,6 +15,8 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/utils',
 		'im:messenger/lib/feature',
+		'im:messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter',
+		'im:messenger/lib/permission-manager',
 	],
 	'bundle' => [
 		'./src/application',
@@ -30,6 +32,7 @@ return [
 		'./src/comment',
 		'./src/messages/reactions',
 		'./src/messages/pin',
+		'./src/dialogues/copilot',
 		'./src/validators/message',
 		'./src/validators/pin',
 		'./src/validators/comment',

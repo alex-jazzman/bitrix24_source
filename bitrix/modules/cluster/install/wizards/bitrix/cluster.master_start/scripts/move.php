@@ -49,18 +49,14 @@ elseif ($STEP < 2)
 	$DB->Query('DELETE FROM b_cluster_table', false, '', ['fixed_connection' => true]);
 	$strError = CreateNodeTable($DB, $nodeDB, 'b_cluster_table');
 
-	$arTables = [];
 	$rsTables = $DB->Query('show tables', false, '', ['fixed_connection' => true]);
 	while ($arTable = $rsTables->Fetch())
 	{
-		$arTables[] = $arTable['Tables_in_' . $DB->DBName];
-	}
+		$table_name = $arTable['Tables_in_' . $DB->DBName];
 
-	foreach ($arTables as $table_name)
-	{
 		if ($table_name == 'b_cluster_table')
 		{
-				continue;
+			continue;
 		}
 
 		$key_column = false;
@@ -72,26 +68,20 @@ elseif ($STEP < 2)
 			{
 				if ($ar['Non_unique'] == '0')
 				{
-					$arIndexes[$ar['Key_name']][$ar['Seq_in_index'] - 1] = $ar['Column_name'];
+					$key_name = $ar['Key_name'];
+					if (!isset($arIndexes[$key_name]))
+					{
+						$arIndexes[$key_name] = [];
+					}
+					$arIndexes[$key_name][$ar['Seq_in_index']] = $ar['Column_name'];
 				}
 			}
 
 			foreach ($arIndexes as $IndexName => $arIndexColumns)
 			{
-				if (count($arIndexColumns) != 1)
+				if (count($arIndexColumns) == 1)
 				{
-					unset($arIndexes[$IndexName]);
-				}
-			}
-
-			if (count($arIndexes) > 0)
-			{
-				foreach ($arIndexes as $IndexName => $arIndexColumns)
-				{
-					foreach ($arIndexColumns as $SeqInIndex => $ColumnName)
-					{
-						$key_column = $ColumnName;
-					}
+					$key_column = current($arIndexColumns);
 					break;
 				}
 			}
@@ -106,8 +96,9 @@ elseif ($STEP < 2)
 			'LAST_ID' => false,
 		]);
 	}
+
 	echo GetMessage('CLUWIZ_INIT');
-	echo '<script>MoveTables(2)</script>';
+	echo '<script>BX.Cluster.MasterStart.MoveTables(2)</script>';
 }
 else
 {
@@ -133,7 +124,7 @@ else
 	$end_time = time() + 5;
 	do
 	{
-		$rsTables = $nodeDB->Query('SELECT * FROM b_cluster_table ORDER BY ID', false, '', ['fixed_connection' => true]);
+		$rsTables = $nodeDB->Query('SELECT * FROM b_cluster_table ORDER BY ID LIMIT 1', false, '', ['fixed_connection' => true]);
 		$arTable = $rsTables->Fetch();
 		if (!is_array($arTable))
 		{
@@ -291,13 +282,12 @@ else
 			'#records#' => $i,
 			'#tables#' => $ar['CNT'],
 		]);
-		echo '<script>MoveTables(2)</script>';
+		echo '<script>BX.Cluster.MasterStart.MoveTables(2)</script>';
 	}
 	else
 	{
 		echo '<p>',GetMessage('CLUWIZ_ALL_DONE'),'</p>';
-		echo '<p>',GetMessage('CLUWIZ_SITE_OPEN'),'</p>';
-		echo '<script>EnableButton();</script>';
+		echo '<script>BX.Cluster.MasterStart.EnableButton();</script>';
 	}
 }
 

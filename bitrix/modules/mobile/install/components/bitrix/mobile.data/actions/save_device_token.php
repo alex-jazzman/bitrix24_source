@@ -63,7 +63,7 @@ elseif ($_REQUEST["mobile_action"] == "save_device_token")
 				"DEVICE_NAME" => $_REQUEST["device_name"],
 				"DEVICE_TYPE" => $_REQUEST["device_type"],
 				"DEVICE_ID" => $_REQUEST["uuid"],
-				"DATE_AUTH" => ConvertTimeStamp(getmicrotime(), "FULL"),
+				"DATE_AUTH" => ConvertTimeStamp(microtime(true), "FULL"),
 				"APP_ID" => "Bitrix24" . (CMobile::$isDev ? "_bxdev" : "")
 			);
 

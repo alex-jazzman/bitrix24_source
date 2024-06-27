@@ -9,5 +9,6 @@ return [
 		'analytics-label',
 		'utils/object',
 		'tasks:layout/task/create',
+		'tasks:layout/task/create/opener',
 	],
 ];

@@ -952,6 +952,9 @@
 			this.declined = false;
 			this.busy = false;
 
+			this.videoSender = null;
+			this.audioSender = null;
+
 			/** @var {PlainCall} this.call */
 			this.call = params.call;
 
@@ -1258,70 +1261,106 @@
 			}
 		}
 
-		sendMedia()
+		sendMedia(skipOffer)
 		{
-			if (this.peerConnection)
+			if (!this.peerConnection)
 			{
-				this.log("Error: Peer connection already exists");
-				return;
-			}
+				if (!this.isInitiator())
+				{
+					this.log('waiting for the other side to send connection offer');
+					this.sendNegotiationNeeded(false);
+					return;
+				}
 
-			if (!this.call.localStream)
-			{
-				this.log(new Error("Local media stream is not found"));
-			}
-
-			if (this.isInitiator())
-			{
 				let connectionId = callEngine.getUuidv4();
 				this._createPeerConnection(connectionId);
-				this.call.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.call.localStream));
-
-				this.createAndSendOffer();
 			}
-			else
+
+			this.updateOutgoingTracks();
+
+			if (!skipOffer)
 			{
-				this.sendNegotiationNeeded();
+				this.createAndSendOffer();
 			}
 		}
 
 		updateOutgoingTracks()
 		{
-			let videoTrack = this.call.videoEnabled && this.call.localStream.getVideoTracks()[0];
-			let audioTrack = this.call.localStream.getAudioTracks()[0];
+			if (!this.peerConnection)
+			{
+				return;
+			}
 
-			let videoSender = this.peerConnection.getSenders().find(
-				sender => sender.track && sender.track.kind == "video",
-			);
-			if (videoSender && videoTrack)
+			let audioTrack;
+			let videoTrack;
+
+			if (this.call.localStream && this.call.localStream.getAudioTracks().length > 0)
+			{
+				audioTrack = this.call.localStream.getAudioTracks()[0];
+			}
+
+			if (this.call.videoEnabled && this.call.localStream && this.call.localStream.getVideoTracks().length > 0)
+			{
+				videoTrack = this.call.localStream.getVideoTracks()[0];
+			}
+
+			let tracksToSend = [];
+
+			if (audioTrack)
+			{
+				tracksToSend.push(audioTrack.id + ' (audio)')
+			}
+			if (videoTrack)
+			{
+				tracksToSend.push(videoTrack.id + ' (' + videoTrack.kind + ')');
+			}
+
+			if (this.videoSender && videoTrack)
 			{
 				// do nothing >:-)
 			}
-			if (!videoSender && videoTrack)
+			if (!this.videoSender && videoTrack)
 			{
-				this.peerConnection.addTrack(videoTrack, this.call.localStream);
+				this.videoSender = this.peerConnection.addTrack(videoTrack, this.call.localStream);
 			}
-			if (videoSender && !videoTrack)
+			if (this.videoSender && !videoTrack)
 			{
-				this.peerConnection.removeTrack(videoSender);
+				this.peerConnection.removeTrack(this.videoSender);
+				this.videoSender = null;
 			}
 
-			let audioSender = this.peerConnection.getSenders().find(
-				sender => sender.track && sender.track.kind == "audio",
-			);
-			if (audioSender && audioTrack)
+			if (this.audioSender && audioTrack)
 			{
 				// do nothing >:-)
 			}
-			if (!audioSender && audioTrack)
+			if (!this.audioSender && audioTrack)
 			{
-				this.peerConnection.addTrack(audioTrack, this.call.localStream);
+				this.audioSender = this.peerConnection.addTrack(audioTrack, this.call.localStream);
 			}
-			if (audioSender && !audioTrack)
+			if (this.audioSender && !audioTrack)
 			{
-				this.peerConnection.removeTrack(audioSender);
+				this.peerConnection.removeTrack(this.audioSender);
+				this.audioSender = null;
 			}
 		}
+
+		getSenderMid(rtpSender)
+		{
+			if (!rtpSender || !this.peerConnection)
+			{
+				return null;
+			}
+
+			const transceiver = this.peerConnection.getTransceivers().find(transceiver => {
+				if (transceiver.sender.track && rtpSender.track)
+				{
+					return transceiver.sender.track.id === rtpSender.track.id
+				}
+				return false
+			});
+
+			return transceiver ? transceiver.mid : null;
+		};
 
 		replaceMedia()
 		{
@@ -1352,7 +1391,10 @@
 				return;
 			}
 
-			this.setReady(true);
+			if (!this.isReady())
+			{
+				return;
+			}
 
 			if (trackList)
 			{
@@ -1403,6 +1445,10 @@
 				connectionId: connectionId,
 				sdp: this.pendingLocalDescription.sdp,
 				userAgent: "Bitrix Mobile",
+				tracks: {
+					audio: this.getSenderMid(this.audioSender),
+					video: this.getSenderMid(this.videoSender),
+				},
 			});
 		};
 
@@ -1456,7 +1502,7 @@
 			{
 				if (this.peerConnection.iceConnectionState === "new")
 				{
-					this.call.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.call.localStream));
+					this.sendMedia(true)
 				}
 
 				return this.peerConnection.createAnswer();
@@ -1473,6 +1519,10 @@
 					connectionId: this.peerConnection._id,
 					sdp: this.peerConnection.localDescription().sdp,
 					userAgent: "Bitrix Mobile",
+					tracks: {
+						audio: this.getSenderMid(this.audioSender),
+						video: this.getSenderMid(this.videoSender),
+					},
 				});
 			}).catch((e) =>
 			{
@@ -1867,8 +1917,19 @@
 					}
 				})
 			}
-			this.incomingScreenTrack = screenTrack;
-			this.incomingVideoTrack = videoTrack;
+
+			// if we set screen track before video track in Android after screen track was deleted on the other side
+			// we will get "MediaStreamTrack has been disposed" error
+			if (screenTrack)
+			{
+				this.incomingScreenTrack = screenTrack;
+				this.incomingVideoTrack = videoTrack;
+			}
+			else
+			{
+				this.incomingVideoTrack = videoTrack;
+				this.incomingScreenTrack = screenTrack;
+			}
 		}
 
 		stopSignalingTimeout()

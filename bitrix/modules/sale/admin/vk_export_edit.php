@@ -103,7 +103,7 @@ if (isset($request["VK"]) && check_bitrix_sessid())
 
 
 //preset URL vars
-$siteDomain = $server->getHttpHost();
+$siteDomain = preg_replace('/:(443|80)$/', '', $server->getHttpHost());
 $currPageUrl = $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID;
 $currPageFullUrl = $siteDomain . $currPageUrl;
 $currPageSettingsTabUrl = $currPageFullUrl . '&tabControl_active_tab=vk_settings';
@@ -166,7 +166,7 @@ if (isset($request["code"]) && !empty($request["code"]) && $exportId)
 				unset($vkSettings["OAUTH"]["ACCESS_TOKEN"], $vkSettings["OAUTH"]["ACCESS_TOKEN_TIME"]);
 				$vk->unsetActiveById($exportId);
 				$logger = new Vk\Logger($exportId);
-				$logger->addError(ToUpper(str_replace(' ','_',$response["error_description"])));
+				$logger->addError(mb_strtoupper(str_replace(' ','_',$response["error_description"])));
 			}
 			catch (Vk\ExecuteException $e){}
 		}
@@ -597,6 +597,16 @@ $tabControl->BeginNextTab();
 		</tr>
 	<? endif; ?>
 
+
+	<tr>
+		<td colspan="2" style="text-align:center">
+			<div class="adm-info-message-wrap">
+				<div class="adm-info-message">
+					<div style="text-align: left; "><?= Loc::getMessage('SALE_VK_SETTINGS_NOTE', ['#URL#' => (new Bitrix\Main\Web\Uri('/bitrix/admin/sale_vk_export_edit.php'))->toAbsolute()]) ?></div>
+				</div>
+			</div>
+		</td>
+	</tr>
 
 	<? if ($exportId && $vkGroupsSelector <> ''): ?>
 		<tr class="heading">

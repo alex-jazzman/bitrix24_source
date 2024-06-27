@@ -397,6 +397,17 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
+		replaceItems(items)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.replaceItems(items);
+			}
+
+			return Promise.resolve();
+		}
+
 		/**
 		 * @public
 		 * @param itemId
@@ -904,6 +915,48 @@ jn.define('layout/ui/kanban', (require, exports, module) => {
 			}
 
 			return true;
+		}
+
+		async scrollToTopItem(itemIds, animated = true, blink = false)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				await statefulList.scrollToTopItem(itemIds, animated, blink);
+			}
+		}
+
+		getItemRef(itemId)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.getItemRef(itemId);
+			}
+
+			return null;
+		}
+
+		getItemRootViewRef(itemId)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.getItemRootViewRef(itemId);
+			}
+
+			return null;
+		}
+
+		getItemMenuViewRef(itemId)
+		{
+			const statefulList = this.getCurrentStatefulList();
+			if (statefulList)
+			{
+				return statefulList.getItemMenuViewRef(itemId);
+			}
+
+			return null;
 		}
 	}
 

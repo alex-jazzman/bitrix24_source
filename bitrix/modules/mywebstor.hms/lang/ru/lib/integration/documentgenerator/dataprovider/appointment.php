@@ -1,0 +1,3 @@
+<?
+
+$MESS["HMS_DOCGEN_DATAPROVIDER_APPOINTMENT_TITLE"] = "Заявка на прием";

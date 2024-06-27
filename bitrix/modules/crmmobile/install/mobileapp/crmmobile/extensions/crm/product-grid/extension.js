@@ -24,9 +24,9 @@ jn.define('crm/product-grid', (require, exports, module) => {
 	 */
 	class CrmProductGrid extends ProductGrid
 	{
-		static getFloatingMenuItems()
+		static getFloatingMenuItems(params = {})
 		{
-			return ProductAddMenu.getFloatingMenuItems();
+			return ProductAddMenu.getFloatingMenuItems(params);
 		}
 
 		/**
@@ -84,19 +84,25 @@ jn.define('crm/product-grid', (require, exports, module) => {
 
 		initServices()
 		{
-			const { catalog, entity, permissions } = this.getProps();
+			const { catalog, entity, permissions, inventoryControl } = this.getProps();
+
+			const isProductCreationPermitted = Boolean(permissions.catalog_product_add);
+			const isCatalogHidden = Boolean(inventoryControl.isCatalogHidden);
+			const isOnecRestrictedByPlan = Boolean(inventoryControl.isOnecRestrictedByPlan);
 
 			this.productSelector = new ProductSelector({
 				iblockId: catalog.id,
 				basePriceId: catalog.basePriceId,
 				currency: this.state.currencyId,
-				enableCreation: permissions.catalog_product_add,
+				enableCreation: isProductCreationPermitted,
+				isCatalogHidden,
 				onSelect: (productId) => this.addExistedProductById(productId),
 				onCreate: (productId, productName) => {
 					return permissions.catalog_product_edit
 						? this.productWizard.open(productId, productName)
 						: this.addExistedProductById(productId);
 				},
+				isOnecRestrictedByPlan,
 			});
 
 			this.barcodeScanner = new BarcodeScanner({
@@ -111,6 +117,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 				analytics: {
 					entityTypeName: entity.typeName,
 				},
+				isCatalogHidden,
 			});
 
 			this.productModelLoader = new ProductModelLoader({
@@ -188,6 +195,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 				isAllowedReservation: inventoryControl.isAllowedReservation,
 				isReservationRestrictedByPlan: inventoryControl.isReservationRestrictedByPlan,
 				defaultDateReserveEnd: inventoryControl.defaultDateReserveEnd,
+				isCatalogHidden: inventoryControl.isCatalogHidden,
 				showTax: this.showTaxInProductCard(),
 				entityDetailPageUrl: entity.detailPageUrl,
 				entityId: entity.id,

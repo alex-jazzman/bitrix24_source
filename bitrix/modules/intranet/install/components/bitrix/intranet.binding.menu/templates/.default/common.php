@@ -39,7 +39,7 @@ $isSwitcher = in_array($this->getPageName(), ['crm_switcher', 'tasks_switcher'])
 	<span class="ui-btn-menu" id="<?= $id;?>"></span>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function()
 	{
 		(new BX.Intranet.Binding.Menu(

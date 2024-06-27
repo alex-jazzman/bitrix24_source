@@ -10,9 +10,9 @@ BX.message.LIMIT_ONLINE = BX.componentParameters.get('LIMIT_ONLINE', 1380);
 
 /* region Clearing session variables after script reload */
 
-if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMessenger.destructor !== 'undefined')
+if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructor !== 'undefined')
 {
-	window.copilotMessenger.destructor();
+	window.messenger.destructor();
 }
 
 /* endregion Clearing session variables after script reload */
@@ -80,7 +80,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
 	const { SyncFillerCopilot } = require('im/messenger/provider/service');
-	const { SidebarController } = require('im/messenger/controller/sidebar/sidebar-controller');
+	const { ChatSidebarController } = require('im/messenger/controller/sidebar');
 	const AppTheme = require('apptheme');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	/* endregion import */
@@ -161,7 +161,10 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 					},
 				}),
 			});
-			await this.recent.init();
+
+			await this.recent.init().catch((error) => {
+				Logger.error('CopilotRecent.init error: ', error);
+			});
 
 			this.searchSelector = new RecentSelector(DialogList);
 			this.chatCreator = new ChatCreator();
@@ -177,7 +180,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		 */
 		bindMethods()
 		{
-			this.onApplicationSetStatus = this.applicationSetStatusHandler.bind(this);
+			super.bindMethods();
 			this.openDialog = this.openDialog.bind(this);
 			this.getOpenDialogParams = this.getOpenDialogParams.bind(this);
 			this.openChatSearch = this.openChatSearch.bind(this);
@@ -298,7 +301,8 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 					break;
 
 				default:
-					headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
+					// headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
+					headerTitle = MessengerParams.getMessengerTitle();
 					useProgress = false;
 					break;
 			}
@@ -350,6 +354,18 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			if (queueRequests.length > 0)
 			{
 				await this.store.dispatch('queueModel/add', queueRequests);
+			}
+		}
+
+		/**
+		 * @override
+		 */
+		async initAnotherRepository()
+		{
+			const copilotData = await this.core.getRepository().copilot.getList();
+			if (copilotData.length > 0)
+			{
+				await this.store.dispatch('dialoguesModel/copilotModel/setCollection', copilotData);
 			}
 		}
 
@@ -617,12 +633,8 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		openSidebar(params)
 		{
 			Logger.info('CopilotMessenger.openSidebar', params);
-			const isOpenSidebarEnabled = MessengerParams.isCopilotAddUsersEnabled();
-			if (isOpenSidebarEnabled)
-			{
-				this.sidebar = new SidebarController(params);
-				this.sidebar.open();
-			}
+			this.sidebar = new ChatSidebarController(params);
+			this.sidebar.open();
 		}
 		/* endregion legacy dialog integration */
 
@@ -685,5 +697,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		}
 	}
 
-	window.copilotMessenger = new CopilotMessenger();
-})();
+	window.messenger = new CopilotMessenger();
+})().catch((error) => {
+	console.error('Messenger init error', error);
+});

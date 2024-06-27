@@ -13,6 +13,7 @@ const DescriptionByChatType = {
 	[ChatType.user]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_USER'),
 	[ChatType.channel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
 	[ChatType.openChannel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
+	[ChatType.generalChannel]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
 	[ChatType.comment]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_COMMENTS'),
 	default: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_GROUP_V2'),
 };

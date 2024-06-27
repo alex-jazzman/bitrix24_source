@@ -1,6 +1,7 @@
 import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
+import { Core } from 'im.v2.application.core';
 import { Messenger } from 'im.public';
 import { Utils } from 'im.v2.lib.utils';
 import { CallManager } from 'im.v2.lib.call';
@@ -37,6 +38,16 @@ export class MembersMenu extends SidebarMenu
 
 	getMenuItems(): MenuItem[]
 	{
+		const targetUserId = Number.parseInt(this.context.dialogId, 10);
+		if (targetUserId === Core.getUserId())
+		{
+			return [
+				this.getOpenProfileItem(),
+				this.getOpenUserCalendarItem(),
+				this.getLeaveItem(),
+			];
+		}
+
 		return [
 			this.getInsertNameItem(),
 			this.getSendMessageItem(),
@@ -54,7 +65,7 @@ export class MembersMenu extends SidebarMenu
 		const user: ImModelUser = this.store.getters['users/get'](this.context.dialogId, true);
 
 		return {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_INSERT_NAME'),
+			text: Loc.getMessage('IM_SIDEBAR_MENU_INSERT_NAME_V2'),
 			onclick: () => {
 				EventEmitter.emit(EventType.textarea.insertMention, {
 					mentionText: user.name,
@@ -69,7 +80,7 @@ export class MembersMenu extends SidebarMenu
 	getSendMessageItem(): MenuItem
 	{
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_WRITE'),
+			text: Loc.getMessage('IM_LIB_MENU_WRITE_V2'),
 			onclick: () => {
 				Messenger.openChat(this.context.dialogId);
 				this.menuInstance.close();
@@ -135,10 +146,14 @@ export class MembersMenu extends SidebarMenu
 			return null;
 		}
 
+		const targetUserId = Number.parseInt(this.context.dialogId, 10);
+
 		const profileUri = Utils.user.getProfileLink(this.context.dialogId);
+		const isCurrentUser = targetUserId === Core.getUserId();
+		const phraseCode = isCurrentUser ? 'IM_LIB_MENU_OPEN_OWN_PROFILE' : 'IM_LIB_MENU_OPEN_PROFILE_V2';
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE'),
+			text: Loc.getMessage(phraseCode),
 			href: profileUri,
 			onclick: () => {
 				this.menuInstance.close();
@@ -153,10 +168,14 @@ export class MembersMenu extends SidebarMenu
 			return null;
 		}
 
+		const targetUserId = Number.parseInt(this.context.dialogId, 10);
+
 		const profileUri = Utils.user.getCalendarLink(this.context.dialogId);
+		const isCurrentUser = targetUserId === Core.getUserId();
+		const phraseCode = isCurrentUser ? 'IM_LIB_MENU_OPEN_OWN_CALENDAR' : 'IM_LIB_MENU_OPEN_CALENDAR_V2';
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR'),
+			text: Loc.getMessage(phraseCode),
 			onclick: () => {
 				BX.SidePanel.Instance.open(profileUri);
 				this.menuInstance.close();
@@ -199,7 +218,7 @@ export class MembersMenu extends SidebarMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_LEAVE'),
+			text: Loc.getMessage('IM_LIB_MENU_LEAVE_V2'),
 			onclick: async () => {
 				this.menuInstance.close();
 				const userChoice = await showLeaveFromChatConfirm();

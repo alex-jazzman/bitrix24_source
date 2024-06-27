@@ -3,7 +3,16 @@
 return [
 	'extensions' => [
 		'tokens',
+		'utils/color',
 		'utils/object',
-		'ui-system/blocks/plain-view',
+		'utils/string',
+		'utils/enums/base',
+		'ui-system/blocks/icon',
+		'ui-system/typography/text',
+		'layout/ui/loaders/spinner',
+	],
+	'bundle' => [
+		'./src/size-enum',
+		'./src/design-enum',
 	],
 ];

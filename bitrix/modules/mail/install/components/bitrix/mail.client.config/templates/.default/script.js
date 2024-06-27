@@ -2,12 +2,26 @@ BX.namespace("BX.MailClientConfig");
 BX.MailClientConfig.Edit = {
 
 	isForbiddenToShare: false,
+	smtp: {
+		switcherChecked: false,
+		switcherDisabled: false,
+	},
+	crm: {
+		integrationAvailable: false,
+		switcherChecked: false,
+	},
+	isCrmIntegrationAvailable: false,
+	isCrmSwitcherChecked: false,
 
 	init: function(params)
 	{
 		if (BX.type.isNotEmptyObject(params))
 		{
 			this.isForbiddenToShare = params.isForbiddenToShare || false;
+			this.smtp.switcherChecked = params.isSmtpSwitcherChecked || false;
+			this.smtp.switcherDisabled = params.isSmtpSwitcherDisabled || false;
+			this.crm.switcherChecked = params.isCrmSwitcherChecked || false;
+			this.crm.integrationAvailable = params.isCrmIntegrationAvailable || false;
 		}
 
 		var selectInputs = BX.findChildrenByClassName(document, 'mail-set-singleselect', true);
@@ -32,6 +46,9 @@ BX.MailClientConfig.Edit = {
 				BX[hide?'removeClass':'addClass'](this, 'mail-set-textarea-show-open');
 			}
 		);
+
+		this.setSmtpSwitcher();
+		this.setCrmSwitcher();
 	},
 
 	singleselect: function(input)
@@ -107,6 +124,95 @@ BX.MailClientConfig.Edit = {
 			);
 
 
-	}
+	},
 
+	setBlockSwitcher(
+		switcherNodeId,
+		oldSwitcherId,
+		sectionBlockId,
+		isSwitcherChecked,
+		isSwitcherDisabled = false,
+	)
+	{
+		const switcherNode = BX(switcherNodeId);
+		const sectionBlockNode = BX(sectionBlockId);
+		if (!switcherNode || !sectionBlockNode)
+		{
+			return;
+		}
+
+		const blockItemsNode = sectionBlockNode.querySelector('.mail-connect-form-items');
+		const blockTitleNode = sectionBlockNode.querySelector('.mail-connect-title-block');
+		if (!blockItemsNode || !blockTitleNode)
+		{
+			return;
+		}
+
+		const hideBlock = () => {
+			BX.Dom.hide(blockItemsNode);
+			BX.Dom.addClass(blockTitleNode, 'mail-connect-title-hidden-block');
+			BX.Dom.removeClass(sectionBlockNode, 'mail-connect-section-block');
+		};
+
+		const showBlock = () => {
+			BX.Dom.show(blockItemsNode);
+			BX.Dom.removeClass(blockTitleNode, 'mail-connect-title-hidden-block');
+			BX.Dom.addClass(sectionBlockNode, 'mail-connect-section-block');
+		};
+
+		const oldSwitcherNode = BX(oldSwitcherId);
+		const switcher = new BX.UI.Switcher({
+			node: switcherNode,
+			checked: isSwitcherChecked,
+			size: 'small',
+			disabled: isSwitcherDisabled ?? false,
+			handlers: {
+				toggled: () => {
+					if (switcher.checked === true)
+					{
+						showBlock();
+					}
+					else
+					{
+						hideBlock();
+					}
+
+					if (oldSwitcherNode)
+					{
+						oldSwitcherNode.click();
+					}
+				},
+			},
+		});
+
+		if (!isSwitcherChecked)
+		{
+			hideBlock();
+		}
+	},
+
+	setSmtpSwitcher()
+	{
+		this.setBlockSwitcher(
+			'mail-connect-smtp-settings-title',
+			'mail_connect_mb_server_smtp_switch',
+			'mail-connect-section-smtp-block',
+			this.smtp.switcherChecked,
+			this.smtp.switcherDisabled,
+		);
+	},
+
+	setCrmSwitcher() {
+		if (!this.crm.integrationAvailable)
+		{
+			return;
+		}
+
+		this.setBlockSwitcher(
+			'mail-connect-crm-settings-title',
+			'mail_connect_mb_crm_switch',
+			'mail-connect-section-crm-block',
+			this.crm.switcherChecked,
+		);
+	},
 };

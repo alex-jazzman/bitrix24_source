@@ -1,6 +1,7 @@
 import { Core } from 'im.v2.application.core';
 import { UserRole, RestMethod, ChatType } from 'im.v2.const';
 import { runAction } from 'im.v2.lib.rest';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import type { ImModelChat } from 'im.v2.model';
 import type { PULL as Pull } from 'pull.client';
@@ -71,7 +72,7 @@ export class PullWatchManager
 
 	#isChannel(): boolean
 	{
-		return [ChatType.openChannel, ChatType.channel].includes(this.#dialog?.type);
+		return ChannelManager.isChannel(this.#dialog?.dialogId);
 	}
 
 	#isCommentsChat(): boolean

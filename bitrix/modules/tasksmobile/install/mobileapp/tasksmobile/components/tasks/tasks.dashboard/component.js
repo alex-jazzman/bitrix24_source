@@ -1,25 +1,31 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 
-	const AppTheme = require('apptheme');
-	const { downloadImages } = require('asset-manager');
+	const { Color } = require('tokens');
+	const { downloadImages, makeLibraryImagePath } = require('asset-manager');
 	const { KanbanAdapter, ListAdapter } = require('tasks/layout/dashboard');
 	const { Loc } = require('loc');
-	const { magnifierWithMenuAndDot } = require('assets/common');
-	const { TaskFilter } = require('tasks/filter/task');
 	const { batchActions } = require('statemanager/redux/batched-actions');
 	const store = require('statemanager/redux/store');
 	const { usersUpserted, usersAdded, usersSelector } = require('statemanager/redux/slices/users');
-	const { Filter, MoreMenu, NavigationTitle, Pull, Sorting } = require('tasks/dashboard');
+	const {
+		SettingsActionExecutor,
+		NavigationTitle,
+		Pull,
+		TasksDashboardFilter,
+		TasksDashboardMoreMenu,
+		TasksDashboardSorting,
+	} = require('tasks/dashboard');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { SearchLayout } = require('layout/ui/search-bar');
 	const { ContextMenu } = require('layout/ui/context-menu');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
-	const { ActionMenu } = require('tasks/layout/action-menu');
+	const { ActionMenu, TopMenuEngine } = require('tasks/layout/action-menu');
+	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
 	const { Haptics } = require('haptics');
 	const { fetchStages } = require('tasks/statemanager/redux/slices/kanban-settings');
 	const { taskStageAdded, taskStageUpserted } = require('tasks/statemanager/redux/slices/tasks-stages');
-	const { TaskCreate } = require('tasks/layout/task/create');
+	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
 	const { CalendarSettings } = require('tasks/task/calendar');
 	const { Pull: TasksPull } = require('layout/ui/stateful-list/pull');
 	const { Views } = require('tasks/statemanager/redux/types');
@@ -28,24 +34,36 @@
 	const { Feature } = require('feature');
 	const { showToast } = require('toast');
 	const { Type } = require('type');
-	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { DeadlinePeriod } = require('tasks/enum');
 	const { fetchDisabledTools } = require('settings/disabled-tools');
 	const {
 		tasksUpserted,
 		tasksAdded,
-		selectById,
+		selectByTaskIdOrGuid,
 		selectEntities,
+		selectIsCreating,
+		selectMarkedAsRemoved,
+		remove,
 		mapStateToTaskModel,
 		readAllForRole,
 		readAllForProject,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { observeCounterChange } = require('tasks/statemanager/redux/slices/tasks/observers/counter-observer');
 	const { observeListChange } = require('tasks/statemanager/redux/slices/tasks/observers/stateful-list-observer');
+	const { StatusBlock } = require('ui-system/blocks/status-block');
 
 	const { groupsUpserted, groupsAdded, selectGroupById } = require('tasks/statemanager/redux/slices/groups');
 	const { dispatch } = store;
 	const { selectTaskStageId } = require('tasks/statemanager/redux/slices/tasks-stages');
 	const { increaseStageCounter, decreaseStageCounter } = require('tasks/statemanager/redux/slices/stage-counters');
+	const { flowsAdded, flowsUpserted } = require('tasks/statemanager/redux/slices/flows');
+	const {
+		isFlowTaskCreationProhibited,
+		loadTariffPlanRestrictionsIfNecessary,
+	} = require('tasks/statemanager/redux/slices/tariff-plan-restrictions');
+	const { openPlanRestriction } = require('tasks/layout/flow/tariff-plan-restrictions-opener');
+
+	const AIR_STYLE_SUPPORTED = Feature.isAirStyleSupported();
 
 	class TasksDashboard extends LayoutComponent
 	{
@@ -58,7 +76,6 @@
 			fetchDisabledTools();
 
 			this.showSearch = this.showSearch.bind(this);
-			this.openViewSwitcher = this.openViewSwitcher.bind(this);
 			this.onItemsLoaded = this.onItemsLoaded.bind(this);
 			this.onSearch = this.onSearch.bind(this);
 			this.onCounterClick = this.onCounterClick.bind(this);
@@ -81,22 +98,24 @@
 			this.skipTasksOperations = this.skipTasksOperations.bind(this);
 			this.showTitleLoader = this.showTitleLoader.bind(this);
 			this.hideTitleLoader = this.hideTitleLoader.bind(this);
+			this.getNavigationTitleParams = this.getNavigationTitleParams.bind(this);
+			this.openViewSwitcher = this.openViewSwitcher.bind(this);
 
-			this.tasksFilter = new Filter(
+			this.tasksDashboardFilter = new TasksDashboardFilter(
 				this.props.currentUserId,
 				this.props.ownerId,
 				this.props.projectId,
 				this.props.isTabsMode,
 				this.props.tabsGuid,
 			);
-			this.tasksFilter.updateCounters().then(() => this.updateMoreMenuButton()).catch(console.error);
+			this.tasksDashboardFilter.updateCounters().then(() => this.updateMoreMenuButton()).catch(console.error);
 
 			this.onPullCallback = this.onPullCallback.bind(this);
 			this.pull = new Pull({
 				onPullCallback: this.onPullCallback,
 				eventCallbacks: {
 					[Pull.events.USER_COUNTER]: (params) => {
-						this.tasksFilter.updateCountersFromPullEvent(params)
+						this.tasksDashboardFilter.updateCountersFromPullEvent(params)
 							.then(() => this.updateMoreMenuButton())
 							.catch(console.error)
 						;
@@ -105,24 +124,35 @@
 				isTabsMode: this.props.isTabsMode,
 			});
 
-			this.sorting = new Sorting();
-
 			const {
 				loading,
 				view,
 				displayFields,
 				calendarSettings,
+				canCreateTask,
 			} = this.getCachedSettings();
 
-			this.moreMenu = new MoreMenu(
-				this.tasksFilter.getCountersByRole(),
-				this.tasksFilter.getCounterType(),
+			this.sorting = new TasksDashboardSorting({
+				type: TasksDashboardSorting.types.ACTIVITY,
+				view,
+			});
+
+			this.moreMenu = new TasksDashboardMoreMenu(
+				this.tasksDashboardFilter.getCountersByRole(),
+				this.tasksDashboardFilter.getCounterType(),
 				this.sorting.getType(),
 				{
 					onCounterClick: this.onCounterClick,
 					onSortingClick: this.onSortingClick,
 					onReadAllClick: this.onReadAllClick,
 					getSelectedView: () => this.state.view,
+					getProjectId: () => this.props.projectId,
+					openViewSwitcher: this.openViewSwitcher,
+					onListClick: () => this.setView(Views.LIST),
+					onKanbanClick: () => this.setView(Views.KANBAN),
+					onPlannerClick: () => this.setView(Views.PLANNER),
+					onDeadlineClick: () => this.setView(Views.DEADLINE),
+					getOwnerId: () => this.props.ownerId || this.props.currentUserId,
 				},
 			);
 
@@ -130,7 +160,7 @@
 				layout,
 				id: 'my_tasks',
 				cacheId: `my_tasks_${env.userId}`,
-				presetId: TaskFilter.presetType.default,
+				presetId: TasksDashboardFilter.presetType.default,
 				searchDataAction: 'tasksmobile.Filter.getSearchBarPresets',
 				searchDataActionParams: {
 					groupId: this.props.projectId,
@@ -139,7 +169,7 @@
 				onCancel: this.onSearch,
 			});
 
-			this.navigationTitle = new NavigationTitle({ layout });
+			this.navigationTitle = new NavigationTitle(this.getNavigationTitleParams());
 
 			/** @type {TasksDashboardBaseView} */
 			this.currentView = null;
@@ -150,7 +180,7 @@
 			const cachedSorting = this.cache.get(this.getId('sorting'));
 			this.setSorting(cachedSorting);
 
-			/** @type {RunActionExecutor} */
+			/** @type {SettingsActionExecutor} */
 			this.settingsActionExecutor = null;
 
 			this.markedAsRemoveTasks = new Set();
@@ -159,11 +189,35 @@
 
 			this.state = {
 				loading,
-				view: this.getValidView(view),
 				displayFields,
+				canCreateTask,
+				view: this.getValidView(view),
 				sorting: this.sorting.getType(),
-				counter: this.tasksFilter.getCounterValue(),
+				counter: this.tasksDashboardFilter.getCounterValue(),
 			};
+		}
+
+		getNavigationTitleParams()
+		{
+			const navigationTitleParams = {
+				layout,
+			};
+			if (this.props.flowId > 0)
+			{
+				navigationTitleParams.statusTitleParamsMap = {
+					[NavigationTitle.ConnectionStatus.NONE]: {
+						text: this.props.flowName ?? Loc.getMessage('M_TASKS_VIEW_FLOW_DEFAULT_NAVIGATION_TITLE'),
+						detailText: Type.isNil(this.props.flowEfficiency)
+							? ''
+							: Loc.getMessage('M_TASKS_VIEW_FLOW_EFFICIENCY_NAVIGATION_SUBTITLE', {
+								'#EFFICIENCY#': this.props.flowEfficiency,
+							}),
+						largeMode: false,
+					},
+				};
+			}
+
+			return navigationTitleParams;
 		}
 
 		async componentDidMount()
@@ -176,6 +230,7 @@
 			this.refreshStages();
 			this.updateMoreMenuButton();
 			this.subscribe();
+			loadTariffPlanRestrictionsIfNecessary();
 
 			setTimeout(async () => {
 				this.prefetchAssets();
@@ -196,6 +251,21 @@
 				BX.addCustomEvent('tasks.tabs:onAppPaused', (eventData) => this.onAppPaused(eventData));
 				BX.addCustomEvent('tasks.tabs:onAppActive', (eventData) => this.onAppActive(eventData));
 			}
+
+			BX.addCustomEvent('TasksDashboard.RemoveTask', (taskId) => {
+				setTimeout(() => {
+					const task = selectByTaskIdOrGuid(store.getState(), taskId);
+					if (task)
+					{
+						ActionMeta[ActionId.REMOVE]?.handleAction({
+							task,
+							taskId,
+							layout,
+							options: { skipConfirm: true },
+						});
+					}
+				}, 500);
+			});
 		}
 
 		prefetchAssets()
@@ -247,12 +317,14 @@
 				view,
 				displayFields,
 				calendarSettings,
+				canCreateTask,
 			} = response?.data || {};
 
 			const loading = (
 				view === undefined
 				|| displayFields === undefined
 				|| calendarSettings === undefined
+				|| canCreateTask === undefined
 			);
 
 			return {
@@ -260,6 +332,7 @@
 				view,
 				displayFields,
 				calendarSettings,
+				canCreateTask,
 			};
 		}
 
@@ -274,12 +347,9 @@
 		{
 			if (!this.settingsActionExecutor)
 			{
-				const { projectId } = this.props;
+				const { projectId, ownerId } = this.props;
 
-				this.settingsActionExecutor = new RunActionExecutor(
-					'tasksmobile.Task.getDashboardSettings',
-					{ projectId },
-				);
+				this.settingsActionExecutor = new SettingsActionExecutor({ projectId, ownerId });
 			}
 
 			return this.settingsActionExecutor;
@@ -291,6 +361,7 @@
 				view: viewFromResponse,
 				displayFields: displayFieldsFromResponse,
 				calendarSettings: calendarSettingsFromResponse,
+				canCreateTask: canCreateTaskFromResponse,
 			} = this.getPreparedSettings(response);
 
 			CalendarSettings.setSettings(calendarSettingsFromResponse);
@@ -298,13 +369,19 @@
 			const {
 				view = viewFromResponse,
 				displayFields = displayFieldsFromResponse,
+				canCreateTask = canCreateTaskFromResponse,
 			} = this.getCachedSettings();
+
+			const validView = this.getValidView(view);
+
+			this.sorting.setView(validView);
 
 			return new Promise((resolve) => {
 				this.setState({
-					loading: false,
-					view: this.getValidView(view),
 					displayFields,
+					canCreateTask,
+					loading: false,
+					view: validView,
 				}, resolve);
 			});
 		}
@@ -322,19 +399,32 @@
 			{
 				this.unsubscribeCounterChangeObserver();
 			}
+
+			this.removeTasksMarkedAsRemoved();
+		}
+
+		removeTasksMarkedAsRemoved()
+		{
+			const toRemoveTasks = selectMarkedAsRemoved(store.getState());
+			if (toRemoveTasks && toRemoveTasks.length > 0)
+			{
+				toRemoveTasks.forEach((task) => {
+					dispatch(remove({ taskId: task.id }));
+				});
+			}
 		}
 
 		// endregion
 
 		// region handle UI events
 
-		onVisibleTasksChange({ moved, removed, added })
+		onVisibleTasksChange({ moved, removed, added, created })
 		{
 			if (!this.currentView || this.currentView.isLoading())
 			{
 				// delay until list is loaded to prevent race-condition with addItems loading
 				setTimeout(() => {
-					this.onVisibleTasksChange({ moved, removed, added });
+					this.onVisibleTasksChange({ moved, removed, added, created });
 				}, 30);
 
 				return;
@@ -354,11 +444,21 @@
 			{
 				void this.updateTasks(moved);
 			}
+
+			if (created.length > 0)
+			{
+				void this.replaceTasks(created);
+			}
 		}
 
 		onCounterChange(counterChangeValue)
 		{
-			this.tasksFilter.updateCounterValue(this.tasksFilter.getCounterValue() + counterChangeValue);
+			this.tasksDashboardFilter.updateCounterValue(this.tasksDashboardFilter.getCounterValue() + counterChangeValue);
+		}
+
+		replaceTasks(tasks)
+		{
+			return this.currentView.replaceItems(tasks);
 		}
 
 		/**
@@ -390,13 +490,43 @@
 		 */
 		async addOrRestoreTasks(tasks)
 		{
-			const restoredTasks = tasks.filter(({ id }) => this.markedAsRemoveTasks.has(id));
+			const restoredTasks = [];
+			const creatingTasks = [];
+			const otherTasksToAdd = [];
+
+			tasks.forEach((task) => {
+				if (this.markedAsRemoveTasks.has(task.id))
+				{
+					restoredTasks.push(task);
+				}
+				else if (
+					selectIsCreating(task)
+					&& this.tasksDashboardFilter.isTaskSuitDashboard(
+						task,
+						this.props.projectId,
+						this.currentView.getActiveStage()?.id,
+						this.state.view,
+					)
+				)
+				{
+					creatingTasks.push(task);
+				}
+				else
+				{
+					otherTasksToAdd.push(task);
+				}
+			});
+
 			if (restoredTasks.length > 0)
 			{
 				await this.currentView.restoreItems(restoredTasks);
 			}
 
-			const otherTasksToAdd = tasks.filter(({ id }) => !this.markedAsRemoveTasks.has(id));
+			if (creatingTasks.length > 0)
+			{
+				await this.currentView.addCreatingItems(creatingTasks);
+			}
+
 			if (otherTasksToAdd.length > 0)
 			{
 				await this.currentView.addItems(otherTasksToAdd);
@@ -407,31 +537,32 @@
 
 		onCounterClick(newCounter)
 		{
-			const currentCounter = this.tasksFilter.getCounterType();
-			const counter = (newCounter === currentCounter ? TaskFilter.counterType.none : newCounter);
+			const currentCounter = this.tasksDashboardFilter.getCounterType();
+			const counter = (newCounter === currentCounter ? TasksDashboardFilter.counterType.none : newCounter);
 
-			this.tasksFilter.setCounterType(counter);
+			this.tasksDashboardFilter.setCounterType(counter);
 			this.moreMenu.setSelectedCounter(counter);
 			this.setState({ counter }, () => this.reload());
 		}
 
 		onSortingClick(sorting)
 		{
-			if (this.sorting.getType() !== sorting)
+			if (this.sorting.getType() === sorting)
 			{
-				this.setSorting(sorting);
-				this.setState({ sorting }, () => {
-					this.cache.set(this.getId('sorting'), sorting);
-					this.reload();
-				});
+				return;
 			}
+
+			this.setSorting(sorting);
+			this.setState({ sorting }, () => {
+				this.cache.set(this.getId('sorting'), sorting);
+				this.reload();
+			});
 		}
 
 		setSorting(sorting)
 		{
 			this.sorting.setType(sorting);
-			// Note: is temporary solution, until user will be able to configure order, too.
-			this.sorting.setOrder(!(this.sorting.getType() === Sorting.type.ACTIVITY));
+			this.sorting.setIsASC(!(this.sorting.getType() === TasksDashboardSorting.types.ACTIVITY));
 
 			this.moreMenu.setSelectedSorting(this.sorting.getType());
 		}
@@ -448,16 +579,18 @@
 			};
 			let action = readAllForProject({ fields });
 
-			if (!this.props.projectId || this.tasksFilter.getRole() !== TaskFilter.roleType.all)
+			if (!this.props.projectId || this.tasksDashboardFilter.getRole() !== TasksDashboardFilter.roleType.all)
 			{
 				fields.userId = (this.props.ownerId || this.props.currentUserId);
-				fields.role = this.tasksFilter.getRole();
+				fields.role = this.tasksDashboardFilter.getRole();
 
 				action = readAllForRole({ fields });
 			}
 
-			const newCommentsCount = this.tasksFilter.getCountersByRole()[TaskFilter.counterType.newComments];
-			this.tasksFilter.updateCounterValue(this.tasksFilter.getCounterValue() - newCommentsCount);
+			const newCommentsCount = this.tasksDashboardFilter.getCountersByRole()[
+				TasksDashboardFilter.counterType.newComments
+			];
+			this.tasksDashboardFilter.updateCounterValue(this.tasksDashboardFilter.getCounterValue() - newCommentsCount);
 
 			if (Feature.isToastSupported())
 			{
@@ -488,7 +621,7 @@
 		 */
 		onItemsLoaded(responseData, context)
 		{
-			const { users = [], items = [], groups = [], tasksStages = [] } = responseData || {};
+			const { users = [], items = [], groups = [], flows = [], tasksStages = [] } = responseData || {};
 			const isCache = context === 'cache';
 
 			const actions = [];
@@ -508,6 +641,11 @@
 				actions.push(isCache ? groupsAdded(groups) : groupsUpserted(groups));
 			}
 
+			if (flows.length > 0)
+			{
+				actions.push(isCache ? flowsAdded(flows) : flowsUpserted(flows));
+			}
+
 			if (tasksStages.length > 0)
 			{
 				actions.push(isCache ? taskStageAdded(tasksStages) : taskStageUpserted(tasksStages));
@@ -521,8 +659,8 @@
 
 		onSearch({ text, presetId })
 		{
-			this.tasksFilter.setPreset(presetId);
-			this.tasksFilter.setSearchString(text);
+			this.tasksDashboardFilter.setPresetId(presetId);
+			this.tasksDashboardFilter.setSearchString(text);
 			this.updateMoreMenuButton();
 
 			// todo avoid setting state and duplicated ajax request
@@ -531,15 +669,13 @@
 
 		onItemClick(id)
 		{
-			const row = selectById(store.getState(), id);
+			const row = selectByTaskIdOrGuid(store.getState(), id);
 			if (row)
 			{
 				// eslint-disable-next-line no-undef
 				const task = new Task({ id: this.props.currentUserId });
-
 				task.setData(mapStateToTaskModel(row));
-
-				task.open(null);
+				task.open(layout, 'tasks.dashboard');
 			}
 		}
 
@@ -572,7 +708,8 @@
 			const actionMenu = new ActionMenu({
 				actions: Object.keys(actions),
 				layoutWidget: layout,
-				taskId: itemId,
+				task: selectByTaskIdOrGuid(store.getState(), itemId),
+				engine: AIR_STYLE_SUPPORTED ? new TopMenuEngine() : null,
 				analyticsLabel: {
 					module: 'tasks',
 					event: 'dashboard-item-menu-click',
@@ -581,31 +718,51 @@
 					isProject: Type.isNumber(this.props.projectId) ? 'Y' : 'N',
 				},
 			});
+			const target = this.currentView.getItemMenuViewRef(itemId);
 
-			actionMenu.show();
+			actionMenu.show({ target });
 		}
 
 		onFloatingButtonClick()
 		{
-			// eslint-disable-next-line consistent-return
 			const mapUser = (user) => {
 				if (user)
 				{
 					return {
 						id: user.id,
 						name: user.fullName,
-						icon: user.avatarSize100,
+						image: user.avatarSize100,
 						link: user.link,
 						workPosition: user.workPosition,
 					};
 				}
+
+				return null;
 			};
 
+			const stage = this.currentView.getActiveStage();
 			const taskCreateParameters = {
+				stage,
 				initialTaskData: {
 					responsible: mapUser(usersSelector.selectById(store.getState(), this.props.ownerId)),
 				},
+				view: this.state.view,
+				loadStagesParams: this.getLoadStagesParams(),
+				layoutWidget: layout,
+				context: 'tasks.dashboard',
 			};
+
+			if (this.isSelectedView(Views.DEADLINE) && stage)
+			{
+				let deadline = null;
+
+				if (stage.statusId !== DeadlinePeriod.PERIOD_NO_DEADLINE)
+				{
+					deadline = (stage.deadline ? new Date(stage.deadline * 1000) : undefined);
+				}
+
+				taskCreateParameters.initialTaskData.deadline = deadline;
+			}
 
 			if (this.props.projectId > 0)
 			{
@@ -613,7 +770,18 @@
 				taskCreateParameters.initialTaskData.group = selectGroupById(store.getState(), this.props.projectId);
 			}
 
-			TaskCreate.open(taskCreateParameters);
+			if (this.props.flowId > 0)
+			{
+				if (isFlowTaskCreationProhibited())
+				{
+					void openPlanRestriction(layout);
+
+					return;
+				}
+				taskCreateParameters.initialTaskData.flowId = this.props.flowId;
+			}
+
+			openTaskCreateForm(taskCreateParameters);
 		}
 
 		onPanList()
@@ -633,7 +801,7 @@
 				const minutesPassed = Math.round((Date.now() - this.pauseTime) / 60000);
 				if (minutesPassed >= 30)
 				{
-					this.tasksFilter.updateCounters().then(() => this.updateMoreMenuButton()).catch(console.error);
+					this.tasksDashboardFilter.updateCounters().then(() => this.updateMoreMenuButton()).catch(console.error);
 					this.reload();
 				}
 			}
@@ -671,7 +839,7 @@
 		{
 			if (this.moreMenu)
 			{
-				this.moreMenu.setCounters(this.tasksFilter.getCountersByRole());
+				this.moreMenu.setCounters(this.tasksDashboardFilter.getCountersByRole());
 			}
 
 			if (this.currentView)
@@ -693,9 +861,10 @@
 		{
 			return {
 				ownerId: this.props.ownerId,
-				presetId: this.tasksFilter.getPreset(),
-				counterId: this.tasksFilter.getCounterType(),
-				searchString: this.tasksFilter.getSearchString(),
+				flowId: this.props.flowId,
+				presetId: this.tasksDashboardFilter.getPresetId(),
+				counterId: this.tasksDashboardFilter.getCounterType(),
+				searchString: this.tasksDashboardFilter.getSearchString(),
 			};
 		}
 
@@ -765,9 +934,20 @@
 		{
 			const validView = this.getValidView(view);
 
+			this.sorting.setView(validView);
+
 			this.setState({ view: validView, loading: false }, () => {
+				if (validView === Views.DEADLINE)
+				{
+					setTimeout(() => {
+						this.refreshStages();
+					}, 100);
+				}
+				else
+				{
+					this.refreshStages();
+				}
 				this.updateViewInCache(validView);
-				this.refreshStages();
 			});
 		}
 
@@ -845,8 +1025,11 @@
 		render()
 		{
 			return View(
-				{ resizableByKeyboard: true },
-				this.state.loading && new LoadingScreenComponent({}),
+				{
+					resizableByKeyboard: true,
+					testId: `TASKS_DASHBOARD_${this.getValidView(this.state.view)}`,
+				},
+				this.state.loading && new LoadingScreenComponent({ showAirStyle: AIR_STYLE_SUPPORTED }),
 				this.isSelectedView(Views.PLANNER) && this.renderPlannerView(),
 				this.isSelectedView(Views.DEADLINE) && this.renderDeadlineView(),
 				this.isSelectedView(Views.KANBAN) && this.renderKanbanView(),
@@ -940,6 +1123,7 @@
 				getEmptyListComponent: this.getEmptyListComponent,
 				onItemClick: this.onItemClick,
 				onItemLongClick: this.onItemLongClick,
+				isShowFloatingButton: this.state.canCreateTask && this.props.canCreateTask,
 				onFloatingButtonClick: this.onFloatingButtonClick,
 				onPanList: this.onPanList,
 				onItemAdded: this.onItemAdded,
@@ -980,6 +1164,7 @@
 
 		onBeforeItemsRender(items, { allItemsLoaded })
 		{
+			const taskEntities = Object.values(selectEntities(store.getState()));
 			const pinnedItems = items.filter((item) => item.isPinned === true);
 			const lastPinnedIndex = pinnedItems.length - 1;
 			const lastIndex = items.length - 1;
@@ -988,6 +1173,7 @@
 			return items.map((item, index) => {
 				const newItem = {
 					id: item.id,
+					idToReplace: taskEntities.find((task) => task.id === item.id)?.guid,
 					key: item.key,
 					type: item.type,
 					[sortingField]: item[sortingField],
@@ -1075,7 +1261,7 @@
 		{
 			if (this.state.view !== Views.LIST)
 			{
-				const task = selectById(store.getState(), item.id);
+				const task = selectByTaskIdOrGuid(store.getState(), item.id);
 				const newTaskStageId = selectTaskStageId(
 					store.getState(),
 					item.id,
@@ -1122,63 +1308,49 @@
 		getLayoutMenuButtons()
 		{
 			return [
-				this.getSearchButton(),
-				this.getToggleViewButton(),
+				this.search.getSearchButton(),
 				this.moreMenu.getMenuButton(),
 			];
 		}
 
-		getSearchButton()
-		{
-			return {
-				type: 'search',
-				badgeCode: 'search',
-				callback: this.showSearch,
-				svg: {
-					content: magnifierWithMenuAndDot(
-						AppTheme.colors.base4,
-						this.search.getSearchButtonBackgroundColor(),
-					),
-				},
-			};
-		}
-
-		getToggleViewButton()
-		{
-			return {
-				type: `view-switcher-${this.state.view}`,
-				callback: this.openViewSwitcher,
-				svg: {
-					uri: SvgIcons[this.state.view],
-				},
-			};
-		}
-
 		getEmptyListImage(viewType, search = false)
 		{
-			return EmptyScreen.makeLibraryImagePath(`${viewType}${search ? '-search' : ''}.svg`, 'tasks');
+			const air = AIR_STYLE_SUPPORTED ? 'air-' : '';
+			const fileName = `${air}${viewType}${search ? '-search' : ''}.svg`;
+
+			return makeLibraryImagePath(fileName, 'empty-states', 'tasks');
 		}
 
 		getEmptyListComponent()
 		{
 			const { title, description, uri } = this.getEmptyListProps();
 
-			return new EmptyScreen({
-				title,
-				description,
-				styles: {
-					paddingHorizontal: 20,
+			const imageParams = {
+				resizeMode: 'contain',
+				style: {
+					width: AIR_STYLE_SUPPORTED ? 327 : 172,
+					height: AIR_STYLE_SUPPORTED ? 140 : 172,
 				},
-				image: {
-					resizeMode: 'contain',
-					style: {
-						width: 172,
-						height: 172,
+				svg: { uri },
+			};
+
+			return AIR_STYLE_SUPPORTED
+				? StatusBlock({
+					title,
+					description,
+					emptyScreen: true,
+					image: Image(imageParams),
+					onRefresh: this.onPullToRefresh,
+				})
+				: new EmptyScreen({
+					title,
+					description,
+					image: imageParams,
+					styles: {
+						paddingHorizontal: 20,
 					},
-					svg: { uri },
-				},
-				onRefresh: this.onPullToRefresh,
-			});
+					onRefresh: this.onPullToRefresh,
+				});
 		}
 
 		getEmptyListProps()
@@ -1190,12 +1362,12 @@
 			let uri = '';
 
 			const isEmptySearchExceptPresets = (
-				this.tasksFilter.isSearchStringEmpty()
-				&& this.tasksFilter.isEmptyCounter()
-				&& this.tasksFilter.isRoleForAll()
+				this.tasksDashboardFilter.isSearchStringEmpty()
+				&& this.tasksDashboardFilter.isEmptyCounter()
+				&& this.tasksDashboardFilter.isRoleForAll()
 			);
 
-			if (!this.tasksFilter.isSearchStringEmpty())
+			if (!this.tasksDashboardFilter.isSearchStringEmpty())
 			{
 				title = Loc.getMessage('M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_TITLE_MSGVER_1');
 				description = Loc.getMessage('M_TASKS_VIEW_ROUTER_EMPTY_LIST_SEARCH_DESCRIPTION_MSGVER_1');
@@ -1203,7 +1375,7 @@
 			}
 			else if (isEmptySearchExceptPresets)
 			{
-				if (this.tasksFilter.isEmptyPreset())
+				if (this.tasksDashboardFilter.isEmptyPreset())
 				{
 					if (this.currentView.isAllStagesDisplayed())
 					{
@@ -1224,25 +1396,15 @@
 						uri = this.getEmptyListImage(listOrKanban, true);
 					}
 				}
-				else if (this.tasksFilter.isDefaultPreset())
+				else if (this.tasksDashboardFilter.isDefaultPreset())
 				{
 					title = Loc.getMessage('M_TASKS_VIEW_ROUTER_EMPTY_IN_PROGRESS');
-					uri = this.getEmptyListImage(listOrKanban, true);
+					uri = this.getEmptyListImage(listOrKanban, false);
 				}
-				else if (this.tasksFilter.getPresetName())
+				else if (this.tasksDashboardFilter.getPresetName())
 				{
-					const message = Loc.getMessage('M_TASKS_VIEW_ROUTER_SELECTED_FILTER_TITLE', {
-						'#FILTER_NAME#': this.tasksFilter.getPresetName(),
-					});
-
-					title = () => BBCodeText({
-						style: {
-							color: AppTheme.colors.base1,
-							fontSize: 25,
-							textAlign: 'center',
-							marginBottom: 12,
-						},
-						value: message,
+					description = Loc.getMessage('M_TASKS_VIEW_ROUTER_SELECTED_FILTER_TITLE', {
+						'#FILTER_NAME#': this.tasksDashboardFilter.getPresetName(),
 					});
 					uri = this.getEmptyListImage(listOrKanban, true);
 				}
@@ -1279,6 +1441,10 @@
 			currentUserId: Number(env.userId),
 			ownerId: Number(BX.componentParameters.get('USER_ID', 0) || env.userId),
 			projectId: projectId > 0 ? projectId : null,
+			flowId: Number(BX.componentParameters.get('FLOW_ID', 0)),
+			flowName: BX.componentParameters.get('FLOW_NAME', null),
+			flowEfficiency: BX.componentParameters.get('FLOW_EFFICIENCY', null),
+			canCreateTask: BX.componentParameters.get('CAN_CREATE_TASK', true),
 			isTabsMode: BX.componentParameters.get('IS_TABS_MODE', false),
 			tabsGuid: BX.componentParameters.get('TABS_GUID', ''),
 		}),

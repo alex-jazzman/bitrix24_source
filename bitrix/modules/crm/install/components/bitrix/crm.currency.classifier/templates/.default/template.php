@@ -457,7 +457,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 	</div>
 </form>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 		BX.message({
 			CRM_CURRENCY_CLASSIFIER_FORM_POPUP_WINDOW_TITLE: '<?= GetMessageJS('CRM_CURRENCY_CLASSIFIER_FORM_POPUP_WINDOW_TITLE')?>',

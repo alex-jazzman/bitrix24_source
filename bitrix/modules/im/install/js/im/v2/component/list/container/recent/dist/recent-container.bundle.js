@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core_events,im_public,im_v2_lib_utils,im_v2_component_list_items_recent,im_v2_component_search_chatSearchInput,im_v2_component_search_chatSearch,im_v2_lib_logger,im_v2_provider_service,im_v2_component_elements,im_v2_const,im_v2_lib_promo,im_v2_lib_createChat,im_v2_lib_layout,main_core) {
+(function (exports,main_core_events,main_core,im_public,im_v2_lib_utils,im_v2_component_list_items_recent,im_v2_component_search_chatSearchInput,im_v2_component_search_chatSearch,im_v2_lib_logger,im_v2_provider_service,im_v2_component_elements,im_v2_const,im_v2_lib_analytics,im_v2_lib_promo,im_v2_lib_createChat) {
 	'use strict';
 
 	// @vue/component
@@ -130,6 +130,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    onChatCreateClick(type) {
+	      im_v2_lib_analytics.Analytics.getInstance().onStartCreateNewChat(type);
 	      this.chatTypeToCreate = type;
 	      const promoBannerIsNeeded = im_v2_lib_promo.PromoManager.getInstance().needToShow(this.getPromoType());
 	      if (promoBannerIsNeeded) {
@@ -161,10 +162,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      var _PromoByChatType$this;
 	      return (_PromoByChatType$this = PromoByChatType[this.chatTypeToCreate]) != null ? _PromoByChatType$this : '';
 	    },
-	    isChannelCreationAvailable() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.list.container.recent');
-	      return settings.get('channelCreationAvailable');
-	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
 	    }
@@ -184,7 +181,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				@click="onChatCreateClick(ChatType.chat)"
 			/>
 			<MenuItem
-				v-if="isChannelCreationAvailable()"
 				:icon="MenuItemIcon.channel"
 				:title="loc('IM_RECENT_CREATE_CHANNEL_TITLE_V2')"
 				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_V3')"
@@ -318,5 +314,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.RecentListContainer = RecentListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Event,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component,BX.Messenger.v2.Component,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=recent-container.bundle.js.map

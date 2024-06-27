@@ -78,7 +78,6 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 		__CrmLeadListEndResponse(array('ERROR' => 'Access denied.'));
 	}
 
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 
 	// Limit count of items to be found
@@ -104,7 +103,7 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 			$arFilter['%TITLE'] = $search;
 			$arFilter['LOGIC'] = 'OR';
 		}
-		else if (preg_match('/(.*)\[(\d+?)\]/i' . BX_UTF_PCRE_MODIFIER, $search, $arMatches))
+		else if (preg_match('/(.*)\[(\d+?)\]/iu', $search, $arMatches))
 		{
 			$arFilter['ID'] = (int)$arMatches[2];
 			$searchString = trim($arMatches[1]);
@@ -965,8 +964,6 @@ elseif ($action === 'DELETE' && check_bitrix_sessid())
 }
 elseif ($action === 'PREPARE_BATCH_CONVERSION' && check_bitrix_sessid())
 {
-	CUtil::JSPostUnescape();
-
 	$params = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
 	$gridID = isset($params['GRID_ID']) ? $params['GRID_ID'] : '';
 	$IDs = isset($params['IDS']) && is_array($params['IDS']) ? $params['IDS'] : array();
@@ -1134,8 +1131,6 @@ elseif ($action === 'STOP_BATCH_CONVERSION' && check_bitrix_sessid())
 }
 elseif ($action === 'PROCESS_BATCH_CONVERSION' && check_bitrix_sessid())
 {
-	CUtil::JSPostUnescape();
-
 	$params = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
 	$gridID = isset($params['GRID_ID']) ? $params['GRID_ID'] : '';
 	$configParams = isset($params['CONFIG']) && is_array($params['CONFIG']) ? $params['CONFIG'] : array();

@@ -244,7 +244,7 @@ class CBPRequestInformationOptionalActivity extends CBPRequestInformationActivit
 				'Default' => 'any',
 			],
 			'TaskButtonCancelMessage' => [
-				'Name' => GetMessage('BPAR_PD_TASK_BUTTON_CANCEL_MESSAGE'),
+				'Name' => GetMessage('BPAR_PD_TASK_BUTTON_CANCEL_MESSAGE_MSGVER_1'),
 				'FieldName' => 'task_button_cancel_message',
 				'Type' => Bizproc\FieldType::STRING,
 				'Required' => true,

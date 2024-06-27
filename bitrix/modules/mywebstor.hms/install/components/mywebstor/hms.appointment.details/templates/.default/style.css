@@ -1,0 +1,84 @@
+[data-tab-id="main"] {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+[data-tab-id="main"] .ui-entity-editor-container-wrapper {
+    flex: 0 0 30%;
+    padding-right: 10px;
+}
+
+[data-tab-id="main"] .ui-entity-additional-wrapper {
+    flex: 1;
+}
+
+.ui-ctl.ui-ctl-duration {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+}
+
+.ui-ctl.ui-ctl-duration input {
+    text-align: center;
+    font-size: 16px;
+}
+
+.ui-chevron {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+}
+
+.ui-chevron:before,
+.ui-chevron.ui-double:after {
+    content: "";
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-left: 4px solid #c6cdd3;
+    border-top: 4px solid #c6cdd3;
+    top: 45%;
+}
+.ui-chevron.ui-left:before,
+.ui-chevron.ui-left:after {
+    left: 50%;
+}
+
+.ui-chevron.ui-left:before,
+.ui-chevron.ui-double.ui-left:after {
+    transform: rotateZ(-45deg) translateY(-50%);
+}
+.ui-chevron.ui-double.ui-left:before {
+    left: 65%;
+}
+.ui-chevron.ui-double.ui-left:after {
+    left: 45%;
+}
+
+.ui-chevron.ui-right:before,
+.ui-chevron.ui-right:after {
+    right: 15%;
+}
+.ui-chevron.ui-right:before,
+.ui-chevron.ui-double.ui-right:after {
+    transform: rotateZ(135deg) translateY(50%);
+}
+.ui-chevron.ui-double.ui-right:before {
+    right: 30%;
+}
+.ui-chevron.ui-double.ui-right:after {
+    right: 10%;
+}
+
+.hms-entity-selector .hms-entity-selector-text {
+    padding-bottom: 5px;
+}
+
+.crm-entity-widget-client-contact-item.crm-entity-widget-client-contact-birthdate {
+    flex: 0 0 100%;
+}
+
+[data-cid='PATIENT'] .crm-entity-widget-client-contact {
+    flex-wrap: wrap;
+}

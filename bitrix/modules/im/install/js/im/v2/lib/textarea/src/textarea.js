@@ -6,6 +6,11 @@ type InsertTextConfig = {
 	replace?: boolean
 };
 
+type InsertMentionConfig = {
+	textToInsert: string,
+	textToReplace?: string
+};
+
 const TAB = '\t';
 const NEW_LINE = '\n';
 const LETTER_CODE_PREFIX = 'Key';
@@ -132,6 +137,7 @@ export const Textarea = {
 	insertText(textarea: HTMLTextAreaElement, config: InsertTextConfig = {}): string
 	{
 		const { text, withNewLine = false, replace = false } = config;
+		const newSelectionPosition: number = textarea.selectionStart + text.length + 1;
 		let resultText = '';
 
 		if (replace)
@@ -148,8 +154,41 @@ export const Textarea = {
 		}
 		else
 		{
-			resultText = withNewLine ? `${textarea.value}${NEW_LINE}${text}` : `${textarea.value} ${text}`;
+			const textBefore = textarea.value.slice(0, textarea.selectionStart);
+			const textAfter = textarea.value.slice(textarea.selectionEnd);
+			resultText = withNewLine ? `${textarea.value}${NEW_LINE}${text}` : `${textBefore} ${text} ${textAfter}`;
 		}
+
+		textarea.focus({ preventScroll: true });
+		textarea.value = resultText;
+		textarea.selectionStart = newSelectionPosition;
+		textarea.selectionEnd = newSelectionPosition;
+
+		return resultText;
+	},
+	insertMention(textarea: HTMLTextAreaElement, config: InsertMentionConfig = {}): string
+	{
+		const { textToInsert, textToReplace = '' } = config;
+
+		let resultText = '';
+		let newSelectionPosition = textarea.selectionStart + textToInsert.length + 1;
+		if (textToReplace.length > 0)
+		{
+			newSelectionPosition -= textToReplace.length;
+			resultText = textarea.value.replace(textToReplace, `${textToInsert} `);
+		}
+		else
+		{
+			const textBefore = textarea.value.slice(0, textarea.selectionStart);
+			const textAfter = textarea.value.slice(textarea.selectionEnd);
+
+			resultText = `${textBefore}${textToInsert} ${textAfter}`;
+		}
+
+		textarea.focus({ preventScroll: true });
+		textarea.value = resultText;
+		textarea.selectionStart = newSelectionPosition;
+		textarea.selectionEnd = newSelectionPosition;
 
 		return resultText;
 	},

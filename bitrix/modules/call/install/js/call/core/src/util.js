@@ -410,6 +410,10 @@ const getUserLimit = () =>
 	return parseInt(BX.message('turn_server_max_users'));
 }
 
+const getCallFeatures = () => {
+	return BX.message('call_features')
+}
+
 function getLogMessage ()
 {
 	let text = getDateForLog();
@@ -716,5 +720,6 @@ export default {
 	calcLocalPacketsLost,
 	calcRemotePacketsLost,
 	formatPacketsLostData,
+	getCallFeatures,
 	getAvatarBackground,
 }

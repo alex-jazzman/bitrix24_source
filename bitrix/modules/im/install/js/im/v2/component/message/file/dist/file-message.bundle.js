@@ -129,7 +129,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const MAX_WIDTH = 305;
+	const MAX_WIDTH = 488;
 	const MAX_HEIGHT = 340;
 	const MIN_WIDTH = 200;
 	const MIN_HEIGHT = 100;
@@ -452,6 +452,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const MAX_GALLERY_WIDTH = 305;
+	const MAX_SINGLE_MEDIA_WIDTH = 488;
+
 	// @vue/component
 	const MediaMessage = {
 	  name: 'MediaMessage',
@@ -512,11 +515,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    isChannelPost() {
 	      return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(this.dialog.type);
+	    },
+	    imageContainerStyles() {
+	      let maxWidth = MAX_SINGLE_MEDIA_WIDTH;
+	      if (this.fileIds.length > 1) {
+	        maxWidth = MAX_GALLERY_WIDTH;
+	      }
+	      return {
+	        'max-width': `${maxWidth}px`
+	      };
 	    }
 	  },
 	  template: `
 		<BaseMessage :item="item" :dialogId="dialogId" :withBackground="needBackground">
-			<div class="bx-im-message-image__container">
+			<div class="bx-im-message-image__container" :style="imageContainerStyles">
 				<MessageHeader :withTitle="false" :item="item" class="bx-im-message-image__header" />
 				<MediaContent :item="message" />
 				<div v-if="showBottomContainer" class="bx-im-message-image__bottom-container">
@@ -1011,7 +1023,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	      // file.type value is empty for mkv files
 	      const isVideo = file.type === im_v2_const.FileType.video || im_v2_lib_utils.Utils.file.getFileExtension(file.name) === 'mkv';
-	      if (isVideo) {
+	      if (isVideo && hasPreview) {
 	        return FileMessageType.media;
 	      }
 	      return FileMessageType.base;

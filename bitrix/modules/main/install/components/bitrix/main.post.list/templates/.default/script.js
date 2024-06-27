@@ -624,7 +624,7 @@
 				BX.addCustomEvent(this.quotePopup, "onQuote", this.__quoteShowClick);
 				BX.addCustomEvent(this.quotePopup, "onHide", this.__quoteShowHide);
 			}
-			this.quotePopup.show(e);
+			this.quotePopup.show(e, params);
 		},
 		displayPagenavigation : function(status, startHeight) {
 			var fxStart;
@@ -2558,36 +2558,17 @@
 		this.closeByEsc = true;
 		this.autoHide = true;
 		this.autoHideTimeout = 5000;
-
-		this.node = document.createElement("A");
-		BX.adjust(this.node, {
-			style: {
-				zIndex: BX.PopupWindow.getOption("popupZindex") + 1,
-				position: "absolute",
-				display: "none",
-				top: "0px",
-				left: "0px",
-			},
-			attrs : {
-				className: "mpl-quote-block",
-				href: "#",
-			},
-			events: {
-				click: this.fire.bind(this),
-			}
-		});
-
 		this.checkEsc = this.checkEsc.bind(this);
 		this.hide = this.hide.bind(this);
-		document.body.appendChild(this.node);
-		BX.ZIndexManager.register(this.node);
 	};
 	MPLQuote.prototype = {
-		show : function(e){
-			var pos = this.getPosition(this.node, e);
-			BX.adjust(this.node, {style : {top : pos.y + "px", left : pos.x + "px", display : "block"}});
-			BX.addClass(this.node, "mpl-quote-block-show");
-			BX.ZIndexManager.bringToFront(this.node);
+		show : function(e, params) {
+			if (window.getSelection().toString() === '')
+			{
+				return;
+			}
+
+			this.render(e, params);
 
 			if (this.closeByEsc && this.closeByEscBound !== true)
 			{
@@ -2616,6 +2597,154 @@
 				this.autoHideTimeoutPointer = setTimeout(this.hide, this.autoHideTimeout);
 			}
 		},
+		render: function(e, params) {
+			if (this.wrap)
+			{
+				BX.ZIndexManager.unregister(this.wrap);
+				this.wrap.remove();
+			}
+
+			const copilotParams = params?.options?.copilotParams;
+			this.wrap = copilotParams ? this.renderQuoteWithCopilot(copilotParams) : this.renderQuote();
+
+			document.body.appendChild(this.wrap);
+			BX.ZIndexManager.register(this.wrap);
+
+			const pos = this.getPosition(this.wrap, e);
+			BX.adjust(this.wrap, {
+				style: {
+					top: `${pos.y}px`,
+					left: `${pos.x}px`,
+					display : 'block',
+				},
+			});
+			BX.addClass(this.wrap, 'mpl-quote-block-show');
+			BX.ZIndexManager.bringToFront(this.wrap);
+		},
+		renderQuote: function() {
+			const quote = BX.Tag.render`
+				<a class="mpl-quote-block" href="#" style="display: none;"></a>
+			`;
+			quote.addEventListener('click', this.fire.bind(this));
+
+			return quote;
+		},
+		renderQuoteWithCopilot: function(copilotParams) {
+			const quoteButton = BX.Tag.render`
+				<div class="mpl-quote-block-quote">
+					<div class="ui-icon-set --quote"></div>
+				</div>
+			`;
+			quoteButton.addEventListener('click', this.fire.bind(this));
+
+			const copilotButton = BX.Tag.render`
+				<div class="mpl-quote-block-copilot">
+					<div class="ui-icon-set --copilot-ai"></div>
+					<div class="mpl-quote-block-copilot-text">${BX.message('MPL_QUOTE_COPILOT')}</div>
+				</div>
+			`;
+			copilotButton.addEventListener('click', this.onCopilotButtonClickHandler.bind(this, copilotParams));
+
+			const quoteWithCopilot = BX.Tag.render`
+				<a class="mpl-quote-block mpl-quote-block-with-copilot" href="#" style="display: none;">
+					<div class="mpl-quote-block-with-copilot-container">
+						${quoteButton}
+						<div class="mpl-quote-block-separator"></div>
+						${copilotButton}
+					</div>
+				</a>
+			`;
+			quoteWithCopilot.addEventListener('click', this.emptyClick.bind(this));
+
+			return quoteWithCopilot;
+		},
+		onCopilotButtonClickHandler: function(copilotParams, e) {
+			this.emptyClick(e);
+
+			this.getCopilot(copilotParams).then((copilot) => {
+				this.showCopilot(copilot);
+			});
+		},
+		showCopilot: function(copilot) {
+			const selection = window.getSelection();
+			const selectedText = selection.toString();
+			const range = selection.getRangeAt(0);
+			const clonedRange = range.cloneRange();
+
+			let selectTextOnBlur = true;
+			const selectText = () => {
+				if (selectTextOnBlur && window.getSelection().toString() !== selectedText)
+				{
+					window.getSelection().removeAllRanges();
+					window.getSelection().addRange(clonedRange);
+				}
+			};
+			const startAdjustAnimation = () => new BX.easing({
+				duration: 1000,
+				start: {},
+				finish: {},
+				transition: BX.easing.makeEaseOut(BX.easing.transitions.linear),
+				step: () => {
+					if (copilot.isShown())
+					{
+						copilot.adjust({ position: this.getBindElement(clonedRange) });
+					}
+				},
+			}).animate();
+			document.addEventListener('mouseup', selectText);
+			document.addEventListener('mousedown', selectText);
+			BX.Event.EventEmitter.subscribe('onPullEvent-unicomments', startAdjustAnimation);
+
+			const stopSelectText = () => {
+				selectTextOnBlur = false;
+				window.getSelection().removeAllRanges();
+				document.removeEventListener('mouseup', selectText);
+				document.removeEventListener('mousedown', selectText);
+				BX.Event.EventEmitter.unsubscribe('onPullEvent-unicomments', startAdjustAnimation);
+				BX.Event.EventEmitter.unsubscribe('AI.Copilot:hide', stopSelectText);
+				BX.Event.EventEmitter.unsubscribe('AI.Copilot.Menu:open', selectText);
+			};
+			BX.Event.EventEmitter.subscribe('AI.Copilot:hide', stopSelectText);
+			BX.Event.EventEmitter.subscribe('AI.Copilot.Menu:open', selectText);
+
+			copilot.setContext(selectedText);
+			copilot.show({ bindElement: this.getBindElement(clonedRange) });
+		},
+		getBindElement: function(range) {
+			const pivotRect = range.getBoundingClientRect();
+
+			return {
+				top: pivotRect.bottom + window.scrollY + 10,
+				left: pivotRect.x + window.scrollX,
+			};
+		},
+		getCopilot: async function(copilotParams) {
+			const key = JSON.stringify(copilotParams);
+
+			MPLQuote.copilots ??= {};
+			if (MPLQuote.copilots[key])
+			{
+				return MPLQuote.copilots[key];
+			}
+
+			const { Copilot } = await BX.Runtime.loadExtension('ai.copilot');
+
+			MPLQuote.copilots[key] = new Copilot({
+				readonly: true,
+				autoHide: true,
+				...copilotParams,
+			});
+
+			return new Promise((resolve) => {
+				MPLQuote.copilots[key].subscribe('finish-init', () => resolve(MPLQuote.copilots[key]));
+				MPLQuote.copilots[key].init();
+			});
+		},
+		emptyClick: function(e) {
+			e.preventDefault();
+			this.cancelBubble(e);
+			this.wrap.style.display = 'none';
+		},
 		fire: function(e) {
 
 			e.preventDefault();
@@ -2632,7 +2761,7 @@
 
 			this.cancelBubble(e);
 
-			this.node.style.display = "none";
+			this.wrap.style.display = "none";
 
 			BX.onCustomEvent(this, "onQuote", [e, this]);
 
@@ -2655,7 +2784,7 @@
 
 			BX.onCustomEvent(this, "onHide", [this]);
 
-			BX.remove(this.node);
+			BX.remove(this.wrap);
 		},
 		getPosition: function(node, e) {
 			var nodePos;
@@ -2676,7 +2805,7 @@
 			};
 		},
 		isShown: function() {
-			return (this.node.style.display === "block");
+			return (this.wrap.style.display === "block");
 		},
 		cancelBubble: function(event) {
 			if (!event)
@@ -2737,9 +2866,10 @@
 	 * @param node
 	 * @param xmlId
 	 * @param author_id
+	 * @param options {{copilotParams}}
 	 * @returns {boolean}
 	 */
-	window.mplCheckForQuote = function(e, node, xmlId, author_id) {
+	window.mplCheckForQuote = function(e, node, xmlId, author_id, options = null) {
 		e = (document.all ? window.event : e);
 		var text = "", range, author = null;
 
@@ -2831,7 +2961,7 @@
 		}
 		if (closestEntity !== null)
 		{
-			BX.onCustomEvent(closestEntity.eventNode, "onQuote", [e, {text : text, author : author}]);
+			BX.onCustomEvent(closestEntity.eventNode, "onQuote", [e, {text : text, author : author, options}]);
 		}
 	};
 	window.mplReplaceUserPath = function(text) {

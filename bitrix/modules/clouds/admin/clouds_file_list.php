@@ -239,7 +239,7 @@ if($USER->CanDoOperation("clouds_upload") && is_array($arID))
 			$absPath = $tempDir."tmp_name";
 			if(isset($_REQUEST["file_name"]))
 			{
-				$filePath = $APPLICATION->ConvertCharset($_REQUEST["file_name"], "UTF-8", LANG_CHARSET);
+				$filePath = $_REQUEST["file_name"];
 				$filePath = "/".$_REQUEST["path_to_upload"]."/".$filePath;
 				$filePath = preg_replace("#[\\\\\\/]+#", "/", $filePath);
 

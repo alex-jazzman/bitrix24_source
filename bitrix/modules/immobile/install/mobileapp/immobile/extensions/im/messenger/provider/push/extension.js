@@ -8,6 +8,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { EventType, DialogType, ComponentCode } = require('im/messenger/const');
+	const { EntityReady } = require('entity-ready');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('push-handler');
 
@@ -142,7 +143,7 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			return true;
 		}
 
-		executeAction()
+		async executeAction()
 		{
 			if (Application.isBackground())
 			{
@@ -191,6 +192,8 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 					if (push.data[1] && push.data[1][13] && push.data[1][13] === DialogType.copilot)
 					{
 						componentCode = ComponentCode.imCopilotMessenger;
+
+						await EntityReady.wait('copilot-messenger');
 						BX.postComponentEvent('onTabChange', ['copilot'], ComponentCode.imNavigation);
 					}
 					else
@@ -198,7 +201,11 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 						BX.postComponentEvent('onTabChange', ['chats'], ComponentCode.imNavigation);
 					}
 
-					MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: `chat${chatId}` }, componentCode);
+					MessengerEmitter.emit(
+						EventType.messenger.openDialog,
+						{ dialogId: `chat${chatId}`, isFromPush: true },
+						componentCode,
+					);
 				}
 
 				return true;

@@ -148,4 +148,3 @@ jn.define('layout/ui/switcher', (require, exports, module) => {
 
 	module.exports = { Switcher };
 });
-

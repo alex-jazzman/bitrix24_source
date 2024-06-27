@@ -48,6 +48,8 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'code', type: FieldType.text },
 				{ name: 'diskFolderId', type: FieldType.integer },
 				{ name: 'aiProvider', type: FieldType.text },
+				{ name: 'role', type: FieldType.text, defaultValue: 'none' },
+				{ name: 'permissions', type: FieldType.json },
 			];
 		}
 
@@ -68,33 +70,7 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				`,
 			});
 
-			const {
-				columns,
-				rows,
-			} = result;
-
-			const list = {
-				items: [],
-			};
-
-			rows.forEach((row) => {
-				const listRow = {};
-				row.forEach((value, index) => {
-					const key = columns[index];
-					listRow[key] = value;
-				});
-
-				if (shouldRestoreRows === true)
-				{
-					list.items.push(this.restoreDatabaseRow(listRow));
-				}
-				else
-				{
-					list.items.push(listRow);
-				}
-			});
-
-			return list;
+			return this.convertSelectResultToGetListResult(result, shouldRestoreRows);
 		}
 
 		async deleteByIdList(idList)

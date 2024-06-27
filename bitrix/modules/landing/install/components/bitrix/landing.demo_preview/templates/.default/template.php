@@ -377,7 +377,7 @@ else
 </div>
 
 <?php if ($template['URL_PREVIEW']):?>
-<script type="text/javascript">
+<script>
 	// Force init template preview layout
 	<?php
 	$popupTextCode = 'LANDING_TPL_POPUP_TEXT';
@@ -420,7 +420,7 @@ else
 	<?php endif;?>
 </script>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		BX.UI.Hint.init(BX('ui-btn-disabled'));
 	})

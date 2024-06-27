@@ -16,6 +16,10 @@ const LAST_USERS_TO_SHOW = 3;
 type CommentsState = {
 	collection: {
 		[messageId: string]: ImModelCommentInfo
+	},
+	layout: {
+		opened: boolean,
+		channelDialogId: string,
 	}
 };
 
@@ -25,6 +29,10 @@ export class CommentsModel extends BuilderModel
 	{
 		return {
 			collection: {},
+			layout: {
+				opened: false,
+				channelDialogId: '',
+			},
 		};
 	}
 
@@ -64,6 +72,18 @@ export class CommentsModel extends BuilderModel
 				}
 
 				return element?.isUserSubscribed ?? false;
+			},
+			/** @function messages/comments/areOpened */
+			areOpened: (state: CommentsState): boolean => {
+				return state.layout?.opened ?? false;
+			},
+			/** @function messages/comments/areOpenedForChannel */
+			areOpenedForChannel: (state: CommentsState) => (channelDialogId: string): boolean => {
+				return state.layout?.channelDialogId === channelDialogId;
+			},
+			/** @function messages/comments/getOpenedChannelId */
+			getOpenedChannelId: (state: CommentsState): string => {
+				return state.layout?.channelDialogId ?? '';
 			},
 		};
 	}
@@ -125,6 +145,14 @@ export class CommentsModel extends BuilderModel
 					isUserSubscribed: false,
 				});
 			},
+			/** @function messages/comments/setOpened */
+			setOpened: (store, payload: { channelDialogId: string }) => {
+				store.commit('setOpened', payload);
+			},
+			/** @function messages/comments/setClosed */
+			setClosed: (store) => {
+				store.commit('setClosed');
+			},
 		};
 	}
 
@@ -154,6 +182,20 @@ export class CommentsModel extends BuilderModel
 
 				currentUsers.pop();
 				currentUsers.unshift(newUserId);
+			},
+			setOpened: (state: CommentsState, payload: { channelDialogId: string }) => {
+				const { channelDialogId } = payload;
+
+				state.layout = {
+					opened: true,
+					channelDialogId,
+				};
+			},
+			setClosed: (state: CommentsState) => {
+				state.layout = {
+					opened: false,
+					channelDialogId: '',
+				};
 			},
 		};
 	}

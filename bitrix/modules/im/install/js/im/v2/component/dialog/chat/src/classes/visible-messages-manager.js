@@ -12,6 +12,11 @@ export class VisibleMessagesManager
 		this.#visibleMessages.delete(messageId);
 	}
 
+	getVisibleMessages(): number[]
+	{
+		return [...this.#visibleMessages];
+	}
+
 	getFirstMessageId(): number
 	{
 		if (this.#visibleMessages.size === 0)

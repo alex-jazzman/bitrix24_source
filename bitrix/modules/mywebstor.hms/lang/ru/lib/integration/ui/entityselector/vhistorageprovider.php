@@ -1,0 +1,4 @@
+<?
+
+$MESS["HMS_ENTITY_SELECTOR_TAB_TITLE"] = "Схожие";
+$MESS["HMS_ENTITY_SELECTOR_TAB_HEADER"] = "Схожие";

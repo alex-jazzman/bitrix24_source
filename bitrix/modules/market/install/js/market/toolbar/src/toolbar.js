@@ -8,7 +8,7 @@ import "./toolbar.css";
 
 export const Toolbar = {
 	props: [
-		'categories', 'menuInfo', 'marketAction',
+		'categories', 'menuInfo', 'marketAction', 'searchAction',
 	],
 	data() {
 		return {
@@ -329,8 +329,15 @@ export const Toolbar = {
 
 						if (append) {
 							this.search.foundApps = this.search.foundApps.concat(response.data.apps);
-						} else {
-							this.search.foundApps = response.data.apps;
+							return;
+						}
+
+						this.search.foundApps = response.data.apps;
+
+						if (this.searchAction.length > 0) {
+							try {
+								eval(this.searchAction.replace('#SEARCH_TEXT#', searchText));
+							} catch (e) {}
 						}
 					}
 				},
@@ -590,7 +597,7 @@ export const Toolbar = {
 									<template v-else>
 										<a class="market-menu-catalog__search-item"
 										   v-for="appItem in search.foundApps"
-										   :href="$root.getDetailUri(appItem.CODE, appItem.IS_SITE_TEMPLATE === 'Y', 'search')"
+										   :href="$root.getDetailUri(appItem.CODE, appItem.IS_SITE_TEMPLATE === 'Y', 'search', search.text)"
 										   @click="$root.openSiteTemplate($event, appItem.IS_SITE_TEMPLATE === 'Y')"
 										>
 											<div class="market-menu-catalog__search-item_img-block">

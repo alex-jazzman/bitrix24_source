@@ -58,6 +58,17 @@ jn.define("uploader/client", (require, exports, module) => {
 		destroy() {
 			BX.removeCustomEvent("onFileUploadTaskReceived", this.eventHandler)
 		}
+
+		addTaskFromCache(task)
+		{
+			if (!task.taskId)
+			{
+				throw new Error("UploaderClient.addTaskFromCache: property 'taskId' should be defined");
+			}
+
+			this.tasks.push(task);
+			BX.postComponentEvent('onFileUploadTaskReceived', [{ files: [task] }], this.context);
+		}
 	}
 
 	module.exports = { UploaderClient }

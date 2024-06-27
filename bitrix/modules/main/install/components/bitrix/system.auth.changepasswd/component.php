@@ -95,7 +95,7 @@ foreach ($arRequestParams as $param)
 }
 
 if(isset($_GET["USER_LOGIN"]))
-	$arResult["~LAST_LOGIN"] = CUtil::ConvertToLangCharset($_GET["USER_LOGIN"]);
+	$arResult["~LAST_LOGIN"] = $_GET["USER_LOGIN"];
 elseif(isset($_POST["USER_LOGIN"]))
 	$arResult["~LAST_LOGIN"] = $_POST["USER_LOGIN"];
 else

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Entity = this.BX.Crm.Entity || {};
-(function (exports,ui_designTokens,ui_notification,catalog_storeSelector,catalog_productCalculator,main_popup,main_core_events,catalog_storeUse,currency_currencyCore,catalog_productSelector,catalog_productModel,pull_client,main_core,spotlight,ui_tour) {
+(function (exports,ui_designTokens,ui_notification,catalog_storeSelector,catalog_storeEnableWizard,catalog_productCalculator,main_popup,main_core_events,currency_currencyCore,catalog_productSelector,catalog_productModel,pull_client,main_core,spotlight,ui_tour,catalog_toolAvailabilityManager) {
 	'use strict';
 
 	var _templateObject;
@@ -285,6 +285,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _rowId = /*#__PURE__*/new WeakMap();
 	var _model = /*#__PURE__*/new WeakMap();
+	var _inventoryManagementMode = /*#__PURE__*/new WeakMap();
 	var _node = /*#__PURE__*/new WeakMap();
 	var _popup = /*#__PURE__*/new WeakMap();
 	var _createPopup = /*#__PURE__*/new WeakSet();
@@ -300,6 +301,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec$1(this, _inventoryManagementMode, {
+	      writable: true,
+	      value: void 0
+	    });
 	    _classPrivateFieldInitSpec$1(this, _node, {
 	      writable: true,
 	      value: void 0
@@ -310,6 +315,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _rowId, options.rowId);
 	    babelHelpers.classPrivateFieldSet(this, _model, options.model);
+	    babelHelpers.classPrivateFieldSet(this, _inventoryManagementMode, options.inventoryManagementMode);
 	    this.setNode(options.node);
 	  }
 	  babelHelpers.createClass(StoreAvailablePopup, [{
@@ -334,12 +340,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var renderRow = function renderRow(value) {
 	        return "<td class=\"main-grid-cell main-grid-cell-right\">\n\t\t\t\t<div class=\"main-grid-cell-inner\">\n\t\t\t\t\t<span class=\"main-grid-cell-content\">".concat(value, "</span>\n\t\t\t\t</div>\n\t\t\t</td>");
 	      };
-	      var reservedQuantityLink = reservedQuantity > 0 ? "<a href=\"#\" class=\"store-available-popup-reserves-slider-link\">".concat(reservedQuantity, "</a>") : reservedQuantity;
+	      var isReservedQuantityLink = reservedQuantity > 0 && babelHelpers.classPrivateFieldGet(this, _inventoryManagementMode) !== catalog_storeEnableWizard.ModeList.MODE_1C;
+	      var reservedQuantityContent = isReservedQuantityLink ? "<a href=\"#\" class=\"store-available-popup-reserves-slider-link\">".concat(reservedQuantity, "</a>") : reservedQuantity;
 	      var viewAvailableQuantity = availableQuantity <= 0 ? "<span class=\"text--danger\">".concat(availableQuantity) : availableQuantity;
-	      var result = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"store-available-popup-container\">\n\t\t\t\t<table class=\"main-grid-table\">\n\t\t\t\t\t<thead class=\"main-grid-header\">\n\t\t\t\t\t\t<tr class=\"main-grid-row-head\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</thead>\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr class=\"main-grid-row main-grid-row-body\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>\n\t\t"])), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_COMMON_MSGVER_1')), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_RESERVED')), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_AVAILABLE')), renderRow(storeQuantity), renderRow(reservedQuantityLink), renderRow(viewAvailableQuantity));
-	      if (reservedQuantity > 0) {
-	        reservedQuantityLink = result.querySelector('.store-available-popup-reserves-slider-link');
-	        main_core.Event.bind(reservedQuantityLink, 'click', function (e) {
+	      var result = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"store-available-popup-container\">\n\t\t\t\t<table class=\"main-grid-table\">\n\t\t\t\t\t<thead class=\"main-grid-header\">\n\t\t\t\t\t\t<tr class=\"main-grid-row-head\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</thead>\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr class=\"main-grid-row main-grid-row-body\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>\n\t\t"])), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_COMMON_MSGVER_1')), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_RESERVED')), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_AVAILABLE')), renderRow(storeQuantity), renderRow(reservedQuantityContent), renderRow(viewAvailableQuantity));
+	      if (isReservedQuantityLink) {
+	        main_core.Event.bind(result.querySelector('.store-available-popup-reserves-slider-link'), 'click', function (e) {
 	          e.preventDefault();
 	          _this.openDealsWithReservedProductSlider();
 	        });
@@ -1931,6 +1937,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      return this.getSettingValue('isInventoryManagementToolEnabled', true);
 	    }
 	  }, {
+	    key: "getInventoryManagementMode",
+	    value: function getInventoryManagementMode() {
+	      return this.getSettingValue('inventoryManagementMode', true);
+	    }
+	  }, {
 	    key: "isRestrictedStoreInfo",
 	    value: function isRestrictedStoreInfo() {
 	      var _this$getField;
@@ -2082,7 +2093,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  this.storeAvailablePopup = new StoreAvailablePopup({
 	    rowId: this.id,
 	    model: this.getModel(),
-	    node: storeAvaiableNode
+	    node: storeAvaiableNode,
+	    inventoryManagementMode: this.getInventoryManagementMode()
 	  });
 	}
 	function _applyStoreSelectorRestrictionTweaks2() {
@@ -2426,8 +2438,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return content;
 	}
 	function _getSettingItem2(item) {
-	  var _item$disabled,
-	    _this5 = this;
+	  var _item$disabled;
 	  var input = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"checkbox\">\n\t\t"])));
 	  input.checked = item.checked;
 	  input.disabled = (_item$disabled = item.disabled) !== null && _item$disabled !== void 0 ? _item$disabled : false;
@@ -2436,15 +2447,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  var hintNode = main_core.Type.isStringFilled(item.hint) ? main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-entity-product-list-setting-hint\" data-hint=\"", "\"></span>"])), item.hint) : '';
 	  var setting = main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<label class=\"ui-ctl-block ui-entity-editor-popup-create-field-item ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-w10\" style=\"text-align: center\">", "</div>\n\t\t\t\t<div class=\"ui-ctl-w75\">\n\t\t\t\t\t<span class=\"ui-entity-editor-popup-create-field-item-title ", "\">", "", "</span>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t"])), input, item.disabled ? 'crm-entity-product-list-disabled-setting' : '', item.title, hintNode, descriptionNode);
 	  BX.UI.Hint.init(setting);
-	  if (item.id === 'SLIDER') {
-	    main_core.Event.bind(setting, 'change', function (event) {
-	      new catalog_storeUse.StoreSlider().open(item.url, {}).then(function () {
-	        return babelHelpers.classPrivateFieldGet(_this5, _editor).reloadGrid(false);
-	      });
-	    });
-	  } else {
-	    main_core.Event.bind(setting, 'change', _classPrivateMethodGet$3(this, _setSetting, _setSetting2).bind(this));
-	  }
+	  main_core.Event.bind(setting, 'change', _classPrivateMethodGet$3(this, _setSetting, _setSetting2).bind(this));
 	  return setting;
 	}
 	function _setSetting2(event) {
@@ -2824,6 +2827,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        }
 	        if (!this.getSettingValue('disabledAddRowButton', false)) {
 	          container.querySelectorAll('[data-role="product-list-add-button"]').forEach(function (addButton) {
+	            if (_this2.getSettingValue('isOnecInventoryManagementRestricted') === true) {
+	              main_core.Dom.addClass(addButton, 'ui-btn-icon-lock');
+	            }
 	            main_core.Event.bind(addButton, 'click', _this2.productRowAddHandler);
 	          });
 	        }
@@ -2924,8 +2930,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        return;
 	      }
 	      requestAnimationFrame(function () {
-	        var _this5$getProductSele;
-	        (_this5$getProductSele = _this5.getProductSelector(id)) === null || _this5$getProductSele === void 0 ? void 0 : _this5$getProductSele.onProductSelect(productId);
+	        var productSelector = _this5.getProductSelector(id);
+	        if (productSelector) {
+	          productSelector.searchInput.clearErrors();
+	          productSelector.onProductSelect(productId);
+	        }
 	      });
 	    }
 	  }, {
@@ -3710,6 +3719,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var list = this.getSettingValue('items', []);
 	      var isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
 	      var isInventoryManagementToolEnabled = this.getSettingValue('isInventoryManagementToolEnabled', false);
+	      var inventoryManagementMode = this.getSettingValue('inventoryManagementMode', null);
 	      var _iterator2 = _createForOfIteratorHelper$1(list),
 	        _step2;
 	      try {
@@ -3719,7 +3729,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          var settings = {
 	            selectorId: item.selectorId,
 	            isReserveBlocked: isReserveBlocked,
-	            isInventoryManagementToolEnabled: isInventoryManagementToolEnabled
+	            isInventoryManagementToolEnabled: isInventoryManagementToolEnabled,
+	            inventoryManagementMode: inventoryManagementMode
 	          };
 	          this.products.push(new Row(item.rowId, fields, settings, this));
 	        }
@@ -3892,6 +3903,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleProductRowAdd",
 	    value: function handleProductRowAdd() {
+	      if (this.getSettingValue('isOnecInventoryManagementRestricted') === true) {
+	        catalog_toolAvailabilityManager.OneCPlanRestrictionSlider.show();
+	        return;
+	      }
 	      var id = this.addProductRow();
 	      this.focusProductSelector(id);
 	    }
@@ -4006,9 +4021,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      delete fields.RESERVE_ID;
 	      var isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
 	      var isInventoryManagementToolEnabled = this.getSettingValue('isInventoryManagementToolEnabled', false);
+	      var inventoryManagementMode = this.getSettingValue('inventoryManagementMode', null);
 	      var settings = {
 	        isReserveBlocked: isReserveBlocked,
 	        isInventoryManagementToolEnabled: isInventoryManagementToolEnabled,
+	        inventoryManagementMode: inventoryManagementMode,
 	        selectorId: 'crm_grid_' + rowId
 	      };
 	      var product = new Row(rowId, fields, settings, this);
@@ -4708,5 +4725,5 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	exports.Editor = Editor;
 	exports.PageEventsManager = PageEventsManager;
 
-}((this.BX.Crm.Entity.ProductList = this.BX.Crm.Entity.ProductList || {}),BX,BX,BX.Catalog,BX.Catalog,BX.Main,BX.Event,BX.Catalog.StoreUse,BX.Currency,BX.Catalog,BX.Catalog,BX,BX,BX,BX.UI.Tour));
+}((this.BX.Crm.Entity.ProductList = this.BX.Crm.Entity.ProductList || {}),BX,BX,BX.Catalog,BX.Catalog.Store,BX.Catalog,BX.Main,BX.Event,BX.Currency,BX.Catalog,BX.Catalog,BX,BX,BX,BX.UI.Tour,BX.Catalog));
 //# sourceMappingURL=script.js.map

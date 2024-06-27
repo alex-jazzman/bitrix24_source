@@ -94,10 +94,23 @@ export default class Form extends EventEmitter
 		this.selector.render();
 	}
 
+	getSubSection()
+	{
+		const regex = /analyticsLabel\[source]=(\w*)&/gm;
+		let match = regex.exec(decodeURI(window.location));
+		if (match?.length > 1)
+		{
+			return match[1];
+		}
+		return null;
+	}
+
 	changeContent(action)
 	{
 		this.hideErrorMessage();
 		this.hideSuccessMessage();
+		let section = this.getSubSection();
+		let subSection = "";
 
 		if (action.length > 0)
 		{
@@ -109,6 +122,7 @@ export default class Form extends EventEmitter
 				}
 
 				this.activeDirectory.showForm();
+				this.analytics.sendTabData(Analytics.TAB_AD);
 
 				return;
 			}
@@ -135,10 +149,12 @@ export default class Form extends EventEmitter
 
 					if (action === 'invite')
 					{
+						subSection = Analytics.TAB_EMAIL;
 						row.renderInviteInputs(5);
 					}
 					else if (action === 'invite-with-group-dp')
 					{
+						subSection = Analytics.TAB_DEPARTMENT;
 						row.renderInviteInputs(3);
 
 						const selectorParams = {
@@ -171,6 +187,7 @@ export default class Form extends EventEmitter
 					}
 					else if (action === "add")
 					{
+						subSection = Analytics.TAB_REGISTRATION;
 						row.renderRegisterInputs();
 
 						const selectorParams = {
@@ -187,7 +204,16 @@ export default class Form extends EventEmitter
 					}
 					else if (action === "integrator")
 					{
+						subSection = Analytics.TAB_INTEGRATOR;
 						row.renderIntegratorInput();
+					}
+					else if (action === "self")
+					{
+						subSection = Analytics.TAB_LINK;
+					}
+					else if (action === "mass-invite")
+					{
+						subSection = Analytics.TAB_MASS;
 					}
 				}
 				else
@@ -197,6 +223,10 @@ export default class Form extends EventEmitter
 				}
 			}
 
+			if (this.analytics)
+			{
+				this.analytics.sendTabData(section, subSection);
+			}
 			this.changeButton(action);
 		}
 	}

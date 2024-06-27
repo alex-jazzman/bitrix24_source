@@ -44,6 +44,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'Activity:Payment',
 		'Activity:Sms',
 		'Activity:Notification',
+		'Activity:Whatsapp',
 		'PaymentPaid',
 		'PaymentViewed',
 		'PaymentNotViewed',

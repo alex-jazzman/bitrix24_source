@@ -169,7 +169,7 @@ if($dh)
 {
 	while(($file = readdir($dh)) !== false)
 	{
-		if(mb_substr(mb_strtolower($file), -4) === ".ttf")
+		if(str_ends_with(mb_strtolower($file), ".ttf"))
 		{
 			$arSettings["arTTFFiles"][1][$file] = $file;
 		}

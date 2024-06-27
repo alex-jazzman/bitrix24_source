@@ -38,7 +38,7 @@ export class Actions
 		const opener = top.BX.Messenger.Public.openChat();
 		const analyticData = {
 			tool: 'InfoHelper',
-			category: 'slider',
+			c_section: document.location.href,
 			event: 'create_chatforrequest',
 		};
 
@@ -52,8 +52,8 @@ export class Actions
 				opener.then(() => {
 					top.BX.Messenger.Public.openChat(`chat${response.data.chatId}`);
 				});
-				analyticData.c_section = data.toolId;
-				analyticData.type = 'tool_off';
+				analyticData.type = data.toolId;
+				analyticData.category = 'tool_off';
 				sendData(analyticData);
 			});
 		}
@@ -68,8 +68,8 @@ export class Actions
 				opener.then(() => {
 					top.BX.Messenger.Public.openChat(`chat${response.data.chatId}`);
 				});
-				analyticData.c_section = data.featureCode;
-				analyticData.type = 'limit';
+				analyticData.type = data.featureCode;
+				analyticData.category = 'limit';
 				sendData(analyticData);
 			});
 		}

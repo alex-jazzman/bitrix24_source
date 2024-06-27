@@ -1,10 +1,19 @@
 <?php
 
+use Bitrix\BIConnector\Access\AccessController;
+use Bitrix\BIConnector\Access\ActionDictionary;
+use Bitrix\BIConnector\Access\Superset\Synchronizer;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
+use Bitrix\BIConnector\Integration\Superset\Stepper\DashboardOwner;
+use Bitrix\BIConnector\Superset;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\BIConnector\Integration\Superset\Stepper\DashboardOwner;
+use Bitrix\UI\Buttons;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -34,6 +43,8 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 		global $APPLICATION;
 		$APPLICATION->setTitle(Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_TITLE'));
 
+		(new Synchronizer(CurrentUser::get()->getId()))->sync();
+
 		$templateUrls = self::getTemplateUrls();
 
 		$variables = [];
@@ -53,7 +64,7 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 		$this->arResult['TOOLS_AVAILABLE'] = true;
 		$this->arResult['HELPER_CODE'] = null;
 
-		if (!\CCrmPerms::IsAccessEnabled())
+		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_ACCESS))
 		{
 			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_PERMISSION_ERROR');
 			$this->includeComponentTemplate($template);
@@ -65,6 +76,10 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 		{
 			if (!\Bitrix\Bitrix24\Feature::isFeatureEnabled('bi_constructor'))
 			{
+				if (SupersetInitializer::isSupersetExist())
+				{
+					$this->initDeleteButton();
+				}
 				$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_TARIFF_ERROR');
 				$this->arResult['FEATURE_AVAILABLE'] = false;
 				$this->arResult['HELPER_CODE'] = 'limit_crm_BI_constructor';
@@ -104,6 +119,7 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 		{
 			DashboardOwner::bind(60);
 		}
+		Application::getInstance()->addBackgroundJob(fn() => Superset\Updater\ClientUpdater::update());
 
 		$this->includeComponentTemplate($template);
 	}
@@ -111,12 +127,27 @@ class ApacheSupersetDashboardController extends CBitrixComponent
 	private static function canSendStartupSupersetMetric(): bool
 	{
 		$supersetStatus = SupersetInitializer::getSupersetStatus();
-		$metricAlreadySend = \Bitrix\Main\Config\Option::get('biconnector', 'superset_startup_metric_send', false);
+		$metricAlreadySend = Option::get('biconnector', 'superset_startup_metric_send', false);
 
 		return (
 			$supersetStatus === SupersetInitializer::SUPERSET_STATUS_READY
 			&& !$metricAlreadySend
 		);
+	}
+
+	private function initDeleteButton(): void
+	{
+		if (Superset\UI\UIHelper::needShowDeleteInstanceButton())
+		{
+			$clearButton = new Buttons\Button([
+				'color' => Buttons\Color::DANGER,
+				'text' => Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_CONTROLLER_CLEAR_BUTTON'),
+				'click' => new Buttons\JsCode(
+					'BX.BIConnector.ApacheSupersetCleaner.Instance.handleButtonClick(this)'
+				),
+			]);
+			Toolbar::addButton($clearButton);
+		}
 	}
 
 	private static function getTemplateUrls(): array

@@ -10,7 +10,6 @@ return [
 	'js' => 'dist/todo-editor.bundle.js',
 	'rel' => [
 		'crm.activity.file-uploader',
-		'crm.activity.settings-popup',
 		'ui.notification',
 		'ui.vue3',
 		'crm.ai.copilot-textarea',

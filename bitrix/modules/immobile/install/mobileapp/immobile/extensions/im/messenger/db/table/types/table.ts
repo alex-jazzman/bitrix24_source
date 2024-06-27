@@ -4,6 +4,7 @@ declare type TableField = {
 	type: FieldType,
 	unique?: boolean,
 	index?: boolean,
+	defaultValue?: any,
 }
 
 declare enum FieldType

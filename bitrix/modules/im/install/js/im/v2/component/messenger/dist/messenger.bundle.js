@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_component_navigation,im_v2_component_list_container_recent,im_v2_component_list_container_openline,im_v2_component_list_container_channel,im_v2_component_content_chat,im_v2_component_content_createChat,im_v2_component_content_openlines,im_v2_component_content_notification,im_v2_component_content_market,im_v2_component_content_settings,im_v2_component_list_container_copilot,im_v2_component_content_copilot,im_v2_lib_logger,im_v2_lib_init,im_v2_const,im_v2_lib_call,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout) {
+(function (exports,ui_designTokens,ui_fonts_opensans,im_v2_css_tokens,im_v2_css_icons,im_v2_component_navigation,im_v2_component_list_container_recent,im_v2_component_list_container_openline,im_v2_component_list_container_channel,im_v2_component_content_chat,im_v2_component_content_createChat,im_v2_component_content_openlines,im_v2_component_content_notification,im_v2_component_content_market,im_v2_component_content_settings,im_v2_component_list_container_copilot,im_v2_component_content_copilot,im_v2_lib_analytics,im_v2_lib_logger,im_v2_lib_init,im_v2_const,im_v2_lib_call,im_v2_lib_theme,im_v2_lib_desktop,im_v2_lib_layout) {
 	'use strict';
 
 	// @vue/component
@@ -74,6 +74,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    im_v2_lib_layout.LayoutManager.init();
 	    im_v2_lib_logger.Logger.warn('MessengerRoot created');
 	    this.getLayoutManager().restoreLastLayout();
+	    this.sendAnalytics();
 	  },
 	  beforeUnmount() {
 	    this.getLayoutManager().destroy();
@@ -104,6 +105,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    getLayoutManager() {
 	      return im_v2_lib_layout.LayoutManager.getInstance();
+	    },
+	    sendAnalytics() {
+	      im_v2_lib_analytics.Analytics.getInstance().onOpenMessenger();
 	    }
 	  },
 	  template: `
@@ -133,5 +137,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Messenger = Messenger;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Component,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX,BX,BX.Messenger.v2.Css,BX.Messenger.v2.Css,BX.Messenger.v2.Component,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Component.List,BX.Messenger.v2.Component.Content,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=messenger.bundle.js.map

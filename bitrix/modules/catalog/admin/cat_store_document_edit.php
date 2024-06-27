@@ -11,7 +11,6 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Type;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\UI\FileInput;
-use Bitrix\Main\Web\PostDecodeFilter;
 use Bitrix\Main\Web\Json;
 use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
@@ -166,10 +165,6 @@ if ($publicMode)
 }
 
 $request = Context::getCurrent()->getRequest();
-if ($request->isAjaxRequest())
-{
-	$request->addFilter(new PostDecodeFilter);
-}
 
 $isAjaxDocumentRequest = $request->get('AJAX_MODE') === 'Y';
 
@@ -1793,7 +1788,7 @@ else
 
 $tabControl->End();
 ?></form>
-<script type="text/javascript">
+<script>
 BX.Currency.setCurrencies(<?= CUtil::PhpToJSObject($currencyList, false, true, true); ?>);
 if (typeof showTotalSum === 'undefined')
 {

@@ -90,10 +90,6 @@ else
 if (is_array($result) && (isset($result['SUCCESS']) || isset($result['ERROR'])))
 {
 	$GLOBALS['APPLICATION']->RestartBuffer();
-	if (SITE_CHARSET != 'UTF-8')
-	{
-		$result = $GLOBALS['APPLICATION']->ConvertCharsetArray($result, SITE_CHARSET, 'UTF-8');
-	}
 
 	header('Content-Type: application/json');
 

@@ -1,7 +1,8 @@
-import { Extension, Text } from 'main.core';
+import { Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { SidebarFileTabTypes, SidebarDetailBlock, EventType } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { DetailTabs } from './components/detail-tabs';
 import { MediaTab } from './components/media-tab';
@@ -44,8 +45,7 @@ export const FilePanel = {
 		tabs(): string[]
 		{
 			const tabTypes = Object.values(SidebarFileTabTypes);
-			const settings = Extension.getSettings('im.v2.component.sidebar');
-			const canShowBriefs = settings.get('canShowBriefs', false);
+			const canShowBriefs = FeatureManager.isFeatureAvailable(Feature.sidebarBriefs);
 			if (!canShowBriefs)
 			{
 				return tabTypes.filter((tab) => tab !== SidebarDetailBlock.brief);

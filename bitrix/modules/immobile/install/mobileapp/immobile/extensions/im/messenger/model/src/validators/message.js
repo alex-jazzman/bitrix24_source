@@ -32,6 +32,23 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 			result.templateId = fields.id;
 		}
 
+		if (Type.isNumber(fields.previousId))
+		{
+			// from database
+			result.previousId = fields.previousId;
+		}
+		else if (Type.isNumber(fields.prevId))
+		{
+			// from push & pull
+			result.previousId = fields.prevId;
+		}
+
+		if (Type.isNumber(fields.nextId))
+		{
+			// from database
+			result.nextId = fields.nextId;
+		}
+
 		if (!Type.isUndefined(fields.chat_id))
 		{
 			fields.chatId = fields.chat_id;

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,main_core,im_public,im_v2_component_list_items_copilot,im_v2_const,im_v2_lib_logger,im_v2_provider_service,im_v2_component_elements) {
+(function (exports,im_public,im_v2_component_list_items_copilot,im_v2_const,im_v2_lib_analytics,im_v2_lib_logger,im_v2_provider_service,im_v2_component_elements) {
 	'use strict';
 
 	// @vue/component
@@ -14,6 +14,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      type: Object,
 	      required: true
 	    }
+	  },
+	  data() {
+	    return {
+	      imageLoadError: false
+	    };
 	  },
 	  computed: {
 	    roleItem() {
@@ -27,12 +32,24 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    roleSDescription() {
 	      return this.roleItem.desc;
+	    },
+	    defaultRole() {
+	      return this.$store.getters['copilot/roles/getDefault'];
+	    },
+	    defaultRoleAvatarUrl() {
+	      return this.defaultRole.avatar.medium;
+	    }
+	  },
+	  methods: {
+	    onImageLoadError() {
+	      this.imageLoadError = true;
 	    }
 	  },
 	  template: `
 		<div class="bx-im-role-item__container">
 			<div class="bx-im-role-item__avatar">
-				<img :src="roleAvatar" :alt="roleName">
+				<img v-if="!imageLoadError" :src="roleAvatar" :alt="roleName" @error="onImageLoadError">
+				<img v-else :src="defaultRoleAvatarUrl" :alt="roleName">
 			</div>
 			<div class="bx-im-role-item__info">
 				<div class="bx-im-role-item__name" :title="roleName">{{ roleName }}</div>
@@ -153,15 +170,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      isCreatingChat: false
 	    };
 	  },
-	  computed: {
-	    isCopilotRolesAvailable() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.content.copilot');
-	      return settings.copilotRolesAvailable === 'Y';
-	    },
-	    defaultRole() {
-	      return this.$store.getters['copilot/roles/getDefault'];
-	    }
-	  },
 	  created() {
 	    im_v2_lib_logger.Logger.warn('List: Copilot container created');
 	  },
@@ -171,10 +179,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	  },
 	  methods: {
 	    async onCreateChatClick() {
-	      if (!this.isCopilotRolesAvailable) {
-	        void this.createChat(this.defaultRole.code);
-	        return;
-	      }
+	      im_v2_lib_analytics.Analytics.getInstance().onStartCreateNewChat(im_v2_const.ChatType.copilot);
 	      this.showRoleSelector = true;
 	    },
 	    onChatClick(dialogId) {
@@ -237,7 +242,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				</div>
 			</div>
 			<RoleSelectorMini
-				v-if="showRoleSelector && isCopilotRolesAvailable"
+				v-if="showRoleSelector"
 				:bindElement="$refs.createChatButton"
 				@close="showRoleSelector = false"
 				@selectedRole="createChat"
@@ -254,5 +259,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CopilotListContainer = CopilotListContainer;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Component.List,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=copilot-container.bundle.js.map

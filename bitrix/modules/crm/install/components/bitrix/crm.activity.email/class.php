@@ -170,7 +170,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 								foreach ($paySystems as $item)
 								{
 									$itemActionFile = isset($item['~PSA_ACTION_FILE']) ? $item['~PSA_ACTION_FILE'] : '';
-									if (preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $itemActionFile))
+									if (preg_match('/quote(_\w+)*$/iu', $itemActionFile))
 									{
 										$pdfFileId = \CCrmQuote::savePdf($quote['ID'], $item['~ID']);
 										break;

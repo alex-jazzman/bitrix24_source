@@ -3,21 +3,21 @@
  */
 jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('loc');
 	const { debounce } = require('utils/function');
+	const { isEqual } = require('utils/object');
 
-	const { DialogType, UserRole, HeaderButton } = require('im/messenger/const');
+	const { DialogType, UserRole, HeaderButton, BotCode } = require('im/messenger/const');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { showToast } = require('toast');
-	const { headerIconsPath } = require('im/messenger/assets/common');
 
-	const ToastSvg = {
-		subscribe: `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.57764 7.00781L24.0532 23.4834L22.583 24.9536L20.1403 22.5106L20.041 22.5565C18.7903 23.1099 17.4974 23.3866 16.1624 23.3866C12.2146 23.3866 8.63582 20.9672 5.42596 16.1283C5.36246 16.0326 5.35187 15.9129 5.3942 15.8092L5.42596 15.7492L5.64533 15.423C6.74337 13.8137 7.88417 12.4846 9.06766 11.4357L6.1074 8.47804L7.57764 7.00781ZM16.1624 8.49079C20.1101 8.49079 23.6889 10.9102 26.8988 15.7491C26.9623 15.8448 26.9729 15.9645 26.9305 16.0682L26.8988 16.1282L26.6794 16.4544C25.6054 18.0284 24.4906 19.3343 23.3349 20.3722L19.8439 16.8805C19.9208 16.5793 19.9616 16.2638 19.9616 15.9387C19.9616 13.8405 18.2606 12.1395 16.1624 12.1395C15.837 12.1395 15.5211 12.1804 15.2197 12.2574L12.2827 9.32139C13.5337 8.76766 14.8269 8.49079 16.1624 8.49079ZM12.3632 15.9387C12.3632 18.0369 14.0641 19.7379 16.1624 19.7379C16.5287 19.7379 16.8828 19.6861 17.218 19.5893L12.5118 14.8831C12.415 15.2182 12.3632 15.5724 12.3632 15.9387Z" fill="${AppTheme.colors.chatOverallBaseWhite2}" fill-opacity="0.7"/></svg>`,
-		unsubscribe: `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M26.8616 16.2202C25.9886 17.4679 21.5168 23.4581 16.1314 23.4581C10.7461 23.4581 6.27429 17.4679 5.40127 16.2202C5.30427 16.0815 5.30427 15.9068 5.40127 15.7682C6.27429 14.5205 10.7461 8.53027 16.1314 8.53027C21.5167 8.53027 25.9886 14.5205 26.8616 15.7682C26.9586 15.9068 26.9586 16.0815 26.8616 16.2202ZM19.9386 15.9942C19.9386 18.0969 18.234 19.8015 16.1313 19.8015C14.0285 19.8015 12.3239 18.0969 12.3239 15.9942C12.3239 13.8914 14.0285 12.1868 16.1313 12.1868C18.234 12.1868 19.9386 13.8914 19.9386 15.9942Z" fill="${AppTheme.colors.chatOverallBaseWhite2}" fill-opacity="0.7"/></svg>`,
-	};
+	const { UserAdd } = require('im/messenger/controller/user-add');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
+	const { buttonIcons } = require('im/messenger/assets/common');
 
 	/**
 	 * @class HeaderButtons
@@ -48,41 +48,58 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 		}
 
 		/**
-		 * @return {Array<Object>}}
+		 * @return {Array<Object>}
+		 * @param {boolean} [isUpdateState=false] this only open widget
 		 */
-		getButtons()
+		getButtons(isUpdateState = false)
 		{
 			const isDialogWithUser = !DialogHelper.isDialogId(this.dialogId);
+			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
 
-			this.buttons = isDialogWithUser
+			const buttons = isDialogWithUser
 				? this.renderUserHeaderButtons()
-				: this.renderDialogHeaderButtons()
+				: this.renderDialogHeaderButtons(dialogData)
 			;
-			if (Application.getPlatform() === 'android')
+
+			if (isUpdateState)
 			{
-				this.buttons.reverse();
+				this.buttons = buttons;
 			}
 
-			return this.buttons;
+			return buttons;
 		}
 
 		/**
 		 * @param {DialogView} view
+		 * @param {boolean} [isUseCallbacks=false]
 		 */
-		render(view)
+		render(view, isUseCallbacks = false)
 		{
-			if (this.buttons.length > 0)
+			let buttons = this.getButtons();
+
+			if (isUseCallbacks)
+			{
+				buttons = buttons.map((button) => {
+					return { ...button, callback: () => {} };
+				});
+			}
+
+			const getBtnWithoutCallback = (btn) => {
+				const { callback, ...stateWithoutCallback } = btn;
+
+				return stateWithoutCallback;
+			};
+
+			const prevStateWithoutCallback = this.buttons.map((btn) => getBtnWithoutCallback(btn));
+			const newStateWithoutCallback = buttons.map((btn) => getBtnWithoutCallback(btn));
+
+			if (isEqual(prevStateWithoutCallback, newStateWithoutCallback))
 			{
 				return;
 			}
 
-			const buttons = this.getButtons().map((button) => {
-				return { ...button, callback: () => {} };
-			});
-			if (Application.getPlatform() === 'ios')
-			{
-				buttons.reverse();
-			}
+			Logger.info(`${this.constructor.name}.render before:`, this.buttons, ' after: ', buttons);
+			this.buttons = buttons;
 
 			view.setRightButtons(buttons);
 		}
@@ -101,28 +118,28 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 
 			return [
 				{
-					id: 'call_audio',
-					type: 'call_audio',
-					badgeCode: 'call_audio',
-					color: AppTheme.colors.accentMainPrimaryalt,
-					testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
-				},
-				{
 					id: 'call_video',
 					type: 'call_video',
 					badgeCode: 'call_video',
-					color: AppTheme.colors.accentMainPrimaryalt,
+					color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
 					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
+				},
+				{
+					id: 'call_audio',
+					type: 'call_audio',
+					badgeCode: 'call_audio',
+					color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
+					testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
 				},
 			];
 		}
 
 		/**
+		 * @param {DialoguesModelState?} dialogData
 		 * @private
 		 */
-		renderDialogHeaderButtons()
+		renderDialogHeaderButtons(dialogData)
 		{
-			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
 			if (!dialogData)
 			{
 				return [];
@@ -143,6 +160,11 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 				case DialogType.comment: {
 					return this.getCommentButtons();
 				}
+
+				case DialogType.copilot: {
+					return this.getCopilotButtons();
+				}
+
 				default: {
 					return this.getDefaultChatButtons();
 				}
@@ -159,18 +181,18 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 
 			return [
 				{
+					id: HeaderButton.callVideo,
+					type: 'call_video',
+					badgeCode: 'call_video',
+					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
+					color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
+				},
+				{
 					id: HeaderButton.callAudio,
 					type: 'call_audio',
 					badgeCode: 'call_audio',
 					testId: 'DIALOG_HEADER_AUDIO_CALL_BUTTON',
-					color: AppTheme.colors.accentMainPrimaryalt,
-				},
-				{
-					id: HeaderButton.callAudio,
-					type: 'call_video',
-					badgeCode: 'call_video',
-					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
-					color: AppTheme.colors.accentMainPrimaryalt,
+					color: Theme.isDesignSystemSupported ? null : AppTheme.colors.accentMainPrimaryalt,
 				},
 			];
 		}
@@ -183,26 +205,69 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 				return [];
 			}
 
-			if (dialog.muteList.includes(serviceLocator.get('core').getUserId()))
+			let isUserSubscribed = false;
+
+			const messageModel = this.store.getters['messagesModel/getById'](dialog.parentMessageId);
+			if ('id' in messageModel)
+			{
+				const commentInfo = this.store.getters['commentModel/getByMessageId'](dialog.parentMessageId);
+
+				if (commentInfo)
+				{
+					isUserSubscribed = commentInfo.isUserSubscribed;
+				}
+
+				if (!commentInfo && messageModel.authorId === serviceLocator.get('core').getUserId())
+				{
+					isUserSubscribed = true;
+				}
+			}
+
+			if (!isUserSubscribed)
 			{
 				return [{
 					id: HeaderButton.unsubscribedFromComments,
 					testId: HeaderButton.unsubscribedFromComments,
-					svg: {
-						uri: headerIconsPath.unsubscribe,
-					},
-					color: AppTheme.colors.base4,
+					type: 'text',
+					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_SUBSCRIBE_COMMENTS'),
+					color: Theme.colors.base4,
 				}];
 			}
 
 			return [{
 				id: HeaderButton.subscribedToComments,
 				testId: HeaderButton.subscribedToComments,
-				svg: {
-					uri: headerIconsPath.subscribe,
-				},
-				color: AppTheme.colors.accentMainPrimaryalt,
+				type: 'text',
+				name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_SUBSCRIBED_COMMENTS'),
+				color: Theme.colors.accentMainPrimaryalt,
 			}];
+		}
+
+		getCopilotButtons()
+		{
+			return this.renderAddUserButton();
+		}
+
+		/**
+		 * @private
+		 */
+		renderAddUserButton()
+		{
+			const dialogData = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			if (!dialogData || !ChatPermission.isCanAddParticipants(dialogData))
+			{
+				return [];
+			}
+
+			return [
+				{
+					id: 'add_users',
+					type: 'add_users',
+					badgeCode: 'add_users',
+					testId: 'DIALOG_HEADER_ADD_USERS_BUTTON',
+					svg: { content: buttonIcons.copilotHeaderAddInline() },
+				},
+			];
 		}
 
 		/**
@@ -224,33 +289,21 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 				}
 
 				case HeaderButton.subscribedToComments: {
-					showToast({
-						message: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_UNSUBSCRIBE_COMMENTS_TOAST'),
-						svg: {
-							content: ToastSvg.subscribe,
-						},
-						offset: 75,
-						backgroundColor: AppTheme.colors.chatOverallFixedBlack,
-						backgroundOpacity: 0.5,
-					}, this.dialogLocator.get('view').ui);
+					Notification.showToast(ToastType.unsubscribeFromComments, this.dialogLocator.get('view').ui);
 					this.dialogLocator.get('chat-service').unsubscribeFromComments(this.dialogId);
+
 					break;
 				}
 
 				case HeaderButton.unsubscribedFromComments: {
-					showToast(
-						{
-							message: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HEADER_SUBSCRIBE_COMMENTS_TOAST'),
-							svg: {
-								content: ToastSvg.unsubscribe,
-							},
-							offset: 75,
-							backgroundColor: AppTheme.colors.chatOverallFixedBlack,
-							backgroundOpacity: 0.5,
-						},
-						this.dialogLocator.get('view').ui,
-					);
+					Notification.showToast(ToastType.subscribeToComments, this.dialogLocator.get('view').ui);
 					this.dialogLocator.get('chat-service').subscribeToComments(this.dialogId);
+
+					break;
+				}
+
+				case HeaderButton.addUsers: {
+					this.callUserAddWidget();
 					break;
 				}
 
@@ -258,6 +311,44 @@ jn.define('im/messenger/controller/dialog/lib/header/buttons', (require, exports
 					break;
 				}
 			}
+		}
+
+		callUserAddWidget()
+		{
+			Logger.log(`${this.constructor.name}.callUserAddWidget`);
+
+			UserAdd.open(
+				{
+					dialogId: this.dialogId,
+					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_USER_ADD_WIDGET_TITTLE'),
+					textRightBtn: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_USER_ADD_WIDGET_BTN'),
+					callback: {
+						onAddUser: (event) => Logger.log(`${this.constructor.name}.callUserAddWidget.callback event:`, event),
+					},
+					widgetOptions: { mediumPositionPercent: 65 },
+					usersCustomFilter: (user) => {
+						if (user?.botData?.code)
+						{
+							return user?.botData?.code === BotCode.copilot;
+						}
+
+						return true;
+					},
+					isCopilotDialog: this.isCopilot,
+				},
+			);
+		}
+
+		/**
+		 * @param {DialoguesModelState?} dialogData
+		 * @return {boolean}
+		 * @private
+		 */
+		isDialogCopilot(dialogData)
+		{
+			this.isCopilot = dialogData?.type === DialogType.copilot;
+
+			return this.isCopilot;
 		}
 	}
 

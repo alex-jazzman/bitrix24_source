@@ -62,7 +62,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
-?><script type="text/javascript">
+?><script>
 		BX.ready(
 			function() {
 				BX.message({
@@ -106,7 +106,7 @@ $APPLICATION->IncludeComponent(
 
 if ($arResult['ENTITY_ID'] <= 0 && !empty($arResult['FIELDS_SET_DEFAULT_VALUE']))
 {?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			var fieldsSetDefaultValue = <?= CUtil::PhpToJSObject($arResult['FIELDS_SET_DEFAULT_VALUE']) ?>;
 			BX.addCustomEvent("onSave", function(fieldConfigurator, params) {

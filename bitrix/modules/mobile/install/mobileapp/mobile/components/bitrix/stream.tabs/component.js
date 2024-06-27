@@ -202,7 +202,7 @@
 		updateLivefeedCounter(value)
 		{
 			this.tabs.updateItem(StreamTabs.tabNames.stream, {
-				title: BX.message('MOBILE_STREAM_TABS_STREAM_TITLE'),
+				title: BX.message('MOBILE_STREAM_TABS_STREAM_TITLE2'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),
 			});

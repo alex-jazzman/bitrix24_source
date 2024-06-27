@@ -497,7 +497,7 @@ $emotion = (!empty($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]
 	?></div><?
 ?></div>
 <div class="task-comments-block" id="task-comments-block"><?=$task_comments_html?></div>
-<script type="text/javascript">
+<script>
 BX.message({
 	PAGE_TITLE : '<?=GetMessageJS("MB_TASKS_GENERAL_TITLE")?>',
 	MB_TASKS_TASK_PLACEHOLDER : '<span class="placeholder"><?=GetMessageJS("MB_TASKS_TASK_PLACEHOLDER")?></span>',

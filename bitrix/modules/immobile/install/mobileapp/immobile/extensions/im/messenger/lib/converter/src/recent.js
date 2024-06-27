@@ -114,10 +114,10 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 				return new CopilotItem(modelItem);
 			}
 
-			if (dialog.type === DialogType.channel || dialog.type === DialogType.openChannel)
+			if ([DialogType.openChannel, DialogType.channel, DialogType.generalChannel].includes(dialog.type))
 			{
 				return new ChannelItem(modelItem, {
-					isNeedShowActions: MessengerParams.get('COMPONENT_CODE') !== ComponentCode.imChannelMessenger,
+					isNeedShowActions: MessengerParams.getComponentCode() !== ComponentCode.imChannelMessenger,
 				});
 			}
 

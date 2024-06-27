@@ -46,6 +46,8 @@ BX.namespace('Tasks.Component');
 		this.checkListChanged = false;
 		this.showCloseConfirmation = false;
 		this.isTemplatesAvailable = parameters.isTemplatesAvailable;
+		this.isCopilotEnabled = parameters.isCopilotEnabled;
+		this.copilotParams = parameters.copilotParams;
 
 		BX.addCustomEvent(window, 'tasksTaskEvent', this.onTaskEvent.bind(this));
 		BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this, false));
@@ -104,7 +106,12 @@ BX.namespace('Tasks.Component');
 			&& BX('task-detail-author-info')
 		)
 		{
-			BX.bind(BX("task-detail-content"), "mouseup", function(e) { window.mplCheckForQuote(e, e.currentTarget, 'TASK_' + this.taskId, 'task-detail-author-info') }.bind(this));
+			BX.bind(BX('task-detail-content'), 'mouseup', (e) => {
+				const xmlId = `TASK_${this.taskId}`;
+				const authorNodeId = 'task-detail-author-info';
+				const copilotParams = this.isCopilotEnabled ? this.copilotParams : null;
+				window.mplCheckForQuote(e, e.currentTarget, xmlId, authorNodeId, { copilotParams });
+			});
 		}
 	};
 
@@ -699,7 +706,7 @@ BX.namespace('Tasks.Component');
 	{
 		BX.Event.EventEmitter.emit('BX.Tasks.TaskView:onBeforeInitSwitcher', {
 			taskId: this.taskId,
-			groupId: this.parameters.groupId,
+			projectId: this.parameters.project.ID ? Number(this.parameters.project.ID) : 0,
 			taskSwitcherTabs: document.getElementById('task-switcher'),
 			taskSwitcherBlocks: document.getElementsByClassName('task-comments-and-log')[0],
 		});

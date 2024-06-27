@@ -1,16 +1,20 @@
 import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime } from 'main.core';
 import { DateTimeFormat } from 'main.date';
+import { PopupWindowManager } from 'main.popup';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
 import { EventEmitter } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import type { DashboardAnalyticInfo } from 'biconnector.apache-superset-analytics';
 import { Dialog } from 'ui.entity-selector';
+import { Guide } from 'ui.tour';
+import 'spotlight';
 import { TagFooter } from 'biconnector.entity-selector';
 import 'ui.alerts';
 
 type Props = {
 	gridId: ?string,
+	isNeedShowTopMenuGuide: boolean,
 };
 
 type LoginPopupParams = {
@@ -26,6 +30,8 @@ class SupersetDashboardGridManager
 	#grid: BX.Main.grid;
 	#filter: BX.Main.Filter;
 	#tagSelectorDialog: ?Dialog;
+	#topMenuGuideSpotlight: ?BX.SpotLight;
+	#lastPinnedRowId: ?number;
 
 	constructor(props: Props)
 	{
@@ -35,6 +41,24 @@ class SupersetDashboardGridManager
 		this.#filter = BX.Main.filterManager.getById(props.gridId);
 
 		this.#subscribeToEvents();
+
+		if (
+			props.isNeedShowTopMenuGuide
+			&& !PopupWindowManager?.isAnyPopupShown()
+			&& this.#grid.getRows().getBodyFirstChild().actionsButton
+		)
+		{
+			this.#topMenuGuideSpotlight = new BX.SpotLight({
+				targetElement: this.#grid.getRows().getBodyFirstChild().actionsButton,
+				targetVertex: 'middle-center',
+				events: {
+					onTargetEnter: () => this.#topMenuGuideSpotlight.close(),
+				},
+			});
+			this.#topMenuGuideSpotlight.show();
+			this.#showTopMenuGuide();
+		}
+		this.#colorPinnedRows();
 	}
 
 	#subscribeToEvents()
@@ -111,7 +135,45 @@ class SupersetDashboardGridManager
 
 		EventEmitter.subscribe('Grid::updated', () => {
 			BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+			this.#colorPinnedRows();
 		});
+	}
+
+	#showTopMenuGuide(): void
+	{
+		const guide = new Guide({
+			steps: [
+				{
+					target: this.#grid.getRows().getBodyFirstChild().node,
+					title: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_TOP_MENU_GUIDE_TITLE'),
+					text: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_TOP_MENU_GUIDE_TEXT'),
+					events: {
+						onClose: () => {
+							BX.userOptions.save('biconnector', 'top_menu_guide', 'is_over', true);
+						},
+					},
+					rounded: false,
+					position: 'bottom',
+					areaPadding: 0,
+				},
+			],
+			onEvents: true,
+		});
+		guide.start();
+	}
+
+	#colorPinnedRows(): void
+	{
+		this.#lastPinnedRowId = 0;
+		const rows = this.#grid.getRows().getBodyChild();
+		for (const row: BX.Grid.Row of rows)
+		{
+			if (row.node.querySelector('.dashboard-unpin-icon'))
+			{
+				Dom.addClass(row.node, 'biconnector-dashboard-pinned');
+				this.#lastPinnedRowId = row.getId();
+			}
+		}
 	}
 
 	onUpdatedDashboardBatchStatus(dashboardList: Array)
@@ -294,9 +356,9 @@ class SupersetDashboardGridManager
 
 				gridRealtime.addRow({
 					id: newDashboard.id,
-					prepend: true,
 					columns: newDashboard.columns,
 					actions: newDashboard.actions,
+					insertAfter: this.#lastPinnedRowId,
 				});
 
 				const editableData = grid.getParam('EDITABLE_DATA');
@@ -432,9 +494,9 @@ class SupersetDashboardGridManager
 				const newDashboard = response.data.dashboard;
 				gridRealtime.addRow({
 					id: newDashboard.id,
-					prepend: true,
 					columns: newDashboard.columns,
 					actions: newDashboard.actions,
+					insertAfter: this.#lastPinnedRowId,
 				});
 
 				const editableData = grid.getParam('EDITABLE_DATA');
@@ -699,28 +761,10 @@ class SupersetDashboardGridManager
 	handleTagClick(tagJson: string): void
 	{
 		const tag = JSON.parse(tagJson);
-		const filterTagValues = this.getFilter().getFilterFieldsValues();
-		let currentFilteredTags = filterTagValues['TAGS.ID'] ?? [];
-		let currentFilteredTagLabels = filterTagValues['TAGS.ID_label'] ?? [];
-		tag.ID = String(tag.ID);
-		if (tag.IS_FILTERED)
-		{
-			currentFilteredTags = currentFilteredTags.filter((value) => value !== tag.ID);
-			currentFilteredTagLabels = currentFilteredTagLabels.filter((value) => value !== tag.TITLE);
-		}
-		else if (!currentFilteredTags.includes(tag.ID))
-		{
-			currentFilteredTags.push(tag.ID);
-			currentFilteredTagLabels.push(tag.TITLE);
-		}
-
-		const filterApi = this.getFilter().getApi();
-		filterApi.extendFilter({
-			'TAGS.ID': currentFilteredTags,
-			'TAGS.ID_label': currentFilteredTagLabels,
+		this.handleFilterChange({
+			fieldId: 'TAGS.ID',
+			...tag,
 		});
-
-		filterApi.apply();
 	}
 
 	handleTagAddClick(dashboardId: number, preselectedIds: [], event: BaseEvent): void
@@ -789,22 +833,24 @@ class SupersetDashboardGridManager
 			events: {
 				onSearch: (event: BaseEvent) => {
 					const query = event.getData().query;
-					const footer = this.#tagSelectorDialog.getFooterContainer();
-					if (Type.isStringFilled(query.trim()))
+
+					const footer: TagFooter = this.#tagSelectorDialog.getFooter();
+					const footerWrapper = this.#tagSelectorDialog.getFooterContainer();
+					if (Type.isStringFilled(query.trim()) && footer.canCreateTag())
 					{
-						Dom.show(footer.querySelector('#tags-widget-custom-footer-add-new'));
-						Dom.show(footer.querySelector('#tags-widget-custom-footer-conjunction'));
+						Dom.show(footerWrapper.querySelector('#tags-widget-custom-footer-add-new'));
+						Dom.show(footerWrapper.querySelector('#tags-widget-custom-footer-conjunction'));
 
 						return;
 					}
 
-					Dom.hide(footer.querySelector('#tags-widget-custom-footer-add-new'));
-					Dom.hide(footer.querySelector('#tags-widget-custom-footer-conjunction'));
+					Dom.hide(footerWrapper.querySelector('#tags-widget-custom-footer-add-new'));
+					Dom.hide(footerWrapper.querySelector('#tags-widget-custom-footer-conjunction'));
 				},
 				'Search:onItemCreateAsync': (searchEvent: BaseEvent) => {
 					return new Promise((resolve, reject) => {
 						const { searchQuery } = searchEvent.getData();
-						const name = searchQuery.getQuery().toLowerCase();
+						const name = searchQuery.getQuery();
 
 						this.#dashboardManager.addTag(name)
 							.then((result) => {
@@ -855,6 +901,153 @@ class SupersetDashboardGridManager
 		});
 
 		this.#tagSelectorDialog.show();
+	}
+
+	handleOwnerClick(ownerData: Object)
+	{
+		this.handleFilterChange({
+			fieldId: 'OWNER_ID',
+			...ownerData,
+		});
+	}
+
+	handleCreatedByClick(ownerData: Object)
+	{
+		this.handleFilterChange({
+			fieldId: 'CREATED_BY_ID',
+			...ownerData,
+		});
+	}
+
+	handleFilterChange(fieldData: Object)
+	{
+		const filterFieldsValues = this.getFilter().getFilterFieldsValues();
+		let currentFilteredField = filterFieldsValues[fieldData.fieldId] ?? [];
+		let currentFilteredFieldLabel = filterFieldsValues[`${fieldData.fieldId}_label`] ?? [];
+
+		if (fieldData.IS_FILTERED)
+		{
+			currentFilteredField = currentFilteredField.filter((value) => parseInt(value, 10) !== fieldData.ID);
+			currentFilteredFieldLabel = currentFilteredFieldLabel.filter((value) => value !== fieldData.TITLE);
+		}
+		else if (!currentFilteredField.includes(fieldData.ID))
+		{
+			currentFilteredField.push(fieldData.ID);
+			currentFilteredFieldLabel.push(fieldData.TITLE);
+		}
+
+		const filterApi = this.getFilter().getApi();
+		const filterToExtend = {};
+		filterToExtend[fieldData.fieldId] = currentFilteredField;
+		filterToExtend[`${fieldData.fieldId}_label`] = currentFilteredFieldLabel;
+
+		filterApi.extendFilter(filterToExtend);
+		filterApi.apply();
+	}
+
+	addToTopMenu(dashboardId: number): Promise
+	{
+		BX.UI.Notification.Center.notify({
+			content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_SUCCESS'),
+		});
+		this.#switchTopMenuAction(dashboardId, true);
+
+		return this.#dashboardManager.addToTopMenu(dashboardId)
+			.then((response) => {})
+			.catch((response) => {
+				this.#grid.updateRow(dashboardId);
+				BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_ERROR'),
+				});
+			})
+		;
+	}
+
+	deleteFromTopMenu(dashboardId: number): Promise
+	{
+		BX.UI.Notification.Center.notify({
+			content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_FROM_TOP_MENU_SUCCESS'),
+		});
+		this.#switchTopMenuAction(dashboardId, false);
+
+		return this.#dashboardManager.deleteFromTopMenu(dashboardId)
+			.then((response) => {})
+			.catch((response) => {
+				this.#grid.updateRow(dashboardId);
+				BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_FROM_TOP_MENU_ERROR'),
+				});
+			})
+		;
+	}
+
+	#switchTopMenuAction(dashboardId: number, isInTopMenu: boolean)
+	{
+		const row = this.#grid.getRows().getById(dashboardId);
+		const rowActions = row?.getActions();
+		for (const [index, action] of rowActions.entries())
+		{
+			if (isInTopMenu && action.ACTION_ID === 'addToTopMenu')
+			{
+				rowActions[index].ACTION_ID = 'deleteFromTopMenu';
+				rowActions[index].onclick = `BX.BIConnector.SupersetDashboardGridManager.Instance.deleteFromTopMenu(${dashboardId})`;
+				rowActions[index].text = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_DELETE_FROM_TOP_MENU');
+			}
+			else if (!isInTopMenu && action.ACTION_ID === 'deleteFromTopMenu')
+			{
+				rowActions[index].ACTION_ID = 'addToTopMenu';
+				rowActions[index].onclick = `BX.BIConnector.SupersetDashboardGridManager.Instance.addToTopMenu(${dashboardId})`;
+				rowActions[index].text = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_ADD_TO_TOP_MENU');
+			}
+		}
+		row.setActions(rowActions);
+
+		const titleCell = row?.getCellById('TITLE');
+		let dashboardTitle = '';
+		if (titleCell)
+		{
+			const titleWrapper = titleCell.querySelector('.dashboard-title-wrapper__item');
+			dashboardTitle = titleWrapper.querySelector('a').innerText;
+		}
+
+		const menu: BX.Main.interfaceButtons = BX.Main.interfaceButtonsManager.getById('biconnector_superset_menu');
+		if (isInTopMenu && dashboardTitle)
+		{
+			menu.addMenuItem({
+				id: `biconnector_superset_menu_dashboard_${dashboardId}`,
+				text: dashboardTitle,
+				url: `/bi/dashboard/detail/${dashboardId}/?openFrom=menu`,
+				onClick: '',
+			});
+			const menuItem = menu.getItemById(`biconnector_superset_menu_dashboard_${dashboardId}`);
+			const firstMenuItem = menu.getVisibleItems();
+			Dom.insertBefore(menuItem, firstMenuItem[0]);
+		}
+		else
+		{
+			const menuItem = menu.getItemById(`biconnector_superset_menu_dashboard_${dashboardId}`);
+			menu.deleteMenuItem(menuItem);
+		}
+	}
+
+	pin(dashboardId: number): void
+	{
+		return this.#dashboardManager.pin(dashboardId)
+			.then(() => {
+				this.#grid.reload();
+			})
+			.catch(() => {})
+		;
+	}
+
+	unpin(dashboardId: number): void
+	{
+		return this.#dashboardManager.unpin(dashboardId)
+			.then(() => {
+				this.#grid.reload();
+			})
+			.catch(() => {})
+		;
 	}
 }
 

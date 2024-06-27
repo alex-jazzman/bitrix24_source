@@ -13,6 +13,7 @@ import ItemSystem from "./items/item-system";
 import Utils from './utils';
 import ItemUserFavorites from "./items/item-user-favorites";
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
+import { BannerDispatcher } from 'ui.banner-dispatcher';
 
 export default class Menu
 {
@@ -415,7 +416,13 @@ export default class Menu
 
 	showGlobalPreset()
 	{
-		this.getDefaultPresetController().show('global');
+		BannerDispatcher.high.toQueue((onDone) => {
+			const presetController = this.getDefaultPresetController();
+			presetController.show('global');
+			presetController.getPopup().subscribe('onAfterClose', (event) => {
+				onDone();
+			});
+		});
 	}
 
 	handleShowHiddenClick()

@@ -105,7 +105,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		iaCanAddByTypeChat()
 		{
-			const rolesByChatType = this.getInstalledRolesByChatType();
+			const rolesByChatType = this.getDefaultRolesByChatType();
 			const installedMinimalRole = rolesByChatType[DialogActionType.extend];
 
 			return this.getRightByLowRole(installedMinimalRole);
@@ -115,17 +115,23 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @desc Get object with minimal installed roles by chat type
 		 * @return {object}
 		 */
-		getInstalledRolesByChatType()
+		getDefaultRolesByChatType()
+		{
+			return this.getPermissionByChatType(this.dialogData.type);
+		}
+
+		getPermissionByChatType(chatType)
 		{
 			const chatPermissions = this.getChatPermissions();
-			let chatType = this.dialogData.type;
 
-			if (Type.isUndefined(chatPermissions.byChatType[chatType]))
-			{
-				chatType = DialogType.default;
-			}
+			return chatPermissions.byChatType[chatType] ?? chatPermissions.byChatType[DialogType.default];
+		}
 
-			return chatPermissions.byChatType[chatType] || {};
+		getActionGroupsByChatType(chatType)
+		{
+			const chatPermissions = this.getChatPermissions();
+
+			return chatPermissions.actionGroupsDefaults[chatType] ?? chatPermissions.actionGroupsDefaults[DialogType.default];
 		}
 
 		/**
@@ -165,7 +171,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		isCanRemoveByTypeChat()
 		{
-			const rolesByChatType = this.getInstalledRolesByChatType();
+			const rolesByChatType = this.getDefaultRolesByChatType();
 			const installedMinimalRole = rolesByChatType[DialogActionType.leave]; // leave equal kick
 
 			return this.getRightByLowRole(installedMinimalRole);
@@ -198,7 +204,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		iaCanLeaveByTypeChat()
 		{
-			const rolesByChatType = this.getInstalledRolesByChatType();
+			const rolesByChatType = this.getDefaultRolesByChatType();
 			let actionType = DialogActionType.leave;
 
 			const isOwner = this.isOwner();
@@ -241,6 +247,11 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		getRightByLowRole(compareRole)
 		{
+			if (compareRole === UserRole.none)
+			{
+				return false;
+			}
+
 			const currentRole = this.dialogData.role;
 
 			switch (currentRole)
@@ -379,6 +390,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 				DialogType.copilot,
 				DialogType.channel,
 				DialogType.openChannel,
+				DialogType.generalChannel,
 				DialogType.comment,
 			].includes(type)
 			;
@@ -386,14 +398,15 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 		/**
 		 * @desc Returns is owner chat
+		 * @param {?DialoguesModelState} dialogData
 		 * @return {boolean}
-		 * @private
 		 */
-		isOwner()
+		isOwner(dialogData = null)
 		{
 			const currentUserId = MessengerParams.getUserId();
+			const dialogModelState = dialogData || this.dialogData;
 
-			return this.dialogData.owner === currentUserId;
+			return dialogModelState.owner === currentUserId;
 		}
 
 		/**
@@ -408,9 +421,9 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 				return false;
 			}
 
-			if (Type.isUndefined(this.dialogData.permissions)
+			if (
+				Type.isUndefined(this.dialogData.permissions)
 				|| Type.isUndefined(this.dialogData.permissions.manageMessages)
-				|| this.dialogData.permissions.manageMessages === UserRole.none
 			)
 			{
 				return true;
@@ -460,7 +473,6 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
 		}
 
-
 		isCanOpenAvatarMenu(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
@@ -470,6 +482,19 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			const minimalRole = MinimalRoleForAction[DialogActionType.openAvatarMenu];
 
 			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
+		}
+
+		isCanDeleteOtherMessage(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const installedMinimalRole = rolesByChatType[DialogActionType.deleteOthersMessage];
+
+			return this.getRightByLowRole(installedMinimalRole);
 		}
 
 		#checkMinimalRole(minimalRole, roleToCheck)

@@ -61,6 +61,7 @@ class CBPCrmAddProductRow extends CBPActivity
 		$row = [
 			'PRODUCT_ID' => $id,
 			'QUANTITY' => (float)$this->RowQuantity,
+			'PRODUCT_NAME' => $product['NAME'],
 		];
 
 		$discountRate = $this->RowDiscountRate;
@@ -70,6 +71,7 @@ class CBPCrmAddProductRow extends CBPActivity
 			$row['DISCOUNT_RATE'] = (float)$discountRate;
 		}
 
+		$row['PRODUCT_NAME'] = $product['NAME'];
 		$row['TAX_RATE'] = $product['VAT_RATE'];
 		$row['TAX_INCLUDED'] = $product['VAT_INCLUDED'];
 		$row['TYPE'] = (int)$product['TYPE'];

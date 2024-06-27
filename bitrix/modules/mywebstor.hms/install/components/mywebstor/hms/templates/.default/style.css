@@ -1,0 +1,9 @@
+#ui-page-slider-content #workarea-content {
+    /* background: transparent; */
+}
+#workarea-content .main-buttons {
+    margin-bottom: 10px;
+}
+#workarea-content .main-buttons .main-buttons-box {
+    padding-top: 0;
+}

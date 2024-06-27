@@ -5017,6 +5017,9 @@ this.BX = this.BX || {};
 	    var remoteParticipant = babelHelpers.classPrivateFieldGet(_this16, _privateProperties).remoteParticipants[participantId];
 	    if (remoteParticipant && remoteParticipant.tracks[MediaStreamsKinds.Camera] && remoteParticipant.isLocalVideoMute === showVideo) {
 	      remoteParticipant.isLocalVideoMute = !showVideo;
+	      if (remoteParticipant.isMutedVideo) {
+	        return;
+	      }
 	      _classPrivateMethodGet(_this16, _pauseRemoteTrack, _pauseRemoteTrack2).call(_this16, remoteParticipant.userId, remoteParticipant.tracks[MediaStreamsKinds.Camera].id, remoteParticipant.tracks[MediaStreamsKinds.Camera].source, remoteParticipant.isLocalVideoMute);
 	      _this16.triggerEvents(eventType, [remoteParticipant, remoteParticipant.tracks[MediaStreamsKinds.Camera]]);
 	    }
@@ -8074,6 +8077,7 @@ this.BX = this.BX || {};
 	    this.showDocumentButton = config.showDocumentButton !== false;
 	    this.showButtonPanel = config.showButtonPanel !== false;
 	    this.enableNewLayoutLogic = config.enableNewLayoutLogic;
+	    this.limitation = null;
 	    this.inactiveUsers = [];
 	    this.activeUsers = [];
 	    this.rerenderTimeout = null;
@@ -8285,8 +8289,90 @@ this.BX = this.BX || {};
 	    }.bind(this), 100)*/
 	  }
 	  babelHelpers.createClass(View, [{
+	    key: "openArticle",
+	    value: function openArticle(articleCode) {
+	      var infoHelper = BX.UI.InfoHelper;
+	      if (infoHelper.isOpen()) {
+	        infoHelper.close();
+	      }
+	      infoHelper.show(articleCode);
+	    }
+	  }, {
+	    key: "onClickButtonWithLimit",
+	    value: function onClickButtonWithLimit(limitObj, handle) {
+	      var enabled = limitObj.enabled,
+	        articleCode = limitObj.articleCode;
+	      if (enabled && typeof handle === "function") {
+	        handle();
+	        return;
+	      }
+	      if (!enabled && articleCode) {
+	        this.openArticle(articleCode);
+	      }
+	    }
+	  }, {
+	    key: "getLimitation",
+	    value: function getLimitation() {
+	      this.limitation = Util.getCallFeatures();
+	    }
+	  }, {
+	    key: "getLimitationByType",
+	    value: function getLimitationByType(type) {
+	      var _this$limitation;
+	      var defaultLimitation = {
+	        enable: true
+	      };
+	      var currentLimitation = (_this$limitation = this.limitation) === null || _this$limitation === void 0 ? void 0 : _this$limitation["call_".concat(type)];
+	      if (!currentLimitation) {
+	        return defaultLimitation;
+	      }
+	      return {
+	        enabled: currentLimitation.enable,
+	        articleCode: currentLimitation.articleCode
+	      };
+	    }
+	  }, {
+	    key: "getBackgroundLimitation",
+	    value: function getBackgroundLimitation() {
+	      return this.getLimitationByType('background');
+	    }
+	  }, {
+	    key: "getBackgroundBlurLimitation",
+	    value: function getBackgroundBlurLimitation() {
+	      return this.getLimitationByType('background_blur');
+	    }
+	  }, {
+	    key: "getRecordLimitation",
+	    value: function getRecordLimitation() {
+	      return this.getLimitationByType('record');
+	    }
+	  }, {
+	    key: "getScreenSharingLimitation",
+	    value: function getScreenSharingLimitation() {
+	      return this.getLimitationByType('screen_sharing');
+	    }
+	  }, {
+	    key: "isDesktopCall",
+	    value: function isDesktopCall() {
+	      return im_v2_lib_desktopApi.DesktopApi.isDesktop();
+	    }
+	  }, {
+	    key: "checkAvailableBackgroundImage",
+	    value: function checkAvailableBackgroundImage() {
+	      if (!this.isDesktopCall()) {
+	        return;
+	      }
+	      var _DesktopApi$getBackgr = im_v2_lib_desktopApi.DesktopApi.getBackgroundImage(),
+	        backgroundId = _DesktopApi$getBackgr.id;
+	      if (!backgroundId || backgroundId === 'none') {
+	        im_v2_lib_desktopApi.DesktopApi.setCallBackground('none', 'none');
+	      }
+	    }
+	  }, {
 	    key: "init",
 	    value: function init() {
+	      this.getLimitation();
+	      this.checkAvailableBackgroundImage();
 	      if (this.isFullScreenSupported()) {
 	        if (main_core.Browser.isChrome() || main_core.Browser.isSafari()) {
 	          window.addEventListener("fullscreenchange", this._onFullScreenChangeHandler);
@@ -8497,7 +8583,7 @@ this.BX = this.BX || {};
 	      var result = [];
 	      for (var i = 0; i < this.userRegistry.users.length; i++) {
 	        var userModel = this.userRegistry.users[i];
-	        if (this.isUserHasActiveState(userModel)) {
+	        if (this.isUserHasActiveState(userModel) && this.users.hasOwnProperty(userModel.id)) {
 	          result.push(userModel.id);
 	        }
 	      }
@@ -8724,7 +8810,7 @@ this.BX = this.BX || {};
 	      if (this.layout !== Layouts.Grid) {
 	        return;
 	      }
-	      this.renderUserList();
+	      this.renderUserList(true);
 	      this.toggleEars();
 	    }
 	  }, {
@@ -9315,17 +9401,18 @@ this.BX = this.BX || {};
 	        throw Error("mediaRenderer should be of video kind");
 	      }
 	      var user = this.users[userId];
+	      var userModel = this.userRegistry.get(userId);
 	      var userHasCameraVideo = user.hasCameraVideo();
 	      this.users[userId].videoRenderer = mediaRenderer;
 	      if (this.enableNewLayoutLogic) {
+	        if (this.skipVideoTriggerForUsers.has(userId)) {
+	          this.skipVideoTriggerForUsers["delete"](userId);
+	          return;
+	        }
 	        if (mediaRenderer.stream && mediaRenderer.kind === 'video') {
-	          if (this.skipVideoTriggerForUsers.has(userId)) {
-	            this.skipVideoTriggerForUsers["delete"](userId);
-	            return;
-	          }
 	          this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
 	        } else if (mediaRenderer.kind === 'video') {
-	          if (!this.activeUsers.includes(userId) || !userHasCameraVideo) {
+	          if (!this.activeUsers.includes(userId) && !userHasCameraVideo && !userModel.prevCameraState) {
 	            return;
 	          }
 	          this.updateRerenderQueue(userId, RerenderReason.VideoDisabled);
@@ -10347,26 +10434,15 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "toggleSubscribingVideoInRenderUserList",
 	    value: function toggleSubscribingVideoInRenderUserList(participantIds, showVideo) {
-	      var _this18 = this;
-	      var filteredParticipants = participantIds.filter(function (p) {
-	        var _this18$users$p$video;
-	        if (((_this18$users$p$video = _this18.users[p].videoRenderer) === null || _this18$users$p$video === void 0 ? void 0 : _this18$users$p$video.kind) === 'sharing') {
-	          return !!_this18.users[p].previewRenderer !== showVideo;
-	        } else {
-	          return !!_this18.users[p].videoRenderer !== showVideo;
-	        }
+	      this.eventEmitter.emit(EventName.onToggleSubscribe, {
+	        participantIds: participantIds,
+	        showVideo: showVideo
 	      });
-	      if (filteredParticipants.length) {
-	        this.eventEmitter.emit(EventName.onToggleSubscribe, {
-	          participantIds: filteredParticipants,
-	          showVideo: showVideo
-	        });
-	      }
 	    }
 	  }, {
 	    key: "getOrderingRules",
 	    value: function getOrderingRules() {
-	      var _this19 = this;
+	      var _this18 = this;
 	      var rules = {
 	        videoEnabled: [],
 	        videoDisabled: [],
@@ -10376,17 +10452,17 @@ this.BX = this.BX || {};
 	        if (el.reason === RerenderReason.UserDisconnected) {
 	          rules.userDisconnected = {
 	            id: el.userId,
-	            order: _this19.userRegistry.get(el.userId).prevOrder
+	            order: _this18.userRegistry.get(el.userId).prevOrder
 	          };
 	        } else if (el.reason === RerenderReason.VideoEnabled) {
 	          rules.videoEnabled.push({
 	            id: el.userId,
-	            order: _this19.userRegistry.get(el.userId).order
+	            order: _this18.userRegistry.get(el.userId).order
 	          });
 	        } else if (el.reason === RerenderReason.VideoDisabled) {
 	          rules.videoDisabled.push({
 	            id: el.userId,
-	            order: _this19.userRegistry.get(el.userId).order
+	            order: _this18.userRegistry.get(el.userId).order
 	          });
 	        }
 	      });
@@ -10423,14 +10499,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "processVideoRules",
 	    value: function processVideoRules(rules, params) {
-	      var _this20 = this;
+	      var _this19 = this;
 	      var diffBetweenChanges = rules.videoEnabled.length - rules.videoDisabled.length;
 	      var lessChangesField = diffBetweenChanges > 0 ? 'videoDisabled' : 'videoEnabled';
 	      var moreChangesField = diffBetweenChanges > 0 ? 'videoEnabled' : 'videoDisabled';
 	      if (rules.videoEnabled.length && rules.videoDisabled.length) {
 	        rules[lessChangesField].forEach(function (el, index) {
-	          var toUser = _this20.userRegistry.get(el.id);
-	          var fromUser = _this20.userRegistry.get(rules[moreChangesField][index].id);
+	          var toUser = _this19.userRegistry.get(el.id);
+	          var fromUser = _this19.userRegistry.get(rules[moreChangesField][index].id);
 	          params.orderChanges.push({
 	            type: SwapType.Replace,
 	            to: {
@@ -10456,8 +10532,8 @@ this.BX = this.BX || {};
 	            params.orderChanges.push({
 	              type: SwapType.Replace,
 	              from: {
-	                userModel: _this20.userRegistry.get(el.id),
-	                order: _this20.userRegistry.get(el.id).order
+	                userModel: _this19.userRegistry.get(el.id),
+	                order: _this19.userRegistry.get(el.id).order
 	              }
 	            });
 	            params.incompleteSwaps.push(params.orderChanges.length);
@@ -10477,10 +10553,6 @@ this.BX = this.BX || {};
 	      var userModel = this.userRegistry.get(rules.userDisconnected.id);
 	      if (userModel.prevCameraState) {
 	        params.disconnectedUserHadVideo = true;
-	        params.shiftUsersWithVideo++;
-	        if (!params.minOrderToShiftUsersWithVideo || params.minOrderToShiftUsersWithVideo > rules.userDisconnected.order) {
-	          params.minOrderToShiftUsersWithVideo = rules.userDisconnected.order;
-	        }
 	      }
 	    }
 	  }, {
@@ -10489,9 +10561,10 @@ this.BX = this.BX || {};
 	      var swapRemains = params.incompleteSwaps.length;
 	      if (userModel.state === UserState.Calling) {
 	        return;
-	      } else if (userModel.cameraState && params.usersWithEnabledVideo.includes(userModel.id)) {
+	      } else if (params.usersWithEnabledVideo.includes(userModel.id)) {
 	        params.incompleteSwaps.pop();
 	        params.usersWithEnabledVideo.splice(params.usersWithEnabledVideo.indexOf(userModel.id), 1);
+	        params.usersToKeepActive.push(userModel.id);
 	      } else if (!userModel.cameraState) {
 	        var _params$possibleActiv, _params$possibleActiv2;
 	        var index = params.incompleteSwaps[swapRemains - 1] - 1;
@@ -10517,16 +10590,16 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "completeVideoDisabledSwap",
 	    value: function completeVideoDisabledSwap(rules, params) {
-	      var _this21 = this;
+	      var _this20 = this;
 	      var usersProceed = 0;
 	      rules.videoDisabled.forEach(function (el, index) {
-	        var userWithoutVideo = _this21.userRegistry.get(el.id);
+	        var userWithoutVideo = _this20.userRegistry.get(el.id);
 	        var userWithoutVideoIndex = params.activeUsers.indexOf(el.id);
-	        var userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / _this21.usersPerPage);
-	        var skipUsers = (userWithoutVideoPage - 1) * _this21.usersPerPage;
+	        var userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / _this20.usersPerPage);
+	        var skipUsers = (userWithoutVideoPage - 1) * _this20.usersPerPage;
 	        var numberOfUsersWithVideoForSwap = params.usersWithVideo.length - skipUsers;
 	        var userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - index];
-	        var canCompleteVideoSwap = userToSwap.order > el.order;
+	        var canCompleteVideoSwap = userToSwap && userToSwap.order > el.order;
 	        if (canCompleteVideoSwap && numberOfUsersWithVideoForSwap - usersProceed >= rules.videoDisabled.length - index) {
 	          usersProceed++;
 	          params.orderChanges.push({
@@ -10541,13 +10614,15 @@ this.BX = this.BX || {};
 	            }
 	          });
 	          var userToSwapIndex = params.activeUsers.indexOf(userToSwap.id);
-	          var userToSwapPage = Math.ceil((userToSwapIndex + 1) / _this21.usersPerPage);
-	          if (userWithoutVideoPage === _this21.currentPage && userToSwapPage > _this21.currentPage) {
+	          var userToSwapPage = Math.ceil((userToSwapIndex + 1) / _this20.usersPerPage);
+	          if (userWithoutVideoPage === _this20.currentPage && userToSwapPage > _this20.currentPage) {
 	            params.usersToKeepActive.push(userToSwap.id);
 	            params.usersToForceDeactivation.push(el.id);
 	            params.usersToDeactivate++;
-	          } else if (userToSwapPage === _this21.currentPage && userToSwapPage > userWithoutVideoPage) {
+	          } else if (userToSwapPage === _this20.currentPage && userToSwapPage > userWithoutVideoPage) {
+	            params.usersToKeepActive.push(el.id);
 	            params.usersToForceDeactivation.push(userToSwap.id);
+	            params.usersToDeactivate++;
 	          }
 	        }
 	      });
@@ -10564,27 +10639,6 @@ this.BX = this.BX || {};
 	        status = false;
 	      }
 	      return status;
-	    }
-	  }, {
-	    key: "moveUsersWithoutVideo",
-	    value: function moveUsersWithoutVideo(rules, params) {
-	      var _this22 = this;
-	      if (!params.lastUserWithVideo || params.videoDisabledProceed) {
-	        return;
-	      }
-	      params.videoDisabledProceed = true;
-	      var lastUserWithDisabledVideoOrder = rules.videoDisabled[rules.videoDisabled.length - 1].order;
-	      var shift = lastUserWithDisabledVideoOrder > params.lastUserWithVideoOrder ? 0 : params.shiftUsersWithVideo;
-	      rules.videoDisabled.forEach(function (el, index) {
-	        var user = _this22.userRegistry.get(el.id);
-	        params.orderChanges.push({
-	          type: SwapType.Direct,
-	          to: {
-	            userModel: user,
-	            order: params.lastUserWithVideoOrder - shift + index + 1
-	          }
-	        });
-	      });
 	    }
 	  }, {
 	    key: "completeDisconnectSwap",
@@ -10627,8 +10681,8 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "renderUserList",
-	    value: function renderUserList() {
-	      var _this23 = this;
+	    value: function renderUserList(pageChange) {
+	      var _this21 = this;
 	      clearTimeout(this.rerenderTimeout);
 	      this.rerenderTimeout = null;
 	      this.activeUsers = [];
@@ -10658,10 +10712,8 @@ this.BX = this.BX || {};
 	          from: null,
 	          to: null
 	        },
-	        shiftUsersWithVideo: 0,
 	        disconnectedUserHadVideo: false,
 	        usersToDeactivate: 0,
-	        minOrderToShiftUsersWithVideo: 0,
 	        videoDisabledProceed: false
 	      };
 	      if (this.layout == Layouts.Grid && this.pagesCount > 1) {
@@ -10681,8 +10733,11 @@ this.BX = this.BX || {};
 	        if (!orderingParams.activeUsers) {
 	          orderingParams.activeUsers = this.getActiveUsers();
 	        }
-	        orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers + 1, this.usersPerPage);
+	        orderingParams.possibleActiveUsers = orderingParams.activeUsers.slice(skipUsers, skipUsers + this.usersPerPage);
 	        orderingParams.lastUserWithVideoOrder = ((_orderingParams$lastU = orderingParams.lastUserWithVideo) === null || _orderingParams$lastU === void 0 ? void 0 : _orderingParams$lastU.order) || 1;
+	        orderingParams.usersWithVideo.sort(function (a, b) {
+	          return a.order - b.order;
+	        });
 	        this.completeVideoDisabledSwap(orderingRules, orderingParams);
 	        if (orderingRules.userDisconnected) {
 	          this.completeDisconnectSwap(orderingRules, orderingParams);
@@ -10691,10 +10746,10 @@ this.BX = this.BX || {};
 	        // new grid logic is applied only in the Layouts.Grid layout
 	        // so we need to save some rules for later
 	        orderingRules.videoEnabled.forEach(function (user) {
-	          return _this23.updateRerenderQueue(user.id, RerenderReason.VideoEnabled);
+	          return _this21.updateRerenderQueue(user.id, RerenderReason.VideoEnabled);
 	        });
 	        orderingRules.videoDisabled.forEach(function (user) {
-	          return _this23.updateRerenderQueue(user.id, RerenderReason.VideoDisabled);
+	          return _this21.updateRerenderQueue(user.id, RerenderReason.VideoDisabled);
 	        });
 	      }
 	      for (var i = 0; i < this.userRegistry.users.length; i++) {
@@ -10738,23 +10793,28 @@ this.BX = this.BX || {};
 	        if (needToUseNewLogic) {
 	          if (orderingRules.videoEnabled.length) {
 	            if ((userActive || userSkipped) && orderingParams.incompleteSwaps.length) {
-	              var _orderingParams$possi;
+	              var _orderingParams$possi, _orderingParams$possi2;
 	              var previousIncompleteSwaps = orderingParams.incompleteSwaps.length;
 	              var index = orderingParams.incompleteSwaps[0] - 1;
 	              var userEnabledVideo = orderingParams.orderChanges[index].from;
-	              var changedUserFromCurrentPage = (_orderingParams$possi = orderingParams.possibleActiveUsers) === null || _orderingParams$possi === void 0 ? void 0 : _orderingParams$possi.includes(userEnabledVideo.userModel.id);
+	              var currentUserFromCurrentPage = (_orderingParams$possi = orderingParams.possibleActiveUsers) === null || _orderingParams$possi === void 0 ? void 0 : _orderingParams$possi.includes(userModel.id);
+	              var changedUserFromCurrentPage = (_orderingParams$possi2 = orderingParams.possibleActiveUsers) === null || _orderingParams$possi2 === void 0 ? void 0 : _orderingParams$possi2.includes(userEnabledVideo.userModel.id);
 	              this.completeVideoEnableSwap(userModel, skipUsers, orderingRules, orderingParams);
 	              var swapCompleted = previousIncompleteSwaps !== orderingParams.incompleteSwaps.length;
 	              if (swapCompleted && userActive && !changedUserFromCurrentPage && !orderingParams.usersToKeepActive.includes(userModel.id)) {
 	                userActive = false;
-	                if (userModel.cameraState) {
+	                if (userModel.cameraState && !currentUserFromCurrentPage) {
 	                  this.skipVideoTriggerForUsers.add(userModel.id);
 	                }
-	              } else if (swapCompleted && !userActive && (!userSkipped || userSkipped && changedUserFromCurrentPage))
-	                // prev page
-	                {
-	                  userActive = true;
+	                if (!currentUserFromCurrentPage) {
+	                  this.skipVideoTriggerForUsers.add(userEnabledVideo.userModel.id);
 	                }
+	              } else if (swapCompleted && (!userSkipped && !currentUserFromCurrentPage || userSkipped && changedUserFromCurrentPage)) {
+	                userActive = true;
+	                if (!changedUserFromCurrentPage) {
+	                  this.skipVideoTriggerForUsers.add(userEnabledVideo.userModel.id);
+	                }
+	              }
 	            }
 	            if (orderingParams.usersToDeactivate) {
 	              var newStatus = this.calculateUserActive(userModel, userActive, userSkipped, orderingParams);
@@ -10787,6 +10847,9 @@ this.BX = this.BX || {};
 	            if (orderingParams.usersToKeepActive.includes(userModel.id)) {
 	              userActive = true;
 	              orderingParams.usersToDeactivate--;
+	              if (userModel.cameraState) {
+	                this.skipVideoTriggerForUsers.add(userModel.id);
+	              }
 	            } else if (orderingParams.currentPageUsers.length + orderingParams.usersToDeactivate > this.usersPerPage) {
 	              userActive = false;
 	              orderingParams.currentPageUsers.pop();
@@ -10794,6 +10857,9 @@ this.BX = this.BX || {};
 	                this.skipVideoTriggerForUsers.add(userModel.id);
 	              }
 	            }
+	          } else if (pageChange && userModel.cameraState && (userActive || userSkipped)) {
+	            // it's just a page change
+	            this.skipVideoTriggerForUsers.add(userModel.id);
 	          }
 	        }
 	        if (userActive && this.layout == Layouts.Grid && this.usersPerPage > 0 && renderedUsers >= this.usersPerPage) {
@@ -10914,7 +10980,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderButtons",
 	    value: function renderButtons(buttons) {
-	      var _this24 = this;
+	      var _this22 = this;
 	      var panelInner, left, center, right;
 	      panelInner = main_core.Dom.create("div", {
 	        props: {
@@ -10991,13 +11057,13 @@ this.BX = this.BX || {};
 	              showLevel: true,
 	              sideIcon: this.getMicrophoneSideIcon(this.roomState),
 	              onClick: function onClick(e) {
-	                _this24._onMicrophoneButtonClick(e);
-	                _this24._showMicrophoneHint(e);
+	                _this22._onMicrophoneButtonClick(e);
+	                _this22._showMicrophoneHint(e);
 	              },
 	              onArrowClick: this._onMicrophoneArrowClick.bind(this),
 	              onMouseOver: this._showMicrophoneHint.bind(this),
 	              onMouseOut: function onMouseOut() {
-	                return _this24._destroyHotKeyHint();
+	                return _this22._destroyHotKeyHint();
 	              },
 	              onSideIconClick: this._onMicrophoneSideIconClick.bind(this)
 	            });
@@ -11014,10 +11080,10 @@ this.BX = this.BX || {};
 	              onClick: this._onCameraButtonClick.bind(this),
 	              onArrowClick: this._onCameraArrowClick.bind(this),
 	              onMouseOver: function onMouseOver(e) {
-	                _this24._showHotKeyHint(e.currentTarget.firstChild, "camera", _this24.keyModifier + " + V");
+	                _this22._showHotKeyHint(e.currentTarget.firstChild, "camera", _this22.keyModifier + " + V");
 	              },
 	              onMouseOut: function onMouseOut() {
-	                _this24._destroyHotKeyHint();
+	                _this22._destroyHotKeyHint();
 	              }
 	            });
 	            left.appendChild(this.buttons.camera.render());
@@ -11031,10 +11097,10 @@ this.BX = this.BX || {};
 	                blocked: this.isButtonBlocked("screen"),
 	                onClick: this._onScreenButtonClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  _this24._showHotKeyHint(e.currentTarget, "screen", _this24.keyModifier + " + S");
+	                  _this22._showHotKeyHint(e.currentTarget, "screen", _this22.keyModifier + " + S");
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  _this24._destroyHotKeyHint();
+	                  _this22._destroyHotKeyHint();
 	                }
 	              });
 	            } else {
@@ -11051,13 +11117,13 @@ this.BX = this.BX || {};
 	                blocked: this.isButtonBlocked("record"),
 	                onClick: this._onRecordToggleClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  if (_this24.isRecordingHotKeySupported()) {
-	                    _this24._showHotKeyHint(e.currentTarget, "record", _this24.keyModifier + " + R");
+	                  if (_this22.isRecordingHotKeySupported()) {
+	                    _this22._showHotKeyHint(e.currentTarget, "record", _this22.keyModifier + " + R");
 	                  }
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  if (_this24.isRecordingHotKeySupported()) {
-	                    _this24._destroyHotKeyHint();
+	                  if (_this22.isRecordingHotKeySupported()) {
+	                    _this22._destroyHotKeyHint();
 	                  }
 	                }
 	              });
@@ -11144,10 +11210,10 @@ this.BX = this.BX || {};
 	                blocked: this.isButtonBlocked("chat"),
 	                onClick: this._onChatButtonClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  _this24._showHotKeyHint(e.currentTarget, "chat", _this24.keyModifier + " + C");
+	                  _this22._showHotKeyHint(e.currentTarget, "chat", _this22.keyModifier + " + C");
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  _this24._destroyHotKeyHint();
+	                  _this22._destroyHotKeyHint();
 	                }
 	              });
 	            } else {
@@ -11164,10 +11230,10 @@ this.BX = this.BX || {};
 	                blocked: this.isButtonBlocked("floorRequest"),
 	                onClick: this._onFloorRequestButtonClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  _this24._showHotKeyHint(e.currentTarget, "floorRequest", _this24.keyModifier + " + H");
+	                  _this22._showHotKeyHint(e.currentTarget, "floorRequest", _this22.keyModifier + " + H");
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  return _this24._destroyHotKeyHint();
+	                  return _this22._destroyHotKeyHint();
 	                }
 	              });
 	            } else {
@@ -11207,7 +11273,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderTopButtons",
 	    value: function renderTopButtons(buttons) {
-	      var _this25 = this;
+	      var _this23 = this;
 	      var result = BX.createFragment();
 	      for (var i = 0; i < buttons.length; i++) {
 	        switch (buttons[i]) {
@@ -11223,11 +11289,11 @@ this.BX = this.BX || {};
 	              textClass: "protected",
 	              text: BX.message("IM_M_CALL_PROTECTED").toLowerCase(),
 	              onMouseOver: function onMouseOver(e) {
-	                _this25.hintManager.popupParameters.events = null;
-	                _this25.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_PROTECTED_HINT"));
+	                _this23.hintManager.popupParameters.events = null;
+	                _this23.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_PROTECTED_HINT"));
 	              },
 	              onMouseOut: function onMouseOut() {
-	                _this25.hintManager.hide();
+	                _this23.hintManager.hide();
 	              }
 	            });
 	            result.appendChild(this.buttons["protected"].render());
@@ -11253,12 +11319,12 @@ this.BX = this.BX || {};
 	              text: this.layout == Layouts.Grid ? BX.message("IM_M_CALL_SPEAKER_MODE") : BX.message("IM_M_CALL_GRID_MODE"),
 	              onClick: this._onGridButtonClick.bind(this),
 	              onMouseOver: function onMouseOver(e) {
-	                _this25._showHotKeyHint(e.currentTarget, "grid", _this25.keyModifier + " + W", {
+	                _this23._showHotKeyHint(e.currentTarget, "grid", _this23.keyModifier + " + W", {
 	                  position: "bottom"
 	                });
 	              },
 	              onMouseOut: function onMouseOut() {
-	                _this25._destroyHotKeyHint();
+	                _this23._destroyHotKeyHint();
 	              }
 	            });
 	            result.appendChild(this.buttons.grid.render());
@@ -11410,7 +11476,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showOverflownButtonsPopup",
 	    value: function showOverflownButtonsPopup() {
-	      var _this26 = this;
+	      var _this24 = this;
 	      if (this.overflownButtonsPopup) {
 	        this.overflownButtonsPopup.show();
 	        return;
@@ -11439,8 +11505,8 @@ this.BX = this.BX || {};
 	        contentBackground: 'unset',
 	        events: {
 	          onPopupDestroy: function onPopupDestroy() {
-	            _this26.overflownButtonsPopup = null;
-	            _this26.buttons.more.setActive(false);
+	            _this24.overflownButtonsPopup = null;
+	            _this24.buttons.more.setActive(false);
 	          }
 	        }
 	      });
@@ -11572,19 +11638,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "scrollUserListUp",
 	    value: function scrollUserListUp() {
-	      var _this27 = this;
+	      var _this25 = this;
 	      this.stopScroll();
 	      this.scrollInterval = setInterval(function () {
-	        return _this27.elements.userList.container.scrollTop -= 10;
+	        return _this25.elements.userList.container.scrollTop -= 10;
 	      }, 20);
 	    }
 	  }, {
 	    key: "scrollUserListDown",
 	    value: function scrollUserListDown() {
-	      var _this28 = this;
+	      var _this26 = this;
 	      this.stopScroll();
 	      this.scrollInterval = setInterval(function () {
-	        return _this28.elements.userList.container.scrollTop += 10;
+	        return _this26.elements.userList.container.scrollTop += 10;
 	      }, 20);
 	    }
 	  }, {
@@ -11959,20 +12025,28 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onRecordToggleClick",
 	    value: function _onRecordToggleClick(e) {
-	      if (this.recordState.state === View.RecordState.Stopped) {
-	        this._onRecordStartClick(e);
-	      } else {
-	        this._onRecordStopClick(e);
-	      }
+	      var _this27 = this;
+	      var limitObj = this.getRecordLimitation();
+	      this.onClickButtonWithLimit(limitObj, function () {
+	        if (_this27.recordState.state === View.RecordState.Stopped) {
+	          _this27._onRecordStartClick(e);
+	        } else {
+	          _this27._onRecordStopClick(e);
+	        }
+	      });
 	    }
 	  }, {
 	    key: "_onForceRecordToggleClick",
 	    value: function _onForceRecordToggleClick(e) {
-	      if (this.recordState.state === View.RecordState.Stopped) {
-	        this._onForceRecordStartClick(View.RecordType.Video);
-	      } else {
-	        this._onRecordStopClick(e);
-	      }
+	      var _this28 = this;
+	      var limitObj = this.getRecordLimitation();
+	      this.onClickButtonWithLimit(limitObj, function () {
+	        if (_this28.recordState.state === View.RecordState.Stopped) {
+	          _this28._onForceRecordStartClick(View.RecordType.Video);
+	        } else {
+	          _this28._onRecordStopClick(e);
+	        }
+	      });
 	    }
 	  }, {
 	    key: "_onForceRecordStartClick",
@@ -12167,10 +12241,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onScreenButtonClick",
 	    value: function _onScreenButtonClick(e) {
+	      var _this29 = this;
 	      e.stopPropagation();
-	      this.eventEmitter.emit(EventName.onButtonClick, {
-	        buttonName: 'toggleScreenSharing',
-	        node: e.target
+	      var limitObj = this.getScreenSharingLimitation();
+	      this.onClickButtonWithLimit(limitObj, function () {
+	        _this29.eventEmitter.emit(EventName.onButtonClick, {
+	          buttonName: 'toggleScreenSharing',
+	          node: e.target
+	        });
 	      });
 	    }
 	  }, {
@@ -12290,7 +12368,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onParticipantsListButtonClick",
 	    value: function _onParticipantsListButtonClick(e) {
-	      var _this29 = this;
+	      var _this30 = this;
 	      e.stopPropagation();
 	      var viewEvent = new main_core_events.BaseEvent({
 	        data: {
@@ -12309,7 +12387,7 @@ this.BX = this.BX || {};
 	        userList: Object.values(this.users),
 	        current: this.centralUser.id,
 	        onSelect: function onSelect(userId) {
-	          return _this29.setCentralUser(userId);
+	          return _this30.setCentralUser(userId);
 	        }
 	      }).show();
 	    }
@@ -12344,23 +12422,23 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showRenameSlider",
 	    value: function showRenameSlider() {
-	      var _this30 = this;
+	      var _this31 = this;
 	      if (!this.renameSlider) {
 	        this.renameSlider = new MobileSlider({
 	          parent: this.elements.root,
 	          content: this.renderRenameSlider(),
 	          onClose: function onClose() {
-	            return _this30.renameSlider.destroy();
+	            return _this31.renameSlider.destroy();
 	          },
 	          onDestroy: function onDestroy() {
-	            return _this30.renameSlider = null;
+	            return _this31.renameSlider = null;
 	          }
 	        });
 	      }
 	      this.renameSlider.show();
 	      setTimeout(function () {
-	        _this30.elements.renameSlider.input.focus();
-	        _this30.elements.renameSlider.input.select();
+	        _this31.elements.renameSlider.input.focus();
+	        _this31.elements.renameSlider.input.select();
 	      }, 400);
 	    }
 	  }, {
@@ -12461,19 +12539,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_applyMaxWidth",
 	    value: function _applyMaxWidth(animateUnsetProperty) {
-	      var _this31 = this;
+	      var _this32 = this;
 	      var containerDimensions = this.container.getBoundingClientRect();
 	      if (this.maxWidth !== null) {
 	        if (!this.elements.root.style.maxWidth && animateUnsetProperty) {
 	          this.elements.root.style.maxWidth = containerDimensions.width + 'px';
 	        }
 	        setTimeout(function () {
-	          return _this31.elements.root.style.maxWidth = Math.max(_this31.maxWidth, MIN_WIDTH) + 'px';
+	          return _this32.elements.root.style.maxWidth = Math.max(_this32.maxWidth, MIN_WIDTH) + 'px';
 	        }, 0);
 	      } else {
 	        this.elements.root.style.maxWidth = containerDimensions.width + 'px';
 	        this.elements.root.addEventListener('transitionend', function () {
-	          return _this31.elements.root.style.removeProperty('max-width');
+	          return _this32.elements.root.style.removeProperty('max-width');
 	        }, {
 	          once: true
 	        });
@@ -15880,6 +15958,9 @@ this.BX = this.BX || {};
 	        switch (e) {
 	          case MediaStreamsKinds.Camera:
 	            _this.BitrixCall.getLocalVideo().then(function (track) {
+	              if (!_this.videoEnabled) {
+	                return;
+	              }
 	              var mediaRenderer = new MediaRenderer({
 	                kind: kind,
 	                track: track
@@ -21572,6 +21653,9 @@ this.BX = this.BX || {};
 	  }
 	  return parseInt(BX.message('turn_server_max_users'));
 	};
+	var getCallFeatures = function getCallFeatures() {
+	  return BX.message('call_features');
+	};
 	function getLogMessage() {
 	  var text = getDateForLog();
 	  for (var i = 0; i < arguments.length; i++) {
@@ -21801,6 +21885,7 @@ this.BX = this.BX || {};
 	  calcLocalPacketsLost: calcLocalPacketsLost,
 	  calcRemotePacketsLost: calcRemotePacketsLost,
 	  formatPacketsLostData: formatPacketsLostData,
+	  getCallFeatures: getCallFeatures,
 	  getAvatarBackground: getAvatarBackground
 	};
 

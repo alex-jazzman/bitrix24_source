@@ -87,7 +87,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 			<?endif?>
 		</div>
 
-		<script type="text/javascript">
+		<script>
 			BX.message({
 				'path_user': '<?= $arResult['PATHS']['USER'];?>',
 				'path_group': '<?= $arResult['PATHS']['GROUP']?>',

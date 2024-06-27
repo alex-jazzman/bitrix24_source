@@ -1,7 +1,7 @@
-import {Event, Loc, Tag} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import { Event, Loc, Tag } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 
-import {SidePanel} from '../../service/side.panel';
+import { SidePanel } from '../../service/side.panel';
 
 import '../../css/robot.button.css';
 
@@ -9,7 +9,8 @@ type Params = {
 	sidePanel: SidePanel,
 	groupId: number,
 	isTaskLimitsExceeded: boolean,
-	canUseAutomation: boolean
+	canUseAutomation: boolean,
+	isAutomationEnabled: boolean,
 }
 
 export class RobotButton extends EventEmitter
@@ -21,6 +22,7 @@ export class RobotButton extends EventEmitter
 		this.sidePanel = params.sidePanel;
 		this.isTaskLimitsExceeded = params.isTaskLimitsExceeded;
 		this.canUseAutomation = params.canUseAutomation;
+		this.isAutomationEnabled = params.isAutomationEnabled;
 		this.groupId = params.groupId;
 
 		this.setEventNamespace('BX.Tasks.Scrum.RobotButton');
@@ -49,7 +51,9 @@ export class RobotButton extends EventEmitter
 	{
 		if (this.isShowLimitSidePanel())
 		{
-			BX.UI.InfoHelper.show('limit_tasks_robots', {
+			const sliderCode = this.isAutomationEnabled ? 'limit_tasks_robots' : 'limit_crm_rules_off';
+
+			BX.UI.InfoHelper.show(sliderCode, {
 				isLimit: true,
 				limitAnalyticsLabels: {
 					module: 'tasks',
@@ -72,6 +76,6 @@ export class RobotButton extends EventEmitter
 
 	isShowLimitSidePanel(): boolean
 	{
-		return (this.isTaskLimitsExceeded && !this.canUseAutomation);
+		return !this.isAutomationEnabled || (this.isTaskLimitsExceeded && !this.canUseAutomation);
 	}
 }

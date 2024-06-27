@@ -150,7 +150,8 @@ if (!$limitManager->checkLimitWarning())
 			<?= CUtil::PhpToJSObject([
 				'appNodeId' => 'dashboard',
 				'openLoginPopup' => $arResult['OPEN_LOGIN_POPUP'],
-				'isExportEnabled' => $arResult['IS_EXPORT_ENABLED'],
+				'canExport' => $arResult['CAN_EXPORT'],
+				'canEdit' => $arResult['CAN_EDIT'],
 				'dashboardEmbeddedParams' => [
 					'guestToken' => $arResult['GUEST_TOKEN'],
 					'uuid' => $arResult['DASHBOARD_UUID'],

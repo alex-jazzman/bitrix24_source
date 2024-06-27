@@ -18,4 +18,6 @@ $MESS["CLUWIZ_INIT"] = "Initialization";
 $MESS["CLUWIZ_DATABASE_NOT_SUPPORTED"] = "The wizard does not support the specified database type.";
 $MESS["CLUWIZ_NO_GROUP_ERROR"] = "The server group is not defined.";
 $MESS["CLUWIZ_NO_MASTER_ERROR"] = "This server group does not have a working master database.";
+$MESS["CLUWIZ_FINALSTEP_TITLE"] = "The wizard has been finished";
+$MESS["CLUWIZ_FINALSTEP_CONTENT"] = "Click \"Finish\" to make the website's public section available to the visitors.";
 ?>

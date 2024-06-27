@@ -1,10 +1,7 @@
 import { EventEmitter } from 'main.core.events';
 
-import { Core } from 'im.v2.application.core';
 import { EventType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
-
-import type { ImModelUser } from 'im.v2.model';
 
 type MentionTextToInsert = string;
 type MentionReplacementMap = {[textToReplace: string]: MentionTextToInsert};
@@ -253,22 +250,9 @@ export class MentionManager extends EventEmitter
 		return this.#mentionReplacementMap;
 	}
 
-	prepareMentionText(config: { currentText: string, textToInsert: string, textToReplace: string }): string
+	getMentionSymbol(): string
 	{
-		const { currentText, textToInsert, textToReplace = '' } = config;
-		let resultText = '';
-
-		const queryWithMentionSymbol = `${this.#mentionSymbol}${textToReplace}`;
-		if (queryWithMentionSymbol.length > 0)
-		{
-			resultText = currentText.replace(queryWithMentionSymbol, `${textToInsert} `);
-		}
-		else
-		{
-			resultText = `${currentText}${textToInsert} `;
-		}
-
-		return resultText;
+		return this.#mentionSymbol;
 	}
 
 	replaceMentions(text: string): string
@@ -283,13 +267,23 @@ export class MentionManager extends EventEmitter
 
 	extractMentions(text: string): MentionReplacementMap
 	{
+		const CHAT_MENTION_CODE = 'chat';
+
 		const mentions = {};
-		const mentionRegExp = /\[(user|chat)=(?<dialogId>\w+)](?<mentionText>.*?)\[\/(user|chat)]/gi;
+		const mentionRegExp = /\[(?<type>user|chat)=(?<dialogId>\w+)](?<mentionText>.*?)\[\/(user|chat)]/gi;
 
 		const matches = text.matchAll(mentionRegExp);
 		for (const match of matches)
 		{
-			const { dialogId, mentionText } = match.groups;
+			const { mentionText } = match.groups;
+			let { type: mentionType, dialogId } = match.groups;
+
+			mentionType = mentionType.toLowerCase();
+			if (mentionType === CHAT_MENTION_CODE)
+			{
+				dialogId = `${mentionType}${dialogId}`;
+			}
+
 			mentions[mentionText] = Utils.text.getMentionBbCode(dialogId, mentionText);
 		}
 

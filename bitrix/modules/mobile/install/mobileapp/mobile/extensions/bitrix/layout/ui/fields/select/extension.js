@@ -459,7 +459,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			{
 				const values = this.isMultiple() ? selectedValues : selectedValues[0];
 
-				return this.handleChange(values);
+				return this.handleChange(values, this.getItems());
 			}
 
 			return Promise.resolve();
@@ -630,8 +630,51 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 		}
 	}
 
+	SelectField.propTypes = {
+		...BaseSelectField.propTypes,
+		config: PropTypes.shape({
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+
+			mode: PropTypes.oneOf([Type.Picker, Type.Selector]),
+			items: PropTypes.oneOfType([
+				PropTypes.arrayOf(PropTypes.shape({
+					value: PropTypes.string.isRequired,
+					name: PropTypes.string.isRequired,
+					selectedName: PropTypes.string,
+				})),
+				PropTypes.array,
+			]),
+			defaultListTitle: PropTypes.string,
+			selectShowImages: PropTypes.bool,
+			isSearchEnabled: PropTypes.bool,
+		}),
+	};
+
+	SelectField.defaultProps = {
+		...BaseSelectField.defaultProps,
+		config: {
+			...BaseSelectField.defaultProps.config,
+			mode: Type.Picker,
+			items: [],
+			defaultListTitle: '',
+			selectShowImages: true,
+			isSearchEnabled: true,
+		},
+	};
+
 	module.exports = {
 		SelectType: 'select',
+		SelectFieldClass: SelectField,
 		SelectField: (props) => new SelectField(props),
 	};
 });

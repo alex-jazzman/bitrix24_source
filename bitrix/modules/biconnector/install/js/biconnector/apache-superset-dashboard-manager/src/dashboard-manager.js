@@ -286,7 +286,7 @@ export class DashboardManager
 		});
 	}
 
-	static openSettingPeriodSlider(dashboardId: number = null)
+	static openSettingsSlider(dashboardId: number = null)
 	{
 		const componentLink = dashboardId === null
 			? '/bitrix/components/bitrix/biconnector.apachesuperset.setting/slider.php'
@@ -323,6 +323,7 @@ export class DashboardManager
 				'biconnector.dashboard.getEditUrl',
 				{
 					data: {
+						dashboardId: dashboardInfo.id,
 						editUrl: dashboardInfo.editLink,
 					},
 				},
@@ -337,6 +338,42 @@ export class DashboardManager
 				.catch((e) => {
 					reject(e);
 				});
+		});
+	}
+
+	addToTopMenu(dashboardId: number): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.addToTopMenu', {
+			data: {
+				dashboardId,
+			},
+		});
+	}
+
+	deleteFromTopMenu(dashboardId: number): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.deleteFromTopMenu', {
+			data: {
+				dashboardId,
+			},
+		});
+	}
+
+	pin(dashboardId: number): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.pin', {
+			data: {
+				dashboardId,
+			},
+		});
+	}
+
+	unpin(dashboardId: number): Promise
+	{
+		return Ajax.runAction('biconnector.dashboard.unpin', {
+			data: {
+				dashboardId,
+			},
 		});
 	}
 }

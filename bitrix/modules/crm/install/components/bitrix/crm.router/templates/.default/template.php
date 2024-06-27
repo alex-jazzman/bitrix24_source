@@ -70,7 +70,17 @@ if (!$arResult['isIframe'])
 					cacheable: false,
 					allowChangeHistory: false
 				}
-			}
+			},
+			{
+				condition: [
+					"type/automated_solution/details/(\\d+)/?$"
+				],
+				options: {
+					width: 876,
+					cacheable: false,
+					allowChangeHistory: false
+				}
+			},
 		];
 
 		var roots = <?=\CUtil::PhpToJSObject($arResult['roots'])?>;

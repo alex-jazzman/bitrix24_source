@@ -12,6 +12,17 @@
 jn.define('bbcode/ast-processor', (require, exports, module) => {
 	const {Type} = require('type');
 
+	function getByIndex(array, index) {
+	  if (!Type.isArray(array)) {
+	    throw new TypeError('array is not a array');
+	  }
+	  if (!Type.isInteger(index)) {
+	    throw new TypeError('index is not a integer');
+	  }
+	  const preparedIndex = index < 0 ? array.length + index : index;
+	  return array[preparedIndex];
+	}
+
 	class AstProcessor {
 	  /**
 	   * Makes flat list from AST
@@ -102,7 +113,7 @@ jn.define('bbcode/ast-processor', (require, exports, module) => {
 	  static findElements(ast, selector) {
 	    const flattenedAst = AstProcessor.flattenAst(ast);
 	    const parsedSelector = AstProcessor.parseSelector(selector);
-	    const lastSelector = parsedSelector.at(-1);
+	    const lastSelector = getByIndex(parsedSelector, -1);
 	    let checkClosestParent = false;
 	    return parsedSelector.reduceRight((acc, currentSelector) => {
 	      if (Type.isPlainObject(currentSelector)) {

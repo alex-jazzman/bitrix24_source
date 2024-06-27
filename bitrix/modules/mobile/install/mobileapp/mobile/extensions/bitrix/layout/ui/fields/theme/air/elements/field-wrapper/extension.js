@@ -10,21 +10,25 @@ jn.define('layout/ui/fields/theme/air/elements/field-wrapper', (require, exports
 	 * @param {BaseField} props.field - field instance
 	 * @param {array|object} children
 	 */
-	const FieldWrapper = ({ field }, ...children) => View(
+	const FieldWrapper = ({ field, titleIndent = Indent.XL }, ...children) => View(
 		{
 			testId: `${field.testId}_FIELD`,
-			ref: field.bindContainerRefHandler,
+			ref: field.bindContainerRef,
 			onClick: field.getContentClickHandler(),
 			style: {
 				flexDirection: 'column',
-				marginHorizontal: Indent.XL3,
 				paddingBottom: field.shouldShowBorder() && Indent.XS,
-				marginBottom: field.shouldShowBorder() && Indent.XL,
 				borderBottomWidth: field.shouldShowBorder() && 1,
-				borderBottomColor: Color.bgSeparatorSecondary,
+				borderBottomColor: Color.bgSeparatorSecondary.toHex(),
 			},
 		},
-		field.shouldShowTitle() && Title({ text: field.getTitleText(), testId: field.testId }),
+		field.shouldShowTitle() && Title({
+			text: field.getTitleText(),
+			textMultiple: field.getConfig()?.textMultiple ?? '',
+			testId: field.testId,
+			count: Array.isArray(field.getValue()) ? field.getValue().length : 0,
+			titleIndent,
+		}),
 		...Array.isArray(children) ? children : [children],
 	);
 

@@ -173,7 +173,7 @@ else
 <?= str_replace("#PRICE#", SaleFormatCurrency($mp3Price, $mp3Currency), GetMessage("MP3_FILE_PRICE")); ?>
 </font><br><br>
 
-<script language="JavaScript">
+<script>
 <!--
 function OnSelectAll(fl)
 {

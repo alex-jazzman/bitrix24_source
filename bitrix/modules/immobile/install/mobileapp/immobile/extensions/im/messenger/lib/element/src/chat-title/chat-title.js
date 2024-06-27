@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 
+	const { Theme } = require('im/lib/theme');
 	const {
 		DialogType,
 		BotType,
@@ -99,6 +100,10 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 				this.name = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_COMMENT');
 			}
+			else if (dialog.type && dialog.type === DialogType.copilot)
+			{
+				this.description = this.getCopilotRoleName();
+			}
 
 			this.createDialogNameColor(dialog);
 		}
@@ -120,6 +125,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_CHANNEL_V2');
 				}
 
+				case DialogType.generalChannel:
 				case DialogType.openChannel:
 				{
 					return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_OPEN_CHANNEL');
@@ -284,7 +290,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			{
 				titleParams.detailText = this.buildWritingListText();
 				titleParams.isWriting = true;
-				titleParams.detailTextColor = AppTheme.colors.accentMainPrimaryalt;
+				titleParams.detailTextColor = Theme.colors.accentMainPrimaryalt;
 			}
 
 			return titleParams;
@@ -317,7 +323,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 			if (this.userCounter)
 			{
-				if ((this.dialogType === DialogType.channel || this.dialogType === DialogType.openChannel))
+				if ([DialogType.openChannel, DialogType.channel, DialogType.generalChannel].includes(this.dialogType))
 				{
 					titleParams.detailText = Loc.getMessagePlural(
 						'IMMOBILE_ELEMENT_CHAT_TITLE_SUBSCRIBER_COUNT',
@@ -354,8 +360,8 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				titleParams.detailText = this.buildWritingListText();
 				titleParams.isWriting = true;
 				titleParams.detailTextColor = this.dialogType === DialogType.copilot
-					? AppTheme.colors.accentMainCopilot
-					: AppTheme.colors.accentMainPrimaryalt;
+					? Theme.colors.accentMainCopilot
+					: Theme.colors.accentMainPrimaryalt;
 			}
 
 			return titleParams;
@@ -478,6 +484,22 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			}
 
 			return text;
+		}
+
+		/**
+		 * @desc get name copilot role
+		 * @return {string}
+		 * @private
+		 */
+		getCopilotRoleName()
+		{
+			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](this.dialogId);
+			if (!copilotMainRole || !Type.isStringFilled(copilotMainRole?.name))
+			{
+				return Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_ONLINE');
+			}
+
+			return copilotMainRole?.name;
 		}
 	}
 

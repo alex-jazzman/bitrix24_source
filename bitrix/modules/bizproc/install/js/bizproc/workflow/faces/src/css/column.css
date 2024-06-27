@@ -1,0 +1,241 @@
+.bp-workflow-faces {
+	--ui-background-light-grey: #fcfcfd;
+	--ui-background-dark-grey: #7b8691;
+	--ui-icon-color-blue: #00a2e8;
+}
+
+.bp-workflow-faces__steps-item,
+.bp-workflow-faces__steps-summary-item {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	margin-right: 24px;
+	min-width: 68px;
+	height: 76px;
+	z-index: 1;
+}
+
+.bp-workflow-faces__steps-summary-item {
+	min-width: inherit;
+	margin-right: 0;
+}
+
+.bp-workflow-faces__steps-item.--summary .bp-workflow-faces__steps-duration {
+	position: relative;
+	top: -2px;
+}
+
+.bp-workflow-faces__steps-item:not(.--result):before {
+	content: '';
+	position: absolute;
+	top: 52%;
+	left: 0;
+	height: 1px;
+	width: 100%;
+	background: var(--ui-color-base-10);
+	transform: translateY(-50%);
+	z-index: -1;
+}
+
+.bp-workflow-faces__steps-item:not(.--result):nth-child(1):before {
+	left: 50px;
+}
+
+.bp-workflow-faces__steps-item:not(.--result):nth-child(3):before {
+	left: -25px;
+}
+
+.bp-workflow-faces__steps-item:last-child {
+	margin-right: 0;
+}
+
+.bp-workflow-faces__steps-name {
+	margin-bottom: 8px;
+	max-width: 75px;
+}
+
+.bp-workflow-faces__fake-area {
+	display: block;
+	width: 40px;
+	height: 13px;
+	align-content: center;
+}
+
+.bp-workflow-faces__fake-area-stub {
+	display: block;
+	height: 6px;
+	background: var(--ui-color-base-10);
+	border-radius: var(--ui-border-radius-lg);
+	margin-top: 2px;
+}
+
+.bp-workflow-faces__steps-users {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-width: 32px;
+	height: 32px;
+	border-radius: var(--ui-border-radius-circle);
+	border: 1px solid var(--ui-color-base-10);
+	box-sizing: border-box;
+}
+
+.bp-workflow-faces__steps-item:not(.--result) .bp-workflow-faces__steps-users {
+	background: var(--ui-background-light-grey);
+}
+
+.bp-workflow-faces__steps-item.--loading:not(.--result) .bp-workflow-faces__steps-users {
+	background: var(--ui-color-palette-white-base);
+	border: 1px solid var(--ui-color-base-10);
+}
+
+.bp-workflow-faces__steps-item.--in-progress .bp-workflow-faces__steps-users {
+	border: none;
+	background-color: unset;
+}
+
+.bp-workflow-faces__icon-progress-box {
+	position: absolute;
+	top: 52%;
+	right: -18px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 16px;
+	height: 12px;
+	transform: translateY(-50%);
+}
+
+.bp-workflow-faces__icon-progress.ui-icon-set {
+	position: relative;
+	z-index: 2;
+	--ui-icon-set__icon-size: 12px;
+	--ui-icon-set__icon-color: var(--ui-color-base-70);
+}
+
+.bp-workflow-faces__icon-progress-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 16px;
+	height: 12px;
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-base-10);
+}
+
+.bp-workflow-faces__icon-waiting-box,
+.bp-workflow-faces__icon-done-box,
+.bp-workflow-faces__icon-decline-box {
+	display: block;
+	position: absolute;
+	top: -8px;
+	right: -4px;
+	width: 18px;
+	height: 18px;
+}
+
+.bp-workflow-faces__icon-waiting,
+.bp-workflow-faces__icon-done,
+.bp-workflow-faces__icon-decline {
+	position: absolute;
+	border-radius: var(--ui-border-radius-circle);
+	border: 1px solid var(--ui-color-palette-white-base);
+	box-sizing: border-box;
+	z-index: 2;
+}
+
+.bp-workflow-faces__icon-decline.ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-35);
+}
+
+.bp-workflow-faces__icon-waiting.ui-icon-set {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-icon-color-blue);
+}
+
+.bp-workflow-faces__icon-overlay {
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 18px;
+	height: 18px;
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color-palette-white-base);
+	z-index: 0;
+}
+
+.bp-workflow-faces__icon-done.ui-icon-set {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-primary-alt);
+}
+
+.bp-workflow-faces__icon-waiting-box.--center,
+.bp-workflow-faces__icon-done-box.--center {
+	display: block;
+	top: 3px;
+	left: 3px;
+}
+
+.bp-workflow-faces__steps-user.ui-icon-set {
+	--ui-icon-set__icon-size: 25px;
+	--ui-icon-set__icon-color: var(--ui-color-base-15);
+}
+
+.bp-workflow-faces__steps-item.--in-progress .bp-workflow-faces__steps-user-item {
+	display: inline-block;
+	min-width: 30px;
+	height: 30px;
+	border-radius: var(--ui-border-radius-circle);
+	border: 1px solid var(--ui-color-background-primary);
+	background-color: var(--ui-background-dark-grey);
+	background-image: url(/bitrix/js/ui/icons/b24/images/ui-user.svg?v2);
+	background-size: cover;
+	box-sizing: border-box;
+}
+
+.bp-workflow-faces__steps-item.--in-progress .bp-workflow-faces__steps-user-item.--tech {
+	border-color: var(--ui-color-base-15);
+	background: var(--ui-background-light-grey) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='18' fill='none'%3E%3Cpath fill='%23BDC1C6' fill-rule='evenodd' d='M6.862.861A.3.3 0 0 1 7.374.65L9.97 3.246a.3.3 0 0 1 0 .424L8.25 5.39a4.684 4.684 0 0 0-1.39.134v-.89l-.011.002A5.489 5.489 0 0 0 2.553 9.36a.31.31 0 0 1-.191.254l-1.96.784a.289.289 0 0 1-.4-.26 8.002 8.002 0 0 1 6.766-8.043.286.286 0 0 1 .094.001V.861Zm5.577 10.415a4.593 4.593 0 0 1-.458 1.065l.803 2.644a.3.3 0 0 0 .374.2l3.514-1.067a.3.3 0 0 0 .054-.552l-1.264-.675a8.002 8.002 0 0 0-4.349-10.262.288.288 0 0 0-.398.27v2.16a.31.31 0 0 0 .15.264A5.481 5.481 0 0 1 13.485 10c0 .59-.094 1.16-.267 1.693l-.78-.417Zm-7.675 2.017a4.636 4.636 0 0 1-.787-1.025l-2.512-.58a.3.3 0 0 0-.36.226l-.824 3.579a.3.3 0 0 0 .451.321l1.117-.698A7.983 7.983 0 0 0 8 18c1.38 0 2.678-.35 3.81-.964a.29.29 0 0 0 .072-.45l-1.339-1.482a.311.311 0 0 0-.355-.073c-.67.291-1.41.453-2.188.453a5.469 5.469 0 0 1-3.99-1.72l.754-.471Zm.215-5.58c0-.167.132-.3.295-.3h5.453c.162 0 .294.133.294.3v1.4c0 .165-.132.3-.294.3H5.274a.297.297 0 0 1-.295-.3v-1.4Zm0 3.175c0-.166.132-.3.295-.3h5.453c.162 0 .294.134.294.3v1.4c0 .166-.132.3-.294.3H5.274a.297.297 0 0 1-.295-.3v-1.4Z' clip-rule='evenodd'/%3E%3C/svg%3E") center 5px no-repeat;
+	background-size: 55%;
+}
+
+.bp-workflow-faces__steps-item.--in-progress  .bp-workflow-faces__steps-user-item.--robot {
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16.9255 8.09465L17.7877 5.19898C17.8629 4.94722 17.7995 4.67404 17.6215 4.48235C17.4435 4.29066 17.1779 4.20958 16.9248 4.26966C16.6717 4.32973 16.4695 4.52183 16.3944 4.77359L15.6559 7.25933C13.36 6.04719 10.6225 6.05007 8.32912 7.26705L7.58698 4.77359C7.47085 4.3844 7.0648 4.16413 6.68004 4.28159C6.29529 4.39906 6.07752 4.80979 6.19365 5.19898L7.05948 8.10606C5.11513 9.67809 3.98597 12.0615 3.99271 14.5793C3.99271 19.1232 7.57607 18.0082 11.9998 18.0082C16.4235 18.0082 20.0069 19.1232 20.0069 14.5793C20.0147 12.0547 18.8794 9.6655 16.9255 8.09465ZM11.9925 13.9615C8.83473 13.9615 6.27363 14.2927 6.27363 12.9389C6.27363 11.5851 8.83473 10.4859 11.9925 10.4859C15.1502 10.4859 17.7149 11.584 17.7149 12.9389C17.7149 14.2938 15.1538 13.9615 11.9925 13.9615ZM9.37673 11.4998C8.9259 11.5831 8.61713 12.0071 8.67215 12.4673C8.72717 12.9276 9.12694 13.2649 9.58441 13.2371C10.0419 13.2093 10.3988 12.826 10.399 12.3624C10.3479 11.8409 9.89305 11.4571 9.37673 11.4998ZM13.9023 12.4699C13.9583 12.93 14.3586 13.2666 14.8161 13.2383C15.2736 13.2099 15.6303 12.8263 15.6303 12.3627C15.5792 11.8397 15.1221 11.4553 14.6044 11.5001C14.1538 11.5849 13.8462 12.0097 13.9023 12.4699Z' fill='%23fff'/%3E%3C/svg%3E%0A");
+}
+
+.bp-workflow-faces__steps-item.--in-progress  .bp-workflow-faces__steps-user-item.--crown {
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.32728 16.8175C5.42885 17.2188 5.79002 17.5 6.20406 17.5H11.9563H18.2562C18.6884 17.5 19.0602 17.1943 19.1436 16.7702L20.5745 9.50001C20.7351 8.68412 19.8876 8.04008 19.1445 8.41327L16.5598 9.71133C16.0713 9.95667 15.4763 9.76426 15.224 9.27933L12.8446 4.70701C12.4708 3.98872 11.4429 3.9893 11.0699 4.70803L8.69896 9.27684C8.44676 9.76283 7.85061 9.95564 7.36158 9.70936L4.92542 8.48252C4.15995 8.09703 3.29594 8.79011 3.50619 9.62098L5.32728 16.8175Z' fill='%23fff'/%3E%3C/svg%3E");
+}
+
+.bp-workflow-faces__steps-item.--in-progress  .bp-workflow-faces__steps-user-item.--stop-hand {
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.9827 2.54688C12.5358 2.54688 12.9994 2.92597 13.1225 3.43586L13.1225 10.7398C13.1225 10.8601 13.219 10.958 13.3395 10.9621L13.3472 10.9622H13.4436C13.5651 10.9622 13.6641 10.8668 13.6682 10.7475L13.6683 10.7398L13.6683 5.50461C13.845 5.10811 14.2457 4.83132 14.7118 4.83132C15.2484 4.83132 15.6984 5.1982 15.8195 5.69226L15.8195 11.9152C15.8195 12.0354 15.9159 12.1334 16.0365 12.1374L16.0442 12.1376H16.1405C16.2621 12.1376 16.3611 12.0421 16.3652 11.9228L16.3653 11.9152V8.64353C16.3653 8.10844 16.8037 7.67466 17.3445 7.67466C17.8854 7.67466 18.2189 8.10844 18.2189 8.64353V11.5022C18.2189 11.5022 18.2064 13.5323 18.1024 14.4983C17.9984 15.4644 17.6157 18.0277 16.1681 20.28C16.0935 20.3961 15.9656 20.4676 15.8271 20.4713L15.8158 20.4714H9.38333C9.25512 20.4714 9.13426 20.4131 9.05526 20.3137L9.0482 20.3046L4.28597 13.9578C4.13405 13.7553 4.16787 13.4708 4.36312 13.3087C4.5921 13.1186 4.83138 13.0053 5.08096 12.9688L5.20946 12.9499C5.68714 12.8809 6.00793 12.8593 6.67316 13.2479C7.14919 13.5259 7.58169 14.0243 7.97066 14.743L7.98541 14.7704V5.48253C7.98541 4.84217 8.51008 4.32306 9.15731 4.32306H9.18941C9.7425 4.32306 10.2061 4.70215 10.3293 5.21204L10.3292 10.2316C10.3292 10.3518 10.4257 10.4498 10.5462 10.4538L10.6503 10.4539C10.7718 10.4539 10.8708 10.3585 10.8749 10.2392L10.875 10.2316L10.875 3.24532C11.0552 2.83434 11.469 2.54688 11.9506 2.54688H11.9827Z' fill='%23fff'/%3E%3C/svg%3E%0A");
+}
+
+.bp-workflow-faces__text-area {
+	max-width: 100%;
+	line-height: unset;
+	color: var(--ui-color-base-50);
+	font-size: var(--ui-font-size-3xs);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.bp-workflow-faces__steps-user-item {
+	margin-right: -15px;
+}
+
+.bp-workflow-faces__steps-user-item:last-child {
+	margin-right: 0;
+}
+
+
+
+
+
+
+
+

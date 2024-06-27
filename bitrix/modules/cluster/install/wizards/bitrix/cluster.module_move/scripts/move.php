@@ -73,9 +73,11 @@ elseif ($STEP < 2)
 	COption::SetOptionString($_REQUEST['module'], 'dbnode_status', 'move');
 
 	$DB->Query("DELETE FROM b_cluster_table WHERE MODULE_ID = '" . $DB->ForSql($_REQUEST['module']) . "'", false, '', ['fixed_connection' => true]);
+
 	foreach ($arTables['TABLES'] as $table_name => $key_column)
 	{
-		$rsIndexes = $nodeDB1->Query('SHOW INDEX FROM `' . $DB->ForSql($table_name) . '`', true, '', ['fixed_connection' => true]);
+		$key_column = false;
+		$rsIndexes = $DB->Query('SHOW INDEX FROM `' . $DB->ForSql($table_name) . '`', true, '', ['fixed_connection' => true]);
 		if ($rsIndexes)
 		{
 			$arIndexes = [];
@@ -83,39 +85,24 @@ elseif ($STEP < 2)
 			{
 				if ($ar['Non_unique'] == '0')
 				{
-					$arIndexes[$ar['Key_name']][$ar['Seq_in_index'] - 1] = $ar['Column_name'];
+					$key_name = $ar['Key_name'];
+					if (!isset($arIndexes[$key_name]))
+					{
+						$arIndexes[$key_name] = [];
+					}
+					$arIndexes[$key_name][$ar['Seq_in_index']] = $ar['Column_name'];
 				}
 			}
 
 			foreach ($arIndexes as $IndexName => $arIndexColumns)
 			{
-				if (count($arIndexColumns) != 1)
+				if (count($arIndexColumns) == 1)
 				{
-					unset($arIndexes[$IndexName]);
-				}
-			}
-
-			if (count($arIndexes) > 0)
-			{
-				foreach ($arIndexes as $IndexName => $arIndexColumns)
-				{
-					foreach ($arIndexColumns as $SeqInIndex => $ColumnName)
-					{
-						$key_column = $ColumnName;
-					}
+					$key_column = current($arIndexColumns);
 					break;
 				}
 			}
-			else
-			{
-				$key_column = false;
-			}
 		}
-		else
-		{
-			$key_column = false;
-		}
-
 
 		$DB->Add('b_cluster_table', [
 			'MODULE_ID' => $_REQUEST['module'],
@@ -126,8 +113,9 @@ elseif ($STEP < 2)
 			'LAST_ID' => false,
 		]);
 	}
+
 	echo GetMessage('CLUWIZ_INIT');
-	echo '<script>MoveTables(2)</script>';
+	echo '<script>BX.Cluster.ModuleMove.MoveTables(2)</script>';
 }
 else
 {
@@ -308,7 +296,7 @@ else
 			'#table_name#' => $arTable['TABLE_NAME'],
 			'#records#' => $i,
 		]);
-		echo '<script>MoveTables(2)</script>';
+		echo '<script>BX.Cluster.ModuleMove.MoveTables(2)</script>';
 	}
 	else
 	{
@@ -320,7 +308,7 @@ else
 		{
 			echo GetMessage('CLUWIZ_ALL_DONE2');
 		}
-		echo '<script>EnableButton();</script>';
+		echo '<script>BX.Cluster.ModuleMove.EnableButton();</script>';
 	}
 }
 

@@ -54,7 +54,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 			</div>
 			<div id="<?=htmlspecialcharsbx($secondaryEditorContainerID)?>" class="crm-entity-merger-column-container">
 			</div>
-			<script type="text/javascript">
+			<script>
 				BX.ready(
 					function ()
 					{

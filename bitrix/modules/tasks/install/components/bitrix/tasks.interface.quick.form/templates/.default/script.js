@@ -126,7 +126,9 @@ BX.Tasks.QuickForm.prototype.submit = function()
 		}.bind(this),
 		function(response)
 		{
-			return this.showError("Could not process this operation.");
+			return this.showError(
+				response.errors[0]?.message ?  response.errors[0].message : "Could not process this operation."
+			);
 		}.bind(this)
 	);
 };
@@ -710,6 +712,11 @@ BX.Tasks.QuickForm.UserSelector.prototype.onSelect = function(item, type, search
 
 BX.Tasks.QuickForm.UserSelector.prototype.setCurrentUser = function(userData)
 {
+	if (!userData)
+	{
+		return;
+	}
+
 	this.userId = userData.id;
 	this.userNameFormatted = userData.fullName;
 	this.form.layout.responsible.value = this.userNameFormatted;
@@ -718,6 +725,7 @@ BX.Tasks.QuickForm.UserSelector.prototype.setCurrentUser = function(userData)
 	{
 		return;
 	}
+
 	var currentUser = this.userDialog.getItem({
 		id: this.userId,
 		entityId: 'user',

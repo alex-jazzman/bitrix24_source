@@ -4,93 +4,184 @@
 jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { PropTypes } = require('utils/validation');
-	const icons = require('assets/icons');
+	const { outline, Icon } = require('assets/icons');
 	const { OutlineIconTypes } = require('assets/icons/types');
 	const { mergeImmutable } = require('utils/object');
+
 	const DEFAULT_ICON_SIZE = {
 		width: 20,
 		height: 20,
 	};
 
 	/**
-	 * @function IconView
+	 * @class IconView
 	 * @params {object} props
-	 * @params {string} [props.icon]
-	 * @params {string} [props.color]
+	 * @params {string} [props.testId]
+	 * @params {string | Icon} [props.icon]
+	 * @params {Color} [props.color]
+	 * @params {number} [props.opacity]
 	 * @params {object | number} [props.size]
 	 * @params {number} [props.size.height]
 	 * @params {number} [props.size.width]
 	 * @params {boolean} [props.disabled]
-	 * @return Image
+	 * @params {function} [props.forwardRef]
 	 */
-	const IconView = (props = {}) => {
-		const {
-			icon = null,
-			color = null,
-			size = null,
-			iconSize = null,
-			iconParams = {},
-			disabled = false,
-			...restProps
-		} = props;
-
-		let {
-			iconColor = color,
-		} = props;
-
-		let iconContent = null;
-
-		if (disabled)
+	class IconView extends LayoutComponent
+	{
+		render()
 		{
-			iconColor = Color.base5;
-			iconParams.color = Color.base5;
-		}
+			const { testId, forwardRef } = this.props;
 
-		Object.values(icons).forEach((folder) => {
-			if (folder[icon])
-			{
-				iconContent = folder[icon](iconParams);
-			}
-		});
-
-		if (!iconContent)
-		{
-			return null;
-		}
-
-		let iconStyle = DEFAULT_ICON_SIZE;
-
-		if (size || iconSize)
-		{
-			const iconViewSize = size || iconSize;
-			const getBoxSize = (boxSize) => ({
-				width: boxSize,
-				height: boxSize,
+			return Image({
+				ref: forwardRef,
+				testId,
+				...this.getProps(),
 			});
-
-			iconStyle = typeof iconViewSize === 'number' ? getBoxSize(iconViewSize) : iconViewSize;
 		}
 
-		const iconProps = { style: iconStyle };
-
-		if (typeof iconColor === 'string')
+		getProps()
 		{
-			iconProps.tintColor = iconColor;
+			const { icon, style = {}, onClick, onFailure, onSuccess, onSvgContentError, resizeMode } = this.props;
+
+			let props = {
+				style: this.getStyle(),
+				tintColor: this.getColor(),
+			};
+
+			if (this.isIconContent())
+			{
+				props.svg = {
+					content: this.getIconContent(),
+				};
+
+				if (Application.isBeta())
+				{
+					console.warn(`IconView: You are using an deprecated icon "<<${icon}>>" type, you need to use enums "Icon.<name your icon>", example "const { IconView, Icon } = require('ui-system/blocks/icon'); IconView({ icon: Icon.MOBILE })`);
+				}
+			}
+
+			if (icon instanceof Icon)
+			{
+				props = {
+					...props,
+					...this.getEnumIconParams(),
+				};
+			}
+
+			return mergeImmutable(props, {
+				style,
+				resizeMode,
+				onClick,
+				onFailure,
+				onSuccess,
+				onSvgContentError,
+			});
 		}
 
-		const mergedProps = mergeImmutable(iconProps, restProps);
+		getEnumIconParams()
+		{
+			const { icon } = this.props;
 
-		return Image({
-			svg: {
-				content: iconContent,
-			},
-			...mergedProps,
-		});
-	};
+			const named = icon.getIconName();
+			const path = icon.getPath();
+			const svgContent = icon.getSvg();
+
+			if (svgContent)
+			{
+				return {
+					svg: {
+						content: svgContent,
+					},
+				};
+			}
+
+			if (path)
+			{
+				return {
+					svg: {
+						uri: path,
+					},
+				};
+			}
+
+			if (named)
+			{
+				return {
+					named: icon.getIconName(),
+				};
+			}
+
+			return {};
+		}
+
+		getIconContent()
+		{
+			const {
+				icon = null,
+				iconParams = {},
+			} = this.props;
+
+			return outline[icon](iconParams);
+		}
+
+		isIconContent()
+		{
+			const { icon } = this.props;
+
+			return typeof icon === 'string' && outline[icon];
+		}
+
+		getStyle()
+		{
+			const size = this.getIconSize();
+
+			return {
+				...size,
+			};
+		}
+
+		getColor()
+		{
+			const { opacity, iconColor, color, disabled } = this.props;
+
+			let colorToken = iconColor || color;
+
+			if (disabled)
+			{
+				colorToken = Color.base6;
+			}
+
+			return colorToken.toHex(opacity);
+		}
+
+		getIconSize()
+		{
+			const { size, iconSize } = this.props;
+
+			if (!size && !iconSize)
+			{
+				return DEFAULT_ICON_SIZE;
+			}
+
+			const iconViewSize = size || iconSize;
+
+			return typeof iconViewSize === 'number' ? this.getBoxSize(iconViewSize) : iconViewSize;
+		}
+
+		getBoxSize(size)
+		{
+			return {
+				width: size,
+				height: size,
+			};
+		}
+	}
 
 	IconView.propTypes = {
-		icon: PropTypes.string.isRequired,
-		color: PropTypes.string,
+		testId: PropTypes.string,
+		icon: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
+		forwardRef: PropTypes.func,
+		color: PropTypes.object,
 		disabled: PropTypes.bool,
 		size: PropTypes.oneOfType([
 			PropTypes.number,
@@ -102,14 +193,9 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 		iconParams: PropTypes.object,
 	};
 
-	IconView.defaultProps = {
-		icon: OutlineIconTypes.attach1,
-		disabled: false,
-	};
-
 	module.exports = {
-		IconView,
-		StorybookComponent: IconView,
+		IconView: (props) => new IconView(props),
+		Icon,
 		iconTypes: {
 			outline: OutlineIconTypes,
 		},

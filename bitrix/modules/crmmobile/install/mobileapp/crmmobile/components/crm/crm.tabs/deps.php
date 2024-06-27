@@ -16,6 +16,7 @@ return [
 		'utils/function',
 		'alert',
 		'loc',
+		'feature',
 
 		'crm:type',
 		'crm:loc',

@@ -15,7 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.tour',
 	'main.core',
 	'catalog.document-grid',
-	'catalog.store-use',
+	'catalog.store-enable-wizard',
 ]);
 
 global $APPLICATION;
@@ -70,9 +70,17 @@ if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'])
 		var currentSlider = BX.SidePanel.Instance.getTopSlider();
 		if (!currentSlider || !currentSlider.data.get('preventMasterSlider'))
 		{
-			(new BX.Catalog.StoreUse.StoreSlider()).open(
+			(new BX.Catalog.Store.EnableWizardOpener()).open(
 				"<?= $arResult['MASTER_SLIDER_URL'] ?>",
 				{
+					urlParams: {
+						<?php if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER_IN_B24_MODE']): ?>
+							initEnableMode: BX.Catalog.Store.ModeList.MODE_B24,
+							analyticsContextSection: BX.Catalog.Store.AnalyticsContextList.LANDING,
+						<?php else:?>
+							analyticsContextSection: BX.Catalog.Store.AnalyticsContextList.SECTION,
+						<?php endif; ?>
+					},
 					cacheable: false,
 					data: {
 						openGridOnDone: false,
@@ -87,8 +95,19 @@ if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'])
 
 							if (slider.getData().get('isInventoryManagementEnabled'))
 							{
-								document.location.reload();
+								BX.Catalog.Store.EnableWizardOpener.saveEnabledFlag();
+
+								if (slider.getData().get('inventoryManagementMode') === BX.Catalog.Store.ModeList.MODE_1C)
+								{
+									top.document.location = '/crm/';
+								}
+								else
+								{
+									document.location.reload();
+								}
 							}
+
+							return Promise.resolve();
 						},
 					}
 				}
@@ -194,10 +213,10 @@ if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'])
 			MessageBox.confirm(
 				BX.Tag.render`
 					<div>
-						<p>${<?= CUtil::PhpToJSObject(Loc::getMessage('BATCH_METHOD_POPUP_TEXT_1')) ?>}</p>
+						<p>${<?= CUtil::PhpToJSObject(Loc::getMessage('BATCH_METHOD_POPUP_TEXT_1_MSGVER_1')) ?>}</p>
 						<p>
 							${<?= CUtil::PhpToJSObject(Loc::getMessage(
-								'BATCH_METHOD_POPUP_TEXT_2',
+								'BATCH_METHOD_POPUP_TEXT_2_MSGVER_1',
 								[
 									'[link]' => '<a href="#" onclick="openHelpdesk()">',
 									'[/link]' => '</a>',
@@ -208,7 +227,7 @@ if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'])
 				`,
 				<?= CUtil::PhpToJSObject(Loc::getMessage('BATCH_METHOD_POPUP_TITLE')) ?>,
 				(messageBox) => {
-					BX.Runtime.loadExtension('crm.config.catalog').then((exports) => {
+					BX.Runtime.loadExtension('catalog.config.settings').then((exports) => {
 						const { Slider } = exports;
 						Slider.open(<?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_SOURCE']) ?>);
 					});
@@ -333,8 +352,9 @@ if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'])
 		}
 	});
 
-	top.BX.addCustomEvent('CatalogWarehouseMasterClear:resetDocuments', function(event) {
-		reloadGrid();
-	});
-
 </script>
+
+<?php
+\Bitrix\Catalog\Store\EnableWizard\Manager::showEnabledJsNotificationIfNeeded();
+?>
+

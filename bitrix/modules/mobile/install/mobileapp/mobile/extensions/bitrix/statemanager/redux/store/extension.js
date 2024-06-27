@@ -3,12 +3,14 @@
  */
 jn.define('statemanager/redux/store', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
-	const { usersReducer } = require('statemanager/redux/slices/users');
 	const { enableBatching } = require('statemanager/redux/batched-actions');
 	const { batchedSubscribe } = require('statemanager/redux/batched-subscribe');
 	const { createStateSyncMiddleware, initBroadcastChannel } = require('statemanager/redux/state-sync');
 	const { configureStore, combineReducers } = require('statemanager/redux/toolkit');
 	const { debounce } = require('utils/function');
+
+	// register user reducer in global ReducerRegistry
+	require('statemanager/redux/slices/users');
 
 	const isBeta = Application.isBeta();
 
@@ -23,13 +25,8 @@ jn.define('statemanager/redux/store', (require, exports, module) => {
 
 	const batchCombineReducers = (reducers) => enableBatching(combineReducers(reducers));
 
-	const reducer = batchCombineReducers({
-		[usersReducer.name]: usersReducer,
-		...ReducerRegistry.getReducers(),
-	});
-
-	// 15 ms = 66 fps
-	const debounceNotify = debounce((notify) => notify(), 15);
+	const reducer = batchCombineReducers(ReducerRegistry.getReducers());
+	const debounceNotify = debounce((notify) => notify(), 100);
 
 	const store = configureStore({
 		reducer,

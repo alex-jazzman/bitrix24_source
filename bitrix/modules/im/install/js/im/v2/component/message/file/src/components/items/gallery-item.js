@@ -11,7 +11,7 @@ import type { ImModelFile } from 'im.v2.model';
 
 import '../../css/items/gallery-item.css';
 
-const MAX_WIDTH = 305;
+const MAX_WIDTH = 488;
 const MAX_HEIGHT = 340;
 const MIN_WIDTH = 200;
 const MIN_HEIGHT = 100;

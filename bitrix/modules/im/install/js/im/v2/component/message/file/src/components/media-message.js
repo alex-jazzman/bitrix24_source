@@ -14,7 +14,11 @@ import { MediaContent } from './media-content';
 
 import '../css/media-message.css';
 
+import type { JsonObject } from 'main.core';
 import type { ImModelMessage, ImModelChat } from 'im.v2.model';
+
+const MAX_GALLERY_WIDTH = 305;
+const MAX_SINGLE_MEDIA_WIDTH = 488;
 
 // @vue/component
 export const MediaMessage = {
@@ -88,10 +92,20 @@ export const MediaMessage = {
 		{
 			return [ChatType.channel, ChatType.openChannel].includes(this.dialog.type);
 		},
+		imageContainerStyles(): JsonObject
+		{
+			let maxWidth = MAX_SINGLE_MEDIA_WIDTH;
+			if (this.fileIds.length > 1)
+			{
+				maxWidth = MAX_GALLERY_WIDTH;
+			}
+
+			return { 'max-width': `${maxWidth}px` };
+		},
 	},
 	template: `
 		<BaseMessage :item="item" :dialogId="dialogId" :withBackground="needBackground">
-			<div class="bx-im-message-image__container">
+			<div class="bx-im-message-image__container" :style="imageContainerStyles">
 				<MessageHeader :withTitle="false" :item="item" class="bx-im-message-image__header" />
 				<MediaContent :item="message" />
 				<div v-if="showBottomContainer" class="bx-im-message-image__bottom-container">

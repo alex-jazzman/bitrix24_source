@@ -1,7 +1,9 @@
 'use strict';
 
 (() => {
-	const { EntityReady } = jn.require('entity-ready');
+	const require = (ext) => jn.require(ext);
+	const { EntityReady } = require('entity-ready');
+	const { AvaMenu } = require('ava-menu');
 
 	if (typeof window.SocketConnection === 'undefined')
 	{
@@ -47,6 +49,10 @@
 				tasks_total: 'tasks_total',
 				crm_all_no_orders: 'crm_all_no_orders',
 				crm_activity_current_calltracker: 'crm_activity_current_calltracker',
+				calendar: 'calendar',
+			};
+
+			this.avaMenuCounterMapName = {
 				calendar: 'calendar',
 			};
 
@@ -243,14 +249,14 @@
 					this.userCountersDates[siteId][counter] = startTime;
 				}
 				else
-				if (this.userCountersDates[siteId][counter] >= startTime)
-				{
-					delete counters[siteId][counter];
-				}
-				else
-				{
-					this.userCountersDates[siteId][counter] = startTime;
-				}
+					if (this.userCountersDates[siteId][counter] >= startTime)
+					{
+						delete counters[siteId][counter];
+					}
+					else
+					{
+						this.userCountersDates[siteId][counter] = startTime;
+					}
 			}
 
 			this.userCounters = Utils.objectMerge(this.userCounters, counters);
@@ -343,9 +349,26 @@
 				Application.setIconBadge(this.total);
 			}
 
+			this.updateAvaMenu();
+
 			this.updateCache();
 
 			return true;
+		}
+
+		updateAvaMenu()
+		{
+			if (typeof AvaMenu === 'undefined')
+			{
+				return;
+			}
+
+			for (const [tabId, elemId] of Object.entries(this.avaMenuCounterMapName))
+			{
+				const counter = Number(this.counters[tabId]);
+				const value = counter || 0;
+				AvaMenu.setCounter({ elemId, value });
+			}
 		}
 
 		isEnableApplicationCounterType(tabName)

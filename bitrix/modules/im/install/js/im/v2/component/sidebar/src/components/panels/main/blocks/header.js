@@ -15,6 +15,7 @@ import type { ImModelRecentItem, ImModelChat } from 'im.v2.model';
 const HeaderTitleByChatType = {
 	[ChatType.channel]: Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE'),
 	[ChatType.openChannel]: Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE'),
+	[ChatType.generalChannel]: Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE'),
 	[ChatType.comment]: Loc.getMessage('IM_SIDEBAR_COMMENTS_HEADER_TITLE'),
 	default: Loc.getMessage('IM_SIDEBAR_HEADER_TITLE'),
 };

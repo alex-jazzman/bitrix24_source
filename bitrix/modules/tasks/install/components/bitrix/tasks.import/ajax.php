@@ -305,7 +305,7 @@ class TasksImportAjaxController extends Main\Engine\Controller
 			}
 
 			$maxExecutionTime = $this->importParameters['MAX_EXECUTION_TIME'];
-			if (($maxExecutionTime > 0) && ((getmicrotime() - START_EXEC_TIME) > $maxExecutionTime))
+			if (($maxExecutionTime > 0) && ((microtime(true) - START_EXEC_TIME) > $maxExecutionTime))
 			{
 				$allLinesLoaded = false;
 				break;

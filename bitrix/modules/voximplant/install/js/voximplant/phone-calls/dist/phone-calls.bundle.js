@@ -7423,7 +7423,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDebugInfo",
 	    value: function getDebugInfo() {
-	      var _this$callView, _this$callView2;
+	      var _this$callView, _this$callView2, _this$voximplantClien;
 	      return {
 	        vInitedCall: BX.localStorage.get('vInitedCall') ? 'Y' : 'N',
 	        isDesktop: this.messengerFacade.isDesktop() ? 'Y' : 'N',
@@ -7434,7 +7434,8 @@ this.BX = this.BX || {};
 	        callView: this.callView ? this.callView.callId : 'N',
 	        callViewPopup: (_this$callView = this.callView) !== null && _this$callView !== void 0 && _this$callView.popup ? 'Y' : 'N',
 	        hasActiveCallView: this.hasActiveCallView ? 'Y' : 'N',
-	        isFoldedCallView: (_this$callView2 = this.callView) !== null && _this$callView2 !== void 0 && _this$callView2.isFolded() ? 'Y' : 'N'
+	        isFoldedCallView: (_this$callView2 = this.callView) !== null && _this$callView2 !== void 0 && _this$callView2.isFolded() ? 'Y' : 'N',
+	        voximplantClient: this.voximplantClient ? (_this$voximplantClien = this.voximplantClient) === null || _this$voximplantClien === void 0 ? void 0 : _this$voximplantClien.connected() : 'N'
 	      };
 	    }
 	  }, {
@@ -7608,7 +7609,7 @@ this.BX = this.BX || {};
 	    return false;
 	  }
 	  var popupConditions = ((_this$callView3 = this.callView) === null || _this$callView3 === void 0 ? void 0 : _this$callView3.popup) && !((_this$callView4 = this.callView) !== null && _this$callView4 !== void 0 && _this$callView4.commentShown) && !((_this$callView5 = this.callView) !== null && _this$callView5 !== void 0 && _this$callView5.autoCloseTimer) && !this.hasActiveCallView;
-	  if (this.callView && !((_this$callView6 = this.callView) !== null && _this$callView6 !== void 0 && _this$callView6.popup) && !this.currentCall || popupConditions && !this.currentCall || this.callView && (_this$callView7 = this.callView) !== null && _this$callView7 !== void 0 && _this$callView7.isFolded() && !this.currentCall) {
+	  if (this.callView && !((_this$callView6 = this.callView) !== null && _this$callView6 !== void 0 && _this$callView6.popup) && !this.currentCall || popupConditions && !this.currentCall || this.callView && (_this$callView7 = this.callView) !== null && _this$callView7 !== void 0 && _this$callView7.isFolded() && !this.currentCall || this.callView && !this.voximplantClient || this.callView && this.voximplantClient && !this.voximplantClient.connected()) {
 	    console.log('Close a stuck call view');
 	    _classPrivateMethodGet$1(this, _onCallViewClose, _onCallViewClose2).call(this);
 	  }

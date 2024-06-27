@@ -178,7 +178,7 @@ $trackedFields = CTaskLog::getTrackedFields();
 
 			<?
 			$fieldName = Loc::getMessage("TASKS_LOG_" . $record["FIELD"]);
-			if ($record['FIELD'] == \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode())
+			if ($record['FIELD'] === \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode())
 			{
 				$fieldName = Loc::getMessage('TASKS_LOG_FILES');
 			}
@@ -186,18 +186,18 @@ $trackedFields = CTaskLog::getTrackedFields();
 			{
 				$fieldName = Loc::getMessage('TASKS_LOG_ASSIGNEE');
 			}
-			elseif ($fieldName == '' && ($trackedFields[$record["FIELD"]]['TITLE'] ?? '') != '')
+			elseif (empty($fieldName) && !empty($trackedFields[$record["FIELD"]]['TITLE']))
 			{
 				$fieldName = $trackedFields[$record["FIELD"]]['TITLE'];
 			}
 			?>
 
 			<span class="task-log-where"><?=htmlspecialcharsbx($fieldName)?><?
-			if ($record["FIELD"] == "DELETED_FILES")
+			if ($record["FIELD"] === "DELETED_FILES")
 			{
 				?>: <?=htmlspecialcharsbx($record["FROM_VALUE"])?><?
 			}
-			elseif ($record["FIELD"] == "NEW_FILES")
+			elseif ($record["FIELD"] === "NEW_FILES")
 			{
 				?>: <?=htmlspecialcharsbx($record["TO_VALUE"])?><?
 			}
@@ -209,7 +209,7 @@ $trackedFields = CTaskLog::getTrackedFields();
 
 				if (!$arParams["PUBLIC_MODE"])
 				{
-					if ($record["FIELD"] != "COMMENT_DEL")
+					if ($record["FIELD"] !== "COMMENT_DEL")
 					{
 						?> <a class="task-log-link" href="<?=$link?>">#<?=$record["TO_VALUE"]?></a><?
 					}

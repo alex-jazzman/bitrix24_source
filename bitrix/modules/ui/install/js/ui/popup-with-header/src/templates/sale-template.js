@@ -1,5 +1,5 @@
 import { Cache, Dom, Tag } from 'main.core';
-import { Button } from 'ui.buttons';
+import { Button, ButtonTag } from 'ui.buttons';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
 import type {
 	ButtonConfig,
@@ -131,14 +131,22 @@ export class SaleTemplate extends BaseTemplate
 
 	#getButton(config: ButtonConfig): HTMLElement
 	{
+		const buttonTag = config.target ? ButtonTag.BUTTON : ButtonTag.LINK;
+
 		const button = new Button({
 			round: true,
 			text: config.text,
 			size: Button.Size.EXTRA_SMALL,
 			color: Button.Color.SUCCESS,
 			noCaps: true,
-			link: config.url,
+			tag: buttonTag,
+			link: config.target ? null : config.url,
 			onclick: () => {
+				if (config.target)
+				{
+					window.open(config.url, config.target);
+				}
+
 				if (this.options?.analyticsCallback)
 				{
 					this.options.analyticsCallback('click-button', config.url);

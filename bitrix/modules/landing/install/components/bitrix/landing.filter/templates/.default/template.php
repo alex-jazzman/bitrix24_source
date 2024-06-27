@@ -96,7 +96,7 @@ if ($isBitrix24Template)
 						<?= \htmlspecialcharsbx($button['TITLE']);?>
 					</a>
 				</div>
-				<script type="text/javascript">
+				<script>
 					BX.ready(function ()
 					{
 						BX.UI.Hint.init(BX('landing-create-element-container'));
@@ -116,7 +116,7 @@ if ($isBitrix24Template)
 					<?= \htmlspecialcharsbx($button['TITLE']);?>
 				</a>
 			</div>
-			<script type="text/javascript">
+			<script>
 				var landingCreateButtons = [
 					<?foreach ($arParams['BUTTONS'] as $button):?>
 					<?if (isset($button['LINK']) && isset($button['TITLE'])):?>
@@ -151,7 +151,7 @@ if ($isBitrix24Template)
 			$this->__component,
 			array('HIDE_ICONS' => true)
 		);?>
-		<script type="text/javascript">
+		<script>
 			var landingAjaxPath = '<?= \CUtil::jsEscape($uriAjax->getUri());?>';
 			var landingFilterId = '<?= \CUtil::jsEscape($arParams['FILTER_ID']);?>';
 		</script>
@@ -173,7 +173,7 @@ if ($isBitrix24Template)
 				]];
 			}
 			?>
-			<script type="text/javascript">
+			<script>
 				var landingSettingsButtons = [
 					<?
 					$bFirst = true;

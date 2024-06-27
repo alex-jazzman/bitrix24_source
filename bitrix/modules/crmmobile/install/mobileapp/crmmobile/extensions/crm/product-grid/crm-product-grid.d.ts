@@ -22,6 +22,7 @@ type CrmProductGridProps = {
 		isAllowedReservation: boolean,
 		isReservationRestrictedByPlan: boolean,
 		defaultDateReserveEnd: number,
+		isCatalogHidden: boolean,
 	},
 	taxes: {
 		vatRates: CrmProductGridVatRate[],

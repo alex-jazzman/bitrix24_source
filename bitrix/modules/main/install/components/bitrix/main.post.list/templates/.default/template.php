@@ -15,7 +15,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
-use \Bitrix\Main\UI;
+use Bitrix\Main\UI;
+use Bitrix\Main\Web\Json;
 
 UI\Extension::load([
 	'ui.design-tokens',
@@ -361,7 +362,7 @@ BX.ready(function(){
 				CREATESUBTASK : '<?= ($arParams['RIGHTS']['CREATESUBTASK'] ?? 'N') ?>',
 			},
 		sign : '<?=$arParams["SIGN"]?>',
-		ajax : <?=CUtil::PhpToJSObject($ajaxParams)?>
+		ajax : <?= Json::encode($ajaxParams) ?>
 		},
 		{
 			VIEW_URL : '<?=CUtil::JSEscape($arParams["~VIEW_URL"] ?? '')?>',
@@ -369,7 +370,7 @@ BX.ready(function(){
 			MODERATE_URL : '<?=CUtil::JSEscape($arParams["~MODERATE_URL"] ?? '')?>',
 			DELETE_URL : '<?=CUtil::JSEscape($arParams["~DELETE_URL"] ?? '')?>',
 			AUTHOR_URL : '<?=CUtil::JSEscape($arParams["~AUTHOR_URL"] ?? '')?>',
-			AUTHOR_URL_PARAMS: <?=(isset($arParams["AUTHOR_URL_PARAMS"]) ? CUtil::PhpToJSObject($arParams["AUTHOR_URL_PARAMS"]) : '{}')?>,
+			AUTHOR_URL_PARAMS: <?=(isset($arParams["AUTHOR_URL_PARAMS"]) ? Json::encode($arParams["AUTHOR_URL_PARAMS"]) : '{}') ?>,
 
 			AVATAR_SIZE : '<?=CUtil::JSEscape($arParams["AVATAR_SIZE"])?>',
 			NAME_TEMPLATE : '<?=CUtil::JSEscape($arParams["~NAME_TEMPLATE"])?>',

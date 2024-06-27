@@ -18,6 +18,9 @@ class recyclebin extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
+
+	protected const INSTALL_PATH_FROM = '/bitrix/modules/recyclebin/install/';
+	protected const INSTALL_PATH_TO = '/bitrix/';
 	private $errors;
 
 	/**
@@ -56,7 +59,7 @@ class recyclebin extends CModule
 
 		if (!$DB->TableExists('b_recyclebin'))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/recyclebin/install/db/' . $connection->getType() . '/install.sql');
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . self::INSTALL_PATH_FROM .'db/' . $connection->getType() . '/install.sql');
 
 			if ($errors !== false)
 			{
@@ -93,33 +96,12 @@ class recyclebin extends CModule
 		$oUserTypeEntity->Add($aUserFields);
 	}
 
-	/**
-	 * Compy admin files, components and images
-	 *
-	 * @param array $arParams
-	 *
-	 * @return bool
-	 */
-	function InstallFiles($arParams = array())
+	public function installFiles($arParams = []): bool
 	{
-		CopyDirFiles(
-			$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/recyclebin/install/admin',
-			$_SERVER['DOCUMENT_ROOT'].'/bitrix/admin',
-			true,
-			true
-		);
-		CopyDirFiles(
-			$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/recyclebin/install/components/bitrix',
-			$_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix',
-			true,
-			true
-		);
-		CopyDirFiles(
-			$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/recyclebin/install/images',
-			$_SERVER['DOCUMENT_ROOT'].'/bitrix/images',
-			true,
-			true
-		);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/recyclebin/install/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/recyclebin/install/components/bitrix', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/recyclebin/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/recyclebin/install/images', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/images', true, true);
 
 		return true;
 	}
@@ -145,7 +127,7 @@ class recyclebin extends CModule
 		$step = intval($step);
 		if($step < 2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("RECYCLEBIN_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/recyclebin/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("RECYCLEBIN_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"] . self::INSTALL_PATH_FROM . "unstep1.php");
 		}
 		elseif($step == 2)
 		{
@@ -156,7 +138,7 @@ class recyclebin extends CModule
 			$this->UnInstallFiles();
 			$this->UnInstallEvents();
 			$GLOBALS["errors"] = $this->errors;
-			$APPLICATION->IncludeAdminFile(GetMessage("RECYCLEBIN_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/recyclebin/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("RECYCLEBIN_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"] . self::INSTALL_PATH_FROM . "unstep2.php");
 		}
 	}
 
@@ -197,18 +179,16 @@ class recyclebin extends CModule
 		return true;
 	}
 
-	/**
-	 * Remove admin files, components and images
-	 *
-	 * @return bool
-	 */
-	function UnInstallFiles()
+	public function uninstallFiles(): bool
 	{
 		$root = $_SERVER['DOCUMENT_ROOT'];
+		$pathFrom = $root . self::INSTALL_PATH_FROM;
+		$pathTo = $root . self::INSTALL_PATH_TO;
 
-		DeleteDirFiles($root.'/bitrix/modules/recyclebin/install/admin', $root.'/bitrix/admin');
-		DeleteDirFiles($root.'/bitrix/modules/recyclebin/install/components', $root.'/bitrix/components/bitrix');
-		DeleteDirFiles($root.'/bitrix/modules/recyclebin/install/images', $root.'/bitrix/images/recyclebin');
+		DeleteDirFiles($pathFrom . 'admin', $pathTo . 'admin');
+		DeleteDirFiles($pathFrom . 'components', $pathTo . 'bitrix');
+		DeleteDirFiles($pathFrom . 'images', $pathTo . 'images/recyclebin');
+		DeleteDirFiles($pathFrom . 'js', $pathTo . 'js/recyclebin');
 
 		return true;
 	}

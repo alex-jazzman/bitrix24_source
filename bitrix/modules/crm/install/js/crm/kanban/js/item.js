@@ -133,20 +133,11 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 	},
 
-	/**
-	 * Get last position of item.
-	 * @returns {void}
-	 */
 	getLastPosition: function()
 	{
 		return this.lastPosition;
 	},
 
-
-	/**
-	 * Set last position of otem.
-	 * @returns {void}
-	 */
 	setLastPosition: function()
 	{
 		var column = this.getColumn();
@@ -341,18 +332,15 @@ BX.CRM.Kanban.Item.prototype = {
 
 		const utcTimestamp = timestampInUserTimezone - BX.Main.Timezone.Offset.USER_TO_SERVER;
 
-		const userToUTCOffset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.USER_TO_SERVER;
-		const userToBrowserOffset = userToUTCOffset + BX.Text.toInteger((new Date()).getTimezoneOffset() * 60);
+		const timeInUserTimezone = BX.Main.Timezone.UserTime.getDate(utcTimestamp);
+		const userNow = BX.Main.Timezone.UserTime.getDate();
 
-		const timestampThatWillCreateCorrectTimeWhenPassedToDateObject = utcTimestamp + userToBrowserOffset;
+		const secondsAgo = (userNow.getTime() - timeInUserTimezone.getTime()) / 1000;
 
-		const userNowTimestamp = BX.Main.Timezone.BrowserTime.getTimestamp() + userToBrowserOffset;
-
-		// const userNowTimestamp = BX.Main.Timezone.UserTime.getTimestamp();
 		const ago = (
-			userNowTimestamp - timestampThatWillCreateCorrectTimeWhenPassedToDateObject <= 60
+			secondsAgo <= 60
 				? BX.Text.encode(BX.Loc.getMessage('CRM_KANBAN_JUST_NOW'))
-				: this.getFormattedLastActiveDateTime(timestampThatWillCreateCorrectTimeWhenPassedToDateObject, userNowTimestamp)
+				: this.getFormattedLastActiveDateTime(timeInUserTimezone, userNow)
 		);
 
 		const timeAgo = BX.Tag.render`
@@ -397,9 +385,9 @@ BX.CRM.Kanban.Item.prototype = {
 		BX.Dom.append(userPic, this.lastActivityBy);
 	},
 
-	getFormattedLastActiveDateTime: function(timestamp, userNow)
+	getFormattedLastActiveDateTime: function(lastActivityTimeInUserTimezone, userNow)
 	{
-		const isCurrentYear = (new Date(timestamp * 1000)).getFullYear() === (new Date()).getFullYear();
+		const isCurrentYear = lastActivityTimeInUserTimezone.getFullYear() === (new Date()).getFullYear();
 		const defaultFormat = (
 			isCurrentYear
 				? BX.Main.DateTimeFormat.getFormat('DAY_SHORT_MONTH_FORMAT')
@@ -416,7 +404,7 @@ BX.CRM.Kanban.Item.prototype = {
 				['today', `today ${shortTimeFormat}`],
 				['-', defaultFormat],
 			],
-			timestamp,
+			lastActivityTimeInUserTimezone,
 			userNow,
 		);
 
@@ -627,7 +615,7 @@ BX.CRM.Kanban.Item.prototype = {
 		{
 			const badge = this.data.badges[i];
 
-			const badgeValueClass = 'crm-kanban-item-fields-item-value crm-kanban-item-status';
+			const badgeValueClass = 'crm-kanban-item-badges-item-value crm-kanban-item-badges-status';
 			const badgeValueStyle = `
 				background-color: ${badge.backgroundColor};
 				border-color: ${badge.backgroundColor};
@@ -635,9 +623,9 @@ BX.CRM.Kanban.Item.prototype = {
 			`;
 
 			const item = BX.Tag.render`
-				<div class="crm-kanban-item-fields-item">
-					<div class="crm-kanban-item-fields-item-title">
-						<div class="crm-kanban-item-fields-item-title-text">${badge.fieldName}</div>
+				<div class="crm-kanban-item-badges-item">
+					<div class="crm-kanban-item-badges-item-title">
+						<div class="crm-kanban-item-badges-item-title-text">${badge.fieldName}</div>
 					</div>
 					<div class="${badgeValueClass}" style="${badgeValueStyle}">${badge.textValue}</div>
 				</div>
@@ -1684,6 +1672,9 @@ BX.CRM.Kanban.Item.prototype = {
 			}
 
 			const pingSettings = this.getData().pingSettings || this.getGridData().pingSettings;
+			const colorSettings = this.getData().colorSettings || this.getGridData().colorSettings;
+			const calendarSettings = this.getData().calendarSettings || this.getGridData().calendarSettings;
+			const useTodoEditorV2 = this.getData().useTodoEditorV2 || this.getGridData().useTodoEditorV2;
 
 			if (!this.activityAddingPopup)
 			{
@@ -1691,8 +1682,13 @@ BX.CRM.Kanban.Item.prototype = {
 					this.getGridData().entityTypeInt,
 					id,
 					this.getCurrentUser(),
-					pingSettings,
 					{
+						pingSettings,
+						colorSettings,
+						calendarSettings,
+					},
+					{
+						useTodoEditorV2,
 						events: {
 							onSave: function() {
 								this.animate({
@@ -2161,7 +2157,7 @@ BX.CRM.Kanban.Item.prototype = {
 				}
 			});
 
-			for (var i = 0; i < moveItems.length && i < 3; i++)
+			for (let i = 0; i < moveItems.length; i++)
 			{
 				BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onItemDragStart", [moveItems[i]]);
 

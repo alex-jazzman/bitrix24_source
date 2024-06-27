@@ -4,6 +4,7 @@
  * @module im/messenger/provider/pull/chat/message
  */
 jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) => {
+	const { Type } = require('type');
 	const { BaseMessagePullHandler } = require('im/messenger/provider/pull/base');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -49,7 +50,11 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 
 			if (recentMessageManager.isCommentChat())
 			{
-				this.setCommentInfo(params);
+				this.setCommentInfo(params)
+					.catch((error) => {
+						logger.error(`${this.getClassName()}.handleMessageChat setCommentInfo error:`, error);
+					})
+				;
 			}
 
 			if (recentMessageManager.isLinesChat())
@@ -74,13 +79,7 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 			;
 
 			const dialog = this.getDialog(recentMessageManager.getDialogId());
-			if (!dialog || dialog.hasNextPage)
-			{
-				return;
-			}
-
-			const hasUnloadMessages = dialog.hasNextPage;
-			if (hasUnloadMessages)
+			if (!dialog)
 			{
 				return;
 			}
@@ -88,7 +87,16 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 			this.setUsers(params)
 				.then(() => this.setFiles(params))
 				.then(() => {
-					this.setMessage(params);
+					const hasUnloadMessages = dialog.hasNextPage;
+					if (hasUnloadMessages)
+					{
+						this.storeMessage(params);
+					}
+					else
+					{
+						this.setMessage(params);
+					}
+
 					this.checkWritingTimer(
 						recentMessageManager.getDialogId(),
 						recentMessageManager.getSender(),
@@ -142,6 +150,19 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 					logger.error('ChatMessagePullHandler.handlePinDelete delete pin error', error);
 				})
 			;
+		}
+
+		handleReadAllChannelComments(params, extra, command)
+		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+			this.logger.log(`${this.constructor.name}.handleReadAllChannelComments`, params);
+
+			const { chatId } = params;
+
+			this.store.dispatch('commentModel/deleteChannelCounters', { channelId: chatId });
 		}
 
 		isNeedUpdateRecent(params)
@@ -206,17 +227,30 @@ jn.define('im/messenger/provider/pull/chat/message', (require, exports, module) 
 		{
 			const chat = params.chat?.[params.chatId];
 
-			await this.store.dispatch('commentModel/setCommentWithCounter', {
+			if (Type.isNumber(params.counter))
+			{
+				await this.store.dispatch('commentModel/setCommentWithCounter', {
+					messageId: chat.parent_message_id,
+					chatId: params.chatId,
+					messageCount: chat.message_count,
+					dialogId: params.dialogId,
+					newUserId: params.message.senderId,
+					chatCounterMap: {
+						[chat.parent_chat_id]: {
+							[chat.id]: params.counter,
+						},
+					},
+				});
+
+				return;
+			}
+
+			await this.store.dispatch('commentModel/setComment', {
 				messageId: chat.parent_message_id,
 				chatId: params.chatId,
 				messageCount: chat.message_count,
 				dialogId: params.dialogId,
 				newUserId: params.message.senderId,
-				chatCounterMap: {
-					[chat.parent_chat_id]: {
-						[chat.id]: params.counter,
-					},
-				},
 			});
 		}
 

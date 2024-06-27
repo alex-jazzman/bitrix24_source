@@ -924,7 +924,7 @@ foreach($blocksOrder as $item)
 	if(isset($customFastNavItems[$item]))
 		$fastNavItems[$item] = $customFastNavItems[$item];
 	else
-		$fastNavItems[$item] = Loc::getMessage("SALE_OK_BLOCK_TITLE_".toUpper($item));
+		$fastNavItems[$item] = Loc::getMessage("SALE_OK_BLOCK_TITLE_".mb_strtoupper($item));
 }
 
 ?>
@@ -1039,7 +1039,7 @@ $tabControl->End();
 
 <div style="display: none;"><?=OrderEdit::getFastNavigationHtml($fastNavItems);?></div>
 
-<script type="text/javascript">
+<script>
 	BX.ready( function(){
 		BX.Sale.Admin.OrderEditPage.setFixHashCorrection();
 
@@ -1051,7 +1051,7 @@ $tabControl->End();
 </script>
 
 <?if(!$result->isSuccess() || $needFieldsRestore):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready( function(){
 			BX.Sale.Admin.OrderEditPage.restoreFormData(
 				<?=CUtil::PhpToJSObject(OrderEdit::restoreFieldsNames(

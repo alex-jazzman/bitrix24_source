@@ -8,6 +8,7 @@ import { MessageText } from './components/message-text';
 import { ItemCounter } from './components/item-counter';
 import { MessageStatus } from './components/message-status';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import './css/recent-item.css';
 
@@ -74,7 +75,7 @@ export const RecentItem = {
 		},
 		isChannel(): boolean
 		{
-			return [ChatType.openChannel, ChatType.channel].includes(this.dialog.type);
+			return ChannelManager.isChannel(this.recentItem.dialogId);
 		},
 		isChatSelected(): boolean
 		{

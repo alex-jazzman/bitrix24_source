@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Config\State;
 use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreDocumentTable;
@@ -217,7 +218,9 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			->setOffset($pageNavigation->getOffset())
 			->setLimit($pageNavigation->getLimit())
 			->setFilter($listFilter)
-			->setSelect($select);
+			->setSelect($select)
+			->setDistinct()
+		;
 
 		foreach ($this->getListRuntime() as $field)
 		{
@@ -492,7 +495,6 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 		$actions = [
 			[
-				'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_OPEN_TITLE'),
 				'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_OPEN_TEXT'),
 				'ONCLICK' => "BX.SidePanel.Instance.open('" . $urlToDocumentDetail . "', {cacheable: false, customLeftBoundary: 0, loader: 'crm-entity-details-loader'})",
 				'DEFAULT' => true,
@@ -504,8 +506,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			if ($canConduct)
 			{
 				$actions[] = [
-					'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TITLE'),
-					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT'),
+					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT_2'),
 					'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.conductDocument(" . $item['ID'] . ")",
 				];
 			}
@@ -513,7 +514,6 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			if ($canDelete)
 			{
 				$actions[] = [
-					'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TITLE'),
 					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TEXT'),
 					'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.deleteDocument(" . $item['ID'] . ")",
 				];
@@ -524,8 +524,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			if ($canCancel)
 			{
 				$actions[] = [
-					'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TITLE'),
-					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT'),
+					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT_2'),
 					'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.cancelDocument(" . $item['ID'] . ")",
 				];
 			}
@@ -1106,12 +1105,12 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		$request = $context->getRequest();
 
 		$this->arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'] =
-			Catalog\Component\UseStore::needShowSlider()
-			&& $request->get(Catalog\Component\UseStore::URL_PARAM_STORE_MASTER_HIDE) !== 'Y'
+			State::isUsedInventoryManagement() === false
+			&& $request->get('STORE_MASTER_HIDE') !== 'Y'
 		;
-		$this->arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER_ON_ACTION'] = !Catalog\Component\UseStore::isUsed();
+		$this->arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER_ON_ACTION'] = !State::isUsedInventoryManagement();
 
-		$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+		$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.store.enablewizard');
 		$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 		$this->arResult['MASTER_SLIDER_URL'] = $sliderPath;
 	}

@@ -1,0 +1,19 @@
+.bp-workflow-faces,
+.bp-workflow-faces__steps {
+	display: flex;
+}
+
+.bp-workflow-faces {
+	flex-direction: row;
+}
+
+.bp-workflow-faces__steps {
+	padding-bottom: 8px;
+}
+
+.bp-workflow-faces__steps-error {
+	color: var(--ui-color-base-50);
+	font-size: var(--ui-font-size-sm);
+	margin: 17px 61px 35px 61px;
+	text-align: center;
+}

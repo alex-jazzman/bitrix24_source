@@ -2,9 +2,10 @@
  * @module elements-stack
  */
 jn.define('elements-stack', (require, exports, module) => {
-	const { Corner, Color, Indent, IndentTypes } = require('tokens');
+	const { Color, Indent, Component } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
 	const { PropTypes } = require('utils/validation');
+	const { Text } = require('ui-system/typography/text');
 
 	const Directions = {
 		left: 'left',
@@ -24,27 +25,27 @@ jn.define('elements-stack', (require, exports, module) => {
 	 * @function ElementsStack
 	 * @param {Object} props
 	 * @param {string} [props.direction]
-	 * @param {number} [props.offset]
-	 * @param {number|string} [props.indent]
-	 * @param {number} [props.radius]
-	 * @param {string} [props.fontColor]
-	 * @param {number} [props.fontSize]
+	 * @param {Indent} [props.offset]
+	 * @param {Indent} [props.indent]
+	 * @param {Component} [props.radius]
+	 * @param {Color} [props.textColor]
+	 * @param {number} [props.textSize]
 	 * @param {number} [props.maxElements]
-	 * @param {string} [props.backgroundColor]
+	 * @param {Color} [props.backgroundColor]
 	 * @param {boolean} [props.showRest]
 	 * @param {Array<View>} restChildren
 	 * @return View
 	 */
 	const ElementsStack = (props = {}, ...restChildren) => {
 		const {
-			fontColor,
-			fontSize = 14,
+			textColor,
+			textSize = 4,
 			showRest = true,
 			direction = Directions.left,
-			offset = 6,
-			indent = IndentTypes.XS2,
+			offset = Indent.S,
+			indent = Indent.XS2,
 			maxElements = 999,
-			radius = Corner.circle,
+			radius = Component.elementAccentCorner,
 			backgroundColor = Color.bgContentPrimary,
 			...restProps
 		} = props;
@@ -57,8 +58,10 @@ jn.define('elements-stack', (require, exports, module) => {
 		}
 
 		const isRight = direction.toLowerCase() === Directions.right;
-		const indentWidth = parseInt(indent, 10) || Indent[indent];
-		const calcOffset = offset > 0 ? Number(offset) + indentWidth : 0;
+		const indentWidth = indent instanceof Indent ? indent.toNumber() : 0;
+		const offsetWidth = offset instanceof Indent ? offset.toNumber() : 0;
+		const calcOffset = offsetWidth > 0 ? offsetWidth + indentWidth : 0;
+		const borderRadius = radius?.toNumber() || 0;
 
 		const getDirectionStyle = ({ index }) => {
 			const isFirst = index === 0;
@@ -93,8 +96,8 @@ jn.define('elements-stack', (require, exports, module) => {
 					{
 						style: {
 							borderWidth: indentWidth,
-							borderColor: backgroundColor,
-							borderRadius: radius,
+							borderColor: backgroundColor.toHex(),
+							borderRadius,
 						},
 					},
 					element,
@@ -109,10 +112,11 @@ jn.define('elements-stack', (require, exports, module) => {
 		const marginLeft = isRight ? minRestTextMargin : calcOffset + minRestTextMargin;
 
 		const restElementsCountText = Text({
+			size: 4,
 			text: `+${elements.length - maxElements}`,
 			style: {
-				fontSize,
-				color: fontColor,
+				textSize,
+				color: Color.resolve(textColor, Color.base1).toHex(),
 				marginLeft,
 			},
 		});
@@ -136,13 +140,13 @@ jn.define('elements-stack', (require, exports, module) => {
 	};
 
 	ElementsStack.defaultProps = {
-		fontSize: 14,
+		textSize: 4,
 		showRest: true,
 		direction: Directions.left,
-		offset: 6,
-		indent: 2,
+		offset: Indent.S,
+		indent: Indent.XS2,
 		maxElements: 999,
-		radius: Corner.circle,
+		radius: Component.elementAccentCorner,
 		backgroundColor: Color.bgContentPrimary,
 	};
 
@@ -153,10 +157,10 @@ jn.define('elements-stack', (require, exports, module) => {
 		]),
 		direction: PropTypes.oneOf([Directions.right, Directions.left]),
 		offset: PropTypes.number,
-		indent: PropTypes.number,
-		radius: PropTypes.number,
-		fontColor: PropTypes.string,
-		fontSize: PropTypes.number,
+		indent: PropTypes.object,
+		radius: PropTypes.object,
+		textColor: PropTypes.object,
+		textSize: PropTypes.number,
 		maxElements: PropTypes.number,
 		showRest: PropTypes.bool,
 	};

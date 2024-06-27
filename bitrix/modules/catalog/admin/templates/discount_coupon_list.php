@@ -413,7 +413,7 @@ if (!(false == B_ADMIN_SUBCOUPONS_LIST && $bCopy))
 
 	if (!isset($_REQUEST["mode"]) || ('excel' != $_REQUEST["mode"] && 'subsettings' != $_REQUEST["mode"]))
 	{
-		?><script type="text/javascript">
+		?><script>
 function ShowNewCoupons(id, multi)
 {
 	var PostParams = {

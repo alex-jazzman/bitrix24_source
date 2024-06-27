@@ -6,3 +6,4 @@ $MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING'] = 'Авто�
 $MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING'] = 'Автоматически обрабатывать первый входящий звонок';
 $MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL'] = 'Автоматически обрабатывать все входящие звонки';
 $MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING'] = 'Запускать обработку звонков вручную';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE'] = 'Выбрать язык ответа';

@@ -20,6 +20,7 @@ return [
 		'im.v2.lib.animation',
 		'im.v2.application.core',
 		'im.v2.lib.rest',
+		'im.v2.lib.channel',
 		'im.v2.const',
 		'im.v2.lib.permission',
 		'im.v2.lib.parser',

@@ -110,7 +110,7 @@ if (
 			subscribedValue: <?= ($arResult['isSubscribed'] ? 'true' : 'false') ?>,
 
 			canInitiate: <?=($arResult["CurrentUserPerms"]["UserCanInitiate"] && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
-			canProcessRequestsIn: <?=($arResult["CurrentUserPerms"]["UserCanProcessRequestsIn"] && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
+			canProcessRequestsIn: <?=(($arResult["CurrentUserPerms"]["UserCanProcessRequestsIn"] ?? null) && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
 			canModify: <?=($arResult["CurrentUserPerms"]["UserCanModifyGroup"] ? 'true' : 'false')?>,
 
 			userRole: '<?=$arResult["CurrentUserPerms"]["UserRole"]?>',
@@ -323,7 +323,7 @@ if (
 					if ($key === 'general')
 					{
 						$menuItems[] = [
-							'TEXT' => Loc::getMessage('SONET_UM_NEWS'),
+							'TEXT' => Loc::getMessage('SONET_UM_NEWS2'),
 							'URL' => !empty($arResult['Urls']['General']) ? $arResult['Urls']['General'] : ($arResult['Urls']['View'] ?? ''),
 							'ID' => 'general',
 							'IS_ACTIVE' => in_array($arParams['PAGE_ID'], ['group', 'group_general'], true),

@@ -1,0 +1,7 @@
+<?
+
+$MESS["HMS_VHI_TYPE_ENTITY_ID_FIELD"] = "ID";
+$MESS["HMS_VHI_TYPE_ENTITY_XML_ID_FIELD"] = "Внешний код";
+$MESS["HMS_VHI_TYPE_ENTITY_TITLE_FIELD"] = "Название";
+
+$MESS["HMS_VHI_TYPE_ENTITY_SERVICE_TYPE_FIELD"] = "Услуги вида полиса";

@@ -372,6 +372,11 @@ class rest extends CModule
 						"b_rest_stat_app" => "APP_CODE",
 					)
 				),
+				"b_rest_event" => array(
+					"ID" => array(
+						"b_rest_log" => "EVENT_ID",
+					),
+				),
 				"b_rest_ap" => array(
 					"ID" => array(
 						"b_rest_ap_permission" => "PASSWORD_ID",

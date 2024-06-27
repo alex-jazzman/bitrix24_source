@@ -16,7 +16,7 @@ jn.define('im/messenger/controller/participants-list', (require, exports, module
 		static open(options = {}, parentWidget = null)
 		{
 			const { dialogId } = options;
-			if (!(new DialogHelper()).isDialogId(dialogId))
+			if (!DialogHelper.isDialogId(dialogId))
 			{
 				return;
 			}

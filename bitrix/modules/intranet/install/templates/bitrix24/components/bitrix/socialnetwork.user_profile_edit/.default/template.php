@@ -357,7 +357,7 @@ foreach ($arFields as $GROUP_ID => $arGroupFields):
 				<input type="text" class="content-edit-form-field-input-text content-edit-form-field-input-bd" value="<?=($year > 0 ? $year : GetMessage("ISL_BIRTHDAY_YEAR") )?>" onclick="this.setAttribute('data-focus', 'true'); if (this.value == '<?=GetMessage("ISL_BIRTHDAY_YEAR")?>') { this.value = '';}" maxlength="4" id="PERSONAL_BIRTHDAY_YEAR" name="PERSONAL_BIRTHDAY_YEAR" onkeyup="onPersonalBirthdayChange(event)" onblur="this.setAttribute('data-focus', 'false'); if (!BX.type.isNumber(parseInt(this.value))) this.value='<?=GetMessage("ISL_BIRTHDAY_YEAR")?>'; onPersonalBirthdayChange(event)" />
 				<input type="hidden" id="PERSONAL_BIRTHDAY_VALUE" name="PERSONAL_BIRTHDAY" value="<?=$value?>" />
 
-				<script type="text/javascript">
+				<script>
 					function onPersonalBirthdayChange(event)
 					{
 						var daySelect = BX("PERSONAL_BIRTHDAY_DAY", true);

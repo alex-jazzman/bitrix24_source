@@ -234,7 +234,7 @@ if (isset($arResult['FILTERS']) && is_array($arResult['FILTERS']))
 	if (!empty($selectors))
 	{
 		?>
-		<script type="text/javascript"><?
+		<script><?
 			foreach ($selectors as $groupSelector)
 			{
 			$selectorID = $groupSelector['ID'];
@@ -262,7 +262,7 @@ if (isset($arResult['FILTERS']) && is_array($arResult['FILTERS']))
 
 <?=$arResult['HELPER']->initializeExtension()?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		var taskLimitExceeded = <?= Json::encode($taskLimitExceeded) ?>;
 		var kpiLimitExceeded = <?= Json::encode($kpiLimitExceeded) ?>;

@@ -64,7 +64,6 @@ if (!$currentUser || !$currentUser->IsAuthorized() || !check_bitrix_sessid() || 
 }
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-CUtil::JSPostUnescape();
 $GLOBALS['APPLICATION']->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 if($action == '')

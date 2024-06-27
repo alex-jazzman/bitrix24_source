@@ -11,6 +11,7 @@ $arWizardDescription = [
 		'CMasterAddStep1',
 		'CMasterAddStep2',
 		'CMasterAddStep4',
+		'CMasterAddStep5',
 		'CMasterAddFinalStep',
 		'CMasterAddCancelStep',
 	],

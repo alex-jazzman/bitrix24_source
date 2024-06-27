@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/create-chat-content.bundle.css',
 	'js' => 'dist/create-chat-content.bundle.js',
 	'rel' => [
+		'im.v2.lib.feature',
 		'im.v2.component.animation',
 		'ui.entity-selector',
 		'main.core',

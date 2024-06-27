@@ -5,6 +5,7 @@ export type ChatConfig = {
 	title: string,
 	avatar: File,
 	members: number[],
+	memberEntities: [string, number | string][],
 	ownerId: number,
 	managers: number[],
 	manageUsersAdd: RoleItem,

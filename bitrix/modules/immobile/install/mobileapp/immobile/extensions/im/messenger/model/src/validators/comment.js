@@ -38,6 +38,11 @@ jn.define('im/messenger/model/validators/comment', (require, exports, module) =>
 			result.lastUserIds = [fields.newUserId];
 		}
 
+		if (Type.isBoolean(fields.isUserSubscribed))
+		{
+			result.isUserSubscribed = fields.isUserSubscribed;
+		}
+
 		return result;
 	}
 

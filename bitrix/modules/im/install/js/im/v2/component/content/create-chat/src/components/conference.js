@@ -14,10 +14,13 @@ import { TitleInput } from './elements/title-input';
 import { ChatAvatar } from './elements/chat-avatar';
 import { ChatMembersSelector } from './elements/chat-members';
 import { ButtonPanel } from './elements/button-panel';
+import { CreateChatHeading } from './elements/heading';
 import { SettingsSection } from './sections/settings/settings-section';
 import { RightsSection } from './sections/rights/rights-section';
 import { AppearanceSection } from './sections/appearance/appearance-section';
 import { ConferenceSection } from './sections/conference/conference-section';
+
+import '../css/conference.css';
 
 import type { JsonObject } from 'main.core';
 import type { OnLayoutChangeEvent } from 'im.v2.const';
@@ -36,6 +39,7 @@ export const ConferenceCreation = {
 		AppearanceSection,
 		ConferenceSection,
 		ButtonPanel,
+		CreateChatHeading,
 	},
 	data(): JsonObject
 	{
@@ -91,7 +95,7 @@ export const ConferenceCreation = {
 	},
 	methods:
 	{
-		onMembersChange(currentTags: number[])
+		onMembersChange(currentTags: [string, number | string][])
 		{
 			this.chatMembers = currentTags;
 		},
@@ -151,7 +155,7 @@ export const ConferenceCreation = {
 				entityType: ChatType.videoconf,
 				title: this.chatTitle,
 				avatar: this.avatarFile,
-				members: this.chatMembers,
+				memberEntities: this.chatMembers,
 				ownerId: this.rights.ownerId,
 				managers: this.rights.managerIds,
 				description: this.settings.description,
@@ -268,11 +272,12 @@ export const ConferenceCreation = {
 		},
 	},
 	template: `
-		<div class="bx-im-content-create-chat__content" @scroll="onScroll">
+		<div class="bx-im-content-create-chat__content --conference" @scroll="onScroll">
 			<div class="bx-im-content-create-chat__header">
 				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" :squared="true" />
 				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CONFERENCE_TITLE_PLACEHOLDER')" />
 			</div>
+			<CreateChatHeading :text="loc('IM_CREATE_CHAT_MEMBERS_TITLE')" />
 			<div class="bx-im-content-create-chat__members_container">
 				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
 			</div>

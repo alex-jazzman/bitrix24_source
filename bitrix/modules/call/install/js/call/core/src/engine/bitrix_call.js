@@ -1744,6 +1744,10 @@ export class BitrixCall extends AbstractCall
 				this.BitrixCall.getLocalVideo()
 					.then((track) =>
 					{
+						if (!this.videoEnabled)
+						{
+							return;
+						}
 						const mediaRenderer = new MediaRenderer({
 							kind,
 							track,

@@ -62,7 +62,7 @@ else
 	if (empty($arTablesToDelete) && empty($arViewsToDelete))
 	{
 		echo GetMessage('CLUWIZ_ALL_DONE');
-		echo '<script>EnableButton();</script>';
+		echo '<script>BX.Cluster.MasterStart.EnableButton();</script>';
 	}
 	else
 	{
@@ -84,7 +84,7 @@ else
 		echo GetMessage('CLUWIZ_TABLE_DROPPED', ['#table_name#' => $lastDropped]);
 		echo '<br />';
 		echo GetMessage('CLUWIZ_TABLE_PROGRESS', ['#tables#' => count($arTablesToDelete)]);
-		echo '<script>DropTables()</script>';
+		echo '<script>BX.Cluster.MasterStart.DropTables()</script>';
 	}
 }
 

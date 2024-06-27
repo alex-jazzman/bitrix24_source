@@ -121,7 +121,7 @@ $APPLICATION->IncludeComponent(
 
 
 ?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 
 			BX.Sender.BlacklistGrid.init(<?=Json::encode(array(

@@ -581,7 +581,7 @@ if (!$publicMode && \Bitrix\Sale\Update\CrmEntityCreatorStepper::isNeedStub())
 else
 {
 	?>
-	<script language="JavaScript">
+	<script>
 		BX.message(
 			{
 				CASHBOX_CREATE_WINDOW_NOT_SELECT: '<?=Loc::getMessage("CASHBOX_CREATE_WINDOW_NOT_SELECT")?>',

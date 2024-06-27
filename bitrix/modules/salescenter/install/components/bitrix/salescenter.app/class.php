@@ -731,6 +731,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['terminalTour'] = CUserOptions::GetOption('salescenter.tour', 'crm-terminal-tour', $defaultTourSettings);
 		$this->arResult['mobileAppLink'] = SalesCenter\Integration\MobileManager::MOBILE_APP_LINK;
 		$this->arResult['currentLanguage'] = Loc::getCurrentLang();
+
+		$this->arResult['isPhoneConfirmed'] = LandingManager::getInstance()->isPhoneConfirmed();
 	}
 
 	private function getCompilation(): ?array
@@ -2051,7 +2053,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			'select' => ['ID', 'NAME', 'ACTION_FILE'],
 			'filter' => [
 				'!ID' => PaySystem\Manager::getInnerPaySystemId(),
-				'!ACTION_FILE' => 'cash',
+				'!=ACTION_FILE' => 'cash',
 				'=ACTIVE' => 'Y',
 			],
 		]);
@@ -2519,7 +2521,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$result['contactPhone'] = CrmManager::getInstance()->getItemContactPhoneFormatted($this->item);
 
 			$contact = CrmManager::getInstance()->getItemContactFields($this->item);
-			$result['title'] = is_array($contact)?  $contact['FULL_NAME']: '';
+			$result['title'] = is_array($contact) ? htmlspecialcharsbx($contact['FULL_NAME']) : '';
 		}
 
 		return $result;

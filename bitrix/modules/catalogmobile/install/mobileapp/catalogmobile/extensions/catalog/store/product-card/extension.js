@@ -96,6 +96,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 			const measures = this.props.measures ?? {};
 			const permissions = this.props.permissions ?? {};
 			const catalog = this.props.catalog ?? {};
+			const config = this.props.config ?? {};
 
 			PageManager.openWidget('layout', {
 				title: BX.message('CSPL_DETAILS_BACKDROP_TITLE'),
@@ -117,6 +118,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 							permissions,
 							catalog,
 							document,
+							config,
 							onChange: (productData) => {
 								productRow.setFields(productData);
 								this.setState({ productRow }, () => {

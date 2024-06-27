@@ -35,6 +35,8 @@ BX.namespace('Tasks.Component');
 
 				this.bindEvents();
 				this.getDayPlan(); // pre-init dayplan as it should process all events come from planner
+
+				this.showAha();
 			},
 
 			bindEvents: function()
@@ -97,6 +99,44 @@ BX.namespace('Tasks.Component');
 				}
 
 				return this.instances.dayplan;
+			},
+
+			showAha()
+			{
+				if (
+					this.option('showAhaStartFlowTask')
+					&& BX.Tasks.Clue
+					&& this.vars.can.START
+				)
+				{
+					const bindElement = this.getStartBtnForAha();
+					if (bindElement)
+					{
+						const clue = new BX.Tasks.Clue({
+							id: `task_start_${this.option('currentUserId')}`,
+							autoSave: true,
+						});
+
+						clue.show(BX.Tasks.Clue.SPOT.TASK_START, bindElement);
+					}
+				}
+			},
+
+			getStartBtnForAha()
+			{
+				const startTimer = this.control('buttonset').querySelector('[data-action="START_TIMER"]');
+				if (startTimer && window.getComputedStyle(startTimer).display !== 'none')
+				{
+					return startTimer;
+				}
+
+				const start = this.control('buttonset').querySelector('[data-action="START"]');
+				if (start && window.getComputedStyle(start).display !== 'none')
+				{
+					return start;
+				}
+
+				return null;
 			},
 
 			showUserSelector: function()

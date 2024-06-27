@@ -9,6 +9,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 
 	const { updateDatabase } = require('im/messenger/db/update');
 	const { VuexModelWriter } = require('im/messenger/db/model-writer');
+	const { MessengerMutationManager } = require('im/messenger/lib/state-manager/vuex-manager/mutation-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Feature } = require('im/messenger/lib/feature');
 	const {
@@ -27,6 +28,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		SmileRepository,
 		QueueRepository,
 		PinMessageRepository,
+		CopilotRepository,
 	} = require('im/messenger/db/repository');
 	const {
 		applicationModel,
@@ -70,6 +72,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				reaction: null,
 				smile: null,
 				pinMessage: null,
+				copilot: null,
 			};
 
 			this.store = null;
@@ -86,6 +89,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		{
 			await this.initDatabase();
 			this.initStore();
+			this.initMutationManager();
 			await this.initStoreManager();
 			this.initLocalStorageWriter();
 
@@ -132,7 +136,37 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 
 		createRepository()
 		{
-			this.repository = {
+			this.repository = this.getBaseRepository();
+
+			this.repository.drop = () => {
+				// TODO: temporary helper for development
+
+				this.repository.option.optionTable.drop();
+				this.repository.recent.recentTable.drop();
+				this.repository.dialog.dialogTable.drop();
+				this.repository.dialog.internal.dialogInternalTable.drop();
+				this.repository.user.userTable.drop();
+				this.repository.file.fileTable.drop();
+				this.repository.message.messageTable.drop();
+				this.repository.tempMessage.tempMessageTable.drop();
+				this.repository.reaction.reactionTable.drop();
+				this.repository.queue.queueTable.drop();
+				this.repository.smile.smileTable.drop();
+				this.repository.pinMessage.pinTable.drop();
+				this.repository.pinMessage.pinMessageTable.drop();
+				this.repository.copilot.copilotTable.drop();
+
+				Application.storageById(CacheNamespace + CacheName.chatRecent).clear();
+				Application.storageById(CacheNamespace + CacheName.copilotRecent).clear();
+				Application.storageById(CacheNamespace + CacheName.draft).clear();
+
+				logger.warn('CoreApplication drop database complete');
+			};
+		}
+
+		getBaseRepository()
+		{
+			return {
 				option: new OptionRepository(),
 				recent: new RecentRepository(),
 				dialog: new DialogRepository(),
@@ -144,29 +178,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				queue: new QueueRepository(),
 				smile: new SmileRepository(),
 				pinMessage: new PinMessageRepository(),
-			};
-
-			this.repository.drop = () => {
-				// TODO: temporary helper for development
-
-				this.repository.option.optionTable.drop();
-				this.repository.recent.recentTable.drop();
-				this.repository.dialog.dialogTable.drop();
-				this.repository.user.userTable.drop();
-				this.repository.file.fileTable.drop();
-				this.repository.message.messageTable.drop();
-				this.repository.tempMessage.tempMessageTable.drop();
-				this.repository.reaction.reactionTable.drop();
-				this.repository.queue.queueTable.drop();
-				this.repository.smile.smileTable.drop();
-				this.repository.pinMessage.pinTable.drop();
-				this.repository.pinMessage.pinMessageTable.drop();
-
-				Application.storageById(CacheNamespace + CacheName.chatRecent).clear();
-				Application.storageById(CacheNamespace + CacheName.copilotRecent).clear();
-				Application.storageById(CacheNamespace + CacheName.draft).clear();
-
-				logger.warn('CoreApplication drop database complete');
+				copilot: new CopilotRepository(),
 			};
 		}
 
@@ -193,10 +205,15 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			});
 		}
 
+		initMutationManager()
+		{
+			this.mutationManager = new MessengerMutationManager();
+		}
+
 		async initStoreManager()
 		{
 			this.storeManager = new VuexManager(this.getStore());
-			await this.storeManager.buildAsync();
+			await this.storeManager.buildAsync(this.getMutationManager());
 		}
 
 		initLocalStorageWriter()
@@ -255,6 +272,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		 *  queue: QueueRepository
 		 *  smile: SmileRepository,
 		 *  pinMessage: PinMessageRepository,
+		 *  copilot?: CopilotRepository,
 		 * }}
 		 */
 		getRepository()
@@ -268,6 +286,15 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		getStore()
 		{
 			return this.store;
+		}
+
+		/**
+		 * @protected
+		 * @return {MessengerMutationManager}
+		 */
+		getMutationManager()
+		{
+			return this.mutationManager;
 		}
 
 		/**

@@ -855,7 +855,7 @@ class SaleOrderAjax extends \CBitrixComponent
 			{
 				if ($property['TYPE'] === 'LOCATION')
 				{
-					$cityName = ToUpper($arResult['PREPAY_ORDER_PROPS'][$property['CODE']]);
+					$cityName = mb_strtoupper($arResult['PREPAY_ORDER_PROPS'][$property['CODE']]);
 					$arLocation = LocationTable::getList([
 						'select' => ['CODE'],
 						'filter' => ['NAME.NAME_UPPER' => $cityName],
@@ -3143,6 +3143,7 @@ class SaleOrderAjax extends \CBitrixComponent
 			elseif (
 				empty($arResultItem["PREVIEW_PICTURE"])
 				&& empty($arResultItem["DETAIL_PICTURE"])
+				&& isset($arAdditionalImages[$productId])
 				&& $arAdditionalImages[$productId]
 			)
 			{
@@ -4834,7 +4835,11 @@ class SaleOrderAjax extends \CBitrixComponent
 
 				$this->saveOrder($saveToSession);
 
-				if (!$needToRegister && Loader::includeModule('crm'))
+				if (
+					!$needToRegister
+					&& $this->arParams['IS_LANDING_SHOP'] === 'Y'
+					&& Loader::includeModule('crm')
+				)
 				{
 					BuyerService::getInstance()->attachUserToBuyers($userId);
 				}

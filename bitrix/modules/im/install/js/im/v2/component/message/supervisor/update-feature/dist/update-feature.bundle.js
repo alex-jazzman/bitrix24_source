@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_elements,im_v2_component_message_supervisor_base,main_core,ui_analytics) {
+(function (exports,im_v2_component_elements,im_v2_component_message_supervisor_base,main_core,im_v2_lib_analytics) {
 	'use strict';
 
 	const EnableFeatures = Object.freeze({
@@ -39,21 +39,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	const onOpenPriceTable = featureId => {
 	  return () => {
-	    ui_analytics.sendData({
-	      tool: 'InfoHelper',
-	      category: 'chat',
-	      event: 'open_prices',
-	      type: 'limit',
-	      c_section: featureId
-	    });
+	    im_v2_lib_analytics.Analytics.getInstance().onOpenPriceTable(featureId);
 	    BX.SidePanel.Instance.open(`${window.location.origin}/settings/license_all.php`);
 	  };
 	};
 	const onHelpClick = ARTICLE_CODE => BX.Helper.show(`redirect=detail&code=${ARTICLE_CODE}`);
 	const metaData = {
 	  [UpdateFeatures.collaborativeDocumentEditing]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.collaborativeDocumentEditing),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.collaborativeDocumentEditing),
+	    title: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.collaborativeDocumentEditing}`),
+	    description: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.collaborativeDocumentEditing}`),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 	      callback: onOpenPriceTable(UpdateFeatures.collaborativeDocumentEditing)
@@ -64,8 +58,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  [UpdateFeatures.crmAnalytics]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.crmAnalytics),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.crmAnalytics),
+	    title: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.crmAnalytics}`),
+	    description: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.crmAnalytics}`),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 	      callback: onOpenPriceTable(UpdateFeatures.crmAnalytics)
@@ -76,8 +70,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  [UpdateFeatures.crmHistory]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.crmHistory),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.crmHistory),
+	    title: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.crmHistory}`),
+	    description: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.crmHistory}`),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 	      callback: onOpenPriceTable(UpdateFeatures.crmHistory)
@@ -88,8 +82,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  [UpdateFeatures.leadsCRM]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.leadsCRM),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.leadsCRM),
+	    title: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.leadsCRM}`),
+	    description: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.leadsCRM}`),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 	      callback: onOpenPriceTable(UpdateFeatures.leadsCRM)
@@ -100,8 +94,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  [UpdateFeatures.crmInvoices]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.crmInvoices),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.crmInvoices),
+	    title: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.crmInvoices}`),
+	    description: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.crmInvoices}`),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 	      callback: onOpenPriceTable(UpdateFeatures.crmInvoices)
@@ -112,8 +106,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  [UpdateFeatures.enterpriseAdmin]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.enterpriseAdmin),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.enterpriseAdmin),
+	    title: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.enterpriseAdmin}`),
+	    description: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.enterpriseAdmin}`),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 	      callback: onOpenPriceTable(UpdateFeatures.enterpriseAdmin)
@@ -124,8 +118,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  [UpdateFeatures.loginHistory]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.loginHistory),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.loginHistory),
+	    title: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.loginHistory}`),
+	    description: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.loginHistory}`),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 	      callback: onOpenPriceTable(UpdateFeatures.loginHistory)
@@ -136,8 +130,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  [UpdateFeatures.mailBoxNumber]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.mailBoxNumber),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.mailBoxNumber),
+	    title: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.mailBoxNumber}`),
+	    description: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.mailBoxNumber}`),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 	      callback: onOpenPriceTable(UpdateFeatures.mailBoxNumber)
@@ -148,8 +142,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  [UpdateFeatures.tasksRobots]: {
-	    title: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_' + UpdateFeatures.tasksRobots),
-	    description: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_' + UpdateFeatures.tasksRobots),
+	    title: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_TITLE_${UpdateFeatures.tasksRobots}`),
+	    description: main_core.Loc.getMessage(`IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DESCRIPTION_${UpdateFeatures.tasksRobots}`),
 	    detailButton: {
 	      text: main_core.Loc.getMessage('IM_MESSAGE_SUPERVISOR_UPDATE_FEATURE_TARIFF_DETAIL_BUTTON_TITLE'),
 	      callback: onOpenPriceTable(UpdateFeatures.tasksRobots)
@@ -227,5 +221,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.SupervisorUpdateFeatureMessage = SupervisorUpdateFeatureMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Message,BX,BX.UI.Analytics));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Message,BX,BX.Messenger.v2.Lib));
 //# sourceMappingURL=update-feature.bundle.js.map

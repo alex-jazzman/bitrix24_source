@@ -9,6 +9,7 @@
 		prepareDelegateNewState,
 		processFieldChanges,
 		unregisterRegistryChanges,
+		onCommonActionError,
 	} = require('tasks/statemanager/redux/slices/tasks/extra-reducer');
 
 	const getOldTaskState = (now) => ({
@@ -38,6 +39,7 @@
 
 		isRemoved: false,
 		isExpired: true,
+		isCreating: false,
 		isConsideredForCounterChange: false,
 	});
 	const fulfillRequest = (requestId) => unregisterRegistryChanges(requestId);
@@ -388,5 +390,55 @@
 		});
 
 		// endregion
+
+		test('should correctly rollback changes after server error', () => {
+			const now = Date.now();
+			const oldTaskState = getOldTaskState(now);
+
+			// pending
+			const requestId = 'request_1';
+			const newResponsible = 5;
+			const newActivityDate = now;
+			const newTaskState = prepareDelegateNewState(oldTaskState, newResponsible, newActivityDate);
+			processFieldChanges(requestId, oldTaskState, newTaskState);
+
+			// fulfill with error
+			const taskAfterRollback = onCommonActionError(requestId, newTaskState);
+			expect(taskAfterRollback).toEqual(oldTaskState);
+		});
+
+		test('should correctly rollback changes after successive server errors', () => {
+			const now = Date.now();
+			const oldTaskState = getOldTaskState(now);
+
+			// pending 1
+			const firstRequestId = 'request_1';
+			const firstNewResponsible = 5;
+			const firstNewActivityDate = now;
+			const firstNewTaskState = prepareDelegateNewState(oldTaskState, firstNewResponsible, firstNewActivityDate);
+			processFieldChanges(firstRequestId, oldTaskState, firstNewTaskState);
+
+			// pending 2
+			const secondRequestId = 'request_2';
+			const secondNewResponsible = 10;
+			const secondNewActivityDate = firstNewActivityDate + 1000;
+			const secondNewTaskState = prepareDelegateNewState(
+				firstNewTaskState,
+				secondNewResponsible,
+				secondNewActivityDate,
+			);
+			processFieldChanges(secondRequestId, firstNewTaskState, secondNewTaskState);
+
+			// fulfill with error 1
+			const taskAfterFirstRollback = onCommonActionError(firstRequestId, secondNewTaskState);
+			expect(taskAfterFirstRollback).toEqual({
+				...secondNewTaskState,
+				isConsideredForCounterChange: false,
+			});
+
+			// fulfill with error 2
+			const taskAfterSecondRollback = onCommonActionError(secondRequestId, secondNewTaskState);
+			expect(taskAfterSecondRollback).toEqual(oldTaskState);
+		});
 	});
 })();

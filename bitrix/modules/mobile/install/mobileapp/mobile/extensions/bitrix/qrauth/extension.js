@@ -33,7 +33,10 @@
 			marginRight: 10,
 		},
 		hint: {
-			height: 54,
+			minHeight: 54,
+			paddingTop: 5,
+			paddingBottom: 5,
+			paddingRight: 5,
 			paddingLeft: 24,
 			backgroundColor: AppTheme.colors.accentSoftBlue1,
 		},

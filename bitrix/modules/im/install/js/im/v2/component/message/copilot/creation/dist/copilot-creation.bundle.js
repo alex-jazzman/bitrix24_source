@@ -3,14 +3,15 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_provider_service,im_v2_component_message_base) {
+(function (exports,im_v2_provider_service,im_v2_component_message_base,im_v2_component_elements) {
 	'use strict';
 
 	// @vue/component
 	const ChatCopilotCreationMessage = {
 	  name: 'ChatCopilotCreationMessage',
 	  components: {
-	    BaseMessage: im_v2_component_message_base.BaseMessage
+	    BaseMessage: im_v2_component_message_base.BaseMessage,
+	    MessageAvatar: im_v2_component_elements.MessageAvatar
 	  },
 	  props: {
 	    item: {
@@ -23,6 +24,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  computed: {
+	    AvatarSize: () => im_v2_component_elements.AvatarSize,
 	    message() {
 	      return this.item;
 	    },
@@ -30,7 +32,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      var _this$message$compone;
 	      const phrase = (_this$message$compone = this.message.componentParams) != null && _this$message$compone.copilotRoleUpdated ? 'IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE_AFTER_CHANGE' : 'IM_MESSAGE_COPILOT_CREATION_HEADER_TITLE';
 	      return this.loc(phrase, {
-	        '#COPILOT_ROLE_NAME#': this.role.name
+	        '#COPILOT_ROLE_NAME#': this.roleName
 	      });
 	    },
 	    promptList() {
@@ -38,9 +40,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    role() {
 	      return this.$store.getters['copilot/messages/getRole'](this.message.id);
-	    },
-	    roleAvatar() {
-	      return this.role.avatar.medium;
 	    },
 	    roleName() {
 	      return this.role.name;
@@ -76,9 +75,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		>
 			<div class="bx-im-message-copilot-creation__container">
 				<div class="bx-im-message-copilot-creation__header">
-					<div class="bx-im-message-copilot-creation__avatar">
-						<img :src="roleAvatar" :alt="roleName"/>
-					</div>
+					<MessageAvatar 
+						:messageId="message.id"
+						:authorId="message.authorId"
+						:size="AvatarSize.XXL"
+					/>
 					<div class="bx-im-message-copilot-creation__info">
 						<div class="bx-im-message-copilot-creation__title" :title="preparedTitle">
 							{{ preparedTitle }}
@@ -111,5 +112,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChatCopilotCreationMessage = ChatCopilotCreationMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Component.Message));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=copilot-creation.bundle.js.map

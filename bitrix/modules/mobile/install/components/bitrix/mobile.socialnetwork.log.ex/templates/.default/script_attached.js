@@ -3048,7 +3048,7 @@ BitrixMSL.prototype.formatTaskDescription = function(taskDescription, livefeedUr
 		&& livefeedUrl.length > 0
 	)
 	{
-		result += '<br><br>' + BX.message('SONET_EXT_COMMENTAUX_CREATE_TASK_' + entityType + suffix).replace(
+		result += "\n\n" + BX.message('SONET_EXT_COMMENTAUX_CREATE_TASK_' + entityType + suffix).replace(
 			'#A_BEGIN#', '[URL=' + livefeedUrl + ']'
 		).replace(
 			'#A_END#', '[/URL]'

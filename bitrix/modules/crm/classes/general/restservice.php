@@ -12594,9 +12594,15 @@ class CCrmRequisiteRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
+		$options = [];
+		if(!$this->isRequiredUserFieldCheckEnabled())
+		{
+			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+		}
+
 		$entity = self::getEntity();
 
-		$result = $entity->add($fields);
+		$result = $entity->add($fields, $options);
 
 		if(!$result->isSuccess())
 		{
@@ -12735,6 +12741,15 @@ class CCrmRequisiteRestProxy extends CCrmRestProxyBase
 		{
 			$errors[] = 'Access denied.';
 			return false;
+		}
+
+		if(!$this->isRequiredUserFieldCheckEnabled())
+		{
+			if (!is_array($params))
+			{
+				$params = [];
+			}
+			$params['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
 		}
 
 		$entity = self::getEntity();
@@ -12927,7 +12942,12 @@ class CCrmRequisiteBankDetailRestProxy extends CCrmRestProxyBase
 
 		$entity = self::getEntity();
 
-		$options = array();
+		$options = [];
+		if(!$this->isRequiredUserFieldCheckEnabled())
+		{
+			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+		}
+
 		$result = $entity->add($fields, $options);
 		if(!$result->isSuccess())
 		{
@@ -13024,6 +13044,15 @@ class CCrmRequisiteBankDetailRestProxy extends CCrmRestProxyBase
 		{
 			$errors[] = 'Access denied.';
 			return false;
+		}
+
+		if(!$this->isRequiredUserFieldCheckEnabled())
+		{
+			if (!is_array($params))
+			{
+				$params = [];
+			}
+			$params['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
 		}
 
 		$entity = self::getEntity();
@@ -14609,8 +14638,8 @@ class CCrmPaySystemRestProxy extends CCrmRestProxyBase
 			{
 				$actionFile = $row['ACTION_FILE'] ?? '';
 				/*// only quote or invoice handlers
-				if (preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $actionFile)
-					|| preg_match('/bill(\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $actionFile))
+				if (preg_match('/quote(_\w+)*$/iu', $actionFile)
+					|| preg_match('/bill(\w+)*$/iu', $actionFile))
 				{*/
 				$paySystemPersonTypes = array();
 				if (isset($row['ID']) && $row['ID'] > 0)

@@ -369,7 +369,7 @@ class CBitrixSaleLocationImportComponent extends CBitrixComponent
 		$sortedChildren = array();
 		foreach($this->dbResult['LAYOUT'][$code] as $item)
 		{
-			$name = $item['NAME'][ToUpper(LANGUAGE_ID)]['NAME'];
+			$name = $item['NAME'][mb_strtoupper(LANGUAGE_ID)]['NAME'];
 			$sortedChildren[$name] = $item;
 
 			$this->resortLayoutBundleAlphabetically($item['CODE']);
@@ -414,7 +414,7 @@ class CBitrixSaleLocationImportComponent extends CBitrixComponent
 			],
 			[
 				$pCode === 'WORLD' ? '' : $pCode, // a little mixin with view, actually temporal
-				(string) $pName[ToUpper(LANGUAGE_ID)]['NAME'] != '' ? $pName[ToUpper(LANGUAGE_ID)]['NAME'] : $pName['EN']['NAME'],
+				(string) $pName[mb_strtoupper(LANGUAGE_ID)]['NAME'] != '' ? $pName[mb_strtoupper(LANGUAGE_ID)]['NAME'] : $pName['EN']['NAME'],
 				$childrenHtml,
 				$parameters['INPUT_NAME'], //!strlen($childrenHtml) ? $parameters['INPUT_NAME'] : '',
 				$childrenHtml !== '' ? $parameters['EXPANDER_CLASS'] : '',

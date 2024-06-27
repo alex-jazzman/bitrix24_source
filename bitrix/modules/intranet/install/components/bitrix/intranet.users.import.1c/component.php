@@ -489,8 +489,8 @@ ob_end_clean();
 
 if(!$bDesignMode)
 {
-	if(toUpper(LANG_CHARSET) != "WINDOWS-1251")
-		$contents = $APPLICATION->ConvertCharset($contents, LANG_CHARSET, "windows-1251");
+	if(mb_strtoupper(LANG_CHARSET) != "WINDOWS-1251")
+		$contents = \Bitrix\Main\Text\Encoding::convertEncoding($contents, LANG_CHARSET, "windows-1251");
 	header("Content-Type: text/html; charset=windows-1251");
 
 	echo $contents;

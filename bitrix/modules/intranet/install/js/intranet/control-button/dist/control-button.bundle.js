@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core,main_popup,im_public_iframe) {
 	'use strict';
@@ -103,7 +104,7 @@ this.BX = this.BX || {};
 	    value: function renderButton() {
 	      var isChatButton = !this.isVideoCallEnabled || this.mainItem === 'chat';
 	      var onClickValue = isChatButton ? this.openChat.bind(this) : this.startVideoCall.bind(this);
-	      var buttonTitle = isChatButton ? main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME');
+	      var buttonTitle = isChatButton ? main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME_MSG_1');
 	      var buttonClass = "".concat(isChatButton ? 'ui-btn-icon-chat-blue' : 'ui-btn-icon-camera-blue', " intranet-control-btn ui-btn-light-border ui-btn-icon-inline ").concat(this.buttonClassName);
 	      this.button = this.items.length > 1 ? main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-btn-split ", "\">\n\t\t\t\t\t\t<button class=\"ui-btn-main\" onclick=\"", "\">", "</button>\n\t\t\t\t\t\t<button class=\"ui-btn-menu\" onclick=\"", "\"></button> \n\t\t\t\t\t</div>\n\t\t\t\t"])), buttonClass, onClickValue, buttonTitle, this.showMenu.bind(this)) : main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-btn ", "\" onclick=\"", "\">", "</button>"])), buttonClass, onClickValue, buttonTitle);
 	      main_core.Dom.append(this.button, this.container);

@@ -82,19 +82,34 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			dynamicProperties.localStorageEnable = true;
 		}
 
+		static get isGoToMessageContextSupported()
+		{
+			return Application.getApiVersion() >= 54;
+		}
+
 		static get isMessagePinSupported()
 		{
-			return Feature.isChatBetaEnabled && Application.getApiVersion() >= 53;
+			return Feature.isGoToMessageContextSupported;
 		}
 
 		static get isMessageForwardSupported()
 		{
-			return Feature.isChatBetaEnabled && Application.getApiVersion() >= 54;
+			return Feature.isGoToMessageContextSupported;
 		}
 
 		static get isSupportBMPImageType()
 		{
 			return Application.getApiVersion() >= 53;
+		}
+
+		static get isCheckInMessageSupported()
+		{
+			return Application.getApiVersion() >= 54;
+		}
+
+		static get isCreateBannerMessageSupported()
+		{
+			return Application.getApiVersion() >= 54;
 		}
 
 		static get isDevelopmentEnvironment()

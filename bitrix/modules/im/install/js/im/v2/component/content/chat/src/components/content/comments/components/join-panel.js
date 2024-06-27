@@ -49,7 +49,7 @@ export const JoinPanel = {
 			<ChatButton
 				:size="ButtonSize.XL"
 				:color="ButtonColor.Primary"
-				:text="loc('IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL')"
+				:text="loc('IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2')"
 				:isRounded="true"
 				@click="onButtonClick"
 			/>

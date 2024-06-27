@@ -152,7 +152,7 @@ $mark_lang = $entity->getField('MARK')->getLangCode();
 		<input type="text" size="2" name="value_days"><?=GetMessage('TASKS_REPORT_DURATION_DAYS')?>&nbsp;
 		<input type="text" size="2" name="value_hours"><?=GetMessage('TASKS_REPORT_DURATION_HOURS')?>
 	</span>
-	<script type="text/javascript">
+	<script>
 		function refreshDaysHoursField()
 		{
 			var inp, days = null, hours = null, val;

@@ -10,6 +10,7 @@ return [
 		'im:messenger/lib/logger',
 		'im:messenger/lib/utils',
 		'im:messenger/lib/helper',
+		'im:messenger/lib/permission-manager',
 		'im:messenger/const',
 	],
 	'bundle' => [
@@ -24,7 +25,9 @@ return [
 		'./src/queue',
 		'./src/smile',
 		'./src/pin-message',
+		'./src/copilot',
 		'./src/validators/message',
 		'./src/validators/pin',
+		'./src/internal/dialog',
 	],
 ];

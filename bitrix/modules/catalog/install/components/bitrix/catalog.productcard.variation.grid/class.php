@@ -515,6 +515,7 @@ class CatalogProductVariationGridComponent
 		$this->arResult['GRID'] = $this->getGridData();
 		$this->arResult['STORE_AMOUNT'] = $this->getStoreAmount();
 		$this->arResult['IS_SHOWED_STORE_RESERVE'] = \Bitrix\Catalog\Config\State::isShowedStoreReserve();
+		$this->arResult['IS_CATALOG_HIDDEN'] = \Bitrix\Catalog\Config\State::isExternalCatalog();
 		$this->arResult['RESERVED_DEALS_SLIDER_LINK'] = $this->getReservedDealsSliderLink();
 		$this->arResult['SUPPORTED_AJAX_FIELDS'] = $form ? $form->getGridSupportedAjaxColumns() : [];
 	}
@@ -578,12 +579,33 @@ class CatalogProductVariationGridComponent
 
 	public function getGridOptionsSorting(): array
 	{
-		return $this->getGridOptions()
-			->getSorting([
-				'sort' => ['NAME' => 'ASC'],
-				'vars' => ['by' => 'by', 'order' => 'order'],
-			])
+		$default = [
+			'sort' => [
+				'NAME' => 'ASC',
+			],
+			'vars' => [
+				'by' => 'by',
+				'order' => 'order',
+			],
+		];
+		$sorting = $this->getGridOptions()
+			->getSorting($default)
 		;
+
+		$field = array_key_first($sorting['sort']);
+		if (
+			$field !== null
+			&& trim($field) === 'PROPERTY_'
+		)
+		{
+			$field = null;
+		}
+		if ($field === null)
+		{
+			$sorting['sort'] = $default['sort'];
+		}
+
+		return $sorting;
 	}
 
 	protected function getVariationLink(?int $skuId): ?string

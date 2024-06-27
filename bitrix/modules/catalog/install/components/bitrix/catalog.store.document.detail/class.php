@@ -1341,7 +1341,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 				'BASE_PRICE' => $product['BASE_PRICE'],
 				'BASE_PRICE_EXTRA' => $product['BASE_PRICE_EXTRA'],
 				'BASE_PRICE_EXTRA_RATE' => $product['BASE_PRICE_EXTRA_RATE'],
-				'COMMENT' => $product['COMMENT'],
+				'COMMENT' => (string)($product['COMMENT'] ?? ''),
 			];
 
 			if (isset($product['DOC_BARCODE']) && !empty($product['DOC_BARCODE']))
@@ -1609,10 +1609,10 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 
 	private function checkIfInventoryManagementIsUsed()
 	{
-		$this->arResult['IS_CONDUCT_LOCKED'] = !\Bitrix\Catalog\Component\UseStore::isUsed();
+		$this->arResult['IS_CONDUCT_LOCKED'] = !State::isUsedInventoryManagement();
 		if ($this->arResult['IS_CONDUCT_LOCKED'])
 		{
-			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.store.enablewizard');
 			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 			$this->arResult['MASTER_SLIDER_URL'] = $sliderPath;
 		}

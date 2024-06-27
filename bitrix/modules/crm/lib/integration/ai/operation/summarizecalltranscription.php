@@ -5,12 +5,12 @@ namespace Bitrix\Crm\Integration\AI\Operation;
 use Bitrix\Crm\Activity\Provider\Call;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Dto\Dto;
+use Bitrix\Crm\Integration\AI\Config;
 use Bitrix\Crm\Integration\AI\Dto\SummarizeCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\SummaryEvent;
-use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\AI\Call\Controller;
@@ -66,6 +66,21 @@ class SummarizeCallTranscription extends AbstractOperation
 	protected function getStubPayload(): string
 	{
 		return 'Stub call summary';
+	}
+
+	final protected function getContextLanguageId(): string
+	{
+		$itemIdentifier = (new Orchestrator())->findPossibleFillFieldsTarget($this->target->getEntityId());
+		if ($itemIdentifier)
+		{
+			return Config::getLanguageId(
+				$this->userId,
+				$itemIdentifier->getEntityTypeId(),
+				$itemIdentifier->getCategoryId()
+			);
+		}
+
+		return parent::getContextLanguageId();
 	}
 
 	protected static function notifyTimelineAfterSuccessfulLaunch(Result $result): void
@@ -125,7 +140,10 @@ class SummarizeCallTranscription extends AbstractOperation
 
 			if ($withSendAnalytics)
 			{
-				self::sendCallParsingAnalyticsEvent($activityId, Dictionary::STATUS_ERROR_GPT, $result->isManualLaunch());
+				self::sendCallParsingAnalyticsEvent(
+					$result,
+					$activityId
+				);
 			}
 		}
 	}

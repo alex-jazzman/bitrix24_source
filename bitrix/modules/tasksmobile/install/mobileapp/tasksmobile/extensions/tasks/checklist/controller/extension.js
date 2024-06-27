@@ -2,6 +2,7 @@
  * @module tasks/checklist/controller
  */
 jn.define('tasks/checklist/controller', (require, exports, module) => {
+	const { debounce } = require('utils/function');
 	const { ChecklistWidget } = require('tasks/checklist/widget');
 	const { CheckListFlatTree } = require('tasks/checklist/flat-tree');
 
@@ -13,15 +14,166 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		constructor(props)
 		{
 			this.props = props;
+			this.currentOpenChecklistId = null;
 			this.checklistsMap = new Map();
 			this.widgetMap = new Map();
+			this.handleOnSave = debounce(this.handleOnSave, 1000, this);
+			this.setChecklists(props.checklists);
+		}
 
-			this.handleOnSave = this.handleOnSave.bind(this);
-			this.handleOnClose = this.handleOnClose.bind(this);
-			this.handleOnRemove = this.handleOnRemove.bind(this);
-			this.handleOnMoveToChecklist = this.handleOnMoveToChecklist.bind(this);
-			this.handleOnCreateChecklist = this.handleOnCreateChecklist.bind(this);
-			this.createChecklistsMap(props);
+		/**
+		 * @public
+		 * @param {object[]} checklists
+		 */
+		setChecklists(checklists = [])
+		{
+			this.checklistsMap = new Map();
+			checklists.forEach((checklist) => this.addChecklist(checklist));
+		}
+
+		/**
+		 * @public
+		 * @param {string|number} taskId
+		 */
+		setTaskId(taskId)
+		{
+			this.props.taskId = taskId;
+		}
+
+		/**
+		 * @public
+		 * @param {number} groupId
+		 */
+		setGroupId(groupId)
+		{
+			this.props.groupId = groupId;
+		}
+
+		/**
+		 * @public
+		 * @param {{folderId: number}} value
+		 */
+		setDiskConfig(value)
+		{
+			this.props.diskConfig = value;
+		}
+
+		/**
+		 * @public
+		 * @return {{
+		 * 	completed: number,
+		 * 	uncompleted: number,
+		 * 	checklistDetails: { title: string, completed: number, uncompleted: number }[],
+		 * }}
+		 */
+		getReduxData()
+		{
+			const checklists = [...this.getChecklists().values()];
+			const checklistDetails = [];
+			let totalCompleted = 0;
+			let totalUncompleted = 0;
+
+			checklists.forEach((checklist) => {
+				const completed = checklist.getCompleteCount();
+				const uncompleted = checklist.getUncompleteCount();
+
+				checklistDetails.push({
+					title: checklist.getRootItem()?.getTitle(),
+					completed,
+					uncompleted,
+				});
+
+				totalCompleted += completed;
+				totalUncompleted += uncompleted;
+			});
+
+			return {
+				checklistDetails,
+				completed: totalCompleted,
+				uncompleted: totalUncompleted,
+			};
+		}
+
+		/**
+		 * @public
+		 * @param {number} taskId
+		 * @param {FlatArray<object>} items
+		 */
+		static save({ taskId, items })
+		{
+			if (!Array.isArray(items))
+			{
+				return Promise.reject(new Error('Checklist: No items to save'));
+			}
+
+			return new Promise((resolve, reject) => {
+				BX.ajax.runAction(
+					'tasks.checklist.checklist.save',
+					{
+						data: {
+							nodes: items,
+							taskId,
+						},
+					},
+				).then((response) => {
+					if (response?.status !== 'success')
+					{
+						reject(response);
+
+						return;
+					}
+
+					resolve(response.data);
+				}).catch(console.error);
+			});
+		}
+
+		/**
+		 *
+		 * @param {boolean} value
+		 * @param {number} userId
+		 * @return {Promise}
+		 */
+		static toggleCompletedItems = ({ value, userId }) => {
+			return new Promise((resolve) => {
+				BX.ajax.runComponentAction(
+					'bitrix:tasks.widget.checklist.new',
+					'updateTaskOption',
+					{
+						mode: 'class',
+						data: {
+							option: 'show_completed',
+							value,
+							userId,
+							entityType: 'TASK',
+						},
+					},
+				).then((result) => {
+					resolve(result);
+				}).catch(console.error);
+			});
+		};
+
+		/**
+		 * @public
+		 * @param params
+		 * @return {CheckListFlatTree[]|*[]}
+		 */
+		static makeChecklistFlatTrees(params)
+		{
+			const { rawChecklistTree, userId, taskId } = params;
+			const checklists = rawChecklistTree?.descendants || [];
+
+			if (checklists.length === 0)
+			{
+				return [];
+			}
+
+			return checklists.map((checklist) => new CheckListFlatTree({
+				userId,
+				taskId,
+				checklist,
+			}));
 		}
 
 		getChecklists()
@@ -61,10 +213,13 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			checklistWidget.close();
 		}
 
-		createChecklistsMap(props)
+		/**
+		 * @public
+		 * @param {object} tree
+		 */
+		setChecklistTree(tree)
 		{
-			const { checkListTree } = props;
-			const checklists = checkListTree?.descendants || [];
+			const checklists = tree?.descendants || [];
 
 			if (checklists.length === 0)
 			{
@@ -72,7 +227,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			}
 
 			checklists.forEach((checklist) => {
-				this.addChecklist(new CheckListFlatTree({ checklist }));
+				this.addChecklist(new CheckListFlatTree({ checklist, ...this.getTaskParams() }));
 			});
 		}
 
@@ -98,7 +253,18 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		 */
 		removeFromWidgetMap(checklistId)
 		{
+			this.currentOpenChecklistId = null;
 			this.widgetMap.delete(checklistId);
+		}
+
+		/**
+		 * @private
+		 * @param {string | number} checklistId
+		 * @param {LayoutWidget} checklistWidget
+		 */
+		addToWidgetMap({ checklistId, checklistWidget })
+		{
+			this.widgetMap.set(checklistId, checklistWidget);
 		}
 
 		/**
@@ -109,38 +275,49 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		 */
 		openChecklist(params)
 		{
-			const { userId, diskConfig } = this.props;
+			const { userId, groupId, diskConfig, inLayout, hideCompleted, parentWidget } = this.props;
 			const { checklist } = params;
 			const checklistId = checklist.getId();
+			this.currentOpenChecklistId = checklistId;
 
 			return new Promise((resolve) => {
 				ChecklistWidget.open({
 					userId,
+					groupId,
 					diskConfig,
-					inLayout: false,
+					parentWidget,
+					hideCompleted,
+					inLayout: Boolean(inLayout),
 					checklists: this.checklistsMap,
 					onSave: this.handleOnSave,
-					onClose: this.handleOnClose,
-					moreMenuActions: {
-						onRemove: this.handleOnRemove(checklistId),
-						onCreateChecklist: this.handleOnCreateChecklist(checklistId),
-						onMoveToCheckList: this.handleOnMoveToChecklist,
+					onClose: this.#handleOnClose,
+					onCompletedChanged: this.#handleOnChange,
+					menuMore: {
+						accessRestrictions: checklist.getAccessRestrictions(),
+						onToggleCompletedItems: (value) => {
+							void ChecklistController.toggleCompletedItems({ value, userId });
+						},
+						actions: {
+							onRemove: this.handleOnRemove(checklistId),
+							onCreateChecklist: this.handleOnCreateChecklist(checklistId),
+							onMoveToCheckList: this.handleOnMoveToChecklist,
+						},
 					},
 					...params,
 				}).then((checklistWidget) => {
-					this.widgetMap.set(checklistId, checklistWidget);
+					this.addToWidgetMap({ checklistId, checklistWidget });
 					resolve(checklistWidget);
 				}).catch(console.error);
 			});
 		}
 
 		/**
-		 * @param params
+		 * @param {object} params
 		 * @return {CheckListFlatTree}
 		 */
 		createNewChecklist(params)
 		{
-			const newChecklist = CheckListFlatTree.buildDefaultList(params);
+			const newChecklist = CheckListFlatTree.buildDefaultList({ ...params, ...this.getTaskParams() });
 			this.addChecklist(newChecklist);
 
 			return newChecklist;
@@ -154,13 +331,12 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		 * @param {boolean} [moveParams.open]
 		 * @return {void}
 		 */
-		async handleOnMoveToChecklist(moveParams)
-		{
+		handleOnMoveToChecklist = async (moveParams) => {
 			const { moveIds, sourceChecklistId } = moveParams;
 
 			if (moveIds.length === 0)
 			{
-				console.error('moveIds is empty');
+				console.error('Checklist: MoveIds is empty');
 
 				return null;
 			}
@@ -174,7 +350,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 				toCheckListId = checklist.getId();
 			}
 
-			this.moveToChecklist({ moveIds, toCheckListId, sourceChecklistId });
+			await this.moveToChecklist({ moveIds, toCheckListId, sourceChecklistId });
 
 			return async () => {
 				const { checklistWidget } = await this.openChecklist({
@@ -185,33 +361,31 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 
 				checklistWidget.handleOnChange();
 			};
-		}
+		};
 
 		/**
 		 * @param {number[]} moveIds
 		 * @param {number} toCheckListId
 		 * @param {number} sourceChecklistId
 		 */
-		moveToChecklist({ moveIds, toCheckListId, sourceChecklistId })
+		async moveToChecklist({ moveIds, toCheckListId, sourceChecklistId })
 		{
-			const viewChecklist = this.getViewChecklistComponent(sourceChecklistId);
 			const sourceChecklist = this.checklistsMap.get(sourceChecklistId);
 			const receivingChecklist = this.checklistsMap.get(toCheckListId);
+			const moveItems = moveIds
+				.map((moveId) => sourceChecklist.getItemById(moveId))
+				.filter(Boolean);
+			const viewSourceChecklist = this.getViewChecklistComponent(sourceChecklistId);
 
-			const removeItems = [];
+			for (const item of moveItems)
+			{
+				// eslint-disable-next-line no-await-in-loop
+				await viewSourceChecklist?.handleOnRemoveItem({ item });
+				receivingChecklist.addMovedItem(item, moveIds);
+			}
 
-			moveIds.forEach((id) => {
-				const item = sourceChecklist.getItemById(id);
-				if (item)
-				{
-					receivingChecklist.addItem(item);
-					removeItems.push(item);
-				}
-			});
-
-			removeItems.forEach((item) => {
-				viewChecklist.handleOnRemoveItem({ item });
-			});
+			const viewReceivingChecklist = this.getViewChecklistComponent(toCheckListId);
+			viewReceivingChecklist?.reload({});
 		}
 
 		getParentWidgetByChecklistId(checklistId)
@@ -231,15 +405,12 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		 * @private
 		 * @return {Promise}
 		 */
-		handleOnCreateChecklist(checklistId)
-		{
-			return () => {
-				return this.openChecklist({
-					checklist: this.createChecklist(),
-					parentWidget: this.getParentWidgetByChecklistId(checklistId),
-				});
-			};
-		}
+		handleOnCreateChecklist = (checklistId) => () => {
+			return this.openChecklist({
+				checklist: this.createChecklist(),
+				parentWidget: this.getParentWidgetByChecklistId(checklistId),
+			});
+		};
 
 		/**
 		 * @private
@@ -255,75 +426,71 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @public
+		 * @return {{}[]}
+		 */
 		getChecklistRequestData()
 		{
 			const requestData = [];
 
 			this.checklistsMap.forEach((checklist) => {
-				requestData.push(checklist.getRequestData());
+				if (checklist?.getRootItem()?.hasDescendants())
+				{
+					requestData.push(checklist.getRequestData());
+				}
 			});
 
 			return requestData.flat();
 		}
 
-		onChange()
-		{
-			const { onChange } = this.props;
-
-			onChange(this.getChecklistsIds());
-		}
-
-		filterEmptyChecklists()
+		#filterEmptyChecklists()
 		{
 			this.checklistsMap.forEach((checklist, id) => {
-				const length = checklist.getTreeItems().filter((item) => item.hasItemTitle()).length;
+				const isCurrentChecklist = this.currentOpenChecklistId === id;
+				const isEmptyChecklist = !checklist?.getRootItem()?.hasDescendants();
 
-				if (length <= 1)
+				if (isEmptyChecklist && !isCurrentChecklist)
 				{
 					this.checklistsMap.delete(id);
 				}
 			});
 		}
 
-		/**
-		 * @public
-		 * @param {number} taskId
-		 */
-		save({ taskId })
+		#handleOnChange = () => {
+			const { onChange } = this.props;
+
+			onChange(this);
+		};
+
+		async handleOnSave()
 		{
-			this.filterEmptyChecklists();
+			const { taskId } = this.getTaskParams();
+			if (!taskId)
+			{
+				return false;
+			}
+
+			this.#filterEmptyChecklists();
+			this.#handleOnChange();
 			const items = this.getChecklistRequestData();
 
-			BX.ajax.runAction(
-				'tasks.task.checklist.save',
-				{
-					data: { items, taskId },
-				},
-			).then((response) => {
-				if (response?.data?.checkListItem
-					&& items.length === Object.keys(response.data.checkListItem?.traversedItems).length
-				)
-				{
-					console.log(`save done, count:${items.length}`);
-				}
-				else
-				{
-					console.log('save error', response);
-				}
+			try
+			{
+				const response = await ChecklistController.save({ taskId, items });
+				this.#updateAfterSave(response);
+			}
+			catch (error)
+			{
+				console.error(error);
 
-				this.onChange();
-			}).catch(console.error);
+				return false;
+			}
+
+			return true;
 		}
 
-		handleOnSave()
-		{
-			const { taskId } = this.props;
-
-			this.save({ taskId });
-		}
-
-		handleOnClose(checklistId)
-		{
+		#handleOnClose = (checklistId) => {
 			const checklist = this.checklistsMap.get(checklistId);
 
 			if (!checklist || !this.widgetMap.has(checklistId))
@@ -331,17 +498,68 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 				return;
 			}
 
-			this.removeFromWidgetMap();
-			this.handleOnSave();
+			this.removeFromWidgetMap(checklistId);
+			void this.handleOnSave();
+
+			this.props.onClose?.();
+		};
+
+		handleOnRemove = (checklistId) => () => {
+			this.closeChecklistWidget(checklistId);
+			this.deleteChecklist(checklistId);
+			void this.handleOnSave();
+		};
+
+		getTaskParams()
+		{
+			const { userId, taskId, groupId, diskConfig, hideCompleted } = this.props;
+
+			return { userId, taskId, groupId, diskConfig, hideCompleted };
 		}
 
-		handleOnRemove(checklistId)
+		#updateAfterSave(items)
 		{
-			return () => {
-				this.closeChecklistWidget(checklistId);
-				this.deleteChecklist(checklistId);
-				this.handleOnSave();
-			};
+			if (!items)
+			{
+				console.warn('Items not found after saving the checklist');
+
+				return;
+			}
+
+			const checklist = this.checklistsMap.get(this.currentOpenChecklistId);
+			if (!checklist)
+			{
+				return;
+			}
+
+			checklist.getTreeItems().forEach((item) => {
+				const savedItem = items[item.getNodeId()];
+
+				if (savedItem)
+				{
+					item.setId(savedItem.id);
+				}
+			});
+		}
+
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
+		hasUploadingFiles()
+		{
+			for (const checklist of this.checklistsMap.values())
+			{
+				for (const item of checklist.getTreeItems())
+				{
+					if (item.hasUploadingAttachments())
+					{
+						return true;
+					}
+				}
+			}
+
+			return false;
 		}
 	}
 

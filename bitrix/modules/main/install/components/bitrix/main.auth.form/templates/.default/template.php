@@ -64,7 +64,7 @@ if ($arResult['AUTHORIZED'])
 							<?= Loc::getMessage('MAIN_AUTH_FORM_SECURE_NOTE');?>
 						</div>
 					</div>
-					<script type="text/javascript">
+					<script>
 						document.getElementById('bx_auth_secure').style.display = '';
 					</script>
 				<?endif?>
@@ -123,7 +123,7 @@ if ($arResult['AUTHORIZED'])
 	</form>
 </div>
 
-<script type="text/javascript">
+<script>
 	<?if ($arResult['LAST_LOGIN'] != ''):?>
 	try{document.<?= $arResult['FORM_ID'];?>.USER_PASSWORD.focus();}catch(e){}
 	<?else:?>

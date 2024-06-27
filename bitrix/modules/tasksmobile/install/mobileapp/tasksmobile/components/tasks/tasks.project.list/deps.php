@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'loc',
 		'apptheme',
+		'feature',
 		'assets/common',
 		'entity-ready',
 		'layout/socialnetwork/project/create',

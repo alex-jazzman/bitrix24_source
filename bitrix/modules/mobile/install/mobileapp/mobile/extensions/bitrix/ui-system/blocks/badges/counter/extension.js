@@ -3,40 +3,81 @@
  */
 jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
-	const { Color } = require('tokens');
+	const { Component, Indent } = require('tokens');
+	const { mergeImmutable } = require('utils/object');
+	const { Text5 } = require('ui-system/typography/text');
+	const { BadgeCounterDesign } = require('ui-system/blocks/badges/counter/src/design-enum');
 
 	/**
-	 * @function Counter
+	 * @param {object} props
+	 * @param {number} props.testId
+	 * @param {number | string} [props.value=0]
+	 * @param {boolean} [props.showRawValue]
+	 * @param {BadgeCounterDesign} props.design=BadgeCounterDesign.SUCCESS
+	 * @param {Color} [props.color=Color.baseWhiteFixed]
+	 * @param {Color} [props.backgroundColor=Color.accentMainPrimary]
+	 * @function BadgeCounter
 	 */
-	const Counter = (props) => {
+	function BadgeCounter(props = {})
+	{
+		PropTypes.validate(BadgeCounter.propTypes, props, 'BadgeCounter');
+
 		const {
-			number = '',
-			backgroundColor = Color.accentMainPrimary,
+			testId = '',
+			value = 0,
+			showRawValue = false,
+			design = BadgeCounterDesign.SUCCESS,
+			...restProps
 		} = props;
 
-		return View(
-			{
-				style: {
-					backgroundColor,
-				},
+		if (!BadgeCounterDesign.has(design))
+		{
+			console.warn('BadgeCounterDesign: counter design not selected');
+
+			return null;
+		}
+
+		const counterText = !showRawValue && value > 99 ? '99+' : String(value);
+
+		const viewProps = mergeImmutable({
+			testId: `${testId}_${design.getName()}`,
+			style: {
+				flexShrink: 1,
+				alignItems: 'flex-start',
 			},
-			Text(
+		}, restProps);
+
+		return View(
+			viewProps,
+			View(
 				{
-					text: number,
+					style: {
+						paddingHorizontal: Indent.S.toNumber(),
+						paddingVertical: Indent.XS2.toNumber(),
+						borderRadius: Component.elementAccentCorner.toNumber(),
+						backgroundColor: design.getBackgroundColor().toHex(),
+					},
 				},
+				Text5({
+					accent: true,
+					text: counterText,
+					color: design.getColor(),
+				}),
 			),
 		);
+	}
+
+	BadgeCounter.defaultProps = {
+		value: 0,
+		showRawValue: false,
 	};
 
-	Counter.defaultProps = {
-		number: 0,
-		backgroundColor: Color.accentMainPrimary,
+	BadgeCounter.propTypes = {
+		testId: PropTypes.string.isRequired,
+		showRawValue: PropTypes.bool,
+		design: PropTypes.object,
+		value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 	};
 
-	Counter.propTypes = {
-		number: PropTypes.number,
-		backgroundColor: PropTypes.string,
-	};
-
-	module.exports = { Counter };
+	module.exports = { BadgeCounter, BadgeCounterDesign };
 });

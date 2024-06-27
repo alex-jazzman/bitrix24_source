@@ -1,7 +1,8 @@
 /**
- * @module im:messenger/controller/participant-manager
+ * @module im/messenger/controller/participant-manager
  */
-jn.define('im:messenger/controller/participant-manager', (require, exports, module) => {
+jn.define('im/messenger/controller/participant-manager', (require, exports, module) => {
+	/* global ContextMenu */
 	const { Loc } = require('loc');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { menuIcons } = require('im/messenger/assets/common');
@@ -17,6 +18,7 @@ jn.define('im:messenger/controller/participant-manager', (require, exports, modu
 		 * @param {object} options
 		 * @param {Array<string>} options.actions - ['remove', ...]
 		 * @param {Array<Function>} options.callbacks
+		 * @param {Array<string>} options.actionsIcon
 		 */
 		static open(options = {})
 		{
@@ -29,10 +31,12 @@ jn.define('im:messenger/controller/participant-manager', (require, exports, modu
 		 * @param {object} options
 		 * @param {Array<string>} options.actions - ['remove', ...]
 		 * @param {Array<Function>} options.callbacks
+		 * @param {Array<string>} options.actionsIcon
 		 */
 		constructor(options = {})
 		{
 			this.actionsName = options.actions;
+			this.actionsIcon = options.actionsIcon.length > 0 ? options.actionsIcon : options.actions;
 			this.callbacks = options.callbacks;
 			this.actionsData = [];
 			this.menu = {};
@@ -60,12 +64,12 @@ jn.define('im:messenger/controller/participant-manager', (require, exports, modu
 		 * @return void
 		 */
 		prepareActionsData() {
-			this.actionsName.forEach((actionName) => {
+			this.actionsName.forEach((actionName, index) => {
 				this.actionsData.push({
 					id: actionName,
 					title: Loc.getMessage(`IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_${actionName.toUpperCase()}`),
 					data: {
-						svgIcon: menuIcons[actionName](),
+						svgIcon: menuIcons[this.actionsIcon[index]](),
 					},
 					onClickCallback: this.getCallbackByAction(actionName),
 					testId: `SIDEBAR_USER_CONTEXT_MENU_${actionName.toUpperCase()}`,

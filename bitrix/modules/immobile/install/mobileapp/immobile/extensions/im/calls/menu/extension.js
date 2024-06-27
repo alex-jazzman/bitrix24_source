@@ -49,6 +49,7 @@
 		calcMediumHeight()
 		{
 			let result = MENU_PADDING;
+		
 			result += this.items
 				.map(item => item.separator ? SEPARATOR_MARGIN * 2 + SEPARATOR_HEIGHT : ITEM_HEIGHT)
 				.reduce((a, b) => a + b);
@@ -56,6 +57,15 @@
 			if (this.header)
 			{
 				result += HEADER_HEIGHT + HEADER_MARGIN;
+			}
+			result = this.limitWidgetMediumHeight(result);
+			return result;
+		}
+
+		limitWidgetMediumHeight(result) {
+			let additionalSafeAreaMargin = 40;
+			if (result >= device.screen.height - device.screen.safeArea.top - additionalSafeAreaMargin) {
+				result = device.screen.height - device.screen.safeArea.top - additionalSafeAreaMargin;
 			}
 			return result;
 		}
@@ -158,7 +168,7 @@
 					style: {
 						backgroundColor: "#FFFFFF",
 						paddingTop: MENU_PADDING,
-						flex: 1,
+						flexDirection: 'column',
 						paddingLeft: device.screen.safeArea.left,
 						paddingRight: device.screen.safeArea.right,
 						marginBottom: device.screen.safeArea.bottom,
@@ -173,7 +183,9 @@
 					},
 					View(
 						{
-							style: {flex: 1}
+							style: {
+								flexDirection: 'column',
+							},
 						},
 						...this.state.items.map(item => item.separator ? this.separator() : this.menuItem(item))
 					)

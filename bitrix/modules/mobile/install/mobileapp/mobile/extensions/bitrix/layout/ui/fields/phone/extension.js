@@ -2,6 +2,7 @@
  * @module layout/ui/fields/phone
  */
 jn.define('layout/ui/fields/phone', (require, exports, module) => {
+	include('SharedBundle');
 	const AppTheme = require('apptheme');
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { phoneUtils } = require('native/phonenumber');
@@ -47,8 +48,6 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 			{
 				countryCode = GLOBAL_COUNTRY_CODE;
 			}
-			console.log('getCountryCodeByPhoneNumber');
-			console.log(countryCode);
 
 			return getCountryCode(phoneNumber, countryCode);
 		}

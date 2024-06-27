@@ -46,13 +46,13 @@ Extension::load([
 	'ui.hint',
 	'pull.client',
 	'ui.icons',
+	'ui.icon-set.actions',
 	'ui.alerts',
+	'ui.tour',
+	'spotlight',
 ]);
 
-if (
-	CurrentUser::get()->isAdmin()
-	&& Bitrix24\LicenseScanner\Manager::getInstance()->shouldWarnPortal()
-):
+if ($arResult['SHOW_DELETE_INSTANCE_BUTTON']):
 ?>
 
 <div class='ui-alert ui-alert-danger'>
@@ -92,6 +92,7 @@ if (!$limitManager->checkLimitWarning())
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
 		BX.BIConnector.SupersetDashboardGridManager.Instance = new BX.BIConnector.SupersetDashboardGridManager(<?= Json::encode([
 			'gridId' => $grid?->getId(),
+			'isNeedShowTopMenuGuide' => $arResult['NEED_SHOW_TOP_MENU_GUIDE'] ?? false,
 		])?>);
 		BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
 

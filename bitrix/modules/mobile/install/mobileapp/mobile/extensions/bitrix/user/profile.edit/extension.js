@@ -18,7 +18,8 @@ jn.define('user/profile.edit', (require, exports, module) => {
 				if (this.form.setTitle)
 				{
 					this.form.setTitle({
-						text: BX.message('PROFILE_INFO'),
+						text: BX.message('PROFILE_INFO_MSGVER_1'),
+						type: 'section',
 					});
 				}
 			});
@@ -65,10 +66,12 @@ jn.define('user/profile.edit', (require, exports, module) => {
 										{
 											const content = fileData.content;
 											this.updateAvatar(
-												['avatar.png', content.substr(
-													content.indexOf('base64,') + 7,
-													content.length,
-												)],
+												[
+													'avatar.png', content.substr(
+														content.indexOf('base64,') + 7,
+														content.length,
+													),
+												],
 											);
 										}
 									})
@@ -185,7 +188,7 @@ jn.define('user/profile.edit', (require, exports, module) => {
 			};
 
 			const items = Object.values(this.formFields);
-			if (this.userId === Number(env.userId) && Application.getPlatform() === 'ios')
+			if (Number(this.userId) === Number(env.userId))
 			{
 				const { isCloudAccount } = require('user/account-delete');
 				if (isCloudAccount())
@@ -210,64 +213,66 @@ jn.define('user/profile.edit', (require, exports, module) => {
 
 			this.form.setItems(items, this.formSections);
 
-			this.form.setRightButtons([{
-				name: BX.message('SAVE_FORM'),
-				callback: () => {
-					if (!this.isBeingUpdated)
-					{
-						this.isBeingUpdated = true;
-						const data = {};
-						delete data.PERSONAL_PHOTO;
-						this.form.getItems()
-							.filter((item) => {
-								if (item.type === 'userpic' || item.type === 'default')
-								{
-									return false;
-								}
-								let oldValue = this.formFields[item.id].value;
-								if (typeof oldValue === 'undefined')
-								{
-									oldValue = '';
-								}
-
-								return oldValue !== item.value;
-							})
-							.forEach((item) => data[item.id] = item.value);
-
-						if (Object.values(data).length === 0)
+			this.form.setRightButtons([
+				{
+					name: BX.message('SAVE_FORM'),
+					callback: () => {
+						if (!this.isBeingUpdated)
 						{
-							this.isBeingUpdated = false;
-							this.form.back();
+							this.isBeingUpdated = true;
+							const data = {};
+							delete data.PERSONAL_PHOTO;
+							this.form.getItems()
+								.filter((item) => {
+									if (item.type === 'userpic' || item.type === 'default')
+									{
+										return false;
+									}
+									let oldValue = this.formFields[item.id].value;
+									if (typeof oldValue === 'undefined')
+									{
+										oldValue = '';
+									}
 
-							return;
-						}
+									return oldValue !== item.value;
+								})
+								.forEach((item) => data[item.id] = item.value);
 
-						data.ID = this.userId;
-						dialogs.showLoadingIndicator();
-						BX.rest.callMethod('mobile.user.update', data)
-							.then((e) => {
+							if (Object.values(data).length === 0)
+							{
 								this.isBeingUpdated = false;
-								this.changed = false;
-								this.showNotification(BX.message('PROFILE_CHANGED_SUCCESS'));
-								BX.postComponentEvent('shouldReloadMenu', null, 'settings');
-								dialogs.hideLoadingIndicator();
 								this.form.back();
-							})
-							.catch((response) => {
-								this.isBeingUpdated = false;
-								dialogs.hideLoadingIndicator();
-								if (response.answer && response.answer.error && response.answer.error_description)
-								{
-									this.error(response.answer.error_description.replace('<br>', ''));
 
-									return;
-								}
+								return;
+							}
 
-								this.error();
-							});
-					}
+							data.ID = this.userId;
+							dialogs.showLoadingIndicator();
+							BX.rest.callMethod('mobile.user.update', data)
+								.then((e) => {
+									this.isBeingUpdated = false;
+									this.changed = false;
+									this.showNotification(BX.message('PROFILE_CHANGED_SUCCESS'));
+									BX.postComponentEvent('shouldReloadMenu', null, 'settings');
+									dialogs.hideLoadingIndicator();
+									this.form.back();
+								})
+								.catch((response) => {
+									this.isBeingUpdated = false;
+									dialogs.hideLoadingIndicator();
+									if (response.answer && response.answer.error && response.answer.error_description)
+									{
+										this.error(response.answer.error_description.replace('<br>', ''));
+
+										return;
+									}
+
+									this.error();
+								});
+						}
+					},
 				},
-			}]);
+			]);
 		}
 	}
 

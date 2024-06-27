@@ -5,12 +5,13 @@ import { Dropdown } from 'im.v2.component.elements';
 import { CreateChatSection } from '../section';
 import { TextareaInput } from '../../elements/textarea';
 import { RadioOption, type RadioOptionItem } from '../../elements/radio';
+import { CreateChatHeading } from '../../elements/heading';
 
 import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const SettingsSection = {
-	components: { CreateChatSection, Dropdown, TextareaInput, RadioOption },
+	components: { CreateChatSection, CreateChatHeading, Dropdown, TextareaInput, RadioOption },
 	props: {
 		description: {
 			type: String,
@@ -76,13 +77,11 @@ export const SettingsSection = {
 	template: `
 		<CreateChatSection name="settings" :title="loc('IM_CREATE_CHAT_SETTINGS_SECTION')">
 			<div v-if="withSearchOption" class="bx-im-content-create-chat__section_block">
-				<div class="bx-im-content-create-chat__heading">
-					{{ loc('IM_CREATE_CHAT_SETTINGS_SECTION_PRIVACY') }}
-				</div>
+				<CreateChatHeading :text="loc('IM_CREATE_CHAT_SETTINGS_SECTION_PRIVACY')" />
 				<RadioOption :items="privacyOptions" @change="onTypeChange" />
 			</div>
 			<div class="bx-im-content-create-chat__section_block">
-				<div class="bx-im-content-create-chat__heading">{{ loc('IM_CREATE_CHAT_SETTINGS_SECTION_DESCRIPTION') }}</div>
+				<CreateChatHeading :text="loc('IM_CREATE_CHAT_SETTINGS_SECTION_DESCRIPTION')" />
 				<div class="bx-im-content-create-chat-settings__description_container">
 					<TextareaInput
 						:value="description"

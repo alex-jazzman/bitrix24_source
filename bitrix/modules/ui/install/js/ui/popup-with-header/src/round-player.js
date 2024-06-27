@@ -37,6 +37,7 @@ export class RoundPlayer
 	#playButton: HTMLElement;
 	#stopButton: HTMLElement;
 	#wrapper: HTMLElement;
+	#hasAutoPlayed: boolean = false;
 	#analyticsCallback: ?Function;
 
 	constructor(options: PlayerOptions)
@@ -170,10 +171,20 @@ export class RoundPlayer
 
 	#onVideoEnded(): void
 	{
-		this.#analyticsCallback('video_finished', `isMuted_${this.#videoNode.muted ? 'Y' : 'N'}`);
+		if (this.#analyticsCallback && (!this.#videoNode.muted || !this.#hasAutoPlayed))
+		{
+			this.#analyticsCallback('video_finished', `isMuted_${this.#videoNode.muted ? 'Y' : 'N'}`);
+		}
+
+		if (!this.#hasAutoPlayed)
+		{
+			this.#hasAutoPlayed = this.#videoNode.muted;
+		}
+
 		this.stop();
 		Dom.remove(this.#progressBar.getContainer());
 		this.setMute(true);
+
 		if (this.#loop)
 		{
 			this.play();
@@ -189,7 +200,7 @@ export class RoundPlayer
 	{
 		this.#scaleTo(1);
 
-		if (this.#analyticsCallback)
+		if (this.#analyticsCallback && (!this.#videoNode.muted || !this.#hasAutoPlayed))
 		{
 			this.#analyticsCallback('on-pause');
 		}
@@ -199,7 +210,7 @@ export class RoundPlayer
 	{
 		this.#scaleTo(this.#scale);
 
-		if (this.#analyticsCallback)
+		if (this.#analyticsCallback && (!this.#videoNode.muted || !this.#hasAutoPlayed))
 		{
 			this.#analyticsCallback('on-play');
 		}

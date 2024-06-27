@@ -19,6 +19,21 @@ jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module
 			super({ logger });
 		}
 
+		handleChatCopilotRoleUpdate(params, extra, command)
+		{
+			logger.info(`${this.getClassName()}.handleChatCopilotRoleUpdate.params`, params);
+			this.store.dispatch(
+				'dialoguesModel/copilotModel/updateRole',
+				{
+					dialogId: params.dialogId,
+					fields: {
+						chats: params.copilotRole.chats,
+						roles: params.copilotRole.roles,
+					},
+				},
+			).catch((error) => logger.error(`${this.constructor.name}.handleChatCopilotRoleUpdate.catch:`, error));
+		}
+
 		handleReadAllChats(params, extra, command)
 		{
 			logger.info(`${this.getClassName()}.handleReadAllChats and nothing happened`, params);

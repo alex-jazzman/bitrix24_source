@@ -45,7 +45,13 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	$isLocked = $lockFile ? flock($lockFile, LOCK_EX) : false;
 
 	$manager = Bitrix\BIConnector\Manager::getInstance();
-	$service = $manager->createService(isset($_GET['consumer']) && $_GET['consumer'] === 'datalens' ? 'datalens' : 'pbi');
+
+	$consumer = 'pbi';
+	if (isset($_GET['consumer']) && in_array($_GET['consumer'], ['datalens', 'bi-ctr'], true))
+	{
+		$consumer = $_GET['consumer'];
+	}
+	$service = $manager->createService($consumer);
 	$service->setLanguage($languageCode);
 
 	$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();

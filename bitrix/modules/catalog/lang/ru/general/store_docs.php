@@ -20,6 +20,7 @@ $MESS["CAT_DOC_WRONG_SITE_ID"] = "Указан неверный SITE_ID";
 $MESS["CAT_DOC_WRONG_RESPONSIBLE"] = "Не указан ответственный.";
 $MESS["CAT_DOC_STATUS_ALREADY_YES"] = "Документ уже проведен";
 $MESS["CAT_DOC_CONDUCT_UNCONDUCT_NOT_AVAILABLE"] = "Проведение документов возможно только при включенном складском учёте";
+$MESS["CAT_DOC_CONDUCT_UNCONDUCT_NOT_AVAILABLE_EXTERNAL_CATALOG"] = "Проведение документов невозможно при использовании внешнего каталога товаров";
 $MESS["CAT_DOC_ERROR_MODULE_SALE_NOT_INSTALLED"] = "Не установлен модуль \"Интернет магазин\"";
 $MESS["CAT_DOC_ERROR_SHIPMENT_NOT_FOUND"] = "Не найдена отгрузка для документа реализации";
 $MESS["CAT_DOC_ERROR_STORE_TO"] = "Не указан склад назначения для товара #PRODUCT#";

@@ -30,7 +30,7 @@
 	/* :has does not work in FF and IE -  https://caniuse.com/?search=%3Ahas */
 	overflow: visible;
 }
-/*.intranet-settings-iframe-popup .ui-side-panel-wrap-title-box,*/
+
 .intranet-settings-iframe-popup .ui-side-panel-toolbar,
 .intranet-settings-iframe-popup .ui-toolbar-title-inner {
 	display: none;
@@ -1093,4 +1093,141 @@
 
 .intranet-settings__gdpr-widget_box {
 	justify-content: end;
+}
+
+.intranet-settings__portal-delete-form_body {
+	display: flex;
+	border-radius: var(--ui-border-radius-md);
+	padding: 12px;
+	margin-bottom: 16px;
+}
+
+.intranet-settings__portal-delete-form_wrapper.--danger .intranet-settings__portal-delete-form_body {
+	background-color: rgba(255, 255, 255, 0.1);
+}
+
+.intranet-settings__portal-delete-form_wrapper.--warning .intranet-settings__portal-delete-form_body {
+	background-color: var(--ui-color-palette-orange-20);
+}
+
+.intranet-settings__portal-delete-form_wrapper.--danger .intranet-settings__portal-delete-form_description,
+.intranet-settings__portal-delete-form_wrapper.--danger .ui-section__link {
+	color: var(--ui-color-on-primary-alt);
+	letter-spacing: 0.2px;
+}
+
+.intranet-settings__portal-delete-form_wrapper.--warning .intranet-settings__portal-delete-form_description,
+.intranet-settings__portal-delete-form_wrapper.--warning .ui-section__link {
+	color: var(--ui-color-palette-orange-95);
+}
+
+.intranet-settings__portal-delete-form_wrapper.--warning .ui-section__link.--mail {
+	border-bottom: 1px solid var(--ui-color-palette-orange-95);
+}
+
+.intranet-settings__portal-delete-form_wrapper .ui-section__link {
+	border-bottom: none;
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.intranet-settings__portal-delete-form_body .intranet-settings__portal-delete-icon-wrapper {
+	height: 20px;
+	width: 20px;
+	padding: 9px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
+	background: var(--ui-color-background-primary);
+	border-radius: var(--ui-border-radius-circle);
+	border: 2px solid;
+}
+
+.intranet-settings__portal-delete-form_wrapper.--danger .intranet-settings__portal-delete-icon-wrapper {
+	border-color: var(--ui-field-color-danger);
+}
+
+.intranet-settings__portal-delete-form_wrapper.--warning .intranet-settings__portal-delete-icon-wrapper {
+	border-color: var(--ui-field-color-orange);
+}
+
+.intranet-settings__portal-delete-form_wrapper.--danger .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-field-color-danger);
+}
+
+.intranet-settings__portal-delete-form_wrapper.--warning .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-field-color-orange);
+}
+
+
+.intranet-settings__portal-delete-form_description-wrapper {
+	display: flex;
+	flex-direction: column;
+	padding-left: 10px;
+}
+
+.intranet-settings__portal-delete-form_buttons-wrapper {
+	display: flex;
+	justify-content: center;
+}
+
+.ui-btn.--cancel {
+	--ui-btn-background: var(--ui-color-background-transparent);
+	--ui-btn-background-hover: var(--ui-color-background-transparent);
+	--ui-btn-background-active: var(--ui-color-background-transparent);
+	--ui-btn-border-color: rgba(255,255,255, 0.4);
+	--ui-btn-border-color-hover: rgba(255,255,255, 0.8);
+	--ui-btn-border-color-active: rgba(255,255,255, 0.8);
+	--ui-btn-color: var(--ui-color-on-primary);
+	--ui-btn-color-hover: var(--ui-color-on-primary);
+	--ui-btn-color-active: var(--ui-color-on-primary);
+}
+
+.intranet-settings__portal-delete-form_wrapper.--warning .ui-btn.--cancel {
+	--ui-btn-border-color: var(--ui-color-base-30);
+	--ui-btn-border-color-hover: var(--ui-color-base-70);
+	--ui-btn-border-color-active: var(--ui-color-base-70);
+	--ui-btn-color: var(--ui-color-base-90);
+	--ui-btn-color-hover: var(--ui-color-base-90);
+	--ui-btn-color-active: var(--ui-color-base-90);
+}
+
+.ui-btn.--confirm {
+	--ui-btn-background: var(--ui-color-background-primary);
+	--ui-btn-background-hover: var(--ui-color-background-alert);
+	--ui-btn-background-active: var(--ui-color-background-alert);
+	--ui-btn-border-color: var(--ui-color-background-transparent);
+	--ui-btn-border-color-hover: var(--ui-color-background-transparent);
+	--ui-btn-border-color-active: var(--ui-color-background-transparent);
+	--ui-btn-color: var(--ui-color-base-90);
+	--ui-btn-color-hover: var(--ui-color-palette-red-60);
+	--ui-btn-color-active: var(--ui-color-palette-red-60);
+}
+
+.ui-btn-disabled.--confirm {
+	--ui-btn-color-hover: var(--ui-color-base-90);
+	--ui-btn-color-active: var(--ui-color-base-90);
+}
+
+.ui-btn-wait.--confirm {
+	--ui-btn-wait-loader: var(--ui-btn-wait-black);
+}
+
+.intranet-settings__portal-delete-form_wrapper.--warning .ui-btn.--confirm {
+	--ui-btn-border-color: var(--ui-color-text-warning);
+	--ui-btn-border-color-hover: var(--ui-color-text-warning);
+	--ui-btn-border-color-active: var(--ui-color-text-warning);
+	--ui-btn-background-hover: var(--ui-color-text-warning);
+	--ui-btn-background-active: var(--ui-color-text-warning);
+	--ui-btn-color-hover: var(--ui-color-on-primary);
+	--ui-btn-color-active: var(--ui-color-on-primary);
+}
+
+.ui-ctl.--delete {
+	margin-top: 12px;
+}
+
+.ui-ctl.--delete .ui-ctl-element {
+	border: transparent;
+	border-radius: 4px;
 }

@@ -1,7 +1,8 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Catalog = this.BX.Catalog || {};
 this.BX.Catalog.Store = this.BX.Catalog.Store || {};
-(function (exports,main_popup,main_core_events,currency_currencyCore,catalog_productSelector,catalog_storeSelector,catalog_documentCard,catalog_productModel,main_core,spotlight,ui_tour,ui_notification) {
+(function (exports,catalog_toolAvailabilityManager,main_popup,main_core_events,currency_currencyCore,catalog_productSelector,catalog_storeSelector,catalog_documentCard,catalog_productModel,main_core,spotlight,ui_tour,ui_notification) {
 	'use strict';
 
 	catalog_documentCard = catalog_documentCard && catalog_documentCard.hasOwnProperty('default') ? catalog_documentCard['default'] : catalog_documentCard;
@@ -2082,6 +2083,9 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	      var container = this.getContainer();
 	      if (main_core.Type.isElementNode(container)) {
 	        container.querySelectorAll('[data-role="product-list-add-button"]').forEach(function (addButton) {
+	          if (_this.getSettingValue('isOnecInventoryManagementRestricted') === true) {
+	            main_core.Dom.addClass(addButton, 'ui-btn-icon-lock');
+	          }
 	          main_core.Event.bind(addButton, 'click', _this.productRowAddHandler);
 	        });
 	        if (this.getSettingValue('enabledCreateProductButton', true)) {
@@ -3104,6 +3108,10 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	  }, {
 	    key: "handleProductRowAdd",
 	    value: function handleProductRowAdd() {
+	      if (this.getSettingValue('isOnecInventoryManagementRestricted') === true) {
+	        catalog_toolAvailabilityManager.OneCPlanRestrictionSlider.show();
+	        return;
+	      }
 	      var id = this.addProductRow();
 	      this.focusProductSelector(id);
 	    }
@@ -3800,5 +3808,5 @@ this.BX.Catalog.Store = this.BX.Catalog.Store || {};
 	exports.Editor = Editor;
 	exports.PageEventsManager = PageEventsManager;
 
-}((this.BX.Catalog.Store.ProductList = this.BX.Catalog.Store.ProductList || {}),BX.Main,BX.Event,BX.Currency,BX.Catalog,BX.Catalog,BX.Catalog.DocumentCard,BX.Catalog,BX,BX,BX.UI.Tour,BX));
+}((this.BX.Catalog.Store.ProductList = this.BX.Catalog.Store.ProductList || {}),BX.Catalog,BX.Main,BX.Event,BX.Currency,BX.Catalog,BX.Catalog,BX.Catalog.DocumentCard,BX.Catalog,BX,BX,BX.UI.Tour,BX));
 //# sourceMappingURL=script.js.map

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_vue3_directives_hint,ui_dialogs_messagebox,im_v2_lib_slider,im_v2_lib_call,im_v2_lib_phone,im_v2_component_elements,im_v2_lib_utils,im_v2_lib_logger,main_core,main_popup,im_v2_lib_menu,im_v2_lib_desktopApi,im_v2_lib_confirm,im_v2_lib_desktop,ui_buttons,ui_feedback_form,ui_fontawesome4,im_v2_application_core,im_v2_const,im_v2_lib_market) {
+(function (exports,ui_vue3_directives_hint,ui_dialogs_messagebox,im_v2_lib_slider,im_v2_lib_call,im_v2_lib_phone,im_v2_lib_feature,im_v2_component_elements,im_v2_lib_utils,im_v2_lib_logger,main_core,main_popup,im_v2_lib_menu,im_v2_lib_desktopApi,im_v2_lib_confirm,im_v2_lib_desktop,ui_buttons,ui_feedback_form,ui_fontawesome4,im_v2_application_core,im_v2_const,im_v2_lib_market) {
 	'use strict';
 
 	// @vue/component
@@ -714,7 +714,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      }, {
 	        id: im_v2_const.Layout.channel.name,
 	        text: this.prepareNavigationText('IM_NAVIGATION_CHANNELS'),
-	        showCondition: this.isChannelListAvailable,
 	        active: true
 	      }, {
 	        id: im_v2_const.Layout.openlines.name,
@@ -879,12 +878,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return Boolean((_BX$Timeman = BX.Timeman) == null ? void 0 : (_BX$Timeman$Monitor = _BX$Timeman.Monitor) == null ? void 0 : _BX$Timeman$Monitor.isEnabled());
 	    },
 	    isCopilotAvailable() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.navigation');
-	      return settings.get('copilotAvailable');
-	    },
-	    isChannelListAvailable() {
-	      const settings = main_core.Extension.getSettings('im.v2.component.navigation');
-	      return settings.get('channelListAvailable');
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilot);
 	    },
 	    async onTimeManagerClick() {
 	      var _BX$Timeman2, _BX$Timeman2$Monitor;
@@ -945,5 +939,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.MessengerNavigation = MessengerNavigation;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Vue3.Directives,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.UI.Feedback,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Vue3.Directives,BX.UI.Dialogs,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.UI.Feedback,BX,BX.Messenger.v2.Application,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
 //# sourceMappingURL=navigation.bundle.js.map

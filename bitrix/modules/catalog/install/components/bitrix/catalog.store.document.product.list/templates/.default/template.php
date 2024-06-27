@@ -67,7 +67,7 @@ $productListConfig['hiddenFields'] = $arResult['HIDDEN_FIELDS'];
 					</div>
 					<?php
 				}
-				elseif (!empty($createUrl))
+				elseif (!empty($createUrl) && !$arResult['IS_EXTERNAL_CATALOG'])
 				{
 					?>
 					<a class="ui-btn ui-btn-light-border"
@@ -137,7 +137,7 @@ $productListConfig['hiddenFields'] = $arResult['HIDDEN_FIELDS'];
 					</div>
 					<?php
 				}
-				elseif (!empty($createUrl))
+				elseif (!empty($createUrl) && !$arResult['IS_EXTERNAL_CATALOG'])
 				{
 					?>
 					<a class="ui-btn ui-btn-light-border"

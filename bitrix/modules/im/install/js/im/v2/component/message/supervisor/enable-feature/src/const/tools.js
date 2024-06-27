@@ -1,17 +1,12 @@
 import { Loc } from 'main.core';
-import { sendData } from 'ui.analytics';
+
+import { Analytics } from 'im.v2.lib.analytics';
 
 import { EnableFeatures } from '../../../base/src/const/features';
 
 const onOpenToolsSettings = (toolId: string) => {
 	return () => {
-		sendData({
-			tool: 'InfoHelper',
-			category: 'chat',
-			event: 'open_settings',
-			type: 'tool_off',
-			c_section: toolId,
-		});
+		Analytics.getInstance().onOpenToolsSettings(toolId);
 		BX.SidePanel.Instance.open(`${window.location.origin}/settings/configs/?page=tools`);
 	};
 };

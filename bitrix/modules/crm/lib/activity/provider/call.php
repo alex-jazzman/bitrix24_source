@@ -6,6 +6,7 @@ use Bitrix\Crm\Activity\CommunicationStatistics;
 use Bitrix\Crm\Activity\IncomingChannel;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Communication;
+use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
@@ -437,7 +438,7 @@ class Call extends Base
 		array $params = null
 	)
 	{
-		\Bitrix\Crm\Integration\AI\EventHandler::onAfterCallActivityUpdate($changedFields, $newFields);
+		\Bitrix\Crm\Integration\AI\EventHandler::onAfterCallActivityUpdate($changedFields, $oldFields, $newFields);
 	}
 
 	/**
@@ -519,7 +520,12 @@ class Call extends Base
 			],
 			false,
 			false,
-			['ID', 'SETTINGS']
+			['ID', 'SETTINGS'],
+			[
+				'QUERY_OPTIONS' => [
+					'LIMIT' => 100,
+				],
+			],
 		);
 
 		$missedOnly = $options & self::UNCOMPLETED_ACTIVITY_MISSED;
@@ -530,30 +536,25 @@ class Call extends Base
 		{
 			if ($missedOnly)
 			{
-				$isMissedCall = isset($arResult['SETTINGS']['MISSED_CALL'])
-					&& $arResult['SETTINGS']['MISSED_CALL'];
-
+				$isMissedCall = isset($arResult['SETTINGS']['MISSED_CALL']) && $arResult['SETTINGS']['MISSED_CALL'];
 				if ($isMissedCall)
 				{
-					$result[] = (int)$arResult["ID"];
+					$result[] = (int)$arResult['ID'];
 				}
 			}
 			else
 			{
 				// all call activities excluding last created call activity
-				if ($activityId !== (int)$arResult["ID"])
+				if ($activityId !== (int)$arResult['ID'])
 				{
-					$result[] = (int)$arResult["ID"];
+					$result[] = (int)$arResult['ID'];
 				}
 			}
+		}
 
-			if ($incomingOnly)
-			{
-				$result = array_filter(
-					$result,
-					fn($activityId): bool => IncomingChannel::getInstance()->isIncomingChannel($activityId)
-				);
-			}
+		if ($incomingOnly)
+		{
+			$result = IncomingChannel::getInstance()->getIncomingChannelActivityIds($result);
 		}
 
 		return array_values(array_unique($result));
@@ -561,6 +562,15 @@ class Call extends Base
 
 	public static function hasPlanner(array $activity): bool
 	{
-		return empty($activity['ORIGIN_ID']);
+		return !VoxImplantManager::isActivityBelongsToVoximplant($activity);
+	}
+
+	public static function hasRecordings(array $activity): bool
+	{
+		$storageTypeId = (int)($activity['STORAGE_TYPE_ID'] ?? null);
+
+		$storageElementIds = \CCrmActivity::extractStorageElementIds($activity);
+
+		return StorageType::isDefined($storageTypeId) && !empty($storageElementIds);
 	}
 }

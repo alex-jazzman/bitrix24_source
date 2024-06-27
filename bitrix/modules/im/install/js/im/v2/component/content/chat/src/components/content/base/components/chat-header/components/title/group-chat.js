@@ -12,6 +12,7 @@ import type { ImModelChat } from 'im.v2.model';
 const UserCounterPhraseCodeByChatType = {
 	[ChatType.openChannel]: 'IM_CONTENT_CHAT_HEADER_CHANNEL_USER_COUNT',
 	[ChatType.channel]: 'IM_CONTENT_CHAT_HEADER_CHANNEL_USER_COUNT',
+	[ChatType.generalChannel]: 'IM_CONTENT_CHAT_HEADER_CHANNEL_USER_COUNT',
 	default: 'IM_CONTENT_CHAT_HEADER_USER_COUNT',
 };
 

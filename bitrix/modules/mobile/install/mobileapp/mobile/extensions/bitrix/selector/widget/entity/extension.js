@@ -20,6 +20,13 @@
 				allowMultipleSelection,
 				closeOnSelect,
 			} = props;
+			const {
+				selectOptions,
+				canUseRecent,
+				events,
+				initSelectedIds,
+				undeselectableIds,
+			} = props;
 
 			if (!Array.isArray(entityIds) || entityIds.length === 0)
 			{
@@ -46,14 +53,14 @@
 				provider,
 				searchOptions,
 				createOptions,
-				selectOptions: props.selectOptions || {},
-				canUseRecent: props.canUseRecent,
+				selectOptions: selectOptions || {},
+				canUseRecent,
 				allowMultipleSelection,
 				closeOnSelect,
 				widgetParams,
-				events: props.events || {},
-				initSelectedIds: props.initSelectedIds || [],
-				undeselectableIds: props.undeselectableIds || [],
+				events: events || {},
+				initSelectedIds: initSelectedIds || [],
+				undeselectableIds: undeselectableIds || [],
 				returnKey: BaseSelectorEntity.getReturnKey(),
 			});
 
@@ -77,9 +84,10 @@
 			}
 
 			provider.options = {
-				entities: this.getEntitiesOptions(provider.options, entityIds),
+				entities: this.getEntitiesOptions(provider.options, entityIds, provider.filters),
 				useRawResult: this.useRawResult(),
 				useLettersForEmptyAvatar: Boolean(provider?.options?.useLettersForEmptyAvatar),
+				recentItemsLimit: provider?.options?.recentItemsLimit,
 			};
 
 			return provider;
@@ -89,9 +97,10 @@
 		{
 			widgetParams = widgetParams || {};
 
-			if (!widgetParams.title)
+			if (!widgetParams.title && !widgetParams.titleParams?.text)
 			{
-				widgetParams.title = this.getTitle();
+				widgetParams.titleParams = widgetParams.titleParams || {};
+				widgetParams.titleParams.text = this.getTitle();
 			}
 
 			return widgetParams;
@@ -180,15 +189,16 @@
 			return createOptions;
 		}
 
-		static getEntitiesOptions(providerOptions, entityIds)
+		static getEntitiesOptions(providerOptions, entityIds, providerFilters)
 		{
-			return [{
-				id: entityIds[0],
+			return entityIds.map((entityId) => ({
+				id: entityId,
 				options: providerOptions || {},
+				filters: providerFilters || {},
 				searchable: true,
 				dynamicLoad: true,
 				dynamicSearch: true,
-			}];
+			}));
 		}
 
 		static getContext()
@@ -282,4 +292,13 @@
 	}
 
 	this.BaseSelectorEntity = BaseSelectorEntity;
+
+	/**
+	 * @module selector/widget/entity
+	 */
+	jn.define('selector/widget/entity', (require, exports, module) => {
+		module.exports = {
+			BaseSelectorEntity: this.BaseSelectorEntity,
+		};
+	});
 })();

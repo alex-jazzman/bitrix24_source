@@ -256,6 +256,19 @@ Class mail extends CModule
 			{
 				\Bitrix\Mail\MailMessageTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT', false);
 			}
+
+			if ($DB->TableExists('b_main_mail_sender') && $DB->Query("SELECT PARENT_MODULE_ID FROM b_main_mail_sender WHERE 1=0", true))
+			{
+				$mailboxSenders = \Bitrix\Main\Mail\Internal\SenderTable::query()
+					->setSelect(['ID'])
+					->where('PARENT_MODULE_ID', 'mail')
+					->fetchAll()
+				;
+				foreach ($mailboxSenders as $mailboxSender)
+				{
+					\Bitrix\Main\Mail\Internal\SenderTable::delete($mailboxSender['ID']);
+				}
+			}
 		}
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
@@ -288,7 +301,7 @@ Class mail extends CModule
 
 		//delete agents
 		CAgent::RemoveModuleAgents("mail");
-		
+
 		UnRegisterModule("mail");
 
 		if($this->errors !== false)

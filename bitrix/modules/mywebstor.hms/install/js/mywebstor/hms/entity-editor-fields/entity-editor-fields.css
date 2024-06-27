@@ -1,0 +1,12 @@
+.ui-entity-editor-field-error .ui-tag-selector-outer-container,
+.ui-entity-editor-field-error .crm-entity-widget-content-block-field-container-inner {
+    border-color: #ff5752 !important;
+}
+.ui-ctl-w20 {
+    max-width: 20% !important;
+    width: 20% !important;
+}
+.calendar-select-popup {
+    overflow: auto;
+    max-height: 200px;
+}

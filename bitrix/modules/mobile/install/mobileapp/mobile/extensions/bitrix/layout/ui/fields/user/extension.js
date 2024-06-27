@@ -13,6 +13,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 	const { isNil } = require('utils/type');
 	const { AnalyticsEvent } = require('analytics');
 	const { isPhoneNumber } = require('utils/phone');
+	const { Icon } = require('assets/icons');
 
 	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';
@@ -397,7 +398,25 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 				},
 			};
 		}
+
+		getDefaultLeftIcon()
+		{
+			return this.getConfig().defaultLeftIcon || Icon.PERSON;
+		}
 	}
+
+	UserField.propTypes = {
+		...EntitySelectorFieldClass.propTypes,
+	};
+
+	UserField.defaultProps = {
+		...EntitySelectorFieldClass.defaultProps,
+		config: {
+			...EntitySelectorFieldClass.defaultProps.config,
+			selectorType: EntitySelectorFactory.Type.USER,
+			mode: Mode.DEFAULT,
+		},
+	};
 
 	module.exports = {
 		UserType: 'user',

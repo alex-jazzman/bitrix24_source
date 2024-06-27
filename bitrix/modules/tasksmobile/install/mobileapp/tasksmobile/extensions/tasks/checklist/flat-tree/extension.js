@@ -4,7 +4,9 @@
 jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { isNil } = require('utils/type');
 	const { Random } = require('utils/random');
+	const { mergeImmutable } = require('utils/object');
 	const { CheckListFlatTreeItem } = require('tasks/checklist/flat-tree/item');
 
 	/**
@@ -14,14 +16,23 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 	{
 		constructor(props)
 		{
-			const { checklistFlatTree, checklist, userId } = props;
+			const {
+				taskId,
+				userId,
+				checklist,
+				hideCompleted,
+				checklistFlatTree,
+			} = props;
 
 			this.isSaved = false;
 			this.userId = userId;
-			this.taskId = 0;
+			this.taskId = taskId;
 			this.checklistFlatTree = checklistFlatTree || this.createFlatTree(checklist);
 			this.checklist = this.createChecklistFlatTree();
-			this.conditions = {};
+			this.conditions = { hideCompleted };
+			this.rootItem = this.findRootItem();
+
+			this.updateCompletedItems();
 		}
 
 		/**
@@ -44,6 +55,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 				focused: false,
 				fields: {
 					title,
+					sortIndex: checklistNumber,
 				},
 			});
 
@@ -63,7 +75,9 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 		createFlatTree(checklistTree)
 		{
 			const flatList = [];
-			const traverse = (descendant) => {
+			const copiedIdMap = {};
+
+			const traverse = (descendant, isRoot = false) => {
 				const { descendants, ...item } = descendant;
 
 				if (!item.key)
@@ -72,18 +86,23 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 					const fields = item.fields || {};
 					const attachments = this.prepareAttachments(fields.attachments);
 
+					item.isRoot = isRoot;
 					item.isNew = false;
 					item.index = flatList.length;
 					item.focused = false;
 					item.key = nodeId;
 					item.type = CheckListFlatTreeItem.getItemType();
 					item.nodeId = nodeId;
-					item.id = fields?.id;
+					item.id = fields?.id || nodeId;
+					fields.title = this.#preparingTitleForView(item.fields);
 					fields.attachments = attachments;
 					fields.totalCount = descendants.length;
-				}
 
-				item.fields.prevTitle = item.fields.title;
+					if (fields.copiedId)
+					{
+						copiedIdMap[fields.copiedId] = item.id;
+					}
+				}
 
 				flatList.push(item);
 
@@ -93,9 +112,23 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 				}
 			};
 
-			traverse(checklistTree);
+			traverse(checklistTree, true);
 
-			return flatList;
+			return flatList.map((item) => {
+				const parentId = item.fields.parentId;
+
+				if (parentId > 0 && copiedIdMap[parentId])
+				{
+					return mergeImmutable(item, {
+						fields: {
+							parentId: copiedIdMap[parentId],
+							parentNodeId: copiedIdMap[parentId],
+						},
+					});
+				}
+
+				return item;
+			});
 		}
 
 		createChecklistFlatTree()
@@ -262,20 +295,24 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			return item ? new CheckListFlatTreeItem({ item, checklist: this }) : null;
 		}
 
-		addItem(item)
+		/**
+		 * @param {CheckListFlatTreeItem} item
+		 * @param {Array<string | number>} moveIds
+		 */
+		addMovedItem(item, moveIds = [])
 		{
 			item.setCheckList(this);
-			const parent = item.getParent();
-			const parentId = parent?.getId() || this.getRootItem().getId();
-
-			if (!parent)
+			if (!moveIds.includes(item.getParentId()))
 			{
-				item.setParentId(parentId);
+				item.setParentId(this.getId());
+				item.setDisplaySortIndex('');
+				item.setSortIndex(0);
 			}
 
 			this.checklist.push(item);
 
-			this.updateIndexes(parentId);
+			this.updateCounters(this.rootItem);
+			this.updateIndexes(this.rootItem);
 		}
 
 		/**
@@ -299,7 +336,15 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 		insertItemToChecklist(prevItem, position)
 		{
 			const id = prevItem.getId();
-			const parentId = prevItem.getParentId() || id;
+			let parent = prevItem.getParent();
+			let parentId = parent?.getId();
+
+			if (prevItem.isRoot())
+			{
+				parent = prevItem;
+				parentId = id;
+			}
+
 			const newItem = this.getTreeItem(
 				CheckListFlatTreeItem.createItem({
 					isNew: true,
@@ -321,6 +366,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 				this.checklist.splice(position, 0, newItem);
 			}
 
+			parent.updateTotalCount();
 			this.updateIndexes(parentId);
 
 			return newItem;
@@ -349,7 +395,7 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 		{
 			if (!this.hasItem(item))
 			{
-				return;
+				return null;
 			}
 
 			const removeIds = [item.getKey()];
@@ -363,7 +409,9 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			}
 
 			this.removeById(item.getId());
-			this.updateIndexes(item.getParentId());
+			const parent = item.getParent();
+			this.updateIndexes(parent.getId());
+			this.updateCounters(parent);
 
 			return removeIds.filter(Boolean);
 		}
@@ -379,20 +427,6 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 		getIndexById(id)
 		{
 			return this.getChecklist().findIndex((item) => item.getId() === id);
-		}
-
-		getIndexByNodeId(nodeId)
-		{
-			return this.checklist.findIndex(({ nodeId: itemNodeId }) => nodeId === itemNodeId);
-		}
-
-		getClosestElement(item)
-		{
-			const position = this.getIndexById(item.getId());
-			const next = this.getChecklist()[position + 1];
-			const prev = this.getChecklist()[position - 1];
-
-			return prev || next;
 		}
 
 		getSiblings(item)
@@ -425,6 +459,15 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 		getItemById(id)
 		{
 			return this.checklist?.find((item) => item.getId() === id);
+		}
+
+		/**
+		 * @param {number} index
+		 * @return {CheckListFlatTreeItem}
+		 */
+		getItemByIndex(index)
+		{
+			return this.checklist[index];
 		}
 
 		/**
@@ -471,21 +514,32 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			return childItems;
 		}
 
-		getChecklistItemCount()
-		{
-			return this.getDescendants(this.getId(), true).length;
-		}
-
+		/**
+		 * @return {number}
+		 */
 		getDescendantsCount(id, deep = false)
 		{
 			return this.getDescendants(id, deep).length;
 		}
 
-		getCompleteCount(id)
+		/**
+		 * @return {number}
+		 */
+		getCompleteCount()
 		{
-			const descendants = this.getDescendants(id);
+			return this.getRootItem().getCompletedCount();
+		}
 
-			return descendants.filter(({ fields }) => fields.isComplete).length;
+		/**
+		 * @return {number}
+		 */
+		getUncompleteCount()
+		{
+			const rootItem = this.getRootItem();
+			const totalCount = rootItem.getTotalCount();
+			const completeCount = rootItem.getCompletedCount();
+
+			return totalCount - completeCount;
 		}
 
 		updateIndexes(id)
@@ -497,6 +551,17 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 
 			this.updateSortIndexes(id);
 			this.updateDisplaySortIndexes(id);
+		}
+
+		updateCounters(item)
+		{
+			if (!item)
+			{
+				return;
+			}
+
+			item.updateTotalCount();
+			item.updateCompletedCount();
 		}
 
 		updateSortIndexes(id)
@@ -616,17 +681,22 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			return camelCaseString;
 		}
 
+		findRootItem()
+		{
+			return this.checklist.find((item) => item.isRoot());
+		}
+
 		/**
 		 * @return {CheckListFlatTreeItem}
 		 */
 		getRootItem()
 		{
-			return this.checklist.find((item) => item.getParentId() === 0);
+			return this.rootItem;
 		}
 
 		getId()
 		{
-			return this.getRootItem()?.getId();
+			return this.rootItem.getId();
 		}
 
 		getFocusedItemId()
@@ -638,58 +708,154 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 
 		getRequestData()
 		{
-			return this.checklist.map((item) => {
-				let title = item.getTitle();
+			return this.checklist
+				.map((item) => this.prepareChecklistItemDataForSaving(item))
+				.filter(Boolean);
+		}
 
-				if (!title)
-				{
-					title = item.getPrevTitle() || Loc.getMessage('TASKSMOBILE_TREE_CHECKLIST_ITEM_DEFAULT_TITLE');
-					item.setTitle(title);
-				}
+		prepareChecklistItemDataForSaving(item)
+		{
+			const parent = item.getParent();
+			const itemId = item.getFieldId();
+			const parentId = item.getParentId();
+			const title = this.#getTitleForSaving(item);
+			const members = Object.values(item.getMembers());
 
-				const parent = item.getParent();
-				const itemId = item.getId();
-				const parentId = item.getParentId();
+			if (!title || isNil(parentId))
+			{
+				return null;
+			}
 
-				const itemRequestData = {
-					NODE_ID: item.getNodeId(),
-					PARENT_NODE_ID: parent ? parent.getNodeId() : 0,
-					ID: Type.isInteger(itemId) ? itemId : null,
-					PARENT_ID: Type.isInteger(parentId) ? parentId : null,
-					TITLE: title,
-					SORT_INDEX: item.getSortIndex(),
-					IS_COMPLETE: item.getIsComplete() ? 1 : 0,
-					IS_IMPORTANT: item.getIsImportant() ? 1 : 0,
-					ATTACHMENTS: {},
-					MEMBERS: {},
-				};
+			const itemRequestData = {
+				NODE_ID: item.getNodeId(),
+				PARENT_NODE_ID: parent ? parent.getNodeId() : 0,
+				ID: Type.isInteger(itemId) ? itemId : null,
+				PARENT_ID: Type.isInteger(parentId) ? parentId : null,
+				TITLE: title,
+				SORT_INDEX: item.getSortIndex(),
+				IS_COMPLETE: item.getIsComplete() ? 1 : 0,
+				IS_IMPORTANT: item.getIsImportant() ? 1 : 0,
+				ATTACHMENTS: {},
+				MEMBERS: {},
+			};
 
-				if (item.hasAttachments())
-				{
-					const attachments = item.getAttachments();
-					Object.keys(attachments).forEach((id) => {
-						if (attachments[id])
-						{
-							const { serverFileId } = attachments[id];
+			if (item.hasAttachments())
+			{
+				const attachments = item.getAttachments();
+				Object.keys(attachments).forEach((id) => {
+					const serverFileId = attachments?.[id]?.serverFileId;
+					if (serverFileId)
+					{
+						itemRequestData.ATTACHMENTS[serverFileId] = serverFileId;
+					}
+					else
+					{
+						itemRequestData.ATTACHMENTS[id] = id;
+					}
+				});
+			}
 
-							itemRequestData.ATTACHMENTS[serverFileId] = serverFileId;
-						}
-					});
-				}
-
-				const members = item.getMembers();
-				Object.keys(item.getMembers()).forEach((id) => {
-					const { type, name } = members[id];
+			if (members.length > 0)
+			{
+				members.forEach(({ id, type, name }) => {
 					itemRequestData.MEMBERS[id] = { TYPE: type, NAME: name };
 				});
+			}
 
-				return itemRequestData;
-			}).filter(Boolean);
+			return itemRequestData;
+		}
+
+		#getTitleForSaving(item)
+		{
+			let title = item.getTitle();
+			const members = Object.values(item.getMembers());
+
+			if (members.length > 0)
+			{
+				return members.reduce(
+					(memberTitle, { name }) => (title.includes(name) ? memberTitle : `${memberTitle} ${name}`),
+					title,
+				);
+			}
+
+			if (!title)
+			{
+				title = Loc.getMessage('TASKSMOBILE_TREE_CHECKLIST_ITEM_DEFAULT_TITLE');
+				item.setTitle(title);
+			}
+
+			return title;
+		}
+
+		#preparingTitleForView(item)
+		{
+			const { title, members } = item;
+
+			let modifiedText = title.trim();
+			let foundMember = false;
+
+			do
+			{
+				foundMember = false;
+				for (const member of Object.values(members))
+				{
+					const regex = new RegExp(`${member.name}\\s*$`);
+					if (regex.test(modifiedText))
+					{
+						modifiedText = modifiedText.replace(regex, '').trim();
+						foundMember = true;
+						break;
+					}
+				}
+			}
+			while (foundMember);
+
+			return modifiedText;
 		}
 
 		getShowItems()
 		{
 			return this.getChecklist().filter((item) => !item.isRoot()).length === 0;
+		}
+
+		canAdd()
+		{
+			return this.rootItem.checkCanAdd();
+		}
+
+		canUpdate()
+		{
+			return this.rootItem.checkCanUpdate();
+		}
+
+		canRemove()
+		{
+			return this.rootItem.checkCanRemove();
+		}
+
+		canAddAccomplice()
+		{
+			return this.rootItem.checkCanAddAccomplice();
+		}
+
+		getAccessRestrictions()
+		{
+			return {
+				add: this.canAdd(),
+				update: this.canUpdate(),
+				remove: this.canRemove(),
+				addAccomplice: this.canAddAccomplice(),
+			};
+		}
+
+		updateCompletedItems()
+		{
+			this.getChecklistItems().forEach((item) => {
+				if (item.isRoot())
+				{
+					item.updateCompletedCount();
+				}
+			});
 		}
 	}
 

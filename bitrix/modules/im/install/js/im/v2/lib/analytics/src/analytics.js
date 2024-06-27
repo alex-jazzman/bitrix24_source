@@ -1,6 +1,6 @@
 import { sendData } from 'ui.analytics';
-import { Type } from 'main.core';
 
+import { ChatType, Layout, UserRole } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 
 import {
@@ -12,11 +12,14 @@ import {
 	CopilotChatType,
 } from './const';
 
+import type { ImModelChat } from 'im.v2.model';
+
 type DialogId = string;
 
 export class Analytics
 {
 	#createdChats: Set<DialogId> = new Set();
+	#currentTab: string = '';
 
 	static #instance: Analytics;
 
@@ -30,7 +33,16 @@ export class Analytics
 		return this.#instance;
 	}
 
-	createChat({ chatId, dialogId })
+	onOpenMessenger()
+	{
+		sendData({
+			event: AnalyticsEvent.openMessenger,
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.messenger,
+		});
+	}
+
+	onCreateCopilotChat({ chatId, dialogId })
 	{
 		this.#createdChats.add(dialogId);
 
@@ -45,20 +57,8 @@ export class Analytics
 		});
 	}
 
-	openCopilotChat(dialogId: string)
+	onOpenCopilotChat(dialogId: string)
 	{
-		if (!Type.isStringFilled(dialogId))
-		{
-			return;
-		}
-
-		if (this.#createdChats.has(dialogId))
-		{
-			this.#createdChats.delete(dialogId);
-
-			return;
-		}
-
 		const dialog = Core.getStore().getters['chats/get'](dialogId);
 		const copilotChatType = dialog.userCounter <= 2 ? CopilotChatType.private : CopilotChatType.multiuser;
 
@@ -73,7 +73,7 @@ export class Analytics
 		});
 	}
 
-	openCopilotTab()
+	onOpenCopilotTab()
 	{
 		sendData({
 			event: AnalyticsEvent.openTab,
@@ -83,7 +83,38 @@ export class Analytics
 		});
 	}
 
-	useAudioInput()
+	onOpenTab(tabName: string)
+	{
+		const existingTabs = [
+			Layout.chat.name,
+			Layout.copilot.name,
+			Layout.channel.name,
+			Layout.notification.name,
+			Layout.settings.name,
+			Layout.openlines.name,
+		];
+
+		if (!existingTabs.includes(tabName))
+		{
+			return;
+		}
+
+		if (this.#currentTab === tabName)
+		{
+			return;
+		}
+
+		this.#currentTab = tabName;
+
+		sendData({
+			event: AnalyticsEvent.openTab,
+			tool: AnalyticsTool.im,
+			category: AnalyticsCategory.messenger,
+			type: tabName,
+		});
+	}
+
+	onUseCopilotAudioInput()
 	{
 		sendData({
 			event: AnalyticsEvent.audioUse,
@@ -93,7 +124,7 @@ export class Analytics
 		});
 	}
 
-	openCheckInPopup()
+	onOpenCheckInPopup()
 	{
 		sendData({
 			event: AnalyticsEvent.popupOpen,
@@ -101,5 +132,110 @@ export class Analytics
 			category: AnalyticsCategory.shift,
 			c_section: AnalyticsSection.chat,
 		});
+	}
+
+	onOpenPriceTable(featureId: string)
+	{
+		sendData({
+			tool: AnalyticsTool.infoHelper,
+			category: AnalyticsCategory.limit,
+			event: AnalyticsEvent.openPrices,
+			type: featureId,
+			c_section: AnalyticsSection.chat,
+		});
+	}
+
+	onOpenToolsSettings(toolId: string)
+	{
+		sendData({
+			tool: AnalyticsTool.infoHelper,
+			category: AnalyticsCategory.toolOff,
+			event: AnalyticsEvent.openSettings,
+			type: toolId,
+			c_section: AnalyticsSection.chat,
+		});
+	}
+
+	onStartCreateNewChat(type: $Values<typeof ChatType>)
+	{
+		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const tabs = [
+			Layout.chat.name,
+			Layout.channel.name,
+			Layout.notification.name,
+			Layout.copilot.name,
+		];
+
+		if (!tabs.includes(currentLayout))
+		{
+			return;
+		}
+
+		sendData({
+			tool: AnalyticsTool.im,
+			category: this.#getCategoryByChatType(type),
+			event: AnalyticsEvent.clickCreateNew,
+			type,
+			c_section: `${currentLayout}_tab`,
+		});
+	}
+
+	onCreateChat(dialogId: string)
+	{
+		this.#createdChats.add(dialogId);
+	}
+
+	onOpenChat(dialog: ImModelChat)
+	{
+		if (this.#createdChats.has(dialog.dialogId))
+		{
+			this.#createdChats.delete(dialog.dialogId);
+
+			return;
+		}
+
+		if (dialog.type === ChatType.copilot)
+		{
+			this.onOpenCopilotChat(dialog.dialogId);
+		}
+
+		const currentLayout = Core.getStore().getters['application/getLayout'].name;
+		const isMember = dialog.role === UserRole.guest ? 'N' : 'Y';
+
+		const params = {
+			tool: AnalyticsTool.im,
+			category: this.#getCategoryByChatType(dialog.type),
+			event: AnalyticsEvent.openExisting,
+			type: dialog.type,
+			c_section: `${currentLayout}_tab`,
+			p3: `isMember_${isMember}`,
+			p5: `chatId_${dialog.chatId}`,
+		};
+
+		if (dialog.type === ChatType.comment)
+		{
+			params.p1 = `chatType_${dialog.type}`;
+			params.p4 = `parentChatId_${dialog.parentChatId}`;
+		}
+
+		sendData(params);
+	}
+
+	#getCategoryByChatType(type: $Values<typeof ChatType>): string
+	{
+		switch (type)
+		{
+			case ChatType.channel:
+			case ChatType.openChannel:
+			case ChatType.comment:
+			case ChatType.generalChannel:
+				return AnalyticsCategory.channel;
+			case ChatType.copilot:
+				return AnalyticsCategory.copilot;
+			case ChatType.videoconf:
+				return AnalyticsCategory.videoconf;
+			default:
+				return AnalyticsCategory.chat;
+		}
 	}
 }

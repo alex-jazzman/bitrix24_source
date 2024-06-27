@@ -219,7 +219,7 @@ function Conf(ob)
 <input type="hidden" name="lang" value="<?= LANG?>">
 <?=bitrix_sessid_post()?>
 <?for($i = 0; $i < $filesCount; $i++):?>
-	<?$ii = $arFiles[$i];if(mb_strtoupper(LANG_CHARSET) != "UTF-8")$ii = $GLOBALS["APPLICATION"]->ConvertCharset($ii, LANG_CHARSET, "UTF-8");?>
+	<?$ii = $arFiles[$i];?>
 	<input type="hidden" name="files[]" value="<?= htmlspecialcharsbx($ii)?>">
 <?endfor?>
 

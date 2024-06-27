@@ -8,17 +8,14 @@ return [
 	'css' => 'dist/channel-container.bundle.css',
 	'js' => 'dist/channel-container.bundle.js',
 	'rel' => [
+		'main.polyfill.core',
 		'im.v2.component.list.items.channel',
 		'im.v2.component.elements',
 		'im.v2.const',
-		'im.v2.lib.layout',
+		'im.v2.lib.analytics',
 		'im.v2.lib.logger',
 		'im.v2.lib.promo',
 		'im.v2.lib.create-chat',
-		'main.core',
 	],
-	'skip_core' => false,
-	'settings' => [
-		'channelCreationAvailable' => \Bitrix\Im\V2\Chat\ChannelChat::isCreationAvailable(),
-	]
+	'skip_core' => true,
 ];

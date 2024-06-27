@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Timeline = this.BX.Crm.Timeline || {};

@@ -5,7 +5,6 @@
 jn.define('im/messenger/provider/pull/channel/message', (require, exports, module) => {
 	const { ChatMessagePullHandler } = require('im/messenger/provider/pull/chat');
 	const { ChannelRecentMessageManager } = require('im/messenger/provider/pull/lib/recent/channel');
-	const { Counters } = require('im/messenger/lib/counters');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--chat-message');
@@ -24,8 +23,16 @@ jn.define('im/messenger/provider/pull/channel/message', (require, exports, modul
 		handleMessageChat(params, extra, command)
 		{
 			const recentMessageManager = this.getRecentMessageManager(params, extra);
-
 			if (!recentMessageManager.isOpenChannelChat() && !recentMessageManager.isCommentChat())
+			{
+				return;
+			}
+
+			if (
+				recentMessageManager.isOpenChannelChat()
+				&& recentMessageManager.isUserInChat()
+				&& !recentMessageManager.isCurrentChannelChatOpened()
+			)
 			{
 				return;
 			}
@@ -34,7 +41,11 @@ jn.define('im/messenger/provider/pull/channel/message', (require, exports, modul
 
 			if (recentMessageManager.isCommentChat())
 			{
-				this.setCommentInfo(params);
+				this.setCommentInfo(params)
+					.catch((error) => {
+						logger.error(`${this.getClassName()}.handleMessageChat setCommentInfo error:`, error);
+					})
+				;
 			}
 
 			this.updateDialog(params)

@@ -19,6 +19,7 @@ BX.namespace('Tasks.Component');
 		methods: {
 			construct: function()
 			{
+				this.onOpenWithContext();
 				this.callConstruct(BX.Tasks.Component);
 				this.initFileView();
 
@@ -472,7 +473,18 @@ BX.namespace('Tasks.Component');
 				);
 
 				menu.popupWindow.show();
-			}
+			},
+
+			onOpenWithContext: function()
+			{
+				if (this.option('context') === 'flow')
+				{
+					const topSlider = window.top.BX.SidePanel.Instance.getTopSlider();
+					window.top.BX.SidePanel.Instance.close(false, () => {
+						topSlider.destroy();
+					});
+				}
+			},
 		}
 	});
 

@@ -11,7 +11,7 @@ jn.define('im/messenger/lib/counters', (require, exports, module) => {
 
 	function createByComponent()
 	{
-		const componentCode = MessengerParams.get('COMPONENT_CODE');
+		const componentCode = MessengerParams.getComponentCode();
 		if (componentCode === COPILOT_COMPONENT_CODE)
 		{
 			return new CopilotCounters();

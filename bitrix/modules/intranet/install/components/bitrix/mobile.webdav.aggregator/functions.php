@@ -86,21 +86,6 @@ if (!function_exists('_getPath'))
     }
 }
 
-
-if (!function_exists('_uencode'))
-{
-    function _uencode($t)
-    {
-        if (SITE_CHARSET != "UTF-8")
-        {
-            global $APPLICATION;
-            $t = $APPLICATION->ConvertCharset($t, SITE_CHARSET, "UTF-8");
-        }
-        return $t;
-    }
-}
-
-
 if (!function_exists('ParseFolderTreeData'))
 {
     function ParseFolderTreeData($obTree, $pathPrefix, $addDepth = 0, $addLinks = false)
@@ -171,7 +156,7 @@ if (!function_exists('MakeDavRedirect'))
                         die();
                     }
                 } else {
-                    $ob->SetBaseURL(_uencode($baseURL));
+                    $ob->SetBaseURL($baseURL);
                 }
                 $ob->SetPath($path);
                 $fn = 'base_' . $_SERVER['REQUEST_METHOD'];
@@ -179,8 +164,8 @@ if (!function_exists('MakeDavRedirect'))
                 die();
             }
         } else {
-            $ob->SetBaseURL(_uencode($baseURL));
-            $ob->SetPath(_uencode(rtrim($path, '/')));
+            $ob->SetBaseURL($baseURL);
+            $ob->SetPath(rtrim($path, '/'));
             if ($is_root) return;
             $ob->IsDir();
             if ($ob->arParams['is_file'] )

@@ -55,10 +55,10 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 
 			this.activePromoList = response.data();
 
-			if (Feature.isChatV2Enabled && response.data().includes(Promo.immobileRelease2023))
-			{
-				this.show(Promo.immobileRelease2023);
-			}
+			// if (Feature.isChatV2Enabled && response.data().includes(Promo.immobileRelease2023))
+			// {
+			// 	this.show(Promo.immobileRelease2023); TODO switch to new promotion 2024
+			// }
 		}
 
 		checkDialog(dialogId)

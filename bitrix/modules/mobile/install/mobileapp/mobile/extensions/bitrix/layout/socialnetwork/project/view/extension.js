@@ -6,6 +6,7 @@
 	const { ButtonsToolbar } = require('layout/ui/buttons-toolbar');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 
 	class ProjectView extends LayoutComponent
 	{
@@ -131,8 +132,8 @@
 							isVisible: (props.VISIBLE === 'Y'),
 							membersCount: Number(props.NUMBER_OF_MEMBERS),
 							membersCountPlural: Number(props.NUMBER_OF_MEMBERS_PLURAL),
-							dateStart: (Date.parse(props.PROJECT_DATE_START) / 1000),
-							dateFinish: (Date.parse(props.PROJECT_DATE_FINISH) / 1000),
+							dateStart: props.PROJECT_DATE_START && (Date.parse(props.PROJECT_DATE_START) / 1000),
+							dateFinish: props.PROJECT_DATE_FINISH && (Date.parse(props.PROJECT_DATE_FINISH) / 1000),
 							dateStartFormatted: props.FORMATTED_PROJECT_DATE_START,
 							dateFinishFormatted: props.FORMATTED_PROJECT_DATE_FINISH,
 							ownerData: {

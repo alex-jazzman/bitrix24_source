@@ -42,8 +42,14 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 	const { DateSeparatorMessage } = require('im/messenger/lib/element/dialog/message/date-separator');
 	const { UnreadSeparatorMessage } = require('im/messenger/lib/element/dialog/message/unread-separator');
 	const { CopilotMessage } = require('im/messenger/lib/element/dialog/message/copilot');
-	const { CopilotPromtMessage } = require('im/messenger/lib/element/dialog/message/copilot-promt');
+	const { CopilotPromptMessage } = require('im/messenger/lib/element/dialog/message/copilot-prompt');
 	const { CopilotErrorMessage } = require('im/messenger/lib/element/dialog/message/copilot-error');
+	const { Banner } = require('im/messenger/lib/element/dialog/message/banner');
+	const { CheckInMessageFactory } = require('im/messenger/lib/element/dialog/message/check-in/factory');
+	const { CheckInMessageHandler } = require('im/messenger/lib/element/dialog/message/check-in/handler');
+	const { GalleryMessageFactory } = require('im/messenger/lib/element/dialog/message/gallery/factory');
+	const { GalleryMessageHandler } = require('im/messenger/lib/element/dialog/message/gallery/handler');
+	const { CreateBannerFactory } = require('im/messenger/lib/element/dialog/message/create-banner/factory');
 
 	module.exports = {
 		ChatAvatar,
@@ -82,9 +88,15 @@ jn.define('im/messenger/lib/element', (require, exports, module) => {
 		DateSeparatorMessage,
 		UnreadSeparatorMessage,
 		CopilotMessage,
-		CopilotPromtMessage,
+		CopilotPromptMessage,
 		CopilotErrorMessage,
+		CheckInMessageFactory,
+		CheckInMessageHandler,
+		GalleryMessageFactory,
+		GalleryMessageHandler,
+		CreateBannerFactory,
 		MessageAlign,
 		MessageTextAlign,
+		Banner,
 	};
 });

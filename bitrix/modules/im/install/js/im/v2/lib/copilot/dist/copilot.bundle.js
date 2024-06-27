@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,main_core,im_v2_const,im_v2_application_core) {
+(function (exports,im_v2_const,im_v2_application_core) {
 	'use strict';
 
 	class CopilotManager {
@@ -83,24 +83,27 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    var _this$store$getters$c2, _this$store$getters$c3;
 	    return (_this$store$getters$c2 = this.store.getters['copilot/messages/getRole'](messageId)) == null ? void 0 : (_this$store$getters$c3 = _this$store$getters$c2.avatar) == null ? void 0 : _this$store$getters$c3.medium;
 	  }
-	  isCopilotRolesAvailable() {
-	    const settings = main_core.Extension.getSettings('im.v2.lib.copilot');
-	    return settings.copilotRolesAvailable === 'Y';
-	  }
 	  getNameWithRole({
 	    dialogId,
 	    messageId
 	  }) {
 	    const user = this.store.getters['users/get'](dialogId);
 	    const roleName = this.store.getters['copilot/messages/getRole'](messageId).name;
-	    if (!this.isCopilotRolesAvailable()) {
-	      return user.name;
-	    }
 	    return `${user.name} (${roleName})`;
+	  }
+	  isCopilotMessage(messageId) {
+	    const message = this.store.getters['messages/getById'](messageId);
+	    if (!message) {
+	      return false;
+	    }
+	    if (this.isCopilotBot(message.authorId)) {
+	      return true;
+	    }
+	    return message.componentId === im_v2_const.MessageComponent.copilotCreation;
 	  }
 	}
 
 	exports.CopilotManager = CopilotManager;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX,BX.Messenger.v2.Const,BX.Messenger.v2.Application));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.Messenger.v2.Const,BX.Messenger.v2.Application));
 //# sourceMappingURL=copilot.bundle.js.map

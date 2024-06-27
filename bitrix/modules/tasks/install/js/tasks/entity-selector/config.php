@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
 if (!Loader::includeModule('tasks'))
 {
@@ -39,6 +40,19 @@ return [
 								'fitContent' => true,
 								'maxWidth' => 100,
 							],
+						],
+					],
+				],
+			],
+			[
+				'id' => 'flow',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => true,
+					'itemOptions' => [
+						'default' => [
+							'supertitle' => Loc::getMessage('TASKS_ENTITY_SELECTOR_FLOW_SUPER_TITLE'),
+							'avatar' => '/bitrix/js/tasks/flow/images/flow.svg',
 						],
 					],
 				],

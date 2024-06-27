@@ -12,6 +12,8 @@ return [
 		'utils/copy',
 		'utils/string',
 		'haptics',
+		'user/profile',
+		'analytics',
 	],
 	'bundle' => [
 		'./base',

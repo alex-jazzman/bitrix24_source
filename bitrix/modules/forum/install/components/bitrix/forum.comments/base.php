@@ -5,10 +5,13 @@ class CCommentBase
 {
 	protected $component = null;
 	protected $handlers = [];
+	private ?\CUser $user;
 
-	function __construct(&$component)
+	public function __construct(&$component, ?\CUser $user = null)
 	{
 		$this->component = &$component;
+		$this->user = $user;
+
 		$methods = get_class_methods(static::class);
 		foreach ($methods as $method)
 		{
@@ -56,5 +59,10 @@ class CCommentBase
 			RemoveEventHandler($handler["moduleId"], $handler["eventName"], $handler["id"]);
 		}
 		$this->handlers = [];
+	}
+
+	protected function getUser(): ?\CUser
+	{
+		return $this->user;
 	}
 }

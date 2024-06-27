@@ -97,6 +97,17 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				return;
 			}
 
+			if (params.lines)
+			{
+				if (MessengerParams.isOpenlinesOperator())
+				{
+					delete Counters.openlinesCounter.detail[params.dialogId];
+					Counters.update();
+				}
+
+				return;
+			}
+
 			this.logger.info(`${this.getClassName()}.handleChatHide`, params);
 
 			this.store.dispatch('recentModel/delete', { id: params.dialogId })
@@ -322,6 +333,7 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 			this.logger.info(`${this.getClassName()}.handleCommentSubscribe`, params);
 			if (params.subscribe)
 			{
+				this.store.dispatch('commentModel/subscribe', { messageId: params.messageId });
 				this.store.dispatch('dialoguesModel/unmute', {
 					dialogId: params.dialogId,
 				});
@@ -329,8 +341,23 @@ jn.define('im/messenger/provider/pull/base/dialog', (require, exports, module) =
 				return;
 			}
 
+			this.store.dispatch('commentModel/unsubscribe', { messageId: params.messageId });
 			this.store.dispatch('dialoguesModel/mute', {
 				dialogId: params.dialogId,
+			});
+		}
+
+		handleChatManagers(params, extra, command)
+		{
+			if (this.interceptEvent(params, extra, command))
+			{
+				return;
+			}
+
+			this.logger.info(`${this.getClassName()}.handleChatManagers`, params);
+			this.store.dispatch('dialoguesModel/updateManagerList', {
+				dialogId: params.dialogId,
+				managerList: params.list,
 			});
 		}
 

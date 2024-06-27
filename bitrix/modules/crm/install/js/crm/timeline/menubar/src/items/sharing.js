@@ -3,10 +3,16 @@ import { EventEmitter } from 'main.core.events';
 import { MenuManager } from "main.popup";
 import WithEditor from "./witheditor";
 import { Guide } from "ui.tour";
-import { TourManager, TourInterface } from 'crm.tour-manager';
+import { Loader } from 'main.loader';
 import Context from "../context";
 import { DialogNew } from 'calendar.sharing.interface';
 import { ConditionChecker, Types as SenderTypes, OpenLineCodes } from 'crm.messagesender';
+
+const DataLoadStatus = Object.freeze({
+	loaded: 'loaded',
+	notLoaded: 'notLoaded',
+	loading: 'loading',
+});
 
 /** @memberof BX.Crm.Timeline.MenuBar */
 export default class Sharing extends WithEditor
@@ -18,16 +24,7 @@ export default class Sharing extends WithEditor
 	 */
 	initialize(context: Context, settings: ?Object): void
 	{
-		const config = settings.config;
-
-		this.link = config.link;
-		this.calendarSettings = config.calendarSettings;
-		this.isResponsible = config.isResponsible;
-		this.setContacts(config.contacts);
-		this.isNotificationsAvailable = config.isNotificationsAvailable;
-		this.areCommunicationChannelsAvailable = config.areCommunicationChannelsAvailable;
-		this.setCommunicationChannels(config.communicationChannels, config.selectedChannelId);
-		this.doPayAttentionToNewFeature = config.doPayAttentionToNewFeature;
+		this.dataLoadStatus = DataLoadStatus.notLoaded;
 
 		super.initialize(context, settings);
 
@@ -64,13 +61,70 @@ export default class Sharing extends WithEditor
 	/**
 	 * @override
 	 */
-	doInitialize()
+	onShow()
 	{
-		if (this.doPayAttentionToNewFeature)
+		super.onShow();
+		if (this.dataLoadStatus === DataLoadStatus.notLoaded && this.getEntityId() > 0)
 		{
-			this.payAttentionToNewFeature();
-			BX.ajax.runAction('crm.api.timeline.calendar.sharing.disableOptionPayAttentionToNewCrmSharingFeature');
+			void this.loadData().then(
+				(isSuccess) => {
+					if (isSuccess)
+					{
+						this.unlockControl();
+						this.updateSettingsButton();
+					}
+
+					this.removeLoader();
+				},
+				(result) => {},
+			);
 		}
+		else if (this.getEntityId() <= 0)
+		{
+			this.removeLoader();
+		}
+	}
+
+	async loadData(): Promise
+	{
+		this.dataLoadStatus = DataLoadStatus.loading;
+		const action = 'crm.api.timeline.calendar.sharing.getConfig';
+		const data = {
+			entityTypeId: this.getEntityTypeId(),
+			entityId: this.getEntityId(),
+		};
+
+		return BX.ajax.runAction(action, { data }).then((response) => {
+			if (response?.data?.config)
+			{
+				this.setConfig(response.data.config);
+				this.dataLoadStatus = DataLoadStatus.loaded;
+
+				return true;
+			}
+
+			return false;
+		}, (error) => {
+			console.error(error);
+
+			return false;
+		});
+	}
+
+	setConfig(config)
+	{
+		this.link = config.link;
+		this.calendarSettings = config.calendarSettings;
+		this.isResponsible = config.isResponsible;
+		this.setContacts(config.contacts);
+		this.isNotificationsAvailable = config.isNotificationsAvailable;
+		this.areCommunicationChannelsAvailable = config.areCommunicationChannelsAvailable;
+		this.setCommunicationChannels(config.communicationChannels, config.selectedChannelId);
+	}
+
+	unlockControl(): void
+	{
+		Dom.removeClass(this.DOM.root, '--locked');
 	}
 
 	/**
@@ -82,8 +136,8 @@ export default class Sharing extends WithEditor
 			menuBarItem: document.querySelector('.crm-entity-stream-section-menu [data-id=sharing]'),
 		};
 
-		return Tag.render`
-			<div class="crm-entity-stream-content-sharing crm-entity-stream-content-wait-detail --hidden">
+		const root = Tag.render`
+			<div class="crm-entity-stream-content-sharing crm-entity-stream-content-wait-detail --hidden --locked">
 				<div id="_sharing_content_container">
 					<div class="crm-entity-stream-calendar-sharing-container">
 						<div class="crm-entity-stream-calendar-sharing-main">
@@ -120,6 +174,22 @@ export default class Sharing extends WithEditor
 				</div>
 			</div>
 		`;
+
+		this.DOM.root = root;
+		this.createLoader(root);
+
+		return root;
+	}
+
+	createLoader(root: HTMLElement): void
+	{
+		this.loader = new Loader({ target: root });
+		this.loader.show();
+	}
+
+	removeLoader(): void
+	{
+		this.loader.destroy();
 	}
 
 	createConfigureSlotsButton()
@@ -727,77 +797,5 @@ export default class Sharing extends WithEditor
 		});
 
 		return warningGuide;
-	}
-
-	payAttentionToNewFeature()
-	{
-		TourManager.getInstance().registerWithLaunch(this.#getTour());
-	}
-
-	#getTour(): TourInterface
-	{
-		const guide = this.getGuide();
-		const pulsar = this.getPulsar();
-
-		return new class SharingTour implements TourInterface
-		{
-			canShow(): boolean
-			{
-				return true;
-			}
-
-			show(): void
-			{
-				setTimeout(() => {
-					guide.showNextStep();
-					pulsar.show();
-				}, 1000);
-			}
-
-			getGuide(): Guide
-			{
-				return guide;
-			}
-		}();
-	}
-
-	getGuide(): Guide
-	{
-		const guide = new Guide({
-			simpleMode: true,
-			onEvents: true,
-			steps: [
-				{
-					target: this.DOM.menuBarItem,
-					title: Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TITLE'),
-					text: Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TEXT'),
-					article: this.HELPDESK_CODE,
-					condition: {
-						top: true,
-						bottom: false,
-						color: 'primary',
-					},
-				},
-			],
-		});
-		const guidePopup = guide.getPopup();
-		Dom.addClass(guidePopup.popupContainer, 'crm-calendar-sharing-configure-slots-popup-ui-tour-animate');
-		guidePopup.setWidth(400);
-		guidePopup.getContentContainer().style.paddingRight = getComputedStyle(guidePopup.closeIcon)['width'];
-
-		return guide;
-	}
-
-	getPulsar(): BX.SpotLight
-	{
-		const pulsar = new BX.SpotLight({
-			targetElement: this.DOM.menuBarItem,
-			targetVertex: 'middle-center',
-		});
-		pulsar.bindEvents({
-			'onTargetEnter': () => pulsar.close(),
-		});
-
-		return pulsar;
 	}
 }

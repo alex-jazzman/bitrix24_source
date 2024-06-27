@@ -59,6 +59,13 @@ $bbFieldNames = isset($arResult['ENTITY_BB_FIELD_NAMES']) && is_array($arResult[
 	? $arResult['ENTITY_BB_FIELD_NAMES']
 	: []
 ;
+
+$hasBBCodeFields = isset($arResult['HAS_BBCODE_FIELDS']) && $arResult['HAS_BBCODE_FIELDS'] === true;
+if ($hasBBCodeFields)
+{
+	Main\UI\Extension::load('ui.text-editor');
+}
+
 foreach ($htmlFieldNames as $fieldName)
 {
 	$fieldPrefix = $prefix.'_'.strtolower($fieldName);
@@ -140,7 +147,7 @@ if(Main\Loader::includeModule('socialnetwork'))
 	$department = $structure['department'];
 	$departmentRelation = $structure['department_relation'];
 	$departmentRelationHead = $structure['department_relation_head'];
-	?><script type="text/javascript">
+	?><script>
 		BX.ready(
 			function()
 			{
@@ -260,7 +267,7 @@ if(!empty($htmlEditorConfigs))
 	);
 ?></div>
 <?endif?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

@@ -32,6 +32,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			showSearch: 'ImMobile.Messenger.Search:open',
 			hideSearch: 'ImMobile.Messenger.Search:close',
 			createChat: 'ImMobile.Messenger.Chat:create',
+			createChannel: 'ImMobile.Messenger.Channel:create',
 			refresh: 'ImMobile.Messenger:refresh',
 			afterRefreshSuccess: 'ImMobile.Messenger:afterRefreshSuccess',
 			renderRecent: 'ImMobile.Messenger:renderRecent',
@@ -76,6 +77,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			scrollBegin: 'scrollBegin',
 			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
+			messageCheckInButtonTap: 'messageCheckInButtonTap',
 			messageAvatarTap: 'avatarTap',
 			messageAvatarLongTap: 'avatarLongTap',
 			messageDoubleTap: 'messageDoubleTap',
@@ -93,6 +95,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			audioRateTap: 'audioRateTap',
 			videoTap: 'videoTap',
 			fileTap: 'fileTap',
+			forwardTap: 'forwardTap',
 			phoneTap: 'phoneTap',
 			statusFieldTap: 'statusFieldTap',
 			chatJoinButtonTap: 'chatJoinButtonTap',
@@ -110,6 +113,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			channelCommentTap: 'channelCommentTap',
 			updateUploadProgressByMessageId: 'updateUploadProgressByMessageId',
 			external: {
+				goToMessageContext: 'ImMobile.Messenger.Dialog:goToMessageContext',
 				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',
 				scrollToFirstUnread: 'ImMobile.Messenger.Dialog:scrollToFirstUnread',
 				disableScrollToBottom: 'ImMobile.Messenger.Dialog:disableScrollToBottom',
@@ -126,6 +130,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				quoteTap: 'quoteTap',
 				changeText: 'changeText',
 				changeState: 'changeState',
+				focus: 'focus',
+				blur: 'blur',
 			},
 			statusField: {
 				tap: 'tap',
@@ -165,6 +171,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		},
 		navigation: {
 			tabChanged: 'ImMobile.Navigation:tabChanged',
+			broadCastEventWithTabChange: 'ImMobile.Navigation:broadCastEventWithChangeTab',
+			changeTab: 'ImMobile.Navigation:changeTab',
 		},
 	});
 

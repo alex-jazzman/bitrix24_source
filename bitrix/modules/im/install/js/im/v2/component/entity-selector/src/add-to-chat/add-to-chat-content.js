@@ -7,6 +7,7 @@ import { ChatService } from 'im.v2.provider.service';
 import { ChatType, EventType, SearchEntityIdTypes } from 'im.v2.const';
 import { ChatSearch } from 'im.v2.component.search.chat-search';
 import { Button as MessengerButton, ButtonSize, ButtonColor } from 'im.v2.component.elements';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import './add-to-chat-content.css';
 
@@ -58,7 +59,7 @@ export const AddToChatContent = {
 		},
 		isChannel(): boolean
 		{
-			return [ChatType.channel, ChatType.openChannel].includes(this.dialog.type);
+			return ChannelManager.isChannel(this.dialogId);
 		},
 		showHistoryOption(): boolean
 		{

@@ -354,6 +354,17 @@ if(!empty($arResult["EXTERNAL_CONTEXT"]))
 	}
 }
 
+if (is_array($_REQUEST['def'] ?? null))
+{
+	foreach($arResult["FIELDS"] as $fieldId => $field)
+	{
+		if (isset($_REQUEST['def'][$fieldId]))
+		{
+			$arResult["FIELDS"][$fieldId]['DEFAULT_VALUE'] = $_REQUEST['def'][$fieldId];
+		}
+	}
+}
+
 if (
 	CLists::isEnabledLockFeature($arResult["IBLOCK_ID"])
 	&& $arParams["CAN_EDIT"]

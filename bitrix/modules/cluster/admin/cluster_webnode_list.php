@@ -31,9 +31,8 @@ if ($arID = $lAdmin->GroupAction())
 			continue;
 		}
 		$ID = intval($ID);
-		switch ($_REQUEST['action'])
+		if ($_REQUEST['action'] === 'delete')
 		{
-		case 'delete':
 			CClusterWebNode::Delete($ID);
 			break;
 		}

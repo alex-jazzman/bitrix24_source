@@ -1,15 +1,14 @@
-import { Extension } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 
 import { Messenger } from 'im.public';
-import { Core } from 'im.v2.application.core';
-import { ChatActionType, LocalStorageKey, ChatType } from 'im.v2.const';
+import { LocalStorageKey, ChatType } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
-import { PermissionManager } from 'im.v2.lib.permission';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 
 import { CallMenu } from './classes/call-menu';
 import { CallTypes } from './types/call-types';
+
+import { hint } from 'ui.vue3.directives.hint';
 
 import './css/call-button.css';
 
@@ -17,6 +16,7 @@ import type { ImModelChat } from 'im.v2.model';
 
 // @vue/component
 export const CallButton = {
+	directives: { hint },
 	props:
 	{
 		dialogId: {
@@ -37,26 +37,6 @@ export const CallButton = {
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
 		},
-		isActive(): boolean
-		{
-			if (
-				this.$store.getters['recent/calls/hasActiveCall'](this.dialogId)
-				&& CallManager.getInstance().getCurrentCallDialogId() === this.dialogId
-			)
-			{
-				return true;
-			}
-
-			if (this.$store.getters['recent/calls/hasActiveCall']())
-			{
-				return false;
-			}
-
-			const chatCanBeCalled = CallManager.getInstance().chatCanBeCalled(this.dialogId);
-			const chatIsAllowedToCall = PermissionManager.getInstance().canPerformAction(ChatActionType.call, this.dialogId);
-
-			return chatCanBeCalled && chatIsAllowedToCall;
-		},
 		isConference(): boolean
 		{
 			return this.dialog.type === ChatType.videoconf;
@@ -66,6 +46,68 @@ export const CallButton = {
 			const locCode = CallTypes[this.lastCallType].locCode;
 
 			return this.loc(locCode);
+		},
+		hasActiveCurrentCall(): boolean
+		{
+			return CallManager
+				.getInstance()
+				.hasActiveCurrentCall(this.dialogId);
+		},
+		hasActiveAnotherCall(): boolean
+		{
+			return CallManager
+				.getInstance()
+				.hasActiveAnotherCall(this.dialogId);
+		},
+		isActive(): boolean
+		{
+			if (
+				this.hasActiveCurrentCall
+			)
+			{
+				return true;
+			}
+
+			if (this.hasActiveAnotherCall)
+			{
+				return false;
+			}
+
+			return CallManager
+				.getInstance()
+				.chatCanBeCalled(this.dialogId);
+		},
+		userLimit(): number
+		{
+			return CallManager
+				.getInstance()
+				.getCallUserLimit();
+		},
+		isChatUserLimitExceeded(): boolean
+		{
+			return CallManager
+				.getInstance()
+				.isChatUserLimitExceeded(this.dialogId);
+		},
+		hintContent(): Object | null
+		{
+			if (this.isChatUserLimitExceeded)
+			{
+				return {
+					text: `В звонке могут участвовать не больше ${this.userLimit} человек`,
+					popupOptions: {
+						bindOptions: {
+							position: 'bottom',
+						},
+						angle: { position: 'top' },
+						targetContainer: document.body,
+						offsetLeft: 63,
+						offsetTop: 0,
+					},
+				};
+			}
+
+			return null;
 		},
 	},
 	created()
@@ -132,7 +174,7 @@ export const CallButton = {
 		getLastCallChoice(): string
 		{
 			const result = LocalStorageManager.getInstance().get(LocalStorageKey.lastCallType, CallTypes.video.id);
-			if (result === CallTypes.beta.id && !this.isBitrixCallEnabled())
+			if (result === CallTypes.beta.id)
 			{
 				return CallTypes.video.id;
 			}
@@ -146,15 +188,7 @@ export const CallButton = {
 		},
 		shouldShowMenu(): boolean
 		{
-			return this.isActive || this.isBitrixCallEnabled();
-		},
-		isBitrixCallEnabled(): boolean
-		{
-			// TODO remove this after release call beta
-			// const settings = Extension.getSettings('im.v2.component.content.chat');
-			// return settings.get('isBitrixCallEnabled');
-
-			return false;
+			return this.isActive;
 		},
 		loc(phraseCode: string): string
 		{
@@ -176,6 +210,7 @@ export const CallButton = {
 			v-else
 			class="bx-im-chat-header-call-button__scope bx-im-chat-header-call-button__container"
 			:class="{'--disabled': !isActive}"
+			v-hint="hintContent"
 			@click="onButtonClick"
 		>
 			<div class="bx-im-chat-header-call-button__text">

@@ -1,7 +1,13 @@
 import { EventEmitter } from 'main.core.events';
 import type { BaseEvent } from 'main.core.events';
 
-import { DateFilterField, DashboardDateFilterField, KeyInfoField, UserNotificationField } from './entities/index';
+import {
+	DateFilterField,
+	DashboardDateFilterField,
+	KeyInfoField,
+	UserNotificationField,
+	DashboardOwnerField,
+} from './entities/index';
 
 export class FieldFactory
 {
@@ -25,6 +31,8 @@ export class FieldFactory
 				return KeyInfoField.create(controlId, settings);
 			case 'userNotificationSelector':
 				return UserNotificationField.create(controlId, settings);
+			case 'ownerSelector':
+				return DashboardOwnerField.create(controlId, settings);
 			default:
 				return null;
 		}

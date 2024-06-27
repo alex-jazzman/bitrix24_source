@@ -17,10 +17,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			continue;
 		}
 
+		$title = htmlspecialcharsbx($item['TEXT'] ?? '', ENT_COMPAT, false);
 		$link = $item['PARAMS']['real_link'] ?? $item['LINK'];
 		$link = htmlspecialcharsbx($link, ENT_COMPAT, false);
 
-		$title = htmlspecialcharsbx($item['TEXT'], ENT_COMPAT, false);
+		if (empty($title) && empty($link))
+		{
+			continue;
+		}
+
 		$depthLevel = $item['DEPTH_LEVEL'];
 		$hasChildren =
 			isset($arResult['MAP_ITEMS'][$index + 1])

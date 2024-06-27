@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
+use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Filter\FieldsTransform\UserBasedField;
 use Bitrix\Crm\Format\PersonNameFormatter;
@@ -706,6 +708,13 @@ abstract class Kanban
 		];
 		$filterHistory = ['STAGE_ID_FROM_HISTORY', 'STAGE_ID_FROM_SUPPOSED_HISTORY', 'STAGE_SEMANTIC_ID_FROM_HISTORY'];
 		$filterUtm = ['UTM_SOURCE', 'UTM_MEDIUM', 'UTM_CAMPAIGN', 'UTM_CONTENT', 'UTM_TERM'];
+		/**
+		 * possible subtype values for example:
+		 *   null | employee | string | url | address | money | integer | double | boolean | datetime |
+		 *   date | enumeration | crm_status | iblock_element | iblock_section | crm
+		 * may also take other value
+		 */
+		$filterSubtype = ['money'];
 		//from main.filter
 		$grid = $entity->getFilterOptions();
 
@@ -825,7 +834,11 @@ abstract class Kanban
 					{
 						$filter['=%' . $key] = $search[$key] . '%';
 					}
-					elseif(in_array($key, array_merge($filterHistory, $filterUtm), true))
+					elseif(in_array($key, array_merge($filterHistory, $filterUtm), true) ||
+						(
+							isset($item['subtype']) && in_array($item['subtype'], $filterSubtype, true)
+						)
+					)
 					{
 						$filter['%' . $key] = $search[$key];
 					}
@@ -1354,6 +1367,14 @@ abstract class Kanban
 
 		$lastActivityInfo = $this->getEntity()->prepareMultipleItemsLastActivity($rows);
 		$pingSettingsInfo = $this->getEntity()->prepareMultipleItemsPingSettings($this->entity->getTypeId());
+		$calendarSettings = (new CalendarSettingsProvider())->fetchForJsComponent();
+
+		$useTodoEditorV2 = \Bitrix\Crm\Settings\Crm::isTimelineToDoUseV2Enabled();
+		$colorSettings = (
+			$useTodoEditorV2
+				? (new ColorSettingsProvider())->fetchForJsComponent()
+				: null
+		);
 
 		$activeAutomationDebugEntityIds = \CCrmBizProcHelper::getActiveDebugEntityIds($this->entity->getTypeId());
 
@@ -1418,13 +1439,8 @@ abstract class Kanban
 					{
 						continue;
 					}
-					if (
-						isset($this->requiredFields[$fieldName])
-						&& !$fieldValue
-						&& $fieldValue !== '0'
-						&& $fieldValue !== 0
-						&& $fieldValue !== 0.0
-					)
+
+					if ($this->isRequiredFieldEmpty($fieldName, $fieldValue))
 					{
 						foreach ($this->requiredFields[$fieldName] as $stageId)
 						{
@@ -1432,6 +1448,7 @@ abstract class Kanban
 							{
 								$required[$stageId] = [];
 							}
+
 							$required[$stageId][] = $fieldName;
 						}
 					}
@@ -1504,6 +1521,9 @@ abstract class Kanban
 				'sort' => $this->getEntity()->prepareItemSort($rows[$rowId]),
 				'lastActivity' => $lastActivityInfo[$row['ID']] ?? null,
 				'pingSettings' => isset($row['CATEGORY_ID']) ? $pingSettingsInfo[$row['CATEGORY_ID']] : null,
+				'colorSettings' => $colorSettings,
+				'calendarSettings' => $calendarSettings,
+				'useTodoEditorV2' => $useTodoEditorV2,
 				'draggable' => (bool)($row['DRAGGABLE'] ?? true),
 			];
 			$result[$rowId] = array_merge($result[$rowId], $this->prepareAdditionalFields($row));
@@ -1542,6 +1562,27 @@ abstract class Kanban
 			'ITEMS' => $result,
 			'RESTRICTED_VALUE_CLICK_CALLBACK' => $restrictedValueClickCallback,
 		];
+	}
+
+	protected function isRequiredFieldEmpty(string $fieldName, mixed $fieldValue): bool
+	{
+		if (!isset($this->requiredFields[$fieldName]))
+		{
+			return false;
+		}
+
+		$field = $this->entity->getField($fieldName);
+		if ($field === null)
+		{
+			return
+				!$fieldValue
+				&& $fieldValue !== '0'
+				&& $fieldValue !== 0
+				&& $fieldValue !== 0.0
+			;
+		}
+
+		return $field->isValueEmpty($fieldValue);
 	}
 
 	protected function prepareAdditionalFields(array $item): array

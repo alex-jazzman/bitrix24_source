@@ -29,7 +29,7 @@ if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 
 if (isset($_REQUEST["IFRAME"]) && $isIFrame)
 {
-	$APPLICATION->RestartBuffer(); //ñáðàñûâàåì âåñü âûâîä
+	$APPLICATION->RestartBuffer(); //ÑÐ±Ñ€Ð°ÑÑ‹Ð²Ð°ÐµÐ¼ Ð²ÐµÑÑŒ Ð²Ñ‹Ð²Ð¾Ð´
 	?>
 	<!DOCTYPE html>
 	<html>
@@ -140,7 +140,7 @@ $APPLICATION->IncludeComponent(
 ?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		new BX.Tasks.TasksReportEffectiveDetail(<?=Json::encode([
 			'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],

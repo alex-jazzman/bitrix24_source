@@ -6,7 +6,7 @@
 
 	--im-content-create-chat__font-color_section: var(--im-color-palette-gray-80);
 	--im-content-create-chat__font-color_section-hover: var(--im-color-palette-gray-90);
-	--im-content-create-chat__font-color_opened-section: var(--im-color-palette-black-base);
+	--im-content-create-chat__font-color_section-heading: var(--im-color-palette-gray-90);
 }
 
 .bx-im-content-create-chat__section {
@@ -56,6 +56,18 @@
 	opacity: 0.7;
 }
 
+.bx-im-content-create-chat__section-header {
+	display: flex;
+	align-items: center;
+	margin-bottom: 12px;
+}
+
+.bx-im-content-create-chat__section-heading {
+	font: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	color: var(--im-content-create-chat__font-color_section-heading);
+	font-weight: var(--im-font-weight-medium);
+}
+
 .bx-im-content-create-chat__section_text {
 	font: var(--im-font-size-lg)/var(--im-font-line-height-reset) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-medium);
@@ -64,10 +76,6 @@
 
 .bx-im-content-create-chat__section:hover .bx-im-content-create-chat__section_text {
 	color: var(--im-content-create-chat__font-color_section-hover);
-}
-
-.bx-im-content-create-chat__section.--active .bx-im-content-create-chat__section_text {
-	color: var(--im-content-create-chat__font-color_opened-section);
 }
 
 

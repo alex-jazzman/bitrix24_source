@@ -24,6 +24,7 @@ jn.define('im/messenger/lib/element/dialog/message/deleted', (require, exports, 
 			this.setFontColor('#959CA4');
 			this.setShowTail(true);
 			this.forwardText = '';
+			this.setUserNameColor(modelMessage.authorId);
 		}
 
 		getType()

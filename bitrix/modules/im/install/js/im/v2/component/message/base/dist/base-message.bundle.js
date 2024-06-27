@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_application_core,im_v2_lib_parser,im_v2_component_message_elements,im_v2_const,im_v2_lib_permission) {
+(function (exports,im_v2_application_core,im_v2_lib_parser,im_v2_component_message_elements,im_v2_const,im_v2_lib_permission,im_v2_lib_channel) {
 	'use strict';
 
 	// @vue/component
@@ -66,7 +66,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return !this.isSystemMessage && !this.isSelfMessage;
 	    },
 	    isChannelPost() {
-	      return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(this.dialog.type);
+	      return im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
 	    },
 	    showMessageAngle() {
 	      const hasAfterContent = Boolean(this.$slots['after-message']);
@@ -144,5 +144,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.BaseMessage = BaseMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Message,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=base-message.bundle.js.map

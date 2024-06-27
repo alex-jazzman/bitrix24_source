@@ -15,7 +15,7 @@ export const PromoPopup = {
 		config(): PopupOptions
 		{
 			return {
-				width: 492,
+				width: 468,
 				padding: 0,
 				overlay: true,
 				autoHide: false,

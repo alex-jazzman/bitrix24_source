@@ -18,6 +18,7 @@ export const ChatType = Object.freeze({
 	copilot: 'copilot',
 	channel: 'channel',
 	openChannel: 'openChannel',
+	generalChannel: 'generalChannel',
 	comment: 'comment',
 });
 

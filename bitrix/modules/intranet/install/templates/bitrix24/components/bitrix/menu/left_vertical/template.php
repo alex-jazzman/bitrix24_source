@@ -10,7 +10,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 CJSCore::Init([
 	'main.core',
 	'ui.draganddrop.draggable',
-	'ui.dialogs.messagebox']);
+	'ui.dialogs.messagebox',
+	'ui.banner-dispatcher']);
 $isCompositeMode = defined("USE_HTML_STATIC_CACHE") ? true : false;
 $this->setFrameMode(true);
 

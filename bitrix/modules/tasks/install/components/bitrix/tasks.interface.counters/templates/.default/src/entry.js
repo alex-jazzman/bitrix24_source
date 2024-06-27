@@ -30,7 +30,9 @@ export class Counters
 				'sonet_total_comments',
 				'groups_total_expired',
 				'groups_total_comments',
-				'scrum_total_comments'
+				'scrum_total_comments',
+				'flow_total_expired',
+				'flow_total_comments',
 			],
 			other: [
 				'project_expired',
@@ -41,7 +43,7 @@ export class Counters
 				'groups_foreign_comments',
 				'sonet_foreign_expired',
 				'sonet_foreign_comments',
-				'scrum_foreign_comments'
+				'scrum_foreign_comments',
 			],
 			additional: [
 				'muted_new_comments',
@@ -59,6 +61,7 @@ export class Counters
 				'groups_foreign_expired',
 				'sonet_total_expired',
 				'sonet_foreign_expired',
+				'flow_total_expired',
 			],
 			comment: [
 				'new_comments',
@@ -75,7 +78,8 @@ export class Counters
 				'sonet_total_comments',
 				'sonet_foreign_comments',
 				'scrum_total_comments',
-				'scrum_foreign_comments'
+				'scrum_foreign_comments',
+				'flow_total_comments',
 			],
 			project: [
 				'project_expired',

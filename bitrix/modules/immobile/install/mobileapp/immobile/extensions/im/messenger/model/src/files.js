@@ -63,6 +63,26 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			},
 
 			/**
+			 * @function filesModel/getListByMessageId
+			 * @return {FilesModelState[] || []}
+			 */
+			getListByMessageId: (state, getters, rootState, rootGetters) => (messageId) => {
+				const message = rootGetters['messagesModel/getById'](messageId);
+				if (!message.id)
+				{
+					return [];
+				}
+
+				const fileIdList = message.files;
+				if (!Type.isArrayFilled(fileIdList))
+				{
+					return [];
+				}
+
+				return rootGetters['filesModel/getByIdList'](fileIdList);
+			},
+
+			/**
 			 * @function filesModel/getByIdList
 			 * @return {FilesModelState[]}
 			 */

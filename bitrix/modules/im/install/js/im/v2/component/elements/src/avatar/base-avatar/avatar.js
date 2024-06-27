@@ -1,5 +1,6 @@
 import { ChatType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import 'ui.fonts.opensans';
 import './avatar.css';
@@ -81,7 +82,7 @@ export const Avatar = {
 		},
 		isChannel(): boolean
 		{
-			return [ChatType.channel, ChatType.openChannel].includes(this.dialog.type);
+			return ChannelManager.isChannel(this.dialogId);
 		},
 		isSpecialType(): boolean
 		{
@@ -125,7 +126,8 @@ export const Avatar = {
 		},
 		showAvatarLetters(): boolean
 		{
-			if (this.isChannel)
+			const SPECIAL_TYPES_WITH_LETTERS = [ChatType.openChannel, ChatType.channel];
+			if (SPECIAL_TYPES_WITH_LETTERS.includes(this.dialog.type))
 			{
 				return true;
 			}

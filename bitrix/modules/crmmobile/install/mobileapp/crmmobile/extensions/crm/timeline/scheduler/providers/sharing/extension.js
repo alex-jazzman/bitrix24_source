@@ -600,23 +600,6 @@ jn.define('crm/timeline/scheduler/providers/sharing', (require, exports, module)
 			return (height > 800 ? 65 : 90);
 		}
 
-		static getMenuBadges()
-		{
-			const hideAfterDate = Date.now(2023, 12, 31);
-			if (Date.now() > hideAfterDate)
-			{
-				return [];
-			}
-
-			return [
-				{
-					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_BADGE_NEW_TITLE'),
-					backgroundColor: AppTheme.colors.accentBrandBlue,
-					color: AppTheme.colors.baseWhiteFixed,
-				},
-			];
-		}
-
 		render()
 		{
 			return View(

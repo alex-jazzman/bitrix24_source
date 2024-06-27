@@ -513,7 +513,7 @@ if ($arResult['PERM_CAN_EDIT'])
 		)
 	);
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 		<?php if (!$arResult['PERM_CAN_EDIT']) :?>
 				BX.SidePanel.Instance.bindAnchors({

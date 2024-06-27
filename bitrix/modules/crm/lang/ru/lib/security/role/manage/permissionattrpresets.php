@@ -1,0 +1,10 @@
+<?php
+
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_"] = "Нет доступа";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_X"] = "Все";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_A"] = "Свои";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_D"] = "Свои + своего отдела";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_F"] = "Свои + своего отдела + подотделов";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_O"] = "Все открытые";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_AUTOMATION_NONE"] = "Чтение";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_AUTOMATION_ALL"] = "Изменение";

@@ -138,18 +138,30 @@ class Quote extends Factory
 			Item\Quote::FIELD_NAME_CONTENT => [
 				'TYPE' => Field::TYPE_TEXT,
 				'VALUE_TYPE' => Field::VALUE_TYPE_BB,
+				// Uncomment these lines to use a new text editor
+				// 'SETTINGS' => [
+				// 	'isFlexibleContentType' => true,
+				// ],
 				'ATTRIBUTES' => [],
 				'CLASS' => Field\Comments::class,
 			],
 			Item\Quote::FIELD_NAME_TERMS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'VALUE_TYPE' => Field::VALUE_TYPE_BB,
+				// Uncomment these lines to use a new text editor
+				// 'SETTINGS' => [
+				// 	'isFlexibleContentType' => true,
+				// ],
 				'ATTRIBUTES' => [],
 				'CLASS' => Field\Comments::class,
 			],
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'VALUE_TYPE' => Field::VALUE_TYPE_BB,
+				// Uncomment these lines to use a new text editor
+				// 'SETTINGS' => [
+				// 	'isFlexibleContentType' => true,
+				// ],
 				'ATTRIBUTES' => [],
 				'CLASS' => Field\Comments::class,
 			],
@@ -452,6 +464,10 @@ class Quote extends Factory
 				Operation::ACTION_AFTER_SAVE,
 				$this->getProductRowsSaveEventAction()
 			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenAddingEntity(),
+			)
 		;
 	}
 
@@ -486,6 +502,10 @@ class Quote extends Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				$this->getProductRowsSaveEventAction()
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenUpdatingEntity(),
 			)
 		;
 	}

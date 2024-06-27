@@ -11,6 +11,7 @@ jn.define('im/messenger/provider/service', (require, exports, module) => {
 	const { DiskService } = require('im/messenger/provider/service/disk');
 	const { ReactionService } = require('im/messenger/provider/service/reaction');
 	const { QueueService } = require('im/messenger/provider/service/queue');
+	const { ComponentCodeService } = require('im/messenger/provider/service/component-code');
 	const { SyncFillerChat } = require('im/messenger/provider/service/classes/sync/fillers/sync-filler-chat');
 	const { SyncFillerCopilot } = require('im/messenger/provider/service/classes/sync/fillers/sync-filler-copilot');
 
@@ -24,6 +25,7 @@ jn.define('im/messenger/provider/service', (require, exports, module) => {
 		DiskService,
 		ReactionService,
 		QueueService,
+		ComponentCodeService,
 		SyncFillerChat,
 		SyncFillerCopilot,
 	};

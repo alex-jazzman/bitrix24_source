@@ -6,6 +6,7 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\DealCategoryChangeError;
+use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
@@ -14,7 +15,9 @@ use Bitrix\Crm\FieldContext\ValueFiller;
 use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\History\DealStageHistoryEntry;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
+use Bitrix\Crm\Integration\Im\ProcessEntity\NotificationManager;
 use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
 use Bitrix\Crm\Service\Container;
@@ -27,6 +30,7 @@ use Bitrix\Crm\Statistics\LeadConversionStatisticsEntry;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Main\Localization\Loc;
 
 class CAllCrmDeal
 {
@@ -1508,7 +1512,7 @@ class CAllCrmDeal
 			$sSql = $DB->TopSql($sSql, $nPageTop);
 		}
 
-		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$obRes = $DB->Query($sSql);
 		$obRes->SetUserFields($USER_FIELD_MANAGER->GetUserFields(self::$sUFEntityID));
 		return $obRes;
 	}
@@ -2020,7 +2024,7 @@ class CAllCrmDeal
 				$sUpdate = $DB->PrepareUpdate('b_crm_deal', array('TITLE' => $arFields['TITLE']));
 				if($sUpdate <> '')
 				{
-					$DB->Query("UPDATE b_crm_deal SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+					$DB->Query("UPDATE b_crm_deal SET {$sUpdate} WHERE ID = {$ID}");
 				};
 			}
 
@@ -2237,29 +2241,20 @@ class CAllCrmDeal
 
 				$logEventID = CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, ['CURRENT_USER' => $userID]);
 
-				if (
-					$logEventID !== false
-					&& $assignedByID != $createdByID
-					&& CModule::IncludeModule("im")
-				)
+				if ($logEventID !== false && !$isRestoration)
 				{
-					$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $ID);
-					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+					$difference = Crm\Comparer\ComparerBase::compareEntityFields([], [
+						Item::FIELD_NAME_ID => $ID,
+						Item::FIELD_NAME_TITLE => $arFields['TITLE'],
+						Item::FIELD_NAME_CREATED_BY => $createdByID,
+						Item::FIELD_NAME_ASSIGNED => $assignedByID,
+						Item::FIELD_NAME_OBSERVERS => $observerIDs,
+					]);
 
-					$arMessageFields = array(
-						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-						"TO_USER_ID" => $assignedByID,
-						"FROM_USER_ID" => $createdByID,
-						"NOTIFY_TYPE" => IM_NOTIFY_FROM,
-						"NOTIFY_MODULE" => "crm",
-						"LOG_ID" => $logEventID,
-						//"NOTIFY_EVENT" => "deal_add",
-						"NOTIFY_EVENT" => "changeAssignedBy",
-						"NOTIFY_TAG" => "CRM|DEAL_RESPONSIBLE|".$ID,
-						"NOTIFY_MESSAGE" => GetMessage("CRM_DEAL_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($arFields['TITLE'])."</a>")),
-						"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_DEAL_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['TITLE'])))." (".$serverName.$url.")"
+					NotificationManager::getInstance()->sendAllNotificationsAboutAdd(
+						CCrmOwnerType::Deal,
+						$difference,
 					);
-					CIMNotify::Add($arMessageFields);
 				}
 			}
 
@@ -2291,7 +2286,7 @@ class CAllCrmDeal
 
 					if ($deadline)
 					{
-						\Bitrix\Crm\Activity\Entity\ToDo::createWithDefaultDescription(
+						\Bitrix\Crm\Activity\Entity\ToDo::createWithDefaultSubjectAndDescription(
 							\CCrmOwnerType::Deal,
 							$ID,
 							$deadline
@@ -3191,7 +3186,7 @@ class CAllCrmDeal
 
 			if ($sUpdate <> '')
 			{
-				$DB->Query("UPDATE b_crm_deal SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+				$DB->Query("UPDATE b_crm_deal SET {$sUpdate} WHERE ID = {$ID}");
 				$bResult = true;
 			}
 
@@ -3276,7 +3271,6 @@ class CAllCrmDeal
 					\CCrmOwnerType::Deal,
 					$ID
 				);
-
 			}
 			//endregion
 
@@ -3441,6 +3435,22 @@ class CAllCrmDeal
 				);
 			}
 
+			$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Deal, $ID, false);
+			$modifiedByID = (int)$arFields['MODIFY_BY_ID'];
+			$difference = Crm\Comparer\ComparerBase::compareEntityFields([],[
+				Item::FIELD_NAME_ID => $ID,
+				Item::FIELD_NAME_TITLE => $title,
+				Item::FIELD_NAME_UPDATED_BY => $modifiedByID,
+			]);
+
+			if (!empty($addedObserverIDs) || !empty($removedObserverIDs))
+			{
+				$difference
+					->setPreviousValue(Item::FIELD_NAME_OBSERVERS, $originalObserverIDs ?? [])
+					->setCurrentValue(Item::FIELD_NAME_OBSERVERS, $observerIDs ?? [])
+				;
+			}
+
 			if($bResult && $bCompare && $registerSonetEvent && !empty($sonetEventData))
 			{
 				//region Preparation of Parent Contact IDs
@@ -3453,7 +3463,6 @@ class CAllCrmDeal
 				$oldCompanyID = isset($arRow['COMPANY_ID']) ? (int)$arRow['COMPANY_ID'] : 0;
 				$companyID = $newCompanyID > 0 ? $newCompanyID : $oldCompanyID;
 
-				$modifiedByID = (int)$arFields['MODIFY_BY_ID'];
 				foreach($sonetEventData as &$sonetEvent)
 				{
 					$sonetEventType = $sonetEvent['TYPE'];
@@ -3489,59 +3498,28 @@ class CAllCrmDeal
 
 					if (
 						$logEventID !== false
-						&& CModule::IncludeModule("im")
+						&& CModule::IncludeModule('im')
 					)
 					{
-						$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Deal, $ID, false);
 						$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $ID);
 						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 
-						if (
-							$sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
-							&& $sonetEventFields['PARAMS']['FINAL_RESPONSIBLE_ID'] != $modifiedByID
-						)
+						if ($sonetEvent['TYPE'] === CCrmLiveFeedEvent::Responsible)
 						{
-							$arMessageFields = array(
-								"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-								"TO_USER_ID" => $sonetEventFields['PARAMS']['FINAL_RESPONSIBLE_ID'],
-								"FROM_USER_ID" => $modifiedByID,
-								"NOTIFY_TYPE" => IM_NOTIFY_FROM,
-								"NOTIFY_MODULE" => "crm",
-								"LOG_ID" => $logEventID,
-								//"NOTIFY_EVENT" => "deal_update",
-								"NOTIFY_EVENT" => "changeAssignedBy",
-								"NOTIFY_TAG" => "CRM|DEAL_RESPONSIBLE|".$ID,
-								"NOTIFY_MESSAGE" => GetMessage("CRM_DEAL_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>")),
-								"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_DEAL_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($title)))." (".$serverName.$url.")"
-							);
-
-							CIMNotify::Add($arMessageFields);
+							$difference
+								->setPreviousValue(
+									Item::FIELD_NAME_ASSIGNED,
+									(int)$sonetEventFields['PARAMS']['START_RESPONSIBLE_ID'],
+								)
+								->setCurrentValue(
+									Item::FIELD_NAME_ASSIGNED,
+									(int)$sonetEventFields['PARAMS']['FINAL_RESPONSIBLE_ID'],
+								)
+							;
 						}
 
 						if (
-							$sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
-							&& $sonetEventFields['PARAMS']['START_RESPONSIBLE_ID'] != $modifiedByID
-						)
-						{
-							$arMessageFields = array(
-								"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-								"TO_USER_ID" => $sonetEventFields['PARAMS']['START_RESPONSIBLE_ID'],
-								"FROM_USER_ID" => $modifiedByID,
-								"NOTIFY_TYPE" => IM_NOTIFY_FROM,
-								"NOTIFY_MODULE" => "crm",
-								"LOG_ID" => $logEventID,
-								//"NOTIFY_EVENT" => "deal_update",
-								"NOTIFY_EVENT" => "changeAssignedBy",
-								"NOTIFY_TAG" => "CRM|DEAL_RESPONSIBLE|".$ID,
-								"NOTIFY_MESSAGE" => GetMessage("CRM_DEAL_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>")),
-								"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_DEAL_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($title)))." (".$serverName.$url.")"
-							);
-
-							CIMNotify::Add($arMessageFields);
-						}
-
-						if (
-							$sonetEvent['TYPE'] == CCrmLiveFeedEvent::Progress
+							$sonetEvent['TYPE'] === CCrmLiveFeedEvent::Progress
 							&& $sonetEventFields['PARAMS']['START_STATUS_ID']
 							&& $sonetEventFields['PARAMS']['FINAL_STATUS_ID']
 
@@ -3586,8 +3564,14 @@ class CAllCrmDeal
 
 					unset($sonetEventFields);
 				}
+
 				unset($sonetEvent);
 			}
+
+			NotificationManager::getInstance()->sendAllNotificationsAboutUpdate(
+				CCrmOwnerType::Deal,
+				$difference,
+			);
 
 			//region After update event
 			if($bResult && $enableSystemEvents)
@@ -3616,6 +3600,16 @@ class CAllCrmDeal
 				$scope = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getScope();
 				$filler = new ValueFiller(CCrmOwnerType::Deal, $ID, $scope);
 				$filler->fill($options['CURRENT_FIELDS'], $arFields);
+
+				if (
+					isset($arRow['STAGE_ID'])
+					&& isset($currentFields['STAGE_ID'])
+					&& ComparerBase::isMovedToFinalStage(CCrmOwnerType::Deal, $arRow['STAGE_ID'], $currentFields['STAGE_ID'])
+				)
+				{
+					$item = Container::getInstance()->getFactory(CCrmOwnerType::Deal)->getItem($ID);
+					(new Bitrix\Crm\Service\Operation\Action\DeleteEntityBadges())->process($item);
+				}
 			}
 
 			if ($bResult && !$syncStageSemantics)
@@ -3684,11 +3678,12 @@ class CAllCrmDeal
 			->checkDeletePermissions(CCrmOwnerType::Deal, $ID, $categoryID)
 		;
 
-		if (
-			$this->bCheckPermission
-			&& !$hasDeletePerm
-		)
+		if ($this->bCheckPermission && !$hasDeletePerm)
 		{
+			$this->LAST_ERROR = Loc::getMessage('CRM_DEAL_NO_PERMISSIONS_TO_DELETE', [
+				'#DEAL_NAME#' => htmlspecialcharsbx($arFields['TITLE'] ?? $arFields['ID']),
+			]);
+
 			return false;
 		}
 
@@ -3730,7 +3725,7 @@ class CAllCrmDeal
 			\Bitrix\Crm\Recycling\DealController::getInstance()->moveToBin($ID, array('FIELDS' => $arFields));
 		}
 
-		$dbRes = $DB->Query("DELETE FROM b_crm_deal WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$dbRes = $DB->Query("DELETE FROM b_crm_deal WHERE ID = {$ID}");
 		if (is_object($dbRes) && $dbRes->AffectedRowsCount() > 0)
 		{
 			if(defined('BX_COMP_MANAGED_CACHE'))
@@ -4795,7 +4790,7 @@ class CAllCrmDeal
 				$arFilter['=ORIGINATOR_ID'] = $v !== '__INTERNAL' ? $v : null;
 				unset($arFilter[$k]);
 			}
-			elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			elseif (preg_match('/(.*)_from$/iu', $k, $arMatch))
 			{
 				if($v <> '')
 				{
@@ -4803,11 +4798,11 @@ class CAllCrmDeal
 				}
 				unset($arFilter[$k]);
 			}
-			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 			{
 				if($v <> '')
 				{
-					if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+					if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 					{
 						$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 					}
@@ -5397,17 +5392,13 @@ class CAllCrmDeal
 		if($ownerTypeID === CCrmOwnerType::Contact)
 		{
 			$DB->Query(
-				"UPDATE {$tableName} SET CONTACT_ID = {$newID} WHERE CONTACT_ID = {$oldID}",
-				false,
-				'File: '.__FILE__.'<br>Line: '.__LINE__
+				"UPDATE {$tableName} SET CONTACT_ID = {$newID} WHERE CONTACT_ID = {$oldID}"
 			);
 		}
 		elseif($ownerTypeID === CCrmOwnerType::Company)
 		{
 			$DB->Query(
-				"UPDATE {$tableName} SET COMPANY_ID = {$newID} WHERE COMPANY_ID = {$oldID}",
-				false,
-				'File: '.__FILE__.'<br>Line: '.__LINE__
+				"UPDATE {$tableName} SET COMPANY_ID = {$newID} WHERE COMPANY_ID = {$oldID}"
 			);
 		}
 	}
@@ -5708,19 +5699,19 @@ class CAllCrmDeal
 	public static function ProcessContactDeletion($contactID)
 	{
 		global $DB;
-		$DB->Query("UPDATE b_crm_deal SET CONTACT_ID = NULL WHERE CONTACT_ID = {$contactID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$DB->Query("UPDATE b_crm_deal SET CONTACT_ID = NULL WHERE CONTACT_ID = {$contactID}");
 
 		\Bitrix\Crm\Binding\DealContactTable::unbindAllDeals($contactID);
 	}
 	public static function ProcessCompanyDeletion($companyID)
 	{
 		global $DB;
-		$DB->Query("UPDATE b_crm_deal SET COMPANY_ID = NULL WHERE COMPANY_ID = {$companyID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$DB->Query("UPDATE b_crm_deal SET COMPANY_ID = NULL WHERE COMPANY_ID = {$companyID}");
 	}
 	public static function ProcessLeadDeletion($leadID)
 	{
 		global $DB;
-		$DB->Query("UPDATE b_crm_deal SET LEAD_ID = NULL WHERE LEAD_ID = {$leadID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$DB->Query("UPDATE b_crm_deal SET LEAD_ID = NULL WHERE LEAD_ID = {$leadID}");
 	}
 	/**
 	 * @deprecated

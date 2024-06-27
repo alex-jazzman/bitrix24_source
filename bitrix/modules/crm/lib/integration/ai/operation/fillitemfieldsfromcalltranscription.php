@@ -7,6 +7,7 @@ use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Entity\FieldDataProvider;
 use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\Config;
 use Bitrix\Crm\Integration\AI\Dto\FillItemFieldsFromCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\MultipleFieldFillPayload;
 use Bitrix\Crm\Integration\AI\Dto\SingleFieldFillPayload;
@@ -17,19 +18,16 @@ use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\ExtractFieldsEvent;
-use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Timeline\AI\Call\Controller;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Security\Random;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\UserField\Types\DoubleType;
 use Bitrix\Main\UserField\Types\IntegerType;
 use Bitrix\Main\UserField\Types\StringType;
@@ -168,15 +166,32 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		return Json::encode($fields);
 	}
 
+	final protected function getContextLanguageId(): string
+	{
+		$item = Container::getInstance()
+			->getFactory($this->target->getEntityTypeId())
+			?->getItem($this->target->getEntityId())
+		;
+
+		if ($item)
+		{
+			$categoryId = $item->isCategoriesSupported() ? $item->getCategoryId() : null;
+
+			return Config::getLanguageId(
+				$this->userId,
+				$this->target->getEntityTypeId(),
+				$categoryId
+			);
+		}
+
+		return parent::getContextLanguageId();
+	}
+
 	protected static function extractPayloadFromAIResult(\Bitrix\AI\Result $result, EO_Queue $job): Dto
 	{
 		try
 		{
 			$prettifiedData = $result->getPrettifiedData() ?: '';
-			if (!Application::getInstance()->isUtfMode())
-			{
-				$prettifiedData = Encoding::convertEncoding($prettifiedData, \Bitrix\Main\Context::getCurrent()?->getCulture()?->getCharset(), 'UTF-8');
-			}
 			$json = Json::decode($prettifiedData);
 		}
 		catch (ArgumentException)
@@ -336,9 +351,6 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			$result->getUserId(),
 		);
 
-		$atListOneFieldIsApplied = false;
-		$commentFieldIsApplied = false;
-
 		foreach ($payload->singleFields as $singleField)
 		{
 			if (
@@ -349,7 +361,6 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			{
 				$item->set($singleField->name, $singleField->aiValue);
 				$singleField->isApplied = true;
-				$atListOneFieldIsApplied = true;
 			}
 		}
 
@@ -366,7 +377,6 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 				{
 					$item->set($multipleField->name, array_merge($previousValue, $multipleField->aiValues));
 					$multipleField->isApplied = true;
-					$atListOneFieldIsApplied = true;
 				}
 			}
 		}
@@ -374,7 +384,6 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 		if (!empty($payload->unallocatedData) && $item->hasField(Item::FIELD_NAME_COMMENTS))
 		{
 			$item->setComments(self::appendComment((string)$item->getComments(), $payload->unallocatedData));
-			$commentFieldIsApplied = true;
 		}
 
 		$context =
@@ -407,22 +416,12 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 			}
 
 			$activityId = self::getParentActivityId($result);
-			if ($atListOneFieldIsApplied)
-			{
-				self::sendCallParsingAnalyticsEvent(
-					$activityId,
-					Dictionary::STATUS_SUCCESS_FIELDS,
-					$result->isManualLaunch(),
-				);
-			}
-			elseif ($commentFieldIsApplied)
-			{
-				self::sendCallParsingAnalyticsEvent(
-					$activityId,
-					Dictionary::STATUS_SUCCESS_COMMENT,
-					$result->isManualLaunch(),
-				);
-			}
+			// send 'main scenario ended' event
+			self::sendCallParsingAnalyticsEvent(
+				$result,
+				$activityId,
+				JobRepository::getInstance()->getTotalFillItemFromCallRecordingScenarioDuration($result->getJobId()),
+			);
 
 			$saveResult = JobRepository::getInstance()->updateFillItemFieldsFromCallTranscriptionResult($result);
 
@@ -567,7 +566,10 @@ class FillItemFieldsFromCallTranscription extends AbstractOperation
 
 			if ($withSendAnalytics)
 			{
-				self::sendCallParsingAnalyticsEvent($activityId, Dictionary::STATUS_ERROR_GPT, $result->isManualLaunch());
+				self::sendCallParsingAnalyticsEvent(
+					$result,
+					$activityId
+				);
 			}
 		}
 	}

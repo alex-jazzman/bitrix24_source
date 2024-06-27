@@ -617,7 +617,7 @@ else
 	$lAdmin->DisplayList();
 
 	?>
-	<script language="JavaScript">
+	<script>
 		BX.message({
 			SALE_DSE_CHOOSE_GROUP_TITLE: '<?=Loc::getMessage("SALE_DSE_CHOOSE_GROUP_TITLE")?>',
 			SALE_DSE_CHOOSE_GROUP_HEAD: '<?=Loc::getMessage("SALE_DSE_CHOOSE_GROUP_HEAD")?>',

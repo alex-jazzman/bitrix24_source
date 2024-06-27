@@ -36,6 +36,9 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    key: "createItem",
 	    value: function createItem() {
 	      var _this2 = this;
+	      if (!this.canCreateTag()) {
+	        return;
+	      }
 	      var tagSelector = this.getDialog().getTagSelector();
 	      if (tagSelector && tagSelector.isLocked()) {
 	        return;
@@ -61,6 +64,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      })["catch"](function () {
 	        finalize();
 	      });
+	    }
+	  }, {
+	    key: "canCreateTag",
+	    value: function canCreateTag() {
+	      var _this$options$canCrea, _this$options;
+	      return (_this$options$canCrea = (_this$options = this.options) === null || _this$options === void 0 ? void 0 : _this$options.canCreateTag) !== null && _this$options$canCrea !== void 0 ? _this$options$canCrea : false;
 	    }
 	  }]);
 	  return TagFooter;

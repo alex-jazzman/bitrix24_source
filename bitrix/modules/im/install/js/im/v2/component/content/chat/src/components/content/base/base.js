@@ -5,6 +5,7 @@ import { ChatTextarea } from 'im.v2.component.textarea';
 import { ThemeManager } from 'im.v2.lib.theme';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ResizeManager } from 'im.v2.lib.textarea';
+import { ChannelManager } from 'im.v2.lib.channel';
 import { ChatSidebar } from 'im.v2.component.sidebar';
 import { ChatActionType, Settings, UserRole, SidebarDetailBlock, EventType } from 'im.v2.const';
 
@@ -43,10 +44,6 @@ export const BaseChatContent = {
 			type: String,
 			default: '',
 		},
-		commentsOpened: {
-			type: Boolean,
-			default: false,
-		},
 	},
 	data(): JsonObject
 	{
@@ -69,6 +66,10 @@ export const BaseChatContent = {
 		isGuest(): boolean
 		{
 			return this.dialog.role === UserRole.guest;
+		},
+		hasCommentsOnTop(): boolean
+		{
+			return this.$store.getters['messages/comments/areOpenedForChannel'](this.dialogId);
 		},
 		containerClasses(): string[]
 		{
@@ -200,10 +201,10 @@ export const BaseChatContent = {
 				<!-- End textarea -->
 				<DropArea :dialogId="dialogId" :container="$refs.content || {}" :key="dialogId" />
 			</div>
-			<ChatSidebar 
+			<ChatSidebar
 				v-if="dialogId.length > 0" 
 				:originDialogId="dialogId"
-				:isActive="!commentsOpened"
+				:isActive="!hasCommentsOnTop"
 				@changePanel="onChangeSidebarPanel" 
 			/>
 		</div>

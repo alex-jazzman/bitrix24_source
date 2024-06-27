@@ -11,6 +11,7 @@ import type { ImModelUser, ImModelChat, ImModelRecentItem, ImModelMessage } from
 const HiddenTitleByChatType = {
 	[ChatType.openChannel]: Loc.getMessage('IM_LIST_RECENT_CHAT_TYPE_OPEN_CHANNEL'),
 	[ChatType.channel]: Loc.getMessage('IM_LIST_RECENT_CHAT_TYPE_PRIVATE_CHANNEL'),
+	[ChatType.generalChannel]: Loc.getMessage('IM_LIST_RECENT_CHAT_TYPE_OPEN_CHANNEL'),
 	default: Loc.getMessage('IM_LIST_RECENT_CHAT_TYPE_GROUP_V2'),
 };
 

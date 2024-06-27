@@ -1,0 +1,6 @@
+<?
+
+$MESS["PHONECARDOPENENTITY_MODULE_NAME"] = "Кнопка \"Открыть сущность\" в карточке звонка";
+$MESS["PHONECARDOPENENTITY_MODULE_DESCRIPTION"] = "";
+$MESS["PHONECARDOPENENTITY_PARTNER_NAME"] = "MyWebstor";
+$MESS["PHONECARDOPENENTITY_PARTNER_URI"] = "https://mywebstor.com/";

@@ -119,6 +119,11 @@ jn.define('crm/type', (require, exports, module) => {
 				return false;
 			}
 
+			if (id >= DynamicTypeId.UnlimitedTypeStart)
+			{
+				return id % 2 === 0;
+			}
+
 			return id >= DynamicTypeId.Start && id < DynamicTypeId.End;
 		}
 
@@ -251,6 +256,16 @@ jn.define('crm/type', (require, exports, module) => {
 			}
 
 			return null;
+		}
+
+		static getSupportedEntitiesList()
+		{
+			const idsAndNames = {};
+			SUPPORTED_ENTITIES.forEach((entityId) => {
+				idsAndNames[entityId] = Type.resolveNameById(entityId);
+			})
+
+			return idsAndNames;
 		}
 	}
 

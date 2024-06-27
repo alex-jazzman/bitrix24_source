@@ -22,6 +22,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 	const { RecentRest } = require('im/messenger/provider/rest');
 	const { DraftCache } = require('im/messenger/cache');
 	const { Logger } = require('im/messenger/lib/logger');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 
 	/**
 	 * @class BaseRecent
@@ -163,7 +164,23 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			let usersCache = cache.users;
 			if (Feature.isLocalStorageEnabled)
 			{
-				const userIdList = Object.keys(cache.users.collection);
+				// IDs of authors of recent messages
+				const messageSenderIdSet = new Set();
+				if (cache && cache.recent && cache.recent.collection)
+				{
+					cache.recent.collection.forEach((recentItem) => {
+						const messageSenderId = recentItem?.message?.senderId;
+						if (messageSenderId)
+						{
+							messageSenderIdSet.add(String(messageSenderId));
+						}
+					});
+				}
+
+				const userIdList = [...new Set([
+					...messageSenderIdSet,
+					...Object.keys(cache.users.collection),
+				])];
 				const userList = await serviceLocator.get('core').getRepository().user.userTable.getListByIds(userIdList);
 				if (userList.items.length > 0)
 				{
@@ -547,12 +564,20 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		/**
 		 * @param {string|number} dialogId
 		 * @param {string|null} [componentCode=null]
+		 * @param checkComponentCode
 		 */
-		openDialog(dialogId, componentCode = null)
+		openDialog(dialogId, componentCode = null, checkComponentCode = false)
 		{
 			this.removeUnreadState(dialogId);
 
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId }, componentCode);
+			MessengerEmitter.emit(
+				EventType.messenger.openDialog,
+				{
+					dialogId,
+					checkComponentCode,
+				},
+				componentCode,
+			);
 		}
 
 		/**
@@ -663,6 +688,9 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 						name: item.user.name,
 						type: DialogType.user,
 						counter: item.counter,
+
+						// required to update the added column in the b_im_dialog table
+						permissions: ChatPermission.getActionGroupsByChatType(DialogType.user),
 					};
 					if (item.message)
 					{
@@ -674,6 +702,11 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 					{
 						dialogItem.chatId = item.chat_id;
 					}
+				}
+
+				if (item.last_id)
+				{
+					dialogItem.last_id = item.last_id;
 				}
 
 				result.dialogues.push(dialogItem);

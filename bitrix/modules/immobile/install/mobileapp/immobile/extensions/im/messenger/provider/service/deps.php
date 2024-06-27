@@ -34,6 +34,7 @@ return [
 		'./src/reaction',
 		'./src/connection',
 		'./src/counters',
+		'./src/component-code',
 		'./src/classes/chat/load',
 		'./src/classes/chat/read',
 		'./src/classes/chat/mute',
@@ -55,5 +56,6 @@ return [
 		'./src/classes/sync/fillers/sync-filler-chat',
 		'./src/classes/sync/fillers/sync-filler-copilot',
 		'./src/classes/chat-data-extractor',
+		'./src/classes/message-context-creator',
 	],
 ];

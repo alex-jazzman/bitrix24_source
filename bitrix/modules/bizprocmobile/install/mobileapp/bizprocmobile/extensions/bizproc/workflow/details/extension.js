@@ -53,6 +53,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 				workflow: null,
 				editorConfig: null,
 				taskCount: 0,
+				commentCounter: null,
 				canView: false,
 				showTimeline: false,
 
@@ -210,6 +211,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 					const isLiveFeedProcess = response.data.isLiveFeedProcess || false;
 					const editorConfig = response.data.editor || null;
 					const taskCount = response.data.taskCount || 0;
+					const commentCounter = response.data.commentCounter;
 					const canView = response.data.canViewWorkflow || false;
 
 					if (isLiveFeedProcess)
@@ -218,6 +220,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 						this.state.workflow = {};
 						this.state.editorConfig = editorConfig;
 						this.state.taskCount = taskCount;
+						this.state.commentCounter = commentCounter;
 						this.state.canView = canView;
 						this.state.showTimeline = true;
 						this.state.showRightError = false;
@@ -236,6 +239,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 							workflow,
 							editorConfig,
 							taskCount,
+							commentCounter,
 							canView,
 							additionalContentIsLoaded: true,
 							showTimeline: true,
@@ -320,7 +324,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 								style: {
 									flexDirection: 'column',
 									backgroundColor: AppTheme.colors.bgContentPrimary,
-									minHeight: device.screen.height * 0.85 - 250,
+									minHeight: device.screen.height * 0.85 - 250, // ?
 									paddingHorizontal: 6,
 									paddingVertical: 12,
 								},
@@ -344,11 +348,13 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 							),
 							this.state.showTimeline && this.renderTimelineButton(),
 						),
-						new WorkflowComments({
-							workflowId: this.workflowId,
-						}),
+						View({ style: { height: 100 } }),
 					),
 				),
+				this.isLoaded && new WorkflowComments({
+					workflowId: this.workflowId,
+					commentCounter: this.state.commentCounter,
+				}),
 			);
 		}
 

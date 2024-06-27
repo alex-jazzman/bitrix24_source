@@ -3,7 +3,7 @@ type CreateMessageOptions = {
 	showAvatar?: boolean,
 	showReactions?: boolean,
 	fontColor?: string,
-	canBeQuoted?: boolean
+	canBeQuoted?: boolean,
 	isBackgroundOn?: boolean,
 	showReaction?: boolean,
 	marginTop?: number,
@@ -11,4 +11,5 @@ type CreateMessageOptions = {
 	showCommentInfo?: boolean,
 	audioRate?: number,
 	showAvatarsInReaction?: boolean,
+	initialPostMessageId?: string,
 };

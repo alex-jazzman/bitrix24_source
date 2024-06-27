@@ -22,6 +22,7 @@ export enum DialogType {
 	channel = 'channel',
 	openChannel = 'openChannel',
 	comment = 'comment',
+	generalChannel = 'generalChannel',
 }
 
 export type DialoguesModelState = {
@@ -112,10 +113,12 @@ export type DialoguesModelActions =
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
 	| 'dialoguesModel/updateWritingList'
+	| 'dialoguesModel/decreaseCounter'
+	| 'dialoguesModel/updateUserCounter'
+	| 'dialoguesModel/updateManagerList'
 	| 'dialoguesModel/clearLastMessageViews'
 	| 'dialoguesModel/incrementLastMessageViews'
 	| 'dialoguesModel/setLastMessageViews'
-	| 'dialoguesModel/decreaseCounter'
 	| 'dialoguesModel/clearAllCounters'
 	| 'dialoguesModel/addParticipants'
 	| 'dialoguesModel/removeParticipants'

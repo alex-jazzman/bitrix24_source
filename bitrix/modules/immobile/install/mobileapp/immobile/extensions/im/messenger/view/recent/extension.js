@@ -153,31 +153,26 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		initChatCreateButton()
 		{
-			if (MessengerParams.get('COMPONENT_CODE') === ComponentCode.imChannelMessenger)
-			{
-				return;
-			}
-
 			this.setFloatingButton(this.getChatCreateButtonOption());
 		}
 
 		isCopilotComponent()
 		{
-			const componentCode = MessengerParams.get('COMPONENT_CODE');
+			const componentCode = MessengerParams.getComponentCode();
 
 			return componentCode === ComponentCode.imCopilotMessenger;
 		}
 
 		isChannelComponent()
 		{
-			const componentCode = MessengerParams.get('COMPONENT_CODE');
+			const componentCode = MessengerParams.getComponentCode();
 
 			return componentCode === ComponentCode.imChannelMessenger;
 		}
 
 		isMessengerComponent()
 		{
-			const componentCode = MessengerParams.get('COMPONENT_CODE');
+			const componentCode = MessengerParams.getComponentCode();
 
 			return componentCode === ComponentCode.imMessenger;
 		}
@@ -343,6 +338,15 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				};
 			}
 
+			if (this.isChannelComponent())
+			{
+				options = {
+					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_UPPER_TEXT'),
+					lowerText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_LOWER_TEXT'),
+					iconName: 'ws_channels',
+				};
+			}
+
 			this.ui.welcomeScreen.show(options);
 		}
 
@@ -355,14 +359,14 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		{
 			this.emitCustomEvent(EventType.recent.createChat);
 
-			if (this.style.showLoader)
-			{
-				const chatCreateButton = this.getChatCreateButtonOption();
-				chatCreateButton.icon = Application.getPlatform() === 'ios' ? null : this.style.icon;
-				chatCreateButton.showLoader = this.style.showLoader;
-
-				this.setFloatingButton(chatCreateButton);
-			}
+			// if (this.style.showLoader) disable, because available copilot role control
+			// {
+			// 	const chatCreateButton = this.getChatCreateButtonOption();
+			// 	chatCreateButton.icon = Application.getPlatform() === 'ios' ? null : this.style.icon;
+			// 	chatCreateButton.showLoader = this.style.showLoader;
+			//
+			// 	this.setFloatingButton(chatCreateButton);
+			// }
 		}
 	}
 

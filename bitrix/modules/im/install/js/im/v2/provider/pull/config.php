@@ -19,6 +19,7 @@ return [
 		'im.v2.lib.counter',
 		'im.v2.lib.utils',
 		'im.v2.model',
+		'im.v2.lib.channel',
 		'im.v2.lib.user',
 		'ui.reactions-select',
 		'im.v2.lib.desktop-api',

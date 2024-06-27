@@ -13,8 +13,6 @@ import Context from '../../context';
 import Item from '../../item';
 import './gotochat.css';
 import ServicesConfig from './services-config';
-import Tour from './tour';
-import { TourManager } from 'crm.tour-manager';
 import { Channel, ChatService, Config, Entity, OpenLinesList } from './types';
 
 const MENU_ITEM_STUB_ID = 'stub';
@@ -46,11 +44,11 @@ export default class GoToChat extends Item
 
 	#chatServiceButtons: Map<string, HTMLElement> = new Map();
 	#region: ?string = null;
-	#isTourViewed: boolean = false;
 	#entityEditor: ?BX.Crm.EntityEditor = null;
 	marketplaceUrl: string = '';
 	#userSelectorDialog: ?BX.UI.EntitySelector.Dialog = null;
 	#clientSelector: ?ClientSelector = null;
+	#services: {[key: string]: string} = {};
 
 	initialize(context: Context, settings: ?Object): void
 	{
@@ -90,7 +88,6 @@ export default class GoToChat extends Item
 	initializeSettings(): void
 	{
 		this.#region = this.getSetting('region');
-		this.#isTourViewed = this.getSetting('isTourViewed');
 	}
 
 	activate()
@@ -138,6 +135,7 @@ export default class GoToChat extends Item
 			communications,
 			openLineItems,
 			marketplaceUrl,
+			services,
 		} = data;
 
 		this.currentChannelId = currentChannelId;
@@ -145,6 +143,7 @@ export default class GoToChat extends Item
 		this.communications = communications;
 		this.openLineItems = openLineItems;
 		this.marketplaceUrl = marketplaceUrl;
+		this.#services = services;
 
 		this.#setCommunicationsParams();
 		this.#setChannelDefaultPhoneId();
@@ -577,7 +576,7 @@ export default class GoToChat extends Item
 		if (!phone)
 		{
 			/*
-			now the situation of the absence of the client’s phone
+			now the situation of the absence of the client's phone
 			has not been worked out by the product manager in any way
 
 			@todo need handle this situation
@@ -713,7 +712,7 @@ export default class GoToChat extends Item
 		let className = service.commonClass;
 		let label = service.connectLabel;
 
-		if (!service.available)
+		if (!this.#isAvailableService(service.id))
 		{
 			className += ' --disabled';
 			label = service.soonLabel;
@@ -762,7 +761,7 @@ export default class GoToChat extends Item
 
 	#getButtonIconColor(service: ChatService): string
 	{
-		if (!service.available)
+		if (!this.#isAvailableService(service.id))
 		{
 			return getComputedStyle(document.body).getPropertyValue('--ui-color-base-40');
 		}
@@ -813,8 +812,9 @@ export default class GoToChat extends Item
 
 		this.showButtonLoader(code);
 
+		const service = this.#getServiceConfigByCode(code);
 		const lineId = await ConditionChecker.checkAndGetLine({
-			openLineCode: code,
+			openLineCode: service.connectorId,
 			senderType: this.getSenderType(),
 			openLineItems: this.openLineItems,
 		});
@@ -829,9 +829,14 @@ export default class GoToChat extends Item
 		}
 	}
 
+	#getServiceConfigByCode(code: string): ?ChatService
+	{
+		return ServicesConfig.get(code) || null;
+	}
+
 	#isAvailableService(code: string): boolean
 	{
-		return ServicesConfig.get(code)?.available;
+		return this.#services[code] ?? false;
 	}
 
 	#isEntityInEditorMode(): boolean
@@ -904,6 +909,7 @@ export default class GoToChat extends Item
 		const senderId = this.currentChannelId;
 		const from = this.fromPhoneId;
 		const to = this.toPhoneId;
+		const connectorId = this.#getServiceConfigByCode(code).connectorId;
 
 		const ajaxParameters = {
 			ownerTypeId,
@@ -914,6 +920,7 @@ export default class GoToChat extends Item
 				from,
 				to,
 				lineId,
+				connectorId,
 			},
 		};
 
@@ -1088,14 +1095,6 @@ export default class GoToChat extends Item
 		if (this.loader)
 		{
 			void this.loader.hide();
-		}
-	}
-
-	showTour()
-	{
-		if (!this.#isTourViewed && !BX.Crm.EntityEditor.getDefault().isNew())
-		{
-			TourManager.getInstance().registerWithLaunch(new Tour());
 		}
 	}
 }

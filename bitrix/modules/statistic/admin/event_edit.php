@@ -278,7 +278,7 @@ if ($success == '' || $success == "Y")
 	</table>
 	</td></tr></table>
 
-	<script language="JavaScript" type="text/javascript">
+	<script>
 	function DoNext()
 	{
 		window.location='<?=$link?>';
@@ -317,7 +317,7 @@ if ($success == '' || $success == "Y")
 	</td></tr></table>
 <?endif;?>
 
-<script language="JavaScript">
+<script>
 <!--
 function addNewRow(currentId)
 {
@@ -420,7 +420,7 @@ if (is_array($arUSER_HANDLERS) && count($arUSER_HANDLERS)>0)
 }
 
 ?>
-<SCRIPT LANGUAGE="JavaScript">
+<SCRIPT>
 <!--
 function SelectHandler()
 {
@@ -579,7 +579,7 @@ $tabControl->BeginNextTab();
 <?=bitrix_sessid_post();?>
 </form>
 
-<SCRIPT LANGUAGE="JavaScript">
+<SCRIPT>
 <!--
 ClickPreview();
 SelectHandler();

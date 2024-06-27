@@ -136,7 +136,7 @@ foreach ($mapIframeLangKeys as $key)
 
 </div>
 
-<script type="text/javascript">
+<script>
 
 (function() {
 	"use strict";

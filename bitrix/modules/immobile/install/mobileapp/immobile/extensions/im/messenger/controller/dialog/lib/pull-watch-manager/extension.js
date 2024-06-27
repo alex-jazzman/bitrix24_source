@@ -103,7 +103,7 @@ jn.define('im/messenger/controller/dialog/lib/pull-watch-manager', (require, exp
 
 		#isChannel()
 		{
-			return [DialogType.openChannel, DialogType.channel].includes(this.#dialog?.type);
+			return [DialogType.openChannel, DialogType.channel, DialogType.generalChannel].includes(this.#dialog?.type);
 		}
 
 		#isCommentsChat()

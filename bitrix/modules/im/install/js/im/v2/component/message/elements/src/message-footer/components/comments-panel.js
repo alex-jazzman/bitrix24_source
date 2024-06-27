@@ -100,6 +100,15 @@ export const CommentsPanel = {
 
 			return permissionManager.canPerformAction(ChatActionType.subscribeToComments, this.dialogId);
 		},
+		subscribeIconTitle(): string
+		{
+			if (this.isSubscribed)
+			{
+				return this.loc('IM_MESSAGE_COMMENTS_PANEL_ICON_UNSUBSCRIBE');
+			}
+
+			return this.loc('IM_MESSAGE_COMMENTS_PANEL_ICON_SUBSCRIBE');
+		},
 	},
 	methods:
 	{
@@ -155,8 +164,12 @@ export const CommentsPanel = {
 					</FadeAnimation>
 				</div>
 			</div>
-			<div v-if="showSubscribeIcon" class="bx-im-message-comments-panel__right">
-				<div @click.stop="onSubscribeIconClick" class="bx-im-message-comments-panel__subscribe-icon" :class="{'--active': isSubscribed}"></div>
+			<div v-if="showSubscribeIcon" :title="subscribeIconTitle" class="bx-im-message-comments-panel__right">
+				<div
+					@click.stop="onSubscribeIconClick"
+					class="bx-im-message-comments-panel__subscribe-icon"
+					:class="{'--active': isSubscribed}"
+				></div>
 			</div>
 		</div>
 	`,

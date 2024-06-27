@@ -638,7 +638,6 @@ this.BX = this.BX || {};
 	  /**
 	   * @emits 'onProductChange' {fields: object}
 	   */
-
 	  props: {
 	    editable: Boolean,
 	    basketLength: Number,
@@ -774,8 +773,8 @@ this.BX = this.BX || {};
 	  },
 	  // language=Vue
 	  template: `
-		<div class="catalog-pf-product-item-section" :id="selectorId" ref="selectorWrapper"></div>
-	`
+			<div class='catalog-pf-product-item-section' :id='selectorId' ref='selectorWrapper'></div>
+		`
 	});
 
 	let _ = t => t,
@@ -2231,6 +2230,9 @@ this.BX = this.BX || {};
 	    countItems() {
 	      return this.order.basket.length;
 	    },
+	    isCatalogHidden() {
+	      return this.options.isCatalogHidden;
+	    },
 	    ...ui_vue_vuex.Vuex.mapState({
 	      productList: state => state.productList
 	    })
@@ -2246,12 +2248,12 @@ this.BX = this.BX || {};
 				<div class="catalog-pf-product-add-wrapper">
 					<span class="catalog-pf-product-add-link" @click="addBasketItemForm">{{localize.CATALOG_FORM_ADD_PRODUCT}}</span>
 					<span
-						v-if="hasAccessToCatalog"
+						v-if="hasAccessToCatalog && !isCatalogHidden"
 						class="catalog-pf-product-add-link catalog-pf-product-add-link--gray"
 						@click="showDialogProductSearch"
 					>{{localize.CATALOG_FORM_ADD_PRODUCT_FROM_CATALOG}}</span>
 					<span
-						v-else
+						v-else-if="!isCatalogHidden"
 						class="catalog-pf-product-add-link catalog-pf-product-add-link--gray catalog-pf-product-add-link--disabled"
 						:data-hint="localize.CATALOG_FORM_ADD_PRODUCT_FROM_CATALOG_DENIED_HINT"
 						data-hint-no-icon
@@ -2503,6 +2505,7 @@ this.BX = this.BX || {};
 	      currencySymbol: settingsCollection.get('currencySymbol'),
 	      taxIncluded: settingsCollection.get('taxIncluded'),
 	      warehouseOption: settingsCollection.get('warehouseOption'),
+	      isCatalogHidden: settingsCollection.get('isCatalogHidden'),
 	      showDiscountBlock: settingsCollection.get('showDiscountBlock'),
 	      showTaxBlock: settingsCollection.get('showTaxBlock'),
 	      allowedDiscountTypes: [catalog_productCalculator.DiscountType.PERCENTAGE, catalog_productCalculator.DiscountType.MONETARY],
@@ -2714,7 +2717,7 @@ this.BX = this.BX || {};
 	    main_core.ajax.runAction('catalog.productForm.setConfig', {
 	      data: {
 	        configName: optionName,
-	        value: value
+	        value
 	      }
 	    });
 	  }
@@ -2836,10 +2839,9 @@ this.BX = this.BX || {};
 	  }
 	  this.options.requiredFields = [];
 	  if (mode === FormMode.COMPILATION) {
-	    let compilationRequiredFields = [FormInputCode.PRODUCT_SELECTOR, FormInputCode.PRICE];
+	    const compilationRequiredFields = [FormInputCode.PRODUCT_SELECTOR, FormInputCode.PRICE];
 	    if (this.options.compilationFormType === FormCompilationType.FACEBOOK) {
-	      compilationRequiredFields.push(FormInputCode.IMAGE_EDITOR);
-	      compilationRequiredFields.push(FormInputCode.BRAND);
+	      compilationRequiredFields.push(FormInputCode.IMAGE_EDITOR, FormInputCode.BRAND);
 	    }
 	    this.options.requiredFields = this.options.visibleBlocks.filter(item => compilationRequiredFields.includes(item));
 	  }
@@ -2851,5 +2853,5 @@ this.BX = this.BX || {};
 	exports.ProductForm = ProductForm;
 	exports.FormMode = FormMode;
 
-}((this.BX.Catalog = this.BX.Catalog || {}),BX,BX,BX,BX.UI,BX,BX.UI,BX,BX.UI,BX.Catalog,BX.UI.EntitySelector,BX.Catalog,BX,BX.Main,BX,BX.UI,BX.UI,window,BX,BX,BX,BX,BX,BX,BX.UI.Dialogs,BX,BX,BX.Event,BX.Currency,BX.Catalog));
+}((this.BX.Catalog = this.BX.Catalog || {}),BX,BX,BX,BX.UI,BX,BX.UI,BX,BX.UI,BX.Catalog,BX.UI.EntitySelector,BX.Catalog,BX,BX.Main,BX,BX.UI,BX.UI,window,BX,BX.UI,BX,BX,BX,BX,BX.UI.Dialogs,BX,BX,BX.Event,BX.Currency,BX.Catalog));
 //# sourceMappingURL=product-form.bundle.js.map

@@ -3,12 +3,13 @@ import 'ui.forms';
 import { Dropdown, Toggle, ToggleSize } from 'im.v2.component.elements';
 
 import { CreateChatSection } from '../section';
+import { CreateChatHeading } from '../../elements/heading';
 
 import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const ConferenceSection = {
-	components: { CreateChatSection, Dropdown, Toggle },
+	components: { CreateChatSection, CreateChatHeading, Dropdown, Toggle },
 	props: {
 		passwordNeeded: {
 			type: Boolean,
@@ -50,9 +51,7 @@ export const ConferenceSection = {
 	template: `
 		<CreateChatSection name="conference" :title="loc('IM_CREATE_CHAT_CONFERENCE_SECTION')">
 			<div class="bx-im-content-create-chat__section_block">
-				<div class="bx-im-content-create-chat__heading">
-					{{ loc('IM_CREATE_CHAT_CONFERENCE_SECTION_PRIVACY') }}
-				</div>
+				<CreateChatHeading :text="loc('IM_CREATE_CHAT_CONFERENCE_SECTION_PRIVACY')" />
 				<div @click="onToggleLabelClick" class="bx-im-content-create-chat-settings__type-select">
 					<Toggle :size="ToggleSize.M" :isEnabled="passwordNeeded" />
 					<div class="bx-im-content-create-chat-settings__type-select_label">

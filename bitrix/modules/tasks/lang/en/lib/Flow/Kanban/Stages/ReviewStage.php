@@ -1,0 +1,3 @@
+<?php
+$MESS["TASKS_FLOW_AUTO_CREATED_GROUP_STAGE_REVIEW_ROBOT"] = "Start review process";
+$MESS["TASKS_FLOW_AUTO_CREATED_GROUP_STAGE_REVIEW_TRIGGER"] = "Move to pending review";

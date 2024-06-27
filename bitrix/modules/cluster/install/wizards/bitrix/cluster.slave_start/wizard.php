@@ -141,7 +141,7 @@ class CSlaveStartStep2 extends CBaseSlaveStartWizardStep
 			$this->content .= '<div id="tables" style="display:none">' . implode('<br />', $arTablesToDelete) . '</div>';
 			$this->content .= '<br /><br />' . $this->ShowCheckboxField('action', 'delete', [
 				'id' => 'action',
-				'onclick' => 'if(this.checked){EnableButton();}else{DisableButton();}',
+				'onclick' => 'if(this.checked){BX.Cluster.SlaveStart.EnableButton();}else{BX.Cluster.SlaveStart.DisableButton();}',
 			]) . '<label for="action">' . GetMessage('CLUWIZ_STEP2_DELETE_TABLES', ['#database#' => $this->arNode['NAME']]) . '</label>';
 
 			CJSCore::Init(['ajax']);
@@ -149,12 +149,14 @@ class CSlaveStartStep2 extends CBaseSlaveStartWizardStep
 			$APPLICATION->AddHeadScript($path . '/js/import.js');
 
 			$this->content .= '
-				<script type="text/javascript">
-					var nextButtonID = "' . $wizard->GetNextButtonID() . '";
-					var formID = "' . $wizard->GetFormName() . '";
-					var path = "' . CUtil::JSEscape($path) . '";
-					var sessid = "' . bitrix_sessid() . '";
-					BX.ready(DisableButton);
+				<script>
+					BX.Cluster.SlaveStart.init({
+						nextButtonID: "' . $wizard->GetNextButtonID() . '",
+						formID: "' . $wizard->GetFormName() . '",
+						path: "' . CUtil::JSEscape($path) . '",
+						sessid: "' . bitrix_sessid() . '",
+					});
+					BX.ready(() => {BX.Cluster.SlaveStart.DisableButton()});
 				</script>
 			';
 			$this->SetNextStep('step3');
@@ -199,15 +201,17 @@ class CSlaveStartStep3 extends CBaseSlaveStartWizardStep
 		$this->content .= '<div id="output">' . GetMessage('CLUWIZ_INIT') . '<br /></div>';
 		$this->content .= '</div>';
 		$this->content .= '
-			<script type="text/javascript">
-				var nextButtonID = "' . $wizard->GetNextButtonID() . '";
-				var formID = "' . $wizard->GetFormName() . '";
-				var LANG = \'' . LANG . '\';
-				var nodeId = "' . CUtil::JSEscape($this->arNode['ID']) . '";
-				var path = "' . CUtil::JSEscape($path) . '";
-				var sessid = "' . bitrix_sessid() . '";
-				BX.ready(DisableButton);
-				BX.ready(DropTables);
+			<script>
+				BX.Cluster.SlaveStart.init({
+					nextButtonID: "' . $wizard->GetNextButtonID() . '",
+					formID: "' . $wizard->GetFormName() . '",
+					LANG: "' . LANG . '",
+					nodeId: "' . CUtil::JSEscape($this->arNode['ID']) . '",
+					path: "' . CUtil::JSEscape($path) . '",
+					sessid: "' . bitrix_sessid() . '",
+				});
+				BX.ready(() => {BX.Cluster.SlaveStart.DisableButton()});
+				BX.ready(() => {BX.Cluster.SlaveStart.DropTables()});
 			</script>
 		';
 	}
@@ -221,25 +225,18 @@ class CSlaveStartStep3 extends CBaseSlaveStartWizardStep
 //Datamove
 class CSlaveStartStep4 extends CBaseSlaveStartWizardStep
 {
-	protected $location = '';
-
 	public function InitStep()
 	{
 		parent::InitStep();
 		$this->SetTitle(GetMessage('CLUWIZ_STEP4_TITLE'));
 		$this->SetStepID('step4');
-		$this->SetNextStep('step4');
-		$this->SetNextCaption(GetMessage('CLUWIZ_FINALSTEP_BUTTONTITLE'));
+		$this->SetNextStep('final');
 	}
 
 	public function OnPostForm()
 	{
-		$wizard = $this->GetWizard();
-		$group_id = intval($wizard->GetVar('group_id'));
-
 		CClusterSlave::SetOnLine($this->arNode['ID'], $this->arMaster['ID']);
 		$this->OpenSite();
-		$this->location = '/bitrix/admin/cluster_slave_list.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id;
 	}
 
 	public function ShowStepNoError()
@@ -248,33 +245,49 @@ class CSlaveStartStep4 extends CBaseSlaveStartWizardStep
 		$wizard = $this->GetWizard();
 		$path = $wizard->package->path;
 
-		if ($this->location)
-		{
-			$this->content = '<script>top.window.location = \'' . CUtil::JSEscape($this->location) . '\';</script>';
-		}
-		else
-		{
-			CJSCore::Init(['ajax']);
-			\Bitrix\Main\UI\Extension::load('main.core');
-			$APPLICATION->AddHeadScript($path . '/js/import.js');
+		CJSCore::Init(['ajax']);
+		\Bitrix\Main\UI\Extension::load('main.core');
+		$APPLICATION->AddHeadScript($path . '/js/import.js');
 
-			$this->content = '';
-			$this->content .= '<div style="padding: 20px;">';
-			$this->content .= '<div id="output">' . GetMessage('CLUWIZ_INIT') . '<br /></div>';
-			$this->content .= '</div>';
-			$this->content .= '
-				<script type="text/javascript">
-					var nextButtonID = "' . $wizard->GetNextButtonID() . '";
-					var formID = "' . $wizard->GetFormName() . '";
-					var LANG = \'' . LANG . '\';
-					var nodeId = "' . CUtil::JSEscape($this->arNode['ID']) . '";
-					var path = "' . CUtil::JSEscape($path) . '";
-					var sessid = "' . bitrix_sessid() . '";
-					BX.ready(DisableButton);
-					BX.ready(MoveTables);
-				</script>
-			';
-		}
+		$this->content = '';
+		$this->content .= '<div style="padding: 20px;">';
+		$this->content .= '<div id="output">' . GetMessage('CLUWIZ_INIT') . '<br /></div>';
+		$this->content .= '</div>';
+		$this->content .= '
+			<script>
+				BX.Cluster.SlaveStart.init({
+					nextButtonID: "' . $wizard->GetNextButtonID() . '",
+					formID: "' . $wizard->GetFormName() . '",
+					LANG: "' . LANG . '",
+					nodeId: "' . CUtil::JSEscape($this->arNode['ID']) . '",
+					path: "' . CUtil::JSEscape($path) . '",
+					sessid: "' . bitrix_sessid() . '",
+				});
+				BX.ready(() => {BX.Cluster.SlaveStart.DisableButton()});
+				BX.ready(() => {BX.Cluster.SlaveStart.MoveTables()});
+			</script>
+		';
+	}
+}
+
+class CSlaveStartFinalStep extends CBaseSlaveStartWizardStep
+{
+	public function InitStep()
+	{
+		parent::InitStep();
+		$this->SetTitle(GetMessage('CLUWIZ_FINALSTEP_TITLE'));
+		$this->SetStepID('final');
+		$this->SetCancelStep('final');
+		$this->SetCancelCaption(GetMessage('CLUWIZ_FINALSTEP_BUTTONTITLE'));
+	}
+
+	public function ShowStep()
+	{
+		$this->content = GetMessage('CLUWIZ_FINALSTEP_CONTENT');
+	}
+
+	public function ShowStepNoError()
+	{
 	}
 }
 

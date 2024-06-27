@@ -85,4 +85,16 @@ export type AICallParsingEvent = {
 		| Dictionary.ELEMENT_CONFLICT_ACCEPT_CHANGES
 		| Dictionary.ELEMENT_CONFLICT_CANCEL_CHANGES
 	,
+	status: Dictionary.STATUS_SUCCESS
+		| Dictionary.STATUS_SUCCESS_FIELDS
+		| Dictionary.STATUS_SUCCESS_COMMENT
+		| Dictionary.STATUS_ERROR_B24
+		| Dictionary.STATUS_ERROR_PROVIDER
+		| Dictionary.STATUS_ERROR_AGREEMENT
+		| Dictionary.STATUS_ERROR_NO_LIMITS
+		| Dictionary.STATUS_ERROR_LIMIT_MONTHLY
+		| Dictionary.STATUS_ERROR_LIMIT_DAILY
+	,
+	p2: 'callDirection_incoming' | 'callDirection_outgoing',
+	p4: 'duration_',
 };

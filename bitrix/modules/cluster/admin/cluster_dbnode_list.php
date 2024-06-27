@@ -30,9 +30,8 @@ if ($arID = $lAdmin->GroupAction())
 		}
 
 		$ID = intval($ID);
-		switch ($_REQUEST['action'])
+		if ($_REQUEST['action'] === 'delete')
 		{
-		case 'delete':
 			$arNode = CClusterDBNode::GetByID($ID);
 			if (is_array($arNode) && $arNode['ROLE_ID'] == 'MODULE' && $arNode['STATUS'] == 'READY')
 			{
@@ -217,7 +216,7 @@ while ($arRes = $rsData->Fetch()):
 			{
 				$arActions[] = [
 					'TEXT' => GetMessage('CLU_DBNODE_LIST_START_USING_DB'),
-					'ACTION' => "javascript:WizardWindow.Open('bitrix:cluster.module_move','" . bitrix_sessid() . '&__wiz_node_id=' . $arRes['ID'] . '&__wiz_status=' . $arRes['STATUS'] . "')",
+					'ACTION' => "javascript:StartWizard('bitrix:cluster.module_move', '&__wiz_node_id=" . $arRes['ID'] . '&__wiz_status=' . $arRes['STATUS'] . "')",
 				];
 			}
 
@@ -233,7 +232,7 @@ while ($arRes = $rsData->Fetch()):
 			{
 				$arActions[] = [
 					'TEXT' => GetMessage('CLU_DBNODE_LIST_STOP_USING_DB'),
-					'ACTION' => "javascript:WizardWindow.Open('bitrix:cluster.module_move','" . bitrix_sessid() . '&__wiz_node_id=' . $arRes['ID'] . '&__wiz_status=' . $arRes['STATUS'] . "')",
+					'ACTION' => "javascript:StartWizard('bitrix:cluster.module_move', '&__wiz_node_id=" . $arRes['ID'] . '&__wiz_status=' . $arRes['STATUS'] . "')",
 				];
 			}
 		}
@@ -265,9 +264,22 @@ $lAdmin->AddFooter(
 	]
 );
 
+$lAdmin->BeginPrologContent();
+$url = 'cluster_dbnode_list.php?lang=' . urlencode(LANGUAGE_ID);
+?>
+<script>
+	function StartWizard(name, params)
+	{
+		WizardWindow.Open(name, BX.bitrix_sessid() + params);
+		BX.addCustomEvent(WizardWindow.currentDialog, 'onWindowClose', () => {<?=$lAdmin->ActionAjaxReload($url)?>});
+	}
+</script>
+<?php
+$lAdmin->EndPrologContent();
+
 if ($DB->type === 'MYSQL')
 {
-	$link = "javascript:WizardWindow.Open('bitrix:cluster.dbnode_add','" . bitrix_sessid() . "')";
+	$link = "javascript:StartWizard('bitrix:cluster.dbnode_add', '')";
 	$title = GetMessage('CLU_DBNODE_LIST_ADD_TITLE1');
 }
 else

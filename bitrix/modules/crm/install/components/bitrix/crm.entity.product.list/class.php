@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -12,6 +13,7 @@ use Bitrix\Catalog\Component\ImageInput;
 use Bitrix\Catalog\ProductTable;
 use Bitrix\Catalog\StoreProductTable;
 use Bitrix\Catalog\StoreTable;
+use Bitrix\Catalog\Store\EnableWizard;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Catalog\v2\Product\BaseProduct;
 use Bitrix\Catalog\v2\Sku\BaseSku;
@@ -30,6 +32,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale;
 use Bitrix\UI\Util;
+use Bitrix\Catalog\Store\EnableWizard\Manager;
 
 if (!Loader::includeModule('crm'))
 {
@@ -1202,6 +1205,7 @@ final class CCrmEntityProductListComponent
 		$this->arResult['DEFAULT_DATE_RESERVATION'] = (string)ReservationService::getInstance()->getDefaultDateReserveEnd();
 
 		$this->arResult['IS_INVENTORY_MANAGEMENT_TOOL_ENABLED'] = Catalog\Restriction\ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability();
+		$this->arResult['IS_EXTERNAL_CATALOG'] = Catalog\Config\State::isExternalCatalog();
 
 		if(
 			Bitrix\Main\Loader::includeModule('pull')
@@ -1239,6 +1243,7 @@ final class CCrmEntityProductListComponent
 			'catalog.product-model',
 			'catalog.store-selector',
 			'catalog.product-selector',
+			'catalog.store-enable-wizard',
 		];
 	}
 
@@ -1693,8 +1698,8 @@ final class CCrmEntityProductListComponent
 
 			$result['RESERVE_INFO'] = [
 				'id' => 'RESERVE_INFO',
-				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED'),
-				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED'),
+				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED_MSGVER_1'),
+				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED_MSGVER_1'),
 				'hint' => Loc::getMessage(
 					'CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED_HINT',
 					[
@@ -1709,8 +1714,8 @@ final class CCrmEntityProductListComponent
 
 			$result['ROW_RESERVED'] = [
 				'id' => 'ROW_RESERVED',
-				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL'),
-				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL'),
+				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL_MSGVER_1'),
+				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL_MSGVER_1'),
 				'hint' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL_HINT'),
 				'hintInteractivity' => true,
 				'sort' => 'ROW_RESERVED',
@@ -2423,7 +2428,11 @@ final class CCrmEntityProductListComponent
 	 */
 	private function isReservationRestrictedByPlan(): bool
 	{
-		return !\Bitrix\Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission();
+		return
+			EnableWizard\Manager::isOnecMode()
+				? EnableWizard\TariffChecker::isOnecInventoryManagementRestricted()
+				: !\Bitrix\Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
+		;
 	}
 
 	/**
@@ -3135,7 +3144,7 @@ final class CCrmEntityProductListComponent
 		}
 		elseif ($settingId === 'WAREHOUSE')
 		{
-			\Bitrix\Catalog\Component\UseStore::disable();
+			Manager::disable();
 		}
 		elseif ($settingId === 'DISABLE_NOTIFY_CHANGING_PRICE')
 		{

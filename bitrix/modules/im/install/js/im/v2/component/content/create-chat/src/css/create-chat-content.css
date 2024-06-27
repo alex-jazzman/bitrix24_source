@@ -8,8 +8,6 @@
 	--im-content-create-chat__font_input: var(--im-font-size-5xl)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	--im-content-create-chat__font-color_input: var(--im-color-palette-black-base);
 	--im-content-create-chat__font-color_input-placeholder: var(--im-color-palette-gray-50);
-	--im-content-create-chat__font_heading: var(--im-font-size-lg)/var(--im-font-line-height-3xs) var(--im-font-family-system);
-	--im-content-create-chat__font-color_heading: var(--im-color-palette-gray-90);
 	--im-content-create-chat__font_toggle-label: var(--im-font-size-md)/var(--im-font-line-height-3xs) var(--im-font-family-system);
 	--im-content-create-chat__font-color_toggle-label: var(--im-color-palette-gray-80);
 	--im-content-create-chat__font_textarea-label: var(--im-font-size-xs)/var(--im-font-line-height-3xs) var(--im-font-family-system);
@@ -97,10 +95,9 @@
 }
 /* End header */
 
-
 /* Members selector */
 .bx-im-content-create-chat__members_container {
-	margin-bottom: 52px;
+	margin-bottom: 36px;
 }
 
 .bx-im-content-create-chat__members {
@@ -156,17 +153,6 @@
 }
 /* End owner selector */
 
-
-/* Form and headings */
-.bx-im-content-create-chat__heading {
-	font: var(--im-content-create-chat__font_heading);
-	color: var(--im-content-create-chat__font-color_heading);
-	font-weight: var(--im-font-weight-medium);
-	margin-bottom: 12px;
-}
-/* End form and headings */
-
-
 /* Buttons */
 .bx-im-content-create-chat__buttons {
 	position: absolute;
@@ -186,9 +172,3 @@
 	margin-right: 18px;
 }
 /* End buttons */
-
-/* Conference section */
-.bx-im-content-create-chat-conference__password-container {
-	margin-top: 14px;
-}
-/* End Conference */

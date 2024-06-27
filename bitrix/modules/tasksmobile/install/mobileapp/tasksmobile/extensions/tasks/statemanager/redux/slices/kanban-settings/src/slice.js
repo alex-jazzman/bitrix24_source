@@ -10,10 +10,7 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/src/slice', (require,
 		updateStagesOrder,
 	} = require('tasks/statemanager/redux/slices/kanban-settings/thunk');
 
-	const {
-		sliceName,
-		adapter,
-	} = require('tasks/statemanager/redux/slices/kanban-settings/meta');
+	const { sliceName, initialState } = require('tasks/statemanager/redux/slices/kanban-settings/meta');
 
 	const {
 		fetchStagesPending,
@@ -44,14 +41,13 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/src/slice', (require,
 		};
 	}
 
-	const initialState = adapter.getInitialState();
-	const filledState = adapter.upsertMany(initialState, []);
 	const slice = createSlice({
 		name: sliceName,
-		initialState: filledState,
+		initialState,
 		reducers: {},
 		extraReducers: getExtraReducers(),
 	});
+
 	ReducerRegistry.register(sliceName, slice.reducer);
 
 	module.exports = {

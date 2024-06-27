@@ -148,11 +148,18 @@ jn.define('im/messenger/provider/service/sync', (require, exports, module) => {
 
 				extra.fromSyncService = true;
 
-				BX.PULL.emit({
-					type: BX.PullClient.SubscriptionType.Server,
-					moduleId: 'im',
-					data: { params, extra, command },
-				});
+				try
+				{
+					BX.PULL.emit({
+						type: BX.PullClient.SubscriptionType.Server,
+						moduleId: 'im',
+						data: { params, extra, command },
+					});
+				}
+				catch (error)
+				{
+					logger.error('SyncService.emitStoredPullEvents error:', error);
+				}
 			}
 		}
 

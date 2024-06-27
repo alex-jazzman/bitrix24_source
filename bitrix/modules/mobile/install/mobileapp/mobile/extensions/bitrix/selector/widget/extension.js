@@ -2,16 +2,20 @@
  * @module selector/widget
  */
 jn.define('selector/widget', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { uniqBy } = require('utils/array');
-	const { isEqual, get } = require('utils/object');
+	const { isEqual, get, mergeImmutable } = require('utils/object');
 	const { CommonSelectorProvider } = require('selector/providers/common');
+	const { Feature } = require('feature');
+	const { showToast } = require('toast');
 
 	const SERVICE_SECTION_CODE = 'service';
 	const COMMON_SECTION_CODE = 'common';
 
 	const CREATE_BUTTON_CODE = 'create';
 	const DEFAULT_RETURN_KEY = 'done';
+
+	const isAirStyleSupported = Feature.isAirStyleSupported();
 
 	/**
 	 * @class EntitySelectorWidget
@@ -49,7 +53,10 @@ jn.define('selector/widget', (require, exports, module) => {
 			this.widgetParams = widgetParams || {};
 			this.allowMultipleSelection = allowMultipleSelection !== false;
 			this.canUseRecent = canUseRecent !== false;
-			this.closeOnSelect = this.allowMultipleSelection === false && closeOnSelect;
+			this.closeOnSelect = (
+				this.allowMultipleSelection === false
+				&& closeOnSelect
+			);
 			this.events = events || {};
 
 			this.entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
@@ -127,46 +134,80 @@ jn.define('selector/widget', (require, exports, module) => {
 			return text;
 		}
 
-		show({ widgetParams } = {}, parentWidget = PageManager)
+		show({ widgetParams = this.widgetParams } = {}, parentWidget = PageManager)
 		{
+			let airWidgetParams = {};
+
+			if (isAirStyleSupported)
+			{
+				airWidgetParams = {
+					sendButtonName: this.allowMultipleSelection ? BX.message('PROVIDER_WIDGET_SELECT') : null,
+					titleParams: {
+						type: 'dialog',
+					},
+				};
+
+				if (widgetParams.title)
+				{
+					airWidgetParams.titleParams.text = widgetParams.title;
+				}
+			}
+
 			return new Promise((resolve, reject) => {
 				if (this.widget)
 				{
-					return resolve();
+					resolve();
+
+					return;
 				}
 
 				const widgetManager = (parentWidget || PageManager);
 				widgetManager
-					.openWidget('selector', (widgetParams || this.widgetParams))
+					.openWidget('selector', mergeImmutable(widgetParams, airWidgetParams))
 					.then((widget) => {
 						this.widget = widget;
 
 						this.widget.setReturnKey(this.returnKey);
 
-						if (typeof this.widget.setPlaceholder === 'function')
+						const placeholder = this.getSearchPlaceholder();
+						if (placeholder)
 						{
-							const placeholder = this.getSearchPlaceholder();
-							if (placeholder)
-							{
-								this.widget.setPlaceholder(placeholder);
-							}
+							this.widget.setPlaceholder(placeholder);
 						}
 
-						this.widget.setRightButtons([
-							{
-								name: (
-									this.closeOnSelect
-										? BX.message('PROVIDER_WIDGET_CLOSE')
-										: BX.message('PROVIDER_WIDGET_SELECT')
-								),
-								type: 'text',
-								color: AppTheme.colors.accentMainLinks,
-								callback: () => this.close(),
-							},
-						]);
+						if (this.shouldShowPlusIcon())
+						{
+							this.widget.setRightButtons([
+								{
+									type: 'plus',
+									testId: 'ENTITY_SELECTOR_PLUS_BUTTON',
+									callback: () => {
+										this.createItems(this.queryText);
+									},
+								},
+							]);
+						}
+
+						if (!isAirStyleSupported)
+						{
+							this.widget.setRightButtons([
+								{
+									name: (
+										this.closeOnSelect
+											? BX.message('PROVIDER_WIDGET_CLOSE')
+											: BX.message('PROVIDER_WIDGET_SELECT')
+									),
+									type: 'text',
+									color: Color.accentMainLinks.toHex(),
+									callback: () => this.close(),
+								},
+							]);
+						}
 
 						this.widget.allowMultipleSelection(this.allowMultipleSelection);
 						this.provider.loadRecent();
+
+						this.widget.on('send', () => this.close());
 
 						this.widget.setListener((eventName, data) => {
 							const callbackName = `${eventName}Listener`;
@@ -221,19 +262,20 @@ jn.define('selector/widget', (require, exports, module) => {
 		 */
 		onItemSelectedListener({ text, item })
 		{
-			if (!(item && item.hasOwnProperty('params') && item.params.hasOwnProperty('code')))
+			if (
+				item.disabled
+				&& this.selectOptions.nonSelectableErrorText.length > 0
+				&& Feature.isToastSupported()
+			)
 			{
+				showToast({ message: this.selectOptions.nonSelectableErrorText });
+
 				return;
 			}
 
-			const buttonCode = item.params.code;
-
-			// eslint-disable-next-line default-case
-			switch (buttonCode)
+			if (item.params?.code === CREATE_BUTTON_CODE)
 			{
-				case CREATE_BUTTON_CODE:
-					this.createItems(text);
-					break;
+				this.createItems(text);
 			}
 		}
 
@@ -490,6 +532,11 @@ jn.define('selector/widget', (require, exports, module) => {
 			});
 		}
 
+		isRecentSearch()
+		{
+			return this.queryText === '';
+		}
+
 		setItems(items)
 		{
 			if (!this.widget)
@@ -499,7 +546,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 			items = uniqBy(items, 'id');
 
-			const isRecent = this.queryText === '';
+			const isRecent = this.isRecentSearch();
 			const sections = [];
 
 			const serviceItems = items.filter((item) => item.sectionCode === SERVICE_SECTION_CODE);
@@ -536,7 +583,7 @@ jn.define('selector/widget', (require, exports, module) => {
 				title,
 				buttonText,
 				styles,
-				backgroundColor: AppTheme.colors.bgContentPrimary,
+				backgroundColor: Color.bgContentPrimary.toHex(),
 			});
 
 			if (!isEqual(this.currentSections, sections))
@@ -557,8 +604,30 @@ jn.define('selector/widget', (require, exports, module) => {
 			}
 		}
 
+		shouldShowPlusIcon()
+		{
+			if (!isAirStyleSupported)
+			{
+				return false;
+			}
+
+			const { canCreateWithEmptySearch, enableCreation } = this.createOptions;
+
+			if (enableCreation || canCreateWithEmptySearch)
+			{
+				return true;
+			}
+
+			return !this.isRecentSearch();
+		}
+
 		getCommonSectionButtonText(isRecent)
 		{
+			if (isAirStyleSupported)
+			{
+				return '';
+			}
+
 			const { canCreateWithEmptySearch, enableCreation } = this.createOptions;
 
 			if (enableCreation && (canCreateWithEmptySearch || !isRecent))
@@ -575,13 +644,13 @@ jn.define('selector/widget', (require, exports, module) => {
 				title: {
 					font: {
 						size: 15,
-						color: AppTheme.colors.base2,
+						color: Color.base4.toHex(),
 					},
 				},
 				button: {
 					font: {
 						size: 15,
-						color: this.getIsItemCreating() ? AppTheme.colors.base2 : AppTheme.colors.accentMainLinks,
+						color: this.getIsItemCreating() ? Color.base2.toHex() : Color.accentMainLinks.toHex(),
 					},
 				},
 			};
@@ -632,7 +701,7 @@ jn.define('selector/widget', (require, exports, module) => {
 
 		isInSelected(item)
 		{
-			return this.currentSelectedItems.find(({ id }) => id === item.id) !== undefined;
+			return this.currentSelectedItems.some(({ id }) => id === item.id);
 		}
 
 		getIsItemCreating()
@@ -755,7 +824,7 @@ jn.define('selector/widget', (require, exports, module) => {
 		getEmptyResultButtonItem()
 		{
 			return {
-				title: BX.message('PROVIDER_SEARCH_NO_RESULTS'),
+				title: this.searchOptions.noResultsText || BX.message('PROVIDER_SEARCH_NO_RESULTS'),
 				type: 'button',
 				sectionCode: COMMON_SECTION_CODE,
 				unselectable: true,

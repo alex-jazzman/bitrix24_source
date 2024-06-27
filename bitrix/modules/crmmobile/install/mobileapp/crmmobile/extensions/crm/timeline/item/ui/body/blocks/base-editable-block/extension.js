@@ -4,7 +4,7 @@
 jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, exports, module) => {
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { EditableTextBlock } = require('layout/ui/editable-text-block');
-	const { Color } = require('tokens');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @abstract
@@ -73,7 +73,7 @@ jn.define('crm/timeline/item/ui/body/blocks/base-editable-block', (require, expo
 				style: {
 					fontSize: 14,
 					fontWeight: '400',
-					color: Color.base1,
+					color: AppTheme.colors.base1,
 				},
 				maxLettersCount: this.getMaxLettersCount(),
 				maxEntersCount: this.getMaxEntersCount(),

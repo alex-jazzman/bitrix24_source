@@ -95,7 +95,12 @@ else
 						<?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_6')?>
 					</li>
 					<li class="adm-cashbox-list-item cashbox-list-item-7"><?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_7')?></li>
-					<li class="adm-cashbox-list-item cashbox-list-item-8"><?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_8')?></li>
+					<li class="adm-cashbox-list-item cashbox-list-item-8"><?=Loc::getMessage(
+							'SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_8_MSGVER_1',
+							[
+								'#LANG#' => LANGUAGE_ID,
+							]
+						); ?></li>
 					<li class="adm-cashbox-list-item cashbox-list-item-9"><?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_9')?></li>
 				</ul>
 				<div class="adm-cashbox-border"></div>
@@ -113,7 +118,12 @@ else
 					<ul class="adm-cashbox-list2 adm-cashbox-inner">
 						<li class="adm-cashbox-list-item cashbox-list-item-1"><?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_APP_STEP_1')?><br> <b id="cashbox-url"></b></li>
 						<li class="adm-cashbox-list-item cashbox-list-item-2"><?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_APP_STEP_2')?></li>
-						<li class="adm-cashbox-list-item cashbox-list-item-3"><?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_APP_STEP_3')?></li>
+						<li class="adm-cashbox-list-item cashbox-list-item-3"><?=Loc::getMessage(
+								'SALE_CASHBOX_CONNECT_INSTRUCTION_APP_STEP_3_MSGVER_1',
+								[
+									'#LANG#' => LANGUAGE_ID,
+								]
+							); ?></li>
 					</ul>
 				</div>
 			</div>

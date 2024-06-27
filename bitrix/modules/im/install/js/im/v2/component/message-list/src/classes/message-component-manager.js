@@ -23,6 +23,9 @@ const serverComponentList = new Set([
 	MessageComponent.supervisorEnableFeature,
 	MessageComponent.sign,
 	MessageComponent.checkIn,
+	MessageComponent.generalChatCreationMessage,
+	MessageComponent.generalChannelCreationMessage,
+	MessageComponent.channelCreationMessage,
 ]);
 
 export class MessageComponentManager

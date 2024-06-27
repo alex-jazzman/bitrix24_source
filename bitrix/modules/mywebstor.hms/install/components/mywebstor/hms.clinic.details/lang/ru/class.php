@@ -1,0 +1,8 @@
+<?
+
+$MESS["HMS_CLINIC_NEW_CLINIC_TITLE"] = "Новая клиника";
+
+$MESS["HMS_CLINIC_ENTITY_SECTION_MAIN"] = "Общее";
+
+$MESS["HMS_CLINIC_BUTTON_DELETE"] = "Удалить";
+$MESS["HMS_CLINIC_BUTTON_COMMON_DOCUMENT"] = "Документ";

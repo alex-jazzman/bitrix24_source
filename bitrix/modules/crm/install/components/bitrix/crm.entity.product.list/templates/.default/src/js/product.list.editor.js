@@ -11,6 +11,8 @@ import {ProductModel} from "catalog.product-model";
 import {PULL} from 'pull.client';
 import {FieldHintManager} from "./field.hint.manager";
 import {Guide} from 'ui.tour';
+import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
+
 import 'ui.hint';
 
 const GRID_TEMPLATE_ROW = 'template_0';
@@ -156,6 +158,11 @@ export class Editor
 			if (!this.getSettingValue('disabledAddRowButton', false))
 			{
 				container.querySelectorAll('[data-role="product-list-add-button"]').forEach((addButton) => {
+					if (this.getSettingValue('isOnecInventoryManagementRestricted') === true)
+					{
+						Dom.addClass(addButton, 'ui-btn-icon-lock');
+					}
+
 					Event.bind(
 						addButton,
 						'click',
@@ -290,10 +297,12 @@ export class Editor
 		}
 
 		requestAnimationFrame(() => {
-			this
-				.getProductSelector(id)
-				?.onProductSelect(productId)
-			;
+			const productSelector = this.getProductSelector(id);
+			if (productSelector)
+			{
+				productSelector.searchInput.clearErrors();
+				productSelector.onProductSelect(productId);
+			}
 		});
 	}
 
@@ -1159,6 +1168,7 @@ export class Editor
 
 		const isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
 		const isInventoryManagementToolEnabled = this.getSettingValue('isInventoryManagementToolEnabled', false);
+		const inventoryManagementMode = this.getSettingValue('inventoryManagementMode', null);
 
 		for (const item of list)
 		{
@@ -1167,6 +1177,7 @@ export class Editor
 				selectorId: item.selectorId,
 				isReserveBlocked,
 				isInventoryManagementToolEnabled,
+				inventoryManagementMode,
 			};
 			this.products.push(new Row(item.rowId, fields, settings, this));
 		}
@@ -1365,6 +1376,13 @@ export class Editor
 
 	handleProductRowAdd(): void
 	{
+		if (this.getSettingValue('isOnecInventoryManagementRestricted') === true)
+		{
+			OneCPlanRestrictionSlider.show();
+
+			return;
+		}
+
 		const id = this.addProductRow();
 		this.focusProductSelector(id);
 	}
@@ -1514,9 +1532,12 @@ export class Editor
 		delete(fields.RESERVE_ID);
 		const isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
 		const isInventoryManagementToolEnabled = this.getSettingValue('isInventoryManagementToolEnabled', false);
+		const inventoryManagementMode = this.getSettingValue('inventoryManagementMode', null);
+
 		const settings = {
 			isReserveBlocked,
 			isInventoryManagementToolEnabled,
+			inventoryManagementMode,
 			selectorId: 'crm_grid_' + rowId,
 		};
 		const product = new Row(rowId, fields, settings, this);

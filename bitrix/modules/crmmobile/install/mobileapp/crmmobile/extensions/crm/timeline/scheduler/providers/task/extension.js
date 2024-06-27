@@ -8,7 +8,19 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 	const { Type } = require('crm/type');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { get } = require('utils/object');
-	const { TaskCreate } = require('tasks/layout/task/create');
+
+	let TaskCreate = null;
+	let openTaskCreateForm = null;
+
+	try
+	{
+		TaskCreate = require('tasks/layout/task/create')?.TaskCreate;
+		openTaskCreateForm = require('tasks/layout/task/create/opener')?.openTaskCreateForm;
+	}
+	catch (e)
+	{
+		console.warn('Failed to load extensions from tasksmobile', e);
+	}
 
 	/**
 	 * @class TimelineSchedulerTaskProvider
@@ -64,27 +76,38 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 
 		static async open(data)
 		{
-			const { entity } = data.scheduler;
-
-			if (TaskCreate)
+			if (!openTaskCreateForm && !TaskCreate)
 			{
-				TaskCreate.open({
-					initialTaskData: {
-						crm: {
-							[`${entity.typeId}_${entity.id}`]: {
-								id: entity.id,
-								title: entity.title,
-								type: Type.resolveNameById(entity.typeId).toLowerCase(),
-							},
+				return;
+			}
+
+			const { entity } = data.scheduler;
+			const openParams = {
+				closeAfterSave: true,
+				initialTaskData: {
+					crm: {
+						[`${entity.typeId}_${entity.id}`]: {
+							id: entity.id,
+							title: entity.title,
+							type: Type.resolveNameById(entity.typeId).toLowerCase(),
 						},
 					},
-				});
+				},
+			};
 
-				AnalyticsLabel.send({
-					event: 'onTaskAdd',
-					scenario: 'task_add',
-				});
+			if (openTaskCreateForm)
+			{
+				openTaskCreateForm(openParams);
 			}
+			else
+			{
+				TaskCreate.open(openParams);
+			}
+
+			AnalyticsLabel.send({
+				event: 'onTaskAdd',
+				scenario: 'task_add',
+			});
 		}
 	}
 

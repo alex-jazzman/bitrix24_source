@@ -60,7 +60,7 @@ if(!empty($arResult["ERROR_MESSAGE"]))
 ?>
 <div id="idea-posts-content">
 <?
-if(count($arResult["POST"])>0)
+if(count($arResult["POST"] ?? [])>0)
 {
 	$arStatusList = CIdeaManagment::getInstance()->Idea()->GetStatusList();
 	foreach($arResult["POST"] as $CurPost)

@@ -78,7 +78,7 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 	);
 }
 ?>
-	<script type="text/javascript">
+	<script>
 		BX.message({
 			"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_LEAD_DETAIL_HISTORY_STUB')?>",
 		});
@@ -126,7 +126,7 @@ $APPLICATION->IncludeComponent(
 /** @var \Bitrix\Crm\Conversion\LeadConversionConfig|null $conversionConfig */
 $conversionConfig = $arResult['CONVERSION_CONFIG'] ?? null;
 if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionConfig):
-?><script type="text/javascript">
+?><script>
 		BX.ready(
 			function()
 			{
@@ -224,7 +224,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 endif;
 
 if (array_key_exists('AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA', $arResult)):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function() {
 			BX.Runtime.loadExtension('bizproc.automation.guide')
 			.then((exports) => {

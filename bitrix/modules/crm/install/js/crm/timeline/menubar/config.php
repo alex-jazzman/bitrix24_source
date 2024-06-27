@@ -13,6 +13,7 @@ return [
 		'calendar.sharing.interface',
 		'crm_common',
 		'crm.activity.todo-editor',
+		'crm.activity.todo-editor-v2',
 		'crm.client-selector',
 		'crm.entity-selector',
 		'crm.messagesender',

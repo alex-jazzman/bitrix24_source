@@ -24,11 +24,17 @@
 	 * @property {?string} banner.title
 	 * @property {?boolean} banner.showSubtitle
 	 * @property {?string} banner.buttonText
+	 * @property {?string} banner.rejectButtonText
+	 * @property {?string} banner.subtextAlign
 	 * @property {?string} banner.buttonType
 	 * @property {?object} banner.onButtonClick
+	 * @property {?object} banner.onRejectButtonClick
 	 * @property {?object} banner.onCloseBanner
 	 * @property {?object} banner.qrAuth
 	 * @property {string} banner.qrAuth.redirectUrl
+	 * @property {boolean} banner.showRejectButton
+	 * @property {boolean} banner.centerVertically
+	 *
 	 *
 	 * @property {?Object} customSection
 	 * @property {number} customSection.height
@@ -406,6 +412,14 @@
 		}
 
 		/**
+		 * @param layoutWidget
+		 */
+		setLayoutWidget(layoutWidget)
+		{
+			this.layoutWidget = layoutWidget;
+		}
+
+		/**
 		 * @public
 		 * @param parentWidget
 		 * @return {Promise}
@@ -420,11 +434,14 @@
 				this.parentWidget
 					.openWidget('layout', widgetParams)
 					.then((layoutWidget) => {
-						this.layoutWidget = layoutWidget;
+						this.setLayoutWidget(layoutWidget);
 
 						if (Type.isStringFilled(this.title))
 						{
-							layoutWidget.setTitle({ text: this.title });
+							layoutWidget.setTitle({
+								text: this.title,
+								type: 'dialog',
+							});
 							layoutWidget.enableNavigationBarBorder(false);
 						}
 
@@ -607,6 +624,11 @@
 			return (this.banner.qrauth || this.banner.onButtonClick || this.banner.onCloseBanner);
 		}
 
+		get isActionBannerWithRejectButton()
+		{
+			return this.banner.showRejectButton;
+		}
+
 		get backgroundDisabled()
 		{
 			return (this.banner && !this.showCancelButton && this.isActionBanner);
@@ -653,6 +675,11 @@
 					{
 						itemsHeight += INDENT_AFTER_ACTION_BUTTON;
 					}
+				}
+
+				if (this.isActionBannerWithRejectButton)
+				{
+					itemsHeight += DEFAULT_BANNER_BUTTON_HEIGHT;
 				}
 
 				if (this.banner.subtext)

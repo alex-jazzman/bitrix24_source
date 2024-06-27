@@ -19,7 +19,8 @@ export class DetailInstance
 
 	#embeddedParams: DashboardEmbeddedParameters;
 	#embeddedLoader: ApacheSupersetEmbeddedLoader;
-	#isExportEnabled: boolean;
+	#canExport: boolean;
+	#canEdit: boolean;
 
 	#moreMenu: Menu;
 
@@ -32,19 +33,15 @@ export class DetailInstance
 			throw new Error(errorMsg);
 		}
 		this.#dashboardManager = new DashboardManager();
-		this.#isExportEnabled = config.isExportEnabled === 'Y';
+		this.#canExport = config.canExport === 'Y';
+		this.#canEdit = config.canEdit === 'Y';
 		this.#embeddedParams = config.dashboardEmbeddedParams;
 
 		this.#frameNode = this.#dashboardNode.querySelector('.dashboard-iframe');
 		this.#subscribeEvents();
 		this.#initHeaderButtons();
 
-		if (BX.BIConnector.LimitLockPopup)
-		{
-			this.#disableEditButton();
-			Event.unbindAll(this.#editBtn);
-		}
-		else
+		if (!BX.BIConnector.LimitLockPopup)
 		{
 			this.#initFrame(this.#embeddedParams);
 		}
@@ -68,6 +65,9 @@ export class DetailInstance
 		EventEmitter.subscribe('BiConnector:DashboardSelector.onSelectDataLoaded', (event) => {
 			this.#embeddedParams = event.data.credentials;
 			Dom.clean(this.#frameNode);
+			this.#canEdit = event.data.credentials.canEdit === 'Y';
+			this.#canExport = event.data.credentials.canExport === 'Y';
+			this.#embeddedParams = event.data.credentials;
 			this.#initFrame(event.data.credentials);
 			this.#initHeaderButtons();
 		});
@@ -75,7 +75,6 @@ export class DetailInstance
 		EventEmitter.subscribe('BiConnector:LimitPopup.Warning.onClose', (event) => {
 			this.#initFrame(this.#embeddedParams);
 			this.#initHeaderButtons();
-			this.#enableEditButton();
 		});
 	}
 
@@ -106,12 +105,26 @@ export class DetailInstance
 	#initHeaderButtons()
 	{
 		this.#initMoreMenu();
-		if (this.#editBtn)
+
+		this.#editBtn = this.#dashboardNode.querySelector('.dashboard-header-buttons-edit');
+		Event.unbindAll(this.#editBtn);
+
+		if (this.#canEdit)
 		{
+			this.#enableEditButton();
+			Event.bind(this.#editBtn, 'click', this.#onEditButtonClick.bind(this));
+		}
+		else
+		{
+			this.#disableEditButton();
 			Event.unbindAll(this.#editBtn);
 		}
-		this.#editBtn = this.#dashboardNode.querySelector('.dashboard-header-buttons-edit');
-		Event.bind(this.#editBtn, 'click', this.#onEditButtonClick.bind(this));
+
+		if (BX.BIConnector.LimitLockPopup)
+		{
+			this.#disableEditButton();
+			Event.unbindAll(this.#editBtn);
+		}
 	}
 
 	#onEditButtonClick()
@@ -254,7 +267,7 @@ export class DetailInstance
 		];
 
 		const dashboardType = this.#embeddedParams.type.toLowerCase();
-		if (this.#isExportEnabled && dashboardType === 'custom')
+		if (this.#canExport)
 		{
 			result.push({
 				id: 'export',

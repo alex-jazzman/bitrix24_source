@@ -266,6 +266,10 @@
 	margin-top: 12px;
 }
 
+.market-detail__app-rating_feedback-btn {
+	flex-shrink: 0;
+}
+
 .ui-ctl-checkbox.market-detail__app-rating_feedback-checkbox {
 	margin-bottom: 0;
 	cursor: pointer;

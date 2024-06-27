@@ -3,12 +3,19 @@
  */
 jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 	const { Type } = require('type');
+	const { mergeImmutable } = require('utils/object');
 
+	const { DialogType } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const {
 		DialogTable,
+		MessageTable,
 	} = require('im/messenger/db/table');
 	const { DateHelper } = require('im/messenger/lib/helper');
+	const { DialogInternalRepository } = require('im/messenger/db/repository/internal/dialog');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const logger = LoggerManager.getInstance().getLogger('repository--dialog');
 
 	/**
 	 * @class DialogRepository
@@ -30,7 +37,20 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 
 		constructor()
 		{
+			/**
+			 * @type {DialogTable}
+			 */
 			this.dialogTable = new DialogTable();
+
+			/**
+			 * @type {DialogInternalRepository}
+			 */
+			this.internal = new DialogInternalRepository();
+
+			/**
+			 * @type {MessageTable}
+			 */
+			this.messageTable = new MessageTable();
 		}
 
 		async getByDialogId(dialogId)
@@ -57,11 +77,15 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 
 		async deleteById(dialogId)
 		{
+			await this.internal.deleteByIdList([dialogId]);
+
 			return this.dialogTable.deleteByIdList([dialogId]);
 		}
 
 		async deleteByChatIdList(chatIdList)
 		{
+			// TODO: await this.internal.deleteByChatIdList(chatIdList);
+
 			return this.dialogTable.deleteByChatIdList(chatIdList);
 		}
 
@@ -74,6 +98,8 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 
 				dialogListToAdd.push(dialogToAdd);
 			});
+
+			await this.internal.saveByDialogList(dialogListToAdd);
 
 			return this.dialogTable.add(dialogListToAdd, true);
 		}
@@ -88,9 +114,14 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 				dialogListToAdd.push(dialogToAdd);
 			});
 
+			await this.internal.saveByDialogList(dialogListToAdd);
+
 			return this.dialogTable.add(dialogListToAdd, true);
 		}
 
+		/**
+		 * @return {Partial<DialogRow>}
+		 */
 		validateRestDialog(dialog)
 		{
 			const result = {};
@@ -253,8 +284,120 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 				result.aiProvider = dialog.ai_provider;
 			}
 
+			if (Type.isStringFilled(dialog.role))
+			{
+				result.role = dialog.role;
+			}
+
+			result.permissions = {};
+			if (Type.isObject(dialog.permissions))
+			{
+				result.permissions = this.validatePermissionsFromRest(dialog.permissions);
+			}
+
+			result.permissions = JSON.stringify(
+				mergeImmutable(ChatPermission.getActionGroupsByChatType(result.type), result.permissions),
+			);
+
 			return result;
 		}
+
+		/**
+		 * @private
+		 * @param {object} fields
+		 * @return {object}
+		 */
+		validatePermissionsFromRest(fields)
+		{
+			const result = {};
+			if (Type.isStringFilled(fields.manage_users_add) || Type.isStringFilled(fields.manageUsersAdd))
+			{
+				result.manageUsersAdd = fields.manage_users_add || fields.manageUsersAdd;
+			}
+
+			if (Type.isStringFilled(fields.manage_users_delete) || Type.isStringFilled(fields.manageUsersDelete))
+			{
+				result.manageUsersDelete = fields.manage_users_delete || fields.manageUsersDelete;
+			}
+
+			if (Type.isStringFilled(fields.manage_ui) || Type.isStringFilled(fields.manageUi))
+			{
+				result.manageUi = fields.manage_ui || fields.manageUi;
+			}
+
+			if (Type.isStringFilled(fields.manage_settings) || Type.isStringFilled(fields.manageSettings))
+			{
+				result.manageSettings = fields.manage_settings || fields.manageSettings;
+			}
+
+			if (Type.isStringFilled(fields.can_post) || Type.isStringFilled(fields.canPost))
+			{
+				fields.manageMessages = fields.can_post || fields.canPost;
+			}
+
+			if (Type.isStringFilled(fields.manage_messages) || Type.isStringFilled(fields.manageMessages))
+			{
+				result.manageMessages = fields.manage_messages || fields.manageMessages;
+			}
+
+			return result;
+		}
+
+		/* region internal */
+
+		/**
+		 * @param {Array<string|number>} idList
+		 * @param {boolean} wasCompletelySync
+		 * @return {Promise<*>}
+		 */
+		async setWasCompletelySyncByIdList(idList, wasCompletelySync)
+		{
+			return this.internal.setWasCompletelySyncByIdList(idList, wasCompletelySync);
+		}
+
+		/**
+		 * @param {Array<string|number>} idList
+		 */
+		async getWasCompletelySyncByIdList(idList)
+		{
+			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
+			{
+				return {
+					items: [],
+				};
+			}
+
+			const dialogIdList = idList.map((id) => `'${id}'`).join(',');
+			const selectResult = await this.dialogTable.executeSql({
+				query: `
+					SELECT
+						d.dialogId as dialogId,
+						d.chatId as chatId,
+						d.lastMessageId as lastMessageId,
+						MAX(m.id) as lastSyncMessageId,
+						di.wasCompletelySync as wasCompletelySync
+					FROM ${this.dialogTable.getName()} as d
+					LEFT JOIN ${this.internal.dialogInternalTable.getName()} as di ON di.dialogId = d.dialogId
+					LEFT JOIN ${this.messageTable.getName()} as m ON m.chatId = d.chatId
+					WHERE d.dialogId IN (${dialogIdList})
+					GROUP BY d.dialogId
+				`,
+			});
+
+			const result = this.dialogTable.convertSelectResultToGetListResult(selectResult, false);
+			result.items = result.items.map((dialog) => {
+				const restoredDialog = dialog;
+				restoredDialog.wasCompletelySync = restoredDialog.wasCompletelySync === '1';
+
+				return restoredDialog;
+			});
+
+			logger.log('DialogRepository.getWasCompletelySyncByIdList complete: ', idList, result);
+
+			return result;
+		}
+
+		/* endregion internal */
 	}
 
 	module.exports = {

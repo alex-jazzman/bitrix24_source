@@ -35,7 +35,8 @@ class MarketList extends CBitrixComponent implements Controllerable, Loadable
 		$this->prepareResult();
 
 		$marketAction = $this->arResult['ADDITIONAL_MARKET_ACTION'] ?? '';
-		$this->arResult = array_merge($this->arResult, Toolbar::getInfo($marketAction));
+		$searchAction = $this->arResult['ADDITIONAL_SEARCH_ACTION'] ?? '';
+		$this->arResult = array_merge($this->arResult, Toolbar::getInfo($marketAction, $searchAction));
 
 		$this->includeComponentTemplate();
 	}

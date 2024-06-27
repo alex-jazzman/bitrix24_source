@@ -62,7 +62,7 @@ foreach ($folders as $folder)
 				!isset($arModules[$dir])
 				&& is_dir($_SERVER["DOCUMENT_ROOT"].$folder . "/" . $dir)
 				&& !in_array($dir, ['.', '..', 'main'], true)
-				&& strpos($dir, ".") === false
+				&& !str_contains($dir, ".")
 			)
 			{
 				$module_dir = $_SERVER["DOCUMENT_ROOT"] . $folder . "/" . $dir;
@@ -74,8 +74,8 @@ foreach ($folders as $folder)
 					$arModules[$dir]["MODULE_VERSION"] = $info->MODULE_VERSION;
 					$arModules[$dir]["MODULE_VERSION_DATE"] = $info->MODULE_VERSION_DATE;
 					$arModules[$dir]["MODULE_SORT"] = $info->MODULE_SORT;
-					$arModules[$dir]["MODULE_PARTNER"] = (strpos($dir, ".") !== false) ? $info->PARTNER_NAME : "";
-					$arModules[$dir]["MODULE_PARTNER_URI"] = (strpos($dir, ".") !== false) ? $info->PARTNER_URI : "";
+					$arModules[$dir]["MODULE_PARTNER"] = (str_contains($dir, ".")) ? $info->PARTNER_NAME : "";
+					$arModules[$dir]["MODULE_PARTNER_URI"] = (str_contains($dir, ".")) ? $info->PARTNER_URI : "";
 					$arModules[$dir]["IsInstalled"] = $info->IsInstalled();
 				}
 			}

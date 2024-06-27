@@ -106,7 +106,7 @@ include('InAppNotifier');
 			this._title = title;
 			if (this.list)
 			{
-				this.list.setTitle({ text: this._title });
+				this.list.setTitle({ text: this._title, type:"section" });
 			}
 		}
 
@@ -121,7 +121,7 @@ include('InAppNotifier');
 			{
 				if (this.title)
 				{
-					this.list.setTitle({ text: this.title });
+					this.list.setTitle({ text: this.title, type: 'section' });
 				}
 
 				const listener = (event, item) => {
@@ -171,7 +171,7 @@ include('InAppNotifier');
 												folderId: item.id,
 											});
 										},
-										title: item.title,
+										titleParams: { text: item.title, type: 'section' },
 									},
 								);
 							}
@@ -327,7 +327,7 @@ include('InAppNotifier');
 					BX.onViewLoaded(() => {
 						if (result.name)
 						{
-							this.list.setTitle({ text: result.name });
+							this.list.setTitle({ text: result.name, type: 'section'});
 						}
 
 						this.setItems(this.items);
@@ -505,7 +505,7 @@ include('InAppNotifier');
 						this.items = more ? this.items.concat(files) : files;
 						if (result.name)
 						{
-							this.list.setTitle({ text: result.name });
+							this.list.setTitle({ text: result.name, type: 'section'});
 						}
 
 						if (this.items.length === 0)

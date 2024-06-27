@@ -50,6 +50,9 @@ return [
 		'im.v2.component.message.check-in',
 		'im.v2.component.message.own-chat-creation',
 		'im.v2.component.message.zoom-invite',
+		'im.v2.component.message.general-chat-creation',
+		'im.v2.component.message.general-channel-creation',
+		'im.v2.component.message.channel-creation',
 	],
 	'skip_core' => false,
 ];

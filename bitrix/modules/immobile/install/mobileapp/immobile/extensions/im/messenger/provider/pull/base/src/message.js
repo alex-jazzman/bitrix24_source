@@ -94,20 +94,23 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			;
 
 			const dialog = this.getDialog(dialogId);
-			if (!dialog || dialog.hasNextPage)
-			{
-				return;
-			}
-
-			const hasUnloadMessages = dialog.hasNextPage;
-			if (hasUnloadMessages)
+			if (!dialog)
 			{
 				return;
 			}
 
 			userPromise.then(() => {
 				this.setFiles(params).then(() => {
-					this.setMessage(params);
+					const hasUnloadMessages = dialog.hasNextPage;
+					if (hasUnloadMessages)
+					{
+						this.storeMessage(params);
+					}
+					else
+					{
+						this.setMessage(params);
+					}
+
 					this.checkWritingTimer(params.dialogId, userData);
 				});
 			});
@@ -185,20 +188,23 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			;
 
 			const dialog = this.getDialog(dialogId);
-			if (!dialog || dialog.hasNextPage)
-			{
-				return;
-			}
-
-			const hasUnloadMessages = dialog.hasNextPage;
-			if (hasUnloadMessages)
+			if (!dialog)
 			{
 				return;
 			}
 
 			this.setUsers(params).then(() => {
 				this.setFiles(params).then(() => {
-					this.setMessage(params);
+					const hasUnloadMessages = dialog.hasNextPage;
+					if (hasUnloadMessages)
+					{
+						this.storeMessage(params);
+					}
+					else
+					{
+						this.setMessage(params);
+					}
+
 					this.checkWritingTimer(dialogId, userData);
 				});
 			});
@@ -295,7 +301,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				dialogId,
 			} = params;
 			const message = this.store.getters['messagesModel/getById'](actualReactionsState.messageId);
-			if (!message)
+			if (!('id' in message))
 			{
 				return;
 			}
@@ -430,6 +436,17 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			{
 				this.logger.info(`${this.getClassName()}.handleReadMessageChat: we already locally processed this action`);
 				UuidManager.getInstance().removeActionUuid(extra.action_uuid);
+
+				return;
+			}
+
+			if (params.lines)
+			{
+				if (MessengerParams.isOpenlinesOperator())
+				{
+					Counters.openlinesCounter.detail[params.dialogId] = params.counter;
+					Counters.update();
+				}
 
 				return;
 			}
@@ -653,7 +670,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 			if (newLastMessage)
 			{
 				recentItem.message = {
-					text: newLastMessage.file ? `[${BX.message('IM_F_FILE')}]` : newLastMessage.text,
+					text: ChatMessengerCommon.purifyText(newLastMessage.text, newLastMessage.params),
 					date: newLastMessage.date,
 					author_id: newLastMessage.author_id,
 					id: newLastMessage.id,
@@ -665,14 +682,20 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 
 			if (isNeedUpdateRecentItem)
 			{
-				this.store.dispatch('recentModel/set', [recentItem])
-					.then(() => {
-						Counters.update();
+				try
+				{
+					this.store.dispatch('recentModel/set', [recentItem])
+						.then(() => {
+							Counters.update();
 
-						this.saveShareDialogCache();
-					})
-					.catch((err) => this.logger.error(`${this.getClassName()}.fullDeleteMessage.recentModel/set.catch:`, err))
-				;
+							this.saveShareDialogCache();
+						})
+					;
+				}
+				catch (error)
+				{
+					this.logger.error(`${this.getClassName()}.fullDeleteMessage.recentModel/set.catch:`, error);
+				}
 			}
 		}
 
@@ -727,7 +750,7 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 				return;
 			}
 
-			const hasFirstViewer = Boolean(dialogModelState.lastMessageViews.firstViewer);
+			const hasFirstViewer = Boolean(dialogModelState.lastMessageViews?.firstViewer);
 			if (hasFirstViewer)
 			{
 				// FIXME this case occurs when the user is using 2 or more devices at the same time ( work only first user )
@@ -772,7 +795,11 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 		async updateCounters(params)
 		{
 			const dialogId = params.dialogId;
-			if (params.type === DialogType.comment)
+			const commentCounters = this.store.getters['commentModel/getCommentCounter']({
+				commentChatId: params.chatId,
+				channelId: params.parentChatId,
+			});
+			if (params.type === DialogType.comment || commentCounters > 0)
 			{
 				await this.store.dispatch('commentModel/setCounters', {
 					[params.parentChatId]: {
@@ -988,6 +1015,38 @@ jn.define('im/messenger/provider/pull/base/message', (require, exports, module) 
 					BX.postComponentEvent(EventType.dialog.external.scrollToBottom, [scrollToBottomEventData]);
 				});
 			}
+		}
+
+		/**
+		 * @param {MessageAddParams} params
+		 * @return {Promise<void>}
+		 */
+		async storeMessage(params)
+		{
+			this.logger.log(`${this.getClassName()}.storeMessage`, params);
+
+			const message = DialogConverter.fromPushToMessage(params);
+
+			/**
+			 * @type {MessagePullHandlerAdditionalEntities || un}
+			 */
+			const { additionalEntities } = params.message;
+
+			if (Type.isObject(additionalEntities))
+			{
+				if (Type.isArrayFilled(additionalEntities?.users))
+				{
+					await this.setUsers(additionalEntities);
+				}
+
+				if (Type.isArrayFilled(additionalEntities?.files))
+				{
+					await this.setFiles(additionalEntities);
+				}
+			}
+
+			this.store.dispatch('messagesModel/storeToLocalDatabase', [message])
+				.catch((error) => this.logger.error(`${this.getClassName()}.storeMessage.messagesModel/store.catch:`, error));
 		}
 
 		updateUserOnline(userId)

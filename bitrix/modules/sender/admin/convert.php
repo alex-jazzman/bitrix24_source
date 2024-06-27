@@ -59,7 +59,7 @@ $aTabs = array(
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 ?>
-<script type="text/javascript">
+<script>
 	var stop = false;
 	var started = false;
 	function StartConvert()

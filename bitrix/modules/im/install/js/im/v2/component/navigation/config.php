@@ -18,6 +18,7 @@ return [
 		'im.v2.lib.slider',
 		'im.v2.lib.call',
 		'im.v2.lib.phone',
+		'im.v2.lib.feature',
 		'im.v2.component.elements',
 		'im.v2.lib.utils',
 		'im.v2.lib.logger',
@@ -35,9 +36,4 @@ return [
 		'im.v2.lib.market',
 	],
 	'skip_core' => false,
-	'settings' => [
-		'copilotAvailable' => \Bitrix\Im\V2\Chat\CopilotChat::isAvailable(),
-		'channelListAvailable' => \Bitrix\Im\V2\Chat\ChannelChat::isListAvailable(),
-		'v2' => !\Bitrix\Im\Settings::isLegacyChatActivated(),
-	]
 ];

@@ -99,23 +99,6 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat', (require, exports, modu
 			return get(device.screen, 'height', 0);
 		}
 
-		static getMenuBadges()
-		{
-			const hideAfterDate = Date.now(2023, 8, 30);
-			if (Date.now() > hideAfterDate)
-			{
-				return [];
-			}
-
-			return [
-				{
-					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_BADGE_NEW_TITLE'),
-					backgroundColor: AppTheme.colors.accentBrandBlue,
-					color: AppTheme.colors.baseWhiteFixed,
-				},
-			];
-		}
-
 		constructor(props)
 		{
 			super(props);

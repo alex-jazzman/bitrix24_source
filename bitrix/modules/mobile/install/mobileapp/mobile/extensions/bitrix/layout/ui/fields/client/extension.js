@@ -122,9 +122,24 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				showClientAdd: BX.prop.getBoolean(config, 'showClientAdd', false),
 				enableMyCompanyOnly: BX.prop.getBoolean(config, 'enableMyCompanyOnly', false),
 				compound: BX.prop.getArray(config, 'compound', []),
-				selectorTitle: ''
-				,
+				selectorTitle: '',
+				entityList: this.getItems(config),
 			};
+		}
+
+		/**
+		 * @private
+		 * @param {object} config
+		 * @return {object}
+		 */
+		getItems(config)
+		{
+			if (config.items)
+			{
+				return BX.prop.getObject(config, 'items', {});
+			}
+
+			return BX.prop.getObject(config, 'entityList', {});
 		}
 
 		useHapticOnChange()
@@ -1023,8 +1038,61 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 		}
 	}
 
+	ClientField.propTypes = {
+		...BaseField.propTypes,
+		permissions: PropTypes.object, // { [entityTypeName]: { read: boolean, add: boolean } }
+		canFocusTitle: PropTypes.bool,
+		analytics: PropTypes.object,
+
+		config: PropTypes.shape({
+			// base field props
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+
+			categoryParams: PropTypes.object,
+			showClientInfo: PropTypes.bool,
+			showClientType: PropTypes.bool,
+			showClientAdd: PropTypes.bool,
+			enableMyCompanyOnly: PropTypes.bool,
+			compound: PropTypes.array,
+
+			clientLayout: PropTypes.number,
+			fixedLayoutType: PropTypes.string,
+			entityDetailOpener: PropTypes.object,
+			options: PropTypes.object,
+			owner: PropTypes.object,
+
+			entityList: PropTypes.object, // { [entityTypeName]: { title: string, icon: string } }
+		}),
+	};
+
+	ClientField.defaultProps = {
+		...BaseField.defaultProps,
+		permissions: {},
+		canFocusTitle: false,
+		analytics: null,
+
+		config: {
+			...BaseField.defaultProps.config,
+			showClientInfo: false,
+			showClientType: true,
+			showClientAdd: false,
+			enableMyCompanyOnly: false,
+		},
+	};
+
 	module.exports = {
 		ClientType: 'client',
+		ClientFieldClass: ClientField,
 		ClientField: (props) => new ClientField(props),
 	};
 });

@@ -1,7 +1,7 @@
 import { Extension, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
-import { ChatType, EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType } from 'im.v2.const';
+import { EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { DraftManager } from 'im.v2.lib.draft';
 import { Utils } from 'im.v2.lib.utils';
@@ -11,6 +11,7 @@ import { MessageService, SendingService, UploadingService } from 'im.v2.provider
 import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { isSendMessageCombination, isNewLineCombination } from 'im.v2.lib.hotkey';
 import { Textarea } from 'im.v2.lib.textarea';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
 import { ResizeDirection, ResizeManager } from './classes/resize-manager';
@@ -136,7 +137,7 @@ export const ChatTextarea = {
 		},
 		isChannelType(): boolean
 		{
-			return [ChatType.channel, ChatType.openChannel].includes(this.dialog.type);
+			return ChannelManager.isChannel(this.dialogId);
 		},
 	},
 	watch:
@@ -482,7 +483,8 @@ export const ChatTextarea = {
 		},
 		onInsertMention(event: BaseEvent<InsertMentionEvent>)
 		{
-			const { mentionText, mentionReplacement, textToReplace = '', dialogId } = event.getData();
+			const { mentionText, mentionReplacement, dialogId } = event.getData();
+			let { textToReplace = '' } = event.getData();
 			if (this.dialogId !== dialogId)
 			{
 				return;
@@ -491,12 +493,12 @@ export const ChatTextarea = {
 			const mentions = this.mentionManager.addMentionReplacement(mentionText, mentionReplacement);
 			this.draftManager.setDraftMentions(this.dialogId, mentions);
 
-			this.text = this.mentionManager.prepareMentionText({
-				currentText: this.text,
+			const mentionSymbol = this.mentionManager.getMentionSymbol();
+			textToReplace = `${mentionSymbol}${textToReplace}`;
+			this.text = Textarea.insertMention(this.$refs.textarea, {
 				textToInsert: mentionText,
 				textToReplace,
 			});
-			this.focus();
 		},
 		onInsertText(event: BaseEvent<InsertTextEvent>)
 		{
@@ -506,7 +508,6 @@ export const ChatTextarea = {
 				return;
 			}
 			this.text = Textarea.insertText(this.$refs.textarea, event.getData());
-			this.focus();
 		},
 		onEditMessage(event: BaseEvent<{ messageId: number, dialogId: string }>)
 		{

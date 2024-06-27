@@ -1,6 +1,7 @@
 import '../css/role-item.css';
 
 import type { ImModelCopilotRole } from 'im.v2.model';
+import type { JsonObject } from 'main.core';
 
 // @vue/component
 export const RoleItem = {
@@ -11,6 +12,12 @@ export const RoleItem = {
 			type: Object,
 			required: true,
 		},
+	},
+	data(): JsonObject
+	{
+		return {
+			imageLoadError: false,
+		};
 	},
 	computed:
 	{
@@ -30,11 +37,27 @@ export const RoleItem = {
 		{
 			return this.roleItem.desc;
 		},
+		defaultRole(): ImModelCopilotRole
+		{
+			return this.$store.getters['copilot/roles/getDefault'];
+		},
+		defaultRoleAvatarUrl(): string
+		{
+			return this.defaultRole.avatar.medium;
+		},
+	},
+	methods:
+	{
+		onImageLoadError()
+		{
+			this.imageLoadError = true;
+		},
 	},
 	template: `
 		<div class="bx-im-role-item__container">
 			<div class="bx-im-role-item__avatar">
-				<img :src="roleAvatar" :alt="roleName">
+				<img v-if="!imageLoadError" :src="roleAvatar" :alt="roleName" @error="onImageLoadError">
+				<img v-else :src="defaultRoleAvatarUrl" :alt="roleName">
 			</div>
 			<div class="bx-im-role-item__info">
 				<div class="bx-im-role-item__name" :title="roleName">{{ roleName }}</div>

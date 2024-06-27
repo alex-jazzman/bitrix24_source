@@ -44,7 +44,7 @@ if ($arID = $lAdmin->GroupAction())
 				&& ($arNode['STATUS'] == 'READY' || $arNode['STATUS'] == 'PAUSED')
 			)
 			{
-				CClusterDBNode::Delete($arNode['ID']);
+				CClusterDBNode::Delete($arNode['ID'], false);
 			}
 			break;
 		case 'pause':
@@ -57,7 +57,11 @@ if ($arID = $lAdmin->GroupAction())
 			CClusterSlave::Stop($ID);
 			break;
 		case 'skip_sql_error':
-			CClusterSlave::SkipSQLError($ID);
+			$result = CClusterSlave::SkipSQLError($ID);
+			if ($result !== true)
+			{
+				$lAdmin->AddGroupError($result, $ID);
+			}
 			break;
 		}
 	}
@@ -389,14 +393,14 @@ while ($arRes = $rsData->Fetch()):
 			{
 				$arActions[] = [
 					'TEXT' => GetMessage('CLU_SLAVE_LIST_START_USING_DB'),
-					'ACTION' => "javascript:WizardWindow.Open('bitrix:cluster.master_start','" . bitrix_sessid() . '&__wiz_node_id=' . $arRes['ID'] . '&__wiz_group_id=' . $arRes['GROUP_ID'] . "')",
+					'ACTION' => "javascript:StartWizard('bitrix:cluster.master_start','&__wiz_node_id=" . $arRes['ID'] . '&__wiz_group_id=' . $arRes['GROUP_ID'] . "')",
 				];
 			}
 			else
 			{
 				$arActions[] = [
 					'TEXT' => GetMessage('CLU_SLAVE_LIST_START_USING_DB'),
-					'ACTION' => "javascript:WizardWindow.Open('bitrix:cluster.slave_start','" . bitrix_sessid() . '&__wiz_node_id=' . $arRes['ID'] . '&__wiz_group_id=' . $arRes['GROUP_ID'] . "')",
+					'ACTION' => "javascript:StartWizard('bitrix:cluster.slave_start','&__wiz_node_id=" . $arRes['ID'] . '&__wiz_group_id=' . $arRes['GROUP_ID'] . "')",
 				];
 			}
 		}
@@ -431,12 +435,26 @@ $lAdmin->AddFooter(
 	]
 );
 
+$url = 'cluster_slave_list.php?lang=' . urlencode(LANGUAGE_ID) . '&group_id=' . ($group_id ?: 'all');
+
+$lAdmin->BeginPrologContent();
+?>
+<script>
+	function StartWizard(name, params)
+	{
+		WizardWindow.Open(name, BX.bitrix_sessid() + params);
+		BX.addCustomEvent(WizardWindow.currentDialog, 'onWindowClose', () => {<?=$lAdmin->ActionAjaxReload($url)?>});
+	}
+</script>
+<?php
+$lAdmin->EndPrologContent();
+
 $aContext = [];
 if ($bHasMaster && $group_id > 0)
 {
 	$aContext[] = [
 		'TEXT' => GetMessage('CLU_SLAVE_LIST_ADD'),
-		'LINK' => "javascript:WizardWindow.Open('bitrix:cluster.slave_add','" . bitrix_sessid() . '&__wiz_group_id=' . $group_id . "')",
+		'LINK' => "javascript:StartWizard('bitrix:cluster.slave_add','&__wiz_group_id=" . $group_id . "')",
 		'TITLE' => GetMessage('CLU_SLAVE_LIST_ADD_TITLE'),
 		'ICON' => 'btn_new',
 	];
@@ -445,14 +463,14 @@ elseif ($group_id > 1)
 {
 	$aContext[] = [
 		'TEXT' => GetMessage('CLU_SLAVE_LIST_MASTER_ADD'),
-		'LINK' => "javascript:WizardWindow.Open('bitrix:cluster.master_add','" . bitrix_sessid() . '&__wiz_group_id=' . $group_id . "')",
+		'LINK' => "javascript:StartWizard('bitrix:cluster.master_add','&__wiz_group_id=" . $group_id . "')",
 		'TITLE' => GetMessage('CLU_SLAVE_LIST_MASTER_ADD_TITLE'),
 		'ICON' => 'btn_new',
 	];
 }
 $aContext[] = [
 	'TEXT' => GetMessage('CLU_SLAVE_LIST_REFRESH'),
-	'LINK' => 'cluster_slave_list.php?lang=' . LANGUAGE_ID . '&group_id=' . ($group_id ?: 'all'),
+	'LINK' => 'javascript:' . $lAdmin->ActionAjaxReload($url),
 ];
 
 $lAdmin->AddAdminContextMenu($aContext, /*$bShowExcel=*/false);

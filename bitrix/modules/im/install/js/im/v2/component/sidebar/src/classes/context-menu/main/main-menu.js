@@ -2,11 +2,10 @@ import { Loc } from 'main.core';
 
 import { Utils } from 'im.v2.lib.utils';
 import { RecentMenu } from 'im.v2.lib.menu';
-import { ChatType, ChatActionType } from 'im.v2.const';
+import { ChatActionType } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 
 import type { MenuItem } from 'im.v2.lib.menu';
-import type { ImModelRecentItem, ImModelUser } from 'im.v2.model';
 
 export class MainMenu extends RecentMenu
 {
@@ -62,7 +61,7 @@ export class MainMenu extends RecentMenu
 		const profileUri = Utils.user.getCalendarLink(this.context.dialogId);
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR'),
+			text: Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR_V2'),
 			onclick: () => {
 				BX.SidePanel.Instance.open(profileUri);
 				this.menuInstance.close();
@@ -83,7 +82,7 @@ export class MainMenu extends RecentMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_SIDEBAR_MENU_INVITE_MEMBERS'),
+			text: Loc.getMessage('IM_SIDEBAR_MENU_INVITE_MEMBERS_V2'),
 			onclick: () => {
 				this.emit(MainMenu.events.onAddToChatShow);
 				this.menuInstance.close();

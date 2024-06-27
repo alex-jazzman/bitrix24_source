@@ -114,6 +114,7 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 
 	protected function updateRequisite(int $requisiteId, int $bankDetailId, array $fieldsValues)
 	{
+		$options = ['DISABLE_REQUIRED_USER_FIELD_CHECK' => true];
 		$requisite = EntityRequisite::getSingleInstance();
 		$bankDetail = EntityBankDetail::getSingleInstance();
 
@@ -121,10 +122,10 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 
 		if ($fieldsValues['RequisiteFields'])
 		{
-		 	$res = $requisite->checkBeforeUpdate($requisiteId, $fieldsValues['RequisiteFields']);
+		 	$res = $requisite->checkBeforeUpdate($requisiteId, $fieldsValues['RequisiteFields'], $options);
 		 	if ($res->isSuccess())
 			{
-				$requisite->update($requisiteId, $fieldsValues['RequisiteFields']);
+				$requisite->update($requisiteId, $fieldsValues['RequisiteFields'], $options);
 			}
 		 	else
 			{
@@ -134,10 +135,15 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 		}
 		if ($fieldsValues['BankDetailFields'])
 		{
-			$res = $bankDetail->checkBeforeUpdate($bankDetailId, $fieldsValues['BankDetailFields']);
+			$presetId = $requisite->getPresetIdFromFields($fieldsValues['RequisiteFields']);
+			if ($presetId > 0)
+			{
+				$options['FIELD_CHECK_OPTIONS'] = ['PRESET_ID' => $presetId];
+			}
+			$res = $bankDetail->checkBeforeUpdate($bankDetailId, $fieldsValues['BankDetailFields'], $options);
 			if ($res->isSuccess())
 			{
-				$bankDetail->update($bankDetailId, $fieldsValues['BankDetailFields']);
+				$bankDetail->update($bankDetailId, $fieldsValues['BankDetailFields'], $options);
 			}
 			else
 			{

@@ -15,12 +15,13 @@ import { ChatAvatar } from './elements/chat-avatar';
 import { ChatMembersSelector } from './elements/chat-members';
 import { ButtonPanel } from './elements/button-panel';
 import { TextareaInput } from './elements/textarea';
+import { CreateChatHeading } from './elements/heading';
 import { SettingsSection } from './sections/settings/settings-section';
 import { RightsSection } from './sections/rights/rights-section';
 import { AppearanceSection } from './sections/appearance/appearance-section';
 import { PrivacySection } from './sections/privacy/privacy-section';
 
-import '../css/create-channel.css';
+import '../css/channel.css';
 
 import type { JsonObject } from 'main.core';
 
@@ -39,6 +40,7 @@ export const ChannelCreation = {
 		PrivacySection,
 		ButtonPanel,
 		TextareaInput,
+		CreateChatHeading,
 	},
 	data(): JsonObject
 	{
@@ -61,6 +63,10 @@ export const ChannelCreation = {
 				manageMessages: '',
 			},
 		};
+	},
+	computed:
+	{
+		ChatType: () => ChatType,
 	},
 	watch:
 	{
@@ -93,7 +99,7 @@ export const ChannelCreation = {
 	},
 	methods:
 	{
-		onMembersChange(currentTags: number[])
+		onMembersChange(currentTags: [string, number | string][])
 		{
 			this.chatMembers = currentTags;
 		},
@@ -137,7 +143,7 @@ export const ChannelCreation = {
 				type: ChatType.channel,
 				title: this.chatTitle,
 				avatar: this.avatarFile,
-				members: this.chatMembers,
+				memberEntities: this.chatMembers,
 				ownerId: this.rights.ownerId,
 				managers: this.rights.managerIds,
 				isAvailableInSearch: this.settings.isAvailableInSearch,
@@ -235,21 +241,22 @@ export const ChannelCreation = {
 
 			return this.chatService;
 		},
-		loc(phraseCode: string): string
+		loc(phraseCode: string, replacements: {[string]: string} = {}): string
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `
-		<div class="bx-im-content-create-chat__content" @scroll="onScroll">
+		<div class="bx-im-content-create-chat__content --channel" @scroll="onScroll">
 			<div class="bx-im-content-create-chat__header">
 				<ChatAvatar :avatarFile="avatarFile" :chatTitle="chatTitle" @avatarChange="onAvatarChange" :squared="true" />
-				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHANNEL_TITLE_PLACEHOLDER')" />
+				<TitleInput v-model="chatTitle" :placeholder="loc('IM_CREATE_CHANNEL_TITLE_PLACEHOLDER_V2')" />
 			</div>
+			<CreateChatHeading :text="loc('IM_CREATE_CHANNEL_DESCRIPTION_TITLE')" />
 			<div class="bx-im-content-create-channel__description_container">
 				<TextareaInput
 					:value="settings.description"
-					:placeholder="loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER')"
+					:placeholder="loc('IM_CREATE_CHANNEL_DESCRIPTION_PLACEHOLDER_V3')"
 					:border="false"
 					@input="onDescriptionChange"
 				/>
@@ -258,7 +265,15 @@ export const ChannelCreation = {
 				:isAvailableInSearch="settings.isAvailableInSearch"
 				@chatTypeChange="onChatTypeChange"
 			/>
+			<CreateChatHeading
+				:text="loc('IM_CREATE_CHANNEL_MEMBERS_TITLE')"
+				:hintText="loc('IM_CREATE_CHANNEL_MEMBERS_HINT')"
+			/>
+			<div class="bx-im-content-create-channel__members_container">
+				<ChatMembersSelector :chatType="ChatType.channel" :chatMembers="chatMembers" @membersChange="onMembersChange" />
+			</div>
 			<RightsSection
+				:chatType="ChatType.channel"
 				:ownerId="rights.ownerId"
 				:managerIds="rights.managerIds"
 				:manageUsersAdd="rights.manageUsersAdd"
@@ -273,9 +288,6 @@ export const ChannelCreation = {
 				@manageUiChange="onManageUiChange"
 				@manageMessagesChange="onManageMessagesChange"
 			/>
-			<div class="bx-im-content-create-channel__members_container">
-				<ChatMembersSelector :chatMembers="chatMembers" @membersChange="onMembersChange" />
-			</div>
 		</div>
 		<ButtonPanel
 			:isCreating="isCreating"

@@ -116,9 +116,20 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			this.nativeSearchField.close();
 		}
 
+		getSearchButton = () => {
+			return {
+				type: 'search',
+				id: 'search',
+				testId: 'search',
+				callback: this.show,
+				accent: this.hasChanges(),
+			};
+		};
+
 		/**
 		 * @public
 		 * @return {string|null}
+		 * @deprecated - now you need to use getSearchButton
 		 */
 		getSearchButtonBackgroundColor()
 		{
@@ -230,14 +241,16 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 				return;
 			}
 
-			const { counters, presets } = response.data;
-			this.counters = counters;
-			this.presets = presets;
+			const { counters = [], presets } = response.data;
 
 			if (!this.presetsLoaded || !isEqual(this.counters, counters) || !isEqual(this.presets, presets))
 			{
-				this.searchLayoutView.setPresets(presets, counters);
+				this.counters = counters;
+				this.presets = Object.entries(presets).map(([id, preset]) => ({ id, ...preset }));
+
+				this.searchLayoutView.setPresets(this.presets, this.counters);
 			}
+
 			this.presetsLoaded = true;
 		}
 

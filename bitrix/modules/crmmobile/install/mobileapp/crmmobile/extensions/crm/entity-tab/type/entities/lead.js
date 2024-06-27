@@ -50,6 +50,18 @@ jn.define('crm/entity-tab/type/entities/lead', (require, exports, module) => {
 				},
 			];
 		}
+
+		getMenuActions()
+		{
+			return [
+				{
+					type: UI.Menu.Types.HELPDESK,
+					data: {
+						articleCode: '19787578',
+					},
+				},
+			];
+		}
 	}
 
 	module.exports = { Lead };

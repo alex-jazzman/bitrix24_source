@@ -2,17 +2,17 @@
 
 namespace Bitrix\Crm\Integration\AI\Operation;
 
-use Bitrix\Crm\Activity\Provider\Call;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Dto\Dto;
+use Bitrix\Crm\Integration\AI\Config;
 use Bitrix\Crm\Integration\AI\Dto\TranscribeCallRecordingPayload;
 use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Result;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\AudioToTextEvent;
-use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\Ai\Call\Controller;
@@ -51,10 +51,7 @@ final class TranscribeCallRecording extends AbstractOperation
 			$activity = Container::getInstance()->getActivityBroker()->getById($target->getEntityId());
 			if (
 				is_array($activity)
-				&& isset($activity['PROVIDER_ID'])
-				&& $activity['PROVIDER_ID'] === Call::ACTIVITY_PROVIDER_ID
-				// check that it's a real call from voximplant or another telephony
-				&& !empty($activity['ORIGIN_ID'])
+				&& VoxImplantManager::isActivityBelongsToVoximplant($activity)
 			)
 			{
 				return true;
@@ -166,6 +163,21 @@ final class TranscribeCallRecording extends AbstractOperation
 		;
 	}
 
+	final protected function getContextLanguageId(): string
+	{
+		$itemIdentifier = (new Orchestrator())->findPossibleFillFieldsTarget($this->target->getEntityId());
+		if ($itemIdentifier)
+		{
+			return Config::getLanguageId(
+				$this->userId,
+				$itemIdentifier->getEntityTypeId(),
+				$itemIdentifier->getCategoryId()
+			);
+		}
+
+		return parent::getContextLanguageId();
+	}
+
 	protected static function notifyTimelineAfterSuccessfulLaunch(Result $result): void
 	{
 		$nextTarget = (new Orchestrator())->findPossibleFillFieldsTarget($result->getTarget()?->getEntityId());
@@ -222,7 +234,10 @@ final class TranscribeCallRecording extends AbstractOperation
 
 			if ($withSendAnalytics)
 			{
-				self::sendCallParsingAnalyticsEvent($activityId, Dictionary::STATUS_ERROR_GPT, $result->isManualLaunch());
+				self::sendCallParsingAnalyticsEvent(
+					$result,
+					$activityId
+				);
 			}
 		}
 	}

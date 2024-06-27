@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Catalog = this.BX.Catalog || {};
-(function (exports,catalog_entityCard,ui_buttons,main_core_events,currency_currencyCore,ui_entitySelector,main_popup,catalog_storeUse,ui_feedback_form,main_core) {
+(function (exports,catalog_entityCard,ui_buttons,main_core_events,currency_currencyCore,ui_entitySelector,main_popup,catalog_storeEnableWizard,ui_feedback_form,main_core) {
 	'use strict';
 
 	var ProductListController = /*#__PURE__*/function (_BX$UI$EntityEditorCo) {
@@ -888,7 +888,10 @@ this.BX.Catalog = this.BX.Catalog || {};
 	    key: "openMasterSlider",
 	    value: function openMasterSlider() {
 	      var card = this;
-	      new catalog_storeUse.StoreSlider().open(this.masterSliderUrl, {
+	      new catalog_storeEnableWizard.EnableWizardOpener().open(this.masterSliderUrl, {
+	        urlParams: {
+	          analyticsContextSection: catalog_storeEnableWizard.AnalyticsContextList.DOCUMENT_CARD
+	        },
 	        data: {
 	          openGridOnDone: false
 	        },
@@ -1466,5 +1469,5 @@ this.BX.Catalog = this.BX.Catalog || {};
 	exports.FeedbackButton = Button;
 	exports.Slider = Slider;
 
-}((this.BX.Catalog.DocumentCard = this.BX.Catalog.DocumentCard || {}),BX.Catalog.EntityCard,BX.UI,BX.Event,BX.Currency,BX.UI.EntitySelector,BX.Main,BX.Catalog.StoreUse,BX,BX));
+}((this.BX.Catalog.DocumentCard = this.BX.Catalog.DocumentCard || {}),BX.Catalog.EntityCard,BX.UI,BX.Event,BX.Currency,BX.UI.EntitySelector,BX.Main,BX.Catalog.Store,BX,BX));
 //# sourceMappingURL=document-card.bundle.js.map

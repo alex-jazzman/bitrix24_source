@@ -210,7 +210,10 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 					pinned: recentItem.pinned,
 					liked: false,
 					unread: recentItem.unread,
-					message,
+					message: {
+						...message,
+						text: ChatMessengerCommon.purifyText(message.text, message.params),
+					},
 				};
 
 				result.recent.push(item);
@@ -229,7 +232,15 @@ jn.define('im/messenger/controller/recent/channel/recent', (require, exports, mo
 
 		onCreateChat()
 		{
-			MessengerEmitter.emit(EventType.messenger.createChat, {}, ComponentCode.imChannelMessenger);
+			MessengerEmitter.emit(
+				EventType.navigation.broadCastEventWithTabChange,
+				{
+					broadCastEvent: EventType.messenger.createChannel,
+					toTab: ComponentCode.imMessenger,
+					data: {},
+				},
+				ComponentCode.imNavigation,
+			);
 		}
 
 		onRefresh()

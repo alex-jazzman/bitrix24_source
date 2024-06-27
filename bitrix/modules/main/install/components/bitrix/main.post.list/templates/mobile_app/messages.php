@@ -1,17 +1,22 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Json;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+	die();
 /**
  * @var string $template
  * @var string $thumb
 */
 ?>
-<script type="text/javascript">
+<script>
 <? if (IsModuleInstalled("socialnetwork")): ?>
 BX.ready(function()
 {
 	if (BX.CommentAux)
 	{
 		BX.	CommentAux.init({
-			currentUserSonetGroupIdList: <?=CUtil::PhpToJSObject(\Bitrix\Socialnetwork\ComponentHelper::getUserSonetGroupIdList($USER->GetID(), SITE_ID))?>,
+			currentUserSonetGroupIdList: <?= Json::encode(\Bitrix\Socialnetwork\ComponentHelper::getUserSonetGroupIdList($USER->GetID(), SITE_ID)) ?>,
 			mobile: true
 		});
 	}

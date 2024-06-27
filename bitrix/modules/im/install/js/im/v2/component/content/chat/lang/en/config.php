@@ -2,9 +2,11 @@
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_DISABLE_NOTIFICATIONS"] = "Mute";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_ENABLE_NOTIFICATIONS"] = "Unmute";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL"] = "Join channel";
+$MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHANNEL_V2"] = "Subscribe";
 $MESS["IM_CONTENT_BLOCKED_TEXTAREA_JOIN_CHAT"] = "Join chat";
-$MESS["IM_CONTENT_CHANNEL_START_MESSAGE"] = "Select a channel to start communicating.";
+$MESS["IM_CONTENT_CHANNEL_START_MESSAGE_SUBTITLE"] = "Channel will show up in your chat list as soon as you subscribe to it.";
 $MESS["IM_CONTENT_CHANNEL_START_MESSAGE_V2"] = "Subscribe to channels to follow news";
+$MESS["IM_CONTENT_CHANNEL_START_MESSAGE_V3"] = "This screen will show public channels";
 $MESS["IM_CONTENT_CHAT_ACCESS_ERROR"] = "You do not have permission to access this chat.";
 $MESS["IM_CONTENT_CHAT_CONTEXT_MESSAGE_NOT_FOUND"] = "Message was not found";
 $MESS["IM_CONTENT_CHAT_HEADER_CALL_MENU_AUDIO"] = "Voice call";

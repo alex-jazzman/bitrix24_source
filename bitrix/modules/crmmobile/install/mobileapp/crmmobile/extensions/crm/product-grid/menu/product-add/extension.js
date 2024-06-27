@@ -16,12 +16,18 @@ jn.define('crm/product-grid/menu/product-add', (require, exports, module) => {
 	 */
 	class ProductAddMenu
 	{
-		static getFloatingMenuItems()
+		static getFloatingMenuItems(params = {})
 		{
-			return [
+			const isSearchOnly = Boolean(params.isSearchOnly);
+			const selectorText = isSearchOnly
+				? Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_SHORT')
+				: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_MSGVER_2')
+			;
+
+			const items = [
 				new FloatingMenuItem({
 					id: MenuItemId.SELECTOR,
-					title: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_MSGVER_2'),
+					title: selectorText,
 					shortTitle: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_SHORT'),
 					isSupported: true,
 					isAvailable: true,
@@ -29,7 +35,11 @@ jn.define('crm/product-grid/menu/product-add', (require, exports, module) => {
 					position: 100,
 					icon: SvgIcons.product,
 				}),
-				new FloatingMenuItem({
+			];
+
+			if (!isSearchOnly)
+			{
+				items.push(new FloatingMenuItem({
 					id: MenuItemId.BARCODE_SCANNER,
 					title: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_OPEN_BARCODE_SCANNER'),
 					shortTitle: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_OPEN_BARCODE_SCANNER_SHORT'),
@@ -38,8 +48,10 @@ jn.define('crm/product-grid/menu/product-add', (require, exports, module) => {
 					checkUnsavedChanges: false,
 					position: 200,
 					icon: SvgIcons.barcode,
-				}),
-			];
+				}));
+			}
+
+			return items;
 		}
 
 		constructor(props)
@@ -60,17 +72,27 @@ jn.define('crm/product-grid/menu/product-add', (require, exports, module) => {
 
 		buildItems()
 		{
-			return [
+			const isSearchOnly = Boolean(this.props.isCatalogHidden);
+			const selectorText = isSearchOnly
+				? Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_SHORT')
+				: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_MSGVER_2')
+			;
+
+			const items = [
 				{
 					id: MenuItemId.SELECTOR,
-					title: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_CHOOSE_FROM_CATALOG_MSGVER_2'),
+					title: selectorText,
 					subTitle: '',
 					data: {
 						svgIcon: SvgIcons.product,
 					},
 					onClickCallback: this.callback.bind(this, MenuItemId.SELECTOR),
 				},
-				{
+			];
+
+			if (!isSearchOnly)
+			{
+				items.push({
 					id: MenuItemId.BARCODE_SCANNER,
 					title: Loc.getMessage('PRODUCT_GRID_MENU_PRODUCT_ADD_OPEN_BARCODE_SCANNER'),
 					subTitle: '',
@@ -78,8 +100,10 @@ jn.define('crm/product-grid/menu/product-add', (require, exports, module) => {
 						svgIcon: SvgIcons.barcode,
 					},
 					onClickCallback: this.callback.bind(this, MenuItemId.BARCODE_SCANNER),
-				},
-			];
+				});
+			}
+
+			return items;
 		}
 
 		callback(eventName)

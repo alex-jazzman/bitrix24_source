@@ -1,5 +1,6 @@
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import type { PullExtraParams, RawChat } from '../../types/common';
 import type { MessageAddParams } from '../../types/message';
@@ -8,6 +9,7 @@ const ActionNameByChatType = {
 	[ChatType.copilot]: 'recent/setCopilot',
 	[ChatType.channel]: 'recent/setChannel',
 	[ChatType.openChannel]: 'recent/setChannel',
+	[ChatType.generalChannel]: 'recent/setChannel',
 	default: 'recent/setRecent',
 };
 
@@ -58,7 +60,7 @@ export class NewMessageManager
 
 	isChannelChat(): boolean
 	{
-		return [ChatType.channel, ChatType.openChannel].includes(this.getChatType());
+		return ChannelManager.channelTypes.has(this.getChatType());
 	}
 
 	isUserInChat(): boolean

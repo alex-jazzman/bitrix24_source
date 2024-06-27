@@ -589,8 +589,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        main_core.Event.bind(closeIcon, 'click', function (event) {
 	          event.preventDefault();
 	          if (main_core.Type.isDomNode(node.parentNode)) {
-	            var phoneBlock = node.parentNode.querySelector("[data-role='phone-block']");
+	            var phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
 	            if (main_core.Type.isDomNode(phoneBlock)) {
+	              console.log('phoneBlock', phoneBlock);
 	              var newInput = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"EMAIL[]\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"])), node.getAttribute('data-num'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'));
 	              main_core.Dom.replace(node, newInput);
 	              _this3.bindCloseIcons(newInput.parentNode);
@@ -787,6 +788,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        p2: _classPrivateMethodGet(this, _getAdminAllowMode, _getAdminAllowMode2).call(this)
 	      });
 	    }
+	  }, {
+	    key: "sendTabData",
+	    value: function sendTabData(section, subSection) {
+	      if (!section) {
+	        return;
+	      }
+	      ui_analytics.sendData({
+	        tool: Analytics.TOOLS,
+	        category: Analytics.CATEGORY_INVITATION,
+	        event: Analytics.EVENT_TAB_VIEW,
+	        c_section: section,
+	        c_sub_section: subSection
+	      });
+	    }
 	  }]);
 	  return Analytics;
 	}();
@@ -806,6 +821,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	babelHelpers.defineProperty(Analytics, "ADMIN_ALLOW_MODE_N", 'askAdminToAllow_N');
 	babelHelpers.defineProperty(Analytics, "IS_ADMIN_Y", 'isAdmin_Y');
 	babelHelpers.defineProperty(Analytics, "IS_ADMIN_N", 'isAdmin_N');
+	babelHelpers.defineProperty(Analytics, "EVENT_TAB_VIEW", 'tab_view');
+	babelHelpers.defineProperty(Analytics, "TAB_EMAIL", 'tab_by_email');
+	babelHelpers.defineProperty(Analytics, "TAB_MASS", 'tab_mass');
+	babelHelpers.defineProperty(Analytics, "TAB_DEPARTMENT", 'tab_department');
+	babelHelpers.defineProperty(Analytics, "TAB_INTEGRATOR", 'tab_integrator');
+	babelHelpers.defineProperty(Analytics, "TAB_LINK", 'by_link');
+	babelHelpers.defineProperty(Analytics, "TAB_REGISTRATION", 'registration');
+	babelHelpers.defineProperty(Analytics, "TAB_AD", 'AD');
 
 	var Form = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Form, _EventEmitter);
@@ -875,16 +898,29 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      this.selector.render();
 	    }
 	  }, {
+	    key: "getSubSection",
+	    value: function getSubSection() {
+	      var regex = /analyticsLabel\[source]=(\w*)&/gm;
+	      var match = regex.exec(decodeURI(window.location));
+	      if ((match === null || match === void 0 ? void 0 : match.length) > 1) {
+	        return match[1];
+	      }
+	      return null;
+	    }
+	  }, {
 	    key: "changeContent",
 	    value: function changeContent(action) {
 	      this.hideErrorMessage();
 	      this.hideSuccessMessage();
+	      var section = this.getSubSection();
+	      var subSection = "";
 	      if (action.length > 0) {
 	        if (action === 'active-directory') {
 	          if (!this.activeDirectory) {
 	            this.activeDirectory = new ActiveDirectory(this);
 	          }
 	          this.activeDirectory.showForm();
+	          this.analytics.sendTabData(Analytics.TAB_AD);
 	          return;
 	        }
 	        var projectId = this.userOptions.hasOwnProperty('groupId') ? parseInt(this.userOptions.groupId, 10) : 0;
@@ -898,8 +934,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            };
 	            var row = new Row(this, params);
 	            if (action === 'invite') {
+	              subSection = Analytics.TAB_EMAIL;
 	              row.renderInviteInputs(5);
 	            } else if (action === 'invite-with-group-dp') {
+	              subSection = Analytics.TAB_DEPARTMENT;
 	              row.renderInviteInputs(3);
 	              var selectorParams = {
 	                contentBlock: this.contentBlocks[action].querySelector("[data-role='entity-selector-container']"),
@@ -924,6 +962,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	              };
 	              this.renderSelector(_selectorParams);
 	            } else if (action === "add") {
+	              subSection = Analytics.TAB_REGISTRATION;
 	              row.renderRegisterInputs();
 	              var _selectorParams2 = {
 	                contentBlock: this.contentBlocks[action].querySelector("[data-role='entity-selector-container']"),
@@ -936,12 +975,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 	              };
 	              this.renderSelector(_selectorParams2);
 	            } else if (action === "integrator") {
+	              subSection = Analytics.TAB_INTEGRATOR;
 	              row.renderIntegratorInput();
+	            } else if (action === "self") {
+	              subSection = Analytics.TAB_LINK;
+	            } else if (action === "mass-invite") {
+	              subSection = Analytics.TAB_MASS;
 	            }
 	          } else {
 	            main_core.Dom.removeClass(block, 'invite-block-shown');
 	            main_core.Dom.addClass(block, 'invite-block-hidden');
 	          }
+	        }
+	        if (this.analytics) {
+	          this.analytics.sendTabData(section, subSection);
 	        }
 	        this.changeButton(action);
 	      }

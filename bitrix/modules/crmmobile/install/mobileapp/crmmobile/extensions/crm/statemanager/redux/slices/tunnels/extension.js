@@ -3,6 +3,7 @@
  */
 jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const {
 		createEntityAdapter,
 		createSlice,
@@ -10,8 +11,7 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 
 	const reducerName = 'crm:tunnels';
 	const adapter = createEntityAdapter({});
-	const initialState = adapter.getInitialState();
-	const filledState = adapter.upsertMany(initialState, []);
+	const initialState = StateCache.getReducerState(reducerName, adapter.getInitialState());
 
 	const prepareTunnelsToSave = (tunnels) => {
 		return tunnels.map((tunnel) => {
@@ -75,7 +75,7 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 
 	const slice = createSlice({
 		name: reducerName,
-		initialState: filledState,
+		initialState,
 		reducers: {},
 		extraReducers: (builder) => {
 			builder

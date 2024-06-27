@@ -2,227 +2,463 @@
  * @module ui-system/form/buttons/button
  */
 jn.define('ui-system/form/buttons/button', (require, exports, module) => {
-	const { PropTypes } = require('utils/validation');
-	const { PlainView } = require('ui-system/blocks/plain-view');
-	const { Color, Indent, IndentTypes, Corner, CornerTypes } = require('tokens');
+	const { Component, Color } = require('tokens');
+	const { isLightColor } = require('utils/color');
+	const { capitalize } = require('utils/string');
 	const { mergeImmutable } = require('utils/object');
+	const { Text } = require('ui-system/typography/text');
+	const { SpinnerLoader, SpinnerDesign } = require('layout/ui/loaders/spinner');
+	const { PropTypes } = require('utils/validation');
+	const { IconView, iconTypes, Icon } = require('ui-system/blocks/icon');
+	const { ButtonSize } = require('ui-system/form/buttons/button/src/size-enum');
+	const { ButtonDesign } = require('ui-system/form/buttons/button/src/design-enum');
 
-	const buttonTypes = Object.freeze({
-		XL: 'XL',
-		L: 'L',
-		M: 'M',
-		S: 'S',
-		XS: 'XS',
-	});
-
-	const paddingHorizontalMap = {
-		[buttonTypes.XL]: Indent[IndentTypes.XL4],
-		[buttonTypes.L]: Indent[IndentTypes.XL3],
-		[buttonTypes.M]: Indent[IndentTypes.XL2],
-		[buttonTypes.S]: Indent[IndentTypes.L],
-		[buttonTypes.XS]: Indent[IndentTypes.M],
-	};
-
-	const textPaddingMap = {
-		[buttonTypes.XL]: IndentTypes.XS,
-		[buttonTypes.L]: IndentTypes.XS,
-		[buttonTypes.M]: IndentTypes.XS2,
-		[buttonTypes.S]: IndentTypes.XS2,
-		[buttonTypes.XS]: IndentTypes.XS2,
-	};
-
-	const cornerMap = {
-		[buttonTypes.XL]: Corner.M,
-		[buttonTypes.L]: Corner.M,
-		[buttonTypes.M]: Corner.M,
-		[buttonTypes.S]: Corner.S,
-		[buttonTypes.XS]: Corner.XS,
-	};
-
-	const FONT_SIZES = {
-		[buttonTypes.XL]: 18,
-		[buttonTypes.L]: 16,
-		[buttonTypes.M]: 14,
-		[buttonTypes.S]: 14,
-		[buttonTypes.XS]: 12,
-	};
-
-	const BUTTON_SIZES = {
-		[buttonTypes.XL]: 48,
-		[buttonTypes.L]: 42,
-		[buttonTypes.M]: 36,
-		[buttonTypes.S]: 28,
-		[buttonTypes.XS]: 22,
+	const Direction = {
+		LEFT: 'left',
+		RIGHT: 'right',
 	};
 
 	/**
-	 * @param {buttonTypes} size
-	 * @return number
-	 */
-	const getButtonSize = (size = buttonTypes.M) => buttonTypes[size] || buttonTypes.M;
-
-	/**
-	 * @param {buttonTypes} size
-	 * @return number
-	 */
-	const getInternalIndents = (size = buttonTypes.M) => paddingHorizontalMap[getButtonSize(size)];
-
-	/**
-	 *
-	 * @param {borderColor | backgroundColor | color | icon} type
-	 * @param {boolean} isFill
-	 * return string;
-	 */
-	const getDisabledColor = (type, isFill) => {
-		if (type === 'borderColor')
-		{
-			return Color.base6;
-		}
-
-		if (type === 'color' || type === 'icon')
-		{
-			return isFill ? Color.base5 : Color.base6;
-		}
-
-		if (type === 'backgroundColor')
-		{
-			return Color.base7;
-		}
-
-		return null;
-	};
-
-	/**
-	 * @function Button
+	 * @class Button
 	 * @param {object} props
-	 * @param {string} props.text
-	 * @param {string} props.size
-	 * @param {string} props.color
-	 * @param {boolean} props.stretched
-	 * @param {boolean} props.rounded
-	 * @param {boolean} props.disabled
-	 * @param {View} props.after
-	 * @param {View} props.before
-	 * @param {boolean} props.border
-	 * @param {string} props.borderColor
-	 * @param {string} props.backgroundColor
-	 * @param {object} props.style
+	 * @param {string} [props.text]
+	 * @param {ButtonDesign} [props.design=ButtonDesign.FILLED]
+	 * @param {ButtonSize} [props.size]
+	 * @param {string} [props.color]
+	 * @param {boolean} [props.stretched]
+	 * @param {boolean} [props.rounded]
+	 * @param {boolean} [props.disabled]
+	 * @param {string} [props.leftIcon]
+	 * @param {Color} [props.leftIconColor]
+	 * @param {string} [props.rightIcon]
+	 * @param {Color} [props.rightIconColor]
+	 * @param {boolean} [props.border]
+	 * @param {boolean} [props.loading]
+	 * @param {Color} [props.borderColor]
+	 * @param {Color} [props.backgroundColor]
+	 * @param {object} [props.style]
+	 * @param {function} [props.onClick]
+	 * @params {function} [props.forwardRef]
 	 * @return {Button}
 	 */
-	const Button = (props) => {
-		const {
-			text,
-			size,
-			color = null,
-			disabled = false,
-			stretched = false,
-			rounded = false,
-			after = null,
-			before = null,
-			border = false,
-			borderColor = Color.base5,
-			backgroundColor = null,
-			...restProps
-		} = props;
-
-		if (!text && !after && !before)
+	class Button extends LayoutComponent
+	{
+		/**
+		 * @return {ButtonSize}
+		 */
+		get size()
 		{
-			return null;
+			const { size } = this.props;
+
+			return ButtonSize.resolve(size, ButtonSize.XL);
 		}
 
-		let buttonTextColor = color;
-		const buttonSize = getButtonSize(size);
-		const paddingHorizontal = getInternalIndents(buttonSize);
+		/**
+		 * @return {ButtonDesign}
+		 */
+		get design()
+		{
+			const { design } = this.props;
 
-		const style = {
-			backgroundColor,
-			justifyContent: 'center',
-			borderRadius: cornerMap[buttonSize],
-			height: BUTTON_SIZES[buttonSize],
-			paddingLeft: paddingHorizontal,
-			paddingRight: paddingHorizontal,
+			return ButtonDesign.resolve(design, ButtonDesign.FILLED);
+		}
+
+		get designStyle()
+		{
+			return this.design.getStyle();
+		}
+
+		render()
+		{
+			const { testId, forwardRef, style = {}, onLayout } = this.props;
+
+			if (!this.shouldRenderButton())
+			{
+				return null;
+			}
+
+			const mainProps = mergeImmutable(
+				{
+					testId,
+					onLayout,
+					style: this.getMainStyle(),
+				},
+				{ style },
+			);
+
+			return View(
+				mainProps,
+				View(
+					{
+						ref: forwardRef,
+						style: this.getButtonStyle(),
+						onClick: this.#handleOnClick,
+						onLongClick: this.#handleOnLongClick,
+					},
+					this.#renderBody(),
+				),
+			);
+		}
+
+		shouldRenderButton()
+		{
+			const { text, leftIcon, rightIcon } = this.props;
+
+			return text || leftIcon || rightIcon;
+		}
+
+		isSquared()
+		{
+			const { leftIcon, rightIcon, text } = this.props;
+
+			return (leftIcon || rightIcon) && !text;
+		}
+
+		#renderBody()
+		{
+			const { leftIcon, rightIcon, badge } = this.props;
+
+			return View(
+				{
+					style: {
+						flexShrink: 1,
+						position: 'relative',
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'center',
+					},
+				},
+				this.#renderLoader(),
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							alignItems: 'center',
+							opacity: this.isLoading() ? 0 : 1,
+						},
+					},
+					this.#renderIcon({
+						icon: leftIcon,
+						direction: Direction.LEFT,
+					}),
+					this.#renderText(),
+					this.#renderIcon({
+						icon: rightIcon,
+						direction: Direction.RIGHT,
+						badge,
+					}),
+					this.#renderBadge(),
+				),
+			);
+		}
+
+		#renderText()
+		{
+			const { text, leftIcon, rightIcon, badge } = this.props;
+
+			if (!text)
+			{
+				return null;
+			}
+
+			const { accent, size } = this.size.getTypography();
+
+			return Text({
+				accent,
+				size,
+				text,
+				color: this.getColor(),
+				numberOfLines: 1,
+				ellipsize: 'end',
+				style: {
+					marginLeft: this.size.getTextIndents({ icon: Boolean(leftIcon) }),
+					marginRight: this.size.getTextIndents({ icon: Boolean(rightIcon), badge }),
+				},
+			});
+		}
+
+		#renderIcon({ icon, direction, badge })
+		{
+			if (!icon)
+			{
+				return null;
+			}
+
+			let style = {
+				flexShrink: 1,
+			};
+
+			if (direction)
+			{
+				style[`margin${capitalize(direction)}`] = this.size.getIconIndents({ badge });
+			}
+
+			if (this.isSquared())
+			{
+				const horizontal = this.size.getIconIndents({ squared: true });
+
+				style = {
+					marginRight: horizontal,
+					marginLeft: horizontal,
+				};
+			}
+
+			return IconView({
+				icon,
+				size: this.size.getIconSize(),
+				color: this.getIconColor(direction),
+				style,
+			});
+		}
+
+		#renderBadge()
+		{
+			const { badge } = this.props;
+
+			if (!badge)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						flexShrink: 1,
+						marginRight: this.size.getBadgeIndent(),
+					},
+				},
+				badge,
+			);
+		}
+
+		#renderLoader()
+		{
+			if (!this.isLoading())
+			{
+				return null;
+			}
+
+			return SpinnerLoader({
+				size: this.size.getIconSize(),
+				design: this.#getLoaderDesign(),
+				style: {
+					position: 'absolute',
+				},
+			});
+		}
+
+		#getLoaderDesign()
+		{
+			const { loaderDesign } = this.props;
+			const backgroundColor = this.getBackgroundColor();
+			const hex = typeof backgroundColor === 'object' ? backgroundColor?.default : backgroundColor;
+			const design = !hex || isLightColor(hex)
+				? SpinnerDesign.BLUE
+				: SpinnerDesign.WHITE;
+
+			return SpinnerDesign.resolve(loaderDesign, design);
+		}
+
+		#handleOnClick = () => {
+			const { onClick, onDisabledClick, disabled } = this.props;
+
+			if (onClick && !disabled)
+			{
+				onClick();
+			}
+
+			if (onDisabledClick && disabled)
+			{
+				onDisabledClick();
+			}
 		};
 
-		if (stretched)
-		{
-			style.width = stretched ? '100%' : null;
-			style.alignItems = stretched ? 'center' : 'auto';
-		}
+		#handleOnLongClick = () => {
+			const { onLongClick, disabled } = this.props;
 
-		if (border)
-		{
-			style.borderWidth = 1.2;
-			style.borderColor = borderColor;
-		}
-
-		if (rounded)
-		{
-			style.borderRadius = Corner[CornerTypes.circle];
-		}
-
-		if (disabled)
-		{
-			const isFill = Boolean(backgroundColor);
-			buttonTextColor = getDisabledColor('color', isFill);
-
-			if (backgroundColor)
+			if (onLongClick && !disabled)
 			{
-				style.backgroundColor = getDisabledColor('backgroundColor', isFill);
+				onLongClick();
+			}
+		};
+
+		getMainStyle()
+		{
+			return {
+				alignItems: 'flex-start',
+				...this.getStretchedStyle(),
+			};
+		}
+
+		getButtonStyle()
+		{
+			const {
+				rounded = false,
+			} = this.props;
+
+			const { radius } = this.size.getBorder();
+
+			const style = {
+				alignItems: 'flex-start',
+				backgroundColor: this.getBackgroundColor(),
+				justifyContent: 'center',
+				borderRadius: radius.toNumber(),
+				height: this.size.getHeight(),
+				...this.getBorderStyle(),
+				...this.getStretchedStyle(),
+			};
+
+			if (rounded)
+			{
+				style.borderRadius = Component.elementAccentCorner.toNumber();
 			}
 
-			if (border)
-			{
-				style.borderColor = getDisabledColor('borderColor', isFill);
-			}
+			return style;
 		}
 
-		const fontSize = FONT_SIZES[buttonSize];
-		const mainProps = mergeImmutable({ style }, restProps);
-		const textIndent = textPaddingMap[buttonSize];
+		getBorderStyle()
+		{
+			const { borderColor: designBorderColor } = this.designStyle;
+			const { border, borderColor, design, disabled } = this.props;
 
-		return View(
-			mainProps,
-			PlainView({
-				text,
-				after,
-				before,
-				fontSize,
-				indent: textIndent,
-				color: buttonTextColor,
-			}),
-		);
-	};
+			if ((design && designBorderColor) || (border && borderColor))
+			{
+				const { width: borderWidth } = this.size.getBorder();
+				let buttonBorderColor = designBorderColor;
+
+				if (borderColor)
+				{
+					buttonBorderColor = borderColor;
+				}
+
+				if (disabled)
+				{
+					buttonBorderColor = this.getDisabledStyle().borderColor;
+				}
+
+				const opacity = designBorderColor
+					? this.design.getOpacity('borderColor')
+					: null;
+
+				return {
+					borderWidth,
+					borderColor: buttonBorderColor.toHex(opacity),
+				};
+			}
+
+			return {};
+		}
+
+		/**
+		 * @return {ColorEnum}
+		 */
+		getColor()
+		{
+			let { color: designColor } = this.designStyle;
+			const { color: propsColor, disabled } = this.props;
+
+			if (disabled)
+			{
+				designColor = this.getDisabledStyle().color;
+			}
+
+			return Color.resolve(propsColor, designColor);
+		}
+
+		/**
+		 * @param {Direction} direction
+		 * @return {ColorEnum}
+		 */
+		getIconColor(direction)
+		{
+			const iconColor = this.props[`${direction}IconColor`];
+
+			return Color.resolve(iconColor, this.getColor());
+		}
+
+		getBackgroundColor()
+		{
+			const { backgroundColor: designBackgroundColor } = this.designStyle;
+			const { backgroundColor, disabled } = this.props;
+			const background = backgroundColor || designBackgroundColor;
+
+			if (background)
+			{
+				return disabled
+					? this.getDisabledStyle().backgroundColor.toHex()
+					: background?.withPressed();
+			}
+
+			return designBackgroundColor?.withPressed();
+		}
+
+		getDisabledStyle()
+		{
+			return this.design.getDisabled().getStyle();
+		}
+
+		getStretchedStyle()
+		{
+			if (!this.isStretched())
+			{
+				return {};
+			}
+
+			return {
+				flexShrink: 1,
+				width: '100%',
+				alignItems: 'center',
+			};
+		}
+
+		isStretched()
+		{
+			const { stretched = false } = this.props;
+
+			return stretched;
+		}
+
+		isLoading()
+		{
+			const { loading } = this.props;
+
+			return Boolean(loading);
+		}
+	}
 
 	Button.defaultProps = {
 		stretched: false,
 		rounded: false,
 		border: false,
-		text: null,
-		after: null,
-		before: null,
-		size: BUTTON_SIZES.XL,
-		color: Color.baseWhiteFixed,
-		backgroundColor: Color.accentMainPrimary,
+		loading: false,
 	};
 
 	Button.propTypes = {
+		testId: PropTypes.string.isRequired,
+		text: PropTypes.string,
+		leftIcon: PropTypes.object,
+		leftIconColor: PropTypes.object,
+		rightIcon: PropTypes.object,
+		rightIconColor: PropTypes.object,
+		size: PropTypes.object,
+		badge: PropTypes.object,
+		design: PropTypes.object,
+		loaderDesign: PropTypes.object,
 		stretched: PropTypes.bool,
 		rounded: PropTypes.bool,
 		border: PropTypes.bool,
-		text: PropTypes.string,
-		after: PropTypes.object,
-		before: PropTypes.object,
-		size: PropTypes.string,
-		color: PropTypes.string,
-		borderColor: PropTypes.string,
-		backgroundColor: PropTypes.string,
+		loading: PropTypes.bool,
+		color: PropTypes.object,
+		borderColor: PropTypes.object,
+		backgroundColor: PropTypes.object,
 	};
 
 	module.exports = {
-		Button,
-		buttonTypes,
-		getButtonSize,
-		getDisabledColor,
-		getInternalIndents,
+		Button: (props) => new Button(props),
+		ButtonDesign,
+		ButtonSize,
+		LoaderDesign: SpinnerDesign,
+		Icon,
+		IconTypes: iconTypes,
 	};
 });

@@ -21,6 +21,7 @@
 			const componentUrl = availableComponents.qrcodeauth.publicUrl;
 			PageManager.openComponent('JSStackComponent', {
 				scriptPath: componentUrl,
+				canOpenInDefault: true,
 				componentCode: 'qrauth',
 				params: {
 					redirectUrl,
@@ -34,11 +35,13 @@
 					name: 'layout',
 					settings: {
 						objectName: 'layout',
-						title: title || BX.message('LOGIN_ON_DESKTOP_DEFAULT_TITLE_MSGVER_1'),
+						titleParams: {
+							text: title || BX.message('LOGIN_ON_DESKTOP_DEFAULT_TITLE_MSGVER_1'),
+							type: 'dialog',
+						},
 						backdrop: {
 							bounceEnable: true,
 							mediumPositionHeight: 500,
-							navigationBarColor: AppTheme.colors.bgSecondary,
 						},
 					},
 				},

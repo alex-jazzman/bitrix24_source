@@ -109,7 +109,7 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 
 		mentionUser()
 		{
-			BX.onCustomEvent(EventType.dialog.external.mention, [this.authorId, BBCode.user]);
+			BX.onCustomEvent(EventType.dialog.external.mention, [this.authorId, BBCode.user, this.options.dialogId]);
 		}
 	}
 

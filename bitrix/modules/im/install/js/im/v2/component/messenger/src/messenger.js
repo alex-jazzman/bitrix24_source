@@ -15,6 +15,7 @@ import { MarketContent } from 'im.v2.component.content.market';
 import { SettingsContent } from 'im.v2.component.content.settings';
 import { CopilotListContainer } from 'im.v2.component.list.container.copilot';
 import { CopilotContent } from 'im.v2.component.content.copilot';
+import { Analytics } from 'im.v2.lib.analytics';
 
 import { Logger } from 'im.v2.lib.logger';
 import { InitManager } from 'im.v2.lib.init';
@@ -114,6 +115,7 @@ export const Messenger = {
 		Logger.warn('MessengerRoot created');
 
 		this.getLayoutManager().restoreLastLayout();
+		this.sendAnalytics();
 	},
 	beforeUnmount()
 	{
@@ -140,6 +142,10 @@ export const Messenger = {
 		getLayoutManager(): LayoutManager
 		{
 			return LayoutManager.getInstance();
+		},
+		sendAnalytics()
+		{
+			Analytics.getInstance().onOpenMessenger();
 		},
 	},
 	template: `

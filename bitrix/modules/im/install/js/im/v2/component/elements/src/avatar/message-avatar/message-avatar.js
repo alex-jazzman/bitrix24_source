@@ -39,14 +39,10 @@ export const MessageAvatar = {
 	},
 	computed:
 	{
-		isCopilotBot(): boolean
-		{
-			return this.$store.getters['users/bots/isCopilot'](this.authorId);
-		},
 		customAvatarUrl(): string
 		{
 			const copilotManager = new CopilotManager();
-			if (!this.isCopilotBot)
+			if (!copilotManager.isCopilotMessage(this.messageId))
 			{
 				return '';
 			}

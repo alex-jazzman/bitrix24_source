@@ -280,7 +280,7 @@ $APPLICATION->IncludeComponent(
 $jsData['ADD_CHECK_URL'] = $arResult['PATH_TO_ORDER_CHECK_ADD'] ?? '';
 
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

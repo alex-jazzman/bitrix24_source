@@ -36,6 +36,8 @@ class CrmChannelSelectorComponent extends Base
 		$arParams['title'] = $arParams['title'] ?? '';
 		$arParams['link'] = $arParams['link'] ?? '';
 		$arParams['isLinkObtainable'] = ($arParams['isLinkObtainable'] ?? null) === true;
+		$arParams['isCombineMessageWithLink'] = (bool)($arParams['isCombineMessageWithLink'] ?? true);
+		$arParams['isInsertLinkInMessage'] = (bool)($arParams['isInsertLinkInMessage'] ?? false);
 		$arParams['entityTypeId'] = (int)($arParams['entityTypeId'] ?? 0);
 		$arParams['entityId'] = (int)($arParams['entityId'] ?? 0);
 		$arParams['files'] = (array)($arParams['files'] ?? []);
@@ -122,6 +124,8 @@ class CrmChannelSelectorComponent extends Base
 			'title' => $this->arParams['title'],
 			'link' => $this->arParams['link'],
 			'isLinkObtainable' => $this->arParams['isLinkObtainable'],
+			'isCombineMessageWithLink' => $this->arParams['isCombineMessageWithLink'],
+			'isInsertLinkInMessage' => $this->arParams['isInsertLinkInMessage'],
 			'isConfigurable' => $this->arParams['isConfigurable'],
 			'configureContext' => $this->arParams['configureContext'],
 			'files' => $this->arParams['files'],
@@ -407,7 +411,7 @@ class CrmChannelSelectorComponent extends Base
 
 		$this->arResult = $this->prepareResult();
 		$this->render();
-		
+
 		return $this->arResult;
 	}
 }

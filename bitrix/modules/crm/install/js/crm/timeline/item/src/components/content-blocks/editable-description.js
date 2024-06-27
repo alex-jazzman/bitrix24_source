@@ -1,6 +1,7 @@
 import { CopilotTextarea, Events as CopilotTextareaEvents } from 'crm.ai.copilot-textarea';
 import { Browser, Loc, Runtime, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Popup } from 'main.popup';
 
 import { Action } from '../../action';
 import { Button } from '../layout/button';
@@ -29,6 +30,11 @@ export const EditableDescription = {
 			required: false,
 			default: true,
 		},
+		copied: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 		height: {
 			type: String,
 			required: false,
@@ -40,9 +46,9 @@ export const EditableDescription = {
 			default: '',
 		},
 		copilotSettings: {
-			type: Array,
+			type: Object,
 			required: false,
-			default: [],
+			default: null,
 		},
 	},
 
@@ -107,6 +113,11 @@ export const EditableDescription = {
 		isEditable(): boolean
 		{
 			return this.editable && this.saveAction && !this.isReadOnly;
+		},
+
+		isCopied(): boolean
+		{
+			return !this.isEdit && this.copied;
 		},
 
 		saveTextButtonProps(): Object
@@ -283,6 +294,28 @@ export const EditableDescription = {
 			this.$refs.textarea.focus();
 		},
 
+		copyText(): void
+		{
+			const isSuccess = BX.clipboard.copy(this.value);
+			if (isSuccess)
+			{
+				new Popup({
+					id: `copyTextHint_${Text.getRandom(8)}`,
+					content: Loc.getMessage('CRM_TIMELINE_ITEM_TEXT_IS_COPIED'),
+					bindElement: this.$refs.copyTextBtn,
+					darkMode: true,
+					autoHide: true,
+					events: {
+						onAfterPopupShow() {
+							setTimeout(() => {
+								this.close();
+							}, 2000);
+						},
+					},
+				}).show();
+			}
+		},
+
 		toggleIsCollapsed(): void
 		{
 			this.isCollapsed = !this.isCollapsed;
@@ -409,12 +442,20 @@ export const EditableDescription = {
 		<div class="crm-timeline__editable-text_wrapper">
 			<div ref="rootElement" :class="className">
 				<button
+					v-if="this.isCopied"
+					ref="copyTextBtn"
+					@click="copyText"
+					class="crm-timeline__text_copy-btn"
+				>
+					<i class="crm-timeline__editable-text_fixed-icon --copy"></i>
+				</button>
+				<button
 					v-if="isEdit && isEditable"
 					:disabled="isSaving"
 					@click="clearText"
 					class="crm-timeline__editable-text_clear-btn"
 				>
-					<i class="crm-timeline__editable-text_clear-icon"></i>
+					<i class="crm-timeline__editable-text_fixed-icon --clear"></i>
 				</button>
 				<button
 					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"

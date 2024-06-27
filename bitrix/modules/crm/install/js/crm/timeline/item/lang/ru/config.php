@@ -1,6 +1,7 @@
 <?php
 
 $MESS['CRM_TIMELINE_ITEM_LINK_IS_COPIED'] = "Ссылка скопирована в буфер обмена";
+$MESS['CRM_TIMELINE_ITEM_TEXT_IS_COPIED'] = "Текст скопирован в буфер обмена";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_CREATE_PUBLIC_LINK_ERROR'] = "Произошла неизвестная ошибка при создании публичной ссылки на документ";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_COPY_PUBLIC_LINK_ERROR'] = "Не удалось скопировать ссылку в буфер обмена. Попробуйте еще раз, пожалуйста";
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PRINT_NOT_READY'] = "Печать документа невозможна, пока не будет сформирован PDF файл. Пожалуйста, повторите попытку позднее";
@@ -8,12 +9,9 @@ $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PDF_NOT_READY'] = "PDF-файл по�
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR'] = "Произошла неизвестная ошибка при редактировании документа";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SAVE"] = "Сохранить";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL"] = "Отмена";
-$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER"] = "Опишите, что нужно сделать";
+$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER"] = "Что нужно сделать";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT"] = "Напишите, что нужно сделать, или нажмите пробел для запуска CoPilot";
 $MESS['CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'] = "Отправлено";
-$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SAVE"] = "Сохранить";
-$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL"] = "Отмена";
-$MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER"] = "Что нужно сделать";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW_MSGVER_1"] = "Показать полностью";
 $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE_MSGVER_1"] = "Скрыть текст";
 $MESS["CRM_TIMELINE_ITEM_ACTIVITY_POPUP_CLOSE"] = "Закрыть";

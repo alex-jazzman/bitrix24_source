@@ -107,6 +107,12 @@ export const DetailComponent = {
 
 			return 0;
 		},
+		canShowAppForm: function () {
+			return this.result.APP.hasOwnProperty('HAS_APP_FORM')
+				&& this.result.APP.HAS_APP_FORM === true
+				&& this.result.APP.hasOwnProperty('INSTALLED')
+				&& this.result.APP.INSTALLED === 'Y';
+		},
 		...mapState(marketInstallState, ['installStep', 'slider', 'timer', 'installError', ]),
 	},
 	created () {
@@ -162,6 +168,10 @@ export const DetailComponent = {
 			} else if (this.installStep === 3) {
 				clearTimeout(this.timer);
 				this.reloadSlider();
+
+				if (this.closeDetailAfterInstall()) {
+					this.openApplication();
+				}
 			}
 		},
 		handleScroll: function () {
@@ -287,6 +297,20 @@ export const DetailComponent = {
 				})
 			}
 
+			if (this.canShowAppForm)
+			{
+				this.result.APP.MENU_ITEMS.push({
+					text: this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG'),
+					onclick: (event) => {
+						this.menuPopup1.close();
+						this.menuPopup2.close();
+						top.BX.Rest.AppForm.buildByAppWithLoader(this.result.APP.CODE, top.BX.Rest.EventType.DISPLAY).then((form) => {
+							form.show();
+						});
+					},
+				})
+			}
+
 			let menuParams = {
 				closeByEsc : true,
 				autoHide : true,
@@ -377,7 +401,8 @@ export const DetailComponent = {
 			BX.UI.InfoHelper.show(this.pricePolicySlider);
 		},
 		...mapActions(marketInstallState, [
-			'showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy'
+			'showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy',
+			'closeDetailAfterInstall', 'openApplication',
 		]),
 		...mapActions(marketUninstallState, ['deleteAction', 'setDeleteActionInfo']),
 	},

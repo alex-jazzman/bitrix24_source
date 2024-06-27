@@ -1,7 +1,10 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI;
+use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Intranet\Settings;
@@ -54,6 +57,7 @@ if ($arResult["LIKE_TEMPLATE"] === 'like_react')
 }
 
 $taskData = $arResult["DATA"]["TASK"] ?? [];
+$flowData = $arResult['DATA']['FLOW'] ?? [];
 $can = $arResult["CAN"]["TASK"]["ACTION"] ?? [];
 $userFields = $arResult["AUX_DATA"]["USER_FIELDS"] ?? [];
 $diskUfCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
@@ -268,32 +272,46 @@ if (
 		<? endif ?>
 
 		<?php if (!$arParams["PUBLIC_MODE"]): ?>
-			<div class="task-detail-extra<?= (!empty($templateData["RELATED_TASK"]) ? ' --flex-wrap' : '') ?>"><?
-				if($can["EDIT"] || !empty($templateData["GROUP"])):?>
-				<div class="task-detail-group-wrap">
-					<div class="task-detail-group --flex-center">
-						<span class="task-detail-group-label"><?=Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN")?>:</span>
-						<?$APPLICATION->IncludeComponent(
-							'bitrix:tasks.widget.member.selector',
-							'projectlink',
-							array(
-								'TYPES' => array('PROJECT'),
-								'DATA' => array(
-									$templateData["GROUP"]
-								),
-								'READ_ONLY' => !$can["EDIT"],
-								'ENTITY_ID' => $taskData["ID"],
-								'ENTITY_ROUTE' => 'task',
-								'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
-								'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
-								'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR
-							),
-							null,
-							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-						);?>
-					</div>
+			<div class="task-detail-extra<?= (!empty($templateData["RELATED_TASK"]) ? ' --flex-wrap' : '') ?>">
+				<div class="task-detail-extra-left">
+					<?php if($can["EDIT"] || !empty($templateData["GROUP"])):?>
+						<div class="task-detail-group-wrap">
+							<div class="task-detail-group --flex-center">
+								<span class="task-detail-group-label"><?=Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN")?>:</span>
+								<?php $APPLICATION->IncludeComponent(
+									'bitrix:tasks.widget.member.selector',
+									'projectlink',
+									array(
+										'TYPES' => array('PROJECT'),
+										'DATA' => array(
+											$templateData["GROUP"]
+										),
+										'READ_ONLY' => !$can["EDIT"],
+										'ENTITY_ID' => $taskData["ID"],
+										'ENTITY_ROUTE' => 'task',
+										'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
+										'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
+										'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR
+									),
+									null,
+									array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+								);?>
+							</div>
+						</div>
+					<?php endif;?>
+					<?php if (FlowFeature::isOn() && !empty($flowData)):?>
+						<div class="task-detail-group-wrap">
+							<div class="task-detail-group --flex-center">
+								<span class="task-detail-group-label">
+									<?=Loc::getMessage("TASKS_TTDP_PROJECT_FLOW_IN")?>
+								</span>
+							</div>
+							<a class="task-flow-field-label" href="<?=$flowData['URL']?>">
+								<?=htmlspecialcharsbx($flowData['NAME'])?>
+							</a>
+						</div>
+					<?php endif;?>
 				</div>
-				<?endif?>
 				<div class="task-detail-extra-right"><?php
 
 					if ($arResult["LIKE_TEMPLATE"] === 'like_react')
@@ -364,6 +382,37 @@ if (
 							array("HIDE_ICONS" => "Y")
 						);
 						?></div><?
+					}
+
+					if ($arResult['IS_COPILOT_READONLY_ENABLED'])
+					{
+						$taskId = (int)$taskData['ID'];
+						$taskButtonCopilotId = "tasks_task_view_copilot_$taskId";
+						$pathToTaskCreate = $arResult['PATH_TO_USER_ADD_TASK'];
+
+						$messages = Loc::loadLanguageFile(__FILE__);
+
+						?>
+
+						<span id="<?= $taskButtonCopilotId ?>"></span>
+						<script>
+							BX.message(<?= Json::encode($messages) ?>);
+
+							BX.ready(() => new BX.Tasks.View.TaskCopilotReadonly({
+								container: BX('<?= $taskButtonCopilotId ?>'),
+								description: '<?= CUtil::JSEscape(HTMLToTxt($taskData['DESCRIPTION']), '', ['<img>']) ?>',
+								enabledBySettings: <?= ($arResult['IS_COPILOT_READONLY_ENABLED_BY_SETTINGS'] ?? true) ? 'true' : 'false' ?>,
+								copilotParams: {
+									moduleId: 'tasks',
+									contextId: '<?= $taskButtonCopilotId ?>',
+									category: 'readonly_livefeed',
+								},
+								taskId: 'TASK_<?= $taskId ?>',
+								pathToTaskCreate: '<?= $pathToTaskCreate ?>',
+							}));
+						</script>
+
+						<?php
 					}
 
 					if (!empty($arResult['CONTENT_ID']))
@@ -448,6 +497,7 @@ if (
 		</div>
 	</div>
 
+
 	<div class="task-detail-buttons"><?
 		$APPLICATION->IncludeComponent(
 			"bitrix:tasks.widget.buttons",
@@ -462,7 +512,7 @@ if (
 				"NAME_TEMPLATE" => $templateData["NAME_TEMPLATE"],
 				"CAN" => $can,
 				"TASK_ID" => $taskData["ID"],
-
+				"SHOW_AHA_START_FLOW_TASK" => (!empty($flowData) && $flowData['SHOW_AHA_START_FLOW_TASK']),
 				"IS_SCRUM_TASK" => $arParams['IS_SCRUM_TASK'],
 				"TASK" => $taskData,
 				"TIMER_IS_RUNNING_FOR_CURRENT_USER" => !!$templateData["TIMER_IS_RUNNING_FOR_CURRENT_USER"],
@@ -887,10 +937,17 @@ $isTemplatesAvailable = (new Settings())->isToolAvailable(Settings::TOOLS['templ
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 if (!empty($request->get('ta_sec')))
 {
+	$params = [];
+	if ($request->get('p1'))
+	{
+		$params['p1'] = $request->get('p1');
+	}
+
 	Analytics::getInstance($arParams["USER_ID"])->onTaskView(
 		$request->get('ta_sec'),
 		$request->get('ta_el'),
-		$request->get('ta_sub')
+		$request->get('ta_sub'),
+		$params,
 	);
 }
 ?>
@@ -977,6 +1034,12 @@ if (!empty($request->get('ta_sec')))
 		},
 		workSettings: <?= CUtil::PhpToJSObject($arResult['WORK_SETTINGS']) ?>,
 		isTemplatesAvailable: <?=CUtil::PhpToJSObject($isTemplatesAvailable)?>,
+		isCopilotEnabled: <?= $arResult['IS_QUOTE_COPILOT_ENABLED'] ? 'true' : 'false' ?>,
+		copilotParams: {
+			moduleId: 'tasks',
+			contextId: 'tasks_task_<?= $taskData["ID"] ?>',
+			category: 'readonly_livefeed',
+		},
 	});
 
 	if (window.B24)

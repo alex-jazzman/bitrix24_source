@@ -35,22 +35,6 @@ jn.define('im/messenger/db/table/temp-message', (require, exports, module) => {
 				{ name: 'retry', type: FieldType.boolean },
 				{ name: 'attach', type: FieldType.json },
 				{ name: 'richLinkId', type: FieldType.integer },
-				{
-					name: 'USER',
-					type: UserTable,
-					joinType: 'LEFT',
-					reference: {
-						'this.AUTHOR_ID': 'ref.ID',
-					},
-				},
-				{
-					name: 'DIALOG',
-					type: DialogTable,
-					joinType: 'LEFT',
-					reference: {
-						'this.CHAT_ID': 'ref.CHAT_ID',
-					},
-				},
 			];
 		}
 	}

@@ -393,7 +393,7 @@ else
 						$file_contents = '';
 						if ($file == "." || $file == ".." || $file == ".access.php" || isset($arReports[$file]))
 							continue;
-						if (is_file($dir.$file) && ToUpper(mb_substr($file, -4)) == ".PHP")
+						if (is_file($dir.$file) && mb_strtoupper(mb_substr($file, -4)) == ".PHP")
 						{
 							$rep_title = $file;
 							if ($dir == $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/reports/")
@@ -673,7 +673,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/admin_tool.
 				<?
 				foreach ($blocksOrder as $blockCode)
 				{
-					$tabControl->DraggableBlockBegin(GetMessage("SALE_BLOCK_TITLE_".toUpper($blockCode)), $blockCode);
+					$tabControl->DraggableBlockBegin(GetMessage("SALE_BLOCK_TITLE_".mb_strtoupper($blockCode)), $blockCode);
 
 					if(BlockType::isDefined(BlockType::resolveId($blockCode)))
 					{

@@ -5,6 +5,7 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { ChatType, EventType, Layout, LocalStorageKey } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import type { ImModelLayout, ImModelChat } from 'im.v2.model';
 
@@ -151,15 +152,17 @@ export class LayoutManager
 	#sendAnalytics(config: ImModelLayout)
 	{
 		const currentLayout = this.getLayout();
-		if (currentLayout.name === Layout.copilot.name && currentLayout.entityId === '')
+		if (currentLayout.name === config.name)
 		{
 			return;
 		}
 
-		if (config.name === Layout.copilot.name && config.entityId === '')
+		if (config.name === Layout.copilot.name)
 		{
-			Analytics.getInstance().openCopilotTab(config.entityId);
+			Analytics.getInstance().onOpenCopilotTab();
 		}
+
+		Analytics.getInstance().onOpenTab(config.name);
 	}
 
 	#isSameChat(config: ImModelLayout): boolean
@@ -174,8 +177,8 @@ export class LayoutManager
 	#onSameChatReopen(config: ImModelLayout): void
 	{
 		const { entityId: dialogId, contextId } = config;
-		const { type }: ImModelChat = this.#getChat(dialogId);
-		const isChannel = [ChatType.openChannel, ChatType.channel].includes(type);
+
+		const isChannel = ChannelManager.isChannel(dialogId);
 		if (isChannel)
 		{
 			EventEmitter.emit(EventType.dialog.closeComments);

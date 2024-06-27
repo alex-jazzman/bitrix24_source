@@ -18,10 +18,10 @@ $result = '';
 $fp = fsockopen($proto . $host, $port, $errno, $errstr, $http_timeout);
 if ($fp)
 {
-	$strRequest = "GET ${path} HTTP/1.0\r\n";
+	$strRequest = "GET " . $path . " HTTP/1.0\r\n";
 	$strRequest .= "Connection: close\r\n";
 	$strRequest .= "Accept: */*\r\n";
-	$strRequest .= "Host: ${host}\r\n";
+	$strRequest .= "Host: " . $host . "\r\n";
 	$strRequest .= "Accept-Language: en\r\n";
 	$strRequest .= "\r\n";
 

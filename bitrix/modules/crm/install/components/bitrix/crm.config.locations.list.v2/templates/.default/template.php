@@ -49,7 +49,7 @@ Loc::loadMessages(__FILE__);
 				'ICONCLASS' => 'delete',
 				'TITLE' => Loc::getMessage('CRM_CLL2_DELETE_TITLE'),
 				'TEXT' => Loc::getMessage('CRM_CLL2_DELETE'),
-				'ONCLICK' => 'bxCRMLLTInstance.deleteGrid(\''.CUtil::JSEscape(Loc::getMessage('CRM_CLL2_DELETE_TITLE')).'\', \''.CUtil::JSEscape(sprintf(Loc::getMessage('CRM_CLL2_DELETE_CONFIRM'), htmlspecialcharsbx($arLoc['NAME_'.ToUpper(LANGUAGE_ID)]))).'\', \''.CUtil::JSEscape(Loc::getMessage('CRM_CLL2_DELETE')).'\', \''.CUtil::JSEscape($arLoc['PATH_TO_LOCATIONS_DELETE']).'\')'
+				'ONCLICK' => 'bxCRMLLTInstance.deleteGrid(\''.CUtil::JSEscape(Loc::getMessage('CRM_CLL2_DELETE_TITLE')).'\', \''.CUtil::JSEscape(sprintf(Loc::getMessage('CRM_CLL2_DELETE_CONFIRM'), htmlspecialcharsbx($arLoc['NAME_'.mb_strtoupper(LANGUAGE_ID)]))).'\', \''.CUtil::JSEscape(Loc::getMessage('CRM_CLL2_DELETE')).'\', \''.CUtil::JSEscape($arLoc['PATH_TO_LOCATIONS_DELETE']).'\')'
 			);
 		}
 

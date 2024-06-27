@@ -96,6 +96,9 @@ this.BX = this.BX || {};
 	      }
 	      return 0;
 	    },
+	    canShowAppForm: function () {
+	      return this.result.APP.hasOwnProperty('HAS_APP_FORM') && this.result.APP.HAS_APP_FORM === true && this.result.APP.hasOwnProperty('INSTALLED') && this.result.APP.INSTALLED === 'Y';
+	    },
 	    ...ui_vue3_pinia.mapState(market_installStore.marketInstallState, ['installStep', 'slider', 'timer', 'installError'])
 	  },
 	  created() {
@@ -143,6 +146,9 @@ this.BX = this.BX || {};
 	      } else if (this.installStep === 3) {
 	        clearTimeout(this.timer);
 	        this.reloadSlider();
+	        if (this.closeDetailAfterInstall()) {
+	          this.openApplication();
+	        }
 	      }
 	    },
 	    handleScroll: function () {
@@ -250,6 +256,18 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      }
+	      if (this.canShowAppForm) {
+	        this.result.APP.MENU_ITEMS.push({
+	          text: this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG'),
+	          onclick: event => {
+	            this.menuPopup1.close();
+	            this.menuPopup2.close();
+	            top.BX.Rest.AppForm.buildByAppWithLoader(this.result.APP.CODE, top.BX.Rest.EventType.DISPLAY).then(form => {
+	              form.show();
+	            });
+	          }
+	        });
+	      }
 	      let menuParams = {
 	        closeByEsc: true,
 	        autoHide: true,
@@ -320,7 +338,7 @@ this.BX = this.BX || {};
 	      }
 	      BX.UI.InfoHelper.show(this.pricePolicySlider);
 	    },
-	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy']),
+	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy', 'closeDetailAfterInstall', 'openApplication']),
 	    ...ui_vue3_pinia.mapActions(market_uninstallStore.marketUninstallState, ['deleteAction', 'setDeleteActionInfo'])
 	  },
 	  template: `

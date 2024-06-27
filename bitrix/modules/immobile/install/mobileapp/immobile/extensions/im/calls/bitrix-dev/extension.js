@@ -599,6 +599,12 @@
 			}
 		}
 
+		cancel()
+		{
+			this.ready = true;
+			this.hangup();
+		}
+
 		attachToConference()
 		{
 			return new Promise((resolve, reject) => {
@@ -614,6 +620,10 @@
 				};
 
 				BXClientWrapper.getClient(clientOptions).then((client) => {
+					if (!this.ready) 
+					{
+						return;
+					}
 					// client.printLogs = true;
 					client.on(BXClient.Events.LogMessage, this.__onSDKLogMessageHandler);
 					try
@@ -682,8 +692,11 @@
 					let onCallFailed = (call, error) => {
 						this.log('Could not attach to conference', error);
 						CallUtil.error('Could not attach to conference', error);
-						this.bitrixCallDev.off(JNBXCall.Events.Connected, onCallConnected);
-						this.bitrixCallDev.off(JNBXCall.Events.Failed, onCallFailed);
+						if (this.bitrixCallDev)
+						{
+							this.bitrixCallDev.off(JNBXCall.Events.Connected, onCallConnected);
+							this.bitrixCallDev.off(JNBXCall.Events.Failed, onCallFailed);
+						}
 						reject(error);
 					};
 
@@ -949,6 +962,10 @@
 			if (this.peers[failedUserId])
 			{
 				this.peers[failedUserId].onInviteTimeout(false);
+			} 
+			else if (failedUserId == this.userId) 
+			{
+				this.eventEmitter.emit(BX.Call.Event.onPullEventUserInviteTimeout);
 			}
 		}
 

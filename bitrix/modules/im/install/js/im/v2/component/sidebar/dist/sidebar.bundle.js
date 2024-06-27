@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,ui_vue3_directives_lazyload,ui_label,im_v2_lib_menu,main_date,ui_vue3_directives_hint,im_v2_lib_promo,im_v2_lib_rest,ui_promoVideoPopup,ui_vue3_components_socialvideo,ui_viewer,ui_icons,im_v2_model,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service,im_v2_lib_logger,main_core,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_lib_utils,im_v2_lib_user,im_v2_application_core,im_public,im_v2_const,im_v2_component_elements,main_core_events,im_v2_lib_dateFormatter) {
+(function (exports,im_v2_lib_localStorage,ui_vue3_directives_lazyload,ui_label,im_v2_lib_menu,main_date,ui_vue3_directives_hint,im_v2_lib_promo,im_v2_lib_rest,ui_promoVideoPopup,im_v2_lib_feature,ui_vue3_components_socialvideo,ui_viewer,ui_icons,im_v2_model,ui_notification,rest_client,ui_vue3_vuex,im_v2_lib_market,im_v2_lib_entityCreator,im_v2_component_entitySelector,im_v2_lib_call,im_v2_lib_permission,im_v2_lib_confirm,im_v2_provider_service,im_v2_lib_logger,main_core,im_v2_lib_parser,im_v2_lib_textHighlighter,im_v2_lib_utils,im_v2_lib_user,im_v2_application_core,im_public,im_v2_const,im_v2_component_elements,main_core_events,im_v2_lib_dateFormatter) {
 	'use strict';
 
 	function getChatId(dialogId) {
@@ -117,7 +117,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  support24Question: [im_v2_const.ChatType.support24Question],
 	  channel: [im_v2_const.ChatType.channel],
 	  openChannel: [im_v2_const.ChatType.openChannel],
-	  comment: [im_v2_const.ChatType.comment]
+	  comment: [im_v2_const.ChatType.comment],
+	  generalChannel: [im_v2_const.ChatType.generalChannel]
 	};
 	const MainPanelBlock = Object.freeze({
 	  support: 'support',
@@ -169,6 +170,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    [MainPanelBlock.info]: 20,
 	    [MainPanelBlock.file]: 30
 	  },
+	  [MainPanelType.generalChannel]: {
+	    [MainPanelBlock.chat]: 10,
+	    [MainPanelBlock.info]: 20,
+	    [MainPanelBlock.file]: 30
+	  },
 	  [MainPanelType.comment]: {
 	    [MainPanelBlock.post]: 10,
 	    [MainPanelBlock.info]: 20,
@@ -186,22 +192,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	class SettingsManager {
 	  constructor() {
-	    this.settings = main_core.Extension.getSettings('im.v2.component.sidebar');
 	    this.saveSettings();
 	  }
 	  async saveSettings() {
 	    await im_v2_application_core.Core.ready();
-	    void im_v2_application_core.Core.getStore().dispatch('sidebar/setFilesMigrated', this.settings.get('filesMigrated', false));
-	    void im_v2_application_core.Core.getStore().dispatch('sidebar/setLinksMigrated', this.settings.get('linksAvailable', false));
-	  }
-	  canShowBriefs() {
-	    return this.settings.get('canShowBriefs', false);
-	  }
-	  isLinksMigrationFinished() {
-	    return im_v2_application_core.Core.getStore().state.sidebar.isLinksMigrated;
-	  }
-	  isFileMigrationFinished() {
-	    return im_v2_application_core.Core.getStore().state.sidebar.isFilesMigrated;
+	    const filesMigrated = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.sidebarFiles);
+	    const linksAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.sidebarLinks);
+	    void im_v2_application_core.Core.getStore().dispatch('sidebar/setFilesMigrated', filesMigrated);
+	    void im_v2_application_core.Core.getStore().dispatch('sidebar/setLinksMigrated', linksAvailable);
 	  }
 	}
 
@@ -224,12 +222,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true).type;
 	};
 
-	const settingsManager = new SettingsManager();
 	function getAvailableBlocks(dialogId) {
 	  const blocks = getMainBlocksForChat(dialogId);
 	  return filterUnavailableBlocks(dialogId, blocks);
 	}
 	function filterUnavailableBlocks(dialogId, blocks) {
+	  new SettingsManager().saveSettings();
 	  const blocksSet = new Set(blocks);
 	  if (isFileMigrationFinished()) {
 	    blocksSet.delete(MainPanelBlock.fileUnsorted);
@@ -250,7 +248,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  return (user == null ? void 0 : user.bot) === true;
 	}
 	function isFileMigrationFinished() {
-	  return settingsManager.isFileMigrationFinished();
+	  return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.sidebarFiles);
 	}
 	function hasMarketApps(dialogId) {
 	  return im_v2_lib_market.MarketManager.getInstance().getAvailablePlacementsByType(im_v2_const.PlacementType.sidebar, dialogId).length > 0;
@@ -1145,6 +1143,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  [im_v2_const.ChatType.user]: main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_USER'),
 	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
 	  [im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
+	  [im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
 	  [im_v2_const.ChatType.comment]: main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_COMMENTS'),
 	  default: main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_GROUP_V2')
 	};
@@ -1788,7 +1787,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    const profileUri = im_v2_lib_utils.Utils.user.getCalendarLink(this.context.dialogId);
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR'),
+	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR_V2'),
 	      onclick: () => {
 	        BX.SidePanel.Instance.open(profileUri);
 	        this.menuInstance.close();
@@ -1804,7 +1803,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_INVITE_MEMBERS'),
+	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_INVITE_MEMBERS_V2'),
 	      onclick: () => {
 	        this.emit(MainMenu.events.onAddToChatShow);
 	        this.menuInstance.close();
@@ -1819,6 +1818,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const HeaderTitleByChatType = {
 	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE'),
 	  [im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE'),
+	  [im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_SIDEBAR_CHANNEL_HEADER_TITLE'),
 	  [im_v2_const.ChatType.comment]: main_core.Loc.getMessage('IM_SIDEBAR_COMMENTS_HEADER_TITLE'),
 	  default: main_core.Loc.getMessage('IM_SIDEBAR_HEADER_TITLE')
 	};
@@ -3130,6 +3130,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	  },
 	  watch: {
+	    dialogId() {
+	      this.initializeSidebar();
+	    },
 	    dialogInited() {
 	      this.initializeSidebar();
 	    }
@@ -4541,8 +4544,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    tabs() {
 	      const tabTypes = Object.values(im_v2_const.SidebarFileTabTypes);
-	      const settings = main_core.Extension.getSettings('im.v2.component.sidebar');
-	      const canShowBriefs = settings.get('canShowBriefs', false);
+	      const canShowBriefs = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.sidebarBriefs);
 	      if (!canShowBriefs) {
 	        return tabTypes.filter(tab => tab !== im_v2_const.SidebarDetailBlock.brief);
 	      }
@@ -5272,12 +5274,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    this.permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
 	  }
 	  getMenuItems() {
+	    const targetUserId = Number.parseInt(this.context.dialogId, 10);
+	    if (targetUserId === im_v2_application_core.Core.getUserId()) {
+	      return [this.getOpenProfileItem(), this.getOpenUserCalendarItem(), this.getLeaveItem()];
+	    }
 	    return [this.getInsertNameItem(), this.getSendMessageItem(), this.getManagerItem(), this.getCallItem(), this.getOpenProfileItem(), this.getOpenUserCalendarItem(), this.getKickItem(), this.getLeaveItem()];
 	  }
 	  getInsertNameItem() {
 	    const user = this.store.getters['users/get'](this.context.dialogId, true);
 	    return {
-	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_INSERT_NAME'),
+	      text: main_core.Loc.getMessage('IM_SIDEBAR_MENU_INSERT_NAME_V2'),
 	      onclick: () => {
 	        main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.insertMention, {
 	          mentionText: user.name,
@@ -5290,7 +5296,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getSendMessageItem() {
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_WRITE'),
+	      text: main_core.Loc.getMessage('IM_LIB_MENU_WRITE_V2'),
 	      onclick: () => {
 	        im_public.Messenger.openChat(this.context.dialogId);
 	        this.menuInstance.close();
@@ -5336,9 +5342,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!this.isUser() || this.isBot()) {
 	      return null;
 	    }
+	    const targetUserId = Number.parseInt(this.context.dialogId, 10);
 	    const profileUri = im_v2_lib_utils.Utils.user.getProfileLink(this.context.dialogId);
+	    const isCurrentUser = targetUserId === im_v2_application_core.Core.getUserId();
+	    const phraseCode = isCurrentUser ? 'IM_LIB_MENU_OPEN_OWN_PROFILE' : 'IM_LIB_MENU_OPEN_PROFILE_V2';
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE'),
+	      text: main_core.Loc.getMessage(phraseCode),
 	      href: profileUri,
 	      onclick: () => {
 	        this.menuInstance.close();
@@ -5349,9 +5358,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    if (!this.isUser() || this.isBot()) {
 	      return null;
 	    }
+	    const targetUserId = Number.parseInt(this.context.dialogId, 10);
 	    const profileUri = im_v2_lib_utils.Utils.user.getCalendarLink(this.context.dialogId);
+	    const isCurrentUser = targetUserId === im_v2_application_core.Core.getUserId();
+	    const phraseCode = isCurrentUser ? 'IM_LIB_MENU_OPEN_OWN_CALENDAR' : 'IM_LIB_MENU_OPEN_CALENDAR_V2';
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_CALENDAR'),
+	      text: main_core.Loc.getMessage(phraseCode),
 	      onclick: () => {
 	        BX.SidePanel.Instance.open(profileUri);
 	        this.menuInstance.close();
@@ -5384,7 +5396,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_LEAVE'),
+	      text: main_core.Loc.getMessage('IM_LIB_MENU_LEAVE_V2'),
 	      onclick: async () => {
 	        this.menuInstance.close();
 	        const userChoice = await im_v2_lib_confirm.showLeaveFromChatConfirm();
@@ -5409,6 +5421,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MemberTitleByChatType = {
 	  [im_v2_const.ChatType.channel]: 'IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE',
 	  [im_v2_const.ChatType.openChannel]: 'IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE',
+	  [im_v2_const.ChatType.generalChannel]: 'IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE',
 	  default: 'IM_SIDEBAR_MEMBERS_DETAIL_TITLE'
 	};
 
@@ -6976,5 +6989,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatSidebar = ChatSidebar;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Messenger.v2.Lib,BX.Main,BX.Vue3.Directives,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.Vue3.Components,BX.UI.Viewer,BX,BX.Messenger.v2.Model,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.UI,BX.Messenger.v2.Lib,BX.Main,BX.Vue3.Directives,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.UI,BX.Messenger.v2.Lib,BX.Vue3.Components,BX.UI.Viewer,BX,BX.Messenger.v2.Model,BX,BX,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib));
 //# sourceMappingURL=sidebar.bundle.js.map

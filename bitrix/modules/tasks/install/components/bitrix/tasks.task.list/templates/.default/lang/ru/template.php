@@ -129,3 +129,8 @@ $MESS["TASKS_SHOW_ROW_COUNT"] = "Показать количество";
 $MESS['TASKS_GRID_STUB_MIGRATION_TITLE'] = "Перенесите свои задачи из других систем";
 $MESS['TASKS_GRID_STUB_MIGRATION_BUTTON_MIGRATE'] = "Перенести";
 $MESS['TASKS_GRID_STUB_MIGRATION_OTHER'] = "и другие";
+
+$MESS['TASKS_EXCEL_POPUP_TITLE'] = "Экспорт списка задач в Excel";
+$MESS['TASKS_EXCEL_POPUP_DESCRIPTION'] = "Будет сформирован файл экспорта для задач. Выполнение этой операции может занять продолжительное время при большом количестве данных.";
+$MESS['TASKS_EXCEL_POPUP_PARAGRAPH_1'] = "Только поля из списка";
+$MESS['TASKS_EXCEL_POPUP_PARAGRAPH_2'] = "Все поля задач";

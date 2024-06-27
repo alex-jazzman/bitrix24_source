@@ -90,6 +90,8 @@ class im extends \CModule
 		\CAgent::AddAgent('Bitrix\Im\V2\Link\Reminder\ReminderService::remindAgent();', 'im', 'N', 60); /** @see \Bitrix\Im\V2\Link\Reminder\ReminderService::remindAgent */
 		\CAgent::AddAgent('Bitrix\Im\V2\Link\File\TemporaryFileService::cleanAgent();', 'im', 'N', 3600); /** @see \Bitrix\Im\V2\Link\File\TemporaryFileService::cleanAgent */
 		\CAgent::AddAgent('Bitrix\Im\Update\MessageDisappearing::disappearMessagesAgent();', 'im', 'N', 60); /** @see \Bitrix\Im\Update\MessageDisappearing::disappearMessagesAgent */
+		\CAgent::AddAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncRelationAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncRelationAgent() */
+		\CAgent::AddAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncMemberAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncMemberAgent() */
 
 		$eventManager->registerEventHandler('pull', 'onGetMobileCounter', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounter');
 		$eventManager->registerEventHandler('pull', 'onGetMobileCounterTypes', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounterTypes');
@@ -101,6 +103,10 @@ class im extends \CModule
 		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEventDelete', 'im', '\Bitrix\Im\V2\Service\Messenger', 'unregisterCalendar');
 		$eventManager->registerEventHandler('im', 'OnAfterMessagesAdd', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'checkDisappearing');
 		$eventManager->registerEventHandler('ai', 'onTuningLoad', 'im', '\Bitrix\Im\V2\Integration\AI\Restriction', 'onTuningLoad');
+		$eventManager->registerEventHandler('humanresources', 'RELATION_ADDED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationAdded');
+		$eventManager->registerEventHandler('humanresources', 'RELATION_DELETED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationDeleted');
+		$eventManager->registerEventHandler('humanresources', 'MEMBER_ADDED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberAdded');
+		$eventManager->registerEventHandler('humanresources', 'MEMBER_DELETED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberDeleted');
 
 		//marketplace
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'im','\Bitrix\Im\V2\Marketplace\Placement', 'onRestServiceBuildDescription');
@@ -146,6 +152,7 @@ class im extends \CModule
 		\Bitrix\Main\Config\Option::set('im', 'im_link_file_migration', 'Y'); /** @see \Bitrix\Im\V2\Link\File\FileItem::$migrationOptionName */
 
 		\CAgent::AddAgent("CIMChat::InstallGeneralChat(true);", "im", "N", 900, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+900, "FULL"));
+		\CAgent::AddAgent('\Bitrix\Im\V2\Chat\GeneralChannel::installAgent();', "im", "N", 3600, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, "FULL"));
 
 		return true;
 	}
@@ -442,6 +449,8 @@ class im extends \CModule
 		\CAgent::RemoveAgent('Bitrix\Im\V2\Link\Reminder\ReminderService::remindAgent();', 'im');
 		\CAgent::RemoveAgent('Bitrix\Im\V2\Link\File\TemporaryFileService::cleanAgent();', 'im');
 		\CAgent::RemoveAgent('Bitrix\Im\Update\MessageDisappearing::disappearMessagesAgent();', 'im');
+		\CAgent::RemoveAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncRelationAgent();', 'im');
+		\CAgent::RemoveAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncMemberAgent();', 'im');
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 
@@ -477,6 +486,10 @@ class im extends \CModule
 		$eventManager->unregisterEventHandler('rest', 'OnRestServiceBuildDescription', 'im','\Bitrix\Im\V2\Marketplace\Placement', 'onRestServiceBuildDescription');
 		$eventManager->unregisterEventHandler('im', 'OnAfterMessagesAdd', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'checkDisappearing');
 		$eventManager->unRegisterEventHandler('ai', 'onTuningLoad', 'im', '\Bitrix\Im\V2\Integration\AI\Restriction', 'onTuningLoad');
+		$eventManager->unRegisterEventHandler('humanresources', 'RELATION_ADDED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationAdded');
+		$eventManager->unRegisterEventHandler('humanresources', 'RELATION_DELETED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationDeleted');
+		$eventManager->unRegisterEventHandler('humanresources', 'MEMBER_ADDED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberAdded');
+		$eventManager->unRegisterEventHandler('humanresources', 'MEMBER_DELETED', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberDeleted');
 
 		$this->UnInstallUserFields($arParams);
 

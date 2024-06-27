@@ -507,7 +507,7 @@ $actionUrl = '/bitrix/services/main/ajax.php?c=bitrix%3Amail.client&action=sendM
 
 </form>
 
-<script type="text/javascript">
+<script>
 
 var mailto = function ()
 {

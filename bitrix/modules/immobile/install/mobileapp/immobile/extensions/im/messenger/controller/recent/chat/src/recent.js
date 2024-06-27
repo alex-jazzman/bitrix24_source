@@ -32,6 +32,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			this.recentUpdateHandler = this.recentUpdateHandler.bind(this);
 			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
 			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
+			this.commentCountersDeleteHandler = this.commentCountersDeleteHandler.bind(this);
 
 			this.firstPageHandler = this.firstPageHandler.bind(this);
 			this.departmentColleaguesGetHandler = this.departmentColleaguesGetHandler.bind(this);
@@ -74,6 +75,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 				.on('recentModel/delete', this.recentDeleteHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
+				.on('commentModel/deleteChannelCounters', this.commentCountersDeleteHandler)
 			;
 		}
 
@@ -271,6 +273,19 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			if (recentItem)
 			{
 				this.updateItems([recentItem]);
+			}
+		}
+
+		commentCountersDeleteHandler(mutation)
+		{
+			const { channelId } = mutation.payload.data;
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](channelId);
+			const recentItem = clone(this.store.getters['recentModel/getById'](dialog.dialogId));
+
+			if (recentItem)
+			{
+				this.updateItems([recentItem]);
+				Counters.update();
 			}
 		}
 

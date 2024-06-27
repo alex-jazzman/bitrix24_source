@@ -18,6 +18,7 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 	const { TaskErrorCode } = require('bizproc/task/task-constants');
 	const { TaskButtons } = require('bizproc/task/buttons');
 	const { ViewMode } = require('bizproc/workflow/list/view-mode');
+	const { CounterView } = require('layout/ui/counter-view');
 
 	class WorkflowSimpleListItem extends Base
 	{
@@ -144,17 +145,25 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 		renderCounters()
 		{
 			const { data } = this.props.item;
+			const tasksCnt = data.tasks.length;
+			const commentsCnt = data.newCommentsCounter;
 
-			if (data.tasks.length === 0)
+			if (!tasksCnt && !commentsCnt)
 			{
 				return null;
 			}
 
-			return Text(
+			return View(
 				{
 					style: this.styles.tasksCounter,
-					text: String(data.tasks.length),
 				},
+				CounterView(
+					tasksCnt || commentsCnt,
+					{
+						firstColor: tasksCnt > 0 ? AppTheme.colors.accentMainAlert : AppTheme.colors.accentMainSuccess,
+						isDouble: tasksCnt && commentsCnt,
+					},
+				),
 			);
 		}
 
@@ -404,14 +413,8 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 			position: 'absolute',
 			top: 69,
 			right: 17,
-			width: 18,
-			height: 18,
-			borderRadius: 9,
-			backgroundColor: AppTheme.colors.accentMainAlert,
-			textAlign: 'center',
-			color: AppTheme.colors.baseWhiteFixed,
-			fontSize: 12,
-			fontWeight: '500',
+			width: 28,
+			height: 28,
 		},
 		taskButtons: {
 			marginHorizontal: 13,

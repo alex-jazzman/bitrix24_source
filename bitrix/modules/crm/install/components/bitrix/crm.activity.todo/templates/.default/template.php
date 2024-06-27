@@ -13,11 +13,11 @@ Extension::load(['ui.fonts.opensans', 'ui.cnt']);
 if ($arParams['IS_AJAX'] === 'Y')
 {
 	echo '<link rel="stylesheet" type="text/css" href="', $this->getFolder(), '/style.css?6" />';
-	echo '<script type="text/javascript" src="', $this->getFolder(), '/script.js?v14"></script>';
+	echo '<script src="', $this->getFolder(), '/script.js?v14"></script>';
 }
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.message({
 		CRM_ACTIVITY_TODO_VIEW_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_VIEW_TITLE'));?>',
 		CRM_ACTIVITY_TODO_CLOSE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_CLOSE'));?>',
@@ -122,7 +122,7 @@ if ($arParams['IS_AJAX'] === 'Y')
 <?endforeach;?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.CrmActivityTodo.create({
 		container: 'crm-activity-todo-items'
 	});

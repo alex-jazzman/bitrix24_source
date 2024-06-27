@@ -20,5 +20,7 @@ return [
 		'./src/smile',
 		'./src/link-pin',
 		'./src/link-pin-message',
+		'./src/internal/dialog',
+		'./src/copilot',
 	],
 ];

@@ -13,6 +13,7 @@ use Bitrix\Tasks\Internals\Task\TimeUnitType;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Replication\Replicator\RegularTaskReplicator;
 use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 
@@ -159,7 +160,7 @@ $taskUrlTemplate = str_replace(array('#task_id#', '#action#'), array('{{VALUE}}'
 $openedBlocks = ($arResult['TEMPLATE_DATA']['BLOCKS']['OPENED'] ?? null);
 $blockClasses = ($arResult['TEMPLATE_DATA']['BLOCKS']['CLASSES'] ?? null);
 $userProfileUrlTemplate = str_replace('#user_id#', '{{VALUE}}', $arParams['PATH_TO_USER_PROFILE']);
-$className = ToLower($arResult['COMPONENT_DATA']['CLASS_NAME']);
+$className = mb_strtolower($arResult['COMPONENT_DATA']['CLASS_NAME']);
 $templateData = $arResult['TEMPLATE_DATA'];
 $request= \Bitrix\Main\Context::getCurrent()->getRequest();
 $requestArray = $request->toArray();
@@ -224,6 +225,8 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 		<?php endif?>
 		<input type="hidden" name="ACTION[0][PARAMETERS][CODE]" value="task_action" />
 
+		<input type="hidden" name="ACTION[0][ARGUMENTS][data][FLOW_ID]" value="<?= (int) $arResult['flowId'] ?>" />
+
 		<?php // todo: move to hit state?>
 		<?php if(Type::isIterable($arResult['COMPONENT_DATA']['DATA_SOURCE'] ?? null)):?>
 			<input type="hidden" name="ADDITIONAL[DATA_SOURCE][TYPE]" value="<?=htmlspecialcharsbx($arResult['COMPONENT_DATA']['DATA_SOURCE']['TYPE'])?>" />
@@ -236,18 +239,20 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 			<?php endforeach?>
 		<?php endif?>
 
-		<?php if (array_key_exists('IM_CHAT_ID', $arResult['DATA']['TASK'])): ?>
-			<input type="hidden" name="<?= htmlspecialcharsbx($inputPrefix); ?>[IM_CHAT_ID]" value="<?= $arResult['DATA']['TASK']['IM_CHAT_ID']; ?>" />
-		<?php endif; ?>
-
-		<?php if (array_key_exists('IM_MESSAGE_ID', $arResult['DATA']['TASK'])): ?>
-			<input type="hidden" name="<?= htmlspecialcharsbx($inputPrefix); ?>[IM_MESSAGE_ID]" value="<?= $arResult['DATA']['TASK']['IM_MESSAGE_ID']; ?>" />
-		<?php endif; ?>
+		<?php foreach ($arResult['immutable'] as $key => $value): ?>
+			<input type="hidden" name="<?= htmlspecialcharsbx($inputPrefix) . "[{$key}]" ?>" value="<?= $value ?>" />
+		<?php endforeach?>
 
 		<?php if (!empty($request->get('ta_sec'))): ?>
+			<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix);?>[TASKS_ANALYTICS_CATEGORY]" value="<?=htmlspecialcharsbx($request->get('ta_cat'));?>"/>
 			<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix);?>[TASKS_ANALYTICS_SECTION]" value="<?=htmlspecialcharsbx($request->get('ta_sec'));?>"/>
 			<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix);?>[TASKS_ANALYTICS_SUB_SECTION]" value="<?=htmlspecialcharsbx($request->get('ta_sub'));?>"/>
 			<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix);?>[TASKS_ANALYTICS_ELEMENT]" value="<?=htmlspecialcharsbx($request->get('ta_el'));?>"/>
+			<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix);?>[TASKS_ANALYTICS_PARAMS][p1]" value="<?=htmlspecialcharsbx($request->get('p1'));?>"/>
+			<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix);?>[TASKS_ANALYTICS_PARAMS][p2]" value="<?=htmlspecialcharsbx($request->get('p2'));?>"/>
+			<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix);?>[TASKS_ANALYTICS_PARAMS][p3]" value="<?=htmlspecialcharsbx($request->get('p3'));?>"/>
+			<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix);?>[TASKS_ANALYTICS_PARAMS][p4]" value="<?=htmlspecialcharsbx($request->get('p4'));?>"/>
+			<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix);?>[TASKS_ANALYTICS_PARAMS][p5]" value="<?=htmlspecialcharsbx($request->get('p5'));?>"/>
 		<?php endif?>
 
 		<div class="task-info">
@@ -313,7 +318,18 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 					<div class="task-options-item task-options-item-destination">
 						<span class="task-options-item-param"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ASSIGNEE')?></span>
 						<div class="task-options-item-open-inner">
-							<?php $APPLICATION->IncludeComponent(
+							<?php
+							$readOnly = (
+								$arResult['isFlowForm']
+								|| !(
+									\Bitrix\Tasks\Access\TaskAccessController::can(
+										Util\User::getId(),
+										\Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE,
+										($taskData['ID'] ?? null)
+									)
+								)
+							);
+							$APPLICATION->IncludeComponent(
 								'bitrix:tasks.widget.member.selector',
 								'',
 								[
@@ -326,25 +342,30 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 									'ATTRIBUTE_PASS' => ['ID', 'NAME', 'LAST_NAME', 'EMAIL'],
 									'DATA' => $taskData['SE_RESPONSIBLE'],
 									'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
-									'READ_ONLY' => ( \Bitrix\Tasks\Access\TaskAccessController::can(Util\User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE, ($taskData['ID'] ?? null)) ? 'N' : 'Y'),
+									'READ_ONLY' => $readOnly ? 'Y' : 'N',
 									'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
-									'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_RESPONSIBLE
+									'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_RESPONSIBLE,
+									'IS_FLOW_FORM' => $arResult['isFlowForm'],
 								],
 								false,
 								["HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y"]
-							) ?>
+							);
+							?>
 
-							<span class="task-dashed-link task-dashed-link-add tasks-additional-block-link inline">
-								<span class="task-dashed-link-inner" data-bx-id="task-edit-toggler" data-target="originator">
-									<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ORIGINATOR')?>
+							<?php if (!$arResult['isFlowForm']): ?>
+								<span class="task-dashed-link task-dashed-link-add tasks-additional-block-link inline">
+									<span class="task-dashed-link-inner" data-bx-id="task-edit-toggler" data-target="originator">
+										<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ORIGINATOR')?>
+									</span>
+									<span class="task-dashed-link-inner" data-bx-id="task-edit-toggler" data-target="accomplice">
+										<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ACCOMPLICES')?>
+									</span>
+									<span class="task-dashed-link-inner" data-bx-id="task-edit-toggler" data-target="auditor">
+										<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_AUDITORS')?>
+									</span>
 								</span>
-								<span class="task-dashed-link-inner" data-bx-id="task-edit-toggler" data-target="accomplice">
-									<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ACCOMPLICES')?>
-								</span>
-								<span class="task-dashed-link-inner" data-bx-id="task-edit-toggler" data-target="auditor">
-									<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_AUDITORS')?>
-								</span>
-							</span>
+							<?php endif; ?>
+
 							<div data-bx-id="task-edit-absence-message" class="task-absence-message"></div>
 						</div>
 					</div>
@@ -388,22 +409,10 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 					<div class="task-options-item task-options-item-destination">
 						<span data-bx-id="task-edit-chooser" data-target="accomplice" class="task-option-fixedbtn"></span>
 						<span class="task-options-item-param"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ACCOMPLICES')?></span>
-						<?php
-							$lockClassName = 'task-options-item-open-inner';
-							$onLockClick = '';
-							$lockClassStyle = '';
-							if ($taskLimitExceeded)
-							{
-								$lockClassName .= ' tasks-btn-restricted';
-								$onLockClick =
-									"top.BX.UI.InfoHelper.show('"
-									. RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL
-									. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
-								;
-								$lockClassStyle = "cursor: pointer;";
-							}
-						?>
-						<div class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>">
+						<div class="task-options-item-open-inner" style="display: flex;">
+							<?php if ($taskLimitExceeded):?>
+								<?= Limit::getLimitLock(RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL)?>
+							<?php endif;?>
 
 							<?php
 							$APPLICATION->IncludeComponent(
@@ -442,22 +451,10 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 					<div class="task-options-item task-options-item-destination">
 						<span data-bx-id="task-edit-chooser" data-target="auditor" class="task-option-fixedbtn"></span>
 						<span class="task-options-item-param"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_AUDITORS')?></span>
-						<?php
-							$lockClassName = 'task-options-item-open-inner';
-							$onLockClick = '';
-							$lockClassStyle = '';
-							if ($taskLimitExceeded)
-							{
-								$lockClassName .= ' tasks-btn-restricted';
-								$onLockClick =
-									"top.BX.UI.InfoHelper.show('"
-									. RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL
-									. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
-								;
-								$lockClassStyle = "cursor: pointer;";
-							}
-						?>
-						<div class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>">
+						<div class="task-options-item-open-inner" style="display: flex;">
+							<?php if ($taskLimitExceeded):?>
+								<?= Limit::getLimitLock(RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL)?>
+							<?php endif;?>
 
 							<?php
 							$APPLICATION->IncludeComponent(
@@ -496,6 +493,23 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 				<div data-bx-id="task-edit-date-plan-manager" class="mode-unit-selected-<?=htmlspecialcharsbx($taskData['DURATION_TYPE'])?> task-options-item task-options-item-open">
 					<span class="task-options-item-param"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_DEADLINE')?></span>
 						<div class="task-options-item-more">
+							<?php if ($arResult['isFlowForm']): ?>
+								<span class="tasks task-form-field inline readonly flow t-filled tdp-mem-sel-is-empty-false t-min tdp-mem-sel-is-min">
+									<span class="js-id-tdp-mem-sel-is-item task-form-field-item">
+										<span class="task-form-field-item-text task-options-destination-text">
+											<?=htmlspecialcharsbx($taskData['DISPLAY_DEADLINE'] ?? null)?>
+										</span>
+										<span class="task-form-field-item-flow"></span>
+										<input
+											data-bx-id="datepicker-value"
+											type="hidden"
+											name="<?=htmlspecialcharsbx($inputPrefix)?>[DEADLINE]"
+											value="<?=htmlspecialcharsbx($taskData['DEADLINE'] ?? null)?>"
+											disabled="disabled"
+										>
+									</span>
+								</span>
+							<?php else: ?>
 							<span class="task-options-destination-wrap date">
 								<span data-bx-id="dateplanmanager-deadline" class="task-options-inp-container task-options-date">
 									<input data-bx-id="datepicker-display" type="text" class="task-options-inp" value="" readonly="readonly">
@@ -507,6 +521,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 								<span class="task-dashed-link-inner" data-bx-id="task-edit-toggler" data-target="date-plan"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_DATE_PLAN')?></span>
 								<span class="task-dashed-link-inner" data-bx-id="task-edit-toggler" data-target="options"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ATTRIBUTES')?></span>
 							</span>
+							<?php endif; ?>
 						</div>
 						<div class="task-options-item-open-inner task-options-item-open-inner-sh task-options-item-open-inner-sett">
 						<?php $blockName = 'DATE_PLAN';?>
@@ -569,7 +584,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 											'CODE' => 'MATCH_WORK_TIME',
 											'VALUE' => $taskData['MATCH_WORK_TIME'],
 											'LINK' => $canCustomizeCalendar ? [
-												'URL' => Bitrix24::getSettingsURL(),
+												'URL' => Bitrix24::getScheduleUrl(),
 												'TEXT' => Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_CUSTOMIZE')
 											] : [],
 											'TEXT' => Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_MATCH_WORK_TIME'),
@@ -648,7 +663,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 
 					<?php
 					ob_start();
-					$blockNameJs = ToLower(str_replace('_', '-', $blockName));
+					$blockNameJs = mb_strtolower(str_replace('_', '-', $blockName));
 
 					$itemOpenClass = "";
 					$openClassBlocks = [
@@ -661,11 +676,23 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 					{
 						$itemOpenClass = " task-options-item-open";
 					}
+
+					$pinDisabled = false;
+					if (
+						$arResult['isFlowForm']
+						&& $blockName === Manager\Task::SE_PREFIX.'PROJECT'
+					)
+					{
+						$pinDisabled = true;
+					}
 					?>
 
 					<div data-bx-id="task-edit-<?=$blockNameJs?>-block" data-block-name="<?=$blockName?>" class="pinable-block task-options-item task-options-item-<?=$blockNameJs?><?=$itemOpenClass?>">
 
-						<span data-bx-id="task-edit-chooser" data-target="<?=$blockNameJs?>-block" class="task-option-fixedbtn" title="<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PINNER_HINT')?>"></span>
+						<?php if (!$pinDisabled): ?>
+							<span data-bx-id="task-edit-chooser" data-target="<?=$blockNameJs?>-block" class="task-option-fixedbtn" title="<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PINNER_HINT')?>"></span>
+						<?php endif; ?>
+
 						<span class="task-options-item-param"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_'.$blockName)?></span>
 
 						<?php if($blockName === Manager\Task::SE_PREFIX.'REQUIRE_RESULT' && isset($arResult['TEMPLATE_DATA']['PARAMS'][\Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED])):?>
@@ -699,6 +726,8 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 										'ATTRIBUTE_PASS' => array(
 											'ID',
 										),
+										'READ_ONLY' => $arResult['isFlowForm'] ? 'Y' : 'N',
+										'IS_FLOW_FORM' => $arResult['isFlowForm'],
 										'DATA' => $taskData['SE_PROJECT'],
 										'SOLE_INPUT_IF_MAX_1' => 'Y',
 										'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
@@ -712,11 +741,13 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 
 							</div>
 
+							<?php if (!$arResult['isFlowForm']): ?>
 							<div class="" style="margin-left:24px; display:inline-block;">
 								<a class="js-id-add-project" href="/company/personal/user/<?=$arParams['USER_ID']?>/groups/create/?firstRow=project&refresh=N">
 									<?=GetMessage('TASKS_ADD_PROJECT')?>
 								</a>
 							</div>
+							<?php endif; ?>
 
 						<?php elseif($blockName === 'TIMEMAN'):?>
 
@@ -1065,7 +1096,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 
 				<?php foreach($arResult['COMPONENT_DATA']['STATE']['BLOCKS'] as $blockName => $block):?>
 					<?php if(array_key_exists(TasksTaskFormState::O_CHOSEN, $block) && isset($blocks[$blockName])):?>
-						<div data-bx-id="task-edit-<?=ToLower(str_replace('_', '-', $blockName))?>-block-place" class="task-edit-block-place">
+						<div data-bx-id="task-edit-<?=mb_strtolower(str_replace('_', '-', $blockName))?>-block-place" class="task-edit-block-place">
 							<?php if($block[TasksTaskFormState::O_CHOSEN]):?>
 								<?=$blocks[$blockName]?>
 							<?php endif?>
@@ -1085,12 +1116,20 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 					<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ADDITIONAL_OPEN')?>
 				</div>
 				<div class="task-additional-alt-promo">
-					<?php foreach($arResult['COMPONENT_DATA']['STATE']['BLOCKS'] as $blockName => $block):?>
-						<?php $label = Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_HEADER_'.$blockName);?>
-						<?php if((string) $label != ''):?>
-							<span class="task-additional-alt-promo-text"><?=htmlspecialcharsbx($label);?></span>
-						<?php endif?>
-					<?php endforeach?>
+					<?php
+					foreach($arResult['COMPONENT_DATA']['STATE']['BLOCKS'] as $blockName => $block)
+					{
+						$label = Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_HEADER_'.$blockName);
+						// C - Chosen. \Bitrix\Tasks\Component\Task\TasksTaskFormState::getBlocks
+						$chosen = $block['C'];
+						if(!$chosen && (string)$label !== '')
+						{
+							?>
+							<span class="task-additional-alt-promo-text"><?= htmlspecialcharsbx($label) ?></span>
+					<?php
+						}
+					}
+					?>
 				</div>
 			</div>
 
@@ -1109,7 +1148,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 							);
 						?>
 						<div
-							data-bx-id="task-edit-<?=ToLower(str_replace('_', '-', $blockName))?>-block-place"
+							data-bx-id="task-edit-<?=mb_strtolower(str_replace('_', '-', $blockName))?>-block-place"
 							data-block-name="<?=$blockName?>"
 							data-group-id="<?=(array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0?>"
 							class="task-edit-block-place <?= $visibility ?>"
@@ -1187,7 +1226,12 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 
 		<?php endif?>
 
-		<input type="hidden" name="ACTION[1][OPERATION]" value="<?=htmlspecialcharsbx($className)?>.setstate" />
+		<?php if ($arResult['isFlowForm']): ?>
+			<input type="hidden" name="ACTION[1][OPERATION]" value="<?=htmlspecialcharsbx($className)?>.setflowstate">
+		<?php else: ?>
+			<input type="hidden" name="ACTION[1][OPERATION]" value="<?=htmlspecialcharsbx($className)?>.setstate">
+		<?php endif; ?>
+
 		<div data-bx-id="task-edit-state" class="task-edit-state-fixed">
 			<script data-bx-id="task-edit-state-block" type="text/html">
 				<input type="hidden" name="ACTION[1][ARGUMENTS][state][BLOCKS][{{NAME}}][{{TYPE}}]" value="{{VALUE}}" />
@@ -1209,10 +1253,18 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 
 	var options = <?=\Bitrix\Tasks\UI::toJSObject(array(
 		'id' => $arResult['TEMPLATE_DATA']['ID'],
-
+		'flowId' => $arResult['flowId'],
+		'isFlowForm' => $arResult['isFlowForm'],
+		'isFeatureEnabled' => (
+			\Bitrix\Tasks\Flow\FlowFeature::isFeatureEnabled()
+			|| \Bitrix\Tasks\Flow\FlowFeature::canTurnOnTrial()
+		),
+		'isFeatureTrialable' => \Bitrix\Tasks\Flow\FlowFeature::isFeatureEnabledByTrial(),
+		'flowLimitCode' => \Bitrix\Tasks\Flow\FlowFeature::LIMIT_CODE,
 		// be careful here, do not "publish" entire data without filtering
 		'data' => array(
 			'TASK' => $arResult['DATA']['TASK'],
+			'FLOW' => $arResult['DATA']['FLOW'],
 			'EVENT_TASK' => ($arResult['DATA']['EVENT_TASK'] ?? null),
 		),
 		'can' => array('TASK' => $arResult['CAN']['TASK']),
@@ -1235,6 +1287,7 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 		'doInit' => !$arResult['TEMPLATE_DATA']['SHOW_SUCCESS_MESSAGE'],
 		'cancelActionIsEvent' => (bool)$arParams['CANCEL_ACTION_IS_EVENT'],
 		'canUseAIChecklistButton' => $arResult['CAN_USE_AI_CHECKLIST_BUTTON'] ?? true,
+		'immutable' => $arResult['immutable'],
 	))?>;
 
 	<?php /*

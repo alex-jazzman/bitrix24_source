@@ -52,9 +52,6 @@ if($REQUEST_METHOD=="POST" && $_REQUEST['save'] == 'Y')
 	}
 	$xmlsrc .= "\n</trackList>\n</playlist>";
 
-	if (!defined("BX_UTF"))
-		$xmlsrc = $GLOBALS["APPLICATION"]->ConvertCharset($xmlsrc, 'Windows-1251', 'UTF-8');
-
 	if (!check_bitrix_sessid())
 	{
 		$strWarning = GetMessage('PLAYLIST_EDIT_SESSION_EXPIRED');
@@ -199,8 +196,8 @@ var jsMess = {
 if (!window.style_2 || !window.style_2.parentNode)
 	window.style_2 = jsUtils.loadCSSFile("/bitrix/components/bitrix/player/js/playlist_edit.css");
 </script>
-<script type="text/javascript" src="/bitrix/js/main/dd.js?v=<?=filemtime($_SERVER['DOCUMENT_ROOT'].'/bitrix/js/main/dd.js')?>"></script>
-<script type="text/javascript" src="/bitrix/components/bitrix/player/js/playlist_edit.js?v=<?=filemtime($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/player/js/playlist_edit.js')?>"></script>
+<script src="/bitrix/js/main/dd.js?v=<?=filemtime($_SERVER['DOCUMENT_ROOT'].'/bitrix/js/main/dd.js')?>"></script>
+<script src="/bitrix/components/bitrix/player/js/playlist_edit.js?v=<?=filemtime($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/player/js/playlist_edit.js')?>"></script>
 <?
 $TITLE = GetMessage("PLAYLIST_TITLE_".($bCreate ? "CREATE" : "EDIT"));
 $DESCRIPTION = GetMessage('PLAYLIST_TITLE_DESCRIPTION');
@@ -310,7 +307,7 @@ CAdminFileDialog::ShowScript(
 );
 ?>
 
-<script type="text/javascript">
+<script>
 window.onload = function ()
 {
 	if (!window.oPlaylistDialog)

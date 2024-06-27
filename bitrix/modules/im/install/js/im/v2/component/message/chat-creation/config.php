@@ -13,6 +13,8 @@ return [
 		'im.v2.component.elements',
 		'im.v2.component.entity-selector',
 		'im.v2.component.message.base',
+		'im.v2.lib.call',
+		'ui.vue3.directives.hint',
 	],
 	'skip_core' => true,
 ];

@@ -328,7 +328,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 			$list = new CList($res);
 			$list->ActualizeDocumentAdminPage(str_replace(
 				array("#list_id#", "#group_id#"),
-				array($arResult["IBLOCK_ID"], $arParams["SOCNET_GROUP_ID"]),
+				array($res, $arParams["SOCNET_GROUP_ID"]),
 				$arParams["LIST_ELEMENT_URL"]
 			));
 

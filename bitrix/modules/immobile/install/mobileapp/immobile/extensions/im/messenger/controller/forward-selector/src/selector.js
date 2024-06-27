@@ -3,7 +3,7 @@
  */
 
 jn.define('im/messenger/controller/forward-selector/selector', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('loc');
 	const { EventType } = require('im/messenger/const');
 	const { RecentProvider, RecentSelector } = require('im/messenger/controller/search/experimental');
@@ -43,7 +43,7 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 				title: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'),
 				useLargeTitleMode: true,
 				modal: true,
-				backgroundColor: AppTheme.colors.bgNavigation,
+				backgroundColor: Theme.colors.bgNavigation,
 				backdrop: {
 					mediumPositionPercent: 85,
 					horizontalSwipeAllowed: false,

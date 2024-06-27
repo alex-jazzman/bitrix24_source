@@ -47,7 +47,6 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 <form class="biconnector-key-edit__wrapper" method="post">
 	<?=bitrix_sessid_post()?>
 	<input type="hidden" name="ID" value="<?=$arResult['FORM_DATA']['ID']?>">
-	<input type="hidden" name="ACCESS_KEY" value="<?=$arResult['FORM_DATA']['ACCESS_KEY']?>">
 	<input type="hidden" name="USERS" id="USERS" value="<?=htmlspecialcharsbx(implode(',', $arResult['FORM_DATA']['USERS']))?>">
 	<div class="biconnector-key-edit__wrapper_form-inner">
 		<div class="biconnector-key-edit__wrapper_form-row" style="display: none;margin-bottom:16px">

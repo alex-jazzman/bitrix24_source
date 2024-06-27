@@ -82,18 +82,6 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-promt', (require, exp
 					leftIcon: null,
 					code: 'autocad',
 				},
-				// {
-				// 	id: CopilotButtonType.promtEdit,
-				// 	text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_6'),
-				// 	editable: true,
-				// 	leftIcon: null,
-				// },
-				// {
-				// 	id: CopilotButtonType.promtEdit,
-				// 	text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_7'),
-				// 	editable: true,
-				// 	leftIcon: null,
-				// },
 			];
 
 			return this;

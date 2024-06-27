@@ -125,25 +125,12 @@ foreach ($arResult['ITEMS'] as &$arItem)
 								onmouseover="ShowTaskQuickInfo(<?php echo $task["ID"]?>, event);"
 								onmouseout="HideTaskQuickInfo(<?php echo $task["ID"]?>, event);"
 							<?endif?>
-
-							<?php
-							if ($bShowInPopup)
-							{
-								?>onclick="ShowPopupTask(<?php echo $task["ID"]?>, event);"<?php
-							}
-							?>
 						><?php echo $task["TITLE"]; ?></a><?php
 
 						if ($updatesCount)
 						{
 							?><a href="<?php echo $viewUrl->getUri()?>#updates"
 								class="task-item-updates"
-							<?php
-						if ($bShowInPopup)
-						{
-							?>onclick="ShowPopupTask(<?php echo $task["ID"]?>, event);"<?php
-						}
-							?>
 								title="<?php
 								echo str_replace(
 									"#NUM#",
@@ -169,12 +156,6 @@ foreach ($arResult['ITEMS'] as &$arItem)
 							{
 								?><a href="<?php echo $viewUrl->getUri()?>#comments"
 									class="task-title-comments"
-								<?php
-							if ($bShowInPopup)
-							{
-								?>onclick="ShowPopupTask(<?php echo $task["ID"]?>, event);"<?php
-							}
-								?>
 									title="<?php
 									echo str_replace(
 										"#NUM#",
@@ -600,7 +581,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 		<?endif?>
 	</tr>
 
-	<script type="text/javascript"<?php echo $arParams["DEFER"] ? "  defer=\"defer\"" : ""?>>
+	<script<?php echo $arParams["DEFER"] ? "  defer=\"defer\"" : ""?>>
 		tasksMenuPopup[<?php echo $task["ID"]?>] = [<?
 			if ((string)($arParams['CUSTOM_ACTIONS_CALLBACK'] ?? null) != '' && is_callable($arParams['CUSTOM_ACTIONS_CALLBACK']))
 			{

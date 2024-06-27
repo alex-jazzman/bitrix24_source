@@ -2,13 +2,15 @@
  * @module im/messenger/controller/dialog-creator/navigation-selector
  */
 jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require, exports, module) => {
+	/* global ChatUtils */
 	const { Loc } = require('loc');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, Analytics } = require('im/messenger/const');
 	const { RecipientSelector } = require('im/messenger/controller/dialog-creator/recipient-selector');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { NavigationSelectorView } = require('im/messenger/controller/dialog-creator/navigation-selector/view');
 	const { DialogDTO } = require('im/messenger/controller/dialog-creator/dialog-dto');
-	const AppTheme = require('apptheme');
+	const { ChannelCreator } = require('im/messenger/controller/channel-creator');
+	const { Theme } = require('im/lib/theme');
 	const { openIntranetInviteWidget } = require('intranet/invite-opener');
 	const { AnalyticsEvent } = require('analytics');
 
@@ -40,20 +42,18 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					MessengerEmitter.emit(EventType.messenger.openDialog, itemData, 'im.messenger');
 					this.layout.close();
 				},
-				onCreateOpenChat: () => {
-					RecipientSelector.open(
-						{
-							dialogDTO: new DialogDTO().setType('OPEN'),
-							userList: ChatUtils.objectClone(this.userList),
-						},
-						this.layout,
-					);
+				onCreateChannel: () => {
+					void ChannelCreator.open({
+						userList: ChatUtils.objectClone(this.userList),
+						analytics: new AnalyticsEvent().setSection(Analytics.Section.chatTab),
+					}, this.layout);
 				},
 				onCreatePrivateChat: () => {
 					RecipientSelector.open(
 						{
 							dialogDTO: (new DialogDTO()).setType('CHAT'),
 							userList: ChatUtils.objectClone(this.userList),
+							analytics: new AnalyticsEvent().setSection(Analytics.Section.chatTab),
 						},
 						this.layout,
 					);
@@ -73,11 +73,11 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 				title: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_CREATE_TITLE'),
 				useLargeTitleMode: true,
 				modal: true,
-				backgroundColor: AppTheme.colors.bgNavigation,
+				backgroundColor: Theme.isDesignSystemSupported ? Theme.colors.bgContentPrimary : Theme.colors.bgNavigation,
 				backdrop: {
 					mediumPositionPercent: 85,
 					horizontalSwipeAllowed: false,
-					onlyMediumPosition: true,
+					// onlyMediumPosition: true,
 				},
 				onReady: (layoutWidget) => {
 					this.layout = layoutWidget;
@@ -108,8 +108,9 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 		configureWidget(layoutWidget)
 		{
 			layoutWidget.setTitle({
+				text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_CREATE_TITLE'),
 				useLargeTitleMode: true,
-			});
+			}, true);
 			layoutWidget.search.mode = 'bar';
 			layoutWidget.setRightButtons([
 				{

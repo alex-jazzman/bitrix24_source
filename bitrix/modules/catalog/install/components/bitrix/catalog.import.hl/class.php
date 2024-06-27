@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 class CBitrixCatalogImportHl extends CBitrixComponent
@@ -36,9 +36,10 @@ class CBitrixCatalogImportHl extends CBitrixComponent
 			$xmlPosition = $this->xmlStream->getPosition();
 			$filePosition = $this->decodePostion($xmlPosition);
 			$xmlString = $this->xmlStream->readFilePart($this->NS["fp"], $filePosition);
-			$error = "";
 			if ($xmlPosition[0])
-				$xmlString = CharsetConverter::convertCharset($xmlString, $xmlPosition[0], LANG_CHARSET, $error);
+			{
+				$xmlString = \Bitrix\Main\Text\Encoding::convertEncoding($xmlString, $xmlPosition[0], LANG_CHARSET);
+			}
 			$xmlString .= "</".GetMessage("CC_BCIH_XML_REFERENCE").">";
 			$xmlObject = new CDataXML;
 			if ($xmlObject->loadString($xmlString))
@@ -421,4 +422,3 @@ class CBitrixCatalogImportHl extends CBitrixComponent
 		return $id;
 	}
 }
-?>

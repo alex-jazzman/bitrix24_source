@@ -1,5 +1,5 @@
-import {EventEmitter} from 'main.core.events';
-import {Dom, Reflection, Type, Event, Tag, Text} from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Dom, Reflection, Type, Event, Tag, Text } from 'main.core';
 
 type RealtimeOptions = {
 	grid: BX.Main.grid,
@@ -37,12 +37,12 @@ export class Realtime extends EventEmitter
 	{
 		super();
 		this.setEventNamespace('BX.Grid.Realtime');
-		this.options = {...options};
+		this.options = { ...options };
 	}
 
 	addRow(options: AddRowOptions)
 	{
-		const {grid} = this.options;
+		const { grid } = this.options;
 		const row = grid.getTemplateRow();
 		row.makeCountable();
 		grid.hideEmptyStub();

@@ -552,7 +552,9 @@ class CBPRequestInformationActivity extends CBPCompositeActivity implements
 					$field['Id'] = $field['Name']; //compatible
 					unset($field['Name']);
 
-					$fields[] = Bizproc\FieldType::normalizeProperty($field);
+					$property = Bizproc\FieldType::normalizeProperty($field);
+					$property['FieldId'] = static::CONTROLS_PREFIX . $property['Id'];
+					$fields[] = $property;
 				}
 			}
 		}

@@ -32,6 +32,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageType,
 		MessageIdType,
 		OwnMessageStatus,
+		MessageParams,
 	} = require('im/messenger/const/message');
 	const { ReactionType } = require('im/messenger/const/reaction-type');
 	const { DialogType } = require('im/messenger/const/dialog-type');
@@ -53,10 +54,11 @@ jn.define('im/messenger/const', (require, exports, module) => {
 	const { BBCode } = require('im/messenger/const/bb-code');
 	const { Setting } = require('im/messenger/const/setting');
 	const { Promo, PromoType } = require('im/messenger/const/promo');
-	const { CopilotButtonType } = require('im/messenger/const/copilot-button');
+	const { CopilotButtonType, CopilotPromptType } = require('im/messenger/const/copilot-button');
 	const { ComponentCode } = require('im/messenger/const/component-code');
 	const { Analytics } = require('im/messenger/const/analytics');
 	const { HeaderButton } = require('im/messenger/const/header-button');
+	const { NavigationTab } = require('im/messenger/const/navigation-tab');
 
 	module.exports = {
 		AppStatus,
@@ -77,6 +79,7 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		MessageType,
 		MessageIdType,
 		OwnMessageStatus,
+		MessageParams,
 		ReactionType,
 		DialogType,
 		DialogActionType,
@@ -97,7 +100,9 @@ jn.define('im/messenger/const', (require, exports, module) => {
 		Promo,
 		PromoType,
 		CopilotButtonType,
+		CopilotPromptType,
 		ComponentCode,
 		HeaderButton,
+		NavigationTab,
 	};
 });

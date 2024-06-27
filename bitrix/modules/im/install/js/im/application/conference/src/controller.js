@@ -1509,12 +1509,12 @@ class ConferenceApplication
 
 	onCallViewChangeFaceImprove(event)
 	{
-		if (typeof (BX.desktop) === 'undefined')
+		if (!DesktopApi.isDesktop())
 		{
 			return;
 		}
 
-		BX.desktop.cameraSmoothingStatus(event.data.faceImproveEnabled);
+		DesktopApi.setCameraSmoothingStatus(event.data.faceImproveEnabled);
 	}
 
 	onCallViewUserRename(event)
@@ -2371,7 +2371,7 @@ class ConferenceApplication
 				dialogName,
 				muted: Call.Hardware.isMicrophoneMuted,
 				cropTop: 72,
-				cropBottom: 85,
+				cropBottom: 90,
 				shareMethod: 'im.disk.record.share'
 			});
 		}

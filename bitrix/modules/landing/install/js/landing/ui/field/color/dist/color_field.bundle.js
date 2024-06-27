@@ -3247,6 +3247,7 @@ this.BX.Landing.UI = this.BX.Landing.UI || {};
 	    data[selector].id = value.getFileId() || -1;
 	    data[selector].id2x = value.getFileId2x() || -1;
 	    landing_backend.Backend.getInstance().action("Landing\\Block::updateNodes", {
+	      lid: this.options.block.lid,
 	      block: this.options.block.id,
 	      data: data
 	    });

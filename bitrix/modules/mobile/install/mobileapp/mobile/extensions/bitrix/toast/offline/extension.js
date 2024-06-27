@@ -19,7 +19,7 @@ jn.define('toast/offline', (require, exports, module) => {
 	{
 		Haptics.notifyFailure();
 
-		showToast(
+		return showToast(
 			mergeImmutable(defaultParams, params),
 			layoutWidget,
 		);

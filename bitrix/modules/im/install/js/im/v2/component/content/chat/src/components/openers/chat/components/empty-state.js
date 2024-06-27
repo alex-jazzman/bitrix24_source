@@ -1,3 +1,5 @@
+import { Loc } from 'main.core';
+
 import { ThemeManager } from 'im.v2.lib.theme';
 import { RecentService } from 'im.v2.provider.service';
 import { Layout } from 'im.v2.const';
@@ -29,13 +31,18 @@ export const EmptyState = {
 
 			if (this.isChannelLayout)
 			{
-				return this.loc('IM_CONTENT_CHANNEL_START_MESSAGE_V2');
+				return this.loc('IM_CONTENT_CHANNEL_START_MESSAGE_V3');
 			}
 
 			return this.loc('IM_CONTENT_CHAT_START_MESSAGE_V2');
 		},
 		subtext(): string
 		{
+			if (this.isChannelLayout)
+			{
+				return this.loc('IM_CONTENT_CHANNEL_START_MESSAGE_SUBTITLE');
+			}
+
 			return '';
 		},
 		isEmptyRecent(): boolean
@@ -57,9 +64,9 @@ export const EmptyState = {
 	},
 	methods:
 	{
-		loc(phraseCode: string): string
+		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
-			return this.$Bitrix.Loc.getMessage(phraseCode);
+			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
 	},
 	template: `

@@ -57,8 +57,6 @@ if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER
 	$sendError('Access denied.');
 }
 
-CUtil::JSPostUnescape();
-
 $action = !empty($_REQUEST['action'])? mb_strtoupper($_REQUEST['action']) : null;
 
 if (empty($action))

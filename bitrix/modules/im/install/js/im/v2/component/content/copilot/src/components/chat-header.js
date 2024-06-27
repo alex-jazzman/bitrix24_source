@@ -1,5 +1,5 @@
 import 'ui.notification';
-import { Loc, Extension } from 'main.core';
+import { Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { PromoManager } from 'im.v2.lib.promo';
@@ -75,12 +75,6 @@ export const ChatHeader = {
 			}
 
 			return role.name;
-		},
-		isCopilotRolesAvailable(): boolean
-		{
-			const settings = Extension.getSettings('im.v2.component.content.copilot');
-
-			return settings.copilotRolesAvailable === 'Y';
 		},
 	},
 	mounted()
@@ -179,7 +173,7 @@ export const ChatHeader = {
 					</div>
 				</div>
 			</div>
-			<div v-if="isCopilotRolesAvailable" class="bx-im-copilot-header__right">
+			<div class="bx-im-copilot-header__right">
 				<div
 					:title="loc('IM_CONTENT_COPILOT_HEADER_OPEN_INVITE_POPUP_TITLE')"
 					:class="{'--active': showAddToChatPopup}"

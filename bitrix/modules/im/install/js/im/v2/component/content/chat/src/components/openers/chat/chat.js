@@ -2,9 +2,11 @@ import 'ui.notification';
 
 import { Messenger } from 'im.public';
 import { ChatType, Layout, UserRole } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
+import { ChannelManager } from 'im.v2.lib.channel';
 import { ChatService } from 'im.v2.provider.service';
 
 import { BaseChatContent } from '../../content/base/base';
@@ -25,10 +27,6 @@ export const ChatOpener = {
 	{
 		dialogId: {
 			type: String,
-			required: true,
-		},
-		commentsOpened: {
-			type: Boolean,
 			required: true,
 		},
 	},
@@ -53,7 +51,7 @@ export const ChatOpener = {
 		},
 		isChannel(): boolean
 		{
-			return [ChatType.channel, ChatType.openChannel].includes(this.dialog.type);
+			return ChannelManager.isChannel(this.dialogId);
 		},
 		isGuest(): boolean
 		{
@@ -112,6 +110,7 @@ export const ChatOpener = {
 					Logger.warn(`ChatContent: channel ${this.dialogId} is loaded, loading comments metadata`);
 					void this.getChatService().loadCommentInfo(this.dialogId);
 				}
+				Analytics.getInstance().onOpenChat(this.dialog);
 
 				return;
 			}
@@ -126,11 +125,13 @@ export const ChatOpener = {
 			if (this.layout.contextId)
 			{
 				await this.loadChatWithContext();
+				Analytics.getInstance().onOpenChat(this.dialog);
 
 				return;
 			}
 
 			await this.loadChat();
+			Analytics.getInstance().onOpenChat(this.dialog);
 		},
 		async loadChatWithContext(): Promise
 		{
@@ -200,7 +201,7 @@ export const ChatOpener = {
 	template: `
 		<div class="bx-im-content-default-chat__container">
 			<EmptyState v-if="!dialogId" />
-			<ChannelContent v-else-if="isChannel" :dialogId="dialogId" :commentsOpened="commentsOpened" />
+			<ChannelContent v-else-if="isChannel" :dialogId="dialogId" />
 			<BaseChatContent
 				v-else
 				:dialogId="dialogId"

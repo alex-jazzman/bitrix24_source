@@ -1,1 +1,95 @@
-<? $GLOBALS['____1222882225']= array(base64_decode(''.'ZXJyb'.'3Jf'.'cmVwb3J0a'.'W5n'),base64_decode('ZGVmaW5l'),base64_decode('bWljcm90aW1l'),base64_decode('Z'.'GVmaW5lZ'.'A=='),base64_decode('ZG'.'VmaW5l'),base64_decode('c3Ry'.'dG91cHB'.'l'.'cg='.'='),base64_decode('c2V0Y'.'29va'.'2ll'),base64_decode('ZGV'.'maW5l'),base64_decode('ZmlsZV'.'9l'.'e'.'Gl'.'zdHM='));if(!function_exists(__NAMESPACE__.'\\___749385495')){function ___749385495($_768744281){static $_731968547= false; if($_731968547 == false) $_731968547=array(''.'U'.'1RBUlRfRVhF'.'Q19U'.'SU1F',''.'Ql9'.'QUk9MT0'.'dfSU5D'.'TFVE'.'RUQ=',''.'Ql9Q'.'Uk9'.'M'.'T'.'0dfSU5DTFVERUQ=','L2J4'.'X'.'3'.'Jvb'.'3'.'Quc'.'G'.'hw','L2xpYi9'.'sb2F'.'kZX'.'IucGh'.'w','L2'.'luY2x1'.'ZG'.'UvYXV0b2'.'xvYWQucGhw',''.'L2'.'N'.'sYXNzZXMvZ'.'2VuZXJhbC92ZXJzaW9uLnB'.'ocA==','L'.'3Rvb'.'2xz'.'L'.'nB'.'ocA'.'='.'=','RE9DVU1'.'FT'.'lRfUk9P'.'VA==','L3'.'B'.'ocF9pbnRlc'.'mZhY'.'2UvZGJ'.'jb'.'25'.'uL'.'nBo'.'cA==','b'.'XlzcWw=','','','','','L2'.'luY2x1ZG'.'U'.'vY'.'29'.'uc'.'3RhbnRz'.'L'.'nBo'.'cA==',''.'REI=','REI'.'=',''.'REI=','RE'.'9'.'DVU1'.'FTl'.'RfUk9PVA==','L215c3'.'F'.'sX2R'.'lYnVnLn'.'NxbA'.'==','','c'.'2hvd19zcWxf'.'c'.'3Rhd'.'A==','c'.'2hvd19'.'zcWx'.'fc'.'3R'.'hdA==','W'.'Q==','WQ==','','c2h'.'vd1'.'9'.'zcWxfc3Rh'.'dA'.'==','Lw==','c2hvd19z'.'cWx'.'f'.'c3RhdA==','c2hv'.'d1'.'9zc'.'Wxfc3RhdA='.'=','WQ'.'==','R'.'EI=',''.'T'.'ElDRU5'.'TRV9LR'.'Vk=',''.'Q0FD'.'S'.'EVf'.'U1'.'RBVF'.'9CWV'.'RFU'.'w==','Q'.'0FDSEVfTU'.'FO'.'Q'.'U'.'dFUg==','c3'.'Rh'.'Y2t'.'DYW'.'No'.'ZU1hbm'.'FnZ'.'XI=','L2NsYXNzZXMvZ2'.'VuZXJhbC'.'91cGR'.'hd'.'GV'.'fZGJ'.'fdXBk'.'YXRl'.'ci5w'.'a'.'HA'.'=');return base64_decode($_731968547[$_768744281]);}};  $GLOBALS['____1222882225'][0](E_COMPILE_ERROR| E_ERROR| E_CORE_ERROR| E_PARSE); $GLOBALS['____1222882225'][1](___749385495(0), $GLOBALS['____1222882225'][2](true)); if(!$GLOBALS['____1222882225'][3](___749385495(1))){ $GLOBALS['____1222882225'][4](___749385495(2), true);} require_once __DIR__. ___749385495(3); require_once __DIR__. ___749385495(4); require_once __DIR__. ___749385495(5); require_once __DIR__. ___749385495(6);  require_once __DIR__. ___749385495(7);  FormDecode(); $_817145988= \Bitrix\Main\HttpApplication::getInstance();  global $DBType, $DBDebug, $DBDebugToFile, $DBHost, $DBName, $DBLogin, $DBPassword;  require_once($_SERVER[___749385495(8)]. BX_PERSONAL_ROOT. ___749385495(9));  $DBType= ___749385495(10); $DBHost= ___749385495(11); $DBLogin= ___749385495(12); $DBPassword= ___749385495(13); $DBName= ___749385495(14);  require_once __DIR__. ___749385495(15);  CAllDatabase::registerAutoload();  $GLOBALS[___749385495(16)]= new CDatabase(); $GLOBALS[___749385495(17)]->debug= $DBDebug; if($DBDebugToFile){ $GLOBALS[___749385495(18)]->DebugToFile= true; $_817145988->getConnection()->startTracker()->startFileLog($_SERVER[___749385495(19)]. ___749385495(20));}  $_870500383= ___749385495(21); if(isset($_GET[___749385495(22)])){ $_870500383=($GLOBALS['____1222882225'][5]($_GET[___749385495(23)]) == ___749385495(24)? ___749385495(25): ___749385495(26)); $GLOBALS['____1222882225'][6](___749385495(27), $_870500383, false, ___749385495(28));} elseif(isset($_COOKIE[___749385495(29)])){ $_870500383= $_COOKIE[___749385495(30)];} if($_870500383 == ___749385495(31)){ $GLOBALS[___749385495(32)]->ShowSqlStat= true; $_817145988->getConnection()->startTracker();}  $GLOBALS['____1222882225'][7](___749385495(33), $_817145988->getLicense()->getKey());  $GLOBALS[___749385495(34)]= min(172,0,57.333333333333); $GLOBALS[___749385495(35)]= new CCacheManager; $GLOBALS[___749385495(36)]= new CStackCacheManager(); if($GLOBALS['____1222882225'][8](($_69634505= __DIR__. ___749385495(37)))){ $US_HOST_PROCESS_MAIN= true; include $_69634505;}?>
+<?php
+
+/**
+ * Bitrix Framework
+ * @package bitrix
+ * @subpackage main
+ * @copyright 2001-2024 Bitrix
+ */
+
+error_reporting(E_COMPILE_ERROR | E_ERROR | E_CORE_ERROR | E_PARSE);
+
+define("START_EXEC_TIME", microtime(true));
+
+if (!defined('B_PROLOG_INCLUDED'))
+{
+	define("B_PROLOG_INCLUDED", true);
+}
+
+require_once __DIR__ . '/bx_root.php';
+require_once __DIR__ . '/lib/loader.php';
+require_once __DIR__ . '/include/autoload.php';
+require_once __DIR__ . '/classes/general/version.php';
+
+// global functions
+require_once __DIR__ . '/tools.php';
+
+/**
+ * @todo Get rid of
+ */
+FormDecode();
+
+$application = \Bitrix\Main\HttpApplication::getInstance();
+
+//Defined in dbconn.php
+global $DBType, $DBDebug, $DBDebugToFile, $DBHost, $DBName, $DBLogin, $DBPassword;
+
+//read various parameters
+require_once($_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . '/php_interface/dbconn.php');
+
+// not used anymore
+$DBType = 'mysql';
+$DBHost = '';
+$DBLogin = '';
+$DBPassword = '';
+$DBName = '';
+
+// need to be after dbconn.php
+require_once __DIR__ . '/include/constants.php';
+
+// Database-dependent classes
+CAllDatabase::registerAutoload();
+
+// From here global variable $DB is available (CDatabase class)
+$GLOBALS['DB'] = new CDatabase();
+
+$GLOBALS['DB']->debug = $DBDebug;
+if ($DBDebugToFile)
+{
+	$GLOBALS['DB']->DebugToFile = true;
+	$application->getConnection()->startTracker()->startFileLog($_SERVER['DOCUMENT_ROOT'] . '/mysql_debug.sql');
+}
+
+//magic parameters: show sql queries statistics
+$show_sql_stat = '';
+if (isset($_GET['show_sql_stat']))
+{
+	$show_sql_stat = (strtoupper($_GET['show_sql_stat']) == 'Y' ? 'Y' : '');
+	setcookie('show_sql_stat', $show_sql_stat, false, '/');
+}
+elseif (isset($_COOKIE['show_sql_stat']))
+{
+	$show_sql_stat = $_COOKIE['show_sql_stat'];
+}
+if ($show_sql_stat == 'Y')
+{
+	$GLOBALS['DB']->ShowSqlStat = true;
+	$application->getConnection()->startTracker();
+}
+
+/**
+ * License key.
+ * @deprecated Use $application->getLicense()->getKey().
+ */
+define('LICENSE_KEY', $application->getLicense()->getKey());
+
+/** @todo Change globals to getInstance() */
+$GLOBALS['CACHE_STAT_BYTES'] = 0;
+$GLOBALS['CACHE_MANAGER'] = new CCacheManager;
+$GLOBALS['stackCacheManager'] = new CStackCacheManager();
+
+if (file_exists(($fname = __DIR__ . '/classes/general/update_db_updater.php')))
+{
+	$US_HOST_PROCESS_MAIN = true;
+	include $fname;
+}

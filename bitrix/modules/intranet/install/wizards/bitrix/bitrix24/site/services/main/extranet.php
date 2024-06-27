@@ -36,7 +36,7 @@ else
 	$EMAIL = COption::GetOptionString("main", "email_from");
 	$LANGUAGE_ID = LANGUAGE_ID;
 	$DOC_ROOT = "";
-	$CHARSET = (defined("BX_UTF") ? "UTF-8" : "windows-1251");
+	$CHARSET = "UTF-8";
 	$SERVER_NAME = $_SERVER["SERVER_NAME"];
 }
 

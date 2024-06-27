@@ -19,6 +19,7 @@ BX.CRM.Kanban.Grid = function(options)
 
 	BX.addCustomEvent(this, "Kanban.DropZone:onBeforeItemCaptured", BX.delegate(this.onBeforeItemCaptured, this));
 	BX.addCustomEvent(this, "Kanban.DropZone:onBeforeItemRestored", BX.delegate(this.onBeforeItemRestored, this));
+	BX.addCustomEvent(this, "Kanban.DropZone:onItemCaptured", BX.delegate(this.onItemCaptured, this));
 
 	BX.addCustomEvent(this, "Kanban.Grid:onBeforeItemMoved", BX.delegate(this.onBeforeItemMoved, this));
 	//BX.addCustomEvent(this, "Kanban.Grid:onItemMoved", BX.delegate(this.onItemMoved, this));
@@ -1308,7 +1309,7 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	/**
 	 * Hook on item drop to junk's.
-	 * @param {BX.Kanban.DropZoneEvent} dropEvent
+	 * @param {BX.CRM.Kanban.DropZoneEvent} dropEvent
 	 * @returns {void}
 	 */
 	onBeforeItemCaptured: function(dropEvent)
@@ -1321,6 +1322,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			var column = item.getColumn();
 			var drop = dropEvent.getDropZone();
 
+			const groupIds = this.getItemsForAction();
 			this.itemMoving = {
 				item: item,
 				price: parseFloat(item.getData().price),
@@ -1329,20 +1331,35 @@ BX.CRM.Kanban.Grid.prototype = {
 				newColumn: null,
 				newNextSibling: null,
 				dropEvent: dropEvent,
-				groupIds: this.getItemsForAction()
+				groupIds,
 			};
 
-			this.onItemMoved(item, drop, null, true);
+			dropEvent.groupIds = groupIds;
 
-			if (drop.getId() === "DELETED")
+			this.onItemMoved(item, drop, null, true);
+		}
+	},
+
+	onItemCaptured: function(item, dropZone, ids)
+	{
+		if (dropZone.getId() === 'DELETED')
+		{
+			if (BX.Type.isArray(ids) && ids.length === 0)
 			{
-				var ids = this.getItemsForAction();
-				BX.CRM.Kanban.Actions.delete(
-					this,
-					ids.length ? ids : parseInt(item.getId(), 10),
-					drop
-				);
+				ids = parseInt(item.getId(), 10);
 			}
+
+			ids = ids ?? grid.getCheckedId();
+
+			const params = {
+				ids,
+				showNotify: false,
+			};
+
+			(new BX.CRM.Kanban.Actions.DeleteAction(this, params))
+				.setDropZone(dropZone)
+				.execute()
+			;
 		}
 	},
 
@@ -1638,6 +1655,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			entity_id: this.itemMoving.groupIds ?? itemId,
 			prev_entity_id: afterItemId,
 			status: targetColumnId,
+			eventId: BX.Pull.QueueManager.registerRandomEventId(),
 		};
 
 		this.ajax(
@@ -2933,12 +2951,9 @@ BX.CRM.Kanban.Grid.prototype = {
 			id: "kanban_delete",
 			text: BX.message("CRM_KANBAN_PANEL_DELETE"),
 			icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-delete.svg",
-			onclick: function()
-			{
-				BX.CRM.Kanban.Actions.deleteAll(
-					this
-				);
-			}.bind(this)
+			onclick: () => {
+				BX.CRM.Kanban.Actions.deleteAll(this);
+			}
 		});
 
 		// ignore
@@ -2948,12 +2963,9 @@ BX.CRM.Kanban.Grid.prototype = {
 				id: "kanban_ignore",
 				text: BX.message("CRM_KANBAN_PANEL_IGNORE"),
 				icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-ignore.svg",
-				onclick: function()
-				{
-					BX.CRM.Kanban.Actions.ignore(
-						this
-					);
-				}.bind(this)
+				onclick: () => {
+					BX.CRM.Kanban.Actions.ignore(this);
+				}
 			});
 		}
 

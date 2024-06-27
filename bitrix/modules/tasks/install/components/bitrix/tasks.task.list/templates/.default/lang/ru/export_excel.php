@@ -59,3 +59,4 @@ $MESS['TASKS_EXCEL_U'] = 'Наблюдатели';
 $MESS['TASKS_EXCEL_A'] = 'Соисполнители';
 $MESS['TASKS_EXCEL_BASE_ID'] = 'ID базовой задачи';
 $MESS['TASKS_EXCEL_BASE_TITLE'] = 'Название базовой задачи';
+$MESS['TASKS_EXCEL_FLOW'] = 'Поток';

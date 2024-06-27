@@ -1,4 +1,5 @@
-<? if (!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+<?php
+if (!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
@@ -40,7 +41,7 @@ $APPLICATION->RestartBuffer();
 if(array_key_exists("logincheck", $_REQUEST) && $_REQUEST["login"])
 {
 	$res = CUser::getByLogin($_REQUEST["login"]);
-	$data["exists"] = $res->fetch() ? true : false;
+	$data["exists"] = (bool)$res->fetch();
 	if (!$data["exists"])
 	{
 		// AD\LDAP
@@ -48,17 +49,17 @@ if(array_key_exists("logincheck", $_REQUEST) && $_REQUEST["login"])
 		if (count($ldapComponents) == 2)
 		{
 			$res = CUser::getByLogin($ldapComponents[1]);
-			$data["exists"] = $res->fetch() ? true : false;
+			$data["exists"] = (bool)$res->fetch();
 		}
 	}
 
-	return Main\Text\Encoding::convertEncoding($data, LANG_CHARSET, 'UTF-8');
+	return $data;
 }
 
 if(array_key_exists("servercheck", $_REQUEST))
 {
 	$data["cloud"] = ModuleManager::isModuleInstalled("bitrix24") && COption::GetOptionString('bitrix24', 'network', 'N') == 'Y';
-	return Main\Text\Encoding::convertEncoding($data, LANG_CHARSET, 'UTF-8');
+	return $data;
 }
 
 $userData = CHTTP::ParseAuthRequest();
@@ -110,6 +111,14 @@ if (!$isAlreadyAuthorized)
 }
 else
 {
+	$isSignMobileModuleInstalled = \Bitrix\Main\Loader::includeModule("signmobile");
+	$isSignModuleInstalled = \Bitrix\Main\Loader::includeModule("sign");
+
+	if ($isSignMobileModuleInstalled && $isSignModuleInstalled)
+	{
+		\Bitrix\SignMobile\Service\EventService::checkDocumentsSentForSigning();
+	}
+
 	$event = new Bitrix\Main\Event("mobile", "onRequestSyncMail", [
 		'urgent' => false,
 	]);
@@ -144,7 +153,7 @@ else
 	$curUser = $dbUser->Fetch();
 	$avatarSource = "";
 
-	if (intval($curUser["PERSONAL_PHOTO"]) > 0)
+	if ((int)$curUser["PERSONAL_PHOTO"] > 0)
 	{
 		$avatar = CFile::ResizeImageGet(
 			$curUser["PERSONAL_PHOTO"],
@@ -196,7 +205,7 @@ else
 
 	$manager = new \Bitrix\Mobile\Tab\Manager($context);
 
-	if ($intent && strpos($intent, 'preset_') === 0)
+	if ($intent && str_starts_with($intent, 'preset_'))
 	{
 		$components = explode('_', $intent);
 		if (count($components) >= 2)
@@ -220,6 +229,8 @@ else
 	}
 
 	$menuTabs = $manager->getActiveTabsData();
+
+	$avaMenuManager = new \Bitrix\Mobile\AvaMenu\Manager($context);
 
 //	array_shift($menuTabs);
 	$voximplantServer = '';
@@ -249,24 +260,29 @@ else
 	}
 
 	$isImModuleInstalled = Main\Loader::includeModule('im');
+	$userName = \CUser::FormatName(CSite::GetNameFormat(false), [
+		"NAME" => $USER->GetFirstName(),
+		"LAST_NAME" => $USER->GetLastName(),
+		"SECOND_NAME" => $USER->GetSecondName(),
+		"LOGIN" => $USER->GetLogin()
+	]);
 
 	$data = [
 		"status" => "success",
 		"id" => $USER->GetID(),
 		"login" => $USER->GetLogin(),
-		"name" => \CUser::FormatName(CSite::GetNameFormat(false), [
-			"NAME" => $USER->GetFirstName(),
-			"LAST_NAME" => $USER->GetLastName(),
-			"SECOND_NAME" => $USER->GetSecondName(),
-			"LOGIN" => $USER->GetLogin()
-		]),
+		"name" => $userName,
 		"sessid_md5" => bitrix_sessid(),
         "backend_version" => \Bitrix\Main\ModuleManager::getVersion('mobile'),
 		"target" => md5($USER->GetID() . CMain::GetServerUniqID()),
 		"photoUrl" => $avatarSource,
-		"wkWebViewSupported" => true,
-		"tabInterfaceSupported" => true,
+		"newStyleSupported" => true,
 		"tabs" => $menuTabs,
+		'avamenu' => [
+			'userInfo' => $avaMenuManager->getProfileData(),
+			'totalCounter' => $avaMenuManager->getTotalCounter(),
+			'items' => $avaMenuManager->getMenuData(),
+		],
 		"services" => [
 			[
 				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im:calls"),
@@ -290,6 +306,7 @@ else
 					"jitsiServer" => Main\Config\Option::get("im", "jitsi_server", ""),
 					"sfuServerEnabled" => $isImModuleInstalled && Im\Call\Call::isCallServerEnabled(),
 					"bitrixCallsEnabled" => $isImModuleInstalled && Im\Call\Call::isBitrixCallEnabled(),
+					'callBetaIosEnabled' => $isImModuleInstalled && Im\Call\Call::isIosBetaEnabled(),
 				]
 			],
 			[
@@ -374,4 +391,4 @@ else
 	}
 }
 
-return Main\Text\Encoding::convertEncoding($data, LANG_CHARSET, 'UTF-8');
+return $data;

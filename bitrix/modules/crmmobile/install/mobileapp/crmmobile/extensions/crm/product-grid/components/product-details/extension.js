@@ -824,7 +824,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		 */
 		isCatalogProductFieldEditable()
 		{
-			return this.getProps().permissions.catalog_product_edit && !this.isReadonly();
+			return !this.getProps().isCatalogHidden && this.getProps().permissions.catalog_product_edit && !this.isReadonly();
 		}
 
 		/**

@@ -22,6 +22,7 @@ export const Dictionary = Object.freeze({
 	EVENT_AUDIO_TO_TEXT: 'audio_to_text',
 	EVENT_SUMMARY: 'summary',
 	EVENT_EXTRACT_FIELDS: 'extract_fields',
+	EVENT_CALL_ACTIVITY_WITH_AUDIO_RECORDING: 'activity_call_with_audio_recording',
 	// endregion
 
 	// region Type const
@@ -95,7 +96,10 @@ export const Dictionary = Object.freeze({
 	STATUS_SUCCESS_FIELDS: 'success_fields',
 	STATUS_SUCCESS_COMMENT: 'success_comment_only',
 	STATUS_ERROR_NO_LIMITS: 'error_no_limits',
-	STATUS_ERROR_GPT: 'error_gpt',
+	STATUS_ERROR_AGREEMENT: 'error_agreement',
+	STATUS_ERROR_LIMIT_DAILY: 'error_limit_daily',
+	STATUS_ERROR_LIMIT_MONTHLY: 'error_limit_monthly',
+	STATUS_ERROR_PROVIDER: 'error_provider',
 	STATUS_ERROR_B24: 'error_b24',
 	// endregion
 });

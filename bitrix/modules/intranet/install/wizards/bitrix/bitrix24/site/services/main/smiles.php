@@ -62,9 +62,6 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 					$csvFile->SetFirstHeader(false);
 					while($smile = $csvFile->Fetch())
 					{
-						if (defined('BX_UTF') && BX_UTF && $res["LID"] == 'ru')
-							$smile[1] = $GLOBALS['APPLICATION']->ConvertCharset($smile[1], 'windows-1251', 'utf-8');
-
 						$arLang[$smile[0]][$res["LID"]] = $smile[1];
 					}
 				}

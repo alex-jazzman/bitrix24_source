@@ -33,6 +33,23 @@ class CIntranetInviteDialog
 			'mode' => Router::COMPONENT_MODE_AJAX,
 		];
 
+		$subSection = null;
+		if (isset($params['analyticsLabel']))
+		{
+			$subSection = $params['analyticsLabel']['analyticsLabel[source]'];
+		}
+
+		if (!is_null($subSection))
+		{
+			$analyticsLabels = [
+				'analyticsLabel[tool]' => 'Invitation',
+				'analyticsLabel[category]' => 'invitation',
+				'analyticsLabel[event]' => 'drawer_open',
+				'analyticsLabel[c_section]' => $subSection
+			];
+			$params['analyticsLabel'] = array_merge($params['analyticsLabel'], $analyticsLabels);
+		}
+
 		if (isset($params['analyticsLabel']))
 		{
 			$data = array_merge($data, $params['analyticsLabel']);
@@ -53,7 +70,7 @@ class CIntranetInviteDialog
 		return self::$bSendPassword;
 	}
 
-	public static function AddNewUser($SITE_ID, $arFields, &$strError)
+	public static function AddNewUser($SITE_ID, $arFields, &$strError, $type = null)
 	{
 		global $APPLICATION, $USER;
 
@@ -268,7 +285,8 @@ class CIntranetInviteDialog
 				{
 					Invitation::add([
 						'USER_ID' => $ID_ADDED,
-						'TYPE' => Invitation::TYPE_EMAIL
+						'TYPE' => Invitation::TYPE_EMAIL,
+						'IS_REGISTER' => $type === 'register' ? 'Y' : 'N'
 					]);
 				}
 
@@ -939,7 +957,8 @@ class CIntranetInviteDialog
 
 			Invitation::add([
 				'USER_ID' => [ $ID ],
-				'TYPE' => Invitation::TYPE_EMAIL
+				'TYPE' => Invitation::TYPE_EMAIL,
+				'IS_INTEGRATOR' => 'Y'
 			]);
 
 			return $ID;
@@ -1018,11 +1037,12 @@ class CIntranetInviteDialog
 			'EMAIL' => $userData['EMAIL'],
 			'PASSWORD' => $strPassword,
 			'CONFIRM_CODE' => $userData['CONFIRM_CODE'],
-			'NAME' => $userData['NAME'],
-			'LAST_NAME' => $userData['LAST_NAME'],
+			'NAME' => $userData['NAME'] ?? null,
+			'LAST_NAME' => $userData['LAST_NAME'] ?? null,
 			'GROUP_ID' => $userData['GROUP_ID'],
 			'LID' => $SITE_ID,
-			'UF_DEPARTMENT' => (is_array($userData['UF_DEPARTMENT']) ? $userData['UF_DEPARTMENT'] : [$userData['UF_DEPARTMENT']]),
+			'UF_DEPARTMENT' => empty($userData['UF_DEPARTMENT']) ? [] :
+				(is_array($userData['UF_DEPARTMENT']) ? $userData['UF_DEPARTMENT'] : [$userData['UF_DEPARTMENT']]),
 			'LANGUAGE_ID' => ($site = \CSite::GetArrayByID($SITE_ID)) ? $site['LANGUAGE_ID'] : LANGUAGE_ID,
 		];
 
@@ -1117,7 +1137,7 @@ class CIntranetInviteDialog
 		$bExtranet = (
 			ModuleManager::isModuleInstalled('extranet')
 			&& (
-				!isset($arUser["UF_DEPARTMENT"])
+				empty($arUser["UF_DEPARTMENT"])
 				|| (
 					is_array($arUser["UF_DEPARTMENT"])
 					&& (int)$arUser["UF_DEPARTMENT"][0] <= 0

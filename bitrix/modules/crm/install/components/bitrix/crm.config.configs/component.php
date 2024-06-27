@@ -375,6 +375,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				\Bitrix\Crm\MessageSender\SettingsManager::setValue($_POST['NOTIFICATIONS_SENDER']);
 			}
 
+			if (isset($_POST['REMOVE_ENTITY_BADGES_INTERVAL_DAYS']))
+			{
+				\Bitrix\Crm\Settings\ActivitySettings::getCurrent()->setRemoveEntityBadgesIntervalDays(
+					(int)$_POST['REMOVE_ENTITY_BADGES_INTERVAL_DAYS']
+				);
+			}
+
 			if (isset($_POST['ENABLE_EXPORT_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableExportEvent(
@@ -619,7 +626,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'LEAD_DEFAULT_LIST_VIEW',
-	'name' => GetMessage('CRM_FIELD_LEAD_DEFAULT_LIST_VIEW'),
+	'name' => GetMessage('CRM_FIELD_LEAD_DEFAULT_LIST_VIEW_MSGVER_1'),
 	'items' => \Bitrix\Crm\Settings\LeadSettings::getViewDescriptions(),
 	'type' => 'list',
 	'value' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->getDefaultListViewID(),
@@ -749,7 +756,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'INVOICE_DEFAULT_LIST_VIEW',
-	'name' => GetMessage('CRM_FIELD_INVOICE_DEFAULT_LIST_VIEW'),
+	'name' => GetMessage('CRM_FIELD_INVOICE_DEFAULT_LIST_VIEW_MSGVER_1'),
 	'items' => \Bitrix\Crm\Settings\InvoiceSettings::getViewDescriptions(),
 	'type' => 'list',
 	'value' => \Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->getDefaultListViewID(),
@@ -967,6 +974,33 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 	'items' => \Bitrix\Crm\Settings\ActivitySettings::getViewDescriptions(),
 	'type' => 'list',
 	'value' => \Bitrix\Crm\Settings\ActivitySettings::getCurrent()->getDefaultListViewID(),
+	'required' => false
+);
+
+$removeEntityBadgesIntervalDaysHint = GetMessage('CRM_FIELD_REMOVE_ENTITY_BADGES_INTERVAL_DAYS_HINT');
+
+$removeEntityBadgesIntervalDays = Settings\ActivitySettings::getCurrent()->getRemoveEntityBadgesIntervalDays();
+
+$removeEntityBadgesIntervalDaysOptions = '';
+foreach (Settings\ActivitySettings::getBadgeTtlValues() as $option => $value)
+{
+	$selected = $option === $removeEntityBadgesIntervalDays ? 'selected' : '';
+	$removeEntityBadgesIntervalDaysOptions .= '<option value="' . $option . '" ' . $selected . '>' . $value .'</option>';
+}
+$removeEntityBadgesIntervalDaysHtml = <<<HTML
+<div>
+	<select name="REMOVE_ENTITY_BADGES_INTERVAL_DAYS">
+		$removeEntityBadgesIntervalDaysOptions
+	</select>
+	<span data-hint-html data-hint="$removeEntityBadgesIntervalDaysHint" class="ui-hint"></span>
+</div>
+HTML;
+
+$arResult['FIELDS']['tab_activity_config'][] = array(
+	'id' => 'REMOVE_ENTITY_BADGES_INTERVAL_DAYS',
+	'name' => GetMessage('CRM_FIELD_REMOVE_ENTITY_BADGES_INTERVAL_DAYS'),
+	'type' => 'custom',
+	'value' => $removeEntityBadgesIntervalDaysHtml,
 	'required' => false
 );
 

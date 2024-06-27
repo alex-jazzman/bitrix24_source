@@ -212,6 +212,7 @@ Class sale extends CModule
 		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\PaySystem\RestService', 'onRestServiceBuildDescription');
 		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\Delivery\Rest\Handlers', 'onRestServiceBuildDescription');
 		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\Cashbox\Rest\RestService', 'onRestServiceBuildDescription');
+		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\Rest\RestManager', 'onRestServiceBuildDescription');
 
 		$eventManager->registerEventHandler('main', 'onNumberGeneratorsClassesCollect', 'sale', '\Bitrix\Sale\Integration\Numerator\OrderIdNumberGenerator', 'onGeneratorClassesCollect');
 		$eventManager->registerEventHandler('main', 'onNumberGeneratorsClassesCollect', 'sale', '\Bitrix\Sale\Integration\Numerator\OrderUserOrdersNumberGenerator', 'onGeneratorClassesCollect');
@@ -245,6 +246,14 @@ Class sale extends CModule
 		$eventManager->registerEventHandler('sale', 'OnAfterSaleBasketItemSetField', 'sale', \Bitrix\Sale\Reservation\Event\Handler\BasketItemUpdateProductReserveHandlers::class, 'OnAfterSaleBasketItemSetField');
 
 		$eventManager->registerEventHandler('sale', 'onBeforeCashboxAdd', 'sale', \Bitrix\Sale\Cashbox\EventsHandler\CashboxYooKassa::class, 'onBeforeCashboxAdd');
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnEventLogGetAuditTypes',
+			'sale',
+			\Bitrix\Sale\EventLogAuditTypeRepository::class,
+			'getAuditTypes'
+		);
 
 		COption::SetOptionString("sale", "viewed_capability", "N");
 		COption::SetOptionString("sale", "viewed_count", 10);
@@ -493,6 +502,7 @@ Class sale extends CModule
 		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\PaySystem\RestService', 'onRestServiceBuildDescription');
 		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\Delivery\Rest\Handlers', 'onRestServiceBuildDescription');
 		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\Cashbox\Rest\RestService', 'onRestServiceBuildDescription');
+		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\Rest\RestManager', 'onRestServiceBuildDescription');
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler('main', 'OnUserLogout', 'sale', '\Bitrix\Sale\DiscountCouponsManager', 'logout');
@@ -534,6 +544,14 @@ Class sale extends CModule
 		$eventManager->unRegisterEventHandler('sale', 'OnAfterSaleBasketItemSetField', 'sale', \Bitrix\Sale\Reservation\Event\Handler\BasketItemUpdateProductReserveHandlers::class, 'OnAfterSaleBasketItemSetField');
 
 		$eventManager->unRegisterEventHandler('sale', 'onBeforeCashboxAdd', 'sale', '\Bitrix\Sale\Cashbox\EventsHandler\CashboxYooKassa', 'onBeforeCashboxAdd');
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnEventLogGetAuditTypes',
+			'sale',
+			\Bitrix\Sale\EventLogAuditTypeRepository::class,
+			'getAuditTypes'
+		);
 
 		if (\Bitrix\Main\Loader::includeModule('sale'))
 		{

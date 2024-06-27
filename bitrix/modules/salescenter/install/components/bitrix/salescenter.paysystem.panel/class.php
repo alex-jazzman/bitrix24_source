@@ -542,7 +542,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 			];
 
 			$isActive = false;
-			$title = $userHandlerList[$handler]['name'];
+			$title = $userHandlerList[$handler]['name'] ?? '';
 			$title = $this->getFormattedTitle($title);
 
 			$image = $this->getImagePath().'marketplace_default.svg';
@@ -671,8 +671,12 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 					continue;
 				}
 
+				$handlerName = $handlerDescription['NAME'];
+				$handlerName ??= $handlerList['USER'][$userHandler];
+				$handlerName ??= '';
+
 				$userHandlerList[$userHandler] = [
-					'name' => $handlerDescription['NAME'] ?? $handlerList['USER'][$userHandler],
+					'name' => $handlerName,
 				];
 
 				/** @var \Bitrix\Sale\PaySystem\BaseServiceHandler $handlerClass */

@@ -22,6 +22,7 @@
 	const { SkeletonFactory } = require('layout/ui/simple-list/skeleton');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
+	const { Feature } = require('feature');
 
 	SkeletonFactory.alias('Kanban', ListItemType.CRM_ENTITY);
 
@@ -144,13 +145,37 @@
 			}
 
 			const preparedCounters = {};
+			const entitiesToUpdate = new Set();
+
 			for (const counter in counters)
 			{
 				if (counters[counter] >= 0)
 				{
 					preparedCounters[counter] = counters[counter];
 				}
+				else if (counters[counter] === -1)
+				{
+					for (const [id, entityName] of Object.entries(Type.getSupportedEntitiesList()))
+					{
+						if (counter.toLowerCase().includes(entityName.toLowerCase()))
+						{
+							entitiesToUpdate.add(id);
+
+							break;
+						}
+					}
+				}
 			}
+
+			entitiesToUpdate.forEach((entityTypeId) => {
+				const data = {
+					entityTypeId,
+					extras: {},
+					withExcludeUsers: 0,
+				}
+
+				BX.ajax.runAction('crm.counter.list', { data });
+			});
 
 			if (Object.keys(preparedCounters).length > 0)
 			{
@@ -291,6 +316,7 @@
 		{
 			const { activeTabTypeName, tabs } = this.state;
 			const activeTab = this.getActiveTab();
+
 			if (!activeTab && tabs[0])
 			{
 				const { hasRestrictions, title, typeName } = tabs[0];
@@ -324,8 +350,10 @@
 				},
 				TabView({
 					style: {
-						height: 44,
-						backgroundColor: AppTheme.colors.bgNavigation,
+						height: Feature.isAirStyleSupported() ? 50 : 44,
+						backgroundColor: Feature.isAirStyleSupported()
+							? AppTheme.realColors.bgNavigation
+							: AppTheme.colors.bgNavigation,
 					},
 					ref: (ref) => {
 						this.tabViewRef = ref;

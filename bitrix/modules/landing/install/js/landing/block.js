@@ -2873,9 +2873,9 @@
 			}.bind(this), 300);
 		},
 
-		onContentPanelClick: function()
+		onContentPanelClick: function(event)
 		{
-			BX.Event.EventEmitter.emit('BX.Landing.UI.Panel.ContentEdit:onClick');
+			BX.Event.EventEmitter.emit('BX.Landing.UI.Panel.ContentEdit:onClick', { event });
 		},
 
 		createHistoryEntry: function(newState)

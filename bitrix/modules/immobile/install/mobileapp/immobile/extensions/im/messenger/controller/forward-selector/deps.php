@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
-		'apptheme',
 		'loc',
+		'im:lib/theme',
 		'im:messenger/controller/search/experimental',
 		'im:messenger/lib/converter',
 		'im:messenger/lib/logger',

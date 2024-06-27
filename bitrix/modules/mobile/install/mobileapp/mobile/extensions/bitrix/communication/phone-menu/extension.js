@@ -38,7 +38,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 			params: {
 				showActionLoader: false,
 				showCancelButton: true,
-				title: Loc.getMessage('PHONE_CALL_TO', { '#PHONE#': getFormattedNumber(params.number) }),
+				title: Loc.getMessage('PHONE_CALL_TO_MSGVER_1', { '#PHONE#': getFormattedNumber(params.number) }),
 			},
 		});
 
@@ -61,7 +61,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 				},
 			},
 			{
-				title: Loc.getMessage('PHONE_CALL_B24'),
+				title: Loc.getMessage('PHONE_CALL_B24_MSGVER_1'),
 				code: 'callUseTelephony',
 				subtitle: !canUseTelephony && Loc.getMessage('PHONE_CALL_B24_DISABLED'),
 				subtitleType: !canUseTelephony && 'warning',

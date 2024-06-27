@@ -115,7 +115,7 @@ if ($arResult['ERRORS'])
 			</div>
 			<div class="landing-view-loader-text"><?= Loc::getMessage('LANDING_WAIT_WHILE_CREATING');?></div>
 		</div>
-		<script type="text/javascript">
+		<script>
 			BX.ready(function()
 			{
 				setTimeout(function() {
@@ -150,7 +150,7 @@ if ($arResult['ERRORS'])
 			else
 			{
 				?>
-				<script type="text/javascript">
+				<script>
 					BX.ready(function()
 					{
 						if (
@@ -218,7 +218,7 @@ if ($formEditor)
 if ($request->get('close') == 'Y')
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		if (top.window !== window)
 		{
 			top.window.location.reload();
@@ -441,7 +441,7 @@ else
 }
 ?>
 
-<script type="text/javascript">
+<script>
 	var landingParams = <?= \CUtil::phpToJSObject($arParams);?>;
 	var landingSiteType = '<?= $arParams['TYPE'];?>';
 	BX.ready(function()
@@ -505,7 +505,6 @@ if ($request->offsetExists('landing_mode'))
 {
 	if (SITE_TEMPLATE_ID == 'bitrix24')
 	{
-		Manager::getCacheManager()->clean('b_site_template');
 		$component->refresh();
 	}
 	if ($request->get('landing_mode') == 'edit')
@@ -527,7 +526,7 @@ if ($request->offsetExists('landing_mode'))
 			height: 14px!important;
 		}
 	</style>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function()
 		{
 			<?if ($arParams['DRAFT_MODE'] != 'Y'):?>
@@ -541,7 +540,7 @@ if ($request->offsetExists('landing_mode'))
 		});
 	</script>
 	<?php if ($request->get('forceLoad') == 'true'):?>
-		<script type="text/javascript">
+		<script>
 			BX.namespace('BX.Landing');
 			BX.Landing.Block = function(element) {
 				BX.onCustomEvent(window, 'BX.Landing.Block:init', [
@@ -662,7 +661,7 @@ else
 			overflow: hidden;
 		}
 	</style>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function() {
 			window.addEventListener('scroll', (e) => {
 				e.preventDefault();

@@ -4,5 +4,6 @@ export type DetailConfig = {
 	dashboardEmbeddedParams: DashboardEmbeddedParameters,
 	appNodeId: string,
 	openLoginPopup: boolean,
-	isExportEnabled: 'Y' | 'N',
+	canExport: 'Y' | 'N',
+	canEdit: 'Y' | 'N',
 }

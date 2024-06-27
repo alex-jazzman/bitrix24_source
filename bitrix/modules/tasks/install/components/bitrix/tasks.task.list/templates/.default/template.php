@@ -45,8 +45,9 @@ Extension::load([
 	'ui.label',
 	'ui.migrationbar',
 	'ui.tour',
-	'tasks.runtime',
 	'tasks.task-model',
+	'pull.queuemanager',
+	'ui.stepprocessing',
 ]);
 
 /** intranet-settings-support */
@@ -266,6 +267,54 @@ $APPLICATION->IncludeComponent(
 	$component,
 	array('HIDE_ICONS' => 'Y')
 );
+
+$componentName = 'bitrix:tasks.task.list';
+$componentParams = [
+	'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+	'GROUP_ID' => (int)$arParams['GROUP_ID'],
+	'USER_ID' => (int)$arParams['USER_ID'],
+];
+
+//min step 100
+$arResult['EXPORT_EXCEL_PARAMS'] = [
+	'id' => 'EXPORT_EXCEL_PARAMS',
+	'controller' => 'bitrix:tasks.api.export',
+	'queue' => [
+		[
+			'action' => 'dispatcher',
+		],
+	],
+	'params' => [
+		'SITE_ID' => SITE_ID,
+		'EXPORT_TYPE' => 'excel',
+		'EXPORT_AS' => 'EXCEL',
+		'EXPORT_STEP' => '100',
+		'COMPONENT_NAME' => $componentName,
+		'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
+			$componentName,
+			$componentParams
+		),
+	],
+	'optionsFields' => [
+		'EXPORT_ALL_FIELDS' => [
+			'name' => 'COLUMNS',
+			'type' => 'checkbox',
+			'title' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_1'),
+			'value' => 'N'
+		],
+		'REQUISITE_MULTILINE' => [
+			'name' => 'ALL_COLUMNS',
+			'type' => 'checkbox',
+			'title' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_2'),
+			'value' => 'N'
+		],
+	],
+	'messages' => [
+		'DialogTitle' => Loc::getMessage('TASKS_EXCEL_POPUP_TITLE'),
+		'DialogSummary' => Loc::getMessage('TASKS_EXCEL_POPUP_DESCRIPTION'),
+	],
+	'dialogMaxWidth' => 650,
+];
 ?>
 
 <script>
@@ -289,7 +338,7 @@ $APPLICATION->IncludeComponent(
 				TASKS_TASK_CONFIRM_START_TIMER: '<?=GetMessageJS('TASKS_TASK_CONFIRM_START_TIMER')?>',
 				TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>',
 				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TITLE: '<?=GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TITLE')?>',
-				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT: '<?=GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT')?>',
+				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT: '<?= Json::encode(GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT')) ?>',
 				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER: '<?=GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER')?>',
 			});
 
@@ -333,6 +382,11 @@ $APPLICATION->IncludeComponent(
 					'tours' => $arResult['tours'],
 				])
 			?>);
+
+			BX.UI.StepProcessing.ProcessManager
+				.create(<?= \CUtil::PhpToJSObject($arResult['EXPORT_EXCEL_PARAMS']) ?>)
+				.setHandler(BX.UI.StepProcessing.ProcessCallback.RequestStart)
+			;
 		}
 	);
 </script>

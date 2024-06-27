@@ -26,6 +26,7 @@ this.BX = this.BX || {};
 	var _playButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("playButton");
 	var _stopButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stopButton");
 	var _wrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wrapper");
+	var _hasAutoPlayed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasAutoPlayed");
 	var _analyticsCallback = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("analyticsCallback");
 	var _onInitVideoMetadata = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onInitVideoMetadata");
 	var _onTick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onTick");
@@ -129,6 +130,10 @@ this.BX = this.BX || {};
 	    Object.defineProperty(this, _wrapper, {
 	      writable: true,
 	      value: void 0
+	    });
+	    Object.defineProperty(this, _hasAutoPlayed, {
+	      writable: true,
+	      value: false
 	    });
 	    Object.defineProperty(this, _analyticsCallback, {
 	      writable: true,
@@ -258,7 +263,12 @@ this.BX = this.BX || {};
 	  this.stop();
 	}
 	function _onVideoEnded2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _analyticsCallback)[_analyticsCallback]('video_finished', `isMuted_${babelHelpers.classPrivateFieldLooseBase(this, _videoNode)[_videoNode].muted ? 'Y' : 'N'}`);
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _analyticsCallback)[_analyticsCallback] && (!babelHelpers.classPrivateFieldLooseBase(this, _videoNode)[_videoNode].muted || !babelHelpers.classPrivateFieldLooseBase(this, _hasAutoPlayed)[_hasAutoPlayed])) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _analyticsCallback)[_analyticsCallback]('video_finished', `isMuted_${babelHelpers.classPrivateFieldLooseBase(this, _videoNode)[_videoNode].muted ? 'Y' : 'N'}`);
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _hasAutoPlayed)[_hasAutoPlayed]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _hasAutoPlayed)[_hasAutoPlayed] = babelHelpers.classPrivateFieldLooseBase(this, _videoNode)[_videoNode].muted;
+	  }
 	  this.stop();
 	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _progressBar)[_progressBar].getContainer());
 	  this.setMute(true);
@@ -271,13 +281,13 @@ this.BX = this.BX || {};
 	}
 	function _onPause2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _scaleTo)[_scaleTo](1);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _analyticsCallback)[_analyticsCallback]) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _analyticsCallback)[_analyticsCallback] && (!babelHelpers.classPrivateFieldLooseBase(this, _videoNode)[_videoNode].muted || !babelHelpers.classPrivateFieldLooseBase(this, _hasAutoPlayed)[_hasAutoPlayed])) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _analyticsCallback)[_analyticsCallback]('on-pause');
 	  }
 	}
 	function _onPlay2() {
 	  babelHelpers.classPrivateFieldLooseBase(this, _scaleTo)[_scaleTo](babelHelpers.classPrivateFieldLooseBase(this, _scale)[_scale]);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _analyticsCallback)[_analyticsCallback]) {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _analyticsCallback)[_analyticsCallback] && (!babelHelpers.classPrivateFieldLooseBase(this, _videoNode)[_videoNode].muted || !babelHelpers.classPrivateFieldLooseBase(this, _hasAutoPlayed)[_hasAutoPlayed])) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _analyticsCallback)[_analyticsCallback]('on-play');
 	  }
 	}
@@ -957,15 +967,20 @@ this.BX = this.BX || {};
 	  return moreLink;
 	}
 	function _getButton2(config) {
+	  const buttonTag = config.target ? ui_buttons.ButtonTag.BUTTON : ui_buttons.ButtonTag.LINK;
 	  const button = new ui_buttons.Button({
 	    round: true,
 	    text: config.text,
 	    size: ui_buttons.Button.Size.EXTRA_SMALL,
 	    color: ui_buttons.Button.Color.SUCCESS,
 	    noCaps: true,
-	    link: config.url,
+	    tag: buttonTag,
+	    link: config.target ? null : config.url,
 	    onclick: () => {
 	      var _this$options;
+	      if (config.target) {
+	        window.open(config.url, config.target);
+	      }
 	      if ((_this$options = this.options) != null && _this$options.analyticsCallback) {
 	        this.options.analyticsCallback('click-button', config.url);
 	      }

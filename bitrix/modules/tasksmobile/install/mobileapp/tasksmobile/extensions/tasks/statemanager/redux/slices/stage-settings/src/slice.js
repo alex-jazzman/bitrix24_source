@@ -4,10 +4,7 @@
 jn.define('tasks/statemanager/redux/slices/stage-settings/src/slice', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 	const { createSlice } = require('statemanager/redux/toolkit');
-	const {
-		sliceName,
-		adapter,
-	} = require('tasks/statemanager/redux/slices/stage-settings/meta');
+	const { sliceName, initialState } = require('tasks/statemanager/redux/slices/stage-settings/meta');
 
 	const {
 		fetchStagesPending,
@@ -48,11 +45,9 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/src/slice', (require, 
 		};
 	}
 
-	const initialState = adapter.getInitialState();
-	const filledState = adapter.upsertMany(initialState, []);
 	const slice = createSlice({
 		name: sliceName,
-		initialState: filledState,
+		initialState,
 		reducers: {},
 		extraReducers: getExtraReducers(),
 	});

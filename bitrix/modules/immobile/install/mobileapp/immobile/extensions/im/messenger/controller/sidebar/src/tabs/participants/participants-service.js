@@ -2,7 +2,6 @@
  * @module im/messenger/controller/sidebar/tabs/participants/participants-service
  */
 jn.define('im/messenger/controller/sidebar/tabs/participants/participants-service', (require, exports, module) => {
-	/* global PageManager */
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');

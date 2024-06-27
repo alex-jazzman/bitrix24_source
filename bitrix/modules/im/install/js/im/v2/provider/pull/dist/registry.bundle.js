@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
-(function (exports,main_core_events,im_v2_lib_uuid,im_v2_provider_service,im_public,im_v2_lib_copilot,im_v2_lib_writing,ui_vue3_vuex,im_v2_lib_counter,im_v2_lib_utils,im_v2_model,im_v2_lib_user,ui_reactionsSelect,im_v2_lib_desktopApi,im_v2_const,im_v2_lib_notifier,im_v2_lib_desktop,im_v2_lib_call,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_logger,main_core,im_v2_application_core) {
+(function (exports,main_core_events,im_v2_lib_uuid,im_v2_provider_service,im_public,im_v2_lib_copilot,im_v2_lib_writing,ui_vue3_vuex,im_v2_lib_counter,im_v2_lib_utils,im_v2_model,im_v2_lib_channel,im_v2_lib_user,ui_reactionsSelect,im_v2_lib_desktopApi,im_v2_const,im_v2_lib_notifier,im_v2_lib_desktop,im_v2_lib_call,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_logger,main_core,im_v2_application_core) {
 	'use strict';
 
 	var _store = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("store");
@@ -875,6 +875,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  [im_v2_const.ChatType.copilot]: 'recent/setCopilot',
 	  [im_v2_const.ChatType.channel]: 'recent/setChannel',
 	  [im_v2_const.ChatType.openChannel]: 'recent/setChannel',
+	  [im_v2_const.ChatType.generalChannel]: 'recent/setChannel',
 	  default: 'recent/setRecent'
 	};
 	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
@@ -916,7 +917,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    return this.getChatType() === im_v2_const.ChatType.comment;
 	  }
 	  isChannelChat() {
-	    return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(this.getChatType());
+	    return im_v2_lib_channel.ChannelManager.channelTypes.has(this.getChatType());
 	  }
 	  isUserInChat() {
 	    const chatUsers = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].userInChat[this.getChatId()];
@@ -1902,5 +1903,5 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	exports.LinesPullHandler = LinesPullHandler;
 	exports.OnlinePullHandler = OnlinePullHandler;
 
-}((this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Lib,BX.Ui,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application));
+}((this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}),BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Vuex,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Ui,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application));
 //# sourceMappingURL=registry.bundle.js.map

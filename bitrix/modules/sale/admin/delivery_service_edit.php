@@ -909,7 +909,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 \Bitrix\Sale\Internals\Input\Manager::initJs();
 
 ?>
-<script language="JavaScript">
+<script>
 	BX.message({
 		SALE_DSE_GROUP_NAME: '<?=Loc::getMessage("SALE_DSE_GROUP_NAME")?>',
 		SALE_DSE_GROUP_CREATE: '<?=Loc::getMessage("SALE_DSE_GROUP_CREATE")?>',
@@ -1096,7 +1096,7 @@ $tabControl->BeginNextTab();
 					'DESCRIPTION',
 					$fields["DESCRIPTION"] ?? '',
 					'hndl_dscr');?>
-				<script language="JavaScript">BX.Sale.Delivery.setLHEClass('bxlhe_frame_hndl_dscr'); </script>
+				<script>BX.Sale.Delivery.setLHEClass('bxlhe_frame_hndl_dscr'); </script>
 			</td>
 		</tr>
 	<?endif;?>
@@ -1216,7 +1216,7 @@ $tabControl->BeginNextTab();
 				<?foreach($configSection["ITEMS"] as $name => $params):?>
 					<?if($params["TYPE"] == "DELIVERY_SECTION"):?>
 						<tr class="heading">
-							<td colspan="2"><?=$params["NAME"]?></td>
+							<td colspan="2"><?= htmlspecialcharsbx($params["NAME"]); ?></td>
 						</tr>
 					<?elseif(isset($params['HIDDEN']) && $params['HIDDEN'] == true):?>
 						<?$hiddensConfigHtml .= \Bitrix\Sale\Internals\Input\Manager::getEditHtml("CONFIG[".$sectionKey."][".$name."]", $params)?>

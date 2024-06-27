@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Context;
+use Bitrix\Main\Grid\Panel\Snippet;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
@@ -184,46 +185,44 @@ function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
  * @return string
  * @throws \Bitrix\Main\LoaderException
  */
-function getGroupRestoreAction($restoreDisablingOptions)
+function getGroupRestoreAction(array $restoreDisablingOptions = [], bool $useDeletionManager = false): string
 {
-	if (!Loader::includeModule('bitrix24'))
+	$action = 'BX.Recyclebin.List.restoreBatch(' . $useDeletionManager . ');';
+
+	if (
+		!Loader::includeModule('bitrix24')
+		|| Feature::isFeatureEnabled('recyclebin')
+	)
 	{
-		return "BX.Recyclebin.List.restoreBatch();";
+		return $action;
 	}
 
-	if (!Feature::isFeatureEnabled('recyclebin'))
+	if ($restoreDisablingOptions['EXISTS'])
 	{
-		if ($restoreDisablingOptions['EXISTS'])
+		if ($restoreDisablingOptions['IS_ON'])
 		{
-			if ($restoreDisablingOptions['IS_ON'])
-			{
-				return "BX.UI.InfoHelper.show('{$restoreDisablingOptions['SLIDER_CODE']}', {isLimit: true, limitAnalyticsLabels: {module: 'recyclebin', source: '{$restoreDisablingOptions['MODULE']}'}});";
-			}
-			return "BX.Recyclebin.List.restoreBatch();";
+			$code = $restoreDisablingOptions['SLIDER_CODE'];
+			$source = $restoreDisablingOptions['MODULE'];
+			$params = "{isLimit: true, limitAnalyticsLabels: {module: 'recyclebin', source: '{$source}'}}";
+
+			return "BX.UI.InfoHelper.show('{$code}', {$params});";
 		}
 
-		return getLicensePopupShowAction();
+		return $action;
 	}
 
-	return "BX.Recyclebin.List.restoreBatch();";
+	return getLicensePopupShowAction();
 }
 
-/**
- * @return string
- */
-function getGroupRemoveAction()
+function getGroupRemoveAction($useDeletionManager = false): string
 {
-	return "BX.Recyclebin.List.removeBatch();";
+	return 'BX.Recyclebin.List.removeBatch(' . $useDeletionManager . ');';
 }
 
-/**
- * @param $restoreDisablingOptions
- * @return array
- * @throws \Bitrix\Main\LoaderException
- */
-function prepareGroupActions($restoreDisablingOptions)
+function prepareGroupActions($restoreDisablingOptions, $arResult = [])
 {
 	$iconLock = ($restoreDisablingOptions['IS_ON'] ? ' ui-btn-icon-lock' : '');
+	$useDeletionManager = (bool)($arResult['USE_FOR_ALL_CHECKBOX'] ?? false);
 
 	$items = [];
 	$items[] = [
@@ -234,7 +233,7 @@ function prepareGroupActions($restoreDisablingOptions)
 		"ONCHANGE" => [
 			[
 				"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-				"DATA"   => [['JS' => getGroupRestoreAction($restoreDisablingOptions)]],
+				"DATA"   => [['JS' => getGroupRestoreAction($restoreDisablingOptions, $useDeletionManager)]],
 			],
 		],
 	];
@@ -248,10 +247,16 @@ function prepareGroupActions($restoreDisablingOptions)
 			"ONCHANGE" => [
 				[
 					"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					"DATA"   => [['JS' => getGroupRemoveAction()]],
+					"DATA"   => [['JS' => getGroupRemoveAction($useDeletionManager)]],
 				],
 			],
 		];
+	}
+
+	if ($useDeletionManager)
+	{
+		$snippet = new Snippet();
+		$items[] = $snippet->getForAllCheckbox();
 	}
 
 	return [
@@ -298,4 +303,4 @@ if (!empty($arResult['GRID']['DATA']))
 		];
 	}
 }
-$arResult['GROUP_ACTIONS'] = prepareGroupActions($restoreDisablingOptions);
+$arResult['GROUP_ACTIONS'] = prepareGroupActions($restoreDisablingOptions, $arResult);

@@ -9,7 +9,7 @@ use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 
-UI\Extension::load(["ui.tooltip", "ui.fonts.opensans"]);
+UI\Extension::load(["ui.tooltip", "ui.fonts.opensans", 'crm.autorun']);
 
 /**
  * Bitrix vars
@@ -23,9 +23,6 @@ UI\Extension::load(["ui.tooltip", "ui.fonts.opensans"]);
 
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/themes/.default/crm-entity-show.css");
-Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
-
 
 if(SITE_TEMPLATE_ID === 'bitrix24')
 {
@@ -217,7 +214,12 @@ foreach($arResult['ITEMS'] as &$item)
 		}
 	endif;
 
-	$subject = isset($item['~SUBJECT']) ? $item['~SUBJECT'] : '';
+	$subject = ($item['~SUBJECT'] ?? '');
+	if ($subject === '' && $provider)
+	{
+		$subject = $provider::getActivityTitle($item);
+	}
+
 	if($subject !== '')
 	{
 		$typeTitle = "{$typeTitle}. {$subject}";
@@ -225,7 +227,13 @@ foreach($arResult['ITEMS'] as &$item)
 
 	$typeTitle = htmlspecialcharsbx($typeTitle);
 
-	$subjectHtml = '<div title="'.$typeTitle.'" class="crm-activity-info '.$typeClassName.'"><a alt="'.$typeTitle.'" class="crm-activity-subject" href="#" onclick="'.htmlspecialcharsbx($openViewJS).' return false;">'.(isset($item['SUBJECT']) ? $item['SUBJECT'] : '').'</a>';
+	$filteredSubject = ($item['SUBJECT'] ?? '');
+	if ($filteredSubject === '' && $provider)
+	{
+		$filteredSubject = $provider::getActivityTitle($item);
+	}
+
+	$subjectHtml = '<div title="'.$typeTitle.'" class="crm-activity-info '.$typeClassName.'"><a alt="'.$typeTitle.'" class="crm-activity-subject" href="#" onclick="'.htmlspecialcharsbx($openViewJS).' return false;">' . $filteredSubject . '</a>';
 
 	$priority = isset($item['~PRIORITY']) ? intval($item['~PRIORITY']) : CCrmActivityPriority::None;
 	if($priority === CCrmActivityPriority::High)
@@ -757,7 +765,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{
@@ -773,7 +781,7 @@ $APPLICATION->IncludeComponent(
 </script><?
 
 if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -801,7 +809,7 @@ if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
 	</script>
 <?endif;
 if($arResult['NEED_FOR_BUILD_TIMELINE']):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -836,7 +844,7 @@ if ($arResult['SHOW_MISMATCH_NOTIFY']):?>
 <?endif;
 
 if(!$useQuickFilter):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{
@@ -907,7 +915,7 @@ if(!$useQuickFilter):
 	);
 </script><?
 else:
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{
@@ -1000,7 +1008,7 @@ endif;
 $openViewItemId = isset($arResult['OPEN_VIEW_ITEM_ID']) ? $arResult['OPEN_VIEW_ITEM_ID'] : 0;
 $openEditItemId = isset($arResult['OPEN_EDIT_ITEM_ID']) ? $arResult['OPEN_EDIT_ITEM_ID'] : 0;
 if($openViewItemId > 0):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{
@@ -1013,7 +1021,7 @@ if($openViewItemId > 0):
 	);
 </script><?
 elseif($openEditItemId > 0):
-	?><script type="text/javascript">
+	?><script>
 		BX.ready(
 			function()
 			{

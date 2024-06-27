@@ -11,5 +11,6 @@ return [
 		'confirm',
 		'./src/confirm-closing',
 		'./src/confirm-destructive',
+		'./src/confirm-default',
 	],
 ];

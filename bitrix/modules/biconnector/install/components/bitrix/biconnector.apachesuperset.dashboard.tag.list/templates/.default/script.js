@@ -195,12 +195,13 @@
 	      id: tagId
 	    }
 	  }).then(function () {
-	    _this3.getGrid().removeRow(tagId);
+	    _this3.getGrid().removeRow(tagId, null, null, function () {
+	      _classPrivateMethodGet(_this3, _sendDeleteEventMessage, _sendDeleteEventMessage2).call(_this3, tagId);
+	    });
 	    var msg = main_core.Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_TAG_LIST_DELETE_SUCCESS');
 	    ui_notification.UI.Notification.Center.notify({
 	      content: msg
 	    });
-	    _classPrivateMethodGet(_this3, _sendDeleteEventMessage, _sendDeleteEventMessage2).call(_this3, tagId);
 	  })["catch"](function (response) {
 	    if (response.errors) {
 	      _classPrivateMethodGet(_this3, _notifyErrors, _notifyErrors2).call(_this3, response.errors);

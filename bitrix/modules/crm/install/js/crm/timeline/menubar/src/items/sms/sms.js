@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 import { Editor, FilledPlaceholder } from 'crm.template.editor';
-import { Dom, Loc, Tag, Text, Type } from 'main.core';
+import { ajax as Ajax, Dom, Loc, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import WithEditor from './../witheditor';
 
@@ -12,13 +12,14 @@ export default class Sms extends WithEditor
 	placeholders: string[];
 	filledPlaceholders: FilledPlaceholder[];
 
+	isFetchedConfig: boolean = false;
+
+	/**
+	 * @override
+	 * */
 	createLayout(): HTMLElement
 	{
-		const canSend = this.getSetting('canSendMessage', false);
-
-		return Tag.render`<div class="crm-entity-stream-content-new-detail --focus --hidden">
-			${canSend ? this.#renderEditor() : this.#renderSetupText()}
-		</div>`;
+		return Tag.render`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-sms --skeleton --hidden"></div>`;
 	}
 
 	#renderEditor(): HTMLElement
@@ -1513,7 +1514,7 @@ export default class Sms extends WithEditor
 				data: {
 					placeholderId: id,
 					fieldName: Type.isStringFilled(value) ? value : null,
-					entityType: Type.isStringFilled(value) ? entityType : null,
+					entityType: Type.isStringFilled(entityType) ? entityType : null,
 					fieldValue:  Type.isStringFilled(text) ? text : null,
 					...this.getCommonPlaceholderData(),
 				},
@@ -1543,14 +1544,46 @@ export default class Sms extends WithEditor
 		}
 	}
 
+	/**
+	 * @override
+	 * */
 	activate()
 	{
 		super.activate();
 
-		if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates)
+		// fetch config
+		if (this.isFetchedConfig || !this.getEntityId())
 		{
-			this.onTemplateSelectClick();
+			return;
 		}
+
+		this.isFetchedConfig = false;
+
+		Ajax.runAction(
+			'crm.api.timeline.sms.getConfig',
+			{ json: { entityTypeId: this.getEntityTypeId(), entityId: this.getEntityId() } },
+		)
+			.then(({ data }) => {
+				this.isFetchedConfig = true;
+				this.setSettings(data);
+
+				setTimeout(() => {
+					const canSend = this.getSetting('canSendMessage', false);
+
+					this.setContainer(Tag.render`
+						<div class="crm-entity-stream-content-new-detail --focus">
+							${canSend ? this.#renderEditor() : this.#renderSetupText()}
+						</div>
+					`);
+
+					if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates)
+					{
+						this.onTemplateSelectClick();
+					}
+				}, 50);
+			})
+			.catch(() => this.showNotify(Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR')))
+		;
 	}
 
 	static create(id, settings)

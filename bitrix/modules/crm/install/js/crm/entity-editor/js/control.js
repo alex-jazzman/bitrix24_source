@@ -513,6 +513,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === 'undefined')
 				IS_USED_INVENTORY_MANAGEMENT: this._model.getField('IS_USED_INVENTORY_MANAGEMENT', false),
 				SALES_ORDERS_RIGHTS: this._model.getField('SALES_ORDERS_RIGHTS', {}),
 				IS_INVENTORY_MANAGEMENT_RESTRICTED: this._model.getField('IS_INVENTORY_MANAGEMENT_RESTRICTED', false),
+				IS_1C_PLAN_RESTRICTED: this._model.getField('IS_1C_PLAN_RESTRICTED', false),
 				OWNER_TYPE_ID: ownerTypeId,
 				OWNER_ID: this._model.getField('ID') ? parseInt(this._model.getField('ID')) : 0,
 				CONTEXT: this.getModel().getOwnerInfo().ownerType.toLowerCase(),
@@ -524,7 +525,10 @@ if(typeof BX.Crm.EntityEditorMoneyPay === 'undefined')
 				PARENT_CONTEXT: this,
 				PHRASES: this._schemeElement.getDataObjectParam('paymentDocumentsPhrases', {}),
 				IS_WITH_ORDERS_MODE: this._schemeElement.getDataBooleanParam('isWithOrdersMode', false),
+				IS_ONEC_MODE: this._schemeElement.getDataBooleanParam('isOnecMode', false),
 				SHOULD_SHOW_CASHBOX_CHECKS: this._schemeElement.getDataBooleanParam('shouldShowCashboxChecks', false),
+				IS_PHONE_CONFIRMED: this._schemeElement.getDataBooleanParam('isPhoneConfirmed', true),
+				CONNECTED_SITE_ID: this._schemeElement.getDataBooleanParam('connectedSiteId', true),
 			};
 			this._paymentDocumentsControl = new BX.Crm.EntityEditorPaymentDocuments(paymentDocumentsOptions);
 			this._paymentDocumentsControl.setVisible(this._isPaymentDocumentsVisible);

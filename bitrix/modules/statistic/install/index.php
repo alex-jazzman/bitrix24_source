@@ -75,6 +75,7 @@ Class statistic extends CModule
 
 		RegisterModuleDependences("main", "OnPageStart", "statistic", "CStopList", "Check", "100");
 		RegisterModuleDependences("main", "OnBeforeProlog", "statistic", "CStatistics", "Keep", "100");
+		RegisterModuleDependences("main", "OnAfterEpilog", "statistic", "CStatistics", "Keep", "100");
 		RegisterModuleDependences("main", "OnEpilog", "statistic", "CStatistics", "Set404", "100");
 		RegisterModuleDependences("main", "OnBeforeProlog", "statistic", "CStatistics", "StartBuffer", "1000");
 		RegisterModuleDependences("main", "OnEndBufferContent", "statistic", "CStatistics", "EndBuffer", "900");
@@ -204,6 +205,7 @@ Class statistic extends CModule
 
 		UnRegisterModuleDependences("main", "OnPageStart", "statistic", "CStopList", "Check");
 		UnRegisterModuleDependences("main", "OnBeforeProlog", "statistic", "CStatistics", "Keep");
+		UnRegisterModuleDependences("main", "OnAfterEpilog", "statistic", "CStatistics", "Keep");
 		UnRegisterModuleDependences("main", "OnEpilog", "statistic", "CStatistics", "Set404");
 		UnRegisterModuleDependences("main", "OnEventLogGetAuditTypes", "statistic", "CStatistics", "GetAuditTypes");
 		UnRegisterModuleDependences("main", "OnBeforeProlog", "statistic", "CStatistics", "StartBuffer");
@@ -228,7 +230,7 @@ Class statistic extends CModule
 	{
 		global $DB;
 		$sIn = "'STATISTIC_DAILY_REPORT', 'STATISTIC_ACTIVITY_EXCEEDING'";
-		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		$ar = $rs->Fetch();
 		if($ar["C"] <= 0)
 		{
@@ -241,8 +243,8 @@ Class statistic extends CModule
 	{
 		global $DB;
 		$sIn = "'STATISTIC_DAILY_REPORT', 'STATISTIC_ACTIVITY_EXCEEDING'";
-		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
-		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME IN (".$sIn.") ");
+		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		return true;
 	}
 

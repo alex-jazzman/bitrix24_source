@@ -1,6 +1,7 @@
-<?
+<?php
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Web\Json;
 
 if(
 	isset($_SERVER["REQUEST_METHOD"]) && $_SERVER["REQUEST_METHOD"] == "POST"
@@ -52,7 +53,7 @@ if(
 			"TYPE" => "OK",
 		));
 		?>
-		<script type="text/javascript">
+		<script>
 			CloseWaitWindow();
 			EndClearCache();
 		</script>
@@ -231,7 +232,7 @@ if(
 		?>
 		<script>
 			CloseWaitWindow();
-			DoNext(<?echo CUtil::PhpToJSObject(mb_substr($file, mb_strlen($_SERVER["DOCUMENT_ROOT"])))?>);
+			DoNext(<?= Json::encode(mb_substr($file, mb_strlen($_SERVER["DOCUMENT_ROOT"]))) ?>);
 		</script>
 		<?
 	}
@@ -349,7 +350,7 @@ if($okMessage <> '')
 	echo CAdminMessage::ShowNote($okMessage);
 ?>
 
-<script language="JavaScript">
+<script>
 var stop;
 var last_path;
 var cache_types_cnt = 0;
@@ -546,7 +547,7 @@ $tabControl->Begin();
 		<input type="radio" class="cache-types" name="cachetype" id="cachetype6" value="landing"<?if($cachetype=="landing")echo " checked"?>> <label for="cachetype6"><?echo GetMessage("MAIN_OPTION_CLEAR_CACHE_LANDING")?></label><br>
 		<?endif;?>
 		<br>
-		<script type="text/javascript">
+		<script>
 			cache_types_cnt = document.getElementsByClassName('cache-types').length;
 		</script>
 	</td>

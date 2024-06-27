@@ -15,6 +15,7 @@ return [
 		'im.v2.lib.utils',
 		'im.v2.lib.permission',
 		'im.v2.lib.confirm',
+		'im.v2.lib.channel',
 		'im.public',
 		'main.popup',
 		'main.core.events',

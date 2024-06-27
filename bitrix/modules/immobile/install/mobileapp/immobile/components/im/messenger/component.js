@@ -82,11 +82,11 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { Promotion } = require('im/messenger/lib/promotion');
 	const { PushHandler } = require('im/messenger/provider/push');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
-	const { SidebarController } = require('im/messenger/controller/sidebar/sidebar-controller');
+	const { ChatSidebarController, ChannelSidebarController, CommentSidebarController } = require('im/messenger/controller/sidebar');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
-	const { SyncFillerChat } = require('im/messenger/provider/service');
+	const { SyncFillerChat, ComponentCodeService } = require('im/messenger/provider/service');
 	/* endregion import */
 
 	class Messenger extends MessengerBase
@@ -179,7 +179,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					ui: dialogList,
 				}),
 			});
-			await this.recent.init();
+
+			await this.recent.init().catch((error) => {
+				Logger.error('Recent.init error: ', error);
+			});
 
 			this.searchSelector = new RecentSelector(dialogList);
 
@@ -196,7 +199,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 		 */
 		bindMethods()
 		{
-			this.onApplicationSetStatus = this.applicationSetStatusHandler.bind(this);
+			super.bindMethods();
 			this.openDialog = this.openDialog.bind(this);
 			this.openSidebar = this.openSidebar.bind(this);
 			this.openLine = this.openLine.bind(this);
@@ -205,6 +208,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			this.openChatSearch = this.openChatSearch.bind(this);
 			this.closeChatSearch = this.closeChatSearch.bind(this);
 			this.openChatCreate = this.openChatCreate.bind(this);
+			this.openChannelCreate = this.openChannelCreate.bind(this);
 			this.openNotifications = this.openNotifications.bind(this);
 			this.refresh = this.refresh.bind(this);
 			this.destroyDialog = this.destroyDialog.bind(this);
@@ -252,6 +256,7 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch);
 			BX.addCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
+			BX.addCustomEvent(EventType.messenger.createChannel, this.openChannelCreate);
 			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications);
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
 			BX.addCustomEvent(EventType.messenger.destroyDialog, this.destroyDialog);
@@ -353,7 +358,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 					break;
 
 				default:
-					headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
+					// headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
+					headerTitle = MessengerParams.getMessengerTitle();
 					useProgress = false;
 					break;
 			}
@@ -578,10 +584,11 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		/* region event handlers */
 
-		openDialog(options = {})
+		async openDialog(options = {})
 		{
-			Logger.info('EventType.messenger.openDialog', options);
+			Logger.info(`${this.constructor.name}.openDialog`, options);
 			const openDialogOptions = options;
+
 			if (openDialogOptions.dialogId)
 			{
 				openDialogOptions.dialogId = openDialogOptions.dialogId.toString();
@@ -605,21 +612,78 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				openDialogOptions.dialogId = String(dialogId);
 			}
 
-			PageManager.getNavigator().makeTabActive();
-			this.visibilityManager.checkIsDialogVisible(openDialogOptions.dialogId)
-				.then((isVisible) => {
-					if (isVisible)
-					{
-						return;
-					}
+			let componentCode = ComponentCode.imMessenger;
+			const checkComponentCode = openDialogOptions.checkComponentCode ?? true;
 
-					this.dialog = new Dialog();
-					this.dialog.open(openDialogOptions);
-				})
-				.catch((error) => {
-					Logger.error(error);
-				})
-			;
+			if (checkComponentCode)
+			{
+				const componentCodeService = new ComponentCodeService();
+				try
+				{
+					componentCode = await componentCodeService.getCodeByDialogId(openDialogOptions.dialogId);
+				}
+				catch (error)
+				{
+					Logger.error(`${this.constructor.name}.openDialog: get component code error`, error);
+					componentCode = ComponentCode.imMessenger;
+				}
+				Logger.info(`${this.constructor.name}.openDialog: open in component`, componentCode);
+			}
+
+			if (componentCode === ComponentCode.imMessenger)
+			{
+				PageManager.getNavigator().makeTabActive();
+				if (options.changeMessengerTab)
+				{
+					MessengerEmitter.emit(EventType.navigation.changeTab, componentCode, ComponentCode.imNavigation);
+				}
+
+				this.visibilityManager.checkIsDialogVisible(openDialogOptions.dialogId)
+					.then((isVisible) => {
+						if (isVisible)
+						{
+							return;
+						}
+
+						this.dialog = new Dialog();
+						this.dialog.open(openDialogOptions);
+					})
+					.catch((error) => {
+						Logger.error(error);
+					})
+				;
+
+				return;
+			}
+
+			if (options.changeMessengerTab)
+			{
+				MessengerEmitter.emit(
+					EventType.navigation.broadCastEventWithTabChange,
+					{
+						broadCastEvent: EventType.messenger.openDialog,
+						toTab: componentCode,
+						data: {
+							...options,
+							checkComponentCode: false,
+							changeMessengerTab: false,
+						},
+					},
+					ComponentCode.imNavigation,
+				);
+
+				return;
+			}
+
+			MessengerEmitter.emit(
+				EventType.messenger.openDialog,
+				{
+					...options,
+					checkComponentCode: false,
+					changeMessengerTab: false,
+				},
+				componentCode,
+			);
 		}
 
 		/**
@@ -638,12 +702,24 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 				return;
 			}
 
-			if ([DialogType.comment, DialogType.channel, DialogType.openChannel].includes(dialogModel.type))
+			if (DialogType.comment === dialogModel.type)
 			{
+				this.sidebar = new CommentSidebarController(params);
+				this.sidebar.open();
+
 				return;
 			}
 
-			this.sidebar = new SidebarController(params);
+			if ([DialogType.channel, DialogType.openChannel, DialogType.generalChannel].includes(dialogModel.type)
+				&& dialogModel?.role !== UserRole.guest)
+			{
+				this.sidebar = new ChannelSidebarController(params);
+				this.sidebar.open();
+
+				return;
+			}
+
+			this.sidebar = new ChatSidebarController(params);
 			this.sidebar.open();
 		}
 
@@ -696,6 +772,17 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 			}
 
 			this.chatCreator.open();
+		}
+
+		openChannelCreate()
+		{
+			Logger.log('EventType.messenger.openChannelCreate');
+			if (this.dialogCreator !== null)
+			{
+				this.dialogCreator.createChannelDialog();
+
+				return;
+			}
 		}
 
 		onNotificationOpen()
@@ -914,4 +1001,6 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	}
 
 	window.messenger = new Messenger();
-})();
+})().catch((error) => {
+	console.error('Messenger init error', error);
+});

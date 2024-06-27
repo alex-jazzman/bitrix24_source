@@ -1,5 +1,6 @@
 import { SendingService } from 'im.v2.provider.service';
 import { BaseMessage } from 'im.v2.component.message.base';
+import { AvatarSize, MessageAvatar } from 'im.v2.component.elements';
 
 import './css/copilot-creation-message.css';
 
@@ -8,7 +9,7 @@ import type { ImModelMessage, ImModelCopilotPrompt, ImModelCopilotRole } from 'i
 // @vue/component
 export const ChatCopilotCreationMessage = {
 	name: 'ChatCopilotCreationMessage',
-	components: { BaseMessage },
+	components: { BaseMessage, MessageAvatar },
 	props: {
 		item: {
 			type: Object,
@@ -21,6 +22,7 @@ export const ChatCopilotCreationMessage = {
 	},
 	computed:
 	{
+		AvatarSize: () => AvatarSize,
 		message(): ImModelMessage
 		{
 			return this.item;
@@ -33,7 +35,7 @@ export const ChatCopilotCreationMessage = {
 			;
 
 			return this.loc(phrase, {
-				'#COPILOT_ROLE_NAME#': this.role.name,
+				'#COPILOT_ROLE_NAME#': this.roleName,
 			});
 		},
 		promptList(): ImModelCopilotPrompt[]
@@ -43,10 +45,6 @@ export const ChatCopilotCreationMessage = {
 		role(): ImModelCopilotRole
 		{
 			return this.$store.getters['copilot/messages/getRole'](this.message.id);
-		},
-		roleAvatar(): string
-		{
-			return this.role.avatar.medium;
 		},
 		roleName(): string
 		{
@@ -89,9 +87,11 @@ export const ChatCopilotCreationMessage = {
 		>
 			<div class="bx-im-message-copilot-creation__container">
 				<div class="bx-im-message-copilot-creation__header">
-					<div class="bx-im-message-copilot-creation__avatar">
-						<img :src="roleAvatar" :alt="roleName"/>
-					</div>
+					<MessageAvatar 
+						:messageId="message.id"
+						:authorId="message.authorId"
+						:size="AvatarSize.XXL"
+					/>
 					<div class="bx-im-message-copilot-creation__info">
 						<div class="bx-im-message-copilot-creation__title" :title="preparedTitle">
 							{{ preparedTitle }}

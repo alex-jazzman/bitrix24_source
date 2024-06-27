@@ -5,8 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true){
 }
 
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\MenuIdResolver;
+use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\Operation\AutostartSettings;
+use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
 
 /**
  * Bitrix vars
@@ -85,6 +88,11 @@ if (!$arResult['READ_ONLY'])
 
 CJSCore::Init($jsLibraries);
 
+$categoryId =  (isset($arResult['EXTRAS']['CATEGORY_ID']) && (int)$arResult['EXTRAS']['CATEGORY_ID'] >= 0)
+	? (int)$arResult['EXTRAS']['CATEGORY_ID']
+	: null
+;
+
 if (
 	AIManager::isAiCallProcessingEnabled()
 	&& in_array((int)($arResult['ENTITY_TYPE_ID'] ?? 0), AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
@@ -94,6 +102,18 @@ if (
 		->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
 		->build()
 	;
+
+	$autostartSettings = AutostartSettings::get($arResult['ENTITY_TYPE_ID'], $categoryId);
+	if (
+		$autostartSettings->isAutostartTranscriptionOnlyOnFirstCallWithRecording()
+		|| !$autostartSettings->shouldAutostart(TranscribeCallRecording::TYPE_ID)
+	)
+	{
+		echo (\Bitrix\Crm\Tour\CopilotInCallAutomatically::getInstance())
+			->setEntityTypeId($arResult['ENTITY_TYPE_ID'])
+			->build()
+		;
+	}
 }
 
 $guid = $arResult['GUID'];
@@ -122,17 +142,12 @@ if (!empty($arResult['ERRORS']))
 		<div id="<?=htmlspecialcharsbx($editorContainerID)?>" class="crm-entity-stream-section crm-entity-stream-section-new">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new"></div>
 			<div class="crm-entity-stream-section-content">
-				<?
+				<?php
 				$mode = true;
-				if ($arParams['ENTITY_CONFIG_SCOPE'] !== Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL)
+				if ($arParams['ENTITY_CONFIG_SCOPE'] !== EntityEditorConfigScope::PERSONAL)
 				{
 					$mode = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
 				}
-
-				$categoryId =  (isset($arResult['EXTRAS']['CATEGORY_ID']) && (int)$arResult['EXTRAS']['CATEGORY_ID'] >= 0)
-					? (int)$arResult['EXTRAS']['CATEGORY_ID']
-					: null
-				;
 
 				$menuId = MenuIdResolver::getMenuId($arResult['ENTITY_TYPE_ID'], $arResult['USER_ID'], $categoryId);
 				$APPLICATION->IncludeComponent(
@@ -145,6 +160,7 @@ if (!empty($arResult['ERRORS']))
 						'ENTITY_TYPE_ID' => $arResult['ENTITY_TYPE_ID'],
 						'ENTITY_ID' => $arResult['ENTITY_ID'],
 						'ENTITY_CATEGORY_ID' => $categoryId,
+						'ENTITY_CONFIG_SCOPE' => $arParams['ENTITY_CONFIG_SCOPE'] ?? EntityEditorConfigScope::UNDEFINED,
 						'READ_ONLY' => $arResult['READ_ONLY'] ?? false,
 					]
 				);
@@ -188,7 +204,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	<?
 	if (\Bitrix\Main\Loader::includeModule('intranet'))
 	{
@@ -454,6 +470,8 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					readOnly: <?=$arResult['READ_ONLY'] ? 'true' : 'false'?>,
 					currentUser: <?=\Bitrix\Main\Web\Json::encode($arResult['LAYOUT_CURRENT_USER'])?>,
 					pingSettings: <?=\Bitrix\Main\Web\Json::encode($arResult['PING_SETTINGS'])?>,
+					calendarSettings: <?=\Bitrix\Main\Web\Json::encode($arResult['CALENDAR_SETTINGS'] ?? [])?>,
+					colorSettings: <?=\Bitrix\Main\Web\Json::encode($arResult['COLOR_SETTINGS'] ?? [])?>,
 					pullTagName: "<?=CUtil::JSEscape($arResult['PULL_TAG_NAME'])?>",
 					progressSemantics: "<?=CUtil::JSEscape($arResult['PROGRESS_SEMANTICS'])?>",
 					containerId: "<?=CUtil::JSEscape($listContainerID)?>",

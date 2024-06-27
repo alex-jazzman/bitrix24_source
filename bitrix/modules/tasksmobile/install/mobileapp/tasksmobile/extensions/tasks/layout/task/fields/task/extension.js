@@ -4,6 +4,7 @@
 jn.define('tasks/layout/task/fields/tasks', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
+	const { Icon } = require('assets/icons');
 
 	class TaskField extends EntitySelectorFieldClass
 	{
@@ -11,6 +12,7 @@ jn.define('tasks/layout/task/fields/tasks', (require, exports, module) => {
 		constructor(props)
 		{
 			super(props);
+			this.state.showAll = false;
 		}
 
 		getConfig()
@@ -22,6 +24,42 @@ jn.define('tasks/layout/task/fields/tasks', (require, exports, module) => {
 				selectorType: (config.selectorType === '' ? 'task' : config.selectorType),
 				canOpenEntity: BX.prop.getBoolean(config, 'canOpenEntity', true),
 			};
+		}
+
+		getCurrentTaskId()
+		{
+			return BX.prop.getInteger(this.getConfig(), 'currentTaskId', null);
+		}
+
+		getUserid()
+		{
+			return BX.prop.getInteger(this.getConfig(), 'userId', null);
+		}
+
+		getGroupId()
+		{
+			return BX.prop.getInteger(this.getConfig(), 'groupId', null);
+		}
+
+		getGroup()
+		{
+			return BX.prop.getObject(this.getConfig(), 'group', null);
+		}
+
+		getPreparedGroupData()
+		{
+			const group = this.getGroup();
+			if (group)
+			{
+				return {
+					id: group.id,
+					name: group.title,
+					image: group.imageUrl,
+					additionalData: {},
+				};
+			}
+
+			return null;
 		}
 
 		renderEntity(task = {}, showPadding = false)
@@ -88,9 +126,71 @@ jn.define('tasks/layout/task/fields/tasks', (require, exports, module) => {
 				},
 			};
 		}
+
+		getDisplayedValue()
+		{
+			if (this.isEmpty() || (this.isMultiple() && this.state.entityList.length > 1))
+			{
+				return this.getTitleText();
+			}
+
+			return this.state.entityList[0].title;
+		}
+
+		getLeftIcon()
+		{
+			return {
+				icon: 'task',
+			};
+		}
+
+		getUIMenuItems()
+		{
+			return [
+				{
+					id: 'selectSubtask',
+					testId: 'selectSubtask',
+					title: BX.message('TASKS_FIELDS_TASK_MENU_SELECT_BUTTON_TEXT'),
+					iconName: Icon.TASK_LIST.getIconName(),
+					onItemSelected: () => {
+						super.openSelector();
+					},
+				},
+				{
+					id: 'createSubtask',
+					testId: 'createSubtask',
+					title: BX.message('TASKS_FIELDS_TASK_MENU_CREATE_BUTTON_TEXT'),
+					iconName: Icon.PLUS.getIconName(),
+					onItemSelected: () => {
+						this.openTaskCreateForm();
+					},
+				},
+			];
+		}
+
+		openSelector(forceSelectorType = false, target = null)
+		{
+			const menuItems = this.getUIMenuItems();
+			if (menuItems.length > 0)
+			{
+				this.removeFocus()
+					.then(() => {
+						new UI.Menu(menuItems).show({ target: target || this.fieldContainerRef });
+					})
+					.catch((error) => {
+						this.logger.error('Error on remove focus', error);
+					});
+			}
+		}
+
+		openTaskCreateForm()
+		{
+			throw new Error('Method not implemented yet');
+		}
 	}
 
 	module.exports = {
+		TaskFieldClass: TaskField,
 		TaskField: (props) => new TaskField(props),
 	};
 });

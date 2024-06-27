@@ -452,7 +452,7 @@ Class blog extends CModule
 
 		global $DB;
 		$sIn = "'NEW_BLOG_COMMENT', 'NEW_BLOG_COMMENT2COMMENT', 'NEW_BLOG_MESSAGE'";
-		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		$ar = $rs->Fetch();
 		if($ar["C"] <= 0)
 		{

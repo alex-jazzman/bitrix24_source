@@ -973,7 +973,11 @@ class CCrmCompanyDetailsComponent
 					"formattedWithCurrency" => "FORMATTED_REVENUE_WITH_CURRENCY"
 				)
 			),
-			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Company, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(
+				\CCrmOwnerType::Company,
+				'COMMENTS',
+				$this->entityID,
+			),
 			array(
 				'name' => 'OPENED',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_OPENED'),
@@ -1030,14 +1034,18 @@ class CCrmCompanyDetailsComponent
 					),
 				)
 			),
-			array(
+			[
 				'name' => 'REQUISITES',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_REQUISITES'),
 				'type' => 'requisite',
 				'editable' => true,
-				'data' => CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite'),
-				'enableAttributes' => false
-			)
+				'data' => CCrmComponentHelper::getFieldInfoData(
+					CCrmOwnerType::Company,
+					'requisite',
+					['IS_EDIT_MODE' => $this->isRequisiteEditMode()]
+				),
+				'enableAttributes' => false,
+			]
 		);
 
 		$category = $this->getCategory();

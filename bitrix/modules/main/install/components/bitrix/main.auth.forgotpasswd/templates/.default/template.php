@@ -95,6 +95,6 @@ if ($arResult['AUTHORIZED'])
 	</form>
 </div>
 
-<script type="text/javascript">
+<script>
 	document.bform.<?= $arResult['FIELDS']['login'];?>.focus();
 </script>

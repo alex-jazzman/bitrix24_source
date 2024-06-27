@@ -21,8 +21,8 @@ if(!$USER->CanDoOperation('view_other_settings') && !$USER->CanDoOperation('edit
 
 if (
 	!isset($_REQUEST["back_url_settings"])
-	|| mb_strpos($_REQUEST["back_url_settings"], '/') !== 0
-	|| mb_strpos($_REQUEST["back_url_settings"], '//') === 0
+	|| !str_starts_with($_REQUEST["back_url_settings"], '/')
+	|| str_starts_with($_REQUEST["back_url_settings"], '//')
 )
 {
 	$_REQUEST["back_url_settings"] = '';
@@ -305,7 +305,7 @@ function renderLable($Option, array $listSite, $siteValue = "")
 	$isChoiceSites = array_key_exists(6, $Option) && $Option[6] == "Y" ? true : false;
 	?>
 	<?if ($isChoiceSites): ?>
-	<script type="text/javascript">
+	<script>
 		function changeSite(el, fieldName)
 		{
 			var tr = jsUtils.FindParentObject(el, "tr");

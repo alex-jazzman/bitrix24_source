@@ -189,7 +189,7 @@ class CatalogProductStoreAmountComponent
 		}
 		else
 		{
-			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.store.enablewizard');
 			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 
 			$this->arResult['GRID'] = $this->getEmptyGridData();

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,ui_entitySelector,im_v2_application_core,im_v2_provider_service,main_popup,im_v2_component_elements,main_core_events,im_public,im_v2_const,im_v2_component_search_chatSearchInput,im_v2_component_search_chatSearch) {
+(function (exports,ui_entitySelector,im_v2_application_core,im_v2_provider_service,im_v2_lib_channel,main_popup,im_v2_component_elements,main_core_events,im_public,im_v2_const,im_v2_component_search_chatSearchInput,im_v2_component_search_chatSearch) {
 	'use strict';
 
 	const searchConfig = Object.freeze({
@@ -47,7 +47,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.dialog.type !== im_v2_const.ChatType.user;
 	    },
 	    isChannel() {
-	      return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(this.dialog.type);
+	      return im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
 	    },
 	    showHistoryOption() {
 	      return this.isChat && !this.isChannel;
@@ -434,5 +434,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.AddToChat = AddToChat;
 	exports.ForwardPopup = ForwardPopup;
 
-}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.UI.EntitySelector,BX.Messenger.v2.Application,BX.Messenger.v2.Provider.Service,BX.Main,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component,BX.Messenger.v2.Component));
+}((this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}),BX.UI.EntitySelector,BX.Messenger.v2.Application,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Component.Elements,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Messenger.v2.Component,BX.Messenger.v2.Component));
 //# sourceMappingURL=registry.bundle.js.map

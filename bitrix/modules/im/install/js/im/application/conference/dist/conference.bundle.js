@@ -1398,10 +1398,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "onCallViewChangeFaceImprove",
 	    value: function onCallViewChangeFaceImprove(event) {
-	      if (typeof BX.desktop === 'undefined') {
+	      if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 	        return;
 	      }
-	      BX.desktop.cameraSmoothingStatus(event.data.faceImproveEnabled);
+	      im_v2_lib_desktopApi.DesktopApi.setCameraSmoothingStatus(event.data.faceImproveEnabled);
 	    }
 	  }, {
 	    key: "onCallViewUserRename",
@@ -2142,7 +2142,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          dialogName: dialogName,
 	          muted: Call.Hardware.isMicrophoneMuted,
 	          cropTop: 72,
-	          cropBottom: 85,
+	          cropBottom: 90,
 	          shareMethod: 'im.disk.record.share'
 	        });
 	      } else if (event.recordState.state === Call.View.RecordState.Stopped) {

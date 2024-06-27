@@ -689,6 +689,12 @@ $arUrlRewrite = array(
 		'ID' => 'bitrix:biconnector.apachesuperset.dashboard.controller',
 		'PATH' => '/bi/dashboard/index.php',
 	),
+	array (
+		'CONDITION' => '#^/bi/settings/permissions/#',
+		'RULE' => '',
+		'ID' => 'bitrix:biconnector.apachesuperset.config.permissions',
+		'PATH' => '/bi/settings/permissions/index.php',
+	),
 	array(
 		"CONDITION" => "#^/marketing/rc/#",
 		"RULE" => "",
@@ -832,6 +838,12 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:crm.router",
 		"PATH" => "/crm/type/index.php",
+	),
+	array(
+		"CONDITION" => "#^/automation/type/#",
+		"RULE" => "",
+		"ID" => "bitrix:crm.router",
+		"PATH" => "/automation/type/index.php",
 	),
 	array(
 		"CONDITION" => "#^/shop/catalog/#",

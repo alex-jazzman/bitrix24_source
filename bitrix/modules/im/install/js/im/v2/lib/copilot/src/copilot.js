@@ -1,11 +1,9 @@
-import { Extension } from 'main.core';
-
-import { ChatType } from 'im.v2.const';
+import { ChatType, MessageComponent } from 'im.v2.const';
 import { Core } from 'im.v2.application.core';
 
 import type { JsonObject } from 'main.core';
 import type { Store } from 'ui.vue3.vuex';
-import type { ImModelUser } from 'im.v2.model';
+import type { ImModelMessage, ImModelUser } from 'im.v2.model';
 
 export class CopilotManager
 {
@@ -117,23 +115,27 @@ export class CopilotManager
 		return this.store.getters['copilot/messages/getRole'](messageId)?.avatar?.medium;
 	}
 
-	isCopilotRolesAvailable(): boolean
-	{
-		const settings = Extension.getSettings('im.v2.lib.copilot');
-
-		return settings.copilotRolesAvailable === 'Y';
-	}
-
 	getNameWithRole({ dialogId, messageId }): string
 	{
 		const user: ImModelUser = this.store.getters['users/get'](dialogId);
 		const roleName = this.store.getters['copilot/messages/getRole'](messageId).name;
 
-		if (!this.isCopilotRolesAvailable())
+		return `${user.name} (${roleName})`;
+	}
+
+	isCopilotMessage(messageId: number): boolean
+	{
+		const message: ImModelMessage = this.store.getters['messages/getById'](messageId);
+		if (!message)
 		{
-			return user.name;
+			return false;
 		}
 
-		return `${user.name} (${roleName})`;
+		if (this.isCopilotBot(message.authorId))
+		{
+			return true;
+		}
+
+		return message.componentId === MessageComponent.copilotCreation;
 	}
 }

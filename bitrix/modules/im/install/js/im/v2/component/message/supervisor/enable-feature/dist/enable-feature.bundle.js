@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_component_elements,im_v2_component_message_supervisor_base,main_core,ui_analytics) {
+(function (exports,im_v2_component_elements,im_v2_component_message_supervisor_base,main_core,im_v2_lib_analytics) {
 	'use strict';
 
 	const EnableFeatures = Object.freeze({
@@ -39,13 +39,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	const onOpenToolsSettings = toolId => {
 	  return () => {
-	    ui_analytics.sendData({
-	      tool: 'InfoHelper',
-	      category: 'chat',
-	      event: 'open_settings',
-	      type: 'tool_off',
-	      c_section: toolId
-	    });
+	    im_v2_lib_analytics.Analytics.getInstance().onOpenToolsSettings(toolId);
 	    BX.SidePanel.Instance.open(`${window.location.origin}/settings/configs/?page=tools`);
 	  };
 	};
@@ -332,5 +326,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.SupervisorEnableFeatureMessage = SupervisorEnableFeatureMessage;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Message,BX,BX.UI.Analytics));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Component.Message,BX,BX.Messenger.v2.Lib));
 //# sourceMappingURL=enable-feature.bundle.js.map

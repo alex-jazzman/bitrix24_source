@@ -15,7 +15,8 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	var _editBtn = /*#__PURE__*/new WeakMap();
 	var _embeddedParams = /*#__PURE__*/new WeakMap();
 	var _embeddedLoader = /*#__PURE__*/new WeakMap();
-	var _isExportEnabled = /*#__PURE__*/new WeakMap();
+	var _canExport = /*#__PURE__*/new WeakMap();
+	var _canEdit = /*#__PURE__*/new WeakMap();
 	var _moreMenu = /*#__PURE__*/new WeakMap();
 	var _subscribeEvents = /*#__PURE__*/new WeakSet();
 	var _initFrame = /*#__PURE__*/new WeakSet();
@@ -65,7 +66,11 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    writable: true,
 	    value: void 0
 	  });
-	  _classPrivateFieldInitSpec(this, _isExportEnabled, {
+	  _classPrivateFieldInitSpec(this, _canExport, {
+	    writable: true,
+	    value: void 0
+	  });
+	  _classPrivateFieldInitSpec(this, _canEdit, {
 	    writable: true,
 	    value: void 0
 	  });
@@ -79,15 +84,13 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    throw new Error(errorMsg);
 	  }
 	  babelHelpers.classPrivateFieldSet(this, _dashboardManager, new biconnector_apacheSupersetDashboardManager.DashboardManager());
-	  babelHelpers.classPrivateFieldSet(this, _isExportEnabled, config.isExportEnabled === 'Y');
+	  babelHelpers.classPrivateFieldSet(this, _canExport, config.canExport === 'Y');
+	  babelHelpers.classPrivateFieldSet(this, _canEdit, config.canEdit === 'Y');
 	  babelHelpers.classPrivateFieldSet(this, _embeddedParams, config.dashboardEmbeddedParams);
 	  babelHelpers.classPrivateFieldSet(this, _frameNode, babelHelpers.classPrivateFieldGet(this, _dashboardNode).querySelector('.dashboard-iframe'));
 	  _classPrivateMethodGet(this, _subscribeEvents, _subscribeEvents2).call(this);
 	  _classPrivateMethodGet(this, _initHeaderButtons, _initHeaderButtons2).call(this);
-	  if (BX.BIConnector.LimitLockPopup) {
-	    _classPrivateMethodGet(this, _disableEditButton, _disableEditButton2).call(this);
-	    main_core.Event.unbindAll(babelHelpers.classPrivateFieldGet(this, _editBtn));
-	  } else {
+	  if (!BX.BIConnector.LimitLockPopup) {
 	    _classPrivateMethodGet(this, _initFrame, _initFrame2).call(this, babelHelpers.classPrivateFieldGet(this, _embeddedParams));
 	  }
 	  if (babelHelpers.classPrivateFieldGet(this, _embeddedParams).sourceDashboard) {
@@ -106,13 +109,15 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	  main_core_events.EventEmitter.subscribe('BiConnector:DashboardSelector.onSelectDataLoaded', function (event) {
 	    babelHelpers.classPrivateFieldSet(_this, _embeddedParams, event.data.credentials);
 	    main_core.Dom.clean(babelHelpers.classPrivateFieldGet(_this, _frameNode));
+	    babelHelpers.classPrivateFieldSet(_this, _canEdit, event.data.credentials.canEdit === 'Y');
+	    babelHelpers.classPrivateFieldSet(_this, _canExport, event.data.credentials.canExport === 'Y');
+	    babelHelpers.classPrivateFieldSet(_this, _embeddedParams, event.data.credentials);
 	    _classPrivateMethodGet(_this, _initFrame, _initFrame2).call(_this, event.data.credentials);
 	    _classPrivateMethodGet(_this, _initHeaderButtons, _initHeaderButtons2).call(_this);
 	  });
 	  main_core_events.EventEmitter.subscribe('BiConnector:LimitPopup.Warning.onClose', function (event) {
 	    _classPrivateMethodGet(_this, _initFrame, _initFrame2).call(_this, babelHelpers.classPrivateFieldGet(_this, _embeddedParams));
 	    _classPrivateMethodGet(_this, _initHeaderButtons, _initHeaderButtons2).call(_this);
-	    _classPrivateMethodGet(_this, _enableEditButton, _enableEditButton2).call(_this);
 	  });
 	}
 	function _initFrame2(embeddedParams) {
@@ -141,11 +146,19 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	}
 	function _initHeaderButtons2() {
 	  _classPrivateMethodGet(this, _initMoreMenu, _initMoreMenu2).call(this);
-	  if (babelHelpers.classPrivateFieldGet(this, _editBtn)) {
+	  babelHelpers.classPrivateFieldSet(this, _editBtn, babelHelpers.classPrivateFieldGet(this, _dashboardNode).querySelector('.dashboard-header-buttons-edit'));
+	  main_core.Event.unbindAll(babelHelpers.classPrivateFieldGet(this, _editBtn));
+	  if (babelHelpers.classPrivateFieldGet(this, _canEdit)) {
+	    _classPrivateMethodGet(this, _enableEditButton, _enableEditButton2).call(this);
+	    main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _editBtn), 'click', _classPrivateMethodGet(this, _onEditButtonClick, _onEditButtonClick2).bind(this));
+	  } else {
+	    _classPrivateMethodGet(this, _disableEditButton, _disableEditButton2).call(this);
 	    main_core.Event.unbindAll(babelHelpers.classPrivateFieldGet(this, _editBtn));
 	  }
-	  babelHelpers.classPrivateFieldSet(this, _editBtn, babelHelpers.classPrivateFieldGet(this, _dashboardNode).querySelector('.dashboard-header-buttons-edit'));
-	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _editBtn), 'click', _classPrivateMethodGet(this, _onEditButtonClick, _onEditButtonClick2).bind(this));
+	  if (BX.BIConnector.LimitLockPopup) {
+	    _classPrivateMethodGet(this, _disableEditButton, _disableEditButton2).call(this);
+	    main_core.Event.unbindAll(babelHelpers.classPrivateFieldGet(this, _editBtn));
+	  }
 	}
 	function _onEditButtonClick2() {
 	  var _babelHelpers$classPr,
@@ -260,7 +273,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    }
 	  }];
 	  var dashboardType = babelHelpers.classPrivateFieldGet(this, _embeddedParams).type.toLowerCase();
-	  if (babelHelpers.classPrivateFieldGet(this, _isExportEnabled) && dashboardType === 'custom') {
+	  if (babelHelpers.classPrivateFieldGet(this, _canExport)) {
 	    result.push({
 	      id: 'export',
 	      text: main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT'),

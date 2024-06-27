@@ -33,6 +33,9 @@
 			this.nativeCall = null;
 			this.chatCounter = 0;
 
+			this.callInviteTime = null;
+			this.callDeclineTimeout = 35000;
+
 			this.callVideoEnabled = false; // for proximity sensor
 
 			this.onCallUserInvitedHandler = this.onCallUserInvited.bind(this);
@@ -55,6 +58,7 @@
 			this.onCallDestroyHandler = this.onCallDestroy.bind(this);
 			this.onCallHangupHandler = this.onCallHangup.bind(this);
 			this.onChildCallFirstStreamHandler = this.onChildCallFirstStream.bind(this);
+			this.onCallTimeoutHandler = this.onCallTimeout.bind(this);
 
 			this.onMicButtonClickHandler = this.onMicButtonClick.bind(this);
 			this.onFloorRequestButtonClickHandler = this.onFloorRequestButtonClick.bind(this);
@@ -247,6 +251,15 @@
 
 						this.currentCall = createResult.call;
 						this.bindCallEvents();
+						if (!this.callView)
+						{
+							if (this.currentCall)
+							{
+								this.currentCall.cancel();
+							}
+							this.clearEverything();
+							return;
+						}
 						callInterface.indicator().setMode('outgoing');
 						device.setIdleTimerDisabled(true);
 						device.setProximitySensorEnabled(true);
@@ -455,6 +468,15 @@
 		{
 			CallUtil.warn('CallController.onIncomingCall', e);
 
+			const newCall = callEngine.calls[e.callId];
+
+			if (!this.canCallBeAnswered(newCall))
+			{
+				return;
+			}
+
+			this.callInviteTime = Date.now();
+
 			if (!CallUtil.isDeviceSupported())
 			{
 				navigator.notification.alert(BX.message('MOBILE_CALL_UNSUPPORTED_VERSION'));
@@ -469,7 +491,6 @@
 				return;
 			}
 
-			const newCall = callEngine.calls[e.callId];
 			this.callWithLegacyMobile = (e.isLegacyMobile === true);
 
 
@@ -699,7 +720,10 @@
 				{
 					return Promise.reject(new Error('ALREADY_FINISHED'));
 				}
-				media.audioPlayer().playSound('call_incoming', 10);
+				if (params.viewStatus == 'incoming') 
+				{
+					media.audioPlayer().playSound('call_incoming', 10);
+				}
 				callInterface.indicator().setMode('incoming');
 				this.bindViewEvents();
 				const userStates = this.currentCall.getUsers();
@@ -864,6 +888,7 @@
 				.on(BX.Call.Event.onLeave, this.onCallLeaveHandler)
 				.on(BX.Call.Event.onDestroy, this.onCallDestroyHandler)
 				.on(BX.Call.Event.onHangup, this.onCallHangupHandler)
+				.on(BX.Call.Event.onPullEventUserInviteTimeout, this.onCallTimeoutHandler)
 			;
 		}
 
@@ -892,6 +917,7 @@
 				.off(BX.Call.Event.onLeave, this.onCallLeaveHandler)
 				.off(BX.Call.Event.onDestroy, this.onCallDestroyHandler)
 				.off(BX.Call.Event.onHangup, this.onCallHangupHandler)
+				.off(BX.Call.Event.onPullEventUserInviteTimeout, this.onCallTimeoutHandler)
 			;
 		}
 
@@ -1297,23 +1323,21 @@
 
 		onDeclineButtonClick()
 		{
-			if (this.currentCall)
-			{
-				this.currentCall.decline();
-			}
-			this.clearEverything();
+			this.declineCall();
 		}
 
-		onToggleSubscriptionRemoteVideo(toggleList) {
-			if (this.currentCall.toggleSubscriptionRemoteVideo) {
+		onToggleSubscriptionRemoteVideo(toggleList) 
+		{
+			if (this.currentCall.toggleSubscriptionRemoteVideo) 
+			{
 				this.currentCall.toggleSubscriptionRemoteVideo(toggleList);
 			}
-
 		}
 
 		onSetCentralUser(userId)
 		{
-			if (this.currentCall.allowVideoFrom) {
+			if (this.currentCall.allowVideoFrom) 
+			{
 				this.currentCall.allowVideoFrom([userId]);
 			}
 			if (this.currentCall.onCentralUserSwitch)
@@ -1492,6 +1516,20 @@
 			// this.createVideoStrategy();
 		}
 
+		onCallTimeout()
+		{
+			this.declineCall();
+		}
+
+		declineCall()
+		{
+			if (this.currentCall)
+			{
+				this.currentCall.decline();
+			}
+			this.clearEverything();
+		}
+
 		onCallJoin(e)
 		{
 			if (e.local)
@@ -1563,7 +1601,7 @@
 			}
 			else
 			{
-				this.onDeclineButtonClick();
+				this.declineCall();
 			}
 
 			// todo: remove if (nativeAction) :)
@@ -1587,6 +1625,18 @@
 		getMaxActiveMicrophonesCount()
 		{
 			return 4;
+		}
+
+		canCallBeAnswered(call)
+		{
+			const isEnoughTimeAfterDecline = (this.callInviteTime + this.callDeclineTimeout) < Date.now();
+			const isSwitchToGroupCall = this.currentCall && !this.currentCall.parentId && call.parentId;
+			if (!this.callInviteTime || isEnoughTimeAfterDecline || isSwitchToGroupCall)
+			{
+				return true;
+			}
+
+			return false;
 		}
 
 		clearEverything()

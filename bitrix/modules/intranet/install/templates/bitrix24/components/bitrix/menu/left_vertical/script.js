@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_buttons,main_core_event,im_v2_lib_desktopApi,main_core,main_popup,main_core_events,ui_dialogs_messagebox) {
+(function (exports,ui_buttons,main_core_event,im_v2_lib_desktopApi,main_core,main_popup,main_core_events,ui_dialogs_messagebox,ui_bannerDispatcher) {
 	'use strict';
 
 	var Options = /*#__PURE__*/function () {
@@ -3457,7 +3457,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showGlobalPreset",
 	    value: function showGlobalPreset() {
-	      this.getDefaultPresetController().show('global');
+	      var _this8 = this;
+	      ui_bannerDispatcher.BannerDispatcher.high.toQueue(function (onDone) {
+	        var presetController = _this8.getDefaultPresetController();
+	        presetController.show('global');
+	        presetController.getPopup().subscribe('onAfterClose', function (event) {
+	          onDone();
+	        });
+	      });
 	    }
 	  }, {
 	    key: "handleShowHiddenClick",
@@ -3513,7 +3520,7 @@ this.BX = this.BX || {};
 	    key: "onGettingSettingMenuItems",
 	    // region Events servicing functions
 	    value: function onGettingSettingMenuItems() {
-	      var _this8 = this;
+	      var _this9 = this;
 	      var topPoint = ItemUserFavorites.getActiveTopMenuItem();
 	      var menuItemWithAddingToFavorites = null;
 	      if (topPoint) {
@@ -3522,7 +3529,7 @@ this.BX = this.BX || {};
 	          menuItemWithAddingToFavorites = {
 	            text: main_core.Loc.getMessage("MENU_ADD_TO_LEFT_MENU"),
 	            onclick: function onclick(event, item) {
-	              _this8.getItemDirector().saveStandardPage(topPoint);
+	              _this9.getItemDirector().saveStandardPage(topPoint);
 	              item.getMenuWindow().destroy();
 	            }
 	          };
@@ -3530,7 +3537,7 @@ this.BX = this.BX || {};
 	          menuItemWithAddingToFavorites = {
 	            text: main_core.Loc.getMessage("MENU_DELETE_FROM_LEFT_MENU"),
 	            onclick: function onclick(event, item) {
-	              _this8.getItemDirector().deleteStandardPage(topPoint);
+	              _this9.getItemDirector().deleteStandardPage(topPoint);
 	              item.getMenuWindow().destroy();
 	            }
 	          };
@@ -3545,23 +3552,23 @@ this.BX = this.BX || {};
 	      var menuItems = [{
 	        text: main_core.Loc.getMessage('SORT_ITEMS'),
 	        onclick: function onclick() {
-	          _this8.getItemsController().switchToEditMode();
+	          _this9.getItemsController().switchToEditMode();
 	        }
 	      }, {
 	        text: this.isCollapsed() ? main_core.Loc.getMessage('MENU_EXPAND') : main_core.Loc.getMessage('MENU_COLLAPSE'),
 	        onclick: function onclick(event, item) {
-	          _this8.toggle();
+	          _this9.toggle();
 	          item.getMenuWindow().destroy();
 	        }
 	      }, menuItemWithAddingToFavorites, {
 	        text: main_core.Loc.getMessage('MENU_ADD_SELF_PAGE'),
 	        onclick: function onclick(event, item) {
-	          _this8.getItemDirector().showAddToSelf(_this8.getSettingsController().getContainer());
+	          _this9.getItemDirector().showAddToSelf(_this9.getSettingsController().getContainer());
 	        }
 	      }, Options.isExtranet ? null : {
 	        text: main_core.Loc.getMessage('MENU_SET_DEFAULT2'),
 	        onclick: function onclick() {
-	          _this8.getDefaultPresetController().show('personal');
+	          _this9.getDefaultPresetController().show('personal');
 	        }
 	      }, Options.isExtranet ? null : {
 	        text: main_core.Loc.getMessage('MENU_SET_DEFAULT'),
@@ -3580,7 +3587,7 @@ this.BX = this.BX || {};
 	            if (Options.isCustomPresetRestricted) {
 	              BX.UI.InfoHelper.show('limit_office_menu_to_all');
 	            } else {
-	              _this8.getCustomPresetController().show();
+	              _this9.getCustomPresetController().show();
 	            }
 	          }
 	        });
@@ -4092,12 +4099,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getStructureForHelper",
 	    value: function getStructureForHelper() {
-	      var _this9 = this;
+	      var _this10 = this;
 	      var items = {
 	        menu: {}
 	      };
 	      ["show", "hide"].forEach(function (state) {
-	        Array.from(_this9.menuContainer.querySelectorAll("[data-status=\"".concat(state, "\"][data-type=\"").concat(ItemSystem.code, "\"]"))).forEach(function (node) {
+	        Array.from(_this10.menuContainer.querySelectorAll("[data-status=\"".concat(state, "\"][data-type=\"").concat(ItemSystem.code, "\"]"))).forEach(function (node) {
 	          items[state] = items[state] || [];
 	          items[state].push(node.getAttribute("data-id"));
 	        });
@@ -4194,23 +4201,23 @@ this.BX = this.BX || {};
 	  return (_item = item) !== null && _item !== void 0 ? _item : null;
 	}
 	function _isLogoMaskNeeded2() {
-	  var _this10 = this;
+	  var _this11 = this;
 	  return this.cache.remember('isLogoMaskNeeded', function () {
-	    var menuHeaderLogo = _this10.menuHeader.querySelector(".logo");
+	    var menuHeaderLogo = _this11.menuHeader.querySelector(".logo");
 	    var result = false;
 	    if (menuHeaderLogo && !menuHeaderLogo.querySelector(".logo-image-container")) {
-	      var widthMeasure = menuHeaderLogo.offsetWidth === 0 ? _this10.header.querySelector(".logo") ? _this10.header.querySelector(".logo").offsetWidth : 0 : menuHeaderLogo.offsetWidth;
+	      var widthMeasure = menuHeaderLogo.offsetWidth === 0 ? _this11.header.querySelector(".logo") ? _this11.header.querySelector(".logo").offsetWidth : 0 : menuHeaderLogo.offsetWidth;
 	      result = widthMeasure > 200;
 	    }
 	    return result;
 	  });
 	}
 	function _adjustAdminPanel2() {
-	  var _this11 = this;
+	  var _this12 = this;
 	  if (!this['menuAdjustAdminPanel']) {
 	    this['menuAdjustAdminPanel'] = function (_ref16) {
 	      var data = _ref16.data;
-	      _this11.menuContainer.style.top = [data, 'px'].join('');
+	      _this12.menuContainer.style.top = [data, 'px'].join('');
 	    };
 	    main_core_events.EventEmitter.subscribe(Utils.adminPanel, Options.eventName('onPanelHasChanged'), this['menuAdjustAdminPanel']);
 	  }
@@ -4219,5 +4226,5 @@ this.BX = this.BX || {};
 
 	exports.Menu = Menu;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX.Messenger.v2.Lib,BX,BX.Main,BX.Event,BX.UI.Dialogs));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX.Messenger.v2.Lib,BX,BX.Main,BX.Event,BX.UI.Dialogs,BX.UI));
 //# sourceMappingURL=script.js.map

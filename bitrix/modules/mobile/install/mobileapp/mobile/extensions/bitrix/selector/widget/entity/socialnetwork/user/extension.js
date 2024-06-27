@@ -33,6 +33,11 @@
 			return true;
 		}
 
+		static getSearchPlaceholderWithCreation()
+		{
+			return Loc.getMessage('SELECTOR_COMPONENT_INVITE_SEARCH_WITH_CREATION');
+		}
+
 		static getCreateText()
 		{
 			return Loc.getMessage('SELECTOR_COMPONENT_INVITE_USER_TAG');
@@ -82,6 +87,13 @@
 			};
 		}
 	}
+
+	/**
+	 * @module selector/widget/entity/socialnetwork/user
+	 */
+	jn.define('selector/widget/entity/socialnetwork/user', (require, exports, module) => {
+		module.exports = { SocialNetworkUserSelector };
+	});
 
 	this.SocialNetworkUserSelector = SocialNetworkUserSelector;
 })();

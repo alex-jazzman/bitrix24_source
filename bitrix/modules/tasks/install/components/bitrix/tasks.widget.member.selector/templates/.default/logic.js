@@ -291,24 +291,35 @@ BX.namespace('Tasks.Component');
 				for (var i = 0; i < targetNodes.length; i++)
 				{
 					var node = targetNodes[i];
-					node.addEventListener('click', function(node) {
+					node.addEventListener('click', function(event) {
 						var userType = this.option('userType');
 						var taskLimitExceeded = this.option('taskLimitExceeded');
 
 						if ((userType === 'accomplice' || userType === 'auditor') && taskLimitExceeded)
 						{
-							BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
-								isLimit: true,
-								limitAnalyticsLabels: {
-									module: 'tasks',
-									source: 'taskEdit',
-									subject: userType
+							BX.Runtime.loadExtension('ui.info-helper').then(({ FeaturePromotersRegistry }) => {
+								if (FeaturePromotersRegistry)
+								{
+									FeaturePromotersRegistry.getPromoter({
+										code: 'limit_tasks_observers_participants',
+										bindElement: event.target,
+									}).show();
+								}
+								else
+								{
+									BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
+										isLimit: true,
+										limitAnalyticsLabels: {
+											module: 'tasks',
+										},
+									});
 								}
 							});
+
 							return;
 						}
 
-						this.getDialog().setTargetNode(node);
+						this.getDialog().setTargetNode(event.target);
 						this.getDialog().show();
 					}.bind(this));
 				}

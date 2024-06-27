@@ -1,5 +1,6 @@
 declare type TaskReduxModel = {
 	id: number,
+	guid?: string,
 	name?: string,
 	description?: string,
 	parsedDescription?: string,
@@ -9,6 +10,7 @@ declare type TaskReduxModel = {
 	commentsCount?: number,
 	serviceCommentsCount?: number,
 	newCommentsCount?: number,
+	resultsCount?: number,
 	parentId?: number,
 
 	status?: number,
@@ -21,15 +23,14 @@ declare type TaskReduxModel = {
 	accomplices?: number[],
 	auditors?: number[],
 
-	// ToDo
-	// relatedTasks?: object,
+	relatedTasks?: number[],
 	// ToDo
 	// subTasks?: object,
 
 	crm?: CrmDTO[],
 	tags?: TagsDTO[],
 	files?: FilesDTO[],
-	uploadedFiles?: string[],
+	uploadedFiles: UploadingFilesDTO[],
 
 	isMuted?: boolean,
 	isPinned?: boolean,
@@ -51,13 +52,24 @@ declare type TaskReduxModel = {
 	endDate?: number,
 
 	checklist?: ChecklistDTO,
+	checklistDetails?: ChecklistDetailsDTO[],
 	counter?: CounterDTO,
 
-	// ToDo
-	actions?: object,
+	// todo: remove this after removing old task card
+	actionsOld?: object;
 
+	canRead?: boolean,
+	canUpdate?: boolean,
 	canUpdateDeadline?: boolean,
+	canUpdateCreator?: boolean,
+	canUpdateResponsible?: boolean,
+	canUpdateAccomplices?: boolean,
 	canDelegate?: boolean,
+	canUpdateMark?: boolean,
+	canUpdateReminder?: boolean,
+	canUpdateElapsedTime?: boolean,
+	canAddChecklist?: boolean,
+	canUpdateChecklist?: boolean,
 	canRemove?: boolean,
 	canUseTimer?: boolean,
 	canStart?: boolean,
@@ -78,6 +90,12 @@ export type ChecklistDTO = {
 	uncompleted: number,
 }
 
+export type ChecklistDetailsDTO = {
+	title: string,
+	completed: number,
+	uncompleted: number,
+};
+
 export type CounterDTO = {
 	counters: {
 		expired: number,
@@ -92,7 +110,7 @@ export type CounterDTO = {
 }
 
 export type CrmDTO = {
-	id: number,
+	id: string,
 	type: string,
 	title: string,
 	subtitle: string,
@@ -106,10 +124,25 @@ export type TagsDTO = {
 
 export type FilesDTO = {
 	id: number,
-	objectId: string,
+	objectId: number,
 	name: string,
 	size: string,
 	url: string,
 	type: string,
 	isImage: boolean,
+}
+
+export type UploadingFilesDTO = {
+	id: string,
+	uuid: string,
+	name: string,
+	url: string,
+	height: number,
+	width: number,
+	previewUrl: string,
+	previewHeight: number,
+	previewWidth: number,
+	type: string,
+	isUploading: boolean,
+	hasError: boolean,
 }

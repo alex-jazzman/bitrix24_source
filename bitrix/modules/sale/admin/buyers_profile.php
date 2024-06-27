@@ -411,14 +411,14 @@ if (isset($_REQUEST['apply']) && isset($_REQUEST['action']) && $saleModulePermis
 						{
 							if ($adminSidePanelHelper->isPublicSidePanel())
 							{
-								echo "<script language=\"JavaScript\">";
+								echo "<script>";
 								echo "top.window.parent.location.href = '/shop/orders/details/0/?USER_ID=".CUtil::JSEscape($ID)."&lang=" . LANGUAGE_ID . "&SITE_ID=".CUtil::JSEscape($LID).CUtil::JSEscape($urlProduct)."';";
 								echo "</script>";
 								exit;
 							}
 							else
 							{
-								echo "<script language=\"JavaScript\">";
+								echo "<script>";
 								echo "window.parent.location.href = '".$selfFolderUrl."sale_order_create.php?USER_ID=".CUtil::JSEscape($ID)."&lang=" . LANGUAGE_ID . "&SITE_ID=".CUtil::JSEscape($LID).CUtil::JSEscape($urlProduct)."';";
 								echo "</script>";
 								exit;
@@ -2500,7 +2500,6 @@ if(!empty($arUser))
 						<tr>
 							<td><?echo GetMessage("BUYER_F_NAME_PRODUCT")?>:</td>
 							<td>
-								<? CUtil::DecodeUriComponent($filter_order_prod_name);?>
 								<input type="text" name="filter_order_prod_name" value="<?=htmlspecialcharsbx($filter_order_prod_name)?>" size="42">
 							</td>
 						</tr>
@@ -2605,7 +2604,6 @@ if(!empty($arUser))
 						<tr>
 							<td><?echo GetMessage("BUYER_F_NAME_PRODUCT")?>:</td>
 							<td>
-								<? CUtil::DecodeUriComponent($filter_order_prod_name);?>
 								<input type="text" name="filter_order_prod_name" value="<?=htmlspecialcharsbx($filter_order_prod_name)?>" size="42">
 							</td>
 						</tr>
@@ -2671,7 +2669,6 @@ if(!empty($arUser))
 					<tr>
 						<td><?=GetMessage('BUYER_BASKET_F_NAME')?>:</td>
 						<td>
-							<? CUtil::DecodeUriComponent($basket_name_product);?>
 							<input type="text" name="basket_name_product" size="48" value="<?=htmlspecialcharsbx($basket_name_product)?>" >
 						</td>
 					</tr>

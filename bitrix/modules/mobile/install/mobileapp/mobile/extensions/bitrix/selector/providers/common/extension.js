@@ -11,7 +11,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 	const { BasePickerCache } = require('selector/utils/picker-cache');
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { Color } = require('selector/providers/common/src/entity-color');
-	const { getColor } = require('layout/ui/user/empty-avatar');
+	const { getColor, getBackgroundColorStyles } = require('layout/ui/user/empty-avatar');
 	const { Loc } = require('loc');
 
 	const specialChars = '!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}';
@@ -68,12 +68,22 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 		getColor(entityId, entityType)
 		{
-			if (entityType === 'user' && this.options.useLettersForEmptyAvatar)
+			if (this.options.useLettersForEmptyAvatar && entityType === 'user')
 			{
 				return getColor(entityId);
 			}
 
 			return Color(entityType);
+		}
+
+		getColorGradient(entityId, entityType)
+		{
+			if (this.options.useLettersForEmptyAvatar && entityType === 'user')
+			{
+				return getBackgroundColorStyles(entityId).backgroundColorGradient;
+			}
+
+			return null;
 		}
 
 		setQuery(value)
@@ -96,6 +106,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 			this.options = options;
 			this.options.useLettersForEmptyAvatar = Boolean(options.useLettersForEmptyAvatar);
+
 			this.cache = new BasePickerCache(this.cacheId());
 		}
 
@@ -146,6 +157,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				context: this.context,
 				preselectedItems: this.preselectedItems,
 				entities: this.getSortedEntities(),
+				recentItemsLimit: this.options.recentItemsLimit,
 			};
 		}
 
@@ -559,6 +571,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 							const item = { ...original };
 
 							item.color = this.getColor(item.id, entityId);
+							item.colorGradient = this.getColorGradient(item.id, entityId);
 
 							if (typeof item.id !== 'undefined')
 							{
@@ -689,12 +702,9 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				sectionCode: 'common',
 				height: 64,
 				color: this.getColor(entity.id, entity.entityId),
+				colorGradient: this.getColorGradient(entity.id, entity.entityId),
 				styles: {
-					title: {
-						font: {
-							size: 16,
-						},
-					},
+					title: {},
 					subtitle: {},
 				},
 				useLetterImage: true,
@@ -706,6 +716,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					id: entity.id,
 					customData: entity.customData || {},
 				},
+				disabled: entity.customData?.isSelectable === false,
 			};
 
 			switch (entity.entityId)
@@ -716,7 +727,9 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					{
 						item.styles.title.font = { color: Color('userExtranet', 'title') };
 						item.color = this.getColor(entity.id, 'userExtranet');
+						item.colorGradient = this.getColorGradient(entity.id, 'userExtranet');
 					}
+
 					item.subtitle = stringify(entity.customData?.position);
 					item.shortTitle = stringify(entity.customData?.name);
 					item.lastName = stringify(entity.customData?.lastName);
@@ -728,19 +741,12 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 				case 'project':
 				{
-					item.subtitle = entity.title;
-					item.title = Loc.getMessage('PROVIDER_COMMON_PROJECT');
+					item.subtitle = Loc.getMessage('PROVIDER_COMMON_PROJECT');
 					item.shortTitle = entity.title;
 					item.name = entity.title;
-					item.styles.title.font = {
-						size: 12,
-						color: AppTheme.colors.base4,
-						fontStyle: 'bold',
-					};
-					item.styles.subtitle.font = {
-						size: 17,
-						color: AppTheme.colors.base1,
-					};
+
+					item.styles.title.font = {};
+					item.styles.subtitle.font = {};
 
 					if (entity.entityType === 'extranet')
 					{
@@ -753,19 +759,12 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 				case 'department':
 				{
-					item.subtitle = entity.title;
+					item.subtitle = Loc.getMessage('PROVIDER_COMMON_DEPARTMENT');
 					item.shortTitle = entity.title;
 					item.name = entity.title;
-					item.title = Loc.getMessage('PROVIDER_COMMON_DEPARTMENT');
-					item.styles.title.font = {
-						size: 12,
-						color: AppTheme.colors.base4,
-						fontStyle: 'bold',
-					};
-					item.styles.subtitle.font = {
-						size: 17,
-						color: AppTheme.colors.base1,
-					};
+
+					item.styles.title.font = {};
+					item.styles.subtitle.font = {};
 
 					break;
 				}

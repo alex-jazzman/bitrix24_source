@@ -12,6 +12,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 	const { pinModel } = require('im/messenger/model/messages/pin');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { validate } = require('im/messenger/model/validators/message');
+	const { MessengerMutationHandlersWaiter } = require('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter');
 
 	const logger = LoggerManager.getInstance().getLogger('model--messages');
 
@@ -20,6 +21,8 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 	const messageState = {
 		id: 0,
 		templateId: '',
+		previousId: 0,
+		nextId: 0,
 		chatId: 0,
 		authorId: 0,
 		date: new Date(),
@@ -75,7 +78,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 			/**
 			 * @function messagesModel/getById
-			 * @return {MessagesModelState}
+			 * @return {MessagesModelState | {}}
 			 */
 			getById: (state, getters, rootState, rootGetters) => (messageId) => {
 				if (!Type.isNumber(messageId) && !Type.isStringFilled(messageId))
@@ -286,25 +289,42 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		},
 		actions: {
 			/** @function messagesModel/forceUpdateByChatId */
-			forceUpdateByChatId: (store, { chatId }) => {
+			forceUpdateByChatId: async (store, { chatId }) => {
+				const moduleName = 'messagesModel';
+				const actionName = 'forceUpdateByChatId';
+
+				const waiter = new MessengerMutationHandlersWaiter(moduleName, actionName);
+				waiter.addMutation('store');
+				waiter.addMutation('setChatCollection');
+				const handlersComplete = waiter.waitComplete();
+
 				const messages = store.getters.getByChatId(chatId);
 
 				store.commit('store', {
-					actionName: 'forceUpdateByChatId',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: messages,
 					},
 				});
+
 				store.commit('setChatCollection', {
-					actionName: 'forceUpdateByChatId',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: messages,
 					},
 				});
+
+				await handlersComplete;
 			},
 
 			/** @function messagesModel/setChatCollection */
-			setChatCollection: (store, { messages, clearCollection }) => {
+			setChatCollection: async (store, { messages, clearCollection }) => {
+				const moduleName = 'messagesModel';
+				const actionName = 'setChatCollection';
+				const waiter = new MessengerMutationHandlersWaiter(moduleName, actionName);
+
 				clearCollection = clearCollection || false;
 				if (!Array.isArray(messages) && Type.isPlainObject(messages))
 				{
@@ -318,8 +338,18 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				const chatId = messages[0]?.chatId;
 				if (chatId && clearCollection)
 				{
+					waiter.addMutation('clearCollection');
+				}
+
+				waiter.addMutation('store');
+				waiter.addMutation('setChatCollection');
+				const handlersComplete = waiter.waitComplete();
+
+				if (chatId && clearCollection)
+				{
 					store.commit('clearCollection', {
-						actionName: 'setChatCollection',
+						actionName,
+						actionUid: waiter.actionUid,
 						data: {
 							chatId,
 						},
@@ -327,17 +357,22 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				store.commit('store', {
-					actionName: 'setChatCollection',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: messages,
 					},
 				});
+
 				store.commit('setChatCollection', {
-					actionName: 'setChatCollection',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: messages,
 					},
 				});
+
+				await handlersComplete;
 			},
 
 			/** @function messagesModel/setFromLocalDatabase */
@@ -401,24 +436,62 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				});
 			},
 
+			/** @function messagesModel/storeToLocalDatabase */
+			storeToLocalDatabase: (store, messages) => {
+				if (!Array.isArray(messages) && Type.isPlainObject(messages))
+				{
+					messages = [messages];
+				}
+
+				messages = messages.map((message) => {
+					return { ...messageState, ...validate(message) };
+				});
+
+				if (messages.length === 0)
+				{
+					return;
+				}
+
+				store.commit('store', {
+					actionName: 'storeToLocalDatabase',
+					data: {
+						messageList: messages,
+					},
+				});
+			},
+
 			/** @function messagesModel/add */
-			add: (store, payload) => {
+			add: async (store, payload) => {
+				const moduleName = 'messagesModel';
+				const actionName = 'add';
+
+				const waiter = new MessengerMutationHandlersWaiter(moduleName, actionName);
+				waiter.addMutation('store');
+				waiter.addMutation('setChatCollection');
+				const handlersComplete = waiter.waitComplete();
+
 				const message = {
 					...messageState,
 					...validate(payload),
 				};
+
 				store.commit('store', {
-					actionName: 'add',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: [message],
 					},
 				});
+
 				store.commit('setChatCollection', {
-					actionName: 'add',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: [message],
 					},
 				});
+
+				await handlersComplete;
 			},
 
 			/** @function messagesModel/addToChatCollection */

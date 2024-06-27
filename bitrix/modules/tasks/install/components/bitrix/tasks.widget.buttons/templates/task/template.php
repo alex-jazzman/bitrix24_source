@@ -21,6 +21,11 @@ Loc::loadMessages(__FILE__);
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
 
+ if ($arParams['SHOW_AHA_START_FLOW_TASK'])
+ {
+	 Extension::load('tasks.clue');
+ }
+
 $helper = $arResult['HELPER'];
 
 $taskId = $arParams["TASK_ID"];

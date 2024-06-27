@@ -21,6 +21,7 @@ return [
 		'im.v2.lib.menu',
 		'im.v2.lib.parser',
 		'im.v2.lib.copilot',
+		'im.v2.lib.channel',
 		'main.core',
 		'main.core.events',
 		'im.v2.const',

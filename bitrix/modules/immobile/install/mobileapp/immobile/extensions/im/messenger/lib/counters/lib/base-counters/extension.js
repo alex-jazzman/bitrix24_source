@@ -95,7 +95,7 @@ jn.define('im/messenger/lib/counters/lib/base-counters', (require, exports, modu
 
 			if (dialogItem.counter && dialogItem.counter > 0)
 			{
-				counter = dialogItem.counter;
+				counter += dialogItem.counter;
 			}
 			else if (recentItem.unread)
 			{

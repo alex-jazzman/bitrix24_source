@@ -179,9 +179,7 @@ class sender extends CModule
 	function GetEventCountByName($eventName)
 	{
 		global $DB;
-		$result = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN ('".$DB->ForSql($eventName)."') ",
-			false,
-			"File: ".__FILE__."<br>Line: ".__LINE__
+		$result = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN ('".$DB->ForSql($eventName)."') "
 		);
 		$array = $result->Fetch();
 		return $array['C'];
@@ -204,8 +202,8 @@ class sender extends CModule
 	{
 		global $DB;
 		$realEscapeName = $DB->ForSql($name);
-		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME IN ('".$realEscapeName."') ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
-		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME IN ('".$realEscapeName."') ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME IN ('".$realEscapeName."') ");
+		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME IN ('".$realEscapeName."') ");
 	}
 	function UnInstallEvents()
 	{

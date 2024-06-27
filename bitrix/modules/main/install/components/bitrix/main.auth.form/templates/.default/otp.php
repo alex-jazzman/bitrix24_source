@@ -104,6 +104,6 @@ $fields = $arResult['FIELDS'];
 	</form>
 </div>
 
-<script type="text/javascript">
+<script>
 	try{document.bform.<?= $fields['otp'];?>.focus();}catch(e){}
 </script>

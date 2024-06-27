@@ -2,6 +2,7 @@
 $MESS["CAT_DOC_AND_MORE"] = "#COUNT# more products.";
 $MESS["CAT_DOC_BARCODE_ALREADY_EXIST"] = "The bar code #BARCODE# created for #PRODUCT# already exists.";
 $MESS["CAT_DOC_CONDUCT_UNCONDUCT_NOT_AVAILABLE"] = "Inventory management has to be enabled to process inventory objects";
+$MESS["CAT_DOC_CONDUCT_UNCONDUCT_NOT_AVAILABLE_EXTERNAL_CATALOG"] = "You cannot process inventory objects when using an external product catalog.";
 $MESS["CAT_DOC_ERROR_CANCEL_STATUS"] = "The transaction is still pending.";
 $MESS["CAT_DOC_ERROR_ELEMENT_IN_DOCUMENT_EXISTS"] = "Product ##ID# (#NAME#) is currently in use by inventory management objects.";
 $MESS["CAT_DOC_ERROR_ELEMENT_IN_DOCUMENT_EXT"] = "Cleared inventory documents contain this item. Please change document status and delete the item.";

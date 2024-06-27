@@ -4,6 +4,7 @@
  */
 jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const {
 		createEntityAdapter,
 		createSlice,
@@ -20,8 +21,7 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 
 	const reducerName = 'crm:stage';
 	const adapter = createEntityAdapter({});
-	const initialState = adapter.getInitialState();
-	const filledState = adapter.upsertMany(initialState, []);
+	const initialState = StateCache.getReducerState(reducerName, adapter.getInitialState());
 
 	const {
 		selectById,
@@ -158,7 +158,7 @@ jn.define('crm/statemanager/redux/slices/stage-settings', (require, exports, mod
 
 	const slice = createSlice({
 		name: reducerName,
-		initialState: filledState,
+		initialState,
 		reducers: {},
 		extraReducers: (builder) => {
 			builder

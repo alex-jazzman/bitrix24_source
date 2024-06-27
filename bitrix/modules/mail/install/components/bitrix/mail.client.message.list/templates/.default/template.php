@@ -113,13 +113,16 @@ $addMailboxMenuItem = array(
 $userMailboxesLimit = $arResult['MAX_ALLOWED_CONNECTED_MAILBOXES'];
 if ($userMailboxesLimit >= 0 && $arResult['USER_OWNED_MAILBOXES_COUNT'] >= $userMailboxesLimit)
 {
-    $addMailboxMenuItem = array(
-        'html' => '<div onclick="BX.UI.InfoHelper.show(\'limit_contact_center_mail_box_number\')">'.
-            '<span class="mail-connect-lock-text">' . Loc::getMessage('MAIL_CLIENT_MAILBOX_ADD') . '</span>' .
-            '<span class="mail-connect-lock-icon"></span>' .
-        '</div>',
-        'className' => 'dummy',
-    );
+	$addMailboxMenuItem = [
+		'html' => '<div id="mail-connect-mailbox-add-lock-item">'.
+			'<span class="mail-connect-lock-text">' . htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_MAILBOX_ADD')) . '</span>' .
+			'<span class="mail-connect-lock-icon"></span>' .
+			'</div>'
+		,
+		'className' => 'dummy',
+		'dataset' => ['isLocked' => true],
+		'onclick' => 'showMailboxLimitSlider()',
+	];
 }
 
 $mailboxMenu[] = array(
@@ -283,7 +286,7 @@ $this->setViewTarget('mail-msg-counter-script');
 
 ?>
 
-<script type="text/javascript">
+<script>
 (function ()
 {
 	var uiManager = BX.Mail.Client.Message.List['<?=\CUtil::jsEscape($component->getComponentId()) ?>'].userInterfaceManager;
@@ -597,7 +600,7 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 <div class="mail-msg-list-actionpanel-container" data-role="mail-msg-list-actionpanel-container"></div>
 <div class="mail-msg-list-grid" data-role="mail-msg-list-grid">
 
-<script type="text/javascript">
+<script>
 	BX.ready(function()
 	{
 		var Mail = BX.Mail.Home;
@@ -721,7 +724,7 @@ $APPLICATION->includeComponent(
 
 </div>
 
-<script type="text/javascript">
+<script>
 	// workaround to prevent page title update after reloading grid in some side panel
 	if(window !== window.top)
 	{
@@ -1002,5 +1005,13 @@ $APPLICATION->includeComponent(
 		);
 		<? endif ?>
 	});
+
+	function showMailboxLimitSlider()
+	{
+		const activeFeaturePromoter = BX.UI.FeaturePromotersRegistry.getPromoter({
+			code: 'limit_contact_center_mail_box_number',
+		});
+		activeFeaturePromoter.show();
+	}
 
 </script>

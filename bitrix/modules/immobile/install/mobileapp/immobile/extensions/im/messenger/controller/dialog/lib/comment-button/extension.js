@@ -5,7 +5,6 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 	const { debounce } = require('utils/function');
 	const { DialogType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { Notification } = require('im/messenger/lib/ui/notification');
 
 	/**
 	 * @class CommentButton
@@ -15,20 +14,20 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 		/**
 		 * @param {DialogView} view
 		 * @param {number} dialogId
+		 * @param {DialogLocator} dialogLocator
 		 */
-		constructor(view, dialogId)
+		constructor(view, dialogId, dialogLocator)
 		{
 			this.view = view;
 			this.dialogId = dialogId;
+			this.dialogLocator = dialogLocator;
 			/** @type {MessengerCoreStore} */
 			this.store = serviceLocator.get('core').getStore();
-			/**  @type {DialoguesModelState} */
-			this.dialog = null;
 
-			this.isShowButton = false;
+			this.isButtonShown = false;
+			this.lastScrolledChatId = 0;
 
 			this.bindViewEventHandlers();
-			this.subscribeViewEvents();
 		}
 
 		bindViewEventHandlers()
@@ -38,56 +37,150 @@ jn.define('im/messenger/controller/dialog/lib/comment-button', (require, exports
 
 		subscribeViewEvents()
 		{
-			if (!this.view.commentsButton)
-			{
-				return;
-			}
-
 			this.view.commentsButton.on('tap', this.onButtonTap);
 		}
 
-		drawButton()
+		get channelComments()
 		{
-			this.dialog ??= this.store.getters['dialoguesModel/getById'](this.dialogId);
-			if (![DialogType.channel, DialogType.openChannel].includes(this.dialog.type))
+			return this.store.getters['commentModel/getChannelCounterCollection'](this.dialog.chatId);
+		}
+
+		get totalChannelCommentsCounter()
+		{
+			let counter = 0;
+			Object.values(this.channelComments).forEach((commentCounter) => {
+				counter += commentCounter;
+			});
+
+			return counter;
+		}
+
+		/**
+		 * @return {?DialoguesModelState}
+		 */
+		get dialog()
+		{
+			return this.store.getters['dialoguesModel/getById'](this.dialogId);
+		}
+
+		get isNeedShowButton()
+		{
+			return this.totalChannelCommentsCounter > 0;
+		}
+
+		init()
+		{
+			if (!this.isButtonAvailable())
 			{
 				return;
 			}
 
-			const unreadComments = this.store.getters['commentModel/getChannelCounters'](this.dialog.chatId);
+			this.subscribeViewEvents();
+
+			if (!this.isNeedShowButton)
+			{
+				return;
+			}
 
 			const commentsButton = this.view.commentsButton;
-			if (!commentsButton)
+
+			commentsButton.setCounter(String(this.totalChannelCommentsCounter));
+			commentsButton.show();
+		}
+
+		redraw()
+		{
+			if (!this.isButtonAvailable())
 			{
 				return;
 			}
 
-			if (unreadComments > 0)
+			const commentsButton = this.view.commentsButton;
+			if (this.isNeedShowButton)
 			{
-				if (!this.isShowButton)
+				if (!this.isButtonShown)
 				{
-					commentsButton.setCounter(String(unreadComments));
+					commentsButton.setCounter(String(this.totalChannelCommentsCounter));
 					commentsButton.show();
-					this.isShowButton = true;
+					this.isButtonShown = true;
 
 					return;
 				}
-
-				commentsButton.setCounter(String(unreadComments));
+				commentsButton.setCounter(String(this.totalChannelCommentsCounter));
 
 				return;
 			}
 
-			if (this.isShowButton)
+			if (this.isButtonShown)
 			{
 				commentsButton.hide();
-				this.isShowButton = false;
+				this.isButtonShown = false;
 			}
+		}
+
+		getNextChatIdToJump()
+		{
+			const commentChatIds = this.getCommentsChatIds();
+			commentChatIds.sort((a, z) => a - z);
+			if (this.lastScrolledChatId === 0)
+			{
+				return commentChatIds[0];
+			}
+
+			const filteredChatIds = commentChatIds.filter((chatId) => chatId > this.lastScrolledChatId);
+			if (filteredChatIds.length === 0)
+			{
+				return commentChatIds[0];
+			}
+
+			return filteredChatIds[0];
+		}
+
+		getCommentsChatIds()
+		{
+			return Object.keys(this.channelComments).map((chatId) => {
+				return Number(chatId);
+			});
+		}
+
+		isButtonAvailable()
+		{
+			if (!this.view.commentsButton)
+			{
+				return false;
+			}
+
+			return [DialogType.channel, DialogType.openChannel, DialogType.generalChannel].includes(this.dialog.type);
 		}
 
 		onButtonTap()
 		{
-			Notification.showComingSoon();
+			const chatIdToJump = this.getNextChatIdToJump();
+			this.lastScrolledChatId = chatIdToJump;
+
+			// TODO do luchih vremen
+			// const commentInfo = this.store.getters['commentModel/getCommentInfoByCommentChatId'](chatIdToJump);
+
+			// const messageIdToJump = commentInfo?.messageId;
+
+			// if (messageIdToJump)
+			// {
+			// 	await this.dialogLocator.get('context-manager').goToMessageContext({
+			// 		dialogId: this.dialogId,
+			// 		messageId: messageIdToJump,
+			// 		withMessageHighlight: true,
+			// 	});
+			//
+			// 	this.localCommentsCounterMap[chatIdToJump] = 0;
+			// 	this.redraw(false);
+			//
+			// 	return;
+			// }
+
+			this.dialogLocator.get('context-manager').goToMessageContextByCommentChatId({
+				commentChatId: chatIdToJump,
+				withMessageHighlight: true,
+			});
 		}
 	}
 

@@ -21,13 +21,19 @@ $arExcelFields = array(
 	"ADD_IN_REPORT",
 	"GROUP_ID"
 );
+$locMap = [
+	'START_DATE_PLAN' => 'START_DATE_PLAN',
+	'END_DATE_PLAN' => 'END_DATE_PLAN',
+];
 ?>
 <meta http-equiv="Content-type" content="text/html;charset=<?echo LANG_CHARSET?>" />
 <table border="1">
 	<thead>
 		<tr>
-			<?php foreach($arExcelFields as $field):?>
-				<th><?php echo GetMessage("TASKS_EXCEL_".$field)?></th>
+			<?php foreach($arExcelFields as $field):
+				$field = $locMap[$field] ?? $field;
+				$header = GetMessage("TASKS_EXCEL_".$field);
+			?><th><?php echo $header?></th>
 			<?php endforeach?>
 		</tr>
 	</thead>

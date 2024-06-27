@@ -4,13 +4,14 @@
 jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
-	const { Indent, Color } = require('tokens');
-	const { useCallback } = require('utils/function');
+	const { Indent } = require('tokens');
 	const { ItemMembers } = require('tasks/layout/checklist/list/src/actions/members');
 	const { ItemAttachments } = require('tasks/layout/checklist/list/src/actions/attachments');
 	const { CheckBoxCounter } = require('tasks/layout/checklist/list/src/checkbox/checkbox-counter');
 	const { ButtonRemove } = require('tasks/layout/checklist/list/src/buttons/button-remove');
 	const { BaseChecklistItem } = require('tasks/layout/checklist/list/src/base-item');
+
+	const LAYOUT_CHECKBOX_WIDTH = 34;
 
 	/**
 	 * @class MainChecklistItem
@@ -21,8 +22,6 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 		{
 			super(props);
 
-			this.handleOnToggleComplete = this.handleOnToggleComplete.bind(this);
-
 			/** @type {CheckBoxCounter} */
 			this.counterRef = null;
 			/** @type {ButtonRemove} */
@@ -31,36 +30,49 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 
 		render()
 		{
-			return this.renderContent([
-				View(
-					{
-						testId: 'checklist_entity_title',
-						style: {
-							flexDirection: 'column',
-						},
-					},
+			return this.renderContent({
+				dividerShift: this.getLeftShift(LAYOUT_CHECKBOX_WIDTH),
+				children: [
 					View(
 						{
+							testId: 'checklist_entity_title',
 							style: {
-								flexDirection: 'row',
-								alignItems: 'flex-start',
-							},
-							onClick: () => {
-								this.textInputFocus();
+								flexDirection: 'column',
 							},
 						},
-						this.renderCheckbox(),
-						this.renderTextField(),
-						new ButtonRemove({
-							ref: (buttonRemoveRef) => {
-								this.buttonRemoveRef = buttonRemoveRef;
+						View(
+							{
+								style: {
+									flexDirection: 'row',
+									alignItems: 'flex-start',
+								},
+								onClick: () => {
+									this.textInputFocus();
+								},
 							},
-							onClick: useCallback(this.handleOnRemove),
-						}),
+							this.renderCheckbox(),
+							this.renderTextField(),
+							this.renderRemoveButton(),
+						),
+						this.renderActions(),
 					),
-					this.renderActions(),
-				),
-			]);
+				],
+			});
+		}
+
+		renderRemoveButton()
+		{
+			if (!this.canRemoveItem())
+			{
+				return null;
+			}
+
+			return new ButtonRemove({
+				ref: (buttonRemoveRef) => {
+					this.buttonRemoveRef = buttonRemoveRef;
+				},
+				onClick: this.handleOnRemove,
+			});
 		}
 
 		/**
@@ -79,15 +91,13 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 		 */
 		renderActions()
 		{
-			const marginLeft = 34 + this.getLeftShift();
-
 			return View(
 				{
 					style: {
 						display: this.isShowActionRow() ? 'flex' : 'none',
-						marginTop: this.isShowActionRow() ? Indent.M : 0,
+						marginTop: this.isShowActionRow() ? Indent.M.toNumber() : 0,
 						flexDirection: 'row',
-						marginLeft,
+						marginLeft: this.getLeftShift(LAYOUT_CHECKBOX_WIDTH),
 					},
 				},
 				this.renderAttachments(),
@@ -119,10 +129,11 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 			const { item, parentWidget, diskConfig, onChangeAttachments } = this.props;
 
 			return new ItemAttachments({
-				ref: useCallback((ref) => {
+				ref: (ref) => {
 					this.attachmentsRef = ref;
-				}),
+				},
 				testId: this.getTestId('file'),
+				readOnly: !item.checkCanUpdate(),
 				item,
 				diskConfig,
 				parentWidget,
@@ -145,7 +156,7 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 		 */
 		renderCheckbox()
 		{
-			const { item } = this.props;
+			const { item, showToastNoRights } = this.props;
 
 			return View(
 				{
@@ -157,62 +168,34 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 					},
 				},
 				new CheckBoxCounter({
-					ref: useCallback((ref) => {
-						this.counterRef = ref;
-					}),
-					onClick: useCallback(this.handleOnToggleComplete),
+					ref: this.#setRef,
+					showToastNoRights,
+					onClick: this.handleOnToggleComplete,
 					checked: item.getIsComplete(),
 					important: item.getIsImportant(),
 					disabled: !item.checkCanToggle(),
-					totalCount: item.getDescendantsCount(),
-					completedCount: item.getCompleteCount(),
-					progressMode: item.getDescendantsCount() > 0,
+					totalCount: item.getTotalCount(),
+					completedCount: item.getCompletedCount(),
 				}),
 			);
 		}
 
 		getTextFieldStyle()
 		{
-			const { item } = this.props;
-
 			return {
-				fontWeight: '400',
-				color: item.getIsComplete() ? Color.base5 : Color.base1,
+				textSize: 2,
+				header: false,
 			};
 		}
 
-		getLeftShift()
-		{
-			const { item } = this.props;
-
-			return item.getDepth() * 18;
-		}
-
-		handleOnToggleComplete()
-		{
+		handleOnToggleComplete = () => {
 			const { item, onToggleComplete } = this.props;
 
 			Haptics.impactLight();
-
 			item.toggleComplete();
-			this.toggleCompleteText();
-
-			if (item.getIsComplete())
-			{
-				this.textInputBlur();
-			}
 
 			onToggleComplete(item);
-		}
-
-		handleOnChangeTitle(title)
-		{
-			const { item } = this.props;
-
-			item.setTitle(title);
-			item.setIsNew(false);
-			this.handleOnChange();
-		}
+		};
 
 		handleOnBlur()
 		{
@@ -258,22 +241,7 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 			const { item } = this.props;
 			item.toggleImportant(!item.getIsImportant());
 
-			return new Promise((resolve) => {
-				this.counterRef.toggleAnimateImportant(item.getIsImportant())
-					.then(() => {
-						this.handleOnChange();
-						resolve();
-					})
-					.catch(console.error);
-			});
-		}
-
-		toggleCompleteText()
-		{
-			if (this.textRef)
-			{
-				this.textRef.reload();
-			}
+			return this.counterRef.toggleAnimateImportant(item.getIsImportant());
 		}
 
 		setMembersToText(members)
@@ -286,7 +254,7 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 			const title = `${startPosition} ${members.join(' ')} ${endPosition}`.trim();
 
 			this.handleOnChangeTitle(title);
-			this.textRef.reload();
+			this.toggleCompleteText();
 		}
 
 		updateProgress(progressParams)
@@ -298,6 +266,10 @@ jn.define('tasks/layout/checklist/list/src/main-item', (require, exports, module
 
 			return this.counterRef.updateProgress(progressParams);
 		}
+
+		#setRef = (ref) => {
+			this.counterRef = ref;
+		};
 	}
 
 	module.exports = { MainChecklistItem };

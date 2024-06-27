@@ -697,3 +697,12 @@
 .salescenter-settings-menu {
 	margin-left: 5px;
 }
+
+.salescenter-paysystem-checkbox-desc {
+	font-size: 12px;
+	font-style: italic;
+}
+
+.salescenter-paysystem-checkbox-input {
+	margin-bottom: 16px !important;
+}

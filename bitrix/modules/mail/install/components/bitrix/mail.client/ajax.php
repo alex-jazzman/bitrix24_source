@@ -586,7 +586,6 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		$rawData = (array) \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPostList()->getRaw('data');
 
 		$decodedData = $rawData;
-		\CUtil::decodeUriComponent($decodedData);
 
 		$hostname = $this->getHostname();
 

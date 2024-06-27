@@ -1,7 +1,6 @@
 /**
  * @module layout/ui/user/avatar-stack
  * */
-
 jn.define('layout/ui/user/avatar-stack', (require, exports, module) => {
 	const { ReduxAvatar } = require('layout/ui/user/avatar');
 
@@ -15,9 +14,13 @@ jn.define('layout/ui/user/avatar-stack', (require, exports, module) => {
 	 * @param {boolean} props.reverse = true
 	 * @param {object} props.styles
 	 */
-
 	class AvatarStack extends LayoutComponent
 	{
+		constructor(props)
+		{
+			super(props);
+		}
+
 		render()
 		{
 			return View(

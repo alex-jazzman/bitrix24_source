@@ -18,6 +18,8 @@ else
 	$cssBundleFile = './dist/call_old.bundle.css';
 }
 
+use Bitrix\Main\Config\Option;
+
 return [
 	'js' => [
 		'./dist/call.bundle.js',
@@ -43,14 +45,25 @@ return [
 		'ui.hint',
 		'voximplant',
 	],
-	'oninit' => function () {
+	'oninit' => function ()
+	{
+		$features = [];
+		$limits = \Bitrix\Im\Limit::getTypesForJs();
+		foreach ($limits as $limit)
+		{
+			$features[$limit['id']] = [
+				'enable' => !$limit['active'],
+				'articleCode' => $limit['articleCode'],
+			];
+		}
+
 		return [
 			'lang_additional' => [
-				'turn_server' => COption::GetOptionString('im', 'turn_server'),
-				'turn_server_firefox' => COption::GetOptionString('im', 'turn_server_firefox'),
-				'turn_server_login' => COption::GetOptionString('im', 'turn_server_login'),
-				'turn_server_password' => COption::GetOptionString('im', 'turn_server_password'),
-				'turn_server_max_users' => \Bitrix\Main\Config\Option::get('im', 'turn_server_max_users'),
+				'turn_server' => Option::get('im', 'turn_server'),
+				'turn_server_firefox' => Option::get('im', 'turn_server_firefox'),
+				'turn_server_login' => Option::get('im', 'turn_server_login'),
+				'turn_server_password' => Option::get('im', 'turn_server_password'),
+				'turn_server_max_users' => Option::get('im', 'turn_server_max_users'),
 				'call_server_enabled' => \Bitrix\Im\Call\Call::isCallServerEnabled() ? 'Y' : 'N',
 				'bitrix_call_server_enabled' => \Bitrix\Im\Call\Call::isBitrixCallEnabled() ? 'Y' : 'N',
 				'call_beta_ios_enabled' => \Bitrix\Im\Call\Call::isIosBetaEnabled() ? 'Y' : 'N',
@@ -58,10 +71,11 @@ return [
 				'voximplant_call_server_enabled' => \Bitrix\Im\Call\Call::isVoximplantCallServerEnabled() ? 'Y' : 'N',
 				'call_server_max_users' => \Bitrix\Im\Call\Call::getMaxCallServerParticipants(),
 				'call_log_service' => \Bitrix\Im\Call\Call::getLogService(),
-				'call_collect_stats' => COption::GetOptionString('im', 'collect_call_stats', 'N'),
+				'call_collect_stats' => Option::get('im', 'collect_call_stats', 'N'),
 				'call_docs_status' => \Bitrix\Im\Integration\Disk\Documents::getDocumentsInCallStatus(),
 				'call_resumes_status' => \Bitrix\Im\Integration\Disk\Documents::getResumesOfCallStatus(),
-				'jitsi_server' => COption::GetOptionString('im', 'jitsi_server'),
+				'jitsi_server' => Option::get('im', 'jitsi_server'),
+				'call_features' => $features,
 			],
 		];
 	},

@@ -497,7 +497,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 			if (
 				empty($searchString)
-				|| mb_strpos(ToLower($menuItem['TEXT']), ToLower($searchString)) !== false
+				|| mb_strpos(mb_strtolower($menuItem['TEXT']), mb_strtolower($searchString)) !== false
 			)
 			{
 				$url = isset($menuItem['PARAMS']) && isset($menuItem['PARAMS']["real_link"]) ?

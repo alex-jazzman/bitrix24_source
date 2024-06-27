@@ -30,6 +30,22 @@ $isIFrame = $arResult['IFRAME'] == 'Y';
 $iFrameType = $arResult['IFRAME_TYPE'];
 $isSideSlider = $iFrameType == 'SIDE_SLIDER';
 
+$isFlowEnabled = \Bitrix\Tasks\Flow\FlowFeature::isOn() && $edit && !$existingTask;
+/** @var \Bitrix\Tasks\Flow\Flow $flow */
+$flow = $arResult['flow'];
+
+if ($flow)
+{
+	$flowName = \Bitrix\Main\Text\HtmlFilter::encode($flow->getName());
+	$flowEfficiency = (int) $arResult['flowEfficiency'] . '%';
+	$flowBtnClass = 'ui-btn-secondary-light';
+}
+else
+{
+	$flowName = Loc::getMessage('TASKS_TIP_TEMPLATE_FLOW_EMPTY_SELECTOR');
+	$flowBtnClass = 'ui-btn-base-light';
+}
+
 if($edit)
 {
 	$template = '.default';
@@ -76,6 +92,7 @@ if($isIFrame)
 
 	// no redirect to list on delete, we will close popup manually
 	$parameters['REDIRECT_TO_LIST_ON_DELETE'] = 'N';
+
 
 	if($isSideSlider)
 	{
@@ -177,12 +194,32 @@ endif?>
 				<div class="tasks-iframe-header">
 					<div class="pagetitle-wrap">
 						<div class="pagetitle-inner-container">
-							<div class="pagetitle-menu" id="pagetitle-menu"><?
-								$APPLICATION->ShowViewContent("pagetitle")
-								?></div>
+							<div class="pagetitle-menu" id="pagetitle-menu">
+								<? $APPLICATION->ShowViewContent("pagetitle") ?>
+							</div>
 							<div class="pagetitle">
 								<span id="pagetitle" class="pagetitle-item">
-									<?$APPLICATION->ShowTitle(false);?>
+									<span class="task-popup-pagetitle-item">
+										<?$APPLICATION->ShowTitle(false);?>
+									</span>
+									<?php if ($isFlowEnabled):
+										$flowBtnUiClass = 'ui-btn ui-btn-round ui-btn-dropdown ui-btn-xs ui-btn-no-caps';
+									?>
+										<button
+											id="tasks-flow-selector"
+											class="tasks-flow__selector <?=$flowBtnClass ?> <?=$flowBtnUiClass ?>"
+											title="<?= \Bitrix\Main\Text\HtmlFilter::encode($flowName) ?>"
+										>
+											<span class="tasks-flow__selector-text">
+												<?= \Bitrix\Main\Text\HtmlFilter::encode($flowName) ?>
+											</span>
+											<?php if ($flow):?>
+												<span class="tasks-flow__selector-efficiency">
+													<?=$flowEfficiency?>
+												</span>
+											<?php endif; ?>
+										</button>
+									<?php endif; ?>
 									<?if($existingTask):?>
 									<span class="task-page-link-btn js-id-copy-page-url" title="<?=Loc::getMessage('TASKS_TIP_TEMPLATE_COPY_CURRENT_URL')?>"></span>
 									<?php $APPLICATION->ShowViewContent("mobileqrpopup")?>
@@ -211,6 +248,7 @@ endif;
 
 if(\Bitrix\Tasks\Util\Restriction::canManageTask())
 {
+
 	$APPLICATION->IncludeComponent(
 		"bitrix:tasks.task",
 		$template,

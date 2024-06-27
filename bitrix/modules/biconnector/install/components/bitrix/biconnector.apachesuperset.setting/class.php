@@ -6,6 +6,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\BIConnector\Superset\SystemDashboardManager;
+use Bitrix\BIConnector\Access\AccessController;
+use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Superset\UI\SettingsPanel\Controller\IconController;
 use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\KeyTable;
@@ -141,6 +143,20 @@ class ApacheSupersetSettingComponent
 			return $result;
 		}
 
+		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_ACCESS))
+		{
+			$result->addError(new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS_MSGVER_1')));
+
+			return $result;
+		}
+
+		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_SETTINGS_ACCESS))
+		{
+			$result->addError(new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS_SETTINGS')));
+
+			return $result;
+		}
+
 		return $result;
 	}
 
@@ -190,8 +206,7 @@ class ApacheSupersetSettingComponent
 		$checkingResult = $this->checkAccess();
 		if (!$checkingResult->isSuccess())
 		{
-			$error = new Error(Loc::getMessage('BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS'));
-			$this->errorCollection->setError($error);
+			$this->errorCollection->add($checkingResult->getErrors());
 
 			return null;
 		}
@@ -296,6 +311,8 @@ class ApacheSupersetSettingComponent
 		{
 			return null;
 		}
+
+		$proxyIntegrator->refreshDomainConnection();
 
 		if ($key)
 		{

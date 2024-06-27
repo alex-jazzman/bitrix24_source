@@ -4,6 +4,7 @@ import { EventEmitter } from 'main.core.events';
 
 import { ChatType, EventType } from 'im.v2.const';
 import { UploadingService } from 'im.v2.provider.service';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import { Height } from '../const/size';
 
@@ -120,7 +121,7 @@ export const DropArea = {
 		{
 			event.preventDefault();
 
-			const isChannelType = [ChatType.channel, ChatType.openChannel].includes(this.dialog.type);
+			const isChannelType = ChannelManager.isChannel(this.dialogId);
 			const uploaderId = await this.getUploadingService().uploadFromDragAndDrop({
 				event,
 				dialogId: this.dialogId,

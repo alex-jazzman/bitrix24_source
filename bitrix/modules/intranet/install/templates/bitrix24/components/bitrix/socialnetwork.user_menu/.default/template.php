@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
@@ -119,6 +120,7 @@ $items = array_merge($items, $profileItem);
 if (
 	is_array($arResult["CanView"])
 	&& $arResult["CanView"]['tasks']
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('tasks')
 )
 {
 	$uri = new Uri($arResult["Urls"]['tasks']);
@@ -157,6 +159,7 @@ if (
 if (
 	is_array($arResult["CanView"])
 	&& $arResult["CanView"]['calendar']
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('calendar')
 )
 {
 	$uri = new Uri($arResult["Urls"]['calendar']);
@@ -247,6 +250,7 @@ if (
 	is_array($arResult['CanView'])
 	&& $arResult['CanView']['tasks']
 	&& checkEffectiveRights($userId)
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('effective')
 )
 {
 	$uri = new Uri($arResult['Urls']['tasks']);
@@ -322,6 +326,7 @@ if (
 	is_array($arResult["CurrentUserPerms"])
 	&& is_array($arResult["CurrentUserPerms"]["Operations"])
 	&& $arResult["CurrentUserPerms"]["Operations"]['viewgroups']
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('workgroups')
 )
 {
 	$uri = new Uri($arResult["Urls"]['groups']);

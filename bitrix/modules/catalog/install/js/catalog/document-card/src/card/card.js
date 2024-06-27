@@ -8,7 +8,7 @@ import ModelFactory from '../model/model-factory';
 import FieldsFactory from '../editor-fields/fields-factory';
 import { MenuManager, Popup } from 'main.popup';
 import ProductListController from '../product-list/controller';
-import { StoreSlider } from 'catalog.store-use';
+import { EnableWizardOpener, AnalyticsContextList } from 'catalog.store-enable-wizard';
 
 class DocumentCard extends BaseCard
 {
@@ -165,9 +165,12 @@ class DocumentCard extends BaseCard
 	{
 		const card = this;
 
-		new StoreSlider().open(
+		new EnableWizardOpener().open(
 			this.masterSliderUrl,
 			{
+				urlParams: {
+					analyticsContextSection: AnalyticsContextList.DOCUMENT_CARD,
+				},
 				data: {
 					openGridOnDone: false,
 				},

@@ -2,7 +2,6 @@
  * @module im/messenger/lib/params
  */
 jn.define('im/messenger/lib/params', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 
 	/**
@@ -42,6 +41,23 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getGeneralChatId()
 		{
 			return Number(this.get('IM_GENERAL_CHAT_ID', 0));
+		}
+
+		/**
+		 * @return {string}
+		 */
+		getMessengerTitle()
+		{
+			return this.get('MESSAGES', { COMPONENT_TITLE: '' }).COMPONENT_TITLE;
+		}
+
+		/**
+		 *
+		 * @return {string || ''}
+		 */
+		getComponentCode()
+		{
+			return this.get('COMPONENT_CODE', '');
 		}
 
 		setGeneralChatId(id)
@@ -87,11 +103,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		hasActiveCloudStorageBucket()
 		{
 			return this.get('HAS_ACTIVE_CLOUD_STORAGE_BUCKET', false);
-		}
-
-		isCopilotAddUsersEnabled()
-		{
-			return this.get('IS_COPILOT_ADD_USERS', false);
 		}
 
 		isCanUseTelephony()

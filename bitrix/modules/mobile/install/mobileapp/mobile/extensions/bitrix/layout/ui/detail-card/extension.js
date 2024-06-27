@@ -17,9 +17,10 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { merge, mergeImmutable, isEqual, clone } = require('utils/object');
 	const { Loc } = require('loc');
+	const { Feature } = require('feature');
 
 	const CACHE_ID = 'DETAIL_CARD';
-	const TAB_HEADER_HEIGHT = 44;
+	const TAB_HEADER_HEIGHT = Feature.isAirStyleSupported() ? 50 : 44;
 	const TOP_TOOLBAR_HEIGHT = 60;
 	const MAIN_TAB = 'main';
 	const MAX_TAB_COUNTER_VALUE = 99;
@@ -574,7 +575,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			return TabView({
 				style: {
 					height: TAB_HEADER_HEIGHT,
-					backgroundColor: AppTheme.colors.bgNavigation,
+					backgroundColor: Feature.isAirStyleSupported()
+						? AppTheme.realColors.bgNavigation
+						: AppTheme.colors.bgNavigation,
 				},
 				params: {
 					styles: {
@@ -812,13 +815,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		{
 			if (this.isFloatingButtonEnabled)
 			{
-				return new FloatingButton({
-					ref: (ref) => {
-						this.floatingButtonRef = ref;
-					},
-					detailCard: this,
-					provider: this.floatingButtonProvider,
-				});
+				return this.createFloatingButton();
 			}
 
 			return null;
@@ -917,6 +914,17 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			}
 
 			console.error('DetailCard::handleActionFailure', args);
+		}
+
+		createFloatingButton()
+		{
+			return new FloatingButton({
+				ref: (ref) => {
+					this.floatingButtonRef = ref;
+				},
+				detailCard: this,
+				provider: this.floatingButtonProvider,
+			});
 		}
 
 		isActionsPanelVisible()
@@ -1920,6 +1928,11 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				this.checkToolbarPanel();
 
 				this.layout.showComponent(this);
+
+				if (this.isFloatingButtonEnabled)
+				{
+					this.createFloatingButton().initNativeButton(this.layout);
+				}
 			});
 
 			return this;

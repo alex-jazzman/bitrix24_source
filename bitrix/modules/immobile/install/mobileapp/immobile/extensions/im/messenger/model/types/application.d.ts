@@ -1,7 +1,7 @@
 import {PayloadData} from "./base";
 import {DialogId} from "../../types/common";
 
-export type MessagesModelState = {
+export type ApplicationModelState = {
 	dialog: {
 		currentId: number,
 		idList: Array<any>,

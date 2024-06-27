@@ -16,6 +16,24 @@ jn.define('im/messenger/db/repository/validators/message', (require, exports, mo
 			result.id = message.id;
 		}
 
+		/**
+		 * field from context creator
+		 * @see MessageContextCreator
+		 */
+		if (Type.isNumber(message.previousId))
+		{
+			result.previousId = message.previousId;
+		}
+
+		/**
+		 * field from context creator
+		 * @see MessageContextCreator
+		 */
+		if (Type.isNumber(message.nextId))
+		{
+			result.nextId = message.nextId;
+		}
+
 		if (!Type.isUndefined(message.chat_id))
 		{
 			// eslint-disable-next-line no-param-reassign

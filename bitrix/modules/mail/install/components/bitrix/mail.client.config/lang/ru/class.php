@@ -44,7 +44,7 @@ $MESS["MAIL_CLIENT_CONFIG_IMAP_DIRS_EMPTY_DEFAULT"] = "не указана";
 $MESS["MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_SAVE"] = "Сохранить";
 $MESS["MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_CANCEL"] = "Отменить";
 
-$MESS["MAIL_CLIENT_CONFIG_SMTP"] = "Настройки для исходящих писем";
+$MESS['MAIL_CLIENT_CONFIG_SMTP_MSGVER_1'] = 'Настройки исходящих писем';
 $MESS["MAIL_CLIENT_CONFIG_SMTP_ACTIVE"] = "Отправлять через внешний SMTP";
 $MESS["MAIL_CLIENT_CONFIG_SMTP_UPLOAD"] = "Сохранять копию на почтовом сервере";
 $MESS["MAIL_CLIENT_CONFIG_SMTP_UPLOAD_HINT"] = "Если в вашем ящике дублируются письма, отправленные через внешний SMTP, попробуйте отключить эту опцию.";
@@ -59,6 +59,8 @@ $MESS["MAIL_CLIENT_CONFIG_SMTP_APP_PASS"] = "Пароль приложения";
 
 $MESS["MAIL_CLIENT_CONFIG_ICAL_OPTIONS"] = "Интеграция с Календарем";
 $MESS["MAIL_CLIENT_CONFIG_ICAL_ACTIVE"] = "Автоматически добавлять событие в календарь";
+$MESS['MAIL_CLIENT_CONFIG_SMTP_LIMIT_MSGVER_1'] = 'Лимит в день';
+$MESS['MAIL_CLIENT_CONFIG_SMTP_USE_LIMIT_MSGVER_1'] = 'Ограничить количество отправленных писем в день';
 
 $MESS["MAIL_CLIENT_CONFIG_ACCESS"] = "Доступ к почтовому ящику";
 $MESS["MAIL_CLIENT_CONFIG_ACCESS_HINT_MSGVER_1"] = "Разрешите другим сотрудникам получать письма из этого ящика и отвечать на них. Добавьте нужных сотрудников и организуйте совместную работу с почтой, например, для отдела продаж или службы поддержки клиентов.";
@@ -107,6 +109,7 @@ $MESS["MAIL_CLIENT_CONFIG_SMTP_PASS_BAD"] = "Пароль не может нач
 $MESS["MAIL_CLIENT_CONFIG_SMTP_PASS_BAD_CARET"] = "Пароль не может начинаться с символа \"^\"";
 $MESS["MAIL_CLIENT_CONFIG_SMTP_PASS_BAD_NULL"] = "Пароль не должен содержать нулевых байтов";
 $MESS["MAIL_CLIENT_CONFIG_SMTP_PASS_SPACE"] = "Пароль начинается или оканчивается пробелом";
+$MESS['MAIL_CLIENT_CONFIG_SMTP_LIMIT_BAD'] = 'Недопустимое значение лимита исходящих писем в день';
 
 $MESS["MAIL_CLIENT_CONFIG_IMAP_OAUTH_ACC_ERROR"] = "Ошибка получения данных почтового ящика";
 
@@ -135,4 +138,13 @@ $MESS["MAIL_MAILBOX_REMOVE_CONFIRM_TEXT"] = "Вы действительно х�
 $MESS["MAIL_MAILBOX_REMOVE_CONFIRM"] = "Отключить почтовый ящик?";
 
 $MESS['MAIL_MAILBOX_SERVICE_NAME_YANDEX'] = 'Яндекс';
-$MESS['MAIL_MAILBOX_SERVICE_NAME_IMAP'] = 'Корпоративная почта';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_IMAP_MSGVER_1'] = 'Корпоративная почта';
+$MESS['MAIL_MAILBOX_SERVICE_SUBTITLE_IMAP'] = 'IMAP + SMTP';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_GMAIL'] = 'Gmail';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_MAILRU'] = 'Mail.ru';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_EXCHANGE'] = 'Exchange';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_OUTLOOK'] = 'Outlook';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_OFFICE365'] = 'Office 365';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_ICLOUD'] = 'iCloud';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_YAHOO'] = 'Yahoo!';
+$MESS['MAIL_MAILBOX_SERVICE_NAME_AOL'] = 'Aol';

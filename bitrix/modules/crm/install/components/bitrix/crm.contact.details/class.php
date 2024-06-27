@@ -915,7 +915,11 @@ class CCrmContactDetailsComponent
 				'type' => 'text',
 				'editable' => true
 			),
-			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Contact, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(
+				\CCrmOwnerType::Contact,
+				'COMMENTS',
+				$this->entityID,
+			),
 			array(
 				'name' => 'ASSIGNED_BY_ID',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_ASSIGNED_BY_ID'),
@@ -1049,14 +1053,18 @@ class CCrmContactDetailsComponent
 					),
 				)
 			),
-			array(
+			[
 				'name' => 'REQUISITES',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_REQUISITES'),
 				'type' => 'requisite',
 				'editable' => true,
-				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite'),
-				'enableAttributes' => false
-			)
+				'data' => \CCrmComponentHelper::getFieldInfoData(
+					CCrmOwnerType::Contact,
+					'requisite',
+					['IS_EDIT_MODE' => $this->isRequisiteEditMode()]
+				),
+				'enableAttributes' => false,
+			]
 		);
 
 		$category = $this->getCategory();

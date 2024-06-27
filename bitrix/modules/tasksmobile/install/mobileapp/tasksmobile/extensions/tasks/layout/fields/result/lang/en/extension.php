@@ -1,0 +1,17 @@
+<?php
+$MESS["TASKS_FIELDS_RESULT_ADD_WIDGET_PLACEHOLDER"] = "Use @ to mention a person, workgroup or department";
+$MESS["TASKS_FIELDS_RESULT_ADD_WIDGET_TITLE"] = "Status summary";
+$MESS["TASKS_FIELDS_RESULT_AIR_ADD_RESULT"] = "Add another status summary";
+$MESS["TASKS_FIELDS_RESULT_AIR_COMPACT_TITLE"] = "Status summaries";
+$MESS["TASKS_FIELDS_RESULT_AIR_COMPACT_TITLE_MULTI"] = "Status summaries: #COUNT#";
+$MESS["TASKS_FIELDS_RESULT_AIR_SHOW_MORE_PLURAL_0"] = "Show #COUNT# more summary";
+$MESS["TASKS_FIELDS_RESULT_AIR_SHOW_MORE_PLURAL_1"] = "Show #COUNT# more summaries";
+$MESS["TASKS_FIELDS_RESULT_AIR_SHOW_MORE_PLURAL_2"] = "Show #COUNT# more summaries";
+$MESS["TASKS_FIELDS_RESULT_AIR_TITLE"] = "Status summary";
+$MESS["TASKS_FIELDS_RESULT_EMPTY_ERROR"] = "Enter task status summary";
+$MESS["TASKS_FIELDS_RESULT_LIST_WIDGET_TITLE"] = "Status summaries";
+$MESS["TASKS_FIELDS_RESULT_MENU_REMOVE"] = "Delete status summary";
+$MESS["TASKS_FIELDS_RESULT_MENU_UPDATE"] = "Edit status summary";
+$MESS["TASKS_FIELDS_RESULT_REMOVE_CONFIRM_TITLE"] = "Delete status summary?";
+$MESS["TASKS_FIELDS_RESULT_VIEW_ACTION_COMPLETE"] = "Complete task";
+$MESS["TASKS_FIELDS_RESULT_VIEW_ANOTHER_RESULTS"] = "Other status summaries";

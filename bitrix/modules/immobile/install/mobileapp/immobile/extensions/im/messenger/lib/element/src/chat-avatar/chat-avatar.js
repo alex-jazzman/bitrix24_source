@@ -57,14 +57,21 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			this.type = dialog.type;
 
-			if (dialog.type === DialogType.channel || dialog.type === DialogType.openChannel)
+			if ([DialogType.generalChannel, DialogType.openChannel, DialogType.channel].includes(dialog.type))
 			{
 				this.isSuperEllipseIcon = true;
 			}
 
 			if (dialog.chatId === MessengerParams.getGeneralChatId())
 			{
-				this.avatar = `${ChatAvatar.getImagePath()}avatar_general.png`;
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_general_chat.png`;
+
+				return;
+			}
+
+			if (dialog.type === DialogType.generalChannel)
+			{
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_general_channel.png`;
 
 				return;
 			}
@@ -78,7 +85,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (dialog.type === DialogType.copilot)
 			{
-				this.avatar = `${ChatAvatar.getImagePath()}avatar_copilot.png`;
+				this.avatar = this.getCopilotRoleAvatar(dialog.dialogId) || `${ChatAvatar.getImagePath()}avatar_copilot_assistant.png`;
 
 				return;
 			}
@@ -162,6 +169,19 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			const user = this.store.getters['usersModel/getById'](userId);
 
 			return !user.bot && !user.network && !user.connector;
+		}
+
+		/**
+		 * @desc get name copilot role
+		 * @param {string} dialogId
+		 * @return {string|null}
+		 * @private
+		 */
+		getCopilotRoleAvatar(dialogId)
+		{
+			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](dialogId);
+
+			return copilotMainRole?.avatar?.small ? encodeURI(copilotMainRole?.avatar?.small) : null;
 		}
 	}
 

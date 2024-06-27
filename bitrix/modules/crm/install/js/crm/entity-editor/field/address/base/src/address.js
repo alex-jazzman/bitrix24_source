@@ -1,7 +1,9 @@
-import {Text, Tag, Dom, Type, Loc} from "main.core";
-import {EventEmitter} from "main.core.events";
-import "./address.css"
-import {MenuManager, PopupManager} from "main.popup";
+/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
+import { Text, Tag, Dom, Type, Loc } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import './address.css';
+import { MenuManager, PopupManager } from 'main.popup';
 
 export class EntityEditorBaseAddressField
 {
@@ -265,35 +267,28 @@ export class EntityEditorBaseAddressField
 		}
 	}
 
-	getDefaultType()
+	getDefaultType(): string | null
 	{
-		let defAddrType = this._defaultAddressType.toString();
-		if (defAddrType > 0
-			&& this._availableTypesIds.indexOf(defAddrType) >= 0
-			&& this._allowedTypeIds.indexOf(parseInt(defAddrType)) >= 0)
+		const defaultAddressTypeId = this._defaultAddressType.toString();
+		if (
+			defaultAddressTypeId > 0
+			&& this._availableTypesIds.includes(defaultAddressTypeId)
+			&& this._allowedTypeIds.includes(Text.toInteger(defaultAddressTypeId))
+		)
 		{
-			return  defAddrType;
+			return defaultAddressTypeId;
 		}
 
-		for (let item of this._typesList)
+		for (const allowedTypeId: number of this._allowedTypeIds)
 		{
-			let value = BX.prop.getString(item, "ID", "");
-			let isDefault = BX.prop.getString(item, "IS_DEFAULT", false);
+			const strAllowedTypeId: string = allowedTypeId.toString();
+			if (this._availableTypesIds.includes(strAllowedTypeId))
+			{
+				const type = this._typesList.find((typeValue: Object): ?Object => {
+					return typeValue.ID === strAllowedTypeId;
+				});
 
-			if (isDefault
-				&& this._availableTypesIds.indexOf(value) >= 0
-				&& this._allowedTypeIds.indexOf(parseInt(value)) >= 0)
-			{
-				return value;
-			}
-		}
-		for (let item of this._typesList)
-		{
-			let value = BX.prop.getString(item, "ID", "");
-			if (this._availableTypesIds.indexOf(value) >= 0
-				&& this._allowedTypeIds.indexOf(parseInt(value)) >= 0)
-			{
-				return value;
+				return type?.ID ?? null;
 			}
 		}
 

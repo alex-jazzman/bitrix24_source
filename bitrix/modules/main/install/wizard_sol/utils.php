@@ -13,7 +13,7 @@ class WizardServices
 				$ffhtaccess = $io->GetFile($fnhtaccess);
 				$ffhtaccessContent = $ffhtaccess->GetContents();
 
-				if (strpos($ffhtaccessContent, "/bitrix/virtual_file_system.php") === false)
+				if (!str_contains($ffhtaccessContent, "/bitrix/virtual_file_system.php"))
 				{
 					$ffhtaccessContent = preg_replace('/RewriteEngine On/is', "RewriteEngine On\r\n\r\n".
 						"RewriteCond %{REQUEST_FILENAME} -f [OR]\r\n".

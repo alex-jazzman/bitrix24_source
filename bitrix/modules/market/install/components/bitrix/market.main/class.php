@@ -37,7 +37,8 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 		$this->prepareResult();
 
 		$marketAction = $this->arResult['ADDITIONAL_MARKET_ACTION'] ?? '';
-		$this->arResult = array_merge($this->arResult, Toolbar::getInfo($marketAction));
+		$searchAction = $this->arResult['ADDITIONAL_SEARCH_ACTION'] ?? '';
+		$this->arResult = array_merge($this->arResult, Toolbar::getInfo($marketAction, $searchAction));
 
 		$this->includeComponentTemplate();
 
@@ -99,6 +100,7 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 		) {
 			$this->arResult['COLLECTIONS'] = $this->prepareCollections($response[Transport::METHOD_GET_COLLECTIONS]['ITEMS']);
 			$this->arResult['ENABLE_NEXT_PAGE'] = $response[Transport::METHOD_GET_COLLECTIONS]['ENABLE_NEXT_PAGE'];
+			$this->arResult['ADDITIONAL_HIT_ACTION'] = $response[Transport::METHOD_GET_COLLECTIONS]['ADDITIONAL_HIT_ACTION'];
 		}
 
 		if (!empty($response[Transport::METHOD_GET_SLIDER])) {
@@ -116,6 +118,7 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 			$this->arResult['SHOW_MARKET_ICON'] = $response[Transport::METHOD_TOTAL_APPS]['SHOW_MARKET_ICON'];
 			$this->arResult['ADDITIONAL_CONTENT'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_CONTENT'] ?? '';
 			$this->arResult['ADDITIONAL_MARKET_ACTION'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_MARKET_ACTION'] ?? '';
+			$this->arResult['ADDITIONAL_SEARCH_ACTION'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_SEARCH_ACTION'] ?? '';
 		}
 	}
 

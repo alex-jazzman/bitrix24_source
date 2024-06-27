@@ -55,6 +55,11 @@ export default class TagFooter extends DefaultFooter
 
 	createItem(): void
 	{
+		if (!this.canCreateTag())
+		{
+			return;
+		}
+
 		const tagSelector = this.getDialog().getTagSelector();
 		if (tagSelector && tagSelector.isLocked())
 		{
@@ -92,5 +97,10 @@ export default class TagFooter extends DefaultFooter
 				finalize();
 			})
 		;
+	}
+
+	canCreateTag(): boolean
+	{
+		return this.options?.canCreateTag ?? false;
 	}
 }

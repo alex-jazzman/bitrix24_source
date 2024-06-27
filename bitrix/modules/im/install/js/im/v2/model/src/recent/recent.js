@@ -2,8 +2,9 @@ import { Type, type JsonObject } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType, Settings, FakeMessagePrefix } from 'im.v2.const';
+import { ChatType, Settings } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
+import { ChannelManager } from 'im.v2.lib.channel';
 import { formatFieldsWithConfig } from 'im.v2.model';
 
 import { recentFieldsConfig } from './format/field-config';
@@ -214,10 +215,9 @@ export class RecentModel extends BuilderModel
 					return Utils.date.getStartOfTheDay();
 				}
 
-				const dialog: ImModelChat = this.#getDialog(currentItem.dialogId);
 				const lastActivity = currentItem.lastActivityDate;
 				const needToUseActivityDate = Type.isDate(lastActivity) && lastActivity > message.date;
-				if (this.#isChannel(dialog) && needToUseActivityDate)
+				if (ChannelManager.isChannel(currentItem.dialogId) && needToUseActivityDate)
 				{
 					return lastActivity;
 				}
@@ -567,11 +567,6 @@ export class RecentModel extends BuilderModel
 		const hasMessage = Utils.text.isUuidV4(message.id) || message.id > 0;
 
 		return hasMessage && Utils.date.isToday(message.date);
-	}
-
-	#isChannel(dialog: ImModelChat): boolean
-	{
-		return [ChatType.channel, ChatType.openChannel].includes(dialog.type);
 	}
 
 	#canDelete(dialogId: string): boolean

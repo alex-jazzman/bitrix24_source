@@ -15,6 +15,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { runAction } = require('im/messenger/lib/rest');
+	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--chat-service');
 
@@ -29,9 +30,14 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 		 */
 		constructor(dialogLocator)
 		{
+			/**
+			 * @type {MessengerCoreStore}
+			 */
 			this.store = serviceLocator.get('core').getStore();
 			this.restManager = new RestManager();
+			/** @type {DialogLocator} */
 			this.dialogLocator = dialogLocator;
+			this.contextCreator = new MessageContextCreator();
 		}
 
 		async loadChatWithMessages(dialogId)
@@ -60,7 +66,6 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 
 			return this.requestChat(RestMethod.imV2ChatLoadInContext, params);
 		}
-
 
 		async loadCommentChatWithMessages(dialogId)
 		{
@@ -107,6 +112,9 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 				// alarm
 				return 0;
 			}
+			const commentInfo = this.store.getters['commentModel/getByMessageId'](postId);
+			const messageModel = this.store.getters['messagesModel/getById'](postId);
+			const currentUserId = serviceLocator.get('core').getUserId();
 
 			this.store.dispatch('commentModel/setComments', {
 				messageId: postId,
@@ -114,6 +122,7 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 				chatId: dialog.chatId,
 				lastUserIds: [],
 				messageCount: dialog.messageCount,
+				isUserSubscribed: commentInfo?.isUserSubscribed ?? Number(messageModel.authorId) === Number(currentUserId),
 			});
 
 			return dialog.dialogId;
@@ -134,14 +143,39 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 
 			logger.log('ChatLoadService.requestChat: response', actionName, params, actionResult);
 
-			const chatId = await this.updateModels(actionResult);
+			await this.updateModels(actionResult);
 
 			if (this.isDialogLoadedMarkNeeded(actionName))
 			{
-				await this.markDialogAsLoaded(dialogId);
+				return this.markDialogAsLoaded(dialogId);
 			}
 
-			return chatId;
+			return true;
+		}
+
+		async getByDialogId(dialogId)
+		{
+			if (!Type.isStringFilled(dialogId))
+			{
+				return Promise.reject(new Error('ChatService: getChatByDialogId: dialogId is not provided'));
+			}
+
+			const params = {
+				dialogId,
+			};
+
+			const actionResult = await runAction(RestMethod.imV2ChatGet, { data: params })
+				.catch((error) => {
+					logger.error('ChatService.getChatByDialogId.catch:', error);
+
+					throw error;
+				})
+			;
+
+			const extractor = new ChatDataExtractor(actionResult);
+			logger.log('ChatService.getChatByDialogId: response', params, actionResult, extractor);
+
+			return extractor.getMainChat();
 		}
 
 		markDialogAsLoaded(dialogId)
@@ -165,21 +199,24 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 		async updateModels(response)
 		{
 			const extractor = new ChatDataExtractor(response);
+			if (this.isCopilotDialog(extractor))
+			{
+				return this.updateModelsCopilot(extractor);
+			}
+
 			const usersPromise = [
 				this.store.dispatch('usersModel/set', extractor.getUsers()),
 				this.store.dispatch('usersModel/addShort', extractor.getAdditionalUsers()),
 			];
 			const dialogList = extractor.getChats();
 
-			if (this.isCopilotDialog(extractor))
-			{
-				this.setRecent(extractor).catch((err) => logger.log('LoadService.updateModels.setRecent error', err));
-			}
-
 			void await this.store.dispatch('dialoguesModel/set', dialogList);
 
 			const dialog = this.store.getters['dialoguesModel/getByChatId'](extractor.getChatId());
-			this.dialogLocator.get('emitter').emit('beforeFirstPageRenderFromServer', [dialog]);
+			if (this.dialogLocator.has('emitter'))
+			{
+				this.dialogLocator.get('emitter').emit('beforeFirstPageRenderFromServer', [dialog]);
+			}
 
 			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
@@ -187,10 +224,13 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			});
 			const commentPromise = this.store.dispatch('commentModel/setComments', extractor.getCommentInfo());
 
+			const messages = await this.contextCreator
+				.createMessageDoublyLinkedListForDialog(extractor.getMainChat(), extractor.getMessages())
+			;
 			const messagesPromise = [
 				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
 				this.store.dispatch('messagesModel/setChatCollection', {
-					messages: extractor.getMessages(),
+					messages,
 					clearCollection: true,
 				}),
 				this.store.dispatch('messagesModel/pinModel/setChatCollection', {
@@ -209,6 +249,62 @@ jn.define('im/messenger/provider/service/classes/chat/load', (require, exports, 
 			await Promise.all(messagesPromise);
 
 			await this.updateCounters(dialogList);
+
+			return extractor.getChatId();
+		}
+
+		/**
+		 * @private
+		 */
+		async updateModelsCopilot(extractor)
+		{
+			const usersPromise = [
+				this.store.dispatch('usersModel/set', extractor.getUsers()),
+				this.store.dispatch('usersModel/addShort', extractor.getAdditionalUsers()),
+			];
+			const dialogData = extractor.getMainChat();
+			this.setRecent(extractor).catch((err) => logger.log('LoadService.updateModels.setRecent error', err));
+			const copilotData = { dialogId: extractor.getDialogId(), ...extractor.getCopilot() };
+			const copilotPromise = this.store.dispatch('dialoguesModel/copilotModel/setCollection', copilotData);
+
+			void await this.store.dispatch('dialoguesModel/set', dialogData);
+
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](extractor.getChatId());
+			if (this.dialogLocator.has('emitter'))
+			{
+				this.dialogLocator.get('emitter').emit('beforeFirstPageRenderFromServer', [dialog]);
+			}
+
+			const filesPromise = this.store.dispatch('filesModel/set', extractor.getFiles());
+			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
+				reactions: extractor.getReactions(),
+			});
+
+			const messages = await this.contextCreator
+				.createMessageDoublyLinkedListForDialog(extractor.getMainChat(), extractor.getMessages())
+			;
+			const messagesPromise = [
+				this.store.dispatch('messagesModel/store', extractor.getMessagesToStore()),
+				this.store.dispatch('messagesModel/setChatCollection', {
+					messages,
+					clearCollection: true,
+				}),
+				this.store.dispatch('messagesModel/pinModel/setChatCollection', {
+					pins: extractor.getPins(),
+					messages: extractor.getPinnedMessages(),
+				}),
+			];
+
+			await Promise.all([
+				usersPromise,
+				filesPromise,
+				reactionPromise,
+				copilotPromise,
+			]);
+
+			await Promise.all(messagesPromise);
+
+			await this.updateCounters([dialogData]);
 
 			return extractor.getChatId();
 		}

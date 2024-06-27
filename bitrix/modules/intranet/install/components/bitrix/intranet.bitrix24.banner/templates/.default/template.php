@@ -10,7 +10,7 @@ $this->setFrameMode(true);
 $this->SetViewTarget("sidebar", 500);
 ?>
 <div class="b24-app-block b24-app-desktop">
-	<div class="b24-app-block-header"><?=GetMessage("B24_BANNER_MESSENGER_TITLE")?></div>
+	<div class="b24-app-block-header"><?=GetMessage("B24_BANNER_MESSENGER_TITLE_MSGVER_1")?></div>
 	<div class="b24-app-block-content">
 		<a href="https://dl.bitrix24.com/b24/bitrix24_desktop.dmg" target="_blank" style="width: 33%;" class="b24-app-block-content-apps">
 			<span class="b24-app-icon b24-app-icon-macos"></span>
@@ -28,7 +28,7 @@ $this->SetViewTarget("sidebar", 500);
 	</div>
 </div>
 <div class="b24-app-block b24-app-mobile">
-	<div class="b24-app-block-header"><?=GetMessage("B24_BANNER_MOBILE_TITLE")?></div>
+	<div class="b24-app-block-header"><?=GetMessage("B24_BANNER_MOBILE_TITLE_MSGVER_1")?></div>
 	<div class="b24-app-block-content">
 		<a href="javascript:void(0)" onclick="BX.UI.InfoHelper.show('mobile_app');" style="width: 45%;" class="b24-app-block-content-apps">
 			<span class="b24-app-icon b24-app-icon-ios"></span>

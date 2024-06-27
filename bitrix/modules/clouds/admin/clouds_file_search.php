@@ -152,7 +152,7 @@ $arFindFields = Array(
 $oFilter = new CAdminFilter($sTableID."_filter", $arFindFields);
 $oFilter->Begin();
 ?>
-<script language="JavaScript">
+<script>
 function SelFile(name)
 {
 	if (window.opener && window.opener.BX)

@@ -76,6 +76,83 @@ BX.namespace('Tasks.Component');
 						}
 					);
 				}
+
+				if (this.option('role') === 'AUDITORS')
+				{
+					BX.PULL.subscribe({
+						type: BX.PullClient.SubscriptionType.Server,
+						moduleId: 'tasks',
+						command: 'task_update',
+						callback: this.onPullTask.bind(this),
+					});
+				}
+			},
+
+			onPullTask: function(params, extra, command)
+			{
+				const taskId = this.recognizeTaskId(params);
+				if (taskId !== parseInt(this.option('entityId'), 10))
+				{
+					return;
+				}
+
+				let auditorsBefore = params.BEFORE?.AUDITORS;
+				let auditorsAfter = params.AFTER?.AUDITORS;
+
+				let auditors = [];
+				if (!auditorsBefore && auditorsAfter)
+				{
+					auditors = auditorsAfter.split(',').map(Number);
+				}
+				else if (auditorsBefore && auditorsAfter)
+				{
+					auditorsBefore = auditorsBefore.split(',').map(Number);
+					auditorsAfter = auditorsAfter.split(',').map(Number);
+					auditors = auditorsAfter.filter((auditor) => !auditorsBefore.includes(auditor));
+				}
+
+				if (auditors.length === 0)
+				{
+					return;
+				}
+
+				BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', 'getMember', {
+					mode: 'class',
+					data: {
+						userIds: auditors,
+						taskId: taskId,
+					}
+				})
+					.then((response) => {
+						const users = Array.from(response.data);
+
+						users.forEach((user) => {
+							this.getManager().onSelectorItemSelected(user);
+						})
+					})
+			},
+
+			recognizeTaskId(pullData)
+			{
+				if ('TASK_ID' in pullData)
+				{
+					return parseInt(pullData.TASK_ID, 10);
+				}
+
+				if ('taskId' in pullData)
+				{
+					return parseInt(pullData.taskId, 10);
+				}
+
+				if (
+					'entityXmlId' in pullData
+					&& pullData.entityXmlId.indexOf('TASK_') === 0
+				)
+				{
+					return parseInt(pullData.entityXmlId.slice(5), 10);
+				}
+
+				return 0;
 			},
 
 			setHeaderButtonLabelText: function(text)
@@ -355,24 +432,35 @@ BX.namespace('Tasks.Component');
 				for (var i = 0; i < targetNodes.length; i++)
 				{
 					var node = targetNodes[i];
-					node.addEventListener('click', function(node) {
+					node.addEventListener('click', function(event) {
 						var userType = this.option('role');
 						var taskLimitExceeded = this.option('taskLimitExceeded');
 
 						if ((userType === 'ACCOMPLICES' || userType === 'AUDITORS') && taskLimitExceeded)
 						{
-							BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
-								isLimit: true,
-								limitAnalyticsLabels: {
-									module: 'tasks',
-									source: 'sidebar',
-									subject: (userType === 'AUDITORS' ? 'auditor' : 'accomplice')
+							BX.Runtime.loadExtension('ui.info-helper').then(({ FeaturePromotersRegistry }) => {
+								if (FeaturePromotersRegistry)
+								{
+									FeaturePromotersRegistry.getPromoter({
+										code: 'limit_tasks_observers_participants',
+										bindElement: event.target,
+									}).show();
+								}
+								else
+								{
+									BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
+										isLimit: true,
+										limitAnalyticsLabels: {
+											module: 'tasks',
+										},
+									});
 								}
 							});
+
 							return;
 						}
 
-						this.getDialog().setTargetNode(node);
+						this.getDialog().setTargetNode(event.target);
 						this.getDialog().show();
 					}.bind(this));
 				}

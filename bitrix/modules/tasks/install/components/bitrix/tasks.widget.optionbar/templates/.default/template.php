@@ -19,7 +19,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 	<div id="<?=$helper->getScopeId()?>" class="tasks">
 
 		<?foreach($arParams['OPTIONS'] as $option):?>
-			<?$optionJs = ToLower(str_replace('_', '-', $option['CODE']));?>
+			<?$optionJs = mb_strtolower(str_replace('_', '-', $option['CODE']));?>
 			<div class="task-options-field">
 				<div class="task-options-field-inner">
 					<label

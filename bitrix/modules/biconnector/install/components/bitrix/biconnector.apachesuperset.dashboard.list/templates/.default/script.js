@@ -1,8 +1,10 @@
 /* eslint-disable */
-(function (exports,main_core,main_date,biconnector_apacheSupersetDashboardManager,main_core_events,ui_dialogs_messagebox,biconnector_apacheSupersetAnalytics,ui_entitySelector,biconnector_entitySelector) {
+(function (exports,main_core,main_date,main_popup,biconnector_apacheSupersetDashboardManager,main_core_events,ui_dialogs_messagebox,biconnector_apacheSupersetAnalytics,ui_entitySelector,ui_tour,spotlight,biconnector_entitySelector) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
@@ -14,19 +16,28 @@
 	var _grid = /*#__PURE__*/new WeakMap();
 	var _filter = /*#__PURE__*/new WeakMap();
 	var _tagSelectorDialog = /*#__PURE__*/new WeakMap();
+	var _topMenuGuideSpotlight = /*#__PURE__*/new WeakMap();
+	var _lastPinnedRowId = /*#__PURE__*/new WeakMap();
 	var _subscribeToEvents = /*#__PURE__*/new WeakSet();
+	var _showTopMenuGuide = /*#__PURE__*/new WeakSet();
+	var _colorPinnedRows = /*#__PURE__*/new WeakSet();
 	var _notifyErrors = /*#__PURE__*/new WeakSet();
 	var _buildDashboardTitleEditor = /*#__PURE__*/new WeakSet();
 	var _getTitlePreview = /*#__PURE__*/new WeakSet();
 	var _setDateModifyNow = /*#__PURE__*/new WeakSet();
+	var _switchTopMenuAction = /*#__PURE__*/new WeakSet();
 	var SupersetDashboardGridManager = /*#__PURE__*/function () {
 	  function SupersetDashboardGridManager(props) {
-	    var _BX$Main$gridManager$;
+	    var _BX$Main$gridManager$,
+	      _this = this;
 	    babelHelpers.classCallCheck(this, SupersetDashboardGridManager);
+	    _classPrivateMethodInitSpec(this, _switchTopMenuAction);
 	    _classPrivateMethodInitSpec(this, _setDateModifyNow);
 	    _classPrivateMethodInitSpec(this, _getTitlePreview);
 	    _classPrivateMethodInitSpec(this, _buildDashboardTitleEditor);
 	    _classPrivateMethodInitSpec(this, _notifyErrors);
+	    _classPrivateMethodInitSpec(this, _colorPinnedRows);
+	    _classPrivateMethodInitSpec(this, _showTopMenuGuide);
 	    _classPrivateMethodInitSpec(this, _subscribeToEvents);
 	    _classPrivateFieldInitSpec(this, _dashboardManager, {
 	      writable: true,
@@ -44,10 +55,32 @@
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _topMenuGuideSpotlight, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _lastPinnedRowId, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldSet(this, _dashboardManager, new biconnector_apacheSupersetDashboardManager.DashboardManager());
 	    babelHelpers.classPrivateFieldSet(this, _grid, (_BX$Main$gridManager$ = BX.Main.gridManager.getById(props.gridId)) === null || _BX$Main$gridManager$ === void 0 ? void 0 : _BX$Main$gridManager$.instance);
 	    babelHelpers.classPrivateFieldSet(this, _filter, BX.Main.filterManager.getById(props.gridId));
 	    _classPrivateMethodGet(this, _subscribeToEvents, _subscribeToEvents2).call(this);
+	    if (props.isNeedShowTopMenuGuide && !(main_popup.PopupWindowManager !== null && main_popup.PopupWindowManager !== void 0 && main_popup.PopupWindowManager.isAnyPopupShown()) && babelHelpers.classPrivateFieldGet(this, _grid).getRows().getBodyFirstChild().actionsButton) {
+	      babelHelpers.classPrivateFieldSet(this, _topMenuGuideSpotlight, new BX.SpotLight({
+	        targetElement: babelHelpers.classPrivateFieldGet(this, _grid).getRows().getBodyFirstChild().actionsButton,
+	        targetVertex: 'middle-center',
+	        events: {
+	          onTargetEnter: function onTargetEnter() {
+	            return babelHelpers.classPrivateFieldGet(_this, _topMenuGuideSpotlight).close();
+	          }
+	        }
+	      }));
+	      babelHelpers.classPrivateFieldGet(this, _topMenuGuideSpotlight).show();
+	      _classPrivateMethodGet(this, _showTopMenuGuide, _showTopMenuGuide2).call(this);
+	    }
+	    _classPrivateMethodGet(this, _colorPinnedRows, _colorPinnedRows2).call(this);
 	  }
 	  babelHelpers.createClass(SupersetDashboardGridManager, [{
 	    key: "onUpdatedDashboardBatchStatus",
@@ -116,7 +149,7 @@
 	  }, {
 	    key: "restartDashboardLoad",
 	    value: function restartDashboardLoad(dashboardId) {
-	      var _this = this;
+	      var _this2 = this;
 	      var row = babelHelpers.classPrivateFieldGet(this, _grid).getRows().getById(dashboardId);
 	      if (row) {
 	        var btn = row.node.querySelector('#restart-dashboard-load-btn');
@@ -140,7 +173,7 @@
 	        try {
 	          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
 	            var restartedDashboardId = _step2.value;
-	            _this.updateDashboardStatus(restartedDashboardId, 'L');
+	            _this2.updateDashboardStatus(restartedDashboardId, 'L');
 	          }
 	        } catch (err) {
 	          _iterator2.e(err);
@@ -208,7 +241,7 @@
 	  }, {
 	    key: "duplicateDashboard",
 	    value: function duplicateDashboard(dashboardId) {
-	      var _this2 = this;
+	      var _this3 = this;
 	      var analyticInfo = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 	      var grid = this.getGrid();
 	      grid.tableFade();
@@ -217,9 +250,9 @@
 	        var newDashboard = response.data.dashboard;
 	        gridRealtime.addRow({
 	          id: newDashboard.id,
-	          prepend: true,
 	          columns: newDashboard.columns,
-	          actions: newDashboard.actions
+	          actions: newDashboard.actions,
+	          insertAfter: babelHelpers.classPrivateFieldGet(_this3, _lastPinnedRowId)
 	        });
 	        var editableData = grid.getParam('EDITABLE_DATA');
 	        if (BX.type.isPlainObject(editableData)) {
@@ -246,7 +279,7 @@
 	      })["catch"](function (response) {
 	        grid.tableUnfade();
 	        if (response.errors) {
-	          _classPrivateMethodGet(_this2, _notifyErrors, _notifyErrors2).call(_this2, response.errors);
+	          _classPrivateMethodGet(_this3, _notifyErrors, _notifyErrors2).call(_this3, response.errors);
 	        }
 	        if (analyticInfo !== null) {
 	          biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('edit', 'report_copy', {
@@ -292,16 +325,16 @@
 	  }, {
 	    key: "deleteDashboard",
 	    value: function deleteDashboard(dashboardId) {
-	      var _this3 = this;
+	      var _this4 = this;
 	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_TITLE'), function (messageBox, button) {
 	        button.setWaiting();
-	        babelHelpers.classPrivateFieldGet(_this3, _dashboardManager).deleteDashboard(dashboardId).then(function () {
-	          _this3.getGrid().reload();
+	        babelHelpers.classPrivateFieldGet(_this4, _dashboardManager).deleteDashboard(dashboardId).then(function () {
+	          _this4.getGrid().reload();
 	          messageBox.close();
 	        })["catch"](function (response) {
 	          messageBox.close();
 	          if (response.errors) {
-	            _classPrivateMethodGet(_this3, _notifyErrors, _notifyErrors2).call(_this3, response.errors);
+	            _classPrivateMethodGet(_this4, _notifyErrors, _notifyErrors2).call(_this4, response.errors);
 	          }
 	        });
 	      }, main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_POPUP_CAPTION_YES'), function (messageBox) {
@@ -311,6 +344,7 @@
 	  }, {
 	    key: "createEmptyDashboard",
 	    value: function createEmptyDashboard() {
+	      var _this5 = this;
 	      BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('new', 'report_new', {
 	        type: 'custom',
 	        c_element: 'new_button'
@@ -323,9 +357,9 @@
 	        var newDashboard = response.data.dashboard;
 	        gridRealtime.addRow({
 	          id: newDashboard.id,
-	          prepend: true,
 	          columns: newDashboard.columns,
-	          actions: newDashboard.actions
+	          actions: newDashboard.actions,
+	          insertAfter: babelHelpers.classPrivateFieldGet(_this5, _lastPinnedRowId)
 	        });
 	        var editableData = grid.getParam('EDITABLE_DATA');
 	        if (BX.type.isPlainObject(editableData)) {
@@ -350,7 +384,7 @@
 	    key: "renameDashboard",
 	    value: function renameDashboard(dashboardId) {
 	      var _row$getCellById,
-	        _this4 = this,
+	        _this6 = this,
 	        _row$getCellById2;
 	      var grid = this.getGrid();
 	      var row = grid.getRows().getById(dashboardId);
@@ -364,10 +398,10 @@
 	        return;
 	      }
 	      var editor = _classPrivateMethodGet(this, _buildDashboardTitleEditor, _buildDashboardTitleEditor2).call(this, dashboardId, row.getEditData().TITLE, function () {
-	        _this4.cancelRenameDashboard(dashboardId);
+	        _this6.cancelRenameDashboard(dashboardId);
 	      }, function (innerTitle) {
-	        var oldTitle = _classPrivateMethodGet(_this4, _getTitlePreview, _getTitlePreview2).call(_this4, dashboardId).querySelector('a').innerText;
-	        _classPrivateMethodGet(_this4, _getTitlePreview, _getTitlePreview2).call(_this4, dashboardId).querySelector('a').innerText = innerTitle;
+	        var oldTitle = _classPrivateMethodGet(_this6, _getTitlePreview, _getTitlePreview2).call(_this6, dashboardId).querySelector('a').innerText;
+	        _classPrivateMethodGet(_this6, _getTitlePreview, _getTitlePreview2).call(_this6, dashboardId).querySelector('a').innerText = innerTitle;
 	        var rowEditData = row.getEditData();
 	        rowEditData.TITLE = innerTitle;
 	        var editableData = grid.getParam('EDITABLE_DATA');
@@ -381,13 +415,13 @@
 	        BX.UI.Notification.Center.notify({
 	          content: msg
 	        });
-	        _this4.cancelRenameDashboard(dashboardId);
-	        _classPrivateMethodGet(_this4, _setDateModifyNow, _setDateModifyNow2).call(_this4, dashboardId);
-	        babelHelpers.classPrivateFieldGet(_this4, _dashboardManager).renameDashboard(dashboardId, innerTitle)["catch"](function (response) {
+	        _this6.cancelRenameDashboard(dashboardId);
+	        _classPrivateMethodGet(_this6, _setDateModifyNow, _setDateModifyNow2).call(_this6, dashboardId);
+	        babelHelpers.classPrivateFieldGet(_this6, _dashboardManager).renameDashboard(dashboardId, innerTitle)["catch"](function (response) {
 	          if (response.errors) {
-	            _classPrivateMethodGet(_this4, _notifyErrors, _notifyErrors2).call(_this4, response.errors);
+	            _classPrivateMethodGet(_this6, _notifyErrors, _notifyErrors2).call(_this6, response.errors);
 	          }
-	          _classPrivateMethodGet(_this4, _getTitlePreview, _getTitlePreview2).call(_this4, dashboardId).querySelector('a').innerText = oldTitle;
+	          _classPrivateMethodGet(_this6, _getTitlePreview, _getTitlePreview2).call(_this6, dashboardId).querySelector('a').innerText = oldTitle;
 	          rowEditData.TITLE = oldTitle;
 	        });
 	      });
@@ -402,7 +436,7 @@
 	        if (editBtn) {
 	          main_core.Event.unbind(editBtn, 'click', actionsClickHandler);
 	        }
-	        _this4.cancelRenameDashboard(dashboardId);
+	        _this6.cancelRenameDashboard(dashboardId);
 	      };
 	      main_core.Event.bind(row.getActionsButton(), 'click', actionsClickHandler);
 	      if (editBtn) {
@@ -429,56 +463,37 @@
 	  }, {
 	    key: "handleTagClick",
 	    value: function handleTagClick(tagJson) {
-	      var _filterTagValues$TAGS, _filterTagValues$TAGS2;
 	      var tag = JSON.parse(tagJson);
-	      var filterTagValues = this.getFilter().getFilterFieldsValues();
-	      var currentFilteredTags = (_filterTagValues$TAGS = filterTagValues['TAGS.ID']) !== null && _filterTagValues$TAGS !== void 0 ? _filterTagValues$TAGS : [];
-	      var currentFilteredTagLabels = (_filterTagValues$TAGS2 = filterTagValues['TAGS.ID_label']) !== null && _filterTagValues$TAGS2 !== void 0 ? _filterTagValues$TAGS2 : [];
-	      tag.ID = String(tag.ID);
-	      if (tag.IS_FILTERED) {
-	        currentFilteredTags = currentFilteredTags.filter(function (value) {
-	          return value !== tag.ID;
-	        });
-	        currentFilteredTagLabels = currentFilteredTagLabels.filter(function (value) {
-	          return value !== tag.TITLE;
-	        });
-	      } else if (!currentFilteredTags.includes(tag.ID)) {
-	        currentFilteredTags.push(tag.ID);
-	        currentFilteredTagLabels.push(tag.TITLE);
-	      }
-	      var filterApi = this.getFilter().getApi();
-	      filterApi.extendFilter({
-	        'TAGS.ID': currentFilteredTags,
-	        'TAGS.ID_label': currentFilteredTagLabels
-	      });
-	      filterApi.apply();
+	      this.handleFilterChange(_objectSpread({
+	        fieldId: 'TAGS.ID'
+	      }, tag));
 	    }
 	  }, {
 	    key: "handleTagAddClick",
 	    value: function handleTagAddClick(dashboardId, preselectedIds, event) {
-	      var _this5 = this;
+	      var _this7 = this;
 	      var onTagsChange = function onTagsChange() {
-	        var tags = babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).getSelectedItems().map(function (item) {
+	        var tags = babelHelpers.classPrivateFieldGet(_this7, _tagSelectorDialog).getSelectedItems().map(function (item) {
 	          return item.getId();
 	        });
-	        babelHelpers.classPrivateFieldGet(_this5, _dashboardManager).setDashboardTags(dashboardId, tags).then(function () {
-	          var _filterTagValues$TAGS3;
-	          _this5.getGrid().updateRow(dashboardId, null, null, function () {
-	            var _this5$getGrid$getRow;
-	            var anchor = (_this5$getGrid$getRow = _this5.getGrid().getRows().getById(dashboardId)) === null || _this5$getGrid$getRow === void 0 ? void 0 : _this5$getGrid$getRow.getCellById('TAGS');
-	            if (anchor && babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog)) {
-	              babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).setTargetNode(anchor);
+	        babelHelpers.classPrivateFieldGet(_this7, _dashboardManager).setDashboardTags(dashboardId, tags).then(function () {
+	          var _filterTagValues$TAGS;
+	          _this7.getGrid().updateRow(dashboardId, null, null, function () {
+	            var _this7$getGrid$getRow;
+	            var anchor = (_this7$getGrid$getRow = _this7.getGrid().getRows().getById(dashboardId)) === null || _this7$getGrid$getRow === void 0 ? void 0 : _this7$getGrid$getRow.getCellById('TAGS');
+	            if (anchor && babelHelpers.classPrivateFieldGet(_this7, _tagSelectorDialog)) {
+	              babelHelpers.classPrivateFieldGet(_this7, _tagSelectorDialog).setTargetNode(anchor);
 	            }
 	          });
-	          var filterTagValues = _this5.getFilter().getFilterFieldsValues();
-	          var currentFilteredTags = (_filterTagValues$TAGS3 = filterTagValues['TAGS.ID']) !== null && _filterTagValues$TAGS3 !== void 0 ? _filterTagValues$TAGS3 : [];
+	          var filterTagValues = _this7.getFilter().getFilterFieldsValues();
+	          var currentFilteredTags = (_filterTagValues$TAGS = filterTagValues['TAGS.ID']) !== null && _filterTagValues$TAGS !== void 0 ? _filterTagValues$TAGS : [];
 	          if (currentFilteredTags.length > 0) {
 	            var filtered = tags.filter(function (tagId) {
 	              return currentFilteredTags.includes(String(tagId));
 	            });
 	            if (filtered.length === 0) {
-	              babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).destroy();
-	              babelHelpers.classPrivateFieldSet(_this5, _tagSelectorDialog, null);
+	              babelHelpers.classPrivateFieldGet(_this7, _tagSelectorDialog).destroy();
+	              babelHelpers.classPrivateFieldSet(_this7, _tagSelectorDialog, null);
 	            }
 	          }
 	        });
@@ -513,23 +528,24 @@
 	        events: {
 	          onSearch: function onSearch(event) {
 	            var query = event.getData().query;
-	            var footer = babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).getFooterContainer();
-	            if (main_core.Type.isStringFilled(query.trim())) {
-	              main_core.Dom.show(footer.querySelector('#tags-widget-custom-footer-add-new'));
-	              main_core.Dom.show(footer.querySelector('#tags-widget-custom-footer-conjunction'));
+	            var footer = babelHelpers.classPrivateFieldGet(_this7, _tagSelectorDialog).getFooter();
+	            var footerWrapper = babelHelpers.classPrivateFieldGet(_this7, _tagSelectorDialog).getFooterContainer();
+	            if (main_core.Type.isStringFilled(query.trim()) && footer.canCreateTag()) {
+	              main_core.Dom.show(footerWrapper.querySelector('#tags-widget-custom-footer-add-new'));
+	              main_core.Dom.show(footerWrapper.querySelector('#tags-widget-custom-footer-conjunction'));
 	              return;
 	            }
-	            main_core.Dom.hide(footer.querySelector('#tags-widget-custom-footer-add-new'));
-	            main_core.Dom.hide(footer.querySelector('#tags-widget-custom-footer-conjunction'));
+	            main_core.Dom.hide(footerWrapper.querySelector('#tags-widget-custom-footer-add-new'));
+	            main_core.Dom.hide(footerWrapper.querySelector('#tags-widget-custom-footer-conjunction'));
 	          },
 	          'Search:onItemCreateAsync': function SearchOnItemCreateAsync(searchEvent) {
 	            return new Promise(function (resolve, reject) {
 	              var _searchEvent$getData = searchEvent.getData(),
 	                searchQuery = _searchEvent$getData.searchQuery;
-	              var name = searchQuery.getQuery().toLowerCase();
-	              babelHelpers.classPrivateFieldGet(_this5, _dashboardManager).addTag(name).then(function (result) {
+	              var name = searchQuery.getQuery();
+	              babelHelpers.classPrivateFieldGet(_this7, _dashboardManager).addTag(name).then(function (result) {
 	                var newTag = result.data;
-	                var item = babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).addItem({
+	                var item = babelHelpers.classPrivateFieldGet(_this7, _tagSelectorDialog).addItem({
 	                  id: newTag.ID,
 	                  entityId: entityId,
 	                  title: name,
@@ -543,7 +559,7 @@
 	                var errors = result.errors;
 	                errors.forEach(function (error) {
 	                  var alert = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t\t<div class=\"dashboard-tag-already-exists-alert\">\n\t\t\t\t\t\t\t\t\t\t\t<div class='ui-alert ui-alert-xs ui-alert-danger'> \n\t\t\t\t\t\t\t\t\t\t\t\t<span class='ui-alert-message'>\n\t\t\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t\t\t</span> \n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t"])), error.message);
-	                  main_core.Dom.prepend(alert, babelHelpers.classPrivateFieldGet(_this5, _tagSelectorDialog).getFooterContainer());
+	                  main_core.Dom.prepend(alert, babelHelpers.classPrivateFieldGet(_this7, _tagSelectorDialog).getFooterContainer());
 	                  setTimeout(function () {
 	                    main_core.Dom.remove(alert);
 	                  }, 3000);
@@ -558,11 +574,96 @@
 	      }));
 	      babelHelpers.classPrivateFieldGet(this, _tagSelectorDialog).show();
 	    }
+	  }, {
+	    key: "handleOwnerClick",
+	    value: function handleOwnerClick(ownerData) {
+	      this.handleFilterChange(_objectSpread({
+	        fieldId: 'OWNER_ID'
+	      }, ownerData));
+	    }
+	  }, {
+	    key: "handleCreatedByClick",
+	    value: function handleCreatedByClick(ownerData) {
+	      this.handleFilterChange(_objectSpread({
+	        fieldId: 'CREATED_BY_ID'
+	      }, ownerData));
+	    }
+	  }, {
+	    key: "handleFilterChange",
+	    value: function handleFilterChange(fieldData) {
+	      var _filterFieldsValues$f, _filterFieldsValues;
+	      var filterFieldsValues = this.getFilter().getFilterFieldsValues();
+	      var currentFilteredField = (_filterFieldsValues$f = filterFieldsValues[fieldData.fieldId]) !== null && _filterFieldsValues$f !== void 0 ? _filterFieldsValues$f : [];
+	      var currentFilteredFieldLabel = (_filterFieldsValues = filterFieldsValues["".concat(fieldData.fieldId, "_label")]) !== null && _filterFieldsValues !== void 0 ? _filterFieldsValues : [];
+	      if (fieldData.IS_FILTERED) {
+	        currentFilteredField = currentFilteredField.filter(function (value) {
+	          return parseInt(value, 10) !== fieldData.ID;
+	        });
+	        currentFilteredFieldLabel = currentFilteredFieldLabel.filter(function (value) {
+	          return value !== fieldData.TITLE;
+	        });
+	      } else if (!currentFilteredField.includes(fieldData.ID)) {
+	        currentFilteredField.push(fieldData.ID);
+	        currentFilteredFieldLabel.push(fieldData.TITLE);
+	      }
+	      var filterApi = this.getFilter().getApi();
+	      var filterToExtend = {};
+	      filterToExtend[fieldData.fieldId] = currentFilteredField;
+	      filterToExtend["".concat(fieldData.fieldId, "_label")] = currentFilteredFieldLabel;
+	      filterApi.extendFilter(filterToExtend);
+	      filterApi.apply();
+	    }
+	  }, {
+	    key: "addToTopMenu",
+	    value: function addToTopMenu(dashboardId) {
+	      var _this8 = this;
+	      BX.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_SUCCESS')
+	      });
+	      _classPrivateMethodGet(this, _switchTopMenuAction, _switchTopMenuAction2).call(this, dashboardId, true);
+	      return babelHelpers.classPrivateFieldGet(this, _dashboardManager).addToTopMenu(dashboardId).then(function (response) {})["catch"](function (response) {
+	        babelHelpers.classPrivateFieldGet(_this8, _grid).updateRow(dashboardId);
+	        BX.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_ERROR')
+	        });
+	      });
+	    }
+	  }, {
+	    key: "deleteFromTopMenu",
+	    value: function deleteFromTopMenu(dashboardId) {
+	      var _this9 = this;
+	      BX.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_FROM_TOP_MENU_SUCCESS')
+	      });
+	      _classPrivateMethodGet(this, _switchTopMenuAction, _switchTopMenuAction2).call(this, dashboardId, false);
+	      return babelHelpers.classPrivateFieldGet(this, _dashboardManager).deleteFromTopMenu(dashboardId).then(function (response) {})["catch"](function (response) {
+	        babelHelpers.classPrivateFieldGet(_this9, _grid).updateRow(dashboardId);
+	        BX.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_FROM_TOP_MENU_ERROR')
+	        });
+	      });
+	    }
+	  }, {
+	    key: "pin",
+	    value: function pin(dashboardId) {
+	      var _this10 = this;
+	      return babelHelpers.classPrivateFieldGet(this, _dashboardManager).pin(dashboardId).then(function () {
+	        babelHelpers.classPrivateFieldGet(_this10, _grid).reload();
+	      })["catch"](function () {});
+	    }
+	  }, {
+	    key: "unpin",
+	    value: function unpin(dashboardId) {
+	      var _this11 = this;
+	      return babelHelpers.classPrivateFieldGet(this, _dashboardManager).unpin(dashboardId).then(function () {
+	        babelHelpers.classPrivateFieldGet(_this11, _grid).reload();
+	      })["catch"](function () {});
+	    }
 	  }]);
 	  return SupersetDashboardGridManager;
 	}();
 	function _subscribeToEvents2() {
-	  var _this6 = this;
+	  var _this12 = this;
 	  main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', function (event) {
 	    var _event$getCompatData = event.getCompatData(),
 	      _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
@@ -570,24 +671,24 @@
 	    if (sliderEvent.getEventId() === 'BIConnector.Superset.DashboardDetail:onDashboardBatchStatusUpdate') {
 	      var eventArgs = sliderEvent.getData();
 	      if (eventArgs.dashboardList) {
-	        _this6.onUpdatedDashboardBatchStatus(eventArgs.dashboardList);
+	        _this12.onUpdatedDashboardBatchStatus(eventArgs.dashboardList);
 	      }
 	    } else if (sliderEvent.getEventId() === 'BIConnector.Superset.DashboardTagGrid:onTagChange' || sliderEvent.getEventId() === 'BIConnector.Superset.DashboardTagGrid:onTagDelete') {
-	      var _filterTagValues$TAGS4, _filterTagValues$TAGS5;
-	      if (babelHelpers.classPrivateFieldGet(_this6, _tagSelectorDialog)) {
-	        babelHelpers.classPrivateFieldGet(_this6, _tagSelectorDialog).destroy();
-	        babelHelpers.classPrivateFieldSet(_this6, _tagSelectorDialog, null);
+	      var _filterTagValues$TAGS2, _filterTagValues$TAGS3;
+	      if (babelHelpers.classPrivateFieldGet(_this12, _tagSelectorDialog)) {
+	        babelHelpers.classPrivateFieldGet(_this12, _tagSelectorDialog).destroy();
+	        babelHelpers.classPrivateFieldSet(_this12, _tagSelectorDialog, null);
 	      }
-	      var filterTagValues = _this6.getFilter().getFilterFieldsValues();
+	      var filterTagValues = _this12.getFilter().getFilterFieldsValues();
 	      if (main_core.Type.isUndefined(filterTagValues['TAGS.ID']) || filterTagValues['TAGS.ID'].length === 0) {
-	        _this6.getGrid().reload();
+	        _this12.getGrid().reload();
 	        return;
 	      }
 	      var _sliderEvent$getData = sliderEvent.getData(),
 	        tagId = _sliderEvent$getData.tagId,
 	        title = _sliderEvent$getData.title;
-	      var currentFilteredTags = (_filterTagValues$TAGS4 = filterTagValues['TAGS.ID']) !== null && _filterTagValues$TAGS4 !== void 0 ? _filterTagValues$TAGS4 : [];
-	      var currentFilteredTagLabels = (_filterTagValues$TAGS5 = filterTagValues['TAGS.ID_label']) !== null && _filterTagValues$TAGS5 !== void 0 ? _filterTagValues$TAGS5 : [];
+	      var currentFilteredTags = (_filterTagValues$TAGS2 = filterTagValues['TAGS.ID']) !== null && _filterTagValues$TAGS2 !== void 0 ? _filterTagValues$TAGS2 : [];
+	      var currentFilteredTagLabels = (_filterTagValues$TAGS3 = filterTagValues['TAGS.ID_label']) !== null && _filterTagValues$TAGS3 !== void 0 ? _filterTagValues$TAGS3 : [];
 	      var index = currentFilteredTags.findIndex(function (id) {
 	        return main_core.Text.toInteger(id) === main_core.Text.toInteger(tagId);
 	      });
@@ -597,7 +698,7 @@
 	      } else {
 	        currentFilteredTagLabels[index] = title;
 	      }
-	      var filterApi = _this6.getFilter().getApi();
+	      var filterApi = _this12.getFilter().getApi();
 	      filterApi.extendFilter({
 	        'TAGS.ID': currentFilteredTags,
 	        'TAGS.ID_label': currentFilteredTagLabels
@@ -611,14 +712,53 @@
 	      return;
 	    }
 	    var dashboardList = data.dashboardList;
-	    _this6.onUpdatedDashboardBatchStatus(dashboardList);
+	    _this12.onUpdatedDashboardBatchStatus(dashboardList);
 	  });
 	  main_core_events.EventEmitter.subscribe('BX.Rest.Configuration.Install:onFinish', function () {
-	    babelHelpers.classPrivateFieldGet(_this6, _grid).reload();
+	    babelHelpers.classPrivateFieldGet(_this12, _grid).reload();
 	  });
 	  main_core_events.EventEmitter.subscribe('Grid::updated', function () {
 	    BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+	    _classPrivateMethodGet(_this12, _colorPinnedRows, _colorPinnedRows2).call(_this12);
 	  });
+	}
+	function _showTopMenuGuide2() {
+	  var guide = new ui_tour.Guide({
+	    steps: [{
+	      target: babelHelpers.classPrivateFieldGet(this, _grid).getRows().getBodyFirstChild().node,
+	      title: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_TOP_MENU_GUIDE_TITLE'),
+	      text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_TOP_MENU_GUIDE_TEXT'),
+	      events: {
+	        onClose: function onClose() {
+	          BX.userOptions.save('biconnector', 'top_menu_guide', 'is_over', true);
+	        }
+	      },
+	      rounded: false,
+	      position: 'bottom',
+	      areaPadding: 0
+	    }],
+	    onEvents: true
+	  });
+	  guide.start();
+	}
+	function _colorPinnedRows2() {
+	  babelHelpers.classPrivateFieldSet(this, _lastPinnedRowId, 0);
+	  var rows = babelHelpers.classPrivateFieldGet(this, _grid).getRows().getBodyChild();
+	  var _iterator3 = _createForOfIteratorHelper(rows),
+	    _step3;
+	  try {
+	    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+	      var row = _step3.value;
+	      if (row.node.querySelector('.dashboard-unpin-icon')) {
+	        main_core.Dom.addClass(row.node, 'biconnector-dashboard-pinned');
+	        babelHelpers.classPrivateFieldSet(this, _lastPinnedRowId, row.getId());
+	      }
+	    }
+	  } catch (err) {
+	    _iterator3.e(err);
+	  } finally {
+	    _iterator3.f();
+	  }
 	}
 	function _notifyErrors2(errors) {
 	  if (errors[0] && errors[0].message) {
@@ -692,7 +832,55 @@
 	  main_core.Dom.replace(cellContent, newCellContent);
 	  BX.UI.Hint.init(dateModifyCell);
 	}
+	function _switchTopMenuAction2(dashboardId, isInTopMenu) {
+	  var row = babelHelpers.classPrivateFieldGet(this, _grid).getRows().getById(dashboardId);
+	  var rowActions = row === null || row === void 0 ? void 0 : row.getActions();
+	  var _iterator4 = _createForOfIteratorHelper(rowActions.entries()),
+	    _step4;
+	  try {
+	    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+	      var _step4$value = babelHelpers.slicedToArray(_step4.value, 2),
+	        index = _step4$value[0],
+	        action = _step4$value[1];
+	      if (isInTopMenu && action.ACTION_ID === 'addToTopMenu') {
+	        rowActions[index].ACTION_ID = 'deleteFromTopMenu';
+	        rowActions[index].onclick = "BX.BIConnector.SupersetDashboardGridManager.Instance.deleteFromTopMenu(".concat(dashboardId, ")");
+	        rowActions[index].text = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_DELETE_FROM_TOP_MENU');
+	      } else if (!isInTopMenu && action.ACTION_ID === 'deleteFromTopMenu') {
+	        rowActions[index].ACTION_ID = 'addToTopMenu';
+	        rowActions[index].onclick = "BX.BIConnector.SupersetDashboardGridManager.Instance.addToTopMenu(".concat(dashboardId, ")");
+	        rowActions[index].text = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ACTION_ITEM_ADD_TO_TOP_MENU');
+	      }
+	    }
+	  } catch (err) {
+	    _iterator4.e(err);
+	  } finally {
+	    _iterator4.f();
+	  }
+	  row.setActions(rowActions);
+	  var titleCell = row === null || row === void 0 ? void 0 : row.getCellById('TITLE');
+	  var dashboardTitle = '';
+	  if (titleCell) {
+	    var titleWrapper = titleCell.querySelector('.dashboard-title-wrapper__item');
+	    dashboardTitle = titleWrapper.querySelector('a').innerText;
+	  }
+	  var menu = BX.Main.interfaceButtonsManager.getById('biconnector_superset_menu');
+	  if (isInTopMenu && dashboardTitle) {
+	    menu.addMenuItem({
+	      id: "biconnector_superset_menu_dashboard_".concat(dashboardId),
+	      text: dashboardTitle,
+	      url: "/bi/dashboard/detail/".concat(dashboardId, "/?openFrom=menu"),
+	      onClick: ''
+	    });
+	    var menuItem = menu.getItemById("biconnector_superset_menu_dashboard_".concat(dashboardId));
+	    var firstMenuItem = menu.getVisibleItems();
+	    main_core.Dom.insertBefore(menuItem, firstMenuItem[0]);
+	  } else {
+	    var _menuItem = menu.getItemById("biconnector_superset_menu_dashboard_".concat(dashboardId));
+	    menu.deleteMenuItem(_menuItem);
+	  }
+	}
 	main_core.Reflection.namespace('BX.BIConnector').SupersetDashboardGridManager = SupersetDashboardGridManager;
 
-}((this.window = this.window || {}),BX,BX.Main,BX.BIConnector,BX.Event,BX.UI.Dialogs,BX.BIConnector,BX.UI.EntitySelector,BX.BIConnector.EntitySelector));
+}((this.window = this.window || {}),BX,BX.Main,BX.Main,BX.BIConnector,BX.Event,BX.UI.Dialogs,BX.BIConnector,BX.UI.EntitySelector,BX.UI.Tour,BX,BX.BIConnector.EntitySelector));
 //# sourceMappingURL=script.js.map

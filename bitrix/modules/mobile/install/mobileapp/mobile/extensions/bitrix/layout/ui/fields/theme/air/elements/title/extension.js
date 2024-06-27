@@ -2,26 +2,37 @@
  * @module layout/ui/fields/theme/air/elements/title
  */
 jn.define('layout/ui/fields/theme/air/elements/title', (require, exports, module) => {
-	const { Color, Indent } = require('tokens');
+	const { Color } = require('tokens');
+	const { Text5 } = require('ui-system/typography/text');
 
 	/**
 	 * @param {string} text
+	 * @param {number} count
 	 * @param {string} testId
+	 * @param {Indent} titleIndent
+	 * @param {string} [textMultiple='']
 	 */
-	const Title = ({ text, testId }) => {
-		return Text({
+	const Title = ({ text, count, testId, titleIndent, textMultiple }) => View(
+		{
 			style: {
-				testId: `${testId}_NAME`,
-				fontSize: 12,
-				color: Color.base4,
-				paddingBottom: Indent.XS,
-				marginBottom: Indent.M,
+				flexDirection: 'row',
+				marginBottom: titleIndent.toNumber(),
+			},
+		},
+		Text5({
+			testId: `${testId}_TITLE`,
+			style: {
+				color: Color.base4.toHex(),
 			},
 			numberOfLines: 1,
 			ellipsize: 'end',
-			text,
-		});
-	};
+			text: (
+				textMultiple && count > 0
+					? textMultiple.replace('#COUNT#', String(count))
+					: String(text)
+			),
+		}),
+	);
 
 	module.exports = {
 		Title,

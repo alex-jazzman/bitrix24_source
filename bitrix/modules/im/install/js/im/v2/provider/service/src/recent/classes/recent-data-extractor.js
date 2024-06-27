@@ -117,10 +117,26 @@ export class RecentDataExtractor
 			viewedByOthers = true;
 		}
 
+		const existingMessage: ImModelMessage = Core.getStore().getters['messages/getById'](message.id);
+		// recent has shortened attach format, we should not rewrite attach if model has it
+		if (Type.isArrayFilled(existingMessage?.attach))
+		{
+			delete message.attach;
+		}
+
 		if (Type.isPlainObject(message.file))
 		{
 			const file: RecentFile = message.file;
-			message.files = [file.id];
+			if (existingMessage)
+			{
+				// recent doesn't know about several files in one message,
+				// we should not rewrite message files, so we merge it.
+				message.files = this.#mergeFileIds(existingMessage, file.id);
+			}
+			else
+			{
+				message.files = [file.id];
+			}
 
 			const existingFile = Core.getStore().getters['files/get'](file.id);
 			// recent has shortened file format, we should not rewrite file if model has it
@@ -128,13 +144,6 @@ export class RecentDataExtractor
 			{
 				this.#files[file.id] = file;
 			}
-		}
-
-		const existingMessage: ImModelMessage = Core.getStore().getters['messages/getById'](message.id);
-		// recent has shortened attach format, we should not rewrite attach if model has it
-		if (Type.isArrayFilled(existingMessage?.attach))
-		{
-			delete message.attach;
 		}
 
 		this.#messages[message.id] = { ...message, viewedByOthers };
@@ -216,5 +225,15 @@ export class RecentDataExtractor
 			id: item.id,
 			isBirthdayPlaceholder: true,
 		};
+	}
+
+	#mergeFileIds(existingMessage: ImModelMessage, fileId: number): number[]
+	{
+		const existingMessageFilesIds = existingMessage.files.map((id) => {
+			return Number.parseInt(id, 10);
+		});
+		const setOfFileIds = new Set([...existingMessageFilesIds, fileId]);
+
+		return [...setOfFileIds];
 	}
 }

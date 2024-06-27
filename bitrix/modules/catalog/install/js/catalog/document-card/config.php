@@ -14,7 +14,7 @@ return [
 		'currency.currency-core',
 		'ui.entity-selector',
 		'main.popup',
-		'catalog.store-use',
+		'catalog.store-enable-wizard',
 		'ui.feedback.form',
 		'main.core',
 	],

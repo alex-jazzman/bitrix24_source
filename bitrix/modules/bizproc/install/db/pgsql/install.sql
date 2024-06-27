@@ -393,3 +393,15 @@ CREATE TABLE b_bp_task_search_content (
 );
 CREATE INDEX ix_b_bp_task_search_content_workflow_id ON b_bp_task_search_content (workflow_id);
 CREATE INDEX tx_b_bp_task_search_content_search_content ON b_bp_task_search_content USING GIN (to_tsvector('english', search_content));
+
+CREATE TABLE b_bp_workflow_user_comment (
+  USER_ID int NOT NULL DEFAULT 0,
+  WORKFLOW_ID varchar(32) NOT NULL,
+  UNREAD_CNT int NOT NULL DEFAULT 0,
+  LAST_TYPE smallint NOT NULL DEFAULT 0,
+  MODIFIED timestamp NOT NULL,
+  PRIMARY KEY (USER_ID, WORKFLOW_ID)
+);
+CREATE INDEX ix_b_bp_workflow_user_comment_workflow_id ON b_bp_workflow_user_comment (workflow_id);
+CREATE INDEX ix_b_bp_workflow_user_comment_last_type ON b_bp_workflow_user_comment (last_type);
+CREATE INDEX ix_b_bp_workflow_user_comment_last_type_modified ON b_bp_workflow_user_comment (last_type, modified);

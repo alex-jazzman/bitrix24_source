@@ -282,8 +282,8 @@ export const UploadPreviewContent = {
 					class="bx-im-upload-preview__message-text"
 					rows="1"
 					@keydown="onKeyDownHandler"
-					@mousedown="onResizeStart"
 				></textarea>
+				<div @mousedown="onResizeStart" class="bx-im-upload-preview__drag-handle"></div>
 			</div>
 			<div class="bx-im-upload-preview__controls-buttons">
 				<MessengerButton

@@ -4,6 +4,7 @@ import { Text, Loc } from 'main.core';
 import { EventType, ChatType } from 'im.v2.const';
 import { Parser } from 'im.v2.lib.parser';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import { AuthorTitle } from '../author-title/author-title';
 
@@ -46,7 +47,7 @@ export const MessageHeader = {
 		},
 		isChannelForward(): boolean
 		{
-			return [ChatType.openChannel, ChatType.channel].includes(this.message.forward.chatType);
+			return ChannelManager.channelTypes.has(this.message.forward.chatType);
 		},
 		forwardAuthorName(): string
 		{

@@ -718,13 +718,14 @@
 }
 
 .bx-messenger-videocall-top-button-text.protected {
-	font: 10px/10px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font: 12px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-medium, 500);
 	text-align: center;
-	font-size: 10px;
 	font-style: normal;
 	color: #BDC1C6;
 	opacity: .6;
+	text-transform: capitalize;
+	margin-top: 2px;
 }
 
 .bx-messenger-videocall-top-button:hover {
@@ -868,9 +869,10 @@
 	margin-right: 4px;
 }
 .bx-messenger-videocall-top-button-icon.protected {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%2212%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M4.979.534c-.459.398-1.286.922-2.088%201.341C2.322%202.235%201.583%202.734%201.202%202.734c-.032%200-.129.085-.132.118-.505%204.153%201.2%206.668%204.474%209.032.022.017.134.017.156%200%203.274-2.364%204.98-4.879%204.474-9.032-.003-.033-.1-.118-.132-.118-.619%200-1.4-.314-2.202-.734-.802-.42-1.629-.944-2.088-1.342-.018-.015-.237-.02-.263%200z%22%20fill%3D%22%23BDC1C6%22%20fill-rule%3D%22evenodd%22%20opacity%3D%22.609%22/%3E%3C/svg%3E');
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='13' fill='none'%3E%3Cpath opacity='.6' fill-rule='evenodd' clip-rule='evenodd' d='M4.86.35c-.495.428-1.387.993-2.25 1.445-.864.453-1.707.79-2.373.79-.035 0-.139.092-.143.127-.544 4.476 1.294 7.185 4.822 9.733.024.017.144.017.168 0 3.528-2.548 5.366-5.257 4.822-9.733-.004-.034-.108-.127-.143-.127-.666 0-1.509-.337-2.373-.79C6.527 1.343 5.635.778 5.14.35c-.019-.016-.255-.022-.28 0z' fill='%2355D0E0'/%3E%3C/svg%3E");
 	width: 10px;
 	height: 12px;
+	margin-top: 2px;
 }
 
 .bx-messenger-videocall-top-separator {
@@ -984,11 +986,17 @@
 	mix-blend-mode: normal;
 }
 
+.bx-messenger-videocall-user-panel-button-icon {
+	opacity: .7;
+}
+
 .bx-messenger-videocall-user-panel-button-icon.background {
 	display: inline-block;
 	width: 12px;
 	height: 12px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.324 2.5h5.352c.455 0 .824.369.824.824v5.352a.824.824 0 01-.824.824H3.324a.824.824 0 01-.824-.824V3.324c0-.455.369-.824.824-.824zm.02 6.155H8.68v-.41L7.257 6.604l-.712.82-1.778-2.051-1.422 1.64v1.642zm4.124-3.439a.688.688 0 100-1.376.688.688 0 000 1.376z' fill='%23fff' opacity='.7'/%3E%3C/svg%3E") no-repeat center;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='12' height='12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M2.825 2h6.35c.539 0 .976.437.976.977v6.349c0 .54-.437.977-.976.977h-6.35a.977.977 0 01-.976-.977v-6.35c0-.539.437-.976.976-.976zm.026 7.302h6.327v-.487L7.491 6.868l-.844.974-2.109-2.434-1.687 1.947v1.947zm4.89-4.08a.816.816 0 100-1.633.816.816 0 000 1.632z' fill='%23fff'/%3E%3C/svg%3E");
+	background-position: center;
+	background-repeat: no-repeat;
 }
 .bx-messenger-videocall-user-panel-button-icon.mask {
 	display: inline-block;
@@ -997,12 +1005,13 @@
 	background: url('./images/masks/avatars.png') no-repeat center center;
 	background-size: contain;
 	margin-top: -4px;
+	opacity: 1;
 }
 .bx-messenger-videocall-user-panel-button-icon.menu {
 	display: inline-block;
 	width: 16px;
 	height: 4px;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2216%22%20height%3D%225%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M14%20.444a2%202%200%20110%204%202%202%200%20010-4zm-6%200a2%202%200%20110%204%202%202%200%20010-4zm-6%200a2%202%200%20110%204%202%202%200%20010-4z%22%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E')  no-repeat center;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='12' height='12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.56 6a1.088 1.088 0 11-2.177 0A1.088 1.088 0 013.56 6zM7.09 6a1.088 1.088 0 11-2.177 0 1.088 1.088 0 012.177 0zm2.44 1.089a1.088 1.088 0 100-2.177 1.088 1.088 0 000 2.177z' fill='%23fff'/%3E%3C/svg%3E") no-repeat center;
 }
 
 .bx-messenger-videocall-user-panel-button-icon.pin {
@@ -1016,7 +1025,9 @@
 	display: inline-block;
 	width: 12px;
 	height: 12px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none'%3E%3Cg opacity='.7' fill='%23fff'%3E%3Cpath d='M6.875 7.168l2.184 2.184.714-.714-6.191-6.19-.714.713 2.214 2.215-.86.656-.403-.403c-.223-.21-.584-.195-.815.035-.23.23-.246.592-.035.815l.964.963-1.88 2.563a.155.155 0 00-.05.147.136.136 0 00.104.105.155.155 0 00.147-.05L4.788 8.3l.984.982c.224.206.581.189.81-.04.229-.229.246-.586.04-.81l-.403-.403.656-.86zM8.843 4.588l-.905 1.186-1.462-1.462 1.186-.904-.41-.41c-.21-.223-.194-.584.036-.814.231-.23.592-.246.816-.035l2.003 2.002c.22.221.21.591-.026.826-.235.235-.605.245-.826.024l-.412-.413z'/%3E%3C/g%3E%3C/svg%3E") no-repeat center;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='12' height='12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.875 7.168l2.184 2.184.713-.714-6.19-6.19-.714.713 2.214 2.215-.86.656-.403-.403c-.223-.21-.584-.195-.815.035-.23.23-.246.592-.035.815l.963.963-1.88 2.563a.155.155 0 00-.05.147.136.136 0 00.105.105.155.155 0 00.147-.05L4.788 8.3l.983.982c.224.206.582.189.81-.04.23-.229.247-.586.04-.81l-.402-.403.656-.86zM8.842 4.588l-.904 1.186-1.462-1.462 1.186-.904-.41-.41c-.21-.223-.194-.584.036-.814.23-.23.592-.246.815-.035l2.004 2.002c.22.221.21.591-.026.826-.235.235-.605.245-.826.024l-.413-.413z' fill='%23fff'/%3E%3C/svg%3E");
+	background-position: center;
+	background-repeat: no-repeat;
 	background-size: contain;
 }
 .bx-messenger-videocall-user-panel-button-text {
@@ -1101,10 +1112,10 @@
 	height: 20px;
 	background-size: contain;
 
-	--excellent-quality-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='26' height='26' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_1621_131011)'%3E%3Cg filter='url(%23filter1_b_1621_131011)' fill='%23fff' fill-opacity='.8'%3E%3Cpath d='M15.852 7.592c0-.43.348-.778.778-.778h.777c.43 0 .778.349.778.778v8.815c0 .43-.348.778-.778.778h-.777a.778.778 0 01-.778-.778V7.592zM11.834 10.184c0-.43.348-.778.777-.778h.778c.43 0 .778.348.778.778v6.222c0 .43-.348.778-.778.778h-.778a.778.778 0 01-.777-.778v-6.222zM7.815 12.778c0-.43.348-.778.778-.778h.777c.43 0 .778.348.778.778v3.63c0 .429-.348.777-.778.777h-.777a.778.778 0 01-.778-.778v-3.63z'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_1621_131011' x='0' y='0' width='26' height='26' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_1621_131011'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_1621_131011' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_b_1621_131011' x='.778' y='-.222' width='24.444' height='24.444' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeGaussianBlur in='BackgroundImageFix' stdDeviation='1.111'/%3E%3CfeComposite in2='SourceAlpha' operator='in' result='effect1_backgroundBlur_1621_131011'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_backgroundBlur_1621_131011' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
-	--good-quality-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='26' height='26' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_1621_131012)'%3E%3Cg filter='url(%23filter1_b_1621_131012)'%3E%3Cpath d='M15.852 7.592c0-.43.348-.778.778-.778h.777c.43 0 .778.349.778.778v8.815c0 .43-.348.778-.778.778h-.777a.778.778 0 01-.778-.778V7.592z' fill='%23FF7C78' fill-opacity='.55'/%3E%3Cpath d='M11.834 10.184c0-.43.348-.778.777-.778h.778c.43 0 .778.348.778.778v6.222c0 .43-.348.778-.778.778h-.778a.778.778 0 01-.777-.778v-6.222zM7.815 12.778c0-.43.348-.778.778-.778h.777c.43 0 .778.348.778.778v3.63c0 .429-.348.777-.778.777h-.777a.778.778 0 01-.778-.778v-3.63z' fill='%23fff' fill-opacity='.8'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_1621_131012' x='0' y='0' width='26' height='26' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_1621_131012'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_1621_131012' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_b_1621_131012' x='.778' y='-.222' width='24.444' height='24.444' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeGaussianBlur in='BackgroundImageFix' stdDeviation='1.111'/%3E%3CfeComposite in2='SourceAlpha' operator='in' result='effect1_backgroundBlur_1621_131012'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_backgroundBlur_1621_131012' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
-	--poor-quality-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='26' height='26' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_1621_131014)'%3E%3Cg filter='url(%23filter1_b_1621_131014)'%3E%3Cpath d='M15.852 7.592c0-.43.348-.778.778-.778h.777c.43 0 .778.349.778.778v8.815c0 .43-.348.778-.778.778h-.777a.778.778 0 01-.778-.778V7.592zM11.834 10.184c0-.43.348-.778.777-.778h.778c.43 0 .778.348.778.778v6.222c0 .43-.348.778-.778.778h-.778a.778.778 0 01-.777-.778v-6.222z' fill='%23FF7C78' fill-opacity='.55'/%3E%3Cpath d='M7.815 12.778c0-.43.348-.778.778-.778h.777c.43 0 .778.348.778.778v3.63c0 .429-.348.777-.778.777h-.777a.778.778 0 01-.778-.778v-3.63z' fill='%23fff' fill-opacity='.8'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_1621_131014' x='0' y='0' width='26' height='26' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_1621_131014'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_1621_131014' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_b_1621_131014' x='.778' y='-.222' width='24.444' height='24.444' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeGaussianBlur in='BackgroundImageFix' stdDeviation='1.111'/%3E%3CfeComposite in2='SourceAlpha' operator='in' result='effect1_backgroundBlur_1621_131014'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_backgroundBlur_1621_131014' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
-	--bad-quality-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='26' height='26' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_1621_131013)'%3E%3Cg filter='url(%23filter1_b_1621_131013)' fill='%23FF7C78' fill-opacity='.55'%3E%3Cpath d='M15.852 7.592c0-.43.348-.778.778-.778h.777c.43 0 .778.349.778.778v8.815c0 .43-.348.778-.778.778h-.777a.778.778 0 01-.778-.778V7.592zM11.834 10.184c0-.43.348-.778.777-.778h.778c.43 0 .778.348.778.778v6.222c0 .43-.348.778-.778.778h-.778a.778.778 0 01-.777-.778v-6.222zM7.815 12.778c0-.43.348-.778.778-.778h.777c.43 0 .778.348.778.778v3.63c0 .429-.348.777-.778.777h-.777a.778.778 0 01-.778-.778v-3.63z'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_1621_131013' x='0' y='0' width='26' height='26' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1.5'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_1621_131013'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_1621_131013' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_b_1621_131013' x='.778' y='-.222' width='24.444' height='24.444' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeGaussianBlur in='BackgroundImageFix' stdDeviation='1.111'/%3E%3CfeComposite in2='SourceAlpha' operator='in' result='effect1_backgroundBlur_1621_131013'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_backgroundBlur_1621_131013' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+	--excellent-quality-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='23' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_1075_40981)'%3E%3Cg filter='url(%23filter1_b_1075_40981)' fill='%23fff'%3E%3Cpath opacity='.8' d='M13.567 5.753a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v7.933a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7V5.753zM9.95 8.087a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v5.6a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7v-5.6zM6.333 10.419a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v3.266a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7V10.42z'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_1075_40981' x='0' y='.719' width='22' height='22' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='2'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0.1 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_1075_40981'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_1075_40981' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_b_1075_40981' x='0' y='-1.281' width='22' height='22' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeGaussianBlur in='BackgroundImageFix' stdDeviation='1'/%3E%3CfeComposite in2='SourceAlpha' operator='in' result='effect1_backgroundBlur_1075_40981'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_backgroundBlur_1075_40981' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+	--good-quality-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='23' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_1075_40970)'%3E%3Cg filter='url(%23filter1_b_1075_40970)' fill='%23fff'%3E%3Cpath opacity='.4' d='M13.567 5.753a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v7.933a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7V5.753z'/%3E%3Cpath opacity='.8' d='M9.95 8.087a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v5.6a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7v-5.6zM6.333 10.419a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v3.266a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7V10.42z'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_1075_40970' x='0' y='.719' width='22' height='22' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='2'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0.1 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_1075_40970'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_1075_40970' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_b_1075_40970' x='0' y='-1.281' width='22' height='22' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeGaussianBlur in='BackgroundImageFix' stdDeviation='1'/%3E%3CfeComposite in2='SourceAlpha' operator='in' result='effect1_backgroundBlur_1075_40970'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_backgroundBlur_1075_40970' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+	--poor-quality-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='23' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_1075_40959)'%3E%3Cg filter='url(%23filter1_b_1075_40959)' fill='%23fff'%3E%3Cpath opacity='.4' d='M13.567 5.753a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v7.933a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7V5.753zM9.95 8.087a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v5.6a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7v-5.6z'/%3E%3Cpath opacity='.8' d='M6.333 10.419a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v3.266a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7V10.42z'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_1075_40959' x='0' y='.719' width='22' height='22' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='2'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0.1 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_1075_40959'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_1075_40959' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_b_1075_40959' x='0' y='-1.281' width='22' height='22' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeGaussianBlur in='BackgroundImageFix' stdDeviation='1'/%3E%3CfeComposite in2='SourceAlpha' operator='in' result='effect1_backgroundBlur_1075_40959'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_backgroundBlur_1075_40959' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+	--bad-quality-icon: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='23' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_1777_122125)'%3E%3Cg filter='url(%23filter1_b_1777_122125)' fill='%23fff'%3E%3Cpath opacity='.4' d='M13.567 5.753a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v7.933a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7V5.753zM9.95 8.087a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v5.6a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7v-5.6zM6.333 10.419a.7.7 0 01.7-.7h.7a.7.7 0 01.7.7v3.266a.7.7 0 01-.7.7h-.7a.7.7 0 01-.7-.7V10.42z'/%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_1777_122125' x='0' y='.719' width='22' height='22' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='2'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0.1 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_1777_122125'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_1777_122125' result='shape'/%3E%3C/filter%3E%3Cfilter id='filter1_b_1777_122125' x='0' y='-1.281' width='22' height='22' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeGaussianBlur in='BackgroundImageFix' stdDeviation='1'/%3E%3CfeComposite in2='SourceAlpha' operator='in' result='effect1_backgroundBlur_1777_122125'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_backgroundBlur_1777_122125' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
 
 	--connection-quality-icon: var(--excellent-quality-icon);
 
@@ -1345,7 +1356,7 @@
 	-webkit-box-align: start;
 	    -ms-flex-align: start;
 	        align-items: flex-start;
-	gap: 12px;
+	gap: 10px;
 	-ms-flex-negative: 0;
 	    flex-shrink: 0;
 	-ms-flex-preferred-size: 33%;
@@ -1419,7 +1430,7 @@
 }
 
 .bx-messenger-videocall-panel-item {
-	width: 50px;
+	width: 60px;
 	/*height: calc(100% - 10px);  !* 100% - top padding *!*/
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -1433,7 +1444,7 @@
 	        align-items: center;
 	gap: 4px;
 	cursor: pointer;
-	max-width: 50px;
+	max-width: 60px;
 	text-align: center;
 	-webkit-tap-highlight-color: transparent;
 }
@@ -1588,7 +1599,9 @@
 	text-align: center;
 	padding: 5px 8px;
 	opacity: 0.7;
-	word-break: break-all;
+	word-break: normal;
+	overflow-wrap: normal;
+	white-space: pre-wrap;
 }
 
 .calm-counter .bx-messenger-videocall-panel-item-counter {
@@ -2598,7 +2611,7 @@
 .bx-messenger-videocall-user-floor-request {
 	display: inline-block;
 	position: absolute;
-	left: 4px;
+	left: 5px;
 	top: 30px;
 	width: 26px;
 	height: 26px;
@@ -2632,7 +2645,6 @@
 	-webkit-box-pack: justify;
 	    -ms-flex-pack: justify;
 	        justify-content: space-between;
-	gap: 4px;
 	padding: 8px;
 	position: absolute;
 	bottom: 0;
@@ -2653,14 +2665,11 @@
 	padding: 3px 4px;
 	border-radius: 6px;
 	background: rgba(24, 23, 23, 0.38);
-	max-width: calc(100% - 48px);
+	max-width: calc(100% - 56px);
 	opacity: 0;
 	-webkit-transition: opacity .2s ease-out;
 	-o-transition: opacity .2s ease-out;
 	transition: opacity .2s ease-out;
-}
-.bx-messenger-videocall-user-name-container.extra-padding{
-	padding-left: 6px;
 }
 
 .bx-messenger-videocall-user-name-container.active {
@@ -2727,7 +2736,7 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
-	max-width: calc(100% - 48px);
+	max-width: calc(100% - 52px);
 }
 .bx-messenger-videocall-user-list-small .bx-messenger-videocall-user-name {
 	font-size: 10px;

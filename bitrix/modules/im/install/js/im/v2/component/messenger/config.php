@@ -25,6 +25,7 @@ return [
 		'im.v2.component.content.settings',
 		'im.v2.component.list.container.copilot',
 		'im.v2.component.content.copilot',
+		'im.v2.lib.analytics',
 		'im.v2.lib.logger',
 		'im.v2.lib.init',
 		'im.v2.const',

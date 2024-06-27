@@ -29,7 +29,7 @@ jn.define('im/messenger/core/chat/application', (require, exports, module) => {
 				})
 			;
 
-			await this.storeManager.buildAsync();
+			await this.storeManager.buildAsync(this.getMutationManager());
 		}
 
 		/**

@@ -2,6 +2,7 @@
  * @module tasks/statemanager/redux/slices/tasks-stages
  */
 jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, module) => {
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 	const { createSlice, createEntityAdapter, createAction } = require('statemanager/redux/toolkit');
 
@@ -10,6 +11,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, mod
 	const selectId = ({ taskId, viewMode, userId }) => `${taskId}_${viewMode}_${userId}`;
 
 	const entityAdapter = createEntityAdapter({ selectId });
+	const initialState = StateCache.getReducerState(sliceName, entityAdapter.getInitialState());
 
 	const { selectById } = entityAdapter.getSelectors((state) => state[sliceName]);
 
@@ -21,10 +23,17 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, mod
 	 * @param {number} userId
 	 * @return {{ stageId: number, canMoveStage: boolean} | undefined}
 	 */
-	const selectTaskStage = (state, taskId, viewMode, userId = env.userId) => {
+	const selectTaskStage = (state, taskId, viewMode, userId = Number(env.userId)) => {
 		const id = selectId({ taskId, viewMode, userId });
 
 		return selectById(state, id);
+	};
+
+	const selectTaskStageByTaskIdOrGuid = (state, taskId, taskGuid, viewMode, userId = Number(env.userId)) => {
+		return (
+			selectTaskStage(state, taskId, viewMode, userId)
+			|| selectTaskStage(state, taskGuid, viewMode, userId)
+		);
 	};
 
 	/**
@@ -45,7 +54,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, mod
 
 	const tasksStagesSlice = createSlice({
 		name: sliceName,
-		initialState: entityAdapter.getInitialState(),
+		initialState,
 		reducers: {
 			taskStageUpserted: {
 				reducer: entityAdapter.upsertMany,
@@ -76,6 +85,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-stages', (require, exports, mod
 		taskStageUpserted,
 		taskStageAdded,
 		selectTaskStage,
+		selectTaskStageByTaskIdOrGuid,
 		selectTaskStageId,
 		setTaskStage,
 	};

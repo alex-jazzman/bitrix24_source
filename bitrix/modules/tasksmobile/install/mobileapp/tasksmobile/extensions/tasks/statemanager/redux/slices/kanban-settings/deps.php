@@ -16,5 +16,5 @@ return [
 		'./src/extra-reducer',
 		'./src/selector',
 		'./src/slice',
-	]
+	],
 ];

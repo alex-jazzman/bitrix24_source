@@ -214,7 +214,7 @@ if (
 		if ($subWindow)
 		{
 			?>
-			<script type="text/javascript">
+			<script>
 				var currentWindow = top.window;
 				if (top.BX.SidePanel && top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
 				{
@@ -257,7 +257,7 @@ elseif ($subWindow)
 	if ((string)$request->get('dontsave') != '')
 	{
 		?>
-		<script type="text/javascript">
+		<script>
 			var currentWindow = top.window;
 			if (top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
 			{
@@ -498,7 +498,7 @@ if ($multiCoupons)
 	$control->Buttons(false, '');
 	$control->Show();
 ?>
-<script type="text/javascript">
+<script>
 	var couponType = BX('<?=$prefix.'TYPE'; ?>'),
 		maxUse = BX('<?=$prefix.'MAX_USE'; ?>'),
 		rowMaxUse;
@@ -703,7 +703,7 @@ else
 	}
 	$control->Show();
 ?>
-<script type="text/javascript">
+<script>
 BX.ready(function(){
 	var obCouponValue = BX('COUPON'),
 		obCouponBtn = BX('COUPON_GENERATE'),

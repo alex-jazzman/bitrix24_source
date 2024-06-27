@@ -7,12 +7,17 @@ jn.define('utils/url', (require, exports, module) => {
 
 	/**
 	 * @function URL
-	 * @param {String} href
-	 * @return {Object}
+	 * @param {string} link
+	 * @return {object}
 	 */
-	function URL(href)
+	function URL(link)
 	{
-		href = prepareLink(href);
+		const href = prepareLink(link);
+
+		if (!href)
+		{
+			return null;
+		}
 
 		const match = href.match(/^(https?:)\/\/(([^#/:?]*)(?::(\d+))?)(\/?[^#?]*)(\?[^#]*|)(#.*|)$/i);
 		if (!match || !Array.isArray(match))
@@ -43,7 +48,7 @@ jn.define('utils/url', (require, exports, module) => {
 	 */
 	function prepareLink(link)
 	{
-		const url = stringify(link.trim());
+		const url = stringify(link).trim();
 
 		// Checks for if url doesn't match either of: http://example.com, https://example.com AND //example.com
 		if (Boolean(url) && !/^(https?:)?\/\//i.test(url))
@@ -62,7 +67,7 @@ jn.define('utils/url', (require, exports, module) => {
 	 */
 	function getParameterByName(url, name)
 	{
-		name = name.replace(/[[\]]/g, '\\$&');
+		name = name.replaceAll(/[[\]]/g, '\\$&');
 		const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`);
 		const results = regex.exec(url);
 		if (!results)
@@ -85,7 +90,7 @@ jn.define('utils/url', (require, exports, module) => {
 	 */
 	function getHttpPath(url)
 	{
-		return URL(url).href || '';
+		return URL(url)?.href || '';
 	}
 
 	/**
@@ -95,7 +100,14 @@ jn.define('utils/url', (require, exports, module) => {
 	 */
 	function isValidLink(url)
 	{
-		return Application.canOpenUrl(getHttpPath(url));
+		const href = getHttpPath(url);
+
+		if (!href)
+		{
+			return false;
+		}
+
+		return Application.canOpenUrl(href);
 	}
 
 	/**

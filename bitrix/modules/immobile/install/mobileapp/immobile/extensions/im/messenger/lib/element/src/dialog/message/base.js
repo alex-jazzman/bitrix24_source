@@ -5,8 +5,9 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { OwnMessageStatus, DialogType } = require('im/messenger/const');
+	const { OwnMessageStatus, BotCode, DialogType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { parser } = require('im/messenger/lib/parser');
@@ -82,7 +83,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setId(modelMessage.id)
 				.setTestId(modelMessage.id)
 				.setUsername(modelMessage.authorId)
-				.setAvatar(modelMessage.authorId)
+				.setAvatar(modelMessage.authorId, modelMessage.chatId, modelMessage.id)
 				.setUserColor(modelMessage.authorId)
 				.setMe(modelMessage.authorId)
 				.setTime(modelMessage.date)
@@ -91,7 +92,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setForwardText(modelMessage)
 				.setLikes(modelMessage.reactions)
 				.setReactions(modelMessage.reactions)
-				.setShowAvatarsInReaction(options.showAvatarsInReaction)
+				.setShowAvatarsInReaction(String(modelMessage.id), options)
 				.setShowUsername(modelMessage, options.showUsername)
 				.setShowAvatar(modelMessage, options.showAvatar)
 				.setFontColor(options.fontColor)
@@ -113,6 +114,14 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		getType()
 		{
 			throw new Error('Message: getType() must be override in subclass.');
+		}
+
+		/**
+		 * @return {MessagesModelState}
+		 */
+		getModelMessage()
+		{
+			return serviceLocator.get('core').getStore().getters['messagesModel/getById'](this.id);
 		}
 
 		setId(id)
@@ -254,7 +263,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			)
 			{
 				const messageId = modelMessage.id || modelMessage.templateId;
-				messageText += `\n\n[[b]ID:[/b] ${messageId}]`;
+				const previousId = modelMessage.previousId;
+				const nextId = modelMessage.nextId;
+				messageText += `\n\n[[b]previousId:[/b] ${previousId}]`;
+				messageText += `\n[[b]id:[/b] ${messageId}]`;
+				messageText += `\n[[b]nextId:[/b] ${nextId}]`;
 			}
 
 			const message = parser.decodeMessageFromText(messageText, options);
@@ -381,11 +394,22 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
-		setShowAvatarsInReaction(showAvatarsInReaction)
+		/**
+		 *
+		 * @param {string} messageId
+		 * @param {CreateMessageOptions} options
+		 * @return {Message}
+		 */
+		setShowAvatarsInReaction(messageId, options)
 		{
-			if (Type.isBoolean(showAvatarsInReaction))
+			if (Type.isBoolean(options.showAvatarsInReaction))
 			{
-				this.showAvatarsInReaction = showAvatarsInReaction;
+				this.showAvatarsInReaction = options.showAvatarsInReaction;
+			}
+
+			if (options.initialPostMessageId === messageId)
+			{
+				this.showAvatarsInReaction = false;
 			}
 
 			return this;
@@ -441,7 +465,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				return result;
 			});
 
-			const unreadCounter = serviceLocator.get('core').getStore().getters['commentModel/getCommentsCounter']?.({
+			const unreadCounter = serviceLocator.get('core').getStore().getters['commentModel/getCommentCounter']?.({
 				channelId: modelMessage.chatId,
 				commentChatId: commentInfo.chatId,
 			}) ?? null;
@@ -453,13 +477,12 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				})
 			;
 
-
 			this.commentInfo = {
 				title,
 				totalCounter: messageCount,
 				unreadCounter: unreadCounter ? {
-					color: AppTheme.colors.accentMainPrimary,
-					value: unreadCounter,
+					color: Theme.colors.accentMainSuccess,
+					value: `+${unreadCounter}`,
 				} : null,
 				users: commentUsers.length > 0 ? commentUsers : null,
 			};
@@ -795,7 +818,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 			const userName = user.name || user.lastName || user.firstName;
 
-			if (forward.chatType === DialogType.openChannel)
+			if ([DialogType.openChannel, DialogType.generalChannel].includes(forward.chatType))
 			{
 				this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_CHANNEL')
 					.replace('#USER_NAME#', userName)
@@ -866,6 +889,18 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		setAuthorTopMessage(value)
 		{
 			this.isAuthorTopMessage = value;
+		}
+
+		setUserNameColor(authorId)
+		{
+			this.style.userNameColor = AppTheme.colors.chatMyPrimary1;
+
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
+			const isCopilot = user.bot && user.botData?.code === BotCode.copilot;
+			if (isCopilot)
+			{
+				this.style.userNameColor = AppTheme.colors.accentMainCopilot;
+			}
 		}
 	}
 

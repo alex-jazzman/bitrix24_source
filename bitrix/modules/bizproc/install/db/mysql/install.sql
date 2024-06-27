@@ -397,3 +397,16 @@ CREATE TABLE b_bp_task_search_content
 	index ix_bp_task_search_1(WORKFLOW_ID),
 	fulltext index ix_bp_task_search_2 (SEARCH_CONTENT)
 );
+
+CREATE TABLE b_bp_workflow_user_comment
+(
+	USER_ID int NOT NULL DEFAULT 0,
+	WORKFLOW_ID varchar(32) NOT NULL,
+	UNREAD_CNT int NOT NULL DEFAULT 0,
+	LAST_TYPE tinyint NOT NULL DEFAULT 0,
+	MODIFIED datetime NOT NULL,
+	primary key (USER_ID, WORKFLOW_ID),
+	index ix_bp_wuc_wf(WORKFLOW_ID),
+	index ix_bp_wuc_lt(LAST_TYPE),
+	index ix_bp_wuc_ltm(LAST_TYPE, MODIFIED)
+);

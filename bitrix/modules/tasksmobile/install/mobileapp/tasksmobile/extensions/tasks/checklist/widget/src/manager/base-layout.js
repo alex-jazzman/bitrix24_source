@@ -3,8 +3,8 @@
  */
 jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { moreWithDot } = require('assets/common');
 	const { Color } = require('tokens');
+	const { outline } = require('assets/icons');
 	const { PropTypes } = require('utils/validation');
 
 	/**
@@ -57,13 +57,20 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 
 		/**
 		 * @public
-		 * @return {Checklist}
+		 * @return {PageManager}
 		 */
 		getParentWidget()
 		{
 			const { parentWidget } = this.props;
 
-			return parentWidget || PageManager;
+			if (!parentWidget)
+			{
+				console.warn('ChecklistWidget: parameter <parentWidget> is not passed to the component');
+
+				return null;
+			}
+
+			return parentWidget;
 		}
 
 		/**
@@ -93,10 +100,10 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 		 */
 		actionsAfterOpenWidget(layoutWidget)
 		{
-			const { focusedItemId } = this.props;
+			const { focusedItemId, highlightMoreButton } = this.props;
 
 			this.setLayoutWidget(layoutWidget);
-			this.showMoreButton();
+			this.showMoreButton({ highlightMoreButton });
 
 			if (focusedItemId)
 			{
@@ -116,10 +123,10 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 					type: 'more',
 					callback: onShowMoreMenu,
 					svg: {
-						content: moreWithDot(
-							Color.base4,
-							highlightMoreButton ? Color.accentMainPrimary : null,
-						),
+						content: outline.moreWithBackgroundAndDot({
+							moreColor: highlightMoreButton ? Color.baseWhiteFixed : Color.base4.toHex(),
+							backgroundColor: highlightMoreButton ? Color.accentMainPrimary.toHex() : null,
+						}),
 					},
 				},
 			]);
@@ -140,7 +147,7 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 				button.push({
 					type: 'text',
 					name: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_DONE'),
-					color: Color.accentExtraDarkblue,
+					color: Color.accentExtraDarkblue.toHex(),
 					callback: this.handleOnComplete,
 				});
 			}

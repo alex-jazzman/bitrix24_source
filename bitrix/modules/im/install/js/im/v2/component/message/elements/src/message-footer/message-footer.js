@@ -1,4 +1,5 @@
 import { ChatType } from 'im.v2.const';
+import { ChannelManager } from 'im.v2.lib.channel';
 
 import { CommentsPanel } from './components/comments-panel';
 
@@ -36,7 +37,7 @@ export const MessageFooter = {
 		},
 		isChannelPost(): boolean
 		{
-			return [ChatType.channel, ChatType.openChannel].includes(this.dialog.type);
+			return ChannelManager.isChannel(this.dialogId);
 		},
 		isSystemMessage(): boolean
 		{

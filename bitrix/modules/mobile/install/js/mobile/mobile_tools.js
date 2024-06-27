@@ -285,6 +285,13 @@
 					},
 				},
 				{
+					resolveFunction: BX.MobileTools.memberIdFromSignDocumentUrl,
+					openFunction(memberId) {
+						// eslint-disable-next-line no-undef
+						BXMobileApp.Events.postToComponent('signbackground::router', memberId);
+					},
+				},
+				{
 					resolveFunction: BX.MobileTools.actionFromTaskActionUrl,
 					openFunction(data) {
 						// eslint-disable-next-line no-undef
@@ -370,6 +377,26 @@
 						data.siteDir = BX.message('SITE_DIR');
 						// eslint-disable-next-line no-undef
 						BXMobileApp.Events.postToComponent('projectbackground::project::action', data, 'background');
+					},
+				},
+				{
+					resolveFunction: BX.MobileTools.getMessengerOpenDialogParamsFromUrl,
+					openFunction(params) {
+						const openDialogOptions = {
+							dialogId: params.dialogId,
+						};
+
+						if (params.messageId)
+						{
+							openDialogOptions.messageId = params.messageId;
+							openDialogOptions.withMessageHighlight = true;
+						}
+
+						BXMobileApp.Events.postToComponent(
+							'ImMobile.Messenger.Dialog:open',
+							openDialogOptions,
+							params.componentCode,
+						);
 					},
 				},
 			];
@@ -547,6 +574,16 @@
 
 			return null;
 		},
+		memberIdFromSignDocumentUrl(url)
+		{
+			var result = url.match(/\/sign\/link\/member\/(\d+)\//i);
+			if (result)
+			{
+				return result[1];
+			}
+
+			return null;
+		},
 		diskFromUrl(url)
 		{
 			const regExpMap = [
@@ -660,6 +697,46 @@
 						action: 'view',
 					};
 				}
+			}
+
+			return null;
+		},
+		getMessengerOpenDialogParamsFromUrl(url)
+		{
+			const regs = [
+				/\/online\/\?IM_DIALOG=(\d+|chat\d+)&IM_MESSAGE=(\d+)/i,
+				/\/online\/\?IM_DIALOG=(\d+|chat\d+)/i,
+				/\/online\/\?IM_COPILOT=(\d+|chat\d+)&IM_MESSAGE=(\d+)/i,
+				/\/online\/\?IM_COPILOT=(\d+|chat\d+)/i,
+			];
+
+			for (const reg of regs)
+			{
+				const result = url.match(reg);
+				if (!result)
+				{
+					continue;
+				}
+
+				let componentCode = 'im.messenger';
+				if (result[0].includes('IM_COPILOT'))
+				{
+					componentCode = 'im.copilot.messenger';
+				}
+
+				const dialogId = result[1];
+				const messageId = result[2];
+				const openDialogParams = {
+					componentCode,
+					dialogId,
+				};
+
+				if (messageId)
+				{
+					openDialogParams.messageId = parseInt(messageId, 10);
+				}
+
+				return openDialogParams;
 			}
 
 			return null;

@@ -39,11 +39,12 @@ return [
 	'rel' => [
 		'crm.activity.todo-notification-skip-menu',
 		'crm.activity.todo-ping-settings-menu',
-		'main.core.events',
-		'main.core',
 		'crm.kanban.restriction',
 		'crm.kanban.sort',
+		'main.core.events',
 		'main.popup',
+		'ui.entity-selector',
+		'main.core',
 	],
 	'skip_core' => false,
 	'settings' => [
@@ -51,6 +52,7 @@ return [
 		'isAIEnabledInGlobalSettings' => $isAIEnabledInGlobalSettings,
 		'allAIOperationTypes' => $allAIOperationTypes,
 		'transcribeAIOperationType' => $transcribeAIOperationType,
+		'aiDisabledSliderCode' => \Bitrix\Crm\Integration\AI\AIManager::AI_DISABLED_SLIDER_CODE,
 	],
 	'lang_additional' => $langAdditional,
 ];

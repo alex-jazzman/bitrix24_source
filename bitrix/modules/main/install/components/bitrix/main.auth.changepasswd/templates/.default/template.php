@@ -63,7 +63,7 @@ $fields = $arResult['FIELDS'];
 							<?= Loc::getMessage('MAIN_AUTH_CHD_SECURE_NOTE');?>
 						</div>
 					</div>
-					<script type="text/javascript">
+					<script>
 						document.getElementById('bx_auth_secure').style.display = '';
 					</script>
 				<?endif;?>
@@ -80,7 +80,7 @@ $fields = $arResult['FIELDS'];
 							<?= Loc::getMessage('MAIN_AUTH_CHD_SECURE_NOTE');?>
 						</div>
 					</div>
-					<script type="text/javascript">
+					<script>
 						document.getElementById('bx_auth_secure2').style.display = '';
 					</script>
 				<?endif;?>
@@ -132,6 +132,6 @@ $fields = $arResult['FIELDS'];
 	</form>
 </div>
 
-<script type="text/javascript">
+<script>
 	document.bform.<?= $fields['login'];?>.focus();
 </script>

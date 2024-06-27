@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector\Access\AccessController;
+use Bitrix\BIConnector\Access\ActionDictionary;
 use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
 use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
@@ -15,9 +17,10 @@ use Bitrix\BIConnector\Superset\Grid\DashboardGrid;
 use Bitrix\BIConnector\Superset\Grid\Settings\DashboardSettings;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
 use Bitrix\BIConnector\Superset\UI\UIHelper;
-use Bitrix\Bitrix24;
-use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\Base;
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
@@ -75,18 +78,8 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 		$this->initGridFilter();
 		$this->initCreateButton();
 		$this->initToolbar();
-
-		$ormParams = $this->getOrmParams();
-		if (
-			!empty($ormParams['filter']['TAGS.ID'])
-			&& is_array($ormParams['filter']['TAGS.ID'])
-			&& count($ormParams['filter']['TAGS.ID']) > 1
-		)
-		{
-			$ormParams['group'] = 'ID';
-		}
-		$totalCount = $this->getSupersetController()->getDashboardRepository()->getCount($ormParams);
-		$this->grid->initPagination($totalCount);
+		$this->arResult['SHOW_DELETE_INSTANCE_BUTTON'] = UIHelper::needShowDeleteInstanceButton();
+		$this->arResult['NEED_SHOW_TOP_MENU_GUIDE'] = $this->isNeedShowTopMenuGuide();
 	}
 
 	private function initGrid(): void
@@ -105,6 +98,27 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 		{
 			$this->grid->getOptions()->setSorting('ID', 'desc');
 		}
+
+		$query = SupersetDashboardTable::query()
+			->setSelect(['ID'])
+			->setCacheTtl(3600)
+		;
+		$accessFilter = $this->getAccessFilter();
+		if ($accessFilter)
+		{
+			$query->setFilter($accessFilter);
+		}
+		$ormParams = $this->getOrmParams();
+		if (
+			!empty($ormParams['filter']['TAGS.ID'])
+			&& is_array($ormParams['filter']['TAGS.ID'])
+			&& count($ormParams['filter']['TAGS.ID']) > 1
+		)
+		{
+			$query->setGroup('ID');
+		}
+		$totalCount = $query->queryCountTotal();
+		$grid->initPagination($totalCount);
 	}
 
 	private function initGridFilter(): void
@@ -157,6 +171,19 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 			$ormParams['filter']['=SUBQUERY.COUNT'] = count($ormParams['filter']['TAGS.ID']);
 		}
 
+		$pinnedDashboardIds = CUserOptions::GetOption('biconnector', 'grid_pinned_dashboards', []);
+		if (!empty($pinnedDashboardIds))
+		{
+			$ormParams['runtime'][] = new ExpressionField(
+				'IS_PINNED',
+				'CASE WHEN %s IN (' . implode(',', $pinnedDashboardIds) . ') THEN 1 ELSE 0 END',
+				['ID'],
+				['data_type' => 'integer']
+			);
+			$ormParams['order'] = ['IS_PINNED' => 'DESC'] + $ormParams['order'];
+			$ormParams['select'][] = 'IS_PINNED';
+		}
+
 		return $ormParams;
 	}
 
@@ -177,19 +204,25 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 		$mainButton = $splitButton->getMainButton();
 		$mainButton->getAttributeCollection()['onclick'] = $openMarketScript;
 
-		$splitButton->setMenu([
-			'items' => [
-				[
-					'text' => Loc::getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_CREATE_DASHBOARD'),
-					'onclick' => new JsCode($openMarketScript),
-				],
-				[
-					'text' => Loc::getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_NEW_DASHBOARD'),
-					'onclick' => new Bitrix\UI\Buttons\JsCode(
-						'this.close(); BX.BIConnector.SupersetDashboardGridManager.Instance.createEmptyDashboard()'
-					),
-				],
+		$menuItems = [
+			[
+				'text' => Loc::getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_CREATE_DASHBOARD'),
+				'onclick' => new JsCode($openMarketScript),
 			],
+		];
+
+		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_BIC_DASHBOARD_CREATE))
+		{
+			$menuItems[] = [
+				'text' => Loc::getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_LIST_MENU_ITEM_NEW_DASHBOARD'),
+				'onclick' => new Bitrix\UI\Buttons\JsCode(
+					'this.close(); BX.BIConnector.SupersetDashboardGridManager.Instance.createEmptyDashboard()'
+				),
+			];
+		}
+
+		$splitButton->setMenu([
+			'items' => $menuItems,
 			'closeByEsc' => true,
 			'angle' => true,
 			'offsetLeft' => 115,
@@ -201,10 +234,7 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 
 	private function initToolbar(): void
 	{
-		if (
-			CurrentUser::get()->isAdmin()
-			&& Bitrix24\LicenseScanner\Manager::getInstance()->shouldWarnPortal()
-		)
+		if (UIHelper::needShowDeleteInstanceButton())
 		{
 			$clearButton = new Button([
 				'color' => Color::DANGER,
@@ -215,13 +245,6 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 			]);
 			Toolbar::addButton($clearButton);
 		}
-
-		$settingButton = new SettingsButton([
-			'click' => new JsCode(
-				'BX.BIConnector.DashboardManager.openSettingPeriodSlider()'
-			),
-		]);
-		Toolbar::addButton($settingButton);
 	}
 
 	/**
@@ -230,8 +253,16 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 	 */
 	private function getSupersetRows(array $ormParams): array
 	{
-		$userId = CurrentUser::get()->getId();
 		$superset = $this->getSupersetController();
+		$accessFilter = $this->getAccessFilter();
+		if ($accessFilter)
+		{
+			$ormParams['filter'] = [
+				$accessFilter,
+				$ormParams['filter'],
+			];
+		}
+
 		$dashboardList = $superset->getDashboardRepository()->getList($ormParams);
 		if (!$dashboardList)
 		{
@@ -257,7 +288,6 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 		$dashboardTagsQuery = SupersetDashboardTable::getList([
 			'filter' => [
 				'=ID' => array_keys($dashboardIds),
-				'=TAGS.USER_ID' => $userId,
 			],
 			'select' => ['TAGS', 'ID']
 		]);
@@ -271,7 +301,6 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 				$tagList[] = [
 					'ID' => $tag->getId(),
 					'TITLE' => $tag->getTitle(),
-					'IS_FILTERED' => !empty($ormParams['filter']['TAGS.ID']) && in_array($tag->getId(), $ormParams['filter']['TAGS.ID'])
 				];
 			}
 
@@ -279,7 +308,35 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 			$dashboardList[$index]['TAGS'] = $tagList;
 		}
 
+		$dashboardsInTopMenu = CUserOptions::getOption('biconnector', 'top_menu_dashboards');
+		foreach ($dashboardsInTopMenu as $dashboardId)
+		{
+			$index = $dashboardIds[$dashboardId] ?? null;
+			if ($index !== null)
+			{
+				$dashboardList[$index]['IS_IN_TOP_MENU'] = true;
+			}
+		}
+
+		$pinnedDashboards = CUserOptions::getOption('biconnector', 'grid_pinned_dashboards', []);
+		foreach ($pinnedDashboards as $dashboardId)
+		{
+			$index = $dashboardIds[$dashboardId] ?? null;
+			if ($index !== null)
+			{
+				$dashboardList[$index]['IS_PINNED'] = true;
+			}
+		}
+
 		return $dashboardList;
+	}
+
+	private function getAccessFilter(): ?array
+	{
+		return AccessController::getCurrent()->getEntityFilter(
+			ActionDictionary::ACTION_BIC_DASHBOARD_VIEW,
+			SupersetDashboardTable::class
+		);
 	}
 
 	private function getSupersetController(): SupersetController
@@ -290,5 +347,26 @@ class ApacheSupersetDashboardListComponent extends CBitrixComponent
 		}
 
 		return $this->supersetController;
+	}
+
+	private function isNeedShowTopMenuGuide(): bool
+	{
+		if (!SupersetInitializer::isSupersetActive())
+		{
+			return false;
+		}
+
+		if ((int)$this->grid->getPagination()?->getRecordCount() <= 0)
+		{
+			return false;
+		}
+
+		$guideOption = CUserOptions::GetOption('biconnector', 'top_menu_guide');
+		if (!is_array($guideOption))
+		{
+			return true;
+		}
+
+		return !$guideOption['is_over'];
 	}
 }

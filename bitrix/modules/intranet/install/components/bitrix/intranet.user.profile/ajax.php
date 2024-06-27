@@ -1,6 +1,7 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Intranet\Invitation;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bitrix24\Integrator;
@@ -88,6 +89,11 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			'currentUserId' => $currentUser->getId(),
 			'isCurrentUserAdmin' => $currentUser->isAdmin()
 		]);
+	}
+
+	public function confirmNotifyUserAction($userId, $isAccept): bool
+	{
+		return Invitation::confirmUserRequest((int)$userId, $isAccept === 'Y')->isSuccess();
 	}
 
 	public function deleteUserAction()

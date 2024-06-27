@@ -34,14 +34,17 @@ Class mobile extends CModule
 
 	private function getSubmodules(): ?array {
 		return [
-			"im",
-			"crm",
-			"tasks",
-			"calendar",
-			"imconnector",
+			'im',
+			'crm',
+			'tasks',
+			'calendar',
+			'imconnector',
 			"catalog",
 			'bizproc',
 			'lists',
+			'sign',
+			'intranet',
+			'stafftrack',
 		];
 	}
 
@@ -129,17 +132,17 @@ Class mobile extends CModule
 			$mobileAppFound = false;
 			while ($template = $dbTemplates->Fetch())
 			{
-				if ($template["TEMPLATE"] == "mobile_app")
+				if ($template["TEMPLATE"] === "mobile_app")
 				{
 					$mobileAppFound = true;
 					$template = $arAppTempalate;
 				}
 
-				$arFields["TEMPLATE"][] = array(
+				$arFields["TEMPLATE"][] = [
 					"TEMPLATE" => $template['TEMPLATE'],
 					"SORT" => $template['SORT'],
 					"CONDITION" => $template['CONDITION']
-				);
+				];
 			}
 
 			if (!$mobileAppFound)
@@ -152,10 +155,14 @@ Class mobile extends CModule
 			$obSite->Update($default_site_id, $arFields);
 		}
 
-		if(File::isFileExists(Application::getDocumentRoot(). "/mobile/webdav/index.php"))
+		if (File::isFileExists(Application::getDocumentRoot(). "/mobile/webdav/index.php"))
+		{
 			CUrlRewriter::ReindexFile("/mobile/webdav/index.php");
-		if(File::isFileExists(Application::getDocumentRoot(). "/mobile/disk/index.php"))
+		}
+		if (File::isFileExists(Application::getDocumentRoot(). "/mobile/disk/index.php"))
+		{
 			CUrlRewriter::ReindexFile("/mobile/disk/index.php");
+		}
 
 		$siteId = \CSite::GetDefSite();
 		if ($siteId)
@@ -182,12 +189,11 @@ Class mobile extends CModule
 				"PATH" => "/bitrix/services/mobile/webcomponent.php",
 			]);
 			\Bitrix\Main\UrlRewriter::add($siteId, [
-					"CONDITION" => "#^/mobile/disk/(?<hash>[0-9]+)/download#",
-					"RULE" => "download=1&objectId=\$1",
-					"ID" => "bitrix:mobile.disk.file.detail",
-					"PATH" => "/mobile/disk/index.php",
-				]
-			);
+				"CONDITION" => "#^/mobile/disk/(?<hash>[0-9]+)/download#",
+				"RULE" => "download=1&objectId=\$1",
+				"ID" => "bitrix:mobile.disk.file.detail",
+				"PATH" => "/mobile/disk/index.php",
+			]);
 		}
 
 		return true;
@@ -239,10 +245,10 @@ Class mobile extends CModule
 
 	function DoUninstall()
 	{
-		global $USER, $DB, $APPLICATION, $step;
+		global $USER, $APPLICATION, $step;
 		if ($USER->IsAdmin())
 		{
-			$step = intval($step);
+			$step = (int)$step;
 			if ($step < 2)
 			{
 

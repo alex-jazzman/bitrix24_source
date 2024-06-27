@@ -7,8 +7,13 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Filter;
+use Bitrix\Main\Filter\UserDataProvider;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Main\PhoneNumber;
+use Bitrix\Main\Grid\Export\ExcelExporter;
+use Bitrix\Intranet\User\Filter\Presets\FilterPresetManager;
+use Bitrix\Intranet\User\Filter\Provider\IntranetUserDataProvider;
+use Bitrix\Intranet\User\Filter\IntranetUserSettings;
 
 Loc::loadMessages(__FILE__);
 
@@ -386,82 +391,6 @@ class CIntranetUserListComponent extends UserList
 		return $result;
 	}
 
-	private function getFilterPresets(\Bitrix\Main\Filter\Filter $entityFilter)
-	{
-		$result = [];
-		$fields = $entityFilter->getFields();
-
-		$defaultFilterIds = $entityFilter->getDefaultFieldIDs();
-		$defaultFieldsValues = [];
-		foreach ($defaultFilterIds as $fieldId)
-		{
-			switch ($fields[$fieldId])
-			{
-				case 'dest_selector':
-					$value = false;
-					break;
-				default:
-					$value = '';
-			}
-			$defaultFieldsValues[$fieldId] = $value;
-		}
-
-		if (!Filter\UserDataProvider::extranetSite())
-		{
-			$result['company'] = [
-				'name' => Loc::getMessage('INTRANET_USER_LIST_FILTER_PRESET_COMPANY'),
-				'fields' => array_merge($defaultFieldsValues, [
-					'FIRED' => 'N'
-				]),
-				'default' => true
-			];
-		}
-		else
-		{
-			$result['employees'] = [
-				'name' => Loc::getMessage('INTRANET_USER_LIST_FILTER_PRESET_EMPLOYEES'),
-				'fields' => array_merge($defaultFieldsValues, [
-					'EXTRANET' => 'N'
-				]),
-				'default' => true
-			];
-		}
-
-		if (Filter\UserDataProvider::getExtranetAvailability())
-		{
-			$result['extranet'] = [
-				'name' => Loc::getMessage(!Filter\UserDataProvider::extranetSite() ? 'INTRANET_USER_LIST_FILTER_PRESET_EXTRANET' : 'INTRANET_USER_LIST_FILTER_PRESET_CONTACTS'),
-				'fields' => array_merge($defaultFieldsValues, [
-					'EXTRANET' => 'Y',
-					'FIRED' => 'N'
-				])
-			];
-		}
-
-		if (Filter\UserDataProvider::getInvitedAvailability())
-		{
-			$result['invited'] = [
-				'name' => Loc::getMessage('INTRANET_USER_LIST_FILTER_PRESET_INVITED'),
-				'fields' => array_merge($defaultFieldsValues, [
-					'INVITED' => 'Y',
-					'FIRED' => 'N'
-				])
-			];
-		}
-
-		if (Filter\UserDataProvider::getFiredAvailability())
-		{
-			$result['fired'] = [
-				'name' => Loc::getMessage('INTRANET_USER_LIST_FILTER_PRESET_FIRED'),
-				'fields' => array_merge($defaultFieldsValues, [
-					'FIRED' => 'Y'
-				])
-			];
-		}
-
-		return $result;
-	}
-
 	private function getOrder(\Bitrix\Main\Grid\Options $gridOptions)
 	{
 		$result = [];
@@ -565,6 +494,12 @@ class CIntranetUserListComponent extends UserList
 			{
 				$query->addFilter('=UF_DEPARTMENT', $value);
 				unset($filter[$fieldName]);
+				continue;
+			}
+
+			if (is_int($fieldName))
+			{
+				$query->addFilter(null, $value);
 				continue;
 			}
 
@@ -755,6 +690,7 @@ class CIntranetUserListComponent extends UserList
 
 			$query->addSelect($fieldName);
 		}
+		$query->addSelect('INVITATION');
 	}
 
 	private function addFilterInteger(&$filter, array $params = [])
@@ -849,25 +785,44 @@ class CIntranetUserListComponent extends UserList
 			'IS_REAL_USER' => 'Y'
 		];
 
-		if (!Filter\UserDataProvider::getFiredAvailability())
+		if (!UserDataProvider::getFiredAvailability())
 		{
-			$result['=ACTIVE'] = 'Y';
+			$result[] = [
+				'LOGIC' => 'OR',
+				[
+					'=ACTIVE' => 'N',
+					'!CONFIRM_CODE' => false,
+				],
+				[
+					'=ACTIVE' => 'Y'
+				]
+			];
 		}
 		elseif (!empty($gridFilter['FIRED']))
 		{
 			if ($gridFilter['FIRED'] === 'Y')
 			{
 				$result['=ACTIVE'] = 'N';
+				$result['CONFIRM_CODE'] = false;
 			}
 			elseif ($gridFilter['FIRED'] === 'N')
 			{
-				$result['=ACTIVE'] = 'Y';
+				$result[] = [
+					'LOGIC' => 'OR',
+					[
+						'=ACTIVE' => 'N',
+						'!CONFIRM_CODE' => false,
+					],
+					[
+						'=ACTIVE' => 'Y'
+					]
+				];
 			}
 		}
 
 		if (
 			!empty($gridFilter['EXTRANET'])
-			&& Filter\UserDataProvider::getExtranetAvailability()
+			&& UserDataProvider::getExtranetAvailability()
 		)
 		{
 			if ($gridFilter['EXTRANET'] === 'Y')
@@ -893,7 +848,7 @@ class CIntranetUserListComponent extends UserList
 
 		if (
 			!empty($gridFilter['VISITOR'])
-			&& Filter\UserDataProvider::getVisitorAvailability()
+			&& UserDataProvider::getVisitorAvailability()
 		)
 		{
 			$extranetGroupId = Loader::includeModule('extranet') ? \CExtranet::getExtranetUserGroupId() : 0;
@@ -919,33 +874,54 @@ class CIntranetUserListComponent extends UserList
 		}
 
 		if (
+			!empty($gridFilter['WAIT_CONFIRMATION'])
+			&& IntranetUserDataProvider::getWaitConfirmationAvailability()
+		)
+		{
+			if ($gridFilter['WAIT_CONFIRMATION'] === 'Y')
+			{
+				$result['=ACTIVE'] = 'N';
+				$result['!CONFIRM_CODE'] = false;
+			}
+			elseif ($gridFilter['WAIT_CONFIRMATION'] === 'N')
+			{
+				$result['CONFIRM_CODE'] = false;
+			}
+		}
+
+		if (
 			!empty($gridFilter['INVITED'])
-			&& Filter\UserDataProvider::getInvitedAvailability()
+			&& UserDataProvider::getInvitedAvailability()
 		)
 		{
 			if ($gridFilter['INVITED'] === 'Y')
 			{
+				$result['=ACTIVE'] = 'Y';
 				$result['!CONFIRM_CODE'] = false;
+				if (!\Bitrix\Intranet\CurrentUser::get()->isAdmin())
+				{
+					$result['INVITATION.ORIGINATOR_ID'] = \Bitrix\Intranet\CurrentUser::get()->getId();
+				}
 			}
 			else
 			{
-				$result['CONFIRM_CODE'] = false;
+//				$result['CONFIRM_CODE'] = false;
 			}
 		}
 		elseif (
 			(isset($gridFilter['PRESET_ID'])
 				&& $gridFilter['PRESET_ID'] === 'company')
-			|| !Filter\UserDataProvider::getInvitedAvailability()
+			|| !\Bitrix\Intranet\CurrentUser::get()->isAdmin()
 		)
 		{
-			$result['CONFIRM_CODE'] = false;
+//			$result['CONFIRM_CODE'] = false;
 		}
 
 		if (
 			!empty($gridFilter['INTEGRATOR'])
 			&& $gridFilter['INTEGRATOR'] === 'Y'
-			&& method_exists('Bitrix\Main\Filter\UserDataProvider', 'getIntegratorAvailability')
-			&& Filter\UserDataProvider::getIntegratorAvailability()
+			&& method_exists('Bitrix\Intranet\Filter\UserDataProvider', 'getIntegratorAvailability')
+			&& UserDataProvider::getIntegratorAvailability()
 			&& Loader::includeModule('bitrix24')
 		)
 		{
@@ -959,8 +935,8 @@ class CIntranetUserListComponent extends UserList
 		if (
 			!empty($gridFilter['ADMIN'])
 			&& $gridFilter['ADMIN'] === 'Y'
-			&& method_exists('Bitrix\Main\Filter\UserDataProvider', 'getAdminAvailability')
-			&& Filter\UserDataProvider::getAdminAvailability()
+			&& method_exists('Bitrix\Intranet\Filter\UserDataProvider', 'getAdminAvailability')
+			&& UserDataProvider::getAdminAvailability()
 		)
 		{
 			$result['=GROUPS.GROUP_ID'] = 1;
@@ -1447,149 +1423,47 @@ class CIntranetUserListComponent extends UserList
 	{
 		$result = [];
 
-		$this->initAvailableEntityFields();
-
-		$entityFilter = Filter\Factory::createEntityFilter(
-			\Bitrix\Main\UserTable::getUfId(),
-			[
-				'ID' => $this->filterId,
-				'WHITE_LIST' => $this->arParams['USER_PROPERTY_LIST']
-			]
-		);
-
+		$result['GRID_ID'] = $this->filterId;
+		$result['FILTER_ID'] = $this->filterId;
+		$result['EXTRANET_SITE'] = ($this->extranetSite() ? 'Y' : 'N');
 		$result['EXCEL_EXPORT_LIMITED'] = (
 			Loader::includeModule('bitrix24')
 			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('intranet_user_export_excel')
 		);
 
-		if (
-			$result['EXCEL_EXPORT_LIMITED']
-			&& isset($this->arParams['EXPORT_TYPE'])
-			&& $this->arParams['EXPORT_TYPE'] === 'excel'
-		)
+		$settings = new \Bitrix\Intranet\User\Grid\Settings\UserSettings([
+			'ID' => 'INTRANET_USER_LIST_'.SITE_ID,
+			'SHOW_ROW_CHECKBOXES' => false,
+			'MODE' => $this->arParams['EXPORT_TYPE'] ?? 'html'
+		]);
+
+		$this->grid = new \Bitrix\Intranet\User\Grid\UserGrid($settings);
+		$this->grid->initPagination(\Bitrix\Intranet\UserTable::getCount($this->grid->getOrmFilter()));
+		$this->grid->getPagination()->setCurrentPage(1);
+		$this->grid->processRequest();
+		$params = $this->grid->getOrmParams();
+
+		$query = \Bitrix\Intranet\UserTable::query();
+		$query->setSelect($params['select'])
+			->setFilter($params['filter'])
+			->setOrder($params['order'])
+			->setDistinct(true);
+
+		if ($this->arParams['EXPORT_MODE'] !== 'Y')
 		{
-			$this->arParams['EXPORT_MODE'] = 'N';
+			$query->setOffset($params['offset'])
+				->setLimit($params['limit']);
 		}
 
-		$result['EXTRANET_SITE'] = ($this->extranetSite() ? 'Y' : 'N');
-		$result['GRID_ID'] = $this->gridId;
-		$result['FILTER_ID'] = $this->filterId;
-		$result['FILTER_PRESETS'] = $this->getFilterPresets($entityFilter);
+		$this->grid->setRawRows($query->fetchAll());
 
-		$gridOptions = new Bitrix\Main\Grid\Options($result['GRID_ID']);
-		$filterOptions = new \Bitrix\Main\UI\Filter\Options($result['FILTER_ID'], $result['FILTER_PRESETS']);
+		$result['GRID_PARAMS'] = \Bitrix\Main\Grid\Component\ComponentParams::get($this->grid);
+		$result['GRID_FILTER'] = $this->grid->getFilter();
+		$result['FILTER_PRESETS'] = $this->grid->getFilter()->getFilterPresets();
 
-		$usedFields = $filterOptions->getUsedFields();
-		$usedFields = array_filter(
-			$usedFields,
-			function ($value)
-			{
-				return !empty($value);
-			}
-		);
-
-		if (empty($usedFields))
-		{
-			$usedFields = $entityFilter->getDefaultFieldIDs();
-		}
-
-		$navParams = $gridOptions->getNavParams();
-		$pageSize = $navParams['nPageSize'];
-
-		$nav = new \Bitrix\Main\UI\PageNavigation('page');
-
-		if ($this->arParams['EXPORT_MODE'] === 'Y')
-		{
-			$nav->allowAllRecords(true)->setPageSize(0);
-		}
-		else
-		{
-			$nav->allowAllRecords(false)
-				->setPageSize($pageSize)
-				->initFromUri();
-		}
-
-		$result['HEADERS'] = $this->getGridHeaders();
-		//TODO: replace to new \Bitrix\Main\Filter\Filter::getFieldArrays after main will be stable
-		$result['FILTER'] = $this->getFilterFields($entityFilter, $usedFields);
-		$result['ROWS'] = [];
-		$result['GRID_COLUMNS'] = [];
-		$result['ROWS_COUNT'] = 0;
-		$result['NAV_OBJECT'] = null;
-
-		$gridFilter = $filterOptions->getFilter($result['FILTER']);
-		$gridFilter['EXTRANET'] = $gridFilter['EXTRANET'] ?? null;
-		$gridFilter['DEPARTMENT'] = $gridFilter['DEPARTMENT'] ?? null;
-		$gridFilter['PRESET_ID'] = $gridFilter['PRESET_ID'] ?? null;
-
-		$result['PROCESS_EXTRANET'] = (
-			in_array($gridFilter['EXTRANET'], ['Y', 'N'])
-			|| !empty($gridFilter['DEPARTMENT'])
-			|| in_array($gridFilter['PRESET_ID'], ['company', 'employees'])
-				? 'N'
-				: 'Y'
-		);
-
-		$query = new \Bitrix\Main\Entity\Query(\Bitrix\Intranet\UserTable::getEntity());
-		$this->addQueryOrder($query, $gridOptions);
-		if (!$this->addQueryFilter($query, $gridFilter))
-		{
-			return $result;
-		}
-		$this->addQuerySelect($query, $gridOptions);
-		$query->countTotal(true);
-		$query->setOffset($nav->getOffset());
-		$query->setLimit($nav->getLimit());
-		$query->disableDataDoubling();
-
-		$res = $query->exec();
-		$users = $res->fetchCollection();
-
-		$gridColumns = $gridOptions->getVisibleColumns();
-		if (empty($gridColumns))
-		{
-			$gridColumns = $this->getDefaultGridHeaders();
-		}
-
-		if (in_array('TAGS', $gridColumns))
-		{
-			$users->fillTags();
-		}
-
-		$rowsList = [];
-
-		foreach ($users as $user)
-		{
-			$row['USER_FIELDS'] = $user;
-
-			$row['CAN_EDIT'] = $row['CAN_DELETE'] = false;
-
-			$rowsList[] = [
-				'id' => $user['ID'],
-				'data' => $row,
-				'columns' => [],
-				'editable' => true,
-				'actions' => \Bitrix\Intranet\Component\UserList::getActions([
-					'USER_FIELDS' => $user,
-					'PATH_TO_USER' => $this->arParams['PATH_TO_USER']
-				]),
-				'columnClasses' => (
-					$user['USER_TYPE'] === 'extranet'
-						? [
-						'FULL_NAME' => 'intranet-user-list-full-name-extranet'
-					]
-					: []
-				)
-			];
-		}
-
-		$result['ROWS'] = $rowsList;
-		$result['ROWS_COUNT'] = $res->getCount();
-
-		$nav->setRecordCount($result['ROWS_COUNT']);
-		$result['NAV_OBJECT'] = $nav;
-
-		$result['GRID_COLUMNS'] = $gridColumns;
+		$filterSettings = $this->grid->getFilter()->getFilterSettings();
+		$result['WAITING_FILTER_AVAILABLE'] = $filterSettings?->isFilterAvailable(IntranetUserSettings::WAIT_CONFIRMATION_FIELD) ?? false;
+		$result['INVITE_FILTER_AVAILABLE'] = $filterSettings?->isFilterAvailable(IntranetUserSettings::INVITED_FIELD) ?? false;
 
 		return $result;
 	}
@@ -1598,24 +1472,25 @@ class CIntranetUserListComponent extends UserList
 	{
 		$this->arResult = $this->prepareData();
 
+		if (Loader::includeModule('pull'))
+		{
+			\CPullWatch::Add(\Bitrix\Intranet\CurrentUser::get()->getId(), \Bitrix\Intranet\Invitation::PULL_MESSAGE_TAG);
+		}
+
 		if ($this->arParams['EXPORT_MODE'] !== 'Y')
 		{
 			$this->includeComponentTemplate();
 		}
-		else
+		elseif (!$this->arResult['EXCEL_EXPORT_LIMITED'])
 		{
-			while(ob_get_clean());
-
-			header('HTTP/1.1 200 OK');
-			header('Content-Transfer-Encoding: binary');
-			header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-			header('Expires: 0');
-			header('Pragma: public');
-
-			$this->IncludeComponentTemplate($this->arParams['EXPORT_TYPE']);
-
-			die();
+			$this->getExcelExporter()->process($this->grid, 'users');
 		}
+	}
 
+	private function getExcelExporter(): ExcelExporter
+	{
+		$this->excelExporter ??= new ExcelExporter();
+
+		return $this->excelExporter;
 	}
 }

@@ -87,17 +87,23 @@ if ($arParams['SHOW_CONTACT_PAGE'] === 'Y')
 	);
 }
 
-$customPagesList = CUtil::JsObjectToPhp($arParams['~CUSTOM_PAGES']);
-if ($customPagesList)
+if (!empty($arParams['~CUSTOM_PAGES']))
 {
-	foreach ($customPagesList as $page)
+	$customPagesList = CUtil::JsObjectToPhp($arParams['~CUSTOM_PAGES']);
+	if (!empty($customPagesList) && is_array($customPagesList))
 	{
-		$availablePages[] = array(
-			"path" => $page[0],
-			"name" => $page[1],
-			"icon" => (mb_strlen($page[2])) ? '<i class="fa '.htmlspecialcharsbx($page[2]).'"></i>' : ""
-		);
+		foreach ($customPagesList as $page)
+		{
+			$icon = (string)($page[2] ?? '');
+			$availablePages[] = [
+				'path' => $page[0],
+				'name' => $page[1],
+				'icon' => $icon !== '' ? '<i class="fa ' . htmlspecialcharsbx($icon) . '"></i>' : ''
+			];
+			unset($icon);
+		}
 	}
+	unset($customPagesList);
 }
 
 if (empty($availablePages))
@@ -134,4 +140,3 @@ else
 	</div>
 	<?
 }
-?>

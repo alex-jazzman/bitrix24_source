@@ -139,7 +139,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					ref: (ref) => this.nameFieldRef = ref,
 					title: Loc.getMessage('CSPD_FIELDS_PRODUCT_NAME'),
 					value: this.state.product.name,
-					readOnly: this.isReadonly(),
+					readOnly: this.areProductInfoFieldsReadonly(),
 					required: true,
 					onChange: (newVal) => this.updateFieldState('name', newVal),
 					...this.getAccessProps(true, hasProductEditAccess),
@@ -147,7 +147,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				EntitySelectorField({
 					title: Loc.getMessage('CSPD_FIELDS_PRODUCT_SECTIONS'),
 					value: this.state.product.sections.map((section) => section.id),
-					readOnly: this.isReadonly(),
+					readOnly: this.areProductInfoFieldsReadonly(),
 					multiple: true,
 					showEditIcon: false,
 					config: {
@@ -177,7 +177,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				BarcodeField({
 					title: Loc.getMessage('CSPD_FIELDS_BARCODE'),
 					value: this.state.product.barcode,
-					readOnly: this.isReadonly(),
+					readOnly: this.areProductInfoFieldsReadonly(),
 					onChange: (newVal) => this.updateFieldState('barcode', newVal),
 					...this.getAccessProps(true, hasProductEditAccess),
 					config: {
@@ -201,7 +201,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 							},
 						},
 					},
-					readOnly: this.isReadonly(),
+					readOnly: this.areProductInfoFieldsReadonly(),
 					onChange: (images) => this.updateFieldState('gallery', images),
 					...this.getAccessProps(true, hasProductEditAccess),
 				}),
@@ -780,6 +780,14 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				null,
 				Loc.getMessage('CSPD_FIELDS_PHOTOS_UPLOADING_BUTTON'),
 			);
+		}
+
+		areProductInfoFieldsReadonly()
+		{
+			const editable = Boolean(this.props.document.editable);
+			const isCatalogHidden = Boolean(this.props.config.isCatalogHidden);
+
+			return !editable || isCatalogHidden;
 		}
 
 		isReadonly()

@@ -4,7 +4,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2021 Bitrix
+ * @copyright 2001-2024 Bitrix
  */
 
 namespace Bitrix\Main\Config;
@@ -200,6 +200,10 @@ class Option
 			// prevents recursion and cache miss
 			self::$options[$moduleId] = ["-" => []];
 
+			// prevents recursion on early stages with cluster module installed
+			$pool = Main\Application::getInstance()->getConnectionPool();
+			$pool->useMasterOnly(true);
+
 			$query = "
 				SELECT NAME, VALUE
 				FROM b_option
@@ -228,7 +232,11 @@ class Option
 					self::$options[$moduleId][$ar["SITE_ID"]][$ar["NAME"]] = $ar["VALUE"];
 				}
 			}
-			catch(Main\DB\SqlQueryException $e){}
+			catch(Main\DB\SqlQueryException)
+			{
+			}
+
+			$pool->useMasterOnly(false);
 
 			if($cacheTtl !== false)
 			{
@@ -238,7 +246,7 @@ class Option
 			unset(self::$loading[$moduleId]);
 		}
 
-		/*ZDUyZmZZmQ3NDYyNzg0Zjk5Nzc0NWI1Y2VkZTc0ZmQxZGYzZTU=*/$GLOBALS['____519549609']= array(base64_decode('Z'.'X'.'hwbG9kZQ=='),base64_decode(''.'c'.'GFjaw'.'=='),base64_decode('bWQ'.'1'),base64_decode('Y29'.'uc3RhbnQ='),base64_decode('a'.'G'.'F'.'zaF9ob'.'WF'.'j'),base64_decode(''.'c3RyY2'.'1w'),base64_decode('a'.'XN'.'fb'.'2'.'JqZW'.'N0'),base64_decode('Y2Fsb'.'F91'.'c2VyX2Z1b'.'mM='),base64_decode('Y2Fsb'.'F91c2V'.'yX2'.'Z1bm'.'M='),base64_decode(''.'Y2Fsb'.'F91c2V'.'yX2Z1bmM='),base64_decode(''.'Y2Fsb'.'F91'.'c2V'.'yX2Z1bmM='),base64_decode('Y2F'.'sb'.'F'.'91c2VyX2Z1'.'bm'.'M='));if(!function_exists(__NAMESPACE__.'\\___384359658')){function ___384359658($_1558656144){static $_1537142255= false; if($_1537142255 == false) $_1537142255=array('LQ==','bW'.'Fpbg==',''.'bWFpb'.'g==','LQ==','bWFpbg'.'==','flB'.'BUkFNX01BWF'.'9VU'.'0VS'.'Uw='.'=','L'.'Q==',''.'bW'.'F'.'pbg'.'==','f'.'lBB'.'UkFNX01BWF9V'.'U'.'0VS'.'Uw==',''.'Lg==','SC'.'o=','Yml0'.'cml'.'4','TElDRU5T'.'RV9'.'LRV'.'k'.'=','c2hhMjU2','LQ==','bW'.'Fpbg'.'==','flBB'.'U'.'kFNX0'.'1B'.'WF9'.'V'.'U'.'0VSUw='.'=','LQ==','bWFpbg==','UE'.'F'.'SQU'.'1f'.'T'.'UFYX'.'1VTRV'.'JT','VV'.'NFUg==','VVNFU'.'g==',''.'VVNFUg==','SXNBdXRo'.'b'.'3JpemVk','VVNFUg==',''.'SXNBZG1pb'.'g==',''.'QVBQTElD'.'QVRJT04=','Um'.'VzdGFydEJ1Z'.'m'.'Zlcg==','TG9jYWxSZWR'.'pcmVjdA==','L2xpY2'.'Vuc2VfcmV'.'zdHJ'.'p'.'Y3R'.'pb24ucG'.'hw','LQ==','bWFp'.'bg='.'=','flBBUkFNX01BWF9VU0'.'VSU'.'w==','L'.'Q==',''.'bWFpbg==','UEFSQU1fTUF'.'YX'.'1VTR'.'VJT','XEJp'.'dHJpeFxNYWluXENvbmZpZ1xPcHRpb'.'2'.'46OnN'.'ldA==',''.'bWF'.'pbg==','U'.'E'.'FSQU1fTUFYX1VTRVJT');return base64_decode($_1537142255[$_1558656144]);}};if(isset(self::$options[___384359658(0)][___384359658(1)]) && $moduleId === ___384359658(2)){ if(isset(self::$options[___384359658(3)][___384359658(4)][___384359658(5)])){ $_24844125= self::$options[___384359658(6)][___384359658(7)][___384359658(8)]; list($_1777609174, $_1398339494)= $GLOBALS['____519549609'][0](___384359658(9), $_24844125); $_687899908= $GLOBALS['____519549609'][1](___384359658(10), $_1777609174); $_939381276= ___384359658(11).$GLOBALS['____519549609'][2]($GLOBALS['____519549609'][3](___384359658(12))); $_543330298= $GLOBALS['____519549609'][4](___384359658(13), $_1398339494, $_939381276, true); self::$options[___384359658(14)][___384359658(15)][___384359658(16)]= $_1398339494; self::$options[___384359658(17)][___384359658(18)][___384359658(19)]= $_1398339494; if($GLOBALS['____519549609'][5]($_543330298, $_687899908) !==(228*2-456)){ if(isset($GLOBALS[___384359658(20)]) && $GLOBALS['____519549609'][6]($GLOBALS[___384359658(21)]) && $GLOBALS['____519549609'][7](array($GLOBALS[___384359658(22)], ___384359658(23))) &&!$GLOBALS['____519549609'][8](array($GLOBALS[___384359658(24)], ___384359658(25)))){ $GLOBALS['____519549609'][9](array($GLOBALS[___384359658(26)], ___384359658(27))); $GLOBALS['____519549609'][10](___384359658(28), ___384359658(29), true);} return;}} else{ self::$options[___384359658(30)][___384359658(31)][___384359658(32)]= round(0+2.4+2.4+2.4+2.4+2.4); self::$options[___384359658(33)][___384359658(34)][___384359658(35)]= round(0+3+3+3+3); $GLOBALS['____519549609'][11](___384359658(36), ___384359658(37), ___384359658(38), round(0+12)); return;}}/**/
+		/*patchvalidationoptions4*/
 	}
 
 	/**

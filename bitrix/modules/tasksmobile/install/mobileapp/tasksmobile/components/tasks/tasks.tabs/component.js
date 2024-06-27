@@ -237,6 +237,7 @@
 					this.updateTasksCounter(data.value);
 				}
 			});
+			BX.addCustomEvent('flows.list:setVisualCounter', (data) => this.updateFlowsCounter(data.value));
 			BX.addCustomEvent('tasks.project.list:setVisualCounter', (data) => this.updateProjectsCounter(data.value));
 			BX.addCustomEvent('tasks.scrum.list:setVisualCounter', (data) => this.updateScrumCounter(data.value));
 		}
@@ -338,11 +339,22 @@
 				this.updateScrumCounter(cachedScrumCounters.counterValue);
 			}
 
+			const flowListStorage = new StorageCache('tasks_flow', 'filterCounters');
+			const cachedFlowCounters = flowListStorage.get();
+			if (cachedFlowCounters)
+			{
+				this.updateFlowsCounter(cachedFlowCounters.counterValue);
+			}
+
 			(new RequestExecutor('tasksmobile.Task.Counter.getByType'))
 				.call()
 				.then(
 					(response) => {
 						const counters = response.result;
+
+						const flowsCounter = counters.flowTotal;
+						this.updateFlowsCounter(flowsCounter);
+						flowListStorage.set({ counterValue: flowsCounter });
 
 						const projectCounter = counters.sonetTotalExpired + counters.sonetTotalComments;
 						this.updateProjectsCounter(projectCounter);
@@ -359,6 +371,15 @@
 				)
 				.catch((response) => this.logger.error(response))
 			;
+		}
+
+		updateFlowsCounter(value)
+		{
+			this.tabs.updateItem(this.tabCodes.FLOW, {
+				title: BX.message('MOBILE_TASKS_TABS_TAB_FLOWS'),
+				counter: Number(value),
+				label: (value > 0 ? String(value) : ''),
+			});
 		}
 
 		updateTasksCounter(value)

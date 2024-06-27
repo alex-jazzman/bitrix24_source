@@ -24,18 +24,6 @@
 	gap: 12px;
 }
 
-.bx-im-message-copilot-creation__avatar {
-	width: 60px;
-	height: 60px;
-	flex-shrink: 0;
-}
-
-.bx-im-message-copilot-creation__avatar img {
-	width: 100%;
-	height: 100%;
-	border-radius: 50%;
-}
-
 .bx-im-message-copilot-creation__info {
 	display: flex;
 	flex-direction: column;

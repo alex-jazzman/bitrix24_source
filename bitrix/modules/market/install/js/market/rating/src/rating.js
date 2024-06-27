@@ -442,7 +442,7 @@ export const Rating = {
 										>
 										</div>
 									</label>
-									<button class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-cancel"
+									<button class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-cancel market-detail__app-rating_feedback-btn"
 											@click="addingReview = false"
 									>
 									</button>

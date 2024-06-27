@@ -233,6 +233,22 @@ class catalog extends CModule
 			'onBeforeIBlockElementDelete'
 		);
 
+		$eventManager->registerEventHandlerCompatible(
+			'rest',
+			'OnRestServiceBuildDescription',
+			'catalog',
+			'\Bitrix\Catalog\EventDispatcher\EventDispatcher',
+			'onRestServiceBuildDescription'
+		);
+
+		$eventManager->registerEventHandlerCompatible(
+			'rest',
+			'OnRestAppInstall',
+			'catalog',
+			'\Bitrix\Catalog\Store\EnableWizard\OnecAppManager',
+			'onRestAppInstall'
+		);
+
 		if ($this->bitrix24mode)
 		{
 			Main\Config\Option::set('catalog', 'enable_viewed_products', 'Y');
@@ -511,6 +527,22 @@ class catalog extends CModule
 			'catalog',
 			'\Bitrix\Catalog\v2\AgentContract\EventHandlers\IblockElement',
 			'onBeforeIBlockElementDelete'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'rest',
+			'OnRestServiceBuildDescription',
+			'catalog',
+			'\Bitrix\Catalog\EventDispatcher\EventDispatcher',
+			'onRestServiceBuildDescription'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'rest',
+			'OnRestAppInstall',
+			'catalog',
+			'\Bitrix\Catalog\Store\EnableWizard\OnecAppManager',
+			'onRestAppInstall'
 		);
 
 		if (Main\Loader::includeModule('catalog'))

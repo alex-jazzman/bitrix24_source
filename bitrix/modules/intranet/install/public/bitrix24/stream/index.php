@@ -105,7 +105,10 @@ $APPLICATION->IncludeComponent(
 if (Loader::includeModule('intranet'))
 {
 	$APPLICATION->IncludeComponent('bitrix:intranet.ustat.online', '', [], false);
-	$APPLICATION->IncludeComponent('bitrix:intranet.ustat.status', '', ['CREATE_FRAME' => 'N'], false);
+	if (\Bitrix\Intranet\UStat\UStat::checkAvailableCompanyPulseAndNotifyAdmin())
+	{
+		$APPLICATION->IncludeComponent('bitrix:intranet.ustat.status', '', ['CREATE_FRAME' => 'N'], false);
+	}
 }
 
 if (ToolsManager::getInstance()->checkAvailabilityByToolId('calendar'))

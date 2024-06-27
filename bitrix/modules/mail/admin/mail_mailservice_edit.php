@@ -236,7 +236,7 @@ $tabControl = new CAdminTabControl("tabControl", $aTabs);
 	<input type="hidden" value="Y" name="apply">
 
 
-<script type="text/javascript">
+<script>
 
 	function change_type()
 	{

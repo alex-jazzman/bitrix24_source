@@ -424,7 +424,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		return (
 			is_array($currentActivity)
 			&& is_array($currentActivity['Properties'])
-			&& $currentActivity['Properties']['OnlyDynamicEntities'] === 'Y'
+			&& ($currentActivity['Properties']['OnlyDynamicEntities'] ?? 'N') === 'Y'
 		);
 	}
 
@@ -433,7 +433,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		return array_filter(
 			$dynamicTypeIdOptions,
 			static function($key) {
-				return ($key >= CCrmOwnerType::DynamicTypeStart && $key <= CCrmOwnerType::DynamicTypeEnd);
+				return (CCrmOwnerType::isPossibleDynamicTypeId($key));
 			},
 			ARRAY_FILTER_USE_KEY
 		);

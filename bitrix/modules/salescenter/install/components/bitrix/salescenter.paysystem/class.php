@@ -568,6 +568,17 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 				'MATCH' => BusinessValue::MATCH_EXACT
 			]
 		);
+		if (empty($shopId))
+		{
+			$shopId = BusinessValue::getMapping(
+				'YANDEX_CHECKOUT_SHOP_ID',
+				"PAYSYSTEM_".$id,
+				null,
+				[
+					'MATCH' => BusinessValue::MATCH_COMMON
+				]
+			);
+		}
 
 		if (isset($shopId['PROVIDER_VALUE']) && $shopId['PROVIDER_VALUE'])
 		{

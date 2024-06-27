@@ -273,14 +273,14 @@ class SupersetDashboardTagGridManager
 			},
 		})
 			.then(() => {
-				this.getGrid().removeRow(tagId);
+				this.getGrid().removeRow(tagId, null, null, () => {
+					this.#sendDeleteEventMessage(tagId);
+				});
 				const msg = Loc.getMessage('BICONNECTOR_APACHE_SUPERSET_DASHBOARD_TAG_LIST_DELETE_SUCCESS');
 
 				UI.Notification.Center.notify({
 					content: msg,
 				});
-
-				this.#sendDeleteEventMessage(tagId);
 			})
 			.catch((response) => {
 				if (response.errors)

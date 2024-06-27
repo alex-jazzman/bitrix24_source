@@ -205,4 +205,6 @@ $arResult['JS_DATA'] = [
 	'groupId' => $arParams['TASK']['GROUP_ID'],
 	'parentId' => (int) $arParams['TASK']['PARENT_ID'],
 	'isScrumTask' => (bool) $arParams['IS_SCRUM_TASK'],
+	'showAhaStartFlowTask' => (bool) $arParams['SHOW_AHA_START_FLOW_TASK'],
+	'currentUserId' => Util\User::getId(),
 ];

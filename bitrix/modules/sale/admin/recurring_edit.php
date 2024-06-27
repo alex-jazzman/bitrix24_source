@@ -271,7 +271,7 @@ $tabControl->BeginNextTab();
 		<td><?echo GetMessage("SRE_MODULE")?></td>
 		<td>
 			<?if ($saleModulePermissions >= "W"):?>
-				<script type="text/javascript">
+				<script>
 				function ModuleChange()
 				{
 					var m = document.frecurring_edit.MODULE;
@@ -345,7 +345,7 @@ $tabControl->BeginNextTab();
 		<td><?echo GetMessage("SRE_PRODUCT")?></td>
 		<td>
 			<?if ($saleModulePermissions >= "W"):?>
-				<script type="text/javascript">
+				<script>
 				function FillProductFields(arParams)
 				{
 					if (arParams["id"])
@@ -394,7 +394,7 @@ $tabControl->BeginNextTab();
 
 				</script>
 				<input name="PRODUCT_ID" value="<?= $str_PRODUCT_ID ?>" size="5" type="text">&nbsp;<input type="button" value="..." id="cat_prod_button" onClick="showProductSearchDialog()">
-				<script type="text/javascript">
+				<script>
 				ModuleChange();
 				</script>
 			<?else:?>

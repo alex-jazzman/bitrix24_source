@@ -21,9 +21,19 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/src/selector', (requir
 		),
 	);
 
+	const selectFirstStage = createDraftSafeSelector(
+		(state, stageIds) => Object.values(selectEntities(state)).filter((stage) => stageIds.includes(stage.id)),
+		(stages) => {
+			const minSort = Math.min(...stages.map((stage) => stage.sort));
+
+			return stages.find((stage) => stage.sort === minSort);
+		},
+	);
+
 	module.exports = {
 		selectById,
 		selectEntities,
 		selectByViewAndProjectId,
+		selectFirstStage,
 	};
 });

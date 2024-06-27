@@ -81,7 +81,7 @@
 				{
 					userId: user.params.id,
 					imageUrl: encodeURI(user.imageUrl),
-					title: BX.message('PROFILE_INFO'),
+					title: BX.message('PROFILE_INFO_MSGVER_1'),
 					workPosition: user.subtitle,
 					name: user.title,
 					url: user.params.profileUrl,

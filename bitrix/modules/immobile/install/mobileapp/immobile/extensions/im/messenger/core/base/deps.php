@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
+		'statemanager/vuex',
+		'statemanager/vuex-manager',
 		'utils/object',
 		'im:messenger/lib/params',
 		'im:messenger/lib/feature',
@@ -10,6 +12,7 @@ return [
 		'im:messenger/db/update',
 		'im:messenger/table',
 		'im:messenger/lib/logger',
+		'im:messenger/lib/state-manager/vuex-manager/mutation-manager',
 		'im:messenger/const',
 	],
 	'bundle' => [

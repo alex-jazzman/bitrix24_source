@@ -95,7 +95,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
-?><script type="text/javascript">
+?><script>
 	BX.message({
 		"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_DEAL_DETAIL_HISTORY_STUB')?>",
 	});
@@ -151,7 +151,7 @@ if ($arResult['IS_EDIT_MODE'] ?? false)
 $conversionConfig = $arResult['CONVERSION_CONFIG'] ?? null;
 
 if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionConfig):
-?><script type="text/javascript">
+?><script>
 		BX.ready(
 			function()
 			{
@@ -277,7 +277,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 endif;
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(() => {
 		BX.Crm.Deal.DealComponent = new BX.Crm.Deal.DealManager({
 			guid: '<?=CUtil::JSEscape($guid)?>',
@@ -305,7 +305,7 @@ endif;
 	});
 </script>
 
-<script type="text/javascript">
+<script>
 	(function() {
 		var listener = function(e) {
 			if (BX.Main && BX.Main.gridManager)
@@ -331,7 +331,7 @@ endif;
 <?php endif; ?>
 
 <?php if (array_key_exists('AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA', $arResult)):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function() {
 			BX.Runtime.loadExtension('bizproc.automation.guide')
 				.then((exports) => {

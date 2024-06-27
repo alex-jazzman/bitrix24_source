@@ -32,7 +32,4 @@ return [
 		'im.v2.lib.copilot',
 	],
 	'skip_core' => false,
-	'settings' => [
-		'copilotRolesAvailable' => \Bitrix\Main\Config\Option::get('im', 'im_copilot_chat_roles_available', 'N'),
-	]
 ];

@@ -242,7 +242,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		foreach($paySystems as $paySystem)
 		{
 			$file = $paySystem['~PSA_ACTION_FILE'] ?? '';
-			if(preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $file))
+			if(preg_match('/quote(_\w+)*$/iu', $file))
 			{
 				$printTemplates[] = [
 					'id' => (int)$paySystem['~ID'],

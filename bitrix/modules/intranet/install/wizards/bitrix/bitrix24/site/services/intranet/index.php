@@ -27,7 +27,7 @@ RegisterModuleDependences("main", "OnGetStaticCacheProvider", "intranet", "\\Bit
 COption::SetOptionString("main", "~show_composite_banner", "N");
 COption::SetOptionString("intranet", "composite_enabled", "Y");
 
-$defaultThemeId = in_array(LANGUAGE_ID, ['ru', 'kz', 'by']) ? ThemePicker::DEFAULT_THEME_ID : 'light:orbital-symphony';
+$defaultThemeId = in_array(LANGUAGE_ID, ['ru', 'kz', 'by']) ? ThemePicker::DEFAULT_THEME_ID : 'light:contrast-horizon';
 $theme = new ThemePicker(WIZARD_TEMPLATE_ID, WIZARD_SITE_ID);
 $theme->setDefaultTheme($defaultThemeId);
 

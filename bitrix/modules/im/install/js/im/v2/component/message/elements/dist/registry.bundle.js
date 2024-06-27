@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_dateFormatter,ui_vue3,ui_lottie,im_v2_lib_user,im_v2_lib_logger,ui_reactionsSelect,ui_vue3_components_reactions,im_v2_lib_utils,im_v2_application_core,im_v2_lib_menu,im_v2_lib_parser,im_v2_lib_copilot,main_core,main_core_events,im_v2_const,im_v2_component_elements,im_v2_lib_permission,im_v2_component_animation,im_v2_provider_service) {
+(function (exports,im_v2_lib_dateFormatter,ui_vue3,ui_lottie,im_v2_lib_user,im_v2_lib_logger,ui_reactionsSelect,ui_vue3_components_reactions,im_v2_lib_utils,im_v2_application_core,im_v2_lib_menu,im_v2_lib_parser,im_v2_lib_copilot,im_v2_lib_channel,main_core,main_core_events,im_v2_const,im_v2_component_elements,im_v2_lib_permission,im_v2_component_animation,im_v2_provider_service) {
 	'use strict';
 
 	// @vue/component
@@ -531,7 +531,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return Object.keys(this.reactionCounters).length > 0;
 	    },
 	    isChannel() {
-	      return [im_v2_const.ChatType.openChannel, im_v2_const.ChatType.channel].includes(this.dialog.type);
+	      return im_v2_lib_channel.ChannelManager.isChannel(this.dialog.dialogId);
 	    },
 	    showAvatars() {
 	      return !this.isChannel;
@@ -1072,7 +1072,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.$store.getters['messages/isForward'](this.message.id);
 	    },
 	    isChannelForward() {
-	      return [im_v2_const.ChatType.openChannel, im_v2_const.ChatType.channel].includes(this.message.forward.chatType);
+	      return im_v2_lib_channel.ChannelManager.channelTypes.has(this.message.forward.chatType);
 	    },
 	    forwardAuthorName() {
 	      const copilotManager = new im_v2_lib_copilot.CopilotManager();
@@ -1206,6 +1206,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    showSubscribeIcon() {
 	      const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
 	      return permissionManager.canPerformAction(im_v2_const.ChatActionType.subscribeToComments, this.dialogId);
+	    },
+	    subscribeIconTitle() {
+	      if (this.isSubscribed) {
+	        return this.loc('IM_MESSAGE_COMMENTS_PANEL_ICON_UNSUBSCRIBE');
+	      }
+	      return this.loc('IM_MESSAGE_COMMENTS_PANEL_ICON_SUBSCRIBE');
 	    }
 	  },
 	  methods: {
@@ -1255,8 +1261,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					</FadeAnimation>
 				</div>
 			</div>
-			<div v-if="showSubscribeIcon" class="bx-im-message-comments-panel__right">
-				<div @click.stop="onSubscribeIconClick" class="bx-im-message-comments-panel__subscribe-icon" :class="{'--active': isSubscribed}"></div>
+			<div v-if="showSubscribeIcon" :title="subscribeIconTitle" class="bx-im-message-comments-panel__right">
+				<div
+					@click.stop="onSubscribeIconClick"
+					class="bx-im-message-comments-panel__subscribe-icon"
+					:class="{'--active': isSubscribed}"
+				></div>
 			</div>
 		</div>
 	`
@@ -1289,7 +1299,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      return this.item;
 	    },
 	    isChannelPost() {
-	      return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(this.dialog.type);
+	      return im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
 	    },
 	    isSystemMessage() {
 	      return this.message.authorId === 0;
@@ -1315,5 +1325,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.MessageHeader = MessageHeader;
 	exports.MessageFooter = MessageFooter;
 
-}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Lib,BX.Vue3,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Ui,BX.Vue3.Components,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Provider.Service));
+}((this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}),BX.Messenger.v2.Lib,BX.Vue3,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Ui,BX.Vue3.Components,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Event,BX.Messenger.v2.Const,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Provider.Service));
 //# sourceMappingURL=registry.bundle.js.map

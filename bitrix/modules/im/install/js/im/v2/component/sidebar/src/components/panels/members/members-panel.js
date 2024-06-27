@@ -19,6 +19,7 @@ import type { ImModelChat } from 'im.v2.model';
 const MemberTitleByChatType = {
 	[ChatType.channel]: 'IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE',
 	[ChatType.openChannel]: 'IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE',
+	[ChatType.generalChannel]: 'IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE',
 	default: 'IM_SIDEBAR_MEMBERS_DETAIL_TITLE',
 };
 

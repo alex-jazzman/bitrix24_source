@@ -162,11 +162,6 @@ export default class PullManager
 
 	#onPullItemUpdated(event: BaseEvent): void
 	{
-		if (Type.isNil(event.data))
-		{
-			return;
-		}
-
 		const { pullData: { params }, promises } = event.data;
 
 		const item = this.grid.getItem(params.item.id);
@@ -187,11 +182,6 @@ export default class PullManager
 
 	#onPullItemAdded(event: BaseEvent): void
 	{
-		if (Type.isNil(event.data))
-		{
-			return;
-		}
-
 		const { pullData: { params }, promises } = event.data;
 
 		const itemId = params.item.id;

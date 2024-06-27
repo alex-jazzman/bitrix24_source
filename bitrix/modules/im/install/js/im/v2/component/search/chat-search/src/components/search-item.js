@@ -12,6 +12,7 @@ import type { ImModelChat, ImModelUser } from 'im.v2.model';
 
 const ItemTextByChatType = {
 	[ChatType.openChannel]: Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
+	[ChatType.generalChannel]: Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
 	[ChatType.channel]: Loc.getMessage('IM_SEARCH_ITEM_PRIVATE_CHANNEL_TYPE_GROUP'),
 	default: Loc.getMessage('IM_SEARCH_ITEM_CHAT_TYPE_GROUP_V2'),
 };

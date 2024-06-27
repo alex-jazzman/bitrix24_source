@@ -1,4 +1,11 @@
 <?php
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_COPY"] = "Insufficient permission to copy the dashboard. Please contact your supervisor or Bitrix24 administrator.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_CREATE"] = "Insufficient permission to create a dashboard. Please contact your supervisor or Bitrix24 administrator.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_DELETE"] = "Insufficient permission to delete the dashboard. Please contact your supervisor or Bitrix24 administrator.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_EDIT"] = "Insufficient permission to edit dashboard. Please contact your supervisor or Bitrix24 administrator.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_EXPORT"] = "Insufficient permission to export the dashboard. Please contact your supervisor or Bitrix24 administrator.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_TAG_MODIFY"] = "Insufficient permission to edit dashboard tags. Please contact your supervisor or Bitrix24 administrator.";
+$MESS["BICONNECTOR_CONTROLLER_DASHBOARD_ACCESS_ERROR_VIEW"] = "Insufficient permission to view the dashboard. Please contact your supervisor or Bitrix24 administrator.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_COPIED_DASHBOARD_TITLE"] = '#DASHBOARD_TITLE# (copy)';
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_COPY_ERROR"] = "Error copying dashboard. Please try again.";
 $MESS["BICONNECTOR_CONTROLLER_DASHBOARD_CREATE_EMPTY_ERROR"] = "Cannot create dashboard. Please try again.";

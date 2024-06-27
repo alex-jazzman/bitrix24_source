@@ -48,3 +48,4 @@ DROP TABLE IF EXISTS b_im_message_disappearing;
 DROP TABLE IF EXISTS b_im_log;
 DROP TABLE IF EXISTS b_im_last_message;
 DROP TABLE IF EXISTS b_im_chat_param;
+DROP TABLE IF EXISTS b_im_hr_sync_queue;

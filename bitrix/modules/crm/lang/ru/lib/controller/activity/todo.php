@@ -7,7 +7,9 @@ $MESS["CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE"] = 'Вы перестали бы
 $MESS["CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_EX"] = 'Вы назначены ответственным за дело "#subject#"';
 $MESS["CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_EX"] = 'Вы перестали быть ответственным за дело "#subject#"';
 $MESS['CRM_ACTIVITY_TODO_UPDATE_PING_OFFSETS_ERROR'] = 'Невозможно изменить напоминания в закрытом деле';
+$MESS['CRM_ACTIVITY_TODO_UPDATE_COLOR_ERROR'] = 'Невозможно изменить цвет в закрытом деле';
 $MESS['CRM_ACTIVITY_TODO_WRONG_PING_OFFSETS_FORMAT'] = 'Некорректные значения напоминаний';
+$MESS['CRM_ACTIVITY_TODO_WRONG_COLOR'] = 'Некорректное значение цвета';
 
 $MESS["CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_LEAD"] = 'Вы назначены ответственным за дело "#subject#" в лиде "#entityName#"';
 $MESS["CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_DEAL"] = 'Вы назначены ответственным за дело "#subject#" в сделке "#entityName#"';

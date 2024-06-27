@@ -93,7 +93,7 @@ export const FileMessage = {
 
 			// file.type value is empty for mkv files
 			const isVideo = file.type === FileType.video || Utils.file.getFileExtension(file.name) === 'mkv';
-			if (isVideo)
+			if (isVideo && hasPreview)
 			{
 				return FileMessageType.media;
 			}

@@ -16,5 +16,6 @@ return [
 		'layout/ui/buttons-toolbar',
 		'layout/ui/loading-screen',
 		'project/member.list',
+		'layout/ui/loading-screen',
 	],
 ];

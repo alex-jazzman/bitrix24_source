@@ -144,10 +144,10 @@ if ($isCompositeMode):
 
 	$frame = new StaticArea('title');
 	$frame->startDynamicArea();
-	?><script type="text/javascript">document.title = "<?showJsTitle()?>";</script><?
+	?><script>document.title = "<?showJsTitle()?>";</script><?
 
 	if ($isIndexPage):
-		?><script type="text/javascript">document.body.classList.add('no-paddings', 'start-page');</script><?
+		?><script>document.body.classList.add('no-paddings', 'start-page');</script><?
 	endif;
 
 	$frame->finishDynamicArea();
@@ -218,7 +218,7 @@ if ($isBitrix24Cloud)
 						<div class="timeman-container timer-container timeman-container-<?=LANGUAGE_ID?><?=(IsAmPmMode() ? " am-pm-mode" : "")?>" id="timeman-container">
 							<div class="timeman-wrap"><span id="timeman-block" class="timeman-block"><span class="bx-time" id="timeman-timer"></span></span></div>
 						</div>
-						<script type="text/javascript">BX.ready(function() {
+						<script>BX.ready(function() {
 							BX.timer.registerFormat("bitrix24_time", B24.Timemanager.formatCurrentTime);
 							BX.timer({
 								container: BX("timeman-timer"),
@@ -228,7 +228,7 @@ if ($isBitrix24Cloud)
 					}
 					?>
 					<!--suppress CheckValidXmlInScriptTagBody -->
-					<script type="text/javascript" data-skip-moving="true">
+					<script data-skip-moving="true">
 						(function() {
 							var isAmPmMode = <?=(IsAmPmMode() ? "true" : "false") ?>;
 							var time = document.getElementById("timeman-timer");
@@ -674,7 +674,7 @@ if ($isBitrix24Cloud)
 								</tr>
 							</table>
 
-							<script type="text/javascript">
+							<script>
 								const page = window.location.pathname;
 								if (page == \'/stream/\' || page == \'/stream/index.php\' || page == \'/index.php\')
 								{

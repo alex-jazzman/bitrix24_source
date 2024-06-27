@@ -1,3 +1,4 @@
+import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
 import {ajax, Cache, Dom, Event, Reflection, Runtime, Text, Type, Loc} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Row} from './product.list.row';
@@ -122,6 +123,11 @@ export class Editor
 		if (Type.isElementNode(container))
 		{
 			container.querySelectorAll('[data-role="product-list-add-button"]').forEach((addButton) => {
+				if (this.getSettingValue('isOnecInventoryManagementRestricted') === true)
+				{
+					Dom.addClass(addButton, 'ui-btn-icon-lock');
+				}
+
 				Event.bind(
 					addButton,
 					'click',
@@ -1278,6 +1284,13 @@ export class Editor
 
 	handleProductRowAdd(): void
 	{
+		if (this.getSettingValue('isOnecInventoryManagementRestricted') === true)
+		{
+			OneCPlanRestrictionSlider.show();
+
+			return;
+		}
+
 		const id = this.addProductRow();
 		this.focusProductSelector(id);
 	}

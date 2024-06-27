@@ -29,4 +29,3 @@ $MESS["TASKS_EXCEL_ADD_IN_REPORT"] = "В отчете";
 $MESS["TASKS_EXCEL_GROUP_ID"] = "Группа";
 $MESS["TASKS_ELAPSED_H"] = "ч";
 $MESS["TASKS_ELAPSED_M"] = "м";
-?>

@@ -32,7 +32,7 @@ if(is_array($arResult['LAYOUT']) && is_array($arResult['LAYOUT']['']))
 			'CODE' => 'WORLD',
 			'PARENT_CODE' => '',
 			'NAME' => array(
-				ToUpper(LANGUAGE_ID) => array('NAME' => Loc::getMessage('SALE_SLI_WORLD_CATEGORY'))
+				mb_strtoupper(LANGUAGE_ID) => array('NAME' => Loc::getMessage('SALE_SLI_WORLD_CATEGORY'))
 			)
 		);
 	}

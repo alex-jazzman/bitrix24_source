@@ -18,6 +18,9 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	const TOOLTIP_COLOR = AppTheme.colors.accentMainWarning;
 	const { PropTypes } = require('utils/validation');
 	const { Random } = require('utils/random');
+	const { isOnline } = require('device/connection');
+	const { showOfflineToast } = require('toast');
+	const { Logger, LogType } = require('utils/logger');
 
 	const TitlePosition = {
 		top: 'top',
@@ -54,10 +57,19 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			this.uid = props.uid || Random.getString();
 			this.preparedValue = null;
 
+			this.logger = new Logger([
+				// LogType.LOG,
+				// LogType.INFO,
+				LogType.WARN,
+				LogType.ERROR,
+			]);
+
 			this.handleContentClick = this.handleContentClick.bind(this);
 			this.handleContentLongClick = this.handleContentLongClick.bind(this);
 			this.setFocusInternal = throttle(this.setFocusInternal, 300, this);
-			this.bindContainerRefHandler = this.bindContainerRef.bind(this);
+			this.bindContainerRef = this.bindContainerRef.bind(this);
+			this.bindAddButtonRef = this.bindAddButtonRef.bind(this);
+			this.onShowAllClick = this.onShowAllClick.bind(this);
 
 			this.debouncedValidation = debounce(this.validate, 300, this);
 
@@ -65,7 +77,10 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			this.customValidation = null;
 
 			this.fieldContainerRef = null;
+			this.addButtonRef = null;
 			this.showHideButton = false;
+			this.setFocus = this.setFocus.bind(this);
+			this.removeFocus = this.removeFocus.bind(this);
 		}
 
 		componentDidMount()
@@ -237,6 +252,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return this.isEmptyEditable() && this.hasKeyboard();
 		}
 
+		shouldShowAddButton()
+		{
+			return BX.prop.getBoolean(this.props, 'showAddButton', true);
+		}
+
 		/**
 		 * @deprecated use shouldShowBorder
 		 * @return {boolean}
@@ -335,6 +355,15 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return this.props.parent;
 		}
 
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
+		isFocused()
+		{
+			return this.state.focus;
+		}
+
 		handleChange(...values)
 		{
 			if (this.useHapticOnChange())
@@ -352,6 +381,13 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		onBeforeHandleChange(actionParams)
 		{
+			if (!isOnline())
+			{
+				showOfflineToast({}, this.getConfig().parentWidget);
+
+				return Promise.reject();
+			}
+
 			if (typeof this.props.onBeforeChange === 'function')
 			{
 				return this.props.onBeforeChange(actionParams);
@@ -621,7 +657,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return View(
 				{
 					style: this.styles.externalWrapper,
-					ref: this.bindContainerRefHandler,
+					ref: this.bindContainerRef,
 				},
 				View(
 					{
@@ -648,6 +684,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		bindContainerRef(ref)
 		{
 			this.fieldContainerRef = ref;
+		}
+
+		bindAddButtonRef(ref)
+		{
+			this.addButtonRef = ref;
 		}
 
 		renderLeftTitleContent()
@@ -695,6 +736,10 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @public
+		 * @return {(function(): void)|null}
+		 */
 		getContentClickHandler()
 		{
 			if (this.isReadOnly() && !this.props.onContentClick && !this.customContentClickHandler)
@@ -707,9 +752,16 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		handleContentClick()
 		{
+			if (!this.isReadOnly() && !this.isDisabled() && !isOnline())
+			{
+				showOfflineToast({}, this.getConfig().parentWidget);
+
+				return;
+			}
+
 			if (this.props.onContentClick)
 			{
-				this.props.onContentClick();
+				this.props.onContentClick(this);
 			}
 
 			if (this.customContentClickHandler)
@@ -866,6 +918,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			}
 
 			const shouldAnimateOnBlur = this.shouldAnimateOnFocus();
+			const lastValue = this.getValue();
 
 			return new Promise((resolve) => {
 				let promise = Promise.resolve();
@@ -881,10 +934,15 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 						void fadeIn(this.fieldContainerRef);
 					}
 
-					const { onFocusOut } = this.props;
+					const { onFocusOut, onBlur } = this.props;
 					if (onFocusOut)
 					{
 						onFocusOut();
+					}
+
+					if (onBlur)
+					{
+						onBlur(lastValue);
 					}
 
 					this.debouncedValidation();
@@ -1513,11 +1571,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 						paddingTop: 3,
 						paddingBottom: 6,
 					},
-					onClick: () => {
-						this.setState({
-							showAll: true,
-						});
-					},
+					onClick: this.onShowAllClick,
 				},
 				View(
 					{
@@ -1548,6 +1602,25 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 					text: `${BX.message('FIELDS_BASE_SHOW_ALL')} ${this.showAllCount() ? hiddenFieldsCount : ''}`,
 				}),
 			);
+		}
+
+		/**
+		 * @public
+		 */
+		onShowAllClick()
+		{
+			this.setState({
+				showAll: true,
+			});
+		}
+
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
+		getShowAllFromState()
+		{
+			return this.state.showAll;
 		}
 
 		renderHideButton()
@@ -1619,11 +1692,22 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		/**
 		 * @public
+		 * @return {?string | Icon}
+		 */
+		getDefaultLeftIcon()
+		{
+			console.error('Method "getDefaultLeftIcon" must be implemented.', this);
+
+			return null;
+		}
+
+		/**
+		 * @public
 		 * @return {object}
 		 */
 		getLeftIcon()
 		{
-			console.error('Method "getLeftIcon" must be implemented.');
+			console.error('Method "getLeftIcon" must be implemented.', this);
 
 			return {};
 		}
@@ -1667,6 +1751,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		showEditIcon: PropTypes.bool,
 		editIcon: PropTypes.object, // View
 		showEditIconInReadOnly: PropTypes.bool,
+		showAddButton: PropTypes.bool,
 
 		// focus props
 		focus: PropTypes.bool, // focus field on mount
@@ -1685,8 +1770,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				externalWrapperBackgroundColor: PropTypes.string,
 				externalWrapperMarginHorizontal: PropTypes.number,
 			}),
-			deepMergeStyles: PropTypes.object, // override styles
-			parentWidget: PropTypes.object, // parent layout widget
+			deepMergeStyles: PropTypes.object,
+			parentWidget: PropTypes.object,
 			copyingOnLongClick: PropTypes.bool,
 			titleIcon: PropTypes.object,
 		}),
@@ -1700,7 +1785,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		hasSolidBorderContainer: PropTypes.bool,
 
 		// render functions
-		renderFunction: PropTypes.func,
+		ThemeComponent: PropTypes.func,
 		renderAdditionalContent: PropTypes.func,
 		renderAdditionalBottomContent: PropTypes.func,
 	};
@@ -1728,19 +1813,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		hasHiddenEmptyView: false,
 		showBorder: false,
 		hasSolidBorderContainer: false,
-		config: {
-			showAll: false,
-			styles: {
-				externalWrapperBorderColor: null,
-				externalWrapperBorderColorFocused: null,
-				externalWrapperBackgroundColor: null,
-				externalWrapperMarginHorizontal: 6,
-			},
-			deepMergeStyles: {},
-			parentWidget: undefined,
-			copyingOnLongClick: true,
-			titleIcon: {},
-		},
+		showAddButton: true,
 	};
 
 	module.exports = { BaseField };

@@ -585,7 +585,7 @@ if($_REQUEST["idea_install"] <> '')
 			$CIdeaInstaller->Install();
 
 		if($CIdeaInstaller->HaveError())
-			echo CAdminMessage::ShowMessage(Array("TYPE"=>"ERROR", "MESSAGE" =>GetMessage("MOD_INST_ERR"), "DETAILS"=> join('<br/>',$CIdeaInstaller->GetError()), "HTML"=>true));
+			CAdminMessage::ShowMessage(Array("TYPE"=>"ERROR", "MESSAGE" =>GetMessage("MOD_INST_ERR"), "DETAILS"=> join('<br/>',$CIdeaInstaller->GetError()), "HTML"=>true));
 		else
 			LocalRedirect('/bitrix/admin/module_admin.php?step=2&lang='.LANGUAGE_ID.'&id=idea&install=Y&'.bitrix_sessid_get());
 	}

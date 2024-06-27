@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_SEMA_ACTIVITY_EMAIL_MAX_SIZE_EXCEED"] = "Maximum possible attachment size exceeded (#SIZE#)";
 $MESS["CRM_SEMA_ACTIVITY_LINK_LABEL"] = "Open message";
 $MESS["CRM_SEMA_ATTACHMENT"] = "Attachments";
 $MESS["CRM_SEMA_ATTACHMENT_DISK"] = "Drive";

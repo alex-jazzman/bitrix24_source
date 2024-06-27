@@ -177,7 +177,7 @@ if ($formEditor)
 }
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function()
 	{
 		<?php if ($arParams['SUCCESS_SAVE']): ?>
@@ -404,7 +404,7 @@ if ($arParams['SUCCESS_SAVE'])
 										$pageFields['METAOG_TITLE']->setValue($meta['og:title']);
 									}
 									?>
-									<script type="text/javascript">
+									<script>
 										BX.ready(function ()
 										{
 											new BX.Landing.EditTitleForm({
@@ -450,7 +450,7 @@ if ($arParams['SUCCESS_SAVE'])
 										$pageFields['METAOG_DESCRIPTION']->setValue($meta['og:description']);
 									}
 									?>
-									<script type="text/javascript">
+									<script>
 										BX.ready(function ()
 										{
 											new BX.Landing.EditTitleForm({
@@ -589,7 +589,7 @@ if ($arParams['SUCCESS_SAVE'])
 									</div>
 									<div class="ui-form-row">
 										<?php $template->showField($pageFields['B24BUTTON_COLOR'], ['additional' => 'readonly']); ?>
-										<script type="text/javascript">
+										<script>
 											BX.ready(function() {
 												new BX.Landing.B24ButtonColor(
 													BX('<?= $template->getFieldId('B24BUTTON_COLOR') ?>'),
@@ -603,7 +603,7 @@ if ($arParams['SUCCESS_SAVE'])
 									</div>
 
 									<?php $template->showField($pageFields['B24BUTTON_COLOR_VALUE'], ['title' => true]); ?>
-									<script type="text/javascript">
+									<script>
 										BX.ready(function() {
 											new BX.Landing.ColorPicker(BX('<?= $template->getFieldId('B24BUTTON_COLOR_VALUE') ?>'));
 										});
@@ -662,7 +662,7 @@ if ($arParams['SUCCESS_SAVE'])
 										<?php $template->showField($pageFields['METAMAIN_TITLE'], ['title' => true, 'buttons' => ['copilot']]);?>
 										<?php $template->showField($pageFields['METAMAIN_DESCRIPTION'], ['title' => true, 'buttons' => ['copilot']]);?>
 
-										<script type="text/javascript">
+										<script>
 											BX.ready(function ()
 											{
 												new BX.Landing.FieldLengthLimited(
@@ -688,7 +688,7 @@ if ($arParams['SUCCESS_SAVE'])
 
 										<?php if (isset($pageFields['METAMAIN_KEYWORDS'])): ?>
 											<?php $template->showField($pageFields['METAMAIN_KEYWORDS'], ['title' => true, 'buttons' => ['copilot']]);?>
-										<script type="text/javascript">
+										<script>
 											BX.ready(function ()
 											{
 												new BX.Landing.FieldLengthLimited(
@@ -943,7 +943,7 @@ if ($arParams['SUCCESS_SAVE'])
 								$template->showFieldWithToggle('YACOUNTER', ['restrictionCode' => 'GACOUNTER']);
 							}
 							?>
-							<script type="text/javascript">
+							<script>
 								BX.ready(function ()
 								{
 									new BX.Landing.ExternalMetrika(
@@ -1114,7 +1114,7 @@ if ($arParams['SUCCESS_SAVE'])
 	</form>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function()
 	{
 		BX.UI.Hint.init(BX('landing-page-set-form'));

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
@@ -59,7 +60,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    onClick() {
 	      this.showQrPopup();
-	      im_v2_lib_analytics.Analytics.getInstance().openCheckInPopup();
+	      im_v2_lib_analytics.Analytics.getInstance().onOpenCheckInPopup();
 	    },
 	    showQrPopup() {
 	      if (!stafftrack_userStatisticsLink.UserStatisticsLink) {

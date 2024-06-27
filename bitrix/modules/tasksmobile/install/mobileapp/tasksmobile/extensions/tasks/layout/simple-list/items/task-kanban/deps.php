@@ -2,13 +2,11 @@
 
 return [
 	'extensions' => [
-		'apptheme',
 		'layout/pure-component',
 		'layout/ui/counter-view',
 		'layout/ui/fields/file',
 		'layout/ui/safe-image',
 		'layout/ui/simple-list/items/extended',
-		'loc',
 		'utils/color',
 		'utils/date',
 		'utils/date/formats',
@@ -17,6 +15,9 @@ return [
 		'utils/url',
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',
+
+		'tasks:enum',
+		'tasks:loc',
 		'tasks:layout/deadline-pill',
 		'tasks:layout/stage-selector',
 		'tasks/layout/task/fields/crm',
@@ -30,7 +31,6 @@ return [
 		'tasks:statemanager/redux/slices/stage-settings',
 		'tasks:statemanager/redux/slices/tasks-stages',
 		'tasks:statemanager/redux/slices/kanban-settings',
-		'tasks:enum',
 	],
 	'bundle' => [
 		'./src/field',

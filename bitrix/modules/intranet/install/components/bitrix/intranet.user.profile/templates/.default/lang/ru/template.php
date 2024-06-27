@@ -12,9 +12,11 @@ $MESS["INTRANET_USER_PROFILE_BLOG_GRAT_TITLE"] = "Благодарности";
 $MESS["INTRANET_USER_PROFILE_BLOG_GRAT_ADD"] = "Поблагодарить";
 $MESS["INTRANET_USER_PROFILE_MORE"] = "Показать еще #NUM#";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Экстранет";
+$MESS["INTRANET_USER_PROFILE_waiting"] = "Ждёт подтверждения входа";
 $MESS["INTRANET_USER_PROFILE_visitor"] = "Посетитель";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Уволен";
 $MESS["INTRANET_USER_PROFILE_invited"] = "Приглашен";
+$MESS["INTRANET_USER_PROFILE_MSG_1_invited"] = "Приглашение не принято";
 $MESS["INTRANET_USER_PROFILE_integrator"] = "Интегратор";
 $MESS["INTRANET_USER_PROFILE_admin"] = "Администратор";
 $MESS["INTRANET_USER_PROFILE_email"] = "Почтовый пользователь";
@@ -105,10 +107,13 @@ $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"] = "стрес
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_VISIBLE"] = "Показатель уровня вашего стресса доступен для просмотра другим пользователям.";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_INVISIBLE"] = "Показатель уровня вашего стресса недоступен для просмотра другим пользователям.";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_SHARE_LINK"] = "копировать в буфер";
-$MESS["INTRANET_USER_PROFILE_DISK_SPACE"] = "объем - #VALUE#";
-$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_1"] = "Установлен Битрикс24.Диск";
+$MESS["INTRANET_USER_PROFILE_DISK_SPACE_MSGVER_1"] = "Установлен Битрикс24.Диск #DATE#, объем - #VALUE#";
+$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_2"] = "Установлен Битрикс24.Диск #DATE#";
 $MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "Вы не можете удалить приглашенного пользователя, так как он связан с другими инструментами.
 Деактивируйте (увольте) пользователя, чтобы закрыть ему доступ к этому Битрикс24.
 <br><br>Хотите уволить?";
 
 $MESS['INTRANET_USER_PROFILE_FACEBOOK_RESTRICTIONS_META_RU'] = '* принадлежит компании Meta, признанной экстремистской организацией и запрещённой на территории РФ';
+
+$MESS["INTRANET_USER_PROFILE_ACTION_CONFIRM"] = "Подтвердить вход";
+$MESS["INTRANET_USERPROFILE_ACTION_REFUSE"] = "Отказать";

@@ -5,7 +5,7 @@ return [
 		'loc',
 		'feature',
 		'haptics',
-		'tokens',
+		'apptheme',
 		'layout/ui/fields/file',
 		'layout/ui/textarea',
 		'selector/widget/factory',

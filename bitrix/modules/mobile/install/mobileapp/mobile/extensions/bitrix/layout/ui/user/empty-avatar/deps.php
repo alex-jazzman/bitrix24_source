@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
-		'apptheme',
+		'tokens',
+		'type',
 		'utils/color',
 		'selector/utils/word-separator',
+		'asset-manager',
 	],
 ];

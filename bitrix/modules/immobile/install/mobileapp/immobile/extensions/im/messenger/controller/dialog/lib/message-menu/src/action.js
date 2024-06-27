@@ -59,12 +59,45 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		},
 	};
 
+	const SubscribeAction = {
+		id: ActionType.subscribe,
+		testId: 'MESSAGE_MENU_ACTION_SUBSCRIBE',
+		type: ActionViewType.button,
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_SUBSCRIBE'),
+		iconSvg: icon.subscribe,
+		style: {
+			fontColor: baseColor,
+		},
+	};
+
+	const UnsubscribeAction = {
+		id: ActionType.unsubscribe,
+		testId: 'MESSAGE_MENU_ACTION_UNSUBSCRIBE',
+		type: ActionViewType.button,
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_UNSUBSCRIBE'),
+		iconSvg: icon.unsubscribe,
+		style: {
+			fontColor: baseColor,
+		},
+	};
+
 	const ForwardAction = {
 		id: ActionType.forward,
 		testId: 'MESSAGE_MENU_ACTION_FORWARD',
 		type: ActionViewType.button,
 		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_FORWARD'),
 		iconSvg: icon.forward,
+		style: {
+			fontColor: baseColor,
+		},
+	};
+
+	const CreateAction = {
+		id: ActionType.create,
+		testId: 'MESSAGE_MENU_ACTION_CREATE',
+		type: ActionViewType.button,
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_CREATE'),
+		iconSvg: icon.create,
 		style: {
 			fontColor: baseColor,
 		},
@@ -137,6 +170,17 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		},
 	};
 
+	const FeedbackAction = {
+		id: ActionType.feedback,
+		testId: 'MESSAGE_MENU_ACTION_FEEDBACK',
+		type: ActionViewType.button,
+		text: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_FEEDBACK'),
+		iconSvg: icon.feedback,
+		style: {
+			fontColor: baseColor,
+		},
+	};
+
 	const SeparatorAction = {
 		type: ActionViewType.separator,
 	};
@@ -148,12 +192,16 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/action', (require, ex
 		PinAction,
 		UnpinAction,
 		ForwardAction,
+		CreateAction,
 		DownloadToDeviceAction,
 		DownloadToDiskAction,
 		QuoteAction,
 		ProfileAction,
 		EditAction,
 		DeleteAction,
+		FeedbackAction,
+		SubscribeAction,
+		UnsubscribeAction,
 		SeparatorAction,
 	};
 });

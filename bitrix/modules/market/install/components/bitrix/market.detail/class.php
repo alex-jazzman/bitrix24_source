@@ -68,17 +68,17 @@ class RestMarketDetail extends CBitrixComponent
 		$this->arResult['INSTALL_HASH'] = false;
 		$this->arResult['START_INSTALL'] = false;
 
+		$installParameter = isset($_GET['install']) && $_GET['install'] == 'Y';
+
 		if (isset($_GET['ver']) && intval($_GET['ver']) && isset($_GET['check_hash']) && isset($_GET['install_hash'])) {
 			$checkHash = $_GET['check_hash'];
 			$check = md5(rtrim(CHTTP::URN2URI('/'), '/') . '|' . $_GET['ver'] . '|' . $this->arParams['APP_CODE']);
 
 			if($checkHash === $check) {
 				$this->version = (int)$_GET['ver'];
-
 				$this->arResult['CHECK_HASH'] = $check;
 				$this->arResult['INSTALL_HASH'] = $_GET['install_hash'];
-
-				$this->arResult['START_INSTALL'] = isset($_GET['install']) && $_GET['install'] == 'Y';
+				$this->arResult['START_INSTALL'] = $installParameter;
 			}
 		}
 
@@ -91,6 +91,10 @@ class RestMarketDetail extends CBitrixComponent
 
 		if ($this->appItem['ACTIVE'] === AppTable::ACTIVE) {
 			$this->appInstalled = true;
+		}
+
+		if (!$this->isAppInstalled()) {
+			$this->arResult['START_INSTALL'] = $installParameter;
 		}
 
 		if ($this->version > 0 && !$this->isAppInstalled() && $this->appItem['STATUS'] === AppTable::STATUS_PAID) {
@@ -177,6 +181,9 @@ class RestMarketDetail extends CBitrixComponent
 			$this->arResult['APP']['DATE_FINISH'] = $this->appItem['DATE_FINISH'];
 			$this->arResult['APP']['IS_TRIALED'] = $this->appItem['IS_TRIALED'];
 			$this->arResult['APP']['WAS_INSTALLED'] = 'Y';
+			$this->arResult['APP']['HAS_APP_FORM'] = !empty($this->appItem['URL_SETTINGS'])
+				&& isset($this->arResult['APP']['OPEN_API'])
+				&& $this->arResult['APP']['OPEN_API'] === 'Y';
 		}
 
 		if (
@@ -242,11 +249,23 @@ class RestMarketDetail extends CBitrixComponent
 
 		$this->arResult['APP']['MENU_ITEMS'] = $this->getMenuItems();
 
-		$this->arResult['APP']['INSTALL_INFO'] = Action::getJsAppData(
+		$this->arResult['APP']['INSTALL_INFO'] = Action::getInstallJsInfo(
 			$this->arResult['APP'],
 			$this->arResult['CHECK_HASH'],
 			$this->arResult['INSTALL_HASH']
 		);
+
+		$installType = $_GET['install_type'] ?? '';
+		if ($installType == '1c_store_management' && !$this->isAppInstalled()) {
+			$this->arResult['APP']['INSTALL_INFO']['INSTALLED_TITLE_CODE'] = 'MARKET_POPUP_INSTALL_JS_APPLICATION_SHORT';
+			$this->arResult['APP']['INSTALL_INFO']['INSTALLED_MESSAGE_CODE'] = 'MARKET_POPUP_INSTALL_JS_1C_STORE_MANAGEMENT';
+			$this->arResult['APP']['INSTALL_INFO']['INSTALLED_IMAGE_SHOW'] = 'N';
+			$this->arResult['APP']['INSTALL_INFO']['CLOSE_DETAIL_AFTER_INSTALL'] = 'Y';
+			$this->arResult['APP']['INSTALL_INFO']['OPEN_APP_AFTER_INSTALL'] = 10;
+			$this->arResult['APP']['INSTALL_INFO']['PLACEMENT_OPTIONS'] = [
+				'source' => 'inventory-management'
+			];
+		}
 
 		$this->arResult['LICENSE'] = License::getInfo($this->arResult['APP']);
 

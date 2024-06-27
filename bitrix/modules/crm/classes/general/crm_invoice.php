@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Catalog;
+use Bitrix\Crm\Agent\Security\DynamicTypes\ReFillDynamicTypeAttr;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddressType;
@@ -2993,6 +2994,38 @@ class CAllCrmInvoice
 		$errMsg = array();
 		$bError = false;
 
+		$reFillDynamicTypesAttrTable = '~CRM_REFILL_DYNAMIC_TYPES_ATTR_TABLE_V2';
+		if ((string)COption::GetOptionString('crm', $reFillDynamicTypesAttrTable, 'N') === 'N') {
+			COption::SetOptionString('crm', $reFillDynamicTypesAttrTable, 'Y');
+
+			try
+			{
+				ReFillDynamicTypeAttr::clearOptions();
+				$ids = ReFillDynamicTypeAttr::findEntityIdsToProcessOnlyBroken();
+
+				if (!empty($ids))
+				{
+					\Bitrix\Main\Config\Option::set(
+						'crm',
+						'dynamic_item_types_refill_attr__process_ids',
+						implode(',', $ids)
+					);
+
+					\CAgent::AddAgent(
+						'Bitrix\Crm\Agent\Security\RefillDynamicsItemsAttrAgent::run();',
+						'crm',
+						'N',
+						60,
+						'',
+						'Y'
+					);
+				}
+			}
+			catch (\Exception $e)
+			{
+			}
+		}
+
 		$clearCountableFromCallListsOption = '~CRM_CLEAR_COUNTABLE_FROM_CALLISTS';
 		if ((string)COption::GetOptionString('crm', $clearCountableFromCallListsOption, 'N') === 'N')
 		{
@@ -3554,7 +3587,7 @@ class CAllCrmInvoice
 						AND O.RESPONSIBLE_ID IS NOT NULL
 						"
 						);
-						$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+						$DB->Query($strSql);
 						unset($strSql);
 					}
 				}
@@ -4934,7 +4967,7 @@ class CAllCrmInvoice
 		{
 			$arMatch = array();
 
-			if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			if (preg_match('/(.*)_from$/iu', $k, $arMatch))
 			{
 				if($v <> '')
 				{
@@ -4942,11 +4975,11 @@ class CAllCrmInvoice
 				}
 				unset($arFilter[$k]);
 			}
-			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 			{
 				if($v <> '')
 				{
-					if (($arMatch[1] == 'DATE_PAY_BEFORE' || $arMatch[1] == 'DATE_INSERT') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+					if (($arMatch[1] == 'DATE_PAY_BEFORE' || $arMatch[1] == 'DATE_INSERT') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 					{
 						$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 					}
@@ -5689,17 +5722,13 @@ class CAllCrmInvoice
 		if($ownerTypeID === CCrmOwnerType::Contact)
 		{
 			$DB->Query(
-				"UPDATE {$tableName} SET UF_CONTACT_ID = {$newID} WHERE UF_CONTACT_ID = {$oldID}",
-				false,
-				'File: '.__FILE__.'<br>Line: '.__LINE__
+				"UPDATE {$tableName} SET UF_CONTACT_ID = {$newID} WHERE UF_CONTACT_ID = {$oldID}"
 			);
 		}
 		elseif($ownerTypeID === CCrmOwnerType::Company)
 		{
 			$DB->Query(
-				"UPDATE {$tableName} SET UF_COMPANY_ID = {$newID} WHERE UF_COMPANY_ID = {$oldID}",
-				false,
-				'File: '.__FILE__.'<br>Line: '.__LINE__
+				"UPDATE {$tableName} SET UF_COMPANY_ID = {$newID} WHERE UF_COMPANY_ID = {$oldID}"
 			);
 		}
 	}

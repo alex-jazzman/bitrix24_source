@@ -13,13 +13,9 @@ export const ChannelContent = {
 			type: String,
 			required: true,
 		},
-		commentsOpened: {
-			type: Boolean,
-			required: true,
-		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId" :commentsOpened="commentsOpened">
+		<BaseChatContent :dialogId="dialogId">
 			<template #header="{ currentSidebarPanel }">
 				<ChannelHeader :dialogId="dialogId" :currentSidebarPanel="currentSidebarPanel" :key="dialogId" />
 			</template>

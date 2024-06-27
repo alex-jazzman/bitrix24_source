@@ -25,6 +25,7 @@ jn.define('im/messenger/const/dialog-type', (require, exports, module) => {
 		comment: 'comment',
 		channel: 'channel',
 		openChannel: 'openChannel',
+		generalChannel: 'generalChannel',
 	});
 
 	module.exports = { DialogType };

@@ -1301,6 +1301,7 @@ BXEditorIframeView.prototype.SetValue = function(html, bParse)
 	// Check last child - if it's block node in the end - add <br> tag there
 	this.CheckContentLastChild(this.element);
 	this.editor.On('OnIframeSetValue', [html]);
+	this.editor.textareaView?.SaveValue();
 };
 
 BXEditorIframeView.prototype.Show = function()

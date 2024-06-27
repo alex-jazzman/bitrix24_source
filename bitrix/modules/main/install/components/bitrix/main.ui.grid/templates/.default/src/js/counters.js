@@ -1,5 +1,5 @@
 import 'ui.cnt';
-import {Reflection} from 'main.core';
+import { Reflection } from 'main.core';
 
 /**
  * @memberOf BX.Grid

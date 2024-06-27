@@ -16,6 +16,7 @@ return [
 		'im.v2.lib.local-storage',
 		'im.v2.const',
 		'im.v2.lib.logger',
+		'im.v2.lib.channel',
 	],
 	'skip_core' => true,
 ];

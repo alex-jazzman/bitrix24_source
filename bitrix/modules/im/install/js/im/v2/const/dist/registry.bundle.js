@@ -225,6 +225,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  copilot: 'copilot',
 	  channel: 'channel',
 	  openChannel: 'openChannel',
+	  generalChannel: 'generalChannel',
 	  comment: 'comment'
 	});
 	const DialogScrollThreshold = Object.freeze({
@@ -294,7 +295,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  supportSessionNumber: 'SupportSessionNumberMessage',
 	  supportChatCreation: 'SupportChatCreationMessage',
 	  system: 'SystemMessage',
-	  channelPost: 'ChannelPost'
+	  channelPost: 'ChannelPost',
+	  generalChatCreationMessage: 'GeneralChatCreationMessage',
+	  generalChannelCreationMessage: 'GeneralChannelCreationMessage',
+	  channelCreationMessage: 'ChannelCreationMessage'
 	});
 	const MessageMentionType = Object.freeze({
 	  user: 'USER',

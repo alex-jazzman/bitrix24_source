@@ -2,7 +2,7 @@
  * @module layout/ui/safe-image/src/shimmed-safe-image
  */
 jn.define('layout/ui/safe-image/src/shimmed-safe-image', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { SafeImage } = require('layout/ui/safe-image/src/safe-image');
 	const { ShimmerView } = require('layout/polyfill');
 
@@ -24,7 +24,7 @@ jn.define('layout/ui/safe-image/src/shimmed-safe-image', (require, exports, modu
 					{
 						style: {
 							...this.props.style,
-							backgroundColor: AppTheme.colors.base6,
+							backgroundColor: Color.base6.toHex(),
 						},
 					},
 				),

@@ -2,11 +2,23 @@
  * @module tasks/layout/checklist/preview
  */
 jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { Random } = require('utils/random');
-	const { ChecklistController } = require('tasks/checklist');
+	const { Icon } = require('assets/icons');
 	const { PropTypes } = require('utils/validation');
-	const { checklistPreviewStub } = require('tasks/layout/checklist/preview/src/stub');
+	const { Loc } = require('loc');
+	const { Indent } = require('tokens');
+	const { isOnline } = require('device/connection');
+	const { showOfflineToast } = require('toast');
+	const { UIMenu } = require('layout/ui/menu');
+	const { AddButton } = require('layout/ui/fields/theme/air/elements/add-button');
+	const { MoreButton } = require('layout/ui/fields/theme/air/elements/more-button');
+	const { Title } = require('tasks/layout/checklist/preview/src/title');
+	const { Item, ItemStub } = require('tasks/layout/checklist/preview/src/item');
+
+	const MAX_ELEMENTS = 3;
+	const ClickStrategy = {
+		CREATE: 'CREATE',
+		OPEN: 'OPEN',
+	};
 
 	/**
 	 * @class ChecklistPreview
@@ -17,182 +29,367 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 		{
 			super(props);
 
-			this.controller = null;
-			this.handleOnChange = this.handleOnChange.bind(this);
+			this.bindContainerRef = this.bindContainerRef.bind(this);
+			this.handleContentClick = this.handleContentClick.bind(this);
+			this.createChecklist = this.createChecklist.bind(this);
 
-			this.initChecklistField(props);
+			const { initialState = [] } = this.getConfig();
+
+			this.state = {
+				value: props.value,
+				collapsed: initialState.length > MAX_ELEMENTS,
+			};
+		}
+
+		getConfig()
+		{
+			return this.props.config || {};
+		}
+
+		get controller()
+		{
+			return this.getConfig().checklistController;
+		}
+
+		get testId()
+		{
+			return this.props.testId;
+		}
+
+		isEmpty()
+		{
+			const { completed = 0, uncompleted = 0 } = this.state.value || {};
+
+			return (completed + uncompleted) === 0;
+		}
+
+		isLoading()
+		{
+			return this.props.loading;
+		}
+
+		validate()
+		{
+			return true;
+		}
+
+		isValid()
+		{
+			return true;
+		}
+
+		isRequired()
+		{
+			return false;
+		}
+
+		isReadOnly()
+		{
+			return this.props.readOnly;
+		}
+
+		isDisabled()
+		{
+			return Boolean(this.props.disabled);
+		}
+
+		isMultiple()
+		{
+			return Boolean(this.props.multiple);
+		}
+
+		getId()
+		{
+			return this.props.id;
+		}
+
+		hasUploadingFiles()
+		{
+			return false;
+		}
+
+		bindContainerRef(ref)
+		{
+			this.fieldContainerRef = ref;
+		}
+
+		setTaskId(taskId)
+		{
+			this.controller.setTaskId(taskId);
+		}
+
+		/**
+		 * @public
+		 * @param {number} completed
+		 * @param {number} uncompleted
+		 * @return {void}
+		 */
+		triggerChange({ completed = 0, uncompleted = 0 })
+		{
+			this.props.onChange?.({ completed, uncompleted });
+		}
+
+		/**
+		 * @public
+		 * @return {(function(): void)|null}
+		 */
+		getContentClickHandler()
+		{
+			if (this.isReadOnly() && !this.props.onContentClick)
+			{
+				return null;
+			}
+
+			return this.handleContentClick;
+		}
+
+		handleContentClick()
+		{
+			if (!this.isReadOnly() && !this.isDisabled() && !isOnline())
+			{
+				showOfflineToast({}, this.getParentWidget());
+
+				return;
+			}
+
+			if (this.props.onContentClick)
+			{
+				this.props.onContentClick(this);
+			}
+
+			if (this.isReadOnly())
+			{
+				return;
+			}
+
+			const checklists = [...this.controller.getChecklists().values()];
+			if (checklists.length > 0)
+			{
+				this.#openChecklistSelector(checklists);
+
+				return;
+			}
+
+			this.createChecklist();
+		}
+
+		#openChecklistSelector(checklists)
+		{
+			this.menu = this.#createMenu(checklists);
+			this.menu.show({ target: this.fieldContainerRef });
+		}
+
+		#createMenu(checklists)
+		{
+			return new UIMenu(this.#getActions(checklists));
+		}
+
+		#getActions(checklists)
+		{
+			const getId = (item) => item.getRootItem()?.getId?.();
+
+			const getTitle = (item) => {
+				return item.getRootItem()?.getTitle?.()
+					|| Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_COMPACT_TITLE');
+			};
+
+			const actions = checklists.map((item, index) => ({
+				id: `checklist-${getId(item) ?? index}`,
+				testId: `checklist-${getId(item) ?? index}`,
+				title: getTitle(item),
+				onItemSelected: () => this.openPageManager(checklists[index]),
+				iconName: Icon.TASK_LIST,
+			}));
+
+			if (!this.isReadOnly())
+			{
+				actions.push({
+					id: 'create-checklist',
+					testId: 'create-checklist',
+					title: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_ADD_CHECKLIST'),
+					onItemSelected: () => this.createChecklist(),
+					iconName: Icon.PLUS,
+				});
+			}
+
+			return actions;
 		}
 
 		componentWillReceiveProps(props)
 		{
-			this.initChecklistField(props);
+			this.state.value = props.value;
+
+			const elementsLoaded = this.props.loading === true && props.loading === false;
+
+			if (elementsLoaded)
+			{
+				const checklistsCount = this.controller.getChecklists().size;
+				this.state.collapsed = checklistsCount > MAX_ELEMENTS;
+			}
 		}
 
-		initChecklistField(props)
+		#isCollapsed()
 		{
-			this.controller = new ChecklistController({ ...props, onChange: this.handleOnChange });
-
-			this.state = {
-				reload: Random.getString(),
-			};
+			return this.state.collapsed;
 		}
 
-		handleOnChange()
+		#expand()
 		{
-			this.setState({ reload: Random.getString() });
+			this.setState({ collapsed: false });
 		}
 
 		openPageManager(checklist)
 		{
-			const { parentWidget } = this.props;
-
-			this.controller.openChecklist({ checklist, parentWidget });
+			this.controller.openChecklist({ checklist });
 		}
 
-		renderProgressView(rootItem)
+		createChecklist()
 		{
-			const completedCount = rootItem.getCompleteCount();
-			const totalCount = rootItem.getDescendantsCount();
+			if (this.isLoading())
+			{
+				return;
+			}
 
-			let fontSize = (completedCount > 9 || totalCount > 9) ? 8 : 9;
-			fontSize = (completedCount > 9 && totalCount > 9) ? 7 : fontSize;
+			const { handleOnCreateChecklist } = this.controller;
 
-			const progressText = `${completedCount}/${totalCount}`;
+			const factory = handleOnCreateChecklist();
 
-			return ProgressView(
-				{
-					testId: 'checklist_Items_count_in_task',
-					params: {
-						type: 'circle',
-						currentPercent: this.getPercent(completedCount, totalCount),
-						color: AppTheme.colors.accentExtraDarkblue,
-					},
-					style: {
-						borderRadius: 30,
-						width: 23,
-						height: 23,
-						justifyContent: 'center',
-						alignItems: 'center',
-						backgroundColor: AppTheme.colors.base5,
-					},
-				},
-				View(
-					{
-						style: {
-							position: 'absolute',
-							width: 20,
-							height: 20,
-							justifyContent: 'center',
-							alignItems: 'center',
-							borderRadius: 10,
-							backgroundColor: AppTheme.colors.bgContentPrimary,
-						},
-					},
-					Text({
-						style: {
-							fontSize,
-							textAlign: 'center',
-						},
-						numberOfLines: 1,
-						text: progressText,
-					}),
-				),
-			);
+			factory();
 		}
 
-		getPercent(completedCount, totalCount)
+		/**
+		 * @public
+		 * @return {*}
+		 */
+		getParentWidget()
 		{
-			return parseInt(
-				(completedCount > 0 ? (completedCount * 100 / totalCount) : 0).toFixed(0),
-				10,
-			);
+			return this.getConfig().parentWidget;
 		}
 
+		/**
+		 * @return {*[]}
+		 */
 		getSortedChecklists()
 		{
 			const checklists = this.controller.getChecklists();
 
-			return [...checklists.values()].sort((a, b) => {
-				const itemA = a.getRootItem()?.getSortIndex();
-				const itemB = b.getRootItem()?.getSortIndex();
+			return [...checklists.values()]
+				.filter((checklist) => checklist?.getRootItem()?.hasDescendants())
+				.sort((a, b) => {
+					const itemA = a.getRootItem()?.getSortIndex();
+					const itemB = b.getRootItem()?.getSortIndex();
 
-				return itemB - itemA;
-			});
+					return itemA - itemB;
+				});
 		}
 
-		renderChecklists()
+		/**
+		 * @public
+		 * @return {{title: string}[]}
+		 */
+		getChecklistStubs()
 		{
-			const { isLoading } = this.props;
-			const content = [];
-
-			this.getSortedChecklists().forEach((checklist, i) => {
-				const needMargin = i !== 0;
-				const rootItem = checklist.getRootItem();
-
-				content.push(
-					checklistPreviewStub({
-						isLoading,
-						margin: needMargin,
-						onClick: () => {
-							this.openPageManager(checklist);
-						},
-						content: View(
-							{
-								style: {
-									flexDirection: 'row',
-									width: '100%',
-									alignItems: 'center',
-								},
-							},
-							this.renderProgressView(rootItem),
-							Text({
-								testId: 'checklist_title_in_task',
-								text: rootItem.getTitle(),
-								style: {
-									marginLeft: 6,
-									fontSize: 16,
-									fontWeight: '400',
-									color: AppTheme.colors.base4,
-								},
-							}),
-						),
-					}),
-				);
-			});
-
-			return content;
+			return (this.getConfig().initialState || [{ title: '' }]);
 		}
 
 		render()
 		{
-			const { parentWidget, ThemeComponent } = this.props;
-			const { handleOnCreateChecklist } = this.controller;
+			const { ThemeComponent } = this.props;
 
 			if (ThemeComponent)
 			{
-				return this.props.ThemeComponent({ field: this, handleOnCreateChecklist });
+				return this.props.ThemeComponent({ field: this });
 			}
+
+			const checklists = this.isLoading()
+				? this.getChecklistStubs()
+				: this.getSortedChecklists();
+
+			const collapsed = this.#isCollapsed();
+			const visibleChecklists = collapsed ? checklists.slice(0, MAX_ELEMENTS) : checklists;
+			const restCount = checklists.length - MAX_ELEMENTS;
 
 			return View(
 				{
+					testId: `${this.testId}_FIELD`,
+					ref: this.bindContainerRef,
 					style: {
-						flexDirection: 'column',
+						paddingTop: Indent.XL.toNumber(),
+						paddingBottom: collapsed ? 32 : Indent.XL.toNumber(),
 					},
 				},
-				...this.renderChecklists(),
-				checklistPreviewStub({
-					margin: true,
-					onClick: handleOnCreateChecklist(parentWidget),
+				Title({
+					testId: this.testId,
+					count: checklists.length,
+				}),
+				this.isLoading() && View(
+					{
+						testId: `${this.testId}_CONTENT`,
+					},
+					...visibleChecklists.map((checklist, index) => ItemStub({
+						testId: this.testId,
+						title: checklist.title,
+						showBorder: index < (visibleChecklists.length - 1),
+					})),
+				),
+				!this.isEmpty() && !this.isLoading() && View(
+					{
+						testId: `${this.testId}_CONTENT`,
+					},
+					...visibleChecklists.map((checklist, index) => {
+						const rootItem = checklist.getRootItem();
+
+						return Item({
+							testId: this.testId,
+							totalCount: rootItem.getTotalCount(),
+							completedCount: rootItem.getCompletedCount(),
+							title: rootItem.getTitle(),
+							isComplete: rootItem.getIsComplete(),
+							showBorder: index < (visibleChecklists.length - 1),
+							onClick: () => this.openPageManager(checklist),
+						});
+					}),
+				),
+				!collapsed && !this.isReadOnly() && AddButton({
+					testId: this.testId,
+					text: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_ADD_CHECKLIST'),
+					onClick: this.createChecklist,
+					style: {
+						paddingHorizontal: Indent.XL2.toNumber(),
+					},
+				}),
+				collapsed && MoreButton({
+					testId: `${this.testId}_SHOW_ALL`,
+					text: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_SHOW_MORE', {
+						'#COUNT#': restCount,
+					}),
+					onClick: () => this.#expand(),
 				}),
 			);
 		}
 	}
 
 	ChecklistPreview.propTypes = {
-		checkListTree: PropTypes.object,
-		parentWidget: PropTypes.object,
-		isLoading: PropTypes.bool,
+		id: PropTypes.string,
+		testId: PropTypes.string,
+		value: PropTypes.object,
+		readOnly: PropTypes.bool,
+		config: PropTypes.shape({
+			parentWidget: PropTypes.object,
+			checklistController: PropTypes.object,
+			initialState: PropTypes.arrayOf(PropTypes.shape({
+				title: PropTypes.string,
+				completed: PropTypes.number,
+				uncompleted: PropTypes.number,
+			})),
+			taskId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+		}),
+		loading: PropTypes.bool,
 	};
 
-	module.exports = { ChecklistPreview };
+	module.exports = {
+		ChecklistPreview,
+		ClickStrategy,
+		ChecklistField: (props) => new ChecklistPreview(props),
+	};
 });

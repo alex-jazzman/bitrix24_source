@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	}
 	elseif ((isset($_REQUEST['delete']) && $_REQUEST['delete'] != '') && $ID > 1)
 	{
-		$res = CClusterDBNode::Delete($ID);
+		$res = CClusterDBNode::Delete($ID, false);
 		if ($res)
 		{
 			LocalRedirect('/bitrix/admin/cluster_dbnode_list.php?lang=' . LANGUAGE_ID . '&group_id=' . $group_id);

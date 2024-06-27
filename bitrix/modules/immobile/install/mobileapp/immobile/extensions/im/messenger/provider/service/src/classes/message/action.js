@@ -71,6 +71,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				}
 
 				case DialogType.channel:
+				case DialogType.generalChannel:
 				case DialogType.openChannel:
 				{
 					return this.fullDeleteMessage(modelMessage, dialogId)
@@ -236,6 +237,7 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				fields: {
 					text,
 					params,
+					files: modelMessage.files,
 				},
 			});
 
@@ -310,14 +312,20 @@ jn.define('im/messenger/provider/service/classes/message/action', (require, expo
 				},
 			);
 
-			this.store.dispatch('recentModel/set', [recentItem])
-				.then(() => {
-					Counters.update();
+			try
+			{
+				// eslint-disable-next-line promise/catch-or-return
+				this.store.dispatch('recentModel/set', [recentItem])
+					.then(() => {
+						Counters.update();
 
-					this.saveShareDialogCache();
-				})
-				.catch((err) => Logger.error('ActionService.fullDeleteMessage recentModel store catch', err))
-			;
+						this.saveShareDialogCache();
+					});
+			}
+			catch (error)
+			{
+				Logger.error(`${this.constructor.name}.fullDeleteMessage.recentModel/set.catch:`, error);
+			}
 		}
 
 		/**

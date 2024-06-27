@@ -14,7 +14,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { UserAddView } = require('im/messenger/controller/user-add/view');
 	const { runAction } = require('im/messenger/lib/rest');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 
 	class UserAdd
 	{
@@ -32,9 +32,10 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 		 */
 		static open(options = {}, parentLayout = null)
 		{
+			Logger.log('UserAdd.open:', options);
 			const { dialogId } = options;
 
-			const createChat = !(new DialogHelper()).isDialogId(dialogId);
+			const createChat = !DialogHelper.isDialogId(dialogId);
 
 			const widget = new UserAdd(dialogId, createChat, parentLayout, options);
 			widget.preparedUserList();
@@ -59,7 +60,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 		{
 			this.textRightBtn = this.options.textRightBtn
 				|| Loc.getMessage('IMMOBILE_MESSENGER_WIDGET_ADD_USER_BUTTON_RESULT');
-			this.loadingTextRightBtn = this.options.loadingTextRightBtn || null;
+			this.loadingTextRightBtn = this.options.loadingTextRightBtn || this.options.textRightBtn;
 			this.title = this.options.title || Loc.getMessage('IMMOBILE_MESSENGER_WIDGET_ADD_USER_TITLE');
 			this.recentText = Loc.getMessage('IMMOBILE_MESSENGER_WIDGET_ADD_USER_RECENT_TEXT');
 		}
@@ -147,7 +148,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 		{
 			// eslint-disable-next-line es/no-optional-chaining
 			const mediumPositionPercent = this.options.widgetOptions?.mediumPositionPercent || 50;
-			const backgroundColor = AppTheme.colors.bgContentTertiary;
+			const backgroundColor = Theme.isDesignSystemSupported ? Theme.colors.bgSecondary : Theme.colors.bgContentTertiary;
 			const widgetConfig = {
 				title: this.title,
 				backgroundColor,

@@ -9,6 +9,7 @@ import { ChatService, RecentService } from 'im.v2.provider.service';
 import { Utils } from 'im.v2.lib.utils';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { showLeaveFromChatConfirm } from 'im.v2.lib.confirm';
+import { ChannelManager } from 'im.v2.lib.channel';
 import { Messenger } from 'im.public';
 
 import { BaseMenu } from '../base/base';
@@ -72,7 +73,7 @@ export class RecentMenu extends BaseMenu
 	getSendMessageItem(): MenuItem
 	{
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_WRITE'),
+			text: Loc.getMessage('IM_LIB_MENU_WRITE_V2'),
 			onclick: () => {
 				Messenger.openChat(this.context.dialogId);
 				this.menuInstance.close();
@@ -192,7 +193,7 @@ export class RecentMenu extends BaseMenu
 		const profileUri = Utils.user.getProfileLink(this.context.dialogId);
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE'),
+			text: Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
 			href: profileUri,
 			onclick: () => {
 				this.menuInstance.close();
@@ -226,7 +227,7 @@ export class RecentMenu extends BaseMenu
 		}
 
 		return {
-			text: Loc.getMessage('IM_LIB_MENU_LEAVE'),
+			text: Loc.getMessage('IM_LIB_MENU_LEAVE_V2'),
 			onclick: async () => {
 				this.menuInstance.close();
 				const userChoice = await showLeaveFromChatConfirm();
@@ -355,9 +356,7 @@ export class RecentMenu extends BaseMenu
 
 	isChannel(): boolean
 	{
-		const { type }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
-
-		return [ChatType.channel, ChatType.openChannel].includes(type);
+		return ChannelManager.isChannel(this.context.dialogId);
 	}
 
 	isCommentsChat(): boolean

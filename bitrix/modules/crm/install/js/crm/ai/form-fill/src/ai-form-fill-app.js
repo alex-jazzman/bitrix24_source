@@ -14,8 +14,10 @@ interface CreateOptions
 	mergeUuid: string;
 	label: string;
 	activityId: number;
+	activityDirection: string;
 	ownerId: number;
 	ownerTypeId: number;
+	languageTitle?: string;
 }
 
 class ConflictFieldsliderCreator
@@ -76,6 +78,7 @@ class ConflictFieldsliderCreator
 						activityId: this.#options.activityId,
 						ownerTypeId: this.#options.ownerTypeId,
 						ownerId: this.#options.ownerId,
+						languageTitle: this.#options.languageTitle,
 					});
 
 					transcription.open();
@@ -95,6 +98,7 @@ class ConflictFieldsliderCreator
 						activityId: this.#options.activityId,
 						ownerTypeId: this.#options.ownerTypeId,
 						ownerId: this.#options.ownerId,
+						languageTitle: this.#options.languageTitle,
 					});
 
 					resume.open();

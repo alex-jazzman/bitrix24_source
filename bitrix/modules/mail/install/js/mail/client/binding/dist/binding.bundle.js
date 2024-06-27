@@ -168,9 +168,14 @@ this.BX.Mail = this.BX.Mail || {};
 	        return;
 	      }
 	      if (this.isActive()) {
-	        //to join the chat if you left it
-	        if (this.getType() === 'chat') {
-	          BX.Mail.Secretary.getInstance(this.getMessageId(true)).openChat();
+	        switch (this.getType()) {
+	          //to join the chat if you left it
+	          case 'chat':
+	            BX.Mail.Secretary.getInstance(this.getMessageId(true)).openChat();
+	            break;
+	          case 'task':
+	            BX.Mail.Secretary.getInstance(this.getMessageId(true)).onTaskAction('task_view', 'view_button');
+	            break;
 	        }
 	      } else if (!babelHelpers.classPrivateFieldGet(this, _wait)) {
 	        switch (this.getType()) {
@@ -182,7 +187,11 @@ this.BX.Mail = this.BX.Mail || {};
 	            BX.Mail.Secretary.getInstance(this.getMessageId(true)).openChat();
 	            break;
 	          case 'task':
-	            top.BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldGet(this, _createHref));
+	            var uri = BX.Uri.addParam(babelHelpers.classPrivateFieldGet(this, _createHref), {
+	              ta_sec: 'mail',
+	              ta_el: 'create_button'
+	            });
+	            top.BX.SidePanel.Instance.open(uri);
 	            break;
 	          case 'post':
 	            top.BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldGet(this, _createHref));

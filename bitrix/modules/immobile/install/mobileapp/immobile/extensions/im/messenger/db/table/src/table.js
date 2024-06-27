@@ -33,10 +33,10 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			this.fieldsCollection = this.getFieldsCollection();
 
 			this.saveHandlerCollection = {
-				[FieldType.date]: (value) => {
+				[FieldType.date]: (key, value) => {
 					return DateHelper.cast(value).toISOString();
 				},
-				[FieldType.boolean]: (value) => {
+				[FieldType.boolean]: (key, value) => {
 					if (value === true)
 					{
 						return '1';
@@ -49,10 +49,10 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 					return '';
 				},
-				[FieldType.json]: (value) => {
+				[FieldType.json]: (key, value) => {
 					return JSON.stringify(value);
 				},
-				[FieldType.map]: (value) => {
+				[FieldType.map]: (key, value) => {
 					if (value instanceof Map)
 					{
 						return JSON.stringify(Object.fromEntries(value));
@@ -63,25 +63,25 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			};
 
 			this.restoreHandlerCollection = {
-				[FieldType.date]: (value) => {
+				[FieldType.date]: (key, value) => {
 					return DateHelper.cast(value, null);
 				},
-				[FieldType.boolean]: (value) => {
+				[FieldType.boolean]: (key, value) => {
 					return value === '1';
 				},
-				[FieldType.json]: (value) => {
+				[FieldType.json]: (key, value) => {
 					try
 					{
 						return JSON.parse(value);
 					}
 					catch (error)
 					{
-						logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, error);
+						logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
 
 						return null;
 					}
 				},
-				[FieldType.map]: (value) => {
+				[FieldType.map]: (key, value) => {
 					try
 					{
 						const obj = JSON.parse(value);
@@ -90,7 +90,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 					}
 					catch (error)
 					{
-						logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, error);
+						logger.error(`Table.restoreDatabaseRow error in ${this.getName()}:`, key, value, error);
 
 						return null;
 					}
@@ -140,6 +140,13 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return this.fieldsCollection;
 		}
 
+		getDefaultValueByFieldName(fieldName)
+		{
+			const field = this.fieldsCollection[fieldName];
+
+			return field.defaultValue;
+		}
+
 		getRestoreHandlerByFieldType(fieldType)
 		{
 			return this.restoreHandlerCollection[fieldType];
@@ -155,7 +162,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return this.table.getMap();
 		}
 
-		add(items, replace = true)
+		add(items, replace = true, ignoreErrors = false)
 		{
 			if (!this.isSupported || !Feature.isLocalStorageEnabled)
 			{
@@ -182,9 +189,26 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 					logger.log(`Table.add complete: ${this.getName()}`, items, replace);
 				})
 				.catch((error) => {
-					logger.error(`Table.add error: ${this.getName()}`, error, items, replace);
+					if (ignoreErrors)
+					{
+						logger.warn(`Table.add error: ${this.getName()}`, error, items, replace);
+					}
+					else
+					{
+						logger.error(`Table.add error: ${this.getName()}`, error, items, replace);
+					}
 				})
 			;
+		}
+
+		async addIfNotExist(items)
+		{
+			try
+			{
+				await this.add(items, false, true);
+			}
+			catch
+			{ /* empty */ }
 		}
 
 		/**
@@ -344,16 +368,6 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
-		prepareInsert(insert)
-		{
-			if (this.isSupported)
-			{
-				return this.table.drop();
-			}
-
-			return Promise.resolve();
-		}
-
 		executeSql({ query, values })
 		{
 			if (!this.isSupported || !Feature.isLocalStorageEnabled)
@@ -369,20 +383,30 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			const fieldsCollection = this.getFieldsCollection();
 
 			const row = {};
+
+			const itemFieldsCollection = {};
 			Object.keys(item).forEach((fieldName) => {
-				const doesTableHaveField = fieldsCollection[fieldName];
-				if (!doesTableHaveField)
+				itemFieldsCollection[fieldName] = true;
+			});
+
+			Object.keys(fieldsCollection).forEach((fieldName) => {
+				const defaultValue = this.getDefaultValueByFieldName(fieldName);
+				if (!itemFieldsCollection[fieldName] && Type.isUndefined(defaultValue))
 				{
 					return;
 				}
 
 				let fieldValue = item[fieldName];
+				if (Type.isUndefined(fieldValue))
+				{
+					fieldValue = defaultValue;
+				}
 
 				const fieldType = fieldsCollection[fieldName].type;
 				const saveHandler = this.getSaveHandlerByFieldType(fieldType);
 				if (Type.isFunction(saveHandler))
 				{
-					fieldValue = saveHandler(fieldValue);
+					fieldValue = saveHandler(fieldName, fieldValue);
 				}
 
 				row[fieldName] = fieldValue;
@@ -408,13 +432,44 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 				const restoreHandler = this.getRestoreHandlerByFieldType(fieldType);
 				if (Type.isFunction(restoreHandler))
 				{
-					fieldValue = restoreHandler(fieldValue);
+					fieldValue = restoreHandler(fieldName, fieldValue);
 				}
 
 				restoredRow[fieldName] = fieldValue;
 			});
 
 			return restoredRow;
+		}
+
+		convertSelectResultToGetListResult(selectResult, shouldRestoreRows)
+		{
+			const {
+				columns,
+				rows,
+			} = selectResult;
+
+			const getListResult = {
+				items: [],
+			};
+
+			rows.forEach((row) => {
+				const listRow = {};
+				row.forEach((value, index) => {
+					const key = columns[index];
+					listRow[key] = value;
+				});
+
+				if (shouldRestoreRows === true)
+				{
+					getListResult.items.push(this.restoreDatabaseRow(listRow));
+				}
+				else
+				{
+					getListResult.items.push(listRow);
+				}
+			});
+
+			return getListResult;
 		}
 	}
 

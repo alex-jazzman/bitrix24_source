@@ -1,3 +1,4 @@
+import 'ui.notification';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 
 import { Utils } from 'im.v2.lib.utils';
@@ -97,6 +98,8 @@ export const ChannelList = {
 		},
 		onChannelJoin(event: BaseEvent<{ channelDialogId: string }>)
 		{
+			this.showNotification(this.loc('IM_LIST_CHANNEL_SUBSCRIBE_NOTIFICATION'));
+
 			const { channelDialogId } = event.getData();
 			this.joinedChannels.add(channelDialogId);
 		},
@@ -133,6 +136,10 @@ export const ChannelList = {
 			}
 
 			return this.pullWatchManager;
+		},
+		showNotification(text: string)
+		{
+			BX.UI.Notification.Center.notify({ content: text });
 		},
 		loc(phraseCode: string): string
 		{

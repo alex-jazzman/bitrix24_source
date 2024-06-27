@@ -9,7 +9,7 @@ $MESS["TASKS_STATUS_COMPLETED"] = "Завершена";
 $MESS["TASKS_STATUS_DELAYED"] = "Отложена";
 $MESS["TASKS_STATUS_DECLINED"] = "Отклонена";
 $MESS["TASKS_STATUS_1"] = "Новая";
-$MESS["TASKS_STATUS_2"] = "Ждет выполнения";
+$MESS["TASKS_STATUS_2"] = "Ждёт выполнения";
 $MESS["TASKS_STATUS_3"] = "Выполняется";
 $MESS["TASKS_STATUS_4"] = "Ждет контроля";
 $MESS["TASKS_STATUS_5"] = "Завершена";
@@ -211,6 +211,7 @@ $MESS["TASKS_DEPENDENCY_END"] = "Финиш";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_MAKE_IMPORTANT"] = "Сделать важной задачей";
 $MESS["TASKS_MAIL_FORWARD"] = "Почтовый адрес для переадресации";
 $MESS["TASKS_TTDP_PROJECT_TASK_IN"] = "Задача в проекте (группе)";
+$MESS["TASKS_TTDP_PROJECT_FLOW_IN"] = "Поток:";
 $MESS["TASKS_TTV_SUB_TITLE"] = "Задача № #ID#";
 $MESS["TASKS_AJAX_ERROR_LOAD_TEMPLATES"] = "Ошибка загрузки списка";
 $MESS["TASKS_AJAX_EMPTY_TEMPLATES"] = "Нет шаблонов задач";
@@ -230,4 +231,7 @@ $MESS["TASKS_TASK_CREATED_IN_MOBILE_TITLE"] = "Создана в мобильн�
 $MESS["TASKS_TASK_CREATED_IN_MOBILE_CONTENT"] = "#HTML_START#Создана в #HTML_UNDERLINE_START#мобильном приложении#HTML_UNDERLINE_END##HTML_END#";
 $MESS["TASKS_TASK_POPUP_TITLE"] = "Контролируйте задачи в мобильном приложении";
 $MESS["TASKS_TASK_POPUP_BOTTOM_TEXT"] = "Поставьте мобильное приложение в один клик! Наведите камеру телефона на ваш персональный QR-код и перейдите по ссылке.";
-?>
+
+$MESS["TASKS_TASK_BUTTON_COPILOT"] = "CoPilot";
+$MESS["TASKS_TASK_BUTTON_COPILOT_COPY_INTO_COMMENT"] = "Скопировать в комментарий";
+$MESS["TASKS_TASK_BUTTON_COPILOT_COPY_INTO_NEW_TASK"] = "Скопировать в новую задачу";

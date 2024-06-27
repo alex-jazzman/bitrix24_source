@@ -166,13 +166,6 @@ export class SliderProvider extends BaseProvider
 			});
 		}
 
-		if (Type.isPlainObject(data) && data.demoStatus)
-		{
-			url = Uri.addParam(url, {
-				demoStatus: data.demoStatus,
-			});
-		}
-
 		return url;
 	}
 

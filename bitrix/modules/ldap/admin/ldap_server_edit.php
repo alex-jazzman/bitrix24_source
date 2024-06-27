@@ -3,7 +3,7 @@
 ##############################################
 # Bitrix: SiteManager                        #
 # Copyright (c) 2002-2016 Bitrix             #
-# http://www.bitrixsoft.com                  #
+# https://www.bitrixsoft.com                 #
 # mailto:admin@bitrixsoft.com                #
 ##############################################
 */
@@ -395,7 +395,7 @@ else
 	if($ID<=0 && !$bPostback)
 	{
 		?>
-		<script type="text/javascript">
+		<script>
 			setTimeout("OutLDSDefParams('AD')", 500);
 		</script>
 		<?
@@ -471,7 +471,7 @@ else
 				<option value="<?=CLDAP::CONNECTION_TYPE_SSL?>"<?=intval($str_CONNECTION_TYPE) == CLDAP::CONNECTION_TYPE_SSL ? ' selected' : ''?>>SSL</option>
 				<option value="<?=CLDAP::CONNECTION_TYPE_TLS?>"<?=intval($str_CONNECTION_TYPE) == CLDAP::CONNECTION_TYPE_TLS ? ' selected' : ''?>>TLS</option>
 			</select>
-			<script type="text/javascript">
+			<script>
 				function onLdapSrvEditConnType()
 				{
 					var type = BX('adm-ldap-srv-edit-conn-type'),
@@ -546,7 +546,7 @@ else
 		<td>&nbsp;</td>
 		<td><input type="submit" name="check_server" value="<?=GetMessage("LDAP_EDIT_CHECK_CONNECTION")?>" class="button"></td>
 	</tr>
-	<script type="text/javascript">
+	<script>
 		function LdapChangePasswordHandler()
 		{
 			const changeButton = document.getElementById('ldap-password-change-button');
@@ -624,7 +624,7 @@ else
 		</tr>
 	<?endif;?>
 <?$tabControl->BeginNextTab();?>
-	<script type="text/javascript">
+	<script>
 		function OutLDSDefParams(t)
 		{
 			if(t=='AD')
@@ -769,7 +769,7 @@ else
 			<td><a href="javascript:void(0)" onClick="__UFAdd();"><?echo GetMessage("LDAP_EDIT_USER_FIELDS_ADD")?></a></td>
 		</tr>
 
-	<script type="text/javascript">
+	<script>
 	var nm = <?=$nm?>;
 	var arMas = {'_': '' <?foreach($arSyncFields as $k=>$p):?>, '<?=Cutil::JSEscape($k)?>': '<?=Cutil::JSEscape($p["AD"])?>'<?endforeach;?>};
 	var arMasLdap = {'_': '' <?foreach($arSyncFields as $k=>$p):?>, '<?=Cutil::JSEscape($k)?>': '<?=Cutil::JSEscape($p["LDAP"])?>'<?endforeach;?>};
@@ -859,7 +859,7 @@ else
 
 		$importEnabled = ($str_IMPORT_STRUCT=="Y");
 		?>
-			<script type="text/javascript">
+			<script>
 				function __importStateSwitch(disabled)
 				{
 					document.getElementById('ROOT_DEPARTMENT').disabled = disabled;
@@ -954,7 +954,7 @@ else
 	}
 
 	if(!is_array($arLDAPGroups) || count($arLDAPGroups)<=0):?>
-	<script type="text/javascript">
+	<script>
 	function CheckNAttr()
 	{
 		if(document.getElementById("GROUP_FILTER").value.length<=0 ||
@@ -1044,7 +1044,7 @@ else
 
 
 <?$tabControl->BeginNextTab();?>
-<script type="text/javascript">
+<script>
 function _SCh(c)
 {
 	document.getElementById('SYNC_PERIOD').disabled = !c;

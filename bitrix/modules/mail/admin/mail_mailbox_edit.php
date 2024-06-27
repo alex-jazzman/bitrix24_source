@@ -3,7 +3,7 @@
 ##############################################
 # Bitrix: SiteManager                        #
 # Copyright (c) 2002-2005 Bitrix             #
-# http://www.bitrixsoft.com                  #
+# https://www.bitrixsoft.com                 #
 # mailto:admin@bitrixsoft.com                #
 ##############################################
 */
@@ -405,7 +405,7 @@ if ($message)
 	<? } ?>
 	<input type="hidden" value="Y" name="apply">
 
-<script type="text/javascript">
+<script>
 
 	function change_type()
 	{

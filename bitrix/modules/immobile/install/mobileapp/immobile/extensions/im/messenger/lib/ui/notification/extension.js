@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 
 	const { Loc } = require('loc');
 
+	const { MessengerToast, ToastType } = require('im/messenger/lib/ui/notification/messenger-toast');
 	/**
 	 * @class Notify
 	 */
@@ -19,7 +20,16 @@ jn.define('im/messenger/lib/ui/notification', (require, exports, module) => {
 				backgroundColor: '#E6000000',
 			});
 		}
+
+		/**
+		 * @param {ToastType} toastType
+		 * @param layoutWidget
+		 */
+		static showToast(toastType, layoutWidget = null)
+		{
+			MessengerToast.show(toastType, layoutWidget);
+		}
 	}
 
-	module.exports = { Notification };
+	module.exports = { Notification, ToastType };
 });

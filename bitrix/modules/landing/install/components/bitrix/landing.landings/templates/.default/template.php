@@ -271,7 +271,10 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 		}
 	}
 
-	if (\Bitrix\Main\Config\Option::get('catalog', 'is_external_catalog') === 'Y')
+	if (
+		\Bitrix\Main\Loader::includeModule('catalog')
+		&& \Bitrix\Catalog\Config\State::isExternalCatalog()
+	)
 	{
 		if (
 			$accessSite['PUBLICATION'] === 'Y'
@@ -447,7 +450,7 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 	</div>
 <?endif;?>
 
-<script type="text/javascript">
+<script>
 	(() => {
 		const sliderConditions = <?= CUtil::phpToJSObject($sliderConditions);?>;
 		if (sliderConditions.length > 0)
@@ -520,7 +523,7 @@ foreach ($arResult['LANDINGS'] as $i => $item):
 		}
 	})();
 </script>
-<script type="text/javascript">
+<script>
 	// + button open page add slider
 	BX.bind(document.querySelector('.landing-item-add-new span.landing-item-inner'), 'click', event => {
 		BX.SidePanel.Instance.open(event.currentTarget.dataset.href, {

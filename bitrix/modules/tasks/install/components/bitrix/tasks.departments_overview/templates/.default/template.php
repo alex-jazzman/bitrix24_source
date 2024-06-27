@@ -106,7 +106,7 @@ if (isset($arResult['FILTER']['FIELDS']) && is_array($arResult['FILTER']['FIELDS
 	if (!empty($selectors))
 	{
 		?>
-		<script type="text/javascript"><?
+		<script><?
 			foreach ($selectors as $groupSelector)
 			{
 			$selectorID = $groupSelector['ID'];
@@ -249,7 +249,7 @@ $this->EndViewTarget();
 
 	<? $helper->initializeExtension(); ?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		var taskLimitExceeded = <?= Json::encode($taskLimitExceeded) ?>;
 		if (taskLimitExceeded)

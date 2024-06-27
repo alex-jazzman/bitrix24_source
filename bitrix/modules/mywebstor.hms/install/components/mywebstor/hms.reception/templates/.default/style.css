@@ -1,0 +1,8 @@
+#calendar-content {
+    background-color: #fff;
+    border-radius: var(--ui-border-radius-md);
+}
+
+#calendar-content .calendar-content-paddings {
+    padding: 15px 15px 20px;
+}

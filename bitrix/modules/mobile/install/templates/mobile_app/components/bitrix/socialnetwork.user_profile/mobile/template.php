@@ -26,7 +26,7 @@ if (CModule::IncludeModule('im'))
 		$userColor = $arOnline['users'][$arUser['ID']]['color'];
 	}
 }
-?><script type="text/javascript">
+?><script>
 
 	BX.message(<?=CUtil::PhpToJSObject(array(
 		"SONET_MESSAGE" => GetMessage("SONET_MESSAGE"),

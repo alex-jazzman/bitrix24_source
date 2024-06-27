@@ -28,6 +28,7 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 
 	private bool $isRequisiteAvailable = false;
 
+	private static array $cachedResult = [];
 	private static int $number = 0;
 	private static array $cachedAffiliates = [];
 
@@ -40,19 +41,6 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 	{
 		parent::__construct($component);
 		self::$number++;
-
-		$this->user = Intranet\CurrentUser::get();
-
-		if (Loader::includeModule('bitrix24'))
-		{
-			$this->isBitrix24 = true;
-			$this->initAffiliates();
-		}
-
-		if (Loader::includeModule('crm') && $this->getUser()->isAdmin())
-		{
-			$this->isRequisiteAvailable = true;
-		}
 	}
 
 	private function getUser(): Intranet\CurrentUser
@@ -222,23 +210,6 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 		return $result;
 	}
 
-	public function onPrepareComponentParams($arParams): array
-	{
-		// for now show widget only for admin or users with affiliate
-		$this->showWidget = $this->getUser()->isAdmin() || count($this->affiliates) > 1;
-
-		if (!$this->showWidget)
-		{
-			return [];
-		}
-
-		$arParams['IS_ADMIN'] = $this->getUser()->isAdmin();
-		$arParams['IS_REQUISITE'] = $this->isRequisiteAvailable;
-		$arParams['IS_BITRIX24'] = $this->isBitrix24;
-
-		return $arParams;
-	}
-
 	public function getWidgetComponentAction()
 	{
 		return new \Bitrix\Main\Engine\Response\Component(
@@ -249,9 +220,37 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 
 	public function executeComponent(): void
 	{
-		if ($this->showWidget)
+		if (empty(self::$cachedResult))
 		{
-			$this->arResult['NUMBER'] = self::$number;
+			$this->user = Intranet\CurrentUser::get();
+
+			if (Loader::includeModule('bitrix24'))
+			{
+				$this->isBitrix24 = true;
+				$this->initAffiliates();
+			}
+
+			if (Loader::includeModule('crm') && $this->getUser()->isAdmin())
+			{
+				$this->isRequisiteAvailable = true;
+			}
+
+			$this->showWidget = $this->getUser()->isAdmin() || count($this->affiliates) > 1;
+			self::$cachedResult['SHOW_WIDGET'] = $this->showWidget;
+
+			if ($this->showWidget)
+			{
+				self::$cachedResult['IS_ADMIN'] = $this->getUser()->isAdmin();
+				self::$cachedResult['IS_REQUISITE'] = $this->isRequisiteAvailable;
+				self::$cachedResult['IS_BITRIX24'] = $this->isBitrix24;
+			}
+		}
+
+		$this->arResult = self::$cachedResult;
+		$this->arResult['NUMBER'] = self::$number;
+
+		if ($this->arResult['SHOW_WIDGET'])
+		{
 			$this->includeComponentTemplate();
 		}
 	}

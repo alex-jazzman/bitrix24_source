@@ -6,6 +6,7 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 	const { DialogType, EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserManager } = require('im/messenger/lib/user-manager');
+	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sync-service');
 
@@ -28,6 +29,8 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 			this.messageRepository = this.core.getRepository().message;
 			this.pinMessageRepository = this.core.getRepository().pinMessage;
 
+			this.messageContextCreator = new MessageContextCreator();
+
 			this.bindMethods();
 			this.subscribeEvents();
 		}
@@ -43,7 +46,9 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 		}
 
 		/**
-		 * @param {SyncListResult} event
+		 * @param {object} event
+		 * @param {string} event.uuid
+		 * @param {SyncListResult} event.result
 		 */
 		async onSyncRequestResultReceive(event)
 		{
@@ -80,40 +85,19 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 				messages,
 				updatedMessages = {},
 				addedChats,
-				addedRecent,
 				completeDeletedMessages,
 				deletedChats,
 				addedPins,
 				deletedPins,
+				dialogIds,
 			} = syncListResult;
 
-			await this.fillDatabaseFromMessages(messages);
+			const addedChatsWithDialogIds = await this.fillDatabaseFromDialogues(addedChats, dialogIds);
+			await this.fillWasCompletelySyncDialogues(addedChatsWithDialogIds, messages.messages);
+
+			await this.fillDatabaseFromMessages(messages, dialogIds);
 			await this.updateDatabaseFromMessages(updatedMessages);
 			await this.updateDatabaseFromPins(addedPins, deletedPins);
-
-			if (Type.isArrayFilled(addedChats))
-			{
-				// TODO: refactor when the dialogId will be in addedChats
-				const addedRecentChatIds = {};
-				addedRecent.forEach((recentItem) => {
-					addedRecentChatIds[recentItem.chat_id] = recentItem.id;
-				});
-
-				const addedChatsWithDialogIds = [];
-				addedChats.forEach((chat) => {
-					const chatId = chat.id;
-					const dialogId = chat.dialogId;
-					if (chatId && !dialogId)
-					{
-						// eslint-disable-next-line no-param-reassign
-						chat.dialogId = addedRecentChatIds[chatId];
-					}
-
-					addedChatsWithDialogIds.push(chat);
-				});
-
-				await this.dialogRepository.saveFromRest(addedChatsWithDialogIds);
-			}
 
 			const deletedChatsIdList = Object.values(deletedChats);
 			if (Type.isArrayFilled(deletedChatsIdList))
@@ -134,9 +118,10 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 		/**
 		 *
 		 * @param {SyncListResult['messages']} syncMessages
+		 * @param {SyncListResult['dialogIds']} dialogIds
 		 * @return {Promise<void>}
 		 */
-		async fillDatabaseFromMessages(syncMessages)
+		async fillDatabaseFromMessages(syncMessages, dialogIds)
 		{
 			const {
 				users,
@@ -160,9 +145,70 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 				await this.reactionRepository.saveFromRest(reactions);
 			}
 
-			if (Type.isArrayFilled(messages))
+			const messagesLinkedList = await this.messageContextCreator.createMessageLinkedListForSyncResult(
+				messages,
+				dialogIds,
+			);
+			if (Type.isArrayFilled(messagesLinkedList))
 			{
-				await this.messageRepository.saveFromRest(messages);
+				await this.messageRepository.saveFromRest(messagesLinkedList);
+			}
+		}
+
+		/**
+		 * @param {SyncListResult['addedChats']} addedChats
+		 * @param {SyncListResult['dialogIds']} dialogIds
+		 *
+		 * @return {Promise<Array>}
+		 */
+		async fillDatabaseFromDialogues(addedChats, dialogIds)
+		{
+			if (Type.isArrayFilled(addedChats))
+			{
+				const addedChatsWithDialogIds = [];
+				addedChats.forEach((chat) => {
+					const chatId = chat.id;
+					const dialogId = chat.dialogId;
+					if (chatId && !dialogId)
+					{
+						// eslint-disable-next-line no-param-reassign
+						chat.dialogId = dialogIds[chatId];
+					}
+
+					addedChatsWithDialogIds.push(chat);
+				});
+
+				await this.dialogRepository.saveFromRest(addedChatsWithDialogIds);
+
+				return addedChatsWithDialogIds;
+			}
+
+			return [];
+		}
+
+		/**
+		 * @param {SyncListResult['addedChats']} addedChats
+		 * @param {SyncListResult['messages']['messages']} messages
+		 * @return {Promise<void>}
+		 */
+		async fillWasCompletelySyncDialogues(addedChats, messages)
+		{
+			const messageIdCollection = {};
+			messages.forEach((message) => {
+				messageIdCollection[message.id] = true;
+			});
+
+			const completelySyncDialogIdList = [];
+			addedChats.forEach((chat) => {
+				if (messageIdCollection[chat.last_message_id])
+				{
+					completelySyncDialogIdList.push(chat.dialogId);
+				}
+			});
+
+			if (Type.isArrayFilled(completelySyncDialogIdList))
+			{
+				await this.dialogRepository.setWasCompletelySyncByIdList(completelySyncDialogIdList, true);
 			}
 		}
 
@@ -263,10 +309,10 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 			const {
 				messages,
 				addedChats,
-				addedRecent,
 				completeDeletedMessages,
 				addedPins,
 				deletedPins,
+				dialogIds,
 			} = syncListResult;
 
 			const {
@@ -282,26 +328,20 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 
 			const usersPromise = this.store.dispatch('usersModel/set', [...users, ...pinnedUsers]);
 
-			// TODO: refactor when the dialogId will be in addedChats
-			const addedRecentChatIds = {};
-			addedRecent.forEach((recentItem) => {
-				addedRecentChatIds[recentItem.chat_id] = recentItem.id;
-			});
-
-			const dialogs = addedChats.map((chat) => {
+			const addedChatsWithDialogIds = addedChats.map((chat) => {
 				const dialog = chat;
 				const chatId = dialog.id;
 				const dialogId = dialog.dialogId;
 				if (chatId && !dialogId)
 				{
 					// eslint-disable-next-line no-param-reassign
-					chat.dialogId = addedRecentChatIds[chatId];
+					chat.dialogId = dialogIds[chatId];
 				}
 
 				return dialog;
 			});
 
-			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', dialogs);
+			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', addedChatsWithDialogIds);
 			const filesPromise = this.store.dispatch('filesModel/set', [...files, ...pinnedFiles]);
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
 				reactions,

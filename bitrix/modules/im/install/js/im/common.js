@@ -757,6 +757,24 @@
 		return messageText;
 	}
 
+	MessengerCommon.prototype.toBXUrl = function(url)
+	{
+		const isMobileWebComponent = this.isMobile() && this.BXIM.webComponent;
+		const isCurrentDomainUrl = (
+			currentDomain
+			&& typeof(url) === 'string'
+			&& url !== ''
+			&& url.startsWith(currentDomain)
+		);
+
+		if (isMobileWebComponent && isCurrentDomainUrl)
+		{
+			return `bx${url}`;
+		}
+
+		return url;
+	};
+
 	/* Section: Images */
 	MessengerCommon.prototype.formatUrl = function(url)
 	{
@@ -13266,9 +13284,15 @@
 				}
 				else
 				{
+					let fileUrl = this.formatUrl(file.urlPreview? file.urlPreview: file.preview);
+					if (this.isMobile() && file.type === 'image')
+					{
+						fileUrl = this.toBXUrl(fileUrl);
+					}
+
 					imageNode = BX.create("img", {
 						attrs:{
-							'src': this.formatUrl(file.urlPreview? file.urlPreview: file.preview),
+							'src': fileUrl,
 							'height': file.image? (file.image.height > 400? '400': file.image.height): 'auto'
 						},
 						props : { className: "bx-messenger-file-image-text bx-messenger-file-image-type-"+file.type},
@@ -15294,6 +15318,14 @@
 				sessionId: session.id,
 				ownerId: session.crmDeal,
 				context: 'chat',
+				st: {
+					tool: 'crm',
+					category: 'payments',
+					event: 'payment_create_click',
+					c_section: 'chats',
+					c_sub_section: 'web',
+					type: 'delivery_payment',
+				}
 			};
 			Object.assign(params, additionalParams);
 			var salescenterUrl = BX.util.add_url_param('/saleshub/app/', params);

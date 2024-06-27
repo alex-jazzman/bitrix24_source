@@ -5,7 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Kanban\Helper;
@@ -48,8 +47,6 @@ $contactCenterUrl = Container::getInstance()->getRouter()->getContactCenterUrl()
 // ;
 
 // js extension reg
-Extension::load(['ui.actionpanel', 'ui.notification']);
-
 \CJSCore::registerExt('crm_common', array(
 	'js' => array('/bitrix/js/crm/crm.js', '/bitrix/js/crm/common.js')
 ));
@@ -63,7 +60,7 @@ Extension::load(['ui.actionpanel', 'ui.notification']);
 	'js' => array('/bitrix/js/main/popup_menu.js')
 ));
 
-\CJSCore::Init(array(
+Extension::load([
 	'crm_common',
 	'crm.kanban',
 	'crm.kanban.sort',
@@ -77,8 +74,12 @@ Extension::load(['ui.actionpanel', 'ui.notification']);
 	'intranet_notify_dialog',
 	'marketplace',
 	'sidepanel',
-	'uf'
-));
+	'uf',
+	'crm.badge',
+	'ui.actionpanel',
+	'ui.notification',
+	'ui.design-tokens',
+]);
 
 include 'editors.php';
 
@@ -103,7 +104,7 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 
 <div id="crm_kanban"></div>
 
-<script type="text/javascript">
+<script>
 	var Kanban;
 	var ajaxHandlerPath = "<?= $this->getComponent()->getPath()?>/ajax.old.php";
 
@@ -300,11 +301,13 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 				{
 					CRM_KANBAN_POPUP_PARAMS_SAVE: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_POPUP_PARAMS_SAVE'));?>",
 					CRM_KANBAN_POPUP_PARAMS_CANCEL: "<?= CUtil::JSEscape(Loc::getMessage('CRM_KANBAN_POPUP_PARAMS_CANCEL'));?>",
-					CRM_KANBAN_DELETE_SUCCESS_MULTIPLE: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE') ?>",
-					CRM_KANBAN_DELETE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS') ?>",
+					CRM_KANBAN_DELETE_SUCCESS_MULTIPLE: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE_MSGVER_1') ?>",
+					CRM_KANBAN_DELETE_SUCCESS_MULTIPLE_WITH_ERRORS: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE_WITH_ERRORS') ?>",
+					CRM_KANBAN_DELETE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_SUCCESS_MSGVER_1') ?>",
 					CRM_KANBAN_DELETE_CANCEL: "<?= GetMessageJS('CRM_KANBAN_DELETE_CANCEL') ?>",
-					CRM_KANBAN_DELETE_RESTORE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_RESTORE_SUCCESS') ?>",
-					CRM_TYPE_ITEM_PARTIAL_EDITOR_TITLE: "<?= GetMessageJS('CRM_TYPE_ITEM_PARTIAL_EDITOR_TITLE')?>"
+					CRM_KANBAN_DELETE_RESTORE_SUCCESS: "<?= GetMessageJS('CRM_KANBAN_DELETE_RESTORE_SUCCESS_MSGVER_1') ?>",
+					CRM_TYPE_ITEM_PARTIAL_EDITOR_TITLE: "<?= GetMessageJS('CRM_TYPE_ITEM_PARTIAL_EDITOR_TITLE')?>",
+					CRM_KANBAN_OPEN_ITEM: "<?= GetMessageJS('CRM_KANBAN_OPEN_ITEM')?>",
 				}
 			);
 
@@ -327,39 +330,23 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 			<?endif;?>
 
 			<?php
-				Extension::load('crm.settings-button-extender');
-				$todoCreateNotification = (new \Bitrix\Crm\Activity\TodoCreateNotification($entityTypeId));
-				$todoCreateNotificationSkipPeriod = $todoCreateNotification->getCurrentSkipPeriod();
 				$factory = Container::getInstance()->getFactory($entityTypeId);
-				$smartActivityNotificationSupported = $factory && $factory->isSmartActivityNotificationSupported();
+				if ($factory)
+				{
+					$settingsButtonExtenderParams = new \Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams(
+						$factory,
+					);
+					$settingsButtonExtenderParams
+						->setCategoryId(isset($arParams['EXTRA']['CATEGORY_ID']) ? (int)$arParams['EXTRA']['CATEGORY_ID'] : null)
+						->setTargetItemId('crm_kanban_cc_delimiter')
+						->setGetRootMenuJsCallback('Kanban.getSettingsButtonMenu()')
+						->setGetKanbanSortSettingsControllerJsCallback('BX.CRM.Kanban.Sort.SettingsController.Instance')
+						->setGetKanbanRestrictionJsCallback('BX.CRM.Kanban.Restriction.Instance')
+					;
+
+					echo $settingsButtonExtenderParams->buildJsInitCode();
+				}
 			?>
-			const settingsMenu = Kanban.getSettingsButtonMenu();
-			if (settingsMenu)
-			{
-				new BX.Crm.SettingsButtonExtender({
-					smartActivityNotificationSupported: <?= $smartActivityNotificationSupported ? 'true' : 'false' ?>,
-					entityTypeId: <?= $entityTypeId ?>,
-					categoryId: <?= isset($arParams['EXTRA']['CATEGORY_ID']) ? (int)$arParams['EXTRA']['CATEGORY_ID'] : 'null' ?>,
-					pingSettings: <?= CUtil::PhpToJSObject((new TodoPingSettingsProvider($entityTypeId, (int)($arParams['EXTRA']['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
-					rootMenu: settingsMenu,
-					targetItemId: 'crm_kanban_cc_delimiter',
-					controller: BX.CRM.Kanban.Sort.SettingsController.Instance,
-					restriction: BX.CRM.Kanban.Restriction.Instance,
-					<?php if (is_string($todoCreateNotificationSkipPeriod)): ?>
-					todoCreateNotificationSkipPeriod: '<?= \CUtil::JSEscape($todoCreateNotificationSkipPeriod) ?>',
-					<?php endif; ?>
-					<?php if (
-					\Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed()
-					&& in_array($entityTypeId, \Bitrix\Crm\Integration\AI\AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
-					&& Container::getInstance()->getUserPermissions()->isAdmin()
-					): ?>
-					aiAutostartSettings: '<?= \Bitrix\Main\Web\Json::encode(\Bitrix\Crm\Integration\AI\Operation\AutostartSettings::get(
-						$entityTypeId,
-						isset($arParams['EXTRA']['CATEGORY_ID']) ? (int)$arParams['EXTRA']['CATEGORY_ID'] : null,
-					)) ?>',
-					<?php endif; ?>
-				});
-			}
 		}
 	);
 </script>
@@ -376,7 +363,7 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 	/** @var \Bitrix\Crm\Conversion\LeadConversionConfig $conversionConfig */
 	$conversionConfig = $arResult['CONVERSION_CONFIG'];
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

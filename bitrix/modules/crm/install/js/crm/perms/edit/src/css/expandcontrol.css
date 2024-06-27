@@ -1,0 +1,26 @@
+.bx-crm-perms-edit-expand_control {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	background: url("../images/plus.gif") no-repeat center left;
+	cursor: pointer;
+	vertical-align: bottom;
+}
+
+.bx-crm-perms-edit-expand_control.--expanded {
+	background: url("../images/minus.gif") no-repeat center left;
+}
+
+.bx-crm-perms-edit-permission_control-select {
+	width: 90px;
+	border: 1px solid #e3e3e3;
+	margin-right: 10px;
+}
+
+.bx-crm-perms-edit-permission_control-select-option__grey {
+	color: #838383;
+}
+
+.small-label {
+	margin-left: 19px;
+}

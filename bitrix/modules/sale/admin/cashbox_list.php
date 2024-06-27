@@ -62,7 +62,7 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W")
 			array(
 				'select' => array('ID'),
 				'filter' => $filter,
-				'order' => array(ToUpper($by) => ToUpper($order))
+				'order' => array(mb_strtoupper($by) => mb_strtoupper($order))
 			)
 		);
 
@@ -292,7 +292,7 @@ if (!$publicMode && \Bitrix\Sale\Update\CrmEntityCreatorStepper::isNeedStub())
 else
 {
 	?>
-	<script language="JavaScript">
+	<script>
 		BX.message(
 			{
 				SALE_CASHBOX_COPY: "<?=Loc::getMessage("SALE_CASHBOX_COPY")?>",

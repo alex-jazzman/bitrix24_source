@@ -13,11 +13,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bitrix24\Integrator;
-use Bitrix\Intranet\Invitation;
 use Bitrix\Main\Config\Option;
 use Bitrix\Socialnetwork\Integration\UI\EntitySelector;
 use Bitrix\Main\HttpResponse;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Intranet;
@@ -32,7 +30,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			parent::getDefaultPreFilters(),
 			[
 				new Intranet\ActionFilter\UserType(['employee']),
-				new Intranet\ActionFilter\InviteAccessControl(),
+				new Intranet\ActionFilter\InviteIntranetAccessControl(),
 				new Intranet\ActionFilter\InviteLimitControl(),
 			]
 		);
@@ -44,9 +42,19 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			'getSliderContent' => [
 				'-prefilters' => [
 					ActionFilter\Csrf::class,
-					Intranet\ActionFilter\InviteAccessControl::class,
+					Intranet\ActionFilter\InviteIntranetAccessControl::class,
 					Intranet\ActionFilter\InviteLimitControl::class,
 				]
+			],
+			'extranet' => [
+				'-prefilters' => [
+					Intranet\ActionFilter\InviteIntranetAccessControl::class,
+				],
+				'+prefilters' => [
+					new Intranet\ActionFilter\InviteExtranetAccessControl(
+						$this->request->getPost('SONET_GROUPS_CODE')
+					),
+				],
 			],
 		];
 	}
@@ -74,7 +82,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	{
 		$params =
 			$componentParams
-				? Json::decode(Encoding::convertEncoding($componentParams, SITE_CHARSET, 'UTF-8'))
+				? Json::decode($componentParams)
 				: []
 		;
 
@@ -236,10 +244,10 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return $formattedGroups;
 	}
 
-	protected function registerNewUser($newUsers, &$strError): array
+	protected function registerNewUser($newUsers, $type, &$strError): array
 	{
 		$arError = [];
-		$invitedUserIds = Register::inviteNewUsers(SITE_ID, $newUsers, $arError);
+		$invitedUserIds = Register::inviteNewUsers(SITE_ID, $newUsers, $type, $arError);
 
 		if (
 			is_array($arError)
@@ -305,7 +313,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			"ITEMS" => $items
 		];
 
-		$res = $this->registerNewUser($newUsers, $strError);
+		$res = $this->registerNewUser($newUsers, 'email', $strError);
 
 		if (!empty($strError))
 		{
@@ -347,7 +355,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			"SONET_GROUPS_CODE" => $userData["SONET_GROUPS_CODE"] ?? []
 		];
 
-		$res = $this->registerNewUser($newUsers, $strError);
+		$res = $this->registerNewUser($newUsers, 'group', $strError);
 
 		if (!empty($strError))
 		{
@@ -430,7 +438,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!empty($newUsers))
 		{
-			$res = $this->registerNewUser($newUsers, $strError);
+			$res = $this->registerNewUser($newUsers, 'mass', $strError);
 		}
 
 		if (!empty($strError))
@@ -484,7 +492,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			}
 		}
 
-		$res = $this->registerNewUser($newUsers, $strError);
+		$res = $this->registerNewUser($newUsers, 'extranet', $strError);
 
 		if (!empty($strError))
 		{
@@ -531,7 +539,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		$userData = $_POST;
 		$userData["DEPARTMENT_ID"] = $this->filterDepartment($userData["UF_DEPARTMENT"] ?? null) ?: [$this->getHeadDepartmentId()];
 
-		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError);
+		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError, 'register');
 
 		if ($idAdded && isset($_POST["SONET_GROUPS_CODE"]) && is_array($_POST["SONET_GROUPS_CODE"]))
 		{

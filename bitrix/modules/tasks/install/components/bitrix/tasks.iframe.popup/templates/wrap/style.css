@@ -71,3 +71,24 @@
 .task-page-link-btn:hover {
 	opacity: 1;
 }
+
+.tasks-flow__selector {
+	margin-left: 12px;
+}
+
+.tasks-flow__selector-efficiency {
+	flex-shrink: 0;
+	margin: 0 3px 0 5px;
+	padding: 0px 5px;
+	border-radius: var(--ui-border-radius-lg);
+	font-size: var(--ui-font-size-3xs);
+	line-height:  var(--ui-font-line-height-lg);
+	background: var(--ui-color-background-info);
+}
+
+.tasks-flow__selector-text {
+	max-width: 300px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

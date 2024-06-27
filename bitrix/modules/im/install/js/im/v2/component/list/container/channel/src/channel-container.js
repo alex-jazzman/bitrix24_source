@@ -1,13 +1,12 @@
 import { ChannelList } from 'im.v2.component.list.items.channel';
 import { CreateChatPromo } from 'im.v2.component.elements';
 import { Layout, ChatType, PromoId } from 'im.v2.const';
-import { LayoutManager } from 'im.v2.lib.layout';
+import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
 import { PromoManager } from 'im.v2.lib.promo';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 
 import './css/channel-container.css';
-import { Extension } from 'main.core';
 
 import type { JsonObject } from 'main.core';
 
@@ -38,6 +37,7 @@ export const ChannelListContainer = {
 		},
 		onCreateClick(): void
 		{
+			Analytics.getInstance().onStartCreateNewChat(ChatType.channel);
 			const promoBannerIsNeeded = PromoManager.getInstance().needToShow(PromoId.createChannel);
 			if (promoBannerIsNeeded)
 			{
@@ -58,12 +58,6 @@ export const ChannelListContainer = {
 		{
 			CreateChatManager.getInstance().startChatCreation(ChatType.channel);
 		},
-		isChannelCreationAvailable(): boolean
-		{
-			const settings = Extension.getSettings('im.v2.component.list.container.channel');
-
-			return settings.get('channelCreationAvailable');
-		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -73,7 +67,7 @@ export const ChannelListContainer = {
 		<div class="bx-im-list-container-channel__container">
 			<div class="bx-im-list-container-channel__header_container">
 				<div class="bx-im-list-container-channel__header_title">{{ loc('IM_LIST_CONTAINER_CHANNEL_HEADER_TITLE') }}</div>
-				<div v-if="isChannelCreationAvailable()" @click="onCreateClick" class="bx-im-list-container-channel__header_create-channel"></div>
+				<div @click="onCreateClick" class="bx-im-list-container-channel__header_create-channel"></div>
 			</div>
 			<div class="bx-im-list-container-channel__elements_container">
 				<div class="bx-im-list-container-channel__elements">

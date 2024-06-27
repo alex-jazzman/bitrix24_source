@@ -152,6 +152,36 @@ jn.define('utils/file', (require, exports, module) => {
 		viewer.openDocument(url, name);
 	}
 
+	/**
+	 * @param objectId
+	 * @return {number|null}
+	 */
+	function prepareObjectId(objectId)
+	{
+		if (!objectId)
+		{
+			return null;
+		}
+
+		if (Number.isInteger(objectId))
+		{
+			return objectId;
+		}
+
+		const match = objectId.match(/^n(\d+)$/);
+		if (match)
+		{
+			return parseInt(match[1], 10);
+		}
+
+		if (Number.isNaN(Number(objectId)))
+		{
+			return null;
+		}
+
+		return parseInt(objectId, 10);
+	}
+
 	module.exports = {
 		NativeViewerMediaTypes,
 		getAbsolutePath,
@@ -161,6 +191,6 @@ jn.define('utils/file', (require, exports, module) => {
 		getMimeType,
 		getExtension,
 		openNativeViewer,
+		prepareObjectId,
 	};
-
 });

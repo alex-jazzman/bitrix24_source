@@ -2,11 +2,20 @@ import { TodoNotificationSkipMenu } from 'crm.activity.todo-notification-skip-me
 import { TodoPingSettingsMenu } from 'crm.activity.todo-ping-settings-menu';
 import { Restriction } from 'crm.kanban.restriction';
 import { SettingsController, Type as SortType } from 'crm.kanban.sort';
-import { ajax as Ajax, Collections, Extension, Loc, Reflection, Text, Type } from 'main.core';
+import {
+	ajax as Ajax,
+	type Collections,
+	Extension,
+	Loc,
+	Reflection,
+	Text,
+	Type,
+	userOptions as UserOptions,
+} from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Menu, MenuItem, MenuItemOptions } from 'main.popup';
+import { Dialog } from 'ui.entity-selector';
 import { SortController as GridSortController } from './grid/sort-controller';
-import { Params } from './params';
 import { requireClass, requireClassOrNull, requireStringOrNull } from './params-handling';
 
 const EntityType = Reflection.getClass('BX.CrmEntityType');
@@ -14,7 +23,24 @@ const EntityType = Reflection.getClass('BX.CrmEntityType');
 const CHECKED_CLASS = 'menu-popup-item-accept';
 const NOT_CHECKED_CLASS = 'menu-popup-item-none';
 
+const COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY = 750;
+const COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH = 300;
+
 type AISettings = {autostartOperationTypes: number[], autostartTranscriptionOnlyOnFirstCallWithRecording: boolean};
+
+export type SettingsButtonExtenderParams = {
+	entityTypeId: number,
+	categoryId: ?number,
+	aiAutostartSettings: ?string, // json
+	aiCopilotLanguageId: ?string,
+	pingSettings: Object,
+	rootMenu: Menu,
+	todoCreateNotificationSkipPeriod: ?string,
+	targetItemId: ?string,
+	controller: ?SettingsController,
+	restriction: ?Restriction,
+	grid: ?BX.Main.grid,
+};
 
 /**
  * @memberOf BX.Crm
@@ -37,11 +63,12 @@ export class SettingsButtonExtender
 	#smartActivityNotificationSupported: boolean = false;
 
 	#aiAutostartSettings: null | AISettings = null;
+	#aiCopilotLanguageId: null | string = null;
 	#isSetAiSettingsRequestRunning: boolean = false;
 
 	#extensionSettings: Collections.SettingsCollection = Extension.getSettings('crm.settings-button-extender');
 
-	constructor(params: Params)
+	constructor(params: SettingsButtonExtenderParams)
 	{
 		this.#entityTypeId = Text.toInteger(params.entityTypeId);
 		this.#categoryId = Type.isInteger(params.categoryId) ? params.categoryId : null;
@@ -86,6 +113,8 @@ export class SettingsButtonExtender
 				this.#aiAutostartSettings = candidate;
 			}
 		}
+
+		this.#aiCopilotLanguageId = params.aiCopilotLanguageId;
 
 		this.#bindEvents();
 	}
@@ -201,6 +230,7 @@ export class SettingsButtonExtender
 		{
 			return this.#kanbanController.getCurrentSettings().getCurrentType() === SortType.BY_LAST_ACTIVITY_TIME;
 		}
+
 		if (this.#gridController)
 		{
 			return this.#gridController.isLastActivitySortEnabled();
@@ -268,54 +298,49 @@ export class SettingsButtonExtender
 
 	#getCoPilotSettings(): ?MenuItemOptions
 	{
-		if (!Type.isPlainObject(this.#aiAutostartSettings))
+		const showInfoHelper = this.#getInfoHelper();
+		const menuItems = [];
+		if (Type.isPlainObject(this.#aiAutostartSettings))
 		{
-			return null;
+			const isTranscriptionAutostarted = this.#aiAutostartSettings
+				?.autostartOperationTypes
+				?.includes(this.#getTranscribeAIOperationType())
+			;
+			const onlyFirstIncoming = this.#aiAutostartSettings?.autostartTranscriptionOnlyOnFirstCallWithRecording;
+
+			menuItems.push({
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING'),
+				className: isTranscriptionAutostarted && onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
+				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'firstCall'),
+			}, {
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL'),
+				className: isTranscriptionAutostarted && !onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
+				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'allCalls'),
+			}, {
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING'),
+				className: isTranscriptionAutostarted ? NOT_CHECKED_CLASS : CHECKED_CLASS,
+				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'manual'),
+			});
 		}
 
-		const isTranscriptionAutostarted = this.#aiAutostartSettings
-			?.autostartOperationTypes
-			?.includes(this.#getTranscribeAIOperationType())
-		;
-		const onlyFirstIncoming = this.#aiAutostartSettings?.autostartTranscriptionOnlyOnFirstCallWithRecording;
-
-		let showInfoHelper = null;
-		if (!this.#extensionSettings.get('isAIEnabledInGlobalSettings'))
+		if (Type.isStringFilled(this.#aiCopilotLanguageId))
 		{
-			showInfoHelper = () => {
-				if (Reflection.getClass('BX.UI.InfoHelper.show'))
-				{
-					BX.UI.InfoHelper.show('limit_copilot_off');
-				}
-			};
+			menuItems.push({
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE'),
+				className: NOT_CHECKED_CLASS,
+				onclick: showInfoHelper ?? this.#handleCoPilotLanguageSelect.bind(this),
+			});
+		}
+
+		if (menuItems.length === 0)
+		{
+			return null;
 		}
 
 		return {
 			text: Loc.getMessage('CRM_COMMON_COPILOT'),
 			disabled: this.#isSetAiSettingsRequestRunning,
-			items: [
-				{
-					text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING'),
-					className:
-						isTranscriptionAutostarted && onlyFirstIncoming
-							? CHECKED_CLASS
-							: NOT_CHECKED_CLASS,
-					onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'firstCall'),
-				},
-				{
-					text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL'),
-					className:
-						isTranscriptionAutostarted && !onlyFirstIncoming
-							? CHECKED_CLASS
-							: NOT_CHECKED_CLASS,
-					onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'allCalls'),
-				},
-				{
-					text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING'),
-					className: isTranscriptionAutostarted ? NOT_CHECKED_CLASS : CHECKED_CLASS,
-					onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'manual'),
-				},
-			],
+			items: menuItems,
 		};
 	}
 
@@ -396,6 +421,57 @@ export class SettingsButtonExtender
 		});
 	}
 
+	#handleCoPilotLanguageSelect(event: PointerEvent): void
+	{
+		const languageSelector = new Dialog({
+			targetNode: event.target,
+			multiple: false,
+			showAvatars: false,
+			dropdownMode: true,
+			compactView: true,
+			enableSearch: true,
+			context: `COPILOT-LANGUAGE-SELECTOR-${this.#entityTypeId}-${this.#categoryId}`,
+			width: COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH,
+			tagSelectorOptions: {
+				textBoxWidth: '100%',
+			},
+			preselectedItems: [
+				['copilot_language', this.#aiCopilotLanguageId],
+			],
+			entities: [{
+				id: 'copilot_language',
+				options: {
+					entityTypeId: this.#entityTypeId,
+					categoryId: this.#categoryId,
+				},
+			}],
+			events: {
+				'Item:onSelect': (selectEvent: BaseEvent): void => {
+					const item = selectEvent.getData().item;
+					const languageId = item.id.toLowerCase();
+					if (!Type.isStringFilled(languageId))
+					{
+						throw new Error('Language ID is not defined');
+					}
+
+					setTimeout(() => {
+						let optionName = `ai_config_${this.#entityTypeId}`;
+						if (Type.isInteger(this.#categoryId))
+						{
+							optionName += `_${this.#categoryId}`;
+						}
+
+						UserOptions.save('crm', optionName, 'languageId', languageId);
+
+						this.#aiCopilotLanguageId = languageId;
+					}, COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY);
+				},
+			},
+		});
+
+		languageSelector.show();
+	}
+
 	#getAllOperationTypes(): number[]
 	{
 		return this.#extensionSettings.get('allAIOperationTypes').map((id) => Text.toInteger(id));
@@ -404,5 +480,20 @@ export class SettingsButtonExtender
 	#getTranscribeAIOperationType(): number
 	{
 		return Text.toInteger(this.#extensionSettings.get('transcribeAIOperationType'));
+	}
+
+	#getInfoHelper(): ?Function
+	{
+		if (this.#extensionSettings.get('isAIEnabledInGlobalSettings'))
+		{
+			return null;
+		}
+
+		return (): void => {
+			if (Reflection.getClass('BX.UI.InfoHelper.show'))
+			{
+				BX.UI.InfoHelper.show(this.#extensionSettings.get('aiDisabledSliderCode'));
+			}
+		};
 	}
 }

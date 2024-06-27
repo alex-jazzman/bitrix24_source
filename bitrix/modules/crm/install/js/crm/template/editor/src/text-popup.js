@@ -45,8 +45,11 @@ export default class TextPopup
 			);
 
 			this.#popup.subscribe('onShow', () => {
-				this.#input.focus();
-				this.#setCursorToEnd();
+				// Give time for input to render before setting focus.
+				setTimeout(() => {
+					this.#input.focus();
+					this.#setCursorToEnd();
+				}, 0);
 			});
 		}
 

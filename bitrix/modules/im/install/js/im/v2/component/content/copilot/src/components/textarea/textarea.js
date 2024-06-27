@@ -85,7 +85,7 @@ export const CopilotTextarea = BitrixVue.cloneComponent(ChatTextarea, {
 
 			if (this.audioUsed)
 			{
-				Analytics.getInstance().useAudioInput();
+				Analytics.getInstance().onUseCopilotAudioInput();
 				this.audioUsed = false;
 			}
 

@@ -6,7 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$new = time() < strtotime('15 January 2024');
+$new = time() < strtotime('15 July 2024');
 
 return array(
 
@@ -25,6 +25,132 @@ return array(
 	),
 
 	"subThemes" => array(
+		"light:video-orion" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_ORION"),
+			"previewImage" => "orion-preview.jpg",
+			"prefetchImages" => array("orion-poster.jpg"),
+			"video" => array(
+				"sources" => array(
+					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-orion/orion.webm",
+					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-orion/orion.mp4"
+				)
+			),
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:orion" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_ORION"),
+			"previewImage" => "orion-preview.jpg",
+			"prefetchImages" => array("orion.jpg"),
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:video-shining-intelligence" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_SHINING_INTELLIGENCE"),
+			"previewImage" => "shining-intelligence-preview.jpg",
+			"prefetchImages" => array("shining-intelligence-poster.jpg"),
+			"video" => array(
+				"sources" => array(
+					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-shining-intelligence/shining-intelligence.webm",
+					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-shining-intelligence/shining-intelligence.mp4"
+				)
+			),
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:shining-intelligence" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_SHINING_INTELLIGENCE"),
+			"prefetchImages" => array("shining-intelligence.jpg"),
+			"previewImage" => "shining-intelligence-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:contrast-horizon" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_CONTRAST_HORIZON"),
+			"prefetchImages" => array("contrast-horizon.jpg"),
+			"previewImage" => "contrast-horizon-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:amethyst-inspiration" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_AMETHYST_INSPIRATION"),
+			"prefetchImages" => array("amethyst-inspiration.jpg"),
+			"previewImage" => "amethyst-inspiration-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:astronomical-watercolor" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_ASTRONOMICAL_WATERCOLOR"),
+			"prefetchImages" => array("astronomical-watercolor.jpg"),
+			"previewImage" => "astronomical-watercolor-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:galactic-dream" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_GALACTIC_DREAM"),
+			"prefetchImages" => array("galactic-dream.jpg"),
+			"previewImage" => "galactic-dream-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:cosmic-dreams" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_COSMIC_DREAMS"),
+			"prefetchImages" => array("cosmic-dreams.jpg"),
+			"previewImage" => "cosmic-dreams-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:sunset-magic" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_SUNSET_MAGIC"),
+			"prefetchImages" => array("sunset-magic.jpg"),
+			"previewImage" => "sunset-magic-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:dawn-harmony" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_DAWN_HARMONY"),
+			"prefetchImages" => array("dawn-harmony.jpg"),
+			"previewImage" => "dawn-harmony-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:northern-lights" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_NORTHERN_LIGHTS"),
+			"prefetchImages" => array("northern-lights.jpg"),
+			"previewImage" => "northern-lights-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
 		"light:jupiter" => array(
 			"title" => Loc::getMessage("BITRIX24_THEME_JUPITER"),
 			"prefetchImages" => array("jupiter.jpg"),
@@ -32,7 +158,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:pancakes-cat" => array(
@@ -42,7 +167,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => time() < strtotime('18 March 2024'),
 			"zones" => array("ru", "by"),
 		),
 
@@ -53,7 +177,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => time() < strtotime('18 March 2024'),
 			"zones" => array("ru", "by"),
 		),
 
@@ -69,7 +192,6 @@ return array(
 				)
 			),
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:orbital-symphony" => array(
@@ -79,7 +201,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:flickering-way" => array(
@@ -89,7 +210,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:mysterious-vega" => array(
@@ -99,7 +219,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:saturn" => array(
@@ -109,7 +228,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:video-saturn" => array(
@@ -124,7 +242,6 @@ return array(
 				)
 			),
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:sapphire-whirlwind" => array(
@@ -134,7 +251,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:orion-nebula" => array(
@@ -144,7 +260,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:cosmic-string" => array(
@@ -154,7 +269,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 		"light:neptune" => array(
 			"title" => Loc::getMessage("BITRIX24_THEME_NEPTUNE"),
@@ -163,7 +277,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:video-neptune" => array(
@@ -178,7 +291,6 @@ return array(
 				)
 			),
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:pluto" => array(
@@ -188,7 +300,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:andromeda-galaxy" => array(
@@ -198,7 +309,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:galactic-harmony" => array(
@@ -208,7 +318,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:foggy-horizon" => array(
@@ -218,7 +327,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:milky-way" => array(

@@ -14,6 +14,8 @@ export type MessagesMessengerModel = MessengerModel<MessagesModelCollection>;
 export type MessagesModelState = {
 	id: number | string,
 	templateId: string,
+	previousId: number,
+	nextId: number,
 	chatId: number,
 	authorId: number,
 	date: Date,
@@ -151,6 +153,7 @@ declare type AttachRichItem = {
 export type MessagesModelActions =
 	'messagesModel/forceUpdateByChatId'
 	| 'messagesModel/store'
+	| 'messagesModel/storeToLocalDatabase'
 	| 'messagesModel/setFromLocalDatabase'
 	| 'messagesModel/add'
 	| 'messagesModel/addToChatCollection'

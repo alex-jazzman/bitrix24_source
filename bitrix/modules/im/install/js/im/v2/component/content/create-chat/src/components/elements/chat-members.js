@@ -1,6 +1,14 @@
-import { TagSelector } from 'ui.entity-selector';
+import { BaseEvent } from 'main.core.events';
+import {
+	TagSelector,
+	type Dialog as SelectorDialog,
+	type Item as SelectorItem,
+	type EntityOptions,
+} from 'ui.entity-selector';
 
 import { Core } from 'im.v2.application.core';
+import { ChatType } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 // @vue/component
 export const ChatMembersSelector = {
@@ -10,50 +18,32 @@ export const ChatMembersSelector = {
 			type: Array,
 			required: true,
 		},
-	},
-	emits: ['membersChange'],
-	data()
-	{
-		return {};
-	},
-	computed:
-	{
-		currentUserId(): number
-		{
-			return Core.getUserId();
+		chatType: {
+			type: String,
+			default: ChatType.chat,
 		},
 	},
+	emits: ['membersChange'],
 	created()
 	{
-		const members = this.chatMembers.map((userId: number) => {
-			return ['user', userId];
-		});
-		const preselectedItems = [['user', this.currentUserId], ...members];
+		const preselectedItems = [['user', Core.getUserId()], ...this.chatMembers];
+		const addButtonCaption = this.loc('IM_CREATE_CHAT_USER_SELECTOR_ADD_MEMBERS_V2');
 
 		this.membersSelector = new TagSelector({
 			maxHeight: 99,
 			placeholder: '',
-			addButtonCaption: this.loc('IM_CREATE_CHAT_USER_SELECTOR_ADD_MEMBERS'),
-			addButtonCaptionMore: this.loc('IM_CREATE_CHAT_USER_SELECTOR_ADD_MEMBERS'),
+			addButtonCaption,
+			addButtonCaptionMore: addButtonCaption,
 			showCreateButton: false,
 			dialogOptions: {
-				enableSearch: false,
+				enableSearch: true,
 				context: 'IM_CHAT_CREATE',
-				entities: [
-					{ id: 'user' },
-					{ id: 'department' },
-				],
+				entities: this.getEntitiesConfig(),
 				preselectedItems,
-				undeselectedItems: [['user', this.currentUserId]],
-			},
-			events: {
-				onAfterTagAdd: (event) => {
-					const selector = event.getTarget();
-					this.$emit('membersChange', selector.getTags().map((tag) => tag.id));
-				},
-				onAfterTagRemove: (event) => {
-					const selector = event.getTarget();
-					this.$emit('membersChange', selector.getTags().map((tag) => tag.id));
+				undeselectedItems: [['user', Core.getUserId()]],
+				events: {
+					'Item:onSelect': this.onItemsChange,
+					'Item:onDeselect': this.onItemsChange,
 				},
 			},
 		});
@@ -64,6 +54,38 @@ export const ChatMembersSelector = {
 	},
 	methods:
 	{
+		getEntitiesConfig(): EntityOptions[]
+		{
+			const entitiesConfig = [{ id: 'user' }];
+			const allowDepartments = FeatureManager.isFeatureAvailable(Feature.chatDepartments);
+			if (allowDepartments)
+			{
+				entitiesConfig.push({
+					id: 'department',
+					options: {
+						selectMode: 'usersAndDepartments',
+						allowFlatDepartments: true,
+						allowSelectRootDepartment: true,
+					},
+				});
+			}
+			else
+			{
+				entitiesConfig.push({ id: 'department' });
+			}
+
+			return entitiesConfig;
+		},
+		onItemsChange(event: BaseEvent)
+		{
+			const dialog: SelectorDialog = event.getTarget();
+			const selectedItems: SelectorItem[] = dialog.getSelectedItems();
+			this.$emit('membersChange', selectedItems.map((item) => this.prepareTag(item)));
+		},
+		prepareTag(tag: SelectorItem): [string, number | string]
+		{
+			return [tag.getEntityId(), tag.getId()];
+		},
 		loc(phraseCode: string): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);

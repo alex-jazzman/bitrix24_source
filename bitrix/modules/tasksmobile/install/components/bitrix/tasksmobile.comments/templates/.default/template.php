@@ -112,7 +112,7 @@ $taskId = (int)$arResult['TASK']['ID'];
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

@@ -8,7 +8,6 @@ use Bitrix\BIConnector\Integration\Superset\Model\Dashboard;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTagTable;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetTagTable;
 use Bitrix\BIConnector\Superset\Grid\DashboardTagGrid;
-use Bitrix\Bitrix24\CurrentUser;
 use Bitrix\Main\Grid\Settings;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields\ExpressionField;
@@ -24,13 +23,6 @@ class ApacheSupersetDashboardTagListComponent extends CBitrixComponent
 	private const DASHBOARD_GRID_ID = 'biconnector_superset_dashboard_grid';
 
 	private DashboardTagGrid $grid;
-
-	public function onPrepareComponentParams($arParams)
-	{
-		$arParams['USER_ID'] = CurrentUser::get()?->getId() ?? 0;
-
-		return parent::onPrepareComponentParams($arParams);
-	}
 
 	public function executeComponent()
 	{
@@ -61,7 +53,9 @@ class ApacheSupersetDashboardTagListComponent extends CBitrixComponent
 			$this->grid->getOptions()->SetSorting('ID', 'desc');
 		}
 
-		$totalCount = SupersetTagTable::getCount(['USER_ID' => $this->arParams['USER_ID']]);
+		$ormParams = $this->grid->getOrmParams();
+		$filter = $ormParams['filter'] ?? [];
+		$totalCount = SupersetTagTable::getCount($filter);
 		$grid->initPagination($totalCount);
 
 		$filter = $this->grid->getFilter();
@@ -97,12 +91,10 @@ class ApacheSupersetDashboardTagListComponent extends CBitrixComponent
 	private function getGridRows(array $ormParams): array
 	{
 		$filter = $ormParams['filter'] ?? [];
-		$filter['USER_ID'] = $this->arParams['USER_ID'];
 		$bindingDashboardTagQuery =	SupersetDashboardTagTable::query()
 			->setSelect(['TAG_ID', 'DASHBOARD_COUNT'])
 			->addGroup('TAG_ID')
 			->registerRuntimeField(new ExpressionField('DASHBOARD_COUNT', 'COUNT(1)'))
-			->where('TAG.USER_ID', $this->arParams['USER_ID'])
 		;
 
 		$entity = ORM\Entity::getInstanceByQuery($bindingDashboardTagQuery);
@@ -138,6 +130,13 @@ class ApacheSupersetDashboardTagListComponent extends CBitrixComponent
 			$tags->setOffset((int)$ormParams['offset']);
 		}
 
-		return $tags->fetchAll();
+		$rows = [];
+		foreach ($tags->fetchAll() as $tag)
+		{
+			$tag['DASHBOARD_COUNT'] = (int)$tag['DASHBOARD_COUNT'];
+			$rows[] = $tag;
+		}
+
+		return $rows;
 	}
 }

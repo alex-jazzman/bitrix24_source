@@ -191,6 +191,13 @@ class CatalogProductGridComponent extends \CBitrixComponent
 		}
 	}
 
+	protected function showCatalogStub(): void
+	{
+		$this->arResult['STUB_REDIRECT'] = Loader::includeModule('crm') ? '/crm/' : '/';
+
+		$this->includeComponentTemplate('stub');
+	}
+
 	protected function includeErrorComponent(string $errorMessage, string $description = null): void
 	{
 		UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
@@ -1277,6 +1284,13 @@ class CatalogProductGridComponent extends \CBitrixComponent
 		if ($this->checkPermissions()->hasErrors())
 		{
 			$this->showErrors();
+
+			return;
+		}
+
+		if (State::isExternalCatalog())
+		{
+			$this->showCatalogStub();
 
 			return;
 		}

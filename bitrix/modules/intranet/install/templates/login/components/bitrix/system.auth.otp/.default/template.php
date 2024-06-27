@@ -85,7 +85,7 @@ else
 	</div>
 </form>
 
-<script type="text/javascript">
+<script>
 	try{document.form_auth.USER_OTP.focus();}catch(e){}
 </script>
 <?

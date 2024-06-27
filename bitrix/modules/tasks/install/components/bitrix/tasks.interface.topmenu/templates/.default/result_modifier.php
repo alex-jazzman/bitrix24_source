@@ -11,6 +11,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Extranet\User;
 use Bitrix\Tasks\Integration\Socialnetwork\Space\SpaceService;
@@ -92,6 +93,7 @@ $arResult['ITEMS'][] = array(
 	"IS_ACTIVE" => (isset($arParams["MARK_TEMPLATES"]) && $arParams["MARK_TEMPLATES"] !== "Y" &&
 					isset($arParams["MARK_SECTION_PROJECTS"]) && $arParams["MARK_SECTION_PROJECTS"] !== "Y" &&
 					isset($arParams["MARK_SECTION_PROJECTS_LIST"]) && $arParams["MARK_SECTION_PROJECTS_LIST"] !== "Y" &&
+					isset($arParams["MARK_SECTION_FLOW_LIST"]) && $arParams["MARK_SECTION_FLOW_LIST"] !== "Y" &&
 					isset($arParams["MARK_SECTION_SCRUM_LIST"]) && $arParams["MARK_SECTION_SCRUM_LIST"] !== "Y" &&
 					isset($arParams["MARK_SECTION_MANAGE"]) && $arParams["MARK_SECTION_MANAGE"] !== "Y" &&
 					isset($arParams["MARK_SECTION_EMPLOYEE_PLAN"]) && $arParams["MARK_SECTION_EMPLOYEE_PLAN"] !== "Y" &&
@@ -154,6 +156,31 @@ $arResult['ITEMS'][] = [
 	'COUNTER_ID' => 'tasks_projects_counter',
 ];
 
+if (FlowFeature::isOn())
+{
+	$flowUri = new Uri($tasksLink . 'flow/' . $strIframe);
+
+	$demoSuffix = FlowFeature::isFeatureEnabledByTrial() ? 'Y' : 'N';
+
+	$flowUri->addParams([
+		'ta_cat' => 'flows',
+		'ta_sec' => 'tasks',
+		'ta_sub' => \Bitrix\Tasks\Helper\Analytics::SUB_SECTION['flows'],
+		'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['section_button'],
+		'p1' => 'isDemo_' . $demoSuffix,
+	]);
+
+	$arResult['ITEMS'][] = [
+		'TEXT' => GetMessage('TASKS_PANEL_TAB_FLOW'),
+		'URL' => $flowUri->getUri(),
+		'ID' => 'view_flow',
+		'IS_ACTIVE' => ($arParams['MARK_SECTION_FLOW_LIST'] === 'Y'),
+		'COUNTER' => $arResult['FLOW_COUNTER'],
+		'COUNTER_ID' => 'tasks_flow_counter',
+		'IS_NEW' => true,
+	];
+}
+
 $createScrumLink = CComponentEngine::makePathFromTemplate(
 	$arParams['TASKS_SCRUM_CREATE_URL_TEMPLATE'],
 	['user_id' => $arParams['LOGGED_USER_ID']]
@@ -179,7 +206,6 @@ $arResult['ITEMS'][] = [
 	],
 	'COUNTER' => $arResult['SCRUM_COUNTER'],
 	'COUNTER_ID' => 'tasks_scrum_counter',
-	'IS_NEW' => true,
 ];
 
 if ($arParams["SHOW_SECTION_MANAGE"] !== "N")
@@ -242,7 +268,7 @@ if (
 	);
 }
 
-if ($arResult["BX24_RU_ZONE"])
+if ($arResult["BX24_RU_ZONE"] && !User::isExtranet())
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_APPLICATIONS_2"),

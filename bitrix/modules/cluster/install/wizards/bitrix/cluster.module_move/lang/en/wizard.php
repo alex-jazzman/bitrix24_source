@@ -18,4 +18,6 @@ $MESS["CLUWIZ_CANCELSTEP_TITLE"] = "The wizard has been canceled.";
 $MESS["CLUWIZ_CANCELSTEP_BUTTONTITLE"] = "Close";
 $MESS["CLUWIZ_CANCELSTEP_CONTENT"] = "The wizard has been canceled.";
 $MESS["CLUWIZ_DATABASE_NOT_SUPPORTED"] = "The wizard does not support the specified database type.";
+$MESS["CLUWIZ_FINALSTEP_TITLE"] = "The wizard has been finished";
+$MESS["CLUWIZ_FINALSTEP_CONTENT"] = "The wizard has been finished.";
 ?>

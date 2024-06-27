@@ -59,6 +59,14 @@ class Analytics
 				{
 					$event->setP2($onaAnalytic['p2']);
 				}
+				if (isset($onaAnalytic['p3']))
+				{
+					$event->setP3($onaAnalytic['p3']);
+				}
+				if (isset($onaAnalytic['p5']))
+				{
+					$event->setP5($onaAnalytic['p5']);
+				}
 				$event->send();
 			}
 		}
@@ -105,6 +113,7 @@ class Analytics
 		int $analyticPhones = 0
 	): void
 	{
+		global $USER;
 		$analyticData = $this->getData();
 
 		$analyticBase = [
@@ -114,6 +123,7 @@ class Analytics
 			'section' => $analyticData['source'] ?? '',
 			'subSection' => $subSection,
 			'p1' => $this->getAdmin(),
+			'p5' => $USER->getId(),
 		];
 
 		if ($analyticEmails > 0)

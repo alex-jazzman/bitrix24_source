@@ -13,7 +13,7 @@ type ApplicationState = {
 		name: string,
 		entityId: string,
 		contextId: number,
-	}
+	},
 };
 
 export class ApplicationModel extends BuilderModel

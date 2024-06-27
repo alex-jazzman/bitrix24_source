@@ -138,6 +138,11 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 		{
 			return this.restResult.reactions ?? [];
 		}
+
+		getCopilot()
+		{
+			return this.restResult.copilot ?? {};
+		}
 	}
 
 	module.exports = {

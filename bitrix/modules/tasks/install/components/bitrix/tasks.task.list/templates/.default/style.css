@@ -162,6 +162,7 @@
 }
 
 .tasks-grid-group,
+.tasks-grid-flow,
 .tasks-grid-username {
 	max-width: 100%;
 	display: inline-flex;
@@ -186,6 +187,8 @@
 
 .tasks-grid-group:hover,
 .tasks-grid-group.tasks-grid-filter-active,
+.tasks-grid-flow:hover,
+.tasks-grid-flow.tasks-grid-filter-active,
 .tasks-grid-username:hover,
 .tasks-grid-username.tasks-grid-filter-active,
 .tasks-grid-tag:hover,
@@ -195,6 +198,7 @@
 }
 
 .tasks-grid-group-inner,
+.tasks-grid-flow-inner,
 .tasks-grid-username-inner {
 	display: inline-block;
 	vertical-align: middle;
@@ -207,7 +211,8 @@
 	text-overflow: ellipsis
 }
 
-.tasks-grid-group-inner {
+.tasks-grid-group-inner,
+.tasks-grid-flow-inner{
 	max-width: 100%;
 }
 
@@ -216,6 +221,7 @@
 }
 
 .tasks-grid-group:hover .tasks-grid-group-inner,
+.tasks-grid-flow:hover .tasks-grid-flow-inner,
 .tasks-grid-username:hover .tasks-grid-username-inner{
 	color: #525C69;
 	text-decoration: none;
@@ -237,7 +243,9 @@
 }
 
 .main-grid-cell-content .tasks-grid-group-link,
-.main-grid-cell-content .tasks-grid-group-link:hover {
+.main-grid-cell-content .tasks-grid-flow-link,
+.main-grid-cell-content .tasks-grid-group-link:hover,
+.main-grid-cell-content .tasks-grid-flow-link:hover {
 	font-size: 13px;
 	color: #525c69;
 	text-decoration: none;

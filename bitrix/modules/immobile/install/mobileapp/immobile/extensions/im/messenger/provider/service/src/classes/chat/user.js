@@ -3,10 +3,11 @@
  */
 jn.define('im/messenger/provider/service/classes/chat/user', (require, exports, module) => {
 	const { Type } = require('type');
-	const { RestMethod, UserRole} = require('im/messenger/const');
+	const { RestMethod, UserRole, ComponentCode} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--chat-service');
 
@@ -39,6 +40,14 @@ jn.define('im/messenger/provider/service/classes/chat/user', (require, exports, 
 				},
 			});
 
+			let recentItem = null;
+			if (MessengerParams.getComponentCode() === ComponentCode.imChannelMessenger)
+			{
+				recentItem = this.#store.getters['recentModel/getById'](dialogId);
+
+				this.#store.dispatch('recentModel/delete', { id: dialogId });
+			}
+
 			return runAction(RestMethod.imV2ChatJoin, {
 				data: {
 					dialogId,
@@ -53,6 +62,11 @@ jn.define('im/messenger/provider/service/classes/chat/user', (require, exports, 
 						role: UserRole.guest,
 					},
 				});
+
+				if (recentItem)
+				{
+					this.#store.dispatch('recentModel/set', [recentItem]);
+				}
 			});
 		}
 	}

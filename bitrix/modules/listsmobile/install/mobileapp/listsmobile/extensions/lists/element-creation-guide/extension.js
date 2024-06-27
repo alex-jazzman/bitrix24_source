@@ -173,10 +173,8 @@ jn.define('lists/element-creation-guide', (require, exports, module) => {
 						elementId: 0,
 					});
 				})
-				.on('DescriptionStep:onAfterLoadDescription', () => {
+				.on('DescriptionStep:onAfterLoadDescription', (startTime) => {
 					this.isChanged = false;
-					const startTime = this.getCurrentTime();
-					descriptionStep.updateProps({ startTime });
 					detailStep.updateProps({ startTime });
 				})
 				.on('DetailStep:onFieldChangeState', () => {

@@ -158,7 +158,7 @@ $uriCookies->addParams([
 ]);
 
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		const editComponent = new BX.Landing.EditComponent('<?= $template->getFieldId('ACTION_CLOSE') ?>');
 		<?if ($arParams['SUCCESS_SAVE']): ?>
@@ -367,7 +367,7 @@ if ($arParams['SUCCESS_SAVE'])
 					<div class="ui-form-content">
 						<div class="ui-form-row">
 							<?php $template->showField($pageFields['B24BUTTON_COLOR'], ['additional' => 'readonly']); ?>
-							<script type="text/javascript">
+							<script>
 								BX.ready(function() {
 									new BX.Landing.B24ButtonColor(
 										BX('<?= $template->getFieldId('B24BUTTON_COLOR') ?>'),
@@ -378,7 +378,7 @@ if ($arParams['SUCCESS_SAVE'])
 						</div>
 
 						<?php $template->showField($pageFields['B24BUTTON_COLOR_VALUE'], ['title' => true]); ?>
-						<script type="text/javascript">
+						<script>
 							BX.ready(function() {
 								new BX.Landing.ColorPicker(BX('<?= $template->getFieldId('B24BUTTON_COLOR_VALUE') ?>'));
 							});
@@ -964,7 +964,7 @@ if ($arParams['SUCCESS_SAVE'])
 						$template->showField($speedFields['SPEED_USE_LAZY'], ['title' => true]);
 						?>
 					</div>
-					<script type="text/javascript">
+					<script>
 						BX.ready(function()
 						{
 							BX.Landing.NeedPublicationField([
@@ -1426,7 +1426,7 @@ if ($arParams['SUCCESS_SAVE'])
 	</form>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		new BX.Landing.EditTitleForm({
 			node: BX('<?= $template->getFieldId('EDITABLE_TITLE') ?>') ,

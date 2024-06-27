@@ -57,3 +57,5 @@ $MESS["TASKS_BP_DOCUMENT_COMMENT_RESULT_LAST"] = "Результат (после
 $MESS["TASKS_BP_DOCUMENT_SCRUM_OWNER_ROLE"] = "Владелец продукта";
 $MESS["TASKS_BP_DOCUMENT_SCRUM_MASTER_ROLE"] = "Скрам-мастер";
 $MESS["TASKS_BP_DOCUMENT_SCRUM_TEAM_ROLE"] = "Команда разработки";
+
+$MESS['TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE'] = 'Осталась половина срока на выполнение задачи [url=/workgroups/group/{groupId}/tasks/task/view/{taskId}/][#{taskId}] {taskTitle}[/url]. Убедитесь, что успеваете завершить работу вовремя';

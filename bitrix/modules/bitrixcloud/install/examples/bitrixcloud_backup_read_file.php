@@ -22,10 +22,10 @@ $result = '';
 $fp = fsockopen($proto . $host, $port, $errno, $errstr, $http_timeout);
 if ($fp)
 {
-	$strRequest = "GET ${path} HTTP/1.0\r\n";
+	$strRequest = "GET " . $path . " HTTP/1.0\r\n";
 	$strRequest .= "Connection: close\r\n";
 	$strRequest .= "Accept: */*\r\n";
-	$strRequest .= "Host: ${host}\r\n";
+	$strRequest .= "Host: " . $host . "\r\n";
 	$strRequest .= "Accept-Language: en\r\n";
 	$strRequest .= "\r\n";
 
@@ -65,10 +65,10 @@ if ($result)
 	var_dump($fp);
 	if ($fp)
 	{
-		$strRequest = "GET ${path} HTTP/1.0\r\n";
+		$strRequest = "GET " . $path . " HTTP/1.0\r\n";
 		$strRequest .= "Connection: close\r\n";
 		$strRequest .= "Accept: */*\r\n";
-		$strRequest .= "Host: ${host}\r\n";
+		$strRequest .= "Host: " . $host. "\r\n";
 		$strRequest .= "Accept-Language: en\r\n";
 
 		foreach ($headers[0] as $i => $tmp)
@@ -127,7 +127,7 @@ function SignRequest($access_key, $secret_key, $bucket, $file_name, $ContentType
 
 	$CanonicalizedResource = '/' . $bucket . $RequestURI;
 
-	$StringToSign = "${RequestMethod}\n\n${ContentType}\n${RequestDATE}\n${CanonicalizedAmzHeaders}${CanonicalizedResource}";
+	$StringToSign = $RequestMethod . "\n\n" . $ContentType . "\n" . $RequestDATE . "\n" . $CanonicalizedAmzHeaders . $CanonicalizedResource;
 
 	$Signature = base64_encode(_hmacsha1($StringToSign, $secret_key));
 	$result['Authorization'] = $Authorization = 'AWS ' . $access_key . ':' . $Signature;

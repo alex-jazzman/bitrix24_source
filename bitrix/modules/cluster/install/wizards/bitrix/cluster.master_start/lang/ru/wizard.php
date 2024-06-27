@@ -16,4 +16,6 @@ $MESS["CLUWIZ_CANCELSTEP_TITLE"] = "Работа мастера прервана
 $MESS["CLUWIZ_CANCELSTEP_BUTTONTITLE"] = "Закрыть";
 $MESS["CLUWIZ_CANCELSTEP_CONTENT"] = "Работа мастера была прервана.";
 $MESS["CLUWIZ_INIT"] = "Инициализация";
+$MESS["CLUWIZ_FINALSTEP_TITLE"] = "Работа мастера завершена";
+$MESS["CLUWIZ_FINALSTEP_CONTENT"] = "При нажатии на кнопку \"Готово\" публичная часть сайта будет открыта для посетителей.";
 ?>

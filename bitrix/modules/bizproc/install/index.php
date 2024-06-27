@@ -61,6 +61,13 @@ Class bizproc extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'getEntityList');
 		$eventManager->registerEventHandlerCompatible('im', 'OnGetNotifySchema', 'bizproc', Bitrix\Bizproc\Integration\NotifySchema::class, 'onGetNotifySchema');
 
+		//Comments
+		$commentsListener = \Bitrix\Bizproc\Integration\CommentListener::class;
+		$eventManager->registerEventHandler('forum', 'OnAfterCommentAdd', 'bizproc', $commentsListener, 'onAfterCommentAdd');
+		//$eventManager->registerEventHandler('forum', 'OnAfterCommentUpdate', 'bizproc', $commentsListener, 'onAfterCommentUpdate');
+		$eventManager->registerEventHandler('forum', 'OnCommentDelete', 'bizproc', $commentsListener, 'onCommentDelete');
+		$eventManager->registerEventHandler('socialnetwork', 'onContentViewed', 'bizproc', $commentsListener, 'onSocnetContentViewed');
+
 		return true;
 	}
 
@@ -94,6 +101,13 @@ Class bizproc extends CModule
 		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationClear', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'onEventClearController');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'bizproc', '\Bitrix\Bizproc\Integration\Rest\AppConfiguration', 'getEntityList');
 		$eventManager->unRegisterEventHandler('im', 'OnGetNotifySchema', 'bizproc', Bitrix\Bizproc\Integration\NotifySchema::class, 'onGetNotifySchema');
+
+		//Comments
+		$commentsListener = \Bitrix\Bizproc\Integration\CommentListener::class;
+		$eventManager->unRegisterEventHandler('forum', 'OnAfterCommentAdd', 'bizproc', $commentsListener, 'onAfterCommentAdd');
+		//$eventManager->unRegisterEventHandler('forum', 'OnAfterCommentUpdate', 'bizproc', $commentsListener, 'onAfterCommentUpdate');
+		$eventManager->unRegisterEventHandler('forum', 'OnCommentDelete', 'bizproc', $commentsListener, 'onCommentDelete');
+		$eventManager->unRegisterEventHandler('socialnetwork', 'onContentViewed', 'bizproc', $commentsListener, 'onSocnetContentViewed');
 
 		return true;
 	}
@@ -208,4 +222,3 @@ Class bizproc extends CModule
 		return $arr;
 	}
 }
-?>

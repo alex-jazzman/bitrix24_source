@@ -19,6 +19,7 @@
 .bx-im-avatar__container {
 	position: relative;
 	user-select: none;
+	flex-shrink: 0;
 }
 
 .bx-im-avatar__content {
@@ -279,7 +280,14 @@
 
 .bx-im-avatar__container.--general .bx-im-avatar__icon,
 .bx-im-avatar__container.--general .bx-im-avatar__special-type_icon {
-	background-image: url(./images/chat-type/general.svg);
+	background-image: url(./images/chat-type/general.png);
+	background-size: cover;
+}
+
+.bx-im-avatar__container.--generalChannel .bx-im-avatar__icon,
+.bx-im-avatar__container.--generalChannel .bx-im-avatar__special-type_icon {
+	background-image: url(./images/chat-type/generalChannel.png);
+	background-size: cover;
 }
 
 .bx-im-avatar__container.--videoconf .bx-im-avatar__icon,

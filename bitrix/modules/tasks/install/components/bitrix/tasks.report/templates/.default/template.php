@@ -239,7 +239,7 @@ endif;
 
 				</div>
 
-				<script type="text/javascript">
+				<script>
 
 					function OnTaskIntervalChange(select)
 					{

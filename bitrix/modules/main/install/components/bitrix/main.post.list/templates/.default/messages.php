@@ -1,4 +1,10 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Json;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+	die();
+
 if (!function_exists("__mpl_get_avatar"))
 {
 	function __mpl_get_avatar()
@@ -51,7 +57,7 @@ if (!function_exists("__mpl_get_avatar"))
 	}
 }
 ?>
-<script type="text/javascript">
+<script>
 <? if (IsModuleInstalled("im")): ?>
 if (window.SPC)
 {
@@ -63,11 +69,11 @@ if (window.SPC)
 if (BX.CommentAux)
 {
 	BX.CommentAux.init({
-		currentUserSonetGroupIdList: <?=CUtil::PhpToJSObject(\Bitrix\Socialnetwork\ComponentHelper::getUserSonetGroupIdList($USER->GetID(), SITE_ID))?>,
+		currentUserSonetGroupIdList: <?= Json::encode(\Bitrix\Socialnetwork\ComponentHelper::getUserSonetGroupIdList($USER->GetID(), SITE_ID)) ?>,
 		mobile: false,
 		publicSection: <?=(isset($arParams["bPublicPage"]) && $arParams["bPublicPage"] ? 'true' : 'false')?>,
 		currentExtranetUser: <?=($arResult["currentExtranetUser"] ? 'true' : 'false')?>,
-		availableUsersList: <?=CUtil::PhpToJSObject($arResult["availableUsersList"])?>,
+		availableUsersList: <?= Json::encode($arResult["availableUsersList"]) ?>,
 	});
 }
 <? endif ?>
@@ -108,6 +114,7 @@ BX.message({
 			, MPL_WORKGROUPS_PATH : '<?=CUtil::JSEscape(COption::GetOptionString("socialnetwork", "workgroups_page", SITE_DIR."workgroups/", SITE_ID))?>'
 			<?
 		}
-	?>
+	?>,
+	MPL_QUOTE_COPILOT: '<?= GetMessageJS('MPL_QUOTE_COPILOT')?>',
 	});
 </script>

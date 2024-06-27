@@ -25,6 +25,7 @@ this.BX = this.BX || {};
 	          skeleton: '',
 	          marketSlider: '',
 	          marketAction: '',
+	          searchAction: '',
 	          mainUri: '',
 	          siteTemplateUri: '',
 	          currentUri: '',
@@ -82,6 +83,10 @@ this.BX = this.BX || {};
 	        this.showMarketIcon = this.result.SHOW_MARKET_ICON;
 	        this.marketSlider = this.result.MARKET_SLIDER;
 	        this.marketAction = this.result.ADDITIONAL_MARKET_ACTION;
+	        this.searchAction = this.result.ADDITIONAL_SEARCH_ACTION;
+	        if (this.params.CURRENT_PAGE && this.params.CURRENT_PAGE.length > 0) {
+	          this.currentUri = this.params.CURRENT_PAGE;
+	        }
 	        if (this.params.CREATE_URI_SITE_TEMPLATE && this.params.CREATE_URI_SITE_TEMPLATE.length > 0) {
 	          this.siteTemplateUri = this.params.CREATE_URI_SITE_TEMPLATE;
 	        }
@@ -110,11 +115,14 @@ this.BX = this.BX || {};
 	        BX.addCustomEvent("SidePanel.Slider:onMessage", this.onMessageSlider);
 	      },
 	      methods: {
-	        getDetailUri: function (appCode, isSiteTemplate, from) {
+	        getDetailUri: function (appCode, isSiteTemplate, from, searchText) {
 	          var _isSiteTemplate;
 	          isSiteTemplate = (_isSiteTemplate = isSiteTemplate) != null ? _isSiteTemplate : false;
 	          if (isSiteTemplate) {
 	            return this.getSiteTemplateUri(appCode, from);
+	          }
+	          if (from === 'search' && searchText) {
+	            from += '&text=' + searchText;
 	          }
 	          return this.getMainDir + 'detail/' + appCode + '/?from=' + from;
 	        },
@@ -204,6 +212,14 @@ this.BX = this.BX || {};
 	                    behavior: 'smooth'
 	                  });
 	                }
+	                if (this.result.ADDITIONAL_HIT_ACTION) {
+	                  try {
+	                    eval(this.result.ADDITIONAL_HIT_ACTION.replace("#HIT#", uri).replace("#HIT_PARAMS#", JSON.stringify({
+	                      title: top.document.title,
+	                      referer: this.currentUri
+	                    })));
+	                  } catch (e) {}
+	                }
 	                this.currentUri = uri;
 	              }
 	            }
@@ -226,6 +242,7 @@ this.BX = this.BX || {};
 						:categories="categories"
 						:menuInfo="result.MENU_INFO"
 						:marketAction="marketAction"
+						:searchAction="searchAction"
 						v-if="!hideToolbar"
 					/>
 					<Main

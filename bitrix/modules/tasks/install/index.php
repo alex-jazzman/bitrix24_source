@@ -161,6 +161,55 @@ Class tasks extends CModule
 		$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'tasks', '\Bitrix\Tasks\Integration\AI\EventHandler', 'onContextGetMessages');
 		$eventManager->registerEventHandler('ai', 'onTuningLoad', 'tasks', '\Bitrix\Tasks\Integration\AI\Settings', 'onTuningLoad');
 
+		// flow
+		$eventManager->registerEventHandler(
+			'tasks',
+			'OnTaskAdd',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'OnTaskAdd'
+		);
+
+		$eventManager->registerEventHandler(
+			'tasks',
+			'OnTaskUpdate',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'onTaskUpdate'
+		);
+
+		$eventManager->registerEventHandler(
+			'tasks',
+			'OnTaskDelete',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'onTaskDelete'
+		);
+
+		$eventManager->registerEventHandler(
+			'socialnetwork',
+			'OnBeforeSocNetGroupDelete',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'OnBeforeSocNetGroupDelete'
+		);
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnAfterUserUpdate',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'onAfterUserUpdate',
+		);
+
+		$eventManager->registerEventHandler(
+			'main',
+			'OnAfterUserDelete',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'onAfterUserDelete',
+		);
+
 		$this->InstallTasks();
 
 		CModule::includeModule('tasks');
@@ -724,6 +773,44 @@ Class tasks extends CModule
 		$eventManager->unRegisterEventHandler('ai', 'onContextGetMessages', 'tasks', '\Bitrix\Tasks\Integration\AI\EventHandler', 'onContextGetMessages');
 		$eventManager->unRegisterEventHandler('ai', 'onTuningLoad', 'tasks', '\Bitrix\Tasks\Integration\AI\Settings', 'onTuningLoad');
 
+		// flow
+		$eventManager->unRegisterEventHandler(
+			'tasks',
+			'OnTaskAdd',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\FlowTaskTable',
+			'onTaskAdd'
+		);
+		$eventManager->unRegisterEventHandler(
+			'tasks',
+			'OnTaskUpdate',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\FlowTaskTable',
+			'onTaskUpdate'
+		);
+		$eventManager->unRegisterEventHandler(
+			'tasks',
+			'OnTaskDelete',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\FlowTaskTable',
+			'onTaskDelete'
+		);
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnAfterUserUpdate',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'onAfterUserUpdate',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'main',
+			'OnAfterUserDelete',
+			'tasks',
+			'\Bitrix\Tasks\Flow\Internal\Event\FlowEventListener',
+			'onAfterUserDelete',
+		);
+
 		// remove tasks from socnetlog table
 		if (
 			(!array_key_exists('savedata', $arParams) || $arParams['savedata'] !== 'Y')
@@ -886,7 +973,7 @@ Class tasks extends CModule
 	{
 		global $DB;
 		$sIn = "'TASK_REMINDER'";
-		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		$ar = $rs->Fetch();
 		if($ar["C"] <= 0)
 		{

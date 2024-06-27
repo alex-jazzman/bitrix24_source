@@ -12,11 +12,11 @@ abstract class CBaseDBNodeAddWizardStep extends CWizardStep
 
 		if (!CModule::IncludeModule('cluster'))
 		{
-			$this->SetError(GetMessage('CLUWIZ_NO_MODULE_ERROR'));
+			$this->SetError(GetMessage('CLUWIZ_DBNODE_ADD_NO_MODULE_ERROR'));
 		}
 		elseif ($DB->type != 'MYSQL')
 		{
-			$this->SetError(GetMessage('CLUWIZ_DATABASE_NOT_SUPPORTED'));
+			$this->SetError(GetMessage('CLUWIZ_DBNODE_ADD_DATABASE_NOT_SUPPORTED'));
 		}
 	}
 
@@ -29,11 +29,11 @@ abstract class CBaseDBNodeAddWizardStep extends CWizardStep
 			{
 				if ($rec['IS_OK'] == CClusterDBNodeCheck::OK)
 				{
-					$this->content .= '<li class="cluwiz_okli">' . $rec['MESSAGE'] . ' ... <span class="cluwiz_ok">' . GetMessage('CLUWIZ_CHEKED') . '</span></li>';
+					$this->content .= '<li class="cluwiz_okli">' . $rec['MESSAGE'] . ' ... <span class="cluwiz_ok">' . GetMessage('CLUWIZ_DBNODE_ADD_CHEKED') . '</span></li>';
 				}
 				elseif ($rec['IS_OK'] == CClusterDBNodeCheck::WARNING)
 				{
-					$this->content .= '<li class="cluwiz_erli">' . $rec['MESSAGE'] . ' ... <span class="cluwiz_ok">' . GetMessage('CLUWIZ_CHEKED') . '</span></li>';
+					$this->content .= '<li class="cluwiz_erli">' . $rec['MESSAGE'] . ' ... <span class="cluwiz_ok">' . GetMessage('CLUWIZ_DBNODE_ADD_CHEKED') . '</span></li>';
 				}
 				else
 				{
@@ -81,7 +81,7 @@ class CDBNodeAddStep1 extends CBaseDBNodeAddWizardStep
 	public function InitStep()
 	{
 		parent::InitStep();
-		$this->SetTitle(GetMessage('CLUWIZ_STEP1_TITLE'));
+		$this->SetTitle(GetMessage('CLUWIZ_DBNODE_ADD_STEP1_TITLE'));
 		$this->SetStepID('step1');
 		$this->SetCancelStep('cancel');
 
@@ -93,7 +93,7 @@ class CDBNodeAddStep1 extends CBaseDBNodeAddWizardStep
 
 	public function ShowStepNoError()
 	{
-		$this->content = GetMessage('CLUWIZ_STEP1_CONTENT');
+		$this->content = GetMessage('CLUWIZ_DBNODE_ADD_STEP1_CONTENT');
 		$this->content .= '<br />';
 
 		$obCheck = new CClusterDBNodeCheck;
@@ -103,7 +103,7 @@ class CDBNodeAddStep1 extends CBaseDBNodeAddWizardStep
 
 		if ($this->CheckListHasNoError($arCheckList))
 		{
-			$this->SetNextStep('step3');
+			$this->SetNextStep('step2');
 		}
 		else
 		{
@@ -113,50 +113,46 @@ class CDBNodeAddStep1 extends CBaseDBNodeAddWizardStep
 }
 
 //Ask for connection credentials
-class CDBNodeAddStep3 extends CBaseDBNodeAddWizardStep
+class CDBNodeAddStep2 extends CBaseDBNodeAddWizardStep
 {
 	public function InitStep()
 	{
 		parent::InitStep();
-		$this->SetTitle(GetMessage('CLUWIZ_STEP3_TITLE'));
+		$this->SetTitle(GetMessage('CLUWIZ_DBNODE_ADD_STEP2_TITLE'));
 		$this->SetPrevStep('step1');
-		$this->SetStepID('step3');
-		$this->SetNextStep('step4');
+		$this->SetStepID('step2');
+		$this->SetNextStep('step3');
 		$this->SetCancelStep('cancel');
 	}
 
 	public function ShowStepNoError()
 	{
+		$inputParams = [
+			'size' => 30,
+			'maxsize' => 50,
+		];
+		$passwordParams = [
+			'size' => 30,
+			'maxsize' => 50,
+			'autocomplete' => 'off',
+		];
 		$this->content = '
 		<table cellpadding="2" cellspacing="0" border="0" width="100%">
 			<tr>
-				<td width="40%" align="right">' . GetMessage('CLUWIZ_STEP3_DB_HOST') . ':</td>
-				<td width="60%">' . $this->ShowInputField('text', 'db_host', [
-					'size' => 30,
-					'maxsize' => 50,
-				]) . '</td>
+				<td width="40%" align="right">' . GetMessage('CLUWIZ_DBNODE_ADD_STEP2_DB_HOST') . ':</td>
+				<td width="60%">' . $this->ShowInputField('text', 'db_host', $inputParams) . '</td>
 			</tr>
 			<tr>
-				<td align="right">' . GetMessage('CLUWIZ_STEP3_DB_LOGIN') . ':</td>
-				<td>' . $this->ShowInputField('text', 'db_login', [
-					'size' => 30,
-					'maxsize' => 50,
-				]) . '</td>
+				<td align="right">' . GetMessage('CLUWIZ_DBNODE_ADD_STEP2_DB_LOGIN') . ':</td>
+				<td>' . $this->ShowInputField('text', 'db_login', $inputParams) . '</td>
 			</tr>
 			<tr>
-				<td align="right">' . GetMessage('CLUWIZ_STEP3_DB_PASSWORD') . ':</td>
-				<td>' . $this->ShowInputField('password', 'db_password', [
-					'size' => 30,
-					'maxsize' => 50,
-					'autocomplete' => 'off',
-				]) . '</td>
+				<td align="right">' . GetMessage('CLUWIZ_DBNODE_ADD_STEP2_DB_PASSWORD') . ':</td>
+				<td>' . $this->ShowInputField('password', 'db_password', $passwordParams) . '</td>
 			</tr>
 			<tr>
-				<td align="right">' . GetMessage('CLUWIZ_STEP3_DB_NAME') . ':</td>
-				<td>' . $this->ShowInputField('text', 'db_name', [
-					'size' => 30,
-					'maxsize' => 50,
-				]) . '</td>
+				<td align="right">' . GetMessage('CLUWIZ_DBNODE_ADD_STEP2_DB_NAME') . ':</td>
+				<td>' . $this->ShowInputField('text', 'db_name', $inputParams) . '</td>
 			</tr>
 		</table>
 		';
@@ -164,14 +160,14 @@ class CDBNodeAddStep3 extends CBaseDBNodeAddWizardStep
 }
 
 //Check master parameters for replication
-class CDBNodeAddStep4 extends CBaseDBNodeAddWizardStep
+class CDBNodeAddStep3 extends CBaseDBNodeAddWizardStep
 {
 	public function InitStep()
 	{
 		parent::InitStep();
-		$this->SetTitle(GetMessage('CLUWIZ_STEP4_TITLE'));
-		$this->SetPrevStep('step3');
-		$this->SetStepID('step4');
+		$this->SetTitle(GetMessage('CLUWIZ_DBNODE_ADD_STEP3_TITLE'));
+		$this->SetPrevStep('step2');
+		$this->SetStepID('step3');
 		$this->SetCancelStep('cancel');
 	}
 
@@ -194,55 +190,47 @@ class CDBNodeAddStep4 extends CBaseDBNodeAddWizardStep
 		}
 		else
 		{
-			$this->content .= '<p class="cluwiz_err">' . $DB . '</p><p>' . GetMessage('CLUWIZ_STEP4_CONN_ERROR') . '</p>';
+			$this->content .= '<p class="cluwiz_err">' . $DB . '</p><p>' . GetMessage('CLUWIZ_DBNODE_ADD_STEP3_CONN_ERROR') . '</p>';
 			$bNextStep = false;
 		}
 
 		if ($bNextStep)
 		{
-			$this->SetNextStep('final');
+			$this->SetNextStep('step4');
 		}
 		else
 		{
-			$this->SetNextStep('step4');
+			$this->SetNextStep('step3');
 		}
 	}
 }
 
-class CDBNodeAddFinalStep extends CBaseDBNodeAddWizardStep
+class CDBNodeAddStep4 extends CBaseDBNodeAddWizardStep
 {
-	protected $location = '';
-
 	public function InitStep()
 	{
 		parent::InitStep();
-		$this->SetTitle(GetMessage('CLUWIZ_FINALSTEP_TITLE'));
-		$this->SetPrevStep('step4');
-		$this->SetStepID('final');
+		$this->SetTitle(GetMessage('CLUWIZ_DBNODE_ADD_STEP4_TITLE'));
+		$this->SetPrevStep('step3');
+		$this->SetStepID('step4');
 		$this->SetNextStep('final');
-		$this->SetNextCaption(GetMessage('CLUWIZ_FINALSTEP_BUTTONTITLE'));
+		$this->SetCancelStep('cancel');
 	}
 
 	public function ShowStepNoError()
 	{
-		if ($this->location)
-		{
-			$this->content = '<script>top.window.location = \'' . CUtil::JSEscape($this->location) . '\';</script>';
-		}
-		else
-		{
-			$this->content = '
+		$inputParams = [
+			'size' => 30,
+			'maxsize' => 50,
+		];
+		$this->content = '
 			<table cellpadding="2" cellspacing="0" border="0" width="100%">
 				<tr>
-					<td width="40%" align="right">' . GetMessage('CLUWIZ_FINALSTEP_NAME') . ':</td>
-					<td width="60%">' . $this->ShowInputField('text', 'node_name', [
-						'size' => 40,
-						'maxsize' => 50,
-					]) . '</td>
+					<td width="40%" align="right">' . GetMessage('CLUWIZ_DBNODE_ADD_STEP4_NAME') . ':</td>
+					<td width="60%">' . $this->ShowInputField('text', 'node_name', $inputParams) . '</td>
 				</tr>
 			</table>
-			';
-		}
+		';
 	}
 
 	public function OnPostForm()
@@ -264,26 +252,44 @@ class CDBNodeAddFinalStep extends CBaseDBNodeAddWizardStep
 				'SERVER_ID' => false,
 				'STATUS' => 'READY',
 			]);
-
-			$this->location = '/bitrix/admin/cluster_dbnode_list.php?lang=' . LANGUAGE_ID;
 		}
 	}
 }
 
+class CDBNodeAddFinalStep extends CBaseDBNodeAddWizardStep
+{
+	public function InitStep()
+	{
+		parent::InitStep();
+		$this->SetTitle(GetMessage('CLUWIZ_DBNODE_ADD_FINALSTEP_TITLE'));
+		$this->SetStepID('final');
+		$this->SetCancelStep('final');
+		$this->SetCancelCaption(GetMessage('CLUWIZ_DBNODE_ADD_FINALSTEP_BUTTONTITLE'));
+	}
+
+	public function ShowStep()
+	{
+		$this->content = GetMessage('CLUWIZ_DBNODE_ADD_FINALSTEP_CONTENT');
+	}
+
+	public function ShowStepNoError()
+	{
+	}
+}
 class CDBNodeAddCancelStep extends CBaseDBNodeAddWizardStep
 {
 	public function InitStep()
 	{
 		parent::InitStep();
-		$this->SetTitle(GetMessage('CLUWIZ_CANCELSTEP_TITLE'));
+		$this->SetTitle(GetMessage('CLUWIZ_DBNODE_ADD_CANCELSTEP_TITLE'));
 		$this->SetStepID('cancel');
 		$this->SetCancelStep('cancel');
-		$this->SetCancelCaption(GetMessage('CLUWIZ_CANCELSTEP_BUTTONTITLE'));
+		$this->SetCancelCaption(GetMessage('CLUWIZ_DBNODE_ADD_CANCELSTEP_BUTTONTITLE'));
 	}
 
 	public function ShowStep()
 	{
-		$this->content = GetMessage('CLUWIZ_CANCELSTEP_CONTENT');
+		$this->content = GetMessage('CLUWIZ_DBNODE_ADD_CANCELSTEP_CONTENT');
 	}
 
 	public function ShowStepNoError()

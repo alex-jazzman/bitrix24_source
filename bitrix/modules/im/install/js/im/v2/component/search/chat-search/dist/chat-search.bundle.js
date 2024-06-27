@@ -248,7 +248,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    const profileUri = im_v2_lib_utils.Utils.user.getProfileLink(this.context.dialogId);
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE'),
+	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
 	      href: profileUri,
 	      onclick: () => {
 	        this.menuInstance.close();
@@ -289,6 +289,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	const ItemTextByChatType = {
 	  [im_v2_const.ChatType.openChannel]: main_core.Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
+	  [im_v2_const.ChatType.generalChannel]: main_core.Loc.getMessage('IM_SEARCH_ITEM_OPEN_CHANNEL_TYPE_GROUP'),
 	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_SEARCH_ITEM_PRIVATE_CHANNEL_TYPE_GROUP'),
 	  default: main_core.Loc.getMessage('IM_SEARCH_ITEM_CHAT_TYPE_GROUP_V2')
 	};

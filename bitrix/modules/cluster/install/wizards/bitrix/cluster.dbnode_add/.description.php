@@ -9,9 +9,10 @@ $arWizardDescription = [
 	'VERSION' => '1.0.0',
 	'STEPS' => [
 		'CDBNodeAddStep1', //Check master
-		'CDBNodeAddStep3', //Node connect credentials
-		'CDBNodeAddStep4', //Node connection check + params
-		'CDBNodeAddFinalStep', //Name and description input
+		'CDBNodeAddStep2', //Node connect credentials
+		'CDBNodeAddStep3', //Node connection check + params
+		'CDBNodeAddStep4', //Name and description input
+		'CDBNodeAddFinalStep',
 		'CDBNodeAddCancelStep',
 	],
 ];

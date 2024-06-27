@@ -26,6 +26,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  EVENT_AUDIO_TO_TEXT: 'audio_to_text',
 	  EVENT_SUMMARY: 'summary',
 	  EVENT_EXTRACT_FIELDS: 'extract_fields',
+	  EVENT_CALL_ACTIVITY_WITH_AUDIO_RECORDING: 'activity_call_with_audio_recording',
 	  // endregion
 
 	  // region Type const
@@ -97,7 +98,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	  STATUS_SUCCESS_FIELDS: 'success_fields',
 	  STATUS_SUCCESS_COMMENT: 'success_comment_only',
 	  STATUS_ERROR_NO_LIMITS: 'error_no_limits',
-	  STATUS_ERROR_GPT: 'error_gpt',
+	  STATUS_ERROR_AGREEMENT: 'error_agreement',
+	  STATUS_ERROR_LIMIT_DAILY: 'error_limit_daily',
+	  STATUS_ERROR_LIMIT_MONTHLY: 'error_limit_monthly',
+	  STATUS_ERROR_PROVIDER: 'error_provider',
 	  STATUS_ERROR_B24: 'error_b24'
 	  // endregion
 	});
@@ -138,6 +142,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	var _type = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("type");
 	var _element = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
 	var _activityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("activityId");
+	var _activityDirection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("activityDirection");
 	var _status = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("status");
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.AI
@@ -157,6 +162,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	      value: void 0
 	    });
 	    Object.defineProperty(this, _activityId, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _activityDirection, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -180,6 +189,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _element)[_element] = element;
 	    return this;
 	  }
+	  setActivityDirection(direction) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _activityDirection)[_activityDirection] = direction;
+	    return this;
+	  }
 	  buildData() {
 	    const analyticsEntityType = getAnalyticsEntityType(babelHelpers.classPrivateFieldLooseBase(this, _entityType)[_entityType]);
 	    if (!analyticsEntityType) {
@@ -188,6 +201,10 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _activityId)[_activityId] <= 0) {
 	      console.error('crm.integration.analytics: invalid activity id');
+	      return null;
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _activityDirection)[_activityDirection] !== 'incoming' && babelHelpers.classPrivateFieldLooseBase(this, _activityDirection)[_activityDirection] !== 'outgoing') {
+	      console.error('crm.integration.analytics: invalid activity direction');
 	      return null;
 	    }
 	    return filterOutNilValues({
@@ -200,6 +217,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	      c_element: babelHelpers.classPrivateFieldLooseBase(this, _element)[_element],
 	      status: babelHelpers.classPrivateFieldLooseBase(this, _status)[_status],
 	      p1: getCrmMode(),
+	      p2: `callDirection_${babelHelpers.classPrivateFieldLooseBase(this, _activityDirection)[_activityDirection]}`,
 	      p5: `idCall_${babelHelpers.classPrivateFieldLooseBase(this, _activityId)[_activityId]}`
 	    });
 	  }

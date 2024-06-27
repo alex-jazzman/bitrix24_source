@@ -68,7 +68,7 @@
 		{
 			return {
 				id: WorkgroupUtil.tabNames.news,
-				title: BX.message('MOBILE_PROJECT_TAB_NEWS'),
+				title: BX.message('MOBILE_PROJECT_TAB_NEWS2'),
 				component: {
 					name: 'JSStackComponent',
 					componentCode: `web: ${newsWebPath}`,

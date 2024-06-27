@@ -40,12 +40,12 @@ export const ChatContent = {
 		},
 		showComments(): boolean
 		{
-			return this.commentsPostId > 0;
+			return this.$store.getters['messages/comments/areOpened'];
 		},
 	},
 	watch:
 	{
-		layout(newValue: ImModelLayout)
+		layout()
 		{
 			this.closeComments();
 		},
@@ -67,6 +67,7 @@ export const ChatContent = {
 			const { messageId } = event.getData();
 			this.commentsPostId = messageId;
 			this.commentsAnimationFlag = true;
+			this.$store.dispatch('messages/comments/setOpened', { channelDialogId: this.entityId });
 		},
 		onCloseComments()
 		{
@@ -75,6 +76,7 @@ export const ChatContent = {
 		closeComments()
 		{
 			this.commentsPostId = 0;
+			this.$store.dispatch('messages/comments/setClosed');
 		},
 		onCommentsAnimationEnd()
 		{
@@ -82,11 +84,7 @@ export const ChatContent = {
 		},
 	},
 	template: `
-		<ChatOpener
-			:commentsOpened="showComments"
-			:dialogId="entityId"
-			:class="{'--comments-show-animation': commentsAnimationFlag}"
-		/>
+		<ChatOpener :dialogId="entityId" :class="{'--comments-show-animation': commentsAnimationFlag}" />
 		<Transition name="comments-content" @after-enter="onCommentsAnimationEnd">
 			<CommentsOpener
 				v-if="showComments"

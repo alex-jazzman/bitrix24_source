@@ -66,7 +66,7 @@ class CBPTask2Activity extends CBPActivity implements
 
 		$this->SetPropertiesTypes([
 			'TaskId' => ['Type' => 'int'],
-			'ClosedBy' => ['Type' => 'string'],
+			'ClosedBy' => ['Type' => 'user'],
 			'ClosedDate' => ['Type' => 'datetime'],
 			'IsDeleted' => ['Type' => 'bool'],
 		]);
@@ -324,6 +324,18 @@ class CBPTask2Activity extends CBPActivity implements
 		{
 			$dateFieldName = is_array($dateField) ? $dateField['Name'] : $dateField;
 			$checkedDateField = $this->assertDateField($dateField, $arFieldsChecked[$dateFieldName] ??  null);
+
+			// In some cases (crm), we got time in user timezone
+			if ($dateFieldName === 'DEADLINE')
+			{
+				$deadlineValue = $arFieldsChecked[$dateFieldName] ?? null;
+				if ($deadlineValue instanceof \Bitrix\Bizproc\BaseType\Value\DateTime)
+				{
+					$checkedDateField = date($deadlineValue->getFormat(), $deadlineValue->getTimestamp());
+				}
+			}
+
+
 			if(!$checkedDateField)
 			{
 				unset($arFieldsChecked[$dateFieldName]);
@@ -361,7 +373,12 @@ class CBPTask2Activity extends CBPActivity implements
 			$task = CTaskItem::add(
 				$arFieldsChecked,
 				\Bitrix\Tasks\Util\User::getAdminId(),
-				['SPAWNED_BY_WORKFLOW' => true]
+				[
+					'SPAWNED_BY_WORKFLOW' => true,
+					'SKIP_TIMEZONE' => [
+						'DEADLINE',
+					],
+				]
 			);
 			$result = $task->getId();
 		}
@@ -585,6 +602,7 @@ class CBPTask2Activity extends CBPActivity implements
 			$activity = CCrmActivity::GetList(
 				[],
 				[
+					'CHECK_PERMISSIONS' => 'N',
 					'OWNER_ID' => $documentId,
 					'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($documentType),
 					'TYPE_ID' => CCrmActivityType::Task,
@@ -609,6 +627,7 @@ class CBPTask2Activity extends CBPActivity implements
 				$activity = CCrmActivity::GetList(
 					[],
 					[
+						'CHECK_PERMISSIONS' => 'N',
 						'OWNER_ID' => $documentId,
 						'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($documentType),
 						'TYPE_ID' => CCrmActivityType::Provider,

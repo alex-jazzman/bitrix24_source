@@ -13,6 +13,9 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { RestMethod, DialogType, EventType, ComponentCode, BotCode, Analytics } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { AnalyticsEvent } = require('analytics');
+	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
+	const { ChannelCreator } = require('im/messenger/controller/channel-creator');
+
 
 	class DialogCreator
 	{
@@ -43,15 +46,47 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			);
 		}
 
+		createChannelDialog()
+		{
+			ChannelCreator.open({
+				userList: this.prepareItems(this.getUserList()),
+				analytics: new AnalyticsEvent().setSection(Analytics.Section.channelTab),
+			});
+		}
+
 		createCopilotDialog()
+		{
+			CopilotRoleSelector.open({
+				showOpenFeedbackItem: true,
+				openWidgetConfig: {
+					backdrop: {
+						mediumPositionPercent: 75,
+						horizontalSwipeAllowed: false,
+						onlyMediumPosition: false,
+					},
+				},
+			})
+				.then((result) => {
+					Logger.log(`${this.constructor.name}.CopilotRoleSelector.result:`, result);
+					const fields = {
+						type: DialogType.copilot.toUpperCase(),
+					};
+
+					if (result?.role?.code)
+					{
+						fields.copilotMainRole = result?.role?.code;
+					}
+
+					this.callRestCreateCopilotDialog(fields);
+				})
+				.catch((error) => Logger.error(error));
+		}
+
+		callRestCreateCopilotDialog(fields)
 		{
 			BX.rest.callMethod(
 				RestMethod.imV2ChatAdd,
-				{
-					fields: {
-						type: DialogType.copilot.toUpperCase(),
-					},
-				},
+				{ fields },
 			).then((result) => {
 				const chatId = parseInt(result.data().chatId, 10);
 				if (chatId > 0)
@@ -80,13 +115,13 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 					if (result.answer.error || result.error())
 					{
-						Logger.error('DialogCreator.createCopilotDialog.error', result.error());
+						Logger.error(`${this.constructor.name}.callRestCreateCopilotDialog.result.error`, result.error());
 					}
 				}
 			})
 				.catch(
 					(err) => {
-						Logger.error(err);
+						Logger.error(`${this.constructor.name}.callRestCreateCopilotDialog.catch:`, err);
 					},
 				);
 		}

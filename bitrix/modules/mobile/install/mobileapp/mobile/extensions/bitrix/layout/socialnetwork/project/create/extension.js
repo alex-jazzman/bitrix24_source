@@ -1,7 +1,7 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 	const AppTheme = require('apptheme');
-	const LoadingScreenComponent = require('layout/ui/loading-screen');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 
 	class ProjectCreate extends LayoutComponent
 	{

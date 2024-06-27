@@ -1,9 +1,8 @@
-import { Extension } from 'main.core';
-
 import { Messenger } from 'im.public';
 import { CopilotRolesDialog } from 'im.v2.component.elements';
 import { CopilotList } from 'im.v2.component.list.items.copilot';
-import { Layout } from 'im.v2.const';
+import { ChatType, Layout } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
 import { CopilotService } from 'im.v2.provider.service';
 
@@ -12,7 +11,6 @@ import { RoleSelectorMini } from './components/role-selector-mini/role-selector-
 import './css/copilot-container.css';
 
 import type { JsonObject } from 'main.core';
-import type { ImModelCopilotRole } from 'im.v2.model';
 
 // @vue/component
 export const CopilotListContainer = {
@@ -27,19 +25,6 @@ export const CopilotListContainer = {
 			isCreatingChat: false,
 		};
 	},
-	computed:
-	{
-		isCopilotRolesAvailable(): boolean
-		{
-			const settings = Extension.getSettings('im.v2.component.content.copilot');
-
-			return settings.copilotRolesAvailable === 'Y';
-		},
-		defaultRole(): ImModelCopilotRole
-		{
-			return this.$store.getters['copilot/roles/getDefault'];
-		},
-	},
 	created()
 	{
 		Logger.warn('List: Copilot container created');
@@ -53,13 +38,7 @@ export const CopilotListContainer = {
 	{
 		async onCreateChatClick()
 		{
-			if (!this.isCopilotRolesAvailable)
-			{
-				void this.createChat(this.defaultRole.code);
-
-				return;
-			}
-
+			Analytics.getInstance().onStartCreateNewChat(ChatType.copilot);
 			this.showRoleSelector = true;
 		},
 		onChatClick(dialogId)
@@ -129,7 +108,7 @@ export const CopilotListContainer = {
 				</div>
 			</div>
 			<RoleSelectorMini
-				v-if="showRoleSelector && isCopilotRolesAvailable"
+				v-if="showRoleSelector"
 				:bindElement="$refs.createChatButton"
 				@close="showRoleSelector = false"
 				@selectedRole="createChat"

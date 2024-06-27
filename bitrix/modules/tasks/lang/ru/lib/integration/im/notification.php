@@ -85,6 +85,7 @@ $MESS["TASKS_TASK_STATUS_MESSAGE_6_N"] = "Задача #TASK_URL_BEGIN##TASK_TIT
 $MESS["TASKS_TASK_STATUS_MESSAGE_7_N"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# отклонена по причине: #TASK_DECLINE_REASON#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_1_M"] = "Возобновил задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_M"] = "Приостановил выполнение задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
+$MESS["TASKS_TASK_STATUS_MESSAGE_2_V2_M"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# ждет выполнения";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_M"] = "Начал выполнять задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_4_M"] = "Закрыл задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END# (требуется контроль постановщика)";
 $MESS["TASKS_TASK_STATUS_MESSAGE_5_M"] = "Закрыл задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
@@ -92,6 +93,7 @@ $MESS["TASKS_TASK_STATUS_MESSAGE_6_M"] = "Отложил задачу #TASK_URL_
 $MESS["TASKS_TASK_STATUS_MESSAGE_7_M"] = "Отклонил задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END# по причине: #TASK_DECLINE_REASON#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_1_F"] = "Возобновила задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_F"] = "Приостановила выполнение задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
+$MESS["TASKS_TASK_STATUS_MESSAGE_2_V2_F"] = "Задача #TASK_URL_BEGIN##TASK_TITLE##URL_END# ждет выполнения";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_F"] = "Начала выполнять задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_4_F"] = "Закрыла задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END# (требуется контроль постановщика)";
 $MESS["TASKS_TASK_STATUS_MESSAGE_5_F"] = "Закрыла задачу #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
@@ -246,4 +248,8 @@ $MESS["TASKS_REGULAR_TASK_REPLICATED_F"] = "Создана новая регул
 $MESS["TASKS_REGULAR_TASK_STARTED_N"] = "Наступило время выполнения регулярной задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
 $MESS["TASKS_REGULAR_TASK_STARTED_M"] = "Наступило время выполнения регулярной задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
 $MESS["TASKS_REGULAR_TASK_STARTED_F"] = "Наступило время выполнения регулярной задачи #TASK_URL_BEGIN##TASK_TITLE##URL_END# #BR# #TASK_EXTRA#";
+
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_N"] = "В поток [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Назначьте сотрудника, который будет её выполнять";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_M"] = "В поток [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Назначьте сотрудника, который будет её выполнять";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_F"] = "В поток [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url] добавлена задача #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Назначьте сотрудника, который будет её выполнять";
 ?>

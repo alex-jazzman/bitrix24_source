@@ -95,6 +95,7 @@
 		onInactive: 'onInactive',
 		onDestroy: 'onDestroy',
 		onHangup: 'onHangup',
+		onPullEventUserInviteTimeout: 'onPullEventUserInviteTimeout',
 	};
 
 	class CallEngine
@@ -134,6 +135,8 @@
 					setTimeout(() => this._onNativeIncomingCall(callservice.currentCall()), 0);
 				}
 			}
+
+			this.timeOfLastPushNotificationWithAutoAnswer;
 
 			this.startWithPush();
 
@@ -219,6 +222,11 @@
 				return false;
 			}
 
+			if (!push.extra || !push.extra.server_time_unix || push.extra.server_time_unix == this.timeOfLastPushNotificationWithAutoAnswer)
+			{
+				return false;
+			}
+
 			try
 			{
 				const pushParams = JSON.parse(push.params);
@@ -230,7 +238,13 @@
 				const callFields = pushParams.PARAMS.call;
 				const pushCallId = callFields.ID;
 
-				return callId == pushCallId;
+				const shouldAnswer = callId == pushCallId;
+				if (shouldAnswer)
+				{
+					this.timeOfLastPushNotificationWithAutoAnswer = push.extra.server_time_unix;
+				}
+
+				return shouldAnswer;
 			}
 			catch
 			{

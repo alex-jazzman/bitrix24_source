@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/provider/service/classes/sending/file', (require, exports, module) => {
 	const { Filesystem, Reader } = require('native/filesystem');
+	const { Type } = require('type');
 
 	const {
 		getExtension,
@@ -15,6 +16,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		FileStatus,
 		FileType,
 		ErrorCode,
+		ComponentCode,
 	} = require('im/messenger/const');
 	const { getFileTypeByExtension } = require('im/messenger/lib/helper');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -60,7 +62,8 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		initUploadManager()
 		{
 			/** @private */
-			this.uploadManager = new UploadManager();
+			const componentName = BX.componentParameters.get('COMPONENT_CODE', ComponentCode.imMessenger); // TODO change getter to helper method
+			this.uploadManager = new UploadManager(componentName);
 			this.uploadManager
 				.on(UploaderManagerEvent.progress, (fileId, data) => {
 					Logger.info('UploaderManagerEvent.progress', fileId, data);
@@ -641,10 +644,22 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 
 			if (!isHasMessageId)
 			{
-				const messagesModelState = this.store.getters['messagesModel/getById'](messageId);
+				let messagesModelState = this.store.getters['messagesModel/getById'](messageId);
+				if (Type.isPlainObject(messagesModelState) && !Type.isUndefined(messagesModelState.id))
+				{
+					messagesModelState = this.store.getters['messagesModel/getByTemplateId'](messageId);
+				}
+
 				if (fileId)
 				{
-					messagesModelState.files[0] = fileId;
+					if (Type.isArray(messagesModelState.files))
+					{
+						messagesModelState.files[0] = fileId;
+					}
+					else
+					{
+						messagesModelState.files = [fileId];
+					}
 				}
 
 				this.store.dispatch('messagesModel/addToChatCollection', messagesModelState);

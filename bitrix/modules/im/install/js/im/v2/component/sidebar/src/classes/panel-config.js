@@ -8,6 +8,7 @@ export const MainPanelType = {
 	channel: [ChatType.channel],
 	openChannel: [ChatType.openChannel],
 	comment: [ChatType.comment],
+	generalChannel: [ChatType.generalChannel],
 };
 
 export const MainPanelBlock = Object.freeze({
@@ -57,6 +58,11 @@ export const MainPanels = {
 		[MainPanelBlock.file]: 30,
 	},
 	[MainPanelType.openChannel]: {
+		[MainPanelBlock.chat]: 10,
+		[MainPanelBlock.info]: 20,
+		[MainPanelBlock.file]: 30,
+	},
+	[MainPanelType.generalChannel]: {
 		[MainPanelBlock.chat]: 10,
 		[MainPanelBlock.info]: 20,
 		[MainPanelBlock.file]: 30,

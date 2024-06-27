@@ -29,6 +29,7 @@ use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Web\Json;
 use Bitrix\Catalog\ProductTable;
+use Bitrix\Catalog\Store\EnableWizard;
 
 if (!Loader::includeModule('catalog'))
 {
@@ -1109,6 +1110,7 @@ final class CatalogStoreDocumentProductListComponent
 		$this->arResult['SETTINGS'] = $this->getSettings();
 		$this->arResult['HIDDEN_FIELDS'] = $this->getHiddenFieldsWithoutAccess();
 		$this->arResult['TOTAL_SUM'] = 0;
+		$this->arResult['IS_EXTERNAL_CATALOG'] = State::isExternalCatalog();
 	}
 
 	protected function getGridParams(array $gridRows): array
@@ -1305,6 +1307,7 @@ final class CatalogStoreDocumentProductListComponent
 			'catalog.product-calculator',
 			'catalog.product-selector',
 			'catalog.store-selector',
+			'catalog.tool-availability-manager',
 			'currency',
 		];
 	}
@@ -1655,13 +1658,16 @@ final class CatalogStoreDocumentProductListComponent
 			'default' => true,
 		];
 
-		$result['BARCODE_INFO'] = [
-			'id' => 'BARCODE_INFO',
-			'name' => Loc::getMessage('CATALOG_DOCUMENT_PRODUCT_LIST_COLUMN_BARCODE'),
-			'title' => Loc::getMessage('CATALOG_DOCUMENT_PRODUCT_LIST_COLUMN_BARCODE'),
-			'default' => true,
-			'width' => 300,
-		];
+		if (State::isExternalCatalog() !== true)
+		{
+			$result['BARCODE_INFO'] = [
+				'id' => 'BARCODE_INFO',
+				'name' => Loc::getMessage('CATALOG_DOCUMENT_PRODUCT_LIST_COLUMN_BARCODE'),
+				'title' => Loc::getMessage('CATALOG_DOCUMENT_PRODUCT_LIST_COLUMN_BARCODE'),
+				'default' => true,
+				'width' => 300,
+			];
+		}
 
 		$priceEditable = [
 			'TYPE' => Types::MONEY,
@@ -1974,6 +1980,10 @@ final class CatalogStoreDocumentProductListComponent
 
 			'restrictedProductTypes' => $this->getRestrictedProductTypesForSelector(),
 			'isCalculableStorePurchasingPrice' => $this->arParams['CALCULATE_STORE_PURCHASING_PRICE'],
+			'isOnecInventoryManagementRestricted' => (
+				EnableWizard\Manager::isOnecMode()
+				&& EnableWizard\TariffChecker::isOnecInventoryManagementRestricted()
+			),
 		];
 	}
 

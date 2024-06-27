@@ -125,8 +125,6 @@ if(is_array($data))
 }
 unset($data);
 
-$arResult = AjaxProcessor::convertEncodingArray($arResult, SITE_CHARSET, 'UTF-8');
-
 $APPLICATION->RestartBuffer();
 
 header('Content-Type: application/json');
@@ -172,9 +170,6 @@ class AjaxProcessor
 		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/helpers/admin/orderedit.php");
 
 		global $APPLICATION;
-
-		if(mb_strtolower(SITE_CHARSET) != 'utf-8')
-			$this->request = $APPLICATION->ConvertCharsetArray($this->request, 'utf-8', SITE_CHARSET);
 
 		try
 		{
@@ -2416,34 +2411,11 @@ class AjaxProcessor
 		return $this->order;
 	}
 
-	public static function convertEncodingArray($arData, $charsetFrom, $charsetTo, &$errorMessage = "")
+	/**
+	 * @deprecated Does nothing.
+	 */
+	public static function convertEncodingArray($arData)
 	{
-		if (!is_array($arData))
-		{
-			if (is_string($arData))
-			{
-				$arData = Encoding::convertEncoding($arData, $charsetFrom, $charsetTo, $errorMessage);
-			}
-		}
-		else
-		{
-			foreach ($arData as $key => $value)
-			{
-				$s = '';
-
-				$newKey = Encoding::convertEncoding($key, $charsetFrom, $charsetTo, $s);
-				$arData[$newKey] = Encoding::convertEncodingArray($value, $charsetFrom, $charsetTo, $s);
-
-				if($newKey != $key)
-					unset($arData[$key]);
-
-				if($s!=='')
-				{
-					$errorMessage .= ($errorMessage == "" ? "" : "\n").$s;
-				}
-			}
-		}
-
 		return $arData;
 	}
 

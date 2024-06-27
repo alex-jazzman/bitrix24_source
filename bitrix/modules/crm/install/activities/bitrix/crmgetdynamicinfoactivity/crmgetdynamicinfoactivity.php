@@ -342,7 +342,7 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		return array_filter(
 			$dynamicTypeIdOptions,
 			static function($key) {
-				return ($key >= CCrmOwnerType::DynamicTypeStart && $key <= CCrmOwnerType::DynamicTypeEnd);
+				return (CCrmOwnerType::isPossibleDynamicTypeId($key));
 			},
 			ARRAY_FILTER_USE_KEY
 		);

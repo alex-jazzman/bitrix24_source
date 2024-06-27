@@ -1,0 +1,7 @@
+<?
+
+$MESS["HMS_VHI_APPOINTMENT_BLOCK_TITLE"] = "Полисы ОМС/ДМС";
+$MESS["HMS_VHI_APPOINTMENT_EMPTY"] = "Нет активных полисов";
+$MESS["HMS_VHI_APPOINTMENT_VHI_UNTIL_DATE"] = "Заканчивается #DATE_END#";
+$MESS["HMS_VHI_APPOINTMENT_VHI_TITLE"] = "Полис";
+$MESS["HMS_VHI_APPOINTMENT_VHI_TYPE"] = "Вид";

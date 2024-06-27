@@ -14,6 +14,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
+	const { WarningBlock } = require('layout/ui/warning-block');
 	const { PaymentCreate } = require('crm/terminal/entity/payment-create');
 
 	/**
@@ -34,6 +35,8 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 			this.isOrderLimitReached = false;
 			this.isTerminalAvailable = false;
 			this.isTerminalToolEnabled = this.entityModel.IS_TERMINAL_TOOL_ENABLED;
+			this.isPhoneConfirmed = this.entityModel.IS_PHONE_CONFIRMED;
+			this.connectedSiteId = this.entityModel.CONNECTED_SITE_ID;
 
 			this.handleCacheResult = this.handleCacheResult.bind(this);
 			this.handleModeSelectionResponse = this.handleModeSelectionResponse.bind(this);
@@ -123,9 +126,40 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 
 		getContextMenuParams()
 		{
-			const actions = [];
+			const contextMenuParams = {
+				actions: [],
+				params: {
+					title: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_MODE_MENU_TITLE'),
+					showCancelButton: true,
+					isCustomIconColor: true,
+					helpUrl: helpdesk.getArticleUrl('17567646'),
+				},
+			};
 
-			actions.push({
+			const isNeedPhoneConfirmation = (!this.isPhoneConfirmed && this.connectedSiteId > 0);
+
+			if (isNeedPhoneConfirmation)
+			{
+				contextMenuParams.customSection = {
+					layout: View(
+						{
+							style: { marginHorizontal: 10 },
+						},
+						new WarningBlock({
+							title: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PHONE_NOT_CONFIRMED_WARNING_TITLE_MSGVER_1'),
+							description: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PHONE_NOT_CONFIRMED_WARNING_TEXT_MSGVER_1'),
+							onClickCallback: this.onDisableClick.bind(
+								this,
+								Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PHONE_CONFIRMATION_WARNING_TITLE_MSGVER_1'),
+								`/shop/stores/?force_verify_site_id=${this.connectedSiteId}`,
+							),
+						}),
+					),
+					height: 160,
+				};
+			}
+
+			contextMenuParams.actions.push({
 				id: 'payment',
 				title: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PAYMENT_MODE_MSGVER_2'),
 				subTitle: '',
@@ -133,13 +167,13 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 					svgIcon: Icons.payment,
 					svgIconAfter: this.isPaymentOrOrderLimitReached() ? { type: ImageAfterTypes.LOCK } : null,
 				},
-				isDisabled: false,
+				isDisabled: isNeedPhoneConfirmation,
 				onClickCallback: this.onActionClick.bind(this, 'payment'),
 			});
 
 			if (this.isTerminalAvailable)
 			{
-				actions.push({
+				contextMenuParams.actions.push({
 					id: 'terminal_payment',
 					title: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_TERMINAL_PAYMENT'),
 					subTitle: '',
@@ -152,33 +186,25 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 				});
 			}
 
-			actions.push({
+			contextMenuParams.actions.push({
 				id: 'payment_delivery',
 				title: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PAYMENT_DELIVERY_MODE'),
 				subTitle: '',
 				data: {
 					svgIcon: Icons.paymentDelivery,
-					svgIconAfter: {
-						type: ImageAfterTypes.WEB,
-					},
+					svgIconAfter: isNeedPhoneConfirmation ? null : { type: ImageAfterTypes.WEB },
 				},
 				isDisabled: true,
 				onClickCallback: this.onActionClick.bind(this, 'payment_delivery'),
-				onDisableClick: this.onDisableClick.bind(
-					this,
-					Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PAYMENT_DELIVERY_MODE'),
-				),
+				onDisableClick: isNeedPhoneConfirmation
+					? null
+					: this.onDisableClick.bind(
+						this,
+						Loc.getMessage('MOBILE_RECEIVE_PAYMENT_PAYMENT_DELIVERY_MODE'),
+					),
 			});
 
-			return {
-				actions,
-				params: {
-					title: Loc.getMessage('MOBILE_RECEIVE_PAYMENT_MODE_MENU_TITLE'),
-					showCancelButton: true,
-					isCustomIconColor: true,
-					helpUrl: helpdesk.getArticleUrl('17567646'),
-				},
-			};
+			return contextMenuParams;
 		}
 
 		onActionClick(action)
@@ -240,7 +266,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 			});
 		}
 
-		onDisableClick(title)
+		onDisableClick(title, redirectUrl = `/crm/deal/details/${this.entityModel.ID}/`)
 		{
 			if (!this.contextMenu)
 			{
@@ -248,7 +274,7 @@ jn.define('crm/receive-payment/mode-selection', (require, exports, module) => {
 			}
 			qrauth.open({
 				title,
-				redirectUrl: `/crm/deal/details/${this.entityModel.ID}/`,
+				redirectUrl: redirectUrl,
 				layout: this.contextMenu.getActionParentWidget(),
 			});
 		}

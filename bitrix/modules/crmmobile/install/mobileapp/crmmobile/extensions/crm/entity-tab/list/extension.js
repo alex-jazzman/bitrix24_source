@@ -35,9 +35,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				testId,
 				actions: this.props.actions || {},
 				actionParams: this.prepareActionParams(),
-				actionCallbacks: {
-					loadItems: this.onItemsLoaded,
-				},
+				actionCallbacks: this.props.actionCallbacks,
 				itemLayoutOptions: this.getItemLayoutOptions(),
 				itemActions: this.getItemActions(),
 				itemParams: {
@@ -74,13 +72,6 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				},
 			});
 		}
-
-		onItemsLoaded = (data) => {
-			if (data.event === 'refreshPresets')
-			{
-				this.props.searchRef?.refreshPresets();
-			}
-		};
 
 		getItemCustomStyles(item, section, row)
 		{

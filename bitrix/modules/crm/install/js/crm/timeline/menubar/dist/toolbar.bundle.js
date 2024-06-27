@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_entitySelector,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,main_loader,ui_buttons,ui_vue3,main_popup,ui_tour,crm_tourManager,calendar_sharing_interface,crm_messagesender,crm_template_editor,main_core_events,crm_activity_todoEditor,main_core,crm_zoom) {
+(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,ui_buttons,ui_vue3,main_loader,calendar_sharing_interface,crm_messagesender,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditor,crm_activity_todoEditorV2,crm_tourManager,main_core_events,ui_designTokens,main_core,crm_zoom) {
 	'use strict';
 
 	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
@@ -109,6 +110,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  getContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
 	  }
+	  setContainer(container) {
+	    if (main_core.Type.isDomNode(container) && !babelHelpers.classPrivateFieldLooseBase(this, _context)[_context].isReadonly() && this.supportsLayout()) {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]) {
+	        main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _container)[_container] = container;
+	      main_core.Dom.prepend(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container], this.getMenuBarContainer());
+	      this.initializeLayout();
+	    }
+	  }
 	  supportsLayout() {
 	    return true;
 	  }
@@ -128,6 +139,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  getSetting(setting, defaultValue = null) {
 	    var _babelHelpers$classPr;
 	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings][setting]) != null ? _babelHelpers$classPr : defaultValue;
+	  }
+	  setSettings(settings) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings] = settings;
 	  }
 	  getSettings() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings];
@@ -196,6 +210,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  onShow() {}
 	  onHide() {}
 	  showTour() {}
+	  showNotify(content) {
+	    ui_notification.UI.Notification.Center.notify({
+	      content
+	    });
+	  }
 	}
 	Item.ON_FINISH_EDIT_EVENT = 'onFinishEdit';
 
@@ -473,6 +492,29 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	var _einvoiceUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("einvoiceUrl");
+	class EInvoiceApp extends Item {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _einvoiceUrl, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  showSlider() {
+	    ui_sidepanel.SidePanel.Instance.open(babelHelpers.classPrivateFieldLooseBase(this, _einvoiceUrl)[_einvoiceUrl], {
+	      width: 575,
+	      allowChangeHistory: false
+	    });
+	  }
+	  supportsLayout() {
+	    return false;
+	  }
+	  initializeSettings() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _einvoiceUrl)[_einvoiceUrl] = this.getSetting('einvoiceUrl');
+	  }
+	}
+
 	class Email extends Item {
 	  showSlider() {
 	    const ownerInfo = BX.CrmTimelineManager.getDefault().getOwnerInfo();
@@ -489,27 +531,27 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	const ServicesConfig = new Map([['telegrambot', {
-	  id: 'telegrambot',
-	  available: true,
-	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_TELEGRAM'),
-	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_TELEGRAM'),
-	  title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_TELEGRAM'),
-	  commonClass: '--telegram',
-	  iconClass: ui_iconSet_api_core.Social.TELEGRAM_IN_CIRCLE,
-	  iconColor: '#2FC6F6'
-	}], ['whatsappbyedna', {
+	const ServicesConfig = new Map([['whatsappbyedna', {
 	  id: 'whatsappbyedna',
-	  available: false,
+	  connectorId: 'notifications',
 	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
 	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
 	  soonLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
 	  title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
 	  commonClass: '--whatsapp',
 	  iconClass: ui_iconSet_api_core.Social.WHATSAPP
+	}], ['telegrambot', {
+	  id: 'telegrambot',
+	  connectorId: 'telegrambot',
+	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_TELEGRAM'),
+	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_TELEGRAM'),
+	  title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_TELEGRAM'),
+	  commonClass: '--telegram',
+	  iconClass: ui_iconSet_api_core.Social.TELEGRAM_IN_CIRCLE,
+	  iconColor: '#2FC6F6'
 	}], ['vkgroup', {
 	  id: 'vkgroup',
-	  available: false,
+	  connectorId: '',
 	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_VK'),
 	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_VK'),
 	  soonLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_VK'),
@@ -519,7 +561,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  iconClass: ui_iconSet_api_core.Social.VK
 	}], ['facebook', {
 	  id: 'facebook',
-	  available: false,
+	  connectorId: '',
 	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_FACEBOOK'),
 	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_FACEBOOK'),
 	  soonLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_FACEBOOK'),
@@ -528,139 +570,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  commonClass: '--facebook',
 	  iconClass: ui_iconSet_api_core.Social.FACEBOOK
 	}]]);
-
-	const UserOptions = main_core.Reflection.namespace('BX.userOptions');
-	const ARTICLE_CODE = '18114500';
-
-	/** @memberof BX.Crm.Timeline.MenuBar.GoToChat */
-	var _guideBindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guideBindElement");
-	var _targetElementRect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetElementRect");
-	var _observerTimeoutId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observerTimeoutId");
-	var _guide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
-	var _spotlight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("spotlight");
-	var _createSpotlight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createSpotlight");
-	var _createGuide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createGuide");
-	class Tour {
-	  constructor() {
-	    Object.defineProperty(this, _createGuide, {
-	      value: _createGuide2
-	    });
-	    Object.defineProperty(this, _createSpotlight, {
-	      value: _createSpotlight2
-	    });
-	    Object.defineProperty(this, _guideBindElement, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _targetElementRect, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _observerTimeoutId, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _guide, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _spotlight, {
-	      writable: true,
-	      value: null
-	    });
-	    this.onWindowResize = main_core.Runtime.debounce(this.onWindowResize.bind(this), 100);
-	    main_core.Event.bind(window, 'resize', this.onWindowResize);
-	  }
-	  canShow() {
-	    return true;
-	  }
-	  show() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight] = babelHelpers.classPrivateFieldLooseBase(this, _createSpotlight)[_createSpotlight]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight].show();
-	    this.getGuide().showNextStep();
-	  }
-	  getGuide() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide] = babelHelpers.classPrivateFieldLooseBase(this, _createGuide)[_createGuide](this.getGuideBindElement(), {
-	        onClose: () => {
-	          UserOptions.save('crm', 'gotochat', 'isTimelineTourViewedInWeb', 1);
-	          babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight].close();
-	          if (babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId]) {
-	            clearInterval(babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId]);
-	            babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId] = null;
-	          }
-	          main_core.Event.unbind(window, 'resize', this.onWindowResize);
-	        }
-	      });
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide];
-	  }
-	  onWindowResize() {
-	    const target = this.getGuideBindElement(true);
-	    babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide].getCurrentStep().setTarget(target);
-	    babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide].showNextStep();
-	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight].setTargetElement(target);
-	  }
-	  getGuideBindElement(force = false) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] || force) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = document.querySelector('[data-id="gotochat"]');
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].offsetTop) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].parentElement.nextElementSibling;
-	      }
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
-	  }
-	  handleTargetElementResize() {
-	    const currentRect = main_core.Dom.getPosition(this.getGuideBindElement());
-	    if (currentRect.left !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].left || currentRect.right !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].right || currentRect.top !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].top || currentRect.bottom !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].bottom) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect] = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement]);
-	      const targetElement = babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
-	      const isVisible = Boolean(targetElement.offsetWidth || targetElement.offsetHeight || targetElement.getClientRects().length > 0);
-	      const guidePopup = babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide].getPopup();
-	      if (isVisible) {
-	        main_core.Dom.removeClass(guidePopup.popupContainer, '--hidden');
-	        guidePopup.adjustPosition();
-	      } else {
-	        main_core.Dom.addClass(guidePopup.popupContainer, '--hidden');
-	      }
-	    }
-	  }
-	}
-	function _createSpotlight2() {
-	  return new BX.SpotLight({
-	    id: 'spotlight-crm-timeline-gotochat-guide',
-	    targetElement: this.getGuideBindElement(),
-	    autoSave: 'no',
-	    targetVertex: 'middle-center',
-	    zIndex: 200
-	  });
-	}
-	function _createGuide2(target, guideEvents = {}) {
-	  const guideText = {
-	    title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_GUIDE_TITLE'),
-	    text: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_GUIDE_TEXT')
-	  };
-	  const guide = new ui_tour.Guide({
-	    onEvents: true,
-	    steps: [{
-	      target,
-	      title: guideText.title,
-	      text: guideText.text,
-	      position: 'bottom',
-	      events: guideEvents,
-	      article: ARTICLE_CODE,
-	      linkTitle: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_GUIDE_ARTICLE_TITLE'),
-	      rounded: true
-	    }]
-	  });
-	  const guidePopup = guide.getPopup();
-	  guidePopup.setWidth(400);
-	  const link = guidePopup.contentContainer.querySelector('.ui-tour-popup-link');
-	  main_core.Dom.addClass(link, 'crm-entity-stream-content-new-detail-gotochat-guide-link');
-	  babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect] = main_core.Dom.getPosition(this.getGuideBindElement());
-	  babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId] = setInterval(this.handleTargetElementResize.bind(this), 1000);
-	  return guide;
-	}
 
 	let _$1 = t => t,
 	  _t$1,
@@ -682,10 +591,10 @@ this.BX.Crm = this.BX.Crm || {};
 	var _context$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("context");
 	var _chatServiceButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("chatServiceButtons");
 	var _region = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("region");
-	var _isTourViewed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTourViewed");
 	var _entityEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityEditor");
 	var _userSelectorDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("userSelectorDialog");
 	var _clientSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clientSelector");
+	var _services = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("services");
 	var _subscribeToReceiversChanges = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToReceiversChanges");
 	var _fetchConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fetchConfig");
 	var _prepareParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareParams");
@@ -714,6 +623,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _renderButtonIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderButtonIcon");
 	var _getButtonIconColor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getButtonIconColor");
 	var _isServiceSelected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isServiceSelected");
+	var _getServiceConfigByCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getServiceConfigByCode");
 	var _isAvailableService = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAvailableService");
 	var _isEntityInEditorMode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEntityInEditorMode");
 	var _showEditorInEditModePopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showEditorInEditModePopup");
@@ -760,6 +670,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    Object.defineProperty(this, _isAvailableService, {
 	      value: _isAvailableService2
+	    });
+	    Object.defineProperty(this, _getServiceConfigByCode, {
+	      value: _getServiceConfigByCode2
 	    });
 	    Object.defineProperty(this, _isServiceSelected, {
 	      value: _isServiceSelected2
@@ -868,10 +781,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _isTourViewed, {
-	      writable: true,
-	      value: false
-	    });
 	    Object.defineProperty(this, _entityEditor, {
 	      writable: true,
 	      value: null
@@ -884,6 +793,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _clientSelector, {
 	      writable: true,
 	      value: null
+	    });
+	    Object.defineProperty(this, _services, {
+	      writable: true,
+	      value: {}
 	    });
 	  }
 	  initialize(context, settings) {
@@ -900,7 +813,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  initializeSettings() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _region)[_region] = this.getSetting('region');
-	    babelHelpers.classPrivateFieldLooseBase(this, _isTourViewed)[_isTourViewed] = this.getSetting('isTourViewed');
 	  }
 	  activate() {
 	    super.activate();
@@ -1082,8 +994,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      return;
 	    }
 	    this.showButtonLoader(code);
+	    const service = babelHelpers.classPrivateFieldLooseBase(this, _getServiceConfigByCode)[_getServiceConfigByCode](code);
 	    const lineId = await crm_messagesender.ConditionChecker.checkAndGetLine({
-	      openLineCode: code,
+	      openLineCode: service.connectorId,
 	      senderType: this.getSenderType(),
 	      openLineItems: this.openLineItems
 	    });
@@ -1106,6 +1019,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    const senderId = this.currentChannelId;
 	    const from = this.fromPhoneId;
 	    const to = this.toPhoneId;
+	    const connectorId = babelHelpers.classPrivateFieldLooseBase(this, _getServiceConfigByCode)[_getServiceConfigByCode](code).connectorId;
 	    const ajaxParameters = {
 	      ownerTypeId,
 	      ownerId,
@@ -1114,7 +1028,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        senderId,
 	        from,
 	        to,
-	        lineId
+	        lineId,
+	        connectorId
 	      }
 	    };
 	    main_core.ajax.runAction('crm.activity.gotochat.send', {
@@ -1218,11 +1133,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.loader.destroy();
 	    }
 	  }
-	  showTour() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isTourViewed)[_isTourViewed] && !BX.Crm.EntityEditor.getDefault().isNew()) {
-	      crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour());
-	    }
-	  }
 	}
 	function _subscribeToReceiversChanges2() {
 	  main_core_events.EventEmitter.subscribe('BX.Crm.MessageSender.ReceiverRepository:OnReceiversChanged', event => {
@@ -1266,13 +1176,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    channels,
 	    communications,
 	    openLineItems,
-	    marketplaceUrl
+	    marketplaceUrl,
+	    services
 	  } = data;
 	  this.currentChannelId = currentChannelId;
 	  this.channels = channels;
 	  this.communications = communications;
 	  this.openLineItems = openLineItems;
 	  this.marketplaceUrl = marketplaceUrl;
+	  babelHelpers.classPrivateFieldLooseBase(this, _services)[_services] = services;
 	  babelHelpers.classPrivateFieldLooseBase(this, _setCommunicationsParams)[_setCommunicationsParams]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _setChannelDefaultPhoneId)[_setChannelDefaultPhoneId]();
 	}
@@ -1444,7 +1356,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  const phone = this.getCurrentPhone();
 	  if (!phone) {
 	    /*
-	    now the situation of the absence of the clientвЂ™s phone
+	    now the situation of the absence of the client's phone
 	    has not been worked out by the product manager in any way
 	    	@todo need handle this situation
 	     */
@@ -1531,7 +1443,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _createChatServiceButton2(service) {
 	  let className = service.commonClass;
 	  let label = service.connectLabel;
-	  if (!service.available) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isAvailableService)[_isAvailableService](service.id)) {
 	    className += ' --disabled';
 	    label = service.soonLabel;
 	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _isServiceSelected)[_isServiceSelected](service)) {
@@ -1569,7 +1481,7 @@ this.BX.Crm = this.BX.Crm || {};
 		`), icon.render());
 	}
 	function _getButtonIconColor2(service) {
-	  if (!service.available) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _isAvailableService)[_isAvailableService](service.id)) {
 	    return getComputedStyle(document.body).getPropertyValue('--ui-color-base-40');
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isServiceSelected)[_isServiceSelected](service)) {
@@ -1580,9 +1492,12 @@ this.BX.Crm = this.BX.Crm || {};
 	function _isServiceSelected2(service) {
 	  return this.openLineItems && this.openLineItems[service.id] && this.openLineItems[service.id].selected;
 	}
+	function _getServiceConfigByCode2(code) {
+	  return ServicesConfig.get(code) || null;
+	}
 	function _isAvailableService2(code) {
-	  var _ServicesConfig$get;
-	  return (_ServicesConfig$get = ServicesConfig.get(code)) == null ? void 0 : _ServicesConfig$get.available;
+	  var _babelHelpers$classPr;
+	  return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _services)[_services][code]) != null ? _babelHelpers$classPr : false;
 	}
 	function _isEntityInEditorMode2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _getEntityEditor)[_getEntityEditor]().getMode() === BX.UI.EntityEditorMode.edit;
@@ -1925,7 +1840,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  mounted() {
 	    this.showLoader(true);
 	  },
-	  beforeDestroy() {
+	  beforeUnmount() {
 	    this.$Bitrix.eventEmitter.unsubscribe(ITEM_ACTION_EVENT, this.onActionEvent);
 	  },
 	  watch: {
@@ -2954,8 +2869,8 @@ this.BX.Crm = this.BX.Crm || {};
 	var _appContext = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appContext");
 	var _isHidden = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isHidden");
 	var _currentTarget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTarget");
-	var _guide$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
-	var _spotlight$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("spotlight");
+	var _guide = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
+	var _spotlight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("spotlight");
 	var _checkTargetChangeIntervalID = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("checkTargetChangeIntervalID");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _unbindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unbindEvents");
@@ -2968,7 +2883,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _getTarget = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTarget");
 	var _prepareMoreDetailsLink = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareMoreDetailsLink");
 	var _openAppPlacementSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openAppPlacementSlider");
-	class Tour$1 {
+	class Tour {
 	  constructor(data) {
 	    Object.defineProperty(this, _openAppPlacementSlider, {
 	      value: _openAppPlacementSlider2
@@ -3031,11 +2946,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _guide$1, {
+	    Object.defineProperty(this, _guide, {
 	      writable: true,
 	      value: null
 	    });
-	    Object.defineProperty(this, _spotlight$1, {
+	    Object.defineProperty(this, _spotlight, {
 	      writable: true,
 	      value: null
 	    });
@@ -3066,8 +2981,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _isCanShowTour)[_isCanShowTour] && isValidStringFields && main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _getTarget)[_getTarget]());
 	  }
 	  getGuide() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1] = new ui_tour.Guide({
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide] = new ui_tour.Guide({
 	        onEvents: true,
 	        steps: [{
 	          target: babelHelpers.classPrivateFieldLooseBase(this, _getTarget)[_getTarget](),
@@ -3086,7 +3001,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }]
 	      });
 	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1];
+	    return babelHelpers.classPrivateFieldLooseBase(this, _guide)[_guide];
 	  }
 	}
 	function _bindEvents2() {
@@ -3137,9 +3052,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight)[_getSpotlight]().setTargetElement(newTarget);
 	}
 	function _getSpotlight2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1]) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight]) {
 	    const id = `${SPOTLIGHT_ID_PREFIX}_${babelHelpers.classPrivateFieldLooseBase(this, _id)[_id]}`;
-	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1] = new BX.SpotLight({
+	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight] = new BX.SpotLight({
 	      id,
 	      targetElement: babelHelpers.classPrivateFieldLooseBase(this, _getTarget)[_getTarget](),
 	      autoSave: 'no',
@@ -3147,7 +3062,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      zIndex: 200
 	    });
 	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1];
+	  return babelHelpers.classPrivateFieldLooseBase(this, _spotlight)[_spotlight];
 	}
 	function _getTarget2() {
 	  var _target;
@@ -3178,7 +3093,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	class Base extends Item {
 	  showTour() {
-	    const tour = new Tour$1({
+	    const tour = new Tour({
 	      id: this.getSetting('id'),
 	      title: this.getSetting('newUserNotificationTitle'),
 	      text: this.getSetting('newUserNotificationText'),
@@ -3557,30 +3472,23 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t10,
 	  _t11,
 	  _t12;
+	const DataLoadStatus = Object.freeze({
+	  loaded: 'loaded',
+	  notLoaded: 'notLoaded',
+	  loading: 'loading'
+	});
 
 	/** @memberof BX.Crm.Timeline.MenuBar */
-	var _getTour = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTour");
 	class Sharing extends WithEditor {
 	  constructor(...args) {
 	    super(...args);
-	    Object.defineProperty(this, _getTour, {
-	      value: _getTour2
-	    });
 	    this.HELPDESK_CODE = 17502612;
 	  }
 	  /**
 	   * @override
 	   */
 	  initialize(context, settings) {
-	    const config = settings.config;
-	    this.link = config.link;
-	    this.calendarSettings = config.calendarSettings;
-	    this.isResponsible = config.isResponsible;
-	    this.setContacts(config.contacts);
-	    this.isNotificationsAvailable = config.isNotificationsAvailable;
-	    this.areCommunicationChannelsAvailable = config.areCommunicationChannelsAvailable;
-	    this.setCommunicationChannels(config.communicationChannels, config.selectedChannelId);
-	    this.doPayAttentionToNewFeature = config.doPayAttentionToNewFeature;
+	    this.dataLoadStatus = DataLoadStatus.notLoaded;
 	    super.initialize(context, settings);
 	    if (this.getSetting('isAvailable')) {
 	      this.bindEvents();
@@ -3606,11 +3514,53 @@ this.BX.Crm = this.BX.Crm || {};
 	  /**
 	   * @override
 	   */
-	  doInitialize() {
-	    if (this.doPayAttentionToNewFeature) {
-	      this.payAttentionToNewFeature();
-	      BX.ajax.runAction('crm.api.timeline.calendar.sharing.disableOptionPayAttentionToNewCrmSharingFeature');
+	  onShow() {
+	    super.onShow();
+	    if (this.dataLoadStatus === DataLoadStatus.notLoaded && this.getEntityId() > 0) {
+	      void this.loadData().then(isSuccess => {
+	        if (isSuccess) {
+	          this.unlockControl();
+	          this.updateSettingsButton();
+	        }
+	        this.removeLoader();
+	      }, result => {});
+	    } else if (this.getEntityId() <= 0) {
+	      this.removeLoader();
 	    }
+	  }
+	  async loadData() {
+	    this.dataLoadStatus = DataLoadStatus.loading;
+	    const action = 'crm.api.timeline.calendar.sharing.getConfig';
+	    const data = {
+	      entityTypeId: this.getEntityTypeId(),
+	      entityId: this.getEntityId()
+	    };
+	    return BX.ajax.runAction(action, {
+	      data
+	    }).then(response => {
+	      var _response$data;
+	      if (response != null && (_response$data = response.data) != null && _response$data.config) {
+	        this.setConfig(response.data.config);
+	        this.dataLoadStatus = DataLoadStatus.loaded;
+	        return true;
+	      }
+	      return false;
+	    }, error => {
+	      console.error(error);
+	      return false;
+	    });
+	  }
+	  setConfig(config) {
+	    this.link = config.link;
+	    this.calendarSettings = config.calendarSettings;
+	    this.isResponsible = config.isResponsible;
+	    this.setContacts(config.contacts);
+	    this.isNotificationsAvailable = config.isNotificationsAvailable;
+	    this.areCommunicationChannelsAvailable = config.areCommunicationChannelsAvailable;
+	    this.setCommunicationChannels(config.communicationChannels, config.selectedChannelId);
+	  }
+	  unlockControl() {
+	    main_core.Dom.removeClass(this.DOM.root, '--locked');
 	  }
 
 	  /**
@@ -3620,8 +3570,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.DOM = {
 	      menuBarItem: document.querySelector('.crm-entity-stream-section-menu [data-id=sharing]')
 	    };
-	    return main_core.Tag.render(_t$3 || (_t$3 = _$3`
-			<div class="crm-entity-stream-content-sharing crm-entity-stream-content-wait-detail --hidden">
+	    const root = main_core.Tag.render(_t$3 || (_t$3 = _$3`
+			<div class="crm-entity-stream-content-sharing crm-entity-stream-content-wait-detail --hidden --locked">
 				<div id="_sharing_content_container">
 					<div class="crm-entity-stream-calendar-sharing-container">
 						<div class="crm-entity-stream-calendar-sharing-main">
@@ -3658,6 +3608,18 @@ this.BX.Crm = this.BX.Crm || {};
 				</div>
 			</div>
 		`), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_INFO_TITLE'), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_1'), main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_2'), this.createConfigureSlotsButton(), this.createSettingsButton(), this.createSendButton(), this.createCancelButton(), this.createMoreInfoButton());
+	    this.DOM.root = root;
+	    this.createLoader(root);
+	    return root;
+	  }
+	  createLoader(root) {
+	    this.loader = new main_loader.Loader({
+	      target: root
+	    });
+	    this.loader.show();
+	  }
+	  removeLoader() {
+	    this.loader.destroy();
 	  }
 	  createConfigureSlotsButton() {
 	    this.DOM.configureSlotsButton = main_core.Tag.render(_t2$3 || (_t2$3 = _$3`
@@ -4111,59 +4073,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    return warningGuide;
 	  }
-	  payAttentionToNewFeature() {
-	    crm_tourManager.TourManager.getInstance().registerWithLaunch(babelHelpers.classPrivateFieldLooseBase(this, _getTour)[_getTour]());
-	  }
-	  getGuide() {
-	    const guide = new ui_tour.Guide({
-	      simpleMode: true,
-	      onEvents: true,
-	      steps: [{
-	        target: this.DOM.menuBarItem,
-	        title: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TITLE'),
-	        text: main_core.Loc.getMessage('CRM_TIMELINE_CALENDAR_SHARING_PAY_ATTENTION_TO_NEW_FEATURE_TEXT'),
-	        article: this.HELPDESK_CODE,
-	        condition: {
-	          top: true,
-	          bottom: false,
-	          color: 'primary'
-	        }
-	      }]
-	    });
-	    const guidePopup = guide.getPopup();
-	    main_core.Dom.addClass(guidePopup.popupContainer, 'crm-calendar-sharing-configure-slots-popup-ui-tour-animate');
-	    guidePopup.setWidth(400);
-	    guidePopup.getContentContainer().style.paddingRight = getComputedStyle(guidePopup.closeIcon)['width'];
-	    return guide;
-	  }
-	  getPulsar() {
-	    const pulsar = new BX.SpotLight({
-	      targetElement: this.DOM.menuBarItem,
-	      targetVertex: 'middle-center'
-	    });
-	    pulsar.bindEvents({
-	      'onTargetEnter': () => pulsar.close()
-	    });
-	    return pulsar;
-	  }
-	}
-	function _getTour2() {
-	  const guide = this.getGuide();
-	  const pulsar = this.getPulsar();
-	  return new class SharingTour {
-	    canShow() {
-	      return true;
-	    }
-	    show() {
-	      setTimeout(() => {
-	        guide.showNextStep();
-	        pulsar.show();
-	      }, 1000);
-	    }
-	    getGuide() {
-	      return guide;
-	    }
-	  }();
 	}
 
 	let _$4 = t => t,
@@ -4179,7 +4088,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t10$1,
 	  _t11$1,
 	  _t12$1,
-	  _t13;
+	  _t13,
+	  _t14;
 
 	/** @memberof BX.Crm.Timeline.MenuBar */
 	var _renderEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderEditor");
@@ -4205,12 +4115,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _renderEditor, {
 	      value: _renderEditor2
 	    });
+	    this.isFetchedConfig = false;
 	  }
+	  /**
+	   * @override
+	   * */
 	  createLayout() {
-	    const canSend = this.getSetting('canSendMessage', false);
-	    return main_core.Tag.render(_t$4 || (_t$4 = _$4`<div class="crm-entity-stream-content-new-detail --focus --hidden">
-			${0}
-		</div>`), canSend ? babelHelpers.classPrivateFieldLooseBase(this, _renderEditor)[_renderEditor]() : babelHelpers.classPrivateFieldLooseBase(this, _renderSetupText)[_renderSetupText]());
+	    return main_core.Tag.render(_t$4 || (_t$4 = _$4`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-sms --skeleton --hidden"></div>`));
 	  }
 	  doInitialize() {
 	    this._isRequestRunning = false;
@@ -4949,8 +4860,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    if (main_core.Type.isArray(items)) {
 	      if (items.length) {
 	        items.forEach(item => {
+	          var _item$ORIGINAL_ID;
 	          menuItems.push({
-	            templateId: item.ORIGINAL_ID,
+	            templateId: (_item$ORIGINAL_ID = item.ORIGINAL_ID) != null ? _item$ORIGINAL_ID : null,
 	            value: item.ID,
 	            text: item.TITLE,
 	            onclick: this._selectTemplateHandler
@@ -5142,7 +5054,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      data: {
 	        placeholderId: id,
 	        fieldName: main_core.Type.isStringFilled(value) ? value : null,
-	        entityType: main_core.Type.isStringFilled(value) ? entityType : null,
+	        entityType: main_core.Type.isStringFilled(entityType) ? entityType : null,
 	        fieldValue: main_core.Type.isStringFilled(text) ? text : null,
 	        ...this.getCommonPlaceholderData()
 	      }
@@ -5169,11 +5081,40 @@ this.BX.Crm = this.BX.Crm || {};
 	      entityCategoryId: this._ownerCategoryId
 	    };
 	  }
+
+	  /**
+	   * @override
+	   * */
 	  activate() {
 	    super.activate();
-	    if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates) {
-	      this.onTemplateSelectClick();
+
+	    // fetch config
+	    if (this.isFetchedConfig || !this.getEntityId()) {
+	      return;
 	    }
+	    this.isFetchedConfig = false;
+	    main_core.ajax.runAction('crm.api.timeline.sms.getConfig', {
+	      json: {
+	        entityTypeId: this.getEntityTypeId(),
+	        entityId: this.getEntityId()
+	      }
+	    }).then(({
+	      data
+	    }) => {
+	      this.isFetchedConfig = true;
+	      this.setSettings(data);
+	      setTimeout(() => {
+	        const canSend = this.getSetting('canSendMessage', false);
+	        this.setContainer(main_core.Tag.render(_t2$4 || (_t2$4 = _$4`
+						<div class="crm-entity-stream-content-new-detail --focus">
+							${0}
+						</div>
+					`), canSend ? babelHelpers.classPrivateFieldLooseBase(this, _renderEditor)[_renderEditor]() : babelHelpers.classPrivateFieldLooseBase(this, _renderSetupText)[_renderSetupText]()));
+	        if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates) {
+	          this.onTemplateSelectClick();
+	        }
+	      }, 50);
+	    }).catch(() => this.showNotify(main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR')));
 	  }
 	  static create(id, settings) {
 	    const self = new Sms();
@@ -5187,10 +5128,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  const enableSalesCenter = BX.prop.getBoolean(config, 'isSalescenterEnabled', false);
 	  const enableDocuments = BX.prop.getBoolean(config, 'isDocumentsEnabled', false);
 	  const enableFiles = this.getSetting('enableFiles', false);
-	  this._saveButton = main_core.Tag.render(_t2$4 || (_t2$4 = _$4`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_SEND'));
-	  this._cancelButton = main_core.Tag.render(_t3$3 || (_t3$3 = _$4`<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>`), this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
-	  this._input = main_core.Tag.render(_t4$3 || (_t4$3 = _$4`<textarea class="crm-entity-stream-content-new-sms-textarea" rows='1' placeholder="${0}"></textarea>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_ENTER_MESSAGE'));
-	  return main_core.Tag.render(_t5$2 || (_t5$2 = _$4`<div class="crm-entity-stream-content-sms-buttons-container">
+	  this._saveButton = main_core.Tag.render(_t3$3 || (_t3$3 = _$4`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_SEND'));
+	  this._cancelButton = main_core.Tag.render(_t4$3 || (_t4$3 = _$4`<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>`), this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
+	  this._input = main_core.Tag.render(_t5$2 || (_t5$2 = _$4`<textarea class="crm-entity-stream-content-new-sms-textarea" rows='1' placeholder="${0}"></textarea>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_ENTER_MESSAGE'));
+	  return main_core.Tag.render(_t6$2 || (_t6$2 = _$4`<div class="crm-entity-stream-content-sms-buttons-container">
 			${0}
 			${0}
 			${0}
@@ -5224,15 +5165,15 @@ this.BX.Crm = this.BX.Crm || {};
 					<span class="crm-entity-stream-content-sms-symbol-counter-number">200</span>
 				</div>
 			</div>
-		`), enableSalesCenter ? main_core.Tag.render(_t6$2 || (_t6$2 = _$4`
+		`), enableSalesCenter ? main_core.Tag.render(_t7$2 || (_t7$2 = _$4`
 				<div class="crm-entity-stream-content-sms-button" data-role="salescenter-starter">
 					<div class="crm-entity-stream-content-sms-salescenter-icon"></div>
 					<div class="crm-entity-stream-content-sms-button-text">${0}</div>
-				</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')) : null, enableFiles ? main_core.Tag.render(_t7$2 || (_t7$2 = _$4`
+				</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')) : null, enableFiles ? main_core.Tag.render(_t8$1 || (_t8$1 = _$4`
 				<div class="crm-entity-stream-content-sms-button" data-role="sms-file-selector">
 					<div class="crm-entity-stream-content-sms-file-icon"></div>
 					<div class="crm-entity-stream-content-sms-button-text">${0}</div>
-				</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SEND_FILE')) : null, enableDocuments ? main_core.Tag.render(_t8$1 || (_t8$1 = _$4`
+				</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SEND_FILE')) : null, enableDocuments ? main_core.Tag.render(_t9$1 || (_t9$1 = _$4`
 				<div class="crm-entity-stream-content-sms-button" data-role="sms-document-selector">
 					<div class="crm-entity-stream-content-sms-document-icon"></div>
 					<div class="crm-entity-stream-content-sms-button-text">${0}</div>
@@ -5240,7 +5181,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _renderSetupText2() {
 	  const enableSalesCenter = BX.prop.getBoolean(this.getSetting('smsConfig', {}), 'isSalescenterEnabled', false);
-	  return main_core.Tag.render(_t9$1 || (_t9$1 = _$4`<div class="crm-entity-stream-content-sms-conditions-container">
+	  return main_core.Tag.render(_t10$1 || (_t10$1 = _$4`<div class="crm-entity-stream-content-sms-conditions-container">
 			<div class="crm-entity-stream-content-sms-conditions">
 				<div class="crm-entity-stream-content-sms-conditions-text">
 					<strong>${0}</strong><br>
@@ -5252,13 +5193,13 @@ this.BX.Crm = this.BX.Crm || {};
 		<div class="crm-entity-stream-content-new-sms-btn-container">
 			<a href="#" data-role="sender-selector" target="_top" class="crm-entity-stream-content-new-sms-connect-link">${0}</a>
 			${0}
-		</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_2'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3_MSGVER_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_URL'), enableSalesCenter ? main_core.Tag.render(_t10$1 || (_t10$1 = _$4`<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
+		</div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_2'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_TEXT_3_MSGVER_1'), main_core.Loc.getMessage('CRM_TIMELINE_SMS_MANAGE_URL'), enableSalesCenter ? main_core.Tag.render(_t11$1 || (_t11$1 = _$4`<div class="crm-entity-stream-content-sms-salescenter-container-absolute" data-role="salescenter-starter">
 	<div class="crm-entity-stream-content-sms-salescenter-icon"></div>
 	<div class="crm-entity-stream-content-sms-button-text">${0}</div>
 </div>`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_SALESCENTER_STARTER')) : null);
 	}
 	function _renderTemplatesContainer2() {
-	  this._templatesContainer = main_core.Tag.render(_t11$1 || (_t11$1 = _$4`<div class="crm-entity-stream-content-new-sms-templates">
+	  this._templatesContainer = main_core.Tag.render(_t12$1 || (_t12$1 = _$4`<div class="crm-entity-stream-content-new-sms-templates">
 				<div class="ui-ctl-label-text">
 					${0}<span class="ui-hint" data-role="hint"><span class="ui-hint-icon"></span></span>
 				</div>
@@ -5279,7 +5220,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    const fileInputName = fileInputPrefix + '-sms-files';
 	    const fileUploaderInputName = fileInputPrefix + '-sms-files-uploader';
 	    const fileUploaderZoneId = 'diskuf-selectdialog-' + fileInputPrefix;
-	    return main_core.Tag.render(_t12$1 || (_t12$1 = _$4`<div class="crm-entity-stream-content-sms-file-uploader-zone" data-role="sms-file-upload-zone" data-node-id="${0}">
+	    return main_core.Tag.render(_t13 || (_t13 = _$4`<div class="crm-entity-stream-content-sms-file-uploader-zone" data-role="sms-file-upload-zone" data-node-id="${0}">
 				<div id="${0}" class="diskuf-files-entity diskuf-selectdialog bx-disk">
 					<div class="diskuf-files-block checklist-loader-files">
 						<div class="diskuf-placeholder">
@@ -5303,7 +5244,7 @@ this.BX.Crm = this.BX.Crm || {};
 			</div>`), fileInputPrefix, fileUploaderZoneId, fileInputName, fileUploaderInputName, fileUploaderInputName);
 	  }
 	  if (showFiles) {
-	    return main_core.Tag.render(_t13 || (_t13 = _$4`<div class="crm-entity-stream-content-sms-file-external-link-popup" data-role="sms-file-external-link-disabled">
+	    return main_core.Tag.render(_t14 || (_t14 = _$4`<div class="crm-entity-stream-content-sms-file-external-link-popup" data-role="sms-file-external-link-disabled">
 				<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-container">
 					<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-inner">
 						<div class="crm-entity-stream-content-sms-file-external-link-popup-limit-desc">
@@ -5363,6 +5304,1100 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	Sms.items = {};
 
+	const CHANNEL_MANAGER_SLIDER_WIDTH = 700;
+	function saveSmsMessage(serviceUrl, senderId, params, onSuccessHandler, onFailureHandler) {
+	  const baseParams = {
+	    site: main_core.Loc.getMessage('SITE_ID'),
+	    sessid: main_core.Loc.getMessage('bitrix_sessid'),
+	    ACTION: 'SAVE_SMS_MESSAGE',
+	    SENDER_ID: senderId
+	  };
+	  return new Promise((resolve, reject) => {
+	    // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+	    BX.ajax({
+	      url: getSendUrl(serviceUrl, senderId),
+	      method: 'POST',
+	      dataType: 'json',
+	      data: {
+	        ...params,
+	        ...baseParams
+	      },
+	      onsuccess: () => {
+	        onSuccessHandler();
+	        resolve();
+	      },
+	      onfailure: () => {
+	        onFailureHandler();
+	        reject();
+	      }
+	    });
+	  });
+	}
+	function createOrUpdatePlaceholder(templateId, entityTypeId, entityCategoryId, params) {
+	  const {
+	    id,
+	    value,
+	    entityType,
+	    text
+	  } = params;
+	  return main_core.ajax.runAction('crm.activity.smsplaceholder.createOrUpdatePlaceholder', {
+	    data: {
+	      placeholderId: id,
+	      fieldName: main_core.Type.isStringFilled(value) ? value : null,
+	      entityType: main_core.Type.isStringFilled(entityType) ? entityType : null,
+	      fieldValue: main_core.Type.isStringFilled(text) ? text : null,
+	      templateId,
+	      entityTypeId,
+	      entityCategoryId
+	    }
+	  });
+	}
+	function showChannelManagerSlider(manageUrl) {
+	  if (!main_core.Type.isStringFilled(manageUrl)) {
+	    throw new Error('"manageUrl" parameter must be specified');
+	  }
+	  if (!main_core.Reflection.getClass('BX.SidePanel.Instance.getTopSlider')) {
+	    throw new Error('Class "SidePanel.Instance.getTopSlider" not found');
+	  }
+	  const url = main_core.Uri.addParam(manageUrl, {
+	    IFRAME: 'Y'
+	  });
+	  const slider = ui_sidepanel.SidePanel.Instance.getTopSlider();
+	  const options = {
+	    width: CHANNEL_MANAGER_SLIDER_WIDTH,
+	    events: {
+	      onClose: () => {
+	        if (slider) {
+	          slider.reload();
+	        }
+	      },
+	      onCloseComplete: () => {
+	        if (!slider) {
+	          document.location.reload();
+	        }
+	      }
+	    }
+	  };
+	  ui_sidepanel.SidePanel.Instance.open(url, options);
+	}
+	function getSendUrl(serviceUrl, senderId) {
+	  if (!main_core.Type.isStringFilled(serviceUrl)) {
+	    throw new Error('"serviceUrl" parameter must be specified');
+	  }
+	  if (!main_core.Type.isStringFilled(senderId)) {
+	    throw new Error('"senderId" parameter must be specified');
+	  }
+	  return BX.util.add_url_param(serviceUrl, {
+	    action: 'save_sms_message',
+	    sender: senderId
+	  });
+	}
+
+	const MENU_ITEM_STUB_ID$1 = 'stub';
+	const MENU_SETTINGS_ID = 'crm-timeline-whatsapp-settings-menu';
+	const ACTIVE_MENU_ITEM_CLASS$1 = 'menu-popup-item-accept';
+	const DEFAULT_MENU_ITEM_CLASS$1 = 'menu-popup-item-none';
+
+	// eslint-disable-next-line class-methods-use-this
+	function getSubmenuStubItems() {
+	  // needed for emitted the onSubMenuShow event
+	  return [{
+	    id: MENU_ITEM_STUB_ID$1
+	  }];
+	}
+	function getSendersItems(fromList, selectedPhoneId, onClickHandler) {
+	  if (!main_core.Type.isArrayFilled(fromList)) {
+	    return [];
+	  }
+	  const result = [];
+	  fromList.forEach(({
+	    id,
+	    name: text
+	  }) => {
+	    const className = id === selectedPhoneId ? ACTIVE_MENU_ITEM_CLASS$1 : DEFAULT_MENU_ITEM_CLASS$1;
+	    result.push({
+	      id,
+	      text,
+	      className,
+	      onclick: onClickHandler
+	    });
+	  });
+	  return result;
+	}
+	function getCommunicationsItems(communications, selectedPhoneId, onClickHandler) {
+	  if (!main_core.Type.isArrayFilled(communications)) {
+	    return [];
+	  }
+	  const result = [];
+	  communications.forEach(communication => {
+	    if (main_core.Type.isArrayFilled(communication.phones)) {
+	      communication.phones.forEach(phone => {
+	        const className = phone.id === selectedPhoneId ? ACTIVE_MENU_ITEM_CLASS$1 : DEFAULT_MENU_ITEM_CLASS$1;
+	        result.push({
+	          id: phone.id,
+	          text: `${communication.caption} (${phone.valueFormatted})`,
+	          className,
+	          onclick: onClickHandler
+	        });
+	      });
+	    }
+	  });
+	  return result;
+	}
+	function getNewCommunications(input) {
+	  const phoneReceivers = input.filter(receiver => receiver.address.typeId === 'PHONE');
+	  const newCommunications = {};
+	  for (const receiver of phoneReceivers) {
+	    let communication = newCommunications[receiver.addressSource.hash];
+	    if (!communication) {
+	      var _receiver$addressSour;
+	      communication = {
+	        entityTypeId: receiver.addressSource.entityTypeId,
+	        entityTypeName: BX.CrmEntityType.resolveName(receiver.addressSource.entityTypeId),
+	        entityId: receiver.addressSource.entityId,
+	        caption: (_receiver$addressSour = receiver.addressSourceData) == null ? void 0 : _receiver$addressSour.title,
+	        phones: []
+	      };
+	    }
+	    communication.phones.push({
+	      id: receiver.address.id,
+	      type: receiver.address.typeId,
+	      value: receiver.address.value,
+	      valueFormatted: receiver.address.valueFormatted
+	    });
+	    newCommunications[receiver.addressSource.hash] = communication;
+	  }
+	  return Object.values(newCommunications);
+	}
+
+	const SPOTLIGHT_ID_PREFIX$1 = 'spotlight-crm-timeline-menubar';
+	const SPOTLIGHT_TARGET_VERTEX = 'middle-center';
+	const SPOTLIGHT_Z_INDEX = 200;
+	const GUIDE_LINK_CLASS_NAME = 'crm-entity-stream-content-new-detail-guide-link';
+	const GUIDE_POPUP_WIDTH = 400;
+	const GUIDE_POPUP_POSITION = 'bottom';
+	var _params = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("params");
+	var _spotlight$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("spotlight");
+	var _guide$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guide");
+	var _guideBindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("guideBindElement");
+	var _targetElementRect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("targetElementRect");
+	var _observerTimeoutId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("observerTimeoutId");
+	var _getSpotlight$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSpotlight");
+	var _getGuideBindElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getGuideBindElement");
+	var _handleTargetElementResize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTargetElementResize");
+	var _assertValidParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("assertValidParams");
+	class BaseTour {
+	  constructor(_params2) {
+	    Object.defineProperty(this, _assertValidParams, {
+	      value: _assertValidParams2
+	    });
+	    Object.defineProperty(this, _handleTargetElementResize, {
+	      value: _handleTargetElementResize2
+	    });
+	    Object.defineProperty(this, _getGuideBindElement, {
+	      value: _getGuideBindElement2
+	    });
+	    Object.defineProperty(this, _getSpotlight$1, {
+	      value: _getSpotlight2$1
+	    });
+	    Object.defineProperty(this, _params, {
+	      writable: true,
+	      value: {}
+	    });
+	    Object.defineProperty(this, _spotlight$1, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _guide$1, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _guideBindElement, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _targetElementRect, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _observerTimeoutId, {
+	      writable: true,
+	      value: null
+	    });
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _assertValidParams)[_assertValidParams](_params2)) {
+	      throw new TypeError('Invalid menu bar tour params');
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _params)[_params] = _params2;
+	    this.onWindowResize = main_core.Runtime.debounce(this.onWindowResize.bind(this), 100);
+	    main_core.Event.bind(window, 'resize', this.onWindowResize);
+	  }
+	  onWindowResize() {
+	    const target = babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](true);
+	    babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1].getCurrentStep().setTarget(target);
+	    babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1].showNextStep();
+	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1].setTargetElement(target);
+	  }
+	  canShow() {
+	    return true;
+	  }
+	  show() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1] = babelHelpers.classPrivateFieldLooseBase(this, _getSpotlight$1)[_getSpotlight$1]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1].show();
+	    this.getGuide().showNextStep();
+	  }
+	  getGuide() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1]) {
+	      var _babelHelpers$classPr2;
+	      const guideCfg = {
+	        onEvents: true,
+	        steps: [{
+	          target: babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](),
+	          title: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].title,
+	          text: babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].text,
+	          position: GUIDE_POPUP_POSITION,
+	          rounded: true,
+	          events: {
+	            onClose: () => {
+	              this.saveUserOption(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].userOptionName);
+	              babelHelpers.classPrivateFieldLooseBase(this, _spotlight$1)[_spotlight$1].close();
+	              if (babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId]) {
+	                clearInterval(babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId]);
+	                babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId] = null;
+	              }
+	              main_core.Event.unbind(window, 'resize', this.onWindowResize);
+	            }
+	          }
+	        }]
+	      };
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].articleCode > 0) {
+	        var _babelHelpers$classPr;
+	        guideCfg.steps[0].article = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].articleCode;
+	        guideCfg.steps[0].linkTitle = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].linkTitle) != null ? _babelHelpers$classPr : main_core.Loc.getMessage('CRM_TIMELINE_DETAILS');
+	      }
+	      const guide = new ui_tour.Guide(guideCfg);
+	      const guidePopup = guide.getPopup();
+	      guidePopup.setWidth((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guidePopupWidth) != null ? _babelHelpers$classPr2 : GUIDE_POPUP_WIDTH);
+	      const link = guidePopup.contentContainer.querySelector('.ui-tour-popup-link');
+	      main_core.Dom.addClass(link, GUIDE_LINK_CLASS_NAME);
+	      babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect] = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement]());
+	      babelHelpers.classPrivateFieldLooseBase(this, _observerTimeoutId)[_observerTimeoutId] = setInterval(babelHelpers.classPrivateFieldLooseBase(this, _handleTargetElementResize)[_handleTargetElementResize].bind(this), 1000);
+	      babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1] = guide;
+	    }
+	    return babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1];
+	  }
+	  saveUserOption(optionName = null) {
+	    // eslint-disable-next-line no-console
+	    console.warn('Method save is not implemented');
+	  }
+	}
+	function _getSpotlight2$1() {
+	  return new BX.SpotLight({
+	    id: `${SPOTLIGHT_ID_PREFIX$1}-${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].itemCode}-guide`,
+	    targetElement: babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement](),
+	    targetVertex: SPOTLIGHT_TARGET_VERTEX,
+	    zIndex: SPOTLIGHT_Z_INDEX,
+	    autoSave: 'no'
+	  });
+	}
+	function _getGuideBindElement2(force = false) {
+	  if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guideBindElement)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].guideBindElement;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] || force) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = document.querySelector(`[data-id="${babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].itemCode}"]`);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].offsetTop) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement] = babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement].parentElement.nextElementSibling;
+	    }
+	  }
+	  return babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
+	}
+	function _handleTargetElementResize2() {
+	  const currentRect = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _getGuideBindElement)[_getGuideBindElement]());
+	  if (currentRect.left !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].left || currentRect.right !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].right || currentRect.top !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].top || currentRect.bottom !== babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect].bottom) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _targetElementRect)[_targetElementRect] = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement]);
+	    const targetElement = babelHelpers.classPrivateFieldLooseBase(this, _guideBindElement)[_guideBindElement];
+	    const isVisible = Boolean(targetElement.offsetWidth || targetElement.offsetHeight || targetElement.getClientRects().length > 0);
+	    const guidePopup = babelHelpers.classPrivateFieldLooseBase(this, _guide$1)[_guide$1].getPopup();
+	    if (isVisible) {
+	      main_core.Dom.removeClass(guidePopup.popupContainer, '--hidden');
+	      guidePopup.adjustPosition();
+	    } else {
+	      main_core.Dom.addClass(guidePopup.popupContainer, '--hidden');
+	    }
+	  }
+	}
+	function _assertValidParams2(params) {
+	  if (!main_core.Type.isPlainObject(params)) {
+	    console.error('"params" must be specified');
+	    return false;
+	  }
+	  if (!main_core.Type.isStringFilled(params.title)) {
+	    console.error('"title" must be specified');
+	    return false;
+	  }
+	  if (!main_core.Type.isStringFilled(params.text)) {
+	    console.error('"text" must be specified');
+	    return false;
+	  }
+	  return true;
+	}
+
+	const UserOptions = main_core.Reflection.namespace('BX.userOptions');
+
+	/** @memberof BX.Crm.Timeline.MenuBar.Whatsapp */
+	class Tour$1 extends BaseTour {
+	  /**
+	   * @override
+	   * */
+	  saveUserOption(optionName = null) {
+	    if (![Tour$1.USER_OPTION_PROVIDER_OFF, Tour$1.USER_OPTION_TEMPLATES_READY, Tour$1.USER_OPTION_PROVIDER_ON].includes(optionName)) {
+	      throw new Error(`User option with name: ${optionName} unsupported`);
+	    }
+	    UserOptions.save('crm', 'whatsapp', optionName, 1);
+	  }
+	}
+	Tour$1.USER_OPTION_PROVIDER_OFF = 'is_tour_provider_off_viewed';
+	Tour$1.USER_OPTION_TEMPLATES_READY = 'is_tour_templates_ready_viewed';
+	Tour$1.USER_OPTION_PROVIDER_ON = 'is_tour_provider_on_viewed';
+
+	let _$5 = t => t,
+	  _t$5,
+	  _t2$5,
+	  _t3$4,
+	  _t4$4,
+	  _t5$3,
+	  _t6$3,
+	  _t7$3,
+	  _t8$2,
+	  _t9$2,
+	  _t10$2,
+	  _t11$2,
+	  _t12$2;
+	const ARTICLE_CODE_SEND_WITH_WHATSAPP = '20526810';
+
+	/** @memberof BX.Crm.Timeline.MenuBar */
+	var _serviceUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("serviceUrl");
+	var _provider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("provider");
+	var _communications = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("communications");
+	var _sendButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendButton");
+	var _cancelButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cancelButton");
+	var _selectorButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectorButton");
+	var _templatesContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templatesContainer");
+	var _templatesContainerTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templatesContainerTitle");
+	var _templatesContainerContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templatesContainerContent");
+	var _settingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("settingsMenu");
+	var _tplEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tplEditor");
+	var _placeholders = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("placeholders");
+	var _filledPlaceholders = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filledPlaceholders");
+	var _canUse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canUse");
+	var _isDemoTemplateSet = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isDemoTemplateSet");
+	var _isSendRequestRunning = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSendRequestRunning");
+	var _isLocked = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLocked");
+	var _isFetchedConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFetchedConfig");
+	var _template = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("template");
+	var _fromPhoneId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fromPhoneId");
+	var _toPhone = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toPhone");
+	var _toEntityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toEntityTypeId");
+	var _toEntityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toEntityId");
+	var _unViewedTourList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unViewedTourList");
+	var _prepareParams$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareParams");
+	var _subscribeToReceiversChanges$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToReceiversChanges");
+	var _createHelpLinkContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createHelpLinkContainer");
+	var _createHeaderButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createHeaderButtons");
+	var _createFooterButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createFooterButtons");
+	var _createTemplatesContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createTemplatesContainer");
+	var _createSettingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createSettingsMenu");
+	var _showContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showContent");
+	var _setTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setTemplate");
+	var _setCommunicationsParams$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCommunicationsParams");
+	var _setChannelDefaultPhoneId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setChannelDefaultPhoneId");
+	var _applySendButtonState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("applySendButtonState");
+	var _handleTemplateSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleTemplateSelect");
+	var _handleSettingsMenuClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSettingsMenuClick");
+	var _handleHelpClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleHelpClick");
+	var _handleShowSubMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleShowSubMenu");
+	var _handleSenderPhoneSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSenderPhoneSelect");
+	var _handleCommunicationSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleCommunicationSelect");
+	var _handleApplyPlaceholder = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleApplyPlaceholder");
+	var _handleSendButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSendButtonClick");
+	var _handleSendSuccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSendSuccess");
+	var _handleSendFailure = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSendFailure");
+	var _initTemplateEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initTemplateEditor");
+	var _preparePlaceholdersFromTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preparePlaceholdersFromTemplate");
+	var _getTemplateEditorText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTemplateEditorText");
+	var _isTourAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTourAvailable");
+	class Whatsapp extends Item {
+	  constructor(...args) {
+	    super(...args);
+	    Object.defineProperty(this, _isTourAvailable, {
+	      value: _isTourAvailable2
+	    });
+	    Object.defineProperty(this, _getTemplateEditorText, {
+	      value: _getTemplateEditorText2
+	    });
+	    Object.defineProperty(this, _preparePlaceholdersFromTemplate, {
+	      value: _preparePlaceholdersFromTemplate2
+	    });
+	    Object.defineProperty(this, _initTemplateEditor, {
+	      value: _initTemplateEditor2
+	    });
+	    Object.defineProperty(this, _handleSendFailure, {
+	      value: _handleSendFailure2
+	    });
+	    Object.defineProperty(this, _handleSendSuccess, {
+	      value: _handleSendSuccess2
+	    });
+	    Object.defineProperty(this, _handleSendButtonClick, {
+	      value: _handleSendButtonClick2
+	    });
+	    Object.defineProperty(this, _handleApplyPlaceholder, {
+	      value: _handleApplyPlaceholder2
+	    });
+	    Object.defineProperty(this, _handleCommunicationSelect, {
+	      value: _handleCommunicationSelect2
+	    });
+	    Object.defineProperty(this, _handleSenderPhoneSelect, {
+	      value: _handleSenderPhoneSelect2
+	    });
+	    Object.defineProperty(this, _handleShowSubMenu, {
+	      value: _handleShowSubMenu2
+	    });
+	    Object.defineProperty(this, _handleHelpClick, {
+	      value: _handleHelpClick2
+	    });
+	    Object.defineProperty(this, _handleSettingsMenuClick, {
+	      value: _handleSettingsMenuClick2
+	    });
+	    Object.defineProperty(this, _handleTemplateSelect, {
+	      value: _handleTemplateSelect2
+	    });
+	    Object.defineProperty(this, _applySendButtonState, {
+	      value: _applySendButtonState2
+	    });
+	    Object.defineProperty(this, _setChannelDefaultPhoneId$1, {
+	      value: _setChannelDefaultPhoneId2$1
+	    });
+	    Object.defineProperty(this, _setCommunicationsParams$1, {
+	      value: _setCommunicationsParams2$1
+	    });
+	    Object.defineProperty(this, _setTemplate, {
+	      value: _setTemplate2
+	    });
+	    Object.defineProperty(this, _showContent$1, {
+	      value: _showContent2$1
+	    });
+	    Object.defineProperty(this, _createSettingsMenu, {
+	      value: _createSettingsMenu2
+	    });
+	    Object.defineProperty(this, _createTemplatesContainer, {
+	      value: _createTemplatesContainer2
+	    });
+	    Object.defineProperty(this, _createFooterButtons, {
+	      value: _createFooterButtons2
+	    });
+	    Object.defineProperty(this, _createHeaderButtons, {
+	      value: _createHeaderButtons2
+	    });
+	    Object.defineProperty(this, _createHelpLinkContainer, {
+	      value: _createHelpLinkContainer2
+	    });
+	    Object.defineProperty(this, _subscribeToReceiversChanges$2, {
+	      value: _subscribeToReceiversChanges2$2
+	    });
+	    Object.defineProperty(this, _prepareParams$1, {
+	      value: _prepareParams2$1
+	    });
+	    Object.defineProperty(this, _serviceUrl, {
+	      writable: true,
+	      value: ''
+	    });
+	    Object.defineProperty(this, _provider, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _communications, {
+	      writable: true,
+	      value: []
+	    });
+	    Object.defineProperty(this, _sendButton, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _cancelButton, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _selectorButton, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _templatesContainer, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _templatesContainerTitle, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _templatesContainerContent, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _settingsMenu, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _tplEditor, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _placeholders, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _filledPlaceholders, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _canUse, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _isDemoTemplateSet, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _isSendRequestRunning, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _isLocked, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _isFetchedConfig, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _template, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _fromPhoneId, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _toPhone, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _toEntityTypeId, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _toEntityId, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _unViewedTourList, {
+	      writable: true,
+	      value: void 0
+	    });
+	  }
+	  /**
+	   * @override
+	   * */
+	  initializeSettings() {
+	    var _this$getSetting;
+	    babelHelpers.classPrivateFieldLooseBase(this, _canUse)[_canUse] = this.getSetting('canUse');
+	    babelHelpers.classPrivateFieldLooseBase(this, _serviceUrl)[_serviceUrl] = this.getSetting('serviceUrl');
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _serviceUrl)[_serviceUrl]) {
+	      throw new Error('Whatsapp message sending must be used with serviceUrl');
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList] = (_this$getSetting = this.getSetting('unViewedTourList')) != null ? _this$getSetting : [];
+	  }
+
+	  /**
+	   * @override
+	   * */
+	  createLayout() {
+	    let iconClass = '--gray';
+	    let titleMessage = main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE_SETUP');
+	    let description = main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_HEADER_DESCRIPTION_SETUP');
+	    let descriptionClass = '--fixed';
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _canUse)[_canUse]) {
+	      iconClass = '--green';
+	      titleMessage = main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE');
+	      description = main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_HEADER_DESCRIPTION');
+	      descriptionClass = '';
+	    }
+	    return main_core.Tag.render(_t$5 || (_t$5 = _$5`
+			<div class="crm-entity-stream-content-whatsapp crm-entity-stream-content-wait-detail --hidden --skeleton">
+				<div class="crm-entity-stream-content-whatsapp-container --hidden">
+					<div class="crm-entity-stream-content-whatsapp-header">
+						<div class="crm-entity-stream-content-whatsapp-header-icon ${0}"></div>
+						<div class="crm-entity-stream-content-whatsapp-header-text">
+							<div class="crm-entity-stream-content-whatsapp-header-title">
+								${0}
+							</div>
+							<div class="crm-entity-stream-content-whatsapp-header-description ${0}">
+								${0}
+							</div>
+							<div>
+								${0}
+							</div>
+						</div>
+						<div class="crm-entity-stream-content-whatsapp-header-buttons">
+							${0}
+						</div>
+					</div>
+					${0}
+				</div>
+				<div class="crm-entity-stream-content-whatsapp-footer --hidden">
+					${0}
+				</div>
+			</div>
+		`), iconClass, titleMessage, descriptionClass, description, babelHelpers.classPrivateFieldLooseBase(this, _createHelpLinkContainer)[_createHelpLinkContainer](), babelHelpers.classPrivateFieldLooseBase(this, _createHeaderButtons)[_createHeaderButtons](), babelHelpers.classPrivateFieldLooseBase(this, _createTemplatesContainer)[_createTemplatesContainer](), babelHelpers.classPrivateFieldLooseBase(this, _createFooterButtons)[_createFooterButtons]());
+	  }
+
+	  /**
+	   * @override
+	   * */
+	  initializeLayout() {
+	    super.initializeLayout();
+	    babelHelpers.classPrivateFieldLooseBase(this, _setTemplate)[_setTemplate](main_core.Runtime.clone(this.getSetting('demoTemplate')));
+	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeToReceiversChanges$2)[_subscribeToReceiversChanges$2]();
+	  }
+
+	  /**
+	   * @override
+	   * */
+	  showTour() {
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isTourAvailable)[_isTourAvailable]()) {
+	      return;
+	    }
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$1.USER_OPTION_PROVIDER_OFF)) {
+	      crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$1({
+	        itemCode: 'whatsapp',
+	        title: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TITLE'),
+	        text: this.getEntityTypeId() === BX.CrmEntityType.enumeration.lead ? main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TEXT_LEAD') : main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TEXT_DEAL'),
+	        articleCode: ARTICLE_CODE_SEND_WITH_WHATSAPP,
+	        userOptionName: Tour$1.USER_OPTION_PROVIDER_OFF
+	      }));
+	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$1.USER_OPTION_PROVIDER_ON)) {
+	      crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$1({
+	        itemCode: 'whatsapp',
+	        title: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_ON_TITLE'),
+	        text: this.getEntityTypeId() === BX.CrmEntityType.enumeration.lead ? main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_ON_TEXT_LEAD') : main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_ON_TEXT_DEAL'),
+	        articleCode: ARTICLE_CODE_SEND_WITH_WHATSAPP,
+	        userOptionName: Tour$1.USER_OPTION_PROVIDER_ON
+	      }));
+	    }
+	  }
+
+	  /**
+	   * @override
+	   * */
+	  activate() {
+	    super.activate();
+
+	    // fetch config
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isFetchedConfig)[_isFetchedConfig] || !this.getEntityId()) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _isFetchedConfig)[_isFetchedConfig] = false;
+	    main_core.ajax.runAction('crm.api.timeline.whatsapp.getConfig', {
+	      json: {
+	        entityTypeId: this.getEntityTypeId(),
+	        entityId: this.getEntityId()
+	      }
+	    }).then(({
+	      data
+	    }) => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _isFetchedConfig)[_isFetchedConfig] = true;
+	      babelHelpers.classPrivateFieldLooseBase(this, _prepareParams$1)[_prepareParams$1](data);
+	      babelHelpers.classPrivateFieldLooseBase(this, _showContent$1)[_showContent$1]();
+	      setTimeout(() => {
+	        if (this.supportsLayout() && babelHelpers.classPrivateFieldLooseBase(this, _isTourAvailable)[_isTourAvailable]() && babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$1.USER_OPTION_TEMPLATES_READY)) {
+	          crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$1({
+	            itemCode: 'whatsapp',
+	            title: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TITLE'),
+	            text: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TEXT'),
+	            articleCode: ARTICLE_CODE_SEND_WITH_WHATSAPP,
+	            userOptionName: Tour$1.USER_OPTION_TEMPLATES_READY,
+	            guideBindElement: babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton]
+	          }));
+	          babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList] = babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].filter(name => name !== Tour$1.USER_OPTION_TEMPLATES_READY);
+	        }
+	      }, 300);
+	    }).catch(() => this.showNotify(main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR')));
+	  }
+
+	  // endregion
+	}
+	function _prepareParams2$1(data) {
+	  const {
+	    communications,
+	    provider
+	  } = data;
+	  babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider] = provider;
+	  babelHelpers.classPrivateFieldLooseBase(this, _canUse)[_canUse] = babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].canUse;
+	  babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications] = communications;
+
+	  // set default parameters
+	  babelHelpers.classPrivateFieldLooseBase(this, _setCommunicationsParams$1)[_setCommunicationsParams$1]();
+	  babelHelpers.classPrivateFieldLooseBase(this, _setChannelDefaultPhoneId$1)[_setChannelDefaultPhoneId$1]();
+	}
+	function _subscribeToReceiversChanges2$2() {
+	  main_core_events.EventEmitter.subscribe('BX.Crm.MessageSender.ReceiverRepository:OnReceiversChanged', event => {
+	    const {
+	      item,
+	      current
+	    } = event.getData();
+	    if (this.getEntityTypeId() !== (item == null ? void 0 : item.entityTypeId) || this.getEntityId() !== (item == null ? void 0 : item.entityId) || !main_core.Type.isArray(current) || !babelHelpers.classPrivateFieldLooseBase(this, _isFetchedConfig)[_isFetchedConfig]) {
+	      return;
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications] = getNewCommunications(current);
+	    babelHelpers.classPrivateFieldLooseBase(this, _setCommunicationsParams$1)[_setCommunicationsParams$1]();
+	    main_popup.MenuManager.destroy(MENU_SETTINGS_ID);
+	    babelHelpers.classPrivateFieldLooseBase(this, _applySendButtonState)[_applySendButtonState]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _createSettingsMenu)[_createSettingsMenu]();
+	  });
+	}
+	function _createHelpLinkContainer2() {
+	  const container = main_core.Tag.render(_t2$5 || (_t2$5 = _$5`
+			<a class="crm-entity-stream-content-whatsapp-header-help-link" href="#">
+				${0}
+			</a>
+		`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_HEADER_HELP_LINK'));
+	  main_core.Event.bind(container, 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _handleHelpClick)[_handleHelpClick](ARTICLE_CODE_SEND_WITH_WHATSAPP));
+	  return container;
+	}
+	function _createHeaderButtons2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _canUse)[_canUse]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton] = main_core.Tag.render(_t3$4 || (_t3$4 = _$5`
+				<button class="crm-entity-stream-content-whatsapp-header-button-selector">
+					<span class="crm-entity-stream-content-whatsapp-header-button-text">
+						${0}
+					</span>
+				</button>
+			`), main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_BUTTON_SELECTOR'));
+	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton], 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _handleTemplateSelect)[_handleTemplateSelect]());
+	    const settingsButton = main_core.Tag.render(_t4$4 || (_t4$4 = _$5`
+				<button class="ui-btn ui-btn-link ui-btn-xs ui-btn-icon-setting crm-entity-stream-content-whatsapp-header-button-settings">
+				</button>
+			`));
+	    main_core.Event.bind(settingsButton, 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _handleSettingsMenuClick)[_handleSettingsMenuClick]());
+	    return main_core.Tag.render(_t5$3 || (_t5$3 = _$5`
+				${0}
+				${0}
+			`), babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton], settingsButton);
+	  }
+	  return null;
+	}
+	function _createFooterButtons2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _canUse)[_canUse]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton] = main_core.Tag.render(_t6$3 || (_t6$3 = _$5`
+				<button class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round ui-btn-disabled">
+					${0}
+				</button>
+			`), main_core.Loc.getMessage('CRM_TIMELINE_SEND'));
+	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton], 'click', () => babelHelpers.classPrivateFieldLooseBase(this, _handleSendButtonClick)[_handleSendButtonClick]());
+	    babelHelpers.classPrivateFieldLooseBase(this, _cancelButton)[_cancelButton] = main_core.Tag.render(_t7$3 || (_t7$3 = _$5`
+				<button class="ui-btn ui-btn-xs ui-btn-link">
+					${0}
+				</button>
+			`), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
+	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _cancelButton)[_cancelButton], 'click', () => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _setTemplate)[_setTemplate](main_core.Runtime.clone(this.getSetting('demoTemplate')));
+	      this.emitFinishEditEvent();
+	    });
+	    return main_core.Tag.render(_t8$2 || (_t8$2 = _$5`
+				${0}
+				${0}
+			`), babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton], babelHelpers.classPrivateFieldLooseBase(this, _cancelButton)[_cancelButton]);
+	  }
+	  const setupButton = main_core.Tag.render(_t9$2 || (_t9$2 = _$5`
+			<button class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round">
+				${0}
+			</button>
+		`), main_core.Loc.getMessage('CRM_TIMELINE_CONNECT_BTN'));
+	  main_core.Event.bind(setupButton, 'click', () => showChannelManagerSlider(babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].manageUrl));
+	  return setupButton;
+	}
+	function _createTemplatesContainer2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerTitle)[_templatesContainerTitle] = main_core.Tag.render(_t10$2 || (_t10$2 = _$5`
+			<div class="crm-entity-stream-content-new-detail-whatsapp-template-title"></div>
+		`));
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerContent)[_templatesContainerContent] = main_core.Tag.render(_t11$2 || (_t11$2 = _$5`
+			<div class="crm-entity-stream-content-new-detail-whatsapp-template-content"></div>
+		`));
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainer)[_templatesContainer] = main_core.Tag.render(_t12$2 || (_t12$2 = _$5`
+			<div class="crm-entity-stream-content-new-detail-whatsapp-template --demo">
+				${0}
+				${0}
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerTitle)[_templatesContainerTitle], babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerContent)[_templatesContainerContent]);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _templatesContainer)[_templatesContainer];
+	}
+	function _createSettingsMenu2() {
+	  const items = getSubmenuStubItems();
+	  babelHelpers.classPrivateFieldLooseBase(this, _settingsMenu)[_settingsMenu] = main_popup.MenuManager.create({
+	    id: MENU_SETTINGS_ID,
+	    bindElement: document.querySelector('.crm-entity-stream-content-whatsapp-header-button-settings'),
+	    items: [{
+	      delimiter: true,
+	      text: main_core.Loc.getMessage('CRM_TIMELINE_MENU_SETTINGS_HEADER')
+	    }, {
+	      id: 'communicationsSubmenu',
+	      text: main_core.Loc.getMessage('CRM_TIMELINE_MENU_SETTINGS_RECEIVER'),
+	      items,
+	      events: {
+	        onSubMenuShow: event => {
+	          babelHelpers.classPrivateFieldLooseBase(this, _handleShowSubMenu)[_handleShowSubMenu](event, getCommunicationsItems(babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications], babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone].id, babelHelpers.classPrivateFieldLooseBase(this, _handleCommunicationSelect)[_handleCommunicationSelect].bind(this)));
+	        }
+	      }
+	    }, {
+	      id: 'sendersSubmenu',
+	      text: main_core.Loc.getMessage('CRM_TIMELINE_MENU_SETTINGS_SENDER'),
+	      items,
+	      disabled: !main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].fromList),
+	      events: {
+	        onSubMenuShow: event => {
+	          babelHelpers.classPrivateFieldLooseBase(this, _handleShowSubMenu)[_handleShowSubMenu](event, getSendersItems(babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].fromList, babelHelpers.classPrivateFieldLooseBase(this, _fromPhoneId)[_fromPhoneId], babelHelpers.classPrivateFieldLooseBase(this, _handleSenderPhoneSelect)[_handleSenderPhoneSelect].bind(this)));
+	        }
+	      }
+	    }]
+	  });
+	}
+	function _showContent2$1() {
+	  main_core.Dom.removeClass(document.querySelector('.crm-entity-stream-content-whatsapp-container'), '--hidden');
+	  main_core.Dom.removeClass(document.querySelector('.crm-entity-stream-content-whatsapp-footer'), '--hidden');
+	  main_core.Dom.removeClass(document.querySelector('.crm-entity-stream-content-whatsapp'), '--skeleton');
+	}
+	function _setTemplate2(template) {
+	  if (template.ORIGINAL_ID > 0) {
+	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _templatesContainer)[_templatesContainer], '--demo');
+	    babelHelpers.classPrivateFieldLooseBase(this, _isDemoTemplateSet)[_isDemoTemplateSet] = false;
+	  } else {
+	    // set DEMO template
+	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _templatesContainer)[_templatesContainer], '--demo');
+	    babelHelpers.classPrivateFieldLooseBase(this, _isDemoTemplateSet)[_isDemoTemplateSet] = true;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _preparePlaceholdersFromTemplate)[_preparePlaceholdersFromTemplate](template);
+	  babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerTitle)[_templatesContainerTitle].textContent = template.TITLE;
+	  babelHelpers.classPrivateFieldLooseBase(this, _initTemplateEditor)[_initTemplateEditor](template);
+	  babelHelpers.classPrivateFieldLooseBase(this, _template)[_template] = template;
+	  babelHelpers.classPrivateFieldLooseBase(this, _applySendButtonState)[_applySendButtonState]();
+	}
+	function _setCommunicationsParams2$1() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications].length === 0) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _toEntityTypeId)[_toEntityTypeId] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _toEntityId)[_toEntityId] = null;
+	    return;
+	  }
+	  const defaultCommunication = babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications][0];
+	  if (main_core.Type.isArrayFilled(defaultCommunication.phones)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone] = defaultCommunication.phones[0];
+	    babelHelpers.classPrivateFieldLooseBase(this, _toEntityTypeId)[_toEntityTypeId] = defaultCommunication.entityTypeId;
+	    babelHelpers.classPrivateFieldLooseBase(this, _toEntityId)[_toEntityId] = defaultCommunication.entityId;
+	  }
+	}
+	function _setChannelDefaultPhoneId2$1() {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider] || !main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].fromList)) {
+	    return;
+	  }
+	  const {
+	    fromList
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider];
+	  const defaultPhone = fromList.find(item => item.default);
+	  babelHelpers.classPrivateFieldLooseBase(this, _fromPhoneId)[_fromPhoneId] = defaultPhone ? defaultPhone.id : fromList[0].id;
+	}
+	function _applySendButtonState2() {
+	  const enabled = !babelHelpers.classPrivateFieldLooseBase(this, _isDemoTemplateSet)[_isDemoTemplateSet] && babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications].length > 0 && babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone] !== null && babelHelpers.classPrivateFieldLooseBase(this, _template)[_template] !== null;
+	  if (enabled) {
+	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton], 'ui-btn-disabled');
+	  } else {
+	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _sendButton)[_sendButton], 'ui-btn-disabled');
+	  }
+	}
+	function _handleTemplateSelect2() {
+	  const entityTypeId = this.getEntityTypeId();
+	  const entityId = this.getEntityId();
+	  const categoryId = this.getEntityCategoryId();
+	  const selector = new ui_entitySelector.Dialog({
+	    targetNode: babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton],
+	    multiple: false,
+	    showAvatars: false,
+	    dropdownMode: true,
+	    enableSearch: true,
+	    context: `SMS-TEMPLATE-SELECTOR-$entityTypeId}-${categoryId}`,
+	    tagSelectorOptions: {
+	      textBoxWidth: '100%'
+	    },
+	    width: 450,
+	    entities: [{
+	      id: 'message_template',
+	      options: {
+	        senderId: babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].id,
+	        entityTypeId,
+	        entityId,
+	        categoryId
+	      }
+	    }],
+	    events: {
+	      'Item:onSelect': selectEvent => {
+	        const item = selectEvent.getData().item;
+	        babelHelpers.classPrivateFieldLooseBase(this, _setTemplate)[_setTemplate](item.getCustomData().get('template'));
+	      }
+	    }
+	  });
+	  selector.show();
+	}
+	function _handleSettingsMenuClick2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone] === null) {
+	    this.showNotify(main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_NO_PHONE_ERROR'));
+	    return;
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _settingsMenu)[_settingsMenu]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _createSettingsMenu)[_createSettingsMenu]();
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _settingsMenu)[_settingsMenu].show();
+	}
+	function _handleHelpClick2(code) {
+	  if (top.BX.Helper && code > 0) {
+	    top.BX.Helper.show(`redirect=detail&code=${code}`);
+	  }
+	}
+	function _handleShowSubMenu2(event, items) {
+	  var _target$getSubMenu2;
+	  const target = event.getTarget();
+	  for (const itemOptionsToAdd of items) {
+	    var _target$getSubMenu;
+	    (_target$getSubMenu = target.getSubMenu()) == null ? void 0 : _target$getSubMenu.addMenuItem(itemOptionsToAdd);
+	  }
+	  (_target$getSubMenu2 = target.getSubMenu()) == null ? void 0 : _target$getSubMenu2.removeMenuItem(MENU_ITEM_STUB_ID$1);
+	}
+	function _handleSenderPhoneSelect2(event, item) {
+	  const {
+	    id
+	  } = item;
+	  babelHelpers.classPrivateFieldLooseBase(this, _fromPhoneId)[_fromPhoneId] = id;
+	  babelHelpers.classPrivateFieldLooseBase(this, _settingsMenu)[_settingsMenu].close();
+	}
+	function _handleCommunicationSelect2(event, item) {
+	  const {
+	    id
+	  } = item;
+	  babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications].forEach(communication => {
+	    const toPhone = communication.phones.find(phone => phone.id === id);
+	    if (toPhone) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone] = toPhone;
+	      babelHelpers.classPrivateFieldLooseBase(this, _toEntityTypeId)[_toEntityTypeId] = communication.entityTypeId;
+	      babelHelpers.classPrivateFieldLooseBase(this, _toEntityId)[_toEntityId] = communication.entityId;
+	    }
+	  });
+	  babelHelpers.classPrivateFieldLooseBase(this, _settingsMenu)[_settingsMenu].close();
+	}
+	function _handleApplyPlaceholder2(params) {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isDemoTemplateSet)[_isDemoTemplateSet]) {
+	    return;
+	  }
+	  createOrUpdatePlaceholder((_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _template)[_template]) == null ? void 0 : _babelHelpers$classPr2.ORIGINAL_ID) != null ? _babelHelpers$classPr : null, this.getEntityTypeId(), this.getEntityCategoryId(), params).catch(error => console.error(error));
+	}
+	function _handleSendButtonClick2() {
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications].length === 0) {
+	    ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_TIMELINE_SMS_ERROR_NO_COMMUNICATIONS'));
+	    return;
+	  }
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _template)[_template] || babelHelpers.classPrivateFieldLooseBase(this, _isDemoTemplateSet)[_isDemoTemplateSet]) {
+	    return;
+	  }
+	  const text = babelHelpers.classPrivateFieldLooseBase(this, _getTemplateEditorText)[_getTemplateEditorText]();
+	  if (text === '') {
+	    return;
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isSendRequestRunning)[_isSendRequestRunning] || babelHelpers.classPrivateFieldLooseBase(this, _isLocked)[_isLocked]) {
+	    return;
+	  }
+	  this.setLocked(true);
+	  babelHelpers.classPrivateFieldLooseBase(this, _isSendRequestRunning)[_isSendRequestRunning] = true;
+	  babelHelpers.classPrivateFieldLooseBase(this, _isLocked)[_isLocked] = true;
+	  saveSmsMessage(babelHelpers.classPrivateFieldLooseBase(this, _serviceUrl)[_serviceUrl], babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].id, {
+	    MESSAGE_FROM: babelHelpers.classPrivateFieldLooseBase(this, _fromPhoneId)[_fromPhoneId],
+	    MESSAGE_TO: babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone].value,
+	    MESSAGE_BODY: text,
+	    MESSAGE_TEMPLATE: babelHelpers.classPrivateFieldLooseBase(this, _template)[_template].ID,
+	    MESSAGE_TEMPLATE_WITH_PLACEHOLDER: main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _placeholders)[_placeholders]),
+	    OWNER_TYPE_ID: this.getEntityTypeId(),
+	    OWNER_ID: this.getEntityId(),
+	    TO_ENTITY_TYPE_ID: babelHelpers.classPrivateFieldLooseBase(this, _toEntityTypeId)[_toEntityTypeId],
+	    TO_ENTITY_ID: babelHelpers.classPrivateFieldLooseBase(this, _toEntityId)[_toEntityId]
+	  }, babelHelpers.classPrivateFieldLooseBase(this, _handleSendSuccess)[_handleSendSuccess].bind(this), babelHelpers.classPrivateFieldLooseBase(this, _handleSendFailure)[_handleSendFailure].bind(this)).then(() => this.setLocked(false), () => this.setLocked(false)).catch(() => this.setLocked(false));
+	}
+	function _handleSendSuccess2(data) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _isSendRequestRunning)[_isSendRequestRunning] = false;
+	  babelHelpers.classPrivateFieldLooseBase(this, _isLocked)[_isLocked] = false;
+	  const error = BX.prop.getString(data, 'ERROR', '');
+	  if (main_core.Type.isStringFilled(error)) {
+	    ui_dialogs_messagebox.MessageBox.alert(main_core.Text.encode(error));
+	    return;
+	  }
+	  this.emitFinishEditEvent();
+	}
+	function _handleSendFailure2() {
+	  babelHelpers.classPrivateFieldLooseBase(this, _isSendRequestRunning)[_isSendRequestRunning] = false;
+	  babelHelpers.classPrivateFieldLooseBase(this, _isLocked)[_isLocked] = false;
+	}
+	function _initTemplateEditor2(template) {
+	  const preview = template == null ? void 0 : template.PREVIEW.replaceAll('\n', '<br>');
+	  const editorParams = {
+	    target: babelHelpers.classPrivateFieldLooseBase(this, _templatesContainerContent)[_templatesContainerContent],
+	    entityId: this.getEntityId(),
+	    entityTypeId: this.getEntityTypeId(),
+	    categoryId: this.getEntityCategoryId(),
+	    canUsePreview: true,
+	    onSelect: params => babelHelpers.classPrivateFieldLooseBase(this, _handleApplyPlaceholder)[_handleApplyPlaceholder](params)
+	  };
+	  babelHelpers.classPrivateFieldLooseBase(this, _tplEditor)[_tplEditor] = new crm_template_editor.Editor(editorParams).setPlaceholders(babelHelpers.classPrivateFieldLooseBase(this, _placeholders)[_placeholders]).setFilledPlaceholders(babelHelpers.classPrivateFieldLooseBase(this, _filledPlaceholders)[_filledPlaceholders]);
+	  babelHelpers.classPrivateFieldLooseBase(this, _tplEditor)[_tplEditor].setBody(preview); // @todo will support other positions too, not only Preview
+	}
+	function _preparePlaceholdersFromTemplate2(template) {
+	  var _template$PLACEHOLDER;
+	  const templatePlaceholders = (_template$PLACEHOLDER = template.PLACEHOLDERS) != null ? _template$PLACEHOLDER : null;
+	  if (!main_core.Type.isPlainObject(templatePlaceholders)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _placeholders)[_placeholders] = null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _filledPlaceholders)[_filledPlaceholders] = null;
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _placeholders)[_placeholders] = templatePlaceholders;
+	  if (!main_core.Type.isArray(template.FILLED_PLACEHOLDERS)) {
+	    // eslint-disable-next-line no-param-reassign
+	    template.FILLED_PLACEHOLDERS = [];
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _filledPlaceholders)[_filledPlaceholders] = template.FILLED_PLACEHOLDERS;
+	}
+	function _getTemplateEditorText2() {
+	  let text = '';
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _tplEditor)[_tplEditor]) {
+	    const tplEditorData = babelHelpers.classPrivateFieldLooseBase(this, _tplEditor)[_tplEditor].getData();
+	    if (main_core.Type.isPlainObject(tplEditorData)) {
+	      text = tplEditorData.body; // @todo check position: body or preview
+	    }
+	  }
+
+	  if (text === '' && babelHelpers.classPrivateFieldLooseBase(this, _template)[_template]) {
+	    text = babelHelpers.classPrivateFieldLooseBase(this, _template)[_template].PREVIEW;
+	  }
+	  return text;
+	}
+	function _isTourAvailable2() {
+	  return main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList]) && !BX.Crm.EntityEditor.getDefault().isNew();
+	}
+
 	class Task extends Item {
 	  showSlider() {
 	    BX.CrmActivityEditor.getDefault().addTask({
@@ -5376,15 +6411,27 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	let _$5 = t => t,
-	  _t$5,
-	  _t2$5,
-	  _t3$4;
+	const UserOptions$1 = main_core.Reflection.namespace('BX.userOptions');
+
+	/** @memberof BX.Crm.Timeline.MenuBar.ToDo */
+	class Tour$2 extends BaseTour {
+	  saveUserOption(optionName = null) {
+	    UserOptions$1.save('crm', 'todo', 'isTimelineTourViewedInWeb', 1);
+	  }
+	}
+
+	let _$6 = t => t,
+	  _t$6,
+	  _t2$6,
+	  _t3$5;
+	const ARTICLE_CODE = '21064046';
 
 	/** @memberof BX.Crm.Timeline.MenuBar */
 	var _toDoEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toDoEditor");
 	var _todoEditorContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("todoEditorContainer");
 	var _saveButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveButton");
+	var _useTodoEditorV = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useTodoEditorV2");
+	var _isTourViewed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTourViewed");
 	var _createEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createEditor");
 	var _onChangeDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChangeDescription");
 	class ToDo extends Item {
@@ -5408,11 +6455,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _useTodoEditorV, {
+	      writable: true,
+	      value: false
+	    });
+	    Object.defineProperty(this, _isTourViewed, {
+	      writable: true,
+	      value: false
+	    });
+	  }
+	  initialize(context, settings) {
+	    super.initialize(context, settings);
 	  }
 	  createLayout() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _todoEditorContainer)[_todoEditorContainer] = main_core.Tag.render(_t$5 || (_t$5 = _$5`<div></div>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton] = main_core.Tag.render(_t2$5 || (_t2$5 = _$5`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round ui-btn-disabled" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_SAVE_BUTTON'));
-	    return main_core.Tag.render(_t3$4 || (_t3$4 = _$5`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-todo --hidden">
+	    babelHelpers.classPrivateFieldLooseBase(this, _todoEditorContainer)[_todoEditorContainer] = main_core.Tag.render(_t$6 || (_t$6 = _$6`<div></div>`));
+	    babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton] = main_core.Tag.render(_t2$6 || (_t2$6 = _$6`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round ui-btn-disabled" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_SAVE_BUTTON'));
+	    return main_core.Tag.render(_t3$5 || (_t3$5 = _$6`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-todo --hidden">
 			${0}
 			<div class="crm-entity-stream-content-new-comment-btn-container">
 				${0}
@@ -5421,7 +6479,14 @@ this.BX.Crm = this.BX.Crm || {};
 		</div>`), babelHelpers.classPrivateFieldLooseBase(this, _todoEditorContainer)[_todoEditorContainer], babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
 	  }
 	  initializeLayout() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV] = Boolean(this.getSetting('useTodoEditorV2', false));
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
+	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _createEditor)[_createEditor]();
+	  }
+	  initializeSettings() {
+	    babelHelpers.classPrivateFieldLooseBase(this, _isTourViewed)[_isTourViewed] = this.getSetting('isTourViewed');
 	  }
 	  onSaveButtonClick(e) {
 	    if (this.isLocked() || main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled')) {
@@ -5439,7 +6504,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      return false;
 	    }
 	    return babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].save().then(response => {
-	      if (main_core.Type.isArray(response.errors) && response.errors.length) {
+	      if (main_core.Type.isArray(response.errors) && response.errors.length > 0) {
 	        return false;
 	      }
 	      this.cancel();
@@ -5449,7 +6514,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  cancel() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].clearValue();
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
+	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
+	    }
 	    this.setFocused(false);
 	  }
 	  bindInputHandlers() {
@@ -5464,9 +6531,35 @@ this.BX.Crm = this.BX.Crm || {};
 	  focus() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].setFocused();
 	  }
+	  setVisible(visible) {
+	    super.setVisible(visible);
+	    if (visible) {
+	      this.showTour();
+	    }
+	  }
+	  showTour() {
+	    if (!this.isVisible()) {
+	      return;
+	    }
+	    const guideBindElementClass = '.crm-activity__todo-show-actions-popup-button';
+	    const guideBindElement = document.querySelector(guideBindElementClass);
+	    if (guideBindElement && !babelHelpers.classPrivateFieldLooseBase(this, _isTourViewed)[_isTourViewed] && !BX.Crm.EntityEditor.getDefault().isNew()) {
+	      const tour = new Tour$2({
+	        itemCode: 'todo',
+	        title: main_core.Loc.getMessage('CRM_TIMELINE_TODO_GUIDE_TITLE'),
+	        text: main_core.Loc.getMessage('CRM_TIMELINE_TODO_GUIDE_TEXT'),
+	        articleCode: ARTICLE_CODE,
+	        userOptionName: 'isTimelineTourViewedInWeb',
+	        guideBindElement
+	      });
+	      setTimeout(() => {
+	        crm_tourManager.TourManager.getInstance().registerWithLaunch(tour);
+	      });
+	    }
+	  }
 	}
 	function _createEditor2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditor.TodoEditor({
+	  const params = {
 	    container: babelHelpers.classPrivateFieldLooseBase(this, _todoEditorContainer)[_todoEditorContainer],
 	    defaultDescription: '',
 	    ownerTypeId: this.getEntityTypeId(),
@@ -5474,12 +6567,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    currentUser: this.getSetting('currentUser'),
 	    pingSettings: this.getSetting('pingSettings'),
 	    copilotSettings: this.getSetting('copilotSettings'),
+	    colorSettings: this.getSetting('colorSettings'),
+	    actionMenuSettings: this.getSetting('actionMenuSettings'),
 	    events: {
-	      onFocus: this.setFocused.bind(this, true),
-	      onChangeDescription: babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this)
-	    },
-	    enableCalendarSync: this.getSetting('enableTodoCalendarSync', false)
-	  });
+	      onFocus: this.setFocused.bind(this, true)
+	    }
+	  };
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
+	    params.calendarSettings = this.getSetting('calendarSettings');
+	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditorV2.TodoEditorV2(params);
+	  } else {
+	    params.events.onChangeDescription = babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this);
+	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditor.TodoEditor(params);
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].show();
 	}
 	function _onChangeDescription2(event) {
@@ -5487,9 +6587,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    description
 	  } = event.getData();
 	  description = description.trim();
-	  if (!description.length && !main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled')) {
+	  if (description.length === 0 && !main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled')) {
 	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
-	  } else if (description.length && main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled')) {
+	  } else if (description.length > 0 && main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled')) {
 	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
 	  }
 	}
@@ -5507,29 +6607,37 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	let _$7 = t => t,
+	  _t$7,
+	  _t2$7,
+	  _t3$6,
+	  _t4$5,
+	  _t5$4;
+
 	/** @memberof BX.Crm.Timeline.Tools */
 	class WaitConfigurationDialog {
 	  constructor() {
-	    this._id = "";
+	    this._popup = null;
+	    this._menuId = null;
+	    this._id = '';
 	    this._settings = {};
 	    this._type = Wait.WaitingType.undefined;
 	    this._duration = 0;
-	    this._target = "";
-	    this._targetDates = null;
+	    this._target = '';
+	    this._targetDates = [];
 	    this._container = null;
-	    this._durationMeasureNode = null;
 	    this._durationInput = null;
 	    this._targetDateNode = null;
 	    this._popup = null;
 	  }
 	  initialize(id, settings) {
 	    this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	    this._settings = settings ? settings : {};
-	    this._type = BX.prop.getInteger(this._settings, "type", Wait.WaitingType.after);
-	    this._duration = BX.prop.getInteger(this._settings, "duration", 1);
-	    this._target = BX.prop.getString(this._settings, "target", "");
-	    this._targetDates = BX.prop.getArray(this._settings, "targetDates", []);
-	    this._menuId = this._id + "_target_date_sel";
+	    this._settings = settings || {};
+	    this._type = BX.prop.getInteger(this._settings, 'type', Wait.WaitingType.after);
+	    this._duration = BX.prop.getInteger(this._settings, 'duration', 1);
+	    this._target = BX.prop.getString(this._settings, 'target', '');
+	    this._targetDates = BX.prop.getArray(this._settings, 'targetDates', []);
+	    this._menuId = `${this._id}_target_date_sel`;
 	  }
 	  getId() {
 	    return this._id;
@@ -5553,25 +6661,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._target = target;
 	  }
 	  getMessage(name) {
-	    const m = WaitConfigurationDialog.messages;
-	    return m.hasOwnProperty(name) ? m[name] : name;
+	    const messages = WaitConfigurationDialog.messages;
+	    return Object.prototype.hasOwnProperty.call(messages, name) ? messages[name] : name;
 	  }
-	  getDurationText(duration, enableNumber) {
-	    return Wait.Helper.getDurationText(duration, enableNumber);
+	  getTargetDateCaption() {
+	    var _this$_targetDates$fi, _this$_targetDates$fi2;
+	    return (_this$_targetDates$fi = (_this$_targetDates$fi2 = this._targetDates.find(targetDate => targetDate.name === this._target)) == null ? void 0 : _this$_targetDates$fi2.caption) != null ? _this$_targetDates$fi : '';
 	  }
-	  getTargetDateCaption(name) {
-	    const length = this._targetDates.length;
-	    for (let i = 0; i < length; i++) {
-	      const info = this._targetDates[i];
-	      if (info["name"] === name) {
-	        return info["caption"];
-	      }
-	    }
-	    return "";
+	  isBeforeWaitingType() {
+	    return this.getType() === Wait.WaitingType.before;
 	  }
 	  open() {
 	    this._popup = new BX.PopupWindow(this._id, null,
-	    //this._configSelector,
+	    // this._configSelector,
 	    {
 	      autoHide: true,
 	      draggable: false,
@@ -5580,22 +6682,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      },
 	      closeByEsc: true,
 	      zIndex: 0,
-	      content: this.prepareDialogContent(),
+	      content: this.renderDialogContent(),
 	      events: {
-	        onPopupShow: BX.delegate(this.onPopupShow, this),
-	        onPopupClose: BX.delegate(this.onPopupClose, this),
-	        onPopupDestroy: BX.delegate(this.onPopupDestroy, this)
+	        onPopupShow: this.onPopupShow.bind(this),
+	        onPopupClose: this.onPopupClose.bind(this),
+	        onPopupDestroy: this.onPopupDestroy.bind(this)
 	      },
 	      buttons: [new BX.PopupWindowButton({
 	        text: main_core.Loc.getMessage('CRM_TIMELINE_CHOOSE'),
-	        className: "popup-window-button-accept",
+	        className: 'popup-window-button-accept',
 	        events: {
-	          click: BX.delegate(this.onSaveButtonClick, this)
+	          click: this.onSaveButtonClick.bind(this)
 	        }
 	      }), new BX.PopupWindowButtonLink({
-	        text: BX.message("JS_CORE_WINDOW_CANCEL"),
+	        text: main_core.Loc.getMessage('JS_CORE_WINDOW_CANCEL'),
 	        events: {
-	          click: BX.delegate(this.onCancelButtonClick, this)
+	          click: this.onCancelButtonClick.bind(this)
 	        }
 	      })]
 	    });
@@ -5606,78 +6708,84 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._popup.close();
 	    }
 	  }
-	  prepareDialogContent() {
-	    const container = BX.create("div", {
-	      attrs: {
-	        className: "crm-wait-popup-select-block"
-	      }
-	    });
-	    const wrapper = BX.create("div", {
-	      attrs: {
-	        className: "crm-wait-popup-select-wrapper"
-	      }
-	    });
-	    container.appendChild(wrapper);
-	    this._durationInput = BX.create("input", {
-	      attrs: {
-	        type: "text",
-	        className: "crm-wait-popup-settings-input",
-	        value: this._duration
-	      },
-	      events: {
-	        keyup: BX.delegate(this.onDurationChange, this)
-	      }
-	    });
-	    this._durationMeasureNode = BX.create("span", {
-	      attrs: {
-	        className: "crm-wait-popup-settings-title"
-	      },
-	      text: this.getDurationText(this._duration, false)
-	    });
-	    if (this._type === Wait.WaitingType.after) {
-	      wrapper.appendChild(BX.create("span", {
-	        attrs: {
-	          className: "crm-wait-popup-settings-title"
-	        },
-	        text: main_core.Loc.getMessage('CRM_TIMELINE_WAIT_CONFIG_PREFIX_TYPE_AFTER')
-	      }));
-	      wrapper.appendChild(this._durationInput);
-	      wrapper.appendChild(this._durationMeasureNode);
-	    } else {
-	      wrapper.appendChild(BX.create("span", {
-	        attrs: {
-	          className: "crm-wait-popup-settings-title"
-	        },
-	        text: main_core.Loc.getMessage('CRM_TIMELINE_WAIT_CONFIG_PREFIX_TYPE_BEFORE')
-	      }));
-	      wrapper.appendChild(this._durationInput);
-	      wrapper.appendChild(this._durationMeasureNode);
-	      wrapper.appendChild(BX.create("span", {
-	        attrs: {
-	          className: "crm-wait-popup-settings-title"
-	        },
-	        text: " " + main_core.Loc.getMessage('CRM_TIMELINE_WAIT_TARGET_PREFIX_TYPE_BEFORE')
-	      }));
-	      this._targetDateNode = BX.create("span", {
-	        attrs: {
-	          className: "crm-automation-popup-settings-link"
-	        },
-	        text: this.getTargetDateCaption(this._target),
-	        events: {
-	          click: BX.delegate(this.toggleTargetMenu, this)
-	        }
-	      });
-	      wrapper.appendChild(this._targetDateNode);
-	    }
+	  renderDialogContent() {
+	    const container = this.getContainer();
+	    container.innerHTML = '';
+	    const wrapper = main_core.Tag.render(_t$7 || (_t$7 = _$7`<div class="crm-wait-popup-select-wrapper"></div>`));
+	    const contentTextNode = this.getContentTextNode();
+	    this.appendDurationInput(contentTextNode);
+	    this.appendTargetDateNode(contentTextNode);
+	    main_core.Dom.append(contentTextNode, wrapper);
+	    main_core.Dom.append(wrapper, container);
 	    return container;
 	  }
+	  getContainer() {
+	    if (!this._container) {
+	      this._container = main_core.Tag.render(_t2$7 || (_t2$7 = _$7`<div class="crm-wait-popup-select-block"></div>`));
+	    }
+	    return this._container;
+	  }
+	  getContentTextNode() {
+	    const phraseCode = this.isBeforeWaitingType() ? 'CRM_TIMELINE_WAIT_CONFIG_DIALOG_BEFORE_CONTENT_TEXT' : 'CRM_TIMELINE_WAIT_CONFIG_DIALOG_AFTER_CONTENT_TEXT';
+
+	    // put a container so that in the future you can put the input there
+	    const replacement = {
+	      '#DAY_INPUT#': `<span class="crm-wait-duration-input-container" id="${this.getDurationInputContainerId()}"></span>`,
+	      '#TARGET_DATE#': this.isBeforeWaitingType() ? `<span class="crm-wait-target-date-container" id="${this.getTargetDateNodeContainerId()}"></span>` : null
+	    };
+	    return main_core.Tag.render(_t3$6 || (_t3$6 = _$7`
+			<span class="crm-wait-text-wrapper crm-wait-popup-settings-title">
+				${0}
+			</span>
+		`), main_core.Loc.getMessagePlural(phraseCode, this.getDuration(), replacement));
+	  }
+	  getDurationInputContainerId() {
+	    return `crm-wait-duration-input-container-${this.getId()}`;
+	  }
+	  getDurationInput() {
+	    if (!this._durationInput) {
+	      this._durationInput = main_core.Tag.render(_t4$5 || (_t4$5 = _$7`
+				<input type="text" class="crm-wait-popup-settings-input" value="${0}">
+			`), this.getDuration());
+	      this._durationInput.onkeyup = main_core.Runtime.debounce(this.onDurationChange.bind(this), 300);
+	    }
+	    return this._durationInput;
+	  }
+	  appendDurationInput(contentTextNode) {
+	    const containerId = this.getDurationInputContainerId();
+	    const container = contentTextNode.querySelector(`#${containerId}`);
+	    main_core.Dom.append(this.getDurationInput(), container);
+	  }
 	  onDurationChange() {
-	    let duration = parseInt(this._durationInput.value);
-	    if (isNaN(duration) || duration <= 0) {
+	    let duration = parseInt(this.getDurationInput().value, 10);
+	    if (Number.isNaN(duration) || duration <= 0) {
 	      duration = 1;
 	    }
 	    this._duration = duration;
-	    this._durationMeasureNode.innerHTML = BX.util.htmlspecialchars(this.getDurationText(duration, false));
+	    this.renderDialogContent();
+	    this.getDurationInput().focus();
+	  }
+	  getTargetDateNodeContainerId() {
+	    return `crm-wait-configuration-dialog-target-date-container-${this.getId()}`;
+	  }
+	  getTargetDateNode() {
+	    if (!this._targetDateNode) {
+	      this._targetDateNode = main_core.Tag.render(_t5$4 || (_t5$4 = _$7`
+				<span class="crm-automation-popup-settings-link">
+					${0}
+				</span>
+			`), main_core.Text.encode(this.getTargetDateCaption(this._target)));
+	      this._targetDateNode.onclick = this.toggleTargetMenu.bind(this);
+	    }
+	    return this._targetDateNode;
+	  }
+	  appendTargetDateNode(contentTextNode) {
+	    if (!this.isBeforeWaitingType()) {
+	      return;
+	    }
+	    const containerId = this.getTargetDateNodeContainerId();
+	    const container = contentTextNode.querySelector(`#${containerId}`);
+	    main_core.Dom.append(this.getTargetDateNode(), container);
 	  }
 	  toggleTargetMenu() {
 	    if (this.isTargetMenuOpened()) {
@@ -5687,7 +6795,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }
 	  isTargetMenuOpened() {
-	    return !!BX.PopupMenu.getMenuById(this._menuId);
+	    return Boolean(BX.PopupMenu.getMenuById(this._menuId));
 	  }
 	  openTargetMenu() {
 	    const menuItems = [];
@@ -5696,16 +6804,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    for (; i < length; i++) {
 	      const info = this._targetDates[i];
 	      menuItems.push({
-	        text: info["caption"],
-	        title: info["caption"],
-	        value: info["name"],
-	        onclick: BX.delegate(this.onTargetSelect, this)
+	        text: info.caption,
+	        title: info.caption,
+	        value: info.name,
+	        onclick: this.onTargetSelect.bind(this)
 	      });
 	    }
 	    BX.PopupMenu.show(this._menuId, this._targetDateNode, menuItems, {
 	      zIndex: 200,
 	      autoHide: true,
-	      offsetLeft: BX.pos(this._targetDateNode)["width"] / 2,
+	      offsetLeft: main_core.Dom.getPosition(this.getTargetDateNode()).width / 2,
 	      angle: {
 	        position: 'top',
 	        offset: 0
@@ -5728,26 +6836,26 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }
 	  onSaveButtonClick(e) {
-	    const callback = BX.prop.getFunction(this._settings, "onSave", null);
+	    this.onDurationChange();
+	    const callback = BX.prop.getFunction(this._settings, 'onSave', null);
 	    if (!callback) {
 	      return;
 	    }
-	    const params = {
-	      type: this._type
-	    };
-	    params["duration"] = this._duration;
-	    params["target"] = this._type === Wait.WaitingType.before ? this._target : "";
-	    callback(this, params);
+	    callback(this, {
+	      type: this.getType(),
+	      duration: this.getDuration(),
+	      target: this.isBeforeWaitingType() ? this.getTarget() : ''
+	    });
 	  }
 	  onCancelButtonClick(e) {
-	    const callback = BX.prop.getFunction(this._settings, "onCancel", null);
+	    const callback = BX.prop.getFunction(this._settings, 'onCancel', null);
 	    if (callback) {
 	      callback(this);
 	    }
 	  }
 	  onTargetSelect(e, item) {
-	    const fieldName = BX.prop.getString(item, "value", "");
-	    if (fieldName !== "") {
+	    const fieldName = BX.prop.getString(item, 'value', '');
+	    if (fieldName !== '') {
 	      this._target = fieldName;
 	      this._targetDateNode.innerHTML = BX.util.htmlspecialchars(this.getTargetDateCaption(fieldName));
 	    }
@@ -5762,12 +6870,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	WaitConfigurationDialog.messages = {};
 
-	let _$6 = t => t,
-	  _t$6,
-	  _t2$6,
-	  _t3$5,
-	  _t4$4,
-	  _t5$3;
+	let _$8 = t => t,
+	  _t$8,
+	  _t2$8,
+	  _t3$7,
+	  _t4$6,
+	  _t5$5;
 
 	/** @memberof BX.Crm.Timeline.MenuBar */
 	var _waitConfigContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("waitConfigContainer");
@@ -5780,11 +6888,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  }
 	  createLayout() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _waitConfigContainer)[_waitConfigContainer] = main_core.Tag.render(_t$6 || (_t$6 = _$6`<div class="crm-entity-stream-content-wait-conditions"></div>`));
-	    this._saveButton = main_core.Tag.render(_t2$6 || (_t2$6 = _$6`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CREATE_WAITING'));
-	    this._cancelButton = main_core.Tag.render(_t3$5 || (_t3$5 = _$6`<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>`), this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
-	    this._input = main_core.Tag.render(_t4$4 || (_t4$4 = _$6`<textarea rows="1" class="crm-entity-stream-content-wait-comment-textarea" placeholder="${0}"></textarea>`), main_core.Loc.getMessage('CRM_TIMELINE_WAIT_PLACEHOLDER'));
-	    return main_core.Tag.render(_t5$3 || (_t5$3 = _$6`<div class="crm-entity-stream-content-wait-detail --focus --hidden">
+	    babelHelpers.classPrivateFieldLooseBase(this, _waitConfigContainer)[_waitConfigContainer] = main_core.Tag.render(_t$8 || (_t$8 = _$8`<div class="crm-entity-stream-content-wait-conditions"></div>`));
+	    this._saveButton = main_core.Tag.render(_t2$8 || (_t2$8 = _$8`<button onclick="${0}" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" >${0}</button>`), this.onSaveButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CREATE_WAITING'));
+	    this._cancelButton = main_core.Tag.render(_t3$7 || (_t3$7 = _$8`<span onclick="${0}"  class="ui-btn ui-btn-xs ui-btn-link">${0}</span>`), this.onCancelButtonClick.bind(this), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
+	    this._input = main_core.Tag.render(_t4$6 || (_t4$6 = _$8`<textarea rows="1" class="crm-entity-stream-content-wait-comment-textarea" placeholder="${0}"></textarea>`), main_core.Loc.getMessage('CRM_TIMELINE_WAIT_PLACEHOLDER'));
+	    return main_core.Tag.render(_t5$5 || (_t5$5 = _$8`<div class="crm-entity-stream-content-wait-detail --focus --hidden">
 			<div class="crm-entity-stream-content-wait-conditions-container">
 				${0}
 			</div>
@@ -6140,8 +7248,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  messages: {}
 	};
 
-	let _$7 = t => t,
-	  _t$7;
+	let _$9 = t => t,
+	  _t$9;
 	var _editor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("editor");
 	var _createEditor$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createEditor");
 	var _onFinishEdit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onFinishEdit");
@@ -6172,7 +7280,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    return this.getSetting('isConnected') && this.getSetting('isAvailable');
 	  }
 	  createLayout() {
-	    return main_core.Tag.render(_t$7 || (_t$7 = _$7`<div class="crm-entity-stream-content-new-detail ui-timeline-zoom-editor --focus --hidden"></div>`));
+	    return main_core.Tag.render(_t$9 || (_t$9 = _$9`<div class="crm-entity-stream-content-new-detail ui-timeline-zoom-editor --focus --hidden"></div>`));
 	  }
 	  onFocus(e) {
 	    this.setFocused(true);
@@ -6199,7 +7307,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	class Factory {
 	  static createItem(id, context, settings) {
-	    let item;
+	    let item = null;
 	    switch (id) {
 	      case 'todo':
 	        item = new ToDo();
@@ -6209,6 +7317,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        break;
 	      case 'sms':
 	        item = new Sms();
+	        break;
+	      case 'whatsapp':
+	        item = new Whatsapp();
 	        break;
 	      case 'gotochat':
 	        item = new GoToChat();
@@ -6242,6 +7353,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        break;
 	      case 'activity_rest_applist':
 	        item = new Market();
+	        break;
+	      case 'einvoice_app_installer':
+	        item = new EInvoiceApp();
 	        break;
 	      default:
 	        item = null;
@@ -6454,5 +7568,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.MenuBar = MenuBar;
 	exports.Item = Item;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI.EntitySelector,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX,BX.UI,BX.Vue3,BX.Main,BX.UI.Tour,BX.Crm,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.Crm.Template,BX.Event,BX.Crm.Activity,BX,BX.Crm));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.UI,BX.Vue3,BX,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Crm.Activity,BX.Crm,BX.Event,BX,BX,BX.Crm));
 //# sourceMappingURL=toolbar.bundle.js.map

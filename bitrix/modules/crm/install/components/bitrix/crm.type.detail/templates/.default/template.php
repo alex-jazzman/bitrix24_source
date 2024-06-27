@@ -26,6 +26,7 @@ Extension::load([
 	'crm.type-model',
 	'main.loader',
 	'ui.layout-form',
+	'ui.info-helper',
 ]);
 
 /** @var CBitrixComponentTemplate $this */
@@ -66,6 +67,7 @@ $this->EndViewTarget();
 $component->addToolbar($this);
 $type = $component->getType();
 $isNew = $type->getId() <= 0;
+$activeTabId = $arResult['activeTabId'] ?? null;
 
 $menuItems = [];
 if ($arResult['isCustomSectionsAvailable'])
@@ -76,6 +78,7 @@ if ($arResult['isCustomSectionsAvailable'])
 			'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('custom-section');",
 			'data-role' => 'tab-custom-section',
 		],
+		'ACTIVE' => $activeTabId === 'custom-section',
 	];
 }
 $menuItems[] = [
@@ -84,7 +87,7 @@ $menuItems[] = [
 		'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('common');",
 		'data-role' => 'tab-common',
 	],
-	'ACTIVE' => !$isNew,
+	'ACTIVE' => $activeTabId === 'common',
 ];
 $menuItems[] = [
 	'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_FIELDS_MSGVER_1'),
@@ -92,7 +95,7 @@ $menuItems[] = [
 		'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('fields');",
 		'data-role' => 'tab-fields',
 	],
-	'ACTIVE' => !$isNew,
+	'ACTIVE' => $activeTabId === 'fields',
 ];
 $menuItems[] = [
 	'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_RELATIONS'),
@@ -100,6 +103,7 @@ $menuItems[] = [
 		'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('relation');",
 		'data-role' => 'tab-relation',
 	],
+	'ACTIVE' => $activeTabId === 'relation',
 ];
 $menuItems[] = [
 	'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_USER_FIELDS'),
@@ -107,6 +111,7 @@ $menuItems[] = [
 		'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('user-fields');",
 		'data-role' => 'tab-user-fields',
 	],
+	'ACTIVE' => $activeTabId === 'user-fields',
 ];
 //$menuItems[] = [
 //	'NAME' => Loc::getMessage('CRM_TYPE_DETAIL_TAB_CONVERSION'),
@@ -114,6 +119,7 @@ $menuItems[] = [
 //		'onclick' => "BX.Crm.Component.TypeDetail.handleLeftMenuClick('conversion');",
 //		'data-role' => 'tab-conversion',
 //	],
+//	'ACTIVE' => $activeTabId === 'conversion',
 //];
 
 $APPLICATION->IncludeComponent(
@@ -553,7 +559,11 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 					data-role="crm-type-custom-section-container"
 					class="crm-type-custom-section-container"
 				>
-					<div class="crm-type-relation-subtitle"><?= htmlspecialcharsbx(Loc::getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL_MSGVER_1')) ?></div>
+					<div class="crm-type-relation-subtitle"><?= htmlspecialcharsbx(
+						\Bitrix\Crm\Settings\Crm::isAutomatedSolutionListEnabled()
+							? Loc::getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL_SELECT')
+							: Loc::getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL_MSGVER_1')
+					) ?></div>
 					<div data-role="crm-type-custom-section-selector"></div>
 				</div>
 			</div>
@@ -624,7 +634,10 @@ BX.ready(function()
 		)) ?>,
 		relations: <?= CUtil::PhpToJSObject($arResult['relations']) ?>,
 		isRestricted: <?=$arResult['isRestricted'] ? 'true' : 'false'?>,
-		isExternal: <?= $arResult['isExternal'] ? 'true' : 'false' ?>
+		restrictionErrorMessage: '<?= $arResult['restrictionErrorMessage'] ?>',
+		restrictionSliderCode: '<?= $arResult['restrictionSliderCode'] ?>',
+		isExternal: <?= $arResult['isExternal'] ? 'true' : 'false' ?>,
+		isCreateSectionsViaAutomatedSolutionDetails: <?= \Bitrix\Crm\Settings\Crm::isAutomatedSolutionListEnabled() ? 'true' : 'false' ?>,
 	});
 	component.init();
 	BX.UI.Hint.init(form);

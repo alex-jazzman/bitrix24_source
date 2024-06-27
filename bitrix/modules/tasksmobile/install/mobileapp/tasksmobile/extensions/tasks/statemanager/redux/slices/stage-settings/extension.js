@@ -6,6 +6,7 @@ jn.define('tasks/statemanager/redux/slices/stage-settings', (require, exports, m
 		selectById,
 		selectEntities,
 		selectByViewAndProjectId,
+		selectFirstStage,
 	} = require('tasks/statemanager/redux/slices/stage-settings/src/selector');
 
 	const {
@@ -20,6 +21,7 @@ jn.define('tasks/statemanager/redux/slices/stage-settings', (require, exports, m
 		selectById,
 		selectEntities,
 		selectByViewAndProjectId,
+		selectFirstStage,
 		addStage,
 		deleteStage,
 		updateStage,

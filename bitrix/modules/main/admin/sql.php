@@ -1,8 +1,8 @@
-<?
+<?php
 /**
- * @global \CUser $USER
- * @global \CMain $APPLICATION
- * @global \CDatabase $DB
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
  */
 
 require_once(__DIR__."/../include/prolog_admin_before.php");
@@ -22,6 +22,7 @@ CPageOption::SetOptionString("main", "nav_page_in_session", "N");
 $lAdmin = new CAdminList($sTableID);
 if($_SERVER["REQUEST_METHOD"] == "POST" && !empty($query) && $isAdmin && check_bitrix_sessid())
 {
+	$dbr = null;
 	$first = microtime(true);
 	$arErrors = array();
 	$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $query));
@@ -64,12 +65,22 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && !empty($query) && $isAdmin && check_b
 		$lAdmin->AddHeaders($header);
 
 		$j = 0;
-		while($db_res=$rsData->Fetch()):
-			$row =& $lAdmin->AddRow("ID", $db_res);
-			foreach ($arFieldName as $field_name) :
-				$row->AddViewField($field_name, TxtToHtml($db_res[$field_name]));
-			endforeach;
-		endwhile;
+		while ($db_res = $rsData->Fetch())
+		{
+			$row = $lAdmin->AddRow("ID", $db_res);
+			foreach ($arFieldName as $field_name)
+			{
+				if ($db_res[$field_name] !== null)
+				{
+					$value = TxtToHtml($db_res[$field_name]);
+				}
+				else
+				{
+					$value = '<span style="color: darkgray">NULL</span>';
+				}
+				$row->AddViewField($field_name, $value);
+			}
+		}
 	}
 	else
 	{

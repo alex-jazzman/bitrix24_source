@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/registry.bundle.css',
 	'js' => 'dist/registry.bundle.js',
 	'rel' => [
+		'im.v2.lib.channel',
 		'ui.fonts.opensans',
 		'im.v2.lib.copilot',
 		'ui.icons.disk',
@@ -36,6 +37,7 @@ return [
 		'im.v2.const',
 		'ui.lottie',
 		'ai.roles-dialog',
+		'ui.vue3.components.hint',
 	],
 	'skip_core' => false,
 ];

@@ -403,7 +403,7 @@ $tabControl->BeginCustomField('HANDLER', GetMessage("SALE_CASHBOX_HANDLER"));
 					<?php
 					if ($cashboxObject)
 					{
-						$handlerHint = Loc::getMessage('SALE_CASHBOX_'.ToUpper($cashboxObject::getCode()).'_HINT');
+						$handlerHint = Loc::getMessage('SALE_CASHBOX_'.mb_strtoupper($cashboxObject::getCode()).'_HINT');
 						if ($handlerHint)
 						{
 						?>
@@ -601,7 +601,7 @@ $tabControl->Buttons(array("disabled" => ($saleModulePermissions < "W"), "back_u
 
 $tabControl->Show();
 ?>
-<script language="JavaScript">
+<script>
 
 	BX.message({
 		CASHBOX_CHECK_CONNECTION_TITLE: '<?=Loc::getMessage("CASHBOX_CHECK_CONNECTION_TITLE")?>',

@@ -1,13 +1,28 @@
+import 'ui.notification';
+import { Loc } from 'main.core';
 import { Store } from 'ui.vue3.vuex';
 import { RestClient } from 'rest.client';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
-import { RestMethod, UserRole } from 'im.v2.const';
+import { ChatType, RestMethod, UserRole } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction } from 'im.v2.lib.rest';
 
 import type { ImModelChat } from 'im.v2.model';
+
+type RestError = {
+	answer: {
+		error: string,
+		error_description: string,
+	},
+	status: number,
+};
+
+const DeleteUserErrorCode = {
+	userInvitedFromStructure: 'USER_INVITED_FROM_STRUCTURE',
+	userNotFound: 'USER_NOT_FOUND',
+};
 
 export class UserService
 {
@@ -31,34 +46,30 @@ export class UserService
 		return this.#restClient.callMethod(RestMethod.imChatUserAdd, queryParams);
 	}
 
-	kickUserFromChat(dialogId: string, userId: number)
+	async kickUserFromChat(dialogId: string, userId: number)
 	{
-		Logger.warn(`UserService: kick user ${userId} from chat ${dialogId}`);
 		const queryParams = { dialogId, userId };
-		this.#restClient.callMethod(RestMethod.imV2ChatDeleteUser, queryParams).catch((error) => {
-			// eslint-disable-next-line no-console
-			console.error('UserService: error kicking user from chat', error);
-		});
+		try
+		{
+			await this.#restClient.callMethod(RestMethod.imV2ChatDeleteUser, queryParams);
+		}
+		catch (error)
+		{
+			this.#onChatKickError(error);
+		}
 	}
 
-	leaveChat(dialogId: string)
+	async leaveChat(dialogId: string)
 	{
-		this.kickUserFromChat(dialogId, Core.getUserId());
-
-		this.#store.dispatch('chats/update', {
-			dialogId,
-			fields: {
-				inited: false,
-			},
-		});
-		this.#store.dispatch('recent/delete', {
-			id: dialogId,
-		});
-
-		const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
-		if (chatIsOpened)
+		const queryParams = { dialogId, userId: Core.getUserId() };
+		try
 		{
-			Messenger.openChat();
+			await this.#restClient.callMethod(RestMethod.imV2ChatDeleteUser, queryParams);
+			this.#onChatLeave(dialogId);
+		}
+		catch (error)
+		{
+			this.#onChatLeaveError(error);
 		}
 	}
 
@@ -134,5 +145,65 @@ export class UserService
 				// eslint-disable-next-line no-console
 				console.error('UserService: remove manager error', error);
 			});
+	}
+
+	#onChatLeave(dialogId: string): void
+	{
+		void this.#store.dispatch('chats/update', {
+			dialogId,
+			fields: { inited: false },
+		});
+		void this.#store.dispatch('recent/delete', { id: dialogId });
+
+		const chatIsOpened = this.#store.getters['application/isChatOpen'](dialogId);
+		if (chatIsOpened)
+		{
+			void Messenger.openChat();
+		}
+	}
+
+	#onChatKickError(error: RestError)
+	{
+		// eslint-disable-next-line no-console
+		console.error('UserService: error kicking from chat', error);
+
+		const NotificationTextByErrorCode = {
+			[DeleteUserErrorCode.userInvitedFromStructure]: Loc.getMessage('IM_MESSAGE_SERVICE_KICK_CHAT_STRUCTURE_ERROR'),
+			default: Loc.getMessage('IM_MESSAGE_SERVICE_KICK_CHAT_DEFAULT_ERROR'),
+		};
+
+		const errorCode = this.#getErrorCode(error);
+		const notificationText = NotificationTextByErrorCode[errorCode] ?? NotificationTextByErrorCode.default;
+		this.#showNotification(notificationText);
+	}
+
+	#onChatLeaveError(error: RestError)
+	{
+		// eslint-disable-next-line no-console
+		console.error('UserService: error leaving chat', error);
+
+		const NotificationTextByErrorCode = {
+			[DeleteUserErrorCode.userInvitedFromStructure]: Loc.getMessage('IM_MESSAGE_SERVICE_LEAVE_CHAT_STRUCTURE_ERROR'),
+			default: Loc.getMessage('IM_MESSAGE_SERVICE_LEAVE_CHAT_DEFAULT_ERROR'),
+		};
+
+		const errorCode = this.#getErrorCode(error);
+		const notificationText = NotificationTextByErrorCode[errorCode] ?? NotificationTextByErrorCode.default;
+		this.#showNotification(notificationText);
+	}
+
+	#showNotification(text: string): void
+	{
+		BX.UI.Notification.Center.notify({
+			content: text,
+			autoHideDelay: 5000,
+		});
+	}
+
+	#getErrorCode(error: RestError): string
+	{
+		const { answer: { error: errorCode } } = error;
+
+		return errorCode;
 	}
 }

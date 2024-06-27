@@ -1,7 +1,6 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_activity_fileUploader,crm_activity_settingsPopup,ui_notification,ui_vue3,crm_ai_copilotTextarea,crm_timeline_tools,main_date,main_popup,crm_field_itemSelector,main_core,main_core_events,ui_entitySelector) {
+(function (exports,crm_activity_fileUploader,ui_notification,ui_vue3,crm_ai_copilotTextarea,crm_timeline_tools,main_date,main_popup,crm_field_itemSelector,main_core,main_core_events,ui_entitySelector) {
 	'use strict';
 
 	const TodoEditorActionBtn = {
@@ -515,22 +514,12 @@ this.BX.Crm = this.BX.Crm || {};
 	var _activityId = /*#__PURE__*/new WeakMap();
 	var _eventEmitter = /*#__PURE__*/new WeakMap();
 	var _fileUploader = /*#__PURE__*/new WeakMap();
-	var _settingsPopup = /*#__PURE__*/new WeakMap();
-	var _settings = /*#__PURE__*/new WeakMap();
-	var _enableCalendarSync = /*#__PURE__*/new WeakMap();
 	var _popupMode = /*#__PURE__*/new WeakMap();
 	var _bindEvents = /*#__PURE__*/new WeakSet();
 	var _getAdditionalButtons = /*#__PURE__*/new WeakSet();
-	var _getSettingsButton = /*#__PURE__*/new WeakSet();
-	var _onSettingsButtonClick = /*#__PURE__*/new WeakSet();
 	var _getFileUploaderButton = /*#__PURE__*/new WeakSet();
 	var _getSaveActionData = /*#__PURE__*/new WeakSet();
 	var _getSaveActionPath = /*#__PURE__*/new WeakSet();
-	var _getSaveActionDataSettings = /*#__PURE__*/new WeakSet();
-	var _syncAndGetSaveActionDataSettingsFromPopup = /*#__PURE__*/new WeakSet();
-	var _getSaveActionDefaultDataSettings = /*#__PURE__*/new WeakSet();
-	var _getSectionSettings = /*#__PURE__*/new WeakSet();
-	var _getDefaultCalendarParams = /*#__PURE__*/new WeakSet();
 	var _clearData = /*#__PURE__*/new WeakSet();
 	var _getDefaultDescription = /*#__PURE__*/new WeakSet();
 	var _onInputFocus = /*#__PURE__*/new WeakSet();
@@ -556,16 +545,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec(this, _onInputFocus);
 	    _classPrivateMethodInitSpec(this, _getDefaultDescription);
 	    _classPrivateMethodInitSpec(this, _clearData);
-	    _classPrivateMethodInitSpec(this, _getDefaultCalendarParams);
-	    _classPrivateMethodInitSpec(this, _getSectionSettings);
-	    _classPrivateMethodInitSpec(this, _getSaveActionDefaultDataSettings);
-	    _classPrivateMethodInitSpec(this, _syncAndGetSaveActionDataSettingsFromPopup);
-	    _classPrivateMethodInitSpec(this, _getSaveActionDataSettings);
 	    _classPrivateMethodInitSpec(this, _getSaveActionPath);
 	    _classPrivateMethodInitSpec(this, _getSaveActionData);
 	    _classPrivateMethodInitSpec(this, _getFileUploaderButton);
-	    _classPrivateMethodInitSpec(this, _onSettingsButtonClick);
-	    _classPrivateMethodInitSpec(this, _getSettingsButton);
 	    _classPrivateMethodInitSpec(this, _getAdditionalButtons);
 	    _classPrivateMethodInitSpec(this, _bindEvents);
 	    _classPrivateFieldInitSpec(this, _container, {
@@ -636,18 +618,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec(this, _settingsPopup, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec(this, _settings, {
-	      writable: true,
-	      value: {}
-	    });
-	    _classPrivateFieldInitSpec(this, _enableCalendarSync, {
-	      writable: true,
-	      value: false
-	    });
 	    _classPrivateFieldInitSpec(this, _popupMode, {
 	      writable: true,
 	      value: false
@@ -681,7 +651,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.setDefaultDeadLine(false);
 	    }
 	    _classPrivateMethodGet(this, _bindEvents, _bindEvents2).call(this, _params);
-	    babelHelpers.classPrivateFieldSet(this, _enableCalendarSync, main_core.Type.isBoolean(_params.enableCalendarSync) ? _params.enableCalendarSync : false);
 	    babelHelpers.classPrivateFieldSet(this, _popupMode, main_core.Type.isBoolean(_params.popupMode) ? _params.popupMode : false);
 	  }
 	  babelHelpers.createClass(TodoEditor$$1, [{
@@ -709,19 +678,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        copilotSettings: babelHelpers.classPrivateFieldGet(this, _copilotSettings)
 	      }));
 	      babelHelpers.classPrivateFieldSet(this, _layoutComponent, babelHelpers.classPrivateFieldGet(this, _layoutApp).mount(babelHelpers.classPrivateFieldGet(this, _container)));
-	    }
-	  }, {
-	    key: "onSettingsChange",
-	    value: function onSettingsChange(settings) {
-	      this.setSettings(settings);
-	      if (settings !== null && settings !== void 0 && settings.calendar) {
-	        this.setDeadlineFromTimestamp(settings['calendar'].from);
-	      }
-	    }
-	  }, {
-	    key: "setSettings",
-	    value: function setSettings(settings = {}) {
-	      babelHelpers.classPrivateFieldSet(this, _settings, settings);
 	    }
 	  }, {
 	    key: "save",
@@ -888,32 +844,8 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _getAdditionalButtons2() {
 	  const buttons = [];
-	  if (babelHelpers.classPrivateFieldGet(this, _enableCalendarSync)) {
-	    buttons.push(_classPrivateMethodGet(this, _getSettingsButton, _getSettingsButton2).call(this));
-	  }
 	  buttons.push(_classPrivateMethodGet(this, _getFileUploaderButton, _getFileUploaderButton2).call(this));
 	  return buttons;
-	}
-	function _getSettingsButton2() {
-	  return {
-	    id: 'settings',
-	    icon: 'settings',
-	    description: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_SETTINGS_BUTTON_HINT'),
-	    action: _classPrivateMethodGet(this, _onSettingsButtonClick, _onSettingsButtonClick2).bind(this)
-	  };
-	}
-	function _onSettingsButtonClick2() {
-	  if (!babelHelpers.classPrivateFieldGet(this, _settingsPopup)) {
-	    babelHelpers.classPrivateFieldSet(this, _settingsPopup, new crm_activity_settingsPopup.SettingsPopup({
-	      onSettingsChange: this.onSettingsChange.bind(this),
-	      sections: _classPrivateMethodGet(this, _getSectionSettings, _getSectionSettings2).call(this),
-	      settings: babelHelpers.classPrivateFieldGet(this, _settings)
-	    }));
-	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _layoutComponent)) {
-	    babelHelpers.classPrivateFieldGet(this, _settingsPopup).syncSettings(babelHelpers.classPrivateFieldGet(this, _layoutComponent).getData());
-	  }
-	  babelHelpers.classPrivateFieldGet(this, _settingsPopup).show();
 	}
 	function _getFileUploaderButton2() {
 	  return {
@@ -925,92 +857,25 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _getSaveActionData2() {
 	  return new Promise(resolve => {
-	    _classPrivateMethodGet(this, _getSaveActionDataSettings, _getSaveActionDataSettings2).call(this).then(settings => {
-	      const userData = babelHelpers.classPrivateFieldGet(this, _layoutComponent).getData();
-	      const data = {
-	        ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
-	        ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId),
-	        description: userData.description,
-	        responsibleId: userData.responsibleUserId,
-	        deadline: main_date.DateTimeFormat.format(crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(), userData.deadline),
-	        parentActivityId: babelHelpers.classPrivateFieldGet(this, _parentActivityId),
-	        fileTokens: babelHelpers.classPrivateFieldGet(this, _fileUploader) ? babelHelpers.classPrivateFieldGet(this, _fileUploader).getServerFileIds() : [],
-	        settings,
-	        pingOffsets: userData.pingOffsets
-	      };
-	      if (babelHelpers.classPrivateFieldGet(this, _mode) === TodoEditorMode.UPDATE) {
-	        data.id = babelHelpers.classPrivateFieldGet(this, _activityId);
-	      }
-	      resolve(data);
-	    });
+	    const userData = babelHelpers.classPrivateFieldGet(this, _layoutComponent).getData();
+	    const data = {
+	      ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
+	      ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId),
+	      description: userData.description,
+	      responsibleId: userData.responsibleUserId,
+	      deadline: main_date.DateTimeFormat.format(crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(), userData.deadline),
+	      parentActivityId: babelHelpers.classPrivateFieldGet(this, _parentActivityId),
+	      fileTokens: babelHelpers.classPrivateFieldGet(this, _fileUploader) ? babelHelpers.classPrivateFieldGet(this, _fileUploader).getServerFileIds() : [],
+	      pingOffsets: userData.pingOffsets
+	    };
+	    if (babelHelpers.classPrivateFieldGet(this, _mode) === TodoEditorMode.UPDATE) {
+	      data.id = babelHelpers.classPrivateFieldGet(this, _activityId);
+	    }
+	    resolve(data);
 	  });
 	}
 	function _getSaveActionPath2() {
 	  return babelHelpers.classPrivateFieldGet(this, _mode) === TodoEditorMode.ADD ? 'crm.activity.todo.add' : 'crm.activity.todo.update';
-	}
-	function _getSaveActionDataSettings2() {
-	  if (babelHelpers.classPrivateFieldGet(this, _settingsPopup)) {
-	    return _classPrivateMethodGet(this, _syncAndGetSaveActionDataSettingsFromPopup, _syncAndGetSaveActionDataSettingsFromPopup2).call(this);
-	  }
-	  return _classPrivateMethodGet(this, _getSaveActionDefaultDataSettings, _getSaveActionDefaultDataSettings2).call(this);
-	}
-	function _syncAndGetSaveActionDataSettingsFromPopup2() {
-	  if (babelHelpers.classPrivateFieldGet(this, _layoutComponent)) {
-	    babelHelpers.classPrivateFieldGet(this, _settingsPopup).syncSettings(babelHelpers.classPrivateFieldGet(this, _layoutComponent).getData());
-	  }
-
-	  // must first work out vue reactivity in nested components
-	  return new Promise(resolve => {
-	    setTimeout(() => {
-	      resolve(babelHelpers.classPrivateFieldGet(this, _settingsPopup).getSettings());
-	    }, 0);
-	  });
-	}
-	function _getSaveActionDefaultDataSettings2() {
-	  const result = [];
-	  _classPrivateMethodGet(this, _getSectionSettings, _getSectionSettings2).call(this).forEach(section => {
-	    if (!section.active) {
-	      return;
-	    }
-	    const sectionSettings = section.params;
-	    sectionSettings.id = section.id;
-	    result.push(sectionSettings);
-	  });
-	  return Promise.resolve(result);
-	}
-	function _getSectionSettings2() {
-	  const calendar = {
-	    id: crm_activity_settingsPopup.Calendar.methods.getId(),
-	    component: crm_activity_settingsPopup.Calendar
-	  };
-	  if (babelHelpers.classPrivateFieldGet(this, _settingsPopup)) {
-	    const settings = babelHelpers.classPrivateFieldGet(this, _settingsPopup).getSettings();
-	    if (settings.calendar) {
-	      const calendarSettings = settings.calendar;
-	      calendar.params = {
-	        from: calendarSettings.from,
-	        to: calendarSettings.to,
-	        duration: calendarSettings.duration
-	      };
-	      calendar.active = true;
-	    }
-	  }
-	  if (!calendar.params) {
-	    calendar.params = _classPrivateMethodGet(this, _getDefaultCalendarParams, _getDefaultCalendarParams2).call(this);
-	    calendar.active = false;
-	  }
-	  return [calendar];
-	}
-	function _getDefaultCalendarParams2() {
-	  const fromDate = this.getDeadline() || babelHelpers.classPrivateFieldGet(this, _deadline);
-	  const from = fromDate.getTime() / 1000;
-	  const duration = 3600;
-	  const to = from + duration;
-	  return {
-	    from,
-	    duration,
-	    to
-	  };
 	}
 	function _clearData2() {
 	  this.setDefaultDeadLine();
@@ -1021,7 +886,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldGet(this, _fileUploader).getContainer(), '--is-displayed');
 	  }
 	  babelHelpers.classPrivateFieldSet(this, _fileUploader, null);
-	  babelHelpers.classPrivateFieldSet(this, _settingsPopup, null);
 	  return new Promise(resolve => {
 	    setTimeout(resolve, 10);
 	  });
@@ -1065,5 +929,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.TodoEditorMode = TodoEditorMode;
 	exports.TodoEditor = TodoEditor$1;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Crm.Activity,BX.Crm.Activity,BX,BX.Vue3,BX.Crm.AI,BX.Crm.Timeline,BX.Main,BX.Main,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Crm.Activity,BX,BX.Vue3,BX.Crm.AI,BX.Crm.Timeline,BX.Main,BX.Main,BX.Crm.Field,BX,BX.Event,BX.UI.EntitySelector));
 //# sourceMappingURL=todo-editor.bundle.js.map

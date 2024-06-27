@@ -1,4 +1,6 @@
 /* eslint-disable flowtype/require-return-type */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable promise/no-nesting */
 
 /**
  * @module im/messenger/controller/dialog/lib/message-renderer
@@ -19,7 +21,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 	} = require('im/messenger/lib/element');
 
 	const { LoggerManager } = require('im/messenger/lib/logger');
-	const logger = LoggerManager.getInstance().getLogger('message-renderer');
+	const logger = LoggerManager.getInstance().getLogger('dialog--message-renderer');
 
 	/**
 	 * @class MessageRenderer
@@ -34,6 +36,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.dialogId = dialogId;
 
 			this.store = serviceLocator.get('core').getStore();
+			this.resetState();
+		}
+
+		resetState()
+		{
 			/** @type {Array<MessagesModelState>} */
 			this.messageList = [];
 			/** @type {Record<number || string, Message>} */
@@ -43,24 +50,95 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			this.messageIdsStack = [];
 			this.unreadSeparatorAdded = false;
 			this.idAfterUnreadSeparatorMessage = '0';
-
-			window.renderer = this;
+			this.nextTickCallbackList = [];
+			this.renderQueuePromise = Promise.resolve();
 		}
 
 		/**
+		 * @description Adds a messageList to the rendering queue.
+		 * Returns a promise that will resolve after rendering of messageList completes
+		 *
 		 * @param {Array<MessagesModelState>} messageList
+		 * @param {string || null} sectionCodeToUpdate
 		 */
-		render(messageList)
+		async render(messageList, sectionCodeToUpdate = null)
 		{
 			logger.log('MessageRenderer.render:', messageList);
-			if (this.messageList.length === 0)
+
+			let resolveRender;
+			let rejectRender;
+			const renderPromise = new Promise((resolve, reject) => {
+				resolveRender = resolve;
+				rejectRender = reject;
+			});
+
+			this.renderQueuePromise = this.renderQueuePromise
+				.then(() => {
+					const renderInternalPromise = this.renderInternal(messageList, sectionCodeToUpdate);
+
+					renderInternalPromise
+						.then(() => {
+							logger.log('MessageRenderer.renderInternal: complete', messageList);
+
+							resolveRender();
+						})
+						.catch((error) => {
+							logger.error('MessageRenderer.renderInternal: error', error);
+
+							rejectRender();
+						})
+					;
+
+					return renderInternalPromise;
+				})
+				.catch((error) => {
+					logger.error('MessageRenderer.renderQueue error:', error);
+
+					// eslint-disable-next-line promise/no-return-wrap
+					return Promise.resolve();
+				});
+
+			await renderPromise;
+		}
+
+		/**
+		 * @private
+		 * @param {Array<MessagesModelState>} messageList
+		 * @param {string || null} sectionCodeToUpdate
+		 */
+		async renderInternal(messageList, sectionCodeToUpdate = null)
+		{
+			logger.log('MessageRenderer.renderInternal:', messageList);
+
+			if (sectionCodeToUpdate !== null)
 			{
-				this.setMessageList(messageList);
+				const updateMessageList = messageList
+					.filter((message) => this.isMessageRendered(message.id))
+				;
+				logger.log('MessageRenderer.renderInternal updateMessageList with sectionCode ', updateMessageList, sectionCodeToUpdate);
+
+				if (updateMessageList.length === 0)
+				{
+					return;
+				}
+
+				await this.updateMessageList(updateMessageList, sectionCodeToUpdate);
+
+				this.doTick();
 
 				return;
 			}
 
-			this.killDoubleMessage(messageList);
+			if (this.messageList.length === 0)
+			{
+				await this.setMessageList(messageList);
+
+				this.doTick();
+
+				return;
+			}
+
+			await this.killDoubleMessage(messageList);
 
 			const newMessageList = [];
 			const updateMessageList = [];
@@ -79,13 +157,15 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			if (newMessageList.length > 0)
 			{
-				this.addMessageList(newMessageList);
+				await this.addMessageList(newMessageList);
 			}
 
 			if (updateMessageList.length > 0)
 			{
-				this.updateMessageList(updateMessageList);
+				await this.updateMessageList(updateMessageList);
 			}
+
+			this.doTick();
 		}
 
 		isMessageRendered(messageId)
@@ -93,11 +173,12 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			return this.messageIdCollection.has(messageId);
 		}
 
-		delete(messageIdList)
+		async delete(messageIdList)
 		{
 			logger.info('MessageRenderer.delete:', messageIdList);
 
-			messageIdList.forEach((id) => {
+			for (const id of messageIdList)
+			{
 				const messageModel = this.getMessageModelByAnyId(id);
 				if (!messageModel)
 				{
@@ -113,7 +194,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				this.deleteIdFromStack(messageModel);
 				this.messageList = this.messageList.filter((message) => message.id !== id);
 
-				this.view.removeMessagesByIds(messageIdList);
+				await this.view.removeMessagesByIds(messageIdList);
 
 				const bottomMessage = this.getBottomMessage();
 
@@ -125,8 +206,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					}
 				}
 
-				this.updateViewMessages(formattedMessages);
-			});
+				await this.updateViewMessages(formattedMessages);
+			}
 
 			const bottomMessage = this.getBottomMessage();
 			if (bottomMessage && bottomMessage.type === MessageType.systemText)
@@ -138,7 +219,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					this.messageIdCollection.delete(bottomMessage.id);
 					this.deleteIdFromStack(bottomMessage);
 
-					this.view.removeMessagesByIds([bottomMessage.id]);
+					await this.view.removeMessagesByIds([bottomMessage.id]);
 				}
 			}
 		}
@@ -146,7 +227,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		/**
 		 * @private
 		 */
-		setMessageList(messageList)
+		async setMessageList(messageList)
 		{
 			logger.info('MessageRenderer.setMessageList:', messageList);
 			this.messageList = [...messageList];
@@ -161,7 +242,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			const viewMessageListToSet = this.processNearbyMessagesList(viewMessageListWithTemplate);
 			this.view.unreadSeparatorAdded = this.unreadSeparatorAdded;
-			this.view.setMessages(viewMessageListToSet);
+			await this.view.setMessages(viewMessageListToSet);
 			viewMessageListToSet.forEach((message) => {
 				this.viewMessageCollection[message.id] = message;
 			});
@@ -171,7 +252,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 * @private
 		 * @param {Array<MessagesModelState>} messageList
 		 */
-		addMessageList(messageList)
+		async addMessageList(messageList)
 		{
 			const messageListAbove = [];
 			const messageListBelow = [];
@@ -208,17 +289,17 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 			if (messageListAbove.length > 0)
 			{
-				this.addMessageListAbove(messageListAbove);
+				await this.addMessageListAbove(messageListAbove);
 			}
 
 			if (messageListBelow.length > 0)
 			{
-				this.addMessageListBelow(messageListBelow);
+				await this.addMessageListBelow(messageListBelow);
 			}
 
 			if (messageMapBetween.size > 0)
 			{
-				this.addMessagesBetween(messageMapBetween);
+				await this.addMessagesBetween(messageMapBetween);
 			}
 		}
 
@@ -293,7 +374,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		/**
 		 * @private
 		 */
-		addMessageListAbove(messageList)
+		async addMessageListAbove(messageList)
 		{
 			logger.info('MessageRenderer.addMessageListAbove:', messageList);
 			// eslint-disable-next-line no-param-reassign
@@ -312,8 +393,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const viewMessageListToPush = this.processTopNearbyMessages(packNearbyMessages);
 
 			const updateMessage = viewMessageListToPush.shift();
-			this.updateViewMessages([updateMessage]);
-			this.view.pushMessages(viewMessageListToPush);
+			await this.updateViewMessages([updateMessage]);
+			await this.view.pushMessages(viewMessageListToPush);
 
 			viewMessageListWithTemplate.forEach((message) => {
 				this.viewMessageCollection[message.id] = message;
@@ -325,7 +406,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 * @param {Array<MessagesModelState>} messageList
 		 * @private
 		 */
-		addMessageListBelow(messageList)
+		async addMessageListBelow(messageList)
 		{
 			logger.info('MessageRenderer.addMessageListBelow:', messageList);
 			this.updateMessageIndex(messageList);
@@ -346,16 +427,16 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			if (packAuthorPreviousMessages.length > 0)
 			{
 				const updateMessageList = viewMessageListToAdd.slice(viewMessageListWithTemplate.length);
-				this.updateViewMessages(updateMessageList);
+				await this.updateViewMessages(updateMessageList);
 				const addMessageList = viewMessageListToAdd.slice(0, viewMessageListWithTemplate.length);
-				this.view.addMessages(addMessageList);
+				await this.view.addMessages(addMessageList);
 				viewMessageListWithTemplate.forEach((message) => {
 					this.viewMessageCollection[message.id] = message;
 				});
 			}
 			else
 			{
-				this.view.addMessages(viewMessageListToAdd);
+				await this.view.addMessages(viewMessageListToAdd);
 				viewMessageListWithTemplate.forEach((message) => {
 					this.viewMessageCollection[message.id] = message;
 				});
@@ -363,10 +444,9 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		}
 
 		/**
-		 *
 		 * @param {Map<number, Array<MessagesModelState>>} messagesMap
 		 */
-		addMessagesBetween(messagesMap)
+		async addMessagesBetween(messagesMap)
 		{
 			for (let [pointedMessageId, messageList] of messagesMap.entries())
 			{
@@ -441,16 +521,16 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					if (packAuthorPreviousMessages.length > 0)
 					{
 						const updateMessageList = viewMessageListToAdd.slice(viewMessageListWithTemplate.length);
-						this.updateViewMessages(updateMessageList);
+						await this.updateViewMessages(updateMessageList);
 						const addMessageList = viewMessageListToAdd.slice(0, viewMessageListWithTemplate.length);
-						this.view.insertMessages(pointedMessageId, addMessageList, 'below');
+						await this.view.insertMessages(pointedMessageId, addMessageList, 'below');
 						viewMessageListWithTemplate.forEach((message) => {
 							this.viewMessageCollection[message.id] = message;
 						});
 					}
 					else
 					{
-						this.view.insertMessages(pointedMessageId, viewMessageListToAdd, 'below');
+						await this.view.insertMessages(pointedMessageId, viewMessageListToAdd, 'below');
 						viewMessageListWithTemplate.forEach((message) => {
 							this.viewMessageCollection[message.id] = message;
 						});
@@ -467,8 +547,8 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				const viewMessageListToPush = this.processTopNearbyMessages([...packNearbyMessages]);
 
 				const updateMessage = viewMessageListToPush.shift();
-				this.updateViewMessages([updateMessage]);
-				this.view.insertMessages(pointedMessageId, [...viewMessageListToPush].reverse(), 'below');
+				await this.updateViewMessages([updateMessage]);
+				await this.view.insertMessages(pointedMessageId, [...viewMessageListToPush].reverse(), 'below');
 
 				viewMessageListWithTemplate.forEach((message) => {
 					this.viewMessageCollection[message.id] = message;
@@ -497,16 +577,17 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 * @param {Array<Message>} viewMessageList
 		 * @private
 		 */
-		updateViewMessages(viewMessageList)
+		async updateViewMessages(viewMessageList)
 		{
 			const updateMessagesObj = {};
-			viewMessageList.forEach((message) => {
+			for (const message of viewMessageList)
+			{
 				updateMessagesObj[message.id] = message;
 				this.viewMessageCollection[message.id] = message;
-				this.view.updateMessageListById(message.id, message);
-			});
+				await this.view.updateMessageListById(message.id, message);
+			}
 
-			this.view.updateMessagesByIds(updateMessagesObj);
+			await this.view.updateMessagesByIds(updateMessagesObj);
 		}
 
 		/**
@@ -596,7 +677,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				packMessage.push(viewMessage);
 			}
 
-			// if current message id === idAfterUnreadSeparatorMessage, than don`t find oldest message
+			// if current message id === idAfterUnreadSeparatorMessage, then don`t find the oldest message
 			if (String(modelMessageId) === this.idAfterUnreadSeparatorMessage
 				|| modelMessageTemplateId === this.idAfterUnreadSeparatorMessage)
 			{
@@ -748,7 +829,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 * @param {Array<MessagesModelState>} messageList
 		 * @param {string} section
 		 */
-		updateMessageList(messageList, section = null)
+		async updateMessageList(messageList, section = null)
 		{
 			logger.info('MessageRenderer.updateMessageList:', messageList);
 
@@ -771,9 +852,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			});
 
 			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
-			const options = DialogConverter.prepareOptionsForMessage(dialog);
+			const options = DialogConverter.prepareSharedOptionsForMessages(dialog);
 
-			messageList.forEach((messageListItem) => {
+			for (const messageListItem of messageList)
+			{
 				const viewMessageItem = DialogConverter.createMessage(messageListItem, options);
 				const packAuthorMessages = this.getPackAuthorNeighborMessages(messageListItem);
 				const indexPackMessage = packAuthorMessages.findIndex(
@@ -789,7 +871,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				const isMessageChanged = !isEqual(formattedMessage, this.viewMessageCollection[formattedMessage.id]);
 				if (isMessageChanged)
 				{
-					this.view.updateMessageById(formattedMessage.id, formattedMessage, section);
+					await this.view.updateMessageById(formattedMessage.id, formattedMessage, section);
 					this.viewMessageCollection[formattedMessage.id] = formattedMessage;
 				}
 
@@ -803,7 +885,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 					if (isTemplateMessageChanged)
 					{
-						this.view.updateMessageById(messageListItem.templateId, formattedMessage, section);
+						await this.view.updateMessageById(messageListItem.templateId, formattedMessage, section);
 						this.viewMessageCollection[messageListItem.templateId] = formattedMessage;
 					}
 				}
@@ -812,7 +894,7 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				{
 					logger.log('MessageRenderer.updateMessageList: Nothing changed');
 				}
-			});
+			}
 		}
 
 		/**
@@ -820,9 +902,10 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		 * @param {Array} messageList
 		 * @private
 		 */
-		killDoubleMessage(messageList)
+		async killDoubleMessage(messageList)
 		{
-			messageList.forEach((message) => {
+			for (const message of messageList)
+			{
 				if (message.templateId && message.id)
 				{
 					const doubleInMessageIdsStack = this.messageIdsStack.filter(
@@ -831,12 +914,12 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 
 					if (doubleInMessageIdsStack.length > 1 && this.viewMessageCollection[message.templateId])
 					{
-						this.view.removeMessagesByIds([message.templateId]);
+						await this.view.removeMessagesByIds([message.templateId]);
 						logger.warn('MessageRenderer.killDoubleMessage: founded', doubleInMessageIdsStack);
-						this.delete([message.templateId]);
+						await this.delete([message.templateId]);
 					}
 				}
-			});
+			}
 		}
 
 		/**
@@ -1062,6 +1145,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				{
 					this.prepareSystemMessage(messageTemplate);
 				}
+
+				if (messageTemplate.type === MessageType.unsupported)
+				{
+					this.prepareUnsupportedMessage(messageTemplate);
+				}
 			});
 
 			return messageListWithTemplate.reverse();
@@ -1179,6 +1267,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 					this.preparePrivateMessage(message, modelMessage);
 				}
 
+				if (message.type === MessageType.unsupported)
+				{
+					this.prepareUnsupportedMessage(message);
+				}
+
 				return message;
 			}
 
@@ -1204,6 +1297,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				if (message.type === MessageType.systemText)
 				{
 					this.prepareSystemMessage(message);
+				}
+
+				if (message.type === MessageType.unsupported)
+				{
+					this.prepareUnsupportedMessage(message);
 				}
 
 				return message;
@@ -1270,6 +1368,11 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 				this.prepareSystemMessage(message);
 			}
 
+			if (message.type === MessageType.unsupported)
+			{
+				this.prepareUnsupportedMessage(message);
+			}
+
 			return message;
 		}
 
@@ -1295,6 +1398,16 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 		{
 			message.setShowAvatarForce(false);
 			message.setAvatarUri(null);
+		}
+
+		/**
+		 * @desc Set property for unsupported message with type 'unsupported'
+		 * @param {UnsupportedMessage} message
+		 * @private
+		 */
+		prepareUnsupportedMessage(message)
+		{
+			message.setAvatarUnsupportedMessage();
 		}
 
 		/**
@@ -1420,6 +1533,22 @@ jn.define('im/messenger/controller/dialog/lib/message-renderer', (require, expor
 			const id = `${MessageIdType.templateSeparatorDate}-${this.toDateCode(date)}`;
 
 			return new DateSeparatorMessage(id, date);
+		}
+
+		nextTick(callback)
+		{
+			if (!Type.isFunction(callback))
+			{
+				throw new TypeError('RecentRenderer.nextTick: callback must be a function');
+			}
+
+			this.nextTickCallbackList.push(callback);
+		}
+
+		doTick()
+		{
+			this.nextTickCallbackList.forEach((callback) => callback());
+			this.nextTickCallbackList = [];
 		}
 	}
 

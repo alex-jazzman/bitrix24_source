@@ -1,5 +1,3 @@
-import { Extension } from 'main.core';
-
 import { Messenger } from 'im.public';
 import { Button as ChatButton, ButtonSize, CopilotRolesDialog } from 'im.v2.component.elements';
 import { Color } from 'im.v2.const';
@@ -9,7 +7,6 @@ import '../css/empty-state.css';
 
 import type { JsonObject } from 'main.core';
 import type { CustomColorScheme } from 'im.v2.component.elements';
-import type { ImModelCopilotRole } from 'im.v2.model';
 
 const BUTTON_BACKGROUND_COLOR = '#fff';
 const BUTTON_HOVER_COLOR = '#eee';
@@ -45,28 +42,11 @@ export const EmptyState = {
 				hoverColor: BUTTON_HOVER_COLOR,
 			};
 		},
-		isCopilotRolesAvailable(): boolean
-		{
-			const settings = Extension.getSettings('im.v2.component.content.copilot');
-
-			return settings.copilotRolesAvailable === 'Y';
-		},
-		defaultRole(): ImModelCopilotRole
-		{
-			return this.$store.getters['copilot/roles/getDefault'];
-		},
 	},
 	methods:
 	{
 		onCreateChatClick()
 		{
-			if (!this.isCopilotRolesAvailable)
-			{
-				void this.createChat(this.defaultRole);
-
-				return;
-			}
-
 			this.showRolesDialog = true;
 		},
 		async createChat(role): Promise<void>
@@ -120,7 +100,7 @@ export const EmptyState = {
 				/>
 			</div>
 			<CopilotRolesDialog 
-				v-if="showRolesDialog && isCopilotRolesAvailable"
+				v-if="showRolesDialog"
 				@selectRole="createChat"
 				@close="showRolesDialog = false"
 			/>

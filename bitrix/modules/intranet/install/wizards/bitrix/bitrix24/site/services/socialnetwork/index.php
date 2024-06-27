@@ -302,7 +302,7 @@ if ($errorMessage == '')
 		{
 			$obTask = new CTasks();
 			$strSql = "SELECT ID FROM b_tasks WHERE XML_ID = '".$task["XML_ID"]."'";
-			$rsTask = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$rsTask = $DB->Query($strSql);
 			if ($oldTask = $rsTask->Fetch())
 			{
 				$obTask->Update($oldTask["ID"], $task);

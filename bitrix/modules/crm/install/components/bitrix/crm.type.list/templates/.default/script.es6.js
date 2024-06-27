@@ -1,3 +1,4 @@
+import { Router } from 'crm.router';
 import { ajax as Ajax, Dom, Loc, Reflection, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
@@ -10,7 +11,6 @@ class TypeListComponent
 	grid: BX.Main.grid;
 	errorTextContainer: Element;
 	welcomeMessageContainer: Element;
-	isEmptyList: boolean;
 
 	constructor(params): void
 	{
@@ -35,7 +35,6 @@ class TypeListComponent
 			{
 				this.welcomeMessageContainer = params.welcomeMessageContainer;
 			}
-			this.isEmptyList = Boolean(params.isEmptyList);
 		}
 	}
 
@@ -46,9 +45,10 @@ class TypeListComponent
 
 	bindEvents(): void
 	{
+		EventEmitter.subscribe('BX.Crm.TypeListComponent:onClickCreate', this.handleTypeCreate.bind(this));
 		EventEmitter.subscribe('BX.Crm.TypeListComponent:onClickDelete', this.handleTypeDelete.bind(this));
-		EventEmitter.subscribe('BX.Crm.TypeListComponent:onFilterByCustomSection', this.handleFilterByCustomSection.bind(this));
-		EventEmitter.subscribe('BX.Crm.TypeListComponent:onResetFilterByCustomSection', this.handleFilterByCustomSection.bind(this));
+		EventEmitter.subscribe('BX.Crm.TypeListComponent:onFilterByAutomatedSolution', this.handleFilterByAutomatedSolution.bind(this));
+		EventEmitter.subscribe('BX.Crm.TypeListComponent:onResetFilterByAutomatedSolution', this.handleFilterByAutomatedSolution.bind(this));
 
 		const toolbarComponent = this.getToolbarComponent();
 
@@ -108,6 +108,36 @@ class TypeListComponent
 	}
 
 	// region EventHandlers
+	handleTypeCreate(event: BaseEvent<Object>): void
+	{
+		let { queryParams } = event.getData();
+
+		if (!Type.isPlainObject(queryParams))
+		{
+			queryParams = {};
+		}
+
+		const automatedSolutionId = this.#getAutomatedSolutionIdFromFilter();
+		if (automatedSolutionId > 0)
+		{
+			queryParams.automatedSolutionId = automatedSolutionId;
+		}
+
+		void Router.Instance.openTypeDetail(0, null, queryParams);
+	}
+
+	#getAutomatedSolutionIdFromFilter(): ?number
+	{
+		const { AUTOMATED_SOLUTION: automatedSolutionId } = this.#getCurrentFilter();
+
+		if (Text.toInteger(automatedSolutionId) > 0)
+		{
+			return Text.toInteger(automatedSolutionId);
+		}
+
+		return null;
+	}
+
 	handleTypeDelete(event: BaseEvent): void
 	{
 		const id = Text.toInteger(event.data.id);
@@ -159,12 +189,11 @@ class TypeListComponent
 		return null;
 	}
 
-	handleFilterByCustomSection(event: BaseEvent): void
+	handleFilterByAutomatedSolution(event: BaseEvent): void
 	{
-		const currentFilter = BX.Main.filterManager?.getList()[0]?.getFilterFieldsValues() || [];
 		const data = {
-			...currentFilter,
-			CUSTOM_SECTION: event.data || null,
+			...this.#getCurrentFilter(),
+			AUTOMATED_SOLUTION: event.data || null,
 		};
 
 		const api = BX.Main.filterManager?.getList()[0]?.getApi();
@@ -174,6 +203,11 @@ class TypeListComponent
 		}
 		api.setFields(data);
 		api.apply();
+	}
+
+	#getCurrentFilter(): Object
+	{
+		return BX.Main.filterManager?.getList()[0]?.getFilterFieldsValues() || {};
 	}
 }
 

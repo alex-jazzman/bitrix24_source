@@ -16,7 +16,7 @@ export const CreateChatSection = {
 			type: String,
 			required: true,
 		},
-		openByDefault: {
+		alwaysOpened: {
 			type: Boolean,
 			required: false,
 			default: false,
@@ -37,29 +37,30 @@ export const CreateChatSection = {
 	},
 	created()
 	{
-		if (this.openByDefault)
+		if (this.alwaysOpened)
 		{
 			this.isOpened = true;
 		}
 	},
 	methods:
 	{
-		onContainerClick()
+		onHeaderClick()
 		{
-			if (!this.isOpened)
+			if (this.alwaysOpened)
 			{
-				this.isOpened = true;
+				return;
 			}
+			this.isOpened = !this.isOpened;
 		},
 	},
 	template: `
 		<div :class="containerClasses" class="bx-im-content-create-chat__section bx-im-content-create-chat__section_scope">
-			<div @click="isOpened = !isOpened" class="bx-im-content-create-chat__section_header">
+			<div @click="onHeaderClick" class="bx-im-content-create-chat__section_header">
 				<div class="bx-im-content-create-chat__section_left">
 					<div class="bx-im-content-create-chat__section_icon"></div>
 					<div class="bx-im-content-create-chat__section_text">{{ title }}</div>
 				</div>
-				<div class="bx-im-content-create-chat__section_right"></div>	
+				<div v-if="!alwaysOpened" class="bx-im-content-create-chat__section_right"></div>	
 			</div>
 			<ExpandAnimation>
 				<div v-if="isOpened" class="bx-im-content-create-chat__section_content_container">

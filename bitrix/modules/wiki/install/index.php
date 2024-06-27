@@ -27,11 +27,6 @@ Class wiki extends CModule
 			$this->MODULE_VERSION = $arModuleVersion['VERSION'];
 			$this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
 		}
-		else
-		{
-			$this->MODULE_VERSION = WIKI_VERSION;
-			$this->MODULE_VERSION_DATE = WIKI_VERSION_DATE;
-		}
 
 		$this->MODULE_NAME = Loc::getMessage('WIKI_INSTALL_NAME');
 		$this->MODULE_DESCRIPTION = Loc::getMessage('WIKI_INSTALL_DESCRIPTION');

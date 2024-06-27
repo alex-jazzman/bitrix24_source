@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,ui_dialogs_messagebox,im_v2_const,im_v2_lib_call,im_v2_provider_service,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_public,main_popup,main_core_events,ui_vue3_vuex,rest_client,im_v2_application_core,main_core) {
+(function (exports,ui_dialogs_messagebox,im_v2_const,im_v2_lib_call,im_v2_provider_service,im_v2_lib_utils,im_v2_lib_permission,im_v2_lib_confirm,im_v2_lib_channel,im_public,main_popup,main_core_events,ui_vue3_vuex,rest_client,im_v2_application_core,main_core) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -210,7 +210,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getSendMessageItem() {
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_WRITE'),
+	      text: main_core.Loc.getMessage('IM_LIB_MENU_WRITE_V2'),
 	      onclick: () => {
 	        im_public.Messenger.openChat(this.context.dialogId);
 	        this.menuInstance.close();
@@ -297,7 +297,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    }
 	    const profileUri = im_v2_lib_utils.Utils.user.getProfileLink(this.context.dialogId);
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE'),
+	      text: main_core.Loc.getMessage('IM_LIB_MENU_OPEN_PROFILE_V2'),
 	      href: profileUri,
 	      onclick: () => {
 	        this.menuInstance.close();
@@ -323,7 +323,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return null;
 	    }
 	    return {
-	      text: main_core.Loc.getMessage('IM_LIB_MENU_LEAVE'),
+	      text: main_core.Loc.getMessage('IM_LIB_MENU_LEAVE_V2'),
 	      onclick: async () => {
 	        this.menuInstance.close();
 	        const userChoice = await im_v2_lib_confirm.showLeaveFromChatConfirm();
@@ -417,10 +417,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    return user.bot === true;
 	  }
 	  isChannel() {
-	    const {
-	      type
-	    } = this.store.getters['chats/get'](this.context.dialogId, true);
-	    return [im_v2_const.ChatType.channel, im_v2_const.ChatType.openChannel].includes(type);
+	    return im_v2_lib_channel.ChannelManager.isChannel(this.context.dialogId);
 	  }
 	  isCommentsChat() {
 	    const {
@@ -433,5 +430,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.RecentMenu = RecentMenu;
 	exports.BaseMenu = BaseMenu;
 
-}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.UI.Dialogs,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Event,BX.Vue3.Vuex,BX,BX.Messenger.v2.Application,BX));
+}((this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}),BX.UI.Dialogs,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Event,BX.Vue3.Vuex,BX,BX.Messenger.v2.Application,BX));
 //# sourceMappingURL=registry.bundle.js.map

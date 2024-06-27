@@ -5,10 +5,10 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 if(!CModule::IncludeModule("iblock"))
 	return;
 
-$iblockXMLFile = WIZARD_SERVICE_RELATIVE_PATH."/xml/".LANGUAGE_ID."/absence.xml";
+$iblockXMLFile = $WIZARD_SERVICE_RELATIVE_PATH."/xml/".LANGUAGE_ID."/absence.xml";
 if (!file_exists($_SERVER["DOCUMENT_ROOT"].$iblockXMLFile))
 {
-	$iblockXMLFile = WIZARD_SERVICE_RELATIVE_PATH."/xml/".\Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID)."/absence.xml";
+	$iblockXMLFile = $WIZARD_SERVICE_RELATIVE_PATH."/xml/".\Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID)."/absence.xml";
 }
 $iblockCode = "absence";
 $iblockType = "structure";

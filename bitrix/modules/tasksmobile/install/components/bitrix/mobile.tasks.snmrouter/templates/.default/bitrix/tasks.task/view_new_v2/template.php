@@ -519,7 +519,7 @@ $APPLICATION->IncludeComponent(
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.message({
 		PAGE_TITLE: '<?=GetMessageJS("MB_TASKS_GENERAL_TITLE")?>',
 		MB_TASKS_TASK_PLACEHOLDER: '<span class="placeholder"><?=GetMessageJS("MB_TASKS_TASK_PLACEHOLDER")?></span>',

@@ -12,7 +12,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 	const { atomIcons } = require('im/messenger/assets/common');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { EventType } = require('im/messenger/const');
 	const { ChatTitle } = require('im/messenger/lib/element');
@@ -62,7 +62,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			PageManager.openWidget(
 				'layout',
 				{
-					backgroundColor: AppTheme.colors.bgContentPrimary,
+					backgroundColor: Theme.colors.bgContentPrimary,
 					title: Loc.getMessage('IMMOBILE_MESSENGER_WIDGET_USERS_READ_MESSAGE_LIST_TITLE'),
 					backdrop: {
 						mediumPositionPercent: 60,
@@ -205,7 +205,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 
 					style: {
 						parentView: {
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Theme.colors.bgContentPrimary,
 						},
 						itemContainer: {
 							flexDirection: 'row',
@@ -220,7 +220,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 						itemInfoContainer: {
 							flexDirection: 'row',
 							borderBottomWidth: 1,
-							borderBottomColor: AppTheme.colors.bgSeparatorSecondary,
+							borderBottomColor: Theme.colors.bgSeparatorSecondary,
 							flex: 1,
 							alignItems: 'center',
 							marginBottom: 6,
@@ -239,7 +239,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 								color: ChatTitle.createFromDialogId(userData.id).getTitleColor(),
 							},
 							subtitle: {
-								color: AppTheme.colors.base3,
+								color: Theme.colors.base3,
 								fontSize: 14,
 								fontWeight: 400,
 								textStyle: 'normal',

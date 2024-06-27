@@ -17,6 +17,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 		lastUserIds: [],
 		messageCount: 0,
 		messageId: 0,
+		isUserSubscribed: false,
 	};
 
 	/**
@@ -33,14 +34,14 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 		getters: {
 			/**
 			 * @function commentModel/getByMessageId
-			 * @return {CommentInfo}
+			 * @return {CommentInfo || undefined}
 			 */
 			getByMessageId: (state) => (messageId) => {
 				return clone(state.commentCollection[messageId]);
 			},
 
-			/** @function commentModel/getCommentsCounter */
-			getCommentsCounter: (state) => (payload) => {
+			/** @function commentModel/getCommentCounter */
+			getCommentCounter: (state) => (payload) => {
 				const { channelId, commentChatId } = payload;
 				if (!state.countersCollection[channelId])
 				{
@@ -97,11 +98,11 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 			},
 
 			/**
-			 * @function commentModel/getUnreadPostCount
+			 * @function commentModel/getUnreadPostsCount
 			 * @param state
 			 * @return {number}
 			 */
-			getUnreadPostCount: (state) => (channelId) => {
+			getUnreadPostsCount: (state) => (channelId) => {
 				let result = 0;
 				if (!state.countersCollection[channelId])
 				{
@@ -116,6 +117,19 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 				});
 
 				return result;
+			},
+
+			/**
+			 * @function commentModel/getChannelCounterCollection
+			 * @return {Array<number>}
+			 */
+			getChannelCounterCollection: (state) => (channelId) => {
+				if (!state.countersCollection[channelId])
+				{
+					return {};
+				}
+
+				return state.countersCollection[channelId];
 			},
 		},
 		actions: {
@@ -148,7 +162,15 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 				}
 
 				const commentInfo = clone(store.state.commentCollection[payload.messageId]);
-				commentInfo.messageCount = payload.messageCount;
+				if (payload.messageCount)
+				{
+					commentInfo.messageCount = payload.messageCount;
+				}
+
+				if (payload.isUserSubscribed)
+				{
+					commentInfo.isUserSubscribed = payload.isUserSubscribed;
+				}
 
 				store.commit('setComments', {
 					actionName: 'updateComment',
@@ -178,7 +200,13 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 				}
 
 				const { newUserId } = payload;
-				const { lastUserIds: currentUsers } = clone(store.state.commentCollection[comment.messageId]);
+				let currentUsers = [];
+				if (Type.isPlainObject(store.state.commentCollection[comment.messageId]))
+				{
+					currentUsers = clone(store.state.commentCollection[comment.messageId])
+						.lastUserIds
+					;
+				}
 
 				comment.lastUserIds = getNewLastUsers(newUserId, currentUsers);
 
@@ -187,6 +215,31 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 					data: {
 						commentList: [comment],
 						chatCounterMap,
+					},
+				});
+			},
+
+			/** @function commentModel/setComment */
+			setComment: (store, payload) => {
+				/** @type {CommentInfo} */
+				const comment = validate(payload);
+
+				const { newUserId } = payload;
+
+				let currentUsers = [];
+				if (Type.isPlainObject(store.state.commentCollection[comment.messageId]))
+				{
+					currentUsers = clone(store.state.commentCollection[comment.messageId])
+						.lastUserIds
+					;
+				}
+
+				comment.lastUserIds = getNewLastUsers(newUserId, currentUsers);
+
+				store.commit('setComments', {
+					actionName: 'setComment',
+					data: {
+						commentList: [comment],
 					},
 				});
 			},
@@ -214,6 +267,65 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 					data: {},
 				});
 			},
+
+			/** @function commentModel/deleteChannelCounters */
+			deleteChannelCounters: (store, payload) => {
+				const { channelId } = payload;
+				if (
+					store.state.countersCollection[channelId]
+					&& store.getters.getChannelCounters(channelId) === 0
+				)
+				{
+					return;
+				}
+				const commentChatIdList = Object.keys(store.state.countersCollection[channelId])
+					.map((id) => Number(id))
+				;
+
+				store.commit('deleteChannelCounters', {
+					actionName: 'deleteChannelCounters',
+					data: {
+						channelId,
+						commentChatIdList, // using in mutation handler
+					},
+				});
+			},
+
+			/** @function commentModel/subscribe */
+			subscribe: (store, payload) => {
+				const messageId = payload.messageId;
+				const commentInfo = {
+					...commentState,
+					...store.state.commentCollection[messageId],
+					isUserSubscribed: true,
+					messageId,
+				};
+
+				store.commit('setComments', {
+					actionName: 'subscribe',
+					data: {
+						commentList: [commentInfo],
+					},
+				});
+			},
+
+			/** @function commentModel/unsubscribe */
+			unsubscribe: (store, payload) => {
+				const messageId = payload.messageId;
+				const commentInfo = {
+					...commentState,
+					...store.state.commentCollection[messageId],
+					isUserSubscribed: false,
+					messageId,
+				};
+
+				store.commit('setComments', {
+					actionName: 'subscribe',
+					data: {
+						commentList: [commentInfo],
+					},
+				});
+			},
 		},
 		mutations: {
 			/**
@@ -227,6 +339,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 				payload.data.commentList.forEach((comment) => {
 					state.commentCollection[comment.messageId] = {
 						...commentState,
+						...state.commentCollection[comment.messageId],
 						...comment,
 					};
 				});
@@ -265,6 +378,7 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 				payload.data.commentList.forEach((comment) => {
 					state.commentCollection[comment.messageId] = {
 						...commentState,
+						...state.commentCollection[comment.messageId],
 						...comment,
 					};
 				});
@@ -293,6 +407,17 @@ jn.define('im/messenger/model/comment', (require, exports, module) => {
 				logger.log('commentModel deleteComments mutation', payload);
 
 				state.commentCollection = {};
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<CommentsDeleteChannelCountersData, CommentsDeleteChannelCountersActions>} payload
+			 */
+			deleteChannelCounters: (state, payload) => {
+				logger.log('commentModel deleteChannelCounters mutation', payload);
+				const { channelId } = payload.data;
+
+				state.countersCollection[channelId] = {};
 			},
 		},
 	};

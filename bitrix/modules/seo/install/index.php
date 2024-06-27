@@ -251,19 +251,6 @@ class seo extends CModule
 		return true;
 	}
 
-	/**
-	 * Method for migrate from cloud version.
-	 * @return void
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	public function migrateToBox(): void
-	{
-		if (\Bitrix\Main\Loader::includeModule('seo'))
-		{
-			\Bitrix\Seo\Service::changeRegisteredDomain();
-		}
-	}
-
 	public function GetModuleTasks()
 	{
 		return [
