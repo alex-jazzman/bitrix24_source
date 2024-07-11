@@ -57,7 +57,7 @@ export class SaleTemplate extends BaseTemplate
 					</div>
 					<div>
 						${config.description ? this.#getDescription(config.description) : null}
-						${config.more ? this.#getMoreLink(config.more) : null}
+						${config.more ? this.#getMoreLink(config.more, config.button) : null}
 					</div>
 				</div>
 				<div class="ui-popupconstructor-content-item-wrapper_button">
@@ -106,7 +106,7 @@ export class SaleTemplate extends BaseTemplate
 		return description;
 	}
 
-	#getMoreLink(config: MoreLinkConfig): HTMLElement
+	#getMoreLink(config: MoreLinkConfig, configMainButton: ButtonConfig): HTMLElement
 	{
 		const onclick = () => {
 			if (config.code)
@@ -118,6 +118,11 @@ export class SaleTemplate extends BaseTemplate
 			else if (config.articleId)
 			{
 				top.BX.Helper.show(`redirect=detail&code=${config.articleId}`);
+			}
+
+			if (this.options?.analyticsCallback)
+			{
+				this.options.analyticsCallback('click-more', configMainButton.url);
 			}
 		};
 

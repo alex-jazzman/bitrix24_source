@@ -107,6 +107,8 @@
 	border-bottom: 1px solid transparent;
 	transition: color .3s;
 	cursor: pointer;
+	color: var(--ui-color-link-primary-base);
+	margin-left: 3px;
 }
 
 .ui-popupconstructor-content-item__more-link:hover {

@@ -13,7 +13,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  sidebarFiles: 'sidebarFiles',
 	  sidebarBriefs: 'sidebarBriefs',
 	  zoomActive: 'zoomActive',
-	  zoomAvailable: 'zoomAvailable'
+	  zoomAvailable: 'zoomAvailable',
+	  giphyAvailable: 'giphyAvailable'
 	};
 	const FeatureManager = {
 	  isFeatureAvailable(featureName) {

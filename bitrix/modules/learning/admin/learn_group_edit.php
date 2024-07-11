@@ -432,7 +432,7 @@ $tabControl->BeginCustomField("PROPERTY_1".$prop_fields["ID"], $prop_fields["NAM
 		if(!($USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('view_all_users')))
 			echo GetMessage('LEARNING_ACCESS_DENIED_TO_USERS');
 		else
-			echo _ShowUserPropertyField('PROP['.$prop_fields["ID"].']', $prop_fields, $prop_fields["VALUE"], false, false, 50000, $tabControl->GetFormName(), $bCopy)
+			_ShowUserPropertyField('PROP['.$prop_fields["ID"].']', $prop_fields, $prop_fields["VALUE"], false, false, 50000, $tabControl->GetFormName(), $bCopy)
 	?></td>
 </tr>
 <?

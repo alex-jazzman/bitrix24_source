@@ -148,7 +148,7 @@ $sessIncorrectMessage =& $_SESSION["LEARN_".$arParams["TEST_ID"]."_INCORRECT_MES
 
 //Page url template
 $currentPage = GetPagePath(false, false);
-$queryString= htmlspecialcharsbx(DeleteParam(array($arParams["PAGE_NUMBER_VARIABLE"], "SEF_APPLICATION_CUR_PAGE_URL")));
+$queryString= htmlspecialcharsbx(DeleteParam(array($arParams["PAGE_NUMBER_VARIABLE"])));
 $pageTemplate = (
 	$queryString == "" ?
 	$currentPage."?".$arParams["PAGE_NUMBER_VARIABLE"]."=#PAGE_ID#" :
@@ -196,10 +196,7 @@ $arResult = Array(
 if (!sizeof($errors))
 {
 	//Action form page
-	if ($_SERVER['REDIRECT_STATUS'] == '404' || isset($_REQUEST["SEF_APPLICATION_CUR_PAGE_URL"]))
-		$arResult["ACTION_PAGE"] = POST_FORM_ACTION_URI;
-	else
-		$arResult["ACTION_PAGE"] = $currentPage.($queryString == "" ? "" : "?".$queryString);
+	$arResult["ACTION_PAGE"] = $currentPage.($queryString == "" ? "" : "?".$queryString);
 
 	//Page number
 	if (array_key_exists($arParams["PAGE_NUMBER_VARIABLE"], $_REQUEST) && intval($_REQUEST[$arParams["PAGE_NUMBER_VARIABLE"]]) > 1)

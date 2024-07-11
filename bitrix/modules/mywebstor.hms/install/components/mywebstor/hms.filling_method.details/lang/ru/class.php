@@ -1,6 +1,0 @@
-<?
-
-$MESS["HMS_FILLING_METHOD_NEW_FILLING_METHOD_TITLE"] = "Новый способ заполнения";
-
-$MESS["HMS_FILLING_METHOD_BUTTON_SAVE"] = "Сохранить";
-$MESS["HMS_FILLING_METHOD_BUTTON_DELETE"] = "Удалить";

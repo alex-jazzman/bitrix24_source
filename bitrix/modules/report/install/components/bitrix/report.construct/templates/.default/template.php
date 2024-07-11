@@ -1055,7 +1055,6 @@ $name = $APPLICATION->IncludeComponent(
 		"bitrix:intranet.user.selector.new", ".default", array(
 			"MULTIPLE" => "N",
 			"NAME" => "Single",
-			'SHOW_EXTRANET_USERS' => 'NONE',
 			"VALUE" => 1,
 			"POPUP" => "Y",
 			"ON_SELECT" => "RTFilter_chooseUserCatch",

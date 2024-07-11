@@ -161,12 +161,47 @@ class learning extends CModule
 	function InstallEvents()
 	{
 		global $DB;
+
 		$sIn = "'NEW_LEARNING_TEXT_ANSWER'";
 		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (" . $sIn . ") ");
 		$ar = $rs->Fetch();
 		if ($ar["C"] <= 0)
 		{
-			include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/events/set_events.php");
+			$langs = CLanguage::GetList();
+			while($lang = $langs->Fetch())
+			{
+				$lid = $lang["LID"];
+				IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/learning/install/events.php", $lid);
+
+				$et = new CEventType;
+				$et->Add(array(
+					"LID" => $lid,
+					"EVENT_NAME" => "NEW_LEARNING_TEXT_ANSWER",
+					"NAME" => GetMessage("NEW_LEARNING_TEXT_ANSWER_NAME"),
+					"DESCRIPTION" => GetMessage("NEW_LEARNING_TEXT_ANSWER_DESC"),
+				));
+
+				$arSites = array();
+				$sites = CSite::GetList('', '', Array("LANGUAGE_ID"=>$lid));
+				while ($site = $sites->Fetch())
+					$arSites[] = $site["LID"];
+
+				if(count($arSites) > 0)
+				{
+
+					$emess = new CEventMessage;
+					$emess->Add(array(
+						"ACTIVE" => "Y",
+						"EVENT_NAME" => "NEW_LEARNING_TEXT_ANSWER",
+						"LID" => $arSites,
+						"EMAIL_FROM" => "#EMAIL_FROM#",
+						"EMAIL_TO" => "#EMAIL_TO#",
+						"SUBJECT" => GetMessage("NEW_LEARNING_TEXT_ANSWER_SUBJECT"),
+						"MESSAGE" => GetMessage("NEW_LEARNING_TEXT_ANSWER_MESSAGE"),
+						"BODY_TYPE" => "text",
+					));
+				}
+			}
 		}
 		return true;
 	}
@@ -174,24 +209,30 @@ class learning extends CModule
 	function UnInstallEvents()
 	{
 		global $DB;
-		include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/events/del_events.php");
+
+		$DB->Query("DELETE FROM b_event_type WHERE EVENT_NAME in (
+			'NEW_LEARNING_TEXT_ANSWER',
+		)");
+
+		$DB->Query("DELETE FROM b_event_message WHERE EVENT_NAME in (
+			'NEW_LEARNING_TEXT_ANSWER',
+		)");
+
 		return true;
 	}
 
 	function InstallFiles($arParams = [])
 	{
-		if ($_ENV["COMPUTERNAME"] != 'BX')
-		{
-			//Admin files
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/admin", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin", false);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/images", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/images/learning", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/public/js", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/js", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/js", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/js", true, true);
+		//Admin files
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/admin", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin", false);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/images", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/images/learning", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/public/js", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/js", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/js", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/js", true, true);
 
-			//Theme
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/themes", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/themes", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/components", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/components", true, true);
-		}
+		//Theme
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/themes", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/themes", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/components", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/components", true, true);
+
 		//copy public scripts
 		$arSITE_ID = [];
 		$sites = CLang::GetList('', '', ["ACTIVE" => "Y"]);
@@ -262,7 +303,7 @@ class learning extends CModule
 
 	function DoInstall()
 	{
-		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
 		$step = intval($step);
 		if ($step < 2)
 		{
@@ -280,7 +321,7 @@ class learning extends CModule
 
 	function DoUninstall()
 	{
-		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
 		$step = intval($step);
 		if ($step < 2)
 		{

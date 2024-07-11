@@ -1,7 +1,7 @@
 <?php
 
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\UI\FeaturePromoter;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -19,7 +19,7 @@ return [
 	],
 	'skip_core' => false,
 	'settings' => [
-		'popupProviderEnabled' => Option::get('ui', 'info-helper-popup-provider', 'N') === 'Y',
+		'popupProviderEnabled' => (new FeaturePromoter\PopupProviderAvailabilityChecker())->isAvailable(),
 		'licenseType' => Loader::includeModule('bitrix24') ? strtoupper(\CBitrix24::getLicenseType()) : null,
 	],
 ];

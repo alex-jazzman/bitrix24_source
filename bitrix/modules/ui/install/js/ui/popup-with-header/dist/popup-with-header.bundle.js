@@ -923,7 +923,7 @@ this.BX = this.BX || {};
 					${0}
 				</div>
 			</div>
-		`), config.icon ? babelHelpers.classPrivateFieldLooseBase(this, _getIcon)[_getIcon](config.icon) : null, config.title ? babelHelpers.classPrivateFieldLooseBase(this, _getTitle)[_getTitle](config.title) : null, config.description ? babelHelpers.classPrivateFieldLooseBase(this, _getDescription)[_getDescription](config.description) : null, config.more ? babelHelpers.classPrivateFieldLooseBase(this, _getMoreLink)[_getMoreLink](config.more) : null, config.button ? babelHelpers.classPrivateFieldLooseBase(this, _getButton)[_getButton](config.button) : null, config.button.description ? babelHelpers.classPrivateFieldLooseBase(this, _getButtonDescription)[_getButtonDescription](config.button.description) : null);
+		`), config.icon ? babelHelpers.classPrivateFieldLooseBase(this, _getIcon)[_getIcon](config.icon) : null, config.title ? babelHelpers.classPrivateFieldLooseBase(this, _getTitle)[_getTitle](config.title) : null, config.description ? babelHelpers.classPrivateFieldLooseBase(this, _getDescription)[_getDescription](config.description) : null, config.more ? babelHelpers.classPrivateFieldLooseBase(this, _getMoreLink)[_getMoreLink](config.more, config.button) : null, config.button ? babelHelpers.classPrivateFieldLooseBase(this, _getButton)[_getButton](config.button) : null, config.button.description ? babelHelpers.classPrivateFieldLooseBase(this, _getButtonDescription)[_getButtonDescription](config.button.description) : null);
 	}
 	function _getTitle2(config) {
 	  const title = main_core.Tag.render(_t2$5 || (_t2$5 = _$5`
@@ -950,14 +950,18 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldLooseBase(this, _setTextStyles)[_setTextStyles](description, config);
 	  return description;
 	}
-	function _getMoreLink2(config) {
+	function _getMoreLink2(config, configMainButton) {
 	  const onclick = () => {
+	    var _this$options;
 	    if (config.code) {
 	      ui_infoHelper.FeaturePromotersRegistry.getPromoter({
 	        code: config.code
 	      }).show();
 	    } else if (config.articleId) {
 	      top.BX.Helper.show(`redirect=detail&code=${config.articleId}`);
+	    }
+	    if ((_this$options = this.options) != null && _this$options.analyticsCallback) {
+	      this.options.analyticsCallback('click-more', configMainButton.url);
 	    }
 	  };
 	  const moreLink = main_core.Tag.render(_t5$3 || (_t5$3 = _$5`
@@ -977,11 +981,11 @@ this.BX = this.BX || {};
 	    tag: buttonTag,
 	    link: config.target ? null : config.url,
 	    onclick: () => {
-	      var _this$options;
+	      var _this$options2;
 	      if (config.target) {
 	        window.open(config.url, config.target);
 	      }
-	      if ((_this$options = this.options) != null && _this$options.analyticsCallback) {
+	      if ((_this$options2 = this.options) != null && _this$options2.analyticsCallback) {
 	        this.options.analyticsCallback('click-button', config.url);
 	      }
 	    }

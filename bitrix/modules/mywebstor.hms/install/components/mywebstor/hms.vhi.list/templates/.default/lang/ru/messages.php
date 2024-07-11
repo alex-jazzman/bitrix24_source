@@ -1,7 +1,0 @@
-<?
-
-$MESS["HMS_VHI_LIST_POPUP_ADD_BUTTON"] = "Добавить";
-$MESS["HMS_VHI_LIST_POPUP_CLOSE_BUTTON"] = "Закрыть";
-$MESS["HMS_VHI_LIST_POPUP_TITLE"] = "Выбрать из хранилища";
-$MESS["HMS_VHI_LIST_POPUP_TAG_SELECTOR_TITLE"] = "Выберите полис:";
-$MESS["HMS_VHI_LIST_POPUP_TAG_SELECTOR_ADD_BUTTON"] = "Выбрать";

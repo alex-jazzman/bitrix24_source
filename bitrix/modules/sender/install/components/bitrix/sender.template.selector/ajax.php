@@ -56,17 +56,21 @@ $actions[] =  Controller\Action::create('load')->setHandler(
 				'count' => $count,
 				'data' => [
 					'templateId' => $template['ID'],
-					'templateType' => $template['TYPE'] ?? '',
+					'templateType' => $template['TYPE'] ?? 'USER',
 					'messageFields' => [
-						'MESSAGE' => [
-							'CODE' => 'MESSAGE',
-							'VALUE' => \Bitrix\Sender\Security\Sanitizer::fixTemplateStyles($template['CONTENT'] ?? ''),
-							'ON_DEMAND' => \Bitrix\Sender\TemplateTable::isContentForBlockEditor($template['CONTENT'] ?? ''),
+						[
+							'code' => 'MESSAGE',
+							'value' => \Bitrix\Sender\Security\Sanitizer::fixTemplateStyles(
+								$template['CONTENT'] ?? ''
+							),
+							'onDemand' => \Bitrix\Sender\TemplateTable::isContentForBlockEditor(
+								$template['CONTENT'] ?? ''
+							),
 						],
-						'SUBJECT' => [
-							'CODE' => 'SUBJECT',
-							'VALUE' => $template['NAME'] ?? '',
-						]
+						[
+							'code' => 'SUBJECT',
+							'value' => $template['NAME'] ?? '',
+						],
 					],
 					'segments' => $template['SEGMENTS'] ?? '',
 					'dispatch' => $template['DISPATCH'] ?? '',

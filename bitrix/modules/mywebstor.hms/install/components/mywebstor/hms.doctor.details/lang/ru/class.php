@@ -1,8 +1,0 @@
-<?
-
-$MESS["HMS_DOCTOR_NEW_DOCTOR_TITLE"] = "Новый врач";
-
-$MESS["HMS_DOCTOR_ENTITY_SECTION_MAIN"] = "Общее";
-
-$MESS["HMS_DOCTOR_BUTTON_DELETE"] = "Удалить";
-$MESS["HMS_DOCTOR_BUTTON_COMMON_DOCUMENT"] = "Документ";

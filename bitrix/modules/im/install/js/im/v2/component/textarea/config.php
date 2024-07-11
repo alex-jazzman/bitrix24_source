@@ -17,6 +17,7 @@ return [
 		'im.v2.lib.sound-notification',
 		'im.v2.lib.channel',
 		'rest.client',
+		'im.v2.lib.feature',
 		'im.v2.lib.smile-manager',
 		'im.v2.lib.rest',
 		'im.v2.lib.entity-creator',

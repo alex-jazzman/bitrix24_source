@@ -196,6 +196,7 @@ CREATE TABLE b_sender_posting_recipient
   UNIQUE UK_SENDER_POSTING_RCPNT (POSTING_ID, CONTACT_ID)
 );
 CREATE INDEX IX_SENDER_POSTING_RECIP_1 on b_sender_posting_recipient(POSTING_ID, STATUS);
+CREATE INDEX IX_B_SENDER_POSTING_RECIPIENT_CONTACT_ID on b_sender_posting_recipient(CONTACT_ID);
 
 CREATE TABLE b_sender_posting_read
 (

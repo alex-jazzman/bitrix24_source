@@ -229,7 +229,6 @@ $tabControl->Buttons();
 </form>
 
 <script>
-<!--
 <?if ($STEP == 1):?>
 tabControl.SelectTab("edit1");
 tabControl.DisableTab("edit2");
@@ -237,7 +236,6 @@ tabControl.DisableTab("edit2");
 tabControl.SelectTab("edit2");
 tabControl.DisableTab("edit1");
 <?endif;?>
-//-->
 </script>
 
-<?require($DOCUMENT_ROOT."/bitrix/modules/main/include/epilog_admin.php");?>
+<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");?>

@@ -9,6 +9,7 @@ export const Feature = {
 	sidebarBriefs: 'sidebarBriefs',
 	zoomActive: 'zoomActive',
 	zoomAvailable: 'zoomAvailable',
+	giphyAvailable: 'giphyAvailable',
 };
 
 export const FeatureManager = {

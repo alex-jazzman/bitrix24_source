@@ -25,9 +25,9 @@ set_time_limit(0);
 $STEP = isset($_REQUEST['STEP']) ? intval($_REQUEST['STEP']) : 0;
 if ($STEP <= 0)
 	$STEP = 1;
-if ($REQUEST_METHOD == "POST" && $backButton <> '')
+if ($_SERVER['REQUEST_METHOD'] == "POST" && $backButton <> '')
 	$STEP = $STEP - 2;
-if ($REQUEST_METHOD == "POST" && $backButton2 <> '')
+if ($_SERVER['REQUEST_METHOD'] == "POST" && $backButton2 <> '')
 	$STEP = 1;
 
 $COURSE_ID = isset($_REQUEST['COURSE_ID']) ? intval($_REQUEST['COURSE_ID']) : 0;
@@ -274,7 +274,6 @@ $tabControl->End();
 </form>
 
 <script>
-<!--
 <?if ($STEP < 2):?>
 tabControl.SelectTab("edit1");
 tabControl.DisableTab("edit2");
@@ -288,7 +287,6 @@ tabControl.SelectTab("edit3");
 tabControl.DisableTab("edit1");
 tabControl.DisableTab("edit2");
 <?endif;?>
-//-->
 </script>
 
-<?require($DOCUMENT_ROOT."/bitrix/modules/main/include/epilog_admin.php");?>
+<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");?>

@@ -1958,7 +1958,6 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes, $helperC
 						array(
 							"MULTIPLE" => "N",
 							"NAME" => "Single_" . $chFilter['formId'],
-							'SHOW_EXTRANET_USERS' => 'NONE',
 							"INPUT_NAME" => $chFilter['formId'],
 							"VALUE" => $chFilter['value']['id'],
 							"POPUP" => "Y",

@@ -1,3 +1,0 @@
-<?
-
-$MESS["HMS_DOCGEN_DATAPROVIDER_OFFICE_TITLE"] = "Кабинет";

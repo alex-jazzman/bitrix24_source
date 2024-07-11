@@ -107,6 +107,8 @@
 	border-bottom: 1px solid transparent;
 	transition: color .3s;
 	cursor: pointer;
+	color: var(--ui-color-link-primary-base);
+	margin-left: 3px;
 }
 
 .ui-popupconstructor-content-item__more-link:hover {
@@ -398,7 +400,7 @@
 	font-weight: var(--ui-font-weight-regular);
 	font-size: var(--ui-font-size-3xs);
 	line-height: 14px;
-	color: rgba(var(--ui-color-on-primary-rgb), var(--ui-opacity-70));
+	color: rgba(var(--ui-color-on-primary-rgb), var(--ui-opacity-50));
 	letter-spacing: -.18px;
 }
 

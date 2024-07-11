@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_channel,rest_client,im_v2_lib_smileManager,im_v2_lib_rest,im_v2_lib_entityCreator,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_application_core,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_channel,rest_client,im_v2_lib_feature,im_v2_lib_smileManager,im_v2_lib_rest,im_v2_lib_entityCreator,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_application_core,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -3965,8 +3965,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    marketMenuItems() {
 	      return im_v2_lib_market.MarketManager.getInstance().getAvailablePlacementsByType(im_v2_const.PlacementType.smilesSelector, this.dialogId);
 	    },
+	    isGiphyAvailable() {
+	      return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.giphyAvailable);
+	    },
 	    tabs() {
-	      return [this.smilesTab, this.giphyTab, ...this.marketTabs];
+	      const tabs = [this.smilesTab];
+	      if (this.isGiphyAvailable) {
+	        tabs.push(this.giphyTab);
+	      }
+	      return [...tabs, ...this.marketTabs];
 	    },
 	    smilesTab() {
 	      return {
@@ -4009,7 +4016,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					<MessengerTabs :colorScheme="TabsColorScheme.gray" :tabs="tabs" @tabSelect="tabSelect"  />
 				</div>
 				<TabSmiles v-show="currentTab === TabType.default" :dialogId="dialogId" @close="$emit('close')" />
-				<TabGiphy v-show="currentTab === TabType.giphy" @close="$emit('close')" :dialogId="dialogId" />
+				<TabGiphy v-if="isGiphyAvailable" v-show="currentTab === TabType.giphy" @close="$emit('close')" :dialogId="dialogId" />
 				<TabMarket v-if="currentTab === TabType.market" :entityId="currentEntityId" :dialogId="dialogId" />
 			</div>
 		</MessengerPopup>
@@ -6765,5 +6772,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=textarea.bundle.js.map

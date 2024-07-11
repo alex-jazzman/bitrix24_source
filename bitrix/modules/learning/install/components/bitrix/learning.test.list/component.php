@@ -115,9 +115,6 @@ while($arTest = $rsTest->GetNext())
 		)
 	);
 
-	if ($_SERVER['REDIRECT_STATUS'] == '404' || isset($_REQUEST["SEF_APPLICATION_CUR_PAGE_URL"]))
-		$arTest["TEST_DETAIL_URL"] = "/bitrix/urlrewrite.php?SEF_APPLICATION_CUR_PAGE_URL=".urlencode($arTest["TEST_DETAIL_URL"]);
-
 	//Unfinished attempt exists?
 	$arTest["ATTEMPT"] = false;
 

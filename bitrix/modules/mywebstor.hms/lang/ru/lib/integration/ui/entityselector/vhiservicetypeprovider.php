@@ -1,6 +1,0 @@
-<?
-
-$MESS["HMS_ENTITY_SELECTOR_VHI_SERVICE_TYPE_YES"] = "Включено";
-$MESS["HMS_ENTITY_SELECTOR_VHI_SERVICE_TYPE_NO"] = "Исключено";
-$MESS["HMS_ENTITY_SELECTOR_TAB_TITLE"] = "Услуги вида полиса";
-$MESS["HMS_ENTITY_SELECTOR_TAB_HEADER"] = "Услуги вида полиса";

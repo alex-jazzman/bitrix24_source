@@ -1,8 +1,0 @@
-<?
-
-$MESS["HMS_OFFICE_BUTTON_DELETE"] = "Общее";
-
-$MESS["HMS_OFFICE_NEW_OFFICE_TITLE"] = "Новый кабинет";
-
-$MESS["HMS_OFFICE_ENTITY_SECTION_MAIN"] = "Общее";
-$MESS["HMS_OFFICE_BUTTON_COMMON_DOCUMENT"] = "Документ";
