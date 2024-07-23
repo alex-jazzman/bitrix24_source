@@ -39,6 +39,7 @@ $MESS["TASKS_FLOW_EDIT_FORM_HEADER_TITLE"] = "Створення потоку";
 $MESS["TASKS_FLOW_EDIT_FORM_HEADER_TITLE_EDIT"] = "Редагування потоку";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_AT_HALF_TIME"] = "Повідомляти виконавця на половині терміну";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_AT_HALF_TIME_HINT"] = "Наприклад, якщо до крайнього терміну залишилося 4 з 8 днів.";
+$MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_EMPTY_PROJECT_HINT"] = "Якщо ви не виберете проєкт, він буде створений автоматично.";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_ON_QUEUE_OVERFLOW"] = "Сповіщати, якщо завдань у черзі понад";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_ON_TASKS_IN_PROGRESS_OVERFLOW"] = "Сповіщати, якщо завдань у роботі понад";
 $MESS["TASKS_FLOW_EDIT_FORM_NOTIFY_WHEN_EFFICIENCY_DECREASES"] = "Сповіщати, якщо ефективність нижче";

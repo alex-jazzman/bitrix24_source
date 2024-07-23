@@ -1,0 +1,5 @@
+<?php
+$MESS["BIC_SCOPE_MENU_ITEM_NAME"] = "BI Builder";
+$MESS["BIC_SCOPE_NAME_BIZPROC"] = "Automation";
+$MESS["BIC_SCOPE_NAME_CRM"] = "CRM";
+$MESS["BIC_SCOPE_NAME_TASKS"] = "Tasks";

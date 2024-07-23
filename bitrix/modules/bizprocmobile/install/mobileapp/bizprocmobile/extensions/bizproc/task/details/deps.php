@@ -25,7 +25,6 @@ return [
 		'layout/ui/context-menu',
 		'layout/pure-component',
 		'layout/ui/fields/focus-manager',
-		'layout/ui/collapsible-text',
 		'selector/widget/factory',
 
 		'bizproc:workflow/comments',

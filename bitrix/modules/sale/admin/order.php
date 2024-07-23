@@ -908,9 +908,9 @@ $arID = array();
 if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 {
 	$arAffectedOrders = array();
-	$forAll =($_REQUEST['action_target'] == 'selected');
+	$forAll = Main\Application::getInstance()->getContext()->getRequest()->get('action_target') === 'selected';
 
-	if($forAll)
+	if ($forAll)
 	{
 		$filter = $arFilterTmp;
 		$arID = array();

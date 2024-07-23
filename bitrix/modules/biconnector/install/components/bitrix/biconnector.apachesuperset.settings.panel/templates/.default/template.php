@@ -23,8 +23,10 @@ Loader::includeModule('ui');
 Extension::load([
 	'ui.buttons',
 	'ui.icons',
+	'ui.countdown',
 	'ui.notification',
 	'ui.entity-editor',
+	'biconnector.apache-superset-cleaner',
 	'biconnector.apache-superset-analytics',
 ]);
 

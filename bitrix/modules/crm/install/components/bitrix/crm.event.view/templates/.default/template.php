@@ -162,6 +162,11 @@ $prefix = $arResult['GRID_ID'];
 					->getItemCategoryId($arResult['ENTITY_ID'])
 				;
 			}
+			if (\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled() && $showAddEventButton)
+			{
+				$showAddEventButton = (\Bitrix\Main\Config\Option::get('crm', 'enable_add_event_btn', 'N') === 'Y');
+			}
+
 			if ($showAddEventButton)
 			{
 				$toolbarButtons[] = [

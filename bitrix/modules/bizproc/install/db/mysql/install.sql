@@ -253,6 +253,7 @@ CREATE TABLE b_bp_script_queue (
 		WORKFLOW_PARAMETERS mediumtext NULL,
 		primary key (ID),
 		index ix_bp_sq_script_id(SCRIPT_ID),
+		index ix_bp_sq_script_id_status(SCRIPT_ID, STATUS),
 		index ix_bp_sq_started_by(STARTED_BY)
 );
 

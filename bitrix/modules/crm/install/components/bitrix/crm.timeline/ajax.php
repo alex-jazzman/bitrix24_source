@@ -459,6 +459,7 @@ elseif ($action === 'SAVE_SMS_MESSAGE')
 	$messageTo = isset($_REQUEST['MESSAGE_TO']) ? (string)$_REQUEST['MESSAGE_TO'] : null;
 	$messageBody = isset($_REQUEST['MESSAGE_BODY']) ? (string)$_REQUEST['MESSAGE_BODY'] : null;
 	$messageTemplateCode = $_REQUEST['MESSAGE_TEMPLATE'] ?? null;
+	$messageTemplateOriginalId = $_REQUEST['MESSAGE_TEMPLATE_ORIGINAL_ID'] ?? null;
 
 	$isTemplatesWithPlaceholdersBased = ($_REQUEST['MESSAGE_TEMPLATE_WITH_PLACEHOLDER'] ?? false) === 'true';
 
@@ -491,6 +492,7 @@ elseif ($action === 'SAVE_SMS_MESSAGE')
 		'to' => $messageTo,
 		'body' => $messageBody,
 		'template' => $messageTemplateCode,
+		'templateOriginalId' => $messageTemplateOriginalId,
 	]);
 
 	$messagePlaceholders = $_REQUEST['MESSAGE_PLACEHOLDERS'] ?? [];

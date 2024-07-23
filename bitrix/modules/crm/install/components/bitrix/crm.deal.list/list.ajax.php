@@ -281,16 +281,16 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 			$arErrors
 		);
 
-		//Region automation
-		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
-		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
-		//end region
-
 		$dealUpdateAction->after(static function ($processInventoryManagementResult) {
 			__CrmDealListEndResponse([
 				'ERROR' => current($processInventoryManagementResult->getErrorMessages()),
 			]);
 		});
+
+		//Region automation
+		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
+		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
+		//end region
 
 		__CrmDealListEndResponse(array('TYPE' => CCrmOwnerType::DealName, 'ID' => $ID, 'VALUE' => $stageID));
 	}

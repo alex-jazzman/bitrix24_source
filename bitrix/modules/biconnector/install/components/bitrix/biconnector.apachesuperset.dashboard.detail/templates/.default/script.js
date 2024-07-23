@@ -93,9 +93,6 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	  if (!BX.BIConnector.LimitLockPopup) {
 	    _classPrivateMethodGet(this, _initFrame, _initFrame2).call(this, babelHelpers.classPrivateFieldGet(this, _embeddedParams));
 	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _embeddedParams).sourceDashboard) {
-	    _classPrivateMethodGet(this, _onEditButtonClick, _onEditButtonClick2).call(this);
-	  }
 	};
 	function _subscribeEvents2() {
 	  var _this = this;
@@ -112,6 +109,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    babelHelpers.classPrivateFieldSet(_this, _canEdit, event.data.credentials.canEdit === 'Y');
 	    babelHelpers.classPrivateFieldSet(_this, _canExport, event.data.credentials.canExport === 'Y');
 	    babelHelpers.classPrivateFieldSet(_this, _embeddedParams, event.data.credentials);
+	    top.window.history.pushState(null, '', event.data.credentials.dashboardUrl);
 	    _classPrivateMethodGet(_this, _initFrame, _initFrame2).call(_this, event.data.credentials);
 	    _classPrivateMethodGet(_this, _initHeaderButtons, _initHeaderButtons2).call(_this);
 	  });
@@ -161,14 +159,12 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	  }
 	}
 	function _onEditButtonClick2() {
-	  var _babelHelpers$classPr,
-	    _this2 = this;
+	  var _this2 = this;
 	  _classPrivateMethodGet(this, _muteEditButton, _muteEditButton2).call(this);
 	  var dashboardInfo = {
 	    id: babelHelpers.classPrivateFieldGet(this, _embeddedParams).id,
 	    editLink: babelHelpers.classPrivateFieldGet(this, _embeddedParams).editUrl,
-	    type: babelHelpers.classPrivateFieldGet(this, _embeddedParams).type,
-	    sourceDashboardInfo: (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _embeddedParams).sourceDashboard) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : null
+	    type: babelHelpers.classPrivateFieldGet(this, _embeddedParams).type
 	  };
 	  babelHelpers.classPrivateFieldGet(this, _dashboardManager).processEditDashboard(dashboardInfo, function () {
 	    _classPrivateMethodGet(_this2, _unmuteEditButton, _unmuteEditButton2).call(_this2);
@@ -198,7 +194,9 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	        return;
 	      }
 	      top.BX.Main.gridManager.data.forEach(function (grid) {
-	        grid.instance.reload();
+	        if (grid.instance.getId() === 'biconnector_superset_dashboard_grid') {
+	          grid.instance.reload();
+	        }
 	      });
 	    });
 	  }
@@ -272,30 +270,16 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	      biconnector_apacheSupersetFeedbackForm.ApacheSupersetFeedbackForm.feedbackFormOpen();
 	    }
 	  }];
-	  var dashboardType = babelHelpers.classPrivateFieldGet(this, _embeddedParams).type.toLowerCase();
 	  if (babelHelpers.classPrivateFieldGet(this, _canExport)) {
 	    result.push({
 	      id: 'export',
 	      text: main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT'),
 	      title: main_core.Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT'),
 	      onclick: function onclick() {
-	        babelHelpers.classPrivateFieldGet(_this4, _dashboardManager).exportDashboard(babelHelpers.classPrivateFieldGet(_this4, _embeddedParams).id, function () {
-	          biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('edit', 'report_export', {
-	            c_element: 'detail_button',
-	            type: dashboardType,
-	            p1: biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(babelHelpers.classPrivateFieldGet(_this4, _embeddedParams).appId),
-	            p2: babelHelpers.classPrivateFieldGet(_this4, _embeddedParams).id,
-	            status: 'success'
-	          });
-	        }, function () {
-	          biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('edit', 'report_export', {
-	            c_element: 'detail_button',
-	            type: dashboardType,
-	            p1: biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(babelHelpers.classPrivateFieldGet(_this4, _embeddedParams).appId),
-	            p2: babelHelpers.classPrivateFieldGet(_this4, _embeddedParams).id,
-	            status: 'error'
-	          });
-	        });
+	        babelHelpers.classPrivateFieldGet(_this4, _moreMenu).getMenuItem('export').disable();
+	        babelHelpers.classPrivateFieldGet(_this4, _dashboardManager).exportDashboard(babelHelpers.classPrivateFieldGet(_this4, _embeddedParams).id, 'detail_button')["finally"](function () {
+	          babelHelpers.classPrivateFieldGet(_this4, _moreMenu).getMenuItem('export').enable();
+	        })["catch"](function () {});
 	      }
 	    });
 	  }
@@ -340,6 +324,30 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    key: "subscribeOnEvents",
 	    value: function subscribeOnEvents() {
 	      var _this = this;
+	      BX.PULL && BX.PULL.extendWatch('superset_dashboard', true);
+	      main_core_events.EventEmitter.subscribe('onPullEvent-biconnector', function (event) {
+	        var _event$data = babelHelpers.slicedToArray(event.data, 2),
+	          eventName = _event$data[0],
+	          eventData = _event$data[1];
+	        if (eventName !== 'onSupersetStatusUpdated' || !eventData) {
+	          return;
+	        }
+	        var status = eventData === null || eventData === void 0 ? void 0 : eventData.status;
+	        if (!status) {
+	          return;
+	        }
+	        switch (status) {
+	          case 'READY':
+	            window.location.reload();
+	            break;
+	          case 'LOAD':
+	            _this.showLoadingContent();
+	            break;
+	          case 'ERROR':
+	            _this.showErrorContent();
+	            break;
+	        }
+	      });
 	      main_core_events.EventEmitter.subscribe('BIConnector.Superset.DashboardManager:onDashboardBatchStatusUpdate', function (event) {
 	        var _BX$SidePanel;
 	        var data = event.getData();
@@ -366,15 +374,6 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	        } finally {
 	          _iterator.f();
 	        }
-	      });
-	      main_core_events.EventEmitter.subscribe('onPullEvent-biconnector', function (event) {
-	        var _event$getData = event.getData(),
-	          _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
-	          eventName = _event$getData2[0];
-	        if (eventName !== 'onSupersetUnfreeze') {
-	          return;
-	        }
-	        window.location.reload();
 	      });
 	    }
 	  }, {
@@ -407,6 +406,11 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    key: "showFailedContent",
 	    value: function showFailedContent() {
 	      _classPrivateMethodGet$1(this, _changeContent, _changeContent2).call(this, this.getFailedContent());
+	    }
+	  }, {
+	    key: "showErrorContent",
+	    value: function showErrorContent() {
+	      _classPrivateMethodGet$1(this, _changeContent, _changeContent2).call(this, this.getUnavailableSupersetHint());
 	    }
 	  }, {
 	    key: "getAnimationContainer",

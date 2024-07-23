@@ -6,6 +6,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 }
 
 use Bitrix\Bizproc;
+use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('RequestInformationActivity');
@@ -287,11 +289,15 @@ class CBPRequestInformationOptionalActivity extends CBPRequestInformationActivit
 					? $arTask["PARAMETERS"]["CommentLabelMessage"]
 					: GetMessage("BPAR_ACT_COMMENT")
 			;
-			throw new CBPArgumentNullException(
-				'task_comment',
-				GetMessage("BPRIA_ACT_COMMENT_ERROR", array(
-					'#COMMENT_LABEL#' => $label
-				))
+			self::$errors->setError(
+				new Error(
+					Loc::getMessage(
+						'BPRIA_ACT_COMMENT_ERROR',
+						[
+							'#COMMENT_LABEL#' => $label,
+						]
+					), 0, 'task_comment'
+				)
 			);
 		}
 

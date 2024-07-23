@@ -39,7 +39,7 @@ if (!empty($arResult['ERROR_MESSAGES']))
 		echo <<<HTML
 			<script>top.BX.UI.InfoHelper.show("{$helperCode}")
 			BX.ready(() => {
-				BX.BIConnector.ApacheSupersetCleaner.Instance = new BX.BIConnector.ApacheSupersetCleaner();
+				BX.BIConnector.ApacheSupersetTariffCleaner.Instance = new BX.BIConnector.ApacheSupersetTariffCleaner();
 			})
 			</script>
 		HTML;

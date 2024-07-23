@@ -1,7 +1,7 @@
 <?
 if(!IsModuleInstalled("currency"))
 {
-	echo CAdminMessage::ShowMessage(GetMessage("SALE_INSTALL_CURRENCY"));
+	CAdminMessage::ShowMessage(GetMessage("SALE_INSTALL_CURRENCY"));
 	?>
 	<form action="<?echo $APPLICATION->GetCurPage()?>">
 	<p>

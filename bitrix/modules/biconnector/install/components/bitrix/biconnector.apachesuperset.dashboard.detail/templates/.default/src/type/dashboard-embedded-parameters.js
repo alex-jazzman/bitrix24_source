@@ -1,5 +1,3 @@
-import type { SourceDashboardInfo } from 'biconnector.apache-superset-dashboard-manager';
-
 export type DashboardEmbeddedParameters = {
 	uuid: string,
 	id: number,
@@ -10,6 +8,4 @@ export type DashboardEmbeddedParameters = {
 	editUrl: string,
 	type: string,
 	appId: string,
-
-	sourceDashboard: SourceDashboardInfo
 }

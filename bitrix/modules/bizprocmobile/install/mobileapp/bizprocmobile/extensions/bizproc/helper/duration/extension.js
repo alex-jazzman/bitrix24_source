@@ -2,7 +2,7 @@
  * @module bizproc/helper/duration
 */
 jn.define('bizproc/helper/duration', (require, exports, module) => {
-	const { Duration } = require('utils/date/duration');
+	const { Duration } = require('utils/date');
 
 	/**
 	 * @param {number} timeInSeconds

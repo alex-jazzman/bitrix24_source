@@ -43,7 +43,7 @@ jn.define('bizproc/task/tasks-performer/informers/task-list-informer', (require,
 							mediumPositionPercent: 93,
 							navigationBarColor: AppTheme.colors.bgSecondary,
 							swipeAllowed: true,
-							swipeContentAllowed: false,
+							swipeContentAllowed: true,
 							horizontalSwipeAllowed: false,
 						},
 						onReady: (readyLayout) => {

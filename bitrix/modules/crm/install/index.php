@@ -748,6 +748,11 @@ class crm extends CModule
 		\Bitrix\Crm\Settings\LiveFeedSettings::getCurrent()->enableLiveFeedMerge(false);
 		\Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::setAvailable(false);
 
+		\Bitrix\Crm\Settings\ActivitySettings::setValue(
+			\Bitrix\Crm\Settings\ActivitySettings::ENABLE_CALENDAR_EVENTS_SETTINGS,
+			false,
+		);
+
 		\Bitrix\Crm\EntityRequisite::installDefaultPresets();
 
 		// Adjust default address zone
@@ -790,6 +795,12 @@ class crm extends CModule
 			'PHASE_GROUP_TYPE_ID' => \Bitrix\Crm\Attribute\FieldAttributePhaseGroupType::ALL,
 			'IS_CUSTOM_FIELD' => false,
 		]);
+
+		$existedSequenceRecord = $DB->Query("select SEQUENCE_NAME from b_crm_sequences where SEQUENCE_NAME='dynamic_type_id'")->Fetch();
+		if (!$existedSequenceRecord)
+		{
+			$DB->Query("insert into b_crm_sequences (SEQUENCE_NAME, SEQUENCE_VALUE) VALUES ('dynamic_type_id', 1030);");
+		}
 
 		if (\Bitrix\Main\Loader::includeModule('intranet'))
 		{
@@ -1791,7 +1802,7 @@ class crm extends CModule
 
 		CAgent::AddAgent('\Bitrix\Crm\Ml\PredictionQueue::processQueue();', 'crm', 'N', 300);
 		CAgent::AddAgent('\Bitrix\Crm\Ml\Agent\Retraining::run();', 'crm', 'N', 86400);
-		CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 86400);
+		CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 3600);
 
 		CAgent::AddAgent(
 			'Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\LeadDuplicateIndexRebuildAgent::run();',
@@ -1911,6 +1922,19 @@ class crm extends CModule
 		\CAgent::AddAgent(
 			'Bitrix\Crm\Agent\Badge\RemoveOldEntityBadgesAgent::run();',
 			'crm'
+		);
+
+		CAgent::AddAgent(
+			'Bitrix\Crm\Agent\Duplicate\DedupeCacheCleanerAgent::run();',
+			'crm',
+			'N',
+			3600 * 24,
+			'',
+			'Y',
+			time() + \CTimeZone::GetOffset() + 600,
+			100,
+			false,
+			false
 		);
 	}
 

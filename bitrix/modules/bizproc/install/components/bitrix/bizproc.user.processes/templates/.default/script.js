@@ -437,7 +437,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        WORKFLOW_STATE: main_core.Text.encode(workflow.statusText),
 	        DOCUMENT_NAME: renderer.renderDocumentName(),
 	        WORKFLOW_TEMPLATE_NAME: main_core.Text.encode(workflow.templateName),
-	        TASK_DESCRIPTION: (_workflow$task = workflow.task) == null ? void 0 : _workflow$task.description,
+	        TASK_DESCRIPTION: main_core.Dom.create('span', {
+	          html: ((_workflow$task = workflow.task) == null ? void 0 : _workflow$task.description) || ''
+	        }),
 	        MODIFIED: renderer.renderModified(),
 	        WORKFLOW_STARTED: main_core.Text.encode(workflow.workflowStarted),
 	        WORKFLOW_STARTED_BY: main_core.Text.encode(workflow.startedBy),
@@ -560,7 +562,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	          if (main_core.Type.isNil(list.url)) {
 	            const params = {
 	              iBlockTypeId: list.iBlockTypeId,
-	              iBlockId: list.iBlockId
+	              iBlockId: list.iBlockId,
+	              analyticsP1: list.name
 	            };
 	            if (list.selected === true) {
 	              selectedIBlockSliderParams = params;
@@ -587,7 +590,20 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      }
 	      button.onclick = event => {
 	        event.preventDefault();
-	        popupMenu.show();
+	        if (!popupMenu.getPopupWindow().isShown()) {
+	          main_core.Runtime.loadExtension('ui.analytics').then(({
+	            sendData
+	          }) => {
+	            sendData({
+	              tool: 'automation',
+	              category: 'bizproc_operations',
+	              event: 'drawer_open',
+	              c_section: 'bizproc',
+	              c_element: 'button'
+	            });
+	          }).catch(() => {});
+	        }
+	        popupMenu.toggle();
 	      };
 	    }
 	    if (selectedIBlockSliderParams) {

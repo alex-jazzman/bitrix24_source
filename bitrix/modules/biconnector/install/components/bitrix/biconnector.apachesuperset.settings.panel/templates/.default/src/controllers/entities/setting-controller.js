@@ -73,6 +73,8 @@ export class SettingController extends BX.UI.EntityEditorController
 			return;
 		}
 
+		parent.BX.Event.EventEmitter.emit('BX.BIConnector.Settings:onAfterSave');
+
 		const gridInstance = parent.BX.Main.gridManager.getById('biconnector_superset_dashboard_grid')?.instance;
 
 		if (gridInstance)

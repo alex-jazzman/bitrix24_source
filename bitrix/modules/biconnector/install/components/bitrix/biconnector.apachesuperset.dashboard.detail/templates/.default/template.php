@@ -16,7 +16,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
-use Bitrix\BIConnector\Integration\Superset\Integrator\SupersetServiceLocation;
+use Bitrix\BIConnector\Integration\Superset\Integrator\ServiceLocation;
 
 Loader::includeModule('biconnector');
 Loader::includeModule('ui');
@@ -62,6 +62,7 @@ Extension::load([
 	'biconnector.apache-superset-dashboard-manager',
 	'biconnector.apache-superset-dashboard-selector',
 	'biconnector.apache-superset-feedback-form',
+	'biconnector.dashboard-export-master',
 	'ui.buttons',
 	'ui.entity-selector',
 	'ui.feedback.form',
@@ -75,7 +76,7 @@ $dashboardTitle = htmlspecialcharsbx($arResult['DASHBOARD_TITLE']);
 $APPLICATION->SetTitle($dashboardTitle);
 
 $supersetServiceLocation = $arResult['SUPERSET_SERVICE_LOCATION'];
-if ($supersetServiceLocation === SupersetServiceLocation::DATACENTER_LOCATION_REGION_EN)
+if ($supersetServiceLocation === ServiceLocation::DATACENTER_LOCATION_REGION_EN)
 {
 	$biBuilderLogo = $templateFolder . '/images/bi-builder-logo-en.svg';
 }
@@ -160,7 +161,6 @@ if (!$limitManager->checkLimitWarning())
 					'editUrl' => $arResult['DASHBOARD_EDIT_URL'],
 					'supersetDomain' => \CUtil::JSEscape($arResult['SUPERSET_DOMAIN']),
 					'type' => $arResult['DASHBOARD_TYPE'],
-					'sourceDashboard' => $arResult['SOURCE_DASHBOARD_DATA'] ?? null,
 					'appId' => $arResult['DASHBOARD_APP_ID'],
 				],
 			]) ?>

@@ -2,7 +2,6 @@
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\Loader;
 use Bitrix\Iblock\UserField\Types\ElementType;
 
 if(isset($arResult['additionalParameters']['bVarsFromForm']) && $arResult['additionalParameters']['bVarsFromForm'])
@@ -39,6 +38,11 @@ else
 	$value = '';
 	$display = ElementType::DISPLAY_LIST;
 	$listHeight = 5;
+}
+
+if (!in_array($display, [ElementType::DISPLAY_LIST, ElementType::DISPLAY_CHECKBOX], true))
+{
+	$display = ElementType::DISPLAY_LIST;
 }
 
 /**

@@ -2800,6 +2800,7 @@ CREATE TABLE b_crm_cleaning (
   ENTITY_TYPE_ID int NOT NULL,
   CREATED_TIME timestamp NOT NULL,
   LAST_UPDATED_TIME timestamp NOT NULL,
+  FORCE_USER_ID int,
   PRIMARY KEY (ENTITY_ID, ENTITY_TYPE_ID)
 );
 CREATE INDEX ix_b_crm_cleaning_created_time ON b_crm_cleaning (created_time);
@@ -3708,3 +3709,9 @@ CREATE TABLE b_crm_automated_solution (
 );
 CREATE INDEX ix_b_crm_automated_solution_code ON b_crm_automated_solution (code);
 CREATE INDEX ix_b_crm_automated_solution_intranet_custom_section_id ON b_crm_automated_solution (intranet_custom_section_id);
+
+CREATE TABLE b_crm_sequences (
+	SEQUENCE_NAME varchar(50) NOT NULL,
+	SEQUENCE_VALUE int NOT NULL DEFAULT 0,
+	PRIMARY KEY(SEQUENCE_NAME)
+)

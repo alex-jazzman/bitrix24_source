@@ -32,7 +32,7 @@ endif;
 <div class="reviews-reply-form" <?=(($arParams['SHOW_MINIMIZED'] == "Y") ? 'style="display:none;"' : '' )?>>
 <form name="<?=$arParams["FORM_ID"] ?>" id="<?=$arParams["FORM_ID"]?>" action="<?=POST_FORM_ACTION_URI?>#postform"<?
 ?> method="POST" enctype="multipart/form-data" class="reviews-form">
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		BX.Forum.Init({
 			id : <?=CUtil::PhpToJSObject(array_keys($arResult["MESSAGES"]))?>,

@@ -2,7 +2,6 @@
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\Loader;
 use Bitrix\Iblock\UserField\Types\SectionType;
 use Bitrix\Main\Text\HtmlFilter;
 
@@ -39,6 +38,11 @@ else
 	$value = '';
 	$display = SectionType::DISPLAY_LIST;
 	$listHeight = 5;
+}
+
+if (!in_array($display, [SectionType::DISPLAY_LIST, SectionType::DISPLAY_CHECKBOX], true))
+{
+	$display = SectionType::DISPLAY_LIST;
 }
 
 /**

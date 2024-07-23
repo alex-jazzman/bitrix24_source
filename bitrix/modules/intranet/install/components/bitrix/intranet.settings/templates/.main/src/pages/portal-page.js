@@ -48,7 +48,7 @@ export class PortalPage extends BaseSettingsPage
 			EventEmitter.GLOBAL_TARGET,
 			this.getEventNamespace() + ':ThemePicker:Change',
 			(baseEvent: BaseEvent) => {
-				this.getAnalytic()?.addEventConfigPortal(AnalyticSettingsEvent.CHANGE_PORTAL_THEME);
+				this.getAnalytic()?.addEventChangeTheme(baseEvent.data?.id);
 			}
 		);
 	}

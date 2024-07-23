@@ -422,7 +422,6 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 	print (Tour\NumberOfClients::getInstance())->build();
 
 	NotificationsManager::showSignUpFormOnCrmShopCreated();
-	print (Tour\SortByLastActivityTime::getInstance())->build();
 endif;
 
 if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))

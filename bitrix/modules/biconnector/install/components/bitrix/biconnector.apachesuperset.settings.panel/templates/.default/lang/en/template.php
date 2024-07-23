@@ -1,12 +1,22 @@
 <?php
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON"] = "Update data now";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_0"] = "Update will be available in #COUNT# minute.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_1"] = "Update will be available in #COUNT# minutes.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_2"] = "Update will be available in #COUNT# minutes.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_ERROR"] = "Cannot update dashboard data.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_HINT_LINK"] = "Data will be updated for all dashboards. You can update data again after the update lock timer has elapsed. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_SUCCESS"] = "Dashboard data has been updated.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_COPIED"] = "Key has been copied.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_HINT_LINK"] = "This key is used to encrypt dashboard data the system sends from Bitrix24 to BI Builder. Refresh the key if you think it's compromised. #HINT_LINK#";
-$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON"] = "Refresh";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON_MSGVER_1"] = "Update key";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT"] = "This date range will be used for all dashboards that don't specify a custom date range. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT_LINK"] = "Learn more";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK"] = "Learn more";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_RANGE_FIELD_HINT"] = "New date range will be applied to this dashboard only.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_DELETE_BUTTON"] = "Disable";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_HINT"] = "Your dashboards, datasets and settings will be lost irrevocably if you disable BI Builder. You will have to set up your BI Builder environment again. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Error refreshing key.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Key has been refreshed.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK"] = "Select employees who will receive notifications when a new dashboard or update is available. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK"] = "Dashboard owner has full access to the dashboard. You can lose your access if you change dashboard owner. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_SCOPE_HINT_LINK"] = "This dashboard will be present in the selected Bitrix24 areas. #HINT_LINK#";

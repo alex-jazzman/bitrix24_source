@@ -118,6 +118,8 @@ export default {
 			<td 
 				v-if="!entity.stageField"
 				class="bx-crm-perms-desk-row-item"
+				data-permission-code="MORE"
+				:data-permission-entity="entity.entityCode"
 			>
 				<span
 					v-if="isShowMore"

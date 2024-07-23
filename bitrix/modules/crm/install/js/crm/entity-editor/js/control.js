@@ -666,10 +666,19 @@ if(typeof BX.Crm.EntityEditorMoneyPay === 'undefined')
 				context: 'deal',
 				templateMode: 'create',
 				mode: entityTypeId === BX.CrmEntityType.enumeration.deal ? mode : 'payment',
+				// old analytics label; to be removed eventually
 				analyticsLabel: 'salescenterClickButtonPay',
 				ownerTypeId: entityTypeId,
 				ownerId: ownerInfo.ownerID,
 				orderId: orderId,
+				st: {
+					tool: 'crm',
+					category: 'payments',
+					event: 'payment_create_click',
+					c_section: 'crm',
+					c_sub_section: 'web',
+					type: 'payment',
+				}
 			};
 		}
 
@@ -2460,7 +2469,8 @@ if(typeof BX.Crm.EntityEditorFileStorage === "undefined")
 	BX.Crm.EntityEditorFileStorage.prototype.getDiskUploaderValues = function()
 	{
 		var uploader = BX.CrmDiskUploader.items[this._uploaderName];
-		return uploader ? uploader.getFileIds() : [];
+
+		return uploader ? uploader.getFileRawIds() : [];
 	};
 	BX.Crm.EntityEditorFileStorage.prototype.getMessage = function(name)
 	{

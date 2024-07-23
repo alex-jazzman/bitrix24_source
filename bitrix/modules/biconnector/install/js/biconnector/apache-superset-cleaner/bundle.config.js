@@ -1,6 +1,6 @@
 module.exports = {
-	input: 'src/apache-superset-cleaner.js',
-	output: 'dist/apache-superset-cleaner.bundle.js',
+	input: 'src/index.js',
+	output: 'dist/index.bundle.js',
 	namespace: 'BX.BIConnector',
 	minification: true,
 	sourceMaps: false,

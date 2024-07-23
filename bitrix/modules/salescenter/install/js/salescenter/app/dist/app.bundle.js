@@ -309,7 +309,8 @@ this.BX = this.BX || {};
 	      ownerTypeId: this.$root.$app.options.ownerTypeId,
 	      dialogId: this.$root.$app.options.dialogId,
 	      sessionId: this.$root.$app.options.sessionId,
-	      isShortProductViewFormat: true
+	      isShortProductViewFormat: true,
+	      enableEmptyProductError: false
 	    });
 	    this.checkProductErrors();
 	    main_core_events.EventEmitter.subscribe(this.productForm, 'ProductForm:onBasketChange', main_core.Runtime.debounce(this.onBasketChange, 500, this));
@@ -429,15 +430,7 @@ this.BX = this.BX || {};
 	    },
 	    isNeedDisableSubmit: function isNeedDisableSubmit() {
 	      var basket = this.$store.getters['orderCreation/getBasket']();
-	      if (basket.length <= 0
-	      // || !this.$root.$app.hasClientContactInfo()
-	      || this.productForm && main_core.Type.isFunction(this.productForm.hasErrors) && this.productForm.hasErrors()) {
-	        return true;
-	      }
-	      var filledProducts = basket.filter(function (item) {
-	        return main_core.Type.isStringFilled(item.module) && item.productId > 0;
-	      });
-	      return filledProducts.length <= 0;
+	      return basket.length <= 0 || this.productForm && main_core.Type.isFunction(this.productForm.hasErrors) && this.productForm.hasErrors();
 	    }
 	  },
 	  template: "\n\t\t<div class=\"salescenter-app-payment-side\">\n\t\t\t<div class=\"salescenter-app-page-content\">\n\t\t\t\t<div class=\"salescenter-app-form-wrapper\"></div>\n\t\t\t\t<slot name=\"footer\"></slot>\n\t\t\t</div>\n\t\t</div>\n\t"

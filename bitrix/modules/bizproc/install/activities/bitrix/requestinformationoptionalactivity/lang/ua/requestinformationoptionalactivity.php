@@ -1,7 +1,8 @@
 <?php
 $MESS["BPAR_PD_TASK_BUTTON_CANCEL_MESSAGE"] = "Текст кнопки відхилення в завданні";
+$MESS["BPAR_PD_TASK_BUTTON_CANCEL_MESSAGE_MSGVER_1"] = "Текст кнопки відхилення в завданні";
 $MESS["BPRIA_PD_CANCEL_TYPE"] = "Тип відхилення";
-$MESS["BPRIA_PD_CANCEL_TYPE_ALL"] = "Всі співробітники";
+$MESS["BPRIA_PD_CANCEL_TYPE_ALL"] = "Усі співробітники";
 $MESS["BPRIA_PD_CANCEL_TYPE_ANY"] = "Будь-який співробітник";
 $MESS["BPRIA_PD_SAVE_VARIABLES"] = "Зберігати значення в разі відмови";
 $MESS["BPRIOA_ACT_APPROVE_TRACK"] = "Користувач #PERSON# ввів додаткову інформацію#COMMENT#";
@@ -17,8 +18,8 @@ $MESS["BPRIOA_ACT_PROP_EMPTY4"] = "Властивість 'Назва' не вк
 $MESS["BPRIOA_ACT_TRACK1"] = "Надати додаткову інформацію повинен #VAL#";
 $MESS["BPRIOA_ARGUMENT_NULL"] = "Не заповнено обов'язкове значення '#PARAM#'";
 $MESS["BPRIOA_LOG_COMMENTS"] = "Коментар";
-$MESS["BPSFA_COMMENT_REQUIRED_YA"] = "Тільки при затвердженні";
-$MESS["BPSFA_COMMENT_REQUIRED_YR"] = "Тільки при відхиленні";
-$MESS["BPSFA_PD_CANCEL"] = "Скасування";
-$MESS["BPSFA_PD_NO"] = "Немає";
+$MESS["BPSFA_COMMENT_REQUIRED_YA"] = "Лише при затвердженні";
+$MESS["BPSFA_COMMENT_REQUIRED_YR"] = "Лише при відхиленні";
+$MESS["BPSFA_PD_CANCEL"] = "Скасувати";
+$MESS["BPSFA_PD_NO"] = "Ні";
 $MESS["BPSFA_PD_YES"] = "Так";

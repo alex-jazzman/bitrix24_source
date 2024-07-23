@@ -33,7 +33,7 @@ if(empty($templateName))
 $params = [];
 $params['ACCOUNT_NUMBER'] = (string)($orderData['order'] ?? '');
 $params['PAYMENT_NUMBER'] = (string)($orderData['payment'] ?? '');
-$params['PATH_TO_PAYMENT'] = $orderData['path_to_payment'] <> '' ? htmlspecialcharsbx($orderData['path_to_payment']) : "";
+$params['PATH_TO_PAYMENT'] = htmlspecialcharsbx((string)($orderData['path_to_payment'] ?? ''));
 $params['REFRESH_PRICES'] = ($orderData['refresh_prices'] ?? 'N') === 'Y' ? 'Y' : 'N';
 $params['RETURN_URL'] = (string)($orderData['return_url'] ?? '');
 if (CBXFeatures::IsFeatureEnabled('SaleAccounts'))

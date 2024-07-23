@@ -64,6 +64,7 @@ export default class TextPopup
 			<input 
 				type="text" 
 				value="${Text.encode(this.#value)}"
+				maxlength="255"
 				placeholder="${Loc.getMessage('CRM_TEMPLATE_EDITOR_SELECT_FIELD_PLACEHOLDER')}
 			">
 		`;

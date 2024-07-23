@@ -44,13 +44,6 @@ if (isset($_REQUEST["PARAMS"]['RECEIVER']) && is_string($_REQUEST["PARAMS"]['REC
 
 $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
 
-if ($isPost && !isset($_REQUEST['saveresult']) && !isset($_REQUEST['IBLOCK_ID']))
-	CUtil::JSPostUnescape();
-elseif ($bSectionPopup && $bReload)
-	CUtil::JSPostUnescape();
-elseif ($adminAjaxHelper->isAjaxRequest())
-	CUtil::JSPostUnescape();
-
 global $DB, $APPLICATION, $USER;
 
 const DEF_LIST_VALUE_COUNT = 5;
@@ -724,7 +717,7 @@ elseif (!$bReload && $isPost && isset($_POST['saveresult']))
 	$arProperty['PROPINFO'] = base64_encode(serialize($arHidden));
 
 	$strResult = CUtil::PhpToJSObject($arProperty);
-	?><script type="text/javascript">
+	?><script>
 	var currentWindow = top.window;
 	if (top.BX.SidePanel && top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
 	{
@@ -892,7 +885,7 @@ elseif(!$bReload && $isPost && (isset($_POST["save"]) || isset($_POST["apply"]))
 				}
 				$type = htmlspecialcharsbx($type);
 
-				echo '<script type="text/javascript">
+				echo '<script>
 					var currentWindow = top.window;
 					if (top.BX.SidePanel && top.BX.SidePanel.Instance && top.BX.SidePanel.Instance.getTopSlider())
 					{
@@ -1245,7 +1238,7 @@ elseif($message)
 	echo $message->Show();
 
 	?>
-	<script type="text/javascript">
+	<script>
 	function jsDelete(form_id, message)
 	{
 		var _form = BX(form_id);
@@ -2066,7 +2059,7 @@ if ($enablePropertyFeatures && !empty($currentFeatures))
 		?></tbody></table><?php
 	}
 	?></div></form>
-<script type="text/javascript"><?php
+<script><?php
 	if ($arProperty['PROPERTY_TYPE'] == Iblock\PropertyTable::TYPE_LIST)
 	{
 ?>

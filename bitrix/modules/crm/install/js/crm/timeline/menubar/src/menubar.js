@@ -68,6 +68,11 @@ export class MenuBar
 		return this.#items[id] ?? null;
 	}
 
+	getContainer(): HTMLElement
+	{
+		return this.#container;
+	}
+
 	onMenuItemClick(selectedItemId: String): void
 	{
 		if (this.#isReadonly)
@@ -105,6 +110,18 @@ export class MenuBar
 		}
 
 		return false;
+	}
+
+	scrollIntoView(): void
+	{
+		this
+			.getContainer()
+			.scrollIntoView({
+				behavior: 'smooth',
+				block: 'end',
+				inline: 'nearest',
+			})
+		;
 	}
 
 	#onItemFinishEdit(): void

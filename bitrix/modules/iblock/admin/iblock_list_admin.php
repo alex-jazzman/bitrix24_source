@@ -268,7 +268,6 @@ $boolCatalogProductAdd = false;
 $boolCatalogProductEdit = false;
 $boolCatalogProductDelete = false;
 $showCatalogWithOffers = false;
-$useSummaryStoreAmount = false;
 $productTypeList = array();
 $productLimits = false;
 $priceTypeList = array();
@@ -293,7 +292,6 @@ if ($bCatalog)
 	$boolCatalogPrice = $accessController->check(ActionDictionary::ACTION_PRICE_EDIT);
 	$boolCatalogPurchasInfo = $accessController->check(ActionDictionary::ACTION_PRODUCT_PURCHASE_INFO_VIEW);
 	$boolCatalogSet = Catalog\Config\Feature::isProductSetsEnabled();
-	$useSummaryStoreAmount = \CCatalogAdminTools::needSummaryStoreAmountByPermissions();
 	$enableConversionToService = Main\Config\Option::get('catalog', 'enable_convert_product_to_service') === 'Y';
 	$arCatalog = CCatalogSKU::GetInfoByIBlock($arIBlock["ID"]);
 	if (empty($arCatalog))
@@ -608,15 +606,12 @@ if ($bCatalog)
 		),
 		"filterable" => ""
 	);
-	if (!$useSummaryStoreAmount)
-	{
-		$filterFields[] = [
-			"id" => "QUANTITY",
-			"name" => GetMessage("IBLIST_A_CATALOG_QUANTITY_EXT"),
-			"type" => "number",
-			"filterable" => ""
-		];
-	}
+	$filterFields[] = [
+		"id" => "QUANTITY",
+		"name" => GetMessage("IBLIST_A_CATALOG_QUANTITY_EXT"),
+		"type" => "number",
+		"filterable" => ""
+	];
 	$filterFields[] = array(
 		"id" => "MEASURE",
 		"name" => GetMessage("IBLIST_A_CATALOG_MEASURE_TITLE"),
@@ -1080,27 +1075,24 @@ if($bCatalog)
 
 	if ($arCatalog['CATALOG_TYPE'] !== CCatalogSKU::TYPE_PRODUCT)
 	{
-		if (\CCatalogAdminTools::allowedShowQuantityFields())
-		{
-			$arHeader[] = [
-				"id" => "CATALOG_QUANTITY",
-				"content" => ($pageConfig["USE_NEW_CARD"]
-					? GetMessage("IBLIST_A_CATALOG_QUANTITY_NEW_CARD")
-					: GetMessage("IBLIST_A_CATALOG_QUANTITY_EXT")
-				),
-				"align" => "right",
-				"sort" => ($pageConfig["USE_NEW_CARD"] || $useSummaryStoreAmount ? "" : "QUANTITY"),
-				"column_sort" => 400,
-			];
-			$arHeader[] = [
-				"id" => "CATALOG_QUANTITY_RESERVED",
-				"content" => ($pageConfig["USE_NEW_CARD"]
-					? GetMessage("IBLIST_A_CATALOG_QUANTITY_RESERVED_NEW_CARD")
-					: GetMessage("IBLIST_A_CATALOG_QUANTITY_RESERVED")
-				),
-				"align" => "right",
-			];
-		}
+		$arHeader[] = [
+			"id" => "CATALOG_QUANTITY",
+			"content" => ($pageConfig["USE_NEW_CARD"]
+				? GetMessage("IBLIST_A_CATALOG_QUANTITY_NEW_CARD")
+				: GetMessage("IBLIST_A_CATALOG_QUANTITY_EXT")
+			),
+			"align" => "right",
+			"sort" => ($pageConfig["USE_NEW_CARD"] ? "" : "QUANTITY"),
+			"column_sort" => 400,
+		];
+		$arHeader[] = [
+			"id" => "CATALOG_QUANTITY_RESERVED",
+			"content" => ($pageConfig["USE_NEW_CARD"]
+				? GetMessage("IBLIST_A_CATALOG_QUANTITY_RESERVED_NEW_CARD")
+				: GetMessage("IBLIST_A_CATALOG_QUANTITY_RESERVED")
+			),
+			"align" => "right",
+		];
 		$arHeader[] = array(
 			"id" => "CATALOG_MEASURE_RATIO",
 			"content" => GetMessage("IBLIST_A_CATALOG_MEASURE_RATIO"),
@@ -2043,40 +2035,57 @@ if($lAdmin->EditAction())
 						{
 							continue;
 						}
+						if (!(is_string($arPrice[$priceTypeId]) && is_string($arCurrency[$priceTypeId])))
+						{
+							continue;
+						}
 
 						if (
 							$arPrice[$priceTypeId] != $CATALOG_PRICE_old[$elID][$priceTypeId]
 							|| $arCurrency[$priceTypeId] != $CATALOG_CURRENCY_old[$elID][$priceTypeId]
 						)
 						{
-							if ($arCatalogGroup["BASE"] == 'Y') // if base price check extra for other prices
+							if ($arCatalogGroup['BASE'] === 'Y') // if base price check extra for other prices
 							{
 								$arFields = array(
 									"PRODUCT_ID" => $elID,
-									"CATALOG_GROUP_ID" => $arCatalogGroup["ID"],
-									"PRICE" => $arPrice[$arCatalogGroup["ID"]],
-									"CURRENCY" => $arCurrency[$arCatalogGroup["ID"]],
-									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$arCatalogGroup["ID"]],
-									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$arCatalogGroup["ID"]],
+									"CATALOG_GROUP_ID" => $priceTypeId,
+									"PRICE" => $arPrice[$priceTypeId],
+									"CURRENCY" => $arCurrency[$priceTypeId],
+									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$priceTypeId],
+									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$priceTypeId],
 								);
-								if (is_string($arFields['PRICE']))
-									$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
-								if($arFields["PRICE"] < 0 || trim($arFields["PRICE"]) === '')
-									CPrice::Delete($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]]);
-								elseif((int)$CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]] > 0)
-									CPrice::Update($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]], $arFields);
-								elseif($arFields["PRICE"] >= 0)
+								$deletePrice = false;
+								$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
+								if (trim($arFields['PRICE']) === '')
+								{
+									$deletePrice = true;
+								}
+								$arFields['PRICE'] = (float)$arFields['PRICE'];
+								if ($arFields['PRICE'] < 0)
+								{
+									$deletePrice = true;
+								}
+
+								if ($deletePrice)
+								{
+									CPrice::Delete($CATALOG_PRICE_ID[$elID][$priceTypeId]);
+								}
+								elseif ((int)($CATALOG_PRICE_ID[$elID][$priceTypeId] ?? null) > 0)
+								{
+									CPrice::Update($CATALOG_PRICE_ID[$elID][$priceTypeId], $arFields);
+								}
+								else
+								{
 									CPrice::Add($arFields);
+								}
 
 								$arPrFilter = array(
 									"PRODUCT_ID" => $elID,
+									"!CATALOG_GROUP_ID" => $priceTypeId,
+									"+QUANTITY_FROM" => "1",
+									"!EXTRA_ID" => false,
 								);
-								if ($arPrice[$arCatalogGroup["ID"]] >= 0)
-								{
-									$arPrFilter["!CATALOG_GROUP_ID"] = $arCatalogGroup["ID"];
-									$arPrFilter["+QUANTITY_FROM"] = "1";
-									$arPrFilter["!EXTRA_ID"] = false;
-								}
 								$db_res = CPrice::GetListEx(
 									array(),
 									$arPrFilter,
@@ -2086,37 +2095,66 @@ if($lAdmin->EditAction())
 								);
 								while ($ar_res = $db_res->Fetch())
 								{
-									$arFields = array(
-										"PRICE" => $arPrice[$arCatalogGroup["ID"]]*(1+$arCatExtraUp[$ar_res["EXTRA_ID"]]/100) ,
-										"EXTRA_ID" => $ar_res["EXTRA_ID"],
-										"CURRENCY" => $arCurrency[$arCatalogGroup["ID"]],
-										"QUANTITY_FROM" => $ar_res["QUANTITY_FROM"],
-										"QUANTITY_TO" => $ar_res["QUANTITY_TO"]
-									);
-									if ($arFields["PRICE"] <= 0)
-										CPrice::Delete($ar_res["ID"]);
+									if ($deletePrice)
+									{
+										$subPriceFields = array(
+											"EXTRA_ID" => false,
+										);
+										CPrice::Update($ar_res["ID"], $subPriceFields);
+									}
 									else
-										CPrice::Update($ar_res["ID"], $arFields);
+									{
+										$subPriceFields = array(
+											"PRICE" => $arFields['PRICE'] * (1 + $arCatExtraUp[$ar_res["EXTRA_ID"]] / 100),
+											"EXTRA_ID" => $ar_res["EXTRA_ID"],
+											"CURRENCY" => $arCurrency[$priceTypeId],
+										);
+										if ($subPriceFields["PRICE"] <= 0)
+										{
+											CPrice::Delete($ar_res["ID"]);
+										}
+										else
+										{
+											CPrice::Update($ar_res["ID"], $subPriceFields);
+										}
+									}
+
 								}
 							}
-							elseif(!isset($CATALOG_EXTRA[$elID][$arCatalogGroup["ID"]]))
+							elseif (!isset($CATALOG_EXTRA[$elID][$priceTypeId]))
 							{
 								$arFields = array(
 									"PRODUCT_ID" => $elID,
-									"CATALOG_GROUP_ID" => $arCatalogGroup["ID"],
-									"PRICE" => $arPrice[$arCatalogGroup["ID"]],
-									"CURRENCY" => $arCurrency[$arCatalogGroup["ID"]],
-									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$arCatalogGroup["ID"]],
-									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$arCatalogGroup["ID"]]
+									"CATALOG_GROUP_ID" => $priceTypeId,
+									"PRICE" => $arPrice[$priceTypeId],
+									"CURRENCY" => $arCurrency[$priceTypeId],
+									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$priceTypeId],
+									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$priceTypeId]
 								);
-								if (is_string($arFields['PRICE']))
-									$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
-								if($arFields["PRICE"] < 0 || trim($arFields["PRICE"]) === '')
-									CPrice::Delete($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]]);
-								elseif((int)$CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]] > 0)
-									CPrice::Update($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]], $arFields);
-								elseif($arFields["PRICE"] >= 0)
+								$deletePrice = false;
+								$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
+								if (trim($arFields['PRICE']) === '')
+								{
+									$deletePrice = true;
+								}
+								$arFields['PRICE'] = (float)$arFields['PRICE'];
+								if ($arFields['PRICE'] < 0)
+								{
+									$deletePrice = true;
+								}
+
+								if ($deletePrice)
+								{
+									CPrice::Delete($CATALOG_PRICE_ID[$elID][$priceTypeId]);
+								}
+								elseif ((int)($CATALOG_PRICE_ID[$elID][$priceTypeId] ?? null) > 0)
+								{
+									CPrice::Update($CATALOG_PRICE_ID[$elID][$priceTypeId], $arFields);
+								}
+								else
+								{
 									CPrice::Add($arFields);
+								}
 							}
 						}
 					}
@@ -2738,17 +2776,6 @@ if(($arID = $lAdmin->GroupAction()))
 					}
 					break;
 				case Catalog\Grid\ProductAction::CONVERT_PRODUCT_TO_SERVICE:
-					$labelStart = !empty($elementsList['SECTIONS']) || !empty($elementsList['ELEMENTS'])
-						? 'withData'
-						: 'emptyData'
-					;
-					AddEventToStatFile(
-						'catalog',
-						Catalog\Grid\ProductAction::CONVERT_PRODUCT_TO_SERVICE,
-						'start',
-						$labelStart
-					);
-					$labelResult = 'fail';
 					if (!empty($elementsList['SECTIONS']))
 					{
 						$result = Catalog\Grid\ProductAction::convertToServiceSectionList(
@@ -2762,11 +2789,6 @@ if(($arID = $lAdmin->GroupAction()))
 								$lAdmin->AddGroupError($error->getMessage(), $error->getCode());
 							}
 							unset($error);
-						}
-						$resultData = $result->getData();
-						if (isset($resultData['CONVERT_COMPLETE']))
-						{
-							$labelResult = 'success';
 						}
 						unset($result);
 					}
@@ -2784,32 +2806,10 @@ if(($arID = $lAdmin->GroupAction()))
 							}
 							unset($error);
 						}
-						$resultData = $result->getData();
-						if (isset($resultData['CONVERT_COMPLETE']))
-						{
-							$labelResult = 'success';
-						}
 						unset($result);
 					}
-					AddEventToStatFile(
-						'catalog',
-						Catalog\Grid\ProductAction::CONVERT_PRODUCT_TO_SERVICE,
-						'finish',
-						$labelResult
-					);
 					break;
 				case Catalog\Grid\ProductAction::CONVERT_SERVICE_TO_PRODUCT:
-					$labelStart = !empty($elementsList['SECTIONS']) || !empty($elementsList['ELEMENTS'])
-						? 'withData'
-						: 'emptyData'
-					;
-					AddEventToStatFile(
-						'catalog',
-						Catalog\Grid\ProductAction::CONVERT_SERVICE_TO_PRODUCT,
-						'start',
-						$labelStart
-					);
-					$labelResult = 'fail';
 					if (!empty($elementsList['SECTIONS']))
 					{
 						$result = Catalog\Grid\ProductAction::convertToProductSectionList(
@@ -2823,11 +2823,6 @@ if(($arID = $lAdmin->GroupAction()))
 								$lAdmin->AddGroupError($error->getMessage(), $error->getCode());
 							}
 							unset($error);
-						}
-						$resultData = $result->getData();
-						if (isset($resultData['CONVERT_COMPLETE']))
-						{
-							$labelResult = 'success';
 						}
 						unset($result);
 					}
@@ -2845,19 +2840,8 @@ if(($arID = $lAdmin->GroupAction()))
 							}
 							unset($error);
 						}
-						$resultData = $result->getData();
-						if (isset($resultData['CONVERT_COMPLETE']))
-						{
-							$labelResult = 'success';
-						}
 						unset($result);
 					}
-					AddEventToStatFile(
-						'catalog',
-						Catalog\Grid\ProductAction::CONVERT_SERVICE_TO_PRODUCT,
-						'finish',
-						$labelResult
-					);
 					break;
 			}
 		}
@@ -3199,53 +3183,8 @@ if (!empty($elementIds))
 	unset($iterator);
 	unset($elementFilter);
 	unset($pageIds);
-
-	// region Replacing the total quantity in grid with the amount of products from available stores (store permissions by current user)
-	if (
-		$useSummaryStoreAmount
-		&& ($arVisibleColumnsMap['CATALOG_QUANTITY'] || $arVisibleColumnsMap['CATALOG_QUANTITY_RESERVED'])
-	)
-	{
-		$productIdList = [];
-		foreach ($elementIds as $productId)
-		{
-			// Only for simple products and offers
-			$productType = $rawRows['E'.$productId]['CATALOG_TYPE'];
-			if (
-				$productType === Catalog\ProductTable::TYPE_SET
-				|| $productType === Catalog\ProductTable::TYPE_EMPTY_SKU
-			)
-			{
-				continue;
-			}
-			$productIdList[$productId] = $selectedSkuMap[$productId] ?? $productId;
-		}
-
-		if (!empty($productIdList))
-		{
-			$quantityList = \CCatalogAdminTools::getSummaryStoreAmountByPermissions($productIdList);
-			if (!empty($quantityList))
-			{
-				foreach ($productIdList as $productId => $resultId)
-				{
-					if (!isset($quantityList[$resultId]))
-					{
-						continue;
-					}
-					$rawRows['E' . $productId]['CATALOG_QUANTITY'] = $quantityList[$resultId]['QUANTITY'];
-					$rawRows['E' . $productId]['CATALOG_QUANTITY_RESERVED'] = $quantityList[$resultId]['QUANTITY_RESERVED'];
-				}
-				unset($productId);
-				unset($resultId);
-			}
-			unset($quantityList);
-		}
-		unset($productIdList);
-	}
-	// endregion
-
-	unset($row, $iterator, $elementFilter, $pageIds, $elementIds);
 }
+unset($elementIds);
 
 $sectionUrlParams = array(
 	'find_section_section' => (int)$find_section_section,
@@ -3253,7 +3192,7 @@ $sectionUrlParams = array(
 $elementUrlParams = $sectionUrlParams;
 $elementUrlParams['WF'] = 'Y';
 
-$nameFormat = CSite::GetNameFormat(true);
+$nameFormat = CSite::GetNameFormat();
 
 // List build
 foreach (array_keys($rawRows) as $rowId)
@@ -5493,7 +5432,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 //We need javascript not in excel mode
 if(($lAdmin->isPageMode() || $lAdmin->isAjaxMode()) && $bCatalog && $bCurrency)
 {
-	?><script type="text/javascript">
+	?><script>
 		top.arCatalogShowedGroups = [];
 		top.arExtra = [];
 		top.arCatalogGroups = [];

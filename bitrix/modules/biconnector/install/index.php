@@ -57,7 +57,13 @@ class BIConnector extends \CModule
 			true, true
 		);
 
-		if ($params['public_dir'])
+		if (!isset($params['manual_installing']))
+		{
+			$params['public_dir'] = 'biconnector';
+			$params['public_rewrite'] = true;
+		}
+
+		if ($params['public_dir'] !== '')
 		{
 			$siteList = CSite::GetList();
 			while ($site = $siteList->Fetch())
@@ -143,6 +149,8 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onBeforeUserUpdate');
 			$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onAfterUserUpdate');
 
+			$eventManager->registerEventHandler('pull', 'onGetDependentModule', $this->MODULE_ID, '\Bitrix\BIConnector\Integration\Pull\PullManager', 'onGetDependentModule');
+
 			$this->InstallTasks();
 
 			\CAgent::AddAgent('\\Bitrix\\BIConnector\\LogTable::cleanUpAgent();', 'biconnector', 'N', 86400);
@@ -217,6 +225,7 @@ class BIConnector extends \CModule
 		$eventManager->unregisterEventHandler('main', 'OnAfterSetOption_server_name', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\SupersetInitializer', 'refreshSupersetDomainConnection');
 		$eventManager->unregisterEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onBeforeUserUpdate');
 		$eventManager->unregisterEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onAfterUserUpdate');
+		$eventManager->unregisterEventHandler('pull', 'onGetDependentModule', $this->MODULE_ID, '\Bitrix\BIConnector\Integration\Pull\PullManager', 'onGetDependentModule');
 
 		\CAgent::RemoveModuleAgents('biconnector');
 
@@ -271,8 +280,9 @@ class BIConnector extends \CModule
 				if ($this->InstallDB())
 				{
 					$this->InstallFiles([
-						'public_dir' => $_REQUEST['install_public'] == 'Y' ? 'biconnector' : '',
-						'public_rewrite' => $_REQUEST['public_rewrite'] == 'Y',
+						'public_dir' => $_REQUEST['install_public'] === 'Y' ? 'biconnector' : '',
+						'public_rewrite' => $_REQUEST['public_rewrite'] === 'Y',
+						'manual_installing' => true,
 					]);
 				}
 				$errors = $this->errors;

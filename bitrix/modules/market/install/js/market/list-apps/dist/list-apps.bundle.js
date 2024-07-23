@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,ui_vue3,market_listItem,market_categories,market_installStore,ui_vue3_pinia,main_core_events) {
+(function (exports,market_listItem,market_categories,market_installStore,ui_vue3_pinia,main_core_events,market_marketLinks,ui_vue3) {
 	'use strict';
 
 	const ListApps = {
@@ -24,12 +24,13 @@ this.BX = this.BX || {};
 	        },
 	        page: 1,
 	        analytics: {}
-	      }
+	      },
+	      MarketLinks: market_marketLinks.MarketLinks
 	    };
 	  },
 	  computed: {
 	    mainUri: function () {
-	      return this.$root.mainUri.length > 0 ? this.$root.mainUri : this.$root.getMainUri;
+	      return this.$root.mainUri.length > 0 ? this.$root.mainUri : this.MarketLinks.mainLink();
 	    },
 	    isCollection: function () {
 	      return this.params.IS_COLLECTION === 'Y';
@@ -143,7 +144,7 @@ this.BX = this.BX || {};
 	    onClosePopup: function () {
 	      if (this.installStep === 2 || this.installStep === 3) {
 	        clearTimeout(this.timer);
-	        this.$root.updatePage(this.$root.getInstalledUri, 'list');
+	        this.$root.updatePage(this.MarketLinks.installedLink(), 'list');
 	        this.resetInstallStep();
 	      }
 	    },
@@ -360,7 +361,7 @@ this.BX = this.BX || {};
 						</div>
 						<div class="market-catalog__breadcrumbs_item">
 							<a class="market-catalog__breadcrumbs_link"
-							   :href="$root.getCategoryUri(codePrevCategory)"
+							   :href="MarketLinks.categoryLink(codePrevCategory)"
 							   data-slider-ignore-autobinding="true"
 							   data-load-content="list"
 							   @click.prevent="$root.emitLoadContent"
@@ -466,4 +467,4 @@ this.BX = this.BX || {};
 
 	exports.ListApps = ListApps;
 
-}((this.BX.Market = this.BX.Market || {}),BX.Vue3,BX.Market,BX.Market,BX.Market,BX.Vue3.Pinia,BX.Event));
+}((this.BX.Market = this.BX.Market || {}),BX.Market,BX.Market,BX.Market,BX.Vue3.Pinia,BX.Event,BX.Market,BX.Vue3));

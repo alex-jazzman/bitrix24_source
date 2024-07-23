@@ -202,6 +202,16 @@ $messages = \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 				'<?= CUtil::JSEscape($viewData['startWorkflowButtonId']) ?>',
 			);
 		<?php endif; ?>
+
+		setTimeout(() => {
+			BX.Runtime.loadExtension('ui.analytics').then(({ sendData }) => {
+				sendData({
+					tool: 'automation',
+					category: 'bizproc_operations',
+					event: 'processes_open',
+				});
+			});
+		}, 2000);
 	})
 </script>
 

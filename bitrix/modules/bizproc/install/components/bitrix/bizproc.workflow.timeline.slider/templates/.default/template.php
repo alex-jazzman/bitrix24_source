@@ -58,4 +58,15 @@ $component = $this->getComponent();
 
 		BX.Dom.append(timeline.render(), timelineWrapper);
 	});
+
+	setTimeout(() => {
+		BX.Runtime.loadExtension('ui.analytics').then(({ sendData }) => {
+			sendData({
+				tool: 'automation',
+				category: 'bizproc_operations',
+				event: 'process_log_view',
+				p1: document.querySelector('.bizproc-workflow-timeline-title')?.textContent,
+			});
+		});
+	}, 2000);
 </script>

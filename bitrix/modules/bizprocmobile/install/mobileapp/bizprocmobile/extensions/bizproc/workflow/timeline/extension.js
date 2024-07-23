@@ -59,7 +59,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 					mediumPositionPercent: 90,
 					navigationBarColor: AppTheme.colors.bgSecondary,
 					swipeAllowed: true,
-					swipeContentAllowed: false,
+					swipeContentAllowed: true,
 					horizontalSwipeAllowed: false,
 				},
 				onReady: (readyLayout) => {

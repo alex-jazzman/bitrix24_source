@@ -223,7 +223,7 @@ export class UserProcesses
 				WORKFLOW_STATE: Text.encode(workflow.statusText),
 				DOCUMENT_NAME: renderer.renderDocumentName(),
 				WORKFLOW_TEMPLATE_NAME: Text.encode(workflow.templateName),
-				TASK_DESCRIPTION: workflow.task?.description,
+				TASK_DESCRIPTION: Dom.create('span', { html: workflow.task?.description || '' }),
 				MODIFIED: renderer.renderModified(),
 				WORKFLOW_STARTED: Text.encode(workflow.workflowStarted),
 				WORKFLOW_STARTED_BY: Text.encode(workflow.startedBy),
@@ -404,6 +404,7 @@ export class UserProcesses
 						const params = {
 							iBlockTypeId: list.iBlockTypeId,
 							iBlockId: list.iBlockId,
+							analyticsP1: list.name,
 						};
 
 						if (list.selected === true)
@@ -442,7 +443,22 @@ export class UserProcesses
 
 			button.onclick = (event) => {
 				event.preventDefault();
-				popupMenu.show();
+				if (!popupMenu.getPopupWindow().isShown())
+				{
+					Runtime.loadExtension('ui.analytics')
+						.then(({ sendData }) => {
+							sendData({
+								tool: 'automation',
+								category: 'bizproc_operations',
+								event: 'drawer_open',
+								c_section: 'bizproc',
+								c_element: 'button',
+							});
+						})
+						.catch(() => {})
+					;
+				}
+				popupMenu.toggle();
 			};
 		}
 

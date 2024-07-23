@@ -19,6 +19,7 @@
 	var _topMenuGuideSpotlight = /*#__PURE__*/new WeakMap();
 	var _lastPinnedRowId = /*#__PURE__*/new WeakMap();
 	var _subscribeToEvents = /*#__PURE__*/new WeakSet();
+	var _onSupersetStatusChange = /*#__PURE__*/new WeakSet();
 	var _showTopMenuGuide = /*#__PURE__*/new WeakSet();
 	var _colorPinnedRows = /*#__PURE__*/new WeakSet();
 	var _notifyErrors = /*#__PURE__*/new WeakSet();
@@ -26,6 +27,9 @@
 	var _getTitlePreview = /*#__PURE__*/new WeakSet();
 	var _setDateModifyNow = /*#__PURE__*/new WeakSet();
 	var _switchTopMenuAction = /*#__PURE__*/new WeakSet();
+	/**
+	 * @namespace BX.BIConnector
+	 */
 	var SupersetDashboardGridManager = /*#__PURE__*/function () {
 	  function SupersetDashboardGridManager(props) {
 	    var _BX$Main$gridManager$,
@@ -38,6 +42,7 @@
 	    _classPrivateMethodInitSpec(this, _notifyErrors);
 	    _classPrivateMethodInitSpec(this, _colorPinnedRows);
 	    _classPrivateMethodInitSpec(this, _showTopMenuGuide);
+	    _classPrivateMethodInitSpec(this, _onSupersetStatusChange);
 	    _classPrivateMethodInitSpec(this, _subscribeToEvents);
 	    _classPrivateFieldInitSpec(this, _dashboardManager, {
 	      writable: true,
@@ -230,6 +235,15 @@
 	            main_core.Dom.removeClass(label, 'ui-label-primary');
 	            label.querySelector('span').innerText = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_FAILED');
 	            break;
+	          case biconnector_apacheSupersetDashboardManager.DashboardManager.DASHBOARD_STATUS_COMPUTED_NOT_LOAD:
+	            if (reloadBtn) {
+	              reloadBtn.remove();
+	            }
+	            main_core.Dom.addClass(label, 'ui-label-danger');
+	            main_core.Dom.removeClass(label, 'ui-label-success');
+	            main_core.Dom.removeClass(label, 'ui-label-primary');
+	            label.querySelector('span').innerText = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_NOT_LOAD');
+	            break;
 	        }
 	      }
 	    }
@@ -295,32 +309,9 @@
 	  }, {
 	    key: "exportDashboard",
 	    value: function exportDashboard(dashboardId) {
-	      var analyticInfo = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 	      var grid = this.getGrid();
 	      grid.tableFade();
-	      return babelHelpers.classPrivateFieldGet(this, _dashboardManager).exportDashboard(dashboardId, function () {
-	        grid.tableUnfade();
-	        if (analyticInfo !== null) {
-	          biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('edit', 'report_export', {
-	            type: analyticInfo.type,
-	            p1: biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(analyticInfo.appId),
-	            p2: dashboardId,
-	            status: 'success',
-	            c_element: analyticInfo.from
-	          });
-	        }
-	      }, function () {
-	        grid.tableUnfade();
-	        if (analyticInfo !== null) {
-	          biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('edit', 'report_export', {
-	            type: analyticInfo.type,
-	            p1: biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(analyticInfo.appId),
-	            p2: dashboardId,
-	            status: 'error',
-	            c_element: analyticInfo.from
-	          });
-	        }
-	      });
+	      return babelHelpers.classPrivateFieldGet(this, _dashboardManager).exportDashboard(dashboardId, 'grid_menu');
 	    }
 	  }, {
 	    key: "deleteDashboard",
@@ -714,6 +705,19 @@
 	    var dashboardList = data.dashboardList;
 	    _this12.onUpdatedDashboardBatchStatus(dashboardList);
 	  });
+	  BX.PULL && BX.PULL.extendWatch('superset_dashboard', true);
+	  main_core_events.EventEmitter.subscribe('onPullEvent-biconnector', function (event) {
+	    var _event$data = babelHelpers.slicedToArray(event.data, 2),
+	      eventName = _event$data[0],
+	      eventData = _event$data[1];
+	    if (eventName !== 'onSupersetStatusUpdated' || !eventData) {
+	      return;
+	    }
+	    var status = eventData === null || eventData === void 0 ? void 0 : eventData.status;
+	    if (status) {
+	      _classPrivateMethodGet(_this12, _onSupersetStatusChange, _onSupersetStatusChange2).call(_this12, status);
+	    }
+	  });
 	  main_core_events.EventEmitter.subscribe('BX.Rest.Configuration.Install:onFinish', function () {
 	    babelHelpers.classPrivateFieldGet(_this12, _grid).reload();
 	  });
@@ -721,6 +725,42 @@
 	    BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
 	    _classPrivateMethodGet(_this12, _colorPinnedRows, _colorPinnedRows2).call(_this12);
 	  });
+	  main_core_events.EventEmitter.subscribe('BIConnector.ExportMaster:onDashboardDataLoaded', function () {
+	    babelHelpers.classPrivateFieldGet(_this12, _grid).tableUnfade();
+	  });
+	  main_core_events.EventEmitter.subscribe('BIConnector.DashboardManager:onEmbeddedDataLoaded', function () {
+	    babelHelpers.classPrivateFieldGet(_this12, _grid).reload();
+	  });
+	}
+	function _onSupersetStatusChange2(status) {
+	  if (status === 'READY') {
+	    this.getGrid().reload();
+	  }
+	  if (status !== 'LOAD' && status !== 'ERROR') {
+	    return;
+	  }
+	  var statusMap = {
+	    LOAD: biconnector_apacheSupersetDashboardManager.DashboardManager.DASHBOARD_STATUS_LOAD,
+	    ERROR: biconnector_apacheSupersetDashboardManager.DashboardManager.DASHBOARD_STATUS_COMPUTED_NOT_LOAD
+	  };
+	  var grid = this.getGrid();
+	  var rows = grid.getRows().getBodyChild();
+	  var _iterator3 = _createForOfIteratorHelper(rows),
+	    _step3;
+	  try {
+	    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+	      var row = _step3.value;
+	      var dashboardId = row.getId();
+	      var dashboardStatus = statusMap[status];
+	      if (dashboardStatus) {
+	        this.updateDashboardStatus(dashboardId, dashboardStatus);
+	      }
+	    }
+	  } catch (err) {
+	    _iterator3.e(err);
+	  } finally {
+	    _iterator3.f();
+	  }
 	}
 	function _showTopMenuGuide2() {
 	  var guide = new ui_tour.Guide({
@@ -744,20 +784,20 @@
 	function _colorPinnedRows2() {
 	  babelHelpers.classPrivateFieldSet(this, _lastPinnedRowId, 0);
 	  var rows = babelHelpers.classPrivateFieldGet(this, _grid).getRows().getBodyChild();
-	  var _iterator3 = _createForOfIteratorHelper(rows),
-	    _step3;
+	  var _iterator4 = _createForOfIteratorHelper(rows),
+	    _step4;
 	  try {
-	    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-	      var row = _step3.value;
+	    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+	      var row = _step4.value;
 	      if (row.node.querySelector('.dashboard-unpin-icon')) {
 	        main_core.Dom.addClass(row.node, 'biconnector-dashboard-pinned');
 	        babelHelpers.classPrivateFieldSet(this, _lastPinnedRowId, row.getId());
 	      }
 	    }
 	  } catch (err) {
-	    _iterator3.e(err);
+	    _iterator4.e(err);
 	  } finally {
-	    _iterator3.f();
+	    _iterator4.f();
 	  }
 	}
 	function _notifyErrors2(errors) {
@@ -835,13 +875,13 @@
 	function _switchTopMenuAction2(dashboardId, isInTopMenu) {
 	  var row = babelHelpers.classPrivateFieldGet(this, _grid).getRows().getById(dashboardId);
 	  var rowActions = row === null || row === void 0 ? void 0 : row.getActions();
-	  var _iterator4 = _createForOfIteratorHelper(rowActions.entries()),
-	    _step4;
+	  var _iterator5 = _createForOfIteratorHelper(rowActions.entries()),
+	    _step5;
 	  try {
-	    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-	      var _step4$value = babelHelpers.slicedToArray(_step4.value, 2),
-	        index = _step4$value[0],
-	        action = _step4$value[1];
+	    for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+	      var _step5$value = babelHelpers.slicedToArray(_step5.value, 2),
+	        index = _step5$value[0],
+	        action = _step5$value[1];
 	      if (isInTopMenu && action.ACTION_ID === 'addToTopMenu') {
 	        rowActions[index].ACTION_ID = 'deleteFromTopMenu';
 	        rowActions[index].onclick = "BX.BIConnector.SupersetDashboardGridManager.Instance.deleteFromTopMenu(".concat(dashboardId, ")");
@@ -853,9 +893,9 @@
 	      }
 	    }
 	  } catch (err) {
-	    _iterator4.e(err);
+	    _iterator5.e(err);
 	  } finally {
-	    _iterator4.f();
+	    _iterator5.f();
 	  }
 	  row.setActions(rowActions);
 	  var titleCell = row === null || row === void 0 ? void 0 : row.getCellById('TITLE');

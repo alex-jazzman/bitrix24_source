@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_entitySelector,main_core_events,ui_designTokens,ui_entitySelector,ui_buttons,main_core,main_popup,ui_progressbar,ui_notification) {
+(function (exports,crm_entitySelector,main_core_events,ui_designTokens,ui_entitySelector,ui_progressbar,ui_notification,main_core,main_popup,ui_buttons) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -116,13 +116,155 @@ this.BX.Crm = this.BX.Crm || {};
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var PREVIEW_POPUP_CONTENT_STATUS = {
+	  LOADING: 1,
+	  SUCCESS: 2,
+	  FAILED: 3
+	};
 	var _popup = /*#__PURE__*/new WeakMap();
-	var _input = /*#__PURE__*/new WeakMap();
 	var _bindElement$1 = /*#__PURE__*/new WeakMap();
-	var _value = /*#__PURE__*/new WeakMap();
-	var _onApply = /*#__PURE__*/new WeakMap();
+	var _previewContentContainer = /*#__PURE__*/new WeakMap();
+	var _previewLoader = /*#__PURE__*/new WeakMap();
+	var _entityTypeId = /*#__PURE__*/new WeakMap();
+	var _entityId = /*#__PURE__*/new WeakMap();
 	var _getPopup = /*#__PURE__*/new WeakSet();
 	var _getContent = /*#__PURE__*/new WeakSet();
+	var PreviewPopup = /*#__PURE__*/function () {
+	  function PreviewPopup(bindElement, entityTypeId, entityId) {
+	    babelHelpers.classCallCheck(this, PreviewPopup);
+	    _classPrivateMethodInitSpec$1(this, _getContent);
+	    _classPrivateMethodInitSpec$1(this, _getPopup);
+	    _classPrivateFieldInitSpec$1(this, _popup, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$1(this, _bindElement$1, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$1(this, _previewContentContainer, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$1(this, _previewLoader, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$1(this, _entityTypeId, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$1(this, _entityId, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _bindElement$1, bindElement);
+	    babelHelpers.classPrivateFieldSet(this, _entityTypeId, entityTypeId);
+	    babelHelpers.classPrivateFieldSet(this, _entityId, entityId);
+	  }
+	  babelHelpers.createClass(PreviewPopup, [{
+	    key: "destroy",
+	    value: function destroy() {
+	      var _classPrivateMethodGe;
+	      (_classPrivateMethodGe = _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this)) === null || _classPrivateMethodGe === void 0 ? void 0 : _classPrivateMethodGe.destroy();
+	    }
+	  }, {
+	    key: "isShown",
+	    value: function isShown() {
+	      var _classPrivateMethodGe2;
+	      (_classPrivateMethodGe2 = _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this)) === null || _classPrivateMethodGe2 === void 0 ? void 0 : _classPrivateMethodGe2.isShown();
+	    }
+	  }, {
+	    key: "show",
+	    value: function show() {
+	      var _classPrivateMethodGe3;
+	      (_classPrivateMethodGe3 = _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this)) === null || _classPrivateMethodGe3 === void 0 ? void 0 : _classPrivateMethodGe3.show();
+	    }
+	  }, {
+	    key: "apply",
+	    value: function apply(status) {
+	      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+	      var closeIconElement = _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).getPopupContainer().querySelector('.popup-window-close-icon');
+	      switch (status) {
+	        case PREVIEW_POPUP_CONTENT_STATUS.LOADING:
+	          {
+	            main_core.Dom.addClass(closeIconElement, '--hidden');
+	            babelHelpers.classPrivateFieldGet(this, _previewContentContainer).innerText = '';
+	            if (!babelHelpers.classPrivateFieldGet(this, _previewLoader)) {
+	              babelHelpers.classPrivateFieldSet(this, _previewLoader, new ui_progressbar.ProgressBar({
+	                color: ui_progressbar.ProgressBar.Color.PRIMARY,
+	                size: 10,
+	                maxValue: 100,
+	                value: 30,
+	                infiniteLoading: true
+	              }));
+	            }
+	            _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).setHeight(75);
+	            babelHelpers.classPrivateFieldGet(this, _previewLoader).renderTo(babelHelpers.classPrivateFieldGet(this, _previewContentContainer));
+	            break;
+	          }
+	        case PREVIEW_POPUP_CONTENT_STATUS.SUCCESS:
+	          {
+	            _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).setHeight(null);
+	            _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).setAutoHide(true);
+	            babelHelpers.classPrivateFieldGet(this, _previewContentContainer).innerText = data;
+	            main_core.Dom.removeClass(closeIconElement, '--hidden');
+	            main_core.Dom.addClass(babelHelpers.classPrivateFieldGet(this, _previewContentContainer), '--loaded');
+	            break;
+	          }
+	        case PREVIEW_POPUP_CONTENT_STATUS.FAILED:
+	          {
+	            _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).destroy();
+	            ui_notification.UI.Notification.Center.notify({
+	              content: main_core.Text.encode(data),
+	              autoHideDelay: 5000
+	            });
+	            break;
+	          }
+	        default:
+	          throw new TypeError("Unsupported preview popup content status ".concat(status));
+	      }
+	    }
+	  }]);
+	  return PreviewPopup;
+	}();
+	function _getPopup2() {
+	  if (babelHelpers.classPrivateFieldGet(this, _popup) === null) {
+	    babelHelpers.classPrivateFieldSet(this, _popup, main_popup.PopupWindowManager.create({
+	      id: "crm-template-editor-preview-popup-".concat(babelHelpers.classPrivateFieldGet(this, _entityTypeId), "-").concat(babelHelpers.classPrivateFieldGet(this, _entityId)),
+	      bindElement: babelHelpers.classPrivateFieldGet(this, _bindElement$1),
+	      closeIcon: {
+	        top: '10px'
+	      },
+	      cacheable: false,
+	      closeByEsc: false,
+	      autoHide: false,
+	      angle: {
+	        position: 'top',
+	        offset: 70
+	      },
+	      content: _classPrivateMethodGet$1(this, _getContent, _getContent2).call(this)
+	    }));
+	  }
+	  return babelHelpers.classPrivateFieldGet(this, _popup);
+	}
+	function _getContent2() {
+	  babelHelpers.classPrivateFieldSet(this, _previewContentContainer, main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-template-editor-preview-popup-content\"></div>"]))));
+	  return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-template-editor-preview-popup-wrapper\">\n\t\t\t\t<div class=\"crm-template-editor-preview-popup-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_PREVIEW_POPUP_TITLE'), babelHelpers.classPrivateFieldGet(this, _previewContentContainer));
+	}
+
+	var _templateObject$1, _templateObject2$1;
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _popup$1 = /*#__PURE__*/new WeakMap();
+	var _input = /*#__PURE__*/new WeakMap();
+	var _bindElement$2 = /*#__PURE__*/new WeakMap();
+	var _value = /*#__PURE__*/new WeakMap();
+	var _onApply = /*#__PURE__*/new WeakMap();
+	var _getPopup$1 = /*#__PURE__*/new WeakSet();
+	var _getContent$1 = /*#__PURE__*/new WeakSet();
 	var _bindInputEvents = /*#__PURE__*/new WeakSet();
 	var _getMenuButtons = /*#__PURE__*/new WeakSet();
 	var _getApplyButton = /*#__PURE__*/new WeakSet();
@@ -138,38 +280,38 @@ this.BX.Crm = this.BX.Crm || {};
 	      _value2 = _ref.value,
 	      onApply = _ref.onApply;
 	    babelHelpers.classCallCheck(this, TextPopup);
-	    _classPrivateMethodInitSpec$1(this, _setCursorToEnd);
-	    _classPrivateMethodInitSpec$1(this, _getCancelButton);
-	    _classPrivateMethodInitSpec$1(this, _getApplyButtonInstance);
-	    _classPrivateMethodInitSpec$1(this, _onApplyButtonClick);
-	    _classPrivateMethodInitSpec$1(this, _getApplyButtonText);
-	    _classPrivateMethodInitSpec$1(this, _adjustButtonState);
-	    _classPrivateMethodInitSpec$1(this, _getApplyButton);
-	    _classPrivateMethodInitSpec$1(this, _getMenuButtons);
-	    _classPrivateMethodInitSpec$1(this, _bindInputEvents);
-	    _classPrivateMethodInitSpec$1(this, _getContent);
-	    _classPrivateMethodInitSpec$1(this, _getPopup);
-	    _classPrivateFieldInitSpec$1(this, _popup, {
+	    _classPrivateMethodInitSpec$2(this, _setCursorToEnd);
+	    _classPrivateMethodInitSpec$2(this, _getCancelButton);
+	    _classPrivateMethodInitSpec$2(this, _getApplyButtonInstance);
+	    _classPrivateMethodInitSpec$2(this, _onApplyButtonClick);
+	    _classPrivateMethodInitSpec$2(this, _getApplyButtonText);
+	    _classPrivateMethodInitSpec$2(this, _adjustButtonState);
+	    _classPrivateMethodInitSpec$2(this, _getApplyButton);
+	    _classPrivateMethodInitSpec$2(this, _getMenuButtons);
+	    _classPrivateMethodInitSpec$2(this, _bindInputEvents);
+	    _classPrivateMethodInitSpec$2(this, _getContent$1);
+	    _classPrivateMethodInitSpec$2(this, _getPopup$1);
+	    _classPrivateFieldInitSpec$2(this, _popup$1, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$1(this, _input, {
+	    _classPrivateFieldInitSpec$2(this, _input, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$1(this, _bindElement$1, {
+	    _classPrivateFieldInitSpec$2(this, _bindElement$2, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$1(this, _value, {
+	    _classPrivateFieldInitSpec$2(this, _value, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$1(this, _onApply, {
+	    _classPrivateFieldInitSpec$2(this, _onApply, {
 	      writable: true,
 	      value: function value() {}
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _bindElement$1, bindElement);
+	    babelHelpers.classPrivateFieldSet(this, _bindElement$2, bindElement);
 	    babelHelpers.classPrivateFieldSet(this, _value, _value2);
 	    babelHelpers.classPrivateFieldSet(this, _onApply, onApply);
 	  }
@@ -177,71 +319,71 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "destroy",
 	    value: function destroy() {
 	      var _babelHelpers$classPr;
-	      (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _popup)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.destroy();
+	      (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _popup$1)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.destroy();
 	    }
 	  }, {
 	    key: "show",
 	    value: function show() {
-	      _classPrivateMethodGet$1(this, _getPopup, _getPopup2).call(this).show();
+	      _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this).show();
 	    }
 	  }]);
 	  return TextPopup;
 	}();
-	function _getPopup2() {
+	function _getPopup2$1() {
 	  var _this = this;
-	  if (babelHelpers.classPrivateFieldGet(this, _popup) === null) {
-	    babelHelpers.classPrivateFieldSet(this, _popup, main_popup.PopupWindowManager.create('crm-template-editor-text-popup', babelHelpers.classPrivateFieldGet(this, _bindElement$1), {
+	  if (babelHelpers.classPrivateFieldGet(this, _popup$1) === null) {
+	    babelHelpers.classPrivateFieldSet(this, _popup$1, main_popup.PopupWindowManager.create('crm-template-editor-text-popup', babelHelpers.classPrivateFieldGet(this, _bindElement$2), {
 	      autoHide: true,
-	      content: _classPrivateMethodGet$1(this, _getContent, _getContent2).call(this),
+	      content: _classPrivateMethodGet$2(this, _getContent$1, _getContent2$1).call(this),
 	      closeByEsc: true,
 	      closeIcon: false,
-	      buttons: _classPrivateMethodGet$1(this, _getMenuButtons, _getMenuButtons2).call(this),
+	      buttons: _classPrivateMethodGet$2(this, _getMenuButtons, _getMenuButtons2).call(this),
 	      cacheable: false
 	    }));
-	    babelHelpers.classPrivateFieldGet(this, _popup).subscribe('onShow', function () {
+	    babelHelpers.classPrivateFieldGet(this, _popup$1).subscribe('onShow', function () {
 	      // Give time for input to render before setting focus.
 	      setTimeout(function () {
 	        babelHelpers.classPrivateFieldGet(_this, _input).focus();
-	        _classPrivateMethodGet$1(_this, _setCursorToEnd, _setCursorToEnd2).call(_this);
+	        _classPrivateMethodGet$2(_this, _setCursorToEnd, _setCursorToEnd2).call(_this);
 	      }, 0);
 	    });
 	  }
-	  return babelHelpers.classPrivateFieldGet(this, _popup);
+	  return babelHelpers.classPrivateFieldGet(this, _popup$1);
 	}
-	function _getContent2() {
-	  var content = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-template-editor-text-popup-wrapper\"></div>"])));
-	  babelHelpers.classPrivateFieldSet(this, _input, main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input \n\t\t\t\ttype=\"text\" \n\t\t\t\tvalue=\"", "\"\n\t\t\t\tplaceholder=\"", "\n\t\t\t\">\n\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _value)), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_SELECT_FIELD_PLACEHOLDER')));
+	function _getContent2$1() {
+	  var content = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-template-editor-text-popup-wrapper\"></div>"])));
+	  babelHelpers.classPrivateFieldSet(this, _input, main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input \n\t\t\t\ttype=\"text\" \n\t\t\t\tvalue=\"", "\"\n\t\t\t\tmaxlength=\"255\"\n\t\t\t\tplaceholder=\"", "\n\t\t\t\">\n\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(this, _value)), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_SELECT_FIELD_PLACEHOLDER')));
 	  main_core.Dom.append(babelHelpers.classPrivateFieldGet(this, _input), content);
-	  _classPrivateMethodGet$1(this, _bindInputEvents, _bindInputEvents2).call(this);
+	  _classPrivateMethodGet$2(this, _bindInputEvents, _bindInputEvents2).call(this);
 	  return content;
 	}
 	function _bindInputEvents2() {
 	  var _this2 = this;
 	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _input), 'keyup', function (event) {
-	    var button = _classPrivateMethodGet$1(_this2, _getApplyButtonInstance, _getApplyButtonInstance2).call(_this2);
+	    var button = _classPrivateMethodGet$2(_this2, _getApplyButtonInstance, _getApplyButtonInstance2).call(_this2);
 	    if (!button) {
 	      return;
 	    }
 	    var value = event.target.value;
-	    _classPrivateMethodGet$1(_this2, _adjustButtonState, _adjustButtonState2).call(_this2, button, value);
+	    _classPrivateMethodGet$2(_this2, _adjustButtonState, _adjustButtonState2).call(_this2, button, value);
 	  });
 	}
 	function _getMenuButtons2() {
-	  return [_classPrivateMethodGet$1(this, _getApplyButton, _getApplyButton2).call(this), _classPrivateMethodGet$1(this, _getCancelButton, _getCancelButton2).call(this)];
+	  return [_classPrivateMethodGet$2(this, _getApplyButton, _getApplyButton2).call(this), _classPrivateMethodGet$2(this, _getCancelButton, _getCancelButton2).call(this)];
 	}
 	function _getApplyButton2() {
 	  var _this3 = this;
 	  var button = new ui_buttons.Button({
 	    id: 'apply-button',
-	    text: _classPrivateMethodGet$1(this, _getApplyButtonText, _getApplyButtonText2).call(this),
+	    text: _classPrivateMethodGet$2(this, _getApplyButtonText, _getApplyButtonText2).call(this),
 	    className: 'ui-btn ui-btn-xs ui-btn-primary ui-btn-round',
 	    onclick: function onclick() {
-	      _classPrivateMethodGet$1(_this3, _onApplyButtonClick, _onApplyButtonClick2).call(_this3);
+	      _classPrivateMethodGet$2(_this3, _onApplyButtonClick, _onApplyButtonClick2).call(_this3);
 	    }
 	  });
 	  var _babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _input),
 	    value = _babelHelpers$classPr2.value;
-	  _classPrivateMethodGet$1(this, _adjustButtonState, _adjustButtonState2).call(this, button, value);
+	  _classPrivateMethodGet$2(this, _adjustButtonState, _adjustButtonState2).call(this, button, value);
 	  return button;
 	}
 	function _adjustButtonState2(button, value) {
@@ -254,18 +396,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  return main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_TEXT_POPUP_ADD');
 	}
 	function _onApplyButtonClick2() {
-	  var button = _classPrivateMethodGet$1(this, _getApplyButtonInstance, _getApplyButtonInstance2).call(this);
+	  var button = _classPrivateMethodGet$2(this, _getApplyButtonInstance, _getApplyButtonInstance2).call(this);
 	  if (button.getState() !== ui_buttons.ButtonState.ACTIVE) {
 	    return;
 	  }
 	  this.destroy();
 	  var _babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _input),
 	    value = _babelHelpers$classPr3.value;
-	  babelHelpers.classPrivateFieldGet(this, _bindElement$1).textContent = main_core.Text.encode(value);
+	  babelHelpers.classPrivateFieldGet(this, _bindElement$2).textContent = main_core.Text.encode(value);
 	  babelHelpers.classPrivateFieldGet(this, _onApply).call(this, value.trim());
 	}
 	function _getApplyButtonInstance2() {
-	  return babelHelpers.classPrivateFieldGet(this, _popup).getButton('apply-button');
+	  return babelHelpers.classPrivateFieldGet(this, _popup$1).getButton('apply-button');
 	}
 	function _getCancelButton2() {
 	  var _this4 = this;
@@ -281,148 +423,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  var length = babelHelpers.classPrivateFieldGet(this, _input).value.length;
 	  babelHelpers.classPrivateFieldGet(this, _input).selectionStart = length;
 	  babelHelpers.classPrivateFieldGet(this, _input).selectionEnd = length;
-	}
-
-	var _templateObject$1, _templateObject2$1;
-	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var PREVIEW_POPUP_CONTENT_STATUS = {
-	  LOADING: 1,
-	  SUCCESS: 2,
-	  FAILED: 3
-	};
-	var _popup$1 = /*#__PURE__*/new WeakMap();
-	var _bindElement$2 = /*#__PURE__*/new WeakMap();
-	var _previewContentContainer = /*#__PURE__*/new WeakMap();
-	var _previewLoader = /*#__PURE__*/new WeakMap();
-	var _entityTypeId = /*#__PURE__*/new WeakMap();
-	var _entityId = /*#__PURE__*/new WeakMap();
-	var _getPopup$1 = /*#__PURE__*/new WeakSet();
-	var _getContent$1 = /*#__PURE__*/new WeakSet();
-	var PreviewPopup = /*#__PURE__*/function () {
-	  function PreviewPopup(bindElement, entityTypeId, entityId) {
-	    babelHelpers.classCallCheck(this, PreviewPopup);
-	    _classPrivateMethodInitSpec$2(this, _getContent$1);
-	    _classPrivateMethodInitSpec$2(this, _getPopup$1);
-	    _classPrivateFieldInitSpec$2(this, _popup$1, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec$2(this, _bindElement$2, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec$2(this, _previewContentContainer, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec$2(this, _previewLoader, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec$2(this, _entityTypeId, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec$2(this, _entityId, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _bindElement$2, bindElement);
-	    babelHelpers.classPrivateFieldSet(this, _entityTypeId, entityTypeId);
-	    babelHelpers.classPrivateFieldSet(this, _entityId, entityId);
-	  }
-	  babelHelpers.createClass(PreviewPopup, [{
-	    key: "destroy",
-	    value: function destroy() {
-	      var _classPrivateMethodGe;
-	      (_classPrivateMethodGe = _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this)) === null || _classPrivateMethodGe === void 0 ? void 0 : _classPrivateMethodGe.destroy();
-	    }
-	  }, {
-	    key: "isShown",
-	    value: function isShown() {
-	      var _classPrivateMethodGe2;
-	      (_classPrivateMethodGe2 = _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this)) === null || _classPrivateMethodGe2 === void 0 ? void 0 : _classPrivateMethodGe2.isShown();
-	    }
-	  }, {
-	    key: "show",
-	    value: function show() {
-	      var _classPrivateMethodGe3;
-	      (_classPrivateMethodGe3 = _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this)) === null || _classPrivateMethodGe3 === void 0 ? void 0 : _classPrivateMethodGe3.show();
-	    }
-	  }, {
-	    key: "apply",
-	    value: function apply(status) {
-	      var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-	      var closeIconElement = _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this).getPopupContainer().querySelector('.popup-window-close-icon');
-	      switch (status) {
-	        case PREVIEW_POPUP_CONTENT_STATUS.LOADING:
-	          {
-	            main_core.Dom.addClass(closeIconElement, '--hidden');
-	            babelHelpers.classPrivateFieldGet(this, _previewContentContainer).innerText = '';
-	            if (!babelHelpers.classPrivateFieldGet(this, _previewLoader)) {
-	              babelHelpers.classPrivateFieldSet(this, _previewLoader, new ui_progressbar.ProgressBar({
-	                color: ui_progressbar.ProgressBar.Color.PRIMARY,
-	                size: 10,
-	                maxValue: 100,
-	                value: 30,
-	                infiniteLoading: true
-	              }));
-	            }
-	            _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this).setHeight(75);
-	            babelHelpers.classPrivateFieldGet(this, _previewLoader).renderTo(babelHelpers.classPrivateFieldGet(this, _previewContentContainer));
-	            break;
-	          }
-	        case PREVIEW_POPUP_CONTENT_STATUS.SUCCESS:
-	          {
-	            _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this).setHeight(null);
-	            _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this).setAutoHide(true);
-	            babelHelpers.classPrivateFieldGet(this, _previewContentContainer).innerText = data;
-	            main_core.Dom.removeClass(closeIconElement, '--hidden');
-	            main_core.Dom.addClass(babelHelpers.classPrivateFieldGet(this, _previewContentContainer), '--loaded');
-	            break;
-	          }
-	        case PREVIEW_POPUP_CONTENT_STATUS.FAILED:
-	          {
-	            _classPrivateMethodGet$2(this, _getPopup$1, _getPopup2$1).call(this).destroy();
-	            ui_notification.UI.Notification.Center.notify({
-	              content: main_core.Text.encode(data),
-	              autoHideDelay: 5000
-	            });
-	            break;
-	          }
-	        default:
-	          throw new TypeError("Unsupported preview popup content status ".concat(status));
-	      }
-	    }
-	  }]);
-	  return PreviewPopup;
-	}();
-	function _getPopup2$1() {
-	  if (babelHelpers.classPrivateFieldGet(this, _popup$1) === null) {
-	    babelHelpers.classPrivateFieldSet(this, _popup$1, main_popup.PopupWindowManager.create({
-	      id: "crm-template-editor-preview-popup-".concat(babelHelpers.classPrivateFieldGet(this, _entityTypeId), "-").concat(babelHelpers.classPrivateFieldGet(this, _entityId)),
-	      bindElement: babelHelpers.classPrivateFieldGet(this, _bindElement$2),
-	      closeIcon: {
-	        top: '10px'
-	      },
-	      cacheable: false,
-	      closeByEsc: false,
-	      autoHide: false,
-	      angle: {
-	        position: 'top',
-	        offset: 70
-	      },
-	      content: _classPrivateMethodGet$2(this, _getContent$1, _getContent2$1).call(this)
-	    }));
-	  }
-	  return babelHelpers.classPrivateFieldGet(this, _popup$1);
-	}
-	function _getContent2$1() {
-	  babelHelpers.classPrivateFieldSet(this, _previewContentContainer, main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-template-editor-preview-popup-content\"></div>"]))));
-	  return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-template-editor-preview-popup-wrapper\">\n\t\t\t\t<div class=\"crm-template-editor-preview-popup-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_TEMPLATE_EDITOR_PREVIEW_POPUP_TITLE'), babelHelpers.classPrivateFieldGet(this, _previewContentContainer));
 	}
 
 	var _templateObject$2, _templateObject2$2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
@@ -1030,7 +1030,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (main_core.Type.isStringFilled(filledPlaceholder.FIELD_NAME)) {
 	        text = text.replace(filledPlaceholder.PLACEHOLDER_ID, "{".concat(filledPlaceholder.FIELD_NAME, "}"));
 	      } else if (main_core.Type.isStringFilled(filledPlaceholder.FIELD_VALUE)) {
-	        text = text.replace(filledPlaceholder.PLACEHOLDER_ID, filledPlaceholder.FIELD_VALUE);
+	        var fieldValue = filledPlaceholder.FIELD_VALUE.replaceAll('{', '&#123;').replaceAll('}', '&#125;');
+	        text = text.replace(filledPlaceholder.PLACEHOLDER_ID, fieldValue);
 	      }
 	    });
 	  }
@@ -1074,5 +1075,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Editor = Editor;
 
-}((this.BX.Crm.Template = this.BX.Crm.Template || {}),BX.Crm.EntitySelectorEx,BX.Event,BX,BX.UI.EntitySelector,BX.UI,BX,BX.Main,BX.UI,BX));
+}((this.BX.Crm.Template = this.BX.Crm.Template || {}),BX.Crm.EntitySelectorEx,BX.Event,BX,BX.UI.EntitySelector,BX.UI,BX,BX,BX.Main,BX.UI));
 //# sourceMappingURL=editor.bundle.js.map

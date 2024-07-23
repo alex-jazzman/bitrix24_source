@@ -10,8 +10,8 @@ return [
 	'rel' => [
 		'main.popup',
 		'main.core',
-		'market.rating-store',
-		'ui.vue3.pinia',
+		'market.rating-stars',
+		'market.market-links',
 		'ui.design-tokens',
 	],
 	'skip_core' => false,

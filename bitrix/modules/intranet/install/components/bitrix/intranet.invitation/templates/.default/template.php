@@ -380,7 +380,7 @@ if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 					<div class="invite-title-container">
 						<div class="invite-title-icon invite-title-icon-mass"></div>
 						<div class="invite-title-text"><?=Loc::getMessage("BX24_INVITE_DIALOG_TAB_INTEGRATOR_TITLE")?></div>
-						<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=6546149');"></div>
+						<div class="invite-title-helper" onclick="top.BX.Helper.show('redirect=detail&code=7725333');"></div>
 					</div>
 					<div class="invite-content-container">
 						<div class="invite-form-container">

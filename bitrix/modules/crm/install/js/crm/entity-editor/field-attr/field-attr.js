@@ -1563,13 +1563,20 @@ if (typeof BX.Crm.EntityFieldVisibilityConfigurator === "undefined")
 		{
 			if (!this._userSelector)
 			{
-				this._userSelector = BX.UI.EntityEditorUserSelector.create(
+				let selectorImplementation = BX.UI.EntityEditorEntitySelector;
+				if (!selectorImplementation)
+				{
+					selectorImplementation = BX.UI.EntityEditorUserSelector;
+				}
+
+				this._userSelector = selectorImplementation.create(
 					this._id,
 					{
 						callback: BX.delegate(this.processItemSelect, this),
 					}
-				);
+				)
 			}
+
 			return this._userSelector;
 		},
 		processItemSelect: function (selector, item)

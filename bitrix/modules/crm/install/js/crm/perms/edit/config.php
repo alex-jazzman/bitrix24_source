@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/edit.bundle.css',
 	'js' => 'dist/edit.bundle.js',
 	'rel' => [
-		'ui.design-tokens',
 		'ui.buttons',
 		'ui.sidepanel',
 		'ui.sidepanel.layout',
 		'ui.vue3',
+		'ui.design-tokens',
 		'ui.vue3.vuex',
 		'main.core',
 		'ui.loader',

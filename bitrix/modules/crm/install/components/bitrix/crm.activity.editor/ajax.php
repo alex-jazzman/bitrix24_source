@@ -2452,6 +2452,29 @@ elseif($action == 'SAVE_EMAIL')
 
 	$totalSize = 0;
 
+	$arRawFiles = [];
+	if (
+		isset($arFields['STORAGE_ELEMENT_IDS'])
+		&& !empty($arFields['STORAGE_ELEMENT_IDS'])
+		&& is_array($arFields['STORAGE_ELEMENT_IDS'])
+	)
+	{
+		foreach ($arFields['STORAGE_ELEMENT_IDS'] as $item)
+		{
+			$arRawFiles[$item] = StorageManager::makeFileArray($item, $storageTypeID);
+			$totalSize += $arRawFiles[$item]['size'];
+		}
+
+		$maxSize = Helper\Message::getMaxAttachedFilesSize();
+		if ($maxSize > 0 && $maxSize <= ceil($totalSize / 3) * 4) // base64 coef.
+		{
+			__CrmActivityEditorEndResponse(array('ERROR' => getMessage(
+				'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
+				['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding())]
+			)));
+		}
+	}
+
 	if ($isNew)
 	{
 		if(!($ID = CCrmActivity::Add($arFields, false, false, ['REGISTER_SONET_EVENT' => true])))
@@ -2464,7 +2487,6 @@ elseif($action == 'SAVE_EMAIL')
 		__CrmActivityEditorEndResponse(array('ERROR' => CCrmActivity::GetLastErrorMessage()));
 	}
 
-	$arRawFiles = [];
 	if (
 		isset($arFields['STORAGE_ELEMENT_IDS'])
 		&& !empty($arFields['STORAGE_ELEMENT_IDS'])
@@ -2473,10 +2495,6 @@ elseif($action == 'SAVE_EMAIL')
 	{
 		foreach ($arFields['STORAGE_ELEMENT_IDS'] as $item)
 		{
-			$arRawFiles[$item] = StorageManager::makeFileArray($item, $storageTypeID);
-
-			$totalSize += $arRawFiles[$item]['size'];
-
 			if (\CCrmContentType::Html == $contentType)
 			{
 				if (array_key_exists($item, $attachToFileIds))
@@ -2505,15 +2523,6 @@ elseif($action == 'SAVE_EMAIL')
 				);
 			}
 		}
-	}
-
-	$maxSize = Helper\Message::getMaxAttachedFilesSize();
-	if ($maxSize > 0 && $maxSize <= ceil($totalSize / 3) * 4) // base64 coef.
-	{
-		__CrmActivityEditorEndResponse(array('ERROR' => getMessage(
-			'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
-			['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding())]
-		)));
 	}
 
 	$hostname = \COption::getOptionString('main', 'server_name', '') ?: 'localhost';

@@ -148,6 +148,7 @@ class ConflictFieldsliderCreator
 			{
 				mergeUuid: this.#options.mergeUuid,
 				activityId: this.#options.activityId,
+				activityDirection: this.#options.activityDirection,
 			},
 		);
 		this.#app.start();

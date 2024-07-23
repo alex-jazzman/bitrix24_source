@@ -2,6 +2,7 @@
 $MESS["SOCNET_GROUP_COPY_DATE_FORMAT_ERROR"] = "Неправильний формат поля дати";
 $MESS["SOCNET_GROUP_COPY_FEATURE_BLOG"] = "Повідомлення в Живій стрічці";
 $MESS["SOCNET_GROUP_COPY_FEATURE_BLOG2"] = "Повідомлення у стрічці новин";
+$MESS["SOCNET_GROUP_COPY_FEATURE_BLOG3"] = "Повідомлення в стрічці";
 $MESS["SOCNET_GROUP_COPY_FEATURE_CHECKLISTS"] = "Чек-листи";
 $MESS["SOCNET_GROUP_COPY_FEATURE_COMMENTS"] = "Коментарі";
 $MESS["SOCNET_GROUP_COPY_FEATURE_DEPARTMENTS"] = "Відділи";

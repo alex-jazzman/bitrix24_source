@@ -17,7 +17,6 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 	const { PureComponent } = require('layout/pure-component');
 	const { ContextMenu } = require('layout/ui/context-menu');
-	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 
 	const { EntitySelectorFactory } = require('selector/widget/factory');
@@ -45,7 +44,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 						mediumPositionPercent: 90,
 						navigationBarColor: AppTheme.colors.bgSecondary,
 						swipeAllowed: true,
-						swipeContentAllowed: false,
+						swipeContentAllowed: true,
 						horizontalSwipeAllowed: false,
 					},
 					onReady: (readyLayout) => {
@@ -278,13 +277,9 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 		renderDescription()
 		{
-			const description = this.task.description && new CollapsibleText({
-				bbCodeMode: true,
+			return this.task.description && BBCodeText({
 				value: jnComponent.convertHtmlEntities(this.task.description),
 				style: styles.taskDescription,
-				containerStyle: {
-					flexGrow: 0,
-				},
 				onLinkClick: ({ url }) => {
 					if (this.files.hasOwnProperty(url))
 					{
@@ -302,13 +297,6 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 					inAppUrl.open(url);
 				},
 			});
-
-			if (description && !this.canRenderTaskFields())
-			{
-				description.toggleExpand();
-			}
-
-			return description;
 		}
 
 		loadTask()

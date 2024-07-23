@@ -156,7 +156,7 @@ $tabControl->BeginNextTab();
 	<tr>
 		<td><?=Loc::getMessage('SALE_DELIVERY_REQ_VIEW_F_DELIVERY_IDT')?>:</td>
 		<td>
-			<a href="/bitrix/admin/sale_delivery_service_edit.php?lang=ru&ID=<?=$fields["DELIVERY_ID"]?>"><?=htmlspecialcharsbx($deliveryName)?></a>
+			<a href="/bitrix/admin/sale_delivery_service_edit.php?lang=<?= LANGUAGE_ID ?>&ID=<?=$fields["DELIVERY_ID"]?>"><?=htmlspecialcharsbx($deliveryName)?></a>
 		</td>
 	</tr>
 <!--

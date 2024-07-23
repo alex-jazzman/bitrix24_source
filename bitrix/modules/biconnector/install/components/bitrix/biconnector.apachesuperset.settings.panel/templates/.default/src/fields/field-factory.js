@@ -7,15 +7,18 @@ import {
 	KeyInfoField,
 	UserNotificationField,
 	DashboardOwnerField,
+	ScopeField,
+	DeleteSupersetField,
+	ClearCacheField,
 } from './entities/index';
 
 export class FieldFactory
 {
 	constructor(entityEditorControlFactory: string = 'BX.UI.EntityEditorControlFactory')
 	{
-		EventEmitter.subscribe(entityEditorControlFactory + ':onInitialize', (event: BaseEvent) => {
+		EventEmitter.subscribe(`${entityEditorControlFactory}:onInitialize`, (event: BaseEvent) => {
 			const [, eventArgs] = event.getCompatData();
-			eventArgs.methods['dashboardSettings'] = this.factory.bind(this);
+			eventArgs.methods.dashboardSettings = this.factory.bind(this);
 		});
 	}
 
@@ -33,6 +36,12 @@ export class FieldFactory
 				return UserNotificationField.create(controlId, settings);
 			case 'ownerSelector':
 				return DashboardOwnerField.create(controlId, settings);
+			case 'scopeSelector':
+				return ScopeField.create(controlId, settings);
+			case 'deleteSuperset':
+				return DeleteSupersetField.create(controlId, settings);
+			case 'clearCache':
+				return ClearCacheField.create(controlId, settings);
 			default:
 				return null;
 		}

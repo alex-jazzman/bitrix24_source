@@ -6,8 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
-use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
-use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\Main\UI\Extension;
 
 /** @global \CMain $APPLICATION */
@@ -42,9 +40,6 @@ if (!empty($arResult['ERROR_MESSAGES']))
 	return;
 }
 
-$superset = new SupersetController(ProxyIntegrator::getInstance());
-$superset->initSuperset();
-
 if (
 	isset($arResult['VARIABLES']['dashboardId'])
 	&& (int)$arResult['VARIABLES']['dashboardId']  === 0
@@ -74,10 +69,7 @@ if (
 	}
 }
 
-$dashboardId = (int)$arResult['VARIABLES']['dashboardId'] ?? 0;
-
-$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-$sourceDashboardId = (int)$request->get('SOURCE');
+$dashboardId = (int)($arResult['VARIABLES']['dashboardId'] ?? 0);
 
 
 $APPLICATION->IncludeComponent(
@@ -88,7 +80,6 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [
 			'DASHBOARD_ID' => $dashboardId,
-			'SOURCE_DASHBOARD_ID' => $sourceDashboardId,
 		],
 		'USE_UI_TOOLBAR' => 'N',
 		'PAGE_MODE' => false,

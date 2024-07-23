@@ -220,7 +220,6 @@ $MESS["SC_CATALOG"] = "Каталог";
 $MESS["SC_CURRENT"] = "Поточне&nbsp;значення";
 $MESS["SC_DB_VERS"] = "Версія бази даних <b>#DB#</b>";
 $MESS["SC_DB_VERS_MYSQL"] = "Версія MySQL";
-$MESS["SC_DB_VERS_MYSQL_ER"] = "Ваша версія MySQL не задовольняє мінімальним технічним вимогам продукту. Оновіть будь ласка MySQL до версії 4.0.18 або вище перед встановленням продукту";
 $MESS["SC_DISK_AVAIL_READ_WRITE"] = "Доступно для читання й запису";
 $MESS["SC_DISK_AVAIL_READ_WRITE1"] = "Доступно для читання й запису";
 $MESS["SC_DISK_AVAIL_READ_WRITE2"] = "Доступно для читання й запису";

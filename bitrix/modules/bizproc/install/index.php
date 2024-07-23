@@ -133,17 +133,14 @@ Class bizproc extends CModule
 
 	function InstallFiles()
 	{
-		if(!isset($_ENV["COMPUTERNAME"]) || $_ENV["COMPUTERNAME"] !== 'BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/themes/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", false, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/templates/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/bizproc", true, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/tools",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, True);
-		}
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/themes/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", false, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/templates/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/images",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/bizproc", true, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/tools",  $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, True);
 		return true;
 	}
 
@@ -153,14 +150,11 @@ Class bizproc extends CModule
 
 	function UnInstallFiles()
 	{
-		if(!isset($_ENV["COMPUTERNAME"]) || $_ENV["COMPUTERNAME"] !== 'BX')
-		{
-			DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
-			DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/themes/.default/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes/.default");
-			DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools");
-			DeleteDirFilesEx("/bitrix/images/bizproc/");
-			DeleteDirFilesEx("/bitrix/js/bizproc/");
-		}
+		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
+		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/themes/.default/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes/.default");
+		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools");
+		DeleteDirFilesEx("/bitrix/images/bizproc/");
+		DeleteDirFilesEx("/bitrix/js/bizproc/");
 
 		return true;
 	}

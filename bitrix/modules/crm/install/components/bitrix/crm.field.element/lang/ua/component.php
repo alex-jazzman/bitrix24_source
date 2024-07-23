@@ -12,6 +12,7 @@ $MESS["CRM_ELEMENT_CREATE_CONTACT"] = "Контакт";
 $MESS["CRM_ELEMENT_CREATE_DEAL"] = "Угоду";
 $MESS["CRM_ELEMENT_CREATE_LEAD"] = "Лід";
 $MESS["CRM_ELEMENT_DEAL"] = "Угоди";
+$MESS["CRM_ELEMENT_HIDDEN_OR_DELETED"] = "Прихований або видалений елемент";
 $MESS["CRM_ELEMENT_LAST"] = "Останні";
 $MESS["CRM_ELEMENT_LEAD"] = "Ліди";
 $MESS["CRM_ELEMENT_NO_RESULT"] = "На жаль, на ваш пошуковий запит нічого не знайдено";

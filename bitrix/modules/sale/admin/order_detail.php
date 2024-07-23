@@ -3542,7 +3542,7 @@ else
 						<table  id="BASKET_TABLE" cellpadding="3" cellspacing="1" border="0" width="100%" class="internal">
 
 						<tr class="heading">
-							<?=getColumnsHeaders($arUserColumns, "detail", false);?>
+							<? getColumnsHeaders($arUserColumns, "detail", false); ?>
 						</tr>
 						<?
 						$bXmlId = COption::GetOptionString("sale", "show_order_product_xml_id", "N");

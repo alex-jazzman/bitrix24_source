@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,market_installStore,ui_vue3_pinia) {
 	'use strict';

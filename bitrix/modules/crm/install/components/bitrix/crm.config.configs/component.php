@@ -77,6 +77,14 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			ShowError($sError.'<br>');
 		else
 		{
+			if (isset($_POST['ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL']))
+			{
+				Settings\ActivitySettings::setValue(
+					Settings\ActivitySettings::ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL,
+					mb_strtoupper($_POST['ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL']) === 'Y',
+				);
+			}
+
 			if(isset($_POST['CALENDAR_DISPLAY_COMPLETED_CALLS']))
 			{
 				Settings\ActivitySettings::setValue(
@@ -861,21 +869,32 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 	'type' => 'section'
 );
 
-$arResult['FIELDS']['tab_activity_config'][] = array(
-	'id' => 'CALENDAR_DISPLAY_COMPLETED_CALLS',
-	'name' => GetMessage('CRM_FIELD_DISPLAY_COMPLETED_CALLS_IN_CALENDAR'),
-	'type' => 'checkbox',
-	'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_COMPLETED_CALLS),
-	'required' => false
-);
+if (Settings\ActivitySettings::getValue(Settings\ActivitySettings::ENABLE_CALENDAR_EVENTS_SETTINGS))
+{
+	$arResult['FIELDS']['tab_activity_config'][] = [
+		'id' => 'ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL',
+		'name' => Loc::getMessage('CRM_FIELD_ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL'),
+		'type' => 'checkbox',
+		'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL),
+		'required' => false,
+	];
 
-$arResult['FIELDS']['tab_activity_config'][] = array(
-	'id' => 'CALENDAR_DISPLAY_COMPLETED_MEETINGS',
-	'name' => GetMessage('CRM_FIELD_DISPLAY_COMPLETED_MEETINGS_IN_CALENDAR'),
-	'type' => 'checkbox',
-	'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_COMPLETED_MEETINGS),
-	'required' => false
-);
+	$arResult['FIELDS']['tab_activity_config'][] = array(
+		'id' => 'CALENDAR_DISPLAY_COMPLETED_CALLS',
+		'name' => GetMessage('CRM_FIELD_DISPLAY_COMPLETED_CALLS_IN_CALENDAR_MSGVER_1'),
+		'type' => 'checkbox',
+		'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_COMPLETED_CALLS),
+		'required' => false
+	);
+
+	$arResult['FIELDS']['tab_activity_config'][] = array(
+		'id' => 'CALENDAR_DISPLAY_COMPLETED_MEETINGS',
+		'name' => GetMessage('CRM_FIELD_DISPLAY_COMPLETED_MEETINGS_IN_CALENDAR'),
+		'type' => 'checkbox',
+		'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_COMPLETED_MEETINGS),
+		'required' => false
+	);
+}
 
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'CALENDAR_KEEP_REASSIGNED_CALLS',

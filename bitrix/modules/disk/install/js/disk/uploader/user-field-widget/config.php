@@ -49,7 +49,6 @@ return [
 		'main.popup',
 
 		// it would be better to load these extensions on demand
-		'disk.google-drive-picker',
 		'disk.document',
 		'disk.viewer.actions',
 	],

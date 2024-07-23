@@ -2,12 +2,13 @@
 import { ajax, Type, Tag, Text, Dom, Runtime, Uri, Loc } from 'main.core';
 import { DocumentId } from 'bizproc.document';
 import { Timestamp, UserId } from 'bizproc.types';
-import { Alert, AlertColor } from 'ui.alerts';
 import 'ui.icons.b24';
+import 'ui.hint';
 import { TextCrop } from 'ui.textcrop';
 import { Popup } from 'main.popup';
 import { TaskStatus, TaskUserData, TaskData } from 'bizproc.task';
 import { DateTimeFormat } from 'main.date';
+import { ErrorsView } from './views/errors-view';
 
 import { TimelineTask } from './timeline-task';
 
@@ -46,16 +47,17 @@ export type TimelineData = {
 
 export class DurationFormatter
 {
+	static #limits = [
+		[3600 * 24 * 30 * 12, 'Ydiff'],
+		[3600 * 24 * 30, 'mdiff'],
+		[3600 * 24, 'ddiff'],
+		[3600, 'Hdiff'],
+		[60, 'idiff'],
+	];
+
 	static #getFormatString(seconds: number): string
 	{
-		const limits = [
-			[3600 * 24 * 366, 'Ydiff'],
-			[3600 * 24 * 31, 'mdiff'],
-			[3600 * 24, 'ddiff'],
-			[3600, 'Hdiff'],
-			[60, 'idiff'],
-		];
-		for (const limit of limits)
+		for (const limit of this.#limits)
 		{
 			if (seconds > limit[0])
 			{
@@ -66,6 +68,19 @@ export class DurationFormatter
 		return 'sdiff';
 	}
 
+	static #getMultiplierByFormat(format: string): number
+	{
+		for (const limit of this.#limits)
+		{
+			if (format === limit[1])
+			{
+				return limit[0];
+			}
+		}
+
+		return 0;
+	}
+
 	static formatTimestamp(timestamp: number): string
 	{
 		return DateTimeFormat.format(
@@ -74,7 +89,7 @@ export class DurationFormatter
 		);
 	}
 
-	static formatTimeInterval(interval: ?number): string
+	static formatTimeInterval(interval: ?number, values: number = 1): string
 	{
 		if (Type.isNil(interval))
 		{
@@ -86,7 +101,31 @@ export class DurationFormatter
 			return Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_ZERO_SECOND_INTERVAL');
 		}
 
-		return DateTimeFormat.format(this.#getFormatString(interval), 0, interval);
+		let result = '';
+		let remainder = interval;
+
+		for (let i = 0; i < values; i++)
+		{
+			const format = this.#getFormatString(remainder);
+			// ignore seconds if we already have result
+			if (result.length > 0 && format === 'sdiff')
+			{
+				return result;
+			}
+			const multiplier = this.#getMultiplierByFormat(format);
+			result += DateTimeFormat.format(format, 0, remainder);
+			result += ' ';
+			if (multiplier > 0)
+			{
+				remainder %= multiplier;
+				if (remainder === 0)
+				{
+					return result;
+				}
+			}
+		}
+
+		return result;
 	}
 
 	static formatDate(timestamp: number, format: string): string
@@ -149,6 +188,12 @@ export class Timeline
 		;
 	}
 
+	static #tooLongProcessDuration(): number
+	{
+		// Three days, too much for business process
+		return 60 * 60 * 24 * 3;
+	}
+
 	#loadTimeline(): void
 	{
 		ajax.runAction('bizproc.workflow.getTimeline', {
@@ -209,9 +254,16 @@ export class Timeline
 	{
 		Dom.clean(this.#container);
 
-		if (!this.#isLoaded || this.#hasErrors())
+		if (this.#hasErrors())
 		{
-			Dom.append(this.#renderErrors(), this.#container);
+			const errorsView = new ErrorsView({ errors: this.#errors });
+			errorsView.renderTo(this.#container);
+
+			return this.#container;
+		}
+
+		if (!this.#isLoaded)
+		{
 			Dom.append(this.#renderLoadingStub(), this.#container);
 		}
 
@@ -223,16 +275,6 @@ export class Timeline
 		}
 
 		return this.#container;
-	}
-
-	#renderHTMLElements(elements: Array<HTMLElement>): string
-	{
-		let content = '';
-		elements.forEach((element) => {
-			content += element.outerHTML;
-		});
-
-		return content;
 	}
 
 	#renderItemTitle(title, iconClass, iconText, crop): HTMLElement
@@ -352,6 +394,22 @@ export class Timeline
 		`;
 	}
 
+	#renderHighlightedNotice(subject, text): HTMLElement
+	{
+		const timelineNotice = Tag.render`
+			<div class="bizproc-workflow-timeline-notice">
+				<div class="bizproc-workflow-timeline-subject">${Text.encode(subject)}</div>
+				<span class="bizproc-workflow-timeline-text">${Text.encode(text)}</span>
+				<span
+					data-hint="${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_TIME_LIMIT_EXCEEDED')}"
+				></span>
+			</div>
+		`;
+		BX.UI.Hint.init(timelineNotice);
+
+		return timelineNotice;
+	}
+
 	#renderStatus(text, statusClass): HTMLElement
 	{
 		const statusClassValue = Type.isString(statusClass) ? (` ${statusClass}`) : '';
@@ -390,7 +448,7 @@ export class Timeline
 	{
 		return (Tag.render`
 			<div class="bizproc-workflow-timeline-content">
-				${this.#renderHTMLElements(children)}
+				${children}
 			</div>
 		`);
 	}
@@ -435,7 +493,7 @@ export class Timeline
 
 		return (Tag.render`
 			<div class="bizproc-workflow-timeline-user-list">
-				${this.#renderHTMLElements(children)}
+				${children}
 				${hideMarksScript}
 			</div>
 		`);
@@ -454,7 +512,7 @@ export class Timeline
 		);
 	}
 
-	getStatusName(taskStatus: TaskStatus): string
+	getStatusName(taskStatus: TaskStatus, taskApproveType: string = '', usersCount = 1): string
 	{
 		if (taskStatus.isYes() || taskStatus.isOk())
 		{
@@ -468,7 +526,24 @@ export class Timeline
 
 		if (taskStatus.isWaiting())
 		{
-			return Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING');
+			if (usersCount === 1)
+			{
+				return Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING');
+			}
+			let message = '';
+			switch (taskApproveType)
+			{
+				case 'all': message = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ALL');
+					break;
+				case 'any': message = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ANY');
+					break;
+				case 'vote': message = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ALL');
+					break;
+				default: message = Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING');
+					break;
+			}
+
+			return message;
 		}
 
 		return taskStatus.name;
@@ -480,7 +555,7 @@ export class Timeline
 			<div class="bizproc-workflow-timeline-wrapper">
 				<div class="bizproc-workflow-timeline-inner">
 					<div class="bizproc-workflow-timeline-list">
-						${this.#renderHTMLElements(items)}
+						${items}
 					</div>
 					<script type="text/javascript">
 						(function() {
@@ -526,7 +601,7 @@ export class Timeline
 		{
 			content.push(this.#renderNotice(
 				Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'),
-				DurationFormatter.formatTimeInterval(this.#data.timeToStart),
+				DurationFormatter.formatTimeInterval(this.#data.timeToStart, 2),
 			));
 		}
 
@@ -593,7 +668,7 @@ export class Timeline
 						}
 						else
 						{
-							content.push(this.#renderCaption(this.getStatusName(task.status)));
+							content.push(this.#renderCaption(this.getStatusName(task.status, task.approveType, task.users.length)));
 						}
 					}
 					else
@@ -619,10 +694,15 @@ export class Timeline
 					if (!Type.isNil(task.executionTime))
 					{
 						content.push(
-							this.#renderNotice(
-								Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'),
-								DurationFormatter.formatTimeInterval(task.executionTime),
-							),
+							(task.executionTime < Timeline.#tooLongProcessDuration())
+								? this.#renderNotice(
+									Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'),
+									DurationFormatter.formatTimeInterval(task.executionTime, 2),
+								)
+								: this.#renderHighlightedNotice(
+									Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'),
+									DurationFormatter.formatTimeInterval(task.executionTime, 2),
+								),
 						);
 					}
 					items.push(this.#renderItem([
@@ -818,7 +898,7 @@ export class Timeline
 	{
 		const [logoClass, notice] = this.#getEfficiencyData();
 
-		return Tag.render`
+		const efficiencyInlineContent = Tag.render`
 			<div class="bizproc-workflow-timeline-item --efficiency ${itemClass}">
 				<div class="bizproc-workflow-timeline-item-inner">
 					<div class="bizproc-workflow-timeline-title">
@@ -835,6 +915,9 @@ export class Timeline
 								<span class="bizproc-workflow-timeline-text">
 									${DurationFormatter.formatTimeInterval(this.#data.executionTime)}
 								</span>
+								<span
+									data-hint="${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE')}"
+								></span>
 							</div>
 							<div class="bizproc-workflow-timeline-notice">
 								<div class="bizproc-workflow-timeline-subject">
@@ -853,13 +936,16 @@ export class Timeline
 				</div>	
 			</div>
 		`;
+		BX.UI.Hint.init(efficiencyInlineContent);
+
+		return efficiencyInlineContent;
 	}
 
 	#renderEfficiencyPopupContent()
 	{
 		const [logoClass, notice] = this.#getEfficiencyData();
 
-		return Tag.render`
+		const popup = Tag.render`
 			<div class="bizproc-timeline-popup">
 				<div class="bizproc-timeline-popup-title">
 					${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EFFECTIVITY_MARK')}
@@ -874,6 +960,9 @@ export class Timeline
 							<span class="bizproc-timeline-popup-val">
 								${DurationFormatter.formatTimeInterval(this.#data.executionTime)}
 							</span>
+							<span
+								data-hint="${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE')}"
+							></span>
 							<div class="bizproc-timeline-popup-prop">
 								${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_CURRENT_PROCESS_TIME')}
 							</div>
@@ -898,6 +987,9 @@ export class Timeline
 				</div>
 			</div>
 		`;
+		BX.UI.Hint.init(popup);
+
+		return popup;
 	}
 
 	showBiPopup(): void
@@ -953,25 +1045,6 @@ export class Timeline
 			<img src="/bitrix/js/bizproc/workflow/timeline/img/skeleton.svg"
 				 style="width:100%; margin: 0; padding: 0;"/>
 		`;
-	}
-
-	#renderErrors(): HTMLElement
-	{
-		const errorsContainer = Dom.create('div');
-
-		for (const error of this.#errors)
-		{
-			const alert = new Alert({
-				text: Text.encode(error.message),
-				color: AlertColor.DANGER,
-				closeBtn: true,
-				animated: true,
-			});
-
-			alert.renderTo(errorsContainer);
-		}
-
-		return errorsContainer;
 	}
 
 	#hasErrors(): boolean

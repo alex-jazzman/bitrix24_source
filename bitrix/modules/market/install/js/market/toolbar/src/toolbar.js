@@ -1,12 +1,15 @@
 import { MenuManager } from 'main.popup';
 import { Dom, Tag, Event } from 'main.core';
-import {ratingStore} from "market.rating-store";
+import { RatingStars } from "market.rating-stars";
+import { MarketLinks } from "market.market-links";
 
-import {mapActions} from "ui.vue3.pinia";
 import 'ui.design-tokens';
 import "./toolbar.css";
 
 export const Toolbar = {
+	components: {
+		RatingStars,
+	},
 	props: [
 		'categories', 'menuInfo', 'marketAction', 'searchAction',
 	],
@@ -27,6 +30,7 @@ export const Toolbar = {
 				foundApps: [],
 			},
 			menuPopup: null,
+			MarketLinks: MarketLinks,
 		}
 	},
 	computed: {
@@ -374,7 +378,6 @@ export const Toolbar = {
 
 			top.BX.UI.InfoHelper.show(this.$root.marketSlider);
 		},
-		...mapActions(ratingStore, ['isActiveStar', 'getAppRating',]),
 	},
 	template: `
 		<div id="market-toolbar-wrapper">
@@ -393,7 +396,7 @@ export const Toolbar = {
 						<span v-if="$root.isMainPage">{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_TITLE') }}</span>
 						<a class="market-toolbar__logo_link market-link-to-home"
 						   data-slider-ignore-autobinding="true"
-						   :href="$root.getMainUri"
+						   :href="MarketLinks.mainLink()"
 						   v-else
 						   data-load-content="main"
 						   @click.prevent="$root.emitLoadContent"
@@ -436,7 +439,7 @@ export const Toolbar = {
 					<div class="market-toolbar__nav_item">
 						<a class="market-toolbar__nav_link"
 						   data-slider-ignore-autobinding="true"
-						   :href="$root.getFavoritesUri"
+						   :href="MarketLinks.favoritesLink()"
 						   data-load-content="list"
 						   @click.prevent="$root.emitLoadContent"
 						>
@@ -519,7 +522,7 @@ export const Toolbar = {
 						<div class="market-menu-catalog__nav">
 							<div class="market-menu-catalog__nav-items --topical">
 								<a class="market-menu-catalog__nav-item_link-topical"
-								   :href="$root.getCategoryUri(categoryTop.CODE)"
+								   :href="MarketLinks.categoryLink(categoryTop.CODE)"
 								   v-for="categoryTop in categories.FIX_ITEMS"
 								   data-slider-ignore-autobinding="true"
 								   data-load-content="list"
@@ -533,7 +536,7 @@ export const Toolbar = {
 							<div class="market-menu-catalog__nav-items">
 								<a class="market-menu-catalog__nav-item_link"
 								   :class="{'--active': hoverCategory == index}"
-								   :href="$root.getCategoryUri(category.CODE)"
+								   :href="MarketLinks.categoryLink(category.CODE)"
 								   v-for="(category, index) in categories.ITEMS"
 								   data-slider-ignore-autobinding="true"
 								   data-load-content="list"
@@ -555,7 +558,7 @@ export const Toolbar = {
 										 v-if="showSubCategories(index)"
 									>
 										<a class="market-menu-catalog__subnav-item_link"
-										   :href="$root.getCategoryUri(subCategory.CODE)"
+										   :href="MarketLinks.categoryLink(subCategory.CODE)"
 										   v-for="subCategory in category.SUB_ITEMS"
 										   data-slider-ignore-autobinding="true"
 										   data-load-content="list"
@@ -597,8 +600,8 @@ export const Toolbar = {
 									<template v-else>
 										<a class="market-menu-catalog__search-item"
 										   v-for="appItem in search.foundApps"
-										   :href="$root.getDetailUri(appItem.CODE, appItem.IS_SITE_TEMPLATE === 'Y', 'search', search.text)"
-										   @click="$root.openSiteTemplate($event, appItem.IS_SITE_TEMPLATE === 'Y')"
+										   :href="MarketLinks.appDetail(appItem.CODE, appItem.IS_SITE_TEMPLATE === 'Y', {from: 'search', text: search.text})"
+										   @click="MarketLinks.openSiteTemplate($event, appItem.IS_SITE_TEMPLATE === 'Y')"
 										>
 											<div class="market-menu-catalog__search-item_img-block">
 												<img class="market-menu-catalog__search-item_img"
@@ -618,46 +621,12 @@ export const Toolbar = {
 													{{ appItem.APP_SEARCH_TYPE }} &#183; {{ getAppDescription(appItem) }}
 												</div>
 												<div class="market-rating__container">
-													<div class="market-rating__stars" v-if="appItem.IS_SITE_TEMPLATE !== 'Y'">
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(1, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(2, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(3, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(4, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(5, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<span class="market-rating__stars-amount"
-															  v-if="appItem.REVIEWS_NUMBER"
-														>({{ appItem.REVIEWS_NUMBER }})</span>
-													</div>
+													<RatingStars
+														v-if="appItem.IS_SITE_TEMPLATE !== 'Y'"
+														:rating="appItem.RATING"
+														:reviewsNumber="appItem.REVIEWS_NUMBER"
+													/>
+													
 													<div class="market-rating__download">
 														<span class="market-rating__download-icon"></span>
 														<div class="market-rating__download-amount">{{ appItem.NUM_INSTALLS }}</div>

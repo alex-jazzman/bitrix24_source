@@ -115,13 +115,13 @@ BX.CRM.Kanban.DropZone.prototype = {
 		BX.onCustomEvent(this.getGrid(), 'Kanban.DropZone:onItemCaptured', [item, this, event.groupIds]);
 
 		this.captureTimeout = setTimeout(
-			function() {
+			() => {
 				this.empty();
 				this.getDropZoneArea().hide();
 				this.droppedItems = [];
 				this.getGrid().dropZonesShow = false;
-			}.bind(this),
-			this.getDropZoneArea().getDropZoneTimeout()
+			},
+			this.getDropZoneArea().getDropZoneTimeout(),
 		);
 	},
 

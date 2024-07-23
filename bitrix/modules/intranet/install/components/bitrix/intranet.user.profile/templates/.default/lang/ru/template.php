@@ -74,9 +74,10 @@ $MESS["INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"] = "Вы уверены, чт
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"] = "На вашем Битрикс24 назначено максимальное допустимое<br/> количество администраторов. 
 При назначении данного<br/>пользователя вы лишитесь права администрировать портал. Вы уверены, что хотите передать права администратора?";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE"] = "Назначить сотрудника администратором?";
-$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION"] = "Администратор имеет полный доступ к персональным данным сотрудников и клиентов, может приглашать и увольнять сотрудников, изменять права и настройки вашего Битрикс24";
-$MESS["INTRANET_USER_PROFILE_CONFIRM_YES"] = "Да, назначить";
-$MESS["INTRANET_USER_PROFILE_CONFIRM_NO"] = "Не назначать";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGVER_1"] = "Обратите внимание, что администратор сможет назначать и удалять любых других администраторов, а также получит полный контроль над вашим Битрикс24. Если это не ваш сотрудник или вы не знаете сотрудника лично, перед назначением убедитесь в его надёжности.<br/><br/>Сторонних разработчиков и сотрудников компаний-партнёров Битрикс24 важно добавлять только как интеграторов. Интеграторы обладают достаточными правами для настройки, но не смогут забрать у вас доступ к Битрикс24.<br/><br/>[helpdesklink]Подробнее о том, как защитить Битрикс24[/helpdesklink]";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1"] = "Назначить администратором";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR"] = "Назначить интегратором";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1"] = "Отмена";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM_PROMO"] = "#LINK_START#Получить#LINK_END# дополнительные возможности для вашего Битрикс24";
 $MESS["INTRANET_USER_PROFILE_RIGHTS_RESTR_TITLE"] = "Ограничение числа администраторов";
 $MESS["INTRANET_USER_PROFILE_RIGHTS_RESTR_TEXT1"] = "Получите дополнительные полезные возможности для вашего «Битрикс24»";

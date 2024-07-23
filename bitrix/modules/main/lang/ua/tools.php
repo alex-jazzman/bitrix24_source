@@ -2,7 +2,6 @@
 $MESS["expire_mess_timelicense1"] = "<font class=\"tablebodytext\"><font color=\"#FF0000\">Термін дії поточної ліцензії закінчився. Через два тижні цей сайт повністю припинить свою роботу. Терміново зв'яжіться з <a href=\"https://www.bitrix.ua/\">відділом по роботі з ключовими клієнтами компанії Бітрікс24</a> для придбання ліцензії на наступний рік.</font></font>";
 $MESS["TOOLS_DN"] = "дн.";
 $MESS["TOOLS_DAYS"] = "днів";
-$MESS["TOOLS_CALENDAR"] = "Календар";
 $MESS["TOOLS_HELP"] = "Допомога";
 $MESS["MAIN_QUOTE"] = "Цитата";
 $MESS["MAIN_QUOTE_S"] = "цитата";

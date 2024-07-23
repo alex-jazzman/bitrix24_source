@@ -13,6 +13,7 @@ export default class Sms extends WithEditor
 	filledPlaceholders: FilledPlaceholder[];
 
 	isFetchedConfig: boolean = false;
+	fetchConfigPromise: ?Promise = null;
 
 	/**
 	 * @override
@@ -838,6 +839,14 @@ export default class Sms extends WithEditor
 
 	getSendData(): ?Object
 	{
+		if (!this.isFetchedConfig)
+		{
+			return {
+				text: '',
+				templateId: null,
+			};
+		}
+
 		let text = '';
 		let templateId = null;
 
@@ -949,6 +958,14 @@ export default class Sms extends WithEditor
 				ownerTypeId: this._ownerTypeId,
 				ownerId: this._ownerId,
 				mode: this._ownerTypeId === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
+				st: {
+					tool: 'crm',
+					category: 'payments',
+					event: 'payment_create_click',
+					c_section: 'crm_sms',
+					c_sub_section: 'web',
+					type: 'delivery_payment',
+				}
 			}).then(function(result)
 			{
 				if(result && result.get('action'))
@@ -1558,12 +1575,13 @@ export default class Sms extends WithEditor
 		}
 
 		this.isFetchedConfig = false;
-
-		Ajax.runAction(
-			'crm.api.timeline.sms.getConfig',
-			{ json: { entityTypeId: this.getEntityTypeId(), entityId: this.getEntityId() } },
-		)
-			.then(({ data }) => {
+		this.fetchConfigPromise = new Promise((resolve) => {
+			Ajax.runAction('crm.api.timeline.sms.getConfig', {
+				json: {
+					entityTypeId: this.getEntityTypeId(),
+					entityId: this.getEntityId(),
+				},
+			}).then(({ data }) => {
 				this.isFetchedConfig = true;
 				this.setSettings(data);
 
@@ -1580,10 +1598,84 @@ export default class Sms extends WithEditor
 					{
 						this.onTemplateSelectClick();
 					}
+
+					resolve();
 				}, 50);
-			})
-			.catch(() => this.showNotify(Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR')))
+			}).catch(() => {
+				this.showNotify(Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR'));
+
+				setTimeout(() => this.cancel(), 50);
+			});
+		});
+	}
+
+	tryToResend(senderId: string, fromId: string, clientData: Object, rawDescription: ?string): void
+	{
+		if (this.isFetchedConfig)
+		{
+			this.#prepareToResend(senderId, fromId, clientData, rawDescription);
+		}
+		else
+		{
+			// eslint-disable-next-line promise/catch-or-return
+			this.fetchConfigPromise.then(() => this.#prepareToResend(senderId, fromId, clientData, rawDescription));
+		}
+	}
+
+	#prepareToResend(senderId: string, fromId: string, clientData: Object, rawDescription: ?string): void
+	{
+		const sender = this._senders.find((sender: Object) => sender.id === senderId);
+		if (sender?.canUse && Type.isArrayFilled(sender?.fromList))
+		{
+			this.setSender(sender);
+
+			const from = sender.fromList.find((from: Object) => String(from.id) === fromId);
+			if (from)
+			{
+				this.setFrom(from);
+			}
+			else
+			{
+				console.warn('Unable to resend SMS with selected from');
+			}
+		}
+		else
+		{
+			console.warn('Unable to resend SMS with sender ID "' + senderId + '"');
+		}
+
+		const client = this._communications
+			.find((communication: Object) => communication.entityId === clientData.entityId
+				&& communication.entityTypeId === clientData.entityTypeId
+			)
 		;
+		if (client)
+		{
+			this.setClient(client);
+
+			const to = client.phones.find((phone: Object) => phone.value === clientData.value);
+			if (to)
+			{
+				this.setTo(to);
+			}
+		}
+		else
+		{
+			console.warn('Unable to resend SMS with selected client');
+		}
+
+		if (Type.isStringFilled(rawDescription))
+		{
+			this._input.value = rawDescription;
+			this.setMessageLengthCounter();
+
+			setTimeout(this.resizeForm.bind(this), 0);
+		}
+
+		if (this._smsDetail.classList.contains('hidden'))
+		{
+			setTimeout(() => this._smsDetailSwitcher.click(), 50);
+		}
 	}
 
 	static create(id, settings)

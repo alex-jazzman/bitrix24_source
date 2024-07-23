@@ -3,7 +3,7 @@ import { TourManager } from 'crm.tour-manager';
 import { ajax as Ajax, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MenuItem, MenuItemOptions, MenuManager } from 'main.popup';
-import { Dialog } from 'ui.entity-selector';
+import { Dialog, DialogOptions } from 'ui.entity-selector';
 import { MessageBox } from 'ui.dialogs.messagebox';
 
 import Item from '../../item';
@@ -40,6 +40,7 @@ export default class Whatsapp extends Item
 
 	#settingsMenu: Menu = null;
 	#tplEditor: Editor = null;
+	#selectTplDlg: Dialog = null;
 	#placeholders: string[];
 	#filledPlaceholders: FilledPlaceholder[];
 
@@ -56,6 +57,8 @@ export default class Whatsapp extends Item
 	#toEntityId: ?number = null;
 
 	#unViewedTourList: string[];
+
+	#fetchConfigPromise: ?Promise = null;
 
 	/**
 	 * @override
@@ -179,15 +182,18 @@ export default class Whatsapp extends Item
 		}
 
 		this.#isFetchedConfig = false;
-
-		Ajax.runAction(
-			'crm.api.timeline.whatsapp.getConfig',
-			{ json: { entityTypeId: this.getEntityTypeId(), entityId: this.getEntityId() } },
-		)
-			.then(({ data }) => {
+		this.#fetchConfigPromise = new Promise((resolve) => {
+			Ajax.runAction('crm.api.timeline.whatsapp.getConfig', {
+				json: {
+					entityTypeId: this.getEntityTypeId(),
+					entityId: this.getEntityId(),
+				},
+			}).then(({ data }) => {
 				this.#isFetchedConfig = true;
 				this.#prepareParams(data);
 				this.#showContent();
+
+				resolve();
 
 				setTimeout(() => {
 					if (
@@ -208,9 +214,25 @@ export default class Whatsapp extends Item
 						this.#unViewedTourList = this.#unViewedTourList.filter((name) => name !== Tour.USER_OPTION_TEMPLATES_READY);
 					}
 				}, 300);
-			})
-			.catch(() => this.showNotify(Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR')))
-		;
+			}).catch(() => {
+				this.showNotify(Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR'));
+
+				setTimeout(() => this.emitFinishEditEvent(), 50);
+			});
+		});
+	}
+
+	tryToResend(template: Object, fromId: string, clientData: Object): void
+	{
+		if (this.#isFetchedConfig)
+		{
+			this.#prepareToResend(template, fromId, clientData);
+		}
+		else
+		{
+			// eslint-disable-next-line promise/catch-or-return
+			this.#fetchConfigPromise.then(() => this.#prepareToResend(template, fromId, clientData));
+		}
 	}
 
 	#prepareParams(data: Object): void
@@ -224,6 +246,44 @@ export default class Whatsapp extends Item
 		// set default parameters
 		this.#setCommunicationsParams();
 		this.#setChannelDefaultPhoneId();
+	}
+
+	#prepareToResend(template: Object, fromId: string, clientData: Object): void
+	{
+		if (!this.#provider)
+		{
+			throw new Error('Whatsapp provider must be defined');
+		}
+
+		const client = this.#communications
+			.find((communication: Object) => communication.entityId === clientData.entityId
+				&& communication.entityTypeId === clientData.entityTypeId)
+		;
+		if (Type.isArrayFilled(client.phones) && Type.isStringFilled(clientData.value))
+		{
+			const toPhone = client.phones.find((row: Object) => row.value === clientData.value);
+			if (toPhone)
+			{
+				this.#toPhone = toPhone;
+				this.#toEntityTypeId = client.entityTypeId;
+				this.#toEntityId = client.entityId;
+			}
+		}
+
+		if (Type.isArrayFilled(this.#provider.fromList) && Type.isStringFilled(fromId))
+		{
+			const from = this.#provider.fromList.find((row: Object) => String(row.id) === fromId);
+			if (from)
+			{
+				this.#fromPhoneId = from.id;
+			}
+		}
+
+		if (this.#canUse && Type.isPlainObject(template))
+		{
+			this.#initTemplateSelectDialog({ preselectedItems: [['message_template', template.ORIGINAL_ID]] });
+			this.#setTemplate(template);
+		}
 	}
 
 	#subscribeToReceiversChanges(): void
@@ -250,6 +310,7 @@ export default class Whatsapp extends Item
 		});
 	}
 
+	// region PRIVATE RENDERERS
 	// region PRIVATE DOM MANIPULATIONS METHODS
 	#createHelpLinkContainer(): HTMLElement
 	{
@@ -309,6 +370,7 @@ export default class Whatsapp extends Item
 			`;
 			Event.bind(this.#cancelButton, 'click', () => {
 				this.#setTemplate(Runtime.clone(this.getSetting('demoTemplate')));
+				this.#selectTplDlg = null;
 				this.emitFinishEditEvent();
 			});
 
@@ -493,40 +555,12 @@ export default class Whatsapp extends Item
 	// region HANDLERS
 	#handleTemplateSelect(): void
 	{
-		const entityTypeId = this.getEntityTypeId();
-		const entityId = this.getEntityId();
-		const categoryId = this.getEntityCategoryId();
+		if (!this.#selectTplDlg)
+		{
+			this.#initTemplateSelectDialog();
+		}
 
-		const selector = new Dialog({
-			targetNode: this.#selectorButton,
-			multiple: false,
-			showAvatars: false,
-			dropdownMode: true,
-			enableSearch: true,
-			context: `SMS-TEMPLATE-SELECTOR-$entityTypeId}-${categoryId}`,
-			tagSelectorOptions: {
-				textBoxWidth: '100%',
-			},
-			width: 450,
-			entities: [{
-				id: 'message_template',
-				options: {
-					senderId: this.#provider.id,
-					entityTypeId,
-					entityId,
-					categoryId,
-				},
-			}],
-			events: {
-				'Item:onSelect': (selectEvent: BaseEvent): void => {
-					const item = selectEvent.getData().item;
-
-					this.#setTemplate(item.getCustomData().get('template'));
-				},
-			},
-		});
-
-		selector.show();
+		this.#selectTplDlg.show();
 	}
 
 	#handleSettingsMenuClick(): void
@@ -643,6 +677,7 @@ export default class Whatsapp extends Item
 				MESSAGE_TO: this.#toPhone.value,
 				MESSAGE_BODY: text,
 				MESSAGE_TEMPLATE: this.#template.ID,
+				MESSAGE_TEMPLATE_ORIGINAL_ID: this.#template.ORIGINAL_ID,
 				MESSAGE_TEMPLATE_WITH_PLACEHOLDER: Type.isPlainObject(this.#placeholders),
 				OWNER_TYPE_ID: this.getEntityTypeId(),
 				OWNER_ID: this.getEntityId(),
@@ -670,6 +705,8 @@ export default class Whatsapp extends Item
 			return;
 		}
 
+		this.#setTemplate(Runtime.clone(this.getSetting('demoTemplate')));
+		this.#selectTplDlg = null;
 		this.emitFinishEditEvent();
 	}
 
@@ -681,6 +718,11 @@ export default class Whatsapp extends Item
 	// endregion
 
 	// region TEMPLATES
+	getTemplate(): ?TemplateItem
+	{
+		return this.#isDemoTemplateSet ? null : this.#template;
+	}
+
 	#initTemplateEditor(template: TemplateItem): void
 	{
 		const preview = template?.PREVIEW.replaceAll('\n', '<br>');
@@ -699,6 +741,44 @@ export default class Whatsapp extends Item
 		;
 
 		this.#tplEditor.setBody(preview); // @todo will support other positions too, not only Preview
+	}
+
+	#initTemplateSelectDialog(additionalOptions: DialogOptions): void
+	{
+		const entityTypeId = this.getEntityTypeId();
+		const entityId = this.getEntityId();
+		const categoryId = this.getEntityCategoryId();
+
+		const defaultOptions: DialogOptions = {
+			targetNode: this.#selectorButton,
+			multiple: false,
+			showAvatars: false,
+			dropdownMode: true,
+			enableSearch: true,
+			context: `SMS-TEMPLATE-SELECTOR-$entityTypeId}-${categoryId}`,
+			tagSelectorOptions: {
+				textBoxWidth: '100%',
+			},
+			width: 450,
+			entities: [{
+				id: 'message_template',
+				options: {
+					senderId: this.#provider.id,
+					entityTypeId,
+					entityId,
+					categoryId,
+				},
+			}],
+			events: {
+				'Item:onSelect': (selectEvent: BaseEvent): void => {
+					const item = selectEvent.getData().item;
+
+					this.#setTemplate(item.getCustomData().get('template'));
+				},
+			},
+		};
+
+		this.#selectTplDlg = new Dialog({ ...defaultOptions, ...additionalOptions });
 	}
 
 	#preparePlaceholdersFromTemplate(template: TemplateItem): void

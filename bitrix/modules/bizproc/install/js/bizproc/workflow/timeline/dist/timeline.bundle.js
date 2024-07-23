@@ -1,8 +1,41 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
-(function (exports,bizproc_document,bizproc_types,ui_alerts,ui_icons_b24,ui_textcrop,main_popup,main_date,main_core,bizproc_task) {
+(function (exports,bizproc_document,bizproc_types,ui_icons_b24,ui_hint,ui_textcrop,main_popup,main_date,main_core,bizproc_task) {
 	'use strict';
+
+	let _ = t => t,
+	  _t,
+	  _t2;
+	var _errors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errors");
+	class ErrorsView {
+	  constructor(props) {
+	    Object.defineProperty(this, _errors, {
+	      writable: true,
+	      value: []
+	    });
+	    if (main_core.Type.isArrayFilled(props.errors)) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors] = props.errors;
+	    }
+	  }
+	  render() {
+	    return main_core.Tag.render(_t || (_t = _`
+			<div class="bizproc-workflow-timeline_error-wrapper">
+				<div class="bizproc-workflow-timeline_error-inner">
+					${0}
+					<div class="bizproc-workflow-timeline_error-img"></div>
+				</div>
+			</div>
+		`), babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors].map(({
+	      message
+	    }) => main_core.Tag.render(_t2 || (_t2 = _`
+						<p class="bizproc-workflow-timeline_error-text">${0}</p>
+					`), main_core.Text.encode(message))));
+	  }
+	  renderTo(target) {
+	    main_core.Dom.append(this.render(), target);
+	  }
+	}
 
 	var _data = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("data");
 	class TimelineTask {
@@ -44,9 +77,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }
 	}
 
-	let _ = t => t,
-	  _t,
-	  _t2,
+	let _$1 = t => t,
+	  _t$1,
+	  _t2$1,
 	  _t3,
 	  _t4,
 	  _t5,
@@ -62,47 +95,82 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  _t15,
 	  _t16,
 	  _t17,
-	  _t18;
+	  _t18,
+	  _t19;
+	var _limits = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("limits");
 	var _getFormatString = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFormatString");
+	var _getMultiplierByFormat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMultiplierByFormat");
 	class DurationFormatter {
 	  static formatTimestamp(timestamp) {
 	    return main_date.DateTimeFormat.format(babelHelpers.classPrivateFieldLooseBase(this, _getFormatString)[_getFormatString](Date.now() / 1000 - timestamp), timestamp);
 	  }
-	  static formatTimeInterval(interval) {
+	  static formatTimeInterval(interval, values = 1) {
 	    if (main_core.Type.isNil(interval)) {
 	      return main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_AVERAGE_PROCESS_TIME_UNKNOWN');
 	    }
 	    if (interval === 0) {
 	      return main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_ZERO_SECOND_INTERVAL');
 	    }
-	    return main_date.DateTimeFormat.format(babelHelpers.classPrivateFieldLooseBase(this, _getFormatString)[_getFormatString](interval), 0, interval);
+	    let result = '';
+	    let remainder = interval;
+	    for (let i = 0; i < values; i++) {
+	      const format = babelHelpers.classPrivateFieldLooseBase(this, _getFormatString)[_getFormatString](remainder);
+	      // ignore seconds if we already have result
+	      if (result.length > 0 && format === 'sdiff') {
+	        return result;
+	      }
+	      const multiplier = babelHelpers.classPrivateFieldLooseBase(this, _getMultiplierByFormat)[_getMultiplierByFormat](format);
+	      result += main_date.DateTimeFormat.format(format, 0, remainder);
+	      result += ' ';
+	      if (multiplier > 0) {
+	        remainder %= multiplier;
+	        if (remainder === 0) {
+	          return result;
+	        }
+	      }
+	    }
+	    return result;
 	  }
 	  static formatDate(timestamp, format) {
 	    return main_date.DateTimeFormat.format(format, timestamp);
 	  }
 	}
 	function _getFormatString2(seconds) {
-	  const limits = [[3600 * 24 * 366, 'Ydiff'], [3600 * 24 * 31, 'mdiff'], [3600 * 24, 'ddiff'], [3600, 'Hdiff'], [60, 'idiff']];
-	  for (const limit of limits) {
+	  for (const limit of babelHelpers.classPrivateFieldLooseBase(this, _limits)[_limits]) {
 	    if (seconds > limit[0]) {
 	      return limit[1];
 	    }
 	  }
 	  return 'sdiff';
 	}
+	function _getMultiplierByFormat2(format) {
+	  for (const limit of babelHelpers.classPrivateFieldLooseBase(this, _limits)[_limits]) {
+	    if (format === limit[1]) {
+	      return limit[0];
+	    }
+	  }
+	  return 0;
+	}
+	Object.defineProperty(DurationFormatter, _getMultiplierByFormat, {
+	  value: _getMultiplierByFormat2
+	});
 	Object.defineProperty(DurationFormatter, _getFormatString, {
 	  value: _getFormatString2
+	});
+	Object.defineProperty(DurationFormatter, _limits, {
+	  writable: true,
+	  value: [[3600 * 24 * 30 * 12, 'Ydiff'], [3600 * 24 * 30, 'mdiff'], [3600 * 24, 'ddiff'], [3600, 'Hdiff'], [60, 'idiff']]
 	});
 	var _workflowId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("workflowId");
 	var _data$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("data");
 	var _isLoaded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLoaded");
-	var _errors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errors");
+	var _errors$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errors");
 	var _container = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _biPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("biPopup");
 	var _dateFormat = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dateFormat");
+	var _tooLongProcessDuration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tooLongProcessDuration");
 	var _loadTimeline = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadTimeline");
 	var _setDataFromResponse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setDataFromResponse");
-	var _renderHTMLElements = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderHTMLElements");
 	var _renderItemTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderItemTitle");
 	var _renderSubject = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderSubject");
 	var _renderProceedTaskButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderProceedTaskButton");
@@ -110,6 +178,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _renderDoc = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDoc");
 	var _renderCaption = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderCaption");
 	var _renderNotice = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderNotice");
+	var _renderHighlightedNotice = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderHighlightedNotice");
 	var _renderStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderStatus");
 	var _renderMore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderMore");
 	var _renderContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContent");
@@ -128,7 +197,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _createBiPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createBiPopup");
 	var _renderBiPopupContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderBiPopupContent");
 	var _renderLoadingStub = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLoadingStub");
-	var _renderErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderErrors");
 	var _hasErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasErrors");
 	class Timeline {
 	  // #taskId: number;
@@ -136,9 +204,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  constructor(options, config) {
 	    Object.defineProperty(this, _hasErrors, {
 	      value: _hasErrors2
-	    });
-	    Object.defineProperty(this, _renderErrors, {
-	      value: _renderErrors2
 	    });
 	    Object.defineProperty(this, _renderLoadingStub, {
 	      value: _renderLoadingStub2
@@ -194,6 +259,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    Object.defineProperty(this, _renderStatus, {
 	      value: _renderStatus2
 	    });
+	    Object.defineProperty(this, _renderHighlightedNotice, {
+	      value: _renderHighlightedNotice2
+	    });
 	    Object.defineProperty(this, _renderNotice, {
 	      value: _renderNotice2
 	    });
@@ -215,9 +283,6 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    Object.defineProperty(this, _renderItemTitle, {
 	      value: _renderItemTitle2
 	    });
-	    Object.defineProperty(this, _renderHTMLElements, {
-	      value: _renderHTMLElements2
-	    });
 	    Object.defineProperty(this, _setDataFromResponse, {
 	      value: _setDataFromResponse2
 	    });
@@ -236,7 +301,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _errors, {
+	    Object.defineProperty(this, _errors$1, {
 	      writable: true,
 	      value: []
 	    });
@@ -278,8 +343,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }
 	  render() {
 	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isLoaded)[_isLoaded] || babelHelpers.classPrivateFieldLooseBase(this, _hasErrors)[_hasErrors]()) {
-	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderErrors)[_renderErrors](), babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _hasErrors)[_hasErrors]()) {
+	      const errorsView = new ErrorsView({
+	        errors: babelHelpers.classPrivateFieldLooseBase(this, _errors$1)[_errors$1]
+	      });
+	      errorsView.renderTo(babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
+	      return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
+	    }
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isLoaded)[_isLoaded]) {
 	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderLoadingStub)[_renderLoadingStub](), babelHelpers.classPrivateFieldLooseBase(this, _container)[_container]);
 	    }
 	    if (main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1])) {
@@ -290,7 +361,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
 	  }
-	  getStatusName(taskStatus) {
+	  getStatusName(taskStatus, taskApproveType = '', usersCount = 1) {
 	    if (taskStatus.isYes() || taskStatus.isOk()) {
 	      return main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMED');
 	    }
@@ -298,13 +369,35 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      return main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_DECLINED');
 	    }
 	    if (taskStatus.isWaiting()) {
-	      return main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING');
+	      if (usersCount === 1) {
+	        return main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING');
+	      }
+	      let message = '';
+	      switch (taskApproveType) {
+	        case 'all':
+	          message = main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ALL');
+	          break;
+	        case 'any':
+	          message = main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ANY');
+	          break;
+	        case 'vote':
+	          message = main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING_ALL');
+	          break;
+	        default:
+	          message = main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMING');
+	          break;
+	      }
+	      return message;
 	    }
 	    return taskStatus.name;
 	  }
 	  showBiPopup() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _getBiPopup)[_getBiPopup]().show();
 	  }
+	}
+	function _tooLongProcessDuration2() {
+	  // Three days, too much for business process
+	  return 60 * 60 * 24 * 3;
 	}
 	function _loadTimeline2() {
 	  main_core.ajax.runAction('bizproc.workflow.getTimeline', {
@@ -352,21 +445,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].users.set(main_core.Text.toInteger(user.id), user);
 	      }
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors] = getArray(response.errors);
+	    babelHelpers.classPrivateFieldLooseBase(this, _errors$1)[_errors$1] = getArray(response.errors);
 	  }
-	}
-	function _renderHTMLElements2(elements) {
-	  let content = '';
-	  elements.forEach(element => {
-	    content += element.outerHTML;
-	  });
-	  return content;
 	}
 	function _renderItemTitle2(title, iconClass, iconText, crop) {
 	  const iconClassValue = main_core.Type.isString(iconClass) ? ` ${iconClass}` : '';
 	  const iconTextValue = main_core.Type.isString(iconText) ? iconText : '';
 	  const cropValue = crop ? ' data-crop="crop"' : '';
-	  return main_core.Tag.render(_t || (_t = _`
+	  return main_core.Tag.render(_t$1 || (_t$1 = _$1`
 			<div>
 				<span class="bizproc-workflow-timeline-icon${0}">${0}</span>
 				<div class="bizproc-workflow-timeline-title"${0}>${0}</div>
@@ -374,7 +460,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		`), iconClassValue, iconTextValue, cropValue, main_core.Text.encode(title));
 	}
 	function _renderSubject2(subject) {
-	  return main_core.Tag.render(_t2 || (_t2 = _`
+	  return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
 			<div class="bizproc-workflow-timeline-subject">${0}</div>
 		`), main_core.Text.encode(subject));
 	}
@@ -383,7 +469,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    workflow: babelHelpers.classPrivateFieldLooseBase(this, _workflowId)[_workflowId],
 	    task: task.id
 	  }).toString();
-	  return main_core.Tag.render(_t3 || (_t3 = _`
+	  return main_core.Tag.render(_t3 || (_t3 = _$1`
 			<div class="task-button --hidden">
 				<a class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round" href="${0}">
 					${0}
@@ -413,7 +499,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    avatar = `<i style="background-image: url('${user.avatarSize100}')"></i>`;
 	  }
 	  const button = task != null && task.id && isWaiting ? babelHelpers.classPrivateFieldLooseBase(this, _renderProceedTaskButton)[_renderProceedTaskButton](task) : '';
-	  return main_core.Tag.render(_t4 || (_t4 = _`
+	  return main_core.Tag.render(_t4 || (_t4 = _$1`
 			<div class="bizproc-workflow-timeline-user${0}">
 				<div class="bizproc-workflow-timeline-userlogo ui-icon ui-icon-common-user">
 					${0}
@@ -427,7 +513,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		`), userClass, avatar, user.link, main_core.Text.encode(user.fullName), position, button);
 	}
 	function _renderDoc2(name, link, type, iconClass) {
-	  return main_core.Tag.render(_t5 || (_t5 = _`
+	  return main_core.Tag.render(_t5 || (_t5 = _$1`
 			<div class="bizproc-workflow-timeline-doc">
 				${0}
 				<div class="bizproc-workflow-timeline-type">
@@ -439,26 +525,39 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		`), babelHelpers.classPrivateFieldLooseBase(this, _renderCaption)[_renderCaption](main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_START_DOC')), iconClass, type, link, main_core.Text.encode(name));
 	}
 	function _renderCaption2(caption) {
-	  return main_core.Tag.render(_t6 || (_t6 = _`
+	  return main_core.Tag.render(_t6 || (_t6 = _$1`
 			<div class="bizproc-workflow-timeline-caption">${0}</div>
 		`), caption);
 	}
 	function _renderNotice2(subject, text) {
-	  return main_core.Tag.render(_t7 || (_t7 = _`
+	  return main_core.Tag.render(_t7 || (_t7 = _$1`
 			<div class="bizproc-workflow-timeline-notice">
 				<div class="bizproc-workflow-timeline-subject">${0}</div>
 				<span class="bizproc-workflow-timeline-text">${0}</span>
 			</div>
 		`), main_core.Text.encode(subject), main_core.Text.encode(text));
 	}
+	function _renderHighlightedNotice2(subject, text) {
+	  const timelineNotice = main_core.Tag.render(_t8 || (_t8 = _$1`
+			<div class="bizproc-workflow-timeline-notice">
+				<div class="bizproc-workflow-timeline-subject">${0}</div>
+				<span class="bizproc-workflow-timeline-text">${0}</span>
+				<span
+					data-hint="${0}"
+				></span>
+			</div>
+		`), main_core.Text.encode(subject), main_core.Text.encode(text), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_TIME_LIMIT_EXCEEDED'));
+	  BX.UI.Hint.init(timelineNotice);
+	  return timelineNotice;
+	}
 	function _renderStatus2(text, statusClass) {
 	  const statusClassValue = main_core.Type.isString(statusClass) ? ` ${statusClass}` : '';
-	  return main_core.Tag.render(_t8 || (_t8 = _`
+	  return main_core.Tag.render(_t9 || (_t9 = _$1`
 			<div class="bizproc-workflow-timeline-status${0}">${0}</div>
 		`), statusClassValue, main_core.Text.encode(text));
 	}
 	function _renderMore2() {
-	  return main_core.Tag.render(_t9 || (_t9 = _`
+	  return main_core.Tag.render(_t10 || (_t10 = _$1`
 			<div class="bizproc-workflow-timeline-item --more">
 				<div class="bizproc-workflow-timeline-item-inner">
 					<span class="bizproc-workflow-timeline-icon"></span>
@@ -481,16 +580,16 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		`), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_MORE_TASKS'));
 	}
 	function _renderContent2(children) {
-	  return main_core.Tag.render(_t10 || (_t10 = _`
+	  return main_core.Tag.render(_t11 || (_t11 = _$1`
 			<div class="bizproc-workflow-timeline-content">
 				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderHTMLElements)[_renderHTMLElements](children));
+		`), children);
 	}
 	function _renderItem2(children, itemClass, efficiencyClass) {
 	  const itemClassValue = main_core.Type.isString(itemClass) ? ` ${itemClass}` : '';
 	  const efficiencyClassValue = main_core.Type.isString(efficiencyClass) ? ` data-efficiency-class="${efficiencyClass}"` : '';
-	  return main_core.Tag.render(_t11 || (_t11 = _`
+	  return main_core.Tag.render(_t12 || (_t12 = _$1`
 			<div class="bizproc-workflow-timeline-item${0}"${0}>
 				<div class="bizproc-workflow-timeline-item-inner">
 					${0}
@@ -501,7 +600,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	function _renderUserList2(children) {
 	  let hideMarksScript = '';
 	  if (children.length === 1) {
-	    hideMarksScript = main_core.Tag.render(_t12 || (_t12 = _`
+	    hideMarksScript = main_core.Tag.render(_t13 || (_t13 = _$1`
 				<script type="text/javascript">
 					(function () {
 						for (let userItem of document
@@ -517,12 +616,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				</script>
 			`));
 	  }
-	  return main_core.Tag.render(_t13 || (_t13 = _`
+	  return main_core.Tag.render(_t14 || (_t14 = _$1`
 			<div class="bizproc-workflow-timeline-user-list">
 				${0}
 				${0}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderHTMLElements)[_renderHTMLElements](children), hideMarksScript);
+		`), children, hideMarksScript);
 	}
 	function _renderVoteCaption2(votedCnt, totalCnt) {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _renderCaption)[_renderCaption](main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_VOTED', {
@@ -531,7 +630,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }));
 	}
 	function _renderItemsList2(items) {
-	  return main_core.Tag.render(_t14 || (_t14 = _`
+	  return main_core.Tag.render(_t15 || (_t15 = _$1`
 			<div class="bizproc-workflow-timeline-wrapper">
 				<div class="bizproc-workflow-timeline-inner">
 					<div class="bizproc-workflow-timeline-list">
@@ -555,7 +654,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					</script>
 				</div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderHTMLElements)[_renderHTMLElements](items));
+		`), items);
 	}
 	function _renderFirstBlock2() {
 	  const content = [];
@@ -564,7 +663,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  }
 	  content.push(babelHelpers.classPrivateFieldLooseBase(this, _renderDoc)[_renderDoc](babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].document.name, babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].document.url, babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].document.moduleName, '--file-2'));
 	  if (!main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].timeToStart)) {
-	    content.push(babelHelpers.classPrivateFieldLooseBase(this, _renderNotice)[_renderNotice](main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'), DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].timeToStart)));
+	    content.push(babelHelpers.classPrivateFieldLooseBase(this, _renderNotice)[_renderNotice](main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'), DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].timeToStart, 2)));
 	  }
 	  return babelHelpers.classPrivateFieldLooseBase(this, _renderItem)[_renderItem]([babelHelpers.classPrivateFieldLooseBase(this, _renderItemTitle)[_renderItemTitle](babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].document.entityName, '--success', '1'), babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].started && babelHelpers.classPrivateFieldLooseBase(this, _renderSubject)[_renderSubject](DurationFormatter.formatDate(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].started, babelHelpers.classPrivateFieldLooseBase(this, _dateFormat)[_dateFormat])), babelHelpers.classPrivateFieldLooseBase(this, _renderContent)[_renderContent](content)], '--selected');
 	}
@@ -604,7 +703,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	            }
 	            content.push(babelHelpers.classPrivateFieldLooseBase(this, _renderVoteCaption)[_renderVoteCaption](votedCnt, task.users.length));
 	          } else {
-	            content.push(babelHelpers.classPrivateFieldLooseBase(this, _renderCaption)[_renderCaption](this.getStatusName(task.status)));
+	            content.push(babelHelpers.classPrivateFieldLooseBase(this, _renderCaption)[_renderCaption](this.getStatusName(task.status, task.approveType, task.users.length)));
 	          }
 	        } else {
 	          hasHidden = true;
@@ -621,7 +720,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	          content.push(babelHelpers.classPrivateFieldLooseBase(this, _renderUserList)[_renderUserList](users));
 	        }
 	        if (!main_core.Type.isNil(task.executionTime)) {
-	          content.push(babelHelpers.classPrivateFieldLooseBase(this, _renderNotice)[_renderNotice](main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'), DurationFormatter.formatTimeInterval(task.executionTime)));
+	          content.push(task.executionTime < babelHelpers.classPrivateFieldLooseBase(Timeline, _tooLongProcessDuration)[_tooLongProcessDuration]() ? babelHelpers.classPrivateFieldLooseBase(this, _renderNotice)[_renderNotice](main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'), DurationFormatter.formatTimeInterval(task.executionTime, 2)) : babelHelpers.classPrivateFieldLooseBase(this, _renderHighlightedNotice)[_renderHighlightedNotice](main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EXECUTION_TIME'), DurationFormatter.formatTimeInterval(task.executionTime, 2)));
 	        }
 	        items.push(babelHelpers.classPrivateFieldLooseBase(this, _renderItem)[_renderItem]([babelHelpers.classPrivateFieldLooseBase(this, _renderItemTitle)[_renderItemTitle](task.name, iconClass, taskNumberNeeded ? (++taskNumber).toString() : null), babelHelpers.classPrivateFieldLooseBase(this, _renderSubject)[_renderSubject](DurationFormatter.formatDate(task.modified, babelHelpers.classPrivateFieldLooseBase(this, _dateFormat)[_dateFormat])), babelHelpers.classPrivateFieldLooseBase(this, _renderContent)[_renderContent](content)], isWaiting ? '--processing' : '--hidden'));
 	      } else {
@@ -725,7 +824,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	}
 	function _renderEfficiencyInlineContent2(itemClass) {
 	  const [logoClass, notice] = babelHelpers.classPrivateFieldLooseBase(this, _getEfficiencyData)[_getEfficiencyData]();
-	  return main_core.Tag.render(_t15 || (_t15 = _`
+	  const efficiencyInlineContent = main_core.Tag.render(_t16 || (_t16 = _$1`
 			<div class="bizproc-workflow-timeline-item --efficiency ${0}">
 				<div class="bizproc-workflow-timeline-item-inner">
 					<div class="bizproc-workflow-timeline-title">
@@ -742,6 +841,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 								<span class="bizproc-workflow-timeline-text">
 									${0}
 								</span>
+								<span
+									data-hint="${0}"
+								></span>
 							</div>
 							<div class="bizproc-workflow-timeline-notice">
 								<div class="bizproc-workflow-timeline-subject">
@@ -755,11 +857,13 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					</div>
 				</div>	
 			</div>
-		`), itemClass, main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EFFECTIVITY_MARK'), logoClass, notice, main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_CURRENT_PROCESS_TIME'), DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].executionTime), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_AVERAGE_PROCESS_TIME'), babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].stats.averageDuration === null ? main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_AVERAGE_PROCESS_TIME_UNKNOWN') : DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].stats.averageDuration));
+		`), itemClass, main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EFFECTIVITY_MARK'), logoClass, notice, main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_CURRENT_PROCESS_TIME'), DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].executionTime), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE'), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_AVERAGE_PROCESS_TIME'), babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].stats.averageDuration === null ? main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_AVERAGE_PROCESS_TIME_UNKNOWN') : DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].stats.averageDuration));
+	  BX.UI.Hint.init(efficiencyInlineContent);
+	  return efficiencyInlineContent;
 	}
 	function _renderEfficiencyPopupContent2() {
 	  const [logoClass, notice] = babelHelpers.classPrivateFieldLooseBase(this, _getEfficiencyData)[_getEfficiencyData]();
-	  return main_core.Tag.render(_t16 || (_t16 = _`
+	  const popup = main_core.Tag.render(_t17 || (_t17 = _$1`
 			<div class="bizproc-timeline-popup">
 				<div class="bizproc-timeline-popup-title">
 					${0}
@@ -774,6 +878,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 							<span class="bizproc-timeline-popup-val">
 								${0}
 							</span>
+							<span
+								data-hint="${0}"
+							></span>
 							<div class="bizproc-timeline-popup-prop">
 								${0}
 							</div>
@@ -797,7 +904,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					</a>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EFFECTIVITY_MARK'), logoClass, notice, DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].executionTime), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_CURRENT_PROCESS_TIME'), DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].stats.averageDuration), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_AVERAGE_PROCESS_TIME'), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMANCE_TUNING_TIP'), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMANCE_TUNING_LINK'));
+		`), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EFFECTIVITY_MARK'), logoClass, notice, DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].executionTime), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_TIME_DIFFERENCE'), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_CURRENT_PROCESS_TIME'), DurationFormatter.formatTimeInterval(babelHelpers.classPrivateFieldLooseBase(this, _data$1)[_data$1].stats.averageDuration), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_AVERAGE_PROCESS_TIME'), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMANCE_TUNING_TIP'), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_PERFORMANCE_TUNING_LINK'));
+	  BX.UI.Hint.init(popup);
+	  return popup;
 	}
 	function _getBiPopup2() {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _biPopup)[_biPopup]) {
@@ -822,7 +931,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	  return babelHelpers.classPrivateFieldLooseBase(this, _biPopup)[_biPopup];
 	}
 	function _renderBiPopupContent2() {
-	  return main_core.Tag.render(_t17 || (_t17 = _`
+	  return main_core.Tag.render(_t18 || (_t18 = _$1`
 			<div class="bizproc-timeline-popup">
 				<div class="bizproc-timeline-popup-title">${0}</div>
 				<p class="bizproc-timeline-popup-info">${0}</p>
@@ -833,30 +942,20 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		`), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_TITLE'), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_TIP'), main_core.Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_LINK'));
 	}
 	function _renderLoadingStub2() {
-	  return main_core.Tag.render(_t18 || (_t18 = _`
+	  return main_core.Tag.render(_t19 || (_t19 = _$1`
 			<img src="/bitrix/js/bizproc/workflow/timeline/img/skeleton.svg"
 				 style="width:100%; margin: 0; padding: 0;"/>
 		`));
 	}
-	function _renderErrors2() {
-	  const errorsContainer = main_core.Dom.create('div');
-	  for (const error of babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors]) {
-	    const alert = new ui_alerts.Alert({
-	      text: main_core.Text.encode(error.message),
-	      color: ui_alerts.AlertColor.DANGER,
-	      closeBtn: true,
-	      animated: true
-	    });
-	    alert.renderTo(errorsContainer);
-	  }
-	  return errorsContainer;
-	}
 	function _hasErrors2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors].length > 0;
+	  return babelHelpers.classPrivateFieldLooseBase(this, _errors$1)[_errors$1].length > 0;
 	}
+	Object.defineProperty(Timeline, _tooLongProcessDuration, {
+	  value: _tooLongProcessDuration2
+	});
 
 	exports.DurationFormatter = DurationFormatter;
 	exports.Timeline = Timeline;
 
-}((this.BX.Bizproc.Workflow = this.BX.Bizproc.Workflow || {}),BX.Bizproc,BX.Bizproc,BX.UI,BX,BX.UI,BX.Main,BX.Main,BX,BX.Bizproc));
+}((this.BX.Bizproc.Workflow = this.BX.Bizproc.Workflow || {}),BX.Bizproc,BX.Bizproc,BX,BX,BX.UI,BX.Main,BX.Main,BX,BX.Bizproc));
 //# sourceMappingURL=timeline.bundle.js.map

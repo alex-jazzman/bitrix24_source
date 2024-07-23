@@ -35,27 +35,6 @@ use Bitrix\Main\Loader;
 	'ui.dialogs.messagebox',
 	'bizproc.workflow.timeline',
 ]);
-
-if (!empty($arResult['errors'])): ?>
-	<div class="bp-workflow-info__main">
-		<div class="bp-workflow-info__title">
-			<span class="bp-workflow-info__title-inner"><?= htmlspecialcharsbx($arResult['pageTitle']) ?></span>
-		</div>
-		<div class="bp-workflow-info__errors">
-			<?php
-			foreach ($arResult['errors'] as $error):
-				?>
-				<div class="ui-alert ui-alert-icon-danger ui-alert-danger">
-					<span class="ui-alert-message"><?= htmlspecialcharsbx($error) ?></span>
-				</div>
-			<?php
-			endforeach;
-			?>
-		</div>
-	</div>
-<?php
-	return;
-endif;
 ?>
 
 <div class="bp-workflow-info__wrapper">
@@ -131,8 +110,10 @@ endif;
 			<div class="bp-workflow-info__editor">
 				<div class="bp-workflow-info__editor-title"><?= Loc::getMessage('BPWFI_SLIDER_FIELDS_TITLE') ?></div>
 				<form class="ui-form" name="task-form" enctype="multipart/form-data">
-					<?php foreach ($taskFields as $field): ?>
-						<div class="ui-form-row">
+					<?php foreach ($taskFields as $field):
+						$cid = str_replace('[]', '', $field['Id']);
+						?>
+						<div class="ui-form-row" data-cid="<?= htmlspecialcharsbx($cid) ?>">
 							<div class="ui-form-label <?= $field['Required'] ? '--required' : '' ?>">
 								<div class="ui-ctl-label-text"><?= htmlspecialcharsbx($field['Name']) ?></div>
 							</div>

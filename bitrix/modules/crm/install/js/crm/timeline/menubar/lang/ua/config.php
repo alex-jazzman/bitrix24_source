@@ -106,6 +106,7 @@ $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_HELP_LINK"] = "Як це працює";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE"] = "WhatsApp під'єднано";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE_SETUP"] = "Під'єднайте WhatsApp";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_NO_PHONE_ERROR"] = "Укажіть номер телефону в картці клієнта.";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_SELECTOR_FOOTER_BUTTON"] = "Запропонувати шаблон";
 $MESS["CRM_TIMELINE_TODO_GUIDE_ARTICLE_TITLE"] = "Як це працює";
 $MESS["CRM_TIMELINE_TODO_GUIDE_TEXT"] = "Додавайте справи до календаря, запрошуйте колег, обирайте клієнта й адресу зустрічі, виділяйте справи кольором.";
 $MESS["CRM_TIMELINE_TODO_GUIDE_TITLE"] = "Плануйте все й одразу";

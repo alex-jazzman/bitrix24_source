@@ -43,7 +43,7 @@ if($component->isIblockIncluded())
 		<td></td>
 		<td> <?= Loc::getMessage('USER_TYPE_IBEL_DISPLAY_NOTE') ?>  </td>
 	</tr>
-	<script type="text/javascript">
+	<script>
 		function showUsertypeElementNote(selector)
 		{
 			BX.style(BX('tr_usertype_element_note'), 'display', (selector.value !== '-1' && selector.value !== '0' ? 'none' : 'table-row'));

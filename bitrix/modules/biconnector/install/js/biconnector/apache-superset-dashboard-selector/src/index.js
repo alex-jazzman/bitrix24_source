@@ -28,6 +28,7 @@ class SupersetDashboardSelector
 		if (this.#selectorNode)
 		{
 			Event.bind(this.#selectorNode, 'click', this.#handleSearchClick.bind(this));
+			EventEmitter.subscribe('BIConnector.DashboardManager:onCopyDashboard', this.#handleCopyDashboard.bind(this));
 		}
 	}
 
@@ -72,29 +73,33 @@ class SupersetDashboardSelector
 	{
 		EventEmitter.emit('BiConnector:DashboardSelector.onSelect');
 
-		return this.getDashboardEmbeddedData(event.data.item.id)
-			.then((response) => {
-				if (response.data.dashboard)
-				{
-					this.#setTitle(response.data.dashboard.title);
-					EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
-						item: event.data.item,
-						dashboardId: event.data.item.id,
-						credentials: response.data.dashboard,
-					});
-				}
-			})
-			.catch((response) => {
-				if (response.errors && Type.isStringFilled(response.errors[0]?.message))
-				{
-					BX.UI.Notification.Center.notify({
-						content: Text.encode(response.errors[0].message),
-					});
-				}
-			});
+		return new Promise((resolve, reject) => {
+			this.#getDashboardEmbeddedData(event.data.item.id)
+				.then((response) => {
+					if (response.data.dashboard)
+					{
+						this.#setTitle(response.data.dashboard.title);
+						EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
+							item: event.data.item,
+							dashboardId: event.data.item.id,
+							credentials: response.data.dashboard,
+						});
+					}
+					resolve(response);
+				})
+				.catch((response) => {
+					if (response.errors && Type.isStringFilled(response.errors[0]?.message))
+					{
+						BX.UI.Notification.Center.notify({
+							content: Text.encode(response.errors[0].message),
+						});
+					}
+					reject(response);
+				});
+		});
 	}
 
-	getDashboardEmbeddedData(dashboardId: number): Promise
+	#getDashboardEmbeddedData(dashboardId: number): Promise
 	{
 		return BX.ajax.runAction('biconnector.dashboard.getDashboardEmbeddedData', {
 			data: {
@@ -128,6 +133,24 @@ class SupersetDashboardSelector
 	#setTitle(text: string)
 	{
 		this.#textNode.innerHTML = Text.encode(text);
+	}
+
+	#handleCopyDashboard(event): Promise
+	{
+		const dashboard = event.data.dashboard;
+
+		return new Promise((resolve) => {
+			this.#setTitle(dashboard.title);
+			this.#dialog = null;
+			this.#dashboardId = dashboard.id;
+			this.#initDialog(this.#selectorNode);
+			EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
+				item: dashboard,
+				dashboardId: dashboard.id,
+				credentials: dashboard,
+			});
+			resolve();
+		});
 	}
 }
 

@@ -45,11 +45,6 @@ export class DetailInstance
 		{
 			this.#initFrame(this.#embeddedParams);
 		}
-
-		if (this.#embeddedParams.sourceDashboard)
-		{
-			this.#onEditButtonClick();
-		}
 	}
 
 	#subscribeEvents()
@@ -68,6 +63,8 @@ export class DetailInstance
 			this.#canEdit = event.data.credentials.canEdit === 'Y';
 			this.#canExport = event.data.credentials.canExport === 'Y';
 			this.#embeddedParams = event.data.credentials;
+			top.window.history.pushState(null, '', event.data.credentials.dashboardUrl);
+
 			this.#initFrame(event.data.credentials);
 			this.#initHeaderButtons();
 		});
@@ -135,7 +132,6 @@ export class DetailInstance
 			id: this.#embeddedParams.id,
 			editLink: this.#embeddedParams.editUrl,
 			type: this.#embeddedParams.type,
-			sourceDashboardInfo: this.#embeddedParams.sourceDashboard ?? null,
 		};
 
 		this.#dashboardManager.processEditDashboard(
@@ -175,7 +171,10 @@ export class DetailInstance
 				}
 
 				top.BX.Main.gridManager.data.forEach((grid) => {
-					grid.instance.reload();
+					if (grid.instance.getId() === 'biconnector_superset_dashboard_grid')
+					{
+						grid.instance.reload();
+					}
 				});
 			});
 		}
@@ -266,7 +265,6 @@ export class DetailInstance
 			},
 		];
 
-		const dashboardType = this.#embeddedParams.type.toLowerCase();
 		if (this.#canExport)
 		{
 			result.push({
@@ -274,27 +272,13 @@ export class DetailInstance
 				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT'),
 				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT'),
 				onclick: () => {
-					this.#dashboardManager.exportDashboard(
-						this.#embeddedParams.id,
-						() => {
-							ApacheSupersetAnalytics.sendAnalytics('edit', 'report_export', {
-								c_element: 'detail_button',
-								type: dashboardType,
-								p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-								p2: this.#embeddedParams.id,
-								status: 'success',
-							});
-						},
-						() => {
-							ApacheSupersetAnalytics.sendAnalytics('edit', 'report_export', {
-								c_element: 'detail_button',
-								type: dashboardType,
-								p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-								p2: this.#embeddedParams.id,
-								status: 'error',
-							});
-						},
-					);
+					this.#moreMenu.getMenuItem('export').disable();
+					this.#dashboardManager.exportDashboard(this.#embeddedParams.id, 'detail_button')
+						.finally(() => {
+							this.#moreMenu.getMenuItem('export').enable();
+						})
+						.catch(() => {})
+					;
 				},
 			});
 		}

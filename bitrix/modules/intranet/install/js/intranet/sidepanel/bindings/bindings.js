@@ -539,9 +539,7 @@
 					new RegExp("/shop/documents-catalog/(\\d+)/product/", "i")
 				],
 				options: {
-					loader: "intranet:crm-entity-details-loader",
 					cacheable: false,
-					customLeftBoundary: 0,
 				}
 			},
 			{
@@ -550,7 +548,6 @@
 				],
 				options: {
 					cacheable: false,
-					customLeftBoundary: 0,
 				}
 			},
 			{
@@ -559,7 +556,6 @@
 				],
 				options: {
 					cacheable: false,
-					customLeftBoundary: 0,
 				}
 			},
 			{

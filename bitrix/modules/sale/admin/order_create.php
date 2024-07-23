@@ -584,14 +584,14 @@ elseif($isRestoringOrderOperation) // Restore order from archive
 		$product = Catalog\ProductTable::getById($archivedItem->getProductId());
 		if (!($product->fetch()))
 		{
-			$errorAbsentProductMessage .= Loc::getMessage(
+			$errorMessage .= Loc::getMessage(
 				"ARCHIVE_ERROR_PRODUCT_NOT_FOUND",
 				array(
 					"#NAME#" => $archivedItem->getField("NAME"),
 					"#ID#" => $archivedItem->getProductId(),
 				)
 			);
-			$errorAbsentProductMessage .= "<br>";
+			$errorMessage .= "<br>";
 		}
 	}
 	$order->setBasket($archivedBasket);
@@ -952,11 +952,6 @@ foreach($blocksOrder as $item)
 			switch ($blockCode)
 			{
 				case "basket":
-					if(!empty($errorAbsentProductMessage))
-					{
-						$admMessage = new CAdminMessage($errorAbsentProductMessage);
-						echo $admMessage->Show();
-					}
 					echo $orderBasket->getEdit(false);
 					break;
 				case "buyer":

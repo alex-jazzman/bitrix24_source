@@ -221,7 +221,8 @@
 	display: block;
 	overflow: hidden;
 	white-space: nowrap;
-	text-overflow: ellipsis;
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
 }
 
 .system-auth-form__profile-name {
@@ -518,7 +519,8 @@
 	white-space: nowrap;
 	max-width: 100%;
 	overflow: hidden;
-	text-overflow: ellipsis;
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
 }
 
 .system-auth-form__item-title.--block {
@@ -641,12 +643,14 @@
 	cursor: pointer;
 	background: url(images/system-auth-form__icon-help.svg) center no-repeat;
 	-webkit-transition: .2s;
+	-o-transition: .2s;
 	transition: .2s;
 }
 
 .system-auth-form__icon-help:hover {
 	opacity: .75;
 	-webkit-transition: none;
+	-o-transition: none;
 	transition: none;
 }
 
@@ -709,6 +713,7 @@
 	display: block;
 	width: 50px;
 	height: 50px;
+	background: url(images/system-auth-form__qr-icon.svg) center no-repeat, -o-linear-gradient(129deg, #FFFFFF 16%, #F2FCFF 86%);
 	background: url(images/system-auth-form__qr-icon.svg) center no-repeat, linear-gradient(321deg, #FFFFFF 16%, #F2FCFF 86%);
 	border: 2px solid var(--blue);
 	border-radius: 100%;
@@ -772,7 +777,8 @@
 	margin-right: 3px;
 	overflow: hidden;
 	white-space: nowrap;
-	text-overflow: ellipsis;
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
 	font: 10px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: var(--graphite_alpha_70);
 	cursor: pointer;
@@ -800,18 +806,21 @@
 	cursor: pointer;
 	opacity: 0;
 	-webkit-transition: .2s;
+	-o-transition: .2s;
 	transition: .2s;
 }
 
 .system-auth-form__visited-item:hover .system-auth-form__visited-action{
 	opacity: .7;
 	-webkit-transition: .1s;
+	-o-transition: .1s;
 	transition: .1s;
 }
 
 .system-auth-form__visited-item .system-auth-form__visited-action:hover {
 	opacity: 1;
 	-webkit-transition: none;
+	-o-transition: none;
 	transition: none;
 }
 
@@ -896,6 +905,7 @@
 	border: none;
 	background: var(--blue_alpha_18);
 	-webkit-transition: .1s;
+	-o-transition: .1s;
 	transition: .1s;
 }
 
@@ -907,6 +917,7 @@
 	background-size: contain;
 	opacity: .5;
 	-webkit-transition: .1s;
+	-o-transition: .1s;
 	transition: .1s;
 }
 
@@ -973,6 +984,7 @@
 	    -ms-transform: rotate(0deg);
 	        transform: rotate(0deg);
 	-webkit-transition: .6s;
+	-o-transition: .6s;
 	transition: .6s;
 }
 
@@ -1039,6 +1051,7 @@
 	padding-left: 1px;
 	opacity: .54;
 	-webkit-transition: .2s;
+	-o-transition: .2s;
 	transition: .2s;
 	font: 10px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
@@ -1067,7 +1080,8 @@
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #fff;
 	white-space: nowrap;
-	text-overflow: ellipsis;
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
 	background-color: #c8cbce;
 	max-width: 134px;
 }
@@ -1271,12 +1285,14 @@
 	z-index: 9;
 	opacity: .5;
 	-webkit-transition: .1s;
+	-o-transition: .1s;
 	transition: .1s;
 }
 
 .system-auth-form__config.--absolute:hover {
 	opacity: 1;
 	-webkit-transition: none;
+	-o-transition: none;
 	transition: none;
 }
 

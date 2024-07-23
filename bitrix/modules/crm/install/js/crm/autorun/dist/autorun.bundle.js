@@ -1799,6 +1799,43 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	BatchSetStageManager.items = {};
 
+	/**
+	 * @memberOf BX.Crm.Autorun
+	 */
+	class BatchRefreshAccountingDataManager extends BatchManager {
+	  static getItem(id) {
+	    return BX.prop.get(BatchRefreshAccountingDataManager.items, id, null);
+	  }
+	  static create(id, settings) {
+	    const self = new BatchRefreshAccountingDataManager(id, settings);
+	    BatchRefreshAccountingDataManager.items[self.getId()] = self;
+	    return self;
+	  }
+	  getIdPrefix() {
+	    return 'crm_batch_refresh_accounting_data_mgr';
+	  }
+	  getEventNamespacePostfix() {
+	    return 'BatchRefreshAccountingDataManager';
+	  }
+	  getPrepareActionName() {
+	    return 'crm.api.autorun.refreshaccountingdata.prepare';
+	  }
+	  getProcessActionName() {
+	    return 'crm.api.autorun.refreshaccountingdata.process';
+	  }
+	  getCancelActionName() {
+	    return 'crm.api.autorun.refreshaccountingdata.cancel';
+	  }
+	}
+	BatchRefreshAccountingDataManager.messages = {
+	  // default messages, you can override them via settings.messages
+	  title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_TITLE'),
+	  summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_CAPTION'),
+	  summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_SUCCEEDED'),
+	  summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_FAILED')
+	};
+	BatchRefreshAccountingDataManager.items = {};
+
 	let _ = t => t,
 	  _t;
 
@@ -1922,6 +1959,7 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ProcessPanel = ProcessPanel;
 	exports.ProcessState = ProcessState;
 	exports.SummaryPanel = SummaryPanel;
+	exports.ProgressBarRepository = ProgressBarRepository;
 	exports.BatchAssignmentManager = BatchAssignmentManager;
 	exports.BatchDeletionManager = BatchDeletionManager;
 	exports.BatchConversionManager = BatchConversionManager;
@@ -1930,8 +1968,8 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.BatchSetOpenedManager = BatchSetOpenedManager;
 	exports.BatchSetExportManager = BatchSetExportManager;
 	exports.BatchExclusionManager = BatchExclusionManager;
-	exports.ProgressBarRepository = ProgressBarRepository;
 	exports.BatchWhatsappMessageManager = BatchWhatsappMessageManager;
+	exports.BatchRefreshAccountingDataManager = BatchRefreshAccountingDataManager;
 
 }((this.BX.Crm.Autorun = this.BX.Crm.Autorun || {}),BX,BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI.Dialogs,BX));
 //# sourceMappingURL=autorun.bundle.js.map

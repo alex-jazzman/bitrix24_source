@@ -593,7 +593,7 @@ class CBPMailActivity extends CBPActivity
 	{
 		$name =
 			$from['name']
-				? $from['name']
+				? \Bitrix\Main\Text\Encoding::convertEncoding($from['name'], SITE_CHARSET, $charset)
 				: ''
 		;
 		$email = $from['email'];

@@ -399,7 +399,7 @@ if (!empty($errors))
 							<td>
 								<select name="RIGHTS[TASK_ID][]">
 									<?foreach ($tasks as $tid => $tname):?>
-									<option value="<?= $tid?>"<?if ($task == $tid){?> selected="selected"<?}?>><?= $tname?></option>
+									<option value="<?= $tid?>"<?= ($task == $tid ? ' selected="selected"' : '') ?>><?= $tname?></option>
 									<?endforeach;?>
 								</select>
 								<input type="hidden" name="RIGHTS[RIGHT_ID][]" value="<?= $i?>">
@@ -418,7 +418,7 @@ if (!empty($errors))
 				</tbody>
 			</table>
 			<?\CUtil::InitJSCore(array('access'))?>
-			<script type="text/javascript">
+			<script>
 
 				var selected = <?= json_encode(array_fill_keys($accessCodes, true))?>;
 				var name = 'RIGHTS';

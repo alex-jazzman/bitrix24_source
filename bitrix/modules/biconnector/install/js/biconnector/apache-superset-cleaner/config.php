@@ -6,11 +6,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/apache-superset-cleaner.bundle.css',
-	'js' => 'dist/apache-superset-cleaner.bundle.js',
+	'css' => 'dist/index.bundle.css',
+	'js' => 'dist/index.bundle.js',
 	'rel' => [
-		'main.core',
+		'ui.buttons',
 		'ui.dialogs.messagebox',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

@@ -27,7 +27,7 @@ jn.define('bizproc/task/tasks-performer/informers/similar-tasks-informer', (requ
 							mediumPositionPercent: 83,
 							navigationBarColor: AppTheme.colors.bgSecondary,
 							swipeAllowed: true,
-							swipeContentAllowed: false,
+							swipeContentAllowed: true,
 							horizontalSwipeAllowed: false,
 						},
 						onReady: (readyLayout) => {

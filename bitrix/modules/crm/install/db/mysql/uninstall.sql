@@ -224,3 +224,4 @@ DROP TABLE IF EXISTS b_crm_ai_queue;
 DROP TABLE IF EXISTS b_crm_terminal_payment;
 DROP TABLE IF EXISTS b_crm_act_sms_placeholder;
 DROP TABLE IF EXISTS b_crm_automated_solution;
+DROP TABLE IF EXISTS b_crm_sequences;

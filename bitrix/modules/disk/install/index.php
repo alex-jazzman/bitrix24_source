@@ -81,32 +81,6 @@ Class disk extends CModule
 		);
 	}
 
-	public function migrateToBox()
-	{
-		if (\Bitrix\Main\Loader::includeModule('disk'))
-		{
-			$commonStorage = \Bitrix\Disk\Driver::getInstance()->getStorageByCommonId('shared_files_s1');
-			if ($commonStorage)
-			{
-				$commonStorage->changeBaseUrl('/docs/shared/');
-			}
-
-			$defaultViewerServiceCode = Configuration::getDefaultViewerServiceCode();
-			if ($defaultViewerServiceCode === OnlyOfficeHandler::getCode())
-			{
-				UserConfiguration::resetDocumentServiceForAllUsers();
-
-				Configuration::setDefaultViewerService(BitrixHandler::getCode());
-				DocumentSessionTable::clearTable();
-
-				Option::set('disk', 'documents_enabled', 'N');
-				Option::delete('disk', [
-					'name' => 'disk_onlyoffice_server',
-				]);
-			}
-		}
-	}
-
 	function InstallDB($install_wizard = true)
 	{
 		global $DB, $APPLICATION;

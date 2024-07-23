@@ -3,11 +3,9 @@ import { Popup } from 'main.popup';
 import { Button } from 'ui.buttons';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import 'sidepanel';
+import { DashboardExportMaster } from 'biconnector.dashboard-export-master';
 
-export type SourceDashboardInfo = {
-	title: string,
-	link: string,
-}
+import './css/main.css';
 
 type DashboardInfo = {
 	id: number,
@@ -16,7 +14,6 @@ type DashboardInfo = {
 	appId: string, // for analytic
 	editLink: string,
 	title: string,
-	sourceDashboardInfo?: SourceDashboardInfo,
 };
 
 export class DashboardManager
@@ -24,6 +21,8 @@ export class DashboardManager
 	static DASHBOARD_STATUS_LOAD = 'L';
 	static DASHBOARD_STATUS_READY = 'R';
 	static DASHBOARD_STATUS_FAILED = 'F';
+
+	static DASHBOARD_STATUS_COMPUTED_NOT_LOAD = 'NL';
 
 	constructor()
 	{
@@ -92,21 +91,41 @@ export class DashboardManager
 			onclick: () => {
 				continueBtn.setWaiting(true);
 				this.duplicateDashboard(dashboardInfo.id)
-					.then((response) => {
+					.then((duplicateResponse) => {
 						onCompleteProcessing(popupType);
-						const dashboard = response.data.dashboard;
-						if (dashboard)
-						{
-							window.open(dashboard.detail_url, '_top');
-						}
-						else
+						const dashboard = duplicateResponse.data.dashboard;
+						if (!dashboard)
 						{
 							BX.UI.Notification.Center.notify({
 								content: BX.util.htmlspecialchars(
 									Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_COPY_ERROR'),
 								),
 							});
+
+							return null;
 						}
+
+						return this.getDashboardEmbeddedData(dashboard.id);
+					})
+					.then((embeddedResponse) => {
+						EventEmitter.emit('BIConnector.DashboardManager:onCopyDashboard', {
+							dashboard: embeddedResponse.data.dashboard,
+						});
+						const copiedDashboardInfo = {
+							id: embeddedResponse.data.dashboard.id,
+							editLink: embeddedResponse.data.dashboard.editUrl,
+							type: embeddedResponse.data.dashboard.type,
+						};
+						this.processLoginDashboard(
+							copiedDashboardInfo,
+							() => {
+								onCloseProcessing();
+								popup.close();
+								EventEmitter.emit('BIConnector.DashboardManager:onEmbeddedDataLoaded');
+							},
+							onCompleteProcessing,
+							onFailProcessing,
+						);
 					})
 					.catch((response) => {
 						onFailProcessing(popupType);
@@ -186,36 +205,16 @@ export class DashboardManager
 
 	exportDashboard(
 		dashboardId: number,
-		onSuccessfulExport: ?function,
-		onFailedExport: ?function,
+		openedFrom: string,
 	): Promise
 	{
-		return Ajax.runAction('biconnector.dashboard.export', {
-			data: {
-				id: dashboardId,
-			},
-		})
-			.then((response) => {
-				const filePath = response.data.filePath;
-				if (filePath)
-				{
-					window.open(filePath, '_self');
-				}
+		const exportMaster: DashboardExportMaster = new DashboardExportMaster({
+			dashboardId,
+			openedFrom,
+		});
 
-				if (Type.isFunction(onSuccessfulExport))
-				{
-					onSuccessfulExport();
-				}
-			})
-			.catch((response) => {
-				BX.UI.Notification.Center.notify({
-					content: BX.util.htmlspecialchars(response.errors[0].message),
-				});
-				if (Type.isFunction(onFailedExport))
-				{
-					onFailedExport();
-				}
-			});
+		/** @see BX.BIConnector.DashboardExportMaster.showPopup() */
+		return exportMaster.showPopup();
 	}
 
 	deleteDashboard(dashboardId): Promise
@@ -373,6 +372,15 @@ export class DashboardManager
 		return Ajax.runAction('biconnector.dashboard.unpin', {
 			data: {
 				dashboardId,
+			},
+		});
+	}
+
+	getDashboardEmbeddedData(dashboardId: number): Promise
+	{
+		return BX.ajax.runAction('biconnector.dashboard.getDashboardEmbeddedData', {
+			data: {
+				id: dashboardId,
 			},
 		});
 	}

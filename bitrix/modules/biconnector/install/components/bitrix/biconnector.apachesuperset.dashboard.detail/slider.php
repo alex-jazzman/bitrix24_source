@@ -13,7 +13,6 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [
 			'ID' => $request->get('ID'),
-			'SOURCE_DASHBOARD_ID' => (int)$request->get('SOURCE'),
 		],
 		'USE_PADDING' => false,
 		'PLAIN_VIEW' => true,

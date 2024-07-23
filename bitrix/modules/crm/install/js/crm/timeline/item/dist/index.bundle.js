@@ -1,6 +1,7 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,ui_hint,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,crm_ai_copilotTextarea,main_popup,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,ui_dialogs_messagebox,crm_ai_call,main_core,ui_notification) {
+(function (exports,rest_client,ui_analytics,ui_hint,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,crm_ai_copilotTextarea,main_popup,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,crm_ai_call,ui_notification,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -3082,20 +3083,33 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	const ALLOWED_MOVE_TO_ITEM_TYPES = ['Activity:Call', 'Activity:Email', 'Activity:OpenLine'];
+	var _moveToSelectorDialog = /*#__PURE__*/new WeakMap();
 	var _viewActivity = /*#__PURE__*/new WeakSet();
 	var _editActivity = /*#__PURE__*/new WeakSet();
+	var _showMoveToSelectorDialog = /*#__PURE__*/new WeakSet();
 	var _getActivityEditor = /*#__PURE__*/new WeakSet();
+	var _createSelectorDialog = /*#__PURE__*/new WeakSet();
+	var _runMoveAction = /*#__PURE__*/new WeakSet();
 	let Activity = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Activity, _Base);
 	  function Activity(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Activity);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Activity).call(this, ...args));
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _runMoveAction);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _createSelectorDialog);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getActivityEditor);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _showMoveToSelectorDialog);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _editActivity);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _viewActivity);
+	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _moveToSelectorDialog, {
+	      writable: true,
+	      value: null
+	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(Activity, [{
@@ -3104,13 +3118,18 @@ this.BX.Crm = this.BX.Crm || {};
 	      return 'crm.timeline.activity.delete';
 	    }
 	  }, {
+	    key: "getMoveActionMethod",
+	    value: function getMoveActionMethod() {
+	      return 'crm.activity.binding.move';
+	    }
+	  }, {
 	    key: "getDeleteActionCfg",
 	    value: function getDeleteActionCfg(recordId, ownerTypeId, ownerId) {
 	      return {
 	        data: {
 	          activityId: recordId,
-	          ownerTypeId: ownerTypeId,
-	          ownerId: ownerId
+	          ownerTypeId,
+	          ownerId
 	        }
 	      };
 	    }
@@ -3128,6 +3147,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      if (action === 'Activity:Edit' && actionData && actionData.activityId) {
 	        _classPrivateMethodGet$2(this, _editActivity, _editActivity2).call(this, actionData.activityId);
+	      }
+	      if (action === 'Activity:MoveTo' && main_core.Type.isPlainObject(actionData)) {
+	        _classPrivateMethodGet$2(this, _showMoveToSelectorDialog, _showMoveToSelectorDialog2).call(this, item, actionData);
 	      }
 	      if (action === 'Activity:View' && actionData && actionData.activityId) {
 	        _classPrivateMethodGet$2(this, _viewActivity, _viewActivity2).call(this, actionData.activityId);
@@ -3175,8 +3197,121 @@ this.BX.Crm = this.BX.Crm || {};
 	    editor.editActivity(id);
 	  }
 	}
+	function _showMoveToSelectorDialog2(itemElement, actionData) {
+	  if (!ALLOWED_MOVE_TO_ITEM_TYPES.includes(itemElement.getType())) {
+	    // eslint-disable-next-line no-console
+	    console.warn('Move to action provided only for following item types:', ALLOWED_MOVE_TO_ITEM_TYPES);
+	    return;
+	  }
+	  const isValidParams = main_core.Type.isNumber(actionData.activityId) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId);
+	  if (!isValidParams) {
+	    throw new TypeError('Invalid actionData parameters');
+	  }
+	  const element = itemElement.getLayoutFooterMenu().$el;
+	  if (!main_core.Type.isDomNode(element)) {
+	    throw new ReferenceError('Selector dialog target element must be a DOM node');
+	  }
+	  if (!babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog)) {
+	    _classPrivateMethodGet$2(this, _createSelectorDialog, _createSelectorDialog2).call(this, element, actionData);
+	  }
+	  babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).show();
+	}
 	function _getActivityEditor2() {
 	  return BX.CrmActivityEditor.getDefault();
+	}
+	function _createSelectorDialog2(dialogTargetElement, actionData) {
+	  const applyButton = new ui_buttons.ApplyButton({
+	    color: ui_buttons.ButtonColor.PRIMARY,
+	    size: ui_buttons.ButtonSize.SMALL,
+	    round: true,
+	    onclick: () => {
+	      _classPrivateMethodGet$2(this, _runMoveAction, _runMoveAction2).call(this, actionData.activityId, actionData.ownerTypeId, actionData.ownerId, targetItem);
+	      babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).hide();
+	    }
+	  });
+	  const cancelButton = new ui_buttons.CancelButton({
+	    size: ui_buttons.ButtonSize.SMALL,
+	    round: true,
+	    onclick: () => {
+	      targetItem = null;
+	      babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).deselectAll();
+	      babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).hide();
+	    }
+	  });
+	  let targetItem = null;
+	  babelHelpers.classPrivateFieldSet(this, _moveToSelectorDialog, new ui_entitySelector.Dialog({
+	    targetNode: dialogTargetElement,
+	    enableSearch: true,
+	    context: `CRM-TIMELINE-MOVE-ACTIVITY-ENTITY-SELECTOR-${actionData.ownerTypeId}`,
+	    tagSelectorOptions: {
+	      textBoxWidth: '50%'
+	    },
+	    entities: [{
+	      id: BX.CrmEntityType.resolveName(actionData.ownerTypeId),
+	      dynamicLoad: true,
+	      dynamicSearch: true,
+	      options: {
+	        ownerId: actionData.ownerId,
+	        categoryId: actionData.categoryId,
+	        showEntityTypeNameInHeader: true,
+	        hideClosedItems: true,
+	        excludeMyCompany: true
+	      }
+	    }],
+	    events: {
+	      'Item:onSelect': event => {
+	        const {
+	          item
+	        } = event.getData();
+	        if (item) {
+	          targetItem = item;
+	          babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).getSelectedItems().forEach(row => {
+	            if (row.getEntityId() === targetItem.getEntityId() && main_core.Text.toInteger(row.getId()) !== main_core.Text.toInteger(targetItem.getId())) {
+	              row.deselect();
+	            }
+	          });
+	          applyButton.setDisabled(false);
+	        }
+	      },
+	      'Item:onDeselect': () => applyButton.setDisabled(true)
+	    },
+	    footer: [applyButton.setDisabled(true).render(), cancelButton.render()],
+	    footerOptions: {
+	      containerStyles: {
+	        display: 'flex',
+	        'justify-content': 'center'
+	      }
+	    }
+	  }));
+	}
+	function _runMoveAction2(activityId, sourceEntityTypeId, sourceEntityId, targetItem) {
+	  if (!targetItem) {
+	    throw new ReferenceError('Target item is not defined');
+	  }
+	  const targetEntityTypeId = BX.CrmEntityType.resolveId(targetItem.getEntityId());
+	  const targetEntityId = targetItem.getId();
+	  if (targetEntityTypeId <= 0 || targetEntityId <= 0) {
+	    throw new Error('Target entity in not valid');
+	  }
+	  if (main_core.Text.toInteger(targetEntityTypeId) !== main_core.Text.toInteger(sourceEntityTypeId)) {
+	    throw new Error('Source and target entity types are not equal');
+	  }
+	  const data = {
+	    activityId,
+	    sourceEntityTypeId,
+	    sourceEntityId,
+	    targetEntityTypeId,
+	    targetEntityId
+	  };
+	  main_core.ajax.runAction(this.getMoveActionMethod(), {
+	    data
+	  }).catch(response => {
+	    ui_notification.UI.Notification.Center.notify({
+	      content: response.errors[0].message,
+	      autoHideDelay: 5000
+	    });
+	    throw response;
+	  });
 	}
 
 	var AddressBlock = {
@@ -5833,7 +5968,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Base);
 
 	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$8(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _isCancellationInProgress = /*#__PURE__*/new WeakMap();
@@ -5861,7 +5996,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _deleteEntry);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _cancelSigningProcess);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _cancelWithConfirm);
-	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _isCancellationInProgress, {
+	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _isCancellationInProgress, {
 	      writable: true,
 	      value: false
 	    });
@@ -6233,7 +6368,7 @@ this.BX.Crm = this.BX.Crm || {};
 	let _ = t => t,
 	  _t;
 	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
@@ -6278,7 +6413,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _copyPublicLink);
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _openDocument$1);
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _onJsEvent);
-	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _popupConfirm, {
+	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _popupConfirm, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -6639,7 +6774,7 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	const COPILOT_BUTTON_DISABLE_DELAY = 5000;
@@ -6681,11 +6816,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _changePlayerState);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _openTranscript);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _makeCall);
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _isCopilotWelcomeTourShown, {
+	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _isCopilotWelcomeTourShown, {
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _isCopilotBannerShown, {
+	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _isCopilotBannerShown, {
 	      writable: true,
 	      value: false
 	    });
@@ -6986,7 +7121,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _responsibleUserSelectorDialog = /*#__PURE__*/new WeakMap();
@@ -7014,7 +7149,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _emitRepeatTodo);
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showResponsibleUserSelector);
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showFileUploaderPopup);
-	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _responsibleUserSelectorDialog, {
+	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _responsibleUserSelectorDialog, {
 	      writable: true,
 	      value: null
 	    });
@@ -7460,7 +7595,7 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$f(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$f(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$f(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$f(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _item = /*#__PURE__*/new WeakMap();
@@ -7473,11 +7608,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classCallCheck(this, DealProductList);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DealProductList).call(this, ...args));
 	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _addProductToDeal);
-	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _item, {
+	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _item, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _productsGrid, {
+	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _productsGrid, {
 	      writable: true,
 	      value: null
 	    });
@@ -7834,7 +7969,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _classPrivateMethodInitSpec$f(obj, privateSet) { _checkPrivateRedeclaration$i(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$i(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$i(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$i(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$f(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _needCheckRequestStatus = /*#__PURE__*/new WeakMap();
@@ -7866,15 +8001,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribeShipmentEvents);
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribePullEvents);
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _makeCall$1);
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _needCheckRequestStatus, {
+	    _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _needCheckRequestStatus, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _checkRequestStatusTimeout, {
+	    _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _checkRequestStatusTimeout, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _isPullSubscribed, {
+	    _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _isPullSubscribed, {
 	      writable: true,
 	      value: false
 	    });
@@ -8843,6 +8978,152 @@ this.BX.Crm = this.BX.Crm || {};
 	  const interval = setInterval(download, DOWNLOAD_DELAY, urlList);
 	}
 
+	function _classPrivateMethodInitSpec$o(obj, privateSet) { _checkPrivateRedeclaration$r(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$r(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$o(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _resendSms = /*#__PURE__*/new WeakSet();
+	let Sms = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(Sms, _Base);
+	  function Sms(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, Sms);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sms).call(this, ...args));
+	    _classPrivateMethodInitSpec$o(babelHelpers.assertThisInitialized(_this), _resendSms);
+	    return _this;
+	  }
+	  babelHelpers.createClass(Sms, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      if (action === 'Activity:Sms:Resend' && main_core.Type.isPlainObject(actionData.params)) {
+	        _classPrivateMethodGet$o(this, _resendSms, _resendSms2).call(this, actionData.params);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:Sms';
+	    }
+	  }]);
+	  return Sms;
+	}(Base);
+	function _resendSms2(params) {
+	  var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
+	  const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
+	  if (!menuBar) {
+	    throw new Error('"BX.Crm?.Timeline.MenuBar" component not found');
+	  }
+	  const smsItem = menuBar.getItemById('sms');
+	  if (!smsItem) {
+	    throw new Error('"BX.Crm.Timeline.MenuBar.Sms" component not found');
+	  }
+	  const goToEditor = () => {
+	    menuBar.scrollIntoView();
+	    menuBar.setActiveItemById('sms');
+	    smsItem.tryToResend(params.senderId, params.from, params.client, params.text);
+	  };
+	  const {
+	    text,
+	    templateId
+	  } = smsItem.getSendData();
+	  if (main_core.Type.isStringFilled(text) || templateId !== null) {
+	    ui_dialogs_messagebox.MessageBox.show({
+	      modal: true,
+	      title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_TITLE'),
+	      message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_MESSAGE'),
+	      buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	      okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
+	      onOk: messageBox => {
+	        messageBox.close();
+	        goToEditor();
+	      },
+	      onCancel: messageBox => messageBox.close()
+	    });
+	  } else {
+	    goToEditor();
+	  }
+	}
+
+	function _classPrivateMethodInitSpec$p(obj, privateSet) { _checkPrivateRedeclaration$s(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$s(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$p(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _resendWhatsApp = /*#__PURE__*/new WeakSet();
+	let WhatsApp = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(WhatsApp, _Base);
+	  function WhatsApp(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, WhatsApp);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WhatsApp).call(this, ...args));
+	    _classPrivateMethodInitSpec$p(babelHelpers.assertThisInitialized(_this), _resendWhatsApp);
+	    return _this;
+	  }
+	  babelHelpers.createClass(WhatsApp, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      if (action === 'Activity:Whatsapp:Resend' && main_core.Type.isPlainObject(actionData.params)) {
+	        _classPrivateMethodGet$p(this, _resendWhatsApp, _resendWhatsApp2).call(this, actionData.params);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:Whatsapp';
+	    }
+	  }]);
+	  return WhatsApp;
+	}(Base);
+	function _resendWhatsApp2(params) {
+	  var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu, _params$template, _params$template$FILL, _params$template2, _whatsAppItem$getTemp, _whatsAppItem$getTemp2, _whatsAppItem$getTemp3;
+	  const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
+	  if (!menuBar) {
+	    throw new Error('"BX.Crm?.Timeline.MenuBar" component not found');
+	  }
+	  const whatsAppItem = menuBar.getItemById('whatsapp');
+	  if (!whatsAppItem) {
+	    throw new Error('"BX.Crm.Timeline.MenuBar.WhatsApp" component not found');
+	  }
+	  const goToEditor = () => {
+	    menuBar.scrollIntoView();
+	    menuBar.setActiveItemById('whatsapp');
+	    whatsAppItem.tryToResend(params.template, params.from, params.client);
+	  };
+	  const templateId = (_params$template = params.template) === null || _params$template === void 0 ? void 0 : _params$template.ORIGINAL_ID;
+	  const filledPlaceholders = (_params$template$FILL = (_params$template2 = params.template) === null || _params$template2 === void 0 ? void 0 : _params$template2.FILLED_PLACEHOLDERS) !== null && _params$template$FILL !== void 0 ? _params$template$FILL : [];
+	  const currentTemplateId = (_whatsAppItem$getTemp = whatsAppItem.getTemplate()) === null || _whatsAppItem$getTemp === void 0 ? void 0 : _whatsAppItem$getTemp.ORIGINAL_ID;
+	  const currentFilledPlaceholders = (_whatsAppItem$getTemp2 = (_whatsAppItem$getTemp3 = whatsAppItem.getTemplate()) === null || _whatsAppItem$getTemp3 === void 0 ? void 0 : _whatsAppItem$getTemp3.FILLED_PLACEHOLDERS) !== null && _whatsAppItem$getTemp2 !== void 0 ? _whatsAppItem$getTemp2 : [];
+	  if (main_core.Type.isNumber(templateId) && templateId > 0 && main_core.Type.isNumber(currentTemplateId) && currentTemplateId > 0 && (templateId !== currentTemplateId || JSON.stringify(filledPlaceholders) !== JSON.stringify(currentFilledPlaceholders))) {
+	    ui_dialogs_messagebox.MessageBox.show({
+	      modal: true,
+	      title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_TITLE'),
+	      message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_MESSAGE'),
+	      buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	      okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
+	      onOk: messageBox => {
+	        messageBox.close();
+	        goToEditor();
+	      },
+	      onCancel: messageBox => messageBox.close()
+	    });
+	  } else {
+	    goToEditor();
+	  }
+	}
+
 	ControllerManager.registerController(Activity);
 	ControllerManager.registerController(CommonContentBlocks);
 	ControllerManager.registerController(OpenLines);
@@ -8869,6 +9150,8 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(SignB2eDocument);
 	ControllerManager.registerController(Visit);
 	ControllerManager.registerController(Zoom);
+	ControllerManager.registerController(Sms);
+	ControllerManager.registerController(WhatsApp);
 
 	exports.Item = Item$1;
 	exports.ConfigurableItem = ConfigurableItem;
@@ -8876,5 +9159,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.Crm.AI,BX.Main,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX.UI.Dialogs,BX.Crm.AI,BX,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.Crm.AI,BX.Main,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX.Crm.AI,BX,BX,BX.UI.Dialogs));
 //# sourceMappingURL=index.bundle.js.map

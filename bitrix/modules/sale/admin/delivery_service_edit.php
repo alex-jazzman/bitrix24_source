@@ -1012,13 +1012,16 @@ if($srvStrError <> '')
 	echo $adminMessage->Show();
 }
 
-if($service)
-	$serviceMessage = $service->getAdminMessage();
-
-if(!empty($serviceMessage))
+if ($service)
 {
-	$adminMessage = new CAdminMessage($serviceMessage);
-	echo $adminMessage->Show();
+	$serviceMessage = $service->getAdminMessage();
+	if (!empty($serviceMessage))
+	{
+		$adminMessage = new CAdminMessage($serviceMessage);
+		echo $adminMessage->Show();
+		unset($adminMessage);
+	}
+	unset($serviceMessage);
 }
 
 $actionUrl = $APPLICATION->GetCurPageParam("",array("RESET_HANDLER_SETTINGS", "action"));

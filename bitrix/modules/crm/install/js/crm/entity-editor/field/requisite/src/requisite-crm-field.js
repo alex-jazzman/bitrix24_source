@@ -541,7 +541,11 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		const isPlacement = (BX.prop.getString(clientResolverProp, 'IS_PLACEMENT', 'N') === 'Y');
 		if (!isPlacement && Type.isStringFilled(title))
 		{
-			title = Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').toLowerCase().replace('#field_name#', title);
+			const modifiedTitle = Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN_01', {'#FIELD_NAME#': title});
+			if (Type.isStringFilled(modifiedTitle))
+			{
+				title = modifiedTitle;
+			}
 		}
 
 		return title;

@@ -281,6 +281,11 @@ export const DetailComponent = {
 				this.result.APP.REVIEWS.ITEMS.unshift(userReview);
 			}
 		},
+		updateRating: function (rating) {
+			if (rating.hasOwnProperty('RATING_DETAIL')) {
+				this.result.APP.REVIEWS.RATING = rating;
+			}
+		},
 		createPopupMenu: function() {
 			if (this.result.APP.MENU_ITEMS.length <= 0 && !this.showRightsButton) {
 				return;
@@ -811,6 +816,7 @@ export const DetailComponent = {
 				:showNoAccessInstallButton="showNoAccessInstallButton"
 				@can-review="result.APP.REVIEWS.CAN_REVIEW = $event"
 				@review-info="addUserReview"
+				@update-rating="updateRating"
 			/>
 
 			<div class="market-detail__catalog-element" v-if="showYouMayLike">

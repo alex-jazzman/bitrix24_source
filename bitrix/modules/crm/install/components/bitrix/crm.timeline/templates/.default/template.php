@@ -10,6 +10,7 @@ use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Operation\AutostartSettings;
 use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
+use Bitrix\Main\DI\ServiceLocator;
 
 /**
  * Bitrix vars
@@ -114,6 +115,14 @@ if (
 			->build()
 		;
 	}
+}
+
+if (ServiceLocator::getInstance()->get('crm.integration.sign')::isEnabled())
+{
+	echo (\Bitrix\Crm\Tour\Sign\SignB2eDocumentProcess::getInstance())
+		->setEntityTypeId((int)($arResult['ENTITY_TYPE_ID'] ?? 0))
+		->setEntityId((int)($arResult['ENTITY_ID'] ?? 0))
+		->build();
 }
 
 $guid = $arResult['GUID'];

@@ -204,7 +204,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	      return null;
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _activityDirection)[_activityDirection] !== 'incoming' && babelHelpers.classPrivateFieldLooseBase(this, _activityDirection)[_activityDirection] !== 'outgoing') {
-	      console.error('crm.integration.analytics: invalid activity direction');
+	      console.error('crm.integration.analytics: invalid activity direction', babelHelpers.classPrivateFieldLooseBase(this, _activityDirection)[_activityDirection]);
 	      return null;
 	    }
 	    return filterOutNilValues({

@@ -66,11 +66,3 @@
 .bx-crm-perms-desk-row-item > .stage-row {
 	padding-left: 30px;
 }
-
-.bx-crm-perms-desk-row-more {
-	visibility: hidden;
-}
-
-.bx-crm-perms-desk-row:hover .bx-crm-perms-desk-row-more {
-	visibility: visible;
-}

@@ -1110,7 +1110,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 				'BASKET_CODE' => $basketCode,
 				'PRODUCT_ID' => $productId,
 				'OFFER_ID' => $productId,
-				'BASE_PRICE' => $product['BASE_PRICE'],
+				'BASE_PRICE' => ($product['TAX_INCLUDED'] === 'Y') ? $product['PRICE_BRUTTO'] : $product['PRICE_NETTO'],
 				'PRICE' => $product['BASE_PRICE'],
 				'CUSTOM_PRICE' => 'Y',
 				'TYPE' => $productType ? Sale\Internals\Catalog\ProductTypeMapper::getType($productType) : null,

@@ -175,9 +175,9 @@ export default class PullManager
 			return;
 		}
 
-		this.#onPullItemAdded(params);
-
-		event.preventDefault();
+		// eslint-disable-next-line no-param-reassign
+		params.eventName = EventName.itemAdded;
+		this.#onPullItemAdded(event);
 	}
 
 	#onPullItemAdded(event: BaseEvent): void

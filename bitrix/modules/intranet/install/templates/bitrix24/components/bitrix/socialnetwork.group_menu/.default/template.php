@@ -228,17 +228,14 @@ if (
 							<span
 								id="tasks-scrum-methodology-button"
 								class="ui-btn ui-btn-light-border"
-								style="cursor: pointer;"
+								style="margin-right: 12px;"
 							><?= Loc::getMessage('SONET_TASKS_SCRUM_METHODOLOGY_LINK') ?></span>
 							<?php
 						}
 
-						if (
-							$arResult['CanView']['chat']
-							&& !$arResult['isScrumProject']
-						)
+						if ($arResult['CanView']['chat'])
 						{
-							?><span id="group-menu-control-button-cont" class="profile-menu-button-container"></span><?php
+							?><span id="group-menu-control-button-cont" class="profile-menu-button-container <?= $arResult['isScrumProject'] ? '--scrum' : ''?>"></span><?php
 						}
 
 						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php
@@ -269,6 +266,7 @@ if (
 							<button
 								id="tasks-scrum-methodology-button"
 								class="ui-btn ui-btn-light-border ui-btn-themes"
+								style="margin-right: 12px;"
 							><?= Loc::getMessage('SONET_TASKS_SCRUM_METHODOLOGY_BUTTON') ?></button>
 							<?php
 						}
@@ -291,12 +289,9 @@ if (
 							}
 						}
 
-						if (
-							$arResult['CanView']['chat']
-							&& !$arResult['isScrumProject']
-						)
+						if ($arResult['CanView']['chat'])
 						{
-							?><span id="group-menu-control-button-cont" class="profile-menu-button-container"></span><?php
+							?><span id="group-menu-control-button-cont" class="profile-menu-button-container <?= $arResult['isScrumProject'] ? '--scrum' : ''?>"></span><?php
 						}
 
 						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border ui-btn-themes" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php

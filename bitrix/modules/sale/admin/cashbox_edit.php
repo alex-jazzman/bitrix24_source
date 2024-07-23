@@ -377,7 +377,7 @@ $tabControl->BeginCustomField('HANDLER', GetMessage("SALE_CASHBOX_HANDLER"));
 						$restHandlers = Cashbox\Manager::getRestHandlersList();
 						foreach ($restHandlers as $restHandlerCode => $restHandlerConfig)
 						{
-							$selected = ($restHandlerCode === $cashbox['SETTINGS']['REST']['REST_CODE']) ? 'selected' : '';
+							$selected = ($restHandlerCode === ($cashbox['SETTINGS']['REST']['REST_CODE'] ?? '')) ? 'selected' : '';
 							echo '<option data-rest-code="'.htmlspecialcharsbx($restHandlerCode).'" value="'.htmlspecialcharsbx($handler).'" '.$selected.'>'.htmlspecialcharsbx($restHandlerConfig['NAME']).'</option>';
 						}
 					}

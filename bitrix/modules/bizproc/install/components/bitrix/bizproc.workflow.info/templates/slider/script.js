@@ -9,8 +9,16 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	var _handleDelegateButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDelegateButtonClick");
 	var _delegateTask = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("delegateTask");
 	var _sendMarkAsRead = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendMarkAsRead");
+	var _clearError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clearError");
+	var _showError = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showError");
 	class WorkflowInfo {
 	  constructor(options) {
+	    Object.defineProperty(this, _showError, {
+	      value: _showError2
+	    });
+	    Object.defineProperty(this, _clearError, {
+	      value: _clearError2
+	    });
 	    Object.defineProperty(this, _sendMarkAsRead, {
 	      value: _sendMarkAsRead2
 	    });
@@ -47,6 +55,37 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	        this.handleMarkAsRead();
 	      }
 	    });
+	    if (this.taskForm) {
+	      main_core.Event.bind(this.taskForm, 'input', event => {
+	        const target = event.target;
+	        if (target.matches('input, textarea, select')) {
+	          const formRow = target.closest('.ui-form-content');
+	          if (formRow) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _clearError)[_clearError](formRow);
+	          }
+	        }
+	      });
+	      this.taskForm.querySelectorAll('.ui-form-content').forEach(row => {
+	        main_core.Event.bind(row, 'click', event => {
+	          const target = event.currentTarget;
+	          babelHelpers.classPrivateFieldLooseBase(this, _clearError)[_clearError](target);
+	        });
+	      });
+	      main_core_events.EventEmitter.subscribe('BX.UI.Selector:onChange', event => {
+	        const box = BX(`crm-${event.data[0].selectorId}-box`);
+	        const formRow = box.closest('.ui-form-content');
+	        if (formRow) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _clearError)[_clearError](formRow);
+	        }
+	      });
+	      main_core_events.EventEmitter.subscribe('OnIframeKeyup', event => {
+	        const box = event.target.dom.cont;
+	        const formRow = box.closest('.ui-form-content');
+	        if (formRow) {
+	          babelHelpers.classPrivateFieldLooseBase(this, _clearError)[_clearError](formRow);
+	        }
+	      });
+	    }
 	  }
 	}
 	function _renderButtons2() {
@@ -94,7 +133,23 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	    uiButton.setDisabled(false);
 	    (_BX$SidePanel$Instanc = BX.SidePanel.Instance.getSliderByWindow(window)) == null ? void 0 : _BX$SidePanel$Instanc.close();
 	  }).catch(response => {
-	    ui_dialogs_messagebox.MessageBox.alert(response.errors.pop().message);
+	    if (BX.type.isArray(response.errors)) {
+	      const popupErrors = [];
+	      response.errors.forEach(error => {
+	        const fieldName = error.customData;
+	        if (this.taskForm && fieldName) {
+	          const field = this.taskForm.querySelector(`[data-cid="${fieldName}"]`);
+	          if (field) {
+	            babelHelpers.classPrivateFieldLooseBase(this, _showError)[_showError](error, field);
+	          }
+	        } else {
+	          popupErrors.push(error.message);
+	        }
+	      });
+	      if (popupErrors.length > 0) {
+	        ui_dialogs_messagebox.MessageBox.alert(popupErrors.join(', '));
+	      }
+	    }
 	    uiButton.setDisabled(false);
 	  });
 	}
@@ -170,6 +225,27 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 	      userId: this.currentUserId
 	    }
 	  });
+	}
+	function _clearError2(target) {
+	  const errorContainer = target.querySelector('.ui-form-notice');
+	  if (errorContainer) {
+	    BX.Dom.remove(errorContainer);
+	  }
+	}
+	function _showError2(error, field) {
+	  const parentContainer = field.querySelector('.ui-form-content');
+	  let errorContainer = field.querySelector('.ui-form-notice');
+	  if (!errorContainer) {
+	    errorContainer = BX.Dom.create('div', {
+	      attrs: {
+	        className: 'ui-form-notice'
+	      }
+	    });
+	    errorContainer.innerText = error.message;
+	    if (parentContainer) {
+	      BX.Dom.append(errorContainer, parentContainer);
+	    }
+	  }
 	}
 
 	exports.WorkflowInfo = WorkflowInfo;

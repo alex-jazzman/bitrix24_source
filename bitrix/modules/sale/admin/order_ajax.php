@@ -768,8 +768,13 @@ class AjaxProcessor
 				{
 					foreach ($deliveryService as $delivery)
 					{
-						if ($shipment->getDeliveryId() == $delivery['ID'] && $delivery['RESTRICTED'] != Sale\Services\PaySystem\Restrictions\Manager::SEVERITY_NONE)
+						if (
+							$shipment->getDeliveryId() == $delivery['ID']
+							&& ($delivery['RESTRICTED'] ?? null) != Sale\Services\PaySystem\Restrictions\Manager::SEVERITY_NONE
+						)
+						{
 							$result['DELIVERY_ERROR'] = Loc::getMessage('SALE_OA_ERROR_DELIVERY_SERVICE');
+						}
 					}
 				}
 			}
@@ -1770,33 +1775,38 @@ class AjaxProcessor
 	protected function changeDeliveryServiceAction()
 	{
 		global $APPLICATION, $USER;
-		$result = array();
-		$profiles = array();
+
+		$result = [];
+		$profiles = [];
 		$index = $this->request['index'];
-		$formData = isset($this->request["formData"]) ? $this->request["formData"] : array();
-		$confirmed = isset($this->request["confirmed"]) ? $this->request["confirmed"] : 'N';
-		$formData['ID'] = $formData['order_id'];
-		$deliveryId = intval($formData['SHIPMENT'][$index]['DELIVERY_ID']);
+		$formData = $this->request["formData"] ?? [];
+		$confirmed = $this->request["confirmed"] ?? 'N';
+		$formData['ID'] = $formData['order_id'] ?? 0;
+		$deliveryId = (int)($formData['SHIPMENT'][$index]['DELIVERY_ID']);
 
 		if ($deliveryId <= 0)
 			return;
 
-		$shipmentId = intval($formData['SHIPMENT'][$index]['SHIPMENT_ID']);
+		$shipmentId = (int)($formData['SHIPMENT'][$index]['SHIPMENT_ID']);
 
-		if($shipmentId > 0 && Sale\Delivery\Requests\Manager::isShipmentSent($shipmentId) && $confirmed != 'Y')
+		if ($shipmentId > 0 && Sale\Delivery\Requests\Manager::isShipmentSent($shipmentId) && $confirmed != 'Y')
 		{
 			$requestId = Sale\Delivery\Requests\Manager::getRequestIdByShipmentId($shipmentId);
 			$this->addResultData("NEED_CONFIRM", "Y");
 			$this->addResultData(
 				"CONFIRM",
-				array(
+				[
 					"TEXT" =>
 						Loc::getMessage(
 							'SALE_OA_SHIPMENT_DELIVERY_REQ_SENT',
-							array(
+							[
 								'#REQUEST_ID#' => Sale\Delivery\Requests\Helper::getRequestViewLink($requestId)
 
-			))));
+							]
+						),
+				]
+			);
+
 			return;
 		}
 

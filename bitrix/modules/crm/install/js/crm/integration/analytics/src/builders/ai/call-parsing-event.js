@@ -70,7 +70,7 @@ export class CallParsingEvent
 
 		if (this.#activityDirection !== 'incoming' && this.#activityDirection !== 'outgoing')
 		{
-			console.error('crm.integration.analytics: invalid activity direction');
+			console.error('crm.integration.analytics: invalid activity direction', this.#activityDirection);
 
 			return null;
 		}

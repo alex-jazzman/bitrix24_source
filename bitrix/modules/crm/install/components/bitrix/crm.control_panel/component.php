@@ -4,10 +4,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Bitrix24\Feature;
 use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Store\EnableWizard\Manager;
 use Bitrix\Catalog\v2\Contractor;
 use Bitrix\Crm;
 use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
@@ -30,7 +30,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\SalesCenter;
 use Bitrix\SalesCenter\Integration\SaleManager;
-use Bitrix\Catalog\Store\EnableWizard\Manager;
 
 /** @var CrmControlPanel $this */
 
@@ -440,7 +439,7 @@ if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 	{
 		unset($leadItem['URL'], $leadItem['COUNTER'], $leadItem['COUNTER_ID']);
 		$leadItem['IS_LOCKED'] = true;
-		$leadItem['ON_CLICK'] = RestrictionManager::getLeadsRestriction()->prepareInfoHelperScript();
+		$leadItem['ON_CLICK'] = RestrictionManager::getLeadsRestriction()->prepareFeaturePromoterScript();
 	}
 }
 
@@ -676,6 +675,21 @@ if ($isAdmin || Container::getInstance()->getUserPermissions()->canReadType($inv
 	}
 
 	$stdItems[\CCrmOwnerType::ResolveName($invoiceEntityTypeId)] = $invoiceItem;
+}
+
+if (
+	Loader::includeModule('biconnector')
+	&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService')
+)
+{
+	/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorCrm::getMenuItemData */
+	$menuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
+		\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_CRM
+	);
+	if ($menuItem)
+	{
+		$stdItems['BIC_DASHBOARDS'] = $menuItem;
+	}
 }
 
 if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())

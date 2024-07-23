@@ -4097,9 +4097,13 @@ this.BX.Crm = this.BX.Crm || {};
 	var _renderTemplatesContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTemplatesContainer");
 	var _renderFilesSelector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderFilesSelector");
 	var _subscribeToReceiversChanges$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToReceiversChanges");
+	var _prepareToResend = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareToResend");
 	class Sms extends WithEditor {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _prepareToResend, {
+	      value: _prepareToResend2
+	    });
 	    Object.defineProperty(this, _subscribeToReceiversChanges$1, {
 	      value: _subscribeToReceiversChanges2$1
 	    });
@@ -4116,6 +4120,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: _renderEditor2
 	    });
 	    this.isFetchedConfig = false;
+	    this.fetchConfigPromise = null;
 	  }
 	  /**
 	   * @override
@@ -4578,6 +4583,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  }
 	  getSendData() {
+	    if (!this.isFetchedConfig) {
+	      return {
+	        text: '',
+	        templateId: null
+	      };
+	    }
 	    let text = '';
 	    let templateId = null;
 	    if (this.isCurrentSenderIsTemplatesBased()) {
@@ -4652,7 +4663,15 @@ this.BX.Crm = this.BX.Crm || {};
 	        context: 'sms',
 	        ownerTypeId: this._ownerTypeId,
 	        ownerId: this._ownerId,
-	        mode: this._ownerTypeId === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment'
+	        mode: this._ownerTypeId === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
+	        st: {
+	          tool: 'crm',
+	          category: 'payments',
+	          event: 'payment_create_click',
+	          c_section: 'crm_sms',
+	          c_sub_section: 'web',
+	          type: 'delivery_payment'
+	        }
 	      }).then(function (result) {
 	        if (result && result.get('action')) {
 	          if (result.get('action') === 'sendPage' && result.get('page') && result.get('page').url) {
@@ -5093,28 +5112,42 @@ this.BX.Crm = this.BX.Crm || {};
 	      return;
 	    }
 	    this.isFetchedConfig = false;
-	    main_core.ajax.runAction('crm.api.timeline.sms.getConfig', {
-	      json: {
-	        entityTypeId: this.getEntityTypeId(),
-	        entityId: this.getEntityId()
-	      }
-	    }).then(({
-	      data
-	    }) => {
-	      this.isFetchedConfig = true;
-	      this.setSettings(data);
-	      setTimeout(() => {
-	        const canSend = this.getSetting('canSendMessage', false);
-	        this.setContainer(main_core.Tag.render(_t2$4 || (_t2$4 = _$4`
+	    this.fetchConfigPromise = new Promise(resolve => {
+	      main_core.ajax.runAction('crm.api.timeline.sms.getConfig', {
+	        json: {
+	          entityTypeId: this.getEntityTypeId(),
+	          entityId: this.getEntityId()
+	        }
+	      }).then(({
+	        data
+	      }) => {
+	        this.isFetchedConfig = true;
+	        this.setSettings(data);
+	        setTimeout(() => {
+	          const canSend = this.getSetting('canSendMessage', false);
+	          this.setContainer(main_core.Tag.render(_t2$4 || (_t2$4 = _$4`
 						<div class="crm-entity-stream-content-new-detail --focus">
 							${0}
 						</div>
 					`), canSend ? babelHelpers.classPrivateFieldLooseBase(this, _renderEditor)[_renderEditor]() : babelHelpers.classPrivateFieldLooseBase(this, _renderSetupText)[_renderSetupText]()));
-	        if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates) {
-	          this.onTemplateSelectClick();
-	        }
-	      }, 50);
-	    }).catch(() => this.showNotify(main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR')));
+	          if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates) {
+	            this.onTemplateSelectClick();
+	          }
+	          resolve();
+	        }, 50);
+	      }).catch(() => {
+	        this.showNotify(main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR'));
+	        setTimeout(() => this.cancel(), 50);
+	      });
+	    });
+	  }
+	  tryToResend(senderId, fromId, clientData, rawDescription) {
+	    if (this.isFetchedConfig) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _prepareToResend)[_prepareToResend](senderId, fromId, clientData, rawDescription);
+	    } else {
+	      // eslint-disable-next-line promise/catch-or-return
+	      this.fetchConfigPromise.then(() => babelHelpers.classPrivateFieldLooseBase(this, _prepareToResend)[_prepareToResend](senderId, fromId, clientData, rawDescription));
+	    }
 	  }
 	  static create(id, settings) {
 	    const self = new Sms();
@@ -5301,6 +5334,38 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.setClient(oldSelectedClient != null ? oldSelectedClient : this._communications[0]);
 	    this.initClientContainer();
 	  });
+	}
+	function _prepareToResend2(senderId, fromId, clientData, rawDescription) {
+	  const sender = this._senders.find(sender => sender.id === senderId);
+	  if (sender != null && sender.canUse && main_core.Type.isArrayFilled(sender == null ? void 0 : sender.fromList)) {
+	    this.setSender(sender);
+	    const from = sender.fromList.find(from => String(from.id) === fromId);
+	    if (from) {
+	      this.setFrom(from);
+	    } else {
+	      console.warn('Unable to resend SMS with selected from');
+	    }
+	  } else {
+	    console.warn('Unable to resend SMS with sender ID "' + senderId + '"');
+	  }
+	  const client = this._communications.find(communication => communication.entityId === clientData.entityId && communication.entityTypeId === clientData.entityTypeId);
+	  if (client) {
+	    this.setClient(client);
+	    const to = client.phones.find(phone => phone.value === clientData.value);
+	    if (to) {
+	      this.setTo(to);
+	    }
+	  } else {
+	    console.warn('Unable to resend SMS with selected client');
+	  }
+	  if (main_core.Type.isStringFilled(rawDescription)) {
+	    this._input.value = rawDescription;
+	    this.setMessageLengthCounter();
+	    setTimeout(this.resizeForm.bind(this), 0);
+	  }
+	  if (this._smsDetail.classList.contains('hidden')) {
+	    setTimeout(() => this._smsDetailSwitcher.click(), 50);
+	  }
 	}
 	Sms.items = {};
 
@@ -5688,6 +5753,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _templatesContainerContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templatesContainerContent");
 	var _settingsMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("settingsMenu");
 	var _tplEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tplEditor");
+	var _selectTplDlg = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectTplDlg");
 	var _placeholders = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("placeholders");
 	var _filledPlaceholders = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("filledPlaceholders");
 	var _canUse = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canUse");
@@ -5701,7 +5767,9 @@ this.BX.Crm = this.BX.Crm || {};
 	var _toEntityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toEntityTypeId");
 	var _toEntityId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toEntityId");
 	var _unViewedTourList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("unViewedTourList");
+	var _fetchConfigPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fetchConfigPromise");
 	var _prepareParams$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareParams");
+	var _prepareToResend$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareToResend");
 	var _subscribeToReceiversChanges$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeToReceiversChanges");
 	var _createHelpLinkContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createHelpLinkContainer");
 	var _createHeaderButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createHeaderButtons");
@@ -5724,6 +5792,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _handleSendSuccess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSendSuccess");
 	var _handleSendFailure = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSendFailure");
 	var _initTemplateEditor = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initTemplateEditor");
+	var _initTemplateSelectDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initTemplateSelectDialog");
 	var _preparePlaceholdersFromTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preparePlaceholdersFromTemplate");
 	var _getTemplateEditorText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTemplateEditorText");
 	var _isTourAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTourAvailable");
@@ -5738,6 +5807,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    Object.defineProperty(this, _preparePlaceholdersFromTemplate, {
 	      value: _preparePlaceholdersFromTemplate2
+	    });
+	    Object.defineProperty(this, _initTemplateSelectDialog, {
+	      value: _initTemplateSelectDialog2
 	    });
 	    Object.defineProperty(this, _initTemplateEditor, {
 	      value: _initTemplateEditor2
@@ -5805,6 +5877,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _subscribeToReceiversChanges$2, {
 	      value: _subscribeToReceiversChanges2$2
 	    });
+	    Object.defineProperty(this, _prepareToResend$1, {
+	      value: _prepareToResend2$1
+	    });
 	    Object.defineProperty(this, _prepareParams$1, {
 	      value: _prepareParams2$1
 	    });
@@ -5849,6 +5924,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 	    Object.defineProperty(this, _tplEditor, {
+	      writable: true,
+	      value: null
+	    });
+	    Object.defineProperty(this, _selectTplDlg, {
 	      writable: true,
 	      value: null
 	    });
@@ -5903,6 +5982,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    Object.defineProperty(this, _unViewedTourList, {
 	      writable: true,
 	      value: void 0
+	    });
+	    Object.defineProperty(this, _fetchConfigPromise, {
+	      writable: true,
+	      value: null
 	    });
 	  }
 	  /**
@@ -6007,31 +6090,51 @@ this.BX.Crm = this.BX.Crm || {};
 	      return;
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _isFetchedConfig)[_isFetchedConfig] = false;
-	    main_core.ajax.runAction('crm.api.timeline.whatsapp.getConfig', {
-	      json: {
-	        entityTypeId: this.getEntityTypeId(),
-	        entityId: this.getEntityId()
-	      }
-	    }).then(({
-	      data
-	    }) => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _isFetchedConfig)[_isFetchedConfig] = true;
-	      babelHelpers.classPrivateFieldLooseBase(this, _prepareParams$1)[_prepareParams$1](data);
-	      babelHelpers.classPrivateFieldLooseBase(this, _showContent$1)[_showContent$1]();
-	      setTimeout(() => {
-	        if (this.supportsLayout() && babelHelpers.classPrivateFieldLooseBase(this, _isTourAvailable)[_isTourAvailable]() && babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$1.USER_OPTION_TEMPLATES_READY)) {
-	          crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$1({
-	            itemCode: 'whatsapp',
-	            title: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TITLE'),
-	            text: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TEXT'),
-	            articleCode: ARTICLE_CODE_SEND_WITH_WHATSAPP,
-	            userOptionName: Tour$1.USER_OPTION_TEMPLATES_READY,
-	            guideBindElement: babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton]
-	          }));
-	          babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList] = babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].filter(name => name !== Tour$1.USER_OPTION_TEMPLATES_READY);
+	    babelHelpers.classPrivateFieldLooseBase(this, _fetchConfigPromise)[_fetchConfigPromise] = new Promise(resolve => {
+	      main_core.ajax.runAction('crm.api.timeline.whatsapp.getConfig', {
+	        json: {
+	          entityTypeId: this.getEntityTypeId(),
+	          entityId: this.getEntityId()
 	        }
-	      }, 300);
-	    }).catch(() => this.showNotify(main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR')));
+	      }).then(({
+	        data
+	      }) => {
+	        babelHelpers.classPrivateFieldLooseBase(this, _isFetchedConfig)[_isFetchedConfig] = true;
+	        babelHelpers.classPrivateFieldLooseBase(this, _prepareParams$1)[_prepareParams$1](data);
+	        babelHelpers.classPrivateFieldLooseBase(this, _showContent$1)[_showContent$1]();
+	        resolve();
+	        setTimeout(() => {
+	          if (this.supportsLayout() && babelHelpers.classPrivateFieldLooseBase(this, _isTourAvailable)[_isTourAvailable]() && babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].includes(Tour$1.USER_OPTION_TEMPLATES_READY)) {
+	            crm_tourManager.TourManager.getInstance().registerWithLaunch(new Tour$1({
+	              itemCode: 'whatsapp',
+	              title: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TITLE'),
+	              text: main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TEXT'),
+	              articleCode: ARTICLE_CODE_SEND_WITH_WHATSAPP,
+	              userOptionName: Tour$1.USER_OPTION_TEMPLATES_READY,
+	              guideBindElement: babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton]
+	            }));
+	            babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList] = babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList].filter(name => name !== Tour$1.USER_OPTION_TEMPLATES_READY);
+	          }
+	        }, 300);
+	      }).catch(() => {
+	        this.showNotify(main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR'));
+	        setTimeout(() => this.emitFinishEditEvent(), 50);
+	      });
+	    });
+	  }
+	  tryToResend(template, fromId, clientData) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _isFetchedConfig)[_isFetchedConfig]) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _prepareToResend$1)[_prepareToResend$1](template, fromId, clientData);
+	    } else {
+	      // eslint-disable-next-line promise/catch-or-return
+	      babelHelpers.classPrivateFieldLooseBase(this, _fetchConfigPromise)[_fetchConfigPromise].then(() => babelHelpers.classPrivateFieldLooseBase(this, _prepareToResend$1)[_prepareToResend$1](template, fromId, clientData));
+	    }
+	  }
+	  // endregion
+
+	  // region TEMPLATES
+	  getTemplate() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _isDemoTemplateSet)[_isDemoTemplateSet] ? null : babelHelpers.classPrivateFieldLooseBase(this, _template)[_template];
 	  }
 
 	  // endregion
@@ -6048,6 +6151,32 @@ this.BX.Crm = this.BX.Crm || {};
 	  // set default parameters
 	  babelHelpers.classPrivateFieldLooseBase(this, _setCommunicationsParams$1)[_setCommunicationsParams$1]();
 	  babelHelpers.classPrivateFieldLooseBase(this, _setChannelDefaultPhoneId$1)[_setChannelDefaultPhoneId$1]();
+	}
+	function _prepareToResend2$1(template, fromId, clientData) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider]) {
+	    throw new Error('Whatsapp provider must be defined');
+	  }
+	  const client = babelHelpers.classPrivateFieldLooseBase(this, _communications)[_communications].find(communication => communication.entityId === clientData.entityId && communication.entityTypeId === clientData.entityTypeId);
+	  if (main_core.Type.isArrayFilled(client.phones) && main_core.Type.isStringFilled(clientData.value)) {
+	    const toPhone = client.phones.find(row => row.value === clientData.value);
+	    if (toPhone) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone] = toPhone;
+	      babelHelpers.classPrivateFieldLooseBase(this, _toEntityTypeId)[_toEntityTypeId] = client.entityTypeId;
+	      babelHelpers.classPrivateFieldLooseBase(this, _toEntityId)[_toEntityId] = client.entityId;
+	    }
+	  }
+	  if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].fromList) && main_core.Type.isStringFilled(fromId)) {
+	    const from = babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].fromList.find(row => String(row.id) === fromId);
+	    if (from) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _fromPhoneId)[_fromPhoneId] = from.id;
+	    }
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _canUse)[_canUse] && main_core.Type.isPlainObject(template)) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _initTemplateSelectDialog)[_initTemplateSelectDialog]({
+	      preselectedItems: [['message_template', template.ORIGINAL_ID]]
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _setTemplate)[_setTemplate](template);
+	  }
 	}
 	function _subscribeToReceiversChanges2$2() {
 	  main_core_events.EventEmitter.subscribe('BX.Crm.MessageSender.ReceiverRepository:OnReceiversChanged', event => {
@@ -6111,6 +6240,7 @@ this.BX.Crm = this.BX.Crm || {};
 			`), main_core.Loc.getMessage('CRM_TIMELINE_CANCEL_BTN'));
 	    main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _cancelButton)[_cancelButton], 'click', () => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _setTemplate)[_setTemplate](main_core.Runtime.clone(this.getSetting('demoTemplate')));
+	      babelHelpers.classPrivateFieldLooseBase(this, _selectTplDlg)[_selectTplDlg] = null;
 	      this.emitFinishEditEvent();
 	    });
 	    return main_core.Tag.render(_t8$2 || (_t8$2 = _$5`
@@ -6224,37 +6354,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	function _handleTemplateSelect2() {
-	  const entityTypeId = this.getEntityTypeId();
-	  const entityId = this.getEntityId();
-	  const categoryId = this.getEntityCategoryId();
-	  const selector = new ui_entitySelector.Dialog({
-	    targetNode: babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton],
-	    multiple: false,
-	    showAvatars: false,
-	    dropdownMode: true,
-	    enableSearch: true,
-	    context: `SMS-TEMPLATE-SELECTOR-$entityTypeId}-${categoryId}`,
-	    tagSelectorOptions: {
-	      textBoxWidth: '100%'
-	    },
-	    width: 450,
-	    entities: [{
-	      id: 'message_template',
-	      options: {
-	        senderId: babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].id,
-	        entityTypeId,
-	        entityId,
-	        categoryId
-	      }
-	    }],
-	    events: {
-	      'Item:onSelect': selectEvent => {
-	        const item = selectEvent.getData().item;
-	        babelHelpers.classPrivateFieldLooseBase(this, _setTemplate)[_setTemplate](item.getCustomData().get('template'));
-	      }
-	    }
-	  });
-	  selector.show();
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _selectTplDlg)[_selectTplDlg]) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _initTemplateSelectDialog)[_initTemplateSelectDialog]();
+	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _selectTplDlg)[_selectTplDlg].show();
 	}
 	function _handleSettingsMenuClick2() {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone] === null) {
@@ -6331,6 +6434,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    MESSAGE_TO: babelHelpers.classPrivateFieldLooseBase(this, _toPhone)[_toPhone].value,
 	    MESSAGE_BODY: text,
 	    MESSAGE_TEMPLATE: babelHelpers.classPrivateFieldLooseBase(this, _template)[_template].ID,
+	    MESSAGE_TEMPLATE_ORIGINAL_ID: babelHelpers.classPrivateFieldLooseBase(this, _template)[_template].ORIGINAL_ID,
 	    MESSAGE_TEMPLATE_WITH_PLACEHOLDER: main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _placeholders)[_placeholders]),
 	    OWNER_TYPE_ID: this.getEntityTypeId(),
 	    OWNER_ID: this.getEntityId(),
@@ -6346,6 +6450,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    ui_dialogs_messagebox.MessageBox.alert(main_core.Text.encode(error));
 	    return;
 	  }
+	  babelHelpers.classPrivateFieldLooseBase(this, _setTemplate)[_setTemplate](main_core.Runtime.clone(this.getSetting('demoTemplate')));
+	  babelHelpers.classPrivateFieldLooseBase(this, _selectTplDlg)[_selectTplDlg] = null;
 	  this.emitFinishEditEvent();
 	}
 	function _handleSendFailure2() {
@@ -6364,6 +6470,42 @@ this.BX.Crm = this.BX.Crm || {};
 	  };
 	  babelHelpers.classPrivateFieldLooseBase(this, _tplEditor)[_tplEditor] = new crm_template_editor.Editor(editorParams).setPlaceholders(babelHelpers.classPrivateFieldLooseBase(this, _placeholders)[_placeholders]).setFilledPlaceholders(babelHelpers.classPrivateFieldLooseBase(this, _filledPlaceholders)[_filledPlaceholders]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _tplEditor)[_tplEditor].setBody(preview); // @todo will support other positions too, not only Preview
+	}
+	function _initTemplateSelectDialog2(additionalOptions) {
+	  const entityTypeId = this.getEntityTypeId();
+	  const entityId = this.getEntityId();
+	  const categoryId = this.getEntityCategoryId();
+	  const defaultOptions = {
+	    targetNode: babelHelpers.classPrivateFieldLooseBase(this, _selectorButton)[_selectorButton],
+	    multiple: false,
+	    showAvatars: false,
+	    dropdownMode: true,
+	    enableSearch: true,
+	    context: `SMS-TEMPLATE-SELECTOR-$entityTypeId}-${categoryId}`,
+	    tagSelectorOptions: {
+	      textBoxWidth: '100%'
+	    },
+	    width: 450,
+	    entities: [{
+	      id: 'message_template',
+	      options: {
+	        senderId: babelHelpers.classPrivateFieldLooseBase(this, _provider)[_provider].id,
+	        entityTypeId,
+	        entityId,
+	        categoryId
+	      }
+	    }],
+	    events: {
+	      'Item:onSelect': selectEvent => {
+	        const item = selectEvent.getData().item;
+	        babelHelpers.classPrivateFieldLooseBase(this, _setTemplate)[_setTemplate](item.getCustomData().get('template'));
+	      }
+	    }
+	  };
+	  babelHelpers.classPrivateFieldLooseBase(this, _selectTplDlg)[_selectTplDlg] = new ui_entitySelector.Dialog({
+	    ...defaultOptions,
+	    ...additionalOptions
+	  });
 	}
 	function _preparePlaceholdersFromTemplate2(template) {
 	  var _template$PLACEHOLDER;
@@ -7460,6 +7602,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    var _babelHelpers$classPr;
 	    return (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _items)[_items][id]) != null ? _babelHelpers$classPr : null;
 	  }
+	  getContainer() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1];
+	  }
 	  onMenuItemClick(selectedItemId) {
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _isReadonly$1)[_isReadonly$1]) {
 	      return;
@@ -7486,6 +7631,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      return true;
 	    }
 	    return false;
+	  }
+	  scrollIntoView() {
+	    this.getContainer().scrollIntoView({
+	      behavior: 'smooth',
+	      block: 'end',
+	      inline: 'nearest'
+	    });
 	  }
 	  static create(id, params) {
 	    const self = new MenuBar(id, params);

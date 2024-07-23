@@ -8,8 +8,8 @@ import { DialogOptions } from 'ui.entity-selector';
 import type { EditorOptions } from './editor-options';
 import './editor.css';
 import MenuPopup from './menu-popup';
-import TextPopup from './text-popup';
 import PreviewPopup, { PREVIEW_POPUP_CONTENT_STATUS } from './preview-popup';
+import TextPopup from './text-popup';
 import type { FilledPlaceholder } from './types';
 
 const UPDATE_ACTION = 'update';
@@ -609,7 +609,11 @@ export class Editor
 				}
 				else if (Type.isStringFilled(filledPlaceholder.FIELD_VALUE))
 				{
-					text = text.replace(filledPlaceholder.PLACEHOLDER_ID, filledPlaceholder.FIELD_VALUE);
+					const fieldValue = filledPlaceholder.FIELD_VALUE
+						.replaceAll('{', '&#123;')
+						.replaceAll('}', '&#125;')
+					;
+					text = text.replace(filledPlaceholder.PLACEHOLDER_ID, fieldValue);
 				}
 			});
 		}

@@ -8,3 +8,4 @@ $MESS["ERROR_WORK_PHONE"] = "Помилка заповнення поля \"Ро
 $MESS["VI_EVENTS_NOTIFICATIONS"] = "Сповіщення телефонії";
 $MESS["VI_EVENTS_SIP_STATUS_NOTIFICATIONS"] = "Сповіщення про зміну статусів<br>SIP-підключень";
 $MESS["VI_EVENTS_SIP_STATUS_NOTIFICATIONS_V2"] = "Сповіщення про зміну статусів SIP-підключень";
+$MESS["VI_EVENTS_SIP_STATUS_NOTIFICATIONS_V3"] = "Сповіщення про зміну статусів SIP-підключень";

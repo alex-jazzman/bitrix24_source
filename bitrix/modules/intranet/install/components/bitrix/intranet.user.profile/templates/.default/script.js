@@ -422,7 +422,7 @@
 						props : {
 							style : "max-width: 450px"
 						},
-						html: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION'),
+						html: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGVER_1'),
 					}),
 				closeIcon : false,
 				lightShadow : true,
@@ -432,7 +432,7 @@
 				contentPadding: 10,
 				buttons: [
 					new BX.UI.CreateButton({
-						text: BX.message("INTRANET_USER_PROFILE_CONFIRM_YES"),
+						text: BX.message('INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1'),
 						events: {
 							click: (button, event) => {
 								this.setAdminRights()
@@ -441,8 +441,17 @@
 							}
 						}
 					}),
+					new BX.UI.CreateButton({
+						text : BX.message('INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR'),
+						events : {
+							click: () => {
+								this.setIntegratorRights();
+								popup.close();
+							},
+						},
+					}),
 					new BX.UI.CancelButton({
-						text : BX.message("INTRANET_USER_PROFILE_CONFIRM_NO"),
+						text : BX.message('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
 						events : {
 							click: () => {
 								popup.close();

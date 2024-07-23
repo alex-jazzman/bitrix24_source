@@ -57,7 +57,6 @@ IP-адреса: #REMOTE_ADDR#
 http://#SERVER_NAME#/bitrix/admin/event_log.php?set_filter=Y&find_audit_type_id=#AUDIT_TYPE_ID#";
 $MESS["MAIN_EVERYONE_GROUP_DESC"] = "Всі користувачі, включаючи неавторизованих.";
 $MESS["MAIN_EVERYONE_GROUP_NAME"] = "Всі користувачі (у тому числі неавторизовані)";
-$MESS["MAIN_INSTALL_DB_ERROR"] = "Не можу з'єднатися з базою даних. Перевірте правильність введених параметрів";
 $MESS["MAIN_INSTALL_EVENT_MESSAGE_NEW_DEVICE_LOGIN"] = "Вітаємо, #NAME#!
 
 Новий пристрій авторизувався під вашим логіном #LOGIN#.

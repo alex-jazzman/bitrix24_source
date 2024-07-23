@@ -45,3 +45,9 @@ $MESS['CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'] = 'Перейти в Мар
 $MESS['CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE'] ='Нет провайдеров для CoPilot';
 $MESS['CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT'] ='Мы не нашли AI-провайдеров в вашем регионе. Если вы хотите использовать CoPilot в CRM, напишите нам';
 $MESS['CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT'] = 'Нужен CoPilot';
+
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_TITLE'] = 'Перейти к редактированию другого СМС?';
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_MESSAGE'] = 'Изменения в новом СМС не сохранятся, если вы начнёте редактировать другое СМС';
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'] = 'Перейти к редактированию';
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_TITLE'] = 'Перейти к редактированию другого сообщения WhatsApp?';
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_MESSAGE'] = 'Изменения в новом сообщении WhatsApp не сохранятся, если вы начнёте редактировать другое сообщение';

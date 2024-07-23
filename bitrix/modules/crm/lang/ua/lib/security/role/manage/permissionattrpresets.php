@@ -1,4 +1,6 @@
 <?php
+$MESS["CRM_SECURITY_ROLE_PERMS_HIDE_SUM"] = "Приховувати";
+$MESS["CRM_SECURITY_ROLE_PERMS_SHOW_SUM"] = "Не приховувати";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_"] = "Доступ закритий";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_A"] = "Свої";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_AUTOMATION_ALL"] = "Редагування";

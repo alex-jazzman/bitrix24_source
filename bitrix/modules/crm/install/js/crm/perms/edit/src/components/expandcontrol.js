@@ -1,3 +1,4 @@
+import 'ui.design-tokens';
 import '../css/expandcontrol.css';
 
 export const ExpandControl = {

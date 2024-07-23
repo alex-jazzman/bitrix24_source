@@ -11,8 +11,8 @@ return [
 	'rel' => [
 		'bizproc.document',
 		'bizproc.types',
-		'ui.alerts',
 		'ui.icons.b24',
+		'ui.hint',
 		'ui.textcrop',
 		'main.popup',
 		'main.date',

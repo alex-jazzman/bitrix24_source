@@ -894,7 +894,7 @@ export class EntityEditorPaymentDocuments
 	}
 
 	/**
-	 *
+	 * @see #getAnalyticLabels for new analytics, this is for old analytics and will be deprecated in the future
 	 * @param labelMode converting to PascalCase before inserting into label template
 	 * @returns {string} final analytics label
 	 * @private
@@ -922,6 +922,20 @@ export class EntityEditorPaymentDocuments
 			.replace('#MODE#', mode);
 	}
 
+	#getAnalyticLabels(type: string): Object
+	{
+		const labels = {
+			tool: 'crm',
+			category: 'payments',
+			event: 'payment_create_click',
+			c_section: 'crm',
+			c_sub_section: 'web',
+			type,
+		};
+
+		return labels;
+	}
+
 	_createPaymentSlider(orderId: number)
 	{
 		if (!this._isSalescenterToolEnabled)
@@ -937,6 +951,7 @@ export class EntityEditorPaymentDocuments
 		const options = this._defaultCreatePaymentDocumentOptions();
 		options.mode = 'payment';
 		options.analyticsLabel = this._generateAnalyticsLabel('create_payment');
+		options.st = this.#getAnalyticLabels('payment');
 		options.orderId = orderId;
 
 		this._context().startSalescenterApplication(orderId, options);
@@ -977,6 +992,7 @@ export class EntityEditorPaymentDocuments
 		const options = this._defaultCreatePaymentDocumentOptions();
 		options.mode = 'payment_delivery';
 		options.analyticsLabel = this._generateAnalyticsLabel('create_payment_delivery');
+		options.st = this.#getAnalyticLabels('delivery_payment');
 		options.orderId = orderId;
 
 		this._context().startSalescenterApplication(orderId, options);
@@ -1020,6 +1036,7 @@ export class EntityEditorPaymentDocuments
 		const options = this._defaultCreatePaymentDocumentOptions();
 		options.mode = 'terminal_payment';
 		options.analyticsLabel = this._generateAnalyticsLabel('create_terminal_payment');
+		options.st = this.#getAnalyticLabels('terminal_payment');
 		options.orderId = orderId;
 
 		this._context().startSalescenterApplication(orderId, options);

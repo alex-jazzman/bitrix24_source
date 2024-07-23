@@ -42,13 +42,16 @@ Extension::load([
 	'biconnector.apache-superset-dashboard-manager',
 	'biconnector.apache-superset-analytics',
 	'biconnector.apache-superset-cleaner',
+	'biconnector.dashboard-export-master',
 	'ui.dialogs.messagebox',
 	'ui.hint',
+	'ui.buttons',
 	'pull.client',
 	'ui.icons',
 	'ui.icon-set.actions',
 	'ui.alerts',
 	'ui.tour',
+	'ui.switcher',
 	'spotlight',
 ]);
 
@@ -96,6 +99,6 @@ if (!$limitManager->checkLimitWarning())
 		])?>);
 		BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
 
-		BX.BIConnector.ApacheSupersetCleaner.Instance = new BX.BIConnector.ApacheSupersetCleaner();
+		BX.BIConnector.ApacheSupersetTariffCleaner.Instance = new BX.BIConnector.ApacheSupersetTariffCleaner();
 	});
 </script>

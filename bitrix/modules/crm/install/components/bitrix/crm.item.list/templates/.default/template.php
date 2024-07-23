@@ -19,18 +19,19 @@ use Bitrix\Main\Web\Json;
  * @var array $arResult
  */
 
-Extension::load(
-	[
-		'ui.dialogs.messagebox',
-		'crm_common',
-		'crm.settings-button-extender',
-		'crm.entity-list.panel',
-		'crm.badge',
-		'ui.design-tokens',
-	]
-);
+Extension::load([
+	'ui.dialogs.messagebox',
+	'crm_common',
+	'crm.settings-button-extender',
+	'crm.entity-list.panel',
+	'crm.activity.grid-activities-manager',
+	'crm.badge',
+	'ui.design-tokens',
+]);
 
-Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
+$assets = Asset::getInstance();
+$assets->addJs('/bitrix/js/crm/progress_control.js');
+$assets->addCss('/bitrix/themes/.default/crm-entity-show.css');
 
 if ($this->getComponent()->getErrors())
 {

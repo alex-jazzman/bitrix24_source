@@ -38,7 +38,7 @@ jn.define('bizproc/task/tasks-performer/rules/task-opener', (require, exports, m
 					mediumPositionPercent: 90,
 					navigationBarColor: AppTheme.colors.bgSecondary,
 					swipeAllowed: true,
-					swipeContentAllowed: false,
+					swipeContentAllowed: true,
 					horizontalSwipeAllowed: false,
 				},
 			};

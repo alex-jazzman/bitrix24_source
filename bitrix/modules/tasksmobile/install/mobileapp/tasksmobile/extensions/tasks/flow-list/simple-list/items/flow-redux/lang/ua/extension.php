@@ -1,4 +1,6 @@
 <?php
+$MESS["TASKSMOBILE_FLOWS_INFO_DESCRIPTION_TEXT"] = "Розподіляйте завдання між виконавцями, відстежуйте завантаженість співробітників і швидкість виконання завдань";
+$MESS["TASKSMOBILE_FLOWS_INFO_HEADER_TEXT"] = "Потоки";
 $MESS["TASKSMOBILE_FLOW_CONTENT_CREATE_TASK_BUTTON_TEXT"] = "Створити завдання";
 $MESS["TASKSMOBILE_FLOW_CONTENT_DISABLED_TOAST"] = "Цей потік вимкнено";
 $MESS["TASKSMOBILE_FLOW_CONTENT_ENABLE_FLOW_BUTTON_TEXT"] = "Увімкнути потік";

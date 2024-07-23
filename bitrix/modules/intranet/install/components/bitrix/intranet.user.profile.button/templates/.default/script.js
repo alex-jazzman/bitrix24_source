@@ -958,8 +958,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          _this10.hide();
 	          new ui_qrauthorization.QrAuthorization({
 	            title: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
-	            content: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2'),
-	            helpLink: ''
+	            content: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2')
 	          }).show();
 	        };
 	        var onclickHelp = function onclickHelp(event) {

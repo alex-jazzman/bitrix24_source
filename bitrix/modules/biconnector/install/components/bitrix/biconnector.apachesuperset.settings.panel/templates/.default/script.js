@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.BIConnector = this.BX.BIConnector || {};
-(function (exports,biconnector_apacheSupersetAnalytics,ui_iconSet_main,ui_designTokens,main_core_events,ui_notification,main_core,ui_entitySelector) {
+(function (exports,biconnector_apacheSupersetAnalytics,ui_iconSet_main,ui_designTokens,ui_entitySelector,main_core,main_core_events,ui_buttons,ui_countdown,ui_notification) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -84,6 +84,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  if (!parent.BX.Main || !parent.BX.Main.gridManager) {
 	    return;
 	  }
+	  parent.BX.Event.EventEmitter.emit('BX.BIConnector.Settings:onAfterSave');
 	  var gridInstance = (_parent$BX$Main$gridM = parent.BX.Main.gridManager.getById('biconnector_superset_dashboard_grid')) === null || _parent$BX$Main$gridM === void 0 ? void 0 : _parent$BX$Main$gridM.instance;
 	  if (gridInstance) {
 	    gridInstance.reload();
@@ -347,19 +348,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  return DashboardDateFilterField;
 	}(DateFilterField);
 
-	var _templateObject$2, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9;
+	var _templateObject$2, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1;
 	var KeyInfoField = /*#__PURE__*/function (_BX$UI$EntityEditorCu) {
 	  babelHelpers.inherits(KeyInfoField, _BX$UI$EntityEditorCu);
 	  function KeyInfoField() {
-	    var _babelHelpers$getProt;
-	    var _this;
 	    babelHelpers.classCallCheck(this, KeyInfoField);
-	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	      args[_key] = arguments[_key];
-	    }
-	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(KeyInfoField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "refreshKeyLock", false);
-	    return _this;
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(KeyInfoField).apply(this, arguments));
 	  }
 	  babelHelpers.createClass(KeyInfoField, [{
 	    key: "createTitleNode",
@@ -391,11 +385,15 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      main_core.Event.bind(this.eyeButton, 'click', this.toggleKey.bind(this));
 	      var copyButton = main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-btn-link ui-btn\">\n\t\t\t\t<span class=\"ui-icon-set --copy-plates\"></span>\n\t\t\t</button>\n\t\t"])));
 	      main_core.Event.bind(copyButton, 'click', this.copyText.bind(this));
-	      var content = main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\t\n\t\t\t<div class=\"ui-ctl ui-ctl__combined-input ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-icon__set ui-ctl-after\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.eyeButton, copyButton, this.keyInput);
+	      var content = main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-ctl ui-ctl__combined-input ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-icon__set ui-ctl-after\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.eyeButton, copyButton, this.keyInput);
 	      main_core.Dom.append(content, this._innerWrapper);
-	      this.refreshButton = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-btn-primary ui-btn icon-set-element\">\n\t\t\t\t\t<div class=\"ui-icon-set --refresh-7\"></div>\n\t\t\t\t\t<div class=\"icon-set-element__class\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t</button>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON'));
-	      main_core.Event.bind(this.refreshButton, 'click', this.refreshKey.bind(this));
-	      main_core.Dom.append(this.refreshButton, this._innerWrapper);
+	      this.refreshButton = new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON_MSGVER_1'),
+	        color: ui_buttons.ButtonColor.LIGHT_BORDER,
+	        size: ui_buttons.ButtonSize.MEDIUM,
+	        onclick: this.refreshKey.bind(this)
+	      });
+	      this.refreshButton.renderTo(this._innerWrapper);
 	      this.registerLayout(options);
 	      this._hasLayout = true;
 	    }
@@ -431,18 +429,14 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  }, {
 	    key: "refreshKey",
 	    value: function refreshKey() {
-	      var _this2 = this;
-	      if (this.refreshKeyLock) {
-	        return;
-	      }
-	      this.refreshKeyLock = true;
-	      main_core.Dom.addClass(this.refreshButton, 'ui-btn-disabled');
+	      var _this = this;
+	      this.refreshButton.setClocking();
 	      main_core.ajax.runComponentAction('bitrix:biconnector.apachesuperset.setting', 'changeBiToken', {
 	        mode: 'class'
 	      }).then(function (response) {
 	        var generatedKey = response.data;
 	        if (main_core.Type.isStringFilled(generatedKey)) {
-	          _this2.keyInput.value = main_core.Text.encode(generatedKey);
+	          _this.keyInput.value = main_core.Text.encode(generatedKey);
 	          ui_notification.UI.Notification.Center.notify({
 	            content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS'),
 	            autoHideDelay: 2000
@@ -453,8 +447,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	            autoHideDelay: 2000
 	          });
 	        }
-	        _this2.refreshKeyLock = false;
-	        main_core.Dom.removeClass(_this2.refreshButton, 'ui-btn-disabled');
+	        _this.refreshButton.setClocking(false);
 	      });
 	    }
 	  }], [{
@@ -734,16 +727,452 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  return DashboardOwnerField;
 	}(BX.UI.EntityEditorCustom);
 
+	var _templateObject$5, _templateObject2$4, _templateObject3$4, _templateObject4$4, _templateObject5$4, _templateObject6$4;
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _scopes = /*#__PURE__*/new WeakMap();
+	var _initialScopes = /*#__PURE__*/new WeakMap();
+	var ScopeField = /*#__PURE__*/function (_BX$UI$EntityEditorCu) {
+	  babelHelpers.inherits(ScopeField, _BX$UI$EntityEditorCu);
+	  function ScopeField() {
+	    var _babelHelpers$getProt;
+	    var _this;
+	    babelHelpers.classCallCheck(this, ScopeField);
+	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(ScopeField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _scopes, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _initialScopes, {
+	      writable: true,
+	      value: void 0
+	    });
+	    return _this;
+	  }
+	  babelHelpers.createClass(ScopeField, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      var _this2 = this;
+	      babelHelpers.get(babelHelpers.getPrototypeOf(ScopeField.prototype), "initialize", this).call(this, id, settings);
+	      babelHelpers.classPrivateFieldSet(this, _scopes, new Set());
+	      babelHelpers.classPrivateFieldSet(this, _initialScopes, new Set());
+	      var scopes = this._model.getField(this.getName(), []);
+	      scopes.forEach(function (scopeCode) {
+	        babelHelpers.classPrivateFieldGet(_this2, _scopes).add(scopeCode);
+	        babelHelpers.classPrivateFieldGet(_this2, _initialScopes).add(scopeCode);
+	      });
+	    }
+	  }, {
+	    key: "layout",
+	    value: function layout(options) {
+	      var _this3 = this;
+	      this.ensureWrapperCreated({
+	        classNames: ['ui-entity-editor-field-text']
+	      });
+	      this.adjustWrapper();
+	      var message = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_SCOPE_HINT_LINK', {
+	        '#HINT_LINK#': '<link></link>'
+	      });
+	      var hint = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-settings-panel-range__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), message);
+	      var link = main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"biconnector-superset-settings-panel-range__hint-link\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'));
+	      main_core.Event.bind(link, 'click', function () {
+	        top.BX.Helper.show('redirect=detail&code=20337242&anchor=DashboardOwner');
+	      });
+	      main_core.Dom.replace(hint.querySelector('link'), link);
+	      main_core.Dom.insertBefore(hint, this._container);
+	      this._innerWrapper = main_core.Tag.render(_templateObject3$4 || (_templateObject3$4 = babelHelpers.taggedTemplateLiteral(["<div class='ui-entity-editor-content-block ui-ctl-custom'></div>"])));
+	      main_core.Dom.append(this._innerWrapper, this._wrapper);
+	      var content = main_core.Tag.render(_templateObject4$4 || (_templateObject4$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-ctl-w100\"></div>\n\t\t"])));
+	      main_core.Dom.append(content, this._innerWrapper);
+	      var preselectedItems = [];
+	      babelHelpers.classPrivateFieldGet(this, _scopes).forEach(function (scope) {
+	        preselectedItems.push(['biconnector-superset-scope', scope]);
+	      });
+	      var tagSelector = new ui_entitySelector.TagSelector({
+	        multiple: true,
+	        dialogOptions: {
+	          id: 'biconnector-superset-scope',
+	          context: 'biconnector-superset-scope',
+	          enableSearch: false,
+	          dropdownMode: true,
+	          showAvatars: false,
+	          compactView: true,
+	          dynamicLoad: true,
+	          width: 250,
+	          height: 200,
+	          entities: [{
+	            id: 'biconnector-superset-scope',
+	            dynamicLoad: true,
+	            options: {}
+	          }],
+	          preselectedItems: preselectedItems
+	        },
+	        events: {
+	          onBeforeTagAdd: function onBeforeTagAdd(event) {
+	            var _event$getData = event.getData(),
+	              tag = _event$getData.tag;
+	            babelHelpers.classPrivateFieldGet(_this3, _scopes).add(tag.getId());
+	            _this3.onChange();
+	          },
+	          onBeforeTagRemove: function onBeforeTagRemove(event) {
+	            var _event$getData2 = event.getData(),
+	              tag = _event$getData2.tag;
+	            babelHelpers.classPrivateFieldGet(_this3, _scopes)["delete"](tag.getId());
+	            _this3.onChange();
+	          }
+	        }
+	      });
+	      tagSelector.renderTo(content);
+	      main_core.Dom.addClass(tagSelector.getOuterContainer(), 'ui-ctl-element');
+	      this.registerLayout(options);
+	      this._hasLayout = true;
+	    }
+	  }, {
+	    key: "onChange",
+	    value: function onChange() {
+	      if (babelHelpers.classPrivateFieldGet(this, _scopes).size === babelHelpers.classPrivateFieldGet(this, _initialScopes).size) {
+	        var _iterator = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _scopes)),
+	          _step;
+	        try {
+	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	            var item = _step.value;
+	            if (!babelHelpers.classPrivateFieldGet(this, _initialScopes).has(item)) {
+	              this.markAsChanged();
+	              return;
+	            }
+	          }
+	        } catch (err) {
+	          _iterator.e(err);
+	        } finally {
+	          _iterator.f();
+	        }
+	      } else {
+	        this.markAsChanged();
+	        return;
+	      }
+	      this._isChanged = false;
+	    }
+	  }, {
+	    key: "save",
+	    value: function save() {
+	      if (main_core.Type.isDomNode(this._innerWrapper)) {
+	        var oldSaveBlock = this._innerWrapper.querySelector('.save-block');
+	        if (main_core.Type.isDomNode(oldSaveBlock)) {
+	          main_core.Dom.remove(oldSaveBlock);
+	        }
+	        var saveBlock = main_core.Tag.render(_templateObject5$4 || (_templateObject5$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"save-block\"></div>"])));
+	        var _iterator2 = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _scopes)),
+	          _step2;
+	        try {
+	          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	            var scope = _step2.value;
+	            main_core.Dom.append(main_core.Tag.render(_templateObject6$4 || (_templateObject6$4 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[]\" value=\"", "\">"])), this.getName(), scope), saveBlock);
+	          }
+	        } catch (err) {
+	          _iterator2.e(err);
+	        } finally {
+	          _iterator2.f();
+	        }
+	        main_core.Dom.append(saveBlock, this._innerWrapper);
+	      }
+	      this._model.setField(this.getName(), babelHelpers.classPrivateFieldGet(this, _scopes));
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      var self = new this(id, settings);
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return ScopeField;
+	}(BX.UI.EntityEditorCustom);
+
+	var _templateObject$6, _templateObject2$5, _templateObject3$5, _templateObject4$5, _templateObject5$5;
+	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _deleteButton = /*#__PURE__*/new WeakMap();
+	var _deletePopup = /*#__PURE__*/new WeakMap();
+	var DeleteSupersetField = /*#__PURE__*/function (_BX$UI$EntityEditorLi) {
+	  babelHelpers.inherits(DeleteSupersetField, _BX$UI$EntityEditorLi);
+	  function DeleteSupersetField() {
+	    var _babelHelpers$getProt;
+	    var _this;
+	    babelHelpers.classCallCheck(this, DeleteSupersetField);
+	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(DeleteSupersetField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _deleteButton, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$3(babelHelpers.assertThisInitialized(_this), _deletePopup, {
+	      writable: true,
+	      value: void 0
+	    });
+	    return _this;
+	  }
+	  babelHelpers.createClass(DeleteSupersetField, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(DeleteSupersetField.prototype), "initialize", this).call(this, id, settings);
+	    }
+	  }, {
+	    key: "createTitleNode",
+	    value: function createTitleNode() {
+	      return main_core.Tag.render(_templateObject$6 || (_templateObject$6 = babelHelpers.taggedTemplateLiteral(["<span></span>"])));
+	    }
+	  }, {
+	    key: "layout",
+	    value: function layout(options) {
+	      this.ensureWrapperCreated({
+	        classNames: ['ui-entity-editor-field-text']
+	      });
+	      this.adjustWrapper();
+	      var message = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_HINT', {
+	        '#HINT_LINK#': '<link></link>'
+	      });
+	      var hint = main_core.Tag.render(_templateObject2$5 || (_templateObject2$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-settings-panel-range__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), message);
+	      var link = main_core.Tag.render(_templateObject3$5 || (_templateObject3$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"biconnector-superset-settings-panel-range__hint-link\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'));
+	      main_core.Event.bind(link, 'click', function () {
+	        top.BX.Helper.show('redirect=detail&code=20337242&anchor=Disable');
+	      });
+	      main_core.Dom.replace(hint.querySelector('link'), link);
+	      main_core.Dom.insertBefore(hint, this._container);
+	      this._innerWrapper = main_core.Tag.render(_templateObject4$5 || (_templateObject4$5 = babelHelpers.taggedTemplateLiteral(["<div class='ui-entity-editor-content-block ui-ctl-custom'></div>"])));
+	      main_core.Dom.append(this._innerWrapper, this._wrapper);
+	      var deleteButtonBlock = main_core.Tag.render(_templateObject5$5 || (_templateObject5$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-delete-superset-button-block\"></div>\n\t\t"])));
+	      babelHelpers.classPrivateFieldSet(this, _deleteButton, new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_DELETE_BUTTON'),
+	        color: ui_buttons.ButtonColor.LIGHT_BORDER,
+	        size: ui_buttons.ButtonSize.SMALL,
+	        onclick: this.deleteSuperset.bind(this)
+	      }));
+	      babelHelpers.classPrivateFieldGet(this, _deleteButton).renderTo(deleteButtonBlock);
+
+	      // Put the clear button into the section header
+	      main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorSection:onLayout', function (event) {
+	        if (event.data[1].id === 'DELETE_SUPERSET_SECTION') {
+	          event.data[1].customNodes.push(deleteButtonBlock);
+	        }
+	      });
+	      this.registerLayout(options);
+	      this._hasLayout = true;
+	    }
+	  }, {
+	    key: "deleteSuperset",
+	    value: function deleteSuperset() {
+	      var _this2 = this;
+	      babelHelpers.classPrivateFieldSet(this, _deletePopup, new BX.BIConnector.ApacheSupersetCleanPopup({
+	        onSuccess: function onSuccess() {
+	          window.top.location.reload();
+	        },
+	        onAccept: function onAccept() {
+	          babelHelpers.classPrivateFieldGet(_this2, _deleteButton).setClocking();
+	        },
+	        onError: function onError() {
+	          babelHelpers.classPrivateFieldGet(_this2, _deleteButton).setClocking(false);
+	        }
+	      }));
+	      babelHelpers.classPrivateFieldGet(this, _deletePopup).show();
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      var self = new this(id, settings);
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return DeleteSupersetField;
+	}(BX.UI.EntityEditorList);
+
+	var _templateObject$7, _templateObject2$6, _templateObject3$6, _templateObject4$6, _templateObject5$6;
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _clearCacheButton = /*#__PURE__*/new WeakMap();
+	var _canClearCache = /*#__PURE__*/new WeakMap();
+	var _clearTimeout = /*#__PURE__*/new WeakMap();
+	var _initCacheTimer = /*#__PURE__*/new WeakSet();
+	var _updateHintTimer = /*#__PURE__*/new WeakSet();
+	var _clearCache = /*#__PURE__*/new WeakSet();
+	var _initClearCacheButton = /*#__PURE__*/new WeakSet();
+	var ClearCacheField = /*#__PURE__*/function (_BX$UI$EntityEditorCu) {
+	  babelHelpers.inherits(ClearCacheField, _BX$UI$EntityEditorCu);
+	  function ClearCacheField() {
+	    var _babelHelpers$getProt;
+	    var _this;
+	    babelHelpers.classCallCheck(this, ClearCacheField);
+	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+	      args[_key] = arguments[_key];
+	    }
+	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(ClearCacheField)).call.apply(_babelHelpers$getProt, [this].concat(args)));
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _initClearCacheButton);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _clearCache);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _updateHintTimer);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _initCacheTimer);
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _clearCacheButton, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _canClearCache, {
+	      writable: true,
+	      value: true
+	    });
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _clearTimeout, {
+	      writable: true,
+	      value: 0
+	    });
+	    return _this;
+	  }
+	  babelHelpers.createClass(ClearCacheField, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(ClearCacheField.prototype), "initialize", this).call(this, id, settings);
+	      var fieldSettings = settings.model.getData();
+	      babelHelpers.classPrivateFieldSet(this, _canClearCache, fieldSettings.canClearCache);
+	      babelHelpers.classPrivateFieldSet(this, _clearTimeout, parseInt(fieldSettings.clearCacheTimeout, 10));
+	      if (!babelHelpers.classPrivateFieldGet(this, _canClearCache)) {
+	        _classPrivateMethodGet$2(this, _initCacheTimer, _initCacheTimer2).call(this);
+	      }
+	    }
+	  }, {
+	    key: "layout",
+	    value: function layout(options) {
+	      this.ensureWrapperCreated({
+	        classNames: ['ui-entity-editor-field-text']
+	      });
+	      this.adjustWrapper();
+	      var message = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_HINT_LINK', {
+	        '#HINT_LINK#': '<link></link>'
+	      });
+	      var hint = main_core.Tag.render(_templateObject$7 || (_templateObject$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-superset-settings-panel-range__hint\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), message);
+	      var link = main_core.Tag.render(_templateObject2$6 || (_templateObject2$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"biconnector-superset-settings-panel-range__hint-link\">\n\t\t\t\t", "\n\t\t\t</a>\n\t\t"])), main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK'));
+	      main_core.Event.bind(link, 'click', function () {
+	        top.BX.Helper.show('redirect=detail&code=21000502');
+	      });
+	      main_core.Dom.replace(hint.querySelector('link'), link);
+	      main_core.Dom.insertBefore(hint, this._container);
+	      this._innerWrapper = main_core.Tag.render(_templateObject3$6 || (_templateObject3$6 = babelHelpers.taggedTemplateLiteral(["<div class='ui-entity-editor-content-block ui-ctl-custom'></div>"])));
+	      main_core.Dom.append(this._innerWrapper, this._wrapper);
+	      _classPrivateMethodGet$2(this, _initClearCacheButton, _initClearCacheButton2).call(this);
+	      this.registerLayout(options);
+	      this._hasLayout = true;
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      var self = new this(id, settings);
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return ClearCacheField;
+	}(BX.UI.EntityEditorCustom);
+	function _initCacheTimer2() {
+	  var _this2 = this;
+	  var timerContainer = main_core.Tag.render(_templateObject4$6 || (_templateObject4$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"biconnector-cache-container\"></div>\n\t\t"])));
+	  var timerProps = {
+	    seconds: babelHelpers.classPrivateFieldGet(this, _clearTimeout),
+	    node: timerContainer,
+	    onTimerEnd: function onTimerEnd() {
+	      babelHelpers.classPrivateFieldSet(_this2, _canClearCache, true);
+	      babelHelpers.classPrivateFieldGet(_this2, _clearCacheButton).setDisabled(false);
+	    },
+	    onTimerUpdate: function onTimerUpdate(data) {
+	      _classPrivateMethodGet$2(_this2, _updateHintTimer, _updateHintTimer2).call(_this2, data);
+	    }
+	  };
+	  new ui_countdown.Countdown(timerProps);
+	}
+	function _updateHintTimer2(data) {
+	  babelHelpers.classPrivateFieldSet(this, _clearTimeout, data.seconds);
+	}
+	function _clearCache2() {
+	  var _this3 = this;
+	  if (!babelHelpers.classPrivateFieldGet(this, _canClearCache)) {
+	    return new Promise(function (resolve) {
+	      resolve();
+	    });
+	  }
+	  babelHelpers.classPrivateFieldGet(this, _clearCacheButton).setDisabled();
+	  babelHelpers.classPrivateFieldSet(this, _canClearCache, false);
+	  return main_core.ajax.runAction('biconnector.superset.clearCache').then(function (response) {
+	    ui_notification.UI.Notification.Center.notify({
+	      content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_SUCCESS'),
+	      autoHideDelay: 2000
+	    });
+	    babelHelpers.classPrivateFieldSet(_this3, _clearTimeout, response.data.timeoutToNextClearCache);
+	    _classPrivateMethodGet$2(_this3, _initCacheTimer, _initCacheTimer2).call(_this3);
+	  })["catch"](function () {
+	    ui_notification.UI.Notification.Center.notify({
+	      content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_ERROR'),
+	      autoHideDelay: 2000
+	    });
+	    babelHelpers.classPrivateFieldGet(_this3, _clearCacheButton).setDisabled(false);
+	    babelHelpers.classPrivateFieldSet(_this3, _canClearCache, true);
+	  });
+	}
+	function _initClearCacheButton2() {
+	  var _this4 = this;
+	  var buttonContainer = main_core.Tag.render(_templateObject5$6 || (_templateObject5$6 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
+	  babelHelpers.classPrivateFieldSet(this, _clearCacheButton, new ui_buttons.Button({
+	    text: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON'),
+	    color: ui_buttons.ButtonColor.LIGHT_BORDER,
+	    size: ui_buttons.ButtonSize.SMALL,
+	    onclick: _classPrivateMethodGet$2(this, _clearCache, _clearCache2).bind(this),
+	    state: babelHelpers.classPrivateFieldGet(this, _canClearCache) ? null : ui_buttons.ButtonState.DISABLED
+	  }));
+	  babelHelpers.classPrivateFieldGet(this, _clearCacheButton).renderTo(buttonContainer);
+
+	  // Put the clear button into the section header
+	  main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorSection:onLayout', function (event) {
+	    if (event.data[1].id === 'CLEAR_CACHE_SECTION') {
+	      event.data[1].customNodes.push(buttonContainer);
+	    }
+	  });
+	  var node = babelHelpers.classPrivateFieldGet(this, _clearCacheButton).button;
+	  var hint = BX.UI.Hint.createInstance({
+	    popupParameters: {
+	      offsetLeft: -60,
+	      angle: {
+	        offset: 160
+	      }
+	    }
+	  });
+	  main_core.Event.bind(node, 'mouseenter', function () {
+	    babelHelpers.classPrivateFieldGet(_this4, _clearCacheButton).button.setAttribute('data-hint-no-icon', '');
+	    if (babelHelpers.classPrivateFieldGet(_this4, _clearTimeout)) {
+	      var minutesLeft = Math.ceil(parseInt(babelHelpers.classPrivateFieldGet(_this4, _clearTimeout), 10) / 60);
+	      hint.show(node, main_core.Loc.getMessagePlural('BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT', minutesLeft, {
+	        '#COUNT#': minutesLeft
+	      }));
+	    }
+	  });
+	  main_core.Event.bind(node, 'mouseleave', function () {
+	    hint.hide(node);
+	  });
+	}
+
 	var FieldFactory = /*#__PURE__*/function () {
 	  function FieldFactory() {
 	    var _this = this;
 	    var entityEditorControlFactory = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'BX.UI.EntityEditorControlFactory';
 	    babelHelpers.classCallCheck(this, FieldFactory);
-	    main_core_events.EventEmitter.subscribe(entityEditorControlFactory + ':onInitialize', function (event) {
+	    main_core_events.EventEmitter.subscribe("".concat(entityEditorControlFactory, ":onInitialize"), function (event) {
 	      var _event$getCompatData = event.getCompatData(),
 	        _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
 	        eventArgs = _event$getCompatData2[1];
-	      eventArgs.methods['dashboardSettings'] = _this.factory.bind(_this);
+	      eventArgs.methods.dashboardSettings = _this.factory.bind(_this);
 	    });
 	  }
 	  babelHelpers.createClass(FieldFactory, [{
@@ -760,6 +1189,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          return UserNotificationField.create(controlId, settings);
 	        case 'ownerSelector':
 	          return DashboardOwnerField.create(controlId, settings);
+	        case 'scopeSelector':
+	          return ScopeField.create(controlId, settings);
+	        case 'deleteSuperset':
+	          return DeleteSupersetField.create(controlId, settings);
+	        case 'clearCache':
+	          return ClearCacheField.create(controlId, settings);
 	        default:
 	          return null;
 	      }
@@ -788,5 +1223,5 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 
 	exports.SettingsPanel = SettingsPanel;
 
-}((this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {}),BX.BIConnector,BX,BX,BX.Event,BX,BX,BX.UI.EntitySelector));
+}((this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {}),BX.BIConnector,BX,BX,BX.UI.EntitySelector,BX,BX.Event,BX.UI,BX.UI,BX));
 //# sourceMappingURL=script.js.map

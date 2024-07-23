@@ -26,6 +26,34 @@ export class Skeleton
 
 	subscribeOnEvents(): void
 	{
+		BX.PULL && BX.PULL.extendWatch('superset_dashboard', true);
+		EventEmitter.subscribe('onPullEvent-biconnector', (event: BaseEvent) => {
+			const [eventName, eventData] = event.data;
+			if (eventName !== 'onSupersetStatusUpdated' || !eventData)
+			{
+				return;
+			}
+
+			const status = eventData?.status;
+			if (!status)
+			{
+				return;
+			}
+
+			switch (status)
+			{
+				case 'READY':
+					window.location.reload();
+					break;
+				case 'LOAD':
+					this.showLoadingContent();
+					break;
+				case 'ERROR':
+					this.showErrorContent();
+					break;
+			}
+		});
+
 		EventEmitter.subscribe('BIConnector.Superset.DashboardManager:onDashboardBatchStatusUpdate', (event) => {
 			const data = event.getData();
 			if (!data.dashboardList)
@@ -47,16 +75,6 @@ export class Skeleton
 					this.onDashboardStatusUpdated(dashboard.status);
 				}
 			}
-		});
-
-		EventEmitter.subscribe('onPullEvent-biconnector', (event: BaseEvent) => {
-			const [eventName] = event.getData();
-			if (eventName !== 'onSupersetUnfreeze')
-			{
-				return;
-			}
-
-			window.location.reload();
 		});
 	}
 
@@ -88,6 +106,11 @@ export class Skeleton
 	showFailedContent(): void
 	{
 		this.#changeContent(this.getFailedContent());
+	}
+
+	showErrorContent(): void
+	{
+		this.#changeContent(this.getUnavailableSupersetHint());
 	}
 
 	#changeContent(innerContent: HTMLElement): void

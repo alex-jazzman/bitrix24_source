@@ -65,6 +65,13 @@ $isIndexPage =
 
 $isBitrix24Cloud = ModuleManager::isModuleInstalled('bitrix24');
 
+if ($isBitrix24Cloud)
+{
+	\Bitrix\Main\UI\Extension::load([
+		'bitrix24.sales-page'
+	]);
+}
+
 if ($isIndexPage)
 {
 	if (!defined('BITRIX24_INDEX_PAGE'))
@@ -337,13 +344,10 @@ if ($isBitrix24Cloud)
 							false
 						);
 						?><div class="header-item" id="header-buttons"><?
-							$APPLICATION->IncludeComponent(
-								IsModuleInstalled('bitrix24') ?
-									"bitrix:bitrix24.license.widget" :
-									"bitrix:intranet.license.widget",
-								"",
-								[]
-							);
+							if (IsModuleInstalled('bitrix24'))
+							{
+								$APPLICATION->IncludeComponent("bitrix:bitrix24.license.widget", '');
+							}
 							$APPLICATION->IncludeComponent("bitrix:intranet.invitation.widget", "", []);
 						?></div>
 					</div>

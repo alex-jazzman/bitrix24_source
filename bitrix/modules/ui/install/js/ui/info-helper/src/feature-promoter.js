@@ -1,4 +1,5 @@
 import { Extension, Type } from 'main.core';
+import { InfoHelper } from 'ui.info-helper';
 import { BaseProvider } from './providers/base-provider';
 import { PopupProvider } from './providers/popup-provider';
 import { SliderProvider } from './providers/slider-provider';
@@ -32,6 +33,7 @@ export class FeaturePromoter
 		else
 		{
 			this.#provider = new SliderProvider();
+			InfoHelper.sliderProviderForOldFormat = this.#provider;
 		}
 	}
 

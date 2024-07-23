@@ -214,7 +214,7 @@ $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
 if($errorMessage <> '')
-	echo CAdminMessage::ShowMessage(Array("DETAILS"=>$errorMessage, "TYPE"=>"ERROR", "MESSAGE"=>GetMessage("SRE_ERROR"), "HTML"=>true));?>
+	CAdminMessage::ShowMessage(Array("DETAILS"=>$errorMessage, "TYPE"=>"ERROR", "MESSAGE"=>GetMessage("SRE_ERROR"), "HTML"=>true));?>
 
 <form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?" name="frecurring_edit">
 <?echo GetFilterHiddens("filter_");?>

@@ -2440,7 +2440,12 @@ this.BX = this.BX || {};
 	      title = BX.prop.getString(clientResolverProp, "TITLE", "");
 	      var isPlacement = BX.prop.getString(clientResolverProp, 'IS_PLACEMENT', 'N') === 'Y';
 	      if (!isPlacement && main_core.Type.isStringFilled(title)) {
-	        title = main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').toLowerCase().replace('#field_name#', title);
+	        var modifiedTitle = main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN_01', {
+	          '#FIELD_NAME#': title
+	        });
+	        if (main_core.Type.isStringFilled(modifiedTitle)) {
+	          title = modifiedTitle;
+	        }
 	      }
 	      return title;
 	    }

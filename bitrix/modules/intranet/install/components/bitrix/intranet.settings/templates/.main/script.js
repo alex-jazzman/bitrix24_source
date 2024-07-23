@@ -148,9 +148,24 @@ this.BX = this.BX || {};
 	      var options = {
 	        event: event,
 	        tool: babelHelpers.classPrivateFieldGet(this, _tool),
-	        category: 'portal'
+	        category: AnalyticSettingsCategory.PORTAL
 	      };
 	      this.addEvent('portal_' + event, options);
+	    }
+	  }, {
+	    key: "addEventChangeTheme",
+	    value: function addEventChangeTheme(themeId) {
+	      var regex = /custom_\d+/;
+	      var preparedThemeId = regex.test(themeId) ? 'themeName_custom' : 'themeName_' + themeId;
+	      var options = {
+	        event: AnalyticSettingsEvent.CHANGE_PORTAL_THEME,
+	        tool: babelHelpers.classPrivateFieldGet(this, _tool),
+	        category: AnalyticSettingsCategory.PORTAL,
+	        type: AnalyticSettingsType.COMMON,
+	        c_section: AnalyticSettingsSection.SETTINGS,
+	        p1: preparedThemeId
+	      };
+	      this.addEvent('portal_' + AnalyticSettingsEvent.CHANGE_PORTAL_THEME, options);
 	    }
 	  }, {
 	    key: "addEventConfigEmployee",
@@ -226,6 +241,14 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(AnalyticSettingsEvent, "CHANGE_QUICK_REG", 'change_quick_reg');
 	babelHelpers.defineProperty(AnalyticSettingsEvent, "CHANGE_REG_ALL", 'change_reg_all');
 	babelHelpers.defineProperty(AnalyticSettingsEvent, "CHANGE_EXTRANET_INVITE", 'change_extranet_invite');
+	var AnalyticSettingsSection = function AnalyticSettingsSection() {
+	  babelHelpers.classCallCheck(this, AnalyticSettingsSection);
+	};
+	babelHelpers.defineProperty(AnalyticSettingsSection, "SETTINGS", 'settings');
+	var AnalyticSettingsType = function AnalyticSettingsType() {
+	  babelHelpers.classCallCheck(this, AnalyticSettingsType);
+	};
+	babelHelpers.defineProperty(AnalyticSettingsType, "COMMON", 'common');
 	var AnalyticSettingsUserRole = function AnalyticSettingsUserRole() {
 	  babelHelpers.classCallCheck(this, AnalyticSettingsUserRole);
 	};
@@ -1423,11 +1446,13 @@ this.BX = this.BX || {};
 	var _cardElement = /*#__PURE__*/new WeakMap();
 	var _requisiteFieldsElement = /*#__PURE__*/new WeakMap();
 	var _buttonBar = /*#__PURE__*/new WeakMap();
+	var _buildCompanyField = /*#__PURE__*/new WeakSet();
 	var _buildField = /*#__PURE__*/new WeakSet();
 	var Card = /*#__PURE__*/function () {
 	  function Card(options) {
 	    babelHelpers.classCallCheck(this, Card);
 	    _classPrivateMethodInitSpec$4(this, _buildField);
+	    _classPrivateMethodInitSpec$4(this, _buildCompanyField);
 	    _classPrivateFieldInitSpec$9(this, _options$1, {
 	      writable: true,
 	      value: void 0
@@ -1452,8 +1477,18 @@ this.BX = this.BX || {};
 	      if (babelHelpers.classPrivateFieldGet(this, _cardElement)) {
 	        return babelHelpers.classPrivateFieldGet(this, _cardElement);
 	      }
-	      babelHelpers.classPrivateFieldSet(this, _cardElement, main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"intranet-settings__req_background\">\n\t\t\t<div class=\"intranet-settings__req-card_wrapper\">\n\t\t\t\t<div class=\"intranet-settings__header\">\n\t\t\t\t\t<div class=\"intranet-settings__title\"> <span class=\"ui-section__title-icon ui-icon-set --city\"></span> <span>", "</span></div>\n\t\t\t\t\t<div class=\"intranet-settings__contact_bar\"> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _options$1).company.TITLE, _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).phone) ? babelHelpers.classPrivateFieldGet(this, _options$1).phone : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_PHONE')), _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).email) ? babelHelpers.classPrivateFieldGet(this, _options$1).email : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_EMAIL')), _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).site) ? babelHelpers.classPrivateFieldGet(this, _options$1).site : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_SITE')), this.requisiteFieldsRender(), this.getButtonsBar().render()));
+	      babelHelpers.classPrivateFieldSet(this, _cardElement, main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"intranet-settings__req_background\">\n\t\t\t<div class=\"intranet-settings__req-card_wrapper\">\n\t\t\t\t<div class=\"intranet-settings__header\">\n\t\t\t\t\t<div class=\"intranet-settings__title\"> <span class=\"ui-section__title-icon ui-icon-set --city\"></span> <span>", "</span></div>\n\t\t\t\t\t<div class=\"intranet-settings__contact_bar\"> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t\t<span class=\"intranet-settings__contact_bar_item\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span> \n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _options$1).company.TITLE, _classPrivateMethodGet$4(this, _buildCompanyField, _buildCompanyField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).phone) ? babelHelpers.classPrivateFieldGet(this, _options$1).phone : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_PHONE')), _classPrivateMethodGet$4(this, _buildCompanyField, _buildCompanyField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).email) ? babelHelpers.classPrivateFieldGet(this, _options$1).email : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_EMAIL')), _classPrivateMethodGet$4(this, _buildCompanyField, _buildCompanyField2).call(this, main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _options$1).site) ? babelHelpers.classPrivateFieldGet(this, _options$1).site : main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_SITE')), this.requisiteFieldsRender(), this.getButtonsBar().render()));
 	      return babelHelpers.classPrivateFieldGet(this, _cardElement);
+	    }
+	  }, {
+	    key: "getRequisiteUrl",
+	    value: function getRequisiteUrl() {
+	      var requisiteId = babelHelpers.classPrivateFieldGet(this, _options$1).landingData.requisite_id;
+	      if (requisiteId) {
+	        return '/crm/company/requisite/' + requisiteId + '/';
+	      } else {
+	        return '/crm/company/requisite/0/?itemId=' + babelHelpers.classPrivateFieldGet(this, _options$1).company.ID;
+	      }
 	    }
 	  }, {
 	    key: "getCompanyUrl",
@@ -1477,7 +1512,7 @@ this.BX = this.BX || {};
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	          var field = _step.value;
-	          var renderField = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"intranet-settings__req-table_row\">\n\t\t\t\t\t<div class=\"intranet-settings__table-cell\">", "</div>\n\t\t\t\t\t<div class=\"intranet-settings__table-cell\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), field.TITLE, main_core.Type.isStringFilled(field.VALUE) ? _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, field.VALUE) : _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB')));
+	          var renderField = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"intranet-settings__req-table_row\">\n\t\t\t\t\t<div class=\"intranet-settings__table-cell\">", "</div>\n\t\t\t\t\t<div class=\"intranet-settings__table-cell\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), field.TITLE, !babelHelpers.classPrivateFieldGet(this, _options$1).company.ID ? _classPrivateMethodGet$4(this, _buildCompanyField, _buildCompanyField2).call(this, main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB')) : main_core.Type.isStringFilled(field.VALUE) ? _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, field.VALUE) : _classPrivateMethodGet$4(this, _buildField, _buildField2).call(this, main_core.Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB')));
 	          main_core.Dom.append(renderField, babelHelpers.classPrivateFieldGet(this, _requisiteFieldsElement));
 	        }
 	      } catch (err) {
@@ -1504,11 +1539,19 @@ this.BX = this.BX || {};
 	  }]);
 	  return Card;
 	}();
-	function _buildField2(label) {
+	function _buildCompanyField2(label) {
 	  return main_core.Dom.create('a', {
 	    text: label,
 	    attrs: {
 	      href: this.getCompanyUrl()
+	    }
+	  });
+	}
+	function _buildField2(label) {
+	  return main_core.Dom.create('a', {
+	    text: label,
+	    attrs: {
+	      href: this.getRequisiteUrl()
 	    }
 	  });
 	}
@@ -1528,7 +1571,7 @@ this.BX = this.BX || {};
 	    top.BX.addCustomEvent('onLocalStorageSet', function (params) {
 	      var _params$key;
 	      var eventName = (_params$key = params === null || params === void 0 ? void 0 : params.key) !== null && _params$key !== void 0 ? _params$key : null;
-	      if (eventName === 'onCrmEntityUpdate' || eventName === 'onCrmEntityCreate') {
+	      if (eventName === 'onCrmEntityUpdate' || eventName === 'onCrmEntityCreate' || eventName === 'BX.Crm.RequisiteSliderDetails:onSave') {
 	        _this.reload();
 	      }
 	    });
@@ -2787,8 +2830,8 @@ this.BX = this.BX || {};
 	    });
 	    //BX.Intranet.Settings:ThemePicker:Change
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, _this.getEventNamespace() + ':ThemePicker:Change', function (baseEvent) {
-	      var _this$getAnalytic3;
-	      (_this$getAnalytic3 = _this.getAnalytic()) === null || _this$getAnalytic3 === void 0 ? void 0 : _this$getAnalytic3.addEventConfigPortal(AnalyticSettingsEvent.CHANGE_PORTAL_THEME);
+	      var _this$getAnalytic3, _baseEvent$data;
+	      (_this$getAnalytic3 = _this.getAnalytic()) === null || _this$getAnalytic3 === void 0 ? void 0 : _this$getAnalytic3.addEventChangeTheme((_baseEvent$data = baseEvent.data) === null || _baseEvent$data === void 0 ? void 0 : _baseEvent$data.id);
 	    });
 	    return _this;
 	  }

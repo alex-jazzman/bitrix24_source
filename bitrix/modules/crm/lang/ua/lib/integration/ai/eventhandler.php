@@ -1,4 +1,6 @@
 <?php
+$MESS["CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_ENGINE_AUDIO_TITLE"] = "Виберіть модель ШІ для розшифровки дзвінків";
+$MESS["CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_ENGINE_TEXT_TITLE"] = "Виберіть модель ШІ для резюме та заповнення полів";
 $MESS["CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_ITEM_FROM_CALL_HEADER"] = "CoPilot розшифрує телефонні розмови, переведе їх у текст, виділить головне й сам заповнить поля в CRM.";
 $MESS["CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_TODO_TEXT_HEADER"] = "CoPilot допоможе написати або поліпшити ваш текст.";
 $MESS["CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_FILL_TODO_TEXT_TITLE"] = "Справи й коментарі в CRM";

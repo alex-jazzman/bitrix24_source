@@ -27,7 +27,6 @@ this.BX = this.BX || {};
 	          marketAction: '',
 	          searchAction: '',
 	          mainUri: '',
-	          siteTemplateUri: '',
 	          currentUri: '',
 	          hideToolbar: false,
 	          hideCategories: false,
@@ -43,24 +42,6 @@ this.BX = this.BX || {};
 	        },
 	        isListPage: function () {
 	          return this.params.COMPONENT_NAME === 'bitrix:market.list';
-	        },
-	        getMainDir: function () {
-	          return '/market/';
-	        },
-	        getMainUri: function () {
-	          return this.getMainDir;
-	        },
-	        getFavoritesUri: function () {
-	          return this.getMainDir + 'favorites/';
-	        },
-	        getInstalledUri: function () {
-	          return this.getMainDir + 'installed/';
-	        },
-	        getUpdatesUri: function () {
-	          return this.getMainDir + 'installed/?updates=Y';
-	        },
-	        getReviewsUri: function () {
-	          return this.getMainDir + 'reviews/';
 	        },
 	        getFavNumbers: function () {
 	          return this.favNumbers > 99 ? '99+' : this.favNumbers;
@@ -87,9 +68,6 @@ this.BX = this.BX || {};
 	        if (this.params.CURRENT_PAGE && this.params.CURRENT_PAGE.length > 0) {
 	          this.currentUri = this.params.CURRENT_PAGE;
 	        }
-	        if (this.params.CREATE_URI_SITE_TEMPLATE && this.params.CREATE_URI_SITE_TEMPLATE.length > 0) {
-	          this.siteTemplateUri = this.params.CREATE_URI_SITE_TEMPLATE;
-	        }
 	        if (this.params.HIDE_CATEGORIES && this.params.HIDE_CATEGORIES === 'Y') {
 	          this.hideCategories = true;
 	        }
@@ -115,49 +93,6 @@ this.BX = this.BX || {};
 	        BX.addCustomEvent("SidePanel.Slider:onMessage", this.onMessageSlider);
 	      },
 	      methods: {
-	        getDetailUri: function (appCode, isSiteTemplate, from, searchText) {
-	          var _isSiteTemplate;
-	          isSiteTemplate = (_isSiteTemplate = isSiteTemplate) != null ? _isSiteTemplate : false;
-	          if (isSiteTemplate) {
-	            return this.getSiteTemplateUri(appCode, from);
-	          }
-	          if (from === 'search' && searchText) {
-	            from += '&text=' + searchText;
-	          }
-	          return this.getMainDir + 'detail/' + appCode + '/?from=' + from;
-	        },
-	        getSiteTemplateUri: function (appCode, from) {
-	          var _from;
-	          from = (_from = from) != null ? _from : '';
-	          let path = '/sites/site/edit/0/?IS_FRAME=Y&tpl=market/' + appCode + '&from=' + from;
-	          if (this.siteTemplateUri.length > 0) {
-	            let uri = new URL(this.siteTemplateUri, window.location.href);
-	            uri.searchParams.append('IS_FRAME', 'Y');
-	            uri.searchParams.append('tpl', 'market/' + appCode);
-	            path = uri.pathname + uri.search;
-	          }
-	          return path;
-	        },
-	        getCategoryUri: function (categoryCode) {
-	          return this.getMainDir + 'category/' + categoryCode + '/';
-	        },
-	        getCollectionUri: function (collectionId, showOnPage) {
-	          if (showOnPage === 'Y') {
-	            this.getCollectionPageUri(collectionId);
-	          }
-	          return this.getMainDir + 'collection/' + collectionId + '/';
-	        },
-	        getCollectionPageUri: function (collectionId) {
-	          return this.getMainDir + 'collection/page/' + collectionId + '/';
-	        },
-	        openSiteTemplate: function (event, isSiteTemplate) {
-	          if (isSiteTemplate) {
-	            event.preventDefault();
-	            BX.SidePanel.Instance.open(event.currentTarget.href, {
-	              customLeftBoundary: 60
-	            });
-	          }
-	        },
 	        emitLoadContent: function (event) {
 	          event.preventDefault();
 	          this.$Bitrix.eventEmitter.emit('market:loadContent', {

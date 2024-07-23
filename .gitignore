@@ -4,3 +4,4 @@
 !/bitrix/
 !/bitrix/modules/
 !/bitrix/modules/**
+/bitrix/modules/mywebstor**

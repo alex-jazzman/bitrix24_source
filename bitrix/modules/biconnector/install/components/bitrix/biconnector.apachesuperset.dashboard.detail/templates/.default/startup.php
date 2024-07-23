@@ -15,7 +15,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
-use Bitrix\BIConnector\Integration\Superset\Integrator\SupersetServiceLocation;
+use Bitrix\BIConnector\Integration\Superset\Integrator\ServiceLocation;
 
 Loader::includeModule('biconnector');
 Loader::includeModule('ui');
@@ -40,7 +40,7 @@ $APPLICATION->SetTitle($dashboardTitle);
 
 
 $supersetServiceLocation = $arResult['SUPERSET_SERVICE_LOCATION'];
-if ($supersetServiceLocation === SupersetServiceLocation::DATACENTER_LOCATION_REGION_EN)
+if ($supersetServiceLocation === ServiceLocation::DATACENTER_LOCATION_REGION_EN)
 {
 	$biBuilderLogo = $templateFolder . '/images/bi-builder-logo-en.svg';
 }

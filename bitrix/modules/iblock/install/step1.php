@@ -2,7 +2,7 @@
 
 <form action="<?echo $APPLICATION->GetCurPage()?>" name="form1">
 <?=bitrix_sessid_post()?>
-	<script language="JavaScript">
+	<script>
 	<!--
 	function ChangeInstallPublic(val, pr)
 	{
@@ -52,7 +52,7 @@
 	</table>
 	<br>
 	<input type="submit" name="inst" value="<?echo GetMessage("MOD_INSTALL")?>">
-	<script language="JavaScript">
+	<script>
 	<!--
 	ChangeInstallPublic(false, 'c');
 	ChangeInstallPublic(false, 'n');

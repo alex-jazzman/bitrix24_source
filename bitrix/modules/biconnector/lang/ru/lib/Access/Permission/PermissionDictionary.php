@@ -1,10 +1,12 @@
 <?php
 
-$MESS['BIC_ACCESS'] = 'Доступ к разделу';
+$MESS['BIC_ACCESS_MSGVER_1'] = 'Доступ к BI Конструктору';
+$MESS['BIC_ACCESS_HINT'] = 'Сотрудникам без доступа к BI Конструктору будет недоступен список отчётов и отчёты в зонах видимости';
 $MESS['BIC_DASHBOARD_CREATE'] = 'Создание отчётов';
 $MESS['BIC_SETTINGS_ACCESS'] = 'Общие настройки';
 $MESS['BIC_SETTINGS_EDIT_RIGHTS'] = 'Управление правами доступа';
 $MESS['BIC_DASHBOARD_TAG_MODIFY'] = 'Создание и изменение тегов для отчётов';
+$MESS['BIC_DASHBOARD_EDIT_SCOPE'] = 'Настройка зон видимости отчётов';
 $MESS['BIC_DASHBOARD_VIEW'] = 'Просмотр';
 $MESS['BIC_DASHBOARD_COPY'] = 'Копирование';
 $MESS['BIC_DASHBOARD_EDIT'] = 'Редактирование';

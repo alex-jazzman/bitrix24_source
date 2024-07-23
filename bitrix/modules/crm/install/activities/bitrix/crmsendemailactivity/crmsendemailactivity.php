@@ -246,16 +246,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'REGISTER_SONET_EVENT' => true,
 		];
 
-		Crm\Activity\Provider\Email::compressActivity($activityFields);
-
-		$id = CCrmActivity::Add($activityFields, false, false, $addOptions);
-		if (!$id)
-		{
-			$this->writeError(CCrmActivity::GetLastErrorMessage(), $userId);
-
-			return CBPActivityExecutionStatus::Closed;
-		}
-
 		$arRawFiles =
 			isset($activityFields['STORAGE_ELEMENT_IDS']) && !empty($activityFields['STORAGE_ELEMENT_IDS'])
 				? \Bitrix\Crm\Integration\StorageManager::makeFileArray(
@@ -275,11 +265,22 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		if ($maxSize > 0 && $maxSize <= ceil($totalSize / 3) * 4) // base64 coef.
 		{
 			$this->writeError(GetMessage('CRM_SEMA_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
-				['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding())]
-			), $userId);
+										 ['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding())]
+							  ), $userId);
 
 			return CBPActivityExecutionStatus::Closed;
 		}
+
+		Crm\Activity\Provider\Email::compressActivity($activityFields);
+
+		$id = CCrmActivity::Add($activityFields, false, false, $addOptions);
+		if (!$id)
+		{
+			$this->writeError(CCrmActivity::GetLastErrorMessage(), $userId);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		$urn = CCrmActivity::PrepareUrn($activityFields);
 		$messageId = sprintf(
 			'<crm.activity.%s@%s>', $urn,

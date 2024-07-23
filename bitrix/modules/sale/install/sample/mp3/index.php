@@ -128,8 +128,8 @@ asort($arMP3Files);
 $arMP3Files = array_reverse($arMP3Files);
 ?>
 
-<?= ShowError($errorMessage); ?>
-<?= ShowNote($successMessage, "oktext"); ?>
+<? ShowError($errorMessage); ?>
+<? ShowNote($successMessage, "oktext"); ?>
 
 <?
 if ($USER->IsAuthorized())

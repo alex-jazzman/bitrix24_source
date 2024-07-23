@@ -1,0 +1,15 @@
+<?php
+$MESS["BPWFI_SLIDER_BANNER_BODY"] = "Залишайте коментарі та ставте запитання учасникам процесу.";
+$MESS["BPWFI_SLIDER_BANNER_TITLE"] = "Коментарів до процесу поки що немає";
+$MESS["BPWFI_SLIDER_BUTTON_DELEGATE"] = "Делегувати";
+$MESS["BPWFI_SLIDER_DESCRIPTION"] = "Опис";
+$MESS["BPWFI_SLIDER_DISCUSSION_COMMENTS_COUNT"] = "Коментарі: #COMMENTS_COUNT#";
+$MESS["BPWFI_SLIDER_DISCUSSION_TITLE"] = "Обговорення процесу";
+$MESS["BPWFI_SLIDER_DISCUSSION_ZERO_COMMENTS_COUNT"] = "Коментарів до процесу поки що немає.";
+$MESS["BPWFI_SLIDER_DOCUMENT"] = "Елемент";
+$MESS["BPWFI_SLIDER_FIELDS_TITLE"] = "Поля для заповнення (обов'язково)";
+$MESS["BPWFI_SLIDER_NAME"] = "Назва";
+$MESS["BPWFI_SLIDER_NOT_MY_TASK"] = "Ви відкрили завдання співробітника #USER#";
+$MESS["BPWFI_SLIDER_TASK"] = "Завдання";
+$MESS["BPWFI_SLIDER_TIMELINE"] = "Протокол";
+$MESS["BPWFI_SLIDER_TYPE"] = "Тип процесу";

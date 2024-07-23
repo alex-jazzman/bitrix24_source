@@ -55,20 +55,16 @@
 			;
 		},
 
-		/**
-		 * Start calling list.
-		 * @param {BX.CRM.Kanban.Grid} grid
-		 * @param {Object} assigned
-		 * @returns {void}
-		 */
 		setAssigned: function(grid, assigned)
 		{
-			this.simpleAction(grid, {
-				action: "setAssigned",
+			const params = {
+				action: 'setAssigned',
 				ids: grid.getCheckedId(),
 				assignedId: assigned.entityId,
-				assignedName: assigned.name
-			}, false);
+				assignedName: assigned.name,
+			};
+
+			void this.simpleAction(grid, params, false);
 		},
 
 		/**
@@ -385,7 +381,6 @@
 			dialog.show();
 
 			return dialog;
-		}
+		},
 	};
-
 })();

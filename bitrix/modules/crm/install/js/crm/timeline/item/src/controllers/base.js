@@ -10,6 +10,7 @@ export type ActionParams =
 	actionData: ?Object,
 	response: ?Object,
 	animationCallbacks: ?ActionAnimationCallbacks,
+	confirmationText: ?String,
 };
 
 export type ActionAnimationCallbacks =

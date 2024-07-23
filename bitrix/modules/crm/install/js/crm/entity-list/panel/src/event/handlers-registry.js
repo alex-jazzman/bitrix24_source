@@ -3,6 +3,7 @@ import { ExecuteConversion } from './handlers/batch-manager/execute-conversion';
 import { ExecuteDeletion } from './handlers/batch-manager/execute-deletion';
 import { ExecuteExclusion } from './handlers/batch-manager/execute-exclusion';
 import { ExecuteMerge } from './handlers/batch-manager/execute-merge';
+import { ExecuteRefreshAccountingData } from './handlers/batch-manager/execute-refresh-accounting-data';
 import { ExecuteSetCategory } from './handlers/batch-manager/execute-set-category';
 import { ExecuteSetExport } from './handlers/batch-manager/execute-set-export';
 import { ExecuteSetOpened } from './handlers/batch-manager/execute-set-opened';
@@ -13,7 +14,6 @@ import { CreateAndStartCallList } from './handlers/call-list/create-and-start-ca
 import { CreateCallList } from './handlers/call-list/create-call-list';
 import { LoadEnumsAndEditSelected } from './handlers/load-enums-and-edit-selected';
 import { OpenTaskCreationForm } from './handlers/open-task-creation-form';
-import { ReloadPageAfterGridUpdate } from './handlers/reload-page-after-grid-update';
 import { RenderUserTagSelector } from './handlers/render-user-tag-selector';
 import { AddItemsToSegment } from './handlers/sender/add-items-to-segment';
 import { AddLetter } from './handlers/sender/add-letter';
@@ -30,6 +30,7 @@ Router.registerHandler(ExecuteExclusion);
 Router.registerHandler(ExecuteAssigment);
 Router.registerHandler(ExecuteConversion);
 Router.registerHandler(ExecuteWhatsappMessage);
+Router.registerHandler(ExecuteRefreshAccountingData);
 // endregion
 
 // region call list
@@ -46,4 +47,3 @@ Router.registerHandler(AddItemsToSegment);
 Router.registerHandler(RenderUserTagSelector);
 Router.registerHandler(OpenTaskCreationForm);
 Router.registerHandler(LoadEnumsAndEditSelected);
-Router.registerHandler(ReloadPageAfterGridUpdate);

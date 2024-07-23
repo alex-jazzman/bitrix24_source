@@ -344,7 +344,7 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 ?>
-<script language="JavaScript" type="text/javascript">
+<script>
 var running = false;
 var oldNS = '';
 function DoNext(NS)

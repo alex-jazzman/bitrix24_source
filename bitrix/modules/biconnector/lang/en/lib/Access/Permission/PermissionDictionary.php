@@ -1,9 +1,11 @@
 <?php
-$MESS["BIC_ACCESS"] = "View BI Builder pages";
+$MESS["BIC_ACCESS_HINT"] = "Users without access to BI Builder cannot see the list of dashboards as well as dashboards irrespective of the assigned scope.";
+$MESS["BIC_ACCESS_MSGVER_1"] = "BI Builder access";
 $MESS["BIC_DASHBOARD_COPY"] = "Copy";
 $MESS["BIC_DASHBOARD_CREATE"] = "Create dashboards";
 $MESS["BIC_DASHBOARD_DELETE"] = "Delete";
 $MESS["BIC_DASHBOARD_EDIT"] = "Edit";
+$MESS["BIC_DASHBOARD_EDIT_SCOPE"] = "Edit dashboard scope";
 $MESS["BIC_DASHBOARD_EXPORT"] = "Export";
 $MESS["BIC_DASHBOARD_TAG_MODIFY"] = "Create and edit dashboard tag";
 $MESS["BIC_DASHBOARD_VIEW"] = "View";

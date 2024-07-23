@@ -1,9 +1,10 @@
-import {nextTick} from 'ui.vue3';
-import {ListItem} from "market.list-item"
-import {Categories} from "market.categories"
-import {marketInstallState} from "market.install-store";
+import { ListItem } from 'market.list-item'
+import { Categories } from 'market.categories'
+import { marketInstallState } from 'market.install-store';
 import { mapState, mapActions } from 'ui.vue3.pinia';
-import {EventEmitter} from "main.core.events";
+import { EventEmitter } from 'main.core.events';
+import { MarketLinks } from 'market.market-links';
+import { nextTick } from 'ui.vue3';
 
 import "./list-apps.css";
 
@@ -24,12 +25,13 @@ export const ListApps = {
 				order: {empty: ''},
 				page: 1,
 				analytics: {},
-			}
+			},
+			MarketLinks: MarketLinks,
 		}
 	},
 	computed: {
 		mainUri: function () {
-			return this.$root.mainUri.length > 0 ? this.$root.mainUri : this.$root.getMainUri;
+			return this.$root.mainUri.length > 0 ? this.$root.mainUri : this.MarketLinks.mainLink();
 		},
 		isCollection: function () {
 			return this.params.IS_COLLECTION === 'Y';
@@ -150,7 +152,7 @@ export const ListApps = {
 		onClosePopup: function () {
 			if (this.installStep === 2 || this.installStep === 3) {
 				clearTimeout(this.timer);
-				this.$root.updatePage(this.$root.getInstalledUri, 'list');
+				this.$root.updatePage(this.MarketLinks.installedLink(), 'list');
 				this.resetInstallStep();
 			}
 		},
@@ -393,7 +395,7 @@ export const ListApps = {
 						</div>
 						<div class="market-catalog__breadcrumbs_item">
 							<a class="market-catalog__breadcrumbs_link"
-							   :href="$root.getCategoryUri(codePrevCategory)"
+							   :href="MarketLinks.categoryLink(codePrevCategory)"
 							   data-slider-ignore-autobinding="true"
 							   data-load-content="list"
 							   @click.prevent="$root.emitLoadContent"

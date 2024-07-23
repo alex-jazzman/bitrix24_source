@@ -1,9 +1,19 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
+/**
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ */
 
-if ($arParams["MAIN_CHAIN_NAME"] <> '')
+if ($arParams["MAIN_CHAIN_NAME"] !== '')
 {
 	$APPLICATION->AddChainItem(htmlspecialcharsbx($arParams["MAIN_CHAIN_NAME"]), $arResult['SEF_FOLDER']);
 }
@@ -114,7 +124,8 @@ else
 {
 	?>
 	<div class="row">
-		<? foreach ($availablePages as $blockElement)
+		<?php
+		foreach ($availablePages as $blockElement)
 		{
 			?>
 			<div class="col-lg-3 col-md-4 col-6">
@@ -129,9 +140,9 @@ else
 					</a>
 				</div>
 			</div>
-			<?
+			<?php
 		}
 		?>
 	</div>
-	<?
+	<?php
 }

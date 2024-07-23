@@ -7,6 +7,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm;
 use Bitrix\Bizproc;
+use Bitrix\Crm\Entity\MessageBuilder\ProcessToDoActivityResponsible;
+use Bitrix\Crm\Integration\Im\ProcessEntity\ToDoResponsibleNotification;
 
 class CBPCrmCreateToDoActivity extends CBPActivity
 {
@@ -70,18 +72,19 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 		}
 
 		$saveResult = $todo->save();
-		if ($saveResult->isSuccess())
-		{
-			$this->Id = $todo->getId();
-		}
-		else
+		if (!$saveResult->isSuccess())
 		{
 			$this->writeToTrackingService(
 				$saveResult->getErrorMessages()[0],
 				0,
-				CBPTrackingType::Error
+				CBPTrackingType::Error,
 			);
+
+			return CBPActivityExecutionStatus::Closed;
 		}
+
+		$this->Id = $todo->getId();
+		$this->notifyAboutResponsible($todo);
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -255,5 +258,13 @@ class CBPCrmCreateToDoActivity extends CBPActivity
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	private function notifyAboutResponsible(Crm\Activity\Entity\ToDo $todo): void
+	{
+		$messageBuilder = new ProcessToDoActivityResponsible($todo->getOwner()->getEntityTypeId());
+		$notification = new ToDoResponsibleNotification($todo, $messageBuilder);
+
+		$notification->sendWhenAdd($this->getTemplateUserId(), $todo->getResponsibleId());
 	}
 }

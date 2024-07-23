@@ -254,6 +254,7 @@ CREATE TABLE b_bp_script_queue (
   PRIMARY KEY (ID)
 );
 CREATE INDEX ix_b_bp_script_queue_script_id ON b_bp_script_queue (script_id);
+CREATE INDEX ix_b_bp_script_queue_script_id_status ON b_bp_script_queue (script_id, status);
 CREATE INDEX ix_b_bp_script_queue_started_by ON b_bp_script_queue (started_by);
 
 CREATE TABLE b_bp_script_queue_document (

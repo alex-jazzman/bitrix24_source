@@ -267,9 +267,10 @@ BX.CRM.Kanban.Grid.prototype = {
 				this.isItKanban(el.target) ? this.currentNode = el.target : this.currentNode = null;
 
 				if(
-					!BX.findParent(el.target, {'className': 'main-kanban-item'})
-					&& !BX.findParent(el.target, {'className': 'ui-action-panel'})
-					&& !BX.findParent(el.target, {'className': 'ui-action-panel-item-popup-menu'})
+					!BX.findParent(el.target, {className: 'main-kanban-item'})
+					&& !BX.findParent(el.target, {className: 'ui-action-panel'})
+					&& !BX.findParent(el.target, {className: 'ui-action-panel-item-popup-menu'})
+					&& !BX.findParent(el.target, {className: 'bx-finder-popup'})
 				)
 				{
 					this.unSetKanbanDragMode();
@@ -1268,9 +1269,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	},
 
 	/**
-	 * Hook on item drag start.
-	 * @param {BX.Kanban.Item} item
-	 * @returns {void}
+	 * @param {BX.CRM.Kanban.Item} item
 	 */
 	onItemDragStartHandler: function(item)
 	{
@@ -1324,13 +1323,13 @@ BX.CRM.Kanban.Grid.prototype = {
 
 			const groupIds = this.getItemsForAction();
 			this.itemMoving = {
-				item: item,
+				item,
 				price: parseFloat(item.getData().price),
 				oldColumn: column,
 				oldNextSiblingId: column.getNextItemSibling(item),
 				newColumn: null,
 				newNextSibling: null,
-				dropEvent: dropEvent,
+				dropEvent,
 				groupIds,
 			};
 
@@ -1351,6 +1350,11 @@ BX.CRM.Kanban.Grid.prototype = {
 
 			ids = ids ?? grid.getCheckedId();
 
+			if (!BX.Type.isArray(ids))
+			{
+				ids = [ids];
+			}
+
 			const params = {
 				ids,
 				showNotify: false,
@@ -1370,11 +1374,10 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	onBeforeItemRestored: function(event)
 	{
-		var item = event.getItem();
-		var column = item.getColumn();
-		var price = parseFloat(item.getData().price);
+		const item = event.getItem();
+		const column = item.getColumn();
+		const price = parseFloat(item.getData().price);
 
-		// change price in column and move item
 		column.incPrice(price);
 		this.onItemMoved(item, column);
 	},
@@ -1682,12 +1685,29 @@ BX.CRM.Kanban.Grid.prototype = {
 					setTimeout(() => this.showItemPlannerMenu(item), 500);
 				}
 
-				const { items, isShouldUpdateCard } = data;
-				if (Array.isArray(items) && items.length > 0)
+				const { items } = data;
+				let { isShouldUpdateCard } = data;
+				if (BX.Type.isArrayFilled(items))
 				{
 					this.updateItem(itemId, items[0]);
 
 					return;
+				}
+
+				const prevColumnId = item.getLastPosition()?.columnId;
+				if (prevColumnId)
+				{
+					const prevColumn = this.getColumn(prevColumnId);
+					const currentColumn = item.getColumn();
+
+					if (prevColumn.isHiddenTotalSum() !== currentColumn.isHiddenTotalSum())
+					{
+						isShouldUpdateCard = true;
+					}
+				}
+				else
+				{
+					isShouldUpdateCard = true;
 				}
 
 				item.setDataKey('columnId', targetColumnId);
@@ -1838,6 +1858,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				}
 				this.setData(gridData);
 				this.destroyFieldsSelectPopup();
+				this.destroyHideColumnSumPopups();
 
 				// remove all columns
 				var exist = [], id = null;
@@ -2139,6 +2160,23 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	unhideItem: function(item)
 	{
+		const result = this.unhideItemWithoutColumnRender(item);
+
+		if (result)
+		{
+			item.getColumn().render();
+		}
+
+		return result;
+	},
+
+	/**
+	 *
+	 * @param {BX.Kanban.Item|string|number} item
+	 * @returns {boolean}
+	 */
+	unhideItemWithoutColumnRender: function(item)
+	{
 		item = this.getItem(item);
 		if (!item || item.isVisible())
 		{
@@ -2147,17 +2185,18 @@ BX.CRM.Kanban.Grid.prototype = {
 
 		item.setOptions({ visible: true });
 
-		if(item.layout.container && item.layout.container.classList.contains("main-kanban-item-disabled"))
+		if (
+			item.layout.container
+			&& BX.Dom.hasClass(item.layout.container, 'main-kanban-item-disabled')
+		)
 		{
-			BX.removeClass(item.layout.container, "main-kanban-item-disabled");
+			BX.Dom.removeClass(item.layout.container, 'main-kanban-item-disabled');
 		}
 
 		if (item.isCountable())
 		{
 			item.getColumn().incrementTotal();
 		}
-
-		item.getColumn().render();
 
 		return true;
 	},
@@ -2520,6 +2559,13 @@ BX.CRM.Kanban.Grid.prototype = {
 		{
 			customFieldsPopup.destroy();
 		}
+	},
+
+	destroyHideColumnSumPopups()
+	{
+		this.getColumns().forEach((column) => {
+			BX.PopupWindowManager.getPopupById(column.getHideColumnSumPopupId())?.destroy();
+		});
 	},
 
 	/**
@@ -3035,69 +3081,8 @@ BX.CRM.Kanban.Grid.prototype = {
 		});
 		/* endregion */
 
-		// change category
-		if (gridData.categories && gridData.categories.length)
-		{
-			var items = [], categories = gridData.categories;
-			for (var i = 0, c = categories.length; i < c; i++)
-			{
-				items.push({
-					id: "kanban_category_" + categories[i].ID,
-					category: categories[i],
-					text: BX.util.htmlspecialchars(categories[i].NAME),
-					onclick: function(i, item)
-					{
-						item.menuWindow.close();
-						BX.CRM.Kanban.Actions.changeCategory(
-							this,
-							item.category
-						);
-					}.bind(this)
-				});
-			}
-			this.actionPanel.appendItem({
-				id: "kanban_category",
-				text: BX.message("CRM_KANBAN_PANEL_CATEGORY2"),
-				icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-fulling.svg",
-				items: items
-			});
-		}
-
-		// assigned to
-		if (typeof(BX.Crm.EntityEditorUserSelector) !== "undefined")
-		{
-			this.actionPanel.appendItem({
-				id: "kanban_assigned",
-				text: BX.message("CRM_KANBAN_PANEL_ASSIGNED"),
-				icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-responsible.svg",
-				onclick: function(e, item)
-				{
-					setTimeout(function()
-					{
-						var userSelector = BX.Crm.EntityEditorUserSelector.create(
-							"selector_assigned",
-							{
-								callback: function(selector, item)
-								{
-									BX.CRM.Kanban.Actions.setAssigned(
-										this,
-										item
-									);
-									userSelector.close();
-								}.bind(this)
-							}
-						);
-
-						var target = (
-							item.layout.container === undefined
-								? item.actionPanel.layout.more
-								: item.layout.container
-						);
-						userSelector.open(target);
-					}.bind(this), 100);
-				}.bind(this)
-			});
-		}
+		this.appendChangeCategoryItem();
+		this.appendAssignedItem();
 
 		// create task
 		if (this.getTypeInfoParam('canUseCreateTaskInPanel'))
@@ -3216,6 +3201,75 @@ BX.CRM.Kanban.Grid.prototype = {
 				}.bind(this)
 			});
 		}*/
+	},
+
+	appendChangeCategoryItem: function()
+	{
+		const gridData = this.getData();
+
+		if (!BX.type.isArrayFilled(gridData?.categories))
+		{
+			return;
+		}
+
+		const items = [];
+		gridData.categories.forEach((category) => {
+			items.push({
+				id: `kanban_category_${category.ID}`,
+				category,
+				text: BX.Text.encode(category.NAME),
+				onclick: (i, item) => {
+					item.menuWindow.close();
+					BX.CRM.Kanban.Actions.changeCategory(this, item.category);
+				},
+			});
+		})
+
+		if (items.length <= 1)
+		{
+			return;
+		}
+
+		this.actionPanel.appendItem({
+			id: 'kanban_category',
+			text: BX.Loc.getMessage('CRM_KANBAN_PANEL_CATEGORY2'),
+			icon: '/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-fulling.svg',
+			items,
+		});
+	},
+
+	appendAssignedItem: function()
+	{
+		if (BX.type.isUndefined(BX.UI.EntityEditorUserSelector))
+		{
+			return;
+		}
+
+		this.actionPanel.appendItem({
+			id: 'kanban_assigned',
+			text: BX.Loc.getMessage('CRM_KANBAN_PANEL_ASSIGNED'),
+			icon: '/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-responsible.svg',
+			onclick: (event, item) => {
+				setTimeout(() => {
+					const userSelector = BX.UI.EntityEditorUserSelector.create(
+						'selector_assigned',
+						{
+							callback: (selector, item) => {
+								BX.CRM.Kanban.Actions.setAssigned(this, item);
+								userSelector.close();
+							},
+						}
+					);
+
+					const target = (
+						BX.type.isUndefined(item.layout.container)
+							? item.actionPanel.layout.more
+							: item.layout.container
+					);
+					userSelector.open(target);
+				}, 100);
+			},
+		});
 	},
 
 	isBlockedIncomingMoving: function(column)

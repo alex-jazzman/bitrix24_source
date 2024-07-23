@@ -42,6 +42,7 @@ $MESS["LANDING_FORM_ACTIONS_EDIT_PAGE_EDIT"] = "Редагувати текст"
 $MESS["LANDING_FORM_ACTIONS_EDIT_PAGE_SHOW"] = "Показати";
 $MESS["LANDING_FORM_ACTIONS_EDIT_SUCCESS_PAGE_TITLE"] = "У разі успішної відправки";
 $MESS["LANDING_FORM_ACTIONS_FAILURE_FIELD_TITLE"] = "У разі неуспішної відправки";
+$MESS["LANDING_FORM_ACTIONS_LINK_WARNING_MESSAGE"] = "Посилання має починатися з https://";
 $MESS["LANDING_FORM_ACTIONS_REFILL_CAPTION"] = "Заповнити ще раз";
 $MESS["LANDING_FORM_ACTIONS_REFILL_CAPTION_FIELD_TITLE"] = "Текст на кнопці зворотного заповнення";
 $MESS["LANDING_FORM_ACTIONS_SUCCESS_FIELD_TITLE"] = "У разі успішної відправки";

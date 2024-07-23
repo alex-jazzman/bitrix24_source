@@ -173,6 +173,8 @@ if ($version == 2)
 				}
 			}
 
+			$currency = $column['currency'] ?? null;
+
 			if (!$column['dropzone'])
 			{
 				$canSort = (
@@ -181,25 +183,28 @@ if ($version == 2)
 					&& !\Bitrix\Crm\Kanban\ViewMode::isDatesBasedView($viewMode)
 				);
 
-				$column = array(
+				$column = [
 					'id' => $column['id'],
 					'total' => (int) $column['count'],
 					'color' => $column['color'],
 					'name' => htmlspecialcharsback($column['name']),
 					'canSort' => $canSort,
 					'canAddItem' => $column['canAddItem'],
-					'data' => array(
+					'data' => [
 						'sort' => $column['sort'],
 						'type' => $column['type'],
-						'sum' => round($column['total']),
+						'sum' => round($column['total'] ?? 0),
 						'sum_init' => 0,
 						'sum_format' => $column['total_format'] ?? null,
 						'blockedIncomingMoving' => ($column['blockedIncomingMoving'] ?? false),
-					)
-				);
+						'hiddenTotalSum' => ($column['hiddenTotalSum'] ?? false),
+						'currencyFormat' => ($column['currencyFormat'] ?? false),
+					],
+				];
 			}
 		}
 		unset($column);
+
 		$result['ITEMS']['dropzones'] = array_values($result['ITEMS']['dropzones']);
 		$result['ITEMS']['columns'] = array_values($result['ITEMS']['columns']);
 	}

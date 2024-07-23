@@ -1,4 +1,4 @@
-import { Dom, ajax, Loc, Runtime } from 'main.core';
+import { Event, Dom, ajax, Loc, Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Button, ButtonIcon, ButtonSize, ButtonColor } from 'ui.buttons';
 import { UserStatus } from 'bizproc.task';
@@ -64,6 +64,42 @@ export class WorkflowInfo
 				this.handleMarkAsRead();
 			}
 		});
+		if (this.taskForm)
+		{
+			Event.bind(this.taskForm, 'input', (event) => {
+				const target = event.target;
+				if (target.matches('input, textarea, select'))
+				{
+					const formRow = target.closest('.ui-form-content');
+					if (formRow)
+					{
+						this.#clearError(formRow);
+					}
+				}
+			});
+			this.taskForm.querySelectorAll('.ui-form-content').forEach((row) => {
+				Event.bind(row, 'click', (event) => {
+					const target = event.currentTarget;
+					this.#clearError(target);
+				});
+			});
+			EventEmitter.subscribe('BX.UI.Selector:onChange', (event) => {
+				const box = BX(`crm-${event.data[0].selectorId}-box`);
+				const formRow = box.closest('.ui-form-content');
+				if (formRow)
+				{
+					this.#clearError(formRow);
+				}
+			});
+			EventEmitter.subscribe('OnIframeKeyup', (event) => {
+				const box = event.target.dom.cont;
+				const formRow = box.closest('.ui-form-content');
+				if (formRow)
+				{
+					this.#clearError(formRow);
+				}
+			});
+		}
 	}
 
 	#renderButtons(): void
@@ -121,7 +157,31 @@ export class WorkflowInfo
 			uiButton.setDisabled(false);
 			BX.SidePanel.Instance.getSliderByWindow(window)?.close();
 		}).catch((response) => {
-			MessageBox.alert(response.errors.pop().message);
+			if (BX.type.isArray(response.errors))
+			{
+				const popupErrors = [];
+				response.errors.forEach((error) => {
+					const fieldName = error.customData;
+					if (this.taskForm && fieldName)
+					{
+						const field = this.taskForm.querySelector(`[data-cid="${fieldName}"]`);
+						if (field)
+						{
+							this.#showError(error, field);
+						}
+					}
+					else
+					{
+						popupErrors.push(error.message);
+					}
+				});
+
+				if (popupErrors.length > 0)
+				{
+					MessageBox.alert(popupErrors.join(', '));
+				}
+			}
+
 			uiButton.setDisabled(false);
 		});
 	}
@@ -205,5 +265,33 @@ export class WorkflowInfo
 				userId: this.currentUserId,
 			},
 		});
+	}
+
+	#clearError(target: HTMLElement): void
+	{
+		const errorContainer = target.querySelector('.ui-form-notice');
+		if (errorContainer)
+		{
+			BX.Dom.remove(errorContainer);
+		}
+	}
+
+	#showError(error: string, field: HTMLElement): void
+	{
+		const parentContainer = field.querySelector('.ui-form-content');
+		let errorContainer = field.querySelector('.ui-form-notice');
+		if (!errorContainer)
+		{
+			errorContainer = BX.Dom.create(
+				'div',
+				{ attrs: { className: 'ui-form-notice' } },
+			);
+
+			errorContainer.innerText = error.message;
+			if (parentContainer)
+			{
+				BX.Dom.append(errorContainer, parentContainer);
+			}
+		}
 	}
 }

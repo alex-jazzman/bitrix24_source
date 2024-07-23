@@ -1,4 +1,6 @@
+/* eslint-disable no-underscore-dangle,@bitrix24/bitrix24-rules/no-pseudo-private */
 import { Text, Tag, Dom, Event, Type, Loc, ajax } from 'main.core';
+import { Button, ButtonSize, ButtonColor } from 'ui.buttons';
 import { UI } from 'ui.notification';
 import 'ui.forms';
 import 'ui.buttons';
@@ -7,8 +9,7 @@ export class KeyInfoField extends BX.UI.EntityEditorCustom
 {
 	keyInput: HTMLElement;
 	eyeButton: HTMLElement;
-	refreshButton: HTMLElement;
-	refreshKeyLock: boolean = false;
+	refreshButton: Button;
 
 	static create(id, settings)
 	{
@@ -77,7 +78,7 @@ export class KeyInfoField extends BX.UI.EntityEditorCustom
 		`;
 		Event.bind(copyButton, 'click', this.copyText.bind(this));
 
-		const content = Tag.render`	
+		const content = Tag.render`
 			<div class="ui-ctl ui-ctl__combined-input ui-ctl-w100">
 				<div class="ui-ctl-icon__set ui-ctl-after">
 					${this.eyeButton}
@@ -89,17 +90,13 @@ export class KeyInfoField extends BX.UI.EntityEditorCustom
 
 		Dom.append(content, this._innerWrapper);
 
-		this.refreshButton = Tag.render`
-			<button class="ui-btn-primary ui-btn icon-set-element">
-					<div class="ui-icon-set --refresh-7"></div>
-					<div class="icon-set-element__class">
-						${Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON')}
-					</div>
-			</button>
-		`;
-		Event.bind(this.refreshButton, 'click', this.refreshKey.bind(this));
-
-		Dom.append(this.refreshButton, this._innerWrapper);
+		this.refreshButton = new Button({
+			text: Loc.getMessage('BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON_MSGVER_1'),
+			color: ButtonColor.LIGHT_BORDER,
+			size: ButtonSize.MEDIUM,
+			onclick: this.refreshKey.bind(this),
+		});
+		this.refreshButton.renderTo(this._innerWrapper);
 
 		this.registerLayout(options);
 		this._hasLayout = true;
@@ -144,13 +141,7 @@ export class KeyInfoField extends BX.UI.EntityEditorCustom
 
 	refreshKey(): void
 	{
-		if (this.refreshKeyLock)
-		{
-			return;
-		}
-
-		this.refreshKeyLock = true;
-		Dom.addClass(this.refreshButton, 'ui-btn-disabled');
+		this.refreshButton.setClocking();
 
 		ajax
 			.runComponentAction(
@@ -177,8 +168,7 @@ export class KeyInfoField extends BX.UI.EntityEditorCustom
 						});
 					}
 
-					this.refreshKeyLock = false;
-					Dom.removeClass(this.refreshButton, 'ui-btn-disabled');
+					this.refreshButton.setClocking(false);
 				},
 			);
 	}

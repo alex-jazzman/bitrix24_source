@@ -1142,8 +1142,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    }));
 	    return;
 	  }
-	  _classPrivateMethodGet$2(this, _onPullItemAdded, _onPullItemAdded2).call(this, params);
-	  event.preventDefault();
+
+	  // eslint-disable-next-line no-param-reassign
+	  params.eventName = EventName.itemAdded;
+	  _classPrivateMethodGet$2(this, _onPullItemAdded, _onPullItemAdded2).call(this, event);
 	}
 	function _onPullItemAdded2(event) {
 	  var _event$data3 = event.data,

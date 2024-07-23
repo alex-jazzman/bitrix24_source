@@ -10,4 +10,13 @@ return [
 		'dist/grid.bundle.js'
 	],
 	'skip_core' => false,
+	'rel' => [
+		'ui.label',
+		'main.popup',
+		'ui.dialogs.messagebox',
+		'ui.cnt',
+		'main.core',
+		'ui.icon-set.main',
+		'ui.entity-selector',
+	],
 ];

@@ -1,5 +1,6 @@
 import { ajax, Extension, Uri } from 'main.core';
 import { sendData } from 'ui.analytics';
+import { FeaturePromotersRegistry } from 'ui.info-helper';
 
 export class Actions
 {
@@ -125,6 +126,20 @@ export class Actions
 						},
 						'*',
 					);
+				}
+
+				if (!result.error)
+				{
+					const settings = Extension.getSettings('ui.info-helper');
+
+					if (settings.licenseNeverPayed)
+					{
+						Actions.openInformer({ code: 'limit_market_trial_active' });
+					}
+					else if (settings.marketUrl)
+					{
+						Actions.openSlider({ url: settings.marketUrl });
+					}
 				}
 			};
 

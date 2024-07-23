@@ -3805,7 +3805,7 @@ class SmartMigrationWebdav
 		}
 		else
 		{
-			$this->useGZipCompression = (function_exists("gzcompress") && !defined('BX_UTF'));
+			$this->useGZipCompression = false;
 		}
 		$sqlHelper = $this->connection->getSqlHelper();
 

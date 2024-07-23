@@ -519,7 +519,7 @@ foreach ($grid['ROWS'] as $product)
 		if (in_array('TAX_INCLUDED', $visibleColumnsIds, true))
 		{
 			$columns['TAX_INCLUDED'] =
-				$rawProduct['TAX_INCLUDED']
+				$rawProduct['TAX_INCLUDED'] === 'Y'
 					? Loc::getMessage('CRM_ENTITY_PL_YES')
 					: Loc::getMessage('CRM_ENTITY_PL_NO')
 			;

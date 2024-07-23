@@ -1,4 +1,5 @@
 <?php
+$MESS["IM_TEXTAREA_AUDIO_INPUT_ERROR"] = "Не вдалося розпізнати мову, спробуйте пізніше.";
 $MESS["IM_TEXTAREA_CHANNEL_PLACEHOLDER"] = "Додайте публікацію";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_SUBTITLE"] = "ШІ створить будь-яку картинку за вашим описом.";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_TITLE"] = "Створити зображення";

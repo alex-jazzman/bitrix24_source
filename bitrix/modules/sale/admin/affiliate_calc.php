@@ -289,11 +289,11 @@ if ($curLoadSessID <> '' && array_key_exists($curLoadSessID, $_SESSION) && is_ar
 
 if ($errorMessage <> '')
 {
-	echo CAdminMessage::ShowMessage(Array("DETAILS"=>$errorMessage, "TYPE"=>"ERROR", "MESSAGE"=>GetMessage("SAC_ERROR_TITLE"), "HTML"=>true));
+	CAdminMessage::ShowMessage(Array("DETAILS"=>$errorMessage, "TYPE"=>"ERROR", "MESSAGE"=>GetMessage("SAC_ERROR_TITLE"), "HTML"=>true));
 }
 elseif ($okMessage <> '')
 {
-	echo CAdminMessage::ShowMessage(Array("DETAILS"=>$okMessage, "TYPE"=>"OK", "MESSAGE"=>GetMessage("SAC_SUCCESS_TITLE"), "HTML"=>true));
+	CAdminMessage::ShowMessage(Array("DETAILS"=>$okMessage, "TYPE"=>"OK", "MESSAGE"=>GetMessage("SAC_SUCCESS_TITLE"), "HTML"=>true));
 }
 ?>
 

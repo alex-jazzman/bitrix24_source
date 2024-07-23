@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,market_slider,market_listItem,market_rating,market_popupInstall,market_popupUninstall,market_scopeList,market_installStore,market_uninstallStore,main_core_events,main_popup,ui_designTokens,ui_vue3_pinia) {
 	'use strict';
@@ -240,6 +239,11 @@ this.BX = this.BX || {};
 	    addUserReview: function (userReview) {
 	      if (BX.Type.isArray(this.result.APP.REVIEWS.ITEMS)) {
 	        this.result.APP.REVIEWS.ITEMS.unshift(userReview);
+	      }
+	    },
+	    updateRating: function (rating) {
+	      if (rating.hasOwnProperty('RATING_DETAIL')) {
+	        this.result.APP.REVIEWS.RATING = rating;
 	      }
 	    },
 	    createPopupMenu: function () {
@@ -746,6 +750,7 @@ this.BX = this.BX || {};
 				:showNoAccessInstallButton="showNoAccessInstallButton"
 				@can-review="result.APP.REVIEWS.CAN_REVIEW = $event"
 				@review-info="addUserReview"
+				@update-rating="updateRating"
 			/>
 
 			<div class="market-detail__catalog-element" v-if="showYouMayLike">

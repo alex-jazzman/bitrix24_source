@@ -465,7 +465,6 @@ export default class Widget extends EventEmitter
 						(new QrAuthorization({
 							title: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
 							content: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2'),
-							helpLink: '',
 						})).show();
 					}
 					const onclickHelp = (event: MouseEvent) => {

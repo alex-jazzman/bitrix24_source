@@ -2,7 +2,7 @@ import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime } from 'main.core
 import { DateTimeFormat } from 'main.date';
 import { PopupWindowManager } from 'main.popup';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
-import { EventEmitter } from 'main.core.events';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import type { DashboardAnalyticInfo } from 'biconnector.apache-superset-analytics';
@@ -24,6 +24,9 @@ type LoginPopupParams = {
 	appId: string,
 };
 
+/**
+ * @namespace BX.BIConnector
+ */
 class SupersetDashboardGridManager
 {
 	#dashboardManager: DashboardManager = null;
@@ -129,6 +132,21 @@ class SupersetDashboardGridManager
 			this.onUpdatedDashboardBatchStatus(dashboardList);
 		});
 
+		BX.PULL && BX.PULL.extendWatch('superset_dashboard', true);
+		EventEmitter.subscribe('onPullEvent-biconnector', (event: BaseEvent) => {
+			const [eventName, eventData] = event.data;
+			if (eventName !== 'onSupersetStatusUpdated' || !eventData)
+			{
+				return;
+			}
+
+			const status = eventData?.status;
+			if (status)
+			{
+				this.#onSupersetStatusChange(status);
+			}
+		});
+
 		EventEmitter.subscribe('BX.Rest.Configuration.Install:onFinish', () => {
 			this.#grid.reload();
 		});
@@ -137,6 +155,44 @@ class SupersetDashboardGridManager
 			BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
 			this.#colorPinnedRows();
 		});
+
+		EventEmitter.subscribe('BIConnector.ExportMaster:onDashboardDataLoaded', () => {
+			this.#grid.tableUnfade();
+		});
+
+		EventEmitter.subscribe('BIConnector.DashboardManager:onEmbeddedDataLoaded', () => {
+			this.#grid.reload();
+		});
+	}
+
+	#onSupersetStatusChange(status: string): void
+	{
+		if (status === 'READY')
+		{
+			this.getGrid().reload();
+		}
+
+		if (status !== 'LOAD' && status !== 'ERROR')
+		{
+			return;
+		}
+
+		const statusMap = {
+			LOAD: DashboardManager.DASHBOARD_STATUS_LOAD,
+			ERROR: DashboardManager.DASHBOARD_STATUS_COMPUTED_NOT_LOAD,
+		};
+
+		const grid = this.getGrid();
+		const rows = grid.getRows().getBodyChild();
+		for (const row: BX.Grid.Row of rows)
+		{
+			const dashboardId = row.getId();
+			const dashboardStatus = statusMap[status];
+			if (dashboardStatus)
+			{
+				this.updateDashboardStatus(dashboardId, dashboardStatus);
+			}
+		}
 	}
 
 	#showTopMenuGuide(): void
@@ -331,6 +387,16 @@ class SupersetDashboardGridManager
 					Dom.removeClass(label, 'ui-label-primary');
 					label.querySelector('span').innerText = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_FAILED');
 					break;
+				case DashboardManager.DASHBOARD_STATUS_COMPUTED_NOT_LOAD:
+					if (reloadBtn)
+					{
+						reloadBtn.remove();
+					}
+					Dom.addClass(label, 'ui-label-danger');
+					Dom.removeClass(label, 'ui-label-success');
+					Dom.removeClass(label, 'ui-label-primary');
+					label.querySelector('span').innerText = Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_NOT_LOAD');
+					break;
 			}
 		}
 	}
@@ -417,40 +483,12 @@ class SupersetDashboardGridManager
 		}
 	}
 
-	exportDashboard(dashboardId: number, analyticInfo: DashboardAnalyticInfo = null): void
+	exportDashboard(dashboardId: number): void
 	{
 		const grid = this.getGrid();
 		grid.tableFade();
 
-		return this.#dashboardManager.exportDashboard(
-			dashboardId,
-			() => {
-				grid.tableUnfade();
-				if (analyticInfo !== null)
-				{
-					ApacheSupersetAnalytics.sendAnalytics('edit', 'report_export', {
-						type: analyticInfo.type,
-						p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(analyticInfo.appId),
-						p2: dashboardId,
-						status: 'success',
-						c_element: analyticInfo.from,
-					});
-				}
-			},
-			() => {
-				grid.tableUnfade();
-				if (analyticInfo !== null)
-				{
-					ApacheSupersetAnalytics.sendAnalytics('edit', 'report_export', {
-						type: analyticInfo.type,
-						p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(analyticInfo.appId),
-						p2: dashboardId,
-						status: 'error',
-						c_element: analyticInfo.from,
-					});
-				}
-			},
-		);
+		return this.#dashboardManager.exportDashboard(dashboardId, 'grid_menu');
 	}
 
 	deleteDashboard(dashboardId: number): void

@@ -8,6 +8,7 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { ProductSelector } from 'catalog.product-selector';
 import { StoreSelector } from 'catalog.store-selector';
 import { PopupMenu } from 'main.popup';
+
 import { PriceCalculator } from './price.calculator';
 import { AccessDeniedInput } from './access.denied.input';
 

@@ -20,6 +20,7 @@ $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_EXPORT_NOTIFICATION_ERROR"] = "Не �
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_LOCK_NOTIFICATION"] = "Вимкніть BI-конструктор, якщо хочете перейти на тариф нижче. Щоб продовжити користуватися інструментом, оплатіть поточний тариф.";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_FAILED"] = "Помилка";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_LOAD"] = "Завантаження";
+$MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_NOT_LOAD"] = "Звіт недоступний";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_READY"] = "Звіт готовий";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_TOP_MENU_GUIDE_TEXT"] = "Так він завжди буде у вас під рукою.";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_GRID_TOP_MENU_GUIDE_TITLE"] = "Додайте звіт у верхнє меню";

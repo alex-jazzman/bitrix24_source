@@ -580,19 +580,13 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	}
 
 	var _entityTypeId$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
-	var _valueElement$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("valueElement");
 	var _progressBarRepo$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
-	class ExecuteSetCategory extends BaseHandler {
+	class ExecuteRefreshAccountingData extends BaseHandler {
 	  constructor({
-	    entityTypeId,
-	    valueElementId
+	    entityTypeId
 	  }) {
 	    super();
 	    Object.defineProperty(this, _entityTypeId$5, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _valueElement$2, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -604,6 +598,63 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$5)[_entityTypeId$5])) {
 	      throw new Error('entityTypeId is required');
 	    }
+	  }
+	  static getEventName() {
+	    return 'BatchManager:executeRefreshAccountingData';
+	  }
+	  injectDependencies(progressBarRepo, extensionSettings) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$4)[_progressBarRepo$4] = progressBarRepo;
+	  }
+	  execute(grid, selectedIds, forAll) {
+	    let accountingManager = crm_autorun.BatchRefreshAccountingDataManager.getItem(grid.getId());
+	    if (accountingManager && accountingManager.isRunning()) {
+	      return;
+	    }
+	    if (crm_autorun.ProcessRegistry.isProcessRunning(grid.getId())) {
+	      showAnotherProcessRunningNotification();
+	      return;
+	    }
+	    if (!accountingManager) {
+	      accountingManager = crm_autorun.BatchRefreshAccountingDataManager.create(grid.getId(), {
+	        gridId: grid.getId(),
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$5)[_entityTypeId$5],
+	        container: babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$4)[_progressBarRepo$4].getOrCreateProgressBarContainer('refresh-accounting-data').id
+	      });
+	    }
+	    if (forAll) {
+	      accountingManager.resetEntityIds();
+	    } else {
+	      accountingManager.setEntityIds(selectedIds);
+	    }
+	    accountingManager.execute();
+	  }
+	}
+
+	var _entityTypeId$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _valueElement$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("valueElement");
+	var _progressBarRepo$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
+	class ExecuteSetCategory extends BaseHandler {
+	  constructor({
+	    entityTypeId,
+	    valueElementId
+	  }) {
+	    super();
+	    Object.defineProperty(this, _entityTypeId$6, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _valueElement$2, {
+	      writable: true,
+	      value: void 0
+	    });
+	    Object.defineProperty(this, _progressBarRepo$5, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$6)[_entityTypeId$6] = main_core.Text.toInteger(entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$6)[_entityTypeId$6])) {
+	      throw new Error('entityTypeId is required');
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _valueElement$2)[_valueElement$2] = document.getElementById(valueElementId);
 	    if (!main_core.Type.isElementNode(babelHelpers.classPrivateFieldLooseBase(this, _valueElement$2)[_valueElement$2])) {
 	      throw new Error('value element not found');
@@ -613,15 +664,15 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    return 'BatchManager:executeSetCategory';
 	  }
 	  injectDependencies(progressBarRepo, extensionSettings) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$4)[_progressBarRepo$4] = progressBarRepo;
+	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$5)[_progressBarRepo$5] = progressBarRepo;
 	  }
 	  execute(grid, selectedIds, forAll) {
 	    let categoryManager = crm_autorun.BatchSetCategoryManager.getItem(grid.getId());
 	    if (!categoryManager) {
 	      categoryManager = crm_autorun.BatchSetCategoryManager.create(grid.getId(), {
 	        gridId: grid.getId(),
-	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$5)[_entityTypeId$5],
-	        container: babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$4)[_progressBarRepo$4].getOrCreateProgressBarContainer('set-category').id
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$6)[_entityTypeId$6],
+	        container: babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$5)[_progressBarRepo$5].getOrCreateProgressBarContainer('set-category').id
 	      });
 	    }
 	    if (categoryManager.isRunning()) {
@@ -641,16 +692,16 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	  }
 	}
 
-	var _entityTypeId$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityTypeId$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _valueElement$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("valueElement");
-	var _progressBarRepo$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
+	var _progressBarRepo$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
 	class ExecuteSetExport extends BaseHandler {
 	  constructor({
 	    entityTypeId,
 	    valueElementId
 	  }) {
 	    super();
-	    Object.defineProperty(this, _entityTypeId$6, {
+	    Object.defineProperty(this, _entityTypeId$7, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -658,12 +709,12 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _progressBarRepo$5, {
+	    Object.defineProperty(this, _progressBarRepo$6, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$6)[_entityTypeId$6] = main_core.Text.toInteger(entityTypeId);
-	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$6)[_entityTypeId$6])) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$7)[_entityTypeId$7] = main_core.Text.toInteger(entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$7)[_entityTypeId$7])) {
 	      throw new Error('entityTypeId is required');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _valueElement$3)[_valueElement$3] = document.getElementById(valueElementId);
@@ -675,15 +726,15 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    return 'BatchManager:executeSetExport';
 	  }
 	  injectDependencies(progressBarRepo, extensionSettings) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$5)[_progressBarRepo$5] = progressBarRepo;
+	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$6)[_progressBarRepo$6] = progressBarRepo;
 	  }
 	  execute(grid, selectedIds, forAll) {
 	    let setExportManager = crm_autorun.BatchSetExportManager.getItem(grid.getId());
 	    if (!setExportManager) {
 	      setExportManager = crm_autorun.BatchSetExportManager.create(grid.getId(), {
 	        gridId: grid.getId(),
-	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$6)[_entityTypeId$6],
-	        container: babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$5)[_progressBarRepo$5].getOrCreateProgressBarContainer('set-export').id
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$7)[_entityTypeId$7],
+	        container: babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$6)[_progressBarRepo$6].getOrCreateProgressBarContainer('set-export').id
 	      });
 	    }
 	    if (setExportManager.isRunning()) {
@@ -708,16 +759,16 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	  }
 	}
 
-	var _entityTypeId$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityTypeId$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _valueElement$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("valueElement");
-	var _progressBarRepo$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
+	var _progressBarRepo$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
 	class ExecuteSetOpened extends BaseHandler {
 	  constructor({
 	    entityTypeId,
 	    valueElementId
 	  }) {
 	    super();
-	    Object.defineProperty(this, _entityTypeId$7, {
+	    Object.defineProperty(this, _entityTypeId$8, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -725,12 +776,12 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _progressBarRepo$6, {
+	    Object.defineProperty(this, _progressBarRepo$7, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$7)[_entityTypeId$7] = main_core.Text.toInteger(entityTypeId);
-	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$7)[_entityTypeId$7])) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$8)[_entityTypeId$8] = main_core.Text.toInteger(entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$8)[_entityTypeId$8])) {
 	      throw new Error('entityTypeId is required');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _valueElement$4)[_valueElement$4] = document.getElementById(valueElementId);
@@ -742,15 +793,15 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    return 'BatchManager:executeSetOpened';
 	  }
 	  injectDependencies(progressBarRepo, extensionSettings) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$6)[_progressBarRepo$6] = progressBarRepo;
+	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$7)[_progressBarRepo$7] = progressBarRepo;
 	  }
 	  execute(grid, selectedIds, forAll) {
 	    let openedManager = crm_autorun.BatchSetOpenedManager.getItem(grid.getId());
 	    if (!openedManager) {
 	      openedManager = crm_autorun.BatchSetOpenedManager.create(grid.getId(), {
 	        gridId: grid.getId(),
-	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$7)[_entityTypeId$7],
-	        container: babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$6)[_progressBarRepo$6].getOrCreateProgressBarContainer('set-opened').id
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$8)[_entityTypeId$8],
+	        container: babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$7)[_progressBarRepo$7].getOrCreateProgressBarContainer('set-opened').id
 	      });
 	    }
 	    if (openedManager.isRunning()) {
@@ -775,16 +826,16 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	  }
 	}
 
-	var _entityTypeId$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityTypeId$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _valueElement$5 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("valueElement");
-	var _progressBarRepo$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
+	var _progressBarRepo$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
 	class ExecuteSetStage extends BaseHandler {
 	  constructor({
 	    entityTypeId,
 	    valueElementId
 	  }) {
 	    super();
-	    Object.defineProperty(this, _entityTypeId$8, {
+	    Object.defineProperty(this, _entityTypeId$9, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -792,12 +843,12 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _progressBarRepo$7, {
+	    Object.defineProperty(this, _progressBarRepo$8, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$8)[_entityTypeId$8] = main_core.Text.toInteger(entityTypeId);
-	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$8)[_entityTypeId$8])) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$9)[_entityTypeId$9] = main_core.Text.toInteger(entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$9)[_entityTypeId$9])) {
 	      throw new Error('entityTypeId is required');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _valueElement$5)[_valueElement$5] = document.getElementById(valueElementId);
@@ -809,15 +860,15 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    return 'BatchManager:executeSetStage';
 	  }
 	  injectDependencies(progressBarRepo, extensionSettings) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$7)[_progressBarRepo$7] = progressBarRepo;
+	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$8)[_progressBarRepo$8] = progressBarRepo;
 	  }
 	  execute(grid, selectedIds, forAll) {
 	    let stageManager = crm_autorun.BatchSetStageManager.getItem(grid.getId());
 	    if (!stageManager) {
 	      stageManager = crm_autorun.BatchSetStageManager.create(grid.getId(), {
 	        gridId: grid.getId(),
-	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$8)[_entityTypeId$8],
-	        container: babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$7)[_progressBarRepo$7].getOrCreateProgressBarContainer('set-stage').id
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$9)[_entityTypeId$9],
+	        container: babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$8)[_progressBarRepo$8].getOrCreateProgressBarContainer('set-stage').id
 	      });
 	    }
 	    if (stageManager.isRunning()) {
@@ -842,11 +893,11 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	  }
 	}
 
-	var _entityTypeId$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityTypeId$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _categoryId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("categoryId");
 	var _isWhatsAppEdnaEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isWhatsAppEdnaEnabled");
 	var _ednaManageUrl = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ednaManageUrl");
-	var _progressBarRepo$8 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
+	var _progressBarRepo$9 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("progressBarRepo");
 	var _isEntityTypeSupported = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEntityTypeSupported");
 	var _showConnectEdnaSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showConnectEdnaSlider");
 	class ExecuteWhatsappMessage extends BaseHandler {
@@ -863,7 +914,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    Object.defineProperty(this, _isEntityTypeSupported, {
 	      value: _isEntityTypeSupported2
 	    });
-	    Object.defineProperty(this, _entityTypeId$9, {
+	    Object.defineProperty(this, _entityTypeId$a, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -879,17 +930,17 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _progressBarRepo$8, {
+	    Object.defineProperty(this, _progressBarRepo$9, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$9)[_entityTypeId$9] = _entityTypeId2;
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$a)[_entityTypeId$a] = _entityTypeId2;
 	    babelHelpers.classPrivateFieldLooseBase(this, _categoryId$1)[_categoryId$1] = categoryId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isWhatsAppEdnaEnabled)[_isWhatsAppEdnaEnabled] = isWhatsAppEdnaEnabled;
 	    babelHelpers.classPrivateFieldLooseBase(this, _ednaManageUrl)[_ednaManageUrl] = ednaManageUrl;
 	  }
 	  injectDependencies(progressBarRepo, extensionSettings) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$8)[_progressBarRepo$8] = progressBarRepo;
+	    babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$9)[_progressBarRepo$9] = progressBarRepo;
 	  }
 	  static getEventName() {
 	    return 'BatchManager:whatsappMessage';
@@ -899,8 +950,8 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _showConnectEdnaSlider)[_showConnectEdnaSlider]();
 	      return;
 	    }
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isEntityTypeSupported)[_isEntityTypeSupported](babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$9)[_entityTypeId$9])) {
-	      console.error(`entityTypeId ${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$9)[_entityTypeId$9]} is not supported for whatsapp message`);
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isEntityTypeSupported)[_isEntityTypeSupported](babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$a)[_entityTypeId$a])) {
+	      console.error(`entityTypeId ${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$a)[_entityTypeId$a]} is not supported for whatsapp message`);
 	      return;
 	    }
 	    try {
@@ -910,12 +961,12 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      } = exports;
 	      const options = {
 	        gridId: grid.getId(),
-	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$9)[_entityTypeId$9],
+	        entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$a)[_entityTypeId$a],
 	        categoryId: babelHelpers.classPrivateFieldLooseBase(this, _categoryId$1)[_categoryId$1],
 	        selectedIds,
 	        forAll
 	      };
-	      const whatsAppMessage = Messages.getInstance(babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$8)[_progressBarRepo$8], options);
+	      const whatsAppMessage = Messages.getInstance(babelHelpers.classPrivateFieldLooseBase(this, _progressBarRepo$9)[_progressBarRepo$9], options);
 	      await whatsAppMessage.execute();
 	    } catch (e) {
 	      console.error(e);
@@ -940,7 +991,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	  });
 	}
 
-	var _entityTypeId$a = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityTypeId$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _callListId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("callListId");
 	var _context = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("context");
 	class AddItemsToCallList extends BaseHandler {
@@ -950,7 +1001,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    context
 	  }) {
 	    super();
-	    Object.defineProperty(this, _entityTypeId$a, {
+	    Object.defineProperty(this, _entityTypeId$b, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -962,8 +1013,8 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$a)[_entityTypeId$a] = main_core.Text.toInteger(entityTypeId);
-	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$a)[_entityTypeId$a])) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$b)[_entityTypeId$b] = main_core.Text.toInteger(entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$b)[_entityTypeId$b])) {
 	      throw new Error('entityTypeId is required');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _callListId)[_callListId] = main_core.Text.toInteger(callListId);
@@ -982,35 +1033,12 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    if (selectedIds.length === 0 && !forAll) {
 	      return;
 	    }
-	    addItemsToCallList(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$a)[_entityTypeId$a], selectedIds, babelHelpers.classPrivateFieldLooseBase(this, _callListId)[_callListId], babelHelpers.classPrivateFieldLooseBase(this, _context)[_context], grid.getId(), forAll);
-	  }
-	}
-
-	var _entityTypeId$b = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
-	class CreateAndStartCallList extends BaseHandler {
-	  constructor({
-	    entityTypeId
-	  }) {
-	    super();
-	    Object.defineProperty(this, _entityTypeId$b, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$b)[_entityTypeId$b] = main_core.Text.toInteger(entityTypeId);
-	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$b)[_entityTypeId$b])) {
-	      throw new Error('entityTypeId is required');
-	    }
-	  }
-	  static getEventName() {
-	    return 'CallList:createAndStartCallList';
-	  }
-	  execute(grid, selectedIds, forAll) {
-	    createCallListAndShowAlertOnErrors(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$b)[_entityTypeId$b], selectedIds, true, grid.getId(), forAll);
+	    addItemsToCallList(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$b)[_entityTypeId$b], selectedIds, babelHelpers.classPrivateFieldLooseBase(this, _callListId)[_callListId], babelHelpers.classPrivateFieldLooseBase(this, _context)[_context], grid.getId(), forAll);
 	  }
 	}
 
 	var _entityTypeId$c = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
-	class CreateCallList extends BaseHandler {
+	class CreateAndStartCallList extends BaseHandler {
 	  constructor({
 	    entityTypeId
 	  }) {
@@ -1025,16 +1053,15 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    }
 	  }
 	  static getEventName() {
-	    return 'CallList:createCallList';
+	    return 'CallList:createAndStartCallList';
 	  }
 	  execute(grid, selectedIds, forAll) {
-	    createCallListAndShowAlertOnErrors(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$c)[_entityTypeId$c], selectedIds, false, grid.getId(), forAll);
+	    createCallListAndShowAlertOnErrors(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$c)[_entityTypeId$c], selectedIds, true, grid.getId(), forAll);
 	  }
 	}
 
 	var _entityTypeId$d = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
-	var _extensionSettings$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extensionSettings");
-	class OpenTaskCreationForm extends BaseHandler {
+	class CreateCallList extends BaseHandler {
 	  constructor({
 	    entityTypeId
 	  }) {
@@ -1043,12 +1070,36 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$d)[_entityTypeId$d] = main_core.Text.toInteger(entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$d)[_entityTypeId$d])) {
+	      throw new Error('entityTypeId is required');
+	    }
+	  }
+	  static getEventName() {
+	    return 'CallList:createCallList';
+	  }
+	  execute(grid, selectedIds, forAll) {
+	    createCallListAndShowAlertOnErrors(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$d)[_entityTypeId$d], selectedIds, false, grid.getId(), forAll);
+	  }
+	}
+
+	var _entityTypeId$e = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _extensionSettings$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extensionSettings");
+	class OpenTaskCreationForm extends BaseHandler {
+	  constructor({
+	    entityTypeId
+	  }) {
+	    super();
+	    Object.defineProperty(this, _entityTypeId$e, {
+	      writable: true,
+	      value: void 0
+	    });
 	    Object.defineProperty(this, _extensionSettings$1, {
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$d)[_entityTypeId$d] = main_core.Text.toInteger(entityTypeId);
-	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$d)[_entityTypeId$d])) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$e)[_entityTypeId$e] = main_core.Text.toInteger(entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$e)[_entityTypeId$e])) {
 	      throw new Error('entityTypeId is required');
 	    }
 	  }
@@ -1063,7 +1114,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    if (urlTemplate === '') {
 	      return;
 	    }
-	    const entityTypeName = BX.CrmEntityType.resolveName(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$d)[_entityTypeId$d]);
+	    const entityTypeName = BX.CrmEntityType.resolveName(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$e)[_entityTypeId$e]);
 	    const entityKeys = selectedIds.map(id => BX.CrmEntityType.prepareEntityKey(entityTypeName, id));
 	    const url = urlTemplate.replace(encodeURIComponent('#USER_ID#'), main_core.Loc.getMessage('USER_ID')).replace(encodeURIComponent('#ENTITY_KEYS#'), entityKeys.join(';'));
 	    if (main_core.Reflection.getClass('BX.SidePanel.Instance.open')) {
@@ -1184,7 +1235,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	  });
 	}
 
-	var _entityTypeId$e = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityTypeId$f = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _valueElement$6 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("valueElement");
 	class AddItemsToSegment extends BaseHandler {
 	  constructor({
@@ -1192,7 +1243,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	    valueElementId
 	  }) {
 	    super();
-	    Object.defineProperty(this, _entityTypeId$e, {
+	    Object.defineProperty(this, _entityTypeId$f, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1200,8 +1251,8 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$e)[_entityTypeId$e] = main_core.Text.toInteger(entityTypeId);
-	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$e)[_entityTypeId$e])) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$f)[_entityTypeId$f] = main_core.Text.toInteger(entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$f)[_entityTypeId$f])) {
 	      throw new Error('entityTypeId is required');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _valueElement$6)[_valueElement$6] = document.getElementById(valueElementId);
@@ -1215,7 +1266,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	  execute(grid, selectedIds, forAll) {
 	    const segmentId = main_core.Text.toInteger(babelHelpers.classPrivateFieldLooseBase(this, _valueElement$6)[_valueElement$6].dataset.value);
 	    grid.disableActionsPanel();
-	    void saveEntitiesToSegment(segmentId <= 0 ? null : segmentId, babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$e)[_entityTypeId$e], selectedIds, forAll ? grid.getId() : null).then(({
+	    void saveEntitiesToSegment(segmentId <= 0 ? null : segmentId, babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$f)[_entityTypeId$f], selectedIds, forAll ? grid.getId() : null).then(({
 	      segment
 	    }) => {
 	      if (segment.textSuccess) {
@@ -1230,7 +1281,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	}
 
 	var _settings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("settings");
-	var _entityTypeId$f = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
+	var _entityTypeId$g = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _valueElement$7 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("valueElement");
 	var _getAvailableLetterCodes = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAvailableLetterCodes");
 	class AddLetter extends BaseHandler {
@@ -1246,7 +1297,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    Object.defineProperty(this, _entityTypeId$f, {
+	    Object.defineProperty(this, _entityTypeId$g, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1254,8 +1305,8 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$f)[_entityTypeId$f] = main_core.Text.toInteger(entityTypeId);
-	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$f)[_entityTypeId$f])) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$g)[_entityTypeId$g] = main_core.Text.toInteger(entityTypeId);
+	    if (!BX.CrmEntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$g)[_entityTypeId$g])) {
 	      throw new Error('entityTypeId is required');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _valueElement$7)[_valueElement$7] = document.getElementById(valueElementId);
@@ -1278,7 +1329,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	      BX.Sender.B24License.showMailingPopup();
 	      return;
 	    }
-	    void saveEntitiesToSegment(null, babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$f)[_entityTypeId$f], selectedIds, forAll ? grid.getId() : null).then(({
+	    void saveEntitiesToSegment(null, babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$g)[_entityTypeId$g], selectedIds, forAll ? grid.getId() : null).then(({
 	      segment
 	    }) => {
 	      const url = babelHelpers.classPrivateFieldLooseBase(this, _settings)[_settings].get('sender.letterAddUrl').replace('#code#', letterCode).replace('#segment_id#', segment.id);
@@ -1303,6 +1354,7 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	Router.registerHandler(ExecuteAssigment);
 	Router.registerHandler(ExecuteConversion);
 	Router.registerHandler(ExecuteWhatsappMessage);
+	Router.registerHandler(ExecuteRefreshAccountingData);
 	// endregion
 
 	// region call list

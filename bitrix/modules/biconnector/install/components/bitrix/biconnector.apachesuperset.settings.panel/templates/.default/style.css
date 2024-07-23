@@ -6,6 +6,18 @@
 	margin-bottom: 20px !important;
 }
 
+.ui-entity-editor-section-header {
+	padding: 14px 0 !important;
+}
+
+.ui-entity-editor-header-title {
+	padding: 4px 0 !important;
+}
+
+.ui-entity-editor-header-actions {
+	padding: 0 !important;
+}
+
 .ui-ctl-dropdown-range-group {
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -16,6 +28,11 @@
 	-webkit-box-flex: 1;
 	flex-grow: 1;
 	margin-left: 10px;
+}
+
+.biconnector-superset-delete-superset-button-block {
+	display: flex;
+	flex-direction: row-reverse;
 }
 
 .ui-ctl-dropdown-range-line {
@@ -58,6 +75,10 @@
 .biconnector-superset-settings-panel-range__hint-link {
 	cursor: pointer;
 	border-bottom: 1px dashed #2066b0;
+}
+
+#biconnector-superset-settings-panel__wrapper {
+	padding-bottom: 30px;
 }
 
 .biconnector-superset-settings-panel__wrapper .ui-entity-card-content-actions-container {

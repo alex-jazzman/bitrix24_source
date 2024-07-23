@@ -82,11 +82,16 @@ this.BX = this.BX || {};
 	}();
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11;
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var SPECIFIC_REALIZATION_ERROR_CODES = ['REALIZATION_ACCESS_DENIED', 'REALIZATION_CANNOT_DELETE', 'REALIZATION_ALREADY_DEDUCTED', 'REALIZATION_NOT_DEDUCTED', 'REALIZATION_PRODUCT_NOT_FOUND', 'SHIPMENT_ACCESS_DENIED', 'PAYMENT_ACCESS_DENIED'];
 	var SPECIFIC_ERROR_CODES = [].concat(SPECIFIC_REALIZATION_ERROR_CODES, ['DEDUCTION_STORE_ERROR1', 'SALE_PROVIDER_SHIPMENT_QUANTITY_NOT_ENOUGH', 'SALE_SHIPMENT_EXIST_SHIPPED', 'SALE_PAYMENT_DELETE_EXIST_PAID', 'DDCT_DEDUCTION_QUANTITY_STORE_ERROR', 'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS', 'BX_ERROR']);
+	var _getAnalyticLabels = /*#__PURE__*/new WeakSet();
 	var EntityEditorPaymentDocuments = /*#__PURE__*/function () {
 	  function EntityEditorPaymentDocuments(options) {
 	    babelHelpers.classCallCheck(this, EntityEditorPaymentDocuments);
+	    _classPrivateMethodInitSpec(this, _getAnalyticLabels);
 	    this._options = options;
 	    this._phrases = {};
 	    if (main_core.Type.isPlainObject(options.PHRASES)) {
@@ -667,7 +672,7 @@ this.BX = this.BX || {};
 	      };
 	    }
 	    /**
-	     *
+	     * @see #getAnalyticLabels for new analytics, this is for old analytics and will be deprecated in the future
 	     * @param labelMode converting to PascalCase before inserting into label template
 	     * @returns {string} final analytics label
 	     * @private
@@ -704,6 +709,7 @@ this.BX = this.BX || {};
 	      var options = this._defaultCreatePaymentDocumentOptions();
 	      options.mode = 'payment';
 	      options.analyticsLabel = this._generateAnalyticsLabel('create_payment');
+	      options.st = _classPrivateMethodGet(this, _getAnalyticLabels, _getAnalyticLabels2).call(this, 'payment');
 	      options.orderId = orderId;
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
@@ -736,6 +742,7 @@ this.BX = this.BX || {};
 	      var options = this._defaultCreatePaymentDocumentOptions();
 	      options.mode = 'payment_delivery';
 	      options.analyticsLabel = this._generateAnalyticsLabel('create_payment_delivery');
+	      options.st = _classPrivateMethodGet(this, _getAnalyticLabels, _getAnalyticLabels2).call(this, 'delivery_payment');
 	      options.orderId = orderId;
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
@@ -775,6 +782,7 @@ this.BX = this.BX || {};
 	      var options = this._defaultCreatePaymentDocumentOptions();
 	      options.mode = 'terminal_payment';
 	      options.analyticsLabel = this._generateAnalyticsLabel('create_terminal_payment');
+	      options.st = _classPrivateMethodGet(this, _getAnalyticLabels, _getAnalyticLabels2).call(this, 'terminal_payment');
 	      options.orderId = orderId;
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
@@ -1172,6 +1180,17 @@ this.BX = this.BX || {};
 	  }]);
 	  return EntityEditorPaymentDocuments;
 	}();
+	function _getAnalyticLabels2(type) {
+	  var labels = {
+	    tool: 'crm',
+	    category: 'payments',
+	    event: 'payment_create_click',
+	    c_section: 'crm',
+	    c_sub_section: 'web',
+	    type: type
+	  };
+	  return labels;
+	}
 	babelHelpers.defineProperty(EntityEditorPaymentDocuments, "_rootNodeClass", 'crm-entity-widget-inner crm-entity-widget-inner--payment');
 
 	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10$1, _templateObject11$1, _templateObject12, _templateObject13, _templateObject14;

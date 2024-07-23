@@ -301,6 +301,11 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 
 		handleRefreshEmptyScreen()
 		{
+			this.reload();
+		}
+
+		reload()
+		{
 			if (this.listRef && this.listRef.reloadList)
 			{
 				this.listRef.reloadList();
