@@ -1,5 +1,20 @@
 <?
 
+namespace Bitrix\BIConnector\Integration\Superset\Integrator {
+    class ProxyIntegrator extends \Bitrix\BIConnector\Integration\Superset\Integrator\Integrator {
+    }
+}
+
+namespace Bitrix\BIConnector\Integration\Superset\Integrator {
+    class ProxySender extends \Bitrix\BIConnector\Integration\Superset\Integrator\Sender {
+    }
+}
+
+namespace Bitrix\BIConnector\Integration\Superset\Integrator {
+    class SupersetServiceLocation extends \Bitrix\BIConnector\Integration\Superset\Integrator\ServiceLocation {
+    }
+}
+
 namespace Bitrix\Bizproc {
     class WorkflowTemplateTable extends \Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable {
     }
@@ -12,6 +27,41 @@ namespace Bitrix\Bizproc {
 
 namespace Bitrix\Bizproc {
     class WorkflowStateTable extends \Bitrix\Bizproc\Workflow\Entity\WorkflowStateTable {
+    }
+}
+
+namespace {
+    class CBPAllWorkflowPersister extends \CBPWorkflowPersister {
+    }
+}
+
+namespace {
+    class CBPAllHistoryService extends \CBPHistoryService {
+    }
+}
+
+namespace {
+    class CBPAllStateService extends \CBPStateService {
+    }
+}
+
+namespace {
+    class CBPAllTaskService extends \CBPTaskService {
+    }
+}
+
+namespace {
+    class CBPAllTrackingService extends \CBPTrackingService {
+    }
+}
+
+namespace {
+    class CAllBPWorkflowTemplateLoader extends \CBPWorkflowTemplateLoader {
+    }
+}
+
+namespace {
+    class CBPCalc extends \Bitrix\Bizproc\Calc\Parser {
     }
 }
 
@@ -290,8 +340,18 @@ namespace Bitrix\Main\ORM {
     }
 }
 
-namespace Bitrix\Main\UserField {
-    abstract class TypeBase extends \Bitrix\Main\UserField\Types\BaseType {
+namespace Bitrix\Main\Data {
+    class ICacheEngine extends \Bitrix\Main\Data\CacheEngineInterface {
+    }
+}
+
+namespace Bitrix\Main\Data {
+    class ICacheEngineStat extends \Bitrix\Main\Data\CacheEngineStatInterface {
+    }
+}
+
+namespace Bitrix\Main\Type {
+    class ArrayHelper extends \Bitrix\Main\Type\Collection {
     }
 }
 
@@ -475,6 +535,56 @@ namespace Bitrix\Sender {
     }
 }
 
+namespace Bitrix\Seo {
+    class SitemapTable extends \Bitrix\Seo\Sitemap\Internals\SitemapTable {
+    }
+}
+
+namespace Bitrix\Seo {
+    class SitemapEntityTable extends \Bitrix\Seo\Sitemap\Internals\EntityTable {
+    }
+}
+
+namespace Bitrix\Seo {
+    class SitemapForumTable extends \Bitrix\Seo\Sitemap\Internals\ForumTable {
+    }
+}
+
+namespace Bitrix\Seo {
+    class SitemapIblockTable extends \Bitrix\Seo\Sitemap\Internals\IblockTable {
+    }
+}
+
+namespace Bitrix\Seo {
+    class SitemapRuntimeTable extends \Bitrix\Seo\Sitemap\Internals\RuntimeTable {
+    }
+}
+
+namespace Bitrix\Seo {
+    class SitemapForum extends \Bitrix\Seo\Sitemap\Source\Forum {
+    }
+}
+
+namespace Bitrix\Seo {
+    class SitemapIblock extends \Bitrix\Seo\Sitemap\Source\Iblock {
+    }
+}
+
+namespace Bitrix\Seo {
+    class SitemapFile extends \Bitrix\Seo\Sitemap\File\Base {
+    }
+}
+
+namespace Bitrix\Seo {
+    class SitemapIndex extends \Bitrix\Seo\Sitemap\File\Index {
+    }
+}
+
+namespace Bitrix\Seo {
+    class SitemapRuntime extends \Bitrix\Seo\Sitemap\File\Runtime {
+    }
+}
+
 namespace Bitrix\Tasks\DB {
     class CommonHelper extends \Bitrix\Tasks\Internals\DataBase\Helper\Common {
     }
@@ -587,5 +697,10 @@ namespace Bitrix\Tasks\Notification {
 
 namespace Bitrix\Tasks\Util {
     class UI extends \Bitrix\Tasks\UI {
+    }
+}
+
+namespace Bitrix\Tasks\Internals\Log {
+    class Logger extends \Bitrix\Tasks\Internals\Log\LogFacade {
     }
 }
