@@ -181,6 +181,12 @@ export class Activity extends Base
 
 		let targetItem: Item = null;
 
+		let dialogEntityId = BX.CrmEntityType.resolveName(actionData.ownerTypeId);
+		if (BX.CrmEntityType.isDynamicTypeByTypeId(actionData.ownerTypeId))
+		{
+			dialogEntityId = BX.CrmEntityType.names.dynamic;
+		}
+
 		this.#moveToSelectorDialog = new Dialog({
 			targetNode: dialogTargetElement,
 			enableSearch: true,
@@ -189,7 +195,7 @@ export class Activity extends Base
 				textBoxWidth: '50%',
 			},
 			entities: [{
-				id: BX.CrmEntityType.resolveName(actionData.ownerTypeId),
+				id: dialogEntityId,
 				dynamicLoad: true,
 				dynamicSearch: true,
 				options: {
@@ -198,6 +204,7 @@ export class Activity extends Base
 					showEntityTypeNameInHeader: true,
 					hideClosedItems: true,
 					excludeMyCompany: true,
+					entityTypeId: actionData.ownerTypeId, // for 'dynamic' types
 				},
 			}],
 			events: {

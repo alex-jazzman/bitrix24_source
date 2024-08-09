@@ -10,6 +10,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
 	const { stringify } = require('utils/string');
 	const { Type } = require('type');
+	const { PropTypes } = require('utils/validation');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 
 	const ReadOnlyElementType = {
@@ -391,7 +392,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			parentWidget: PropTypes.object,
 			copyingOnLongClick: PropTypes.bool,
 			titleIcon: PropTypes.object,
-
+			keyboardType: PropTypes.string,
 			autoCapitalize: PropTypes.string,
 			enableKeyboardHide: PropTypes.bool,
 			selectionOnFocus: PropTypes.bool,

@@ -2,8 +2,8 @@
  * @module im/messenger/controller/dialog/lib/message-create-menu
  */
 jn.define('im/messenger/controller/dialog/lib/message-create-menu', (require, exports, module) => {
-	/* global ContextMenu */
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { menuIcons } = require('im/messenger/assets/common');
 	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
 	const { Logger } = require('im/messenger/lib/logger');

@@ -415,6 +415,7 @@ class ConferenceApplication
 				this.callView.subscribe(Call.View.Event.onChangeFaceImprove, this.onCallViewChangeFaceImprove.bind(this));
 				this.callView.subscribe(Call.View.Event.onUserRename, this.onCallViewUserRename.bind(this));
 				this.callView.subscribe(Call.View.Event.onUserPinned, this.onCallViewUserPinned.bind(this));
+				this.callView.subscribe(Call.View.Event.onToggleSubscribe, this.onCallToggleSubscribe.bind(this));
 
 				this.callView.blockAddUser();
 				this.callView.blockHistoryButton();
@@ -542,9 +543,7 @@ class ConferenceApplication
 
 		tryJoinExistingCall()
 		{
-			const provider = Call.Util.isBitrixCallServerAllowed()
-				? Call.Provider.Bitrix
-				: Call.Provider.Voximplant;
+			const provider = Call.Provider.Bitrix;
 
 			this.restClient.callMethod("im.call.tryJoinCall", {
 					entityType: 'chat',
@@ -907,9 +906,7 @@ class ConferenceApplication
 			return;
 		}
 
-		const provider = Call.Util.isBitrixCallServerAllowed()
-			? Call.Provider.Bitrix
-			: Call.Provider.Voximplant;
+		const provider = Call.Provider.Bitrix;
 
 		if (Utils.device.isMobile())
 		{
@@ -1548,6 +1545,13 @@ class ConferenceApplication
 		this.controller.getStore().dispatch('call/unpinUser');
 
 		return true;
+	}
+
+	onCallToggleSubscribe(e) {
+		if (this.currentCall && this.currentCall.provider === Call.Provider.Bitrix && e.data)
+		{
+			this.currentCall.toggleRemoteParticipantVideo(e.data.participantIds, e.data.showVideo, true)
+		}
 	}
 
 	renameGuest(newName)

@@ -380,7 +380,7 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 								<div class="mail-connect-option-email">
 									<input class="mail-connect-form-input mail-connect-form-input-check" type="checkbox"
 										   name="fields[use_smtp]" value="1" id="mail_connect_mb_server_smtp_switch"
-										<?php if ((empty($mailbox) && (empty($settings['oauth']) || !$isExchangeService)) || !empty($mailbox['__smtp'])): ?> checked <?php endif ?>
+										<?php if ($settings['IS_SMTP_SWITCHER_CHECKED']): ?> checked <?php endif; ?>
 										   onchange="BX('mail_connect_mb_server_smtp_form').style.display = this.checked ? '' : 'none'; ">
 									>
 									<label class="mail-connect-form-label mail-connect-form-label-check" for="mail_connect_mb_server_smtp_switch">

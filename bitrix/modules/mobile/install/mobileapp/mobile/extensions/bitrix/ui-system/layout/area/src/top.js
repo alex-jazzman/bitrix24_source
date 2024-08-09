@@ -3,37 +3,48 @@
  */
 jn.define('ui-system/layout/area/src/top', (require, exports, module) => {
 	const { Component, Color, Indent } = require('tokens');
-	const { Text4 } = require('ui-system/typography/text');
+	const { BBCodeText } = require('ui-system/typography/bbcodetext');
 
 	/**
 	 * @function AreaTop
 	 * @param {object} props
-	 * @param {text} [props.title]
+	 * @param {string} [props.title]
+	 * @param {Object} [props.excludePaddingSide]
 	 * @return AreaTop
 	 */
 	function AreaTop(props = {})
 	{
 		PropTypes.validate(AreaTop.propTypes, props, 'AreaTop');
 
-		const { title } = props;
+		const {
+			title,
+			excludePaddingSide = {},
+		} = props;
+
+		const { horizontal } = excludePaddingSide;
+
+		const style = {
+			alignSelf: 'flex-start',
+			paddingVertical: Indent.L.toNumber(),
+			paddingLeft: horizontal ? 0 : Component.areaPaddingLr.toNumber(),
+			paddingRight: horizontal ? 0 : Component.areaPaddingLr.toNumber(),
+		};
 
 		return View(
-			{
-				style: {
-					alignSelf: 'flex-start',
-					paddingLeft: Component.areaPaddingLr,
-					paddingVertical: Indent.L.toNumber(),
-				},
-			},
-			Text4({
-				text: title,
+			{ style },
+			BBCodeText({
+				size: 4,
+				value: title,
 				color: Color.base4,
+				ellipsize: 'end',
+				numberOfLines: 1,
 			}),
 		);
 	}
 
 	AreaTop.propTypes = {
 		title: PropTypes.string,
+		excludePaddingSide: PropTypes.objectOf(PropTypes.bool),
 	};
 
 	module.exports = { AreaTop };

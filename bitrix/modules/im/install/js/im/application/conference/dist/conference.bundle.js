@@ -499,6 +499,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        _this7.callView.subscribe(Call.View.Event.onChangeFaceImprove, _this7.onCallViewChangeFaceImprove.bind(_this7));
 	        _this7.callView.subscribe(Call.View.Event.onUserRename, _this7.onCallViewUserRename.bind(_this7));
 	        _this7.callView.subscribe(Call.View.Event.onUserPinned, _this7.onCallViewUserPinned.bind(_this7));
+	        _this7.callView.subscribe(Call.View.Event.onToggleSubscribe, _this7.onCallToggleSubscribe.bind(_this7));
 	        _this7.callView.blockAddUser();
 	        _this7.callView.blockHistoryButton();
 	        if (!im_lib_utils.Utils.device.isMobile()) {
@@ -610,7 +611,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "tryJoinExistingCall",
 	    value: function tryJoinExistingCall() {
 	      var _this11 = this;
-	      var provider = Call.Util.isBitrixCallServerAllowed() ? Call.Provider.Bitrix : Call.Provider.Voximplant;
+	      var provider = Call.Provider.Bitrix;
 	      this.restClient.callMethod("im.call.tryJoinCall", {
 	        entityType: 'chat',
 	        entityId: this.params.dialogId,
@@ -889,7 +890,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.initCallPromise) {
 	        return;
 	      }
-	      var provider = Call.Util.isBitrixCallServerAllowed() ? Call.Provider.Bitrix : Call.Provider.Voximplant;
+	      var provider = Call.Provider.Bitrix;
 	      if (im_lib_utils.Utils.device.isMobile()) {
 	        this.callView.show();
 	        this.callView.setButtonCounter('chat', this.getDialogData().counter);
@@ -1427,6 +1428,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	      this.controller.getStore().dispatch('call/unpinUser');
 	      return true;
+	    }
+	  }, {
+	    key: "onCallToggleSubscribe",
+	    value: function onCallToggleSubscribe(e) {
+	      if (this.currentCall && this.currentCall.provider === Call.Provider.Bitrix && e.data) {
+	        this.currentCall.toggleRemoteParticipantVideo(e.data.participantIds, e.data.showVideo, true);
+	      }
 	    }
 	  }, {
 	    key: "renameGuest",

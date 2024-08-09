@@ -63,7 +63,10 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		}
 		$this->preparedProperties['DynamicEntitiesFields'] = $entityFieldsValues;
 
-		$this->writeDebugInfo($this->getDebugInfo());
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo());
+		}
 	}
 
 	protected function checkProperties(): \Bitrix\Main\ErrorCollection
@@ -170,12 +173,15 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	private function logDocumentFields(array $fields)
 	{
-		$this->writeDebugInfo(
-			$this->getDebugInfo(
-				$fields,
-				array_intersect_key(static::getEntityFields($this->DynamicTypeId), $fields),
-			)
-		);
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo(
+				$this->getDebugInfo(
+					$fields,
+					array_intersect_key(static::getEntityFields($this->DynamicTypeId), $fields),
+				)
+			);
+		}
 	}
 
 	private function bindElements(Crm\ItemIdentifier $parent, Crm\ItemIdentifier $child): void

@@ -3,6 +3,7 @@
  */
 jn.define('tasks/layout/flow/list', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
@@ -26,6 +27,9 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 		mapStateToTaskModel,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { dispatch } = store;
+	const { set } = require('utils/object');
+
+	const FLOWS_INFO_ITEM_ID = 'flows-info-item';
 
 	class TasksFlowList extends LayoutComponent
 	{
@@ -45,6 +49,8 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 			this.onCounterClick = this.onCounterClick.bind(this);
 			this.onBeforeItemsRender = this.onBeforeItemsRender.bind(this);
 			this.getItemType = this.getItemType.bind(this);
+			this.getItemProps = this.getItemProps.bind(this);
+			this.onFlowsInfoItemCloseButtonClick = this.onFlowsInfoItemCloseButtonClick.bind(this);
 
 			this.flowListFilter = new TasksFlowListFilter(
 				this.props.currentUserId,
@@ -203,7 +209,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 		 */
 		onItemsLoaded(responseData, context)
 		{
-			const { items = [], users = [], groups = [] } = responseData || {};
+			const { items = [], users = [], groups = [], showflowsinfo = true } = responseData || {};
 			const isCache = context === 'cache';
 
 			const actions = [];
@@ -227,6 +233,74 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 			{
 				dispatch(batchActions(actions));
 			}
+
+			if (showflowsinfo
+				&& this.isFlowsList()
+				&& items.length > 0
+				&& items.findIndex((item) => item.id === FLOWS_INFO_ITEM_ID) < 0
+				&& this.listRef)
+			{
+				items.unshift(this.getFlowInfoItemData());
+			}
+		}
+
+		deleteFlowsInfoItemToList()
+		{
+			if (this.listRef && this.listRef.hasItem(FLOWS_INFO_ITEM_ID))
+			{
+				this.listRef.processItemsGroupsByData({
+					delete: [FLOWS_INFO_ITEM_ID],
+				}).then(() => {
+					const cache = this.listRef.cache.runActionExecutor.getCache();
+					const modifiedCache = set(cache.getData() || {}, ['data', 'showflowsinfo'], false);
+					cache.saveData(modifiedCache);
+				})
+					.catch(console.error);
+			}
+		}
+
+		onFlowsInfoItemCloseButtonClick()
+		{
+			this.deleteFlowsInfoItemToList();
+			void this.disableShowFlowsFeatureInfoFlagInDB();
+		}
+
+		disableShowFlowsFeatureInfoFlagInDB()
+		{
+			return new Promise((resolve) => {
+				const handler = (response) => {
+					if (response
+						&& response.status === 'success'
+						&& response.errors.length === 0)
+					{
+						resolve();
+					}
+					else
+					{
+						console.error(response.errors);
+					}
+				};
+
+				(new RunActionExecutor('tasksmobile.Flow.disableShowFlowsFeatureInfoFlagInDB'))
+					.setHandler(handler)
+					.call(true)
+				;
+			});
+		}
+
+		getFlowInfoItemData()
+		{
+			const fakeActivityDate = new Date(2100, 0);
+
+			return {
+				id: FLOWS_INFO_ITEM_ID,
+				key: FLOWS_INFO_ITEM_ID,
+				type: ListItemType.FLOWS_INFO,
+				active: true,
+				demo: false,
+				isLast: false,
+				activity: fakeActivityDate.getTime(),
+			};
 		}
 
 		onSearch({ text, presetId })
@@ -369,6 +443,11 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 		}
 
 		getItemType = (item) => {
+			if (item.id === FLOWS_INFO_ITEM_ID)
+			{
+				return ListItemType.FLOWS_INFO;
+			}
+
 			if (this.isFlowsList())
 			{
 				if (item.demo)
@@ -387,59 +466,81 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 			return ListItemType.SIMILAR_FLOW;
 		};
 
+		getItemProps = (item) => {
+			const type = this.getItemType(item);
+
+			return {
+				onCloseButtonClick: type === ListItemType.FLOWS_INFO
+					? this.onFlowsInfoItemCloseButtonClick
+					: null,
+				type,
+			};
+		};
+
 		renderList()
 		{
+			const statefulList = new StatefulList({
+				layout: this.layout,
+				testId: 'task-list',
+				showAirStyle: true,
+				itemsLoadLimit: 10,
+				itemType: this.getItemProps,
+				itemFactory: FlowListItemsFactory,
+				typeGenerator: {
+					generator: TypeGenerator.generators.bySelectedProperties,
+					properties: [
+						'id',
+						'demo',
+						'active',
+						'myTasksCounter',
+						'myTasksTotal',
+						'pending',
+						'atWork',
+						'completed',
+						'isLast',
+					],
+				},
+				needInitMenu: this.isFlowsList(),
+				menuButtons: this.getLayoutMenuButtons(),
+				actionParams: {
+					loadItems: {
+						flowSearchParams: this.getSearchParams(),
+						order: this.sorting.getType(),
+					},
+				},
+				actions: {
+					loadItems: 'tasksmobile.Flow.loadItems',
+				},
+				actionCallbacks: {
+					loadItems: this.onItemsLoaded,
+				},
+				pull: this.pull.getPullConfig(),
+				sortingConfig: this.sorting.getSortingConfig(),
+				isShowFloatingButton: false,
+				getEmptyListComponent: this.getEmptyListComponent,
+				itemDetailOpenHandler: this.onItemClick,
+				onBeforeItemsRender: this.onBeforeItemsRender,
+				onPanListHandler: this.onPanList,
+				showTitleLoader: this.showTitleLoader,
+				hideTitleLoader: this.hideTitleLoader,
+				ref: this.bindRef,
+				itemLayoutOptions: {},
+				animationTypes: {
+					insertRows: 'fade',
+					updateRows: 'none',
+					deleteRow: 'fade',
+					moveRow: true,
+				},
+			});
+
 			return View(
 				{
 					style: {
-						flex: 1,
 						width: '100%',
 						height: '100%',
-						backgroundColor: '#00ff00',
 					},
 				},
-				new StatefulList({
-					layout: this.layout,
-					testId: 'task-list',
-					showAirStyle: true,
-					itemsLoadLimit: 10,
-					itemType: this.getItemType,
-					itemFactory: FlowListItemsFactory,
-					typeGenerator: {
-						generator: TypeGenerator.generators.byAllProperties,
-					},
-					needInitMenu: this.isFlowsList(),
-					menuButtons: this.getLayoutMenuButtons(),
-					actionParams: {
-						loadItems: {
-							flowSearchParams: this.getSearchParams(),
-							order: this.sorting.getType(),
-						},
-					},
-					actions: {
-						loadItems: 'tasksmobile.Flow.loadItems',
-					},
-					actionCallbacks: {
-						loadItems: this.onItemsLoaded,
-					},
-					pull: this.pull.getPullConfig(),
-					sortingConfig: this.sorting.getSortingConfig(),
-					isShowFloatingButton: false,
-					getEmptyListComponent: this.getEmptyListComponent,
-					itemDetailOpenHandler: this.onItemClick,
-					onBeforeItemsRender: this.onBeforeItemsRender,
-					onPanListHandler: this.onPanList,
-					showTitleLoader: this.showTitleLoader,
-					hideTitleLoader: this.hideTitleLoader,
-					ref: this.bindRef,
-					itemLayoutOptions: {},
-					animationTypes: {
-						insertRows: 'fade',
-						updateRows: 'none',
-						deleteRow: 'fade',
-						moveRow: true,
-					},
-				}),
+				statefulList,
 			);
 		}
 

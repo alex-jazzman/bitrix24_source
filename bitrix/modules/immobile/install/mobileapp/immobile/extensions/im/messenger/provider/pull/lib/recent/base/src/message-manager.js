@@ -172,6 +172,19 @@ jn.define('im/messenger/provider/pull/lib/recent/base/message-manager', (require
 			return chatUsers.includes(this.getCurrentUserId());
 		}
 
+		/**
+		 * it is necessary to check the pull shared events that came by tags
+		 * (open channels without current user in channel tab and comment chats in channel dialog)
+		 *
+		 * @see ChannelMessenger.extendWatch
+		 * @see PullWatchManager.subscribe
+		 * @return {boolean}
+		 */
+		isSharedEvent()
+		{
+			return this.extra.is_shared_event === true;
+		}
+
 		isCurrentChannelChatOpened()
 		{
 			return serviceLocator.get('core').getStore().getters['applicationModel/isDialogOpen'](this.getDialogId());
@@ -179,7 +192,7 @@ jn.define('im/messenger/provider/pull/lib/recent/base/message-manager', (require
 
 		isChannelListEvent()
 		{
-			return this.isChannelChat() && this.extra.is_shared_event;
+			return this.isChannelChat() && this.isSharedEvent();
 		}
 	}
 

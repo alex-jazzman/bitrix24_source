@@ -3,6 +3,7 @@
  */
 jn.define('tasks/layout/task/view-new/ui/extra-settings', (require, exports, module) => {
 	const { Color, Indent } = require('tokens');
+	const { Box } = require('ui-system/layout/box');
 	const { Text2 } = require('ui-system/typography/text');
 	const { Switcher, SwitcherMode, SwitcherSize } = require('ui-system/blocks/switcher');
 	const { Loc } = require('tasks/loc');
@@ -41,11 +42,10 @@ jn.define('tasks/layout/task/view-new/ui/extra-settings', (require, exports, mod
 
 		render()
 		{
-			return ScrollView(
+			return Box(
 				{
-					style: {
-						backgroundColor: Color.bgContentPrimary.toHex(),
-					},
+					withScroll: true,
+					withPaddingHorizontal: true,
 				},
 				ExtraSettingsContent({
 					taskId: this.props.taskId,
@@ -144,7 +144,6 @@ jn.define('tasks/layout/task/view-new/ui/extra-settings', (require, exports, mod
 			testId: `${id}_container`,
 			style: {
 				paddingTop: Indent.XL.getValue(),
-				paddingLeft: Indent.XL.getValue(),
 			},
 			onClick: () => onChange?.(id, !enabled),
 		},
@@ -152,9 +151,8 @@ jn.define('tasks/layout/task/view-new/ui/extra-settings', (require, exports, mod
 			{
 				style: {
 					paddingBottom: Indent.XL.getValue(),
-					paddingRight: Indent.XL.getValue(),
 					borderBottomWidth: 1,
-					borderBottomColor: Color.bgSeparatorSecondary.toHex(divided ? 1 : 0),
+					borderBottomColor: divided ? Color.bgSeparatorSecondary.toHex() : null,
 					flexDirection: 'row',
 					justifyContent: 'space-between',
 					alignItems: 'center',

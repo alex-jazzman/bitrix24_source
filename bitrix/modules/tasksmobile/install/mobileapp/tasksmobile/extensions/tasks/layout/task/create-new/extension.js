@@ -24,6 +24,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { CrmElementField } = require('layout/ui/fields/crm-element/theme/air-compact');
 
 	const store = require('statemanager/redux/store');
+	const { batchActions } = require('statemanager/redux/batched-actions');
 	const { dispatch } = store;
 	const { usersSelector, usersUpserted, usersAddedFromEntitySelector } = require('statemanager/redux/slices/users');
 	const { getUniqId, selectStages } = require('tasks/statemanager/redux/slices/kanban-settings');
@@ -32,9 +33,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 	const { create } = require('tasks/statemanager/redux/slices/tasks');
 	const { groupsAddedFromEntitySelector, groupsUpserted } = require('tasks/statemanager/redux/slices/groups');
 	const { flowsUpserted } = require('tasks/statemanager/redux/slices/flows');
-	const {
-		loadTariffPlanRestrictionsIfNecessary,
-	} = require('tasks/statemanager/redux/slices/tariff-plan-restrictions');
+	const { loadTariffRestrictions } = require('tasks/statemanager/redux/slices/tariff-restrictions');
 
 	const {
 		makeProjectFieldConfig,
@@ -115,7 +114,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 				createNew.layoutWidget = layoutWidget;
 				createNew.isLayoutWidgetClosed = false;
 			}).catch(() => {});
-			loadTariffPlanRestrictionsIfNecessary();
 		}
 
 		constructor(props)
@@ -170,17 +168,18 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			const preloaders = [
+			const preloads = [
 				this.#preloadCurrentUserData(),
 				this.#preloadSourceTask(),
 				this.#preloadFlowData(),
 				getDiskFolderId().then(({ diskFolderId }) => {
 					this.diskFolderId = diskFolderId;
 				}),
+				loadTariffRestrictions(),
 				CalendarSettings.loadSettings(),
 			];
 
-			Promise.allSettled(preloaders)
+			Promise.allSettled(preloads)
 				.then(() => this.doFinalInitAction())
 				.catch(console.error)
 			;
@@ -913,9 +912,11 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 								return;
 							}
 
-							dispatch(flowsUpserted([response.data.flow]));
-							dispatch(groupsUpserted(response.data.groups));
-							dispatch(usersUpserted(response.data.users));
+							batchActions([
+								flowsUpserted([response.data.flow]),
+								groupsUpserted(response.data.groups),
+								usersUpserted(response.data.users),
+							]);
 
 							const template = response.data.template;
 							if (template)

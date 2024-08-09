@@ -3,7 +3,7 @@ import { EventEmitter, BaseEvent } from 'main.core.events';
 
 import { Logger } from 'im.v2.lib.logger';
 import { Core } from 'im.v2.application.core';
-import { EventType, Layout, TextareaPanelType } from 'im.v2.const';
+import { ChatType, EventType, Layout, TextareaPanelType } from 'im.v2.const';
 
 import { IndexedDbManager } from './indexed-db-manager';
 
@@ -21,6 +21,8 @@ const WRITE_TO_STORAGE_TIMEOUT = 1000;
 const SHOW_DRAFT_IN_RECENT_TIMEOUT = 1500;
 
 const STORAGE_KEY = 'recentDraft';
+
+const NOT_AVAILABLE_CHAT_TYPES = new Set([ChatType.comment]);
 
 export class DraftManager
 {
@@ -101,6 +103,11 @@ export class DraftManager
 
 	setDraftText(dialogId: number, text: string): void
 	{
+		if (!this.canSaveDraft(dialogId))
+		{
+			return;
+		}
+
 		if (!this.drafts[dialogId])
 		{
 			this.drafts[dialogId] = {};
@@ -141,7 +148,7 @@ export class DraftManager
 		return Promise.resolve(draft);
 	}
 
-	clearDraft(dialogId: number)
+	clearDraft(dialogId: string)
 	{
 		delete this.drafts[dialogId];
 		this.setRecentItemDraftText(dialogId, '');
@@ -226,5 +233,16 @@ export class DraftManager
 	getDraftMethodName(): string
 	{
 		return 'recent/setRecentDraft';
+	}
+
+	canSaveDraft(dialogId: string): boolean
+	{
+		const chat = Core.getStore().getters['chats/get'](dialogId);
+		if (!chat)
+		{
+			return false;
+		}
+
+		return !NOT_AVAILABLE_CHAT_TYPES.has(chat.type);
 	}
 }

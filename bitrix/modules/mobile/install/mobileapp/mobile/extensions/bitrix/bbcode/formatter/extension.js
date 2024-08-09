@@ -21,6 +21,7 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	const convertSymbol = Symbol('convert');
 	const forChildSymbol = Symbol('forChild');
 	const afterSymbol = Symbol('after');
+	const formatterSymbol = Symbol('formatter');
 	const defaultValidator = () => true;
 	const defaultNodeConverter = ({
 	  node
@@ -40,6 +41,9 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	      this[groupSymbol] = [...options.name];
 	    } else {
 	      this.setName(options.name);
+	    }
+	    if (!Type.isNil(options.formatter)) {
+	      this.setFormatter(options.formatter);
 	    }
 	    this.setValidate(options.validate);
 	    this.setBefore(options.before);
@@ -109,10 +113,17 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	  runAfter(options) {
 	    return this[afterSymbol](options);
 	  }
+	  setFormatter(formatter) {
+	    this[formatterSymbol] = formatter;
+	  }
+	  getFormatter() {
+	    return this[formatterSymbol];
+	  }
 	}
 
 	const formattersSymbol = Symbol('formatters');
 	const onUnknownSymbol = Symbol('onUnknown');
+	const dataSymbol = Symbol('data');
 
 	/**
 	 * @memberOf BX.UI.BBCode
@@ -121,6 +132,7 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	  constructor(options = {}) {
 	    this[formattersSymbol] = new Map();
 	    this[onUnknownSymbol] = null;
+	    this[dataSymbol] = null;
 	    this.setNodeFormatters(options.formatters);
 	    if (Type.isNil(options.onUnknown)) {
 	      this.setOnUnknown(this.getDefaultUnknownNodeCallback());
@@ -140,6 +152,12 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	    }
 	    return null;
 	  }
+	  setData(data) {
+	    this[dataSymbol] = data;
+	  }
+	  getData() {
+	    return this[dataSymbol];
+	  }
 	  setNodeFormatters(formatters) {
 	    if (Type.isArrayFilled(formatters)) {
 	      formatters.forEach(formatter => {
@@ -155,27 +173,7 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	    }
 	  }
 	  getDefaultUnknownNodeCallback() {
-	    return () => {
-	      return new NodeFormatter({
-	        name: 'unknown',
-	        before({
-	          node
-	        }) {
-	          const scheme = node.getScheme();
-	          if (node.isVoid()) {
-	            return scheme.createFragment({
-	              children: [scheme.createText(node.getOpeningTag())]
-	            });
-	          }
-	          return scheme.createFragment({
-	            children: [scheme.createText(node.getOpeningTag()), ...node.getChildren(), scheme.createText(node.getClosingTag())]
-	          });
-	        },
-	        convert() {
-	          return document.createDocumentFragment();
-	        }
-	      });
-	    };
+	    throw new TypeError('Must be implemented in subclass');
 	  }
 	  setOnUnknown(callback) {
 	    if (Type.isFunction(callback)) {
@@ -201,6 +199,9 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	      formatter: this
 	    });
 	  }
+	  getNodeFormatters() {
+	    return this[formattersSymbol];
+	  }
 	  format(options) {
 	    if (!Type.isPlainObject(options)) {
 	      throw new TypeError('options is not a object');
@@ -212,6 +213,7 @@ jn.define('bbcode/formatter', (require, exports, module) => {
 	    if (!Type.isUndefined(data) && !Type.isPlainObject(data)) {
 	      throw new TypeError('options.data is not a object');
 	    }
+	    this.setData(data);
 	    const sourceNode = Formatter.prepareSourceNode(source);
 	    if (Type.isNull(sourceNode)) {
 	      throw new TypeError('options.source is not a BBCodeNode or string');

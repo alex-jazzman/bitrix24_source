@@ -5,6 +5,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 	const { confirmDestructiveAction } = require('alert');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { EventEmitter } = require('event-emitter');
 	const { handleErrors } = require('crm/error');
 	const { Feature } = require('feature');

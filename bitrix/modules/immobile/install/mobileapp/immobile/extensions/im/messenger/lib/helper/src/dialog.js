@@ -109,39 +109,59 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			this.dialogModel = dialogModel;
 		}
 
-		isChannel()
+		get isChannel()
 		{
 			return [DialogType.generalChannel, DialogType.openChannel, DialogType.channel].includes(this.dialogModel.type);
 		}
 
-		isOpenChannel()
+		get isOpenChannel()
 		{
 			return this.dialogModel.type === DialogType.openChannel;
 		}
 
-		isComment()
+		get isComment()
 		{
 			return this.dialogModel.type === DialogType.comment;
 		}
 
-		isCopilot()
+		get isCopilot()
 		{
 			return this.dialogModel.type === DialogType.copilot;
 		}
 
-		isOpenChat()
+		get isOpenChat()
 		{
 			return this.dialogModel.type === DialogType.open;
 		}
 
-		isCurrentUserOwner()
+		get isCurrentUserOwner()
 		{
 			return Number(this.dialogModel.owner) === serviceLocator.get('core').getUserId();
 		}
 
-		isCurrentUserGuest()
+		get isCurrentUserGuest()
 		{
 			return this.dialogModel.role === UserRole.guest;
+		}
+
+		get isLocalStorageSupported()
+		{
+			if (this.isComment)
+			{
+				return false;
+			}
+
+			if (this.isOpenChannel)
+			{
+				if (!this.dialogModel.role || this.dialogModel.role === UserRole.none)
+				{
+					return false;
+				}
+
+				return !this.isCurrentUserGuest;
+			}
+
+			return true;
 		}
 	}
 

@@ -38,7 +38,7 @@ $data = [
 ];
 
 $APPLICATION->RestartBuffer();
-if(array_key_exists("logincheck", $_REQUEST) && $_REQUEST["login"])
+if (array_key_exists("logincheck", $_REQUEST) && $_REQUEST["login"])
 {
 	$res = CUser::getByLogin($_REQUEST["login"]);
 	$data["exists"] = (bool)$res->fetch();
@@ -56,9 +56,10 @@ if(array_key_exists("logincheck", $_REQUEST) && $_REQUEST["login"])
 	return $data;
 }
 
-if(array_key_exists("servercheck", $_REQUEST))
+if (array_key_exists("servercheck", $_REQUEST))
 {
 	$data["cloud"] = ModuleManager::isModuleInstalled("bitrix24") && COption::GetOptionString('bitrix24', 'network', 'N') == 'Y';
+
 	return $data;
 }
 
@@ -136,7 +137,7 @@ else
 	}
 
 	$selectFields = [
-		"FIELDS" => ["PERSONAL_PHOTO"]
+		"FIELDS" => ["PERSONAL_PHOTO"],
 	];
 
 	if ($isExtranetModuleInstalled)
@@ -172,16 +173,16 @@ else
 	\Bitrix\Main\Loader::includeModule("pull");
 
 	$siteId = (
-		$bExtranetUser
-			? $extranetSiteId
-			: SITE_ID
+	$bExtranetUser
+		? $extranetSiteId
+		: SITE_ID
 	);
 
 	$siteDir = SITE_DIR;
 	if ($bExtranetUser)
 	{
 		$res = \CSite::getById($extranetSiteId);
-		if(
+		if (
 			($extranetSiteFields = $res->fetch())
 			&& ($extranetSiteFields["ACTIVE"] != "N")
 		)
@@ -191,16 +192,16 @@ else
 	}
 
 	$moduleVersion = (defined("MOBILE_MODULE_VERSION") ? MOBILE_MODULE_VERSION : "default");
-	if(array_key_exists("IS_WKWEBVIEW", $_COOKIE) && $_COOKIE["IS_WKWEBVIEW"] == "Y")
+	if (array_key_exists("IS_WKWEBVIEW", $_COOKIE) && $_COOKIE["IS_WKWEBVIEW"] == "Y")
 	{
 		$moduleVersion .= "_wkwebview";
 	}
 
 	$context = new \Bitrix\Mobile\Context([
-		"extranet"=>$bExtranetUser,
-		"siteId"=>$siteId,
-		"siteDir"=>$siteDir,
-		"version"=>$moduleVersion,
+		"extranet" => $bExtranetUser,
+		"siteId" => $siteId,
+		"siteDir" => $siteDir,
+		"version" => $moduleVersion,
 	]);
 
 	$manager = new \Bitrix\Mobile\Tab\Manager($context);
@@ -232,24 +233,52 @@ else
 
 	$avaMenuManager = new \Bitrix\Mobile\AvaMenu\Manager($context);
 
-//	array_shift($menuTabs);
-	$voximplantServer = '';
-	$voximplantLogin = '';
-	$voximplantLines = [];
-	$voximplantDefaultLineId = '';
-	if($voximplantInstalled = Main\Loader::includeModule('voximplant'))
+	$voximplantOptions = [
+		'voximplantInstalled' => false,
+		'voximplantServer' => '',
+		'voximplantLogin' => '',
+		'canPerformCalls' => false,
+		'lines' => [],
+		'defaultLineId' => '',
+		'callLogService' => '',
+	];
+	if (Main\Loader::includeModule('voximplant'))
 	{
+		$voximplantServer = '';
+		$voximplantLogin = '';
 		$viUser = new CVoxImplantUser();
 		$voximplantAuthorization = $viUser->getAuthorizationInfo($USER->getId());
-		if($voximplantAuthorization->isSuccess())
+		if ($voximplantAuthorization->isSuccess())
 		{
 			$voximplantAuthorizationData = $voximplantAuthorization->getData();
 			$voximplantServer = $voximplantAuthorizationData['server'];
 			$voximplantLogin = $voximplantAuthorizationData['login'];
 		}
 
-		$voximplantLines = CVoxImplantConfig::GetLines(true, true);
-		$voximplantDefaultLineId = CVoxImplantUser::getUserOutgoingLine($USER->getId());
+		$voximplantOptions = [
+			'voximplantInstalled' => true,
+			'voximplantServer' => $voximplantServer,
+			'voximplantLogin' => $voximplantLogin,
+			'canPerformCalls' => \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls(),
+			'lines' => CVoxImplantConfig::GetLines(true, true),
+			'defaultLineId' => CVoxImplantUser::getUserOutgoingLine($USER->getId()),
+			'callLogService' => Main\Config\Option::get("im", "call_log_service", ""),
+		];
+	}
+
+	$callOptions = [
+		'useCustomTurnServer' => false,
+		'turnServer' => '',
+		'turnServerLogin' => '',
+		'turnServerPassword' => '',
+		'jitsiServer' => '',
+		'sfuServerEnabled' => false,
+		'bitrixCallsEnabled' => false,
+		'callBetaIosEnabled' => false,
+	];
+	if (Main\Loader::includeModule('call'))
+	{
+		$callOptions = \Bitrix\Call\Settings::getMobileOptions();
 	}
 
 	$events = \Bitrix\Main\EventManager::getInstance()->findEventHandlers("mobile", "onMobileTabListBuilt");
@@ -264,7 +293,7 @@ else
 		"NAME" => $USER->GetFirstName(),
 		"LAST_NAME" => $USER->GetLastName(),
 		"SECOND_NAME" => $USER->GetSecondName(),
-		"LOGIN" => $USER->GetLogin()
+		"LOGIN" => $USER->GetLogin(),
 	]);
 
 	$data = [
@@ -273,7 +302,7 @@ else
 		"login" => $USER->GetLogin(),
 		"name" => $userName,
 		"sessid_md5" => bitrix_sessid(),
-        "backend_version" => \Bitrix\Main\ModuleManager::getVersion('mobile'),
+		"backend_version" => \Bitrix\Main\ModuleManager::getVersion('mobile'),
 		"target" => md5($USER->GetID() . CMain::GetServerUniqID()),
 		"photoUrl" => $avatarSource,
 		"newStyleSupported" => true,
@@ -285,29 +314,18 @@ else
 		],
 		"services" => [
 			[
-				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im:calls"),
+				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("call:calls"),
 				"name" => \Bitrix\MobileApp\Mobile::getApiVersion() >= 36 ? "JNUIComponent" : "JSComponent",
 				"componentCode" => "calls",
-				"params" => [
-					"userId" => $USER->getId(),
-					"isAdmin" => $USER->isAdmin(),
-					"siteDir" => $siteDir,
-					"voximplantInstalled" => $voximplantInstalled,
-					"voximplantServer" => $voximplantServer,
-					"voximplantLogin" => $voximplantLogin,
-					"canPerformCalls" => $voximplantInstalled && \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls(),
-					"lines" => $voximplantLines,
-					"defaultLineId" => $voximplantDefaultLineId,
-					"useCustomTurnServer" => Main\Config\Option::get("im", "turn_server_self") === "Y",
-					"turnServer" => Main\Config\Option::get("im", "turn_server", ""),
-					"turnServerLogin" => Main\Config\Option::get("im", "turn_server_login", ""),
-					"turnServerPassword" => Main\Config\Option::get("im", "turn_server_password", ""),
-					"callLogService" => Main\Config\Option::get("im", "call_log_service", ""),
-					"jitsiServer" => Main\Config\Option::get("im", "jitsi_server", ""),
-					"sfuServerEnabled" => $isImModuleInstalled && Im\Call\Call::isCallServerEnabled(),
-					"bitrixCallsEnabled" => $isImModuleInstalled && Im\Call\Call::isBitrixCallEnabled(),
-					'callBetaIosEnabled' => $isImModuleInstalled && Im\Call\Call::isIosBetaEnabled(),
-				]
+				"params" => array_merge(
+					[
+						"userId" => $USER->getId(),
+						"isAdmin" => $USER->isAdmin(),
+						"siteDir" => $siteDir,
+					],
+					$voximplantOptions,
+					$callOptions
+				),
 			],
 			[
 				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("communication"),
@@ -315,10 +333,10 @@ else
 					"USER_ID" => $USER->getId(),
 					"SITE_ID" => $siteId,
 					"LANGUAGE_ID" => LANGUAGE_ID,
-					"PULL_CONFIG" => \Bitrix\Pull\Config::get(['JSON' => true])
+					"PULL_CONFIG" => \Bitrix\Pull\Config::get(['JSON' => true]),
 				],
 				"name" => "JSComponent",
-				"componentCode" => "communication"
+				"componentCode" => "communication",
 			],
 			[
 				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("background"),
@@ -328,19 +346,18 @@ else
 					"LANGUAGE_ID" => LANGUAGE_ID,
 				],
 				"name" => "JSComponent",
-				"componentCode" => "background"
-			]
+				"componentCode" => "background",
+			],
 		],
 		"useModernStyle" => true,
 		"appmap" => [
-			"main" => ["url" => $siteDir."mobile/index.php?version=".$moduleVersion, "bx24ModernStyle" => true],
-			"menu" => ["url" => $siteDir."mobile/left.php?version=".$moduleVersion],
-			"notification" => ["url" => $siteDir."mobile/im/notify.php"]
-		]
+			"main" => ["url" => $siteDir . "mobile/index.php?version=" . $moduleVersion, "bx24ModernStyle" => true],
+			"menu" => ["url" => $siteDir . "mobile/left.php?version=" . $moduleVersion],
+			"notification" => ["url" => $siteDir . "mobile/im/notify.php"],
+		],
 	];
 
-
-	if(\Bitrix\Main\Loader::includeModule('bitrix24'))
+	if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 	{
 		$data["restricted"] = \Bitrix\Bitrix24\Limits\User::isUserRestricted($USER->getId());
 		$data["blocked"] = \Bitrix\Bitrix24\LicenseScanner\Manager::getInstance()->shouldLockPortal();
@@ -354,18 +371,19 @@ else
 	$forceGenerate = \Bitrix\Mobile\Auth::removeOneTimeAuthHash($hitHash);
 	if (($needAppPass == 'mobile' && $USER->GetParam("APPLICATION_ID") === null) || $forceGenerate)
 	{
-		if($forceGenerate) {
+		if ($forceGenerate)
+		{
 			setSessionExpired(false);
 		}
 		if ($appUUID <> '')
 		{
-			$result = ApplicationPasswordTable::getList(Array(
-				'select' => Array('ID'),
-				'filter' => Array(
+			$result = ApplicationPasswordTable::getList([
+				'select' => ['ID'],
+				'filter' => [
 					'USER_ID' => $USER->GetID(),
 					'=CODE' => strtoupper($appUUID),
-				)
-			));
+				],
+			]);
 			if ($row = $result->fetch())
 			{
 				ApplicationPasswordTable::delete($row['ID']);
@@ -373,15 +391,15 @@ else
 		}
 
 		$password = ApplicationPasswordTable::generatePassword();
-		$res = ApplicationPasswordTable::add(array(
+		$res = ApplicationPasswordTable::add([
 			'USER_ID' => $USER->GetID(),
 			'APPLICATION_ID' => 'mobile',
 			'PASSWORD' => $password,
 			'CODE' => $appUUID,
 			'DATE_CREATE' => new Main\Type\DateTime(),
 			'COMMENT' => GetMessage("MD_GENERATE_BY_MOBILE") . ($deviceName <> '' ? " (" . $deviceName . ")" : ""),
-			'SYSCOMMENT' => GetMessage("MD_MOBILE_APPLICATION")
-		));
+			'SYSCOMMENT' => GetMessage("MD_MOBILE_APPLICATION"),
+		]);
 
 		if ($res->isSuccess())
 		{

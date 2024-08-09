@@ -7,9 +7,6 @@ return [
 		'utils/logger/warn-logger',
 		'utils/object',
 
-		'tasks:layout/action-menu/engines/base',
-		'tasks:layout/action-menu/engines/bottom-menu',
-		'tasks:layout/action-menu/engines/top-menu',
 		'tasks:layout/action-menu/actions',
 
 		'statemanager/redux/store',

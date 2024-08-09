@@ -175,19 +175,6 @@ jn.define('selector/widget', (require, exports, module) => {
 							this.widget.setPlaceholder(placeholder);
 						}
 
-						if (this.shouldShowPlusIcon())
-						{
-							this.widget.setRightButtons([
-								{
-									type: 'plus',
-									testId: 'ENTITY_SELECTOR_PLUS_BUTTON',
-									callback: () => {
-										this.createItems(this.queryText);
-									},
-								},
-							]);
-						}
-
 						if (!isAirStyleSupported)
 						{
 							this.widget.setRightButtons([
@@ -575,7 +562,7 @@ jn.define('selector/widget', (require, exports, module) => {
 					? BX.message('PROVIDER_SEARCH_RECENT_SECTION_TITLE')
 					: BX.message('PROVIDER_SEARCH_SECTION_TITLE')
 			);
-			const buttonText = this.getCommonSectionButtonText(isRecent);
+			const buttonText = this.getCommonSectionButtonText();
 			const styles = this.getCommonSectionStyles();
 
 			sections.push({
@@ -602,35 +589,43 @@ jn.define('selector/widget', (require, exports, module) => {
 
 				this.widget.setItems(this.currentItems);
 			}
+
+			if (isAirStyleSupported)
+			{
+				if (this.isCreationModeActive())
+				{
+					this.widget.setRightButtons([
+						{
+							type: 'plus',
+							testId: 'ENTITY_SELECTOR_PLUS_BUTTON',
+							callback: () => {
+								this.createItems(this.queryText);
+							},
+						},
+					]);
+				}
+				else
+				{
+					this.widget.setRightButtons([]);
+				}
+			}
 		}
 
-		shouldShowPlusIcon()
+		isCreationModeActive()
 		{
-			if (!isAirStyleSupported)
-			{
-				return false;
-			}
-
 			const { canCreateWithEmptySearch, enableCreation } = this.createOptions;
 
-			if (enableCreation || canCreateWithEmptySearch)
-			{
-				return true;
-			}
-
-			return !this.isRecentSearch();
+			return enableCreation && (canCreateWithEmptySearch || !this.isRecentSearch());
 		}
 
-		getCommonSectionButtonText(isRecent)
+		getCommonSectionButtonText()
 		{
 			if (isAirStyleSupported)
 			{
 				return '';
 			}
 
-			const { canCreateWithEmptySearch, enableCreation } = this.createOptions;
-
-			if (enableCreation && (canCreateWithEmptySearch || !isRecent))
+			if (this.isCreationModeActive())
 			{
 				return this.getCreateButtonItemTitle();
 			}

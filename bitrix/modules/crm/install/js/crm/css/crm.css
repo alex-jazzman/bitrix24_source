@@ -83,7 +83,7 @@
 .crm-box-layout.crm-single-column .crm-block-cont-left{ padding:0 4px 0 4px;}
 table.field_crm { margin-bottom: 3px }
 table.field_crm .field_crm_empty_entity_title{ opacity: 0.5; padding-left: 3px; text-transform: lowercase; }
-table.field_crm td.field_crm_entity_type {	vertical-align: top; border-left: 1px solid #c7c7c7; padding-left: 11px;	padding-right: 7px;	text-align: right;	font-weight: var(--ui-font-weight-bold);	background: none; padding-bottom: 2px;	word-break: initial;}
+table.field_crm td.field_crm_entity_type {vertical-align: top; border-left: 1px solid #c7c7c7; padding-left: 11px;	padding-right: 7px;	text-align: right;	font-weight: var(--ui-font-weight-bold);	background: none; padding-bottom: 2px;	word-break: initial; overflow: hidden; text-overflow: ellipsis; max-width: 260px;}
 table.field_crm td.field_crm_entity {background: none; padding-bottom: 2px; display:flex; flex-wrap: wrap; margin-left: -3px;}
 table.field_crm td.field_crm_entity .field-item{margin-bottom: 0; margin-left: 3px;}
 .crm-button-open a { border-bottom: 1px dashed #0069C4; outline: medium none; text-decoration: none;}

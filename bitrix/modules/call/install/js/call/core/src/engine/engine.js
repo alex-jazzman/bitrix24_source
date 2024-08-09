@@ -87,6 +87,7 @@ export const CallEvent = {
 	onUserCameraState: 'onUserCameraState',
 	onCameraPublishing: 'onCameraPublishing',
 	onMicrophonePublishing: 'onMicrophonePublishing',
+	onNeedResetMediaDevicesState: 'onNeedResetMediaDevicesState',
 	onUserVideoPaused: 'onUserVideoPaused',
 	onUserScreenState: 'onUserScreenState',
 	onUserRecordState: 'onUserRecordState',

@@ -1,13 +1,14 @@
+import { Loc } from 'main.core';
+
 import { ChatType, Layout } from 'im.v2.const';
-import { Parser } from 'im.v2.lib.parser';
 
 import './chat-description.css';
-import { Loc } from 'main.core';
 
 import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelUser } from 'im.v2.model';
 
 const MAX_DESCRIPTION_SYMBOLS = 25;
+const NEW_LINE_SYMBOL = '\n';
 
 const DescriptionByChatType = {
 	[ChatType.user]: Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_USER'),
@@ -50,6 +51,12 @@ export const ChatDescription = {
 
 			return user.bot === true;
 		},
+		isLongDescription(): boolean
+		{
+			const hasNewLine = this.dialog.description.includes(NEW_LINE_SYMBOL);
+
+			return this.dialog.description.length > MAX_DESCRIPTION_SYMBOLS || hasNewLine;
+		},
 		previewDescription(): string
 		{
 			if (this.dialog.description.length === 0)
@@ -57,7 +64,7 @@ export const ChatDescription = {
 				return this.chatTypeText;
 			}
 
-			if (this.dialog.description.length > MAX_DESCRIPTION_SYMBOLS)
+			if (this.isLongDescription)
 			{
 				return `${this.dialog.description.slice(0, MAX_DESCRIPTION_SYMBOLS)}...`;
 			}
@@ -66,9 +73,7 @@ export const ChatDescription = {
 		},
 		descriptionToShow(): string
 		{
-			const rawText = this.expanded ? this.dialog.description : this.previewDescription;
-
-			return Parser.purifyText(rawText);
+			return this.expanded ? this.dialog.description : this.previewDescription;
 		},
 		chatTypeText(): string
 		{
@@ -91,7 +96,7 @@ export const ChatDescription = {
 				return false;
 			}
 
-			return this.dialog.description.length >= MAX_DESCRIPTION_SYMBOLS;
+			return this.isLongDescription;
 		},
 		isCopilotLayout(): boolean
 		{
@@ -111,9 +116,7 @@ export const ChatDescription = {
 		<div class="bx-im-sidebar-chat-description__container">
 			<div class="bx-im-sidebar-chat-description__text-container" :class="[expanded ? '--expanded' : '']">
 				<div class="bx-im-sidebar-chat-description__icon"></div>
-				<div class="bx-im-sidebar-chat-description__text">
-					{{ descriptionToShow }}
-				</div>
+				<div class="bx-im-sidebar-chat-description__text"> {{ descriptionToShow }}</div>
 			</div>
 			<button
 				v-if="showExpandButton"

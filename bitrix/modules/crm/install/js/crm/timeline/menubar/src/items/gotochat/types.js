@@ -63,6 +63,7 @@ declare type ChatService = {
 	commonClass: string,
 	iconClass: string,
 	iconColor: string,
+	checkServiceId?: string,
 }
 
 declare type ChatServiceRegion = {

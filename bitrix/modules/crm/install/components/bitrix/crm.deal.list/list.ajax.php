@@ -292,6 +292,10 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
 		//end region
 
+		//Region synchronization
+		(new \Bitrix\Crm\Order\OrderDealSynchronizer)->updateOrderFromDeal($ID);
+		//end region
+
 		__CrmDealListEndResponse(array('TYPE' => CCrmOwnerType::DealName, 'ID' => $ID, 'VALUE' => $stageID));
 	}
 	else

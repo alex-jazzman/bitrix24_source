@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_CLOSED_DATE"] = "Дата завершення";
 $MESS["TASKS_CREATED_DATE"] = "Дата створення";
 $MESS["TASKS_CREATOR"] = "Постановник";
@@ -18,7 +18,7 @@ $MESS["TASKS_STATUS"] = "Статус";
 $MESS["TASKS_STATUS_1"] = "Нове";
 $MESS["TASKS_STATUS_2"] = "Чекає виконання";
 $MESS["TASKS_STATUS_3"] = "Виконується";
-$MESS["TASKS_STATUS_4"] = "Чекає контролю";
+$MESS["TASKS_STATUS_4"] = "Очікує на контроль";
 $MESS["TASKS_STATUS_5"] = "Завершене";
 $MESS["TASKS_STATUS_6"] = "Відкладене";
 $MESS["TASKS_STATUS_7"] = "Відхилене";
@@ -29,6 +29,5 @@ $MESS["TASKS_STATUS_DELAYED"] = "Відкладене";
 $MESS["TASKS_STATUS_IN_PROGRESS"] = "Виконується";
 $MESS["TASKS_STATUS_NEW"] = "Нове";
 $MESS["TASKS_STATUS_OVERDUE"] = "Протерміноване";
-$MESS["TASKS_STATUS_WAITING"] = "Чекає контролю";
+$MESS["TASKS_STATUS_WAITING"] = "Очікує на контроль";
 $MESS["TASKS_TASK_TITLE_LABEL"] = "Завдання";
-?>

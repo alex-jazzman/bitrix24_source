@@ -513,6 +513,8 @@ class im extends \CModule
 
 	function UnInstallEvents()
 	{
+		global $DB;
+
 		include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/events/del_events.php");
 
 		return true;

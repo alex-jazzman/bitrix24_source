@@ -8,6 +8,7 @@ return [
 		'haptics',
 		'notify-manager',
 		'utils/url',
+		'im:lib/theme',
 		'im:messenger/assets/common',
 		'im:messenger/const',
 		'im:messenger/controller/user-profile',

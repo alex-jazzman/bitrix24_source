@@ -1,5 +1,6 @@
-import {PayloadData} from "./base";
+import {MessengerModel, PayloadData} from "./base";
 import {DialogId} from "../../types/common";
+import {CommentModelCollection} from "./comment";
 
 export enum ChatType
 {
@@ -101,5 +102,12 @@ export interface RecentDeleteData extends PayloadData
 	id: DialogId;
 	index: number;
 }
+
+export type RecentModelCollection = {
+	collection: Array<RecentModelState>;
+	index: Record<DialogId, number>;
+}
+
+export type RecentMessengerModel = MessengerModel<RecentModelCollection>;
 
 

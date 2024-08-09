@@ -2,26 +2,23 @@
  * @module im/messenger/controller/dialog/lib/helper/text
  */
 jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, module) => {
-	include('InAppNotifier');
-
 	const { Loc } = require('loc');
 	const { parser } = require('im/messenger/lib/parser');
+	const { Notification } = require('im/messenger/lib/ui/notification');
 
 	/**
 	 * @class DialogTextHelper
 	 */
 	class DialogTextHelper
 	{
-		static copyToClipboard(modelMessage, textTitle = null)
+		static copyToClipboard({ clipboardText = '', notificationText = null }, widget = null)
 		{
-			Application.copyToClipboard(parser.prepareCopy(modelMessage));
-			const title = textTitle || Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED');
+			Application.copyToClipboard(parser.prepareCopy({ text: clipboardText }));
+			const title = notificationText
+				?? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED')
+			;
 
-			InAppNotifier.showNotification({
-				title,
-				time: 1,
-				backgroundColor: '#E6000000',
-			});
+			return Notification.showToastWithParams({ message: title, svgType: 'copy' }, widget);
 		}
 	}
 

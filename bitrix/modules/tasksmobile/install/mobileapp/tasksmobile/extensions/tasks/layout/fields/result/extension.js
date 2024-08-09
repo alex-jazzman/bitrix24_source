@@ -9,6 +9,8 @@ jn.define('tasks/layout/fields/result', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { showToast, Position } = require('toast');
 	const { Icon } = require('assets/icons');
+	const { Color } = require('tokens');
+	const { BottomSheet } = require('bottom-sheet');
 
 	const store = require('statemanager/redux/store');
 	const { dispatch } = store;
@@ -166,11 +168,26 @@ jn.define('tasks/layout/fields/result', (require, exports, module) => {
 		 */
 		openResultList()
 		{
-			TaskResultList.open({
-				taskId: this.taskId,
-				parentWidget: this.parentWidget,
-				onResultClick: (resultId) => this.openResult(resultId),
-			});
+			void new BottomSheet({
+				titleParams: {
+					text: Loc.getMessage('TASKS_FIELDS_RESULT_LIST_WIDGET_TITLE'),
+					type: 'dialog',
+				},
+				component: (layout) => {
+					return TaskResultList({
+						taskId: this.taskId,
+						parentWidget: layout,
+						onResultClick: (resultId) => this.openResult(resultId),
+						onCreateClick: () => this.createNewResult(),
+					});
+				},
+			})
+				.setParentWidget(this.parentWidget || PageManager)
+				.setBackgroundColor(Color.bgSecondary.toHex())
+				.setNavigationBarColor(Color.bgSecondary.toHex())
+				.alwaysOnTop()
+				.open()
+			;
 		}
 
 		#processFiles(files)

@@ -18,7 +18,7 @@ return [
 		'statemanager/redux/store',
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',
-		'tasks/enum',
+		'tasks:enum',
 		'tasks:layout/deadline-pill',
 		'tasks:statemanager/redux/slices/tasks',
 	],

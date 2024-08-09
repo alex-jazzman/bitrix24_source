@@ -10,17 +10,7 @@ jn.define('im/messenger/provider/pull/lib/recent/channel/message-manager', (requ
 	{
 		needToSkipMessageEvent()
 		{
-			if (this.isLinesChat() || this.isCommentChat())
-			{
-				return true;
-			}
-
-			if (this.isOpenChannelChat() && this.isUserInChat())
-			{
-				return true;
-			}
-
-			return false;
+			return !this.isChannelListEvent();
 		}
 	}
 

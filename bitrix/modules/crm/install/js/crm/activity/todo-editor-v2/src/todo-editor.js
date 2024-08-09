@@ -1,10 +1,12 @@
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { ajax as Ajax, Dom, Loc, Type } from 'main.core';
+import { ajax as Ajax, Dom, Extension, Loc, Runtime, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
 import { UI } from 'ui.notification';
 import { BitrixVue } from 'ui.vue3';
 import ActionsPopup from './actions-popup';
+import type { ElementIdsType, SectionIdType, SubSectionIdType } from './analytics';
+import { Analytics, ElementIds, EventIds, Section, SubSection } from './analytics';
 import {
 	TodoEditorBlocksAddress,
 	TodoEditorBlocksCalendar,
@@ -32,6 +34,7 @@ declare type TodoEditorParams = {
 	ownerTypeId: number,
 	borderColor: string,
 	popupMode: boolean,
+	analytics?: AnalyticsSettings,
 };
 
 export type ColorSettings = {
@@ -50,6 +53,18 @@ type ColorItem = {
 
 type ActionMenuSettings = {
 	hiddenActionItems: string[],
+}
+
+type CancelParams = {
+	sendAnalytics: boolean,
+	analytics?: AnalyticsSettings;
+}
+
+type AnalyticsSettings = {
+	section: SectionIdType;
+	subSection: SubSectionIdType;
+	element?: ElementIdsType;
+	notificationSkipPeriod?: string;
 }
 
 export type BlockSettings = {
@@ -90,6 +105,10 @@ export class TodoEditorV2
  * @event onSaveHotkeyPressed
  */
 	static BorderColor = TodoEditorBorderColor;
+	static AnalyticsSection = Section;
+	static AnalyticsSubSection = SubSection;
+	static AnalyticsElement = ElementIds;
+	static AnalyticsEvent = EventIds;
 
 	#container: HTMLElement = null;
 	#layoutApp = null;
@@ -114,6 +133,7 @@ export class TodoEditorV2
 	#popupMode: boolean = false;
 	#hiddenActionItems: string[] = [];
 	#actionsPopup: ?ActionsPopup = null;
+	#analytics: ?Analytics = null;
 
 	constructor(params: TodoEditorParams)
 	{
@@ -165,7 +185,7 @@ export class TodoEditorV2
 		}
 	}
 
-	#initParams(params): void
+	#initParams(params: TodoEditorParams): void
 	{
 		this.#container = params.container;
 		this.#borderColor = this.#isValidBorderColor(params.borderColor)
@@ -197,6 +217,14 @@ export class TodoEditorV2
 		}
 
 		this.#popupMode = Type.isBoolean(params.popupMode) ? params.popupMode : false;
+
+		if (Type.isPlainObject(params.analytics))
+		{
+			this.#analytics = Analytics.createFromToDoEditorData({
+				analyticSection: params.analytics.section,
+				analyticSubSection: params.analytics.subSection,
+			});
+		}
 	}
 
 	#prepareContainer(): void
@@ -237,6 +265,7 @@ export class TodoEditorV2
 			actionsPopup: this.#getActionsPopup(),
 			blocks: this.#getBlocks(),
 			mode: this.#mode,
+			analytics: this.#getAnalyticsInstance(),
 		});
 
 		this.#layoutComponent = this.#layoutApp.mount(this.#container);
@@ -282,6 +311,7 @@ export class TodoEditorV2
 					id: 'address',
 					messageCode: 'CRM_ACTIVITY_TODO_ACTIONS_ADDRESS',
 					svgData: '<svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.5059 3.50928C9.12771 3.50928 6.41309 6.22284 6.41309 9.6021C6.41309 13.2243 10.1465 18.3027 11.7684 20.338C12.1493 20.816 12.8582 20.8132 13.2357 20.3325C14.8534 18.2721 18.5987 13.1219 18.5987 9.6021C18.5987 6.22284 15.8841 3.50928 12.5059 3.50928ZM12.506 12.3707C10.9556 12.3707 9.73636 11.1526 9.73636 9.60108C9.73636 8.05063 10.9545 6.83142 12.506 6.83142C14.0565 6.83142 15.2757 8.04956 15.2757 9.60108C15.2757 11.1526 14.0565 12.3707 12.506 12.3707Z" fill="#A8ADB4"/></svg>',
+					hidden: !this.#canUseAddressBlock(),
 				},
 				{
 					id: 'room',
@@ -291,9 +321,11 @@ export class TodoEditorV2
 					componentParams: {
 						showLocation: true,
 					},
+					hidden: !this.#canUseAddressBlock(),
 				},
 				{
 					type: 'delimiter',
+					hidden: !this.#canUseAddressBlock(),
 				},
 				{
 					id: 'link',
@@ -319,7 +351,7 @@ export class TodoEditorV2
 	{
 		items.forEach((item) => {
 			// eslint-disable-next-line no-param-reassign
-			item.hidden = (item.id && this.#hiddenActionItems.includes(item.id));
+			item.hidden = (item.id && this.#hiddenActionItems.includes(item.id)) || item.hidden;
 		});
 	}
 
@@ -372,7 +404,7 @@ export class TodoEditorV2
 	{
 		if (Dom.hasClass(this.#container, '--is-edit'))
 		{
-			return new Promise((resolve, reject) => {
+			return new Promise((resolve) => {
 				UI.Dialogs.MessageBox.show({
 					modal: true,
 					title: Loc.getMessage('CRM_ACTIVITY_TODO_CONFIRM_DIALOG_TITLE'),
@@ -457,7 +489,7 @@ export class TodoEditorV2
 	async #initLayoutComponentForEdit(entityData: Object, blocksData: Object[]): Promise
 	{
 		return new Promise((resolve) => {
-			void this.clearValue().then(() => {
+			void this.#clearValue().then(() => {
 				this.#layoutComponent.setData(entityData);
 
 				blocksData.forEach(({ id, data }) => {
@@ -517,8 +549,13 @@ export class TodoEditorV2
 		// wrap BX.Promise in native js promise
 		this.#loadingPromise = new Promise((resolve, reject) => {
 			this.#getSaveActionData().then((data) => {
+				const analytics = this.#getAnalyticsLabel(data);
+
 				Ajax
-					.runAction(this.#getSaveActionPath(), { data })
+					.runAction(this.#getSaveActionPath(), {
+						data,
+						analytics,
+					})
 					.then(resolve)
 					.catch(reject)
 				;
@@ -582,15 +619,62 @@ export class TodoEditorV2
 		return Promise.resolve(result);
 	}
 
+	#getAnalyticsLabel(data: Object): Object
+	{
+		const analyticsLabel = this.#getAnalyticsInstance();
+		if (analyticsLabel === null)
+		{
+			return {};
+		}
+
+		analyticsLabel
+			.setEvent(EventIds.activityAdd)
+			.setElement(ElementIds.createButton)
+		;
+
+		// eslint-disable-next-line no-param-reassign
+		data = Runtime.clone(data);
+
+		const pingOffsets = data.pingOffsets.map((value) => Number(value));
+		const defaultOffsets = this.#pingSettings.selectedValues;
+		if (JSON.stringify(pingOffsets) !== JSON.stringify(defaultOffsets))
+		{
+			analyticsLabel.setPingSettings(data.pingOffsets.join(','));
+		}
+
+		const defaultColorId = 'default';
+		if (data.colorId !== defaultColorId)
+		{
+			analyticsLabel.setColorId(data.colorId);
+		}
+
+		const blockTypes = [];
+		data.settings.forEach((block) => {
+			blockTypes.push(block.id);
+		});
+		if (Type.isArrayFilled(blockTypes))
+		{
+			analyticsLabel.setBlockTypes(blockTypes);
+		}
+
+		return analyticsLabel.getData();
+	}
+
 	#getBlocks(): BlockSettings[]
 	{
-		return [
+		const blocks = [
 			this.#getCalendarBlockSettings(),
 			this.#getClientBlockSettings(),
 			this.#getLinkBlockSettings(),
 			this.#getFileBlockSettings(),
-			this.#getAddressBlockSettings(),
 		];
+
+		if (this.#canUseAddressBlock())
+		{
+			blocks.push(this.#getAddressBlockSettings());
+		}
+
+		return blocks;
 	}
 
 	#getCalendarBlockSettings(): BlockSettings
@@ -651,14 +735,21 @@ export class TodoEditorV2
 		};
 	}
 
+	#canUseAddressBlock(): boolean
+	{
+		const settings = Extension.getSettings('crm.activity.todo-editor-v2');
+
+		return settings?.canUseAddressBlock === true;
+	}
+
 	getDeadline(): ?Date
 	{
-		return this.#layoutComponent?.getData()['deadline'] ?? null;
+		return this.#layoutComponent?.getData().deadline ?? null;
 	}
 
 	getDescription(): String
 	{
-		return this.#layoutComponent?.getData()['description'] ?? '';
+		return this.#layoutComponent?.getData().description ?? '';
 	}
 
 	setParentActivityId(activityId: Number): TodoEditorV2
@@ -677,7 +768,7 @@ export class TodoEditorV2
 
 	setCurrentUser(currentUser: Object): TodoEditorV2
 	{
-		this.#currentUser = Object;
+		this.#currentUser = currentUser;
 
 		return this;
 	}
@@ -697,7 +788,7 @@ export class TodoEditorV2
 	setDefaultDeadLine(isNeedUpdateLayout: Boolean = true): TodoEditorV2
 	{
 		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
-		let defaultDate = BX.parseDate(Loc.getMessage('CRM_TIMELINE_TODO_EDITOR_DEFAULT_DATETIME'));
+		const defaultDate = BX.parseDate(Loc.getMessage('CRM_TIMELINE_TODO_EDITOR_DEFAULT_DATETIME'));
 		if (Type.isDate(defaultDate))
 		{
 			this.#deadline = defaultDate;
@@ -729,7 +820,60 @@ export class TodoEditorV2
 		return this;
 	}
 
-	clearValue(): Promise
+	cancel(params: CancelParams = {}): Promise
+	{
+		if (params?.sendAnalytics === false)
+		{
+			return this.#clearValue();
+		}
+
+		const analytics = this.#getAnalyticsInstance();
+		if (analytics === null)
+		{
+			return this.#clearValue();
+		}
+
+		analytics
+			.setEvent(EventIds.activityAdd)
+			.setElement(ElementIds.cancelButton)
+		;
+
+		const subSection = params?.analytics?.subSection;
+		if (Type.isStringFilled(subSection))
+		{
+			analytics.setSubSection(subSection);
+		}
+
+		const element = params?.analytics?.element;
+		if (Type.isStringFilled(element))
+		{
+			analytics.setElement(element);
+		}
+
+		const notificationSkipPeriod = params?.analytics?.notificationSkipPeriod;
+		if (Type.isStringFilled(notificationSkipPeriod))
+		{
+			analytics.setNotificationSkipPeriod(notificationSkipPeriod);
+		}
+
+		analytics.send();
+
+		return this.#clearValue();
+	}
+
+	#getAnalyticsInstance(): ?Analytics
+	{
+		const data = this.#analytics?.getData();
+
+		if (!data)
+		{
+			return null;
+		}
+
+		return new Analytics(data.c_section, data.c_sub_section);
+	}
+
+	#clearValue(): Promise
 	{
 		this.#parentActivityId = null;
 

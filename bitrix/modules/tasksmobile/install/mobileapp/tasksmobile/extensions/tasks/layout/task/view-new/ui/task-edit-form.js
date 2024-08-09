@@ -22,6 +22,8 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 	const {
 		selectByTaskIdOrGuid,
 		selectActions,
+		selectIsResponsible,
+		selectIsAccomplice,
 		selectIsDeferred,
 		selectIsCompleted,
 		selectIsExpired,
@@ -240,6 +242,7 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 						id: Field.RESULT,
 						taskId: task.id,
 						resultsCount: task.resultsCount,
+						readOnly: !selectIsResponsible(task) && !selectIsAccomplice(task),
 						onContentClick: onFieldContentClick,
 					},
 					compact: TaskResultFieldCompact,
@@ -544,6 +547,9 @@ jn.define('tasks/layout/task/view-new/ui/task-edit-form', (require, exports, mod
 			id: user.id,
 			imageUrl: user.avatarSize100,
 			title: user.fullName,
+			customData: {
+				position: user.workPosition,
+			},
 		} : undefined;
 	};
 

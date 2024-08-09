@@ -6,6 +6,7 @@
 	const { ButtonsToolbar } = require('layout/ui/buttons-toolbar');
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
 
 	class ProjectView extends LayoutComponent

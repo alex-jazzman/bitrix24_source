@@ -9,6 +9,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+$settings = [
+	'canUseAddressBlock' => \Bitrix\Main\ModuleManager::isModuleInstalled('location'),
+];
+
+if (\Bitrix\Main\Loader::includeModule('crm'))
+{
+	$settings['crmMode'] = \Bitrix\Crm\Settings\Mode::getCurrentName();
+}
+
 return [
 	'css' => 'dist/todo-editor-v2.bundle.css',
 	'js' => 'dist/todo-editor-v2.bundle.js',
@@ -16,6 +25,7 @@ return [
 		'ui.vue3',
 		'crm.ai.copilot-textarea',
 		'crm.timeline.tools',
+		'ui.analytics',
 		'location.core',
 		'location.widget',
 		'calendar.planner',
@@ -26,13 +36,14 @@ return [
 		'ui.uploader.tile-widget',
 		'main.popup',
 		'crm.field.color-selector',
-		'crm.field.item-selector',
+		'crm.field.ping-selector',
 		'main.core',
 		'main.core.events',
 		'ui.entity-selector',
 		'ui.vue3.directives.hint',
 	],
 	'skip_core' => false,
+	'settings' => $settings,
 	'oninit' => static function() {
 		$date = null;
 		if (\Bitrix\Main\Loader::includeModule('crm'))

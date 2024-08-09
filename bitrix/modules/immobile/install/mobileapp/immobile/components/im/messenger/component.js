@@ -32,7 +32,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	const core = new ChatApplication({
-		localStorageEnable: true,
+		localStorage: {
+			enable: true,
+			readOnly: false,
+		},
 	});
 	try
 	{
@@ -830,7 +833,8 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 
 		getOpenLineParams(options = {})
 		{
-			const openLineParamsResponseEvent = `${EventType.messenger.openLineParams}::${options.userCode}`;
+			const requestId = options.userCode ?? options.sessionId;
+			const openLineParamsResponseEvent = `${EventType.messenger.openLineParams}::${requestId}`;
 
 			Dialog.getOpenLineParams(options)
 				.then((params) => {

@@ -11,7 +11,6 @@ export const ColorSelectorEvents = {
 
 export class ColorSelector
 {
-	#id: ?string;
 	#target: ?HTMLElement = null;
 	#colorList: Item[] = [];
 	#selectedColorId: string = 'default';
@@ -23,7 +22,6 @@ export class ColorSelector
 
 	constructor(params: Object)
 	{
-		this.#id = params.id || `color-selector-${Text.getRandom()}`;
 		this.#target = Type.isDomNode(params.target) ? params.target : null;
 		this.#colorList = Type.isArrayFilled(params.colorList) ? params.colorList : [];
 		this.#selectedColorId = Type.isStringFilled(params.selectedColorId) ? params.selectedColorId : [];

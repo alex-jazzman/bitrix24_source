@@ -65,6 +65,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  BELL: 'bell'
 	};
 	var Events = {
+	  EVENT_ITEMSELECTOR_OPEN: 'crm.field.itemselector:open',
 	  EVENT_ITEMSELECTOR_VALUE_CHANGE: 'crm.field.itemselector:change'
 	};
 	var _id = /*#__PURE__*/new WeakMap();
@@ -371,11 +372,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 	function _bindEvents2() {
-	  if (main_core.Type.isDomNode(_classPrivateMethodGet(this, _getAddButtonEl, _getAddButtonEl2).call(this))) {
-	    main_core.Event.bind(_classPrivateMethodGet(this, _getAddButtonEl, _getAddButtonEl2).call(this), 'click', _classPrivateMethodGet(this, _onShowPopup, _onShowPopup2).bind(this));
-	  }
 	  if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldGet(this, _addButtonCompact))) {
 	    main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _addButtonCompact), 'click', _classPrivateMethodGet(this, _onShowPopup, _onShowPopup2).bind(this));
+	  } else if (main_core.Type.isDomNode(_classPrivateMethodGet(this, _getAddButtonEl, _getAddButtonEl2).call(this))) {
+	    main_core.Event.bind(_classPrivateMethodGet(this, _getAddButtonEl, _getAddButtonEl2).call(this), 'click', _classPrivateMethodGet(this, _onShowPopup, _onShowPopup2).bind(this));
 	  }
 	  if (main_core.Type.isDomNode(babelHelpers.classPrivateFieldGet(this, _selectedValueWrapperEl))) {
 	    main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _selectedValueWrapperEl), 'click', _classPrivateMethodGet(this, _onRemoveValue, _onRemoveValue2).bind(this));
@@ -400,6 +400,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  };
 	  babelHelpers.classPrivateFieldSet(this, _valuesMenuPopup, main_popup.MenuManager.create(babelHelpers.classPrivateFieldGet(this, _id), _classPrivateMethodGet(this, _getAddButtonEl, _getAddButtonEl2).call(this), menuItems, menuParams));
 	  babelHelpers.classPrivateFieldGet(this, _valuesMenuPopup).show();
+	  main_core_events.EventEmitter.emit(this, Events.EVENT_ITEMSELECTOR_OPEN);
 	}
 	function _getPreparedMenuItems2() {
 	  var _this3 = this;

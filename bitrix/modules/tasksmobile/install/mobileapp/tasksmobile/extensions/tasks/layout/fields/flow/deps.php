@@ -6,7 +6,8 @@ return [
 		'selector/widget/factory',
 		'utils/url',
 		'assets/icons',
-		'tasks:statemanager/redux/slices/tariff-plan-restrictions',
+		'statemanager/redux/store',
+		'tasks:statemanager/redux/slices/tariff-restrictions',
 		'tasks:layout/flow/tariff-plan-restrictions-opener',
 	],
 ];

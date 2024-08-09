@@ -381,22 +381,87 @@
 				},
 				{
 					resolveFunction: BX.MobileTools.getMessengerOpenDialogParamsFromUrl,
-					openFunction(params) {
-						const openDialogOptions = {
-							dialogId: params.dialogId,
-						};
-
-						if (params.messageId)
+					openFunction(params = {}) {
+						const dialogId = params.dialogId;
+						const userCode = params.userCode;
+						const sessionId = params.sessionId;
+						const fallbackUrl = params.fallbackUrl;
+						const openDialogOptions = {};
+						if (params.dialogType === MessengerDialogType.lines)
 						{
-							openDialogOptions.messageId = params.messageId;
-							openDialogOptions.withMessageHighlight = true;
+							openDialogOptions.fallbackUrl = fallbackUrl;
+							openDialogOptions.dialogTitleParams = {
+								chatType: 'lines',
+							};
 						}
 
-						BXMobileApp.Events.postToComponent(
-							'ImMobile.Messenger.Dialog:open',
-							openDialogOptions,
-							params.componentCode,
-						);
+						if (dialogId)
+						{
+							openDialogOptions.dialogId = dialogId;
+
+							if (params.messageId)
+							{
+								openDialogOptions.messageId = params.messageId;
+								openDialogOptions.withMessageHighlight = true;
+							}
+
+							if (params.dialogType === MessengerDialogType.chat)
+							{
+								BXMobileApp.Events.postToComponent(
+									'ImMobile.Messenger.Dialog:open',
+									openDialogOptions,
+									'im.messenger',
+								);
+
+								return;
+							}
+
+							if (params.dialogType === MessengerDialogType.copilot)
+							{
+								BXMobileApp.Events.postToComponent(
+									'ImMobile.Messenger.Dialog:open',
+									openDialogOptions,
+									'im.copilot.messenger',
+								);
+
+								return;
+							}
+
+							if (params.dialogType === MessengerDialogType.lines)
+							{
+								BXMobileApp.Events.postToComponent(
+									'ImMobile.Messenger.Openlines:open',
+									openDialogOptions,
+									'im.messenger',
+								);
+
+								return;
+							}
+
+							return;
+						}
+
+						if (params.dialogType === MessengerDialogType.lines && userCode)
+						{
+							openDialogOptions.userCode = userCode;
+
+							BXMobileApp.Events.postToComponent(
+								'ImMobile.Messenger.Openlines:open',
+								openDialogOptions,
+								'im.messenger',
+							);
+						}
+
+						if (params.dialogType === MessengerDialogType.lines && sessionId)
+						{
+							openDialogOptions.sessionId = sessionId;
+
+							BXMobileApp.Events.postToComponent(
+								'ImMobile.Messenger.Openlines:open',
+								openDialogOptions,
+								'im.messenger',
+							);
+						}
 					},
 				},
 			];
@@ -589,12 +654,6 @@
 			const regExpMap = [
 				{
 					regExp: /\/bitrix\/tools\/disk\/focus.php\?.*(folderId|objectId)=(\d+)/i,
-					params: [
-						{
-							name: 'folderId',
-							key: 2,
-						},
-					],
 				},
 				{
 					regExp: /\/company\/personal\/user\/(\d+)\/disk\/path\//i,
@@ -635,6 +694,15 @@
 				{
 					params.forEach(({ key, name }) => {
 						result[name] = found[key];
+					});
+				}
+				else if (Array.isArray(found))
+				{
+					found.slice(1).forEach((value, index, array) => {
+						if (index % 2 === 0 && index + 1 < array.length)
+						{
+							result[value] = array[index + 1];
+						}
 					});
 				}
 
@@ -703,14 +771,43 @@
 		},
 		getMessengerOpenDialogParamsFromUrl(url)
 		{
-			const regs = [
+			const chatRegs = [
 				/\/online\/\?IM_DIALOG=(\d+|chat\d+)&IM_MESSAGE=(\d+)/i,
 				/\/online\/\?IM_DIALOG=(\d+|chat\d+)/i,
 				/\/online\/\?IM_COPILOT=(\d+|chat\d+)&IM_MESSAGE=(\d+)/i,
 				/\/online\/\?IM_COPILOT=(\d+|chat\d+)/i,
+				/\/online\/\?IM_LINES=(chat\d+)&IM_MESSAGE=(\d+)/i,
+				/\/online\/\?IM_LINES=(chat\d+)/i,
 			];
 
-			for (const reg of regs)
+			const openlinesPrefix = 'imol|';
+			const checkIsOpenLineSessionId = (dialogId) => {
+				if (!(typeof dialogId === 'string' && dialogId !== ''))
+				{
+					return false;
+				}
+
+				if (!dialogId.startsWith(openlinesPrefix))
+				{
+					return false;
+				}
+
+				const sessionIdParts = dialogId.split(openlinesPrefix);
+				if (sessionIdParts.length !== 2)
+				{
+					return false;
+				}
+
+				const sessionId = Number(sessionIdParts[1]);
+
+				return !Number.isNaN(sessionId) && typeof sessionId === 'number';
+			};
+
+			const checkIsOpenLineUserCode = (dialogId) => {
+				return !checkIsOpenLineSessionId(dialogId) && dialogId.startsWith(openlinesPrefix);
+			};
+
+			for (const reg of chatRegs)
 			{
 				const result = url.match(reg);
 				if (!result)
@@ -718,19 +815,65 @@
 					continue;
 				}
 
-				let componentCode = 'im.messenger';
+				let dialogType;
 				if (result[0].includes('IM_COPILOT'))
 				{
-					componentCode = 'im.copilot.messenger';
+					dialogType = MessengerDialogType.copilot;
+				}
+				else if (result[0].includes('IM_LINES'))
+				{
+					dialogType = MessengerDialogType.lines;
+				}
+				else
+				{
+					dialogType = MessengerDialogType.chat;
 				}
 
 				const dialogId = result[1];
 				const messageId = result[2];
 				const openDialogParams = {
-					componentCode,
+					dialogType,
 					dialogId,
+					fallbackUrl: url,
 				};
 
+				if (messageId)
+				{
+					openDialogParams.messageId = parseInt(messageId, 10);
+				}
+
+				return openDialogParams;
+			}
+
+			const openLineRegs = [
+				/\/online\/\?IM_DIALOG=imol([^&]+)&IM_MESSAGE=(\d+)/i,
+				/\/online\/\?IM_DIALOG=imol([^&]+)/i,
+				/\/online\/\?IM_HISTORY=imol([^&]+)/i,
+			];
+			for (const reg of openLineRegs)
+			{
+				const result = url.match(reg);
+				if (!result)
+				{
+					continue;
+				}
+
+				const openDialogParams = {
+					dialogType: MessengerDialogType.lines,
+					fallbackUrl: url,
+				};
+
+				const dialogId = `imol${result[1]}`;
+				if (checkIsOpenLineUserCode(dialogId))
+				{
+					openDialogParams.userCode = dialogId;
+				}
+				else if (checkIsOpenLineSessionId(dialogId))
+				{
+					openDialogParams.sessionId = Number(dialogId.replace(openlinesPrefix, ''));
+				}
+
+				const messageId = result[2];
 				if (messageId)
 				{
 					openDialogParams.messageId = parseInt(messageId, 10);
@@ -914,6 +1057,13 @@
 			return BX.rest.callMethod('im.desktop.page.open', { url });
 		},
 	};
+
+	var MessengerDialogType = Object.freeze({
+		chat: 'chat',
+		copilot: 'copilot',
+		channel: 'channel',
+		lines: 'lines',
+	});
 
 	var pageViewEvents = {
 		onLiveFeedFavoriteView: /\/mobile\/index.php\?favorites=y/gi,

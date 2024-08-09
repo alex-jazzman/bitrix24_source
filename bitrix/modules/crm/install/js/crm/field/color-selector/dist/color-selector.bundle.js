@@ -11,7 +11,6 @@ this.BX.Crm = this.BX.Crm || {};
 	var ColorSelectorEvents = {
 	  EVENT_COLORSELECTOR_VALUE_CHANGE: 'crm.field.colorselector:change'
 	};
-	var _id = /*#__PURE__*/new WeakMap();
 	var _target = /*#__PURE__*/new WeakMap();
 	var _colorList = /*#__PURE__*/new WeakMap();
 	var _selectedColorId = /*#__PURE__*/new WeakMap();
@@ -30,10 +29,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec(this, _getPopup);
 	    _classPrivateMethodInitSpec(this, _getColorById);
 	    _classPrivateMethodInitSpec(this, _create);
-	    _classPrivateFieldInitSpec(this, _id, {
-	      writable: true,
-	      value: void 0
-	    });
 	    _classPrivateFieldInitSpec(this, _target, {
 	      writable: true,
 	      value: null
@@ -62,7 +57,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _id, params.id || "color-selector-".concat(main_core.Text.getRandom()));
 	    babelHelpers.classPrivateFieldSet(this, _target, main_core.Type.isDomNode(params.target) ? params.target : null);
 	    babelHelpers.classPrivateFieldSet(this, _colorList, main_core.Type.isArrayFilled(params.colorList) ? params.colorList : []);
 	    babelHelpers.classPrivateFieldSet(this, _selectedColorId, main_core.Type.isStringFilled(params.selectedColorId) ? params.selectedColorId : []);

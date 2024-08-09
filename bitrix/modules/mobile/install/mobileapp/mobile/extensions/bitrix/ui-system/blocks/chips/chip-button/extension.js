@@ -2,7 +2,8 @@
  * @module ui-system/blocks/chips/chip-button
  */
 jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
-	const { Indent, Component } = require('tokens');
+	const { Indent, Component, Color } = require('tokens');
+	const { Ellipsize } = require('utils/enums/style');
 	const { mergeImmutable } = require('utils/object');
 	const { IconView, Icon, iconTypes } = require('ui-system/blocks/icon');
 	const { ChipButtonDesign } = require('ui-system/blocks/chips/chip-button/src/design-enum');
@@ -20,14 +21,16 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	 */
 	class ChipButton extends LayoutComponent
 		/**
-		 * @params {object} props
+		 * @params {Object} props
 		 * @params {boolean} [props.text]
+		 * @params {Icon} [props.icon]
 		 * @params {boolean} [props.compact]
-		 * @params {ChipButtonSize} [props.size]
 		 * @params {ChipButtonMode} [props.mode]
 		 * @params {ChipButtonDesign} [props.design]
+		 * @params {Ellipsize} [props.ellipsize]
 		 * @params {BadgeStatus | BadgeCounter} [props.badge]
-		 * @params {function} [props.forwardRef]
+		 * @params {Function} [props.forwardRef]
+		 * @params {Color} [props.backgroundColor]
 		 */
 	{
 		constructor(props)
@@ -69,19 +72,15 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			const { color } = this.style;
 			const Typography = this.size.getTypography();
 
-			return View(
-				{
-					style: {
-						flexShrink: 1,
-					},
+			return Typography({
+				text,
+				color,
+				ellipsize: this.#getEllipsize(),
+				numberOfLines: 1,
+				style: {
+					flexShrink: 1,
 				},
-				Typography({
-					text,
-					color,
-					ellipsize: 'end',
-					numberOfLines: 1,
-				}),
-			);
+			});
 		}
 
 		#renderIcon()
@@ -96,7 +95,6 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			const { color } = this.style;
 
 			const iconStyle = {
-				flexGrow: 1,
 				marginRight: text ? Indent.XS2.toNumber() : 0,
 			};
 
@@ -118,9 +116,6 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			const { color } = this.style;
 
 			return IconView({
-				style: {
-					flexGrow: 1,
-				},
 				color,
 				icon: Icon.CHEVRON_DOWN,
 			});
@@ -148,18 +143,15 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 
 		render()
 		{
-			const { testId, style = {}, onLayout, onClick, forwardRef, ...restProps } = this.props;
+			const { testId, style = {}, onLayout, forwardRef } = this.props;
 			const renderProps = mergeImmutable(
 				{
-					...restProps,
 					ref: forwardRef,
 					testId,
-					onClick,
 					onLayout,
 					style: {
+						flexDirection: 'row',
 						flexShrink: 1,
-						alignItems: 'baseline',
-						justifyContent: 'flex-start',
 					},
 				},
 				{ style },
@@ -173,20 +165,23 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 
 		#renderBody()
 		{
+			const { onClick, backgroundColor = null } = this.props;
 			const { color, ...chipStyle } = this.style;
 
 			return View(
 				{
+					onClick,
 					style: {
+						flexShrink: 1,
 						flexDirection: 'row',
 						alignItems: 'center',
-						justifyContent: 'center',
 						height: this.size.getHeight(),
 						borderRadius: Component.elementAccentCorner.toNumber(),
 						paddingLeft: this.#getInternalPadding(Direction.LEFT),
 						paddingRight: this.#getInternalPadding(Direction.RIGHT),
 						paddingHorizontal: Indent.L.toNumber(),
 						...chipStyle,
+						backgroundColor: backgroundColor?.toHex(),
 					},
 				},
 				this.#renderIcon(),
@@ -217,6 +212,13 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 			return this.size.getIndent(direction, 'text');
 		}
 
+		#getEllipsize()
+		{
+			const { ellipsize } = this.props;
+
+			return Ellipsize.resolve(ellipsize, Ellipsize.END).toString();
+		}
+
 		isOnlyIcon()
 		{
 			const { icon, dropdown, text } = this.props;
@@ -232,18 +234,22 @@ jn.define('ui-system/blocks/chips/chip-button', (require, exports, module) => {
 	ChipButton.propTypes = {
 		testId: PropTypes.string.isRequired,
 		text: PropTypes.string,
+		icon: PropTypes.instanceOf(Icon),
 		compact: PropTypes.bool,
-		design: PropTypes.object,
-		mode: PropTypes.object,
+		design: PropTypes.instanceOf(ChipButtonDesign),
+		mode: PropTypes.instanceOf(ChipButtonMode),
 		badge: PropTypes.object,
 		dropdown: PropTypes.bool,
+		ellipsize: PropTypes.object,
 		forwardRef: PropTypes.func,
+		backgroundColor: PropTypes.instanceOf(Color),
 	};
 
 	module.exports = {
 		ChipButton: (props) => new ChipButton(props),
 		ChipButtonDesign,
 		ChipButtonMode,
+		Ellipsize,
 		iconTypes,
 	};
 });

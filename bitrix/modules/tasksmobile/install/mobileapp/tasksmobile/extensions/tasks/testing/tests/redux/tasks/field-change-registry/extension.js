@@ -3,7 +3,6 @@
 	const { describe, test, expect, beforeEach } = require('testing');
 	const { FieldChangeRegistry } = require('tasks/statemanager/redux/slices/tasks/field-change-registry');
 	const { TaskModel } = require('tasks/statemanager/redux/slices/tasks/model/task');
-	const { TaskStatus } = require('tasks/enum');
 	const {
 		prepareUpdateDeadlineNewState,
 		prepareDelegateNewState,
@@ -13,34 +12,13 @@
 	} = require('tasks/statemanager/redux/slices/tasks/extra-reducer');
 
 	const getOldTaskState = (now) => ({
+		...TaskModel.getDefaultReduxTask(),
 		id: 1,
-		newCommentsCount: 0,
-		status: TaskStatus.PENDING,
 		creator: 2,
 		responsible: 1,
-		accomplices: [],
-		auditors: [],
-
-		isMuted: false,
-		isPinned: false,
-		isInFavorites: false,
-		isTimerRunningForCurrentUser: false,
-
 		deadline: Math.ceil(now / 1000) - 3600,
 		activityDate: Math.ceil(now / 1000) - 2 * 3600,
-
-		canUseTimer: false,
-		canStart: false,
-		canPause: false,
-		canComplete: false,
-		canRenew: false,
-		canApprove: false,
-		canDisapprove: false,
-
-		isRemoved: false,
 		isExpired: true,
-		isCreating: false,
-		isConsideredForCounterChange: false,
 	});
 	const fulfillRequest = (requestId) => unregisterRegistryChanges(requestId);
 
@@ -232,6 +210,7 @@
 			expect(firstNewTaskState).toEqual({
 				...oldTaskState,
 				responsible: firstNewResponsible,
+				auditors: [oldTaskState.responsible],
 				activityDate: Math.ceil(firstNewActivityDate / 1000),
 				isConsideredForCounterChange: true,
 			});
@@ -247,6 +226,7 @@
 			expect(secondNewTaskState).toEqual({
 				...oldTaskState,
 				responsible: secondNewResponsible,
+				auditors: [oldTaskState.responsible, firstNewResponsible],
 				activityDate: Math.ceil(secondNewActivityDate / 1000),
 				isConsideredForCounterChange: true,
 			});

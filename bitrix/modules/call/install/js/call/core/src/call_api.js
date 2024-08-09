@@ -93,6 +93,8 @@ export class Call {
 		cameraStream: null,
 		microphoneStream: null,
 		screenStream: null,
+		mediaMutedBySystem: false,
+		needToEnableAudioAfterSystemMuted: false,
 		localTracks: {},
 		localConnectionQuality: 0,
 		minimalConnectionQuality: 2,
@@ -145,6 +147,11 @@ export class Call {
 	constructor() {
 		this.sendLeaveBound = this.#sendLeave.bind(this);
 		this.beforeDisconnectBound = this.#beforeDisconnect.bind(this);
+	}
+
+	get isMediaMutedBySystem()
+	{
+		return this.#privateProperties.mediaMutedBySystem;
 	}
 
 	async connect(options) {
@@ -538,11 +545,11 @@ export class Call {
 				{
 					if (track.source === MediaStreamsKinds.Camera)
 					{
-						if (!data.trackMuted.muted && track.muted)
+						if (!data.trackMuted.muted && track.muted && !this.#privateProperties.mediaMutedBySystem)
 						{
 							this.triggerEvents('PublishSucceed', [track.source]);
 						}
-						else
+						else if (!this.#privateProperties.mediaMutedBySystem)
 						{
 							this.triggerEvents('PublishPaused', [track.source]);
 						}
@@ -1456,11 +1463,17 @@ export class Call {
 		}
 	}
 
-	disableAudio() {
+	disableAudio(bySystem = false) {
+		if (this.#privateProperties.mediaMutedBySystem)
+		{
+			return;
+		}
+
 		this.setLog('Start disabling audio', LOG_LEVEL.INFO);
 		const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 		if (track)
 		{
+			this.#privateProperties.needToEnableAudioAfterSystemMuted = bySystem ? track.enabled : false;
 			track.enabled = false;
 			this.pauseTrack(MediaStreamsKinds.Microphone, true);
 		}
@@ -1472,6 +1485,7 @@ export class Call {
 
 	async enableAudio() {
 		this.setLog('Start enabling audio', LOG_LEVEL.INFO);
+		this.#privateProperties.needToEnableAudioAfterSystemMuted = false;
 		if (this.#privateProperties.switchActiveAudioDeviceInProgress)
 		{
 			try
@@ -1509,7 +1523,8 @@ export class Call {
 		}
 	}
 
-	async disableVideo() {
+	async disableVideo(bySystem = false)
+	{
 		if (this.#privateProperties.isReconnecting)
 		{
 			return;
@@ -1524,20 +1539,33 @@ export class Call {
 		const track = this.#privateProperties.cameraStream?.getVideoTracks()[0];
 		if (track && this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
 		{
-			track.stop();
+			if (this.#privateProperties.mediaMutedBySystem)
+			{
+				this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+				this.#privateProperties.mediaMutedBySystem = false;
+				track.stop();
+				this.triggerEvents('MediaMutedBySystem', [false]);
+				this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+				return;
+			}
+
 			this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted = true;
-
 			this.pauseTrack(MediaStreamsKinds.Camera, true);
-
-			this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+			if (!bySystem)
+			{
+				this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+				track.stop();
+				this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+			}
 		}
 		else
 		{
 			this.setLog('Disabling video failed: has no track', LOG_LEVEL.ERROR);
+			this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
 		}
 	}
 
-	async enableVideo() {
+	async enableVideo(skipUnpause = false) {
 		if (this.#privateProperties.isReconnecting)
 		{
 			return;
@@ -1560,29 +1588,47 @@ export class Call {
 			}
 		}
 		this.setLog('Start enabling video', LOG_LEVEL.INFO);
-		let track = this.#privateProperties.cameraStream?.getVideoTracks()[0];
-		if (track && this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
+		let hasTrack = !!this.#privateProperties.cameraStream?.getVideoTracks()[0];
+		let track = await this.getLocalVideo();
+
+		if (track && hasTrack && this.#privateProperties.localTracks[MediaStreamsKinds.Camera])
 		{
-			track = await this.getLocalVideo();
-			this.setLog('Enabling video via unpause signal', LOG_LEVEL.INFO);
-			this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted = false;
-			await this.publishTrack(MediaStreamsKinds.Camera, track);
-			this.unpauseTrack(MediaStreamsKinds.Camera);
-		}
-		else
-		{
-			track = await this.getLocalVideo();
-			if (track)
+
+			if (this.#privateProperties.mediaMutedBySystem)
 			{
-				this.setLog('Enabling video via publish', LOG_LEVEL.INFO);
-				await this.publishTrack(MediaStreamsKinds.Camera, track);
+				this.#privateProperties.mediaMutedBySystem = false;
+				this.triggerEvents('MediaMutedBySystem', [false]);
+			}
+			if (skipUnpause)
+			{
+				this.setLog('Re-enabling video after automatic camera change', LOG_LEVEL.INFO);
 			}
 			else
 			{
-				this.setLog('Enabling video failed: has no track', LOG_LEVEL.ERROR);
-				this.#releaseStream(MediaStreamsKinds.Camera);
-				this.triggerEvents('PublishFailed', [MediaStreamsKinds.Camera]);
+				this.setLog('Enabling video via unpause signal', LOG_LEVEL.INFO);
 			}
+			this.#privateProperties.localTracks[MediaStreamsKinds.Camera].muted = false;
+			await this.publishTrack(MediaStreamsKinds.Camera, track);
+			if (skipUnpause)
+			{
+				this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+			}
+			else
+			{
+				this.unpauseTrack(MediaStreamsKinds.Camera);
+			}
+		}
+		else if (track)
+		{
+			this.setLog('Enabling video via publish', LOG_LEVEL.INFO);
+			await this.publishTrack(MediaStreamsKinds.Camera, track);
+		}
+		else
+		{
+			this.setLog('Enabling video failed: has no track', LOG_LEVEL.ERROR);
+			this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+			this.#releaseStream(MediaStreamsKinds.Camera);
+			this.triggerEvents('PublishFailed', [MediaStreamsKinds.Camera]);
 		}
 	}
 
@@ -1594,7 +1640,7 @@ export class Call {
 		{
 			this.enableVideo();
 		}
-		else if (videoQueue === VIDEO_QUEUE.DISABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0].readyState === 'live')
+		else if (videoQueue === VIDEO_QUEUE.DISABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0].readyState === 'live' && !this.#privateProperties.mediaMutedBySystem)
 		{
 			this.disableVideo();
 		}
@@ -1685,6 +1731,10 @@ export class Call {
 			}
 
 			stream = await navigator.mediaDevices.getUserMedia(constraints)
+			if (options.video)
+			{
+				this.#addTrackMuteHandlers(stream.getVideoTracks()[0]);
+			}
 			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} succeeded`, LOG_LEVEL.INFO);
 		} catch (e) {
 			if (options.video)
@@ -1935,7 +1985,33 @@ export class Call {
 
 	isVideoPublished()
 	{
-		return this.#privateProperties.localTracks[MediaStreamsKinds.Camera] && this.#privateProperties.localTracks[MediaStreamsKinds.Camera]?.muted !== true;
+		return this.#privateProperties.localTracks[MediaStreamsKinds.Camera] && this.#privateProperties.localTracks[MediaStreamsKinds.Camera]?.muted !== true ;
+	}
+
+	#addTrackMuteHandlers(track)
+	{
+		track.onmute = (event) =>
+		{
+			this.#privateProperties.mediaMutedBySystem = false;
+			this.disableVideo(true);
+			this.disableAudio(true);
+			this.#privateProperties.mediaMutedBySystem = true;
+			this.triggerEvents('MediaMutedBySystem', [true]);
+		};
+
+		track.onunmute = (event) =>
+		{
+			if (this.#privateProperties.mediaMutedBySystem)
+			{
+				this.#privateProperties.mediaMutedBySystem = false;
+				this.triggerEvents('MediaMutedBySystem', [false]);
+			}
+			this.enableVideo();
+			if (this.#privateProperties.needToEnableAudioAfterSystemMuted)
+			{
+				this.enableAudio();
+			}
+		};
 	}
 
 	getParticipants() {

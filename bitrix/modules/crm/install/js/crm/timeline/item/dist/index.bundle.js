@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,rest_client,ui_analytics,ui_hint,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,crm_ai_copilotTextarea,main_popup,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,crm_ai_call,ui_notification,main_core,ui_dialogs_messagebox) {
+(function (exports,rest_client,ui_analytics,ui_hint,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,crm_ai_copilotTextarea,main_popup,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,crm_field_pingSelector,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,crm_ai_call,ui_notification,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
@@ -3239,6 +3239,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  });
 	  let targetItem = null;
+	  let dialogEntityId = BX.CrmEntityType.resolveName(actionData.ownerTypeId);
+	  if (BX.CrmEntityType.isDynamicTypeByTypeId(actionData.ownerTypeId)) {
+	    dialogEntityId = BX.CrmEntityType.names.dynamic;
+	  }
 	  babelHelpers.classPrivateFieldSet(this, _moveToSelectorDialog, new ui_entitySelector.Dialog({
 	    targetNode: dialogTargetElement,
 	    enableSearch: true,
@@ -3247,7 +3251,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      textBoxWidth: '50%'
 	    },
 	    entities: [{
-	      id: BX.CrmEntityType.resolveName(actionData.ownerTypeId),
+	      id: dialogEntityId,
 	      dynamicLoad: true,
 	      dynamicSearch: true,
 	      options: {
@@ -3255,9 +3259,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        categoryId: actionData.categoryId,
 	        showEntityTypeNameInHeader: true,
 	        hideClosedItems: true,
-	        excludeMyCompany: true
+	        excludeMyCompany: true,
+	        entityTypeId: actionData.ownerTypeId // for 'dynamic' types
 	      }
 	    }],
+
 	    events: {
 	      'Item:onSelect': event => {
 	        const {
@@ -3325,6 +3331,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  methods: {
 	    renderAddressWidget() {
+	      const settings = main_core.Extension.getSettings('crm.timeline.item');
+	      if (!settings.hasLocationModule) {
+	        return;
+	      }
 	      const widgetFactory = new BX.Location.Widget.Factory();
 	      const format = new location_core.Format(JSON.parse(main_core.Loc.getMessage('CRM_ACTIVITY_TODO_ADDRESS_FORMAT')));
 	      const address = new location_core.Address({
@@ -3864,7 +3874,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.value = this.oldValue;
 	      this.isEdit = false;
 	      if (this.filesHtmlBlock) {
-	        main_core.Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
+	        void main_core.Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
 	          this.registerImages(this.$refs.files);
 	          BX.LazyLoad.showImages();
 	          this.emitEvent('Comment:FinishEdit');
@@ -3888,7 +3898,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      const textBlockMaxHeight = parseFloat(textBlockMaxHeightStyle.slice(0, -2));
 	      const root = this.filesCount > 0 ? this.$refs.rootElement : this.$refs.rootWrapperElement;
 	      const parentComputedStyles = window.getComputedStyle(root);
-	      const parentHeight = (root === null || root === void 0 ? void 0 : root.offsetHeight) - parseFloat(parentComputedStyles.paddingTop) - parseFloat(parentComputedStyles.paddingBottom);
+	      const parentHeight = root.offsetHeight - parseFloat(parentComputedStyles.paddingTop) - parseFloat(parentComputedStyles.paddingBottom);
 	      const isLongText = parentHeight > textBlockMaxHeight;
 	      return isLongText || this.hasInlineFiles;
 	    },
@@ -3903,8 +3913,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      const htmlContent = this.editor.getHtmlContent();
 	      const attachmentList = this.editor.getAttachments();
+	      const attachmentAllowEditOptions = this.editor.getAttachmentsAllowEditOptions(attachmentList);
 	      this.isSaving = true;
-	      this.executeSaveAction(content, attachmentList).then(() => {
+	      void this.executeSaveAction(content, attachmentList, attachmentAllowEditOptions).then(() => {
 	        this.isEdit = false;
 	        if (!this.isTextChanged) {
 	          this.oldValue = htmlContent;
@@ -3919,16 +3930,19 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.isSaving = false;
 	      });
 	    },
-	    executeSaveAction(content, attachmentList) {
+	    executeSaveAction(content, attachmentList, attachmentAllowEditOptions) {
 	      var _actionDescription$ac;
 	      // to avoid unintended props mutation
 	      const actionDescription = main_core.Runtime.clone(this.saveAction);
 	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
 	      actionDescription.actionParams.id = actionDescription.actionParams.commentId;
 	      actionDescription.actionParams.fields = {
-	        'COMMENT': content,
-	        'ATTACHMENTS': attachmentList
+	        COMMENT: content,
+	        ATTACHMENTS: attachmentList
 	      };
+	      if (Object.keys(attachmentAllowEditOptions).length > 0) {
+	        actionDescription.actionParams.CRM_TIMELINE_DISK_ATTACHED_OBJECT_ALLOW_EDIT = attachmentAllowEditOptions;
+	      }
 	      const action = new Action(actionDescription);
 	      return action.execute(this);
 	    },
@@ -3952,7 +3966,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        } else if (type === TYPE_LOAD_TEXT_CONTENT) {
 	          this.isTextLoaded = true;
 	        }
-	        main_core.Runtime.html(node, response.data.html).then(() => {
+	        void main_core.Runtime.html(node, response.data.html).then(() => {
 	          this.registerImages(node);
 	          BX.LazyLoad.showImages();
 	          this.showLoader(false);
@@ -3982,12 +3996,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	        if (idsList.length > 0) {
 	          BX.LazyLoad.registerImages(idsList, null, {
-	            dataSrcName: "thumbSrc"
+	            dataSrcName: 'thumbSrc'
 	          });
 	        }
 	      }
 	      BX.LazyLoad.registerImages(idsList, null, {
-	        dataSrcName: "thumbSrc"
+	        dataSrcName: 'thumbSrc'
 	      });
 	    },
 	    showLoader(showLoader) {
@@ -3999,10 +4013,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          });
 	        }
 	        this.loader.show(this.$refs.files);
-	      } else {
-	        if (this.loader) {
-	          this.loader.hide();
-	        }
+	      } else if (this.loader) {
+	        this.loader.hide();
 	      }
 	    },
 	    createEditor() {
@@ -4014,7 +4026,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    setIsFilesBlockDisplayed(flag = true) {
 	      this.isFilesBlockDisplayed = flag;
 	      if (this.filesHtmlBlock) {
-	        main_core.Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
+	        void main_core.Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
 	          this.registerImages(this.$refs.files);
 	          BX.LazyLoad.showImages();
 	        });
@@ -4412,6 +4424,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      const action = new Action(actionDescription);
 	      action.execute(this);
 	      this.initialTimestamp = this.currentTimestamp;
+	      this.$emit('onChange', this.initialTimestamp);
 	    },
 	    getDatetimeConverter() {
 	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.currentTimestamp).toUserTime();
@@ -5540,6 +5553,39 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const RestAppLayoutBlocks = {
+	  props: {
+	    itemTypeId: {
+	      type: Number
+	    },
+	    itemId: {
+	      type: Number
+	    },
+	    restAppInfo: {
+	      title: String,
+	      clientId: String
+	    },
+	    contentBlocks: {
+	      type: Object
+	    }
+	  },
+	  computed: {
+	    restAppTitle() {
+	      return main_core.Text.encode(this.restAppInfo.title);
+	    },
+	    clientId() {
+	      return main_core.Text.encode(this.restAppInfo.clientId);
+	    }
+	  },
+	  template: `
+		<div class="crm_timeline__rest_app_layout_blocks" :data-app-name="restAppTitle" :data-rest-client-id="clientId">
+			<div class="crm-timeline__card-container_block" v-for="contentBlock in contentBlocks">
+				<component :is="contentBlock.rendererName" v-bind="contentBlock.properties" ref="contentBlocks" />
+			</div>
+		</div>
+	`
+	};
+
 	const SmsMessage = {
 	  props: {
 	    text: {
@@ -5580,6 +5626,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      default: null
 	    }
 	  },
+	  data() {
+	    return {
+	      deadlineBlockData: this.deadlineBlock,
+	      pingSelectorBlockData: this.pingSelectorBlock
+	    };
+	  },
 	  computed: {
 	    className() {
 	      return {
@@ -5599,6 +5651,25 @@ this.BX.Crm = this.BX.Crm || {};
 	      return {};
 	    }
 	  },
+	  methods: {
+	    onDeadlineChange(deadline) {
+	      this.deadlineBlockData.properties.value = deadline;
+	      this.pingSelectorBlockData.properties.deadline = deadline;
+	      this.$refs.pingSelectorBlock.setDeadline(deadline);
+	    }
+	  },
+	  created() {
+	    this.$watch('deadlineBlock', deadlineBlock => {
+	      this.deadlineBlockData = deadlineBlock;
+	    }, {
+	      deep: true
+	    });
+	    this.$watch('pingSelectorBlock', pingSelectorBlock => {
+	      this.pingSelectorBlockData = pingSelectorBlock;
+	    }, {
+	      deep: true
+	    });
+	  },
 	  // language=Vue
 	  template: `
 		<span class="crm-timeline-block-deadline-and-ping-selector">
@@ -5613,18 +5684,114 @@ this.BX.Crm = this.BX.Crm || {};
 				</div>
 				<component
 					:is="deadlineBlock.rendererName"
-					v-bind="deadlineBlock.properties"
+					v-bind="deadlineBlockData.properties"
+					@onChange="onDeadlineChange"
 				/>
 			</div>
 	
 			<component
 				v-if="pingSelectorBlock"
 				:is="pingSelectorBlock.rendererName"
-				v-bind="pingSelectorBlock.properties"
+				v-bind="pingSelectorBlockData.properties"
 				ref="pingSelectorBlock"
 			/>
 		</span>	
 	`
+	};
+
+	const SAVE_OFFSETS_REQUEST_DELAY$1 = 1000;
+	var PingSelector = {
+	  props: {
+	    valuesList: {
+	      type: Array,
+	      required: true,
+	      default: []
+	    },
+	    value: {
+	      type: Array,
+	      default: []
+	    },
+	    deadline: {
+	      type: Number
+	    },
+	    saveAction: {
+	      type: Object,
+	      required: true
+	    },
+	    icon: {
+	      type: String,
+	      default: null,
+	      required: false
+	    }
+	  },
+	  data() {
+	    return {
+	      deadlineData: this.deadline
+	    };
+	  },
+	  watch: {
+	    deadline(deadline) {
+	      this.deadlineData = deadline;
+	    }
+	  },
+	  mounted() {
+	    this.initPingSelector();
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(this.pingSelector, crm_field_pingSelector.PingSelectorEvents.EVENT_PINGSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+	  },
+	  methods: {
+	    onItemSelectorValueChange(event) {
+	      main_core.Runtime.debounce(() => {
+	        const data = event.getData();
+	        if (data) {
+	          this.executeSaveAction(data.value);
+	        }
+	      }, SAVE_OFFSETS_REQUEST_DELAY$1, this)();
+	    },
+	    executeSaveAction(items) {
+	      var _actionDescription$ac;
+	      if (!this.saveAction) {
+	        return;
+	      }
+	      if (this.value.sort().toString() === items.sort().toString()) {
+	        return;
+	      }
+
+	      // to avoid unintended props mutation
+	      const actionDescription = main_core.Runtime.clone(this.saveAction);
+	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
+	      actionDescription.actionParams.value = items;
+	      const action = new Action(actionDescription);
+	      void action.execute(this);
+	    },
+	    initPingSelector() {
+	      const deadlineDate = this.createDateFromDeadline();
+	      const deadlineTime = deadlineDate === null || deadlineDate === void 0 ? void 0 : deadlineDate.getTime();
+	      const currentTime = Date.now();
+	      const deadline = deadlineTime > currentTime ? deadlineDate : new Date();
+	      this.pingSelector = new crm_field_pingSelector.PingSelector({
+	        target: this.$el,
+	        valuesList: this.valuesList,
+	        selectedValues: this.value,
+	        icon: main_core.Type.isStringFilled(this.icon) ? this.icon : null,
+	        deadline
+	      });
+	      main_core_events.EventEmitter.subscribe(this.pingSelector, crm_field_pingSelector.PingSelectorEvents.EVENT_PINGSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+	    },
+	    createDateFromDeadline() {
+	      if (!main_core.Type.isNumber(this.deadlineData)) {
+	        return null;
+	      }
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.deadlineData).getValue();
+	    },
+	    setDeadline(deadline) {
+	      const date = main_date.Timezone.UserTime.getDate(deadline);
+	      this.deadlineData = date.getTime() / 1000;
+	      this.pingSelector.setDeadline(date);
+	    }
+	  },
+	  template: '<div></div>'
 	};
 
 	var WithTitle = {
@@ -5730,6 +5897,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        EditableDescription,
 	        EditableDate,
 	        PlayerAlert,
+	        RestAppLayoutBlocks,
 	        DatePill,
 	        Note,
 	        FileList,
@@ -5738,6 +5906,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        SmsMessage,
 	        CommentContent,
 	        ItemSelector,
+	        PingSelector,
 	        DeadlineAndPingSelector
 	      };
 	    }
@@ -6859,7 +7028,29 @@ this.BX.Crm = this.BX.Crm || {};
 	        _classPrivateMethodGet$8(this, _downloadRecord, _downloadRecord2).call(this, actionData.url);
 	      }
 	      if (action === 'Call:LaunchCallRecordingTranscription' && actionData) {
-	        _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
+	        const isCopilotAgreementNeedShow = actionData.isCopilotAgreementNeedShow || false;
+	        if (isCopilotAgreementNeedShow) {
+	          main_core.Runtime.loadExtension('ai.copilot-agreement').then(({
+	            CopilotAgreement
+	          }) => {
+	            const copilotAgreementPopup = new CopilotAgreement({
+	              moduleId: 'crm',
+	              contextId: 'audio',
+	              events: {
+	                onAccept: () => _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData)
+	              }
+	            });
+	            void copilotAgreementPopup.checkAgreement()
+	            // eslint-disable-next-line promise/no-nesting
+	            .then(isAgreementAccepted => {
+	              if (isAgreementAccepted) {
+	                _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
+	              }
+	            });
+	          }).catch(() => console.error('Cant load "ai.copilot-agreement" extension'));
+	        } else {
+	          _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
+	        }
 	      }
 	    }
 	  }], [{
@@ -6959,7 +7150,33 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _showAdditionalInfo2(data, item, actionData) {
 	  if (_classPrivateMethodGet$8(this, _isSliderCodeExist, _isSliderCodeExist2).call(this, data)) {
-	    BX.UI.InfoHelper.show(data.sliderCode);
+	    if (data.sliderCode === 'limit_boost_copilot') {
+	      main_core.Runtime.loadExtension('baas.store').then(({
+	        ServiceWidget,
+	        Analytics
+	      }) => {
+	        var _item$getLayoutFooter, _item$getLayoutFooter2;
+	        if (!ServiceWidget) {
+	          var _BX, _BX$UI;
+	          (_BX = BX) === null || _BX === void 0 ? void 0 : (_BX$UI = _BX.UI) === null || _BX$UI === void 0 ? void 0 : _BX$UI.InfoHelper.show('limit_boost_copilot');
+	          console.error('Cant load "baas.store" extension');
+	        }
+	        const serviceWidget = ServiceWidget === null || ServiceWidget === void 0 ? void 0 : ServiceWidget.getInstanceByCode('ai_copilot_token');
+	        const bindElement = (_item$getLayoutFooter = item.getLayoutFooterButtonById('aiButton')) === null || _item$getLayoutFooter === void 0 ? void 0 : (_item$getLayoutFooter2 = _item$getLayoutFooter.getUiButton()) === null || _item$getLayoutFooter2 === void 0 ? void 0 : _item$getLayoutFooter2.getContainer();
+	        serviceWidget.bind(bindElement, Analytics.CONTEXT_CRM);
+	        serviceWidget.getPopup().adjustPosition({
+	          forceTop: true
+	        });
+	        serviceWidget.show();
+	      }).catch(() => {
+	        var _BX2, _BX2$UI;
+	        (_BX2 = BX) === null || _BX2 === void 0 ? void 0 : (_BX2$UI = _BX2.UI) === null || _BX2$UI === void 0 ? void 0 : _BX2$UI.InfoHelper.show('limit_boost_copilot');
+	        console.error('Cant load "baas.store" extension');
+	      });
+	    } else {
+	      var _BX3, _BX3$UI;
+	      (_BX3 = BX) === null || _BX3 === void 0 ? void 0 : (_BX3$UI = _BX3.UI) === null || _BX3$UI === void 0 ? void 0 : _BX3$UI.InfoHelper.show(data.sliderCode);
+	    }
 	  } else if (_classPrivateMethodGet$8(this, _isAiMarketplaceAppsExist, _isAiMarketplaceAppsExist2).call(this, data)) {
 	    if (!babelHelpers.classPrivateFieldGet(this, _isCopilotBannerShown) && data.isCopilotBannerNeedShow) {
 	      _classPrivateMethodGet$8(this, _showCopilotBanner, _showCopilotBanner2).call(this, item, actionData);
@@ -9159,5 +9376,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.Crm.AI,BX.Main,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX.Crm.AI,BX,BX,BX.UI.Dialogs));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.Crm.AI,BX.Main,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX.Crm.AI,BX,BX,BX.UI.Dialogs));
 //# sourceMappingURL=index.bundle.js.map

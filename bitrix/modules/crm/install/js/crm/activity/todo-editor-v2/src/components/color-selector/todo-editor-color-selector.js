@@ -6,6 +6,7 @@ const DEFAULT_COLOR_ID = 'default';
 
 export const TodoEditorColorSelector = {
 	directives: { hint },
+	emits: ['onChange'],
 	props: {
 		valuesList: {
 			type: Object,
@@ -44,6 +45,8 @@ export const TodoEditorColorSelector = {
 		onColorSelectorValueChange({ data }): void
 		{
 			this.currentValueId = data.value;
+
+			this.$emit('onChange');
 		},
 		resetToDefault(): void
 		{

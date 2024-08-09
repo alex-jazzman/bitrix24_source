@@ -1,6 +1,7 @@
 import { mapGetters, mapMutations } from 'ui.vue3.vuex';
 import { ExpandControl } from '../components/expandcontrol';
 import { PermissionControl } from '../components/permissioncontrol';
+import { EntityControl } from '../components/entitycontrol';
 import { PermissionEntityIdentifier } from '../store';
 
 export const SliderPermissions = {
@@ -14,6 +15,7 @@ export const SliderPermissions = {
 	components: {
 		ExpandControl,
 		PermissionControl,
+		EntityControl,
 	},
 	data() {
 		return {
@@ -23,7 +25,7 @@ export const SliderPermissions = {
 		};
 	},
 	computed: {
-		...mapGetters(['getEntitiesGroupedByPermission', 'getAssignedAttribute']),
+		...mapGetters(['getEntitiesGroupedByPermission', 'getAssignedAttribute', 'getTransitionSettings']),
 		permissions() {
 			return this.getEntitiesGroupedByPermission(this.entityCode);
 		},
@@ -64,10 +66,13 @@ export const SliderPermissions = {
 
 			return perm.stateName;
 		},
+		identifier(perm) {
+			return this.getIdentifier(perm.code, perm.stageField, perm.stageCode);
+		},
 	},
 	mounted() {},
 	methods: {
-		...mapMutations(['assignPermissionAttribute']),
+		...mapMutations(['assignPermissionAttribute', 'assignTransitions']),
 		onToggleStageVisibility(code) {
 			if (this.ui.stageVisibilityCodes[code])
 			{
@@ -98,12 +103,16 @@ export const SliderPermissions = {
 				stageCode,
 			};
 		},
+		onTransitionValuesChanged(payload) {
+			this.assignTransitions({ identifier: payload.identifier, values: payload.values });
+		},
 	},
 	template: `
 		<div class="bx-crm-perms-edit-entity-permissions">
 			<div
 				v-for="perm of displayList"
 				class="bx-crm-perms-edit-entity-permissions-item"
+				:data-permission-code="perm.code"
 				:class="{'stage-item': isRowStageRow(perm)}"
 			>
 				<div class="bx-crm-perms-edit-entity-permissions-item__column">
@@ -122,6 +131,14 @@ export const SliderPermissions = {
 						:values-map="perm.values"
 						:permission-identifier="getIdentifier(perm.code, perm.stageField, perm.stageCode)"
 						@value-changed="onAttributeValueChanged"
+						v-if="perm.code !== 'TRANSITION'"
+					/>
+					<EntityControl
+						v-if="perm.code === 'TRANSITION'"
+						:values="getTransitionSettings(getIdentifier(perm.code, perm.stageField, perm.stageCode))"
+						@onTransitionValuesChanged="onTransitionValuesChanged"
+						:values-map="perm.values"
+						:permission-identifier="getIdentifier(perm.code, perm.stageField, perm.stageCode)"
 					/>
 				</div>
 			</div>

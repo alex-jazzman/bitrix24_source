@@ -3588,7 +3588,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      const {
 	        date
 	      } = this.lastMessageViews.firstViewer;
-	      return this.loc('IM_ELEMENTS_STATUS_READ_USER', {
+	      return this.loc('IM_ELEMENTS_STATUS_READ_USER_MSGVER_1', {
 	        '#DATE#': im_v2_lib_dateFormatter.DateFormatter.formatByTemplate(date, im_v2_lib_dateFormatter.DateTemplate.messageReadStatus)
 	      });
 	    },

@@ -733,6 +733,8 @@ class CCrmConfigEmailtrackerAjax
 
 		if ($error === false)
 			\CMailbox::delete($mailbox['ID']);
+
+		return [];
 	}
 
 	private static function executeCheckMailbox(&$error)

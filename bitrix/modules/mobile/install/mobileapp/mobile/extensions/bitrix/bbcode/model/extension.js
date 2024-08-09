@@ -1411,7 +1411,7 @@ jn.define('bbcode/model', (require, exports, module) => {
 	      allowedChildren: ['#text', '#linebreak', '#inline'],
 	      canBeEmpty: false
 	    }), new BBCodeTagScheme({
-	      name: ['span'],
+	      name: ['span', 'font'],
 	      group: ['#inline'],
 	      allowedChildren: ['#text', '#linebreak', '#inline'],
 	      canBeEmpty: false

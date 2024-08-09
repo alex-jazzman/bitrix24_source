@@ -342,9 +342,11 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 				'colorSettings' => $colorSettings,
 			]);
 
+			$analytics = CUtil::PhpToJSObject($arParams['ANALYTICS'] ?? []);
+
 			$arActivitySubMenuItems[] = [
 				'TEXT' => GetMessage('CRM_CONTACT_ADD_TODO'),
-				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Contact . ", " . (int)$arContact['ID'] . ", " . $currentUser . ", " . $settings . ", " . $useTodoEditorV2 . ");"
+				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Contact . ", " . (int)$arContact['ID'] . ", " . $currentUser . ", " . $settings . ", " . $useTodoEditorV2 . ", " . $analytics .");"
 			];
 
 			if(IsModuleInstalled('subscribe'))

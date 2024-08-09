@@ -9,7 +9,10 @@ jn.define('tasks/layout/fields/result/list-item', (require, exports, module) => 
 	const { selectById } = require('tasks/statemanager/redux/slices/tasks-results');
 	const { Text4, Text5 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { getFormattedTaskResultDate } = require('tasks/layout/fields/result/date-formatter');
+	const { Date } = require('tasks/layout/fields/result/date');
+	const { dayMonth, longDate, shortTime } = require('utils/date/formats');
+	const { Loc } = require('loc');
+	const { BBCodeParser } = require('bbcode/parser');
 
 	class TaskResultListItemContent extends PureComponent
 	{
@@ -83,7 +86,7 @@ jn.define('tasks/layout/fields/result/list-item', (require, exports, module) => 
 		{
 			return Text4({
 				color: Color.base1,
-				text: this.#result.text,
+				text: new BBCodeParser().parse(this.#result.text).toPlainText(),
 				numberOfLines: 2,
 				ellipsize: 'end',
 				testId: `${this.#testId}_TEXT`,
@@ -92,9 +95,21 @@ jn.define('tasks/layout/fields/result/list-item', (require, exports, module) => 
 
 		#renderDate()
 		{
-			return Text5({
-				color: Color.base3,
-				text: getFormattedTaskResultDate(this.#result.createdAt),
+			return new Date({
+				style: {
+					color: Color.base3.toHex(),
+				},
+				defaultFormat: (moment) => Loc.getMessage(
+					'TASKS_FIELDS_RESULT_DATE_FORMAT',
+					{
+						'#DATE#': moment.format(moment.inThisYear ? dayMonth() : longDate()),
+						'#TIME#': moment.format(shortTime),
+					},
+				),
+				timeSeparator: '',
+				showTime: true,
+				useTimeAgo: true,
+				timestamp: this.#result.createdAt,
 				testId: `${this.#testId}_DATE`,
 			});
 		}

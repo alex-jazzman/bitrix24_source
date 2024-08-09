@@ -145,6 +145,7 @@
 	position: absolute;
 	right: 6px;
 	bottom: 6px;
+	z-index: 2;
 }
 
 .bx-im-base-file-item__container {

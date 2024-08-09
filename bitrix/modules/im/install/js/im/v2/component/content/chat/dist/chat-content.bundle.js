@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,im_v2_lib_layout,im_v2_lib_textarea,im_v2_component_sidebar,im_v2_component_entitySelector,im_v2_lib_localStorage,im_v2_lib_menu,im_v2_lib_rest,im_v2_lib_feature,im_public,im_v2_lib_call,ui_vue3_directives_hint,im_v2_component_animation,im_v2_lib_utils,ui_uploader_core,im_v2_lib_channel,im_v2_lib_theme,main_core,im_v2_application_core,ui_notification,im_v2_lib_analytics,im_v2_lib_permission,im_v2_lib_logger,im_v2_model,im_v2_component_dialog_chat,im_v2_component_messageList,im_v2_component_textarea,main_core_events,im_v2_component_elements,im_v2_const,im_v2_provider_service) {
+(function (exports,im_v2_lib_layout,im_v2_lib_textarea,im_v2_component_sidebar,im_v2_component_entitySelector,im_v2_lib_localStorage,im_v2_lib_menu,im_v2_lib_rest,im_v2_lib_feature,im_public,im_v2_lib_call,ui_vue3_directives_hint,im_v2_component_animation,im_v2_lib_utils,ui_uploader_core,im_v2_lib_channel,im_v2_lib_theme,im_v2_application_core,ui_notification,im_v2_lib_analytics,im_v2_lib_permission,im_v2_lib_logger,im_v2_model,im_v2_component_dialog_chat,main_core,main_core_events,im_v2_component_messageList,im_v2_const,im_v2_component_textarea,im_v2_component_elements,im_v2_provider_service) {
 	'use strict';
 
 	const Height = {
@@ -1331,7 +1331,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<!-- Textarea -->
 				<div v-if="canSend" v-textarea-observer class="bx-im-content-chat__textarea_container" ref="textarea-container">
 					<slot name="textarea" :onTextareaMount="onTextareaMount">
-						<ChatTextarea :dialogId="dialogId" :key="dialogId" @mounted="onTextareaMount" />
+						<ChatTextarea 
+							:dialogId="dialogId" 
+							:key="dialogId" 
+							:withAudioInput="false" 
+							@mounted="onTextareaMount" 
+						/>
 					</slot>
 				</div>
 				<slot v-else-if="isGuest" name="join-panel">
@@ -1562,18 +1567,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      required: true
 	    }
 	  },
-	  data() {
-	    return {};
-	  },
 	  computed: {
 	    ButtonSize: () => im_v2_component_elements.ButtonSize,
 	    ButtonColor: () => im_v2_component_elements.ButtonColor
 	  },
 	  methods: {
 	    onButtonClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.channel.onChannelJoin, {
-	        channelDialogId: this.dialogId
-	      });
 	      this.getChatService().joinChat(this.dialogId);
 	    },
 	    getChatService() {
@@ -1611,11 +1610,18 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      default: ''
 	    }
 	  },
+	  methods: {
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    }
+	  },
 	  template: `
 		<ChatTextarea
 			:dialogId="dialogId"
+			:placeholder="this.loc('IM_CONTENT_CHANNEL_TEXTAREA_PLACEHOLDER')"
 			:withCreateMenu="false"
 			:withMarket="false"
+			:withAudioInput="false"
 			class="bx-im-channel-send-panel__container"
 		/>
 	`
@@ -2034,6 +2040,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	class CommentsMessageMenu extends im_v2_component_messageList.MessageMenu {
 	  getMenuItems() {
+	    if (this.isPostMessage()) {
+	      return [this.getCopyItem(), this.getCopyFileItem(), this.getDelimiter(), this.getDownloadFileItem(), this.getSaveToDisk(), this.getDelimiter(), this.getOpenInChannelItem()];
+	    }
 	    return [this.getReplyItem(), this.getCopyItem(), this.getCopyFileItem(),
 	    // this.getPinItem(),
 	    // this.getForwardItem(),
@@ -2041,29 +2050,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    // this.getMarkItem(),
 	    this.getFavoriteItem(), this.getDelimiter(), this.getCreateItem(), this.getDelimiter(), this.getDownloadFileItem(), this.getSaveToDisk(), this.getDelimiter(), this.getEditItem(), this.getDeleteItem()];
 	  }
-	  getReplyItem() {
-	    if (this.isPostMessage()) {
-	      return null;
-	    }
-	    return super.getReplyItem();
-	  }
-	  getEditItem() {
-	    if (this.isPostMessage()) {
-	      return null;
-	    }
-	    return super.getEditItem();
-	  }
-	  getDeleteItem() {
-	    if (this.isPostMessage()) {
-	      return null;
-	    }
-	    return super.getDeleteItem();
-	  }
-	  getCreateItem() {
-	    if (this.isPostMessage()) {
-	      return null;
-	    }
-	    return super.getCreateItem();
+	  getOpenInChannelItem() {
+	    return {
+	      text: main_core.Loc.getMessage('IM_CONTENT_COMMENTS_MESSAGE_MENU_OPEN_IN_CHANNEL'),
+	      onclick: () => {
+	        main_core_events.EventEmitter.emit(im_v2_const.EventType.dialog.closeComments);
+	        this.menuInstance.close();
+	      }
+	    };
 	  }
 	  isPostMessage() {
 	    const {
@@ -2230,6 +2224,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<ChatTextarea
 			:dialogId="dialogId"
 			:withMarket="false"
+			:withAudioInput="false"
 			class="bx-im-comments-send-panel__container"
 		/>
 	`
@@ -2246,18 +2241,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      required: true
 	    }
 	  },
-	  data() {
-	    return {};
-	  },
 	  computed: {
 	    ButtonSize: () => im_v2_component_elements.ButtonSize,
 	    ButtonColor: () => im_v2_component_elements.ButtonColor
 	  },
 	  methods: {
 	    onButtonClick() {
-	      main_core_events.EventEmitter.emit(im_v2_const.EventType.channel.onChannelJoin, {
-	        channelDialogId: this.dialogId
-	      });
 	      this.getChatService().joinChat(this.dialogId);
 	    },
 	    getChatService() {
@@ -2480,5 +2469,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChatContent = ChatContent;
 
-}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Lib,BX.UI.Uploader,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Application,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Dialog,BX.Messenger.v2.Component,BX.Messenger.v2.Component,BX.Event,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Const,BX.Messenger.v2.Provider.Service));
+}((this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Component,BX.Messenger.v2.Component.EntitySelector,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Vue3.Directives,BX.Messenger.v2.Component.Animation,BX.Messenger.v2.Lib,BX.UI.Uploader,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Model,BX.Messenger.v2.Component.Dialog,BX,BX.Event,BX.Messenger.v2.Component,BX.Messenger.v2.Const,BX.Messenger.v2.Component,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Provider.Service));
 //# sourceMappingURL=chat-content.bundle.js.map

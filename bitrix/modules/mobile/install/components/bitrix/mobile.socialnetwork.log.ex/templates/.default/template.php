@@ -635,7 +635,7 @@ else
 	{
 		$APPLICATION->RestartBuffer();
 		$res = array(
-			'ERROR_MESSAGE' => Loc::getMessage('MOBILE_LOG_ERROR_ENTRY_NOT_FOUND2')
+			'ERROR_MESSAGE' => Loc::getMessage('MOBILE_LOG_ERROR_ENTRY_NOT_FOUND3')
 		);
 
 		CMain::FinalActions(CUtil::PhpToJSObject($res));
@@ -645,7 +645,7 @@ else
 		if ($arParams["LOG_ID"] > 0)
 		{
 			?><div class="post-wrap">
-				<div class="lenta-block-empty"><?= Loc::getMessage('MOBILE_LOG_ERROR_ENTRY_NOT_FOUND2') ?></div>
+				<div class="lenta-block-empty"><?= Loc::getMessage('MOBILE_LOG_ERROR_ENTRY_NOT_FOUND3') ?></div>
 			</div><?php
 		}
 		elseif (empty($arResult['pinnedEvents']))

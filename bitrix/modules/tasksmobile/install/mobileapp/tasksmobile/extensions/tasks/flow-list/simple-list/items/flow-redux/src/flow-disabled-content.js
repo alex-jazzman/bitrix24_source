@@ -4,11 +4,9 @@
 jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-disabled-content', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
-	const { Type } = require('type');
 	const { showToast } = require('toast');
 	const { outline } = require('assets/icons');
-	const { Color, Component, Indent } = require('tokens');
-	const { Card } = require('ui-system/layout/card');
+	const { Color } = require('tokens');
 	const { ChipStatusDesign } = require('ui-system/blocks/chips/chip-status');
 	const { FlowContent } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-content');
 
@@ -17,30 +15,6 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-disabled-conten
 		get testId()
 		{
 			return `flow-disabled-content-${this.props.id}`;
-		}
-
-		render()
-		{
-			if (Type.isNil(this.flow))
-			{
-				return null;
-			}
-
-			return Card(
-				{
-					testId: this.testId,
-					border: true,
-					style: {
-						marginHorizontal: Component.paddingLr.toNumber(),
-						marginBottom: this.isLast ? Indent.XL2.toNumber() : 0,
-						marginTop: Indent.XL2.toNumber(),
-					},
-					onClick: this.cardClickHandler,
-				},
-				this.renderHeader(),
-				this.renderProgressInfo(),
-				this.renderFooter(),
-			);
 		}
 
 		getUserAvatarOpacity()

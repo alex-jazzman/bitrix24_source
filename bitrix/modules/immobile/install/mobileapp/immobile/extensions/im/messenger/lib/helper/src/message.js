@@ -92,44 +92,44 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			this.filesModel = filesModel;
 		}
 
-		isSystem()
+		get isSystem()
 		{
 			return this.messageModel.authorId === 0;
 		}
 
-		isText()
+		get isText()
 		{
 			return this.messageModel.text !== '';
 		}
 
-		isYour()
+		get isYour()
 		{
 			return Number(this.messageModel.authorId) === serviceLocator.get('core').getUserId();
 		}
 
-		isDeleted()
+		get isDeleted()
 		{
 			return this.messageModel.params?.IS_DELETED === 'Y';
 		}
 
-		isForward()
+		get isForward()
 		{
 			return !Type.isUndefined(this.messageModel?.forward.id);
 		}
 
-		isWithAttach()
+		get isWithAttach()
 		{
 			return Type.isArrayFilled(this.messageModel?.params?.ATTACH);
 		}
 
-		isWithFile()
+		get isWithFile()
 		{
 			return Type.isArrayFilled(this.messageModel.files);
 		}
 
-		isGallery()
+		get isGallery()
 		{
-			if (!this.isWithFile())
+			if (!this.isWithFile)
 			{
 				return false;
 			}
@@ -137,9 +137,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return this.messageModel.files?.length > 1;
 		}
 
-		isVideo()
+		get isVideo()
 		{
-			if (!this.isWithFile())
+			if (!this.isWithFile)
 			{
 				return false;
 			}
@@ -152,9 +152,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return this.filesModel[0].type === FileType.video;
 		}
 
-		isImage()
+		get isImage()
 		{
-			if (!this.isWithFile())
+			if (!this.isWithFile)
 			{
 				return false;
 			}
@@ -167,9 +167,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return this.filesModel[0].type === FileType.image;
 		}
 
-		isAudio()
+		get isAudio()
 		{
-			if (!this.isWithFile())
+			if (!this.isWithFile)
 			{
 				return false;
 			}
@@ -182,9 +182,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return this.filesModel[0].type === FileType.audio;
 		}
 
-		isFile()
+		get isFile()
 		{
-			if (!this.isWithFile())
+			if (!this.isWithFile)
 			{
 				return false;
 			}
@@ -197,9 +197,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return this.filesModel[0].type === FileType.file;
 		}
 
-		isEmojiOnly()
+		get isEmojiOnly()
 		{
-			if (!this.isText())
+			if (!this.isText)
 			{
 				return false;
 			}
@@ -210,9 +210,9 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return text.replaceAll(/\s/g, '').length === 0;
 		}
 
-		isSmileOnly()
+		get isSmileOnly()
 		{
-			if (!this.isText())
+			if (!this.isText)
 			{
 				return false;
 			}
@@ -231,16 +231,21 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 			return text.replaceAll(/\s/g, '').length === 0;
 		}
 
-		/**
-		 * @param {DialoguesModelState | null} dialogModel
-		 */
-		isInitialPostForComment(dialogModel = null)
+		get isInitialPostForComment()
 		{
-			dialogModel ??= serviceLocator.get('core').getStore()
+			this.dialogModel ??= this.#getDialoguesModel();
+
+			return String(this.dialogModel?.parentMessageId) === String(this.messageModel.id);
+		}
+
+		/**
+		 * @return {?DialoguesModelState}
+		 */
+		#getDialoguesModel()
+		{
+			return serviceLocator.get('core').getStore()
 				.getters['dialoguesModel/getByChatId'](this.messageModel.chatId)
 			;
-
-			return String(dialogModel?.parentMessageId) === String(this.messageModel.id);
 		}
 	}
 

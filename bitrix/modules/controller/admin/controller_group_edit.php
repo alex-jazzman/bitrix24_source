@@ -1031,12 +1031,11 @@ echo $USER_FIELD_MANAGER->ShowScript();
 	}
 
 	$tabControl->EndTab();
-	?>
 
-	<?php $tabControl->Buttons([
+	$tabControl->Buttons([
 		'back_url' => 'controller_group_admin.php?lang=' . LANGUAGE_ID,
 		'disabled' => !$USER->CanDoOperation('controller_group_manage'),
-	]); ?>
+	]);?>
 	<?php $tabControl->End(); ?>
 	<input type="hidden" value="Y" name="apply">
 </form>

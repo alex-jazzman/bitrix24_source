@@ -5,7 +5,7 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { lighten } = require('utils/color');
 	const { Type } = require('type');
-	const { makeLibraryImagePath, downloadImages } = require('asset-manager');
+	const { makeLibraryImagePath } = require('asset-manager');
 
 	const COLORS = [
 		'#df532d',
@@ -104,7 +104,6 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 		testId,
 	}) => {
 		const imageUri = makeLibraryImagePath('person.svg', 'empty-avatar');
-		downloadImages([imageUri]);
 
 		if (Type.isNil(name))
 		{

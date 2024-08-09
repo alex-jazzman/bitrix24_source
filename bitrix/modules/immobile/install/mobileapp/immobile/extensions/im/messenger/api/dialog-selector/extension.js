@@ -12,7 +12,9 @@ jn.define('im/messenger/api/dialog-selector', (require, exports, module) => {
 			DialogSelector,
 		},
 		appConfig: {
-			localStorageEnable: false,
+			localStorage: {
+				enable: false,
+			},
 		},
 	});
 });

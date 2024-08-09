@@ -148,6 +148,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static ATTACH_2 = new Icon('ATTACH_2', {
+			name: 'attach_2',
+			path: '',
+			content: '',
+		});
+
 		static BACK_15 = new Icon('BACK_15', {
 			name: 'back_15',
 			path: '',
@@ -420,6 +426,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 
 		static CIRCLE_CROSS = new Icon('CIRCLE_CROSS', {
 			name: 'circle_cross',
+			path: '',
+			content: '',
+		});
+
+		static CIRCLE_MINUS = new Icon('CIRCLE_MINUS', {
+			name: 'circle_minus',
 			path: '',
 			content: '',
 		});
@@ -780,6 +792,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 
 		static GO_TO = new Icon('GO_TO', {
 			name: 'go_to',
+			path: '',
+			content: '',
+		});
+
+		static GO_TO_MESSAGE = new Icon('GO_TO_MESSAGE', {
+			name: 'go_to_message',
 			path: '',
 			content: '',
 		});
@@ -1420,6 +1438,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 			content: '',
 		});
 
+		static POWER = new Icon('POWER', {
+			name: 'power',
+			path: '',
+			content: '',
+		});
+
 		static PRINTER = new Icon('PRINTER', {
 			name: 'printer',
 			path: '',
@@ -1482,6 +1506,12 @@ jn.define('assets/icons/src/main', (require, exports, module) => {
 
 		static RELATED_TASKS = new Icon('RELATED_TASKS', {
 			name: 'related_tasks',
+			path: '',
+			content: '',
+		});
+
+		static REMOVE_PERSON = new Icon('REMOVE_PERSON', {
+			name: 'remove_person',
 			path: '',
 			content: '',
 		});

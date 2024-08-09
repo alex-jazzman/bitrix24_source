@@ -1,5 +1,5 @@
 import { Address, ControlMode, Format } from 'location.core';
-import { Loc } from 'main.core';
+import { Extension, Loc } from 'main.core';
 
 export default {
 	props: {
@@ -14,6 +14,13 @@ export default {
 	methods: {
 		renderAddressWidget(): void
 		{
+			const settings = Extension.getSettings('crm.timeline.item');
+
+			if (!settings.hasLocationModule)
+			{
+				return;
+			}
+
 			const widgetFactory = new BX.Location.Widget.Factory();
 
 			const format = new Format(JSON.parse(Loc.getMessage('CRM_ACTIVITY_TODO_ADDRESS_FORMAT')));

@@ -32,10 +32,13 @@ class CBPCrmSetObserverField extends CBPActivity
 		$documentId = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2])[1];
 		$observerIds = CBPHelper::ExtractUsers($this->Observers, $this->GetDocumentId());
 
-		$this->writeDebugInfo($this->getDebugInfo([
-			'ActionOnObservers' => $this->ActionOnObservers,
-			'Observers' => $this->Observers,
-		]));
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo([
+				'ActionOnObservers' => $this->ActionOnObservers,
+				'Observers' => $this->Observers,
+			]));
+		}
 
 		if ($documentType === CCrmOwnerType::LeadName || $documentType === CCrmOwnerType::DealName)
 		{
@@ -120,7 +123,7 @@ class CBPCrmSetObserverField extends CBPActivity
 		}
 
 		$item->setObservers($observerIds);
-		$factory->getUpdateOperation($item)->launch();
+		$factory->getUpdateOperation($item)->disableAllChecks()->launch();
 	}
 
 	public static function getPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = '', $popupWindow = null, $siteId = '')

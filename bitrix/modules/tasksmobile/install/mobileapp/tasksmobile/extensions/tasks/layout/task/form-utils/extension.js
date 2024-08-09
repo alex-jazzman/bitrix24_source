@@ -25,6 +25,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 	}, extra);
 
 	const makeAccomplicesFieldConfig = (extra = {}) => mergeImmutable({
+		canOpenUserList: true,
 		provider: {
 			context: 'TASKS_MEMBER_SELECTOR_EDIT_accomplice',
 			options: {
@@ -49,6 +50,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 	}, extra);
 
 	const makeAuditorsFieldConfig = (extra = {}) => mergeImmutable({
+		canOpenUserList: true,
 		provider: {
 			context: 'TASKS_MEMBER_SELECTOR_EDIT_auditor',
 		},
@@ -68,6 +70,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 			context: 'TASKS_TAG',
 		},
 		selectorTitle: Loc.getMessage('M_TASKS_FIELDS_TAGS'),
+		textMultiple: Loc.getMessage('M_TASKS_FIELDS_TAGS_MULTI'),
 	}, extra);
 
 	const makeCrmFieldConfig = (extra = {}) => mergeImmutable({
@@ -78,6 +81,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 		canUseRecent: false,
 		selectorType: 'crm-element',
 		selectorTitle: Loc.getMessage('M_TASKS_FIELDS_CRM'),
+		textMultiple: Loc.getMessage('M_TASKS_FIELDS_CRM_MULTI'),
 		provider: {
 			context: 'TASKS_CRM',
 		},
@@ -96,6 +100,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 		},
 		nonSelectableErrorText: Loc.getMessage('M_TASKS_DENIED_SELECT_TASK'),
 		selectorTitle: Loc.getMessage('M_TASK_FORM_FIELD_SUBTASK_TITLE'),
+		textMultiple: Loc.getMessage('M_TASK_FORM_FIELD_SUBTASK_TITLE_MULTI'),
 		canUseRecent: false,
 	}, extra);
 
@@ -111,6 +116,7 @@ jn.define('tasks/layout/task/form-utils', (require, exports, module) => {
 		},
 		nonSelectableErrorText: Loc.getMessage('M_TASKS_DENIED_SELECT_TASK'),
 		selectorTitle: Loc.getMessage('M_TASK_FORM_FIELD_RELATED_TITLE'),
+		textMultiple: Loc.getMessage('M_TASK_FORM_FIELD_RELATED_TITLE_MULTI'),
 		canUseRecent: false,
 	}, extra);
 

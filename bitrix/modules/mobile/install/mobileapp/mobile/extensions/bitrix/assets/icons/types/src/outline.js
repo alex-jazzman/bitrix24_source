@@ -3,6 +3,9 @@
  * @return {Object}
  */
 jn.define('assets/icons/types/src/outline', (require, exports, module) => {
+	/**
+	 * @deprecated
+	 */
 	const OutlineIconTypes = Object.freeze({
 		arrowRight: 'arrowRight',
 		arrowLeft: 'arrowLeft',

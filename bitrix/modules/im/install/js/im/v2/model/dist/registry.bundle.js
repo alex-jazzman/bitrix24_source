@@ -3197,9 +3197,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	var _getDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getDialog");
 	var _hasTodayMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasTodayMessage");
 	var _canDelete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canDelete");
+	var _prepareFakeItemWithDraft = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareFakeItemWithDraft");
+	var _createFakeMessageForDraft = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createFakeMessageForDraft");
+	var _shouldDeleteItemWithDraft = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldDeleteItemWithDraft");
 	class RecentModel extends ui_vue3_vuex.BuilderModel {
 	  constructor(...args) {
 	    super(...args);
+	    Object.defineProperty(this, _shouldDeleteItemWithDraft, {
+	      value: _shouldDeleteItemWithDraft2
+	    });
+	    Object.defineProperty(this, _createFakeMessageForDraft, {
+	      value: _createFakeMessageForDraft2
+	    });
+	    Object.defineProperty(this, _prepareFakeItemWithDraft, {
+	      value: _prepareFakeItemWithDraft2
+	    });
 	    Object.defineProperty(this, _canDelete, {
 	      value: _canDelete2
 	    });
@@ -3531,13 +3543,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      /** @function recent/setDraft */
 	      setDraft: (store, payload) => {
-	        const existingItem = store.state.collection[payload.id];
-	        if (!existingItem) {
+	        const isRemovingDraft = !main_core.Type.isStringFilled(payload.text);
+	        if (isRemovingDraft && babelHelpers.classPrivateFieldLooseBase(this, _shouldDeleteItemWithDraft)[_shouldDeleteItemWithDraft](payload)) {
+	          void im_v2_application_core.Core.getStore().dispatch('recent/delete', {
+	            id: payload.id
+	          });
 	          return;
+	        }
+	        let existingItem = store.state.collection[payload.id];
+	        if (!existingItem && !isRemovingDraft) {
+	          store.commit('add', {
+	            ...this.getElementState(),
+	            ...babelHelpers.classPrivateFieldLooseBase(this, _prepareFakeItemWithDraft)[_prepareFakeItemWithDraft](payload)
+	          });
+	          existingItem = store.state.collection[payload.id];
 	        }
 	        const existingCollectionItem = store.state[payload.collectionName].has(payload.id);
 	        if (!existingCollectionItem) {
-	          if (payload.text === '') {
+	          if (isRemovingDraft) {
 	            return;
 	          }
 	          store.commit(payload.addMethodName, [payload.id.toString()]);
@@ -3571,14 +3594,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	          id: existingItem.dialogId
 	        });
 	      },
-	      /** @function recent/deleteFromChannelCollection */
-	      deleteFromChannelCollection: (store, dialogId) => {
-	        const existingItem = store.state.collection[dialogId];
-	        if (!existingItem) {
-	          return;
-	        }
-	        store.commit('deleteFromChannelCollection', dialogId);
-	      },
 	      /** @function recent/clearUnread */
 	      clearUnread: store => {
 	        store.commit('clearUnread');
@@ -3607,9 +3622,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      },
 	      deleteFromCopilotCollection: (state, payload) => {
 	        state.copilotCollection.delete(payload);
-	      },
-	      deleteFromChannelCollection: (state, dialogId) => {
-	        state.channelCollection.delete(dialogId);
 	      },
 	      setChannelCollection: (state, payload) => {
 	        payload.forEach(dialogId => {
@@ -3701,6 +3713,28 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    type
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _getDialog)[_getDialog](dialogId);
 	  return !NOT_DELETABLE_TYPES.includes(type);
+	}
+	function _prepareFakeItemWithDraft2(payload) {
+	  const messageId = babelHelpers.classPrivateFieldLooseBase(this, _createFakeMessageForDraft)[_createFakeMessageForDraft](payload.id);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _formatFields$2)[_formatFields$2]({
+	    dialogId: payload.id.toString(),
+	    draft: {
+	      text: payload.text.toString()
+	    },
+	    messageId
+	  });
+	}
+	function _createFakeMessageForDraft2(dialogId) {
+	  const messageId = `${im_v2_const.FakeDraftMessagePrefix}-${dialogId}`;
+	  void im_v2_application_core.Core.getStore().dispatch('messages/store', {
+	    id: messageId,
+	    date: new Date()
+	  });
+	  return messageId;
+	}
+	function _shouldDeleteItemWithDraft2(payload) {
+	  const existingItem = im_v2_application_core.Core.getStore().state.recent.collection[payload.id];
+	  return existingItem && !main_core.Type.isStringFilled(payload.text) && existingItem.messageId.toString().startsWith(im_v2_const.FakeDraftMessagePrefix);
 	}
 
 	class NotificationsModel extends ui_vue3_vuex.BuilderModel {

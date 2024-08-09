@@ -289,13 +289,15 @@ if ($message)
 			<textarea name="COMMAND" id="COMMAND" style="width:100%" rows="20"><?php echo htmlspecialcharsbx($arCounter['COMMAND']) ?></textarea>
 		</td>
 	</tr>
-	<?php $tabControl->EndTab(); ?>
-	<?php $tabControl->Buttons([
+	<?php
+	$tabControl->EndTab();
+	$tabControl->Buttons([
 		'back_url' => $_REQUEST['back_url'] ?: 'controller_counter_admin.php?lang=' . LANGUAGE_ID,
 		'disabled' => !$USER->CanDoOperation('controller_counters_manage'),
-	]); ?>
-	<?php $tabControl->End(); ?>
-	<?php echo bitrix_sessid_post(); ?>
+	]);
+	$tabControl->End();
+	echo bitrix_sessid_post();
+	?>
 	<input type="hidden" name="lang" value="<?php echo LANGUAGE_ID ?>">
 	<?php if ($ID > 0): ?>
 		<input type="hidden" name="ID" value="<?=$ID?>">

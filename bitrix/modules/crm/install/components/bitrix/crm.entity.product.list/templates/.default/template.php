@@ -748,6 +748,9 @@ foreach ($rows as $key => $row)
 			'SHOW_ACTION_PANEL' => !empty($grid['ACTION_PANEL']),
 			'SHOW_ROW_CHECKBOXES' => false,
 			'SETTINGS_WINDOW_TITLE' => $arResult['ENTITY']['TITLE'],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+				$grid['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+			),
 		],
 		$component
 	);

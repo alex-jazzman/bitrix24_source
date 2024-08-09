@@ -750,6 +750,15 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return this.handleContentClick;
 		}
 
+		/**
+		 * @public
+		 * @return {function | null}
+		 */
+		getCustomContentClickHandler()
+		{
+			return this.customContentClickHandler;
+		}
+
 		handleContentClick()
 		{
 			if (!this.isReadOnly() && !this.isDisabled() && !isOnline())

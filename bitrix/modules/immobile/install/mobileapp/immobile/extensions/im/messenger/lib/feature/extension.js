@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 
 	const dynamicProperties = {
 		localStorageEnable: true,
+		localStorageReadOnlyModeEnable: false,
 	};
 
 	/**
@@ -62,6 +63,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			return isSupportedApp && (isSupportedAndroid || isSupportedIos);
 		}
 
+		static get isLocalStorageReadOnlyModeEnable()
+		{
+			return dynamicProperties.localStorageReadOnlyModeEnable;
+		}
+
 		static get isCopilotAvailable()
 		{
 			return MessengerParams.isCopilotAvailable();
@@ -80,6 +86,16 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static enableLocalStorage()
 		{
 			dynamicProperties.localStorageEnable = true;
+		}
+
+		static disableLocalStorageReadOnlyMode()
+		{
+			dynamicProperties.localStorageReadOnlyModeEnable = false;
+		}
+
+		static enableLocalStorageReadOnlyMode()
+		{
+			dynamicProperties.localStorageReadOnlyModeEnable = true;
 		}
 
 		static get isGoToMessageContextSupported()

@@ -11,6 +11,7 @@ jn.define('text-editor', (require, exports, module) => {
 	const { CodeAdapter } = require('text-editor/adapters/code-adapter');
 	const { ImageAdapter } = require('text-editor/adapters/image-adapter');
 	const { TableAdapter } = require('text-editor/adapters/table-adapter');
+	const { MentionAdapter } = require('text-editor/adapters/mention-adapter');
 	const { parser } = require('text-editor/internal/parser');
 	const { scheme } = require('text-editor/internal/scheme');
 	const { BbcodeView } = require('text-editor/bbcode-view/bbcode-view');
@@ -53,6 +54,13 @@ jn.define('text-editor', (require, exports, module) => {
 		 *     fileField?: {},
 		 *     saveButton?: {},
 		 *     allowFiles?: boolean,
+		 *     mention?: {
+		 *     		paths?: {
+		 *     			user?: (id) => string,
+		 *     			project?: (id) => string,
+		 *     			department?: (id) => string,
+		 *     		},
+		 *     },
 		 * }}
 		 */
 		constructor(props = {})
@@ -93,6 +101,19 @@ jn.define('text-editor', (require, exports, module) => {
 					...props?.fileField,
 				},
 				allowFiles: this.props.allowFiles !== false,
+				mention: {
+					paths: {
+						user: props?.mention?.paths?.user || ((id) => {
+							return `/company/personal/user/${id}/`;
+						}),
+						project: props?.mention?.paths?.project || ((id) => {
+							return `/workgroups/group/${id}/`;
+						}),
+						department: props?.mention?.paths?.department || ((id) => {
+							return `/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=${id}`;
+						}),
+					},
+				},
 				testId: this.props.testId || 'TEXT_EDITOR',
 			};
 
@@ -176,7 +197,7 @@ jn.define('text-editor', (require, exports, module) => {
 				testId: props.testId,
 				fileField: {
 					...this.state.fileField,
-					...props.fileField || {},
+					...props.fileField,
 				},
 				allowFiles: props.allowFiles !== false,
 				textInput: {
@@ -257,6 +278,25 @@ jn.define('text-editor', (require, exports, module) => {
 							});
 						}
 					});
+				}
+
+				const mentionNodes = [
+					...AstProcessor.findElements(ast, 'BBCodeElementNode[name="user"]'),
+					...AstProcessor.findElements(ast, 'BBCodeElementNode[name="department"]'),
+					...AstProcessor.findElements(ast, 'BBCodeElementNode[name="project"]'),
+				];
+				if (Type.isArrayFilled(mentionNodes))
+				{
+					for (const sourceNode of mentionNodes)
+					{
+						const adapter = new MentionAdapter({ node: sourceNode });
+						const previewNode = adapter.getPreview();
+
+						this.addAdapter({
+							adapter,
+							previewNode,
+						});
+					}
 				}
 
 				const tableNodes = AstProcessor.findElements(ast, 'BBCodeElementNode[name="table"]');
@@ -426,9 +466,31 @@ jn.define('text-editor', (require, exports, module) => {
 			});
 		}
 
-		onTextChange()
+		async onTextChange(value)
 		{
 			this.isChangedValue = true;
+
+			if (Type.isStringFilled(value))
+			{
+				const plainText = await this.getTextInput().getPlainTextValue();
+				const selection = await this.getTextInput().getSelection();
+
+				const left = plainText.slice(0, selection.end + 1);
+
+				if (
+					(
+						Type.isStringFilled(left)
+						&& /\s@$/.test(left)
+					)
+					|| (selection.end === 0 && left.endsWith('@'))
+				)
+				{
+					void this.onMention({
+						start: selection.end,
+						end: selection.end + 1,
+					});
+				}
+			}
 		}
 
 		isChanged()
@@ -570,14 +632,38 @@ jn.define('text-editor', (require, exports, module) => {
 		/**
 		 * @private
 		 */
-		async onMention()
+		async onMention(selection)
 		{
 			const entitySelector = this.getEntitySelector();
 			const mentions = await entitySelector.show();
 
 			const preparedMentions = mentions.map((mention) => {
-				return mention.toBbcode();
+				const sourceNode = scheme.createElement({
+					name: mention.getType(),
+					value: mention.getId(),
+					children: [
+						scheme.createText(mention.getTitle()),
+					],
+				});
+
+				const adapter = new MentionAdapter({
+					node: sourceNode,
+				});
+
+				const previewNode = adapter.getPreview();
+
+				this.addAdapter({
+					adapter,
+					previewNode,
+				});
+
+				return previewNode.toString();
 			});
+
+			if (Type.isPlainObject(selection))
+			{
+				await this.getTextInput().setSelection(selection);
+			}
 
 			await this.getTextInput().insert(`${preparedMentions.join(', ')} `);
 		}
@@ -776,7 +862,7 @@ jn.define('text-editor', (require, exports, module) => {
 				FileField({
 					...this.state.fileField,
 					config: {
-						...(this.state?.fileField?.config || {}),
+						...(this.state?.fileField?.config),
 						parentWidget: this.parentWidget,
 					},
 					ref: this.onFileFieldRef,
@@ -825,6 +911,36 @@ jn.define('text-editor', (require, exports, module) => {
 						parentWidget: this.parentWidget || PageManager,
 					});
 				}
+			}
+			else if (url.startsWith('#user-'))
+			{
+				const id = url.replace(/^#user-(\d+)-/, '');
+				inAppUrl.open(
+					this.state.mention.paths.user(id),
+					{
+						parentWidget: (this.parentWidget || PageManager),
+					},
+				);
+			}
+			else if (url.startsWith('#department-'))
+			{
+				const id = url.replace(/^#department-(\d+)-/, '');
+				inAppUrl.open(
+					this.state.mention.paths.department(id),
+					{
+						parentWidget: (this.parentWidget || PageManager),
+					},
+				);
+			}
+			else if (url.startsWith('#project-'))
+			{
+				const id = url.replace(/^#project-(\d+)-/, '');
+				inAppUrl.open(
+					this.state.mention.paths.project(id),
+					{
+						parentWidget: (this.parentWidget || PageManager),
+					},
+				);
 			}
 			else
 			{

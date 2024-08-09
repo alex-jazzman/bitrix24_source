@@ -10,3 +10,6 @@ $MESS["CRM_PERMS_EDIT_ALLOW_TO_CHANGE_CONFIG"] = "Разрешить измен�
 $MESS["CRM_PERMS_EDIT_RESTRICTION"] = "Настройка прав доступа к CRM доступна только <a target=\"_blank\" href=\"https://www.bitrix24.ru/prices/\">на платных тарифах</a>.";
 $MESS["CRM_PERMS_EDIT_ROLE_DELETE"] = "Удалить роль";
 $MESS["CRM_PERMS_EDIT_AUTOMATION_DISABLED_HELP"] = "Настройка актуальна только при выключенной опции \"Разрешить изменять настройки\"";
+$MESS["CRM_PERMS_EDIT_ENTITIES_STAGES"] = "Стадии";
+$MESS["CRM_PERMS_EDIT_ENTITIES_ANY"] = "В любую";
+$MESS["CRM_PERMS_EDIT_ENTITIES_BLOCKED"] = "Запрещено";

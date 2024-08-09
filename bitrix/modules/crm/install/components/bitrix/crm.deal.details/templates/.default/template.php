@@ -132,7 +132,10 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_PROGRESS_BAR' => true,
 		'ENABLE_PROGRESS_CHANGE' => (!$isRecurring && !$arResult['READ_ONLY']),
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
-		'EXTRAS' => ['CATEGORY_ID' => $arResult['CATEGORY_ID']],
+		'EXTRAS' => [
+			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
+			'ANALYTICS' => $arParams['EXTRAS']['ANALYTICS'] ?? [],
+		],
 		'ANALYTIC_PARAMS' => ['deal_category' => $arResult['CATEGORY_ID']],
 		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'] ?? ''
 	]

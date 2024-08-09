@@ -742,16 +742,11 @@ jn.define('tasks/checklist/flat-tree', (require, exports, module) => {
 			if (item.hasAttachments())
 			{
 				const attachments = item.getAttachments();
+
 				Object.keys(attachments).forEach((id) => {
-					const serverFileId = attachments?.[id]?.serverFileId;
-					if (serverFileId)
-					{
-						itemRequestData.ATTACHMENTS[serverFileId] = serverFileId;
-					}
-					else
-					{
-						itemRequestData.ATTACHMENTS[id] = id;
-					}
+					const { serverFileId, token } = attachments[id];
+					const attachmentKey = token && serverFileId ? serverFileId : id;
+					itemRequestData.ATTACHMENTS[attachmentKey] = serverFileId;
 				});
 			}
 

@@ -41,9 +41,9 @@ class controller extends CModule
 			{
 				$DB->Query("
 					INSERT INTO b_controller_group (
-						ID, NAME, DATE_CREATE, CREATED_BY, MODIFIED_BY
+						ID, NAME, DATE_CREATE, CREATED_BY, MODIFIED_BY, TIMESTAMP_X
 					) VALUES (
-						1, '(default)', now(), 1, 1
+						1, '(default)', now(), 1, 1, now()
 					)
 				");
 			}
@@ -103,21 +103,18 @@ class controller extends CModule
 
 	public function InstallFiles()
 	{
-		if ($_ENV['COMPUTERNAME'] != 'BX')
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin', false);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/images', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/images/controller', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/themes', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/themes', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/components', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/activities', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/activities', true, true);
+		if (IsModuleInstalled('bizproc'))
 		{
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/admin', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin', false);
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/images', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/images/controller', true, true);
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/themes', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/themes', true, true);
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/components', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components', true, true);
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/activities', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/activities', true, true);
-			if (IsModuleInstalled('bizproc'))
+			CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/bizproc/templates', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizproc/templates', true, true);
+			$langs = CLanguage::GetList();
+			while ($lang = $langs->Fetch())
 			{
-				CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/bizproc/templates', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizproc/templates', true, true);
-				$langs = CLanguage::GetList();
-				while ($lang = $langs->Fetch())
-				{
-					CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/lang/' . $lang['LID'] . '/install/bizproc/templates', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizproc/lang/' . $lang['LID'] . '/templates', true, true);
-				}
+				CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/lang/' . $lang['LID'] . '/install/bizproc/templates', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizproc/lang/' . $lang['LID'] . '/templates', true, true);
 			}
 		}
 		return true;
@@ -125,13 +122,10 @@ class controller extends CModule
 
 	public function UnInstallFiles()
 	{
-		if ($_ENV['COMPUTERNAME'] != 'BX')
-		{
-			DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/admin/', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin');
-			DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/themes/.default/', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/themes/.default');//css
-			DeleteDirFilesEx('/bitrix/themes/.default/icons/controller/');//icons
-			DeleteDirFilesEx('/bitrix/images/controller/');//images
-		}
+		DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/admin/', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/admin');
+		DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/install/themes/.default/', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/themes/.default');//css
+		DeleteDirFilesEx('/bitrix/themes/.default/icons/controller/');//icons
+		DeleteDirFilesEx('/bitrix/images/controller/');//images
 		return true;
 	}
 

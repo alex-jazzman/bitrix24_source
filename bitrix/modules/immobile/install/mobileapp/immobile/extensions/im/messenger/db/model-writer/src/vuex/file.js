@@ -5,6 +5,7 @@
  */
 jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) => {
 	const { Type } = require('type');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('repository--file');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
@@ -60,7 +61,23 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 			data.fileList.forEach((file) => {
 				fileIdList.push(file.id);
 			});
-			const fileList = this.store.getters['filesModel/getByIdList'](fileIdList);
+			const fileList = [];
+
+			this.store.getters['filesModel/getByIdList'](fileIdList).forEach((file) => {
+
+				const dialogHelper = DialogHelper.createByChatId(file.chatId);
+				if (!dialogHelper?.isLocalStorageSupported)
+				{
+					return;
+				}
+
+				fileList.push(file);
+			});
+
+			if (!Type.isArrayFilled(fileList))
+			{
+				return;
+			}
 
 			this.repository.file.saveFromModel(fileList)
 				.catch((error) => logger.error('FileWriter.addRouter.saveFromModel.catch:', error));
@@ -101,7 +118,18 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 				fileIdList.push(file.id);
 			});
 
-			const fileList = this.store.getters['filesModel/getByIdList'](fileIdList);
+			const fileList = [];
+
+			this.store.getters['filesModel/getByIdList'](fileIdList).forEach((file) => {
+				const dialogHelper = DialogHelper.createByDialogId(file.dialogId);
+				if (!dialogHelper?.isLocalStorageSupported)
+				{
+					return;
+				}
+
+				fileList.push(file);
+			});
+
 			if (!Type.isArrayFilled(fileList))
 			{
 				return;
@@ -139,6 +167,12 @@ jn.define('im/messenger/db/model-writer/vuex/file', (require, exports, module) =
 
 			const file = this.store.getters['filesModel/getById'](fileId);
 			if (!file)
+			{
+				return;
+			}
+
+			const dialogHelper = DialogHelper.createByDialogId(file.dialogId);
+			if (!dialogHelper?.isLocalStorageSupported)
 			{
 				return;
 			}

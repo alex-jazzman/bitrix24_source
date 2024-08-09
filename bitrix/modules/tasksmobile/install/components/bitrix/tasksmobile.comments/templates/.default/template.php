@@ -27,6 +27,25 @@ Extension::load([
 	'ui.alerts',
 ]);
 
+$taskId = (int)$arResult['TASK_ID'];
+?>
+
+<script>
+	BX.ready(
+		function()
+		{
+			BXMobileApp.addCustomEvent('tasks-view-new:onTaskForbidden', (event) => {
+				if (Number(event.taskId) === <?= $taskId ?>)
+				{
+					app.closeController({ drop: true });
+				}
+			});
+			BXMobileApp.Events.postToComponent('tasks.task.comments:onComponentReady', []);
+		}
+	);
+</script>
+
+<?php
 if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 {
 	$isUiIncluded = Loader::includeModule('ui');
@@ -48,8 +67,6 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 	}
 	return;
 }
-
-$taskId = (int)$arResult['TASK']['ID'];
 ?>
 
 <div style="display: none">

@@ -54,6 +54,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const WRITE_TO_STORAGE_TIMEOUT = 1000;
 	const SHOW_DRAFT_IN_RECENT_TIMEOUT = 1500;
 	const STORAGE_KEY = 'recentDraft';
+	const NOT_AVAILABLE_CHAT_TYPES = new Set([im_v2_const.ChatType.comment]);
 	class DraftManager {
 	  static getInstance() {
 	    if (!DraftManager.instance) {
@@ -103,6 +104,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    });
 	  }
 	  setDraftText(dialogId, text) {
+	    if (!this.canSaveDraft(dialogId)) {
+	      return;
+	    }
 	    if (!this.drafts[dialogId]) {
 	      this.drafts[dialogId] = {};
 	    }
@@ -194,6 +198,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  getDraftMethodName() {
 	    return 'recent/setRecentDraft';
+	  }
+	  canSaveDraft(dialogId) {
+	    const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+	    if (!chat) {
+	      return false;
+	    }
+	    return !NOT_AVAILABLE_CHAT_TYPES.has(chat.type);
 	  }
 	}
 	DraftManager.instance = null;

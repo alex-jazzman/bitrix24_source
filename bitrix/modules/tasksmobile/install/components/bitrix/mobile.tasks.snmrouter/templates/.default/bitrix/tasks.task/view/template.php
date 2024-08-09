@@ -235,7 +235,7 @@ $APPLICATION->IncludeComponent(
 					array(
 						"type" => ($can["EDIT"] ? "select-user" : "user"),
 						"id" => "data[SE_RESPONSIBLE][0][ID]",
-						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE"),
+						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE_MSGVER_1"),
 						"item" => $task["SE_RESPONSIBLE"],
 						"value" => $task["RESPONSIBLE_ID"],
 						"canDrop" => false

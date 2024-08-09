@@ -82,12 +82,20 @@ export default {
 			icon: Type.isStringFilled(this.icon) ? this.icon : null,
 		});
 
-		EventEmitter.subscribe(this.itemSelector, Events.EVENT_ITEMSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+		EventEmitter.subscribe(
+			this.itemSelector,
+			Events.EVENT_ITEMSELECTOR_VALUE_CHANGE,
+			this.onItemSelectorValueChange,
+		);
 	},
 
 	beforeUnmount()
 	{
-		EventEmitter.unsubscribe(this.itemSelector, Events.EVENT_ITEMSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+		EventEmitter.unsubscribe(
+			this.itemSelector,
+			Events.EVENT_ITEMSELECTOR_VALUE_CHANGE,
+			this.onItemSelectorValueChange,
+		);
 	},
 
 	computed: {

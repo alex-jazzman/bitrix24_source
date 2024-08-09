@@ -73,14 +73,12 @@ class call extends \CModule
 			true,
 			true
 		);
-		/*
 		\CopyDirFiles(
 			$_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/call/install/components',
 			$_SERVER['DOCUMENT_ROOT'].'/bitrix/components',
 			true,
 			true
 		);
-		*/
 
 		return true;
 	}

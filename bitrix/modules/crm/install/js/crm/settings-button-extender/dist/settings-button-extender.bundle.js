@@ -167,6 +167,8 @@ this.BX = this.BX || {};
 	const NOT_CHECKED_CLASS = 'menu-popup-item-none';
 	const COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY = 750;
 	const COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH = 300;
+	const AUTOSTART_CALL_DIRECTION_INCOMING = 1;
+	const AUTOSTART_CALL_DIRECTION_OUTGOING = 2;
 	var _entityTypeId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
 	var _categoryId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("categoryId");
 	var _pingSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("pingSettings");
@@ -434,6 +436,8 @@ this.BX = this.BX || {};
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _isSetSortRequestRunning)[_isSetSortRequestRunning] = true;
 	    const settings = babelHelpers.classPrivateFieldLooseBase(this, _kanbanController)[_kanbanController].getCurrentSettings();
+
+	    // eslint-disable-next-line init-declarations
 	    let newSortType;
 	    if (settings.getCurrentType() === crm_kanban_sort.Type.BY_LAST_ACTIVITY_TIME) {
 	      // first different type
@@ -462,35 +466,52 @@ this.BX = this.BX || {};
 	  const showInfoHelper = babelHelpers.classPrivateFieldLooseBase(this, _getInfoHelper)[_getInfoHelper]();
 	  const menuItems = [];
 	  if (main_core.Type.isPlainObject(babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings])) {
-	    var _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6;
-	    const isTranscriptionAutostarted = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : (_babelHelpers$classPr5 = _babelHelpers$classPr4.autostartOperationTypes) == null ? void 0 : _babelHelpers$classPr5.includes(babelHelpers.classPrivateFieldLooseBase(this, _getTranscribeAIOperationType)[_getTranscribeAIOperationType]());
-	    const onlyFirstIncoming = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : _babelHelpers$classPr6.autostartTranscriptionOnlyOnFirstCallWithRecording;
-	    menuItems.push({
-	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING'),
-	      className: isTranscriptionAutostarted && onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
+	    var _babelHelpers$classPr4, _babelHelpers$classPr5, _babelHelpers$classPr6, _babelHelpers$classPr7, _babelHelpers$classPr8, _babelHelpers$classPr9, _babelHelpers$classPr10, _babelHelpers$classPr11, _babelHelpers$classPr12, _babelHelpers$classPr13, _babelHelpers$classPr14;
+	    const autoCallItems = [];
+	    const isTranscriptionAutoStarted = (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : (_babelHelpers$classPr5 = _babelHelpers$classPr4.autostartOperationTypes) == null ? void 0 : _babelHelpers$classPr5.includes(babelHelpers.classPrivateFieldLooseBase(this, _getTranscribeAIOperationType)[_getTranscribeAIOperationType]());
+	    const isOnlyFirst = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : _babelHelpers$classPr6.autostartTranscriptionOnlyOnFirstCallWithRecording;
+	    const isOnlyIncoming = ((_babelHelpers$classPr7 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : (_babelHelpers$classPr8 = _babelHelpers$classPr7.autostartCallDirections) == null ? void 0 : _babelHelpers$classPr8.length) === 1 && ((_babelHelpers$classPr9 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : (_babelHelpers$classPr10 = _babelHelpers$classPr9.autostartCallDirections) == null ? void 0 : _babelHelpers$classPr10.includes(AUTOSTART_CALL_DIRECTION_INCOMING));
+	    const isOnlyOutgoing = ((_babelHelpers$classPr11 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : (_babelHelpers$classPr12 = _babelHelpers$classPr11.autostartCallDirections) == null ? void 0 : _babelHelpers$classPr12.length) === 1 && ((_babelHelpers$classPr13 = babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings]) == null ? void 0 : (_babelHelpers$classPr14 = _babelHelpers$classPr13.autostartCallDirections) == null ? void 0 : _babelHelpers$classPr14.includes(AUTOSTART_CALL_DIRECTION_OUTGOING));
+	    const isAIHasPackages = babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('isAIHasPackages');
+	    autoCallItems.push({
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING_MSGVER_1'),
+	      className: isTranscriptionAutoStarted && isAIHasPackages && isOnlyFirst && isOnlyIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
 	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'firstCall')
 	    }, {
-	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL'),
-	      className: isTranscriptionAutostarted && !onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
-	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'allCalls')
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_INCOMING'),
+	      className: isTranscriptionAutoStarted && isAIHasPackages && isOnlyIncoming && !isOnlyFirst ? CHECKED_CLASS : NOT_CHECKED_CLASS,
+	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'allCalls') // all incoming
 	    }, {
-	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING'),
-	      className: isTranscriptionAutostarted ? NOT_CHECKED_CLASS : CHECKED_CLASS,
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_OUTGOING'),
+	      className: isTranscriptionAutoStarted && isAIHasPackages && isOnlyOutgoing && !isOnlyFirst ? CHECKED_CLASS : NOT_CHECKED_CLASS,
+	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'outgoingCalls')
+	    }, {
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL_MSGVER_1'),
+	      className: isTranscriptionAutoStarted && isAIHasPackages && !isOnlyIncoming && !isOnlyOutgoing && !isOnlyFirst ? CHECKED_CLASS : NOT_CHECKED_CLASS,
+	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'allIncomingOutgoingCalls')
+	    }, {
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING_MSGVER_1'),
+	      className: isTranscriptionAutoStarted && isAIHasPackages ? NOT_CHECKED_CLASS : CHECKED_CLASS,
 	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotMenuItemClick)[_handleCoPilotMenuItemClick].bind(this, 'manual')
+	    });
+	    menuItems.push({
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS'),
+	      disabled: babelHelpers.classPrivateFieldLooseBase(this, _isSetAiSettingsRequestRunning)[_isSetAiSettingsRequestRunning],
+	      items: autoCallItems
 	    });
 	  }
 	  if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _aiCopilotLanguageId)[_aiCopilotLanguageId])) {
+	    var _babelHelpers$classPr15;
 	    menuItems.push({
-	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE'),
-	      className: NOT_CHECKED_CLASS,
-	      onclick: showInfoHelper != null ? showInfoHelper : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotLanguageSelect)[_handleCoPilotLanguageSelect].bind(this)
+	      text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE_MSGVER_1'),
+	      onclick: (_babelHelpers$classPr15 = babelHelpers.classPrivateFieldLooseBase(this, _getInfoHelper)[_getInfoHelper](true)) != null ? _babelHelpers$classPr15 : babelHelpers.classPrivateFieldLooseBase(this, _handleCoPilotLanguageSelect)[_handleCoPilotLanguageSelect].bind(this)
 	    });
 	  }
 	  if (menuItems.length === 0) {
 	    return null;
 	  }
 	  return {
-	    text: main_core.Loc.getMessage('CRM_COMMON_COPILOT'),
+	    text: main_core.Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CALLS'),
 	    disabled: babelHelpers.classPrivateFieldLooseBase(this, _isSetAiSettingsRequestRunning)[_isSetAiSettingsRequestRunning],
 	    items: menuItems
 	  };
@@ -513,10 +534,23 @@ this.BX = this.BX || {};
 	    case 'firstCall':
 	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartOperationTypes = babelHelpers.classPrivateFieldLooseBase(this, _getAllOperationTypes)[_getAllOperationTypes]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartTranscriptionOnlyOnFirstCallWithRecording = true;
+	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartCallDirections = [AUTOSTART_CALL_DIRECTION_INCOMING];
 	      break;
 	    case 'allCalls':
+	      // all incoming
 	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartOperationTypes = babelHelpers.classPrivateFieldLooseBase(this, _getAllOperationTypes)[_getAllOperationTypes]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartTranscriptionOnlyOnFirstCallWithRecording = false;
+	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartCallDirections = [AUTOSTART_CALL_DIRECTION_INCOMING];
+	      break;
+	    case 'outgoingCalls':
+	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartOperationTypes = babelHelpers.classPrivateFieldLooseBase(this, _getAllOperationTypes)[_getAllOperationTypes]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartTranscriptionOnlyOnFirstCallWithRecording = false;
+	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartCallDirections = [AUTOSTART_CALL_DIRECTION_OUTGOING];
+	      break;
+	    case 'allIncomingOutgoingCalls':
+	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartOperationTypes = babelHelpers.classPrivateFieldLooseBase(this, _getAllOperationTypes)[_getAllOperationTypes]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartTranscriptionOnlyOnFirstCallWithRecording = false;
+	      babelHelpers.classPrivateFieldLooseBase(this, _aiAutostartSettings)[_aiAutostartSettings].autostartCallDirections = [AUTOSTART_CALL_DIRECTION_INCOMING, AUTOSTART_CALL_DIRECTION_OUTGOING];
 	      break;
 	  }
 	  main_core.ajax.runAction('crm.settings.ai.saveAutostartSettings', {
@@ -607,13 +641,27 @@ this.BX = this.BX || {};
 	function _getTranscribeAIOperationType2() {
 	  return main_core.Text.toInteger(babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('transcribeAIOperationType'));
 	}
-	function _getInfoHelper2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('isAIEnabledInGlobalSettings')) {
+	function _getInfoHelper2(skipPackagesCheck = false) {
+	  if (skipPackagesCheck) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('isAIEnabledInGlobalSettings')) {
+	      return null;
+	    }
+	    return () => {
+	      if (main_core.Reflection.getClass('BX.UI.InfoHelper.show')) {
+	        BX.UI.InfoHelper.show(babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('aiDisabledSliderCode'));
+	      }
+	    };
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('isAIEnabledInGlobalSettings') && babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('isAIHasPackages')) {
 	    return null;
 	  }
 	  return () => {
 	    if (main_core.Reflection.getClass('BX.UI.InfoHelper.show')) {
-	      BX.UI.InfoHelper.show(babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('aiDisabledSliderCode'));
+	      if (!babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('isAIEnabledInGlobalSettings')) {
+	        BX.UI.InfoHelper.show(babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('aiDisabledSliderCode'));
+	      } else if (!babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('isAIHasPackages')) {
+	        BX.UI.InfoHelper.show(babelHelpers.classPrivateFieldLooseBase(this, _extensionSettings)[_extensionSettings].get('aiPackagesEmptySliderCode'));
+	      }
 	    }
 	  };
 	}

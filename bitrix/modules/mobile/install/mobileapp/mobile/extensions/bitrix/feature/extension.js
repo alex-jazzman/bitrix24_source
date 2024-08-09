@@ -86,10 +86,20 @@ jn.define('feature', (require, exports, module) => {
 			{
 				const { MemoryStorage } = require('native/memorystore') || {};
 
-				return typeof MemoryStorage === 'function' || isESClass(MemoryStorage)
+				return typeof MemoryStorage === 'function' || isESClass(MemoryStorage);
 			}
 
 			return false;
+		}
+
+		static isOpenImageNonContextSupported()
+		{
+			if (isAndroid)
+			{
+				return true;
+			}
+
+			return minApiVersion(55, 'isOpenImageNonContextSupported');
 		}
 	}
 

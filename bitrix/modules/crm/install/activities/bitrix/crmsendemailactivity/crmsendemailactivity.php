@@ -867,6 +867,11 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 	private function logDebug(array $values = [])
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$fullMap = static::getPropertiesMap($this->getDocumentType());
 		$map = [
 			'MessageFrom' => $fullMap['MessageFrom']['Name'],
@@ -880,6 +885,11 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 	private function logDebugActivity($id)
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$value = sprintf(
 			'/bitrix/components/bitrix/crm.activity.planner/slider.php?site_id='
 			. SITE_ID . '&ajax_action=ACTIVITY_VIEW&activity_id=%d',

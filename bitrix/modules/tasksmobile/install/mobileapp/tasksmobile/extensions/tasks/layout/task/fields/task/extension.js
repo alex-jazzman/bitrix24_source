@@ -1,7 +1,7 @@
 /**
- * @module tasks/layout/task/fields/tasks
+ * @module tasks/layout/task/fields/task
  */
-jn.define('tasks/layout/task/fields/tasks', (require, exports, module) => {
+jn.define('tasks/layout/task/fields/task', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 	const { Icon } = require('assets/icons');

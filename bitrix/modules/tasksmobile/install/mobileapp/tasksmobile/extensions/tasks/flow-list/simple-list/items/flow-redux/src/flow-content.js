@@ -3,6 +3,7 @@
  */
 jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const store = require('statemanager/redux/store');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { PureComponent } = require('layout/pure-component');
@@ -12,14 +13,14 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
 
 	const { Color, Component, Indent } = require('tokens');
-	const { Card } = require('ui-system/layout/card');
+	const { Card, CardDesign } = require('ui-system/layout/card');
 	const { ChipStatus, ChipStatusDesign, ChipStatusMode } = require('ui-system/blocks/chips/chip-status');
 	const { H4 } = require('ui-system/typography/heading');
 	const { Text6 } = require('ui-system/typography/text');
-	const { Link4, LinkMode } = require('ui-system/blocks/link');
+	const { Link4, LinkMode, Ellipsize } = require('ui-system/blocks/link');
 	const { Button, ButtonSize, ButtonDesign } = require('ui-system/form/buttons');
 	const { Entry } = require('tasks/entry');
-	const { isFlowTaskCreationProhibited } = require('tasks/statemanager/redux/slices/tariff-plan-restrictions');
+	const { selectIsFlowTaskCreationProhibited } = require('tasks/statemanager/redux/slices/tariff-restrictions');
 	const { openPlanRestriction } = require('tasks/layout/flow/tariff-plan-restrictions-opener');
 
 	class FlowContent extends PureComponent
@@ -134,6 +135,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 			return `flow-content-${this.props.id}`;
 		}
 
+		getCardDesign()
+		{
+			return CardDesign.PRIMARY;
+		}
+
 		getUserAvatarOpacity()
 		{
 			return 1;
@@ -146,6 +152,11 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 				return null;
 			}
 
+			return this.renderCard();
+		}
+
+		renderCard()
+		{
 			return Card(
 				{
 					testId: this.testId,
@@ -156,6 +167,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 						marginTop: Indent.XL2.toNumber(),
 					},
 					onClick: this.cardClickHandler,
+					design: this.getCardDesign(),
 				},
 				this.renderHeader(),
 				this.renderProgressInfo(),
@@ -623,7 +635,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 					text: Loc.getMessage('TASKSMOBILE_FLOW_CONTENT_MY_TASKS_BUTTON_TEXT', {
 						'#TASKS_COUNT#': countText,
 					}),
-					ellipsize: 'middle',
+					ellipsize: Ellipsize.MIDDLE,
 					mode: LinkMode.DASH,
 					color: Color.base4,
 					accent: true,
@@ -639,7 +651,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content', (requ
 		};
 
 		createTaskButtonClickHandler = () => {
-			if (isFlowTaskCreationProhibited())
+			if (selectIsFlowTaskCreationProhibited(store.getState()))
 			{
 				void openPlanRestriction(this.props.layout);
 

@@ -45,4 +45,6 @@ $MESS["IM_CONTENT_CHAT_NO_CHATS_START_MESSAGE"] = "Invite your colleagues here";
 $MESS["IM_CONTENT_CHAT_START_MESSAGE_V2"] = "Select one of the chats to start messaging.";
 $MESS["IM_CONTENT_COMMENTS_FOLLOW_TOGGLE_TEXT"] = "Follow";
 $MESS["IM_CONTENT_COMMENTS_HEADER_TITLE"] = "Comments";
+$MESS["IM_CONTENT_COMMENTS_MESSAGE_MENU_OPEN_IN_CHANNEL"] = "View in channel";
 $MESS["IM_CONTENT_DROP_AREA"] = "Drag your files here";
+$MESS["IM_CONTENT_CHANNEL_TEXTAREA_PLACEHOLDER"] = "Add post";

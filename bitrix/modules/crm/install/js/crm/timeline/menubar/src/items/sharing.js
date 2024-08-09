@@ -1,12 +1,12 @@
-import { Tag, Event, Loc, Type, Dom, Text } from 'main.core';
-import { EventEmitter } from 'main.core.events';
-import { MenuManager } from "main.popup";
-import WithEditor from "./witheditor";
-import { Guide } from "ui.tour";
-import { Loader } from 'main.loader';
-import Context from "../context";
 import { DialogNew } from 'calendar.sharing.interface';
-import { ConditionChecker, Types as SenderTypes, OpenLineCodes } from 'crm.messagesender';
+import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
+import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Loader } from 'main.loader';
+import { MenuManager } from 'main.popup';
+import { Guide } from 'ui.tour';
+import Context from '../context';
+import WithEditor from './witheditor';
 
 const DataLoadStatus = Object.freeze({
 	loaded: 'loaded',
@@ -737,7 +737,6 @@ export default class Sharing extends WithEditor
 	async isBitrix24Approved()
 	{
 		return await ConditionChecker.checkIsApproved({
-			openLineCode: OpenLineCodes.notifications,
 			senderType: SenderTypes.bitrix24,
 		});
 	}

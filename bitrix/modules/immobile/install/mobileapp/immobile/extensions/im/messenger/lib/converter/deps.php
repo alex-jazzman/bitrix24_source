@@ -5,6 +5,7 @@ return [
 		'apptheme',
 		'type',
 		'utils/object',
+		'utils/uuid',
 		'im:chat/utils',
 		'im:chat/messengercommon',
 		'im:chat/dataconverter',
@@ -17,6 +18,7 @@ return [
 		'im:messenger/lib/element',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/smile-manager',
+		'im:messenger/lib/utils',
 	],
 	'bundle' => [
 		'./src/recent',

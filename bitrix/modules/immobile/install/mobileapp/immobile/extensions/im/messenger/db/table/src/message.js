@@ -221,7 +221,12 @@ jn.define('im/messenger/db/table/message', (require, exports, module) => {
 
 		async deleteByIdList(idList)
 		{
-			if (!this.isSupported || !Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
+			if (
+				!this.isSupported
+				|| this.readOnly
+				|| !Feature.isLocalStorageEnabled
+				|| !Type.isArrayFilled(idList)
+			)
 			{
 				return Promise.resolve({});
 			}

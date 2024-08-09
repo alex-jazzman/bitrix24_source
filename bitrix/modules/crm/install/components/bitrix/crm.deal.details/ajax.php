@@ -1234,6 +1234,7 @@ elseif($action === 'SAVE')
 			{
 				$starter->runOnUpdate($fields, $previousFields);
 			}
+			(new OrderDealSynchronizer())->updateOrderFromDeal($ID);
 		}
 
 		if($conversionWizard !== null)

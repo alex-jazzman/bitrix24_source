@@ -940,7 +940,7 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 				}
 			);
 
-			$result = $mailboxHelper->mail(array_merge(
+			$mailboxHelper->mail(array_merge(
 				$outgoingParams,
 				array(
 					'HEADER' => array_merge(

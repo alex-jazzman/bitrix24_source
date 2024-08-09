@@ -7,6 +7,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 	const { copyToClipboard } = require('utils/copy');
 	const { getFormattedNumber } = require('utils/phone');
 	const { stringify } = require('utils/string');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const pathToExtension = currentDomain + '/bitrix/mobileapp/mobile/extensions/bitrix/communication/phone-menu/';
 	const imagePath = pathToExtension + 'images/banner.png';

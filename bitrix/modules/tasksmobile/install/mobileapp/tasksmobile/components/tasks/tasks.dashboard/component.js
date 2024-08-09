@@ -58,9 +58,9 @@
 	const { increaseStageCounter, decreaseStageCounter } = require('tasks/statemanager/redux/slices/stage-counters');
 	const { flowsAdded, flowsUpserted } = require('tasks/statemanager/redux/slices/flows');
 	const {
-		isFlowTaskCreationProhibited,
-		loadTariffPlanRestrictionsIfNecessary,
-	} = require('tasks/statemanager/redux/slices/tariff-plan-restrictions');
+		selectIsFlowTaskCreationProhibited,
+		loadTariffRestrictions,
+	} = require('tasks/statemanager/redux/slices/tariff-restrictions');
 	const { openPlanRestriction } = require('tasks/layout/flow/tariff-plan-restrictions-opener');
 
 	const AIR_STYLE_SUPPORTED = Feature.isAirStyleSupported();
@@ -73,7 +73,8 @@
 		{
 			super(props);
 
-			fetchDisabledTools();
+			void fetchDisabledTools();
+			void loadTariffRestrictions();
 
 			this.showSearch = this.showSearch.bind(this);
 			this.onItemsLoaded = this.onItemsLoaded.bind(this);
@@ -230,7 +231,6 @@
 			this.refreshStages();
 			this.updateMoreMenuButton();
 			this.subscribe();
-			loadTariffPlanRestrictionsIfNecessary();
 
 			setTimeout(async () => {
 				this.prefetchAssets();
@@ -772,7 +772,7 @@
 
 			if (this.props.flowId > 0)
 			{
-				if (isFlowTaskCreationProhibited())
+				if (selectIsFlowTaskCreationProhibited(store.getState()))
 				{
 					void openPlanRestriction(layout);
 

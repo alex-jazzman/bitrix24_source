@@ -2,8 +2,8 @@
  * @module im/messenger/controller/participant-manager
  */
 jn.define('im/messenger/controller/participant-manager', (require, exports, module) => {
-	/* global ContextMenu */
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { menuIcons } = require('im/messenger/assets/common');
 

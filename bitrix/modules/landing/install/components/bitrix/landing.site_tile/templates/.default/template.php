@@ -112,10 +112,12 @@ $isAjax = $component->isAjax();
 					<div class="landing-sites__grid-empty--title">
 						<?= $component->getMessageType('LANDING_SITE_TILE_EMPTY_HEADER2')?>
 					</div>
-					<div class="landing-sites__grid-empty--balloon">
-						<div class="ui-icon-set --copilot-ai landing-sites__grid-empty--balloon-icon"></div>
-						<div class="landing-sites__grid-empty--balloon-text"><?= $component->getMessageType('LANDING_SITE_TILE_EMPTY_BALLOON_TEXT')?></div>
-					</div>
+					<?php if (\Bitrix\Landing\Connector\Ai::isCopilotAvailable()): ?>
+						<div class="landing-sites__grid-empty--balloon">
+							<div class="ui-icon-set --copilot-ai landing-sites__grid-empty--balloon-icon"></div>
+							<div class="landing-sites__grid-empty--balloon-text"><?= $component->getMessageType('LANDING_SITE_TILE_EMPTY_BALLOON_TEXT')?></div>
+						</div>
+					<?php endif; ?>
 				</div>
 				<div class="landing-sites__grid-empty--info-block-content">
 					<ul class="landing-sites__grid-empty--list-items">

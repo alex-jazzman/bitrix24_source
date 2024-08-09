@@ -778,6 +778,12 @@ export default class Whatsapp extends Item
 			},
 		};
 
+		const footerData = this.#getFooterData();
+		if (Type.isArrayFilled(footerData))
+		{
+			defaultOptions.footer = footerData;
+		}
+
 		this.#selectTplDlg = new Dialog({ ...defaultOptions, ...additionalOptions });
 	}
 
@@ -821,6 +827,55 @@ export default class Whatsapp extends Item
 		}
 
 		return text;
+	}
+
+	#getFooterData(): Array
+	{
+		const showForm = () => {
+			BX.UI.Feedback.Form.open({
+				id: 'b24_crm_timeline_whatsapp_template_suggest_form',
+				defaultForm: {
+					id: 760,
+					lang: 'en',
+					sec: 'culzcq',
+				},
+				forms: [{
+					zones: ['ru', 'by', 'kz'],
+					id: 758,
+					lang: 'ru',
+					sec: 'jyafqa',
+				}, {
+					zones: ['de'],
+					id: 764,
+					lang: 'de',
+					sec: '9h74xf',
+				}, {
+					zones: ['com.br'],
+					id: 766,
+					lang: 'com.br',
+					sec: 'ddkhcc',
+				}, {
+					zones: ['es'],
+					id: 762,
+					lang: 'es',
+					sec: '6ni833',
+				}, {
+					zones: ['en'],
+					id: 760,
+					lang: 'en',
+					sec: 'culzcq',
+				}],
+			});
+		};
+
+		return [
+			Tag.render`<span style="width: 100%;"></span>`,
+			Tag.render`
+				<span onclick="${showForm}" class="ui-selector-footer-link">
+					${Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_SELECTOR_FOOTER_BUTTON')}
+				</span>
+			`,
+		];
 	}
 	// endregion
 

@@ -351,9 +351,11 @@ js,
 				'colorSettings' => $colorSettings,
 			]);
 
+			$analytics = CUtil::PhpToJSObject($arParams['ANALYTICS'] ?? []);
+
 			$arActivitySubMenuItems[] = [
 				'TEXT' => Loc::getMessage('CRM_LEAD_ADD_TODO'),
-				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Lead . ", " . (int)$arLead['ID'] . ", " . $currentUser . ", " . $settings . ", " . $useTodoEditorV2 . ");"
+				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Lead . ", " . (int)$arLead['ID'] . ", " . $currentUser . ", " . $settings . ", " . $useTodoEditorV2 . ", " . $analytics .");"
 			];
 
 			if (IsModuleInstalled('subscribe'))

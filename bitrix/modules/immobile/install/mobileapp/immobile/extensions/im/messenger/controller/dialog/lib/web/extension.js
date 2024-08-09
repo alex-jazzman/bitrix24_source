@@ -166,10 +166,27 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 			};
 		}
 
-		static getOpenLineParams(userCode, dialogTitleParams = null)
+		static getOpenLineParams(options)
 		{
+			const {
+				userCode,
+				sessionId,
+				dialogTitleParams,
+			} = options;
+
 			return new Promise((resolve) => {
-				this.getOpenlineDialogByUserCode(userCode).then((dialog) => {
+				let getOpenlineDialogPromise = Promise.resolve({ dialog_id: 0 });
+				if (userCode)
+				{
+					getOpenlineDialogPromise = this.getOpenlineDialogByUserCode(userCode);
+				}
+				else if (sessionId)
+				{
+					getOpenlineDialogPromise = this.getOpenlineDialogBySessionId(sessionId);
+				}
+
+				// eslint-disable-next-line promise/catch-or-return
+				getOpenlineDialogPromise.then((dialog) => {
 					let titleParams;
 					if (dialogTitleParams)
 					{
@@ -243,7 +260,24 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 					.then((response) => {
 						resolve(response.data());
 					})
-					.catch(() => {
+					.catch((error) => {
+						console.error('WebDialog.getOpenlineDialogByUserCode error:', error, userCode);
+
+						resolve({ dialog_id: 0 });
+					});
+			});
+		}
+
+		static getOpenlineDialogBySessionId(sessionId)
+		{
+			return new Promise((resolve) => {
+				OpenLinesRest.getBySessionId(sessionId)
+					.then((response) => {
+						resolve(response.data());
+					})
+					.catch((error) => {
+						console.error('WebDialog.getOpenlineDialogBySessionId error:', error, sessionId);
+
 						resolve({ dialog_id: 0 });
 					});
 			});

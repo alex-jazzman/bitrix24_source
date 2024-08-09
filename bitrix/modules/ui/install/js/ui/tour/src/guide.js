@@ -1081,7 +1081,7 @@ export class Guide extends Event.EventEmitter
 		if (!this.layout.finalContent)
 		{
 			this.layout.finalContent = Tag.render`
-				<div class="ui-tour-popup">
+				<div class="ui-tour-popup --final">
 					<div class="ui-tour-popup-title">
 						${this.finalTitle}
 					</div>

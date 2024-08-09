@@ -234,6 +234,11 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				isForbidden: false,
 				checklistLoading: selectHasChecklist(this.#task),
 			};
+
+			if (this.props.shouldOpenComments)
+			{
+				this.openComments();
+			}
 		}
 
 		#initFromBackend()
@@ -251,12 +256,12 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				}),
 				this.#getDiskFolderId(),
 			])
-				.then((results) => this.#onAfterInitDataFetched(results))
+				.then((results) => this.#onAfterInitDataFetched(results, this.props.shouldOpenComments))
 				.catch(console.error)
 			;
 		}
 
-		#onAfterInitDataFetched(results)
+		#onAfterInitDataFetched(results, shouldOpenComments = false)
 		{
 			const isForbidden = !results[0].value;
 
@@ -266,8 +271,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			}
 			else
 			{
-				this.setState({ loading: false });
 				this.layout.setTitle({ useProgress: false }, true);
+				this.setState({ loading: false }, () => shouldOpenComments && this.openComments());
 			}
 		}
 
@@ -282,6 +287,8 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 			});
 			this.layout.setTitle({ useProgress: false }, true);
 			this.layout.setRightButtons([]);
+
+			this.commentsOpener.closeCommentsWidget(this.#taskId);
 		}
 
 		/**
@@ -839,7 +846,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 				return;
 			}
 
-			if (field.isReadOnly())
+			if (field.isReadOnly() && !field.getCustomContentClickHandler())
 			{
 				this.accessToast.showByFieldId(field.getId());
 			}

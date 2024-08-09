@@ -4,6 +4,5 @@ return [
 		'tokens',
 		'utils/object',
 		'utils/validation',
-		'utils/typography',
 	],
 ];

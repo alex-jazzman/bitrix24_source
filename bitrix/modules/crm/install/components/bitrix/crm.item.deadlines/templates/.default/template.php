@@ -2,9 +2,6 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Localization\Loc;
-
 \Bitrix\Main\UI\Extension::load(
 	[
 		'ui.dialogs.messagebox',
@@ -50,6 +47,7 @@ $APPLICATION->IncludeComponent(
 		'SHOW_ACTIVITY' => $arResult['isCountersEnabled'] ? 'Y' : 'N',
 		'EXTRA' => [
 			'CATEGORY_ID' => $arResult['categoryId'],
+			'ANALYTICS' => $arResult['analytics'],
 		],
 		'HEADERS_SECTIONS' => [
 			[

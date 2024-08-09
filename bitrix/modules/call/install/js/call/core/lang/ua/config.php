@@ -1,4 +1,5 @@
 <?php
+$MESS["CALL_MEDIA_DEVICES_RESET_STATE_HINT"] = "Не вдалося ввімкнути камеру й мікрофон після розблокування екрана. Ви можете ввімкнути їх вручну.";
 $MESS["CALL_M_BTN_HANGUP_OPTION_FINISH"] = "Завершити дзвінок для всіх";
 $MESS["CALL_M_BTN_HANGUP_OPTION_LEAVE"] = "Відключитися від дзвінка";
 $MESS["CALL_M_BTN_TITLE_STOP_RECORD"] = "Зупинити запис";

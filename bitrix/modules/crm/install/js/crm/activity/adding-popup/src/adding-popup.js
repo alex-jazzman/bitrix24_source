@@ -9,6 +9,10 @@ import { UI } from 'ui.notification';
 
 import './adding-popup.css';
 
+type Context = {
+	analytics: Object;
+}
+
 /**
  * @event onSave
  * @event onClose
@@ -27,6 +31,7 @@ export class AddingPopup
 	#popupToDoEditorContainer: HTMLElement = null;
 	#todoEditor: TodoEditor | TodoEditorV2 | null = null;
 	#eventEmitter: EventEmitter = null;
+	#context: Context = {};
 
 	constructor(entityTypeId: Number, entityId: Number, currentUser: Object, settings: Object, params: Object)
 	{
@@ -62,6 +67,11 @@ export class AddingPopup
 		}
 
 		this.#useTodoEditorV2 = params.useTodoEditorV2 ?? null;
+
+		if (Type.isPlainObject(params.context))
+		{
+			this.#context = params.context;
+		}
 	}
 
 	show(bindElement: HTMLElement, mode: String = TodoEditorMode.ADD)
@@ -156,9 +166,18 @@ export class AddingPopup
 
 		if (this.#useTodoEditorV2)
 		{
+			const analytics = this.#context?.analytics ?? {};
+			const section = analytics.c_section ?? null;
+			const subSection = analytics.c_sub_section ?? null;
+
 			params.calendarSettings = this.#calendarSettings;
 			params.colorSettings = this.#colorSettings;
 			params.defaultDescription = '';
+			params.analytics = {
+				section,
+				subSection,
+			};
+
 			this.#todoEditor = new TodoEditorV2(params);
 		}
 		else

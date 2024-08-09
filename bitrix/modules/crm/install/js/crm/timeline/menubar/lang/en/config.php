@@ -106,6 +106,7 @@ $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_HELP_LINK"] = "How does it work";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE"] = "WhatsApp connected";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE_SETUP"] = "Connect WhatsApp";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_NO_PHONE_ERROR"] = "Provide phone number in customer details.";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_SELECTOR_FOOTER_BUTTON"] = "Suggest a template";
 $MESS["CRM_TIMELINE_TODO_GUIDE_ARTICLE_TITLE"] = "How does it work?";
 $MESS["CRM_TIMELINE_TODO_GUIDE_TEXT"] = "Add activities to the calendar; invite users; create meetings with customers and highlight various activities with different colors – all inside the same activity.";
 $MESS["CRM_TIMELINE_TODO_GUIDE_TITLE"] = "New universal activity";

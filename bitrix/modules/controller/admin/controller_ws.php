@@ -72,7 +72,7 @@ else
 					true,
 					'CONTROLLER_WS',
 					$res['USER_INFO']['NAME'] . ' ' . $res['USER_INFO']['LAST_NAME'] . ' (' . $res['USER_INFO']['LOGIN'] . ')'
-				);
+				)->isSuccess();
 			}
 		}
 		else
@@ -238,7 +238,7 @@ else
 					true,
 					'CONTROLLER_WS',
 					$arSaveUser['NAME'] . ' ' . $arSaveUser['LAST_NAME'] . ' (' . $arSaveUser['LOGIN'] . ')'
-				);
+				)->isSuccess();
 			}
 		}
 		else

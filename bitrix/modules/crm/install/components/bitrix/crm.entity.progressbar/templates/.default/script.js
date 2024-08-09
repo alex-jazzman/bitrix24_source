@@ -539,6 +539,19 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					return;
 				}
 
+				const errorMessage = BX.prop.getString(data, 'ERROR', null);
+				if (errorMessage)
+				{
+					BX.UI.Notification.Center.notify({
+						content: errorMessage,
+						autoHideDelay: 5000,
+					});
+
+					this.setCurrentStepByIdAndAdjustSteps(this._previousStepId);
+
+					return;
+				}
+
 				BX.onCustomEvent(
 					window,
 					"Crm.EntityProgress.Saved",

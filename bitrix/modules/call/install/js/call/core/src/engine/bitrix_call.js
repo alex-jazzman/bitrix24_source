@@ -222,7 +222,9 @@ export class BitrixCall extends AbstractCall
 	{
 		if (this._reconnectionEventCount === 0 && newValue > 0)
 		{
-			this.runCallback(CallEvent.onReconnecting);
+			this.runCallback(CallEvent.onReconnecting, {
+				reconnectionEventCount: newValue,
+			});
 		}
 		if (newValue === 0)
 		{
@@ -417,6 +419,11 @@ export class BitrixCall extends AbstractCall
 		this.clientEventsBound = false;
 	};
 
+	canChangeMediaDevices()
+	{
+		return !this.BitrixCall?.isMediaMutedBySystem;
+	};
+
 	setMuted = (event) =>
 	{
 		if (this.muted == event.data.isMicrophoneMuted)
@@ -509,7 +516,7 @@ export class BitrixCall extends AbstractCall
 					{
 						this.runCallback('onUpdateLastUsedCameraId');
 
-						if (this.BitrixCall.isVideoPublished())
+						if (this.BitrixCall.isVideoPublished() && this.canChangeMediaDevices())
 						{
 							this.BitrixCall.getLocalVideo()
 								.then(track => {
@@ -530,11 +537,15 @@ export class BitrixCall extends AbstractCall
 									}
 								});
 						}
+						else if (!this.canChangeMediaDevices())
+						{
+							this.runCallback(CallEvent.onNeedResetMediaDevicesState);
+						}
 						else
 						{
 							this.#setPublisingState(MediaStreamsKinds.Camera, true);
 							this.#showLocalVideo();
-							this.BitrixCall.enableVideo();
+							this.BitrixCall.enableVideo(true);
 						}
 					}
 					else
@@ -589,7 +600,7 @@ export class BitrixCall extends AbstractCall
 				.finally(() => {
 					this.#setPublisingState(MediaStreamsKinds.Microphone, false);
 
-					if (Hardware.isMicrophoneMuted)
+					if (Hardware.isMicrophoneMuted && !this.canChangeMediaDevices())
 					{
 						this.BitrixCall.disableAudio();
 					}
@@ -664,6 +675,10 @@ export class BitrixCall extends AbstractCall
 
 	requestFloor(requestActive)
 	{
+		if (this.floorRequestActive === requestActive)
+		{
+			return;
+		}
 		this.floorRequestActive = requestActive;
 		this.BitrixCall.raiseHand(requestActive);
 	};
@@ -962,6 +977,8 @@ export class BitrixCall extends AbstractCall
 		this.videoEnabled = Hardware.isCameraOn;
 		this.muted = Hardware.isMicrophoneMuted;
 
+		clearTimeout(this.lastSelfPingReceivedTimeout);
+
 		if (!joinAsViewer)
 		{
 			this._outgoingAnswer = this.signaling.sendAnswer();
@@ -1238,6 +1255,7 @@ export class BitrixCall extends AbstractCall
 	{
 		this.BitrixCall.on('PublishSucceed', this.#onLocalMediaRendererAdded);
 		this.BitrixCall.on('PublishPaused', this.#onLocalMediaRendererMuteToggled);
+		this.BitrixCall.on('MediaMutedBySystem', this.#onMediaMutedBySystem);
 		this.BitrixCall.on('PublishFailed', this.#onLocalMediaRendererEnded);
 		this.BitrixCall.on('PublishEnded', this.#onLocalMediaRendererEnded);
 		this.BitrixCall.on('GetUserMediaEnded', this.#onGetUserMediaEnded);
@@ -1804,6 +1822,14 @@ export class BitrixCall extends AbstractCall
 		}
 	}
 
+	#onMediaMutedBySystem = (muted) =>
+	{
+		const microphoneState = muted ? false : !Hardware.isMicrophoneMuted;
+		const cameraState = muted ? false : Hardware.isCameraOn;
+		this.signaling.sendMicrophoneState(microphoneState);
+		this.signaling.sendCameraState(cameraState);
+	}
+
 	#onLocalMediaRendererEnded = (e, interrupted) =>
 	{
 		const kind = MediaKinds[e];
@@ -2051,6 +2077,10 @@ export class BitrixCall extends AbstractCall
 					mediaStream: e.stream,
 					onVoiceStarted: () =>
 					{
+						if (!Hardware.isMicrophoneMuted)
+						{
+							this.requestFloor(false);
+						}
 						this.#onEndpointVoiceStart({userId: this.userId});
 					},
 					onVoiceStopped: () =>
@@ -2101,6 +2131,7 @@ export class BitrixCall extends AbstractCall
 		this.sendTelemetryEvent("reconnect");
 		this.localUserState = UserState.Connected;
 
+		this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
 		if (!Hardware.isMicrophoneMuted)
 		{
 			if (!this.BitrixCall.isAudioPublished())
@@ -2110,6 +2141,7 @@ export class BitrixCall extends AbstractCall
 			this.BitrixCall.enableAudio();
 		}
 
+		this.signaling.sendCameraState(Hardware.isCameraOn);
 		if (Hardware.isCameraOn)
 		{
 			if (!this.BitrixCall.isVideoPublished())
@@ -2483,6 +2515,10 @@ export class BitrixCall extends AbstractCall
 		}
 		else if (eventName === clientEvents.videoPaused)
 		{
+			if (message.senderId === this.userId)
+			{
+				return;
+			}
 			this.runCallback(CallEvent.onUserVideoPaused, {
 				userId: message.senderId,
 				videoPaused: message.videoPaused === "Y"
@@ -2724,6 +2760,13 @@ class Signaling
 	{
 		return this.#sendMessage(clientEvents.cameraState, {
 			cameraState: cameraState ? "Y" : "N"
+		});
+	};
+
+	sendVideoPaused(videoPaused)
+	{
+		return this.#sendMessage(clientEvents.videoPaused, {
+			videoPaused: videoPaused ? "Y" : "N"
 		});
 	};
 

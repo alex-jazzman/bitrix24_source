@@ -7,7 +7,6 @@ return [
 		'layout/ui/menu',
 		'feature',
 		'loc',
-		'tasks:filter/task',
 		'tasks:statemanager/redux/slices/tasks/field-change-registry',
 		'tasks:statemanager/redux/types',
 		'tasks:statemanager/redux/slices/groups',

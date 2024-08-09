@@ -302,6 +302,7 @@ $includeFormComponent = static function(array $tab) {
 
 		BX.Lists.Component.ElementCreationGuide.Instance = new BX.Lists.Component.ElementCreationGuide(
 			<?= Json::encode([
+				'name' => trim((string)$info['name']),
 				'description' => trim((string)$info['description']),
 				'duration' => $arResult['bizproc']['averageDuration'] ?? null,
 				'signedParameters' => $arResult['signedParameters'],

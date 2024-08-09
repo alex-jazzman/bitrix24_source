@@ -15,6 +15,14 @@ export default {
 		},
 	},
 
+	data(): Object
+	{
+		return {
+			deadlineBlockData: this.deadlineBlock,
+			pingSelectorBlockData: this.pingSelectorBlock,
+		};
+	},
+
 	computed: {
 		className(): Object
 		{
@@ -39,6 +47,39 @@ export default {
 		},
 	},
 
+	methods: {
+		onDeadlineChange(deadline: number)
+		{
+			this.deadlineBlockData.properties.value = deadline;
+			this.pingSelectorBlockData.properties.deadline = deadline;
+
+			this.$refs.pingSelectorBlock.setDeadline(deadline);
+		},
+	},
+
+	created()
+	{
+		this.$watch(
+			'deadlineBlock',
+			(deadlineBlock) => {
+				this.deadlineBlockData = deadlineBlock;
+			},
+			{
+				deep: true,
+			},
+		);
+
+		this.$watch(
+			'pingSelectorBlock',
+			(pingSelectorBlock) => {
+				this.pingSelectorBlockData = pingSelectorBlock;
+			},
+			{
+				deep: true,
+			},
+		);
+	},
+
 	// language=Vue
 	template: `
 		<span class="crm-timeline-block-deadline-and-ping-selector">
@@ -53,14 +94,15 @@ export default {
 				</div>
 				<component
 					:is="deadlineBlock.rendererName"
-					v-bind="deadlineBlock.properties"
+					v-bind="deadlineBlockData.properties"
+					@onChange="onDeadlineChange"
 				/>
 			</div>
 	
 			<component
 				v-if="pingSelectorBlock"
 				:is="pingSelectorBlock.rendererName"
-				v-bind="pingSelectorBlock.properties"
+				v-bind="pingSelectorBlockData.properties"
 				ref="pingSelectorBlock"
 			/>
 		</span>	

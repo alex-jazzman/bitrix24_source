@@ -2,7 +2,7 @@ import { TodoEditor } from 'crm.activity.todo-editor';
 import { TodoEditorV2 } from 'crm.activity.todo-editor-v2';
 import { TodoNotificationSkip } from 'crm.activity.todo-notification-skip';
 import { TodoNotificationSkipMenu } from 'crm.activity.todo-notification-skip-menu';
-import { Loc, Tag } from 'main.core';
+import { Event, Loc, Tag } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
 import { Button, ButtonColor, ButtonState, CancelButton, SaveButton } from 'ui.buttons';
@@ -35,7 +35,7 @@ export class TodoCreateNotification
 	#allowCloseSlider: boolean = false;
 	#isSkipped: boolean = false;
 	#popup: ?Popup = null;
-	#toDoEditor: ?TodoEditor = null;
+	#toDoEditor: ?TodoEditorV2 = null;
 	#skipProvider: TodoNotificationSkip = null;
 	#skipMenu: ?TodoNotificationSkipMenu = null;
 	#sliderIsMinimizing: boolean = false;
@@ -77,6 +77,7 @@ export class TodoCreateNotification
 			EventEmitter.subscribe('onCrmEntityUpdate', this.#onEntityUpdate.bind(this));
 			EventEmitter.subscribe('onCrmEntityDelete', this.#onEntityDelete.bind(this));
 		}
+
 		EventEmitter.subscribe('Crm.InterfaceToolbar.MenuBuild', this.#onToolbarMenuBuild.bind(this));
 	}
 
@@ -226,6 +227,14 @@ export class TodoCreateNotification
 		this.#popup?.getButton(CANCEL_BUTTON_ID)?.setState(ButtonState.DISABLED);
 		this.#popup?.getButton(SKIP_BUTTON_ID)?.setState(ButtonState.WAITING);
 
+		this.#toDoEditor.cancel({
+			analytics: {
+				subSection: TodoEditorV2.AnalyticsSubSection.notificationPopup,
+				element: TodoEditorV2.AnalyticsElement.skipPeriodButton,
+				notificationSkipPeriod: period,
+			},
+		});
+
 		this.#skipProvider.saveSkippedPeriod(period).then(() => {
 			this.#isSkipped = Boolean(period);
 			this.#skipMenu.setSelectedValue(period);
@@ -255,6 +264,18 @@ export class TodoCreateNotification
 			}
 		}).catch(() => {
 			this.#revertButtonsState();
+		});
+	}
+
+	#cancel(): void
+	{
+		void this.#toDoEditor.cancel({
+			analytics: {
+				subSection: TodoEditorV2.AnalyticsSubSection.notificationPopup,
+				element: TodoEditorV2.AnalyticsElement.cancelButton,
+			},
+		}).then(() => {
+			this.#closePopup();
 		});
 	}
 
@@ -314,11 +335,6 @@ export class TodoCreateNotification
 			});
 		}
 
-		// if (this.#useTodoEditorV2)
-		// {
-		// 	this.#preparePopupForTodoEditorV2();
-		// }
-
 		this.#popup.show();
 
 		setTimeout(() => {
@@ -327,28 +343,20 @@ export class TodoCreateNotification
 
 		setTimeout(() => {
 			this.#popup.setClosingByEsc(true);
+
+			Event.bind(document, 'keyup', (event) => {
+				if (event.key === 'Escape')
+				{
+					void this.#toDoEditor.cancel({
+						analytics: {
+							subSection: TodoEditorV2.AnalyticsSubSection.notificationPopup,
+							element: TodoEditorV2.AnalyticsElement.cancelButton,
+						},
+					});
+				}
+			});
 		}, 300);
 	}
-
-	// temporary
-	/* #preparePopupForTodoEditorV2(): void
-	{
-		const bindElement = document.querySelector('.crm-entity-stream-container-content');
-		if (!bindElement)
-		{
-			throw new TypeError('Wrong bindElement');
-		}
-
-		this.#popup.setBindElement(bindElement);
-		this.#popup.setWidth(bindElement.offsetWidth);
-		this.#popup.setOffset({
-			offsetTop: -(bindElement.offsetHeight),
-			offsetLeft: this.#popup.offsetLeft,
-		});
-
-		const maxPopupHeight = 482;
-		this.#popup.setMaxHeight(maxPopupHeight);
-	} */
 
 	#getPopupDescription(): string
 	{
@@ -387,7 +395,7 @@ export class TodoCreateNotification
 						</button>
 						<button
 							class="ui-btn ui-btn-xs ui-btn-link"
-							onclick="${this.#closePopup.bind(this)}"
+							onclick="${this.#cancel.bind(this)}"
 						>
 							${Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_CANCEL_BUTTON_V2')}
 						</button>
@@ -477,6 +485,11 @@ export class TodoCreateNotification
 			params.calendarSettings = this.#timeline.getCalendarSettings();
 			params.colorSettings = this.#timeline.getColorSettings();
 			params.defaultDescription = '';
+			params.analytics = {
+				section: TodoEditorV2.AnalyticsSubSection.details,
+				subSection: TodoEditorV2.AnalyticsSubSection.notificationPopup,
+			};
+
 			this.#toDoEditor = new TodoEditorV2(params);
 		}
 		else
@@ -522,7 +535,7 @@ export class TodoCreateNotification
 			id: CANCEL_BUTTON_ID,
 			round: true,
 			events: {
-				click: this.#closePopup.bind(this),
+				click: this.#cancel.bind(this),
 			},
 		});
 	}

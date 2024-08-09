@@ -20,7 +20,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 	{
 		static getVersion()
 		{
-			return 2;
+			return 3;
 		}
 
 		/**
@@ -74,29 +74,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 				}
 
 				EntityReady.wait('chat').then(() => {
-					const openDialogParamsEvent = `${EventType.messenger.openDialogParams}::${options.dialogId}`;
-
-					const onOpenDialogParams = (params) => {
-						BX.removeCustomEvent(openDialogParamsEvent, onOpenDialogParams);
-
-						if (options.parentWidget)
-						{
-							PageManager.openWebComponent(params, options.parentWidget);
-						}
-						else
-						{
-							PageManager.openWebComponent(params);
-						}
-
-						resolve();
-					};
-
-					BX.addCustomEvent(openDialogParamsEvent, onOpenDialogParams);
-
-					BX.postComponentEvent(EventType.messenger.getOpenDialogParams, [{
-						dialogId: options.dialogId,
-						dialogTitleParams: options.dialogTitleParams,
-					}], ComponentCode.imMessenger);
+					BX.postComponentEvent(EventType.messenger.openDialog, [options], ComponentCode.imMessenger);
 				});
 			});
 		}
@@ -106,7 +84,9 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		 *
 		 * @param {object} options
 		 *
-		 * @param {string} options.userCode
+		 * one of them must be passed on:
+		 * @param {string} [options.userCode]
+		 * @param {number} [options.sessionId]
 		 *
 		 * @param {object} [options.dialogTitleParams]
 		 * @param {string} [options.dialogTitleParams.name]
@@ -141,10 +121,22 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 					return;
 				}
 
-				if (!Type.isStringFilled(options.userCode))
+				let shouldOpenByUserCode = false;
+				if (Type.isStringFilled(options.userCode))
+				{
+					shouldOpenByUserCode = true;
+				}
+
+				let shouldOpenBySessionId = false;
+				if (Type.isNumber(options.sessionId))
+				{
+					shouldOpenBySessionId = true;
+				}
+
+				if (!shouldOpenByUserCode && !shouldOpenBySessionId)
 				{
 					reject({
-						text: `options.userCode must be a filled string, ${options.userCode} given.`,
+						text: 'one of the required options.userCode or options.sessionId is not specified or invalid',
 						code: 'INVALID_ARGUMENT',
 					});
 
@@ -152,7 +144,18 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 				}
 
 				EntityReady.wait('chat').then(() => {
-					const openLineParamsEvent = `${EventType.messenger.openLineParams}::${options.userCode}`;
+					// eslint-disable-next-line init-declarations
+					let requestId;
+					if (shouldOpenByUserCode)
+					{
+						requestId = options.userCode;
+					}
+					else if (shouldOpenBySessionId)
+					{
+						requestId = options.sessionId;
+					}
+
+					const openLineParamsEvent = `${EventType.messenger.openLineParams}::${requestId}`;
 
 					const onOpenLineParams = (params) => {
 						BX.removeCustomEvent(openLineParamsEvent, onOpenLineParams);
@@ -181,10 +184,20 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 
 					BX.addCustomEvent(openLineParamsEvent, onOpenLineParams);
 
-					BX.postComponentEvent(EventType.messenger.getOpenLineParams, [{
-						userCode: options.userCode,
+					const getOpenLineParams = {
 						dialogTitleParams: options.dialogTitleParams,
-					}], ComponentCode.imMessenger);
+					};
+
+					if (shouldOpenByUserCode)
+					{
+						getOpenLineParams.userCode = options.userCode;
+					}
+					else if (shouldOpenBySessionId)
+					{
+						getOpenLineParams.sessionId = options.sessionId;
+					}
+
+					BX.postComponentEvent(EventType.messenger.getOpenLineParams, [getOpenLineParams], ComponentCode.imMessenger);
 				});
 			});
 		}

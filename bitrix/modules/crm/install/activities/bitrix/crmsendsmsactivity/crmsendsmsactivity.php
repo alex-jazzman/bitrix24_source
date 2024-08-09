@@ -578,6 +578,11 @@ class CBPCrmSendSmsActivity extends CBPActivity
 
 	private function logDebug()
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$debugInfo = $this->getDebugInfo();
 
 		if ($debugInfo['RecipientType']['TrackValue'] !== static::RECIPIENT_TYPE_USER)

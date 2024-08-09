@@ -228,3 +228,5 @@ $MESS["CRM_TYPE_ITEM_ADD_HINT"] = "У вас недостаточно прав �
 $MESS["CRM_LOCALIZATION_FIELD_VALUE_WITH_TITLE"] = "#TITLE# #VALUE#";
 
 $MESS["CRM_LOCALIZATION_DB_TYPE_NOT_SUPPORTED"] = "Это действие не поддерживается используемой базой данных";
+
+$MESS["CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED"] = "Недостаточно прав на смену стадии";

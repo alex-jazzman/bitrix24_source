@@ -32,7 +32,10 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	{
 		parent::prepareProperties();
 
-		$this->writeDebugInfo($this->getDebugInfo());
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo());
+		}
 	}
 
 	protected function checkProperties(): \Bitrix\Main\ErrorCollection

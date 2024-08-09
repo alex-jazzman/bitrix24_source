@@ -120,8 +120,9 @@ jn.define('tasks/layout/fields/result/view', (require, exports, module) => {
 							onUpdate: () => textEditorRef?.getTextInput().focus(),
 							onRemove: () => {
 								confirmDestructiveAction({
-									title: '',
-									description: Loc.getMessage('TASKS_FIELDS_RESULT_REMOVE_CONFIRM_TITLE'),
+									title: Loc.getMessage('TASKS_FIELDS_RESULT_REMOVE_CONFIRM_TITLE_V2'),
+									description: Loc.getMessage('TASKS_FIELDS_RESULT_REMOVE_CONFIRM_DESCRIPTION'),
+									destructionText: Loc.getMessage('TASKS_FIELDS_RESULT_REMOVE_CONFIRM_YES'),
 									onDestruct: () => this.#onRemove(result),
 								});
 							},

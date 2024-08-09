@@ -110,7 +110,7 @@ class CBPCrmSendWhatsAppMessageActivity extends CBPActivity
 
 		$sender = (new \Bitrix\Crm\Activity\Provider\Sms\Sender($owner, $message));
 		$sender->setEntityIdentifier(new \Bitrix\Crm\ItemIdentifier($to['entityTypeId'], $to['entityId']));
-		$result = $sender->send();
+		$result = $sender->send(false);
 
 		if (!$result->isSuccess())
 		{

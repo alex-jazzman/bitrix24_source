@@ -5,6 +5,7 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 	const { RecentGridView } = require('layout/ui/detail-card/floating-button/menu/recent/grid-view');
 	const { MenuRecentStorage } = require('layout/ui/detail-card/floating-button/menu/recent/storage');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const UNSUPPORTED_SECTION = 'unsupported';
 
@@ -274,6 +275,7 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 				showActionLoader: menuItem.shouldShowLoader(),
 				showArrow: menuItem.shouldShowArrow(),
 				badges: menuItem.getBadges(),
+				icon: menuItem.getIcon(),
 				data: {
 					svgIcon: menuItem.getIcon(),
 					svgIconAfter: {

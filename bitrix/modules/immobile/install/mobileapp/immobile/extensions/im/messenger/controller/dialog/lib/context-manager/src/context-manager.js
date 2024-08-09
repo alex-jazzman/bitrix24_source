@@ -464,15 +464,15 @@ jn.define('im/messenger/controller/dialog/lib/context-manager/context-manager', 
 				this.#resetRenderedState();
 				this.#view.setContextOptions(messageId);
 				await this.#messageService.updateModelByContextResult(result);
+				this.#topLoader.hide();
+				await this.#goToRenderedMessageContext(messageId, withMessageHighlight);
 			}
 			catch (error)
 			{
+				this.#topLoader.hide();
+
 				logger.error('ContextManager.#goToServerMessageContext: error', error);
 			}
-
-			this.#topLoader.hide();
-
-			await this.#goToRenderedMessageContext(messageId, withMessageHighlight);
 		}
 
 		#isMessageRendered(messageId)

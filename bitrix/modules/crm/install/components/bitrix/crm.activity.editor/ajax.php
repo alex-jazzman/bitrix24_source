@@ -3792,7 +3792,7 @@ elseif($action == 'UPDATE_DOCS')
 
 		if (!in_array($itemOwnerTypeId, $docsTypes) || $itemOwnerId <= 0)
 		{
-			$errors[] = __CrmActivityEditorEndResponse(array('ERROR' => 'Invalid parameters!'));
+			__CrmActivityEditorEndResponse(array('ERROR' => 'Invalid parameters!'));
 			continue;
 		}
 

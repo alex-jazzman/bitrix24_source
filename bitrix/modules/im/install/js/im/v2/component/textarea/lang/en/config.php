@@ -1,5 +1,4 @@
 <?php
-$MESS["IM_TEXTAREA_CHANNEL_PLACEHOLDER"] = "Add post";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_SUBTITLE"] = "AI will create image according to your description.";
 $MESS["IM_TEXTAREA_CREATE_AI_IMAGE_TITLE"] = "Create image";
 $MESS["IM_TEXTAREA_CREATE_AI_TEXT_SUBTITLE"] = "AI will create or improve text according to your description.";
@@ -65,3 +64,4 @@ $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_SEND_AS_FILE"] = "Send as file";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE"] = "Upload images";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_TITLE_FILES"] = "Upload files";
 $MESS["IM_TEXTAREA_UPLOAD_PREVIEW_POPUP_UPLOAD_ERROR"] = "Could not upload image.";
+$MESS["IM_TEXTAREA_AUDIO_INPUT_ERROR"] = "Speech recognition failed. Please try again later.";

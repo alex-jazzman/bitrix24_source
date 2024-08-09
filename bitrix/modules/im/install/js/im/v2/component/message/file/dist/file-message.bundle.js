@@ -213,6 +213,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    isVideo() {
 	      return this.file.type === im_v2_const.FileType.video;
+	    },
+	    previewSourceLink() {
+	      // for a video, we use "urlPreview", because there is an image preview.
+	      // for an image, we use "urlShow", because for large gif files in "urlPreview" we have
+	      // a static image (w/o animation) .
+	      return this.isVideo ? this.file.urlPreview : this.file.urlShow;
 	    }
 	  },
 	  methods: {
@@ -239,7 +245,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			<img
 				v-lazyload
 				data-lazyload-dont-hide
-				:data-lazyload-src="file.urlPreview"
+				:data-lazyload-src="previewSourceLink"
 				:title="imageTitle"
 				:alt="file.name"
 				class="bx-im-gallery-item__source"

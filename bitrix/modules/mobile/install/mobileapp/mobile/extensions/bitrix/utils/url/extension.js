@@ -67,8 +67,8 @@ jn.define('utils/url', (require, exports, module) => {
 	 */
 	function getParameterByName(url, name)
 	{
-		name = name.replaceAll(/[[\]]/g, '\\$&');
-		const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`);
+		const preparedName = name.replaceAll(/[[\]]/g, '\\$&');
+		const regex = new RegExp(`[?&]${preparedName}(=([^&#]*)|&|#|$)`);
 		const results = regex.exec(url);
 		if (!results)
 		{
@@ -111,21 +111,6 @@ jn.define('utils/url', (require, exports, module) => {
 	}
 
 	/**
-	 * @function isValidEmail
-	 * @return {Boolean}
-	 */
-	function isValidEmail(email)
-	{
-		if (typeof email !== 'string')
-		{
-			return false;
-		}
-		const regExp = /^[^@]+@[^@]+\.[^@]+$/;
-
-		return regExp.test(email);
-	}
-
-	/**
 	 * Prefix {uri} with current domain, if {uri} is local path.
 	 * Otherwise, keeps {uri} unchanged.
 	 * @param {string} uri
@@ -145,7 +130,6 @@ jn.define('utils/url', (require, exports, module) => {
 		URL,
 		prepareLink,
 		isValidLink,
-		isValidEmail,
 		getHttpPath,
 		withCurrentDomain,
 		getParameterByName,

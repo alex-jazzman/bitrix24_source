@@ -9,6 +9,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content-chooser
 	const { FlowPromoContent } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-promo-content');
 	const { FlowDisabledContent } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-disabled-content');
 	const { FlowSimilarContent } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-similar-content');
+	const { FlowsInformationCard } = require('tasks/flow-list/simple-list/items/flow-redux/src/flows-information-card');
 	const { ListItemType } = require('tasks/flow-list/simple-list/items/type');
 
 	/**
@@ -28,6 +29,8 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content-chooser
 					return new FlowPromoContent(this.props);
 				case ListItemType.DISABLED_FLOW:
 					return new FlowDisabledContent(this.props);
+				case ListItemType.FLOWS_INFO:
+					return new FlowsInformationCard(this.props);
 				default:
 					return View();
 			}
@@ -42,7 +45,7 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-content-chooser
 
 		if (!flow)
 		{
-			return { flow };
+			return ownProps;
 		}
 
 		const {

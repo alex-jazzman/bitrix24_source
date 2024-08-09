@@ -2,6 +2,32 @@
 	const { mergeImmutable } = jn.require('utils/object');
 
 	/**
+	 * @param {Array} array
+	 * @param {number} size
+	 * @returns {Array}
+	 */
+	function chunk(array, size)
+	{
+		if (!Array.isArray(array))
+		{
+			throw new TypeError('The first argument must be an array');
+		}
+
+		if (typeof size !== 'number' || size <= 0)
+		{
+			throw new TypeError('The second argument must be a positive number');
+		}
+
+		const result = [];
+		for (let i = 0; i < array.length; i += size)
+		{
+			result.push(array.slice(i, i + size));
+		}
+
+		return result;
+	}
+
+	/**
 	 * Gets the last element of array
 	 * @param array
 	 */
@@ -125,6 +151,7 @@
 	jn.define('utils/array', (require, exports, module) => {
 		module.exports = {
 			last,
+			chunk,
 			unique,
 			uniqBy,
 			mergeBy,

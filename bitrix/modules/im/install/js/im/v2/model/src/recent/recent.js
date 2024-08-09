@@ -2,7 +2,7 @@ import { Type, type JsonObject } from 'main.core';
 import { BuilderModel } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { ChatType, Settings } from 'im.v2.const';
+import { ChatType, FakeDraftMessagePrefix, Settings } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { formatFieldsWithConfig } from 'im.v2.model';
@@ -21,6 +21,13 @@ type RecentState = {
 	unreadCollection: Set<string>,
 	copilotCollection: Set<string>,
 	channelCollection: Set<string>,
+};
+
+type SetDraftPayload = {
+	id: string | number,
+	text: string,
+	collectionName: string,
+	addMethodName: string
 };
 
 export class RecentModel extends BuilderModel
@@ -375,19 +382,26 @@ export class RecentModel extends BuilderModel
 				});
 			},
 			/** @function recent/setDraft */
-			setDraft: (store, payload: {
-				id: string | number, text: string, collectionName: string, addMethodName: string
-			}) => {
-				const existingItem = store.state.collection[payload.id];
-				if (!existingItem)
+			setDraft: (store, payload: SetDraftPayload) => {
+				const isRemovingDraft = !Type.isStringFilled(payload.text);
+				if (isRemovingDraft && this.#shouldDeleteItemWithDraft(payload))
 				{
+					void Core.getStore().dispatch('recent/delete', { id: payload.id });
+
 					return;
+				}
+
+				let existingItem = store.state.collection[payload.id];
+				if (!existingItem && !isRemovingDraft)
+				{
+					store.commit('add', { ...this.getElementState(), ...this.#prepareFakeItemWithDraft(payload) });
+					existingItem = store.state.collection[payload.id];
 				}
 
 				const existingCollectionItem = store.state[payload.collectionName].has(payload.id);
 				if (!existingCollectionItem)
 				{
-					if (payload.text === '')
+					if (isRemovingDraft)
 					{
 						return;
 					}
@@ -426,16 +440,6 @@ export class RecentModel extends BuilderModel
 					id: existingItem.dialogId,
 				});
 			},
-			/** @function recent/deleteFromChannelCollection */
-			deleteFromChannelCollection: (store, dialogId) => {
-				const existingItem = store.state.collection[dialogId];
-				if (!existingItem)
-				{
-					return;
-				}
-
-				store.commit('deleteFromChannelCollection', dialogId);
-			},
 			/** @function recent/clearUnread */
 			clearUnread: (store) => {
 				store.commit('clearUnread');
@@ -466,9 +470,6 @@ export class RecentModel extends BuilderModel
 			},
 			deleteFromCopilotCollection: (state: RecentState, payload: string) => {
 				state.copilotCollection.delete(payload);
-			},
-			deleteFromChannelCollection: (state: RecentState, dialogId: string) => {
-				state.channelCollection.delete(dialogId);
 			},
 			setChannelCollection: (state: RecentState, payload: string[]) => {
 				payload.forEach((dialogId) => {
@@ -575,5 +576,36 @@ export class RecentModel extends BuilderModel
 		const { type } = this.#getDialog(dialogId);
 
 		return !NOT_DELETABLE_TYPES.includes(type);
+	}
+
+	#prepareFakeItemWithDraft(payload: SetDraftPayload): Partial<ImModelRecentItem>
+	{
+		const messageId = this.#createFakeMessageForDraft(payload.id);
+
+		return this.#formatFields({
+			dialogId: payload.id.toString(),
+			draft: {
+				text: payload.text.toString(),
+			},
+			messageId,
+		});
+	}
+
+	#createFakeMessageForDraft(dialogId: string): string
+	{
+		const messageId = `${FakeDraftMessagePrefix}-${dialogId}`;
+		void Core.getStore().dispatch('messages/store', { id: messageId, date: new Date() });
+
+		return messageId;
+	}
+
+	#shouldDeleteItemWithDraft(payload: SetDraftPayload): boolean
+	{
+		const existingItem = Core.getStore().state.recent.collection[payload.id];
+
+		return existingItem
+			&& !Type.isStringFilled(payload.text)
+			&& existingItem.messageId.toString().startsWith(FakeDraftMessagePrefix)
+		;
 	}
 }

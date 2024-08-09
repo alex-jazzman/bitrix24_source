@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'tokens',
+		'ui-system/layout/box',
 		'ui-system/typography/text',
 		'ui-system/blocks/switcher',
 		'statemanager/redux/connect',

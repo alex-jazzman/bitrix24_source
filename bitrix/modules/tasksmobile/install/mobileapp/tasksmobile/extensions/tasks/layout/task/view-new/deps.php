@@ -22,7 +22,7 @@ return [
 		'utils/validation',
 		'utils/date',
 		'utils/date/formats',
-		'utils/date/dynamic-date-formatter',
+		'utils/date',
 		'utils/guid',
 
 		'rest',

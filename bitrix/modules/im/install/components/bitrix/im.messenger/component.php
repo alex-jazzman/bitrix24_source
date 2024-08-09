@@ -16,6 +16,8 @@ if (!CModule::IncludeModule('im'))
 
 if (!\Bitrix\Im\Settings::isLegacyChatActivated())
 {
+	\Bitrix\Main\UI\Extension::load(['planner']);
+
 	$arResult['MESSENGER_V2'] = true;
 	$arResult['DESKTOP'] = $arParams['CONTEXT'] === 'DESKTOP';
 	$arResult['COPILOT_AVAILABLE'] = \Bitrix\Im\V2\Chat\CopilotChat::isAvailable();
@@ -27,10 +29,7 @@ if (!\Bitrix\Im\Settings::isLegacyChatActivated())
 
 	if (CModule::IncludeModule('disk'))
 	{
-		CJSCore::Init([
-			'file_dialog',
-			'im.integration.viewer'
-		]);
+		\Bitrix\Main\UI\Extension::load(['file_dialog', 'im.integration.viewer']);
 	}
 	CModule::IncludeModule('voximplant');
 

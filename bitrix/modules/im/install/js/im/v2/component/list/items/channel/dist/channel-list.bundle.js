@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports,ui_notification,main_core_events,main_date,im_v2_component_elements,im_v2_lib_utils,im_v2_lib_parser,im_v2_lib_dateFormatter,im_v2_lib_logger,im_v2_lib_user,im_v2_application_core,im_v2_lib_rest,main_core,im_v2_const,im_v2_lib_layout,im_v2_lib_menu) {
+(function (exports,main_date,im_v2_component_elements,im_v2_lib_utils,im_v2_lib_parser,im_v2_lib_dateFormatter,im_v2_lib_logger,im_v2_lib_user,im_v2_application_core,im_v2_lib_rest,main_core,im_v2_const,im_v2_lib_layout,im_v2_lib_menu) {
 	'use strict';
 
 	// @vue/component
@@ -402,9 +402,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    },
 	    preparedItems() {
 	      return [...this.collection].sort((a, b) => {
-	        const firstDate = this.$store.getters['recent/getSortDate'](a.dialogId);
-	        const secondDate = this.$store.getters['recent/getSortDate'](b.dialogId);
-	        return secondDate - firstDate;
+	        const firstMessage = this.$store.getters['messages/getById'](a.messageId);
+	        const secondMessage = this.$store.getters['messages/getById'](b.messageId);
+	        return secondMessage.date - firstMessage.date;
 	      });
 	    },
 	    isEmptyCollection() {
@@ -412,13 +412,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    }
 	  },
 	  created() {
-	    this.joinedChannels = new Set();
 	    this.contextMenuManager = new ChannelRecentMenu();
-	    this.bindEvents();
 	  },
 	  beforeUnmount() {
 	    this.contextMenuManager.destroy();
-	    this.unbindEvents();
 	  },
 	  async activated() {
 	    this.isLoading = true;
@@ -428,7 +425,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	    this.getPullWatchManager().subscribe();
 	  },
 	  deactivated() {
-	    this.removeJoinedChannels();
 	    this.getPullWatchManager().unsubscribe();
 	  },
 	  methods: {
@@ -448,25 +444,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	      event.preventDefault();
 	      this.contextMenuManager.openMenu(item, event.currentTarget);
 	    },
-	    onChannelJoin(event) {
-	      this.showNotification(this.loc('IM_LIST_CHANNEL_SUBSCRIBE_NOTIFICATION'));
-	      const {
-	        channelDialogId
-	      } = event.getData();
-	      this.joinedChannels.add(channelDialogId);
-	    },
-	    bindEvents() {
-	      main_core_events.EventEmitter.subscribe(im_v2_const.EventType.channel.onChannelJoin, this.onChannelJoin);
-	    },
-	    unbindEvents() {
-	      main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.channel.onChannelJoin, this.onChannelJoin);
-	    },
-	    removeJoinedChannels() {
-	      [...this.joinedChannels].forEach(channelDialogId => {
-	        this.$store.dispatch('recent/deleteFromChannelCollection', channelDialogId);
-	      });
-	      this.joinedChannels = new Set();
-	    },
 	    getRecentService() {
 	      if (!this.service) {
 	        this.service = new ChannelService();
@@ -478,11 +455,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	        this.pullWatchManager = new PullWatchManager();
 	      }
 	      return this.pullWatchManager;
-	    },
-	    showNotification(text) {
-	      BX.UI.Notification.Center.notify({
-	        content: text
-	      });
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -510,5 +482,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChannelList = ChannelList;
 
-}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX,BX.Event,BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
+}((this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}),BX.Main,BX.Messenger.v2.Component.Elements,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Const,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib));
 //# sourceMappingURL=channel-list.bundle.js.map

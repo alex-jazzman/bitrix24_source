@@ -128,6 +128,16 @@ jn.define('tokens/src/typography', (require, exports, module) => {
 		fontSize: 12,
 		fontWeight: '500',
 	});
+	Typography.text7 = new Typography('text7', AppTheme.typography.text7);
+	Typography.body7Style = new Typography('body7Style', {
+		fontSize: 10,
+		fontWeight: '400',
+	});
+	Typography.text7Accent = new Typography('text7Accent', AppTheme.typography.text7Accent);
+	Typography.body7AccentStyle = new Typography('body7AccentStyle', {
+		fontSize: 10,
+		fontWeight: '500',
+	});
 	Typography.textCapital = new Typography('textCapital', AppTheme.typography.textCapital);
 	Typography.bodyCapitalStyle = new Typography('bodyCapitalStyle', {
 		fontSize: 10,

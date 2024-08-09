@@ -147,7 +147,7 @@ $APPLICATION->IncludeComponent("bitrix:mobile.interface.sort", "", array(
 		'TITLE' => array('id' => 'TITLE', 'name' => GetMessage('TASK_COLUMN_TITLE'), 'sort' => 'TITLE'),
 		'DEADLINE' => array('id' => 'DEADLINE', 'name' => GetMessage('TASK_COLUMN_DEADLINE'), 'sort' => 'DEADLINE'),
 		'CREATED_BY' => array('id' => 'CREATED_BY', 'name' => GetMessage('TASK_COLUMN_CREATED_BY'), 'sort' => 'CREATED_BY'),
-		'RESPONSIBLE_ID' => array('id' => 'RESPONSIBLE_ID', 'name' => GetMessage('TASK_COLUMN_RESPONSIBLE_ID'), 'sort' => 'RESPONSIBLE_ID'),
+		'RESPONSIBLE_ID' => array('id' => 'RESPONSIBLE_ID', 'name' => GetMessage('TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1'), 'sort' => 'RESPONSIBLE_ID'),
 		'PRIORITY' => array('id' => 'PRIORITY', 'name' => GetMessage('TASK_COLUMN_PRIORITY'), 'sort' => 'PRIORITY'),
 		'MARK' => array('id' => 'MARK', 'name' => GetMessage('TASK_COLUMN_MARK'), 'sort' => 'MARK'),
 		'TIME_ESTIMATE' => array('id' => 'TIME_ESTIMATE', 'name' => GetMessage('TASK_COLUMN_TIME_ESTIMATE'), 'sort' => 'TIME_ESTIMATE'),

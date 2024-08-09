@@ -58,6 +58,7 @@ jn.define('tokens/src/component', (require, exports, module) => {
 	Component.paddingLr = new Component('paddingLr', AppTheme.styles.paddingLr);
 	Component.paddingLrMore = new Component('paddingLrMore', AppTheme.styles.paddingLrMore);
 	Component.popupCorner = new Component('popupCorner', AppTheme.styles.popupCorner);
+	Component.separatorStroke = new Component('separatorStroke', AppTheme.styles.separatorStroke);
 
 	module.exports = { Component };
 });

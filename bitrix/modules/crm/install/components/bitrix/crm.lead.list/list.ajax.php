@@ -345,7 +345,6 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 	else
 	{
 		$checkExceptions = $CCrmLead->GetCheckExceptions();
-		$errorMessage = $entity->LAST_ERROR;
 		$responseData = array(
 			'TYPE' => CCrmOwnerType::LeadName,
 			'ID' => $ID,
@@ -366,6 +365,11 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 			}
 			$responseData['CHECK_ERRORS'] = $checkErrors;
 			$responseData['CONTEXT'] = array('STATUS_ID' => $statusID);
+		}
+
+		if ($CCrmLead->LAST_ERROR)
+		{
+			$responseData['ERROR'] = $CCrmLead->LAST_ERROR;
 		}
 
 		__CrmLeadListEndResponse($responseData);

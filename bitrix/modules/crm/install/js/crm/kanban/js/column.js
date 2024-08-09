@@ -258,28 +258,25 @@
 					item.layout.container.style.zIndex = -1;
 				},
 				useAnimation: item.useAnimation
-			}).then(function(){
+			}).then(() => {
 				this.setPullItemBackground(item, '#fff');
 				item.useAnimation = false;
 
-				Object.assign(
-					item.layout.container.style,
-					{
-						height: 'auto',
-						opacity: '100%',
-						zIndex: null,
-					}
-				);
+				const style = {
+					height: 'auto',
+					opacity: '100%',
+					zIndex: null,
+				};
+				BX.Dom.style(item.layout.container, style);
 
-				BX.Event.EventEmitter.emit(
-					'Crm.Kanban.Column:onItemAdded',
-					{
-						item:item,
-						targetColumn: this,
-						beforeItem: beforeItem,
-						oldColumn: this.grid.getColumn(oldColumnId),
-					});
-			}.bind(this));
+				const params = {
+					item,
+					targetColumn: this,
+					beforeItem,
+					oldColumn: this.grid.getColumn(oldColumnId),
+				}
+				BX.Event.EventEmitter.emit('Crm.Kanban.Column:onItemAdded', params);
+			});
 
 			if (this.getGrid().isRendered())
 			{
@@ -359,31 +356,22 @@
 				forSend.push(items[i].getId());
 			}
 
-			// ajax
-			this.getGrid().ajax(
-				{
-					action: "status",
-					entity_id: forSend,
-					prev_entity_id: afterItemId,
-					status: this.getId()
-				},
-				(data) => {
-					if (!data)
-					{
-						return;
-					}
+			const columnId = this.getId();
+			const params = {
+				action: 'status',
+				entity_id: forSend,
+				prev_entity_id: afterItemId,
+				status: columnId,
+			}
 
-					if (data.error)
-					{
-						BX.Kanban.Utils.showErrorDialog(data.error, true);
-					}
-					else if (data.isShouldUpdateCard)
-					{
-						const useAnimation = (!Array.isArray(forSend) || forSend.length <= 1);
-						void this.getGrid().loadNew(forSend, false, true, true, useAnimation);
-					}
+			this.getGrid().ajax(
+				params,
+				(data) => {
+					this.prepareGridAfterItemsAdded(forSend, data);
 				},
-				(error) => BX.Kanban.Utils.showErrorDialog('Error: ' + error, true)
+				(error) => {
+					BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
+				}
 			);
 
 			if (this.getGrid().isRendered())
@@ -400,6 +388,30 @@
 				}
 
 				this.render();
+			}
+		},
+
+		prepareGridAfterItemsAdded: function(itemIds, data)
+		{
+			if (!BX.Type.isObjectLike(data))
+			{
+				return;
+			}
+
+			const { grid } = this;
+			if (grid.hasResponseError(data))
+			{
+				grid.clearItemMoving();
+				grid.rollbackItemsMovement(itemIds, this.getId());
+				grid.showResponseError(data);
+
+				return;
+			}
+
+			if (data.isShouldUpdateCard)
+			{
+				const useAnimation = (!Array.isArray(itemIds) || itemIds.length <= 1);
+				void this.getGrid().loadNew(itemIds, false, true, true, useAnimation);
 			}
 		},
 

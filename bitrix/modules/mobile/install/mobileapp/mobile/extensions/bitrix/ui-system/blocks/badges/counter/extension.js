@@ -42,6 +42,7 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 		const viewProps = mergeImmutable({
 			testId: `${testId}_${design.getName()}`,
 			style: {
+				height: 18,
 				flexShrink: 1,
 				alignItems: 'flex-start',
 			},
@@ -52,8 +53,9 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 			View(
 				{
 					style: {
+						flexDirection: 'row',
+						alignItems: 'center',
 						paddingHorizontal: Indent.S.toNumber(),
-						paddingVertical: Indent.XS2.toNumber(),
 						borderRadius: Component.elementAccentCorner.toNumber(),
 						backgroundColor: design.getBackgroundColor().toHex(),
 					},
@@ -75,7 +77,7 @@ jn.define('ui-system/blocks/badges/counter', (require, exports, module) => {
 	BadgeCounter.propTypes = {
 		testId: PropTypes.string.isRequired,
 		showRawValue: PropTypes.bool,
-		design: PropTypes.object,
+		design: PropTypes.instanceOf(BadgeCounterDesign),
 		value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 	};
 

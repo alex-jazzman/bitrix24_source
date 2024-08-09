@@ -928,6 +928,7 @@ if(!empty($htmlEditorConfigs))
 						pullTag: "<?= CUtil::JSEscape($arResult['PULL_TAG'] ?? '') ?>",
 						pullModuleId: "<?= CUtil::JSEscape($arResult['PULL_MODULE_ID'] ?? '') ?>",
 						analyticsConfig: <?= CUtil::PhpToJSObject($arResult['ANALYTICS_CONFIG'] ?? []) ?>,
+						personalViewAllowed: <?= $arResult['PERSONAL_VIEW_ALLOWED'] ? 'true' : 'false'?>,
 					}
 				)
 			);

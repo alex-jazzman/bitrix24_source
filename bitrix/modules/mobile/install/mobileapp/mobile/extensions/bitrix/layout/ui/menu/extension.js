@@ -1,5 +1,7 @@
-(() => {
-	const require = (ext) => jn.require(ext);
+/**
+ * @module layout/ui/menu
+ */
+jn.define('layout/ui/menu', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { Feature } = require('feature');
 	const { Color } = require('tokens');
@@ -17,7 +19,7 @@
 	}
 
 	/**
-	 * @class UI.Menu.Types
+	 * @class UIMenuType
 	 */
 	const Types = {
 		DESKTOP: 'desktop',
@@ -25,7 +27,7 @@
 	};
 
 	/**
-	 * @class UI.Menu
+	 * @class UIMenu
 	 */
 	class Menu
 	{
@@ -307,17 +309,16 @@
 		}
 	}
 
-	this.UI = this.UI || {};
-	this.UI.Menu = Menu;
-	this.UI.Menu.Types = Types;
+	module.exports = {
+		UIMenu: Menu,
+		UIMenuType: Types,
+	};
+});
 
-	/**
-	 * @module layout/ui/menu
-	 */
-	jn.define('layout/ui/menu', (require, exports, module) => {
-		module.exports = {
-			UIMenu: Menu,
-			UIMenuType: Types,
-		};
-	});
+(() => {
+	const { UIMenu, UIMenuType } = jn.require('layout/ui/menu');
+
+	this.UI = this.UI || {};
+	this.UI.Menu = UIMenu;
+	this.UI.Menu.Types = UIMenuType;
 })();

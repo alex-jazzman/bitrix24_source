@@ -3309,9 +3309,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	          this.emit(UploaderWrapper.events.onUploadComplete, {
 	            uploaderId
 	          });
-	          babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].destroy({
-	            removeFilesFromServer: false
-	          });
 	        }
 	      }
 	    });
@@ -3319,6 +3316,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  start(uploaderId) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].setAutoUpload(true);
 	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].start();
+	  }
+	  destroyUploader(uploaderId) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderRegistry)[_uploaderRegistry][uploaderId].destroy({
+	      removeFilesFromServer: false
+	    });
 	  }
 	  addFiles(tasks) {
 	    const firstTenTasks = tasks.slice(0, MAX_FILES_IN_ONE_MESSAGE);
@@ -3401,6 +3403,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _addFileFromDiskToModel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addFileFromDiskToModel");
 	var _initUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initUploader");
 	var _requestDiskFolderId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("requestDiskFolderId");
+	var _tryCommit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryCommit");
 	var _uploadPreview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uploadPreview");
 	var _prepareFileForUploader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareFileForUploader");
 	var _updateFileProgress = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateFileProgress");
@@ -3416,12 +3419,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	var _getCurrentUser = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCurrentUser");
 	var _getChatId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatId");
 	var _registerFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("registerFiles");
-	var _setReadyFilePreview = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setReadyFilePreview");
+	var _setPreviewCreatedStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setPreviewCreatedStatus");
+	var _setPreviewSentStatus = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setPreviewSentStatus");
 	var _setMessagesText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setMessagesText");
 	var _setAutoUpload = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAutoUpload");
 	var _createMessagesFromFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createMessagesFromFiles");
 	var _createMessageFromFiles = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createMessageFromFiles");
 	var _readyToAddMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("readyToAddMessages");
+	var _readyToCommit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("readyToCommit");
 	var _tryToSendMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryToSendMessage");
 	var _tryToSendMessages = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("tryToSendMessages");
 	var _prepareFileFromDisk = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareFileFromDisk");
@@ -3450,6 +3455,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _tryToSendMessage, {
 	      value: _tryToSendMessage2
 	    });
+	    Object.defineProperty(this, _readyToCommit, {
+	      value: _readyToCommit2
+	    });
 	    Object.defineProperty(this, _readyToAddMessages, {
 	      value: _readyToAddMessages2
 	    });
@@ -3465,8 +3473,11 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    Object.defineProperty(this, _setMessagesText, {
 	      value: _setMessagesText2
 	    });
-	    Object.defineProperty(this, _setReadyFilePreview, {
-	      value: _setReadyFilePreview2
+	    Object.defineProperty(this, _setPreviewSentStatus, {
+	      value: _setPreviewSentStatus2
+	    });
+	    Object.defineProperty(this, _setPreviewCreatedStatus, {
+	      value: _setPreviewCreatedStatus2
 	    });
 	    Object.defineProperty(this, _registerFiles, {
 	      value: _registerFiles2
@@ -3512,6 +3523,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	    Object.defineProperty(this, _uploadPreview, {
 	      value: _uploadPreview2
+	    });
+	    Object.defineProperty(this, _tryCommit, {
+	      value: _tryCommit2
 	    });
 	    Object.defineProperty(this, _requestDiskFolderId, {
 	      value: _requestDiskFolderId2
@@ -3717,7 +3731,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    const sendAsFile = babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].getFiles(uploaderId).every(file => {
 	      return file.getCustomData('sendAsFile');
 	    });
-	    void babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a].callMethod(im_v2_const.RestMethod.imDiskFileCommit, {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _restClient$a)[_restClient$a].callMethod(im_v2_const.RestMethod.imDiskFileCommit, {
 	      chat_id: chatId,
 	      message: babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].text,
 	      template_id: babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].tempMessageId,
@@ -3817,7 +3831,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      uploaderId
 	    } = event.getData();
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateFilePreviewInStore)[_updateFilePreviewInStore](file);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setReadyFilePreview)[_setReadyFilePreview](uploaderId, file.getId());
+	    babelHelpers.classPrivateFieldLooseBase(this, _setPreviewCreatedStatus)[_setPreviewCreatedStatus](uploaderId, file.getId());
 	    babelHelpers.classPrivateFieldLooseBase(this, _tryToSendMessage)[_tryToSendMessage](uploaderId);
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadStart, event => {
@@ -3832,12 +3846,15 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    } = event.getData();
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](file.getId(), file.getProgress(), im_v2_const.FileStatus.upload);
 	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadComplete, event => {
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadComplete, async event => {
 	    const {
-	      file
+	      file,
+	      uploaderId
 	    } = event.getData();
 	    babelHelpers.classPrivateFieldLooseBase(this, _updateFileProgress)[_updateFileProgress](file.getId(), file.getProgress(), im_v2_const.FileStatus.wait);
-	    void babelHelpers.classPrivateFieldLooseBase(this, _uploadPreview)[_uploadPreview](file);
+	    await babelHelpers.classPrivateFieldLooseBase(this, _uploadPreview)[_uploadPreview](file);
+	    babelHelpers.classPrivateFieldLooseBase(this, _setPreviewSentStatus)[_setPreviewSentStatus](uploaderId, file.getId());
+	    void babelHelpers.classPrivateFieldLooseBase(this, _tryCommit)[_tryCommit](uploaderId);
 	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onFileUploadError, event => {
 	    const {
@@ -3855,12 +3872,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	      tempFileId
 	    } = event.getData();
 	    babelHelpers.classPrivateFieldLooseBase(this, _cancelUpload)[_cancelUpload](tempMessageId, tempFileId);
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].subscribe(UploaderWrapper.events.onUploadComplete, event => {
-	    const {
-	      uploaderId
-	    } = event.getData();
-	    this.commitMessage(uploaderId);
 	  });
 	}
 	function _requestDiskFolderId2(dialogId) {
@@ -3887,7 +3898,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    });
 	  });
 	}
-	function _uploadPreview2(file) {
+	async function _tryCommit2(uploaderId) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _readyToCommit)[_readyToCommit](uploaderId)) {
+	    return;
+	  }
+	  await this.commitMessage(uploaderId);
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderWrapper)[_uploaderWrapper].destroyUploader(uploaderId);
+	}
+	async function _uploadPreview2(file) {
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _getFileType)[_getFileType](file.getBinary()) === im_v2_const.FileType.file || file.getExtension() === 'gif') {
 	    return Promise.resolve();
 	  }
@@ -4024,7 +4042,8 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	function _registerFiles2(uploaderId, files, dialogId, autoUpload) {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId]) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId] = {
-	      filesPreviewStatus: {},
+	      previewCreatedStatus: {},
+	      previewSentStatus: {},
 	      dialogId,
 	      text: '',
 	      autoUpload
@@ -4032,14 +4051,18 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	  }
 	  files.forEach(file => {
 	    const fileId = file.getId();
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].filesPreviewStatus) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].filesPreviewStatus = {};
+	    if (!babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus) {
+	      babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus = {};
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].filesPreviewStatus[fileId] = false;
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus[fileId] = false;
+	    babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewSentStatus[fileId] = false;
 	  });
 	}
-	function _setReadyFilePreview2(uploaderId, fileId) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].filesPreviewStatus[fileId] = true;
+	function _setPreviewCreatedStatus2(uploaderId, fileId) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewCreatedStatus[fileId] = true;
+	}
+	function _setPreviewSentStatus2(uploaderId, fileId) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].previewSentStatus[fileId] = true;
 	}
 	function _setMessagesText2(uploaderId, text) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId].text = text;
@@ -4107,9 +4130,18 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	    return false;
 	  }
 	  const {
-	    filesPreviewStatus
+	    previewCreatedStatus
 	  } = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId];
-	  return Object.values(filesPreviewStatus).every(flag => flag === true);
+	  return Object.values(previewCreatedStatus).every(flag => flag === true);
+	}
+	function _readyToCommit2(uploaderId) {
+	  if (!babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId]) {
+	    return false;
+	  }
+	  const {
+	    previewSentStatus
+	  } = babelHelpers.classPrivateFieldLooseBase(this, _uploaderFilesRegistry)[_uploaderFilesRegistry][uploaderId];
+	  return Object.values(previewSentStatus).every(flag => flag === true);
 	}
 	function _tryToSendMessage2(uploaderId) {
 	  if (!babelHelpers.classPrivateFieldLooseBase(this, _readyToAddMessages)[_readyToAddMessages](uploaderId)) {

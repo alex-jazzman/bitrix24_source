@@ -7,3 +7,4 @@ $MESS["CALL_M_INCOMING_NOTIFICATION_SETTINGS_TITLE"] = "Настройки";
 $MESS["CALL_M_BTN_HANGUP_OPTION_LEAVE"] = "Отключиться от звонка";
 $MESS["CALL_M_BTN_HANGUP_OPTION_FINISH"] = "Завершить звонок для всех";
 $MESS["CALL_M_BTN_TITLE_STOP_RECORD"] = "Остановить запись";
+$MESS["CALL_MEDIA_DEVICES_RESET_STATE_HINT"] = "Не удалось включить камеру и микрофон после разблокировки экрана. Вы можете включить их вручную";

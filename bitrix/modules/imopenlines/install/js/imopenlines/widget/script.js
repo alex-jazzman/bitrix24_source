@@ -11782,7 +11782,7 @@ window._main_polyfill_core = true;
 	        get: function get() {
 	          var _this$instance2;
 
-	          return (_this$instance2 = this.instance) !== null && _this$instance2 !== void 0 ? _this$instance2 : pull_client.PULL;
+	          return (_this$instance2 = this.instance) !== null && _this$instance2 !== void 0 ? _this$instance2 : pull_client.WidgetPULL;
 	        },
 	        set: function set(instance) {
 	          this.instance = instance;
@@ -29461,7 +29461,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	{
 		window.BX = {};
 	}
-	else if (window.BX.PullClient)
+	else if (window.BX.WidgetPullClient)
 	{
 		return;
 	}
@@ -33042,17 +33042,17 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 	if (
 		typeof BX.namespace !== 'undefined'
-		&& typeof BX.PULL === 'undefined'
+		&& typeof BX.WidgetPULL === 'undefined'
 	)
 	{
-		BX.PULL = new PullClient();
+		BX.WidgetPULL = new PullClient();
 	}
 
-	BX.PullClient = PullClient;
-	BX.PullClient.PullStatus = PullStatus;
-	BX.PullClient.SubscriptionType = SubscriptionType;
-	BX.PullClient.CloseReasons = CloseReasons;
-	BX.PullClient.StorageManager = StorageManager;
+	BX.WidgetPullClient = PullClient;
+	BX.WidgetPullClient.PullStatus = PullStatus;
+	BX.WidgetPullClient.SubscriptionType = SubscriptionType;
+	BX.WidgetPullClient.CloseReasons = CloseReasons;
+	BX.WidgetPullClient.StorageManager = StorageManager;
 })();
 
 
@@ -33081,7 +33081,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	  },
 	  data: function data() {
 	    return {
-	      status: pull_client.PullClient.PullStatus.Online,
+	      status: pull_client.WidgetPullClient.PullStatus.Online,
 	      showed: null
 	    };
 	  },
@@ -33106,7 +33106,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	      var _this2 = this;
 	      this.pullUnSubscribe();
 	      this.pullUnSubscribe = this.$Bitrix.PullClient.get().subscribe({
-	        type: pull_client.PullClient.SubscriptionType.Status,
+	        type: pull_client.WidgetPullClient.SubscriptionType.Status,
 	        callback: function callback(event) {
 	          return _this2.statusChange(event.status);
 	        }
@@ -33125,14 +33125,14 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	      if (this.status === status) {
 	        return false;
 	      }
-	      var validStatus = [pull_client.PullClient.PullStatus.Online, pull_client.PullClient.PullStatus.Offline, pull_client.PullClient.PullStatus.Connecting];
+	      var validStatus = [pull_client.WidgetPullClient.PullStatus.Online, pull_client.WidgetPullClient.PullStatus.Offline, pull_client.WidgetPullClient.PullStatus.Connecting];
 	      if (validStatus.indexOf(status) < 0) {
 	        return false;
 	      }
 	      var timeout = 500;
-	      if (status === pull_client.PullClient.PullStatus.Connecting) {
+	      if (status === pull_client.WidgetPullClient.PullStatus.Connecting) {
 	        timeout = 5000;
-	      } else if (status === pull_client.PullClient.PullStatus.Offline) {
+	      } else if (status === pull_client.WidgetPullClient.PullStatus.Offline) {
 	        timeout = 2000;
 	      }
 	      this.setStatusTimeout = setTimeout(function () {
@@ -33149,7 +33149,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	    status: function status() {
 	      var _this4 = this;
 	      clearTimeout(this.hideTimeout);
-	      if (this.status === pull_client.PullClient.PullStatus.Online) {
+	      if (this.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	        clearTimeout(this.hideTimeout);
 	        this.hideTimeout = setTimeout(function () {
 	          return _this4.showed = false;
@@ -33165,22 +33165,22 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	      } else if (this.showed === false) {
 	        result = "bx-pull-status-hide";
 	      }
-	      if (this.status === pull_client.PullClient.PullStatus.Online) {
+	      if (this.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	        result += " bx-pull-status-online";
-	      } else if (this.status === pull_client.PullClient.PullStatus.Offline) {
+	      } else if (this.status === pull_client.WidgetPullClient.PullStatus.Offline) {
 	        result += " bx-pull-status-offline";
-	      } else if (this.status === pull_client.PullClient.PullStatus.Connecting) {
+	      } else if (this.status === pull_client.WidgetPullClient.PullStatus.Connecting) {
 	        result += " bx-pull-status-connecting";
 	      }
 	      return result;
 	    },
 	    connectionText: function connectionText() {
 	      var result = '';
-	      if (this.status === pull_client.PullClient.PullStatus.Online) {
+	      if (this.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	        result = this.localize.BX_PULL_STATUS_ONLINE;
-	      } else if (this.status === pull_client.PullClient.PullStatus.Offline) {
+	      } else if (this.status === pull_client.WidgetPullClient.PullStatus.Offline) {
 	        result = this.localize.BX_PULL_STATUS_OFFLINE;
-	      } else if (this.status === pull_client.PullClient.PullStatus.Connecting) {
+	      } else if (this.status === pull_client.WidgetPullClient.PullStatus.Connecting) {
 	        result = this.localize.BX_PULL_STATUS_CONNECTING;
 	      }
 	      return result;
@@ -58214,7 +58214,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "getSubscriptionType",
 	    value: function getSubscriptionType() {
-	      return pull_client.PullClient.SubscriptionType.Server;
+	      return pull_client.WidgetPullClient.SubscriptionType.Server;
 	    }
 	  }, {
 	    key: "skipExecute",
@@ -58725,7 +58725,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "getSubscriptionType",
 	    value: function getSubscriptionType() {
-	      return pull_client.PullClient.SubscriptionType.Server;
+	      return pull_client.WidgetPullClient.SubscriptionType.Server;
 	    }
 	  }, {
 	    key: "handleChatUserAdd",
@@ -58868,7 +58868,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "getSubscriptionType",
 	    value: function getSubscriptionType() {
-	      return pull_client.PullClient.SubscriptionType.Server;
+	      return pull_client.WidgetPullClient.SubscriptionType.Server;
 	    }
 	  }, {
 	    key: "handleNotifyAdd",
@@ -59822,8 +59822,8 @@ this.BX = this.BX || {};
 	      } else {
 	        this.languageId = this.getLocalize('LANGUAGE_ID') || 'en';
 	      }
-	      this.pullInstance = pull_client.PullClient;
-	      this.pullClient = pull_client.PULL;
+	      this.pullInstance = pull_client.WidgetPullClient;
+	      this.pullClient = pull_client.WidgetPULL;
 	      if (typeof params.pull !== 'undefined') {
 	        if (typeof params.pull.instance !== 'undefined') {
 	          this.pullInstance = params.pull.instance;
@@ -66641,7 +66641,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "initPullClient",
 	    value: function initPullClient() {
-	      this.pullClient = new pull_client.PullClient({
+	      this.pullClient = new pull_client.WidgetPullClient({
 	        serverEnabled: true,
 	        userId: 0,
 	        siteId: this.getSiteId(),
@@ -67208,7 +67208,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        _this9.pullClient.userId = _this9.getUserId();
 	        _this9.pullClient.configTimestamp = config ? config.server.config_timestamp : 0;
 	        _this9.pullClient.skipStorageInit = false;
-	        _this9.pullClient.storage = new pull_client.PullClient.StorageManager({
+	        _this9.pullClient.storage = new pull_client.WidgetPullClient.StorageManager({
 	          userId: _this9.getUserId(),
 	          siteId: _this9.getSiteId()
 	        });
@@ -67223,13 +67223,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          widget: _this9
 	        }));
 	        _this9.pullClient.subscribe({
-	          type: pull_client.PullClient.SubscriptionType.Status,
+	          type: pull_client.WidgetPullClient.SubscriptionType.Status,
 	          callback: _this9.eventStatusInteraction.bind(_this9)
 	        });
 	        _this9.pullConnectedFirstTime = _this9.pullClient.subscribe({
-	          type: pull_client.PullClient.SubscriptionType.Status,
+	          type: pull_client.WidgetPullClient.SubscriptionType.Status,
 	          callback: function callback(result) {
-	            if (result.status === pull_client.PullClient.PullStatus.Online) {
+	            if (result.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	              resolve(true);
 	              _this9.pullConnectedFirstTime();
 	            }
@@ -67255,21 +67255,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "stopPullClient",
 	    value: function stopPullClient() {
 	      if (this.pullClient) {
-	        this.pullClient.stop(pull_client.PullClient.CloseReasons.MANUAL, 'Closed manually');
+	        this.pullClient.stop(pull_client.WidgetPullClient.CloseReasons.MANUAL, 'Closed manually');
 	      }
 	    }
 	  }, {
 	    key: "recoverPullConnection",
 	    value: function recoverPullConnection() {
 	      // this.pullClient.session.mid = 0; // TODO specially for disable pull history, remove after recode im
-	      this.pullClient.restart(pull_client.PullClient.CloseReasons.MANUAL, 'Restart after click by connection status button.');
+	      this.pullClient.restart(pull_client.WidgetPullClient.CloseReasons.MANUAL, 'Restart after click by connection status button.');
 	    }
 	  }, {
 	    key: "eventStatusInteraction",
 	    value: function eventStatusInteraction(data) {
-	      if (data.status === pull_client.PullClient.PullStatus.Online) {
+	      if (data.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	        this.onPullOnlineStatus();
-	      } else if (data.status === pull_client.PullClient.PullStatus.Offline) {
+	      } else if (data.status === pull_client.WidgetPullClient.PullStatus.Offline) {
 	        this.pullRequestMessage = true;
 	        this.offline = true;
 	      }

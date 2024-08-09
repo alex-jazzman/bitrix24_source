@@ -18,7 +18,28 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 	};
 
 	/**
+	 * @typedef ContextMenuBannerProps
+	 * @property {?Object} banner
+	 * @property {string[]} banner.featureItems
+	 * @property {string} banner.imagePath
+	 * @property {string} banner.imageSvg
+	 * @property {?string} banner.positioning
+	 * @property {?string} banner.title
+	 * @property {?boolean} banner.showSubtitle
+	 * @property {?string} banner.buttonText
+	 * @property {?string} banner.rejectButtonText
+	 * @property {?string} banner.subtextAlign
+	 * @property {?string} banner.buttonType
+	 * @property {?object} banner.onButtonClick
+	 * @property {?object} banner.onRejectButtonClick
+	 * @property {?object} banner.onCloseBanner
+	 * @property {?object} banner.qrAuth
+	 * @property {string} banner.qrAuth.redirectUrl
+	 * @property {boolean} banner.showRejectButton
+	 * @property {boolean} banner.centerVertically
+	 *
 	 * @class ContextMenuBanner
+	 * @param {...ContextMenuBannerProps} props
 	 */
 	class ContextMenuBanner extends LayoutComponent
 	{
@@ -56,7 +77,11 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 
 		get rejectButtonText()
 		{
-			return BX.prop.getString(this.props.banner, 'rejectButtonText', Loc.getMessage('CONTEXT_MENU_REJECT_BANNER_BUTTON'));
+			return BX.prop.getString(
+				this.props.banner,
+				'rejectButtonText',
+				Loc.getMessage('CONTEXT_MENU_REJECT_BANNER_BUTTON'),
+			);
 		}
 
 		get positioning()
@@ -175,7 +200,7 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 						...styles.container(isHorizontalPositioning),
 						/*temporarily*/
 						marginTop: this.shouldCenterVertically() ? 120 : 0,
-					}
+					},
 				},
 				this.renderSubtitle(),
 				View(

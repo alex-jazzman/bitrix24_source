@@ -232,13 +232,10 @@ export default class GoToChat extends Item
 		const clientFinish = '</span>';
 		const titleContainer = Tag.render`
 			<span>
-				${Loc.getMessage(
-				'CRM_TIMELINE_GOTOCHAT_CLIENT_SELECTOR_TITLE',
-			{
-							'[client]': clientStart,
-							'[/client]': clientFinish,
-						},
-				)}
+				${Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CLIENT_SELECTOR_TITLE', {
+					'[client]': clientStart,
+					'[/client]': clientFinish,
+				})}
 			</span>
 		`;
 
@@ -776,11 +773,9 @@ export default class GoToChat extends Item
 
 	#isServiceSelected(service: ChatService): boolean
 	{
-		return (
-			this.openLineItems
-			&& this.openLineItems[service.id]
-			&& this.openLineItems[service.id].selected
-		);
+		const id = service.checkServiceId ?? service.id;
+
+		return this.openLineItems?.[id]?.selected;
 	}
 
 	async showRegistrarAndSend(code: string): Promise<void>
@@ -813,19 +808,22 @@ export default class GoToChat extends Item
 		this.showButtonLoader(code);
 
 		const service = this.#getServiceConfigByCode(code);
+		const { entityTypeId } = this.#getOwnerEntity();
 		const lineId = await ConditionChecker.checkAndGetLine({
 			openLineCode: service.connectorId,
 			senderType: this.getSenderType(),
 			openLineItems: this.openLineItems,
+			serviceId: service.id,
+			entityTypeId,
 		});
 
-		if (lineId)
+		if (lineId === null)
 		{
-			this.send(lineId, code);
+			this.#restoreButton(code);
 		}
 		else
 		{
-			this.#restoreButton(code);
+			this.send(lineId, code);
 		}
 	}
 
@@ -952,7 +950,14 @@ export default class GoToChat extends Item
 
 	#setOpenLineItemIsSelected(code: string): void
 	{
-		this.openLineItems[code].selected = true;
+		const service = this.#getServiceById(code);
+
+		this.openLineItems[service?.checkServiceId ?? code].selected = true;
+	}
+
+	#getServiceById(id: string): ?ChatService
+	{
+		return [...ServicesConfig.values()].find((item) => item.id === id) ?? null;
 	}
 
 	#restoreButton(code: string): void

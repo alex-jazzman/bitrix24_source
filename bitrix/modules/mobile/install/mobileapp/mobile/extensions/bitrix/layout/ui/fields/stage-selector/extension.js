@@ -636,5 +636,6 @@ jn.define('layout/ui/fields/stage-selector', (require, exports, module) => {
 	module.exports = {
 		StageSelectorType: 'stage-selector',
 		StageSelectorField,
+		StageItemClass,
 	};
 });

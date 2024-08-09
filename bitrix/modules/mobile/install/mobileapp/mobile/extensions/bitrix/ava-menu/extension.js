@@ -94,10 +94,8 @@ jn.define('ava-menu', (require, exports, module) => {
 			menu.on('titleTap', (event) => {
 				menu.hide();
 
-				// ToDo: add section
 				this.sendAnalyticsOnAvaMenuItemClicked({
 					hasCounter: Number(event.counter) > 0,
-					section: '',
 				});
 
 				this.handleOnMenuItemTap(event.customData.entryParams);
@@ -106,10 +104,8 @@ jn.define('ava-menu', (require, exports, module) => {
 			menu.on('itemTap', (event) => {
 				menu.hide();
 
-				// ToDo: add section
 				this.sendAnalyticsOnAvaMenuItemClicked({
 					hasCounter: Number(event.counter) > 0,
-					section: '',
 				});
 
 				if (this.handleOnMenuItemTap(event.customData))
@@ -124,14 +120,13 @@ jn.define('ava-menu', (require, exports, module) => {
 			});
 		}
 
-		sendAnalyticsOnAvaMenuItemClicked({ hasCounter, section })
+		sendAnalyticsOnAvaMenuItemClicked({ hasCounter })
 		{
 			new AnalyticsEvent({
 				tool: 'intranet',
 				category: 'ava_menu',
 				event: 'menu_open',
 				type: hasCounter ? 'with_counter' : 'no_counter',
-				c_section: section,
 			}).send();
 		}
 

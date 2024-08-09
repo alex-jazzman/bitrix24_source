@@ -37,7 +37,7 @@ return [
 		'tasks:statemanager/redux/slices/tasks',
 		'tasks:statemanager/redux/slices/tasks-stages',
 		'tasks:statemanager/redux/slices/flows',
-		'tasks:statemanager/redux/slices/tariff-plan-restrictions',
+		'tasks:statemanager/redux/slices/tariff-restrictions',
 		'tasks:statemanager/redux/slices/tasks/observers/counter-observer',
 		'tasks:statemanager/redux/slices/tasks/observers/stateful-list-observer',
 		'tasks:statemanager/redux/types',

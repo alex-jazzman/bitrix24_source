@@ -5,7 +5,6 @@ import { ChatTextarea } from 'im.v2.component.textarea';
 import { ThemeManager } from 'im.v2.lib.theme';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { ResizeManager } from 'im.v2.lib.textarea';
-import { ChannelManager } from 'im.v2.lib.channel';
 import { ChatSidebar } from 'im.v2.component.sidebar';
 import { ChatActionType, Settings, UserRole, SidebarDetailBlock, EventType } from 'im.v2.const';
 
@@ -191,7 +190,12 @@ export const BaseChatContent = {
 				<!-- Textarea -->
 				<div v-if="canSend" v-textarea-observer class="bx-im-content-chat__textarea_container" ref="textarea-container">
 					<slot name="textarea" :onTextareaMount="onTextareaMount">
-						<ChatTextarea :dialogId="dialogId" :key="dialogId" @mounted="onTextareaMount" />
+						<ChatTextarea 
+							:dialogId="dialogId" 
+							:key="dialogId" 
+							:withAudioInput="false" 
+							@mounted="onTextareaMount" 
+						/>
 					</slot>
 				</div>
 				<slot v-else-if="isGuest" name="join-panel">

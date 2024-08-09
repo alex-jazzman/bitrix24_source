@@ -50,12 +50,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  chat: 'chat'
 	});
 
+	const CUSTOM_CHAT_TYPE = 'custom';
 	var _createdChats = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createdChats");
 	var _currentTab = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentTab");
 	var _instance = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("instance");
 	var _getCategoryByChatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCategoryByChatType");
+	var _getChatType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChatType");
 	class Analytics {
 	  constructor() {
+	    Object.defineProperty(this, _getChatType, {
+	      value: _getChatType2
+	    });
 	    Object.defineProperty(this, _getCategoryByChatType, {
 	      value: _getCategoryByChatType2
 	    });
@@ -169,10 +174,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  }
 	  onStartCreateNewChat(type) {
 	    const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
-	    const tabs = [im_v2_const.Layout.chat.name, im_v2_const.Layout.channel.name, im_v2_const.Layout.notification.name, im_v2_const.Layout.copilot.name];
-	    if (!tabs.includes(currentLayout)) {
-	      return;
-	    }
 	    ui_analytics.sendData({
 	      tool: AnalyticsTool.im,
 	      category: babelHelpers.classPrivateFieldLooseBase(this, _getCategoryByChatType)[_getCategoryByChatType](type),
@@ -189,22 +190,24 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _createdChats)[_createdChats].delete(dialog.dialogId);
 	      return;
 	    }
-	    if (dialog.type === im_v2_const.ChatType.copilot) {
+	    const chatType = babelHelpers.classPrivateFieldLooseBase(this, _getChatType)[_getChatType](dialog);
+	    if (chatType === im_v2_const.ChatType.copilot) {
 	      this.onOpenCopilotChat(dialog.dialogId);
 	    }
 	    const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
 	    const isMember = dialog.role === im_v2_const.UserRole.guest ? 'N' : 'Y';
 	    const params = {
 	      tool: AnalyticsTool.im,
-	      category: babelHelpers.classPrivateFieldLooseBase(this, _getCategoryByChatType)[_getCategoryByChatType](dialog.type),
+	      category: babelHelpers.classPrivateFieldLooseBase(this, _getCategoryByChatType)[_getCategoryByChatType](chatType),
 	      event: AnalyticsEvent.openExisting,
-	      type: dialog.type,
+	      type: chatType,
 	      c_section: `${currentLayout}_tab`,
 	      p3: `isMember_${isMember}`,
 	      p5: `chatId_${dialog.chatId}`
 	    };
-	    if (dialog.type === im_v2_const.ChatType.comment) {
-	      params.p1 = `chatType_${dialog.type}`;
+	    if (chatType === im_v2_const.ChatType.comment) {
+	      const parentChat = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](dialog.parentChatId);
+	      params.p1 = `chatType_${parentChat.type}`;
 	      params.p4 = `parentChatId_${dialog.parentChatId}`;
 	    }
 	    ui_analytics.sendData(params);
@@ -224,6 +227,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    default:
 	      return AnalyticsCategory.chat;
 	  }
+	}
+	function _getChatType2(chat) {
+	  var _ChatType$chat$type;
+	  return (_ChatType$chat$type = im_v2_const.ChatType[chat.type]) != null ? _ChatType$chat$type : CUSTOM_CHAT_TYPE;
 	}
 	Object.defineProperty(Analytics, _instance, {
 	  writable: true,

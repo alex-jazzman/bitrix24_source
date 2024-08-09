@@ -16,11 +16,13 @@ import Money from '../components/content-blocks/money';
 import { MoneyPill } from '../components/content-blocks/money-pill';
 import { Note } from '../components/content-blocks/note';
 import { PlayerAlert } from '../components/content-blocks/player-alert';
+import { RestAppLayoutBlocks } from '../components/content-blocks/rest-app-layout-blocks';
 import { SmsMessage } from '../components/content-blocks/sms-message';
 import TextBlock from '../components/content-blocks/text';
 import { TimelineAudio } from '../components/content-blocks/timeline-audio';
 
 import DeadlineAndPingSelector from '../components/content-blocks/todo/deadline-and-ping-selector';
+import PingSelector from '../components/content-blocks/todo/ping-selector';
 import WithTitle from '../components/content-blocks/with-title';
 import ConfigurableItem from '../configurable-item';
 import { Base } from './base';
@@ -43,6 +45,7 @@ export class CommonContentBlocks extends Base
 			EditableDescription,
 			EditableDate,
 			PlayerAlert,
+			RestAppLayoutBlocks,
 			DatePill,
 			Note,
 			FileList,
@@ -51,6 +54,7 @@ export class CommonContentBlocks extends Base
 			SmsMessage,
 			CommentContent,
 			ItemSelector,
+			PingSelector,
 			DeadlineAndPingSelector,
 		};
 	}

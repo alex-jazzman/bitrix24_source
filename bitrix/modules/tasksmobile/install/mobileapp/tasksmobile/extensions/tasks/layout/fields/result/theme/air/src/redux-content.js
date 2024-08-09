@@ -7,15 +7,16 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 	const { PureComponent } = require('layout/pure-component');
 	const { AddButton } = require('layout/ui/fields/theme/air/elements/add-button');
 	const { Loc } = require('loc');
-	const { Text4, Text5 } = require('ui-system/typography/text');
+	const { Text4 } = require('ui-system/typography/text');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { ReduxAvatar } = require('layout/ui/user/avatar');
-	const { getFormattedTaskResultDate } = require('tasks/layout/fields/result/date-formatter');
 	const { FileField } = require('layout/ui/fields/file');
 	const { Circle, Line } = require('utils/skeleton');
 	const { Menu } = require('tasks/layout/fields/result/menu');
 	const { confirmDestructiveAction } = require('alert');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
+	const { Date } = require('tasks/layout/fields/result/date');
+	const { dayMonth, longDate, shortTime } = require('utils/date/formats');
 
 	const store = require('statemanager/redux/store');
 	const { connect } = require('statemanager/redux/connect');
@@ -130,12 +131,22 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 							text: Loc.getMessage('TASKS_FIELDS_RESULT_AIR_TITLE'),
 							accent: true,
 						}),
-						this.#result && Text5({
-							testId: `${this.#testId}_DATE`,
+						this.#result && new Date({
 							style: {
 								color: Color.base3.toHex(),
 							},
-							text: getFormattedTaskResultDate(this.#result.createdAt),
+							defaultFormat: (moment) => Loc.getMessage(
+								'TASKS_FIELDS_RESULT_DATE_FORMAT',
+								{
+									'#DATE#': moment.format(moment.inThisYear ? dayMonth() : longDate()),
+									'#TIME#': moment.format(shortTime),
+								},
+							),
+							timeSeparator: '',
+							showTime: true,
+							useTimeAgo: true,
+							timestamp: this.#result.createdAt,
+							testId: `${this.#testId}_DATE`,
 						}),
 						!this.#result && Line(90, 8, 7),
 					),
@@ -152,8 +163,9 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 							onUpdate: () => this.#openResult(true),
 							onRemove: () => {
 								confirmDestructiveAction({
-									title: '',
-									description: Loc.getMessage('TASKS_FIELDS_RESULT_REMOVE_CONFIRM_TITLE'),
+									title: Loc.getMessage('TASKS_FIELDS_RESULT_REMOVE_CONFIRM_TITLE_V2'),
+									description: Loc.getMessage('TASKS_FIELDS_RESULT_REMOVE_CONFIRM_DESCRIPTION'),
+									destructionText: Loc.getMessage('TASKS_FIELDS_RESULT_REMOVE_CONFIRM_YES'),
 									onDestruct: () => this.#field.removeResult(this.#result.commentId),
 								});
 							},
@@ -233,7 +245,7 @@ jn.define('tasks/layout/fields/result/theme/air/redux-content', (require, export
 					marginTop: Indent.M.toNumber(),
 				},
 				style: {
-					fontSize: 14,
+					fontSize: 15,
 					fontWeight: '400',
 					color: Color.base2.toHex(),
 				},

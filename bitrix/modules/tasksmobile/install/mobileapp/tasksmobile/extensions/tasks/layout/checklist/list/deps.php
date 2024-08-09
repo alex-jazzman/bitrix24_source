@@ -34,7 +34,6 @@ return [
 		'ui-system/typography/text',
 		'ui-system/typography/text-input',
 
-		'tasks/enum',
 		'tasks:checklist',
 		'tasks:checklist/flat-tree',
 		'tasks:layout/checklist/list',

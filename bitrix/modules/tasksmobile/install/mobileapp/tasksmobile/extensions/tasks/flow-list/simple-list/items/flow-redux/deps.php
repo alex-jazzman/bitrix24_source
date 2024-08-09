@@ -18,7 +18,7 @@ return [
 		'layout/ui/simple-list/items/extended',
 		'layout/ui/user/avatar',
 
-		'tasks/layout/task/create/opener',
+		'tasks:layout/task/create/opener',
 
 		'tokens',
 		'ui-system/blocks/chips/chip-status',
@@ -30,13 +30,13 @@ return [
 
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',
+		'statemanager/redux/store',
 
-		'tasks/enum',
-		'tasks/entry',
+		'tasks:entry',
 		'tasks:layout/deadline-pill',
 		'tasks:layout/flow/tariff-plan-restrictions-opener',
 		'tasks:statemanager/redux/slices/flows/selector',
-		'tasks:statemanager/redux/slices/tariff-plan-restrictions',
+		'tasks:statemanager/redux/slices/tariff-restrictions',
 		'tasks:flow-list/simple-list/items/type',
 
 		'require-lazy',
@@ -48,5 +48,6 @@ return [
 		'./src/flow-promo-content',
 		'./src/flow-disabled-content',
 		'./src/flow-content-chooser',
+		'./src/flows-information-card',
 	],
 ];

@@ -95,11 +95,11 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 
 		render()
 		{
-			const { testId, style } = this.props;
+			const { style } = this.props;
 
 			return View(
 				{
-					testId,
+					testId: this.#getTestId(),
 					style: {
 						alignItems: 'flex-start',
 						...style,
@@ -231,6 +231,15 @@ jn.define('ui-system/blocks/switcher', (require, exports, module) => {
 			const { checked } = this.state;
 
 			return this.#getSize().getThumbPosition(checked);
+		}
+
+		#getTestId()
+		{
+			const { testId } = this.props;
+			const { checked } = this.state;
+			const prefix = checked ? '' : 'un';
+
+			return `${testId}_${prefix}selected`;
 		}
 	}
 

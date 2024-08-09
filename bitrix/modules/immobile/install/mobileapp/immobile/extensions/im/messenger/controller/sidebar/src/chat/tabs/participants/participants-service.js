@@ -37,6 +37,7 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 			this.onClickLeaveChat = this.onClickLeaveChat.bind(this);
 			this.onClickAddManager = this.onClickAddManager.bind(this);
 			this.onClickRemoveManager = this.onClickRemoveManager.bind(this);
+			this.onClickPingUser = this.onClickPingUser.bind(this);
 		}
 
 		/**
@@ -308,21 +309,22 @@ jn.define('im/messenger/controller/sidebar/chat/tabs/participants/participants-s
 		 */
 		onClickPingUser(userId)
 		{
-			try
-			{
-				PageManager.getNavigator().popTo('im.dialog')
-					// eslint-disable-next-line promise/no-nesting
-					.catch((err) => {
-						Logger.error('ParticipantsService.onClickPingUser.popTo.catch error', err);
-						BX.onCustomEvent('onDestroySidebar');
-					});
-			}
-			catch (e)
-			{
-				Logger.error(`${this.constructor.name}.onClickPingUser.getNavigator()`, e);
-				BX.onCustomEvent('onDestroySidebar');
-			}
+			// try
+			// {
+				// PageManager.getNavigator().popTo('im.dialog')
+				// 	// eslint-disable-next-line promise/no-nesting
+				// 	.catch((err) => {
+				// 		Logger.error('ParticipantsService.onClickPingUser.popTo.catch error', err);
+				// 		BX.onCustomEvent('onDestroySidebar');
+				// 	}); TODO uncomment when the popTo method will work over the entire stack code
+			// }
+			// catch (e)
+			// {
+			// 	Logger.error(`${this.constructor.name}.onClickPingUser.getNavigator()`, e);
+			// 	BX.onCustomEvent('onDestroySidebar');
+			// }
 
+			BX.onCustomEvent('onDestroySidebar');
 			BX.onCustomEvent(EventType.dialog.external.mention, [userId, BBCode.user, this.dialogId]);
 		}
 

@@ -59,6 +59,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		this._enableExternalLayoutResolvers = BX.prop.getBoolean(this._settings, "enableExternalLayoutResolvers", false);
 		this._showEmptyFields = BX.prop.getBoolean(this._settings, "showEmptyFields", false);
+		this._personalViewAllowed = BX.prop.getBoolean(this._settings, "personalViewAllowed", true);
 
 		BX.Crm.EntityEditor.superclass.initialize.apply(this, [id, settings]);
 
@@ -880,6 +881,21 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		};
 
 		return aliases[eventName] || eventName;
+	};
+	BX.Crm.EntityEditor.prototype.prepareConfigMenuItems = function() {
+
+		let items  = BX.Crm.EntityEditor.superclass.prepareConfigMenuItems.apply(this);
+
+		if (!this._personalViewAllowed)
+		{
+			items = items.filter(function( obj ) {
+				return obj.id !== 'switchToPersonalConfig';
+			});
+		}
+
+		BX.onCustomEvent(window, this.eventsNamespace + ':onPrepareConfigMenuItems', [this, items]);
+
+		return items;
 	};
 	BX.Crm.EntityEditor.defaultInstance = null;
 	BX.Crm.EntityEditor.items = {};

@@ -20,7 +20,7 @@ return [
 		'tasks:loc',
 		'tasks:layout/deadline-pill',
 		'tasks:layout/stage-selector',
-		'tasks/layout/task/fields/crm',
+		'tasks:layout/task/fields/crm',
 		'tasks:layout/task/fields/mark',
 		'tasks:layout/task/fields/project',
 		'tasks:layout/task/fields/tags',

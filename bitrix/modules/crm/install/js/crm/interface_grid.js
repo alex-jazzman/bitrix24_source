@@ -1651,7 +1651,8 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		entityId,
 		currentUser,
 		settings,
-		useTodoEditorV2
+		useTodoEditorV2,
+		analytics
 	)
 	{
 		if (!BX.Main || !BX.Main.MenuManager || !BX.Main.MenuManager.Data)
@@ -1677,6 +1678,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 				currentUser,
 				settings,
 				useTodoEditorV2,
+				analytics,
 			);
 			menu.close();
 		}
@@ -1689,7 +1691,8 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		entityId,
 		currentUser,
 		settings,
-		useTodoEditorV2
+		useTodoEditorV2,
+		analytics
 	)
 	{
 		BX.Dom.addClass(bindElement, '--active');
@@ -1714,6 +1717,10 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 									gridExtension.reloadGrid();
 								}
 							}
+						},
+						context: {
+							analytics,
+							source: BX.Crm.Activity.TodoEditorV2.AnalyticsSubSection.list,
 						},
 						useTodoEditorV2,
 					}

@@ -56,6 +56,11 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 
 	protected function logRequisiteValues(array $requisiteValues): void
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$requisiteFieldValues = $requisiteValues['RequisiteFields'];
 		$addressFieldValues = $requisiteValues['RequisiteFields'][EntityRequisite::ADDRESS][$this->AddressTypeId] ?? [];
 		unset($requisiteFieldValues['RequisiteFields'][EntityRequisite::ADDRESS]);

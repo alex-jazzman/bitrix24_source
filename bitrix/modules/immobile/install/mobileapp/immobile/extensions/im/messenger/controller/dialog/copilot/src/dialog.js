@@ -194,7 +194,10 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 			if (button.id === CopilotButtonType.copy)
 			{
 				const modelMessage = this.store.getters['messagesModel/getById'](messageId);
-				DialogTextHelper.copyToClipboard(modelMessage);
+				DialogTextHelper.copyToClipboard(
+					{ clipboardText: modelMessage.text },
+					this.view.ui,
+				);
 
 				return true;
 			}

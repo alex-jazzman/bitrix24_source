@@ -397,7 +397,6 @@ if ($_REQUEST['domain_name'] <> '')
 		// adding dbconn.php
 		$filename = str_replace('//', '/', $path_to . 'bitrix_personal/php_interface/dbconn.php');
 		$str = '<?' . 'php
-define("DBPersistent", false);
 $DBType = "mysql";
 $DBHost = "' . EscapePHPString($DB->DBHost) . '";
 $DBLogin = "' . EscapePHPString($arParams['MYSQL_USER']) . '";
@@ -407,7 +406,6 @@ $DBDebug = true;
 $DBDebugToFile = false;
 @set_time_limit(60);
 
-define("DELAY_DB_CONNECT", true);
 define("CACHED_b_file", 3600);
 define("CACHED_b_file_bucket_size", 10);
 

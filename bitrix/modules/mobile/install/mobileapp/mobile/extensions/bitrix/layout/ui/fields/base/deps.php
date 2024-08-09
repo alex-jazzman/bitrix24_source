@@ -5,7 +5,6 @@ return [
 		'animation',
 		'apptheme',
 		'assets/common',
-		'core',
 		'device/connection',
 		'haptics',
 		'layout/pure-component',

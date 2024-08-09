@@ -7,9 +7,9 @@ import { ImModelMessage } from 'im.v2.model';
 
 import { ProgressBar } from './progress-bar';
 
-import type { ImModelFile } from 'im.v2.model';
-
 import '../../css/items/gallery-item.css';
+
+import type { ImModelFile } from 'im.v2.model';
 
 const MAX_WIDTH = 488;
 const MAX_HEIGHT = 340;
@@ -116,6 +116,13 @@ export const GalleryItem = {
 		{
 			return this.file.type === FileType.video;
 		},
+		previewSourceLink(): string
+		{
+			// for a video, we use "urlPreview", because there is an image preview.
+			// for an image, we use "urlShow", because for large gif files in "urlPreview" we have
+			// a static image (w/o animation) .
+			return this.isVideo ? this.file.urlPreview : this.file.urlShow;
+		},
 	},
 	methods:
 	{
@@ -145,7 +152,7 @@ export const GalleryItem = {
 			<img
 				v-lazyload
 				data-lazyload-dont-hide
-				:data-lazyload-src="file.urlPreview"
+				:data-lazyload-src="previewSourceLink"
 				:title="imageTitle"
 				:alt="file.name"
 				class="bx-im-gallery-item__source"

@@ -49,9 +49,9 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 		{
 			const item = this.getModelItem();
 			const message = item.message;
-			if (message.id === 0)
+			if (!Type.isPlainObject(message) || message.id === 0)
 			{
-				this.subtitle = ChatTitle.createFromDialogId(item.id).getDescription();
+				this.subtitle = ChatTitle.createFromDialogId(item.id).getDescription() ?? this.subtitle;
 
 				return this;
 			}

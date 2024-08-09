@@ -1,4 +1,5 @@
 <?php
+$MESS["CALL_MEDIA_DEVICES_RESET_STATE_HINT"] = "Cannot turn camera and mic back on after screen unlock. You have to do it manually.";
 $MESS["CALL_M_BTN_HANGUP_OPTION_FINISH"] = "End call for everyone";
 $MESS["CALL_M_BTN_HANGUP_OPTION_LEAVE"] = "Leave call";
 $MESS["CALL_M_BTN_TITLE_STOP_RECORD"] = "Stop recording";

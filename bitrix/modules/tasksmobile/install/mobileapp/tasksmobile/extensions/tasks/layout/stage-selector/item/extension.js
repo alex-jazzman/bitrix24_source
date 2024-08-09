@@ -3,7 +3,7 @@
  */
 jn.define('tasks/stage-selector/item', (require, exports, module) => {
 	const { connect } = require('statemanager/redux/connect');
-	const { StageItemClass } = require('layout/ui/fields/stage-selector/stage-item');
+	const { StageItemClass } = require('layout/ui/fields/stage-selector');
 	const {
 		selectById,
 	} = require('tasks/statemanager/redux/slices/stage-settings');

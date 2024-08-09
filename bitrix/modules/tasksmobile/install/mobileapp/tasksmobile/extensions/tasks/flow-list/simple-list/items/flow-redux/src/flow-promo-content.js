@@ -4,9 +4,8 @@
 jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-promo-content', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
-	const { Type } = require('type');
-	const { Color, Indent, Component } = require('tokens');
-	const { Card, CardDesign } = require('ui-system/layout/card');
+	const { Color, Indent } = require('tokens');
+	const { CardDesign } = require('ui-system/layout/card');
 	const { FlowContent } = require('tasks/flow-list/simple-list/items/flow-redux/src/flow-content');
 	const { H4 } = require('ui-system/typography/heading');
 	const { Text6 } = require('ui-system/typography/text');
@@ -19,29 +18,9 @@ jn.define('tasks/flow-list/simple-list/items/flow-redux/src/flow-promo-content',
 			return `flow-promo-content-${this.props.id}`;
 		}
 
-		render()
+		getCardDesign()
 		{
-			if (Type.isNil(this.flow))
-			{
-				return null;
-			}
-
-			return Card(
-				{
-					testId: this.testId,
-					border: false,
-					style: {
-						marginHorizontal: Component.paddingLr.toNumber(),
-						marginBottom: this.isLast ? Indent.XL2.toNumber() : 0,
-						marginTop: Indent.XL2.toNumber(),
-					},
-					onClick: this.cardClickHandler,
-					design: CardDesign.SECONDARY,
-				},
-				this.renderHeader(),
-				this.renderProgressInfo(),
-				this.renderFooter(),
-			);
+			return CardDesign.SECONDARY;
 		}
 
 		cardClickHandler = () => {};

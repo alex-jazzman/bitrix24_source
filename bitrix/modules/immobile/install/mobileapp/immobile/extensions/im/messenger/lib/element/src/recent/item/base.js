@@ -138,9 +138,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		createTitle()
 		{
 			const item = this.getModelItem();
-			this.title = ChatTitle.createFromDialogId(item.id, {
+			const title = ChatTitle.createFromDialogId(item.id, {
 				showItsYou: true,
 			}).getTitle();
+
+			if (title)
+			{
+				this.title = title;
+			}
 
 			return this;
 		}

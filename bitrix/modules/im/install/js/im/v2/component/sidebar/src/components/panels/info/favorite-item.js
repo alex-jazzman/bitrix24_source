@@ -50,7 +50,7 @@ export const FavoriteItem = {
 		},
 		messageText(): string
 		{
-			return Parser.decodeMessage(this.favoriteMessage);
+			return Parser.purifyMessage(this.favoriteMessage);
 		},
 		isCopilot(): boolean
 		{
@@ -73,13 +73,6 @@ export const FavoriteItem = {
 				messageId: this.favorite.messageId,
 				dialogId: this.dialogId,
 			});
-		},
-		onMessageBodyClick(event)
-		{
-			if (event.target.tagName === 'A')
-			{
-				event.stopPropagation();
-			}
 		},
 	},
 	template: `
@@ -111,7 +104,7 @@ export const FavoriteItem = {
 					@click.stop="onContextMenuClick"
 				></button>
 			</div>
-			<div class="bx-im-favorite-item__message-text" v-html="messageText" @click="onMessageBodyClick"></div>
+			<div class="bx-im-favorite-item__message-text"> {{ messageText }}</div>
 		</div>
 	`,
 };

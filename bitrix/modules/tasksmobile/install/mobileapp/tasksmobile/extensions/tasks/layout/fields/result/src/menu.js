@@ -38,20 +38,20 @@ jn.define('tasks/layout/fields/result/menu', (require, exports, module) => {
 			{
 				this.menu = new UIMenu([
 					{
-						id: actions.REMOVE,
-						testId: actions.REMOVE,
-						title: Loc.getMessage('TASKS_FIELDS_RESULT_MENU_REMOVE'),
-						iconName: Icon.CROSS,
-						sectionCode: 'default',
-						onItemSelected: () => this.onRemove(),
-					},
-					{
 						id: actions.UPDATE,
 						testId: actions.UPDATE,
 						title: Loc.getMessage('TASKS_FIELDS_RESULT_MENU_UPDATE'),
 						iconName: Icon.EDIT,
 						sectionCode: 'default',
 						onItemSelected: () => this.onUpdate(),
+					},
+					{
+						id: actions.REMOVE,
+						testId: actions.REMOVE,
+						title: Loc.getMessage('TASKS_FIELDS_RESULT_MENU_REMOVE'),
+						iconName: Icon.CROSS,
+						sectionCode: 'default',
+						onItemSelected: () => this.onRemove(),
 					},
 				]);
 			}

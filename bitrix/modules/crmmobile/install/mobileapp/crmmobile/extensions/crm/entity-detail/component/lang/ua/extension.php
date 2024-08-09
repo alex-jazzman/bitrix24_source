@@ -73,6 +73,7 @@ $MESS["M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_SMART_INVOICE"] = "Дійсно �
 $MESS["M_CRM_ENTITY_ACTION_DELETE_CONTACT"] = "Видалення контакту";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_DEAL"] = "Видалити угоду";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_LEAD"] = "Видалити лід";
+$MESS["M_CRM_ENTITY_ACTION_DELETE_MSGVER_1"] = "Видалити";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_QUOTE"] = "Видалити пропозицію";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_QUOTE_MSGVER_1"] = "Видалити пропозицію";
 $MESS["M_CRM_ENTITY_ACTION_DELETE_SMART_INVOICE"] = "Видалити рахунок";

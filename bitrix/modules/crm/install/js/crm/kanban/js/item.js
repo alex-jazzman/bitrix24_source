@@ -20,6 +20,7 @@ BX.CRM.Kanban.Item = function(options)
 	this.plannerCurrent = null;
 	this.fieldsWrapper = null;
 	this.badgesWrapper = null;
+	this.footerWrapper = null;
 	this.clientName = null;
 	this.clientNameItems = [];
 	this.useAnimation = false;
@@ -139,6 +140,11 @@ BX.CRM.Kanban.Item.prototype = {
 		if (!this.container)
 		{
 			this.createLayout();
+		}
+
+		if (this.isLayoutFooterEveryRender())
+		{
+			this.layoutFooter();
 		}
 
 		this.setBorderColor();
@@ -800,6 +806,33 @@ BX.CRM.Kanban.Item.prototype = {
 		}
 	},
 
+	layoutFooter()
+	{
+		BX.Dom.clean(this.footerWrapper);
+
+		const elements = [
+			{
+				id: 'planner',
+				node: this.createPlanner(),
+			},
+			{
+				id: 'activityBlock',
+				node: this.createLastActivityBlock(),
+			},
+		];
+
+		const data = {
+			elements,
+			item: this,
+		};
+
+		BX.Event.EventEmitter.emit('BX.Crm.Kanban.Item::onBeforeFooterCreate', data);
+
+		data.elements.forEach((element) => {
+			BX.Dom.append(element.node, this.footerWrapper);
+		});
+	},
+
 	/**
 	 * Get close icon for demo-block.
 	 * @return {Element}
@@ -851,13 +884,28 @@ BX.CRM.Kanban.Item.prototype = {
 			this.hasFields() ? this.getItemFields() : null,
 			this.createBadgesWrapper(),
 			this.createAside(),
-			this.createFooter(),
+			this.createFooterWrapper(),
 			this.createShadow(),
 		];
+
+		if (!this.isLayoutFooterEveryRender())
+		{
+			this.layoutFooter();
+		}
 
 		elements.forEach((element) => {
 			BX.Dom.append(element, container);
 		});
+	},
+
+	isLayoutFooterEveryRender()
+	{
+		return Boolean(this.getPerformanceSettings().layoutFooterEveryItemRender === 'Y');
+	},
+
+	getPerformanceSettings()
+	{
+		return this.getGrid().getData().performance;
 	},
 
 	createContainer()
@@ -1034,6 +1082,8 @@ BX.CRM.Kanban.Item.prototype = {
 		return this.badgesWrapper;
 	},
 
+	// runs only once and is not subsequently redrawn
+	// BX.Crm.Kanban.Item::onBeforeAsideCreate is sent only once when the item is created
 	createAside()
 	{
 		const limitExceededIcon = (
@@ -1118,33 +1168,11 @@ BX.CRM.Kanban.Item.prototype = {
 		this.showTooltip(activityMessage, event.target, true);
 	},
 
-	createFooter()
+	createFooterWrapper()
 	{
-		const elements = [
-			{
-				id: 'planner',
-				node: this.createPlanner(),
-			},
-			{
-				id: 'activityBlock',
-				node: this.createLastActivityBlock(),
-			},
-		];
+		this.footerWrapper = BX.Tag.render`<div class="crm-kanban-item-footer"></div>`;
 
-		const data = {
-			elements,
-			item: this,
-		};
-
-		BX.Event.EventEmitter.emit('BX.Crm.Kanban.Item::onBeforeFooterCreate', data);
-
-		const footer = BX.Tag.render`<div class="crm-kanban-item-footer"></div>`;
-
-		data.elements.forEach((element) => {
-			BX.Dom.append(element.node, footer);
-		});
-
-		return footer;
+		return this.footerWrapper;
 	},
 
 	createPlanner()
@@ -1612,8 +1640,10 @@ BX.CRM.Kanban.Item.prototype = {
 			colorSettings,
 			calendarSettings,
 		};
+
 		const params = {
 			useTodoEditorV2,
+			context: this.getToDoEditorContext(),
 			events: {
 				onSave: () => {
 					void this.animate({
@@ -1660,6 +1690,13 @@ BX.CRM.Kanban.Item.prototype = {
 		{
 			this.unDisabledItem();
 		}
+	},
+
+	getToDoEditorContext()
+	{
+		return {
+			analytics: this.grid.getData().analytics,
+		};
 	},
 
 	prepareAndShowPlannerPopup(node)
@@ -1744,21 +1781,13 @@ BX.CRM.Kanban.Item.prototype = {
 			return;
 		}
 
-		const data = this.getData();
-		const column = this.getColumn();
-		const columnData = column.getData();
-
-		if (columnData.type !== 'PROGRESS')
-		{
-			return;
-		}
-
 		BX.Dom.removeClass(this.activityExist, ...this.activityExist.classList);
 		BX.Dom.addClass(this.activityExist, 'crm-kanban-item-activity');
 
-		const userId = this.getGrid().getData().userId;
-
-		const errorCounterByActivityResponsible = this.getGrid().getData().showErrorCounterByActivityResponsible || false;
+		const gridData = this.getGrid().getData();
+		const errorCounterByActivityResponsible = gridData.showErrorCounterByActivityResponsible || false;
+		const data = this.getData();
+		const userId = gridData.userId;
 
 		const html = errorCounterByActivityResponsible
 			? this.makeCounterHtmlByActivityResponsible(data, userId)

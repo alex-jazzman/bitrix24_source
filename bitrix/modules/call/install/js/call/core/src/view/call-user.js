@@ -123,7 +123,6 @@ export class CallUser
 
 		this.avatarBackground = Util.getAvatarBackground();
 
-		this.withBlur = Utils.platform.isMac();
 		this.removeAvatarPulseTimer = null;
 		this.hideUserNameTimer = null;
 
@@ -398,6 +397,21 @@ export class CallUser
 		}
 	}
 
+	isVisibleMediaStateIcon(isActive)
+	{
+		return !isActive && this.userModel.state === UserState.Connected;
+	};
+
+	isVisibleCameraStateIcon()
+	{
+		return this.isVisibleMediaStateIcon(this.userModel.cameraState);
+	};
+
+	isVisibleMicStateIcon()
+	{
+		return this.isVisibleMediaStateIcon(this.userModel.microphoneState);
+	};
+
 	showStats(stats)
 	{
 		this.connectionStats = stats;
@@ -414,7 +428,7 @@ export class CallUser
 			return this.elements.root;
 		}
 		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-user" + (this.withBlur ? ' with-blur' : '')},
+			props: {className: "bx-messenger-videocall-user"},
 			dataset: {userId: this.userModel.id, order: this.userModel.order},
 			children: [
 				this.elements.videoBorder = Dom.create("div", {
@@ -530,7 +544,7 @@ export class CallUser
 							props: {className: "bx-messenger-videocall-user-floor-request bx-messenger-videocall-floor-request-icon"}
 						}),
 						this.elements.statsOverlay = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-stats-overlay" + (this.withBlur ? ' with-blur' : '')},
+							props: {className: "bx-messenger-videocall-user-stats-overlay"},
 						})
 					]
 				}),
@@ -684,7 +698,7 @@ export class CallUser
 			this.elements.video.classList.add("bx-messenger-videocall-video-contain");
 		}
 
-		if (this.userModel.cameraState && this.userModel.microphoneState)
+		if (this.isVisibleCameraStateIcon() && this.isVisibleMicStateIcon())
 		{
 			this.elements.nameContainer.classList.add("extra-padding");
 		}
@@ -797,10 +811,10 @@ export class CallUser
 					props: {className: "bx-messenger-videocall-user-device-state-container"},
 					children: [
 						this.elements.cameraState = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (this.userModel.cameraState ? " hidden" : "")},
+							props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (!this.isVisibleCameraStateIcon() ? " hidden" : "")},
 						}),
 						this.elements.micState = Dom.create("div", {
-							props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (this.userModel.microphoneState ? " hidden" : "")},
+							props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (!this.isVisibleMicStateIcon() ? " hidden" : "")},
 						}),
 					],
 				}),
@@ -816,10 +830,10 @@ export class CallUser
 
 			this.elements.nameContainer.prepend(...[
 				this.elements.micState = Dom.create("div", {
-					props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (this.userModel.microphoneState ? " hidden" : "")},
+					props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (!this.isVisibleMicStateIcon() ? " hidden" : "")},
 				}),
 				this.elements.cameraState = Dom.create("div", {
-					props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (this.userModel.cameraState ? " hidden" : "")},
+					props: {className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (!this.isVisibleCameraStateIcon() ? " hidden" : "")},
 				}),
 			]);
 		}
@@ -1169,7 +1183,7 @@ export class CallUser
 		return Util.isNewCallLayoutEnabled()
 			? Utils.text.getFirstLetters(this.userModel.name).toUpperCase()
 			: ''
-		;
+			;
 	}
 
 	updateRenameAllowed()
@@ -1330,7 +1344,7 @@ export class CallUser
 			}
 		}
 		if (
-			Util.isBitrixCallServerAllowed()
+			Util.isCallServerAllowed()
 			&& this.userModel.state === UserState.Connected
 			&& !this.elements.debugPanel.parentElement
 			&& !this.screenSharingUser
@@ -1482,6 +1496,10 @@ export class CallUser
 		}
 
 		this.elements.state.innerText = this.getStateMessage(this.userModel.state, this.userModel.videoPaused);
+
+		this.updateMicrophoneState()
+		this.updateCameraState()
+
 		this.update();
 	};
 
@@ -1521,7 +1539,7 @@ export class CallUser
 		{
 			return;
 		}
-		if (this.userModel.microphoneState)
+		if (!this.isVisibleMicStateIcon())
 		{
 			this.elements.micState.classList.add("hidden");
 		}
@@ -1531,7 +1549,7 @@ export class CallUser
 			this.clearAvatarPulseTimer();
 		}
 
-		if (this.userModel.cameraState && this.userModel.microphoneState)
+		if (this.isVisibleCameraStateIcon() && this.isVisibleMicStateIcon())
 		{
 			this.elements.nameContainer.classList.add("extra-padding");
 		}
@@ -1547,7 +1565,7 @@ export class CallUser
 		{
 			return;
 		}
-		if (this.userModel.cameraState)
+		if (!this.isVisibleCameraStateIcon())
 		{
 			this.elements.cameraState.classList.add("hidden");
 		}
@@ -1556,7 +1574,7 @@ export class CallUser
 			this.elements.cameraState.classList.remove("hidden");
 		}
 
-		if (this.userModel.cameraState && this.userModel.microphoneState)
+		if (this.isVisibleCameraStateIcon() && this.isVisibleMicStateIcon())
 		{
 			this.elements.nameContainer.classList.add("extra-padding");
 		}
@@ -1679,10 +1697,38 @@ export class CallUser
 		}
 	};
 
+	_getVideoStats(videoStats) {
+		let resultString = '';
+		let limitationsString = '';
+
+		resultString += `Bitrate: ${videoStats?.bitrate || 0}\n`;
+		resultString += `PacketsLost: ${videoStats?.packetsLostExtended || 0}\n`;
+		resultString += `Codec: ${videoStats?.codecName || '-'}\n`;
+		resultString += `Resolution: ${videoStats?.frameWidth || 0}x${videoStats?.frameHeight || 0} `;
+
+		if (videoStats?.qualityLimitationReason)
+		{
+			resultString += `(changes:${videoStats.qualityLimitationResolutionChanges}, FPS: ${videoStats?.framesPerSecond || 0})`;
+			limitationsString = `Limitation: ${videoStats.qualityLimitationReason}`;
+			limitationsString += ` (duration: ${Object.entries(videoStats.qualityLimitationDurations || {}).reduce(
+				(accumulator, value, index) => accumulator + `${index ? ', ' : ''}` + `${value[0]}: ${value[1]}`,
+				'',
+			)})`;
+		}
+		else
+		{
+			resultString += `(${videoStats?.framesPerSecond || 0} FPS)`;
+		}
+
+		return ({
+			resultString,
+			limitationsString,
+		})
+	}
+
 	_formatVideoStats(videoStats)
 	{
 		let result = '';
-		let stats = '';
 		let limitations = '';
 		if (Type.isArray(videoStats))
 		{
@@ -1697,36 +1743,32 @@ export class CallUser
 				{
 					result += `Track ${trackIndex+1}\n`;
 				}
-				result += `Bitrate: ${stats?.bitrate || 0}\n`;
-				result += `PacketsLost: ${stats?.packetsLostExtended || 0}\n`;
-				result += `Codec: ${stats?.codecName || '-'}\n`;
-				result += `Resolution: ${stats?.frameWidth || 0}x${stats?.frameHeight || 0} `;
-				result += `(changes:${stats.qualityLimitationResolutionChanges}, FPS: ${stats?.framesPerSecond || 0})`;
-				limitations = `Limitation: ${stats.qualityLimitationReason}`;
-				limitations += ` (duration: ${Object.entries(stats.qualityLimitationDurations).reduce(
-					(accumulator, currentValue, index) => accumulator + `${index ? ', ' : ''}` + `${currentValue[0]}: ${currentValue[1]}`,
-					'',
-				)})`;
+
+				const {resultString, limitationsString} = this._getVideoStats(stats);
+
+				if (resultString)
+				{
+					result += resultString;
+				}
+
+				if (limitationsString)
+				{
+					limitations = limitationsString;
+				}
 			});
 		}
 		else
 		{
-			result += `Bitrate: ${videoStats?.bitrate || 0}\n`;
-			result += `PacketsLost: ${videoStats?.packetsLostExtended || 0}\n`;
-			result += `Codec: ${videoStats?.codecName || '-'}\n`;
-			result += `Resolution: ${videoStats?.frameWidth || 0}x${videoStats?.frameHeight || 0} `;
-			if (videoStats?.qualityLimitationReason)
+			const {resultString, limitationsString} = this._getVideoStats(videoStats);
+
+			if (resultString)
 			{
-				result += `(changes:${videoStats.qualityLimitationResolutionChanges}, FPS: ${videoStats?.framesPerSecond || 0})`;
-				limitations = `Limitation: ${videoStats.qualityLimitationReason}`;
-				limitations += ` (duration: ${Object.entries(videoStats.qualityLimitationDurations).reduce(
-					(accumulator, value, index) => accumulator + `${index ? ', ' : ''}` + `${value[0]}: ${value[1]}`,
-					'',
-				)})`;
+				result += resultString;
 			}
-			else
+
+			if (limitationsString)
 			{
-				result += `(${videoStats?.framesPerSecond || 0} FPS)`;
+				limitations = limitationsString;
 			}
 		}
 
@@ -1735,12 +1777,12 @@ export class CallUser
 
 	showUserName()
 	{
-		if (this.hideUserNameTimer) 
+		if (this.hideUserNameTimer)
 		{
 			clearTimeout(this.hideUserNameTimer);
 			this.hideUserNameTimer = null;
 		}
-		
+
 		if (this.elements.nameContainer)
 		{
 			this.elements.nameContainer.classList.add('active');
@@ -1805,3 +1847,4 @@ export class CallUser
 		}
 	}
 }
+

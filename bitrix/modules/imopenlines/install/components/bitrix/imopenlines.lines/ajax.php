@@ -29,8 +29,8 @@ class ImOpenLinesListAjaxController
 	/** @var \Bitrix\ImOpenlines\Security\Permissions */
 	protected $userPermissions;
 
-	/** @var HttpRequest $request */
-	protected $request = array();
+	/** @var \Bitrix\Main\HttpRequest $request */
+	protected $request;
 
 	protected function getActions()
 	{
@@ -99,7 +99,7 @@ class ImOpenLinesListAjaxController
 		if(!$configManager->canEditLine($this->requestData['CONFIG_ID']))
 		{
 			$this->errors[] = Loc::getMessage('OL_PERMISSION_MODIFY_LINE');
-			return;
+			return false;
 		}
 		return $configManager->delete($this->requestData['CONFIG_ID']);
 	}

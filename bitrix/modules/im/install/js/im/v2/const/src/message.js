@@ -54,3 +54,4 @@ export const OwnMessageStatus = Object.freeze({
 });
 
 export const FakeMessagePrefix = 'temp';
+export const FakeDraftMessagePrefix = 'temp-draft';

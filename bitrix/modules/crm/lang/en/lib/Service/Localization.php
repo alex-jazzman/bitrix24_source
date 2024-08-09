@@ -88,6 +88,7 @@ $MESS["CRM_LOCALIZATION_DB_TYPE_NOT_SUPPORTED"] = "The database you're using doe
 $MESS["CRM_LOCALIZATION_FIELD_VALUE_WITH_TITLE"] = "#TITLE# #VALUE#";
 $MESS["CRM_OLD_VERSION_SUFFIX"] = "#TITLE# (old version)";
 $MESS["CRM_ORDER_TITLE"] = "Order ##ORDER_ID# of #ORDER_DATE#";
+$MESS["CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED"] = "Insufficient permission to change stage.";
 $MESS["CRM_QUOTE_ADD_HINT_MSGVER_1"] = "You do not have permission to create estimates. Please contact your Bitrix24 administrator or person in charge of the CRM.";
 $MESS["CRM_QUOTE_TITLE_MSGVER_1"] = "Estimate ##QUOTE_NUMBER# of #BEGINDATE#";
 $MESS["CRM_QUOTE_TITLE_PLACEHOLDER_MSGVER_1"] = "Estimate ##ID#";

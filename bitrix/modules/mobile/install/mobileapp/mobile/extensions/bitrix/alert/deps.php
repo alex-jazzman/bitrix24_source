@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'loc',
-		'alert/alert',
 		'utils/validation',
 	],
 	'bundle' => [

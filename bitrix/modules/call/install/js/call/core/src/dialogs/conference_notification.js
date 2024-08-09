@@ -168,7 +168,6 @@ export class NotificationConferenceContent
 		this.callerAvatar = config.callerAvatar || '';
 		this.callerName = config.callerName || BX.message('IM_CL_USER');
 		this.callerColor = config.callerColor || '#525252';
-		this.withBlur = Utils.platform.isMac();
 
 		this.elements = {
 			root: null,
@@ -300,7 +299,7 @@ export class NotificationConferenceContent
 					events: {click: this._onSkipConferenceButtonClick.bind(this)}
 				}),
 				Dom.create("div", {
-					props: {className: "bx-messenger-call-window-button" + (this.withBlur ? ' with-blur' : '')},
+					props: {className: "bx-messenger-call-window-button"},
 					children: [
 						Dom.create("div", {
 							props: {

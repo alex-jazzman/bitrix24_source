@@ -263,7 +263,6 @@ export class IncomingNotificationContent extends EventEmitter
 		this.callerColor = config.callerColor || '';
 		this.microphoneState = config.microphoneState;
 		this.cameraState = config.cameraState;
-		this.withBlur = Utils.platform.isMac();
 		this.isNewCallLayoutEnabled = Util.isNewCallLayoutEnabled();
 
 		this.elements = {
@@ -494,7 +493,7 @@ export class IncomingNotificationContent extends EventEmitter
 				}),
 				this.elements.buttons.answer = Dom.create("div", {
 					props: {
-						className: "bx-messenger-call-window-button" + (this.withBlur ? ' with-blur' : ''),
+						className: "bx-messenger-call-window-button",
 						title: BX.message("IM_M_CALL_BTN_ANSWER"),
 					},
 					children: [

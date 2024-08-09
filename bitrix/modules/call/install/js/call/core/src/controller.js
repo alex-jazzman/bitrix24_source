@@ -25,6 +25,7 @@ import {View} from './view/view';
 import {VideoStrategy} from './video_strategy';
 import Util from './util';
 import { Utils } from 'im.v2.lib.utils';
+import { Analytics } from 'call.lib.analytics';
 
 import './css/call-overlay.css';
 
@@ -163,8 +164,11 @@ export class CallController extends EventEmitter
 		this.featureScreenSharing = FeatureState.Enabled;
 		this.featureRecord = FeatureState.Enabled;
 
+		this.screenShareStartTime = null;
+
 		this.callRecordState = View.RecordState.Stopped;
 		this.callRecordType = View.RecordType.None;
+		this.callRecordInfo = null;
 
 		this.autoCloseCallView = true;
 
@@ -180,6 +184,7 @@ export class CallController extends EventEmitter
 		this._onCallUserStateChangedHandler = this._onCallUserStateChanged.bind(this);
 		this._onCallUserMicrophoneStateHandler = this._onCallUserMicrophoneState.bind(this);
 		this._onCallUserCameraStateHandler = this._onCallUserCameraState.bind(this);
+		this._onNeedResetMediaDevicesStateHandler = this._onNeedResetMediaDevicesState.bind(this);
 		this._onCameraPublishingHandler = this._onCameraPublishing.bind(this);
 		this._onMicrophonePublishingdHandler = this._onMicrophonePublishingd.bind(this);
 		this._onCallUserVideoPausedHandler = this._onCallUserVideoPaused.bind(this);
@@ -391,6 +396,19 @@ export class CallController extends EventEmitter
 		}
 	}
 
+	getCallType()
+	{
+		if (!this.currentCall)
+		{
+			return;
+		}
+
+		return this.currentCall.provider === Provider.Plain
+			? Analytics.AnalyticsType.private
+			: Analytics.AnalyticsType.group
+		;
+	}
+
 	getCallUsers(includeSelf)
 	{
 		const result = Object.keys(this.currentCall.getUsers());
@@ -585,6 +603,21 @@ export class CallController extends EventEmitter
 			{
 				// send busy
 				newCall.decline(486);
+				const isVideoconf =
+					newCall.associatedEntity.type === 'chat'
+					&& newCall.associatedEntity.advanced['chatType'] === 'videoconf'
+				;
+				const newCallType = newCall.provider === Provider.Plain
+					? Analytics.AnalyticsType.private
+					: Analytics.AnalyticsType.group
+				;
+
+				Analytics.getInstance().onJoinCall({
+					callId: newCall.id,
+					callType: isVideoconf ? Analytics.AnalyticsType.videoconf : newCallType,
+					status: Analytics.AnalyticsStatus.busy,
+				});
+
 				return false;
 			}
 		}
@@ -597,6 +630,7 @@ export class CallController extends EventEmitter
 		this.currentCall.addEventListener(CallEvent.onUserStateChanged, this._onCallUserStateChangedHandler);
 		this.currentCall.addEventListener(CallEvent.onUserMicrophoneState, this._onCallUserMicrophoneStateHandler);
 		this.currentCall.addEventListener(CallEvent.onUserCameraState, this._onCallUserCameraStateHandler);
+		this.currentCall.addEventListener(CallEvent.onNeedResetMediaDevicesState, this._onNeedResetMediaDevicesStateHandler);
 		this.currentCall.addEventListener(CallEvent.onCameraPublishing, this._onCameraPublishingHandler);
 		this.currentCall.addEventListener(CallEvent.onMicrophonePublishing, this._onMicrophonePublishingdHandler);
 		this.currentCall.addEventListener(CallEvent.onUserVideoPaused, this._onCallUserVideoPausedHandler);
@@ -636,6 +670,7 @@ export class CallController extends EventEmitter
 		this.currentCall.removeEventListener(CallEvent.onUserStateChanged, this._onCallUserStateChangedHandler);
 		this.currentCall.removeEventListener(CallEvent.onUserMicrophoneState, this._onCallUserMicrophoneStateHandler);
 		this.currentCall.removeEventListener(CallEvent.onUserCameraState, this._onCallUserCameraStateHandler);
+		this.currentCall.removeEventListener(CallEvent.onNeedResetMediaDevicesState, this._onNeedResetMediaDevicesStateHandler);
 		this.currentCall.removeEventListener(CallEvent.onCameraPublishing, this._onCameraPublishingHandler);
 		this.currentCall.removeEventListener(CallEvent.onMicrophonePublishing, this._onMicrophonePublishingdHandler);
 		this.currentCall.removeEventListener(CallEvent.onUserVideoPaused, this._onCallUserVideoPausedHandler);
@@ -681,6 +716,7 @@ export class CallController extends EventEmitter
 		this.callView.setCallback(View.Event.onReplaceSpeaker, this._onCallViewReplaceSpeaker.bind(this));
 		this.callView.setCallback(View.Event.onHasMainStream, this._onCallViewHasMainStream.bind(this));
 		this.callView.setCallback(View.Event.onToggleSubscribe, this._onCallToggleSubscribe.bind(this));
+		this.callView.setCallback(View.Event.onUserClick, this._onCallUserClick.bind(this));
 	}
 
 	updateCallViewUsers(callId, userList)
@@ -862,6 +898,16 @@ export class CallController extends EventEmitter
 
 		this.removeCallEvents();
 		const oldCall = this.currentCall;
+
+		Analytics.getInstance().onFinishCall({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+			status: Analytics.AnalyticsStatus.privateToGroup,
+			chatId: this.currentCall.associatedEntity.id,
+			callUsersCount: this.getCallUsers(true).length,
+			callLength: Util.getTimeText(this.currentCall.startDate),
+		});
+
 		oldCall.hangup();
 
 		this.currentCall = newCall;
@@ -967,7 +1013,7 @@ export class CallController extends EventEmitter
 		});
 
 		this.callNotification.show();
-		this.scheduleCancelNotification();
+		this.scheduleCancelNotification(false);
 
 		this.messengerFacade.repeatSound(this.audioRingtone, 3500, true);
 	}
@@ -985,16 +1031,22 @@ export class CallController extends EventEmitter
 		});
 
 		this.callNotification.show();
-		this.scheduleCancelNotification();
+		this.scheduleCancelNotification(true);
 
 		this.messengerFacade.repeatSound(this.audioRingtone, 3500, true);
 	}
 
-	scheduleCancelNotification()
+	scheduleCancelNotification(isIncomingConference = false)
 	{
 		clearTimeout(this.hideIncomingCallTimeout);
 		this.hideIncomingCallTimeout = setTimeout(() =>
 		{
+			Analytics.getInstance().onJoinCall({
+				callId: this.currentCall.id,
+				callType: isIncomingConference ? Analytics.AnalyticsType.videoconf : this.getCallType(),
+				status: Analytics.AnalyticsStatus.noAnswer,
+			});
+
 			if (this.callNotification)
 			{
 				this.callNotification.close();
@@ -1181,6 +1233,7 @@ export class CallController extends EventEmitter
 					showRecordButton: this.featureRecord !== FeatureState.Disabled,
 					hiddenButtons: hiddenButtons,
 					blockedButtons: this.getBlockedButtons(provider === Provider.Plain),
+					showAddUserButtonInList: provider === Provider.Plain
 				});
 
 				this.bindCallViewEvents();
@@ -1277,6 +1330,16 @@ export class CallController extends EventEmitter
 				if (this.currentCallIsNew)
 				{
 					this.log("Inviting users");
+					Analytics.getInstance().onStartCall({
+						callId: this.currentCall.id,
+						callType: this.getCallType(),
+						mediaParams: {
+							video: Hardware.isCameraOn,
+							audio: !Hardware.isMicrophoneMuted,
+						},
+						status: Analytics.AnalyticsStatus.success,
+					});
+
 					this.currentCall.inviteUsers({
 						show: !Util.isNewCallLayoutEnabled(),
 					});
@@ -1286,6 +1349,17 @@ export class CallController extends EventEmitter
 				else
 				{
 					this.log("Joining existing call");
+					Analytics.getInstance().onJoinCall({
+						callId: this.currentCall.id,
+						callType: this.getCallType(),
+						mediaParams: {
+							video: Hardware.isCameraOn,
+							audio: !Hardware.isMicrophoneMuted,
+						},
+						section: Analytics.AnalyticsSection.chatWindow,
+						element: Analytics.AnalyticsElement.videocall,
+						status: Analytics.AnalyticsStatus.success,
+					});
 					this.currentCall.answer();
 				}
 
@@ -1386,6 +1460,7 @@ export class CallController extends EventEmitter
 					microphoneId: Hardware.defaultMicrophone,
 					hiddenButtons: hiddenButtons,
 					blockedButtons: this.getBlockedButtons(this.currentCall.provider === Provider.Plain),
+					showAddUserButtonInList: this.currentCall.provider === Provider.Plain
 				});
 				this.autoCloseCallView = true;
 				this.bindCallViewEvents();
@@ -1428,12 +1503,36 @@ export class CallController extends EventEmitter
 			})
 			.finally(() =>
 			{
+				Analytics.getInstance().onJoinCall({
+					callId: this.currentCall.id,
+					callType: this.getCallType(),
+					mediaParams: {
+						video: Hardware.isCameraOn,
+						audio: !Hardware.isMicrophoneMuted,
+					},
+					section: Analytics.AnalyticsSection.chatList,
+					element: Analytics.AnalyticsElement.joinButton,
+					status: Analytics.AnalyticsStatus.success,
+				});
 				this.initCallPromise = null;
 			});
 	}
 
 	leaveCurrentCall(force, finishCall = false)
 	{
+		if (this.isRecording())
+		{
+			Analytics.getInstance().onRecordStop({
+				callId: this.currentCall.id,
+				callType: this.getCallType(),
+				subSection: finishCall ? Analytics.AnalyticsSubSection.contextMenu : Analytics.AnalyticsSubSection.window,
+				element: finishCall ? Analytics.AnalyticsElement.finishForAllButton : Analytics.AnalyticsElement.disconnectButton,
+				recordTime: Util.getRecordTimeText(this.callRecordInfo),
+			});
+
+			this.callRecordInfo = null;
+		}
+
 		if (this.callView)
 		{
 			this.callView.releaseLocalMedia();
@@ -2347,6 +2446,19 @@ export class CallController extends EventEmitter
 					);
 					this.removeVideoStrategy();
 					this.removeCallEvents();
+
+					Analytics.getInstance().onJoinCall({
+						callId: callId,
+						callType: this.getCallType(),
+						mediaParams: {
+							video: Hardware.isCameraOn,
+							audio: !Hardware.isMicrophoneMuted,
+						},
+						section: Analytics.AnalyticsSection.callPopup,
+						element: Analytics.AnalyticsElement.answerButton,
+						status: Analytics.AnalyticsStatus.decline,
+					});
+
 					this.currentCall.decline();
 					this.currentCall = null;
 				}
@@ -2372,6 +2484,15 @@ export class CallController extends EventEmitter
 			this.showUnsupportedNotification();
 			return;
 		}
+
+		Analytics.getInstance().onJoinCall({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+			mediaParams,
+			section: Analytics.AnalyticsSection.callPopup,
+			element: Analytics.AnalyticsElement.answerButton,
+			status: Analytics.AnalyticsStatus.success,
+		});
 
 		if (this.callView)
 		{
@@ -2426,6 +2547,7 @@ export class CallController extends EventEmitter
 					blockedButtons: this.getBlockedButtons(this.currentCall.provider === Provider.Plain),
 					hiddenButtons: hiddenButtons,
 					language: this.language,
+					showAddUserButtonInList: this.currentCall.provider === Provider.Plain,
 				});
 				this.autoCloseCallView = true;
 				if (this.callWithLegacyMobile)
@@ -2478,6 +2600,10 @@ export class CallController extends EventEmitter
 			case "answerConference":
 				if (this.currentCall && 'id' in this.currentCall.associatedEntity)
 				{
+					Analytics.getInstance().onAnswerConference({
+						callId: this.currentCall.id,
+					});
+
 					this.answeredOrDeclinedCalls.add(this.currentCall.id);
 					let dialogId = this.currentCall.associatedEntity.id.toString();
 					if (dialogId.startsWith('chat'))
@@ -2490,6 +2616,10 @@ export class CallController extends EventEmitter
 			case "skipConference":
 				if (this.currentCall)
 				{
+					Analytics.getInstance().onDeclineConference({
+						callId: this.currentCall.id,
+					});
+
 					this.answeredOrDeclinedCalls.add(this.currentCall.id);
 					this.removeVideoStrategy();
 					this.removeCallEvents();
@@ -2528,6 +2658,11 @@ export class CallController extends EventEmitter
 		}
 		this.closePromo();
 
+		if (this.mediaDevicesResetStateHintBaloon)
+		{
+			this.mediaDevicesResetStateHintBaloon.close();
+			this.mediaDevicesResetStateHintBaloon = null;
+		}
 		this._closeReconnectionBaloon();
 		this._closeParticipantsVideoBaloon();
 	}
@@ -2592,6 +2727,16 @@ export class CallController extends EventEmitter
 
 	_onCallViewHangupButtonClick()
 	{
+		Analytics.getInstance().onDisconnectCall({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+			subSection: Analytics.AnalyticsSubSection.finishButton,
+			mediaParams: {
+				video: Hardware.isCameraOn,
+				audio: !Hardware.isMicrophoneMuted,
+			},
+		});
+
 		this.leaveCurrentCall();
 	}
 
@@ -2608,11 +2753,35 @@ export class CallController extends EventEmitter
 		let menuItems = [
 			{
 				text: BX.message("CALL_M_BTN_HANGUP_OPTION_FINISH"),
-				onclick: () => this.leaveCurrentCall(false, true),
+				onclick: () => {
+					console.log('this.currentCall.associatedEntity', this.currentCall.associatedEntity);
+					Analytics.getInstance().onFinishCall({
+						callId: this.currentCall.id,
+						callType: this.getCallType(),
+						status: Analytics.AnalyticsStatus.finishedForAll,
+						chatId: this.currentCall.associatedEntity.id,
+						callUsersCount: this.getCallUsers(true).length,
+						callLength: Util.getTimeText(this.currentCall.startDate),
+					});
+
+					this.leaveCurrentCall(false, true);
+				},
 			},
 			{
 				text: BX.message("CALL_M_BTN_HANGUP_OPTION_LEAVE"),
-				onclick: () => this.leaveCurrentCall(),
+				onclick: () => {
+					Analytics.getInstance().onDisconnectCall({
+						callId: this.currentCall.id,
+						callType: this.getCallType(),
+						subSection: Analytics.AnalyticsSubSection.contextMenu,
+						mediaParams: {
+							video: Hardware.isCameraOn,
+							audio: !Hardware.isMicrophoneMuted,
+						},
+					});
+
+					this.leaveCurrentCall();
+				},
 			},
 		];
 
@@ -2659,12 +2828,22 @@ export class CallController extends EventEmitter
 
 	_onCallViewShowChatButtonClick()
 	{
+		Analytics.getInstance().onShowChat({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+
 		this.messengerFacade.openMessenger(this.currentCall.associatedEntity.id);
 		this.showChat();
 	}
 
 	_onCallViewFloorRequestButtonClick()
 	{
+		Analytics.getInstance().onFloorRequest({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+
 		const floorState = this.callView.getUserFloorRequestState(CallEngine.getCurrentUserId());
 		const talkingState = this.callView.getUserTalking(CallEngine.getCurrentUserId());
 
@@ -2749,6 +2928,12 @@ export class CallController extends EventEmitter
 
 	_onCallViewToggleMuteButtonClick(e)
 	{
+		Analytics.getInstance().onToggleMicrophone({
+			muted: e.muted,
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+
 		const currentRoom = this.currentCall.currentRoom && this.currentCall.currentRoom();
 		if (currentRoom && currentRoom.speaker != this.userId && !e.muted)
 		{
@@ -2785,6 +2970,11 @@ export class CallController extends EventEmitter
 
 	_onCallViewRecordButtonClick(event)
 	{
+		Analytics.getInstance().onRecordBtnClick({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+
 		if (event.recordState === View.RecordState.Started)
 		{
 			if (this.featureRecord === FeatureState.Limited)
@@ -2886,6 +3076,11 @@ export class CallController extends EventEmitter
 
 	_onCallViewToggleScreenSharingButtonClick()
 	{
+		Analytics.getInstance().onScreenShareBtnClick({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+
 		if (this.featureScreenSharing === FeatureState.Limited)
 		{
 			this.messengerFacade.openHelpArticle('call_screen_sharing');
@@ -2927,6 +3122,12 @@ export class CallController extends EventEmitter
 
 	_onCallViewToggleVideoButtonClick(e)
 	{
+		Analytics.getInstance().onToggleCamera({
+			video: e.video,
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+		});
+
 		Hardware.isCameraOn = e.video;
 		if (!Hardware.initialized)
 		{
@@ -3341,6 +3542,25 @@ export class CallController extends EventEmitter
 		this.callView.setUserCameraState(e.userId, e.cameraState);
 	}
 
+	_onNeedResetMediaDevicesState(e)
+	{
+		console.log('_onNeedResetMediaDevicesState');
+		Hardware.isMicrophoneMuted = true;
+		Hardware.isCameraOn = false;
+
+		if (this.mediaDevicesResetStateHintBaloon)
+		{
+			return;
+		}
+
+		this.mediaDevicesResetStateHintBaloon = BX.UI.Notification.Center.notify({
+			content: Text.encode(BX.message('CALL_MEDIA_DEVICES_RESET_STATE_HINT')),
+			autoHide: false,
+			position: "top-right",
+			closeButton: true,
+		});
+	}
+
 	_onCameraPublishing(e)
 	{
 		if (!this.callView)
@@ -3402,6 +3622,12 @@ export class CallController extends EventEmitter
 			this.callView.setButtonActive("screen", this.currentCall.isScreenSharingStarted());
 			if (this.currentCall.isScreenSharingStarted())
 			{
+				this.screenShareStartTime = new Date();
+				Analytics.getInstance().onScreenShareStarted({
+					callId: this.currentCall.id,
+					callType: this.getCallType(),
+				});
+
 				if (!DesktopApi.isDesktop())
 				{
 					this.showWebScreenSharePopup();
@@ -3411,6 +3637,14 @@ export class CallController extends EventEmitter
 			}
 			else
 			{
+				Analytics.getInstance().onScreenShareStopped({
+					callId: this.currentCall.id,
+					callType: this.getCallType(),
+					status: Analytics.AnalyticsStatus.success,
+					screenShareLength: Util.getTimeText(this.screenShareStartTime),
+				});
+				this.screenShareStartTime = null;
+
 				if (this.floatingScreenShareWindow)
 				{
 					this.floatingScreenShareWindow.close();
@@ -3439,7 +3673,10 @@ export class CallController extends EventEmitter
 
 		if (this.currentCall && Hardware.isCameraOn && e.tag === 'main' && e.stream.getVideoTracks().length === 0)
 		{
-			this.showNotification(BX.message("IM_CALL_CAMERA_ERROR_FALLBACK_TO_MIC"));
+			if (this.currentCall.canChangeMediaDevices())
+			{
+				this.showNotification(BX.message("IM_CALL_CAMERA_ERROR_FALLBACK_TO_MIC"));
+			}
 			Hardware.isCameraOn = false;
 		}
 	}
@@ -3704,8 +3941,14 @@ export class CallController extends EventEmitter
 
 	_onCallUserRecordState(event)
 	{
+		console.warn('_onCallUserRecordState', event);
 		this.callRecordState = event.recordState.state;
 		this.callView.setRecordState(event.recordState);
+
+		if (event.recordState.state !== View.RecordState.Stopped)
+		{
+			this.callRecordInfo = event.recordState;
+		}
 
 		if (!this.canRecord() || event.userId != BX.message['USER_ID'])
 		{
@@ -3739,6 +3982,11 @@ export class CallController extends EventEmitter
 
 			CallEngine.getRestClient().callMethod("im.call.onStartRecord", {callId: this.currentCall.id});
 
+			Analytics.getInstance().onRecordStart({
+				callId: this.currentCall.id,
+				callType: this.getCallType(),
+			});
+
 			console.error('DIALOG ID', dialogId);
 			BXDesktopSystem.CallRecordStart({
 				windowId: windowId,
@@ -3756,6 +4004,14 @@ export class CallController extends EventEmitter
 		}
 		else if (event.recordState.state === View.RecordState.Stopped)
 		{
+			Analytics.getInstance().onRecordStop({
+				callId: this.currentCall.id,
+				callType: this.getCallType(),
+				subSection: Analytics.AnalyticsSubSection.window,
+				element: Analytics.AnalyticsElement.recordButton,
+				recordTime: Util.getRecordTimeText(this.callRecordInfo),
+			});
+			this.callRecordInfo = null;
 			BXDesktopSystem.CallRecordStop();
 		}
 
@@ -3867,7 +4123,7 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	_onReconnecting()
+	_onReconnecting(e)
 	{
 		if (!(this.currentCall instanceof BitrixCall || this.currentCall instanceof PlainCall))
 		{
@@ -3876,6 +4132,12 @@ export class CallController extends EventEmitter
 			// now it's enabled for Bitrix24 calls as a temp solution
 			return false;
 		}
+
+		Analytics.getInstance().onReconnect({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+			reconnectionEventCount: e.reconnectionEventCount
+		});
 
 		// noinspection UnreachableCodeJS
 		if (this.reconnectionBaloon)
@@ -4041,6 +4303,18 @@ export class CallController extends EventEmitter
 		this.docCreatedForCurrentCall = false;
 		let callDetails;
 
+		if (!this.getActiveCallUsers().length)
+		{
+			Analytics.getInstance().onFinishCall({
+				callId: this.currentCall.id,
+				callType: this.getCallType(),
+				status: Analytics.AnalyticsStatus.lastUserLeft,
+				chatId: this.currentCall.associatedEntity.id,
+				callUsersCount: this.getCallUsers(true).length,
+				callLength: Util.getTimeText(this.currentCall.startDate),
+			});
+		}
+
 		if (this.currentCall && this.currentCall.associatedEntity)
 		{
 			this.removeVideoStrategy();
@@ -4152,6 +4426,12 @@ export class CallController extends EventEmitter
 		{
 			return;
 		}
+
+		Analytics.getInstance().onInviteUser({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+			chatId: this.currentCall.associatedEntity.id,
+		});
 
 		if (Util.isCallServerAllowed() && this.currentCall instanceof PlainCall)
 		{
@@ -4775,6 +5055,15 @@ export class CallController extends EventEmitter
 		{
 			this.currentCall.toggleRemoteParticipantVideo(e.participantIds, e.showVideo, true)
 		}
+	}
+
+	_onCallUserClick(e)
+	{
+		Analytics.getInstance().onClickUser({
+			callId: this.currentCall.id,
+			callType: this.getCallType(),
+			layout: Object.keys(View.Layout).find(key => View.Layout[key] === e.layout),
+		});
 	}
 
 	toggleRoomMenu(bindElement)

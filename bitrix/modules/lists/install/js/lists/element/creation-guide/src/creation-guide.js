@@ -1,4 +1,4 @@
-import { Type, Uri } from 'main.core';
+import { Runtime, Type, Uri } from 'main.core';
 import 'sidepanel';
 
 type OpenSliderParams = {
@@ -6,6 +6,8 @@ type OpenSliderParams = {
 	iBlockId: number,
 	fillConstantsUrl?: string,
 	onClose?: Function,
+	analyticsSection?: string,
+	analyticsP1?: string,
 };
 
 export class CreationGuide
@@ -23,6 +25,7 @@ export class CreationGuide
 				iBlockTypeId: encodeURIComponent(params.iBlockTypeId),
 				iBlockId: encodeURIComponent(params.iBlockId),
 				fillConstantsUrl: encodeURIComponent(this.#getFillConstantsUrl(params)),
+				analyticsSection: params.analyticsSection || '',
 			},
 		);
 
@@ -32,6 +35,7 @@ export class CreationGuide
 				width: 900,
 				cacheable: false,
 				allowChangeHistory: false,
+				loader: '/bitrix/js/lists/element/creation-guide/images/skeleton.svg',
 				events: {
 					onCloseComplete: () => {
 						if (Type.isFunction(params.onClose))
@@ -42,6 +46,8 @@ export class CreationGuide
 				},
 			},
 		);
+
+		this.#sendAnalytics(params);
 	}
 
 	static #getFillConstantsUrl(params: OpenSliderParams): string
@@ -54,5 +60,21 @@ export class CreationGuide
 		return Uri.addParam('/bizproc/userprocesses/', {
 			iBlockId: params.iBlockId,
 		});
+	}
+
+	static #sendAnalytics(params: OpenSliderParams): void
+	{
+		Runtime.loadExtension('ui.analytics')
+			.then(({ sendData }) => {
+				sendData({
+					tool: 'automation',
+					category: 'bizproc_operations',
+					event: 'process_start_attempt',
+					c_section: params.analyticsSection || 'bizproc',
+					p1: params.analyticsP1,
+				});
+			})
+			.catch(() => {})
+		;
 	}
 }

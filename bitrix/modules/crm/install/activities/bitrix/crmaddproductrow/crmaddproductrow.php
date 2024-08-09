@@ -48,10 +48,13 @@ class CBPCrmAddProductRow extends CBPActivity
 
 		if (!$product)
 		{
-			$this->writeDebugInfo($this->getDebugInfo(
-				['ProductId' => $id],
-				['ProductId' => static::getPropertiesMap($this->getDocumentType())['ProductId']]
-			));
+			if ($this->workflow->isDebug())
+			{
+				$this->writeDebugInfo($this->getDebugInfo(
+					['ProductId' => $id],
+					['ProductId' => static::getPropertiesMap($this->getDocumentType())['ProductId']]
+				));
+			}
 
 			$this->WriteToTrackingService(GetMessage('CRM_APR_GET_PRODUCT_ERROR'), 0, CBPTrackingType::Error);
 
@@ -138,12 +141,15 @@ class CBPCrmAddProductRow extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$this->writeDebugInfo($this->getDebugInfo([
-			'ProductId' => $row['PRODUCT_ID'],
-			'RowPriceAccount' => $price,
-			'RowQuantity' => $row['QUANTITY'],
-			'RowDiscountRate' => $row['DISCOUNT_RATE']
-		]));
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo([
+				'ProductId' => $row['PRODUCT_ID'],
+				'RowPriceAccount' => $price,
+				'RowQuantity' => $row['QUANTITY'],
+				'RowDiscountRate' => $row['DISCOUNT_RATE']
+			]));
+		}
 
 		if (!$addResult)
 		{

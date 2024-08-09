@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/file-download-menu', (require, exports, module) => {
 	const { Filesystem, utils } = require('native/filesystem');
 
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Loc } = require('loc');
 	const { withCurrentDomain } = require('utils/url');
 	const { NotifyManager } = require('notify-manager');

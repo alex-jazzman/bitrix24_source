@@ -298,6 +298,10 @@
 	flex-direction: row;
 }
 
+.ui-tour-popup.--final {
+	flex-direction: column;
+}
+
 .ui-tour-popup-icon {
 	position: relative;
 	z-index: 1;

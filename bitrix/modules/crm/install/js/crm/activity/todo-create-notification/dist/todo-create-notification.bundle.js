@@ -39,6 +39,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _onChangeUploaderContainerSize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onChangeUploaderContainerSize");
 	var _onSkipMenuItemSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSkipMenuItemSelect");
 	var _saveTodo = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveTodo");
+	var _cancel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cancel");
 	var _revertButtonsState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("revertButtonsState");
 	var _closePopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closePopup");
 	var _closeSlider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("closeSlider");
@@ -100,6 +101,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    Object.defineProperty(this, _revertButtonsState, {
 	      value: _revertButtonsState2
+	    });
+	    Object.defineProperty(this, _cancel, {
+	      value: _cancel2
 	    });
 	    Object.defineProperty(this, _saveTodo, {
 	      value: _saveTodo2
@@ -332,6 +336,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr7 = _babelHelpers$classPr6.getButton(SAVE_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr7.setState(ui_buttons.ButtonState.DISABLED);
 	  (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr9 = _babelHelpers$classPr8.getButton(CANCEL_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr9.setState(ui_buttons.ButtonState.DISABLED);
 	  (_babelHelpers$classPr10 = babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup]) == null ? void 0 : (_babelHelpers$classPr11 = _babelHelpers$classPr10.getButton(SKIP_BUTTON_ID)) == null ? void 0 : _babelHelpers$classPr11.setState(ui_buttons.ButtonState.WAITING);
+	  babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].cancel({
+	    analytics: {
+	      subSection: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.notificationPopup,
+	      element: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsElement.skipPeriodButton,
+	      notificationSkipPeriod: period
+	    }
+	  });
 	  babelHelpers.classPrivateFieldLooseBase(this, _skipProvider)[_skipProvider].saveSkippedPeriod(period).then(() => {
 	    var _babelHelpers$classPr12;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isSkipped)[_isSkipped] = Boolean(period);
@@ -359,6 +370,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }).catch(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _revertButtonsState)[_revertButtonsState]();
+	  });
+	}
+	function _cancel2() {
+	  void babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].cancel({
+	    analytics: {
+	      subSection: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.notificationPopup,
+	      element: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsElement.cancelButton
+	    }
+	  }).then(() => {
+	    babelHelpers.classPrivateFieldLooseBase(this, _closePopup)[_closePopup]();
 	  });
 	}
 	function _revertButtonsState2() {
@@ -409,18 +430,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      className: 'crm-activity__todo-create-notification-popup'
 	    });
 	  }
-
-	  // if (this.#useTodoEditorV2)
-	  // {
-	  // 	this.#preparePopupForTodoEditorV2();
-	  // }
-
 	  babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();
 	  setTimeout(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].setFocused();
 	  }, 10);
 	  setTimeout(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].setClosingByEsc(true);
+	    main_core.Event.bind(document, 'keyup', event => {
+	      if (event.key === 'Escape') {
+	        void babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].cancel({
+	          analytics: {
+	            subSection: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.notificationPopup,
+	            element: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsElement.cancelButton
+	          }
+	        });
+	      }
+	    });
 	  }, 300);
 	}
 	function _getPopupDescription2() {
@@ -460,7 +485,7 @@ this.BX.Crm = this.BX.Crm || {};
 					</div>
 					${0}
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _saveTodo)[_saveTodo].bind(this), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_OK_BUTTON_V2'), babelHelpers.classPrivateFieldLooseBase(this, _closePopup)[_closePopup].bind(this), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_CANCEL_BUTTON_V2'), babelHelpers.classPrivateFieldLooseBase(this, _getPreparedForV2NotificationSkipButton)[_getPreparedForV2NotificationSkipButton]().render());
+			`), babelHelpers.classPrivateFieldLooseBase(this, _saveTodo)[_saveTodo].bind(this), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_OK_BUTTON_V2'), babelHelpers.classPrivateFieldLooseBase(this, _cancel)[_cancel].bind(this), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_CANCEL_BUTTON_V2'), babelHelpers.classPrivateFieldLooseBase(this, _getPreparedForV2NotificationSkipButton)[_getPreparedForV2NotificationSkipButton]().render());
 	    content = main_core.Tag.render(_t3 || (_t3 = _`
 				<div>
 					<div class="crm-activity__todo-create-notification_title --v2">
@@ -524,6 +549,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    params.calendarSettings = babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline].getCalendarSettings();
 	    params.colorSettings = babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline].getColorSettings();
 	    params.defaultDescription = '';
+	    params.analytics = {
+	      section: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.details,
+	      subSection: crm_activity_todoEditorV2.TodoEditorV2.AnalyticsSubSection.notificationPopup
+	    };
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditorV2.TodoEditorV2(params);
 	  } else {
 	    params.events.onChangeDescription = babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this);
@@ -554,7 +583,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    id: CANCEL_BUTTON_ID,
 	    round: true,
 	    events: {
-	      click: babelHelpers.classPrivateFieldLooseBase(this, _closePopup)[_closePopup].bind(this)
+	      click: babelHelpers.classPrivateFieldLooseBase(this, _cancel)[_cancel].bind(this)
 	    }
 	  });
 	}

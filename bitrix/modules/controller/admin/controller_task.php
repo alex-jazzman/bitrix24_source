@@ -107,7 +107,7 @@ if (
 		$message = new CAdminMessage([
 			'TYPE' => 'PROGRESS',
 			'MESSAGE' => GetMessage('CTRLR_TASK_PROGRESS'),
-			'DETAILS' => GetMessage('CTRLR_TASK_PROGRESS_BAR') . " " . $iCntExecuted . " " . GetMessage('CTRLR_TASK_PROGRESS_BAR_FROM') . " " . $iCntTotal . " #PROGRESS_BAR#",
+			'DETAILS' => GetMessage('CTRLR_TASK_PROGRESS_BAR') . ' ' . $iCntExecuted . ' ' . GetMessage('CTRLR_TASK_PROGRESS_BAR_FROM') . ' ' . $iCntTotal . ' #PROGRESS_BAR#',
 			'HTML' => true,
 			'PROGRESS_TOTAL' => $iCntTotal,
 			'PROGRESS_VALUE' => $iCntExecuted,
@@ -125,7 +125,7 @@ if (
 		$message = new CAdminMessage([
 			'TYPE' => 'PROGRESS',
 			'MESSAGE' => GetMessage('CTRLR_TASK_PROGRESS'),
-			'DETAILS' => GetMessage('CTRLR_TASK_PROGRESS_BAR') . " " . $iCntExecuted . " " . GetMessage('CTRLR_TASK_PROGRESS_BAR_FROM') . " " . $iCntTotal . " #PROGRESS_BAR#",
+			'DETAILS' => GetMessage('CTRLR_TASK_PROGRESS_BAR') . ' ' . $iCntExecuted . ' ' . GetMessage('CTRLR_TASK_PROGRESS_BAR_FROM') . ' ' . $iCntTotal . ' #PROGRESS_BAR#',
 			'HTML' => true,
 			'PROGRESS_TOTAL' => $iCntTotal,
 			'PROGRESS_VALUE' => $iCntExecuted,
@@ -474,7 +474,7 @@ $lAdmin->BeginPrologContent();
 		$message = new CAdminMessage([
 			'TYPE' => 'PROGRESS',
 			'MESSAGE' => GetMessage('CTRLR_TASK_PROGRESS'),
-			'DETAILS' => GetMessage('CTRLR_TASK_PROGRESS_BAR') . ' 0 ' . GetMessage('CTRLR_TASK_PROGRESS_BAR_FROM') . " " . $iTaskNCnt . " #PROGRESS_BAR#",
+			'DETAILS' => GetMessage('CTRLR_TASK_PROGRESS_BAR') . ' 0 ' . GetMessage('CTRLR_TASK_PROGRESS_BAR_FROM') . ' ' . $iTaskNCnt . ' #PROGRESS_BAR#',
 			'HTML' => true,
 			'PROGRESS_TOTAL' => $iTaskNCnt,
 			'PROGRESS_VALUE' => 0,
@@ -493,7 +493,7 @@ $lAdmin->BeginPrologContent();
 		$message = new CAdminMessage([
 			'TYPE' => 'PROGRESS',
 			'MESSAGE' => GetMessage('CTRLR_TASK_PROGRESS'),
-			'DETAILS' => GetMessage('CTRLR_TASK_PROGRESS_BAR') . " " . $iCntExecuted . " " . GetMessage('CTRLR_TASK_PROGRESS_BAR_FROM') . " " . $iCntTotal . " #PROGRESS_BAR#",
+			'DETAILS' => GetMessage('CTRLR_TASK_PROGRESS_BAR') . ' ' . $iCntExecuted . ' ' . GetMessage('CTRLR_TASK_PROGRESS_BAR_FROM') . ' ' . $iCntTotal . ' #PROGRESS_BAR#',
 			'HTML' => true,
 			'PROGRESS_TOTAL' => $iCntTotal,
 			'PROGRESS_VALUE' => $iCntExecuted,

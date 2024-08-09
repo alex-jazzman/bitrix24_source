@@ -89,6 +89,11 @@
 	margin-bottom: 18px;
 }
 
+.ui-section__header.--hidden,
+.ui-section__separator.--hidden {
+	display: none;
+}
+
 .ui-section__wrapper .ui-section__separator {
 	margin: 0;
 	height: 0;

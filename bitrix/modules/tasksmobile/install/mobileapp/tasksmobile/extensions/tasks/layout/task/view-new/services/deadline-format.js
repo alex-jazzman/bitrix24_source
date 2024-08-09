@@ -2,7 +2,7 @@
  * @module tasks/layout/task/view-new/services/deadline-format
  */
 jn.define('tasks/layout/task/view-new/services/deadline-format', (require, exports, module) => {
-	const { DynamicDateFormatter } = require('utils/date/dynamic-date-formatter');
+	const { DynamicDateFormatter } = require('utils/date');
 	const { longDate, shortTime, dayMonth } = require('utils/date/formats');
 	const { Loc } = require('loc');
 

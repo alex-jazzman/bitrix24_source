@@ -108,6 +108,11 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 			return Feature.isLocalStorageSupported;
 		}
 
+		get readOnly()
+		{
+			return Feature.isLocalStorageReadOnlyModeEnable;
+		}
+
 		/**
 		 * @abstract
 		 */
@@ -164,7 +169,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		add(items, replace = true, ignoreErrors = false)
 		{
-			if (!this.isSupported || !Feature.isLocalStorageEnabled)
+			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
 			{
 				return Promise.resolve();
 			}
@@ -302,7 +307,12 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		async deleteByIdList(idList)
 		{
-			if (!this.isSupported || !Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
+			if (
+				!this.isSupported
+				|| this.readOnly
+				|| !Feature.isLocalStorageEnabled
+				|| !Type.isArrayFilled(idList)
+			)
 			{
 				return Promise.resolve({});
 			}
@@ -323,7 +333,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		update(options)
 		{
-			if (!this.isSupported || !Feature.isLocalStorageEnabled)
+			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
 			{
 				return Promise.resolve({});
 			}
@@ -333,7 +343,7 @@ jn.define('im/messenger/db/table/table', (require, exports, module) => {
 
 		delete(filter)
 		{
-			if (!this.isSupported || !Feature.isLocalStorageEnabled)
+			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
 			{
 				return Promise.resolve({});
 			}

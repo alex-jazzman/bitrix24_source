@@ -3,10 +3,13 @@
  */
 jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
+	const { AnalyticsEvent } = require('analytics');
 	const { Loc } = require('loc');
 	const { clone, isEqual } = require('utils/object');
 	const { Haptics } = require('haptics');
 	const { ProfileView } = require('user/profile');
+	const { ContextMenu } = require('layout/ui/context-menu');
+
 	const CONTACT_TYPE_ID = 3;
 	const COMPANY_TYPE_ID = 4;
 
@@ -140,7 +143,14 @@ jn.define('layout/ui/fields/mail-contact', (require, exports, module) => {
 			else
 			{
 				const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
-				EntityDetailOpener.open({ entityTypeId: typeNameId, entityId: id });
+				const analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}));
+				EntityDetailOpener.open({
+					payload: {
+						entityTypeId: typeNameId,
+						entityId: id,
+					},
+					analytics,
+				});
 			}
 		}
 

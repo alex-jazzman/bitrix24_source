@@ -4,6 +4,7 @@
 jn.define('communication/menu', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { AnalyticsEvent } = require('analytics');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const ConnectionTypeSvg = require('assets/communication/menu');
 	const { ImType, PhoneType, EmailType, isOpenLine, getOpenLineTitle } = require('communication/connection');
 	const { CommunicationEvents } = require('communication/events');
@@ -438,16 +439,7 @@ jn.define('communication/menu', (require, exports, module) => {
 
 			if (Type.isStringFilled(titleContactType))
 			{
-				this.titlesBySectionCode[sectionCode] = BBCodeText({
-					style: {
-						fontSize: 14,
-						fontWeight: '400',
-						color: AppTheme.colors.base4,
-					},
-					numberOfLines: 1,
-					ellipsize: 'end',
-					value: `[COLOR=${AppTheme.colors.base2}]${titleContactType}[/COLOR] ${entityTitle}`.trim(),
-				});
+				this.titlesBySectionCode[sectionCode] = `[COLOR=${AppTheme.colors.base2}]${titleContactType}[/COLOR] ${entityTitle}`.trim();
 			}
 		}
 

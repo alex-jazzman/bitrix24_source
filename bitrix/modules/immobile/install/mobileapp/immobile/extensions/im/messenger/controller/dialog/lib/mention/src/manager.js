@@ -444,7 +444,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			if (!this.isDialogShow)
 			{
-				this.externalMentionQueue.push({ id, type });
+				this.externalMentionQueue.push({ id, type, fromDialogId });
 
 				return;
 			}
@@ -490,7 +490,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			if (this.externalMentionQueue.length > 0)
 			{
 				this.externalMentionQueue.forEach((externalMention) => {
-					this.onExternalMention(externalMention.id, externalMention.type);
+					this.onExternalMention(externalMention.id, externalMention.type, externalMention.fromDialogId);
 				});
 
 				this.externalMentionQueue = [];

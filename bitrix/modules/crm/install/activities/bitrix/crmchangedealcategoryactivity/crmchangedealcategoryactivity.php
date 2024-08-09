@@ -126,9 +126,12 @@ class CBPCrmChangeDealCategoryActivity extends CBPActivity
 
 	private function logDebug()
 	{
-		$this->writeDebugInfo($this->getDebugInfo([
-			'StageId' => Crm\Category\DealCategory::getStageName($this->StageId),
-		]));
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo([
+				'StageId' => Crm\Category\DealCategory::getStageName($this->StageId),
+			]));
+		}
 	}
 
 	private function checkCycling(array $documentId)

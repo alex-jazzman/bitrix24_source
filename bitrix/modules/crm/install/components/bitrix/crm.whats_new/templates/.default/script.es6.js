@@ -1,7 +1,9 @@
 import { ajax as Ajax, clone, Dom, Reflection, Runtime, Tag, Type } from 'main.core';
+import { BannerDispatcher } from 'crm.integration.ui.banner-dispatcher';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Popup, PopupManager } from 'main.popup';
 import { Button } from 'ui.buttons';
+import { Guide as UIGuide } from 'ui.tour';
 
 const namespaceCrmWhatsNew = Reflection.namespace('BX.Crm.WhatsNew');
 
@@ -62,6 +64,7 @@ class ActionViewMode
 	#options: Option;
 
 	#popup: ?Popup;
+	#bannerDispatcher: ?BannerDispatcher = null;
 
 	#closeOptionName: string;
 	#closeOptionCategory: string;
@@ -147,6 +150,19 @@ class ActionViewMode
 		return slide;
 	}
 
+	async #getBannerDispatcher(): Promise<BannerDispatcher>
+	{
+		if (this.#bannerDispatcher)
+		{
+			return this.#bannerDispatcher;
+		}
+
+		const { BannerDispatcher: Dispatcher } = await Runtime.loadExtension('crm.integration.ui.banner-dispatcher');
+		this.#bannerDispatcher = new Dispatcher();
+
+		return this.#bannerDispatcher;
+	}
+
 	#getPrepareSlideButtons(slideConfig: SlideConfig): Button[]
 	{
 		let buttons = [];
@@ -208,9 +224,8 @@ class ActionViewMode
 
 	#showStepByEvent(event: BaseEvent): void
 	{
-		// eslint-disable-next-line promise/catch-or-return
-		this.tourPromise.then((exports) => {
-			const { stepId, target, delay } = event.data;
+		void this.tourPromise.then((exports) => {
+			const { stepId, target } = event.data;
 			// eslint-disable-next-line no-shadow
 			const step = this.#steps.find((step) => step.id === stepId);
 			if (!step)
@@ -220,15 +235,22 @@ class ActionViewMode
 				return;
 			}
 
-			setTimeout(() => {
-				step.target = target;
-				const { Guide } = exports;
-				const guide = this.createGuideInstance(Guide, [step], true);
+			step.target = target;
+			const { Guide } = exports;
+			const guide = this.createGuideInstance(Guide, [step], true);
 
-				this.setStepPopupOptions(guide.getPopup());
-				guide.showNextStep();
-				this.save();
-			}, delay || 0);
+			this.setStepPopupOptions(guide.getPopup());
+
+			void this.#getBannerDispatcher().then((dispatcher: BannerDispatcher) => {
+				dispatcher.toQueue((onDone: Function) => {
+					guide.subscribe('UI.Tour.Guide:onFinish', () => {
+						this.save();
+						onDone();
+					});
+
+					guide.showNextStep();
+				});
+			});
 		});
 	}
 
@@ -272,8 +294,7 @@ class ActionViewMode
 			return;
 		}
 
-		// eslint-disable-next-line promise/catch-or-return
-		this.whatNewPromise.then((exports) => {
+		void this.whatNewPromise.then((exports) => {
 			const { WhatsNew } = exports;
 			this.#popup = new WhatsNew({
 				slides: this.#slides,
@@ -283,18 +304,24 @@ class ActionViewMode
 				events: {
 					onDestroy: () => {
 						this.save();
-						this.#executeGuide();
+						this.#executeGuide(false);
 					},
 				},
 			});
 
-			this.#popup.show();
+			// eslint-disable-next-line promise/no-nesting
+			void this.#getBannerDispatcher().then((dispatcher: BannerDispatcher) => {
+				dispatcher.toQueue((onDone: Function) => {
+					this.#popup.subscribe('onDestroy', onDone);
+					this.#popup.show();
+				});
+			});
 
 			ActionViewMode.whatsNewInstances.push(this.#popup);
 		}, this);
 	}
 
-	#executeGuide(): void
+	#executeGuide(isAddToQueue: boolean = true): void
 	{
 		let steps = clone(this.#steps);
 
@@ -305,8 +332,12 @@ class ActionViewMode
 			return;
 		}
 
-		// eslint-disable-next-line promise/catch-or-return
-		this.tourPromise.then((exports) => {
+		void this.tourPromise.then((exports) => {
+			if (ActionViewMode.tourInstances.some((existedGuide) => existedGuide.getPopup()?.isShown()))
+			{
+				return; // do not allow many guides at the same time
+			}
+
 			if (PopupManager && PopupManager.isAnyPopupShown())
 			{
 				return;
@@ -314,25 +345,40 @@ class ActionViewMode
 
 			const { Guide } = exports;
 			const guide = this.createGuideInstance(Guide, steps, (this.#steps.length <= 1));
-
-			if (ActionViewMode.tourInstances.find((existedGuide) => existedGuide.getPopup()?.isShown()))
-			{
-				return; // do not allow many guides at the same time
-			}
 			ActionViewMode.tourInstances.push(guide);
 
 			this.setStepPopupOptions(guide.getPopup());
 
-			if (guide.steps.length > 1 || this.#options.showOverlayFromFirstStep)
+			if (isAddToQueue)
 			{
-				guide.start();
+				void this.#getBannerDispatcher().then((dispatcher: BannerDispatcher) => {
+					dispatcher.toQueue((onDone: Function) => {
+						guide.subscribe('UI.Tour.Guide:onFinish', () => {
+							onDone();
+							this.save();
+						});
+
+						this.#showGuide(guide);
+					});
+				});
+
+				return;
 			}
-			else
-			{
-				guide.showNextStep();
-			}
-			this.save();
+
+			this.#showGuide(guide);
 		});
+	}
+
+	#showGuide(guide: UIGuide): void
+	{
+		if (guide.steps.length > 1 || this.#options.showOverlayFromFirstStep)
+		{
+			guide.start();
+		}
+		else
+		{
+			guide.showNextStep();
+		}
 	}
 
 	createGuideInstance(Guide, steps: Array<Step>, onEvents: boolean): Object

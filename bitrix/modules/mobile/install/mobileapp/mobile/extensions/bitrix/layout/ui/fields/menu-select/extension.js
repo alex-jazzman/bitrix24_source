@@ -5,6 +5,7 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { BaseSelectField } = require('layout/ui/fields/base-select');
 	const { chevronDown } = require('assets/common');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class MenuSelectField

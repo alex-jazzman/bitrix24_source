@@ -930,7 +930,7 @@ this.BX.UI = this.BX.UI || {};
 	  getFinalContent() {
 	    if (!this.layout.finalContent) {
 	      this.layout.finalContent = main_core.Tag.render(_t15 || (_t15 = _`
-				<div class="ui-tour-popup">
+				<div class="ui-tour-popup --final">
 					<div class="ui-tour-popup-title">
 						${0}
 					</div>

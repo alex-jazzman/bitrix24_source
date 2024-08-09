@@ -6,6 +6,7 @@
 jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module) => {
 	const { Type } = require('type');
 	const { DialogType } = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
@@ -69,7 +70,7 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 		}
 
 		/**
-		 * @param {MutationPayload<MessagesSetChatCollectionData, MessagesSetChatCollectionActions>} mutation.payload
+		 * @param {MutationPayload<MessagesStoreData, MessagesStoreActions>} mutation.payload
 		 */
 		async storeRouter(mutation)
 		{
@@ -89,7 +90,6 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
-			console.warn('storeRouter.#saveMessageData', data);
 			await this.#saveMessageData(data);
 		}
 
@@ -177,8 +177,8 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			}
 
 			const chatId = message.chatId;
-			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
-			if (DialogType.comment === dialog?.type)
+			const dialogHelper = DialogHelper.createByChatId(chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
 			{
 				return;
 			}
@@ -249,17 +249,18 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
-			const chatId = data.messageList[0].chatId;
-
-			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
-			if (DialogType.comment === dialog?.type)
-			{
-				return;
-			}
-
 			const messageList = [];
 			data.messageList.forEach((message) => {
 				const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+
+				const chatId = modelMessage.chatId;
+
+				const dialogHelper = DialogHelper.createByChatId(chatId);
+				if (!dialogHelper?.isLocalStorageSupported)
+				{
+					return;
+				}
+
 				if (modelMessage && modelMessage.id && Type.isNumber(modelMessage.id))
 				{
 					messageList.push(modelMessage);

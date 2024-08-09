@@ -100,6 +100,9 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 {
 	$showActivity = isset($arParams['SHOW_ACTIVITY']) && $arParams['SHOW_ACTIVITY'] === 'Y' ? 'true' : 'false';
 }
+
+$section = $arParams['EXTRA']['ANALYTICS']['c_section'] ?? null;
+$subSection = $arParams['EXTRA']['ANALYTICS']['c_sub_section'] ?? null;
 ?>
 
 <div id="crm_kanban"></div>
@@ -277,6 +280,11 @@ if (!$isActivityLimitIsExceeded && CounterSettings::getInstance()->isEnabled())
 							},
 							showErrorCounterByActivityResponsible: <?= $arResult['SHOW_ERROR_COUNTER_BY_ACTIVITY_RESPONSIBLE'] ? 'true' : 'false' ?>,
 							isActivityLimitIsExceeded: <?= $isActivityLimitIsExceeded ? 'true' : 'false' ?>,
+							analytics: {
+								c_section: '<?= \CUtil::JSEscape($section) ?>',
+								c_sub_section: '<?= \CUtil::JSEscape($subSection) ?>',
+							},
+							performance: <?= \CUtil::phpToJsObject($arResult['PERFORMANCE']) ?>,
 						}
 				}
 			);

@@ -156,9 +156,12 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 
 		foreach($arFields as $id => $arField)
 		{
-			$arField['SORT'] = (int)$arField['SORT'];
+			$arField['SORT'] = (int)($arField['SORT'] ?? 0);
 			if ($arField['SORT'] <= $iPrevSort)
+			{
 				$arField['SORT'] = $iPrevSort + 10;
+			}
+
 			$iPrevSort = $arField['SORT'];
 
 			if (mb_strpos($id, 'n') === 0)
@@ -169,9 +172,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 				}
 
 				$arAdd['NAME'] = trim($arField['VALUE']);
-				$arAdd['SORT'] = $arField['SORT'];
-				$arAdd['COLOR'] = $arField['COLOR'];
-				$arAdd['SEMANTICS'] = $arField['SEMANTICS'];
+				$arAdd['SORT'] = $arField['SORT'] ?? 0;
+				$arAdd['COLOR'] = $arField['COLOR'] ?? '';
+				$arAdd['SEMANTICS'] = $arField['SEMANTICS'] ?? '';
 				$arAdd['STATUS_ID'] = $arField['STATUS_ID'] ?? null;
 				$arAdd['CATEGORY_ID'] = $arField['CATEGORY_ID'] ?? null;
 
@@ -190,19 +193,21 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 			{
 				$id = (int) $id;
 				$arCurrentData = $CCrmStatus->GetStatusById($id);
+				$color = $arField['COLOR'] ?? '';
 				if(!$arCurrentData)
 				{
 					continue;
 				}
 				if(
-					trim($arField['VALUE']) != $arCurrentData['NAME'] ||
-					intval($arField['SORT']) != $arCurrentData['SORT'] ||
-					$arField['COLOR'] !== $arCurrentData['COLOR']
+					trim($arField['VALUE']) != $arCurrentData['NAME']
+					|| intval($arField['SORT']) != $arCurrentData['SORT']
+					|| $color !== $arCurrentData['COLOR']
 				)
 				{
 					$arUpdate['NAME'] = trim($arField['VALUE']);
 					$arUpdate['SORT'] = $arField['SORT'];
-					$arUpdate['COLOR'] = $arField['COLOR'];
+					$arUpdate['COLOR'] = $color;
+
 					$CCrmStatus->Update($id, $arUpdate);
 				}
 			}

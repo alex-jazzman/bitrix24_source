@@ -1,4 +1,4 @@
-import { Text } from 'main.core';
+import { Text, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { hint } from 'ui.vue3.directives.hint';
@@ -104,12 +104,9 @@ export const TodoEditorResponsibleUserSelector = {
 
 		showUserDialog(): void
 		{
-			if (this.userSelectorDialog)
-			{
-				setTimeout(() => {
-					this.userSelectorDialog.show();
-				}, 5);
-			}
+			setTimeout(() => {
+				this.getUserSelectorDialog().show();
+			}, 5);
 		},
 
 		resetToDefault(): void
@@ -121,40 +118,48 @@ export const TodoEditorResponsibleUserSelector = {
 					id: this.userId,
 					entityId: 'user',
 				});
+
 				if (defaultUserItem)
 				{
 					defaultUserItem.select(true);
 				}
 			}
 		},
-	},
 
-	mounted(): void
-	{
-		this.userSelectorDialog = new Dialog({
-			id: 'responsible-user-selector-dialog',
-			targetNode: this.$refs.userSelector,
-			context: 'CRM_ACTIVITY_TODO_RESPONSIBLE_USER',
-			multiple: false,
-			dropdownMode: true,
-			showAvatars: true,
-			enableSearch: true,
-			width: 450,
-			zIndex: 2500,
-			entities: [{
-				id: 'user',
-			}],
-			preselectedItems: [
-				['user', this.userId],
-			],
-			undeselectedItems: [
-				['user', this.userId],
-			],
-			events: {
-				'Item:onSelect': this.onSelectUser,
-				'Item:onDeselect': this.onDeselectUser,
-			},
-		});
+		getUserSelectorDialog(): Dialog
+		{
+			if (Type.isNil(this.userSelectorDialog))
+			{
+				this.userSelectorDialog = new Dialog({
+					id: 'responsible-user-selector-dialog',
+					targetNode: this.$refs.userSelector,
+					context: 'CRM_ACTIVITY_TODO_RESPONSIBLE_USER',
+					multiple: false,
+					dropdownMode: true,
+					showAvatars: true,
+					enableSearch: true,
+					width: 450,
+					zIndex: 2500,
+					entities: [
+						{
+							id: 'user',
+						},
+					],
+					preselectedItems: [
+						['user', this.userId],
+					],
+					undeselectedItems: [
+						['user', this.userId],
+					],
+					events: {
+						'Item:onSelect': this.onSelectUser,
+						'Item:onDeselect': this.onDeselectUser,
+					},
+				});
+			}
+
+			return this.userSelectorDialog;
+		},
 	},
 
 	template: `

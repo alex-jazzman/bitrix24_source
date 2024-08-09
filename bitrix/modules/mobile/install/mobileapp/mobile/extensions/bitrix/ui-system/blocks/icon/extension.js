@@ -17,14 +17,15 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 	 * @class IconView
 	 * @params {object} props
 	 * @params {string} [props.testId]
+	 * @params {Function} [props.forwardRef]
 	 * @params {string | Icon} [props.icon]
 	 * @params {Color} [props.color]
 	 * @params {number} [props.opacity]
-	 * @params {object | number} [props.size]
+	 * @params {Object | number} [props.size]
 	 * @params {number} [props.size.height]
 	 * @params {number} [props.size.width]
 	 * @params {boolean} [props.disabled]
-	 * @params {function} [props.forwardRef]
+	 * @params {Object} [props.style]
 	 */
 	class IconView extends LayoutComponent
 	{
@@ -179,10 +180,13 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 
 	IconView.propTypes = {
 		testId: PropTypes.string,
-		icon: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
 		forwardRef: PropTypes.func,
-		color: PropTypes.object,
-		disabled: PropTypes.bool,
+		icon: PropTypes.oneOfType([
+			PropTypes.instanceOf(Icon),
+			PropTypes.string,
+		]),
+		color: PropTypes.instanceOf(Color),
+		opacity: PropTypes.number,
 		size: PropTypes.oneOfType([
 			PropTypes.number,
 			PropTypes.exact({
@@ -190,7 +194,8 @@ jn.define('ui-system/blocks/icon', (require, exports, module) => {
 				width: PropTypes.number,
 			}),
 		]),
-		iconParams: PropTypes.object,
+		disabled: PropTypes.bool,
+		style: PropTypes.object,
 	};
 
 	module.exports = {

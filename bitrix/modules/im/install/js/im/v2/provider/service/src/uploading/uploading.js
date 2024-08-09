@@ -39,7 +39,8 @@ export class UploadingService
 			text: string,
 			dialogId: string,
 			tempMessageId: string,
-			filesPreviewStatus: { [string]: boolean }
+			previewCreatedStatus: { [string]: boolean },
+			previewSentStatus: { [string]: boolean }
 		}
 	} = {};
 
@@ -243,7 +244,7 @@ export class UploadingService
 		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileAdd, (event: BaseEvent) => {
 			const { file, uploaderId } = event.getData();
 			this.#updateFilePreviewInStore(file);
-			this.#setReadyFilePreview(uploaderId, file.getId());
+			this.#setPreviewCreatedStatus(uploaderId, file.getId());
 			this.#tryToSendMessage(uploaderId);
 		});
 
@@ -257,10 +258,14 @@ export class UploadingService
 			this.#updateFileProgress(file.getId(), file.getProgress(), FileStatus.upload);
 		});
 
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadComplete, (event: BaseEvent) => {
-			const { file }: {file: UploaderFile} = event.getData();
+		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadComplete, async (event: BaseEvent) => {
+			const { file, uploaderId }: {file: UploaderFile, uploaderId: string} = event.getData();
 			this.#updateFileProgress(file.getId(), file.getProgress(), FileStatus.wait);
-			void this.#uploadPreview(file);
+
+			await this.#uploadPreview(file);
+			this.#setPreviewSentStatus(uploaderId, file.getId());
+
+			void this.#tryCommit(uploaderId);
 		});
 
 		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadError, (event: BaseEvent) => {
@@ -274,11 +279,6 @@ export class UploadingService
 		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onFileUploadCancel, (event: BaseEvent) => {
 			const { tempMessageId, tempFileId } = event.getData();
 			this.#cancelUpload(tempMessageId, tempFileId);
-		});
-
-		this.#uploaderWrapper.subscribe(UploaderWrapper.events.onUploadComplete, (event: BaseEvent) => {
-			const { uploaderId } = event.getData();
-			this.commitMessage(uploaderId);
 		});
 	}
 
@@ -350,7 +350,7 @@ export class UploadingService
 		});
 	}
 
-	commitMessage(uploaderId: string)
+	commitMessage(uploaderId: string): Promise
 	{
 		const dialogId = this.#uploaderFilesRegistry[uploaderId].dialogId;
 		const chatId = this.#getChatId(dialogId);
@@ -363,7 +363,7 @@ export class UploadingService
 			return file.getCustomData('sendAsFile');
 		});
 
-		void this.#restClient.callMethod(RestMethod.imDiskFileCommit, {
+		return this.#restClient.callMethod(RestMethod.imDiskFileCommit, {
 			chat_id: chatId,
 			message: this.#uploaderFilesRegistry[uploaderId].text,
 			template_id: this.#uploaderFilesRegistry[uploaderId].tempMessageId,
@@ -373,7 +373,18 @@ export class UploadingService
 		});
 	}
 
-	#uploadPreview(file: UploaderFile): Promise
+	async #tryCommit(uploaderId: string)
+	{
+		if (!this.#readyToCommit(uploaderId))
+		{
+			return;
+		}
+
+		await this.commitMessage(uploaderId);
+		this.#uploaderWrapper.destroyUploader(uploaderId);
+	}
+
+	async #uploadPreview(file: UploaderFile): Promise
 	{
 		if (
 			this.#getFileType(file.getBinary()) === FileType.file
@@ -558,7 +569,8 @@ export class UploadingService
 		if (!this.#uploaderFilesRegistry[uploaderId])
 		{
 			this.#uploaderFilesRegistry[uploaderId] = {
-				filesPreviewStatus: {},
+				previewCreatedStatus: {},
+				previewSentStatus: {},
 				dialogId,
 				text: '',
 				autoUpload,
@@ -567,18 +579,24 @@ export class UploadingService
 
 		files.forEach((file) => {
 			const fileId = file.getId();
-			if (!this.#uploaderFilesRegistry[uploaderId].filesPreviewStatus)
+			if (!this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus)
 			{
-				this.#uploaderFilesRegistry[uploaderId].filesPreviewStatus = {};
+				this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus = {};
 			}
 
-			this.#uploaderFilesRegistry[uploaderId].filesPreviewStatus[fileId] = false;
+			this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus[fileId] = false;
+			this.#uploaderFilesRegistry[uploaderId].previewSentStatus[fileId] = false;
 		});
 	}
 
-	#setReadyFilePreview(uploaderId: string, fileId: string)
+	#setPreviewCreatedStatus(uploaderId: string, fileId: string)
 	{
-		this.#uploaderFilesRegistry[uploaderId].filesPreviewStatus[fileId] = true;
+		this.#uploaderFilesRegistry[uploaderId].previewCreatedStatus[fileId] = true;
+	}
+
+	#setPreviewSentStatus(uploaderId: string, fileId: string)
+	{
+		this.#uploaderFilesRegistry[uploaderId].previewSentStatus[fileId] = true;
 	}
 
 	#setMessagesText(uploaderId: string, text: string)
@@ -690,9 +708,21 @@ export class UploadingService
 			return false;
 		}
 
-		const { filesPreviewStatus } = this.#uploaderFilesRegistry[uploaderId];
+		const { previewCreatedStatus } = this.#uploaderFilesRegistry[uploaderId];
 
-		return Object.values(filesPreviewStatus).every((flag) => flag === true);
+		return Object.values(previewCreatedStatus).every((flag) => flag === true);
+	}
+
+	#readyToCommit(uploaderId: string): boolean
+	{
+		if (!this.#uploaderFilesRegistry[uploaderId])
+		{
+			return false;
+		}
+
+		const { previewSentStatus } = this.#uploaderFilesRegistry[uploaderId];
+
+		return Object.values(previewSentStatus).every((flag) => flag === true);
 	}
 
 	#tryToSendMessage(uploaderId: string)

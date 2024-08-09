@@ -8,7 +8,7 @@ return [
 		'loc',
 		'asset-manager',
 		'assets/common',
-		'assets/icons/src/outline',
+		'assets/icons',
 		'layout/ui/menu',
 		'feature',
 

@@ -9,6 +9,7 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/db/repository',
 		'im:messenger/db/model-writer',
+		'im:messenger/model',
 		'im:messenger/db/update',
 		'im:messenger/table',
 		'im:messenger/lib/logger',

@@ -10,7 +10,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 	const { UIScrollView } = require('layout/ui/scroll-view');
 	const { Card } = require('ui-system/layout/card');
 	const { IconView, iconTypes } = require('ui-system/blocks/icon');
-	const { Link4, LinkMode } = require('ui-system/blocks/link');
+	const { Link4, LinkMode, Ellipsize } = require('ui-system/blocks/link');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { AhaMoment } = require('ui-system/popups/aha-moment');
 	const { ChipStatus, ChipStatusMode, ChipStatusDesign } = require('ui-system/blocks/chips/chip-status');
@@ -127,7 +127,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 					color: Color.accentMainPrimary,
 					numberOfLines: 1,
 					mode: LinkMode.DASH,
-					ellipsize: 'end',
+					ellipsize: Ellipsize.END,
 					style: {
 						marginTop: Indent.XS2.toNumber(),
 					},

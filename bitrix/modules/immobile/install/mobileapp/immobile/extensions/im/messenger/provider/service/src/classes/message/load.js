@@ -13,7 +13,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 	const { runAction } = require('im/messenger/lib/rest');
 	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { MessengerParams } = require('im/messenger/lib/params');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const logger = LoggerManager.getInstance().getLogger('message-service--load');
 
 	/**
@@ -639,6 +639,13 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 			return dialog.type === DialogType.comment;
 		}
 
+		#isCurrentUserGuest()
+		{
+			const helper = DialogHelper.createByChatId(this.chatId);
+
+			return Boolean(helper?.isCurrentUserGuest);
+		}
+
 		#checkShouldLoadFromDb()
 		{
 			if (this.#isComment())
@@ -646,7 +653,7 @@ jn.define('im/messenger/provider/service/classes/message/load', (require, export
 				return false;
 			}
 
-			if (this.#isChannel() && MessengerParams.getComponentCode() !== ComponentCode.imMessenger)
+			if (this.#isChannel() && this.#isCurrentUserGuest())
 			{
 				return false;
 			}

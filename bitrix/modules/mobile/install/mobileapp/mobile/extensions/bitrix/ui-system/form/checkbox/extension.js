@@ -43,11 +43,11 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 		render()
 		{
 			const { checked } = this.state;
-			const { testId, disabled, useState = true } = this.props;
+			const { disabled, useState = true } = this.props;
 
 			return View(
 				{
-					testId,
+					testId: this.#getTestId(),
 					clickable: !disabled && useState,
 					style: this.getStyle(),
 					onClick: this.handleOnClick,
@@ -159,6 +159,15 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 			}
 
 			return style;
+		}
+
+		#getTestId()
+		{
+			const { testId } = this.props;
+			const { checked } = this.state;
+			const prefix = checked ? '' : 'un';
+
+			return `${testId}_${prefix}selected`;
 		}
 	}
 

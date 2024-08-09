@@ -129,7 +129,7 @@ if (\Bitrix\Controller\AuthLogTable::isEnabled())
 		true,
 		'CONTROLLER_GOTO',
 		$USER->GetParam('FIRST_NAME') . ' ' . $USER->GetParam('LAST_NAME') . ' (' . $USER->GetParam('LOGIN') . ')'
-	);
+	)->isSuccess();
 }
 
 $result = CControllerMember::RunCommandRedirect($ar['ID'], $query, [], false);

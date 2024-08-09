@@ -6,6 +6,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
 	const AppTheme = require('apptheme');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { clone, merge, get, isEqual } = require('utils/object');
 	const { useCallback } = require('utils/function');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');

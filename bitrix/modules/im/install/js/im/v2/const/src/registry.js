@@ -2,7 +2,7 @@ export { RestMethod } from './rest';
 export { EventType } from './events';
 export { ChatType, DialogBlockType, DialogScrollThreshold, DialogAlignment } from './chat';
 export { FileStatus, FileType, FileIconType } from './file';
-export { MessageType, MessageComponent, MessageMentionType, MessageStatus, OwnMessageStatus, FakeMessagePrefix } from './message';
+export { MessageType, MessageComponent, MessageMentionType, MessageStatus, OwnMessageStatus, FakeMessagePrefix, FakeDraftMessagePrefix } from './message';
 export { RecentCallStatus } from './recent';
 export { NotificationTypesCodes, NotificationSettingsMode } from './notification';
 export { Layout } from './layout';

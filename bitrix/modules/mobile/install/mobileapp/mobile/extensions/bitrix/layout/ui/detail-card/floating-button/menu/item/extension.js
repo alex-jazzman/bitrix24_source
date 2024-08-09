@@ -214,7 +214,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 		 */
 		getIcon()
 		{
-			return BX.prop.getString(this.options, 'icon', null);
+			return this.options?.icon || null;
 		}
 
 		/**
@@ -237,7 +237,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 				return 'recent';
 			}
 
-			return BX.prop.getString(this.options, 'sectionCode', ContextMenuSection.getDefaultSectionName());
+			return BX.prop.getString(this.options, 'sectionCode');
 		}
 
 		/**

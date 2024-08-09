@@ -329,7 +329,7 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 							},
 							widgetParams: {
 								title: Loc.getMessage(
-									'TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_DELEGATE_MENU_TITLE_V2',
+									'TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_DELEGATE_MENU_TITLE_MSGVER_1',
 								),
 								backdrop: {
 									mediumPositionPercent: 70,

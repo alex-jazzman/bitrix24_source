@@ -181,13 +181,6 @@
 	white-space: pre-line;
 }
 
-.bx-im-textarea__content {
-	padding-left: 16px;
-}
-
-.bx-im-copilot-send-panel__container .bx-im-send-panel__button_container {
-	background-color: #8e52ec;
-}
 .bx-im-copilot-add-to-chat-hint__scope {
 	--im-copilot-add-to-chat-hint__color_hide-button: var(--im-color-accent-purple);
 
@@ -208,27 +201,4 @@
 	border: none;
 	cursor: pointer;
 	padding: 0;
-}
-.bx-im-copilot-audio-input__container {
-	width: 24px;
-	height: 24px;
-	display: flex;
-	align-self: flex-end;
-	margin-right: 4px;
-	margin-left: 14px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.058 11.636c.509-.011.93.395.941.906.05 2.352-1.672 5.113-5.009 5.569v1.218h.399c.459 0 .83.375.83.836a.833.833 0 01-.83.835H10.61a.833.833 0 01-.83-.835c0-.461.371-.835.83-.835h.397v-1.22c-3.33-.453-5.034-3.148-5.008-5.558a.924.924 0 01.932-.917c.475.005.862.371.907.836l.004.101c-.005.48.262 1.404.755 2.122.707 1.031 1.795 1.628 3.411 1.628 1.608 0 2.692-.608 3.4-1.66.453-.67.717-1.523.745-1.982l.003-.098a.924.924 0 01.901-.947zM12 4c1.505 0 2.725 1.16 2.725 2.59v5.463c0 1.43-1.22 2.59-2.725 2.59-1.505 0-2.726-1.16-2.726-2.59V6.59C9.274 5.16 10.494 4 12 4z' fill='%23925AEB' opacity='.8'/%3E%3C/svg%3E");
-	background-size: cover;
-	cursor: pointer;
-}
-
-.bx-im-copilot-audio-input__container:hover {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.058 11.636c.509-.011.93.395.941.906.05 2.352-1.672 5.113-5.009 5.569v1.218h.399c.459 0 .83.375.83.836a.833.833 0 01-.83.835H10.61a.833.833 0 01-.83-.835c0-.461.371-.835.83-.835h.397v-1.22c-3.33-.453-5.034-3.148-5.008-5.558a.924.924 0 01.932-.917c.475.005.862.371.907.836l.004.101c-.005.48.262 1.404.755 2.122.707 1.031 1.795 1.628 3.411 1.628 1.608 0 2.692-.608 3.4-1.66.453-.67.717-1.523.745-1.982l.003-.098a.924.924 0 01.901-.947zM12 4c1.505 0 2.725 1.16 2.725 2.59v5.463c0 1.43-1.22 2.59-2.725 2.59-1.505 0-2.726-1.16-2.726-2.59V6.59C9.274 5.16 10.494 4 12 4z' fill='%23925AEB'/%3E%3C/svg%3E");
-}
-
-.bx-im-copilot-audio-input__container.--active {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='24' height='24' rx='12' fill='%23925AEB' fill-opacity='.2'/%3E%3Crect x='7' y='7' width='10' height='10' rx='1' fill='%23925AEB'/%3E%3C/svg%3E");
-}
-
-.bx-im-copilot-audio-input__container.--active:hover {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='24' height='24' rx='12' fill='%23925AEB' fill-opacity='.3'/%3E%3Crect x='7' y='7' width='10' height='10' rx='1' fill='%23925AEB'/%3E%3C/svg%3E");
 }

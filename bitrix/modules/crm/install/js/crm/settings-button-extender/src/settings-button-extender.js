@@ -26,7 +26,14 @@ const NOT_CHECKED_CLASS = 'menu-popup-item-none';
 const COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY = 750;
 const COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH = 300;
 
-type AISettings = {autostartOperationTypes: number[], autostartTranscriptionOnlyOnFirstCallWithRecording: boolean};
+const AUTOSTART_CALL_DIRECTION_INCOMING = 1;
+const AUTOSTART_CALL_DIRECTION_OUTGOING = 2;
+
+type AISettings = {
+	autostartOperationTypes: number[],
+	autostartTranscriptionOnlyOnFirstCallWithRecording: boolean,
+	autostartCallDirections: number[],
+};
 
 export type SettingsButtonExtenderParams = {
 	entityTypeId: number,
@@ -255,6 +262,7 @@ export class SettingsButtonExtender
 
 			const settings = this.#kanbanController.getCurrentSettings();
 
+			// eslint-disable-next-line init-declarations
 			let newSortType: string;
 			if (settings.getCurrentType() === SortType.BY_LAST_ACTIVITY_TIME)
 			{
@@ -302,33 +310,64 @@ export class SettingsButtonExtender
 		const menuItems = [];
 		if (Type.isPlainObject(this.#aiAutostartSettings))
 		{
-			const isTranscriptionAutostarted = this.#aiAutostartSettings
+			const autoCallItems = [];
+			const isTranscriptionAutoStarted = this.#aiAutostartSettings
 				?.autostartOperationTypes
 				?.includes(this.#getTranscribeAIOperationType())
 			;
-			const onlyFirstIncoming = this.#aiAutostartSettings?.autostartTranscriptionOnlyOnFirstCallWithRecording;
+			const isOnlyFirst = this.#aiAutostartSettings?.autostartTranscriptionOnlyOnFirstCallWithRecording;
+			const isOnlyIncoming = this.#aiAutostartSettings?.autostartCallDirections?.length === 1
+				&& this.#aiAutostartSettings?.autostartCallDirections?.includes(AUTOSTART_CALL_DIRECTION_INCOMING)
+			;
+			const isOnlyOutgoing = this.#aiAutostartSettings?.autostartCallDirections?.length === 1
+				&& this.#aiAutostartSettings?.autostartCallDirections?.includes(AUTOSTART_CALL_DIRECTION_OUTGOING)
+			;
+			const isAIHasPackages = this.#extensionSettings.get('isAIHasPackages');
 
-			menuItems.push({
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING'),
-				className: isTranscriptionAutostarted && onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
+			autoCallItems.push({
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING_MSGVER_1'),
+				className: isTranscriptionAutoStarted && isAIHasPackages && isOnlyFirst && isOnlyIncoming
+					? CHECKED_CLASS
+					: NOT_CHECKED_CLASS,
 				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'firstCall'),
 			}, {
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL'),
-				className: isTranscriptionAutostarted && !onlyFirstIncoming ? CHECKED_CLASS : NOT_CHECKED_CLASS,
-				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'allCalls'),
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_INCOMING'),
+				className: isTranscriptionAutoStarted && isAIHasPackages && isOnlyIncoming && !isOnlyFirst
+					? CHECKED_CLASS
+					: NOT_CHECKED_CLASS,
+				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'allCalls'), // all incoming
 			}, {
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING'),
-				className: isTranscriptionAutostarted ? NOT_CHECKED_CLASS : CHECKED_CLASS,
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_OUTGOING'),
+				className: isTranscriptionAutoStarted && isAIHasPackages && isOnlyOutgoing && !isOnlyFirst
+					? CHECKED_CLASS
+					: NOT_CHECKED_CLASS,
+				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'outgoingCalls'),
+			}, {
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL_MSGVER_1'),
+				className: isTranscriptionAutoStarted && isAIHasPackages && !isOnlyIncoming && !isOnlyOutgoing && !isOnlyFirst
+					? CHECKED_CLASS
+					: NOT_CHECKED_CLASS,
+				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'allIncomingOutgoingCalls'),
+			}, {
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING_MSGVER_1'),
+				className: isTranscriptionAutoStarted && isAIHasPackages
+					? NOT_CHECKED_CLASS
+					: CHECKED_CLASS,
 				onclick: showInfoHelper ?? this.#handleCoPilotMenuItemClick.bind(this, 'manual'),
+			});
+
+			menuItems.push({
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS'),
+				disabled: this.#isSetAiSettingsRequestRunning,
+				items: autoCallItems,
 			});
 		}
 
 		if (Type.isStringFilled(this.#aiCopilotLanguageId))
 		{
 			menuItems.push({
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE'),
-				className: NOT_CHECKED_CLASS,
-				onclick: showInfoHelper ?? this.#handleCoPilotLanguageSelect.bind(this),
+				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE_MSGVER_1'),
+				onclick: this.#getInfoHelper(true) ?? this.#handleCoPilotLanguageSelect.bind(this),
 			});
 		}
 
@@ -338,14 +377,14 @@ export class SettingsButtonExtender
 		}
 
 		return {
-			text: Loc.getMessage('CRM_COMMON_COPILOT'),
+			text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CALLS'),
 			disabled: this.#isSetAiSettingsRequestRunning,
 			items: menuItems,
 		};
 	}
 
 	#handleCoPilotMenuItemClick(
-		action: 'manual' | 'firstCall' | 'allCalls',
+		action: 'firstCall' | 'allCalls' | 'outgoingCalls' | 'allIncomingOutgoingCalls' | 'manual',
 		event: PointerEvent,
 		menuItem: MenuItem,
 	): void
@@ -374,12 +413,31 @@ export class SettingsButtonExtender
 			case 'firstCall':
 				this.#aiAutostartSettings.autostartOperationTypes = this.#getAllOperationTypes();
 				this.#aiAutostartSettings.autostartTranscriptionOnlyOnFirstCallWithRecording = true;
+				this.#aiAutostartSettings.autostartCallDirections = [AUTOSTART_CALL_DIRECTION_INCOMING];
 
 				break;
 
-			case 'allCalls':
+			case 'allCalls': // all incoming
 				this.#aiAutostartSettings.autostartOperationTypes = this.#getAllOperationTypes();
 				this.#aiAutostartSettings.autostartTranscriptionOnlyOnFirstCallWithRecording = false;
+				this.#aiAutostartSettings.autostartCallDirections = [AUTOSTART_CALL_DIRECTION_INCOMING];
+
+				break;
+
+			case 'outgoingCalls':
+				this.#aiAutostartSettings.autostartOperationTypes = this.#getAllOperationTypes();
+				this.#aiAutostartSettings.autostartTranscriptionOnlyOnFirstCallWithRecording = false;
+				this.#aiAutostartSettings.autostartCallDirections = [AUTOSTART_CALL_DIRECTION_OUTGOING];
+
+				break;
+
+			case 'allIncomingOutgoingCalls':
+				this.#aiAutostartSettings.autostartOperationTypes = this.#getAllOperationTypes();
+				this.#aiAutostartSettings.autostartTranscriptionOnlyOnFirstCallWithRecording = false;
+				this.#aiAutostartSettings.autostartCallDirections = [
+					AUTOSTART_CALL_DIRECTION_INCOMING,
+					AUTOSTART_CALL_DIRECTION_OUTGOING,
+				];
 
 				break;
 		}
@@ -482,9 +540,27 @@ export class SettingsButtonExtender
 		return Text.toInteger(this.#extensionSettings.get('transcribeAIOperationType'));
 	}
 
-	#getInfoHelper(): ?Function
+	#getInfoHelper(skipPackagesCheck: boolean = false): ?Function
 	{
-		if (this.#extensionSettings.get('isAIEnabledInGlobalSettings'))
+		if (skipPackagesCheck)
+		{
+			if (this.#extensionSettings.get('isAIEnabledInGlobalSettings'))
+			{
+				return null;
+			}
+
+			return (): void => {
+				if (Reflection.getClass('BX.UI.InfoHelper.show'))
+				{
+					BX.UI.InfoHelper.show(this.#extensionSettings.get('aiDisabledSliderCode'));
+				}
+			};
+		}
+
+		if (
+			this.#extensionSettings.get('isAIEnabledInGlobalSettings')
+			&& this.#extensionSettings.get('isAIHasPackages')
+		)
 		{
 			return null;
 		}
@@ -492,7 +568,14 @@ export class SettingsButtonExtender
 		return (): void => {
 			if (Reflection.getClass('BX.UI.InfoHelper.show'))
 			{
-				BX.UI.InfoHelper.show(this.#extensionSettings.get('aiDisabledSliderCode'));
+				if (!this.#extensionSettings.get('isAIEnabledInGlobalSettings'))
+				{
+					BX.UI.InfoHelper.show(this.#extensionSettings.get('aiDisabledSliderCode'));
+				}
+				else if (!this.#extensionSettings.get('isAIHasPackages'))
+				{
+					BX.UI.InfoHelper.show(this.#extensionSettings.get('aiPackagesEmptySliderCode'));
+				}
 			}
 		};
 	}

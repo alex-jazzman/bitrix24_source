@@ -67,6 +67,7 @@ $jsParams = [
 	'entityId' => $arResult['entityId'],
 	'entityCategoryId' => $arResult['entityCategoryId'],
 	'isReadonly' => $arResult['isReadonly'],
+	'extras' => $arResult['extras'] ?? [],
 	'containerId' => $editorsContainerId,
 	'menuId' => $menuId,
 	'items' => [],

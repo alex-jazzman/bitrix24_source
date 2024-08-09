@@ -5,6 +5,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 	const { Component, Color } = require('tokens');
 	const { isLightColor } = require('utils/color');
 	const { capitalize } = require('utils/string');
+	const { Ellipsize } = require('utils/enums/style');
 	const { mergeImmutable } = require('utils/object');
 	const { Text } = require('ui-system/typography/text');
 	const { SpinnerLoader, SpinnerDesign } = require('layout/ui/loaders/spinner');
@@ -33,6 +34,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 	 * @param {string} [props.rightIcon]
 	 * @param {Color} [props.rightIconColor]
 	 * @param {boolean} [props.border]
+	 * @param {Ellipsize} [props.ellipsize]
 	 * @param {boolean} [props.loading]
 	 * @param {Color} [props.borderColor]
 	 * @param {Color} [props.backgroundColor]
@@ -132,6 +134,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 				View(
 					{
 						style: {
+							flexShrink: 1,
 							flexDirection: 'row',
 							alignItems: 'center',
 							opacity: this.isLoading() ? 0 : 1,
@@ -169,8 +172,9 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 				text,
 				color: this.getColor(),
 				numberOfLines: 1,
-				ellipsize: 'end',
+				ellipsize: this.#getEllipsize(),
 				style: {
+					flexShrink: 1,
 					marginLeft: this.size.getTextIndents({ icon: Boolean(leftIcon) }),
 					marginRight: this.size.getTextIndents({ icon: Boolean(rightIcon), badge }),
 				},
@@ -185,7 +189,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 			}
 
 			let style = {
-				flexShrink: 1,
+				flexGrow: 1,
 			};
 
 			if (direction)
@@ -223,7 +227,6 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						flexShrink: 1,
 						marginRight: this.size.getBadgeIndent(),
 					},
 				},
@@ -285,6 +288,8 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		getMainStyle()
 		{
 			return {
+				flexShrink: 1,
+				flexDirection: 'row',
 				alignItems: 'flex-start',
 				...this.getStretchedStyle(),
 			};
@@ -299,7 +304,8 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 			const { radius } = this.size.getBorder();
 
 			const style = {
-				alignItems: 'flex-start',
+				flexDirection: 'row',
+				flexShrink: 1,
 				backgroundColor: this.getBackgroundColor(),
 				justifyContent: 'center',
 				borderRadius: radius.toNumber(),
@@ -411,6 +417,13 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 			};
 		}
 
+		#getEllipsize()
+		{
+			const { ellipsize } = this.props;
+
+			return Ellipsize.resolve(ellipsize, Ellipsize.END).toString();
+		}
+
 		isStretched()
 		{
 			const { stretched = false } = this.props;
@@ -442,6 +455,7 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		rightIconColor: PropTypes.object,
 		size: PropTypes.object,
 		badge: PropTypes.object,
+		ellipsize: PropTypes.object,
 		design: PropTypes.object,
 		loaderDesign: PropTypes.object,
 		stretched: PropTypes.bool,
@@ -460,5 +474,6 @@ jn.define('ui-system/form/buttons/button', (require, exports, module) => {
 		LoaderDesign: SpinnerDesign,
 		Icon,
 		IconTypes: iconTypes,
+		Ellipsize,
 	};
 });

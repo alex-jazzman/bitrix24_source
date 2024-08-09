@@ -36,7 +36,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	await EntityReady.wait('chat');
 
 	const core = new ChannelApplication({
-		localStorageEnable: false,
+		localStorage: {
+			enable: true,
+			readOnly: true,
+		},
 	});
 	try
 	{

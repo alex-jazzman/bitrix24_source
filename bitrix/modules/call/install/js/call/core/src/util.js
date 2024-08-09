@@ -1,6 +1,7 @@
 import {Type} from 'main.core'
 import {CallEngine, Provider} from './engine/engine';
 import { MediaStreamsKinds } from './call_api';
+import { View } from './view/view';
 
 const blankAvatar = '/bitrix/js/im/images/blank.gif';
 
@@ -355,16 +356,6 @@ const isNewCallLayoutEnabled = () =>
 	return BX.message('new_call_layout_enabled') === 'Y'
 }
 
-const isVoximplantCallServerAllowed = () =>
-{
-	return BX.message('voximplant_call_server_enabled') === 'Y';
-}
-
-const isBitrixCallServerAllowed = () =>
-{
-	return BX.message('bitrix_call_server_enabled') === 'Y';
-}
-
 const isFeedbackAllowed = () =>
 {
 	return BX.message('call_allow_feedback') === 'Y'
@@ -550,13 +541,9 @@ function stopMediaStream(mediaStream)
 }
 
 function getConferenceProvider(): string{
-	if (isBitrixCallServerAllowed())
+	if (isCallServerAllowed())
 	{
 		return Provider.Bitrix;
-	}
-	if (isVoximplantCallServerAllowed())
-	{
-		return Provider.Voximplant;
 	}
 
 	return Provider.Plain;
@@ -670,6 +657,94 @@ function getAvatarBackground()
 	return colorList[Math.floor(Math.random() * colorList.length)];
 }
 
+function getRecordTimeText(recordState)
+{
+	if (!recordState)
+	{
+		return '';
+	}
+
+	const nowDate = new Date();
+	let startDate = new Date(recordState.date.start);
+	if (startDate.getTime() < nowDate.getDate())
+	{
+		startDate = nowDate;
+	}
+
+	const pauseTime = recordState.date.pause
+		.map((element) =>
+		{
+			const finish = element.finish ? new Date(element.finish) : nowDate;
+			return finish - new Date(element.start);
+		})
+		.reduce((sum, element) => sum + element, 0);
+
+	let totalTime = nowDate - startDate - pauseTime;
+	if (totalTime <= 0)
+	{
+		totalTime = 0;
+	}
+
+	let second = Math.floor(totalTime / 1000);
+
+	let hour = Math.floor(second / 60 / 60);
+	if (hour > 0)
+	{
+		second -= hour * 60 * 60;
+	}
+
+	const minute = Math.floor(second / 60);
+	if (minute > 0)
+	{
+		second -= minute * 60;
+	}
+
+	return (hour > 0 ? hour + ':' : '')
+		+ (hour > 0 ? minute.toString().padStart(2, "0") + ':' : minute + ':')
+		+ second.toString().padStart(2, "0")
+		;
+}
+
+function getTimeText(startTime)
+{
+	if (!startTime)
+	{
+		return '';
+	}
+
+	const nowDate = new Date();
+	let startDate = new Date(startTime);
+	if (startDate.getTime() < nowDate.getDate())
+	{
+		startDate = nowDate;
+	}
+
+	let totalTime = nowDate - startDate;
+	if (totalTime <= 0)
+	{
+		totalTime = 0;
+	}
+
+	let second = Math.floor(totalTime / 1000);
+
+	let hour = Math.floor(second / 60 / 60);
+	if (hour > 0)
+	{
+		second -= hour * 60 * 60;
+	}
+
+	const minute = Math.floor(second / 60);
+	if (minute > 0)
+	{
+		second -= minute * 60;
+	}
+
+	return (hour > 0 ? hour + ':' : '')
+		+ (hour > 0 ? minute.toString().padStart(2, "0") + ':' : minute + ':')
+		+ second.toString().padStart(2, "0")
+		;
+}
+
 export default {
 	updateUserData,
 	setUserData,
@@ -693,8 +768,6 @@ export default {
 	isWebRTCSupported,
 	isCallServerAllowed,
 	isNewCallLayoutEnabled,
-	isVoximplantCallServerAllowed,
-	isBitrixCallServerAllowed,
 	isFeedbackAllowed,
 	shouldCollectStats,
 	shouldShowDocumentButton,
@@ -722,4 +795,6 @@ export default {
 	formatPacketsLostData,
 	getCallFeatures,
 	getAvatarBackground,
+	getRecordTimeText,
+	getTimeText,
 }

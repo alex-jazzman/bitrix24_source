@@ -26,6 +26,7 @@ jn.define('tasks/layout/fields/checklist/theme/air-compact', (require, exports, 
 				icon: Icon.TASK_LIST,
 			},
 			text: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_TITLE'),
+			textMultiple: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_TITLE_MULTI'),
 			onClick: field.getContentClickHandler(),
 			count: checklists.length,
 		});

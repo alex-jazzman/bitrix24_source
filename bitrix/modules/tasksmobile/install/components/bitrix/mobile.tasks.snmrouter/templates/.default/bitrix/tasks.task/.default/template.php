@@ -121,7 +121,7 @@ $APPLICATION->IncludeComponent(
 					array(
 						"type" => "select-user",
 						"id" => "data[SE_RESPONSIBLE][0][ID]",
-						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE"),
+						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE_MSGVER_1"),
 						"item" => $task["SE_RESPONSIBLE"],
 						"value" => $task["RESPONSIBLE_ID"],
 						"canDrop" => false
@@ -216,7 +216,7 @@ $APPLICATION->IncludeComponent(
 						"id" => "ADDITIONAL[]",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL"),
 						"items" => [
-							"ALLOW_CHANGE_DEADLINE" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_ALLOW_CHANGE_DEADLINE"),
+							"ALLOW_CHANGE_DEADLINE" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_ALLOW_CHANGE_DEADLINE_MSGVER_1"),
 							"MATCH_WORK_TIME" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_MATCH_WORK_TIME"),
 						]
 						+ ($taskLimitExceeded ? [] : ["TASK_CONTROL" => GetMessage("MB_TASKS_TASK_SETTINGS_ADDITIONAL_TASK_CONTROL_V2")])

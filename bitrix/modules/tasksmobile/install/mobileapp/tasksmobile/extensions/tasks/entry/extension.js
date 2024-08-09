@@ -100,7 +100,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 		 */
 		static async #openTaskDetailNew(data, params = {})
 		{
-			const { userId = env.userId, parentWidget, context } = params;
+			const { userId = env.userId, parentWidget, context, shouldOpenComments = false } = params;
 			const taskId = data.id || data.taskId;
 			const guid = Entry.getGuid();
 
@@ -114,6 +114,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 					taskId,
 					guid,
 					context,
+					shouldOpenComments,
 				});
 			}
 			else
@@ -140,6 +141,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 						USER_ID: (userId || env.userId),
 						GUID: guid,
 						CONTEXT: context,
+						SHOULD_OPEN_COMMENTS: shouldOpenComments,
 					},
 				});
 			}

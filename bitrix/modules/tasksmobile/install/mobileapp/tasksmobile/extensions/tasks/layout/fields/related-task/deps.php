@@ -6,6 +6,6 @@ return [
 		'statemanager/redux/store',
 		'statemanager/redux/slices/users',
 		'tasks:layout/task/create/opener',
-		'tasks:layout/task/fields/tasks',
+		'tasks:layout/task/fields/task',
 	],
 ];

@@ -505,7 +505,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				analytics: analyticsToSend && new AnalyticsEvent(analyticsToSend)
 					.setSubSection('element_card')
 					.setEvent('entity_add_open')
-					.setType(type),
+					.setType(type?.toLowerCase()),
 			});
 		}
 

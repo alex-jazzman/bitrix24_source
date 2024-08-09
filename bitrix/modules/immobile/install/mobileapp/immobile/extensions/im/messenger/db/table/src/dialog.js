@@ -75,7 +75,7 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 
 		async deleteByIdList(idList)
 		{
-			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
+			if (!Feature.isLocalStorageEnabled || this.readOnly || !Type.isArrayFilled(idList))
 			{
 				return Promise.resolve({});
 			}
@@ -96,7 +96,7 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 
 		async deleteByChatIdList(idList)
 		{
-			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
+			if (!Feature.isLocalStorageEnabled || this.readOnly || !Type.isArrayFilled(idList))
 			{
 				return Promise.resolve({});
 			}

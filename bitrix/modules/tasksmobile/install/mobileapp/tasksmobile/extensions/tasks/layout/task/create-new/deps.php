@@ -34,6 +34,7 @@ return [
 		'selector/widget/factory',
 		'statemanager/redux/slices/users',
 		'statemanager/redux/store',
+		'statemanager/redux/batched-actions',
 
 		'tasks:loc',
 		'tasks:checklist',
@@ -47,7 +48,7 @@ return [
 		'tasks:statemanager/redux/slices/tasks-stages',
 		'tasks:statemanager/redux/slices/groups',
 		'tasks:statemanager/redux/slices/flows',
-		'tasks:statemanager/redux/slices/tariff-plan-restrictions',
+		'tasks:statemanager/redux/slices/tariff-restrictions',
 		'tasks:task/calendar',
 		'tasks:layout/task/form-utils',
 		'tasks:layout/task/parent-task',

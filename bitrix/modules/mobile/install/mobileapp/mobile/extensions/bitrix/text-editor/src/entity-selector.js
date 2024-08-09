@@ -26,16 +26,7 @@ jn.define('text-editor/entity-selector', (require, exports, module) => {
 		show()
 		{
 			const recipientList = new RecipientList(
-				[
-					'users',
-					'groups',
-					'departments',
-				],
-				{
-					users: {
-						showAll: true,
-					},
-				},
+				['users', 'groups', 'departments'],
 			);
 
 			recipientList.ui.on('close', this.props?.onClose);

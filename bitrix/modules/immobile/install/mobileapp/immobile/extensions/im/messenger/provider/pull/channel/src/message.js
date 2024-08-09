@@ -28,11 +28,7 @@ jn.define('im/messenger/provider/pull/channel/message', (require, exports, modul
 				return;
 			}
 
-			if (
-				recentMessageManager.isOpenChannelChat()
-				&& recentMessageManager.isUserInChat()
-				&& !recentMessageManager.isCurrentChannelChatOpened()
-			)
+			if (!recentMessageManager.isSharedEvent())
 			{
 				return;
 			}

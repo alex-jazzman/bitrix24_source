@@ -114,6 +114,11 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 
 	protected function logRequisiteProperties(): void
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$debugValues = [
 			'CrmEntityType' => $this->CrmEntityType,
 			'RequisitePresetId' => $this->RequisitePresetId,
@@ -132,6 +137,11 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 
 	protected function logRequisiteValues(array $requisiteValues): void
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$requisiteFieldValues = $requisiteValues['RequisiteFields'];
 		$addressFieldValues = $requisiteValues['RequisiteFields'][EntityRequisite::ADDRESS][$this->AddressTypeId] ?? [];
 		unset($requisiteFieldValues['RequisiteFields'][EntityRequisite::ADDRESS]);

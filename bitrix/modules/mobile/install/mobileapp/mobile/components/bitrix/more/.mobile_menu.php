@@ -73,7 +73,7 @@ $workgroupsComponentVersion = Manager::getComponentVersion("workgroups");
 $menuStructure = [];
 $favoriteItems = [];
 
-if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
+if (Mobile::getApiVersion() < 41)
 {
 	$favoriteItems[] = [
 		"hidden" => ($isExtranetUser || !ModuleManager::isModuleInstalled("bizproc")),
@@ -88,7 +88,7 @@ if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
 	];
 }
 
-if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
+if (Mobile::getApiVersion() < 41)
 {
 	$favoriteItems[] = [
 		"title" => Loc::getMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"),
@@ -615,10 +615,9 @@ JS
 	];
 }
 
-$isAvaMenuAvailable = \Bitrix\MobileApp\Mobile::getInstance()::getApiVersion() >= 54;
-
 $menuStructure[] = $groupSection;
 
+$isAvaMenuAvailable = Mobile::getInstance()::getApiVersion() >= 54;
 if (!$isAvaMenuAvailable)
 {
 	$timemanEnabledForUser = false;
@@ -881,14 +880,14 @@ JS,
 		],
 	];
 
-    $developerMenuItems[] = [
-        "title" => "Rich-text editor sandbox",
-        "imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
-        "color" => '#8590a2',
-        "hidden" => false,
-        "attrs" => [
-            "id" => "text-editor-demo",
-            "onclick" => <<<JS
+	$developerMenuItems[] = [
+		"title" => "Rich-text editor sandbox",
+		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+		"color" => '#8590a2',
+		"hidden" => false,
+		"attrs" => [
+			"id" => "text-editor-demo",
+			"onclick" => <<<JS
 				ComponentHelper.openLayout({
 					name: 'dev:text-editor-sandbox',
 					object: 'layout',
@@ -897,8 +896,27 @@ JS,
 					}
 				});
 			JS,
-        ],
-    ];
+		],
+	];
+
+	$developerMenuItems[] = [
+		"title" => "Formatter sandbox",
+		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+		"color" => '#8590a2',
+		"hidden" => false,
+		"attrs" => [
+			"id" => "formatter-sandbox",
+			"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'dev:formatter-sandbox',
+					object: 'layout',
+					widgetParams: {
+						title: 'Formatter sandbox',
+					}
+				});
+			JS,
+		],
+	];
 
 	if (!empty($developerMenuItems))
 	{

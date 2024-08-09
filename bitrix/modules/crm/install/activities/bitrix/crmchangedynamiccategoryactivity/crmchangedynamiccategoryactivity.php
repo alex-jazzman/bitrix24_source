@@ -67,9 +67,8 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 		$operation = $factory->getUpdateOperation($item);
 		$operation->getContext()->setScope(Crm\Service\Context::SCOPE_AUTOMATION);
 		$operation
-			->disableCheckAccess()
 			->disableBizProc()
-			->disableCheckFields()
+			->disableAllChecks()
 			->disableCheckWorkflows()
 			->disableAutomation()
 		;

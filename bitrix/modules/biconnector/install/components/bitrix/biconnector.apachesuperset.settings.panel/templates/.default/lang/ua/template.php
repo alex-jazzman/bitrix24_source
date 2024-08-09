@@ -1,7 +1,15 @@
 <?php
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON"] = "Оновити дані";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_0"] = "Оновлення можливе через #COUNT# хвилину";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_1"] = "Оновлення можливе через #COUNT# хвилини";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_2"] = "Оновлення можливе через #COUNT# хвилин";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_ERROR"] = "Не вдалося оновити дані звітів.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_HINT_LINK"] = "Дані оновляться в усіх звітах. Повторне оновлення буде доступне через певний період часу. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_SUCCESS"] = "Дані звітів оновлено.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_COPIED"] = "Ключ скопійовано.";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_HINT_LINK"] = "За допомогою ключа дані для звітів передаються з Бітрікс24 до BI-конструктора. Оновіть ключ, якщо він потрапив до сторонніх осіб. Так ви знизите ризики несанкціонованого доступу до важливої інформації. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON"] = "Оновити";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON_MSGVER_1"] = "Оновити ключ";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT"] = "Інтервал застосовуватиметься для всіх звітів, крім тих, де вказано свій період. #HINT_LINK#";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT_LINK"] = "Докладніше";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK"] = "Докладніше";

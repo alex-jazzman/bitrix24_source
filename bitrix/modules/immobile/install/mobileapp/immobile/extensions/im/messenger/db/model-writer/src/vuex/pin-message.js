@@ -6,6 +6,7 @@ eslint-disable consistent-return
  */
 jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, module) => {
 	const { Type } = require('type');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
 
 	class PinMessageWriter extends Writer
@@ -147,6 +148,12 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 		 */
 		addPinList(pinData)
 		{
+			const dialogHelper = DialogHelper.createByChatId(pinData.chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
+			{
+				return;
+			}
+
 			this.repository.pinMessage.saveFromModel(pinData.pins, pinData.messages);
 		}
 
@@ -164,6 +171,12 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 				return;
 			}
 
+			const dialogHelper = DialogHelper.createByChatId(pinData.chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
+			{
+				return;
+			}
+
 			this.repository.pinMessage.saveFromModel([pinModel], [pinModel.message]);
 		}
 
@@ -172,6 +185,12 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 		 */
 		updateMessage(updateMessageData)
 		{
+			const dialogHelper = DialogHelper.createByChatId(updateMessageData.chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
+			{
+				return;
+			}
+
 			this.repository.pinMessage.updateMessage({
 				id: updateMessageData.id,
 				...updateMessageData.fields,

@@ -95,6 +95,7 @@ jn.define('layout/ui/fields/textarea/theme/air-description', (require, exports, 
 							style: descriptionStyle(this.field.isEmpty()),
 							bbCodeMode: true,
 							moreButtonColor: Color.accentMainPrimary,
+							onLinkClick: this.field.getOnLinkClick(),
 						},
 						editorProps: {
 							placeholder: this.field.getPlaceholder(),

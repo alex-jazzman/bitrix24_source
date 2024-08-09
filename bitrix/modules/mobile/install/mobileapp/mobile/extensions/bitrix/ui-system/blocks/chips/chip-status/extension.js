@@ -4,6 +4,7 @@
 jn.define('ui-system/blocks/chips/chip-status', (require, exports, module) => {
 	const { Indent, Component } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
+	const { Ellipsize } = require('utils/enums/style');
 	const { ChipStatusDesign } = require('ui-system/blocks/chips/chip-status/src/design-enum');
 	const { ChipStatusMode } = require('ui-system/blocks/chips/chip-status/src/mode-enum');
 	const { ChipStatusSize } = require('ui-system/blocks/chips/chip-status/src/size-enum');
@@ -14,6 +15,7 @@ jn.define('ui-system/blocks/chips/chip-status', (require, exports, module) => {
 	 * @params {string} [props.text]
 	 * @params {object} [props.design]
 	 * @params {object} [props.mode]
+	 * @params {string} [props.ellipsize]
 	 * @params {boolean} [props.compact]
 	 * @return ChipStatus
 	 */
@@ -23,6 +25,7 @@ jn.define('ui-system/blocks/chips/chip-status', (require, exports, module) => {
 		const {
 			text,
 			testId,
+			ellipsize,
 			compact = false,
 			design = ChipStatusDesign.PRIMARY,
 			mode = ChipStatusMode.SOLID,
@@ -60,7 +63,7 @@ jn.define('ui-system/blocks/chips/chip-status', (require, exports, module) => {
 				Typography({
 					text,
 					color,
-					ellipsize: 'end',
+					ellipsize: Ellipsize.resolve(ellipsize, Ellipsize.END).toString(),
 					numberOfLines: 1,
 				}),
 			),
@@ -77,7 +80,8 @@ jn.define('ui-system/blocks/chips/chip-status', (require, exports, module) => {
 		compact: PropTypes.bool,
 		design: PropTypes.object,
 		mode: PropTypes.object,
+		ellipsize: PropTypes.string,
 	};
 
-	module.exports = { ChipStatus, ChipStatusDesign, ChipStatusMode };
+	module.exports = { ChipStatus, ChipStatusDesign, ChipStatusMode, Ellipsize };
 });

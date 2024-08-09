@@ -87,12 +87,12 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				file ?? [],
 			);
 
-			if (messageHelper.isSystem())
+			if (messageHelper.isSystem)
 			{
 				return new SystemTextMessage(modelMessage, { ...options, showCommentInfo: false });
 			}
 
-			if (messageHelper.isDeleted())
+			if (messageHelper.isDeleted)
 			{
 				return new DeletedMessage(modelMessage, options);
 			}
@@ -120,7 +120,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return GalleryMessageFactory.create(modelMessage, options);
 			}
 
-			if (messageHelper.isImage())
+			if (messageHelper.isImage)
 			{
 				if (Type.isStringFilled(file?.urlPreview))
 				{
@@ -130,32 +130,32 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return new FileMessage(modelMessage, options, file);
 			}
 
-			if (messageHelper.isAudio())
+			if (messageHelper.isAudio)
 			{
 				return new AudioMessage(modelMessage, options, file);
 			}
 
-			if (messageHelper.isVideo())
+			if (messageHelper.isVideo)
 			{
 				return new VideoMessage(modelMessage, options, file);
 			}
 
-			if (messageHelper.isFile())
+			if (messageHelper.isFile)
 			{
 				return new FileMessage(modelMessage, options, file);
 			}
 
-			if (messageHelper.isWithAttach())
+			if (messageHelper.isWithAttach)
 			{
 				return new TextMessage(modelMessage, options);
 			}
 
-			if (messageHelper.isEmojiOnly() || messageHelper.isSmileOnly())
+			if (messageHelper.isEmojiOnly || messageHelper.isSmileOnly)
 			{
 				return new EmojiOnlyMessage(modelMessage, options);
 			}
 
-			if (messageHelper.isText())
+			if (messageHelper.isText)
 			{
 				return new TextMessage(modelMessage, options);
 			}

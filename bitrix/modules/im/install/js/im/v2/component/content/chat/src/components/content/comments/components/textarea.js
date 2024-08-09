@@ -1,7 +1,5 @@
 import { ChatTextarea } from 'im.v2.component.textarea';
 
-import '../css/textarea.css';
-
 // @vue/component
 export const CommentsTextarea = {
 	name: 'CommentsTextarea',
@@ -17,6 +15,7 @@ export const CommentsTextarea = {
 		<ChatTextarea
 			:dialogId="dialogId"
 			:withMarket="false"
+			:withAudioInput="false"
 			class="bx-im-comments-send-panel__container"
 		/>
 	`,

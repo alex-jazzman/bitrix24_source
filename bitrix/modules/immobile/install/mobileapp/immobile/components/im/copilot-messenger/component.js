@@ -36,7 +36,10 @@ if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructo
 	await EntityReady.wait('chat');
 
 	const core = new CopilotApplication({
-		localStorageEnable: true,
+		localStorage: {
+			enable: true,
+			readOnly: false,
+		},
 	});
 	try
 	{

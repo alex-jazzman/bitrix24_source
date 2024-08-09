@@ -10,13 +10,6 @@
 		{
 			super(props);
 
-			const only = testSuites.filter((suite) => suite.$only);
-			const executables = only.length > 0 ? only : testSuites;
-
-			executables
-				.filter((suite) => !suite.$skip)
-				.forEach((suite) => suite.execute());
-
 			this.jnLayoutPrinter = new JnLayoutPrinter();
 			this.consolePrinter = new ConsolePrinter();
 			this.consolePrinter.print(report);
@@ -135,7 +128,21 @@
 		}
 	}
 
-	BX.onViewLoaded(() => {
+	async function executeTests()
+	{
+		const only = testSuites.filter((suite) => suite.$only);
+		const executables = (only.length > 0 ? only : testSuites).filter((suite) => !suite.$skip);
+
+		for (const suite of executables)
+		{
+			// eslint-disable-next-line no-await-in-loop
+			void await suite.execute();
+		}
+	}
+
+	BX.onViewLoaded(async () => {
+		await executeTests();
+
 		layout.showComponent(new UnitTestDashboard({}));
 	});
 })();

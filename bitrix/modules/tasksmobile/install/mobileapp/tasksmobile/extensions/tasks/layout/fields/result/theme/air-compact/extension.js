@@ -20,8 +20,9 @@ jn.define('tasks/layout/fields/result/theme/air-compact', (require, exports, mod
 			wideMode: true,
 			defaultLeftIcon: Icon.WINDOW_FLAG,
 			text: Loc.getMessage('TASKS_FIELDS_RESULT_AIR_COMPACT_TITLE'),
+			textMultiple: Loc.getMessage('TASKS_FIELDS_RESULT_AIR_COMPACT_TITLE_MULTI'),
 			count: field.getResultsCount(),
-			onClick: () => field.createNewResult(),
+			onClick: () => (field.isEmpty() ? field.createNewResult() : field.openResultList()),
 		});
 	};
 

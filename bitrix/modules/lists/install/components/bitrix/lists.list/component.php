@@ -815,7 +815,7 @@ $rsElements = CIBlockElement::getList(
 
 if ($arResult["BIZPROC"] == "Y")
 {
-	$arUserGroupsForBP = CUser::GetUserGroup($USER->GetID());
+	$arUserGroupsForBP = \Bitrix\Main\Engine\CurrentUser::get()->getUserGroups();
 	$arDocumentStatesForBP = CBPWorkflowTemplateLoader::GetDocumentTypeStates(
 		BizprocDocument::generateDocumentComplexType($arParams["IBLOCK_TYPE_ID"], $arIBlock["ID"])
 	);

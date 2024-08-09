@@ -101,7 +101,7 @@ if ($arID && $USER->CanDoOperation('controller_group_manage'))
 		}
 		$ID = intval($ID);
 
-		if ($_REQUEST['action'] ==='delete')
+		if ($_REQUEST['action'] === 'delete')
 		{
 			@set_time_limit(0);
 			$DB->StartTransaction();

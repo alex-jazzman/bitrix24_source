@@ -11,6 +11,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	const { Haptics } = require('haptics');
 	const { NotifyManager } = require('notify-manager');
 	const { withCurrentDomain } = require('utils/url');
+	const { Theme } = require('im/lib/theme');
 
 	const {
 		EventType,
@@ -464,7 +465,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 
-			DialogTextHelper.copyToClipboard(modelMessage);
+			DialogTextHelper.copyToClipboard(
+				{ clipboardText: modelMessage.text },
+				this.locator.get('view').ui,
+			);
 		}
 
 		/**
@@ -638,24 +642,52 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			void NotifyManager.showLoadingIndicator();
 			Filesystem.downloadFile(withCurrentDomain(file.urlDownload))
 				.then((localPath) => {
-					utils.saveToLibrary(localPath)
-						.then(() => {
-							const successMessage = isImageMessage
-								? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_GALLERY_SUCCESS')
-								: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_GALLERY_SUCCESS')
-							;
-
-							InAppNotifier.showNotification({
-								title: successMessage,
-								time: 3,
-								backgroundColor: '#E6000000',
-							});
-						})
-						.finally(() => {
-							NotifyManager.hideLoadingIndicatorWithoutFallback();
-						});
+					this.#saveToLibrary(localPath, isImageMessage);
 				})
-			;
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.onDownloadToDevice.downloadFile.catch:`, error);
+				});
+		}
+
+		/**
+		 * @param {String} localPath
+		 * @param {Boolean} isImageMessage
+		 */
+		#saveToLibrary(localPath, isImageMessage)
+		{
+			return utils.saveToLibrary(localPath)
+				.then(() => {
+					const successMessage = isImageMessage
+						? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_GALLERY_SUCCESS')
+						: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_GALLERY_SUCCESS')
+					;
+
+					Notification.showToastWithParams({ message: successMessage, svgType: 'image' }, this.locator.get('view').ui);
+				})
+				.finally(() => {
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
+				})
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.saveToLibrary.catch:`, error);
+					const locDescMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_GALLERY_FAILURE');
+					const locSettingsMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_GALLERY_FAILURE_SETTINGS');
+					const locNoMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_GALLERY_FAILURE_NO');
+
+					navigator.notification.confirm(
+						'',
+						(buttonId) => {
+							if (buttonId === 2)
+							{
+								Application.openSettings();
+							}
+						},
+						locDescMessage,
+						[
+							locNoMessage,
+							locSettingsMessage,
+						],
+					);
+				});
 		}
 
 		/**
@@ -681,14 +713,15 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 						: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_DISK_SUCCESS')
 					;
 
-					InAppNotifier.showNotification({
-						title: successMessage,
-						time: 3,
-						backgroundColor: '#E6000000',
-					});
+					Notification.showToastWithParams({ message: successMessage, svgType: 'catalogueSuccess' }, this.locator.get('view').ui);
 				})
 				.catch((error) => {
-					logger.error('MessageMenu onDownloadToDisk error', error);
+					logger.error(`${this.constructor.name}.onDownloadToDisk.catch`, error);
+					const errorMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DISK_FAILURE');
+					Notification.showToastWithParams(
+						{ message: errorMessage, svgType: 'catalogue', backgroundColor: Theme.colors.accentMainAlert },
+						this.locator.get('view').ui,
+					);
 				})
 			;
 		}

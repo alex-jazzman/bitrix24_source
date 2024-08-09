@@ -5,20 +5,26 @@ jn.define('ava-menu/check-in', (require, exports, module) => {
 	const { menu } = require('native/avamenu') || {};
 	const { Color } = require('tokens');
 
+	let Entry = null;
+	try
+	{
+		Entry = require('stafftrack/entry').Entry;
+	}
+	catch (e)
+	{
+		console.warn(e);
+	}
+
 	const ITEM_ID = 'check_in';
 
 	class CheckIn
 	{
 		static open(event)
 		{
-			requireLazy('stafftrack:entry')
-				.then(({ Entry }) => {
-					if (Entry)
-					{
-						Entry.openCheckIn(event);
-					}
-				})
-				.catch(console.error);
+			if (Entry)
+			{
+				Entry.openCheckIn(event);
+			}
 		}
 
 		static handleItemColor()

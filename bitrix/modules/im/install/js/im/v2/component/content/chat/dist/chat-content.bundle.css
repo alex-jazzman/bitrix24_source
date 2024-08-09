@@ -402,9 +402,6 @@
 .loading-bar-transition-leave-to {
 	opacity: 0;
 }
-.bx-im-channel-send-panel__container .bx-im-send-panel__button_container {
-	background-color: #05b5ab;
-}
 .bx-im-comment-header__container {
 	--im-comment-header__font-color_title: var(--im-color-palette-black-base);
 	--im-comment-header__font-color_subtitle: var(--im-color-palette-gray-60);
@@ -444,9 +441,6 @@
 .bx-im-comment-header__subtitle_text {
 	font: var(--im-font-size-md)/16px var(--im-font-family-system);
 	color: var(--im-comment-header__font-color_subtitle);
-}
-.bx-im-comments-send-panel__container .bx-im-send-panel__button_container {
-	/*background-color: #05b5ab;*/
 }
 .bx-im-chat-header-call-button__scope {
 	--im-chat-header-call-button__font-color_phone-number: var(--im-color-palette-gray-90);

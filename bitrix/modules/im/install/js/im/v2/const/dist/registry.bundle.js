@@ -149,6 +149,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    insertMention: 'IM.Textarea:insertMention',
 	    insertForward: 'IM.Textarea:insertForward',
 	    sendMessage: 'IM.Textarea:sendMessage',
+	    onAfterSendMessage: 'IM.Textarea:onAfterSendMessage',
 	    openUploadPreview: 'IM.Textarea:openUploadPreview'
 	  },
 	  uploader: {
@@ -199,9 +200,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  request: {
 	    onAuthError: 'IM.request:onAuthError'
-	  },
-	  channel: {
-	    onChannelJoin: 'IM.Channel:onChannelJoin'
 	  }
 	});
 
@@ -319,6 +317,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  error: 'error'
 	});
 	const FakeMessagePrefix = 'temp';
+	const FakeDraftMessagePrefix = 'temp-draft';
 
 	const RecentCallStatus = {
 	  waiting: 'waiting',
@@ -744,6 +743,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.MessageStatus = MessageStatus;
 	exports.OwnMessageStatus = OwnMessageStatus;
 	exports.FakeMessagePrefix = FakeMessagePrefix;
+	exports.FakeDraftMessagePrefix = FakeDraftMessagePrefix;
 	exports.RecentCallStatus = RecentCallStatus;
 	exports.NotificationTypesCodes = NotificationTypesCodes;
 	exports.NotificationSettingsMode = NotificationSettingsMode;

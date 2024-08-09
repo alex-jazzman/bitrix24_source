@@ -205,6 +205,12 @@
 	--tech-test-rgb: 251, 48, 255;
 	--accent-main-link: #ffffff;
 	--accent-main-link-rgb: 255, 255, 255;
+	--accent-soft-border-blue: #ffffff;
+	--accent-soft-border-blue-rgb: 255, 255, 255;
+	--accent-soft-border-green: #ffffff;
+	--accent-soft-border-green-rgb: 255, 255, 255;
+	--accent-soft-border-red: #ffffff;
+	--accent-soft-border-red-rgb: 255, 255, 255;
 	--accent-soft-element-blue: #ffffff;
 	--accent-soft-element-blue-rgb: 255, 255, 255;
 	--accent-soft-element-green: #ffffff;
@@ -225,6 +231,14 @@
 	--bg-content-light-rgb: 255, 255, 255;
 	--bg-content-primary-layer: #ffffff;
 	--bg-content-primary-layer-rgb: 255, 255, 255;
+	--chat-my-channel-alert: #ffffff;
+	--chat-my-channel-alert-rgb: 255, 255, 255;
+	--chat-my-channel-border: #ffffff;
+	--chat-my-channel-border-rgb: 255, 255, 255;
+	--chat-my-channel-cmnt: #ffffff;
+	--chat-my-channel-cmnt-rgb: 255, 255, 255;
+	--chat-my-channel-success: #ffffff;
+	--chat-my-channel-success-rgb: 255, 255, 255;
 	--tech-dark-fixes: #ffffff;
 	--tech-dark-fixes-rgb: 255, 255, 255;
 }
@@ -436,6 +450,12 @@
 	--tech-test-rgb: 77, 255, 48;
 	--accent-main-link: #ffffff;
 	--accent-main-link-rgb: 255, 255, 255;
+	--accent-soft-border-blue: #ffffff;
+	--accent-soft-border-blue-rgb: 255, 255, 255;
+	--accent-soft-border-green: #ffffff;
+	--accent-soft-border-green-rgb: 255, 255, 255;
+	--accent-soft-border-red: #ffffff;
+	--accent-soft-border-red-rgb: 255, 255, 255;
 	--accent-soft-element-blue: #ffffff;
 	--accent-soft-element-blue-rgb: 255, 255, 255;
 	--accent-soft-element-green: #ffffff;
@@ -456,6 +476,14 @@
 	--bg-content-light-rgb: 255, 255, 255;
 	--bg-content-primary-layer: #ffffff;
 	--bg-content-primary-layer-rgb: 255, 255, 255;
+	--chat-my-channel-alert: #ffffff;
+	--chat-my-channel-alert-rgb: 255, 255, 255;
+	--chat-my-channel-border: #ffffff;
+	--chat-my-channel-border-rgb: 255, 255, 255;
+	--chat-my-channel-cmnt: #ffffff;
+	--chat-my-channel-cmnt-rgb: 255, 255, 255;
+	--chat-my-channel-success: #ffffff;
+	--chat-my-channel-success-rgb: 255, 255, 255;
 	--tech-dark-fixes: #ffffff;
 	--tech-dark-fixes-rgb: 255, 255, 255;
 }
@@ -613,8 +641,8 @@
 	--chat-other-base1_2-rgb: 51, 51, 51;
 	--chat-other-channel-border: #E2F1B3;
 	--chat-other-channel-border-rgb: 226, 241, 179;
-	--chat-other-channel-cmnt: #000000;
-	--chat-other-channel-cmnt-rgb: 0, 0, 0;
+	--chat-other-channel-cmnt: #F5FCDE;
+	--chat-other-channel-cmnt-rgb: 245, 252, 222;
 	--chat-other-copilot1: #F5EEFF;
 	--chat-other-copilot1-rgb: 245, 238, 255;
 	--chat-other-copilot2: #B6AAC8;
@@ -667,6 +695,12 @@
 	--tech-test-rgb: 251, 48, 255;
 	--accent-main-link: #0154C8;
 	--accent-main-link-rgb: 1, 84, 200;
+	--accent-soft-border-blue: #88C8F8;
+	--accent-soft-border-blue-rgb: 136, 200, 248;
+	--accent-soft-border-green: #3BF39C;
+	--accent-soft-border-green-rgb: 59, 243, 156;
+	--accent-soft-border-red: #FEA8A6;
+	--accent-soft-border-red-rgb: 254, 168, 166;
 	--accent-soft-element-blue: #0154C8;
 	--accent-soft-element-blue-rgb: 1, 84, 200;
 	--accent-soft-element-green: #02BB9A;
@@ -687,6 +721,14 @@
 	--bg-content-light-rgb: 255, 255, 255;
 	--bg-content-primary-layer: #FFFFFF;
 	--bg-content-primary-layer-rgb: 255, 255, 255;
+	--chat-my-channel-alert: #FF5752;
+	--chat-my-channel-alert-rgb: 255, 87, 82;
+	--chat-my-channel-border: #D8EEBA;
+	--chat-my-channel-border-rgb: 216, 238, 186;
+	--chat-my-channel-cmnt: #E0F5C3;
+	--chat-my-channel-cmnt-rgb: 224, 245, 195;
+	--chat-my-channel-success: #1BCE7B;
+	--chat-my-channel-success-rgb: 27, 206, 123;
 	--tech-dark-fixes: #FFFFFF00;
 	--tech-dark-fixes-rgb: 255, 255, 255;
 }
@@ -844,8 +886,8 @@
 	--chat-other-base1_2-rgb: 248, 248, 248;
 	--chat-other-channel-border: #0000002E;
 	--chat-other-channel-border-rgb: 0, 0, 0;
-	--chat-other-channel-cmnt: #2B2E32;
-	--chat-other-channel-cmnt-rgb: 43, 46, 50;
+	--chat-other-channel-cmnt: #3F3F3F;
+	--chat-other-channel-cmnt-rgb: 63, 63, 63;
 	--chat-other-copilot1: #2B2135;
 	--chat-other-copilot1-rgb: 43, 33, 53;
 	--chat-other-copilot2: #7A6D8A;
@@ -898,6 +940,12 @@
 	--tech-test-rgb: 77, 255, 48;
 	--accent-main-link: #468BEC;
 	--accent-main-link-rgb: 70, 139, 236;
+	--accent-soft-border-blue: #2D61A3;
+	--accent-soft-border-blue-rgb: 45, 97, 163;
+	--accent-soft-border-green: #187249;
+	--accent-soft-border-green-rgb: 24, 114, 73;
+	--accent-soft-border-red: #A0403A;
+	--accent-soft-border-red-rgb: 160, 64, 58;
 	--accent-soft-element-blue: #0056BF;
 	--accent-soft-element-blue-rgb: 0, 86, 191;
 	--accent-soft-element-green: #06A35A;
@@ -918,6 +966,14 @@
 	--bg-content-light-rgb: 87, 87, 87;
 	--bg-content-primary-layer: #292929;
 	--bg-content-primary-layer-rgb: 41, 41, 41;
+	--chat-my-channel-alert: #FFFFFFE6;
+	--chat-my-channel-alert-rgb: 255, 255, 255;
+	--chat-my-channel-border: #FFFFFF33;
+	--chat-my-channel-border-rgb: 255, 255, 255;
+	--chat-my-channel-cmnt: #1B79E6;
+	--chat-my-channel-cmnt-rgb: 27, 121, 230;
+	--chat-my-channel-success: #FFFFFF33;
+	--chat-my-channel-success-rgb: 255, 255, 255;
 	--tech-dark-fixes: #383838;
 	--tech-dark-fixes-rgb: 56, 56, 56;
 }

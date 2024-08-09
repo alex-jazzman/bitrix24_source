@@ -10,6 +10,7 @@ use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Operation\AutostartSettings;
 use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
 
 /**
@@ -107,7 +108,8 @@ if (
 	$autostartSettings = AutostartSettings::get($arResult['ENTITY_TYPE_ID'], $categoryId);
 	if (
 		$autostartSettings->isAutostartTranscriptionOnlyOnFirstCallWithRecording()
-		|| !$autostartSettings->shouldAutostart(TranscribeCallRecording::TYPE_ID)
+		|| !$autostartSettings->shouldAutostart(TranscribeCallRecording::TYPE_ID, CCrmActivityDirection::Incoming)
+		|| !$autostartSettings->shouldAutostart(TranscribeCallRecording::TYPE_ID, CCrmActivityDirection::Outgoing)
 	)
 	{
 		echo (\Bitrix\Crm\Tour\CopilotInCallAutomatically::getInstance())
@@ -155,7 +157,7 @@ if (!empty($arResult['ERRORS']))
 				$mode = true;
 				if ($arParams['ENTITY_CONFIG_SCOPE'] !== EntityEditorConfigScope::PERSONAL)
 				{
-					$mode = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
+					$mode = Container::getInstance()->getUserPermissions()->isAdminForEntity($arResult['ENTITY_TYPE_ID']);
 				}
 
 				$menuId = MenuIdResolver::getMenuId($arResult['ENTITY_TYPE_ID'], $arResult['USER_ID'], $categoryId);
@@ -171,6 +173,10 @@ if (!empty($arResult['ERRORS']))
 						'ENTITY_CATEGORY_ID' => $categoryId,
 						'ENTITY_CONFIG_SCOPE' => $arParams['ENTITY_CONFIG_SCOPE'] ?? EntityEditorConfigScope::UNDEFINED,
 						'READ_ONLY' => $arResult['READ_ONLY'] ?? false,
+						'EXTRAS' => [
+							'IS_MY_COMPANY' => $arResult['EXTRAS']['IS_MY_COMPANY'] ?? 'N',
+							'ANALYTICS' => $arResult['EXTRAS']['ANALYTICS'] ?? [],
+						],
 					]
 				);
 ?>

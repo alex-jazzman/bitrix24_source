@@ -101,7 +101,7 @@ const MIN_WIDTH = 250;
 const SIDE_USER_WIDTH = 160; // keep in sync with .bx-messenger-videocall-user-block .bx-messenger-videocall-user width
 const SIDE_USER_HEIGHT = 90; // keep in sync with .bx-messenger-videocall-user height
 
-const MAX_USERS_PER_PAGE = 15;
+const MAX_USERS_PER_PAGE = 19;
 const MIN_GRID_USER_WIDTH = 180;
 const MIN_GRID_USER_HEIGHT = 100;
 
@@ -134,6 +134,7 @@ type ViewOptions = {
 	layout: string,
 	userStates: {},
 	enableNewLayoutLogic: boolean,
+	showAddUserButtonInList?: boolean,
 }
 
 export class View
@@ -154,6 +155,7 @@ export class View
 		this.baseZIndex = config.baseZIndex;
 		this.cameraId = config.cameraId;
 		this.microphoneId = config.microphoneId;
+
 		this.speakerId = '';
 		this.speakerMuted = false;
 		this.showChatButtons = (config.showChatButtons === true);
@@ -162,6 +164,7 @@ export class View
 		this.showRecordButton = (config.showRecordButton !== false);
 		this.showDocumentButton = (config.showDocumentButton !== false);
 		this.showButtonPanel = (config.showButtonPanel !== false);
+		this.showAddUserButtonInList = config.showAddUserButtonInList || false;
 
 		this.enableNewLayoutLogic = config.enableNewLayoutLogic;
 
@@ -388,14 +391,14 @@ export class View
 			this.appendUsers(config.userStates);
 		}
 
-		this.withBlur = Utils.platform.isMac();
-
 		/*this.resizeCalled = 0;
 		this.reportResizeCalled = BX.debounce(function()
 		{
 			console.log('resizeCalled ' + this.resizeCalled + ' times');
 			this.resizeCalled = 0;
 		}.bind(this), 100)*/
+
+		this.hideEarTimer = null;
 	};
 
 	openArticle(articleCode)
@@ -484,6 +487,28 @@ export class View
 		}
 	}
 
+	toggleVisibilityEar()
+	{
+		if (this.hideEarTimer)
+		{
+			clearTimeout(this.hideEarTimer);
+			this.hideEarTimer = null;
+		}
+
+		this.elements.ear.top?.classList.add("force-visible");
+		this.elements.ear.bottom?.classList.add("force-visible");
+		this.elements.pageNavigatorLeft?.classList.add("force-visible");
+		this.elements.pageNavigatorRight?.classList.add("force-visible");
+
+		this.hideEarTimer = setTimeout(() =>
+		{
+			this.elements.ear.top?.classList.remove("force-visible");
+			this.elements.ear.bottom?.classList.remove("force-visible");
+			this.elements.pageNavigatorLeft?.classList.remove("force-visible");
+			this.elements.pageNavigatorRight?.classList.remove("force-visible");
+		}, 5000);
+	}
+
 	init()
 	{
 		this.getLimitation();
@@ -528,6 +553,9 @@ export class View
 
 		window.addEventListener("keydown", this._onKeyDownHandler);
 		window.addEventListener("keyup", this._onKeyUpHandler);
+
+		this.onMouseMoveHandler = this.toggleVisibilityEar.bind(this);
+		document.addEventListener('mousemove', this.onMouseMoveHandler);
 
 		if (Browser.isMac())
 		{
@@ -756,7 +784,7 @@ export class View
 		for (let i = 0; i < this.userRegistry.users.length; i++)
 		{
 			const userModel = this.userRegistry.users[i];
-			if (userModel.id != this.userId && (userModel.state == UserState.Connected || userModel.state == UserState.Connecting || userModel.state == UserState.Calling))
+			if (userModel.id != this.userId && (userModel.id != this.centralUser.id && this.layout === Layouts.Centered || this.layout !== Layouts.Centered) && (userModel.state == UserState.Connected || userModel.state == UserState.Connecting || userModel.state == UserState.Calling))
 			{
 				result.push(userModel.id);
 			}
@@ -984,7 +1012,7 @@ export class View
 
 		this.elements.root.classList.toggle("bx-messenger-videocall-fullscreen-mobile", (this.layout == Layouts.Mobile));
 
-		this.renderUserList();
+		this.updateUserList();
 		this.toggleEars();
 		this.updateButtons();
 		this.eventEmitter.emit(EventName.onLayoutChange, {
@@ -1031,7 +1059,7 @@ export class View
 			this.elements.pageNavigatorLeftCounter.innerHTML = (this.currentPage - 1) + '&nbsp;/&nbsp;' + this.pagesCount;
 			this.elements.pageNavigatorRightCounter.innerHTML = (this.currentPage + 1) + '&nbsp;/&nbsp;' + this.pagesCount;
 		}
-		if (this.layout !== Layouts.Grid)
+		if (!(this.layout === Layouts.Grid || this.layout === Layouts.Centered))
 		{
 			return;
 		}
@@ -1050,7 +1078,13 @@ export class View
 		const containerSize = this.elements.userList.container.getBoundingClientRect();
 		let columns = Math.floor(containerSize.width / MIN_GRID_USER_WIDTH) || 1;
 		let rows = Math.floor(containerSize.height / MIN_GRID_USER_HEIGHT) || 1;
-		const usersPerPage = columns * rows - 1;
+
+		let usersPerPage = columns * rows - 1;
+
+		if (this.userId == this.centralUser.id && this.layout === Layouts.Centered)
+		{
+			usersPerPage += 1;
+		}
 
 		if (!usersPerPage)
 		{
@@ -1074,6 +1108,7 @@ export class View
 			// console.log('Optimal element size: width '+elementSize.width+' height '+elementSize.height);
 			columns = Math.floor(containerSize.width / elementSize.width);
 			rows = Math.floor(containerSize.height / elementSize.height);
+
 			return columns * rows - 1;
 		}
 	};
@@ -1088,6 +1123,11 @@ export class View
 	{
 		this.usersPerPage = this.calculateUsersPerPage();
 		this.pagesCount = this.calculatePagesCount(this.usersPerPage);
+
+		if (this.currentPage > this.pagesCount)
+		{
+			this.currentPage = this.pagesCount;
+		}
 
 		if (this.elements.root)
 		{
@@ -1504,6 +1544,14 @@ export class View
 		if (user)
 		{
 			user.videoPaused = videoPaused;
+
+			if (this.enableNewLayoutLogic)
+			{
+				user.cameraState = !videoPaused;
+				videoPaused
+					? this.updateRerenderQueue(userId, RerenderReason.VideoDisabled)
+					: this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
+			}
 		}
 	};
 
@@ -2026,6 +2074,9 @@ export class View
 		this.visible = true;
 
 		this.eventEmitter.emit(EventName.onShow);
+
+		// We specifically disable the face improve feature to improve call quality.
+		this.disableFaceImprove();
 	};
 
 	hide()
@@ -2095,7 +2146,7 @@ export class View
 			speakerId: this.speakerId,
 			allowHdVideo: Hardware.preferHdQuality,
 			faceImproveEnabled: Util.isDesktop() && DesktopApi.isDesktop() && DesktopApi.getCameraSmoothingStatus(),
-			allowFaceImprove: Util.isDesktop() && DesktopApi.isDesktop() && DesktopApi.getApiVersion() > 64,
+			allowFaceImprove: false,
 			allowBackground: BackgroundDialog.isAvailable() && this.isIntranetOrExtranet,
 			allowMask: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
 			allowAdvancedSettings: typeof (BXIM) !== 'undefined' && this.isIntranetOrExtranet,
@@ -2858,7 +2909,7 @@ export class View
 			props: {className: "bx-messenger-videocall"},
 			children: [
 				this.elements.wrap = Dom.create("div", {
-					props: {className: "bx-messenger-videocall-wrap" + (this.withBlur ? ' with-blur' : '')},
+					props: {className: "bx-messenger-videocall-wrap"},
 					children: [
 						this.elements.container = Dom.create("div", {
 							props: {className: "bx-messenger-videocall-inner"},
@@ -2871,10 +2922,10 @@ export class View
 									}
 								}),
 								this.elements.pageNavigatorLeft = Dom.create("div", {
-									props: {className: "bx-messenger-videocall-page-navigator left" + (this.withBlur ? ' with-blur' : '')},
+									props: {className: "bx-messenger-videocall-page-navigator left"},
 									children: [
 										this.elements.pageNavigatorLeftCounter = Dom.create("div", {
-											props: {className: "bx-messenger-videocall-page-navigator-counter left" + (this.withBlur ? ' with-blur' : '')},
+											props: {className: "bx-messenger-videocall-page-navigator-counter left"},
 											html: (this.currentPage - 1) + '&nbsp;/&nbsp;' + this.pagesCount
 										}),
 										Dom.create("div", {
@@ -2886,10 +2937,10 @@ export class View
 									}
 								}),
 								this.elements.pageNavigatorRight = Dom.create("div", {
-									props: {className: "bx-messenger-videocall-page-navigator right" + (this.withBlur ? ' with-blur' : '')},
+									props: {className: "bx-messenger-videocall-page-navigator right"},
 									children: [
 										this.elements.pageNavigatorRightCounter = Dom.create("div", {
-											props: {className: "bx-messenger-videocall-page-navigator-counter right" + (this.withBlur ? ' with-blur' : '')},
+											props: {className: "bx-messenger-videocall-page-navigator-counter right"},
 											html: (this.currentPage + 1) + '&nbsp;/&nbsp;' + this.pagesCount
 										}),
 										Dom.create("div", {
@@ -2998,8 +3049,7 @@ export class View
 						})
 					],
 					events: {
-						mouseenter: this.scrollUserListUp.bind(this),
-						mouseleave: this.stopScroll.bind(this)
+						click: this._onTopPageNavigatorClick.bind(this)
 					}
 				}),
 				this.elements.ear.bottom = Dom.create("div", {
@@ -3010,8 +3060,7 @@ export class View
 						})
 					],
 					events: {
-						mouseenter: this.scrollUserListDown.bind(this),
-						mouseleave: this.stopScroll.bind(this)
+						click: this._onBottomPageNavigatorClick.bind(this)
 					}
 				})
 			]
@@ -3028,7 +3077,7 @@ export class View
 		});
 
 		this.elements.userList.addButton = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-user-add" + (this.withBlur ? ' with-blur' : '')},
+			props: {className: "bx-messenger-videocall-user-add"},
 			children: [
 				Dom.create("div", {
 					props: {className: "bx-messenger-videocall-user-add-inner"}
@@ -3070,10 +3119,13 @@ export class View
 
 	toggleSubscribingVideoInRenderUserList(participantIds, showVideo)
 	{
-		this.eventEmitter.emit(EventName.onToggleSubscribe, {
-			participantIds: participantIds,
-			showVideo: showVideo
-		});
+		if (!!participantIds.length)
+		{
+			this.eventEmitter.emit(EventName.onToggleSubscribe, {
+				participantIds: participantIds,
+				showVideo: showVideo
+			});
+		}
 	}
 
 	getOrderingRules()
@@ -3387,6 +3439,19 @@ export class View
 		}
 	};
 
+	renderAddUserButtonInList()
+	{
+		const showAdd = this.showAddUserButtonInList && this.layout == Layouts.Centered && this.uiState === UiState.Connected && !this.isButtonBlocked("add") && this.getConnectedUserCount() < this.userLimit - 1 && !this.isFullScreen && this.elements.userList.addButton;
+
+		if (showAdd)
+		{
+			this.elements.userList.container.appendChild(this.elements.userList.addButton);
+			return;
+		}
+
+		Dom.remove(this.elements.userList.addButton);
+	};
+
 	renderUserList(pageChange)
 	{
 		clearTimeout(this.rerenderTimeout);
@@ -3425,7 +3490,7 @@ export class View
 			videoDisabledProceed: false,
 		};
 
-		if (this.layout == Layouts.Grid && this.pagesCount > 1)
+		if ((this.layout === Layouts.Grid || this.layout === Layouts.Centered) && this.pagesCount > 1)
 		{
 			skipUsers = (this.currentPage - 1) * this.usersPerPage;
 		}
@@ -3621,7 +3686,7 @@ export class View
 				}
 			}
 
-			if (userActive && this.layout == Layouts.Grid && this.usersPerPage > 0 && renderedUsers >= this.usersPerPage)
+			if (userActive && (this.layout === Layouts.Grid || this.layout === Layouts.Centered) && this.usersPerPage > 0 && renderedUsers >= this.usersPerPage)
 			{
 				// skip users on following pages
 				userActive = false;
@@ -3712,15 +3777,7 @@ export class View
 		}
 		this.applyIncomingVideoConstraints();
 
-		const showAdd = this.layout == Layouts.Centered && userCount > 0 /*&& !this.isFullScreen*/ && this.uiState === UiState.Connected && !this.isButtonBlocked("add") && this.getConnectedUserCount() < this.userLimit - 1;
-		if (showAdd && !this.isFullScreen && this.elements.userList.addButton)
-		{
-			this.elements.userList.container.appendChild(this.elements.userList.addButton);
-		}
-		else
-		{
-			Dom.remove(this.elements.userList.addButton);
-		}
+		this.renderAddUserButtonInList();
 
 		this.elements.root.classList.toggle("bx-messenger-videocall-user-list-empty", (this.elements.userList.container.childElementCount === 0));
 		this.localUser.updatePanelDeferred();
@@ -4265,7 +4322,7 @@ export class View
 			const buttonWidth = button.elements.root ? button.elements.root.getBoundingClientRect().width : 0;
 			totalButtonWidth += buttonWidth;
 		}
-		console.log('this.elements.panel.scrollWidth - totalButtonWidth - 32', this.elements.panel.scrollWidth - totalButtonWidth - 32);
+
 		return this.elements.panel.scrollWidth - totalButtonWidth - 32;
 	};
 
@@ -4323,10 +4380,16 @@ export class View
 			}
 			return;
 		}
-		if (this.layout == Layouts.Grid && this.size == Size.Full)
+		/* if (this.layout == Layouts.Grid && this.size == Size.Full)
+		{
+			this.recalculatePages();
+		} */
+
+		if ((this.layout == Layouts.Grid || this.layout == Layouts.Centered) && this.size == Size.Full)
 		{
 			this.recalculatePages();
 		}
+
 		this.renderUserList();
 
 		if (this.layout == Layouts.Centered)
@@ -4429,6 +4492,10 @@ export class View
 		{
 			this.buttons.participantsMobile.setCount(this.getConnectedUserCount(true));
 		}
+
+
+
+		this.renderAddUserButtonInList();
 	};
 
 	updateUserData(userData)
@@ -4524,9 +4591,8 @@ export class View
 	toggleTopEar()
 	{
 		if (
-			this.layout !== Layouts.Grid
-			&& this.elements.userList.container.scrollHeight > this.elements.userList.container.offsetHeight
-			&& this.elements.userList.container.scrollTop > 0
+			this.layout !== Layouts.Grid &&
+			this.pagesCount > 1
 		)
 		{
 			this.elements.ear.top.classList.add("active");
@@ -4540,8 +4606,8 @@ export class View
 	toggleBottomEar()
 	{
 		if (
-			this.layout !== Layouts.Grid
-			&& (this.elements.userList.container.offsetHeight + this.elements.userList.container.scrollTop) < this.elements.userList.container.scrollHeight
+			this.layout !== Layouts.Grid &&
+			this.pagesCount > 1
 		)
 		{
 			this.elements.ear.bottom.classList.add("active");
@@ -4738,7 +4804,7 @@ export class View
 		{
 			document.documentElement.style.setProperty('--view-height', window.innerHeight + 'px');
 		}
-		if (this.layout == Layouts.Grid)
+		if (this.layout == Layouts.Grid || this.layout == Layouts.Centered)
 		{
 			this.updateUserList();
 		}
@@ -5040,7 +5106,8 @@ export class View
 
 		this.eventEmitter.emit(EventName.onUserClick, {
 			userId: userId,
-			stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream
+			stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream,
+			layout: this.layout,
 		});
 	};
 
@@ -5302,6 +5369,20 @@ export class View
 	{
 		this.eventEmitter.emit(EventName.onChangeFaceImprove, e.data);
 	};
+
+	disableFaceImprove()
+	{
+		if (
+			Util.isDesktop()
+			&& DesktopApi.isDesktop()
+			&& DesktopApi.getCameraSmoothingStatus()
+		)
+		{
+			this.eventEmitter.emit(EventName.onChangeFaceImprove, {
+				faceImproveEnabled: false
+			});
+		}
+	}
 
 	_onSpeakerSelected(e)
 	{
@@ -5610,6 +5691,18 @@ export class View
 		this.setCurrentPage(this.currentPage + 1)
 	};
 
+	_onTopPageNavigatorClick(e)
+	{
+		e.stopPropagation();
+		this.setCurrentPage(this.currentPage !== 1 ? this.currentPage - 1 : this.pagesCount);
+	};
+
+	_onBottomPageNavigatorClick(e)
+	{
+		e.stopPropagation();
+		this.setCurrentPage(this.currentPage !== this.pagesCount ? this.currentPage + 1 : 1);
+	};
+
 	setMaxWidth(maxWidth)
 	{
 		if (this.maxWidth !== maxWidth)
@@ -5700,6 +5793,8 @@ export class View
 		window.removeEventListener("orientationchange", this._onOrientationChangeHandler);
 		window.removeEventListener("keydown", this._onKeyDownHandler);
 		window.removeEventListener("keyup", this._onKeyUpHandler);
+
+		document.removeEventListener('mousemove', this.onMouseMoveHandler);
 		this.resizeObserver.disconnect();
 		this.resizeObserver = null;
 		if (this.intersectionObserver)

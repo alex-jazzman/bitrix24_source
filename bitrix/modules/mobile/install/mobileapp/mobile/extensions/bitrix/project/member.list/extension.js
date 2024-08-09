@@ -3,6 +3,7 @@
 
 	const AppTheme = require('apptheme');
 	const colorUtils = require('utils/color');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const platform = Application.getPlatform();
 	const caches = new Map();
 

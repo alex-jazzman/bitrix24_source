@@ -1,4 +1,7 @@
 declare interface MessengerCoreInitializeOptions
 {
-    localStorageEnable: boolean;
+	localStorage: {
+		enable: boolean,
+		readOnly: boolean,
+	},
 }

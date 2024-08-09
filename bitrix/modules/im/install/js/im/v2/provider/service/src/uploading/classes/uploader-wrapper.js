@@ -94,7 +94,6 @@ export class UploaderWrapper extends EventEmitter
 				},
 				[UploaderEvent.UPLOAD_COMPLETE]: (event) => {
 					this.emit(UploaderWrapper.events.onUploadComplete, { uploaderId });
-					this.#uploaderRegistry[uploaderId].destroy({ removeFilesFromServer: false });
 				},
 			},
 		});
@@ -104,6 +103,11 @@ export class UploaderWrapper extends EventEmitter
 	{
 		this.#uploaderRegistry[uploaderId].setAutoUpload(true);
 		this.#uploaderRegistry[uploaderId].start();
+	}
+
+	destroyUploader(uploaderId: string)
+	{
+		this.#uploaderRegistry[uploaderId].destroy({ removeFilesFromServer: false });
 	}
 
 	addFiles(tasks: MessageWithFile[]): UploaderFile[]

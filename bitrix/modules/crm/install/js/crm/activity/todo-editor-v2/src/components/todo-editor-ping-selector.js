@@ -1,8 +1,11 @@
-import { CompactIcons, ItemSelector } from 'crm.field.item-selector';
+import { CompactIcons, PingSelector, PingSelectorEvents } from 'crm.field.ping-selector';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { hint } from 'ui.vue3.directives.hint';
+import { Events } from './todo-editor';
 
 export const TodoEditorPingSelector = {
 	directives: { hint },
+	emits: ['onChange'],
 	props: {
 		valuesList: {
 			type: Array,
@@ -12,6 +15,9 @@ export const TodoEditorPingSelector = {
 		selectedValues: {
 			type: Array,
 			default: [],
+		},
+		deadline: {
+			type: Date,
 		},
 	},
 
@@ -31,6 +37,20 @@ export const TodoEditorPingSelector = {
 	},
 
 	methods: {
+		onPingSelectorValueChange(): void
+		{
+			this.$emit('onChange');
+		},
+
+		onDeadlineChange(event: BaseEvent): void
+		{
+			const { deadline } = event.getData();
+			if (deadline)
+			{
+				this.itemSelector?.setDeadline(deadline);
+			}
+		},
+
 		getValue(): Array
 		{
 			if (this.itemSelector)
@@ -43,22 +63,27 @@ export const TodoEditorPingSelector = {
 
 		setValue(values: Array): void
 		{
-			if (this.itemSelector)
-			{
-				this.itemSelector.setValue(values);
-			}
+			this.itemSelector?.setValue(values);
 		},
 	},
 
 	mounted(): void
 	{
-		this.itemSelector = new ItemSelector({
+		this.itemSelector = new PingSelector({
 			target: this.$refs.container,
 			valuesList: this.valuesList,
 			selectedValues: this.selectedValues,
-			compactMode: true,
 			icon: CompactIcons.BELL,
+			deadline: this.deadline,
 		});
+
+		EventEmitter.subscribe(
+			this.itemSelector,
+			PingSelectorEvents.EVENT_PINGSELECTOR_VALUE_CHANGE,
+			this.onPingSelectorValueChange,
+		);
+
+		this.$Bitrix.eventEmitter.subscribe(Events.EVENT_DEADLINE_CHANGE, this.onDeadlineChange);
 	},
 
 	template: '<div style="width: 100%;"><div ref="container" v-hint="hint"></div></div>',

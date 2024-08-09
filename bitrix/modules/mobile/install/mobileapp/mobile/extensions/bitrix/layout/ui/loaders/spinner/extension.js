@@ -55,7 +55,7 @@ jn.define('layout/ui/loaders/spinner', (require, exports, module) => {
 
 	SpinnerLoader.propTypes = {
 		size: PropTypes.number,
-		design: PropTypes.object,
+		design: PropTypes.instanceOf(SpinnerDesign),
 	};
 
 	module.exports = { SpinnerLoader, SpinnerDesign };

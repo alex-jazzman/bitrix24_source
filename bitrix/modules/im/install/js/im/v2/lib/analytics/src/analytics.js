@@ -16,6 +16,8 @@ import type { ImModelChat } from 'im.v2.model';
 
 type DialogId = string;
 
+const CUSTOM_CHAT_TYPE = 'custom';
+
 export class Analytics
 {
 	#createdChats: Set<DialogId> = new Set();
@@ -159,17 +161,6 @@ export class Analytics
 	onStartCreateNewChat(type: $Values<typeof ChatType>)
 	{
 		const currentLayout = Core.getStore().getters['application/getLayout'].name;
-		const tabs = [
-			Layout.chat.name,
-			Layout.channel.name,
-			Layout.notification.name,
-			Layout.copilot.name,
-		];
-
-		if (!tabs.includes(currentLayout))
-		{
-			return;
-		}
 
 		sendData({
 			tool: AnalyticsTool.im,
@@ -194,7 +185,9 @@ export class Analytics
 			return;
 		}
 
-		if (dialog.type === ChatType.copilot)
+		const chatType = this.#getChatType(dialog);
+
+		if (chatType === ChatType.copilot)
 		{
 			this.onOpenCopilotChat(dialog.dialogId);
 		}
@@ -204,17 +197,18 @@ export class Analytics
 
 		const params = {
 			tool: AnalyticsTool.im,
-			category: this.#getCategoryByChatType(dialog.type),
+			category: this.#getCategoryByChatType(chatType),
 			event: AnalyticsEvent.openExisting,
-			type: dialog.type,
+			type: chatType,
 			c_section: `${currentLayout}_tab`,
 			p3: `isMember_${isMember}`,
 			p5: `chatId_${dialog.chatId}`,
 		};
 
-		if (dialog.type === ChatType.comment)
+		if (chatType === ChatType.comment)
 		{
-			params.p1 = `chatType_${dialog.type}`;
+			const parentChat = Core.getStore().getters['chats/getByChatId'](dialog.parentChatId);
+			params.p1 = `chatType_${parentChat.type}`;
 			params.p4 = `parentChatId_${dialog.parentChatId}`;
 		}
 
@@ -237,5 +231,10 @@ export class Analytics
 			default:
 				return AnalyticsCategory.chat;
 		}
+	}
+
+	#getChatType(chat: ImModelChat): $Values<typeof ChatType>
+	{
+		return ChatType[chat.type] ?? CUSTOM_CHAT_TYPE;
 	}
 }

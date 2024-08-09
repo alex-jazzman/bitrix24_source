@@ -142,6 +142,7 @@
 	--ui-icon-set__path_crown-2: url('/bitrix/js/ui/icon-set/main/images/crown-2.svg');
 	--ui-icon-set__path_crown-1: url('/bitrix/js/ui/icon-set/main/images/crown-1.svg');
 	--ui-icon-set__path_home: url('/bitrix/js/ui/icon-set/main/images/home.svg');
+	--ui-icon-set__path_home-page: url('/bitrix/js/ui/icon-set/main/images/home-page.svg');
 	--ui-icon-set__path_send: url('/bitrix/js/ui/icon-set/main/images/send.svg');
 	--ui-icon-set__path_suitcase: url('/bitrix/js/ui/icon-set/main/images/suitcase.svg');
 	--ui-icon-set__path_spanner: url('/bitrix/js/ui/icon-set/main/images/spanner.svg');
@@ -1032,6 +1033,10 @@
 
 .ui-icon-set.--home {
 	--ui-icon-set__icon-path: var(--ui-icon-set__path_home);
+}
+
+.ui-icon-set.--home-page {
+	--ui-icon-set__icon-path: var(--ui-icon-set__path_home-page);
 }
 
 .ui-icon-set.--send {

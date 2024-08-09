@@ -9,6 +9,7 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 	const { Type } = require('type');
 	const { pen } = require('assets/common');
 	const { inAppUrl } = require('in-app-url');
+	const { isOffline } = require('device/connection');
 
 	/**
 	 * @class EditableTextBlock
@@ -125,15 +126,19 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 
 			if (useBBCodeEditor)
 			{
-				bbCodeEditorParams.onSave = ({ bbcode, files }) => {
-					if (this.props.onSave)
-					{
-						this.props.onSave(bbcode, files);
-					}
-					this.textEditorLayout = null;
+				const editorParams = {
+					...bbCodeEditorParams,
+					readOnly: (!bbCodeEditorParams.readOnly && isOffline() ? true : bbCodeEditorParams.readOnly),
+					onSave: ({ bbcode, files }) => {
+						if (this.props.onSave)
+						{
+							this.props.onSave(bbcode, files);
+						}
+						this.textEditorLayout = null;
+					},
 				};
 
-				BBCodeTextEditor.edit(bbCodeEditorParams)
+				BBCodeTextEditor.edit(editorParams)
 					.then((layout) => {
 						this.textEditorLayout = layout;
 					})

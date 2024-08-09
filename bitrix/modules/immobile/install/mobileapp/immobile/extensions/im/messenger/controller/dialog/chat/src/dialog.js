@@ -43,6 +43,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		ComponentCode,
 		Setting,
 		Analytics,
+		MessageStatus,
 	} = require('im/messenger/const');
 
 	const { defaultUserIcon, ReactionAssets } = require('im/messenger/assets/common');
@@ -799,7 +800,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		isOpenChat()
 		{
-			return DialogHelper.createByDialogId(this.getDialogId())?.isOpenChat?.();
+			return DialogHelper.createByDialogId(this.getDialogId())?.isOpenChat;
 		}
 
 		/**
@@ -808,7 +809,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		isChannel(dialogData = this.getDialog())
 		{
-			return DialogHelper.createByModel(dialogData)?.isChannel?.();
+			return DialogHelper.createByModel(dialogData)?.isChannel;
 		}
 
 		/**
@@ -817,7 +818,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		isComment(dialogData = this.getDialog())
 		{
-			return DialogHelper.createByModel(dialogData)?.isComment?.();
+			return DialogHelper.createByModel(dialogData)?.isComment;
+		}
+
+		getDialogHelper()
+		{
+			return DialogHelper.createByDialogId(this.getDialogId());
 		}
 
 		isMuted()
@@ -1168,7 +1174,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return;
 			}
 
-			if (this.isChannel() && MessengerParams.get('COMPONENT_CODE', '') !== ComponentCode.imMessenger)
+			if (this.isChannel() && this.getDialogHelper()?.isCurrentUserGuest)
 			{
 				return;
 			}
@@ -1432,7 +1438,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				return true;
 			}
 
-			if (this.isChannel() && MessengerParams.getComponentCode() === ComponentCode.imChannelMessenger)
+			if (this.isChannel() && this.getDialogHelper()?.isCurrentUserGuest)
 			{
 				return true;
 			}
@@ -1720,7 +1726,10 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					const modelMessage = this.store.getters['messagesModel/getById'](messageId);
 					const descAttach = modelMessage?.params?.ATTACH[0]?.DESCRIPTION;
 					const text = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_COPY_LINK_TEXT');
-					DialogTextHelper.copyToClipboard({ text: descAttach }, text);
+					DialogTextHelper.copyToClipboard(
+						{ clipboardText: descAttach, notificationText: text },
+						this.view.ui,
+					);
 				}
 				catch (error)
 				{
@@ -2394,11 +2403,20 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					? Analytics.Category.channel
 					: (Analytics.Category[dialogData.type] || Analytics.Category.chat);
 
-				const type = dialogData?.type || Analytics.Type.chat;
+				const type = Analytics.Type[dialogData?.type] ?? Analytics.Type.custom;
 				const p3 = (dialogData.role === UserRole.guest || dialogData.role === UserRole.none)
 					? Analytics.P3.isMemberN : Analytics.P3.isMemberY;
-				const section = MessengerParams.get('COMPONENT_CODE') === ComponentCode.imChannelMessenger
-					? Analytics.Section.channelTab : Analytics.Section.chatTab;
+
+				let section = Analytics.Section.chatTab;
+				switch (MessengerParams.getComponentCode())
+				{
+					case ComponentCode.imChannelMessenger: section = Analytics.Section.channelTab;
+						break;
+					case ComponentCode.imCopilotMessenger: section = Analytics.Section.copilotTab;
+						break;
+					default: section = Analytics.Section.chatTab;
+				}
+
 				const element = this.isFromPush ? Analytics.Element.push : null;
 
 				const analytics = new AnalyticsEvent()
@@ -3395,11 +3413,44 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			return new Promise((resolve) => {
 				if (Type.isStringFilled(options.userCode))
 				{
-					WebDialog.getOpenlineDialogByUserCode(options.userCode).then((dialog) => {
-						options.dialogId = dialog.dialog_id;
-						WebDialog.open(options);
-					})
-						.catch((err) => logger.log('Dialog.openWebDialog.getOpenlineDialogByUserCode.catch:', err));
+					WebDialog.getOpenlineDialogByUserCode(options.userCode)
+						.then((dialog) => {
+							options.dialogId = dialog.dialog_id;
+							if (options.dialogId === 0 && Type.isStringFilled(options.fallbackUrl))
+							{
+								Application.openUrl(options.fallbackUrl);
+
+								return;
+							}
+
+							WebDialog.open(options);
+						})
+						.catch((err) => {
+							logger.log('Dialog.openWebDialog.getOpenlineDialogByUserCode.catch:', err);
+						})
+					;
+
+					return;
+				}
+
+				if (Type.isNumber(options.sessionId))
+				{
+					WebDialog.getOpenlineDialogBySessionId(options.sessionId)
+						.then((dialog) => {
+							options.dialogId = dialog.dialog_id;
+							if (options.dialogId === 0 && Type.isStringFilled(options.fallbackUrl))
+							{
+								Application.openUrl(options.fallbackUrl);
+
+								return;
+							}
+
+							WebDialog.open(options);
+						})
+						.catch((err) => {
+							logger.log('Dialog.openWebDialog.getOpenlineDialogBySessionId.catch:', err);
+						})
+					;
 
 					return;
 				}
@@ -3419,14 +3470,9 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			return WebDialog.getOpenDialogParams(dialogId, dialogTitleParams);
 		}
 
-		static getOpenLineParams(options = {})
+		static getOpenLineParams(options)
 		{
-			const {
-				userCode,
-				dialogTitleParams,
-			} = options;
-
-			return WebDialog.getOpenLineParams(userCode, dialogTitleParams);
+			return WebDialog.getOpenLineParams(options);
 		}
 
 		createAudioCall()
@@ -3532,6 +3578,12 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 				subTitleIcon = isManualSend ? SubTitleIconType.error : SubTitleIconType.wait;
 			}
 
+			let status = MessageStatus.received;
+			if (messageModel && Type.isBoolean(messageModel.viewedByOthers) && messageModel.viewedByOthers)
+			{
+				status = MessageStatus.delivered;
+			}
+
 			const recentItem = RecentConverter.fromPushToModel({
 				id: dialogId,
 				chat: recentModel ? recentModel.chat : this.getDialog(),
@@ -3541,6 +3593,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 					text: isMessageFile ? `[${BX.message('IM_F_FILE')}]` : messageModel.text,
 					date: new Date(),
 					subTitleIcon,
+					status,
 				},
 			});
 

@@ -1,7 +1,6 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,ui_buttons,ui_vue3,main_loader,calendar_sharing_interface,crm_messagesender,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditor,crm_activity_todoEditorV2,crm_tourManager,main_core_events,ui_designTokens,main_core,crm_zoom) {
+(function (exports,ui_notification,ui_iconSet_actions,ui_iconSet_main,ui_iconSet_social,ui_iconSet_api_core,crm_clientSelector,ui_buttons,ui_vue3,calendar_sharing_interface,crm_messagesender,main_loader,crm_template_editor,ui_entitySelector,ui_dialogs_messagebox,ui_sidepanel,main_popup,ui_tour,crm_activity_todoEditor,crm_activity_todoEditorV2,crm_tourManager,main_core_events,ui_designTokens,main_core,crm_zoom) {
 	'use strict';
 
 	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
@@ -9,8 +8,10 @@ this.BX.Crm = this.BX.Crm || {};
 	var _entityCategoryId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityCategoryId");
 	var _isReadonly = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReadonly");
 	var _menuBarContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menuBarContainer");
+	var _extras = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extras");
 	class Context {
 	  constructor(params) {
+	    var _params$extras;
 	    Object.defineProperty(this, _entityTypeId, {
 	      writable: true,
 	      value: null
@@ -31,11 +32,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    Object.defineProperty(this, _extras, {
+	      writable: true,
+	      value: {}
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = params.entityTypeId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId] = params.entityId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityCategoryId)[_entityCategoryId] = main_core.Type.isNumber(params.entityCategoryId) ? params.entityCategoryId : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isReadonly)[_isReadonly] = params.isReadonly;
 	    babelHelpers.classPrivateFieldLooseBase(this, _menuBarContainer)[_menuBarContainer] = params.menuBarContainer;
+	    babelHelpers.classPrivateFieldLooseBase(this, _extras)[_extras] = (_params$extras = params.extras) != null ? _params$extras : {};
 	  }
 	  getEntityTypeId() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId];
@@ -51,6 +57,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  getMenuBarContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _menuBarContainer)[_menuBarContainer];
+	  }
+	  getExtras() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _extras)[_extras];
 	  }
 	}
 
@@ -106,6 +115,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  getMenuBarContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _context)[_context].getMenuBarContainer();
+	  }
+	  getExtras() {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _context)[_context].getExtras();
 	  }
 	  getContainer() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _container)[_container];
@@ -405,17 +417,25 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.setFocused(true);
 	  }
 	  save() {
-	    let text = "";
+	    let text = '';
 	    const attachmentList = [];
+	    const attachmentAllowEditOptions = {};
 	    if (this._postForm) {
 	      text = this._postForm.oEditor.GetContent();
-	      this._postForm.eventNode.querySelectorAll('input[name="UF_CRM_COMMENT_FILES[]"]').forEach(function (input) {
-	        attachmentList.push(input.value);
-	      });
+	      this._postForm.eventNode.querySelectorAll('input[name="UF_CRM_COMMENT_FILES[]"]').forEach(input => attachmentList.push(input.value));
+	      if (main_core.Type.isArrayFilled(attachmentList)) {
+	        attachmentList.forEach(id => {
+	          const selectorName = `input[name="CRM_TIMELINE_DISK_ATTACHED_OBJECT_ALLOW_EDIT[${id}]"`;
+	          const selector = this._postForm.eventNode.querySelector(selectorName);
+	          if (selector) {
+	            attachmentAllowEditOptions[id] = selector.value;
+	          }
+	        });
+	      }
 	    } else {
 	      text = this._input.value;
 	    }
-	    if (text === "") {
+	    if (text === '') {
 	      if (!this.emptyCommentMessage) {
 	        this.emptyCommentMessage = new BX.PopupWindow('timeline_empty_new_comment_' + this.getEntityId(), this._saveButton, {
 	          content: BX.message('CRM_TIMELINE_EMPTY_COMMENT_MESSAGE'),
@@ -439,15 +459,19 @@ this.BX.Crm = this.BX.Crm || {};
 	      return;
 	    }
 	    this._isRequestRunning = this._isLocked = true;
-	    return main_core.ajax.runAction('crm.timeline.comment.add', {
-	      data: {
-	        fields: {
-	          ENTITY_ID: this.getEntityId(),
-	          ENTITY_TYPE_ID: this.getEntityTypeId(),
-	          COMMENT: text,
-	          ATTACHMENTS: attachmentList
-	        }
+	    const addedData = {
+	      fields: {
+	        ENTITY_ID: this.getEntityId(),
+	        ENTITY_TYPE_ID: this.getEntityTypeId(),
+	        COMMENT: text,
+	        ATTACHMENTS: attachmentList
 	      }
+	    };
+	    if (Object.keys(attachmentAllowEditOptions).length > 0) {
+	      addedData.CRM_TIMELINE_DISK_ATTACHED_OBJECT_ALLOW_EDIT = attachmentAllowEditOptions;
+	    }
+	    return main_core.ajax.runAction('crm.timeline.comment.add', {
+	      data: addedData
 	    }).then(result => {
 	      this.onSaveSuccess();
 	      return result;
@@ -457,8 +481,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  }
 	  cancel() {
-	    this._input.value = "";
-	    this._input.style.minHeight = "";
+	    this._input.value = '';
+	    this._input.style.minHeight = '';
 	    if (BX.type.isDomNode(this._editorContainer)) this._postForm.eventNode.style.display = 'none';
 	    this._input.style.display = 'block';
 	    this.setFocused(false);
@@ -531,15 +555,28 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	const ServicesConfig = new Map([['whatsappbyedna', {
-	  id: 'whatsappbyedna',
+	const ServicesConfig = new Map([['ru-whatsapp', {
+	  id: 'ru-whatsapp',
 	  connectorId: 'notifications',
 	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
 	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
 	  soonLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
 	  title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
+	  region: 'ru',
 	  commonClass: '--whatsapp',
-	  iconClass: ui_iconSet_api_core.Social.WHATSAPP
+	  iconClass: ui_iconSet_api_core.Social.WHATSAPP,
+	  checkServiceId: 'virtual_whatsapp'
+	}], ['whatsapp', {
+	  id: 'whatsapp',
+	  connectorId: 'notifications',
+	  connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
+	  inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
+	  soonLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
+	  title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
+	  region: '!ru',
+	  commonClass: '--whatsapp',
+	  iconClass: ui_iconSet_api_core.Social.WHATSAPP,
+	  checkServiceId: 'virtual_whatsapp'
 	}], ['telegrambot', {
 	  id: 'telegrambot',
 	  connectorId: 'telegrambot',
@@ -631,6 +668,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _showNotSelectedClientNotify = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotSelectedClientNotify");
 	var _showNotify = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotify");
 	var _setOpenLineItemIsSelected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setOpenLineItemIsSelected");
+	var _getServiceById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getServiceById");
 	var _restoreButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("restoreButton");
 	var _getChannelById = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getChannelById");
 	var _getLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLoader");
@@ -649,6 +687,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    Object.defineProperty(this, _restoreButton, {
 	      value: _restoreButton2
+	    });
+	    Object.defineProperty(this, _getServiceById, {
+	      value: _getServiceById2
 	    });
 	    Object.defineProperty(this, _setOpenLineItemIsSelected, {
 	      value: _setOpenLineItemIsSelected2
@@ -995,15 +1036,20 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	    this.showButtonLoader(code);
 	    const service = babelHelpers.classPrivateFieldLooseBase(this, _getServiceConfigByCode)[_getServiceConfigByCode](code);
+	    const {
+	      entityTypeId
+	    } = babelHelpers.classPrivateFieldLooseBase(this, _getOwnerEntity)[_getOwnerEntity]();
 	    const lineId = await crm_messagesender.ConditionChecker.checkAndGetLine({
 	      openLineCode: service.connectorId,
 	      senderType: this.getSenderType(),
-	      openLineItems: this.openLineItems
+	      openLineItems: this.openLineItems,
+	      serviceId: service.id,
+	      entityTypeId
 	    });
-	    if (lineId) {
-	      this.send(lineId, code);
-	    } else {
+	    if (lineId === null) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _restoreButton)[_restoreButton](code);
+	    } else {
+	      this.send(lineId, code);
 	    }
 	  }
 	  saveEntityEditor() {
@@ -1490,7 +1536,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  return service.iconColor;
 	}
 	function _isServiceSelected2(service) {
-	  return this.openLineItems && this.openLineItems[service.id] && this.openLineItems[service.id].selected;
+	  var _service$checkService, _this$openLineItems, _this$openLineItems$i;
+	  const id = (_service$checkService = service.checkServiceId) != null ? _service$checkService : service.id;
+	  return (_this$openLineItems = this.openLineItems) == null ? void 0 : (_this$openLineItems$i = _this$openLineItems[id]) == null ? void 0 : _this$openLineItems$i.selected;
 	}
 	function _getServiceConfigByCode2(code) {
 	  return ServicesConfig.get(code) || null;
@@ -1543,7 +1591,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	}
 	function _setOpenLineItemIsSelected2(code) {
-	  this.openLineItems[code].selected = true;
+	  var _service$checkService2;
+	  const service = babelHelpers.classPrivateFieldLooseBase(this, _getServiceById)[_getServiceById](code);
+	  this.openLineItems[(_service$checkService2 = service == null ? void 0 : service.checkServiceId) != null ? _service$checkService2 : code].selected = true;
+	}
+	function _getServiceById2(id) {
+	  var _find;
+	  return (_find = [...ServicesConfig.values()].find(item => item.id === id)) != null ? _find : null;
 	}
 	function _restoreButton2(code) {
 	  const oldButton = babelHelpers.classPrivateFieldLooseBase(this, _chatServiceButtons)[_chatServiceButtons].get(code);
@@ -4025,7 +4079,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  async isBitrix24Approved() {
 	    return await crm_messagesender.ConditionChecker.checkIsApproved({
-	      openLineCode: crm_messagesender.OpenLineCodes.notifications,
 	      senderType: crm_messagesender.Types.bitrix24
 	    });
 	  }
@@ -5738,7 +5791,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  _t9$2,
 	  _t10$2,
 	  _t11$2,
-	  _t12$2;
+	  _t12$2,
+	  _t13$1,
+	  _t14$1;
 	const ARTICLE_CODE_SEND_WITH_WHATSAPP = '20526810';
 
 	/** @memberof BX.Crm.Timeline.MenuBar */
@@ -5795,12 +5850,16 @@ this.BX.Crm = this.BX.Crm || {};
 	var _initTemplateSelectDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initTemplateSelectDialog");
 	var _preparePlaceholdersFromTemplate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("preparePlaceholdersFromTemplate");
 	var _getTemplateEditorText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getTemplateEditorText");
+	var _getFooterData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFooterData");
 	var _isTourAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isTourAvailable");
 	class Whatsapp extends Item {
 	  constructor(...args) {
 	    super(...args);
 	    Object.defineProperty(this, _isTourAvailable, {
 	      value: _isTourAvailable2
+	    });
+	    Object.defineProperty(this, _getFooterData, {
+	      value: _getFooterData2
 	    });
 	    Object.defineProperty(this, _getTemplateEditorText, {
 	      value: _getTemplateEditorText2
@@ -6502,6 +6561,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  };
+	  const footerData = babelHelpers.classPrivateFieldLooseBase(this, _getFooterData)[_getFooterData]();
+	  if (main_core.Type.isArrayFilled(footerData)) {
+	    defaultOptions.footer = footerData;
+	  }
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectTplDlg)[_selectTplDlg] = new ui_entitySelector.Dialog({
 	    ...defaultOptions,
 	    ...additionalOptions
@@ -6535,6 +6598,49 @@ this.BX.Crm = this.BX.Crm || {};
 	    text = babelHelpers.classPrivateFieldLooseBase(this, _template)[_template].PREVIEW;
 	  }
 	  return text;
+	}
+	function _getFooterData2() {
+	  const showForm = () => {
+	    BX.UI.Feedback.Form.open({
+	      id: 'b24_crm_timeline_whatsapp_template_suggest_form',
+	      defaultForm: {
+	        id: 760,
+	        lang: 'en',
+	        sec: 'culzcq'
+	      },
+	      forms: [{
+	        zones: ['ru', 'by', 'kz'],
+	        id: 758,
+	        lang: 'ru',
+	        sec: 'jyafqa'
+	      }, {
+	        zones: ['de'],
+	        id: 764,
+	        lang: 'de',
+	        sec: '9h74xf'
+	      }, {
+	        zones: ['com.br'],
+	        id: 766,
+	        lang: 'com.br',
+	        sec: 'ddkhcc'
+	      }, {
+	        zones: ['es'],
+	        id: 762,
+	        lang: 'es',
+	        sec: '6ni833'
+	      }, {
+	        zones: ['en'],
+	        id: 760,
+	        lang: 'en',
+	        sec: 'culzcq'
+	      }]
+	    });
+	  };
+	  return [main_core.Tag.render(_t13$1 || (_t13$1 = _$5`<span style="width: 100%;"></span>`)), main_core.Tag.render(_t14$1 || (_t14$1 = _$5`
+				<span onclick="${0}" class="ui-selector-footer-link">
+					${0}
+				</span>
+			`), showForm, main_core.Loc.getMessage('CRM_TIMELINE_SMS_WHATSAPP_SELECTOR_FOOTER_BUTTON'))];
 	}
 	function _isTourAvailable2() {
 	  return main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _unViewedTourList)[_unViewedTourList]) && !BX.Crm.EntityEditor.getDefault().isNew();
@@ -6630,7 +6736,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  initializeSettings() {
 	    babelHelpers.classPrivateFieldLooseBase(this, _isTourViewed)[_isTourViewed] = this.getSetting('isTourViewed');
 	  }
-	  onSaveButtonClick(e) {
+	  onSaveButtonClick() {
 	    if (this.isLocked() || main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled')) {
 	      return;
 	    }
@@ -6649,13 +6755,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (main_core.Type.isArray(response.errors) && response.errors.length > 0) {
 	        return false;
 	      }
-	      this.cancel();
+	      this.cancel(false);
 	      this.emitFinishEditEvent();
 	      return true;
 	    });
 	  }
-	  cancel() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].clearValue();
+	  cancel(sendAnalytics = true) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor].cancel({
+	      sendAnalytics
+	    });
 	    if (!babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
 	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _saveButton)[_saveButton], 'ui-btn-disabled');
 	    }
@@ -6717,6 +6825,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  };
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _useTodoEditorV)[_useTodoEditorV]) {
 	    params.calendarSettings = this.getSetting('calendarSettings');
+	    const extras = this.getExtras();
+	    if (main_core.Type.isPlainObject(extras.analytics)) {
+	      params.analytics = {
+	        section: extras.analytics.c_section,
+	        subSection: extras.analytics.c_sub_section
+	      };
+	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _toDoEditor)[_toDoEditor] = new crm_activity_todoEditorV2.TodoEditorV2(params);
 	  } else {
 	    params.events.onChangeDescription = babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this);
@@ -7523,6 +7638,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _isReadonly$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isReadonly");
 	var _container$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("container");
 	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
+	var _extras$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("extras");
 	var _selectedItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedItemId");
 	var _menu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
 	var _onItemFinishEdit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onItemFinishEdit");
@@ -7531,7 +7647,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _selectMenuItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectMenuItem");
 	class MenuBar {
 	  constructor(_id, params) {
-	    var _params$menuId;
+	    var _params$extras, _params$menuId;
 	    Object.defineProperty(this, _selectMenuItem, {
 	      value: _selectMenuItem2
 	    });
@@ -7565,6 +7681,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: {}
 	    });
+	    Object.defineProperty(this, _extras$1, {
+	      writable: true,
+	      value: {}
+	    });
 	    Object.defineProperty(this, _selectedItemId, {
 	      writable: true,
 	      value: null
@@ -7577,6 +7697,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1] = params.entityId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityCategoryId$1)[_entityCategoryId$1] = params.entityCategoryId;
 	    babelHelpers.classPrivateFieldLooseBase(this, _isReadonly$1)[_isReadonly$1] = params.isReadonly;
+	    babelHelpers.classPrivateFieldLooseBase(this, _extras$1)[_extras$1] = (_params$extras = params.extras) != null ? _params$extras : {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1] = document.getElementById(params.containerId);
 	    const menuId = (_params$menuId = params.menuId) != null ? _params$menuId : (BX.CrmEntityType.resolveName(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]) + '_menu').toLowerCase();
 	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu] = BX.Main.interfaceButtonsManager.getById(menuId);
@@ -7585,7 +7706,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      entityId: babelHelpers.classPrivateFieldLooseBase(this, _entityId$1)[_entityId$1],
 	      entityCategoryId: babelHelpers.classPrivateFieldLooseBase(this, _entityCategoryId$1)[_entityCategoryId$1],
 	      isReadonly: babelHelpers.classPrivateFieldLooseBase(this, _isReadonly$1)[_isReadonly$1],
-	      menuBarContainer: babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1]
+	      menuBarContainer: babelHelpers.classPrivateFieldLooseBase(this, _container$1)[_container$1],
+	      extras: babelHelpers.classPrivateFieldLooseBase(this, _extras$1)[_extras$1]
 	    });
 	    params.items.forEach(itemData => {
 	      var _itemData$settings;
@@ -7720,5 +7842,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.MenuBar = MenuBar;
 	exports.Item = Item;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.UI,BX.Vue3,BX,BX.Calendar.Sharing,BX.Crm.MessageSender,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Crm.Activity,BX.Crm,BX.Event,BX,BX,BX.Crm));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.UI.IconSet,BX.Crm,BX.UI,BX.Vue3,BX.Calendar.Sharing,BX.Crm.MessageSender,BX,BX.Crm.Template,BX.UI.EntitySelector,BX.UI.Dialogs,BX,BX.Main,BX.UI.Tour,BX.Crm.Activity,BX.Crm.Activity,BX.Crm,BX.Event,BX,BX,BX.Crm));
 //# sourceMappingURL=toolbar.bundle.js.map

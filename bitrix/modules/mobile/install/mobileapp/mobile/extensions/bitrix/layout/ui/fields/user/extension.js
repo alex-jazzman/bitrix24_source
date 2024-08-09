@@ -33,7 +33,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 		{
 			super(props);
 
-			if (this.isReadOnly() && this.isMultiple() && this.isIconsMode() && !this.isEmpty())
+			if (this.isReadOnly() && this.isMultiple() && !this.isEmpty() && this.canOpenUserList())
 			{
 				this.customContentClickHandler = () => {
 					UserListManager.open({
@@ -50,6 +50,11 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 			}
 
 			this.state.showAll = false;
+		}
+
+		canOpenUserList()
+		{
+			return BX.prop.getBoolean(this.getConfig(), 'canOpenUserList', false);
 		}
 
 		prepareUserTitle(userTitle)

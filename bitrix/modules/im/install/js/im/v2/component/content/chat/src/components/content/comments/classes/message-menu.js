@@ -1,4 +1,8 @@
+import { Loc } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+
 import { MessageMenu } from 'im.v2.component.message-list';
+import { EventType } from 'im.v2.const';
 
 import type { MenuItem } from 'im.v2.lib.menu';
 import type { ImModelChat } from 'im.v2.model';
@@ -7,6 +11,19 @@ export class CommentsMessageMenu extends MessageMenu
 {
 	getMenuItems(): MenuItem[]
 	{
+		if (this.isPostMessage())
+		{
+			return [
+				this.getCopyItem(),
+				this.getCopyFileItem(),
+				this.getDelimiter(),
+				this.getDownloadFileItem(),
+				this.getSaveToDisk(),
+				this.getDelimiter(),
+				this.getOpenInChannelItem(),
+			];
+		}
+
 		return [
 			this.getReplyItem(),
 			this.getCopyItem(),
@@ -27,44 +44,16 @@ export class CommentsMessageMenu extends MessageMenu
 		];
 	}
 
-	getReplyItem(): ?MenuItem
+	getOpenInChannelItem(): MenuItem
 	{
-		if (this.isPostMessage())
-		{
-			return null;
-		}
+		return {
+			text: Loc.getMessage('IM_CONTENT_COMMENTS_MESSAGE_MENU_OPEN_IN_CHANNEL'),
+			onclick: () => {
+				EventEmitter.emit(EventType.dialog.closeComments);
 
-		return super.getReplyItem();
-	}
-
-	getEditItem(): ?MenuItem
-	{
-		if (this.isPostMessage())
-		{
-			return null;
-		}
-
-		return super.getEditItem();
-	}
-
-	getDeleteItem(): ?MenuItem
-	{
-		if (this.isPostMessage())
-		{
-			return null;
-		}
-
-		return super.getDeleteItem();
-	}
-
-	getCreateItem(): ?MenuItem
-	{
-		if (this.isPostMessage())
-		{
-			return null;
-		}
-
-		return super.getCreateItem();
+				this.menuInstance.close();
+			},
+		};
 	}
 
 	isPostMessage(): boolean

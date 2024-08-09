@@ -695,7 +695,7 @@
 				params = tag.split('|');
 
 				const { Entry } = jn.require('tasks/entry');
-				Entry.openTask({ id: params[2] });
+				Entry.openTask({ id: params[2] }, { shouldOpenComments: params[1] === 'COMMENT' });
 			}
 			else if (tag.slice(0, 12) == 'SONET|EVENT|')
 			{

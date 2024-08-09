@@ -34,6 +34,7 @@ export const EventType = Object.freeze({
 		insertMention: 'IM.Textarea:insertMention',
 		insertForward: 'IM.Textarea:insertForward',
 		sendMessage: 'IM.Textarea:sendMessage',
+		onAfterSendMessage: 'IM.Textarea:onAfterSendMessage',
 		openUploadPreview: 'IM.Textarea:openUploadPreview',
 	},
 	uploader:
@@ -95,9 +96,5 @@ export const EventType = Object.freeze({
 	request:
 	{
 		onAuthError: 'IM.request:onAuthError',
-	},
-	channel:
-	{
-		onChannelJoin: 'IM.Channel:onChannelJoin',
 	},
 });

@@ -4,10 +4,10 @@
 jn.define('tasks/layout/fields/task/theme/air', (require, exports, module) => {
 	const { withTheme } = require('layout/ui/fields/theme');
 	const { FieldWrapper } = require('layout/ui/fields/theme/air/elements/field-wrapper');
-	const { Content } = require('layout/ui/fields/entity-selector/theme/air/src/content');
+	const { Content } = require('layout/ui/fields/entity-selector/theme/air');
 
 	const { Entity } = require('tasks/layout/fields/task/theme/air/src/entity');
-	const { TaskFieldClass } = require('tasks/layout/task/fields/tasks');
+	const { TaskFieldClass } = require('tasks/layout/task/fields/task');
 
 	/**
 	 * @param  {TaskField} field - instance of the SubTasks.

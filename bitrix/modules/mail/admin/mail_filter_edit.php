@@ -42,7 +42,7 @@ if($filter_type!="")
 }
 
 $ID=intval($ID);
-if($REQUEST_METHOD=="POST" && ($save <> '' || $apply <> '') && $MOD_RIGHT>="W" && check_bitrix_sessid())
+if($_SERVER['REQUEST_METHOD']=="POST" && ($save <> '' || $apply <> '') && $MOD_RIGHT>="W" && check_bitrix_sessid())
 {
 	$arFields = Array(
 		"ACTIVE"			=> $ACTIVE,

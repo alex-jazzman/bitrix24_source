@@ -23,6 +23,24 @@ export interface Permissions {
 	canAssignPermissionToStages: boolean;
 }
 
+export interface EntitySelectorValue {
+	id: string,
+	entityId: string,
+	tabs: string,
+	title: string,
+}
+
+export interface AssignTransitionValues {
+	identifier: PermissionEntityIdentifier,
+	values: Transitions
+}
+
+interface Transition {
+	key: string,
+}
+
+type Transitions = Transition[];
+
 function initState()
 {
 	return {
@@ -48,7 +66,10 @@ function initState()
 		touched: {
 			originalAttributes: {},
 			touchedAttributes: {},
+			originalTransitions: {},
+			touchedTransitions: {},
 		},
+		transitions: {},
 	};
 }
 

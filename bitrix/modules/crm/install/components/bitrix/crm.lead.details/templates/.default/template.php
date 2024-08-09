@@ -120,6 +120,9 @@ $APPLICATION->IncludeComponent(
 		'CONVERSION_SCHEME' => $arResult['CONVERSION_SCHEME'] ?? null,
 		'CONVERSION_TYPE_ID' => $arResult['CONVERSION_TYPE_ID'] ?? LeadConversionType::GENERAL,
 		'CONVERTER_ID' => $arResult['CONVERTER_ID'] ?? null,
+		'EXTRAS' => [
+			'ANALYTICS' => $arParams['EXTRAS']['ANALYTICS'] ?? [],
+		],
 	]
 );
 

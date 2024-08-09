@@ -150,6 +150,8 @@ export default {
 			action.execute(this);
 
 			this.initialTimestamp = this.currentTimestamp;
+
+			this.$emit('onChange', this.initialTimestamp);
 		},
 		getDatetimeConverter(): DatetimeConverter
 		{

@@ -339,12 +339,11 @@ include('InAppNotifier');
 		redrawMenu()
 		{
 			let popupPoints = [
-				{
+				this.makeItemChecked({
 					title: BX.message('USER_DISK_MENU_SORT_DATE_CREATE'),
 					sectionCode: 'sort',
 					id: 'UPDATE_TIME',
-					iconUrl: UserDisk.pathToIcon('check.png'),
-				},
+				}, true),
 				{ title: BX.message('USER_DISK_MENU_SORT_DATE_UPDATE'), sectionCode: 'sort', id: 'CREATE_TIME' },
 				{ title: BX.message('USER_DISK_MENU_SORT_TYPE'), sectionCode: 'sort', id: 'TYPE' },
 				{ title: BX.message('USER_DISK_MENU_SORT_NAME'), sectionCode: 'sort', id: 'NAME' },
@@ -384,22 +383,14 @@ include('InAppNotifier');
 			popupPoints = popupPoints.map((item) => {
 				if (item.sectionCode === 'sort')
 				{
-					if (sortSettings.field == item.id)
-					{
-						item.iconUrl = UserDisk.pathToIcon('check.png');
-					}
-					else
-					{
-						item.iconUrl = '';
-					}
+					item = this.makeItemChecked(item, (sortSettings.field == item.id))
 				}
 
 				if (item.id === 'MIXSORT')
 				{
-					item.iconUrl = this.mixedSort() ? UserDisk.pathToIcon('check.png') : UserDisk.pathToIcon(
-						'noimage.png',
-					);
+					item = this.makeItemChecked(item, this.mixedSort())
 				}
+
 
 				return item;
 			});
@@ -407,9 +398,8 @@ include('InAppNotifier');
 			this.popupMenu.setData(
 				popupPoints,
 				[
-					{ id: 'usermenu', title: '' },
 					{ id: 'sort', title: BX.message('USER_DISK_MENU_SORT') },
-					{ id: 'mix_sort', title: ' ' }],
+					{ id: 'mix_sort', title: '' }],
 				(event, item) => {
 					if (event === 'onItemSelected')
 					{
@@ -439,6 +429,19 @@ include('InAppNotifier');
 					}
 				},
 			);
+		}
+
+		makeItemChecked(item, checked = true) {
+			if (Application.getApiVersion() >= 54)
+			{
+				item.checked = checked
+			}
+			else
+			{
+				item.iconUrl = checked ? UserDisk.pathToIcon('check.png') : ''
+			}
+
+			return item
 		}
 
 		resolvedFolderId()

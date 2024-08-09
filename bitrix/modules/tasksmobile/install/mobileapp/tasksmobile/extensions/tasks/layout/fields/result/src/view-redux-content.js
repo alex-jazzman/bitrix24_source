@@ -7,11 +7,12 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 	const { Loc } = require('loc');
 	const { Indent, Color } = require('tokens');
 	const { Chip } = require('ui-system/blocks/chips/chip');
-	const { Text4, Text5 } = require('ui-system/typography/text');
+	const { Text5 } = require('ui-system/typography/text');
 	const { ButtonSize, ButtonDesign, Button } = require('ui-system/form/buttons/button');
 	const { ReduxAvatar } = require('layout/ui/user/avatar');
-	const { getFormattedTaskResultDate } = require('tasks/layout/fields/result/date-formatter');
 	const { ActionId, ActionMeta } = require('tasks/layout/action-menu/actions');
+	const { Date } = require('tasks/layout/fields/result/date');
+	const { dayMonth, longDate, shortTime } = require('utils/date/formats');
 
 	const { connect } = require('statemanager/redux/connect');
 	const { selectById: selectTaskById, selectActions } = require('tasks/statemanager/redux/slices/tasks');
@@ -230,12 +231,22 @@ jn.define('tasks/layout/fields/result/view-redux-content', (require, exports, mo
 						size: 20,
 						testId: `${this.#testId}_ANOTHER_RESULTS_CHIP_${result.id}_AVATAR`,
 					}),
-					Text4({
+					new Date({
 						style: {
 							marginLeft: Indent.XS.toNumber(),
+							color: (isSelected ? Color.accentMainPrimary.toHex() : Color.base3.toHex()),
 						},
-						color: (isSelected ? Color.accentMainPrimary : Color.base3),
-						text: getFormattedTaskResultDate(result.createdAt),
+						defaultFormat: (moment) => Loc.getMessage(
+							'TASKS_FIELDS_RESULT_DATE_FORMAT',
+							{
+								'#DATE#': moment.format(moment.inThisYear ? dayMonth() : longDate()),
+								'#TIME#': moment.format(shortTime),
+							},
+						),
+						timeSeparator: '',
+						showTime: true,
+						useTimeAgo: true,
+						timestamp: result.createdAt,
 						testId: `${this.#testId}_ANOTHER_RESULTS_CHIP_${result.id}_DATE`,
 					}),
 				],

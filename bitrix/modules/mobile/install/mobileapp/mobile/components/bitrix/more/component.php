@@ -43,25 +43,10 @@ $canInviteUsers = (
 	&& Invitation::canCurrentUserInvite()
 );
 
-$registerUrl = (
-	$canInviteUsers
-		? Invitation::getRegisterUrl()
-		: ''
-);
-
-$registerAdminConfirm = (
-	$canInviteUsers
-		? Invitation::getRegisterAdminConfirm()
-		: false
-);
-
+$registerUrl = $canInviteUsers ? Invitation::getRegisterUrl() : '';
+$registerAdminConfirm = $canInviteUsers ? Invitation::getRegisterAdminConfirm() : false;
 $disableRegisterAdminConfirm = !Invitation::canListDelete();
-
-$registerSharingMessage = (
-	$canInviteUsers
-		? Invitation::getRegisterSharingMessage()
-		: ''
-);
+$registerSharingMessage = $canInviteUsers ? Invitation::getRegisterSharingMessage() : '';
 
 $rootStructureSectionId = Invitation::getRootStructureSectionId();
 $userId = $USER->getId();
@@ -100,12 +85,11 @@ $cache_id = 'more_menu_'
 					'isTerminalAvailable' => (int)(
 						Loader::includeModule('crm')
 						&& AvailabilityManager::getInstance()->isAvailable()
-					)
+					),
 				])
-			)
+			),
 		]
-	)
-;
+	);
 $cache_dir = '/bx/mobile_component/more/user_' . $userId;
 $obCache = new CPHPCache;
 
@@ -129,7 +113,10 @@ else
 		$imageFile = CFile::GetFileArray($user["PERSONAL_PHOTO"]);
 		if ($imageFile !== false)
 		{
-			$avatar = CFile::ResizeImageGet($imageFile, ["width" => 150, "height" => 150], BX_RESIZE_IMAGE_EXACT, false, false, false, 50);
+			$avatar = CFile::ResizeImageGet($imageFile, [
+				"width" => 150,
+				"height" => 150,
+			], BX_RESIZE_IMAGE_EXACT, false, false, false, 50);
 			$arResult["user"]["avatar"] = $avatar["src"];
 		}
 	}
@@ -181,13 +168,12 @@ foreach ($event->getResults() as $eventResult)
 }
 
 $isAvaMenuAvailable = \Bitrix\MobileApp\Mobile::getInstance()::getApiVersion() >= 54;
-
 if ($isAvaMenuAvailable)
 {
 	$arResult["menu"][] = [
 		"title" => "",
 		"sort" => 0,
-		"items" => []
+		"items" => [],
 	];
 }
 else
@@ -208,20 +194,20 @@ else
 				"styles" => [
 					"subtitle" => [
 						"image" => [
-							"useTemplateRender" => true
+							"useTemplateRender" => true,
 						],
 						"additionalImage" => [
 							"name" => $canEditProfile ? "pencil" : "",
-							"useTemplateRender" => true
-						]
+							"useTemplateRender" => true,
+						],
 					],
 					"title" => [
 						"font" => [
 							"fontStyle" => "medium",
 							"size" => 19,
-							"color" => "#333333"
-						]
-					]
+							"color" => "#333333",
+						],
+					],
 				],
 				"useLetterImage" => true,
 				"subtitle" => $canEditProfile ? GetMessage("MENU_EDIT_PROFILE") : GetMessage("MENU_VIEW_PROFILE"),
@@ -284,25 +270,26 @@ else
 					});
 
 JS
+					,
 
-				]
-			]
-		]
+				],
+			],
+		],
 	];
 }
 
 $counterList = [];
 $isStressLevelTurnOn = Option::get('intranet', 'stresslevel_available', 'Y') == 'Y';
-$showStressItemCondition =(!Loader::includeModule('bitrix24') || \Bitrix\Bitrix24\Release::isAvailable('stresslevel')) && $isStressLevelTurnOn ;
+$showStressItemCondition = (!Loader::includeModule('bitrix24') || \Bitrix\Bitrix24\Release::isAvailable('stresslevel')) && $isStressLevelTurnOn;
 $arResult["releaseStressLevel"] = $showStressItemCondition;
-if(Loader::includeModule('socialnetwork') && $showStressItemCondition)
+if (Loader::includeModule('socialnetwork') && $showStressItemCondition)
 {
 	$favoriteSection = &$arResult["menu"][0];
 	$colors = [
 		"green" => "#9DCF00",
 		"yellow" => "#F7A700",
 		"red" => "#FF5752",
-		"unknown" => "#C8CBCE"
+		"unknown" => "#C8CBCE",
 	];
 
 	$stressValue = false;
@@ -314,33 +301,32 @@ if(Loader::includeModule('socialnetwork') && $showStressItemCondition)
 		"min_api_version" => 31,
 		"imageUrl" => $this->getPath() . "/images/favorite/icon-stress.png?1",
 		"color" => "#55D0E0",
-		"hidden"=> false,
+		"hidden" => false,
 		"attrs" => [
 			"id" => "stress",
-			"onclick"=>""
-		]
+			"onclick" => "",
+		],
 
 	];
 
-
 	$data = UserWelltory::getHistoricData([
 		'userId' => $USER->getId(),
-		'limit' => 1
+		'limit' => 1,
 	]);
 
 	if (!empty($data))
 	{
 		$result = $data[0];
 		$initStressResult = \Bitrix\MobileApp\Janative\Utils::jsonEncode([
-			"value"=>$result["value"],
-			"type"=>$result["type"],
-			"comment"=>$result["comment"],
-			"token"=>$result["hash"],
-			"date"=>$result["date"]
+			"value" => $result["value"],
+			"type" => $result["type"],
+			"comment" => $result["comment"],
+			"token" => $result["hash"],
+			"date" => $result["date"],
 		]);
 
-		$stressItem["styles"] = ["tag"=>["backgroundColor"=>$colors[$result["type"]] , "cornerRadius"=>15]];
-		$stressItem["tag"] = $result["value"]."%";
+		$stressItem["styles"] = ["tag" => ["backgroundColor" => $colors[$result["type"]], "cornerRadius" => 15]];
+		$stressItem["tag"] = $result["value"] . "%";
 		$stressItem["initData"] = $initStressResult;
 		$onclick = <<<JS
 			if(typeof window.version  === "undefined" || window.version < 1.0)
@@ -364,7 +350,7 @@ JS;
 	}
 	else
 	{
-		$stressItem["styles"] = ["tag"=>["backgroundColor"=>"#3BC8F5" , "cornerRadius"=>5]];
+		$stressItem["styles"] = ["tag" => ["backgroundColor" => "#3BC8F5", "cornerRadius" => 5]];
 		$stressItem["tag"] = Loc::getMessage("MEASURE_STRESS");
 		$onclick = <<<JS
 			if(typeof window.version  === "undefined" || window.version < 1.0)
@@ -388,7 +374,7 @@ JS;
 
 usort($arResult["menu"], 'sortMenu');
 
-usort($arResult['spotlights'], function($item1, $item2) {
+usort($arResult['spotlights'], function ($item1, $item2) {
 	$delayCount1 = (int)($item1['delayCount'] ?? 0);
 	$delayCount2 = (int)($item2['delayCount'] ?? 0);
 
@@ -443,11 +429,13 @@ array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 
 				if (empty($item["styles"]["title"]["font"]))
 				{
-					$item["styles"]["title"] = ["font" => [
-						"fontStyle" => "medium",
-						"size" => 16,
-						"color" => "#333333"
-					]];
+					$item["styles"]["title"] = [
+						"font" => [
+							"fontStyle" => "medium",
+							"size" => 16,
+							"color" => "#333333",
+						],
+					];
 				}
 
 				if ($type != "userinfo")
@@ -468,8 +456,8 @@ $arResult = array_merge($arResult, [
 		"registerAdminConfirm" => $registerAdminConfirm,
 		"disableRegisterAdminConfirm" => $disableRegisterAdminConfirm,
 		"registerSharingMessage" => $registerSharingMessage,
-		"rootStructureSectionId" => $rootStructureSectionId
-	]
+		"rootStructureSectionId" => $rootStructureSectionId,
+	],
 ]);
 
 unset($obCache);

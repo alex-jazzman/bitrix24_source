@@ -2,8 +2,7 @@
  * @module layout/ui/fields/user/theme/elements/user-icon
  */
 jn.define('layout/ui/fields/user/theme/elements/user-icon', (require, exports, module) => {
-	const { Avatar } = require('layout/ui/user/avatar');
-	const { EmptyAvatar } = require('layout/ui/user/empty-avatar');
+	const { ReduxAvatar } = require('layout/ui/user/avatar');
 
 	/**
 	 * @param {UserField} field
@@ -25,25 +24,11 @@ jn.define('layout/ui/fields/user/theme/elements/user-icon', (require, exports, m
 	}) => {
 		const onClick = field.openEntity.bind(field, entity.id);
 
-		if (!entity.imageUrl)
-		{
-			return EmptyAvatar({
-				id: entity.id,
-				name: entity.title,
-				size,
-				onClick: canOpenEntity && onClick,
-				testId: `${field.testId}_USER_${entity.id}_LETTERS_ICON`,
-				additionalStyles,
-			});
-		}
-
-		return Avatar({
+		return ReduxAvatar({
 			id: entity.id,
-			name: entity.title,
 			size,
-			onClick: canOpenEntity && onClick,
 			testId: `${field.testId}_USER_${entity.id}_ICON`,
-			image: entity.imageUrl || entity.avatar || field.getDefaultAvatar(),
+			onClick: canOpenEntity && onClick,
 			additionalStyles: {
 				wrapper: additionalStyles,
 			},

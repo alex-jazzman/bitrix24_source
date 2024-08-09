@@ -26,6 +26,7 @@ this.BX.Lists = this.BX.Lists || {};
 	  FIELDS: 'fields'
 	});
 	var _steps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("steps");
+	var _name = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("name");
 	var _description = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("description");
 	var _duration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("duration");
 	var _signedParameters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedParameters");
@@ -38,6 +39,8 @@ this.BX.Lists = this.BX.Lists || {};
 	var _canUserTuningStates = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canUserTuningStates");
 	var _isAdminLoaded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdminLoaded");
 	var _isLoading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLoading");
+	var _stepsEnterTime = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stepsEnterTime");
+	var _setCurrentStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCurrentStep");
 	var _fillSteps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillSteps");
 	var _toggleButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleButtons");
 	var _isFirstStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFirstStep");
@@ -73,8 +76,16 @@ this.BX.Lists = this.BX.Lists || {};
 	var _enableAllButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableAllButtons");
 	var _addNotTunedConstantsHint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addNotTunedConstantsHint");
 	var _removeNotTunedConstantsHint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeNotTunedConstantsHint");
+	var _sendCreationAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendCreationAnalytics");
+	var _getAnalyticsSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalyticsSection");
 	class ElementCreationGuide {
 	  constructor(_props) {
+	    Object.defineProperty(this, _getAnalyticsSection, {
+	      value: _getAnalyticsSection2
+	    });
+	    Object.defineProperty(this, _sendCreationAnalytics, {
+	      value: _sendCreationAnalytics2
+	    });
 	    Object.defineProperty(this, _removeNotTunedConstantsHint, {
 	      value: _removeNotTunedConstantsHint2
 	    });
@@ -180,9 +191,16 @@ this.BX.Lists = this.BX.Lists || {};
 	    Object.defineProperty(this, _fillSteps, {
 	      value: _fillSteps2
 	    });
+	    Object.defineProperty(this, _setCurrentStep, {
+	      value: _setCurrentStep2
+	    });
 	    Object.defineProperty(this, _steps, {
 	      writable: true,
 	      value: []
+	    });
+	    Object.defineProperty(this, _name, {
+	      writable: true,
+	      value: void 0
 	    });
 	    Object.defineProperty(this, _description, {
 	      writable: true,
@@ -202,7 +220,7 @@ this.BX.Lists = this.BX.Lists || {};
 	    });
 	    Object.defineProperty(this, _currentStep, {
 	      writable: true,
-	      value: STEPS.DESCRIPTION
+	      value: void 0
 	    });
 	    Object.defineProperty(this, _startTime, {
 	      writable: true,
@@ -232,10 +250,15 @@ this.BX.Lists = this.BX.Lists || {};
 	      writable: true,
 	      value: false
 	    });
+	    Object.defineProperty(this, _stepsEnterTime, {
+	      writable: true,
+	      value: new Map()
+	    });
 	    if (!main_core.Type.isStringFilled(_props.signedParameters)) {
 	      throw new TypeError('signedParameters must be filled string');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters] = _props.signedParameters;
+	    babelHelpers.classPrivateFieldLooseBase(this, _name)[_name] = main_core.Type.isString(_props.name) ? _props.name : '';
 	    babelHelpers.classPrivateFieldLooseBase(this, _description)[_description] = main_core.Type.isString(_props.description) ? _props.description : '';
 	    if (main_core.Type.isInteger(_props.duration) && _props.duration >= 0) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration] = _props.duration;
@@ -245,6 +268,7 @@ this.BX.Lists = this.BX.Lists || {};
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _canUserTuningStates)[_canUserTuningStates] = main_core.Type.isBoolean(_props.canUserTuningStates) ? _props.canUserTuningStates : false;
 	    babelHelpers.classPrivateFieldLooseBase(this, _startTime)[_startTime] = Math.round(Date.now() / 1000);
+	    babelHelpers.classPrivateFieldLooseBase(this, _setCurrentStep)[_setCurrentStep](STEPS.DESCRIPTION);
 	    babelHelpers.classPrivateFieldLooseBase(this, _fillSteps)[_fillSteps](_props);
 	    babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
 	    babelHelpers.classPrivateFieldLooseBase(this, _renderProgressBar)[_renderProgressBar]();
@@ -266,7 +290,7 @@ this.BX.Lists = this.BX.Lists || {};
 	      if (babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.DESCRIPTION) {
 	        main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _durationNode)[_durationNode], '--hidden');
 	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] = nextStep.step;
+	      babelHelpers.classPrivateFieldLooseBase(this, _setCurrentStep)[_setCurrentStep](nextStep.step);
 	      babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
 	    };
 	    if (currentStep.step === STEPS.CONSTANTS && babelHelpers.classPrivateFieldLooseBase(this, _canUserTuningStates)[_canUserTuningStates]) {
@@ -294,6 +318,7 @@ this.BX.Lists = this.BX.Lists || {};
 	      if (main_core.Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window)) {
 	        BX.SidePanel.Instance.getSliderByWindow(window).close(false);
 	      }
+	      babelHelpers.classPrivateFieldLooseBase(this, _setCurrentStep)[_setCurrentStep]();
 	      return;
 	    }
 	    const currentStepIndex = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].findIndex(step => step.step === babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep]);
@@ -307,7 +332,7 @@ this.BX.Lists = this.BX.Lists || {};
 	    if (previousStep.step === STEPS.DESCRIPTION) {
 	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _durationNode)[_durationNode], '--hidden');
 	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] = previousStep.step;
+	    babelHelpers.classPrivateFieldLooseBase(this, _setCurrentStep)[_setCurrentStep](previousStep.step);
 	    babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
 	  }
 	  async create() {
@@ -334,8 +359,10 @@ this.BX.Lists = this.BX.Lists || {};
 	        BX.SidePanel.Instance.getSliderByWindow(window).close(false);
 	        babelHelpers.classPrivateFieldLooseBase(this, _showSuccessNotification)[_showSuccessNotification](data.elementUrl);
 	      }
-	    }).catch(() => {
+	      babelHelpers.classPrivateFieldLooseBase(this, _sendCreationAnalytics)[_sendCreationAnalytics]();
+	    }).catch(error => {
 	      babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
+	      babelHelpers.classPrivateFieldLooseBase(this, _sendCreationAnalytics)[_sendCreationAnalytics](error);
 	    }).finally(babelHelpers.classPrivateFieldLooseBase(this, _finishLoading)[_finishLoading].bind(this));
 	  }
 	  saveConstants(templateId, button) {
@@ -362,6 +389,28 @@ this.BX.Lists = this.BX.Lists || {};
 	      babelHelpers.classPrivateFieldLooseBase(this, _finishLoading)[_finishLoading]();
 	      babelHelpers.classPrivateFieldLooseBase(this, _removeWaitFromButton)[_removeWaitFromButton](button);
 	    });
+	  }
+	}
+	function _setCurrentStep2(step) {
+	  babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] = step;
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.DESCRIPTION) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _stepsEnterTime)[_stepsEnterTime].set(STEPS.DESCRIPTION, Date.now());
+	  } else {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _stepsEnterTime)[_stepsEnterTime].has(STEPS.DESCRIPTION)) {
+	      const diffTime = Date.now() - babelHelpers.classPrivateFieldLooseBase(this, _stepsEnterTime)[_stepsEnterTime].get(STEPS.DESCRIPTION);
+	      main_core.Runtime.loadExtension('ui.analytics').then(({
+	        sendData
+	      }) => {
+	        sendData({
+	          tool: 'automation',
+	          category: 'bizproc_operations',
+	          event: 'process_instructions_read',
+	          p1: babelHelpers.classPrivateFieldLooseBase(this, _name)[_name],
+	          p4: Math.round(diffTime / 1000)
+	        });
+	      }).catch(() => {});
+	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _stepsEnterTime)[_stepsEnterTime].delete(STEPS.DESCRIPTION);
 	  }
 	}
 	function _fillSteps2(props) {
@@ -744,7 +793,7 @@ this.BX.Lists = this.BX.Lists || {};
 	      if (Array.isArray(errors)) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _showErrors)[_showErrors](errors);
 	      }
-	      reject();
+	      reject(new Error(errors[0].message));
 	    });
 	  });
 	}
@@ -834,6 +883,24 @@ this.BX.Lists = this.BX.Lists || {};
 	  if (main_core.Type.isDomNode(button)) {
 	    main_core.Dom.attr(button, 'title', null);
 	  }
+	}
+	function _sendCreationAnalytics2(error) {
+	  main_core.Runtime.loadExtension('ui.analytics').then(({
+	    sendData
+	  }) => {
+	    sendData({
+	      tool: 'automation',
+	      category: 'bizproc_operations',
+	      event: 'process_run',
+	      type: 'run',
+	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticsSection)[_getAnalyticsSection](),
+	      p1: babelHelpers.classPrivateFieldLooseBase(this, _name)[_name],
+	      status: error ? 'error' : 'success'
+	    });
+	  }).catch(() => {});
+	}
+	function _getAnalyticsSection2() {
+	  return new main_core.Uri(window.location.href).getQueryParam('analyticsSection') || 'bizproc';
 	}
 	namespace.ElementCreationGuide = ElementCreationGuide;
 

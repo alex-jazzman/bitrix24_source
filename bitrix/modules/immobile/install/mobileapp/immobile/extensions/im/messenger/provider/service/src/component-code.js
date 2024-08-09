@@ -60,12 +60,12 @@ jn.define('im/messenger/provider/service/component-code', (require, exports, mod
 				return fallbackCode;
 			}
 
-			if (dialogHelper.isCopilot())
+			if (dialogHelper.isCopilot)
 			{
 				return ComponentCode.imCopilotMessenger;
 			}
 
-			if (dialogHelper.isOpenChannel() && dialogHelper.isCurrentUserGuest())
+			if (dialogHelper.isOpenChannel && dialogHelper.isCurrentUserGuest)
 			{
 				return ComponentCode.imChannelMessenger;
 			}

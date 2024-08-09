@@ -2,7 +2,7 @@
  * @module tasks/layout/fields/related-task
  */
 jn.define('tasks/layout/fields/related-task', (require, exports, module) => {
-	const { TaskFieldClass } = require('tasks/layout/task/fields/tasks');
+	const { TaskFieldClass } = require('tasks/layout/task/fields/task');
 	const { openTaskCreateForm } = require('tasks/layout/task/create/opener');
 	const store = require('statemanager/redux/store');
 	const { usersSelector } = require('statemanager/redux/slices/users');

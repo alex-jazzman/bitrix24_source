@@ -11,11 +11,6 @@ this.BX.Crm = this.BX.Crm || {};
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-
-	/**
-	 * @event onSave
-	 * @event onClose
-	 */
 	var _entityId = /*#__PURE__*/new WeakMap();
 	var _entityTypeId = /*#__PURE__*/new WeakMap();
 	var _currentUser = /*#__PURE__*/new WeakMap();
@@ -28,6 +23,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _popupToDoEditorContainer = /*#__PURE__*/new WeakMap();
 	var _todoEditor = /*#__PURE__*/new WeakMap();
 	var _eventEmitter = /*#__PURE__*/new WeakMap();
+	var _context = /*#__PURE__*/new WeakMap();
 	var _createToDoEditor = /*#__PURE__*/new WeakSet();
 	var _prepareAndShowPopup = /*#__PURE__*/new WeakSet();
 	var _fetchNearActivity = /*#__PURE__*/new WeakSet();
@@ -40,6 +36,10 @@ this.BX.Crm = this.BX.Crm || {};
 	var _onEditorSaveHotkeyPressed = /*#__PURE__*/new WeakSet();
 	var _onChangeUploaderContainerSize = /*#__PURE__*/new WeakSet();
 	var _onFocus = /*#__PURE__*/new WeakSet();
+	/**
+	 * @event onSave
+	 * @event onClose
+	 */
 	let AddingPopup = /*#__PURE__*/function () {
 	  function AddingPopup(entityTypeId, entityId, currentUser, settings, _params) {
 	    var _params$useTodoEditor;
@@ -104,6 +104,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    _classPrivateFieldInitSpec(this, _context, {
+	      writable: true,
+	      value: {}
+	    });
 	    babelHelpers.classPrivateFieldSet(this, _entityId, main_core.Text.toInteger(entityId));
 	    babelHelpers.classPrivateFieldSet(this, _entityTypeId, main_core.Text.toInteger(entityTypeId));
 	    babelHelpers.classPrivateFieldSet(this, _currentUser, currentUser);
@@ -127,6 +131,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	    babelHelpers.classPrivateFieldSet(this, _useTodoEditorV, (_params$useTodoEditor = _params.useTodoEditorV2) !== null && _params$useTodoEditor !== void 0 ? _params$useTodoEditor : null);
+	    if (main_core.Type.isPlainObject(_params.context)) {
+	      babelHelpers.classPrivateFieldSet(this, _context, _params.context);
+	    }
 	  }
 	  babelHelpers.createClass(AddingPopup, [{
 	    key: "show",
@@ -213,9 +220,17 @@ this.BX.Crm = this.BX.Crm || {};
 	    popupMode: true
 	  };
 	  if (babelHelpers.classPrivateFieldGet(this, _useTodoEditorV)) {
+	    var _babelHelpers$classPr, _babelHelpers$classPr2, _analytics$c_section, _analytics$c_sub_sect;
+	    const analytics = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _context)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.analytics) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : {};
+	    const section = (_analytics$c_section = analytics.c_section) !== null && _analytics$c_section !== void 0 ? _analytics$c_section : null;
+	    const subSection = (_analytics$c_sub_sect = analytics.c_sub_section) !== null && _analytics$c_sub_sect !== void 0 ? _analytics$c_sub_sect : null;
 	    params.calendarSettings = babelHelpers.classPrivateFieldGet(this, _calendarSettings);
 	    params.colorSettings = babelHelpers.classPrivateFieldGet(this, _colorSettings);
 	    params.defaultDescription = '';
+	    params.analytics = {
+	      section,
+	      subSection
+	    };
 	    babelHelpers.classPrivateFieldSet(this, _todoEditor, new crm_activity_todoEditorV2.TodoEditorV2(params));
 	  } else {
 	    params.events.onChangeDescription = _classPrivateMethodGet(this, _onChangeEditorDescription, _onChangeEditorDescription2).bind(this);

@@ -21,8 +21,6 @@ export class FloorRequest extends EventEmitter
 		this._hideTimeout = null;
 		this._onUserModelChangedHandler = this._onUserModelChanged.bind(this);
 		this.userModel.subscribe("changed", this._onUserModelChangedHandler);
-
-		this.withBlur = Utils.platform.isMac();
 	};
 
 	static create(config)
@@ -61,7 +59,7 @@ export class FloorRequest extends EventEmitter
 		}
 
 		this.elements.root = Dom.create("div", {
-			props: {className: "bx-call-view-floor-request-notification" + (this.withBlur ? ' with-blur' : '')},
+			props: {className: "bx-call-view-floor-request-notification"},
 			children: [
 				Dom.create("div", {
 					props: {className: "bx-call-view-floor-request-notification-icon-container"},

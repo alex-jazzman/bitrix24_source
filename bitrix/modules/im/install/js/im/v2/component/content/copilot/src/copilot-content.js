@@ -12,7 +12,7 @@ import { Analytics } from 'im.v2.lib.analytics';
 
 import { ChatHeader } from './components/chat-header';
 import { EmptyState } from './components/empty-state';
-import { CopilotTextarea } from './components/textarea/textarea';
+import { CopilotTextarea } from './components/textarea';
 import { CopilotDialog } from './components/dialog';
 
 import './css/copilot-content.css';

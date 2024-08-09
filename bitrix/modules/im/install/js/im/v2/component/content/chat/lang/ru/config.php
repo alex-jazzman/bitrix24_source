@@ -42,6 +42,8 @@ $MESS["IM_CONTENT_CHAT_HEADER_OPEN_DYNAMIC_ELEMENT"] = "Открыть элем�
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_INVITE_POPUP_TITLE"] = "Добавить участников";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_SEARCH"] = "Поиск по чату";
 $MESS["IM_CONTENT_CHAT_HEADER_OPEN_SIDEBAR"] = "Сайдбар";
-
 $MESS["IM_CONTENT_COMMENTS_HEADER_TITLE"] = "Комментарии";
 $MESS["IM_CONTENT_COMMENTS_FOLLOW_TOGGLE_TEXT"] = "Следить";
+$MESS["IM_CONTENT_COMMENTS_MESSAGE_MENU_OPEN_IN_CHANNEL"] = "Посмотреть в канале";
+$MESS["IM_CONTENT_CHANNEL_TEXTAREA_PLACEHOLDER"] = "Добавьте публикацию";
+

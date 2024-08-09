@@ -53,6 +53,11 @@ export default class Item
 		return this.#context.getMenuBarContainer();
 	}
 
+	getExtras(): Object
+	{
+		return this.#context.getExtras();
+	}
+
 	getContainer(): ?HTMLElement
 	{
 		return this.#container;

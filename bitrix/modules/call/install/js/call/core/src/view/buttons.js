@@ -47,8 +47,7 @@ export class SimpleButton
 	{
 		this.class = config.class;
 		this.backgroundClass = BX.prop.getString(config, "backgroundClass", "");
-		this.withBlur = Utils.platform.isMac();
-		this.backgroundClass = "bx-messenger-videocall-panel-icon-background" + (this.backgroundClass ? " " : "") + this.backgroundClass + (this.withBlur ? ' with-blur' : '');
+		this.backgroundClass = "bx-messenger-videocall-panel-icon-background" + (this.backgroundClass ? " " : "") + this.backgroundClass;
 		this.blocked = config.blocked === true;
 
 		this.text = BX.prop.getString(config, "text", "");
@@ -224,8 +223,6 @@ export class DeviceButton
 			onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
 			onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing),
 		}
-
-		this.withBlur = Utils.platform.isMac();
 	};
 
 	render()
@@ -268,7 +265,7 @@ export class DeviceButton
 		});
 
 		this.elements.arrow = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-panel-item-with-arrow-right" + (this.withBlur ? ' with-blur' : '')},
+			props: {className: "bx-messenger-videocall-panel-item-with-arrow-right"},
 			children: [
 				Dom.create("div", {
 					props: {className: "bx-messenger-videocall-panel-item-with-arrow-right-icon"},
@@ -407,7 +404,7 @@ export class DeviceButton
 
 	getIconContainerClass()
 	{
-		return "bx-messenger-videocall-panel-item-with-arrow-icon-container" + (this.withBlur ? ' with-blur' : '') + " bx-messenger-videocall-panel-item-with-arrow-icon-container-" + this.class + (this.enabled ? "" : "-off");
+		return "bx-messenger-videocall-panel-item-with-arrow-icon-container" + " bx-messenger-videocall-panel-item-with-arrow-icon-container-" + this.class + (this.enabled ? "" : "-off");
 	};
 
 	enable()
@@ -586,7 +583,6 @@ export class TopButton
 	{
 		this.iconClass = BX.prop.getString(config, "iconClass", "");
 		this.text = BX.prop.getString(config, "text", "");
-		this.withBlur = Utils.platform.isMac();
 
 		this.callbacks = {
 			onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
@@ -598,7 +594,7 @@ export class TopButton
 	render()
 	{
 		return Dom.create("div", {
-			props: {className: "bx-messenger-videocall-top-button" + (this.withBlur ? ' with-blur' : '')},
+			props: {className: "bx-messenger-videocall-top-button"},
 			children: [
 				Dom.create("div", {
 					props: {className: "bx-messenger-videocall-top-button-icon " + this.iconClass}
@@ -665,7 +661,6 @@ export class ParticipantsButton
 		this.count = BX.prop.getInteger(config, "count", 0);
 		this.foldButtonState = BX.prop.getString(config, "foldButtonState", ParticipantsButton.FoldButtonState.Hidden);
 		this.allowAdding = BX.prop.getBoolean(config, "allowAdding", false);
-		this.withBlur = Utils.platform.isMac();
 
 		this.elements = {
 			root: null,
@@ -696,7 +691,7 @@ export class ParticipantsButton
 			return this.elements.root;
 		}
 		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-top-participants" + (this.withBlur ? ' with-blur' : '')},
+			props: {className: "bx-messenger-videocall-top-participants"},
 			children: [
 				this.elements.leftContainer = Dom.create("div", {
 					props: {className: "bx-messenger-videocall-top-participants-inner left" + (this.foldButtonState != ParticipantsButton.FoldButtonState.Hidden ? " active" : "")},
@@ -864,8 +859,6 @@ export class RecordStatusButton
 			onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
 			onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing),
 		}
-
-		this.withBlur = Utils.platform.isMac();
 	};
 
 	render()
@@ -876,7 +869,7 @@ export class RecordStatusButton
 		}
 
 		this.elements.root = Dom.create("div", {
-			props: {className: "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + " " + (this.recordState.userId == this.userId ? '' : 'record-user-viewer') + (this.withBlur ? ' with-blur' : '')},
+			props: {className: "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + " " + (this.recordState.userId == this.userId ? '' : 'record-user-viewer')},
 			children: [
 				Dom.create("div", {
 					props: {className: "bx-messenger-videocall-top-recordstatus-status"},
@@ -891,7 +884,7 @@ export class RecordStatusButton
 					children: [
 						this.elements.timeText = Dom.create("span", {
 							props: {className: "bx-messenger-videocall-top-recordstatus-time-text"},
-							text: this.getTimeText()
+							text: Util.getRecordTimeText(this.recordState)
 						}),
 					]
 				}),
@@ -924,54 +917,6 @@ export class RecordStatusButton
 		return this.elements.root;
 	};
 
-	getTimeText()
-	{
-		if (this.recordState.state === View.RecordState.Stopped)
-		{
-			return '';
-		}
-
-		const nowDate = new Date();
-		let startDate = new Date(this.recordState.date.start);
-		if (startDate.getTime() < nowDate.getDate())
-		{
-			startDate = nowDate;
-		}
-
-		const pauseTime = this.recordState.date.pause
-			.map((element) =>
-			{
-				const finish = element.finish ? new Date(element.finish) : nowDate;
-				return finish - new Date(element.start);
-			})
-			.reduce((sum, element) => sum + element, 0);
-
-		let totalTime = nowDate - startDate - pauseTime;
-		if (totalTime <= 0)
-		{
-			totalTime = 0;
-		}
-
-		let second = Math.floor(totalTime / 1000);
-
-		let hour = Math.floor(second / 60 / 60);
-		if (hour > 0)
-		{
-			second -= hour * 60 * 60;
-		}
-
-		const minute = Math.floor(second / 60);
-		if (minute > 0)
-		{
-			second -= minute * 60;
-		}
-
-		return (hour > 0 ? hour + ':' : '')
-			+ (hour > 0 ? minute.toString().padStart(2, "0") + ':' : minute + ':')
-			+ second.toString().padStart(2, "0")
-			;
-	}
-
 	update(recordState)
 	{
 		if (this.recordState.state !== recordState.state)
@@ -989,10 +934,10 @@ export class RecordStatusButton
 
 	updateView()
 	{
-		var timeText = this.getTimeText();
+		var timeText = Util.getRecordTimeText(this.recordState);
 		if (this.elements.timeText.innerText !== timeText)
 		{
-			this.elements.timeText.innerText = this.getTimeText();
+			this.elements.timeText.innerText = Util.getRecordTimeText(this.recordState);
 		}
 
 		if (!this.elements.root.classList.contains("record-status-" + this.recordState.state))

@@ -1,7 +1,6 @@
 <?php
 
 $MESS["IM_TEXTAREA_PLACEHOLDER_V3"] = "Нажмите @, чтобы упомянуть человека или чат";
-$MESS["IM_TEXTAREA_CHANNEL_PLACEHOLDER"] = "Добавьте публикацию";
 $MESS["IM_TEXTAREA_ICON_SEND_VOICE"] = "Отправить голосовое сообщение";
 $MESS["IM_TEXTAREA_ICON_SEND_TEXT"] = "Отправить сообщение (#SEND_MESSAGE_COMBINATION#)";
 $MESS["IM_TEXTAREA_ICON_UPLOAD"] = "Отправить файл";
@@ -75,3 +74,5 @@ $MESS["IM_TEXTAREA_MENTION_USER_TYPE"] = "Пользователь";
 $MESS["IM_TEXTAREA_MENTION_CHAT_TYPE"] = "Групповой чат";
 $MESS["IM_TEXTAREA_MENTION_OPEN_CHANNEL_TYPE"] = "Открытый канал";
 $MESS["IM_TEXTAREA_MENTION_PRIVATE_CHANNEL_TYPE"] = "Закрытый канал";
+
+$MESS["IM_TEXTAREA_AUDIO_INPUT_ERROR"] = "Не удалось распознать речь, попробуйте позже";

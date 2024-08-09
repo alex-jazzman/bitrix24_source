@@ -181,42 +181,42 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isDeleted()
 		{
-			return this.messageHelper.isDeleted();
+			return this.messageHelper.isDeleted;
 		}
 
 		isForward()
 		{
-			return this.messageHelper.isForward();
+			return this.messageHelper.isForward;
 		}
 
 		isGallery()
 		{
-			return this.messageHelper.isGallery();
+			return this.messageHelper.isGallery;
 		}
 
 		isVideo()
 		{
-			return this.messageHelper.isVideo();
+			return this.messageHelper.isVideo;
 		}
 
 		isImage()
 		{
-			return this.messageHelper.isImage();
+			return this.messageHelper.isImage;
 		}
 
 		isSystem()
 		{
-			return this.messageHelper.isSystem();
+			return this.messageHelper.isSystem;
 		}
 
 		isText()
 		{
-			return this.messageHelper.isText();
+			return this.messageHelper.isText;
 		}
 
 		isYour()
 		{
-			return this.messageHelper.isYour();
+			return this.messageHelper.isYour;
 		}
 
 		isDialogCopilot()
@@ -236,17 +236,17 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 
 		isAdmin()
 		{
-			return this.dialogHelper.isCurrentUserOwner();
+			return this.dialogHelper.isCurrentUserOwner;
 		}
 
 		isChannel()
 		{
-			return this.dialogHelper.isChannel();
+			return this.dialogHelper.isChannel;
 		}
 
 		isEmojiOrSmileOnly()
 		{
-			return this.messageHelper.isEmojiOnly() || this.messageHelper.isSmileOnly();
+			return this.messageHelper.isEmojiOnly || this.messageHelper.isSmileOnly;
 		}
 	}
 

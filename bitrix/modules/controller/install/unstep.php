@@ -4,7 +4,7 @@ if (!check_bitrix_sessid())
 	return;
 }
 /** @var CMain $APPLICATION */
-echo CAdminMessage::ShowNote(GetMessage('MOD_UNINST_OK'));
+CAdminMessage::ShowNote(GetMessage('MOD_UNINST_OK'));
 ?>
 <form action="<?php echo $APPLICATION->GetCurPage()?>">
 	<input type="hidden" name="lang" value="<?php echo LANGUAGE_ID?>">

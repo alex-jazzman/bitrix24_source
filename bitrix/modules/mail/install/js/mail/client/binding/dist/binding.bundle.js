@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
 (function (exports,main_core,ui_notification,main_core_events) {
@@ -317,10 +318,10 @@ this.BX.Mail = this.BX.Mail || {};
 	  writable: true,
 	  value: {
 	    'crm-install-error': 'MAIL_BINDING_CRM_ERROR',
-	    'calendar-install-error': 'MAIL_BINDING_MEETING_ERROR',
+	    'calendar-install-error': 'MAIL_BINDING_MEETING_ERROR_MSGVER_1',
 	    'tasks-install-error': 'MAIL_BINDING_TASK_ERROR',
-	    'chat-install-error': 'MAIL_BINDING_CHAT_ERROR',
-	    'socialnetwork-install-error': 'MAIL_BINDING_POST_ERROR',
+	    'chat-install-error': 'MAIL_BINDING_CHAT_ERROR_MSGVER_1',
+	    'socialnetwork-install-error': 'MAIL_BINDING_POST_ERROR_MSGVER_1',
 	    'crm-install-permission-error': 'MAIL_BINDING_CRM_PERMISSION_SAVE_ERROR',
 	    'crm-install-permission-open-error': 'MAIL_BINDING_CRM_PERMISSION_OPEN_ERROR',
 	    'crm-install-permission-working-error': 'MAIL_BINDING_CRM_PERMISSION_WORKING_ERROR'

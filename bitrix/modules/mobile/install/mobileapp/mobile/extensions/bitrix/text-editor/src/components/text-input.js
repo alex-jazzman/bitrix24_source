@@ -191,6 +191,13 @@ jn.define('text-editor/components/text-input', (require, exports, module) => {
 			return this.state.storedValue;
 		}
 
+		async getPlainTextValue()
+		{
+			const textInput = await this.getTextInput();
+			
+			return textInput.getTextValue();
+		}
+
 		async blur()
 		{
 			(await this.getTextInput()).blur();

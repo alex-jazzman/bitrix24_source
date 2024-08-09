@@ -1,4 +1,4 @@
-import { Dom, Loc, Reflection, Tag, Text, Type, ajax, Runtime } from 'main.core';
+import { Dom, Loc, Reflection, Tag, Text, Type, ajax, Runtime, Uri } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Button, ButtonSize, ButtonColor } from 'ui.buttons';
 import 'ui.tooltip';
@@ -19,6 +19,7 @@ const STEPS = Object.freeze({
 });
 
 type ComponentData = {
+	name: string,
 	description: string,
 	duration: ?number,
 	signedParameters: string,
@@ -38,12 +39,13 @@ class ElementCreationGuide
 {
 	#steps: Array<Step> = [];
 
+	#name: string;
 	#description: string;
 	#duration: ?number = null;
 	#signedParameters: string;
 	#templateIds: [] = [];
 
-	#currentStep: string = STEPS.DESCRIPTION;
+	#currentStep: ?string;
 	#startTime: number;
 	#descriptionNode: HTMLElement;
 	#durationNode: HTMLElement;
@@ -51,6 +53,7 @@ class ElementCreationGuide
 	#canUserTuningStates: boolean;
 	#isAdminLoaded: boolean = false;
 	#isLoading: boolean = false;
+	#stepsEnterTime: Map<string, number> = new Map();
 
 	constructor(props: ComponentData)
 	{
@@ -60,6 +63,7 @@ class ElementCreationGuide
 		}
 		this.#signedParameters = props.signedParameters;
 
+		this.#name = Type.isString(props.name) ? props.name : '';
 		this.#description = Type.isString(props.description) ? props.description : '';
 
 		if (Type.isInteger(props.duration) && props.duration >= 0)
@@ -76,10 +80,43 @@ class ElementCreationGuide
 
 		this.#startTime = Math.round(Date.now() / 1000);
 
+		this.#setCurrentStep(STEPS.DESCRIPTION);
 		this.#fillSteps(props);
 		this.#toggleButtons();
 		this.#renderProgressBar();
 		this.#renderFirstStep();
+	}
+
+	#setCurrentStep(step: ?string): void
+	{
+		this.#currentStep = step;
+
+		if (this.#currentStep === STEPS.DESCRIPTION)
+		{
+			this.#stepsEnterTime.set(STEPS.DESCRIPTION, Date.now());
+		}
+		else
+		{
+			if (this.#stepsEnterTime.has(STEPS.DESCRIPTION))
+			{
+				const diffTime = Date.now() - this.#stepsEnterTime.get(STEPS.DESCRIPTION);
+
+				Runtime.loadExtension('ui.analytics')
+					.then(({ sendData }) => {
+						sendData({
+							tool: 'automation',
+							category: 'bizproc_operations',
+							event: 'process_instructions_read',
+							p1: this.#name,
+							p4: Math.round(diffTime / 1000),
+						});
+					})
+					.catch(() => {})
+				;
+			}
+
+			this.#stepsEnterTime.delete(STEPS.DESCRIPTION);
+		}
 	}
 
 	#fillSteps(props)
@@ -435,7 +472,7 @@ class ElementCreationGuide
 				Dom.addClass(this.#durationNode, '--hidden');
 			}
 
-			this.#currentStep = nextStep.step;
+			this.#setCurrentStep(nextStep.step);
 			this.#toggleButtons();
 		};
 
@@ -622,6 +659,8 @@ class ElementCreationGuide
 				BX.SidePanel.Instance.getSliderByWindow(window).close(false);
 			}
 
+			this.#setCurrentStep();
+
 			return;
 		}
 
@@ -642,7 +681,7 @@ class ElementCreationGuide
 			Dom.removeClass(this.#durationNode, '--hidden');
 		}
 
-		this.#currentStep = previousStep.step;
+		this.#setCurrentStep(previousStep.step);
 		this.#toggleButtons();
 	}
 
@@ -684,9 +723,11 @@ class ElementCreationGuide
 					BX.SidePanel.Instance.getSliderByWindow(window).close(false);
 					this.#showSuccessNotification(data.elementUrl);
 				}
+				this.#sendCreationAnalytics();
 			})
-			.catch(() => {
+			.catch((error) => {
 				this.#toggleButtons();
+				this.#sendCreationAnalytics(error);
 			})
 			.finally(this.#finishLoading.bind(this))
 		;
@@ -781,7 +822,7 @@ class ElementCreationGuide
 						this.#showErrors(errors);
 					}
 
-					reject();
+					reject(new Error(errors[0].message));
 				})
 			;
 		});
@@ -916,6 +957,29 @@ class ElementCreationGuide
 		{
 			Dom.attr(button, 'title', null);
 		}
+	}
+
+	#sendCreationAnalytics(error?: Error)
+	{
+		Runtime.loadExtension('ui.analytics')
+			.then(({ sendData }) => {
+				sendData({
+					tool: 'automation',
+					category: 'bizproc_operations',
+					event: 'process_run',
+					type: 'run',
+					c_section: this.#getAnalyticsSection(),
+					p1: this.#name,
+					status: error ? 'error' : 'success',
+				});
+			})
+			.catch(() => {})
+		;
+	}
+
+	#getAnalyticsSection(): string
+	{
+		return ((new Uri(window.location.href)).getQueryParam('analyticsSection')) || 'bizproc';
 	}
 }
 

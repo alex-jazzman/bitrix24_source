@@ -32,6 +32,7 @@ jn.define('ui-system/typography/text', (require, exports, module) => {
 		Text4: (props) => BodyText({ ...props, size: 4 }),
 		Text5: (props) => BodyText({ ...props, size: 5 }),
 		Text6: (props) => BodyText({ ...props, size: 6 }),
+		Text7: (props) => BodyText({ ...props, size: 7 }),
 		Capital: (props) => BodyText({ ...props, typography: Typography.textCapital }),
 	};
 });

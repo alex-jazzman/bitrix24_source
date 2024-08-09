@@ -9,6 +9,7 @@ $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_COMPANY"] = "Копіювати комп�
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_CONTACT"] = "Копіювати контакт";
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_DEAL"] = "Копіювати угоду";
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_LEAD"] = "Копіювати лід";
+$MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_MSGVER_1"] = "Копіювати";
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_QUOTE"] = "Копіювати пропозицію";
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_QUOTE_MSGVER_1"] = "Копіювати пропозицію";
 $MESS["M_CRM_ENTITY_ACTION_COPY_ENTITY_SMART_INVOICE"] = "Копіювати рахунок";

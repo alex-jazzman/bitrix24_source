@@ -2,7 +2,7 @@
  * @module im/messenger/core/base/application
  */
 jn.define('im/messenger/core/base/application', (require, exports, module) => {
-	const { clone } = require('utils/object');
+	const { clone, mergeImmutable } = require('utils/object');
 
 	const { createStore } = require('statemanager/vuex');
 	const { VuexManager } = require('statemanager/vuex-manager');
@@ -58,10 +58,11 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		 * @param {MessengerCoreInitializeOptions} config
 		 * @return {Promise<void>}
 		 */
-		constructor(config)
+		constructor(config = {})
 		{
 			/** @type {MessengerCoreInitializeOptions} */
-			this.config = config ?? {};
+			this.config = mergeImmutable(this.#getDefaultConfig(), config);
+
 			this.inited = false;
 
 			this.repository = {
@@ -98,9 +99,18 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 
 		async initDatabase()
 		{
-			if (!this.config.localStorageEnable)
+			if (!this.config.localStorage.enable)
 			{
 				Feature.disableLocalStorage();
+			}
+
+			if (this.config.localStorage.readOnly)
+			{
+				Feature.enableLocalStorageReadOnlyMode();
+			}
+			else
+			{
+				Feature.disableLocalStorageReadOnlyMode();
 			}
 
 			await this.updateDatabase();
@@ -124,7 +134,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 
 			if (!Feature.isLocalStorageEnabled)
 			{
-				if (this.config.localStorageEnable)
+				if (this.config.localStorage.enable)
 				{
 					// if the database is programmatically supported, but is disabled by the user
 					this.repository.drop();
@@ -320,6 +330,16 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			this.inited = true;
 
 			logger.warn('CoreApplication.initComplete');
+		}
+
+		#getDefaultConfig()
+		{
+			return {
+				localStorage: {
+					enable: true,
+					readOnly: false,
+				},
+			};
 		}
 	}
 

@@ -101,6 +101,13 @@ export const TodoEditorBlocksClient = {
 		},
 		onShowAddClientPhoneSelector(): void
 		{
+			if (Type.isArrayFilled(this.clients))
+			{
+				this.onShowClientSelector();
+
+				return;
+			}
+
 			const id = 'client-selector-dialog';
 			const context = `CRM_TIMELINE_TODO-${this.entityTypeId}`;
 

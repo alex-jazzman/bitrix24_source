@@ -39,7 +39,7 @@ jn.define('ui-system/layout/area-list', (require, exports, module) => {
 				return View(
 					{
 						style: {
-							marginTop: Component.areaBoxGapMore.toNumber(),
+							marginTop: Component.areaListGapMore.toNumber(),
 						},
 					},
 					child,

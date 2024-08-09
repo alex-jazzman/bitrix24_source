@@ -100,7 +100,7 @@ if ($arUpdateList)
 
 if ($errorMessage !== '')
 {
-	echo CAdminMessage::ShowMessage(['DETAILS' => $errorMessage, 'TYPE' => 'ERROR', 'MESSAGE' => GetMessage('SUP_ERROR'), 'HTML' => true]);
+	CAdminMessage::ShowMessage(['DETAILS' => $errorMessage, 'TYPE' => 'ERROR', 'MESSAGE' => GetMessage('SUP_ERROR'), 'HTML' => true]);
 }
 
 ?>

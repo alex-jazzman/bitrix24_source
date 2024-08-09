@@ -6,7 +6,7 @@
 jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { DialogType } = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
@@ -66,7 +66,8 @@ jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module)
 				return;
 			}
 
-			if (dialog.type === DialogType.comment)
+			const dialogHelper = DialogHelper.createByModel(dialog);
+			if (!dialogHelper?.isLocalStorageSupported)
 			{
 				return;
 			}
@@ -114,7 +115,9 @@ jn.define('im/messenger/db/model-writer/vuex/dialog', (require, exports, module)
 
 				return;
 			}
-			if (dialog.type === DialogType.comment)
+
+			const dialogHelper = DialogHelper.createByModel(dialog);
+			if (!dialogHelper?.isLocalStorageSupported)
 			{
 				return;
 			}

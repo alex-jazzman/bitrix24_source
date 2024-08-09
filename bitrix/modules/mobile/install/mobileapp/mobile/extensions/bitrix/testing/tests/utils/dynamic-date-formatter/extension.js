@@ -2,7 +2,7 @@
 	const require = (ext) => jn.require(ext);
 
 	const { describe, test, expect } = require('testing');
-	const { DynamicDateFormatter } = require('utils/date/dynamic-date-formatter');
+	const { DynamicDateFormatter } = require('utils/date');
 	const { Moment } = require('utils/date/moment');
 	const { datetime, shortTime, longTime } = require('utils/date/formats');
 	const { clone } = require('utils/object');

@@ -70,7 +70,35 @@ export class Call extends Base
 
 		if (action === 'Call:LaunchCallRecordingTranscription' && actionData)
 		{
-			this.#launchCallRecordingTranscription(item, actionData);
+			const isCopilotAgreementNeedShow = actionData.isCopilotAgreementNeedShow || false;
+			if (isCopilotAgreementNeedShow)
+			{
+				Runtime.loadExtension('ai.copilot-agreement')
+					.then(({ CopilotAgreement }) => {
+						const copilotAgreementPopup = new CopilotAgreement({
+							moduleId: 'crm',
+							contextId: 'audio',
+							events: {
+								onAccept: () => this.#launchCallRecordingTranscription(item, actionData),
+							},
+						});
+
+						void copilotAgreementPopup.checkAgreement()
+							// eslint-disable-next-line promise/no-nesting
+							.then((isAgreementAccepted) => {
+								if (isAgreementAccepted)
+								{
+									this.#launchCallRecordingTranscription(item, actionData);
+								}
+							});
+					})
+					.catch(() => console.error('Cant load "ai.copilot-agreement" extension'))
+				;
+			}
+			else
+			{
+				this.#launchCallRecordingTranscription(item, actionData);
+			}
 		}
 	}
 
@@ -216,7 +244,37 @@ export class Call extends Base
 	{
 		if (this.#isSliderCodeExist(data))
 		{
-			BX.UI.InfoHelper.show(data.sliderCode);
+			if (data.sliderCode === 'limit_boost_copilot')
+			{
+				Runtime.loadExtension('baas.store')
+					.then(({ ServiceWidget, Analytics }) => {
+						if (!ServiceWidget)
+						{
+							BX?.UI?.InfoHelper.show('limit_boost_copilot');
+
+							console.error('Cant load "baas.store" extension');
+						}
+
+						const serviceWidget = ServiceWidget?.getInstanceByCode('ai_copilot_token');
+						const bindElement = item.getLayoutFooterButtonById('aiButton')?.getUiButton()?.getContainer();
+
+						serviceWidget.bind(bindElement, Analytics.CONTEXT_CRM);
+						serviceWidget.getPopup().adjustPosition({
+							forceTop: true,
+						});
+						serviceWidget.show();
+					})
+					.catch(() => {
+						BX?.UI?.InfoHelper.show('limit_boost_copilot');
+
+						console.error('Cant load "baas.store" extension');
+					})
+				;
+			}
+			else
+			{
+				BX?.UI?.InfoHelper.show(data.sliderCode);
+			}
 		}
 		else if (this.#isAiMarketplaceAppsExist(data))
 		{

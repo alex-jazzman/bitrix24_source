@@ -4,6 +4,8 @@
 jn.define('im/in-app-url/routes', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { NotifyManager } = require('notify-manager');
+	const { Haptics } = require('haptics');
 
 	const {
 		EventType,
@@ -11,6 +13,9 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		FileType,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { DialogOpener } = require('im/messenger/api/dialog-opener');
+
+	const openlinesPrefix = 'imol|';
 
 	const checkIsMessengerFamilyComponent = () => {
 		const componentCode = BX.componentParameters.get('COMPONENT_CODE', '');
@@ -40,6 +45,105 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		}
 
 		MessengerEmitter.emit(EventType.messenger.openDialog, openDialogEvent, componentCode);
+	};
+
+	/**
+	 * @param {string} dialogId
+	 */
+	const checkIsOpenLineSessionId = (dialogId) => {
+		if (!Type.isStringFilled(dialogId))
+		{
+			return false;
+		}
+
+		if (!dialogId.startsWith(openlinesPrefix))
+		{
+			return false;
+		}
+
+		const sessionIdParts = dialogId.split(openlinesPrefix);
+		if (sessionIdParts.length !== 2)
+		{
+			return false;
+		}
+
+		return Type.isNumber(Number(sessionIdParts[1]));
+	};
+
+	/**
+	 * @param {string} dialogId
+	 */
+	const checkIsOpenLineUserCode = (dialogId) => {
+		return !checkIsOpenLineSessionId(dialogId) && dialogId.startsWith(openlinesPrefix);
+	};
+
+	const openLineByDialogId = (dialogId, messageId = null) => {
+		const openDialogEvent = {
+			dialogId,
+			dialogTitleParams: {
+				chatType: 'lines',
+			},
+		};
+
+		if (Type.isStringFilled(messageId) && Type.isNumber(parseInt(messageId, 10)))
+		{
+			openDialogEvent.messageId = parseInt(messageId, 10);
+			openDialogEvent.withMessageHighlight = true;
+		}
+
+		MessengerEmitter.emit(EventType.messenger.openLine, openDialogEvent, ComponentCode.imMessenger);
+	};
+
+	const openLineBySessionId = (sessionId, fallbackUrl) => {
+		return openLineWithUnknownDialogId({
+			sessionId,
+			fallbackUrl,
+		});
+	};
+
+	const openLineByUserCode = (userCode, fallbackUrl) => {
+		return openLineWithUnknownDialogId({
+			userCode,
+			fallbackUrl,
+		});
+	};
+
+	/**
+	 * @param {object} options
+	 */
+	const openLineWithUnknownDialogId = async (options = {}) => {
+		await NotifyManager.showLoadingIndicator();
+
+		let openLinePromise = Promise.reject();
+		if (options.userCode)
+		{
+			openLinePromise = DialogOpener.openLine({
+				userCode: options.userCode,
+			});
+		}
+		else if (options.sessionId)
+		{
+			openLinePromise = DialogOpener.openLine({
+				sessionId: Number(options.sessionId),
+			});
+		}
+
+		openLinePromise
+			.catch((error) => {
+				// eslint-disable-next-line no-console
+				console.error(error);
+
+				Haptics.notifyFailure();
+
+				if (Type.isStringFilled(options.fallbackUrl))
+				{
+					Application.openUrl(options.fallbackUrl);
+				}
+			})
+			.finally(() => {
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+			})
+		;
 	};
 
 	const openMessageAttach = (messageId) => {
@@ -111,6 +215,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = (inAppUrl) => {
+		// chat and channel
 		inAppUrl.register(
 			'/online/\\?IM_DIALOG=:dialogId$',
 			({ dialogId }) => openDialog(ComponentCode.imMessenger, dialogId),
@@ -121,6 +226,7 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			({ dialogId, messageId }) => openDialog(ComponentCode.imMessenger, dialogId, messageId),
 		).name('im:dialog:goToMessageContext');
 
+		// CoPilot
 		inAppUrl.register(
 			'/online/\\?IM_COPILOT=:dialogId$',
 			({ dialogId }) => openDialog(ComponentCode.imCopilotMessenger, dialogId),
@@ -131,6 +237,46 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			({ dialogId, messageId }) => openDialog(ComponentCode.imCopilotMessenger, dialogId, messageId),
 		).name('im:copilot:goToMessageContext');
 
+		// lines
+		inAppUrl.register(
+			'/online/\\?IM_LINES=:dialogId$',
+			({ dialogId }) => openLineByDialogId(dialogId),
+		).name('im:openline:openLine');
+
+		inAppUrl.register(
+			'/online/\\?IM_LINES=:dialogId&IM_MESSAGE=:messageId$',
+			({ dialogId, messageId }) => openLineByDialogId(dialogId, messageId),
+		).name('im:openline:goToMessageContext');
+
+		inAppUrl.register(
+			'/online/\\?IM_DIALOG=',
+			(params, { queryParams = {}, url = '' }) => {
+				const dialogId = queryParams.IM_DIALOG;
+				if (checkIsOpenLineUserCode(dialogId))
+				{
+					void openLineByUserCode(dialogId, url);
+				}
+				else if (checkIsOpenLineSessionId(dialogId))
+				{
+					const sessionId = dialogId.replace(openlinesPrefix, '');
+					void openLineBySessionId(sessionId, url);
+				}
+			},
+		).name('im:openline:openDialog');
+
+		inAppUrl.register(
+			'/online/\\?IM_HISTORY=',
+			(params, { queryParams = {}, url = '' }) => {
+				const historyId = queryParams.IM_HISTORY;
+				if (checkIsOpenLineSessionId(historyId))
+				{
+					const sessionId = historyId.replace(openlinesPrefix, '');
+					void openLineBySessionId(sessionId, url);
+				}
+			},
+		).name('im:openline:openHistory');
+
+		// internal handlers
 		inAppUrl.register(
 			'/immobile/in-app/message-attach/:messageId',
 			({ messageId }) => openMessageAttach(messageId),

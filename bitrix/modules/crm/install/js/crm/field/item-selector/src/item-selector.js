@@ -21,6 +21,7 @@ export const CompactIcons = {
 };
 
 export const Events = {
+	EVENT_ITEMSELECTOR_OPEN: 'crm.field.itemselector:open',
 	EVENT_ITEMSELECTOR_VALUE_CHANGE: 'crm.field.itemselector:change',
 };
 
@@ -320,14 +321,13 @@ export class ItemSelector
 	// region Event handlers
 	#bindEvents(): void
 	{
-		if (Type.isDomNode(this.#getAddButtonEl()))
-		{
-			Event.bind(this.#getAddButtonEl(), 'click', this.#onShowPopup.bind(this));
-		}
-
 		if (Type.isDomNode(this.#addButtonCompact))
 		{
 			Event.bind(this.#addButtonCompact, 'click', this.#onShowPopup.bind(this));
+		}
+		else if (Type.isDomNode(this.#getAddButtonEl()))
+		{
+			Event.bind(this.#getAddButtonEl(), 'click', this.#onShowPopup.bind(this));
 		}
 
 		if (Type.isDomNode(this.#selectedValueWrapperEl))
@@ -356,6 +356,8 @@ export class ItemSelector
 
 		this.#valuesMenuPopup = MenuManager.create(this.#id, this.#getAddButtonEl(), menuItems, menuParams);
 		this.#valuesMenuPopup.show();
+
+		EventEmitter.emit(this, Events.EVENT_ITEMSELECTOR_OPEN);
 	}
 
 	#getPreparedMenuItems(): []

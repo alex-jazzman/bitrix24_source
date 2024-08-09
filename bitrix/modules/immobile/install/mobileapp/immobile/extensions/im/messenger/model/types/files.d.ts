@@ -18,9 +18,8 @@ export enum FileStatus
 export type FilesModelState = {
 	id: number,
 	chatId: number,
-	dialogId: string,
 	name: string,
-	templateId: number,
+	templateId: string,
 	date: Date,
 	type: FileType,
 	extension: string,

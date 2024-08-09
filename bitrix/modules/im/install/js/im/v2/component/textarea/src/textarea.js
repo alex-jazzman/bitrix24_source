@@ -1,7 +1,7 @@
 import { Extension, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
-import { EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType } from 'im.v2.const';
+import { ChatType, EventType, LocalStorageKey, SoundType, TextareaPanelType as PanelType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { DraftManager } from 'im.v2.lib.draft';
 import { Utils } from 'im.v2.lib.utils';
@@ -16,6 +16,7 @@ import { ChannelManager } from 'im.v2.lib.channel';
 import { MentionManager, MentionManagerEvents } from './classes/mention-manager';
 import { ResizeDirection, ResizeManager } from './classes/resize-manager';
 import { TypingService } from './classes/typing-service';
+import { AudioInput } from './components/audio-input/audio-input';
 import { SmileSelector } from './components/smile-selector/smile-selector';
 import { UploadMenu } from './components/upload-menu/upload-menu';
 import { CreateEntityMenu } from './components/create-entity-menu/create-entity-menu';
@@ -26,6 +27,7 @@ import { TextareaPanel } from './components/panel/panel';
 
 import './css/textarea.css';
 
+import type { JsonObject } from 'main.core';
 import type { ImModelChat, ImModelMessage } from 'im.v2.model';
 import type { InsertTextEvent, InsertMentionEvent } from 'im.v2.const';
 
@@ -45,9 +47,14 @@ export const ChatTextarea = {
 		UploadPreviewPopup,
 		MentionPopup,
 		TextareaPanel,
+		AudioInput,
 	},
 	props: {
 		dialogId: {
+			type: String,
+			default: '',
+		},
+		placeholder: {
 			type: String,
 			default: '',
 		},
@@ -59,9 +66,29 @@ export const ChatTextarea = {
 			type: Boolean,
 			default: true,
 		},
+		withEdit: {
+			type: Boolean,
+			default: true,
+		},
+		withUploadMenu: {
+			type: Boolean,
+			default: true,
+		},
+		withSmileSelector: {
+			type: Boolean,
+			default: true,
+		},
+		withAudioInput: {
+			type: Boolean,
+			default: true,
+		},
+		draftManagerClass: {
+			type: Function,
+			default: DraftManager,
+		},
 	},
 	emits: ['mounted'],
-	data(): { [key: string]: any}
+	data(): JsonObject
 	{
 		return {
 			text: '',
@@ -109,12 +136,12 @@ export const ChatTextarea = {
 		},
 		textareaPlaceholder(): string
 		{
-			if (this.isChannelType)
+			if (!this.placeholder)
 			{
-				return this.loc('IM_TEXTAREA_CHANNEL_PLACEHOLDER');
+				return this.loc('IM_TEXTAREA_PLACEHOLDER_V3');
 			}
 
-			return this.loc('IM_TEXTAREA_PLACEHOLDER_V3');
+			return this.placeholder;
 		},
 		textareaStyle(): Object
 		{
@@ -138,6 +165,10 @@ export const ChatTextarea = {
 		isChannelType(): boolean
 		{
 			return ChannelManager.isChannel(this.dialogId);
+		},
+		isEmptyText(): boolean
+		{
+			return this.text === '';
 		},
 	},
 	watch:
@@ -216,6 +247,7 @@ export const ChatTextarea = {
 			this.getDraftManager().clearDraft(this.dialogId);
 			SoundNotificationManager.getInstance().playOnce(SoundType.send);
 			this.focus();
+			EventEmitter.emit(EventType.textarea.onAfterSendMessage);
 		},
 		handlePanelAction(text: string)
 		{
@@ -266,6 +298,11 @@ export const ChatTextarea = {
 		},
 		openEditPanel(messageId: number)
 		{
+			if (!this.withEdit)
+			{
+				return;
+			}
+
 			const message: ImModelMessage = this.$store.getters['messages/getById'](messageId);
 			if (message.isDeleted)
 			{
@@ -538,6 +575,11 @@ export const ChatTextarea = {
 		},
 		async onPaste(clipboardEvent: ClipboardEvent)
 		{
+			if (!this.withUploadMenu)
+			{
+				return;
+			}
+
 			const uploaderId = await this.getUploadingService().uploadFromClipboard({
 				clipboardEvent,
 				dialogId: this.dialogId,
@@ -634,7 +676,7 @@ export const ChatTextarea = {
 		{
 			if (!this.draftManager)
 			{
-				this.draftManager = DraftManager.getInstance();
+				this.draftManager = this.draftManagerClass.getInstance();
 			}
 
 			return this.draftManager;
@@ -689,6 +731,19 @@ export const ChatTextarea = {
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode);
 		},
+		onAudioInputStart()
+		{
+			if (this.isEmptyText)
+			{
+				return;
+			}
+
+			this.text += ' ';
+		},
+		onAudioInputResult(inputText: string)
+		{
+			this.text += inputText;
+		},
 	},
 	template: `
 		<div class="bx-im-send-panel__scope bx-im-send-panel__container">
@@ -702,7 +757,7 @@ export const ChatTextarea = {
 				/>
 				<div class="bx-im-textarea__content" ref="textarea-content">
 					<div class="bx-im-textarea__left">
-						<div class="bx-im-textarea__upload_container">
+						<div v-if="withUploadMenu" class="bx-im-textarea__upload_container">
 							<UploadMenu @fileSelect="onFileSelect" @diskFileSelect="onDiskFileSelect" />
 						</div>
 						<textarea
@@ -716,6 +771,11 @@ export const ChatTextarea = {
 							ref="textarea"
 							rows="1"
 						></textarea>
+						<AudioInput
+							v-if="withAudioInput"
+							@inputStart="onAudioInputStart"
+							@inputResult="onAudioInputResult"
+						/>
 					</div>
 					<div class="bx-im-textarea__right">
 						<div class="bx-im-textarea__action-panel">
@@ -727,12 +787,15 @@ export const ChatTextarea = {
 								class="bx-im-textarea__icon --market"
 								:class="{'--active': marketMode}"
 							></div>
-							<SmileSelector :dialogId="dialogId" />
+							<SmileSelector 
+								v-if="withSmileSelector" 
+								:dialogId="dialogId" 
+							/>
 						</div>
 					</div>
 				</div>
 			</div>
-			<SendButton :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
+			<SendButton :dialogId="dialogId" :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
 			<UploadPreviewPopup
 				v-if="showUploadPreviewPopup"
 				:dialogId="dialogId"

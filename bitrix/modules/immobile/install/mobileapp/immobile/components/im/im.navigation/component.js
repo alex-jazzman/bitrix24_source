@@ -164,8 +164,6 @@
 					.setSection(Analytics.Section.copilotTab);
 
 				analytics.send();
-
-				return;
 			}
 
 			const type = this.currentTab === 'chats' ? Analytics.Type.chat : Analytics.Type[this.currentTab];

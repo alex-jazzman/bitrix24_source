@@ -41,5 +41,6 @@ jn.define('alert', (require, exports, module) => {
 		makeButton,
 		makeCancelButton,
 		makeDestructiveButton,
+		ConfirmNavigator,
 	};
 });

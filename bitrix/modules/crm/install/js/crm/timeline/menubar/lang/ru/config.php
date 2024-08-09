@@ -134,6 +134,7 @@ $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_DESCRIPTION"] = "Пишите клиен
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_HELP_LINK"] = "Как это работает";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_BUTTON_SELECTOR"] = "Шаблоны сообщений";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_NO_PHONE_ERROR"] = "Укажите номер телефона в карточке клиента";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_SELECTOR_FOOTER_BUTTON"] = "Предложить шаблон";
 
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TITLE"] = "Напишите клиенту в WhatsApp первыми";
 $MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TEXT_LEAD"] = "Отправляйте подтверждения заказов, уведомления о доставке и информацию о специальных предложениях прямо из лида. Мы собрали больше 20 шаблонов сообщений, нужно просто выбрать подходящий";

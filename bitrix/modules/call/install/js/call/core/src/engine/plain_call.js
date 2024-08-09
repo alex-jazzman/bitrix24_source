@@ -118,6 +118,10 @@ export class PlainCall extends AbstractCall
 
 		this.enableMicAutoParameters = params.enableMicAutoParameters !== false;
 		this.microphoneLevelInterval = null;
+		this.mediaMutedBySystem = false;
+
+		this._reconnectionEventCount = 0;
+
 
 		window.addEventListener("unload", this._onUnloadHandler);
 	};
@@ -171,10 +175,14 @@ export class PlainCall extends AbstractCall
 			},
 			onReconnecting: () =>
 			{
-				this.runCallback(CallEvent.onReconnecting);
+				this._reconnectionEventCount++;
+				this.runCallback(CallEvent.onReconnecting, {
+					reconnectionEventCount: this._reconnectionEventCount,
+				});
 			},
 			onReconnected: () =>
 			{
+				this._reconnectionEventCount = 0;
 				this.runCallback(CallEvent.onReconnected);
 			},
 			onUpdateLastUsedCameraId: () =>
@@ -228,6 +236,11 @@ export class PlainCall extends AbstractCall
 		}
 	};
 
+	canChangeMediaDevices()
+	{
+		return !this.mediaMutedBySystem;
+	};
+
 	setMuted = (event) =>
 	{
 		if (this.muted == event.data.isMicrophoneMuted)
@@ -258,7 +271,12 @@ export class PlainCall extends AbstractCall
 
 		this.cameraId = cameraId;
 
-		if (this.ready && Hardware.isCameraOn)
+		if (this.ready && this.mediaMutedBySystem)
+		{
+			this.runCallback(CallEvent.onNeedResetMediaDevicesState);
+			this.changedMediaMutedBySystem(false);
+		}
+		else if (this.ready && Hardware.isCameraOn)
 		{
 			this.runCallback('onUpdateLastUsedCameraId');
 			Runtime.debounce(this.replaceLocalMediaStream, 100, this)();
@@ -275,6 +293,10 @@ export class PlainCall extends AbstractCall
 		this.microphoneId = microphoneId;
 		if (this.ready)
 		{
+			if (this.mediaMutedBySystem)
+			{
+				return;
+			}
 			Runtime.debounce(this.replaceLocalAudioStream, 100, this)();
 		}
 	};
@@ -557,10 +579,12 @@ export class PlainCall extends AbstractCall
 			{
 				this.log("Local media stream received");
 				this.localStreams[tag] = stream;
-                stream.getVideoTracks().forEach((track) =>
-                {
-                    track.addEventListener("ended", () => this.onLocalVideoTrackEnded())
-                });
+				stream.getVideoTracks().forEach((track) =>
+				{
+					track.addEventListener("ended", () => this.onLocalVideoTrackEnded());
+					track.addEventListener("mute", () => this.onLocalVideoTrackMute());
+					track.addEventListener("unmute", () => this.onLocalVideoTrackUnmute());
+				});
 
                 stream.getAudioTracks().forEach((track) =>
                 {
@@ -875,6 +899,52 @@ export class PlainCall extends AbstractCall
         }
     }
 
+	onLocalVideoTrackMute()
+	{
+		this.changedMediaMutedBySystem(true);
+		this.prevMainStream = this.localStreams['main'];
+
+		if (this.ready)
+		{
+			this.localStreams['main'] = null;
+			for (let userId in this.peers)
+			{
+				if (this.peers[userId].isReady())
+				{
+					this.peers[userId].replaceMediaStream('main');
+				}
+			}
+		}
+	};
+
+	onLocalVideoTrackUnmute()
+	{
+		this.changedMediaMutedBySystem(false);
+
+		if (this.prevMainStream)
+		{
+			Util.stopMediaStream(this.prevMainStream);
+			this.prevMainStream = null;
+		}
+
+		this.replaceLocalMediaStream().catch(() =>
+		{
+			this.runCallback(CallEvent.onLocalMediaReceived, {
+				tag: 'main',
+				stream: this.localStreams['main'] || new MediaStream(),
+			});
+		});
+	};
+
+	changedMediaMutedBySystem(muted)
+	{
+		this.mediaMutedBySystem = muted;
+		const microphoneState = muted ? false : !Hardware.isMicrophoneMuted;
+		const cameraState = muted ? false : Hardware.isCameraOn;
+		this.signaling.sendMicrophoneState(this.users, microphoneState);
+		this.signaling.sendCameraState(this.users, cameraState);
+	};
+
 	stopScreenSharing()
 	{
 		if (!this.localStreams["screen"])
@@ -1107,6 +1177,10 @@ export class PlainCall extends AbstractCall
 						if (this.peers[userId].isReady())
 						{
 							this.peers[userId].replaceMediaStream(tag);
+							if (this.mediaMutedBySystem)
+							{
+								this.changedMediaMutedBySystem(false);
+							}
 						}
 					}
 				}
@@ -1758,6 +1832,11 @@ export class PlainCall extends AbstractCall
 				this.localStreams[tag] = null;
 			}
 		}
+		if (this.prevMainStream)
+		{
+			Util.stopMediaStream(this.prevMainStream);
+			this.prevMainStream = null;
+		}
 
 		if (this.voiceDetection)
 		{
@@ -1908,6 +1987,17 @@ class Signaling
 			return this.#sendPullEvent(pullEvents.cameraState, {
 				userId: users,
 				cameraState: cameraState
+			}, 0);
+		}
+	};
+
+	sendVideoPaused(users, videoPaused)
+	{
+		if (CallEngine.getPullClient().isPublishingSupported())
+		{
+			return this.#sendPullEvent(pullEvents.videoPaused, {
+				userId: users,
+				videoPaused: videoPaused
 			}, 0);
 		}
 	};

@@ -23,6 +23,11 @@ jn.define('tasks/statemanager/redux/slices/tasks-results/selector', (require, ex
 		),
 	);
 
+	const selectIdsByTaskId = createDraftSafeSelector(
+		selectByTaskId,
+		(results) => results.map((result) => result.id),
+	);
+
 	const selectLastResult = createDraftSafeSelector(
 		selectByTaskId,
 		(results) => (results[0] ?? {}),
@@ -36,6 +41,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-results/selector', (require, ex
 		selectTotal,
 
 		selectByTaskId,
+		selectIdsByTaskId,
 		selectLastResult,
 	};
 });

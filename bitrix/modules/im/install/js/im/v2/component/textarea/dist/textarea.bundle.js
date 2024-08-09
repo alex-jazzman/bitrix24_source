@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_channel,rest_client,im_v2_lib_feature,im_v2_lib_smileManager,im_v2_lib_rest,im_v2_lib_entityCreator,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_application_core,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
+(function (exports,im_v2_lib_localStorage,im_v2_lib_soundNotification,im_v2_lib_channel,rest_client,im_v2_lib_analytics,im_v2_lib_desktopApi,im_v2_lib_feature,im_v2_lib_smileManager,im_v2_lib_rest,im_v2_lib_entityCreator,main_popup,im_v2_lib_draft,im_v2_lib_hotkey,im_v2_lib_textarea,im_v2_provider_service,ui_icons,main_core_events,im_v2_lib_textHighlighter,im_v2_application_core,im_v2_lib_logger,im_v2_lib_search,im_v2_lib_utils,im_v2_lib_parser,im_v2_const,main_core,im_v2_lib_market,im_v2_component_elements) {
 	'use strict';
 
 	const MentionSymbols = new Set(['@', '+']);
@@ -428,6 +428,211 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	function _isSelfChat2() {
 	  return Number.parseInt(babelHelpers.classPrivateFieldLooseBase(this, _dialogId)[_dialogId], 10) === im_v2_application_core.Core.getUserId();
 	}
+
+	const RecognizerEvent = {
+	  audioend: 'audioend',
+	  audiostart: 'audiostart',
+	  end: 'end',
+	  error: 'error',
+	  nomatch: 'nomatch',
+	  result: 'result',
+	  soundend: 'soundend',
+	  soundstart: 'soundstart',
+	  speechend: 'speechend',
+	  speechstart: 'speechstart',
+	  start: 'start'
+	};
+	const EVENT_NAMESPACE = 'BX.Messenger.v2.CopilotAudioManager';
+	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
+	var _getRecognizedText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecognizedText");
+	var _getNewText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getNewText");
+	var _initSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initSettings");
+	class AudioManager extends main_core_events.EventEmitter {
+	  static isAvailable() {
+	    if (im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
+	      return im_v2_lib_desktopApi.DesktopApi.getApiVersion() > 74;
+	    }
+	    return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+	  }
+	  constructor() {
+	    super();
+	    Object.defineProperty(this, _initSettings, {
+	      value: _initSettings2
+	    });
+	    Object.defineProperty(this, _getNewText, {
+	      value: _getNewText2
+	    });
+	    Object.defineProperty(this, _getRecognizedText, {
+	      value: _getRecognizedText2
+	    });
+	    Object.defineProperty(this, _bindEvents, {
+	      value: _bindEvents2
+	    });
+	    this.recognizer = null;
+	    this.setEventNamespace(EVENT_NAMESPACE);
+	    this.recognizer = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+	    babelHelpers.classPrivateFieldLooseBase(this, _initSettings)[_initSettings]();
+	    babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
+	  }
+	  startRecognition() {
+	    this.recognizer.start();
+	  }
+	  stopRecognition() {
+	    this.recognizer.stop();
+	  }
+	}
+	function _bindEvents2() {
+	  main_core.Event.bind(this.recognizer, RecognizerEvent.start, () => {
+	    this.lastRecognizedText = '';
+	    this.emit(AudioManager.events.recognitionStart);
+	  });
+	  main_core.Event.bind(this.recognizer, RecognizerEvent.error, event => {
+	    this.emit(AudioManager.events.recognitionError, event.error);
+	    // eslint-disable-next-line no-console
+	    console.error('Copilot: AudioManager: error', event.error);
+	  });
+	  main_core.Event.bind(this.recognizer, RecognizerEvent.end, () => {
+	    this.lastRecognizedText = '';
+	    this.emit(AudioManager.events.recognitionEnd);
+	  });
+	  main_core.Event.bind(this.recognizer, RecognizerEvent.result, event => {
+	    const recognizedText = babelHelpers.classPrivateFieldLooseBase(this, _getRecognizedText)[_getRecognizedText](event);
+	    const newText = babelHelpers.classPrivateFieldLooseBase(this, _getNewText)[_getNewText](recognizedText);
+	    if (newText !== '') {
+	      this.emit(AudioManager.events.recognitionResult, newText);
+	    }
+	    this.lastRecognizedText = recognizedText;
+	  });
+	}
+	function _getRecognizedText2(event) {
+	  let recognizedChunk = '';
+	  Object.values(event.results).forEach(result => {
+	    if (result.isFinal) {
+	      return;
+	    }
+	    const [alternative] = result;
+	    const {
+	      transcript
+	    } = alternative;
+	    recognizedChunk += transcript;
+	  });
+	  return recognizedChunk;
+	}
+	function _getNewText2(fullText) {
+	  let additionalText = '';
+	  const lastChunkLength = this.lastRecognizedText.length;
+	  if (fullText.length > lastChunkLength) {
+	    additionalText = fullText.slice(lastChunkLength);
+	  }
+	  return additionalText;
+	}
+	function _initSettings2() {
+	  this.recognizer.continuous = true;
+	  this.recognizer.interimResults = true;
+	}
+	AudioManager.events = {
+	  recognitionStart: 'recognitionStart',
+	  recognitionError: 'recognitionError',
+	  recognitionEnd: 'recognitionEnd',
+	  recognitionResult: 'recognitionResult'
+	};
+
+	// @vue/component
+	const AudioInput = {
+	  name: 'AudioInput',
+	  emits: ['inputStart', 'inputResult'],
+	  data() {
+	    return {
+	      audioMode: false,
+	      audioUsed: false
+	    };
+	  },
+	  watch: {
+	    audioMode(newValue, oldValue) {
+	      if (oldValue === false && newValue === true) {
+	        this.startAudio();
+	      }
+	      if (oldValue === true && newValue === false) {
+	        this.stopAudio();
+	      }
+	    }
+	  },
+	  created() {
+	    main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.onAfterSendMessage, this.handleOnAfterSendMessage);
+	  },
+	  methods: {
+	    onClick() {
+	      if (this.audioMode) {
+	        this.audioMode = false;
+	        return;
+	      }
+	      this.audioMode = true;
+	    },
+	    startAudio() {
+	      this.getAudioManager().startRecognition();
+	      this.bindAudioEvents();
+	    },
+	    stopAudio() {
+	      this.getAudioManager().stopRecognition();
+	      this.unbindAudioEvents();
+	    },
+	    bindAudioEvents() {
+	      this.getAudioManager().subscribe(AudioManager.events.recognitionResult, event => {
+	        const text = event.getData();
+	        this.$emit('inputResult', text);
+	        this.audioUsed = true;
+	      });
+	      this.getAudioManager().subscribe(AudioManager.events.recognitionStart, () => {
+	        this.$emit('inputStart');
+	      });
+	      this.getAudioManager().subscribe(AudioManager.events.recognitionEnd, () => {
+	        this.audioMode = false;
+	      });
+	      this.getAudioManager().subscribe(AudioManager.events.recognitionError, () => {
+	        this.audioMode = false;
+	        BX.UI.Notification.Center.notify({
+	          content: this.loc('IM_TEXTAREA_AUDIO_INPUT_ERROR')
+	        });
+	      });
+	    },
+	    unbindAudioEvents() {
+	      this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionResult);
+	      this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionStart);
+	      this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionEnd);
+	      this.getAudioManager().unsubscribeAll(AudioManager.events.recognitionError);
+	    },
+	    isAudioModeAvailable() {
+	      return AudioManager.isAvailable();
+	    },
+	    getAudioManager() {
+	      if (!this.audioManager) {
+	        this.audioManager = new AudioManager();
+	      }
+	      return this.audioManager;
+	    },
+	    loc(phraseCode) {
+	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    },
+	    handleOnAfterSendMessage() {
+	      if (this.audioUsed) {
+	        im_v2_lib_analytics.Analytics.getInstance().onUseCopilotAudioInput();
+	        this.audioUsed = false;
+	      }
+	      this.audioMode = false;
+	    }
+	  },
+	  template: `
+		<div
+			v-if="isAudioModeAvailable()"
+			@click="onClick"
+			class="bx-im-copilot-audio-input__container"
+			:class="{'--active': audioMode}"
+		></div>
+	`
+	};
 
 	const emoji = [{
 	  id: 1,
@@ -4333,6 +4538,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	// @vue/component
 	const SendButton = {
 	  props: {
+	    dialogId: {
+	      type: String,
+	      default: ''
+	    },
 	    editMode: {
 	      type: Boolean,
 	      default: false
@@ -4342,10 +4551,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      default: false
 	    }
 	  },
-	  data() {
-	    return {};
-	  },
 	  computed: {
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    dialogTypeClass() {
+	      return `--${this.dialog.type}`;
+	    },
 	    buttonHint() {
 	      const sendByEnter = this.$store.getters['application/settings/get'](im_v2_const.Settings.hotkey.sendByEnter);
 	      const ctrlKey = im_v2_lib_utils.Utils.platform.isMac() ? 'Cmd' : 'Ctrl';
@@ -4364,7 +4576,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<div
 			:title="buttonHint"
 			class="bx-im-send-panel__button_container"
-			:class="{'--edit': editMode, '--disabled': isDisabled}"
+			:class="[{'--edit': editMode, '--disabled': isDisabled, }, dialogTypeClass]"
 		></div>
 	`
 	};
@@ -5487,19 +5699,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    query: {
 	      type: String,
 	      default: ''
-	    },
-	    searchChats: {
-	      type: Boolean,
-	      default: true
-	    },
-	    exclude: {
-	      type: Array,
-	      default: () => []
 	    }
 	  },
 	  emits: ['close'],
 	  computed: {
 	    POPUP_ID: () => POPUP_ID$1,
+	    dialog() {
+	      return this.$store.getters['chats/get'](this.dialogId, true);
+	    },
+	    isCopilotType() {
+	      return this.dialog.type === im_v2_const.ChatType.copilot;
+	    },
+	    needToShowMentionPopup() {
+	      if (this.isCopilotType) {
+	        return this.dialog.userCounter > 2;
+	      }
+	      return true;
+	    },
+	    excludedChatsFromMentions() {
+	      if (!this.isCopilotType) {
+	        return [];
+	      }
+	      const copilotUserId = this.$store.getters['users/bots/getCopilotUserId'];
+	      if (copilotUserId && this.dialog.userCounter > 2) {
+	        return [copilotUserId.toString()];
+	      }
+	      return [];
+	    },
+	    searchChats() {
+	      return !this.isCopilotType;
+	    },
 	    config() {
 	      return {
 	        width: 426,
@@ -5517,6 +5746,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	  },
 	  template: `
 		<MessengerPopup
+			v-if="needToShowMentionPopup"
 			:config="config"
 			@close="$emit('close');"
 			:id="POPUP_ID"
@@ -5525,7 +5755,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<MentionPopupContent 
 				:dialogId="dialogId"
 				:query="query"
-				:exclude="exclude"
+				:exclude="excludedChatsFromMentions"
 				:searchChats="searchChats"
 				@close="$emit('close');"
 				@adjustPosition="adjustPosition()"
@@ -6172,10 +6402,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    SendButton,
 	    UploadPreviewPopup,
 	    MentionPopup,
-	    TextareaPanel
+	    TextareaPanel,
+	    AudioInput
 	  },
 	  props: {
 	    dialogId: {
+	      type: String,
+	      default: ''
+	    },
+	    placeholder: {
 	      type: String,
 	      default: ''
 	    },
@@ -6186,6 +6421,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    withMarket: {
 	      type: Boolean,
 	      default: true
+	    },
+	    withEdit: {
+	      type: Boolean,
+	      default: true
+	    },
+	    withUploadMenu: {
+	      type: Boolean,
+	      default: true
+	    },
+	    withSmileSelector: {
+	      type: Boolean,
+	      default: true
+	    },
+	    withAudioInput: {
+	      type: Boolean,
+	      default: true
+	    },
+	    draftManagerClass: {
+	      type: Function,
+	      default: im_v2_lib_draft.DraftManager
 	    }
 	  },
 	  emits: ['mounted'],
@@ -6224,10 +6479,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.text.trim() === '' && !this.editMode && !this.forwardMode;
 	    },
 	    textareaPlaceholder() {
-	      if (this.isChannelType) {
-	        return this.loc('IM_TEXTAREA_CHANNEL_PLACEHOLDER');
+	      if (!this.placeholder) {
+	        return this.loc('IM_TEXTAREA_PLACEHOLDER_V3');
 	      }
-	      return this.loc('IM_TEXTAREA_PLACEHOLDER_V3');
+	      return this.placeholder;
 	    },
 	    textareaStyle() {
 	      let height = `${this.textareaHeight}px`;
@@ -6245,6 +6500,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    isChannelType() {
 	      return im_v2_lib_channel.ChannelManager.isChannel(this.dialogId);
+	    },
+	    isEmptyText() {
+	      return this.text === '';
 	    }
 	  },
 	  watch: {
@@ -6307,6 +6565,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.getDraftManager().clearDraft(this.dialogId);
 	      im_v2_lib_soundNotification.SoundNotificationManager.getInstance().playOnce(im_v2_const.SoundType.send);
 	      this.focus();
+	      main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.onAfterSendMessage);
 	    },
 	    handlePanelAction(text) {
 	      if (this.editMode && text === '') {
@@ -6343,6 +6602,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.draftManager.setDraftPanel(this.dialogId, this.panelType, this.panelMessageId);
 	    },
 	    openEditPanel(messageId) {
+	      if (!this.withEdit) {
+	        return;
+	      }
 	      const message = this.$store.getters['messages/getById'](messageId);
 	      if (message.isDeleted) {
 	        return;
@@ -6571,6 +6833,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      this.openForwardPanel(messageId);
 	    },
 	    async onPaste(clipboardEvent) {
+	      if (!this.withUploadMenu) {
+	        return;
+	      }
 	      const uploaderId = await this.getUploadingService().uploadFromClipboard({
 	        clipboardEvent,
 	        dialogId: this.dialogId,
@@ -6654,7 +6919,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    getDraftManager() {
 	      if (!this.draftManager) {
-	        this.draftManager = im_v2_lib_draft.DraftManager.getInstance();
+	        this.draftManager = this.draftManagerClass.getInstance();
 	      }
 	      return this.draftManager;
 	    },
@@ -6706,6 +6971,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	    },
 	    loc(phraseCode) {
 	      return this.$Bitrix.Loc.getMessage(phraseCode);
+	    },
+	    onAudioInputStart() {
+	      if (this.isEmptyText) {
+	        return;
+	      }
+	      this.text += ' ';
+	    },
+	    onAudioInputResult(inputText) {
+	      this.text += inputText;
 	    }
 	  },
 	  template: `
@@ -6720,7 +6994,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/>
 				<div class="bx-im-textarea__content" ref="textarea-content">
 					<div class="bx-im-textarea__left">
-						<div class="bx-im-textarea__upload_container">
+						<div v-if="withUploadMenu" class="bx-im-textarea__upload_container">
 							<UploadMenu @fileSelect="onFileSelect" @diskFileSelect="onDiskFileSelect" />
 						</div>
 						<textarea
@@ -6734,6 +7008,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 							ref="textarea"
 							rows="1"
 						></textarea>
+						<AudioInput
+							v-if="withAudioInput"
+							@inputStart="onAudioInputStart"
+							@inputResult="onAudioInputResult"
+						/>
 					</div>
 					<div class="bx-im-textarea__right">
 						<div class="bx-im-textarea__action-panel">
@@ -6745,12 +7024,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 								class="bx-im-textarea__icon --market"
 								:class="{'--active': marketMode}"
 							></div>
-							<SmileSelector :dialogId="dialogId" />
+							<SmileSelector 
+								v-if="withSmileSelector" 
+								:dialogId="dialogId" 
+							/>
 						</div>
 					</div>
 				</div>
 			</div>
-			<SendButton :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
+			<SendButton :dialogId="dialogId" :editMode="editMode" :isDisabled="isDisabled" @click="sendMessage" />
 			<UploadPreviewPopup
 				v-if="showUploadPreviewPopup"
 				:dialogId="dialogId"
@@ -6772,5 +7054,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.ChatTextarea = ChatTextarea;
 
-}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
+}((this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}),BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Main,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Provider.Service,BX,BX.Event,BX.Messenger.v2.Lib,BX.Messenger.v2.Application,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX,BX.Messenger.v2.Lib,BX.Messenger.v2.Component.Elements));
 //# sourceMappingURL=textarea.bundle.js.map

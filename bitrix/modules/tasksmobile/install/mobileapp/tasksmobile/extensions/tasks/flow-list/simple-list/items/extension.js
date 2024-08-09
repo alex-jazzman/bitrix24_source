@@ -11,13 +11,13 @@ jn.define('tasks/flow-list/simple-list/items', (require, exports, module) => {
 	 */
 	class FlowListItemsFactory extends BaseListItemsFactory
 	{
-		static create(getType, data)
+		static create(getProps, data)
 		{
-			const type = getType(data.item);
+			const props = getProps(data.item);
 
 			return new Flow({
 				...data,
-				type,
+				...props,
 			});
 		}
 	}

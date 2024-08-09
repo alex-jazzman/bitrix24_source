@@ -56,6 +56,8 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 		createCopilotDialog()
 		{
+			this.sendAnalyticsStartCreateCopilotDialog();
+
 			CopilotRoleSelector.open({
 				showOpenFeedbackItem: true,
 				openWidgetConfig: {
@@ -80,6 +82,25 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 					this.callRestCreateCopilotDialog(fields);
 				})
 				.catch((error) => Logger.error(error));
+		}
+
+		sendAnalyticsStartCreateCopilotDialog()
+		{
+			try
+			{
+				const analytics = new AnalyticsEvent()
+					.setTool(Analytics.Tool.im)
+					.setCategory(Analytics.Category.copilot)
+					.setEvent(Analytics.Event.clickCreateNew)
+					.setType(Analytics.Type.copilot)
+					.setSection(Analytics.Section.copilotTab);
+
+				analytics.send();
+			}
+			catch (e)
+			{
+				console.error(`${this.constructor.name}.sendAnalyticsStartCreateCopilotDialog.catch:`, e);
+			}
 		}
 
 		callRestCreateCopilotDialog(fields)

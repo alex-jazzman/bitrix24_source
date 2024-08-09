@@ -59,7 +59,12 @@ jn.define('ui-system/layout/area', (require, exports, module) => {
 
 		return View(
 			mergeImmutable(restProps, { style }),
-			title ? AreaTop({ title }) : null,
+			title ? AreaTop({
+				title,
+				excludePaddingSide: {
+					horizontal: !horizontal,
+				},
+			}) : null,
 			...children,
 		);
 	}
@@ -78,5 +83,5 @@ jn.define('ui-system/layout/area', (require, exports, module) => {
 		excludePaddingSide: PropTypes.objectOf(PropTypes.bool),
 	};
 
-	module.exports = { Area };
+	module.exports = { Area, AreaTop };
 });

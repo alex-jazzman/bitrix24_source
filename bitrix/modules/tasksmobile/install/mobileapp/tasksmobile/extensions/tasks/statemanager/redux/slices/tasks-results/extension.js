@@ -17,6 +17,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-results', (require, exports, mo
 		selectIds,
 		selectTotal,
 		selectByTaskId,
+		selectIdsByTaskId,
 		selectLastResult,
 	} = require('tasks/statemanager/redux/slices/tasks-results/selector');
 	const { fetch, create, update, remove } = require('tasks/statemanager/redux/slices/tasks-results/thunk');
@@ -66,6 +67,7 @@ jn.define('tasks/statemanager/redux/slices/tasks-results', (require, exports, mo
 		selectIds,
 		selectTotal,
 		selectByTaskId,
+		selectIdsByTaskId,
 		selectLastResult,
 
 		fetch,

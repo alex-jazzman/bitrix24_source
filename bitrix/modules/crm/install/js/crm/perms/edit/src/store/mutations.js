@@ -1,6 +1,6 @@
 /* eslint no-param-reassign: off */
 import { AppData } from '../app';
-import { AssignAttributeParam, PermissionEntityIdentifier } from '../store';
+import { AssignAttributeParam, AssignTransitionValues, PermissionEntityIdentifier } from '../store';
 import { entityHash, hashIdentifier } from '../utils';
 import { Type } from 'main.core';
 
@@ -10,6 +10,7 @@ export default {
 		state.desk.permissionEntities = data.permissionEntities;
 		state.restriction.hasPermission = data.restriction.hasPermission;
 		state.restriction.restrictionScript = data.restriction.restrictionScript;
+		state.transitions = data.roleAssignedSettings;
 
 		const availablePermissionsOrders = {};
 		const availablePermissions = data.availablePermissions.map(item => {
@@ -29,11 +30,17 @@ export default {
 		state.role.name = data.role.name;
 
 		state.touched.originalAttributes = structuredClone(data.roleAssignedPermissions);
+		state.touched.originalTransitions = structuredClone(data.roleAssignedSettings);
 	},
 
 	assignPermissionAttribute(state, payload: AssignAttributeParam) {
 		setAssignedAttributes(state.roleAssignedPermissions, payload.identifier, payload.value);
 		this.commit('setAttributeTouched', { identifier: payload.identifier, value: payload.value });
+	},
+
+	assignTransitions(state, payload: AssignTransitionValues) {
+		setAssignedTransitions(state.transitions, payload.identifier, payload.values);
+		this.commit('setTransitionsTouched', { identifier: payload.identifier, values: payload.values });
 	},
 
 	setAttributeTouched(state, payload: AssignAttributeParam) {
@@ -72,9 +79,49 @@ export default {
 		}
 	},
 
+	setTransitionsTouched(state, payload: AssignTransitionValues) {
+		const entityCode = payload.identifier.entityCode;
+		const stageField = payload.identifier.stageField;
+		const stageCode = payload.identifier.stageCode;
+
+		const values = payload.values;
+		let original = [];
+		if (stageField && stageCode)
+		{
+			original = state.touched.originalTransitions?.[entityCode]?.[stageField]?.[stageCode];
+		}
+		else
+		{
+			original = state.touched.originalTransitions?.[entityCode]?.['-'];
+		}
+
+		const hash = hashIdentifier(payload.identifier);
+
+		if (Type.isArray(original) && isArraysEqual(original, values))
+		{
+			try
+			{
+				delete state.touched.touchedTransitions[hash];
+			}
+			catch {}
+		}
+		else
+		{
+			state.touched.touchedTransitions[hash] = {
+				values,
+				identifier: payload.identifier,
+			};
+		}
+	},
+
 	resetTouchedAttributes(state) {
 		state.touched.originalAttributes = JSON.parse(JSON.stringify((state.roleAssignedPermissions)));
 		state.touched.touchedAttributes = {};
+	},
+
+	resetTouchedTransitions(state) {
+		state.touched.originalTransitions = JSON.parse(JSON.stringify((state.transitions)));
+		state.touched.touchedTransitions = {};
 	},
 
 	toggleStagesVisibility(state, entity) {
@@ -175,4 +222,44 @@ function isObjectEmpty(obj): boolean
 	}
 
 	return Object.keys(obj).length === 0;
+}
+
+function setAssignedTransitions(obj, identifier: PermissionEntityIdentifier, values)
+{
+	const entityCode = identifier.entityCode;
+	const stageField = identifier.stageField;
+	const stageCode = identifier.stageCode;
+
+	if (!obj[entityCode])
+	{
+		obj[entityCode] = {};
+	}
+
+	if (stageField && stageCode)
+	{
+		if (!obj[entityCode][stageField])
+		{
+			obj[entityCode][stageField] = {};
+		}
+
+		obj[entityCode][stageField][stageCode] = values;
+
+		return;
+	}
+
+	if (values === '')
+	{
+		delete obj[entityCode]['-'];
+	}
+	else
+	{
+		obj[entityCode]['-'] = values;
+	}
+
+	clearEmptyNodes(obj);
+}
+
+function isArraysEqual(first: Array, second: Array): boolean
+{
+	return first.sort().toString() === second.sort().toString();
 }

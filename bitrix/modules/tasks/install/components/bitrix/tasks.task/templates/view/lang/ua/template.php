@@ -167,6 +167,7 @@ $MESS["TASKS_STATUS_1"] = "Низький";
 $MESS["TASKS_STATUS_2"] = "В очікуванні";
 $MESS["TASKS_STATUS_3"] = "Виконується";
 $MESS["TASKS_STATUS_4"] = "Очікує контролю";
+$MESS["TASKS_STATUS_4_MSGVER_1"] = "Очікує на контроль";
 $MESS["TASKS_STATUS_5"] = "Завершене";
 $MESS["TASKS_STATUS_6"] = "Відкладене";
 $MESS["TASKS_STATUS_7"] = "Відхилене";

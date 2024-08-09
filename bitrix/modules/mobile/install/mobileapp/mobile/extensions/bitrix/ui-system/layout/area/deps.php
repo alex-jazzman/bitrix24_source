@@ -3,7 +3,7 @@ return [
 	'extensions' => [
 		'tokens',
 		'utils/object',
-		'ui-system/typography/text',
+		'ui-system/typography/bbcodetext',
 	],
 	'bundle' => [
 		'./src/top',

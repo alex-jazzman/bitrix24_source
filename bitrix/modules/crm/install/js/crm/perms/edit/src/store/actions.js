@@ -38,6 +38,7 @@ export default {
 			}
 
 			commit('resetTouchedAttributes');
+			commit('resetTouchedTransitions');
 		}
 		catch (err)
 		{

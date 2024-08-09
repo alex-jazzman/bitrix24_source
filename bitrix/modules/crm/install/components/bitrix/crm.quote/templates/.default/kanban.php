@@ -8,6 +8,7 @@ $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 
@@ -155,6 +156,12 @@ else
 					'name' => Loc::getMessage('CRM_COMMON_QUOTE_MSGVER_1'),
 					'default' => true,
 					'selected' => true,
+				],
+			],
+			'EXTRA' => [
+				'ANALYTICS' => [
+					'c_section' => Dictionary::SECTION_QUOTE,
+					'c_sub_section' => Dictionary::SUB_SECTION_KANBAN,
 				],
 			],
 		],

@@ -4,11 +4,13 @@ return [
 	'extensions' => [
 		'loc',
 		'alert',
+		'bbcode/parser',
 		'tokens',
 		'text-editor',
 		'assets/icons',
 		'bottom-sheet',
 		'layout/pure-component',
+		'layout/ui/friendly-date',
 		'layout/ui/menu',
 		'layout/ui/scroll-view',
 		'layout/ui/user/avatar',
@@ -25,7 +27,7 @@ return [
 		'tasks:statemanager/redux/slices/tasks-results',
 	],
 	'bundle' => [
-		'./src/date-formatter',
+		'./src/date',
 		'./src/list',
 		'./src/list-item',
 		'./src/menu',

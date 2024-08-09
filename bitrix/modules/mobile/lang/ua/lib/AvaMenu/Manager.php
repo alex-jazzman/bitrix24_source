@@ -5,3 +5,4 @@ $MESS["AVA_MENU_NAME_EMAIL_CONFIRM"] = "Підтвердьте адресу ел
 $MESS["AVA_MENU_NAME_GO_TO_WEB"] = "Перейти до вебверсії";
 $MESS["AVA_MENU_NAME_SETTINGS"] = "Налаштування";
 $MESS["AVA_MENU_NAME_TIMEMAN"] = "Робочий час";
+$MESS["AVA_MENU_NAME_TIMEMAN_MSGVER_1"] = "Робочий час";

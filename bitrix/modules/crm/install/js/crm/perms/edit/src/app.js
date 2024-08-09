@@ -18,7 +18,8 @@ export interface AppData {
 	restriction: {
 		hasPermission: boolean;
 		restrictionScript: ?string;
-	}
+	};
+	roleAssignedSettings: Object;
 }
 
 export class EditApp

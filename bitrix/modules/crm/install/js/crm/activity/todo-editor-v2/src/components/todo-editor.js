@@ -3,6 +3,7 @@ import { DatetimeConverter } from 'crm.timeline.tools';
 import { Browser, Dom, Runtime, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
+import { ElementIds, EventIds } from '../analytics';
 import type { BlockSettings } from '../todo-editor';
 import BlockFactory from './block-factory';
 import {
@@ -73,6 +74,11 @@ export const TodoEditor = {
 		},
 		activityId: {
 			type: Number,
+			default: null,
+			required: false,
+		},
+		analytics: {
+			type: Object,
 			default: null,
 			required: false,
 		},
@@ -282,8 +288,10 @@ export const TodoEditor = {
 			this.description = description;
 		},
 
-		onTextareaFocus(): void
+		onTextareaFocus(event: FocusEvent): void
 		{
+			this.descriptionBeforeFocus = event.target.value;
+
 			this.setWasUsed(true);
 			this.onFocus();
 		},
@@ -323,8 +331,15 @@ export const TodoEditor = {
 				bHideTime: false,
 				bSetFocus: false,
 				value: DateTimeFormat.format(DatetimeConverter.getSiteDateTimeFormat(), this.currentDeadline),
-				callback: this.setDeadline.bind(this),
+				callback: this.onSetDeadlineByCalendar.bind(this),
 			});
+		},
+
+		onSetDeadlineByCalendar(deadline: Date): void
+		{
+			this.setDeadline(deadline);
+
+			this.sendAnalyticsDeadlineChange();
 		},
 
 		setDeadline(deadline: Date): void
@@ -340,6 +355,12 @@ export const TodoEditor = {
 			if (data)
 			{
 				this.setResponsibleUserId(data.responsibleUserId);
+
+				if (!this.responsibleUserSelectorChangeSended)
+				{
+					this.responsibleUserSelectorChangeSended = true;
+					this.sendAnalytics(EventIds.activityTouch, ElementIds.responsibleUserId);
+				}
 			}
 		},
 
@@ -350,6 +371,8 @@ export const TodoEditor = {
 			{
 				this.currentDeadline = new Date(data.from);
 				this.calendarDateTo = new Date(data.to);
+
+				this.sendAnalyticsDeadlineChange();
 			}
 		},
 
@@ -405,6 +428,47 @@ export const TodoEditor = {
 			};
 		},
 
+		onColorSelectorValueChange(): void
+		{
+			if (!this.colorSelectorChangeSended)
+			{
+				this.colorSelectorChangeSended = true;
+				this.sendAnalytics(EventIds.activityTouch, ElementIds.colorSettings);
+			}
+		},
+
+		onPingSettingsSelectorValueChange(): void
+		{
+			if (!this.pingSettingsSelectorChangeSended)
+			{
+				this.pingSettingsSelectorChangeSended = true;
+				this.sendAnalytics(EventIds.activityTouch, ElementIds.pingSettings);
+			}
+		},
+
+		sendAnalyticsDeadlineChange(): void
+		{
+			if (!this.isDeadlineChanged)
+			{
+				this.sendAnalytics(EventIds.activityTouch, ElementIds.deadline);
+				this.isDeadlineChanged = true;
+			}
+		},
+
+		sendAnalytics(event: string, element: string): void
+		{
+			if (this.analytics === null)
+			{
+				return;
+			}
+
+			this.analytics
+				.setEvent(event)
+				.setElement(element)
+				.send()
+			;
+		},
+
 		onTitleInput(event: InputEvent): void
 		{
 			const { value } = event.target;
@@ -412,11 +476,36 @@ export const TodoEditor = {
 			this.setTitle(value);
 		},
 
+		onTitleFocus(event: FocusEvent): void
+		{
+			this.titleBeforeFocus = event.target.value;
+		},
+
+		onTitleBlur(event: FocusEvent): void
+		{
+			const { value } = event.target;
+
+			if (value !== this.defaultTitle && value !== this.titleBeforeFocus)
+			{
+				this.sendAnalytics(EventIds.activityTouch, ElementIds.title);
+			}
+		},
+
 		onTextareaInput(event: InputEvent): void
 		{
 			const { value } = event.target;
 
 			this.setDescription(value);
+		},
+
+		onTextareaBlur(event: FocusEvent): void
+		{
+			const { value } = event.target;
+
+			if (Type.isStringFilled(value) && value !== this.descriptionBeforeFocus)
+			{
+				this.sendAnalytics(EventIds.activityTouch, ElementIds.description);
+			}
 		},
 
 		onActionsPopupItemClick({ data: { id, componentId, componentParams } }): void
@@ -459,6 +548,12 @@ export const TodoEditor = {
 			block.sort = this.getNextBlockSortValue();
 
 			this.setTextareaFocused();
+
+			if (!this.addBlockSended)
+			{
+				this.addBlockSended = true;
+				this.sendAnalytics(EventIds.activityTouch, ElementIds.addBlock);
+			}
 		},
 
 		getNextBlockSortValue(): number
@@ -612,11 +707,14 @@ export const TodoEditor = {
 						:placeholder="placeholderTitle"
 						maxlength="40"
 						@input="onTitleInput"
+						@focus="onTitleFocus"
+						@blur="onTitleBlur"
 					>
 					<TodoEditorColorSelector
 						ref="colorSelector"
 						:valuesList="colorSettings.valuesList"
 						:selectedValueId="colorSettings.selectedValueId"
+						@onChange="onColorSelectorValueChange"
 					/>
 					<TodoEditorResponsibleUserSelector
 						:userId="currentUserData.userId"
@@ -630,11 +728,12 @@ export const TodoEditor = {
 					<textarea
 						rows="2"
 						ref="textarea"
-						@focus="onTextareaFocus"
 						@keydown="onTextareaKeydown"
 						class="crm-activity__todo-editor-v2_input_control"
 						:placeholder="placeholderDescription"
 						@input="onTextareaInput"
+						@focus="onTextareaFocus"
+						@blur="onTextareaBlur"
 						:value="description"
 						:class="{ '--has-scroll': isTextareaToLong }"
 					></textarea>
@@ -661,6 +760,8 @@ export const TodoEditor = {
 								ref="pingSelector"
 								:valuesList="pingSettings.valuesList"
 								:selectedValues="pingOffsets"
+								:deadline="currentDeadline"
+								@onChange="onPingSettingsSelectorValueChange"
 								class="crm-activity__todo-editor-v2_ping_selector"
 							/>
 						</div>

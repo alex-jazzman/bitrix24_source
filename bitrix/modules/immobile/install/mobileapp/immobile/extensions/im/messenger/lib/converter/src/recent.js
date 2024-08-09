@@ -49,37 +49,42 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @param {Array<RecentModelState>} recentItems
+		 * @return {Array<RecentItem>}
+		 */
 		toList(recentItems)
 		{
 			const listItems = [];
 
 			recentItems.forEach((item) => {
-				listItems.push(this.toItem(item));
+				listItems.push(this.prepareItemToNative(this.toItem(item)));
 			});
 
 			return listItems;
 		}
 
+		/**
+		 * @param {RecentModelState} item
+		 * @return {RecentItem}
+		 */
 		toItem(item)
 		{
 			const modelItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](item.id);
-			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](modelItem.id);
-			if (!dialog)
-			{
-				logger.error(`RecentConverter.toItem: there is no dialog "${item.id}" in model`);
 
-				return new RecentItem(modelItem);
+			if (DialogHelper.isChatId(modelItem.id))
+			{
+				return this.#toUserItem(modelItem);
 			}
 
-			if (DialogHelper.isDialogId(dialog.dialogId))
-			{
-				return this.toChatItem(item);
-			}
-
-			return this.toUserItem(modelItem);
+			return this.#toChatItem(modelItem);
 		}
 
-		toChatItem(modelItem)
+		/**
+		 * @param {RecentModelState} modelItem
+		 * @return {RecentItem}
+		 */
+		#toChatItem(modelItem)
 		{
 			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](modelItem.id);
 			if (!dialog)
@@ -124,7 +129,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			return new ChatItem(modelItem);
 		}
 
-		toUserItem(modelItem)
+		/**
+		 * @param {RecentModelState} modelItem
+		 * @return {RecentItem}
+		 */
+		#toUserItem(modelItem)
 		{
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](modelItem.id);
 			if (!user)
@@ -339,6 +348,36 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			}
 
 			return user;
+		}
+
+		/**
+		 * @param {RecentItem} recentItem
+		 * @return NativeRecentItem
+		*/
+		prepareItemToNative(recentItem)
+		{
+			const removeProperty = (item, propToRemove) => {
+				if (Array.isArray(item))
+				{
+					return item.map((elem) => removeProperty(elem, propToRemove));
+				}
+
+				if (item !== null && typeof item === 'object')
+				{
+					return Object.keys(item).reduce((acc, key) => {
+						if (key !== propToRemove)
+						{
+							acc[key] = removeProperty(item[key], propToRemove);
+						}
+
+						return acc;
+					}, {});
+				}
+
+				return item;
+			};
+
+			return removeProperty(recentItem, 'model');
 		}
 	}
 

@@ -1139,6 +1139,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const MAX_DESCRIPTION_SYMBOLS = 25;
+	const NEW_LINE_SYMBOL = '\n';
 	const DescriptionByChatType = {
 	  [im_v2_const.ChatType.user]: main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_USER'),
 	  [im_v2_const.ChatType.channel]: main_core.Loc.getMessage('IM_SIDEBAR_CHAT_TYPE_CHANNEL'),
@@ -1173,18 +1174,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      const user = this.$store.getters['users/get'](this.dialogId, true);
 	      return user.bot === true;
 	    },
+	    isLongDescription() {
+	      const hasNewLine = this.dialog.description.includes(NEW_LINE_SYMBOL);
+	      return this.dialog.description.length > MAX_DESCRIPTION_SYMBOLS || hasNewLine;
+	    },
 	    previewDescription() {
 	      if (this.dialog.description.length === 0) {
 	        return this.chatTypeText;
 	      }
-	      if (this.dialog.description.length > MAX_DESCRIPTION_SYMBOLS) {
+	      if (this.isLongDescription) {
 	        return `${this.dialog.description.slice(0, MAX_DESCRIPTION_SYMBOLS)}...`;
 	      }
 	      return this.dialog.description;
 	    },
 	    descriptionToShow() {
-	      const rawText = this.expanded ? this.dialog.description : this.previewDescription;
-	      return im_v2_lib_parser.Parser.purifyText(rawText);
+	      return this.expanded ? this.dialog.description : this.previewDescription;
 	    },
 	    chatTypeText() {
 	      var _DescriptionByChatTyp;
@@ -1200,7 +1204,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      if (this.expanded) {
 	        return false;
 	      }
-	      return this.dialog.description.length >= MAX_DESCRIPTION_SYMBOLS;
+	      return this.isLongDescription;
 	    },
 	    isCopilotLayout() {
 	      const {
@@ -1218,9 +1222,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		<div class="bx-im-sidebar-chat-description__container">
 			<div class="bx-im-sidebar-chat-description__text-container" :class="[expanded ? '--expanded' : '']">
 				<div class="bx-im-sidebar-chat-description__icon"></div>
-				<div class="bx-im-sidebar-chat-description__text">
-					{{ descriptionToShow }}
-				</div>
+				<div class="bx-im-sidebar-chat-description__text"> {{ descriptionToShow }}</div>
 			</div>
 			<button
 				v-if="showExpandButton"
@@ -5672,7 +5674,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	      return this.favoriteMessage.authorId.toString();
 	    },
 	    messageText() {
-	      return im_v2_lib_parser.Parser.decodeMessage(this.favoriteMessage);
+	      return im_v2_lib_parser.Parser.purifyMessage(this.favoriteMessage);
 	    },
 	    isCopilot() {
 	      return this.$store.getters['users/bots/isCopilot'](this.favoriteMessage.authorId);
@@ -5691,11 +5693,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	        messageId: this.favorite.messageId,
 	        dialogId: this.dialogId
 	      });
-	    },
-	    onMessageBodyClick(event) {
-	      if (event.target.tagName === 'A') {
-	        event.stopPropagation();
-	      }
 	    }
 	  },
 	  template: `
@@ -5727,7 +5724,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					@click.stop="onContextMenuClick"
 				></button>
 			</div>
-			<div class="bx-im-favorite-item__message-text" v-html="messageText" @click="onMessageBodyClick"></div>
+			<div class="bx-im-favorite-item__message-text"> {{ messageText }}</div>
 		</div>
 	`
 	};

@@ -70,7 +70,7 @@ export default class ToDo extends Item
 		this.#isTourViewed = this.getSetting('isTourViewed');
 	}
 
-	onSaveButtonClick(e)
+	onSaveButtonClick()
 	{
 		if (
 			this.isLocked()
@@ -113,6 +113,16 @@ export default class ToDo extends Item
 		if (this.#useTodoEditorV2)
 		{
 			params.calendarSettings = this.getSetting('calendarSettings');
+
+			const extras = this.getExtras();
+			if (Type.isPlainObject(extras.analytics))
+			{
+				params.analytics = {
+					section: extras.analytics.c_section,
+					subSection: extras.analytics.c_sub_section,
+				};
+			}
+
 			this.#toDoEditor = new TodoEditorV2(params);
 		}
 		else
@@ -136,16 +146,16 @@ export default class ToDo extends Item
 			{
 				return false;
 			}
-			this.cancel();
+			this.cancel(false);
 			this.emitFinishEditEvent();
 
 			return true;
 		});
 	}
 
-	cancel(): void
+	cancel(sendAnalytics: boolean = true): void
 	{
-		this.#toDoEditor.clearValue();
+		this.#toDoEditor.cancel({ sendAnalytics });
 		if (!this.#useTodoEditorV2)
 		{
 			Dom.addClass(this.#saveButton, 'ui-btn-disabled');

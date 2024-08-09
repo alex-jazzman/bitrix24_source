@@ -30,6 +30,7 @@ Extension::load([
 	"ui.icons.disk",
 	"ui.progressbar",
 	"ui.icon-set.main",
+	"crm.integration.ui.banner-dispatcher",
 ]);
 Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 

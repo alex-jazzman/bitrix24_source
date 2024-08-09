@@ -36,7 +36,7 @@ jn.define('im/messenger/db/table/link-pin', (require, exports, module) => {
 		 */
 		async deleteByMessageIdList(messageIdList)
 		{
-			if (!this.isSupported || !Feature.isLocalStorageEnabled)
+			if (!this.isSupported || this.readOnly || !Feature.isLocalStorageEnabled)
 			{
 				return Promise.resolve();
 			}

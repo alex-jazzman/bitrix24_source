@@ -194,6 +194,7 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('imopenlines', 'OnImopenlineChangeQueueType', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueTypeChange');
 		$eventManager->registerEventHandler('imopenlines', 'OnQueueOperatorsAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsAdd');
 		$eventManager->registerEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsDelete');
+		$eventManager->registerEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Recent', 'onQueueOperatorsDelete');
 		$eventManager->registerEventHandler('iblock', 'OnBeforeIBlockSectionDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnBeforeDepartmentsDelete');
 		$eventManager->registerEventHandler('iblock', 'OnAfterIBlockSectionDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnAfterDepartmentsDelete');
 		$eventManager->registerEventHandler('iblock', 'OnBeforeIBlockSectionUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnBeforeDepartmentsUpdate');
@@ -469,6 +470,7 @@ final class imopenlines extends \CModule
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnImopenlineChangeQueueType', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueTypeChange');
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsAdd');
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsDelete');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Recent', 'onQueueOperatorsDelete');
 		$eventManager->unRegisterEventHandler('iblock', 'OnBeforeIBlockSectionDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnBeforeDepartmentsDelete');
 		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockSectionDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnAfterDepartmentsDelete');
 		$eventManager->unRegisterEventHandler('iblock', 'OnBeforeIBlockSectionUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnBeforeDepartmentsUpdate');

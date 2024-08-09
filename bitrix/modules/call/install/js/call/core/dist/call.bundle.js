@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,im_lib_utils,ui_switcher,ui_dialogs_messagebox,ui_buttons,im_v2_lib_desktopApi,im_v2_const,main_core_events,main_popup,main_core,im_v2_lib_utils,loader,resize_observer,webrtc_adapter,im_lib_localstorage) {
+(function (exports,im_lib_utils,ui_switcher,ui_dialogs_messagebox,ui_buttons,im_v2_lib_desktopApi,im_v2_const,main_core_events,main_popup,main_core,im_v2_lib_utils,call_lib_analytics,loader,resize_observer,webrtc_adapter,im_lib_localstorage) {
 	'use strict';
 
 	// screensharing workaround
@@ -1046,8 +1046,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, SimpleButton);
 	    this["class"] = config["class"];
 	    this.backgroundClass = BX.prop.getString(config, "backgroundClass", "");
-	    this.withBlur = im_v2_lib_utils.Utils.platform.isMac();
-	    this.backgroundClass = "bx-messenger-videocall-panel-icon-background" + (this.backgroundClass ? " " : "") + this.backgroundClass + (this.withBlur ? ' with-blur' : '');
+	    this.backgroundClass = "bx-messenger-videocall-panel-icon-background" + (this.backgroundClass ? " " : "") + this.backgroundClass;
 	    this.blocked = config.blocked === true;
 	    this.text = BX.prop.getString(config, "text", "");
 	    this.isActive = false;
@@ -1196,7 +1195,6 @@ this.BX = this.BX || {};
 	      onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
 	      onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing)
 	    };
-	    this.withBlur = im_v2_lib_utils.Utils.platform.isMac();
 	  }
 	  babelHelpers.createClass(DeviceButton, [{
 	    key: "render",
@@ -1237,7 +1235,7 @@ this.BX = this.BX || {};
 	      });
 	      this.elements.arrow = main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-messenger-videocall-panel-item-with-arrow-right" + (this.withBlur ? ' with-blur' : '')
+	          className: "bx-messenger-videocall-panel-item-with-arrow-right"
 	        },
 	        children: [main_core.Dom.create("div", {
 	          props: {
@@ -1362,7 +1360,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getIconContainerClass",
 	    value: function getIconContainerClass() {
-	      return "bx-messenger-videocall-panel-item-with-arrow-icon-container" + (this.withBlur ? ' with-blur' : '') + " bx-messenger-videocall-panel-item-with-arrow-icon-container-" + this["class"] + (this.enabled ? "" : "-off");
+	      return "bx-messenger-videocall-panel-item-with-arrow-icon-container" + " bx-messenger-videocall-panel-item-with-arrow-icon-container-" + this["class"] + (this.enabled ? "" : "-off");
 	    }
 	  }, {
 	    key: "enable",
@@ -1511,7 +1509,6 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, TopButton);
 	    this.iconClass = BX.prop.getString(config, "iconClass", "");
 	    this.text = BX.prop.getString(config, "text", "");
-	    this.withBlur = im_v2_lib_utils.Utils.platform.isMac();
 	    this.callbacks = {
 	      onClick: BX.prop.getFunction(config, "onClick", BX.DoNothing),
 	      onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
@@ -1523,7 +1520,7 @@ this.BX = this.BX || {};
 	    value: function render() {
 	      return main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-messenger-videocall-top-button" + (this.withBlur ? ' with-blur' : '')
+	          className: "bx-messenger-videocall-top-button"
 	        },
 	        children: [main_core.Dom.create("div", {
 	          props: {
@@ -1590,7 +1587,6 @@ this.BX = this.BX || {};
 	    this.count = BX.prop.getInteger(config, "count", 0);
 	    this.foldButtonState = BX.prop.getString(config, "foldButtonState", ParticipantsButton.FoldButtonState.Hidden);
 	    this.allowAdding = BX.prop.getBoolean(config, "allowAdding", false);
-	    this.withBlur = im_v2_lib_utils.Utils.platform.isMac();
 	    this.elements = {
 	      root: null,
 	      leftContainer: null,
@@ -1612,7 +1608,7 @@ this.BX = this.BX || {};
 	      }
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-messenger-videocall-top-participants" + (this.withBlur ? ' with-blur' : '')
+	          className: "bx-messenger-videocall-top-participants"
 	        },
 	        children: [this.elements.leftContainer = main_core.Dom.create("div", {
 	          props: {
@@ -1770,7 +1766,6 @@ this.BX = this.BX || {};
 	      onMouseOver: BX.prop.getFunction(config, "onMouseOver", BX.DoNothing),
 	      onMouseOut: BX.prop.getFunction(config, "onMouseOut", BX.DoNothing)
 	    };
-	    this.withBlur = im_v2_lib_utils.Utils.platform.isMac();
 	  }
 	  babelHelpers.createClass(RecordStatusButton, [{
 	    key: "render",
@@ -1780,7 +1775,7 @@ this.BX = this.BX || {};
 	      }
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + " " + (this.recordState.userId == this.userId ? '' : 'record-user-viewer') + (this.withBlur ? ' with-blur' : '')
+	          className: "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + " " + (this.recordState.userId == this.userId ? '' : 'record-user-viewer')
 	        },
 	        children: [main_core.Dom.create("div", {
 	          props: {
@@ -1799,7 +1794,7 @@ this.BX = this.BX || {};
 	            props: {
 	              className: "bx-messenger-videocall-top-recordstatus-time-text"
 	            },
-	            text: this.getTimeText()
+	            text: Util.getRecordTimeText(this.recordState)
 	          })]
 	        }), main_core.Dom.create("div", {
 	          props: {
@@ -1831,38 +1826,6 @@ this.BX = this.BX || {};
 	      return this.elements.root;
 	    }
 	  }, {
-	    key: "getTimeText",
-	    value: function getTimeText() {
-	      if (this.recordState.state === View.RecordState.Stopped) {
-	        return '';
-	      }
-	      var nowDate = new Date();
-	      var startDate = new Date(this.recordState.date.start);
-	      if (startDate.getTime() < nowDate.getDate()) {
-	        startDate = nowDate;
-	      }
-	      var pauseTime = this.recordState.date.pause.map(function (element) {
-	        var finish = element.finish ? new Date(element.finish) : nowDate;
-	        return finish - new Date(element.start);
-	      }).reduce(function (sum, element) {
-	        return sum + element;
-	      }, 0);
-	      var totalTime = nowDate - startDate - pauseTime;
-	      if (totalTime <= 0) {
-	        totalTime = 0;
-	      }
-	      var second = Math.floor(totalTime / 1000);
-	      var hour = Math.floor(second / 60 / 60);
-	      if (hour > 0) {
-	        second -= hour * 60 * 60;
-	      }
-	      var minute = Math.floor(second / 60);
-	      if (minute > 0) {
-	        second -= minute * 60;
-	      }
-	      return (hour > 0 ? hour + ':' : '') + (hour > 0 ? minute.toString().padStart(2, "0") + ':' : minute + ':') + second.toString().padStart(2, "0");
-	    }
-	  }, {
 	    key: "update",
 	    value: function update(recordState) {
 	      if (this.recordState.state !== recordState.state) {
@@ -1877,9 +1840,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateView",
 	    value: function updateView() {
-	      var timeText = this.getTimeText();
+	      var timeText = Util.getRecordTimeText(this.recordState);
 	      if (this.elements.timeText.innerText !== timeText) {
-	        this.elements.timeText.innerText = this.getTimeText();
+	        this.elements.timeText.innerText = Util.getRecordTimeText(this.recordState);
 	      }
 	      if (!this.elements.root.classList.contains("record-status-" + this.recordState.state)) {
 	        this.elements.root.className = "bx-messenger-videocall-top-recordstatus record-status-" + this.recordState.state + ' ' + (this.recordState.userId == this.userId ? '' : 'record-user-viewer');
@@ -2604,6 +2567,7 @@ this.BX = this.BX || {};
 	var _processVideoQueue = /*#__PURE__*/new WeakSet();
 	var _getUserMedia = /*#__PURE__*/new WeakSet();
 	var _getDisplayMedia = /*#__PURE__*/new WeakSet();
+	var _addTrackMuteHandlers = /*#__PURE__*/new WeakSet();
 	var _sendLog = /*#__PURE__*/new WeakSet();
 	var _answerHandler = /*#__PURE__*/new WeakSet();
 	var _offerHandler = /*#__PURE__*/new WeakSet();
@@ -2633,6 +2597,7 @@ this.BX = this.BX || {};
 	    _classPrivateMethodInitSpec(this, _offerHandler);
 	    _classPrivateMethodInitSpec(this, _answerHandler);
 	    _classPrivateMethodInitSpec(this, _sendLog);
+	    _classPrivateMethodInitSpec(this, _addTrackMuteHandlers);
 	    _classPrivateMethodInitSpec(this, _getDisplayMedia);
 	    _classPrivateMethodInitSpec(this, _getUserMedia);
 	    _classPrivateMethodInitSpec(this, _processVideoQueue);
@@ -2695,6 +2660,8 @@ this.BX = this.BX || {};
 	        cameraStream: null,
 	        microphoneStream: null,
 	        screenStream: null,
+	        mediaMutedBySystem: false,
+	        needToEnableAudioAfterSystemMuted: false,
 	        localTracks: {},
 	        localConnectionQuality: 0,
 	        minimalConnectionQuality: 2,
@@ -3283,9 +3250,9 @@ this.BX = this.BX || {};
 	              });
 	              if (_track2) {
 	                if (_track2.source === MediaStreamsKinds.Camera) {
-	                  if (!data.trackMuted.muted && _track2.muted) {
+	                  if (!data.trackMuted.muted && _track2.muted && !babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem) {
 	                    this.triggerEvents('PublishSucceed', [_track2.source]);
-	                  } else {
+	                  } else if (!babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem) {
 	                    this.triggerEvents('PublishPaused', [_track2.source]);
 	                  }
 	                  if (babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue) {
@@ -4073,9 +4040,14 @@ this.BX = this.BX || {};
 	    key: "disableAudio",
 	    value: function disableAudio() {
 	      var _babelHelpers$classPr5;
+	      var bySystem = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+	      if (babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem) {
+	        return;
+	      }
 	      this.setLog('Start disabling audio', LOG_LEVEL.INFO);
 	      var track = (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldGet(this, _privateProperties).microphoneStream) === null || _babelHelpers$classPr5 === void 0 ? void 0 : _babelHelpers$classPr5.getAudioTracks()[0];
 	      if (track) {
+	        babelHelpers.classPrivateFieldGet(this, _privateProperties).needToEnableAudioAfterSystemMuted = bySystem ? track.enabled : false;
 	        track.enabled = false;
 	        this.pauseTrack(MediaStreamsKinds.Microphone, true);
 	      } else {
@@ -4092,59 +4064,60 @@ this.BX = this.BX || {};
 	          while (1) switch (_context11.prev = _context11.next) {
 	            case 0:
 	              this.setLog('Start enabling audio', LOG_LEVEL.INFO);
+	              babelHelpers.classPrivateFieldGet(this, _privateProperties).needToEnableAudioAfterSystemMuted = false;
 	              if (!babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveAudioDeviceInProgress) {
-	                _context11.next = 10;
+	                _context11.next = 11;
 	                break;
 	              }
-	              _context11.prev = 2;
-	              _context11.next = 5;
+	              _context11.prev = 3;
+	              _context11.next = 6;
 	              return babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveAudioDeviceInProgress;
-	            case 5:
-	              _context11.next = 10;
+	            case 6:
+	              _context11.next = 11;
 	              break;
-	            case 7:
-	              _context11.prev = 7;
-	              _context11.t0 = _context11["catch"](2);
+	            case 8:
+	              _context11.prev = 8;
+	              _context11.t0 = _context11["catch"](3);
 	              this.triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
-	            case 10:
+	            case 11:
 	              track = (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldGet(this, _privateProperties).microphoneStream) === null || _babelHelpers$classPr6 === void 0 ? void 0 : _babelHelpers$classPr6.getAudioTracks()[0];
 	              if (!(track && babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Microphone])) {
-	                _context11.next = 19;
+	                _context11.next = 20;
 	                break;
 	              }
 	              this.setLog('Enabling audio via unpause signal', LOG_LEVEL.INFO);
 	              track.enabled = true;
-	              _context11.next = 16;
+	              _context11.next = 17;
 	              return this.publishTrack(MediaStreamsKinds.Microphone, track);
-	            case 16:
+	            case 17:
 	              this.unpauseTrack(MediaStreamsKinds.Microphone);
-	              _context11.next = 32;
+	              _context11.next = 33;
 	              break;
-	            case 19:
-	              _context11.next = 21;
+	            case 20:
+	              _context11.next = 22;
 	              return this.getLocalAudio();
-	            case 21:
+	            case 22:
 	              track = _context11.sent;
 	              if (!track) {
-	                _context11.next = 29;
+	                _context11.next = 30;
 	                break;
 	              }
 	              this.setLog('Enabling audio via publish', LOG_LEVEL.INFO);
 	              track.enabled = true;
-	              _context11.next = 27;
+	              _context11.next = 28;
 	              return this.publishTrack(MediaStreamsKinds.Microphone, track);
-	            case 27:
-	              _context11.next = 32;
+	            case 28:
+	              _context11.next = 33;
 	              break;
-	            case 29:
+	            case 30:
 	              this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
 	              _classPrivateMethodGet(this, _releaseStream, _releaseStream2).call(this, MediaStreamsKinds.Microphone);
 	              this.triggerEvents('PublishFailed', [MediaStreamsKinds.Microphone]);
-	            case 32:
+	            case 33:
 	            case "end":
 	              return _context11.stop();
 	          }
-	        }, _callee11, this, [[2, 7]]);
+	        }, _callee11, this, [[3, 8]]);
 	      }));
 	      function enableAudio() {
 	        return _enableAudio.apply(this, arguments);
@@ -4156,35 +4129,58 @@ this.BX = this.BX || {};
 	    value: function () {
 	      var _disableVideo = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee12() {
 	        var _babelHelpers$classPr7;
-	        var hasQueue, track;
+	        var bySystem,
+	          hasQueue,
+	          track,
+	          _args12 = arguments;
 	        return _regeneratorRuntime().wrap(function _callee12$(_context12) {
 	          while (1) switch (_context12.prev = _context12.next) {
 	            case 0:
+	              bySystem = _args12.length > 0 && _args12[0] !== undefined ? _args12[0] : false;
 	              if (!babelHelpers.classPrivateFieldGet(this, _privateProperties).isReconnecting) {
-	                _context12.next = 2;
+	                _context12.next = 3;
 	                break;
 	              }
 	              return _context12.abrupt("return");
-	            case 2:
+	            case 3:
 	              hasQueue = babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue !== VIDEO_QUEUE.INITIAL;
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.DISABLE;
 	              if (!hasQueue) {
-	                _context12.next = 6;
+	                _context12.next = 7;
 	                break;
 	              }
 	              return _context12.abrupt("return");
-	            case 6:
+	            case 7:
 	              this.setLog('Start disabling video', LOG_LEVEL.INFO);
 	              track = (_babelHelpers$classPr7 = babelHelpers.classPrivateFieldGet(this, _privateProperties).cameraStream) === null || _babelHelpers$classPr7 === void 0 ? void 0 : _babelHelpers$classPr7.getVideoTracks()[0];
-	              if (track && babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Camera]) {
-	                track.stop();
-	                babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Camera].muted = true;
-	                this.pauseTrack(MediaStreamsKinds.Camera, true);
-	                this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
-	              } else {
-	                this.setLog('Disabling video failed: has no track', LOG_LEVEL.ERROR);
+	              if (!(track && babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Camera])) {
+	                _context12.next = 22;
+	                break;
 	              }
-	            case 9:
+	              if (!babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem) {
+	                _context12.next = 17;
+	                break;
+	              }
+	              babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.INITIAL;
+	              babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem = false;
+	              track.stop();
+	              this.triggerEvents('MediaMutedBySystem', [false]);
+	              this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+	              return _context12.abrupt("return");
+	            case 17:
+	              babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Camera].muted = true;
+	              this.pauseTrack(MediaStreamsKinds.Camera, true);
+	              if (!bySystem) {
+	                babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.INITIAL;
+	                track.stop();
+	                this.triggerEvents('PublishEnded', [MediaStreamsKinds.Camera]);
+	              }
+	              _context12.next = 24;
+	              break;
+	            case 22:
+	              this.setLog('Disabling video failed: has no track', LOG_LEVEL.ERROR);
+	              babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.INITIAL;
+	            case 24:
 	            case "end":
 	              return _context12.stop();
 	          }
@@ -4200,81 +4196,95 @@ this.BX = this.BX || {};
 	    value: function () {
 	      var _enableVideo = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee13() {
 	        var _babelHelpers$classPr8;
-	        var hasQueue, track;
+	        var skipUnpause,
+	          hasQueue,
+	          hasTrack,
+	          track,
+	          _args13 = arguments;
 	        return _regeneratorRuntime().wrap(function _callee13$(_context13) {
 	          while (1) switch (_context13.prev = _context13.next) {
 	            case 0:
+	              skipUnpause = _args13.length > 0 && _args13[0] !== undefined ? _args13[0] : false;
 	              if (!babelHelpers.classPrivateFieldGet(this, _privateProperties).isReconnecting) {
-	                _context13.next = 2;
+	                _context13.next = 3;
 	                break;
 	              }
 	              return _context13.abrupt("return");
-	            case 2:
+	            case 3:
 	              hasQueue = babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue !== VIDEO_QUEUE.INITIAL;
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.ENABLE;
 	              if (!hasQueue) {
-	                _context13.next = 6;
+	                _context13.next = 7;
 	                break;
 	              }
 	              return _context13.abrupt("return");
-	            case 6:
+	            case 7:
 	              if (!babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveVideoDeviceInProgress) {
-	                _context13.next = 15;
+	                _context13.next = 16;
 	                break;
 	              }
-	              _context13.prev = 7;
-	              _context13.next = 10;
+	              _context13.prev = 8;
+	              _context13.next = 11;
 	              return babelHelpers.classPrivateFieldGet(this, _privateProperties).switchActiveVideoDeviceInProgress;
-	            case 10:
-	              _context13.next = 15;
+	            case 11:
+	              _context13.next = 16;
 	              break;
-	            case 12:
-	              _context13.prev = 12;
-	              _context13.t0 = _context13["catch"](7);
+	            case 13:
+	              _context13.prev = 13;
+	              _context13.t0 = _context13["catch"](8);
 	              this.triggerEvents('PublishFailed', [MediaStreamsKinds.Camera]);
-	            case 15:
+	            case 16:
 	              this.setLog('Start enabling video', LOG_LEVEL.INFO);
-	              track = (_babelHelpers$classPr8 = babelHelpers.classPrivateFieldGet(this, _privateProperties).cameraStream) === null || _babelHelpers$classPr8 === void 0 ? void 0 : _babelHelpers$classPr8.getVideoTracks()[0];
-	              if (!(track && babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Camera])) {
-	                _context13.next = 28;
-	                break;
-	              }
+	              hasTrack = !!((_babelHelpers$classPr8 = babelHelpers.classPrivateFieldGet(this, _privateProperties).cameraStream) !== null && _babelHelpers$classPr8 !== void 0 && _babelHelpers$classPr8.getVideoTracks()[0]);
 	              _context13.next = 20;
 	              return this.getLocalVideo();
 	            case 20:
 	              track = _context13.sent;
-	              this.setLog('Enabling video via unpause signal', LOG_LEVEL.INFO);
+	              if (!(track && hasTrack && babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Camera])) {
+	                _context13.next = 30;
+	                break;
+	              }
+	              if (babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem) {
+	                babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem = false;
+	                this.triggerEvents('MediaMutedBySystem', [false]);
+	              }
+	              if (skipUnpause) {
+	                this.setLog('Re-enabling video after automatic camera change', LOG_LEVEL.INFO);
+	              } else {
+	                this.setLog('Enabling video via unpause signal', LOG_LEVEL.INFO);
+	              }
 	              babelHelpers.classPrivateFieldGet(this, _privateProperties).localTracks[MediaStreamsKinds.Camera].muted = false;
-	              _context13.next = 25;
+	              _context13.next = 27;
 	              return this.publishTrack(MediaStreamsKinds.Camera, track);
-	            case 25:
-	              this.unpauseTrack(MediaStreamsKinds.Camera);
+	            case 27:
+	              if (skipUnpause) {
+	                babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.INITIAL;
+	              } else {
+	                this.unpauseTrack(MediaStreamsKinds.Camera);
+	              }
 	              _context13.next = 40;
 	              break;
-	            case 28:
-	              _context13.next = 30;
-	              return this.getLocalVideo();
 	            case 30:
-	              track = _context13.sent;
 	              if (!track) {
-	                _context13.next = 37;
+	                _context13.next = 36;
 	                break;
 	              }
 	              this.setLog('Enabling video via publish', LOG_LEVEL.INFO);
-	              _context13.next = 35;
+	              _context13.next = 34;
 	              return this.publishTrack(MediaStreamsKinds.Camera, track);
-	            case 35:
+	            case 34:
 	              _context13.next = 40;
 	              break;
-	            case 37:
+	            case 36:
 	              this.setLog('Enabling video failed: has no track', LOG_LEVEL.ERROR);
+	              babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.INITIAL;
 	              _classPrivateMethodGet(this, _releaseStream, _releaseStream2).call(this, MediaStreamsKinds.Camera);
 	              this.triggerEvents('PublishFailed', [MediaStreamsKinds.Camera]);
 	            case 40:
 	            case "end":
 	              return _context13.stop();
 	          }
-	        }, _callee13, this, [[7, 12]]);
+	        }, _callee13, this, [[8, 13]]);
 	      }));
 	      function enableVideo() {
 	        return _enableVideo.apply(this, arguments);
@@ -4789,6 +4799,11 @@ this.BX = this.BX || {};
 	    value: function enableSilentLogging(enable) {
 	      babelHelpers.classPrivateFieldGet(this, _privateProperties).isloggingEnable = enable;
 	    }
+	  }, {
+	    key: "isMediaMutedBySystem",
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem;
+	    }
 	  }]);
 	  return Call;
 	}();
@@ -5034,7 +5049,7 @@ this.BX = this.BX || {};
 	  babelHelpers.classPrivateFieldGet(this, _privateProperties).videoQueue = VIDEO_QUEUE.INITIAL;
 	  if (videoQueue === VIDEO_QUEUE.ENABLE && ((_babelHelpers$classPr23 = babelHelpers.classPrivateFieldGet(this, _privateProperties).cameraStream) === null || _babelHelpers$classPr23 === void 0 ? void 0 : _babelHelpers$classPr23.getVideoTracks()[0].readyState) !== 'live') {
 	    this.enableVideo();
-	  } else if (videoQueue === VIDEO_QUEUE.DISABLE && ((_babelHelpers$classPr24 = babelHelpers.classPrivateFieldGet(this, _privateProperties).cameraStream) === null || _babelHelpers$classPr24 === void 0 ? void 0 : _babelHelpers$classPr24.getVideoTracks()[0].readyState) === 'live') {
+	  } else if (videoQueue === VIDEO_QUEUE.DISABLE && ((_babelHelpers$classPr24 = babelHelpers.classPrivateFieldGet(this, _privateProperties).cameraStream) === null || _babelHelpers$classPr24 === void 0 ? void 0 : _babelHelpers$classPr24.getVideoTracks()[0].readyState) === 'live' && !babelHelpers.classPrivateFieldGet(this, _privateProperties).mediaMutedBySystem) {
 	    this.disableVideo();
 	  }
 	}
@@ -5088,36 +5103,39 @@ this.BX = this.BX || {};
 	          return navigator.mediaDevices.getUserMedia(constraints);
 	        case 8:
 	          stream = _context25.sent;
+	          if (options.video) {
+	            _classPrivateMethodGet(this, _addTrackMuteHandlers, _addTrackMuteHandlers2).call(this, stream.getVideoTracks()[0]);
+	          }
 	          this.setLog("Getting user media with constraints: ".concat(JSON.stringify(constraints), " succeeded"), LOG_LEVEL.INFO);
-	          _context25.next = 21;
+	          _context25.next = 22;
 	          break;
-	        case 12:
-	          _context25.prev = 12;
+	        case 13:
+	          _context25.prev = 13;
 	          _context25.t0 = _context25["catch"](4);
 	          if (!options.video) {
-	            _context25.next = 20;
+	            _context25.next = 21;
 	            break;
 	          }
 	          this.setLog("Getting user media with constraints: ".concat(JSON.stringify(constraints), " failed (fallbackMode: ").concat(fallbackMode, "): ").concat(_context25.t0), LOG_LEVEL.ERROR);
 	          if (fallbackMode) {
-	            _context25.next = 20;
+	            _context25.next = 21;
 	            break;
 	          }
-	          _context25.next = 19;
+	          _context25.next = 20;
 	          return _classPrivateMethodGet(this, _getUserMedia, _getUserMedia2).call(this, options, true);
-	        case 19:
-	          stream = _context25.sent;
 	        case 20:
-	          this.setLog("Getting user media with constraints: ".concat(JSON.stringify(constraints), " failed: ").concat(_context25.t0), LOG_LEVEL.ERROR);
+	          stream = _context25.sent;
 	        case 21:
-	          _context25.prev = 21;
+	          this.setLog("Getting user media with constraints: ".concat(JSON.stringify(constraints), " failed: ").concat(_context25.t0), LOG_LEVEL.ERROR);
+	        case 22:
+	          _context25.prev = 22;
 	          this.triggerEvents('GetUserMediaEnded');
 	          return _context25.abrupt("return", stream);
-	        case 25:
+	        case 26:
 	        case "end":
 	          return _context25.stop();
 	      }
-	    }, _callee25, this, [[4, 12, 21, 25]]);
+	    }, _callee25, this, [[4, 13, 22, 26]]);
 	  }));
 	  return _getUserMedia3.apply(this, arguments);
 	}
@@ -5181,6 +5199,26 @@ this.BX = this.BX || {};
 	  }));
 	  return _getDisplayMedia3.apply(this, arguments);
 	}
+	function _addTrackMuteHandlers2(track) {
+	  var _this17 = this;
+	  track.onmute = function (event) {
+	    babelHelpers.classPrivateFieldGet(_this17, _privateProperties).mediaMutedBySystem = false;
+	    _this17.disableVideo(true);
+	    _this17.disableAudio(true);
+	    babelHelpers.classPrivateFieldGet(_this17, _privateProperties).mediaMutedBySystem = true;
+	    _this17.triggerEvents('MediaMutedBySystem', [true]);
+	  };
+	  track.onunmute = function (event) {
+	    if (babelHelpers.classPrivateFieldGet(_this17, _privateProperties).mediaMutedBySystem) {
+	      babelHelpers.classPrivateFieldGet(_this17, _privateProperties).mediaMutedBySystem = false;
+	      _this17.triggerEvents('MediaMutedBySystem', [false]);
+	    }
+	    _this17.enableVideo();
+	    if (babelHelpers.classPrivateFieldGet(_this17, _privateProperties).needToEnableAudioAfterSystemMuted) {
+	      _this17.enableAudio();
+	    }
+	  };
+	}
 	function _sendLog2(log, level) {
 	  var signal = {
 	    sendLog: {
@@ -5196,7 +5234,7 @@ this.BX = this.BX || {};
 	}
 	function _answerHandler3() {
 	  _answerHandler3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee27(data) {
-	    var _this21 = this;
+	    var _this22 = this;
 	    var hasError;
 	    return _regeneratorRuntime().wrap(function _callee27$(_context27) {
 	      while (1) switch (_context27.prev = _context27.next) {
@@ -5208,8 +5246,8 @@ this.BX = this.BX || {};
 	          return this.sender.setRemoteDescription(data.answer);
 	        case 5:
 	          babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingCandidates.sender.forEach(function (candidate) {
-	            _this21.sender.addIceCandidate(candidate);
-	            _this21.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
+	            _this22.sender.addIceCandidate(candidate);
+	            _this22.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
 	          });
 	          babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingCandidates.sender = [];
 	          _context27.next = 13;
@@ -5242,7 +5280,7 @@ this.BX = this.BX || {};
 	}
 	function _offerHandler3() {
 	  _offerHandler3 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee28(data) {
-	    var _this22 = this;
+	    var _this23 = this;
 	    var answer;
 	    return _regeneratorRuntime().wrap(function _callee28$(_context28) {
 	      while (1) switch (_context28.prev = _context28.next) {
@@ -5253,8 +5291,8 @@ this.BX = this.BX || {};
 	          return this.recipient.setRemoteDescription(data.offer);
 	        case 4:
 	          babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingCandidates.recipient.forEach(function (candidate) {
-	            _this22.recipient.addIceCandidate(candidate);
-	            _this22.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
+	            _this23.recipient.addIceCandidate(candidate);
+	            _this23.setLog('Added a deferred ICE candidate', LOG_LEVEL.INFO);
 	          });
 	          babelHelpers.classPrivateFieldGet(this, _privateProperties).pendingCandidates.recipient = [];
 	          _context28.next = 8;
@@ -5308,7 +5346,7 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _setRemoteParticipant2(participant) {
-	  var _this17 = this;
+	  var _this18 = this;
 	  var userId = participant.userId;
 	  var participantEvent = babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId] ? 'ParticipantStateUpdated' : 'ParticipantJoined';
 	  var remoteParticipant = new Participant(participant, babelHelpers.classPrivateFieldGet(this, _privateProperties).socketConnect);
@@ -5317,7 +5355,7 @@ this.BX = this.BX || {};
 	  if (participant.participantTracks) {
 	    Object.values(participant.participantTracks).forEach(function (track) {
 	      track.userId = userId;
-	      babelHelpers.classPrivateFieldGet(_this17, _privateProperties).tracksDataFromSocket[track.sid] = track;
+	      babelHelpers.classPrivateFieldGet(_this18, _privateProperties).tracksDataFromSocket[track.sid] = track;
 	      if (track.muted && track.source === MediaStreamsKinds.Microphone) {
 	        remoteParticipant.isMutedAudio = true;
 	      }
@@ -5335,13 +5373,13 @@ this.BX = this.BX || {};
 	          remoteParticipant.screenSharingEnabled = true;
 	          break;
 	      }
-	      _this17.setLog("A participant with id ".concat(userId, " (sid: ").concat(participant.sid, ") has a track info with kind ").concat(track.source, " (sid: ").concat(track.sid, ", waiting for it"), LOG_LEVEL.INFO);
-	      var ontrackData = babelHelpers.classPrivateFieldGet(_this17, _privateProperties).ontrackData[track.sid];
-	      delete babelHelpers.classPrivateFieldGet(_this17, _privateProperties).ontrackData[track.sid];
+	      _this18.setLog("A participant with id ".concat(userId, " (sid: ").concat(participant.sid, ") has a track info with kind ").concat(track.source, " (sid: ").concat(track.sid, ", waiting for it"), LOG_LEVEL.INFO);
+	      var ontrackData = babelHelpers.classPrivateFieldGet(_this18, _privateProperties).ontrackData[track.sid];
+	      delete babelHelpers.classPrivateFieldGet(_this18, _privateProperties).ontrackData[track.sid];
 	      if (ontrackData) {
-	        _classPrivateMethodGet(_this17, _createRemoteTrack, _createRemoteTrack2).call(_this17, track.sid, ontrackData);
+	        _classPrivateMethodGet(_this18, _createRemoteTrack, _createRemoteTrack2).call(_this18, track.sid, ontrackData);
 	      } else {
-	        _classPrivateMethodGet(_this17, _addPendingSubscription, _addPendingSubscription2).call(_this17, participant, track);
+	        _classPrivateMethodGet(_this18, _addPendingSubscription, _addPendingSubscription2).call(_this18, participant, track);
 	      }
 	    });
 	  }
@@ -5350,7 +5388,7 @@ this.BX = this.BX || {};
 	  var _babelHelpers$classPr25,
 	    _babelHelpers$classPr26,
 	    _babelHelpers$classPr27,
-	    _this18 = this;
+	    _this19 = this;
 	  var trackData = babelHelpers.classPrivateFieldGet(this, _privateProperties).tracksDataFromSocket[trackId];
 	  var userId = trackData.userId;
 	  var participant = babelHelpers.classPrivateFieldGet(this, _privateProperties).remoteParticipants[userId];
@@ -5391,34 +5429,34 @@ this.BX = this.BX || {};
 	    ontrackData.streams[0].onremovetrack = function () {
 	      // we need to check if a participant is still exists
 	      // otherwise tracks were deleted when participant left room
-	      var participant = babelHelpers.classPrivateFieldGet(_this18, _privateProperties).remoteParticipants[userId];
+	      var participant = babelHelpers.classPrivateFieldGet(_this19, _privateProperties).remoteParticipants[userId];
 	      if (participant) {
-	        _this18.setLog("Track with kind ".concat(track.source, " (sid: ").concat(track.id, ") for a participant with id ").concat(userId, " (sid: ").concat(participant.sid || 'unknown', ") was removed from peer connection"), LOG_LEVEL.WARNING);
-	        _this18.triggerEvents('RemoteMediaRemoved', [participant, remoteTrack]);
+	        _this19.setLog("Track with kind ".concat(track.source, " (sid: ").concat(track.id, ") for a participant with id ").concat(userId, " (sid: ").concat(participant.sid || 'unknown', ") was removed from peer connection"), LOG_LEVEL.WARNING);
+	        _this19.triggerEvents('RemoteMediaRemoved', [participant, remoteTrack]);
 	      } else {
-	        _this18.setLog("Track with kind ".concat(track.source, " (sid: ").concat(track.id, ") was removed from a disconnected participant with id ").concat(userId, " (sid: unknown) before it was removed from peer connection"), LOG_LEVEL.WARNING);
+	        _this19.setLog("Track with kind ".concat(track.source, " (sid: ").concat(track.id, ") was removed from a disconnected participant with id ").concat(userId, " (sid: unknown) before it was removed from peer connection"), LOG_LEVEL.WARNING);
 	      }
 	    };
 	  }
 	}
 	function _speakerChangedHandler2(data) {
-	  var _this19 = this;
+	  var _this20 = this;
 	  data.speakersChanged.speakers.forEach(function (speaker) {
-	    var participant = Object.values(babelHelpers.classPrivateFieldGet(_this19, _privateProperties).remoteParticipants).find(function (p) {
+	    var participant = Object.values(babelHelpers.classPrivateFieldGet(_this20, _privateProperties).remoteParticipants).find(function (p) {
 	      return p.sid === speaker.sid;
 	    });
-	    if (participant && (participant === null || participant === void 0 ? void 0 : participant.userId) != babelHelpers.classPrivateFieldGet(_this19, _privateProperties).userId) {
+	    if (participant && (participant === null || participant === void 0 ? void 0 : participant.userId) != babelHelpers.classPrivateFieldGet(_this20, _privateProperties).userId) {
 	      participant.isSpeaking = (speaker === null || speaker === void 0 ? void 0 : speaker.active) || false;
 	      if (speaker !== null && speaker !== void 0 && speaker.active) {
-	        _this19.triggerEvents('VoiceStarted', [participant]);
+	        _this20.triggerEvents('VoiceStarted', [participant]);
 	      } else {
-	        _this19.triggerEvents('VoiceEnded', [participant]);
+	        _this20.triggerEvents('VoiceEnded', [participant]);
 	      }
 	    }
 	  });
 	}
 	function _createPeerConnection2() {
-	  var _this20 = this;
+	  var _this21 = this;
 	  _classPrivateMethodGet(this, _destroyPeerConnection, _destroyPeerConnection2).call(this);
 	  var config = {};
 	  if (babelHelpers.classPrivateFieldGet(this, _privateProperties).iceServers) {
@@ -5426,29 +5464,29 @@ this.BX = this.BX || {};
 	  }
 	  this.sender = new RTCPeerConnection(config);
 	  this.sender.addEventListener('icecandidate', function (e) {
-	    return _this20.onIceCandidate(null, e);
+	    return _this21.onIceCandidate(null, e);
 	  });
 	  this.sender.addEventListener('connectionstatechange', function (e) {
-	    return _this20.onConnectionStateChange();
+	    return _this21.onConnectionStateChange();
 	  });
 	  this.recipient = new RTCPeerConnection(config);
 	  this.recipient.ontrack = function (event) {
 	    var _babelHelpers$classPr28;
 	    var ids = event.streams[0].id.split('|');
 	    var trackId = ids[1];
-	    var userId = (_babelHelpers$classPr28 = babelHelpers.classPrivateFieldGet(_this20, _privateProperties).tracksDataFromSocket[trackId]) === null || _babelHelpers$classPr28 === void 0 ? void 0 : _babelHelpers$classPr28.userId;
-	    if (babelHelpers.classPrivateFieldGet(_this20, _privateProperties).remoteParticipants[userId] && babelHelpers.classPrivateFieldGet(_this20, _privateProperties).tracksDataFromSocket[trackId]) {
-	      _classPrivateMethodGet(_this20, _createRemoteTrack, _createRemoteTrack2).call(_this20, trackId, event);
+	    var userId = (_babelHelpers$classPr28 = babelHelpers.classPrivateFieldGet(_this21, _privateProperties).tracksDataFromSocket[trackId]) === null || _babelHelpers$classPr28 === void 0 ? void 0 : _babelHelpers$classPr28.userId;
+	    if (babelHelpers.classPrivateFieldGet(_this21, _privateProperties).remoteParticipants[userId] && babelHelpers.classPrivateFieldGet(_this21, _privateProperties).tracksDataFromSocket[trackId]) {
+	      _classPrivateMethodGet(_this21, _createRemoteTrack, _createRemoteTrack2).call(_this21, trackId, event);
 	    } else {
-	      _this20.setLog("Got a track with kind ".concat(event.track.kind, " (sid: ").concat(trackId, ") without a participant, saving it"), LOG_LEVEL.WARNING);
-	      babelHelpers.classPrivateFieldGet(_this20, _privateProperties).ontrackData[trackId] = event;
+	      _this21.setLog("Got a track with kind ".concat(event.track.kind, " (sid: ").concat(trackId, ") without a participant, saving it"), LOG_LEVEL.WARNING);
+	      babelHelpers.classPrivateFieldGet(_this21, _privateProperties).ontrackData[trackId] = event;
 	    }
 	  };
 	  this.recipient.addEventListener('icecandidate', function (e) {
-	    return _this20.onIceCandidate('SUBSCRIBER', e);
+	    return _this21.onIceCandidate('SUBSCRIBER', e);
 	  });
 	  this.recipient.addEventListener('connectionstatechange', function (e) {
-	    return _this20.onConnectionStateChange(true);
+	    return _this21.onConnectionStateChange(true);
 	  });
 	  babelHelpers.classPrivateFieldGet(this, _privateProperties).callStatsInterval = setInterval( /*#__PURE__*/babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee24() {
 	    var statsAll;
@@ -5458,7 +5496,7 @@ this.BX = this.BX || {};
 	          _context24.prev = 0;
 	          statsAll = {};
 	          _context24.next = 4;
-	          return _this20.sender.getStats(null).then(function (stats) {
+	          return _this21.sender.getStats(null).then(function (stats) {
 	            var statsOutput = [];
 	            var codecs = {};
 	            var reportsWithoutCodecs = {};
@@ -5473,19 +5511,19 @@ this.BX = this.BX || {};
 	              if (report.type === 'remote-inbound-rtp') {
 	                var reportId = report.localId;
 	                if (reportsWithoutRemoteInfo[reportId]) {
-	                  var packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], babelHelpers.classPrivateFieldGet(_this20, _privateProperties).reportsForOutgoingTracks[reportId], report);
+	                  var packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], babelHelpers.classPrivateFieldGet(_this21, _privateProperties).reportsForOutgoingTracks[reportId], report);
 	                  reportsWithoutRemoteInfo[reportId].packetsLostData = packetsLostData;
 	                  reportsWithoutRemoteInfo[reportId].packetsLost = packetsLostData.totalPacketsLost;
 	                  reportsWithoutRemoteInfo[reportId].packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
-	                  babelHelpers.classPrivateFieldGet(_this20, _privateProperties).reportsForOutgoingTracks[reportId] = reportsWithoutRemoteInfo[reportId];
+	                  babelHelpers.classPrivateFieldGet(_this21, _privateProperties).reportsForOutgoingTracks[reportId] = reportsWithoutRemoteInfo[reportId];
 	                  delete reportsWithoutRemoteInfo[reportId];
 	                  return;
 	                }
 	                remoteReports[report.localId] = report;
 	              }
 	              if (report.type === 'outbound-rtp') {
-	                report.bitrate = Util.calcBitrate(report, babelHelpers.classPrivateFieldGet(_this20, _privateProperties).reportsForOutgoingTracks[report.id], true);
-	                report.userId = babelHelpers.classPrivateFieldGet(_this20, _privateProperties).userId;
+	                report.bitrate = Util.calcBitrate(report, babelHelpers.classPrivateFieldGet(_this21, _privateProperties).reportsForOutgoingTracks[report.id], true);
+	                report.userId = babelHelpers.classPrivateFieldGet(_this21, _privateProperties).userId;
 	                if (report.kind === 'audio') {
 	                  report.source = MediaStreamsKinds.Microphone;
 	                } else if (report.kind === 'video') {
@@ -5493,7 +5531,7 @@ this.BX = this.BX || {};
 	                }
 	                if (report.qualityLimitationReason && report.qualityLimitationReason !== 'none' && !isQualityLimitationSent) {
 	                  isQualityLimitationSent = true;
-	                  _this20.setLog("Local user have problems with sending video: ".concat(report.qualityLimitationReason, " (").concat(Object.entries(report.qualityLimitationDurations).reduce(function (accumulator, value, index) {
+	                  _this21.setLog("Local user have problems with sending video: ".concat(report.qualityLimitationReason, " (").concat(Object.entries(report.qualityLimitationDurations).reduce(function (accumulator, value, index) {
 	                    return accumulator + "".concat(index ? ', ' : '') + "".concat(value[0], ": ").concat(value[1]);
 	                  }, ''), ")"), LOG_LEVEL.WARNING);
 	                }
@@ -5501,7 +5539,7 @@ this.BX = this.BX || {};
 	                  Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
 	                }
 	                if (Util.setLocalPacketsLostOrSaveReport(report, remoteReports, reportsWithoutRemoteInfo)) {
-	                  babelHelpers.classPrivateFieldGet(_this20, _privateProperties).reportsForOutgoingTracks[report.id] = report;
+	                  babelHelpers.classPrivateFieldGet(_this21, _privateProperties).reportsForOutgoingTracks[report.id] = report;
 	                }
 	              }
 	            });
@@ -5509,7 +5547,7 @@ this.BX = this.BX || {};
 	          });
 	        case 4:
 	          _context24.next = 6;
-	          return _this20.recipient.getStats(null).then(function (stats) {
+	          return _this21.recipient.getStats(null).then(function (stats) {
 	            var statsOutput = [];
 	            var participantsWithLargeDataLoss = new Map();
 	            var codecs = {};
@@ -5518,11 +5556,11 @@ this.BX = this.BX || {};
 	              statsOutput.push(report);
 	              var needCheckPacketLosts = (report === null || report === void 0 ? void 0 : report.trackIdentifier) && report.hasOwnProperty('packetsLost') && report.hasOwnProperty('packetsReceived');
 	              if (needCheckPacketLosts) {
-	                var packetsLostData = Util.calcRemotePacketsLost(report, babelHelpers.classPrivateFieldGet(_this20, _privateProperties).reportsForIncomingTracks[report.trackIdentifier]);
+	                var packetsLostData = Util.calcRemotePacketsLost(report, babelHelpers.classPrivateFieldGet(_this21, _privateProperties).reportsForIncomingTracks[report.trackIdentifier]);
 	                report.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
-	                babelHelpers.classPrivateFieldGet(_this20, _privateProperties).reportsForIncomingTracks[report.trackIdentifier] = report;
-	                var realTrackId = babelHelpers.classPrivateFieldGet(_this20, _privateProperties).realTracksIds[report.trackIdentifier];
-	                var track = babelHelpers.classPrivateFieldGet(_this20, _privateProperties).tracksDataFromSocket[realTrackId];
+	                babelHelpers.classPrivateFieldGet(_this21, _privateProperties).reportsForIncomingTracks[report.trackIdentifier] = report;
+	                var realTrackId = babelHelpers.classPrivateFieldGet(_this21, _privateProperties).realTracksIds[report.trackIdentifier];
+	                var track = babelHelpers.classPrivateFieldGet(_this21, _privateProperties).tracksDataFromSocket[realTrackId];
 	                if (track) {
 	                  var prevReport = track.report || {};
 	                  track.report = report;
@@ -5533,14 +5571,14 @@ this.BX = this.BX || {};
 	                    Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
 	                  }
 	                }
-	                if (packetsLostData.currentPercentPacketLost > babelHelpers.classPrivateFieldGet(_this20, _privateProperties).packetLostThreshold) {
-	                  var participant = Object.values(babelHelpers.classPrivateFieldGet(_this20, _privateProperties).remoteParticipants).find(function (p) {
+	                if (packetsLostData.currentPercentPacketLost > babelHelpers.classPrivateFieldGet(_this21, _privateProperties).packetLostThreshold) {
+	                  var participant = Object.values(babelHelpers.classPrivateFieldGet(_this21, _privateProperties).remoteParticipants).find(function (p) {
 	                    var _p$tracks, _p$tracks$MediaStream, _p$tracks$MediaStream2;
 	                    return (p === null || p === void 0 ? void 0 : (_p$tracks = p.tracks) === null || _p$tracks === void 0 ? void 0 : (_p$tracks$MediaStream = _p$tracks[MediaStreamsKinds.Camera]) === null || _p$tracks$MediaStream === void 0 ? void 0 : (_p$tracks$MediaStream2 = _p$tracks$MediaStream.track) === null || _p$tracks$MediaStream2 === void 0 ? void 0 : _p$tracks$MediaStream2.id) === report.trackIdentifier;
 	                  });
-	                  if (participant && participant.userId != babelHelpers.classPrivateFieldGet(_this20, _privateProperties).userId) {
+	                  if (participant && participant.userId != babelHelpers.classPrivateFieldGet(_this21, _privateProperties).userId) {
 	                    participantsWithLargeDataLoss.set(participant.userId, "userId: ".concat(participant.userId, " (").concat(packetsLostData.currentPercentPacketLost, "%)"));
-	                    babelHelpers.classPrivateFieldGet(_this20, _privateProperties).prevParticipantsWithLargeDataLoss["delete"](participant.userId);
+	                    babelHelpers.classPrivateFieldGet(_this21, _privateProperties).prevParticipantsWithLargeDataLoss["delete"](participant.userId);
 	                  }
 	                }
 	              }
@@ -5549,16 +5587,16 @@ this.BX = this.BX || {};
 	              }
 	            });
 	            statsAll.recipient = statsOutput;
-	            if (participantsWithLargeDataLoss.size || babelHelpers.classPrivateFieldGet(_this20, _privateProperties).prevParticipantsWithLargeDataLoss.size) {
+	            if (participantsWithLargeDataLoss.size || babelHelpers.classPrivateFieldGet(_this21, _privateProperties).prevParticipantsWithLargeDataLoss.size) {
 	              if (participantsWithLargeDataLoss.size) {
-	                _this20.setLog("Have high packetsLost on users: ".concat(babelHelpers.toConsumableArray(participantsWithLargeDataLoss.values())), LOG_LEVEL.WARNING);
+	                _this21.setLog("Have high packetsLost on users: ".concat(babelHelpers.toConsumableArray(participantsWithLargeDataLoss.values())), LOG_LEVEL.WARNING);
 	              }
-	              _this20.triggerEvents('UpdatePacketLoss', [babelHelpers.toConsumableArray(participantsWithLargeDataLoss.keys())]);
+	              _this21.triggerEvents('UpdatePacketLoss', [babelHelpers.toConsumableArray(participantsWithLargeDataLoss.keys())]);
 	            }
-	            babelHelpers.classPrivateFieldGet(_this20, _privateProperties).prevParticipantsWithLargeDataLoss = participantsWithLargeDataLoss;
+	            babelHelpers.classPrivateFieldGet(_this21, _privateProperties).prevParticipantsWithLargeDataLoss = participantsWithLargeDataLoss;
 	          });
 	        case 6:
-	          _this20.triggerEvents('CallStatsReceived', [statsAll]);
+	          _this21.triggerEvents('CallStatsReceived', [statsAll]);
 	          _context24.next = 11;
 	          break;
 	        case 9:
@@ -5807,7 +5845,6 @@ this.BX = this.BX || {};
 	    this.connectionStats = {};
 	    this.connectionStatsVisible = false;
 	    this.avatarBackground = Util.getAvatarBackground();
-	    this.withBlur = im_v2_lib_utils.Utils.platform.isMac();
 	    this.removeAvatarPulseTimer = null;
 	    this.hideUserNameTimer = null;
 	    this.init();
@@ -5817,6 +5854,21 @@ this.BX = this.BX || {};
 	    value: function init() {
 	      this.onMouseMoveHandler = this.showUserName.bind(this);
 	      document.addEventListener('mousemove', this.onMouseMoveHandler);
+	    }
+	  }, {
+	    key: "isVisibleMediaStateIcon",
+	    value: function isVisibleMediaStateIcon(isActive) {
+	      return !isActive && this.userModel.state === UserState.Connected;
+	    }
+	  }, {
+	    key: "isVisibleCameraStateIcon",
+	    value: function isVisibleCameraStateIcon() {
+	      return this.isVisibleMediaStateIcon(this.userModel.cameraState);
+	    }
+	  }, {
+	    key: "isVisibleMicStateIcon",
+	    value: function isVisibleMicStateIcon() {
+	      return this.isVisibleMediaStateIcon(this.userModel.microphoneState);
 	    }
 	  }, {
 	    key: "showStats",
@@ -5835,7 +5887,7 @@ this.BX = this.BX || {};
 	      }
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-messenger-videocall-user" + (this.withBlur ? ' with-blur' : '')
+	          className: "bx-messenger-videocall-user"
 	        },
 	        dataset: {
 	          userId: this.userModel.id,
@@ -5978,7 +6030,7 @@ this.BX = this.BX || {};
 	            }
 	          }), this.elements.statsOverlay = main_core.Dom.create("div", {
 	            props: {
-	              className: "bx-messenger-videocall-user-stats-overlay" + (this.withBlur ? ' with-blur' : '')
+	              className: "bx-messenger-videocall-user-stats-overlay"
 	            }
 	          })]
 	        })],
@@ -6102,7 +6154,7 @@ this.BX = this.BX || {};
 	      if (this.userModel.screenState) {
 	        this.elements.video.classList.add("bx-messenger-videocall-video-contain");
 	      }
-	      if (this.userModel.cameraState && this.userModel.microphoneState) {
+	      if (this.isVisibleCameraStateIcon() && this.isVisibleMicStateIcon()) {
 	        this.elements.nameContainer.classList.add("extra-padding");
 	      }
 
@@ -6202,11 +6254,11 @@ this.BX = this.BX || {};
 	          },
 	          children: [this.elements.cameraState = main_core.Dom.create("div", {
 	            props: {
-	              className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (this.userModel.cameraState ? " hidden" : "")
+	              className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (!this.isVisibleCameraStateIcon() ? " hidden" : "")
 	            }
 	          }), this.elements.micState = main_core.Dom.create("div", {
 	            props: {
-	              className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (this.userModel.microphoneState ? " hidden" : "")
+	              className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (!this.isVisibleMicStateIcon() ? " hidden" : "")
 	            }
 	          })]
 	        }));
@@ -6220,11 +6272,11 @@ this.BX = this.BX || {};
 	        this.elements.container.prepend(this.elements.avatarBackground);
 	        (_this$elements$nameCo = this.elements.nameContainer).prepend.apply(_this$elements$nameCo, [this.elements.micState = main_core.Dom.create("div", {
 	          props: {
-	            className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (this.userModel.microphoneState ? " hidden" : "")
+	            className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state mic" + (!this.isVisibleMicStateIcon() ? " hidden" : "")
 	          }
 	        }), this.elements.cameraState = main_core.Dom.create("div", {
 	          props: {
-	            className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (this.userModel.cameraState ? " hidden" : "")
+	            className: "bx-messenger-videocall-user-name-icon bx-messenger-videocall-user-device-state camera" + (!this.isVisibleCameraStateIcon() ? " hidden" : "")
 	          }
 	        })]);
 	      }
@@ -6633,7 +6685,7 @@ this.BX = this.BX || {};
 	          this.elements.avatarContainer.classList.remove('bx-messenger-videocall-hidden-avatar');
 	        }
 	      }
-	      if (Util.isBitrixCallServerAllowed() && this.userModel.state === UserState.Connected && !this.elements.debugPanel.parentElement && !this.screenSharingUser) {
+	      if (Util.isCallServerAllowed() && this.userModel.state === UserState.Connected && !this.elements.debugPanel.parentElement && !this.screenSharingUser) {
 	        this.elements.container.appendChild(this.elements.debugPanel);
 	      }
 	      this.updatePanelDeferred();
@@ -6748,6 +6800,8 @@ this.BX = this.BX || {};
 	        this._audioStream = null;
 	      }
 	      this.elements.state.innerText = this.getStateMessage(this.userModel.state, this.userModel.videoPaused);
+	      this.updateMicrophoneState();
+	      this.updateCameraState();
 	      this.update();
 	    }
 	  }, {
@@ -6776,13 +6830,13 @@ this.BX = this.BX || {};
 	      if (!this.elements.root) {
 	        return;
 	      }
-	      if (this.userModel.microphoneState) {
+	      if (!this.isVisibleMicStateIcon()) {
 	        this.elements.micState.classList.add("hidden");
 	      } else {
 	        this.elements.micState.classList.remove("hidden");
 	        this.clearAvatarPulseTimer();
 	      }
-	      if (this.userModel.cameraState && this.userModel.microphoneState) {
+	      if (this.isVisibleCameraStateIcon() && this.isVisibleMicStateIcon()) {
 	        this.elements.nameContainer.classList.add("extra-padding");
 	      } else {
 	        this.elements.nameContainer.classList.remove("extra-padding");
@@ -6794,12 +6848,12 @@ this.BX = this.BX || {};
 	      if (!this.elements.root) {
 	        return;
 	      }
-	      if (this.userModel.cameraState) {
+	      if (!this.isVisibleCameraStateIcon()) {
 	        this.elements.cameraState.classList.add("hidden");
 	      } else {
 	        this.elements.cameraState.classList.remove("hidden");
 	      }
-	      if (this.userModel.cameraState && this.userModel.microphoneState) {
+	      if (this.isVisibleCameraStateIcon() && this.isVisibleMicStateIcon()) {
 	        this.elements.nameContainer.classList.add("extra-padding");
 	      } else {
 	        this.elements.nameContainer.classList.remove("extra-padding");
@@ -6895,8 +6949,32 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "_getVideoStats",
+	    value: function _getVideoStats(videoStats) {
+	      var resultString = '';
+	      var limitationsString = '';
+	      resultString += "Bitrate: ".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.bitrate) || 0, "\n");
+	      resultString += "PacketsLost: ".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.packetsLostExtended) || 0, "\n");
+	      resultString += "Codec: ".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.codecName) || '-', "\n");
+	      resultString += "Resolution: ".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.frameWidth) || 0, "x").concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.frameHeight) || 0, " ");
+	      if (videoStats !== null && videoStats !== void 0 && videoStats.qualityLimitationReason) {
+	        resultString += "(changes:".concat(videoStats.qualityLimitationResolutionChanges, ", FPS: ").concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.framesPerSecond) || 0, ")");
+	        limitationsString = "Limitation: ".concat(videoStats.qualityLimitationReason);
+	        limitationsString += " (duration: ".concat(Object.entries(videoStats.qualityLimitationDurations || {}).reduce(function (accumulator, value, index) {
+	          return accumulator + "".concat(index ? ', ' : '') + "".concat(value[0], ": ").concat(value[1]);
+	        }, ''), ")");
+	      } else {
+	        resultString += "(".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.framesPerSecond) || 0, " FPS)");
+	      }
+	      return {
+	        resultString: resultString,
+	        limitationsString: limitationsString
+	      };
+	    }
+	  }, {
 	    key: "_formatVideoStats",
 	    value: function _formatVideoStats(videoStats) {
+	      var _this3 = this;
 	      var result = '';
 	      var limitations = '';
 	      if (main_core.Type.isArray(videoStats)) {
@@ -6907,29 +6985,25 @@ this.BX = this.BX || {};
 	          if (videoStats.length > 1) {
 	            result += "Track ".concat(trackIndex + 1, "\n");
 	          }
-	          result += "Bitrate: ".concat((stats === null || stats === void 0 ? void 0 : stats.bitrate) || 0, "\n");
-	          result += "PacketsLost: ".concat((stats === null || stats === void 0 ? void 0 : stats.packetsLostExtended) || 0, "\n");
-	          result += "Codec: ".concat((stats === null || stats === void 0 ? void 0 : stats.codecName) || '-', "\n");
-	          result += "Resolution: ".concat((stats === null || stats === void 0 ? void 0 : stats.frameWidth) || 0, "x").concat((stats === null || stats === void 0 ? void 0 : stats.frameHeight) || 0, " ");
-	          result += "(changes:".concat(stats.qualityLimitationResolutionChanges, ", FPS: ").concat((stats === null || stats === void 0 ? void 0 : stats.framesPerSecond) || 0, ")");
-	          limitations = "Limitation: ".concat(stats.qualityLimitationReason);
-	          limitations += " (duration: ".concat(Object.entries(stats.qualityLimitationDurations).reduce(function (accumulator, currentValue, index) {
-	            return accumulator + "".concat(index ? ', ' : '') + "".concat(currentValue[0], ": ").concat(currentValue[1]);
-	          }, ''), ")");
+	          var _this3$_getVideoStats = _this3._getVideoStats(stats),
+	            resultString = _this3$_getVideoStats.resultString,
+	            limitationsString = _this3$_getVideoStats.limitationsString;
+	          if (resultString) {
+	            result += resultString;
+	          }
+	          if (limitationsString) {
+	            limitations = limitationsString;
+	          }
 	        });
 	      } else {
-	        result += "Bitrate: ".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.bitrate) || 0, "\n");
-	        result += "PacketsLost: ".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.packetsLostExtended) || 0, "\n");
-	        result += "Codec: ".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.codecName) || '-', "\n");
-	        result += "Resolution: ".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.frameWidth) || 0, "x").concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.frameHeight) || 0, " ");
-	        if (videoStats !== null && videoStats !== void 0 && videoStats.qualityLimitationReason) {
-	          result += "(changes:".concat(videoStats.qualityLimitationResolutionChanges, ", FPS: ").concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.framesPerSecond) || 0, ")");
-	          limitations = "Limitation: ".concat(videoStats.qualityLimitationReason);
-	          limitations += " (duration: ".concat(Object.entries(videoStats.qualityLimitationDurations).reduce(function (accumulator, value, index) {
-	            return accumulator + "".concat(index ? ', ' : '') + "".concat(value[0], ": ").concat(value[1]);
-	          }, ''), ")");
-	        } else {
-	          result += "(".concat((videoStats === null || videoStats === void 0 ? void 0 : videoStats.framesPerSecond) || 0, " FPS)");
+	        var _this$_getVideoStats = this._getVideoStats(videoStats),
+	          resultString = _this$_getVideoStats.resultString,
+	          limitationsString = _this$_getVideoStats.limitationsString;
+	        if (resultString) {
+	          result += resultString;
+	        }
+	        if (limitationsString) {
+	          limitations = limitationsString;
 	        }
 	      }
 	      return limitations ? "".concat(limitations, "\n\n").concat(result) : result;
@@ -6937,7 +7011,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showUserName",
 	    value: function showUserName() {
-	      var _this3 = this;
+	      var _this4 = this;
 	      if (this.hideUserNameTimer) {
 	        clearTimeout(this.hideUserNameTimer);
 	        this.hideUserNameTimer = null;
@@ -6945,7 +7019,7 @@ this.BX = this.BX || {};
 	      if (this.elements.nameContainer) {
 	        this.elements.nameContainer.classList.add('active');
 	        this.hideUserNameTimer = setTimeout(function () {
-	          _this3.elements.nameContainer.classList.remove('active');
+	          _this4.elements.nameContainer.classList.remove('active');
 	        }, 5000);
 	      }
 	    }
@@ -6963,14 +7037,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "addAvatarPulseTimer",
 	    value: function addAvatarPulseTimer() {
-	      var _this4 = this;
+	      var _this5 = this;
 	      if (this.removeAvatarPulseTimer) {
 	        clearTimeout(this.removeAvatarPulseTimer);
 	        this.removeAvatarPulseTimer = null;
 	      }
 	      this.removeAvatarPulseTimer = setTimeout(function () {
-	        _this4.elements.avatarContainer.classList.remove("bx-messenger-videocall-user-avatar-pulse");
-	        _this4.elements.root.classList.remove("bx-messenger-videocall-user-talking");
+	        _this5.elements.avatarContainer.classList.remove("bx-messenger-videocall-user-avatar-pulse");
+	        _this5.elements.root.classList.remove("bx-messenger-videocall-user-talking");
 	      }, 1000);
 	    }
 	  }, {
@@ -7211,7 +7285,6 @@ this.BX = this.BX || {};
 	    _this._hideTimeout = null;
 	    _this._onUserModelChangedHandler = _this._onUserModelChanged.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.userModel.subscribe("changed", _this._onUserModelChangedHandler);
-	    _this.withBlur = im_v2_lib_utils.Utils.platform.isMac();
 	    return _this;
 	  }
 	  babelHelpers.createClass(FloorRequest, [{
@@ -7246,7 +7319,7 @@ this.BX = this.BX || {};
 	      }
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-call-view-floor-request-notification" + (this.withBlur ? ' with-blur' : '')
+	          className: "bx-call-view-floor-request-notification"
 	        },
 	        children: [main_core.Dom.create("div", {
 	          props: {
@@ -8027,7 +8100,7 @@ this.BX = this.BX || {};
 	var SIDE_USER_WIDTH = 160; // keep in sync with .bx-messenger-videocall-user-block .bx-messenger-videocall-user width
 	var SIDE_USER_HEIGHT = 90; // keep in sync with .bx-messenger-videocall-user height
 
-	var MAX_USERS_PER_PAGE = 15;
+	var MAX_USERS_PER_PAGE = 19;
 	var MIN_GRID_USER_WIDTH = 180;
 	var MIN_GRID_USER_HEIGHT = 100;
 	var CHANGE_VIDEO_RERENDER_DELAY = 3000;
@@ -8076,6 +8149,7 @@ this.BX = this.BX || {};
 	    this.showRecordButton = config.showRecordButton !== false;
 	    this.showDocumentButton = config.showDocumentButton !== false;
 	    this.showButtonPanel = config.showButtonPanel !== false;
+	    this.showAddUserButtonInList = config.showAddUserButtonInList || false;
 	    this.enableNewLayoutLogic = config.enableNewLayoutLogic;
 	    this.limitation = null;
 	    this.inactiveUsers = [];
@@ -8279,7 +8353,6 @@ this.BX = this.BX || {};
 	    if (main_core.Type.isPlainObject(config.userStates)) {
 	      this.appendUsers(config.userStates);
 	    }
-	    this.withBlur = im_v2_lib_utils.Utils.platform.isMac();
 
 	    /*this.resizeCalled = 0;
 	    this.reportResizeCalled = BX.debounce(function()
@@ -8287,6 +8360,8 @@ this.BX = this.BX || {};
 	    	console.log('resizeCalled ' + this.resizeCalled + ' times');
 	    	this.resizeCalled = 0;
 	    }.bind(this), 100)*/
+
+	    this.hideEarTimer = null;
 	  }
 	  babelHelpers.createClass(View, [{
 	    key: "openArticle",
@@ -8369,6 +8444,30 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "toggleVisibilityEar",
+	    value: function toggleVisibilityEar() {
+	      var _this$elements$ear$to,
+	        _this$elements$ear$bo,
+	        _this$elements$pageNa,
+	        _this$elements$pageNa2,
+	        _this2 = this;
+	      if (this.hideEarTimer) {
+	        clearTimeout(this.hideEarTimer);
+	        this.hideEarTimer = null;
+	      }
+	      (_this$elements$ear$to = this.elements.ear.top) === null || _this$elements$ear$to === void 0 ? void 0 : _this$elements$ear$to.classList.add("force-visible");
+	      (_this$elements$ear$bo = this.elements.ear.bottom) === null || _this$elements$ear$bo === void 0 ? void 0 : _this$elements$ear$bo.classList.add("force-visible");
+	      (_this$elements$pageNa = this.elements.pageNavigatorLeft) === null || _this$elements$pageNa === void 0 ? void 0 : _this$elements$pageNa.classList.add("force-visible");
+	      (_this$elements$pageNa2 = this.elements.pageNavigatorRight) === null || _this$elements$pageNa2 === void 0 ? void 0 : _this$elements$pageNa2.classList.add("force-visible");
+	      this.hideEarTimer = setTimeout(function () {
+	        var _this2$elements$ear$t, _this2$elements$ear$b, _this2$elements$pageN, _this2$elements$pageN2;
+	        (_this2$elements$ear$t = _this2.elements.ear.top) === null || _this2$elements$ear$t === void 0 ? void 0 : _this2$elements$ear$t.classList.remove("force-visible");
+	        (_this2$elements$ear$b = _this2.elements.ear.bottom) === null || _this2$elements$ear$b === void 0 ? void 0 : _this2$elements$ear$b.classList.remove("force-visible");
+	        (_this2$elements$pageN = _this2.elements.pageNavigatorLeft) === null || _this2$elements$pageN === void 0 ? void 0 : _this2$elements$pageN.classList.remove("force-visible");
+	        (_this2$elements$pageN2 = _this2.elements.pageNavigatorRight) === null || _this2$elements$pageN2 === void 0 ? void 0 : _this2$elements$pageN2.classList.remove("force-visible");
+	      }, 5000);
+	    }
+	  }, {
 	    key: "init",
 	    value: function init() {
 	      this.getLimitation();
@@ -8401,6 +8500,8 @@ this.BX = this.BX || {};
 	      Hardware.subscribe(Hardware.Events.onChangeCameraOn, this.setCameraState);
 	      window.addEventListener("keydown", this._onKeyDownHandler);
 	      window.addEventListener("keyup", this._onKeyUpHandler);
+	      this.onMouseMoveHandler = this.toggleVisibilityEar.bind(this);
+	      document.addEventListener('mousemove', this.onMouseMoveHandler);
 	      if (main_core.Browser.isMac()) {
 	        this.keyModifier = '&#8984; + Shift';
 	      } else {
@@ -8459,7 +8560,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setCentralUser",
 	    value: function setCentralUser(userId) {
-	      var _this2 = this;
+	      var _this3 = this;
 	      if (this.centralUser.id == userId) {
 	        return;
 	      }
@@ -8481,7 +8582,7 @@ this.BX = this.BX || {};
 	          this.centralUserMobile = new CallUserMobile({
 	            userModel: this.userRegistry.get(userId),
 	            onClick: function onClick() {
-	              return _this2.showUserMenu(_this2.centralUser.id);
+	              return _this3.showUserMenu(_this3.centralUser.id);
 	            }
 	          });
 	          this.centralUserMobile.mount(this.elements.pinnedUserContainer);
@@ -8571,7 +8672,7 @@ this.BX = this.BX || {};
 	      var result = [];
 	      for (var i = 0; i < this.userRegistry.users.length; i++) {
 	        var userModel = this.userRegistry.users[i];
-	        if (userModel.id != this.userId && (userModel.state == UserState.Connected || userModel.state == UserState.Connecting || userModel.state == UserState.Calling)) {
+	        if (userModel.id != this.userId && (userModel.id != this.centralUser.id && this.layout === Layouts.Centered || this.layout !== Layouts.Centered) && (userModel.state == UserState.Connected || userModel.state == UserState.Connecting || userModel.state == UserState.Calling)) {
 	          result.push(userModel.id);
 	        }
 	      }
@@ -8592,11 +8693,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getUsersWithCamera",
 	    value: function getUsersWithCamera() {
-	      var _this3 = this;
+	      var _this4 = this;
 	      // since we don't receive streams from inactive pages
 	      // we can't use this.getUsersWithVideo() to get number of users with video
 	      return this.userRegistry.users.filter(function (el) {
-	        return el.id != _this3.userId && el.cameraState && _this3.isUserHasActiveState(el) && el.state !== UserState.Calling;
+	        return el.id != _this4.userId && el.cameraState && _this4.isUserHasActiveState(el) && el.state !== UserState.Calling;
 	      });
 	    }
 	  }, {
@@ -8677,7 +8778,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "switchPresenter",
 	    value: function switchPresenter() {
-	      var _this4 = this;
+	      var _this5 = this;
 	      var currentPresenterId = this.presenterId || 0;
 	      var newPresenterId = this.getPresenterUserId();
 	      if (!newPresenterId) {
@@ -8685,7 +8786,7 @@ this.BX = this.BX || {};
 	      }
 	      this.presenterId = newPresenterId;
 	      this.userRegistry.users.forEach(function (userModel) {
-	        return userModel.presenter = userModel.id == _this4.presenterId;
+	        return userModel.presenter = userModel.id == _this5.presenterId;
 	      });
 	      if (this.pinnedUser === null) {
 	        this.setCentralUser(newPresenterId);
@@ -8765,7 +8866,7 @@ this.BX = this.BX || {};
 	        this.setUserBlockFolded(true);
 	      }
 	      this.elements.root.classList.toggle("bx-messenger-videocall-fullscreen-mobile", this.layout == Layouts.Mobile);
-	      this.renderUserList();
+	      this.updateUserList();
 	      this.toggleEars();
 	      this.updateButtons();
 	      this.eventEmitter.emit(EventName.onLayoutChange, {
@@ -8807,7 +8908,7 @@ this.BX = this.BX || {};
 	        this.elements.pageNavigatorLeftCounter.innerHTML = this.currentPage - 1 + '&nbsp;/&nbsp;' + this.pagesCount;
 	        this.elements.pageNavigatorRightCounter.innerHTML = this.currentPage + 1 + '&nbsp;/&nbsp;' + this.pagesCount;
 	      }
-	      if (this.layout !== Layouts.Grid) {
+	      if (!(this.layout === Layouts.Grid || this.layout === Layouts.Centered)) {
 	        return;
 	      }
 	      this.renderUserList(true);
@@ -8823,6 +8924,9 @@ this.BX = this.BX || {};
 	      var columns = Math.floor(containerSize.width / MIN_GRID_USER_WIDTH) || 1;
 	      var rows = Math.floor(containerSize.height / MIN_GRID_USER_HEIGHT) || 1;
 	      var usersPerPage = columns * rows - 1;
+	      if (this.userId == this.centralUser.id && this.layout === Layouts.Centered) {
+	        usersPerPage += 1;
+	      }
 	      if (!usersPerPage) {
 	        return 1000;
 	      }
@@ -8848,6 +8952,9 @@ this.BX = this.BX || {};
 	    value: function recalculatePages() {
 	      this.usersPerPage = this.calculateUsersPerPage();
 	      this.pagesCount = this.calculatePagesCount(this.usersPerPage);
+	      if (this.currentPage > this.pagesCount) {
+	        this.currentPage = this.pagesCount;
+	      }
 	      if (this.elements.root) {
 	        this.elements.pageNavigatorLeftCounter.innerHTML = this.currentPage - 1 + '&nbsp;/&nbsp;' + this.pagesCount;
 	        this.elements.pageNavigatorRightCounter.innerHTML = this.currentPage + 1 + '&nbsp;/&nbsp;' + this.pagesCount;
@@ -9006,7 +9113,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "setUserState",
 	    value: function setUserState(userId, newState) {
-	      var _this5 = this;
+	      var _this6 = this;
 	      var user = this.userRegistry.get(userId);
 	      if (!user) {
 	        return;
@@ -9041,7 +9148,7 @@ this.BX = this.BX || {};
 	      if (this.enableNewLayoutLogic) {
 	        if (newState === UserState.Connected) {
 	          var timer = setTimeout(function () {
-	            _this5.waitingForUserMediaTimeouts["delete"](userId);
+	            _this6.waitingForUserMediaTimeouts["delete"](userId);
 	          }, WAITING_VIDEO_DELAY);
 	          this.waitingForUserMediaTimeouts.set(userId, timer);
 	        } else if (newState === UserState.Idle) {
@@ -9138,6 +9245,10 @@ this.BX = this.BX || {};
 	      var user = this.userRegistry.get(userId);
 	      if (user) {
 	        user.videoPaused = videoPaused;
+	        if (this.enableNewLayoutLogic) {
+	          user.cameraState = !videoPaused;
+	          videoPaused ? this.updateRerenderQueue(userId, RerenderReason.VideoDisabled) : this.updateRerenderQueue(userId, RerenderReason.VideoEnabled);
+	        }
 	      }
 	    }
 	  }, {
@@ -9327,7 +9438,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateRerenderQueue",
 	    value: function updateRerenderQueue(userId, reason) {
-	      var _this6 = this;
+	      var _this7 = this;
 	      if (!this.users[userId]) {
 	        throw Error("User " + userId + " is not a part of this call");
 	      }
@@ -9351,7 +9462,7 @@ this.BX = this.BX || {};
 	          } else {
 	            if (!this.rerenderTimeout) {
 	              this.rerenderTimeout = setTimeout(function () {
-	                _this6.renderUserList();
+	                _this7.renderUserList();
 	              }, this.videoRerenderDelay);
 	            }
 	            this.rerenderQueue.set(userId, {
@@ -9371,7 +9482,7 @@ this.BX = this.BX || {};
 	        } else {
 	          if (!this.rerenderTimeout) {
 	            this.rerenderTimeout = setTimeout(function () {
-	              _this6.renderUserList();
+	              _this7.renderUserList();
 	            }, this.videoRerenderDelay);
 	          }
 	          this.rerenderQueue.set(userId, {
@@ -9540,6 +9651,9 @@ this.BX = this.BX || {};
 	      this.toggleEars();
 	      this.visible = true;
 	      this.eventEmitter.emit(EventName.onShow);
+
+	      // We specifically disable the face improve feature to improve call quality.
+	      this.disableFaceImprove();
 	    }
 	  }, {
 	    key: "hide",
@@ -9584,7 +9698,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showDeviceSelector",
 	    value: function showDeviceSelector(bindElement) {
-	      var _this7 = this,
+	      var _this8 = this,
 	        _events;
 	      if (this.deviceSelector) {
 	        return;
@@ -9601,18 +9715,18 @@ this.BX = this.BX || {};
 	        speakerId: this.speakerId,
 	        allowHdVideo: Hardware.preferHdQuality,
 	        faceImproveEnabled: Util.isDesktop() && im_v2_lib_desktopApi.DesktopApi.isDesktop() && im_v2_lib_desktopApi.DesktopApi.getCameraSmoothingStatus(),
-	        allowFaceImprove: Util.isDesktop() && im_v2_lib_desktopApi.DesktopApi.isDesktop() && im_v2_lib_desktopApi.DesktopApi.getApiVersion() > 64,
+	        allowFaceImprove: false,
 	        allowBackground: BackgroundDialog.isAvailable() && this.isIntranetOrExtranet,
 	        allowMask: BackgroundDialog.isMaskAvailable() && this.isIntranetOrExtranet,
 	        allowAdvancedSettings: typeof BXIM !== 'undefined' && this.isIntranetOrExtranet,
 	        switchCameraBlocked: this.blockedButtons['camera'],
 	        switchMicrophoneBlocked: this.blockedButtons['microphone'],
 	        events: (_events = {}, babelHelpers.defineProperty(_events, DeviceSelector.Events.onMicrophoneSelect, this._onMicrophoneSelected.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onMicrophoneSwitch, this._onMicrophoneButtonClick.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onCameraSelect, this._onCameraSelected.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onCameraSwitch, this._onCameraButtonClick.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onSpeakerSelect, this._onSpeakerSelected.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onSpeakerSwitch, this._onSpeakerButtonClick.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onChangeHdVideo, this._onChangeHdVideo.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onChangeMicAutoParams, this._onChangeMicAutoParams.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onChangeFaceImprove, this._onChangeFaceImprove.bind(this)), babelHelpers.defineProperty(_events, DeviceSelector.Events.onAdvancedSettingsClick, function () {
-	          return _this7.eventEmitter.emit(EventName.onOpenAdvancedSettings);
+	          return _this8.eventEmitter.emit(EventName.onOpenAdvancedSettings);
 	        }), babelHelpers.defineProperty(_events, DeviceSelector.Events.onDestroy, function () {
-	          return _this7.deviceSelector = null;
+	          return _this8.deviceSelector = null;
 	        }), babelHelpers.defineProperty(_events, DeviceSelector.Events.onShow, function () {
-	          return _this7.eventEmitter.emit(EventName.onDeviceSelectorShow, {});
+	          return _this8.eventEmitter.emit(EventName.onDeviceSelectorShow, {});
 	        }), _events)
 	      });
 	      this.deviceSelector.show();
@@ -9620,7 +9734,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showCallMenu",
 	    value: function showCallMenu() {
-	      var _this8 = this;
+	      var _this9 = this;
 	      var menuItems = [{
 	        text: BX.message("IM_M_CALL_BTN_WANT_TO_SAY"),
 	        iconClass: "hand",
@@ -9661,8 +9775,8 @@ this.BX = this.BX || {};
 	        text: BX.message("IM_M_CALL_MOBILE_MENU_CHANGE_MY_NAME"),
 	        iconClass: "change-name",
 	        onClick: function onClick() {
-	          _this8.callMenu.close();
-	          setTimeout(_this8.showRenameSlider.bind(_this8), 100);
+	          _this9.callMenu.close();
+	          setTimeout(_this9.showRenameSlider.bind(_this9), 100);
 	        }
 	      } : null, {
 	        separator: true
@@ -9675,10 +9789,10 @@ this.BX = this.BX || {};
 	        parent: this.elements.root,
 	        items: menuItems,
 	        onClose: function onClose() {
-	          return _this8.callMenu.destroy();
+	          return _this9.callMenu.destroy();
 	        },
 	        onDestroy: function onDestroy() {
-	          return _this8.callMenu = null;
+	          return _this9.callMenu = null;
 	        }
 	      });
 	      this.callMenu.show();
@@ -9686,7 +9800,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showUserMenu",
 	    value: function showUserMenu(userId) {
-	      var _this9 = this;
+	      var _this10 = this;
 	      var userModel = this.userRegistry.get(userId);
 	      if (!userModel) {
 	        return false;
@@ -9697,8 +9811,8 @@ this.BX = this.BX || {};
 	          text: BX.message("IM_M_CALL_MOBILE_MENU_UNPIN"),
 	          iconClass: "unpin",
 	          onClick: function onClick() {
-	            _this9.userMenu.close();
-	            _this9.unpinUser();
+	            _this10.userMenu.close();
+	            _this10.unpinUser();
 	          }
 	        };
 	      } else if (this.userId != userId) {
@@ -9706,8 +9820,8 @@ this.BX = this.BX || {};
 	          text: BX.message("IM_M_CALL_MOBILE_MENU_PIN"),
 	          iconClass: "pin",
 	          onClick: function onClick() {
-	            _this9.userMenu.close();
-	            _this9.pinUser(userId);
+	            _this10.userMenu.close();
+	            _this10.pinUser(userId);
 	          }
 	        };
 	      }
@@ -9720,8 +9834,8 @@ this.BX = this.BX || {};
 	        text: BX.message("IM_M_CALL_MOBILE_MENU_CHANGE_MY_NAME"),
 	        iconClass: "change-name",
 	        onClick: function onClick() {
-	          _this9.userMenu.close();
-	          setTimeout(_this9.showRenameSlider.bind(_this9), 100);
+	          _this10.userMenu.close();
+	          setTimeout(_this10.showRenameSlider.bind(_this10), 100);
 	        }
 	      } : null,
 	      /*{
@@ -9745,17 +9859,17 @@ this.BX = this.BX || {};
 	        text: BX.message("IM_M_CALL_MOBILE_MENU_CANCEL"),
 	        enabled: false,
 	        onClick: function onClick() {
-	          return _this9.userMenu.close();
+	          return _this10.userMenu.close();
 	        }
 	      }];
 	      this.userMenu = new MobileMenu({
 	        parent: this.elements.root,
 	        items: menuItems,
 	        onClose: function onClose() {
-	          return _this9.userMenu.destroy();
+	          return _this10.userMenu.destroy();
 	        },
 	        onDestroy: function onDestroy() {
-	          return _this9.userMenu = null;
+	          return _this10.userMenu = null;
 	        }
 	      });
 	      this.userMenu.show();
@@ -9763,7 +9877,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showParticipantsMenu",
 	    value: function showParticipantsMenu() {
-	      var _this10 = this;
+	      var _this11 = this;
 	      if (this.participantsMenu) {
 	        return;
 	      }
@@ -9789,8 +9903,8 @@ this.BX = this.BX || {};
 	          userModel: userModel,
 	          showSubMenu: true,
 	          onClick: function onClick() {
-	            _this10.participantsMenu.close();
-	            _this10.showUserMenu(userModel.id);
+	            _this11.participantsMenu.close();
+	            _this11.showUserMenu(userModel.id);
 	          }
 	        });
 	      });
@@ -9998,13 +10112,13 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to show
 	     */
 	    value: function showButtons(buttons) {
-	      var _this11 = this;
+	      var _this12 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        if (_this11.hiddenButtons.hasOwnProperty(buttonName)) {
-	          delete _this11.hiddenButtons[buttonName];
+	        if (_this12.hiddenButtons.hasOwnProperty(buttonName)) {
+	          delete _this12.hiddenButtons[buttonName];
 	        }
 	      });
 	      this.updateButtons();
@@ -10015,12 +10129,12 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to hide
 	     */
 	    value: function hideButtons(buttons) {
-	      var _this12 = this;
+	      var _this13 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        return _this12.hiddenButtons[buttonName] = true;
+	        return _this13.hiddenButtons[buttonName] = true;
 	      });
 	      this.updateButtons();
 	    }
@@ -10086,14 +10200,14 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to block
 	     */
 	    value: function blockButtons(buttons) {
-	      var _this13 = this;
+	      var _this14 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array ");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        _this13.blockedButtons[buttonName] = true;
-	        if (_this13.buttons[buttonName]) {
-	          _this13.buttons[buttonName].setBlocked(true);
+	        _this14.blockedButtons[buttonName] = true;
+	        if (_this14.buttons[buttonName]) {
+	          _this14.buttons[buttonName].setBlocked(true);
 	        }
 	      });
 	    }
@@ -10103,14 +10217,14 @@ this.BX = this.BX || {};
 	     * @param {string[]} buttons Array of buttons names to unblock
 	     */
 	    value: function unblockButtons(buttons) {
-	      var _this14 = this;
+	      var _this15 = this;
 	      if (!main_core.Type.isArray(buttons)) {
 	        console.error("buttons should be array");
 	      }
 	      buttons.forEach(function (buttonName) {
-	        delete _this14.blockedButtons[buttonName];
-	        if (_this14.buttons[buttonName]) {
-	          _this14.buttons[buttonName].setBlocked(_this14.isButtonBlocked(buttonName));
+	        delete _this15.blockedButtons[buttonName];
+	        if (_this15.buttons[buttonName]) {
+	          _this15.buttons[buttonName].setBlocked(_this15.isButtonBlocked(buttonName));
 	        }
 	      });
 	    }
@@ -10138,7 +10252,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getButtonList",
 	    value: function getButtonList() {
-	      var _this15 = this;
+	      var _this16 = this;
 	      if (this.uiState == UiState.Error) {
 	        return ['close'];
 	      }
@@ -10165,7 +10279,7 @@ this.BX = this.BX || {};
 	        result.push('document');
 	      }
 	      result = result.filter(function (buttonCode) {
-	        return !_this15.hiddenButtons.hasOwnProperty(buttonCode) && !_this15.overflownButtons.hasOwnProperty(buttonCode);
+	        return !_this16.hiddenButtons.hasOwnProperty(buttonCode) && !_this16.overflownButtons.hasOwnProperty(buttonCode);
 	      });
 	      if (Object.keys(this.overflownButtons).length > 0) {
 	        result.push('more');
@@ -10183,7 +10297,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getTopButtonList",
 	    value: function getTopButtonList() {
-	      var _this16 = this;
+	      var _this17 = this;
 	      var result = [];
 	      if (this.layout == Layouts.Mobile) {
 	        return ['participantsMobile'];
@@ -10210,21 +10324,21 @@ this.BX = this.BX || {};
 	          return true;
 	        }
 	        previousButtonCode = buttonCode;
-	        return !_this16.hiddenTopButtons.hasOwnProperty(buttonCode);
+	        return !_this17.hiddenTopButtons.hasOwnProperty(buttonCode);
 	      });
 	      return result;
 	    }
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      var _this17 = this;
+	      var _this18 = this;
 	      this.elements.root = main_core.Dom.create("div", {
 	        props: {
 	          className: "bx-messenger-videocall"
 	        },
 	        children: [this.elements.wrap = main_core.Dom.create("div", {
 	          props: {
-	            className: "bx-messenger-videocall-wrap" + (this.withBlur ? ' with-blur' : '')
+	            className: "bx-messenger-videocall-wrap"
 	          },
 	          children: [this.elements.container = main_core.Dom.create("div", {
 	            props: {
@@ -10240,11 +10354,11 @@ this.BX = this.BX || {};
 	              }
 	            }), this.elements.pageNavigatorLeft = main_core.Dom.create("div", {
 	              props: {
-	                className: "bx-messenger-videocall-page-navigator left" + (this.withBlur ? ' with-blur' : '')
+	                className: "bx-messenger-videocall-page-navigator left"
 	              },
 	              children: [this.elements.pageNavigatorLeftCounter = main_core.Dom.create("div", {
 	                props: {
-	                  className: "bx-messenger-videocall-page-navigator-counter left" + (this.withBlur ? ' with-blur' : '')
+	                  className: "bx-messenger-videocall-page-navigator-counter left"
 	                },
 	                html: this.currentPage - 1 + '&nbsp;/&nbsp;' + this.pagesCount
 	              }), main_core.Dom.create("div", {
@@ -10257,11 +10371,11 @@ this.BX = this.BX || {};
 	              }
 	            }), this.elements.pageNavigatorRight = main_core.Dom.create("div", {
 	              props: {
-	                className: "bx-messenger-videocall-page-navigator right" + (this.withBlur ? ' with-blur' : '')
+	                className: "bx-messenger-videocall-page-navigator right"
 	              },
 	              children: [this.elements.pageNavigatorRightCounter = main_core.Dom.create("div", {
 	                props: {
-	                  className: "bx-messenger-videocall-page-navigator-counter right" + (this.withBlur ? ' with-blur' : '')
+	                  className: "bx-messenger-videocall-page-navigator-counter right"
 	                },
 	                html: this.currentPage + 1 + '&nbsp;/&nbsp;' + this.pagesCount
 	              }), main_core.Dom.create("div", {
@@ -10366,8 +10480,7 @@ this.BX = this.BX || {};
 	            }
 	          })],
 	          events: {
-	            mouseenter: this.scrollUserListUp.bind(this),
-	            mouseleave: this.stopScroll.bind(this)
+	            click: this._onTopPageNavigatorClick.bind(this)
 	          }
 	        }), this.elements.ear.bottom = main_core.Dom.create("div", {
 	          props: {
@@ -10379,8 +10492,7 @@ this.BX = this.BX || {};
 	            }
 	          })],
 	          events: {
-	            mouseenter: this.scrollUserListDown.bind(this),
-	            mouseleave: this.stopScroll.bind(this)
+	            click: this._onBottomPageNavigatorClick.bind(this)
 	          }
 	        })]
 	      });
@@ -10391,13 +10503,13 @@ this.BX = this.BX || {};
 	        events: {
 	          scroll: main_core.Runtime.debounce(this.toggleEars.bind(this), 300),
 	          wheel: function wheel(e) {
-	            return _this17.elements.userList.container.scrollTop += e.deltaY;
+	            return _this18.elements.userList.container.scrollTop += e.deltaY;
 	          }
 	        }
 	      });
 	      this.elements.userList.addButton = main_core.Dom.create("div", {
 	        props: {
-	          className: "bx-messenger-videocall-user-add" + (this.withBlur ? ' with-blur' : '')
+	          className: "bx-messenger-videocall-user-add"
 	        },
 	        children: [main_core.Dom.create("div", {
 	          props: {
@@ -10434,15 +10546,17 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "toggleSubscribingVideoInRenderUserList",
 	    value: function toggleSubscribingVideoInRenderUserList(participantIds, showVideo) {
-	      this.eventEmitter.emit(EventName.onToggleSubscribe, {
-	        participantIds: participantIds,
-	        showVideo: showVideo
-	      });
+	      if (!!participantIds.length) {
+	        this.eventEmitter.emit(EventName.onToggleSubscribe, {
+	          participantIds: participantIds,
+	          showVideo: showVideo
+	        });
+	      }
 	    }
 	  }, {
 	    key: "getOrderingRules",
 	    value: function getOrderingRules() {
-	      var _this18 = this;
+	      var _this19 = this;
 	      var rules = {
 	        videoEnabled: [],
 	        videoDisabled: [],
@@ -10452,17 +10566,17 @@ this.BX = this.BX || {};
 	        if (el.reason === RerenderReason.UserDisconnected) {
 	          rules.userDisconnected = {
 	            id: el.userId,
-	            order: _this18.userRegistry.get(el.userId).prevOrder
+	            order: _this19.userRegistry.get(el.userId).prevOrder
 	          };
 	        } else if (el.reason === RerenderReason.VideoEnabled) {
 	          rules.videoEnabled.push({
 	            id: el.userId,
-	            order: _this18.userRegistry.get(el.userId).order
+	            order: _this19.userRegistry.get(el.userId).order
 	          });
 	        } else if (el.reason === RerenderReason.VideoDisabled) {
 	          rules.videoDisabled.push({
 	            id: el.userId,
-	            order: _this18.userRegistry.get(el.userId).order
+	            order: _this19.userRegistry.get(el.userId).order
 	          });
 	        }
 	      });
@@ -10499,14 +10613,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "processVideoRules",
 	    value: function processVideoRules(rules, params) {
-	      var _this19 = this;
+	      var _this20 = this;
 	      var diffBetweenChanges = rules.videoEnabled.length - rules.videoDisabled.length;
 	      var lessChangesField = diffBetweenChanges > 0 ? 'videoDisabled' : 'videoEnabled';
 	      var moreChangesField = diffBetweenChanges > 0 ? 'videoEnabled' : 'videoDisabled';
 	      if (rules.videoEnabled.length && rules.videoDisabled.length) {
 	        rules[lessChangesField].forEach(function (el, index) {
-	          var toUser = _this19.userRegistry.get(el.id);
-	          var fromUser = _this19.userRegistry.get(rules[moreChangesField][index].id);
+	          var toUser = _this20.userRegistry.get(el.id);
+	          var fromUser = _this20.userRegistry.get(rules[moreChangesField][index].id);
 	          params.orderChanges.push({
 	            type: SwapType.Replace,
 	            to: {
@@ -10532,8 +10646,8 @@ this.BX = this.BX || {};
 	            params.orderChanges.push({
 	              type: SwapType.Replace,
 	              from: {
-	                userModel: _this19.userRegistry.get(el.id),
-	                order: _this19.userRegistry.get(el.id).order
+	                userModel: _this20.userRegistry.get(el.id),
+	                order: _this20.userRegistry.get(el.id).order
 	              }
 	            });
 	            params.incompleteSwaps.push(params.orderChanges.length);
@@ -10590,13 +10704,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "completeVideoDisabledSwap",
 	    value: function completeVideoDisabledSwap(rules, params) {
-	      var _this20 = this;
+	      var _this21 = this;
 	      var usersProceed = 0;
 	      rules.videoDisabled.forEach(function (el, index) {
-	        var userWithoutVideo = _this20.userRegistry.get(el.id);
+	        var userWithoutVideo = _this21.userRegistry.get(el.id);
 	        var userWithoutVideoIndex = params.activeUsers.indexOf(el.id);
-	        var userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / _this20.usersPerPage);
-	        var skipUsers = (userWithoutVideoPage - 1) * _this20.usersPerPage;
+	        var userWithoutVideoPage = Math.ceil((userWithoutVideoIndex + 1) / _this21.usersPerPage);
+	        var skipUsers = (userWithoutVideoPage - 1) * _this21.usersPerPage;
 	        var numberOfUsersWithVideoForSwap = params.usersWithVideo.length - skipUsers;
 	        var userToSwap = params.usersWithVideo[params.usersWithVideo.length - 1 - index];
 	        var canCompleteVideoSwap = userToSwap && userToSwap.order > el.order;
@@ -10614,12 +10728,12 @@ this.BX = this.BX || {};
 	            }
 	          });
 	          var userToSwapIndex = params.activeUsers.indexOf(userToSwap.id);
-	          var userToSwapPage = Math.ceil((userToSwapIndex + 1) / _this20.usersPerPage);
-	          if (userWithoutVideoPage === _this20.currentPage && userToSwapPage > _this20.currentPage) {
+	          var userToSwapPage = Math.ceil((userToSwapIndex + 1) / _this21.usersPerPage);
+	          if (userWithoutVideoPage === _this21.currentPage && userToSwapPage > _this21.currentPage) {
 	            params.usersToKeepActive.push(userToSwap.id);
 	            params.usersToForceDeactivation.push(el.id);
 	            params.usersToDeactivate++;
-	          } else if (userToSwapPage === _this20.currentPage && userToSwapPage > userWithoutVideoPage) {
+	          } else if (userToSwapPage === _this21.currentPage && userToSwapPage > userWithoutVideoPage) {
 	            params.usersToKeepActive.push(el.id);
 	            params.usersToForceDeactivation.push(userToSwap.id);
 	            params.usersToDeactivate++;
@@ -10680,9 +10794,19 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "renderAddUserButtonInList",
+	    value: function renderAddUserButtonInList() {
+	      var showAdd = this.showAddUserButtonInList && this.layout == Layouts.Centered && this.uiState === UiState.Connected && !this.isButtonBlocked("add") && this.getConnectedUserCount() < this.userLimit - 1 && !this.isFullScreen && this.elements.userList.addButton;
+	      if (showAdd) {
+	        this.elements.userList.container.appendChild(this.elements.userList.addButton);
+	        return;
+	      }
+	      main_core.Dom.remove(this.elements.userList.addButton);
+	    }
+	  }, {
 	    key: "renderUserList",
 	    value: function renderUserList(pageChange) {
-	      var _this21 = this;
+	      var _this22 = this;
 	      clearTimeout(this.rerenderTimeout);
 	      this.rerenderTimeout = null;
 	      this.activeUsers = [];
@@ -10716,7 +10840,7 @@ this.BX = this.BX || {};
 	        usersToDeactivate: 0,
 	        videoDisabledProceed: false
 	      };
-	      if (this.layout == Layouts.Grid && this.pagesCount > 1) {
+	      if ((this.layout === Layouts.Grid || this.layout === Layouts.Centered) && this.pagesCount > 1) {
 	        skipUsers = (this.currentPage - 1) * this.usersPerPage;
 	      }
 	      if (needToUseNewLogic) {
@@ -10746,10 +10870,10 @@ this.BX = this.BX || {};
 	        // new grid logic is applied only in the Layouts.Grid layout
 	        // so we need to save some rules for later
 	        orderingRules.videoEnabled.forEach(function (user) {
-	          return _this21.updateRerenderQueue(user.id, RerenderReason.VideoEnabled);
+	          return _this22.updateRerenderQueue(user.id, RerenderReason.VideoEnabled);
 	        });
 	        orderingRules.videoDisabled.forEach(function (user) {
-	          return _this21.updateRerenderQueue(user.id, RerenderReason.VideoDisabled);
+	          return _this22.updateRerenderQueue(user.id, RerenderReason.VideoDisabled);
 	        });
 	      }
 	      for (var i = 0; i < this.userRegistry.users.length; i++) {
@@ -10862,7 +10986,7 @@ this.BX = this.BX || {};
 	            this.skipVideoTriggerForUsers.add(userModel.id);
 	          }
 	        }
-	        if (userActive && this.layout == Layouts.Grid && this.usersPerPage > 0 && renderedUsers >= this.usersPerPage) {
+	        if (userActive && (this.layout === Layouts.Grid || this.layout === Layouts.Centered) && this.usersPerPage > 0 && renderedUsers >= this.usersPerPage) {
 	          // skip users on following pages
 	          userActive = false;
 	        }
@@ -10922,12 +11046,7 @@ this.BX = this.BX || {};
 	        this.updateCentralUserAvatarSize();
 	      }
 	      this.applyIncomingVideoConstraints();
-	      var showAdd = this.layout == Layouts.Centered && userCount > 0 /*&& !this.isFullScreen*/ && this.uiState === UiState.Connected && !this.isButtonBlocked("add") && this.getConnectedUserCount() < this.userLimit - 1;
-	      if (showAdd && !this.isFullScreen && this.elements.userList.addButton) {
-	        this.elements.userList.container.appendChild(this.elements.userList.addButton);
-	      } else {
-	        main_core.Dom.remove(this.elements.userList.addButton);
-	      }
+	      this.renderAddUserButtonInList();
 	      this.elements.root.classList.toggle("bx-messenger-videocall-user-list-empty", this.elements.userList.container.childElementCount === 0);
 	      this.localUser.updatePanelDeferred();
 	      this.toggleSubscribingVideoInRenderUserList(this.activeUsers, true);
@@ -10980,7 +11099,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderButtons",
 	    value: function renderButtons(buttons) {
-	      var _this22 = this;
+	      var _this23 = this;
 	      var panelInner, left, center, right;
 	      panelInner = main_core.Dom.create("div", {
 	        props: {
@@ -11057,13 +11176,13 @@ this.BX = this.BX || {};
 	              showLevel: true,
 	              sideIcon: this.getMicrophoneSideIcon(this.roomState),
 	              onClick: function onClick(e) {
-	                _this22._onMicrophoneButtonClick(e);
-	                _this22._showMicrophoneHint(e);
+	                _this23._onMicrophoneButtonClick(e);
+	                _this23._showMicrophoneHint(e);
 	              },
 	              onArrowClick: this._onMicrophoneArrowClick.bind(this),
 	              onMouseOver: this._showMicrophoneHint.bind(this),
 	              onMouseOut: function onMouseOut() {
-	                return _this22._destroyHotKeyHint();
+	                return _this23._destroyHotKeyHint();
 	              },
 	              onSideIconClick: this._onMicrophoneSideIconClick.bind(this)
 	            });
@@ -11080,10 +11199,10 @@ this.BX = this.BX || {};
 	              onClick: this._onCameraButtonClick.bind(this),
 	              onArrowClick: this._onCameraArrowClick.bind(this),
 	              onMouseOver: function onMouseOver(e) {
-	                _this22._showHotKeyHint(e.currentTarget.firstChild, "camera", _this22.keyModifier + " + V");
+	                _this23._showHotKeyHint(e.currentTarget.firstChild, "camera", _this23.keyModifier + " + V");
 	              },
 	              onMouseOut: function onMouseOut() {
-	                _this22._destroyHotKeyHint();
+	                _this23._destroyHotKeyHint();
 	              }
 	            });
 	            left.appendChild(this.buttons.camera.render());
@@ -11097,10 +11216,10 @@ this.BX = this.BX || {};
 	                blocked: this.isButtonBlocked("screen"),
 	                onClick: this._onScreenButtonClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  _this22._showHotKeyHint(e.currentTarget, "screen", _this22.keyModifier + " + S");
+	                  _this23._showHotKeyHint(e.currentTarget, "screen", _this23.keyModifier + " + S");
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  _this22._destroyHotKeyHint();
+	                  _this23._destroyHotKeyHint();
 	                }
 	              });
 	            } else {
@@ -11117,13 +11236,13 @@ this.BX = this.BX || {};
 	                blocked: this.isButtonBlocked("record"),
 	                onClick: this._onRecordToggleClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  if (_this22.isRecordingHotKeySupported()) {
-	                    _this22._showHotKeyHint(e.currentTarget, "record", _this22.keyModifier + " + R");
+	                  if (_this23.isRecordingHotKeySupported()) {
+	                    _this23._showHotKeyHint(e.currentTarget, "record", _this23.keyModifier + " + R");
 	                  }
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  if (_this22.isRecordingHotKeySupported()) {
-	                    _this22._destroyHotKeyHint();
+	                  if (_this23.isRecordingHotKeySupported()) {
+	                    _this23._destroyHotKeyHint();
 	                  }
 	                }
 	              });
@@ -11210,10 +11329,10 @@ this.BX = this.BX || {};
 	                blocked: this.isButtonBlocked("chat"),
 	                onClick: this._onChatButtonClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  _this22._showHotKeyHint(e.currentTarget, "chat", _this22.keyModifier + " + C");
+	                  _this23._showHotKeyHint(e.currentTarget, "chat", _this23.keyModifier + " + C");
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  _this22._destroyHotKeyHint();
+	                  _this23._destroyHotKeyHint();
 	                }
 	              });
 	            } else {
@@ -11230,10 +11349,10 @@ this.BX = this.BX || {};
 	                blocked: this.isButtonBlocked("floorRequest"),
 	                onClick: this._onFloorRequestButtonClick.bind(this),
 	                onMouseOver: function onMouseOver(e) {
-	                  _this22._showHotKeyHint(e.currentTarget, "floorRequest", _this22.keyModifier + " + H");
+	                  _this23._showHotKeyHint(e.currentTarget, "floorRequest", _this23.keyModifier + " + H");
 	                },
 	                onMouseOut: function onMouseOut() {
-	                  return _this22._destroyHotKeyHint();
+	                  return _this23._destroyHotKeyHint();
 	                }
 	              });
 	            } else {
@@ -11273,7 +11392,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderTopButtons",
 	    value: function renderTopButtons(buttons) {
-	      var _this23 = this;
+	      var _this24 = this;
 	      var result = BX.createFragment();
 	      for (var i = 0; i < buttons.length; i++) {
 	        switch (buttons[i]) {
@@ -11289,11 +11408,11 @@ this.BX = this.BX || {};
 	              textClass: "protected",
 	              text: BX.message("IM_M_CALL_PROTECTED").toLowerCase(),
 	              onMouseOver: function onMouseOver(e) {
-	                _this23.hintManager.popupParameters.events = null;
-	                _this23.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_PROTECTED_HINT"));
+	                _this24.hintManager.popupParameters.events = null;
+	                _this24.hintManager.show(e.currentTarget, BX.message("IM_M_CALL_PROTECTED_HINT"));
 	              },
 	              onMouseOut: function onMouseOut() {
-	                _this23.hintManager.hide();
+	                _this24.hintManager.hide();
 	              }
 	            });
 	            result.appendChild(this.buttons["protected"].render());
@@ -11319,12 +11438,12 @@ this.BX = this.BX || {};
 	              text: this.layout == Layouts.Grid ? BX.message("IM_M_CALL_SPEAKER_MODE") : BX.message("IM_M_CALL_GRID_MODE"),
 	              onClick: this._onGridButtonClick.bind(this),
 	              onMouseOver: function onMouseOver(e) {
-	                _this23._showHotKeyHint(e.currentTarget, "grid", _this23.keyModifier + " + W", {
+	                _this24._showHotKeyHint(e.currentTarget, "grid", _this24.keyModifier + " + W", {
 	                  position: "bottom"
 	                });
 	              },
 	              onMouseOut: function onMouseOut() {
-	                _this23._destroyHotKeyHint();
+	                _this24._destroyHotKeyHint();
 	              }
 	            });
 	            result.appendChild(this.buttons.grid.render());
@@ -11411,7 +11530,6 @@ this.BX = this.BX || {};
 	        var buttonWidth = button.elements.root ? button.elements.root.getBoundingClientRect().width : 0;
 	        totalButtonWidth += buttonWidth;
 	      }
-	      console.log('this.elements.panel.scrollWidth - totalButtonWidth - 32', this.elements.panel.scrollWidth - totalButtonWidth - 32);
 	      return this.elements.panel.scrollWidth - totalButtonWidth - 32;
 	    }
 	  }, {
@@ -11457,7 +11575,12 @@ this.BX = this.BX || {};
 	        }
 	        return;
 	      }
-	      if (this.layout == Layouts.Grid && this.size == Size.Full) {
+	      /* if (this.layout == Layouts.Grid && this.size == Size.Full)
+	      {
+	      	this.recalculatePages();
+	      } */
+
+	      if ((this.layout == Layouts.Grid || this.layout == Layouts.Centered) && this.size == Size.Full) {
 	        this.recalculatePages();
 	      }
 	      this.renderUserList();
@@ -11476,7 +11599,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showOverflownButtonsPopup",
 	    value: function showOverflownButtonsPopup() {
-	      var _this24 = this;
+	      var _this25 = this;
 	      if (this.overflownButtonsPopup) {
 	        this.overflownButtonsPopup.show();
 	        return;
@@ -11505,8 +11628,8 @@ this.BX = this.BX || {};
 	        contentBackground: 'unset',
 	        events: {
 	          onPopupDestroy: function onPopupDestroy() {
-	            _this24.overflownButtonsPopup = null;
-	            _this24.buttons.more.setActive(false);
+	            _this25.overflownButtonsPopup = null;
+	            _this25.buttons.more.setActive(false);
 	          }
 	        }
 	      });
@@ -11550,6 +11673,7 @@ this.BX = this.BX || {};
 	      if (this.buttons.participantsMobile) {
 	        this.buttons.participantsMobile.setCount(this.getConnectedUserCount(true));
 	      }
+	      this.renderAddUserButtonInList();
 	    }
 	  }, {
 	    key: "updateUserData",
@@ -11620,7 +11744,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "toggleTopEar",
 	    value: function toggleTopEar() {
-	      if (this.layout !== Layouts.Grid && this.elements.userList.container.scrollHeight > this.elements.userList.container.offsetHeight && this.elements.userList.container.scrollTop > 0) {
+	      if (this.layout !== Layouts.Grid && this.pagesCount > 1) {
 	        this.elements.ear.top.classList.add("active");
 	      } else {
 	        this.elements.ear.top.classList.remove("active");
@@ -11629,7 +11753,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "toggleBottomEar",
 	    value: function toggleBottomEar() {
-	      if (this.layout !== Layouts.Grid && this.elements.userList.container.offsetHeight + this.elements.userList.container.scrollTop < this.elements.userList.container.scrollHeight) {
+	      if (this.layout !== Layouts.Grid && this.pagesCount > 1) {
 	        this.elements.ear.bottom.classList.add("active");
 	      } else {
 	        this.elements.ear.bottom.classList.remove("active");
@@ -11638,19 +11762,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "scrollUserListUp",
 	    value: function scrollUserListUp() {
-	      var _this25 = this;
+	      var _this26 = this;
 	      this.stopScroll();
 	      this.scrollInterval = setInterval(function () {
-	        return _this25.elements.userList.container.scrollTop -= 10;
+	        return _this26.elements.userList.container.scrollTop -= 10;
 	      }, 20);
 	    }
 	  }, {
 	    key: "scrollUserListDown",
 	    value: function scrollUserListDown() {
-	      var _this26 = this;
+	      var _this27 = this;
 	      this.stopScroll();
 	      this.scrollInterval = setInterval(function () {
-	        return _this26.elements.userList.container.scrollTop += 10;
+	        return _this27.elements.userList.container.scrollTop += 10;
 	      }, 20);
 	    }
 	  }, {
@@ -11781,7 +11905,7 @@ this.BX = this.BX || {};
 	      if (BX.browser.IsMobile()) {
 	        document.documentElement.style.setProperty('--view-height', window.innerHeight + 'px');
 	      }
-	      if (this.layout == Layouts.Grid) {
+	      if (this.layout == Layouts.Grid || this.layout == Layouts.Centered) {
 	        this.updateUserList();
 	      } else {
 	        this.updateCentralUserAvatarSize();
@@ -11986,7 +12110,8 @@ this.BX = this.BX || {};
 	      }
 	      this.eventEmitter.emit(EventName.onUserClick, {
 	        userId: userId,
-	        stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream
+	        stream: userId == this.userId ? this.localUser.stream : this.users[userId].stream,
+	        layout: this.layout
 	      });
 	    }
 	  }, {
@@ -12025,26 +12150,26 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onRecordToggleClick",
 	    value: function _onRecordToggleClick(e) {
-	      var _this27 = this;
+	      var _this28 = this;
 	      var limitObj = this.getRecordLimitation();
 	      this.onClickButtonWithLimit(limitObj, function () {
-	        if (_this27.recordState.state === View.RecordState.Stopped) {
-	          _this27._onRecordStartClick(e);
+	        if (_this28.recordState.state === View.RecordState.Stopped) {
+	          _this28._onRecordStartClick(e);
 	        } else {
-	          _this27._onRecordStopClick(e);
+	          _this28._onRecordStopClick(e);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "_onForceRecordToggleClick",
 	    value: function _onForceRecordToggleClick(e) {
-	      var _this28 = this;
+	      var _this29 = this;
 	      var limitObj = this.getRecordLimitation();
 	      this.onClickButtonWithLimit(limitObj, function () {
-	        if (_this28.recordState.state === View.RecordState.Stopped) {
-	          _this28._onForceRecordStartClick(View.RecordType.Video);
+	        if (_this29.recordState.state === View.RecordState.Stopped) {
+	          _this29._onForceRecordStartClick(View.RecordType.Video);
 	        } else {
-	          _this28._onRecordStopClick(e);
+	          _this29._onRecordStopClick(e);
 	        }
 	      });
 	    }
@@ -12231,6 +12356,15 @@ this.BX = this.BX || {};
 	      this.eventEmitter.emit(EventName.onChangeFaceImprove, e.data);
 	    }
 	  }, {
+	    key: "disableFaceImprove",
+	    value: function disableFaceImprove() {
+	      if (Util.isDesktop() && im_v2_lib_desktopApi.DesktopApi.isDesktop() && im_v2_lib_desktopApi.DesktopApi.getCameraSmoothingStatus()) {
+	        this.eventEmitter.emit(EventName.onChangeFaceImprove, {
+	          faceImproveEnabled: false
+	        });
+	      }
+	    }
+	  }, {
 	    key: "_onSpeakerSelected",
 	    value: function _onSpeakerSelected(e) {
 	      this.setSpeakerId(e.data.deviceId);
@@ -12241,11 +12375,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onScreenButtonClick",
 	    value: function _onScreenButtonClick(e) {
-	      var _this29 = this;
+	      var _this30 = this;
 	      e.stopPropagation();
 	      var limitObj = this.getScreenSharingLimitation();
 	      this.onClickButtonWithLimit(limitObj, function () {
-	        _this29.eventEmitter.emit(EventName.onButtonClick, {
+	        _this30.eventEmitter.emit(EventName.onButtonClick, {
 	          buttonName: 'toggleScreenSharing',
 	          node: e.target
 	        });
@@ -12368,7 +12502,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onParticipantsListButtonClick",
 	    value: function _onParticipantsListButtonClick(e) {
-	      var _this30 = this;
+	      var _this31 = this;
 	      e.stopPropagation();
 	      var viewEvent = new main_core_events.BaseEvent({
 	        data: {
@@ -12387,7 +12521,7 @@ this.BX = this.BX || {};
 	        userList: Object.values(this.users),
 	        current: this.centralUser.id,
 	        onSelect: function onSelect(userId) {
-	          return _this30.setCentralUser(userId);
+	          return _this31.setCentralUser(userId);
 	        }
 	      }).show();
 	    }
@@ -12422,23 +12556,23 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showRenameSlider",
 	    value: function showRenameSlider() {
-	      var _this31 = this;
+	      var _this32 = this;
 	      if (!this.renameSlider) {
 	        this.renameSlider = new MobileSlider({
 	          parent: this.elements.root,
 	          content: this.renderRenameSlider(),
 	          onClose: function onClose() {
-	            return _this31.renameSlider.destroy();
+	            return _this32.renameSlider.destroy();
 	          },
 	          onDestroy: function onDestroy() {
-	            return _this31.renameSlider = null;
+	            return _this32.renameSlider = null;
 	          }
 	        });
 	      }
 	      this.renameSlider.show();
 	      setTimeout(function () {
-	        _this31.elements.renameSlider.input.focus();
-	        _this31.elements.renameSlider.input.select();
+	        _this32.elements.renameSlider.input.focus();
+	        _this32.elements.renameSlider.input.select();
 	      }, 400);
 	    }
 	  }, {
@@ -12517,6 +12651,18 @@ this.BX = this.BX || {};
 	      this.setCurrentPage(this.currentPage + 1);
 	    }
 	  }, {
+	    key: "_onTopPageNavigatorClick",
+	    value: function _onTopPageNavigatorClick(e) {
+	      e.stopPropagation();
+	      this.setCurrentPage(this.currentPage !== 1 ? this.currentPage - 1 : this.pagesCount);
+	    }
+	  }, {
+	    key: "_onBottomPageNavigatorClick",
+	    value: function _onBottomPageNavigatorClick(e) {
+	      e.stopPropagation();
+	      this.setCurrentPage(this.currentPage !== this.pagesCount ? this.currentPage + 1 : 1);
+	    }
+	  }, {
 	    key: "setMaxWidth",
 	    value: function setMaxWidth(maxWidth) {
 	      if (this.maxWidth !== maxWidth) {
@@ -12539,19 +12685,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_applyMaxWidth",
 	    value: function _applyMaxWidth(animateUnsetProperty) {
-	      var _this32 = this;
+	      var _this33 = this;
 	      var containerDimensions = this.container.getBoundingClientRect();
 	      if (this.maxWidth !== null) {
 	        if (!this.elements.root.style.maxWidth && animateUnsetProperty) {
 	          this.elements.root.style.maxWidth = containerDimensions.width + 'px';
 	        }
 	        setTimeout(function () {
-	          return _this32.elements.root.style.maxWidth = Math.max(_this32.maxWidth, MIN_WIDTH) + 'px';
+	          return _this33.elements.root.style.maxWidth = Math.max(_this33.maxWidth, MIN_WIDTH) + 'px';
 	        }, 0);
 	      } else {
 	        this.elements.root.style.maxWidth = containerDimensions.width + 'px';
 	        this.elements.root.addEventListener('transitionend', function () {
-	          return _this32.elements.root.style.removeProperty('max-width');
+	          return _this33.elements.root.style.removeProperty('max-width');
 	        }, {
 	          once: true
 	        });
@@ -12594,6 +12740,7 @@ this.BX = this.BX || {};
 	      window.removeEventListener("orientationchange", this._onOrientationChangeHandler);
 	      window.removeEventListener("keydown", this._onKeyDownHandler);
 	      window.removeEventListener("keyup", this._onKeyUpHandler);
+	      document.removeEventListener('mousemove', this.onMouseMoveHandler);
 	      this.resizeObserver.disconnect();
 	      this.resizeObserver = null;
 	      if (this.intersectionObserver) {
@@ -12966,6 +13113,8 @@ this.BX = this.BX || {};
 	    _this._onUnloadHandler = _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _onUnload, _onUnload2).bind(babelHelpers.assertThisInitialized(_this));
 	    _this.enableMicAutoParameters = _params.enableMicAutoParameters !== false;
 	    _this.microphoneLevelInterval = null;
+	    _this.mediaMutedBySystem = false;
+	    _this._reconnectionEventCount = 0;
 	    window.addEventListener("unload", _this._onUnloadHandler);
 	    return _this;
 	  }
@@ -13007,9 +13156,13 @@ this.BX = this.BX || {};
 	          _this2.runCallback(CallEvent.onNetworkProblem, e);
 	        },
 	        onReconnecting: function onReconnecting() {
-	          _this2.runCallback(CallEvent.onReconnecting);
+	          _this2._reconnectionEventCount++;
+	          _this2.runCallback(CallEvent.onReconnecting, {
+	            reconnectionEventCount: _this2._reconnectionEventCount
+	          });
 	        },
 	        onReconnected: function onReconnected() {
+	          _this2._reconnectionEventCount = 0;
 	          _this2.runCallback(CallEvent.onReconnected);
 	        },
 	        onUpdateLastUsedCameraId: function onUpdateLastUsedCameraId() {
@@ -13036,13 +13189,21 @@ this.BX = this.BX || {};
 	      return this.ready;
 	    }
 	  }, {
+	    key: "canChangeMediaDevices",
+	    value: function canChangeMediaDevices() {
+	      return !this.mediaMutedBySystem;
+	    }
+	  }, {
 	    key: "setCameraId",
 	    value: function setCameraId(cameraId) {
 	      if (this.cameraId == cameraId) {
 	        return;
 	      }
 	      this.cameraId = cameraId;
-	      if (this.ready && Hardware.isCameraOn) {
+	      if (this.ready && this.mediaMutedBySystem) {
+	        this.runCallback(CallEvent.onNeedResetMediaDevicesState);
+	        this.changedMediaMutedBySystem(false);
+	      } else if (this.ready && Hardware.isCameraOn) {
 	        this.runCallback('onUpdateLastUsedCameraId');
 	        main_core.Runtime.debounce(this.replaceLocalMediaStream, 100, this)();
 	      }
@@ -13055,6 +13216,9 @@ this.BX = this.BX || {};
 	      }
 	      this.microphoneId = microphoneId;
 	      if (this.ready) {
+	        if (this.mediaMutedBySystem) {
+	          return;
+	        }
 	        main_core.Runtime.debounce(this.replaceLocalAudioStream, 100, this)();
 	      }
 	    }
@@ -13301,6 +13465,12 @@ this.BX = this.BX || {};
 	          stream.getVideoTracks().forEach(function (track) {
 	            track.addEventListener("ended", function () {
 	              return _this5.onLocalVideoTrackEnded();
+	            });
+	            track.addEventListener("mute", function () {
+	              return _this5.onLocalVideoTrackMute();
+	            });
+	            track.addEventListener("unmute", function () {
+	              return _this5.onLocalVideoTrackUnmute();
 	            });
 	          });
 	          stream.getAudioTracks().forEach(function (track) {
@@ -13551,6 +13721,45 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "onLocalVideoTrackMute",
+	    value: function onLocalVideoTrackMute() {
+	      this.changedMediaMutedBySystem(true);
+	      this.prevMainStream = this.localStreams['main'];
+	      if (this.ready) {
+	        this.localStreams['main'] = null;
+	        for (var userId in this.peers) {
+	          if (this.peers[userId].isReady()) {
+	            this.peers[userId].replaceMediaStream('main');
+	          }
+	        }
+	      }
+	    }
+	  }, {
+	    key: "onLocalVideoTrackUnmute",
+	    value: function onLocalVideoTrackUnmute() {
+	      var _this8 = this;
+	      this.changedMediaMutedBySystem(false);
+	      if (this.prevMainStream) {
+	        Util.stopMediaStream(this.prevMainStream);
+	        this.prevMainStream = null;
+	      }
+	      this.replaceLocalMediaStream()["catch"](function () {
+	        _this8.runCallback(CallEvent.onLocalMediaReceived, {
+	          tag: 'main',
+	          stream: _this8.localStreams['main'] || new MediaStream()
+	        });
+	      });
+	    }
+	  }, {
+	    key: "changedMediaMutedBySystem",
+	    value: function changedMediaMutedBySystem(muted) {
+	      this.mediaMutedBySystem = muted;
+	      var microphoneState = muted ? false : !Hardware.isMicrophoneMuted;
+	      var cameraState = muted ? false : Hardware.isCameraOn;
+	      this.signaling.sendMicrophoneState(this.users, microphoneState);
+	      this.signaling.sendCameraState(this.users, cameraState);
+	    }
+	  }, {
 	    key: "stopScreenSharing",
 	    value: function stopScreenSharing() {
 	      if (!this.localStreams["screen"]) {
@@ -13623,7 +13832,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "answer",
 	    value: function answer(config) {
-	      var _this8 = this;
+	      var _this9 = this;
 	      if (!main_core.Type.isPlainObject(config)) {
 	        config = {};
 	      }
@@ -13640,21 +13849,21 @@ this.BX = this.BX || {};
 	        this.localStreams["main"] = config.localStream;
 	      }
 	      return new Promise(function (resolve, reject) {
-	        _this8.getLocalMediaStream("main", true).then(function () {
-	          if (!_this8.ready) {
-	            _classPrivateMethodGet$1(_this8, _beforeLeaveCall, _beforeLeaveCall2).call(_this8);
+	        _this9.getLocalMediaStream("main", true).then(function () {
+	          if (!_this9.ready) {
+	            _classPrivateMethodGet$1(_this9, _beforeLeaveCall, _beforeLeaveCall2).call(_this9);
 	            return;
 	          }
-	          _this8.subscribeHardwareChanges();
-	          _this8.state = CallState.Connected;
-	          _this8.runCallback(CallEvent.onJoin, {
+	          _this9.subscribeHardwareChanges();
+	          _this9.state = CallState.Connected;
+	          _this9.runCallback(CallEvent.onJoin, {
 	            local: true
 	          });
-	          return _this8.sendAnswer();
+	          return _this9.sendAnswer();
 	        }).then(function () {
 	          return resolve();
 	        })["catch"](function (e) {
-	          _this8.runCallback(CallEvent.onCallFailure, e);
+	          _this9.runCallback(CallEvent.onCallFailure, e);
 	          reject(e);
 	        });
 	      });
@@ -13667,7 +13876,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "decline",
 	    value: function decline(code, reason) {
-	      var _this9 = this;
+	      var _this10 = this;
 	      this.ready = false;
 	      var data = {
 	        callId: this.id,
@@ -13680,13 +13889,13 @@ this.BX = this.BX || {};
 	        data.reason = reason;
 	      }
 	      CallEngine.getRestClient().callMethod(ajaxActions.decline, data).then(function () {
-	        _this9.destroy();
+	        _this10.destroy();
 	      });
 	    }
 	  }, {
 	    key: "hangup",
 	    value: function hangup() {
-	      var _this10 = this;
+	      var _this11 = this;
 	      var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      if (!this.ready && !force) {
 	        var error = new Error("Hangup in wrong state");
@@ -13699,15 +13908,15 @@ this.BX = this.BX || {};
 	      this.ready = false;
 	      this.state = CallState.Proceeding;
 	      return new Promise(function (resolve, reject) {
-	        for (var userId in _this10.peers) {
-	          _this10.peers[userId].disconnect();
+	        for (var userId in _this11.peers) {
+	          _this11.peers[userId].disconnect();
 	        }
-	        _classPrivateMethodGet$1(_this10, _beforeLeaveCall, _beforeLeaveCall2).call(_this10);
-	        _this10.runCallback(CallEvent.onLeave, {
+	        _classPrivateMethodGet$1(_this11, _beforeLeaveCall, _beforeLeaveCall2).call(_this11);
+	        _this11.runCallback(CallEvent.onLeave, {
 	          local: true
 	        });
-	        _this10.signaling.sendHangup({
-	          userId: _this10.users
+	        _this11.signaling.sendHangup({
+	          userId: _this11.users
 	        }).then(function () {
 	          return resolve();
 	        })["catch"](function (e) {
@@ -13737,7 +13946,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "replaceLocalMediaStream",
 	    value: function replaceLocalMediaStream() {
-	      var _this11 = this;
+	      var _this12 = this;
 	      var tag = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "main";
 	      this.setPublishingState(MediaStreamsKinds.Camera, true);
 	      if (this.localStreams[tag]) {
@@ -13745,11 +13954,14 @@ this.BX = this.BX || {};
 	        this.localStreams[tag] = null;
 	      }
 	      return new Promise(function (resolve, reject) {
-	        _this11.getLocalMediaStream(tag).then(function () {
-	          if (_this11.ready) {
-	            for (var userId in _this11.peers) {
-	              if (_this11.peers[userId].isReady()) {
-	                _this11.peers[userId].replaceMediaStream(tag);
+	        _this12.getLocalMediaStream(tag).then(function () {
+	          if (_this12.ready) {
+	            for (var userId in _this12.peers) {
+	              if (_this12.peers[userId].isReady()) {
+	                _this12.peers[userId].replaceMediaStream(tag);
+	                if (_this12.mediaMutedBySystem) {
+	                  _this12.changedMediaMutedBySystem(false);
+	                }
 	              }
 	            }
 	          }
@@ -13763,17 +13975,17 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "replaceLocalAudioStream",
 	    value: function replaceLocalAudioStream() {
-	      var _this12 = this;
+	      var _this13 = this;
 	      var tag = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "main";
 	      if (this.localStreams[tag]) {
 	        Util.stopMediaStreamAudioTracks(this.localStreams[tag]);
 	      }
 	      return new Promise(function (resolve, reject) {
-	        _this12.getLocalAudioStream(tag).then(function () {
-	          if (_this12.ready) {
-	            for (var userId in _this12.peers) {
-	              if (_this12.peers[userId].isReady()) {
-	                _this12.peers[userId].replaceMediaStream(tag);
+	        _this13.getLocalAudioStream(tag).then(function () {
+	          if (_this13.ready) {
+	            for (var userId in _this13.peers) {
+	              if (_this13.peers[userId].isReady()) {
+	                _this13.peers[userId].replaceMediaStream(tag);
 	              }
 	            }
 	          }
@@ -14175,13 +14387,13 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _onPeerStateChanged2(e) {
-	  var _this21 = this;
+	  var _this22 = this;
 	  this.runCallback(CallEvent.onUserStateChanged, e);
 	  if (e.state == UserState.Failed || e.state == UserState.Unavailable) {
 	    if (!this.isAnyoneParticipating()) {
 	      this.hangup().then(this.destroy.bind(this))["catch"](function () {
 	        //this.runCallback(Event.onCallFailure, e);
-	        _this21.destroy();
+	        _this22.destroy();
 	      });
 	    }
 	  } else if (e.state == UserState.Connected) {
@@ -14246,6 +14458,10 @@ this.BX = this.BX || {};
 	      Util.stopMediaStream(this.localStreams[tag]);
 	      this.localStreams[tag] = null;
 	    }
+	  }
+	  if (this.prevMainStream) {
+	    Util.stopMediaStream(this.prevMainStream);
+	    this.prevMainStream = null;
 	  }
 	  if (this.voiceDetection) {
 	    this.voiceDetection.destroy();
@@ -14355,6 +14571,16 @@ this.BX = this.BX || {};
 	        return _classPrivateMethodGet$1(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.cameraState, {
 	          userId: users,
 	          cameraState: cameraState
+	        }, 0);
+	      }
+	    }
+	  }, {
+	    key: "sendVideoPaused",
+	    value: function sendVideoPaused(users, videoPaused) {
+	      if (CallEngine.getPullClient().isPublishingSupported()) {
+	        return _classPrivateMethodGet$1(this, _sendPullEvent, _sendPullEvent2).call(this, pullEvents.videoPaused, {
+	          userId: users,
+	          videoPaused: videoPaused
 	        }, 0);
 	      }
 	    }
@@ -14957,7 +15183,7 @@ this.BX = this.BX || {};
 	          return false;
 	        }
 	        this.peerConnection.getStats().then(function (stats) {
-	          var _this13 = this;
+	          var _this14 = this;
 	          // stats gathering in new format like in the Bitrix24 calls
 	          var statsOutput = [];
 	          var codecs = {};
@@ -14970,7 +15196,7 @@ this.BX = this.BX || {};
 	            statsOutput.push(report);
 	            var needCheckInputPacketLost = (report === null || report === void 0 ? void 0 : report.trackIdentifier) && (report === null || report === void 0 ? void 0 : report.type) === 'inbound-rtp' && report.hasOwnProperty('packetsLost') && report.hasOwnProperty('packetsReceived');
 	            if (needCheckInputPacketLost || report.type === 'outbound-rtp') {
-	              switch (_this13.trackList[report.mid]) {
+	              switch (_this14.trackList[report.mid]) {
 	                case 'video':
 	                  report.source = MediaStreamsKinds.Camera;
 	                  break;
@@ -14985,13 +15211,13 @@ this.BX = this.BX || {};
 	              }
 	            }
 	            if (needCheckInputPacketLost) {
-	              report.bitrate = Util.calcBitrate(report, _this13.reportsForIncomingTracks[report.source]);
-	              var packetsLostData = Util.calcRemotePacketsLost(report, _this13.reportsForIncomingTracks[report.source]);
+	              report.bitrate = Util.calcBitrate(report, _this14.reportsForIncomingTracks[report.source]);
+	              var packetsLostData = Util.calcRemotePacketsLost(report, _this14.reportsForIncomingTracks[report.source]);
 	              report.packetsLostExtended = Util.formatPacketsLostData(packetsLostData);
 	              if (!Util.setCodecToReport(report, codecs, reportsWithoutCodecs)) {
 	                Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
 	              }
-	              _this13.reportsForIncomingTracks[report.source] = report;
+	              _this14.reportsForIncomingTracks[report.source] = report;
 	              if (report.source === MediaStreamsKinds.Camera) {
 	                incomingDataLoss = packetsLostData.currentPercentPacketLost;
 	              }
@@ -15002,13 +15228,13 @@ this.BX = this.BX || {};
 	            if (report.type === 'remote-inbound-rtp') {
 	              var reportId = report.localId;
 	              if (reportsWithoutRemoteInfo[reportId]) {
-	                var _packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], _this13.reportsForOutgoingTracks[reportId], report);
+	                var _packetsLostData = Util.calcLocalPacketsLost(reportsWithoutRemoteInfo[reportId], _this14.reportsForOutgoingTracks[reportId], report);
 	                reportsWithoutRemoteInfo[reportId].packetsLostData = _packetsLostData;
 	                reportsWithoutRemoteInfo[reportId].packetsLost = _packetsLostData.totalPacketsLost;
 	                reportsWithoutRemoteInfo[reportId].packetsLostExtended = Util.formatPacketsLostData(_packetsLostData);
-	                _this13.reportsForOutgoingTracks[reportId] = reportsWithoutRemoteInfo[reportId];
+	                _this14.reportsForOutgoingTracks[reportId] = reportsWithoutRemoteInfo[reportId];
 	                delete reportsWithoutRemoteInfo[reportId];
-	                if (_this13.reportsForOutgoingTracks[reportId].source === MediaStreamsKinds.Camera) {
+	                if (_this14.reportsForOutgoingTracks[reportId].source === MediaStreamsKinds.Camera) {
 	                  outgoingDataLoss = report.packetsLost;
 	                }
 	                return;
@@ -15016,13 +15242,13 @@ this.BX = this.BX || {};
 	              remoteReports[reportId] = report;
 	            }
 	            if (report.type === 'outbound-rtp') {
-	              report.bitrate = Util.calcBitrate(report, _this13.reportsForOutgoingTracks[report.id], true);
-	              report.userId = _this13.call.userId;
+	              report.bitrate = Util.calcBitrate(report, _this14.reportsForOutgoingTracks[report.id], true);
+	              report.userId = _this14.call.userId;
 	              if (!Util.setCodecToReport(report, codecs, reportsWithoutCodecs)) {
 	                Util.saveReportWithoutCodecs(report, reportsWithoutCodecs);
 	              }
 	              if (Util.setLocalPacketsLostOrSaveReport(report, remoteReports, reportsWithoutRemoteInfo)) {
-	                _this13.reportsForOutgoingTracks[report.id] = report;
+	                _this14.reportsForOutgoingTracks[report.id] = report;
 	                if (report.source === MediaStreamsKinds.Camera) {
 	                  outgoingDataLoss = report.packetsLostData.currentPercentPacketLost;
 	                }
@@ -15221,26 +15447,26 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createAndSendOffer",
 	    value: function createAndSendOffer(config) {
-	      var _this14 = this;
+	      var _this15 = this;
 	      var connectionConfig = defaultConnectionOptions;
 	      for (var _key in config) {
 	        connectionConfig[_key] = config[_key];
 	      }
 	      this.peerConnection.createOffer(connectionConfig).then(function (offer) {
-	        _this14.log("User " + _this14.userId + ": Created connection offer.");
-	        _this14.log("Applying local description");
-	        return _this14.peerConnection.setLocalDescription(offer);
+	        _this15.log("User " + _this15.userId + ": Created connection offer.");
+	        _this15.log("Applying local description");
+	        return _this15.peerConnection.setLocalDescription(offer);
 	      }).then(function () {
-	        _this14.sendOffer();
+	        _this15.sendOffer();
 	      });
 	    }
 	  }, {
 	    key: "sendOffer",
 	    value: function sendOffer() {
-	      var _this15 = this;
+	      var _this16 = this;
 	      clearTimeout(this.connectionOfferReplyTimeout);
 	      this.connectionOfferReplyTimeout = setTimeout(function () {
-	        return _this15._onConnectionOfferReplyTimeout(_this15.peerConnectionId);
+	        return _this16._onConnectionOfferReplyTimeout(_this16.peerConnectionId);
 	      }, signalingWaitReplyPeriod);
 	      this.getSignaling().sendConnectionOffer({
 	        userId: this.userId,
@@ -15257,11 +15483,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "sendNegotiationNeeded",
 	    value: function sendNegotiationNeeded(restart) {
-	      var _this16 = this;
+	      var _this17 = this;
 	      restart = restart === true;
 	      clearTimeout(this.negotiationNeededReplyTimeout);
 	      this.negotiationNeededReplyTimeout = setTimeout(function () {
-	        return _this16._onNegotiationNeededReplyTimeout();
+	        return _this17._onNegotiationNeededReplyTimeout();
 	      }, signalingWaitReplyPeriod);
 	      var params = {
 	        userId: this.userId
@@ -15274,7 +15500,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "applyOfferAndSendAnswer",
 	    value: function applyOfferAndSendAnswer(sdp) {
-	      var _this17 = this;
+	      var _this18 = this;
 	      var sessionDescription = new RTCSessionDescription({
 	        type: "offer",
 	        sdp: sdp
@@ -15282,39 +15508,39 @@ this.BX = this.BX || {};
 	      this.log("User: " + this.userId + "; Applying remote offer");
 	      this.log("User: " + this.userId + "; Peer ice connection state ", this.peerConnection.iceConnectionState);
 	      this.peerConnection.setRemoteDescription(sessionDescription).then(function () {
-	        if (_this17.peerConnection.iceConnectionState === 'new') {
-	          _this17.sendMedia(true);
+	        if (_this18.peerConnection.iceConnectionState === 'new') {
+	          _this18.sendMedia(true);
 	        }
-	        return _this17.peerConnection.createAnswer();
+	        return _this18.peerConnection.createAnswer();
 	      }).then(function (answer) {
-	        _this17.log("Created connection answer.");
-	        _this17.log("Applying local description.");
-	        return _this17.peerConnection.setLocalDescription(answer);
+	        _this18.log("Created connection answer.");
+	        _this18.log("Applying local description.");
+	        return _this18.peerConnection.setLocalDescription(answer);
 	      }).then(function () {
-	        _this17.applyResolutionScale();
-	        _this17.applyPendingIceCandidates();
-	        _this17.getSignaling().sendConnectionAnswer({
-	          userId: _this17.userId,
-	          connectionId: _this17.peerConnectionId,
-	          sdp: _this17.peerConnection.localDescription.sdp,
+	        _this18.applyResolutionScale();
+	        _this18.applyPendingIceCandidates();
+	        _this18.getSignaling().sendConnectionAnswer({
+	          userId: _this18.userId,
+	          connectionId: _this18.peerConnectionId,
+	          sdp: _this18.peerConnection.localDescription.sdp,
 	          tracks: {
-	            audio: _this17.getSenderMid(_this17.audioSender),
-	            video: _this17.getSenderMid(_this17.videoSender),
-	            screen: _this17.getSenderMid(_this17.screenSender)
+	            audio: _this18.getSenderMid(_this18.audioSender),
+	            video: _this18.getSenderMid(_this18.videoSender),
+	            screen: _this18.getSenderMid(_this18.screenSender)
 	          },
 	          userAgent: navigator.userAgent
 	        });
 	      })["catch"](function (e) {
-	        _this17.failureReason = e.toString();
-	        _this17.updateCalculatedState();
-	        _this17.log("Could not apply remote offer", e);
+	        _this18.failureReason = e.toString();
+	        _this18.updateCalculatedState();
+	        _this18.log("Could not apply remote offer", e);
 	        console.error("Could not apply remote offer", e);
 	      });
 	    }
 	  }, {
 	    key: "setConnectionAnswer",
 	    value: function setConnectionAnswer(connectionId, sdp, trackList) {
-	      var _this18 = this;
+	      var _this19 = this;
 	      if (!this.peerConnection || this.peerConnectionId != connectionId) {
 	        this.log("Could not apply answer, for unknown connection " + connectionId);
 	        return;
@@ -15333,19 +15559,19 @@ this.BX = this.BX || {};
 	      clearTimeout(this.connectionOfferReplyTimeout);
 	      this.log("User: " + this.userId + "; Applying remote answer");
 	      this.peerConnection.setRemoteDescription(sessionDescription).then(function () {
-	        _this18.applyPendingIceCandidates();
+	        _this19.applyPendingIceCandidates();
 	      })["catch"](function (e) {
-	        _this18.failureReason = e.toString();
-	        _this18.updateCalculatedState();
-	        _this18.log(e);
+	        _this19.failureReason = e.toString();
+	        _this19.updateCalculatedState();
+	        _this19.log(e);
 	      })["finally"](function () {
-	        _this18.call.setPublishingState(MediaStreamsKinds.Camera, false);
+	        _this19.call.setPublishingState(MediaStreamsKinds.Camera, false);
 	      });
 	    }
 	  }, {
 	    key: "addIceCandidate",
 	    value: function addIceCandidate(connectionId, candidate) {
-	      var _this19 = this;
+	      var _this20 = this;
 	      if (!this.peerConnection) {
 	        return;
 	      }
@@ -15355,9 +15581,9 @@ this.BX = this.BX || {};
 	      }
 	      if (this.peerConnection.remoteDescription && this.peerConnection.remoteDescription.type) {
 	        this.peerConnection.addIceCandidate(candidate).then(function () {
-	          _this19.log("User: " + _this19.userId + "; Added remote ICE candidate: " + (candidate ? candidate.candidate : candidate));
+	          _this20.log("User: " + _this20.userId + "; Added remote ICE candidate: " + (candidate ? candidate.candidate : candidate));
 	        })["catch"](function (e) {
-	          _this19.log(e);
+	          _this20.log(e);
 	        });
 	      } else {
 	        if (!this.pendingIceCandidates[connectionId]) {
@@ -15369,14 +15595,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "applyPendingIceCandidates",
 	    value: function applyPendingIceCandidates() {
-	      var _this20 = this;
+	      var _this21 = this;
 	      if (!this.peerConnection || !this.peerConnection.remoteDescription.type) {
 	        return;
 	      }
 	      if (main_core.Type.isArray(this.pendingIceCandidates[this.peerConnectionId])) {
 	        this.pendingIceCandidates[this.peerConnectionId].forEach(function (candidate) {
-	          _this20.peerConnection.addIceCandidate(candidate).then(function () {
-	            _this20.log("User: " + _this20.userId + "; Added remote ICE candidate: " + (candidate ? candidate.candidate : candidate));
+	          _this21.peerConnection.addIceCandidate(candidate).then(function () {
+	            _this21.log("User: " + _this21.userId + "; Added remote ICE candidate: " + (candidate ? candidate.candidate : candidate));
 	          });
 	        });
 	        this.pendingIceCandidates[this.peerConnectionId] = [];
@@ -15576,7 +15802,7 @@ this.BX = this.BX || {};
 	  console.log("Video track ended");
 	}
 	function _updateTracks2() {
-	  var _this22 = this;
+	  var _this23 = this;
 	  if (!this.peerConnection) {
 	    return null;
 	  }
@@ -15584,14 +15810,14 @@ this.BX = this.BX || {};
 	  var videoTrack = null;
 	  var screenTrack = null;
 	  this.peerConnection.getTransceivers().forEach(function (tr) {
-	    _this22.call.log("[debug] tr direction: " + tr.direction + " currentDirection: " + tr.currentDirection);
+	    _this23.call.log("[debug] tr direction: " + tr.direction + " currentDirection: " + tr.currentDirection);
 	    if (tr.currentDirection === "sendrecv" || tr.currentDirection === "recvonly") {
 	      if (tr.receiver && tr.receiver.track) {
 	        var track = tr.receiver.track;
 	        if (track.kind === 'audio') {
 	          audioTrack = track;
 	        } else if (track.kind === 'video') {
-	          if (_this22.trackList[tr.mid] === 'screen') {
+	          if (_this23.trackList[tr.mid] === 'screen') {
 	            screenTrack = track;
 	          } else {
 	            videoTrack = track;
@@ -15705,6 +15931,7 @@ this.BX = this.BX || {};
 	var _onPullEventRepeatAnswer$1 = /*#__PURE__*/new WeakMap();
 	var _onLocalMediaRendererAdded = /*#__PURE__*/new WeakMap();
 	var _onLocalMediaRendererMuteToggled = /*#__PURE__*/new WeakMap();
+	var _onMediaMutedBySystem = /*#__PURE__*/new WeakMap();
 	var _onLocalMediaRendererEnded = /*#__PURE__*/new WeakMap();
 	var _onGetUserMediaEnded = /*#__PURE__*/new WeakMap();
 	var _onBeforeLocalMediaRendererRemoved = /*#__PURE__*/new WeakMap();
@@ -16010,6 +16237,15 @@ this.BX = this.BX || {};
 	        }
 	      }
 	    });
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _onMediaMutedBySystem, {
+	      writable: true,
+	      value: function value(muted) {
+	        var microphoneState = muted ? false : !Hardware.isMicrophoneMuted;
+	        var cameraState = muted ? false : Hardware.isCameraOn;
+	        _this.signaling.sendMicrophoneState(microphoneState);
+	        _this.signaling.sendCameraState(cameraState);
+	      }
+	    });
 	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _onLocalMediaRendererEnded, {
 	      writable: true,
 	      value: function value(e, interrupted) {
@@ -16225,6 +16461,9 @@ this.BX = this.BX || {};
 	            _this.localVAD = new SimpleVAD({
 	              mediaStream: e.stream,
 	              onVoiceStarted: function onVoiceStarted() {
+	                if (!Hardware.isMicrophoneMuted) {
+	                  _this.requestFloor(false);
+	                }
 	                babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _onEndpointVoiceStart).call(babelHelpers.assertThisInitialized(_this), {
 	                  userId: _this.userId
 	                });
@@ -16272,12 +16511,14 @@ this.BX = this.BX || {};
 	        _this.log("Call reconnected");
 	        _this.sendTelemetryEvent("reconnect");
 	        _this.localUserState = UserState.Connected;
+	        _this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
 	        if (!Hardware.isMicrophoneMuted) {
 	          if (!_this.BitrixCall.isAudioPublished()) {
 	            _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublisingState, _setPublisingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Microphone, true);
 	          }
 	          _this.BitrixCall.enableAudio();
 	        }
+	        _this.signaling.sendCameraState(Hardware.isCameraOn);
 	        if (Hardware.isCameraOn) {
 	          if (!_this.BitrixCall.isVideoPublished()) {
 	            _classPrivateMethodGet$2(babelHelpers.assertThisInitialized(_this), _setPublisingState, _setPublisingState2).call(babelHelpers.assertThisInitialized(_this), MediaStreamsKinds.Camera, true);
@@ -16579,6 +16820,9 @@ this.BX = this.BX || {};
 	            cameraState: message.cameraState === "Y"
 	          });
 	        } else if (eventName === clientEvents.videoPaused) {
+	          if (message.senderId === _this.userId) {
+	            return;
+	          }
 	          _this.runCallback(CallEvent.onUserVideoPaused, {
 	            userId: message.senderId,
 	            videoPaused: message.videoPaused === "Y"
@@ -16881,6 +17125,12 @@ this.BX = this.BX || {};
 	      this.clientEventsBound = false;
 	    }
 	  }, {
+	    key: "canChangeMediaDevices",
+	    value: function canChangeMediaDevices() {
+	      var _this$BitrixCall;
+	      return !((_this$BitrixCall = this.BitrixCall) !== null && _this$BitrixCall !== void 0 && _this$BitrixCall.isMediaMutedBySystem);
+	    }
+	  }, {
 	    key: "setCameraId",
 	    value: function setCameraId(cameraId) {
 	      var _this5 = this;
@@ -16899,7 +17149,7 @@ this.BX = this.BX || {};
 	        this.BitrixCall.switchActiveVideoDevice(this.cameraId).then(function () {
 	          if (Hardware.isCameraOn) {
 	            _this5.runCallback('onUpdateLastUsedCameraId');
-	            if (_this5.BitrixCall.isVideoPublished()) {
+	            if (_this5.BitrixCall.isVideoPublished() && _this5.canChangeMediaDevices()) {
 	              _this5.BitrixCall.getLocalVideo().then(function (track) {
 	                var mediaRenderer = new MediaRenderer({
 	                  kind: 'video',
@@ -16915,10 +17165,12 @@ this.BX = this.BX || {};
 	                  _classPrivateMethodGet$2(_this5, _setPublisingState, _setPublisingState2).call(_this5, MediaStreamsKinds.Camera, false);
 	                }
 	              });
+	            } else if (!_this5.canChangeMediaDevices()) {
+	              _this5.runCallback(CallEvent.onNeedResetMediaDevicesState);
 	            } else {
 	              _classPrivateMethodGet$2(_this5, _setPublisingState, _setPublisingState2).call(_this5, MediaStreamsKinds.Camera, true);
 	              _classPrivateMethodGet$2(_this5, _showLocalVideo, _showLocalVideo2).call(_this5);
-	              _this5.BitrixCall.enableVideo();
+	              _this5.BitrixCall.enableVideo(true);
 	            }
 	          } else {
 	            _classPrivateMethodGet$2(_this5, _setPublisingState, _setPublisingState2).call(_this5, MediaStreamsKinds.Camera, false);
@@ -16958,7 +17210,7 @@ this.BX = this.BX || {};
 	          console.error(e);
 	        })["finally"](function () {
 	          _classPrivateMethodGet$2(_this6, _setPublisingState, _setPublisingState2).call(_this6, MediaStreamsKinds.Microphone, false);
-	          if (Hardware.isMicrophoneMuted) {
+	          if (Hardware.isMicrophoneMuted && !_this6.canChangeMediaDevices()) {
 	            _this6.BitrixCall.disableAudio();
 	          }
 	        });
@@ -17011,6 +17263,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "requestFloor",
 	    value: function requestFloor(requestActive) {
+	      if (this.floorRequestActive === requestActive) {
+	        return;
+	      }
 	      this.floorRequestActive = requestActive;
 	      this.BitrixCall.raiseHand(requestActive);
 	    }
@@ -17194,6 +17449,7 @@ this.BX = this.BX || {};
 	      var joinAsViewer = config.joinAsViewer === true;
 	      this.videoEnabled = Hardware.isCameraOn;
 	      this.muted = Hardware.isMicrophoneMuted;
+	      clearTimeout(this.lastSelfPingReceivedTimeout);
 	      if (!joinAsViewer) {
 	        this._outgoingAnswer = this.signaling.sendAnswer();
 	      }
@@ -17365,6 +17621,7 @@ this.BX = this.BX || {};
 	    value: function bindCallEvents() {
 	      this.BitrixCall.on('PublishSucceed', babelHelpers.classPrivateFieldGet(this, _onLocalMediaRendererAdded));
 	      this.BitrixCall.on('PublishPaused', babelHelpers.classPrivateFieldGet(this, _onLocalMediaRendererMuteToggled));
+	      this.BitrixCall.on('MediaMutedBySystem', babelHelpers.classPrivateFieldGet(this, _onMediaMutedBySystem));
 	      this.BitrixCall.on('PublishFailed', babelHelpers.classPrivateFieldGet(this, _onLocalMediaRendererEnded));
 	      this.BitrixCall.on('PublishEnded', babelHelpers.classPrivateFieldGet(this, _onLocalMediaRendererEnded));
 	      this.BitrixCall.on('GetUserMediaEnded', babelHelpers.classPrivateFieldGet(this, _onGetUserMediaEnded));
@@ -17681,7 +17938,9 @@ this.BX = this.BX || {};
 	    },
 	    set: function set(newValue) {
 	      if (this._reconnectionEventCount === 0 && newValue > 0) {
-	        this.runCallback(CallEvent.onReconnecting);
+	        this.runCallback(CallEvent.onReconnecting, {
+	          reconnectionEventCount: newValue
+	        });
 	      }
 	      if (newValue === 0) {
 	        this.runCallback(CallEvent.onReconnected);
@@ -17897,6 +18156,13 @@ this.BX = this.BX || {};
 	    value: function sendCameraState(cameraState) {
 	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.cameraState, {
 	        cameraState: cameraState ? "Y" : "N"
+	      });
+	    }
+	  }, {
+	    key: "sendVideoPaused",
+	    value: function sendVideoPaused(videoPaused) {
+	      return _classPrivateMethodGet$2(this, _sendMessage, _sendMessage2).call(this, clientEvents.videoPaused, {
+	        videoPaused: videoPaused ? "Y" : "N"
 	      });
 	    }
 	  }, {
@@ -20781,6 +21047,7 @@ this.BX = this.BX || {};
 	  onUserCameraState: 'onUserCameraState',
 	  onCameraPublishing: 'onCameraPublishing',
 	  onMicrophonePublishing: 'onMicrophonePublishing',
+	  onNeedResetMediaDevicesState: 'onNeedResetMediaDevicesState',
 	  onUserVideoPaused: 'onUserVideoPaused',
 	  onUserScreenState: 'onUserScreenState',
 	  onUserRecordState: 'onUserRecordState',
@@ -21620,12 +21887,6 @@ this.BX = this.BX || {};
 	var isNewCallLayoutEnabled = function isNewCallLayoutEnabled() {
 	  return BX.message('new_call_layout_enabled') === 'Y';
 	};
-	var isVoximplantCallServerAllowed = function isVoximplantCallServerAllowed() {
-	  return BX.message('voximplant_call_server_enabled') === 'Y';
-	};
-	var isBitrixCallServerAllowed = function isBitrixCallServerAllowed() {
-	  return BX.message('bitrix_call_server_enabled') === 'Y';
-	};
 	var isFeedbackAllowed = function isFeedbackAllowed() {
 	  return BX.message('call_allow_feedback') === 'Y';
 	};
@@ -21749,11 +22010,8 @@ this.BX = this.BX || {};
 	  });
 	}
 	function getConferenceProvider() {
-	  if (isBitrixCallServerAllowed()) {
+	  if (isCallServerAllowed()) {
 	    return Provider.Bitrix;
-	  }
-	  if (isVoximplantCallServerAllowed()) {
-	    return Provider.Voximplant;
 	  }
 	  return Provider.Plain;
 	}
@@ -21835,6 +22093,60 @@ this.BX = this.BX || {};
 	  var colorList = ['#006484', '#00A2E8', '#559BE6', '#688800', '#7FA800', '#11A9D9', '#0B66C3', '#004F69', '#00789E', '#506900', '#828B95'];
 	  return colorList[Math.floor(Math.random() * colorList.length)];
 	}
+	function getRecordTimeText(recordState) {
+	  if (!recordState) {
+	    return '';
+	  }
+	  var nowDate = new Date();
+	  var startDate = new Date(recordState.date.start);
+	  if (startDate.getTime() < nowDate.getDate()) {
+	    startDate = nowDate;
+	  }
+	  var pauseTime = recordState.date.pause.map(function (element) {
+	    var finish = element.finish ? new Date(element.finish) : nowDate;
+	    return finish - new Date(element.start);
+	  }).reduce(function (sum, element) {
+	    return sum + element;
+	  }, 0);
+	  var totalTime = nowDate - startDate - pauseTime;
+	  if (totalTime <= 0) {
+	    totalTime = 0;
+	  }
+	  var second = Math.floor(totalTime / 1000);
+	  var hour = Math.floor(second / 60 / 60);
+	  if (hour > 0) {
+	    second -= hour * 60 * 60;
+	  }
+	  var minute = Math.floor(second / 60);
+	  if (minute > 0) {
+	    second -= minute * 60;
+	  }
+	  return (hour > 0 ? hour + ':' : '') + (hour > 0 ? minute.toString().padStart(2, "0") + ':' : minute + ':') + second.toString().padStart(2, "0");
+	}
+	function getTimeText(startTime) {
+	  if (!startTime) {
+	    return '';
+	  }
+	  var nowDate = new Date();
+	  var startDate = new Date(startTime);
+	  if (startDate.getTime() < nowDate.getDate()) {
+	    startDate = nowDate;
+	  }
+	  var totalTime = nowDate - startDate;
+	  if (totalTime <= 0) {
+	    totalTime = 0;
+	  }
+	  var second = Math.floor(totalTime / 1000);
+	  var hour = Math.floor(second / 60 / 60);
+	  if (hour > 0) {
+	    second -= hour * 60 * 60;
+	  }
+	  var minute = Math.floor(second / 60);
+	  if (minute > 0) {
+	    second -= minute * 60;
+	  }
+	  return (hour > 0 ? hour + ':' : '') + (hour > 0 ? minute.toString().padStart(2, "0") + ':' : minute + ':') + second.toString().padStart(2, "0");
+	}
 	var Util = {
 	  updateUserData: updateUserData,
 	  setUserData: setUserData,
@@ -21858,8 +22170,6 @@ this.BX = this.BX || {};
 	  isWebRTCSupported: isWebRTCSupported,
 	  isCallServerAllowed: isCallServerAllowed,
 	  isNewCallLayoutEnabled: isNewCallLayoutEnabled,
-	  isVoximplantCallServerAllowed: isVoximplantCallServerAllowed,
-	  isBitrixCallServerAllowed: isBitrixCallServerAllowed,
 	  isFeedbackAllowed: isFeedbackAllowed,
 	  shouldCollectStats: shouldCollectStats,
 	  shouldShowDocumentButton: shouldShowDocumentButton,
@@ -21886,7 +22196,9 @@ this.BX = this.BX || {};
 	  calcRemotePacketsLost: calcRemotePacketsLost,
 	  formatPacketsLostData: formatPacketsLostData,
 	  getCallFeatures: getCallFeatures,
-	  getAvatarBackground: getAvatarBackground
+	  getAvatarBackground: getAvatarBackground,
+	  getRecordTimeText: getRecordTimeText,
+	  getTimeText: getTimeText
 	};
 
 	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
@@ -22132,7 +22444,6 @@ this.BX = this.BX || {};
 	    _this4.callerColor = _config2.callerColor || '';
 	    _this4.microphoneState = _config2.microphoneState;
 	    _this4.cameraState = _config2.cameraState;
-	    _this4.withBlur = im_v2_lib_utils.Utils.platform.isMac();
 	    _this4.isNewCallLayoutEnabled = Util.isNewCallLayoutEnabled();
 	    _this4.elements = {
 	      root: null,
@@ -22346,7 +22657,7 @@ this.BX = this.BX || {};
 	          }
 	        }), this.elements.buttons.answer = main_core.Dom.create("div", {
 	          props: {
-	            className: "bx-messenger-call-window-button" + (this.withBlur ? ' with-blur' : ''),
+	            className: "bx-messenger-call-window-button",
 	            title: BX.message("IM_M_CALL_BTN_ANSWER")
 	          },
 	          children: [main_core.Dom.create("div", {
@@ -22707,7 +23018,6 @@ this.BX = this.BX || {};
 	    this.callerAvatar = config.callerAvatar || '';
 	    this.callerName = config.callerName || BX.message('IM_CL_USER');
 	    this.callerColor = config.callerColor || '#525252';
-	    this.withBlur = im_v2_lib_utils.Utils.platform.isMac();
 	    this.elements = {
 	      root: null,
 	      avatar: null
@@ -22845,7 +23155,7 @@ this.BX = this.BX || {};
 	          }
 	        }), main_core.Dom.create("div", {
 	          props: {
-	            className: "bx-messenger-call-window-button" + (this.withBlur ? ' with-blur' : '')
+	            className: "bx-messenger-call-window-button"
 	          },
 	          children: [main_core.Dom.create("div", {
 	            props: {
@@ -24323,8 +24633,10 @@ this.BX = this.BX || {};
 	    _this.callWithLegacyMobile = false;
 	    _this.featureScreenSharing = FeatureState.Enabled;
 	    _this.featureRecord = FeatureState.Enabled;
+	    _this.screenShareStartTime = null;
 	    _this.callRecordState = View.RecordState.Stopped;
 	    _this.callRecordType = View.RecordType.None;
+	    _this.callRecordInfo = null;
 	    _this.autoCloseCallView = true;
 	    _this.talkingUsers = {};
 	    _this._callViewState = ViewState.Closed;
@@ -24336,6 +24648,7 @@ this.BX = this.BX || {};
 	    _this._onCallUserStateChangedHandler = _this._onCallUserStateChanged.bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onCallUserMicrophoneStateHandler = _this._onCallUserMicrophoneState.bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onCallUserCameraStateHandler = _this._onCallUserCameraState.bind(babelHelpers.assertThisInitialized(_this));
+	    _this._onNeedResetMediaDevicesStateHandler = _this._onNeedResetMediaDevicesState.bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onCameraPublishingHandler = _this._onCameraPublishing.bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onMicrophonePublishingdHandler = _this._onMicrophonePublishingd.bind(babelHelpers.assertThisInitialized(_this));
 	    _this._onCallUserVideoPausedHandler = _this._onCallUserVideoPaused.bind(babelHelpers.assertThisInitialized(_this));
@@ -24474,6 +24787,14 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "getCallType",
+	    value: function getCallType() {
+	      if (!this.currentCall) {
+	        return;
+	      }
+	      return this.currentCall.provider === Provider.Plain ? call_lib_analytics.Analytics.AnalyticsType["private"] : call_lib_analytics.Analytics.AnalyticsType.group;
+	    }
+	  }, {
 	    key: "getCallUsers",
 	    value: function getCallUsers(includeSelf) {
 	      var result = Object.keys(this.currentCall.getUsers());
@@ -24609,6 +24930,13 @@ this.BX = this.BX || {};
 	        } else {
 	          // send busy
 	          newCall.decline(486);
+	          var isVideoconf = newCall.associatedEntity.type === 'chat' && newCall.associatedEntity.advanced['chatType'] === 'videoconf';
+	          var newCallType = newCall.provider === Provider.Plain ? call_lib_analytics.Analytics.AnalyticsType["private"] : call_lib_analytics.Analytics.AnalyticsType.group;
+	          call_lib_analytics.Analytics.getInstance().onJoinCall({
+	            callId: newCall.id,
+	            callType: isVideoconf ? call_lib_analytics.Analytics.AnalyticsType.videoconf : newCallType,
+	            status: call_lib_analytics.Analytics.AnalyticsStatus.busy
+	          });
 	          return false;
 	        }
 	      }
@@ -24621,6 +24949,7 @@ this.BX = this.BX || {};
 	      this.currentCall.addEventListener(CallEvent.onUserStateChanged, this._onCallUserStateChangedHandler);
 	      this.currentCall.addEventListener(CallEvent.onUserMicrophoneState, this._onCallUserMicrophoneStateHandler);
 	      this.currentCall.addEventListener(CallEvent.onUserCameraState, this._onCallUserCameraStateHandler);
+	      this.currentCall.addEventListener(CallEvent.onNeedResetMediaDevicesState, this._onNeedResetMediaDevicesStateHandler);
 	      this.currentCall.addEventListener(CallEvent.onCameraPublishing, this._onCameraPublishingHandler);
 	      this.currentCall.addEventListener(CallEvent.onMicrophonePublishing, this._onMicrophonePublishingdHandler);
 	      this.currentCall.addEventListener(CallEvent.onUserVideoPaused, this._onCallUserVideoPausedHandler);
@@ -24660,6 +24989,7 @@ this.BX = this.BX || {};
 	      this.currentCall.removeEventListener(CallEvent.onUserStateChanged, this._onCallUserStateChangedHandler);
 	      this.currentCall.removeEventListener(CallEvent.onUserMicrophoneState, this._onCallUserMicrophoneStateHandler);
 	      this.currentCall.removeEventListener(CallEvent.onUserCameraState, this._onCallUserCameraStateHandler);
+	      this.currentCall.removeEventListener(CallEvent.onNeedResetMediaDevicesState, this._onNeedResetMediaDevicesStateHandler);
 	      this.currentCall.removeEventListener(CallEvent.onCameraPublishing, this._onCameraPublishingHandler);
 	      this.currentCall.removeEventListener(CallEvent.onMicrophonePublishing, this._onMicrophonePublishingdHandler);
 	      this.currentCall.removeEventListener(CallEvent.onUserVideoPaused, this._onCallUserVideoPausedHandler);
@@ -24705,6 +25035,7 @@ this.BX = this.BX || {};
 	      this.callView.setCallback(View.Event.onReplaceSpeaker, this._onCallViewReplaceSpeaker.bind(this));
 	      this.callView.setCallback(View.Event.onHasMainStream, this._onCallViewHasMainStream.bind(this));
 	      this.callView.setCallback(View.Event.onToggleSubscribe, this._onCallToggleSubscribe.bind(this));
+	      this.callView.setCallback(View.Event.onUserClick, this._onCallUserClick.bind(this));
 	    }
 	  }, {
 	    key: "updateCallViewUsers",
@@ -24860,6 +25191,14 @@ this.BX = this.BX || {};
 	      newCall.removeEventListener(CallEvent.onLocalMediaReceived, this._onCallLocalMediaReceivedHandler);
 	      this.removeCallEvents();
 	      var oldCall = this.currentCall;
+	      call_lib_analytics.Analytics.getInstance().onFinishCall({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType(),
+	        status: call_lib_analytics.Analytics.AnalyticsStatus.privateToGroup,
+	        chatId: this.currentCall.associatedEntity.id,
+	        callUsersCount: this.getCallUsers(true).length,
+	        callLength: Util.getTimeText(this.currentCall.startDate)
+	      });
 	      oldCall.hangup();
 	      this.currentCall = newCall;
 	      if (this.currentCall.associatedEntity && this.currentCall.associatedEntity.id) {
@@ -24938,7 +25277,7 @@ this.BX = this.BX || {};
 	        onButtonClick: this._onCallNotificationButtonClick.bind(this)
 	      });
 	      this.callNotification.show();
-	      this.scheduleCancelNotification();
+	      this.scheduleCancelNotification(false);
 	      this.messengerFacade.repeatSound(this.audioRingtone, 3500, true);
 	    }
 	  }, {
@@ -24954,15 +25293,21 @@ this.BX = this.BX || {};
 	        onButtonClick: this._onCallConferenceNotificationButtonClick.bind(this)
 	      });
 	      this.callNotification.show();
-	      this.scheduleCancelNotification();
+	      this.scheduleCancelNotification(true);
 	      this.messengerFacade.repeatSound(this.audioRingtone, 3500, true);
 	    }
 	  }, {
 	    key: "scheduleCancelNotification",
 	    value: function scheduleCancelNotification() {
 	      var _this6 = this;
+	      var isIncomingConference = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      clearTimeout(this.hideIncomingCallTimeout);
 	      this.hideIncomingCallTimeout = setTimeout(function () {
+	        call_lib_analytics.Analytics.getInstance().onJoinCall({
+	          callId: _this6.currentCall.id,
+	          callType: isIncomingConference ? call_lib_analytics.Analytics.AnalyticsType.videoconf : _this6.getCallType(),
+	          status: call_lib_analytics.Analytics.AnalyticsStatus.noAnswer
+	        });
 	        if (_this6.callNotification) {
 	          _this6.callNotification.close();
 	        }
@@ -25117,7 +25462,8 @@ this.BX = this.BX || {};
 	          showShareButton: _this7.featureScreenSharing !== FeatureState.Disabled,
 	          showRecordButton: _this7.featureRecord !== FeatureState.Disabled,
 	          hiddenButtons: hiddenButtons,
-	          blockedButtons: _this7.getBlockedButtons(provider === Provider.Plain)
+	          blockedButtons: _this7.getBlockedButtons(provider === Provider.Plain),
+	          showAddUserButtonInList: provider === Provider.Plain
 	        });
 	        _this7.bindCallViewEvents();
 	        if (isCallPrepared) {
@@ -25182,12 +25528,32 @@ this.BX = this.BX || {};
 	        _this7.showMaskPromo();
 	        if (_this7.currentCallIsNew) {
 	          _this7.log("Inviting users");
+	          call_lib_analytics.Analytics.getInstance().onStartCall({
+	            callId: _this7.currentCall.id,
+	            callType: _this7.getCallType(),
+	            mediaParams: {
+	              video: Hardware.isCameraOn,
+	              audio: !Hardware.isMicrophoneMuted
+	            },
+	            status: call_lib_analytics.Analytics.AnalyticsStatus.success
+	          });
 	          _this7.currentCall.inviteUsers({
 	            show: !Util.isNewCallLayoutEnabled()
 	          });
 	          _this7.messengerFacade.repeatSound('dialtone', 5000, true);
 	        } else {
 	          _this7.log("Joining existing call");
+	          call_lib_analytics.Analytics.getInstance().onJoinCall({
+	            callId: _this7.currentCall.id,
+	            callType: _this7.getCallType(),
+	            mediaParams: {
+	              video: Hardware.isCameraOn,
+	              audio: !Hardware.isMicrophoneMuted
+	            },
+	            section: call_lib_analytics.Analytics.AnalyticsSection.chatWindow,
+	            element: call_lib_analytics.Analytics.AnalyticsElement.videocall,
+	            status: call_lib_analytics.Analytics.AnalyticsStatus.success
+	          });
 	          _this7.currentCall.answer();
 	        }
 	        _this7._onUpdateLastUsedCameraId();
@@ -25257,7 +25623,8 @@ this.BX = this.BX || {};
 	          showRecordButton: _this8.featureRecord !== FeatureState.Disabled,
 	          microphoneId: Hardware.defaultMicrophone,
 	          hiddenButtons: hiddenButtons,
-	          blockedButtons: _this8.getBlockedButtons(_this8.currentCall.provider === Provider.Plain)
+	          blockedButtons: _this8.getBlockedButtons(_this8.currentCall.provider === Provider.Plain),
+	          showAddUserButtonInList: _this8.currentCall.provider === Provider.Plain
 	        });
 	        _this8.autoCloseCallView = true;
 	        _this8.bindCallViewEvents();
@@ -25287,6 +25654,17 @@ this.BX = this.BX || {};
 	        });
 	        _this8._onUpdateLastUsedCameraId();
 	      })["finally"](function () {
+	        call_lib_analytics.Analytics.getInstance().onJoinCall({
+	          callId: _this8.currentCall.id,
+	          callType: _this8.getCallType(),
+	          mediaParams: {
+	            video: Hardware.isCameraOn,
+	            audio: !Hardware.isMicrophoneMuted
+	          },
+	          section: call_lib_analytics.Analytics.AnalyticsSection.chatList,
+	          element: call_lib_analytics.Analytics.AnalyticsElement.joinButton,
+	          status: call_lib_analytics.Analytics.AnalyticsStatus.success
+	        });
 	        _this8.initCallPromise = null;
 	      });
 	    }
@@ -25294,6 +25672,16 @@ this.BX = this.BX || {};
 	    key: "leaveCurrentCall",
 	    value: function leaveCurrentCall(force) {
 	      var finishCall = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	      if (this.isRecording()) {
+	        call_lib_analytics.Analytics.getInstance().onRecordStop({
+	          callId: this.currentCall.id,
+	          callType: this.getCallType(),
+	          subSection: finishCall ? call_lib_analytics.Analytics.AnalyticsSubSection.contextMenu : call_lib_analytics.Analytics.AnalyticsSubSection.window,
+	          element: finishCall ? call_lib_analytics.Analytics.AnalyticsElement.finishForAllButton : call_lib_analytics.Analytics.AnalyticsElement.disconnectButton,
+	          recordTime: Util.getRecordTimeText(this.callRecordInfo)
+	        });
+	        this.callRecordInfo = null;
+	      }
 	      if (this.callView) {
 	        this.callView.releaseLocalMedia();
 	      }
@@ -26035,6 +26423,17 @@ this.BX = this.BX || {};
 	            }, 15000);
 	            this.removeVideoStrategy();
 	            this.removeCallEvents();
+	            call_lib_analytics.Analytics.getInstance().onJoinCall({
+	              callId: callId,
+	              callType: this.getCallType(),
+	              mediaParams: {
+	                video: Hardware.isCameraOn,
+	                audio: !Hardware.isMicrophoneMuted
+	              },
+	              section: call_lib_analytics.Analytics.AnalyticsSection.callPopup,
+	              element: call_lib_analytics.Analytics.AnalyticsElement.answerButton,
+	              status: call_lib_analytics.Analytics.AnalyticsStatus.decline
+	            });
 	            this.currentCall.decline();
 	            this.currentCall = null;
 	          }
@@ -26057,6 +26456,14 @@ this.BX = this.BX || {};
 	        this.showUnsupportedNotification();
 	        return;
 	      }
+	      call_lib_analytics.Analytics.getInstance().onJoinCall({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType(),
+	        mediaParams: mediaParams,
+	        section: call_lib_analytics.Analytics.AnalyticsSection.callPopup,
+	        element: call_lib_analytics.Analytics.AnalyticsElement.answerButton,
+	        status: call_lib_analytics.Analytics.AnalyticsStatus.success
+	      });
 	      if (this.callView) {
 	        this.callView.destroy();
 	      }
@@ -26096,7 +26503,8 @@ this.BX = this.BX || {};
 	          microphoneId: Hardware.defaultMicrophone,
 	          blockedButtons: _this19.getBlockedButtons(_this19.currentCall.provider === Provider.Plain),
 	          hiddenButtons: hiddenButtons,
-	          language: _this19.language
+	          language: _this19.language,
+	          showAddUserButtonInList: _this19.currentCall.provider === Provider.Plain
 	        });
 	        _this19.autoCloseCallView = true;
 	        if (_this19.callWithLegacyMobile) {
@@ -26134,6 +26542,9 @@ this.BX = this.BX || {};
 	      switch (e.button) {
 	        case "answerConference":
 	          if (this.currentCall && 'id' in this.currentCall.associatedEntity) {
+	            call_lib_analytics.Analytics.getInstance().onAnswerConference({
+	              callId: this.currentCall.id
+	            });
 	            this.answeredOrDeclinedCalls.add(this.currentCall.id);
 	            var _dialogId = this.currentCall.associatedEntity.id.toString();
 	            if (_dialogId.startsWith('chat')) {
@@ -26146,6 +26557,9 @@ this.BX = this.BX || {};
 	          break;
 	        case "skipConference":
 	          if (this.currentCall) {
+	            call_lib_analytics.Analytics.getInstance().onDeclineConference({
+	              callId: this.currentCall.id
+	            });
 	            this.answeredOrDeclinedCalls.add(this.currentCall.id);
 	            this.removeVideoStrategy();
 	            this.removeCallEvents();
@@ -26179,6 +26593,10 @@ this.BX = this.BX || {};
 	        im_v2_lib_desktopApi.DesktopApi.closeWindow(im_v2_lib_desktopApi.DesktopApi.findWindow('callBackground'));
 	      }
 	      this.closePromo();
+	      if (this.mediaDevicesResetStateHintBaloon) {
+	        this.mediaDevicesResetStateHintBaloon.close();
+	        this.mediaDevicesResetStateHintBaloon = null;
+	      }
 	      this._closeReconnectionBaloon();
 	      this._closeParticipantsVideoBaloon();
 	    }
@@ -26236,6 +26654,15 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallViewHangupButtonClick",
 	    value: function _onCallViewHangupButtonClick() {
+	      call_lib_analytics.Analytics.getInstance().onDisconnectCall({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType(),
+	        subSection: call_lib_analytics.Analytics.AnalyticsSubSection.finishButton,
+	        mediaParams: {
+	          video: Hardware.isCameraOn,
+	          audio: !Hardware.isMicrophoneMuted
+	        }
+	      });
 	      this.leaveCurrentCall();
 	    }
 	  }, {
@@ -26250,12 +26677,30 @@ this.BX = this.BX || {};
 	      var menuItems = [{
 	        text: BX.message("CALL_M_BTN_HANGUP_OPTION_FINISH"),
 	        onclick: function onclick() {
-	          return _this20.leaveCurrentCall(false, true);
+	          console.log('this.currentCall.associatedEntity', _this20.currentCall.associatedEntity);
+	          call_lib_analytics.Analytics.getInstance().onFinishCall({
+	            callId: _this20.currentCall.id,
+	            callType: _this20.getCallType(),
+	            status: call_lib_analytics.Analytics.AnalyticsStatus.finishedForAll,
+	            chatId: _this20.currentCall.associatedEntity.id,
+	            callUsersCount: _this20.getCallUsers(true).length,
+	            callLength: Util.getTimeText(_this20.currentCall.startDate)
+	          });
+	          _this20.leaveCurrentCall(false, true);
 	        }
 	      }, {
 	        text: BX.message("CALL_M_BTN_HANGUP_OPTION_LEAVE"),
 	        onclick: function onclick() {
-	          return _this20.leaveCurrentCall();
+	          call_lib_analytics.Analytics.getInstance().onDisconnectCall({
+	            callId: _this20.currentCall.id,
+	            callType: _this20.getCallType(),
+	            subSection: call_lib_analytics.Analytics.AnalyticsSubSection.contextMenu,
+	            mediaParams: {
+	              video: Hardware.isCameraOn,
+	              audio: !Hardware.isMicrophoneMuted
+	            }
+	          });
+	          _this20.leaveCurrentCall();
 	        }
 	      }];
 	      this.hangupOptionsMenu = new BX.PopupMenuWindow({
@@ -26307,6 +26752,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallViewShowChatButtonClick",
 	    value: function _onCallViewShowChatButtonClick() {
+	      call_lib_analytics.Analytics.getInstance().onShowChat({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType()
+	      });
 	      this.messengerFacade.openMessenger(this.currentCall.associatedEntity.id);
 	      this.showChat();
 	    }
@@ -26314,6 +26763,10 @@ this.BX = this.BX || {};
 	    key: "_onCallViewFloorRequestButtonClick",
 	    value: function _onCallViewFloorRequestButtonClick() {
 	      var _this21 = this;
+	      call_lib_analytics.Analytics.getInstance().onFloorRequest({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType()
+	      });
 	      var floorState = this.callView.getUserFloorRequestState(CallEngine.getCurrentUserId());
 	      var talkingState = this.callView.getUserTalking(CallEngine.getCurrentUserId());
 	      this.callView.setUserFloorRequestState(CallEngine.getCurrentUserId(), !floorState);
@@ -26383,6 +26836,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallViewToggleMuteButtonClick",
 	    value: function _onCallViewToggleMuteButtonClick(e) {
+	      call_lib_analytics.Analytics.getInstance().onToggleMicrophone({
+	        muted: e.muted,
+	        callId: this.currentCall.id,
+	        callType: this.getCallType()
+	      });
 	      var currentRoom = this.currentCall.currentRoom && this.currentCall.currentRoom();
 	      if (currentRoom && currentRoom.speaker != this.userId && !e.muted) {
 	        this.currentCall.requestRoomSpeaker();
@@ -26409,6 +26867,10 @@ this.BX = this.BX || {};
 	    key: "_onCallViewRecordButtonClick",
 	    value: function _onCallViewRecordButtonClick(event) {
 	      var _this23 = this;
+	      call_lib_analytics.Analytics.getInstance().onRecordBtnClick({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType()
+	      });
 	      if (event.recordState === View.RecordState.Started) {
 	        if (this.featureRecord === FeatureState.Limited) {
 	          this.messengerFacade.openHelpArticle('call_record');
@@ -26486,6 +26948,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallViewToggleScreenSharingButtonClick",
 	    value: function _onCallViewToggleScreenSharingButtonClick() {
+	      call_lib_analytics.Analytics.getInstance().onScreenShareBtnClick({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType()
+	      });
 	      if (this.featureScreenSharing === FeatureState.Limited) {
 	        this.messengerFacade.openHelpArticle('call_screen_sharing');
 	        return;
@@ -26517,6 +26983,11 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallViewToggleVideoButtonClick",
 	    value: function _onCallViewToggleVideoButtonClick(e) {
+	      call_lib_analytics.Analytics.getInstance().onToggleCamera({
+	        video: e.video,
+	        callId: this.currentCall.id,
+	        callType: this.getCallType()
+	      });
 	      Hardware.isCameraOn = e.video;
 	      if (!Hardware.initialized) {
 	        return;
@@ -26871,6 +27342,22 @@ this.BX = this.BX || {};
 	      this.callView.setUserCameraState(e.userId, e.cameraState);
 	    }
 	  }, {
+	    key: "_onNeedResetMediaDevicesState",
+	    value: function _onNeedResetMediaDevicesState(e) {
+	      console.log('_onNeedResetMediaDevicesState');
+	      Hardware.isMicrophoneMuted = true;
+	      Hardware.isCameraOn = false;
+	      if (this.mediaDevicesResetStateHintBaloon) {
+	        return;
+	      }
+	      this.mediaDevicesResetStateHintBaloon = BX.UI.Notification.Center.notify({
+	        content: main_core.Text.encode(BX.message('CALL_MEDIA_DEVICES_RESET_STATE_HINT')),
+	        autoHide: false,
+	        position: "top-right",
+	        closeButton: true
+	      });
+	    }
+	  }, {
 	    key: "_onCameraPublishing",
 	    value: function _onCameraPublishing(e) {
 	      if (!this.callView) {
@@ -26917,12 +27404,24 @@ this.BX = this.BX || {};
 	        this.callView.flipLocalVideo(flipVideo);
 	        this.callView.setButtonActive("screen", this.currentCall.isScreenSharingStarted());
 	        if (this.currentCall.isScreenSharingStarted()) {
+	          this.screenShareStartTime = new Date();
+	          call_lib_analytics.Analytics.getInstance().onScreenShareStarted({
+	            callId: this.currentCall.id,
+	            callType: this.getCallType()
+	          });
 	          if (!im_v2_lib_desktopApi.DesktopApi.isDesktop()) {
 	            this.showWebScreenSharePopup();
 	          }
 	          this.callView.blockSwitchCamera();
 	          this.callView.updateButtons();
 	        } else {
+	          call_lib_analytics.Analytics.getInstance().onScreenShareStopped({
+	            callId: this.currentCall.id,
+	            callType: this.getCallType(),
+	            status: call_lib_analytics.Analytics.AnalyticsStatus.success,
+	            screenShareLength: Util.getTimeText(this.screenShareStartTime)
+	          });
+	          this.screenShareStartTime = null;
 	          if (this.floatingScreenShareWindow) {
 	            this.floatingScreenShareWindow.close();
 	          }
@@ -26942,7 +27441,9 @@ this.BX = this.BX || {};
 	        }
 	      }
 	      if (this.currentCall && Hardware.isCameraOn && e.tag === 'main' && e.stream.getVideoTracks().length === 0) {
-	        this.showNotification(BX.message("IM_CALL_CAMERA_ERROR_FALLBACK_TO_MIC"));
+	        if (this.currentCall.canChangeMediaDevices()) {
+	          this.showNotification(BX.message("IM_CALL_CAMERA_ERROR_FALLBACK_TO_MIC"));
+	        }
 	        Hardware.isCameraOn = false;
 	      }
 	    }
@@ -27160,8 +27661,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_onCallUserRecordState",
 	    value: function _onCallUserRecordState(event) {
+	      console.warn('_onCallUserRecordState', event);
 	      this.callRecordState = event.recordState.state;
 	      this.callView.setRecordState(event.recordState);
+	      if (event.recordState.state !== View.RecordState.Stopped) {
+	        this.callRecordInfo = event.recordState;
+	      }
 	      if (!this.canRecord() || event.userId != BX.message['USER_ID']) {
 	        return true;
 	      }
@@ -27180,6 +27685,10 @@ this.BX = this.BX || {};
 	        CallEngine.getRestClient().callMethod("im.call.onStartRecord", {
 	          callId: this.currentCall.id
 	        });
+	        call_lib_analytics.Analytics.getInstance().onRecordStart({
+	          callId: this.currentCall.id,
+	          callType: this.getCallType()
+	        });
 	        console.error('DIALOG ID', _dialogId2);
 	        BXDesktopSystem.CallRecordStart({
 	          windowId: windowId,
@@ -27195,6 +27704,14 @@ this.BX = this.BX || {};
 	          shareMethod: 'im.disk.record.share'
 	        });
 	      } else if (event.recordState.state === View.RecordState.Stopped) {
+	        call_lib_analytics.Analytics.getInstance().onRecordStop({
+	          callId: this.currentCall.id,
+	          callType: this.getCallType(),
+	          subSection: call_lib_analytics.Analytics.AnalyticsSubSection.window,
+	          element: call_lib_analytics.Analytics.AnalyticsElement.recordButton,
+	          recordTime: Util.getRecordTimeText(this.callRecordInfo)
+	        });
+	        this.callRecordInfo = null;
 	        BXDesktopSystem.CallRecordStop();
 	      }
 	      return true;
@@ -27275,13 +27792,18 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "_onReconnecting",
-	    value: function _onReconnecting() {
+	    value: function _onReconnecting(e) {
 	      if (!(this.currentCall instanceof BitrixCall || this.currentCall instanceof PlainCall)) {
 	        // todo: restore after fixing balloon resurrection issue
 	        // related to multiple simultaneous calls to the balloon manager
 	        // now it's enabled for Bitrix24 calls as a temp solution
 	        return false;
 	      }
+	      call_lib_analytics.Analytics.getInstance().onReconnect({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType(),
+	        reconnectionEventCount: e.reconnectionEventCount
+	      });
 
 	      // noinspection UnreachableCodeJS
 	      if (this.reconnectionBaloon) {
@@ -27413,6 +27935,16 @@ this.BX = this.BX || {};
 	      this.callRecordType = View.RecordType.None;
 	      this.docCreatedForCurrentCall = false;
 	      var callDetails;
+	      if (!this.getActiveCallUsers().length) {
+	        call_lib_analytics.Analytics.getInstance().onFinishCall({
+	          callId: this.currentCall.id,
+	          callType: this.getCallType(),
+	          status: call_lib_analytics.Analytics.AnalyticsStatus.lastUserLeft,
+	          chatId: this.currentCall.associatedEntity.id,
+	          callUsersCount: this.getCallUsers(true).length,
+	          callLength: Util.getTimeText(this.currentCall.startDate)
+	        });
+	      }
 	      if (this.currentCall && this.currentCall.associatedEntity) {
 	        this.removeVideoStrategy();
 	        this.removeCallEvents();
@@ -27485,6 +28017,11 @@ this.BX = this.BX || {};
 	      if (!this.currentCall || !userIds.length) {
 	        return;
 	      }
+	      call_lib_analytics.Analytics.getInstance().onInviteUser({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType(),
+	        chatId: this.currentCall.associatedEntity.id
+	      });
 	      if (Util.isCallServerAllowed() && this.currentCall instanceof PlainCall) {
 	        // trying to switch to the server version of the call
 	        this.removeVideoStrategy();
@@ -28008,6 +28545,17 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "_onCallUserClick",
+	    value: function _onCallUserClick(e) {
+	      call_lib_analytics.Analytics.getInstance().onClickUser({
+	        callId: this.currentCall.id,
+	        callType: this.getCallType(),
+	        layout: Object.keys(View.Layout).find(function (key) {
+	          return View.Layout[key] === e.layout;
+	        })
+	      });
+	    }
+	  }, {
 	    key: "toggleRoomMenu",
 	    value: function toggleRoomMenu(bindElement) {
 	      var _this36 = this;
@@ -28446,5 +28994,5 @@ this.BX = this.BX || {};
 	exports.View = View;
 	exports.WebScreenSharePopup = WebScreenSharePopup;
 
-}((this.BX.Call = this.BX.Call || {}),BX.Messenger.Lib,BX.UI,BX.UI.Dialogs,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Event,BX.Main,BX,BX.Messenger.v2.Lib,BX,BX,BX,BX.Messenger.Lib));
+}((this.BX.Call = this.BX.Call || {}),BX.Messenger.Lib,BX.UI,BX.UI.Dialogs,BX.UI,BX.Messenger.v2.Lib,BX.Messenger.v2.Const,BX.Event,BX.Main,BX,BX.Messenger.v2.Lib,BX.Call.Lib,BX,BX,BX,BX.Messenger.Lib));
 //# sourceMappingURL=call.bundle.js.map

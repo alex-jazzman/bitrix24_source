@@ -58,7 +58,7 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 
 		getTestId()
 		{
-			return 'detail-card-floating-button';
+			return 'detail-card_ADD_BTN';
 		}
 
 		componentDidMount()

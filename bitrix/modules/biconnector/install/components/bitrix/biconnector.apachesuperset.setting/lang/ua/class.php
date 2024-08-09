@@ -5,6 +5,7 @@ $MESS["BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS_MSGVER_1"] = "�
 $MESS["BICONNECTOR_SUPERSET_ACTION_SETTINGS_SAVE_ERROR_NO_RIGHTS_SETTINGS"] = "Недостатньо прав для налаштування BI-конструктора.";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_DASHBOARD_HELP"] = "Допомога";
 $MESS["BICONNECTOR_SUPERSET_DASHBOARD_SETTINGS_FEATURE_UNAVAILABLE"] = "Функціонал BI-конструктора недоступний.";
+$MESS["BICONNECTOR_SUPERSET_NEW_DASHBOARD_CLEAR_CACHE_SECTION"] = "Оновлення даних";
 $MESS["BICONNECTOR_SUPERSET_NEW_DASHBOARD_DELETE_SUPERSET_SECTION"] = "Вимкнення BI-конструктора";
 $MESS["BICONNECTOR_SUPERSET_NEW_DASHBOARD_NOTIFICATION_SECTION"] = "Сповіщення про нові звіти";
 $MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_INFO_SECTION"] = "Ключ шифрування";

@@ -10,6 +10,7 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
 	const { isValidLink } = require('utils/url');
 	const { inAppUrl } = require('in-app-url');
+	const { Ellipsize } = require('utils/enums/style');
 
 	const ICON_SIZE = 20;
 
@@ -19,12 +20,14 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 	 * @params {string} props.testId
 	 * @params {string} props.text
 	 * @params {number} props.size
-	 * @params {string} props.href
-	 * @params {boolean} props.useInAppLink=true
+	 * @params {string}[ props.href]
+	 * @params {boolean} [props.useInAppLink=true]
 	 * @params {Color} [props.color=Color.accentMainLink]
+	 * @params {Ellipsize} [props.ellipsize=Ellipsize.END]
 	 * @params {string} [props.leftIcon]
 	 * @params {string} [props.rightIcon]
 	 * @params {function} [props.forwardRef]
+	 * @params {function} [props.onClick]
 	 * @return Link
 	 */
 	class Link extends LayoutComponent
@@ -52,18 +55,19 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 					ref: forwardRef,
 					testId,
 					style: {
-						alignItems: 'flex-start',
+						flexDirection: 'row',
+						flexShrink: 1,
 						...style,
 					},
-					onClick: this.#handleOnClick,
 				},
 				View(
 					{
 						style: {
 							alignItems: 'center',
-							justifyContent: 'center',
 							flexDirection: 'row',
+							flexShrink: 1,
 						},
+						onClick: this.#handleOnClick,
 					},
 					this.#renderIcon(leftIcon, {
 						marginRight: Indent.XS2.toNumber(),
@@ -91,20 +95,23 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 
 		#renderText()
 		{
-			const { text, size = 4, accent = false, typography, ellipsize = 'end' } = this.props;
+			const { text, size = 4, accent = false, typography } = this.props;
 
 			const TypographyText = typography || Text;
 
 			return View(
 				{
-					style: this.getBorderStyle(),
+					style: {
+						flexShrink: 1,
+						...this.getBorderStyle(),
+					},
 				},
 				TypographyText({
 					text,
 					size,
 					accent,
 					color: this.getColor(),
-					ellipsize,
+					ellipsize: this.#getEllipsize(),
 					numberOfLines: 1,
 					style: {
 						flexShrink: 1,
@@ -143,6 +150,18 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 
 			return Color.resolve(color, designColor);
 		}
+
+		#getEllipsize()
+		{
+			const { ellipsize } = this.props;
+
+			if (typeof ellipsize === 'string')
+			{
+				return ellipsize;
+			}
+
+			return Ellipsize.resolve(ellipsize, Ellipsize.END).toString();
+		}
 	}
 
 	const renderLinkBy = (typography = null) => (props) => new Link({ ...props, typography });
@@ -161,6 +180,7 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 		leftIcon: PropTypes.object,
 		rightIcon: PropTypes.object,
 		color: PropTypes.object,
+		ellipsize: PropTypes.object,
 		mode: PropTypes.object,
 		onClick: PropTypes.func,
 		forwardRef: PropTypes.func,
@@ -178,5 +198,6 @@ jn.define('ui-system/blocks/link', (require, exports, module) => {
 		LinkMode,
 		LinkDesign,
 		Icon,
+		Ellipsize,
 	};
 });

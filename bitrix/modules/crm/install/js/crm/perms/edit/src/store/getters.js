@@ -1,5 +1,11 @@
 import { Type } from 'main.core';
-import { AssignAttributeParam, MAX_SORT_ORDER_ON_THE_DESK, PermissionEntityIdentifier, Permissions } from '../store';
+import {
+	AssignAttributeParam,
+	AssignTransitionValues,
+	MAX_SORT_ORDER_ON_THE_DESK,
+	PermissionEntityIdentifier,
+	Permissions,
+} from '../store';
 import { entityHash } from '../utils';
 
 export default {
@@ -122,6 +128,7 @@ export default {
 	getSaveData(state) {
 		const toRemove = [];
 		const toChange = [];
+
 		for (const hash of Object.keys(state.touched.touchedAttributes))
 		{
 			const touched: AssignAttributeParam = state.touched.touchedAttributes[hash];
@@ -147,6 +154,40 @@ export default {
 			{
 				toChange.push({ ...touched.identifier, value: touched.value });
 			}
+		}
+
+		for (const hash of Object.keys(state.touched.touchedTransitions))
+		{
+			const touched: AssignTransitionValues = state.touched.touchedTransitions[hash];
+
+			if (touched.identifier.stageField)
+			{
+				if (touched.values === '-')
+				{
+					toRemove.push({ ...touched.identifier });
+				}
+				else
+				{
+					toChange.push({ ...touched.identifier, settings: touched.values });
+				}
+
+				continue;
+			}
+
+			if (touched.values.length === 0 || (touched.values.length === 1 && touched.values[0] === 'INHERIT'))
+			{
+				toRemove.push({ ...touched.identifier });
+			}
+			else
+			{
+				toChange.push({ ...touched.identifier, settings: touched.values });
+			}
+		}
+
+		if (state.role.id === 0) // is new role
+		{
+			appendDefaultAttributesPermissionsToChange(state, toChange);
+			appendDefaultTransitionPermissionsToChange(state, toChange);
 		}
 
 		return {
@@ -178,4 +219,89 @@ export default {
 	setSaveInProgress(state): boolean {
 		return state.ui.isSaveInProgress;
 	},
+
+	getTransitionSettings: (state) => (
+		{ permissionCode, entityCode, stageField, stageCode }: PermissionEntityIdentifier,
+	) => {
+		if (stageField)
+		{
+			let value = state.transitions?.[entityCode]?.[stageField]?.[stageCode];
+
+			// Not assigned value of stage attribute means it is inherited val from root permission entity
+			if (Type.isUndefined(value))
+			{
+				value = ['INHERIT'];
+			}
+
+			return value;
+		}
+
+		return state.transitions?.[entityCode]?.['-'] || ['BLOCKED'];
+	},
 };
+
+function appendDefaultAttributesPermissionsToChange(state, toChange): void
+{
+	Object.keys(state.roleAssignedPermissions).forEach((entityCode) => {
+		const permissions = state.roleAssignedPermissions[entityCode] ?? {};
+		Object.keys(permissions).forEach((permissionCode) => {
+			if (permissionCode === 'TRANSITION')
+			{
+				return;
+			}
+
+			const permission = permissions[permissionCode];
+			const value = permission?.['-'];
+			if (!Type.isString(value))
+			{
+				return;
+			}
+
+			const hasSelectedPermission = toChange.find(
+				(item) => item.entityCode === entityCode
+					&& item.permissionCode === permissionCode
+					&& Type.isUndefined(item.stageCode),
+			);
+
+			if (hasSelectedPermission)
+			{
+				return;
+			}
+
+			toChange.push({
+				entityCode,
+				permissionCode,
+				value,
+			});
+		});
+	});
+}
+
+function appendDefaultTransitionPermissionsToChange(state, toChange): void
+{
+	const transitionPermissionCode = 'TRANSITION';
+	for (const [entityCode, permission] of Object.entries(state.transitions))
+	{
+		if (!Object.hasOwn(permission, ['-']))
+		{
+			return;
+		}
+
+		const hasSelectedPermission = toChange.find(
+			(item) => item.entityCode === entityCode
+				&& item.permissionCode === transitionPermissionCode
+				&& Type.isUndefined(item.stageCode),
+		);
+
+		if (hasSelectedPermission)
+		{
+			return;
+		}
+
+		toChange.push({
+			entityCode,
+			permissionCode: transitionPermissionCode,
+			settings: permission['-'],
+		});
+	}
+}
