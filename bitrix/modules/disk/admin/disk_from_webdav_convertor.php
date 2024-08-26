@@ -132,7 +132,6 @@ class CFromWebDavConvertor
 		{
 			$obUserField = new CUserTypeEntity;
 			$obUserField->delete($r['ID']);
-			$USER_FIELD_MANAGER->arFieldsCache = array();
 		}
 	}
 

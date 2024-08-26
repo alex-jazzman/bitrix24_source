@@ -84,7 +84,9 @@ this.BX.UI = this.BX.UI || {};
 	  getContainer() {
 	    if (!this.container) {
 	      this.container = main_core.Tag.render(_t || (_t = _`<div class="${0} ${0}"></div>`), DialogStyle.ProcessOptionContainer, this.className);
-	      this.container.appendChild(main_core.Tag.render(_t2 || (_t2 = _`<div class="${0}"></div>`), DialogStyle.ProcessOptionsTitle)).appendChild(main_core.Tag.render(_t3 || (_t3 = _`<label for="${0}_inp">${0}</label>`), this.id, this.title));
+	      if (this.title) {
+	        this.container.appendChild(main_core.Tag.render(_t2 || (_t2 = _`<div class="${0}"></div>`), DialogStyle.ProcessOptionsTitle)).appendChild(main_core.Tag.render(_t3 || (_t3 = _`<label for="${0}_inp">${0}</label>`), this.id, this.title));
+	      }
 	      this.container.appendChild(main_core.Tag.render(_t4 || (_t4 = _`<div class="${0}"></div>`), DialogStyle.ProcessOptionsInput)).appendChild(this.render());
 	      if (this.obligatory) {
 	        const alertId = this.id + '_alert';
@@ -634,14 +636,14 @@ this.BX.UI = this.BX.UI || {};
 	    const fields = this.getSetting('optionsFields');
 	    if (main_core.Type.isArray(fields)) {
 	      fields.forEach(option => {
-	        if (main_core.Type.isPlainObject(option) && option.hasOwnProperty('name') && option.hasOwnProperty('type') && option.hasOwnProperty('title')) {
+	        if (main_core.Type.isPlainObject(option) && option.hasOwnProperty('name') && option.hasOwnProperty('type')) {
 	          optionsFields[option.name] = option;
 	        }
 	      });
 	    } else if (main_core.Type.isPlainObject(fields)) {
 	      Object.keys(fields).forEach(optionName => {
 	        let option = fields[optionName];
-	        if (main_core.Type.isPlainObject(option) && option.hasOwnProperty('name') && option.hasOwnProperty('type') && option.hasOwnProperty('title')) {
+	        if (main_core.Type.isPlainObject(option) && option.hasOwnProperty('name') && option.hasOwnProperty('type')) {
 	          optionsFields[option.name] = option;
 	        }
 	      });

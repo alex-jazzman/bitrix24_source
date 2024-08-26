@@ -11,6 +11,6 @@ $MESS["IMBOT_GIPHY_ICON_BROWSE_DESCRIPTION"] = "Browse and select relevant GIF i
 $MESS["IMBOT_GIPHY_ICON_BROWSE_TITLE"] = "Browse GIF Images";
 $MESS["IMBOT_GIPHY_ICON_COPYRIGHT"] = "Giphy.com";
 $MESS["IMBOT_GIPHY_NOT_FOUND_MESSAGE"] = "Nothing has been found :(";
-$MESS["IMBOT_GIPHY_REGION_ERROR"] = "The service is not available in this region.";
+$MESS["IMBOT_GIPHY_REGION_ERROR"] = "Service is not available in your region.";
 $MESS["IMBOT_GIPHY_WELCOME_MESSAGE"] = "I can help you find images relevant to your request! [br] Type in something and I'll pick one for you! :)";
 $MESS["IMBOT_GIPHY_WELCOME_MESSAGE_CHAT"] = "I can help you find images relevant to your request! [br] Mention me in the message or click my avatar to get me started :)";

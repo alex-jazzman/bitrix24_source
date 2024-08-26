@@ -65,7 +65,7 @@ InitBVar($SAVE_STATISTIC);
 InitBVar($DIAGRAM_DEFAULT);
 InitBVar($CHECK_ACTIVITY);
 
-if (($save <> '' || $apply <> '') && $REQUEST_METHOD=="POST" && $STAT_RIGHT>="W" && check_bitrix_sessid())
+if (($save <> '' || $apply <> '') && $_SERVER['REQUEST_METHOD']=="POST" && $STAT_RIGHT>="W" && check_bitrix_sessid())
 {
 	$strSql = "SELECT HIT_KEEP_DAYS FROM b_stat_searcher WHERE ID = $ID";
 	$rsSearcher = $statDB->Query($strSql);

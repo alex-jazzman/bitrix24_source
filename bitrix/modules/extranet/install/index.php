@@ -1,7 +1,8 @@
-<?
+<?php
+
 IncludeModuleLangFile(__FILE__);
 
-Class extranet extends CModule
+class extranet extends CModule
 {
 	var $MODULE_ID = "extranet";
 	var $MODULE_VERSION;
@@ -30,7 +31,8 @@ Class extranet extends CModule
 
 	function DoInstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION;
+		global $APPLICATION;
+
 		$APPLICATION->ResetException();
 
 		if(!CBXFeatures::IsFeatureEditable("Extranet"))
@@ -47,7 +49,7 @@ Class extranet extends CModule
 				$this->InstallEvents();
 				$this->InstallFiles();
 			}
-			$APPLICATION->IncludeAdminFile(GetMessage("EXTRANET_INSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/extranet/install/step1.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("EXTRANET_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/step1.php");
 		}
 
 	}
@@ -59,9 +61,9 @@ Class extranet extends CModule
 		RegisterModule("extranet");
 
 		RegisterModuleDependences('main', 'OnBeforeProlog', 'extranet', 'CExtranet', 'ExtranetRedirect', 200);
-		RegisterModuleDependences('socialnetwork', 'OnFillSocNetFeaturesList', 'extranet', 'CExtranet', 'ModifyGroupDefaultFeatures', 100);
-		RegisterModuleDependences('socialnetwork', 'OnBeforeSocNetGroupUpdate', 'extranet', 'CExtranet', 'OnBeforeSocNetGroupUpdateHandler', 100);
-		RegisterModuleDependences('socialnetwork', 'OnSocNetGroupUpdate', 'extranet', 'CExtranet', 'OnSocNetGroupUpdateHandler', 100);
+		RegisterModuleDependences('socialnetwork', 'OnFillSocNetFeaturesList', 'extranet', 'CExtranet', 'ModifyGroupDefaultFeatures');
+		RegisterModuleDependences('socialnetwork', 'OnBeforeSocNetGroupUpdate', 'extranet', 'CExtranet', 'OnBeforeSocNetGroupUpdateHandler');
+		RegisterModuleDependences('socialnetwork', 'OnSocNetGroupUpdate', 'extranet', 'CExtranet', 'OnSocNetGroupUpdateHandler');
 		RegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupAdd', 'extranet', 'CExtranet', 'OnSocNetUserToGroupAdd');
 		RegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupUpdate', 'extranet', 'CExtranet', 'OnSocNetUserToGroupUpdate');
 		RegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupDelete', 'extranet', 'CExtranet', 'OnSocNetUserToGroupDelete');
@@ -110,14 +112,10 @@ Class extranet extends CModule
 
 	function InstallFiles($arParams = array())
 	{
-		$computerName = $_ENV["COMPUTERNAME"] ?? '';
-		if ($computerName != 'BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", True, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/gadgets", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets", True, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/wizards", $_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards", True, True);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/services", $_SERVER["DOCUMENT_ROOT"]."/bitrix/services", true, true);
-		}
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", True, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/gadgets", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets", True, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/wizards", $_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards", True, True);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/services", $_SERVER["DOCUMENT_ROOT"]."/bitrix/services", true, true);
 
 		CUrlRewriter::Add(array(
 			"CONDITION" => "#^/stssync/contacts_extranet/#",
@@ -167,7 +165,7 @@ Class extranet extends CModule
 
 	function DoUninstall()
 	{
-		global $DB, $APPLICATION, $step;
+		global $APPLICATION, $step;
 
 		$step = intval($step);
 		if($step<2)
@@ -194,17 +192,9 @@ Class extranet extends CModule
 
 	function UnInstallDB($arParams = array())
 	{
-		global $DB, $APPLICATION;
-		$errors = false;
 		if($arParams['savedata'] != 'Y')
 		{
 			COption::RemoveOption("extranet", "extranet_site");
-		}
-
-		if (is_array($errors))
-		{
-			$APPLICATION->ThrowException(implode(' ', $errors));
-			return false;
 		}
 
 		CAgent::RemoveModuleAgents('extranet');
@@ -242,6 +232,4 @@ Class extranet extends CModule
 		DeleteDirFilesEx("/bitrix/wizards/bitrix/extranet/");
 		return true;
 	}
-
 }
-?>

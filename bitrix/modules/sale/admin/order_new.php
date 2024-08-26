@@ -3748,18 +3748,17 @@ if (isset($arRelFilter["RELATED"]) && ($arRelFilter["RELATED"]["DELIVERY_ID"] <>
 	}
 
 	$propsHTML = getOrderPropertiesHTML($arProps, $arPropsValues, $LID, $str_USER_ID, $ID, $bVarsFromForm);
+	$tabControl->AddSection("RELATED_PROPS", GetMessage("NEW_ORDER_RELATED_PROPS"));
+	$tabControl->BeginCustomField("RELATED_PROPS_DATA", GetMessage("NEW_ORDER_RELATED_PROPS"), true);
+	?>
+	<tr>
+		<td id="related_props_content" colspan="2">
+			<?= $propsHTML ?>
+		</td>
+	</tr>
+	<?php
+	$tabControl->EndCustomField("RELATED_PROPS_DATA");
 }
-
-$tabControl->AddSection("RELATED_PROPS", GetMessage("NEW_ORDER_RELATED_PROPS"));
-$tabControl->BeginCustomField("RELATED_PROPS_DATA", GetMessage("NEW_ORDER_RELATED_PROPS"), true);
-?>
-<tr>
-	<td id="related_props_content" colspan="2">
-		<?=$propsHTML?>
-	</td>
-</tr>
-<?
-$tabControl->EndCustomField("RELATED_PROPS_DATA");
 
 $tabControl->AddSection("NEWO_COMMENTS", GetMessage("NEWO_COMMENTS"));
 $tabControl->BeginCustomField("NEWO_COMMENTS_A", GetMessage("NEWO_COMMENTS"), true);

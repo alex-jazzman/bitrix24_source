@@ -1,0 +1,14 @@
+drop table if exists b_ai_queue;
+drop table if exists b_ai_history;
+drop table if exists b_ai_engine;
+drop table if exists b_ai_prompt;
+drop table if exists b_ai_role;
+drop table if exists b_ai_role_prompt;
+drop table if exists b_ai_role_industry;
+drop table if exists b_ai_recent_role;
+drop table if exists b_ai_role_favorite;
+drop table if exists b_ai_plan;
+drop table if exists b_ai_usage;
+drop table if exists b_ai_section;
+drop table if exists b_ai_baas_package;
+drop table if exists b_ai_counter;

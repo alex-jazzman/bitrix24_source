@@ -306,11 +306,18 @@ export class ProviderShowcase
 			else
 			{
 				Event.bind(root, 'click', () => {
+					if (this.activeFeaturePromoter)
+					{
+						this.activeFeaturePromoter.close();
+						this.activeFeaturePromoter = null;
+					}
+
 					const featureRegistry = BX.Intranet ? BX.UI.FeaturePromotersRegistry : top.BX.UI.FeaturePromotersRegistry;
-					featureRegistry.getPromoter({
+					this.activeFeaturePromoter = featureRegistry.getPromoter({
 						code: this.options.mailboxLimitSliderCode,
 						bindElement: title,
-					}).show();
+					});
+					this.activeFeaturePromoter.show();
 				});
 			}
 

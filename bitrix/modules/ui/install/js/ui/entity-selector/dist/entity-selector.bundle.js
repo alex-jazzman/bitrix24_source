@@ -6538,10 +6538,11 @@ this.BX.UI = this.BX.UI || {};
 	      if (!this.shouldLoad(searchQuery)) {
 	        return;
 	      }
-	      /*if (this.queryXhr)
-	      {
-	      	this.queryXhr.abort();
-	      }*/
+
+	      // if (this.queryXhr)
+	      // {
+	      // 	this.queryXhr.abort();
+	      // }
 
 	      this.addCacheQuery(searchQuery);
 	      this.getStub().hide();
@@ -6568,7 +6569,11 @@ this.BX.UI = this.BX.UI || {};
 	          return;
 	        }
 	        if (response.data.searchQuery && response.data.searchQuery.cacheable === false) {
+	          var _this$getLastSearchQu;
 	          this.removeCacheQuery(searchQuery);
+	          if (((_this$getLastSearchQu = this.getLastSearchQuery()) === null || _this$getLastSearchQu === void 0 ? void 0 : _this$getLastSearchQu.getQuery()) !== searchQuery.getQuery()) {
+	            this.loadWithDebounce();
+	          }
 	        }
 	        if (main_core.Type.isArrayFilled(response.data.dialog.items)) {
 	          const items = new Set();

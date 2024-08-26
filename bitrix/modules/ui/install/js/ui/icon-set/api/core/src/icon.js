@@ -145,6 +145,7 @@ export const Social = Object.freeze({
 	APPLE_AND_IOS: 'apple-and-ios',
 	ANDROID: 'android',
 	ZOOM: 'zoom',
+	LINUX: 'linux',
 });
 
 export const Main = Object.freeze({

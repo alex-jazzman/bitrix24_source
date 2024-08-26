@@ -16,7 +16,10 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 	{
 		if (!$trackedObject->canRead($this->getCurrentUser()->getId()))
 		{
-			$trackedObject->delete();
+			if ($trackedObject->getUserId() == $this->getCurrentUser()->getId())
+			{
+				$trackedObject->delete();
+			}
 
 			return Main\Engine\Response\AjaxJson::createDenied()->setStatus('403 Forbidden');
 		}
@@ -36,7 +39,10 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		$urlManager = Disk\Driver::getInstance()->getUrlManager();
 		if (!$trackedObject->canRead($this->getCurrentUser()->getId()))
 		{
-			$trackedObject->delete();
+			if ($trackedObject->getUserId() == $this->getCurrentUser()->getId())
+			{
+				$trackedObject->delete();
+			}
 
 			return Main\Engine\Response\AjaxJson::createDenied()->setStatus('403 Forbidden');
 		}
@@ -195,7 +201,7 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 			];
 
 			$trackedObject = Disk\Document\TrackedObject::getById((int)$trackedObjectId);
-			if ($trackedObject || !$trackedObject->canRead($userId))
+			if (!$trackedObject || !$trackedObject->canRead($userId))
 			{
 				continue;
 			}

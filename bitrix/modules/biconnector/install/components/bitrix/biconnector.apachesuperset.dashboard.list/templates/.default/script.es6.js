@@ -62,6 +62,7 @@ class SupersetDashboardGridManager
 			this.#showTopMenuGuide();
 		}
 		this.#colorPinnedRows();
+		this.#initHints();
 	}
 
 	#subscribeToEvents()
@@ -152,7 +153,7 @@ class SupersetDashboardGridManager
 		});
 
 		EventEmitter.subscribe('Grid::updated', () => {
-			BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+			this.#initHints();
 			this.#colorPinnedRows();
 		});
 
@@ -163,6 +164,20 @@ class SupersetDashboardGridManager
 		EventEmitter.subscribe('BIConnector.DashboardManager:onEmbeddedDataLoaded', () => {
 			this.#grid.reload();
 		});
+
+		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', () => {
+			this.#grid.reload();
+		});
+	}
+
+	#initHints(): void
+	{
+		const manager = BX.UI.Hint.createInstance({
+			popupParameters: {
+				autoHide: true,
+			},
+		});
+		manager.init(this.#grid.getContainer());
 	}
 
 	#onSupersetStatusChange(status: string): void
@@ -437,7 +452,7 @@ class SupersetDashboardGridManager
 				const counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
 				counterTotalTextContainer.textContent++;
 
-				BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+				this.#initHints();
 				BX.UI.Notification.Center.notify({
 					content: Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_COPY_NOTIFICATION_ADDED'),
 				});
@@ -546,7 +561,7 @@ class SupersetDashboardGridManager
 				grid.tableUnfade();
 				const counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
 				counterTotalTextContainer.textContent++;
-				BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+				this.#initHints();
 			})
 			.catch((response) => {
 				grid.tableUnfade();
@@ -793,7 +808,7 @@ class SupersetDashboardGridManager
 		`;
 
 		Dom.replace(cellContent, newCellContent);
-		BX.UI.Hint.init(dateModifyCell);
+		this.#initHints();
 	}
 
 	handleTagClick(tagJson: string): void

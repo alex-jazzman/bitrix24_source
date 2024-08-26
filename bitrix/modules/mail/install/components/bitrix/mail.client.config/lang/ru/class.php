@@ -148,3 +148,8 @@ $MESS['MAIL_MAILBOX_SERVICE_NAME_OFFICE365'] = 'Office 365';
 $MESS['MAIL_MAILBOX_SERVICE_NAME_ICLOUD'] = 'iCloud';
 $MESS['MAIL_MAILBOX_SERVICE_NAME_YAHOO'] = 'Yahoo!';
 $MESS['MAIL_MAILBOX_SERVICE_NAME_AOL'] = 'Aol';
+
+$MESS["MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE"] = "Авторизуйтесь повторно";
+$MESS["MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT"] = "При последней синхронизации мы не смогли получить доступ к вашему ящику. Авторизуйтесь повторно, чтобы продолжить работу с почтой";
+$MESS["MAIL_CONFIG_PASSWORD_ERROR_TOUR_TITLE"] = "Обновите пароль приложения";
+$MESS["MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT"] = "При последней синхронизации мы не смогли получить доступ к вашему ящику. Создайте новый пароль в вашем почтовом сервисе, чтобы продолжить работу с почтой";

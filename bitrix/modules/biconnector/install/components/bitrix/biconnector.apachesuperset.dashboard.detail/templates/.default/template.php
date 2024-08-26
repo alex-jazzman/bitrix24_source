@@ -68,6 +68,7 @@ Extension::load([
 	'ui.feedback.form',
 	'ui.icons',
 	'ui.notification',
+	'ui.hint',
 	'loc',
 	'sidepanel',
 ]);

@@ -60,27 +60,20 @@ export class SettingController extends BX.UI.EntityEditorController
 		ApacheSupersetAnalytics.sendAnalytics('edit', 'report_settings', analyticOptions);
 		this?._editor?._modeSwitch.reset();
 
-		this.#reloadParent();
+		this.#sendOnSaveEvent();
 		this.innerCancel();
 	}
 
-	#reloadParent(): void
+	#sendOnSaveEvent(): void
 	{
 		const previousSlider = BX.SidePanel.Instance.getPreviousSlider(BX.SidePanel.Instance.getSliderByWindow(window));
 		const parent = previousSlider ? previousSlider.getWindow() : top;
-		if (!parent.BX.Main || !parent.BX.Main.gridManager)
+		if (!parent.BX.Event)
 		{
 			return;
 		}
 
 		parent.BX.Event.EventEmitter.emit('BX.BIConnector.Settings:onAfterSave');
-
-		const gridInstance = parent.BX.Main.gridManager.getById('biconnector_superset_dashboard_grid')?.instance;
-
-		if (gridInstance)
-		{
-			gridInstance.reload();
-		}
 	}
 
 	innerCancel()

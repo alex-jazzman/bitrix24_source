@@ -23,7 +23,7 @@ InitBVar($ADV_VISIBLE);
 InitBVar($DIAGRAM_DEFAULT);
 $bVarsFromForm = false;
 
-if($REQUEST_METHOD == "POST" && ($save!="" || $apply!="") && $STAT_RIGHT=="W" && check_bitrix_sessid())
+if($_SERVER['REQUEST_METHOD'] == "POST" && ($save!="" || $apply!="") && $STAT_RIGHT=="W" && check_bitrix_sessid())
 {
 	$cEventType = new CStatEventType();
 

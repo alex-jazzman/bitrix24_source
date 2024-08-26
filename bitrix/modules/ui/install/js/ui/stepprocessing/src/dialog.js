@@ -141,8 +141,7 @@ export class Dialog
 				if (
 					Type.isPlainObject(option) &&
 					option.hasOwnProperty('name') &&
-					option.hasOwnProperty('type') &&
-					option.hasOwnProperty('title')
+					option.hasOwnProperty('type')
 				)
 				{
 					optionsFields[option.name] = option;
@@ -156,8 +155,7 @@ export class Dialog
 				if (
 					Type.isPlainObject(option) &&
 					option.hasOwnProperty('name') &&
-					option.hasOwnProperty('type') &&
-					option.hasOwnProperty('title')
+					option.hasOwnProperty('type')
 				)
 				{
 					optionsFields[option.name] = option;

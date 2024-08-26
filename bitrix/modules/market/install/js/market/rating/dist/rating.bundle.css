@@ -277,9 +277,9 @@
 
 .market-detail__app-rating_feedback-label {
 	font-family:  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-size: var(--ui-font-size-5xs, 9px);
-	line-height: var(--ui-font-line-height-lg, 1.5);
-	color: rgba(var(--ui-color-base-solid-rgb), 0.2);
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-reset, 1);
+	color: #525c69;
 }
 
 .ui-ctl-textarea .market-detail__app-rating_feedback-textarea.ui-ctl-element {

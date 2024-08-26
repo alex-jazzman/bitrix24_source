@@ -1,3 +1,2 @@
-<?
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/clouds/admin/clouds_duplicates_list.php");
-?>
+<?php
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/clouds/admin/clouds_duplicates_list.php';

@@ -1,0 +1,28 @@
+.ui-text-editor__table {
+	border: 1px double #bfbfbf;
+	border-collapse: collapse;
+	border-spacing: 0;
+	overflow-y: scroll;
+	overflow-x: scroll;
+	margin: var(--ui-text-editor-block-space);
+}
+
+.ui-text-editor__table-row {
+
+}
+
+.ui-text-editor__table-cell {
+	border: 1px solid #bfbfbf;
+	overflow-wrap: break-word;
+	min-width: 75px;
+	vertical-align: top;
+	text-align: start;
+	padding: 0 var(--ui-text-editor-block-space-stack);
+	position: relative;
+	outline: none;
+}
+
+.ui-text-editor__table-cell-header {
+	background: rgba(0,0,0,.05);
+	text-align: start;
+}

@@ -1,0 +1,7 @@
+.ui-text-editor__link {
+	color: var(--ui-text-editor-color-link);
+}
+
+.ui-text-editor__link:hover {
+	text-decoration: var(--ui-text-decoration-line-underline);
+}

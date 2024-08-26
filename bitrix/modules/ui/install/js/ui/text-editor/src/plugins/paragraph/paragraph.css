@@ -1,0 +1,5 @@
+.ui-text-editor__paragraph {
+	margin: var(--ui-text-editor-block-space);
+	padding: 0;
+	position: relative;
+}

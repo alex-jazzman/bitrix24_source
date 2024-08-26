@@ -211,6 +211,19 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 		}
 	};
 
+	const openCopilotAgreement = async () => {
+		try
+		{
+			const { CopilotUserAgreementWidget } = await requireLazy('im:messenger/controller/copilot-agreement');
+
+			CopilotUserAgreementWidget.open({});
+		}
+		catch (error)
+		{
+			console.error(error);
+		}
+	};
+
 	/**
 	 * @param {InAppUrl} inAppUrl
 	 */
@@ -236,6 +249,11 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			'/online/\\?IM_COPILOT=:dialogId&IM_MESSAGE=:messageId$',
 			({ dialogId, messageId }) => openDialog(ComponentCode.imCopilotMessenger, dialogId, messageId),
 		).name('im:copilot:goToMessageContext');
+
+		inAppUrl.register(
+			'/online/\\?AI_UX_TRIGGER=box_agreement$',
+			() => openCopilotAgreement(),
+		).name('im:copilot:agreement');
 
 		// lines
 		inAppUrl.register(

@@ -97,7 +97,6 @@ if (!$limitManager->checkLimitWarning())
 			'gridId' => $grid?->getId(),
 			'isNeedShowTopMenuGuide' => $arResult['NEED_SHOW_TOP_MENU_GUIDE'] ?? false,
 		])?>);
-		BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
 
 		BX.BIConnector.ApacheSupersetTariffCleaner.Instance = new BX.BIConnector.ApacheSupersetTariffCleaner();
 	});

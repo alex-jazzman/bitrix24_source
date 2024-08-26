@@ -1,6 +1,9 @@
 BX.namespace("BX.MailClientConfig");
 BX.MailClientConfig.Edit = {
 
+	isSuccessSyncStatus: null,
+	oauthUserIsEmpty: true,
+	isOauthMode: false,
 	isForbiddenToShare: false,
 	smtp: {
 		switcherChecked: false,
@@ -22,6 +25,32 @@ BX.MailClientConfig.Edit = {
 			this.smtp.switcherDisabled = params.isSmtpSwitcherDisabled || false;
 			this.crm.switcherChecked = params.isCrmSwitcherChecked || false;
 			this.crm.integrationAvailable = params.isCrmIntegrationAvailable || false;
+			this.oauthUserIsEmpty = params.oauthUserIsEmpty || false;
+			this.isSuccessSyncStatus = null;
+			this.isOauthMode = params.isOauthMode || false;
+
+			if (params.isSuccessSyncStatus !== undefined)
+			{
+				this.isSuccessSyncStatus = params.isSuccessSyncStatus;
+			}
+		}
+
+		if (this.isSuccessSyncStatus === false)
+		{
+			if (this.isOauthMode)
+			{
+				this.showOauthAuthorizationBlock();
+				this.showOauthErrorTour();
+			}
+			else
+			{
+				this.showPasswordErrorTour();
+			}
+		}
+
+		if (this.isOauthMode && this.oauthUserIsEmpty)
+		{
+			this.showOauthAuthorizationBlock();
 		}
 
 		var selectInputs = BX.findChildrenByClassName(document, 'mail-set-singleselect', true);
@@ -189,6 +218,77 @@ BX.MailClientConfig.Edit = {
 		{
 			hideBlock();
 		}
+	},
+
+	showOauthErrorTour()
+	{
+		this.oauthErrorTour = new BX.UI.Tour.Guide({
+			id: 'mail-config-oauth-error-tour',
+			simpleMode: true,
+			steps: [
+				{
+					target: '#mail_connect_mb_oauth_btn',
+					title: BX.message('MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE'),
+					text: BX.message('MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT'),
+					position: 'bottom',
+					article: '19083990',
+				},
+			],
+		});
+
+		this.oauthErrorTour.start();
+	},
+
+	showPasswordErrorTour()
+	{
+		this.oauthErrorTour = new BX.UI.Tour.Guide({
+			id: 'mail-config-password-error-tour',
+			simpleMode: true,
+			steps: [
+				{
+					target: '#mail_password_form_wrapper',
+					title: BX.message('MAIL_CONFIG_PASSWORD_ERROR_TOUR_TITLE'),
+					text: BX.message('MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT'),
+					position: 'bottom',
+					article: '19083990',
+				},
+			],
+		});
+
+		this.oauthErrorTour.start();
+	},
+
+	showOauthAuthorizationBlock()
+	{
+		var form = BX('mail_connect_form');
+		var oauthFieldError = BX('mail-client-config-email-oauth-field-error');
+		var oauthFieldSuccess = BX('mail-client-config-email-oauth-field-success');
+		var emailOauthBlock = BX('mail-email-oauth');
+		var mailConnectOauthField = BX('mail_connect_mb_oauth_field');
+
+		if(emailOauthBlock)
+		{
+			BX.hide(emailOauthBlock);
+			BX.hide(oauthFieldError);
+			BX.hide(oauthFieldSuccess);
+		}
+
+		if (mailConnectOauthField)
+		{
+			mailConnectOauthField.value = 'N';
+		}
+
+		if (!form.elements['fields[mailbox_id]'])
+		{
+			var nameField = BX('mail_connect_mb_name_field');
+			if (!nameField['__filled'])
+			{
+				nameField.value = '';
+			}
+		}
+
+		BX.Dom.style(BX('mail_connect_mb_oauth_status'), 'display', 'none');
+		BX.Dom.style(BX('mail_connect_mb_oauth_btn'), 'display', null);
 	},
 
 	setSmtpSwitcher()

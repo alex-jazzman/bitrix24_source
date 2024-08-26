@@ -73,6 +73,10 @@ export class DetailInstance
 			this.#initFrame(this.#embeddedParams);
 			this.#initHeaderButtons();
 		});
+
+		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', () => {
+			this.#reloadGridAfterSliderClose();
+		});
 	}
 
 	#initFrame(embeddedParams: DashboardEmbeddedParameters)
@@ -161,6 +165,11 @@ export class DetailInstance
 			},
 		);
 
+		this.#reloadGridAfterSliderClose();
+	}
+
+	#reloadGridAfterSliderClose()
+	{
 		const slider = BX.SidePanel.Instance.getSliderByWindow(window);
 		if (slider)
 		{

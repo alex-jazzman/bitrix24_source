@@ -10,5 +10,6 @@ $MESS["BIC_EXPORT_HINT_WITH_NO_SETTINGS"] = "The user can change the dashboard p
 $MESS["BIC_EXPORT_OPEN_SETTINGS"] = "Edit dashboard settings";
 $MESS["BIC_EXPORT_PERIOD"] = "Date range";
 $MESS["BIC_EXPORT_SCOPE"] = "Scope";
+$MESS["BIC_EXPORT_SCOPE_HINT"] = "Automated solution scope will not be exported.";
 $MESS["BIC_EXPORT_SCOPE_NONE"] = "none";
 $MESS["BIC_EXPORT_SUBTITLE"] = "Export dashboard";

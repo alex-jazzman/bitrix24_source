@@ -87,6 +87,10 @@ this.BX = this.BX || {};
 	    },
 	    canEditReview: function () {
 	      return this.review.CAN_EDIT_REVIEW === 'Y';
+	    },
+	    editReviewNotAllowedText: function () {
+	      var _this$review$EDIT_REV;
+	      return (_this$review$EDIT_REV = this.review.EDIT_REVIEW_NOT_ALLOWED_TEXT) != null ? _this$review$EDIT_REV : '';
 	    }
 	  },
 	  mounted: function () {
@@ -123,6 +127,10 @@ this.BX = this.BX || {};
 	        this.contextMenu.close();
 	      }
 	      if (!this.canEditReview) {
+	        if (this.editReviewNotAllowedText.length) {
+	          this.showNotify(this.editReviewNotAllowedText);
+	          return;
+	        }
 	        this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_NOT_ALLOWED'));
 	        return;
 	      }
@@ -478,6 +486,7 @@ this.BX = this.BX || {};
 	      this.result.REVIEWS.ITEMS[index]['BLOCKED'] = reviewInfo['BLOCKED'];
 	      this.result.REVIEWS.ITEMS[index]['PUBLISHED'] = reviewInfo['PUBLISHED'];
 	      this.result.REVIEWS.ITEMS[index]['CAN_EDIT_REVIEW'] = reviewInfo['CAN_EDIT_REVIEW'];
+	      this.result.REVIEWS.ITEMS[index]['EDIT_REVIEW_NOT_ALLOWED_TEXT'] = reviewInfo['EDIT_REVIEW_NOT_ALLOWED_TEXT'];
 	    }
 	  },
 	  template: `

@@ -33,6 +33,9 @@ export const ReviewItem = {
 		canEditReview: function() {
 			return this.review.CAN_EDIT_REVIEW === 'Y';
 		},
+		editReviewNotAllowedText: function() {
+			return this.review.EDIT_REVIEW_NOT_ALLOWED_TEXT ?? '';
+		},
 	},
 	mounted: function() {
 		this.newReviewText = this.review.REVIEW_FULL_TEXT_EDITING_EDIT;
@@ -78,6 +81,11 @@ export const ReviewItem = {
 			}
 
 			if (!this.canEditReview) {
+				if (this.editReviewNotAllowedText.length) {
+					this.showNotify(this.editReviewNotAllowedText);
+					return;
+				}
+
 				this.showNotify(this.$Bitrix.Loc.getMessage('MARKET_REVIEW_EDIT_REVIEW_NOT_ALLOWED'))
 				return;
 			}

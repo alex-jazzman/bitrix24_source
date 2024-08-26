@@ -149,7 +149,8 @@ this.BX.UI = this.BX.UI || {};
 	  CHATS_COMPUTER: 'chats-computer',
 	  APPLE_AND_IOS: 'apple-and-ios',
 	  ANDROID: 'android',
-	  ZOOM: 'zoom'
+	  ZOOM: 'zoom',
+	  LINUX: 'linux'
 	});
 	const Main = Object.freeze({
 	  PERSON_LOCATION: 'person-location',

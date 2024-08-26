@@ -340,6 +340,23 @@ $tabControl->BeginCustomField('HANDLER', GetMessage("SALE_CASHBOX_HANDLER"));
 					{
 						continue;
 					}
+					
+					if (
+						in_array(
+							$handler, 
+							[
+								'\Bitrix\Sale\Cashbox\CashboxBitrixV2',
+								'\Bitrix\Sale\Cashbox\CashboxBitrixV3',
+								'\Bitrix\Sale\Cashbox\CashboxBitrix',
+							],
+						)
+					)
+					{
+						if ($id === 0 || ($id > 0 && $handler !== $cashbox['HANDLER']))
+						{
+							continue;
+						}
+					}
 
 					if (Cashbox\Manager::isPaySystemCashbox($handler))
 					{

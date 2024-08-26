@@ -784,6 +784,29 @@ this.BX.UI.BBCode = this.BX.UI.BBCode || {};
 	  getMentionSettings() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _mentionSettings)[_mentionSettings];
 	  }
+	  getDefaultUnknownNodeCallback(options) {
+	    return () => {
+	      return new ui_bbcode_formatter.NodeFormatter({
+	        name: 'unknown',
+	        before({
+	          node
+	        }) {
+	          const scheme = node.getScheme();
+	          if (node.isVoid()) {
+	            return scheme.createFragment({
+	              children: [scheme.createText(node.getOpeningTag())]
+	            });
+	          }
+	          return scheme.createFragment({
+	            children: [scheme.createText(node.getOpeningTag()), ...node.getChildren(), scheme.createText(node.getClosingTag())]
+	          });
+	        },
+	        convert() {
+	          return document.createDocumentFragment();
+	        }
+	      });
+	    };
+	  }
 	}
 
 	exports.HtmlFormatter = HtmlFormatter;

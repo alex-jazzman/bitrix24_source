@@ -225,3 +225,12 @@
 	0% {transform: translateY(0);}
 	100% {transform: translateY(-150%);}
 }
+
+.biconnector-grid-scope-hint-more {
+	color: var(--ui-color-link-primary-base);
+	transition: .2s ease;
+}
+
+.biconnector-grid-scope-hint-more:hover {
+	color: var(--ui-color-palette-blue-95);
+}

@@ -282,7 +282,7 @@ this.BX = this.BX || {};
 	          let toolbar = '';
 	          let toolbar2 = '';
 	          if (parseInt(main_core.Loc.getMessage('USER_ID')) > 0 && response.data.user.active && response.data.user.id != main_core.Loc.getMessage('USER_ID') && response.data.currentUserPerms.operations.message) {
-	            toolbar2 += `<li class="bx-icon bx-icon-message"><span onclick="return BX.tooltip.openIM(${response.data.user.id});">${main_core.Loc.getMessage('MAIN_UL_TOOLBAR_MESSAGES_CHAT')}</span></li>`;
+	            toolbar2 += `<li class="bx-icon bx-icon-message"><span onclick="return BX.Messenger.Public.openChat(${response.data.user.id});">${main_core.Loc.getMessage('MAIN_UL_TOOLBAR_MESSAGES_CHAT')}</span></li>`;
 	            toolbar2 += `<li id="im-video-call-button${response.data.user.id}" class="bx-icon bx-icon-video"><span onclick="return BX.tooltip.openCallTo(${response.data.user.id});">${main_core.Loc.getMessage('MAIN_UL_TOOLBAR_VIDEO_CALL')}</span></li>`;
 	            toolbar2 += `<script>Event.ready(() => { BX.tooltip.checkCallTo("im-video-call-button${response.data.user.id}"); };</script>`;
 	          }

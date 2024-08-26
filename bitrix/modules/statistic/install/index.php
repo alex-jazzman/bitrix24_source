@@ -75,7 +75,7 @@ Class statistic extends CModule
 
 		RegisterModuleDependences("main", "OnPageStart", "statistic", "CStopList", "Check", "100");
 		RegisterModuleDependences("main", "OnBeforeProlog", "statistic", "CStatistics", "Keep", "100");
-		RegisterModuleDependences("main", "OnAfterEpilog", "statistic", "CStatistics", "Keep", "100");
+		RegisterModuleDependences("main", "OnLocalRedirect", "statistic", "CStatistics", "Keep", "100");
 		RegisterModuleDependences("main", "OnEpilog", "statistic", "CStatistics", "Set404", "100");
 		RegisterModuleDependences("main", "OnBeforeProlog", "statistic", "CStatistics", "StartBuffer", "1000");
 		RegisterModuleDependences("main", "OnEndBufferContent", "statistic", "CStatistics", "EndBuffer", "900");
@@ -205,7 +205,7 @@ Class statistic extends CModule
 
 		UnRegisterModuleDependences("main", "OnPageStart", "statistic", "CStopList", "Check");
 		UnRegisterModuleDependences("main", "OnBeforeProlog", "statistic", "CStatistics", "Keep");
-		UnRegisterModuleDependences("main", "OnAfterEpilog", "statistic", "CStatistics", "Keep");
+		UnRegisterModuleDependences("main", "OnLocalRedirect", "statistic", "CStatistics", "Keep");
 		UnRegisterModuleDependences("main", "OnEpilog", "statistic", "CStatistics", "Set404");
 		UnRegisterModuleDependences("main", "OnEventLogGetAuditTypes", "statistic", "CStatistics", "GetAuditTypes");
 		UnRegisterModuleDependences("main", "OnBeforeProlog", "statistic", "CStatistics", "StartBuffer");
@@ -250,24 +250,18 @@ Class statistic extends CModule
 
 	function InstallFiles()
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/public/bitrix", $_SERVER["DOCUMENT_ROOT"]."/bitrix", true, true);//all from bitrix
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/components/bitrix", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/gadgets/bitrix", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets/bitrix", true, true);
-		}
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/public/bitrix", $_SERVER["DOCUMENT_ROOT"]."/bitrix", true, true);//all from bitrix
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/components/bitrix", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/gadgets/bitrix", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets/bitrix", true, true);
 		return true;
 	}
 
 	function UnInstallFiles()
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/public/bitrix/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
-			DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/public/bitrix/themes/.default/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes/.default");//css
-			DeleteDirFilesEx("/bitrix/themes/.default/icons/statistic/");//icons
-			DeleteDirFilesEx("/bitrix/images/statistic/");//images
-		}
+		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/public/bitrix/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
+		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/statistic/install/public/bitrix/themes/.default/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes/.default");//css
+		DeleteDirFilesEx("/bitrix/themes/.default/icons/statistic/");//icons
+		DeleteDirFilesEx("/bitrix/images/statistic/");//images
 		return true;
 	}
 

@@ -1,0 +1,141 @@
+.ai__copilot-image-configurator-popup-content{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;padding-top:12px;padding-bottom:20px}.ai__copilot-image-configurator-popup-content_header{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;padding:0 12px;margin-bottom:8px}.ai__copilot-image-configurator-popup-content_back-btn{width:24px;min-width:24px;height:24px;margin-right:2px;opacity:.7;cursor:pointer}.ai__copilot-image-configurator-popup-content_back-btn:hover{opacity:1}.ai__copilot-image-configurator-popup-content_title{font-size:var(--ui-font-size-md);line-height:var(--ui-font-line-height-sm);color:var(--ui-color-text-secondary);font-weight:var(--ui-font-weight-bold)}.ai__copilot-image-configurator-popup-content_footer{width:100%;display:flex;flex-direction:row;align-items:center;justify-content:center;margin-top:12px}.ai__copilot-image-configurator{padding:0}.ai__image-configurator-styles{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start}.ai__image-configurator-styles_header{box-sizing:border-box;width:100%;padding-left:12px;padding-right:12px;margin-bottom:4px;display:flex;flex-direction:row;justify-content:space-between}.ai__image-configurator-styles_title{font-weight:var(--ui-font-weight-medium);font-size:var(--ui-font-size-sm);line-height:var(--ui-font-line-height-lg);color:var(--ui-color-text-secondary);max-width:156px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.ai__image-configurator-styles_all-styles{font-size:var(--ui-font-size-sm);line-height:var(--ui-font-line-height-xl);color:var(--ui-color-base-50);cursor:pointer;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ai__image-configurator-styles_list{display:flex;flex-direction:row;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;padding:8px 12px 0 12px;overflow-y:hidden;scrollbar-width:thin}.ai__image-configurator-styles_list.--expanded{padding-right:8px;overflow-y:scroll}.ai__image-configurator-styles_list::-webkit-scrollbar{width:4px}.ai__image-configurator-styles_list::-webkit-scrollbar-track{background-color:rgba(82,92,105,0.1);margin:8px 0;border-right:1px solid transparent;border-left:1px solid transparent;background-clip:content-box}.ai__image-configurator-styles_list::-webkit-scrollbar-thumb{background-color:rgba(82,92,105,0.2);margin:8px 0;border-right:1px solid transparent;border-left:1px solid transparent;background-clip:content-box}.ai__image-configurator-styles_item{width:30%;margin-bottom:8px;aspect-ratio:1/1;position:relative;display:flex;flex-direction:row}.ai__image-configurator-style_item-radio-btn{z-index:-1;position:absolute;width:0;height:0}.ai__image-configurator-style_item-radio-btn:checked+.ai__image-configurator-styles_item-inner{outline:2px solid var(--ui-color-primary);outline-offset:2px}.ai__image-configurator-style_item-radio-btn:checked+.ai__image-configurator-styles_item-inner::after{content:'';position:absolute;top:-8px;right:-8px;width:18px;height:18px;display:flex;flex-direction:row;align-items:center;justify-content:center;background-color:var(--ui-color-primary-alt);border-radius:var(--ui-border-radius-circle);	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='11' height='8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M4.105 5.022L8.858.33l1.439 1.446-6.17 6.116-.022-.022-.022.022L.309 4.24l1.438-1.447 2.358 2.23z' fill='%23fff'/%3E%3C/svg%3E"); background-repeat:no-repeat;background-position:center center}.ai__image-configurator-styles_item-inner{width:100%;height:100%;border-radius:4px;display:flex;flex-direction:column;justify-content:flex-end;flex-grow:1;background-repeat:no-repeat;background-position:top center;background-size:100%;cursor:pointer}.ai__image-configurator-styles_item-title{box-sizing:border-box;height:15px;width:100%;padding:0 7px;margin:0 auto;display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:center;font-size:var(--ui-font-size-5xs);line-height:15px;color:#151515;background-color:rgba(255,255,255,0.92);}
+
+.ai__image-configurator-styles_item.--style-movie .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles/movie.png); }
+
+.ai__image-configurator-styles_item.--style-tale .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles/tale.png); }
+
+.ai__image-configurator-styles_item.--style-realism .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles/realism.png); }
+
+.ai__image-configurator-styles_item.--style-expressionism .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles/exressionism.png); }
+
+.ai__image-configurator-styles_item.--style-illustration .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles/illustration.png); }
+
+.ai__image-configurator-styles_item.--style-cyberpunk .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles/cyberpunk.png); }
+
+.ai__image-configurator-styles_item.--style-psychedelic .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles/psychedelic.png); }
+
+.ai__image-configurator-styles_item.--style-comics .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles/comics.png); }
+
+.ai__image-configurator-styles_item.--style-blackAndWhite .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles/black-and-white.png); }
+
+/*--------------------------- */
+
+.ai__image-configurator-styles_item.--style-none .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/None.png); }
+
+.ai__image-configurator-styles_item.--style-cinematic-default .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/cinematic-default.png); }
+
+.ai__image-configurator-styles_item.--style-sai-cinematic .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/sai-cinematic.png); }
+
+.ai__image-configurator-styles_item.--style-sai-enhance .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/sai-enhance.png); }
+
+.ai__image-configurator-styles_item.--style-sai-line-art .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/sai-line-art.png); }
+
+.ai__image-configurator-styles_item.--style-sai-photographic .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/sai-photographic.png); }
+
+.ai__image-configurator-styles_item.--style-sai-texture .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/sai-texture.png); }
+
+.ai__image-configurator-styles_item.--style-ads-advertising .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/ads-advertising.png); }
+
+.ai__image-configurator-styles_item.--style-ads-automotive .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/ads-automotive.png); }
+
+.ai__image-configurator-styles_item.--style-ads-corporate .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/ads-corporate.png); }
+
+.ai__image-configurator-styles_item.--style-ads-fashion-editorial .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/ads-fashion-editorial.png); }
+
+.ai__image-configurator-styles_item.--style-ads-food-photography .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/ads-food-photography.png); }
+
+.ai__image-configurator-styles_item.--style-ads-luxury .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/ads-luxury.png); }
+
+.ai__image-configurator-styles_item.--style-ads-real-estate .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/ads-real-estate.png); }
+
+.ai__image-configurator-styles_item.--style-ads-retail .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/ads-retail.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-abstract .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-abstract.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-abstract-expressionism .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-abstract-expressionism.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-art-deco .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-art-deco.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-art-nouveau .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-art-vouveau.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-constructivist .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-constrictivist.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-cubist .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-cubist.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-expressionist .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-expressionist.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-graffiti .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-graffiti.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-hyperrealism .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-hyperrealism.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-impressionist .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-impressionist.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-pointillism .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-pointilism.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-pop-art .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-pop-art.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-psychedelic .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-psychedelic.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-renaissance .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-renaissance.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-steampunk .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-steampunk.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-surrealist .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-surrealist.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-typography .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-typography.png); }
+
+.ai__image-configurator-styles_item.--style-artstyle-watercolor .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/artstyle-watercolor.png); }
+
+.ai__image-configurator-styles_item.--style-misc-minimalist .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/misk-minimalist.png); }
+
+.ai__image-configurator-styles_item.--style-papercraft-collage .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/papercraft-collage.png); }
+
+.ai__image-configurator-styles_item.--style-papercraft-papercut-collage .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/papercraft-papercut-collage.png); }
+
+.ai__image-configurator-styles_item.--style-photo-hdr .ai__image-configurator-styles_item-inner {
+	background-image: url(../images/ai-styles-2/photo-hdr.png);}.ai__copilot-image-params{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start}.ai__copilot-image-params-item{padding:6px 12px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;cursor:pointer}.ai__copilot-image-params-item:hover{background-color:var(--ui-color-base-04)}.ai__copilot-image-params-item_title{display:flex;flex-direction:row;align-items:center}.ai__copilot-image-params-item_title-icon{min-width:24px;width:24px;height:24px;margin-right:8px}.ai__copilot-image-params-item_title-text{max-width:65px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ai__copilot-image-params-item_title,.ai__copilot-image-params-item_value{font-size:var(--ui-font-size-md);line-height:var(--ui-font-line-height-sm)}.ai__copilot-image-params-item_title{color:var(--ui-color-text-secondary)}.ai__copilot-image-params-item_value-text{max-width:105px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.ai__copilot-image-params-item_value{display:flex;flex-direction:row;align-items:center;cursor:pointer;color:#8e52ec}.ai__copilot-image-params-item_value-arrow-icon{min-width:16px;height:16px;margin-left:8px}.ai__copilot-image-params-popup-item{display:flex;flex-direction:row;align-items:center;justify-content:space-between;padding-left:12px;padding-right:12px}

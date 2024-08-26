@@ -150,6 +150,7 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onAfterUserUpdate');
 
 			$eventManager->registerEventHandler('pull', 'onGetDependentModule', $this->MODULE_ID, '\Bitrix\BIConnector\Integration\Pull\PullManager', 'onGetDependentModule');
+			$eventManager->registerEventHandler('crm', 'onAfterAutomatedSolutionDelete', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\ScopeService', 'deleteAutomatedSolutionBinding');
 
 			$this->InstallTasks();
 
@@ -226,6 +227,7 @@ class BIConnector extends \CModule
 		$eventManager->unregisterEventHandler('main', 'OnBeforeUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onBeforeUserUpdate');
 		$eventManager->unregisterEventHandler('main', 'OnAfterUserUpdate', 'biconnector', '\Bitrix\BIConnector\Integration\Superset\Events\Main\User', 'onAfterUserUpdate');
 		$eventManager->unregisterEventHandler('pull', 'onGetDependentModule', $this->MODULE_ID, '\Bitrix\BIConnector\Integration\Pull\PullManager', 'onGetDependentModule');
+		$eventManager->unregisterEventHandler('crm', 'onAfterAutomatedSolutionDelete', 'biconnector', '\Bitrix\BIConnector\Superset\Scope\ScopeService', 'deleteAutomatedSolutionBinding');
 
 		\CAgent::RemoveModuleAgents('biconnector');
 

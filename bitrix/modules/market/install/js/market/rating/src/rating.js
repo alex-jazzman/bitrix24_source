@@ -19,6 +19,7 @@ export const Rating = {
 			ratingClickState: false,
 			addingReview: false,
 			policyChecked: false,
+			rulesChecked: false,
 			feedbackBlock: null,
 			reviewText: '',
 			currentRating: 0,
@@ -32,6 +33,12 @@ export const Rating = {
 		},
 		showPolicy: function () {
 			return this.appInfo.REVIEWS.SHOW_POLICY_CHECKBOX === 'Y';
+		},
+		showRules: function () {
+			return this.appInfo.REVIEWS.SHOW_RULES_CHECKBOX === 'Y';
+		},
+		allChecked: function() {
+			return this.policyChecked && this.rulesChecked;
 		},
 		appWasInstalled: function () {
 			return this.appInfo.WAS_INSTALLED && this.appInfo.WAS_INSTALLED === 'Y';
@@ -60,6 +67,9 @@ export const Rating = {
 
 		if (!this.showPolicy) {
 			this.policyChecked = true;
+		}
+		if (!this.showRules) {
+			this.rulesChecked = true;
 		}
 
 		if (false) {
@@ -106,7 +116,7 @@ export const Rating = {
 			}
 		},
 		addReview: function () {
-			if (!this.policyChecked) {
+			if (!this.allChecked) {
 				return;
 			}
 
@@ -458,16 +468,28 @@ export const Rating = {
 							>
 								</span>
 						</label>
+						<label
+							class="ui-ctl ui-ctl-checkbox ui-ctl-wa market-detail__app-rating_feedback-checkbox"
+							v-if="showRules"
+						>
+							<input type="checkbox" class="ui-ctl-element"
+								   v-model="rulesChecked"
+							>
+							<span class="ui-ctl-label-text market-detail__app-rating_feedback-label"
+								  v-html="$Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_POSTING_GUIDELINES', {'#RULES_URL#': appInfo.REVIEWS.POSTING_GUIDELINES_URL})"
+							>
+								</span>
+						</label>
 					</div>
 					<div class="market-detail__app-rating_feedback-buttons">
 						<button class="ui-btn ui-btn-sm"
 								:class="{
 											'ui-btn-wait': sendingReview, 
-											'ui-btn-primary': policyChecked,
-											'ui-btn-default': !policyChecked,
-											'ui-btn-disabled': !policyChecked,
+											'ui-btn-primary': allChecked,
+											'ui-btn-default': !allChecked,
+											'ui-btn-disabled': !allChecked,
 										}"
-								:disabled="sendingReview || !policyChecked"
+								:disabled="sendingReview || !allChecked"
 								@click="addReview"
 						>
 							{{ $Bitrix.Loc.getMessage('MARKET_RATING_JS_ADD_REVIEW_SEND') }}

@@ -123,17 +123,6 @@ $contentRes = Requests\Manager::getDeliveryRequestContent($fields['ID']);
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
-if(!empty($adminErrorMessages))
-{
-	$adminMessage = new CAdminMessage(Array(
-		"DETAILS" => implode("<br>\n", $adminErrorMessages),
-		"TYPE" => "ERROR",
-		"MESSAGE" => Loc::getMessage('SALE_DELIVERY_REQ_VIEW_ERROR'),
-		"HTML"=>true
-	));
-	echo $adminMessage->Show();
-}
-
 ?>
 <form method="POST" action="<?=$APPLICATION->GetCurPageParam()?>" name="form1" enctype="multipart/form-data">
 <input type="hidden" name="lang" value="<?=LANGUAGE_ID;?>">

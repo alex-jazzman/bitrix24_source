@@ -68,11 +68,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	  runBefore(options) {
-	    const result = this[beforeSymbol](options);
-	    if (result instanceof ui_bbcode_model.BBCodeNode || main_core.Type.isNull(result)) {
-	      return result;
-	    }
-	    throw new TypeError(`Before callback for "${this.getName()}" returned not null or BBCodeNode`);
+	    return this[beforeSymbol](options);
 	  }
 	  setConvert(callback) {
 	    if (!main_core.Type.isFunction(callback)) {
@@ -81,11 +77,7 @@ this.BX.UI = this.BX.UI || {};
 	    this[convertSymbol] = callback;
 	  }
 	  runConvert(options) {
-	    const result = this[convertSymbol](options);
-	    if (main_core.Type.isDomNode(result) || main_core.Type.isNull(result)) {
-	      return result;
-	    }
-	    throw new TypeError(`Convert callback for "${this.getName()}" returned not HTMLElement, Text or null`);
+	    return this[convertSymbol](options);
 	  }
 	  setForChild(callback) {
 	    if (main_core.Type.isFunction(callback)) {
@@ -95,11 +87,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	  runForChild(options) {
-	    const result = this[forChildSymbol](options);
-	    if (main_core.Type.isDomNode(result) || main_core.Type.isNull(result)) {
-	      return result;
-	    }
-	    throw new TypeError(`ForChild callback for "${this.getName()}" returned not HTMLElement, Text or null`);
+	    return this[forChildSymbol](options);
 	  }
 	  setAfter(callback) {
 	    if (main_core.Type.isFunction(callback)) {
@@ -109,11 +97,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	  runAfter(options) {
-	    const result = this[afterSymbol](options);
-	    if (main_core.Type.isDomNode(result) || main_core.Type.isNull(result)) {
-	      return result;
-	    }
-	    throw new TypeError(`After callback for "${this.getName()}" returned not HTMLElement, Text or null`);
+	    return this[afterSymbol](options);
 	  }
 	}
 
@@ -133,6 +117,9 @@ this.BX.UI = this.BX.UI || {};
 	    } else {
 	      this.setOnUnknown(options.onUnknown);
 	    }
+	  }
+	  static isElement(source) {
+	    return main_core.Type.isObject(source) && main_core.Type.isFunction(source.appendChild);
 	  }
 	  static prepareSourceNode(source) {
 	    if (source instanceof ui_bbcode_model.BBCodeNode) {
@@ -158,27 +145,7 @@ this.BX.UI = this.BX.UI || {};
 	    }
 	  }
 	  getDefaultUnknownNodeCallback() {
-	    return () => {
-	      return new NodeFormatter({
-	        name: 'unknown',
-	        before({
-	          node
-	        }) {
-	          const scheme = node.getScheme();
-	          if (node.isVoid()) {
-	            return scheme.createFragment({
-	              children: [scheme.createText(node.getOpeningTag())]
-	            });
-	          }
-	          return scheme.createFragment({
-	            children: [scheme.createText(node.getOpeningTag()), ...node.getChildren(), scheme.createText(node.getClosingTag())]
-	          });
-	        },
-	        convert() {
-	          return document.createDocumentFragment();
-	        }
-	      });
-	    };
+	    throw new TypeError('Must be implemented in subclass');
 	  }
 	  setOnUnknown(callback) {
 	    if (main_core.Type.isFunction(callback)) {
@@ -249,14 +216,14 @@ this.BX.UI = this.BX.UI || {};
 	        source: childNode,
 	        data
 	      });
-	      if (main_core.Type.isDomNode(childElement)) {
+	      if (Formatter.isElement(childElement)) {
 	        const convertedChildElement = nodeFormatter.runForChild({
 	          node: childNode,
 	          element: childElement,
 	          formatter: this,
 	          data
 	        });
-	        if (main_core.Type.isDomNode(convertedChildElement)) {
+	        if (Formatter.isElement(convertedChildElement)) {
 	          convertedElement.appendChild(convertedChildElement);
 	        }
 	      }

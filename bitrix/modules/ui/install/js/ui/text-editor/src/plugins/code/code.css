@@ -1,0 +1,61 @@
+.ui-text-editor__code {
+	display: block;
+	background-color: #fdf6e3;
+	font-family: var(--ui-font-family-system-mono);
+	padding: var(--ui-space-inset-xs);
+	margin: var(--ui-text-editor-block-space);
+	overflow-x: auto;
+	position: relative;
+	tab-size: 2;
+	color: #333;
+	text-decoration: none;
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.ui-text-editor__token-operator {
+	color: #f60d04;
+}
+
+.ui-text-editor__token-punctuation {
+	color: #999;
+}
+
+.ui-text-editor__token-comment {
+	color: #839496;
+}
+
+.ui-text-editor__token-word {
+	color: var(--ui-color-text-secondary);
+}
+
+.ui-text-editor__token-keyword {
+	color: #6c71c4;
+}
+
+.ui-text-editor__token-regex {
+	color: #2aa198;
+}
+
+.ui-text-editor__token-number {
+	color: #cb4b16;
+}
+
+.ui-text-editor__token-string {
+	color: #859900;
+}
+
+.ui-text-editor__token-semicolon {
+	color: #6c71c4;
+}
+
+.ui-text-editor__token-bracket {
+	color: #268bd2;
+}
+
+.ui-text-editor__token-brace {
+	color: #dc322f;
+}
+
+.ui-text-editor__token-parentheses {
+	color: #af9a9a;
+}

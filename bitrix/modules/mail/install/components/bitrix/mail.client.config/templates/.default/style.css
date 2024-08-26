@@ -274,6 +274,10 @@
 	overflow-x: hidden;
 }
 
+.mail-hidden-element {
+	visibility: hidden;
+}
+
 .mail-set-singleselect input[type="radio"]:checked ~ div {
 	position: absolute;
 	top: 50%;

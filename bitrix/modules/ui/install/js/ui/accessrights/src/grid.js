@@ -21,6 +21,7 @@ type GridOptions = {
 	userGroups: [];
 	accessRights: [];
 	loadParams: {};
+	needToLoadUserGroups?: boolean;
 };
 
 export default class Grid {
@@ -50,6 +51,7 @@ export default class Grid {
 		this.loadParams = options.loadParams ? options.loadParams : null;
 		this.loader = null;
 		this.timer = null;
+		this.needToLoadUserGroups = options.needToLoadUserGroups ?? true;
 
 		this.initData();
 		if (options.userGroups)
@@ -601,6 +603,11 @@ export default class Grid {
 
 	onGetEntityTypes(): void
 	{
+		if (!this.needToLoadUserGroups)
+		{
+			return;
+		}
+
 		const controls = BX.Main
 			.selectorManagerV2
 			.controls

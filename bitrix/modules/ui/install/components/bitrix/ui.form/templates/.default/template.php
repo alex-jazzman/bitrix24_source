@@ -33,6 +33,13 @@ $bbFieldNames = isset($arResult['ENTITY_BB_FIELD_NAMES']) && is_array($arResult[
 	? $arResult['ENTITY_BB_FIELD_NAMES']
 	: []
 ;
+
+$hasBBCodeFields = isset($arResult['HAS_BBCODE_FIELDS']) && $arResult['HAS_BBCODE_FIELDS'] === true;
+if ($hasBBCodeFields)
+{
+	\Bitrix\Main\UI\Extension::load('ui.text-editor');
+}
+
 foreach ($htmlFieldNames as $fieldName)
 {
 	$fieldPrefix = $prefix.'_'.strtolower($fieldName);

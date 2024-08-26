@@ -77,7 +77,7 @@ if ($base_currency <> '')
 	}
 }
 
-if (($save <> '' || $apply <> '') && $REQUEST_METHOD=="POST" && $STAT_RIGHT>="W" && check_bitrix_sessid())
+if (($save <> '' || $apply <> '') && $_SERVER['REQUEST_METHOD']=="POST" && $STAT_RIGHT>="W" && check_bitrix_sessid())
 {
 	if($EVENTS_VIEW=="NOT_REF")
 		$EVENTS_VIEW="";

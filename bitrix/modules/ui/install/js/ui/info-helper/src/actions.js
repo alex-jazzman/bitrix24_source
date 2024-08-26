@@ -98,7 +98,7 @@ export class Actions
 
 	static openToolsSettings(): void
 	{
-		Actions.openSlider({ url: '/settings/configs/?page=tools' });
+		Actions.openSlider({ url: Extension.getSettings('ui.info-helper').settingsUrl + '?page=tools' });
 	}
 
 	static openInformer(data)

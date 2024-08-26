@@ -15,6 +15,15 @@ type DashboardMasterProps = {
 	openedFrom: string,
 }
 
+type DashboardData = {
+	title: string,
+	period: string,
+	type: string,
+	appId: string,
+	scopesToExport: string,
+	scopesNotToExport: string,
+}
+
 /**
  * @namespace BX.BIConnector
  */
@@ -23,7 +32,7 @@ export class DashboardExportMaster
 	#dashboardId: number;
 	#openedFrom: string;
 	#popup: Popup;
-	#dashboardData: Object;
+	#dashboardData: DashboardData;
 	#settingSwitcherState: boolean = true;
 	#exportButton: Button;
 
@@ -50,7 +59,7 @@ export class DashboardExportMaster
 		});
 	}
 
-	#createPopup(dashboardData)
+	#createPopup(dashboardData: DashboardData)
 	{
 		this.#popup = new Popup({
 			content: this.#getPopupContent(dashboardData),
@@ -63,6 +72,23 @@ export class DashboardExportMaster
 			padding: 0,
 		});
 		this.#popup.show();
+
+		if (dashboardData.scopesNotToExport)
+		{
+			const hintNode = document.querySelector('#bic-scope-hint');
+			const hint = UI.Hint.createInstance({
+				popupParameters: {
+					darkMode: true,
+					maxWidth: 250,
+					padding: 5,
+					offsetTop: 0,
+					offsetLeft: 10,
+					angle: true,
+					animation: 'fading-slide',
+				},
+			});
+			hint.initNode(hintNode);
+		}
 
 		const dashboardTitle = new TextCrop({
 			rows: 1,
@@ -95,9 +121,39 @@ export class DashboardExportMaster
 		settingsLink.onclick = this.#openSettingsSlider.bind(this, this.#dashboardId);
 	}
 
-	#getPopupContent(dashboardData): string
+	#getPopupContent(dashboardData: DashboardData): string
 	{
-		const scope = dashboardData.scope === '' ? Loc.getMessage('BIC_EXPORT_SCOPE_NONE') : dashboardData.scope;
+		let scope = '';
+		if (!dashboardData.scopesToExport && !dashboardData.scopesNotToExport)
+		{
+			scope = Loc.getMessage('BIC_EXPORT_SCOPE_NONE');
+		}
+		else
+		{
+			// eslint-disable-next-line no-lonely-if
+			if (dashboardData.scopesToExport)
+			{
+				scope = `<span class="bic-scopes-to-export">${dashboardData.scopesToExport}</span>`;
+				if (dashboardData.scopesNotToExport)
+				{
+					scope += `, <span class="bic-scopes-not-to-export">${dashboardData.scopesNotToExport}</span>`;
+				}
+			}
+			else
+			{
+				scope = `<span class="bic-scopes-not-to-export">${dashboardData.scopesNotToExport}</span>`;
+			}
+		}
+
+		let scopeHintContainer = '';
+		if (dashboardData.scopesNotToExport)
+		{
+			scopeHintContainer = `
+				<span data-hint="${Loc.getMessage('BIC_EXPORT_SCOPE_HINT')}" data-hint-no-icon id="bic-scope-hint">
+					<i class="ui-icon-set --info-circle bic-scope-hint-icon"></i>
+				</span>
+			`;
+		}
 
 		return `
 			<div class="bic-export-container">
@@ -121,7 +177,10 @@ export class DashboardExportMaster
 					</div>
 
 					<div class="bic-setting-item bic-setting-item-scope">
-						<div class="bic-setting-title">${Loc.getMessage('BIC_EXPORT_SCOPE')}</div>
+						<div class="bic-setting-title">
+							<span>${Loc.getMessage('BIC_EXPORT_SCOPE')}</span>
+							${scopeHintContainer}
+						</div>
 						<div class="bic-setting-value">${scope}</div>
 					</div>
 
@@ -216,6 +275,11 @@ export class DashboardExportMaster
 	#onSettingsChanged(): void
 	{
 		EventEmitter.unsubscribe('BX.BIConnector.Settings:onAfterSave', this.#onSettingsChanged.bind(this));
+
+		if (this.#popup.isDestroyed())
+		{
+			return;
+		}
 
 		const loader = new Loader({
 			target: this.#popup.getContentContainer(),

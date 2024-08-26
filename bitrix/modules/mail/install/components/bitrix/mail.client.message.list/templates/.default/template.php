@@ -190,8 +190,10 @@ $settingsMenu = [
 $this->setViewTarget('mail-msg-counter-panel');
 
 ?>
+<div class = 'mail-error-box-wrapper' data-role="mail-error-box-wrapper"></div>
 <div class="mail-msg-counter-wrapper">
 	<div class = 'mail-counter-toolbar' data-role="mail-counter-toolbar"></div>
+	<!-- The old error output block, which is controlled from the synchronization progress bar. -->
 	<div data-role = "error-box" class="mail-home-error-box mail-hidden-element">
 		<div data-role = "error-box-title" class="error-box-title"></div>
 		<div data-role = "error-box-text" class="error-box-text"></div>
@@ -611,6 +613,7 @@ $actionPanelActionButtons = array_merge($actionPanelActionButtons, [
 			mailboxId: <?= intval($arResult['MAILBOX']['ID']) ?>,
 			filterId: '<?= $arResult['FILTER_ID'] ?>',
 			syncAvailable: '<?= \Bitrix\Mail\Helper\LicenseManager::isSyncAvailable() ?>',
+			configPath: '<?= CUtil::JSEscape(htmlspecialcharsbx($configPath)) ?>',
 		});
 
 		Mail.FilterToolbar = client.getFilterToolbar();

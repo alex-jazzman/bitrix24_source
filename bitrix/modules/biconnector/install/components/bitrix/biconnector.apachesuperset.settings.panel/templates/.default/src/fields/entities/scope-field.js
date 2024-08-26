@@ -65,13 +65,13 @@ export class ScopeField extends BX.UI.EntityEditorCustom
 		this._innerWrapper = Tag.render`<div class='ui-entity-editor-content-block ui-ctl-custom'></div>`;
 		Dom.append(this._innerWrapper, this._wrapper);
 
-		const content = Tag.render`
-			<div class="ui-ctl-w100"></div>
-		`;
-
-		Dom.append(content, this._innerWrapper);
 		const preselectedItems = [];
+		let hasSelectedAutomatedSolutions = false;
 		this.#scopes.forEach((scope) => {
+			if (scope.startsWith('automated_solution_'))
+			{
+				hasSelectedAutomatedSolutions = true;
+			}
 			preselectedItems.push(['biconnector-superset-scope', scope]);
 		});
 
@@ -85,8 +85,8 @@ export class ScopeField extends BX.UI.EntityEditorCustom
 				showAvatars: false,
 				compactView: true,
 				dynamicLoad: true,
-				width: 250,
-				height: 200,
+				width: 300,
+				height: 250,
 				entities: [
 					{
 						id: 'biconnector-superset-scope',
@@ -95,6 +95,17 @@ export class ScopeField extends BX.UI.EntityEditorCustom
 					},
 				],
 				preselectedItems,
+				events: {
+					onLoad: (event) => {
+						if (hasSelectedAutomatedSolutions)
+						{
+							const items = event.getTarget()?.getItems();
+							const automatedSolutionItem = items.find((item) => item.getId() === 'automated_solution');
+							const itemNode = automatedSolutionItem.getNodes()?.values()?.next()?.value;
+							itemNode?.setOpen(true);
+						}
+					},
+				},
 			},
 			events: {
 				onBeforeTagAdd: (event) => {
@@ -110,9 +121,8 @@ export class ScopeField extends BX.UI.EntityEditorCustom
 			},
 		});
 
-		tagSelector.renderTo(content);
-
-		Dom.addClass(tagSelector.getOuterContainer(), 'ui-ctl-element');
+		Dom.addClass(tagSelector.getDialog().getContainer(), 'biconnector-settings-scope-selector');
+		tagSelector.renderTo(this._innerWrapper);
 
 		this.registerLayout(options);
 		this._hasLayout = true;

@@ -1,4 +1,4 @@
-<?
+<?php
 
 function Tab1($adminForm)
 {

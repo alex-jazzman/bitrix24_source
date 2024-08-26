@@ -51,7 +51,7 @@ Extension::load([
 		<input id="salescenter-form-is-saved" type="hidden" value="n">
 
 		<div class="ui-slider-section ui-slider-section-icon">
-		    <span class="ui-icon ui-slider-icon">
+			<span class="ui-icon ui-slider-icon">
 				<?php
 				$imageName = $imagePsModeName = $arResult['PAYSYSTEM_HANDLER'];
 				if ($arResult['PAYSYSTEM_PS_MODE'])
@@ -66,12 +66,12 @@ Extension::load([
 				<?php else: ?>
 					<div class="salescenter-default-icon ui-icon"><i></i></div>
 				<?php endif; ?>
-		    </span>
+			</span>
 			<div class="ui-slider-content-box">
 				<?php
 				$title =
 					$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['FULL_NAME']
-                    ?: $arResult['PAYSYSTEM_HANDLER_FULL']
+					?: $arResult['PAYSYSTEM_HANDLER_FULL']
 					?: $arResult['PAYSYSTEM_HANDLER'];
 				?>
 				<div style="display: flex; align-items: center" class="ui-slider-heading-4">
@@ -254,7 +254,7 @@ Extension::load([
 						</div>
 
 						<?php
-						if ($isCanPrintCheckSelf && $paySystemId > 0)
+						if ($isCanPrintCheckSelf)
 						{
 							$cashboxCode = $arResult['CASHBOX']['code'];
 							$cashboxTitle = Loc::getMessage('SALESCENTER_SP_CASHBOX_PAYSYSTEM_'.$cashboxCode.'_TITLE');

@@ -521,7 +521,7 @@ if(typeof BX.UI.EntityEditor === "undefined")
 		},
 		onSliderClose: function(event)
 		{
-			if(!this._enableCloseConfirmation)
+			if(!this._enableCloseConfirmation || this.isEmbedded())
 			{
 				return;
 			}

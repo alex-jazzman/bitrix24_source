@@ -266,13 +266,6 @@ class rest extends CModule
 			));
 
 			\Bitrix\Main\UrlRewriter::add($siteId, array(
-				"CONDITION" => "#^/marketplace/local/#",
-				"RULE" => "",
-				"ID" => "bitrix:rest.marketplace.localapp",
-				"PATH" => "/marketplace/local/index.php",
-			));
-
-			\Bitrix\Main\UrlRewriter::add($siteId, array(
 				"CONDITION" => "#^/marketplace/app/#",
 				"RULE" => "",
 				"ID" => "bitrix:app.layout",

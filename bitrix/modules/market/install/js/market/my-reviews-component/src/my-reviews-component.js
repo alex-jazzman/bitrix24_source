@@ -185,6 +185,7 @@ export const MyReviewsComponent = {
 			this.result.REVIEWS.ITEMS[index]['BLOCKED'] = reviewInfo['BLOCKED'];
 			this.result.REVIEWS.ITEMS[index]['PUBLISHED'] = reviewInfo['PUBLISHED'];
 			this.result.REVIEWS.ITEMS[index]['CAN_EDIT_REVIEW'] = reviewInfo['CAN_EDIT_REVIEW'];
+			this.result.REVIEWS.ITEMS[index]['EDIT_REVIEW_NOT_ALLOWED_TEXT'] = reviewInfo['EDIT_REVIEW_NOT_ALLOWED_TEXT'];
 		},
 	},
 	template: `

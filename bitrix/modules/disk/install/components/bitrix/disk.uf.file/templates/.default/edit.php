@@ -49,7 +49,6 @@ $photoTemplateMode = $newEntityCreation ? 'auto' : 'manual';
 
 $isMainPostForm = isset($arParams['MAIN_POST_FORM']) && $arParams['MAIN_POST_FORM'] === true;
 $mainPostFormId = $arParams['MAIN_POST_FORM_ID'] ?? '';
-$controlVisibility = !$isMainPostForm;
 ?>
 
 <?
@@ -93,7 +92,6 @@ $controlVisibility = !$isMainPostForm;
 			photoTemplate: <?= Json::encode($photoTemplate)?>,
 			photoTemplateFieldName: <?= Json::encode($photoTemplateFieldName)?>,
 			photoTemplateMode: <?= Json::encode($photoTemplateMode)?>,
-			controlVisibility: <?= Json::encode($controlVisibility)?>,
 		}
 	);
 

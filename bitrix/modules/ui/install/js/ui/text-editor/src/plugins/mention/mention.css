@@ -1,0 +1,9 @@
+.ui-text-editor__mention {
+	color: var(--ui-text-editor-color-link);
+	border-bottom: 1px dashed var(--ui-text-editor-color-link);
+}
+
+.ui-text-editor-mention-popup__hidden {
+	visibility: hidden;
+	pointer-events: none;
+}

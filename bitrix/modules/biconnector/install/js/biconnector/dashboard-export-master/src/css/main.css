@@ -49,6 +49,8 @@
 }
 
 .bic-setting-title {
+	display: flex;
+	align-items: center;
 	font-size: 13px;
 	color: var(--ui-color-palette-gray-50);
 	transition: .3s ease;
@@ -64,6 +66,16 @@
 	color: var(--ui-color-palette-gray-70);
 	border-bottom: 1px dashed var(--ui-color-palette-gray-70);
 	cursor: pointer;
+}
+
+.bic-scopes-not-to-export {
+	color: var(--ui-color-palette-gray-50);
+}
+
+.bic-scope-hint-icon {
+	margin-left: 2px;
+	--ui-icon-set__icon-size: 15px;
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-50);
 }
 
 .bic-export-separator {

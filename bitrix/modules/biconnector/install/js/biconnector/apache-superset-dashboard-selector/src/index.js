@@ -60,6 +60,7 @@ class SupersetDashboardSelector
 			showAvatars: true,
 			compactView: false,
 			dynamicLoad: true,
+			clearUnavailableItems: true,
 			preselectedItems: [['biconnector-superset-dashboard', this.#dashboardId]],
 			events: {
 				'Item:onSelect': this.#onSelectItem.bind(this),

@@ -1,0 +1,8 @@
+.ui-text-editor__smiley {
+	width: 20px;
+	height: 20px;
+	cursor: text;
+	caret-color: rgb(5, 5, 5);
+	color: transparent;
+	vertical-align: text-bottom;
+}

@@ -22,6 +22,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	var _initFrame = /*#__PURE__*/new WeakSet();
 	var _initHeaderButtons = /*#__PURE__*/new WeakSet();
 	var _onEditButtonClick = /*#__PURE__*/new WeakSet();
+	var _reloadGridAfterSliderClose = /*#__PURE__*/new WeakSet();
 	var _muteEditButton = /*#__PURE__*/new WeakSet();
 	var _unmuteEditButton = /*#__PURE__*/new WeakSet();
 	var _disableEditButton = /*#__PURE__*/new WeakSet();
@@ -38,6 +39,7 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	  _classPrivateMethodInitSpec(this, _disableEditButton);
 	  _classPrivateMethodInitSpec(this, _unmuteEditButton);
 	  _classPrivateMethodInitSpec(this, _muteEditButton);
+	  _classPrivateMethodInitSpec(this, _reloadGridAfterSliderClose);
 	  _classPrivateMethodInitSpec(this, _onEditButtonClick);
 	  _classPrivateMethodInitSpec(this, _initHeaderButtons);
 	  _classPrivateMethodInitSpec(this, _initFrame);
@@ -117,6 +119,9 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	    _classPrivateMethodGet(_this, _initFrame, _initFrame2).call(_this, babelHelpers.classPrivateFieldGet(_this, _embeddedParams));
 	    _classPrivateMethodGet(_this, _initHeaderButtons, _initHeaderButtons2).call(_this);
 	  });
+	  main_core_events.EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', function () {
+	    _classPrivateMethodGet(_this, _reloadGridAfterSliderClose, _reloadGridAfterSliderClose2).call(_this);
+	  });
 	}
 	function _initFrame2(embeddedParams) {
 	  var dashboardParams = {
@@ -187,6 +192,9 @@ this.BX.BIConnector.ApacheSuperset = this.BX.BIConnector.ApacheSuperset || {};
 	      status: 'error'
 	    });
 	  });
+	  _classPrivateMethodGet(this, _reloadGridAfterSliderClose, _reloadGridAfterSliderClose2).call(this);
+	}
+	function _reloadGridAfterSliderClose2() {
 	  var slider = BX.SidePanel.Instance.getSliderByWindow(window);
 	  if (slider) {
 	    main_core_events.EventEmitter.subscribeOnce(slider, 'SidePanel.Slider:onClose', function () {

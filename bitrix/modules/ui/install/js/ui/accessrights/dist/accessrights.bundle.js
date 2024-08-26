@@ -9,6 +9,7 @@ this.BX = this.BX || {};
 	const BX$1 = main_core.Reflection.namespace('BX');
 	class Grid {
 	  constructor(options) {
+	    var _options$needToLoadUs;
 	    options = options || {};
 	    this.options = options;
 	    this.renderTo = options.renderTo;
@@ -27,6 +28,7 @@ this.BX = this.BX || {};
 	    this.loadParams = options.loadParams ? options.loadParams : null;
 	    this.loader = null;
 	    this.timer = null;
+	    this.needToLoadUserGroups = (_options$needToLoadUs = options.needToLoadUserGroups) != null ? _options$needToLoadUs : true;
 	    this.initData();
 	    if (options.userGroups) {
 	      this.userGroups = options.userGroups;
@@ -390,6 +392,9 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.emit('BX.UI.AccessRights:removeFromAccessCodes', option);
 	  }
 	  onGetEntityTypes() {
+	    if (!this.needToLoadUserGroups) {
+	      return;
+	    }
 	    const controls = BX$1.Main.selectorManagerV2.controls;
 	    const selectorInstance = controls[Object.keys(controls)[0]];
 	    selectorInstance.entityTypes.USERGROUPS = {

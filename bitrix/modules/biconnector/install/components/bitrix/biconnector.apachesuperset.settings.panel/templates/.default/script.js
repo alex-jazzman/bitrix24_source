@@ -8,7 +8,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var SidePanel = BX.SidePanel;
-	var _reloadParent = /*#__PURE__*/new WeakSet();
+	var _sendOnSaveEvent = /*#__PURE__*/new WeakSet();
 	var SettingController = /*#__PURE__*/function (_BX$UI$EntityEditorCo) {
 	  babelHelpers.inherits(SettingController, _BX$UI$EntityEditorCo);
 	  function SettingController(id, settings) {
@@ -16,7 +16,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, SettingController);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SettingController).call(this));
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _reloadParent);
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _sendOnSaveEvent);
 	    _this.initialize(id, settings);
 	    _this.analytic = (_settings$config$dash = (_settings$config = settings.config) === null || _settings$config === void 0 ? void 0 : _settings$config.dashboardAnalyticInfo) !== null && _settings$config$dash !== void 0 ? _settings$config$dash : {};
 	    main_core_events.EventEmitter.subscribeOnce('BX.UI.EntityEditor:onInit', function (event) {
@@ -66,7 +66,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      }
 	      biconnector_apacheSupersetAnalytics.ApacheSupersetAnalytics.sendAnalytics('edit', 'report_settings', analyticOptions);
 	      this === null || this === void 0 ? void 0 : (_this$_editor = this._editor) === null || _this$_editor === void 0 ? void 0 : _this$_editor._modeSwitch.reset();
-	      _classPrivateMethodGet(this, _reloadParent, _reloadParent2).call(this);
+	      _classPrivateMethodGet(this, _sendOnSaveEvent, _sendOnSaveEvent2).call(this);
 	      this.innerCancel();
 	    }
 	  }, {
@@ -77,18 +77,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  }]);
 	  return SettingController;
 	}(BX.UI.EntityEditorController);
-	function _reloadParent2() {
-	  var _parent$BX$Main$gridM;
+	function _sendOnSaveEvent2() {
 	  var previousSlider = BX.SidePanel.Instance.getPreviousSlider(BX.SidePanel.Instance.getSliderByWindow(window));
 	  var parent = previousSlider ? previousSlider.getWindow() : top;
-	  if (!parent.BX.Main || !parent.BX.Main.gridManager) {
+	  if (!parent.BX.Event) {
 	    return;
 	  }
 	  parent.BX.Event.EventEmitter.emit('BX.BIConnector.Settings:onAfterSave');
-	  var gridInstance = (_parent$BX$Main$gridM = parent.BX.Main.gridManager.getById('biconnector_superset_dashboard_grid')) === null || _parent$BX$Main$gridM === void 0 ? void 0 : _parent$BX$Main$gridM.instance;
-	  if (gridInstance) {
-	    gridInstance.reload();
-	  }
 	}
 
 	var _templateObject;
@@ -727,7 +722,7 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	  return DashboardOwnerField;
 	}(BX.UI.EntityEditorCustom);
 
-	var _templateObject$5, _templateObject2$4, _templateObject3$4, _templateObject4$4, _templateObject5$4, _templateObject6$4;
+	var _templateObject$5, _templateObject2$4, _templateObject3$4, _templateObject4$4, _templateObject5$4;
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
@@ -788,10 +783,12 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	      main_core.Dom.insertBefore(hint, this._container);
 	      this._innerWrapper = main_core.Tag.render(_templateObject3$4 || (_templateObject3$4 = babelHelpers.taggedTemplateLiteral(["<div class='ui-entity-editor-content-block ui-ctl-custom'></div>"])));
 	      main_core.Dom.append(this._innerWrapper, this._wrapper);
-	      var content = main_core.Tag.render(_templateObject4$4 || (_templateObject4$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-ctl-w100\"></div>\n\t\t"])));
-	      main_core.Dom.append(content, this._innerWrapper);
 	      var preselectedItems = [];
+	      var hasSelectedAutomatedSolutions = false;
 	      babelHelpers.classPrivateFieldGet(this, _scopes).forEach(function (scope) {
+	        if (scope.startsWith('automated_solution_')) {
+	          hasSelectedAutomatedSolutions = true;
+	        }
 	        preselectedItems.push(['biconnector-superset-scope', scope]);
 	      });
 	      var tagSelector = new ui_entitySelector.TagSelector({
@@ -804,14 +801,27 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          showAvatars: false,
 	          compactView: true,
 	          dynamicLoad: true,
-	          width: 250,
-	          height: 200,
+	          width: 300,
+	          height: 250,
 	          entities: [{
 	            id: 'biconnector-superset-scope',
 	            dynamicLoad: true,
 	            options: {}
 	          }],
-	          preselectedItems: preselectedItems
+	          preselectedItems: preselectedItems,
+	          events: {
+	            onLoad: function onLoad(event) {
+	              if (hasSelectedAutomatedSolutions) {
+	                var _event$getTarget, _automatedSolutionIte, _automatedSolutionIte2, _automatedSolutionIte3;
+	                var items = (_event$getTarget = event.getTarget()) === null || _event$getTarget === void 0 ? void 0 : _event$getTarget.getItems();
+	                var automatedSolutionItem = items.find(function (item) {
+	                  return item.getId() === 'automated_solution';
+	                });
+	                var itemNode = (_automatedSolutionIte = automatedSolutionItem.getNodes()) === null || _automatedSolutionIte === void 0 ? void 0 : (_automatedSolutionIte2 = _automatedSolutionIte.values()) === null || _automatedSolutionIte2 === void 0 ? void 0 : (_automatedSolutionIte3 = _automatedSolutionIte2.next()) === null || _automatedSolutionIte3 === void 0 ? void 0 : _automatedSolutionIte3.value;
+	                itemNode === null || itemNode === void 0 ? void 0 : itemNode.setOpen(true);
+	              }
+	            }
+	          }
 	        },
 	        events: {
 	          onBeforeTagAdd: function onBeforeTagAdd(event) {
@@ -828,8 +838,8 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	          }
 	        }
 	      });
-	      tagSelector.renderTo(content);
-	      main_core.Dom.addClass(tagSelector.getOuterContainer(), 'ui-ctl-element');
+	      main_core.Dom.addClass(tagSelector.getDialog().getContainer(), 'biconnector-settings-scope-selector');
+	      tagSelector.renderTo(this._innerWrapper);
 	      this.registerLayout(options);
 	      this._hasLayout = true;
 	    }
@@ -866,13 +876,13 @@ this.BX.BIConnector = this.BX.BIConnector || {};
 	        if (main_core.Type.isDomNode(oldSaveBlock)) {
 	          main_core.Dom.remove(oldSaveBlock);
 	        }
-	        var saveBlock = main_core.Tag.render(_templateObject5$4 || (_templateObject5$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"save-block\"></div>"])));
+	        var saveBlock = main_core.Tag.render(_templateObject4$4 || (_templateObject4$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"save-block\"></div>"])));
 	        var _iterator2 = _createForOfIteratorHelper$1(babelHelpers.classPrivateFieldGet(this, _scopes)),
 	          _step2;
 	        try {
 	          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
 	            var scope = _step2.value;
-	            main_core.Dom.append(main_core.Tag.render(_templateObject6$4 || (_templateObject6$4 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[]\" value=\"", "\">"])), this.getName(), scope), saveBlock);
+	            main_core.Dom.append(main_core.Tag.render(_templateObject5$4 || (_templateObject5$4 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "[]\" value=\"", "\">"])), this.getName(), scope), saveBlock);
 	          }
 	        } catch (err) {
 	          _iterator2.e(err);

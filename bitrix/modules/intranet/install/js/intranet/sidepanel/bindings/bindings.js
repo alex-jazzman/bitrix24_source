@@ -393,6 +393,35 @@
 			},
 			{
 				condition: [
+					/(AI_UX_TRIGGER)=([^&]+)/,
+				],
+				handler: function(event, link)
+				{
+					const code = link.matches[2];
+					if (code === 'box_agreement')
+					{
+						BX.Runtime.loadExtension('ai.copilot-agreement').then((exports) => {
+							const CopilotAgreementClass = exports['CopilotAgreement'];
+							if (CopilotAgreementClass)
+							{
+								const optionsCopilotAgreement = {
+									moduleId: 'im',
+									contextId: 'chat',
+									events: {
+										onAccept: () => {},
+										onCancel: () => {},
+									},
+								};
+								(new CopilotAgreementClass(optionsCopilotAgreement)).checkAgreement();
+							}
+						});
+
+						event.preventDefault();
+					}
+				},
+			},
+			{
+				condition: [
 					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT)=([^&]+)(&IM_MESSAGE=([^&]+))?/i
 				],
 				handler: function(event, link)

@@ -19,6 +19,7 @@
 	var _topMenuGuideSpotlight = /*#__PURE__*/new WeakMap();
 	var _lastPinnedRowId = /*#__PURE__*/new WeakMap();
 	var _subscribeToEvents = /*#__PURE__*/new WeakSet();
+	var _initHints = /*#__PURE__*/new WeakSet();
 	var _onSupersetStatusChange = /*#__PURE__*/new WeakSet();
 	var _showTopMenuGuide = /*#__PURE__*/new WeakSet();
 	var _colorPinnedRows = /*#__PURE__*/new WeakSet();
@@ -43,6 +44,7 @@
 	    _classPrivateMethodInitSpec(this, _colorPinnedRows);
 	    _classPrivateMethodInitSpec(this, _showTopMenuGuide);
 	    _classPrivateMethodInitSpec(this, _onSupersetStatusChange);
+	    _classPrivateMethodInitSpec(this, _initHints);
 	    _classPrivateMethodInitSpec(this, _subscribeToEvents);
 	    _classPrivateFieldInitSpec(this, _dashboardManager, {
 	      writable: true,
@@ -86,6 +88,7 @@
 	      _classPrivateMethodGet(this, _showTopMenuGuide, _showTopMenuGuide2).call(this);
 	    }
 	    _classPrivateMethodGet(this, _colorPinnedRows, _colorPinnedRows2).call(this);
+	    _classPrivateMethodGet(this, _initHints, _initHints2).call(this);
 	  }
 	  babelHelpers.createClass(SupersetDashboardGridManager, [{
 	    key: "onUpdatedDashboardBatchStatus",
@@ -277,7 +280,7 @@
 	        grid.tableUnfade();
 	        var counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
 	        counterTotalTextContainer.textContent++;
-	        BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+	        _classPrivateMethodGet(_this3, _initHints, _initHints2).call(_this3);
 	        BX.UI.Notification.Center.notify({
 	          content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_COPY_NOTIFICATION_ADDED')
 	        });
@@ -361,7 +364,7 @@
 	        grid.tableUnfade();
 	        var counterTotalTextContainer = grid.getCounterTotal().querySelector('.main-grid-panel-content-text');
 	        counterTotalTextContainer.textContent++;
-	        BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+	        _classPrivateMethodGet(_this5, _initHints, _initHints2).call(_this5);
 	      })["catch"](function (response) {
 	        grid.tableUnfade();
 	        if (response.errors) {
@@ -722,7 +725,7 @@
 	    babelHelpers.classPrivateFieldGet(_this12, _grid).reload();
 	  });
 	  main_core_events.EventEmitter.subscribe('Grid::updated', function () {
-	    BX.UI.Hint.init(BX('biconnector-dashboard-grid'));
+	    _classPrivateMethodGet(_this12, _initHints, _initHints2).call(_this12);
 	    _classPrivateMethodGet(_this12, _colorPinnedRows, _colorPinnedRows2).call(_this12);
 	  });
 	  main_core_events.EventEmitter.subscribe('BIConnector.ExportMaster:onDashboardDataLoaded', function () {
@@ -731,6 +734,17 @@
 	  main_core_events.EventEmitter.subscribe('BIConnector.DashboardManager:onEmbeddedDataLoaded', function () {
 	    babelHelpers.classPrivateFieldGet(_this12, _grid).reload();
 	  });
+	  main_core_events.EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', function () {
+	    babelHelpers.classPrivateFieldGet(_this12, _grid).reload();
+	  });
+	}
+	function _initHints2() {
+	  var manager = BX.UI.Hint.createInstance({
+	    popupParameters: {
+	      autoHide: true
+	    }
+	  });
+	  manager.init(babelHelpers.classPrivateFieldGet(this, _grid).getContainer());
 	}
 	function _onSupersetStatusChange2(status) {
 	  if (status === 'READY') {
@@ -870,7 +884,7 @@
 	  var readableDate = main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DATE_MODIFY_NOW');
 	  var newCellContent = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span data-hint=\"", "\" data-hint-no-icon data-hint-interactivity>", "</span>\n\t\t"])), date, readableDate);
 	  main_core.Dom.replace(cellContent, newCellContent);
-	  BX.UI.Hint.init(dateModifyCell);
+	  _classPrivateMethodGet(this, _initHints, _initHints2).call(this);
 	}
 	function _switchTopMenuAction2(dashboardId, isInTopMenu) {
 	  var row = babelHelpers.classPrivateFieldGet(this, _grid).getRows().getById(dashboardId);

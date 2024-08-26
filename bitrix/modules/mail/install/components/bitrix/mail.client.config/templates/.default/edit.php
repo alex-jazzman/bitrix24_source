@@ -10,6 +10,7 @@ use Bitrix\Main\Localization\Loc;
 	'ui.sidepanel-content',
 	'ui.switcher',
 	'ui.layout-form',
+	'ui.tour',
 ]);
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
@@ -136,7 +137,7 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 								) ?>
 							</span>
 									<? $isSuccessSyncStatus = $arResult['LAST_MAIL_CHECK_STATUS']; ?>
-									<span class="mail-connect-last-sync-status mail-connect-last-sync-<?= $isSuccessSyncStatus ? 'success' : 'error'; ?>">
+									<span class="mail-connect-last-sync-status mail-connect-last-sync-<?= $isSuccessSyncStatus ? 'success' : 'error'; ?> <?= is_null($isSuccessSyncStatus) ? 'mail-hidden-element' : ''; ?> ">
 								<?= Loc::getMessage('MAIL_CLIENT_CONFIG_LAST_MAIL_CHECK_' . ($isSuccessSyncStatus ? 'SUCCESS' : 'ERROR')); ?>
 							</span>
 								</div>
@@ -161,10 +162,10 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 							<?= htmlspecialcharsbx($settings['serviceName'] ?? ucfirst($settings['name'])) ?>
 						</span>
 					</div>
-					<button class="ui-btn ui-btn-primary" id="mail_connect_mb_oauth_btn" type="button"
-						<? if (!empty($settings['oauth_user'])): ?> style="display: none; "<? endif ?>><?=Loc::getMessage('MAIL_CLIENT_CONFIG_OAUTH_CONNECT') ?></button>
-					<div class="mail-connect-email-block" id="mail_connect_mb_oauth_status"
-						<? if (empty($settings['oauth_user'])): ?> style="display: none; "<? endif ?>>
+					<button class="ui-btn ui-btn-primary" id="mail_connect_mb_oauth_btn" type="button">
+						<?= htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_OAUTH_CONNECT')) ?>
+					</button>
+					<div class="mail-connect-email-block" id="mail_connect_mb_oauth_status">
 						<div id="mail-connect-email-inner" class="mail-connect-email-inner">
 							<span class="mail-connect-email-img" id="mail_connect_mb_oauth_status_image"></span>
 							<a class="mail-connect-email-text" title="<?= htmlspecialcharsbx($settings['oauth_user']['email']); ?>" id="mail_connect_mb_oauth_status_email">
@@ -175,9 +176,8 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 							type="button" id="mail_connect_mb_oauth_cancel_btn"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_OAUTH_DISCONNECT') ?></button>
 					</div>
 				</div>
-				<a href="<?=htmlspecialcharsbx(\CHTTP::urlAddParams($baseUri, array('oauth' => 'N'))) ?>"
+				<a href="<?= htmlspecialcharsbx(\CHTTP::urlAddParams($baseUri, array('oauth' => 'N'))) ?>"
 					data-slider-ignore-autobinding="true" style="display: none; ">password mode</a>
-
 
 						<div id="mail-email-oauth" class="ui-alert ui-alert-warning mail-connect-form-item">
 							<label class="mail-connect-form-label" for="mail-email-oauth-field"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_EMAIL_OAUTH_FIELD_TITLE_OFFICE365') ?></label>
@@ -189,11 +189,11 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 						</div>
 
 						<div class="ui-alert ui-alert-danger" id="mail-client-config-email-oauth-field-error">
-							<span class="ui-alert-message"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_EMAIL_OAUTH_FIELD_ERROR') ?></span>
+							<span class="ui-alert-message"><?= htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_EMAIL_OAUTH_FIELD_ERROR')) ?></span>
 						</div>
 
 						<div class="ui-alert ui-alert-success" id="mail-client-config-email-oauth-field-success">
-							<span class="ui-alert-message"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_EMAIL_OAUTH_FIELD_SUCCESS') ?></span>
+							<span class="ui-alert-message"><?= htmlspecialcharsbx(Loc::getMessage('MAIL_CLIENT_CONFIG_EMAIL_OAUTH_FIELD_SUCCESS')) ?></span>
 						</div>
 					<? else: ?>
 						<div class="mail-connect-form-inner">
@@ -240,7 +240,7 @@ $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
 									<? if (!empty($mailbox)): ?> value="<?=htmlspecialcharsbx($mailbox['LOGIN']) ?>" disabled <? endif ?>>
 								<div class="mail-connect-form-error"></div>
 							</div>
-							<div class="mail-connect-form-item">
+							<div class="mail-connect-form-item" id="mail_password_form_wrapper">
 								<label class="mail-connect-form-label" for="mail_connect_mb_pass_imap_field"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_PASS') ?></label>
 								<input class="mail-connect-form-input" type="password" name="fields[pass_imap]" id="mail_connect_mb_pass_imap_field"
 									<? if (!empty($mailbox['PASSWORD'])): ?>
@@ -739,6 +739,9 @@ $arJsParams = array(
 	'isSmtpSwitcherDisabled' => $arResult['LOCK_SMTP'] && $settings['IS_SMTP_SWITCHER_CHECKED'],
 	'isCrmIntegrationAvailable' => !empty($arParams['CRM_AVAILABLE']),
 	'isCrmSwitcherChecked' => empty($mailbox) || !empty($mailbox['__crm']),
+	'isSuccessSyncStatus' => $arResult['LAST_MAIL_CHECK_STATUS'],
+	'oauthUserIsEmpty' => empty($settings['oauth_user']),
+	'isOauthMode' => !empty($settings['oauth']),
 );
 ?>
 <script>
@@ -774,7 +777,11 @@ $arJsParams = array(
 		'MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_SAVE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_SAVE')) ?>',
 		'MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_CANCEL': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_CANCEL')) ?>',
 		'MAIL_MAILBOX_LICENSE_SHARED_LIMIT_BODY': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_MAILBOX_LICENSE_SHARED_LIMIT_BODY', array('#LIMIT#' => LicenseManager::getSharedMailboxesLimit()))) ?>',
-		'MAIL_MAILBOX_LICENSE_SHARED_LIMIT_TITLE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_MAILBOX_LICENSE_SHARED_LIMIT_TITLE')) ?>'
+		'MAIL_MAILBOX_LICENSE_SHARED_LIMIT_TITLE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_MAILBOX_LICENSE_SHARED_LIMIT_TITLE')) ?>',
+		'MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE')) ?>',
+		'MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT')) ?>',
+		'MAIL_CONFIG_PASSWORD_ERROR_TOUR_TITLE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_PASSWORD_ERROR_TOUR_TITLE')) ?>',
+		'MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT')) ?>',
 	});
 
 
@@ -982,35 +989,7 @@ $arJsParams = array(
 			}
 		);
 
-		var cancelHandler = function (e)
-		{
-			var emailOauthBlock = BX('mail-email-oauth');
-
-			if(emailOauthBlock)
-			{
-				BX.hide(emailOauthBlock);
-				BX.hide(oauthFieldError);
-				BX.hide(oauthFieldSuccess);
-			}
-
-			BX('mail_connect_mb_oauth_field').value = 'N';
-
-			if (!form.elements['fields[mailbox_id]'])
-			{
-				var nameField = BX('mail_connect_mb_name_field');
-				if (!nameField['__filled'])
-				{
-					nameField.value = '';
-				}
-			}
-
-			BX('mail_connect_mb_oauth_status').style.display = 'none';
-			BX('mail_connect_mb_oauth_btn').style.display = '';
-
-			e.preventDefault();
-		};
-
-		BX.bind(BX('mail_connect_mb_oauth_cancel_btn'), 'click', cancelHandler);
+		BX.bind(BX('mail_connect_mb_oauth_cancel_btn'), 'click', BX.MailClientConfig.Edit.showOauthAuthorizationBlock);
 
 		for (var i = 0; i < form.elements.length; i++)
 		{

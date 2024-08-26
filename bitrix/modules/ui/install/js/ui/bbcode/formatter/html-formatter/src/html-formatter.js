@@ -1,5 +1,12 @@
 import { Type, Extension } from 'main.core';
-import { Formatter, type FormatterOptions, NodeFormatter } from 'ui.bbcode.formatter';
+import {
+	Formatter,
+	NodeFormatter,
+	type FormatterOptions,
+	type UnknownNodeCallbackOptions,
+	type BeforeConvertCallbackOptions,
+} from 'ui.bbcode.formatter';
+import { BBCodeScheme, BBCodeFragmentNode } from 'ui.bbcode.model';
 import * as NodeFormatters from './node-formatters';
 
 import 'ui.icon-set.actions';
@@ -177,5 +184,37 @@ export class HtmlFormatter extends Formatter
 	getMentionSettings(): HtmlFormatterOptions['mention']
 	{
 		return this.#mentionSettings;
+	}
+
+	getDefaultUnknownNodeCallback(options): (UnknownNodeCallbackOptions) => NodeFormatter | null
+	{
+		return () => {
+			return new NodeFormatter({
+				name: 'unknown',
+				before({ node }: BeforeConvertCallbackOptions): BBCodeFragmentNode {
+					const scheme: BBCodeScheme = node.getScheme();
+
+					if (node.isVoid())
+					{
+						return scheme.createFragment({
+							children: [
+								scheme.createText(node.getOpeningTag()),
+							],
+						});
+					}
+
+					return scheme.createFragment({
+						children: [
+							scheme.createText(node.getOpeningTag()),
+							...node.getChildren(),
+							scheme.createText(node.getClosingTag()),
+						],
+					});
+				},
+				convert(): DocumentFragment {
+					return document.createDocumentFragment();
+				},
+			});
+		};
 	}
 }
