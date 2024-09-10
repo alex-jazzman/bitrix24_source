@@ -25,6 +25,9 @@ if (\CModule::includeModule('bitrix24'))
 \CJsCore::init(array('socnetlogdest', 'popup', 'fx'));
 $APPLICATION->setAdditionalCSS('/bitrix/components/bitrix/main.post.form/templates/.default/style.css');
 
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."workarea-transparent no-background");
+
 $mailbox = $arParams['MAILBOX'];
 $settings = $arParams['SERVICE'];
 

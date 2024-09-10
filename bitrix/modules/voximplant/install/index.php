@@ -227,7 +227,8 @@ class voximplant extends \CModule
 							'PERFORM' => 'X'
 						),
 						'CALL_RECORD' => array(
-							'LISTEN' => 'X'
+							'LISTEN' => 'X',
+							'MODIFY' => 'X',
 						),
 						'USER' => array(
 							'MODIFY' => 'X'

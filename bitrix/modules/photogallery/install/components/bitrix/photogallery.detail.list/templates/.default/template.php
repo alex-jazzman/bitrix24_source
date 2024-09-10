@@ -119,7 +119,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/template_".$sTemplate
 if (!empty($arResult["ERROR_MESSAGE"])):
 ?>
 <div class="photo-error">
-	<?=ShowError($arResult["ERROR_MESSAGE"])?>
+	<? ShowError($arResult["ERROR_MESSAGE"])?>
 </div>
 <?
 endif;

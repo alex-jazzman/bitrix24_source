@@ -64,7 +64,7 @@ class WizardTemplate extends CWizardTemplate
 
 		$support = $bxProductConfig["product_wizard"]["links"] ?? $arWizardConfig["supportText"] ?? InstallGetMessage("SUPPORT");
 
-		if(file_exists($_SERVER["DOCUMENT_ROOT"]."/readme.php") || file_exists($_SERVER["DOCUMENT_ROOT"]."/readme.html"))
+		if (file_exists($_SERVER["DOCUMENT_ROOT"]."/readme.html"))
 			$support = InstallGetMessage("SUPPORT_README").$support;
 
 		//Images

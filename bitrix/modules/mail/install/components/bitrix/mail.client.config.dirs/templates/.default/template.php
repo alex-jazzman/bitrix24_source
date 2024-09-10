@@ -20,6 +20,8 @@ Extension::load([
 
 Asset::getInstance()->addJS('/bitrix/components/bitrix/mail.client.config.dirs/templates/.default/script.js');
 $APPLICATION->setAdditionalCSS('/bitrix/components/bitrix/mail.client.config.dirs/templates/.default/style.css');
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."workarea-transparent no-background");
 
 $mailboxId = isset($arResult['MAILBOX_ID']) ? $arResult['MAILBOX_ID'] : '';
 $maxLevelDirs = isset($arResult['MAX_LEVEL_DIRS']) ? $arResult['MAX_LEVEL_DIRS'] : 0;

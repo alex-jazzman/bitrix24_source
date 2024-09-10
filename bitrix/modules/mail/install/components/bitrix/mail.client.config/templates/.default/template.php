@@ -25,6 +25,9 @@ if (!$arResult['CAN_CONNECT_NEW_MAILBOX'])
 	}
 }
 
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."workarea-transparent no-background");
+
 $isMainPage = $arParams['VARIABLES']['IS_MAIN_MAIL_PAGE'] ?? false;
 ?>
 

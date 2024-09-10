@@ -99,7 +99,7 @@ $tabControl = new CAdminForm("questionTabControl", $aTabs);
 
 if (!$bBadCourse && $_SERVER["REQUEST_METHOD"] == "POST" && !empty($_REQUEST['Update']) && check_bitrix_sessid())
 {
-	$arFILE_ID = $_FILES["FILE_ID"] ?? 0;
+	$arFILE_ID = $_FILES["FILE_ID"] ?? [];
 	$arFILE_ID["del"] = $_REQUEST["FILE_ID_del"] ?? '';
 	$arFILE_ID["MODULE_ID"] = "learning";
 	$arFILE_ID["description"] = $_REQUEST["FILE_ID_descr"] ?? '';

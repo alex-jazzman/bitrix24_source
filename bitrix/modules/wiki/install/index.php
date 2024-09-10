@@ -74,13 +74,10 @@ Class wiki extends CModule
 
 	function InstallFiles()
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/wiki/install/admin', $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin', true, true);
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/wiki/install/images', $_SERVER['DOCUMENT_ROOT'].'/bitrix/images/wiki', true, true);
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/wiki/install/themes', $_SERVER['DOCUMENT_ROOT'].'/bitrix/themes', true, true);
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/wiki/install/components', $_SERVER['DOCUMENT_ROOT'].'/bitrix/components', true, true);
-		}
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/wiki/install/admin', $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/wiki/install/images', $_SERVER['DOCUMENT_ROOT'].'/bitrix/images/wiki', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/wiki/install/themes', $_SERVER['DOCUMENT_ROOT'].'/bitrix/themes', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/wiki/install/components', $_SERVER['DOCUMENT_ROOT'].'/bitrix/components', true, true);
 		return true;
 	}
 

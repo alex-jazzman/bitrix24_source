@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Location = this.BX.Location || {};
 (function (exports,ui_vue,ui_designTokens,location_google,main_popup,location_source,ui_forms,location_core,location_widget,main_core_events,main_core) {
@@ -844,7 +845,7 @@ this.BX.Location = this.BX.Location || {};
 	      if (storeAsLastAddress) {
 	        _classPrivateMethodGet$3(this, _storeAsLastAddress, _storeAsLastAddress2).call(this);
 	      }
-	      if (addressId > 0) {
+	      if (babelHelpers.classPrivateFieldGet(this, _address$2) && addressId > 0) {
 	        babelHelpers.classPrivateFieldGet(this, _address$2).id = addressId;
 	      }
 	      babelHelpers.classPrivateFieldSet(this, _isAddressChangedByFeature, true);

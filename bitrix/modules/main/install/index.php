@@ -208,7 +208,6 @@ class main extends CModule
 		COption::SetOptionString("main", "secure_logout", "Y");
 
 		$nextDay = time() + 86400;
-		CAgent::AddAgent('\\Bitrix\\Main\\Analytics\\CounterDataTable::submitData();', "main", "N", 60);
 		CAgent::AddAgent("CCaptchaAgent::DeleteOldCaptcha(3600);", "main", "N", 3600);
 		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bitrix24'))
 		{

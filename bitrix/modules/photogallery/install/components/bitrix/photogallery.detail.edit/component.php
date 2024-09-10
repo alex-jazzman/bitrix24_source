@@ -1,10 +1,19 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 if (!CModule::IncludeModule("photogallery"))
-	return ShowError(GetMessage("P_MODULE_IS_NOT_INSTALLED"));
+{
+	ShowError(GetMessage("P_MODULE_IS_NOT_INSTALLED"));
+	return;
+}
 elseif (!CModule::IncludeModule("iblock"))
-	return ShowError(GetMessage("IBLOCK_MODULE_NOT_INSTALLED"));
+{
+	ShowError(GetMessage("IBLOCK_MODULE_NOT_INSTALLED"));
+	return;
+}
 elseif ($arParams["BEHAVIOUR"] == "USER" && empty($arParams["USER_ALIAS"]))
-	return ShowError(GetMessage("P_GALLERY_EMPTY"));
+{
+	ShowError(GetMessage("P_GALLERY_EMPTY"));
+	return;
+}
 
 // **************************************************************************************
 if(!function_exists("__UnEscape"))

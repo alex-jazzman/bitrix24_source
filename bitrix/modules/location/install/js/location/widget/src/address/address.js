@@ -183,7 +183,7 @@ export default class Address extends EventEmitter
 			this.#storeAsLastAddress();
 		}
 
-		if (addressId > 0)
+		if (this.#address && addressId > 0)
 		{
 			this.#address.id = addressId;
 		}

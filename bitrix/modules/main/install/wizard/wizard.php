@@ -2931,7 +2931,6 @@ class CreateAdminStep extends CWizardStep
 		{
 			if (BXInstallServices::CreateWizardIndex($wizardName, $errorMessageTmp))
 			{
-				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/readme.php");
 				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/readme.html");
 				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/install.config");
 				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/restore.php");
@@ -3082,7 +3081,6 @@ class SelectWizardStep extends CWizardStep
 			}
 			else
 			{
-				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/readme.php");
 				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/readme.html");
 				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/install.config");
 				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/restore.php");
@@ -3458,7 +3456,6 @@ class LoadModuleActionStep extends CWizardStep
 					}
 					else
 					{
-						BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/readme.php");
 						BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/readme.html");
 						BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/install.config");
 						BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/restore.php");
@@ -3768,7 +3765,6 @@ class SelectWizard1Step extends SelectWizardStep
 			}
 			else
 			{
-				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/readme.php");
 				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/readme.html");
 				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/install.config");
 				BXInstallServices::DeleteDirRec($_SERVER["DOCUMENT_ROOT"] . "/restore.php");

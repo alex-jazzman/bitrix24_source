@@ -35,6 +35,7 @@ class learning extends CModule
 	function InstallDB($arParams = [])
 	{
 		global $DB, $APPLICATION;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		if (is_object($GLOBALS['CACHE_MANAGER']))
@@ -48,7 +49,7 @@ class learning extends CModule
 		// was:		if(!$DB->Query("SELECT 'x' FROM b_learn_course WHERE 1=0", true))
 		if (!$DB->TableExists('b_learn_lesson'))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/db/mysql/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/learning/install/db/" . $connection->getType() . "/install.sql");
 
 			if ($this->errors === false)
 			{

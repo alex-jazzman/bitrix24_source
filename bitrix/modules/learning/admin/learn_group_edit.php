@@ -28,6 +28,14 @@ $bCopy = false;
 $bBadResult = false;
 $message = null;
 $arMembers = array();
+$str_ID = '';
+$str_ACTIVE = '';
+$str_TITLE = '';
+$str_CODE = '';
+$str_SORT = '';
+$str_ACTIVE_FROM = '';
+$str_ACTIVE_TO = '';
+$str_COURSE_LESSON_ID = '';
 
 if ($ID != 0)
 {
@@ -84,15 +92,6 @@ $aTabs = array(
 $aTabs[] = $USER_FIELD_MANAGER->EditFormTab('LEARNING_LGROUPS');
 $tabControl = new CAdminForm("learningGroupResultTabControl", $aTabs);
 $bVarsFromForm = false;
-
-$str_ID = '';
-$str_ACTIVE = '';
-$str_TITLE = '';
-$str_CODE = '';
-$str_SORT = '';
-$str_ACTIVE_FROM = '';
-$str_ACTIVE_TO = '';
-$str_COURSE_LESSON_ID = '';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_REQUEST['Update']) && check_bitrix_sessid())
 {

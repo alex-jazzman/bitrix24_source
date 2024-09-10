@@ -21,7 +21,7 @@ Main\UI\Extension::load('sale.admin_order_list');
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/admin_tool.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-$isCanUsePersonalization = Sale\Configuration::isCanUsePersonalization();
+$isCanUsePersonalization = Sale\Configuration::isCanUsePersonalization() && Main\Analytics\Catalog::isOn();
 
 if($saleModulePermissions == "D")
 	$APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));

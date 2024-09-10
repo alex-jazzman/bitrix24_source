@@ -196,5 +196,13 @@ class HumanResources extends CModule
 			next_exec: $startTime,
 			existError: false,
 		);
+
+		\CAgent::AddAgent(
+			name: 'Bitrix\HumanResources\Install\Stepper\UpdateSortAndActiveFieldsStepper::checkDefaultConverting();',
+			module: $this->MODULE_ID,
+			interval: 600,
+			next_exec: $startTime,
+			existError: false,
+		);
 	}
 }

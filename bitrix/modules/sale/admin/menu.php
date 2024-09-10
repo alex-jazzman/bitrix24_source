@@ -156,7 +156,12 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 
 	/* Orders End*/
 
-	if (Loader::includeModule('sale') && \Bitrix\Sale\Configuration::isCanUsePersonalization())
+	$isBigDataOptionEnabled = Option::get("main", "gather_catalog_stat", "Y") === "Y";
+	if (
+		$isBigDataOptionEnabled
+		&& Loader::includeModule('sale')
+		&& \Bitrix\Sale\Configuration::isCanUsePersonalization()
+	)
 	{
 		$aMenu[] = array(
 			"parent_menu" => "global_menu_marketing",

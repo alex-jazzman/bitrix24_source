@@ -24,6 +24,7 @@
 
 .mail-connect-slider {
 	padding: 0;
+	margin-bottom: 60px;
 }
 
 .mail-connect-section-block {
@@ -916,10 +917,6 @@
 
 .mail_connect_mb_import_messages_label {
 	cursor: pointer;
-}
-
-#workarea-content {
-	background: transparent;
 }
 
 /* mail-provider-showcase */

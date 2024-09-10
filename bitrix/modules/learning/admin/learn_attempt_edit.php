@@ -107,6 +107,8 @@ if (!$bBadAttempt && $_SERVER["REQUEST_METHOD"] == "POST" && $Update <> '' && ch
 	}
 	else
 	{
+		CTestAttempt::OnAttemptChange($ID, $arFields['COMPLETED'] === 'Y');
+
 		if($apply == '')
 		{
 			if ($return_url <> '')

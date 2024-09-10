@@ -863,16 +863,7 @@ else
 	);
 	$arResult['~PATH_TO_POST_EDIT'] = rawurldecode($arResult['PATH_TO_POST_EDIT']);
 
-	//because it can change the page name, and hence the path for the parameter "Action" in tag "Form"
-	if (mb_strpos(POST_FORM_ACTION_URI, 'SEF_APPLICATION_CUR_PAGE_URL=') !== false)
-	{
-		$arResult['PATH_TO_POST_EDIT_SUBMIT'] = CHTTP::urlAddParams(
-			CHTTP::urlDeleteParams(POST_FORM_ACTION_URI, array('SEF_APPLICATION_CUR_PAGE_URL')),
-			array('SEF_APPLICATION_CUR_PAGE_URL' => rawurlencode($arResult['~PATH_TO_POST_EDIT']))
-		);
-	}
-	else
-		$arResult['PATH_TO_POST_EDIT_SUBMIT'] = $arResult['PATH_TO_POST_EDIT'];
+	$arResult['PATH_TO_POST_EDIT_SUBMIT'] = $arResult['PATH_TO_POST_EDIT'];
 
 	$sCatName = '';
 	$arResult["IS_CATEGORY_PAGE"] = CWikiUtils::IsCategoryPage($arResult['ELEMENT']['NAME_LOCALIZE'], $sCatName);
