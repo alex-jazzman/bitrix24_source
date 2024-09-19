@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Repository\Catalog;
 
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\CatalogException,
     Sotbit\RestAPI\Core,
     Sotbit\RestAPI\Localisation as l,
@@ -23,18 +23,18 @@ class Catalog extends CatalogRepository
     public function get(int $id)
     {
         if($this->getUserId() === null) {
-            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         if(!$id) {
-            throw new CatalogException(l::get('ERROR_CATALOG_ID_EMPTY'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_CATALOG_ID_EMPTY'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         $result = \CCatalog::GetByID($id);
        //$result = \Bitrix\Catalog\CatalogIblockTable::getById($id)->fetch();
 
         if(!$result) {
-            throw new CatalogException(l::get('ERROR_CATALOG_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new CatalogException(l::get('ERROR_CATALOG_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         return ['data' => $result];
@@ -45,7 +45,7 @@ class Catalog extends CatalogRepository
         $result = [];
 
         if($this->getUserId() === null) {
-            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         $navParams = ['nPageSize' => $params['limit'], 'iNumPage' => $params['page']];

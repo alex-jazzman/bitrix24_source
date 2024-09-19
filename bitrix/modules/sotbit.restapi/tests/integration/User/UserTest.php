@@ -26,7 +26,7 @@ class UserTest extends BaseTestCase
         $result = (string)$response->getBody();
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('success', $result);
         $this->assertStringContainsString('message', $result);
 
@@ -51,7 +51,7 @@ class UserTest extends BaseTestCase
         $result = (string)$response->getBody();
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('success', $result);
         $this->assertStringContainsString('main', $result);
         $this->assertStringContainsString('groups', $result);

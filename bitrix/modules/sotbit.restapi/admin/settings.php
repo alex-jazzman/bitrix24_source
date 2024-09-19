@@ -48,7 +48,7 @@ if(!Loader::includeModule('catalog')) {
     echo Helper::error(Loc::getMessage($moduleId."_ERROR_CATALOG_MODULE"));
 }*/
 
-if(PHP_VERSION_ID < 70200) {
+if(!SotbitRestAPI::checkVersionPHP()) {
     echo Helper::error(Loc::getMessage($moduleId."_ERROR_PHP_VERSION"));
 }
 
@@ -1042,7 +1042,7 @@ $APPLICATION->SetTitle(Loc::getMessage($moduleId.'_TITLE_SETTINGS'));
         margin-left: 10px;
     }
     input.select_button {
-        margin: 0px !important;
+        margin: 0 !important;
     }
 
     .adm-workarea select.refresh {
@@ -1055,6 +1055,10 @@ $APPLICATION->SetTitle(Loc::getMessage($moduleId.'_TITLE_SETTINGS'));
 
     .adm-workarea input[type="number"] {
         width: 98% !important;
+    }
+
+    select {
+        overflow-x: scroll;
     }
 </style>
 

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\Sale;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 
 class Basket extends Base
 {
@@ -15,11 +15,11 @@ class Basket extends Base
         // prepare
         $this->params = [
             'user_id' => $this->getUserId($request),
-            'limit'   => $request->getQueryParam('limit'),
-            'page'    => $request->getQueryParam('page'),
-            'select'  => $request->getQueryParam('select'),
-            'order'   => $request->getQueryParam('order'),
-            'filter'  => $request->getQueryParam('filter'),
+            'limit'   => $request->getQueryParams()['limit'] ?? null,
+            'page'    => $request->getQueryParams()['page'] ?? null,
+            'select'  => $request->getQueryParams()['select'] ?? null,
+            'order'   => $request->getQueryParams()['order'] ?? null,
+            'filter'  => $request->getQueryParams()['filter'] ?? null,
         ];
 
         // repository
@@ -29,7 +29,7 @@ class Basket extends Base
             $basket['data']['items'] = array_values($basket['data']['items']);
         }
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $basket, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $basket, StatusCode::STATUS_OK);
     }
 
     public function add(Request $request, Response $response, array $args): Response
@@ -50,7 +50,7 @@ class Basket extends Base
 
         // event
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $basket, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $basket, StatusCode::STATUS_OK);
     }
 
 
@@ -72,7 +72,7 @@ class Basket extends Base
 
         // event
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $basket, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $basket, StatusCode::STATUS_OK);
 
     }
 
@@ -96,7 +96,7 @@ class Basket extends Base
 
         // event
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $coupons, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $coupons, StatusCode::STATUS_OK);
     }*/
 
     /**
@@ -120,7 +120,7 @@ class Basket extends Base
 
         // event
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $coupon, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $coupon, StatusCode::STATUS_OK);
     }*/
 
     /**
@@ -142,7 +142,7 @@ class Basket extends Base
 
         // event
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $coupon, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $coupon, StatusCode::STATUS_OK);
 
     }*/
 }

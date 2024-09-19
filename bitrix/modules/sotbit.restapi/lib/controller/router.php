@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
+use Slim\Routing\RouteCollectorProxy as Route;
 use Sotbit\RestAPI\Controller\BaseController;
-use Sotbit\RestAPI\Config\Config;
-use Sotbit\RestAPI\EventDispatcher\Events\RouteEvent;
-use Sotbit\RestAPI\EventDispatcher\Listeners\OrderListener;
 use Sotbit\RestAPI\Exception\EventException;
 use Sotbit\RestAPI\Localisation as l;
 use Bitrix\Main\Loader;
-use Bitrix\Main\LoaderException;
 use Sotbit\RestAPI\Middleware;
 
 /**
@@ -26,25 +23,11 @@ use Sotbit\RestAPI\Middleware;
  */
 class Router extends BaseController
 {
-    public static function listen(\Slim\App $app, $customRouters): void
+    public static function listen(Route $app, $customRouters): void
     {
         try {
-            $response = $app->getContainer()->get('response');
             if($customRouters) {
                 foreach($customRouters as $router) {
-                    /*if(!$router['callable']) {
-                        throw new EventException(l::get('ERROR_EVENT_EMPTY_CALLABLE'), StatusCode::HTTP_BAD_REQUEST, $response);
-                    }
-
-                    if(!$router['method']) {
-                        throw new EventException(l::get('ERROR_EVENT_EMPTY_METHOD'), StatusCode::HTTP_BAD_REQUEST, $response);
-                    }
-
-                    if(!$router['pattern']) {
-                        throw new EventException(l::get('ERROR_EVENT_EMPTY_PATTERN'), StatusCode::HTTP_BAD_REQUEST, $response);
-                    }*/
-
-
                     if($router['callable'] && $router['method'] && $router['pattern']) {
                         if($router['module']) {
                             Loader::includeModule($router['module']);
@@ -69,12 +52,7 @@ class Router extends BaseController
                     }
                 }
             }
-        } catch(LoaderException $e) {
-            //throw new EventException($e->getMessage(), StatusCode::HTTP_BAD_REQUEST, $response);
-        } catch(\BadMethodCallException $e) {
-            //throw new EventException($e->getMessage(), StatusCode::HTTP_BAD_REQUEST, $response);
         } catch(\Exception $e) {
-            //throw new EventException($e->getMessage(), StatusCode::HTTP_BAD_REQUEST, $response);
         }
     }
 
@@ -109,7 +87,7 @@ class Router extends BaseController
         ];
 
         if(!is_callable($args['callable'])) {
-            throw new EventException(l::get('ERROR_EVENT_EMPTY_CALLABLE_INVALID'), StatusCode::HTTP_BAD_REQUEST);
+            throw new EventException(l::get('ERROR_EVENT_EMPTY_CALLABLE_INVALID'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         try {
@@ -118,7 +96,7 @@ class Router extends BaseController
             $message = $e->getMessage();
         }
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $message, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $message, StatusCode::STATUS_OK);
     }
 
 }

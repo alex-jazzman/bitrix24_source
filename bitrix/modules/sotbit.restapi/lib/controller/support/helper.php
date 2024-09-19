@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\Support;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\SupportException;
 use Sotbit\RestAPI\Localisation as l;
 
@@ -24,7 +24,7 @@ class Helper extends Base
         $input = (array)$request->getParsedBody();
         $support = $this->getRepository()->getDictionary();
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::STATUS_OK);
     }
 
     public function getFile(Request $request, Response $response, array $args): Response
@@ -35,7 +35,7 @@ class Helper extends Base
 
         $support = $this->getRepository()->getFile((string)$args['hash'], (int)$this->getUserId($request));
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::STATUS_OK);
     }
 
 

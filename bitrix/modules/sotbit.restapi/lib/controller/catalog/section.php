@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\Catalog;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Config\Config;
 
 class Section extends Base
@@ -20,7 +20,7 @@ class Section extends Base
         $section = $this->getRepository()->getSection((int) $args['iblock_id'], (int) $args['section_id'], $this->getUserId($request));
 
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $section, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $section, StatusCode::STATUS_OK);
     }
 
     public function getList(Request $request, Response $response, array $args): Response
@@ -28,11 +28,11 @@ class Section extends Base
         // prepare
         $this->params = [
             'user_id' => $this->getUserId($request),
-            'select'  => $request->getQueryParam('select'),
-            'filter'  => $request->getQueryParam('filter'),
-            'order'   => $request->getQueryParam('order'),
-            'page'    => $request->getQueryParam('page'),
-            'limit'   => $request->getQueryParam('limit'),
+            'select'  => $request->getQueryParams()['select'] ?? null,
+            'filter'  => $request->getQueryParams()['filter'] ?? null,
+            'order'   => $request->getQueryParams()['order'] ?? null,
+            'page'    => $request->getQueryParams()['page'] ?? null,
+            'limit'   => $request->getQueryParams()['limit'] ?? null,
         ];
 
         $this->params['filter']['IBLOCK_ID'] = (int) $args['iblock_id'];
@@ -46,7 +46,7 @@ class Section extends Base
         // event detail
         //$this->getEventService()->dispatch(new OrderEvent($order), OrderEvent::DETAIL_AFTER);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $list, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $list, StatusCode::STATUS_OK);
     }
 
 }

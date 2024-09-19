@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Middleware;
 
-use PHPUnit\Exception;
-use Psr\Http\Message\ResponseInterface;
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Route;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
+use Psr\Container\ContainerInterface as Container;
+use Slim\Psr7\Response;
+use Slim\App;
 use Sotbit\RestAPI\Model;
 use Sotbit\RestAPI\Exception\AuthException;
 use Sotbit\RestAPI\Localisation as l;
@@ -23,38 +23,34 @@ use Sotbit\RestAPI\Core;
  */
 class Log extends Base
 {
-    private $container;
+    protected ?Container $container;
 
-    public function __construct($container)
+    public function __construct(App $app)
     {
-        $this->container = $container->getContainer();
+        $this->container = $app->getContainer();
     }
 
-    public function __invoke(
-        Request $request,
-        Response $response,
-        $next
-    ): ResponseInterface {
-        $arrayLog = [];
+    public function __invoke(Request $request, RequestHandler $handler): Response
+    {
         $logWriter = new Core\LogWriter();
 
         if($userId = $this->getUserId($request)) {
-            $arrayLog['USER_ID'] = $userId;
+            $logWriter->setParam('USER_ID', $userId);
         }
 
         // RESPONSE params
         $logWriter->setRequest($request);
 
         // send a request to get a response
-        $response = $next($request, $response);
+        $response = $handler->handle($request);
 
         // REQUEST params
         if($response->getStatusCode()) {
-            $arrayLog['RESPONSE_HTTP_CODE'] = $response->getStatusCode().':'.$response->getReasonPhrase();
+            $logWriter->setParam('RESPONSE_HTTP_CODE', $response->getStatusCode().':'.$response->getReasonPhrase());
         }
 
         // write LOG
-        $logWriter->add($arrayLog);
+        $logWriter->add();
 
         return $response;
     }

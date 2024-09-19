@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Repository;
 
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\UserException;
 use Sotbit\RestAPI\Core;
 use Bitrix\Main\UserTable;
@@ -12,7 +12,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Type;
 use Sotbit\RestAPI\Core\Helper;
 use Sotbit\RestAPI\Localisation as l;
-use Slim\Http\UploadedFile;
+use Slim\Psr7\UploadedFile;
 
 class UserRepository extends BaseRepository
 {
@@ -206,7 +206,7 @@ class UserRepository extends BaseRepository
                     $updateUser[$key] = [
                         'name'      => Helper::convertEncodingToSite($file->getClientFilename()),
                         'type'      => $file->getClientMediaType(),
-                        'tmp_name'  => $file->file,
+                        'tmp_name'  => $file->getFilePath(),
                         'error'     => $file->getError(),
                         'size'      => $file->getSize(),
                         "MODULE_ID" => "main",
@@ -236,7 +236,7 @@ class UserRepository extends BaseRepository
 
         // password
         if(!empty($updateUser['PASSWORD']) && empty($updateUser['PASSWORD_CONFIRM'])) {
-            throw new UserException(l::get('ERROR_USER_PASSWORD_CONFIRM'), StatusCode::HTTP_BAD_REQUEST);
+            throw new UserException(l::get('ERROR_USER_PASSWORD_CONFIRM'), StatusCode::STATUS_BAD_REQUEST);
         } elseif(!empty($updateUser['PASSWORD']) && !empty($updateUser['PASSWORD_CONFIRM']) && $updateUser['PASSWORD'] === $updateUser['PASSWORD_CONFIRM']) {
             $updateUser["CONFIRM_PASSWORD"] = $updateUser['PASSWORD_CONFIRM'];
             unset($updateUser['PASSWORD_CONFIRM']);
@@ -247,7 +247,7 @@ class UserRepository extends BaseRepository
             $res = $user->Update($userId, $updateUser, true);
 
             if($user->LAST_ERROR) {
-                throw new UserException($user->LAST_ERROR, StatusCode::HTTP_BAD_REQUEST);
+                throw new UserException($user->LAST_ERROR, StatusCode::STATUS_BAD_REQUEST);
             }
 
             return $res;
@@ -289,7 +289,7 @@ class UserRepository extends BaseRepository
                                ]);
 
         if(!$user) {
-            throw new UserException(l::get('ERROR_USER_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new UserException(l::get('ERROR_USER_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         $user = reset($user);
@@ -324,11 +324,11 @@ class UserRepository extends BaseRepository
         $user = \CUser::GetByLogin($login)->fetch();
 
         if(empty($user) || !$this->isUserPassword($user['PASSWORD'], $password)) {
-            throw new UserException(l::get('ERROR_AUTH_INCORRECT'), StatusCode::HTTP_BAD_REQUEST);
+            throw new UserException(l::get('ERROR_AUTH_INCORRECT'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         if($user['ACTIVE'] !== 'Y') {
-            throw new UserException(l::get('ERROR_AUTH_USER_DEACTIVATED'), StatusCode::HTTP_BAD_REQUEST);
+            throw new UserException(l::get('ERROR_AUTH_USER_DEACTIVATED'), StatusCode::STATUS_BAD_REQUEST);
         }
 
 
@@ -367,7 +367,7 @@ class UserRepository extends BaseRepository
                                ]);
 
         if(!$user) {
-            throw new UserException(l::get('ERROR_USER_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new UserException(l::get('ERROR_USER_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         return reset($user);
@@ -391,7 +391,7 @@ class UserRepository extends BaseRepository
                                ]);
 
         if(!$user) {
-            throw new UserException(l::get('ERROR_USER_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new UserException(l::get('ERROR_USER_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         return reset($user);
@@ -416,7 +416,7 @@ class UserRepository extends BaseRepository
                                ]);
 
         if(!$user) {
-            throw new UserException(l::get('ERROR_USER_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new UserException(l::get('ERROR_USER_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         return reset($user);
@@ -453,7 +453,7 @@ class UserRepository extends BaseRepository
     {
         global $USER_FIELD_MANAGER;
 
-        $config = $this->config->getPersonalUserProperties();
+        $config = $this->getConfig()->getPersonalUserProperties();
         $userProperties = $USER_FIELD_MANAGER->GetUserFields("USER", $userId, LANGUAGE_ID);
         $countries = GetCountryArray();
 

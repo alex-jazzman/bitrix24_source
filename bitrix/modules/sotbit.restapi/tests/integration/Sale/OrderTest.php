@@ -19,7 +19,7 @@ class OrderTest extends BaseTestCase
         );
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
 
         $resultJson = $this->getJson($response);
         $this->assertEquals('success', $resultJson['status']);
@@ -36,8 +36,7 @@ class OrderTest extends BaseTestCase
             '/'.self::VERSION_API.'/orders'
         );
         $resultJson = $this->getJson($responseOrders);
-
-        if($resultJson) {
+        if($resultJson && isset($resultJson['message']['data'])) {
             $orders = $resultJson['message']['data'];
             if(count($orders)) {
                 $orderId = array_keys($orders)[0];
@@ -51,7 +50,7 @@ class OrderTest extends BaseTestCase
             );
 
             $this->assertEquals(200, $response->getStatusCode());
-            $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+            $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
 
             $resultJson = $this->getJson($response);
             $this->assertEquals('success', $resultJson['status']);
@@ -129,7 +128,7 @@ class OrderTest extends BaseTestCase
         );
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
 
         $resultJson = $this->getJson($response);
         $this->assertEquals('success', $resultJson['status']);
@@ -148,7 +147,7 @@ class OrderTest extends BaseTestCase
         );
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
 
         $resultJson = $this->getJson($response);
         $this->assertEquals('success', $resultJson['status']);
@@ -166,7 +165,7 @@ class OrderTest extends BaseTestCase
         );
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
 
         $resultJson = $this->getJson($response);
         $this->assertEquals('success', $resultJson['status']);
@@ -184,7 +183,7 @@ class OrderTest extends BaseTestCase
         );
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
 
         $resultJson = $this->getJson($response);
         $this->assertEquals('success', $resultJson['status']);

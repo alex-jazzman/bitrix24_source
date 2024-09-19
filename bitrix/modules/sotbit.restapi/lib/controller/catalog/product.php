@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\Catalog;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Core\Helper;
 
 class Product extends Base
@@ -21,7 +21,7 @@ class Product extends Base
 
         // event
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $product, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $product, StatusCode::STATUS_OK);
     }
 
     public function getList(Request $request, Response $response, array $args): Response
@@ -29,12 +29,12 @@ class Product extends Base
         // prepare
         $this->params = [
             'user_id' => $this->getUserId($request),
-            'select'  => $request->getQueryParam('select'),
-            'filter'  => $request->getQueryParam('filter'),
-            'order'   => $request->getQueryParam('order'),
-            'limit'   => $request->getQueryParam('limit'),
-            'page'    => $request->getQueryParam('page'),
-            'search'  => Helper::convertEncodingToSite($request->getQueryParam('search')),
+            'select'  => $request->getQueryParams()['select'] ?? null,
+            'filter'  => $request->getQueryParams()['filter'] ?? null,
+            'order'   => $request->getQueryParams()['order'] ?? null,
+            'limit'   => $request->getQueryParams()['limit'] ?? null,
+            'page'    => $request->getQueryParams()['page'] ?? null,
+            'search'  => Helper::convertEncodingToSite($request->getQueryParams()['search'] ?? null),
         ];
 
 
@@ -47,7 +47,7 @@ class Product extends Base
 
         $list['data'] = array_values($list['data']);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $list, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $list, StatusCode::STATUS_OK);
     }
 
 }

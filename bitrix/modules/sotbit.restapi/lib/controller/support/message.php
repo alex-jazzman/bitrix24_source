@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\Support;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\EventDispatcher\Events\SupportEvent;
 use Sotbit\RestAPI\Exception\SupportException;
 use Sotbit\RestAPI\Localisation as l;
+use Slim\Routing\RouteContext;
 
 /**
  * Class Message
@@ -24,11 +25,11 @@ class Message extends Base
     {
         $this->params = [
             'user_id' => $this->getUserId($request),
-            'filter' => $request->getQueryParam('filter'),
-            'limit' => $request->getQueryParam('limit'),
-            'page' => $request->getQueryParam('page'),
-            'order' => $request->getQueryParam('order'),
-            'router_file' => $this->container->get('router')->pathFor('support.get.file', ['hash' => '#HASH#']),
+            'filter' => $request->getQueryParams()['filter'] ?? null,
+            'limit' => $request->getQueryParams()['limit'] ?? null,
+            'page' => $request->getQueryParams()['page'] ?? null,
+            'order' => $request->getQueryParams()['order'] ?? null,
+            'router_file' => RouteContext::fromRequest($request)->getRouteParser()->urlFor('support.get.file', ['hash' => '#HASH#']),
         ];
 
         // event
@@ -44,7 +45,7 @@ class Message extends Base
         $this->getEvents()->dispatch(new SupportEvent($tickets), SupportEvent::MESSAGE_AFTER_GET);
 
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $tickets, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $tickets, StatusCode::STATUS_OK);
     }
 
     public function getOne(Request $request, Response $response, array $args): Response
@@ -57,14 +58,14 @@ class Message extends Base
         }
 
         // prepare file url for download
-        $routerFile = $this->container->get('router')->pathFor('support.get.file', ['hash' => '#HASH#']);
+        $routerFile = RouteContext::fromRequest($request)->getRouteParser()->urlFor('support.get.file', ['hash' => '#HASH#']);
 
         $ticket = $this->getRepository()->getMessage((int)$args['id'], $this->getUserId($request), $routerFile);
 
         // event
         $this->getEvents()->dispatch(new SupportEvent($ticket), SupportEvent::MESSAGE_AFTER_GET);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $ticket, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $ticket, StatusCode::STATUS_OK);
     }
 
 
@@ -84,21 +85,21 @@ class Message extends Base
             $this->getUserId($request)
         );
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::HTTP_CREATED);
+        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::STATUS_CREATED);
     }
 
     public function delete(Request $request, Response $response, array $args): Response
     {
         $this->getRepository()->delete((int)$args['id']);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, null, StatusCode::HTTP_NO_CONTENT);
+        return $this->response($response, self::RESPONSE_SUCCESS, null, StatusCode::STATUS_NO_CONTENT);
     }
 
     public function search(Request $request, Response $response, array $args): Response
     {
         $supports = $this->getRepository()->search($args['query']);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $supports, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $supports, StatusCode::STATUS_OK);
     }
 
     public function update(Request $request, Response $response, array $args): Response
@@ -106,6 +107,6 @@ class Message extends Base
         $input = (array)$request->getParsedBody();
         $support = $this->getRepository()->update($input, (int)$args['id']);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::STATUS_OK);
     }
 }

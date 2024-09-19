@@ -6,9 +6,9 @@ namespace Sotbit\RestAPI\Controller\User;
 
 use Firebase\JWT\JWT;
 use Respect\Validation\Validator as v;
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Config\Config;
 use Sotbit\RestAPI\Core\Helper;
 use Sotbit\RestAPI\Exception\UserException;
@@ -72,7 +72,7 @@ class Auth extends Base
             'user_id'       => $jwt['user_id'],
         ];
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $message, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $message, StatusCode::STATUS_OK);
     }
 
     /**
@@ -91,12 +91,12 @@ class Auth extends Base
         if(empty($data->email)) {
             throw new UserException(l::get('ERROR_USER_EMAIL_EMPTY'), 400);
         }
-        if(!v::email()->validate($data->email)) {
+        if(!filter_var($data->email, FILTER_VALIDATE_EMAIL)) {
             throw new UserException(l::get('ERROR_USER_EMAIL_INVALID'), 400);
         }
 
         $message = $this->getRepository()->forgot($data->email);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $message, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $message, StatusCode::STATUS_OK);
     }
 }

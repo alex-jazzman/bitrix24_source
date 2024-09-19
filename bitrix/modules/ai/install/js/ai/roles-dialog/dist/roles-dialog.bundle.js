@@ -1,4 +1,4 @@
-/* eslint-disable */
+/* eslint-disable  */
 this.BX = this.BX || {};
 (function (exports,ai_engine,main_popup,main_core_events,ui_vue3_components_hint,main_core,ui_vue3_pinia,ui_label,ui_iconSet_api_vue,ui_iconSet_api_core) {
 	'use strict';
@@ -162,8 +162,12 @@ this.BX = this.BX || {};
 	var _sendLabel = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendLabel");
 	var _getCommonParameters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCommonParameters");
 	var _getFormattedExtraParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFormattedExtraParams");
+	var _formatCSectionParam = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formatCSectionParam");
 	class RolesDialogAnalytics {
 	  constructor(options) {
+	    Object.defineProperty(this, _formatCSectionParam, {
+	      value: _formatCSectionParam2
+	    });
 	    Object.defineProperty(this, _getFormattedExtraParams, {
 	      value: _getFormattedExtraParams2
 	    });
@@ -177,7 +181,7 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _cSection)[_cSection] = options.cSection;
+	    babelHelpers.classPrivateFieldLooseBase(this, _cSection)[_cSection] = babelHelpers.classPrivateFieldLooseBase(this, _formatCSectionParam)[_formatCSectionParam](options.cSection);
 	  }
 	  sendOpenLabel(isSuccess, role) {
 	    const status = isSuccess ? RolesDialogAnalyticsEventStatus.SUCCESS : RolesDialogAnalyticsEventStatus.ERROR;
@@ -250,8 +254,8 @@ this.BX = this.BX || {};
 	      ...babelHelpers.classPrivateFieldLooseBase(this, _getFormattedExtraParams)[_getFormattedExtraParams](extraParams)
 	    };
 	    sendData(sendDataOptions);
-	  } catch (e) {
-	    console.error('AI: RolesDialog: Can\'t send analytics', e);
+	  } catch (er) {
+	    console.error('AI: RolesDialog: Can\'t send analytics', er);
 	  }
 	}
 	function _getCommonParameters2() {
@@ -267,6 +271,14 @@ this.BX = this.BX || {};
 	    formattedExtraParams[paramKey] = `${main_core.Text.toCamelCase(param.name)}_${main_core.Text.toCamelCase(param.value)}`;
 	  });
 	  return formattedExtraParams;
+	}
+	function _formatCSectionParam2(cSection) {
+	  return cSection.split('_').map(stringPart => {
+	    if (Number.isNaN(parseInt(stringPart, 10))) {
+	      return stringPart;
+	    }
+	    return '';
+	  }).filter(stringPart => stringPart).join('_');
 	}
 
 	const RolesDialogGroupListFooterEvents = {

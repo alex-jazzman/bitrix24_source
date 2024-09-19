@@ -1,40 +1,30 @@
 <?php
 declare(strict_types=1);
 
+use Slim\Factory\AppFactory;
+use DI\Container;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 use Sotbit\RestAPI\Core\Helper;
 
-/* Warnings and Notices
-error_reporting(E_ALL);
-set_error_handler(function ($severity, $message, $file, $line) {
-    if (error_reporting(E_ALL) & $severity > 8192) {
-        throw new \ErrorException($message, 0, $severity, $file, $line);
-    }
-});*/
-
-/**
- * Include custom settings from file
- */
-$settings = require __DIR__ . DS . 'settings.php';
-if(Helper::checkCustomFile('settings.php')) {
-    $settings = array_merge($settings, require Helper::checkCustomFile('settings.php'));
-}
+// Init container
+$container = require __DIR__ . '/container.php';
+AppFactory::setContainer($container->build());
 
 // Init app
-$app = new \Slim\App($settings);
-
-// Add CorsSlim
-$app->add(new \CorsSlim\CorsSlim());
+$app = AppFactory::create();
 
 // Add Cache
 $app->add(new \Slim\HttpCache\Cache('public', 86400));
 
-// Get container
-$container = $app->getContainer();
+// Set default route path
+$app->setBasePath(\SotbitRestAPI::getRouteMainPath());
 
-require __DIR__ . DS . 'dependencies.php';
-require __DIR__ . DS . 'repositories.php';
-require __DIR__ . DS . 'events.php';
-require __DIR__ . DS . 'routes.php';
+$customErrorHandler = require __DIR__ . '/errorhandler.php';
+(require __DIR__ . '/cors.php')($app);
+(require __DIR__ . '/events.php')($app->getContainer());
+(require __DIR__ . '/middleware.php')($app, $customErrorHandler);
+(require __DIR__ . '/routes.php')($app);
+(require __DIR__ . '/notfound.php')($app);
 
-
-$app->run();
+return $app;

@@ -5,7 +5,7 @@ type RolesDialogAnalyticsOptions = {
 	cSection: string;
 }
 
-const RolesDialogAnalyticsEvent = Object.freeze({
+const RolesDialogAnalyticsEvent = Object.freeze( {
 	OPEN: 'open',
 	CLOSE: 'close',
 	SAVE: 'save',
@@ -25,7 +25,7 @@ export class RolesDialogAnalytics
 
 	constructor(options: RolesDialogAnalyticsOptions)
 	{
-		this.#cSection = options.cSection;
+		this.#cSection = this.#formatCSectionParam(options.cSection);
 	}
 
 	sendOpenLabel(isSuccess: boolean, role?: string): void
@@ -126,6 +126,22 @@ export class RolesDialogAnalytics
 		});
 
 		return formattedExtraParams;
+	}
+
+	#formatCSectionParam(cSection: string): string
+	{
+		return cSection
+			.split('_')
+			.map((stringPart: string) => {
+				if (Number.isNaN(parseInt(stringPart, 10)))
+				{
+					return stringPart;
+				}
+
+				return '';
+			})
+			.filter((stringPart: string) => stringPart)
+			.join('_');
 	}
 }
 

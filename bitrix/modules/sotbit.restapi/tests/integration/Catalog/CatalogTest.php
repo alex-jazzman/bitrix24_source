@@ -27,7 +27,7 @@ class CatalogTest extends BaseCatalogTest
         );
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
 
         $resultJson = $this->getJson($response);
         $this->assertEquals('success', $resultJson['status']);
@@ -56,7 +56,7 @@ class CatalogTest extends BaseCatalogTest
             );
 
             $this->assertEquals(200, $response->getStatusCode());
-            $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+            $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
 
             $resultJson = $this->getJson($response);
             $this->assertEquals('success', $resultJson['status']);

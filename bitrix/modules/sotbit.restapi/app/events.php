@@ -2,44 +2,32 @@
 
 declare(strict_types=1);
 
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Sotbit\RestAPI\EventDispatcher\Subscribers;
 use Sotbit\RestAPI\Core\Helper;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use Psr\Container\ContainerInterface;
 
-/**
- * Events
- *
- * @link https://symfony.com/doc/current/components/event_dispatcher.html
- * @return EventDispatcher
- */
-$container['event_dispatcher'] = static function(): EventDispatcher {
-    return new EventDispatcher();
+return static function (ContainerInterface $container): void {
+
+    $eventDispatcher = $container->get('event_dispatcher');
+
+    /**
+     * Order events subscriber
+     */
+    $eventDispatcher->addSubscriber(new Subscribers\OrderSubscriber());
+
+    /**
+     * User events subscriber
+     */
+    $eventDispatcher->addSubscriber(new Subscribers\UserSubscriber());
+
+    /**
+     * Support events subscriber
+     */
+    $eventDispatcher->addSubscriber(new Subscribers\SupportSubscriber());
+
+    /**
+     * Get help events subscriber
+     */
+    $eventDispatcher->addSubscriber(new Subscribers\RouterSubscriber());
 };
-
-
-/**
- * Order events subscriber
- */
-$container['event_dispatcher']->addSubscriber(new Subscribers\OrderSubscriber());
-
-/**
- * User events subscriber
- */
-$container['event_dispatcher']->addSubscriber(new Subscribers\UserSubscriber());
-
-/**
- * Support events subscriber
- */
-$container['event_dispatcher']->addSubscriber(new Subscribers\SupportSubscriber());
-
-/**
- * Get help events subscriber
- */
-$container['event_dispatcher']->addSubscriber(new Subscribers\RouterSubscriber());
-
-/**
- * Include custom dependencies from file
- */
-if(Helper::checkCustomFile(basename(__FILE__))) {
-    require Helper::checkCustomFile(basename(__FILE__));
-}

@@ -112,7 +112,7 @@ class Config extends BaseConfig
      */
     public function isModuleActive(): bool
     {
-        return $this->get('ACTIVE') === 'Y' && PHP_VERSION_ID > 70200;
+        return $this->get('ACTIVE') === 'Y' && \SotbitRestAPI::checkVersionPHP();
     }
 
     /**

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Repository;
 
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\CatalogException,
     Sotbit\RestAPI\Repository\Catalog as _Catalog,
     Sotbit\RestAPI\Repository\Catalog\Product,
@@ -37,18 +37,18 @@ class CatalogRepository extends BaseRepository
     {
         parent::__construct();
         if(!Loader::includeModule("sale")) {
-            throw new CatalogException(l::get('ERROR_MODULE_SALE'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_MODULE_SALE'), StatusCode::STATUS_BAD_REQUEST);
         }
         if(!Loader::includeModule("catalog")) {
-            throw new CatalogException(l::get('ERROR_MODULE_CATALOG'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_MODULE_CATALOG'), StatusCode::STATUS_BAD_REQUEST);
         }
         if(!Loader::includeModule("currency")) {
-            throw new CatalogException(l::get('ERROR_MODULE_CURRENCY'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_MODULE_CURRENCY'), StatusCode::STATUS_BAD_REQUEST);
         }
 
 
         if(!Config::getInstance()->isCatalogActive()) {
-            throw new CatalogException(l::get('ERROR_CATALOG_IS_ACTIVE'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_CATALOG_IS_ACTIVE'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         $this->permission = new _Catalog\Permission();
@@ -230,10 +230,13 @@ class CatalogRepository extends BaseRepository
         // check permission
         $this->permission->user($userId)->section((int) $params['filter']['IBLOCK_ID'], 0);
 
+        $filter = (new _Catalog\Filter())
+            ->setUserId($userId)
+            ->select($params['select'])
+            ->filter($params['filter']);
 
-        $section = new _Catalog\Filter();
+        return $filter->getItems();
 
-        return $section->setUserId($userId)->select($params['select'])->filter($params['filter'])->execute();
     }
 
     /**
@@ -258,16 +261,16 @@ class CatalogRepository extends BaseRepository
      */
     protected function prepareReturn(array $array, string $typeView = self::TYPE_LIST): array
     {
-        $sizePreview = $this->getSizeImage($typeView);
+        $sizePreview = self::getSizeImage($typeView);
         if($array) {
             // prepare picture
             if(is_numeric($array['PICTURE'])) {
-                $array['PICTURE'] = $this->getPictureSrc((int) $array['PICTURE'], $sizePreview);
+                $array['PICTURE'] = self::getPictureSrc((int) $array['PICTURE'], $sizePreview);
             }
 
             // prepare detail picture
             if(is_numeric($array['DETAIL_PICTURE'])) {
-                $array['DETAIL_PICTURE'] = $this->getPictureSrc((int) $array['DETAIL_PICTURE'], $sizePreview);
+                $array['DETAIL_PICTURE'] = self::getPictureSrc((int) $array['DETAIL_PICTURE'], $sizePreview);
             } else {
                 $array['DETAIL_PICTURE']['ORIGINAL'] = $array['DETAIL_PICTURE']['RESIZE'] = Product::IMAGE_NOT_FOUND;
             }
@@ -275,7 +278,7 @@ class CatalogRepository extends BaseRepository
 
             // prepare preview picture
             if(is_numeric($array['PREVIEW_PICTURE'])) {
-                $array['PREVIEW_PICTURE'] = $this->getPictureSrc((int) $array['PREVIEW_PICTURE'], $sizePreview);
+                $array['PREVIEW_PICTURE'] = self::getPictureSrc((int) $array['PREVIEW_PICTURE'], $sizePreview);
             } else {
                 $array['PREVIEW_PICTURE']['ORIGINAL'] = $array['PREVIEW_PICTURE']['RESIZE'] = Product::IMAGE_NOT_FOUND;
             }

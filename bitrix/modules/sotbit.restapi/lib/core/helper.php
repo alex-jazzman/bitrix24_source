@@ -287,4 +287,39 @@ class Helper
             ksort($array);
         }
     }
+
+    public static function generateJson404(\Exception $exception): void
+    {
+        global $APPLICATION;
+
+        $APPLICATION->RestartBuffer();
+        header('Content-Type: application/json');
+
+        if (!defined("ERROR_404")) {
+            define("ERROR_404", "Y");
+        }
+
+        \CHTTP::setStatus("404 Not Found");
+
+        if(\SotbitRestAPI::isDebug()) {
+            $data = [
+                'status'  => 'error',
+                'message' => self::convertEncodingToUtf8($exception->getMessage()),
+                'class'   => (new \ReflectionClass($exception::class))->getName(),
+                'code'    => 404,
+                'file'    => $exception->getFile(),
+                'line'    => $exception->getLine(),
+            ];
+        } else {
+            $data = [
+                'status'  => 'error',
+                'message' => self::convertEncodingToUtf8($exception->getMessage()),
+            ];
+        }
+
+        echo \Bitrix\Main\Web\Json::encode($data);
+
+        \CMain::FinalActions();
+        die();
+    }
 }

@@ -21,7 +21,7 @@ class SaleTest extends BaseTestCase
         $result = (string) $response->getBody();
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('success', $result);
         $this->assertStringContainsString('message', $result);
         $this->assertStringContainsString('data', $result);
@@ -40,9 +40,12 @@ class SaleTest extends BaseTestCase
         );
         $resultOrders = (string) $responseOrders->getBody();
         if($resultOrders) {
-            $orders = json_decode($resultOrders, true)['message']['data'];
-            if(count($orders)) {
-                $orderId = array_keys($orders)[0];
+            $json = json_decode($resultOrders, true);
+            if(isset($json['message']['data'])) {
+                $orders = $json['message']['data'];
+                if(count($orders)) {
+                    $orderId = array_keys($orders)[0];
+                }
             }
         }
 
@@ -55,7 +58,7 @@ class SaleTest extends BaseTestCase
             $result = (string) $response->getBody();
 
             $this->assertEquals(200, $response->getStatusCode());
-            $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+            $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
             $this->assertStringContainsString('success', $result);
             $this->assertStringContainsString('message', $result);
             $this->assertStringContainsString('data', $result);
@@ -136,7 +139,7 @@ class SaleTest extends BaseTestCase
         $result = (string) $response->getBody();
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('success', $result);
         $this->assertStringContainsString('message', $result);
 
@@ -157,7 +160,7 @@ class SaleTest extends BaseTestCase
         $result = (string) $response->getBody();
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('success', $result);
         $this->assertStringContainsString('message', $result);
 
@@ -177,7 +180,7 @@ class SaleTest extends BaseTestCase
         $result = (string) $response->getBody();
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('success', $result);
         $this->assertStringContainsString('message', $result);
 
@@ -197,7 +200,7 @@ class SaleTest extends BaseTestCase
         $result = (string) $response->getBody();
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('success', $result);
         $this->assertStringContainsString('message', $result);
 

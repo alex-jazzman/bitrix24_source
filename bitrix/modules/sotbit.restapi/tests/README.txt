@@ -6,3 +6,6 @@ For sotbit.restapi with dependency sotbit.b2bcabinet
 
 For sotbit.restapi with dependency other module
 ./vendor/bin/phpunit --bootstrap tests/bootstrap.php tests/ [other module]
+
+
+Set login and password to phpunit.xml.dist

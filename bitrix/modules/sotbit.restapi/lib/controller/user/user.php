@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\User;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\UserException;
 use Sotbit\RestAPI\Localisation as l;
 
@@ -23,14 +23,14 @@ class User extends Base
     {
         $user = $this->getRepository()->get($this->getUserId($request));
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $user, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $user, StatusCode::STATUS_OK);
     }
 
     public function getOne(Request $request, Response $response, array $args): Response
     {
         $user = $this->getRepository()->get((int) $args['id']);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $user, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $user, StatusCode::STATUS_OK);
     }
 
     public function update(Request $request, Response $response, array $args): Response
@@ -42,7 +42,7 @@ class User extends Base
 
         $user = $this->getRepository()->update($input, $this->getUserId($request));
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $user, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $user, StatusCode::STATUS_OK);
     }
 
 }

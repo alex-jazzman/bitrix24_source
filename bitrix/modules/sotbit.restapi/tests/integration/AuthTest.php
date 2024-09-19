@@ -98,7 +98,7 @@ class AuthTest extends BaseTestCase
         self::$userId = (int)json_decode($result, false)->message->user_id;
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('Authorization', $result);
         $this->assertStringContainsString('Bearer', $result);
     }
@@ -170,7 +170,7 @@ class AuthTest extends BaseTestCase
         $result = (string)$response->getBody();
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('success', $result);
         $this->assertStringContainsString('message', $result);
         $this->assertStringContainsString('MESSAGE', $result);

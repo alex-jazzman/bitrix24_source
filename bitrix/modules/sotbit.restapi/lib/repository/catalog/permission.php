@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Sotbit\RestAPI\Repository\Catalog;
 
 use PHPUnit\Util\Exception;
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\CatalogException,
     Sotbit\RestAPI\Core,
     Sotbit\RestAPI\Localisation as l,
@@ -30,7 +30,7 @@ class Permission extends CatalogRepository
     public function user($userId): Permission
     {
         if(!$userId) {
-            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
         $this->userId = $userId;
         return $this;
@@ -48,7 +48,7 @@ class Permission extends CatalogRepository
     public function section(int $iblockId, int $sectionId): void
     {
         if(!$iblockId) {
-            throw new CatalogException(l::get('ERROR_CATALOG_ID_EMPTY'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_CATALOG_ID_EMPTY'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         // type rights [E - extended, S - normal] ,
@@ -64,12 +64,12 @@ class Permission extends CatalogRepository
             $rights = $obRights->GetUserOperations($iblockId, $this->userId);
 
             if(!in_array('section_read', $rights)) {
-                throw new CatalogException(l::get('ERROR_CATALOG_PERMISSION_DENIED'), StatusCode::HTTP_BAD_REQUEST);
+                throw new CatalogException(l::get('ERROR_CATALOG_PERMISSION_DENIED'), StatusCode::STATUS_BAD_REQUEST);
             }
         } else {
             $permission = \CIBlock::GetPermission($iblockId, $this->userId);
             if($permission < self::PERMISSION_READ) {
-                throw new CatalogException(l::get('ERROR_CATALOG_PERMISSION_DENIED'), StatusCode::HTTP_BAD_REQUEST);
+                throw new CatalogException(l::get('ERROR_CATALOG_PERMISSION_DENIED'), StatusCode::STATUS_BAD_REQUEST);
             }
         }
     }
@@ -79,7 +79,7 @@ class Permission extends CatalogRepository
         $iblockId = \CIBlockElement::GetIBlockByID($productId);
 
         if(!$iblockId) {
-            throw new CatalogException(l::get('ERROR_CATALOG_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new CatalogException(l::get('ERROR_CATALOG_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         // type rights [E - extended, S - normal] ,
@@ -98,15 +98,15 @@ class Permission extends CatalogRepository
             $rights = $obRights->GetUserOperations($iblockId, $this->userId);
 
             if(!in_array('element_read', $rights)) {
-                throw new CatalogException(l::get('ERROR_CATALOG_PERMISSION_DENIED'), StatusCode::HTTP_BAD_REQUEST);
+                throw new CatalogException(l::get('ERROR_CATALOG_PERMISSION_DENIED'), StatusCode::STATUS_BAD_REQUEST);
             }
         } else {
             $permission = \CIBlock::GetPermission($iblockId, $this->userId);
             if($permission < self::PERMISSION_READ) {
-                throw new CatalogException(l::get('ERROR_CATALOG_PERMISSION_DENIED'), StatusCode::HTTP_BAD_REQUEST);
+                throw new CatalogException(l::get('ERROR_CATALOG_PERMISSION_DENIED'), StatusCode::STATUS_BAD_REQUEST);
             }
         }
 
-        //throw new CatalogException(l::get('ERROR_CATALOG_PRODUCT_PERMISSION_DENIED'), StatusCode::HTTP_BAD_REQUEST);
+        //throw new CatalogException(l::get('ERROR_CATALOG_PRODUCT_PERMISSION_DENIED'), StatusCode::STATUS_BAD_REQUEST);
     }
 }

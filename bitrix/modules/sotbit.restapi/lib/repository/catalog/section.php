@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Repository\Catalog;
 
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\CatalogException;
 use Sotbit\RestAPI\Exception\OrderException,
     Sotbit\RestAPI\Core,
@@ -26,17 +26,17 @@ class Section extends CatalogRepository
         $result = [];
 
         if(!$id) {
-            throw new CatalogException(l::get('ERROR_CATALOG_SECTION_ID_EMPTY'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_CATALOG_SECTION_ID_EMPTY'), StatusCode::STATUS_BAD_REQUEST);
         }
         if($this->getUserId() === null) {
-            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         $result = \CIBlockSection::GetByID($id)->Fetch();
 
         // check isset
         if(!$result) {
-            throw new CatalogException(l::get('ERROR_CATALOG_SECTION_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new CatalogException(l::get('ERROR_CATALOG_SECTION_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         $result = $this->prepareReturn($result, self::TYPE_LIST);
@@ -58,13 +58,11 @@ class Section extends CatalogRepository
         $countAll = \CIBlockSection::GetList([], $params['filter_default'], false, ['ID']);
 
         // info
-        $result['info']['count_select'] = count($result);
+        $result['info']['count_select'] = is_array($result['data']) ? count($result['data']) : 0;
         $result['info']['count_all'] = (int)$countAll->SelectedRowsCount();
 
         return $result;
 
     }
-
-
 
 }

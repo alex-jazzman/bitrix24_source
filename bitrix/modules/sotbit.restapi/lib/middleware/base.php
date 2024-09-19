@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Middleware;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Sotbit\RestAPI\Config\Config;
 use Sotbit\RestAPI\Exception\AuthException;
 use Firebase\JWT\JWT;

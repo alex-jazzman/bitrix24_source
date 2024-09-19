@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Repository\Catalog;
 
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Core\Helper;
 use Sotbit\RestAPI\Exception\CatalogException;
 use Sotbit\RestAPI\Exception\OrderException,
@@ -55,8 +55,6 @@ class Product extends CatalogRepository
     public const SEARCH_DEFAULT_NO_WORD_LOGIC = false;
     public const SEARCH_DEFAULT_WITHOUT_MORPHOLOGY = false;
 
-    public const IMAGE_NOT_FOUND = '/bitrix/components/bitrix/catalog.section/templates/.default/images/no_photo.png';
-
     /**
      * Product constructor.
      *
@@ -73,9 +71,9 @@ class Product extends CatalogRepository
         $this->search = new Search();
 
         // config
-        $pricesSelect = $this->config->getCatalogPrices();
+        $pricesSelect = $this->getConfig()->getCatalogPrices();
         $this->prices->setPricesSelect($pricesSelect);
-        $this->vatIncludeComponent = $this->config->isVatIncluded();
+        $this->vatIncludeComponent = $this->getConfig()->isVatIncluded();
 
 
         // product types
@@ -102,23 +100,23 @@ class Product extends CatalogRepository
         $result = [];
 
         if(!$id) {
-            throw new CatalogException(l::get('ERROR_CATALOG_PRODUCT_ID_EMPTY'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_CATALOG_PRODUCT_ID_EMPTY'), StatusCode::STATUS_BAD_REQUEST);
         }
         if($this->getUserId() === null) {
-            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         // get and check iblock
         $iblockId = \CIBlockElement::GetIBlockByID($id);
         if(!$iblockId) {
-            throw new CatalogException(l::get('ERROR_CATALOG_PRODUCT_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new CatalogException(l::get('ERROR_CATALOG_PRODUCT_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         // checking the selected infoblock for type
         $iblockData = \CCatalogSku::GetInfoByIBlock($iblockId);
         $allowedTypes = $this->getProductTypes($iblockData['CATALOG_TYPE']);
         if(empty($allowedTypes) || $iblockData['CATALOG'] !== 'Y') {
-            throw new CatalogException(l::get('ERROR_IBLOCK_NOT_CATALOG'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_IBLOCK_NOT_CATALOG'), StatusCode::STATUS_BAD_REQUEST);
         }
         $iblockOfferId = $iblockData['IBLOCK_ID'];
 
@@ -136,7 +134,7 @@ class Product extends CatalogRepository
         ]);
 
         if(!$data) {
-            throw new CatalogException(l::get('ERROR_CATALOG_PRODUCT_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new CatalogException(l::get('ERROR_CATALOG_PRODUCT_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         $data = $data[$id];
@@ -155,8 +153,8 @@ class Product extends CatalogRepository
             );
         } else {
             // config
-            $selectProperties = $this->config->getDetailProperties();
-            $offerTreeProp = $this->config->getOfferTreeProps();
+            $selectProperties = $this->getConfig()->getDetailProperties();
+            $offerTreeProp = $this->getConfig()->getOfferTreeProps();
         }
 
         $data['PROPERTIES'] = ($selectProperties ? $this->getPropertyValues([$id], $data['IBLOCK_ID'], $selectProperties)[$id] : []);
@@ -197,7 +195,7 @@ class Product extends CatalogRepository
     public function list(array $params): array
     {
         if($this->getUserId() === null) {
-            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
 
@@ -212,7 +210,7 @@ class Product extends CatalogRepository
         $iblockData = \CCatalogSku::GetInfoByIBlock($iblockId);
         $allowedTypes = $this->getProductTypes($iblockData['CATALOG_TYPE']);
         if(empty($allowedTypes) || $iblockData['CATALOG'] !== 'Y') {
-            throw new CatalogException(l::get('ERROR_IBLOCK_NOT_CATALOG'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_IBLOCK_NOT_CATALOG'), StatusCode::STATUS_BAD_REQUEST);
         }
         $iblockOfferId = $iblockData['IBLOCK_ID'];
 
@@ -228,10 +226,10 @@ class Product extends CatalogRepository
             $searchSettings['query'] = $params['search'];
 
             // config
-            $searchSettings['iblockId'] = $this->config->getCatalogId() ?? $iblockId;
-            $searchSettings['guessLanguage'] = $this->config->getSearchLanguageGuess() ?? self::SEARCH_DEFAULT_GUESS_LANGUAGE;
-            $searchSettings['noWordLogic'] =  $this->config->getSearchNoWordLogic() ?? self::SEARCH_DEFAULT_NO_WORD_LOGIC;
-            $searchSettings['withoutMorphology'] = $this->config->getSearchWithoutMorphology() ?? self::SEARCH_DEFAULT_WITHOUT_MORPHOLOGY;
+            $searchSettings['iblockId'] = $this->getConfig()->getCatalogId() ?? $iblockId;
+            $searchSettings['guessLanguage'] = $this->getConfig()->getSearchLanguageGuess() ?? self::SEARCH_DEFAULT_GUESS_LANGUAGE;
+            $searchSettings['noWordLogic'] =  $this->getConfig()->getSearchNoWordLogic() ?? self::SEARCH_DEFAULT_NO_WORD_LOGIC;
+            $searchSettings['withoutMorphology'] = $this->getConfig()->getSearchWithoutMorphology() ?? self::SEARCH_DEFAULT_WITHOUT_MORPHOLOGY;
 
 
             $searchElementIds = $this->search->setSettings($searchSettings)->execute();
@@ -264,8 +262,8 @@ class Product extends CatalogRepository
             );*/
         } else {
             // config
-            $selectProperties = $this->config->getSectionProperties();
-            $offerTreeProp = $this->config->getOfferTreeProps();
+            $selectProperties = $this->getConfig()->getSectionProperties();
+            $offerTreeProp = $this->getConfig()->getOfferTreeProps();
 
         }
 
@@ -384,7 +382,7 @@ $data = [
         $params['select'] = empty($params['select'])? self::FIELD_ELEMENT : array_unique(array_merge($params['select'], self::FIELD_ELEMENT_REQUEST));
 
         // config
-        switch($this->config->getHideNotAvailable()) {
+        switch($this->getConfig()->getHideNotAvailable()) {
             case 'Y':
                 $params['filter']['AVAILABLE'] = 'Y';
                 break;
@@ -580,8 +578,8 @@ $data = [
                 $currencyConvert = false;
 
                 // config
-                if($this->config->getCurrencyConvert()) {
-                    $currencyConvertId = $this->config->getCurrencyConvert();
+                if($this->getConfig()->getCurrencyConvert()) {
+                    $currencyConvertId = $this->getConfig()->getCurrencyConvert();
                     $currencyConvert = true;
                 }
 
@@ -989,7 +987,7 @@ $data = [
             ];
 
             // config
-            if($this->config->getHideNotAvailableOffers() === 'Y') {
+            if($this->getConfig()->getHideNotAvailableOffers() === 'Y') {
                 $offerListFilter['AVAILABLE'] = 'Y';
             }
 
@@ -1032,9 +1030,9 @@ $data = [
                         // config
                         } else {
                             if($typeView === self::TYPE_DETAIL) {
-                                $selectProperties = $this->config->getDetailOfferProperties();
+                                $selectProperties = $this->getConfig()->getDetailOfferProperties();
                             } else {
-                                $selectProperties = $this->config->getSectionOfferProperties();
+                                $selectProperties = $this->getConfig()->getSectionOfferProperties();
                             }
                         }
 
@@ -1189,7 +1187,7 @@ $data = [
 
                                             // is file, create url
                                             if($fields['PROPERTY_TYPE'] === 'F') {
-                                                $fields['VALUE'][$i] = $this->getPictureSrc((int) $fields['VALUE'][$i]);
+                                                $fields['VALUE'][$i] = self::getPictureSrc((int) $fields['VALUE'][$i]);
                                             }
 
                                             $value[] = [
@@ -1202,7 +1200,7 @@ $data = [
 
                                     // is file, create url
                                     if($fields['PROPERTY_TYPE'] === 'F') {
-                                        $fields['VALUE'][$i] = $this->getPictureSrc((int) $fields['VALUE'][$i]);
+                                        $fields['VALUE'][$i] = self::getPictureSrc((int) $fields['VALUE'][$i]);
                                     }
 
                                     $value = [
@@ -1224,12 +1222,12 @@ $data = [
                                 if(is_array($fields['PROPERTY_VALUE_ID'])) {
                                     foreach($fields['PROPERTY_VALUE_ID'] as $i => $item) {
                                         // is file, create url
-                                        $fields['VALUE'][$i] = $this->getPictureSrc((int)$fields['VALUE'][$i]);
+                                        $fields['VALUE'][$i] = self::getPictureSrc((int)$fields['VALUE'][$i]);
                                     }
                                 }
                             } else {
                                 // is file, create url
-                                $fields['VALUE'][$i] = $this->getPictureSrc((int)$fields['VALUE'][$i]);
+                                $fields['VALUE'][$i] = self::getPictureSrc((int)$fields['VALUE'][$i]);
                             }
 
                             $properties[$elementId][$propCode] = $fields;
@@ -1255,7 +1253,7 @@ $data = [
                                 if(!empty($properties[$elementId][$propCode]['UF_FIELDS']) && is_array($properties[$elementId][$propCode]['UF_FIELDS'])) {
                                     foreach($properties[$elementId][$propCode]['UF_FIELDS'] as &$v) {
                                         if(!empty($v['UF_FILE'])) {
-                                            $v['UF_FILE'] = $this->getPictureSrc((int)$v['UF_FILE']);
+                                            $v['UF_FILE'] = self::getPictureSrc((int)$v['UF_FILE']);
                                         }
                                     }
                                     unset($v);
@@ -1397,7 +1395,7 @@ $data = [
 
         // config
         if(!$newCurrency) {
-            $newCurrency = (string) $this->config->getCurrencyConvert();
+            $newCurrency = (string) $this->getConfig()->getCurrencyConvert();
         }
 
         if($newCurrency && $currency !== $newCurrency && $this->checkCurrencyConvert($currency, $newCurrency)) {
@@ -1482,26 +1480,5 @@ $data = [
     public static function checkOffer(int $id)
     {
         return \CCatalogSku::GetProductInfo($id);
-    }
-
-    public function showQuantity($quantity, $measureRatio = 1)
-    {
-        if($this->config->getShowQuantity() === 'Y') {
-            return $quantity;
-        }
-
-        if($this->config->getShowQuantity() === 'M') {
-            if($quantity == 0) {
-                return l::get('QUANTITY_NO');
-            }
-
-            if((float)$quantity / $measureRatio >= $this->config->getShowQuantityInt()) {
-                return $this->config->getShowQuantityTextMax();
-            }
-
-            return $this->config->getShowQuantityTextMin();
-        }
-
-        return null;
     }
 }

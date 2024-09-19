@@ -24,7 +24,7 @@ import type {
 	SpeechConverterResultEventData,
 } from 'ai.speech-converter';
 
-type CopilotInputOptions = {
+type CopilotInputOptions =  {
 	readonly: boolean;
 	useForImages: boolean;
 }
@@ -660,6 +660,7 @@ export class CopilotInput extends EventEmitter
 	#handleSpeechConverterResultEvent(e: BaseEvent<SpeechConverterResultEventData>): void
 	{
 		this.setValue(e.getData().text);
+		this.#textarea.value = e.getData().text;
 	}
 
 	#handleSpeechConverterStopEvent(): void

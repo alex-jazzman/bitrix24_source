@@ -73,7 +73,7 @@ $MESS[$module_id."_EMPTY"] = "не выбрано";
 
 $MESS[$module_id."_ERROR_DEMO"] = 'Решение <a target="_blank" title="Сотбит: REST API" href="https://marketplace.1c-bitrix.ru/solutions/sotbit.restapi/">"Сотбит: REST API"</a> работает в демо-режиме в течение 14 дней. Вы можете его приобрести по адресу: <a target="_blank" title="Сотбит: REST API" href="https://marketplace.1c-bitrix.ru/solutions/sotbit.restapi/">https://marketplace.1c-bitrix.ru/solutions/sotbit.restapi/</a>';
 $MESS[$module_id."_ERROR_DEMO_END"] = 'Демо-режим закончен. Приобрести полнофункциональную версию вы можете по адресу: <a target="_blank" title="Сотбит: REST API" href="https://marketplace.1c-bitrix.ru/solutions/sotbit.restapi/">https://marketplace.1c-bitrix.ru/solutions/sotbit.restapi/</a>';
-$MESS[$module_id."_ERROR_PHP_VERSION"] = 'Модуль отключен. Необходимая минимальная версия PHP 7.2';
+$MESS[$module_id."_ERROR_PHP_VERSION"] = 'Модуль отключен.<br>Минимальная версия PHP для работы модуля должна быть <b>8.1</b> или выше.<br>Ваша версия PHP: '.PHP_VERSION;
 $MESS[$module_id."_ERROR_SUPPORT_MODULE"] = 'Модуль <a href="/bitrix/admin/module_admin.php?lang=ru">"Техподдержка (support)"</a> не установлен';
 $MESS[$module_id."_ERROR_CATALOG_MODULE"] = 'Модуль <a href="/bitrix/admin/module_admin.php?lang=ru">"Торговый каталог (catalog)"</a> не установлен';
 $MESS[$module_id."_ERROR_IBLOCK_MODULE"] = 'Модуль <a href="/bitrix/admin/module_admin.php?lang=ru">"Информационные блоки (iblock)"</a> не установлен';

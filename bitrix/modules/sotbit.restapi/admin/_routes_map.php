@@ -1,24 +1,36 @@
 <?php
 use Bitrix\Main\Localization\Loc;
-require __DIR__.'/../vendor/autoload.php';
+use Slim\Factory\AppFactory;
+use DI\Container;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Sotbit\RestAPI\Core\Helper;
+
 try {
+    require __DIR__.'/../vendor/autoload.php';
 
     $return = '';
     $returnRoutes = [];
     $core = new Sotbit\RestAPI\Core\Core();
     $core->initConstants();
-    $app = new \Slim\App();
-    $container = $app->getContainer();
-    require __DIR__ . '/../app/dependencies.php';
-    require __DIR__ . '/../app/repositories.php';
-    require __DIR__ . '/../app/events.php';
-    require __DIR__ . '/../app/routes.php';
 
-    $routes = $app->getContainer()->router->getRoutes();
+
+    // Init container
+    $container = require __DIR__ . '/../app/container.php';
+    AppFactory::setContainer($container->build());
+
+    // Init app
+    $app = AppFactory::create();
+
+    // Set default route path
+    $app->setBasePath(\SotbitRestAPI::getRouteMainPath());
+    (require __DIR__ . '/../app/events.php')($app->getContainer());
+    (require __DIR__ . '/../app/routes.php')($app);
+    $routes = $app->getRouteCollector()->getRoutes();
     foreach ($routes as $route) {
         $returnRoutes[] = [
             'data' => [
-                'PATTERN' => $route->getPattern(),
+                'PATTERN' => \SotbitRestAPI::getRouteMainPath().$route->getPattern(),
                 'METHOD' => implode(', ', $route->getMethods()),
             ]
         ];
@@ -59,8 +71,7 @@ try {
             'ALLOW_COLUMN_RESIZE'       => true,
             'AJAX_OPTION_HISTORY'       => 'N'
         ]);
-        $return = ob_get_contents();
-        ob_end_clean();
+        $return = ob_get_clean();
     }
 
     return $return;

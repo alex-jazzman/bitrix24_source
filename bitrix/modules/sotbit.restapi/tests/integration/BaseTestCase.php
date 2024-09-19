@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Sotbit\RestAPI\Tests\integration;
 
 use Slim\App;
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\Environment;
-use Psr\Http\Message\ResponseInterface;
 use Sotbit\RestAPI\Config\Config;
+use Slim\Psr7\Factory\StreamFactory;
+use Slim\Psr7\Headers;
+use Slim\Psr7\Request as SlimRequest;
+use Slim\Psr7\Response as SlimResponse;
+use Slim\Psr7\Uri;
 
 /**
  * Class BaseTestCase
@@ -61,7 +62,6 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
      * @param  array|null  $requestData
      * @param  bool  $isAuth
      *
-     * @return ResponseInterface
      * @throws \Throwable
      */
     public function runApp(
@@ -69,7 +69,7 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
         string $requestUri,
         array $requestData = null,
         bool $isAuth = true
-    ): ResponseInterface {
+    ) {
         global $argv, $argc;
 
         // From config module
@@ -80,14 +80,8 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
         }
 
 
-        $environment = Environment::mock(
-            [
-                'REQUEST_METHOD' => $requestMethod,
-                'REQUEST_URI'    => $requestUri,
-            ]
-        );
+        $request = (new \Slim\Psr7\Factory\RequestFactory())->createRequest($requestMethod, $requestUri);
 
-        $request = Request::createFromEnvironment($environment);
 
         if($isAuth) {
             $request = $request->withHeader('Authorization', self::$jwt);
@@ -97,19 +91,41 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
             $request = $request->withParsedBody($requestData);
         }
 
-        $settings = require __DIR__.'/../../app/settings.php';
 
-        $app = new App($settings);
-
-        $container = $app->getContainer();
-
-        require __DIR__.'/../../app/events.php';
-        require __DIR__.'/../../app/dependencies.php';
-        require __DIR__.'/../../app/repositories.php';
-        require __DIR__.'/../../app/routes.php';
-
-        return $app->process($request, new Response());
+        return $this->getAppInstance()->handle($request);
     }
+
+    protected function getAppInstance(): App
+    {
+        return require __DIR__.'/../../app/app.php';
+    }
+
+    protected function createRequest(
+        string $method,
+        string $path,
+        string $query = '',
+        array $headers = ['HTTP_ACCEPT' => 'application/json;charset=utf-8'],
+        array $cookies = [],
+        array $serverParams = []
+    ): SlimRequest {
+        $uri = new Uri('', '', 80, $path, $query);
+        $handle = fopen('php://temp', 'w+');
+        $stream = (new StreamFactory())->createStreamFromResource($handle);
+
+        $h = new Headers();
+        foreach ($headers as $name => $value) {
+            $h->addHeader($name, $value);
+        }
+
+        return new SlimRequest($method, $uri, $h, $cookies, $serverParams, $stream);
+    }
+
+    public function getJson(SlimResponse $response) {
+        $result = (string) $response->getBody();
+        $this->assertJson($result);
+        return json_decode($result, true, 512, JSON_THROW_ON_ERROR);
+    }
+
 
     public function testApp(): void
     {
@@ -123,7 +139,7 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
         $result = (string)$response->getBody();
 
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
         $this->assertStringContainsString('status', $result);
         $this->assertStringContainsString('success', $result);
         $this->assertStringContainsString('message', $result);
@@ -153,9 +169,6 @@ class BaseTestCase extends \PHPUnit\Framework\TestCase
         $this->assertStringNotContainsString('success', $result);
     }
 
-    public function getJson(ResponseInterface $response) {
-        $result = (string) $response->getBody();
-        $this->assertJson($result);
-        return json_decode($result, true, 512, JSON_THROW_ON_ERROR);
-    }
+
+
 }

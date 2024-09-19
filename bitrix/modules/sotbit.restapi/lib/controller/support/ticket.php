@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\Support;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\EventDispatcher\Events\SupportEvent;
 use Sotbit\RestAPI\Exception\SupportException;
 use Sotbit\RestAPI\Localisation as l;
@@ -33,10 +33,10 @@ class Ticket extends Base
     {
         $this->params = [
             'user_id' => $this->getUserId($request),
-            'limit'   => $request->getQueryParam('limit'),
-            'page'    => $request->getQueryParam('page'),
-            'order'   => $request->getQueryParam('order'),
-            'filter'  => $request->getQueryParam('filter'),
+            'limit'   => $request->getQueryParams()['limit'] ?? null,
+            'page'    => $request->getQueryParams()['page'] ?? null,
+            'order'   => $request->getQueryParams()['order'] ?? null,
+            'filter'  => $request->getQueryParams()['filter'] ?? null,
         ];
 
         // event
@@ -47,7 +47,7 @@ class Ticket extends Base
         // event
         $this->getEvents()->dispatch(new SupportEvent($tickets), SupportEvent::TICKET_AFTER_GET);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $tickets, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $tickets, StatusCode::STATUS_OK);
     }
 
 
@@ -65,7 +65,7 @@ class Ticket extends Base
         // event
         $this->getEvents()->dispatch(new SupportEvent($ticket), SupportEvent::TICKET_AFTER_GET_DETAIL);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $ticket, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $ticket, StatusCode::STATUS_OK);
     }
 
     /**
@@ -83,7 +83,7 @@ class Ticket extends Base
         $input['uploaded_files'] = $request->getUploadedFiles();
         $support = $this->getRepository()->createTicket($input, $this->getUserId($request));
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::HTTP_CREATED);
+        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::STATUS_CREATED);
     }
 
 
@@ -92,7 +92,7 @@ class Ticket extends Base
         $input = (array)$request->getParsedBody();
         $support = $this->getRepository()->update((int)$args['id'], $this->getUserId($request));
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::STATUS_OK);
     }
 
     public function close(Request $request, Response $response): Response
@@ -106,7 +106,7 @@ class Ticket extends Base
             $this->getEvents()->dispatch(new SupportEvent($input['id']), SupportEvent::TICKET_CLOSE);
         }
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::STATUS_OK);
     }
 
     public function open(Request $request, Response $response): Response
@@ -120,7 +120,7 @@ class Ticket extends Base
             $this->getEvents()->dispatch(new SupportEvent($input['id']), SupportEvent::TICKET_OPEN);
         }
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $support, StatusCode::STATUS_OK);
     }
 
 
@@ -131,14 +131,14 @@ class Ticket extends Base
     {
         $this->getServiceDeleteSupport()->delete((int) $args['id']);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, null, StatusCode::HTTP_NO_CONTENT);
+        return $this->response($response, self::RESPONSE_SUCCESS, null, StatusCode::STATUS_NO_CONTENT);
     }*/
 
     /*public function search(Request $request, Response $response, array $args): Response
     {
         $supports = $this->getServiceFindSupport()->search($args['query']);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $supports, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $supports, StatusCode::STATUS_OK);
     }*/
 
 }

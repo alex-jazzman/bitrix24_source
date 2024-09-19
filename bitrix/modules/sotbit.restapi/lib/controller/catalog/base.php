@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\Catalog;
 
-use Slim\Container;
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 
 use Sotbit\RestAPI\Exception\UserException;
 use Sotbit\RestAPI\Core;

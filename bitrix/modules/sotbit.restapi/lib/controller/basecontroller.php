@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller;
 
-use Slim\Container;
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Container\ContainerInterface as Container;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use Sotbit\RestAPI\Service\Event;
@@ -30,9 +30,9 @@ abstract class BaseController
     public const RESPONSE_ERROR = 'error';
 
     /**
-     * @var Container
+     * @var ContainerInterface
      */
-    protected $container;
+    protected ?Container $container;
 
     /**
      * @var int
@@ -43,6 +43,11 @@ abstract class BaseController
      * @var array
      */
     protected $params;
+
+    /**
+     * @var array|null
+     */
+    protected ?array $queryParams;
 
     /**
      * BaseController constructor.
@@ -101,15 +106,49 @@ abstract class BaseController
      */
     protected function jsonResponse(
         Response $response,
-        array $result
+        array $data
     ): Response {
-        return $response->withJson(
-            $result,
-            $result['code'],
-            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT
-            | JSON_FORCE_OBJECT
+        $json = json_encode(
+            $data,
+            JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE
+            | JSON_PRETTY_PRINT | JSON_FORCE_OBJECT
         );
+
+        if ($json === false) {
+            throw new \RuntimeException(
+                json_last_error_msg(),
+                json_last_error()
+            );
+        }
+
+        $response->getBody()->write($json);
+
+        $responseWithJson = $response->withHeader(
+            'Content-Type',
+            'application/json;charset=utf-8'
+        );
+
+        if (isset($data['code'])) {
+            return $responseWithJson->withStatus($data['code']);
+        }
+
+        return $responseWithJson;
     }
+
+    /**
+     * @param  Request  $request
+     * @param  string  $param
+     * @param $default
+     *
+     * @return mixed
+     */
+    protected function extractQueryParam(Request $request, string $param, $default = null): mixed
+    {
+        $this->queryParams = $request->getQueryParams();
+
+        return $this->queryParams[$key] ?? $default;
+    }
+
 
     /**
      * Get user id out of request
@@ -125,7 +164,7 @@ abstract class BaseController
         $userId = $input['decoded']->sub;
 
         if(!$userId) {
-            throw new UserException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new UserException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         return (int)$userId;
@@ -145,7 +184,7 @@ abstract class BaseController
         $login = $input['decoded']->login;
 
         if(!$login) {
-            throw new UserException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new UserException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         return (string)$login;

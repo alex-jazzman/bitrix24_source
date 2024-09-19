@@ -10,9 +10,6 @@ $_SERVER['DOCUMENT_ROOT'] = dirname(__DIR__, 4);
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 //$_SESSION['SESS_AUTH']['USER_ID'] = 1;
 
-define('DS', DIRECTORY_SEPARATOR);
-
-define('SR_ROOT_PATH', __DIR__ . DS .'..'.DS.'..'.DS);
-define('SR_APP_PATH', SR_ROOT_PATH.'app'.DS);
-define('SR_APP_CUSTOM_PATH', SR_APP_PATH.'custom'.DS);
-define('SR_CONFIG_PATH', SR_ROOT_PATH.DS.'config'.DS);
+define('SR_ROOT_PATH', __DIR__ .'/../..');
+define('SR_APP_PATH', SR_ROOT_PATH.'/app/');
+define('SR_CONFIG_PATH', SR_ROOT_PATH.'/config/');

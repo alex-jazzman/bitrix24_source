@@ -21,7 +21,7 @@ class TicketMainTest extends BaseTestCase
 
         // headers
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('application/json', $response->getHeaderLine('Content-Type'));
+        $this->assertEquals('application/json;charset=utf-8', $response->getHeaderLine('Content-Type'));
 
         // body
         $resultJson = $this->getJson($response);

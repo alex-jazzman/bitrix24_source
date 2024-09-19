@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Repository\Catalog;
 
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\CatalogException,
     Sotbit\RestAPI\Localisation as l,
     Sotbit\RestAPI\Repository\CatalogRepository;
@@ -19,13 +19,13 @@ class Vat extends CatalogRepository
     public function get(int $id)
     {
         if($this->getUserId() === null) {
-            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         $result = VatTable::getById($id)->fetch();
 
         if(!$result) {
-            throw new CatalogException(l::get('ERROR_CATALOG_VAT_GET'), StatusCode::HTTP_NOT_FOUND);
+            throw new CatalogException(l::get('ERROR_CATALOG_VAT_GET'), StatusCode::STATUS_NOT_FOUND);
         }
 
         return $result;
@@ -37,7 +37,7 @@ class Vat extends CatalogRepository
         $data = [];
 
         //if($this->getUserId() === null) {
-        //    throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+        //    throw new CatalogException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         //}
 
         $params = $this->prepareNavigationBase($params);

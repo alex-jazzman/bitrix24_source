@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\Sale;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\EventDispatcher\Events\OrderEvent;
 use Sotbit\RestAPI\EventDispatcher\Listeners\OrderListener;
+use Sotbit\RestAPI\Exception\OrderException;
+use Sotbit\RestAPI\Localisation as l;
 
 /**
  * Class Order
@@ -40,7 +42,7 @@ class Order extends Base
         // event detail
         $this->getEvents()->dispatch(new OrderEvent($order), OrderEvent::DETAIL_AFTER);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
     /**
@@ -61,11 +63,11 @@ class Order extends Base
         // prepare
         $this->params = [
             'user_id' => $this->getUserId($request),
-            'limit'   => $request->getQueryParam('limit'),
-            'page'    => $request->getQueryParam('page'),
-            'select'  => $request->getQueryParam('select'),
-            'order'   => $request->getQueryParam('order'),
-            'filter'  => $request->getQueryParam('filter'),
+            'limit'   => $request->getQueryParams()['limit'] ?? null,
+            'page'    => $request->getQueryParams()['page'] ?? null,
+            'select'  => $request->getQueryParams()['select'] ?? null,
+            'order'   => $request->getQueryParams()['order'] ?? null,
+            'filter'  => $request->getQueryParams()['filter'] ?? null,
         ];
 
         // repository
@@ -74,7 +76,7 @@ class Order extends Base
         // event
         $this->getEvents()->dispatch(new OrderEvent($order), OrderEvent::AFTER);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
 
@@ -88,11 +90,11 @@ class Order extends Base
      * @return Response
      * @throws \Sotbit\RestAPI\Exception\UserException
      */
-    public function create(Request $request, Response $response, array $args): Response
+    /*public function create(Request $request, Response $response, array $args): Response
     {
         //$order = $this->getServiceCreateSale()->create((array) $args, $this->getUserId($request));
-        //return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
-    }
+        //return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
+    }*/
 
     /**
      * Update order
@@ -104,12 +106,12 @@ class Order extends Base
      * @return Response
      * @throws \Sotbit\RestAPI\Exception\UserException
      */
-    public function update(Request $request, Response $response, array $args): Response
+    /*public function update(Request $request, Response $response, array $args): Response
     {
-        /*$order = $this->getServiceUpdateSale()->update((array) $args, $this->getUserId($request));
+        $order = $this->getServiceUpdateSale()->update((array) $args, $this->getUserId($request));
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);*/
-    }
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
+    }*/
 
     /**
      * Get order status
@@ -119,13 +121,13 @@ class Order extends Base
      * @param  array  $args
      *
      * @return Response
-     * @throws \Sotbit\RestAPI\Exception\UserException
+     * @throws \Sotbit\RestAPI\Exception\UserExceptionû
      */
     public function getStatus(Request $request, Response $response, array $args): Response
     {
         $order = $this->getRepository()->getOrderStatus((int)$args['id'], $this->getUserId($request));
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
     /**
@@ -148,7 +150,32 @@ class Order extends Base
             $this->getUserId($request)
         );
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
+    }
+
+    /**
+     * Repeat order
+     *
+     * @param  Request  $request
+     * @param  Response  $response
+     *
+     * @return Response
+     * @throws \Sotbit\RestAPI\Exception\UserException
+     */
+    public function repeat(Request $request, Response $response): Response
+    {
+        $input = (array)$request->getParsedBody();
+
+        if(!$input['id']) {
+            throw new OrderException(l::get('ERROR_USER_ID_EMPTY'), 400);
+        }
+
+        $order = $this->getRepository()->setOrderRepeat(
+            (int)$input['id'],
+            $this->getUserId($request)
+        );
+
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
     /**
@@ -164,7 +191,7 @@ class Order extends Base
     {
         $order = $this->getRepository()->getPaySystems();
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
     /**
@@ -180,7 +207,7 @@ class Order extends Base
     {
         $order = $this->getRepository()->getDeliveries();
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
     /**
@@ -196,7 +223,7 @@ class Order extends Base
     {
         $order = $this->getRepository()->getStatuses();
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
     /**
@@ -212,7 +239,7 @@ class Order extends Base
     {
         $order = $this->getRepository()->getPersonTypes();
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
 

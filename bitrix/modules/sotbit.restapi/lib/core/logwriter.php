@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Core;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Slim\Routing\RouteContext;
+use Slim\Interfaces\RouteInterface;
+
 use Sotbit\RestAPI\Exception\AuthException;
 use Sotbit\RestAPI\Localisation as l;
 use Sotbit\RestAPI\Model;
@@ -13,18 +16,25 @@ use Sotbit\RestAPI\Exception\LogException;
 
 class LogWriter
 {
-    private $logs = [];
+    private array $result = [];
+    private int $userId = 0;
+
+
+    public function setParam($key, $value): void
+    {
+        $this->result[$key] = $value;
+    }
+
 
     /**
      * @param  array  $fields
      */
-    public function add(array $fields): void
+    public function add(): void
     {
         if(\SotbitRestAPI::isLog()) {
-            $this->logs = array_merge($fields, $this->logs);
-            if(count($this->logs)) {
+            if(count($this->result)) {
                 try {
-                    Model\LogTable::add($this->logs);
+                    Model\LogTable::add($this->result);
                 } catch(\Exception $e) {
                 }
             }
@@ -34,28 +44,25 @@ class LogWriter
     /**
      * @param $request
      */
-    public function setRequest($request): void
+    public function setRequest(Request $request): void
     {
-        if($request instanceof Request) {
-            $route = $request->getAttribute('route');
+        $routeContext = RouteContext::fromRequest($request);
+        $route = $routeContext->getRoute();
 
-            if($request->getMethod()) {
-                $this->logs['REQUEST_METHOD'] = $request->getMethod();
-            }
-            if($request->getUri()->getPath()) {
-                $this->logs['REQUEST_PATH'] = $request->getUri()->getPath();
-                if($route !== null && $route->getPattern()) {
-                    $this->logs['REQUEST_PATH'] .= ' (route: '.$route->getPattern().($route->getArguments() ? ', args: '
-                            .implode(", ", $route->getArguments()) : '').")";
-                }
-            }
-            if($request->getServerParam('REMOTE_ADDR')) {
-                $this->logs['IP'] = $request->getServerParam('REMOTE_ADDR');
-            }
+        if($request->getMethod()) {
+            $this->result['REQUEST_METHOD'] = $request->getMethod();
+        }
+        if($request->getUri()->getPath()) {
+            $this->result['REQUEST_PATH'] = $request->getUri()->getPath();
 
-            if($userId) {
-                $this->logs['USER_ID'] = $userId;
+            if($route instanceof RouteInterface && $route->getPattern()) {
+                $this->result['REQUEST_PATH'] .= PHP_EOL.'(route: '.$route->getPattern().($route->getArguments() ? ', args: '
+                        .implode(", ", $route->getArguments()) : '').")";
             }
+        }
+        $serverParams = $request->getServerParams();
+        if(isset($serverParams['REMOTE_ADDR'])) {
+            $this->result['IP'] = $serverParams['REMOTE_ADDR'];
         }
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Repository\Sale;
 
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Repository\SaleRepository,
     Sotbit\RestAPI\Exception\OrderException,
     Sotbit\RestAPI\Core,
@@ -47,6 +47,7 @@ class Order extends SaleRepository
     {
         $this->userId = $this->getUserId();
 
+        /** @var Sale\Order $order */
         $order = $this->orderClass::load($orderId);
 
         return $this->getOrderDetail($order);
@@ -65,6 +66,8 @@ class Order extends SaleRepository
     public function getByAccountNumber(string $accountNumber): array
     {
         $this->userId = $this->getUserId();
+
+        /** @var Sale\Order $order */
         $order = $this->orderClass::loadByAccountNumber($accountNumber);
 
         return $this->getOrderDetail($order);
@@ -584,8 +587,9 @@ class Order extends SaleRepository
     public function getStatus(int $orderId): string
     {
         $this->userId = $this->getUserId();
-        $order = $this->orderClass::load($orderId);
-        $order = $this->checkOrder($order);
+
+        /** @var Sale\Order $order */
+        $order = $this->checkOrder($this->orderClass::load($orderId));
 
         return $order->getField("STATUS_ID");
     }
@@ -612,8 +616,8 @@ class Order extends SaleRepository
                 continue;
             }
 
-            $order = $this->orderClass::load((int)$id);
-            $order = $this->checkOrderCancel($order);
+            /** @var Sale\Order $order */
+            $order = $this->checkOrderCancel($this->orderClass::load((int)$id));
 
             if(count($this->error) && array_key_exists($order->getId(), $this->error)) {
                 continue;
@@ -648,6 +652,100 @@ class Order extends SaleRepository
         return count($this->error) ? $this->error : true;
     }
 
+    /**
+     * Order cancel
+     *
+     * @param  int  $orderId
+     *
+     * @return bool
+     * @throws OrderException
+     */
+    public function setRepeat(int $orderId): bool
+    {
+        // check order
+        $this->userId = $this->getUserId();
+
+        /** @var Sale\Order $order */
+        $order = $this->checkOrder($this->orderClass::load($orderId));
+
+        // get products from order
+        /** @var Sale\Basket $basket */
+        $basket = $this->basketClass::loadItemsForFUser($this->getSaleFuserId($this->userId), $this->getSiteId());
+
+        $filterFields = array(
+            'SET_PARENT_ID', 'TYPE',
+            'PRODUCT_ID', 'PRODUCT_PRICE_ID', 'PRICE', 'CURRENCY', 'WEIGHT', 'QUANTITY', 'LID',
+            'NAME', 'CALLBACK_FUNC', 'NOTES', 'PRODUCT_PROVIDER_CLASS', 'CANCEL_CALLBACK_FUNC',
+            'ORDER_CALLBACK_FUNC', 'PAY_CALLBACK_FUNC', 'DETAIL_PAGE_URL', 'CATALOG_XML_ID', 'PRODUCT_XML_ID',
+            'VAT_RATE', 'MEASURE_NAME', 'MEASURE_CODE', 'BASE_PRICE', 'VAT_INCLUDED'
+        );
+        $filterFields = array_flip($filterFields);
+
+        $oldBasket = $order->getBasket();
+
+        if(!$oldBasket) {
+            throw new OrderException(
+                l::get('ERROR_ORDER_CANNOT_COPY_ORDER').PHP_EOL.implode(PHP_EOL, $this->error),
+                StatusCode::STATUS_BAD_REQUEST
+            );
+        }
+
+        $refreshStrategy = Sale\Basket\RefreshFactory::create(Sale\Basket\RefreshFactory::TYPE_FULL);
+        $oldBasket->refresh($refreshStrategy);
+        $oldBasketItems = $oldBasket->getOrderableItems();
+
+        /** @var Sale\BasketItem $oldBasketItem */
+        foreach($oldBasketItems as $oldBasketItem) {
+            $propertyList = [];
+            if($oldPropertyCollection = $oldBasketItem->getPropertyCollection()) {
+                $propertyList = $oldPropertyCollection->getPropertyValues();
+            }
+
+            $item = $basket->getExistsItem(
+                $oldBasketItem->getField('MODULE'),
+                $oldBasketItem->getField('PRODUCT_ID'),
+                $propertyList
+            );
+
+            if($item) {
+                $item->setField('QUANTITY', $item->getQuantity() + $oldBasketItem->getQuantity());
+            } else {
+                $item = $basket->createItem($oldBasketItem->getField('MODULE'), $oldBasketItem->getField('PRODUCT_ID'));
+                $oldBasketValues = array_intersect_key($oldBasketItem->getFieldValues(), $filterFields);
+                $item->setField('NAME', $oldBasketValues['NAME']);
+                $resultItem = $item->setFields($oldBasketValues);
+                if(!$resultItem->isSuccess())
+                    continue;
+                /** @var Sale\PropertyValueCollection $newPropertyCollection */
+                $newPropertyCollection = $item->getPropertyCollection();
+
+                /** @var Sale\BasketPropertyItem $oldProperty */
+                foreach($propertyList as $oldPropertyFields) {
+                    $propertyItem = $newPropertyCollection->createItem($oldPropertyFields);
+                    unset($oldPropertyFields['ID'], $oldPropertyFields['BASKET_ID']);
+
+                    /** @var Sale\BasketPropertyItem $propertyItem */
+                    $propertyItem->setFields($oldPropertyFields);
+                }
+            }
+        }
+
+        $result = $basket->save();
+        if(!$result->isSuccess()) {
+            $errorList = $result->getErrors();
+            foreach($errorList as $key => $error) {
+                $this->error[] = $error->getMessage();
+            }
+
+            throw new OrderException(
+                l::get('ERROR_ORDER_CANNOT_COPY_ORDER').PHP_EOL.implode(PHP_EOL, $this->error),
+                StatusCode::STATUS_BAD_REQUEST
+            );
+        }
+
+        return true;
+    }
+
 
     /**
      * Check order for the entity and user permission
@@ -659,11 +757,11 @@ class Order extends SaleRepository
     public function checkOrder($order)
     {
         if($order === null) {
-            throw new OrderException(l::get('ERROR_ORDER_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new OrderException(l::get('ERROR_ORDER_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         if(!($order instanceof Sale\Order)) {
-            throw new OrderException(l::get('ERROR_ORDER_OBJECT_INVALID'), StatusCode::HTTP_BAD_REQUEST);
+            throw new OrderException(l::get('ERROR_ORDER_OBJECT_INVALID'), StatusCode::STATUS_BAD_REQUEST);
         }
         $this->checkOrderPermissions($order, (int)$this->userId);
 
@@ -687,7 +785,7 @@ class Order extends SaleRepository
             $this->error[$order->getId()] = l::get('ERROR_ORDER_CANCEL', ['#ID#' => $order->getId()]);
             /*throw new OrderException(
                 l::get('ERROR_ORDER_CANCEL'),
-                StatusCode::HTTP_BAD_REQUEST
+                StatusCode::STATUS_BAD_REQUEST
             );*/
         }
 
@@ -705,7 +803,7 @@ class Order extends SaleRepository
         if($userIdLogged && (int)$order->getUserId() !== $userIdLogged
             && (int)$order->getField('CREATED_BY') !== $userIdLogged
         ) {
-            throw new OrderException(l::get('ERROR_ORDER_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new OrderException(l::get('ERROR_ORDER_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
     }
 

@@ -231,9 +231,13 @@
 								this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"), this.setAdminRights.bind(this));
 							}
 						}
-						else
+						else if (this.isCloud)
 						{
 							this.getAdminConfirmPopup().show();
+						}
+						else
+						{
+							this.setAdminRights();
 						}
 					}, this),
 				});

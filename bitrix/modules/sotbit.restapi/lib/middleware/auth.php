@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Middleware;
 
-use Psr\Http\Message\ResponseInterface;
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Route;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
+use Psr\Container\ContainerInterface;
+use Slim\Psr7\Response;
+use Slim\App;
 use Sotbit\RestAPI\Exception\AuthException;
 use Sotbit\RestAPI\Localisation as l;
 
@@ -21,23 +22,18 @@ class Auth extends Base
 {
     /**
      * @param  Request  $request
-     * @param  Response  $response
-     * @param  Route  $next
+     * @param  RequestHandler  $handler
      *
-     * @return ResponseInterface
+     * @return Response
      * @throws AuthException
      */
-    public function __invoke(
-        Request $request,
-        Response $response,
-        Route $next
-    ): ResponseInterface {
+    public function __invoke(Request $request, RequestHandler $handler): Response
+    {
         $jwtHeader = $request->getHeaderLine('Authorization');
 
         $decoded = $this->decodedHeader($jwtHeader);
         $object = $request->getParsedBody();
         $object['decoded'] = $decoded;
-
-        return $next($request->withParsedBody($object), $response);
+        return $handler->handle($request->withParsedBody($object));
     }
 }

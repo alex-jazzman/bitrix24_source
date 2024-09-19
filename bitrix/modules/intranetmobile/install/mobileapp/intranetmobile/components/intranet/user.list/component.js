@@ -240,12 +240,32 @@
 
 		renderDepartmentButton()
 		{
+			// Workaround to avoid a bug with hiding departments on iOS with a small number of items
+			if (this.state.itemsCount > 4 && !isAndroid)
+			{
+				return View(
+					{
+						style: {
+							position: 'absolute',
+							top: this.departmentTop,
+							width: '100%',
+							alignItems: 'center',
+							paddingHorizontal: Component.paddingLr.toNumber(),
+						},
+					},
+					new DepartmentButton({
+						department: this.state.department,
+						onSelect: this.setDepartment,
+						layout,
+					}),
+				);
+			}
+
 			return View(
 				{
-					// todo replace this when the component stageSelector is ready
 					style: {
 						position: 'absolute',
-						top: this.departmentTop,
+						top: Indent.M.toNumber(),
 						width: '100%',
 						alignItems: 'center',
 						paddingHorizontal: Component.paddingLr.toNumber(),
@@ -440,6 +460,8 @@
 			{
 				dispatch(batchActions(actions));
 			}
+
+			this.setState({itemsCount: items.length});
 		};
 
 		openUserDetail = (userId) => {

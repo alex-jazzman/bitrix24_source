@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\EventDispatcher\Events\HelpEvent;
 
 /**
@@ -67,7 +67,7 @@ class Status extends BaseController
         // event
         //$this->getEventService()->dispatch(new HelpEvent($message), HelpEvent::GET);
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $message, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $message, StatusCode::STATUS_OK);
     }
 
     public function getStatus(Request $request, Response $response): Response
@@ -75,7 +75,7 @@ class Status extends BaseController
         $status = [
         ];
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $status, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $status, StatusCode::STATUS_OK);
     }
 
 }

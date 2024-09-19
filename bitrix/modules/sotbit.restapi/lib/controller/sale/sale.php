@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Controller\Sale;
 
-use Slim\Http\Request;
-use Slim\Http\Response;
-use Slim\Http\StatusCode;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\EventDispatcher\Events\OrderEvent;
 use Sotbit\RestAPI\EventDispatcher\Listeners\OrderListener;
 
@@ -32,7 +32,7 @@ class Sale extends Base
     {
         $order = $this->getRepository()->getPaySystems();
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
     /**
@@ -48,7 +48,7 @@ class Sale extends Base
     {
         $order = $this->getRepository()->getDeliveries();
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
     /**
@@ -64,7 +64,7 @@ class Sale extends Base
     {
         $order = $this->getRepository()->getStatuses();
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
     /**
@@ -80,7 +80,7 @@ class Sale extends Base
     {
         $order = $this->getRepository()->getPersonTypes();
 
-        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::HTTP_OK);
+        return $this->response($response, self::RESPONSE_SUCCESS, $order, StatusCode::STATUS_OK);
     }
 
 

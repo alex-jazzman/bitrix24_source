@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Repository;
 
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\SupportException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Sotbit\RestAPI\Core;
 use Sotbit\RestAPI\Localisation as l;
+use Slim\Psr7\UploadedFile;
 
 class SupportRepository extends BaseRepository
 {
@@ -40,7 +41,7 @@ class SupportRepository extends BaseRepository
     {
         parent::__construct();
         if(!Loader::includeModule("support")) {
-            throw new SupportException(l::get('ERROR_MODULE_SUPPORT'), StatusCode::HTTP_BAD_REQUEST);
+            throw new SupportException(l::get('ERROR_MODULE_SUPPORT'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         $this->user = new UserRepository();
@@ -119,7 +120,7 @@ class SupportRepository extends BaseRepository
         $query->NavStart($params['limit']);
 
         /*if(!$query->NavRecordCount) {
-            throw new SupportException(l::get('ERROR_SUPPORT_TICKET_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new SupportException(l::get('ERROR_SUPPORT_TICKET_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }*/
 
         if($query->NavRecordCount) {
@@ -169,7 +170,7 @@ class SupportRepository extends BaseRepository
         $ticket = $query->Fetch();
 
         if(!$ticket) {
-            throw new SupportException(l::get('ERROR_SUPPORT_TICKET_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new SupportException(l::get('ERROR_SUPPORT_TICKET_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         $ticket['OWNER_USER_ID_PHOTO'] = $this->getUserPhoto((int)$ticket['OWNER_USER_ID']);
@@ -256,7 +257,7 @@ class SupportRepository extends BaseRepository
         $query->NavStart($params['limit'], true, $params['page']);
 
         if(!$query->SelectedRowsCount()) {
-            throw new SupportException(l::get('ERROR_SUPPORT_MESSAGE_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new SupportException(l::get('ERROR_SUPPORT_MESSAGE_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
         $rsFiles = \CTicket::GetFileList($v1 = "s_id", $v2 = "asc", ["TICKET_ID" => $ticketId], 'N');
@@ -351,7 +352,7 @@ class SupportRepository extends BaseRepository
         $result = $query->Fetch();
 
         if(!$result || ((int)$result['CREATED_USER_ID'] !== $userId && (int)$result['OWNER_USER_ID'] !== $userId)) {
-            throw new SupportException(l::get('ERROR_SUPPORT_MESSAGE_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new SupportException(l::get('ERROR_SUPPORT_MESSAGE_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
 
 
@@ -505,7 +506,7 @@ class SupportRepository extends BaseRepository
         $createId = \CTicket::Set($arFields, $messageId, $ticketId, "N");
 
         if($ex = $APPLICATION->GetException()) {
-            throw new SupportException($ex->GetString(), StatusCode::HTTP_BAD_REQUEST);
+            throw new SupportException($ex->GetString(), StatusCode::STATUS_BAD_REQUEST);
         }
 
         return (int)$createId;
@@ -624,34 +625,34 @@ class SupportRepository extends BaseRepository
             // check and collect files into an array
             if(is_array($files)) {
                 foreach($files as $uploadFile) {
-                    if($uploadFile instanceof \Slim\Http\UploadedFile) {
+                    if($uploadFile instanceof UploadedFile) {
                         if($uploadFile->getError() === UPLOAD_ERR_OK) {
                             $returnFiles[] = [
                                 'name'      => Core\Helper::convertEncodingToSite($uploadFile->getClientFilename()),
                                 'type'      => $uploadFile->getClientMediaType(),
-                                'tmp_name'  => $uploadFile->file,
+                                'tmp_name'  => $uploadFile->getFilePath(),
                                 'error'     => $uploadFile->getError(),
                                 'size'      => $uploadFile->getSize(),
                                 "MODULE_ID" => "support",
                             ];
                         } else {
-                            throw new SupportException($uploadFile->getError(), StatusCode::HTTP_BAD_REQUEST);
+                            throw new SupportException($uploadFile->getError(), StatusCode::STATUS_BAD_REQUEST);
                         }
                     }
                 }
             } else {
-                if($files instanceof \Slim\Http\UploadedFile) {
+                if($files instanceof UploadedFile) {
                     if($files->getError() === UPLOAD_ERR_OK) {
                         $returnFiles[] = [
                             'name'      => Core\Helper::convertEncodingToSite($files->getClientFilename()),
                             'type'      => $files->getClientMediaType(),
-                            'tmp_name'  => $files->file,
+                            'tmp_name'  => $files->getFilePath(),
                             'error'     => $files->getError(),
                             'size'      => $files->getSize(),
                             "MODULE_ID" => "support",
                         ];
                     } else {
-                        throw new SupportException($files->getError(), StatusCode::HTTP_BAD_REQUEST);
+                        throw new SupportException($files->getError(), StatusCode::STATUS_BAD_REQUEST);
                     }
                 }
             }
@@ -667,7 +668,7 @@ class SupportRepository extends BaseRepository
                                     '#FILE#' => $returnFile['name'],
                                     '#SIZE#' => round($maxSize / 1024 / 1024, 1),
                                 ]
-                            ), StatusCode::HTTP_BAD_REQUEST
+                            ), StatusCode::STATUS_BAD_REQUEST
                         );
                     }
                 }
@@ -694,7 +695,7 @@ class SupportRepository extends BaseRepository
             }
             \CFile::ViewByUser($arFile, $options);
         } else {
-            throw new SupportException(l::get('ERROR_SUPPORT_FILE_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new SupportException(l::get('ERROR_SUPPORT_FILE_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
     }
 

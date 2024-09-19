@@ -35,6 +35,11 @@ class SotbitRestAPI
     {
         return Config::getInstance()->getRouteMainPath();
     }
+
+    public static function checkVersionPHP(): bool
+    {
+        return PHP_VERSION_ID >= 80100;
+    }
 }
 
 ?>

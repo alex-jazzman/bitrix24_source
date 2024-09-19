@@ -10,6 +10,7 @@ use Bitrix\Currency;
 use Sotbit\RestAPI\Config\Config;
 use Sotbit\RestAPI\Core\Helper;
 use Sotbit\RestAPI\Core;
+use Sotbit\RestAPI\Localisation as l;
 
 abstract class BaseRepository
 {
@@ -26,14 +27,28 @@ abstract class BaseRepository
     public const TYPE_LIST = 'list';
     public const TYPE_DETAIL = 'detail';
 
+    //public const IMAGE_NOT_FOUND = '/bitrix/components/bitrix/catalog.section/templates/.default/images/no_photo.png';
+    public const IMAGE_NOT_FOUND = null;
+
 
     public function __construct()
     {
-        // get config
-        $this->config = Config::getInstance();
-
-        $this->setSiteId();
+        $this
+            ->setConfig(Config::getInstance())
+            ->setSiteId();
     }
+
+    public function getConfig()
+    {
+        return $this->config;
+    }
+
+    public function setConfig($config)
+    {
+        $this->config = Config::getInstance();
+        return $this;
+    }
+
 
     /**
      * @return mixed
@@ -224,11 +239,11 @@ abstract class BaseRepository
             (int)(
                 is_numeric($params['limit']) && $params['limit'] > 0 ?
                 $params['limit']
-                : $this->config->getCatalogLimit() ?? self::DEFAULT_LIMIT_PAGE
+                : $this->getConfig()->getCatalogLimit() ?? self::DEFAULT_LIMIT_PAGE
             );
 
         if(empty($params['order'])) {
-            $params['order'] = $this->config->getCatalogSort();
+            $params['order'] = $this->getConfig()->getCatalogSort();
         }
 
 
@@ -293,41 +308,6 @@ abstract class BaseRepository
         //return Helper::convertEncodingToSite($value);
     }
 
-    public function getSizeImage(string $type = self::TYPE_LIST)
-    {
-        if($type === self::TYPE_DETAIL) {
-            return \Bitrix\Main\Config\Option::get('iblock', 'detail_image_size', self::IMAGE_PREVIEW);
-        }
-        return \Bitrix\Main\Config\Option::get('iblock', 'list_image_size', self::IMAGE_PREVIEW);
-    }
-
-    public function getPictureSrc(int $id, $sizePreview = null)
-    {
-        $image = [];
-        if(!$sizePreview) {
-            $sizePreview = $this->getSizeImage(self::TYPE_LIST);
-        }
-
-        if($id) {
-            $imageOriginal = \CFile::GetFileArray($id);
-
-            $imageResize = \CFile::ResizeImageGet(
-                $id,
-                ["width" => $sizePreview, "height" => $sizePreview],
-                BX_RESIZE_IMAGE_PROPORTIONAL,
-                false
-            );
-        }
-        if(is_array($imageOriginal)) {
-            $image['ORIGINAL'] = $imageOriginal['SRC'];
-        }
-        if(is_array($imageResize)) {
-            $image['RESIZE'] = $imageResize['src'];
-        }
-
-        return $image;
-    }
-
     public function getCurrencyFormat(array $currencies): array
     {
         $return = [];
@@ -385,5 +365,61 @@ abstract class BaseRepository
         }
 
         return $return;
+    }
+
+    public static function getSizeImage(string $type = self::TYPE_LIST)
+    {
+        if($type === self::TYPE_DETAIL) {
+            return \Bitrix\Main\Config\Option::get('iblock', 'detail_image_size', self::IMAGE_PREVIEW);
+        }
+        return \Bitrix\Main\Config\Option::get('iblock', 'list_image_size', self::IMAGE_PREVIEW);
+    }
+
+    public static function getPictureSrc(int $id, $sizePreview = null)
+    {
+        $image = [];
+        if(!$sizePreview) {
+            $sizePreview = self::getSizeImage();
+        }
+
+        if($id) {
+            $imageOriginal = \CFile::GetFileArray($id);
+
+            $imageResize = \CFile::ResizeImageGet(
+                $id,
+                ["width" => $sizePreview, "height" => $sizePreview]
+            );
+        }
+        if(is_array($imageOriginal)) {
+            $image['ORIGINAL'] = $imageOriginal['SRC'];
+        }
+        if(is_array($imageResize)) {
+            $image['RESIZE'] = $imageResize['src'];
+        }
+
+        return $image;
+    }
+
+    public function showQuantity($quantity, $measureRatio = 1)
+    {
+        if($this->getConfig()) {
+            if($this->getConfig()->getShowQuantity() === 'Y') {
+                return $quantity;
+            }
+
+            if($this->getConfig()->getShowQuantity() === 'M') {
+                if($quantity == 0) {
+                    return l::get('QUANTITY_NO');
+                }
+
+                if((float)$quantity / $measureRatio >= $this->getConfig()->getShowQuantityInt()) {
+                    return $this->getConfig()->getShowQuantityTextMax();
+                }
+
+                return $this->getConfig()->getShowQuantityTextMin();
+            }
+        }
+
+        return null;
     }
 }

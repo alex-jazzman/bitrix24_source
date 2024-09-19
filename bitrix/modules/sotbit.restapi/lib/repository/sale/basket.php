@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sotbit\RestAPI\Repository\Sale;
 
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Exception\SaleException,
     Sotbit\RestAPI\Core,
     Sotbit\RestAPI\Localisation as l,
@@ -99,7 +99,7 @@ class Basket extends SaleRepository
         $basketTotal = [];
 
         if($this->getUserId() === null) {
-            throw new SaleException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new SaleException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         // prepare params
@@ -125,7 +125,7 @@ class Basket extends SaleRepository
         if(!$basketSave->isSuccess()) {
             throw new SaleException(
                 is_array($basketSave->getErrors()) ? implode(', ', $basketSave->getErrors()) : $basketSave->getErrors(),
-                StatusCode::HTTP_BAD_REQUEST
+                StatusCode::STATUS_BAD_REQUEST
             );
         }
 
@@ -157,13 +157,19 @@ class Basket extends SaleRepository
 
                     // get detail and preview images for basket items
                     $basketItems = $this->getBasketItemImages($basketItems);
+
+                    // prepare quantity
+                    // config: show quantity
+                    array_walk($basketItems, function(&$value) {
+                        $value['AVAILABLE_QUANTITY'] = $this->showQuantity($value['AVAILABLE_QUANTITY'], $value['MEASURE_RATIO']);
+                    });
                 }
 
 
                 // total
                 $basketTotal = $this->getBasketTotal($basket);
             } catch(\Exception $e) {
-                throw new SaleException(l::get('ERROR_QUERY'), StatusCode::HTTP_BAD_REQUEST);
+                throw new SaleException(l::get('ERROR_QUERY'), StatusCode::STATUS_BAD_REQUEST);
             }
         }
 
@@ -189,7 +195,7 @@ class Basket extends SaleRepository
     public function add(array $params)
     {
         if($this->getUserId() === null) {
-            throw new SaleException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new SaleException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         $productId = $params['id'];
@@ -199,16 +205,16 @@ class Basket extends SaleRepository
         $options = [];
 
         if(!$productId) {
-            throw new SaleException(l::get('ERROR_CATALOG_PRODUCT_ID_EMPTY'), StatusCode::HTTP_BAD_REQUEST);
+            throw new SaleException(l::get('ERROR_CATALOG_PRODUCT_ID_EMPTY'), StatusCode::STATUS_BAD_REQUEST);
         }
         if(!$elementFields = Product::checkElement($productId, $userId)) {
-            throw new SaleException(l::get('ERROR_CATALOG_PRODUCT_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new SaleException(l::get('ERROR_CATALOG_PRODUCT_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
         if(!$productFields = Product::checkProduct($productId, $userId)) {
-            throw new SaleException(l::get('ERROR_CATALOG_PRODUCT_NOT_FOUND'), StatusCode::HTTP_NOT_FOUND);
+            throw new SaleException(l::get('ERROR_CATALOG_PRODUCT_NOT_FOUND'), StatusCode::STATUS_NOT_FOUND);
         }
         /*if($productFields['AVAILABLE'] != Catalog\ProductTable::STATUS_YES) {
-            throw new SaleException(l::get('ERROR_CATALOG_PRODUCT_BASKET_ERR_PRODUCT_RUN_OUT'),StatusCode::HTTP_BAD_REQUEST);
+            throw new SaleException(l::get('ERROR_CATALOG_PRODUCT_BASKET_ERR_PRODUCT_RUN_OUT'),StatusCode::STATUS_BAD_REQUEST);
         }*/
 
         $iblockId = $elementFields['IBLOCK_ID'];
@@ -216,7 +222,7 @@ class Basket extends SaleRepository
 
         // basket fields
         $basketFields = [];
-        if($this->config->isBasketAddProperty()) {
+        if($this->getConfig()->isBasketAddProperty()) {
             if($this->isPropertyFeature()) {
                 /*$propertyFeature = \Bitrix\Iblock\Model\PropertyFeature::getDetailPageShowProperties(
                     $elementFields['IBLOCK_ID'],
@@ -233,7 +239,7 @@ class Basket extends SaleRepository
             } else {
                 $basketFields = ((int)$productFields['TYPE'] !== Catalog\ProductTable::TYPE_OFFER
                     && (int)$productFields['TYPE'] !== Catalog\ProductTable::TYPE_FREE_OFFER)
-                    ? $this->config->getBasketProperty() : $this->config->getBasketOfferProperty();
+                    ? $this->getConfig()->getBasketProperty() : $this->getConfig()->getBasketOfferProperty();
 
                 if(!$basketFields) {
                     $options['FILL_PRODUCT_PROPERTIES'] = 'Y';
@@ -266,7 +272,7 @@ class Basket extends SaleRepository
                 l::get(
                     'ERROR_BASKET_ADD_PRODUCT_QUANTITY',
                     ['#QUANTITY#' => $quantity]
-                ), StatusCode::HTTP_BAD_REQUEST
+                ), StatusCode::STATUS_BAD_REQUEST
             );
         }
 
@@ -312,13 +318,13 @@ class Basket extends SaleRepository
                     l::get(
                         'ERROR_BASKET_ADD_PRODUCT_QUANTITY',
                         ['#QUANTITY#' => $fields['QUANTITY']]
-                    ), StatusCode::HTTP_BAD_REQUEST
+                    ), StatusCode::STATUS_BAD_REQUEST
                 );
             }
             /*$basketResult = $basketItem->delete();
             if(!$basketResult->isSuccess()) {
                 throw new SaleException(
-                    l::get('ERROR_BASKET_ADD_PRODUCT'), StatusCode::HTTP_BAD_REQUEST
+                    l::get('ERROR_BASKET_ADD_PRODUCT'), StatusCode::STATUS_BAD_REQUEST
                 );
             }*/
 
@@ -353,11 +359,11 @@ class Basket extends SaleRepository
                         }
                         $result->setData(['ID' => $item->getId(),]);
                     } else {
-                        throw new SaleException(l::get('ERROR_BASKET_ERR_UNKNOWN'), StatusCode::HTTP_BAD_REQUEST);
+                        throw new SaleException(l::get('ERROR_BASKET_ERR_UNKNOWN'), StatusCode::STATUS_BAD_REQUEST);
                     }
                     unset($item);
                 } else {
-                    throw new SaleException(l::get('ERROR_BASKET_ERR_UNKNOWN'), StatusCode::HTTP_BAD_REQUEST);
+                    throw new SaleException(l::get('ERROR_BASKET_ERR_UNKNOWN'), StatusCode::STATUS_BAD_REQUEST);
                 }
                 unset($resultData);
             } else {
@@ -370,7 +376,7 @@ class Basket extends SaleRepository
         if($errors = $result->getErrorMessages()) {
             throw new SaleException(
                 is_array($errors) ? implode(', ', $errors) : $errors,
-                StatusCode::HTTP_BAD_REQUEST
+                StatusCode::STATUS_BAD_REQUEST
             );
         }
 
@@ -384,12 +390,12 @@ class Basket extends SaleRepository
     public function delete(array $params)
     {
         if($this->getUserId() === null) {
-            throw new SaleException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+            throw new SaleException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
         }
 
         $productIds = is_array($params['id']) ? array_map('intval', $params['id']) : [(int)$params['id']];
         if(empty($productIds) || !$productIds[0]) {
-            throw new SaleException(l::get('ERROR_BASKET_ID'), StatusCode::HTTP_BAD_REQUEST);
+            throw new SaleException(l::get('ERROR_BASKET_ID'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         $userId = $this->getUserId();
@@ -401,7 +407,7 @@ class Basket extends SaleRepository
         );
 
         if($basket->isEmpty()) {
-            throw new SaleException(l::get('ERROR_BASKET_EMPTY'), StatusCode::HTTP_BAD_REQUEST);
+            throw new SaleException(l::get('ERROR_BASKET_EMPTY'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         $basketItems = null;
@@ -425,13 +431,13 @@ class Basket extends SaleRepository
                 $basketItem = $basketItems[$productId];
                 $actionDelete = $basketItem->delete();
                 if(!$actionDelete->isSuccess()) {
-                    throw new SaleException($actionDelete->getErrors(), StatusCode::HTTP_BAD_REQUEST);
+                    throw new SaleException($actionDelete->getErrors(), StatusCode::STATUS_BAD_REQUEST);
                 }
             } else {
                 $productName = Product::checkProduct($productId, $userId);
                 throw new SaleException(
                     l::get('ERROR_BASKET_REMOVE_PRODUCT', [' `#NAME#`' => $productName['NAME']]),
-                    StatusCode::HTTP_BAD_REQUEST
+                    StatusCode::STATUS_BAD_REQUEST
                 );
             }
         }
@@ -440,7 +446,7 @@ class Basket extends SaleRepository
         // save basket
         $basketSave = $basket->save();
         if(!$basketSave->isSuccess()) {
-            throw new SaleException($basketSave->getErrors(), StatusCode::HTTP_BAD_REQUEST);
+            throw new SaleException($basketSave->getErrors(), StatusCode::STATUS_BAD_REQUEST);
         }
 
         return l::get('ERROR_BASKET_REMOVE_SUCCESS');
@@ -719,11 +725,11 @@ class Basket extends SaleRepository
         // 4. parent product additional picture from parameters
 
         // config
-        if($this->config->getMorePhotoCode()) {
-            $morePhoto = 'PROPERTY_'.$this->config->getMorePhotoCode();
+        if($this->getConfig()->getMorePhotoCode()) {
+            $morePhoto = 'PROPERTY_'.$this->getConfig()->getMorePhotoCode();
         }
-        if($this->config->getOfferMorePhotoCode()) {
-            $morePhotoOffer = 'PROPERTY_'.$this->config->getOfferMorePhotoCode();
+        if($this->getConfig()->getOfferMorePhotoCode()) {
+            $morePhotoOffer = 'PROPERTY_'.$this->getConfig()->getOfferMorePhotoCode();
         }
 
 
@@ -765,20 +771,20 @@ class Basket extends SaleRepository
 
             while($req = $q->GetNextElement()) {
                 $fields = $req->GetFields();
-                $elements[$fields['ID']]['DETAIL_PICTURE'] = $fields['DETAIL_PICTURE'] ? $this->getPictureSrc(
+                $elements[$fields['ID']]['DETAIL_PICTURE'] = $fields['DETAIL_PICTURE'] ? self::getPictureSrc(
                     (int)$fields['DETAIL_PICTURE']
                 ) : null;
-                $elements[$fields['ID']]['PREVIEW_PICTURE'] = $fields['PREVIEW_PICTURE'] ? $this->getPictureSrc(
+                $elements[$fields['ID']]['PREVIEW_PICTURE'] = $fields['PREVIEW_PICTURE'] ? self::getPictureSrc(
                     (int)$fields['PREVIEW_PICTURE']
                 ) : null;
 
                 if($fields[$morePhoto]) {
-                    $elements[$fields['ID']]['MORE_PHOTO'] = $fields[$morePhoto] ? $this->getPictureSrc(
+                    $elements[$fields['ID']]['MORE_PHOTO'] = $fields[$morePhoto] ? self::getPictureSrc(
                         (int)$fields[$morePhoto]
                     ) : null;
                 } else {
                     if($morePhotoOffer) {
-                        $elements[$fields['ID']]['MORE_PHOTO'] = $fields[$morePhotoOffer] ? $this->getPictureSrc(
+                        $elements[$fields['ID']]['MORE_PHOTO'] = $fields[$morePhotoOffer] ? self::getPictureSrc(
                             (int)$fields[$morePhotoOffer]
                         ) : null;
                     }
@@ -790,24 +796,24 @@ class Basket extends SaleRepository
                 $parentId = $skuParent[$productId] ?? null;
 
                 // get detail image
-                if($elements[$productId]['DETAIL_PICTURE']) {
-                    $basketItems[$k]['PICTURE'] = $elements[$productId]['DETAIL_PICTURE'];
+                if($elements[$productId]['PREVIEW_PICTURE']) {
+                    $basketItems[$k]['PICTURE'] = $elements[$productId]['PREVIEW_PICTURE'];
                     // get preview image
                 } else {
-                    if($elements[$productId]['PREVIEW_PICTURE']) {
-                        $basketItems[$k]['PICTURE'] = $elements[$productId]['PREVIEW_PICTURE'];
+                    if($elements[$productId]['DETAIL_PICTURE']) {
+                        $basketItems[$k]['PICTURE'] = $elements[$productId]['DETAIL_PICTURE'];
                         // get additional picture from parameters
                     } else {
                         if($elements[$productId]['MORE_PHOTO']) {
                             $basketItems[$k]['PICTURE'] = $elements[$productId]['MORE_PHOTO'];
                             // get parent detail image
                         } else {
-                            if($parentId && $elements[$skuParent[$productId]]['DETAIL_PICTURE']) {
-                                $basketItems[$k]['PICTURE'] = $elements[$skuParent[$productId]]['DETAIL_PICTURE'];
+                            if($parentId && $elements[$skuParent[$productId]]['PREVIEW_PICTURE']) {
+                                $basketItems[$k]['PICTURE'] = $elements[$skuParent[$productId]]['PREVIEW_PICTURE'];
                                 // get parent preview image
                             } else {
-                                if($parentId && $elements[$skuParent[$productId]]['PREVIEW_PICTURE']) {
-                                    $basketItems[$k]['PICTURE'] = $elements[$skuParent[$productId]]['PREVIEW_PICTURE'];
+                                if($parentId && $elements[$skuParent[$productId]]['DETAIL_PICTURE']) {
+                                    $basketItems[$k]['PICTURE'] = $elements[$skuParent[$productId]]['DETAIL_PICTURE'];
                                     // get parent additional picture from parameters
                                 } else {
                                     if($parentId && $elements[$skuParent[$productId]]['MORE_PHOTO']) {
@@ -974,7 +980,7 @@ class Basket extends SaleRepository
        $result = [];
 
        if($this->getUserId() === null) {
-           throw new SaleException(l::get('EMPTY_USER_ID'), StatusCode::HTTP_UNAUTHORIZED);
+           throw new SaleException(l::get('EMPTY_USER_ID'), StatusCode::STATUS_UNAUTHORIZED);
        }
 
        $userId = $this->getUserId();
@@ -998,7 +1004,7 @@ class Basket extends SaleRepository
     /*public function addCoupon($coupon)
     {
         if(!$coupon) {
-            throw new SaleException(l::get('ERROR_BASKET_COUPON_NOT_FOUND'), StatusCode::HTTP_BAD_REQUEST);
+            throw new SaleException(l::get('ERROR_BASKET_COUPON_NOT_FOUND'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         $userId = $this->getUserId();
@@ -1043,10 +1049,10 @@ class Basket extends SaleRepository
 
                     return $result['COUPON_LIST'];
                 } else {
-                    throw new SaleException(l::get('ERROR_BASKET_COUPON_NOT_FOUND'), StatusCode::HTTP_BAD_REQUEST);
+                    throw new SaleException(l::get('ERROR_BASKET_COUPON_NOT_FOUND'), StatusCode::STATUS_BAD_REQUEST);
                 }
             } else {
-                throw new SaleException(l::get('ERROR_BASKET_COUPON_NOT_FOUND'), StatusCode::HTTP_BAD_REQUEST);
+                throw new SaleException(l::get('ERROR_BASKET_COUPON_NOT_FOUND'), StatusCode::STATUS_BAD_REQUEST);
             }
 
 

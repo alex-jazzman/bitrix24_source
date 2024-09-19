@@ -19,7 +19,7 @@ class Search extends CatalogRepository
         parent::__construct();
 
         if(!Loader::includeModule("search")) {
-            throw new CatalogException(l::get('ERROR_MODULE_SEARCH'), StatusCode::HTTP_BAD_REQUEST);
+            throw new CatalogException(l::get('ERROR_MODULE_SEARCH'), StatusCode::STATUS_BAD_REQUEST);
         }
     }
 

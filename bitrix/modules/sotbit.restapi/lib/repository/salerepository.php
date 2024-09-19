@@ -6,7 +6,7 @@ namespace Sotbit\RestAPI\Repository;
 
 use Bitrix\Sale;
 use Bitrix\Main\Loader;
-use Slim\Http\StatusCode;
+use Fig\Http\Message\StatusCodeInterface as StatusCode;
 use Sotbit\RestAPI\Repository\Sale as _Sale,
     Sotbit\RestAPI\Exception\SaleException,
     Sotbit\RestAPI\Core,
@@ -31,10 +31,10 @@ class SaleRepository extends BaseRepository
     {
         parent::__construct();
         if(!Loader::includeModule("sale")) {
-            throw new SaleException(l::get('ERROR_MODULE_SALE'), StatusCode::HTTP_BAD_REQUEST);
+            throw new SaleException(l::get('ERROR_MODULE_SALE'), StatusCode::STATUS_BAD_REQUEST);
         }
         if(!Loader::includeModule("catalog")) {
-            throw new SaleException(l::get('ERROR_MODULE_CATALOG'), StatusCode::HTTP_BAD_REQUEST);
+            throw new SaleException(l::get('ERROR_MODULE_CATALOG'), StatusCode::STATUS_BAD_REQUEST);
         }
 
         $this->permission = new _Sale\Permission();
@@ -91,6 +91,15 @@ class SaleRepository extends BaseRepository
         $order = new _Sale\Order();
 
         return $order->setUserId($userId)->setCancel($orderId, $reason);
+    }
+
+    public function setOrderRepeat(int $orderId, int $userId)
+    {
+        // check permission
+
+        $order = new _Sale\Order();
+
+        return $order->setUserId($userId)->setRepeat($orderId);
     }
 
 
